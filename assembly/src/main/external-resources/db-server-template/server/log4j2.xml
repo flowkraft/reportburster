@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+
+	<!-- Logging Properties -->
+    <Properties>
+        <Property name="LOG_PATTERN">%d{dd/MM/yyyy HH:mm:ss} %p - %m%n</Property>
+        <Property name="APP_LOG_ROOT">logs</Property>
+    </Properties>
+     
+	<Appenders>
+	<RollingFile name="info-out" fileName="${APP_LOG_ROOT}/info.log" filePattern="${APP_LOG_ROOT}/info-%d{MM-dd-yyyy}.log.zip">
+
+		<PatternLayout pattern="${LOG_PATTERN}"/>
+		<Policies>
+                <SizeBasedTriggeringPolicy size="10MB" />
+        </Policies>
+        <DefaultRolloverStrategy max="10"/>
+		
+		<LevelRangeFilter minLevel="INFO" maxLevel="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+		
+	</RollingFile>
+
+	<RollingFile name="warning-out" fileName="${APP_LOG_ROOT}/warnings.log" filePattern="${APP_LOG_ROOT}/warnings-%d{MM-dd-yyyy}.log.zip">
+
+		<PatternLayout pattern="${LOG_PATTERN}"/>
+		<Policies>
+                <SizeBasedTriggeringPolicy size="10MB" />
+        </Policies>
+        <DefaultRolloverStrategy max="10"/>
+		
+		<LevelRangeFilter minLevel="WARN" maxLevel="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+		
+	</RollingFile>
+	
+	<RollingFile name="error-out" fileName="${APP_LOG_ROOT}/errors.log" filePattern="${APP_LOG_ROOT}/errors-%d{MM-dd-yyyy}.log.zip">
+
+		<PatternLayout pattern="${LOG_PATTERN}"/>
+		<Policies>
+                <SizeBasedTriggeringPolicy size="10MB" />
+        </Policies>
+        <DefaultRolloverStrategy max="10"/>
+		
+		<LevelRangeFilter minLevel="ERROR" maxLevel="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+		
+	</RollingFile>
+
+	<RollingFile name="debug-out" fileName="${APP_LOG_ROOT}/debug.log" filePattern="${APP_LOG_ROOT}/debug-%d{MM-dd-yyyy}.log.zip">
+
+		<PatternLayout pattern="${LOG_PATTERN}"/>
+		<Policies>
+                <SizeBasedTriggeringPolicy size="100MB" />
+        </Policies>
+        <DefaultRolloverStrategy max="10"/>
+		
+		<LevelRangeFilter minLevel="DEBUG" maxLevel="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
+		
+	</RollingFile>
+
+	<RollingFile name="batch-out" fileName="${APP_LOG_ROOT}/batch.log" filePattern="${APP_LOG_ROOT}/batch-%d{MM-dd-yyyy}.log.zip">
+
+		<PatternLayout pattern="${LOG_PATTERN}"/>
+		<Policies>
+                <SizeBasedTriggeringPolicy size="10MB" />
+        </Policies>
+        <DefaultRolloverStrategy max="10"/>
+		
+	</RollingFile>
+
+	<!-- Send all DocumentBurster problems by email -->
+	<!-- Correct email account details should be provided -->
+	<SMTP name="mailAppender" subject="DocumentBurster Error Log" to="adminA@server.com,adminB@server.com" from="appname@server.com"
+          smtpHost="email.host" smtpPort="25" smtpUsername="email.user.name" smtpPassword="password" bufferSize="50">
+
+		<PatternLayout pattern="${LOG_PATTERN}"/>
+		
+		<LevelRangeFilter minLevel="ERROR" maxLevel="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+	
+	</SMTP>
+
+	</Appenders>
+	<Loggers>
+	<!-- Log level="debug" will make DocumentBurster more verbose -->
+	<Logger name="com.sourcekraft.documentburster" level="info">
+
+		<AppenderRef ref="info-out" />
+		<AppenderRef ref="warning-out" />
+		<AppenderRef ref="error-out" />
+		<AppenderRef ref="debug-out" />
+
+	</Logger>
+
+	<Logger name="com.sourcekraft.batch" level="info">
+		<AppenderRef ref="batch-out" />
+	</Logger>
+
+	<Root level="debug">
+
+		<!-- <AppenderRef ref="documentburster" /> -->
+
+		<!-- 
+            Un-comment the following line for sending DocumentBurster problems 
+            by email -->
+		<!-- <AppenderRef ref="mailAppender" /> -->
+
+	</Root>
+	</Loggers>
+	
+</configuration>

@@ -1,0 +1,3 @@
+import com.sourcekraft.documentburster.unit.documentation.userguide.qualityassurance.Split2TimesTest
+
+Split2TimesTest.assertEmailMessage(message)

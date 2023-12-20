@@ -1,0 +1,223 @@
+import * as path from 'path';
+const slash = require('slash');
+
+import * as jetpack from 'fs-jetpack';
+
+import { test } from '@playwright/test';
+import { Constants } from '../../utils/constants';
+import * as PATHS from '../../utils/paths';
+import { Helpers } from '../../utils/helpers';
+import { FluentTester } from '../../helpers/fluent-tester';
+/*
+MINIMUM JAVA required is Java 1.8 - FOR COMPLETENESS AND TO PROVE IT WORKS THERE ARE TESTS FOR
+      01. System's default Java installation (probably latest Java) - WORKS
+      02. Java6 - IT DOES NOT WORK (tested)
+      03. Java7 - IT DOES NOT WORK (tested)
+      04. Java8 - WORKS
+*/
+
+test.describe('', async () => {
+  test('java default installation - it should correctly do license-activation-quickstart-deactivation', async function () {
+    //long running test
+    test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+    await Helpers.restoreDocumentBursterCleanState(true);
+    //await Helpers.restoreDocumentBursterCleanState(false);
+
+    return _licenseActivationQuickStartDeActivation();
+  });
+
+  test('java 6 IT DOES NOT WORK (tested) - it fails with Unsupported minor version 51 on JAXB jar files', async function () {
+    // copy the documentburster-javaX.bat file
+    /*
+    jetpack.copy(
+      PATHS.E2E_RESOURCES_PATH + "/java-versions/documentburster-java6.bat",
+      process.env.PORTABLE_EXECUTABLE_DIR + "/documentburster.bat",
+      {
+        overwrite: true,
+      }
+    );
+    return _licenseActivationQuickStartDeActivation(firstPage);
+    */
+  });
+
+  test('java 7 IT DOES NOT WORK (tested) - it fails with SSL handshake exception when activating the license', async function () {
+    // copy the documentburster-javaX.bat file
+    /*
+    jetpack.copy(
+      PATHS.E2E_RESOURCES_PATH + "/java-versions/documentburster-java7.bat",
+      process.env.PORTABLE_EXECUTABLE_DIR + "/documentburster.bat",
+      {
+        overwrite: true,
+      }
+    );
+    return _licenseActivationQuickStartDeActivation(firstPage);
+      */
+  });
+
+  test('java 8 - should correctly do license-activation-quickstart-deactivation', async function () {
+    //long running test
+    test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+    await Helpers.restoreDocumentBursterCleanState(true);
+
+    // copy the documentburster-javaX.bat file
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH + '/java-versions/documentburster-java8.bat',
+      process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
+      {
+        overwrite: true,
+      }
+    );
+
+    return _licenseActivationQuickStartDeActivation();
+  });
+
+  test('java11 - should correctly do license-activation-quickstart-deactivation', async function () {
+    //long running test
+    test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+    await Helpers.restoreDocumentBursterCleanState(true);
+
+    // copy the documentburster-javaX.bat file
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH + '/java-versions/documentburster-java11.bat',
+      process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
+      {
+        overwrite: true,
+      }
+    );
+
+    return _licenseActivationQuickStartDeActivation();
+  });
+
+  test('java14 - should correctly do license-activation-quickstart-deactivation', async function () {
+    //long running test
+    test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+    await Helpers.restoreDocumentBursterCleanState(true);
+
+    // copy the documentburster-javaX.bat file
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH + '/java-versions/documentburster-java14.bat',
+      process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
+      {
+        overwrite: true,
+      }
+    );
+
+    return _licenseActivationQuickStartDeActivation();
+  });
+
+  test('java16 - should correctly do license-activation-quickstart-deactivation', async function () {
+    //long running test
+    test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+    await Helpers.restoreDocumentBursterCleanState(true);
+
+    // copy the documentburster-javaX.bat file
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH + '/java-versions/documentburster-java16.bat',
+      process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
+      {
+        overwrite: true,
+      }
+    );
+
+    return _licenseActivationQuickStartDeActivation();
+  });
+
+  test('java17 - should correctly do license-activation-quickstart-deactivation', async function () {
+    //long running test
+    test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+    await Helpers.restoreDocumentBursterCleanState(true);
+
+    // copy the documentburster-javaX.bat file
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH + '/java-versions/documentburster-java17.bat',
+      process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
+      {
+        overwrite: true,
+      }
+    );
+
+    return _licenseActivationQuickStartDeActivation();
+  });
+});
+
+const _licenseActivationQuickStartDeActivation = async () => {
+  const electronApp = await Helpers.electronAppLaunch('../..');
+
+  const ft = new FluentTester(await electronApp.firstWindow());
+
+  await ft
+    .goToBurstScreen()
+    .click('#licenseTab-link')
+    // STEP0 - start from a demo license key
+    .elementShouldBeVisible('#statusDemoLicense')
+    .appShouldBeReadyToRunNewJobs()
+    .appStatusShouldBeGreatNoErrorsNoWarnings()
+    // activating the test license key (pre-requisite for the test)
+    .setValue('#licenseKey', Constants.TEST_LICENSE_KEY)
+    .click('#btnActivateLicenseKey')
+    .clickYesDoThis()
+    .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR)
+    .waitOnElementToBecomeVisible(
+      '#statusActiveLicenseKey',
+      Constants.DELAY_FIVE_THOUSANDS_SECONDS
+    )
+    .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
+    .appShouldBeReadyToRunNewJobs()
+    .appStatusShouldBeGreatNoErrorsNoWarnings()
+    .elementShouldBeVisible('#version')
+    //do the actual test (activating the license was required)
+    .click('#burstTab-link')
+    .appShouldBeReadyToRunNewJobs()
+    .appStatusShouldBeGreatNoErrorsNoWarnings()
+    .setValue(
+      '#burstFile',
+      path.resolve(
+        slash(
+          process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf'
+        )
+      )
+    )
+    //.killHangingJavaProcesses()
+    .click('#btnBurst')
+    // wait for the 'Clear Logs' modal to come
+    .clickYesDoThis()
+    .click('#btnClearLogs')
+    .clickYesDoThis()
+    .waitOnElementToBecomeVisible('#qaReminderLink')
+    .waitOnElementToBecomeInvisible('#logsViewer')
+    .click('#btnBurst')
+    .clickYesDoThis()
+    .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR)
+    .waitOnElementToBecomeVisible(
+      '#cancelPause',
+      Constants.DELAY_FIVE_THOUSANDS_SECONDS
+    )
+    .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
+    .appStatusShouldBeGreatNoErrorsNoWarnings()
+    .click('#licenseTab-link')
+    // de-activating the test license key
+    //.killHangingJavaProcesses()
+    .click('#deactivateLicenseKey')
+    .clickYesDoThis()
+    .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR)
+    .waitOnElementToBecomeVisible(
+      '#statusDemoLicense',
+      Constants.DELAY_FIVE_THOUSANDS_SECONDS
+    )
+    .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
+    .appShouldBeReadyToRunNewJobs()
+    .appStatusShouldBeGreatNoErrorsNoWarnings()
+    //.killHangingJavaProcesses()
+    .processingShouldHaveGeneratedOutputFiles(
+      Constants.PAYSLIPS_PDF_BURST_TOKENS.map(function (burstToken) {
+        return burstToken + '.pdf';
+      })
+    );
+  await Helpers.electronAppClose(electronApp);
+};

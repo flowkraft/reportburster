@@ -1,0 +1,1 @@
+throw new Exception("assert_sms_not_executed - It should not come here!")

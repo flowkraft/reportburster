@@ -1,0 +1,262 @@
+{
+  "PAGES": {
+    "HOME": {
+      "TITLE": "App works!"
+    }
+  },
+  "HEADER": {
+    "TITLE": "Header works!"
+  },
+
+  "MENU": {
+
+    "HEADER": {
+
+      "BURST": "Burst",
+      "CONFIGURATION": "Configuration",
+      "MANAGE-CONFIGURATION-TEMPLATES": "Manage Configuration Templates",
+      "HELP-AND-SUPPORT": "Help & Support",
+      "GET-SOFTWARE-SUPPORT": "Get Software Support",
+      "DOCUMENTBURSTER-SERVICES": "<em>DocumentBurster</em> Services",
+      "DOCUMENTATION": "Documentation",
+      "EXAMPLES": "Examples",
+      "FREE-FOR-SCHOOLS": "Free For Schools",
+      "CUSTOMER-REVIEWS": "Customer Reviews",
+      "DOCUMENTBURSTER-BLOG": "<em>DocumentBurster</em> Blog",
+      "LICENSE": "License",
+      "ABOUT": "About"
+
+    },
+
+    "PROCESSING": {
+
+      "ACTIONS": "ACTIONS",
+      "BURST": "Burst",
+      "MERGE-BURST": "Merge -> Burst",
+      "QUALITY-ASSURANCE": "Quality Assurance",
+      "LOGGING-TRACING": "Logging, Tracing"
+
+    },
+
+    "CONFIGURATION": {
+
+      "GENERAL": "General",
+      "ENABLE-DISABLE-DELIVERY": "Enable / Disable Delivery",
+      "EMAIL": "Email",
+      "CLOUD-EMAIL-PROVIDERS": "Cloud Email Providers",
+      "UPLOAD": "Upload",
+      "FTP": "FTP",
+      "SFTP": "SFTP/SCP",
+      "FILE-SHARE": "File Share",
+      "FTPS": "FTPs",
+      "HTTP": "HTTP/WebDAV",
+      "CLOUD-UPLOAD": "Cloud Upload",
+      "DOCUMENTS2WEB": "Documents2Web",
+      "DOCUMENTBURSTER-WEB": "DocumentBurster Web",
+      "SHAREPOINT": "Microsoft SharePoint",
+      "WORDPRESS": "WordPress",
+      "DRUPAL": "Drupal",
+      "JOOMLA": "Joomla",
+      "OTHER-WEB-PLATFORMS": "Other Web Platforms...",
+      "SMS": "SMS",
+      "TWILIO": "Twilio",
+      "QUALITY-ASSURANCE": "Quality Assurance",
+      "EMAIL-SERVER": "Test Email Server",
+      "ADVANCED": "Advanced",
+      "ERROR-HANDLING": "Error Handling"
+
+    },
+    "CONFIGURATION-TEMPLATES": {
+
+      "TITLE": "Configuration Templates",
+      "TEMPLATES": "Templates"
+
+    },
+    "HELP": {
+
+      "TITLE": "HELP",
+      "SUPPORT": "Get Software Support",
+      "SERVICES": "DocumentBurster Services",
+      "DOCUMENTATION": "Documentation",
+      "EXAMPLES": "Examples",
+      "FREE": "Free For Schools",
+      "REVIEWS": "Customer Reviews",
+      "BLOG": "DocumentBurster Blog",
+      "LICENSE": "License",
+      "ABOUT": "About"
+
+    }
+
+
+  },
+
+  "TABS": {
+
+    "CONFIGURATION": {
+
+      "GENERAL": {
+
+        "TITLE": "General Settings"
+
+      },
+      "ENABLE-DISABLE-DELIVERY": {
+
+        "TITLE": "Enable / Disable Delivery"
+
+      },
+      "EMAIL": {
+
+        "CONNECTION": {
+          "TITLE": "Connection Settings"
+        },
+        "MESSAGE": {
+          "TITLE": "Email Message"
+        },
+        "CLOUD-PROVIDERS": {
+          "TITLE": "Cloud Email Providers"
+        }
+
+      },
+
+      "ATTACHMENTS": {
+        "TITLE": "Attachments"
+      },
+
+      "UPLOAD": {
+
+        "FTP": {
+          "TITLE": "FTP"
+        },
+        "FILE-SHARE": {
+          "TITLE": "File Share"
+        },
+        "FTPS": {
+          "TITLE": "FTPs"
+        },
+        "SFTP": {
+          "TITLE": "SFTP/SCP"
+        },
+        "HTTP": {
+          "TITLE": "HTTP/WebDAV"
+        },
+        "CLOUD": {
+          "TITLE": "Cloud Upload"
+        }
+      },
+      "WEB-UPLOAD": {
+
+        "DOCUMENTBURSTER-WEB": {
+          "TITLE": "DocumentBurster Web"
+        },
+        "SHAREPOINT": {
+          "TITLE": "Microsoft SharePoint"
+        },
+        "WORDPRESS": {
+          "TITLE": "WordPress"
+        },
+        "DRUPAL": {
+          "TITLE": "Drupal"
+        },
+        "JOOMLA": {
+          "TITLE": "Joomla"
+        },
+        "OTHER-WEB-PLATFORMS": {
+          "TITLE": "Other Web Platforms..."
+        }
+      },
+      "SMS": {
+
+        "TWILIO": {
+          "TITLE": "Twilio"
+        },
+        "MESSAGE": {
+          "TITLE": "Message"
+        }
+
+
+      },
+      "QA": {
+        "TITLE": "Test Email Server"
+      },
+      "ADVANCED": {
+        "TITLE": "Advanced",
+        "ERROR-HANDLING": {
+          "TITLE": "Delivery Error Handling"
+        }
+      }
+
+    },
+    "CONFIGURATION-TEMPLATES": {
+
+      "TITLE": "Configuration Templates"
+
+    },
+
+    "PROCESSING": {
+
+      "BURST": {
+
+        "TITLE": "Burst"
+
+      },
+
+      "MERGE-BURST": {
+
+        "TITLE": "Merge -> Burst"
+
+      },
+      "QUALITY-ASSURANCE": {
+
+        "TITLE": "Quality Assurance"
+
+      },
+      "LOGGING-TRACING": {
+
+        "TITLE": "Logging and Tracing"
+
+      },
+      "LICENSE": {
+
+        "TITLE": "License"
+
+      }
+    },
+    "HELP": {
+
+      "SUPPORT": {
+        "TITLE": "Get Software Support"
+      },
+      "DOCUMENTATION": {
+        "TITLE": "Documentation"
+      },
+      "SERVICES": {
+        "TITLE": "Services"
+      },
+      "EXAMPLES": {
+        "TITLE": "Examples"
+      },
+      "FREE": {
+        "TITLE": "Free For Schools"
+      },
+      "REVIEWS": {
+        "TITLE": "Customer Reviews"
+      },
+      "BLOG": {
+        "TITLE": "DocumentBurster Blog"
+      },
+      "ABOUT": {
+        "TITLE": "About"
+      },
+      "COMPARISON": {
+        "TITLE": "DocumentBurster vs. DocumentBurster Server"
+      }
+
+
+    }
+
+  },
+
+  "STATUSBAR": {
+    "TITLE": "StatusBar works!"
+  }
+}

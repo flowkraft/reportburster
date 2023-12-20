@@ -1,0 +1,63 @@
+/* You can add global styles to this file, and also import other style files */
+@import "~bootstrap/dist/css/bootstrap.min.css";
+
+@import "~font-awesome/css/font-awesome.min.css";
+
+@import "~office-ui-fabric-core/dist/css/fabric.min.css";
+
+// Admin LTE css
+@import "~admin-lte/dist/css/AdminLTE.min.css";
+@import "~admin-lte/dist/css/skins/_all-skins.min.css";
+
+// Prime NG css
+@import "~primeicons/primeicons.css";
+@import "~primeng/resources/primeng.min.css";
+@import "~primeng/resources/themes/bootstrap4-light-blue/theme.css";
+
+@import "ngx-toastr/toastr";
+@import "~@ng-select/ng-select/themes/default.theme.css";
+
+label {
+  font-weight: 400;
+}
+
+.cet-container {
+  overflow: hidden !important;
+}
+
+.cet-window-icon img {
+  display: none;
+}
+
+/*
+
+.wrapper {
+  overflow: hidden;
+}
+*/
+
+.content {
+  //overflow: hidden;
+  overflow-y: hidden;
+  height: 100%;
+}
+
+#statusBar {
+  position: absolute;
+  right: 0px;
+  bottom: 1px;
+  width: 100%;
+  //height: 30px;
+}
+
+body .p-terminal {
+  height: 8rem;
+}
+
+.modal-dialog-center {
+  margin-top: 25%;
+}
+
+.modal {
+  top: 30px;
+}

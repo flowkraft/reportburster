@@ -1,0 +1,34 @@
+{
+  "asar": true,
+  "directories": {
+    "output": "release/"
+  },
+  "files": [
+    "**/*",
+    "!**/*.ts",
+    "!*.map",
+    "!package.json",
+    "!package-lock.json",
+    {
+      "from": "../dist",
+      "filter": ["**/*"]
+    }
+  ],
+  "win": {
+    "artifactName": "${productName}.${ext}",
+    "icon": "dist/assets/icons/icon.ico",
+    "target": ["portable"]
+  },
+  "portable": {
+    "splashImage": "dist/assets/images/splash-documentburster.bmp"
+  },
+  "mac": {
+    "icon": "dist/assets/icons",
+    "target": ["dmg"]
+  },
+  "linux": {
+    "icon": "dist/assets/icons",
+    "target": ["AppImage"]
+  },
+  "extraResources": ["app/preload.ts"]
+}

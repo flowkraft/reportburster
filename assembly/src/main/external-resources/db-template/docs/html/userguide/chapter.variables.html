@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Chapter 5. Variables</title><link rel="stylesheet" href="css/skrf.css" type="text/css"/><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"/><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><script xmlns="" type="text/javascript" src="css/shCore.js"><!----></script><script xmlns="" type="text/javascript" src="css/shBrushJava.js"><!----></script><script xmlns="" type="text/javascript" src="css/shBrushGroovy.js"><!----></script><link xmlns="" href="css/shCore.css" rel="stylesheet" type="text/css"/><link xmlns="" href="css/shThemeDefault.css" rel="stylesheet" type="text/css"/><script xmlns="" type="text/javascript">
+     SyntaxHighlighter.all()
+</script><link rel="home" href="index.html" title="DocumentBurster User Guide"/><link rel="up" href="pt02.html" title="Part II.  DocumentBurster"/><link rel="prev" href="chapter.templates.html" title="Chapter 4. Configuration Templates"/><link rel="next" href="chapter.polling.html" title="Chapter 6. Automatic Polling for Incoming Reports"/></head>
+				<body>
+				<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K63768" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript> <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+				new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src= '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+				})(window,document,'script','dataLayer','GTM-K63768');</script>
+			<ul class="docnav"><li class="previous"><a accesskey="p" href="chapter.templates.html"><strong>Prev</strong></a></li><li class="next"><a accesskey="n" href="chapter.polling.html"><strong>Next</strong></a></li></ul><div class="chapter" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.variables"/>Chapter 5. Variables</h2></div></div></div><div class="toc"><dl><dt><span class="section"><a href="chapter.variables.html#d0e3617">5.1. 
+			Example - Configure an
+			Unique Output Folder
+		</a></span></dt><dt><span class="section"><a href="chapter.variables.html#chapter.variables.builtin">5.2. Built-In Variables</a></span></dt><dd><dl><dt><span class="section"><a href="chapter.variables.html#chapter.variables.builtin.example">5.2.1. 
+				Sample -
+				Payslips.pdf
+			</a></span></dt></dl></dd><dt><span class="section"><a href="chapter.variables.html#chapter.variables.userdefined">5.3. User-Defined Variables</a></span></dt><dd><dl><dt><span class="section"><a href="chapter.variables.html#chapter.variables.userdefined.example">5.3.1. 
+				Sample
+				Invoices-Oct.pdf
+				- Customizable Burst File Name
+			</a></span></dt><dt><span class="section"><a href="chapter.variables.html#chapter.variables.userdefined.excel">5.3.2. 
+				Excel User-Defined Variables
+			</a></span></dt></dl></dd></dl></div><p>
+		<span class="emphasis"><em>
+			<span class="trademark">DocumentBurster</span>™
+		</em></span>
+		variables are pieces of information from the input report, evaluated
+		and processed individually for each output report.
+	</p><p>
+		Variables can be used to define dynamic configurations as
+		well as
+		data
+		to be included in the delivery of documents. For example, using
+		an
+		email message template together with variables
+		it is possible to define
+		a
+		personalized
+		email
+		subject/message for
+		each individual recipient.
+	</p><p>
+		Variables can be used to define custom dynamic values
+		for the
+		following
+		configurations
+	</p><p>
+		</p><div class="itemizedlist"><ul><li><span class="emphasis"><em>Burst File Name</em></span></li><li><span class="emphasis"><em>Output Folder</em></span></li><li><span class="emphasis"><em>Backup Folder</em></span></li><li><span class="emphasis"><em>Quarantine Folder</em></span></li><li><span class="emphasis"><em>Upload (FTP, File Share, etc.) commands and URLs
+				</em></span>
+				can be dynamically generated
+			</li><li>
+				Email
+				<span class="emphasis"><em>To, CC and BCC</em></span>
+				fields can be dynamically generated
+			</li><li><span class="emphasis"><em>Email subject and message</em></span>
+				text can be personalized using variables
+			</li><li>
+				Email
+				<span class="emphasis"><em>connection settings</em></span>
+				can be customized using variables.
+				<span class="emphasis"><em>From Name, From Email Address,
+					Host, User Name, User
+					Password and Port
+				</em></span>
+				settings are all configurable using variables.
+			</li></ul></div><p>
+	</p><p>
+		Using variables, the values of the above configurations can be
+		dynamically
+		populated at
+		run-time with information coming from the
+		report which is
+		being burst.
+	</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="d0e3617"/>5.1. 
+			Example - Configure an
+			Unique Output Folder
+		</h2></div></div></div><p>
+			While it is possible to define static values for the output
+			folders,
+			it
+			is not advisable. In order to avoid the output reports to
+			get
+			overridden from one burst session to another, with the
+			help of
+			variables, it is better to define dynamic
+			<span class="emphasis"><em>time-stamp based</em></span>
+			output
+			folder configurations.
+		</p><p>
+			Following are few situations in which variables
+			will help
+			</p><div class="itemizedlist"><ul><li>
+					The same report is being burst at different times.
+					Bursting
+					the
+					same
+					report
+					to the same statically defined output folders
+					will
+					override
+					the
+					files
+					generated during previous burst sessions.
+				</li><li>
+					Few different reports are using the same burst tokens
+					(for
+					example the email address of the same client).
+					Having a common
+					output
+					folder will result in getting the generated
+					reports to be
+					overridden
+					between different burst sessions. This is happening
+					because the same
+					burst
+					token is found
+					in different input reports.
+				</li></ul></div><p>
+		</p><p>
+			Using variables, with unique
+			<span class="emphasis"><em>time-stamp based</em></span>
+			values generated at
+			run-time, it is
+			possible to
+			overcome the above
+			described problems by
+			defining unique
+			output
+			folder names per each
+			different burst session.
+		</p><p>
+			<span class="emphasis"><em>Output Folder, Backup Folder and Quarantine Folder
+			</em></span>
+			configurations are all defined using the same
+			pattern
+			<span class="emphasis"><em>$input_document_name$/$now;
+				format="yyyy.MM.dd_HH.mm.ss"$
+			</em></span>
+		</p><p>
+			When bursting the input sample document
+			<code class="filename">Payslips.pdf,</code>
+			by default, the output files are being generated in a folder
+			similar
+			with
+			<code class="filename">Payslips.pdf/2010.10.28_19.13.13
+			</code>
+			-
+			<span class="emphasis"><em>
+				$input_document_name$/$now;
+				format="yyyy.MM.dd_HH.mm.ss"$.
+			</em></span>
+		</p><p>
+			</p><div class="mediaobject"><img src="images/burst-output-folder.png"/></div><p>
+		</p></div><p>
+		<span class="emphasis"><em>Built-In vs. User-Defined Variables</em></span>
+	</p><p>
+		<span class="emphasis"><em>
+			<span class="trademark">DocumentBurster</span>™
+		</em></span>
+		has two types of variables
+		</p><div class="itemizedlist"><ul><li><p>
+					Built-In Variables
+				</p></li><li><p>
+					User-Defined Variables
+				</p></li></ul></div><p>
+	</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.variables.builtin"/>5.2. Built-In Variables</h2></div></div></div><p>
+			Built-in variables can be the name of the report to burst, the
+			date (in various formats) when the bursting is happening or the
+			current burst token.
+		</p><p>
+			Following built-in variables are available to be used within
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+		</p><p>
+			</p><div class="itemizedlist"><ul><li><span class="emphasis"><em>$input_document_name$</em></span>
+					- the file name of the input report
+				</li><li><span class="emphasis"><em>$input_document_extension$</em></span>
+					- the file extension of the input report. It will be
+					<span class="emphasis"><em>pdf</em></span>
+					for PDF input reports,
+					<span class="emphasis"><em>xls</em></span>
+					for <em class="citetitle">Excel</em> versions prior to 2007 and
+					<span class="emphasis"><em>xlsx</em></span>
+					for
+					<em class="citetitle">Excel 2007</em> and <em class="citetitle">Excel 2010</em>.
+				</li><li><span class="emphasis"><em>$burst_token$</em></span>
+					- the burst token which is used for bursting the current file
+				</li><li><span class="emphasis"><em>$burst_index$</em></span>
+					- the index of the burst file. For example, a file which will be
+					burst fourth will have the value 4
+				</li><li><span class="emphasis"><em>$output_folder$</em></span>
+					- the output folder where the last file was extracted
+				</li><li><span class="emphasis"><em>$extracted_file_path$</em></span>
+					- the path to the last extracted file
+				</li><li><span class="emphasis"><em>$now; format="yyyy.MM.dd_HH.mm.ss"$</em></span>
+					- the current date and time displayed in the specified format.
+					Custom
+					date formats
+					can be specified also, for example it is possible
+					to
+					display the full date/time or display
+					one or a
+					combination of year,
+					month, week, day, hour, minute,
+					second.
+					<span class="emphasis"><em>yyyy.MM.dd_HH.mm.ss</em></span>
+					is the format which is provided with the software.
+					<div class="note"><h2>Note</h2><p>
+							Windows doesn't allow to use
+							<span class="emphasis"><em>the character :</em></span>
+							when defining folder and file names.
+						</p></div><p>
+						<a class="ulink" href="http://download.oracle.com/javase/1.4.2/docs/api/java/text/SimpleDateFormat.html">
+							Full date format documentation is available here
+						</a>
+					</p></li><li><span class="emphasis"><em>$now_default_date$</em></span>
+					- shortcut to the default date format in the computer's locale
+					settings. U.S. Locale example would be Jun 30, 2009
+				</li><li><span class="emphasis"><em>$now_short_date$</em></span>
+					- shortcut to the short date format in the computer's locale
+					settings. U.S. Locale example would be 6/30/09
+				</li><li><span class="emphasis"><em>$now_medium_date$</em></span>
+					- shortcut to the medium date format in the computer's locale
+					settings. U.S. Locale example would be Jun 30, 2009
+				</li><li><span class="emphasis"><em>$now_long_date$</em></span>
+					- shortcut to the long date format in the computer's locale
+					settings. U.S. Locale example would be June 30, 2009
+				</li><li><span class="emphasis"><em>$now_full_date$</em></span>
+					- shortcut to the full date format in the computer's locale
+					settings. U.S. Locale example would be Tuesday, June 30, 2009
+				</li></ul></div><p>
+		</p><p>
+			Using built-in variables it is possible to build an advanced
+			foldering
+			and archiving solution for the output reports.
+		</p><p>
+			Following different foldering options are possible. Combinations
+			of
+			the following are also possible
+			</p><div class="itemizedlist"><ul><li><p>
+						Generate one different output folder per each input report
+					</p></li><li><p>
+						Generate one different output folder per each different burst
+						token
+					</p></li><li><p>
+						Date related options - generate one output folder per year,
+						financial
+						quarter, month,
+						week in month, day in week and up to the
+						level of hours, minutes and
+						seconds.
+					</p></li></ul></div><p>
+		</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.variables.builtin.example"/>5.2.1. 
+				Sample -
+				<code class="filename">Payslips.pdf</code>
+			</h3></div></div></div><p>
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				is coming with the following default settings
+			</p><p>
+				<span class="emphasis"><em>Burst File Name</em></span>
+				-
+				<span class="emphasis"><em>$burst_token$.$input_document_extension$</em></span>
+			</p><p>
+				When bursting the
+				<code class="filename">samples/Payslips.pdf</code>
+				report following three
+				files are being generated. The three email
+				addresses are the burst tokens and
+				<code class="filename">pdf</code>
+				is the input
+				document extension.
+			</p><p>
+				</p><div class="mediaobject"><img src="images/default-burst-configuration.png"/></div><p>
+			</p></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.variables.userdefined"/>5.3. User-Defined Variables</h2></div></div></div><p>
+			User defined variables can be any text from the report which is
+			being burst or distributed.
+		</p><p>
+			User variables might be used for sending
+			emails
+			with a
+			personalized subject
+			and a personalized message text or
+			for generating
+			dynamic file names
+			and folder names for the
+			output burst
+			reports.
+		</p><p>
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			has support for up to 10 (ten) user defined variables
+			<span class="emphasis"><em>$var0$, $var1$, $var2$, $var3$, $var4$,
+				$var5$, $var6$,
+				$var7$, $var8$
+			</em></span>
+			and
+			<span class="emphasis"><em>$var9$.
+			</em></span>
+			While the variable names are not impressive they are for sure
+			handy
+			to
+			use.
+		</p><p>
+			The values for the user defined variables are being populated
+			with
+			text content from the report
+			which is being burst. Usually the
+			variables will have different
+			values for
+			each different
+			<span class="emphasis"><em>burst token</em></span>
+			(or
+			for each different recipient).
+		</p><p>
+			In order to populate the user defined variables with values,
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			engine is looking inside the report for patterns
+			like the
+			following
+		</p><p>
+			</p><div class="itemizedlist"><ul><li><p>
+						<span class="emphasis"><em>&lt;0&gt;</em></span>
+						any text which should be assigned as a value to the first variable
+						<span class="emphasis"><em>&lt;/0&gt;</em></span>
+						or
+					</p></li><li><p>
+						<span class="emphasis"><em>&lt;1&gt;</em></span>
+						any text which should be assigned as a value to the second
+						variable
+						<span class="emphasis"><em>&lt;/1&gt;</em></span>
+					</p></li></ul></div><p>
+		</p><p>
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			engine supports up to 10 (ten) different variables,
+			so the last
+			variable will look like
+			<span class="emphasis"><em>&lt;9&gt;</em></span>
+			any text which should be assigned as a value to the 10th variable
+			<span class="emphasis"><em>&lt;/9&gt;.</em></span>
+		</p><p>
+			User defined variables can be used to dynamically generate any
+			of the
+			following
+			<span class="emphasis"><em>Burst File Name, Output Folder, Backup Folder,
+				Quarantine
+				Folder, Upload(FTP, File Share, etc.) commands and URLs,
+				Email To, CC
+				and BCC fields,
+				Email
+				Subject, Email Message Text, From Name, From
+				Email Address, Host,
+				User Name, User Password and Email Server Port.
+			</em></span>
+		</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.variables.userdefined.example"/>5.3.1. 
+				Sample
+				<code class="filename">Invoices-Oct.pdf</code>
+				- Customizable Burst File Name
+			</h3></div></div></div><p>
+				With the default settings,
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				is generating the output file names
+				using the following configuration
+			</p><p>
+				<span class="emphasis"><em>
+					Burst File Name
+				</em></span>
+				-
+				<code class="filename">$burst_token$.$input_document_extension$</code>
+			</p><p>
+				where
+				<span class="emphasis"><em>$burst_token$</em></span>
+				is the system built-in variable used to burst
+				the separate files and
+				<span class="emphasis"><em>$input_document_extension$</em></span>
+				is the input file
+				extension (i.e.
+				<code class="filename">pdf, xls or xlsx).</code>
+			</p><p>
+				<span class="emphasis"><em>Requirement</em></span>
+			</p><p>
+				For example, a requirement might be to generate the output file
+				names
+				<span class="emphasis"><em>
+					(Burst File Name)
+				</em></span>
+				using the
+				following pattern
+			</p><p>
+				<code class="filename">Customer name-Invoice number-Invoice date.pdf</code>
+			</p><p>
+				The requirement can be achieved with the help of user defined
+				variables.
+				Please check
+				<code class="filename">samples/Invoices-Oct.pdf</code>
+				sample report to see that
+				<span class="emphasis"><em>Invoice number</em></span>
+				field is configured as burst token and
+				<span class="emphasis"><em>Customer name</em></span>
+				and
+				<span class="emphasis"><em>Invoice date</em></span>
+				fields are mapped to
+				<span class="emphasis"><em>$var1$</em></span>
+				and
+				<span class="emphasis"><em>$var0$</em></span>
+				user variables.
+			</p><p>
+				</p><div class="mediaobject"><img src="images/invoice-report-bursting.png"/></div><p>
+			</p><p>
+				<span class="emphasis"><em>
+					Burst File Name
+				</em></span>
+				will be defined as
+				<code class="filename">$var1$-$burst_token$-$var0$.pdf</code>
+			</p><p>
+				</p><div class="mediaobject"><img src="images/burst-settings1.png"/></div><p>
+				</p><div class="mediaobject"><img src="images/report-bursting-variables.png"/></div><p>
+			</p><p>
+				<span class="emphasis"><em>$burst token$, $var0$ and $var1$</em></span>
+				variables will be populated
+				at run-time with values fetched from each
+				separate report.
+			</p><p>
+				</p><div class="itemizedlist"><ul><li>
+						Variables are fetched at run-time from each separate invoice.
+						<span class="emphasis"><em>
+							<span class="trademark">DocumentBurster</span>™
+						</em></span>
+						is looking
+						for
+						<span class="emphasis"><em>&lt;N&gt;value&lt;/N&gt;</em></span>
+						patterns in each invoice, where
+						<span class="emphasis"><em>N</em></span>
+						is from 0 to 9.
+					</li><li>
+						In the above example the name of the generated file will be
+						<code class="filename">Alpha Electric-0011-Oct 10, 2011.pdf</code></li></ul></div><p>
+			</p><p>
+				Using the previous configuration, bursting
+				<code class="filename">samples/Invoices-Oct.pdf</code>
+				will generate
+				the following four distinct files
+			</p><p>
+				</p><div class="mediaobject"><img src="images/burst-reports1.png"/></div><p>
+				</p><div class="mediaobject"><img src="images/break-invoices-report.png"/></div><p>
+			</p></div><div class="note"><h2>Note</h2><p>
+				Use a white font color for the start and the end tags of the
+				variables,
+				(e.g.
+				<span class="emphasis"><em>&lt;0&gt;</em></span>
+				and
+				<span class="emphasis"><em>&lt;/0&gt;)</em></span>
+				so that the visual appearance and the layout of the report will not
+				be
+				affected.
+			</p></div><div class="important"><h2>Important</h2><p>
+				Before going to production, it is advisable to practice the use
+				of
+				variables on few sample reports. This is
+				to avoid any unpleasant
+				situation of sending wrong data to clients or customers.
+			</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.variables.userdefined.excel"/>5.3.2. 
+				<em class="citetitle">Excel</em> User-Defined Variables
+			</h3></div></div></div><p>
+				While the concept and the usage for the
+				user defined variables
+				are the
+				same with the PDF reports, <em class="citetitle">Excel</em> user
+				defined variables
+				are
+				defined
+				like the following example
+				</p><div class="mediaobject"><img src="images/excel-user-variables.png"/></div><p>
+			</p><p>
+				</p><div class="itemizedlist"><ul><li>
+						If
+						required,
+						<em class="citetitle">Excel</em> user-defined variables can be declared in the
+						<span class="emphasis"><em>userVariables</em></span>
+						column from
+						<span class="emphasis"><em>burst</em></span>
+						metadata sheet
+					</li><li>Similarly with the PDF variables, <em class="citetitle">Excel</em> user-defined
+						variables are enclosed in between
+						&lt;0&gt;value&lt;/0&gt;,&lt;1&gt;value&lt;/1&gt; and so on.
+					</li><li>
+						The value for
+						<span class="emphasis"><em>var0</em></span>
+						user variable (associated with
+						<span class="emphasis"><em>Germany</em></span>
+						burst token) is
+						<span class="emphasis"><em>Alfreds Futterkiste</em></span>
+						and the
+						value for
+						<span class="emphasis"><em>var1</em></span>
+						is
+						<span class="emphasis"><em>Berlin.</em></span>
+						The values for the
+						<span class="emphasis"><em>USA</em></span>
+						burst token
+						are the ones
+						which are
+						presented in the screenshot.
+					</li></ul></div><p>
+			</p></div></div></div><ul class="docnav"><li class="previous"><a accesskey="p" href="chapter.templates.html"><strong>Prev</strong>Chapter 4. Configuration Templates</a></li><li class="up"><a accesskey="u" href="#"><strong>Top of page</strong></a></li><li class="home"><a accesskey="h" href="index.html"><strong>Front page</strong></a></li><li class="next"><a accesskey="n" href="chapter.polling.html"><strong>Next</strong>Chapter 6. Automatic Polling for Incoming Reports</a></li></ul>
+				<script type="text/javascript">
+				window.$zopim||(function(d,s){var z=$zopim=function(c){z._.push(c)},$=z.s= d.createElement(s),e=d.getElementsByTagName(s)[0];z.set=function(o){z.set. _.push(o)};z._=[];z.set._=[];$.async=!0;$.setAttribute('charset','utf-8'); $.src='//cdn.zopim.com/?h7mkkauOUJAVdDuy4BEr4FLv2scL9q1J';z.t=+new Date;$. type='text/javascript';e.parentNode.insertBefore($,e)})(document,'script');
+				</script>
+</body>
+			</html>

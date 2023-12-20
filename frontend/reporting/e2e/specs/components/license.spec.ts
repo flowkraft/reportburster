@@ -1,0 +1,265 @@
+import * as path from 'path';
+const slash = require('slash');
+
+import { test } from '@playwright/test';
+import * as jetpack from 'fs-jetpack';
+
+import * as PATHS from '../../utils/paths';
+import { Helpers } from '../../utils/helpers';
+import { Constants } from '../../utils/constants';
+import { FluentTester } from '../../helpers/fluent-tester';
+
+test.describe('', async () => {
+  test('should correctly handle when the user will empty the license key', async function () {
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH +
+        '/license/license-empty-key-but-with-status.xml',
+      path.resolve(
+        slash(
+          process.env.PORTABLE_EXECUTABLE_DIR +
+            PATHS.CONFIG_PATH +
+            '/_internal/license.xml'
+        )
+      ),
+      { overwrite: true }
+    );
+
+    const electronApp = await Helpers.electronAppLaunch('../..');
+    const ft = new FluentTester(await electronApp.firstWindow());
+
+    await ft
+      .click('#topMenuBurst')
+      .click('#licenseTab-link')
+      .elementShouldBeVisible('#btnCheckLicenseKeyDisabled')
+      .elementShouldBeVisible('#statusInvalidLicense')
+      .elementShouldBeVisible('#version');
+
+    await Helpers.electronAppClose(electronApp);
+  });
+
+  test('should correctly display when a newer version is available for download', async () => {
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH + '/license/license-download-latest-version.xml',
+      path.resolve(
+        slash(
+          process.env.PORTABLE_EXECUTABLE_DIR +
+            PATHS.CONFIG_PATH +
+            '/_internal/license.xml'
+        )
+      ),
+      { overwrite: true }
+    );
+
+    const electronApp = await Helpers.electronAppLaunch('../..');
+    const ft = new FluentTester(await electronApp.firstWindow());
+
+    await ft
+      .click('#topMenuBurst')
+      .click('#licenseTab-link')
+      .elementShouldBeVisible('#btnCheckLicenseKey')
+      .elementShouldBeVisible('#statusActiveLicenseKey')
+      .elementShouldBeVisible('#version')
+      .elementShouldContainText('#version', 'DocumentBurster 9.1.1')
+      .elementShouldNotBeVisible('#updateNowSuccint');
+
+    await Helpers.electronAppClose(electronApp);
+  });
+
+  test('should correctly display the license screen in the initial empty key state', async () => {
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH + '/license/license-just-downloaded-demo.xml',
+      path.resolve(
+        slash(
+          process.env.PORTABLE_EXECUTABLE_DIR +
+            PATHS.CONFIG_PATH +
+            '/_internal/license.xml'
+        )
+      ),
+      { overwrite: true }
+    );
+
+    const electronApp = await Helpers.electronAppLaunch('../..');
+    const ft = new FluentTester(await electronApp.firstWindow());
+
+    await ft
+      .click('#topMenuBurst')
+      .click('#licenseTab-link')
+      // STEP0 - start from a demo (empty) license key
+      .elementShouldBeVisible('#btnGetLicenseKey')
+      .elementShouldBeVisible('#statusDemoLicense')
+      .elementShouldBeVisible('#version')
+      // STEP1 - fill a license key
+      // SourceKraft Test License - virgil.trasca@reportburster.com
+      .click('#licenseKey')
+      .typeText(Constants.TEST_LICENSE_KEY)
+      .elementShouldBeVisible('#btnActivateLicenseKey');
+
+    await Helpers.electronAppClose(electronApp);
+  });
+
+  test('should correctly display a license in the deactivated state', async function () {
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH + '/license/license-deactivated.xml',
+      path.resolve(
+        slash(
+          process.env.PORTABLE_EXECUTABLE_DIR +
+            PATHS.CONFIG_PATH +
+            '/_internal/license.xml'
+        )
+      ),
+      { overwrite: true }
+    );
+
+    const electronApp = await Helpers.electronAppLaunch('../..');
+    const ft = new FluentTester(await electronApp.firstWindow());
+
+    await ft
+      .click('#topMenuBurst')
+      .click('#licenseTab-link')
+      .inputShouldHaveValue('#licenseKey', Constants.TEST_LICENSE_KEY)
+      .elementShouldBeVisible('#btnActivateLicenseKey')
+      .elementShouldBeVisible('#statusDemoLicense')
+      .elementShouldBeVisible('#version');
+
+    await Helpers.electronAppClose(electronApp);
+  });
+
+  test('should correctly handle demo status', async function () {
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH + '/license/license-just-downloaded-demo.xml',
+      path.resolve(
+        slash(
+          process.env.PORTABLE_EXECUTABLE_DIR +
+            PATHS.CONFIG_PATH +
+            '/_internal/license.xml'
+        )
+      ),
+      { overwrite: true }
+    );
+
+    const electronApp = await Helpers.electronAppLaunch('../..');
+    const ft = new FluentTester(await electronApp.firstWindow());
+
+    await ft
+      .click('#topMenuBurst')
+      .click('#licenseTab-link')
+      // STEP0 - start from a demo (empty) license key
+      .elementShouldBeVisible('#btnGetLicenseKey')
+      .elementShouldBeVisible('#statusDemoLicense')
+      .elementShouldBeVisible('#version')
+      // STEP1 - fill, activate and verify the flow of a valid license key
+      // SourceKraft Test License - virgil.trasca@reportburster.com
+      .click('#licenseKey')
+      .typeText(Constants.TEST_LICENSE_KEY)
+      .elementShouldBeVisible('#btnActivateLicenseKey');
+
+    await Helpers.electronAppClose(electronApp);
+  });
+
+  test('should correctly handle invalid status key', async function () {
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH +
+        '/license/license-re-check-existing-license.xml',
+      path.resolve(
+        slash(
+          process.env.PORTABLE_EXECUTABLE_DIR +
+            PATHS.CONFIG_PATH +
+            '/_internal/license.xml'
+        )
+      ),
+      { overwrite: true }
+    );
+
+    const electronApp = await Helpers.electronAppLaunch('../..');
+    const ft = new FluentTester(await electronApp.firstWindow());
+
+    await ft
+      .click('#topMenuBurst')
+      .click('#licenseTab-link')
+      .elementShouldBeVisible('#btnCheckLicenseKey')
+      .elementShouldBeVisible('#statusInvalidLicense')
+      .elementShouldBeVisible('#version');
+
+    await Helpers.electronAppClose(electronApp);
+  });
+
+  test('should correctly handle active status key', async function () {
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH + '/license/license-active.xml',
+      path.resolve(
+        slash(
+          process.env.PORTABLE_EXECUTABLE_DIR +
+            PATHS.CONFIG_PATH +
+            '/_internal/license.xml'
+        )
+      ),
+      { overwrite: true }
+    );
+
+    const electronApp = await Helpers.electronAppLaunch('../..');
+    const ft = new FluentTester(await electronApp.firstWindow());
+
+    await ft
+      .click('#topMenuBurst')
+      .click('#licenseTab-link')
+      .elementShouldBeVisible('#btnCheckLicenseKey')
+      .elementShouldBeVisible('#statusActiveLicenseKey')
+      .elementShouldBeVisible('#version')
+      .elementShouldBeVisible('#deactivateLicenseKey');
+
+    await Helpers.electronAppClose(electronApp);
+  });
+
+  test('should correctly handle expired status key', async function () {
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH + '/license/license-expired.xml',
+      path.resolve(
+        slash(
+          process.env.PORTABLE_EXECUTABLE_DIR +
+            PATHS.CONFIG_PATH +
+            '/_internal/license.xml'
+        )
+      ),
+      { overwrite: true }
+    );
+
+    const electronApp = await Helpers.electronAppLaunch('../..');
+    const ft = new FluentTester(await electronApp.firstWindow());
+
+    await ft
+      .click('#topMenuBurst')
+      .click('#licenseTab-link')
+      .elementShouldBeVisible('#btnCheckLicenseKey')
+      .elementShouldBeVisible('#statusExpiredLicense')
+      .elementShouldBeVisible('#version');
+
+    await Helpers.electronAppClose(electronApp);
+  });
+
+  test('should allow user to (re) check a key', async function () {
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH +
+        '/license/license-re-check-existing-license.xml',
+      path.resolve(
+        slash(
+          process.env.PORTABLE_EXECUTABLE_DIR +
+            PATHS.CONFIG_PATH +
+            '/_internal/license.xml'
+        )
+      ),
+      { overwrite: true }
+    );
+
+    const electronApp = await Helpers.electronAppLaunch('../..');
+    const ft = new FluentTester(await electronApp.firstWindow());
+
+    await ft
+      .click('#topMenuBurst')
+      .click('#licenseTab-link')
+      .elementShouldBeVisible('#btnCheckLicenseKey')
+      .elementShouldBeVisible('#statusInvalidLicense')
+      .elementShouldBeVisible('#version');
+
+    await Helpers.electronAppClose(electronApp);
+  });
+});

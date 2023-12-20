@@ -1,0 +1,689 @@
+<chapter id="chapter.variables">
+	<title>Variables</title>
+	<para>
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		variables are pieces of information from the input report, evaluated
+		and processed individually for each output report.
+	</para>
+	<para>
+		Variables can be used to define dynamic configurations as
+		well as
+		data
+		to be included in the delivery of documents. For example, using
+		an
+		email message template together with variables
+		it is possible to define
+		a
+		personalized
+		email
+		subject/message for
+		each individual recipient.
+	</para>
+	<para>
+		Variables can be used to define custom dynamic values
+		for the
+		following
+		configurations
+	</para>
+	<para>
+		<itemizedlist>
+			<listitem>
+				<emphasis>Burst File Name</emphasis>
+			</listitem>
+			<listitem>
+				<emphasis>Output Folder</emphasis>
+			</listitem>
+			<listitem>
+				<emphasis>Backup Folder</emphasis>
+			</listitem>
+			<listitem>
+				<emphasis>Quarantine Folder</emphasis>
+			</listitem>
+			<listitem>
+				<emphasis>Upload (FTP, File Share, etc.) commands and URLs
+				</emphasis>
+				can be dynamically generated
+			</listitem>
+			<listitem>
+				Email
+				<emphasis>To, CC and BCC</emphasis>
+				fields can be dynamically generated
+			</listitem>
+			<listitem>
+				<emphasis>Email subject and message</emphasis>
+				text can be personalized using variables
+			</listitem>
+			<listitem>
+				Email
+				<emphasis>connection settings</emphasis>
+				can be customized using variables.
+				<emphasis>From Name, From Email Address,
+					Host, User Name, User
+					Password and Port
+				</emphasis>
+				settings are all configurable using variables.
+			</listitem>
+		</itemizedlist>
+	</para>
+	<para>
+		Using variables, the values of the above configurations can be
+		dynamically
+		populated at
+		run-time with information coming from the
+		report which is
+		being burst.
+	</para>
+	<section>
+		<title>
+			Example - Configure an
+			Unique Output Folder
+		</title>
+		<para>
+			While it is possible to define static values for the output
+			folders,
+			it
+			is not advisable. In order to avoid the output reports to
+			get
+			overridden from one burst session to another, with the
+			help of
+			variables, it is better to define dynamic
+			<emphasis>time-stamp based</emphasis>
+			output
+			folder configurations.
+		</para>
+		<para>
+			Following are few situations in which variables
+			will help
+			<itemizedlist>
+				<listitem>
+					The same report is being burst at different times.
+					Bursting
+					the
+					same
+					report
+					to the same statically defined output folders
+					will
+					override
+					the
+					files
+					generated during previous burst sessions.
+				</listitem>
+				<listitem>
+					Few different reports are using the same burst tokens
+					(for
+					example the email address of the same client).
+					Having a common
+					output
+					folder will result in getting the generated
+					reports to be
+					overridden
+					between different burst sessions. This is happening
+					because the same
+					burst
+					token is found
+					in different input reports.
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			Using variables, with unique
+			<emphasis>time-stamp based</emphasis>
+			values generated at
+			run-time, it is
+			possible to
+			overcome the above
+			described problems by
+			defining unique
+			output
+			folder names per each
+			different burst session.
+		</para>
+		<para>
+			<emphasis>Output Folder, Backup Folder and Quarantine Folder
+			</emphasis>
+			configurations are all defined using the same
+			pattern
+			<emphasis>$input_document_name$/$now;
+				format="yyyy.MM.dd_HH.mm.ss"$
+			</emphasis>
+		</para>
+		<para>
+			When bursting the input sample document
+			<filename>Payslips.pdf,</filename>
+			by default, the output files are being generated in a folder
+			similar
+			with
+			<filename class='directory'>Payslips.pdf/2010.10.28_19.13.13
+			</filename>
+			-
+			<emphasis>
+				$input_document_name$/$now;
+				format="yyyy.MM.dd_HH.mm.ss"$.
+			</emphasis>
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/burst-output-folder.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+	</section>
+	<para>
+		<emphasis>Built-In vs. User-Defined Variables</emphasis>
+	</para>
+	<para>
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		has two types of variables
+		<itemizedlist>
+			<listitem>
+				<para>
+					Built-In Variables
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					User-Defined Variables
+				</para>
+			</listitem>
+		</itemizedlist>
+	</para>
+	<section id="chapter.variables.builtin">
+		<title>Built-In Variables</title>
+		<para>
+			Built-in variables can be the name of the report to burst, the
+			date (in various formats) when the bursting is happening or the
+			current burst token.
+		</para>
+		<para>
+			Following built-in variables are available to be used within
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+		</para>
+		<para>
+			<itemizedlist>
+				<listitem>
+					<emphasis>$input_document_name$</emphasis>
+					- the file name of the input report
+				</listitem>
+				<listitem>
+					<emphasis>$input_document_extension$</emphasis>
+					- the file extension of the input report. It will be
+					<emphasis>pdf</emphasis>
+					for PDF input reports,
+					<emphasis>xls</emphasis>
+					for <citetitle>Excel</citetitle> versions prior to 2007 and
+					<emphasis>xlsx</emphasis>
+					for
+					<citetitle>Excel 2007</citetitle> and <citetitle>Excel 2010</citetitle>.
+				</listitem>
+				<listitem>
+					<emphasis>$burst_token$</emphasis>
+					- the burst token which is used for bursting the current file
+				</listitem>
+				<listitem>
+					<emphasis>$burst_index$</emphasis>
+					- the index of the burst file. For example, a file which will be
+					burst fourth will have the value 4
+				</listitem>
+				<listitem>
+					<emphasis>$output_folder$</emphasis>
+					- the output folder where the last file was extracted
+				</listitem>
+				<listitem>
+					<emphasis>$extracted_file_path$</emphasis>
+					- the path to the last extracted file
+				</listitem>
+				<listitem>
+					<emphasis>$now; format="yyyy.MM.dd_HH.mm.ss"$</emphasis>
+					- the current date and time displayed in the specified format.
+					Custom
+					date formats
+					can be specified also, for example it is possible
+					to
+					display the full date/time or display
+					one or a
+					combination of year,
+					month, week, day, hour, minute,
+					second.
+					<emphasis>yyyy.MM.dd_HH.mm.ss</emphasis>
+					is the format which is provided with the software.
+					<note>
+						<title>Note</title>
+						<para>
+							Windows doesn't allow to use
+							<emphasis>the character :</emphasis>
+							when defining folder and file names.
+						</para>
+					</note>
+					<para>
+						<ulink
+							url="http://download.oracle.com/javase/1.4.2/docs/api/java/text/SimpleDateFormat.html">
+							Full date format documentation is available here
+						</ulink>
+					</para>
+				</listitem>
+				<listitem>
+					<emphasis>$now_default_date$</emphasis>
+					- shortcut to the default date format in the computer's locale
+					settings. U.S. Locale example would be Jun 30, 2009
+				</listitem>
+				<listitem>
+					<emphasis>$now_short_date$</emphasis>
+					- shortcut to the short date format in the computer's locale
+					settings. U.S. Locale example would be 6/30/09
+				</listitem>
+				<listitem>
+					<emphasis>$now_medium_date$</emphasis>
+					- shortcut to the medium date format in the computer's locale
+					settings. U.S. Locale example would be Jun 30, 2009
+				</listitem>
+				<listitem>
+					<emphasis>$now_long_date$</emphasis>
+					- shortcut to the long date format in the computer's locale
+					settings. U.S. Locale example would be June 30, 2009
+				</listitem>
+				<listitem>
+					<emphasis>$now_full_date$</emphasis>
+					- shortcut to the full date format in the computer's locale
+					settings. U.S. Locale example would be Tuesday, June 30, 2009
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			Using built-in variables it is possible to build an advanced
+			foldering
+			and archiving solution for the output reports.
+		</para>
+		<para>
+			Following different foldering options are possible. Combinations
+			of
+			the following are also possible
+			<itemizedlist>
+				<listitem>
+					<para>
+						Generate one different output folder per each input report
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						Generate one different output folder per each different burst
+						token
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						Date related options - generate one output folder per year,
+						financial
+						quarter, month,
+						week in month, day in week and up to the
+						level of hours, minutes and
+						seconds.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<section id="chapter.variables.builtin.example">
+			<title>
+				Sample -
+				<filename>Payslips.pdf</filename>
+			</title>
+			<para>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				is coming with the following default settings
+			</para>
+			<para>
+				<emphasis>Burst File Name</emphasis>
+				-
+				<emphasis>$burst_token$.$input_document_extension$</emphasis>
+			</para>
+			<para>
+				When bursting the
+				<filename>samples/Payslips.pdf</filename>
+				report following three
+				files are being generated. The three email
+				addresses are the burst tokens and
+				<filename>pdf</filename>
+				is the input
+				document extension.
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/default-burst-configuration.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+		</section>
+	</section>
+	<section id="chapter.variables.userdefined">
+		<title>User-Defined Variables</title>
+		<para>
+			User defined variables can be any text from the report which is
+			being burst or distributed.
+		</para>
+		<para>
+			User variables might be used for sending
+			emails
+			with a
+			personalized subject
+			and a personalized message text or
+			for generating
+			dynamic file names
+			and folder names for the
+			output burst
+			reports.
+		</para>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			has support for up to 10 (ten) user defined variables
+			<emphasis>$var0$, $var1$, $var2$, $var3$, $var4$,
+				$var5$, $var6$,
+				$var7$, $var8$
+			</emphasis>
+			and
+			<emphasis>$var9$.
+			</emphasis>
+			While the variable names are not impressive they are for sure
+			handy
+			to
+			use.
+		</para>
+		<para>
+			The values for the user defined variables are being populated
+			with
+			text content from the report
+			which is being burst. Usually the
+			variables will have different
+			values for
+			each different
+			<emphasis>burst token</emphasis>
+			(or
+			for each different recipient).
+		</para>
+		<para>
+			In order to populate the user defined variables with values,
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			engine is looking inside the report for patterns
+			like the
+			following
+		</para>
+		<para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>&lt;0&gt;</emphasis>
+						any text which should be assigned as a value to the first variable
+						<emphasis>&lt;/0&gt;</emphasis>
+						or
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>&lt;1&gt;</emphasis>
+						any text which should be assigned as a value to the second
+						variable
+						<emphasis>&lt;/1&gt;</emphasis>
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			engine supports up to 10 (ten) different variables,
+			so the last
+			variable will look like
+			<emphasis>&lt;9&gt;</emphasis>
+			any text which should be assigned as a value to the 10th variable
+			<emphasis>&lt;/9&gt;.</emphasis>
+		</para>
+		<para>
+			User defined variables can be used to dynamically generate any
+			of the
+			following
+			<emphasis>Burst File Name, Output Folder, Backup Folder,
+				Quarantine
+				Folder, Upload(FTP, File Share, etc.) commands and URLs,
+				Email To, CC
+				and BCC fields,
+				Email
+				Subject, Email Message Text, From Name, From
+				Email Address, Host,
+				User Name, User Password and Email Server Port.
+			</emphasis>
+		</para>
+		<section id="chapter.variables.userdefined.example">
+			<title>
+				Sample
+				<filename>Invoices-Oct.pdf</filename>
+				- Customizable Burst File Name
+			</title>
+			<para>
+				With the default settings,
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				is generating the output file names
+				using the following configuration
+			</para>
+			<para>
+				<emphasis>
+					Burst File Name
+				</emphasis>
+				-
+				<filename>$burst_token$.$input_document_extension$</filename>
+			</para>
+			<para>
+				where
+				<emphasis>$burst_token$</emphasis>
+				is the system built-in variable used to burst
+				the separate files and
+				<emphasis>$input_document_extension$</emphasis>
+				is the input file
+				extension (i.e.
+				<filename>pdf, xls or xlsx).</filename>
+			</para>
+			<para>
+				<emphasis>Requirement</emphasis>
+			</para>
+			<para>
+				For example, a requirement might be to generate the output file
+				names
+				<emphasis>
+					(Burst File Name)
+				</emphasis>
+				using the
+				following pattern
+			</para>
+			<para>
+				<filename>Customer name-Invoice number-Invoice date.pdf</filename>
+			</para>
+			<para>
+				The requirement can be achieved with the help of user defined
+				variables.
+				Please check
+				<filename>samples/Invoices-Oct.pdf</filename>
+				sample report to see that
+				<emphasis>Invoice number</emphasis>
+				field is configured as burst token and
+				<emphasis>Customer name</emphasis>
+				and
+				<emphasis>Invoice date</emphasis>
+				fields are mapped to
+				<emphasis>$var1$</emphasis>
+				and
+				<emphasis>$var0$</emphasis>
+				user variables.
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/invoice-report-bursting.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<emphasis>
+					Burst File Name
+				</emphasis>
+				will be defined as
+				<filename>$var1$-$burst_token$-$var0$.pdf</filename>
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/burst-settings1.png" format="PNG" />
+					</imageobject>
+				</mediaobject>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/report-bursting-variables.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<emphasis>$burst token$, $var0$ and $var1$</emphasis>
+				variables will be populated
+				at run-time with values fetched from each
+				separate report.
+			</para>
+			<para>
+				<itemizedlist>
+					<listitem>
+						Variables are fetched at run-time from each separate invoice.
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+						</emphasis>
+						is looking
+						for
+						<emphasis>&lt;N&gt;value&lt;/N&gt;</emphasis>
+						patterns in each invoice, where
+						<emphasis>N</emphasis>
+						is from 0 to 9.
+					</listitem>
+					<listitem>
+						In the above example the name of the generated file will be
+						<filename>Alpha Electric-0011-Oct 10, 2011.pdf</filename>
+					</listitem>
+				</itemizedlist>
+			</para>
+			<para>
+				Using the previous configuration, bursting
+				<filename>samples/Invoices-Oct.pdf</filename>
+				will generate
+				the following four distinct files
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/burst-reports1.png" format="PNG" />
+					</imageobject>
+				</mediaobject>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/break-invoices-report.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+		</section>
+		<note>
+			<title>Note</title>
+			<para>
+				Use a white font color for the start and the end tags of the
+				variables,
+				(e.g.
+				<emphasis>&lt;0&gt;</emphasis>
+				and
+				<emphasis>&lt;/0&gt;)</emphasis>
+				so that the visual appearance and the layout of the report will not
+				be
+				affected.
+			</para>
+		</note>
+		<important>
+			<title>Important</title>
+			<para>
+				Before going to production, it is advisable to practice the use
+				of
+				variables on few sample reports. This is
+				to avoid any unpleasant
+				situation of sending wrong data to clients or customers.
+			</para>
+		</important>
+		<section id="chapter.variables.userdefined.excel">
+			<title>
+				<citetitle>Excel</citetitle> User-Defined Variables
+			</title>
+			<para>
+				While the concept and the usage for the
+				user defined variables
+				are the
+				same with the PDF reports, <citetitle>Excel</citetitle> user
+				defined variables
+				are
+				defined
+				like the following example
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/excel-user-variables.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<itemizedlist>
+					<listitem>
+						If
+						required,
+						<citetitle>Excel</citetitle> user-defined variables can be declared in the
+						<emphasis>userVariables</emphasis>
+						column from
+						<emphasis>burst</emphasis>
+						metadata sheet
+					</listitem>
+					<listitem>Similarly with the PDF variables, <citetitle>Excel</citetitle> user-defined
+						variables are enclosed in between
+						&lt;0&gt;value&lt;/0&gt;,&lt;1&gt;value&lt;/1&gt; and so on.
+					</listitem>
+					<listitem>
+						The value for
+						<emphasis>var0</emphasis>
+						user variable (associated with
+						<emphasis>Germany</emphasis>
+						burst token) is
+						<emphasis>Alfreds Futterkiste</emphasis>
+						and the
+						value for
+						<emphasis>var1</emphasis>
+						is
+						<emphasis>Berlin.</emphasis>
+						The values for the
+						<emphasis>USA</emphasis>
+						burst token
+						are the ones
+						which are
+						presented in the screenshot.
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+</chapter>

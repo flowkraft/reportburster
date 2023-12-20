@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<documentburster>
+  <connection>
+    <code>eml-contact</code>
+	<name>Default Email Connection</name>
+	<default>true</default>
+	
+	<emailserver>
+		<host>Email Server Host</host>
+		<!-- email server port. 25 is the default SMTP port -->
+		<port>25</port>
+		<userid>From Email User ID</userid>
+		<userpassword>From Email Password</userpassword>
+		<usessl>false</usessl>
+		<usetls>false</usetls>
+		<fromaddress>from@emailaddress.com</fromaddress>
+		<name>From Name</name>
+	</emailserver>
+		
+  </connection>
+</documentburster>

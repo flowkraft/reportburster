@@ -1,0 +1,77 @@
+#################
+## DocumentBurster
+#################
+applications-src.zip
+assembly-documentburster/**/*.zip
+assembly-documentburster/dist
+
+playground
+testground
+
+**/backup/**/*.csv
+**/output/**/*.csv
+
+#batch-web-lightmin
+#next
+
+log.txt
+*.log
+.flattened-pom.xml
+target/
+dist/
+99 - documentation/planning/assets/
+out/
+*.userprefs
+.svn
+
+
+#################
+## Eclipse
+#################
+
+*.pydevproject
+.project
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+# CDT-specific
+.cproject
+
+# PDT-specific
+.buildpath
+
+#############
+## Windows detritus
+#############
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Include reguired bin folders (which were otherwise excluded in a more general rule earlier)
+!assembly-documentburster-server/src/main/external-resources/template/server/bin
+!assembly-documentburster-server/src/main/external-resources/template/server/bin/*
+
+!assembly-documentburster-server/src/main/external-resources/template/web-console/console/bin
+!assembly-documentburster-server/src/main/external-resources/template/web-console/console/bin/*

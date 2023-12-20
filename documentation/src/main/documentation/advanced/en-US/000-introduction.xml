@@ -1,0 +1,201 @@
+<chapter>
+	<title>
+		Overview
+	</title>
+	<para>
+		The scope of this document is to show how
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		can be used
+		to achieve more complex report delivery scenarios.
+	</para>
+	<section>
+		<title>What to Expect</title>
+		<para>
+			In this document, you'll learn how to
+		</para>
+		<para>
+			<itemizedlist>
+				<listitem>
+					Script
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					to achieve complex use cases
+				</listitem>
+				<listitem>
+					Get yourself familiar with the sample scripts
+					provided with
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+				</listitem>
+				<listitem>
+					Upload reports using
+					<citetitle>cURL</citetitle>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			From
+			time to time, some report distribution requirements might
+			need to
+			execute
+			an external program during the report bursting
+			lifecycle,
+			distribute SMS messages, upload
+			reports to enterprise
+			portals, send
+			reports by Fax or to print the output burst reports. In
+			other
+			situations it
+			might be
+			required to upload the reports using more
+			secure protocols
+			such as FTPs, SFTP or SCP.
+			Before sending the reports,
+			it is
+			also possible
+			to encrypt the output reports
+			or stamp the
+			distributed
+			reports in much
+			the same way that it is
+			applied a rubber
+			stamp
+			to a paper
+			document.
+		</para>
+	</section>
+	<section>
+		<title>
+			<trademark>DocumentBurster</trademark>
+			scripting
+		</title>
+		<para>
+			If required,
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			can be
+			scripted in order to support advanced customized report
+			distribution
+			needs.
+		</para>
+		<para>
+			While it might look like an overkill to write
+			scripts for doing
+			report
+			distribution, it is actually a powerful
+			and
+			flexible
+			approach for implementing very specific requirements.
+			Furthermore the default
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			software package is coming with a set of already written
+			scripts
+			which
+			can be used almost out of the box.
+		</para>
+		<para>
+			In most of the real
+			life
+			situations, just taking
+			an existing script
+			(appropriate for the
+			task
+			in hand) and doing very small adjustments (for
+			example giving
+			FTP host, user name and password) will be all
+			that is
+			required to
+			achieve complex requirements.
+		</para>
+	</section>
+	<section>
+		<title>
+			<citetitle>cURL</citetitle>
+			integration
+		</title>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			does not reinvent the wheel and it integrates with
+			<citetitle>cURL</citetitle>
+			in order to achieve the most complex document distribution
+			situations.
+		</para>
+		<para>
+			<ulink url="http://curl.haxx.se/" />
+		</para>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			does offer close integration with
+			<citetitle>cURL,</citetitle>
+			a command line tool for transferring data with URL syntax,
+			supporting
+			DICT, FILE, FTP, FTPS, GOPHER, HTTP, HTTPS, IMAP, IMAPS,
+			LDAP, LDAPS,
+			POP3,
+			POP3S, RTMP, RTSP, SCP, SFTP, SMTP, SMTPS, TELNET
+			and TFTP.
+			<citetitle>cURL</citetitle>
+			supports SSL certificates, HTTP POST, HTTP PUT, FTP
+			uploading,
+			HTTP form
+			based upload, proxies, cookies,
+			user+password
+			authentication (Basic,
+			Digest, NTLM, Negotiate, kerberos...), file
+			transfer resume, proxy
+			tunneling and a busload of other useful tricks.
+		</para>
+	</section>
+	<section>
+		<title>Quick &amp; Professional Support</title>
+		<para>
+			If you have any questions that aren't answered here or you need some
+			special script to be developed, feel free
+			to
+			contact us:
+			<email>support@pdfburst.com</email>
+		</para>
+	</section>
+	<section>
+		<title>We Need Feedback!</title>
+		<para>
+			If you find a typographical error in this manual, or if you
+			have
+			thought of a way to make this manual
+			better, we would love to
+			hear
+			from
+			you!
+		</para>
+		<para>
+			If you have a suggestion for improving the documentation, try
+			to
+			be as
+			specific as possible when
+			describing it. If you have found an
+			error, please include the section number
+			and some of the
+			surrounding
+			text so we can find it easily.
+		</para>
+		<para>
+			Email address:
+			<email>support@pdfburst.com</email>
+		</para>
+	</section>
+
+	<para>
+		Now let’s get started.
+	</para>
+</chapter>

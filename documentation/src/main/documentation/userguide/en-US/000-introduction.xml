@@ -1,0 +1,401 @@
+<article>
+	<articleinfo>
+		<title>
+			Overview
+		</title>
+	</articleinfo>
+	<para>
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		is a powerful solution to schedule, break up (split), merge and
+		distribute
+		reports and can naturally complement any current business
+		intelligence
+		deployment by adding advanced report delivery
+		capabilities.
+	</para>
+	<para>
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		can process reports generated with an existing in-house reporting
+		platform or with any of the well known leading report
+		writers including
+		Crystal Reports and Web Intelligence (Business
+		Objects/SAP), IBM
+		Cognos, Oracle Hyperion, Microsoft Reporting Services, Microsoft
+		Access, QlikView, JasperReports, Eclipse BIRT, Pentaho, etc.
+	</para>
+	<para>
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		software is currently used successfully together with business
+		applications like Oracle PeopleSoft, SAP ERP, Oracle Applications,
+		Sage Applications,
+		Microsoft Dynamics, JD Edwards, MYOB and QuickBooks
+		accounting software.
+	</para>
+	<para>
+		The software has three flavors
+	</para>
+	<para>
+		<itemizedlist>
+			<listitem>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				has very good report bursting and report
+				distribution
+				capabilities.
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				has a desktop based
+				GUI interface
+				which can be used by a single user.
+			</listitem>
+			<listitem>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+					Server
+				</emphasis>
+				has all the capabilities of
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				and some additional advanced features like scheduling,
+				capability to
+				run
+				as windows services and a
+				browser based web
+				interface which can be
+				accessed simultaneously by
+				multiple people.
+			</listitem>
+			<listitem>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+					Portal
+				</emphasis>
+				is our
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				cloud-based managed services solution.
+			</listitem>
+		</itemizedlist>
+	</para>
+	<section id="chapter0.documentburster">
+		<title>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+		</title>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			can process PDF or Excel reports.
+			<itemizedlist>
+				<listitem>
+					The software can break up reports such as pay slips,
+					invoices or statements for
+					each of your employees, customers or
+					partners.
+				</listitem>
+				<listitem>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					can distribute reports to a wide range of
+					destination types such as
+					Email, FTP, FTPS, SFTP, TFTP, Windows
+					shared drives, Unix Samba
+					servers, WebDAV servers and document
+					management systems.
+				</listitem>
+				<listitem>
+					The software can publish reports to enterprise portals
+					such as Microsoft
+					Sharepoint Server, SAP NetWeaver, Oracle Portal or
+					IBM
+					WebSphere
+					Portal.
+				</listitem>
+				<listitem>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					can generate custom dynamic email messages
+					based on email templates.
+				</listitem>
+				<listitem>
+					The software can generate good looking HTML email messages
+					based on HTML email
+					templates.
+				</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section id="chapter0.server">
+		<title>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+				Server
+			</emphasis>
+		</title>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+				Server
+			</emphasis>
+			has all the
+			features of
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			and some
+			additional advanced capabilities like
+			scheduled
+			report
+			distribution and
+			unattended report delivery in order
+			to achieve
+			the most
+			complex report delivery scenarios.
+		</para>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+				Server
+			</emphasis>
+			can
+			be executed like a long-running Windows service in order to
+			perform report distribution
+			with minimum or no user intervention.
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+				Server
+			</emphasis>
+			services can be configured to start when Windows
+			is booted (and run in
+			the background as long as Windows is
+			running),
+			or they can be started
+			manually, when required.
+		</para>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+				Server
+			</emphasis>
+			is a fully fledged report
+			distribution solution
+			which can be
+			tailored
+			with advanced features to
+			perfectly meet the most complex report
+			bursting
+			and report
+			distribution requirements.
+		</para>
+		<para>
+			Following
+			capabilities
+			are all
+			achievable
+			with
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+				Server,
+			</emphasis>
+			either as out of the box features, either through
+			the tailoring of
+			the
+			software
+		</para>
+		<para>
+			<itemizedlist>
+				<listitem>
+					<emphasis>Distribution Server</emphasis>
+					- The software can be deployed as a
+					central report bursting and
+					report distribution
+					platform which can
+					be simultaneously accessed by
+					multiple people or legacy
+					applications from within your
+					organization.
+				</listitem>
+				<listitem>
+					<emphasis>Cross browser web interface</emphasis>
+					-
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						Server
+					</emphasis>
+					has a web based interface available for IE,
+					Firefox, Chrome, Safari
+					and Opera.
+				</listitem>
+				<listitem>
+					<emphasis>Unattended report distribution</emphasis>
+					-
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						Server
+					</emphasis>
+					can be configured to run like standard Windows services in order
+					to
+					automatically burst and deliver the reports without human
+					intervention.
+				</listitem>
+				<listitem>
+					<emphasis>Easy to integrate</emphasis>
+					-
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						Server
+					</emphasis>
+					can be easily integrated with existing CRM and ERP kind of
+					applications.
+				</listitem>
+				<listitem>
+					<emphasis>Scheduling</emphasis>
+					- Using
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						Server
+					</emphasis>
+					it is possible to define simple or complex
+					schedules for executing
+					nightly, weekly or monthly report bursting
+					and report distribution
+					jobs.
+				</listitem>
+				<listitem>
+					<emphasis>Parallel report delivery</emphasis>
+					-
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						Server
+					</emphasis>
+					has support for parallel report
+					distribution which allows achieving
+					a high
+					throughput of reports which can be
+					distributed in a short
+					period of time.
+				</listitem>
+				<listitem>
+					<emphasis>Process any report format</emphasis>
+					- Out of the box
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						Server
+					</emphasis>
+					can burst and distribute PDF and Excel reports. If required, the
+					software
+					can be tailored to merge, burst and distribute any report
+					format in addition to the already supported PDF and Excel report
+					types.
+				</listitem>
+				<listitem>
+					<emphasis>Organize, store and index the distributed reports
+					</emphasis>
+					-
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						Server
+					</emphasis>
+					can be customized to support advanced storing,
+					indexing and
+					searching capabilities for the distributed reports.
+				</listitem>
+				<listitem>
+					<emphasis>Custom deployment model</emphasis>
+					-
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						Server
+					</emphasis>
+					can be deployed as
+					a
+					standalone server, or it can be deployed
+					on
+					various
+					application servers such as Weblogic, Websphere, JBoss
+					etc.
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/documentburster-server.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+	</section>
+	<section id="chapter0.portal">
+		<title>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+				Portal
+			</emphasis>
+		</title>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+				Portal
+			</emphasis>
+			is our
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			cloud-based managed services solution.
+		</para>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+				Portal
+			</emphasis>
+			allows our customers to focus on their business, instead of their
+			report building, report generation, document distribution or how to
+			build a mechanism to accept customer payments online.
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+				Portal
+			</emphasis>
+			is a cloud-hosted web software which can be used to generate
+			and
+			send personalized documents to customers, manage and track documents
+			sent
+			to
+			customers
+			and to
+			(optionally)
+			accept payments online from
+			your
+			customers.
+		</para>
+		<para>
+			Here is how you could manage customer documents (invoices) using
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+				Portal
+			</emphasis>
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/documentburster-portal-manage-invoices.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+	</section>
+</article>
