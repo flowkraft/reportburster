@@ -11,6 +11,8 @@ testground
 **/backup/**/*.csv
 **/output/**/*.csv
 
+**/test-results/**/*.*
+
 #batch-web-lightmin
 #next
 
