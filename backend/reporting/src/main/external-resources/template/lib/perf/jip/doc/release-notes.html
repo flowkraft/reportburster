@@ -1,0 +1,526 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Java Interactive Profiler release notes</title>
+	</head>	
+	<body>
+		<table>
+			<tr>
+				<td><img src="images/jip-logo-90.png"></td> 
+				<td width="100%"><center> <h1>Java Interactive Profiler</h1></center></td>
+			</tr>
+		</table>	
+		<h2>Version 1.2</h3>
+		<ul>
+			<li>Added support for filtering classloaders by name.</li>
+			<li>Added a patch to ASM courtesy of Dennis Ushakov to <a href="http://jira.codehaus.org/browse/JRUBY-4676">help</a>
+			 the JRuby team.  </li>
+		</ul>
+		<h2>Version 1.1</h3>
+		<ul>
+			<li>Fixed problem with the <code>TimeLineProfiler</code> -- threw an exception when
+			an exception was thrown in the program being profiled.
+		</ul>
+		<h2>Version 1.1 rc 1</h3>
+		<ul>
+			<li>Added a new class loader filter: <code>net.sourceforge.jiprof.instrument.clfilter.GenericClassLoaderFilter</code>,
+			which allows you to specify which class loader(s) to apply profiling to. This is done
+			by a new profile property: <code>accept-class-loaders</code>, which is comma separated list
+			of fully qualified class or interface names. Allowing interface names comes in handy when dealing with
+			Tomcat where you might want to specify <code>org.apache.catalina.loader.Reloader</code>
+			rather than <code>org.apache.catalina.loader.WebappClassLoader</code>. If 
+			<code>GenericClassLoaderFilter</code> is used, but no values are specified for 
+			<code>accept-class-loaders</code>, then the System Class Loader is used. Note also that 
+			<code>GenericClassLoaderFilter</code> will not defer to other Class Loader Filters.</li>
+			<li>Fixed an issue where some method timings were way too big -- like 10^18. The problem was caused
+			by exceptions being caught in static initializers.</li>
+			<li>Added a profile property called <code>include</code> which allows you to explicitly specify
+			which classes or packages to include in the profile.</li>
+			<li>Updated the <a href="readme.html">readme.html</a>. Added a FAQ that hopefully will address
+			most of the questions that people have about JIP.</li>
+		</ul>
+		<h2>Version 1.1 beta 3</h2>
+		<ul>
+			<li>Fixed a problem where caught exceptions were messing up the JIP call stack. Many thanks to 
+			Fredrik Svarén, who encountered the problem, did some research, came up with a fix and 
+			posted it to the help forum!
+			</li>
+			<li>Added the ability to turn off the top section of the profiler output. This is useful when
+			you only want to see the summary information. This is accomplished by adding:
+<pre><code>
+output-summary-only=yes
+</code></pre>
+			to the profile properties file.				
+			</li>
+		</ul>
+		<h2>Version 1.1 beta 2</h2>
+		<ul>	
+			<li>Added a sample profile properties file for using the Timeline profiler 
+			(<code>/profile/timeline.profile.properites</code>)</li>
+			<li>Improved "net time" reporting. The time that a thread spends calling <code>Object.wait</code>,
+			<code>Thread.sleep</code>, <code>Thread.join</code> or <code>Thread.yeild</code> is not longer
+			counted as part of a method's net time. In addition any time spent waiting to enter a synchronized
+			block of code will also not be counted toward a method's net time.
+			<i>Note to anyone who has built a custom profiler
+			class: your class will now be required to have two additional static methods: 
+			<code>public void beginWait(className, methodName)</code> and 
+			<code>public void endWait(className, methodName)</code>.</i></li>
+			<li>The timeline profiler now notes when activity on a thread is suspended due to 
+			calls to <code>synchronized, wait, sleep, join</code> and <code>
+			yield</code> (as discussed above). This is shown in the output via <code>W:START</code>
+			and <code>W:END</code>.</li>
+		</ul>	
+		<h2>Version 1.1 beta 1</h2>
+		<ul>
+			<il><b>jipViewer</b> Added this cool tool that allows you to view JIP output
+			via a graphical user interface. Supports all kinds of helpful features to help you
+			analyze your profile. To use it:
+			<br/>- Ensure that you're generating XML output. In the profile properties file
+			set <code>output</code> to <code>XML</code> (or <code>both</code>).
+			<br/>- Invoke the jipViewer using either the batch file (jipViewer.bat) or the 
+			shell script (jipViewer.sh -- make sure to do a chmod u+x jipViewer.sh), passing
+			in the name of the xml output file. Here's an example of what jipView looks like: <br/>
+			
+			<img src="images/jipViewer-b1.png" alt="JIP Viewer"/>  
+			
+			<li>Added a new optional property: <code>output-method-signatures</code>.
+			Setting this to <code>yes</code> causes JIP to include the signature
+			of a method, in addition to its name and package, in the output. For
+			compatability, the default value is <code>no</code>.</li>
+			<li>Timelines. This release features an alternative profiler engine that produces
+			a timeline rather than timings. Here is a snippet from the output of this profiler:
+<pre><code>
+	...
+	
+	START	[9]	ProjectComponent:getProject()Lorg/apache/tools/ant/Project;	(org.apache.tools.ant)
+	END	[9]	ProjectComponent:getProject()Lorg/apache/tools/ant/Project;	(org.apache.tools.ant)
+	START	[9]	Project:log(Lorg/apache/tools/ant/Task;Ljava/lang/String;I)V	(org.apache.tools.ant)
+Time: 3260 ms.
+	START	[9]	Project:fireMessageLogged(Lorg/apache/tools/ant/Task;Ljava/lang/String;I)V	(org.apache.tools.ant)
+	ALLOC	[9]	BuildEvent	(org.apache.tools.ant)
+	START	[9]	BuildEvent:<init>(Lorg/apache/tools/ant/Task;)V	(org.apache.tools.ant)
+	START	[9]	ProjectComponent:getProject()Lorg/apache/tools/ant/Project;	(org.apache.tools.ant)
+	END	[9]	ProjectComponent:getProject()Lorg/apache/tools/ant/Project;	(org.apache.tools.ant)
+	START	[9]	Task:getOwningTarget()Lorg/apache/tools/ant/Target;	(org.apache.tools.ant)
+	END	[9]	Task:getOwningTarget()Lorg/apache/tools/ant/Target;	(org.apache.tools.ant)
+	END	[9]	BuildEvent:<init>(Lorg/apache/tools/ant/Task;)V	(org.apache.tools.ant)
+	
+	...
+</code></pre>
+			Ledgend:		
+				<br/><b>Time</b> - This is the time, relative to the start of profiling, when the events listed were captured.
+				<br/><b>START</b> - The given method was entered.
+				<br/><b>END</b> - The given method was exited.
+				<br/><b>ALLOC</b> - An instance of the given class was created.
+				<br/><b>[<i>x</i>]</b> - This is the id of the thread associated with the event.
+				<p/>
+			To use the Timeline Profiler, add this to your profile.properties file:<b>
+<code><pre>
+profiler-class=net.sourceforge.jiprof.timeline.TimeLineProfiler
+</pre></code></b>
+				Notes on usage:<p/>
+				- <b><code>output-method-signatures</code></b> can be used to display the full method signature.
+				<br/>- <b><code>clock-resolution</b></code> can be used to toggle the unit of time used to generate
+				the timeline. You can use either <code><b>ms</b></code> for milliseconds or <code><b>ns</b></code>  for
+				nanoseconds. (Note that this property is <b>not</b> used by the standard profiler).
+				<br/>- As with the standard JIP profiler, tracking object allocations can be turned on or off by using
+				<code><b>track.object.alloc=on|off</b></code>. 
+				<br/>- Currently, the Timeline profiler only supports one output format, so the <code><b>output</b></code>
+				property is ignored.
+				<br/>- You cannot use both the standard profiler and the timeline profiler at the same time.
+				<br/>- Output from the Timeline profiler can be very, very large.
+				<br/>- Currently, the interactive profiling is not supported.
+				<br/>- The ordering of method calls is correct within the context of a thread. Ordering is not guaranteed
+				between threads.
+			</li>
+			<li>Added support for JBoss 4. There are three class loader filters that have been tested against JBoss 4
+				<br/>- <code><b>net.sourceforge.jiprof.instrument.clfilter.JBossServletClassLoaderFilter</b></code> if you
+				only want to profile your Servlets.
+				<br/>- <code><b>net.sourceforge.jiprof.instrument.clfilter.JBossEJBClassLoaderFilter</b></code> for 
+				profiling SessionBeans.
+				<br>- <code><b>net.sourceforge.jiprof.instrument.clfilter.JBossUniversalClassLoaderFilter</b></code> for 
+				profiling both Servlets and SessionBeans.
+				<p/>
+				These should only be used interactively (i.e., <code>profiler=off</code>, <code>remote=on</code>). It is also
+				recommended that you exercise the code to be profiled at least once before you begin profiling.
+			</li>
+		</ul>
+		<h2>Version 1.0.7 final</h2>
+		<ul>
+			<li>Added a new <code>ClassLoaderFilter 
+				(com.mentorgen.tools.profile.instrument.clfilter.AntTaskClassLoaderFilter)</code> 
+				to allow profiling of code
+			from an Ant task that is runing in the same JVM that Ant is (thanks to Paul Hudson 
+			for submitting this)</li>
+			<li>see the changes for beta 1 and beta 2.</li>			
+		</ul>
+		<h2>Version 1.0.7 beta 2</h2>
+		<em>Summary: better synchronization added and more debugging info is now available.</em>
+		<ul>
+			<li>The mutext scheme for the runtime profiler has been revamped. Hopefully
+			this will finally put an end to those annoying <code>ConcurrentModificationExceptions</code>.
+			Thanks Nathan for pointing this problem and submitting a patch!</li>
+			<li>The <code>debug</code> flag in the profile properties file now produces additional
+			output. This includes reporting that an exception has been detected as well as
+			outputting the names of any methods that the profiler needed to &quot;fixup&quot;.
+			Both of these pieces of information are quite useful in debugging potential
+			problems with JIP's output. Anyone who gets output from JIP that looks suspicious
+			is encouraged to include debugging information, if possbile, when reporting their
+			problem.</li>
+		</ul>
+		<h2>Version 1.0.7 beta 1</h2>
+		<em>Summary: many small fixes to ensure the output is correct</em>
+		<ul>
+			<li>Many changes were made to how the output is created in order to
+			ensure that its correct.</li>
+			<li>Fixed a bug in the way that object allocations are counted that in 
+				some cases was causing a <code>NullPointerException</code>.</li>
+			<li>Did some small tuning to the amount of memory that was being
+			used.</li>
+		</ul>
+		<h2>Version 1.0.6</h2>
+		<em>Summary: important bug fixes</em>
+		<ul>
+			<li>Problem with <code>ConcurrentModificationException</code> has been 
+				fixed. A number of users reported that at the end of a profile they were
+			getting this exception. The worst part was that they also weren't getting 
+			any output!</li>
+			<li>A few users reported that the output from JIP sometimes contained
+			odd values, such as negative percentages. This release should
+			keep this from happening.</li>
+		</ul>
+		Thanks to everyone who reported a bug or posted a question to the forum. 
+		Bug reporting is a very important part of making JIP a better product and 
+		people who have taken the time to report issues share some of the credit 
+		for the fixes in this release. Posting questions is also important. Not only
+		does it help to make the product better but having a record of these questions
+		is very helpful to other users as well. 
+		<p/>
+		<b>A very special thanks</b> goes to <b>Stefano Doni</b>. His willingness to 
+		provide feedback and do field testing were absolutely critical to making this 
+		release happen.
+		<p/>
+		<em>Suggestions wanted!</em> &nbsp;Have a feature you'd like to see in a future 
+		version of JIP? Is there something about JIP that you think needs to be
+		changed? The way to make sure it gets considered is to create a 
+		<a href="http://sourceforge.net/tracker/?func=add&group_id=148701&atid=772418">
+		Feature Request</a>.
+		
+		<h2>Version 1.0.5</h2>
+		<em>Summary: important bug fixes</em>
+		<ul>
+
+			<li>Fixed a bug that was causing an exception to be thrown 
+			when JIP was configured for interactive profiling. </li>
+			<li>If the output file name (in the configuration) ended in
+			<code>.xml</code> and the output type was set to <code>xml</code> 
+			or <code>both</code>, the actual output file name was ending in
+			<code>.xml.xml</code>.</li>
+		</ul>
+
+		Many thanks to Nascif Abousalh-Neto for finding and reporting both
+		of these bugs! Nascif is joining the JIP project and will be
+		contributing a JIP plugin for <a href="http://jdee.sunsite.dk/">JDEE</a>.		
+		<h2>Version 1.0.4</h2>
+		<em>Summary: Minor bug fixed, feature enhancements</em>
+		<ul>
+			<li>Fixed problem with counting object allocations: The problem was
+				that if you had a 
+				class where one constructor called another constructor in 
+				the same class the object allocation count for the class 
+				would get incremented twice (many thanks go to Peter for
+				reporting this :-).
+			</li>
+			<li>Separated the mechanism for instrumenting bytecode from
+				the profiler itself. This makes it easy to use JIP to run 
+				your own profiler (rather than the one that JIP ships 
+				with) without needing to hack any code. This can be done
+				by adding the following line to the <code>profile-properties</code>
+				file<pre><code>
+profiler-class=[your-profiler-class]</code></pre>
+				Your profiler doesn't need to implement any particular 
+				interface, but rather it just needs to contain the same
+				methods as the default profiler 
+				(<code>com.mentorgen.tools.profile.runtime.Profile</code>)
+			</li>
+		</ul>
+		<h2>Version 1.0.3</h2>
+		<em>Summary: Fixed problems when using JIP with Hibernate</em>
+		<blockquote>
+			JIP uses the <a href="http://asm.objectweb.org/index.html">ASM</a>
+			library to instrument bytecode. One of the libraries that Hibernate
+			depends on uses an older version of ASM. Since JIP gets
+			loaded before Hibernate, the newer version of ASM was taking
+			precedent and causing Hibernate not to work.
+		</blockquote>
+		<h2>Version 1.0.2</h2>
+		<em>Summary: Fixed instrumentation problems when using JIP with
+		AspectJ</em>
+		<blockquote>
+			JIP uses the <a href="http://asm.objectweb.org/index.html">ASM</a>
+			library to instrument bytecode. There was a compatability issue 
+			when using ASM 2.0 in conjuntion with code that was compiled
+			with the <a href="http://www.eclipse.org/aspectj/">AspectJ</a>
+			compiler. This has been fixed in the current version of ASM (2.2.1).
+			This release of JIP uses the new version of ASM and now works
+			with AspectJ compiled code.
+		</blockquote>
+		
+		<h2>Version 1.0.1</h2>
+		<em>Summary: fixed a couple of output problems.</em>
+		<h3>Problem with interactive profiling</h3>
+		<blockquote>When using interactive profiling, there were a couple of 
+			cases where the results of the profile had problems.</blockquote>
+		<ul>
+			<li>In a web app, JIP works just fine for a single hit to
+			the web server. If you hit the web server more than once while profiling,
+			the call graph for the subsequent hits would show up underneath
+			the root of the first web hit. In addition, net times and
+			percents weren't being calculated correctly.</li>
+			<li>If you started to profile in the middle of a hit to the
+			web server the resulting call graph could end up being just about
+			useless and the net times and percents weren't even close to
+			being correct.</li>
+		</ul>
+		<blockquote>The fix for this introduces the idea of an interaction.
+		In a webapp, a single thread could service multiple requests. What
+		you'd like to see is each of these requests to have their own call
+		graph and timings. This new unit of scope is called an interaction. 
+		There are few things to note about the way interactions behave:</blockquote>
+		<ul>
+			<li>If a thread only has one interaction, everything works
+			the way it has in the past.</li>
+			<li>If a thread has multiple interactions, each interaction will
+			be listed in the order that they occurred. For example:
+<pre><code>
++------------------------------
+| Thread: 37
++------------------------------
+...
++------------------------------
+| Thread: 37 (interaction #2)
++------------------------------
+...
++------------------------------
+| Thread: 37 (interaction #3)
++------------------------------			
+</code></pre>			
+			</li>
+			<li>Any interaction that only has one node in the call
+			graph or is only one level deep and none of the child notes
+			are above the threshold set for display, will not be displayed at all.
+			This might seem strange, but it is designed to avoid outputting
+			a whole bunch of interactions that the user probably doesn't
+			want to see anyway.</li>
+			<li>In the XML output, the introduction of interactions means
+			that there is a new element, called <code>interaction</code>
+			that is sandwiched between the <code>thread</code> element
+			and the <code>frame</code> element. <i>(my sincerest
+			apologies to anyone who 
+			is integrating with JIP via the XML output 
+			for changing the document structure.)</i></li>
+		</ul>
+		<h3>Summary section of output not giving a complete picture.</h3>
+		<blockquote>The summary section of the profiler output
+		was only summarizing (rolling up) items that appeared in the
+		previous section. This might not be a complete picture
+		since the output of the previous section can be limited
+		via the profile properties.</blockquote>
+		<h3>Text output headings updated</h3>
+		<blockquote>The headings for sections 2 and 3 of the text file
+		that JIP generates were confusing and generally not helpful. They
+		have been update to read &quot;Most expensive methods (by net time)&quot;
+		for the second section and &quot;Most expensive methods summarized&quot;
+		for the third section.</blockquote>
+		
+		
+		<h2>Version 1.0</h2>
+		<em>Summary: updated docs, minor bug fixes.</em>
+		<ul>
+			<li>Updated the Javadoc and classloader.html</li>
+			<li>Fixed bug in how the <em>Frame Count</em> and 
+				<em>Summarized</em> sections of the text output 
+				were being sorted.</li>
+		</ul>
+		<h2>Version 0.9.4 (1.0 rc 1)</h2>
+		<em>Summary: Moved most of the files around to create a directory
+		structure that made things easier to find. Made minor improvements.
+		The version is also the first version 1.0 release candidate.
+		Unless bugs show up or some functionality needs to be changed or 
+		added, the next release will be JIP 1.0.</em>
+		<h3>Directory structure changes</h3>
+		<ul>
+			<li>All documentation is now in the <code>docs</code> 
+				directory.</li>
+			<li>All client scripts are now in <code>src/client</code>.</li>
+			<li>The example properties files are in 
+				<code>src/example-properties</code>.</li>
+			<li>Repackaged the code so 'like' classes are in their own 
+				package.</li>
+		</ul>
+		
+		<blockquote><font color="red">
+			<em>Important Note:</em> The package for <code>
+			ClassLoaderFilter</code>s has been changed from </font><code>
+			com.mentorgen.toos.profile</code> 
+			<font color="red">to</font>
+			<code>
+			com.mentorgen.tools.profile.instrument.clfilter</code>. 
+			<font color="red">Please update your profile property files.			 
+		 </font></blockquote>
+		
+		<h3>New Features</h3>
+		<ul>
+			<li>Changed the &quot;overhead&quot; calculation to be on
+			the fly rather than an average. This will elimiate most of the
+			instances where the net time was a negative number.</li>
+			<li>Added an <code>ExtensionsClassLoaderFiler</code>.</li>
+			<li>Change the way call graphs are printed out so that
+			the order of method calls matches the order in which the
+			methods were actually called.</li>
+			<li>Added support for an optional <code>debug</code> property 
+			in the profile properties file. With this set to <code>on</code>
+			it's now possible to see which classes are being instrumented
+			for profiling and which are not. I did this because Tomcat&#153;
+			one day just started classloading my webapp with the wrong
+			classloader (this was using the Eclipse plugin &mdash; I'm not 
+			sure if that had anything to do with it as I've not see this
+			behavior if I make a WAR file and start Tomcat&#153; manually)
+			With the debug flag set to <code>on</code> it's possible to
+			spot this behavior.</li>
+			<li>Added a warning message when the profiler is started 
+			interactively but no classes have been instrumented by the 
+			profiler.</li>
+		</ul>
+		<h3>Bug fixes</h3>
+		<ul>
+			<li>Made the file naming convention for text and xml files 
+			consistent. The problem was that if you specified the file name as 
+			<code>profile.txt</code> and the output type as <code>both</code>
+			you would end up with <code>profile.txt.xml</code>. This has
+			been fixed. In the case above, you can name the file either
+			<code>profile.txt</code> or just <code>profile</code> 
+			and the files should be named correctly.</li>
+		</ul>
+		
+		
+		<h2>Version 0.9.3</h2>
+		<em>Summary:</em> Minor fixes to the profiler. Output options added.
+		<h3>New Features</h3>
+		<ul>
+			<li>If the name of the file to output profiling information
+			to is a directory, JIP will auto-generate file names and
+			put the files in that directory. The format for the
+			generated file name is <code>yyyyMMdd-HHmmss</code>.</li>
+			<li>An option has been added to output the profiling
+			information as an XML document in a raw format. This
+			will enable 3rd party tools to use the output of
+			the profiler for analysis. You can set which type of output
+			you want in the profile properties file:
+			<pre><code>output=[option]</code></pre>	
+			Where option is 
+			<ul>
+				<li><code>text</code> &mdash; the normal text output.</li>
+				<li><code>xml</code> &mdash; output the raw profile
+				as an XML document.</li>
+				<li><code>both</code> &mdash; output both text and
+				xml docs.</li>
+			</ul>
+			The default value is <code>text</code>.
+			</li>	
+		</ul>
+		<h3>Fixes</h3>
+		<ul>
+			<li>Fixed some synchronization issues in the profiler.</li>
+		</ul>
+		<h3>Coming soon ...</h3>
+		The next big enhancement will be a GUI front end and possibly 
+		an Eclipse plugin.
+		<h2>Version 0.9.2</h2>
+		<em>Summary:</em> Finished preliminary work on the runtime profiler.
+		<h3>New Features</h3>
+		<ul>
+			<li>Added the ability to turn the profiler on and off 
+			programatically. To do this, you can use the following
+			methods on <code>com.mentorgen.tools.profile.Profile</code>
+			<ul>
+				<li><code>setFileName</code></li>
+				<li><code>start</code></li>
+				<li><code>stop</code></li>
+				<li><code>clear</code></li>
+			</ul>
+			</li>
+			<li>Added the option to measure object allocations.
+			This is a protentially expensive operation and should
+			be avoided in most cases. To turn this option on, add
+				the following to the properties file: 
+			<pre><code>track.object.alloc=on</code></pre> 
+			</li>
+			<li>Added the ability to extend the mechanism that determines
+			which classloader to filter for. In the previous version,
+			a fix was put in for the problem associated with which
+			classloader was loading a class that was being profiled
+			(see the notes for the previous release). At that time,
+			only stand-alone and Tomcat 5.5 apps were supported 
+			(Tomcat 5.x should also work, but hasn't been tested).
+			In this release, this mechanism has been externalized so
+			that new app types (for example, JBoss) can be supported
+			without neededing to hack JIP. This is accomplished by 
+			implementing the <code>ClassLoaderFilter</code> interface.
+			This mechanism implements the chain of responsibility pattern.
+			The way that is works is that it will go through a number
+			of <code>ClassLaoderFilters</code> until it finds one that will
+			work. For example, the default properties file has a 
+			section that looks like:<pre><code>
+ClassLoaderFilter.1=com.mentorgen.tools.profile.WebAppClassLoaderFilter
+ClassLoaderFilter.2=com.mentorgen.tools.profile.StandardClassLoaderFilter
+			</code></pre>
+			</li>
+		</ul>
+		This release also includes a draft of a whitepaper about profiling.
+		It talks about various profiling methods and how JIP addresses 
+		the limitations of these approaches. Feedback is appreciated.
+		
+		<h2>Version 0.9.1</h2>
+		<em>Summary:</em> Mainly stability and useability enhancements
+		<h3>Issues addressed in this release</h3>
+		<ul>
+			<li><em>Issue:</em> The profiler would sometimes
+			crash the application being profiled with a <code>
+			ClassNotFoundException</code>. The problem here had to do
+			with the Profiler being loaded with the application
+			classloader while some of the instrumented classes
+			where loaded by the extension classloader. This has
+			been fixed by only instrumenting classes that are
+			loaded by the application classloader for standalone
+			apps and Tomcat's webapp classloader for web applications.
+			Note that only Java 5 and Tomcat 5.5 are currently 
+			supported. See the <a href="doc/classloader.html">
+			classloader</a> doc for more information</li>
+			<li><em>Issue:</em> Profiling didn't work correctly
+			when the application being profiled threw an
+			exception. This issue has been resolved in this release.</li>
+			<li><em>Issue:</em> Static initializers 
+			(<code>&lt;clinit&gt;</code>) 
+			that are called before a thread started to execute
+			were throwing off the call stack / profiler info.
+			This issue has been resolved in this release.</li>
+		</ul>
+		<h3>Other changes in this release</h3>
+		<ul>
+			<li>The <code>include</code> option in the profile properties
+			is no longer supported. Now all classes that are loaded by the
+			application or webapp classes loader are included by default.
+			The <code>exclude</code> is still available, so you can
+			filter out anything that you don't want to see.</li>
+			<li>To supply a profile properties file name, you now
+			need to use a VM parameter, which is 
+			<pre><code>-Dprofile.properties=&lt;file name&gt;</code></pre></li> 
+			<li>Added an example of how to profile a standalone Java
+			application. See <code>example.bat</code>. It profiles
+			<code>ANT</code> building the profiler.</li>
+		</ul>
+		
+		
+	</body>
+</html>

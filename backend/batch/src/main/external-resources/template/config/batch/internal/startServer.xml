@@ -1,0 +1,28 @@
+<project name="batch" default="start-batch">
+
+	<path id="batch.class.path">
+
+		<fileset dir="${DOCUMENTBURSTER_HOME}/lib/batch">
+			<include name="**/*.jar"/>
+		</fileset>
+
+		<fileset dir="${DOCUMENTBURSTER_HOME}/lib/additional">
+			<include name="**/*.jar"/>
+		</fileset>
+
+		<pathelement location="${DOCUMENTBURSTER_HOME}" />
+
+	</path>
+
+	<target name="start-batch">
+
+		<java classname="com.sourcekraft.batch.Server">
+
+			<classpath refid="batch.class.path"/>
+
+		</java>
+
+	</target>
+
+</project>
+

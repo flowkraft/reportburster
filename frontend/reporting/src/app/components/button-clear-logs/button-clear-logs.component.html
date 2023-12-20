@@ -1,0 +1,14 @@
+<button
+  id="{{ id || 'btnClearLogs' }}"
+  type="button"
+  class="btn btn-default btn-block"
+  (click)="onClick()"
+  [disabled]="
+    executionStatsService.jobStats.numberOfActiveJobs > 0 ||
+    !executionStatsService.foundDirtyLogFiles()
+  "
+>
+  <i class="fa fa-file-o"></i>&nbsp;{{
+    value || "COMPONENTS.BUTTON-CLEAR-LOGS.CLEAR-LOGS" | translate
+  }}
+</button>

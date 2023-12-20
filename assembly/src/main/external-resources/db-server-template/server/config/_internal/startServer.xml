@@ -1,0 +1,59 @@
+<project name="server" default="start-server">
+
+	<property file="documentburster.properties" />
+
+	<echo>DOCUMENTBURSTER_HOME = ${DOCUMENTBURSTER_HOME}</echo>
+	<echo>SERVER_JVM_OPTS = ${SERVER_JVM_OPTS}</echo>
+
+	<import file="${DOCUMENTBURSTER_HOME}/config/batch/internal/startServer.xml" />
+
+	<path id="documentburster.class.path">
+
+		<fileset dir="${DOCUMENTBURSTER_HOME}/lib/burst">
+			<include name="**/*.jar" />
+		</fileset>
+
+	</path>
+
+	<path id="class.path">
+		<path refid="batch.class.path" />
+		<path refid="documentburster.class.path" />
+	</path>
+
+	<target name="start-server">
+
+		<java classname="com.sourcekraft.batch.Server" fork="true" dir="${DOCUMENTBURSTER_HOME}">
+
+			<jvmarg line="${SERVER_JVM_OPTS}" />
+
+			<classpath refid="class.path" />
+
+		</java>
+
+	</target>
+
+	<target name="performance-statistics">
+
+		<java classname="com.sourcekraft.batch.Server" fork="true" dir="${DOCUMENTBURSTER_HOME}">
+
+			<jvmarg line="${SERVER_JVM_OPTS}" />
+
+			<jvmarg value="-javaagent:lib/perf/perf4j/weaver/aspectjweaver.jar"/>
+			<jvmarg value="-Dorg.aspectj.weaver.loadtime.configuration=config/_internal/aop-perf4j.xml"/>
+			<jvmarg value="-Dlog4j.configuration=config/_internal/log4j-perf4j.xml"/>
+
+			<classpath>
+
+				<path refid="class.path" />
+
+				<fileset dir="${DOCUMENTBURSTER_HOME}/lib/perf/perf4j/jars">
+					<include name="**/*.jar"/>
+				</fileset>
+
+			</classpath>
+
+		</java>
+
+	</target>
+
+</project>

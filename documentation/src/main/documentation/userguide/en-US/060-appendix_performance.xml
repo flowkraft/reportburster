@@ -1,0 +1,834 @@
+<appendix id="appendix.performance">
+	<title>Performance</title>
+	<para>
+		The first part of this chapter presents a general picture
+		about
+		report
+		distribution performance and some
+		high
+		level
+		performance guidelines for
+		getting an increased throughput
+		from
+		the
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		software.
+	</para>
+	<para>
+		The last section shows a simple, yet powerful,
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		tool for monitoring
+		various report bursting and report delivery
+		performance metrics.
+	</para>
+	<section id="appendix.performance.hints">
+		<title>
+			Performance Guidelines - Getting the Most From Your
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			System
+		</title>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			hardware
+			requirements will depend on the volume and the size of the
+			reports which
+			the
+			system
+			is expected to
+			process and distribute. The
+			system can scale in order to
+			support the most demanding report
+			distribution performance
+			requirements.
+		</para>
+		<para>
+			In most of the situations,
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			should perform well enough on any
+			low-end machine which can decently
+			run Windows XP.
+			However, if your enterprise organization is expected
+			to process really huge
+			reports,
+			it is advisable to allocate a
+			dedicated
+			and powerful
+			machine.
+		</para>
+		<para>
+			Following are the hardware devices which have an influence on
+			the
+			overall
+			system throughput
+			<itemizedlist>
+				<listitem>
+					<emphasis>Network performance</emphasis>
+					- The quality of network and the size of the files transferred will
+					have a
+					considerable impact on the report distribution throughput.
+					A
+					good network
+					bandwidth together with low network latency will have
+					a
+					positive
+					impact when distributing a lot of reports by either
+					email or
+					other
+					network based protocols.
+				</listitem>
+				<listitem>
+					<emphasis>CPU, Disk I/O performance</emphasis>
+					- More CPU power together with a
+					good
+					Disk
+					I/O performance will
+					improve the report
+					bursting/separation
+					throughput.
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					will benefit
+					when running on a modern multi-core server machine.
+				</listitem>
+				<listitem>
+					<emphasis>Memory</emphasis>
+					- By default,
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					starts with 128MB and
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						Server
+					</emphasis>
+					starts with 256MB. The default memory configuration should be
+					enough
+					when
+					processing
+					really big reports (thousands of pages) and, if
+					required,
+					the memory
+					can be further increased in order to process
+					even bigger
+					reports.
+				</listitem>
+			</itemizedlist>
+		</para>
+		<section>
+			<title>
+				Minimize the network overhead
+			</title>
+			<para>
+				The most common scenario will be for
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				to distribute the reports by email. When a big number of
+				reports is
+				required to be distributed in a short period of time, deploying
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				software on the same physical machine with the email server (e.g.
+				Microsoft Exchange)
+				will mostly save the network overhead and will
+				be
+				like
+				a boost for the
+				overall report distribution throughput.
+			</para>
+			<para>
+				If
+				possible, for email distribution performance reasons,
+				install
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				on the same computer with the email server software (e.g.
+				Microsoft
+				Exchange).
+			</para>
+		</section>
+		<section>
+			<title>Minimize intermediate layers</title>
+			<para>
+				Any intermediate layer which sits in-between
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				and the
+				email server software will pose a performance
+				penalty when the
+				reports are being distributed. For example,
+				a common situation will
+				be
+				with various antivirus/firewall (e.g. Symantec, McAfee)
+				kind of
+				software which might
+				monitor
+				the network
+				transfer from
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				to the email server (e.g. Microsoft Exchange).
+				Such intermediate
+				layers
+				will slow down the network performance and, if
+				email sending
+				performance is a critical requirement, the IT administrator of your
+				organization should check for various
+				approaches to minimize the
+				performance cost of these intermediate
+				layers. The simplest approach
+				would be to decide
+				that all the emails which are sent by
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				are legitimate and do not require additional validation. Another
+				approach
+				might be to configure the antivirus software to do the
+				minimum amount
+				of scanning necessary to meet the
+				security requirements
+				from your organization.
+			</para>
+		</section>
+		<section>
+			<title>
+				Running
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				in a virtual machine
+			</title>
+			<para>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				can be deployed and used in a virtual machine. The software
+				is
+				confirmed to run in Oracle VM VirtualBox and Microsoft Hyper-V
+				and
+				should
+				work properly on other virtualization software too. Like any
+				other
+				software, there
+				is a
+				performance penalty when running
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				in a virtual machine
+				as compared with running the software in a
+				native
+				operating system.
+				The network quality, the CPU, Disk I/O and
+				memory
+				performance are the
+				factors which influence the total
+				throughput
+				of the
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				software when running inside a virtual machine.
+			</para>
+		</section>
+	</section>
+	<section id="appendix.performance.monitoring">
+		<title>
+			Performance Monitoring
+		</title>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			has a simple, yet powerful, mechanism to monitor
+			various
+			report
+			bursting
+			and report distribution performance metrics. This mechanism
+			can be
+			enabled for tracking, on an ongoing basis, the report
+			bursting
+			and
+			report distribution performance during production.
+		</para>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			monitoring system displays the most relevant report bursting
+			and
+			report
+			distribution performance indicators with
+			the help of various
+			graphs
+			which are easy to understand and visualize.
+		</para>
+		<para>
+			Further more,
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			is publishing the
+			performance metrics in two additional ways which can
+			be used
+			when integrating
+			with professional monitoring tools
+			<itemizedlist>
+				<listitem>
+					<emphasis>
+						Log file
+					</emphasis>
+					-
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					generates a
+					relatively simple to read (and simple to parse) log
+					file
+					which contains aggregated
+					performance statistics.
+					When compared
+					with
+					the
+					graphs, the log file
+					contains a bigger set of
+					performance
+					metrics
+					(at the cost of being
+					less easy to read) and, if required,
+					can be
+					automatically polled and parsed for
+					raw performance data by
+					other
+					third
+					party
+					monitoring tools.
+				</listitem>
+				<listitem>
+					<citetitle>
+						JMX
+					</citetitle>
+					-
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					exposes performance metrics through JMX so that
+					monitors can be
+					set
+					up to alert when performance degrades
+					below acceptable
+					thresholds.
+					Since JMX has become the standard interface
+					for managing
+					and
+					monitoring Java applications, exposing
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					performance data through JMX opens up
+					a wide range of functionality
+					provided by third party monitoring applications.
+				</listitem>
+			</itemizedlist>
+		</para>
+		<section id="appendix.performance.monitoring.enable">
+			<title>Enable Performance Monitoring</title>
+			<para>
+				In the default installation,
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				does not gather any performance related data.
+				If performance
+				monitoring
+				is required, then
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				should
+				be configured to gather, calculate and publish the performance
+				statistics.
+			</para>
+			<section>
+				<title>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+				</title>
+				<para>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					can be enabled to publish
+					performance metrics by doing the
+					modification which
+					is marked as bold to the first line of
+					<filename>config/burst/internal/documentburster.xml</filename>
+					configuration
+					file.
+					<itemizedlist>
+						<listitem>
+							existing value -
+							<emphasis>
+								&lt;project name="documentburster"
+								default="documentburster"&gt; </emphasis>
+						</listitem>
+						<listitem>
+							new
+							value - see the bold change
+							<emphasis>
+								&lt;project name="documentburster" default="
+								<emphasis role="bold">performance-statistics</emphasis>"&gt;
+							</emphasis>
+						</listitem>
+					</itemizedlist>
+				</para>
+			</section>
+			<section>
+				<title>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						Server
+					</emphasis>
+				</title>
+				<para>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						Server
+					</emphasis>
+					can be enabled to publish
+					performance metrics by doing the
+					modification which
+					is marked as bold to the first line of
+					<filename>server/config/burst/internal/startServer.xml</filename>
+					configuration
+					file.
+					<itemizedlist>
+						<listitem>
+							existing value -
+							<emphasis>
+								&lt;project name="server" default="start-server"&gt;
+							</emphasis>
+						</listitem>
+						<listitem>
+							new
+							value - see the bold change
+							<emphasis>
+								&lt;project name="server" default="
+								<emphasis role="bold">performance-statistics</emphasis>"&gt;
+							</emphasis>
+						</listitem>
+					</itemizedlist>
+				</para>
+			</section>
+			<para>
+				Save the configuration file(s) and run
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				again. Now, everytime
+				a report is being processed, performance
+				metrics
+				will be published in the
+				following two files
+				<itemizedlist>
+					<listitem>
+						<filename>logs/performance/statistics.log</filename>
+						- contains the aggregated
+						performance statistics calculated at
+						regular time intervals (10 seconds by
+						default)
+					</listitem>
+					<listitem>
+						<para>
+							<filename>logs/performance/graphs.log</filename>
+							- contains
+							<citetitle>Google Chart Tools</citetitle>
+							URLs with
+							<emphasis>
+								<trademark>DocumentBurster</trademark>
+							</emphasis>
+							performance charts
+						</para>
+						<para>
+							<ulink url="https://developers.google.com/chart/?csw=1" />
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section id="appendix.performance.monitoring.built-in">
+			<title>
+				Built-in
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				Performance
+				Monitoring
+			</title>
+			<sect3 id="appendix.performance.monitoring.built-in.log-file">
+				<title>Performance Statistics Log File</title>
+				<para>
+					If configured as such,
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					will gather run-time performance statistics.
+					The data is collected
+					throughout the program execution
+					and regularly,
+					at a configurable
+					time interval (10 seconds by default)
+					the raw data
+					is processed to
+					produce and log aggregated statistics such as mean,
+					minimum,
+					maximum, standard deviation and transactions per second
+					over
+					a set
+					time span. If monitoring is enabled, the aggregated
+					statistics
+					will
+					be
+					available in
+					<filename>logs/performance/statistics.log</filename>
+					log file.
+				</para>
+				<para>
+					Example of performance statistics log file
+				</para>
+				<para>
+					<mediaobject>
+						<imageobject>
+							<imagedata fileref="images/performance-statistics.png"
+								format="PNG" />
+						</imageobject>
+					</mediaobject>
+				</para>
+			</sect3>
+			<sect3 id="appendix.performance.monitoring.built-in.graphs">
+				<title>Performance Graphs</title>
+				<para>
+					If monitoring is enabled,
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					will generate graphs for the average execution time and
+					transactions
+					per
+					second for the following transaction types
+					<itemizedlist>
+						<listitem>
+							<emphasis>
+								processPage
+							</emphasis>
+							- transaction which is parsing the text of
+							one page of the report
+							for burst tokens and variable
+							values.
+						</listitem>
+						<listitem>
+							<emphasis>
+								extractOutputFile
+							</emphasis>
+							- transaction which is extracting a
+							separate burst report.
+						</listitem>
+						<listitem>
+							<emphasis>
+								send
+							</emphasis>
+							- transaction which is distributing the previously
+							extracted
+							report.
+						</listitem>
+					</itemizedlist>
+				</para>
+				<para>
+					The graphs are generated as URLs to Google Chart Server in
+					<filename>logs/performance/graphs.log</filename>
+					log file.
+
+				</para>
+				<para>Mean Execution Times (ms)</para>
+				<para>
+					<mediaobject>
+						<imageobject>
+							<imagedata fileref="images/performance-mean.png"
+								format="PNG" />
+						</imageobject>
+					</mediaobject>
+				</para>
+				<para>
+					Transactions Per Second
+				</para>
+				<para>
+					<mediaobject>
+						<imageobject>
+							<imagedata fileref="images/performance-tps.png" format="PNG" />
+						</imageobject>
+					</mediaobject>
+				</para>
+			</sect3>
+			<sect3 id="appendix.performance.monitoring.built-in.jmx">
+				<title>Exposing Performance Statistics as JMX Attributes</title>
+				<para>
+					If performance monitoring is enabled,
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					does expose the performance data using the JMX standard.
+					Exposing
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					performance data
+					using JMX opens up a wide range of functionality,
+					such as:
+					<itemizedlist>
+						<listitem>
+							<emphasis>
+								<trademark>DocumentBurster</trademark>
+							</emphasis>
+							performance metrics can be visualized
+							using existing Java JMX
+							consoles like
+							JConsole or MC4J Management Console.
+						</listitem>
+						<listitem>
+							Through JMX,
+							<emphasis>
+								<trademark>DocumentBurster</trademark>
+							</emphasis>
+							has the premises to be monitored using professional network
+							monitoring software like Nagios or OpenNMS.
+						</listitem>
+					</itemizedlist>
+				</para>
+				<para>
+					Visualize report bursting and report distribution performance
+					metrics using JConsole
+				</para>
+				<para>
+					<mediaobject>
+						<imageobject>
+							<imagedata fileref="images/performance-monitoring-jconsole.png"
+								format="PNG" />
+						</imageobject>
+					</mediaobject>
+				</para>
+			</sect3>
+		</section>
+		<section id="appendix.performance.monitoring.integration">
+			<title>Integration with Professional Third Party
+				Monitoring Tools
+			</title>
+			<para>
+				If required, for more advanced monitoring scenarios,
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				has the technical premises to be
+				integrated with
+				other professional
+				monitoring tools. Such an advanced monitoring tool
+				will allow, for
+				example, to
+				define
+				performance thresholds on
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				metrics and to raise an alert whenever the minimum performance
+				thresholds
+				are not met. Once raised, the alert can
+				be either displayed
+				in a
+				monitoring dashboard using red
+				color or can be sent
+				by email to
+				one
+				or more configured email addresses.
+			</para>
+			<para>
+				While
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+					's
+				</emphasis>
+				monitoring system is not directly dependent on any, it can be
+				integrated with most of the existing network monitoring platforms
+				such
+				as Nagios, Cacti, Hyperic, Zenoss, SpiceWorks, GroundWork,
+				Zabbix
+				or
+				OpenNMS. If the IT department of your organization
+				has
+				already
+				standardized on
+				using an existing platform for doing system
+				monitoring
+				then it
+				should be
+				possible to add
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				to the list of applications which are closely monitored.
+			</para>
+			<para>
+				The documentation of the selected monitoring vendor should be
+				consulted in order to find
+				details on how to define and monitor a
+				new
+				application. In general, such tools will allow to fetch the required
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				performance data by either
+				<itemizedlist>
+					<listitem>
+						Constantly polling and parsing of the raw
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+						</emphasis>
+						performance log file -
+						<filename>logs/performance/statistics.log</filename>
+						for the required data.
+					</listitem>
+					<listitem>
+						By using a JMX adaptor (provided by the third party tool),
+						remotely
+						connect
+						and
+						read
+						the performance data which is
+						exposed by
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+						</emphasis>
+						using JMX.
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+	<section id="appendix.performance.reading">
+		<title>Further Reading</title>
+		<itemizedlist>
+			<listitem>
+				<para>
+					<citetitle>Google Chart Tools - </citetitle>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					is displaying the performance charts using
+					<ulink url="https://developers.google.com/chart/?csw=1">Google Charts</ulink>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<citetitle>JMX - </citetitle>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					exposes performance metrics through
+					<ulink url="http://en.wikipedia.org/wiki/Java_Management_Extensions">JMX</ulink>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<citetitle>JConsole -
+					</citetitle>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					can be monitored using
+					<ulink
+						url="http://en.wikipedia.org/wiki/JConsole">JConsole</ulink>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<citetitle>Nagios documentation -
+					</citetitle>
+					general documentation useful
+					when monitoring
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					through
+					<ulink url="http://www.nagios.org/documentation">Nagios</ulink>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<citetitle>Cacti documentation -
+					</citetitle>
+					general docs useful
+					when using
+					<ulink url="http://www.cacti.net/documentation.php">Cacti</ulink>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<citetitle>Hyperic HQ documentation - </citetitle>
+					<ulink url="http://www.hyperic.com/support/systems-monitoring-doc">Hyperic HQ</ulink>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<citetitle>Zenoss documentation -
+					</citetitle>
+					<ulink url="http://www.zenoss.com/resources/docs">Zenoss</ulink>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<citetitle>Spiceworks - </citetitle>
+					<ulink
+						url="http://www.spiceworks.com/free-network-monitoring-management-software/">Spiceworks</ulink>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<citetitle>GroundWork - network and application monitoring
+						software
+						-
+					</citetitle>
+					<ulink url="http://www.gwos.com/">GroundWork</ulink>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<citetitle>Zabbix - Monitoring software -
+					</citetitle>
+					<ulink url="http://www.zabbix.com/">Zabbix</ulink>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<citetitle>OpenNMS - Monitoring software -
+					</citetitle>
+					<ulink url="http://www.opennms.org/">OpenNMS </ulink>
+				</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+</appendix>

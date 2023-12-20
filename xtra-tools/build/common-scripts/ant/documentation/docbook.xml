@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<project name="docbook">
+
+	<description>
+		
+		Scripts to generate documentation
+		from XML DockBook documents (using Maven jDocbook plugin).
+		
+	</description>
+
+	<import file="../modules/package-common.xml" />
+
+	<!-- ***********************************************************************
+		* target: package
+	************************************************************************ -->
+	<target name="package" depends="
+		-package-init,
+		-package-template, 
+		generate-documentation,
+		-package-zip" description="Zips the documentation files together" />
+
+	<!-- ***********************************************************************
+		    * macrodef: generate-docs
+		 ************************************************************************ -->
+	<macrodef name="generate-docs" description="Generates HTML files from DocBook XML">
+
+		<attribute name="document" />
+
+		<sequential>
+
+			<delete includeemptydirs="true" quiet="true">
+				<fileset dir="${common.target-dir}/docbook/publish/en-US/html" defaultexcludes="false"/>
+			</delete>
+			<delete includeemptydirs="true" quiet="true">
+				<fileset dir="${common.target-dir}/docbook/publish/en-US/html_single" defaultexcludes="false"/>
+			</delete>
+
+			<exec executable="cmd">
+				<arg value="/c" />
+				<arg value="mvn -X -Ddocname=@{document} jdocbook:resources jdocbook:generate > log.txt" />
+			</exec>
+
+			<mkdir dir="${common.target-dir}/package/docs/html/@{document}"/>
+			<mkdir dir="${common.target-dir}/package/docs/html_single/@{document}"/>
+
+			<copy todir="${common.target-dir}/package/docs">
+				<fileset dir="${common.target-dir}/docbook/publish/en-US/pdf" />
+			</copy>
+
+			<copy todir="${common.target-dir}/package/docs/html/@{document}">
+				<fileset dir="${common.target-dir}/docbook/publish/en-US/html" />
+			</copy>
+
+			<copy todir="${common.target-dir}/package/docs/html_single/@{document}">
+				<fileset dir="${common.target-dir}/docbook/publish/en-US/html_single" />
+			</copy>
+
+		</sequential>
+
+	</macrodef>
+
+	<!-- ***********************************************************************
+		* target: generate-html-chunck-pdf-documentation to be overriden in the
+		client documentation scripts
+	*********************************************************************** -->
+	<target name="generate-documentation">
+
+		<echo>Please override the generate-pdf-documentation target with logic to generate the PDF documentation...</echo>
+
+	</target>
+
+
+</project>

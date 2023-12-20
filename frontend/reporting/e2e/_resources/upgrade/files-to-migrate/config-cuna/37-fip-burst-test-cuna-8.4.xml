@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<documentburster>
+  <settings>
+    <version>8.4</version>
+    <template>FIP Burst Test</template>
+    <burstfilename>$var0$.$input_document_extension$</burstfilename>
+    <mergefilename>merged.pdf</mergefilename>
+    <outputfolder>output/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss"$</outputfolder>
+    <backupfolder>backup/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</backupfolder>
+    <quarantinefiles>true</quarantinefiles>
+    <quarantinefolder>quarantine/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss"$</quarantinefolder>
+    <logsarchivesfolder>logs/archives/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</logsarchivesfolder>
+    <statsfilename>_stats-$num_pages$pages-$num_files_extracted$extracted-$num_files_distributed$distributed.log</statsfilename>
+    <sendfiles>
+      <email>true</email>
+      <upload>false</upload>
+      <web>false</web>
+      <sms>false</sms>
+    </sendfiles>
+    <deletefiles>false</deletefiles>
+    <emailserver>
+      <host>mail.company.com</host>
+      <port>2521</port>
+      <userid/>
+      <userpassword/>
+      <usessl>false</usessl>
+      <usetls>false</usetls>
+      <debug>false</debug>
+      <fromaddress>premiums@company.com</fromaddress>
+      <name>FIP Bill Admin</name>
+    </emailserver>
+    <htmlemail>true</htmlemail>
+    <htmlemaileditcode>true</htmlemaileditcode>
+    <emailsettings>
+      <to>premiums@company.com</to>
+      <cc/>
+      <bcc>$var2$</bcc>
+      <subject>$var1$ FIP Billing -$var3$</subject>
+      <text>Dear Policy Holder,
+
+Please receive your FIP billing for the period $var1$.
+
+Kindly pay special attention and review the accounts for members that currently have a paid through date of  November 2020  and prior as they have already become due for cancellation.
+
+If premiums has been submitted by these members for the relevant months outstanding, kindly forward these premiums with your next billing payment.
+
+Should you have any questions, please feel free to send an email to the following: 
+customerservices@company.com  
+
+premiums@company.com  
+
+Best Regard.
+
+</text>
+      <html>&lt;p&gt;Dear Policy Holder,&lt;br&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Please receive your FIP billing for the period $var1$.&lt;br&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Kindly pay special attention and review the accounts for members that currently have a paid through date of &lt;b&gt; November 2020 &lt;/b&gt; and prior as they have already become due for cancellation.&lt;br&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;If premiums has been submitted by these members for the relevant months outstanding, kindly forward these premiums with your next billing payment.&lt;br&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Should you have any questions, please feel free to send an email to the following: &lt;br&gt;&lt;/p&gt;
+&lt;u&gt;customerservices@company.com &lt;/u&gt;&lt;/b&gt; &lt;br&gt;&lt;br&gt;
+
+&lt;u&gt;premiums@company.com &lt;/u&gt;&lt;/b&gt; &lt;br&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Best Regard.&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;img src="images/CCI_Email_Sig.JPG"&gt;</html>
+    </emailsettings>
+    <attachments>
+      <items>
+        <attachment path="$extracted_file_path$" order="0"/>
+      </items>
+      <archive>
+        <archiveattachments>false</archiveattachments>
+        <archivefilename>reports-$burst_token$.zip</archivefilename>
+      </archive>
+    </attachments>
+    <uploadsettings>
+      <ftpcommand/>
+      <filesharecommand/>
+      <ftpscommand/>
+      <sftpcommand/>
+      <httpcommand/>
+      <cloudcommand/>
+    </uploadsettings>
+    <webuploadsettings>
+      <documentbursterwebcommand/>
+      <mssharepointcommand/>
+      <wordpresscommand/>
+      <drupalcommand/>
+      <joomlacommand/>
+      <otherwebcommand/>
+    </webuploadsettings>
+    <smssettings>
+      <twilio>
+        <accountsid/>
+        <authtoken/>
+      </twilio>
+      <fromtelephonenumber/>
+      <totelephonenumber/>
+      <text/>
+    </smssettings>
+    <qualityassurance>
+      <emailserver>
+        <host>localhost</host>
+        <port>1025</port>
+        <userid/>
+        <userpassword/>
+        <usessl>false</usessl>
+        <usetls>false</usetls>
+        <debug>false</debug>
+        <fromaddress>from@emailaddress.com</fromaddress>
+        <name>From Name</name>
+        <weburl>http://localhost:8025</weburl>
+      </emailserver>
+    </qualityassurance>
+    <bursttokendelimiters>
+      <start>{</start>
+      <end>}</end>
+    </bursttokendelimiters>
+    <numberofuservariables>10</numberofuservariables>
+    <delayeachdistributionby>0</delayeachdistributionby>
+    <reusetokenswhennotfound>false</reusetokenswhennotfound>
+    <failjobifanydistributionfails>true</failjobifanydistributionfails>
+    <enableretrypolicy>false</enableretrypolicy>
+    <retrypolicy>
+      <delay>3</delay>
+      <maxdelay>30</maxdelay>
+      <maxretries>3</maxretries>
+    </retrypolicy>
+    <allowlocalemailaddresses>false</allowlocalemailaddresses>
+    <locale>
+      <language/>
+      <country/>
+    </locale>
+    <encoding/>
+    <sort>false</sort>
+    <ignorebeads>false</ignorebeads>
+    <force>false</force>
+  </settings>
+</documentburster>

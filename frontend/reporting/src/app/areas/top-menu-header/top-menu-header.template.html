@@ -1,0 +1,255 @@
+<dburst-skins></dburst-skins>
+<header class="main-header">
+  <!-- Logo -->
+  <a href="#" [routerLink]="['/processing', 'burstMenuSelected']" class="logo">
+    <!-- logo for regular state and mobile devices -->
+    <span class="logo-lg">
+      <strong>Report</strong><em>Burster</em>&nbsp;
+      <i class="fa fa-paper-plane-o"></i>
+    </span>
+  </a>
+
+  <!-- Header Navbar -->
+  <nav class="navbar navbar-static-top" role="navigation">
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse pull-left" id="navbar-collapse">
+      <ul id="topMenu" class="nav navbar-nav">
+        <li routerLinkActive="active">
+          <a
+            id="topMenuBurst"
+            href="#"
+            [routerLink]="['/processing', 'burstMenuSelected']"
+            >{{ 'AREAS.TOP-MENU-HEADER.BURST' | translate }}</a
+          >
+        </li>
+
+        <li class="dropdown" routerLinkActive="active">
+          <a
+            id="topMenuConfiguration"
+            href="#"
+            class="dropdown-toggle"
+            data-toggle="dropdown"
+            >{{ 'AREAS.TOP-MENU-HEADER.CONFIGURATION' | translate }}
+            <span *ngIf="settingsService.currentConfigurationTemplateName">
+              ({{ settingsService.currentConfigurationTemplateName }})</span
+            >&nbsp;
+            <span class="caret"></span>
+          </a>
+          <ul id="topMenuConfigurationList" class="dropdown-menu" role="menu">
+            <li
+              *ngFor="let configurationFile of this.settingsService.getConfigurations('visible')"
+            >
+              <a
+                id="topMenuConfigurationLoad_{{ configurationFile.folderName }}_{{ configurationFile.fileName }}"
+                href="#"
+                [routerLink]="[
+                  '/configuration',
+                  'generalSettingsMenuSelected',
+                  configurationFile.filePath,
+                  configurationFile.templateName
+                ]"
+                >{{ configurationFile.templateName }}
+              </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+              <a id="topMenuConfigurationManage" href="#"
+                >Manage&nbsp;<i
+                  style="margin-top: 5px"
+                  class="fa fa-caret-right pull-right"
+                  >&nbsp;</i
+                ></a
+              >
+              <ul class="dropdown-menu">
+                <li>
+                  <a
+                    id="topMenuConfigurationTemplates"
+                    href="#"
+                    routerLink="/configuration-templates"
+                    >Reports</a
+                  >
+                </li>
+                <li>
+                  <a
+                    id="topMenuConfigurationExternalConnections"
+                    href="#"
+                    routerLink="/ext-connections"
+                    >Connections (Email, etc)</a
+                  >
+                </li>
+              </ul>
+            </li>
+            <li *ngIf="false" class="divider"></li>
+            <li *ngIf="false">
+              <a href="#"
+                >Samples&nbsp;<i
+                  style="margin-top: 5px"
+                  class="fa fa-caret-right pull-right"
+                  >&nbsp;</i
+                ></a
+              >
+              <ul class="dropdown-menu">
+                <li
+                  *ngIf="this.settingsService.getSampleConfigurations('visible').length == 0"
+                >
+                  No Samples
+                </li>
+                <li
+                  *ngFor="let configurationFile of this.settingsService.getSampleConfigurations('visible')"
+                >
+                  <a
+                    id="topMenuConfigurationLoad_{{ configurationFile.folderName }}_{{ configurationFile.fileName }}"
+                    href="#"
+                    [routerLink]="[
+                  '/configuration',
+                  'generalSettingsMenuSelected',
+                  configurationFile.filePath,
+                  configurationFile.templateName
+                ]"
+                    >{{ configurationFile.templateName }}
+                  </a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+
+        <li routerLinkActive="active" class="dropdown">
+          <a
+            id="topMenuHelp"
+            href="#"
+            class="dropdown-toggle"
+            data-toggle="dropdown"
+            >{{ 'AREAS.TOP-MENU-HEADER.HELP-AND-SUPPORT' | translate }}&nbsp;
+            <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu" role="menu">
+            <li>
+              <a
+                id="topMenuHelpSupport"
+                href="#"
+                [routerLink]="['/help', 'supportMenuSelected']"
+                >{{ 'AREAS.TOP-MENU-HEADER.GET-SOFTWARE-SUPPORT' | translate
+                }}</a
+              >
+            </li>
+            <li>
+              <a
+                id="topMenuHelpServices"
+                href="#"
+                [routerLink]="['/help', 'servicesMenuSelected']"
+              >
+                {{ 'AREAS.TOP-MENU-HEADER.DOCUMENTBURSTER-SERVICES' | translate
+                }}</a
+              >
+            </li>
+            <li class="divider"></li>
+            <li>
+              <a
+                id="topMenuHelpDocumentation"
+                href="#"
+                [routerLink]="['/help', 'docsMenuSelected']"
+                >{{ 'AREAS.TOP-MENU-HEADER.DOCUMENTATION' | translate }}</a
+              >
+            </li>
+            <li>
+              <a
+                id="topMenuHelpExamples"
+                href="#"
+                [routerLink]="['/help', 'useCasesMenuSelected']"
+                >{{ 'AREAS.TOP-MENU-HEADER.EXAMPLES' | translate }}</a
+              >
+            </li>
+            <li class="divider"></li>
+            <li>
+              <a
+                id="topMenuHelpFreeForSchools"
+                href="#"
+                [routerLink]="['/help', 'freeForSchoolsMenuSelected']"
+                >{{ 'AREAS.TOP-MENU-HEADER.FREE-FOR-SCHOOLS' | translate }}</a
+              >
+            </li>
+            <li>
+              <a
+                id="topMenuHelpCustomerReviews"
+                href="#"
+                [routerLink]="['/help', 'reviewsMenuSelected']"
+                >{{ 'AREAS.TOP-MENU-HEADER.CUSTOMER-REVIEWS' | translate }}</a
+              >
+            </li>
+            <li>
+              <a
+                id="topMenuHelpBlog"
+                href="#"
+                [routerLink]="['/help', 'blogMenuSelected']"
+              >
+                {{ 'AREAS.TOP-MENU-HEADER.DOCUMENTBURSTER-BLOG' | translate
+                }}</a
+              >
+            </li>
+
+            <li class="divider"></li>
+
+            <li>
+              <a
+                id="topMenuHelpJava"
+                href="#"
+                [routerLink]="['/help', 'installSetupMenuSelected']"
+              >
+                {{ 'AREAS.TOP-MENU-HEADER.INSTALL-SETUP' | translate }}</a
+              >
+            </li>
+
+            <li class="divider"></li>
+            <li>
+              <a
+                id="topMenuHelpLicense"
+                href="#"
+                [routerLink]="['/help','licenseMenuSelected']"
+              >
+                {{ 'AREAS.HELP.LEFT-MENU.LICENSE' | translate }}
+              </a>
+            </li>
+            <li>
+              <a
+                id="topMenuHelpAbout"
+                href="#"
+                [routerLink]="['/help', 'aboutMenuSelected']"
+                >{{ 'AREAS.TOP-MENU-HEADER.ABOUT' | translate }}</a
+              >
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="navbar-custom-menu">
+      <ul class="nav navbar-nav">
+        <li>
+          <a
+            id="askForFeature"
+            href="#"
+            (click)="onAskForFeatureModalShow(); false"
+            >Request <span class="badge">New</span> Feature</a
+          >
+        </li>
+
+        <li>
+          <a
+            id="supportEmail"
+            href="#"
+            [routerLink]="['/help', 'supportMenuSelected']"
+            >contact@reportburster.org</a
+          >
+        </li>
+        <!-- Control Sidebar Toggle Button -->
+        <li data-toggle="control-sidebar">
+          <a id="btnChangeSkin" style="cursor: pointer">
+            <i class="fa fa-gears"></i>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+</header>
+<!--<dburst-skins *ngIf="!electronService.RUNNING_IN_E2E"></dburst-skins>-->

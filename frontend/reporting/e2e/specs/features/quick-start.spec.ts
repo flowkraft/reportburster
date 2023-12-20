@@ -1,0 +1,42 @@
+import * as path from 'path';
+const slash = require('slash');
+
+import { test } from '@playwright/test';
+import { electronBeforeAfterAllTest } from '../../utils/common-setup';
+import { Constants } from '../../utils/constants';
+import { FluentTester } from '../../helpers/fluent-tester';
+
+test.describe('', async () => {
+  electronBeforeAfterAllTest(
+    'should correctly split samples/burst/Payslips.pdf (My Report)',
+    async ({ beforeAfterEach: firstPage }) => {
+      //long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const expectedOutputFiles = Constants.PAYSLIPS_PDF_BURST_TOKENS.map(
+        function (burstToken) {
+          return burstToken + '.pdf';
+        }
+      );
+
+      const ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#burstFile')
+        .typeText(
+          path.resolve(
+            slash(
+              process.env.PORTABLE_EXECUTABLE_DIR +
+                '/samples/burst/Payslips.pdf'
+            )
+          )
+        )
+        .click('#btnBurst')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles);
+    }
+  );
+});

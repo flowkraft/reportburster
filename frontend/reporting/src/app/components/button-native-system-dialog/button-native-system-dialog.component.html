@@ -1,0 +1,10 @@
+<button
+  id="{{ btnId }}"
+  type="button"
+  class="btn"
+  (click)="onClick()"
+  style="margin-bottom: 5px; width: 100%"
+>
+  <i class="fa fa-{{ saveDialog ? 'floppy-o' : 'folder-open-o' }}"></i>
+  {{ value || "Select" }}
+</button>

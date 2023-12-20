@@ -1,0 +1,606 @@
+<!-- Control Sidebar -->
+<aside id="controlSidebar" class="control-sidebar control-sidebar-dark">
+  <h4 class="control-sidebar-heading">
+    {{ "COMPONENTS.SKINS.SKINS" | translate }}
+  </h4>
+  <ul class="list-unstyled skins-grid clearfix">
+    <li style="float: left; width: 33.33333%; padding: 5px">
+      <a
+        id="skin-blue"
+        (click)="changeSkin('skin-blue')"
+        data-skin="skin-blue"
+        style="
+          cursor: pointer;
+          display: block;
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+        "
+        class="clearfix full-opacity-hover"
+      >
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 7px;
+              background: #367fa9;
+            "
+          ></span
+          ><span
+            class="bg-light-blue"
+            style="display: block; width: 80%; float: left; height: 7px"
+          ></span>
+        </div>
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 20px;
+              background: #222d32;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 20px;
+              background: #f4f5f7;
+            "
+          ></span>
+        </div>
+      </a>
+      <p class="text-center no-margin">
+        {{ "COMPONENTS.SKINS.BLUE" | translate }}
+      </p>
+    </li>
+    <li style="float: left; width: 33.33333%; padding: 5px">
+      <a
+        id="skin-black"
+        (click)="changeSkin('skin-black')"
+        data-skin="skin-black"
+        style="
+          cursor: pointer;
+          display: block;
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+        "
+        class="clearfix full-opacity-hover"
+      >
+        <div style="box-shadow: 0 0 2px rgba(0, 0, 0, 0.1)" class="clearfix">
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 7px;
+              background: #fefefe;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 7px;
+              background: #fefefe;
+            "
+          ></span>
+        </div>
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 20px;
+              background: #222;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 20px;
+              background: #f4f5f7;
+            "
+          ></span>
+        </div>
+      </a>
+      <p class="text-center no-margin">
+        {{ "COMPONENTS.SKINS.BLACK" | translate }}
+      </p>
+    </li>
+    <li style="float: left; width: 33.33333%; padding: 5px">
+      <a
+        id="skin-purple"
+        (click)="changeSkin('skin-purple')"
+        data-skin="skin-purple"
+        style="
+          cursor: pointer;
+          display: block;
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+        "
+        class="clearfix full-opacity-hover"
+      >
+        <div>
+          <span
+            style="display: block; width: 20%; float: left; height: 7px"
+            class="bg-purple-active"
+          ></span
+          ><span
+            class="bg-purple"
+            style="display: block; width: 80%; float: left; height: 7px"
+          ></span>
+        </div>
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 20px;
+              background: #222d32;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 20px;
+              background: #f4f5f7;
+            "
+          ></span>
+        </div>
+      </a>
+      <p class="text-center no-margin">
+        {{ "COMPONENTS.SKINS.PURPLE" | translate }}
+      </p>
+    </li>
+    <li style="float: left; width: 33.33333%; padding: 5px">
+      <a
+        id="skin-green"
+        (click)="changeSkin('skin-green')"
+        data-skin="skin-green"
+        style="
+          cursor: pointer;
+          display: block;
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+        "
+        class="clearfix full-opacity-hover"
+      >
+        <div>
+          <span
+            style="display: block; width: 20%; float: left; height: 7px"
+            class="bg-green-active"
+          ></span
+          ><span
+            class="bg-green"
+            style="display: block; width: 80%; float: left; height: 7px"
+          ></span>
+        </div>
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 20px;
+              background: #222d32;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 20px;
+              background: #f4f5f7;
+            "
+          ></span>
+        </div>
+      </a>
+      <p class="text-center no-margin">
+        {{ "COMPONENTS.SKINS.GREEN" | translate }}
+      </p>
+    </li>
+    <li style="float: left; width: 33.33333%; padding: 5px">
+      <a
+        id="skin-red"
+        (click)="changeSkin('skin-red')"
+        data-skin="skin-red"
+        style="
+          cursor: pointer;
+          display: block;
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+        "
+        class="clearfix full-opacity-hover"
+      >
+        <div>
+          <span
+            style="display: block; width: 20%; float: left; height: 7px"
+            class="bg-red-active"
+          ></span
+          ><span
+            class="bg-red"
+            style="display: block; width: 80%; float: left; height: 7px"
+          ></span>
+        </div>
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 20px;
+              background: #222d32;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 20px;
+              background: #f4f5f7;
+            "
+          ></span>
+        </div>
+      </a>
+      <p class="text-center no-margin">
+        {{ "COMPONENTS.SKINS.RED" | translate }}
+      </p>
+    </li>
+    <li style="float: left; width: 33.33333%; padding: 5px">
+      <a
+        id="skin-yellow"
+        (click)="changeSkin('skin-yellow')"
+        data-skin="skin-yellow"
+        style="
+          cursor: pointer;
+          display: block;
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+        "
+        class="clearfix full-opacity-hover"
+      >
+        <div>
+          <span
+            style="display: block; width: 20%; float: left; height: 7px"
+            class="bg-yellow-active"
+          ></span
+          ><span
+            class="bg-yellow"
+            style="display: block; width: 80%; float: left; height: 7px"
+          ></span>
+        </div>
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 20px;
+              background: #222d32;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 20px;
+              background: #f4f5f7;
+            "
+          ></span>
+        </div>
+      </a>
+      <p class="text-center no-margin">
+        {{ "COMPONENTS.SKINS.YELLOW" | translate }}
+      </p>
+    </li>
+    <li style="float: left; width: 33.33333%; padding: 5px">
+      <a
+        id="skin-blue-light"
+        (click)="changeSkin('skin-blue-light')"
+        data-skin="skin-blue-light"
+        style="
+          cursor: pointer;
+          display: block;
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+        "
+        class="clearfix full-opacity-hover"
+      >
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 7px;
+              background: #367fa9;
+            "
+          ></span
+          ><span
+            class="bg-light-blue"
+            style="display: block; width: 80%; float: left; height: 7px"
+          ></span>
+        </div>
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 20px;
+              background: #f9fafc;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 20px;
+              background: #f4f5f7;
+            "
+          ></span>
+        </div>
+      </a>
+      <p class="text-center no-margin" style="font-size: 12px">
+        {{ "COMPONENTS.SKINS.BLUE-LIGHT" | translate }}
+      </p>
+    </li>
+    <li style="float: left; width: 33.33333%; padding: 5px">
+      <a
+        id="skin-black-light"
+        (click)="changeSkin('skin-black-light')"
+        data-skin="skin-black-light"
+        style="
+          cursor: pointer;
+          display: block;
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+        "
+        class="clearfix full-opacity-hover"
+      >
+        <div style="box-shadow: 0 0 2px rgba(0, 0, 0, 0.1)" class="clearfix">
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 7px;
+              background: #fefefe;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 7px;
+              background: #fefefe;
+            "
+          ></span>
+        </div>
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 20px;
+              background: #f9fafc;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 20px;
+              background: #f4f5f7;
+            "
+          ></span>
+        </div>
+      </a>
+      <p class="text-center no-margin" style="font-size: 12px">
+        {{ "COMPONENTS.SKINS.BLACK-LIGHT" | translate }}
+      </p>
+    </li>
+    <li style="float: left; width: 33.33333%; padding: 5px">
+      <a
+        id="skin-purple-light"
+        (click)="changeSkin('skin-purple-light')"
+        data-skin="skin-purple-light"
+        style="
+          cursor: pointer;
+          display: block;
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+        "
+        class="clearfix full-opacity-hover"
+      >
+        <div>
+          <span
+            style="display: block; width: 20%; float: left; height: 7px"
+            class="bg-purple-active"
+          ></span
+          ><span
+            class="bg-purple"
+            style="display: block; width: 80%; float: left; height: 7px"
+          ></span>
+        </div>
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 20px;
+              background: #f9fafc;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 20px;
+              background: #f4f5f7;
+            "
+          ></span>
+        </div>
+      </a>
+      <p class="text-center no-margin" style="font-size: 12px">
+        {{ "COMPONENTS.SKINS.PURPLE-LIGHT" | translate }}
+      </p>
+    </li>
+    <li style="float: left; width: 33.33333%; padding: 5px">
+      <a
+        id="skin-green-light"
+        (click)="changeSkin('skin-green-light')"
+        data-skin="skin-green-light"
+        style="
+          cursor: pointer;
+          display: block;
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+        "
+        class="clearfix full-opacity-hover"
+      >
+        <div>
+          <span
+            style="display: block; width: 20%; float: left; height: 7px"
+            class="bg-green-active"
+          ></span
+          ><span
+            class="bg-green"
+            style="display: block; width: 80%; float: left; height: 7px"
+          ></span>
+        </div>
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 20px;
+              background: #f9fafc;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 20px;
+              background: #f4f5f7;
+            "
+          ></span>
+        </div>
+      </a>
+      <p class="text-center no-margin" style="font-size: 12px">
+        {{ "COMPONENTS.SKINS.GREEN-LIGHT" | translate }}
+      </p>
+    </li>
+    <li style="float: left; width: 33.33333%; padding: 5px">
+      <a
+        id="skin-red-light"
+        (click)="changeSkin('skin-red-light')"
+        data-skin="skin-red-light"
+        style="
+          cursor: pointer;
+          display: block;
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+        "
+        class="clearfix full-opacity-hover"
+      >
+        <div>
+          <span
+            style="display: block; width: 20%; float: left; height: 7px"
+            class="bg-red-active"
+          ></span
+          ><span
+            class="bg-red"
+            style="display: block; width: 80%; float: left; height: 7px"
+          ></span>
+        </div>
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 20px;
+              background: #f9fafc;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 20px;
+              background: #f4f5f7;
+            "
+          ></span>
+        </div>
+      </a>
+      <p class="text-center no-margin" style="font-size: 12px">
+        {{ "COMPONENTS.SKINS.RED-LIGHT" | translate }}
+      </p>
+    </li>
+    <li style="float: left; width: 33.33333%; padding: 5px">
+      <a
+        id="skin-yellow-light"
+        (click)="changeSkin('skin-yellow-light')"
+        data-skin="skin-yellow-light"
+        style="
+          cursor: pointer;
+          display: block;
+          box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+        "
+        class="clearfix full-opacity-hover"
+      >
+        <div>
+          <span
+            style="display: block; width: 20%; float: left; height: 7px"
+            class="bg-yellow-active"
+          ></span
+          ><span
+            class="bg-yellow"
+            style="display: block; width: 80%; float: left; height: 7px"
+          ></span>
+        </div>
+        <div>
+          <span
+            style="
+              display: block;
+              width: 20%;
+              float: left;
+              height: 20px;
+              background: #f9fafc;
+            "
+          ></span
+          ><span
+            style="
+              display: block;
+              width: 80%;
+              float: left;
+              height: 20px;
+              background: #f4f5f7;
+            "
+          ></span>
+        </div>
+      </a>
+      <p class="text-center no-margin" style="font-size: 12px">
+        {{ "COMPONENTS.SKINS.YELLOW-LIGHT" | translate }}
+      </p>
+    </li>
+  </ul>
+</aside>
+<!-- /.control-sidebar -->
+<!-- Add the sidebar's background. This div must be placed
+         immediately after the control sidebar -->
+<div class="control-sidebar-bg" style="margin-top: 25px"></div>

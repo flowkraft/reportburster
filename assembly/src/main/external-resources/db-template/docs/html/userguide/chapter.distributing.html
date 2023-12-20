@@ -1,0 +1,1330 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Chapter 3. Distribute Reports</title><link rel="stylesheet" href="css/skrf.css" type="text/css"/><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"/><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><script xmlns="" type="text/javascript" src="css/shCore.js"><!----></script><script xmlns="" type="text/javascript" src="css/shBrushJava.js"><!----></script><script xmlns="" type="text/javascript" src="css/shBrushGroovy.js"><!----></script><link xmlns="" href="css/shCore.css" rel="stylesheet" type="text/css"/><link xmlns="" href="css/shThemeDefault.css" rel="stylesheet" type="text/css"/><script xmlns="" type="text/javascript">
+     SyntaxHighlighter.all()
+</script><link rel="home" href="index.html" title="DocumentBurster User Guide"/><link rel="up" href="pt02.html" title="Part II.  DocumentBurster"/><link rel="prev" href="chapter.excel.html" title="Chapter 2. Burst Excel Reports"/><link rel="next" href="chapter.templates.html" title="Chapter 4. Configuration Templates"/></head>
+				<body>
+				<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K63768" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript> <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+				new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src= '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+				})(window,document,'script','dataLayer','GTM-K63768');</script>
+			<ul class="docnav"><li class="previous"><a accesskey="p" href="chapter.excel.html"><strong>Prev</strong></a></li><li class="next"><a accesskey="n" href="chapter.templates.html"><strong>Next</strong></a></li></ul><div class="chapter" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.distributing"/>Chapter 3. Distribute Reports</h2></div></div></div><div class="toc"><dl><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.overview">3.1. Overview</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.enable">3.2. Enable Report Distribution</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.email">3.3. Distribute Reports by Email</a></span></dt><dd><dl><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.email.settings">3.3.1. Email Connection Settings</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#d0e2027">3.3.2. Dynamic Email Connection Settings</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#d0e2078">3.3.3. Email Each Report to One Recipient</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#d0e2128">3.3.4. Email Each Report to Multiple Recipients</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#d0e2199">3.3.5. Text Email Messages</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.email.html">3.3.6. HTML Email Messages</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.html.responsive">3.3.7. 
+				Beautiful Responsive HTML Emails
+			</a></span></dt></dl></dd><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.attachments">3.4. Attachments</a></span></dt><dd><dl><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.attachments.configure">3.4.1. Configure Attachments</a></span></dt></dl></dd><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.uploading">3.5. Upload Reports</a></span></dt><dd><dl><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.uploading.curl.integration">3.5.1. 
+				cURL
+				Integration
+			</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.uploading.ftp">3.5.2. 
+				FTP
+			</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.uploading.fileshare">3.5.3. 
+				File Share
+			</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.uploading.ftps">3.5.4. 
+				FTPS
+			</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.uploading.sftp">3.5.5. 
+				SFTP/SSH/SCP
+			</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.uploading.http">3.5.6. 
+				HTTP/WebDAV
+			</a></span></dt></dl></dd><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.sms">3.6. Send SMS Messages</a></span></dt><dd><dl><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.sms.twilio">3.6.1. 
+				Twilio
+			</a></span></dt><dt><span class="section"><a href="chapter.distributing.html#chapter.distributing.sms.text">3.6.2. 
+				Text
+			</a></span></dt></dl></dd></dl></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.distributing.overview"/>3.1. Overview</h2></div></div></div><p>
+			Your partners might need their reports to be sent through
+			various
+			distribution channels. Most of them will prefer email but
+			others will
+			rather use FTP. Some customers might have their own
+			automated
+			software
+			systems to further process the reports and might
+			expect the files to
+			be placed in a specified remote location.
+			Others
+			might have more strict
+			security related requirements and will
+			prefer
+			the FTPS protocol. In
+			some scenarios the generated reports
+			should be
+			uploaded
+			through an
+			enterprise
+			portal like
+			<em class="citetitle">Microsoft SharePoint</em>
+			.
+		</p><p>
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			offers a broad range of destination types
+			like email, local files,
+			FTP, FTPs, SFTP and TFTP, Windows shared
+			drives, UNIX Samba servers
+			and WebDAV servers.
+			WebDAV
+			protocol
+			is used to
+			distribute the reports to
+			enterprise web portals such
+			as
+			<em class="citetitle">Microsoft
+				SharePoint
+			</em>
+			,
+			<em class="citetitle">Oracle Portal</em>
+			or
+			<em class="citetitle">SAP
+				NetWeaver
+			</em>
+			.
+		</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.distributing.enable"/>3.2. Enable Report Distribution</h2></div></div></div><p>
+			In order to distribute the reports, the following configuration
+			needs to be checked.
+		</p><p>
+			In
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			main window select
+			<span class="guimenu"><strong>Actions</strong></span>
+			,
+			<span class="guimenu"><strong>Configure</strong></span>
+			,
+			<span class="guimenu"><strong>General</strong></span>
+		</p><p>
+			</p><div class="mediaobject"><img src="images/burst-settings1.png"/></div><p>
+			</p><div class="mediaobject"><img src="images/distribute-reports.png"/></div><p>
+		</p><p>
+			<span class="emphasis"><em>Distribute reports to Email, FTP ...
+			</em></span>
+			- If checked, the
+			generated reports will be distributed as part of
+			the
+			bursting process,
+			otherwise no. Default value is unchecked.
+		</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.distributing.email"/>3.3. Distribute Reports by Email</h2></div></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.distributing.email.settings"/>3.3.1. Email Connection Settings</h3></div></div></div><p>
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				can distribute reports using a
+				<em class="citetitle">Microsoft Exchange</em>
+				email
+				server or
+				using any other
+				SMTP compliant email server. For
+				testing purposes it's possible to configure
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				to send emails through free (SMTP) email providers like
+				<em class="citetitle">Hotmail</em>
+				,
+				<em class="citetitle">Yahoo!
+					Mail
+				</em>
+				,
+				<em class="citetitle">Gmail</em>
+				,
+				etc.
+			</p><p>
+				In order to distribute reports by email, the email server
+				connection settings should be
+				properly configured.
+			</p><p>
+				In
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				main window select
+				<span class="guimenu"><strong>Actions</strong></span>
+				,
+				<span class="guimenu"><strong>Configure</strong></span>
+				,
+				<span class="guimenu"><strong>Email</strong></span>
+				,
+				<span class="guimenu"><strong>Connection Settings</strong></span>
+			</p><p>
+				</p><div class="mediaobject"><img src="images/email-connection-settings.png"/></div><p>
+			</p><p>
+				The email configuration is straightforward. The most
+				important
+				settings are the
+				host, the user name, the password and the
+				port. If an
+				email
+				server with SSL or
+				TLS support (e.g.
+				<em class="citetitle">Gmail</em>
+				, etc.) is
+				used then
+				the appropriate checkboxes need
+				to be
+				selected.
+			</p><p>
+				<span class="emphasis"><em>Send Test Email</em></span>
+				can be used to test that the provided email settings are correct.
+			</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h4 class="title"><a id="d0e1869"/>3.3.1.1. Microsoft Exchange Server</h4></div></div></div><p>
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+					</em></span>
+					works when configured with correct
+					<em class="citetitle">Microsoft Exchange</em>
+					SMTP server connection settings.
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+					</em></span>
+					communicates with the
+					<em class="citetitle">Microsoft Exchange</em>
+					email server through SMTP similar with how the
+					<em class="citetitle">Microsoft Outlook</em>
+					email client
+					software does.
+					Check the
+					<em class="citetitle">Microsoft Exchange</em>
+					SMTP connection settings configured in any working
+					<em class="citetitle">Microsoft Outlook</em>
+					software installation.
+					Providing the same (Outlook) SMTP settings to
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+					</em></span>
+					it's an easy way to get
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+					</em></span>
+					to send emails through yours organization
+					<em class="citetitle">Microsoft Exchange</em>
+					server.
+				</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h4 class="title"><a id="d0e1916"/>3.3.1.2. Cloud Email Providers</h4></div></div></div><p>
+					<em class="citetitle">Microsoft Office 365</em>
+				</p><p>
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+					</em></span>
+					can be configured to send emails through the cloud
+					<em class="citetitle">Microsoft Office 365</em>
+					service. Please refer to the following
+					documentation and see the
+					<em class="citetitle">Microsoft Office 365</em>
+					SMTP settings to be configured with
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+					</em></span>
+				</p><p>
+					<a class="ulink" href="https://technet.microsoft.com/en-us/library/dn554323(v=exchg.150).aspx#HowtoconfigSMTPCS">
+						<em class="citetitle">Microsoft Office 365</em>
+						SMTP configuration
+					</a>
+				</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h4 class="title"><a id="d0e1952"/>3.3.1.3. Free cloud email services - Hotmail, Yahoo! Mail, Gmail
+				</h4></div></div></div><p>
+					For testing few reports
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+					</em></span>
+					can be configured to send emails through any (free) SMTP cloud
+					email service provider.
+				</p><p>
+					No matter which of
+					these
+					free email
+					services are used,
+					you
+					must be aware
+					of
+					the "rate limit" (the limit
+					for sending emails)
+					established by your
+					email account provider (i.e.
+					<em class="citetitle">Microsoft</em>
+					,
+					<em class="citetitle">Gmail</em>
+					,
+					<em class="citetitle">Yahoo</em>
+					).
+				</p><p>
+					<em class="citetitle">Gmail</em>
+					can be configured for
+					testing few reports. If you
+					are interested to
+					test
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+					</em></span>
+					with
+					<em class="citetitle">Gmail</em>
+					,
+					<a class="ulink" href="https://support.google.com/mail/answer/13287?hl=en">
+						please read this Gmail documentation.
+
+					</a>
+				</p><p>
+					<em class="citetitle">Yahoo! Mail</em>
+					,
+					<em class="citetitle">Hotmail</em>
+					and other big email providers have POP3
+					support
+					and
+					can
+					be
+					configured
+					with
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+						.
+					</em></span>
+					Please read the POP3 support documentation
+					of the
+					specific email
+					provider which you have the intention to use.
+				</p></div><div class="note"><h2>Note</h2><p>
+					If required, a network or IT administrator
+					from your
+					organization should be able to give further
+					help in
+					configuring the
+					email server settings.
+				</p></div><div class="important"><h2>Important</h2><p>
+					If there is a firewall or anti-virus software
+					which is enabled
+					in-between
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+					</em></span>
+					and the email server,
+					in such case, the protecting software might
+					need to
+					be configured and allow
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+					</em></span>
+					to send emails
+					as a good and trustable citizen.
+				</p></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="d0e2027"/>3.3.2. Dynamic Email Connection Settings</h3></div></div></div><p>
+				If required, using variables, the email connection settings can
+				be
+				dynamically
+				filled at run-time when the reports are being
+				distributed.
+			</p><p>
+				For example, your organization might have few departments (e.g.
+				human
+				resources/payroll, financial/accounting,
+				travel department,
+				etc.) and each department will need to
+				distribute
+				their own set of
+				reports. Payslip reports (which are being distributed by the
+				human
+				resources/payroll department) should be sent using the
+				<span class="emphasis"><em>payroll@yourcompany.com</em></span>
+				email account, invoices should be sent
+				using
+				<span class="emphasis"><em>finance@yourcompany.com</em></span>
+				and so on.
+			</p><p>
+				<span class="emphasis"><em>Variables,</em></span>
+				which are described with more details in
+				<a class="xref" href="chapter.variables.html" title="Chapter 5. Variables">Chapter 5, <i>Variables</i></a>
+				,
+				can be used to achieve such a requirement. Instead of hard-coding
+				the
+				sender email account as being
+				<span class="emphasis"><em>payroll@yourcompany.com</em></span>
+				or
+				<span class="emphasis"><em>finance@yourcompany.com,</em></span>
+				using variables, it is possible
+				to dynamically fill the email
+				connection details when the reports are being
+				distributed (at that
+				time the sender
+				is known).
+			</p><p>
+				</p><div class="mediaobject"><img src="images/dynamic-email-connection.png"/></div><p>
+			</p><p>
+				When sending the reports, the dynamic variables
+				<span class="emphasis"><em>$var0$,</em></span>
+				<span class="emphasis"><em>$var1,</em></span>
+				etc. will be appropriately evaluated with the configuration settings
+				for either
+				<span class="emphasis"><em>payroll@yourcompany.com</em></span>
+				or
+				<span class="emphasis"><em>finance@yourcompany.com.</em></span>
+				For more details about
+				<span class="emphasis"><em>Variables</em></span>
+				please check
+				<a class="xref" href="chapter.variables.html" title="Chapter 5. Variables">Chapter 5, <i>Variables</i></a>
+				.
+			</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="d0e2078"/>3.3.3. Email Each Report to One Recipient</h3></div></div></div><p>
+				The simplest email distribution scenario is when sending
+				each of
+				the generated reports to one different recipient.
+			</p><p>
+				By default the
+				<span class="emphasis"><em>To</em></span>
+				address is configured with the value of the
+				<span class="emphasis"><em>$burst_token$</em></span>
+				variable.
+				If the burst
+				tokens are of type
+				email
+				address, for
+				example by
+				using tokens such as
+				<span class="emphasis"><em>{clyde.grew@northridgehealth.org},</em></span>
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				will send the
+				output report to the corresponding email address, in
+				this case the
+				<span class="emphasis"><em>clyde.grew@northridgehealth.org</em></span>
+				email address.
+			</p><p>
+				This is how the existing sample report
+				<code class="filename">samples/Payslips.pdf</code>
+				is configured to work.
+			</p><p>
+				</p><div class="mediaobject"><img src="images/email-payslips-employee.png"/></div><p>
+			</p><p>
+				The
+				<span class="emphasis"><em>burst token</em></span>
+				is
+				<span class="emphasis"><em>clyde.grew@northridgehealth.org</em></span>
+				so the output file name will be
+				<code class="filename">clyde.grew@northridgehealth.org.pdf</code>
+				and
+				will be emailed as an attachment to the
+				<span class="emphasis"><em>clyde.grew@northridgehealth.org</em></span>
+				email address.
+			</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="d0e2128"/>3.3.4. Email Each Report to Multiple Recipients</h3></div></div></div><p>
+				Another scenario is to distribute each output report to a list
+				of
+				people (or groups of people). It is also easy to configure
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				to CC and BCC the generated reports.
+			</p><p>
+				</p><div class="mediaobject"><img src="images/email-multiple-recipients.png"/></div><p>
+			</p><p>
+				In addition, it is possible to use dynamic variables when
+				configuring the
+				email destinations for the output reports.
+				For
+				example, it is
+				possible to configure
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				to distribute emails
+				<span class="emphasis"><em>TO</em></span>
+				<span class="emphasis"><em>$var0$,</em></span>
+				<span class="emphasis"><em>CC</em></span>
+				to
+				<span class="emphasis"><em>$var1$</em></span>
+				and
+				<span class="emphasis"><em>BCC</em></span>
+				to
+				<span class="emphasis"><em>$var2$.</em></span>
+			</p><p>
+				</p><div class="mediaobject"><img src="images/email-multiple-addresses.png"/></div><p>
+			</p><p>
+				At run-time the variables will be expanded with values from the
+				report
+				which is being distributed, for example the variable values
+				might be evaluated to
+				</p><div class="itemizedlist"><ul><li><span class="emphasis"><em>$var0$ (TO)-</em></span>
+						emma.w@company.com;george.c@company.com
+					</li><li><span class="emphasis"><em>$var1$ (CC)-</em></span>
+						accounting@company.com
+					</li><li>
+						and
+						<span class="emphasis"><em>$var2$ (BCC)-</em></span>
+						finance@northridgehealth.com.
+					</li></ul></div><p>
+			</p><div class="important"><h2>Important</h2><p>
+					Multiple email addresses should be separated by either
+					semicolon (;) or
+					comma (,).
+				</p></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="d0e2199"/>3.3.5. Text Email Messages</h3></div></div></div><p>
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				supports sending of personalized email messages which have the
+				corresponding burst report attached to the email.
+			</p><p>
+				In
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				main window select
+				<span class="guimenu"><strong>Actions</strong></span>
+				,
+				<span class="guimenu"><strong>Configure</strong></span>
+				,
+				<span class="guimenu"><strong>Email</strong></span>
+				,
+				<span class="guimenu"><strong>Email Message</strong></span>
+			</p><p>
+				</p><div class="mediaobject"><img src="images/email-settings1.png"/></div><p>
+				</p><div class="mediaobject"><img src="images/email-message.png"/></div><p>
+			</p><p>
+				Using variables, the subject
+				and the text of the email messages
+				can be dynamically configured and customized for each
+				individual
+				recipient.
+			</p><p>
+				<span class="emphasis"><em>Example</em></span>
+				- In the previous screenshot, when each individual report is being
+				distributed,
+				<span class="emphasis"><em>$var0$,</em></span>
+				<span class="emphasis"><em>$var1$</em></span>
+				and
+				<span class="emphasis"><em>$var2$</em></span>
+				variables will be replaced with values fetched from the burst report
+				such as
+				<span class="emphasis"><em>John,</em></span>
+				<span class="emphasis"><em>July</em></span>
+				and
+				<span class="emphasis"><em>Michelle.</em></span>
+			</p><p>
+				Following is the message which is sent when the variables
+				are
+				expanded with the values
+				<span class="emphasis"><em>John,</em></span>
+				<span class="emphasis"><em>July</em></span>
+				and
+				<span class="emphasis"><em>Michelle</em></span>
+				</p><div class="literallayout"><p><br/>
+					Hi John,<br/>
+<br/>
+					Attached you can find the invoice for the<br/>
+					month of July.<br/>
+<br/>
+					Thank you,<br/>
+					Michelle<br/>
+				</p></div><p>
+			</p><div class="note"><h2>Note</h2><p>
+					In order to avoid message retyping, using the
+					<span class="emphasis"><em>Save Template</em></span>
+					and
+					<span class="emphasis"><em>Load Template</em></span>
+					buttons, it is possible
+					to save/load email message templates from/to
+					external text files.
+				</p></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.distributing.email.html"/>3.3.6. HTML Email Messages</h3></div></div></div><p>
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				can be configured to send
+				rich HTML formatted email messages in order
+				to add color,
+				images, headings, bulleted lists, emphasized text,
+				underline key
+				points, or to make some of the words bold.
+			</p><p>
+				<span class="strong"><strong>
+					Configuration
+				</strong></span>
+			</p><p>
+				Select the
+				<span class="emphasis"><em>HTML email</em></span>
+				checkbox and define the HTML message
+				with valid HTML code containing
+				the message which needs to be
+				distributed.
+			</p><p>
+				</p><div class="mediaobject"><img src="images/html-email.png"/></div><p>
+			</p><div class="note"><h2>Provide Plain Text Message Alternative</h2><p>
+					When you configure to send HTML emails it is a good practice
+					to provide
+					an alternative plain text message for HTML unaware email
+					clients
+					(such as text-based email clients).
+				</p></div><div class="note"><h2>Personalize HTML Messages Using Variables</h2><p>
+					It is possible to use variables to personalize
+					the
+					content
+					of the HTML
+					emails for each individual recipient. For more
+					details about
+					variables please
+					read
+					<a class="xref" href="chapter.variables.html" title="Chapter 5. Variables">Chapter 5, <i>Variables</i></a>
+				</p></div><div class="important"><h2>Image Paths</h2><p>
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+					</em></span>
+					resolves all image paths used in the HTML code starting from
+					<code class="filename">./templates</code>
+					parent directory.
+				</p><p>
+					For instance, the image
+					<code class="filename">logo.png</code>
+					is defined in the
+					<code class="filename">invoice.html</code>
+					having the relative path
+					<code class="filename">
+						src="html-basic-example/images/logo.png",
+					</code>
+					starting from the
+					<code class="filename">./templates</code>
+					parent directory.
+				</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h4 class="title"><a id="chapter.distributing.html.basic"/>3.3.6.1. 
+					Basic HTML Sample -
+					<code class="filename">invoice.html</code>
+				</h4></div></div></div><p>
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+					</em></span>
+					comes with a sample
+					HTML email template located in
+					<code class="filename">templates/html-basic-example</code>
+					folder.
+					The sample template is called
+					<code class="filename">invoice.html</code>
+					and contains a good looking invoice to demonstrate the
+					capabilities
+					of HTML emails.
+				</p><p>
+					The sample HTML email template has a complex enough layout for
+					giving an
+					idea
+					of what things can be achieved when sending HTML
+					formatted
+					emails (i.e. colors, images, bold text, etc.).
+				</p><p>
+					This is how the sample HTML invoice looks on Microsoft Outlook
+					email client.
+				</p><p>
+					</p><div class="mediaobject"><img src="images/html-invoice-sample.png"/></div><p>
+				</p></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.distributing.html.responsive"/>3.3.7. 
+				Beautiful Responsive HTML Emails
+			</h3></div></div></div><p>
+				<span class="strong"><strong>
+					Mobile, WebMail and Desktop Trends
+				</strong></span>
+			</p><p>
+				<span class="emphasis"><em>We tracked nearly 1 billion emails every month
+					throughout
+					2015.
+				</em></span>
+			</p><p>
+				<span class="emphasis"><em>
+					In the second half of 2015, opens made on mobile devices
+					surged,
+					going from 49% in June to 54% in November—a 10% increase.
+					This matches trends we’ve seen in prior years where consumers are
+					more
+					likely to rely on portable devices. Webmail and desktop opens
+					have also steadily declined throughout 2015,
+					each dropping 13%
+					since
+					January.
+				</em></span>
+			</p><p>
+				<a class="ulink" href="https://litmus.com/blog/top-10-most-popular-email-clients-of-2015">https://litmus.com/blog/top-10-most-popular-email-clients-of-2015</a>
+			</p><p>
+				<span class="strong"><strong>
+					Responsive Email Templates
+				</strong></span>
+			</p><p>
+				Designing responsive HTML emails can be hard.
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				makes it easy.
+			</p><p>
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				comes with
+				<span class="strong"><strong>Foundation for Emails</strong></span>
+				which is a simple framework to quickly
+				create responsive HTML
+				emails
+				that work on any device and any client.
+			</p><p>
+				<a class="ulink" href="http://foundation.zurb.com/emails.html">http://foundation.zurb.com/emails.html</a>
+			</p><p>
+				There are four responsive email templates available in
+				<code class="filename">./templates/html-mobile-responsive-emails/templates/base
+				</code>
+			</p><p>
+				All four email templates have been tested across 40+ email
+				clients
+				and devices.
+			</p><p>
+				<span class="strong"><strong>
+					1. Basic
+				</strong></span>
+				- View Demo -
+				<a class="ulink" href="https://litmus.com/pub/85a1b19">https://litmus.com/pub/85a1b19</a>
+			</p><p>
+				This template is perfect for sending a basic but nice looking
+				responsive email.
+			</p><p>
+				</p><div class="mediaobject"><img src="images/responsive-basic.png"/></div><p>
+			</p><p>
+				<span class="strong"><strong>
+					2. Hero
+				</strong></span>
+				- View Demo -
+				<a class="ulink" href="https://litmus.com/pub/6d34a4c">https://litmus.com/pub/6d34a4c</a>
+			</p><p>
+				Want to include a snazzy hero image in your responsive email?
+				This template is for you!
+			</p><p>
+				</p><div class="mediaobject"><img src="images/responsive-hero.png"/></div><p>
+			</p><p>
+				<span class="strong"><strong>
+					3. Sidebar
+				</strong></span>
+				- View Demo -
+				<a class="ulink" href="https://litmus.com/checklist/public/f6f3c9d">https://litmus.com/checklist/public/f6f3c9d</a>
+			</p><p>
+				This template includes a sidebar area for a list of links,
+				perfect for linking to additional content.
+			</p><p>
+				</p><div class="mediaobject"><img src="images/responsive-sidebar.png"/></div><p>
+			</p><p>
+				<span class="strong"><strong>
+					4. Sidebar Hero
+				</strong></span>
+				- View Demo -
+				<a class="ulink" href="https://litmus.com/checklist/public/c00b7d3">https://litmus.com/checklist/public/c00b7d3</a>
+			</p><p>
+				Want a sidebar and a hero image? Let's go crazy! This template
+				combines the Sidebar and Hero templates.
+			</p><p>
+				</p><div class="mediaobject"><img src="images/responsive-sidebar-hero.png"/></div><p>
+			</p><p>
+				<span class="strong"><strong>
+					Resources
+				</strong></span>
+			</p><p>
+				</p><div class="itemizedlist"><ul><li>
+						Foundation for Emails Documentation -
+						<a class="ulink" href="http://foundation.zurb.com/emails.html">http://foundation.zurb.com/emails.html</a></li><li>
+						Online tool to easily write your your email in markdown which is
+						then converted automatically into a
+						fully responsive email -
+						<a class="ulink" href="http://cakedown.alexandredeschamps.ca">http://cakedown.alexandredeschamps.ca</a></li></ul></div><p>
+			</p></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.distributing.attachments"/>3.4. Attachments</h2></div></div></div><p>
+			Out of the box
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			attaches to each email message
+			the file which
+			is extracted for
+			the
+			corresponding burst token. This is the most
+			common
+			scenario and it is
+			supported using the default program
+			configuration.
+		</p><p>
+			Sometimes a different situation might be required
+			</p><div class="itemizedlist"><ul><li>Send emails without any attachment</li><li>Send emails with two or more files attached (separate
+					files or
+					a single archive/zip file containing all the files
+					together)
+				</li><li>Distribute other document formats (e.g. Word, XML, etc.)
+					beside
+					the
+					PDF and Excel formats
+					which are supported out of the box
+				</li></ul></div><p>
+		</p><p>
+			<span class="bold"><strong>
+				Use case example
+			</strong></span>
+		</p><p>
+			The requirement is to send electronic invoices via email. The
+			invoice is formed by a
+			PDF which is the graphical form of the invoice,
+			and an XML file which
+			contains the details of the invoice.
+		</p><p>
+			By some countries law, it is required to send both files in
+			order to
+			consider this as a valid invoice.
+		</p><p>
+			The above requirement can be achieved by defining both files as
+			an
+			attachment for the output emails
+			</p><div class="itemizedlist"><ul><li>The extracted PDF invoice</li><li>The corresponding XML file</li></ul></div><p>
+		</p><p>
+			Furthermore, the files can be
+			archived
+			and sent together as a
+			single
+			zip file.
+		</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.distributing.attachments.configure"/>3.4.1. Configure Attachments</h3></div></div></div><p>
+				In
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				main window select
+				<span class="guimenu"><strong>Actions</strong></span>
+				,
+				<span class="guimenu"><strong>Configure</strong></span>
+				,
+				<span class="guimenu"><strong>Attachments</strong></span>
+			</p><p>
+				</p><div class="mediaobject"><img src="images/attachments-settings1.png"/></div><p>
+				</p><div class="mediaobject"><img src="images/email-attachments.png"/></div><p>
+			</p><p>
+				</p><div class="itemizedlist"><ul><li>
+						By default the software is attaching
+						<span class="emphasis"><em>$extracted_file_path$.</em></span></li><li>
+						Attachments can be added, removed and edited using the buttons
+						with the corresponding names
+						<span class="emphasis"><em>Add,</em></span><span class="emphasis"><em>Remove</em></span>
+						(or
+						<span class="emphasis"><em>Clear</em></span>
+						to remove all) and
+						<span class="emphasis"><em>Edit.</em></span></li><li><span class="emphasis"><em>Variables</em></span>
+						can be used when defining attachments. For more
+						details about
+						variables please
+						read
+						<a class="xref" href="chapter.variables.html" title="Chapter 5. Variables">Chapter 5, <i>Variables</i></a>
+						.
+					</li><li>
+						The files are attached in the selection order. The order can be
+						changed using
+						<span class="emphasis"><em>Up</em></span>
+						and
+						<span class="emphasis"><em>Down</em></span>
+						button commands.
+					</li></ul></div><p>
+			</p><p>
+				<span class="emphasis"><em>Archive Attachments</em></span>
+				</p><div class="itemizedlist"><ul><li><span class="emphasis"><em>Archive all attachments together</em></span>
+						- If selected,
+						<span class="emphasis"><em>
+							<span class="trademark">DocumentBurster</span>™
+						</em></span>
+						will archive (zip) all the attachments
+						together. If configured to
+						distribute reports,
+						<span class="emphasis"><em>
+							<span class="trademark">DocumentBurster</span>™
+						</em></span>
+						will deliver to the relevant recipients
+						the archived (zip) file
+						containing all the corresponding files. Default value is
+						unchecked.
+					</li><li><span class="emphasis"><em>Archive File Name</em></span>
+						– Name for the
+						archive file. Default value is
+						<span class="emphasis"><em>reports-$burst_token$.zip.</em></span></li></ul></div><p>
+			</p></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.distributing.uploading"/>3.5. Upload Reports</h2></div></div></div><p>
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			software
+			can upload business reports through most of the existing
+			network protocols
+			including FTP, Windows File Share, FTPS,
+			SFTP/SCP/SSH, TFTP, HTTP, HTTPs and WebDAV.
+			WebDAV is an
+			extension of
+			HTTP protocol and
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			can be used to upload
+			reports to any web server which has WebDAV
+			support.
+		</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.distributing.uploading.curl.integration"/>3.5.1. 
+				<em class="citetitle">cURL</em>
+				Integration
+			</h3></div></div></div><p>
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				closely integrates with
+				<em class="citetitle">
+					cURL
+				</em>
+				, a
+				Swiss-army knife for doing data transfer. Through
+				<em class="citetitle">cURL,</em>
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				can distribute
+				reports
+				via HTTP or FTP with or without authentication,
+				it works over
+				SSL, and it
+				works without interaction. Actually
+				<em class="citetitle">cURL</em>
+				(and
+				thus
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				)
+				supports distributing files and data to a various range of common
+				Internet
+				protocols, currently including
+				HTTP, HTTPS, FTP, FTPS, SCP,
+				SFTP, TFTP, LDAP, LDAPS, DICT, TELNET, FILE,
+				IMAP, POP3, SMTP and
+				RTSP.
+			</p><p>
+				<em class="citetitle">cURL - </em>
+				<a class="ulink" href="http://curl.haxx.se/">http://curl.haxx.se/</a>
+			</p><p>
+				<span class="emphasis"><em>Cross platform</em></span>
+			</p><p>
+				<em class="citetitle">cURL</em>
+				is portable and works on many platforms, including
+				Windows, Linux,
+				Mac
+				OS X, MS-DOS and more.
+			</p><p>
+				On Windows,
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				package distribution is bundling together
+				a recent version of
+				<em class="citetitle">cURL.</em>
+				So,
+				if your organization is running
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				under Windows,
+				there is nothing more to download or install in
+				regards
+				with
+				<em class="citetitle">cURL.</em>
+			</p><p>
+				For other UNIX like systems, such as Linux and Mac OS X, the
+				appropriate
+				<em class="citetitle">cURL</em>
+				binaries
+				distribution should be properly downloaded
+				and
+				installed.
+				In
+				addition, the
+				<em class="citetitle">cURL</em>
+				groovy scripts which are bundled
+				together with
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				are written for Windows usage and should support small adjustments
+				to
+				be made
+				ready for usage under Linux/UNIX.
+			</p><p>
+				<span class="emphasis"><em>
+					Further
+					<em class="citetitle">cURL</em>
+					resources
+				</em></span>
+			</p><p>
+				<em class="citetitle">cURL</em>
+				is a tool for getting or sending files using URL syntax. The
+				URL
+				syntax
+				is protocol-dependent. Along with the URL for
+				the required
+				protocol,
+				<em class="citetitle">cURL</em>
+				can take some additional options in the
+				command line.
+			</p><p>
+				For complete
+				<em class="citetitle">cURL</em>
+				documentation you can follow
+				</p><div class="itemizedlist"><ul><li><a class="ulink" href="http://curl.haxx.se/docs/manual.html">cURL Manual</a></li><li><a class="ulink" href="http://curl.haxx.se/docs/manpage.html">cURL Man Page</a></li><li><a class="ulink" href="http://curl.haxx.se/docs/faq.html">cURL Frequently Asked Questions </a></li></ul></div><p>
+			</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.distributing.uploading.ftp"/>3.5.2. 
+				FTP
+			</h3></div></div></div><p>
+				In
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				main window select
+				<span class="guimenu"><strong>Actions</strong></span>
+				,
+				<span class="guimenu"><strong>Configure</strong></span>
+				,
+				<span class="guimenu"><strong>Upload</strong></span>
+				,
+				<span class="guimenu"><strong>FTP</strong></span>
+			</p><p>
+				</p><div class="mediaobject"><img src="images/upload-reports-ftp.png"/></div><p>
+				</p><div class="mediaobject"><img src="images/upload-reports-ftp-configuration.png"/></div><p>
+			</p><p>
+				<span class="emphasis"><em>Command</em></span>
+				- Command which
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				will execute in order to upload each of the output reports. It is
+				possible
+				to use
+				variables in order to dynamically generate the command
+				at
+				run-time.
+			</p><p>
+				The example provided with the software is a typical cURL command for
+				uploading reports using the FTP protocol.
+				</p><div class="itemizedlist"><ul><li><span class="emphasis"><em>--ftp-create-dirs</em></span>
+						- (FTP/SFTP) When an FTP or SFTP URL/operation uses a path that
+						doesn't currently exist on the server, the standard behavior is to
+						fail.
+						Using this option, the software will instead attempt to
+						create
+						missing
+						directories.
+					</li><li><span class="emphasis"><em>-T, --upload-file</em></span>
+						- This transfers the specified local file to the remote host.
+					</li><li><span class="emphasis"><em>$extracted_file_path$</em></span>
+						- Variable which is
+						expanded with the path to the last extracted
+						file.
+					</li><li><span class="emphasis"><em>-u, --user &lt;user:password&gt;</em></span>
+						- Specify the user name and password to use for server
+						authentication. User variables can be used in order to dynamically
+						configure
+						user and password.
+					</li><li><span class="emphasis"><em>example.com</em></span>
+						- Replace this with the FTP host where the reports should be
+						uploaded. User variables can be used in order to dynamically
+						configure
+						the FTP host.
+					</li><li><span class="emphasis"><em>/reports/</em></span>
+						- Replace this with the folder on the server where the reports
+						should be
+						uploaded. User variables can be used in order to
+						dynamically configure the remote
+						folder.
+					</li></ul></div><p>
+			</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.distributing.uploading.fileshare"/>3.5.3. 
+				File Share
+			</h3></div></div></div><p>
+				In
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				main window select
+				<span class="guimenu"><strong>Actions</strong></span>
+				,
+				<span class="guimenu"><strong>Configure</strong></span>
+				,
+				<span class="guimenu"><strong>Upload</strong></span>
+				,
+				<span class="guimenu"><strong>File Share</strong></span>
+			</p><p>
+				</p><div class="mediaobject"><img src="images/upload-reports-file-share.png"/></div><p>
+				</p><div class="mediaobject"><img src="images/upload-reports-file-share-configuration.png"/></div><p>
+			</p><p>
+				<span class="emphasis"><em>Command</em></span>
+				- Command which
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				will execute in order to upload each of the output reports. It is
+				possible
+				to use
+				variables in order to dynamically generate the command
+				at
+				run-time.
+			</p><p>
+				The example provided with the software is a typical cURL command for
+				uploading reports to file share.
+				</p><div class="itemizedlist"><ul><li><span class="emphasis"><em>file://</em></span>
+						-
+						<a class="ulink" href="http://en.wikipedia.org/wiki/File_URI_scheme">
+							File URI scheme
+						</a></li><li><span class="emphasis"><em>%20</em></span>
+						- ASCII character code for space (URL Encoding).
+					</li><li><span class="emphasis"><em>$extracted_file_path$</em></span>
+						- Variable which is
+						expanded with the path to the last extracted
+						file.
+					</li></ul></div><p>
+			</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.distributing.uploading.ftps"/>3.5.4. 
+				FTPS
+			</h3></div></div></div><p>
+				In
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				main window select
+				<span class="guimenu"><strong>Actions</strong></span>
+				,
+				<span class="guimenu"><strong>Configure</strong></span>
+				,
+				<span class="guimenu"><strong>Upload</strong></span>
+				,
+				<span class="guimenu"><strong>FTPS</strong></span>
+			</p><p>
+				</p><div class="mediaobject"><img src="images/upload-reports-ftps.png"/></div><p>
+				</p><div class="mediaobject"><img src="images/upload-reports-ftps-configuration.png"/></div><p>
+			</p><p>
+				<span class="emphasis"><em>Command</em></span>
+				- Command which
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				will execute in order to upload each of the output reports. It is
+				possible
+				to use
+				variables in order to dynamically generate the command
+				at
+				run-time.
+			</p><p>
+				The example provided with the software is a typical cURL command for
+				uploading reports to a server which has FTPS support.
+				</p><div class="itemizedlist"><ul><li><span class="emphasis"><em>--ssl</em></span>
+						- Try to use SSL/TLS for the connection.
+						Reverts to a non-secure
+						connection if the server doesn't support
+						SSL/TLS. See also
+						<code class="command">--ftp-ssl-control</code>
+						and
+						<code class="command">--ssl-reqd</code>
+						for different
+						levels of encryption required.
+					</li><li><span class="emphasis"><em>$extracted_file_path$</em></span>
+						- Variable which is
+						expanded with the path to the last extracted
+						file.
+					</li></ul></div><p>
+			</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.distributing.uploading.sftp"/>3.5.5. 
+				SFTP/SSH/SCP
+			</h3></div></div></div><p>
+				In
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				main window select
+				<span class="guimenu"><strong>Actions</strong></span>
+				,
+				<span class="guimenu"><strong>Configure</strong></span>
+				,
+				<span class="guimenu"><strong>Upload</strong></span>
+				,
+				<span class="guimenu"><strong>SFTP/SCP</strong></span>
+			</p><p>
+				</p><div class="mediaobject"><img src="images/upload-reports-sftp.png"/></div><p>
+				</p><div class="mediaobject"><img src="images/upload-reports-sftp-configuration.png"/></div><p>
+			</p><p>
+				<span class="emphasis"><em>Command</em></span>
+				- Command which
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				will execute in order to upload each of the output reports. It is
+				possible
+				to use
+				variables in order to dynamically generate the command
+				at
+				run-time.
+			</p><p>
+				The example provided with the software is a typical cURL command for
+				uploading reports to a server which has SFTP support.
+				</p><div class="itemizedlist"><ul><li><span class="emphasis"><em>sftp://</em></span>
+						- Specifies that SFTP protocol should be used.
+					</li><li><span class="emphasis"><em>$extracted_file_path$</em></span>
+						- Variable which is
+						expanded with the path to the last extracted
+						file.
+					</li></ul></div><p>
+			</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.distributing.uploading.http"/>3.5.6. 
+				HTTP/WebDAV
+			</h3></div></div></div><p>
+				In
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				main window select
+				<span class="guimenu"><strong>Actions</strong></span>
+				,
+				<span class="guimenu"><strong>Configure</strong></span>
+				,
+				<span class="guimenu"><strong>Upload</strong></span>
+				,
+				<span class="guimenu"><strong>HTTP/WebDAV</strong></span>
+			</p><p>
+				</p><div class="mediaobject"><img src="images/upload-reports-http.png"/></div><p>
+				</p><div class="mediaobject"><img src="images/upload-reports-http-configuration.png"/></div><p>
+			</p><p>
+				<span class="emphasis"><em>Command</em></span>
+				- Command which
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				will execute in order to upload each of the output reports. It is
+				possible
+				to use
+				variables in order to dynamically generate the command
+				at
+				run-time.
+			</p><p>
+				The example provided with the software is a typical cURL
+				command for
+				uploading reports to a web server. The web server should
+				have HTTP upload
+				enabled, otherwise uploads will not be allowed.
+			</p><p>
+				<em class="citetitle">Microsoft SharePoint</em>
+				is a
+				common report distribution use case.
+				The
+				command to upload to a
+				<em class="citetitle">SharePoint</em>
+				portal should be
+				similar with
+				the
+				provided
+				<em class="citetitle">SharePoint</em>
+				example.
+			</p></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.distributing.sms"/>3.6. Send SMS Messages</h2></div></div></div><p>
+			People use
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			to email invoices, payslips or other financial reports to customers
+			and employees. In addition to an email your customers can also get an
+			SMS message like:
+		</p><p>
+			</p><div class="literallayout"><p><br/>
+				Dear<br/>
+				<span class="emphasis"><em>Customer Name</em></span><br/>
+				,<br/>
+<br/>
+				Just wanted to let you know that we've sent the June invoice by<br/>
+				email to<br/>
+				<span class="emphasis"><em>customer@emailaddress.com</em></span><br/>
+				.<br/>
+<br/>
+				Thank You for your business!<br/>
+<br/>
+				<span class="emphasis"><em>Your Name</em></span><br/>
+				,<br/>
+				<span class="emphasis"><em>Your Company Name</em></span><br/>
+			</p></div><p>
+		</p><p>
+			With an average SMS open rate of 99% you can see why sending SMS
+			messages
+			to your customers is useful.
+		</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.distributing.sms.twilio"/>3.6.1. 
+				Twilio
+			</h3></div></div></div><p>
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				can be configured to send SMS text messages through Twilio.
+			</p><p>
+				Twilio (pronounced TWILL-e-o) is a cloud communications (IaaS)
+				company
+				based in San Francisco, California. Twilio allows sending
+				text
+				messages using its services. Twilio's services are billed based
+				on
+				usage.
+			</p><p>
+				</p><div class="itemizedlist"><ul><li><a class="ulink" href="https://www.twilio.com">Twilio Home Page</a></li><li><a class="ulink" href="https://www.twilio.com/sms/pricing">Twilio SMS Pricing</a></li></ul></div><p>
+			</p><p>
+				<span class="bold"><strong>
+					Configuration
+				</strong></span>
+			</p><p>
+				First step is to register an account with Twilio. It's fast and
+				free to get started. You can use your existing Twilio account if you
+				already have one. Follow this link to register your new Twilio
+				account.
+			</p><p>
+				<a class="ulink" href="https://www.twilio.com/try-twilio">https://www.twilio.com/try-twilio</a>
+			</p><p>
+				Twilio requires two credentials for sending SMS messages. The
+				<span class="emphasis"><em>Account SID</em></span>
+				, which acts as a username, and the
+				<span class="emphasis"><em>Auth Token</em></span>
+				which acts as a password.
+				Follow this link to learn more about your
+				Twilio
+				<span class="emphasis"><em>Account SID</em></span>
+				and
+				<span class="emphasis"><em>Auth Token</em></span>
+				.
+			</p><p>
+				<a class="ulink" href="https://www.twilio.com/help/faq/twilio-basics/what-is-the-auth-token-and-how-can-i-change-it">What is the Auth Token, and how can I change it?</a>
+			</p><p>
+				</p><div class="mediaobject"><img src="images/documentburster-sms-menu.png"/></div><p>
+				</p><div class="mediaobject"><img src="images/documentburster-sms-configure.png"/></div><p>
+			</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="chapter.distributing.sms.text"/>3.6.2. 
+				Text
+			</h3></div></div></div><p>
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				supports sending of personalized SMS text messages to your
+				customers.
+			</p><p>
+				In
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				main window select
+				<span class="guimenu"><strong>Actions</strong></span>
+				,
+				<span class="guimenu"><strong>Configure</strong></span>
+				,
+				<span class="guimenu"><strong>SMS</strong></span>
+				,
+				<span class="guimenu"><strong>Message</strong></span>
+			</p><p>
+				</p><div class="mediaobject"><img src="images/documentburster-sms-messages.png"/></div><p>
+
+			</p><p>
+				Using variables the
+				<em class="citetitle">From Number</em>
+				,
+				<em class="citetitle">To Number</em>
+				and the text of the SMS messages
+				can be customized for each
+				individual recipient.
+			</p><p>
+				</p><div class="itemizedlist"><ul><li><p>
+							<span class="emphasis"><em>From Number</em></span>
+							– Phone number used for sending the SMS messages.
+						</p><p>
+							This number should be a
+							<em class="citetitle">Twilio SMS-enabled phone number</em>
+							.
+							Follow this link for more details
+						</p><p>
+							<a class="ulink" href="https://www.twilio.com/help/faq/sms/can-i-use-my-twilio-number-for-sms">Can I use my Twilio number for SMS?</a>
+						</p></li><li><p>
+							<span class="emphasis"><em>To Number</em></span>
+							– Phone number where the SMS message will be sent. Using a
+							variable you'll personalize (provide) the mobile number for each
+							of
+							your recipients (customers).
+						</p></li><li><p>
+							<span class="emphasis"><em>Text</em></span>
+							– The SMS text message to be sent. Using variables you'll send a
+							personalized text message for each
+							of
+							your recipients (customers).
+						</p></li></ul></div><p>
+			</p></div></div></div><ul class="docnav"><li class="previous"><a accesskey="p" href="chapter.excel.html"><strong>Prev</strong>Chapter 2. Burst Excel Reports</a></li><li class="up"><a accesskey="u" href="#"><strong>Top of page</strong></a></li><li class="home"><a accesskey="h" href="index.html"><strong>Front page</strong></a></li><li class="next"><a accesskey="n" href="chapter.templates.html"><strong>Next</strong>Chapter 4. Configuration Templates</a></li></ul>
+				<script type="text/javascript">
+				window.$zopim||(function(d,s){var z=$zopim=function(c){z._.push(c)},$=z.s= d.createElement(s),e=d.getElementsByTagName(s)[0];z.set=function(o){z.set. _.push(o)};z._=[];z.set._=[];$.async=!0;$.setAttribute('charset','utf-8'); $.src='//cdn.zopim.com/?h7mkkauOUJAVdDuy4BEr4FLv2scL9q1J';z.t=+new Date;$. type='text/javascript';e.parentNode.insertBefore($,e)})(document,'script');
+				</script>
+</body>
+			</html>

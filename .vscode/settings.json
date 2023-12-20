@@ -1,0 +1,21 @@
+{
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#B22222",
+    "activityBar.foreground": "#ffffff",
+    "activityBar.inactiveForeground": "#000000"
+  },
+  "window.title": "${dirty}all-repos >> src >> products >> documentburster${separator}${activeEditorShort}",
+  "files.watcherExclude": {
+    "**/node_modules/*/**": true,
+    "**/.venv/*/**": true
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true
+  },
+  "hide-files.files": []
+}

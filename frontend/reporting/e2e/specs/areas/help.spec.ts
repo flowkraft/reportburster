@@ -1,0 +1,194 @@
+import { test } from '@playwright/test';
+import { electronBeforeAfterAllTest } from '../../utils/common-setup';
+import { FluentTester } from '../../helpers/fluent-tester';
+
+test.describe('', async () => {
+  electronBeforeAfterAllTest(
+    'should correctly display all the screens from the Help area',
+    async function ({ beforeAfterEach: firstPage }) {
+      const ft = new FluentTester(firstPage);
+
+      return (
+        ft
+          .goToBurstScreen()
+          .click('#supportEmail')
+          .elementShouldHaveText(
+            '#checkPointHelpSupport',
+            'ParkTrent Properties Group, Australia'
+          )
+          .click('#licenseTab-link')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .click('#logsTab-link')
+          .elementShouldBeVisible('#warningsLog')
+          .click('#leftMenuHelpServices')
+          .elementShouldHaveText(
+            '#checkPointHelpServices',
+            'sales@reportburster.com'
+          )
+          .click('#licenseTab-link')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .click('#leftMenuHelpSupport')
+          .elementShouldHaveText(
+            '#checkPointHelpSupport',
+            'ParkTrent Properties Group, Australia'
+          )
+          .click('#leftMenuHelpDocumentation')
+          .elementShouldContainText(
+            '#checkPointHelpDocumentation',
+            'Advanced Report Delivery Scenarios'
+          )
+          .click('#licenseTab-link')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .click('#leftMenuHelpExamples')
+          .elementShouldHaveText(
+            '#checkPointHelpExamples',
+            'DocumentBurster Examples'
+          )
+          .click('#licenseTab-link')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .click('#leftMenuHelpFreeForSchools')
+          .elementShouldHaveText(
+            '#checkPointHelpFreeForSchools',
+            'How Schools Use DocumentBurster Software'
+          )
+          .click('#licenseTab-link')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .click('#leftMenuHelpCustomerReviews')
+          .elementShouldHaveText(
+            '#checkPointHelpCustomerReviews',
+            'Michael B., Finance Systems Team'
+          )
+          .click('#licenseTab-link')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .click('#leftMenuHelpBlog')
+          //this depends on a specific website to be up and the specific website stopped working
+          /*
+        .waitOnElementToBecomeVisible(
+          '#blogRss .feed-container',
+          Constants.DELAY_FIVE_THOUSANDS_SECONDS
+        )
+        */
+          .click('#licenseTab-link')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .click('#leftMenuHelpLicense')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .click('#logsTab-link')
+          .elementShouldBeVisible('#warningsLog')
+          .click('#leftMenuHelpAbout')
+          .elementShouldHaveText('#checkPointHelpAbout', 'Copyright')
+          .click('#comparisonTab-link')
+          .elementShouldHaveText(
+            '#checkPointHelpComparison',
+            'DocumentBurster Server Features'
+          )
+          .goToBurstScreen()
+          .click('#topMenuHelp')
+          .click('#topMenuHelpSupport')
+          .elementShouldHaveText(
+            '#checkPointHelpSupport',
+            'ParkTrent Properties Group, Australia'
+          )
+          .click('#topMenuHelp')
+          .click('#topMenuHelpServices')
+          .elementShouldHaveText(
+            '#checkPointHelpServices',
+            'sales@reportburster.com'
+          )
+          .goToBurstScreen()
+          .click('#topMenuHelp')
+          .click('#topMenuHelpDocumentation')
+          .elementShouldContainText(
+            '#checkPointHelpDocumentation',
+            'Advanced Report Delivery Scenarios'
+          )
+          .click('#licenseTab-link')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .goToBurstScreen()
+          .click('#topMenuHelp')
+          .click('#topMenuHelpExamples')
+          .elementShouldHaveText(
+            '#checkPointHelpExamples',
+            'DocumentBurster Examples'
+          )
+          .click('#licenseTab-link')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .goToBurstScreen()
+          .click('#topMenuHelp')
+          .click('#topMenuHelpFreeForSchools')
+          .elementShouldHaveText(
+            '#checkPointHelpFreeForSchools',
+            'How Schools Use DocumentBurster Software'
+          )
+          .click('#licenseTab-link')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .goToBurstScreen()
+          .click('#topMenuHelp')
+          .click('#topMenuHelpCustomerReviews')
+          .elementShouldHaveText(
+            '#checkPointHelpCustomerReviews',
+            'Michael B., Finance Systems Team'
+          )
+          .click('#licenseTab-link')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .goToBurstScreen()
+          .click('#topMenuHelp')
+          .click('#topMenuHelpBlog')
+          .elementShouldBeVisible('#blogRss')
+          .click('#licenseTab-link')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .goToBurstScreen()
+          .click('#topMenuHelp')
+          .click('#topMenuHelpLicense')
+          .elementShouldHaveText(
+            '#statusDemoLicense',
+            'Demo / Trial (up to 25 recipients)'
+          )
+          .click('#logsTab-link')
+          .elementShouldBeVisible('#warningsLog')
+          .goToBurstScreen()
+          .click('#topMenuHelp')
+          .click('#topMenuHelpAbout')
+          .elementShouldHaveText('#checkPointHelpAbout', 'Copyright')
+      );
+    }
+  );
+});

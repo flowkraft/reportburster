@@ -1,0 +1,25 @@
+Guidance on DocumentBurster License Requirements
+
+DocumentBurster software has two different licensing options. 
+
+1. Commercial license
+
+DocumentBurster price is $595US per single user license.
+
+DocumentBurster Server has a separate pricing plan. For more details please see
+http://www.pdfburst.com/purchase.html
+
+Purchasing the software is giving
+
+    * DocumentBurster product with no limit on the number of the burst reports
+    * 60 days of software support from the date of purchasing
+  
+For a full read of the software terms please read license-commercial.txt document.
+
+If interested, please send an email to sales@pdfburst.com
+
+2. Free educational license
+
+Free educational license agreement allows to freely use DocumentBurster software in educational environments, such as schools and universities.
+
+Your school can purchase professional DocumentBurster software support.

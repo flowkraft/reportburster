@@ -1,0 +1,1 @@
+taskkill /im MailHog* /T /F >shutlog.log 2>&1

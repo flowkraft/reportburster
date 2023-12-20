@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<documentburster>
+	<settings>
+
+		<!-- DocumentBurster version -->
+		<version>5.1</version>
+
+		<!-- file name for the burst files -->
+		<burstfilename>$burst_token$.$input_document_extension$</burstfilename>
+
+		<!-- file name for the merged files -->
+		<mergefilename>merged.pdf</mergefilename>
+
+		<!-- where to place the burst files -->
+		<outputfolder>output/$input_document_name$/$now;
+			format="yyyy.MM.dd_HH.mm.ss"$</outputfolder>
+
+		<!-- where to place the backup files -->
+		<backupfolder>backup/$input_document_name$/$now;
+			format="yyyy.MM.dd_HH.mm.ss"$</backupfolder>
+
+		<!-- the folder which is polled for incoming reports to burst -->
+		<pollfolder>poll</pollfolder>
+
+		<!-- quarantine bursted files which fail to be delivered (true|false) -->
+		<quarantinefiles>true</quarantinefiles>
+		<!-- where to place the quarantined files -->
+		<quarantinefolder>quarantine/$input_document_name$/$now;
+			format="yyyy.MM.dd_HH.mm.ss"$</quarantinefolder>
+
+		<!-- send the bursted files by Email and/or FTP (true|false) -->
+		<sendfiles>false</sendfiles>
+
+		<!-- delete the bursted files (true|false) -->
+		<deletefiles>false</deletefiles>
+
+		<!-- send rich formatted HTML e-mails (true|false) -->
+		<htmlemail>false</htmlemail>
+
+		<!-- validate email addresses to have the following pattern name@organization.ext 
+			(true|false) 1. In production it is advisable to validate the email addresses 
+			and keep the configuration on true 2. While doing local testing it might 
+			be required to skip the validation (by having the configuration on false) 
+			since testing local email addresses might not pass the validation test. 3. 
+			For example, temporarily having the configuration on false will allow the 
+			otherwise invalid email address documentburster@win2003srv to be used for 
+			some pre-production testing activities. -->
+		<validatemailaddresses>true</validatemailaddresses>
+
+		<!-- following are text extraction options -->
+		<encoding></encoding>
+		<sort>false</sort>
+		<ignorebeads>false</ignorebeads>
+		<!-- text extraction option to skip corrupt objects -->
+		<force>false</force>
+
+
+		<!-- email settings -->
+		<emailserver>
+
+			<host>Email Server Host</host>
+
+			<!-- email server port. 25 is the default SMTP port -->
+			<port>25</port>
+			<userid>From Email User ID</userid>
+			<userpassword>From Email Password</userpassword>
+			<usessl>false</usessl>
+			<usetls>false</usetls>
+			<debug>false</debug>
+			<fromaddress>from@emailaddress.com</fromaddress>
+			<name>From Name</name>
+		</emailserver>
+
+		<!-- default email message -->
+		<defaultmessage>
+			<to>$burst_token$</to>
+			<cc></cc>
+			<bcc></bcc>
+			<subject></subject>
+			<text></text>
+			<html></html>
+		</defaultmessage>
+
+		<!-- default ftp -->
+		<defaultftp>
+			<url>ftp://</url>
+		</defaultftp>
+
+		<locale>
+			<language></language>
+			<country></country>
+		</locale>
+
+		<numberofuservariables>10</numberofuservariables>
+
+	</settings>
+</documentburster>

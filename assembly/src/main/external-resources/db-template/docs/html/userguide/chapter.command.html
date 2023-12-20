@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Chapter 8. Command Line</title><link rel="stylesheet" href="css/skrf.css" type="text/css"/><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"/><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><script xmlns="" type="text/javascript" src="css/shCore.js"><!----></script><script xmlns="" type="text/javascript" src="css/shBrushJava.js"><!----></script><script xmlns="" type="text/javascript" src="css/shBrushGroovy.js"><!----></script><link xmlns="" href="css/shCore.css" rel="stylesheet" type="text/css"/><link xmlns="" href="css/shThemeDefault.css" rel="stylesheet" type="text/css"/><script xmlns="" type="text/javascript">
+     SyntaxHighlighter.all()
+</script><link rel="home" href="index.html" title="DocumentBurster User Guide"/><link rel="up" href="pt02.html" title="Part II.  DocumentBurster"/><link rel="prev" href="chapter.audit.html" title="Chapter 7. Quality Assurance"/><link rel="next" href="pt03.html" title="Part III.  DocumentBurster Server"/></head>
+				<body>
+				<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K63768" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript> <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+				new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src= '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+				})(window,document,'script','dataLayer','GTM-K63768');</script>
+			<ul class="docnav"><li class="previous"><a accesskey="p" href="chapter.audit.html"><strong>Prev</strong></a></li><li class="next"><a accesskey="n" href="pt03.html"><strong>Next</strong></a></li></ul><div class="chapter" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.command"/>Chapter 8. Command Line</h2></div></div></div><div class="toc"><dl><dt><span class="section"><a href="chapter.command.html#chapter.command.usage">8.1. Usage</a></span></dt><dt><span class="section"><a href="chapter.command.html#burst">8.2. Burst Reports</a></span></dt><dt><span class="section"><a href="chapter.command.html#merge">8.3. Merge Reports</a></span></dt><dt><span class="section"><a href="chapter.command.html#polling">8.4. Poll Folder for Incoming Reports</a></span></dt><dt><span class="section"><a href="chapter.command.html#chapter.command.qa">8.5. Quality Assurance</a></span></dt></dl></div><p>
+		<span class="emphasis"><em>
+			<span class="trademark">DocumentBurster</span>™
+		</em></span>
+		has a command line interface and can be integrated and
+		executed from
+		existing legacy software
+		systems.
+		All the features of the
+		program are
+		available through command line.
+	</p><div class="important"><h2>Important</h2><p>
+			Before running
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			in command line, the software should be properly configured.
+		</p><p>
+			For more
+			details about configuring
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			please
+			read
+			<a class="xref" href="chapter.pdf.html#chapter.config" title="1.3. Configuration">Section 1.3, “Configuration�?</a>
+		</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.command.usage"/>8.1. Usage</h2></div></div></div><p>
+			Following is the
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			command line usage
+		</p><p>
+			</p><div class="mediaobject"><img src="images/documentburster-command-line-usage.png"/></div><p>
+		</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="burst"/>8.2. Burst Reports</h2></div></div></div><p>
+			<span class="emphasis"><em>A. Windows</em></span>
+		</p><p>
+			Following is the syntax for running the program
+		</p><p>
+			<code class="command">documentburster.bat –f &lt;pathOfTheFileToBurst&gt; [-c
+				&lt;pathOfTheConfigurationFileToUse&gt;]
+			</code>
+		</p><p>
+			</p><div class="itemizedlist"><ul><li>
+					–f &lt;pathOfTheFileToBurst&gt; - Mandatory argument. Path
+					to the PDF or Excel report to burst.
+				</li><li>
+					-c &lt;pathOfTheConfigurationFileToUse&gt; - Optional
+					argument. Path to the configuration file to be used.
+				</li></ul></div><p>
+		</p><p>
+			For example the command
+		</p><p>
+			<code class="command">documentburster.bat –f samples/Payslips.pdf</code>
+		</p><p>
+			will burst the
+			<code class="filename">Payslips.pdf</code>
+			file located in the
+			<code class="filename">samples</code>
+			folder using the default
+			<code class="filename">config/burst/settings.xml</code>
+			configuration file.
+		</p><p>
+			<span class="emphasis"><em>B. Unix/Linux</em></span>
+		</p><p>
+			Following is the syntax for running the shell script
+		</p><p>
+			<code class="command">./documentburster.sh –f &lt;pathOfTheFileToBurst&gt; [-c
+				&lt;pathOfTheConfigurationFileToUse&gt;]
+			</code>
+		</p><p>
+			For example the command
+		</p><p>
+			<code class="command">./documentburster.sh –f samples/Payslips.pdf</code>
+		</p><p>
+			will burst the
+			<code class="filename">Payslips.pdf</code>
+			file located in the
+			<code class="filename">samples</code>
+			folder using the default
+			<code class="filename">config/burst/settings.xml</code>
+			configuration file.
+		</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="merge"/>8.3. Merge Reports</h2></div></div></div><p>
+			<span class="emphasis"><em>A. Windows</em></span>
+		</p><p>
+			Following is the syntax for running the program
+		</p><p>
+			<code class="command">documentburster.bat –m
+				&lt;"pathOfTheFileToMerge1|...|pathOfTheFileToMergeN"&gt; [-o
+				&lt;mergedFileName&gt;] [-b]</code>
+		</p><p>
+			</p><div class="itemizedlist"><ul><li><p>
+						–m &lt;"pathOfTheFileToMerge1|...|pathOfTheFileToMergeN"&gt;
+						-
+						Mandatory argument. List of the PDF reports to merge (separated
+						by the | character).
+					</p></li><li><p>
+						-o &lt;mergedFileName&gt; - Optional argument. The name of the
+						output merged file.
+						If it is not specified then the
+						<code class="filename">merged.pdf</code>
+						file name is assumed by default.
+					</p></li><li><p>
+						-b - Optional argument. Optional switch which specifies that
+						the
+						resulted merged file
+						should be also burst.
+					</p></li></ul></div><p>
+		</p><p>
+			For example the command
+		</p><p>
+			<code class="command">documentburster.bat –m
+				"samples/Invoices-Oct.pdf|samples/Invoices-Nov.pdf|samples/Invoices-Dec.pdf"
+				-o Invoices-1st-Quarter.pdf -b
+			</code>
+		</p><p>
+			will first concatenate the files
+			<code class="filename">Invoices-Oct.pdf,</code>
+			<code class="filename">Invoices-Nov.pdf</code>
+			and
+			<code class="filename">Invoices-Dec.pdf</code>
+			(-m) into a file called
+			<code class="filename">Invoices-1st-Quarter.pdf</code>
+			(-o) and will burst the merged
+			file (-b).
+		</p><p>
+			<span class="emphasis"><em>B. Unix/Linux</em></span>
+		</p><p>
+			Following is the syntax for running the program
+		</p><p>
+			<code class="command">./documentburster.sh –m
+				&lt;"pathOfTheFileToMerge1|...|pathOfTheFileToMergeN"&gt; [-o
+				&lt;mergedFileName&gt;] [-b]</code>
+		</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="polling"/>8.4. Poll Folder for Incoming Reports</h2></div></div></div><p>
+			<span class="emphasis"><em>A. Windows</em></span>
+		</p><p>
+			Following is the syntax for running the program
+		</p><p>
+			<code class="command">documentburster.bat –p &lt;pathOfTheFolderToPoll&gt; </code>
+		</p><p>
+			For example the command
+		</p><p>
+			<code class="command">documentburster.bat –p poll</code>
+		</p><p>
+			will start polling the folder
+			<code class="filename">poll</code>
+			for incoming
+			reports to process.
+		</p><p>
+			<span class="emphasis"><em>B. Unix/Linux</em></span>
+		</p><p>
+			Following is the syntax for running the shell script
+		</p><p>
+			<code class="command">./documentburster.sh –p &lt;pathOfTheFolderToPoll&gt; </code>
+		</p><p>
+			For example the command
+		</p><p>
+			<code class="command">./documentburster.sh –p poll</code>
+		</p><p>
+			will start polling the folder
+			<code class="filename">poll</code>
+			for incoming
+			reports to process.
+		</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.command.qa"/>8.5. Quality Assurance</h2></div></div></div><p>
+			<span class="emphasis"><em>A. Windows</em></span>
+		</p><p>
+			1. Following is the syntax for testing all the burst tokens
+		</p><p>
+			<code class="command">documentburster.bat –f &lt;pathOfTheFileToBurst&gt; [-c
+				&lt;pathOfTheConfigurationFileToUse&gt;] -ta
+			</code>
+		</p><p>
+			For example the command
+		</p><p>
+			<code class="command">documentburster.bat –f samples/Payslips.pdf -ta</code>
+		</p><p>
+			will test all the burst tokens which are found in the
+			<code class="filename">Payslips.pdf</code>
+			file located in the
+			<code class="filename">samples</code>
+			folder using the default
+			<code class="filename">config/burst/settings.xml</code>
+			configuration file.
+		</p><p>
+			2. Following is the syntax for testing a comma separated list of
+			tokens
+		</p><p>
+			<code class="command">documentburster.bat –f &lt;pathOfTheFileToBurst&gt; [-c
+				&lt;pathOfTheConfigurationFileToUse&gt;] -tl
+				&lt;"token1,token2,...tokenN"&gt; </code>
+		</p><p>
+			For example the command
+		</p><p>
+			<code class="command">documentburster.bat –f samples/Payslips.pdf -tl
+				"clyde.grew@northridgehealth.org,alfreda.waldback@northridgehealth.org"
+			</code>
+		</p><p>
+			will test the tokens
+			<span class="emphasis"><em>clyde.grew@northridgehealth.org</em></span>
+			and
+			<span class="emphasis"><em>alfreda.waldback@northridgehealth.org</em></span>
+			which are found in the
+			<code class="filename">Payslips.pdf</code>
+			file located in the
+			<code class="filename">samples</code>
+			folder using the default
+			<code class="filename">config/burst/settings.xml</code>
+			configuration file.
+		</p><p>
+			3. Following is the syntax for testing random tokens
+		</p><p>
+			<code class="command">documentburster.bat –f &lt;pathOfTheFileToBurst&gt; [-c
+				&lt;pathOfTheConfigurationFileToUse&gt;] -tr &lt;N&gt; </code>
+		</p><p>
+			For example the command
+		</p><p>
+			<code class="command">documentburster.bat –f samples/Payslips.pdf -tr 2</code>
+		</p><p>
+			will test two random tokens which are found in the
+			<code class="filename">Payslips.pdf</code>
+			file located in the
+			<code class="filename">samples</code>
+			folder using the default
+			<code class="filename">config/burst/settings.xml</code>
+			configuration file.
+		</p><p>
+			<span class="emphasis"><em>B. Unix/Linux</em></span>
+		</p><p>
+			1. Following is the syntax for testing all the burst tokens
+		</p><p>
+			<code class="command">./documentburster.sh –f &lt;pathOfTheFileToBurst&gt; [-c
+				&lt;pathOfTheConfigurationFileToUse&gt;] -ta
+			</code>
+		</p><p>
+			2. Following is the syntax for testing a comma separated list of
+			tokens
+		</p><p>
+			<code class="command">./documentburster.sh –f &lt;pathOfTheFileToBurst&gt; [-c
+				&lt;pathOfTheConfigurationFileToUse&gt;] -tl
+				&lt;"token1,token2,...tokenN"&gt; </code>
+		</p><p>
+			3. Following is the syntax for testing random tokens
+		</p><p>
+			<code class="command">./documentburster.sh –f &lt;pathOfTheFileToBurst&gt; [-c
+				&lt;pathOfTheConfigurationFileToUse&gt;] -tr &lt;N&gt; </code>
+		</p></div></div><ul class="docnav"><li class="previous"><a accesskey="p" href="chapter.audit.html"><strong>Prev</strong>Chapter 7. Quality Assurance</a></li><li class="up"><a accesskey="u" href="#"><strong>Top of page</strong></a></li><li class="home"><a accesskey="h" href="index.html"><strong>Front page</strong></a></li><li class="next"><a accesskey="n" href="pt03.html"><strong>Next</strong>Part III. 
+			
+				DocumentBurster
+				Server
+			...</a></li></ul>
+				<script type="text/javascript">
+				window.$zopim||(function(d,s){var z=$zopim=function(c){z._.push(c)},$=z.s= d.createElement(s),e=d.getElementsByTagName(s)[0];z.set=function(o){z.set. _.push(o)};z._=[];z.set._=[];$.async=!0;$.setAttribute('charset','utf-8'); $.src='//cdn.zopim.com/?h7mkkauOUJAVdDuy4BEr4FLv2scL9q1J';z.t=+new Date;$. type='text/javascript';e.parentNode.insertBefore($,e)})(document,'script');
+				</script>
+</body>
+			</html>

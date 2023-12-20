@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<documentburster>
+  <settings>
+    <version>8.8.4</version>
+    <template>99-wrkday-train</template>
+    <burstfilename>${burst_token}.${input_document_extension}</burstfilename>
+    <mergefilename>merged.pdf</mergefilename>
+    <outputfolder>output/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}</outputfolder>
+    <backupfolder>backup/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}</backupfolder>
+    <quarantinefiles>true</quarantinefiles>
+    <quarantinefolder>quarantine/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}</quarantinefolder>
+    <logsarchivesfolder>logs/archives/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}</logsarchivesfolder>
+    <statsfilename>_stats-${stats_info}.log</statsfilename>
+    <sendfiles>
+      <email>true</email>
+      <upload>false</upload>
+      <web>false</web>
+      <sms>false</sms>
+    </sendfiles>
+    <deletefiles>false</deletefiles>
+    <emailserver>
+      <host></host>
+      <port>25</port>
+      <userid/>
+      <userpassword/>
+      <usessl>false</usessl>
+      <usetls>false</usetls>
+      <fromaddress>do-not-reply@leidos.com</fromaddress>
+      <name>Learning and Development</name>
+    </emailserver>
+    <htmlemail>true</htmlemail>
+    <htmlemaileditcode>true</htmlemaileditcode>
+    <emailsettings>
+      <to>${var0}</to>
+      <cc/>
+      <bcc/>
+      <subject>Mandatory Training Status Report for Supervisors</subject>
+      <text>You are receiving this email because some of your employees have not completed their required compliance training that is due by Dec. 31. Included as an attachment to this email is a report which provides the training status of your direct reports, and if applicable, those employees within your supervisory chain who report to your direct reports.
+
+    You will receive reports through the end of December to assist you with tracking employees who still need to complete their required trainings. Please work with your employees to confirm that all training is completed by the due date.
+
+    If you would like a report containing all employees in your organization, you can access the 2019 Compliance Roster for Learning under Manager Reports on the Learning Dashboard in Workday Learning.
+
+    If an employee listed on your report has left the company or is on a leave of absence and will not return to work prior to Dec. 31, please complete an exemption request form to remove the employee from future reports. Employees on leave will need to complete their required training upon their return to work.
+
+    If you have questions, please contact AskHR@leidos.com.
+
+
+
+    
+
+    
+            
+            © Leidos | Web Privacy Policy
+            This email and any attachments to it are intended only for the identified recipients. It may contain proprietary or otherwise legally protected information of Leidos. Any unauthorized use or disclosure of this communication is strictly prohibited. If you have received this communication in error, please notify the sender and delete or otherwise destroy the email and all attachments immediately.</text>
+      <html>&lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8"&gt;&lt;table align="center" style="width: 685px; height: auto; border: 1px solid #b3b3b3;" cellspacing="0" cellpadding="0"&gt;
+    &lt;tbody&gt;
+
+    &lt;tr&gt;
+        &lt;td colspan="2" style="width: 685px; height: 100px;"&gt;&lt;img alt="" src="../config/images/top_header.jpg" width="685" height="100"&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+
+    &lt;tr&gt;
+        &lt;td&gt;&lt;img alt="" src="../config/images/leidos_logo.gif" width="175" height="37"&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+
+    &lt;tr&gt;
+        &lt;td style="text-align: left; padding-left: 20px; padding-right: 30px; width: 685px; font-family: arial, helvetica, sans-serif; color: #000000; vertical-align: middle; padding-top: 20px;" colspan="2"&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;People Leader,&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;Annual ethics awareness and compliance training requirements are due Dec. 30. Training status for your direct reports with incomplete training requirements are in the attached report.&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;As the due date approaches, these reports become consolidated and escalate up the management chain for employees who have not completed training. As the email escalation process continues, new employees may appear on your report based on their level in your reporting structure. &lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;Beginning in early November, managers can expect to receive the following notifications:&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;
+    &lt;ul&gt;
+        &lt;li&gt;&lt;strong&gt;Nov. 1-30&lt;/strong&gt; First level manager receives weekly reminders with the status of direct reports with incomplete training requirements.&lt;/li&gt;
+        &lt;li&gt;&lt;strong&gt;Dec. 1-15&lt;/strong&gt; First and second level managers receive bi-weekly reminders containing employees with incomplete training requirements.&lt;/li&gt;
+         &lt;li&gt;&lt;strong&gt;Dec. 16-30&lt;/strong&gt; First, second, and third level managers receive daily reminder emails containing employees with incomplete training requirements.&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;&lt;i&gt;Please encourage all employees to complete their annual training by Dec. 30. Employees can access their assigned training in the "Required for You" sections on the &lt;a href="https://wd5.myworkday.com/leidos/learning"&gt;Learning Home&lt;/a&gt; page in Workday.&lt;/i&gt;&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;&lt;strong&gt;All annual compliance training must be complete by Friday, Dec. 30.&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;&lt;strong&gt;Workday Reports and Other Resources&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;
+    &lt;ul&gt;
+        &lt;li&gt;&lt;strong&gt;Managers&lt;/strong&gt; can view their team's compliance training status from the Team Management App&gt; Learning tab under &lt;strong&gt;My Team's Compliance Training Status&lt;/strong&gt;. You can export this information to Excel.&lt;/li&gt;
+        &lt;li&gt;If you would like a report containing all employees in your organization, you can access the &lt;strong&gt;Compliance Training Status for My Hierarchy&lt;/strong&gt; under My Hierarchy Reports on the Learning tab in the &lt;strong&gt;Team Management App.&lt;/strong&gt;&lt;/li&gt;
+        &lt;li&gt;Human Resources staff who would like a report containing all employees in their organization can access this &lt;a href="https://vector.leidos.com/sites/HumanResources/BIA/CE  USP Hours/2022 Compliance Roster.xlsx?d=w6c033b88b0994353911c3ef9a1a84733"&gt;dashboard&lt;/a&gt; for up-to-date compliance training status for all employees in their organizations.&lt;/li&gt;
+        &lt;li&gt;If you have questions related to completion of training for your employees, please contact &lt;a href="mailto:AskHR@Leidos.com"&gt;AskHR@leidos.com&lt;/a&gt;.&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;&lt;strong&gt;Exemptions&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;Please complete an &lt;a href="https://ciocentral.servicenowservices.com/sp_ldos?id=sc_cat_item&amp;sys_id=4a42b636e15ef7806a0f430a53e8403d&amp;sysparm_category=f3036cdff07b4b000f21edabd495033e"&gt;exemption request form&lt;/a&gt; to remove the employee from future reports if:&lt;/span&gt;&lt;/p&gt;
+
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;
+    &lt;ul&gt;
+        &lt;li&gt;an employee listed on your report is inactive and will not return to work before Dec. 30, or&lt;/li&gt;
+        &lt;li&gt;there are other extenuating circumstances, as defined by LP-LG-1, preventing the completion of their required training&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;An exemption request is not required if your employee is on an approved leave of absence.. If an employee on an approved leave of absence appears on your report, please ensure their status is reflected accurately in Workday. Exempt employees or those on an approved leave of absence must complete their required training within 30 days of their return to work.&lt;/span&gt;&lt;/p&gt;
+
+    &lt;/tr&gt;
+
+    &lt;tr&gt;
+            &lt;td colspan="2" style="color: #333333; font-size: 10px; font-family: arial, helvetica, sans-serif; padding: 20px;"&gt;
+            &lt;div style="border-top-width: 1px; border-top-style: solid; border-top-color: #020034; padding-top: 10px;"&gt;© &lt;a href="https://www.leidos.com/"&gt;Leidos&lt;/a&gt; | &lt;a href="https://prism.leidos.com/command_media/command_media_folders/policy_lp_lg_3_privacypdf"&gt;Web Privacy Policy&lt;/a&gt;&lt;br&gt;
+            This email and any attachments to it are intended only for the identified recipients. It may contain proprietary or otherwise legally protected information of Leidos. Any unauthorized use or disclosure of this communication is strictly prohibited. If you have received this communication in error, please notify the sender and delete or otherwise destroy the email and all attachments immediately.&lt;/div&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/tbody&gt;
+&lt;/table&gt;</html>
+    </emailsettings>
+    <attachments>
+      <items>
+        <attachment path="${extracted_file_path}" order="0"/>
+      </items>
+      <archive>
+        <archiveattachments>false</archiveattachments>
+        <archivefilename>reports-${burst_token}.zip</archivefilename>
+      </archive>
+    </attachments>
+    <emailrfc2822validator>
+      <allowquotedidentifiers>true</allowquotedidentifiers>
+      <allowparensinlocalpart>true</allowparensinlocalpart>
+      <allowdomainliterals/>
+      <allowdotinatext/>
+      <allowsquarebracketsinatext/>
+      <skipvalidationfor/>
+    </emailrfc2822validator>
+    <simplejavamail>
+      <active/>
+      <replytoname/>
+      <replytoaddress/>
+      <bouncetoname/>
+      <bouncetoaddress/>
+      <receipttoname/>
+      <receipttoaddress/>
+      <dispositionnotificationtoname/>
+      <dispositionnotificationtoaddress/>
+      <customemailheaders/>
+      <customsessionproperties/>
+      <javaxmaildebug/>
+      <transportmodeloggingonly/>
+      <proxy>
+        <host/>
+        <port>1080</port>
+        <username/>
+        <password/>
+        <socks5bridgeport>1081</socks5bridgeport>
+      </proxy>
+      <async/>
+      <poolsize/>
+      <poolsizekeepalivetime/>
+      <connectionpool>
+        <clusterkeyuuid/>
+        <coresize/>
+        <maxsize/>
+        <claimtimeoutmillis/>
+        <expireaftermillis/>
+        <loadbalancingstrategy/>
+      </connectionpool>
+      <sessiontimeoutmillis/>
+      <trustallhosts/>
+      <trustedhosts/>
+      <verifyserveridentity/>
+      <opportunistictls/>
+      <dkim>
+        <privatekey/>
+        <signingdomain/>
+        <selector/>
+      </dkim>
+      <smime>
+        <signingkeystore/>
+        <signingkeystorepassword/>
+        <signingkeyalias/>
+        <signingkeypassword/>
+        <encryptioncertificate/>
+      </smime>
+    </simplejavamail>
+    <uploadsettings>
+      <ftpcommand/>
+      <filesharecommand/>
+      <ftpscommand/>
+      <sftpcommand/>
+      <httpcommand/>
+      <cloudcommand/>
+    </uploadsettings>
+    <webuploadsettings>
+      <documentbursterwebcommand/>
+      <mssharepointcommand/>
+      <wordpresscommand/>
+      <drupalcommand/>
+      <joomlacommand/>
+      <otherwebcommand/>
+    </webuploadsettings>
+    <smssettings>
+      <twilio>
+        <accountsid/>
+        <authtoken/>
+      </twilio>
+      <fromtelephonenumber/>
+      <totelephonenumber/>
+      <text/>
+    </smssettings>
+    <qualityassurance>
+      <emailserver>
+        <host>localhost</host>
+        <port>1025</port>
+        <userid/>
+        <userpassword/>
+        <usessl>false</usessl>
+        <usetls>false</usetls>
+        <fromaddress>do-not-reply@leidos.com</fromaddress>
+        <name>Learning and Development</name>
+        <weburl>http://localhost:8025</weburl>
+      </emailserver>
+    </qualityassurance>
+    <split2ndtime>false</split2ndtime>
+    <bursttokendelimiters>
+      <start>{</start>
+      <end>}</end>
+      <start2nd>[</start2nd>
+      <end2nd>]</end2nd>
+    </bursttokendelimiters>
+    <numberofuservariables>10</numberofuservariables>
+    <delayeachdistributionby>0</delayeachdistributionby>
+    <reusetokenswhennotfound>false</reusetokenswhennotfound>
+    <failjobifanydistributionfails>false</failjobifanydistributionfails>
+    <enableretrypolicy>false</enableretrypolicy>
+    <retrypolicy>
+      <delay>3</delay>
+      <maxdelay>30</maxdelay>
+      <maxretries>3</maxretries>
+    </retrypolicy>
+    <locale>
+      <language/>
+      <country/>
+    </locale>
+    <sortbyposition>false</sortbyposition>
+    <suppressduplicateoverlappingtext>false</suppressduplicateoverlappingtext>
+    <shouldseparatebybeads>true</shouldseparatebybeads>
+    <averagechartolerancevalue/>
+    <spacingtolerancevalue/>
+    <enableincubatingfeatures>false</enableincubatingfeatures>
+    <updatesettings>
+      <copylicensinginformation>true</copylicensinginformation>
+      <copyoutputfiles>false</copyoutputfiles>
+      <copylogfiles>true</copylogfiles>
+      <copyquarantinefiles>false</copyquarantinefiles>
+      <copybackupfiles>false</copybackupfiles>
+    </updatesettings>
+  </settings>
+</documentburster>

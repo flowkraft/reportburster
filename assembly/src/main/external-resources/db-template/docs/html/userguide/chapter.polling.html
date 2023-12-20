@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Chapter 6. Automatic Polling for Incoming Reports</title><link rel="stylesheet" href="css/skrf.css" type="text/css"/><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"/><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><script xmlns="" type="text/javascript" src="css/shCore.js"><!----></script><script xmlns="" type="text/javascript" src="css/shBrushJava.js"><!----></script><script xmlns="" type="text/javascript" src="css/shBrushGroovy.js"><!----></script><link xmlns="" href="css/shCore.css" rel="stylesheet" type="text/css"/><link xmlns="" href="css/shThemeDefault.css" rel="stylesheet" type="text/css"/><script xmlns="" type="text/javascript">
+     SyntaxHighlighter.all()
+</script><link rel="home" href="index.html" title="DocumentBurster User Guide"/><link rel="up" href="pt02.html" title="Part II.  DocumentBurster"/><link rel="prev" href="chapter.variables.html" title="Chapter 5. Variables"/><link rel="next" href="chapter.audit.html" title="Chapter 7. Quality Assurance"/></head>
+				<body>
+				<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K63768" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript> <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+				new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src= '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+				})(window,document,'script','dataLayer','GTM-K63768');</script>
+			<ul class="docnav"><li class="previous"><a accesskey="p" href="chapter.variables.html"><strong>Prev</strong></a></li><li class="next"><a accesskey="n" href="chapter.audit.html"><strong>Next</strong></a></li></ul><div class="chapter" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.polling"/>Chapter 6. Automatic Polling for Incoming Reports</h2></div></div></div><div class="toc"><dl><dt><span class="section"><a href="chapter.polling.html#chapter.polling.watching">6.1. Watch a Folder for Incoming Reports</a></span></dt></dl></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.polling.watching"/>6.1. Watch a Folder for Incoming Reports</h2></div></div></div><p>
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			can poll a configurable folder and automatically pick for processing
+			all the reports which are dropped to this folder.
+		</p><p>
+			This functionality
+			is useful when
+			integrating with an external
+			legacy
+			system
+			which can be
+			configured to generate the reports to the
+			polled
+			folder, thus
+			obtaining an
+			automated system to generate, burst and
+			distribute the
+			reports.
+		</p><p>
+			In
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			main window select
+			<span class="guimenu"><strong>Actions</strong></span>
+			,
+			<span class="guimenu"><strong>Merge, Burst and Trace...</strong></span>
+			,
+			<span class="guimenu"><strong>Poll Folder -&gt; Burst</strong></span>
+		</p><p>
+			</p><div class="mediaobject"><img src="images/report-polling1.png"/></div><p>
+			</p><div class="mediaobject"><img src="images/report-polling2.png"/></div><p>
+		</p><p>
+			</p><div class="itemizedlist"><ul><li><p>
+						<span class="emphasis"><em>Start Polling</em></span>
+						- Start watching the selected folder for incoming reports. Once
+						the polling is
+						started,
+						<span class="emphasis"><em>
+							<span class="trademark">DocumentBurster</span>™
+						</em></span>
+						will automatically process all the reports which are dropped to
+						this folder.
+					</p></li><li><p>
+						<span class="emphasis"><em>End Polling</em></span>
+						- Stop watching/polling the folder for incoming reports.
+					</p></li><li><p>
+						<span class="emphasis"><em>View Generated Reports</em></span>
+						- Browse the generated reports.
+					</p></li></ul></div><p>
+		</p><div class="note"><h2>Note</h2><p>
+				The polling GUI presented in this chapter is not available in
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+					Server.
+				</em></span>
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+					Server
+				</em></span>
+				will automatically start to check (poll) the
+				<code class="filename">server/poll</code>
+				folder once it is started.
+			</p><p>
+				For more
+				details about the additional features of
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+					Server
+				</em></span>
+				software please
+				read
+				<a class="xref" href="chapter.server.html" title="Chapter 9.  DocumentBurster Server">Chapter 9, <i>
+		
+			DocumentBurster
+			Server
+		
+	</i></a>
+				.
+			</p></div></div></div><ul class="docnav"><li class="previous"><a accesskey="p" href="chapter.variables.html"><strong>Prev</strong>Chapter 5. Variables</a></li><li class="up"><a accesskey="u" href="#"><strong>Top of page</strong></a></li><li class="home"><a accesskey="h" href="index.html"><strong>Front page</strong></a></li><li class="next"><a accesskey="n" href="chapter.audit.html"><strong>Next</strong>Chapter 7. Quality Assurance</a></li></ul>
+				<script type="text/javascript">
+				window.$zopim||(function(d,s){var z=$zopim=function(c){z._.push(c)},$=z.s= d.createElement(s),e=d.getElementsByTagName(s)[0];z.set=function(o){z.set. _.push(o)};z._=[];z.set._=[];$.async=!0;$.setAttribute('charset','utf-8'); $.src='//cdn.zopim.com/?h7mkkauOUJAVdDuy4BEr4FLv2scL9q1J';z.t=+new Date;$. type='text/javascript';e.parentNode.insertBefore($,e)})(document,'script');
+				</script>
+</body>
+			</html>

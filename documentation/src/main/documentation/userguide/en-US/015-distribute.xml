@@ -1,0 +1,1778 @@
+<chapter id="chapter.distributing">
+	<title>Distribute Reports</title>
+	<section id="chapter.distributing.overview">
+		<title>Overview</title>
+		<para>
+			Your partners might need their reports to be sent through
+			various
+			distribution channels. Most of them will prefer email but
+			others will
+			rather use FTP. Some customers might have their own
+			automated
+			software
+			systems to further process the reports and might
+			expect the files to
+			be placed in a specified remote location.
+			Others
+			might have more strict
+			security related requirements and will
+			prefer
+			the FTPS protocol. In
+			some scenarios the generated reports
+			should be
+			uploaded
+			through an
+			enterprise
+			portal like
+			<citetitle>Microsoft SharePoint</citetitle>
+			.
+		</para>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			offers a broad range of destination types
+			like email, local files,
+			FTP, FTPs, SFTP and TFTP, Windows shared
+			drives, UNIX Samba servers
+			and WebDAV servers.
+			WebDAV
+			protocol
+			is used to
+			distribute the reports to
+			enterprise web portals such
+			as
+			<citetitle>Microsoft
+				SharePoint
+			</citetitle>
+			,
+			<citetitle>Oracle Portal</citetitle>
+			or
+			<citetitle>SAP
+				NetWeaver
+			</citetitle>
+			.
+		</para>
+	</section>
+	<section id="chapter.distributing.enable">
+		<title>Enable Report Distribution</title>
+		<para>
+			In order to distribute the reports, the following configuration
+			needs to be checked.
+		</para>
+		<para>
+			In
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			main window select
+			<guimenu>Actions</guimenu>
+			,
+			<guimenu>Configure</guimenu>
+			,
+			<guimenu>General</guimenu>
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/burst-settings1.png" format="PNG" />
+				</imageobject>
+			</mediaobject>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/distribute-reports.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			<emphasis>Distribute reports to Email, FTP ...
+			</emphasis>
+			- If checked, the
+			generated reports will be distributed as part of
+			the
+			bursting process,
+			otherwise no. Default value is unchecked.
+		</para>
+	</section>
+	<section id="chapter.distributing.email">
+		<title>Distribute Reports by Email</title>
+		<section id="chapter.distributing.email.settings">
+			<title>Email Connection Settings</title>
+			<para>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				can distribute reports using a
+				<citetitle>Microsoft Exchange</citetitle>
+				email
+				server or
+				using any other
+				SMTP compliant email server. For
+				testing purposes it's possible to configure
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				to send emails through free (SMTP) email providers like
+				<citetitle>Hotmail</citetitle>
+				,
+				<citetitle>Yahoo!
+					Mail
+				</citetitle>
+				,
+				<citetitle>Gmail</citetitle>
+				,
+				etc.
+			</para>
+			<para>
+				In order to distribute reports by email, the email server
+				connection settings should be
+				properly configured.
+			</para>
+			<para>
+				In
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				main window select
+				<guimenu>Actions</guimenu>
+				,
+				<guimenu>Configure</guimenu>
+				,
+				<guimenu>Email</guimenu>
+				,
+				<guimenu>Connection Settings</guimenu>
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/email-connection-settings.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				The email configuration is straightforward. The most
+				important
+				settings are the
+				host, the user name, the password and the
+				port. If an
+				email
+				server with SSL or
+				TLS support (e.g.
+				<citetitle>Gmail</citetitle>
+				, etc.) is
+				used then
+				the appropriate checkboxes need
+				to be
+				selected.
+			</para>
+			<para>
+				<emphasis>Send Test Email</emphasis>
+				can be used to test that the provided email settings are correct.
+			</para>
+			<section>
+				<title>Microsoft Exchange Server</title>
+				<para>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					works when configured with correct
+					<citetitle>Microsoft Exchange</citetitle>
+					SMTP server connection settings.
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					communicates with the
+					<citetitle>Microsoft Exchange</citetitle>
+					email server through SMTP similar with how the
+					<citetitle>Microsoft Outlook</citetitle>
+					email client
+					software does.
+					Check the
+					<citetitle>Microsoft Exchange</citetitle>
+					SMTP connection settings configured in any working
+					<citetitle>Microsoft Outlook</citetitle>
+					software installation.
+					Providing the same (Outlook) SMTP settings to
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					it's an easy way to get
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					to send emails through yours organization
+					<citetitle>Microsoft Exchange</citetitle>
+					server.
+				</para>
+			</section>
+			<section>
+				<title>Cloud Email Providers</title>
+				<para>
+					<citetitle>Microsoft Office 365</citetitle>
+				</para>
+				<para>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					can be configured to send emails through the cloud
+					<citetitle>Microsoft Office 365</citetitle>
+					service. Please refer to the following
+					documentation and see the
+					<citetitle>Microsoft Office 365</citetitle>
+					SMTP settings to be configured with
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+				</para>
+				<para>
+					<ulink
+						url="https://technet.microsoft.com/en-us/library/dn554323(v=exchg.150).aspx#HowtoconfigSMTPCS">
+						<citetitle>Microsoft Office 365</citetitle>
+						SMTP configuration
+					</ulink>
+				</para>
+			</section>
+			<section>
+				<title>Free cloud email services - Hotmail, Yahoo! Mail, Gmail
+				</title>
+				<para>
+					For testing few reports
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					can be configured to send emails through any (free) SMTP cloud
+					email service provider.
+				</para>
+				<para>
+					No matter which of
+					these
+					free email
+					services are used,
+					you
+					must be aware
+					of
+					the "rate limit" (the limit
+					for sending emails)
+					established by your
+					email account provider (i.e.
+					<citetitle>Microsoft</citetitle>
+					,
+					<citetitle>Gmail</citetitle>
+					,
+					<citetitle>Yahoo</citetitle>
+					).
+				</para>
+				<para>
+					<citetitle>Gmail</citetitle>
+					can be configured for
+					testing few reports. If you
+					are interested to
+					test
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					with
+					<citetitle>Gmail</citetitle>
+					,
+					<ulink url="https://support.google.com/mail/answer/13287?hl=en">
+						please read this Gmail documentation.
+
+					</ulink>
+				</para>
+				<para>
+					<citetitle>Yahoo! Mail</citetitle>
+					,
+					<citetitle>Hotmail</citetitle>
+					and other big email providers have POP3
+					support
+					and
+					can
+					be
+					configured
+					with
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						.
+					</emphasis>
+					Please read the POP3 support documentation
+					of the
+					specific email
+					provider which you have the intention to use.
+				</para>
+			</section>
+			<note>
+				<title>Note</title>
+				<para>
+					If required, a network or IT administrator
+					from your
+					organization should be able to give further
+					help in
+					configuring the
+					email server settings.
+				</para>
+			</note>
+			<important>
+				<title>Important</title>
+				<para>
+					If there is a firewall or anti-virus software
+					which is enabled
+					in-between
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					and the email server,
+					in such case, the protecting software might
+					need to
+					be configured and allow
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					to send emails
+					as a good and trustable citizen.
+				</para>
+			</important>
+		</section>
+		<section>
+			<title>Dynamic Email Connection Settings</title>
+			<para>
+				If required, using variables, the email connection settings can
+				be
+				dynamically
+				filled at run-time when the reports are being
+				distributed.
+			</para>
+			<para>
+				For example, your organization might have few departments (e.g.
+				human
+				resources/payroll, financial/accounting,
+				travel department,
+				etc.) and each department will need to
+				distribute
+				their own set of
+				reports. Payslip reports (which are being distributed by the
+				human
+				resources/payroll department) should be sent using the
+				<emphasis>payroll@yourcompany.com</emphasis>
+				email account, invoices should be sent
+				using
+				<emphasis>finance@yourcompany.com</emphasis>
+				and so on.
+			</para>
+			<para>
+				<emphasis>Variables,</emphasis>
+				which are described with more details in
+				<xref linkend="chapter.variables" />
+				,
+				can be used to achieve such a requirement. Instead of hard-coding
+				the
+				sender email account as being
+				<emphasis>payroll@yourcompany.com</emphasis>
+				or
+				<emphasis>finance@yourcompany.com,</emphasis>
+				using variables, it is possible
+				to dynamically fill the email
+				connection details when the reports are being
+				distributed (at that
+				time the sender
+				is known).
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/dynamic-email-connection.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				When sending the reports, the dynamic variables
+				<emphasis>$var0$,</emphasis>
+				<emphasis>$var1,</emphasis>
+				etc. will be appropriately evaluated with the configuration settings
+				for either
+				<emphasis>payroll@yourcompany.com</emphasis>
+				or
+				<emphasis>finance@yourcompany.com.</emphasis>
+				For more details about
+				<emphasis>Variables</emphasis>
+				please check
+				<xref linkend="chapter.variables" />
+				.
+			</para>
+		</section>
+		<section>
+			<title>Email Each Report to One Recipient</title>
+			<para>
+				The simplest email distribution scenario is when sending
+				each of
+				the generated reports to one different recipient.
+			</para>
+			<para>
+				By default the
+				<emphasis>To</emphasis>
+				address is configured with the value of the
+				<emphasis>$burst_token$</emphasis>
+				variable.
+				If the burst
+				tokens are of type
+				email
+				address, for
+				example by
+				using tokens such as
+				<emphasis>{clyde.grew@northridgehealth.org},</emphasis>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				will send the
+				output report to the corresponding email address, in
+				this case the
+				<emphasis>clyde.grew@northridgehealth.org</emphasis>
+				email address.
+			</para>
+			<para>
+				This is how the existing sample report
+				<filename>samples/Payslips.pdf</filename>
+				is configured to work.
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/email-payslips-employee.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				The
+				<emphasis>burst token</emphasis>
+				is
+				<emphasis>clyde.grew@northridgehealth.org</emphasis>
+				so the output file name will be
+				<filename>clyde.grew@northridgehealth.org.pdf</filename>
+				and
+				will be emailed as an attachment to the
+				<emphasis>clyde.grew@northridgehealth.org</emphasis>
+				email address.
+			</para>
+		</section>
+		<section>
+			<title>Email Each Report to Multiple Recipients</title>
+			<para>
+				Another scenario is to distribute each output report to a list
+				of
+				people (or groups of people). It is also easy to configure
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				to CC and BCC the generated reports.
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/email-multiple-recipients.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				In addition, it is possible to use dynamic variables when
+				configuring the
+				email destinations for the output reports.
+				For
+				example, it is
+				possible to configure
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				to distribute emails
+				<emphasis>TO</emphasis>
+				<emphasis>$var0$,</emphasis>
+				<emphasis>CC</emphasis>
+				to
+				<emphasis>$var1$</emphasis>
+				and
+				<emphasis>BCC</emphasis>
+				to
+				<emphasis>$var2$.</emphasis>
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/email-multiple-addresses.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				At run-time the variables will be expanded with values from the
+				report
+				which is being distributed, for example the variable values
+				might be evaluated to
+				<itemizedlist>
+					<listitem>
+						<emphasis>$var0$ (TO)-</emphasis>
+						emma.w@company.com;george.c@company.com
+					</listitem>
+					<listitem>
+						<emphasis>$var1$ (CC)-</emphasis>
+						accounting@company.com
+					</listitem>
+					<listitem>
+						and
+						<emphasis>$var2$ (BCC)-</emphasis>
+						finance@northridgehealth.com.
+					</listitem>
+				</itemizedlist>
+			</para>
+			<important>
+				<title>Important</title>
+				<para>
+					Multiple email addresses should be separated by either
+					semicolon (;) or
+					comma (,).
+				</para>
+			</important>
+		</section>
+		<section>
+			<title>Text Email Messages</title>
+			<para>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				supports sending of personalized email messages which have the
+				corresponding burst report attached to the email.
+			</para>
+			<para>
+				In
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				main window select
+				<guimenu>Actions</guimenu>
+				,
+				<guimenu>Configure</guimenu>
+				,
+				<guimenu>Email</guimenu>
+				,
+				<guimenu>Email Message</guimenu>
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/email-settings1.png" format="PNG" />
+					</imageobject>
+				</mediaobject>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/email-message.png" format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				Using variables, the subject
+				and the text of the email messages
+				can be dynamically configured and customized for each
+				individual
+				recipient.
+			</para>
+			<para>
+				<emphasis>Example</emphasis>
+				- In the previous screenshot, when each individual report is being
+				distributed,
+				<emphasis>$var0$,</emphasis>
+				<emphasis>$var1$</emphasis>
+				and
+				<emphasis>$var2$</emphasis>
+				variables will be replaced with values fetched from the burst report
+				such as
+				<emphasis>John,</emphasis>
+				<emphasis>July</emphasis>
+				and
+				<emphasis>Michelle.</emphasis>
+			</para>
+			<para>
+				Following is the message which is sent when the variables
+				are
+				expanded with the values
+				<emphasis>John,</emphasis>
+				<emphasis>July</emphasis>
+				and
+				<emphasis>Michelle</emphasis>
+				<literallayout>
+					Hi John,
+
+					Attached you can find the invoice for the
+					month of July.
+
+					Thank you,
+					Michelle
+				</literallayout>
+			</para>
+			<note>
+				<title>Note</title>
+				<para>
+					In order to avoid message retyping, using the
+					<emphasis>Save Template</emphasis>
+					and
+					<emphasis>Load Template</emphasis>
+					buttons, it is possible
+					to save/load email message templates from/to
+					external text files.
+				</para>
+			</note>
+		</section>
+		<section id="chapter.distributing.email.html">
+			<title>HTML Email Messages</title>
+			<para>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				can be configured to send
+				rich HTML formatted email messages in order
+				to add color,
+				images, headings, bulleted lists, emphasized text,
+				underline key
+				points, or to make some of the words bold.
+			</para>
+			<para>
+				<emphasis role="strong">
+					Configuration
+				</emphasis>
+			</para>
+			<para>
+				Select the
+				<emphasis>HTML email</emphasis>
+				checkbox and define the HTML message
+				with valid HTML code containing
+				the message which needs to be
+				distributed.
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/html-email.png" format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<note>
+				<title>Provide Plain Text Message Alternative</title>
+				<para>
+					When you configure to send HTML emails it is a good practice
+					to provide
+					an alternative plain text message for HTML unaware email
+					clients
+					(such as text-based email clients).
+				</para>
+			</note>
+			<note>
+				<title>Personalize HTML Messages Using Variables</title>
+				<para>
+					It is possible to use variables to personalize
+					the
+					content
+					of the HTML
+					emails for each individual recipient. For more
+					details about
+					variables please
+					read
+					<xref linkend="chapter.variables" />
+				</para>
+			</note>
+			<important>
+				<title>Image Paths</title>
+				<para>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					resolves all image paths used in the HTML code starting from
+					<filename class='directory'>./templates</filename>
+					parent directory.
+				</para>
+				<para>
+					For instance, the image
+					<filename>logo.png</filename>
+					is defined in the
+					<filename>invoice.html</filename>
+					having the relative path
+					<filename>
+						src="html-basic-example/images/logo.png",
+					</filename>
+					starting from the
+					<filename class='directory'>./templates</filename>
+					parent directory.
+				</para>
+			</important>
+			<section id="chapter.distributing.html.basic">
+				<title>
+					Basic HTML Sample -
+					<filename>invoice.html</filename>
+				</title>
+				<para>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					comes with a sample
+					HTML email template located in
+					<filename class='directory'>templates/html-basic-example</filename>
+					folder.
+					The sample template is called
+					<filename>invoice.html</filename>
+					and contains a good looking invoice to demonstrate the
+					capabilities
+					of HTML emails.
+				</para>
+				<para>
+					The sample HTML email template has a complex enough layout for
+					giving an
+					idea
+					of what things can be achieved when sending HTML
+					formatted
+					emails (i.e. colors, images, bold text, etc.).
+				</para>
+				<para>
+					This is how the sample HTML invoice looks on Microsoft Outlook
+					email client.
+				</para>
+				<para>
+					<mediaobject>
+						<imageobject>
+							<imagedata fileref="images/html-invoice-sample.png"
+								format="PNG" />
+						</imageobject>
+					</mediaobject>
+				</para>
+			</section>
+		</section>
+		<section id="chapter.distributing.html.responsive">
+			<title>
+				Beautiful Responsive HTML Emails
+			</title>
+			<para>
+				<emphasis role="strong">
+					Mobile, WebMail and Desktop Trends
+				</emphasis>
+			</para>
+			<para>
+				<emphasis>We tracked nearly 1 billion emails every month
+					throughout
+					2015.
+				</emphasis>
+			</para>
+			<para>
+				<emphasis>
+					In the second half of 2015, opens made on mobile devices
+					surged,
+					going from 49% in June to 54% in November—a 10% increase.
+					This matches trends we’ve seen in prior years where consumers are
+					more
+					likely to rely on portable devices. Webmail and desktop opens
+					have also steadily declined throughout 2015,
+					each dropping 13%
+					since
+					January.
+				</emphasis>
+			</para>
+			<para>
+				<ulink
+					url="https://litmus.com/blog/top-10-most-popular-email-clients-of-2015" />
+			</para>
+			<para>
+				<emphasis role="strong">
+					Responsive Email Templates
+				</emphasis>
+			</para>
+			<para>
+				Designing responsive HTML emails can be hard.
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				makes it easy.
+			</para>
+			<para>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				comes with
+				<emphasis role="strong">Foundation for Emails</emphasis>
+				which is a simple framework to quickly
+				create responsive HTML
+				emails
+				that work on any device and any client.
+			</para>
+			<para>
+				<ulink url="http://foundation.zurb.com/emails.html" />
+			</para>
+			<para>
+				There are four responsive email templates available in
+				<filename class='directory'>./templates/html-mobile-responsive-emails/templates/base
+				</filename>
+			</para>
+			<para>
+				All four email templates have been tested across 40+ email
+				clients
+				and devices.
+			</para>
+			<para>
+				<emphasis role="strong">
+					1. Basic
+				</emphasis>
+				- View Demo -
+				<ulink url="https://litmus.com/pub/85a1b19" />
+			</para>
+			<para>
+				This template is perfect for sending a basic but nice looking
+				responsive email.
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/responsive-basic.png" format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<emphasis role="strong">
+					2. Hero
+				</emphasis>
+				- View Demo -
+				<ulink url="https://litmus.com/pub/6d34a4c" />
+			</para>
+			<para>
+				Want to include a snazzy hero image in your responsive email?
+				This template is for you!
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/responsive-hero.png" format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<emphasis role="strong">
+					3. Sidebar
+				</emphasis>
+				- View Demo -
+				<ulink url="https://litmus.com/checklist/public/f6f3c9d" />
+			</para>
+			<para>
+				This template includes a sidebar area for a list of links,
+				perfect for linking to additional content.
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/responsive-sidebar.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<emphasis role="strong">
+					4. Sidebar Hero
+				</emphasis>
+				- View Demo -
+				<ulink url="https://litmus.com/checklist/public/c00b7d3" />
+			</para>
+			<para>
+				Want a sidebar and a hero image? Let's go crazy! This template
+				combines the Sidebar and Hero templates.
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/responsive-sidebar-hero.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<emphasis role="strong">
+					Resources
+				</emphasis>
+			</para>
+			<para>
+				<itemizedlist>
+					<listitem>
+						Foundation for Emails Documentation -
+						<ulink url="http://foundation.zurb.com/emails.html" />
+					</listitem>
+					<listitem>
+						Online tool to easily write your your email in markdown which is
+						then converted automatically into a
+						fully responsive email -
+						<ulink url="http://cakedown.alexandredeschamps.ca" />
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+	<section id="chapter.distributing.attachments">
+		<title>Attachments</title>
+		<para>
+			Out of the box
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			attaches to each email message
+			the file which
+			is extracted for
+			the
+			corresponding burst token. This is the most
+			common
+			scenario and it is
+			supported using the default program
+			configuration.
+		</para>
+		<para>
+			Sometimes a different situation might be required
+			<itemizedlist>
+				<listitem>Send emails without any attachment</listitem>
+				<listitem>Send emails with two or more files attached (separate
+					files or
+					a single archive/zip file containing all the files
+					together)
+				</listitem>
+				<listitem>Distribute other document formats (e.g. Word, XML, etc.)
+					beside
+					the
+					PDF and Excel formats
+					which are supported out of the box
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			<emphasis role="bold">
+				Use case example
+			</emphasis>
+		</para>
+		<para>
+			The requirement is to send electronic invoices via email. The
+			invoice is formed by a
+			PDF which is the graphical form of the invoice,
+			and an XML file which
+			contains the details of the invoice.
+		</para>
+		<para>
+			By some countries law, it is required to send both files in
+			order to
+			consider this as a valid invoice.
+		</para>
+		<para>
+			The above requirement can be achieved by defining both files as
+			an
+			attachment for the output emails
+			<itemizedlist>
+				<listitem>The extracted PDF invoice</listitem>
+				<listitem>The corresponding XML file</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			Furthermore, the files can be
+			archived
+			and sent together as a
+			single
+			zip file.
+		</para>
+		<section id="chapter.distributing.attachments.configure">
+			<title>Configure Attachments</title>
+			<para>
+				In
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				main window select
+				<guimenu>Actions</guimenu>
+				,
+				<guimenu>Configure</guimenu>
+				,
+				<guimenu>Attachments</guimenu>
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/attachments-settings1.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/email-attachments.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<itemizedlist>
+					<listitem>
+						By default the software is attaching
+						<emphasis>$extracted_file_path$.</emphasis>
+					</listitem>
+					<listitem>
+						Attachments can be added, removed and edited using the buttons
+						with the corresponding names
+						<emphasis>Add,</emphasis>
+						<emphasis>Remove</emphasis>
+						(or
+						<emphasis>Clear</emphasis>
+						to remove all) and
+						<emphasis>Edit.</emphasis>
+					</listitem>
+					<listitem>
+						<emphasis>Variables</emphasis>
+						can be used when defining attachments. For more
+						details about
+						variables please
+						read
+						<xref linkend="chapter.variables" />
+						.
+					</listitem>
+					<listitem>
+						The files are attached in the selection order. The order can be
+						changed using
+						<emphasis>Up</emphasis>
+						and
+						<emphasis>Down</emphasis>
+						button commands.
+					</listitem>
+				</itemizedlist>
+			</para>
+			<para>
+				<emphasis>Archive Attachments</emphasis>
+				<itemizedlist>
+					<listitem>
+						<emphasis>Archive all attachments together</emphasis>
+						- If selected,
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+						</emphasis>
+						will archive (zip) all the attachments
+						together. If configured to
+						distribute reports,
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+						</emphasis>
+						will deliver to the relevant recipients
+						the archived (zip) file
+						containing all the corresponding files. Default value is
+						unchecked.
+					</listitem>
+					<listitem>
+						<emphasis>Archive File Name</emphasis>
+						– Name for the
+						archive file. Default value is
+						<emphasis>reports-$burst_token$.zip.</emphasis>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+	<section id="chapter.distributing.uploading">
+		<title>Upload Reports</title>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			software
+			can upload business reports through most of the existing
+			network protocols
+			including FTP, Windows File Share, FTPS,
+			SFTP/SCP/SSH, TFTP, HTTP, HTTPs and WebDAV.
+			WebDAV is an
+			extension of
+			HTTP protocol and
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			can be used to upload
+			reports to any web server which has WebDAV
+			support.
+		</para>
+		<section id="chapter.distributing.uploading.curl.integration">
+			<title>
+				<citetitle>cURL</citetitle>
+				Integration
+			</title>
+			<para>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				closely integrates with
+				<citetitle>
+					cURL
+				</citetitle>
+				, a
+				Swiss-army knife for doing data transfer. Through
+				<citetitle>cURL,</citetitle>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				can distribute
+				reports
+				via HTTP or FTP with or without authentication,
+				it works over
+				SSL, and it
+				works without interaction. Actually
+				<citetitle>cURL</citetitle>
+				(and
+				thus
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				)
+				supports distributing files and data to a various range of common
+				Internet
+				protocols, currently including
+				HTTP, HTTPS, FTP, FTPS, SCP,
+				SFTP, TFTP, LDAP, LDAPS, DICT, TELNET, FILE,
+				IMAP, POP3, SMTP and
+				RTSP.
+			</para>
+			<para>
+				<citetitle>cURL - </citetitle>
+				<ulink url="http://curl.haxx.se/" />
+			</para>
+			<para>
+				<emphasis>Cross platform</emphasis>
+			</para>
+			<para>
+				<citetitle>cURL</citetitle>
+				is portable and works on many platforms, including
+				Windows, Linux,
+				Mac
+				OS X, MS-DOS and more.
+			</para>
+			<para>
+				On Windows,
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				package distribution is bundling together
+				a recent version of
+				<citetitle>cURL.</citetitle>
+				So,
+				if your organization is running
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				under Windows,
+				there is nothing more to download or install in
+				regards
+				with
+				<citetitle>cURL.</citetitle>
+			</para>
+			<para>
+				For other UNIX like systems, such as Linux and Mac OS X, the
+				appropriate
+				<citetitle>cURL</citetitle>
+				binaries
+				distribution should be properly downloaded
+				and
+				installed.
+				In
+				addition, the
+				<citetitle>cURL</citetitle>
+				groovy scripts which are bundled
+				together with
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				are written for Windows usage and should support small adjustments
+				to
+				be made
+				ready for usage under Linux/UNIX.
+			</para>
+			<para>
+				<emphasis>
+					Further
+					<citetitle>cURL</citetitle>
+					resources
+				</emphasis>
+			</para>
+			<para>
+				<citetitle>cURL</citetitle>
+				is a tool for getting or sending files using URL syntax. The
+				URL
+				syntax
+				is protocol-dependent. Along with the URL for
+				the required
+				protocol,
+				<citetitle>cURL</citetitle>
+				can take some additional options in the
+				command line.
+			</para>
+			<para>
+				For complete
+				<citetitle>cURL</citetitle>
+				documentation you can follow
+				<itemizedlist>
+					<listitem>
+						<ulink url="http://curl.haxx.se/docs/manual.html">cURL Manual</ulink>
+					</listitem>
+					<listitem>
+						<ulink url="http://curl.haxx.se/docs/manpage.html">cURL Man Page</ulink>
+					</listitem>
+					<listitem>
+						<ulink url="http://curl.haxx.se/docs/faq.html">cURL Frequently Asked Questions </ulink>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section id="chapter.distributing.uploading.ftp">
+			<title>
+				FTP
+			</title>
+			<para>
+				In
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				main window select
+				<guimenu>Actions</guimenu>
+				,
+				<guimenu>Configure</guimenu>
+				,
+				<guimenu>Upload</guimenu>
+				,
+				<guimenu>FTP</guimenu>
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/upload-reports-ftp.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/upload-reports-ftp-configuration.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<emphasis>Command</emphasis>
+				- Command which
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				will execute in order to upload each of the output reports. It is
+				possible
+				to use
+				variables in order to dynamically generate the command
+				at
+				run-time.
+			</para>
+			<para>
+				The example provided with the software is a typical cURL command for
+				uploading reports using the FTP protocol.
+				<itemizedlist>
+					<listitem>
+						<emphasis>--ftp-create-dirs</emphasis>
+						- (FTP/SFTP) When an FTP or SFTP URL/operation uses a path that
+						doesn't currently exist on the server, the standard behavior is to
+						fail.
+						Using this option, the software will instead attempt to
+						create
+						missing
+						directories.
+					</listitem>
+					<listitem>
+						<emphasis>-T, --upload-file</emphasis>
+						- This transfers the specified local file to the remote host.
+					</listitem>
+					<listitem>
+						<emphasis>$extracted_file_path$</emphasis>
+						- Variable which is
+						expanded with the path to the last extracted
+						file.
+					</listitem>
+					<listitem>
+						<emphasis>-u, --user &lt;user:password&gt;</emphasis>
+						- Specify the user name and password to use for server
+						authentication. User variables can be used in order to dynamically
+						configure
+						user and password.
+					</listitem>
+					<listitem>
+						<emphasis>example.com</emphasis>
+						- Replace this with the FTP host where the reports should be
+						uploaded. User variables can be used in order to dynamically
+						configure
+						the FTP host.
+					</listitem>
+					<listitem>
+						<emphasis>/reports/</emphasis>
+						- Replace this with the folder on the server where the reports
+						should be
+						uploaded. User variables can be used in order to
+						dynamically configure the remote
+						folder.
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section id="chapter.distributing.uploading.fileshare">
+			<title>
+				File Share
+			</title>
+			<para>
+				In
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				main window select
+				<guimenu>Actions</guimenu>
+				,
+				<guimenu>Configure</guimenu>
+				,
+				<guimenu>Upload</guimenu>
+				,
+				<guimenu>File Share</guimenu>
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/upload-reports-file-share.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/upload-reports-file-share-configuration.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<emphasis>Command</emphasis>
+				- Command which
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				will execute in order to upload each of the output reports. It is
+				possible
+				to use
+				variables in order to dynamically generate the command
+				at
+				run-time.
+			</para>
+			<para>
+				The example provided with the software is a typical cURL command for
+				uploading reports to file share.
+				<itemizedlist>
+					<listitem>
+						<emphasis>file://</emphasis>
+						-
+						<ulink url="http://en.wikipedia.org/wiki/File_URI_scheme">
+							File URI scheme
+						</ulink>
+					</listitem>
+					<listitem>
+						<emphasis>%20</emphasis>
+						- ASCII character code for space (URL Encoding).
+					</listitem>
+					<listitem>
+						<emphasis>$extracted_file_path$</emphasis>
+						- Variable which is
+						expanded with the path to the last extracted
+						file.
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section id="chapter.distributing.uploading.ftps">
+			<title>
+				FTPS
+			</title>
+			<para>
+				In
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				main window select
+				<guimenu>Actions</guimenu>
+				,
+				<guimenu>Configure</guimenu>
+				,
+				<guimenu>Upload</guimenu>
+				,
+				<guimenu>FTPS</guimenu>
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/upload-reports-ftps.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/upload-reports-ftps-configuration.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<emphasis>Command</emphasis>
+				- Command which
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				will execute in order to upload each of the output reports. It is
+				possible
+				to use
+				variables in order to dynamically generate the command
+				at
+				run-time.
+			</para>
+			<para>
+				The example provided with the software is a typical cURL command for
+				uploading reports to a server which has FTPS support.
+				<itemizedlist>
+					<listitem>
+						<emphasis>--ssl</emphasis>
+						- Try to use SSL/TLS for the connection.
+						Reverts to a non-secure
+						connection if the server doesn't support
+						SSL/TLS. See also
+						<command>--ftp-ssl-control</command>
+						and
+						<command>--ssl-reqd</command>
+						for different
+						levels of encryption required.
+					</listitem>
+					<listitem>
+						<emphasis>$extracted_file_path$</emphasis>
+						- Variable which is
+						expanded with the path to the last extracted
+						file.
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section id="chapter.distributing.uploading.sftp">
+			<title>
+				SFTP/SSH/SCP
+			</title>
+			<para>
+				In
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				main window select
+				<guimenu>Actions</guimenu>
+				,
+				<guimenu>Configure</guimenu>
+				,
+				<guimenu>Upload</guimenu>
+				,
+				<guimenu>SFTP/SCP</guimenu>
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/upload-reports-sftp.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/upload-reports-sftp-configuration.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<emphasis>Command</emphasis>
+				- Command which
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				will execute in order to upload each of the output reports. It is
+				possible
+				to use
+				variables in order to dynamically generate the command
+				at
+				run-time.
+			</para>
+			<para>
+				The example provided with the software is a typical cURL command for
+				uploading reports to a server which has SFTP support.
+				<itemizedlist>
+					<listitem>
+						<emphasis>sftp://</emphasis>
+						- Specifies that SFTP protocol should be used.
+					</listitem>
+					<listitem>
+						<emphasis>$extracted_file_path$</emphasis>
+						- Variable which is
+						expanded with the path to the last extracted
+						file.
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section id="chapter.distributing.uploading.http">
+			<title>
+				HTTP/WebDAV
+			</title>
+			<para>
+				In
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				main window select
+				<guimenu>Actions</guimenu>
+				,
+				<guimenu>Configure</guimenu>
+				,
+				<guimenu>Upload</guimenu>
+				,
+				<guimenu>HTTP/WebDAV</guimenu>
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/upload-reports-http.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/upload-reports-http-configuration.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<emphasis>Command</emphasis>
+				- Command which
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				will execute in order to upload each of the output reports. It is
+				possible
+				to use
+				variables in order to dynamically generate the command
+				at
+				run-time.
+			</para>
+			<para>
+				The example provided with the software is a typical cURL
+				command for
+				uploading reports to a web server. The web server should
+				have HTTP upload
+				enabled, otherwise uploads will not be allowed.
+			</para>
+			<para>
+				<citetitle>Microsoft SharePoint</citetitle>
+				is a
+				common report distribution use case.
+				The
+				command to upload to a
+				<citetitle>SharePoint</citetitle>
+				portal should be
+				similar with
+				the
+				provided
+				<citetitle>SharePoint</citetitle>
+				example.
+			</para>
+		</section>
+	</section>
+	<section id="chapter.distributing.sms">
+		<title>Send SMS Messages</title>
+		<para>
+			People use
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			to email invoices, payslips or other financial reports to customers
+			and employees. In addition to an email your customers can also get an
+			SMS message like:
+		</para>
+		<para>
+			<literallayout>
+				Dear
+				<emphasis>Customer Name</emphasis>
+				,
+
+				Just wanted to let you know that we've sent the June invoice by
+				email to
+				<emphasis>customer@emailaddress.com</emphasis>
+				.
+
+				Thank You for your business!
+
+				<emphasis>Your Name</emphasis>
+				,
+				<emphasis>Your Company Name</emphasis>
+			</literallayout>
+		</para>
+		<para>
+			With an average SMS open rate of 99% you can see why sending SMS
+			messages
+			to your customers is useful.
+		</para>
+		<section id="chapter.distributing.sms.twilio">
+			<title>
+				Twilio
+			</title>
+			<para>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				can be configured to send SMS text messages through Twilio.
+			</para>
+			<para>
+				Twilio (pronounced TWILL-e-o) is a cloud communications (IaaS)
+				company
+				based in San Francisco, California. Twilio allows sending
+				text
+				messages using its services. Twilio's services are billed based
+				on
+				usage.
+			</para>
+			<para>
+				<itemizedlist>
+					<listitem>
+						<ulink url="https://www.twilio.com">Twilio Home Page</ulink>
+					</listitem>
+					<listitem>
+						<ulink url="https://www.twilio.com/sms/pricing">Twilio SMS Pricing</ulink>
+					</listitem>
+				</itemizedlist>
+			</para>
+			<para>
+				<emphasis role="bold">
+					Configuration
+				</emphasis>
+			</para>
+			<para>
+				First step is to register an account with Twilio. It's fast and
+				free to get started. You can use your existing Twilio account if you
+				already have one. Follow this link to register your new Twilio
+				account.
+			</para>
+			<para>
+				<ulink url="https://www.twilio.com/try-twilio">https://www.twilio.com/try-twilio</ulink>
+			</para>
+			<para>
+				Twilio requires two credentials for sending SMS messages. The
+				<emphasis>Account SID</emphasis>
+				, which acts as a username, and the
+				<emphasis>Auth Token</emphasis>
+				which acts as a password.
+				Follow this link to learn more about your
+				Twilio
+				<emphasis>Account SID</emphasis>
+				and
+				<emphasis>Auth Token</emphasis>
+				.
+			</para>
+			<para>
+				<ulink
+					url="https://www.twilio.com/help/faq/twilio-basics/what-is-the-auth-token-and-how-can-i-change-it">What is the Auth Token, and how can I change it?</ulink>
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/documentburster-sms-menu.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/documentburster-sms-configure.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+		</section>
+		<section id="chapter.distributing.sms.text">
+			<title>
+				Text
+			</title>
+			<para>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				supports sending of personalized SMS text messages to your
+				customers.
+			</para>
+			<para>
+				In
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				main window select
+				<guimenu>Actions</guimenu>
+				,
+				<guimenu>Configure</guimenu>
+				,
+				<guimenu>SMS</guimenu>
+				,
+				<guimenu>Message</guimenu>
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/documentburster-sms-messages.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+
+			</para>
+			<para>
+				Using variables the
+				<citetitle>From Number</citetitle>
+				,
+				<citetitle>To Number</citetitle>
+				and the text of the SMS messages
+				can be customized for each
+				individual recipient.
+			</para>
+			<para>
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>From Number</emphasis>
+							– Phone number used for sending the SMS messages.
+						</para>
+						<para>
+							This number should be a
+							<citetitle>Twilio SMS-enabled phone number</citetitle>
+							.
+							Follow this link for more details
+						</para>
+						<para>
+							<ulink
+								url="https://www.twilio.com/help/faq/sms/can-i-use-my-twilio-number-for-sms">Can I use my Twilio number for SMS?</ulink>
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<emphasis>To Number</emphasis>
+							– Phone number where the SMS message will be sent. Using a
+							variable you'll personalize (provide) the mobile number for each
+							of
+							your recipients (customers).
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<emphasis>Text</emphasis>
+							– The SMS text message to be sent. Using variables you'll send a
+							personalized text message for each
+							of
+							your recipients (customers).
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+</chapter>
