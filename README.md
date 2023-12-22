@@ -1,6 +1,6 @@
 # ReportBurster
 
-<em><a href="https://www.reportburster.org" target="_blank">ReportBurster</em> is a report distribution software for bursting reports like invoices, statements and payslips in order to distribute by email, FTP, web or file share relevant parts to each of your customers, partners and employees.
+<a href="https://www.reportburster.org" target="_blank"><em>ReportBurster</em></a> is a report distribution software for bursting reports like invoices, statements and payslips in order to distribute by email, FTP, web or file share relevant parts to each of your customers, partners and employees.
 
 <em>ReportBurster</em> supports
 
