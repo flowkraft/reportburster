@@ -30,7 +30,7 @@ import com.sourcekraft.documentburster.utils.LicenseUtils;
 public class LicenseTest {
 
 	private static final String licenseXmlPath = "../../assembly/src/main/external-resources/db-template/config/_internal/license.xml";
-	private static final String TEST_LICENSE_KEY = System.getenv("TEST_LICENSE_KEY");
+	private static final String TEST_LICENSE_KEY = System.getProperty("TEST_LICENSE_KEY");
 	
 	private LicenseUtils _getTestLicenseUtils() throws Exception {
 		String randomTestLicenseXmlPath = TestsUtils.TESTS_OUTPUT_FOLDER + "/"
@@ -74,6 +74,7 @@ public class LicenseTest {
 
 		licenseUtils.checkLicense();
 		licenseUtils.getLicense().loadLicense();
+		
 		assertEquals(licenseUtils.getLicense().getStatus(), "valid");
 
 		licenseUtils.deActivateLicense();
