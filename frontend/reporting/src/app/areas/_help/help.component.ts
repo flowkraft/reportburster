@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import RSS from 'vanilla-rss';
+//import RSS from 'vanilla-rss';
 
 import { leftMenuTemplate } from './templates/_left-menu';
 import { tabsTemplate } from './templates/_tabs';
@@ -232,7 +232,7 @@ export class HelpComponent implements OnInit, AfterViewChecked {
     },
   ];
 
-  rssParser: typeof RSS;
+  //rssParser: typeof RSS;
 
   currentLeftMenu: string;
 
@@ -280,6 +280,7 @@ export class HelpComponent implements OnInit, AfterViewChecked {
       return;
     }
 
+    /*
     const blogEntriesFetchedCount = document.querySelectorAll(
       '#blogRss .feed-container'
     ).length;
@@ -287,7 +288,7 @@ export class HelpComponent implements OnInit, AfterViewChecked {
     if (blogEntriesFetchedCount == 0 && !this.rssParser) {
       this.rssParser = new RSS(
         document.querySelector('#blogRss'),
-        'https://www.reportburster.com/blog/feed/',
+        'https://www.pdfburst.com/blog/feed/',
         {
           limit: 100,
           ssl: true,
@@ -298,5 +299,6 @@ export class HelpComponent implements OnInit, AfterViewChecked {
       );
       return this.rssParser.render();
     }
+    */
   }
 }

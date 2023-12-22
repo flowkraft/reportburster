@@ -101,7 +101,6 @@
     "tslib": "^2.4.0",
     "unique-filename": "3.0.0",
     "urling": "1.0.7",
-    "vanilla-rss": "1.4.0",
     "zone.js": "~0.11.6"
   },
   "devDependencies": {
