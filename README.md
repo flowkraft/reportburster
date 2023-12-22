@@ -2,7 +2,7 @@
 
 <a href="https://www.reportburster.org" target="_blank"><em>ReportBurster</em></a> is a report distribution software for bursting reports like invoices, statements and payslips in order to distribute by email, FTP, web or file share relevant parts to each of your customers, partners and employees.
 
-<em>ReportBurster</em> supports
+<em>ReportBurster</em> works with
 
 <ul>
 <li>Crystal Reports, JasperReports, Microsoft Access, Microsoft SQL Server Reporting Services, IBM Cognos, Oracle Hyperion, QlikView and all the rest
