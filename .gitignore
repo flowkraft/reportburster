@@ -15,6 +15,7 @@ testground
 
 #batch-web-lightmin
 #next
+frontend/reporting/test-results/**/trace.zip
 
 log.txt
 *.log
