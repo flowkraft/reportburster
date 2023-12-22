@@ -32,7 +32,7 @@
 
 	<properties>
 
-		<revision>9.1.1</revision>
+		<revision>9.1.2</revision>
 
 		<!-- upgraded -->
 		<commons.beanutils.version>1.9.4</commons.beanutils.version>
@@ -65,7 +65,7 @@
 		<bouncycastle.version>1.46</bouncycastle.version>
 		<icu4j.version>67.1</icu4j.version>
 		<groovy.all.version>3.0.9</groovy.all.version>
-		<jackson.version>2.11.2</jackson.version>
+		<jackson.version>2.16.0</jackson.version>
 		<jersey.version>2.41</jersey.version>
 		<freemarker.version>2.3.30</freemarker.version>
 		<emailaddress-rfc2822-validator.version>2.2.0</emailaddress-rfc2822-validator.version>

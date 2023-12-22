@@ -59,7 +59,7 @@ test.describe('', async () => {
       .elementShouldBeVisible('#btnCheckLicenseKey')
       .elementShouldBeVisible('#statusActiveLicenseKey')
       .elementShouldBeVisible('#version')
-      .elementShouldContainText('#version', 'DocumentBurster 9.1.1')
+      .elementShouldContainText('#version', 'DocumentBurster 9.1.2')
       .elementShouldNotBeVisible('#updateNowSuccint');
 
     await Helpers.electronAppClose(electronApp);
