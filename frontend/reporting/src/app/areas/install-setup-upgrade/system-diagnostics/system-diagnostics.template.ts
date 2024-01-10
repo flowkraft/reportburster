@@ -1,5 +1,5 @@
 export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTemplate> -->
-<strong
+<strong id='checkPointHelpJavaPreRequisite'
   >{{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.DIAGNOSTICS.STATUS' | translate
   }}</strong
 >

@@ -91,6 +91,19 @@ test.describe('', async () => {
             '#statusDemoLicense',
             'Demo / Trial (up to 25 recipients)'
           )
+          .click('#leftMenuHelpInstallSetup')
+          .elementShouldContainText(
+            '#checkPointJavaPreRequisite',
+            'as a prerequisite'
+          )
+          .click('#systemDiagnosticsTab-link')
+          .elementShouldHaveText('#checkPointHelpJavaPreRequisite', 'Status')
+          .click('#terminalTab-link')
+          .elementShouldBeVisible('#p-terminal')
+          .click('#updateTab-link')
+          .elementShouldBeVisible('#btnLetMeUpdateManually')
+          .click('#extraPackagesTab-link')
+          .elementShouldBeVisible('#package-notepadplusplus')
           .click('#leftMenuHelpLicense')
           .elementShouldHaveText(
             '#statusDemoLicense',

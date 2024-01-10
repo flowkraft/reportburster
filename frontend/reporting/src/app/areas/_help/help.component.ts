@@ -144,12 +144,6 @@ export class HelpComponent implements OnInit, AfterViewChecked {
       heading: 'AREAS.HELP.TABS.SYSTEM-DIAGNOSTICS',
       ngTemplateOutlet: 'tabSystemDiagnosticsTemplate',
     },
-    /*
-    {
-      id: 'extraPackagesTab',
-      heading: 'AREAS.HELP.TABS.EXTRA-PACKAGES',
-      ngTemplateOutlet: 'tabExtraPackagesTemplate',
-    },*/
     {
       id: 'terminalTab',
       heading: 'AREAS.HELP.TABS.TERMINAL',
@@ -159,6 +153,11 @@ export class HelpComponent implements OnInit, AfterViewChecked {
       id: 'updateTab',
       heading: 'AREAS.HELP.TABS.UPDATE',
       ngTemplateOutlet: 'tabUpdateTemplate',
+    },
+    {
+      id: 'extraPackagesTab',
+      heading: 'AREAS.HELP.TABS.EXTRA-PACKAGES',
+      ngTemplateOutlet: 'tabExtraPackagesTemplate',
     },
     {
       id: 'aboutTab',
@@ -216,9 +215,9 @@ export class HelpComponent implements OnInit, AfterViewChecked {
       visibleTabs: [
         'javaTab',
         'systemDiagnosticsTab',
-        //'extraPackagesTab',
         'terminalTab',
         'updateTab',
+        'extraPackagesTab',
         'licenseTab',
       ],
     },

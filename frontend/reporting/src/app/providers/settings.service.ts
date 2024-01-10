@@ -135,10 +135,6 @@ export class SettingsService {
     //if (process.env.SHOULD_SEND_STATS) this.SHOULD_SEND_STATS = false;
     //this.SHOULD_SEND_STATS = electronService.SHOULD_SEND_STATS;
 
-    //console.log(
-    //  `this.electronService.PORTABLE_EXECUTABLE_DIR: ` + this.electronService.PORTABLE_EXECUTABLE_DIR
-    //);
-
     this.PORTABLE_EXECUTABLE_DIR = electronService.PORTABLE_EXECUTABLE_DIR;
 
     this.CONFIGURATION_FOLDER_PATH = Utilities.slash(
@@ -270,8 +266,6 @@ export class SettingsService {
   }
 
   async loadAllSettingsFilesAsync(): Promise<Array<CfgTmplFileInfo>> {
-    //console.log(`loadAllSettingsFilesAsync`);
-
     let ujf = await this.electronService.jetpack.findAsync(
       this.electronService.PORTABLE_EXECUTABLE_DIR,
       {
@@ -318,11 +312,8 @@ export class SettingsService {
       .concat(reportsConfigFilePaths)
       .concat(samplesConfigFilePaths);
 
-    //console.log(`configFilePaths = ${JSON.stringify(configFilePaths)}`);
-
     for (let filePath of configFilePaths) {
       const configurationFilePath = Utilities.slash(filePath);
-      //console.log(`configurationFilePath: ${configurationFilePath}`);
       const configurationFileName = this.electronService.path.basename(
         configurationFilePath
       );
@@ -443,12 +434,6 @@ export class SettingsService {
 
     this.configurationFiles = configurationFiles;
 
-    /*
-    console.log(
-      `configurationFiles = ${JSON.stringify(this.configurationFiles)}`
-    );
-    */
-
     return configurationFiles;
   }
 
@@ -524,26 +509,13 @@ export class SettingsService {
   }
 
   async loadAllConnectionFilesAsync() {
-    //console.log(`loadAllConnectionFilesAsync`);
-
     if (this.connectionsLoading == 1) return;
 
     this.connectionsLoading = 1;
 
-    /*
-    if (this.connectionFiles && this.connectionFiles.length > 0) {
-      this.connectionsLoading = 0;
-      return this.connectionFiles;
-    }
-    */
-
     this.defaultEmailConnectionFile = undefined;
 
     const connectionFiles: Array<ExtConnection> = [];
-
-    console.log(
-      `this.CONFIGURATION_CONNECTIONS_FOLDER_PATH = ${this.CONFIGURATION_CONNECTIONS_FOLDER_PATH}`
-    );
 
     const connectionFilePaths = await this.electronService.jetpack.findAsync(
       this.CONFIGURATION_CONNECTIONS_FOLDER_PATH,
@@ -555,8 +527,6 @@ export class SettingsService {
       }
     );
 
-    //console.log(`connectionFilePaths = ${JSON.stringify(connectionFilePaths)}`);
-
     for (let filePath of connectionFilePaths) {
       const connectionFilePath = Utilities.slash(filePath);
       const connectionFileName =
@@ -565,8 +535,6 @@ export class SettingsService {
       const xml = await this.parseXmlFileAsync(connectionFilePath);
 
       const connXml = xml.documentburster.connection;
-
-      //console.log(`usedByConfs = ${JSON.stringify(usedByConfs)}`);
 
       connectionFiles.push({
         fileName: connectionFileName,
@@ -597,23 +565,11 @@ export class SettingsService {
 
     this.connectionFiles = connectionFiles;
 
-    /*
-    console.log(
-      `this.connectionFiles = ${JSON.stringify(this.connectionFiles)}`
-    );
-      */
-
     this.defaultEmailConnectionFile = this.getConnectionDetails({
       connectionType: 'email-connection',
       defaultConnection: true,
       connectionCode: '',
     });
-
-    //console.log(
-    //  `this.defaultEmailConnectionFile = ${JSON.stringify(
-    //    this.defaultEmailConnectionFile
-    //  )}`
-    //);
 
     this.connectionsLoading = 0;
   }
@@ -649,7 +605,6 @@ export class SettingsService {
     emailsTemplateFilePaths = emailsTemplateFilePaths.concat(
       samplesEmailsTemplateFilePaths
     );
-    //console.log(`connectionFilePaths = ${JSON.stringify(connectionFilePaths)}`);
     
     for (let filePath of emailsTemplateFilePaths) {
       const emailTemplateFilePath = Utilities.slash(
@@ -696,10 +651,6 @@ export class SettingsService {
 
     const reportsTemplateFiles: Array<TmplFileInfo> = [];
 
-    //console.log(
-    //  `this.CONFIGURATION_CONNECTIONS_FOLDER_PATH = ${this.CONFIGURATION_CONNECTIONS_FOLDER_PATH}`
-    //);
-
     let reportsTemplateFilePaths = await this.electronService.jetpack.findAsync(
       `${this.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports`,
       {
@@ -709,8 +660,6 @@ export class SettingsService {
         directories: false,
       }
     );
-
-    console.log(`reportsTemplateFilePaths = ${reportsTemplateFilePaths}`);
 
     const samplesReportsTemplateFilePaths = [];
     /*
@@ -730,8 +679,6 @@ export class SettingsService {
       samplesReportsTemplateFilePaths
     );
 
-    //console.log(`connectionFilePaths = ${JSON.stringify(connectionFilePaths)}`);
-
     for (let filePath of reportsTemplateFilePaths) {
       const reportTemplateFilePath = Utilities.slash(
         this.electronService.path.resolve(filePath)
@@ -739,8 +686,6 @@ export class SettingsService {
       const reportTemplateFileName = this.electronService.path.basename(
         reportTemplateFilePath
       );
-
-      //console.log(`reportTemplateFileName = ${reportTemplateFileName}`);
 
       const folderName = this.electronService.path.basename(
         this.electronService.path.dirname(reportTemplateFilePath)
@@ -772,7 +717,6 @@ export class SettingsService {
     const templateFiles = emailsTemplateFiles.concat(reportsTemplateFiles);
 
     this.templateFiles = templateFiles;
-    //console.log(`this.templateFiles = ${JSON.stringify(this.templateFiles)}`);
     return templateFiles;
   }
 

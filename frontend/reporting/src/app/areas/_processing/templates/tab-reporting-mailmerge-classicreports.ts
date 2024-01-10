@@ -124,7 +124,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
           {{ 'AREAS.PROCESSING.TAB-BURST.BEFORE-EMAILING' | translate }}
           <a
             href="#"
-            [routerLink]="['/processing','qualityMenuSelected',procBurstInfo.mailMergeClassicReportInputFilePath, procBurstInfo.configurationFilePath, 'csv-generate-reports']"
+            [routerLink]="['/processingQa','qualityMenuSelected',procBurstInfo.mailMergeClassicReportInputFilePath, procBurstInfo.configurationFilePath, 'csv-generate-reports']"
             >Quality Assurance</a
           >
           {{ 'AREAS.PROCESSING.TAB-BURST.FOR-THE-FILE' | translate }}
@@ -133,7 +133,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
             id="goToQa"
             type="button"
             class="btn btn-primary btn-sm"
-            [routerLink]="['/processing','qualityMenuSelected',procBurstInfo.mailMergeClassicReportInputFilePath, procBurstInfo.configurationFilePath, 'csv-generate-reports']"
+            [routerLink]="['/processingQa','qualityMenuSelected',procBurstInfo.mailMergeClassicReportInputFilePath, procBurstInfo.configurationFilePath, 'csv-generate-reports']"
           >
             {{ 'AREAS.PROCESSING.TAB-BURST.RUN-QA' | translate }}
           </button>

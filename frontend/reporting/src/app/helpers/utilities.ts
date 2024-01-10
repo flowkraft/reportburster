@@ -47,6 +47,10 @@ export default class Utilities {
     return path.dirname(inputPath);
   }
 
+  static resolve(inputPath: string): string {
+    return path.resolve(inputPath);
+  }
+
   static traverseJSONObjTree(
     obj: any,
     fn: (obj: any, k: string, v: any) => void,

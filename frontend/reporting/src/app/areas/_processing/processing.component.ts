@@ -5,13 +5,11 @@ import {
   ViewChild,
   TemplateRef,
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { interval, Subscription } from 'rxjs';
 
 import * as _ from 'lodash';
-
-//import * as path from 'path';
 
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
 
@@ -68,10 +66,10 @@ export class ProcessingComponent implements OnInit {
     inputDetails: '',
     outputDetails: '',
     notes: '',
-    configurationRelativePath: '',
+    configurationFilePath: '',
   };
 
-  subscription: Subscription;
+  subscriptionCheckIfTestEmailServerIsStarted: Subscription;
 
   @ViewChild('tabBurstTemplate', { static: true })
   tabBurstTemplate: TemplateRef<any>;
@@ -168,7 +166,7 @@ export class ProcessingComponent implements OnInit {
   ];
 
   procBurstInfo = {
-    burstInputFilePath: '',
+    inputFilePath: '',
     mailMergeClassicReportInputFilePath: '',
     configurationFilePath: '',
   };
@@ -206,6 +204,7 @@ export class ProcessingComponent implements OnInit {
     protected confirmService: ConfirmService,
     protected infoService: InfoService,
     protected route: ActivatedRoute,
+    protected router: Router,
     protected changeDetectorRef: ChangeDetectorRef,
     protected shellService: ShellService,
     protected executionStatsService: ExecutionStatsService,
@@ -213,7 +212,17 @@ export class ProcessingComponent implements OnInit {
     protected samplesService: SamplesService
   ) {}
 
+  ngOnDestroy() {
+    if (this.subscriptionCheckIfTestEmailServerIsStarted) {
+      this.subscriptionCheckIfTestEmailServerIsStarted.unsubscribe();
+    }
+  }
+
   async ngOnInit() {
+    if (this.subscriptionCheckIfTestEmailServerIsStarted) {
+      this.subscriptionCheckIfTestEmailServerIsStarted.unsubscribe();
+    }
+
     this.settingsService.currentConfigurationTemplateName = '';
     this.settingsService.currentConfigurationTemplatePath = '';
 
@@ -222,25 +231,44 @@ export class ProcessingComponent implements OnInit {
     this.settingsService.configurationFiles =
       await this.settingsService.loadAllSettingsFilesAsync();
 
+    await this.samplesService.fillSamplesNotes();
+
     this.route.params.subscribe(async (params) => {
-      if (params.prefilledInputFilePathInQualityAssurance) {
-        this.procQualityAssuranceInfo.inputFilePath =
-          params.prefilledInputFilePathInQualityAssurance;
-      }
-
-      if (params.prefilledConfigurationFilePathInQualityAssurance) {
-        this.procQualityAssuranceInfo.configurationFilePath =
-          params.prefilledConfigurationFilePathInQualityAssurance;
-      }
-
-      if (params.whichAction) {
-        this.procQualityAssuranceInfo.whichAction = params.whichAction;
-      }
-
       if (params.leftMenu) {
         this.currentLeftMenu = params.leftMenu;
       } else {
         this.currentLeftMenu = 'burstMenuSelected';
+      }
+
+      if (this.currentLeftMenu == 'qualityMenuSelected') {
+        if (params.prefilledInputFilePath) {
+          this.procQualityAssuranceInfo.inputFilePath =
+            params.prefilledInputFilePath;
+        }
+
+        if (params.prefilledConfigurationFilePath) {
+          this.procQualityAssuranceInfo.configurationFilePath =
+            params.prefilledConfigurationFilePath;
+        }
+
+        if (params.whichAction) {
+          this.procQualityAssuranceInfo.whichAction = params.whichAction;
+        }
+
+        const repeat = interval(1000);
+        this.subscriptionCheckIfTestEmailServerIsStarted = repeat.subscribe(
+          (val) => {
+            this.checkIfTestEmailServerIsStarted();
+          }
+        );
+      } else {
+        if (params.prefilledInputFilePath) {
+          this.procBurstInfo.inputFilePath = params.prefilledInputFilePath;
+        }
+        if (params.prefilledConfigurationFilePath) {
+          this.procBurstInfo.configurationFilePath =
+            params.prefilledConfigurationFilePath;
+        }
       }
 
       this.refreshTabs();
@@ -252,14 +280,6 @@ export class ProcessingComponent implements OnInit {
 
     this.procMergeBurstInfo.mergedFileName =
       this.xmlSettings.documentburster.settings.mergefilename;
-
-    const repeat = interval(1000);
-    this.subscription = repeat.subscribe((val) => {
-      //this.executionStatsService.checkLogsFolder();
-      //this.executionStatsService.checkJobsFolder();
-      //this.executionStatsService.checkResumeJobs();
-      this.checkIfTestEmailServerIsStarted();
-    });
   }
 
   refreshTabs() {
@@ -273,8 +293,6 @@ export class ProcessingComponent implements OnInit {
     //if (this.currentLeftMenu == 'burstMenuSelected') {
     let mailMergeConfigurations =
       this.settingsService.getMailMergeConfigurations('visible');
-
-    //console.log(`mailMergeConfigurations = ${mailMergeConfigurations}`);
 
     if (!mailMergeConfigurations.length) {
       visibleTabsIds = visibleTabsIds.filter(
@@ -291,7 +309,7 @@ export class ProcessingComponent implements OnInit {
   // tab Burst
 
   onBurstFileSelected(filePath: string) {
-    this.procBurstInfo.burstInputFilePath = Utilities.slash(filePath);
+    this.procBurstInfo.inputFilePath = Utilities.slash(filePath);
   }
 
   onMailMergeClassicReportFileSelected(filePath: string) {
@@ -320,18 +338,33 @@ export class ProcessingComponent implements OnInit {
       });
     } else {
       const dialogQuestion =
-        'Burst file ' + this.procBurstInfo.burstInputFilePath + '?';
+        'Burst file ' + this.procBurstInfo.inputFilePath + '?';
 
       this.confirmService.askConfirmation({
         message: dialogQuestion,
         confirmAction: () => {
           const fileName = this.electronService.path.basename(
-            this.procBurstInfo.burstInputFilePath
+            this.procBurstInfo.inputFilePath
           );
-          this.shellService.runBatFile(
-            ['-f', '"' + this.procBurstInfo.burstInputFilePath + '"'],
-            fileName
-          );
+
+          if (!this.procBurstInfo.configurationFilePath)
+            this.shellService.runBatFile(
+              ['-f', `"${this.procBurstInfo.inputFilePath}"`],
+              fileName
+            );
+          else {
+            const configFilePath = this.procBurstInfo.configurationFilePath;
+            this.procBurstInfo.configurationFilePath = '';
+            this.shellService.runBatFile(
+              [
+                '-f',
+                `"${this.procBurstInfo.inputFilePath}"`,
+                '-c',
+                `"${configFilePath}"`,
+              ],
+              fileName
+            );
+          }
         },
       });
     }
@@ -355,12 +388,15 @@ export class ProcessingComponent implements OnInit {
       this.confirmService.askConfirmation({
         message: dialogQuestion,
         confirmAction: () => {
+          const configFilePath = this.procBurstInfo.configurationFilePath;
+          this.procBurstInfo.configurationFilePath = '';
+
           this.shellService.runBatFile(
             [
               '-f',
               `"${this.procBurstInfo.mailMergeClassicReportInputFilePath}"`,
               '-c',
-              `"${this.procBurstInfo.configurationFilePath}"`,
+              `"${configFilePath}"`,
             ],
             inputFileName
           );
@@ -633,8 +669,6 @@ export class ProcessingComponent implements OnInit {
           .weburl
       );
 
-      //console.log(`qaEmailServerStarted: ${qaEmailServerStarted}`);
-
       if (qaEmailServerStarted) testEmailServerStatus = 'started';
     } catch (e) {
       testEmailServerStatus = 'stopped';
@@ -712,7 +746,6 @@ export class ProcessingComponent implements OnInit {
 
   //start Mail Merge
   groupByMailMergeHelper(report: any) {
-    //console.log(JSON.stringify(report));
     if (report.type == 'config-reports') return 'Reports';
     else return 'Samples';
   }
@@ -720,11 +753,17 @@ export class ProcessingComponent implements OnInit {
 
   //start samples
   async doShowSamplesLearnMoreModal(clickedSample: SampleInfo) {
+    this.modalSampleInfo.id = clickedSample.id;
+
     this.modalSampleInfo.title = clickedSample.name;
     this.modalSampleInfo.capReportDistribution =
       clickedSample.capReportDistribution;
     this.modalSampleInfo.capReportGenerationMailMerge =
       clickedSample.capReportGenerationMailMerge;
+    this.modalSampleInfo.notes = clickedSample.notes;
+
+    this.modalSampleInfo.configurationFilePath = clickedSample.configFilePath;
+
     this.modalSampleInfo.inputDetails = this.samplesService.getInputHtml(
       clickedSample.id,
       true
@@ -733,7 +772,11 @@ export class ProcessingComponent implements OnInit {
       clickedSample.id,
       true
     );
-    this.modalSampleInfo.notes = clickedSample.notes;
+
+    this.modalSampleInfo.outputDetails = this.samplesService.getOutputHtml(
+      clickedSample.id,
+      true
+    );
 
     this.isModalSamplesLearnMoreVisible = true;
   }
@@ -780,6 +823,32 @@ export class ProcessingComponent implements OnInit {
       message: dialogQuestion,
       confirmAction: async () => {
         await this.samplesService.hideAllSamples();
+      },
+    });
+  }
+
+  doTryIt(clickedSample: SampleInfo) {
+    const inputDocumentShortPath = clickedSample.input.data[0].replace(
+      'file:',
+      ''
+    );
+
+    const dialogQuestion = clickedSample.notes;
+    this.confirmService.askConfirmation({
+      message: dialogQuestion,
+      confirmLabel: "OK and I'll click 'Burst' in the following screen",
+      declineLabel: "No, I'll do it later",
+      confirmAction: () => {
+        this.router.navigate([
+          '/processingSample',
+          'burstMenuSelected',
+          Utilities.resolve(
+            Utilities.slash(
+              `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputDocumentShortPath}`
+            )
+          ),
+          Utilities.resolve(Utilities.slash(clickedSample.configFilePath)),
+        ]);
       },
     });
   }

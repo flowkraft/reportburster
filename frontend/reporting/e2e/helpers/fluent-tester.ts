@@ -397,6 +397,13 @@ export class FluentTester implements PromiseLike<void> {
     value: string,
     waitTime?: number
   ): FluentTester {
+    /*
+    if (selector == '#divMONTHLY-PAYSLIPS-SPLIT') {
+      const content = this.window.locator(selector);
+      console.log(`#divMONTHLY-PAYSLIPS-SPLIT content = ${content}`);
+    }
+    */
+
     let action = (): Promise<void> =>
       this.doWaitOnElementToContainText(selector, value, waitTime);
 

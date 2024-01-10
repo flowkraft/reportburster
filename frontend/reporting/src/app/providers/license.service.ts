@@ -98,7 +98,7 @@ export class LicenseService {
 
   getChangeLogForTheDemoInstallationToo(): Promise<any> {
     return Utilities.httpGet(
-      `https://store.reportburster.com?edd_action=get_version&item_name=${this.settingsService.product}`
+      `https://www.pdfburst.com/store?edd_action=get_version&item_name=${this.settingsService.product}`
     );
   }
 

@@ -25,7 +25,7 @@ export class TopMenuHeaderComponent implements OnInit {
     this.settingsService.configurationFiles =
       await this.settingsService.loadAllSettingsFilesAsync();
 
-    this.samplesService.fillSamplesNotes();
+    await this.samplesService.fillSamplesNotes();
   }
 
   onAskForFeatureModalShow() {

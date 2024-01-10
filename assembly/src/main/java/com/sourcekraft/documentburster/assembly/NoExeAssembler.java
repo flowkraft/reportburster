@@ -20,8 +20,9 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// this will execute mvn clean install and generate the jar files for all sub
 		// projects
-		// assembly is not required to be compiled and should be excluded otherwise 
-		//'mvn -pl -assembly clean install' command will be executed recursively in an INFINITE loop
+		// assembly is not required to be compiled and should be excluded otherwise
+		// 'mvn -pl -assembly clean install' command will be executed recursively in an
+		// INFINITE loop
 		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl -assembly clean install");
 
 		System.out.println(
@@ -40,8 +41,7 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// copy all MODULE_REPORTING's dependencies to the intermediate folder location
 		// MODULE_REPORTING/target/dependencies
-		Utils.runMaven(Utils.getTopProjectFolderPath(),
-				"mvn -pl \":reporting,:update\" dependency:copy-dependencies");
+		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl \":reporting,:update\" dependency:copy-dependencies");
 
 		System.out.println(
 				"------------------------------------- DONE_02:NoExeAssembler Utils.runMaven(Utils.getTopProjectFolderPath(), mvn -pl ':reporting,:update' dependency:copy-dependencies) ... -------------------------------------");
@@ -59,8 +59,8 @@ public class NoExeAssembler extends AbstractAssembler {
 		// START MODULE_REPORTING work
 
 		// copy MODULE_REPORTING's template files and folders
-		FileUtils.copyDirectory(
-				new File(Utils.getTopProjectFolderPath() + "/backend/reporting/" + "src/main/external-resources/template"),
+		FileUtils.copyDirectory(new File(
+				Utils.getTopProjectFolderPath() + "/backend/reporting/" + "src/main/external-resources/template"),
 				new File(packageDirPath + "/" + topFolderName));
 
 		System.out.println(
@@ -172,6 +172,17 @@ public class NoExeAssembler extends AbstractAssembler {
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
 				new File(packageDirPath + "/" + topFolderName + "/config/_defaults/settings.xml"));
 
+		String burstPdfMonthlyPayslipsSplitOnlyXmlConfigFilePath = packageDirPath + "/" + topFolderName
+				+ "/config/samples/burst-pdf-monthly-payslips-split-only/settings.xml";
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(burstPdfMonthlyPayslipsSplitOnlyXmlConfigFilePath));
+		// replace <reportdistribution>true</reportdistribution> with <reportdistribution>false</reportdistribution>
+		String content = FileUtils.readFileToString(
+				new File(burstPdfMonthlyPayslipsSplitOnlyXmlConfigFilePath), "UTF-8");
+		content = content.replace("<reportdistribution>true</reportdistribution>", "<reportdistribution>false</reportdistribution>");
+		File newFile = new File(burstPdfMonthlyPayslipsSplitOnlyXmlConfigFilePath);
+		FileUtils.writeStringToFile(newFile, content, "UTF-8");
+
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_internal/license.xml"),
 				new File(packageDirPath + "/" + topFolderName + "/config/_defaults/license.xml"));
 
@@ -210,8 +221,8 @@ public class NoExeAssembler extends AbstractAssembler {
 				"------------------------------------- VERIFIED_01:NoExeAssembler db general template files and folders ... -------------------------------------");
 
 		// verify burst module template files and folders
-		assertThat(Utils.dir1ContainsAllDir2Files(new File(verifyDirPath + "/" + topFolderName),
-				new File(Utils.getTopProjectFolderPath() + "/backend/reporting/" + "src/main/external-resources/template")))
+		assertThat(Utils.dir1ContainsAllDir2Files(new File(verifyDirPath + "/" + topFolderName), new File(
+				Utils.getTopProjectFolderPath() + "/backend/reporting/" + "src/main/external-resources/template")))
 						.isTrue();
 
 		System.out.println(
@@ -282,9 +293,9 @@ public class NoExeAssembler extends AbstractAssembler {
 		assertThat(FileUtils.contentEquals(new File(verifyDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
 				new File(verifyDirPath + "/" + topFolderName + "/config/_defaults/settings.xml"))).isTrue();
 
-		assertThat(FileUtils.contentEquals(
-				new File(verifyDirPath + "/" + topFolderName + "/config/_internal/license.xml"),
-				new File(verifyDirPath + "/" + topFolderName + "/config/_defaults/license.xml"))).isTrue();
+		assertThat(
+				FileUtils.contentEquals(new File(verifyDirPath + "/" + topFolderName + "/config/_internal/license.xml"),
+						new File(verifyDirPath + "/" + topFolderName + "/config/_defaults/license.xml"))).isTrue();
 
 		System.out.println(
 				"------------------------------------- VERIFIED_08:NoExeAssembler _copyDefaultConfigurationAndLicenseFiles() ... -------------------------------------");

@@ -1,6 +1,19 @@
-# DocumentBurster
+# ReportBurster
 
 All notable changes to this project will be documented in this file.
+
+## 9.1.3 - 2024-01-10
+
+### Added
+
+- An easy way for users to onboard/tour/learn about ReportBurster capabilities
+- "Samples/1. Monthly Payslips (split only)" is the first of the "Samples" which users can quickly "Try It"
+
+## 9.1.2 - 2023-12-22
+
+### Changed
+
+- DocumentBurster -> ReportBurster product rename
 
 ## 9.1.1 - 2023-05-25
 

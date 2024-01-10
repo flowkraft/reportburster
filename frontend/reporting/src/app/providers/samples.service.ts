@@ -19,7 +19,7 @@ export interface SampleInfo {
   step3: string;
   output: {
     data: string[];
-    folder: "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}";
+    folder: string;
   };
   outputHtmlHardcoded: string;
   configFilePath: string;
@@ -45,33 +45,33 @@ export class SamplesService {
 
   samples: Array<SampleInfo> = [
     {
-      id: 'SPLIT-EMAIL-PAYSLIPS',
-      name: '1. Monthly Payslips',
+      id: 'MONTHLY-PAYSLIPS-SPLIT-ONLY',
+      name: '1. Monthly Payslips (split only)',
       visibility: 'visible',
       jobType: 'burst',
       input: {
-        data: ['file:samples/All-Payslips.pdf'],
+        data: ['file:samples/burst/Payslips.pdf'],
         numberOfPages: 3,
         tokens: [
           'clyde.grew@northridgehealth.org',
-          'kyle.butford@northridgehealth.org.pdf',
+          'kyle.butford@northridgehealth.org',
           'alfreda.waldback@northridgehealth.org',
         ],
       },
       step1: 'split',
-      step2: 'email',
+      step2: '',
       step3: '',
       output: {
         data: [
-          'email-file-attached:clyde.grew@northridgehealth.org.pdf',
-          'email-file-attached:kyle.butford@northridgehealth.org.pdf',
-          'email-file-attached:alfreda.waldback@northridgehealth.org.pdf',
+          'file:clyde.grew@northridgehealth.org.pdf',
+          'file:kyle.butford@northridgehealth.org.pdf',
+          'file:alfreda.waldback@northridgehealth.org.pdf',
         ],
         folder:
-          "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
+          "output/Payslips.pdf/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/monthly-payslips-burst-pdf/settings.xml`,
+      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/burst-pdf-monthly-payslips-split-only/settings.xml`,
       notes: ``,
       recipientType: 'employee',
       documentType: 'payslip',
@@ -79,6 +79,10 @@ export class SamplesService {
       capReportGenerationMailMerge: false,
       activeClicked: false,
     },
+  ];
+
+  samplesNotYetImplemented: Array<SampleInfo> = [
+    ,
     {
       id: 'MERGE-SPLIT-EMAIL-INVOICES',
       name: '2. Customers with One Invoice Each',
@@ -358,10 +362,12 @@ export class SamplesService {
   getOutputHtml(id: string, fullDetails?: boolean) {
     const sample = this.samples.find((sample) => sample.id == id);
 
+    console.log(`sample = ${JSON.stringify(sample)}`);
+
     if (sample.outputHtmlHardcoded) return sample.outputHtmlHardcoded;
 
     const outputs: string[] = sample.output.data;
-    let outputLabel = outputs[0].replace('email-file-attached:', '');
+    let outputLabel = outputs[0].replace('file:', '');
 
     let attachmentFileIcon = 'fa-file-pdf-o';
     if (outputLabel.endsWith('.docx')) attachmentFileIcon = 'fa-file-word-o';
@@ -373,64 +379,84 @@ export class SamplesService {
 
         outputHtml = `<strong>Folder</strong><br>${this.settingsService.PORTABLE_EXECUTABLE_DIR}/output/${inputFileName}/\${now?format["yyyy.MM.dd_HH.mm.ss.SSS"]}<br>${outputHtml}`;
       }
-    } else
-      outputHtml = `<i class="fa fa-envelope-o"></i> ${sample.recipientType} with <i class="fa fa-at"></i> ${sample.documentType} <i class="fa ${attachmentFileIcon}"></i> ${outputLabel}`;
+    } else {
+      if (sample.capReportDistribution)
+        outputHtml = `<i class="fa fa-envelope-o"></i> ${sample.recipientType} with <i class="fa fa-at"></i> ${sample.documentType} <i class="fa ${attachmentFileIcon}"></i> ${outputLabel}`;
+      else
+        outputHtml = `<i class="fa ${attachmentFileIcon}"></i> ${outputLabel} ${sample.recipientType} ${sample.documentType}`;
+    }
+
+    //console.log(`outputHtml = ${outputHtml}`);
 
     if (!fullDetails) {
       for (let index = 1; index < outputs.length; index++) {
-        outputLabel = outputs[index].replace('email-file-attached:', '');
+        outputLabel = outputs[index].replace('file:', '');
         let currentHtml = `<i class="fa fa-envelope-o"></i> ${sample.recipientType} with <i class="fa fa-at"></i> ${sample.documentType} <i class="fa ${attachmentFileIcon}"></i> ${outputLabel}`;
+        if (!sample.capReportDistribution)
+          currentHtml = `<i class="fa ${attachmentFileIcon}"></i> ${outputLabel} ${sample.recipientType} ${sample.documentType}`;
+
         outputHtml = `${outputHtml}<br>${currentHtml}`;
       }
     } else {
       outputHtml = `${outputHtml}<strong>Files</strong>`;
 
       for (let index = 0; index < outputs.length; index++) {
-        outputLabel = outputs[index].replace('email-file-attached:', '');
-        let currentHtml = `${sample.documentType} <i class="fa ${attachmentFileIcon}"></i> ${outputLabel}`;
+        outputLabel = outputs[index].replace('file:', '');
+        //console.log(`outputLabel = ${outputLabel}`);
+
+        let currentHtml = `<i class="fa fa-envelope-o"></i> ${sample.recipientType} with <i class="fa fa-at"></i> ${sample.documentType} <i class="fa ${attachmentFileIcon}"></i> ${outputLabel}`;
+        if (!sample.capReportDistribution)
+          currentHtml = `<i class="fa ${attachmentFileIcon}"></i> ${outputLabel} ${sample.recipientType} ${sample.documentType}`;
+
         outputHtml = `${outputHtml}<br>${currentHtml}`;
       }
 
-      outputHtml = `${outputHtml}<br><strong>Emails</strong>`;
+      if (sample.capReportDistribution) {
+        outputHtml = `${outputHtml}<br><strong>Emails</strong>`;
 
-      for (let index = 0; index < outputs.length; index++) {
-        outputLabel = outputs[index].replace('email-file-attached:', '');
-        let currentHtml = `<i class="fa fa-envelope-o"></i> ${sample.recipientType} with <i class="fa fa-at"></i> ${sample.documentType} <i class="fa ${attachmentFileIcon}"></i> ${outputLabel}`;
-        outputHtml = `${outputHtml}<br>${currentHtml}`;
+        for (let index = 0; index < outputs.length; index++) {
+          outputLabel = outputs[index].replace('file:', '');
+          let currentHtml = `<i class="fa fa-envelope-o"></i> ${sample.recipientType} with <i class="fa fa-at"></i> ${sample.documentType} <i class="fa ${attachmentFileIcon}"></i> ${outputLabel}`;
+          outputHtml = `${outputHtml}<br>${currentHtml}`;
+        }
       }
     }
 
     return outputHtml;
   }
 
-  fillSamplesNotes() {
-    const sampleConfigurations = this.settingsService.getSampleConfigurations();
+  async fillSamplesNotes() {
+    //if not yet loaded
+    if (this.samples[0].notes.length == 0) {
+      const sampleConfigurations =
+        this.settingsService.getSampleConfigurations();
 
-    for (let sample of this.samples) {
-      //console.log(JSON.stringify(sampleConfigurations));
-      const sampleConfigurationValues = sampleConfigurations.find(
-        (configuration) => {
-          return sample.configFilePath.endsWith(configuration.filePath);
+      for (let sample of this.samples) {
+        //console.log(JSON.stringify(sampleConfigurations));
+        const sampleConfigurationValues = sampleConfigurations.find(
+          (configuration) => {
+            return sample.configFilePath.endsWith(configuration.filePath);
+          }
+        );
+
+        if (sampleConfigurationValues) {
+          sample.capReportDistribution =
+            sampleConfigurationValues.capReportDistribution;
+          sample.capReportGenerationMailMerge =
+            sampleConfigurationValues.capReportGenerationMailMerge;
+          sample.visibility = sampleConfigurationValues.visibility;
         }
-      );
 
-      if (sampleConfigurationValues) {
-        sample.capReportDistribution =
-          sampleConfigurationValues.capReportDistribution;
-        sample.capReportGenerationMailMerge =
-          sampleConfigurationValues.capReportGenerationMailMerge;
-        sample.visibility = sampleConfigurationValues.visibility;
+        const notes = await this.translateService.instant(
+          `SAMPLES.${sample.id}.NOTES.INNER-HTML`
+        );
+        sample.notes = notes;
       }
 
-      const notes = this.translateService.instant(
-        `SAMPLES.${sample.id}.NOTES.INNER-HTML`
-      );
-      sample.notes = notes;
+      this.countVisibleSamples = this.samples.filter(
+        (sample) => sample.visibility == 'visible'
+      ).length;
     }
-
-    this.countVisibleSamples = this.samples.filter(
-      (sample) => sample.visibility == 'visible'
-    ).length;
   }
 
   async toggleSampleVisibility(sample: SampleInfo, visibility: string) {
