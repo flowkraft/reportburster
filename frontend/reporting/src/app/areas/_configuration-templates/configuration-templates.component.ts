@@ -216,7 +216,7 @@ export class ConfigurationTemplatesComponent implements OnInit {
         );
 
         this.getSelectedConfiguration().visibility = visibility;
-        this.samplesService.fillSamplesNotes();
+        await this.samplesService.fillSamplesNotes();
       },
     });
   }

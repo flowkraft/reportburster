@@ -54,7 +54,7 @@ export class WhatsNewComponent {
       this.changeLogMarkdown =
         this.licenseService.licenseDetails.license.changelog;
     } else {
-      // if the latest changelog cannot be retrieved from https://store.reportburster.com
+      // if the latest changelog cannot be retrieved from https://www.pdfburst.com/store
       // load the changelog from local CHANGELOG.MD file
 
       try {
@@ -77,7 +77,7 @@ export class WhatsNewComponent {
     }
 
     this.blogPosts = await rssFeedParser.parse(
-      'https://www.reportburster.com/blog/feed/'
+      'https://www.pdfburst.com/blog/feed/'
     );
 
     this.handleVisibleAnnouncement('first');

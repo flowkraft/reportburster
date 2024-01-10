@@ -37,12 +37,12 @@ export const tabSamplesTemplate = `<ng-template #tabSamplesTemplate>
           </thead>
           <tbody>
             <tr
-              id="{{sample.id}}"
+              id="tr{{sample.id}}"
               *ngFor="let sample of samplesService.samples"
               (click)="onSampleClick(sample)"
               [ngClass]="{ 'info': sample.activeClicked}"
             >
-            <td>{{sample.name}}<br><button type="button" class="btn btn-xs btn-primary" (click)="doShowSamplesLearnMoreModal(sample)">Learn More</button>
+            <td id="td{{sample.id}}">{{sample.name}}<br><button id="btnSamplesLearnMode{{sample.id}}" type="button" class="btn btn-xs btn-primary" (click)="doShowSamplesLearnMoreModal(sample)">Learn More</button>
             </td>
             <td>
                 <span class="label label-default" *ngIf="sample.step1 == 'merge'">
@@ -92,8 +92,9 @@ export const tabSamplesTemplate = `<ng-template #tabSamplesTemplate>
             <td [innerHTML]="samplesService.getOutputHtml(sample.id)"></td>
             <td>
             
-              <button type="button" class="btn btn-xs btn-primary">&nbsp;&nbsp;&nbsp;&nbsp;Try it&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+              <button type="button" id="btnSampleTryIt{{sample.id}}" class="btn btn-xs btn-primary" (click)="doTryIt(sample)">&nbsp;&nbsp;&nbsp;&nbsp;Try it&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
               <br><br>
+              <!--
               <div class="btn-group dropup"> 
                   <button type="button" *ngIf="sample.visibility == 'visible'" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">&nbsp;&nbsp;Visible&nbsp;&nbsp;<span class="caret"></span></button>
                   <button type="button" *ngIf="sample.visibility == 'hidden'" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">&nbsp;&nbsp;<em>Hidden</em>&nbsp;&nbsp;<span class="caret"></span></button>
@@ -102,7 +103,7 @@ export const tabSamplesTemplate = `<ng-template #tabSamplesTemplate>
                   <li *ngIf="sample.visibility == 'hidden'" (click)="doToggleSampleVisibility('visible')">Show <em>{{sample.name}}</em></li>
                  </ul>
                   </div>
-                
+                -->
             </td>
             
             </tr>
@@ -115,7 +116,7 @@ export const tabSamplesTemplate = `<ng-template #tabSamplesTemplate>
     </div>
 
     <p><br></p><p></p>
-
+    <!-- 
     <div class="row">
     
       <div class="col-xs-3">
@@ -132,9 +133,9 @@ export const tabSamplesTemplate = `<ng-template #tabSamplesTemplate>
     
       </div>
     
-    
       </div>
-
+      -->
+     
   </div>
 </ng-template>
 `;

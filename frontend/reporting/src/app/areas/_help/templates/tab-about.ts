@@ -17,13 +17,13 @@ export const tabAboutTemplate = `<ng-template #tabAboutTemplate>
     <ol>
       <li>{{
         'AREAS.HELP.TAB-ABOUT.PURCHASE-COMMERCIAL-LICENSE' | translate }}&nbsp;
-        <a href="https://store.reportburster.com" target="_blank">
+        <a href="https://www.pdfburst.com/store" target="_blank">
           <button class="btn btn-primary btn-xs" type="button">{{
             'AREAS.HELP.TAB-ABOUT.BUY-NOW' | translate }}</button>
         </a>
       </li>
       <li>
-        <a href="https://www.reportburster.com/services/free-for-schools/" target="_blank">
+        <a href="https://www.pdfburst.com/services/free-for-schools/" target="_blank">
           <button class="btn btn-xs" type="button"><span
               [innerHTML]="'AREAS.HELP.TAB-ABOUT.INNER-HTML.GET-FREE-SCHOOLS' | translate"></span></button>
         </a> (registered schools only)

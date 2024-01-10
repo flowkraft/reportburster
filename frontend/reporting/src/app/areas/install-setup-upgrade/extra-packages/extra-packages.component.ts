@@ -6,6 +6,7 @@ import { BashService } from '../bash.service';
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
 import { ExecutionStatsService } from '../../../providers/execution-stats.service';
 import Utilities from '../../../helpers/utilities';
+import { TranslateService } from '@ngx-translate/core';
 
 interface ExtPackage {
   id: string;
@@ -15,6 +16,9 @@ interface ExtPackage {
   description: string;
   status: string;
   packageManager: string;
+  cmdInstall: string;
+  cmdUnInstall: string;
+  cmdGetInfo: string;
 }
 
 @Component({
@@ -27,23 +31,30 @@ export class ExtraPackagesComponent implements OnInit {
       id: 'notepadplusplus',
       name: 'Notepad++',
       icon: 'notepad++.svg',
-      website: 'https://notepad-plus-plus.org/',
-      description: ` is a free (as in “free speech” and also as in “free beer”) source code editor and Notepad replacement that supports several languages.`,
+      website: 'https://notepad-plus-plus.org',
+      description: ` is a free (as in “free speech” and also as in “free beer”) source code editor and Notepad replacement. Notepad++ is useful when editing DocumentBurster configuration files and scripts.`,
       status: 'not-installed',
       packageManager: 'choco',
+      cmdInstall: 'choco install notepadplusplus',
+      cmdUnInstall: 'choco uninstall notepadplusplus',
+      cmdGetInfo: 'choco info notepadplusplus -lo',
     },
     {
       id: 'winmerge',
       name: 'WinMerge',
       icon: 'winmerge.png',
-      website: 'https://winmerge.org/',
-      description: ` is an Open Source differencing and merging tool for Windows. WinMerge can compare both folders and files, presenting differences in a visual text format that is easy to understand and handle.`,
+      website: 'https://winmerge.org',
+      description: ` is an Open Source differencing and merging tool for Windows. WinMerge can compare both folders and files, presenting differences in a visual text format that is easy to understand and handle. WinMerge can be used for comparing DocumentBurster configuration files and scripts.`,
       status: 'not-installed',
       packageManager: 'choco',
+      cmdInstall: 'choco install winmerge',
+      cmdUnInstall: 'choco uninstall winmerge',
+      cmdGetInfo: 'choco info winmerge -lo',
     },
   ];
 
   constructor(
+    protected translateService: TranslateService,
     protected bashService: BashService,
     protected executionStatsService: ExecutionStatsService,
     protected confirmService: ConfirmService
@@ -56,6 +67,10 @@ export class ExtraPackagesComponent implements OnInit {
   async fetchExtraPackagesDetails() {
     for (const extraPackage of this.extraPackages) {
       const packageId = extraPackage.id;
+
+      extraPackage.description = await this.translateService.instant(
+        `AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.EXTRA-PACKAGES.INNER-HTML.${packageId.toUpperCase()}`
+      );
 
       //console.log(packageId);
 
@@ -78,6 +93,16 @@ export class ExtraPackagesComponent implements OnInit {
         extraPackage.status = 'not-installed';
       }
     }
+    // Sort the extraPackages array so that installed packages come first
+    this.extraPackages.sort((a, b) => {
+      if (a.status === 'installed' && b.status !== 'installed') {
+        return -1;
+      } else if (a.status !== 'installed' && b.status === 'installed') {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
   }
 
   doInstallUninstallAction(pckage: ExtPackage, action: string) {

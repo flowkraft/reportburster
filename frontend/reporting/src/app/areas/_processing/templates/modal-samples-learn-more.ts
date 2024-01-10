@@ -1,15 +1,26 @@
 export const modalSamplesLearnMoreTemplate = `<p-dialog [header]="modalSampleInfo.title" [(visible)]="isModalSamplesLearnMoreVisible" [modal]="true" width="800"
   height="200" class="modal-dialog-center">
   <div style="margin: 25px;">
-    
-  
+    <div class="row">
       <div class="col-xs-2">
       {{
-        'AREAS.CONFIGURATION-TEMPLATES.MODAL-CONF-TEMPLATE.CAPABILITIES' | translate
+        'SAMPLES.MODAL.FEATURES' | translate
       }}
       </div>
       
       <div class="col-xs-10">
+        
+      <input
+          type="checkbox"
+          id="btnCapReportSplitting"
+          [ngModel]="true" onclick="return false;"
+          />
+        <label 
+          for="btnCapReportSplitting" class="checkboxlabel">
+          &nbsp;{{'AREAS.CONFIGURATION-TEMPLATES.MODAL-CONF-TEMPLATE.CAP-REPORT-SPLITTING' | translate}}
+        </label>
+        &nbsp;&nbsp;
+
         <input
           type="checkbox"
           id="btnCapReportDistribution"
@@ -31,12 +42,15 @@ export const modalSamplesLearnMoreTemplate = `<p-dialog [header]="modalSampleInf
         </label>
               
       </div>
+    
+    </div>
     <p></p>
-  
+    
     <div class="row">
-  
     <div class="col-xs-2">
-      Input
+    {{
+      'SAMPLES.MODAL.INPUT' | translate
+    }}
     </div>
 
     <div class="col-xs-10">
@@ -46,24 +60,31 @@ export const modalSamplesLearnMoreTemplate = `<p-dialog [header]="modalSampleInf
     </div>
   </div>
   
-  <p></p>
-  
+  <br/>
+  <br/>
+
   <div class="row">
   <div class="col-xs-2">
-    Expected Output
+  {{
+    'SAMPLES.MODAL.EXPECTED-OUTPUT' | translate
+  }}
   </div>
 
   <div class="col-xs-10" [innerHTML]="modalSampleInfo.outputDetails">
   </div>
 </div>
 
+<br/>
+<br/>
 
   <div class="row">
 
-      <div class="col-xs-2">Notes
+      <div class="col-xs-2">{{
+        'SAMPLES.MODAL.NOTES' | translate
+      }}
       </div>
       
-      <div class="col-xs-10" [innerHTML] = "modalSampleInfo.notes">
+      <div id="div{{modalSampleInfo.id}}" class="col-xs-10" [innerHTML] = "modalSampleInfo.notes">
 
           
       </div>    
@@ -74,12 +95,14 @@ export const modalSamplesLearnMoreTemplate = `<p-dialog [header]="modalSampleInf
   <div class="row" *ngIf="!modalSampleInfo.capReportGenerationMailMerge">
     
     <div class="col-xs-2">
-        Configuration
+    {{
+      'SAMPLES.MODAL.CONFIGURATION' | translate
+    }}
       </div>
 
       <div class="col-xs-10">
         <input type="text" id="templateHowTo" class="form-control"
-          [ngModel]="modalSampleInfo.configurationRelativePath" readonly />
+          [ngModel]="modalSampleInfo.configurationFilePath" readonly />
         
       </div>
     </div>
@@ -87,7 +110,7 @@ export const modalSamplesLearnMoreTemplate = `<p-dialog [header]="modalSampleInf
   </div> 
 
   <p-footer>
-    <button id="btnClose" class="btn btn-flat btn-default" type="button" (click)="doCloseSamplesLearnMoreModal()">
+    <button id="btnCloseSamplesLearnMoreModal" class="btn btn-flat btn-default" type="button" (click)="doCloseSamplesLearnMoreModal()">
       {{ 'BUTTONS.CLOSE' | translate }}
     </button>
   </p-footer>

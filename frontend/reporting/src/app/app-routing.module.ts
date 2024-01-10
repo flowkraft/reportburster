@@ -21,11 +21,19 @@ const routes: Routes = [
     component: ProcessingComponent,
   },
   {
-    path: 'processing/:leftMenu/:prefilledInputFilePathInQualityAssurance',
+    path: 'processingSample/:leftMenu/:prefilledInputFilePath/:prefilledConfigurationFilePath',
     component: ProcessingComponent,
   },
   {
-    path: 'processing/:leftMenu/:prefilledInputFilePathInQualityAssurance/:prefilledConfigurationFilePathInQualityAssurance/:whichAction',
+    path: 'processingQa/:leftMenu',
+    component: ProcessingComponent,
+  },
+  {
+    path: 'processingQa/:leftMenu/:prefilledInputFilePath',
+    component: ProcessingComponent,
+  },
+  {
+    path: 'processingQa/:leftMenu/:prefilledInputFilePath/:prefilledConfigurationFilePath/:whichAction',
     component: ProcessingComponent,
   },
   {

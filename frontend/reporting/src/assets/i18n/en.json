@@ -374,6 +374,7 @@
       "MODAL-CONF-TEMPLATE": {
         "NAME": "Name",
         "CAPABILITIES": "Capabilities",
+        "CAP-REPORT-SPLITTING": "Report Splitting",
         "CAP-REPORT-DISTRIBUTION": "Report Distribution",
         "CAP-REPORT-GENERATION": "Report Generation / Mail Merge",
         "NOTES": "Notes",
@@ -464,7 +465,7 @@
         "BLOG": "ReportBurster Blog",
         "JAVA": "Java",
         "TERMINAL": "Terminal",
-        "EXTRA-PACKAGES": "Add-ons",
+        "EXTRA-PACKAGES": "Extra Packages",
         "SYSTEM-DIAGNOSTICS": "System Diagnostics",
         "UPDATE": "Update",
         "COMPARISON": "ReportBurster vs. ReportBurster Server",
@@ -483,7 +484,7 @@
         "LOGGING-TRACING": "Logging, Tracing",
         "MERGE-BURST": "Merge -> Burst",
         "QUALITY-ASSURANCE": "Quality Assurance",
-        "SAMPLES": "Samples"
+        "SAMPLES": "Samples (Try & See)"
       },
       "TAB-BURST": {
         "BEFORE-EMAILING": "Before emailing we recommend running",
@@ -678,6 +679,22 @@
           "FOLLOWING13": "Migrate / Copy Above Files",
           "WHEN-UPDATING": "Copy",
           "SURE": "Existing info will be overridden. Sure?"
+        },
+        "EXTRA-PACKAGES": {
+          "INNER-HTML": {
+            "ABOUT": "<h5><strong>Extra packages are a list of external software which are often useful when used together with <em>DocumentBurster</em></strong></h5><p><br/>Most of these packages can be easily installed and/or uninstalled using <strong>Chocolatey</strong>, a very good package manager for <strong>Windows</strong>. All the below commands should be executed by first starting a DOS/Windows Powershell command prompt and then by typing the respective commands inside the DOS/Windows Powershell command prompt.<br/></p><p>It is recommended to start the <strong>DOS/Powershell command prompt</strong> using Windows Start button -> Search for DOS/Powershell -> Right mouse click and then select &quot;<strong>Run as administrator</strong>&quot;<br /><br /></p>",
+            "NOTEPADPLUSPLUS": " is a free (as in “free speech” and also as in “free beer”) source code editor and Notepad replacement. Notepad++ is useful when editing DocumentBurster configuration files and scripts.",
+            "WINMERGE": " is an Open Source differencing and merging tool for Windows. WinMerge can compare both folders and files, presenting differences in a visual text format that is easy to understand and handle. WinMerge can be used for comparing DocumentBurster configuration files and scripts."
+          },
+          "INSTALLED": {
+            "ALREADY": "already installed",
+            "NOT": "not installed"
+          },
+          "COMMANDS": {
+            "INSTALL": "Install Command",
+            "UNINSTALL": "Uninstall Command",
+            "GET-INFO": "Get Info Command"
+          }
         }
       }
     }
@@ -775,9 +792,16 @@
     "LOGGING-TRACING": "Logging and Tracing"
   },
   "SAMPLES": {
-    "NEWSLETTER1": {
+    "MODAL": {
+      "FEATURES": "Features demonstrated",
+      "INPUT": "Input",
+      "EXPECTED-OUTPUT": "Expected Output",
+      "NOTES": "Notes",
+      "CONFIGURATION": "Configuration"
+    },
+    "MONTHLY-PAYSLIPS-SPLIT-ONLY": {
       "NOTES": {
-        "INNER-HTML": "When clicking the 'Burst' button (click it) the three pages file ./samples/Payslips.pdf containing the payslips documents for three employees<br>generates in the folder output/Payslips.pdf three different output files clyde.grew@northridgehealth.org.pdf, kyle.butford@northridgehealth.org.pdf<br>and alfreda.waldback@northridgehealth.org and each output file contains only the correct paycheck for the correct employee.<br><br>If configured to send emails the three different paychecks documents will be sent by email to the correct employee and each employee<br>in your company will automatically receive their own paycheck by email."
+        "INNER-HTML": "<em>Payslips.pdf</em> sample document contains three pages corresponding for three employees and, when 'bursting' <em>Payslips.pdf</em> sample document, three output PDF files of one page each will be generated for each employee found in the input file. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundres or few thousants employees."
       }
     }
   }

@@ -18,7 +18,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu-->
     </a>
   </li>
   <li routerLinkActive="active">
-    <a id="leftMenuQualityAssurance" href="#" [routerLink]="['/processing','qualityMenuSelected']">
+    <a id="leftMenuQualityAssurance" href="#" [routerLink]="['/processingQa','qualityMenuSelected']">
       <i class="fa fa-flag-checkered"></i>
       <span>{{
         'AREAS.PROCESSING.LEFT-MENU.QUALITY-ASSURANCE' | translate }}</span>
@@ -31,8 +31,8 @@ export const leftMenuTemplate = `<!-- Sidebar Menu-->
         'AREAS.PROCESSING.LEFT-MENU.LOGGING-TRACING' | translate }}</span>
     </a>
   </li>
-  <li *ngIf="false" routerLinkActive="active">
-    <a href="#" [routerLink]="['/processing','samplesMenuSelected']">
+  <li routerLinkActive="active">
+    <a id="leftMenuSamples" href="#" [routerLink]="['/processing','samplesMenuSelected']">
       <i class="fa fa-bell-o"></i>
       <span>{{
         'AREAS.PROCESSING.LEFT-MENU.SAMPLES' | translate }}</span>
