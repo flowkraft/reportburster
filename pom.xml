@@ -32,7 +32,7 @@
 
 	<properties>
 
-		<revision>9.1.3</revision>
+		<revision>9.1.4</revision>
 
 		<!-- upgraded -->
 		<commons.beanutils.version>1.9.4</commons.beanutils.version>
