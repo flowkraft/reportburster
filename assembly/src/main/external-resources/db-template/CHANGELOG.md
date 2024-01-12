@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 9.1.4 - 2024-01-12
+
+### Added
+
+- "Samples/2. Split Excel File by Distinct Sheets (split only)" for users to quickly "Try It"
+
 ## 9.1.3 - 2024-01-10
 
 ### Added
