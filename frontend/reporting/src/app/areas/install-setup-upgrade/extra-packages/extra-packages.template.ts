@@ -23,7 +23,7 @@ export const extraPackagesTemplate = `<!-- <ng-template #extraPackagesTemplate> 
 
       <div id="package-{{extraPackage.id}}" class="panel-body">
         <a href="{{extraPackage.website}}" target="_blank"
-          ><img src="assets/images/{{extraPackage.icon}}" />
+          ><img src="assets/images/{{extraPackage.icon}}" height="48" />
           {{extraPackage.name}}</a
         >
         {{extraPackage.description}}

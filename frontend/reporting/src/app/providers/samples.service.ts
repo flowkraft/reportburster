@@ -71,7 +71,43 @@ export class SamplesService {
           "output/Payslips.pdf/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/burst-pdf-monthly-payslips-split-only/settings.xml`,
+      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/burst-split-only-config-defaults/settings.xml`,
+      notes: ``,
+      recipientType: 'employee',
+      documentType: 'payslip',
+      capReportDistribution: false,
+      capReportGenerationMailMerge: false,
+      activeClicked: false,
+    },
+    {
+      id: 'EXCEL-DISTINCT-SHEETS-SPLIT-ONLY',
+      name: '2. Split Excel File by Distinct Sheets (split only)',
+      visibility: 'visible',
+      jobType: 'burst',
+      step1: 'split',
+      step2: '',
+      step3: '',
+      input: {
+        data: ['file:samples/burst/Payslips-Distinct-Sheets.xls'],
+        numberOfPages: -1,
+        tokens: [
+          'clyde.grew@northridgehealth.org',
+          'kyle.butford@northridgehealth.org.pdf',
+          'alfreda.waldback@northridgehealth.org',
+        ],
+      },
+      output: {
+        data: [
+          'file:clyde.grew@northridgehealth.org.xls',
+          'file:kyle.butford@northridgehealth.org.xls',
+          'file:alfreda.waldback@northridgehealth.org.xls',
+        ],
+        folder:
+          "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
+      },
+      outputHtmlHardcoded:
+        '<i class="fa fa-file-excel-o"></i> clyde.grew@northridgehealth.org.xls employee payslip<br><i class="fa fa-file-excel-o"></i> kyle.butford@northridgehealth.org.xls employee payslip<br><i class="fa fa-file-excel-o"></i> alfreda.waldback@northridgehealth.org.xls employee payslip',
+      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/burst-split-only-config-defaults/settings.xml`,
       notes: ``,
       recipientType: 'employee',
       documentType: 'payslip',
@@ -82,7 +118,6 @@ export class SamplesService {
   ];
 
   samplesNotYetImplemented: Array<SampleInfo> = [
-    ,
     {
       id: 'MERGE-SPLIT-EMAIL-INVOICES',
       name: '2. Customers with One Invoice Each',
