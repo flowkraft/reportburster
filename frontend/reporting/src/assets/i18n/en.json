@@ -480,7 +480,7 @@
     "PROCESSING": {
       "LEFT-MENU": {
         "ACTIONS": "ACTIONS",
-        "BURST": "Jobs",
+        "BURST": "Processing",
         "LOGGING-TRACING": "Logging, Tracing",
         "MERGE-BURST": "Merge -> Burst",
         "QUALITY-ASSURANCE": "Quality Assurance",
@@ -564,7 +564,7 @@
     },
     "TOP-MENU-HEADER": {
       "ABOUT": "About",
-      "BURST": "Jobs",
+      "BURST": "Processing",
       "CONFIGURATION": "Configuration",
       "CUSTOMER-REVIEWS": "Customer Reviews",
       "DOCUMENTATION": "Documentation",
@@ -682,7 +682,7 @@
         },
         "EXTRA-PACKAGES": {
           "INNER-HTML": {
-            "ABOUT": "<h5><strong>Extra packages are a list of external software which are often useful when used together with <em>DocumentBurster</em></strong></h5><p><br/>Most of these packages can be easily installed and/or uninstalled using <strong>Chocolatey</strong>, a very good package manager for <strong>Windows</strong>. All the below commands should be executed by first starting a DOS/Windows Powershell command prompt and then by typing the respective commands inside the DOS/Windows Powershell command prompt.<br/></p><p>It is recommended to start the <strong>DOS/Powershell command prompt</strong> using Windows Start button -> Search for DOS/Powershell -> Right mouse click and then select &quot;<strong>Run as administrator</strong>&quot;<br /><br /></p>",
+            "ABOUT": "<h5><strong>Extra packages are a list of external software which bring additional value when used together with <em>DocumentBurster</em></strong></h5><p><br/>Most of these packages can be easily installed and/or uninstalled using <strong>Chocolatey</strong>, a very good package manager for <strong>Windows</strong>. All the below commands should be executed by first starting a DOS/Windows Powershell command prompt and then by typing the respective commands inside the DOS/Windows Powershell command prompt.<br/></p><p>It is recommended to start the <strong>DOS/Powershell command prompt</strong> using Windows Start button -> Search for DOS/Powershell -> Right mouse click and then select &quot;<strong>Run as administrator</strong>&quot;<br /><br /></p>",
             "NOTEPADPLUSPLUS": " is a free (as in “free speech” and also as in “free beer”) source code editor and Notepad replacement. Notepad++ is useful when editing ReportBurster configuration files and scripts.",
             "WINMERGE": " is an Open Source differencing and merging tool for Windows. WinMerge can compare both folders and files, presenting differences in a visual text format that is easy to understand and handle. WinMerge can be used for comparing ReportBurster configuration files and scripts.",
             "DOCKER-DESKTOP": " a very good containerization software. Docker is required for running other ReportBurster extra packages."
@@ -802,12 +802,17 @@
     },
     "MONTHLY-PAYSLIPS-SPLIT-ONLY": {
       "NOTES": {
-        "INNER-HTML": "<em>Payslips.pdf</em> sample document contains three pages corresponding for three employees and, when 'bursting' <em>Payslips.pdf</em> sample document, three output PDF files of one page each will be generated for each employee found in the input file. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundres or few thousants employees."
+        "INNER-HTML": "<em>Payslips.pdf</em> sample document contains three pages corresponding for three employees and, when 'bursting' <em>Payslips.pdf</em> sample document, three output PDF files of one page each will be generated for each employee found in the input file. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundred or few thousands employees."
       }
     },
     "EXCEL-DISTINCT-SHEETS-SPLIT-ONLY": {
       "NOTES": {
-        "INNER-HTML": "<em>Payslips-Distinct-Sheets.xls</em> sample document contains three sheets for three employees and, when 'bursting' <em>Payslips-Distinct-Sheets.xls</em> sample document, three output Excel files of one sheet each will be generated for each employee found in the input file. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundres or few thousants employees."
+        "INNER-HTML": "<em>Payslips-Distinct-Sheets.xls</em> sample document contains three sheets for three employees and, when 'bursting' <em>Payslips-Distinct-Sheets.xls</em> sample document, three output Excel files of one sheet each will be generated for each employee found in the input file. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundred or few thousands employees."
+      }
+    },
+    "EXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY": {
+      "NOTES": {
+        "INNER-HTML": "<em>Customers-Distinct-Column-Values.xls</em> sample document contains one sheet with customer data for 21 countries and, when 'bursting' <em>Customers-Distinct-Column-Values.xls</em> sample document, 21 output Excel files will be generated, each file containing the customer data for the corresponding country found in the input file. <br/><br/>When working with your real documents you can process the data for all your company customers no matter if your company has few tens, few hundred or few thousands customers."
       }
     }
   }

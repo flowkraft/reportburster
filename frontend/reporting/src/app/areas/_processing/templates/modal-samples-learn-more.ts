@@ -1,7 +1,22 @@
 export const modalSamplesLearnMoreTemplate = `<p-dialog [header]="modalSampleInfo.title" [(visible)]="isModalSamplesLearnMoreVisible" [modal]="true" width="800"
   height="200" class="modal-dialog-center">
   <div style="margin: 25px;">
-    <div class="row">
+  
+  <div class="row">
+    
+  <div class="col-xs-2">
+    <strong>{{
+      'AREAS.TOP-MENU-HEADER.DOCUMENTATION' | translate
+    }}</strong> 
+  </div>
+
+  <div class="col-xs-10">
+      <a href="{{modalSampleInfo.documentation}}" target="_blank">{{modalSampleInfo.documentation}}</a>    
+  </div>
+ 
+ </div>
+  <br/>  
+  <div class="row">
       <div class="col-xs-2">
       {{
         'SAMPLES.MODAL.FEATURES' | translate
@@ -106,9 +121,24 @@ export const modalSamplesLearnMoreTemplate = `<p-dialog [header]="modalSampleInf
         
       </div>
     </div>
+    <br/>
+    <div class="row">
     
-  </div> 
+    <div class="col-xs-2">
+      
+    </div>
+  
+    <div class="col-xs-10">
+      <button type="button" id="btnViewConfigurationFile{{modalSampleInfo.id}}" class="btn btn-xs btn-default" (click)="doSampleViewConfigurationFile(modalSampleInfo.configurationFilePath, modalSampleInfo.configurationFileName)">&nbsp;&nbsp;&nbsp;&nbsp;View Configuration File&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+    </div>
+   
+   </div>
+   
+    </div> 
 
+    
+    <p></p>
+    
   <p-footer>
     <button id="btnCloseSamplesLearnMoreModal" class="btn btn-flat btn-default" type="button" (click)="doCloseSamplesLearnMoreModal()">
       {{ 'BUTTONS.CLOSE' | translate }}

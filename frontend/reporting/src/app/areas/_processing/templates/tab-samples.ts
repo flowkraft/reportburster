@@ -19,10 +19,10 @@ export const tabSamplesTemplate = `<ng-template #tabSamplesTemplate>
                 {{ 'AREAS.CONFIGURATION-TEMPLATES.TAB-CONF-TEMPLATES.NAME' |
                 translate }}
               </th>
-              <th style="width:14%">
+              <th style="width:12%">
                 What It Does
               </th>
-              <th style="width:22%">
+              <th style="width:24%">
                 Input
               </th>
               <th>
@@ -92,7 +92,7 @@ export const tabSamplesTemplate = `<ng-template #tabSamplesTemplate>
             <td [innerHTML]="samplesService.getOutputHtml(sample.id)"></td>
             <td>
             
-              <button type="button" id="btnSampleTryIt{{sample.id}}" class="btn btn-xs btn-primary" (click)="doTryIt(sample)">&nbsp;&nbsp;&nbsp;&nbsp;Try it&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+              <button type="button" id="btnSampleTryIt{{sample.id}}" class="btn btn-xs btn-primary" (click)="doSampleTryIt(sample)">&nbsp;&nbsp;&nbsp;&nbsp;Try it&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
               <br><br>
               <!--
               <div class="btn-group dropup"> 

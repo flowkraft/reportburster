@@ -67,6 +67,8 @@ export class ProcessingComponent implements OnInit {
     outputDetails: '',
     notes: '',
     configurationFilePath: '',
+    configurationFileName: '',
+    documentation: '',
   };
 
   subscriptionCheckIfTestEmailServerIsStarted: Subscription;
@@ -762,7 +764,11 @@ export class ProcessingComponent implements OnInit {
       clickedSample.capReportGenerationMailMerge;
     this.modalSampleInfo.notes = clickedSample.notes;
 
-    this.modalSampleInfo.configurationFilePath = clickedSample.configFilePath;
+    this.modalSampleInfo.configurationFilePath =
+      clickedSample.configurationFilePath;
+
+    this.modalSampleInfo.configurationFileName =
+      clickedSample.configurationFileName;
 
     this.modalSampleInfo.inputDetails = this.samplesService.getInputHtml(
       clickedSample.id,
@@ -777,6 +783,8 @@ export class ProcessingComponent implements OnInit {
       clickedSample.id,
       true
     );
+
+    this.modalSampleInfo.documentation = clickedSample.documentation;
 
     this.isModalSamplesLearnMoreVisible = true;
   }
@@ -827,7 +835,19 @@ export class ProcessingComponent implements OnInit {
     });
   }
 
-  doTryIt(clickedSample: SampleInfo) {
+  doSampleViewConfigurationFile(
+    configFilePath: string,
+    configFileName: string
+  ) {
+    this.router.navigate([
+      '/configuration',
+      'generalSettingsMenuSelected',
+      configFilePath,
+      configFileName,
+    ]);
+  }
+
+  doSampleTryIt(clickedSample: SampleInfo) {
     const inputDocumentShortPath = clickedSample.input.data[0].replace(
       'file:',
       ''
@@ -847,7 +867,9 @@ export class ProcessingComponent implements OnInit {
               `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputDocumentShortPath}`
             )
           ),
-          Utilities.resolve(Utilities.slash(clickedSample.configFilePath)),
+          Utilities.resolve(
+            Utilities.slash(clickedSample.configurationFilePath)
+          ),
         ]);
       },
     });

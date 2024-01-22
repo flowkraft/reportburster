@@ -11,6 +11,7 @@ export interface SampleInfo {
   jobType: string;
   input: {
     data: string[];
+    dataUrl?: string[];
     numberOfPages: number;
     tokens: string[];
   };
@@ -22,13 +23,15 @@ export interface SampleInfo {
     folder: string;
   };
   outputHtmlHardcoded: string;
-  configFilePath: string;
+  configurationFilePath: string;
+  configurationFileName: string;
   notes: string;
   recipientType: string;
   documentType: string;
   activeClicked: boolean;
   capReportDistribution: boolean;
   capReportGenerationMailMerge: boolean;
+  documentation?: string;
 }
 
 @Injectable({
@@ -46,11 +49,12 @@ export class SamplesService {
   samples: Array<SampleInfo> = [
     {
       id: 'MONTHLY-PAYSLIPS-SPLIT-ONLY',
-      name: '1. Monthly Payslips (split only)',
+      name: '1. Monthly Payslips PDF (split only)',
       visibility: 'visible',
       jobType: 'burst',
       input: {
         data: ['file:samples/burst/Payslips.pdf'],
+        dataUrl: ['file:https://www.pdfburst.com/samples/Payslips.pdf'],
         numberOfPages: 3,
         tokens: [
           'clyde.grew@northridgehealth.org',
@@ -71,17 +75,20 @@ export class SamplesService {
           "output/Payslips.pdf/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/burst-split-only-config-defaults/settings.xml`,
+      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'employee',
       documentType: 'payslip',
       capReportDistribution: false,
       capReportGenerationMailMerge: false,
       activeClicked: false,
+      documentation:
+        'https://www.pdfburst.com/docs/html/userguide/chapter.pdf.html#chapter.pdf.bursting',
     },
     {
       id: 'EXCEL-DISTINCT-SHEETS-SPLIT-ONLY',
-      name: '2. Split Excel File by Distinct Sheets (split only)',
+      name: '2. Monthly Payslips Excel - split Excel file by distinct sheets (split only)',
       visibility: 'visible',
       jobType: 'burst',
       step1: 'split',
@@ -89,6 +96,9 @@ export class SamplesService {
       step3: '',
       input: {
         data: ['file:samples/burst/Payslips-Distinct-Sheets.xls'],
+        dataUrl: [
+          'file:https://www.pdfburst.com/samples/Payslips-Distinct-Sheets.xls',
+        ],
         numberOfPages: -1,
         tokens: [
           'clyde.grew@northridgehealth.org',
@@ -107,13 +117,50 @@ export class SamplesService {
       },
       outputHtmlHardcoded:
         '<i class="fa fa-file-excel-o"></i> clyde.grew@northridgehealth.org.xls employee payslip<br><i class="fa fa-file-excel-o"></i> kyle.butford@northridgehealth.org.xls employee payslip<br><i class="fa fa-file-excel-o"></i> alfreda.waldback@northridgehealth.org.xls employee payslip',
-      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/burst-split-only-config-defaults/settings.xml`,
+      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'employee',
       documentType: 'payslip',
       capReportDistribution: false,
       capReportGenerationMailMerge: false,
       activeClicked: false,
+      documentation:
+        'https://www.pdfburst.com/docs/html/userguide/chapter.excel.html#chapter.excel.bursting.by.distinct.sheets',
+    },
+    {
+      id: 'EXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY',
+      name: '3. Customer List/Country - split Excel file by distinct column values (split only)',
+      visibility: 'hidden',
+      jobType: 'burst',
+      step1: 'split',
+      step2: '',
+      step3: '',
+      input: {
+        data: ['file:samples/burst/Customers-Distinct-Column-Values.xls'],
+        dataUrl: [
+          'file:https://www.pdfburst.com/samples/Customers-Distinct-Column-Values.xls',
+        ],
+        numberOfPages: -1,
+        tokens: [],
+      },
+      output: {
+        data: [],
+        folder:
+          "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
+      },
+      outputHtmlHardcoded:
+        '<i class="fa fa-file-excel-o"></i> United States of America.xls<br><i class="fa fa-file-excel-o"></i> Australia.xls<br><i class="fa fa-file-excel-o"></i> Canada.xls<br><i class="fa fa-file-excel-o"></i> United Kingdom.xls<br><i class="fa fa-file-excel-o"></i> Germany.xls<br>etc... (separate file containing customer list for each country)',
+      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      configurationFileName: 'split-only',
+      notes: ``,
+      recipientType: 'customer',
+      documentType: 'invoices',
+      capReportDistribution: false,
+      capReportGenerationMailMerge: false,
+      activeClicked: false,
+      documentation:
+        'https://www.pdfburst.com/docs/html/userguide/chapter.excel.html#chapter.excel.bursting.by.distinct.column.values',
     },
   ];
 
@@ -151,7 +198,8 @@ export class SamplesService {
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/customers-with-one-invoice-each-burst-pdf/settings.xml`,
+      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/customers-with-one-invoice-each-burst-pdf/settings.xml`,
+      configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'customer',
       documentType: 'invoice',
@@ -182,71 +230,8 @@ export class SamplesService {
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/customers-with-multiple-invoices-each-merge-burst-pdf/settings.xml`,
-      notes: ``,
-      recipientType: 'customer',
-      documentType: 'invoices',
-      capReportDistribution: false,
-      capReportGenerationMailMerge: false,
-      activeClicked: false,
-    },
-    {
-      id: 'EXCEL-DISTINCT-SHEETS',
-      name: '4. Split Excel File by Distinct Sheets',
-      visibility: 'hidden',
-      jobType: 'burst',
-      step1: 'split',
-      step2: '',
-      step3: '',
-      input: {
-        data: ['file:samples/Payslips-Distinct-Sheets.xls'],
-        numberOfPages: -1,
-        tokens: [
-          'clyde.grew@northridgehealth.org',
-          'kyle.butford@northridgehealth.org.pdf',
-          'alfreda.waldback@northridgehealth.org',
-        ],
-      },
-      output: {
-        data: [
-          'email-file-attached:clyde.grew@northridgehealth.org.xls',
-          'email-file-attached:kyle.butford@northridgehealth.org.xls',
-          'email-file-attached:alfreda.waldback@northridgehealth.org.xls',
-        ],
-        folder:
-          "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
-      },
-      outputHtmlHardcoded:
-        '<i class="fa fa-file-excel-o"></i> clyde.grew@northridgehealth.org.xls<br><i class="fa fa-file-excel-o"></i> kyle.butford@northridgehealth.org.xls<br><i class="fa fa-file-excel-o"></i> alfreda.waldback@northridgehealth.org.xls',
-      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/excel-split-by-distinct-sheets/settings.xml`,
-      notes: ``,
-      recipientType: 'employee',
-      documentType: 'payslip',
-      capReportDistribution: false,
-      capReportGenerationMailMerge: false,
-      activeClicked: false,
-    },
-    {
-      id: 'EXCEL-DISTINCT-COLUMN-VALUES',
-      name: '5. Split Excel File by Distinct Column Values',
-      visibility: 'hidden',
-      jobType: 'burst',
-      step1: 'split',
-      step2: '',
-      step3: '',
-      input: {
-        data: ['file:samples/Customers-Distinct-Column-Values.xls'],
-        numberOfPages: -1,
-        tokens: [],
-      },
-      output: {
-        data: [],
-        folder:
-          "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
-      },
-      outputHtmlHardcoded:
-        '<i class="fa fa-file-excel-o"></i> Germany.xls<br><i class="fa fa-file-excel-o"></i> USA.xls<br><i class="fa fa-file-excel-o"></i> UK.xls<br><i class="fa fa-file-excel-o"></i> Australia.xls<br><i class="fa fa-file-excel-o"></i> Canada.xls<br>etc... (separate file containing customer list for each country)',
-      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/excel-split-by-distinct-column-values/settings.xml`,
+      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/customers-with-multiple-invoices-each-merge-burst-pdf/settings.xml`,
+      configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'customer',
       documentType: 'invoices',
@@ -281,7 +266,8 @@ export class SamplesService {
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/monthly-payslips-generate-docx/settings.xml`,
+      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/monthly-payslips-generate-docx/settings.xml`,
+      configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'employee',
       documentType: 'payslip',
@@ -317,7 +303,8 @@ export class SamplesService {
       },
       outputHtmlHardcoded:
         '<i class="fa fa-envelope-o"></i> letter to student clyde.grew@northridgeschool.edu<br><i class="fa fa-envelope-o"></i> letter to student kyle.butford@northridgeschool.edu<br><i class="fa fa-envelope-o"></i> letter to student alfreda.waldback@northridgeschool.edu',
-      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/mail-merge-emails/settings.xml`,
+      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/mail-merge-emails/settings.xml`,
+      configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'student',
       documentType: 'letter',
@@ -352,7 +339,8 @@ export class SamplesService {
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/newsletter-1/settings.xml`,
+      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/newsletter-1/settings.xml`,
+      configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'student',
       documentType: 'letter',
@@ -365,7 +353,14 @@ export class SamplesService {
   getInputHtml(id: string, fullDetails?: boolean) {
     const sample = this.samples.find((sample) => sample.id == id);
     const inputs: string[] = sample.input.data;
+    const inputsUrl: string[] = sample.input.dataUrl;
+
     let inputLabel = inputs[0].replace('file:', '');
+    let inputUrl: string;
+
+    if (inputsUrl && inputsUrl.length) {
+      inputUrl = inputsUrl[0].replace('file:', '');
+    }
 
     //let inputLabel = inputs[0];
 
@@ -376,17 +371,31 @@ export class SamplesService {
       inputFileIcon = 'fa-file-text-o';
     }
 
-    let inputHtml = `<i class="fa ${inputFileIcon}"></i> ${inputLabel}`;
+    let inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${inputLabel}`;
     if (fullDetails)
-      inputHtml = `<i class="fa ${inputFileIcon}"></i> ${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}`;
+      inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}`;
+
+    if (inputUrl) {
+      inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank">${inputLabel}</a>`;
+      if (fullDetails)
+        inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank">${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}</a>`;
+    }
 
     for (let index = 1; index < inputs.length; index++) {
       inputLabel = inputs[index].replace('file:', '');
       //inputLabel = inputs[index];
-      let currentHtml = `<i class="fa ${inputFileIcon}"></i> ${inputLabel}`;
-
+      let currentHtml = `<i class="fa ${inputFileIcon}"></i>${inputLabel}`;
       if (fullDetails)
-        currentHtml = `<i class="fa ${inputFileIcon}"></i> ${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}`;
+        currentHtml = `<i class="fa ${inputFileIcon}"></i>${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}`;
+
+      console.log(`inputsUrl = ${JSON.stringify(inputsUrl)}`);
+
+      if (inputUrl) {
+        inputUrl = inputsUrl[index].replace('file:', '');
+        currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank">${inputLabel}</a>`;
+        if (fullDetails)
+          currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank>${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}</a>`;
+      }
 
       inputHtml = `${inputHtml}<br>${currentHtml}`;
     }
@@ -397,7 +406,7 @@ export class SamplesService {
   getOutputHtml(id: string, fullDetails?: boolean) {
     const sample = this.samples.find((sample) => sample.id == id);
 
-    console.log(`sample = ${JSON.stringify(sample)}`);
+    //console.log(`sample = ${JSON.stringify(sample)}`);
 
     if (sample.outputHtmlHardcoded) return sample.outputHtmlHardcoded;
 
@@ -470,7 +479,9 @@ export class SamplesService {
         //console.log(JSON.stringify(sampleConfigurations));
         const sampleConfigurationValues = sampleConfigurations.find(
           (configuration) => {
-            return sample.configFilePath.endsWith(configuration.filePath);
+            return sample.configurationFilePath.endsWith(
+              configuration.filePath
+            );
           }
         );
 
@@ -496,14 +507,16 @@ export class SamplesService {
 
   async toggleSampleVisibility(sample: SampleInfo, visibility: string) {
     const settingsXmlConfigurationValues =
-      await this.settingsService.loadSettingsFileAsync(sample.configFilePath);
+      await this.settingsService.loadSettingsFileAsync(
+        sample.configurationFilePath
+      );
 
     settingsXmlConfigurationValues.documentburster.settings.visibility =
       visibility;
 
     await this.settingsService.saveSettingsFileAsync(
       settingsXmlConfigurationValues,
-      sample.configFilePath
+      sample.configurationFilePath
     );
 
     sample.visibility = visibility;
@@ -511,7 +524,7 @@ export class SamplesService {
     const sampleConfiguration = this.settingsService
       .getSampleConfigurations()
       .find((configuration) =>
-        sample.configFilePath.endsWith(configuration.filePath)
+        sample.configurationFilePath.endsWith(configuration.filePath)
       );
     sampleConfiguration.visibility = visibility;
     this.countVisibleSamples = this.samples.filter(

@@ -88,4 +88,63 @@ test.describe('', async () => {
         .appStatusShouldBeGreatNoErrorsNoWarnings();
     }
   );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (03_split_excel_file_by_distinct_column_values_split_only)',
+    async ({ beforeAfterEach: firstPage }) => {
+      //long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const expectedOutputFiles = [
+        'Germany.xls',
+        'USA.xls',
+        'UK.xls',
+        'Sweden.xls',
+        'France.xls',
+        'Spain.xls',
+        'Canada.xls',
+        'Argentina.xls',
+        'Switzerland.xls',
+        'Brazil.xls',
+        'Austria.xls',
+        'Italy.xls',
+        'Portugal.xls',
+        'Mexico.xls',
+        'Venezuela.xls',
+        'Ireland.xls',
+        'Belgium.xls',
+        'Norway.xls',
+        'Denmark.xls',
+        'Finland.xls',
+        'Poland.xls',
+      ];
+
+      const ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .waitOnElementToContainText(
+          '#tdEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY',
+          '(split only)'
+        )
+        .click('#trEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY')
+        .click('#btnSamplesLearnModeEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY')
+        .waitOnElementToContainText(
+          '#divEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY',
+          'you can process the data for all your company customers no matter if your company has few tens'
+        )
+        .click('#btnCloseSamplesLearnMoreModal')
+        .click('#btnSampleTryItEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY')
+        .clickYesDoThis()
+        .click('#btnBurst')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'xls')
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    }
+  );
 });

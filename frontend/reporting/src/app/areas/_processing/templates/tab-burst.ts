@@ -99,8 +99,8 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
           {{ 'AREAS.PROCESSING.TAB-BURST.BEFORE-EMAILING' | translate }}
           <a
             href="#"
-            [routerLink]="['/processingQa','qualityMenuSelected',procBurstInfo.inputFilePath]"
-            >Quality Assurance</a
+            [routerLink]="['/processingQa','qualityMenuSelected', procBurstInfo.inputFilePath, procBurstInfo.configurationFilePath]"
+            >{{ 'AREAS.PROCESSING.TABS.QUALITY-ASSURANCE' | translate }}</a
           >
           {{ 'AREAS.PROCESSING.TAB-BURST.FOR-THE-FILE' | translate }}
           <em>{{procBurstInfo.inputFilePath}}</em>&nbsp;&nbsp;
@@ -108,7 +108,7 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
             id="goToQa"
             type="button"
             class="btn btn-primary btn-sm"
-            [routerLink]="['/processingQa','qualityMenuSelected',procBurstInfo.inputFilePath]"
+            [routerLink]="['/processingQa', 'qualityMenuSelected', procBurstInfo.inputFilePath, procBurstInfo.configurationFilePath]"
           >
             {{ 'AREAS.PROCESSING.TAB-BURST.RUN-QA' | translate }}
           </button>
