@@ -33,6 +33,10 @@ const routes: Routes = [
     component: ProcessingComponent,
   },
   {
+    path: 'processingQa/:leftMenu/:prefilledInputFilePath/:prefilledConfigurationFilePath',
+    component: ProcessingComponent,
+  },
+  {
     path: 'processingQa/:leftMenu/:prefilledInputFilePath/:prefilledConfigurationFilePath/:whichAction',
     component: ProcessingComponent,
   },

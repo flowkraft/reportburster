@@ -173,7 +173,7 @@ public class NoExeAssembler extends AbstractAssembler {
 				new File(packageDirPath + "/" + topFolderName + "/config/_defaults/settings.xml"));
 
 		String burstPdfMonthlyPayslipsSplitOnlyXmlConfigFilePath = packageDirPath + "/" + topFolderName
-				+ "/config/samples/burst-split-only-config-defaults/settings.xml";
+				+ "/config/samples/split-only/settings.xml";
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
 				new File(burstPdfMonthlyPayslipsSplitOnlyXmlConfigFilePath));
 		// replace <reportdistribution>true</reportdistribution> with <reportdistribution>false</reportdistribution>

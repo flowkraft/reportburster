@@ -108,13 +108,13 @@ export class ElectronService {
         ).valueOf();
       }
 
-      // this.PORTABLE_EXECUTABLE_DIR = this.path.resolve(
-      // Utilities.slash(this.process.env.PORTABLE_EXECUTABLE_DIR)
-      //);
-
-      this.PORTABLE_EXECUTABLE_DIR = Utilities.slash(
-        this.process.env.PORTABLE_EXECUTABLE_DIR
+      this.PORTABLE_EXECUTABLE_DIR = this.path.resolve(
+        Utilities.slash(this.process.env.PORTABLE_EXECUTABLE_DIR)
       );
+
+      // this.PORTABLE_EXECUTABLE_DIR = Utilities.slash(
+      //   this.process.env.PORTABLE_EXECUTABLE_DIR
+      // );
 
       this.jetpack = window.require('fs-jetpack');
 
