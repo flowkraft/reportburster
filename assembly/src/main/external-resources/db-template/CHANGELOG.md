@@ -2,11 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## 9.1.5 - 2024-01-22
+## 9.1.5 - 2024-01-24
 
 ### Added
 
-- "Samples/3. Customer List/Country - split Excel file by distinct column values (split only)c" for users to quickly "Try It"
+- "Samples/3. Customer List/Country - split Excel file by distinct column values (split only)" for users to quickly "Try It"
 
 ## 9.1.4 - 2024-01-12
 
