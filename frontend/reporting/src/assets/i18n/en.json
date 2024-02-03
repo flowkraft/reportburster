@@ -814,6 +814,11 @@
       "NOTES": {
         "INNER-HTML": "<em>Customers-Distinct-Column-Values.xls</em> sample document contains one sheet with customer data for 21 countries and, when 'bursting' <em>Customers-Distinct-Column-Values.xls</em> sample document, 21 output Excel files will be generated, each file containing the customer data for the corresponding country found in the input file. <br/><br/>When working with your real documents you can process the data for all your company customers no matter if your company has few tens, few hundred or few thousands customers."
       }
+    },
+    "INVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY": {
+      "NOTES": {
+        "INNER-HTML": "<em>Split2Times.pdf</em> sample document contains multiple invoices for three different customers. Normally, with a single split per customer, each customer will receive one PDF containing multiple invoices together. There are situations where you'd prefer, for each customer, to send their invoices separated with one invoice per document. This is where the 'Split Once More' feature comes in handy. The first split will be done based on the customer and then, for each customer, a second split will be done based on the invoice number. <br/><br/>When working with your real documents you can process the data for all your company customers no matter if your company has few tens, few hundred or few thousands customers."
+      }
     }
   }
 }

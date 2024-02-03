@@ -162,6 +162,47 @@ export class SamplesService {
       documentation:
         'https://www.pdfburst.com/docs/html/userguide/chapter.excel.html#chapter.excel.bursting.by.distinct.column.values',
     },
+    {
+      id: 'INVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY',
+      name: '4. Customers with Multiple Invoices (split only)',
+      visibility: 'hidden',
+      jobType: 'burst',
+      step1: 'split',
+      step2: '',
+      step3: '',
+      input: {
+        data: ['file:samples/burst/Split2Times.pdf'],
+        dataUrl: ['file:https://www.pdfburst.com/samples/Split2Times.pdf'],
+        numberOfPages: -1,
+        tokens: [],
+      },
+      output: {
+        data: [
+          'file:10.pdf (for accounting@alphainsurance.biz)',
+          'file:9.pdf (for accounting@alphainsurance.biz)',
+          'file:8.pdf (for accounting@alphainsurance.biz)',
+          'file:7.pdf (for accounting@alphainsurance.biz)',
+          'file:6.pdf (for accounting@betainsurance.biz)',
+          'file:5.pdf (for accounting@betainsurance.biz)',
+          'file:4.pdf (for accounting@betainsurance.biz)',
+          'file:3.pdf (for accounting@gammahealth.biz)',
+          'file:2.pdf (for accounting@gammahealth.biz)',
+        ],
+        folder:
+          "output/Payslips.pdf/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
+      },
+      outputHtmlHardcoded: '',
+      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-two-times-split-only/settings.xml`,
+      configurationFileName: 'split-two-times-split-only',
+      notes: ``,
+      recipientType: 'customer',
+      documentType: 'invoice',
+      capReportDistribution: false,
+      capReportGenerationMailMerge: false,
+      activeClicked: false,
+      documentation:
+        'https://www.pdfburst.com/docs/html/userguide/chapter.excel.html#chapter.excel.bursting.by.distinct.column.values',
+    },
   ];
 
   samplesNotYetImplemented: Array<SampleInfo> = [
@@ -203,38 +244,6 @@ export class SamplesService {
       notes: ``,
       recipientType: 'customer',
       documentType: 'invoice',
-      capReportDistribution: false,
-      capReportGenerationMailMerge: false,
-      activeClicked: false,
-    },
-    {
-      id: 'SPLIT2TIMES-EMAIL-INVOICES',
-      name: '3. Customers with Multiple Invoices Each',
-      visibility: 'hidden',
-      jobType: 'burst',
-      step1: 'split',
-      step2: 'split',
-      step3: 'email',
-      input: {
-        data: ['file:samples/Split2Times.pdf'],
-        numberOfPages: -1,
-        tokens: [],
-      },
-      output: {
-        data: [
-          'email-files-attached:10.pdf, 9.pdf, 8.pdf and 7.pdf',
-          'email-files-attached:6.pdf, 5.pdf and 4.pdf',
-          'email-files-attached:3.pdf and 2.pdf',
-        ],
-        folder:
-          "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
-      },
-      outputHtmlHardcoded: '',
-      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/customers-with-multiple-invoices-each-merge-burst-pdf/settings.xml`,
-      configurationFileName: 'split-only',
-      notes: ``,
-      recipientType: 'customer',
-      documentType: 'invoices',
       capReportDistribution: false,
       capReportGenerationMailMerge: false,
       activeClicked: false,
