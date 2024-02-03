@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 9.1.6 - 2024-02-05
+
+### Added
+
+- "Samples/4. Customers with Multiple Invoices (split only)" for users to quickly "Try It"
+
 ## 9.1.5 - 2024-01-24
 
 ### Added

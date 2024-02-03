@@ -172,15 +172,29 @@ public class NoExeAssembler extends AbstractAssembler {
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
 				new File(packageDirPath + "/" + topFolderName + "/config/_defaults/settings.xml"));
 
-		String burstPdfMonthlyPayslipsSplitOnlyXmlConfigFilePath = packageDirPath + "/" + topFolderName
+		String splitOnlyXmlConfigFilePath = packageDirPath + "/" + topFolderName
 				+ "/config/samples/split-only/settings.xml";
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
-				new File(burstPdfMonthlyPayslipsSplitOnlyXmlConfigFilePath));
-		// replace <reportdistribution>true</reportdistribution> with <reportdistribution>false</reportdistribution>
-		String content = FileUtils.readFileToString(
-				new File(burstPdfMonthlyPayslipsSplitOnlyXmlConfigFilePath), "UTF-8");
-		content = content.replace("<reportdistribution>true</reportdistribution>", "<reportdistribution>false</reportdistribution>");
-		File newFile = new File(burstPdfMonthlyPayslipsSplitOnlyXmlConfigFilePath);
+				new File(splitOnlyXmlConfigFilePath));
+		// replace <reportdistribution>true</reportdistribution> with
+		// <reportdistribution>false</reportdistribution>
+		String content = FileUtils.readFileToString(new File(splitOnlyXmlConfigFilePath), "UTF-8");
+		content = content.replace("<reportdistribution>true</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		File newFile = new File(splitOnlyXmlConfigFilePath);
+		FileUtils.writeStringToFile(newFile, content, "UTF-8");
+
+		String splitTwoTimesSplitOnlyXmlConfigFilePath = packageDirPath + "/" + topFolderName
+				+ "/config/samples/split-two-times-split-only/settings.xml";
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(splitTwoTimesSplitOnlyXmlConfigFilePath));
+		// replace <reportdistribution>true</reportdistribution> with
+		// <reportdistribution>false</reportdistribution>
+		content = FileUtils.readFileToString(new File(splitTwoTimesSplitOnlyXmlConfigFilePath), "UTF-8");
+		content = content.replace("<reportdistribution>true</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replace("<split2ndtime>false</split2ndtime>", "<split2ndtime>true</split2ndtime>");
+		newFile = new File(splitTwoTimesSplitOnlyXmlConfigFilePath);
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
 
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_internal/license.xml"),

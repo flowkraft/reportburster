@@ -147,4 +147,54 @@ test.describe('', async () => {
         .appStatusShouldBeGreatNoErrorsNoWarnings();
     }
   );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (04_invoices_split_once_more_split_only)',
+    async ({ beforeAfterEach: firstPage }) => {
+      //long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const expectedOutputFiles = [
+        '10.pdf',
+        '9.pdf',
+        '8.pdf',
+        '7.pdf',
+        '6.pdf',
+        '5.pdf',
+        '4.pdf',
+        '3.pdf',
+        '2.pdf',
+        'accounting@alphainsurance.biz.pdf',
+        'accounting@betainsurance.biz.pdf',
+        'accounting@gammahealth.biz.pdf',
+      ];
+
+      const ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .waitOnElementToContainText(
+          '#tdINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY',
+          '(split only)'
+        )
+        .click('#trINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
+        .click('#btnSamplesLearnModeINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
+        .waitOnElementToContainText(
+          '#divINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY',
+          'you can process the data for all your company customers no matter if your company has few tens'
+        )
+        .click('#btnCloseSamplesLearnMoreModal')
+        .click('#btnSampleTryItINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
+        .clickYesDoThis()
+        .click('#btnBurst')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles)
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    }
+  );
 });
