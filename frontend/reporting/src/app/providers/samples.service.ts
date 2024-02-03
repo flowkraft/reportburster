@@ -201,7 +201,7 @@ export class SamplesService {
       capReportGenerationMailMerge: false,
       activeClicked: false,
       documentation:
-        'https://www.pdfburst.com/docs/html/userguide/chapter.excel.html#chapter.excel.bursting.by.distinct.column.values',
+        'http://www.pdfburst.com/docs/html/userguide/chapter.pdf.html#chapter.config.advanced',
     },
   ];
 
