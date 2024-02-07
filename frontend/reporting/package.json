@@ -2,7 +2,7 @@
   "name": "documentburster",
   "productName": "DocumentBurster",
   "description": "DocumentBurster is a report distribution software for bursting reports like invoices, statements and payslips in order to distribute by email, FTP, web or file share relevant parts to each of your customers, partners and employees.",
-  "version": "9.1.5",
+  "version": "9.1.6",
   "copyright": "2024, SourceKraft Systems & Consulting Ltd.",
   "homepage": "https://www.pdfburst.com",
   "license": "paid license",
