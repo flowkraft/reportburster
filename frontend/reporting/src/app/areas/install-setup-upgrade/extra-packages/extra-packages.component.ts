@@ -40,6 +40,18 @@ export class ExtraPackagesComponent implements OnInit {
       cmdGetInfo: 'choco info notepadplusplus -lo',
     },
     {
+      id: 'vscode',
+      name: 'Visual Studio Code',
+      icon: 'vscode-logo.svg',
+      website: 'https://code.visualstudio.com',
+      description: ` Code editing. Redefined.`,
+      status: 'not-installed',
+      packageManager: 'choco',
+      cmdInstall: 'choco install vscode --yes',
+      cmdUnInstall: 'choco uninstall vscode',
+      cmdGetInfo: 'choco info vscode -lo',
+    },
+    {
       id: 'winmerge',
       name: 'WinMerge',
       icon: 'winmerge.png',

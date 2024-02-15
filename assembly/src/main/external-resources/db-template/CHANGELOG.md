@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 9.1.7 - 2024-02-19
+
+### Added
+
+- "Samples/5. Customer Invoices PDF - Merge and then Process Multiple Files Together" for users to quickly "Try It"
+
 ## 9.1.6 - 2024-02-05
 
 ### Added

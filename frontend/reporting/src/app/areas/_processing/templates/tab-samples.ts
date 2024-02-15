@@ -4,7 +4,7 @@ export const tabSamplesTemplate = `<ng-template #tabSamplesTemplate>
     <div class="row">
 
       <div class="col-xs-12"
-        style="cursor: pointer; height: 480px; overflow: auto"
+        style="cursor: pointer; height: 530px; overflow: auto"
       >
 
         <table id="samplesTable"

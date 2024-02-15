@@ -19,6 +19,6 @@ ant.exec(
 	failonerror: "true",
 	failifexecutionfails: "true",
 	output:"logs/cURL.log",
-	executable: 'curl/win/curl.exe') {
+	executable: 'tools/curl/win/curl.exe') {
 				arg(line:"${curlOptions}")
 	}

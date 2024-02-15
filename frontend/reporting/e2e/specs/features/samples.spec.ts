@@ -197,4 +197,49 @@ test.describe('', async () => {
         .appStatusShouldBeGreatNoErrorsNoWarnings();
     }
   );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (05_invoices_merge_then_split_only)',
+    async ({ beforeAfterEach: firstPage }) => {
+      //long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const expectedOutputFiles = [
+        '0011.pdf',
+        '0012.pdf',
+        '0013.pdf',
+        '0014.pdf',
+        '0015.pdf',
+        '0016.pdf',
+        '0017.pdf',
+        '0018.pdf',
+        '0019.pdf',
+        'merged.pdf',
+      ];
+
+      const ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .waitOnElementToContainText('#tdINVOICES-MERGE-THEN-SPLIT', 'Merge and')
+        .click('#trINVOICES-MERGE-THEN-SPLIT')
+        .click('#btnSamplesLearnModeINVOICES-MERGE-THEN-SPLIT')
+        .waitOnElementToContainText(
+          '#divINVOICES-MERGE-THEN-SPLIT',
+          'you can process the data for all your company invoices no matter if your company has few tens'
+        )
+        .click('#btnCloseSamplesLearnMoreModal')
+        .click('#btnSampleTryItINVOICES-MERGE-THEN-SPLIT')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItINVOICES-MERGE-THEN-SPLIT')
+        .clickYesDoThis()
+        .click('#btnRun')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles)
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    }
+  );
 });

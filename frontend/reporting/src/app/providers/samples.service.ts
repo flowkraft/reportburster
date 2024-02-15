@@ -130,8 +130,8 @@ export class SamplesService {
     },
     {
       id: 'EXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY',
-      name: '3. Customer List/Country - split Excel file by distinct column values (split only)',
-      visibility: 'hidden',
+      name: '3. Customer List/Country Excel - split Excel file by distinct column values (split only)',
+      visibility: 'visible',
       jobType: 'burst',
       step1: 'split',
       step2: '',
@@ -164,8 +164,8 @@ export class SamplesService {
     },
     {
       id: 'INVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY',
-      name: '4. Customers with Multiple Invoices (split only)',
-      visibility: 'hidden',
+      name: '4. Customers with Multiple Invoices PDF (split only)',
+      visibility: 'visible',
       jobType: 'burst',
       step1: 'split',
       step2: '',
@@ -203,43 +203,40 @@ export class SamplesService {
       documentation:
         'http://www.pdfburst.com/docs/html/userguide/chapter.pdf.html#chapter.config.advanced',
     },
-  ];
-
-  samplesNotYetImplemented: Array<SampleInfo> = [
     {
-      id: 'MERGE-SPLIT-EMAIL-INVOICES',
-      name: '2. Customers with One Invoice Each',
-      visibility: 'hidden',
+      id: 'INVOICES-MERGE-THEN-SPLIT',
+      name: '5. Customer Invoices PDF - Merge and then Process Multiple Files Together',
+      visibility: 'visible',
       jobType: 'merge-burst',
       input: {
         data: [
-          'file:samples/All-Invoices-Oct.pd',
-          'file:samples/All-Invoices-Nov.pdf',
-          'file:samples/All-Invoices-Dec.pdf',
+          'file:samples/burst/Invoices-Oct.pdf',
+          'file:samples/burst/Invoices-Nov.pdf',
+          'file:samples/burst/Invoices-Dec.pdf',
         ],
         numberOfPages: -1,
         tokens: [],
       },
       step1: 'merge',
       step2: 'split',
-      step3: 'email',
+      step3: '',
       output: {
         data: [
-          'email-file-attached:0011.pdf',
-          'email-file-attached:0012.pdf',
-          'email-file-attached:0013.pdf',
-          'email-file-attached:0014.pdf',
-          'email-file-attached:0015.pdf',
-          'email-file-attached:0016.pdf',
-          'email-file-attached:0017.pdf',
-          'email-file-attached:0018.pdf',
-          'email-file-attached:0019.pdf',
+          'file:0011.pdf',
+          'file:0012.pdf',
+          'file:0013.pdf',
+          'file:0014.pdf',
+          'file:0015.pdf',
+          'file:0016.pdf',
+          'file:0017.pdf',
+          'file:0018.pdf',
+          'file:0019.pdf',
         ],
         folder:
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/customers-with-one-invoice-each-burst-pdf/settings.xml`,
+      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'customer',
@@ -248,6 +245,9 @@ export class SamplesService {
       capReportGenerationMailMerge: false,
       activeClicked: false,
     },
+  ];
+
+  samplesNotYetImplemented: Array<SampleInfo> = [
     {
       id: 'GENERATE-EMAIL-PAYSLIPS',
       name: '6. Monthly Payslips (again)',
@@ -393,9 +393,9 @@ export class SamplesService {
     for (let index = 1; index < inputs.length; index++) {
       inputLabel = inputs[index].replace('file:', '');
       //inputLabel = inputs[index];
-      let currentHtml = `<i class="fa ${inputFileIcon}"></i>${inputLabel}`;
+      let currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${inputLabel}`;
       if (fullDetails)
-        currentHtml = `<i class="fa ${inputFileIcon}"></i>${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}`;
+        currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}`;
 
       console.log(`inputsUrl = ${JSON.stringify(inputsUrl)}`);
 

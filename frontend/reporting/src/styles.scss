@@ -61,3 +61,10 @@ body .p-terminal {
 .modal {
   top: 30px;
 }
+
+#samplesTable thead th {
+  position: sticky;
+  top: -1px;
+  background-color: #f5f5f5;
+  z-index: 1;
+}

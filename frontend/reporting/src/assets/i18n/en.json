@@ -682,8 +682,9 @@
         },
         "EXTRA-PACKAGES": {
           "INNER-HTML": {
-            "ABOUT": "<h5><strong>Extra packages are a list of external software which bring additional value when used together with <em>ReportBurster</em></strong></h5><p><br/>Many of these packages can be easily installed and/or uninstalled using <strong>Chocolatey</strong>, a very good package manager for <strong>Windows</strong>. All the below commands should be executed by first starting a DOS/Windows Powershell command prompt and then by typing the respective commands inside the DOS/Windows Powershell command prompt.<br/></p><p>It is recommended to start the <strong>DOS/Powershell command prompt</strong> using Windows Start button -> Search for DOS/Powershell -> Right mouse click and then select &quot;<strong>Run as administrator</strong>&quot;<br /><br /></p>",
+            "ABOUT": "<h5><strong>Extra packages are a list of external software which bring additional value when used together with <em>ReportBurster</em></strong></h5><p><br/>A good chunk of the below extra packages can be easily installed and/or uninstalled using <strong>Chocolatey</strong>, a very good <strong>package manager</strong> for <strong>Windows</strong>. All the below commands should be executed by first starting a DOS/Windows Powershell command prompt and then by typing the respective commands inside the DOS/Windows Powershell command prompt.<br/></p><p>It is recommended to start the <strong>DOS/Powershell command prompt</strong> using Windows Start button -> Search for DOS/Powershell -> Right mouse click and then select &quot;<strong>Run as administrator</strong>&quot;<br /><br /></p>",
             "NOTEPADPLUSPLUS": " is a free (as in “free speech” and also as in “free beer”) source code editor and Notepad replacement. Notepad++ is useful when editing ReportBurster configuration files and scripts.",
+            "VSCODE": "  is a code editor redefined and optimized for building and debugging modern applications.",
             "WINMERGE": " is an Open Source differencing and merging tool for Windows. WinMerge can compare both folders and files, presenting differences in a visual text format that is easy to understand and handle. WinMerge can be used for comparing ReportBurster configuration files and scripts.",
             "DOCKER-DESKTOP": " a very good containerization software. Docker is required for running other ReportBurster extra packages."
           },
@@ -818,6 +819,11 @@
     "INVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY": {
       "NOTES": {
         "INNER-HTML": "<em>Split2Times.pdf</em> sample document contains multiple invoices for three different customers. Normally, with a single split per customer, each customer will receive one PDF containing multiple invoices together. There are situations where you'd prefer, for each customer, to send their invoices separated with one invoice per document. This is where the 'Split Once More' feature comes in handy. The first split will be done based on the customer and then, for each customer, a second split will be done based on the invoice number. <br/><br/>When working with your real documents you can process the data for all your company customers no matter if your company has few tens, few hundred or few thousands customers."
+      }
+    },
+    "INVOICES-MERGE-THEN-SPLIT": {
+      "NOTES": {
+        "INNER-HTML": "This example demonstrates how to merge and process multiple files simultaneously in one operation. This can be particularly useful when you have several documents, such as invoices from previous months, that also require processing. <br/><br/>When working with your real documents you can process the data for all your company invoices no matter if your company has few tens, few hundred or few thousands invoices."
       }
     }
   }
