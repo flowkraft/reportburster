@@ -178,6 +178,6 @@ ant.exec(
 		append: "true",
 		failonerror: "true",
 		output:"logs/cURL.log",
-		executable: 'curl/win/curl.exe') {
+		executable: 'tools/curl/win/curl.exe') {
 			arg(line:"$execOptions")
 		}

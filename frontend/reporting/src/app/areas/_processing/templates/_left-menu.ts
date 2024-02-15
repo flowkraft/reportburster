@@ -3,21 +3,21 @@ export const leftMenuTemplate = `<!-- Sidebar Menu-->
   <li class="header">{{
     'AREAS.PROCESSING.LEFT-MENU.ACTIONS' | translate }}</li>
 
-  <li routerLinkActive="active">
+  <li [class.active]="currentLeftMenu === 'burstMenuSelected'">
     <a href="#" [routerLink]="['/processing','burstMenuSelected']">
       <i class="fa fa-play"></i>
       <span>{{
         'AREAS.PROCESSING.LEFT-MENU.BURST' | translate }}</span>
     </a>
   </li>
-  <li routerLinkActive="active">
+  <li [class.active]="currentLeftMenu === 'mergeBurstMenuSelected'">
     <a id="leftMenuMergeBurst" href="#" [routerLink]="['/processing','mergeBurstMenuSelected']">
       <i class="fa fa-plus-square-o"></i>
       <span>{{
         'AREAS.PROCESSING.LEFT-MENU.MERGE-BURST' | translate }}</span>
     </a>
   </li>
-  <li routerLinkActive="active">
+  <li [class.active]="currentLeftMenu === 'qualityMenuSelected'">
     <a id="leftMenuQualityAssurance" href="#" [routerLink]="['/processingQa','qualityMenuSelected']">
       <i class="fa fa-flag-checkered"></i>
       <span>{{

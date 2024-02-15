@@ -265,7 +265,28 @@ export class ProcessingComponent implements OnInit {
         );
       } else {
         if (params.prefilledInputFilePath) {
-          this.procBurstInfo.inputFilePath = params.prefilledInputFilePath;
+          if (this.currentLeftMenu != 'mergeBurstMenuSelected')
+            this.procBurstInfo.inputFilePath = params.prefilledInputFilePath;
+          else if (this.currentLeftMenu == 'mergeBurstMenuSelected') {
+            let pFilledInputFilePath = params.prefilledInputFilePath;
+
+            this.procMergeBurstInfo.shouldBurstResultedMergedFile =
+              pFilledInputFilePath.endsWith('#burst-merged-file');
+
+            if (this.procMergeBurstInfo.shouldBurstResultedMergedFile)
+              pFilledInputFilePath = pFilledInputFilePath.replace(
+                '#burst-merged-file',
+                ''
+              );
+            const filePaths = pFilledInputFilePath.split('#');
+
+            filePaths.forEach((filePath: string) => {
+              this.procMergeBurstInfo.mergeFiles.push({
+                name: this.electronService.path.basename(filePath),
+                path: filePath,
+              });
+            });
+          }
         }
         if (params.prefilledConfigurationFilePath) {
           this.procBurstInfo.configurationFilePath =
@@ -848,29 +869,59 @@ export class ProcessingComponent implements OnInit {
   }
 
   doSampleTryIt(clickedSample: SampleInfo) {
-    const inputDocumentShortPath = clickedSample.input.data[0].replace(
-      'file:',
-      ''
-    );
-
     const dialogQuestion = clickedSample.notes;
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmLabel: "OK and I'll click 'Burst' in the following screen",
       declineLabel: "No, I'll do it later",
       confirmAction: () => {
-        this.router.navigate([
-          '/processingSample',
-          'burstMenuSelected',
-          Utilities.resolve(
-            Utilities.slash(
-              `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputDocumentShortPath}`
-            )
-          ),
-          Utilities.resolve(
-            Utilities.slash(clickedSample.configurationFilePath)
-          ),
-        ]);
+        if (clickedSample.input.data.length == 1) {
+          const inputDocumentShortPath = clickedSample.input.data[0].replace(
+            'file:',
+            ''
+          );
+
+          this.router.navigate([
+            '/processingSample',
+            'burstMenuSelected',
+            Utilities.resolve(
+              Utilities.slash(
+                `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputDocumentShortPath}`
+              )
+            ),
+            Utilities.resolve(
+              Utilities.slash(clickedSample.configurationFilePath)
+            ),
+          ]);
+        } else if (clickedSample.input.data.length > 1) {
+          let diezSeparatedListOfFilePathsToMerge = '';
+          const filesToMerge = clickedSample.input.data;
+          filesToMerge.forEach((fileToMerge: string) => {
+            const filePath = Utilities.resolve(
+              Utilities.slash(
+                `${
+                  this.settingsService.PORTABLE_EXECUTABLE_DIR
+                }/${fileToMerge.replace('file:', '')}`
+              )
+            );
+            if (diezSeparatedListOfFilePathsToMerge.length == 0) {
+              diezSeparatedListOfFilePathsToMerge = filePath;
+            } else {
+              diezSeparatedListOfFilePathsToMerge = `${diezSeparatedListOfFilePathsToMerge}#${filePath}`;
+            }
+          });
+
+          diezSeparatedListOfFilePathsToMerge = `${diezSeparatedListOfFilePathsToMerge}#burst-merged-file`;
+
+          this.router.navigate([
+            '/processingSample',
+            'mergeBurstMenuSelected',
+            diezSeparatedListOfFilePathsToMerge,
+            Utilities.resolve(
+              Utilities.slash(clickedSample.configurationFilePath)
+            ),
+          ]);
+        }
       },
     });
   }
