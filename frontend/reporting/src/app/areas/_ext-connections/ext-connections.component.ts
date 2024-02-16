@@ -9,6 +9,7 @@ import { tabLogsTemplate } from './templates/tab-logs';
 import { tabLicenseTemplate } from './templates/tab-license';
 import {
   SettingsService,
+  newDatabaseServer,
   newEmailServer,
 } from '../../providers/settings.service';
 import { ConfirmService } from '../../components/dialog-confirm/confirm.service';
