@@ -49,6 +49,14 @@ export const newEmailServer = {
   name: 'From Name',
 };
 
+export const newDatabaseServer = {
+  host: 'Database Server Host',
+  port: '25',
+  userid: 'Database User ID',
+  userpassword: 'Database User Password',
+  dbname: 'Database Name',
+};
+
 export interface TmplFileInfo {
   fileName: string;
   filePath: string;

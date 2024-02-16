@@ -50,7 +50,7 @@
 		<!-- email server settings -->
 		<emailserver>
 			<useconn>true</useconn>
-      		<conncode>eml-contact</conncode>
+      		<conncode>eml-main</conncode>
       		<host>Email Server Host</host>
 			<!-- email server port. 25 is the default SMTP port -->
 			<port>25</port>

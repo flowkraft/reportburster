@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<documentburster>
+  <connection>
+    <code>db-main</code>
+	<name>Default Database Connection</name>
+	<default>true</default>
+	<vendor>mysql</vendor>
+	<databaseserver>
+		<host>Database Host (server name or IP address)</host>
+		<dbname>Database Name</dbname>
+		<userid>Database User ID</userid>
+		<userpassword>Database Password</userpassword>
+		<port>25</port>
+	</databaseserver>
+	<filepath>File path for file-based databases (i.e. SQLite)</filepath>	
+  </connection>
+</documentburster>

@@ -21,7 +21,7 @@ export const E2E_ASSEMBLY_FOLDER_PATH =
 
 export const SETTINGS_CONFIG_FILE = 'settings\\.xml';
 
-export const EML_CONTACT_FILE = 'eml-contact\\.xml';
+export const EML_CONTACT_FILE = 'eml-main\\.xml';
 
 export const TEST_CONFIG_FILE = 'test\\.xml';
 

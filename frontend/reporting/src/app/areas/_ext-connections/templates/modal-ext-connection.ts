@@ -7,7 +7,7 @@ export const modalExtConnectionsTemplate = `<p-dialog
   [style]="{ top: '3vw', left: '4vw' }"
   [autoZIndex]="false"
 >
-  <div style="margin: 5px;">
+  <div *ngIf="modalConnectionInfo.connectionType =='email-connection'" style="margin: 5px;">
     <div class="row">
       <div class="col-xs-2">
         {{ 'AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.CONNECTION-NAME' |
@@ -263,6 +263,91 @@ export const modalExtConnectionsTemplate = `<p-dialog
         >
         </dburst-button-well-known-email-providers>
       </div>
+    </div>
+  </div>
+
+  <div *ngIf="modalConnectionInfo.connectionType =='database-connection'" style="margin: 5px;">
+  
+    <div class="row">
+      
+        <div class="col-xs-2">
+          {{ 'AREAS.CONFIGURATION.DATABASE-CONNECTION-SETTINGS.DATABASE-VENDOR' | translate }}
+        </div>
+      
+        <div class="col-xs-10">
+          <select id="dbVendor" [(ngModel)]="modalConnectionInfo.database.documentburster.connection.vendor" class="form-control">
+            <option value="SQLite">SQLite</option>
+            <option value="MySQL">MySQL</option>
+            <option value="MariaDB">MariaDB</option>
+            <option value="PostgreSQL">PostgreSQL</option>
+            <option value="MSSQL">MS SQL</option>
+            <option value="Oracle">Oracle</option>
+          </select>
+        </div>
+
+    </div>       
+
+    <p></p>
+        
+    <div class="row">
+    <div class="col-xs-2">
+      {{ 'AREAS.CONFIGURATION.DATABASE-CONNECTION-SETTINGS.CONNECTION-NAME' |
+      translate }}
+    </div>
+    <div class="col-xs-10">
+      <input
+        id="dbConnectionName"
+        [(ngModel)]="modalConnectionInfo.database.documentburster.connection.name"
+        (ngModelChange)="updateModelAndForm()"
+        class="form-control"
+        autofocus
+        required
+      />
+    </div>
+  </div>
+  <p></p>
+
+  <div class="row">
+    <div class="col-xs-2">
+      {{ 'AREAS.CONFIGURATION.DATABASE-CONNECTION-SETTINGS.HOST' |
+      translate }}
+    </div>
+    <div class="col-xs-10">
+      <input
+        id="dbHost"
+        [(ngModel)]="modalConnectionInfo.database.documentburster.connection.host"
+        class="form-control"
+      />
+    </div>
+  </div>
+  <p></p>
+
+  <div class="row">
+    <div class="col-xs-2">
+      {{ 'AREAS.CONFIGURATION.DATABASE-CONNECTION-SETTINGS.DATABASE' |
+      translate }}
+    </div>
+    <div class="col-xs-10">
+      <input
+        id="dbName"
+        [(ngModel)]="modalConnectionInfo.database.documentburster.connection.dbname"
+        class="form-control"
+      />
+    </div>
+  </div>
+  <p></p>
+
+  <div class="row">
+    <div class="col-xs-2">
+      {{ 'AREAS.CONFIGURATION.DATABASE-CONNECTION-SETTINGS.USER-NAME' |
+      translate }}
+    </div>
+    <div class="col-xs-10">
+      <input
+        id="dbUserName"
+        [(ngModel)]="modalConnectionInfo.database.documentburster.connection.userid"
+        class="form-control"
+      />
     </div>
   </div>
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <documentburster>
   <connection>
-    <code>eml-contact</code>
+    <code>eml-main</code>
 	<name>Default Email Connection</name>
 	<default>true</default>
 	

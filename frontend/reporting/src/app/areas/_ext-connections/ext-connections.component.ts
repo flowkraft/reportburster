@@ -51,6 +51,7 @@ export class ExternalConnectionsComponent implements OnInit {
     //connectionName: '',
     filePath: '',
     connectionFilePathExists: '' as boolean | string,
+    connectionType: 'email-connection',
     email: {
       documentburster: {
         connection: {
@@ -58,6 +59,17 @@ export class ExternalConnectionsComponent implements OnInit {
           name: '',
           default: false,
           emailserver: { ...newEmailServer },
+        },
+      },
+    },
+    database: {
+      documentburster: {
+        connection: {
+          code: '',
+          name: '',
+          default: false,
+          vendor: '',
+          databaseserver: { ...newDatabaseServer },
         },
       },
     },
