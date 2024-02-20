@@ -823,7 +823,7 @@
     },
     "INVOICES-MERGE-THEN-SPLIT": {
       "NOTES": {
-        "INNER-HTML": "This example demonstrates how to merge and process multiple files simultaneously in one operation. This can be particularly useful when you have several documents, such as invoices from previous months, that also require processing. <br/><br/>When working with your real documents you can process the data for all your company invoices no matter if your company has few tens, few hundred or few thousands invoices."
+        "INNER-HTML": "This example demonstrates how to merge and process multiple files containing invoices simultaneously, in one operation. This can be particularly useful when you have several documents, such as invoices from previous months, that also require processing. <br/><br/>When working with your real documents you can process the data for all your company invoices no matter if your company has few tens, few hundred or few thousands invoices."
       }
     }
   }
