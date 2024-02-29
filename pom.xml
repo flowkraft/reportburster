@@ -4,8 +4,8 @@
 	xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
-	<name>product-documentburster</name>
-	<description>product-documentburster</description>
+	<name>product-reportburster</name>
+	<description>product-reportburster</description>
 	<url>http://www.pdfburst.com/</url>
 	<parent>
 		<groupId>com.sourcekraft.documentburster</groupId>
@@ -13,7 +13,7 @@
 		<version>1</version>
 		<relativePath>./xtra-tools/build/common-scripts/maven/pom.xml</relativePath>
 	</parent>
-	<artifactId>product-documentburster</artifactId>
+	<artifactId>product-reportburster</artifactId>
 	<version>${revision}</version>
 
 	<packaging>pom</packaging>

@@ -8,7 +8,7 @@
 	<parent>
 
 		<groupId>com.sourcekraft.documentburster</groupId>
-		<artifactId>product-documentburster</artifactId>
+		<artifactId>product-reportburster</artifactId>
 		<version>${revision}</version>
 
 	</parent>
