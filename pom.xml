@@ -22,12 +22,12 @@
 		<!-- commented because of a race condition when deleting a JUnit suferire.jar 
 			file -->
 		<!-- <module>assembly-documentburster</module> -->
-		<module>backend/rb-update</module>
-		<module>backend/rb-reporting</module>
-		<module>backend/rb-batch</module>
-		<module>backend/rb-batch-web-admin</module>
-		<module>rb-documentation</module>
-		<module>rb-assembly</module>
+		<module>backend/update</module>
+		<module>backend/reporting</module>
+		<module>backend/batch</module>
+		<module>backend/batch-web-admin</module>
+		<module>documentation</module>
+		<module>assembly</module>
 	</modules>
 
 	<properties>
