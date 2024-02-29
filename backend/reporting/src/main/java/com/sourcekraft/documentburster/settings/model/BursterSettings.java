@@ -92,4 +92,7 @@ public class BursterSettings extends DumpToString {
 	public boolean split2ndtime;
 	public BurstTokenDelimiters bursttokendelimiters;
 
+	public String notes;
+	public String visibility;
+
 }
