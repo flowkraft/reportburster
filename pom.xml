@@ -9,7 +9,7 @@
 	<url>http://www.pdfburst.com/</url>
 	<parent>
 		<groupId>com.sourcekraft.documentburster</groupId>
-		<artifactId>common</artifactId>
+		<artifactId>rbsj-common-maven-configuration</artifactId>
 		<version>1</version>
 		<relativePath>./xtra-tools/build/common-scripts/maven/pom.xml</relativePath>
 	</parent>
