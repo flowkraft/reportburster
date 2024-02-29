@@ -269,7 +269,7 @@ export class SettingsService {
     let ujf = await this.electronService.jetpack.findAsync(
       this.electronService.PORTABLE_EXECUTABLE_DIR,
       {
-        matching: 'lib/burst/update-*.jar',
+        matching: 'lib/burst/*update-*.jar',
       }
     );
     let ujfp = ujf[0];

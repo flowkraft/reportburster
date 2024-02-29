@@ -4,8 +4,8 @@
 	xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
-	<name>product-reportburster</name>
-	<description>product-reportburster</description>
+	<name>rb-product-reportburster</name>
+	<description>rb-product-reportburster</description>
 	<url>http://www.pdfburst.com/</url>
 	<parent>
 		<groupId>com.sourcekraft.documentburster</groupId>
@@ -13,7 +13,7 @@
 		<version>1</version>
 		<relativePath>./xtra-tools/build/common-scripts/maven/pom.xml</relativePath>
 	</parent>
-	<artifactId>product-reportburster</artifactId>
+	<artifactId>rb-product-reportburster</artifactId>
 	<version>${revision}</version>
 
 	<packaging>pom</packaging>
@@ -22,12 +22,12 @@
 		<!-- commented because of a race condition when deleting a JUnit suferire.jar 
 			file -->
 		<!-- <module>assembly-documentburster</module> -->
-		<module>backend/update</module>
-		<module>backend/reporting</module>
-		<module>backend/batch</module>
-		<module>backend/batch-web-admin</module>
-		<module>documentation</module>
-		<module>assembly</module>
+		<module>backend/rb-update</module>
+		<module>backend/rb-reporting</module>
+		<module>backend/rb-batch</module>
+		<module>backend/rb-batch-web-admin</module>
+		<module>rb-documentation</module>
+		<module>rb-assembly</module>
 	</modules>
 
 	<properties>
