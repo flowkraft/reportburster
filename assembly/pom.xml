@@ -8,12 +8,12 @@
 	<parent>
 
 		<groupId>com.sourcekraft.documentburster</groupId>
-		<artifactId>product-reportburster</artifactId>
+		<artifactId>rb-product-reportburster</artifactId>
 		<version>${revision}</version>
 
 	</parent>
 
-	<artifactId>assembly</artifactId>
+	<artifactId>rb-assembly</artifactId>
 	<name>assembly module</name>
 
 	<dependencies>

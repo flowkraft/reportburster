@@ -9,13 +9,13 @@
 	<parent>
 
 		<groupId>com.sourcekraft.documentburster</groupId>
-		<artifactId>product-reportburster</artifactId>
+		<artifactId>rb-product-reportburster</artifactId>
 		<version>${revision}</version>
 		<relativePath>../../pom.xml</relativePath>
 
 	</parent>
 
-	<artifactId>batch</artifactId>
+	<artifactId>rb-batch</artifactId>
 	<name>batch module</name>
 
 	<build>

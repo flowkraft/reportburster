@@ -8,13 +8,13 @@
 	<parent>
 
 		<groupId>com.sourcekraft.documentburster</groupId>
-		<artifactId>product-reportburster</artifactId>
+		<artifactId>rb-product-reportburster</artifactId>
 		<version>${revision}</version>
 		<relativePath>../../pom.xml</relativePath>
 
 	</parent>
 
-	<artifactId>reporting</artifactId>
+	<artifactId>rb-reporting</artifactId>
 	<name>reporting module</name>
 
 	<build>
@@ -24,7 +24,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
-			<artifactId>update</artifactId>
+			<artifactId>rb-update</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>commons-beanutils</groupId>

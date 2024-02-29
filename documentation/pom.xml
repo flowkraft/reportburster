@@ -8,12 +8,12 @@
 	<parent>
 
 		<groupId>com.sourcekraft.documentburster</groupId>
-		<artifactId>product-reportburster</artifactId>
+		<artifactId>rb-product-reportburster</artifactId>
 		<version>${revision}</version>
 
 	</parent>
 
-	<artifactId>documentation</artifactId>
+	<artifactId>rb-documentation</artifactId>
 
 	<name>documentation module</name>
 

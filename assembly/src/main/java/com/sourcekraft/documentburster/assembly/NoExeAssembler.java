@@ -73,12 +73,12 @@ public class NoExeAssembler extends AbstractAssembler {
 		System.out.println(
 				"------------------------------------- DONE_05:NoExeAssembler copy MODULE_REPORTING's dependencies jar files ... -------------------------------------");
 
-		// copy reporting.jar
-		FileUtils.copyFile(new File(Utils.getTopProjectFolderPath() + "/backend/reporting/target/reporting.jar"),
-				new File(packageDirPath + "/" + topFolderName + "/lib/burst/reporting.jar"));
+		// copy rb-reporting.jar
+		FileUtils.copyFile(new File(Utils.getTopProjectFolderPath() + "/backend/reporting/target/rb-reporting.jar"),
+				new File(packageDirPath + "/" + topFolderName + "/lib/burst/rb-reporting.jar"));
 
 		System.out.println(
-				"------------------------------------- DONE_06:NoExeAssembler copy reporting.jar file ... -------------------------------------");
+				"------------------------------------- DONE_06:NoExeAssembler copy rb-reporting.jar file ... -------------------------------------");
 
 		// END MODULE_REPORTING work
 
@@ -249,12 +249,12 @@ public class NoExeAssembler extends AbstractAssembler {
 		System.out.println(
 				"------------------------------------- VERIFIED_03:NoExeAssembler burst dependencies files are there ... -------------------------------------");
 
-		// verify reporting.jar files are there
-		assertThat(FileUtils.contentEquals(new File(verifyDirPath + "/" + topFolderName + "/lib/burst/reporting.jar"),
-				new File(Utils.getTopProjectFolderPath() + "/backend/reporting/target/reporting.jar"))).isTrue();
+		// verify rb-reporting.jar files are there
+		assertThat(FileUtils.contentEquals(new File(verifyDirPath + "/" + topFolderName + "/lib/burst/rb-reporting.jar"),
+				new File(Utils.getTopProjectFolderPath() + "/backend/reporting/target/rb-reporting.jar"))).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_04:NoExeAssembler reporting.jar files are there ... -------------------------------------");
+				"------------------------------------- VERIFIED_04:NoExeAssembler rb-reporting.jar files are there ... -------------------------------------");
 
 		// verify quickstart images, html and PDF files
 		String quickStartDocumentationFolderPath = Utils.getTopProjectFolderPath()

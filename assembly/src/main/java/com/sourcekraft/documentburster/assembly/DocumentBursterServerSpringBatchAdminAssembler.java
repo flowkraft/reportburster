@@ -101,12 +101,12 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 		System.out.println(
 				"------------------------------------- DONE_05:DocumentBursterServer copy MODULE_BATCH's dependencies jar files ... -------------------------------------");
 
-		// copy batch.jar
-		FileUtils.copyFile(new File(Utils.getTopProjectFolderPath() + "/backend/batch/target/batch.jar"),
-				new File(packageDirPath + "/" + this.topFolderName + "/server/lib/batch/batch.jar"));
+		// copy rb-batch.jar
+		FileUtils.copyFile(new File(Utils.getTopProjectFolderPath() + "/backend/batch/target/rb-batch.jar"),
+				new File(packageDirPath + "/" + this.topFolderName + "/server/lib/batch/rb-batch.jar"));
 
 		System.out.println(
-				"------------------------------------- DONE_06:DocumentBursterServer copy batch.jar ... -------------------------------------");
+				"------------------------------------- DONE_06:DocumentBursterServer copy rb-batch.jar ... -------------------------------------");
 
 		Utils.removeVersionFromAntLauncherFileName(packageDirPath + "/" + this.topFolderName + "/server/lib/batch");
 
@@ -237,13 +237,13 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 		System.out.println(
 				"------------------------------------- VERIFIED_04:DocumentBursterServer copy MODULE_BATCH's dependencies jar files ... -------------------------------------");
 
-		// copy batch.jar
+		// copy rb-batch.jar
 		assertThat(FileUtils.contentEquals(
-				new File(verifyDirPath + "/" + this.topFolderName + "/server/lib/batch/batch.jar"),
-				new File(Utils.getTopProjectFolderPath() + "/backend/batch/target/batch.jar"))).isTrue();
+				new File(verifyDirPath + "/" + this.topFolderName + "/server/lib/batch/rb-batch.jar"),
+				new File(Utils.getTopProjectFolderPath() + "/backend/batch/target/rb-batch.jar"))).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_05:DocumentBursterServer copy batch.jar ... -------------------------------------");
+				"------------------------------------- VERIFIED_05:DocumentBursterServer copy rb-batch.jar ... -------------------------------------");
 
 		assertThat(new File(verifyDirPath + "/" + this.topFolderName + "/server/lib/batch/ant-launcher.jar").exists())
 				.isTrue();

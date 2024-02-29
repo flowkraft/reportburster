@@ -8,7 +8,7 @@
 	<parent>
 
 		<groupId>com.sourcekraft.documentburster</groupId>
-		<artifactId>product-reportburster</artifactId>
+		<artifactId>rb-product-reportburster</artifactId>
 		<version>${revision}</version>
 		<relativePath>../../pom.xml</relativePath>
 
@@ -16,7 +16,7 @@
 
 	<packaging>war</packaging>
 
-	<artifactId>batch-web-admin</artifactId>
+	<artifactId>rb-batch-web-admin</artifactId>
 	<name>batch-web-admin module</name>
 
 	<build>
