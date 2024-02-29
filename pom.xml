@@ -9,7 +9,7 @@
 	<url>http://www.pdfburst.com/</url>
 	<parent>
 		<groupId>com.sourcekraft.documentburster</groupId>
-		<artifactId>rbsj-common-maven-configuration</artifactId>
+		<artifactId>rb-common-maven-configuration</artifactId>
 		<version>1</version>
 		<relativePath>./xtra-tools/build/common-scripts/maven/pom.xml</relativePath>
 	</parent>
@@ -96,7 +96,17 @@
 			<!-- batch,burst module dependencies -->
 			<dependency>
 				<groupId>com.sourcekraft.documentburster</groupId>
-				<artifactId>update</artifactId>
+				<artifactId>rb-reporting</artifactId>
+				<version>${revision}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.sourcekraft.documentburster</groupId>
+				<artifactId>rb-update</artifactId>
+				<version>${revision}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.sourcekraft.documentburster</groupId>
+				<artifactId>rb-batch</artifactId>
 				<version>${revision}</version>
 			</dependency>
 			<dependency>
