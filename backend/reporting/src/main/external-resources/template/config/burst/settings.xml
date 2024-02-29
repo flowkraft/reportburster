@@ -299,6 +299,9 @@
 		<!-- Make incubating features available in the UI -->
 		<enableincubatingfeatures>false</enableincubatingfeatures>
 
+		<!-- Notes -->
+		<notes></notes>
+  
 		<!-- Visible in the menu -->
 		<visibility>visible</visibility>
   

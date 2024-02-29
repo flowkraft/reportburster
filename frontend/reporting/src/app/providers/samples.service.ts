@@ -214,6 +214,11 @@ export class SamplesService {
           'file:samples/burst/Invoices-Nov.pdf',
           'file:samples/burst/Invoices-Dec.pdf',
         ],
+        dataUrl: [
+          'file:https://www.pdfburst.com/samples/Invoices-Oct.pdf',
+          'file:https://www.pdfburst.com/samples/Invoices-Nov.pdf',
+          'file:https://www.pdfburst.com/samples/Invoices-Dec.pdf',
+        ],
         numberOfPages: -1,
         tokens: [],
       },

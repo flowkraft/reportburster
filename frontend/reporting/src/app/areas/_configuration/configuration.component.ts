@@ -573,6 +573,7 @@ export class ConfigurationComponent implements OnInit {
           maxretries: 3,
         },
         enableincubatingfeatures: false,
+        notes: '',
         visibility: 'visible',
       },
     },
