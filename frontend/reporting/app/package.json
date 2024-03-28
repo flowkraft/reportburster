@@ -1,14 +1,14 @@
 {
-  "name": "documentburster",
-  "productName": "DocumentBurster",
-  "description": "DocumentBurster is a report distribution software for bursting reports like invoices, statements and payslips in order to distribute by email, FTP, web or file share relevant parts to each of your customers, partners and employees.",
-  "version": "8.8.8",
-  "copyright": "2022, SourceKraft Systems & Consulting Ltd.",
+  "name": "reportburster",
+  "productName": "ReportBurster",
+  "description": "ReportBurster is a report distribution software for bursting reports like invoices, statements and payslips in order to distribute by email, FTP, web or file share relevant parts to each of your customers, partners and employees.",
+  "version": "9.2.0",
+  "copyright": "2024, FlowKraft Systems & Consulting Ltd.",
   "homepage": "https://www.pdfburst.com",
-  "license": "paid license",
+  "license": "Server Side Public License (SSPL)",
   "author": {
-    "name": "SourceKraft Systems & Consulting Ltd",
-    "email": "sales@pdfburst.com"
+    "name": "FlowKraft Systems & Consulting Ltd",
+    "email": "contact@reportburster.org"
   },
   "main": "main.js",
   "private": true,
