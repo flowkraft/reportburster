@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
-import com.sourcekraft.documentburster.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.Settings;
 
 public class SettingsTest {
 
@@ -72,7 +72,7 @@ public class SettingsTest {
 		// END PDF parsing options
 
 		assertEquals("Email Server Host", settings.getEmailServerHost());
-		assertEquals(25, settings.getEmailServerPort());
+		assertEquals("25", settings.getEmailServerPort());
 		assertEquals("From Email User ID", settings.getEmailServerUserId());
 		assertEquals("From Email Password", settings.getEmailServerUserPassword());
 

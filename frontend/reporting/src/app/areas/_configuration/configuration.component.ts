@@ -18,11 +18,7 @@ import * as _ from 'lodash';
 import { leftMenuTemplate } from './templates/_left-menu';
 import { tabsTemplate } from './templates/_tabs';
 
-import {
-  ExtConnection,
-  SettingsService,
-  TmplFileInfo,
-} from '../../providers/settings.service';
+import { ExtConnection } from '../../providers/settings.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 
 import { tabGeneralSettingsTemplate } from './templates/tab-general-settings';
@@ -58,14 +54,16 @@ import { tabLicenseTemplate } from './templates/tab-license';
 
 import { modalAttachmentTemplate } from './templates/modal-attachment';
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
-import { ShellService } from '../../providers/shell.service';
 import Utilities from '../../helpers/utilities';
 import { ConfirmService } from '../../components/dialog-confirm/confirm.service';
 import { EmailProviderSettings } from '../../components/button-well-known/button-well-known.component';
 import { Quill, RangeStatic } from 'quill';
 import { InfoService } from '../../components/dialog-info/info.service';
-import { ElectronService } from '../../core/services';
 import { AskForFeatureService } from '../../components/ask-for-feature/ask-for-feature.service';
+import { SettingsService } from '../../providers/settings.service';
+import { ShellService } from '../../providers/shell.service';
+import { FsService } from '../../providers/fs.service';
+import { StateStoreService } from '../../providers/state-store.service';
 
 @Component({
   selector: 'dburst-configuration',
@@ -433,10 +431,14 @@ export class ConfigurationComponent implements OnInit {
     toNumber: '',
   };
 
+  xmlSettings = {
+    documentburster: {
+      settings: null,
+    },
+  };
   /*
       this initial declaration is required otherwise the view will generate "NullPointExceptions" until the async data will be
       loaded and ready from the XML file; having this initialization defined here avoids all these "NullPointExceptions"
-  */
   xmlSettings = {
     documentburster: {
       settings: {
@@ -573,42 +575,14 @@ export class ConfigurationComponent implements OnInit {
           maxretries: 3,
         },
         enableincubatingfeatures: false,
-        notes: '',
         visibility: 'visible',
       },
     },
-  };
+  };  
+  */
 
   xmlReporting = {
-    documentburster: {
-      report: {
-        datasource: {
-          type: 'ds.csvfile',
-          parser: 'opencsv',
-          showmorecsvoptions: false,
-          csvoptions: {
-            separatorchar: ',',
-            quotationchar: '"',
-            escapechar: '\\',
-            strictquotations: false,
-            ignorequotations: false,
-            ignoreleadingwhitespace: false,
-            header: 'noheader',
-            skiplines: 0,
-            idcolumn: 'notused',
-            idcolumnindex: 0,
-            linesregexvalidator: {
-              linematcher: [{ index: -1, expressionpattern: '' }],
-            },
-          },
-        },
-        template: {
-          outputtype: 'output.docx',
-          documentname: '',
-          documentpath: '',
-        },
-      },
-    },
+    documentburster: null,
   };
 
   settingsChanged: Subject<any> = new Subject<any>();
@@ -627,11 +601,12 @@ export class ConfigurationComponent implements OnInit {
     protected confirmService: ConfirmService,
     protected infoService: InfoService,
     protected settingsService: SettingsService,
+    protected stateStore: StateStoreService,
     protected messagesService: ToastrMessagesService,
-    protected electronService: ElectronService,
+    protected fsService: FsService,
     protected askForFeatureService: AskForFeatureService,
     protected route: ActivatedRoute,
-    protected changeDetectorRef: ChangeDetectorRef
+    protected changeDetectorRef: ChangeDetectorRef,
   ) {}
 
   currentLeftMenu: string;
@@ -675,13 +650,27 @@ export class ConfigurationComponent implements OnInit {
         this.currentLeftMenu === 'generalSettingsMenuSelected' ||
         params.reloadConfiguration
       ) {
-        this.settingsService.currentConfigurationTemplatePath =
-          params.configurationFilePath;
+        this.settingsService.currentConfigurationTemplatePath = Utilities.slash(
+          params.configurationFilePath,
+        );
+
         this.settingsService.currentConfigurationTemplateName =
           params.configurationFileName;
 
+        // this.xmlSettings.documentburster =
+        //   await this.settingsService.loadSettingsFileAsync(
+        //     this.settingsService.currentConfigurationTemplatePath
+        //   );
+
         this.xmlSettings = await this.settingsService.loadSettingsFileAsync(
-          this.settingsService.currentConfigurationTemplatePath
+          this.settingsService.currentConfigurationTemplatePath,
+        );
+        this.stateStore.configSys.currentConfigFile.configuration.settings = {
+          ...this.xmlSettings.documentburster.settings,
+        };
+
+        console.log(
+          `1. ConfigurationComponent onInit - this.stateStore.configSys.currentConfigFile.configuration.settings = ${JSON.stringify(this.stateStore.configSys.currentConfigFile.configuration.settings)}`,
         );
       }
 
@@ -689,8 +678,8 @@ export class ConfigurationComponent implements OnInit {
         await this.settingsService.loadAllConnectionFilesAsync();
         console.log(
           `this.settingsService.defaultEmailConnectionFile = ${JSON.stringify(
-            this.settingsService.defaultEmailConnectionFile
-          )}`
+            this.settingsService.defaultEmailConnectionFile,
+          )}`,
         );
 
         if (!this.xmlSettings.documentburster.settings.emailserver.conncode)
@@ -698,7 +687,7 @@ export class ConfigurationComponent implements OnInit {
             this.settingsService.defaultEmailConnectionFile.connectionCode;
 
         console.log(
-          `this.xmlSettings.documentburster.settings.emailserver.conncode = ${this.xmlSettings.documentburster.settings.emailserver.conncode}`
+          `this.xmlSettings.documentburster.settings.emailserver.conncode = ${this.xmlSettings.documentburster.settings.emailserver.conncode}`,
         );
         if (this.xmlSettings.documentburster.settings.emailserver.conncode) {
           this.selectedEmailConnectionFile =
@@ -706,24 +695,28 @@ export class ConfigurationComponent implements OnInit {
               (connection) =>
                 connection.connectionType == 'email-connection' &&
                 connection.connectionCode ==
-                  this.xmlSettings.documentburster.settings.emailserver.conncode
+                  this.xmlSettings.documentburster.settings.emailserver
+                    .conncode,
             );
           console.log(
             `this.selectedEmailConnectionFile = ${JSON.stringify(
-              this.settingsService.connectionFiles
-            )}`
+              this.settingsService.connectionFiles,
+            )}`,
           );
           if (this.xmlSettings.documentburster.settings.emailserver.useconn)
             this.fillExistingEmailConnectionDetails(
-              this.selectedEmailConnectionFile.connectionCode
+              this.selectedEmailConnectionFile.connectionCode,
             );
         }
       } else if (this.currentLeftMenu === 'reportingSettingsMenuSelected') {
         await this.settingsService.loadAllReportTemplatesFilesAsync();
 
-        this.xmlReporting = await this.settingsService.loadReportingFileAsync(
-          this.settingsService.currentConfigurationTemplatePath
-        );
+        this.xmlReporting.documentburster =
+          await this.settingsService.loadReportingFileAsync(
+            this.settingsService.currentConfigurationTemplatePath,
+          );
+
+        console.log(`this.xmlReporting = ${JSON.stringify(this.xmlReporting)}`);
 
         this.onReportOutputTypeChanged();
       }
@@ -735,15 +728,15 @@ export class ConfigurationComponent implements OnInit {
 
       this.messagesService.showInfo(
         'Showing configuration ' +
-          this.settingsService.currentConfigurationTemplateName
+          this.settingsService.currentConfigurationTemplateName,
       );
       // wait 300ms after the last event before emitting last event
       this.settingsChanged
         .pipe(debounceTime(30))
         .subscribe(async (newValue) => {
           await this.settingsService.saveSettingsFileAsync(
+            this.settingsService.currentConfigurationTemplatePath,
             this.xmlSettings,
-            this.settingsService.currentConfigurationTemplatePath
           );
 
           if (
@@ -751,8 +744,8 @@ export class ConfigurationComponent implements OnInit {
               .reportgenerationmailmerge
           )
             await this.settingsService.saveReportingFileAsync(
+              this.settingsService.currentConfigurationTemplatePath,
               this.xmlReporting,
-              this.settingsService.currentConfigurationTemplatePath
             );
 
           this.messagesService.showInfo('Saved');
@@ -790,8 +783,8 @@ export class ConfigurationComponent implements OnInit {
     this.xmlSettings.documentburster.settings.outputfolder =
       Utilities.slash(filePath);
     await this.settingsService.saveSettingsFileAsync(
+      this.settingsService.currentConfigurationTemplatePath,
       this.xmlSettings,
-      this.settingsService.currentConfigurationTemplatePath
     );
     this.messagesService.showInfo('Saved');
   }
@@ -799,8 +792,8 @@ export class ConfigurationComponent implements OnInit {
   async onSelectQuarantineFolderPath(filePath: string) {
     this.xmlSettings.documentburster.settings.quarantinefolder = filePath;
     await this.settingsService.saveSettingsFileAsync(
+      this.settingsService.currentConfigurationTemplatePath,
       this.xmlSettings,
-      this.settingsService.currentConfigurationTemplatePath
     );
     this.messagesService.showInfo('Saved');
   }
@@ -813,7 +806,7 @@ export class ConfigurationComponent implements OnInit {
     if (event instanceof Event)
       if ((event.target as HTMLInputElement).checked)
         this.fillExistingEmailConnectionDetails(
-          this.selectedEmailConnectionFile.connectionCode
+          this.selectedEmailConnectionFile.connectionCode,
         );
   }
 
@@ -826,8 +819,8 @@ export class ConfigurationComponent implements OnInit {
         this.fillExistingEmailConnectionDetails(code);
 
         await this.settingsService.saveSettingsFileAsync(
+          this.settingsService.currentConfigurationTemplatePath,
           this.xmlSettings,
-          this.settingsService.currentConfigurationTemplatePath
         );
 
         this.messagesService.showInfo('Saved');
@@ -840,7 +833,7 @@ export class ConfigurationComponent implements OnInit {
     this.xmlSettings.documentburster.settings.emailserver.conncode = code;
 
     const emailConnection = this.settingsService.connectionFiles.filter(
-      (connection) => connection.connectionCode === code
+      (connection) => connection.connectionCode === code,
     )[0];
 
     this.selectedEmailConnectionFile = emailConnection;
@@ -874,15 +867,15 @@ export class ConfigurationComponent implements OnInit {
   }
 
   async onSaveHTMLTemplateClick(filePath: string) {
-    await this.settingsService.saveFileAsync(
+    await this.fsService.writeAsync(
       filePath + '.html',
-      this.xmlSettings.documentburster.settings.emailsettings.html
+      this.xmlSettings.documentburster.settings.emailsettings.html,
     );
     this.messagesService.showInfo('HTML template was saved.');
   }
 
   async onLoadHTMLTemplateClick(filePath: string) {
-    const data = await this.settingsService.readFileAsync(filePath);
+    const data = await this.fsService.readAsync(filePath);
 
     (
       document.getElementById('htmlCodeEmailMessage') as HTMLInputElement
@@ -895,23 +888,24 @@ export class ConfigurationComponent implements OnInit {
   // attachments
 
   onAttachmentSelected(attachment) {
-    this.xmlSettings.documentburster.settings.attachments.items.attachment.forEach(
+    this.xmlSettings.documentburster.settings.attachments.items.attachmentItems.forEach(
       (each) => {
-        if (each.$.path === attachment.$.path) {
+        console.log(`each = ${JSON.stringify(each)}`);
+        if (each.path === attachment.path) {
           each.selected = true;
           this.selectedAttachment = attachment;
         } else {
           each.selected = false;
         }
-      }
+      },
     );
   }
 
   onDeleteSelectedAttachment() {
     let dialogQuestion = 'Send emails without any attachment?';
     if (
-      this.xmlSettings.documentburster.settings.attachments.items.attachment
-        .length > 1
+      this.xmlSettings.documentburster.settings.attachments.items
+        .attachmentItems.length > 1
     ) {
       dialogQuestion = 'Delete selected item?';
     }
@@ -919,16 +913,19 @@ export class ConfigurationComponent implements OnInit {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: async () => {
+        console.log(
+          `this.selectedAttachment = ${JSON.stringify(this.selectedAttachment)}`,
+        );
         _.remove(
           this.xmlSettings.documentburster.settings.attachments.items
-            .attachment,
-          (o) => (<any>o).$.path === this.selectedAttachment.$.path
+            .attachmentItems,
+          (attachment: any) => attachment.path === this.selectedAttachment.path,
         );
 
         delete this.selectedAttachment;
         await this.settingsService.saveSettingsFileAsync(
+          this.settingsService.currentConfigurationTemplatePath,
           this.xmlSettings,
-          this.settingsService.currentConfigurationTemplatePath
         );
         this.messagesService.showInfo('Saved');
       },
@@ -943,12 +940,12 @@ export class ConfigurationComponent implements OnInit {
       confirmAction: async () => {
         delete this.selectedAttachment;
 
-        this.xmlSettings.documentburster.settings.attachments.items.attachment =
+        this.xmlSettings.documentburster.settings.attachments.items.attachmentItems =
           [];
 
         await this.settingsService.saveSettingsFileAsync(
+          this.settingsService.currentConfigurationTemplatePath,
           this.xmlSettings,
-          this.settingsService.currentConfigurationTemplatePath
         );
         this.messagesService.showInfo('Saved');
       },
@@ -957,20 +954,22 @@ export class ConfigurationComponent implements OnInit {
 
   async onSelectedAttachmentUp() {
     const index = _.indexOf(
-      this.xmlSettings.documentburster.settings.attachments.items.attachment,
-      this.selectedAttachment
+      this.xmlSettings.documentburster.settings.attachments.items
+        .attachmentItems,
+      this.selectedAttachment,
     );
 
     if (index > 0) {
-      this.moveItemInArray(
-        this.xmlSettings.documentburster.settings.attachments.items.attachment,
-        index,
-        index - 1
-      );
+      // Decrement the 'order' of the selected attachment and increment the 'order' of the one above it
+      this.xmlSettings.documentburster.settings.attachments.items
+        .attachmentItems[index].order--;
+      this.xmlSettings.documentburster.settings.attachments.items
+        .attachmentItems[index - 1].order++;
+
       this.onAttachmentSelected(this.selectedAttachment);
       await this.settingsService.saveSettingsFileAsync(
+        this.settingsService.currentConfigurationTemplatePath,
         this.xmlSettings,
-        this.settingsService.currentConfigurationTemplatePath
       );
       this.messagesService.showInfo('Saved');
     }
@@ -978,40 +977,42 @@ export class ConfigurationComponent implements OnInit {
 
   async onSelectedAttachmentDown() {
     const index = _.indexOf(
-      this.xmlSettings.documentburster.settings.attachments.items.attachment,
-      this.selectedAttachment
+      this.xmlSettings.documentburster.settings.attachments.items
+        .attachmentItems,
+      this.selectedAttachment,
     );
 
     if (
       index <
-      this.xmlSettings.documentburster.settings.attachments.items.attachment
-        .length -
+      this.xmlSettings.documentburster.settings.attachments.items
+        .attachmentItems.length -
         1
     ) {
-      this.moveItemInArray(
-        this.xmlSettings.documentburster.settings.attachments.items.attachment,
-        index,
-        index + 1
-      );
+      // Increment the 'order' of the selected attachment and decrement the 'order' of the one below it
+      this.xmlSettings.documentburster.settings.attachments.items
+        .attachmentItems[index].order++;
+      this.xmlSettings.documentburster.settings.attachments.items
+        .attachmentItems[index + 1].order--;
+
       this.onAttachmentSelected(this.selectedAttachment);
       await this.settingsService.saveSettingsFileAsync(
+        this.settingsService.currentConfigurationTemplatePath,
         this.xmlSettings,
-        this.settingsService.currentConfigurationTemplatePath
       );
       this.messagesService.showInfo('Saved');
     }
   }
 
-  moveItemInArray(array, from, to) {
+  moveItemInArray(array: [], from: number, to: number): void {
     array.splice(to, 0, array.splice(from, 1)[0]);
   }
 
   getSortedAttachments() {
     if (this.xmlSettings) {
-      return this.xmlSettings.documentburster.settings.attachments.items.attachment.sort(
+      return this.xmlSettings.documentburster.settings.attachments.items.attachmentItems.sort(
         (attach1: any, attach2: any): number => {
           return attach1.order - attach2.order;
-        }
+        },
       );
     } else {
       return [];
@@ -1022,7 +1023,7 @@ export class ConfigurationComponent implements OnInit {
     this.modalAttachmentInfo.mode = newOrEditMode;
     if (newOrEditMode === 'edit') {
       this.modalAttachmentInfo.attachmentFilePath =
-        this.selectedAttachment.$.path;
+        this.selectedAttachment.path;
     }
 
     this.isModalAttachmentVisible = true;
@@ -1031,27 +1032,29 @@ export class ConfigurationComponent implements OnInit {
   async onOKAttachmentModal() {
     if (this.modalAttachmentInfo.mode === 'edit') {
       const index = _.indexOf(
-        this.xmlSettings.documentburster.settings.attachments.items.attachment,
-        this.selectedAttachment
+        this.xmlSettings.documentburster.settings.attachments.items
+          .attachmentItems,
+        this.selectedAttachment,
       );
-      this.xmlSettings.documentburster.settings.attachments.items.attachment[
+      this.xmlSettings.documentburster.settings.attachments.items.attachmentItems[
         index
-      ].$.path = this.modalAttachmentInfo.attachmentFilePath;
-      this.selectedAttachment.$.path =
+      ].path = this.modalAttachmentInfo.attachmentFilePath;
+      this.selectedAttachment.path =
         this.modalAttachmentInfo.attachmentFilePath;
     } else if (this.modalAttachmentInfo.mode === 'new') {
-      this.xmlSettings.documentburster.settings.attachments.items.attachment.push(
+      this.xmlSettings.documentburster.settings.attachments.items.attachmentItems.push(
         {
-          $: {
-            path: this.modalAttachmentInfo.attachmentFilePath,
-          },
-        }
+          path: this.modalAttachmentInfo.attachmentFilePath,
+          order:
+            this.xmlSettings.documentburster.settings.attachments.items
+              .attachmentItems.length,
+        },
       );
       this.modalAttachmentInfo.attachmentFilePath = '';
     }
     await this.settingsService.saveSettingsFileAsync(
+      this.settingsService.currentConfigurationTemplatePath,
       this.xmlSettings,
-      this.settingsService.currentConfigurationTemplatePath
     );
     this.isModalAttachmentVisible = false;
 
@@ -1067,7 +1070,7 @@ export class ConfigurationComponent implements OnInit {
 
   updateFormControlWithSelectedVariable(
     id: string,
-    selectedVariableValue: string
+    selectedVariableValue: string,
   ) {
     const formControl = document.getElementById(id) as HTMLInputElement;
     const caretPos = formControl.selectionStart;
@@ -1081,17 +1084,17 @@ export class ConfigurationComponent implements OnInit {
   }
 
   async updateQuillFormControlWithSelectedVariable(
-    selectedVariableValue: string
+    selectedVariableValue: string,
   ) {
     this.editor.insertText(
       this.editorCaretPosition,
       selectedVariableValue,
-      'user'
+      'user',
     );
   }
 
   async updateSMTPFormControlsWithSelectedProviderSettings(
-    selectedProviderSettings: EmailProviderSettings
+    selectedProviderSettings: EmailProviderSettings,
   ) {
     this.xmlSettings.documentburster.settings.emailserver.usessl = false;
     this.xmlSettings.documentburster.settings.emailserver.usetls = false;
@@ -1110,14 +1113,14 @@ export class ConfigurationComponent implements OnInit {
     }
 
     await this.settingsService.saveSettingsFileAsync(
+      this.settingsService.currentConfigurationTemplatePath,
       this.xmlSettings,
-      this.settingsService.currentConfigurationTemplatePath
     );
     this.messagesService.showInfo('Saved');
   }
 
   doTestSMTPConnection() {
-    if (this.executionStatsService.foundDirtyLogFiles()) {
+    if (this.executionStatsService.logStats.foundDirtyLogFiles) {
       const dialogMessage =
         'Log files are not empty. You need to press the Clear Logs button first.';
 
@@ -1129,17 +1132,14 @@ export class ConfigurationComponent implements OnInit {
 
       this.confirmService.askConfirmation({
         message: dialogQuestion,
-        confirmAction: () => {
+        confirmAction: async () => {
+          const configurationTemplatePath = await this.fsService.resolveAsync(
+            this.settingsService.currentConfigurationTemplatePath,
+          );
           this.shellService.runBatFile([
             '-cec',
             '-c',
-            '"' +
-              Utilities.slash(
-                this.electronService.path.resolve(
-                  this.settingsService.currentConfigurationTemplatePath
-                )
-              ) +
-              '"',
+            '"' + Utilities.slash(configurationTemplatePath) + '"',
           ]);
         },
       });
@@ -1147,7 +1147,7 @@ export class ConfigurationComponent implements OnInit {
   }
 
   onShowSendTestSMSModal() {
-    if (this.executionStatsService.foundDirtyLogFiles()) {
+    if (this.executionStatsService.logStats.foundDirtyLogFiles) {
       const dialogMessage =
         'Log files are not empty. You need to press the Clear Logs button first.';
 
@@ -1171,13 +1171,7 @@ export class ConfigurationComponent implements OnInit {
       '-to',
       this.modalSMSInfo.toNumber,
       '-c',
-      '"' +
-        Utilities.slash(
-          this.electronService.path.resolve(
-            this.settingsService.currentConfigurationTemplatePath
-          )
-        ) +
-        '"',
+      '"' + this.settingsService.currentConfigurationTemplatePath + '"',
     ]);
   }
 
@@ -1190,7 +1184,7 @@ export class ConfigurationComponent implements OnInit {
       this.xmlReporting.documentburster.report.template.documentpath = '';
     else if (
       ['output.docx', 'output.html'].includes(
-        this.xmlReporting.documentburster.report.template.outputtype
+        this.xmlReporting.documentburster.report.template.outputtype,
       )
     ) {
       const reportTemplateFilePath =
@@ -1199,13 +1193,13 @@ export class ConfigurationComponent implements OnInit {
       if (reportTemplateFilePath) {
         this.selectedReportTemplateFile =
           this.settingsService.templateFiles.find(
-            (tplFile) => tplFile.filePath == reportTemplateFilePath
+            (tplFile) => tplFile.filePath == reportTemplateFilePath,
           );
 
         console.log(
           `this.selectedReportTemplateFile = ${JSON.stringify(
-            this.selectedReportTemplateFile
-          )}`
+            this.selectedReportTemplateFile,
+          )}`,
         );
       } else if (!reportTemplateFilePath) {
         this.settingsService.currentConfigurationTemplate = this.settingsService
@@ -1213,7 +1207,7 @@ export class ConfigurationComponent implements OnInit {
           .find(
             (confTemplate) =>
               confTemplate.filePath ==
-              this.settingsService.currentConfigurationTemplatePath
+              this.settingsService.currentConfigurationTemplatePath,
           );
 
         const reportTemplateSameFolderNameOrFileName =
@@ -1222,13 +1216,13 @@ export class ConfigurationComponent implements OnInit {
               tplFile.folderName ==
                 this.settingsService.currentConfigurationTemplate.folderName ||
               tplFile.fileName.includes(
-                this.settingsService.currentConfigurationTemplate.folderName
+                this.settingsService.currentConfigurationTemplate.folderName,
               )
             );
           });
         if (reportTemplateSameFolderNameOrFileName) {
           console.log(
-            `reportTemplateSameFolderNameOrFileName = ${reportTemplateSameFolderNameOrFileName}`
+            `reportTemplateSameFolderNameOrFileName = ${reportTemplateSameFolderNameOrFileName}`,
           );
           this.selectedReportTemplateFile =
             reportTemplateSameFolderNameOrFileName;
@@ -1236,8 +1230,8 @@ export class ConfigurationComponent implements OnInit {
             reportTemplateSameFolderNameOrFileName.filePath;
 
           await this.settingsService.saveReportingFileAsync(
+            this.settingsService.currentConfigurationTemplatePath,
             this.xmlReporting,
-            this.settingsService.currentConfigurationTemplatePath
           );
         }
       }
@@ -1258,7 +1252,7 @@ export class ConfigurationComponent implements OnInit {
     if (
       requestedFeature &&
       !this.askForFeatureService.alreadyImplementedFeatures.includes(
-        requestedFeature
+        requestedFeature,
       )
     ) {
       this.askForFeatureService.showAskForFeature({

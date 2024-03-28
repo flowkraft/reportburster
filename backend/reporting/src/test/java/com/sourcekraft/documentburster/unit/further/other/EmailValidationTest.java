@@ -27,7 +27,7 @@ import com.sourcekraft.documentburster._helpers.TestBursterFactory;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.scripting.Scripts;
-import com.sourcekraft.documentburster.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.utils.Utils;
 import com.sourcekraft.documentburster.variables.Variables;
 

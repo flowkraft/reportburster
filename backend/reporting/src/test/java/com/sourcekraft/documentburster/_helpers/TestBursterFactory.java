@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.scripting.Scripting;
-import com.sourcekraft.documentburster.settings.EmailConnection;
+import com.sourcekraft.documentburster.common.settings.EmailConnection;
 
 public class TestBursterFactory {
 
@@ -201,7 +201,7 @@ public class TestBursterFactory {
 
 			ctx.settings.setCapabilityReportGenerationMailMerge(true);
 
-			ctx.settings.loadReportingSettings(REPORTING_CONFIG_PATH);
+			ctx.settings.loadSettingsReporting(REPORTING_CONFIG_PATH);
 
 			// a "temp" folder is required to be available
 			ctx.tempFolder = TestsUtils.TESTS_OUTPUT_FOLDER + "/temp";
@@ -250,7 +250,7 @@ public class TestBursterFactory {
 
 		if (!ctx.settings.getEmailServerUseConn()) {
 			ctx.settings.setEmailServerHost("smtp.test.com");
-			ctx.settings.setEmailServerPort(465);
+			ctx.settings.setEmailServerPort("465");
 			ctx.settings.setEmailServerUserId("firstname.lastname");
 			ctx.settings.setEmailServerUserPassword("password");
 			ctx.settings.setEmailServerUseTLS(false);
@@ -276,7 +276,7 @@ public class TestBursterFactory {
 		}
 
 		ctx.settings.setTestEmailServerHost("test.smtp.test.com");
-		ctx.settings.setTestEmailServerPort(995);
+		ctx.settings.setTestEmailServerPort("995");
 		ctx.settings.setTesttEmailServerUserId("test.firstname.lastname");
 		ctx.settings.setTestEmailServerUserPassword("test.password");
 		ctx.settings.setTestEmailServerUseTLS(false);

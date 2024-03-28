@@ -305,8 +305,8 @@ export class ConfigurationTestHelper {
         .setValue('#qaPassword', '04')
         .setValue('#qaPort', '05')
         .click('#leftMenuAdvancedSettings') // Advanced settings
-        .setValue('#delayEachDistributionBy', '00')
-        .setValue('#numberOfUserVariables', '01')
+        .setValue('#delayEachDistributionBy', '0')
+        .setValue('#numberOfUserVariables', '1')
         .setValue('#burstTokenDelimitersStart', '02')
         .setValue('#burstTokenDelimitersEnd', '03')
         .click('#btnReuseToken')
@@ -320,9 +320,9 @@ export class ConfigurationTestHelper {
         .elementShouldBeEnabled('#retryPolicyDelay')
         .elementShouldBeEnabled('#retryPolicyMaxDelay')
         .elementShouldBeEnabled('#retryPolicyMaxRetries')
-        .setValue('#retryPolicyDelay', '01')
-        .setValue('#retryPolicyMaxDelay', '02')
-        .setValue('#retryPolicyMaxRetries', '03')
+        .setValue('#retryPolicyDelay', '1')
+        .setValue('#retryPolicyMaxDelay', '2')
+        .setValue('#retryPolicyMaxRetries', '3')
         .click('#leftMenuAdvancedSettings') // Advanced settings
         .click('#btnEnableIncubatingFeatures') // Show the Incubating Features
         .click('#emailAddressValidationTab-link') // Email Address Validation
@@ -487,8 +487,8 @@ export class ConfigurationTestHelper {
         .elementCheckBoxShouldBeSelected('#btnQATLS')
         // Advanced settings
         .click('#leftMenuAdvancedSettings')
-        .inputShouldHaveValue('#delayEachDistributionBy', '00')
-        .inputShouldHaveValue('#numberOfUserVariables', '01')
+        .inputShouldHaveValue('#delayEachDistributionBy', '0')
+        .inputShouldHaveValue('#numberOfUserVariables', '1')
         .inputShouldHaveValue('#burstTokenDelimitersStart', '02')
         .inputShouldHaveValue('#burstTokenDelimitersEnd', '03')
         .elementCheckBoxShouldBeSelected('#btnReuseToken')
@@ -501,9 +501,9 @@ export class ConfigurationTestHelper {
         .elementCheckBoxShouldNotBeSelected('#stopImmediatelyOnError')
         .elementCheckBoxShouldBeSelected('#continueOnError')
         .elementCheckBoxShouldBeSelected('#btnEnableRetryPolicy')
-        .inputShouldHaveValue('#retryPolicyDelay', '01')
-        .inputShouldHaveValue('#retryPolicyMaxDelay', '02')
-        .inputShouldHaveValue('#retryPolicyMaxRetries', '03')
+        .inputShouldHaveValue('#retryPolicyDelay', '1')
+        .inputShouldHaveValue('#retryPolicyMaxDelay', '2')
+        .inputShouldHaveValue('#retryPolicyMaxRetries', '3')
         .click('#leftMenuAdvancedSettings') // Advanced settings
         .click('#emailAddressValidationTab-link') // Email Address Validation
         .elementCheckBoxShouldNotBeSelected('#btnAllowQuotedIdentifiers')

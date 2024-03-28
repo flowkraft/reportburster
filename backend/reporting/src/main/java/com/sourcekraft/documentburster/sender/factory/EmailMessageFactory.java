@@ -6,9 +6,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.sender.model.EmailMessage;
-import com.sourcekraft.documentburster.settings.EmailConnection;
-import com.sourcekraft.documentburster.settings.Settings;
-import com.sourcekraft.documentburster.settings.model.EmailSettings;
+import com.sourcekraft.documentburster.common.settings.EmailConnection;
+import com.sourcekraft.documentburster.common.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.model.EmailSettings;
 import com.sourcekraft.documentburster.utils.Utils;
 
 public class EmailMessageFactory {
@@ -79,8 +79,8 @@ public class EmailMessageFactory {
 			}
 
 			msg.hostName = Utils.getStringFromTemplate(ctx.settings.getTestEmailServerHost(), ctx.variables, ctx.token);
-			msg.smtpPort = Integer.parseInt((Utils.getStringFromTemplate(
-					Integer.valueOf(ctx.settings.getTestEmailServerPort()).toString(), ctx.variables, ctx.token)));
+			msg.smtpPort = (Utils.getStringFromTemplate(ctx.settings.getTestEmailServerPort(), ctx.variables,
+					ctx.token));
 
 			msg.fromAddress = Utils.getStringFromTemplate(ctx.settings.getTestEmailServerFrom(), ctx.variables,
 					ctx.token);
@@ -121,8 +121,8 @@ public class EmailMessageFactory {
 				}
 
 				msg.hostName = Utils.getStringFromTemplate(ctx.settings.getEmailServerHost(), ctx.variables, ctx.token);
-				msg.smtpPort = Integer.parseInt(Utils.getStringFromTemplate(
-						Integer.valueOf(ctx.settings.getEmailServerPort()).toString(), ctx.variables, ctx.token));
+				msg.smtpPort = Utils.getStringFromTemplate(
+						ctx.settings.getEmailServerPort(), ctx.variables, ctx.token);
 
 				msg.fromAddress = Utils.getStringFromTemplate(ctx.settings.getEmailServerFrom(), ctx.variables,
 						ctx.token);
@@ -173,9 +173,9 @@ public class EmailMessageFactory {
 
 				msg.hostName = Utils.getStringFromTemplate(ctx.emailConnection.getDetails().connection.emailserver.host,
 						ctx.variables, ctx.token);
-				msg.smtpPort = Integer.parseInt(Utils.getStringFromTemplate(
-						Integer.valueOf(ctx.emailConnection.getDetails().connection.emailserver.port).toString(),
-						ctx.variables, ctx.token));
+				msg.smtpPort = Utils.getStringFromTemplate(
+						ctx.emailConnection.getDetails().connection.emailserver.port,
+						ctx.variables, ctx.token);
 
 				msg.fromAddress = Utils.getStringFromTemplate(
 						ctx.emailConnection.getDetails().connection.emailserver.fromaddress, ctx.variables, ctx.token);
@@ -322,7 +322,7 @@ public class EmailMessageFactory {
 		}
 
 		msg.hostName = emailConnection.getDetails().connection.emailserver.host;
-		msg.smtpPort = Integer.parseInt(emailConnection.getDetails().connection.emailserver.port);
+		msg.smtpPort = emailConnection.getDetails().connection.emailserver.port;
 
 		msg.fromAddress = emailConnection.getDetails().connection.emailserver.fromaddress;
 		msg.fromName = emailConnection.getDetails().connection.emailserver.name;

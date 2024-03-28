@@ -16,10 +16,12 @@ import { HelpModule } from './_help/help.module';
 import { ConfigurationModule } from './_configuration/configuration.module';
 import { SkinsComponent } from '../components/skins/skins.component';
 import { ExternalConnectionsModule } from './_ext-connections/ext-connections.module';
+import { BrandComponent } from '../components/brand/brand.component';
 
 @NgModule({
   declarations: [
     AreasComponent,
+    BrandComponent,
     TopMenuHeaderComponent,
     StatusBarComponent,
     SkinsComponent,

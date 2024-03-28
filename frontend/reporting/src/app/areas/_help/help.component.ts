@@ -30,7 +30,7 @@ import { tabComparisonTemplate } from './templates/tab-comparison';
 import { tabLogsTemplate } from './templates/tab-logs';
 import { tabLicenseTemplate } from './templates/tab-license';
 import { SettingsService } from '../../providers/settings.service';
-import { BashService } from '../install-setup-upgrade/bash.service';
+import { ElectronService } from '../../core/services/electron/electron.service';
 
 @Component({
   selector: 'dburst-help',
@@ -239,7 +239,7 @@ export class HelpComponent implements OnInit, AfterViewChecked {
     protected route: ActivatedRoute,
     protected changeDetectorRef: ChangeDetectorRef,
     protected settingsService: SettingsService,
-    protected bashService: BashService
+    protected electronService: ElectronService,
   ) {}
 
   async ngOnInit() {

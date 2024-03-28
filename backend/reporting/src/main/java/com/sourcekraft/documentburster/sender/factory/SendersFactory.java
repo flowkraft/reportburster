@@ -26,10 +26,10 @@ import com.sourcekraft.documentburster.sender.EmailSender;
 import com.sourcekraft.documentburster.sender.SmsSender;
 import com.sourcekraft.documentburster.sender.UploadSender;
 import com.sourcekraft.documentburster.sender.WebUploadSender;
-import com.sourcekraft.documentburster.settings.model.EmailSettings;
-import com.sourcekraft.documentburster.settings.model.SmsSettings;
-import com.sourcekraft.documentburster.settings.model.UploadSettings;
-import com.sourcekraft.documentburster.settings.model.WebUploadSettings;
+import com.sourcekraft.documentburster.common.settings.model.EmailSettings;
+import com.sourcekraft.documentburster.common.settings.model.SmsSettings;
+import com.sourcekraft.documentburster.common.settings.model.UploadSettings;
+import com.sourcekraft.documentburster.common.settings.model.WebUploadSettings;
 import com.sourcekraft.documentburster.sender.AbstractSender;
 import com.sourcekraft.documentburster.utils.Utils;
 

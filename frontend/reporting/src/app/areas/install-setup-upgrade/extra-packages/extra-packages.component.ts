@@ -7,6 +7,8 @@ import { ConfirmService } from '../../../components/dialog-confirm/confirm.servi
 import { ExecutionStatsService } from '../../../providers/execution-stats.service';
 import Utilities from '../../../helpers/utilities';
 import { TranslateService } from '@ngx-translate/core';
+import UtilitiesElectron from '../../../helpers/utilities-electron';
+import { ElectronService } from '../../../core/services';
 
 interface ExtPackage {
   id: string;
@@ -80,8 +82,9 @@ export class ExtraPackagesComponent implements OnInit {
   constructor(
     protected translateService: TranslateService,
     protected bashService: BashService,
+    protected electronService: ElectronService,
     protected executionStatsService: ExecutionStatsService,
-    protected confirmService: ConfirmService
+    protected confirmService: ConfirmService,
   ) {}
 
   async ngOnInit() {
@@ -93,7 +96,7 @@ export class ExtraPackagesComponent implements OnInit {
       const packageId = extraPackage.id;
 
       extraPackage.description = await this.translateService.instant(
-        `AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.EXTRA-PACKAGES.INNER-HTML.${packageId.toUpperCase()}`
+        `AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.EXTRA-PACKAGES.INNER-HTML.${packageId.toUpperCase()}`,
       );
 
       //console.log(packageId);
@@ -104,9 +107,8 @@ export class ExtraPackagesComponent implements OnInit {
       //const chocoInfoCommand = `choco --version`;
 
       try {
-        const { stdout, stderr } = await this.bashService.execCommand(
-          chocoInfoCommand
-        );
+        const { stdout, stderr } =
+          await UtilitiesElectron.execNativeCommand(chocoInfoCommand);
 
         //console.log(`chocoInfo = ${chocoInfo}`);
 
@@ -136,7 +138,7 @@ export class ExtraPackagesComponent implements OnInit {
       message: dialogQuestion,
       confirmAction: () => {
         this.bashService.typeCommandOnTerminalAndThenPressEnter(
-          `choco ${action} ${pckage.id} --yes`
+          `choco ${action} ${pckage.id} --yes`,
         );
       },
     });

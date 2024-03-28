@@ -20,9 +20,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.sourcekraft.documentburster.scripting.Scripts;
-import com.sourcekraft.documentburster.settings.EmailConnection;
-import com.sourcekraft.documentburster.settings.Settings;
-import com.sourcekraft.documentburster.utils.DumpToString;
+import com.sourcekraft.documentburster.common.settings.EmailConnection;
+import com.sourcekraft.documentburster.common.settings.Settings;
+import com.sourcekraft.documentburster.common.utils.DumpToString;
 import com.sourcekraft.documentburster.variables.Variables;
 
 /*

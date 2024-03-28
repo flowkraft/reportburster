@@ -3,11 +3,11 @@ import * as util from 'util';
 import * as fs from 'fs';
 import { WriteStream } from 'fs';
 
-import * as path from 'path';
 import * as os from 'os';
 
+import * as path from 'path';
+
 import { convertableToString, OptionsV2, parseString } from 'xml2js';
-import * as urling from 'urling';
 import { Readable } from 'stream';
 
 export default class Utilities {
@@ -20,6 +20,10 @@ export default class Utilities {
     );
   }
 
+  static looseInvalid(a: string | number): boolean {
+    return a === '' || a === null || a === undefined;
+  }
+
   static slash(inputPath: string): string {
     if (!inputPath) return inputPath;
 
@@ -28,7 +32,9 @@ export default class Utilities {
     if (isExtendedLengthPath) {
       return inputPath;
     }
-
+    //console.log(
+    //  `inputPath = ${inputPath}, typeof inputPath = ${typeof inputPath}`
+    //);
     return inputPath.replace(/\\/g, '/');
   }
 
@@ -40,11 +46,22 @@ export default class Utilities {
   static TMP_DIR_PATH = os.tmpdir;
 
   static UPG_DB_FOLDER_PATH = Utilities.slash(
-    path.resolve(`${Utilities.TMP_DIR_PATH}/upg-db`)
+    path.resolve(`${Utilities.TMP_DIR_PATH}/upg-db`),
   );
 
-  static dirname(inputPath: string): string {
-    return path.dirname(inputPath);
+  static basename(path: string, extension?: string): string {
+    let base = path.split(/[\\/]/).pop() || '';
+
+    if (extension && base.slice(-extension.length) === extension) {
+      base = base.slice(0, -extension.length);
+    }
+
+    return base;
+  }
+
+  static dirname(path: string): string {
+    const lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+    return path.substring(0, lastSlash);
   }
 
   static resolve(inputPath: string): string {
@@ -54,7 +71,7 @@ export default class Utilities {
   static traverseJSONObjTree(
     obj: any,
     fn: (obj: any, k: string, v: any) => void,
-    scope = []
+    scope = [],
   ) {
     for (const i in obj) {
       fn.apply(this, [i, obj[i], scope]);
@@ -66,7 +83,7 @@ export default class Utilities {
 
   static parseStringPromise(
     xml: convertableToString,
-    options?: OptionsV2
+    options?: OptionsV2,
   ): Promise<any> {
     return new Promise((resolve, reject) => {
       if (options) {
@@ -143,11 +160,20 @@ export default class Utilities {
     return [Math.round(end[0] * 1000 + end[1] / 1000000), 0];
   }
 
+  static getFileNameFromPath(filePath: string) {
+    return filePath.split('\\').pop().split('/').pop();
+  }
+
+  static getParentFolderPath(folderPath: string) {
+    let separator = folderPath.includes('/') ? '/' : '\\';
+    return folderPath.substring(0, folderPath.lastIndexOf(separator));
+  }
+
   static async download(
     sourceUrl: string,
     targetFile: string,
     progressCallback?: (bytesDone: number, percent: number) => void,
-    length?: number
+    length?: number,
   ) {
     const request = new Request(sourceUrl, {
       headers: new Headers({ 'Content-Type': 'application/octet-stream' }),
@@ -156,7 +182,7 @@ export default class Utilities {
     const response = await fetch(request);
     if (!response.ok) {
       throw Error(
-        `Unable to download, server returned ${response.status} ${response.statusText}`
+        `Unable to download, server returned ${response.status} ${response.statusText}`,
       );
     }
 
@@ -174,9 +200,13 @@ export default class Utilities {
       finalLength,
       reader,
       writer,
-      progressCallback
+      progressCallback,
     );
     writer.end();
+  }
+
+  static sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   static async streamToString(stream: Readable) {
@@ -194,7 +224,7 @@ export default class Utilities {
     length: number,
     reader: ReadableStreamReader<Uint8Array>,
     writer: WriteStream,
-    progressCallback?: (bytesDone: number, percent: number) => void
+    progressCallback?: (bytesDone: number, percent: number) => void,
   ) {
     let bytesDone = 0;
 
@@ -258,20 +288,30 @@ export default class Utilities {
   }
 
   static async httpHead(url: string) {
-    //console.log(url);
-    return fetch(url, { method: 'head' });
+    console.log(`httpHead: ${url}`);
+    try {
+      // Suppress console output
+      const originalConsoleError = console.error;
+      console.error = function () {};
+
+      const response = await fetch(url, { method: 'head' });
+
+      // Restore console output
+      console.error = originalConsoleError;
+
+      return response;
+    } catch (error) {
+      return null;
+    }
   }
 
   static async urlExists(url: string) {
-    //console.log(`urlExists(url: string): ${url}`);
-    const options = {
-      url: url,
-      retry: 0,
-      //interval: 10000,
-      immediate: true,
-    };
-
-    return urling(options);
+    const response = await this.httpHead(url);
+    if (response) {
+      return response.ok;
+    } else {
+      return false;
+    }
   }
 
   static setCursor(htmlElement: HTMLElement, pos: number) {

@@ -41,7 +41,7 @@ if (msg.isAuthentication)
 	email.setAuthentication(msg.authuser, msg.authpwd)
  
 email.setHostName(msg.hostName)
-email.setSmtpPort(msg.smtpPort)
+email.setSmtpPort(Integer.parseInt(msg.smtpPort))
 
 email.setFrom(msg.fromAddress, msg.fromName)
 

@@ -182,7 +182,7 @@ export const modalConfigurationTemplateTemplate = /*html*/ `<p-dialog
         id="alreadyExistsWarning"
         style="font-size: 9px"
         class="label label-warning"
-        *ngIf="modalConfigurationTemplateInfo.templateFilePathExists"
+        *ngIf="modalConfigurationTemplateInfo.templateFilePathExists == 'file'"
         >{{
         'AREAS.CONFIGURATION-TEMPLATES.MODAL-CONF-TEMPLATE.FILE-ALREADY-EXISTS'
         | translate }}</span
@@ -196,7 +196,7 @@ export const modalConfigurationTemplateTemplate = /*html*/ `<p-dialog
       [disabled]="
         !modalConfigurationTemplateInfo.fileInfo.templateName ||
         (modalConfigurationTemplateInfo.crudMode == 'create' &&
-        (modalConfigurationTemplateInfo.templateFilePathExists))
+        (modalConfigurationTemplateInfo.templateFilePathExists == 'file'))
       "
     >
       {{ 'BUTTONS.OK' | translate }}

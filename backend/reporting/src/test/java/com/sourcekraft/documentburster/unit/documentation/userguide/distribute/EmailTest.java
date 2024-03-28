@@ -23,7 +23,7 @@ import com.sourcekraft.documentburster._helpers.TestBursterFactory;
 import com.sourcekraft.documentburster._helpers.TestsUtils;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.sender.model.EmailMessage;
-import com.sourcekraft.documentburster.settings.model.Attachment;
+import com.sourcekraft.documentburster.common.settings.model.Attachment;
 import com.sourcekraft.documentburster.unit.documentation.userguide.qualityassurance.Split2TimesTest;
 import com.sourcekraft.documentburster.unit.further.other.MultipleTokensTest;
 import com.sourcekraft.documentburster.utils.LicenseUtils;
@@ -557,7 +557,7 @@ public class EmailTest {
 			assertEquals("test.password", emailMessage.authpwd);
 
 			assertEquals("test.smtp.test.com", emailMessage.hostName);
-			assertEquals(995, emailMessage.smtpPort);
+			assertEquals("995", emailMessage.smtpPort);
 
 			assertEquals("test.firstname.lastname@test.com", emailMessage.fromAddress);
 			assertEquals("Test FirstName LastName", emailMessage.fromName);
@@ -566,7 +566,7 @@ public class EmailTest {
 			assertEquals("password", emailMessage.authpwd);
 
 			assertEquals("smtp.test.com", emailMessage.hostName);
-			assertEquals(465, emailMessage.smtpPort);
+			assertEquals("465", emailMessage.smtpPort);
 
 			assertEquals("firstname.lastname@test.com", emailMessage.fromAddress);
 			assertEquals("FirstName LastName", emailMessage.fromName);

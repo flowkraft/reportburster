@@ -26,7 +26,7 @@ import com.sourcekraft.documentburster._helpers.TestsUtils;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.engine.pdf.Merger;
 import com.sourcekraft.documentburster.job.CliJob;
-import com.sourcekraft.documentburster.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.unit.further.other.UtilsTest;
 import com.sourcekraft.documentburster.variables.Variables;
 

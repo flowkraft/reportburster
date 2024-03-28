@@ -37,6 +37,7 @@ export const updateTemplate = `<div *ngIf="succint">
         translate }})
       </h4>
     </div>
+    <!--
     <div *ngIf="licenseService?.isNewerVersionAvailable">
       <br />
       <strong
@@ -83,7 +84,7 @@ export const updateTemplate = `<div *ngIf="succint">
       }}.
       <br /><br />
       <dburst-when-updating></dburst-when-updating>
-    </div>
+    </div> -->
     <div class="row" *ngIf="!licenseService?.isNewerVersionAvailable">
       <hr />
       <div class="col-xs-12">
@@ -200,7 +201,7 @@ export const updateTemplate = `<div *ngIf="succint">
             </ol>
           </div>
         </div>
-        <div class="col-xs-9" *ngIf="!updateInfo?.errorMsg && letMeUpdateSourceDirectoryPath !='testground/upgrade/baseline/DocumentBurster'">
+        <div class="col-xs-9" *ngIf="!updateInfo?.errorMsg && !letMeUpdateSourceDirectoryPath.includes('playwright/')">
           <br />
           <button
             id="btnMigrate"
@@ -214,13 +215,13 @@ export const updateTemplate = `<div *ngIf="succint">
             translate }}
           </button>
         </div>
-        <div class="col-xs-9" *ngIf="letMeUpdateSourceDirectoryPath =='testground/upgrade/baseline/DocumentBurster'">
+        <div class="col-xs-9" *ngIf="letMeUpdateSourceDirectoryPath.includes('playwright/')">
         <br />
         <button
           id="btnE2EFillInfo"
           type="button"
           class="btn btn-primary"
-          (click)="onExistingInstallationFolderSelected('testground/upgrade/baseline/DocumentBurster')"
+          (click)="onExistingInstallationFolderSelected('playwright/')"
         >
           <i class="fa fa-arrow-up"></i>&nbsp;Fill Info
         </button>

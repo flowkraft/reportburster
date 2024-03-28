@@ -24,7 +24,7 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
               </thead>
               <tbody>
                 <tr
-                  *ngFor="let file of procMergeBurstInfo.mergeFiles"
+                  *ngFor="let file of processingService.procMergeBurstInfo.inputFiles"
                   [ngClass]="{ 'info': file.selected
                   } "
                   (click)="onFileSelected(file)"
@@ -37,20 +37,24 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
           </div>
 
           <div class="col-xs-2">
-            <dburst-button-native-system-dialog
-              btnId="btnAddPdfFile"
+          <label for="mergeFilesUploadInput" class="btn btn-default btn-block"><i class="fa fa-folder-open-o' }}"></i>&nbsp;Add</label>
+          <input id="mergeFilesUploadInput" type="file" multiple (change)="onFilesAdded($event)" #mergeFilesUploadInput style="display: none;" />           
+          <!--  
+          <dburst-button-native-system-dialog
+              btnId="mergeFilesUploadInput"
               value="&nbsp;&nbsp;&nbsp;&nbsp;{{
               'AREAS.PROCESSING.TAB-MERGE-BURST.ADD' | translate }}"
               dialogType="files"
               (pathsSelected)="onFilesAdded($event)"
             ></dburst-button-native-system-dialog>
-
+            -->
+            
             <button
               id="btnDeletePdfFile"
               type="button"
               class="btn btn-default btn-block"
               (click)="onSelectedFileDelete()"
-              [disabled]="!procMergeBurstInfo.selectedFile"
+              [disabled]="!processingService.procMergeBurstInfo.selectedFile"
               style="margin-top: 5px"
             >
               <span class="glyphicon glyphicon-minus"></span>&nbsp;&nbsp;{{
@@ -62,7 +66,7 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
               type="button"
               class="btn btn-default btn-block"
               (click)="onSelectedFileUp()"
-              [disabled]="!procMergeBurstInfo.selectedFile"
+              [disabled]="!processingService.procMergeBurstInfo.selectedFile"
             >
               <span class="glyphicon glyphicon-arrow-up"></span>&nbsp;&nbsp;{{
               'AREAS.PROCESSING.TAB-MERGE-BURST.UP' | translate }}
@@ -73,7 +77,7 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
               type="button"
               class="btn btn-default btn-block"
               (click)="onSelectedFileDown()"
-              [disabled]="!procMergeBurstInfo.selectedFile"
+              [disabled]="!processingService.procMergeBurstInfo.selectedFile"
             >
               <span class="glyphicon glyphicon-arrow-down"></span>&nbsp;&nbsp;{{
               'AREAS.PROCESSING.TAB-MERGE-BURST.DOWN' | translate }}
@@ -84,7 +88,7 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
               type="button"
               class="btn btn-default btn-block"
               (click)="onClearFiles()"
-              [disabled]="procMergeBurstInfo.mergeFiles.length === 0"
+              [disabled]="processingService.procMergeBurstInfo.inputFiles.length === 0"
             >
               <i class="fa fa-eraser"></i>&nbsp;&nbsp;{{
               'AREAS.PROCESSING.TAB-MERGE-BURST.CLEAR' | translate }}
@@ -104,7 +108,7 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
           <div class="col-xs-9">
             <input
               id="mergedFileName"
-              [(ngModel)]="procMergeBurstInfo.mergedFileName"
+              [(ngModel)]="processingService.procMergeBurstInfo.mergedFileName"
               (change)="saveMergedFileSetting();"
               class="form-control"
             />
@@ -116,14 +120,14 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
             <span
               id="mergedFileNameRequired"
               class="label label-default"
-              *ngIf="!procMergeBurstInfo.mergedFileName"
+              *ngIf="!processingService.procMergeBurstInfo.mergedFileName"
               >{{ 'AREAS.PROCESSING.TAB-MERGE-BURST.MERGED-FILE-NAME-REQUIRED' |
               translate }}</span
             >
             <span
               id="mergedFileNamePdfExtensionRequired"
               class="label label-default"
-              *ngIf="procMergeBurstInfo.mergedFileName && !procMergeBurstInfo.mergedFileName.endsWith('.pdf')"
+              *ngIf="processingService.procMergeBurstInfo.mergedFileName && !processingService.procMergeBurstInfo.mergedFileName.endsWith('.pdf')"
               >{{
               'AREAS.PROCESSING.TAB-MERGE-BURST.MERGED-FILE-NAME-PDF-EXTENSION'
               | translate }}</span
@@ -138,7 +142,7 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
               <label id="btnBurstMergedFile">
                 <input
                   type="checkbox"
-                  [(ngModel)]="procMergeBurstInfo.shouldBurstResultedMergedFile"
+                  [(ngModel)]="processingService.procMergeBurstInfo.shouldBurstResultedMergedFile"
                 />
                 {{ 'AREAS.PROCESSING.TAB-MERGE-BURST.BURST-MERGED-FILE' |
                 translate }}
@@ -154,7 +158,7 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
               type="button"
               class="btn btn-primary"
               (click)="doMergeBurst()"
-              [disabled]="!procMergeBurstInfo.mergedFileName || !procMergeBurstInfo.mergedFileName.endsWith('.pdf') || procMergeBurstInfo.mergeFiles.length<=1 || executionStatsService.jobStats.numberOfActiveJobs > 0"
+              [disabled]="!processingService.procMergeBurstInfo.mergedFileName || !processingService.procMergeBurstInfo.mergedFileName.endsWith('.pdf') || processingService.procMergeBurstInfo.inputFiles.length<=1 || executionStatsService.jobStats.numberOfActiveJobs > 0"
             >
               <i class="fa fa-play"></i>&nbsp;{{
               'AREAS.PROCESSING.TAB-MERGE-BURST.RUN' | translate }}
@@ -166,7 +170,7 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
           </div>
 
           <div class="col-xs-3" style="margin-left: -20px">
-            <dburst-button-native-system-dialog
+            <dburst-button-native-system-dialog style="display: none;"
               value="{{
               'AREAS.PROCESSING.TAB-BURST.VIEW-REPORTS' | translate }}"
               dialogType="file"
@@ -181,7 +185,7 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
             <span
               id="twoOrMoreRequired"
               class="label label-default"
-              *ngIf="procMergeBurstInfo.mergeFiles.length<=1"
+              *ngIf="processingService.procMergeBurstInfo.inputFiles.length<=1"
               >{{ 'AREAS.PROCESSING.TAB-MERGE-BURST.SELECT-2-OR-MORE' |
               translate }}</span
             >

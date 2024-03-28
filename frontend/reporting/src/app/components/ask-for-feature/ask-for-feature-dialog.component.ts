@@ -2,12 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { BsModalRef } from 'ngx-bootstrap/modal';
 import { Subject } from 'rxjs';
-import { SettingsService } from '../../providers/settings.service';
 import { askForFeatureDialogTemplate } from './ask-for-feature-dialog.template';
 import { ConfirmService } from '../dialog-confirm/confirm.service';
 import Utilities from '../../helpers/utilities';
-import { ElectronService } from '../../core/services';
 import { ShellService } from '../../providers/shell.service';
+import { SettingsService } from '../../providers/settings.service';
+import { FsService } from '../../providers/fs.service';
 
 @Component({
   selector: 'dburst-ask-for-feature-dialog',
@@ -27,9 +27,9 @@ export class AskForFeatureDialogComponent implements OnInit {
     protected bsModalRef: BsModalRef,
     protected settingsService: SettingsService,
     protected confirmService: ConfirmService,
-    protected electronService: ElectronService,
+    protected fsService: FsService,
     protected shellService: ShellService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -43,10 +43,11 @@ export class AskForFeatureDialogComponent implements OnInit {
       }/${Utilities.getRandomFileName('xml')}`;
 
       xmlAskForFeatureFilePath = Utilities.slash(
-        this.electronService.path.resolve(xmlAskForFeatureFilePath)
+        await this.fsService.resolveAsync(xmlAskForFeatureFilePath),
       );
 
       await this.settingsService.saveSettingsFileAsync(
+        xmlAskForFeatureFilePath,
         {
           documentburster: {
             featurerequest: {
@@ -55,7 +56,6 @@ export class AskForFeatureDialogComponent implements OnInit {
             },
           },
         },
-        xmlAskForFeatureFilePath
       );
 
       this.shellService.runBatFile(['-rnf', `"${xmlAskForFeatureFilePath}"`]);

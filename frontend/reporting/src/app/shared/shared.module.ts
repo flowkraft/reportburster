@@ -5,7 +5,6 @@ import { TranslateModule } from '@ngx-translate/core';
 
 import { FormsModule } from '@angular/forms';
 
-import { SettingsService } from '../providers/settings.service';
 import { ShellService } from '../providers/shell.service';
 import { ToastrMessagesService } from '../providers/toastr-messages.service';
 import { TabsModule } from 'ngx-bootstrap/tabs';
@@ -26,6 +25,12 @@ import { ButtonHtmlPreviewComponent } from '../components/button-html-preview/bu
 import { LogFilesViewerAllTogetherModule } from '../components/log-files-viewer-all-together/log-files-viewer-all-together.module';
 import { LogFilesViewerSeparateTabsModule } from '../components/log-files-viewer-separate-tabs/log-files-viewer-separate-tabs.module';
 import { LogFileViewerModule } from '../components/log-file-viewer/log-file-viewer.module';
+import { SettingsService } from '../providers/settings.service';
+import { LogsServiceWebSocket } from '../providers/ws-logs.service';
+import { FsService } from '../providers/fs.service';
+import { BrandComponent } from '../components/brand/brand.component';
+import { StateStoreService } from '../providers/state-store.service';
+import { ApiService } from '../providers/api.service';
 
 @NgModule({
   imports: [
@@ -59,13 +64,18 @@ import { LogFileViewerModule } from '../components/log-file-viewer/log-file-view
     ButtonHtmlPreviewComponent,
   ],
   providers: [
+    StateStoreService,
     ElectronService,
     SettingsService,
+    SettingsService,
+    FsService,
+    LogsServiceWebSocket,
     ShellService,
     ToastrMessagesService,
     ConfirmService,
     InfoService,
     AskForFeatureService,
+    ApiService,
   ],
 })
 export class SharedModule {}

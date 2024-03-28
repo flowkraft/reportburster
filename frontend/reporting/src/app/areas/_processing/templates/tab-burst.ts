@@ -7,7 +7,7 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
       <div class="col-xs-7">
         <input
           id="burstFile"
-          [(ngModel)]="procBurstInfo.inputFilePath"
+          [(ngModel)]="processingService.procBurstInfo.isSample ? processingService.procBurstInfo.prefilledInputFilePath : processingService.procBurstInfo.inputFileName"
           class="form-control"
           autofocus
           required
@@ -15,12 +15,16 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
       </div>
 
       <div class="col-xs-3">
-        <dburst-button-native-system-dialog
+        <label for="burstFileUploadInput" class="btn btn-default btn-block"><i class="fa fa-folder-open-o' }}"></i>&nbsp;Select File</label>
+        <input style="display: none;" type="file" id="burstFileUploadInput" (change)="onBurstFileSelected($event)" accept=".pdf" #burstFileUploadInput/>
+      <!--  
+      <dburst-button-native-system-dialog
           value="{{
           'COMPONENTS.BUTTON-NATIVE-SYSTEM-DIALOG.SELECT-FILE' | translate }}"
           dialogType="file"
           (pathsSelected)="onBurstFileSelected($event)"
         ></dburst-button-native-system-dialog>
+        -->
       </div>
     </div>
     <div class="row">
@@ -32,8 +36,7 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
           type="button"
           class="btn btn-primary"
           (click)="doBurst()"
-          [disabled]="!procBurstInfo.inputFilePath || executionStatsService.jobStats.numberOfActiveJobs > 0"
-        >
+          [disabled]="(!processingService.procBurstInfo.prefilledInputFilePath && !processingService.procBurstInfo.inputFileName) || executionStatsService.jobStats.numberOfActiveJobs > 0"  >
           <i class="fa fa-play"></i>&nbsp;Burst
         </button>
       </div>
@@ -43,7 +46,7 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
       </div>
 
       <div class="col-xs-3" style="margin-left: -20px">
-        <dburst-button-native-system-dialog
+        <dburst-button-native-system-dialog style="display: none;"
           value="{{
           'AREAS.PROCESSING.TAB-BURST.VIEW-REPORTS' | translate }}"
           dialogType="file"
@@ -84,7 +87,7 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
 
     <div
       class="row"
-      *ngIf="procBurstInfo.inputFilePath && !executionStatsService.foundDirtyLogFiles() && executionStatsService.jobStats.numberOfActiveJobs === 0 && executionStatsService.jobStats.jobsToResume.length === 0"
+      *ngIf="(processingService.procBurstInfo.prefilledInputFilePath || processingService.procBurstInfo.inputFile) && !executionStatsService.logStats.foundDirtyLogFiles && executionStatsService.jobStats.numberOfActiveJobs === 0 && executionStatsService.jobStats.jobsToResume.length === 0"
     >
       <div class="col-xs-1">
         <i class="fa fa-flag-checkered fa-2x"></i>
@@ -93,22 +96,22 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
       <div class="col-xs-11">
         <a id="qaReminderLink" href="#qaReminder" data-toggle="collapse"
           >{{ 'AREAS.PROCESSING.TAB-BURST.DID-YOU-RUN-QA' | translate }}
-          <em>{{procBurstInfo.inputFilePath}}</em>?</a
+          <em>{{processingService.procBurstInfo.isSample ? processingService.procBurstInfo.prefilledInputFilePath : processingService.procBurstInfo.inputFileName}}</em>?</a
         >
         <div id="qaReminder" class="collapse">
           {{ 'AREAS.PROCESSING.TAB-BURST.BEFORE-EMAILING' | translate }}
           <a
             href="#"
-            [routerLink]="['/processingQa','qualityMenuSelected', procBurstInfo.inputFilePath, procBurstInfo.configurationFilePath]"
-            >{{ 'AREAS.PROCESSING.TABS.QUALITY-ASSURANCE' | translate }}</a
+            [routerLink]="['/processingQa','qualityMenuSelected', processingService.procBurstInfo.prefilledInputFilePath, processingService.procBurstInfo.prefilledConfigurationFilePath]"
+            >Quality Assurance</a
           >
           {{ 'AREAS.PROCESSING.TAB-BURST.FOR-THE-FILE' | translate }}
-          <em>{{procBurstInfo.inputFilePath}}</em>&nbsp;&nbsp;
+          <em>{{processingService.procBurstInfo.isSample ? processingService.procBurstInfo.prefilledInputFilePath : processingService.procBurstInfo.inputFileName}}</em>&nbsp;&nbsp;
           <button
             id="goToQa"
             type="button"
             class="btn btn-primary btn-sm"
-            [routerLink]="['/processingQa', 'qualityMenuSelected', procBurstInfo.inputFilePath, procBurstInfo.configurationFilePath]"
+            [routerLink]="['/processingQa','qualityMenuSelected', processingService.procBurstInfo.prefilledInputFilePath, processingService.procBurstInfo.prefilledConfigurationFilePath]"
           >
             {{ 'AREAS.PROCESSING.TAB-BURST.RUN-QA' | translate }}
           </button>

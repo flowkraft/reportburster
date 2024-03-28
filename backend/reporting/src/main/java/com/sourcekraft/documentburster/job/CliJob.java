@@ -35,9 +35,9 @@ import com.sourcekraft.documentburster.sender.factory.EmailMessageFactory;
 import com.sourcekraft.documentburster.sender.factory.SmsMessageFactory;
 import com.sourcekraft.documentburster.sender.model.EmailMessage;
 import com.sourcekraft.documentburster.sender.model.SmsMessage;
-import com.sourcekraft.documentburster.settings.EmailConnection;
-import com.sourcekraft.documentburster.settings.NewFeatureRequest;
-import com.sourcekraft.documentburster.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.EmailConnection;
+import com.sourcekraft.documentburster.common.settings.NewFeatureRequest;
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.utils.LicenseUtils;
 import com.sourcekraft.documentburster.utils.Utils;
 

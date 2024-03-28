@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ElectronService } from './core/services';
 import { setTheme } from 'ngx-bootstrap/utils';
+import { ElectronService } from './core/services';
 
 @Component({
   selector: 'app-root',
@@ -11,7 +11,7 @@ import { setTheme } from 'ngx-bootstrap/utils';
 export class AppComponent {
   constructor(
     protected electronService: ElectronService,
-    protected translate: TranslateService
+    protected translate: TranslateService,
   ) {
     setTheme('bs3'); // or 'bs4'
 

@@ -2,12 +2,12 @@
 const config = {
   testDir: '.',
   testMatch: '**/*.spec.ts',
-  timeout: 45000,
+  timeout: 90000,
   use: {
     headless: false,
-    viewport: { width: 1280, height: 720 },
+    viewport: { width: 1400, height: 1000 },
     launchOptions: {
-      slowMo: 1000,
+      slowMo: 10000,
     },
     trace: 'on',
   },

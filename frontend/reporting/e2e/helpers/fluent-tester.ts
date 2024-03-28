@@ -37,7 +37,7 @@ export class FluentTester implements PromiseLike<void> {
     onrejected?:
       | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
       | null
-      | undefined
+      | undefined,
   ): Promise<TResult1 | TResult2> {
     // prettier-ignore
     return await this.executeActions()
@@ -131,6 +131,17 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  public consoleLog(message: string): FluentTester {
+    const action = (): Promise<void> =>
+      new Promise((resolve) => {
+        console.log(message);
+        resolve();
+      });
+
+    this.actions.push(action);
+    return this;
+  }
+
   public clickNoDontDoThis(): FluentTester {
     const action = (): Promise<void> =>
       this.doClick(Constants.BTN_DECLINE_SELECTOR);
@@ -155,7 +166,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public waitOnElementWithTextToBecomeVisible(
     text: string,
-    waitTime?: number
+    waitTime?: number,
   ): FluentTester {
     let delay = Constants.DELAY_FIVE_THOUSANDS_SECONDS;
     if (waitTime) delay = waitTime;
@@ -168,7 +179,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public waitOnElementWithTextToBecomeInvisible(
     text: string,
-    waitTime?: number
+    waitTime?: number,
   ): FluentTester {
     let delay = Constants.DELAY_FIVE_THOUSANDS_SECONDS;
     if (waitTime) delay = waitTime;
@@ -188,7 +199,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public waitOnElementToBecomeVisible(
     selector: string,
-    waitTime?: number
+    waitTime?: number,
   ): FluentTester {
     let delay = Constants.DELAY_HUNDRED_SECONDS;
     if (waitTime) delay = waitTime;
@@ -201,7 +212,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public waitOnElementToBecomeInvisible(
     selector: string,
-    waitTime?: number
+    waitTime?: number,
   ): FluentTester {
     //console.log(selector);
 
@@ -217,7 +228,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public waitOnElementToBecomeEnabled(
     selector: string,
-    waitTime?: number
+    waitTime?: number,
   ): FluentTester {
     let delay = Constants.DELAY_HUNDRED_SECONDS;
     if (waitTime) delay = waitTime;
@@ -230,7 +241,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public waitOnElementToBecomeDisabled(
     selector: string,
-    waitTime?: number
+    waitTime?: number,
   ): FluentTester {
     let delay = Constants.DELAY_HUNDRED_SECONDS;
     if (waitTime) delay = waitTime;
@@ -317,7 +328,7 @@ export class FluentTester implements PromiseLike<void> {
   public elementAttributeShouldHaveValue(
     selector: string,
     attribute: string,
-    value: string
+    value: string,
   ): FluentTester {
     const action = (): Promise<void> =>
       this.doCheckElementAttributeHasValue(selector, attribute, value);
@@ -328,7 +339,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public elementShouldHaveAttribute(
     selector: string,
-    attribute: string
+    attribute: string,
   ): FluentTester {
     const isPresent = true;
 
@@ -341,7 +352,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public elementShouldNotHaveAttribute(
     selector: string,
-    attribute: string
+    attribute: string,
   ): FluentTester {
     const isPresent = false;
 
@@ -359,9 +370,19 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  public setInputFiles(
+    selector: string,
+    files: string | readonly string[],
+  ): FluentTester {
+    const action = (): Promise<void> => this.doSetInputFiles(selector, files);
+
+    this.actions.push(action);
+    return this;
+  }
+
   public selectedOptionShouldContainText(
     selector: string,
-    value: string
+    value: string,
   ): FluentTester {
     let action = (): Promise<void> =>
       this.doCheckSelectedOptionShouldContainText(selector, value);
@@ -372,7 +393,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public dropDownSelectOptionHavingLabel(
     selector: string,
-    label: string
+    label: string,
   ): FluentTester {
     let action = (): Promise<void> =>
       this.doDropDownSelectOptionHavingLabel(selector, label);
@@ -383,7 +404,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public elementShouldContainText(
     selector: string,
-    value: string
+    value: string,
   ): FluentTester {
     let action = (): Promise<void> =>
       this.doCheckElementToContainText(selector, value);
@@ -395,7 +416,7 @@ export class FluentTester implements PromiseLike<void> {
   public waitOnElementToContainText(
     selector: string,
     value: string,
-    waitTime?: number
+    waitTime?: number,
   ): FluentTester {
     /*
     if (selector == '#divMONTHLY-PAYSLIPS-SPLIT') {
@@ -422,7 +443,7 @@ export class FluentTester implements PromiseLike<void> {
   public waitOnElementToHaveText(
     selector: string,
     text: string,
-    waitTime?: number
+    waitTime?: number,
   ): FluentTester {
     let wTime = Constants.DELAY_FIVE_THOUSANDS_SECONDS;
     if (waitTime) wTime = waitTime;
@@ -436,7 +457,7 @@ export class FluentTester implements PromiseLike<void> {
   public waitOnInputToHaveValue(
     selector: string,
     text: string,
-    waitTime?: number
+    waitTime?: number,
   ): FluentTester {
     let wTime = Constants.DELAY_FIVE_THOUSANDS_SECONDS;
     if (waitTime) wTime = waitTime;
@@ -450,7 +471,7 @@ export class FluentTester implements PromiseLike<void> {
   public waitOnInputValueToContainText(
     selector: string,
     text: string,
-    waitTime?: number
+    waitTime?: number,
   ): FluentTester {
     let action = (): Promise<void> =>
       this.doWaitOnInputValueToContainText(selector, text, waitTime);
@@ -461,7 +482,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public inputValueShouldContainText(
     selector: string,
-    text: string
+    text: string,
   ): FluentTester {
     let action = (): Promise<void> =>
       this.doWaitOnInputValueToContainText(selector, text);
@@ -496,7 +517,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public elementShouldHaveClass(
     selector: string,
-    className: string
+    className: string,
   ): FluentTester {
     const action = (): Promise<void> =>
       this.doCheckElementClass(selector, className, true);
@@ -507,7 +528,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public elementShouldNotHaveClass(
     selector: string,
-    className: string
+    className: string,
   ): FluentTester {
     const action = (): Promise<void> =>
       this.doCheckElementClass(selector, className, false);
@@ -519,7 +540,7 @@ export class FluentTester implements PromiseLike<void> {
   public waitOnElementToHaveClass(
     selector: string,
     className: string,
-    waitTime?: number
+    waitTime?: number,
   ): FluentTester {
     const action = (): Promise<void> =>
       this.doWaitOnElementClass(selector, className, true, waitTime);
@@ -531,7 +552,7 @@ export class FluentTester implements PromiseLike<void> {
   public waitOnElementNotToHaveClass(
     selector: string,
     className: string,
-    waitTime?: number
+    waitTime?: number,
   ): FluentTester {
     const action = (): Promise<void> =>
       this.doWaitOnElementClass(selector, className, false, waitTime);
@@ -589,7 +610,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public processingShouldHaveGeneratedOutputFiles(
     listOfFiles: string[],
-    fileSuffix: string = 'pdf'
+    fileSuffix: string = 'pdf',
   ): FluentTester {
     const action = (): Promise<void> =>
       this.doVerifyOutputFiles(listOfFiles, fileSuffix);
@@ -600,7 +621,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public processingShouldHaveGeneratedQuarantineFiles(
     listOfFiles: string[],
-    fileSuffix: string = 'pdf'
+    fileSuffix: string = 'pdf',
   ): FluentTester {
     const action = (): Promise<void> =>
       this.doVerifyQuarantineFiles(listOfFiles, fileSuffix);
@@ -611,7 +632,7 @@ export class FluentTester implements PromiseLike<void> {
 
   public processingShouldHaveGeneratedNFilesHavingSuffix(
     n: number,
-    suffix: string
+    suffix: string,
   ): FluentTester {
     const action = (): Promise<void> =>
       this.doVerifyNumberOfOutputFilesHavingSuffix(n, suffix);
@@ -621,7 +642,7 @@ export class FluentTester implements PromiseLike<void> {
   }
 
   public processingShouldHaveGeneratedFewFilesHavingSuffix(
-    suffix: string
+    suffix: string,
   ): FluentTester {
     const action = (): Promise<void> =>
       this.doVerifyFewOutputFilesHavingSuffix(suffix);
@@ -647,7 +668,7 @@ export class FluentTester implements PromiseLike<void> {
   public shouldHaveSentNCorrectEmails(
     qaMode: string,
     n: number,
-    attachmentsCommand: string
+    attachmentsCommand: string,
   ): FluentTester {
     const action = (): Promise<void> =>
       this.doVerifyEmails(qaMode, n, attachmentsCommand);
@@ -693,14 +714,14 @@ export class FluentTester implements PromiseLike<void> {
   };
 
   private async doGotoConfigurationTemplates(): Promise<void> {
-    await this.doHover('#supportEmail');
-    await this.doClick('#supportEmail');
+    //await this.doHover('#supportEmail');
+    //await this.doClick('#supportEmail');
 
     await this.doHover('#topMenuBurst');
     await this.doClick('#topMenuBurst');
 
-    await this.doHover('#supportEmail');
-    await this.doClick('#supportEmail');
+    //await this.doHover('#supportEmail');
+    //await this.doClick('#supportEmail');
 
     //await this.doClick('#topMenuBurst');
 
@@ -716,11 +737,11 @@ export class FluentTester implements PromiseLike<void> {
     );
       */
 
-    await this.doFocus('#topMenuConfigurationManage');
-    await this.doHover('#topMenuConfigurationManage');
+    //await this.doFocus('#topMenuConfigurationManage');
+    //await this.doHover('#topMenuConfigurationManage');
 
     //await this.doFocus('#topMenuConfigurationManage');
-    //await this.doClick('#topMenuConfigurationManage');
+    await this.doClick('#topMenuConfigurationManage');
 
     /*
    
@@ -740,23 +761,23 @@ export class FluentTester implements PromiseLike<void> {
     );
   */
     await this.doClickAndSelectTableRow(
-      `#confTemplatesTable tbody tr:first-child`
+      `#confTemplatesTable tbody tr:first-child`,
     );
 
     await this.doWaitOnElementToBecomeEnabledDisabled(
       '#btnEdit',
       true,
-      Constants.DELAY_TEN_SECONDS
+      Constants.DELAY_TEN_SECONDS,
     );
     await this.doWaitOnElementToBecomeEnabledDisabled(
       '#btnDuplicate',
       true,
-      Constants.DELAY_TEN_SECONDS
+      Constants.DELAY_TEN_SECONDS,
     );
     await this.doWaitOnElementToBecomeEnabledDisabled(
       '#btnDelete',
       true,
-      Constants.DELAY_TEN_SECONDS
+      Constants.DELAY_TEN_SECONDS,
     );
   }
 
@@ -801,7 +822,7 @@ export class FluentTester implements PromiseLike<void> {
   private async doVerifyEmails(
     qaMode: string,
     howManyEmails: number,
-    attachmentsCommand: string
+    attachmentsCommand: string,
   ): Promise<void> {
     let emailMessages: any;
 
@@ -827,7 +848,7 @@ export class FluentTester implements PromiseLike<void> {
 
       if (qaMode != Constants.QA_TA) {
         emailMessages.items[i].To[0].Domain.should.equal(
-          'northridgehealth.org'
+          'northridgehealth.org',
         );
 
         // assert the email subject is correct
@@ -851,7 +872,7 @@ export class FluentTester implements PromiseLike<void> {
           // assert there is a correct zip file attached
           emailBody.should.have.string('Content-Disposition: attachment;');
           emailBody.should.have.string(
-            'reports-' + recipientEmailAddress + '.zip'
+            'reports-' + recipientEmailAddress + '.zip',
           );
         } else if (attachmentsCommand === Constants.ATTACHMENTS_DEFAULT) {
           // assert there is a correct zip file attached
@@ -874,7 +895,7 @@ export class FluentTester implements PromiseLike<void> {
         process.env.PORTABLE_EXECUTABLE_DIR,
         {
           matching: `output/**/${recipientEmailAddress}_email.txt`,
-        }
+        },
       );
       should.exist(emailFilePath);
       emailFilePath.length.should.equal(1);
@@ -890,7 +911,7 @@ export class FluentTester implements PromiseLike<void> {
     */
 
     Constants.PAYSLIPS_PDF_BURST_TOKENS.should.include.members(
-      recipientEmailAddresses
+      recipientEmailAddresses,
     );
   }
 
@@ -899,7 +920,7 @@ export class FluentTester implements PromiseLike<void> {
       path.join(process.env.PORTABLE_EXECUTABLE_DIR, '/temp'),
       {
         matching: ['**/*.*', '!**/*.pdf'],
-      }
+      },
     );
 
     expect(jobFiles.length).toEqual(0);
@@ -910,7 +931,7 @@ export class FluentTester implements PromiseLike<void> {
       path.join(process.env.PORTABLE_EXECUTABLE_DIR, '/temp'),
       {
         matching: ['**/*.*', '!**/*.pdf'],
-      }
+      },
     );
 
     expect(jobFiles.length).toEqual(n);
@@ -918,13 +939,13 @@ export class FluentTester implements PromiseLike<void> {
 
   private async doVerifyNumberOfOutputFilesHavingSuffix(
     n: number,
-    suffix: string
+    suffix: string,
   ): Promise<void> {
     const outputFilePaths = await jetpack.findAsync(
       process.env.PORTABLE_EXECUTABLE_DIR,
       {
         matching: `output/**/*${suffix}`,
-      }
+      },
     );
     should.exist(outputFilePaths);
 
@@ -932,13 +953,13 @@ export class FluentTester implements PromiseLike<void> {
   }
 
   private async doVerifyFewOutputFilesHavingSuffix(
-    suffix: string
+    suffix: string,
   ): Promise<void> {
     const outputFilePaths = await jetpack.findAsync(
       process.env.PORTABLE_EXECUTABLE_DIR,
       {
         matching: `output/**/*${suffix}`,
-      }
+      },
     );
     should.exist(outputFilePaths);
 
@@ -947,13 +968,13 @@ export class FluentTester implements PromiseLike<void> {
 
   private async doVerifyOutputFiles(
     listOfFiles: string[],
-    fileSuffix: string = 'pdf'
+    fileSuffix: string = 'pdf',
   ): Promise<void> {
     const outputFilePaths = await jetpack.findAsync(
       process.env.PORTABLE_EXECUTABLE_DIR,
       {
         matching: `output/**/*${fileSuffix}`,
-      }
+      },
     );
     const outputFileNames = outputFilePaths.map(function (filePath) {
       return path.basename(filePath);
@@ -963,24 +984,24 @@ export class FluentTester implements PromiseLike<void> {
 
     try {
       expect(
-        Helpers.arrayEquals(outputFileNames.sort(), listOfFiles.sort())
+        Helpers.arrayEquals(outputFileNames.sort(), listOfFiles.sort()),
       ).toBeTruthy();
     } catch (e) {
       throw new Error(
-        `Expected ${listOfFiles.sort()} but generated ${outputFileNames.sort()}`
+        `Expected ${listOfFiles.sort()} but generated ${outputFileNames.sort()}`,
       );
     }
   }
 
   private async doVerifyQuarantineFiles(
     listOfFiles: string[],
-    fileSuffix: string = 'pdf'
+    fileSuffix: string = 'pdf',
   ): Promise<void> {
     const quarantineFilePaths = await jetpack.findAsync(
       process.env.PORTABLE_EXECUTABLE_DIR,
       {
         matching: `quarantine/**/*${fileSuffix}`,
-      }
+      },
     );
     const quarantineFileNames = quarantineFilePaths.map(function (filePath) {
       return path.basename(filePath);
@@ -990,11 +1011,11 @@ export class FluentTester implements PromiseLike<void> {
 
     try {
       expect(
-        Helpers.arrayEquals(quarantineFileNames.sort(), listOfFiles.sort())
+        Helpers.arrayEquals(quarantineFileNames.sort(), listOfFiles.sort()),
       ).toBeTruthy();
     } catch (e) {
       throw new Error(
-        `Expected ${listOfFiles.sort()} but generated ${quarantineFileNames.sort()}`
+        `Expected ${listOfFiles.sort()} but generated ${quarantineFileNames.sort()}`,
       );
     }
   }
@@ -1053,7 +1074,7 @@ export class FluentTester implements PromiseLike<void> {
 
   private async doWaitOnElementToBecomeVisible(
     selector: string,
-    waitTime?: number
+    waitTime?: number,
   ): Promise<void> {
     return expect(this.window.locator(selector)).toBeVisible({
       timeout: waitTime,
@@ -1067,7 +1088,7 @@ export class FluentTester implements PromiseLike<void> {
   private async doWaitOnElementToHaveCount(
     selector: string,
     count: number,
-    waitTime: number
+    waitTime: number,
   ): Promise<void> {
     return expect(this.window.locator(selector)).toHaveCount(count, {
       timeout: waitTime,
@@ -1077,7 +1098,7 @@ export class FluentTester implements PromiseLike<void> {
   private async doWaitOnInputValueToContainText(
     selector: string,
     text: string,
-    waitTime?: number
+    waitTime?: number,
   ): Promise<void> {
     let wTime = Constants.DELAY_FIVE_THOUSANDS_SECONDS;
     if (waitTime) wTime = waitTime;
@@ -1086,14 +1107,14 @@ export class FluentTester implements PromiseLike<void> {
       new RegExp(text, 'i'),
       {
         timeout: wTime,
-      }
+      },
     );
   }
 
   private async doWaitOnInputToHaveValue(
     selector: string,
     value: string,
-    waitTime?: number
+    waitTime?: number,
   ): Promise<void> {
     let wTime = Constants.DELAY_FIVE_THOUSANDS_SECONDS;
     if (waitTime) wTime = waitTime;
@@ -1106,7 +1127,7 @@ export class FluentTester implements PromiseLike<void> {
   private async doWaitOnElementToHaveText(
     selector: string,
     text: string,
-    waitTime: number
+    waitTime: number,
   ): Promise<void> {
     return expect(this.window.locator(selector)).toHaveText(text, {
       timeout: waitTime,
@@ -1116,7 +1137,7 @@ export class FluentTester implements PromiseLike<void> {
   private async doWaitOnElementWithTextToBecome(
     text: string,
     visible: boolean,
-    waitTime: number
+    waitTime: number,
   ): Promise<void> {
     //console.log(`waitTime: ${waitTime}`);
     if (visible)
@@ -1132,7 +1153,7 @@ export class FluentTester implements PromiseLike<void> {
   protected async doWaitOnElementToBecomeEnabledDisabled(
     selector: string,
     isEnabled: boolean,
-    waitTime: number
+    waitTime: number,
   ): Promise<void> {
     //console.log(`waitTime: ${waitTime}`);
     if (isEnabled)
@@ -1147,14 +1168,14 @@ export class FluentTester implements PromiseLike<void> {
 
   private async doCheckElementToContainText(
     selector: string,
-    text: string
+    text: string,
   ): Promise<void> {
     return expect(this.window.locator(selector)).toContainText(text);
   }
 
   private async doCheckSelectedOptionShouldContainText(
     selector: string,
-    text: string
+    text: string,
   ): Promise<void> {
     const selectElement = this.window.locator(selector);
 
@@ -1168,7 +1189,7 @@ export class FluentTester implements PromiseLike<void> {
 
   private async doDropDownSelectOptionHavingLabel(
     selector: string,
-    label: string
+    label: string,
   ): Promise<void> {
     const selectElement = this.window.locator(selector);
 
@@ -1180,9 +1201,17 @@ export class FluentTester implements PromiseLike<void> {
     await this.doTypeText(value);
   }
 
+  private async doSetInputFiles(
+    selector: string,
+    files: string | readonly string[],
+  ): Promise<void> {
+    this.focusedElement = this.window.locator(selector);
+    await this.focusedElement.setInputFiles(files);
+  }
+
   private async doCheckElementToHaveText(
     selector: string,
-    text: string
+    text: string,
   ): Promise<void> {
     return expect(this.window.locator(selector)).toHaveText(text);
   }
@@ -1197,21 +1226,22 @@ export class FluentTester implements PromiseLike<void> {
 
     do {
       content = await jetpack.readAsync(filePath);
+      console.log(`filePath = ${filePath}, content = ${content}`);
       const endTime = new Date().getTime();
       if ((endTime - startTime) / 1000 > Constants.DELAY_FIVE_THOUSANDS_SECONDS)
         throw new Error(
-          `File ${filePath} still not containing ${text} after waiting ${Constants.DELAY_FIVE_THOUSANDS_SECONDS} seconds`
+          `File ${filePath} still not containing ${text} after waiting ${Constants.DELAY_FIVE_THOUSANDS_SECONDS} seconds`,
         );
 
       if (content) found = content.includes(text);
-      if (!found) await Helpers.delay(Constants.DELAY_HUNDRED_SECONDS);
+      if (!found) await Helpers.delay(Constants.DELAY_ONE_SECOND);
     } while (!found);
   }
 
   private async doWaitOnElementToContainText(
     selector: string,
     text: string,
-    waitTime?: number
+    waitTime?: number,
   ): Promise<void> {
     let wTime = Constants.DELAY_HUNDRED_SECONDS;
     if (waitTime) wTime = waitTime;
@@ -1223,12 +1253,12 @@ export class FluentTester implements PromiseLike<void> {
 
   private async doCheckElementExists(
     selector: string,
-    exists: boolean
+    exists: boolean,
   ): Promise<void> {
     if (exists) {
       //console.log(selector);
       return expect(
-        await this.window.locator(selector).count()
+        await this.window.locator(selector).count(),
       ).toBeGreaterThan(0);
     } else
       return expect(await this.window.locator(selector).count()).toEqual(0);
@@ -1236,7 +1266,7 @@ export class FluentTester implements PromiseLike<void> {
 
   private async doCheckElementEnabledStatus(
     selector: string,
-    isEnabled: boolean
+    isEnabled: boolean,
   ): Promise<void> {
     if (isEnabled) return expect(this.window.locator(selector)).toBeEnabled();
     else return expect(this.window.locator(selector)).toBeDisabled();
@@ -1245,7 +1275,7 @@ export class FluentTester implements PromiseLike<void> {
   private async doCheckElementClass(
     selector: string,
     className: string,
-    isPresent: boolean
+    isPresent: boolean,
   ): Promise<void> {
     const expression: RegExp = new RegExp(className);
 
@@ -1259,7 +1289,7 @@ export class FluentTester implements PromiseLike<void> {
     selector: string,
     className: string,
     isPresent: boolean,
-    waitTime?: number
+    waitTime?: number,
   ): Promise<void> {
     let wTime = Constants.DELAY_HUNDRED_SECONDS;
     if (waitTime) wTime = waitTime;
@@ -1278,44 +1308,44 @@ export class FluentTester implements PromiseLike<void> {
 
   private async doCheckInputHasValue(
     selector: string,
-    value: string
+    value: string,
   ): Promise<void> {
     return expect(await this.window.locator(selector).inputValue()).toEqual(
-      value
+      value,
     );
   }
 
   private async doCheckElementAttributeHasValue(
     selector: string,
     attribute: string,
-    value: string
+    value: string,
   ): Promise<void> {
     return expect(
-      await this.window.locator(selector).getAttribute(attribute)
+      await this.window.locator(selector).getAttribute(attribute),
     ).toEqual(value);
   }
 
   private async doCheckElementAttributeExistence(
     selector: string,
     attribute: string,
-    isPresent: boolean
+    isPresent: boolean,
   ): Promise<void> {
     if (isPresent)
       return expect(
-        await this.window.locator(selector).getAttribute(attribute)
+        await this.window.locator(selector).getAttribute(attribute),
       ).not.toBeNull();
     else
       return expect(
-        await this.window.locator(selector).getAttribute(attribute)
+        await this.window.locator(selector).getAttribute(attribute),
       ).toBeNull();
   }
 
   private async doCheckCheckBoxValue(
     selector: string,
-    value: boolean
+    value: boolean,
   ): Promise<void> {
     return expect(await this.window.locator(selector).isChecked()).toEqual(
-      value
+      value,
     );
   }
 
@@ -1329,16 +1359,16 @@ export class FluentTester implements PromiseLike<void> {
         path.join(
           process.env.PORTABLE_EXECUTABLE_DIR,
           PATHS.CONFIG_PATH,
-          '/settings.xml'
-        )
-      )
+          '/settings.xml',
+        ),
+      ),
     );
 
     //console.log(configFilePath);
 
     return this.doWaitOnFileToContainText(
       configFilePath,
-      `<skin>${skin}</skin>`
+      `<skin>${skin}</skin>`,
     );
   }
 
@@ -1354,19 +1384,28 @@ export class FluentTester implements PromiseLike<void> {
     if (howToCheck === Constants.CHECK_PROCESSING_JAVA) {
       await this.doWaitOnElementToBecomeVisible(
         '.java-started',
-        Constants.DELAY_FIVE_THOUSANDS_SECONDS
+        Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       );
     } else if (howToCheck === Constants.CHECK_PROCESSING_STATUS_BAR) {
       await this.doWaitOnElementToContainText(
         '#workingOn',
         'Working on',
-        Constants.DELAY_FIVE_THOUSANDS_SECONDS
+        Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       );
     } else {
-      await this.doWaitOnElementToContainText(
-        '#infoLogViewer',
+      //await this.doWaitOnElementToContainText(
+      //  '#infoLogViewer',
+      //  'Program Started',
+      //  Constants.DELAY_FIVE_THOUSANDS_SECONDS
+      //);
+
+      await this.doWaitOnFileToContainText(
+        path.resolve(
+          slash(
+            `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/info.log`,
+          ),
+        ),
         'Program Started',
-        Constants.DELAY_FIVE_THOUSANDS_SECONDS
       );
     }
   }
@@ -1375,7 +1414,7 @@ export class FluentTester implements PromiseLike<void> {
     if (howToCheck === Constants.CHECK_PROCESSING_JAVA) {
       await this.doWaitOnElementToBecomeVisible(
         '.java-exited',
-        Constants.DELAY_FIVE_THOUSANDS_SECONDS
+        Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       );
     } else if (howToCheck === Constants.CHECK_PROCESSING_STATUS_BAR) {
       /*
@@ -1389,7 +1428,7 @@ export class FluentTester implements PromiseLike<void> {
       await this.doWaitOnElementToContainText(
         '#noJobsRunning',
         'No jobs are currently',
-        Constants.DELAY_FIVE_THOUSANDS_SECONDS
+        Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       );
     } else {
       /*
@@ -1403,10 +1442,10 @@ export class FluentTester implements PromiseLike<void> {
       await this.doWaitOnFileToContainText(
         path.resolve(
           slash(
-            process.env.PORTABLE_EXECUTABLE_DIR + PATHS.LOGS_PATH + '/info.log'
-          )
+            `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/info.log`,
+          ),
         ),
-        'Execution Ended'
+        'Execution Ended',
       );
     }
     /*
@@ -1426,7 +1465,9 @@ export class FluentTester implements PromiseLike<void> {
   }
 
   private async doGotoProcessingMergeBurstScreen(): Promise<void> {
+    await this.doHover('#topMenuBurst');
     await this.doClick('#topMenuBurst');
+
     await this.doClick('#leftMenuMergeBurst');
   }
 
@@ -1435,42 +1476,46 @@ export class FluentTester implements PromiseLike<void> {
 
     await this.doGoToBurstScreen();
 
-    await this.doClick('#burstFile');
+    //await this.doClick('#burstFile');
     //.sleep(Constants.DELAY_HUNDRED_SECONDS)
     await this.doWaitOnProcessingToFinish(
-      Constants.CHECK_PROCESSING_STATUS_BAR
+      Constants.CHECK_PROCESSING_STATUS_BAR,
     );
 
     await this.doAppShouldBeReadyToRunNewJobs();
 
     await this.doWaitOnElementToBecomeVisible(
       '#btnGreatNoErrorsNoWarnings',
-      Constants.DELAY_FIVE_THOUSANDS_SECONDS
+      Constants.DELAY_FIVE_THOUSANDS_SECONDS,
     );
 
     await this.doCheckAppStatus(Constants.STATUS_GREAT_NO_ERRORS_NO_WARNINGS);
   }
 
   private async doGoToBurstScreen(): Promise<void> {
-    await this.doClick('#supportEmail');
+    //await this.doClick('#supportEmail');
+    await this.doHover('#topMenuBurst');
     await this.doClick('#topMenuBurst');
+
     //await this.doClick('#burstTab-link');
   }
 
   private async doGotoProcessingQualityAssuranceScreen(): Promise<void> {
+    await this.doHover('#topMenuBurst');
     await this.doClick('#topMenuBurst');
+
     await this.doClick('#leftMenuQualityAssurance');
   }
 
   private async doGotoConnections(): Promise<void> {
-    await this.doHover('#supportEmail');
-    await this.doClick('#supportEmail');
+    //await this.doHover('#supportEmail');
+    //await this.doClick('#supportEmail');
 
     await this.doHover('#topMenuBurst');
     await this.doClick('#topMenuBurst');
 
-    await this.doHover('#supportEmail');
-    await this.doClick('#supportEmail');
+    //await this.doHover('#supportEmail');
+    //await this.doClick('#supportEmail');
 
     //await this.doClick('#topMenuBurst');
 
@@ -1486,9 +1531,11 @@ export class FluentTester implements PromiseLike<void> {
     );
       */
 
-    await this.doFocus('#topMenuConfigurationManage');
-    await this.doHover('#topMenuConfigurationManage');
-    //await this.doClick('#topMenuConfigurationManage');
+    //await this.doFocus('#topMenuConfigurationManage');
+    //await this.doHover('#topMenuConfigurationManage');
+
+    //await this.doFocus('#topMenuConfigurationManage');
+    await this.doClick('#topMenuConfigurationManage');
 
     /*
    
@@ -1511,25 +1558,27 @@ export class FluentTester implements PromiseLike<void> {
     await this.doWaitOnElementToBecomeVisible(`#${PATHS.EML_CONTACT_FILE}`);
 
     await this.doClickAndSelectTableRow(
-      `#extConnectionsTable tbody tr:first-child`
+      `#extConnectionsTable tbody tr:first-child`,
     );
 
     await this.doWaitOnElementToBecomeEnabledDisabled(
       '#btnEdit',
       true,
-      Constants.DELAY_TEN_SECONDS
+      Constants.DELAY_TEN_SECONDS,
     );
 
     await this.doWaitOnElementToBecomeEnabledDisabled(
       '#btnDuplicate',
       true,
-      Constants.DELAY_TEN_SECONDS
+      Constants.DELAY_TEN_SECONDS,
     );
   }
 
   private async doGotoConfiguration(): Promise<void> {
-    await this.doHover('#supportEmail');
-    await this.doClick('#supportEmail');
+    //await this.doHover('#supportEmail');
+    //await this.doClick('#supportEmail');
+    await this.doHover('#topMenuBurst');
+    await this.doClick('#topMenuBurst');
 
     await this.doHover('#topMenuConfiguration');
     //await this.doFocus('#topMenuConfiguration');
@@ -1537,25 +1586,35 @@ export class FluentTester implements PromiseLike<void> {
   }
 
   private async doGotoConfigurationGeneralSettings(): Promise<void> {
+    await this.doHover('#topMenuBurst');
+    await this.doClick('#topMenuBurst');
+
     await this.doClick('#topMenuConfiguration');
     await this.doClick(
-      '#topMenuConfigurationLoad_burst_' + PATHS.SETTINGS_CONFIG_FILE
+      '#topMenuConfigurationLoad_burst_' + PATHS.SETTINGS_CONFIG_FILE,
     );
     await this.doClick('#leftMenuGeneralSettings');
   }
 
   private async doGotoConfigurationEmailSettings(): Promise<void> {
+    await this.doHover('#topMenuBurst');
+    await this.doClick('#topMenuBurst');
+
     await this.doClick('#topMenuConfiguration');
     await this.doClick(
-      '#topMenuConfigurationLoad_burst_' + PATHS.SETTINGS_CONFIG_FILE
+      '#topMenuConfigurationLoad_burst_' + PATHS.SETTINGS_CONFIG_FILE,
     );
     await this.doClick('#leftMenuEmailSettings');
+    await this.doWaitOnElementToBecomeVisible('#btnSendTestEmail');
   }
 
   private async doGotoConfigurationSMSSettings(): Promise<void> {
+    await this.doHover('#topMenuBurst');
+    await this.doClick('#topMenuBurst');
+
     await this.doClick('#topMenuConfiguration');
     await this.doClick(
-      '#topMenuConfigurationLoad_burst_' + PATHS.SETTINGS_CONFIG_FILE
+      '#topMenuConfigurationLoad_burst_' + PATHS.SETTINGS_CONFIG_FILE,
     );
     await this.doClick('#leftMenuSMSSettings');
   }

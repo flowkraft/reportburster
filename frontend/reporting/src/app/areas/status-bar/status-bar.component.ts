@@ -1,37 +1,46 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 
-import { interval, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
 
 //import * as jetpack from 'fs-jetpack';
 
 //import * as path from 'path';
 import Utilities from '../../helpers/utilities';
-import { ElectronService } from '../../core/services';
 import { ConfirmService } from '../../components/dialog-confirm/confirm.service';
+import { WebSocketExecutionStatsService } from '../../providers/ws-execution-stats.service';
+import { FsService } from '../../providers/fs.service';
 
 @Component({
   selector: 'dburst-status-bar',
   templateUrl: './status-bar.template.html',
 })
-export class StatusBarComponent implements OnInit {
+export class StatusBarComponent implements OnInit, OnDestroy {
   subscription: Subscription;
 
   constructor(
     protected confirmService: ConfirmService,
-    protected electronService: ElectronService,
-    protected executionStatsService: ExecutionStatsService
+    protected fsService: FsService,
+    protected executionStatsService: ExecutionStatsService,
+    protected executionStatsWsService: WebSocketExecutionStatsService,
   ) {}
 
   ngOnInit() {
+    this.executionStatsWsService.makeWSConnectionAndHandleMessages();
     //FIXME define a constant CHECK_INTERVAL = 333 to be reused across all ).subscribe
 
-    const repeat = interval(333);
-    this.subscription = repeat.subscribe((val) => {
-      this.executionStatsService.checkJobsFolder();
-      this.executionStatsService.checkLogsFolder();
-      this.executionStatsService.checkResumeJobs();
-    });
+    //const repeat = interval(333);
+    //const repeat = interval(3333);
+
+    //this.subscription = repeat.subscribe((val) => {
+    //  this.executionStatsService.checkJobsFolder();
+    //  this.executionStatsService.checkLogsFolder();
+    //  this.executionStatsService.checkResumeJobs();
+    //});
+  }
+
+  ngOnDestroy() {
+    this.executionStatsWsService.wsSubscription.unsubscribe();
   }
 
   shouldShowPauseCancelButtons() {
@@ -67,19 +76,19 @@ export class StatusBarComponent implements OnInit {
           this.executionStatsService.jobStats.cancelJobFileExists = 1;
         }
 
-        const dirPath = this.electronService.path.dirname(jobFilePath);
-        const baseName = this.electronService.path.basename(
-          jobFilePath,
-          '.job'
-        );
+        const dirPath = Utilities.dirname(jobFilePath);
+        const baseName = Utilities.basename(jobFilePath, '.job');
 
         const pauseCancelFileName = baseName + '.' + command;
 
         const pauseCancelFilePath = Utilities.slash(
-          dirPath + '/' + pauseCancelFileName
+          dirPath + '/' + pauseCancelFileName,
         );
 
-        this.electronService.jetpack.fileAsync(pauseCancelFilePath);
+        console.log(
+          `this.executionStatsService. = ${JSON.stringify(this.executionStatsService)}`,
+        );
+        this.fsService.fileAsync(pauseCancelFilePath);
       },
     });
   }

@@ -3,8 +3,8 @@ import { Component } from '@angular/core';
 import { LicenseService } from '../../providers/license.service';
 
 import { ConfirmService } from '../dialog-confirm/confirm.service';
-import { SettingsService } from '../../providers/settings.service';
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
+import { SettingsService } from '../../providers/settings.service';
 
 @Component({
   selector: 'dburst-license',
@@ -17,7 +17,7 @@ export class LicenseComponent {
     protected licenseService: LicenseService,
     protected confirmService: ConfirmService,
     protected settingsService: SettingsService,
-    protected executionStatsService: ExecutionStatsService
+    protected executionStatsService: ExecutionStatsService,
   ) {}
 
   verifyLicense(action) {
@@ -30,11 +30,11 @@ export class LicenseComponent {
     this.confirmService.askConfirmation({
       message: message,
       confirmAction: async () => {
-        this.licenseService.verifyLicense(action, async () => {
-          await this.licenseService.loadLicenseFileAsync();
+        await this.licenseService.verifyLicense(action);
+        console.log(`verifyLicense done`);
+        await this.licenseService.loadLicenseFileAsync();
 
-          //this.router.navigate(['/help', 'licenseMenuSelected']);
-        });
+        //this.router.navigate(['/help', 'licenseMenuSelected']);
       },
     });
   }

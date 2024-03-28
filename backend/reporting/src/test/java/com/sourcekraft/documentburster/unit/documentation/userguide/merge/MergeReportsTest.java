@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import com.sourcekraft.documentburster._helpers.TestsUtils;
 import com.sourcekraft.documentburster.engine.pdf.Merger;
-import com.sourcekraft.documentburster.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.Settings;
 
 import com.sourcekraft.documentburster._helpers.DocumentTester;
 import com.sourcekraft.documentburster._helpers.DocumentTester.TextSearchType;

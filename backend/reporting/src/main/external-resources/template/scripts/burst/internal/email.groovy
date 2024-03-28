@@ -27,7 +27,7 @@ if (message.isAuthentication)
 	commonsEmail.setAuthentication(message.authuser, message.authpwd)
  
 commonsEmail.setHostName(message.hostName)
-commonsEmail.setSmtpPort(message.smtpPort)
+commonsEmail.setSmtpPort(Integer.parseInt(message.smtpPort))
 
 commonsEmail.setFrom(message.fromAddress, message.fromName)
 

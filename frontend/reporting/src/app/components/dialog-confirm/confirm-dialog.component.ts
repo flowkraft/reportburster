@@ -41,7 +41,6 @@ export class ConfirmDialogComponent implements OnInit {
   message: string;
   confirmLabel: string;
   declineLabel: string;
-  zIndex: string;
   confirmAction: Function;
 
   constructor(protected bsModalRef: BsModalRef) {}

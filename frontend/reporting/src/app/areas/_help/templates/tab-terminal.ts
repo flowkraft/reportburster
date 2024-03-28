@@ -4,7 +4,7 @@ export const tabTerminalTemplate = `<ng-template #tabTerminalTemplate>
     <dburst-terminal></dburst-terminal>
     <div id='bashServiceLog' class="panel-body"
       style="color:grey; height:370px; overflow-y: scroll; overflow-x: auto; -webkit-user-select: all; user-select: all;">
-      <dburst-log-file-viewer logFile='bash.service.log'></dburst-log-file-viewer>
+      <dburst-log-file-viewer logFileName='bash.service.log'></dburst-log-file-viewer>
     </div>
 
   </div>

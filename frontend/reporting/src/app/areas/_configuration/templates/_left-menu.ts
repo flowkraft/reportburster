@@ -17,7 +17,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
     </a>
   </li>
 
-  <li *ngIf="xmlSettings?.documentburster.settings.capabilities.reportgenerationmailmerge" routerLinkActive="active">
+  <li *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportgenerationmailmerge" routerLinkActive="active">
     <a id="leftMenuReportingSettings" href="#" [routerLink]="[
         '/configuration',
         'reportingSettingsMenuSelected',
@@ -29,7 +29,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
     </a>
   </li>
 
-  <li *ngIf="xmlSettings?.documentburster.settings.capabilities.reportdistribution" routerLinkActive="active">
+  <li *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportdistribution" routerLinkActive="active">
     <a id="leftMenuEnableDisableDistribution" href="#" [routerLink]="[
         '/configuration',
         'enableDisableDistributionMenuSelected',
@@ -43,7 +43,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
     </a>
   </li>
 
-  <li *ngIf="xmlSettings?.documentburster.settings.capabilities.reportdistribution" class="treeview" routerLinkActive="active">
+  <li *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportdistribution" class="treeview" routerLinkActive="active">
     <a id="leftMenuEmailSettings" href="#" [routerLink]="[
         '/configuration',
         'emailSettingsMenuSelected',
@@ -72,7 +72,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
     </ul>
   </li>
 
-  <li *ngIf="xmlSettings?.documentburster.settings.capabilities.reportdistribution" routerLinkActive="active">
+  <li *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportdistribution" routerLinkActive="active">
     <a id="leftMenuUploadSettings" href="#" [routerLink]="[
         '/configuration',
         'uploadSettingsMenuSelected',
@@ -84,7 +84,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
     </a>
   </li>
 
-  <li *ngIf="xmlSettings?.documentburster.settings.capabilities.reportdistribution" routerLinkActive="active">
+  <li *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportdistribution" routerLinkActive="active">
     <a id="leftMenuDocuments2WebSettings" href="#" [routerLink]="[
         '/configuration',
         'documentBursterWebSettingsMenuSelected',
@@ -96,7 +96,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
     </a>
   </li>
 
-  <li *ngIf="xmlSettings?.documentburster.settings.capabilities.reportdistribution" class="treeview" routerLinkActive="active">
+  <li *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportdistribution" class="treeview" routerLinkActive="active">
     <a id="leftMenuSMSSettings" href="#" [routerLink]="[
         '/configuration',
         'smsSettingsMenuSelected',
@@ -123,7 +123,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
     </ul>
   </li>
 
-  <li *ngIf="xmlSettings?.documentburster.settings.capabilities.reportdistribution" class="treeview" routerLinkActive="active">
+  <li *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportdistribution" class="treeview" routerLinkActive="active">
     <a id="leftMenuQualitySettings" href="#" [routerLink]="[
         '/configuration',
         'qualitySettingsMenuSelected',
@@ -161,11 +161,11 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
       ]">
       <i class="fa fa-list-ul"></i>
       <span>{{ 'AREAS.CONFIGURATION.LEFT-MENU.ADVANCED' | translate }}</span>
-      <span class="pull-right-container" *ngIf="xmlSettings?.documentburster.settings.capabilities.reportdistribution">
+      <span class="pull-right-container" *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportdistribution">
         <i class="fa fa-angle-left pull-right "></i>
       </span>
     </a>
-    <ul class="treeview-menu" *ngIf="xmlSettings?.documentburster.settings.capabilities.reportdistribution">
+    <ul class="treeview-menu" *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportdistribution">
       <li routerLinkActive="active">
         <a id="leftMenuErrorHandlingSettings" href="#" [routerLink]="[
             '/configuration',

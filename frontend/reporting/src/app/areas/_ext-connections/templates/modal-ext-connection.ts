@@ -272,7 +272,7 @@ export const modalExtConnectionsTemplate = `<p-dialog
         id="alreadyExistsWarning"
         style="font-size: 9px"
         class="label label-warning"
-        *ngIf="modalConnectionInfo.connectionFilePathExists"
+        *ngIf="modalConnectionInfo.connectionFilePathExists == 'file'"
         >{{
         'AREAS.CONFIGURATION-TEMPLATES.MODAL-CONF-TEMPLATE.FILE-ALREADY-EXISTS'
         | translate }}</span
@@ -285,7 +285,7 @@ export const modalExtConnectionsTemplate = `<p-dialog
       class="btn btn-primary"
       type="button"
       (click)="onModalOK()"
-      [disabled]="!modalConnectionInfo.email.documentburster.connection.name || modalConnectionInfo.connectionFilePathExists"
+      [disabled]="!modalConnectionInfo.email.documentburster.connection.name || modalConnectionInfo.connectionFilePathExists == 'file'"
     >
       {{ 'BUTTONS.SAVE' | translate }}
     </button>

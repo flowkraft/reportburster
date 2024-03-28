@@ -5,7 +5,6 @@ import { SettingsService } from '../../providers/settings.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 import { AskForFeatureDialogComponent } from './ask-for-feature-dialog.component';
 import { ShellService } from '../../providers/shell.service';
-import { ElectronService } from '../../core/services';
 @Injectable()
 export class AskForFeatureService {
   alreadyImplementedFeatures = [
@@ -55,16 +54,15 @@ Sincerely,
     protected messagesService: ToastrMessagesService,
     protected settingsService: SettingsService,
     protected shellService: ShellService,
-    protected electronService: ElectronService
   ) {}
 
   showAskForFeature(options: any): Promise<any> {
     const titleLabel = this.translateService.instant(
-      'COMPONENTS.ASK-FOR-FEATURE-DIALOG.TITLE'
+      'COMPONENTS.ASK-FOR-FEATURE-DIALOG.TITLE',
     );
 
     const confirmLabel = this.translateService.instant(
-      'COMPONENTS.ASK-FOR-FEATURE-DIALOG.CONFIRM'
+      'COMPONENTS.ASK-FOR-FEATURE-DIALOG.CONFIRM',
     );
 
     return new Promise((resolve, reject) => {
@@ -114,11 +112,11 @@ Sincerely,
       if (requestedFeatureFriendly) {
         this.modalRef.content.msgSubject = this.messageTemplate.subject.replace(
           '{{nameYourFeatureHere}}',
-          requestedFeatureFriendly
+          requestedFeatureFriendly,
         );
         this.modalRef.content.msgMessage = this.messageTemplate.message.replace(
           '{{nameYourFeatureHere}}',
-          requestedFeatureFriendly
+          requestedFeatureFriendly,
         );
       } else {
         this.modalRef.content.msgSubject = this.messageTemplate.subject;

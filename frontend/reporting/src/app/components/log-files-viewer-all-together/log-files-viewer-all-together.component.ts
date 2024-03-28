@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
-import { ShellService } from '../../providers/shell.service';
 import { ConfirmService } from '../dialog-confirm/confirm.service';
+import { LogsServiceWebSocket } from '../../providers/ws-logs.service';
+import { FsService } from '../../providers/fs.service';
+import { SettingsService } from '../../providers/settings.service';
 
 @Component({
   selector: 'dburst-log-files-viewer-all-together',
@@ -11,10 +13,12 @@ export class LogFilesViewerAllTogetherComponent {
   constructor(
     protected confirmService: ConfirmService,
     protected executionStatsService: ExecutionStatsService,
-    protected shellService: ShellService
+    protected fsService: FsService,
+    protected logsService: LogsServiceWebSocket,
+    protected settingsService: SettingsService,
   ) {}
 
-  clearQuarantinedAndLogFiles(shouldClearLogFiles) {
+  clearQuarantinedAndLogFiles(shouldClearLogFiles: boolean) {
     let dialogQuestion = 'Clear all quarantined files?';
     if (shouldClearLogFiles) {
       dialogQuestion = 'Clear all quarantined and log files?';
@@ -23,15 +27,18 @@ export class LogFilesViewerAllTogetherComponent {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: async () => {
-        await this.shellService.clearQuarantinedFiles();
+        await this.fsService.dirAsync(
+          this.settingsService.QUARANTINE_FOLDER_PATH,
+          { empty: true },
+        );
         if (shouldClearLogFiles) {
-          await this.shellService.clearLogs();
+          await this.logsService.clearLogs();
         }
       },
     });
   }
 
-  clearLogs(logFile) {
+  clearLogs(logFile: string) {
     let dialogQuestion = 'Clear file /logs/' + logFile + '?';
     if (!logFile) {
       dialogQuestion = 'Clear all log files?';
@@ -40,7 +47,7 @@ export class LogFilesViewerAllTogetherComponent {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: () => {
-        this.shellService.clearLogs(logFile);
+        this.logsService.clearLogs(logFile);
       },
     });
   }

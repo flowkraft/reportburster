@@ -1,7 +1,7 @@
-import { Component, Output, EventEmitter, Input } from '@angular/core';
-import { SettingsService } from '../../providers/settings.service';
+import { Component, Output, EventEmitter, Input, OnInit } from '@angular/core';
 
 import { modalVariablesTemplate } from './modal-variables.template';
+import { StateStoreService } from '../../providers/state-store.service';
 
 @Component({
   selector: 'dburst-button-variables',
@@ -27,7 +27,7 @@ export class ButtonVariablesComponent {
   @Input() shouldBeDisabled: boolean = false;
   @Output() sendSelectedVariable: EventEmitter<string> = new EventEmitter();
 
-  constructor(protected settingsService: SettingsService) {}
+  constructor(protected stateStore: StateStoreService) {}
 
   builtInVariables = [
     {
@@ -103,7 +103,10 @@ export class ButtonVariablesComponent {
   ];
 
   getShortListUserVariables() {
-    if (this.settingsService.numberOfUserVariables <= 5) {
+    if (
+      this.stateStore.configSys.currentConfigFile.configuration.settings
+        .numberofuservariables <= 5
+    ) {
       return this.getAllUserVariables();
     } else {
       return this.getAllUserVariables().filter((variable) => {
@@ -115,13 +118,17 @@ export class ButtonVariablesComponent {
   getAllUserVariables() {
     const allUserVariables = [];
 
-    /*
-    console.log(
-      `numberOfUserVariables = ${this.settingsService.numberOfUserVariables}`
-    );
-    */
+    //console.log(
+    //  `this.numberOfUserVariables = ${this.stateStore.configSys.currentConfigFile.configuration.settings.numberofuservariables}`,
+    //);
 
-    for (let i = 0; i < this.settingsService.numberOfUserVariables; i++) {
+    for (
+      let i = 0;
+      i <
+      this.stateStore.configSys.currentConfigFile.configuration.settings
+        .numberofuservariables;
+      i++
+    ) {
       allUserVariables.push({
         name: '${var' + i + '}',
         type: 'user-defined',
@@ -142,7 +149,7 @@ export class ButtonVariablesComponent {
       this.variables = this.builtInVariables.concat(this.getAllUserVariables());
     } else {
       this.variables = this.builtInVariables.concat(
-        this.getShortListUserVariables()
+        this.getShortListUserVariables(),
       );
       console.log(`this.variables = ${JSON.stringify(this.variables)}`);
     }

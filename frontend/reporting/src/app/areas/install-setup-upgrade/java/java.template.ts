@@ -1,6 +1,6 @@
 export const javaTemplate = `<!-- <ng-template #javaTemplate> -->
 
-  <div *ngIf="!bashService.isRestartRequired">
+  <div *ngIf="!electronService.isRestartRequired">
     <strong
       id="checkPointJavaPreRequisite"
       [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INNER-HTML.REQUIRED-SHORT' | translate"
@@ -11,20 +11,20 @@ export const javaTemplate = `<!-- <ng-template #javaTemplate> -->
     ></span>
 
     <br />
-    <div *ngIf="bashService.isJavaOk">
+    <div *ngIf="electronService.isJavaOk">
       <br />
       <span class="label label-success"
         ><i class="fa fa-check-square-o"></i>&nbsp;<strong
           >{{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.GREAT' | translate }},
           <em>Java</em>
-          {{bashService.javaVersion}}
+          {{electronService.javaVersion}}
           {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.FOUND' | translate }}
           <em>DocumentBurster</em></strong
         ></span
       >
     </div>
 
-    <div *ngIf="!bashService.isJavaOk">
+    <div *ngIf="!electronService.isJavaOk">
       <span class=" label label-warning"
         ><strong
           ><em>Java</em>
@@ -45,16 +45,16 @@ export const javaTemplate = `<!-- <ng-template #javaTemplate> -->
       <dburst-chocolatey></dburst-chocolatey>
       <br />
 
-      <span class="label label-success" *ngIf="bashService.isChocoOk"
+      <span class="label label-success" *ngIf="electronService.isChocoOk"
         ><i class="fa fa-check-square-o"></i>&nbsp;<strong
           ><em>Chocolatey</em>
-          {{bashService.chocoVersion}}
+          {{electronService.chocoVersion}}
           {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.FOUND-READY' |
           translate }}
           <em>Java</em></strong
         ></span
       >
-      <span class="label label-warning" *ngIf="!bashService.isChocoOk"
+      <span class="label label-warning" *ngIf="!electronService.isChocoOk"
         ><strong
           ><em>Chocolatey</em>
           {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.NOT-FOUND' | translate
@@ -84,14 +84,14 @@ export const javaTemplate = `<!-- <ng-template #javaTemplate> -->
           id="btnInstallJava"
           type="button"
           class="btn btn-primary"
-          [disabled]="!bashService.isChocoOk"
+          [disabled]="!electronService.isChocoOk"
           (click)="installJava()"
         >
           <i class="fa fa-play"></i
           >&nbsp;{{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INSTALL' |
           translate }} <em>Java</em>
         </button>
-        <span *ngIf="!bashService.isChocoOk"
+        <span *ngIf="!electronService.isChocoOk"
           >&nbsp;&nbsp;<strong
             ><em
               >( {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.FIRST' |
@@ -103,7 +103,7 @@ export const javaTemplate = `<!-- <ng-template #javaTemplate> -->
     </div>
   </div>
 
-  <div *ngIf="bashService.isRestartRequired">
+  <div *ngIf="electronService.isRestartRequired">
     <p-panel #pnlRestartDocumentBurster>
       <h4 id="checkPointRestartDocumentBurster">
         <u

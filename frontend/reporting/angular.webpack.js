@@ -41,12 +41,17 @@ module.exports = (config, options) => {
       //zlib: false,
       //crypto: false,
       "original-fs": false,
-      //child_process: false,
+      child_process: false,
       //module: false,
-      //process: false,
+      process: false,
       net: false,
       tls: false,
     },
+  };
+
+  config.externals = {
+    ...config.externals,
+    electron: 'require("electron")',
   };
   //end my own stuff
 

@@ -49,5 +49,6 @@ export class Constants {
   static INPUT_FILE_CUSTOMERS_DISTINCT_COLUMN_VALUES_XLS =
     'Customers-Distinct-Column-Values.xls';
 
-  static TEST_LICENSE_KEY = process.env.TEST_LICENSE_KEY || 'default_value';
+  static TEST_LICENSE_KEY =
+    process.env.TEST_LICENSE_KEY || '12345678909876543210123456789';
 }

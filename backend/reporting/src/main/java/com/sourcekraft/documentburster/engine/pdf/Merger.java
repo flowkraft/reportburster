@@ -18,7 +18,7 @@ import com.lowagie.text.Document;
 import com.lowagie.text.pdf.PdfCopy;
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.PdfSmartCopy;
-import com.sourcekraft.documentburster.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.utils.Utils;
 import com.sourcekraft.documentburster.variables.Variables;
 

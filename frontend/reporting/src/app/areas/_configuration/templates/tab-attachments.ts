@@ -20,9 +20,9 @@ export const tabAttachmentsTemplate = `<ng-template #tabAttachmentsTemplate>
               <tbody>
                 <tr *ngFor="let attachment of getSortedAttachments()" [ngClass]="{ 'info': attachment.selected }"
                   (click)="onAttachmentSelected(attachment)">
-                  <td style="width: 700px">{{attachment.$.path}}</td>
+                  <td style="width: 700px">{{attachment.path}}</td>
                 </tr>
-                <tr *ngIf="xmlSettings?.documentburster.settings.attachments.items.attachment.length ===0">
+                <tr *ngIf="xmlSettings?.documentburster.settings.attachments.items.attachmentItems.length ===0">
                   <td style="width: 700px">
                     <em id="noAttachments">{{
                       'AREAS.CONFIGURATION.TAB-ATTACHMENT.NO-ATTACHMENTS' | translate }}</em>

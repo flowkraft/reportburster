@@ -4,7 +4,7 @@ export const tabGeneralSettingsTemplate = `<ng-template #tabGeneralSettingsTempl
       <div class="col-xs-2">{{
         'AREAS.CONFIGURATION.TAB-GENERAL-SETTINGS.BURST-FILE-NAME' | translate }}</div>
       <div class="col-xs-6">
-        <input id="burstFileName" class="form-control" [(ngModel)]="xmlSettings?.documentburster.settings.burstfilename"
+        <input id="burstFileName" class="form-control" [(ngModel)]="xmlSettings?.documentburster?.settings.burstfilename"
           (ngModelChange)='settingsChangedEventHandler($event)' />
       </div>
       <div class="col-xs-2">
@@ -18,7 +18,7 @@ export const tabGeneralSettingsTemplate = `<ng-template #tabGeneralSettingsTempl
       <div class="col-xs-2">{{
         'AREAS.CONFIGURATION.TAB-GENERAL-SETTINGS.OUTPUT-FOLDER' | translate }}</div>
       <div class="col-xs-6">
-        <input id="outputFolder" class="form-control" [(ngModel)]="xmlSettings?.documentburster.settings.outputfolder"
+        <input id="outputFolder" class="form-control" [(ngModel)]="xmlSettings?.documentburster?.settings.outputfolder"
           (ngModelChange)='settingsChangedEventHandler($event)' />
       </div>
 
@@ -39,7 +39,7 @@ export const tabGeneralSettingsTemplate = `<ng-template #tabGeneralSettingsTempl
         'AREAS.CONFIGURATION.TAB-GENERAL-SETTINGS.QUARANTINE-FOLDER' | translate }}</div>
       <div class="col-xs-6">
         <input id="quarantineFolder" class="form-control"
-          [(ngModel)]="xmlSettings?.documentburster.settings.quarantinefolder"
+          [(ngModel)]="xmlSettings?.documentburster?.settings.quarantinefolder"
           (ngModelChange)='settingsChangedEventHandler($event)' />
       </div>
 
@@ -70,7 +70,7 @@ export const tabGeneralSettingsTemplate = `<ng-template #tabGeneralSettingsTempl
     </div>
 
     <br>
-    <div class="row" *ngIf="xmlSettings?.documentburster.settings.capabilities.reportdistribution">
+    <div class="row" *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportdistribution">
 
       <div class="col-xs-12">
         <a id="btnEnableDisableDistribution" href="#" [routerLink]="[
