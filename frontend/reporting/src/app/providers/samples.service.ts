@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ElectronService } from '../core/services/electron/electron.service';
-import Utilities from '../helpers/utilities';
 import { SettingsService } from './settings.service';
+import Utilities from '../helpers/utilities';
 
 export interface SampleInfo {
   id: string;
@@ -41,7 +40,6 @@ export class SamplesService {
   constructor(
     protected translateService: TranslateService,
     protected settingsService: SettingsService,
-    protected electronService: ElectronService
   ) {}
 
   countVisibleSamples = -1;
@@ -75,7 +73,7 @@ export class SamplesService {
           "output/Payslips.pdf/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'employee',
@@ -117,7 +115,7 @@ export class SamplesService {
       },
       outputHtmlHardcoded:
         '<i class="fa fa-file-excel-o"></i> clyde.grew@northridgehealth.org.xls employee payslip<br><i class="fa fa-file-excel-o"></i> kyle.butford@northridgehealth.org.xls employee payslip<br><i class="fa fa-file-excel-o"></i> alfreda.waldback@northridgehealth.org.xls employee payslip',
-      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'employee',
@@ -151,7 +149,7 @@ export class SamplesService {
       },
       outputHtmlHardcoded:
         '<i class="fa fa-file-excel-o"></i> United States of America.xls<br><i class="fa fa-file-excel-o"></i> Australia.xls<br><i class="fa fa-file-excel-o"></i> Canada.xls<br><i class="fa fa-file-excel-o"></i> United Kingdom.xls<br><i class="fa fa-file-excel-o"></i> Germany.xls<br>etc... (separate file containing customer list for each country)',
-      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'customer',
@@ -192,7 +190,7 @@ export class SamplesService {
           "output/Payslips.pdf/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-two-times-split-only/settings.xml`,
+      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-two-times-split-only/settings.xml`,
       configurationFileName: 'split-two-times-split-only',
       notes: ``,
       recipientType: 'customer',
@@ -241,7 +239,7 @@ export class SamplesService {
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'customer',
@@ -280,7 +278,7 @@ export class SamplesService {
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/monthly-payslips-generate-docx/settings.xml`,
+      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/monthly-payslips-generate-docx/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'employee',
@@ -317,7 +315,7 @@ export class SamplesService {
       },
       outputHtmlHardcoded:
         '<i class="fa fa-envelope-o"></i> letter to student clyde.grew@northridgeschool.edu<br><i class="fa fa-envelope-o"></i> letter to student kyle.butford@northridgeschool.edu<br><i class="fa fa-envelope-o"></i> letter to student alfreda.waldback@northridgeschool.edu',
-      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/mail-merge-emails/settings.xml`,
+      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/mail-merge-emails/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'student',
@@ -353,7 +351,7 @@ export class SamplesService {
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configurationFilePath: `${this.electronService.PORTABLE_EXECUTABLE_DIR}/config/samples/newsletter-1/settings.xml`,
+      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/newsletter-1/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'student',
@@ -402,7 +400,7 @@ export class SamplesService {
       if (fullDetails)
         currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}`;
 
-      console.log(`inputsUrl = ${JSON.stringify(inputsUrl)}`);
+      //console.log(`inputsUrl = ${JSON.stringify(inputsUrl)}`);
 
       if (inputUrl) {
         inputUrl = inputsUrl[index].replace('file:', '');
@@ -433,7 +431,7 @@ export class SamplesService {
     if (fullDetails) {
       const inputs: string[] = sample.input.data;
       if (inputs.length == 1) {
-        const inputFileName = this.electronService.path.basename(inputs[0]);
+        const inputFileName = Utilities.basename(inputs[0]);
 
         outputHtml = `<strong>Folder</strong><br>${this.settingsService.PORTABLE_EXECUTABLE_DIR}/output/${inputFileName}/\${now?format["yyyy.MM.dd_HH.mm.ss.SSS"]}<br>${outputHtml}`;
       }
@@ -494,9 +492,9 @@ export class SamplesService {
         const sampleConfigurationValues = sampleConfigurations.find(
           (configuration) => {
             return sample.configurationFilePath.endsWith(
-              configuration.filePath
+              configuration.filePath,
             );
-          }
+          },
         );
 
         if (sampleConfigurationValues) {
@@ -508,13 +506,13 @@ export class SamplesService {
         }
 
         const notes = await this.translateService.instant(
-          `SAMPLES.${sample.id}.NOTES.INNER-HTML`
+          `SAMPLES.${sample.id}.NOTES.INNER-HTML`,
         );
         sample.notes = notes;
       }
 
       this.countVisibleSamples = this.samples.filter(
-        (sample) => sample.visibility == 'visible'
+        (sample) => sample.visibility == 'visible',
       ).length;
     }
   }
@@ -522,15 +520,15 @@ export class SamplesService {
   async toggleSampleVisibility(sample: SampleInfo, visibility: string) {
     const settingsXmlConfigurationValues =
       await this.settingsService.loadSettingsFileAsync(
-        sample.configurationFilePath
+        sample.configurationFilePath,
       );
 
     settingsXmlConfigurationValues.documentburster.settings.visibility =
       visibility;
 
     await this.settingsService.saveSettingsFileAsync(
+      sample.configurationFilePath,
       settingsXmlConfigurationValues,
-      sample.configurationFilePath
     );
 
     sample.visibility = visibility;
@@ -538,11 +536,11 @@ export class SamplesService {
     const sampleConfiguration = this.settingsService
       .getSampleConfigurations()
       .find((configuration) =>
-        sample.configurationFilePath.endsWith(configuration.filePath)
+        sample.configurationFilePath.endsWith(configuration.filePath),
       );
     sampleConfiguration.visibility = visibility;
     this.countVisibleSamples = this.samples.filter(
-      (sample) => sample.visibility == 'visible'
+      (sample) => sample.visibility == 'visible',
     ).length;
   }
 

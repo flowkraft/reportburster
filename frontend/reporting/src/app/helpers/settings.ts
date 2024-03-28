@@ -1,28 +1,30 @@
 import * as xml2js from 'xml2js';
-
-import { promises as fsp } from 'fs';
-
 import Utilities from './utilities';
+import UtilitiesElectron from './utilities-electron';
 
 export class Settings {
-  constructor(protected fs: typeof fsp) {}
+  constructor() {}
   async saveSettingsFileAsync(settings: {}, filePath: string) {
     //console.log(`filePath: ${filePath}`);
     //console.log(`settings: ${JSON.stringify(settings)}`);
 
     try {
-      await this.fs.rm(filePath);
+      await UtilitiesElectron.removeAsync(filePath);
       //await this.fs.unlink(filePath);
     } catch (error) {
     } finally {
       const builder = new xml2js.Builder();
-      return this.fs.writeFile(filePath, builder.buildObject(settings));
+      return UtilitiesElectron.writeAsync(
+        filePath,
+        builder.buildObject(settings),
+      );
+
       //return this.fs.writeFile(filePath, '123');
     }
   }
 
   async loadFileContentAsync(filePath: string): Promise<string> {
-    return this.fs.readFile(filePath, 'utf8');
+    return UtilitiesElectron.readAsync(filePath);
   }
 
   async loadReportingFileAsync(filePath: string): Promise<any> {
@@ -30,7 +32,7 @@ export class Settings {
 
     const configReportingFilePath = `${configFolderPath}/reporting.xml`;
 
-    const content = await this.fs.readFile(configReportingFilePath, 'utf8');
+    const content = await UtilitiesElectron.readAsync(configReportingFilePath);
 
     return Utilities.parseStringPromise(content, {
       trim: true,
@@ -42,7 +44,7 @@ export class Settings {
   async loadSettingsFileAsync(filePath: string): Promise<any> {
     //console.trace();
 
-    const content = await this.fs.readFile(filePath, 'utf8');
+    const content = await UtilitiesElectron.readAsync(filePath);
 
     const parsedString = await Utilities.parseStringPromise(content, {
       trim: true,
@@ -52,15 +54,20 @@ export class Settings {
 
     //XML files from older versions (i.e. v5) do not contain attachments
     if (parsedString.documentburster.settings.attachments) {
-      if (parsedString.documentburster.settings.attachments.items.attachment) {
+      if (
+        parsedString.documentburster.settings.attachments.items.attachmentItems
+      ) {
         if (
           !Array.isArray(
-            parsedString.documentburster.settings.attachments.items.attachment
+            parsedString.documentburster.settings.attachments.items
+              .attachmentItems,
           )
         ) {
-          parsedString.documentburster.settings.attachments.items.attachment = [
-            parsedString.documentburster.settings.attachments.items.attachment,
-          ];
+          parsedString.documentburster.settings.attachments.items.attachmentItems =
+            [
+              parsedString.documentburster.settings.attachments.itemsItems
+                .attachment,
+            ];
         }
       } else {
         parsedString.documentburster.settings.attachments.items = {};
@@ -72,7 +79,7 @@ export class Settings {
   }
 
   async loadPreferencesFileAsync(filePath: string): Promise<any> {
-    const content = await this.fs.readFile(filePath, 'utf8');
+    const content = await UtilitiesElectron.readAsync(filePath);
 
     const parsedString = await Utilities.parseStringPromise(content, {
       trim: true,
@@ -86,7 +93,7 @@ export class Settings {
   async parseXmlFileAsync(filePath: string): Promise<any> {
     //console.trace();
 
-    const content = await this.fs.readFile(filePath, 'utf8');
+    const content = await UtilitiesElectron.readAsync(filePath);
 
     const xml = await Utilities.parseStringPromise(content, {
       trim: true,

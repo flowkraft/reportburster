@@ -152,7 +152,7 @@ export class ConfTemplatesTestHelper {
   ): FluentTester => {
     return (
       ft
-
+        .gotoStartScreen()
         .click('#topMenuConfiguration')
         // STEP0 - CHANGE VALUES
         // general settings
@@ -175,7 +175,7 @@ export class ConfTemplatesTestHelper {
         .click('#btnQuarantineDocuments')
         //.waitOnElementWithTextToBecomeVisible('Saved')
         // values are supposed to be saved at this moment ==> go away and click burst top menu
-
+        .gotoStartScreen()
         // STEP1 - load and assert the saved values
         .click('#topMenuConfiguration')
         // general settings
@@ -233,6 +233,7 @@ export class ConfTemplatesTestHelper {
     folderName: string
   ): FluentTester => {
     return ft
+      .gotoStartScreen()
       .gotoConfigurationTemplates()
       .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .click(`#btnActions_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
@@ -250,6 +251,7 @@ export class ConfTemplatesTestHelper {
     mailMergeCapability?: string
   ): FluentTester => {
     ft = ft
+      .gotoStartScreen()
       .gotoConfiguration()
       .elementShouldContainText(
         `#topMenuConfigurationLoad_burst_${PATHS.SETTINGS_CONFIG_FILE}`,
@@ -310,13 +312,14 @@ export class ConfTemplatesTestHelper {
   ): FluentTester => {
     return (
       ft
-
+        .gotoStartScreen()
         // STEP1 - load and assert the saved values
         .click('#topMenuConfiguration')
         // general settings
         .click(
           `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
         )
+        .click('#leftMenuGeneralSettings')
         .inputShouldHaveValue(
           '#burstFileName',
           '${burst_token}.${output_type_extension}'
@@ -329,6 +332,7 @@ export class ConfTemplatesTestHelper {
           '#quarantineFolder',
           'quarantine/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}'
         )
+        .click('#quarantineFolder')
         .click('#leftMenuEnableDisableDistribution')
         .elementCheckBoxShouldNotBeSelected('#btnSendDocumentsEmail')
         .elementCheckBoxShouldNotBeSelected('#btnDeleteDocuments')
@@ -341,6 +345,7 @@ export class ConfTemplatesTestHelper {
     folderName: string
   ): FluentTester => {
     return ft
+      .gotoStartScreen()
       .gotoConfigurationTemplates()
       .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .waitOnElementToBecomeEnabled('#btnDelete')
@@ -367,6 +372,7 @@ export class ConfTemplatesTestHelper {
     newTemplateName: string
   ): FluentTester => {
     return ft
+      .gotoStartScreen()
       .gotoConfigurationTemplates()
       .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .waitOnElementToBecomeEnabled('#btnEdit')

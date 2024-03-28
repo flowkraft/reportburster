@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sourcekraft.documentburster.settings.License;
+import com.sourcekraft.documentburster.common.settings.License;
 
 import de.ailis.pherialize.Pherialize;
 

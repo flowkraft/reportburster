@@ -13,8 +13,8 @@ import org.junit.Test;
 import com.sourcekraft.documentburster._helpers.TestBursterFactory;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.sender.model.EmailMessage;
-import com.sourcekraft.documentburster.settings.model.Proxy;
-import com.sourcekraft.documentburster.settings.model.SimpleJavaMail;
+import com.sourcekraft.documentburster.common.settings.model.Proxy;
+import com.sourcekraft.documentburster.common.settings.model.SimpleJavaMail;
 
 public class EmailWithApacheCommonsEmailOrWithSimpleJavaMailTest {
 

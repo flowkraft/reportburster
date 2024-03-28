@@ -1,4 +1,4 @@
-<div *ngIf="executionStatsService.foundDirtyLogFiles()" id="logsViewer">
+<div *ngIf="executionStatsService.logStats.foundDirtyLogFiles" id="logsViewer">
   <tabset>
     <tab
       heading="{{
@@ -18,10 +18,7 @@
           user-select: all;
         "
       >
-        <dburst-log-file-viewer
-          viewerId="infoLogViewer"
-          logFile="info.log"
-        ></dburst-log-file-viewer>
+        <dburst-log-file-viewer logFileName="info.log"></dburst-log-file-viewer>
       </div>
     </tab>
 
@@ -45,8 +42,7 @@
         "
       >
         <dburst-log-file-viewer
-          viewerId="warningsLogViewer"
-          logFile="warnings.log"
+          logFileName="warnings.log"
         ></dburst-log-file-viewer>
       </div>
     </tab>
@@ -71,8 +67,7 @@
         "
       >
         <dburst-log-file-viewer
-          viewerId="errorsLogViewer"
-          logFile="errors.log"
+          logFileName="errors.log"
         ></dburst-log-file-viewer>
       </div>
     </tab>

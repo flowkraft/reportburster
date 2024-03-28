@@ -1,8 +1,11 @@
 import { Component, Input } from '@angular/core';
 
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
-import { ShellService } from '../../providers/shell.service';
 import { ConfirmService } from '../dialog-confirm/confirm.service';
+import { SettingsService } from '../../providers/settings.service';
+import { FsService } from '../../providers/fs.service';
+import { LogsServiceWebSocket } from '../../providers/ws-logs.service';
+import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 
 @Component({
   selector: 'dburst-button-clear-logs',
@@ -16,9 +19,10 @@ export class ButtonClearLogsComponent {
   @Input() question: string;
 
   constructor(
+    protected logsService: LogsServiceWebSocket,
     protected executionStatsService: ExecutionStatsService,
-    protected shellService: ShellService,
-    protected confirmService: ConfirmService
+    protected confirmService: ConfirmService,
+    protected messagesService: ToastrMessagesService,
   ) {}
 
   onClick() {
@@ -26,8 +30,10 @@ export class ButtonClearLogsComponent {
 
     this.confirmService.askConfirmation({
       message: dialogQuestion,
-      confirmAction: () => {
-        this.shellService.clearLogs();
+      confirmAction: async () => {
+        await this.logsService.clearLogs();
+        this.executionStatsService.logStats.foundDirtyLogFiles = false;
+        this.messagesService.showInfo('Logs cleared.');
       },
     });
   }

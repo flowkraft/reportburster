@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 
 import { javaTemplate } from './java.template';
 
-import { BashService } from '../bash.service';
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
+import { ElectronService } from '../../../core/services/electron/electron.service';
 
 @Component({
   selector: 'dburst-java',
@@ -11,15 +11,15 @@ import { ConfirmService } from '../../../components/dialog-confirm/confirm.servi
 })
 export class JavaComponent {
   constructor(
-    protected bashService: BashService,
-    protected confirmService: ConfirmService
+    protected electronService: ElectronService,
+    protected confirmService: ConfirmService,
   ) {}
 
   restartApp() {
     this.confirmService.askConfirmation({
       message: 'Are you sure that you want to perform this action?',
       confirmAction: () => {
-        this.bashService.restartElectronApp();
+        this.electronService.restartElectronApp();
       },
     });
   }
@@ -29,8 +29,8 @@ export class JavaComponent {
     this.confirmService.askConfirmation({
       message: 'Are you sure that you want to perform this action?',
       confirmAction: () => {
-        this.bashService.typeCommandOnTerminalAndThenPressEnter(
-          'choco install jre8 -PackageParameters "/exclude:64" --yes'
+        this.electronService.typeCommandOnTerminalAndThenPressEnter(
+          'choco install jre8 -PackageParameters "/exclude:64" --yes',
         );
       },
     });
@@ -40,8 +40,8 @@ export class JavaComponent {
     this.confirmService.askConfirmation({
       message: 'Are you sure that you want to perform this action?',
       confirmAction: () => {
-        this.bashService.typeCommandOnTerminalAndThenPressEnter(
-          'choco uninstall jre8 --yes'
+        this.electronService.typeCommandOnTerminalAndThenPressEnter(
+          'choco uninstall jre8 --yes',
         );
       },
     });

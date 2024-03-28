@@ -29,7 +29,7 @@ import com.sourcekraft.documentburster._helpers.DocumentTester.TextSearchType;
 import com.sourcekraft.documentburster._helpers.TestBursterFactory;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.sender.model.EmailMessage;
-import com.sourcekraft.documentburster.settings.model.Attachment;
+import com.sourcekraft.documentburster.common.settings.model.Attachment;
 import com.sourcekraft.documentburster.unit.documentation.userguide.distribute.EmailTest;
 
 public class MultipleTokensTest {

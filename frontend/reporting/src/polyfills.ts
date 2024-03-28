@@ -54,4 +54,4 @@ import 'zone.js'; // Included with Angular CLI.
 (window as any).$ = (window as any).jQuery = require('jquery');
 //import * as $ from 'jquery';
 //declare var $: any;
-//global.process = require('process');
+global.process = require('process');

@@ -1,9 +1,5 @@
-//import * as jetpack from 'fs-jetpack';
-
 import * as path from 'path';
 import uniqueFilename from 'unique-filename';
-import { promises as fsp } from 'fs';
-
 import dayjs from 'dayjs';
 import AdmZip from 'adm-zip';
 
@@ -12,9 +8,8 @@ import { Settings } from '../../helpers/settings';
 
 import * as semver from 'semver';
 
-import * as jetpackt from 'fs-jetpack';
-
 import ElectronLog from 'electron-log';
+import UtilitiesElectron from '../../helpers/utilities-electron';
 
 export class UpdateInfo {
   mode = 'update-now';
@@ -93,20 +88,19 @@ export class Updater {
         '_stats-${stats_info}.log',
       ],
     ]);
+  isElectron: boolean = false;
 
   constructor(
     protected portableExecutableDirectoryPath: string,
-    protected jetpack: typeof jetpackt,
-    protected fs: typeof fsp,
-    protected log?: typeof ElectronLog
+    protected log?: typeof ElectronLog,
   ) {
     this.updateDestinationDirectoryPath = Utilities.slash(
-      this.portableExecutableDirectoryPath
+      this.portableExecutableDirectoryPath,
     );
 
-    this.nowFormatted = dayjs().format('yyyy.MM.DD_HH.mm.ss');
+    this.nowFormatted = dayjs().format('YYYY.MM.DD_HH.mm.ss');
     this.upgdDbTempDirectoryPath = Utilities.slash(
-      uniqueFilename(Utilities.UPG_DB_FOLDER_PATH, this.nowFormatted)
+      uniqueFilename(Utilities.UPG_DB_FOLDER_PATH, this.nowFormatted),
     );
   }
 
@@ -119,8 +113,12 @@ export class Updater {
     if (updateInfo.mode == 'migrate-copy') {
       //console.log('Log 1');
 
-      let validDbExeFilePath = await this.jetpack.existsAsync(
-        updateInfo.updateSourceDirectoryPath + '/DocumentBurster.exe'
+      let validDbExeFilePath = await UtilitiesElectron.existsAsync(
+        `${updateInfo.updateSourceDirectoryPath}/DocumentBurster.exe`,
+      );
+
+      console.log(
+        `validDbExeFilePath = ${updateInfo.updateSourceDirectoryPath}/DocumentBurster.exe`,
       );
 
       if (validDbExeFilePath !== 'file') {
@@ -134,8 +132,8 @@ export class Updater {
           },
         };
 
-        xmlSourceSettings = await new Settings(this.fs).loadSettingsFileAsync(
-          `${updateInfo.updateSourceDirectoryPath}/config/burst/settings.xml`
+        xmlSourceSettings = await new Settings().loadSettingsFileAsync(
+          `${updateInfo.updateSourceDirectoryPath}/config/burst/settings.xml`,
         );
 
         //console.log(
@@ -148,31 +146,41 @@ export class Updater {
     }
     //config folder
     if (!updateInfo.errorMsg) {
-      // Finds all '.xml' files inside 'config' folder but excluding those in 'vendor' subtree.
       //console.log(
-      //  `updateInfo.updateSourceDirectoryPath = ${updateInfo.updateSourceDirectoryPath}`
+      //  `exists(updateInfo.updateSourceDirectoryPath) = ${JSON.stringify(
+      //    sourceDirectoryExists
+      //  )}`
       //);
 
-      //console.log('Log 2');
+      //console.log(
+      //  `Log 2 updateInfo.updateSourceDirectoryPath: ${updateInfo.updateSourceDirectoryPath}`
+      //);
 
-      const srcJetpack = this.jetpack.cwd(updateInfo.updateSourceDirectoryPath);
-      const configFilePaths = await srcJetpack.findAsync('config', {
-        matching: [
-          '*.xml',
-          `!_internal/**/*`,
-          `!_defaults/**/*`,
-          `!burst/internal/**/*`,
-          `!burst/default/**/*`,
-        ],
-      });
+      // Finds all '.xml' files inside 'config' folder but excluding those in 'vendor' subtree.
+      const configFilePaths = await UtilitiesElectron.findAsync(
+        `${updateInfo.updateSourceDirectoryPath}/config`,
+        {
+          matching: [
+            '*.xml',
+            `!_internal/**/*`,
+            `!_defaults/**/*`,
+            `!burst/internal/**/*`,
+            `!burst/default/**/*`,
+          ],
+        },
+      );
 
       for (const configFilePath of configFilePaths) {
-        const fullConfigFilePath = Utilities.slash(
-          `${updateInfo.updateSourceDirectoryPath}/${configFilePath}`
-        );
-        const configFileName = path.basename(fullConfigFilePath);
+        const configFileName = Utilities.basename(configFilePath);
 
-        //console.log(fullConfigFilePath);
+        const fullConfigFilePath = Utilities.slash(
+          `${updateInfo.updateSourceDirectoryPath}/config/burst/${configFileName}`,
+        );
+
+        //console.log(`Log 3.00 configFileName = ${configFileName}`);
+
+        //console.log(`Log 3.0 configFilPath = ${configFilePath}`);
+        //console.log(`Log 3 fullConfigFilePath = ${fullConfigFilePath}`);
         updateInfo.migrateConfigFiles.push([
           configFileName,
           fullConfigFilePath,
@@ -182,19 +190,24 @@ export class Updater {
       //console.log(updateInfo.migrateConfigFiles);
 
       //scripts
-      const scriptFilePaths = await srcJetpack.findAsync('scripts/burst', {
-        matching: ['*.groovy', `!internal/**/*`, `!samples/**/*`],
-      });
+      const scriptFilePaths = await UtilitiesElectron.findAsync(
+        `${updateInfo.updateSourceDirectoryPath}/scripts/burst`,
+        {
+          matching: ['*.groovy', `!internal/**/*`, `!samples/**/*`],
+        },
+      );
 
       for (const scriptFilePath of scriptFilePaths) {
         const fullScriptFilePath = Utilities.slash(
-          `${updateInfo.updateSourceDirectoryPath}/${scriptFilePath}`
+          `${updateInfo.updateSourceDirectoryPath}/${scriptFilePath}`,
         );
         const scriptFileName = path.basename(fullScriptFilePath);
 
         //console.log('Log 3');
 
-        const scriptContent = await this.jetpack.readAsync(fullScriptFilePath);
+        const scriptContent =
+          await UtilitiesElectron.readAsync(fullScriptFilePath);
+        //console.log(`fullScriptFilePath = ${fullScriptFilePath}`);
 
         //only copy / migrate groovy scripts which were customized (which are not empty)
         if (scriptContent) {
@@ -207,24 +220,27 @@ export class Updater {
 
       // Looks for all custom html templates directories
       // (all html templates directories besides the 2 sample templates provided with the app)
-      const templatesFolderPaths = await srcJetpack.findAsync('templates', {
-        matching: [
-          '!html-basic-example',
-          '!html-mobile-responsive-emails',
-          `!html-email-templates/basic-example`,
-          `!html-email-templates/mobile-responsive-example`,
-        ],
-        files: false,
-        directories: true,
-        recursive: false,
-      });
+      const templatesFolderPaths = await UtilitiesElectron.findAsync(
+        `${updateInfo.updateSourceDirectoryPath}/templates`,
+        {
+          matching: [
+            '!html-basic-example',
+            '!html-mobile-responsive-emails',
+            `!html-email-templates/basic-example`,
+            `!html-email-templates/mobile-responsive-example`,
+          ],
+          files: false,
+          directories: true,
+          recursive: false,
+        },
+      );
 
       for (const templateFolderPath of templatesFolderPaths) {
         const fullTemplatePath = Utilities.slash(
-          `${updateInfo.updateSourceDirectoryPath}/${templateFolderPath}`
+          `${updateInfo.updateSourceDirectoryPath}/${templateFolderPath}`,
         );
         const templateName = path.basename(fullTemplatePath);
-
+        //console.log(`fullTemplatePath = ${fullTemplatePath}`);
         updateInfo.templatesFolders.push([templateName, fullTemplatePath]);
       }
     }
@@ -238,7 +254,7 @@ export class Updater {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     new AdmZip(targetFile).extractAllTo(
-      Utilities.slash(path.dirname(targetFile))
+      Utilities.slash(path.dirname(targetFile)),
     );
   };
 
@@ -266,7 +282,7 @@ export class Updater {
     if (updateInfo.mode == 'update-now') {
       //console.log('Log 4');
 
-      await this.jetpack.dirAsync(Utilities.UPG_DB_FOLDER_PATH, {
+      await UtilitiesElectron.dirAsync(Utilities.UPG_DB_FOLDER_PATH, {
         empty: true,
         mode: '700',
       });
@@ -285,32 +301,37 @@ export class Updater {
       //Ensures that directory on given path exists and meets given criteria
       //console.log('Log 5');
 
-      await this.jetpack.dirAsync(`${this.upgdDbTempDirectoryPath}/to`, {
+      await UtilitiesElectron.dirAsync(`${this.upgdDbTempDirectoryPath}/to`, {
         empty: true,
       });
 
       await this.downloadDb(
         latestVersionDownloadUrl,
-        latestVersionTargetFilePath
+        latestVersionTargetFilePath,
       );
 
       //it could be DocumentBurster-8.7.1 but it could  be also just
       //DocumentBurster => it should work in both cases
       let topFolderNamePath = '';
 
-      do {
-        //console.log('Log 6');
+      //console.log(
+      //  `Log 6 - this.upgdDbTempDirectoryPath = ${this.upgdDbTempDirectoryPath}`
+      //);
 
-        topFolderNamePath = this.jetpack.find(
-          `${this.upgdDbTempDirectoryPath}/to`,
-          {
-            matching: 'DocumentBurster*',
-            files: false,
-            directories: true,
-            recursive: false,
-          }
-        )[0];
-      } while (!topFolderNamePath);
+      topFolderNamePath = await UtilitiesElectron.findAsync(
+        `${this.upgdDbTempDirectoryPath}/to`,
+        {
+          matching: ['DocumentBurster*'],
+          files: false,
+          directories: true,
+          recursive: false,
+        },
+      )[0];
+
+      if (!topFolderNamePath)
+        topFolderNamePath = `${this.upgdDbTempDirectoryPath}/to/DocumentBurster`;
+
+      //console.log(`Log 61 - topFolderNamePath = ${topFolderNamePath}`);
 
       topFolderName = path.basename(topFolderNamePath);
 
@@ -322,7 +343,10 @@ export class Updater {
       // keep a backup of the existing installation
       //console.log('Log 7');
 
-      await this.jetpack.copyAsync(homeDirectoryPath, upgdDbFromFolderPath);
+      await UtilitiesElectron.copyAsync(
+        homeDirectoryPath,
+        upgdDbFromFolderPath,
+      );
     }
 
     // console.log(updateInfo);
@@ -345,34 +369,34 @@ export class Updater {
     //old location
     //console.log('Log 8');
 
-    let dbPropertiesFileExists = await this.jetpack.existsAsync(
-      `${updateInfo.updateSourceDirectoryPath}/config/burst/internal/documentburster.properties`
+    let dbPropertiesFileExists = await UtilitiesElectron.existsAsync(
+      `${updateInfo.updateSourceDirectoryPath}/config/burst/internal/documentburster.properties`,
     );
 
     if (dbPropertiesFileExists) {
       //console.log('Log 9');
 
-      await this.jetpack.copyAsync(
+      await UtilitiesElectron.copyAsync(
         `${updateInfo.updateSourceDirectoryPath}/config/burst/internal/documentburster.properties`,
         `${this.updateDestinationDirectoryPath}/config/_internal/documentburster.properties`,
-        { overwrite: true }
+        { overwrite: true },
       );
     }
 
     //new location
     //console.log('Log 10');
 
-    dbPropertiesFileExists = await this.jetpack.existsAsync(
-      `${updateInfo.updateSourceDirectoryPath}/config/_internal/documentburster.properties`
+    dbPropertiesFileExists = await UtilitiesElectron.existsAsync(
+      `${updateInfo.updateSourceDirectoryPath}/config/_internal/documentburster.properties`,
     );
 
     if (dbPropertiesFileExists) {
       //console.log('Log 11');
 
-      await this.jetpack.copyAsync(
+      await UtilitiesElectron.copyAsync(
         `${updateInfo.updateSourceDirectoryPath}/config/_internal/documentburster.properties`,
         `${this.updateDestinationDirectoryPath}/config/_internal/documentburster.properties`,
-        { overwrite: true }
+        { overwrite: true },
       );
     }
     // script files
@@ -389,10 +413,10 @@ export class Updater {
 
       //console.log('Log 12');
 
-      await this.jetpack.copyAsync(
+      await UtilitiesElectron.copyAsync(
         templateFolderPath,
         `${this.updateDestinationDirectoryPath}/templates/${templateFolderName}`,
-        { overwrite: true }
+        { overwrite: true },
       );
     }
 
@@ -401,40 +425,40 @@ export class Updater {
     if (updateInfo.updateOptions.copyoutputfiles) {
       //console.log('Log 13');
 
-      await this.jetpack.copyAsync(
+      await UtilitiesElectron.copyAsync(
         `${updateInfo.updateSourceDirectoryPath}/output`,
         `${this.updateDestinationDirectoryPath}/output`,
-        { overwrite: true }
+        { overwrite: true },
       );
     }
 
     if (updateInfo.updateOptions.copylogfiles) {
       //console.log('Log 14');
 
-      await this.jetpack.copyAsync(
+      await UtilitiesElectron.copyAsync(
         `${updateInfo.updateSourceDirectoryPath}/logs`,
         `${this.updateDestinationDirectoryPath}/logs`,
-        { overwrite: true }
+        { overwrite: true },
       );
     }
 
     if (updateInfo.updateOptions.copyquarantinefiles) {
       //console.log('Log 15');
 
-      await this.jetpack.copyAsync(
+      await UtilitiesElectron.copyAsync(
         `${updateInfo.updateSourceDirectoryPath}/quarantine`,
         `${this.updateDestinationDirectoryPath}/quarantine`,
-        { overwrite: true }
+        { overwrite: true },
       );
     }
 
     if (updateInfo.updateOptions.copybackupfiles) {
-      // console.log('Log 16');
+      //console.log('Log 16');
 
-      await this.jetpack.copyAsync(
+      await UtilitiesElectron.copyAsync(
         `${updateInfo.updateSourceDirectoryPath}/backup`,
         `${this.updateDestinationDirectoryPath}/backup`,
-        { overwrite: true }
+        { overwrite: true },
       );
     }
 
@@ -443,33 +467,33 @@ export class Updater {
       //old location
       //console.log('Log 17');
 
-      let licenseFileExists = await this.jetpack.existsAsync(
-        `${updateInfo.updateSourceDirectoryPath}/config/burst/internal/license.xml`
+      let licenseFileExists = await UtilitiesElectron.existsAsync(
+        `${updateInfo.updateSourceDirectoryPath}/config/burst/internal/license.xml`,
       );
 
       if (licenseFileExists) {
         //console.log('Log 18');
 
-        await this.jetpack.copyAsync(
+        await UtilitiesElectron.copyAsync(
           `${updateInfo.updateSourceDirectoryPath}/config/burst/internal/license.xml`,
           `${this.updateDestinationDirectoryPath}/config/_internal/license.xml`,
-          { overwrite: true }
+          { overwrite: true },
         );
       }
       //new location
       //console.log('Log 19');
 
-      licenseFileExists = await this.jetpack.existsAsync(
-        `${updateInfo.updateSourceDirectoryPath}/config/_internal/license.xml`
+      licenseFileExists = await UtilitiesElectron.existsAsync(
+        `${updateInfo.updateSourceDirectoryPath}/config/_internal/license.xml`,
       );
 
       if (licenseFileExists) {
         //console.log('Log 20');
 
-        await this.jetpack.copyAsync(
+        await UtilitiesElectron.copyAsync(
           `${updateInfo.updateSourceDirectoryPath}/config/_internal/license.xml`,
           `${this.updateDestinationDirectoryPath}/config/_internal/license.xml`,
-          { overwrite: true }
+          { overwrite: true },
         );
       }
     }
@@ -479,27 +503,27 @@ export class Updater {
     if (updateInfo.mode == 'update-now') {
       //console.log('Log 21');
 
-      let allFilesAndFoldersPaths = await this.jetpack.findAsync(
+      let allFilesAndFoldersPaths = await UtilitiesElectron.findAsync(
         homeDirectoryPath,
         {
           matching: ['**/*'],
           directories: true,
-        }
+        },
       );
 
       //remove all but not DocumentBurster.exe
       allFilesAndFoldersPaths = allFilesAndFoldersPaths.filter(
-        (fileFolderPath) => !fileFolderPath.includes('DocumentBurster.exe')
+        (fileFolderPath) => !fileFolderPath.includes('DocumentBurster.exe'),
       );
 
       for (const fileFolderPath of allFilesAndFoldersPaths) {
         //console.log('Log 22');
-        await this.jetpack.removeAsync(fileFolderPath);
+        await UtilitiesElectron.removeAsync(fileFolderPath);
       }
 
       //console.log('Log 23');
 
-      await this.jetpack.copyAsync(
+      await UtilitiesElectron.copyAsync(
         `${this.upgdDbTempDirectoryPath}/to/${topFolderName}`,
         homeDirectoryPath,
         {
@@ -507,7 +531,7 @@ export class Updater {
             `!${this.updateDestinationDirectoryPath}/DocumentBurster.exe`,
           ],
           overwrite: true,
-        }
+        },
       );
 
       if (updateInfo.productInfo.isServerVersion)
@@ -521,48 +545,56 @@ export class Updater {
       zip.writeZip(`${this.upgdDbTempDirectoryPath}/${this.backupZipFileName}`);
 
       //console.log('Log 24');
-      await this.jetpack.moveAsync(
+      await UtilitiesElectron.moveAsync(
         `${this.upgdDbTempDirectoryPath}/${this.backupZipFileName}`,
-        `${updateInfo.updateSourceDirectoryPath}/backup/${this.backupZipFileName}`
+        `${updateInfo.updateSourceDirectoryPath}/backup/${this.backupZipFileName}`,
       );
     }
   }
 
   async migrateSettingsFile(settingsFilePath: string) {
+    //console.log(
+    //  `Log 86 - this.updateDestinationDirectoryPath = ${this.updateDestinationDirectoryPath}`
+    //);
+
+    //console.log(`Log 99 - settingsFilePath = ${settingsFilePath}`);
+
     //console.log('Log 25');
-    let previousXMLSettingsContent = await this.jetpack.readAsync(
-      settingsFilePath
-    );
+    let previousXMLSettingsContent =
+      await UtilitiesElectron.readAsync(settingsFilePath);
 
-    //console.log(`settingsFilePath = ${settingsFilePath}`);
+    if (!previousXMLSettingsContent) {
+      Error.stackTraceLimit = 100;
+      console.log(`Log 25 - settingsFilePath = ${settingsFilePath}`);
+    }
 
-    //console.log(`previousXMLSettingsContent = ${previousXMLSettingsContent}`);
-
-    const previousConfigFileName = path.basename(settingsFilePath);
+    const previousConfigFileName = Utilities.basename(settingsFilePath);
 
     const newMigratedSettingsFilePath = `${this.updateDestinationDirectoryPath}/config/burst/${previousConfigFileName}`;
 
     //STEP0 - some configuration settings node names were renamed (no structural changes)
 
     //this is a quick way to "re-map" such old tag names to the new tag names
-    previousXMLSettingsContent = previousXMLSettingsContent
-      .split('<defaultmessage>')
-      .join('<emailsettings>');
+    if (previousXMLSettingsContent.includes('defaultmessage')) {
+      previousXMLSettingsContent = previousXMLSettingsContent
+        .split('<defaultmessage>')
+        .join('<emailsettings>');
 
-    previousXMLSettingsContent = previousXMLSettingsContent
-      .split('</defaultmessage>')
-      .join('</emailsettings>');
+      previousXMLSettingsContent = previousXMLSettingsContent
+        .split('</defaultmessage>')
+        .join('</emailsettings>');
+    }
 
     if (previousXMLSettingsContent.includes('defaultmessage'))
       if (this.log)
         this.log.error(
-          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'defaultmessage' not expected!`
+          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'defaultmessage' not expected!`,
         );
 
     if (!previousXMLSettingsContent.includes('emailsettings'))
       if (this.log)
         this.log.error(
-          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'emailsettings' not found!`
+          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'emailsettings' not found!`,
         );
 
     previousXMLSettingsContent = previousXMLSettingsContent
@@ -575,13 +607,13 @@ export class Updater {
     if (previousXMLSettingsContent.includes('defaultftp'))
       if (this.log)
         this.log.error(
-          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'defaultftp' not expected!`
+          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'defaultftp' not expected!`,
         );
 
     if (!previousXMLSettingsContent.includes('uploadsettings'))
       if (this.log)
         this.log.error(
-          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'uploadsettings' not found!`
+          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'uploadsettings' not found!`,
         );
 
     previousXMLSettingsContent = previousXMLSettingsContent
@@ -594,13 +626,13 @@ export class Updater {
     if (previousXMLSettingsContent.includes('<url'))
       if (this.log)
         this.log.error(
-          `migrateSettingsFile - ${newMigratedSettingsFilePath} '<url' not expected!`
+          `migrateSettingsFile - ${newMigratedSettingsFilePath} '<url' not expected!`,
         );
 
     if (!previousXMLSettingsContent.includes('ftpcommand'))
       if (this.log)
         this.log.error(
-          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'ftpcommand' not found!`
+          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'ftpcommand' not found!`,
         );
 
     const previousSettings = await Utilities.parseStringPromise(
@@ -608,15 +640,15 @@ export class Updater {
       {
         trim: true,
         explicitArray: false,
-      }
+      },
     );
 
     //console.log(`defaultSettings = ${this.defaultSettings}`);
 
     if (!this.defaultSettings) {
       //console.log('Log 26');
-      const defaultsXMLSettingsContent = await this.jetpack.readAsync(
-        `${this.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
+      const defaultsXMLSettingsContent = await UtilitiesElectron.readAsync(
+        `${this.updateDestinationDirectoryPath}/config/_defaults/settings.xml`,
       );
 
       //console.log(`defaultsXMLSettingsContent = ${defaultsXMLSettingsContent}`);
@@ -629,7 +661,7 @@ export class Updater {
         {
           trim: true,
           explicitArray: false,
-        }
+        },
       );
     }
 
@@ -648,7 +680,7 @@ export class Updater {
         const configurationStructureDidNotChange =
           this.checkObjectHasAllAttributes(
             previousSettings,
-            currentConfigurationItemKeys
+            currentConfigurationItemKeys,
           );
 
         let migratedValue = value;
@@ -657,7 +689,7 @@ export class Updater {
           //initialize the "migratedValue" configuration value with the previous configuration value
           migratedValue = Utilities.getDeeplyNestedLastProp(
             previousSettings,
-            currentConfigurationItemKeys
+            currentConfigurationItemKeys,
           );
 
           //if neeeded, migrate STRINGTEMPLATE_SYNTAX_TO_FREEMARKER_SYNTAX
@@ -677,7 +709,7 @@ export class Updater {
             if (migratedValue)
               for (const [keyST, valueFM] of Array.from(
                 this
-                  .BUILTIN_VARS_LEGACY_STRINGTEMPLATE_SYNTAX_TO_FREEMARKER_SYNTAX_MAP
+                  .BUILTIN_VARS_LEGACY_STRINGTEMPLATE_SYNTAX_TO_FREEMARKER_SYNTAX_MAP,
               )) {
                 //migrate STRINGTEMPLATE_SYNTAX_TO_FREEMARKER_SYNTAX
                 migratedValue = migratedValue.split(keyST).join(valueFM);
@@ -699,7 +731,7 @@ export class Updater {
         this.setDeeplyNestedLastProp(
           migratedSettings,
           migratedValue,
-          currentConfigurationItemKeys
+          currentConfigurationItemKeys,
         );
       }
     });
@@ -734,13 +766,13 @@ export class Updater {
     //STEP5 - manually handle few special situations
     if (
       migratedSettings.documentburster.settings.burstfilename.includes(
-        'input_document_extension'
+        'input_document_extension',
       )
     )
       migratedSettings.documentburster.settings.burstfilename =
         migratedSettings.documentburster.settings.burstfilename.replace(
           'input_document_extension',
-          'output_type_extension'
+          'output_type_extension',
         );
 
     migratedSettings.documentburster.settings.qualityassurance.emailserver.port =
@@ -755,15 +787,15 @@ export class Updater {
     // console.log(`${this.updateDestinationDirectoryPath}/config/burst/${previousConfigFileName}`);
 
     //finally, once everything is migrated, save the configuration
-    return new Settings(this.fs).saveSettingsFileAsync(
+    return new Settings().saveSettingsFileAsync(
       migratedSettings,
-      newMigratedSettingsFilePath
+      newMigratedSettingsFilePath,
     );
   }
 
   async migrateScriptFile(
     scriptFilePath: string,
-    legacyVersion?: string
+    legacyVersion?: string,
   ): Promise<string> {
     const scriptFileName = path.basename(scriptFilePath);
 
@@ -774,7 +806,7 @@ export class Updater {
 
     //ASYNC ISSUE - if I make this async it fails
     //console.log('Log 27');
-    await this.jetpack.copyAsync(scriptFilePath, newScriptFilePath, {
+    await UtilitiesElectron.copyAsync(scriptFilePath, newScriptFilePath, {
       overwrite: true,
     });
 
@@ -867,14 +899,14 @@ export class Updater {
     //console.log('Log 28');
     //console.log(`newScriptFilePath = ${newScriptFilePath}`);
 
-    let scriptContent = await this.jetpack.readAsync(newScriptFilePath);
+    let scriptContent = await UtilitiesElectron.readAsync(newScriptFilePath);
     //console.log(`scriptContent before = ${scriptContent}`);
 
     for (const replaceValue of replaceValues) {
       if (scriptContent.includes(replaceValue.from)) {
         scriptContent = scriptContent.replace(
           new RegExp(replaceValue.from, 'g'),
-          replaceValue.to
+          replaceValue.to,
         );
       }
     }
@@ -882,23 +914,23 @@ export class Updater {
     scriptContent = scriptContent.replace(
       new RegExp(
         'samples\\/stamp\\.pdf \\\\"\\$inputFile\\\\" \\\\"\\$inputFile\\\\"',
-        'g'
+        'g',
       ),
-      '\\"$inputFile\\" samples/Stamp.pdf \\"$inputFile\\"'
+      '\\"$inputFile\\" samples/Stamp.pdf \\"$inputFile\\"',
     );
 
     scriptContent = scriptContent.replace(
       new RegExp(
         'samples\\/Stamp\\.pdf \\\\"\\$inputFile\\\\" \\\\"\\$inputFile\\\\"',
-        'g'
+        'g',
       ),
-      '\\"$inputFile\\" samples/Stamp.pdf \\"$inputFile\\"'
+      '\\"$inputFile\\" samples/Stamp.pdf \\"$inputFile\\"',
     );
 
     //correct groovy vars
     scriptContent = scriptContent.replace(
       new RegExp('.Overlay \\$overlayOptions', 'g'),
-      '.OverlayPDF ${overlayOptions}'
+      '.OverlayPDF ${overlayOptions}',
     );
 
     if (
@@ -907,7 +939,7 @@ export class Updater {
     )
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '.OverlayPDF \${overlayOptions}' not found!`
+          `migrateScriptFile - ${newScriptFilePath} '.OverlayPDF \${overlayOptions}' not found!`,
         );
 
     if (
@@ -916,7 +948,7 @@ export class Updater {
     ) {
       scriptContent = scriptContent.replace(
         new RegExp('-cp \\$pdfBoxClassPath org.apache.pdfbox.', 'g'),
-        '-cp ${pdfBoxClassPath} org.apache.pdfbox.tools.'
+        '-cp ${pdfBoxClassPath} org.apache.pdfbox.tools.',
       );
 
       if (
@@ -926,260 +958,260 @@ export class Updater {
       )
         if (this.log)
           this.log.error(
-            `migrateScriptFile - ${newScriptFilePath} 'org.apache.pdfbox.tools' not found!`
+            `migrateScriptFile - ${newScriptFilePath} 'org.apache.pdfbox.tools' not found!`,
           );
     }
     scriptContent = scriptContent.replace(
       new RegExp('\\$hostName', 'g'),
-      '${hostName}'
+      '${hostName}',
     );
 
     if (scriptContent.includes('$hostName'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$hostName' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$hostName' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$tempFilePath', 'g'),
-      '${tempFilePath}'
+      '${tempFilePath}',
     );
 
     if (scriptContent.includes('$tempFilePath'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$tempFilePath' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$tempFilePath' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$curlOptions', 'g'),
-      '${curlOptions}'
+      '${curlOptions}',
     );
 
     if (scriptContent.includes('$curlOptions'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$curlOptions' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$curlOptions' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$userName', 'g'),
-      '${userName}'
+      '${userName}',
     );
 
     if (scriptContent.includes('$userName'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$userName' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$userName' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$password', 'g'),
-      '${password}'
+      '${password}',
     );
 
     if (scriptContent.includes('$password'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$password' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$password' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$absolutePath', 'g'),
-      '${absolutePath}'
+      '${absolutePath}',
     );
 
     if (scriptContent.includes('$absolutePath'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$absolutePath' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$absolutePath' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$destDir', 'g'),
-      '${destDir}'
+      '${destDir}',
     );
 
     if (scriptContent.includes('$destDir'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$destDir' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$destDir' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$sharedLocationPath', 'g'),
-      '${sharedLocationPath}'
+      '${sharedLocationPath}',
     );
 
     if (scriptContent.includes('$sharedLocationPath'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$sharedLocationPath' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$sharedLocationPath' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$uploadFilePath', 'g'),
-      '${uploadFilePath}'
+      '${uploadFilePath}',
     );
 
     if (scriptContent.includes('$uploadFilePath'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$uploadFilePath' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$uploadFilePath' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$execOptions', 'g'),
-      '${execOptions}'
+      '${execOptions}',
     );
 
     if (scriptContent.includes('$execOptions'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$execOptions' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$execOptions' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$inputFile', 'g'),
-      '${inputFile}'
+      '${inputFile}',
     );
 
     if (scriptContent.includes('$inputFile'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$inputFile' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$inputFile' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$pdfBoxClassPath', 'g'),
-      '${pdfBoxClassPath}'
+      '${pdfBoxClassPath}',
     );
 
     if (scriptContent.includes('$pdfBoxClassPath'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$pdfBoxClassPath' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$pdfBoxClassPath' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$encryptOptions', 'g'),
-      '${encryptOptions}'
+      '${encryptOptions}',
     );
 
     if (scriptContent.includes('$encryptOptions'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$encryptOptions' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$encryptOptions' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$extractedFilePath', 'g'),
-      '${extractedFilePath}'
+      '${extractedFilePath}',
     );
 
     if (scriptContent.includes('$extractedFilePath'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$extractedFilePath' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$extractedFilePath' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$stampedFilePath', 'g'),
-      '${stampedFilePath}'
+      '${stampedFilePath}',
     );
 
     if (scriptContent.includes('$stampedFilePath'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$stampedFilePath' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$stampedFilePath' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$overlayOptions', 'g'),
-      '${overlayOptions}'
+      '${overlayOptions}',
     );
 
     if (scriptContent.includes('$overlayOptions'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$overlayOptions' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$overlayOptions' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$printOptions', 'g'),
-      '${printOptions}'
+      '${printOptions}',
     );
 
     if (scriptContent.includes('$printOptions'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$printOptions' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$printOptions' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$numberedFilePath', 'g'),
-      '${numberedFilePath}'
+      '${numberedFilePath}',
     );
 
     if (scriptContent.includes('$numberedFilePath'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$numberedFilePath' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$numberedFilePath' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$host', 'g'),
-      '${host}'
+      '${host}',
     );
 
     if (scriptContent.includes('$host'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$host' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$host' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$port', 'g'),
-      '${port}'
+      '${port}',
     );
 
     if (scriptContent.includes('$port'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$port' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$port' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$user', 'g'),
-      '${user}'
+      '${user}',
     );
 
     if (scriptContent.includes('$user'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$user' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$user' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$subject', 'g'),
-      '${subject}'
+      '${subject}',
     );
 
     if (scriptContent.includes('$subject'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$subject' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$subject' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$from', 'g'),
-      '${from}'
+      '${from}',
     );
 
     if (scriptContent.includes('$from'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$from' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$from' not expected!`,
         );
 
     scriptContent = scriptContent.replace(new RegExp('\\$to', 'g'), '${to}');
@@ -1187,18 +1219,18 @@ export class Updater {
     if (scriptContent.includes('$to'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$to' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$to' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$message', 'g'),
-      '${message}'
+      '${message}',
     );
 
     if (scriptContent.includes('$message'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$message' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$message' not expected!`,
         );
 
     scriptContent = scriptContent.replace(new RegExp('\\$ssl', 'g'), '${ssl}');
@@ -1206,110 +1238,110 @@ export class Updater {
     if (scriptContent.includes('$ssl'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$ssl' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$ssl' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$enableStartTLS', 'g'),
-      '${enableStartTLS}'
+      '${enableStartTLS}',
     );
 
     if (scriptContent.includes('$enableStartTLS'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$enableStartTLS' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$enableStartTLS' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$mergedFileName', 'g'),
-      '${mergedFileName}'
+      '${mergedFileName}',
     );
 
     if (scriptContent.includes('$mergedFileName'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$mergedFileName' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$mergedFileName' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\${employeeRow.employee_id}', 'g'),
-      '$employeeRow.employee_id'
+      '$employeeRow.employee_id',
     );
 
     if (scriptContent.includes('${employeeRow.employee_id}'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '\${employeeRow.employee_id}' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '\${employeeRow.employee_id}' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('String\\.valueOf\\("\\${token}"\\)', 'g'),
-      `"\${token}"`
+      `"\${token}"`,
     );
 
     scriptContent = scriptContent.replace(
       new RegExp('String\\.valueOf\\("\\${emailAddress}"\\)', 'g'),
-      `"\${emailAddress}"`
+      `"\${emailAddress}"`,
     );
 
     scriptContent = scriptContent.replace(
       new RegExp('String\\.valueOf\\("\\${firstName}"\\)', 'g'),
-      `"\${firstName}"`
+      `"\${firstName}"`,
     );
 
     scriptContent = scriptContent.replace(
       new RegExp('String\\.valueOf\\("\\${lastName}"\\)', 'g'),
-      `"\${lastName}"`
+      `"\${lastName}"`,
     );
 
     if (scriptContent.includes('String.valueOf'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'String.valueOf' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'String.valueOf' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$var0\\$', 'g'),
-      '${var0}'
+      '${var0}',
     );
 
     if (scriptContent.includes('$var0$'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$var0$' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$var0$' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$var1\\$', 'g'),
-      '${var1}'
+      '${var1}',
     );
 
     if (scriptContent.includes('$var1$'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$var1$' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$var1$' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$var2\\$', 'g'),
-      '${var2}'
+      '${var2}',
     );
 
     if (scriptContent.includes('$var2$'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$var2$' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$var2$' not expected!`,
         );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$var3\\$', 'g'),
-      '${var3}'
+      '${var3}',
     );
 
     if (scriptContent.includes('$var3$'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$var3$' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} '$var3$' not expected!`,
         );
     //end correct groovy vars
 
@@ -1318,116 +1350,116 @@ export class Updater {
     if (scriptContent.includes('import com.smartwish'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'import com.smartwish' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'import com.smartwish' not expected!`,
         );
 
     if (scriptContent.includes('extractFilePath'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'extractFilePath' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'extractFilePath' not expected!`,
         );
 
     if (
       scriptContent.includes(
-        'samples/Stamp.pdf \\"$inputFile\\" \\"$inputFile\\"'
+        'samples/Stamp.pdf \\"$inputFile\\" \\"$inputFile\\"',
       )
     )
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'samples/Stamp.pdf \\"$inputFile\\" \\"$inputFile\\"' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'samples/Stamp.pdf \\"$inputFile\\" \\"$inputFile\\"' not expected!`,
         );
 
     if (
       scriptContent.includes(
-        'samples/stamp.pdf \\"$inputFile\\" \\"$inputFile\\"'
+        'samples/stamp.pdf \\"$inputFile\\" \\"$inputFile\\"',
       )
     )
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'samples/stamp.pdf \\"$inputFile\\" \\"$inputFile\\"' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'samples/stamp.pdf \\"$inputFile\\" \\"$inputFile\\"' not expected!`,
         );
 
     if (scriptContent.includes('org.apache.commons.vfs.tasks'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'org.apache.commons.vfs.tasks' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'org.apache.commons.vfs.tasks' not expected!`,
         );
 
     if (scriptContent.includes('commons-logging'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'commons-logging' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'commons-logging' not expected!`,
         );
 
     if (scriptContent.includes('jcl-over-slf4j-1.7.5.jar'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'jcl-over-slf4j-1.7.5.jar' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'jcl-over-slf4j-1.7.5.jar' not expected!`,
         );
 
     if (scriptContent.includes('slf4j-api-1.7.5.jar'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'slf4j-api-1.7.5.jar' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'slf4j-api-1.7.5.jar' not expected!`,
         );
 
     if (scriptContent.includes('pdfbox-1.0.0.jar'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'pdfbox-1.0.0.jar' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'pdfbox-1.0.0.jar' not expected!`,
         );
 
     if (scriptContent.includes('pdfbox-1.8.2.jar'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'pdfbox-1.8.2.jar' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'pdfbox-1.8.2.jar' not expected!`,
         );
 
     if (scriptContent.includes('jempbox-1.0.0.jar'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'jempbox-1.0.0.jar' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'jempbox-1.0.0.jar' not expected!`,
         );
 
     if (scriptContent.includes('jempbox-1.8.2.jar'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'jempbox-1.8.2.jar' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'jempbox-1.8.2.jar' not expected!`,
         );
 
     if (scriptContent.includes('fontbox-1.0.0.jar'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'fontbox-1.0.0.jar' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'fontbox-1.0.0.jar' not expected!`,
         );
 
     if (scriptContent.includes('fontbox-1.8.2.jar'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'fontbox-1.8.2.jar' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'fontbox-1.8.2.jar' not expected!`,
         );
 
     if (scriptContent.includes('bcmail-jdk15-1.44.jar'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'bcmail-jdk15-1.44.jar' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'bcmail-jdk15-1.44.jar' not expected!`,
         );
 
     if (scriptContent.includes('bcprov-jdk15-1.44.jar'))
       if (this.log)
         this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'bcprov-jdk15-1.44.jar' not expected!`
+          `migrateScriptFile - ${newScriptFilePath} 'bcprov-jdk15-1.44.jar' not expected!`,
         );
 
     //console.log('Log 29');
-    await this.jetpack.writeAsync(newScriptFilePath, scriptContent);
+    await UtilitiesElectron.writeAsync(newScriptFilePath, scriptContent);
 
     return Promise.resolve(newScriptFilePath);
   }
 
   async removeTempUpgradeFolder() {
     //console.log('Log 30');
-    return this.jetpack.removeAsync(this.upgdDbTempDirectoryPath);
+    return UtilitiesElectron.removeAsync(this.upgdDbTempDirectoryPath);
   }
 
   checkObjectHasAllAttributes(obj: any, attrs: Array<string>): boolean {

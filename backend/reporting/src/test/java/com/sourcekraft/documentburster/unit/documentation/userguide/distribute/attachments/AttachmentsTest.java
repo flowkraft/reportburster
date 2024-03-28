@@ -14,7 +14,7 @@ import org.junit.Test;
 import com.sourcekraft.documentburster._helpers.PdfTestUtils;
 import com.sourcekraft.documentburster._helpers.TestBursterFactory;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
-import com.sourcekraft.documentburster.settings.model.Attachment;
+import com.sourcekraft.documentburster.common.settings.model.Attachment;
 import com.sourcekraft.documentburster.unit.further.other.UtilsTest;
 
 public class AttachmentsTest {

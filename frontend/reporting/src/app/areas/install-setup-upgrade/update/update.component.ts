@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 
 //import * as jetpack from 'fs-jetpack';
 //import * as slash from 'slash';
@@ -16,15 +16,17 @@ import { updateTemplate } from './update.template';
 import { UpdateInfo, Updater } from '../updater';
 
 import Utilities from '../../../helpers/utilities';
-import { SettingsService } from '../../../providers/settings.service';
 import { LicenseService } from '../../../providers/license.service';
 import { ExecutionStatsService } from '../../../providers/execution-stats.service';
 import { ToastrMessagesService } from '../../../providers/toastr-messages.service';
-import { ShellService } from '../../../providers/shell.service';
-import { ElectronService } from '../../../core/services';
-import { UsageDetails } from '../../../model/usage-details';
+import { UsageDetailsInfo } from '../../../models/usage-details-info.model';
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
+import { SettingsService } from '../../../providers/settings.service';
+import { ShellService } from '../../../providers/shell.service';
 import { BashService } from '../bash.service';
+import { ElectronService } from '../../../core/services/electron/electron.service';
+import { FsService } from '../../../providers/fs.service';
+import UtilitiesElectron from '../../../helpers/utilities-electron';
 
 @Component({
   selector: 'dburst-update',
@@ -49,27 +51,20 @@ export class UpdateComponent implements OnInit {
     protected messagesService: ToastrMessagesService,
     protected shellService: ShellService,
     protected bashService: BashService,
-    protected electronService: ElectronService
+    protected electronService: ElectronService,
+    protected fsService: FsService,
   ) {
-    this.homeDirectoryPath = Utilities.slash(
-      this.electronService.path.resolve(
-        this.electronService.PORTABLE_EXECUTABLE_DIR
-      )
-    );
+    this.homeDirectoryPath = this.settingsService.PORTABLE_EXECUTABLE_DIR;
     this.updater = new Updater(
       this.homeDirectoryPath,
-      this.electronService.jetpack,
-      this.electronService.fs,
-      this.electronService.log
+      this.electronService.log,
     );
+    this.updater.isElectron = true;
   }
 
   async ngOnInit(): Promise<void> {
-    this.updateInfo.updateSourceDirectoryPath = Utilities.slash(
-      this.electronService.path.resolve(
-        this.electronService.PORTABLE_EXECUTABLE_DIR
-      )
-    );
+    this.updateInfo.updateSourceDirectoryPath =
+      this.settingsService.PORTABLE_EXECUTABLE_DIR;
 
     await this.settingsService.loadDefaultSettingsFileAsync();
 
@@ -94,15 +89,23 @@ export class UpdateComponent implements OnInit {
   }
 
   async onExistingInstallationFolderSelected(
-    oldInstallationFolderPath: string
+    oldInstallationFolderPath: string,
   ) {
     if (oldInstallationFolderPath) {
+      this.letMeUpdateSourceDirectoryPath = oldInstallationFolderPath;
+
+      if (oldInstallationFolderPath.includes('playwright/'))
+        this.letMeUpdateSourceDirectoryPath = `${Utilities.getParentFolderPath(
+          this.settingsService.PORTABLE_EXECUTABLE_DIR,
+        )}/upgrade/baseline/DocumentBurster`;
+
       this.updateInfo.errorMsg = '';
       this.updateInfo.mode = 'migrate-copy';
 
-      this.letMeUpdateSourceDirectoryPath = Utilities.slash(
-        this.electronService.path.resolve(oldInstallationFolderPath)
+      console.log(
+        `this.letMeUpdateSourceDirectoryPath : ${this.letMeUpdateSourceDirectoryPath}`,
       );
+
       this.updateInfo.updateSourceDirectoryPath =
         this.letMeUpdateSourceDirectoryPath;
 
@@ -137,10 +140,12 @@ export class UpdateComponent implements OnInit {
         await this.licenseService.loadLicenseFileAsync();
 
         if (this.licenseService.licenseDetails.license.key)
-          this.licenseService.verifyLicense('-cl');
+          await this.licenseService.verifyLicense('-cl');
 
         this.settingsService.configurationFiles =
-          await this.settingsService.loadAllSettingsFilesAsync();
+          await this.settingsService.loadAllSettingsFilesAsync({
+            forceReload: true,
+          });
 
         await this.licenseService.loadLicenseFileAsync();
 
@@ -163,19 +168,19 @@ export class UpdateComponent implements OnInit {
 
   /*
   async createJobFile(): Promise<string> {
-    const filePath = `${this.electronService.PORTABLE_EXECUTABLE_DIR}/updating DocumentBurster, please wait`;
+    const filePath = `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/updating DocumentBurster, please wait`;
     const jobType = 'update';
 
     const jobFileName = Utilities.getRandomJobFileName();
 
-    const jobFilePath = `${this.electronService.PORTABLE_EXECUTABLE_DIR}/temp/${jobFileName}`;
+    const jobFilePath = `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/temp/${jobFileName}`;
     const jobFileContent = Utilities.getJobFileContent(
       filePath,
       jobType,
       '14234234324324'
     );
 
-    await this.electronService.jetpack.writeAsync(jobFilePath, jobFileContent);
+    await this.fsService.writeAsync(jobFilePath, jobFileContent);
 
     return Promise.resolve(
       Utilities.slash(this.electronService.path.resolve(jobFilePath))
@@ -188,23 +193,25 @@ export class UpdateComponent implements OnInit {
     const nowFormatted = dayjs().utc().format('YYYY-MM-DD HH-mm-ss');
 
     // Creates directory if doesn't exist
-    const backupFolderPath = `${this.electronService.PORTABLE_EXECUTABLE_DIR}/backup/config-files-before-updating/${this.settingsService.version}/${nowFormatted}`;
-    await this.electronService.jetpack.dirAsync(backupFolderPath);
+    const backupFolderPath = `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/backup/config-files-before-updating/${this.settingsService.version}/${nowFormatted}`;
 
-    await this.electronService.jetpack.copyAsync(
-      `${this.electronService.PORTABLE_EXECUTABLE_DIR}`,
+    console.log(`dirAsync.backupFolderPath: ${backupFolderPath}`);
+    await UtilitiesElectron.dirAsync(backupFolderPath);
+
+    await UtilitiesElectron.copyAsync(
+      `${this.settingsService.PORTABLE_EXECUTABLE_DIR}`,
       backupFolderPath,
-      { matching: ['config/**/*'], overwrite: true }
+      { matching: ['config/**/*'], overwrite: true },
     );
-    await this.electronService.jetpack.copyAsync(
-      `${this.electronService.PORTABLE_EXECUTABLE_DIR}`,
+    await UtilitiesElectron.copyAsync(
+      `${this.settingsService.PORTABLE_EXECUTABLE_DIR}`,
       backupFolderPath,
-      { matching: ['scripts/**/*'], overwrite: true }
+      { matching: ['scripts/**/*'], overwrite: true },
     );
-    await this.electronService.jetpack.copyAsync(
-      `${this.electronService.PORTABLE_EXECUTABLE_DIR}`,
+    await UtilitiesElectron.copyAsync(
+      `${this.settingsService.PORTABLE_EXECUTABLE_DIR}`,
       backupFolderPath,
-      { matching: ['templates/**/*'], overwrite: true }
+      { matching: ['templates/**/*'], overwrite: true },
     );
   }
 
@@ -213,14 +220,15 @@ export class UpdateComponent implements OnInit {
 
     let updateError: Error = null;
 
-    this.updateInfo.jobFilePath = await this.bashService.createJobFile(
-      'update'
-    );
+    this.updateInfo.jobFilePath =
+      await this.bashService.createJobFile('update');
 
     try {
-      await this.electronService.jetpack.removeAsync(
-        this.shellService.logFilePath
+      console.log(
+        `removeAsync shellService.logFilePath: ${this.shellService.logFilePath}`,
       );
+
+      await UtilitiesElectron.removeAsync(this.shellService.logFilePath);
 
       this.executionStatsService.jobStats.numberOfActiveUpdateJobs = 1;
 
@@ -233,18 +241,18 @@ export class UpdateComponent implements OnInit {
 
       if (this.updateInfo.mode == 'update-now') {
         //START - REMOVE THIS AFTER FEW RELEASES (when the jar will be there)
-        let updateJarExists = await this.electronService.jetpack.existsAsync(
-          this.settingsService.UPDATE_JAR_FILE_PATH
+        let updateJarExists = await UtilitiesElectron.existsAsync(
+          this.settingsService.UPDATE_JAR_FILE_PATH,
         );
         if (!updateJarExists) {
           // console.log(`from: ${this._updater.upgdDbTempDirectoryPath}/from/DocumentBurster/lib/burst/${this.electronService.path.basename(this._settingsService.UPDATE_JAR_FILE_PATH)}, to: ${this.settingsService.UPDATE_JAR_FILE_PATH}`)
-          await this.electronService.jetpack.copyAsync(
+          await UtilitiesElectron.copyAsync(
             `${
               this.updater.upgdDbTempDirectoryPath
-            }/from/DocumentBurster/lib/burst/${this.electronService.path.basename(
-              this.settingsService.UPDATE_JAR_FILE_PATH
+            }/from/DocumentBurster/lib/burst/${Utilities.basename(
+              this.settingsService.UPDATE_JAR_FILE_PATH,
             )}`,
-            this.settingsService.UPDATE_JAR_FILE_PATH
+            this.settingsService.UPDATE_JAR_FILE_PATH,
           );
         }
         //END - REMOVE THIS AFTER FEW RELEASES (when the jar will be there)
@@ -257,7 +265,7 @@ export class UpdateComponent implements OnInit {
         await this.shellService.doKillOldExeThenCopyAndStartNewExe(
           this.updateInfo.jobFilePath,
           `${this.updater.updateDestinationDirectoryPath}/DocumentBurster.exe`,
-          this.updater.upgdDbTempDirectoryPath
+          this.updater.upgdDbTempDirectoryPath,
         );
       }
 
@@ -271,34 +279,34 @@ export class UpdateComponent implements OnInit {
 
       if (updateError.message.includes('zip'))
         this.messagesService.showError(
-          "Ups, there was an update error. Please try to 'Update Now' again!"
+          "Ups, there was an update error. Please try to 'Update Now' again!",
         );
       else this.messagesService.showError('Update Error!');
     } finally {
       this.electronService.log.info(
-        `Updater.updateDestinationDirectoryPath: ${this.updater.updateDestinationDirectoryPath}`
+        `Updater.updateDestinationDirectoryPath: ${this.updater.updateDestinationDirectoryPath}`,
       );
 
       if (this.updateInfo.mode == 'update-now') {
         this.electronService.log.info(
-          `Updater.upgdDbTempDirectoryPath: ${this.updater.upgdDbTempDirectoryPath}`
+          `Updater.upgdDbTempDirectoryPath: ${this.updater.upgdDbTempDirectoryPath}`,
         );
         this.electronService.log.info(
-          `Updater.backupZipFileName: ${this.updater.backupZipFileName}`
+          `Updater.backupZipFileName: ${this.updater.backupZipFileName}`,
         );
       }
 
       this.electronService.log.info(
-        `Updater.updateInfo: ${JSON.stringify(this.updateInfo)}`
+        `Updater.updateInfo: ${JSON.stringify(this.updateInfo)}`,
       );
 
       const duration = this.electronService.clock(start)[0];
 
       this.electronService.log.info(
-        `Updater.Duration: ${Math.round(duration / 1000)} seconds`
+        `Updater.Duration: ${Math.round(duration / 1000)} seconds`,
       );
 
-      if (this.electronService.SHOULD_SEND_STATS)
+      if (this.settingsService.SHOULD_SEND_STATS)
         this.doStats(this.updateInfo, updateError, duration);
 
       this.executionStatsService.jobStats.numberOfActiveUpdateJobs = 0;
@@ -306,9 +314,10 @@ export class UpdateComponent implements OnInit {
       this.letMeUpdateSourceDirectoryPath = null;
       this.letMeUpdateManually = false;
 
-      return this.electronService.jetpack.removeAsync(
-        this.updateInfo.jobFilePath
+      console.log(
+        `removeAsync this.updateInfo.jobFilePath: ${this.updateInfo.jobFilePath}`,
       );
+      return UtilitiesElectron.removeAsync(this.updateInfo.jobFilePath);
     }
   }
 
@@ -327,7 +336,7 @@ export class UpdateComponent implements OnInit {
     else eventDetails += '-linux';
 
     eventDetails = `${eventDetails}-${Math.round(executionTime / 1000)}sec`;
-    const tt = new UsageDetails();
+    const tt = new UsageDetailsInfo();
 
     tt.text1 = eventDetails;
 
@@ -340,7 +349,7 @@ export class UpdateComponent implements OnInit {
     if (err) {
       tt.status2 = 'FAILED';
 
-      tt.clob1 = this.electronService.stackUtils.clean(err.stack);
+      //tt.clob1 = this.electronService.stackUtils.clean(err.stack);
     }
 
     tt.clob2 = JSON.stringify(updateInfo);

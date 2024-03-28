@@ -10,19 +10,18 @@ import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 
 import { leftMenuTemplate } from './templates/_left-menu';
 import { tabsTemplate } from './templates/_tabs';
-import {
-  CfgTmplFileInfo,
-  SettingsService,
-} from '../../providers/settings.service';
+import { CfgTmplFileInfo } from '../../providers/settings.service';
 import { tabConfigurationTemplatesTemplate } from './templates/tab-conf-templates';
 import { tabConfTemplatesSamples } from './templates/tab-conf-templates-samples';
 
 import { tabLicenseTemplate } from './templates/tab-license';
 
 import { modalConfigurationTemplateTemplate } from './templates/modal-conf-template';
-import { ElectronService } from '../../core/services';
 import { ConfirmService } from '../../components/dialog-confirm/confirm.service';
 import { SamplesService } from '../../providers/samples.service';
+import { SettingsService } from '../../providers/settings.service';
+import { FsService } from '../../providers/fs.service';
+import Utilities from '../../helpers/utilities';
 
 @Component({
   selector: 'dburst-configuration-templates',
@@ -54,9 +53,9 @@ export class ConfigurationTemplatesComponent implements OnInit {
   constructor(
     protected confirmService: ConfirmService,
     protected messagesService: ToastrMessagesService,
-    protected electronService: ElectronService,
+    protected fsService: FsService,
     protected settingsService: SettingsService,
-    protected samplesService: SamplesService
+    protected samplesService: SamplesService,
   ) {
     this.modalConfigurationTemplateInfo = {
       fileInfo: {
@@ -112,18 +111,16 @@ export class ConfigurationTemplatesComponent implements OnInit {
       message: dialogQuestion,
       confirmAction: async () => {
         if (selectedConfiguration.type == 'config-burst-legacy') {
-          await this.electronService.jetpack.removeAsync(
-            selectedConfiguration.filePath
-          );
+          await this.fsService.removeAsync(selectedConfiguration.filePath);
         } else {
-          await this.electronService.jetpack.removeAsync(
-            `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${selectedConfiguration.folderName}`
+          await this.fsService.removeAsync(
+            `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${selectedConfiguration.folderName}`,
           );
         }
 
         _.remove(
           this.settingsService.configurationFiles,
-          (o) => o.filePath === selectedConfiguration.filePath
+          (o) => o.filePath === selectedConfiguration.filePath,
         );
 
         this.messagesService.showInfo('Done');
@@ -141,21 +138,21 @@ export class ConfigurationTemplatesComponent implements OnInit {
         let configurationValues: any;
         const currentTemplateName = selectedConfiguration.templateName;
         configurationValues = await this.settingsService.loadSettingsFileAsync(
-          this.settingsService.getDefaultsConfigurationValuesFilePath()
+          this.settingsService.getDefaultsConfigurationValuesFilePath(),
         );
 
         //don't do this for config-burst-legacy and config-samples
         if (selectedConfiguration.type == 'config-reports') {
-          await this.electronService.jetpack.copyAsync(
+          await this.fsService.copyAsync(
             `${this.settingsService.CONFIGURATION_DEFAULTS_FOLDER_PATH}/reporting.xml`,
             `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${selectedConfiguration.folderName}/reporting.xml`,
             {
               overwrite: true,
-            }
+            },
           );
 
           /*
-          await this.electronService.jetpack.copyAsync(
+          await this.fsService.copyAsync(
             `${this.settingsService.CONFIGURATION_DEFAULTS_FOLDER_PATH}/datatables.xml`,
             `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${selectedConfiguration.folderName}/datatables.xml`
           );
@@ -167,13 +164,15 @@ export class ConfigurationTemplatesComponent implements OnInit {
         configurationValues.documentburster.settings.visibility = 'visible';
 
         await this.settingsService.saveSettingsFileAsync(
+          selectedConfiguration.filePath,
           configurationValues,
-          selectedConfiguration.filePath
         );
 
         this.getSelectedConfiguration().visibility = 'visible';
 
-        await this.settingsService.loadAllSettingsFilesAsync();
+        await this.settingsService.loadAllSettingsFilesAsync({
+          forceReload: true,
+        });
         this.messagesService.showInfo('Saved');
       },
     });
@@ -194,7 +193,7 @@ export class ConfigurationTemplatesComponent implements OnInit {
       confirmAction: async () => {
         const settingsXmlConfigurationValues =
           await this.settingsService.loadSettingsFileAsync(
-            selectedConfiguration.filePath
+            selectedConfiguration.filePath,
           );
 
         if (visibility == 'hidden') {
@@ -207,12 +206,12 @@ export class ConfigurationTemplatesComponent implements OnInit {
           visibility;
 
         await this.settingsService.saveSettingsFileAsync(
+          selectedConfiguration.filePath,
           settingsXmlConfigurationValues,
-          selectedConfiguration.filePath
         );
 
         console.log(
-          `toggleVisibility selectedConfiguration.filePath: ${selectedConfiguration.filePath}`
+          `toggleVisibility selectedConfiguration.filePath: ${selectedConfiguration.filePath}`,
         );
 
         this.getSelectedConfiguration().visibility = visibility;
@@ -268,7 +267,7 @@ export class ConfigurationTemplatesComponent implements OnInit {
 
       const settingsXmlConfigurationValues =
         await this.settingsService.loadSettingsFileAsync(
-          selectedConfiguration.filePath
+          selectedConfiguration.filePath,
         );
 
       this.modalConfigurationTemplateInfo.fileInfo.notes =
@@ -299,14 +298,14 @@ export class ConfigurationTemplatesComponent implements OnInit {
 
         copyFromXmlConfigurationValues =
           await this.settingsService.loadSettingsFileAsync(
-            this.modalConfigurationTemplateInfo.copyFromPath
+            this.modalConfigurationTemplateInfo.copyFromPath,
           );
       }
 
       console.log(
         `copyFromXmlConfigurationValues = ${JSON.stringify(
-          copyFromXmlConfigurationValues
-        )}`
+          copyFromXmlConfigurationValues,
+        )}`,
       );
 
       this.modalConfigurationTemplateInfo.fileInfo.capReportDistribution =
@@ -342,8 +341,8 @@ export class ConfigurationTemplatesComponent implements OnInit {
 
       // tslint:disable-next-line:max-line-length
       this.modalConfigurationTemplateInfo.templateFilePathExists =
-        await this.electronService.jetpack.existsAsync(
-          this.modalConfigurationTemplateInfo.fileInfo.filePath
+        await this.fsService.existsAsync(
+          this.modalConfigurationTemplateInfo.fileInfo.filePath,
         );
 
       this.modalConfigurationTemplateInfo.templateHowTo = '';
@@ -372,7 +371,7 @@ export class ConfigurationTemplatesComponent implements OnInit {
   /*
   async checkForAValidCopyFromPath() {
     if (this.modalConfigurationTemplateInfo.copyFromPath) {
-      const fileExists = await this.electronService.jetpack.existsAsync(
+      const fileExists = await this.fsService.existsAsync(
         this.modalConfigurationTemplateInfo.copyFromPath
       );
 
@@ -420,7 +419,7 @@ export class ConfigurationTemplatesComponent implements OnInit {
     if (this.modalConfigurationTemplateInfo.crudMode == 'create') {
       const settingsXmlConfigurationValues =
         await this.settingsService.loadSettingsFileAsync(
-          this.modalConfigurationTemplateInfo.copyFromPath
+          this.modalConfigurationTemplateInfo.copyFromPath,
         );
       settingsXmlConfigurationValues.documentburster.settings.template =
         this.modalConfigurationTemplateInfo.fileInfo.templateName;
@@ -456,27 +455,28 @@ export class ConfigurationTemplatesComponent implements OnInit {
 
       console.log(
         `modalConfigurationTemplateInfo = ${JSON.stringify(
-          this.modalConfigurationTemplateInfo
-        )}`
+          this.modalConfigurationTemplateInfo,
+        )}`,
       );
 
-      const folderName = this.electronService.path.basename(
-        this.electronService.path.dirname(
-          this.modalConfigurationTemplateInfo.fileInfo.filePath
-        )
+      const folderName = Utilities.basename(
+        Utilities.dirname(
+          this.modalConfigurationTemplateInfo.fileInfo.filePath,
+        ),
       );
 
       console.log(
-        `FOLDER_PATH = ${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${folderName}`
+        `FOLDER_PATH = ${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${folderName}`,
       );
 
-      await this.electronService.jetpack.dirAsync(
-        `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${folderName}`
+      await this.fsService.dirAsync(
+        `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${folderName}`,
       );
+      console.log('BEFORE SAVE');
 
       await this.settingsService.saveSettingsFileAsync(
+        this.modalConfigurationTemplateInfo.fileInfo.filePath,
         settingsXmlConfigurationValues,
-        this.modalConfigurationTemplateInfo.fileInfo.filePath
       );
 
       //console.log(this.modalConfigurationTemplateInfo.copyFromPath);
@@ -489,13 +489,13 @@ export class ConfigurationTemplatesComponent implements OnInit {
         this.settingsService.getDefaultsConfigurationValuesFilePath()
       ) {
         // console.log('config/_defaults');
-        await this.electronService.jetpack.copyAsync(
+        await this.fsService.copyAsync(
           `${this.settingsService.CONFIGURATION_DEFAULTS_FOLDER_PATH}/reporting.xml`,
-          `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${folderName}/reporting.xml`
+          `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${folderName}/reporting.xml`,
         );
 
         /*
-        await this.electronService.jetpack.copyAsync(
+        await this.fsService.copyAsync(
           `${this.settingsService.CONFIGURATION_DEFAULTS_FOLDER_PATH}/datatables.xml`,
           `${this.modalConfigurationTemplateInfo.templateFolderPath}/datatables.xml`
         );
@@ -503,25 +503,23 @@ export class ConfigurationTemplatesComponent implements OnInit {
       } else {
         //console.log('config/reports');
 
-        let copyFromFolderName = this.electronService.path.basename(
-          this.electronService.path.dirname(
-            this.modalConfigurationTemplateInfo.copyFromPath
-          )
+        let copyFromFolderName = Utilities.basename(
+          Utilities.dirname(this.modalConfigurationTemplateInfo.copyFromPath),
         );
 
         if (copyFromFolderName != 'burst')
-          await this.electronService.jetpack.copyAsync(
+          await this.fsService.copyAsync(
             `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${copyFromFolderName}/reporting.xml`,
-            `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${folderName}/reporting.xml`
+            `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${folderName}/reporting.xml`,
           );
         else
-          await this.electronService.jetpack.copyAsync(
+          await this.fsService.copyAsync(
             `${this.settingsService.CONFIGURATION_DEFAULTS_FOLDER_PATH}/reporting.xml`,
-            `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${folderName}/reporting.xml`
+            `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${folderName}/reporting.xml`,
           );
 
         /*
-        await this.electronService.jetpack.copyAsync(
+        await this.fsService.copyAsync(
           `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${copyFromFolderName}/datatables.xml`,
           `${this.modalConfigurationTemplateInfo.templateFolderPath}/datatables.xml`
         );
@@ -533,8 +531,8 @@ export class ConfigurationTemplatesComponent implements OnInit {
           .capReportGenerationMailMerge;
 
       this.settingsService.configurationFiles.push({
-        fileName: this.electronService.path.basename(
-          this.modalConfigurationTemplateInfo.fileInfo.filePath
+        fileName: Utilities.basename(
+          this.modalConfigurationTemplateInfo.fileInfo.filePath,
         ),
         filePath: this.modalConfigurationTemplateInfo.fileInfo.filePath,
         templateName: this.modalConfigurationTemplateInfo.fileInfo.templateName,
@@ -579,8 +577,8 @@ export class ConfigurationTemplatesComponent implements OnInit {
         this.modalConfigurationTemplateInfo.fileInfo.notes;
 
       await this.settingsService.saveSettingsFileAsync(
+        this.modalConfigurationTemplateInfo.fileInfo.filePath,
         configurationValues,
-        this.modalConfigurationTemplateInfo.fileInfo.filePath
       );
 
       this.getSelectedConfiguration().templateName =

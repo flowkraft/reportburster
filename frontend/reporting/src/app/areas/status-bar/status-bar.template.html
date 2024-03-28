@@ -161,6 +161,19 @@
               <u>{{ "AREAS.STATUS-BAR.VIEW-LOGS" | translate }}</u>
             </a>
           </li>
+          <li *ngIf="executionStatsWsService.settingsService.isJServerStarted">
+            <a href="#"
+              ><i
+                class="fa fa-check-circle-o"
+                style="color: #4caf50"
+                *ngIf="executionStatsWsService.settingsService.isJServerStarted"
+              ></i
+              ><span
+                *ngIf="executionStatsWsService.settingsService.isJServerStarted"
+                >server is UP</span
+              >&nbsp;<i class="fa fa-arrows-v"></i
+            ></a>
+          </li>
         </ul>
       </div>
     </div>

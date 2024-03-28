@@ -20,7 +20,7 @@ import org.apache.commons.io.FileUtils;
 
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.sender.model.UploadMessage;
-import com.sourcekraft.documentburster.settings.model.WebUploadSettings;
+import com.sourcekraft.documentburster.common.settings.model.WebUploadSettings;
 import com.sourcekraft.documentburster.utils.Utils;
 
 public class WebUploadSender extends AbstractSender {

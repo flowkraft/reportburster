@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 
 import { systemDiagnosticsTemplate } from './system-diagnostics.template';
-import { BashService } from '../bash.service';
-import { SettingsService } from '../../../providers/settings.service';
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
+import { SettingsService } from '../../../providers/settings.service';
+import { ElectronService } from '../../../core/services/electron/electron.service';
 
 @Component({
   selector: 'dburst-system-diagnostics',
@@ -11,17 +11,17 @@ import { ConfirmService } from '../../../components/dialog-confirm/confirm.servi
 })
 export class SystemDiagnosticsComponent {
   constructor(
-    protected bashService: BashService,
+    protected electronService: ElectronService,
     protected settingsService: SettingsService,
 
-    protected confirmService: ConfirmService
+    protected confirmService: ConfirmService,
   ) {}
 
   restartApp() {
     this.confirmService.askConfirmation({
       message: 'Are you sure that you want to perform this action?',
       confirmAction: () => {
-        this.bashService.restartElectronApp();
+        this.electronService.restartElectronApp();
       },
     });
   }

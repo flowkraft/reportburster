@@ -5,7 +5,7 @@
   (click)="onClick()"
   [disabled]="
     executionStatsService.jobStats.numberOfActiveJobs > 0 ||
-    !executionStatsService.foundDirtyLogFiles()
+    !executionStatsService.logStats.foundDirtyLogFiles
   "
 >
   <i class="fa fa-file-o"></i>&nbsp;{{

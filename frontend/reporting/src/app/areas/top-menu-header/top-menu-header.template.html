@@ -1,12 +1,7 @@
-<dburst-skins></dburst-skins>
 <header class="main-header">
   <!-- Logo -->
   <a href="#" [routerLink]="['/processing', 'burstMenuSelected']" class="logo">
-    <!-- logo for regular state and mobile devices -->
-    <span class="logo-lg">
-      <strong>Report</strong><em>Burster</em>&nbsp;
-      <i class="fa fa-paper-plane-o"></i>
-    </span>
+    <rb-brand></rb-brand>
   </a>
 
   <!-- Header Navbar -->
@@ -239,11 +234,15 @@
             id="supportEmail"
             href="#"
             [routerLink]="['/help', 'supportMenuSelected']"
-            >contact&#64;reportburster.org</a
+            >contact@reportburster.org</a
           >
         </li>
+        <li class="divider">&nbsp;</li>
         <!-- Control Sidebar Toggle Button -->
-        <li data-toggle="control-sidebar">
+        <li
+          *ngIf="!settingsService.RUNNING_IN_E2E"
+          data-toggle="control-sidebar"
+        >
           <a id="btnChangeSkin" style="cursor: pointer">
             <i class="fa fa-gears"></i>
           </a>
@@ -252,4 +251,5 @@
     </div>
   </nav>
 </header>
-<!--<dburst-skins *ngIf="!electronService.RUNNING_IN_E2E"></dburst-skins>-->
+<!--<dburst-skins></dburst-skins> -->
+<dburst-skins *ngIf="!settingsService.RUNNING_IN_E2E"></dburst-skins>

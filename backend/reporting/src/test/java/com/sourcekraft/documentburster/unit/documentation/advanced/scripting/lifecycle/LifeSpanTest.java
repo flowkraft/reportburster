@@ -16,7 +16,7 @@ import com.sourcekraft.documentburster._helpers.TestsUtils;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.scripting.Scripts;
-import com.sourcekraft.documentburster.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.variables.Variables;
 
 public class LifeSpanTest {

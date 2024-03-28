@@ -7,21 +7,19 @@ import { tabExternalConnectionsTemplate } from './templates/tab-ext-connection';
 import { tabLogsTemplate } from './templates/tab-logs';
 
 import { tabLicenseTemplate } from './templates/tab-license';
-import {
-  SettingsService,
-  newEmailServer,
-} from '../../providers/settings.service';
 import { ConfirmService } from '../../components/dialog-confirm/confirm.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
-import { ElectronService } from '../../core/services';
 
 import { modalExtConnectionsTemplate } from './templates/modal-ext-connection';
 import { EmailProviderSettings } from '../../components/button-well-known/button-well-known.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ShellService } from '../../providers/shell.service';
 import Utilities from '../../helpers/utilities';
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
 import { InfoService } from '../../components/dialog-info/info.service';
+import { SettingsService } from '../../providers/settings.service';
+import { ShellService } from '../../providers/shell.service';
+import { FsService } from '../../providers/fs.service';
+import { newEmailServer } from '../../providers/settings.service';
 
 @Component({
   selector: 'dburst-ext-connections',
@@ -56,7 +54,7 @@ export class ExternalConnectionsComponent implements OnInit {
         connection: {
           code: '',
           name: '',
-          default: false,
+          defaultConnection: false,
           emailserver: { ...newEmailServer },
         },
       },
@@ -66,13 +64,13 @@ export class ExternalConnectionsComponent implements OnInit {
   constructor(
     protected confirmService: ConfirmService,
     protected messagesService: ToastrMessagesService,
-    protected electronService: ElectronService,
+    protected fsService: FsService,
     protected settingsService: SettingsService,
     protected infoService: InfoService,
     protected executionStatsService: ExecutionStatsService,
     protected shellService: ShellService,
     protected route: ActivatedRoute,
-    protected router: Router
+    protected router: Router,
   ) {}
 
   async ngOnInit() {
@@ -91,11 +89,11 @@ export class ExternalConnectionsComponent implements OnInit {
         this.settingsService.connectionFiles.length > 0
       ) {
         this.messagesService.showWarning(
-          'Choose a single email connection to be the `Default` email cnnection'
+          'Choose a single email connection to be the `Default` email cnnection',
         );
       } else {
         this.messagesService.showInfo(
-          'Multiple email connections can be configured and one should be selected to be the `Default` email connection`'
+          'Multiple email connections can be configured and one should be selected to be the `Default` email connection`',
         );
       }
     }
@@ -126,7 +124,7 @@ export class ExternalConnectionsComponent implements OnInit {
     }
 
     return this.settingsService.connectionFiles.find(
-      (connection) => connection.activeClicked
+      (connection) => connection.activeClicked,
     );
   }
 
@@ -138,13 +136,11 @@ export class ExternalConnectionsComponent implements OnInit {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: async () => {
-        await this.electronService.jetpack.removeAsync(
-          this.getSelectedConnection().filePath
-        );
+        await this.fsService.removeAsync(this.getSelectedConnection().filePath);
 
         _.remove(
           this.settingsService.connectionFiles,
-          (o) => o.filePath === this.getSelectedConnection().filePath
+          (o) => o.filePath === this.getSelectedConnection().filePath,
         );
 
         this.messagesService.showInfo('Done');
@@ -161,7 +157,8 @@ export class ExternalConnectionsComponent implements OnInit {
     this.modalConnectionInfo.email.documentburster.connection.code = '';
     this.modalConnectionInfo.email.documentburster.connection.name = '';
 
-    this.modalConnectionInfo.email.documentburster.connection.default = false;
+    this.modalConnectionInfo.email.documentburster.connection.defaultConnection =
+      false;
 
     if (crudMode == 'update' || duplicate) {
       const selectedConnection = this.getSelectedConnection();
@@ -177,7 +174,7 @@ export class ExternalConnectionsComponent implements OnInit {
         this.modalConnectionInfo.email.documentburster.connection.name =
           selectedConnection.connectionName;
 
-        this.modalConnectionInfo.email.documentburster.connection.default =
+        this.modalConnectionInfo.email.documentburster.connection.defaultConnection =
           selectedConnection.defaultConnection;
       }
 
@@ -185,7 +182,8 @@ export class ExternalConnectionsComponent implements OnInit {
         ...selectedConnection.emailserver,
       };
     } else {
-      this.modalConnectionInfo.email.documentburster.connection.default = false;
+      this.modalConnectionInfo.email.documentburster.connection.defaultConnection =
+        false;
 
       this.modalConnectionInfo.email.documentburster.connection.emailserver = {
         ...newEmailServer,
@@ -196,7 +194,7 @@ export class ExternalConnectionsComponent implements OnInit {
 
   updateFormControlWithSelectedVariable(
     id: string,
-    selectedVariableValue: string
+    selectedVariableValue: string,
   ) {
     const formControl = document.getElementById(id) as HTMLInputElement;
     const caretPos = formControl.selectionStart;
@@ -210,7 +208,7 @@ export class ExternalConnectionsComponent implements OnInit {
   }
 
   async updateSMTPFormControlsWithSelectedProviderSettings(
-    selectedProviderSettings: EmailProviderSettings
+    selectedProviderSettings: EmailProviderSettings,
   ) {
     this.modalConnectionInfo.email.documentburster.connection.emailserver.usessl =
       false;
@@ -240,12 +238,13 @@ export class ExternalConnectionsComponent implements OnInit {
       this.modalConnectionInfo.duplicate
     ) {
       const connectionCode = `eml-${_.kebabCase(
-        this.modalConnectionInfo.email.documentburster.connection.name
+        this.modalConnectionInfo.email.documentburster.connection.name,
       )}`;
 
       this.modalConnectionInfo.email.documentburster.connection.code =
         connectionCode;
-      this.modalConnectionInfo.email.documentburster.connection.default = false;
+      this.modalConnectionInfo.email.documentburster.connection.defaultConnection =
+        false;
 
       const connectionFileName = `${connectionCode}.xml`;
 
@@ -272,9 +271,9 @@ export class ExternalConnectionsComponent implements OnInit {
         this.modalConnectionInfo.email.documentburster.connection.emailserver;
     }
 
-    await this.settingsService.saveSettingsFileAsync(
+    await this.settingsService.saveConnectionFileAsync(
+      this.modalConnectionInfo.filePath,
       this.modalConnectionInfo.email,
-      this.modalConnectionInfo.filePath
     );
 
     //await this.settingsService.loadAllConnectionFilesAsync();
@@ -287,16 +286,17 @@ export class ExternalConnectionsComponent implements OnInit {
   async updateModelAndForm() {
     if (this.modalConnectionInfo.crudMode != 'update') {
       const connectionCode = `eml-${_.kebabCase(
-        this.modalConnectionInfo.email.documentburster.connection.name
+        this.modalConnectionInfo.email.documentburster.connection.name,
       )}`;
 
       const connectionFileName = `${connectionCode}.xml`;
       this.modalConnectionInfo.filePath = `${this.settingsService.CONFIGURATION_CONNECTIONS_FOLDER_PATH}/${connectionFileName}`;
 
       this.modalConnectionInfo.connectionFilePathExists =
-        await this.electronService.jetpack.existsAsync(
-          this.modalConnectionInfo.filePath
-        );
+        await this.fsService.existsAsync(this.modalConnectionInfo.filePath);
+      console.log(
+        `this.modalConnectionInfo.connectionFilePathExists = ${this.modalConnectionInfo.connectionFilePathExists}`,
+      );
     }
   }
 
@@ -315,7 +315,7 @@ export class ExternalConnectionsComponent implements OnInit {
   }
 
   doTestSMTPConnection() {
-    if (this.executionStatsService.foundDirtyLogFiles()) {
+    if (this.executionStatsService.logStats.foundDirtyLogFiles) {
       const dialogMessage =
         'Log files are not empty. You need to press the Clear Logs button first.';
 
@@ -352,12 +352,12 @@ export class ExternalConnectionsComponent implements OnInit {
           this.settingsService.connectionFiles.find(
             (connection) =>
               connection.defaultConnection &&
-              connection.connectionType == selectedConnection.connectionType
+              connection.connectionType == selectedConnection.connectionType,
           );
 
         //previous
         if (previousDefaultConnection) {
-          this.modalConnectionInfo.email.documentburster.connection.default =
+          this.modalConnectionInfo.email.documentburster.connection.defaultConnection =
             false;
           this.modalConnectionInfo.email.documentburster.connection.code =
             previousDefaultConnection.connectionCode;
@@ -368,14 +368,14 @@ export class ExternalConnectionsComponent implements OnInit {
 
           previousDefaultConnection.defaultConnection = false;
 
-          await this.settingsService.saveSettingsFileAsync(
+          await this.settingsService.saveConnectionFileAsync(
+            previousDefaultConnection.filePath,
             this.modalConnectionInfo.email,
-            previousDefaultConnection.filePath
           );
         }
         //selected
 
-        this.modalConnectionInfo.email.documentburster.connection.default =
+        this.modalConnectionInfo.email.documentburster.connection.defaultConnection =
           true;
         this.modalConnectionInfo.email.documentburster.connection.code =
           selectedConnection.connectionCode;
@@ -388,9 +388,9 @@ export class ExternalConnectionsComponent implements OnInit {
 
         this.settingsService.defaultEmailConnectionFile = selectedConnection;
 
-        await this.settingsService.saveSettingsFileAsync(
+        await this.settingsService.saveConnectionFileAsync(
+          selectedConnection.filePath,
           this.modalConnectionInfo.email,
-          selectedConnection.filePath
         );
       },
     });

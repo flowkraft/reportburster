@@ -1,36 +1,41 @@
-import { app, BrowserWindow, shell, screen } from 'electron';
+import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import log from 'electron-log';
 import * as path from 'path';
 import * as fs from 'fs';
+
+import { ChildProcessWithoutNullStreams, exec, spawn } from 'child_process';
+import { promisify } from 'util';
+
+import * as jetpack from 'fs-jetpack';
 
 import {
   setupTitlebar,
   attachTitlebarToWindow,
 } from 'custom-electron-titlebar/main';
-import Utilities from '../src/app/helpers/utilities';
 
 // setup the titlebar main process
 setupTitlebar();
 
-//TODO - Pay CASS
-//TODO - Do FlowKraft bookkeeping
-
-//TODO - Generate HTML output reports
-
-//TODO - Get SAMPLE 0 Working
-
-//TODO - Fix https://github.com/sourcekraft/kraft-src-documentburster/issues/3
-//TODO - Fix https://github.com/sourcekraft/kraft-src-documentburster/issues/2
-//TODO - Fix https://github.com/sourcekraft/kraft-src-documentburster/issues/1
-
-//TODO - LATER0 - e2e tests for Samples Working
-//TODO - e2e tests for Request New Feature
-//TODO - LATER0 - e2e tests for Extra Packages
-//TODO - LATER0 - Implement 'Install Extra Packages' + provide status bar feedback while packages are installed
-//TODO - LATER0 - Reuse the above 'Install Extra Packages' framework to provide status bar feedback while installing Java and/or Choco
-
 let win: BrowserWindow = null;
 const args = process.argv.slice(1),
   serve = args.some((val) => val === '--serve');
+
+process.env.PORTABLE_EXECUTABLE_DIR = path
+  .normalize(path.resolve(process.env.PORTABLE_EXECUTABLE_DIR))
+  .replace(/\\/g, '/');
+
+const electronLogFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/logs/electron.log`;
+fs.writeFileSync(electronLogFilePath, '');
+
+log.transports.file.resolvePath = () => {
+  return electronLogFilePath;
+};
+
+log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] - {text}';
+
+log.info(
+  `process.env.PORTABLE_EXECUTABLE_DIR: ${process.env.PORTABLE_EXECUTABLE_DIR}`,
+);
 
 function createWindow(): BrowserWindow {
   /*
@@ -113,14 +118,80 @@ function createWindow(): BrowserWindow {
 try {
   app.commandLine.appendSwitch(
     'disable-features',
-    'BlockInsecurePrivateNetworkRequests'
+    'BlockInsecurePrivateNetworkRequests',
   );
 
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.
   // Added 400 ms to fix the black background issue while using transparent window. More detais at https://github.com/electron/electron/issues/15947
-  app.on('ready', () => setTimeout(createWindow, 400));
+  let serverProcess: ChildProcessWithoutNullStreams;
+
+  app.on('ready', () => {
+    //if "production"
+    if (app.isPackaged) {
+      log.info(
+        `executing ${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj/startRbsjServer.bat`,
+      );
+
+      serverProcess = spawn('startRbsjServer.bat', {
+        cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
+      });
+
+      serverProcess.stdout.on('data', (data) => {
+        console.log(`stdout: ${data}`);
+        const dataStr = data.toString();
+        if (dataStr.includes('Started ServerApplication in')) {
+          log.info(dataStr);
+
+          createWindow();
+        }
+      });
+
+      serverProcess.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+      });
+
+      serverProcess.on('close', (code) => {
+        log.info(`Server process exited with code ${code}`);
+      });
+    } else {
+      //if non-"production"
+      setTimeout(() => {
+        createWindow();
+
+        console.log(
+          `electron.main.ts.process.env.PORTABLE_EXECUTABLE_DIR = ${process.env.PORTABLE_EXECUTABLE_DIR}`,
+        );
+      }, 400);
+    }
+  });
+
+  app.on('before-quit', () => {
+    //stop the java server
+    if (app.isPackaged) {
+      if (serverProcess) {
+        log.info(
+          `executing ${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj/shutRbsjServer.bat`,
+        );
+
+        spawn('shutRbsjServer.bat', {
+          cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
+        });
+      }
+    }
+  });
+
+  app.on('will-quit', () => {
+    if (app.isPackaged) {
+      if (serverProcess && !serverProcess.killed) {
+        //stop the java server
+        spawn('shutRbsjServer.bat', {
+          cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
+        });
+      }
+    }
+  });
 
   // Quit when all windows are closed.
   app.on('window-all-closed', () => {
@@ -142,3 +213,113 @@ try {
   // Catch Error
   // throw e;
 }
+
+ipcMain.handle('execNativeCommand', async (event, command) => {
+  const execPromise = promisify(exec);
+  return execPromise(command);
+});
+
+ipcMain.handle('getBackendUrl', async (event) => {
+  //if non-"production"
+  if (!app.isPackaged) return 'http://localhost:9090';
+
+  const filePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/config/_internal/settings.xml`;
+  const fileContent = await fs.promises.readFile(filePath, 'utf-8');
+
+  const match = fileContent.match(/<backendurl>(.*?)<\/backendurl>/);
+  const backendUrl = match ? match[1] : null;
+
+  //log.info(`getBackendUrl settings.xml: ${fileContent}`);
+
+  log.info(`getBackendUrl backendUrl: ${backendUrl}`);
+
+  return backendUrl;
+});
+
+ipcMain.handle(
+  'jetpack.dirAsync',
+  async (event, pathFolder, criteria = { empty: false, mode: undefined }) => {
+    const mkdir = promisify(fs.mkdir);
+    const readdir = promisify(fs.readdir);
+    const unlink = promisify(fs.unlink);
+    const chmod = promisify(fs.chmod);
+    const stat = promisify(fs.stat);
+
+    try {
+      const stats = await stat(pathFolder);
+
+      if (!stats.isDirectory()) {
+        throw new Error(`Path ${pathFolder} exists but is not a directory`);
+      }
+
+      if (criteria.empty) {
+        const files = await readdir(pathFolder);
+        await Promise.all(
+          files.map((file) => unlink(path.join(pathFolder, file))),
+        );
+      }
+
+      if (criteria.mode !== undefined) {
+        await chmod(pathFolder, criteria.mode);
+      }
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        await mkdir(pathFolder, { recursive: true, mode: criteria.mode });
+      } else {
+        throw error;
+      }
+    }
+  },
+);
+
+ipcMain.handle(
+  'jetpack.copyAsync',
+  async (
+    event,
+    from,
+    to,
+    options: {
+      overwrite?:
+        | boolean
+        | ((source: any, destination: any) => boolean | Promise<boolean>);
+      matching?: string;
+      ignoreCase?: boolean;
+    },
+  ) => {
+    return await jetpack.copyAsync(from, to, options);
+  },
+);
+
+ipcMain.handle(
+  'jetpack.moveAsync',
+  async (
+    event,
+    from,
+    to,
+    options: {
+      overwrite?: false;
+    },
+  ) => {
+    return await jetpack.moveAsync(from, to, options);
+  },
+);
+
+ipcMain.handle('jetpack.existsAsync', async (event, filePath) => {
+  return await jetpack.existsAsync(filePath);
+});
+
+ipcMain.handle('jetpack.removeAsync', async (event, filePath) => {
+  return await jetpack.removeAsync(filePath);
+});
+
+ipcMain.handle('jetpack.writeAsync', async (event, filePath, content) => {
+  return await jetpack.writeAsync(filePath, content);
+});
+
+ipcMain.handle('jetpack.readAsync', async (event, filePath) => {
+  return await jetpack.readAsync(filePath);
+});
+
+ipcMain.handle('jetpack.findAsync', async (event, directory, options) => {
+  return await jetpack.findAsync(directory, options);
+});

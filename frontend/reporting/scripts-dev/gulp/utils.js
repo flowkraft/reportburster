@@ -1,6 +1,7 @@
 const gulp = require("gulp");
 const jetpack = require("fs-jetpack");
-const childProcess = require("child_process");
+const { childProcess, spawn } = require("child_process");
+const kill = require("tree-kill");
 
 const argv = require("minimist")(process.argv);
 
@@ -20,6 +21,14 @@ exports.beepSound = () => {
   process.stdout.write("\u0007");
 };
 
+gulp.task("utils:start-server-and-ui", () => {
+  _startServerAndDoX("custom:start");
+});
+
+gulp.task("utils:start-server-and-e2e", () => {
+  _startServerAndDoX("custom:e2e");
+});
+
 gulp.task("utils:show-stats-memory", () => {
   const maxHeapSz = require("v8").getHeapStatistics().heap_size_limit;
   const maxHeapSz_GB = (maxHeapSz / 1024 ** 3).toFixed(1);
@@ -33,6 +42,47 @@ gulp.task("utils:show-stats-memory", () => {
 gulp.task("utils:check-broken-links", () => {
   return gulp.src("src/**/*.html").pipe(_checkBrokenLinks());
 });
+
+_startServerAndDoX = (npm_x_script) => {
+  const server = spawn("npm", ["run", "custom:start-server"], {
+    stdio: "pipe",
+    shell: true,
+  });
+
+  server.stdout.on("data", (data) => {
+    console.log(`stdout: ${data}`);
+    if (data.includes("Started ServerApplication in")) {
+      console.log(
+        `stdout: ${data} !!!!!! ====>>>>> starting 'npm run "${npm_x_script}"'`,
+      );
+
+      const npmXScriptSpawned = spawn("npm", ["run", npm_x_script], {
+        stdio: "pipe",
+        shell: true,
+      });
+      npmXScriptSpawned.stdout.on("data", (data) => {
+        console.log(`stdout: ${data}`);
+      });
+      npmXScriptSpawned.stderr.on("data", (data) => {
+        console.error(`stderr: ${data}`);
+      });
+      npmXScriptSpawned.on("close", (code) => {
+        console.log(`npmXScriptSpawned exited with code ${code}`);
+        kill(server.pid, () => {
+          console.error(`DONE: SpringBoot Server was killed`);
+        });
+      });
+    }
+  });
+
+  server.stderr.on("data", (data) => {
+    console.error(`stderr: ${data}`);
+  });
+
+  server.on("close", (code) => {
+    console.log(`server exited with code ${code}`);
+  });
+};
 
 _checkBrokenLinks = () => {
   const shouldWorkUrlsButCuriouslyTheyDont = [
@@ -53,7 +103,7 @@ _checkBrokenLinks = () => {
     if (file.isStream()) {
       throw new PluginError(
         "gulp-check-broken-links",
-        "streams not implemented"
+        "streams not implemented",
       );
     } else if (file.isBuffer()) {
       var contents = String(file.contents);
@@ -71,7 +121,7 @@ _checkBrokenLinks = () => {
             shouldWorkUrlsButCuriouslyTheyDont.indexOf(externalUrl) == -1
           ) {
             console.log(
-              "externalUrl : " + externalUrl + ", file : " + file.relative
+              "externalUrl : " + externalUrl + ", file : " + file.relative,
             );
 
             var res = syncHTTPRequest("GET", externalUrl);
@@ -82,7 +132,7 @@ _checkBrokenLinks = () => {
                 "Found broken link: " +
                   externalUrl +
                   " in file: " +
-                  file.relative
+                  file.relative,
               );
           }
         });
@@ -99,7 +149,7 @@ _checkBrokenLinks = () => {
 gulp.task("utils:generate-icons-if-needed", async () => {
   // Finds existing icon
   var iconExist = await jetpack.existsAsync(
-    `${FRONTEND_PLAYGROUND_FOLDER_PATH}/icons/win/icon.ico`
+    `${FRONTEND_PLAYGROUND_FOLDER_PATH}/icons/win/icon.ico`,
   );
 
   //if-needed
@@ -114,6 +164,6 @@ gulp.task("utils:generate-icons-if-needed", async () => {
   }
 
   return Promise.resolve(
-    "utils:generate-icons-if-needed- Nothing to do, Icons stuff already present."
+    "utils:generate-icons-if-needed- Nothing to do, Icons stuff already present.",
   );
 });

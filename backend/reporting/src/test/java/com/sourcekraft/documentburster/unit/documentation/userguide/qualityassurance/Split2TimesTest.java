@@ -24,7 +24,7 @@ import com.sourcekraft.documentburster._helpers.TestsUtils;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.sender.model.EmailMessage;
-import com.sourcekraft.documentburster.settings.model.Attachment;
+import com.sourcekraft.documentburster.common.settings.model.Attachment;
 import com.sourcekraft.documentburster.unit.further.other.UtilsTest;
 import com.sourcekraft.documentburster.utils.Utils;
 import com.sourcekraft.documentburster.variables.Variables;

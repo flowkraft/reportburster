@@ -41,10 +41,10 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// copy all MODULE_REPORTING's dependencies to the intermediate folder location
 		// MODULE_REPORTING/target/dependencies
-		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl \":reporting,:update\" dependency:copy-dependencies");
+		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl \":reporting,:server,:update\" dependency:copy-dependencies");
 
 		System.out.println(
-				"------------------------------------- DONE_02:NoExeAssembler Utils.runMaven(Utils.getTopProjectFolderPath(), mvn -pl ':reporting,:update' dependency:copy-dependencies) ... -------------------------------------");
+				"------------------------------------- DONE_02:NoExeAssembler Utils.runMaven(Utils.getTopProjectFolderPath(), mvn -pl ':reporting,:server,:update' dependency:copy-dependencies) ... -------------------------------------");
 
 		// copy db template files and folders
 		FileUtils.copyDirectory(new File("src/main/external-resources/db-template"),
@@ -253,8 +253,12 @@ public class NoExeAssembler extends AbstractAssembler {
 		assertThat(FileUtils.contentEquals(new File(verifyDirPath + "/" + topFolderName + "/lib/burst/rb-reporting.jar"),
 				new File(Utils.getTopProjectFolderPath() + "/backend/reporting/target/rb-reporting.jar"))).isTrue();
 
+        // verify rb-server.jar file is there
+		assertThat(FileUtils.contentEquals(new File(verifyDirPath + "/" + topFolderName + "/lib/server/rbsj-server.jar"),
+				new File(Utils.getTopProjectFolderPath() + "/backend/server/target/rbsj-server.jar"))).isTrue();
+	
 		System.out.println(
-				"------------------------------------- VERIFIED_04:NoExeAssembler rb-reporting.jar files are there ... -------------------------------------");
+				"------------------------------------- VERIFIED_04:NoExeAssembler rb-reporting.jar, rbsj-server files are there ... -------------------------------------");
 
 		// verify quickstart images, html and PDF files
 		String quickStartDocumentationFolderPath = Utils.getTopProjectFolderPath()

@@ -22,7 +22,7 @@ import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.PDPage;
 //import org.perf4j.aop.Profiled;
 
-import com.sourcekraft.documentburster.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.utils.Utils;
 
 import java.util.Iterator;

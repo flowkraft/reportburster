@@ -32,6 +32,10 @@ export class Helpers {
     }
   };
 
+  static sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   static deActivateLicenseKey = async () => {
     // de-activate the test license so that all tests will start from a 'demo' license
     await jetpack.copyAsync(
@@ -39,7 +43,7 @@ export class Helpers {
       process.env.PORTABLE_EXECUTABLE_DIR +
         PATHS.CONFIG_PATH +
         '/_internal/license.xml',
-      { overwrite: true }
+      { overwrite: true },
     );
 
     spawnSync('documentburster.bat', ['-dl', '/c'], {
@@ -49,7 +53,7 @@ export class Helpers {
   };
 
   static electronAppLaunch = async (
-    relativePath: string
+    relativePath: string,
   ): Promise<ElectronApplication> => {
     const electronApp = await electron.launch({
       args: [
@@ -78,16 +82,8 @@ export class Helpers {
   };
 
   static restoreDocumentBursterCleanState = async (
-    shouldDeactivateLicense: boolean
+    shouldDeactivateLicense: boolean,
   ) => {
-    // stop Test Email Server
-    spawnSync('shutTestEmailServer.bat', ['/c'], {
-      cwd: path.resolve(
-        process.env.PORTABLE_EXECUTABLE_DIR + '/tools/test-email-server'
-      ),
-      shell: true,
-    });
-
     /*
     console.log(
       `PATHS.E2E_ASSEMBLY_FOLDER_PATH: ${path.resolve(
@@ -96,6 +92,19 @@ export class Helpers {
     );
     */
 
+    //copy back the default documentburster.bat file
+    await jetpack.copyAsync(
+      PATHS.E2E_RESOURCES_PATH +
+        '/java-versions/documentburster-java-default.bat',
+      process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
+      { overwrite: true },
+    );
+
+    if (shouldDeactivateLicense) {
+      await this.deActivateLicenseKey();
+    }
+
+    //await this.killHangingJavaProcesses();
     // empty and refresh config
     const verifiedDbFolder = await jetpack.findAsync(
       path.resolve(PATHS.E2E_ASSEMBLY_FOLDER_PATH),
@@ -104,80 +113,126 @@ export class Helpers {
         files: false,
         directories: true,
         recursive: false,
-      }
+      },
     );
 
-    await jetpack.removeAsync(
-      process.env.PORTABLE_EXECUTABLE_DIR + PATHS.CONFIG_PATH
-    );
-    await jetpack.copyAsync(
-      verifiedDbFolder[0] + '/config',
-      process.env.PORTABLE_EXECUTABLE_DIR + PATHS.CONFIG_PATH
-    );
-
-    //copy back the default documentburster.bat file
-    await jetpack.copyAsync(
-      PATHS.E2E_RESOURCES_PATH +
-        '/java-versions/documentburster-java-default.bat',
-      process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
-      { overwrite: true }
-    );
-
-    if (shouldDeactivateLicense) {
-      await this.deActivateLicenseKey();
-    }
-
-    //await this.killHangingJavaProcesses();
+    //console.log(
+    //  `restoreDocumentBursterCleanState config_path: ${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.CONFIG_PATH}`
+    //);
 
     let allCleared = false;
     do {
       try {
+        //console.log('restoreDocumentBursterCleanState /config folder emptying');
+
+        await jetpack.dirAsync(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.CONFIG_PATH}`,
+          { empty: true },
+        );
+
+        let configFiles = await jetpack.listAsync(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.CONFIG_PATH}`,
+        );
+
+        if (configFiles && configFiles.length > 0) {
+          throw new Error(
+            `restoreDocumentBursterCleanState /config folder not empty`,
+          );
+        }
+
+        await jetpack.copyAsync(
+          verifiedDbFolder[0] + '/config',
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.CONFIG_PATH}`,
+          { overwrite: true },
+        );
+
+        configFiles = await jetpack.listAsync(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.CONFIG_PATH}`,
+        );
+
+        if (!configFiles && configFiles.length == 0) {
+          throw new Error(
+            `restoreDocumentBursterCleanState /config folder should not be empty`,
+          );
+        }
+
         // empty output
         await jetpack.dirAsync(
-          process.env.PORTABLE_EXECUTABLE_DIR + '/output',
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/output`,
           {
             empty: true,
-          }
+          },
         );
 
         // empty backup
         await jetpack.dirAsync(
-          process.env.PORTABLE_EXECUTABLE_DIR + '/backup',
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/backup`,
           {
             empty: true,
-          }
+          },
         );
 
         // empty quarantine
         await jetpack.dirAsync(
-          process.env.PORTABLE_EXECUTABLE_DIR + PATHS.QUARANTINE_PATH,
-          { empty: true }
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.QUARANTINE_PATH}`,
+          { empty: true },
         );
 
         // empty temp
         await jetpack.dirAsync(
-          process.env.PORTABLE_EXECUTABLE_DIR + PATHS.TEMP_PATH,
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.TEMP_PATH}`,
           {
             empty: true,
-          }
+          },
         );
 
+        //try {
         // empty logs
-        await jetpack.dirAsync(
-          process.env.PORTABLE_EXECUTABLE_DIR + PATHS.LOGS_PATH,
-          {
-            empty: true,
-          }
+        //await jetpack.dirAsync(
+        //  `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}`,
+        //  {
+        //    empty: true,
+        //  }
+        //);
+        //} catch (err) {
+        //console.error('jetpack.dirAsync empty logs:', err);
+
+        await jetpack.writeAsync(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/info.log`,
+          '',
         );
+        await jetpack.writeAsync(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/errors.log`,
+          '',
+        );
+        await jetpack.writeAsync(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/warnings.log`,
+          '',
+        );
+        //}
 
         allCleared = true;
-      } catch (err) {
-        allCleared = false;
-        await new Promise((resolve) =>
-          setTimeout(resolve, Constants.DELAY_ONE_SECOND)
+        console.log(
+          `restoreDocumentBursterCleanState /config is now emptied, waiting ${
+            Constants.DELAY_ONE_SECOND / 1000
+          }  seconds ...`,
         );
+
+        await this.delay(Constants.DELAY_ONE_SECOND);
+      } catch (err) {
+        console.error('An error occurred:', err);
+        allCleared = false;
+        await this.delay(Constants.DELAY_ONE_SECOND);
       }
     } while (!allCleared);
+
+    // stop Test Email Server
+    spawnSync('shutTestEmailServer.bat', ['/c'], {
+      cwd: path.resolve(
+        process.env.PORTABLE_EXECUTABLE_DIR + '/tools/test-email-server',
+      ),
+      shell: true,
+    });
   };
 
   static arrayEquals = (a: any[], b: any[]) => {
@@ -198,48 +253,45 @@ export class Helpers {
   };
 
   static generateRandomLogFiles = async () => {
-    const howManyFiles = Math.random() * (3 - 1) + 1;
+    const howManyFiles = Math.floor(Math.random() * 3) + 1;
 
     const randomLogFiles = _.sampleSize(
       ['errors.log', 'info.log', 'warnings.log'],
-      howManyFiles
+      howManyFiles,
     );
 
     randomLogFiles.forEach(async (logFile) => {
       if (logFile.includes('errors')) {
         await jetpack.copyAsync(
-          PATHS.E2E_RESOURCES_PATH + '/logs/errors-with-data.log',
+          `${PATHS.E2E_RESOURCES_PATH}/logs/errors-with-data.log`,
           path.resolve(
             slash(
-              process.env.PORTABLE_EXECUTABLE_DIR +
-                PATHS.LOGS_PATH +
-                '/errors.log'
-            )
-          )
+              `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/errors.log`,
+            ),
+          ),
+          { overwrite: true },
         );
       }
       if (logFile.includes('info')) {
         await jetpack.copyAsync(
-          PATHS.E2E_RESOURCES_PATH + '/logs/info-with-data.log',
+          `${PATHS.E2E_RESOURCES_PATH}/logs/info-with-data.log`,
           path.resolve(
             slash(
-              process.env.PORTABLE_EXECUTABLE_DIR +
-                PATHS.LOGS_PATH +
-                '/info.log'
-            )
-          )
+              `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/info.log`,
+            ),
+          ),
+          { overwrite: true },
         );
       }
       if (logFile.includes('warnings')) {
         await jetpack.copyAsync(
-          PATHS.E2E_RESOURCES_PATH + '/logs/warnings-with-data.log',
+          `${PATHS.E2E_RESOURCES_PATH}/logs/warnings-with-data.log`,
           path.resolve(
             slash(
-              process.env.PORTABLE_EXECUTABLE_DIR +
-                PATHS.LOGS_PATH +
-                '/warnings.log'
-            )
-          )
+              `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/warnings.log`,
+            ),
+          ),
+          { overwrite: true },
         );
       }
     });

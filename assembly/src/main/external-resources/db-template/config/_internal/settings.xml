@@ -4,6 +4,7 @@
 	<settings>
 	    
 	  <skin>skin-blue</skin>
+	  <backendurl>http://localhost:9090</backendurl>
   
 	</settings>
 

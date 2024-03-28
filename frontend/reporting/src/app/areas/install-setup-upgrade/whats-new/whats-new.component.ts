@@ -8,10 +8,10 @@ import * as dayjs from 'dayjs';
 import * as rssFeedParser from 'feedparser-promised';
 
 import { Changelog, Release, parser } from 'keep-a-changelog';
-import { SettingsService } from '../../../providers/settings.service';
 import { LicenseService } from '../../../providers/license.service';
-import { ElectronService } from '../../../core/services';
 import Utilities from '../../../helpers/utilities';
+import { SettingsService } from '../../../providers/settings.service';
+import { FsService } from '../../../providers/fs.service';
 
 type BlogPost = {
   title: string;
@@ -44,7 +44,7 @@ export class WhatsNewComponent {
   constructor(
     protected settingsService: SettingsService,
     protected licenseService: LicenseService,
-    protected electronService: ElectronService
+    protected fsService: FsService,
   ) {}
 
   async ngOnInit() {
@@ -58,17 +58,13 @@ export class WhatsNewComponent {
       // load the changelog from local CHANGELOG.MD file
 
       try {
-        const localKeepAChangelogContentPath =
-          this.electronService.path.resolve(
-            Utilities.slash(
-              this.electronService.PORTABLE_EXECUTABLE_DIR + '/CHANGELOG.md'
-            )
-          );
+        const localKeepAChangelogContentPath = Utilities.slash(
+          `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/CHANGELOG.md`,
+        );
 
-        this.changeLogMarkdown =
-          await this.settingsService.loadFileContentAsync(
-            localKeepAChangelogContentPath
-          );
+        this.changeLogMarkdown = await this.fsService.readAsync(
+          localKeepAChangelogContentPath,
+        );
 
         this.changeLog = parser(this.changeLogMarkdown);
       } catch {
@@ -77,7 +73,7 @@ export class WhatsNewComponent {
     }
 
     this.blogPosts = await rssFeedParser.parse(
-      'https://www.pdfburst.com/blog/feed/'
+      'https://www.pdfburst.com/blog/feed/',
     );
 
     this.handleVisibleAnnouncement('first');
@@ -94,7 +90,7 @@ export class WhatsNewComponent {
       this.visibleBlogPost = this.blogPosts[this.visibleBlogPostIndex];
       this.visibleBlogPost.summary = Utilities.getExcerpt(
         this.visibleBlogPost.description,
-        this.visibleBlogPost.link
+        this.visibleBlogPost.link,
       );
     }
   }
@@ -110,7 +106,7 @@ export class WhatsNewComponent {
     this.visibleRelease = this.changeLog.releases[this.visibleReleaseIndex];
 
     this.visibleReleaseDate = dayjs(this.visibleRelease.date).format(
-      'DD MMM YYYY'
+      'DD MMM YYYY',
     );
 
     let versionNumber = this.visibleRelease.version.raw.trim();

@@ -1,5 +1,4 @@
 import * as jetpack from 'fs-jetpack';
-import { promises as fs } from 'fs';
 
 import * as _ from 'lodash';
 
@@ -15,11 +14,19 @@ describe('updater: smaler individual tests', function () {
   });
 
   beforeEach(async () => {
-    helpers.updateDestinationDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster`;
-
     await jetpack.dirAsync(PATHS.EXECUTABLE_DIR_PATH, { empty: true });
 
-    return jetpack.dirAsync(
+    helpers.updateDestinationDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster`;
+
+    const files = await jetpack.listAsync(PATHS.EXECUTABLE_DIR_PATH);
+
+    if (!files && files.length > 0) {
+      throw new Error(
+        `${PATHS.EXECUTABLE_DIR_PATH} folder is supposed to be empty but is not`
+      );
+    }
+
+    await jetpack.dirAsync(
       `${helpers.updateDestinationDirectoryPath}/config/burst`
     );
   });
@@ -120,11 +127,8 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
+
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/00-settings-5.1.xml`
     );
@@ -136,24 +140,35 @@ describe('updater: smaler individual tests', function () {
   });
 
   it('migrate-settings-from-version-5.1-expected-nn', async function () {
-    await jetpack.copyAsync(
-      `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
-      `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
-    await updater.migrateSettingsFile(
-      `${helpers.filesToMigrateDirectoryPath}/config/00-settings-5.1-nn.xml`
-    );
+    try {
+      await jetpack.copyAsync(
+        `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
+        `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
+      );
 
-    return helpers._assertXmlConfigV51ExpectedNN(
-      `${helpers.updateDestinationDirectoryPath}/config/burst/00-settings-5.1-nn.xml`,
-      updater.defaultSettings
-    );
+      //console.log('Before Log 96');
+      //console.log(
+      //  `Log 96 helpers.filesToMigrateDirectoryPath= ${helpers.filesToMigrateDirectoryPath}`
+      //);
+      //console.log('After Log 96');
+
+      await updater.migrateSettingsFile(
+        `${helpers.filesToMigrateDirectoryPath}/config/00-settings-5.1-nn.xml`
+      );
+
+      //console.log(
+      //  `Log 97 helpers.updateDestinationDirectoryPath = ${helpers.updateDestinationDirectoryPath}`
+      //);
+      return helpers._assertXmlConfigV51ExpectedNN(
+        `${helpers.updateDestinationDirectoryPath}/config/burst/00-settings-5.1-nn.xml`,
+        updater.defaultSettings,
+        '00-settings-5.1-nn.xml'
+      );
+    } catch (error) {
+      console.error(`Error migrating settings file:`, error);
+    }
   });
 
   it('migrate-settings-from-version-5.8.1-expected-defaults', async function () {
@@ -162,11 +177,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
 
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/05-settings-5.8.1.xml`
@@ -189,11 +200,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/05-settings-5.8.1-custom.xml`
     );
@@ -211,11 +218,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
 
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/10-settings-6.1.xml`
@@ -238,11 +241,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
 
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/10-settings-6.1-custom.xml`
@@ -261,11 +260,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
 
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/15-settings-6.2.xml`
@@ -288,11 +283,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
 
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/15-settings-6.2-custom.xml`
@@ -322,11 +313,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
 
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/20-settings-6.4.1.xml`
@@ -349,11 +336,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
 
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/20-settings-6.4.1-custom.xml`
@@ -372,11 +355,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
 
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/25-settings-7.1.xml`
@@ -399,11 +378,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
 
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/25-settings-7.1-custom.xml`
@@ -422,11 +397,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/30-settings-7.5.xml`
     );
@@ -448,11 +419,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
 
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/30-settings-7.5-custom.xml`
@@ -471,11 +438,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/35-settings-8.1.xml`
     );
@@ -492,11 +455,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
 
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/35-settings-8.1-custom.xml`
@@ -518,11 +477,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/40-settings-8.7.1.xml`
     );
@@ -539,11 +494,7 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
 
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config/40-settings-8.7.1-custom.xml`

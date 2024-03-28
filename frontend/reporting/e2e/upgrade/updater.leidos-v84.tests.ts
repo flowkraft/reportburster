@@ -1,5 +1,4 @@
 import * as jetpack from 'fs-jetpack';
-import { promises as fs } from 'fs';
 
 import helpers from './updater.helpers';
 
@@ -28,11 +27,7 @@ describe("updater: 'update' from v8.4 (LEIDOS)", function () {
       `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
     );
 
-    let updater = new Updater(
-      helpers.updateDestinationDirectoryPath,
-      jetpack,
-      fs
-    );
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
     await updater.migrateSettingsFile(
       `${helpers.filesToMigrateDirectoryPath}/config-leidos/99-coi-cert-email3.xml`
     );

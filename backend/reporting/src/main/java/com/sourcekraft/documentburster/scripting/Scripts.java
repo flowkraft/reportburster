@@ -1,6 +1,6 @@
 package com.sourcekraft.documentburster.scripting;
 
-import com.sourcekraft.documentburster.utils.DumpToString;
+import com.sourcekraft.documentburster.common.utils.DumpToString;
 
 public class Scripts extends DumpToString {
 

@@ -26,10 +26,16 @@ export class SkinsComponent implements OnInit {
   constructor(protected settingsService: SettingsService) {}
 
   async ngOnInit() {
-    this.settingsService.xmlInternalSettings =
+    this.settingsService.xmlInternalSettings.documentburster =
       await this.settingsService.loadPreferencesFileAsync(
-        this.settingsService.INTERNAL_SETTINGS_FILE_PATH
+        this.settingsService.INTERNAL_SETTINGS_FILE_PATH,
       );
+
+    //console.log(
+    //  `this.settingsService.xmlInternalSettings = ${JSON.stringify(
+    //    this.settingsService.xmlInternalSettings
+    //  )}`
+    //);
 
     let skin =
       this.settingsService.xmlInternalSettings.documentburster.settings.skin;
@@ -60,17 +66,17 @@ export class SkinsComponent implements OnInit {
   }
 
   async saveSkin(newSkin: string) {
-    this.settingsService.xmlInternalSettings =
+    this.settingsService.xmlInternalSettings.documentburster =
       await this.settingsService.loadPreferencesFileAsync(
-        this.settingsService.INTERNAL_SETTINGS_FILE_PATH
+        this.settingsService.INTERNAL_SETTINGS_FILE_PATH,
       );
 
     this.settingsService.xmlInternalSettings.documentburster.settings.skin =
       newSkin;
 
-    await this.settingsService.saveSettingsFileAsync(
+    await this.settingsService.savePreferencesFileAsync(
+      this.settingsService.INTERNAL_SETTINGS_FILE_PATH,
       this.settingsService.xmlInternalSettings,
-      this.settingsService.INTERNAL_SETTINGS_FILE_PATH
     );
   }
 }

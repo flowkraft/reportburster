@@ -5,7 +5,7 @@ import { Page, test } from '@playwright/test';
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
-
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should work correctly (01_monthly_payslips_split_only)',
@@ -16,7 +16,7 @@ test.describe('', async () => {
       const expectedOutputFiles = Constants.PAYSLIPS_PDF_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '.pdf';
-        }
+        },
       );
 
       const ft = new FluentTester(firstPage);
@@ -25,13 +25,13 @@ test.describe('', async () => {
         .click('#leftMenuSamples')
         .waitOnElementToContainText(
           '#tdMONTHLY-PAYSLIPS-SPLIT-ONLY',
-          '(split only)'
+          '(split only)',
         )
         .click('#trMONTHLY-PAYSLIPS-SPLIT-ONLY')
         .click('#btnSamplesLearnModeMONTHLY-PAYSLIPS-SPLIT-ONLY')
         .waitOnElementToContainText(
           '#divMONTHLY-PAYSLIPS-SPLIT-ONLY',
-          'you can process the data for all your company employees no matter if your company has few tens'
+          'you can process the data for all your company employees no matter if your company has few tens',
         )
         .click('#btnCloseSamplesLearnMoreModal')
         .click('#btnSampleTryItMONTHLY-PAYSLIPS-SPLIT-ONLY')
@@ -40,12 +40,11 @@ test.describe('', async () => {
         .clickYesDoThis()
         .click('#btnBurst')
         .clickYesDoThis()
-        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_LOGS)
         .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
-        .appStatusShouldBeGreatNoErrorsNoWarnings()
         .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles)
         .appStatusShouldBeGreatNoErrorsNoWarnings();
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -57,7 +56,7 @@ test.describe('', async () => {
       const expectedOutputFiles = Constants.PAYSLIPS_XLS_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '.xls';
-        }
+        },
       );
 
       const ft = new FluentTester(firstPage);
@@ -66,13 +65,13 @@ test.describe('', async () => {
         .click('#leftMenuSamples')
         .waitOnElementToContainText(
           '#tdEXCEL-DISTINCT-SHEETS-SPLIT-ONLY',
-          '(split only)'
+          '(split only)',
         )
         .click('#trEXCEL-DISTINCT-SHEETS-SPLIT-ONLY')
         .click('#btnSamplesLearnModeEXCEL-DISTINCT-SHEETS-SPLIT-ONLY')
         .waitOnElementToContainText(
           '#divEXCEL-DISTINCT-SHEETS-SPLIT-ONLY',
-          'you can process the data for all your company employees no matter if your company has few tens'
+          'you can process the data for all your company employees no matter if your company has few tens',
         )
         .click('#btnCloseSamplesLearnMoreModal')
         .click('#btnSampleTryItEXCEL-DISTINCT-SHEETS-SPLIT-ONLY')
@@ -81,12 +80,11 @@ test.describe('', async () => {
         .clickYesDoThis()
         .click('#btnBurst')
         .clickYesDoThis()
-        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_LOGS)
         .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
-        .appStatusShouldBeGreatNoErrorsNoWarnings()
         .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'xls')
         .appStatusShouldBeGreatNoErrorsNoWarnings();
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -125,13 +123,13 @@ test.describe('', async () => {
         .click('#leftMenuSamples')
         .waitOnElementToContainText(
           '#tdEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY',
-          '(split only)'
+          '(split only)',
         )
         .click('#trEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY')
         .click('#btnSamplesLearnModeEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY')
         .waitOnElementToContainText(
           '#divEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY',
-          'you can process the data for all your company customers no matter if your company has few tens'
+          'you can process the data for all your company customers no matter if your company has few tens',
         )
         .click('#btnCloseSamplesLearnMoreModal')
         .click('#btnSampleTryItEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY')
@@ -145,7 +143,7 @@ test.describe('', async () => {
         .appStatusShouldBeGreatNoErrorsNoWarnings()
         .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'xls')
         .appStatusShouldBeGreatNoErrorsNoWarnings();
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -175,13 +173,13 @@ test.describe('', async () => {
         .click('#leftMenuSamples')
         .waitOnElementToContainText(
           '#tdINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY',
-          '(split only)'
+          '(split only)',
         )
         .click('#trINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
         .click('#btnSamplesLearnModeINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
         .waitOnElementToContainText(
           '#divINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY',
-          'you can process the data for all your company customers no matter if your company has few tens'
+          'you can process the data for all your company customers no matter if your company has few tens',
         )
         .click('#btnCloseSamplesLearnMoreModal')
         .click('#btnSampleTryItINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
@@ -195,7 +193,7 @@ test.describe('', async () => {
         .appStatusShouldBeGreatNoErrorsNoWarnings()
         .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles)
         .appStatusShouldBeGreatNoErrorsNoWarnings();
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -226,7 +224,7 @@ test.describe('', async () => {
         .click('#btnSamplesLearnModeINVOICES-MERGE-THEN-SPLIT')
         .waitOnElementToContainText(
           '#divINVOICES-MERGE-THEN-SPLIT',
-          'you can process the data for all your company invoices no matter if your company has few tens'
+          'you can process the data for all your company invoices no matter if your company has few tens',
         )
         .click('#btnCloseSamplesLearnMoreModal')
         .click('#btnSampleTryItINVOICES-MERGE-THEN-SPLIT')
@@ -240,6 +238,6 @@ test.describe('', async () => {
         .appStatusShouldBeGreatNoErrorsNoWarnings()
         .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles)
         .appStatusShouldBeGreatNoErrorsNoWarnings();
-    }
+    },
   );
 });
