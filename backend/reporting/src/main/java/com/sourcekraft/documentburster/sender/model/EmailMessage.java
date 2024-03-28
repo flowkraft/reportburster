@@ -17,7 +17,7 @@ package com.sourcekraft.documentburster.sender.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.sourcekraft.documentburster.settings.model.SimpleJavaMail;
+import com.sourcekraft.documentburster.common.settings.model.SimpleJavaMail;
 
 public class EmailMessage extends AbstractMessage {
 
@@ -32,7 +32,7 @@ public class EmailMessage extends AbstractMessage {
 	public String authpwd;
 
 	public String hostName;
-	public int smtpPort;
+	public String smtpPort;
 
 	public String fromName;
 	public String fromAddress;

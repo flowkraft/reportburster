@@ -14,8 +14,8 @@
  */
 package com.sourcekraft.documentburster.sender.model;
 
+import com.sourcekraft.documentburster.common.utils.DumpToString;
 import com.sourcekraft.documentburster.context.BurstingContext;
-import com.sourcekraft.documentburster.utils.DumpToString;
 
 public class AbstractMessage extends DumpToString {
 

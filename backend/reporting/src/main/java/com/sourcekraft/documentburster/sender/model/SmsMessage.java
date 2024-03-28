@@ -14,7 +14,7 @@
  */
 package com.sourcekraft.documentburster.sender.model;
 
-import com.sourcekraft.documentburster.settings.model.Twilio;
+import com.sourcekraft.documentburster.common.settings.model.Twilio;
 
 public class SmsMessage extends AbstractMessage {
 

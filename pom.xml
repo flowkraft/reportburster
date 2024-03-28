@@ -19,20 +19,24 @@
 	<packaging>pom</packaging>
 
 	<modules>
-		<!-- commented because of a race condition when deleting a JUnit suferire.jar 
+		<!-- commented because of a race condition when deleting a JUnit
+		suferire.jar 
 			file -->
 		<!-- <module>assembly-documentburster</module> -->
+		<module>backend/common</module>
 		<module>backend/update</module>
 		<module>backend/reporting</module>
+		<module>backend/server</module>
 		<module>backend/batch</module>
 		<module>backend/batch-web-admin</module>
 		<module>documentation</module>
 		<module>assembly</module>
+
 	</modules>
 
 	<properties>
 
-		<revision>9.1.7</revision>
+		<revision>9.2.0</revision>
 
 		<!-- upgraded -->
 		<commons.beanutils.version>1.9.4</commons.beanutils.version>
@@ -74,7 +78,8 @@
 		<jaxb.api.version>2.4.0-b180830.0359</jaxb.api.version>
 		<jaxb.runtime.version>2.4.0-b180830.0438</jaxb.runtime.version>
 		<xml-apis.version>1.4.01</xml-apis.version>
-		<!-- I tried upgrading to v4 however the API is heavily changed and I wasted 
+		<!-- I tried upgrading to v4 however the API is heavily changed and I
+		wasted 
 			too much time. 3.2.1 is the last v3 released -->
 		<stringtemplate.version>3.2.1</stringtemplate.version>
 		<sadun.version>1.5.2</sadun.version>
@@ -325,6 +330,11 @@
 				<version>${failsafe.version}</version>
 			</dependency>
 			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>javax.xml.bind</groupId>
 				<artifactId>jaxb-api</artifactId>
 				<version>${jaxb.api.version}</version>
@@ -519,7 +529,8 @@
 				<version>${ant.version}</version>
 			</dependency>
 			<!-- perf4j does not work with log4j v2 -->
-			<!-- <dependency> <groupId>org.perf4j</groupId> <artifactId>perf4j</artifactId> 
+			<!-- <dependency> <groupId>org.perf4j</groupId>
+			<artifactId>perf4j</artifactId> 
 				<version>${perf4j.version}</version> </dependency> -->
 			<dependency>
 				<groupId>xml-apis</groupId>
@@ -533,7 +544,8 @@
 				<version>${javax.servlet.version}</version>
 				<scope>provided</scope>
 			</dependency>
-			<!-- Replaced Commons Logging with SL4J (JCL-over-SL4j) <scope>provided</scope> 
+			<!-- Replaced Commons Logging with SL4J (JCL-over-SL4j)
+			<scope>provided</scope> 
 				is only a trick to exclude this dependency at global level. -->
 			<dependency>
 				<groupId>commons-logging</groupId>

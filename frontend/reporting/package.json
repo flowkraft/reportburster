@@ -2,8 +2,8 @@
   "name": "reportburster",
   "productName": "ReportBurster",
   "description": "ReportBurster is a report distribution software for bursting reports like invoices, statements and payslips in order to distribute by email, FTP, web or file share relevant parts to each of your customers, partners and employees.",
-  "version": "10.0.1",
-  "copyright": "2023, FlowKraft Systems & Consulting Ltd.",
+  "version": "9.2.0",
+  "copyright": "2024, FlowKraft Systems & Consulting Ltd.",
   "homepage": "https://www.pdfburst.com",
   "license": "Server Side Public License (SSPL)",
   "author": {
