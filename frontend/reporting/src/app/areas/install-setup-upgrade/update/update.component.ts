@@ -137,7 +137,7 @@ export class UpdateComponent implements OnInit {
         await this.licenseService.loadLicenseFileAsync();
 
         if (this.licenseService.licenseDetails.license.key)
-          await this.licenseService.verifyLicense('-cl');
+          this.licenseService.verifyLicense('-cl');
 
         this.settingsService.configurationFiles =
           await this.settingsService.loadAllSettingsFilesAsync();
