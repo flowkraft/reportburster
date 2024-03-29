@@ -41,10 +41,10 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// copy all MODULE_REPORTING's dependencies to the intermediate folder location
 		// MODULE_REPORTING/target/dependencies
-		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl \":reporting,:server,:update\" dependency:copy-dependencies");
+		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl \":rb-reporting,:rb-server\" dependency:copy-dependencies");
 
 		System.out.println(
-				"------------------------------------- DONE_02:NoExeAssembler Utils.runMaven(Utils.getTopProjectFolderPath(), mvn -pl ':reporting,:server,:update' dependency:copy-dependencies) ... -------------------------------------");
+				"------------------------------------- DONE_02:NoExeAssembler Utils.runMaven(Utils.getTopProjectFolderPath(), mvn -pl ':rb-reporting,:rb-server' dependency:copy-dependencies) ... -------------------------------------");
 
 		// copy db template files and folders
 		FileUtils.copyDirectory(new File("src/main/external-resources/db-template"),
@@ -77,8 +77,12 @@ public class NoExeAssembler extends AbstractAssembler {
 		FileUtils.copyFile(new File(Utils.getTopProjectFolderPath() + "/backend/reporting/target/rb-reporting.jar"),
 				new File(packageDirPath + "/" + topFolderName + "/lib/burst/rb-reporting.jar"));
 
+		// copy "FAT UBER" rb-server.jar
+		FileUtils.copyFile(new File(Utils.getTopProjectFolderPath() + "/backend/server/target/rb-server.jar"),
+			new File(packageDirPath + "/" + topFolderName + "/lib/server/rb-server.jar"));
+
 		System.out.println(
-				"------------------------------------- DONE_06:NoExeAssembler copy rb-reporting.jar file ... -------------------------------------");
+				"------------------------------------- DONE_06:NoExeAssembler copy rb-reporting.jar, rb-rserver.jar files ... -------------------------------------");
 
 		// END MODULE_REPORTING work
 

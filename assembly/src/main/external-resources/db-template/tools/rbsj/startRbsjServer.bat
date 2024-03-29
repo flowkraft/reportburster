@@ -6,7 +6,7 @@ set SETTINGS_FILE=../../config/_internal/settings.xml
 :: Update settings.xml with the correct port
 powershell -Command "(gc '%SETTINGS_FILE%') -replace 'http://localhost:\d+', 'http://localhost:%PORT%' | Out-File -encoding ASCII '%SETTINGS_FILE%'"
 
-set JAR_FILE=../../lib/server/rbsj-server.jar
+set JAR_FILE=../../lib/server/rb-server.jar
 
 IF NOT DEFINED PORTABLE_EXECUTABLE_DIR_PATH set PORTABLE_EXECUTABLE_DIR_PATH=../..
 
