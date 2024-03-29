@@ -7,7 +7,7 @@ import { Constants } from '../../utils/constants';
 import * as PATHS from '../../utils/paths';
 import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test-helper';
 import { ConnectionsTestHelper } from '../../helpers/areas/connections-test-helper';
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     '(email-connection) should correctly CRUD create, read, update, duplicate and delete',
@@ -19,28 +19,29 @@ test.describe('', async () => {
 
       ft = ConnectionsTestHelper.createAndAssertNewEmailConnection(
         ft,
-        'Test Email Connection'
+        'Test Email Connection',
       );
       ft = ConnectionsTestHelper.readUpdateAndAssertEmailConnection(
         ft,
-        'Test Email Connection'
+        'Test Email Connection',
       );
       ft = ConnectionsTestHelper.duplicateAndAssertEmailConnection(
         ft,
-        'Test Email Connection'
+        'Test Email Connection',
       );
       ft = ConnectionsTestHelper.deleteAndAssertEmailConnection(
         ft,
-        'eml-test-email-connection\\.xml'
+        'eml-test-email-connection\\.xml',
       );
       ft = ConnectionsTestHelper.deleteAndAssertEmailConnection(
         ft,
-        'eml-test-email-connection-duplicated\\.xml'
+        'eml-test-email-connection-duplicated\\.xml',
       );
 
       return ft;
-    }
+    },
   );
+
   electronBeforeAfterAllTest(
     '(email-connection) should correctly handle all the "Default" related actions',
     async function ({ beforeAfterEach: firstPage }) {
@@ -57,25 +58,25 @@ test.describe('', async () => {
         .waitOnElementToBecomeEnabled('#btnDuplicate')
         .elementShouldContainText(
           `#${PATHS.EML_CONTACT_FILE} td:first-child`,
-          'Default Email Connection'
+          'Default Email Connection',
         )
         .elementShouldContainText(
           `#${PATHS.EML_CONTACT_FILE} td:nth-child(2)`,
-          'email-connection'
+          'email-connection',
         )
         .elementShouldContainText(
           `#${PATHS.EML_CONTACT_FILE} td:nth-child(3)`,
-          'My Reports'
+          'My Reports',
         )
         .elementShouldBeVisible(`#btnDefault_${PATHS.EML_CONTACT_FILE}`)
         .elementShouldNotBeVisible(`#btnActions_${PATHS.EML_CONTACT_FILE}`)
         .click(`#btnDefault_${PATHS.EML_CONTACT_FILE}`)
         .waitOnElementToBecomeVisible(
-          `#btnSendTestEmail_${PATHS.EML_CONTACT_FILE}`
+          `#btnSendTestEmail_${PATHS.EML_CONTACT_FILE}`,
         )
         .elementShouldNotBeVisible(`#btnSeparator_${PATHS.EML_CONTACT_FILE}`)
         .elementShouldNotBeVisible(
-          `#btnToggleDefault_${PATHS.EML_CONTACT_FILE}`
+          `#btnToggleDefault_${PATHS.EML_CONTACT_FILE}`,
         )
         //#btnDelete should be disabled for Default | usedBy != empty
         .elementShouldHaveClass('#btnDelete', 'disabled');
@@ -83,12 +84,12 @@ test.describe('', async () => {
       //create 2nd email connection and assert it is not default and other basic things
       const secondEmailConnectionName = 'Second Email Connection';
       const secondEmailConnectionFileName = `eml-${_.kebabCase(
-        secondEmailConnectionName
+        secondEmailConnectionName,
       )}\\.xml`;
 
       ft = ConnectionsTestHelper.createAndAssertNewEmailConnection(
         ft,
-        secondEmailConnectionName
+        secondEmailConnectionName,
       );
       ft.gotoConnections()
         .clickAndSelectTableRow(`#${secondEmailConnectionFileName}`)
@@ -99,35 +100,35 @@ test.describe('', async () => {
         .waitOnElementToBecomeEnabled('#btnDelete')
         .elementShouldContainText(
           `#${secondEmailConnectionFileName} td:first-child`,
-          secondEmailConnectionName
+          secondEmailConnectionName,
         )
         .elementShouldContainText(
           `#${secondEmailConnectionFileName} td:nth-child(2)`,
-          'email-connection'
+          'email-connection',
         )
         .elementShouldHaveText(
           `#${secondEmailConnectionFileName} td:nth-child(3)`,
-          ''
+          '',
         );
       //toggle 1st time default and assert it worked
       ft = ConnectionsTestHelper.makeConnectionAsDefault(
         ft,
-        secondEmailConnectionFileName
+        secondEmailConnectionFileName,
       );
 
       //toggle 2nd tine default and assert it worked
       ft = ConnectionsTestHelper.makeConnectionAsDefault(
         ft,
-        PATHS.EML_CONTACT_FILE
+        PATHS.EML_CONTACT_FILE,
       );
 
       ft = ConnectionsTestHelper.deleteAndAssertEmailConnection(
         ft,
-        secondEmailConnectionFileName
+        secondEmailConnectionFileName,
       );
 
       return ft;
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -143,47 +144,47 @@ test.describe('', async () => {
         ft,
         'burst',
         'Default Email Connection',
-        'yes-default-connection'
+        'yes-default-connection',
       );
 
       ft = ConfTemplatesTestHelper.createNewTemplate(
         ft,
-        'First Test Configuration'
+        'First Test Configuration',
       );
       ft = ConnectionsTestHelper.assertConfigurationUsesEmailConnection(
         ft,
         'first-test-configuration',
         'Default Email Connection',
-        'yes-default-connection'
+        'yes-default-connection',
       );
 
       ft = ConnectionsTestHelper.createAndAssertNewEmailConnection(
         ft,
-        'Test Contact Information'
+        'Test Contact Information',
       );
 
       ft = ConnectionsTestHelper.makeConnectionAsDefault(
         ft,
-        'eml-test-contact-information\\.xml'
+        'eml-test-contact-information\\.xml',
       );
 
       ft = ConfTemplatesTestHelper.createNewTemplate(
         ft,
-        'Second Test Configuration'
+        'Second Test Configuration',
       );
 
       ft = ConnectionsTestHelper.assertConfigurationUsesEmailConnection(
         ft,
         'second-test-configuration',
         'Test Contact Information',
-        'yes-default-connection'
+        'yes-default-connection',
       );
 
       ft = ft
         .goToBurstScreen()
         .gotoConfiguration()
         .click(
-          `#topMenuConfigurationLoad_second-test-configuration_${PATHS.SETTINGS_CONFIG_FILE}`
+          `#topMenuConfigurationLoad_second-test-configuration_${PATHS.SETTINGS_CONFIG_FILE}`,
         )
         .click('#leftMenuEmailSettings')
         .waitOnElementToBecomeVisible('#selectedEmailConnectionDefault')
@@ -203,7 +204,7 @@ test.describe('', async () => {
         ft,
         'second-test-configuration',
         'Default Email Connection',
-        'no-default-connection'
+        'no-default-connection',
       );
 
       //uncheck the "Re-use existing email connection" and change email host and port
@@ -222,7 +223,7 @@ test.describe('', async () => {
         .goToBurstScreen()
         .gotoConfiguration()
         .click(
-          `#topMenuConfigurationLoad_second-test-configuration_${PATHS.SETTINGS_CONFIG_FILE}`
+          `#topMenuConfigurationLoad_second-test-configuration_${PATHS.SETTINGS_CONFIG_FILE}`,
         )
         .click('#leftMenuEmailSettings')
         .elementShouldNotBeVisible('#btnSelectAnotherEmailConnection')
@@ -238,27 +239,27 @@ test.describe('', async () => {
         .elementShouldBeEnabled('#btnSSL')
         .elementShouldNotHaveAttribute(
           '#btnFromNameVariables button',
-          'disabled'
+          'disabled',
         )
         .elementShouldNotHaveAttribute(
           '#btnFromEmailAddressVariables button',
-          'disabled'
+          'disabled',
         )
         .elementShouldNotHaveAttribute(
           '#btnEmailServerHostVariables button',
-          'disabled'
+          'disabled',
         )
         .elementShouldNotHaveAttribute(
           '#btnSmtpPortVariables button',
-          'disabled'
+          'disabled',
         )
         .elementShouldNotHaveAttribute(
           '#btnUserNameVariables button',
-          'disabled'
+          'disabled',
         )
         .elementShouldNotHaveAttribute(
           '#btnSmtpPasswordVariables button',
-          'disabled'
+          'disabled',
         );
 
       //check back "Re-use existing email connection" and then "Manage Email Connections" and change email host and port
@@ -267,7 +268,7 @@ test.describe('', async () => {
         .goToBurstScreen()
         .gotoConfiguration()
         .click(
-          `#topMenuConfigurationLoad_second-test-configuration_${PATHS.SETTINGS_CONFIG_FILE}`
+          `#topMenuConfigurationLoad_second-test-configuration_${PATHS.SETTINGS_CONFIG_FILE}`,
         )
         .click('#leftMenuEmailSettings')
         .click('#btnUseExistingEmailConnection')
@@ -280,7 +281,7 @@ test.describe('', async () => {
         .waitOnElementToBecomeVisible('#btnGoBack')
         .waitOnElementToHaveText(
           `#${PATHS.EML_CONTACT_FILE} td:first-child`,
-          'Default Email Connection'
+          'Default Email Connection',
         )
         .clickAndSelectTableRow(`#${PATHS.EML_CONTACT_FILE}`)
         .waitOnElementToBecomeEnabled('#btnEdit')
@@ -298,7 +299,7 @@ test.describe('', async () => {
 
       ft = ConnectionsTestHelper.makeConnectionAsDefault(
         ft,
-        PATHS.EML_CONTACT_FILE
+        PATHS.EML_CONTACT_FILE,
       );
 
       //assert that changes are reflected accurately
@@ -307,7 +308,7 @@ test.describe('', async () => {
         .waitOnElementToBecomeVisible('#selectedEmailConnectionDefault')
         .waitOnElementToContainText(
           '#btnSelectedEmailConnection',
-          'Default Email Connection'
+          'Default Email Connection',
         )
         .inputShouldHaveValue('#emailServerHost', 'smtp.exmail.qq.com Modified')
         .inputShouldHaveValue('#smtpPort', '999')
@@ -318,14 +319,14 @@ test.describe('', async () => {
         .goToBurstScreen()
         .gotoConfiguration()
         .click(
-          `#topMenuConfigurationLoad_second-test-configuration_${PATHS.SETTINGS_CONFIG_FILE}`
+          `#topMenuConfigurationLoad_second-test-configuration_${PATHS.SETTINGS_CONFIG_FILE}`,
         )
         .click('#leftMenuEmailSettings')
         .elementCheckBoxShouldBeSelected('#btnUseExistingEmailConnection')
         .waitOnElementToBecomeVisible('#selectedEmailConnectionDefault')
         .waitOnElementToContainText(
           '#btnSelectedEmailConnection',
-          'Default Email Connection'
+          'Default Email Connection',
         )
         .inputShouldHaveValue('#emailServerHost', 'smtp.exmail.qq.com Modified')
         .inputShouldHaveValue('#smtpPort', '999')
@@ -334,20 +335,20 @@ test.describe('', async () => {
 
       ft = ConfTemplatesTestHelper.deleteTemplate(
         ft,
-        'first-test-configuration'
+        'first-test-configuration',
       );
 
       ft = ConfTemplatesTestHelper.deleteTemplate(
         ft,
-        'second-test-configuration'
+        'second-test-configuration',
       );
 
       ft = ConnectionsTestHelper.deleteAndAssertEmailConnection(
         ft,
-        'eml-test-contact-information\\.xml'
+        'eml-test-contact-information\\.xml',
       );
 
       return ft;
-    }
+    },
   );
 });

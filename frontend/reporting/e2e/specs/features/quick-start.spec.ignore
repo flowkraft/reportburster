@@ -17,7 +17,7 @@ test.describe('', async () => {
       const expectedOutputFiles = Constants.PAYSLIPS_PDF_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '.pdf';
-        }
+        },
       );
 
       const ft = new FluentTester(firstPage);
@@ -29,23 +29,25 @@ test.describe('', async () => {
           path.resolve(
             slash(
               process.env.PORTABLE_EXECUTABLE_DIR +
-                '/samples/burst/Payslips.pdf'
-            )
-          )
-        ).setInputFiles(
-        '#burstFileUploadInput',
-        slash(
-          path.resolve(
-            process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf'
-          )
+                '/samples/burst/Payslips.pdf',
+            ),
+          ),
         )
-      )
+        .setInputFiles(
+          '#burstFileUploadInput',
+          slash(
+            path.resolve(
+              process.env.PORTABLE_EXECUTABLE_DIR +
+                '/samples/burst/Payslips.pdf',
+            ),
+          ),
+        )
         .click('#btnBurst')
         .clickYesDoThis()
         .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
         .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
-        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles);
-        .appStatusShouldBeGreatNoErrorsNoWarnings()
-    }
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles)
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    },
   );
 });

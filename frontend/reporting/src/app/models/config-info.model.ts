@@ -7,7 +7,7 @@ export const ConfigInfo = {
     settings: {
       version: '',
       template: '',
-      numberofuservariables: -1,
+      numberofuservariables: 20,
       sendfiles: {},
       emailserver: {},
       emailsettings: {},

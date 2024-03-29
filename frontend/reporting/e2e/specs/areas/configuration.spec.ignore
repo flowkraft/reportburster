@@ -5,7 +5,7 @@ import { ConfigurationTestHelper } from '../../helpers/areas/configuration-test-
 import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test-helper';
 import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     `(WITHOUT Report Generation) - should work changing/saving configuration values and should work rolling back to default configuration values 
@@ -21,14 +21,14 @@ test.describe('', async () => {
       ft =
         ConfigurationTestHelper.rollbackChangesToDefaultDocumentBursterConfiguration(
           ft,
-          'burst'
+          'burst',
         );
 
       return ConfigurationTestHelper.assertDefaultDocumentBursterConfiguration(
         ft,
-        'burst'
+        'burst',
       );
-    }
+    },
   );
   electronBeforeAfterAllTest(
     `(WITH Report Generation) - should check the correct and default values/behaviour`,
@@ -41,19 +41,19 @@ test.describe('', async () => {
       ft = ConfTemplatesTestHelper.createNewTemplate(
         ft,
         'Invoices',
-        'enableMailMergeCapability'
+        'enableMailMergeCapability',
       );
 
       ft =
         ConfigurationTestHelper.assertDefaultDocumentBursterReportingConfiguration(
           ft,
-          'invoices'
+          'invoices',
         );
 
       ft = ConfTemplatesTestHelper.createNewTemplate(
         ft,
         'Bills',
-        'enableMailMergeCapability'
+        'enableMailMergeCapability',
       );
 
       ft = ft
@@ -76,7 +76,7 @@ test.describe('', async () => {
         .click('.ng-clear-wrapper')
         .waitOnElementToBecomeInvisible('#mailMergeClassicReportInputFilePath')
         .waitOnElementToBecomeInvisible(
-          '#browseMailMergeClassicReportInputFile'
+          '#browseMailMergeClassicReportInputFile',
         )
         .click('#selectMailMergeClassicReport')
         .waitOnElementToBecomeVisible('#bills_ds\\.csvfile')
@@ -88,7 +88,7 @@ test.describe('', async () => {
         .click('.ng-clear-wrapper')
         .waitOnElementToBecomeInvisible('#mailMergeClassicReportInputFilePath')
         .waitOnElementToBecomeInvisible(
-          '#browseMailMergeClassicReportInputFile'
+          '#browseMailMergeClassicReportInputFile',
         );
 
       ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'invoices');
@@ -98,7 +98,7 @@ test.describe('', async () => {
       return ft
         .goToBurstScreen()
         .elementShouldNotBeVisible('#reportGenerationMailMergeTab-link');
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -112,25 +112,25 @@ test.describe('', async () => {
       ft = ConfTemplatesTestHelper.createNewTemplate(
         ft,
         'Bills',
-        'enableMailMergeCapability'
+        'enableMailMergeCapability',
       );
 
       ft =
         ConfigurationTestHelper.changeSaveLoadAssertSavedReportingConfiguration(
           ft,
-          'bills'
+          'bills',
         );
 
       ft =
         ConfigurationTestHelper.rollbackChangesToDefaultDocumentBursterConfiguration(
           ft,
-          'bills'
+          'bills',
         );
 
       //#btnCapReportGenerationMailMerge will be changed to "off" after rollback => assert without the Reporting part
       ft = ConfigurationTestHelper.assertDefaultDocumentBursterConfiguration(
         ft,
-        'bills'
+        'bills',
       );
 
       //Update #btnCapReportGenerationMailMerge to be "on" again
@@ -149,10 +149,10 @@ test.describe('', async () => {
       ft =
         ConfigurationTestHelper.assertDefaultDocumentBursterReportingConfiguration(
           ft,
-          'bills'
+          'bills',
         );
 
       return ConfTemplatesTestHelper.deleteTemplate(ft, 'bills');
-    }
+    },
   );
 });
