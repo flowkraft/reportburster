@@ -49,8 +49,8 @@ public class DocumentBursterAssembler extends AbstractAssembler {
 
 		
 		FileUtils.copyFile(
-				new File(Utils.getTopProjectFolderPath() + "/frontend/reporting/release/DocumentBurster.exe"),
-				new File(packageDirPath + "/" + topFolderName + "/DocumentBurster.exe"));
+				new File(Utils.getTopProjectFolderPath() + "/frontend/reporting/release/ReportBurster.exe"),
+				new File(packageDirPath + "/" + topFolderName + "/ReportBurster.exe"));
 
 		System.out.println(
 				"------------------------------------- DONE_03:DocumentBurster _copyDocumentBursterExe... -------------------------------------");
@@ -62,10 +62,10 @@ public class DocumentBursterAssembler extends AbstractAssembler {
 		ZipUtil.unpack(new File(targetPathZipFile), new File(verifyDirPath));
 
 		// verify DocumentBursterExe();
-		assertThat(new File(verifyDirPath + "/" + topFolderName + "/DocumentBurster.exe").exists()).isTrue();
+		assertThat(new File(verifyDirPath + "/" + topFolderName + "/ReportBurster.exe").exists()).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_01:DocumentBurster DocumentBurster.exe... -------------------------------------");
+				"------------------------------------- VERIFIED_01:DocumentBurster ReportBurster.exe... -------------------------------------");
 
 		System.out.println(
 				"------------------------------------- VERIFIED_DONE:DocumentBurster ... -------------------------------------");

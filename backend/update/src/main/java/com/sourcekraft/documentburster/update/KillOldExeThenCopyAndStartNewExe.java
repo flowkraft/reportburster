@@ -51,11 +51,11 @@ public class KillOldExeThenCopyAndStartNewExe {
 
 		System.out.println(APP_ID + " - _KILL_COMMAND: " + _KILL_COMMAND);
 
-		System.out.println(APP_ID + " - STEP 1 - \"Kill -9\" the running DocumentBurster.exe process ... ");
+		System.out.println(APP_ID + " - STEP 1 - \"Kill -9\" the running ReportBurster.exe process ... ");
 
 		_killProcess();
 
-		File oldExe = new File(_getWorkingDirectoryPath() + "/DocumentBurster.exe");
+		File oldExe = new File(_getWorkingDirectoryPath() + "/ReportBurster.exe");
 
 		String message;
 
@@ -106,12 +106,12 @@ public class KillOldExeThenCopyAndStartNewExe {
 		}
 
 		if (!oldExe.exists()) {
-			message = APP_ID + " - STEP 6 - Could not start the new / updated DocumentBurster.exe... '"
+			message = APP_ID + " - STEP 6 - Could not start the new / updated ReportBurster.exe... '"
 					+ oldExe.getAbsolutePath() + "' file WAS NOT FOUND !";
 			System.out.println(message);
 			throw new Exception(message);
 		} else {
-			System.out.println(APP_ID + " - STEP 6 - Starting the new / updated DocumentBurster.exe ... ");
+			System.out.println(APP_ID + " - STEP 6 - Starting the new / updated ReportBurster.exe ... ");
 			Runtime.getRuntime().exec(oldExe.getAbsolutePath());
 		}
 	}
