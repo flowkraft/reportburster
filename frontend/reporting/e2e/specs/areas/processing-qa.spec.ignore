@@ -7,14 +7,14 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import * as PATHS from '../../utils/paths';
 import { FluentTester } from '../../helpers/fluent-tester';
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly split-test-all samples/burst/Payslips.pdf (My Report)',
     async function ({ beforeAfterEach: firstPage }) {
       const sendEmails = false;
       await _splitSendVerifyEmails(firstPage, Constants.QA_TA, sendEmails);
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -22,7 +22,7 @@ test.describe('', async () => {
     async function ({ beforeAfterEach: firstPage }) {
       const sendEmails = false;
       await _splitSendVerifyEmails(firstPage, Constants.QA_TR, sendEmails);
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -30,14 +30,15 @@ test.describe('', async () => {
     async function ({ beforeAfterEach: firstPage }) {
       const sendEmails = false;
       await _splitSendVerifyEmails(firstPage, Constants.QA_TL, sendEmails);
-    }
+    },
   );
+
   electronBeforeAfterAllTest(
     'should correctly split-email-test-all samples/burst/Payslips.pdf (My Report)',
     async function ({ beforeAfterEach: firstPage }) {
       const sendEmails = true;
       await _splitSendVerifyEmails(firstPage, Constants.QA_TA, sendEmails);
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -45,7 +46,7 @@ test.describe('', async () => {
     async function ({ beforeAfterEach: firstPage }) {
       const sendEmails = true;
       await _splitSendVerifyEmails(firstPage, Constants.QA_TR, sendEmails);
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -53,14 +54,14 @@ test.describe('', async () => {
     async function ({ beforeAfterEach: firstPage }) {
       const sendEmails = true;
       await _splitSendVerifyEmails(firstPage, Constants.QA_TL, sendEmails);
-    }
+    },
   );
 });
 
 const _splitSendVerifyEmails = (
   firstPage: Page,
   mode: string,
-  sendEmails: boolean
+  sendEmails: boolean,
   //expectedOutputEmailFiles: string[]
 ): FluentTester => {
   const qaFlowOptions = ['PROC_2_QA', 'QA_DIRECTLY'];
@@ -95,9 +96,9 @@ const _splitSendVerifyEmails = (
       '#burstFileUploadInput',
       path.resolve(
         slash(
-          process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf'
-        )
-      )
+          process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf',
+        ),
+      ),
     )
       .elementShouldBeVisible('#qaReminderLink')
       .click('#qaReminderLink')
@@ -111,9 +112,9 @@ const _splitSendVerifyEmails = (
       '#qaFileUploadInput',
       path.resolve(
         slash(
-          process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf'
-        )
-      )
+          process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf',
+        ),
+      ),
     );
   }
 
@@ -122,7 +123,7 @@ const _splitSendVerifyEmails = (
   } else if (mode === Constants.QA_TL) {
     ft.click('#testTokensList').setValue(
       '#listOfTokens',
-      'clyde.grew@northridgehealth.org,alfreda.waldback@northridgehealth.org'
+      'clyde.grew@northridgehealth.org,alfreda.waldback@northridgehealth.org',
     );
   }
 
@@ -131,7 +132,7 @@ const _splitSendVerifyEmails = (
       .clickYesDoThis()
       .waitOnElementToBecomeVisible(
         '#stopTestEmailServer',
-        Constants.DELAY_FIVE_THOUSANDS_SECONDS
+        Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       )
       .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR);
   }
@@ -148,7 +149,7 @@ const _splitSendVerifyEmails = (
     ft.processingShouldHaveGeneratedOutputFiles(
       Constants.PAYSLIPS_PDF_BURST_TOKENS.map(function (burstToken) {
         return burstToken + '.pdf';
-      })
+      }),
     );
   } else if (mode === Constants.QA_TR)
     ft.processingShouldHaveGeneratedNFilesHavingSuffix(2, '.pdf');
@@ -164,7 +165,7 @@ const _splitSendVerifyEmails = (
       ft.shouldHaveSentNCorrectEmails(
         mode,
         Constants.PAYSLIPS_PDF_BURST_TOKENS.length,
-        Constants.ATTACHMENTS_DEFAULT
+        Constants.ATTACHMENTS_DEFAULT,
       );
     else
       ft.shouldHaveSentNCorrectEmails(mode, 2, Constants.ATTACHMENTS_DEFAULT);
@@ -175,7 +176,7 @@ const _splitSendVerifyEmails = (
       .clickYesDoThis()
       .waitOnElementToBecomeVisible(
         '#startTestEmailServer',
-        Constants.DELAY_FIVE_THOUSANDS_SECONDS
+        Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       )
       .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR);
   }

@@ -151,8 +151,11 @@ export class ButtonVariablesComponent {
       this.variables = this.builtInVariables.concat(
         this.getShortListUserVariables(),
       );
-      console.log(`this.variables = ${JSON.stringify(this.variables)}`);
     }
+
+    //console.log(
+    //  `onShowMore() - this.variables = ${JSON.stringify(this.variables)}`,
+    //);
   }
 
   onVariableClick(variable) {

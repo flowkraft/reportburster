@@ -112,7 +112,7 @@ public class Settings extends DumpToString {
 
 	public void loadSettingsConnection(String connectionConfigFilePath) throws Exception {
 
-		System.out.println("loadSettingsConnection connectionConfigFilePath = " + connectionConfigFilePath);
+		//System.out.println("loadSettingsConnection connectionConfigFilePath = " + connectionConfigFilePath);
 
 		JAXBContext jcr = JAXBContext.newInstance(DocumentBursterConnectionSettings.class);
 

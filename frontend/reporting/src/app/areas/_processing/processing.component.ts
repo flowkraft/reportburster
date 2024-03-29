@@ -878,10 +878,22 @@ export class ProcessingComponent implements OnInit {
   }
 
   async checkIfTestEmailServerIsStarted() {
+    //console.log(
+    //  `this.xmlSettings.documentburster.settings.qualityassurance.emailserver.weburl = ${this.xmlSettings.documentburster.settings.qualityassurance.emailserver.weburl}`,
+    //);
+
     let testEmailServerStatus = 'stopped';
     const qaEmailServerStarted = await this.apiService.get(
-      `/jobman/system/check-url?url=${encodeURIComponent(this.xmlSettings.documentburster.settings.qualityassurance.emailserver.weburl)}`,
+      '/jobman/system/check-url',
+      {
+        url: encodeURIComponent(
+          this.xmlSettings.documentburster.settings.qualityassurance.emailserver
+            .weburl,
+        ),
+      },
     );
+
+    //console.log(`qaEmailServerStarted = ${qaEmailServerStarted}`);
 
     if (qaEmailServerStarted) testEmailServerStatus = 'started';
 

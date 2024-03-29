@@ -5,7 +5,7 @@ import _ from 'lodash';
 
 import { Constants } from '../../utils/constants';
 import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test-helper';
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly edit / save the name of the "fallback" configuration settings.xml to Payslips (from My Report)',
@@ -17,10 +17,10 @@ test.describe('', async () => {
       ft = ConfTemplatesTestHelper.modifyTemplateName(
         ft,
         'burst',
-        'My Reports'
+        'My Reports',
       );
       return ConfTemplatesTestHelper.assertFallbackTemplate(ft, 'My Reports');
-    }
+    },
   );
 
   // tslint:disable-next-line:max-line-length
@@ -39,22 +39,22 @@ test.describe('', async () => {
       ft = ConfTemplatesTestHelper.modifyTemplateName(
         ft,
         'test',
-        'Test Modified'
+        'Test Modified',
       );
       ft.consoleLog(
-        `ConfTemplatesTestHelper.modifyConfigurationValuesAssertSavedValues`
+        `ConfTemplatesTestHelper.modifyConfigurationValuesAssertSavedValues`,
       );
       ft = ConfTemplatesTestHelper.modifyConfigurationValuesAssertSavedValues(
         ft,
-        'test'
+        'test',
       );
       ft.consoleLog(
-        `ConfTemplatesTestHelper.rollbackChangesToDefaultDocumentBursterConfiguration`
+        `ConfTemplatesTestHelper.rollbackChangesToDefaultDocumentBursterConfiguration`,
       );
       ft =
         ConfTemplatesTestHelper.rollbackChangesToDefaultDocumentBursterConfiguration(
           ft,
-          'test'
+          'test',
         );
       ft.consoleLog(`ConfTemplatesTestHelper.assertTemplate`);
       ft = ConfTemplatesTestHelper.assertTemplate(ft, 'test', 'Test Modified');
@@ -62,7 +62,7 @@ test.describe('', async () => {
       ft = ConfTemplatesTestHelper.assertDefaultConfigurationValues(ft, 'test');
       ft.consoleLog(`ConfTemplatesTestHelper.deleteTemplate`);
       return ConfTemplatesTestHelper.deleteTemplate(ft, 'test');
-    }
+    },
   );
   electronBeforeAfterAllTest(
     'should correctly create two distinct configuration templates, allow altering email subject / message configuration values, assert both are correctly saved / loaded, rollback default values and assert correctness in one of them and finally remove both',
@@ -76,7 +76,7 @@ test.describe('', async () => {
       ft = ConfTemplatesTestHelper.assertTemplate(
         ft,
         'statements',
-        'Statements'
+        'Statements',
       );
 
       ft = ConfTemplatesTestHelper.createNewTemplate(ft, 'Bills');
@@ -86,31 +86,31 @@ test.describe('', async () => {
         ConfTemplatesTestHelper.modifyEmailBCCAndSubjectAndAssertCorrectValues(
           ft,
           'statements',
-          'Statements'
+          'Statements',
         );
       ft = ConfTemplatesTestHelper.assertTemplate(
         ft,
         'statements',
-        'Statements'
+        'Statements',
       );
 
       ft =
         ConfTemplatesTestHelper.modifyEmailBCCAndSubjectAndAssertCorrectValues(
           ft,
           'bills',
-          'Bills'
+          'Bills',
         );
       ft = ConfTemplatesTestHelper.assertTemplate(ft, 'bills', 'Bills');
 
       ft =
         ConfTemplatesTestHelper.rollbackChangesToDefaultDocumentBursterConfiguration(
           ft,
-          'statements'
+          'statements',
         );
       ft = ConfTemplatesTestHelper.assertTemplate(
         ft,
         'statements',
-        'Statements'
+        'Statements',
       );
 
       //assert that BCC and Subject were rolledback to '' values
@@ -118,7 +118,7 @@ test.describe('', async () => {
 
       ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'bills');
       return ConfTemplatesTestHelper.deleteTemplate(ft, 'statements');
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -132,33 +132,33 @@ test.describe('', async () => {
       ft = ConfTemplatesTestHelper.createNewTemplate(
         ft,
         'Statements',
-        'enableMailMergeCapability'
+        'enableMailMergeCapability',
       );
       ft = ConfTemplatesTestHelper.assertTemplate(
         ft,
         'statements',
         'Statements',
-        'enableMailMergeCapability'
+        'enableMailMergeCapability',
       );
 
       ft = ConfTemplatesTestHelper.duplicateTemplate(
         ft,
         'statements',
         'Bills',
-        'enableMailMergeCapability'
+        'enableMailMergeCapability',
       );
       ft = ConfTemplatesTestHelper.assertTemplate(
         ft,
         'bills',
         'Bills',
-        'enableMailMergeCapability'
+        'enableMailMergeCapability',
       );
 
       ft = ConfTemplatesTestHelper.assertShowHideWorksFine(ft, 'bills');
 
       ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'bills');
       return ConfTemplatesTestHelper.deleteTemplate(ft, 'statements');
-    }
+    },
   );
   /*
    */

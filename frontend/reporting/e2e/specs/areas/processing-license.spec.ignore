@@ -3,7 +3,7 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import { Helpers } from '../../utils/helpers';
 import { FluentTester } from '../../helpers/fluent-tester';
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly activate, check and deactivate a valid license',
@@ -37,7 +37,7 @@ test.describe('', async () => {
           .appStatusShouldBeGreatNoErrorsNoWarnings()
           .waitOnElementToBecomeVisible(
             '#statusActiveLicenseKey',
-            Constants.DELAY_FIVE_THOUSANDS_SECONDS
+            Constants.DELAY_FIVE_THOUSANDS_SECONDS,
           )
           .elementShouldBeVisible('#version')
           //.sleep(Constants.DELAY_ONE_SECOND)
@@ -62,12 +62,12 @@ test.describe('', async () => {
           .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
           .waitOnElementToBecomeVisible(
             '#statusDemoLicense',
-            Constants.DELAY_FIVE_THOUSANDS_SECONDS
+            Constants.DELAY_FIVE_THOUSANDS_SECONDS,
           )
           .appShouldBeReadyToRunNewJobs()
           .appStatusShouldBeGreatNoErrorsNoWarnings()
         //.killHangingJavaProcesses()
       );
-    }
+    },
   );
 });

@@ -1,5 +1,6 @@
 package com.flowkraft.jobman.controllers;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
@@ -39,10 +40,18 @@ public class SystemController {
 	SystemService systemService;
 
 	@GetMapping("/check-url")
-	public Mono<Boolean> checkUrl(@RequestParam String url) {
+	public Mono<Boolean> checkUrl(@RequestParam String url) throws Exception {
+		
+		String decodedUrl = java.net.URLDecoder.decode(url, StandardCharsets.UTF_8.name());
+		
+		//System.out.println("/jobman/system/check-url url = " + decodedUrl);
+		
 		WebClient webClient = WebClient.create();
 		
-		return webClient.head().uri(url).exchangeToMono(response -> {
+		return webClient.get().uri(decodedUrl).exchangeToMono(response -> {
+			
+			//System.out.println("/jobman/system/check-url url = " + decodedUrl + ", response.status = "+response.statusCode());
+			
 			if (response.statusCode().equals(HttpStatus.OK)) {
 				return Mono.just(true);
 			} else {
