@@ -29,6 +29,7 @@ public class Attachment extends DumpToString {
 	public String path;
 
 	@XmlAttribute
-    public int order;
+	public int order;
+
 
 }

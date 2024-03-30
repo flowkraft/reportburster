@@ -5,7 +5,7 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { FluentTester } from '../../helpers/fluent-tester';
 import path from 'path';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should show the screen correctly in the initial state',

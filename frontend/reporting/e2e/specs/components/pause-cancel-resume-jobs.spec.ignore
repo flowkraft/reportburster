@@ -10,7 +10,7 @@ import { Constants } from '../../utils/constants';
 import path from 'path';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should Pause a Job and no output file should be created (because the Pause is called before the first output file is generated)',
@@ -100,45 +100,52 @@ const _splitVerifyBigFile = (
       .waitOnProcessingToStart(Constants.CHECK_PROCESSING_LOGS)
       .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
       .waitOnElementToBecomeVisible('#btnCheckLicenseKey')
+      .click('#burstTab-link')
+      .waitOnElementToBecomeVisible('#logsViewer')
+      .click('#btnClearLogs')
+      .clickYesDoThis()
+      .waitOnElementToBecomeInvisible('#logsViewer')
+      .click('#licenseTab-link')
       .click('#btnCheckLicenseKey')
       .clickYesDoThis()
       .waitOnProcessingToStart(Constants.CHECK_PROCESSING_LOGS)
+      .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
       .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
       .waitOnElementToBecomeVisible(
         '#statusActiveLicenseKey',
         Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       )
-      .elementShouldBeVisible('#version')
-      .elementShouldBeVisible('#deactivateLicenseKey')
-      .click('#burstTab-link');
+      .waitOnElementToBecomeVisible(
+        '#deactivateLicenseKey',
+        Constants.DELAY_FIVE_THOUSANDS_SECONDS,
+      )
+      .waitOnElementToBecomeVisible(
+        '#version',
+        Constants.DELAY_FIVE_THOUSANDS_SECONDS,
+      )
+      .sleep(Constants.DELAY_ONE_SECOND)
+      .appShouldBeReadyToRunNewJobs()
+      .click('#burstTab-link')
+      .waitOnElementToBecomeVisible('#logsViewer')
+      .click('#btnClearLogs')
+      .clickYesDoThis()
+      .waitOnElementToBecomeInvisible('#logsViewer');
   }
 
-  ft.appShouldBeReadyToRunNewJobs()
-    .appStatusShouldBeGreatNoErrorsNoWarnings()
-    .click('#burstFile')
-    .setInputFiles(
-      '#burstFileUploadInput',
-      path.resolve(
-        slash(
-          process.env.PORTABLE_EXECUTABLE_DIR +
-            '/samples/burst/Payslips-Oct.pdf',
-        ),
+  ft.appStatusShouldBeGreatNoErrorsNoWarnings().setInputFiles(
+    '#burstFileUploadInput',
+    path.resolve(
+      slash(
+        `${process.env.PORTABLE_EXECUTABLE_DIR}/samples/burst/Payslips-Oct.pdf`,
       ),
-    );
+    ),
+  );
 
   if (!pauseCancelMode.includes('after-pdf-generated')) {
     ft.waitOnElementToBecomeVisible('#qaReminderLink');
   }
 
-  ft.click('#btnBurst').clickYesDoThis();
-
-  if (pauseCancelMode.includes('after-pdf-generated')) {
-    ft.click('#btnClearLogs').clickYesDoThis();
-    ft.waitOnElementToBecomeVisible('#qaReminderLink');
-  }
-
-  ft.elementShouldNotBeVisible('#logsViewer')
-    .click('#btnBurst')
+  ft.click('#btnBurst')
     .clickYesDoThis()
     .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR);
 
@@ -194,6 +201,8 @@ const _splitVerifyBigFile = (
       .click('#deactivateLicenseKey')
       .clickYesDoThis()
       .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+      .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+      .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
       .waitOnElementToBecomeVisible(
         '#statusDemoLicense',
         Constants.DELAY_FIVE_THOUSANDS_SECONDS,
@@ -204,7 +213,7 @@ const _splitVerifyBigFile = (
   ft.click('#burstTab-link')
     .click('#btnClearLogs')
     .clickYesDoThis()
-    //.waitOnElementToBecomeInvisible('#logsViewer')
+    .waitOnElementToBecomeInvisible('#logsViewer')
     .appShouldBeReadyToRunNewJobs();
 
   if (pauseCancelMode === 'pause-after-pdf-generated-and-then-resume')

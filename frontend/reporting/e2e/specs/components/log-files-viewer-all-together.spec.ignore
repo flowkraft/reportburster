@@ -7,10 +7,9 @@ import * as jetpack from 'fs-jetpack';
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import * as PATHS from '../../utils/paths';
 import { Helpers } from '../../utils/helpers';
-import * as fsExtra from 'fs-extra';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly display the log viewers in the initial "Empty" state',
@@ -31,15 +30,15 @@ test.describe('', async () => {
           'dburst-log-files-viewer-all-together #warningsLog',
         )
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
           '',
         )
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
           '',
         )
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
           '',
         );
     },
@@ -110,16 +109,16 @@ test.describe('', async () => {
           'dburst-log-files-viewer-all-together #warningsLog',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
           '1\n',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
-          '1\n2\n',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
+          '2\n1\n',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
-          '1\n2\n3\n',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
+          '3\n2\n1\n',
         );
 
       await jetpack.copyAsync(
@@ -139,16 +138,16 @@ test.describe('', async () => {
         .waitOnElementToBecomeVisible('#btnErrors')
         .appStatusShouldShowErrors()
         .elementShouldContainText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
-          '1\n2\n',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
+          '2\n1\n',
         )
         .elementShouldContainText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
-          '1\n2\n3\n',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
+          '3\n2\n1\n',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
-          '1\n2\n3\n4\n5\n6\n7\n8',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
+          '8\n7\n6\n5\n4\n3\n2\n1',
         );
     },
   );
@@ -194,16 +193,16 @@ test.describe('', async () => {
         .appStatusShouldShowErrors()
         .click('#logsTab-link')
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
           '1\n',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
-          '1\n2\n',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
+          '2\n1\n',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
-          '1\n2\n3\n',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
+          '3\n2\n1\n',
         );
 
       await jetpack.writeAsync(
@@ -237,15 +236,15 @@ test.describe('', async () => {
         .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
         .appStatusShouldBeGreatNoErrorsNoWarnings()
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
           '',
         )
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
           '',
         )
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
           '',
         );
 
@@ -283,16 +282,16 @@ test.describe('', async () => {
         .waitOnElementToBecomeVisible('#btnErrors')
         .appStatusShouldShowErrors()
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
           '1\n',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
-          '1\n2\n',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
+          '2\n1\n',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
-          '1\n2\n3\n4\n5\n6\n7\n8\n',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
+          '8\n7\n6\n5\n4\n3\n2\n1\n',
         );
     },
   );
@@ -326,30 +325,30 @@ test.describe('', async () => {
           'dburst-log-files-viewer-all-together #warningsLog',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
           '1\n',
         )
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
           '',
         )
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
           '',
         )
         .click('#btnClearLogFiles')
         .click('#btnClearInfoLog')
         .clickYesDoThis()
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
           '',
         )
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
           '',
         )
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
           '',
         )
         .appStatusShouldBeGreatNoErrorsNoWarnings();
@@ -359,12 +358,6 @@ test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should handle correctly pressing the Clear Warnings button',
     async function ({ beforeAfterEach: firstPage }) {
-      await fsExtra.emptyDir(
-        path.resolve(
-          slash(`${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}`),
-        ),
-      );
-
       await jetpack.copyAsync(
         `${PATHS.E2E_RESOURCES_PATH}/logs/warnings-with-1234data.log`,
         path.resolve(
@@ -386,16 +379,16 @@ test.describe('', async () => {
         .appStatusShouldShowWarnings()
         .click('#logsTab-link')
         .elementShouldHaveText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
           '',
         )
         .elementShouldHaveText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
           '',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
-          '1\n2\n3\n',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
+          '3\n2\n1\n',
         )
         .click('#btnClearLogFiles')
         .click('#btnClearWarningsLog')
@@ -404,15 +397,15 @@ test.describe('', async () => {
         .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
         .appStatusShouldBeGreatNoErrorsNoWarnings()
         .elementShouldHaveText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
           '',
         )
         .elementShouldHaveText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
           '',
         )
         .elementShouldHaveText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
           '',
         );
     },
@@ -447,16 +440,16 @@ test.describe('', async () => {
         .appStatusShouldShowErrors()
         .click('#logsTab-link')
         .elementShouldHaveText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
           '',
         )
         .elementShouldHaveText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
           '',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
-          '1\n2\n',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
+          '2\n1\n',
         )
         .click('#btnClearLogFiles')
         .click('#btnClearErrorsLog')
@@ -465,15 +458,15 @@ test.describe('', async () => {
         .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
         .appStatusShouldBeGreatNoErrorsNoWarnings()
         .elementShouldHaveText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
           '',
         )
         .elementShouldHaveText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
           '',
         )
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
           '',
         );
     },
@@ -537,16 +530,16 @@ test.describe('', async () => {
         .appStatusShouldShowErrors()
         .click('#logsTab-link')
         .elementShouldContainText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
-          '1\n2\n',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
+          '2\n1\n',
         )
         .elementShouldContainText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
-          '1\n2\n3\n',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
+          '3\n2\n1\n',
         )
         .elementShouldContainText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
-          '1\n2\n3\n4\n',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
+          '4\n3\n2\n1\n',
         )
         .processingShouldHaveGeneratedQuarantineFiles([
           'alfreda.waldback@northridgehealth.org.pdf',
@@ -558,16 +551,16 @@ test.describe('', async () => {
         .clickYesDoThis()
         .appStatusShouldShowErrors()
         .elementShouldContainText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
-          '1\n2\n',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
+          '2\n1\n',
         )
         .elementShouldContainText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
-          '1\n2\n3\n',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
+          '3\n2\n1\n',
         )
         .elementShouldContainText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
-          '1\n2\n3\n4\n',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
+          '4\n3\n2\n1\n',
         )
         .processingShouldHaveGeneratedQuarantineFiles([]);
     },
@@ -632,16 +625,16 @@ test.describe('', async () => {
           'dburst-log-files-viewer-all-together #warningsLog',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
           '1\n',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
-          '1\n2\n',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
+          '2\n1\n',
         )
         .waitOnElementToContainText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
-          '1\n2\n3\n',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
+          '3\n2\n1\n',
         )
         .processingShouldHaveGeneratedQuarantineFiles([
           'alfreda.waldback@northridgehealth.org.pdf',
@@ -652,15 +645,15 @@ test.describe('', async () => {
         .click('#btnClearAllLogQuarantinedFiles')
         .clickYesDoThis()
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
           '',
         )
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
           '',
         )
         .waitOnElementToHaveText(
-          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
+          'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
           '',
         )
         .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
@@ -728,16 +721,16 @@ async function _shouldCorrectlyDisplayLogFiles(
     .elementShouldBeVisible('dburst-log-files-viewer-all-together #errorsLog')
     .elementShouldBeVisible('dburst-log-files-viewer-all-together #warningsLog')
     .waitOnElementToContainText(
-      'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer pre',
+      'dburst-log-files-viewer-all-together #infoLog dburst-log-file-viewer div',
       '1\n',
     )
     .waitOnElementToContainText(
-      'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer pre',
-      '1\n2\n',
+      'dburst-log-files-viewer-all-together #errorsLog dburst-log-file-viewer div',
+      '2\n1\n',
     )
     .waitOnElementToContainText(
-      'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer pre',
-      '1\n2\n3\n',
+      'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
+      '3\n2\n1\n',
     );
 
   if (electronApp) {

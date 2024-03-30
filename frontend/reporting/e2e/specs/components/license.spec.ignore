@@ -9,7 +9,7 @@ import { Helpers } from '../../utils/helpers';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   test('should correctly handle when the user will empty the license key', async function () {
     await jetpack.copyAsync(

@@ -1052,6 +1052,18 @@ export class ConfigurationComponent implements OnInit {
       );
       this.modalAttachmentInfo.attachmentFilePath = '';
     }
+
+    //console.log(
+    //  `this.settingsService.currentConfigurationTemplatePath = ${this.settingsService.currentConfigurationTemplatePath}`,
+    //);
+    //console.log(`this.xmlSettings = ${JSON.stringify(this.xmlSettings)}`);
+
+    this.xmlSettings.documentburster.settings.attachments.items.attachmentItems.forEach(
+      (item) => {
+        delete item.selected;
+      },
+    );
+
     await this.settingsService.saveSettingsFileAsync(
       this.settingsService.currentConfigurationTemplatePath,
       this.xmlSettings,
