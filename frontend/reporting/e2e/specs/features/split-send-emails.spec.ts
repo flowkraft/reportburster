@@ -7,7 +7,7 @@ import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should split and send Payslips.pdf output files by email (My Report)',
@@ -16,9 +16,9 @@ test.describe('', async () => {
         firstPage,
         Constants.QA_TA,
         3,
-        Constants.ATTACHMENTS_DEFAULT
+        Constants.ATTACHMENTS_DEFAULT,
       );
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -28,9 +28,9 @@ test.describe('', async () => {
         firstPage,
         Constants.QA_TR,
         2,
-        Constants.ATTACHMENTS_CLEAR
+        Constants.ATTACHMENTS_CLEAR,
       );
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -40,9 +40,9 @@ test.describe('', async () => {
         firstPage,
         Constants.QA_TR,
         2,
-        Constants.ATTACHMENTS_ADD_AND_ZIP
+        Constants.ATTACHMENTS_ADD_AND_ZIP,
       );
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -52,9 +52,9 @@ test.describe('', async () => {
         firstPage,
         Constants.QA_TA,
         3,
-        Constants.ATTACHMENTS_XLS_ONLY
+        Constants.ATTACHMENTS_XLS_ONLY,
       );
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -64,9 +64,9 @@ test.describe('', async () => {
         firstPage,
         Constants.QA_TA,
         3,
-        Constants.ATTACHMENTS_PDF_AND_XLS
+        Constants.ATTACHMENTS_PDF_AND_XLS,
       );
-    }
+    },
   );
 });
 
@@ -74,7 +74,7 @@ const _splitSendVerifyEmails = (
   firstPage: Page,
   qaMode: string,
   numberOfRandomRecipients: number,
-  attachmentsCommand: string
+  attachmentsCommand: string,
 ): FluentTester => {
   const ft = new FluentTester(firstPage);
   ft.click('#topMenuConfiguration')
@@ -103,12 +103,12 @@ const _splitSendVerifyEmails = (
         path.resolve(
           slash(
             process.env.PORTABLE_EXECUTABLE_DIR +
-              '/samples/burst/Customers-Distinct-Column-Values.xls'
-          )
-        )
+              '/samples/burst/Customers-Distinct-Column-Values.xls',
+          ),
+        ),
       )
       .click(
-        '#modalSelectAttachment .dburst-button-question-confirm-attachment'
+        '#modalSelectAttachment .dburst-button-question-confirm-attachment',
       )
       .click('#btnArchiveAttachmentsTogether');
   } else if (attachmentsCommand === Constants.ATTACHMENTS_XLS_ONLY) {
@@ -121,12 +121,12 @@ const _splitSendVerifyEmails = (
         path.resolve(
           slash(
             process.env.PORTABLE_EXECUTABLE_DIR +
-              '/samples/burst/Customers-Distinct-Column-Values.xls'
-          )
-        )
+              '/samples/burst/Customers-Distinct-Column-Values.xls',
+          ),
+        ),
       )
       .click(
-        '#modalSelectAttachment .dburst-button-question-confirm-attachment'
+        '#modalSelectAttachment .dburst-button-question-confirm-attachment',
       );
   }
 
@@ -138,8 +138,8 @@ const _splitSendVerifyEmails = (
     .setInputFiles(
       '#qaFileUploadInput',
       path.resolve(
-        process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf'
-      )
+        process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf',
+      ),
     );
 
   if (qaMode === Constants.QA_TR) {
@@ -150,7 +150,7 @@ const _splitSendVerifyEmails = (
       .clickYesDoThis()
       .waitOnElementToBecomeVisible(
         '#stopTestEmailServer',
-        Constants.DELAY_FIVE_THOUSANDS_SECONDS
+        Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       )
       .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR);
   }
@@ -166,16 +166,16 @@ const _splitSendVerifyEmails = (
     .appStatusShouldBeGreatNoErrorsNoWarnings()
     .processingShouldHaveGeneratedNFilesHavingSuffix(
       numberOfExpectedRecipients,
-      '.pdf'
+      '.pdf',
     )
     .processingShouldHaveGeneratedNFilesHavingSuffix(
       numberOfExpectedRecipients,
-      '_email.txt'
+      '_email.txt',
     )
     .shouldHaveSentNCorrectEmails(
       qaMode,
       numberOfExpectedRecipients,
-      attachmentsCommand
+      attachmentsCommand,
     );
 
   return ft;

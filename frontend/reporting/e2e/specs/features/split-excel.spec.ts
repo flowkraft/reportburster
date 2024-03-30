@@ -5,7 +5,7 @@ import { Page, test } from '@playwright/test';
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly split samples/burst/Payslips-Distinct-Sheets.xls (My Report)',
@@ -13,15 +13,15 @@ test.describe('', async () => {
       const expectedOutputFiles = Constants.PAYSLIPS_XLS_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '.xls';
-        }
+        },
       );
 
       await _splitExcel(
         firstPage,
         Constants.INPUT_FILE_CUSTOMERS_PAYSLIPS_DISTINCT_SHEETS_XLS,
-        expectedOutputFiles
+        expectedOutputFiles,
       );
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -54,16 +54,16 @@ test.describe('', async () => {
       await _splitExcel(
         firstPage,
         Constants.INPUT_FILE_CUSTOMERS_DISTINCT_COLUMN_VALUES_XLS,
-        expectedOutputFiles
+        expectedOutputFiles,
       );
-    }
+    },
   );
 });
 
 const _splitExcel = (
   firstPage: Page,
   file: string,
-  expectedOutputFiles: string[]
+  expectedOutputFiles: string[],
 ): FluentTester => {
   const ft = new FluentTester(firstPage)
     .appShouldBeReadyToRunNewJobs()
@@ -72,8 +72,8 @@ const _splitExcel = (
     .setInputFiles(
       '#burstFileUploadInput',
       path.resolve(
-        slash(process.env.PORTABLE_EXECUTABLE_DIR + `/samples/burst/${file}`)
-      )
+        slash(process.env.PORTABLE_EXECUTABLE_DIR + `/samples/burst/${file}`),
+      ),
     )
     .waitOnElementToBecomeVisible('#qaReminderLink')
     .click('#btnBurst')
@@ -85,7 +85,7 @@ const _splitExcel = (
     .appStatusShouldBeGreatNoErrorsNoWarnings()
     .processingShouldHaveGeneratedNFilesHavingSuffix(
       expectedOutputFiles.length,
-      '.xls'
+      '.xls',
     )
     .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'xls');
 

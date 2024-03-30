@@ -6,7 +6,7 @@ import helpers from '../../upgrade/updater.helpers';
 import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly update and migrate older configuration',
@@ -21,7 +21,7 @@ test.describe('', async () => {
       console.log(`baselineVersionFilePath = ${baselineVersionFilePath}`);
       await helpers._extractBaseLineAndCopyCustomConfigAndScriptFiles(
         UPGRADE_DIR,
-        baselineVersionFilePath
+        baselineVersionFilePath,
       );
 
       const ft = new FluentTester(firstPage);
@@ -30,7 +30,7 @@ test.describe('', async () => {
         .click('#topMenuHelp')
         .waitOnElementToContainText(
           '#topMenuHelpJava',
-          'System Diagnostics / Update'
+          'System Diagnostics / Update',
         )
         .click('#topMenuHelpJava')
         .click('#updateTab-link')
@@ -44,14 +44,14 @@ test.describe('', async () => {
         .waitOnElementToBecomeVisible('#errorMsg')
         .elementShouldContainText(
           '#errorMsg',
-          'DocumentBurster.exe was not found'
+          'DocumentBurster.exe was not found',
         )
         .click('#oldDbInstallationFolder')
         .typeText('')
         .waitOnElementToBecomeInvisible('#btnE2EFillInfo')
         .renameFile(
           `${UPGRADE_DIR}/baseline/DocumentBurster/file-1.txt`,
-          'DocumentBurster.exe'
+          'DocumentBurster.exe',
         )
         .click('#oldDbInstallationFolder')
         .typeText('playwright/')
@@ -71,10 +71,10 @@ test.describe('', async () => {
         .waitOnElementToBecomeVisible('#burstFileName')
         .inputShouldHaveValue(
           '#burstFileName',
-          'custom-${var0}.${output_type_extension}'
+          'custom-${var0}.${output_type_extension}',
         )
         .inputShouldHaveValue('#outputFolder', 'custom-output path')
         .inputShouldHaveValue('#quarantineFolder', 'custom-quarantine');
-    }
+    },
   );
 });

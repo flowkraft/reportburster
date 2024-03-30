@@ -7,7 +7,7 @@ import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly upload Payslips.pdf to ftp, sftp, fileshare, ftps and http (My Report)',
@@ -15,28 +15,28 @@ test.describe('', async () => {
       const expectedOutputPdfFiles = Constants.PAYSLIPS_PDF_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '.pdf';
-        }
+        },
       );
 
       const expectedOutputUploadFiles = [];
 
       Constants.PAYSLIPS_PDF_BURST_TOKENS.forEach(function (token) {
-        ['ftp', 'sftp', 'fileshare', 'ftps', 'http', 'cloud'].forEach(function (
-          uploadType
-        ) {
-          expectedOutputUploadFiles.push(
-            token + '_' + uploadType + '_upload.txt'
-          );
-        });
+        ['ftp', 'sftp', 'fileshare', 'ftps', 'http', 'cloud'].forEach(
+          function (uploadType) {
+            expectedOutputUploadFiles.push(
+              token + '_' + uploadType + '_upload.txt',
+            );
+          },
+        );
       });
 
       await _splitSendVerifyEmailsAndUploads(
         firstPage,
         expectedOutputPdfFiles,
         expectedOutputUploadFiles,
-        []
+        [],
       );
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -45,34 +45,34 @@ test.describe('', async () => {
       const expectedOutputPdfFiles = Constants.PAYSLIPS_PDF_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '.pdf';
-        }
+        },
       );
 
       const expectedOutputUploadFiles = [];
 
       Constants.PAYSLIPS_PDF_BURST_TOKENS.forEach(function (token) {
-        ['ftp', 'sftp', 'fileshare', 'ftps', 'http', 'cloud'].forEach(function (
-          uploadType
-        ) {
-          expectedOutputUploadFiles.push(
-            token + '_' + uploadType + '_upload.txt'
-          );
-        });
+        ['ftp', 'sftp', 'fileshare', 'ftps', 'http', 'cloud'].forEach(
+          function (uploadType) {
+            expectedOutputUploadFiles.push(
+              token + '_' + uploadType + '_upload.txt',
+            );
+          },
+        );
       });
 
       const expectedOutputEmailFiles = Constants.PAYSLIPS_PDF_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '_email.txt';
-        }
+        },
       );
 
       await _splitSendVerifyEmailsAndUploads(
         firstPage,
         expectedOutputPdfFiles,
         expectedOutputUploadFiles,
-        expectedOutputEmailFiles
+        expectedOutputEmailFiles,
       );
-    }
+    },
   );
 });
 
@@ -80,7 +80,7 @@ const _splitSendVerifyEmailsAndUploads = (
   firstPage: Page,
   expectedOutputPdfFiles: string[],
   expectedOutputUploadFiles: string[],
-  expectedOutputEmailFiles: string[]
+  expectedOutputEmailFiles: string[],
 ): FluentTester => {
   const ft = new FluentTester(firstPage);
 
@@ -98,7 +98,7 @@ const _splitSendVerifyEmailsAndUploads = (
     .click('#ftpTab-link')
     .click('#ftpCommand')
     .typeText(
-      '-T $extracted_file_path$ --ftp-create-dirs -u user:password ftp://ftp.example.com/reports/'
+      '-T $extracted_file_path$ --ftp-create-dirs -u user:password ftp://ftp.example.com/reports/',
     )
     // File Share settings
     .click('#fileShareTab-link')
@@ -108,25 +108,25 @@ const _splitSendVerifyEmailsAndUploads = (
     .click('#ftpsTab-link')
     .click('#ftpsCommand')
     .typeText(
-      '-T $extracted_file_path$ --ssl -u user:password ftp://ftp.example.com/reports/'
+      '-T $extracted_file_path$ --ssl -u user:password ftp://ftp.example.com/reports/',
     )
     // SFTP settings
     .click('#sftpTab-link')
     .click('#sftpCommand')
     .typeText(
-      '-T $extracted_file_path$ --ftp-create-dirs -u user:password sftp://ftp.example.com/reports/'
+      '-T $extracted_file_path$ --ftp-create-dirs -u user:password sftp://ftp.example.com/reports/',
     )
     // HTTPS settings
     .click('#httpTab-link')
     .click('#httpCommand')
     .typeText(
-      '-T $extracted_file_path$ --ntlm -u user:password https://sharepointserver.com/reports/'
+      '-T $extracted_file_path$ --ntlm -u user:password https://sharepointserver.com/reports/',
     )
     // Cloud Upload settings
     .click('#cloudUploadTab-link')
     .click('#cloudUploadCommand')
     .typeText(
-      '-T $extracted_file_path$ --ntlm -u user:password https://s3.amazonaws.com/documentburster'
+      '-T $extracted_file_path$ --ntlm -u user:password https://s3.amazonaws.com/documentburster',
     )
     .click('#topMenuBurst')
     .click('#leftMenuQualityAssurance')
@@ -134,8 +134,8 @@ const _splitSendVerifyEmailsAndUploads = (
     .setInputFiles(
       '#qaFileUploadInput',
       path.resolve(
-        process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf'
-      )
+        process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf',
+      ),
     )
     .click('#btnRunTest')
     .clickYesDoThis()
@@ -149,13 +149,13 @@ const _splitSendVerifyEmailsAndUploads = (
   if (expectedOutputUploadFiles.length > 0)
     ft.processingShouldHaveGeneratedOutputFiles(
       expectedOutputUploadFiles,
-      '_upload.txt'
+      '_upload.txt',
     );
 
   if (expectedOutputEmailFiles.length > 0)
     ft.processingShouldHaveGeneratedOutputFiles(
       expectedOutputEmailFiles,
-      '_email.txt'
+      '_email.txt',
     );
 
   return ft;

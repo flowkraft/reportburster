@@ -6,6 +6,7 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should properly merge Invoices-Oct.pdf, Invoices-Nov.pdf and Invoices-Dec.pdf PDF files',
@@ -13,7 +14,7 @@ test.describe('', async () => {
       const burstMergedFile = false;
       const ft = _mergeInvoiceOctNovDecFiles(firstPage, burstMergedFile);
       await ft.processingShouldHaveGeneratedOutputFiles(['merged.pdf']);
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -36,13 +37,13 @@ test.describe('', async () => {
         '0019.pdf',
         'merged.pdf',
       ]);
-    }
+    },
   );
 });
 
 const _mergeInvoiceOctNovDecFiles = (
   firstPage: Page,
-  burstMergedFile: boolean
+  burstMergedFile: boolean,
 ): FluentTester => {
   let ft = new FluentTester(firstPage);
   ft.click('#leftMenuMergeBurst');
@@ -63,9 +64,9 @@ const _mergeInvoiceOctNovDecFiles = (
     '#mergeFilesUploadInput',
     slash(
       path.resolve(
-        process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Invoices-Oct.pdf'
-      )
-    )
+        process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Invoices-Oct.pdf',
+      ),
+    ),
   )
     .elementShouldBeVisible('#twoOrMoreRequired')
     .setInputFiles(
@@ -73,9 +74,9 @@ const _mergeInvoiceOctNovDecFiles = (
       slash(
         path.resolve(
           process.env.PORTABLE_EXECUTABLE_DIR +
-            '/samples/burst/Invoices-Nov.pdf'
-        )
-      )
+            '/samples/burst/Invoices-Nov.pdf',
+        ),
+      ),
     )
     .waitOnElementToBecomeInvisible('#twoOrMoreRequired')
     .setInputFiles(
@@ -83,9 +84,9 @@ const _mergeInvoiceOctNovDecFiles = (
       slash(
         path.resolve(
           process.env.PORTABLE_EXECUTABLE_DIR +
-            '/samples/burst/Invoices-Dec.pdf'
-        )
-      )
+            '/samples/burst/Invoices-Dec.pdf',
+        ),
+      ),
     )
     .click('#mergedFileName')
     .typeText('merged.pdf');
