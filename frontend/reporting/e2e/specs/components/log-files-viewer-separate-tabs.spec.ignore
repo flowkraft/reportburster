@@ -7,7 +7,7 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Helpers } from '../../utils/helpers';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly not display any log when there is no log file to show',

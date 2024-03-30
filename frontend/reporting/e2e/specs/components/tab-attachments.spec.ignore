@@ -2,7 +2,7 @@ import { test } from '@playwright/test';
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should allow to remove the default attachment with the intention of sending emails without any attachment',
@@ -36,9 +36,7 @@ test.describe('', async () => {
         .click('#btnEditAttachment')
         .click('#attachmentPath')
         .typeText('C:/Test/Test.pdf')
-        .click(
-          '#modalSelectAttachment .dburst-button-question-confirm-attachment',
-        )
+        .click('.dburst-button-question-confirm-attachment')
         .click('#topMenuBurst')
         .gotoConfigurationEmailSettings()
         .click('#leftMenuEmailSettings')
