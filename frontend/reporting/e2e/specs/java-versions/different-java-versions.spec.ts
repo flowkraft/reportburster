@@ -16,7 +16,7 @@ MINIMUM JAVA required is Java 1.8 - FOR COMPLETENESS AND TO PROVE IT WORKS THERE
       04. Java8 - WORKS
 */
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   test('java default installation - it should correctly do license-activation-quickstart-deactivation', async function () {
     //long running test
@@ -68,7 +68,7 @@ test.describe('', async () => {
       process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
       {
         overwrite: true,
-      }
+      },
     );
 
     return _licenseActivationQuickStartDeActivation();
@@ -86,7 +86,7 @@ test.describe('', async () => {
       process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
       {
         overwrite: true,
-      }
+      },
     );
 
     return _licenseActivationQuickStartDeActivation();
@@ -104,7 +104,7 @@ test.describe('', async () => {
       process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
       {
         overwrite: true,
-      }
+      },
     );
 
     return _licenseActivationQuickStartDeActivation();
@@ -122,7 +122,7 @@ test.describe('', async () => {
       process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
       {
         overwrite: true,
-      }
+      },
     );
 
     return _licenseActivationQuickStartDeActivation();
@@ -140,7 +140,7 @@ test.describe('', async () => {
       process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
       {
         overwrite: true,
-      }
+      },
     );
 
     return _licenseActivationQuickStartDeActivation();
@@ -166,7 +166,7 @@ const _licenseActivationQuickStartDeActivation = async () => {
     .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR)
     .waitOnElementToBecomeVisible(
       '#statusActiveLicenseKey',
-      Constants.DELAY_FIVE_THOUSANDS_SECONDS
+      Constants.DELAY_FIVE_THOUSANDS_SECONDS,
     )
     .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
     .appShouldBeReadyToRunNewJobs()
@@ -180,9 +180,9 @@ const _licenseActivationQuickStartDeActivation = async () => {
       '#burstFileUploadInput',
       path.resolve(
         slash(
-          process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf'
-        )
-      )
+          process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf',
+        ),
+      ),
     )
     //.killHangingJavaProcesses()
     .click('#btnBurst')
@@ -197,7 +197,7 @@ const _licenseActivationQuickStartDeActivation = async () => {
     .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR)
     .waitOnElementToBecomeVisible(
       '#cancelPause',
-      Constants.DELAY_FIVE_THOUSANDS_SECONDS
+      Constants.DELAY_FIVE_THOUSANDS_SECONDS,
     )
     .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
     .appStatusShouldBeGreatNoErrorsNoWarnings()
@@ -209,7 +209,7 @@ const _licenseActivationQuickStartDeActivation = async () => {
     .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR)
     .waitOnElementToBecomeVisible(
       '#statusDemoLicense',
-      Constants.DELAY_FIVE_THOUSANDS_SECONDS
+      Constants.DELAY_FIVE_THOUSANDS_SECONDS,
     )
     .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
     .appShouldBeReadyToRunNewJobs()
@@ -218,7 +218,7 @@ const _licenseActivationQuickStartDeActivation = async () => {
     .processingShouldHaveGeneratedOutputFiles(
       Constants.PAYSLIPS_PDF_BURST_TOKENS.map(function (burstToken) {
         return burstToken + '.pdf';
-      })
+      }),
     );
   await Helpers.electronAppClose(electronApp);
 };

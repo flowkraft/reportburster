@@ -7,7 +7,7 @@ import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly send Payslips.pdf notifications by default SMS sender (My Report)',
@@ -15,13 +15,13 @@ test.describe('', async () => {
       const expectedOutputPdfFiles = Constants.PAYSLIPS_PDF_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '.pdf';
-        }
+        },
       );
 
       const expectedOutputSmsFiles = Constants.PAYSLIPS_PDF_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '_sms_default.txt';
-        }
+        },
       );
 
       await _splitSendVerifyEmailsAndSMSes(
@@ -29,9 +29,9 @@ test.describe('', async () => {
         Constants.SMS_DEFAULT,
         expectedOutputPdfFiles,
         expectedOutputSmsFiles,
-        []
+        [],
       );
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -40,12 +40,12 @@ test.describe('', async () => {
       const expectedOutputPdfFiles = Constants.PAYSLIPS_PDF_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '.pdf';
-        }
+        },
       );
       const expectedOutputSmsFiles = Constants.PAYSLIPS_PDF_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '_sms_twilio.txt';
-        }
+        },
       );
 
       await _splitSendVerifyEmailsAndSMSes(
@@ -53,9 +53,9 @@ test.describe('', async () => {
         Constants.SMS_TWILIO,
         expectedOutputPdfFiles,
         expectedOutputSmsFiles,
-        []
+        [],
       );
-    }
+    },
   );
 
   electronBeforeAfterAllTest(
@@ -64,17 +64,17 @@ test.describe('', async () => {
       const expectedOutputPdfFiles = Constants.PAYSLIPS_PDF_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '.pdf';
-        }
+        },
       );
       const expectedOutputSmsFiles = Constants.PAYSLIPS_PDF_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '_sms_twilio.txt';
-        }
+        },
       );
       const expectedOutputEmailFiles = Constants.PAYSLIPS_PDF_BURST_TOKENS.map(
         function (burstToken) {
           return burstToken + '_email.txt';
-        }
+        },
       );
 
       await _splitSendVerifyEmailsAndSMSes(
@@ -82,9 +82,9 @@ test.describe('', async () => {
         Constants.SMS_TWILIO,
         expectedOutputPdfFiles,
         expectedOutputSmsFiles,
-        expectedOutputEmailFiles
+        expectedOutputEmailFiles,
       );
-    }
+    },
   );
 });
 
@@ -93,7 +93,7 @@ const _splitSendVerifyEmailsAndSMSes = (
   mode: string,
   expectedOutputPdfFiles: string[],
   expectedOutputSmsFiles: string[],
-  expectedOutputEmailFiles: string[]
+  expectedOutputEmailFiles: string[],
 ): FluentTester => {
   const ft = new FluentTester(firstPage);
 
@@ -125,8 +125,8 @@ const _splitSendVerifyEmailsAndSMSes = (
     .setInputFiles(
       '#qaFileUploadInput',
       path.resolve(
-        process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf'
-      )
+        process.env.PORTABLE_EXECUTABLE_DIR + '/samples/burst/Payslips.pdf',
+      ),
     )
     .click('#btnRunTest')
     .clickYesDoThis()
@@ -141,13 +141,13 @@ const _splitSendVerifyEmailsAndSMSes = (
   if (expectedOutputSmsFiles.length > 0)
     ft.processingShouldHaveGeneratedOutputFiles(
       expectedOutputSmsFiles,
-      '_sms_*.txt'
+      '_sms_*.txt',
     );
 
   if (expectedOutputEmailFiles.length > 0)
     ft.processingShouldHaveGeneratedOutputFiles(
       expectedOutputEmailFiles,
-      '_email.txt'
+      '_email.txt',
     );
 
   return ft;

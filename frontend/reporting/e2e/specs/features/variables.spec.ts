@@ -6,7 +6,8 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
-//DONE1
+
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should split Invoices-Oct.pdf and, with the help of User Variables, and the output files should be "Customer name-Invoice number-Invoice date.pdf" convention (My Report)',
@@ -52,9 +53,9 @@ test.describe('', async () => {
           path.resolve(
             slash(
               process.env.PORTABLE_EXECUTABLE_DIR +
-                '/samples/burst/Invoices-Oct.pdf'
-            )
-          )
+                '/samples/burst/Invoices-Oct.pdf',
+            ),
+          ),
         )
         .waitOnElementToBecomeVisible('#qaReminderLink')
         .click('#btnBurst')
@@ -65,6 +66,6 @@ test.describe('', async () => {
         .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
         .appStatusShouldBeGreatNoErrorsNoWarnings()
         .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles);
-    }
+    },
   );
 });
