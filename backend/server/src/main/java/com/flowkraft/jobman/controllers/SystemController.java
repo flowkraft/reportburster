@@ -93,7 +93,7 @@ public class SystemController {
 	@GetMapping(value = "/fs/resolve", produces = MediaType.TEXT_PLAIN_VALUE)
 	Mono<String> resolve(@RequestParam String path) throws Exception {
 
-		System.out.println("/fs/resolve path = " + path);
+		//System.out.println("/fs/resolve path = " + path);
 
 		String resolvedPath = systemService.fsResolvePath(URLDecoder.decode(path, StandardCharsets.UTF_8.toString()));
 
@@ -117,9 +117,9 @@ public class SystemController {
 
 	@PostMapping(value = "/fs/write-string-to-file", consumes = "text/plain")
 	Mono<Void> writeStringToFile(@RequestParam String path, @RequestBody Optional<String> content) throws Exception {
-		System.out.println("/fs/write-string-to-file path = " + path);
+		// System.out.println("/fs/write-string-to-file path = " + path);
 
-		System.out.println("/fs/write-string-to-file content = " + content);
+		// System.out.println("/fs/write-string-to-file content = " + content);
 
 		return Mono.fromCallable(() -> {
 			systemService.fsWriteStringToFile(URLDecoder.decode(path, StandardCharsets.UTF_8.toString()), content);
@@ -160,7 +160,7 @@ public class SystemController {
 
 	@PostMapping(value = "/fs/dir")
 	public Mono<Void> dir(@RequestParam String path, @RequestBody Optional<DirCriteria> criteria) throws Exception {
-		System.out.println("/fs/dir = " + path);
+		//System.out.println("/fs/dir = " + path);
 
 		systemService.fsDir(URLDecoder.decode(path, StandardCharsets.UTF_8.toString()), criteria);
 		return Mono.empty();
@@ -193,7 +193,7 @@ public class SystemController {
 	public Mono<ProcessOutputResult> spawn(@RequestBody List<String> args, @RequestParam Optional<String> cwdPath)
 			throws Exception {
 
-		System.out.println("/child-process/spawn commands: " + args);
+		//System.out.println("/child-process/spawn commands: " + args);
 
 		return systemService.spawn(args, cwdPath);
 

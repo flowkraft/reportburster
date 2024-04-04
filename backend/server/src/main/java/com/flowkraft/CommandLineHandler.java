@@ -34,7 +34,7 @@ public class CommandLineHandler implements CommandLineRunner, ExitCodeGenerator 
 
 			CommandLine commandLine = new CommandLine(jobsonCommands, factory);
 			
-			System.out.println("args: " + args);
+			//System.out.println("args: " + args);
 			
 			exitCode = commandLine.execute(args);
 
