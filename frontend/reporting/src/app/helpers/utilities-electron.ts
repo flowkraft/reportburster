@@ -1,11 +1,44 @@
-import { ipcRenderer } from 'electron';
-
+import { ChildProcessWithoutNullStreams } from 'child_process';
 import * as jetpack from 'fs-jetpack';
 
 export default class UtilitiesElectron {
+  static renderer: Electron.IpcRenderer;
+
+  static async appRelaunch() {
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return UtilitiesElectron.renderer.invoke('app.relaunch');
+    }
+  }
+
+  static async appShutServer() {
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return UtilitiesElectron.renderer.invoke('app.shutserver');
+    }
+  }
+
+  static async getSystemInfo(): Promise<{
+    chocolatey: {
+      isChocoOk: boolean;
+      version: string;
+    };
+    java: {
+      isJavaOk: boolean;
+      version: string;
+    };
+    env: {
+      PATH: string;
+      JAVA_HOME: string;
+      JRE_HOME: string;
+    };
+  }> {
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return UtilitiesElectron.renderer.invoke('getSystemInfo');
+    }
+  }
+
   static async getBackendUrl(): Promise<string> {
-    if (UtilitiesElectron.isIpcRendererAvailable()) {
-      return ipcRenderer.invoke('getBackendUrl');
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return UtilitiesElectron.renderer.invoke('getBackendUrl');
     } else {
       return 'http://localhost:9090';
     }
@@ -15,8 +48,12 @@ export default class UtilitiesElectron {
     path: string,
     criteria: { empty?: boolean; mode?: number | string } = { empty: false },
   ): Promise<void> {
-    if (UtilitiesElectron.isIpcRendererAvailable()) {
-      await ipcRenderer.invoke('jetpack.dirAsync', path, criteria);
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      await UtilitiesElectron.renderer.invoke(
+        'jetpack.dirAsync',
+        path,
+        criteria,
+      );
     } else {
       await jetpack.dirAsync(path, criteria);
     }
@@ -33,8 +70,13 @@ export default class UtilitiesElectron {
       ignoreCase?: boolean;
     },
   ): Promise<void> {
-    if (UtilitiesElectron.isIpcRendererAvailable()) {
-      return ipcRenderer.invoke('jetpack.copyAsync', from, to, options);
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return UtilitiesElectron.renderer.invoke(
+        'jetpack.copyAsync',
+        from,
+        to,
+        options,
+      );
     } else return jetpack.copyAsync(from, to, options);
   }
 
@@ -45,65 +87,135 @@ export default class UtilitiesElectron {
       overwrite?: false;
     },
   ): Promise<void> {
-    if (UtilitiesElectron.isIpcRendererAvailable()) {
-      return ipcRenderer.invoke('jetpack.moveAsync', from, to, options);
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return UtilitiesElectron.renderer.invoke(
+        'jetpack.moveAsync',
+        from,
+        to,
+        options,
+      );
     } else return jetpack.moveAsync(from, to, options);
   }
 
   static async removeAsync(path: string): Promise<void> {
     if (path) {
-      if (UtilitiesElectron.isIpcRendererAvailable()) {
-        return ipcRenderer.invoke('jetpack.removeAsync', path);
+      if (await UtilitiesElectron.isIpcRendererAvailable()) {
+        return UtilitiesElectron.renderer.invoke('jetpack.removeAsync', path);
       } else return jetpack.removeAsync(path);
     }
   }
 
   static async existsAsync(filePath: string): Promise<any> {
-    if (UtilitiesElectron.isIpcRendererAvailable()) {
-      return ipcRenderer.invoke('jetpack.existsAsync', filePath);
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return UtilitiesElectron.renderer.invoke('jetpack.existsAsync', filePath);
     } else return jetpack.existsAsync(filePath);
   }
 
   static async readAsync(filePath: string): Promise<string> {
-    if (UtilitiesElectron.isIpcRendererAvailable()) {
-      return await ipcRenderer.invoke('jetpack.readAsync', filePath);
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return await UtilitiesElectron.renderer.invoke(
+        'jetpack.readAsync',
+        filePath,
+      );
     } else return jetpack.readAsync(filePath);
   }
 
   static async writeAsync(filePath: string, content: string): Promise<void> {
-    if (UtilitiesElectron.isIpcRendererAvailable()) {
-      return ipcRenderer.invoke('jetpack.writeAsync', filePath, content);
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return UtilitiesElectron.renderer.invoke(
+        'jetpack.writeAsync',
+        filePath,
+        content,
+      );
     } else return jetpack.writeAsync(filePath, content);
   }
 
+  static async logInfoAsync(message: string): Promise<void> {
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return UtilitiesElectron.renderer.invoke('log', 'info', message);
+    }
+  }
+
+  static async logWarnAsync(message: string): Promise<void> {
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return UtilitiesElectron.renderer.invoke('log', 'warn', message);
+    }
+  }
+
+  static async logErrorAsync(message: string): Promise<void> {
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return UtilitiesElectron.renderer.invoke('log', 'error', message);
+    }
+  }
+
   static async findAsync(directory: string, options: {}): Promise<string[]> {
-    if (UtilitiesElectron.isIpcRendererAvailable()) {
-      return await ipcRenderer.invoke('jetpack.findAsync', directory, options);
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return await UtilitiesElectron.renderer.invoke(
+        'jetpack.findAsync',
+        directory,
+        options,
+      );
     } else return jetpack.findAsync(directory, options);
   }
 
   static async checkUrl(url: string): Promise<boolean> {
-    if (UtilitiesElectron.isIpcRendererAvailable())
-      return ipcRenderer.invoke('checkUrl', url);
+    if (await UtilitiesElectron.isIpcRendererAvailable())
+      return UtilitiesElectron.renderer.invoke('checkUrl', url);
 
     return false;
   }
 
-  static async execNativeCommand(
+  static async childProcessExec(
     command: string,
   ): Promise<{ stdout: string; stderr: string }> {
-    const { stdout, stderr } = await ipcRenderer.invoke(
-      'execNativeCommand',
-      command,
-    );
-    //console.log(`stdout: ${stdout}`);
-    //console.log(`stderr: ${stderr}`);
-    return { stdout, stderr };
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      const { stdout, stderr } = await UtilitiesElectron.renderer.invoke(
+        'child_process.exec',
+        command,
+      );
+      //console.log(`stdout: ${stdout}`);
+      //console.log(`stderr: ${stderr}`);
+      return { stdout, stderr };
+    }
   }
 
-  static isIpcRendererAvailable(): boolean {
-    if (ipcRenderer) return true;
+  static async childProcessSpawn(
+    command: string,
+    args?: string[],
+    options?: {},
+  ): Promise<ChildProcessWithoutNullStreams> {
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return UtilitiesElectron.renderer.invoke(
+        'child_process.spawn',
+        command,
+        args,
+        options,
+      );
+    }
+  }
 
-    return false;
+  static async getEnvVariable(envVariableName: string): Promise<string> {
+    if (await UtilitiesElectron.isIpcRendererAvailable()) {
+      return UtilitiesElectron.renderer.invoke('process.env', envVariableName);
+    } else {
+      return '';
+    }
+  }
+
+  static async isIpcRendererAvailable(): Promise<boolean> {
+    //console.log(`UtilitiesElectron.renderer = ${UtilitiesElectron.renderer}`);
+
+    if (UtilitiesElectron.renderer) {
+      return true;
+    } else {
+      const { ipcRenderer } = await import('electron');
+      //console.log(`ipcRenderer = ${ipcRenderer}`);
+
+      if (ipcRenderer) {
+        UtilitiesElectron.renderer = ipcRenderer;
+        return true;
+      }
+      return false;
+    }
   }
 }

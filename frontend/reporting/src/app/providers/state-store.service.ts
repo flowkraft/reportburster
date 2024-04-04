@@ -13,7 +13,7 @@ export class StateStoreService {
     currentConfigFile: ConfigInfo,
     allConfigFiles: [ConfigInfo],
     sysInfo: SystemInfo,
-    env: {
+    info: {
       SHOULD_SEND_STATS: true,
       PORTABLE_EXECUTABLE_DIR: '',
       CONFIGURATION_FOLDER_PATH: '',
@@ -21,6 +21,9 @@ export class StateStoreService {
       JOBS_FOLDER_PATH: '',
       QUARANTINED_FOLDER_PATH: '',
       UPDATE_JAR_FILE_PATH: '',
+      isServerVersion: false,
+      product: 'DocumentBurster',
+      version: '9.1',
     },
   };
 
@@ -90,42 +93,6 @@ export class StateStoreService {
       isModalSMSVisible: false,
       fromNumber: '',
       toNumber: '',
-    },
-  };
-
-  setup = {
-    isRestartRequired: false,
-    chocolatey: {
-      isChocoOk: false,
-      version: 'v0.10.15',
-    },
-    java: {
-      isJavaOk: false,
-      version: '1.8.271',
-      javaHomeFolderExists: false,
-      pathIncludesJavaHomeBin: false,
-      javaExeExists: false,
-      JAVA_HOME: 'C:/Program Files/OpenJDK/jdk-14.0.2',
-      JAVA_HOME_REGISTRY: 'C:/Program Files/OpenJDK/jdk-14.0.2',
-    },
-    env: {
-      PATH: 'C:/Python39/Scripts/;C:/Python39/;C:/Windows/system32;C:/Windows;C:/Windows/System32/Wbem;C:/Windows/System32/WindowsPowerShell/v1.0/;C:/Windows/System32/OpenSSH/;C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common;C:/Program Files/NVIDIA Corporation/NVIDIA NvDLISR;C:/Programs/Node.js12/;C:/Projects/documentburster/src/tools;C:/Programs/WinMerge;C:/Program Files/Git/cmd;C:/Program Files/Git/mingw64C:/Program Files/Git/usr;C:/ProgramData/chocolatey/bin;%M2_HOME%/bin;%JRE_HOME%/bin;C:/Go/bin;C:/Program Files (x86)/Yarn/bin/;C:/tools/php74;C:/ProgramData/ComposerSetup/bin;C:/Users/Virgil/AppData/Roaming/npm;C:/Program Files/OpenJDK/jdk-14.0.2/bin;',
-      PATH_REGISTRY:
-        'C:/Python39/Scripts/;C:/Python39/;C:/Windows/system32;C:/Windows;C:/Windows/System32/Wbem;C:/Windows/System32/WindowsPowerShell/v1.0/;C:/Windows/System32/OpenSSH/;C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common;C:/Program Files/NVIDIA Corporation/NVIDIA NvDLISR;C:/Programs/Node.js12/;C:/Projects/documentburster/src/tools;C:/Programs/WinMerge;C:/Program Files/Git/cmd;C:/Program Files/Git/mingw64C:/Program Files/Git/usr;C:/ProgramData/chocolatey/bin;%M2_HOME%/bin;%JRE_HOME%/bin;C:/Go/bin;C:/Program Files (x86)/Yarn/bin/;C:/tools/php74;C:/ProgramData/ComposerSetup/bin;C:/Users/Virgil/AppData/Roaming/npm;C:/Program Files/OpenJDK/jdk-14.0.2/bin;',
-    },
-    update: {
-      succint: true,
-      letMeUpdateManually: false,
-      letMeUpdateSourceDirectoryPath: '',
-      homeDirectoryPath: '',
-      info: {
-        errorMsg: '',
-        updateSourceDirectoryPath: '',
-        updateSourceVersion: '',
-        migrateConfigFiles: [['', '']],
-        migrateScriptFiles: [['', '']],
-        templatesFolders: [['', '']],
-      },
     },
   };
 

@@ -1,10 +1,7 @@
 import { Injectable } from '@angular/core';
-import { APP_CONFIG } from '../../environments/environment';
 import Utilities from '../helpers/utilities';
 import { HttpParams } from '@angular/common/http';
-import { SettingsService } from './settings.service';
-import { Inject } from '@angular/core';
-import UtilitiesElectron from '../helpers/utilities-electron';
+import { StateStoreService } from './state-store.service';
 
 export enum RequestMethod {
   get = 'GET',
@@ -20,29 +17,16 @@ export enum RequestMethod {
   providedIn: 'root',
 })
 export class ApiService {
-  private BACKEND_URL = '';
-
   private headers: Headers;
   private jwtToken: string;
 
-  constructor() {
-    this.getBackendUrl();
-
+  constructor(protected stateStore: StateStoreService) {
     this.headers = new Headers({
       Accept: 'application/json',
       'Content-Type': 'application/json',
     });
 
     this.jwtToken = '';
-  }
-
-  public async getBackendUrl(): Promise<string> {
-    if (this.BACKEND_URL) return this.BACKEND_URL;
-    else {
-      this.BACKEND_URL = await UtilitiesElectron.getBackendUrl();
-      console.log(`api.server this.BACKEND_URL = ${this.BACKEND_URL}`);
-      return this.BACKEND_URL;
-    }
   }
 
   private serialize(obj: any): HttpParams {
@@ -79,9 +63,11 @@ export class ApiService {
     body: any = '',
     customHeaders?: Headers,
   ): Promise<any> {
+    const url = `${this.stateStore.configSys.sysInfo.setup.BACKEND_URL}${path}`;
+
+    if (!this.stateStore.configSys.sysInfo.setup.java.isJavaOk) return;
     //console.log(`apiService.request.path: ${JSON.stringify(path)}`);
 
-    const url = `${await this.getBackendUrl()}${path}`;
     const headers = new Headers(customHeaders || this.headers);
     const options: RequestInit = {
       method,

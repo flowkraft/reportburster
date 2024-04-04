@@ -1,13 +1,13 @@
 export const chocolateyTemplate = ` <!--<ng-template #chocolateyTemplate> -->
   <p-panel #pnlStep1ChocoInstallation>
     <h4 id="checkPointChocolatey">
-      <div *ngIf="!electronService.isChocoOk">
+      <div *ngIf="!storeService.configSys.sysInfo.setup.chocolatey.isChocoOk">
         <u
           >{{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.CHOCOLATEY.STEP1' |
           translate }} <em>Chocolatey</em></u
         >
       </div>
-      <div *ngIf="electronService.isChocoOk">
+      <div *ngIf="storeService.configSys.sysInfo.setup.chocolatey.isChocoOk">
         <s
           >{{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.CHOCOLATEY.STEP1' |
           translate }} <em>Chocolatey</em></s
@@ -24,7 +24,7 @@ export const chocolateyTemplate = ` <!--<ng-template #chocolateyTemplate> -->
     <br /><br />
     <button
       id="btnInstallChocolatey"
-      *ngIf="!electronService.isChocoOk"
+      *ngIf="!storeService.configSys.sysInfo.setup.chocolatey.isChocoOk"
       type="button"
       class="btn btn-primary"
       (click)="installChocolatey()"

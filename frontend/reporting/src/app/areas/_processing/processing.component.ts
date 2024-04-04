@@ -40,6 +40,7 @@ import { ShellService } from '../../providers/shell.service';
 import { ApiService } from '../../providers/api.service';
 import { FsService } from '../../providers/fs.service';
 import { ProcessingService } from '../../providers/processing.service';
+import { StateStoreService } from '../../providers/state-store.service';
 
 @Component({
   selector: 'dburst-processing',
@@ -196,6 +197,7 @@ export class ProcessingComponent implements OnInit {
     protected route: ActivatedRoute,
     protected router: Router,
     protected changeDetectorRef: ChangeDetectorRef,
+    protected storeService: StateStoreService,
     protected shellService: ShellService,
     protected executionStatsService: ExecutionStatsService,
     protected fsService: FsService,
@@ -301,9 +303,9 @@ export class ProcessingComponent implements OnInit {
     //console.log(
     //  `processing.component.xmlSettings: ${JSON.stringify(this.xmlSettings)}`
     //);
-
-    this.processingService.procMergeBurstInfo.mergedFileName =
-      this.xmlSettings.documentburster.settings.mergefilename;
+    if (this.xmlSettings && this.xmlSettings.documentburster)
+      this.processingService.procMergeBurstInfo.mergedFileName =
+        this.xmlSettings.documentburster.settings.mergefilename;
   }
 
   refreshTabs() {
@@ -431,6 +433,11 @@ export class ProcessingComponent implements OnInit {
               formData,
               customHeaders,
             );
+
+            if (!uploadedFilesInfo || !uploadedFilesInfo.length) {
+              return;
+            }
+
             inputFilePath = uploadedFilesInfo[0].filePath;
           }
 
@@ -526,6 +533,10 @@ export class ProcessingComponent implements OnInit {
               formData,
               customHeaders,
             );
+            if (!uploadedFilesInfo || !uploadedFilesInfo.length) {
+              return;
+            }
+
             mergeFilePath =
               await this.shellService.generateMergeFileInTempFolder(
                 uploadedFilesInfo.map(

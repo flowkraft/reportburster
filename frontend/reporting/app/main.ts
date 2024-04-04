@@ -25,7 +25,8 @@ process.env.PORTABLE_EXECUTABLE_DIR = path
   .replace(/\\/g, '/');
 
 const electronLogFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/logs/electron.log`;
-fs.writeFileSync(electronLogFilePath, '');
+
+_shutServer();
 
 log.transports.file.resolvePath = () => {
   return electronLogFilePath;
@@ -139,17 +140,35 @@ try {
       });
 
       serverProcess.stdout.on('data', (data) => {
-        console.log(`stdout: ${data}`);
+        //console.log(`stdout: ${data}`);
         const dataStr = data.toString();
-        if (dataStr.includes('Started ServerApplication in')) {
-          log.info(dataStr);
 
+        //if (
+        //  dataStr.includes('choco') ||
+        //  dataStr.includes('embedded.tomcat.') ||
+        //  dataStr.includes('flowkraft.ServerApplication')
+        //)
+        log.info(dataStr);
+
+        //createWindow() main application window in both situations
+        //if java is installed 'Started ServerApplication in' or java is not installed 'process exited with code 1'
+        if (dataStr.includes('Started ServerApplication in')) {
           createWindow();
         }
       });
 
+      let windowCreated = false;
+
       serverProcess.stderr.on('data', (data) => {
-        console.error(`stderr: ${data}`);
+        const dataStr = data.toString();
+        log.error(dataStr);
+        if (
+          !windowCreated &&
+          dataStr.includes("'java' is not recognized as an internal")
+        ) {
+          createWindow();
+          windowCreated = true;
+        }
       });
 
       serverProcess.on('close', (code) => {
@@ -160,9 +179,9 @@ try {
       setTimeout(() => {
         createWindow();
 
-        console.log(
-          `electron.main.ts.process.env.PORTABLE_EXECUTABLE_DIR = ${process.env.PORTABLE_EXECUTABLE_DIR}`,
-        );
+        //console.log(
+        //  `electron.main.ts.process.env.PORTABLE_EXECUTABLE_DIR = ${process.env.PORTABLE_EXECUTABLE_DIR}`,
+        //);
       }, 400);
     }
   });
@@ -214,24 +233,76 @@ try {
   // throw e;
 }
 
-ipcMain.handle('execNativeCommand', async (event, command) => {
+ipcMain.handle('child_process.exec', async (event, command) => {
   const execPromise = promisify(exec);
   return execPromise(command);
+});
+
+ipcMain.handle(
+  'child_process.spawn',
+  async (event, command, args?, options?) => {
+    return spawn(command, args, options);
+  },
+);
+
+ipcMain.handle('process.env', async (event, envVariableName) => {
+  return process.env[envVariableName];
+});
+
+ipcMain.handle('log', async (event, level, message) => {
+  switch (level) {
+    case 'info':
+      log.info(message);
+      break;
+    case 'warn':
+      log.warn(message);
+      break;
+    case 'error':
+      log.error(message);
+      break;
+    case 'debug':
+      log.debug(message);
+      break;
+    default:
+      log.info(message);
+      break;
+  }
+});
+
+ipcMain.handle('getSystemInfo', async (event) => {
+  return _getSystemInfo();
+});
+
+ipcMain.handle('app.relaunch', async (event) => {
+  app.relaunch();
+  app.exit(0);
+});
+
+ipcMain.handle('app.shutserver', async (event) => {
+  return _shutServer();
+});
+
+ipcMain.on('restart_app', () => {
+  app.relaunch();
+  app.exit(0);
 });
 
 ipcMain.handle('getBackendUrl', async (event) => {
   //if non-"production"
   if (!app.isPackaged) return 'http://localhost:9090';
 
-  const filePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/config/_internal/settings.xml`;
-  const fileContent = await fs.promises.readFile(filePath, 'utf-8');
+  const internalSettingsXmlFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/config/_internal/settings.xml`;
+  const internalSettingsXmlFileContent = await fs.promises.readFile(
+    internalSettingsXmlFilePath,
+    'utf-8',
+  );
 
-  const match = fileContent.match(/<backendurl>(.*?)<\/backendurl>/);
+  const match = internalSettingsXmlFileContent.match(
+    /<backendurl>(.*?)<\/backendurl>/,
+  );
   const backendUrl = match ? match[1] : null;
 
   //log.info(`getBackendUrl settings.xml: ${fileContent}`);
-
-  log.info(`getBackendUrl backendUrl: ${backendUrl}`);
 
   return backendUrl;
 });
@@ -323,3 +394,81 @@ ipcMain.handle('jetpack.readAsync', async (event, filePath) => {
 ipcMain.handle('jetpack.findAsync', async (event, directory, options) => {
   return await jetpack.findAsync(directory, options);
 });
+
+async function _shutServer() {
+  spawn('shutRbsjServer.bat', {
+    cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
+  });
+
+  await jetpack.dirAsync(`${process.env.PORTABLE_EXECUTABLE_DIR}/temp`, {
+    empty: true,
+  });
+
+  await jetpack.writeAsync(electronLogFilePath, '');
+}
+
+async function _getSystemInfo(): Promise<{
+  chocolatey: {
+    isChocoOk: boolean;
+    version: string;
+  };
+  java: {
+    isJavaOk: boolean;
+    version: string;
+  };
+  env: {
+    PATH: string;
+    JAVA_HOME: string;
+    JRE_HOME: string;
+  };
+}> {
+  let javaIsNotInstalled = true;
+  let chocoIsNotInstalled = true;
+
+  const electronLogFileContent = await fs.promises.readFile(
+    electronLogFilePath,
+    'utf-8',
+  );
+
+  if (!electronLogFileContent.includes("'java' is not recognized")) {
+    javaIsNotInstalled = false;
+  }
+
+  if (!electronLogFileContent.includes("'choco' is not recognized")) {
+    chocoIsNotInstalled = false;
+  }
+
+  // Extract Chocolatey version
+  let chocoVersionMatch = electronLogFileContent.match(
+    /choco version: (\d+\.\d+\.\d+)/,
+  );
+  let chocoVersion = chocoVersionMatch
+    ? chocoVersionMatch[1]
+    : "'choco' is not recognized";
+
+  // Extract Java version
+  let javaVersionMatch = electronLogFileContent.match(
+    /using Java (\d+\.\d+\.\d+)/,
+  );
+  let javaVersion = javaVersionMatch
+    ? javaVersionMatch[1]
+    : "'java' is not recognized";
+
+  const sysInfo = {
+    chocolatey: {
+      isChocoOk: !chocoIsNotInstalled,
+      version: chocoVersion,
+    },
+    java: {
+      isJavaOk: !javaIsNotInstalled,
+      version: javaVersion,
+    },
+    env: {
+      PATH: process.env.PATH || '',
+      JAVA_HOME: process.env.JAVA_HOME || '',
+      JRE_HOME: process.env.JRE_HOME || '',
+    },
+  };
+
+  return sysInfo;
+}

@@ -67,6 +67,8 @@ export class LicenseService {
 
     const content = await this.fsService.readAsync(this.licenseFilePath);
 
+    if (!content) return;
+
     //console.log(`license.service.content = ${content}`);
 
     this.licenseDetails = await Utilities.parseStringPromise(content, {

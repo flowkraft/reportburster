@@ -1,8 +1,7 @@
-import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
+import { Meta, StoryObj } from '@storybook/angular';
 import { ButtonClearLogsComponent } from '../app/components/button-clear-logs/button-clear-logs.component';
 import { ExecutionStatsService } from '../app/providers/execution-stats.service';
 import { baseMeta } from './_utils/setup';
-import { LogsServiceWebSocket } from '../app/providers/ws-logs.service';
 
 type Story = StoryObj<ButtonClearLogsComponent>;
 const defaultMeta: Meta<ButtonClearLogsComponent> = {

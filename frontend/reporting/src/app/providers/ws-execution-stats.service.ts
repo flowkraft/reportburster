@@ -26,7 +26,7 @@ export class WebSocketExecutionStatsService extends WebSocketEndpoint {
   };
 
   constructor(
-    protected apiService: ApiService,
+    public apiService: ApiService,
     public settingsService: SettingsService,
     protected executionStatsService: ExecutionStatsService,
     protected toastMessagesService: ToastrMessagesService,

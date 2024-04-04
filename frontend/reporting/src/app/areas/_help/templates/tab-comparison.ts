@@ -3,7 +3,7 @@ export const tabComparisonTemplate = `<ng-template #tabComparisonTemplate>
 
     <strong>
       <a href="https://www.reportburster.com/features.html" target="_blank">
-        <em>DocumentBurster</em> {{
+        <em>ReportBurster</em> {{
         'AREAS.HELP.TAB-COMPARISON.FEATURES' | translate }}</a>
     </strong>
 

@@ -1,7 +1,7 @@
 export const tabSupportTemplate = `<ng-template #tabSupportTemplate>
   <div class="well">
 
-    <strong><em>DocumentBurster</em> {{'AREAS.HELP.TAB-SUPPORT.DB-SUPPORT' | translate }}</strong>
+    <strong><em>ReportBurster</em> {{'AREAS.HELP.TAB-SUPPORT.DB-SUPPORT' | translate }}</strong>
     <br>
     <a href="mailto:support@reportburster.com" target="_blank">
       <h3>support@reportburster.com</h3>

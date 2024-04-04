@@ -47,7 +47,7 @@ export const terminalTemplate = `
       <span
         [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.UNINSTALL-JAVA' | translate"
       ></span
-      >: <code>choco uninstall openjdk --yes</code>
+      >: <code>choco uninstall openjdk --yes --force</code>
     </li>
   </ol>
   <br />
@@ -67,7 +67,7 @@ export const terminalTemplate = `
       <span
         [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.UNINSTALL-JAVA8' | translate"
       ></span
-      >: <code>choco uninstall jre8 --yes</code>
+      >: <code>choco uninstall jre8 --yes --force</code>
     </li>
   </ol>
 </p-sidebar>

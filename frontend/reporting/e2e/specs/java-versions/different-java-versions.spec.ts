@@ -14,6 +14,15 @@ MINIMUM JAVA required is Java 1.8 - FOR COMPLETENESS AND TO PROVE IT WORKS THERE
       02. Java6 - IT DOES NOT WORK (tested)
       03. Java7 - IT DOES NOT WORK (tested)
       04. Java8 - WORKS
+
+choco uninstall jre8 --yes
+choco uninstall AdoptOpenJDK16 --yes
+choco uninstall AdoptOpenJDK16jre --yes
+
+openjdk11
+openjdk14
+openjdk8
+
 */
 
 //DONE2

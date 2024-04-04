@@ -10,6 +10,7 @@ import { ToastrModule, ToastrService } from 'ngx-toastr';
 import { DialogModule } from 'primeng/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
+import { PanelModule } from 'primeng/panel';
 
 // Base configuration with placeholders
 export const baseMeta = {
@@ -21,6 +22,7 @@ export const baseMeta = {
         FormsModule,
         BrowserAnimationsModule,
         DialogModule,
+        PanelModule,
         HttpClientModule,
         ToastrModule.forRoot(),
         TranslateModule.forRoot({

@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 
-import * as process from 'process';
-import { ChildProcess, spawn } from 'child_process';
-import * as childProcess from 'child_process';
+//import * as process from 'process';
+import { ChildProcess, ChildProcessWithoutNullStreams } from 'child_process';
+//import * as childProcess from 'child_process';
 
 import * as jetpack from 'fs-jetpack';
 import * as uniqueFilename from 'unique-filename';
@@ -57,9 +57,9 @@ class Dialog {
 })
 export class ElectronService {
   process: typeof process;
-  childProcess: typeof childProcess;
-  exec: typeof childProcess.exec;
-  spawn: typeof childProcess.spawn;
+  //childProcess: typeof childProcess;
+  //exec: typeof childProcess.exec;
+  //spawn: typeof childProcess.spawn;
 
   log: typeof ElectronLog;
   cet: typeof CustomElectronTitlebar;
@@ -76,24 +76,19 @@ export class ElectronService {
 
   PATH: string;
 
-  JAVA_HOME_REGISTRY: string;
-  PATH_REGISTRY: string;
+  //isJavaOk = false;
+  //javaVersion: string;
+  //checkJavaSubscription: Subscription;
 
-  isJavaOk = false;
-  javaVersion: string;
-  checkJavaSubscription: Subscription;
+  //javaDiagnostics = {
+  //  javaHomeFolderExists: false,
+  //  pathIncludesJavaHomeBin: false,
+  //  javaExeExists: false,
+  //  jreHomeFolderExists: false,
+  //};
 
-  isRestartRequired = false;
-
-  javaDiagnostics = {
-    javaHomeFolderExists: false,
-    pathIncludesJavaHomeBin: false,
-    javaExeExists: false,
-    jreHomeFolderExists: false,
-  };
-
-  isChocoOk = false;
-  chocoVersion: string;
+  //isChocoOk = false;
+  //chocoVersion: string;
 
   logFilePath: string;
 
@@ -111,20 +106,20 @@ export class ElectronService {
     this.dialog = new Dialog();
 
     //if (this.isElectron) {
-    this.childProcess = window.require('child_process');
-    this.exec = this.childProcess.exec;
-    this.spawn = this.childProcess.spawn;
+    //this.childProcess = window.require('child_process');
+    //this.exec = this.childProcess.exec;
+    //this.spawn = this.childProcess.spawn;
 
     this.log = window.require('electron-log');
     this.cet = window.require('custom-electron-titlebar');
 
     this.logFilePath = Utilities.slash(
-      `${this.PORTABLE_EXECUTABLE_DIR}/logs/bash.service.log`,
+      `${this.PORTABLE_EXECUTABLE_DIR}/logs/electron.log`,
     );
 
-    this.checkJavaSubscription = interval(1000).subscribe(async (x) => {
-      await this.checkJava();
-    });
+    //this.checkJavaSubscription = interval(1000).subscribe(async (x) => {
+    //  await this.checkJava();
+    //});
     //}
   }
 
@@ -136,6 +131,7 @@ export class ElectronService {
     return [0, 0];
   }
 
+  /*
   async checkJavaVersion(throwError = false) {
     if (process.env.JAVA_HOME)
       this.JAVA_HOME = Utilities.slash(process.env.JAVA_HOME);
@@ -201,46 +197,10 @@ export class ElectronService {
         this.javaVersion = javaVersion.toString();
       }
 
-      this.isRestartRequired = false;
-
       return javaV;
     } catch (error) {
       this.isJavaOk = false;
       this.javaVersion = undefined;
-
-      if (!this.JAVA_HOME_REGISTRY) {
-        try {
-          const jev = await this._getEnvironmentVariableValue(
-            'JAVA_HOME_REGISTRY',
-            throwError,
-          );
-          const javaHomeEnvVariable = Utilities.slash(jev);
-          let pathEnvVariable: string;
-          {
-            pathEnvVariable = await this._getEnvironmentVariableValue(
-              'PATH',
-              throwError,
-            );
-          }
-
-          this.JAVA_HOME_REGISTRY = javaHomeEnvVariable;
-          this.PATH_REGISTRY = pathEnvVariable;
-
-          if (pathEnvVariable.includes(javaHomeEnvVariable)) {
-            this.isRestartRequired = true;
-
-            //User should be allowed to restart the app in this situation
-
-            //https://stackoverflow.com/questions/55982480/what-is-the-proper-way-to-restart-an-electron-app
-
-            //https://www.electronjs.org/docs/api/app#apprelaunchoptions
-
-            //https://stackoverflow.com/questions/41819632/how-to-call-a-function-module-in-electron-from-my-webpage
-          }
-        } catch (err) {}
-
-        if (throwError) throw error;
-      }
     }
   }
 
@@ -305,7 +265,7 @@ export class ElectronService {
       else this.javaDiagnostics.jreHomeFolderExists = false;
     }
   }
-
+ 
   async _getEnvironmentVariableValue(envKey: string, throwError = false) {
     // https://stackoverflow.com/questions/445167/how-can-i-get-the-value-of-a-registry-key-from-within-a-batch-script
     // How can I get the value of a registry key from within a batch script?
@@ -324,7 +284,9 @@ export class ElectronService {
       return value;
     }
   }
-  async installChocolatey(): Promise<ChildProcess> {
+  */
+
+  async installChocolatey(): Promise<ChildProcessWithoutNullStreams> {
     //https://chocolatey.org/docs/installation#install-using-powershell-from-cmdexe
 
     //Step 1 generate /temp/installChocolatey.cmd
@@ -343,7 +305,7 @@ del /f /s install.ps1
       this.PORTABLE_EXECUTABLE_DIR + '/temp/installChocolatey.cmd',
     );
 
-    await jetpack.writeAsync(scriptFilePath, scriptContent);
+    await UtilitiesElectron.writeAsync(scriptFilePath, scriptContent);
 
     //Step 2 Run installChocolatey.cmd
 
@@ -357,33 +319,43 @@ del /f /s install.ps1
 
   async getCommandReadyToBeRunAsAdministratorUsingBatchCmd(
     command: string,
-  ): Promise<ChildProcess> {
+  ): Promise<ChildProcessWithoutNullStreams> {
     const elevatedScriptFilePath =
       await this.generateScriptForRunningCommandAsAdministratorUsingBatchCmd(
         command,
       );
 
     return Promise.resolve(
-      spawn('cmd.exe', ['/c', elevatedScriptFilePath], {
-        cwd: Utilities.slash(this.PORTABLE_EXECUTABLE_DIR + '/temp/'),
-      }),
+      UtilitiesElectron.childProcessSpawn(
+        'cmd.exe',
+        ['/c', 'start', elevatedScriptFilePath],
+        {
+          cwd: Utilities.slash(this.PORTABLE_EXECUTABLE_DIR + '/temp/'),
+        },
+      ),
     );
   }
 
   async getCommandReadyToBeRunAsAdministratorUsingPowerShell(
     command: string,
     testCommand = '',
-  ): Promise<ChildProcess> {
+  ): Promise<ChildProcessWithoutNullStreams> {
     const elevatedScriptFilePath =
       await this.generateScriptForRunningCommandAsAdministratorUsingPowerShell(
         command,
         testCommand,
       );
 
+    console.log(`elevatedScriptFilePath = ${elevatedScriptFilePath}`);
+
     return Promise.resolve(
-      spawn('powershell.exe', [elevatedScriptFilePath], {
-        cwd: Utilities.slash(this.PORTABLE_EXECUTABLE_DIR + '/temp/'),
-      }),
+      UtilitiesElectron.childProcessSpawn(
+        'powershell.exe',
+        [elevatedScriptFilePath],
+        {
+          cwd: Utilities.slash(this.PORTABLE_EXECUTABLE_DIR + '/temp/'),
+        },
+      ),
     );
   }
 
@@ -405,7 +377,7 @@ del /f /s install.ps1
       
       # If not already admin
       
-      Write-Host "${now} - Executing '${commandToElevate}' as Administrator";
+      Write-Host "${now} - Executing '${commandToElevate.replace(/"/g, '\\"').replace(/'/g, "\\'")}' as Administrator";
       Start-Process PowerShell -Verb RunAs "-NoProfile -ExecutionPolicy Bypass -Command \`"cd '$pwd'; & '$PSCommandPath';\`"";
       
       # Exit the non-elevated script
@@ -429,8 +401,17 @@ del /f /s install.ps1
     # if ${testCommand} was succesfull
     if($?)
     {
-      Write-Host "Please wait while executing '${commandToElevate}' as Administrator...";
+      Write-Host "DO NOT CLOSE THIS SCREEN/WINDOW - Please wait while executing '${commandToElevate.replace(/"/g, '\\"').replace(/'/g, "\\'")}' as Administrator...";
       ${commandToElevate} 2>&1 | timestamp | Out-File -Append -Encoding ascii ${this.logFilePath};
+      
+      if ('${commandToElevate}'.contains("install")) {
+
+        Start-Sleep -Seconds 10
+            
+        Stop-Process -Name "ReportBurster" -ErrorAction SilentlyContinue
+        $reportBursterPath = Join-Path -Path ".." -ChildPath "ReportBurster.exe"
+        Start-Process -FilePath "powershell.exe" -ArgumentList "-Command", "Start-Process -FilePath '$reportBursterPath'"
+      }
     }
     else {
       Add-Content ${this.logFilePath} "${now} ERRROR - Could not execute '${commandToElevate}' because '${testCommand}' failed!"
@@ -439,7 +420,7 @@ del /f /s install.ps1
     Remove-Item $PSCommandPath;
     `;
 
-    await jetpack.writeAsync(elevatedScriptFilePath, scriptContent);
+    await UtilitiesElectron.writeAsync(elevatedScriptFilePath, scriptContent);
 
     return Promise.resolve(elevatedScriptFilePath);
   }
@@ -467,7 +448,7 @@ del /f /s install.ps1
      CLS
      ECHO.
      ECHO =============================
-     ECHO Please wait... Running '${commandToElevate}' as Admin...
+     ECHO DO NOT CLOSE THIS SCREEN/WINDOW - Please wait... Running '${commandToElevate}' as Admin...
      ECHO =============================
     
     :init
@@ -518,18 +499,22 @@ del /f /s install.ps1
      ::::::::::::::::::::::::::::
      REM Run shell as admin (example) - put here code as you like
      ${commandToElevate} 2>&1 >> ${this.logFilePath}
-     del /f /s *.cmd 2>&1 >> ${this.logFilePath}
-     cmd /k
+     echo ${commandToElevate} | findstr /C:"install" 1>nul
+     if not errorlevel 1 (
+        taskkill /IM ReportBurster.exe /F
+        start ../ReportBurster.exe
+     )
+     exit
      `;
 
-    await jetpack.writeAsync(elevatedScriptFilePath, scriptContent);
+    await UtilitiesElectron.writeAsync(elevatedScriptFilePath, scriptContent);
 
     return Promise.resolve(elevatedScriptFilePath);
   }
 
-  async emptyLogFile() {
-    return jetpack.writeAsync(this.logFilePath, '');
-  }
+  // async emptyLogFile() {
+  //   return jetpack.writeAsync(this.logFilePath, '');
+  // }
 
   async createJobFile(jobType: string): Promise<string> {
     let filePath = '';
@@ -545,22 +530,13 @@ del /f /s install.ps1
       '14234234324324',
     );
 
-    await jetpack.writeAsync(jobFilePath, jobFileContent);
+    await UtilitiesElectron.writeAsync(jobFilePath, jobFileContent);
 
     return Promise.resolve(Utilities.slash(jobFilePath));
   }
 
-  async logMessage(message: string) {
-    if (message) {
-      return jetpack.appendAsync(
-        this.logFilePath,
-        '\n' + dayjs().format('DD/MM/YYYY HH:mm:ss') + ' - ' + message,
-      );
-    }
-  }
-
   async deleteJobFile(jobFilePath: string) {
-    return jetpack.removeAsync(jobFilePath);
+    return UtilitiesElectron.removeAsync(jobFilePath);
   }
 
   typeCommandOnTerminalAndThenPressEnter(command: string) {
