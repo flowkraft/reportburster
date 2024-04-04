@@ -192,9 +192,7 @@ try {
           `executing ${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj/shutRbsjServer.bat`,
         );
 
-        spawn('shutRbsjServer.bat', {
-          cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
-        });
+        _shutServer();
       }
     }
   });
@@ -203,9 +201,7 @@ try {
     if (app.isPackaged) {
       if (serverProcess && !serverProcess.killed) {
         //stop the java server
-        spawn('shutRbsjServer.bat', {
-          cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
-        });
+        _shutServer();
       }
     }
   });
