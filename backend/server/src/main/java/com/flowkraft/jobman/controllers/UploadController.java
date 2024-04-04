@@ -91,7 +91,7 @@ public class UploadController {
 	@PostMapping("/upload/process-qa")
 	public Flux<FileInfo> handleUploadQa(@RequestPart("file") MultipartFile multipPartFile) throws Exception {
 
-		System.out.println("UploadController - handleUploadQa");
+		//System.out.println("UploadController - handleUploadQa");
 
 		String originalFilename = multipPartFile.getOriginalFilename();
 
@@ -104,7 +104,7 @@ public class UploadController {
 
 		Files.copy(multipPartFile.getInputStream(), uploadedFile.toPath());
 
-		System.out.println("/upload/process-qa uploadedFilePath: " + uploadedFilePath);
+		//System.out.println("/upload/process-qa uploadedFilePath: " + uploadedFilePath);
 
 		List<FileInfo> uploadedFiles = Utils.getFilesToProcess(directoryName, AppPaths.UPLOADS_DIR_PATH);
 

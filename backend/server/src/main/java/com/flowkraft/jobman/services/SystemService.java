@@ -74,7 +74,7 @@ public class SystemService {
 		File file = new File(path.trim());
 
 		if (!file.exists()) {
-			System.out.println("File does not exist: " + path + "!");
+			//System.out.println("File does not exist: " + path + "!");
 			return StringUtils.EMPTY;
 		}
 
@@ -124,7 +124,7 @@ public class SystemService {
 	public void startTailer(String fileName) throws Exception {
 		if (Objects.isNull(existingTailers.get(fileName))) {
 
-			System.out.println("startTailer - AppPaths.LOGS_DIR_PATH = " + AppPaths.LOGS_DIR_PATH + "/" + fileName);
+			//System.out.println("startTailer - AppPaths.LOGS_DIR_PATH = " + AppPaths.LOGS_DIR_PATH + "/" + fileName);
 
 			Tailer tailer = new Tailer(new File(AppPaths.LOGS_DIR_PATH + "/" + fileName), new TailerListenerAdapter() {
 				public void handle(String line) {
@@ -152,7 +152,7 @@ public class SystemService {
 		Tailer tailer = existingTailers.get(fileName);
 
 		if (!Objects.isNull(tailer)) {
-			System.out.println("stopTailer - AppPaths.LOGS_DIR_PATH = " + AppPaths.LOGS_DIR_PATH + "/" + fileName);
+			//System.out.println("stopTailer - AppPaths.LOGS_DIR_PATH = " + AppPaths.LOGS_DIR_PATH + "/" + fileName);
 
 			tailer.stop();
 			existingTailers.remove(fileName);
@@ -186,7 +186,7 @@ public class SystemService {
 		File batFile = new File(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, args.get(0));
 
 		// Print whether the .bat file exists
-		System.out.println("Does the .bat file exist? " + batFile.exists());
+		//System.out.println("Does the .bat file exist? " + batFile.exists());
 
 		ProcessBuilder processBuilder = new ProcessBuilder(commandWithShell);
 
@@ -350,10 +350,10 @@ public class SystemService {
 
 				DirCriteria c = criteria.get();
 
-				System.out.println("DirCriteria: " + c);
-				System.out.println("Directory path: " + dirPath);
+				//System.out.println("DirCriteria: " + c);
+				//System.out.println("Directory path: " + dirPath);
 				String[] fileList = dirPath.toFile().list();
-				System.out.println("File list: " + Arrays.toString(fileList));
+				//System.out.println("File list: " + Arrays.toString(fileList));
 
 				if (c.empty && dirPath.toFile().list().length > 0) {
 					try (Stream<Path> paths = Files.walk(dirPath)) {
