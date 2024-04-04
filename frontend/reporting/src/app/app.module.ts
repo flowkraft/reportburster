@@ -31,9 +31,9 @@ export function initApp(stateStore: StateStoreService) {
     stateStore.configSys.sysInfo.setup.env = systemInfo.env;
     stateStore.configSys.sysInfo.setup.BACKEND_URL =
       await UtilitiesElectron.getBackendUrl();
-    console.log(
-      `stateStore.configSys.sysInfo.setup = ${JSON.stringify(stateStore.configSys.sysInfo.setup)}`,
-    );
+    //console.log(
+    //  `stateStore.configSys.sysInfo.setup = ${JSON.stringify(stateStore.configSys.sysInfo.setup)}`,
+    //);
   };
 }
 

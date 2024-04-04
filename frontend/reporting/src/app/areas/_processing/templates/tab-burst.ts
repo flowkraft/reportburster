@@ -1,6 +1,6 @@
 export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
   <div class="well">
-    <div class="row">
+    <div class="row" style="margin-bottom: 5px">
       <div class="col-xs-2">
         PDF / Excel {{ 'AREAS.PROCESSING.TAB-BURST.FILE' | translate }}
       </div>

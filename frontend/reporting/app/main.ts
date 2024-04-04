@@ -26,8 +26,6 @@ process.env.PORTABLE_EXECUTABLE_DIR = path
 
 const electronLogFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/logs/electron.log`;
 
-_shutServer();
-
 log.transports.file.resolvePath = () => {
   return electronLogFilePath;
 };
@@ -399,12 +397,6 @@ async function _shutServer() {
   spawn('shutRbsjServer.bat', {
     cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
   });
-
-  await jetpack.dirAsync(`${process.env.PORTABLE_EXECUTABLE_DIR}/temp`, {
-    empty: true,
-  });
-
-  await jetpack.writeAsync(electronLogFilePath, '');
 }
 
 async function _getSystemInfo(): Promise<{
