@@ -39,10 +39,10 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 	protected void compile() throws Exception {
 
 		// Generate MODULE_BATCH/target/dependencies
-		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl \":batch\" dependency:copy-dependencies");
+		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl \":rb-batch\" dependency:copy-dependencies");
 
 		System.out.println(
-				"------------------------------------- DONE_01:DocumentBursterServer Utils.runMaven(Utils.getTopProjectFolderPath(), mvn -pl :batch dependency:copy-dependencies) ... -------------------------------------");
+				"------------------------------------- DONE_01:DocumentBursterServer Utils.runMaven(Utils.getTopProjectFolderPath(), mvn -pl :rb-batch dependency:copy-dependencies) ... -------------------------------------");
 
 	}
 
@@ -165,7 +165,7 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 
 		// START MODULE_BATCH_WEB_ADMIN work
 		ZipUtil.unpack(
-				new File(Utils.getTopProjectFolderPath() + "/backend/batch-web-admin/target/batch-web-admin.war"),
+				new File(Utils.getTopProjectFolderPath() + "/backend/batch-web-admin/target/rb-batch-web-admin.war"),
 				new File(packageDirPath + "/" + this.topFolderName + "/web-console/console/webapps/burst"));
 
 		FileUtils.copyFile(
@@ -175,7 +175,7 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 						+ "/web-console/console/webapps/burst/WEB-INF/classes/batch-hsql.properties"));
 
 		System.out.println(
-				"------------------------------------- DONE_10:DocumentBursterServer Unzip batch-web-admin.war ... -------------------------------------");
+				"------------------------------------- DONE_10:DocumentBursterServer Unzip rb-batch-web-admin.war ... -------------------------------------");
 
 		// Copy batch web admin license files...
 		FileUtils.copyDirectory(
@@ -293,7 +293,7 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 		assertThat(jspFiles.size() > 0).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_08:DocumentBursterServer check tomcat and batch-web-admin.war ... -------------------------------------");
+				"------------------------------------- VERIFIED_08:DocumentBursterServer check tomcat and rb-batch-web-admin.war ... -------------------------------------");
 
 		// Copy batch web admin license files...
 		assertThat(Utils.dir1ContainsAllDir2Files(

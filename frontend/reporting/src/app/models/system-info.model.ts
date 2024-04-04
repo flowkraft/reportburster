@@ -1,6 +1,34 @@
 export const SystemInfo = {
   operatingSystem: 'Windows',
-  isServerVersion: false,
-  product: 'DocumentBurster',
-  version: '9.1',
+  setup: {
+    BACKEND_URL: '',
+    isRestartRequired: false,
+    chocolatey: {
+      isChocoOk: false,
+      version: '',
+    },
+    java: {
+      isJavaOk: false,
+      version: '',
+    },
+    env: {
+      PATH: '',
+      JAVA_HOME: '',
+      JRE_HOME: '',
+    },
+    update: {
+      succint: true,
+      letMeUpdateManually: false,
+      letMeUpdateSourceDirectoryPath: '',
+      homeDirectoryPath: '',
+      info: {
+        errorMsg: '',
+        updateSourceDirectoryPath: '',
+        updateSourceVersion: '',
+        migrateConfigFiles: [['', '']],
+        migrateScriptFiles: [['', '']],
+        templatesFolders: [['', '']],
+      },
+    },
+  },
 };

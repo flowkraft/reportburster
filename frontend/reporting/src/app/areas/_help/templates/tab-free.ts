@@ -10,7 +10,7 @@ export const tabFreeTemplate = `<ng-template #tabFreeTemplate>
 
     <a href="https://www.reportburster.com/services/free-for-schools/" target="_blank">
       <button class="btn btn-primary" type="button">Get
-        <em>DocumentBurster</em> {{
+        <em>ReportBurster</em> {{
         'AREAS.HELP.TAB-FREE.FREE-FOR-SCHOOLS' | translate }}</button>
     </a>
 
@@ -29,7 +29,7 @@ export const tabFreeTemplate = `<ng-template #tabFreeTemplate>
     <hr>
 
     <h3 id='checkPointHelpFreeForSchools' style="text-decoration: underline;">How Schools Use
-      <em>DocumentBurster</em> Software</h3>
+      <em>ReportBurster</em> Software</h3>
     <em>"At the university we provide reading lists for each course of study. These reading list are provided by the
       course tutors
       and annually we like to feed back to the tutors borrowing figures for the items on the reading lists. We are
@@ -50,9 +50,9 @@ export const tabFreeTemplate = `<ng-template #tabFreeTemplate>
     <br>
     <hr>
     <h3 style="text-decoration: underline;">More
-      <em>DocumentBurster</em> School Examples</h3>
+      <em>ReportBurster</em> School Examples</h3>
     <br>1.
-    <em>DocumentBurster</em> as a general
+    <em>ReportBurster</em> as a general
     <a title="Examples of how people are using DocumentBurster report distribution software"
       href="https://www.pdfburst.com/blog/report-distribution-software/">Report
       Distribution Software</a>
@@ -65,7 +65,7 @@ export const tabFreeTemplate = `<ng-template #tabFreeTemplate>
     <a title="Examples of how people are using DocumentBurster to burst and distribute Crystal Reports documents"
       href="https://www.pdfburst.com/blog/crystal-reports-distribution/">Burst
       and Distribute Crystal Reports Documents</a> using
-    <em>DocumentBurster</em>
+    <em>ReportBurster</em>
     <a href="https://www.pdfburst.com/blog/crystal-reports-distribution/" target="_blank">
       <button class="btn btn-primary btn-xs" type="button">View Examples</button>
     </a>
@@ -74,7 +74,7 @@ export const tabFreeTemplate = `<ng-template #tabFreeTemplate>
     <a title="Examples of how people are using DocumentBurster for emailing payslips to employees"
       href="https://www.pdfburst.com/blog/email-payslips/">Email
       Payslips to Employees</a> using
-    <em>DocumentBurster</em>
+    <em>ReportBurster</em>
     <a href="https://www.pdfburst.com/blog/email-payslips/" target="_blank">
       <button class="btn btn-primary btn-xs" type="button">View Examples</button>
     </a>

@@ -9,6 +9,7 @@ import Utilities from '../../../helpers/utilities';
 import { TranslateService } from '@ngx-translate/core';
 import UtilitiesElectron from '../../../helpers/utilities-electron';
 import { ElectronService } from '../../../core/services';
+import { StateStoreService } from '../../../providers/state-store.service';
 
 interface ExtPackage {
   id: string;
@@ -83,6 +84,7 @@ export class ExtraPackagesComponent implements OnInit {
     protected translateService: TranslateService,
     protected bashService: BashService,
     protected electronService: ElectronService,
+    protected stateStore: StateStoreService,
     protected executionStatsService: ExecutionStatsService,
     protected confirmService: ConfirmService,
   ) {}
@@ -108,7 +110,7 @@ export class ExtraPackagesComponent implements OnInit {
 
       try {
         const { stdout, stderr } =
-          await UtilitiesElectron.execNativeCommand(chocoInfoCommand);
+          await UtilitiesElectron.childProcessExec(chocoInfoCommand);
 
         //console.log(`chocoInfo = ${chocoInfo}`);
 

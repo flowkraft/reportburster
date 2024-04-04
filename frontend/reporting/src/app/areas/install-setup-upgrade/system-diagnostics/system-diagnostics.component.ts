@@ -4,6 +4,7 @@ import { systemDiagnosticsTemplate } from './system-diagnostics.template';
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
 import { SettingsService } from '../../../providers/settings.service';
 import { ElectronService } from '../../../core/services/electron/electron.service';
+import { StateStoreService } from '../../../providers/state-store.service';
 
 @Component({
   selector: 'dburst-system-diagnostics',
@@ -11,9 +12,9 @@ import { ElectronService } from '../../../core/services/electron/electron.servic
 })
 export class SystemDiagnosticsComponent {
   constructor(
+    protected storeService: StateStoreService,
     protected electronService: ElectronService,
     protected settingsService: SettingsService,
-
     protected confirmService: ConfirmService,
   ) {}
 

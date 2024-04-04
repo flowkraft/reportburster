@@ -12,6 +12,8 @@ import { terminalTemplate } from './terminal.template';
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
 import { TerminalService } from 'primeng/terminal';
 import { ElectronService } from '../../../core/services/electron/electron.service';
+import UtilitiesElectron from '../../../helpers/utilities-electron';
+import { StateStoreService } from '../../../providers/state-store.service';
 
 @Component({
   selector: 'dburst-terminal',
@@ -33,6 +35,7 @@ export class TerminalComponent implements AfterViewInit {
 
   constructor(
     protected terminalService: TerminalService,
+    protected stateStore: StateStoreService,
     protected electronService: ElectronService,
     protected confirmService: ConfirmService,
     protected el: ElementRef,
@@ -52,15 +55,11 @@ export class TerminalComponent implements AfterViewInit {
           switch (command) {
             case 'java -version':
             case 'java --version':
-              try {
-                //const throwError = true;
-                const throwError = false;
+              //console.log(
+              //  `this.stateStore.configSys.sysInfo.setup = ${JSON.stringify(this.stateStore.configSys.sysInfo.setup)}`,
+              //);
 
-                response =
-                  await this.electronService.checkJavaVersion(throwError);
-              } catch (error) {
-                response = error;
-              }
+              response = `Java ${this.stateStore.configSys.sysInfo.setup.java.version}`;
 
               this.electronService.typeCommandOnTerminalAndThenPressEnter(
                 'choco --version',
@@ -69,24 +68,12 @@ export class TerminalComponent implements AfterViewInit {
               break;
 
             case 'choco --version':
-              try {
-                //const throwError = true;
-                const throwError = false;
-
-                const version =
-                  await this.electronService.checkChocoVersion(throwError);
-
-                response = 'Chocolatey ' + version;
-              } catch (error) {
-                response = error;
-              }
+              response = `Chocolatey ${this.stateStore.configSys.sysInfo.setup.chocolatey.version}`;
 
               break;
 
             case 'install chocolatey':
               try {
-                await this.electronService.emptyLogFile();
-
                 await this.electronService.installChocolatey();
 
                 /*
@@ -106,15 +93,13 @@ export class TerminalComponent implements AfterViewInit {
 
             case 'uninstall chocolatey':
               try {
-                await this.electronService.emptyLogFile();
-
                 const unInstallCommand = `& ../tools/chocolatey/uninstall.ps1`;
-                const testCommand = 'choco --version';
+                //const testCommand = 'choco --version';
 
                 const elevatedScript =
-                  await this.electronService.getCommandReadyToBeRunAsAdministratorUsingPowerShell(
+                  await this.electronService.getCommandReadyToBeRunAsAdministratorUsingBatchCmd(
                     unInstallCommand,
-                    testCommand,
+                    //testCommand,
                   );
 
                 elevatedScript.stderr.on('data', (data) => {
@@ -131,13 +116,84 @@ export class TerminalComponent implements AfterViewInit {
               break;
 
             case 'choco install jre8 -PackageParameters "/exclude:64" --yes':
+              try {
+                try {
+                  await UtilitiesElectron.appShutServer();
+                } catch (error) {}
+
+                const elevatedScript =
+                  await this.electronService.getCommandReadyToBeRunAsAdministratorUsingBatchCmd(
+                    command,
+                  );
+
+                elevatedScript.stderr.on('data', (data) => {
+                  response = response + '\n' + data;
+                });
+
+                for await (const data of elevatedScript.stdout) {
+                  response = response + '\n' + data;
+                }
+              } catch (error) {
+                response = error;
+              }
+
+              break;
             case 'choco install openjdk --yes':
             case 'choco install notepadplusplus --yes':
             case 'choco install winmerge --yes':
-            case 'choco uninstall jre8 --yes':
-            case 'choco uninstall openjdk --yes':
-            case 'choco uninstall notepadplusplus --yes':
-            case 'choco uninstall winmerge --yes':
+            case 'choco uninstall notepadplusplus --yes --force':
+            case 'choco uninstall winmerge --yes --force':
+              try {
+                try {
+                  await UtilitiesElectron.appShutServer();
+                } catch (error) {}
+
+                const testCommand = 'choco --version';
+                const elevatedScript =
+                  await this.electronService.getCommandReadyToBeRunAsAdministratorUsingPowerShell(
+                    command,
+                    testCommand,
+                  );
+
+                elevatedScript.stderr.on('data', (data) => {
+                  response = response + '\n' + data;
+                });
+
+                for await (const data of elevatedScript.stdout) {
+                  response = response + '\n' + data;
+                }
+              } catch (error) {
+                response = error;
+              }
+
+              break;
+            case 'choco uninstall jre8 --yes --force':
+            case 'choco uninstall openjdk --yes --force':
+              try {
+                try {
+                  await UtilitiesElectron.appShutServer();
+                } catch (error) {}
+
+                const testCommand = 'java -version';
+                const elevatedScript =
+                  await this.electronService.getCommandReadyToBeRunAsAdministratorUsingPowerShell(
+                    command,
+                    testCommand,
+                  );
+
+                elevatedScript.stderr.on('data', (data) => {
+                  response = response + '\n' + data;
+                });
+
+                for await (const data of elevatedScript.stdout) {
+                  response = response + '\n' + data;
+                }
+              } catch (error) {
+                response = error;
+              }
+
+              break;
+
             case '':
               response = '';
               break;
@@ -149,13 +205,14 @@ export class TerminalComponent implements AfterViewInit {
           if (response) {
             //response = response.toString();
             try {
-              await this.electronService.logMessage(
+              await UtilitiesElectron.logInfoAsync(
                 response.replace('undefined', ''),
               );
             } catch (error) {}
           }
           if (jobFilePath)
             await this.electronService.deleteJobFile(jobFilePath);
+
           this.changeDetectorRef.detectChanges();
         }
       },

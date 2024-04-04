@@ -33,7 +33,7 @@ export const tabReviewsTemplate = `<ng-template #tabReviewsTemplate>
     <br>
     <a href="https://www.reportburster.com/clients.html" target="_blank">
       <button class="btn btn-primary" type="button">Who is using
-        <em>DocumentBurster</em>
+        <em>ReportBurster</em>
       </button>
     </a>
 

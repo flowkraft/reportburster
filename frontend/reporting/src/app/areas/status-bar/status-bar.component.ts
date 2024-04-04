@@ -10,6 +10,7 @@ import Utilities from '../../helpers/utilities';
 import { ConfirmService } from '../../components/dialog-confirm/confirm.service';
 import { WebSocketExecutionStatsService } from '../../providers/ws-execution-stats.service';
 import { FsService } from '../../providers/fs.service';
+import { StateStoreService } from '../../providers/state-store.service';
 
 @Component({
   selector: 'dburst-status-bar',
@@ -23,9 +24,17 @@ export class StatusBarComponent implements OnInit, OnDestroy {
     protected fsService: FsService,
     protected executionStatsService: ExecutionStatsService,
     protected executionStatsWsService: WebSocketExecutionStatsService,
+    protected storeService: StateStoreService,
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
+    if (!this.storeService.configSys.sysInfo.setup.java.isJavaOk) {
+      return;
+    }
+
+    this.executionStatsWsService.BACKEND_URL =
+      this.storeService.configSys.sysInfo.setup.BACKEND_URL;
+
     this.executionStatsWsService.makeWSConnectionAndHandleMessages();
     //FIXME define a constant CHECK_INTERVAL = 333 to be reused across all ).subscribe
 

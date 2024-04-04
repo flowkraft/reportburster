@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 9.2.0 - 2024-04-08
+
+### Added
+
+- New java server which implements the older NodeJS/Electron functionality
+  (foundation for the upcoming DocumentBurster/DocumentBurster Server with common UI/functionalities)
+
 ## 9.1.7 - 2024-02-19
 
 ### Added

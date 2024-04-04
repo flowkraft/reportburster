@@ -4,6 +4,7 @@ import { javaTemplate } from './java.template';
 
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
 import { ElectronService } from '../../../core/services/electron/electron.service';
+import { StateStoreService } from '../../../providers/state-store.service';
 
 @Component({
   selector: 'dburst-java',
@@ -11,6 +12,7 @@ import { ElectronService } from '../../../core/services/electron/electron.servic
 })
 export class JavaComponent {
   constructor(
+    protected storeService: StateStoreService,
     protected electronService: ElectronService,
     protected confirmService: ConfirmService,
   ) {}
@@ -40,9 +42,9 @@ export class JavaComponent {
     this.confirmService.askConfirmation({
       message: 'Are you sure that you want to perform this action?',
       confirmAction: () => {
-        this.electronService.typeCommandOnTerminalAndThenPressEnter(
-          'choco uninstall jre8 --yes',
-        );
+        //this.electronService.typeCommandOnTerminalAndThenPressEnter(
+        //  'choco uninstall jre8 --yes',
+        //);
       },
     });
   }

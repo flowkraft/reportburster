@@ -2,7 +2,7 @@ export const tabEmailCloudProvidersTemplate = `<ng-template #tabEmailCloudProvid
   <div class="well" style="height: 600px; overflow-y: scroll;">
 
     <h5>
-      <u><em>DocumentBurster</em> can be used with all the major cloud email providers.</u>
+      <u><em>ReportBurster</em> can be used with all the major cloud email providers.</u>
     </h5>
 
     <br>

@@ -10,7 +10,6 @@ import { Injectable } from '@angular/core';
 import { StompSubscription } from '@stomp/stompjs';
 import { FsService } from './fs.service';
 import { ExecutionStatsService } from './execution-stats.service';
-import { log } from 'console';
 
 @Injectable({
   providedIn: 'root',

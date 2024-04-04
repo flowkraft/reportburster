@@ -1,4 +1,10 @@
 @echo off
+FOR /F "tokens=* USEBACKQ" %%F IN (`choco -v 2^>^&1`) DO (
+    SET choco_command_output=%%F
+)
+echo choco version: %choco_command_output%
+java -version
+
 set PORT=9090
 
 set SETTINGS_FILE=../../config/_internal/settings.xml

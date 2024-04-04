@@ -1,6 +1,6 @@
 export const extraPackagesTemplate = `<!-- <ng-template #extraPackagesTemplate> -->
 
-  <div *ngIf="electronService.isChocoOk">
+  <div *ngIf="stateStore.configSys.sysInfo.setup.chocolatey.isChocoOk">
     <span [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.EXTRA-PACKAGES.INNER-HTML.ABOUT' | translate"></span>
     <div
       *ngFor="let extraPackage of this.extraPackages"

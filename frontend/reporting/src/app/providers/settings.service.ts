@@ -185,6 +185,11 @@ export class SettingsService {
 
   async loadDefaultSettingsFileAsync(): Promise<any> {
     const systemInfo = await this.apiService.get('/jobman/system/info');
+
+    if (!systemInfo) {
+      return;
+    }
+
     this.isWindows = systemInfo.osName.startsWith('Windows');
 
     const startServerScripts = await this.unixCliService.findAsync(
@@ -326,6 +331,10 @@ export class SettingsService {
         matching: ['*.xml'],
       },
     );
+
+    if (!burstConfigFilePaths || burstConfigFilePaths.length == 0) {
+      return [];
+    }
 
     //console.log(
     //  `burstConfigFilePaths1 = ${JSON.stringify(burstConfigFilePaths)}`
@@ -499,6 +508,11 @@ export class SettingsService {
         matching: ['*.xml'],
       },
     );
+
+    if (!connectionFilePaths || connectionFilePaths.length == 0) {
+      this.connectionsLoading = 0;
+      return;
+    }
 
     for (let connectionFilePath of connectionFilePaths) {
       let connectionSettings = {

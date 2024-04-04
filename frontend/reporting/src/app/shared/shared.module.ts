@@ -28,7 +28,6 @@ import { LogFileViewerModule } from '../components/log-file-viewer/log-file-view
 import { SettingsService } from '../providers/settings.service';
 import { LogsServiceWebSocket } from '../providers/ws-logs.service';
 import { FsService } from '../providers/fs.service';
-import { BrandComponent } from '../components/brand/brand.component';
 import { StateStoreService } from '../providers/state-store.service';
 import { ApiService } from '../providers/api.service';
 

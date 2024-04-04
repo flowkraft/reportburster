@@ -1,14 +1,16 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { setTheme } from 'ngx-bootstrap/utils';
 import { ElectronService } from './core/services';
+
+declare var $: any;
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent {
+export class AppComponent implements AfterViewInit {
   constructor(
     protected electronService: ElectronService,
     protected translate: TranslateService,
@@ -28,5 +30,9 @@ export class AppComponent {
     } else {
       //console.log('Run in browser');
     }
+  }
+
+  ngAfterViewInit() {
+    $('#topMenu').smartmenus();
   }
 }

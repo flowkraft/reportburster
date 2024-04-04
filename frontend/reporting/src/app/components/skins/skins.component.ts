@@ -36,6 +36,7 @@ export class SkinsComponent implements OnInit {
     //    this.settingsService.xmlInternalSettings
     //  )}`
     //);
+    if (!this.settingsService.xmlInternalSettings.documentburster) return;
 
     let skin =
       this.settingsService.xmlInternalSettings.documentburster.settings.skin;

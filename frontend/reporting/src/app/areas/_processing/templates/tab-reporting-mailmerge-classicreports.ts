@@ -75,7 +75,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
       </div>
     </div>
 
-    <div class="row" *ngIf="!shellService.isJavaOk">
+    <div class="row" *ngIf="!storeService.configSys.sysInfo.setup.java.isJavaOk">
       <br /><br />
       <span class="label label-warning"
         ><strong

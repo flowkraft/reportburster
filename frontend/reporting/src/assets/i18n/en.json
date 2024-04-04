@@ -603,7 +603,7 @@
           "RESTARTING-REQUIRED": "is required to complete the installation",
           "INNER-HTML": {
             "REQUIRED-SHORT": "<em>ReportBurster</em> requires <em>Java</em> as a prerequisite.",
-            "REQUIRED-LONG": "In order to use <em>ReportBurster</em> <em>Java</em> runtime version 8 should be installed on your computer."
+            "REQUIRED-LONG": "In order to use <em>ReportBurster</em> <em>Java</em> runtime should be installed on your computer."
           }
         },
         "TERMINAL": {

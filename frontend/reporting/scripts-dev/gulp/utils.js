@@ -29,6 +29,16 @@ gulp.task("utils:start-server-and-e2e", () => {
   _startServerAndDoX("custom:e2e");
 });
 
+gulp.task("utils:start-javano-chocoyes-and-ui", () => {
+  const chocoStatus = "not-installed";
+  _startNoJavaAndUI(chocoStatus);
+});
+
+gulp.task("utils:start-javano-chocoyes-and-ui", () => {
+  const chocoStatus = "installed";
+  _startNoJavaAndUI(chocoStatus);
+});
+
 gulp.task("utils:show-stats-memory", () => {
   const maxHeapSz = require("v8").getHeapStatistics().heap_size_limit;
   const maxHeapSz_GB = (maxHeapSz / 1024 ** 3).toFixed(1);
@@ -42,6 +52,23 @@ gulp.task("utils:show-stats-memory", () => {
 gulp.task("utils:check-broken-links", () => {
   return gulp.src("src/**/*.html").pipe(_checkBrokenLinks());
 });
+
+_startNoJavaAndUI = async (chocoStatus) => {
+  const logPath = "testground/e2e/logs/electron.log";
+  await jetpack.writeAsync(logPath, "");
+
+  let logMessage = "bla bla\n'java' is not recognized";
+
+  if (chocoStatus === "not-installed")
+    logMessage += "\n'choco' is not recognized";
+  else logMessage += "\nchoco version: 0.11.2";
+
+  await jetpack.writeAsync(logPath, logMessage);
+  spawn("npm", ["run", "custom:start"], {
+    stdio: "pipe",
+    shell: true,
+  });
+};
 
 _startServerAndDoX = (npm_x_script) => {
   const server = spawn("npm", ["run", "custom:start-server"], {
