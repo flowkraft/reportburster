@@ -345,9 +345,9 @@ export class ProcessingComponent implements OnInit {
     this.processingService.procQualityAssuranceInfo.inputFileName =
       this.processingService.procBurstInfo.inputFileName;
 
-    console.log(
-      `processingService.procQualityAssuranceInfo.inputFileName ( onBurstFileSelected) = ${this.processingService.procQualityAssuranceInfo.inputFileName}`,
-    );
+    //console.log(
+    //  `processingService.procQualityAssuranceInfo.inputFileName ( onBurstFileSelected) = ${this.processingService.procQualityAssuranceInfo.inputFileName}`,
+    //);
   }
 
   resetProcInfo() {
@@ -369,9 +369,9 @@ export class ProcessingComponent implements OnInit {
       false;
     this.processingService.procMergeBurstInfo.mergedFileName = 'merged.pdf';
 
-    (this.burstFileUploadInput.nativeElement as HTMLInputElement).value = '';
-    (this.qaFileUploadInput.nativeElement as HTMLInputElement).value = '';
-    (this.mergeFilesUploadInput.nativeElement as HTMLInputElement).value = '';
+    (this.burstFileUploadInput?.nativeElement as HTMLInputElement).value = '';
+    (this.qaFileUploadInput?.nativeElement as HTMLInputElement).value = '';
+    (this.mergeFilesUploadInput?.nativeElement as HTMLInputElement).value = '';
   }
 
   async onMailMergeClassicReportFileSelected(filePath: string) {
@@ -399,9 +399,9 @@ export class ProcessingComponent implements OnInit {
         message: dialogMessage,
       });
     } else {
-      console.log(
-        `this.processingService.procBurstInfo.isSample = ${this.processingService.procBurstInfo.isSample}`,
-      );
+      //console.log(
+      //  `this.processingService.procBurstInfo.isSample = ${this.processingService.procBurstInfo.isSample}`,
+      //);
 
       if (this.processingService.procBurstInfo.isSample) {
         this.processingService.procBurstInfo.inputFileName = Utilities.basename(
