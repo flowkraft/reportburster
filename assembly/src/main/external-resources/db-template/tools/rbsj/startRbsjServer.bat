@@ -1,4 +1,6 @@
 @echo off
+powershell -Command "Get-WmiObject Win32_Process -Filter \"name = 'java.exe'\" | Where-Object { $_.CommandLine -like '*rb-server.jar*' } | ForEach-Object { Stop-Process -Id $_.ProcessId }"
+
 FOR /F "tokens=* USEBACKQ" %%F IN (`choco -v 2^>^&1`) DO (
     SET choco_command_output=%%F
 )
