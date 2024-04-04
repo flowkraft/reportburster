@@ -75,7 +75,7 @@ export class ShellService {
       commands,
     );
 
-    console.log(`batScript = ${JSON.stringify(batScript)}`);
+    //console.log(`batScript = ${JSON.stringify(batScript)}`);
     this.handleScriptEvents(batScript, workItemName, exitCallback);
   }
 
