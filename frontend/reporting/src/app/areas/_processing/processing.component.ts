@@ -369,9 +369,15 @@ export class ProcessingComponent implements OnInit {
       false;
     this.processingService.procMergeBurstInfo.mergedFileName = 'merged.pdf';
 
-    (this.burstFileUploadInput?.nativeElement as HTMLInputElement).value = '';
-    (this.qaFileUploadInput?.nativeElement as HTMLInputElement).value = '';
-    (this.mergeFilesUploadInput?.nativeElement as HTMLInputElement).value = '';
+    if (this.burstFileUploadInput?.nativeElement) {
+      (this.burstFileUploadInput.nativeElement as HTMLInputElement).value = '';
+    }
+    if (this.qaFileUploadInput?.nativeElement) {
+      (this.qaFileUploadInput.nativeElement as HTMLInputElement).value = '';
+    }
+    if (this.mergeFilesUploadInput?.nativeElement) {
+      (this.mergeFilesUploadInput.nativeElement as HTMLInputElement).value = '';
+    }
   }
 
   async onMailMergeClassicReportFileSelected(filePath: string) {

@@ -170,7 +170,7 @@ try {
       });
 
       serverProcess.on('close', (code) => {
-        log.info(`Server process exited with code ${code}`);
+        //log.info(`Server process exited with code ${code}`);
       });
     } else {
       //if non-"production"
@@ -188,9 +188,9 @@ try {
     //stop the java server
     if (app.isPackaged) {
       if (serverProcess) {
-        log.info(
-          `executing ${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj/shutRbsjServer.bat`,
-        );
+        //log.info(
+        //  `executing ${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj/shutRbsjServer.bat`,
+        //);
 
         _shutServer();
       }

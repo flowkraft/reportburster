@@ -78,7 +78,7 @@ export class WebSocketEndpoint {
   //_socketListener = (frame: string) => {
   _socketListener = () => {
     //console.log('WebSocket Connected: ' + frame);
-    console.log('WebSocket Connected');
+    //console.log('WebSocket Connected');
 
     this._socket.stomp.subscribe(this._options.topicName, (data: any) =>
       this.subscribers.forEach((subscriber) =>
@@ -157,7 +157,7 @@ export class WebSocketEndpoint {
       this._socket.stomp.connect(
         headers,
         async () => {
-          await Utilities.sleep(100);
+          await Utilities.sleep(300);
           this._socketListener();
           resolve();
         },
