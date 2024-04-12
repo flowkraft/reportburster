@@ -1,6 +1,5 @@
 package com.flowkraft.jobman.controllers;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
@@ -19,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.flowkraft.common.AppPaths;
 import com.flowkraft.jobman.models.SystemInfo;
 import com.flowkraft.jobman.services.SystemService;
@@ -26,10 +27,8 @@ import com.flowkraft.jobman.services.SystemService.DirCriteria;
 import com.flowkraft.jobman.services.SystemService.FileCriteria;
 import com.flowkraft.jobman.services.SystemService.FindCriteria;
 import com.flowkraft.jobman.services.SystemService.InspectResult;
-import com.flowkraft.jobman.services.SystemService.ProcessOutput;
 import com.flowkraft.jobman.services.SystemService.ProcessOutputResult;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -41,23 +40,57 @@ public class SystemController {
 
 	@GetMapping("/check-url")
 	public Mono<Boolean> checkUrl(@RequestParam String url) throws Exception {
-		
-		String decodedUrl = java.net.URLDecoder.decode(url, StandardCharsets.UTF_8.name());
-		
-		//System.out.println("/jobman/system/check-url url = " + decodedUrl);
-		
+
+		// System.out.println("/jobman/system/check-url");
+
+		String decodedUrl = URLDecoder.decode(url, StandardCharsets.UTF_8.toString());
+
 		WebClient webClient = WebClient.create();
-		
-		return webClient.get().uri(decodedUrl).exchangeToMono(response -> {
-			
-			//System.out.println("/jobman/system/check-url url = " + decodedUrl + ", response.status = "+response.statusCode());
-			
+
+		return webClient.head().uri(decodedUrl).exchangeToMono(response -> {
+
+			// System.out.println(
+			// "/jobman/system/check-url url = " + decodedUrl + ", response.status = " +
+			// response.statusCode());
+
 			if (response.statusCode().equals(HttpStatus.OK)) {
 				return Mono.just(true);
 			} else {
 				return Mono.just(false);
 			}
 		}).onErrorResume(e -> Mono.just(false));
+	}
+
+	@GetMapping("/get-changelog")
+	public Mono<String> getChangeLog(@RequestParam String itemName) throws Exception {
+		String itemNameDecoded = URLDecoder.decode(itemName, StandardCharsets.UTF_8.toString());
+
+		String url = "https://www.pdfburst.com/store?edd_action=get_version&item_name=" + itemNameDecoded;
+
+		WebClient webClient = WebClient.create();
+
+		return webClient.get().uri(url).exchangeToMono(response -> {
+			if (response.statusCode().is3xxRedirection()) {
+				String redirectUrl = response.headers().asHttpHeaders().getLocation().toString();
+				return webClient.get().uri(redirectUrl).retrieve().bodyToMono(String.class);
+			} else {
+				return response.bodyToMono(String.class);
+			}
+		});
+	}
+
+	@GetMapping("/get-blog-posts")
+	public Mono<String> getBlogPosts() {
+		String url = "https://www.pdfburst.com/blog/feed/";
+
+		WebClient webClient = WebClient.create();
+
+		return webClient.get().uri(url).retrieve().bodyToMono(String.class).flatMap(body -> {
+			XmlMapper xmlMapper = new XmlMapper();
+			ObjectMapper jsonMapper = new ObjectMapper();
+			return Mono.fromCallable(() -> xmlMapper.readTree(body))
+					.flatMap(xmlNode -> Mono.fromCallable(() -> jsonMapper.writeValueAsString(xmlNode)));
+		}).onErrorMap(e -> new RuntimeException("Error converting XML to JSON", e));
 	}
 
 	@GetMapping("/info")
@@ -74,7 +107,10 @@ public class SystemController {
 			@RequestParam Optional<Boolean> files, @RequestParam Optional<Boolean> directories,
 			@RequestParam Optional<Boolean> recursive, @RequestParam Optional<Boolean> ignoreCase) throws Exception {
 
-		List<String> results = systemService.unixCliFind(URLDecoder.decode(path, StandardCharsets.UTF_8.toString()),
+		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+
+		List<String> results = systemService.unixCliFind(fullPath,
 				new FindCriteria(matching, files, directories, recursive, ignoreCase));
 		return Mono.just(results);
 	}
@@ -83,21 +119,15 @@ public class SystemController {
 	Mono<String> cat(@RequestParam String path) throws Exception {
 
 		// System.out.println("/unix-cli/cat path = " + path);
-		String fileContent = systemService.unixCliCat(URLDecoder.decode(path, StandardCharsets.UTF_8.toString()));
+		
+		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+
+		String fileContent = systemService.unixCliCat(URLDecoder.decode(fullPath, StandardCharsets.UTF_8.toString()));
 		// System.out.println("fileContent = " + fileContent);
 
 		return Mono.just(fileContent);
 
-	}
-
-	@GetMapping(value = "/fs/resolve", produces = MediaType.TEXT_PLAIN_VALUE)
-	Mono<String> resolve(@RequestParam String path) throws Exception {
-
-		//System.out.println("/fs/resolve path = " + path);
-
-		String resolvedPath = systemService.fsResolvePath(URLDecoder.decode(path, StandardCharsets.UTF_8.toString()));
-
-		return Mono.just(resolvedPath.replace("\\", "/"));
 	}
 
 	@DeleteMapping("/fs/delete-quietly")
@@ -110,19 +140,26 @@ public class SystemController {
 	Mono<String> readFileToString(@RequestParam String path) throws Exception {
 		// System.out.println("/fs/read-file-to-string");
 
-		String fileContent = systemService.unixCliCat(URLDecoder.decode(path, StandardCharsets.UTF_8.toString()));
+		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+
+		String fileContent = systemService.unixCliCat(fullPath);
 		return Mono.just(fileContent);
 
 	}
 
 	@PostMapping(value = "/fs/write-string-to-file", consumes = "text/plain")
 	Mono<Void> writeStringToFile(@RequestParam String path, @RequestBody Optional<String> content) throws Exception {
-		// System.out.println("/fs/write-string-to-file path = " + path);
 
 		// System.out.println("/fs/write-string-to-file content = " + content);
 
+		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+		
+		System.out.println("/fs/write-string-to-file fullPath = " + fullPath);
+
 		return Mono.fromCallable(() -> {
-			systemService.fsWriteStringToFile(URLDecoder.decode(path, StandardCharsets.UTF_8.toString()), content);
+			systemService.fsWriteStringToFile(fullPath, content);
 			return null;
 		});
 	}
@@ -160,7 +197,7 @@ public class SystemController {
 
 	@PostMapping(value = "/fs/dir")
 	public Mono<Void> dir(@RequestParam String path, @RequestBody Optional<DirCriteria> criteria) throws Exception {
-		//System.out.println("/fs/dir = " + path);
+		// System.out.println("/fs/dir = " + path);
 
 		systemService.fsDir(URLDecoder.decode(path, StandardCharsets.UTF_8.toString()), criteria);
 		return Mono.empty();
@@ -193,7 +230,7 @@ public class SystemController {
 	public Mono<ProcessOutputResult> spawn(@RequestBody List<String> args, @RequestParam Optional<String> cwdPath)
 			throws Exception {
 
-		//System.out.println("/child-process/spawn commands: " + args);
+		// System.out.println("/child-process/spawn commands: " + args);
 
 		return systemService.spawn(args, cwdPath);
 

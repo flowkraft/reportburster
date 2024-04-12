@@ -132,6 +132,8 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
                 *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings?.documentburster.settings.htmlemaileditcode">
               </dburst-button-html-preview>
 
+              <!--
+        
               <dburst-button-native-system-dialog value="{{
                   'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.LOAD-TEMPLATE' | translate }}" dialogType="file"
                 (pathsSelected)="onLoadHTMLTemplateClick($event)"
@@ -143,6 +145,7 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
                 saveDialog="true" (pathsSelected)="onSaveHTMLTemplateClick($event)"
                 *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings.documentburster.settings.htmlemaileditcode">
               </dburst-button-native-system-dialog>
+              -->
 
             </div>
 

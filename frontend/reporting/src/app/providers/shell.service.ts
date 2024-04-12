@@ -45,7 +45,7 @@ export class ShellService {
         command: 'rb_rust_updater',
         args: ['--job_file_path', jblFilePath, '2>&1', '>>', this.logFilePath],
         options: {
-          cwd: this.settingsService.PORTABLE_EXECUTABLE_DIR,
+          //cwd: this.settingsService.PORTABLE_EXECUTABLE_DIR,
           shell: true,
         },
       },
@@ -81,7 +81,10 @@ export class ShellService {
 
   async generateMergeFileInTempFolder(filePaths: string[]): Promise<string> {
     console.log(`generateMergeFileInTempFolder filePaths = ${filePaths}`);
-    const dir = `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/temp/`;
+    
+    //const dir = `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/temp/`;
+    const dir = `temp/`;
+
     const uniqueId =
       Date.now().toString(36) + Math.random().toString(36).substring(2);
     const mergeFilePath = `${dir}merge-files-${uniqueId}`;
@@ -99,8 +102,8 @@ export class ShellService {
       messageClass: 'java-started',
     });
 
-    const currentWorkingDirPath = `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/tools/test-email-server`;
-
+    //const currentWorkingDirPath = `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/tools/test-email-server`;
+constcurrentWorkingDirPath=`tools/test-email-server`;
     const batFile = command + 'TestEmailServer.bat';
 
     const batScript = await this.apiService.post(

@@ -5,7 +5,6 @@ import { TabsModule } from 'ngx-bootstrap/tabs';
 import { ExternalConnectionsComponent } from './ext-connections.component';
 import { AppRoutingModule } from '../../app-routing.module';
 import { LicenseModule } from '../../components/license/license.module';
-import { ButtonNativeSystemDialogModule } from '../../components/button-native-system-dialog/button-native-system-dialog.component.module';
 import { SharedModule } from '../../shared/shared.module';
 
 @NgModule({
@@ -14,7 +13,6 @@ import { SharedModule } from '../../shared/shared.module';
   imports: [
     TabsModule.forRoot(),
     AppRoutingModule,
-    ButtonNativeSystemDialogModule,
     SharedModule,
     LicenseModule,
   ],

@@ -37,12 +37,14 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
       </div>
 
       <div id="browseMailMergeClassicReportInputFile" class="col-xs-3" *ngIf="selectedMailMergeClassicReport">
+        <!--  
         <dburst-button-native-system-dialog
           value="{{
           'COMPONENTS.BUTTON-NATIVE-SYSTEM-DIALOG.SELECT-FILE' | translate }}"
           dialogType="file"
           (pathsSelected)="onMailMergeClassicReportFileSelected($event)"
-        ></dburst-button-native-system-dialog>
+        ></dburst-button-native-system-dialog>-->
+
       </div>
     </div>
 
@@ -66,12 +68,14 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
       </div>
 
       <div class="col-xs-4">
+        <!--  
         <dburst-button-native-system-dialog
           value="{{
           'AREAS.PROCESSING.TAB-BURST.VIEW-REPORTS' | translate }}"
           dialogType="file"
         >
         </dburst-button-native-system-dialog>
+        -->
       </div>
     </div>
 

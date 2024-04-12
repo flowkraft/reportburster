@@ -7,7 +7,7 @@ public class Constants {
 	public static final Object NULLL_OBJ = null;
 	
 	public static final String COMMAND_BURST = "burst";
-	public static final String PROCESSING_DIR_NAME = "heinhslqypajpus";
+	//public static final String PROCESSING_DIR_NAME = "heinhslqypajpus";
 	
 	public static final String DB_NAME = "DocumentBurster";
 	public static final String SERVER_DB_NAME = "DocumentBurster Server";

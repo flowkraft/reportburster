@@ -10,7 +10,7 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
-	<version>9.2.0</version>
+	<version>10.1.0</version>
 
 	<groupId>com.flowkraft</groupId>
 	<artifactId>rb-server</artifactId>
@@ -21,7 +21,7 @@
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
 			<artifactId>rb-common</artifactId>
-			<version>9.2.0</version>
+			<version>10.1.0</version>
 		</dependency>
 
 		<dependency>
@@ -54,7 +54,7 @@
 			<version>1.10.12</version>
 		</dependency>
 
-		<dependency>
+<dependency><groupId>org.apache.groovy</groupId><artifactId>groovy-all</artifactId><version>4.0.21</version><type>pom</type></dependency>		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 		</dependency>
@@ -155,6 +155,10 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-yaml</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-xml</artifactId>
 		</dependency>
 
 		<dependency>

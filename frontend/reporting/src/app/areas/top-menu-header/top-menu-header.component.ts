@@ -3,6 +3,7 @@ import { LicenseService } from '../../providers/license.service';
 import { AskForFeatureService } from '../../components/ask-for-feature/ask-for-feature.service';
 import { SamplesService } from '../../providers/samples.service';
 import { SettingsService } from '../../providers/settings.service';
+import Utilities from '../../helpers/utilities';
 
 @Component({
   selector: 'dburst-top-menu-header',
@@ -28,5 +29,9 @@ export class TopMenuHeaderComponent implements OnInit {
 
   onAskForFeatureModalShow() {
     this.askForFeatureService.showAskForFeature({});
+  }
+
+  isRunningInsideElectron(): boolean {
+    return Utilities.isRunningInsideElectron();
   }
 }

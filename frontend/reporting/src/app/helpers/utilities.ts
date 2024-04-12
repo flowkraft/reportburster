@@ -1,14 +1,24 @@
-import * as util from 'util';
+//import * as util from 'util';
 
-import * as fs from 'fs';
-import { WriteStream } from 'fs';
+//import * as fs from 'fs';
+//import { WriteStream } from 'fs';
 
-import * as os from 'os';
+//import * as os from 'os';
 
-import * as path from 'path';
+//import * as path from 'path';
+
+//import { Readable } from 'stream';
 
 import { convertableToString, OptionsV2, parseString } from 'xml2js';
-import { Readable } from 'stream';
+
+/*
+import {
+  XMLParser,
+  XMLValidator,
+  XMLBuilder,
+  j2xParser,
+} from 'fast-xml-parser';
+*/
 
 export default class Utilities {
   static TT_URL = 'https://www.reportburster.com/19863306942987104-tt.php';
@@ -38,17 +48,6 @@ export default class Utilities {
     return inputPath.replace(/\\/g, '/');
   }
 
-  static promisify(original: Function): Function {
-    return util.promisify(original);
-  }
-
-  //SYSTEM_TEMP_FOLDER_PATH = slash(path.resolve(require('temp-dir')))
-  static TMP_DIR_PATH = os.tmpdir;
-
-  static UPG_DB_FOLDER_PATH = Utilities.slash(
-    path.resolve(`${Utilities.TMP_DIR_PATH}/upg-db`),
-  );
-
   static basename(path: string, extension?: string): string {
     let base = path.split(/[\\/]/).pop() || '';
 
@@ -64,10 +63,6 @@ export default class Utilities {
     return path.substring(0, lastSlash);
   }
 
-  static resolve(inputPath: string): string {
-    return path.resolve(inputPath);
-  }
-
   static traverseJSONObjTree(
     obj: any,
     fn: (obj: any, k: string, v: any) => void,
@@ -80,6 +75,53 @@ export default class Utilities {
       }
     }
   }
+
+  /*
+  static parseStringPromise(
+    xml: convertableToString,
+    options?: OptionsV2,
+  ): Promise<any> {
+    return new Promise((resolve, reject) => {
+      if (options) {
+        parseString(xml, options, (err, results) => {
+          if (err) {
+            reject(err);
+          }
+
+          resolve(results);
+        });
+      } else {
+        parseString(xml, (err, results) => {
+          if (err) {
+            reject(err);
+          }
+
+          resolve(results);
+        });
+      }
+    });
+  }
+  */
+
+  static uniqueFilename(
+    dir: string,
+    fileprefix: string,
+    uniqstr?: string,
+  ): string {
+    // Use the provided unique string or generate a unique string from the current timestamp
+    const uniquePart = uniqstr || new Date().getTime().toString(36);
+
+    // Generate the filename by appending the unique part to the base name
+    const filename = `${dir}/${fileprefix ? fileprefix + '-' : ''}${uniquePart}`;
+
+    return filename;
+  }
+
+  static isRunningInsideElectron(): boolean {
+    return typeof window.require !== 'undefined';
+  }
+
+  //xml2js stuff
 
   static parseStringPromise(
     xml: convertableToString,
@@ -106,15 +148,176 @@ export default class Utilities {
     });
   }
 
+  static _buildObject(
+    obj: any,
+    doc: Document,
+    element: Element = doc.documentElement,
+  ) {
+    for (const key in obj) {
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        const nested = doc.createElement(key);
+        element.appendChild(nested);
+        Utilities._buildObject(obj[key], doc, nested);
+      } else {
+        const nested = doc.createElement(key);
+        nested.textContent = obj[key];
+        element.appendChild(nested);
+      }
+    }
+  }
+
+  static xml2jsXmlObjectToString(obj: any): string {
+    const doc = document.implementation.createDocument('', '', null);
+    const root = doc.createElement('root'); // Create a root element
+    doc.appendChild(root); // Append the root element to the document
+    Utilities._buildObject(obj, doc, root); // Pass the root element instead of the document
+    const serializer = new XMLSerializer();
+    return serializer.serializeToString(doc);
+  }
+
+  /*
+  // Convert XML to JSON
+  static xmlToJson(xml: Node): any {
+    let obj = {};
+    if (xml.nodeType === 1) {
+      // element
+      let element = xml as Element;
+      if (element.attributes.length > 0) {
+        obj['@attributes'] = {};
+        for (let j = 0; j < element.attributes.length; j++) {
+          let attribute = element.attributes.item(j);
+          obj['@attributes'][attribute.nodeName] = attribute.nodeValue;
+        }
+      }
+    } else if (xml.nodeType === 3) {
+      // text
+      obj = xml.nodeValue;
+    }
+
+    if (xml.hasChildNodes()) {
+      for (let i = 0; i < xml.childNodes.length; i++) {
+        let item = xml.childNodes.item(i);
+        let nodeName = item.nodeName;
+        if (typeof obj[nodeName] === 'undefined') {
+          obj[nodeName] = this.xmlToJson(item);
+        } else {
+          if (typeof obj[nodeName].push === 'undefined') {
+            let old = obj[nodeName];
+            obj[nodeName] = [];
+            obj[nodeName].push(old);
+          }
+          obj[nodeName].push(this.xmlToJson(item));
+        }
+      }
+    }
+    return obj;
+  }
+
+  // Trim all string values in an object
+  static trimValues(obj: any): any {
+    if (typeof obj !== 'object') return obj;
+    for (let key in obj) {
+      if (typeof obj[key] === 'string') {
+        obj[key] = obj[key].trim();
+      } else if (typeof obj[key] === 'object') {
+        obj[key] = this.trimValues(obj[key]);
+      }
+    }
+    return obj;
+  }
+
+  // Unwrap arrays with a single item
+  static unwrapArrays(obj: any): any {
+    if (typeof obj !== 'object') return obj;
+    for (let key in obj) {
+      if (Array.isArray(obj[key]) && obj[key].length === 1) {
+        obj[key] = obj[key][0];
+      } else if (typeof obj[key] === 'object') {
+        obj[key] = this.unwrapArrays(obj[key]);
+      }
+    }
+    return obj;
+  }
+
+  // Parse boolean values
+  static parseBooleanValues(obj: any): any {
+    for (let key in obj) {
+      if (typeof obj[key] === 'object') {
+        this.parseBooleanValues(obj[key]);
+      } else if (obj[key] === 'true' || obj[key] === 'false') {
+        obj[key] = obj[key] === 'true';
+      }
+    }
+    return obj;
+  }
+
+  static fastXmlParseStringPromise(
+    xml: string,
+    options?: ParseOptions,
+  ): Promise<any> {
+    return new Promise((resolve, reject) => {
+      try {
+        // Validate XML
+        const isValid = fastXmlParser.XMLValidator.validate(xml);
+        if (isValid !== true) {
+          reject(new Error('Error parsing XML'));
+        } else {
+          const parser = new fastXmlParser.XMLParser({
+            trimValues: options.trimValues,
+            parseTagValue: options.parseTagValue,
+            isArray: options.isArray,
+          });
+          const jsonObj = parser.parse(xml);
+          return jsonObj;
+         
+          }
+
+          // Resolve with the JSON object
+          resolve(json);
+        }
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  static fastXmlObjectToString(obj: any): string {
+    // Create a default configuration for the parser
+    const defaultOptions = {
+      format: true,
+      indentBy: '  ',
+      supressEmptyNode: false,
+    };
+
+    // Create a new parser with the default configuration
+    return new XMLBuilder().build(obj);
+  }
+  */
+  //end xml2js stuff
+
   static getDeeplyNestedLastProp(obj: any, props: Array<string>) {
     let tempObj = obj;
 
     for (const prop of props) tempObj = tempObj[prop];
 
-    return tempObj;
+    //return tempObj;
+    return String(tempObj);
   }
 
   static getExcerpt(content: string, link?: string, wordLimit = 45) {
+    if (Array.isArray(content)) {
+      content = content[0];
+    }
+
+    //console.log(`content = ${content}`);
+
+    //if (typeof content !== 'string') {
+    //  console.error(
+    //    `Expected content to be a string, but received ${typeof content}`,
+    //  );
+    //  console.error(content); // Log the content object
+    //}
+
     let filter = content.replace(/\s+/g, ' '); // You can add more filters here
     let wordsArr = filter.split(' ');
 
@@ -169,88 +372,8 @@ export default class Utilities {
     return folderPath.substring(0, folderPath.lastIndexOf(separator));
   }
 
-  static async download(
-    sourceUrl: string,
-    targetFile: string,
-    progressCallback?: (bytesDone: number, percent: number) => void,
-    length?: number,
-  ) {
-    const request = new Request(sourceUrl, {
-      headers: new Headers({ 'Content-Type': 'application/octet-stream' }),
-    });
-
-    const response = await fetch(request);
-    if (!response.ok) {
-      throw Error(
-        `Unable to download, server returned ${response.status} ${response.statusText}`,
-      );
-    }
-
-    const body = response.body;
-    if (body == null) {
-      throw Error('No response body');
-    }
-
-    const finalLength =
-      length || parseInt(response.headers.get('Content-Length' || '0'), 10);
-    const reader = body.getReader();
-    const writer = fs.createWriteStream(targetFile);
-
-    await this.streamWithProgress(
-      finalLength,
-      reader,
-      writer,
-      progressCallback,
-    );
-    writer.end();
-  }
-
   static sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  static async streamToString(stream: Readable) {
-    // lets have a ReadableStream as a stream variable
-    const chunks = [];
-
-    for await (const chunk of stream) {
-      chunks.push(Buffer.from(chunk));
-    }
-
-    return Buffer.concat(chunks).toString('utf-8');
-  }
-
-  static async streamWithProgress(
-    length: number,
-    reader: ReadableStreamReader<Uint8Array>,
-    writer: WriteStream,
-    progressCallback?: (bytesDone: number, percent: number) => void,
-  ) {
-    let bytesDone = 0;
-
-    while (true) {
-      // const result = await reader.read(new Uint8Array(length));
-      const result = await reader.read();
-      if (result.done) {
-        if (progressCallback != null) {
-          progressCallback(length, 100);
-        }
-        return;
-      }
-
-      const chunk = result.value;
-      if (chunk == null) {
-        throw Error('Empty chunk received during download');
-      } else {
-        writer.write(Buffer.from(chunk));
-        if (progressCallback != null) {
-          bytesDone += chunk.byteLength;
-          const percent =
-            length === 0 ? null : Math.floor((bytesDone / length) * 100);
-          progressCallback(bytesDone, percent);
-        }
-      }
-    }
   }
 
   static getRandomId(length: number) {
@@ -280,38 +403,6 @@ export default class Utilities {
       referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
       body: JSON.stringify(data), // body data type must match "Content-Type" header
     });
-  }
-
-  static async httpGet(url: string) {
-    //console.log(url);
-    return fetch(url, { mode: 'no-cors' });
-  }
-
-  static async httpHead(url: string) {
-    console.log(`httpHead: ${url}`);
-    try {
-      // Suppress console output
-      const originalConsoleError = console.error;
-      console.error = function () {};
-
-      const response = await fetch(url, { method: 'head' });
-
-      // Restore console output
-      console.error = originalConsoleError;
-
-      return response;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  static async urlExists(url: string) {
-    const response = await this.httpHead(url);
-    if (response) {
-      return response.ok;
-    } else {
-      return false;
-    }
   }
 
   static setCursor(htmlElement: HTMLElement, pos: number) {

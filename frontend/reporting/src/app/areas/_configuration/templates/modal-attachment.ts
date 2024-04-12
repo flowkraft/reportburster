@@ -27,11 +27,13 @@ export const modalAttachmentTemplate = `<p-dialog id="modalSelectAttachment"
       </div>
 
       <div class="col-xs-2">
+        <!--
         <dburst-button-native-system-dialog
           dialogType="file"
           (pathsSelected)="onSelectAttachmentFilePath($event)"
         >
         </dburst-button-native-system-dialog>
+        -->
       </div>
     </div>
   </div>

@@ -50,7 +50,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu-->
         'AREAS.HELP.LEFT-MENU.BLOG' | translate }}</span>
     </a>
   </li>
-  <li routerLinkActive="active">
+  <li routerLinkActive="active" *ngIf="isRunningInsideElectron()">
     <a id='leftMenuHelpInstallSetup' href="#" [routerLink]="['/help','installSetupMenuSelected']">
       <i class="fa fa-cogs"></i>
       <span>{{

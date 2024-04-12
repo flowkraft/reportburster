@@ -2,6 +2,8 @@ import { Component, Input } from '@angular/core';
 
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
 import { ConfirmService } from '../dialog-confirm/confirm.service';
+import { SettingsService } from '../../providers/settings.service';
+import { FsService } from '../../providers/fs.service';
 import { LogsServiceWebSocket } from '../../providers/ws-logs.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 

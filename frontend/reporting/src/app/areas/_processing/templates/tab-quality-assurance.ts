@@ -79,10 +79,11 @@ export const tabQualityAssuranceTemplate = `<ng-template #tabQualityAssuranceTem
       </div>
 
       <div class="col-xs-3">
-        <dburst-button-native-system-dialog style="display: none;" value="{{ 'AREAS.PROCESSING.TAB-BURST.VIEW-REPORTS' | translate }}"
+<!--  
+      <dburst-button-native-system-dialog style="display: none;" value="{{ 'AREAS.PROCESSING.TAB-BURST.VIEW-REPORTS' | translate }}"
           dialogType="file">
-        </dburst-button-native-system-dialog>
-      </div>
+        </dburst-button-native-system-dialog>-->
+            </div>
     </div>
 
     <hr />

@@ -23,8 +23,10 @@ export const tabGeneralSettingsTemplate = `<ng-template #tabGeneralSettingsTempl
       </div>
 
       <div class="col-xs-2">
+        <!--
         <dburst-button-native-system-dialog dialogType="folder" (pathsSelected)="onSelectOutputFolderPath($event)">
         </dburst-button-native-system-dialog>
+        -->
       </div>
 
       <div class="col-xs-2">
@@ -44,8 +46,10 @@ export const tabGeneralSettingsTemplate = `<ng-template #tabGeneralSettingsTempl
       </div>
 
       <div class="col-xs-2">
+        <!--
         <dburst-button-native-system-dialog dialogType="folder" (pathsSelected)="onSelectQuarantineFolderPath($event)">
         </dburst-button-native-system-dialog>
+        -->
       </div>
 
       <div class="col-xs-2">

@@ -183,6 +183,10 @@ export class LogsServiceWebSocket extends WebSocketEndpoint {
       this.logsSubjects.get(logFileName).complete();
       this.subscriptionsLogFileContent.get(logFileName).unsubscribe();
       this.logsSubjects.delete(logFileName);
+await this.apiService.put('/jobman/logs/tailer', {
+      fileName: logFileName,
+      command: 'stop',
+    });
     }
 
     if (this.logsSubjects.size == 0) {
@@ -192,10 +196,7 @@ export class LogsServiceWebSocket extends WebSocketEndpoint {
       }
     }
 
-    await this.apiService.put('/jobman/logs/tailer', {
-      fileName: logFileName,
-      command: 'stop',
-    });
+    
   }
 
   getLogs$(fileName: string) {

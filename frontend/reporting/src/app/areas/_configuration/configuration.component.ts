@@ -1145,13 +1145,14 @@ export class ConfigurationComponent implements OnInit {
       this.confirmService.askConfirmation({
         message: dialogQuestion,
         confirmAction: async () => {
-          const configurationTemplatePath = await this.fsService.resolveAsync(
-            this.settingsService.currentConfigurationTemplatePath,
-          );
           this.shellService.runBatFile([
             '-cec',
             '-c',
-            '"' + Utilities.slash(configurationTemplatePath) + '"',
+            '"' +
+              Utilities.slash(
+                this.settingsService.currentConfigurationTemplatePath,
+              ) +
+              '"',
           ]);
         },
       });

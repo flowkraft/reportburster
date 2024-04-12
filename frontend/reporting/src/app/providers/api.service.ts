@@ -17,6 +17,8 @@ export enum RequestMethod {
   providedIn: 'root',
 })
 export class ApiService {
+  private BACKEND_URL = '/api';
+
   private headers: Headers;
   private jwtToken: string;
 
@@ -63,11 +65,11 @@ export class ApiService {
     body: any = '',
     customHeaders?: Headers,
   ): Promise<any> {
-    const url = `${this.stateStore.configSys.sysInfo.setup.BACKEND_URL}${path}`;
-
+    
     if (!this.stateStore.configSys.sysInfo.setup.java.isJavaOk) return;
     //console.log(`apiService.request.path: ${JSON.stringify(path)}`);
 
+    const url = `${this.BACKEND_URL}${path}`;
     const headers = new Headers(customHeaders || this.headers);
     const options: RequestInit = {
       method,
@@ -110,7 +112,9 @@ export class ApiService {
     } else {
       let data = {};
       if (response.headers.get('Content-Length') === '0') {
-        console.log('No data returned from API');
+        console.log(
+          `No data returned from API call: ${url}, body: ${JSON.stringify(body)}`,
+        );
       } else {
         //console.log(`apiService.request.response: ${JSON.stringify(response)}`);
 
@@ -126,22 +130,11 @@ export class ApiService {
   }
 
   public get(path: string, args?: any, customHeaders?: Headers): Promise<any> {
-    //console.log(`GET path: ${path}`);
-    //if (args) console.log(`GET args: ${JSON.stringify(args)}`);
+     const params = args ? this.serialize(args).toString() : '';
+    const fullPath = params ? `${path}?${params}` : path;
 
-    const params = args ? this.serialize(args).toString() : '';
-    //if (args) console.log(`GET this.serialize(args).toString(): ${params}`);
-
-    //if (customHeaders)
-    //  console.log(`GET customHeaders: ${JSON.stringify(customHeaders)}`);
-
-    return this.request(
-      `${path}?${params}`,
-      RequestMethod.get,
-      undefined,
-      customHeaders,
-    );
-  }
+    return this.request(fullPath, RequestMethod.get, undefined, customHeaders);
+ }
 
   public post(path: string, body?: any, customHeaders?: Headers): Promise<any> {
     return this.request(path, RequestMethod.post, body, customHeaders);

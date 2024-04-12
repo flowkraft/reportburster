@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 
-import * as xml2js from 'xml2js';
-
 import { unserialize } from 'php-serialize';
+
+import * as xml2js from 'xml2js';
 
 import { Changelog, parser } from 'keep-a-changelog';
 
@@ -12,6 +12,7 @@ import Utilities from '../helpers/utilities';
 import { SettingsService } from './settings.service';
 import { ShellService } from './shell.service';
 import { FsService } from './fs.service';
+import { ApiService } from './api.service';
 
 @Injectable({
   providedIn: 'root',
@@ -31,6 +32,7 @@ export class LicenseService {
     protected settingsService: SettingsService,
     protected shellService: ShellService,
     protected fsService: FsService,
+    protected apiService: ApiService,
   ) {
     this.licenseFilePath = Utilities.slash(
       `${this.settingsService.CONFIGURATION_FOLDER_PATH}/_internal/license.xml`,
@@ -67,9 +69,7 @@ export class LicenseService {
 
     const content = await this.fsService.readAsync(this.licenseFilePath);
 
-    if (!content) return;
-
-    //console.log(`license.service.content = ${content}`);
+    //console.log(`license.service.content = ${JSON.stringify(content)}`);
 
     this.licenseDetails = await Utilities.parseStringPromise(content, {
       trim: true,
@@ -87,14 +87,16 @@ export class LicenseService {
       this.changeLogStr = this.licenseDetails.license.changelog;
     } // if it is a demo installation
     else {
-      const response = await this.getChangeLogForTheDemoInstallationToo();
-      const bodyAsJson = await response.json();
+      const changeLogResponseAsJson =
+        await this.getChangeLogForTheDemoInstallationToo();
 
-      //console.log(`response.json: ${JSON.stringify(bodyAsJson)}`);
+      //console.log(
+      //  `changeLogResponseAsJson = ${JSON.stringify(changeLogResponseAsJson)}`,
+      //);
 
-      this.latestVersion = bodyAsJson.new_version;
+      this.latestVersion = changeLogResponseAsJson.new_version;
 
-      const { changelog } = unserialize(bodyAsJson.sections, {
+      const { changelog } = unserialize(changeLogResponseAsJson.sections, {
         description: String,
         changelog: String,
       });
@@ -125,8 +127,8 @@ export class LicenseService {
   }
 
   getChangeLogForTheDemoInstallationToo(): Promise<any> {
-    return Utilities.httpGet(
-      `https://www.pdfburst.com/store?edd_action=get_version&item_name=${this.settingsService.product}`,
+    return this.apiService.get(
+      `/jobman/system/get-changelog?itemName=${encodeURIComponent(this.settingsService.product)}`,
     );
   }
 

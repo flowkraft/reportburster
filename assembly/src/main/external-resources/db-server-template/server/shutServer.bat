@@ -1,5 +1,3 @@
-set HOME=.
-
-echo Shutting down the DocumentBurster server.. 
-
-del %HOME%\temp\server.pid
+@echo off
+set SERVE_STATIC_FRONTEND=TRUE
+call tools/rbsj/shutRbsjServer.bat

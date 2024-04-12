@@ -30,7 +30,8 @@ import { tabComparisonTemplate } from './templates/tab-comparison';
 import { tabLogsTemplate } from './templates/tab-logs';
 import { tabLicenseTemplate } from './templates/tab-license';
 import { SettingsService } from '../../providers/settings.service';
-import { ElectronService } from '../../core/services/electron/electron.service';
+import Utilities from '../../helpers/utilities';
+//import { ElectronService } from '../../core/services/electron/electron.service';
 
 @Component({
   selector: 'dburst-help',
@@ -239,7 +240,7 @@ export class HelpComponent implements OnInit, AfterViewChecked {
     protected route: ActivatedRoute,
     protected changeDetectorRef: ChangeDetectorRef,
     protected settingsService: SettingsService,
-    protected electronService: ElectronService,
+    //protected electronService: ElectronService,
   ) {}
 
   async ngOnInit() {
@@ -272,6 +273,10 @@ export class HelpComponent implements OnInit, AfterViewChecked {
     this.visibleTabs = this.ALL_TABS.filter((item) => {
       return visibleTabsIds.includes(item.id);
     });
+  }
+
+  isRunningInsideElectron(): boolean {
+    return Utilities.isRunningInsideElectron();
   }
 
   refreshBlogRss() {

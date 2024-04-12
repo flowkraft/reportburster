@@ -1,12 +1,11 @@
 import { Observable, Subscriber } from 'rxjs';
 
 import { Stomp } from '@stomp/stompjs';
-import * as SockJS from 'sockjs-client';
 import Utilities from './utilities';
-import UtilitiesElectron from './utilities-electron';
+import SockJS from 'sockjs-client';
 
 export class WebSocketEndpoint {
-  BACKEND_URL = '';
+  BACKEND_URL = '/api';
 
   _options: SocketOptions;
 
@@ -133,8 +132,6 @@ export class WebSocketEndpoint {
   connect = async () => {
     const headers = {};
 
-    if (!this.BACKEND_URL)
-      this.BACKEND_URL = await UtilitiesElectron.getBackendUrl();
     let socketUrl = this.BACKEND_URL + this._options.socketUrl;
     if (this._options.getAccessToken())
       socketUrl += `?access_token=${this._options.getAccessToken()}`;

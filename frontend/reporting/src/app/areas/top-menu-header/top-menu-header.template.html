@@ -185,7 +185,7 @@
 
             <li class="divider"></li>
 
-            <li>
+            <li *ngIf="isRunningInsideElectron()">
               <a
                 id="topMenuHelpJava"
                 href="#"
@@ -195,7 +195,8 @@
               >
             </li>
 
-            <li class="divider"></li>
+            <li class="divider" *ngIf="isRunningInsideElectron()"></li>
+
             <li>
               <a
                 id="topMenuHelpLicense"
