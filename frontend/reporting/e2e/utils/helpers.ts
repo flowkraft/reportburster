@@ -7,8 +7,13 @@ import * as _ from 'lodash';
 
 import * as PATHS from './paths';
 import { Constants } from './constants';
-
-import { ElectronApplication, _electron as electron } from '@playwright/test';
+import {
+  Browser,
+  BrowserContext,
+  ElectronApplication,
+  _electron as electron,
+  chromium,
+} from '@playwright/test';
 
 const findProcess = require('find-process');
 const kill = require('tree-kill');
@@ -80,6 +85,32 @@ export class Helpers {
     await electronApp.context().tracing.stop({ path: 'e2e/tracing/trace.zip' });
     await electronApp.close();
   };
+
+  static async browserLaunch(): Promise<{
+    browser: Browser;
+    context: BrowserContext;
+  }> {
+    const browser = await chromium.launch();
+    const context = await browser.newContext();
+    //await context.tracing.start({
+    //  screenshots: true,
+    //  snapshots: true,
+    //});
+    const page = await context.newPage(); // Create a new page in the context
+    await page.goto('http://localhost:4201'); // Navigate to the URL
+    await page.waitForLoadState('domcontentloaded'); // Wait for the 'domcontentloaded' event
+
+    return { browser, context };
+  }
+
+  static async browserClose(
+    browser: Browser,
+    context: BrowserContext,
+  ): Promise<void> {
+    //await context.tracing.stop({ path: 'e2e/tracing/trace.zip' });
+    await context.close();
+    await browser.close();
+  }
 
   static restoreDocumentBursterCleanState = async (
     shouldDeactivateLicense: boolean,
