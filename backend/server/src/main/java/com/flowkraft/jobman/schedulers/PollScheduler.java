@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -33,67 +34,63 @@ public class PollScheduler {
 	// incomplete files which are not yet fully copied to the "poll" folder
 	private List<String> waitQueue = new LinkedList<String>();
 
-	@Scheduled(fixedRate = 500)
+	@Scheduled(fixedRate = 5000)
 	public void poll() throws Exception {
-
-		FileUtils.createParentDirectories(new File(AppPaths.PROCESSING_DIR_PATH + "/." + Constants.PROCESSING_DIR_NAME));
 
 		Collection<File> allFilesInPollFolder = FileUtils.listFiles(new File(AppPaths.POLL_DIR_PATH),
 				Utils.filesWhichCanBeProcessedFilter, null);
 
-		allFilesInPollFolder.forEach(polledFile -> {
+		for (File polledFile : allFilesInPollFolder) {
 
 			String polledFilePath = polledFile.getAbsolutePath();
 
-			// System.out.println("polledFilePath = " + polledFilePath);
+			String baseName = FilenameUtils.getBaseName(polledFilePath); // get filename without extension
+			String extension = FilenameUtils.getExtension(polledFilePath); // get file extension
 
-			String polledFileName = FilenameUtils.getName(polledFilePath);
+			String randomUUID = UUID.randomUUID().toString(); // generate random UUID
 
-			try {
+			// construct new filename with random UUID
+			String polledFileName = baseName + "-" + randomUUID + "." + extension;
 
-				Collection<File> processingFiles = FileUtils.listFiles(new File(AppPaths.PROCESSING_DIR_PATH),
-						Utils.filesWhichCanBeProcessedFilter, null);
+			Collection<File> processingFiles = FileUtils.listFiles(new File(AppPaths.POLL_RECEIVED_DIR_PATH),
+					Utils.filesWhichCanBeProcessedFilter, null);
 
-				jobsService.state.numberOfActiveJobs = processingFiles.size();
+			jobsService.state.numberOfActiveJobs = processingFiles.size();
 
-				if (jobsService.state.numberOfActiveJobs > 0)
-					return;
+			if (jobsService.state.numberOfActiveJobs > 0)
+				return;
 
-				if (!waitQueue.contains(polledFilePath)) {
-					waitQueue.add(polledFilePath);
-				} else {
+			if (!waitQueue.contains(polledFilePath)) {
+				waitQueue.add(polledFilePath);
+			} else {
 
-					String filePathToProcess = AppPaths.PROCESSING_DIR_PATH + "/" + polledFileName;
+				String filePathToProcess = AppPaths.POLL_RECEIVED_DIR_PATH + "/" + polledFileName;
 
-					jobsService.state.numberOfActiveJobs = 1;
+				jobsService.state.numberOfActiveJobs = 1;
 
-					File fileToProcess = new File(filePathToProcess);
+				File fileToProcess = new File(filePathToProcess);
 
-					FileUtils.moveFile(polledFile, fileToProcess);
-					shellService.runDocumentBursterBatScriptFile("-f \"" + filePathToProcess + "\"", file -> {
+				FileUtils.moveFile(polledFile, fileToProcess);
+				shellService.runDocumentBursterBatScriptFile("-f \"" + filePathToProcess + "\"", file -> {
 
-						List<FileInfo> progressFile = this.jobsService.fetchStats()
-								.filter(f -> f.fileName.endsWith(Constants.EXTENTION_PROGRESS_FILE)
-										&& f.fileContent.contains(filePathToProcess))
-								.collect(Collectors.toList());
+					List<FileInfo> progressFile = this.jobsService.fetchStats()
+							.filter(f -> f.fileName.endsWith(Constants.EXTENTION_PROGRESS_FILE)
+									&& f.fileContent.contains(filePathToProcess))
+							.collect(Collectors.toList());
 
-						// if there is a corresponding .progress file do not remove the file since it
-						// might be "Resumed" later
-						if (Objects.isNull(progressFile) || progressFile.size() == 0)
-							FileUtils.forceDelete(file);
+					// if there is a corresponding .progress file do not remove the file since it
+					// might be "Resumed" later
+					if (Objects.isNull(progressFile) || progressFile.size() == 0)
+						FileUtils.forceDelete(file);
 
-						waitQueue.remove(polledFilePath);
-						jobsService.state.numberOfActiveJobs = 0;
+					waitQueue.remove(polledFilePath);
+					jobsService.state.numberOfActiveJobs = 0;
 
-					}, fileToProcess);
+				}, fileToProcess);
 
-				}
-
-			} catch (Exception e) {
-				throw new RuntimeException(e);
 			}
 
-		});
+		}
 
 	}
 }

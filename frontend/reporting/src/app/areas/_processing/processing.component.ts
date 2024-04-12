@@ -382,14 +382,10 @@ export class ProcessingComponent implements OnInit {
 
   async onMailMergeClassicReportFileSelected(filePath: string) {
     this.processingService.procBurstInfo.mailMergeClassicReportInputFilePath =
-      Utilities.slash(await this.fsService.resolveAsync(filePath));
+      Utilities.slash(filePath);
 
     this.processingService.procBurstInfo.prefilledConfigurationFilePath =
-      Utilities.slash(
-        await this.fsService.resolveAsync(
-          this.selectedMailMergeClassicReport.filePath,
-        ),
-      );
+      Utilities.slash(this.selectedMailMergeClassicReport.filePath);
   }
 
   disableRunTest() {}
@@ -1110,28 +1106,26 @@ export class ProcessingComponent implements OnInit {
           this.router.navigate([
             '/processingSample',
             'burstMenuSelected',
-            Utilities.resolve(
-              Utilities.slash(
-                `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputDocumentShortPath}`,
-              ),
+             Utilities.slash(
+              //`${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputDocumentShortPath}`,
+              `${inputDocumentShortPath}`,
             ),
-            Utilities.resolve(
-              Utilities.slash(clickedSample.configurationFilePath),
-            ),
-          ]);
+            Utilities.slash(clickedSample.configurationFilePath),
+         ]);
         } else if (clickedSample.input.data.length > 1) {
           this.processingService.procBurstInfo.isSample = true;
 
           let diezSeparatedListOfFilePathsToMerge = '';
           const filesToMerge = clickedSample.input.data;
           filesToMerge.forEach((fileToMerge: string) => {
-            const filePath = Utilities.resolve(
-              Utilities.slash(
-                `${
-                  this.settingsService.PORTABLE_EXECUTABLE_DIR
-                }/${fileToMerge.replace('file:', '')}`,
-              ),
-            );
+               //const filePath = Utilities.slash(
+            //  `${
+            //    this.settingsService.PORTABLE_EXECUTABLE_DIR
+            //  }/${fileToMerge.replace('file:', '')}`,
+            //);
+            const filePath = Utilities.slash(
+              `${fileToMerge.replace('file:', '')}`,
+                   );
             if (diezSeparatedListOfFilePathsToMerge.length == 0) {
               diezSeparatedListOfFilePathsToMerge = filePath;
             } else {
@@ -1147,10 +1141,8 @@ export class ProcessingComponent implements OnInit {
             '/processingSample',
             'mergeBurstMenuSelected',
             diezSeparatedListOfFilePathsToMerge,
-            Utilities.resolve(
-              Utilities.slash(clickedSample.configurationFilePath),
-            ),
-          ]);
+                    Utilities.slash(clickedSample.configurationFilePath),
+		  ]);
         }
       },
     });

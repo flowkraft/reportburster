@@ -1,32 +1,33 @@
 @echo off
-
-REM Empty the ../../temp directory
-powershell -Command "Get-ChildItem -Path '../../temp/*' | Remove-Item -Recurse -Force"
-
-REM Empty the ../../logs/electron.log file
-powershell -Command "Set-Content -Path '../../logs/electron.log' -Value ''"
-
-REM Kill/stop any running existing java server
-powershell -Command "Get-WmiObject Win32_Process -Filter \"name = 'java.exe'\" | Where-Object { $_.CommandLine -like '*rb-server.jar*' } | ForEach-Object { Stop-Process -Id $_.ProcessId }"
-
-FOR /F "tokens=* USEBACKQ" %%F IN (`choco -v 2^>^&1`) DO (
-    SET choco_command_output=%%F
-)
-echo choco version: %choco_command_output%
-java -version
-
-set PORT=9090
-
 set SETTINGS_FILE=../../config/_internal/settings.xml
+set JAR_FILE=../../lib/server/rb-server.jar
+set FRONTEND_GENERATED_BY_NG=../../lib/frontend
+
+IF NOT DEFINED PORTABLE_EXECUTABLE_DIR_PATH set PORTABLE_EXECUTABLE_DIR_PATH=../..
+
+:: Find an available port
+for /L %%x in (9090, 1, 65535) do (
+    >nul 2>nul netstat /a /n | find "%%x" || (
+        set "PORT=%%x"
+        goto :found
+    )
+)
+echo No available port found
+exit /b 1
+:found
 
 :: Update settings.xml with the correct port
 powershell -Command "(gc '%SETTINGS_FILE%') -replace 'http://localhost:\d+', 'http://localhost:%PORT%' | Out-File -encoding ASCII '%SETTINGS_FILE%'"
 
-set JAR_FILE=../../lib/server/rb-server.jar
-
-IF NOT DEFINED PORTABLE_EXECUTABLE_DIR_PATH set PORTABLE_EXECUTABLE_DIR_PATH=../..
-
-:: Start the Java process
-java -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -jar %JAR_FILE% -serve
-
-:: pause
+:: Check if SERVE_STATIC_FRONTEND is set to TRUE
+if "%SERVE_STATIC_FRONTEND%"=="TRUE" (
+    :: Write the port number to a different file
+    echo %PORT% > "server-%PORT%.port"
+    :: Start the Java process with the port number as the unique identifier and serve static content
+    java -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT% -Dspring.resources.static-locations=file:%FRONTEND_GENERATED_BY_NG% -jar %JAR_FILE% -serve
+) else (
+    :: Write the port number to a file
+    echo %PORT% > "exe-%PORT%.port"
+    :: Start the Java process with the port number as the unique identifier
+    java -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT% -jar %JAR_FILE% -serve
+)

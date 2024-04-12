@@ -84,7 +84,9 @@ public class SystemService {
 
 	public List<String> unixCliFind(String path, FindCriteria criteria) throws Exception {
 
-		// System.out.println("path = " + path + ", criteria = " + criteria);
+		//System.out.println("PORTABLE_EXECUTABLE_DIR_PATH: " + AppPaths.PORTABLE_EXECUTABLE_DIR_PATH);
+
+		//System.out.println("path = " + path + ", criteria = " + criteria);
 		Stream<Path> stream;
 
 		if (criteria.recursive) {
@@ -113,10 +115,12 @@ public class SystemService {
 		}
 
 		List<String> list = stream.map(Path::toAbsolutePath).map(Path::normalize).map(Path::toString)
-				.map(p -> p.replace("\\", "/")).collect(Collectors.toList());
+				.map(p -> p.replace("\\", "/"))
+				.map(p -> p.replace(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, ""))
+				.collect(Collectors.toList());
 
-		// System.out.println("SystemService.unixCliFind before return");
-		// list.forEach(System.out::println);
+		//System.out.println("SystemService.unixCliFind before return");
+		//list.forEach(System.out::println);
 
 		return list;
 	}
@@ -137,7 +141,7 @@ public class SystemService {
 					WebSocketJobsExecutionStatsInfo tailMessageInfo = new WebSocketJobsExecutionStatsInfo("logs.tailer",
 							logsTailInfo.stream());
 
-					//System.out.println("fileName = " + fileName + ", tailer.line = " + line);
+					// System.out.println("fileName = " + fileName + ", tailer.line = " + line);
 					messagingTemplate.convertAndSend("/topic/tailer", tailMessageInfo);
 				}
 			});
@@ -357,8 +361,8 @@ public class SystemService {
 
 				if (c.empty && dirPath.toFile().list().length > 0) {
 					try (Stream<Path> paths = Files.walk(dirPath)) {
-						paths.filter(p -> !p.equals(dirPath))
-								.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+						paths.filter(p -> !p.equals(dirPath)).sorted(Comparator.reverseOrder()).map(Path::toFile)
+								.forEach(File::delete);
 					}
 				}
 

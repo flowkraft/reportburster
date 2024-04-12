@@ -105,6 +105,14 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.web.ts"
+                },
+                {
+                  "replace": "src/app/areas/electron-nodejs/electron-nodejs-module.ts",
+                  "with": "src/app/areas/electron-nodejs/electron-nodejs-module.empty-web.ts"
+                },
+                {
+                  "replace": "src/app/areas/electron-nodejs/electron.service.ts",
+                  "with": "src/app/areas/electron-nodejs/electron.service.empty-web.ts"
                 }
               ]
             },
@@ -121,6 +129,14 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.web.prod.ts"
+                },
+                {
+                  "replace": "src/app/areas/electron-nodejs/electron-nodejs-module.ts",
+                  "with": "src/app/areas/electron-nodejs/electron-nodejs-module.empty-web.ts"
+                },
+                {
+                  "replace": "src/app/areas/electron-nodejs/electron.service.ts",
+                  "with": "src/app/areas/electron-nodejs/electron.service.empty-web.ts"
                 }
               ]
             }

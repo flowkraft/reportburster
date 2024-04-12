@@ -34,7 +34,7 @@ public class DocumentBursterAssembler extends AbstractAssembler {
 				}).execute();
 
 		System.out.println(
-				"------------------------------------- DONE_01:DocumentBurster _generateDocumentBursterExe ... -------------------------------------");
+				"------------------------------------- DONE_01:DocumentBurster _generateDocumentBursterExe && generate angular production /dist ... -------------------------------------");
 
 	}
 
@@ -54,6 +54,15 @@ public class DocumentBursterAssembler extends AbstractAssembler {
 
 		System.out.println(
 				"------------------------------------- DONE_03:DocumentBurster _copyDocumentBursterExe... -------------------------------------");
+
+		// copy the angular's production generated /dist folder
+		FileUtils.forceMkdir(new File(packageDirPath + "/" + topFolderName + "/lib/frontend"));
+		FileUtils.copyDirectory(new File(Utils.getTopProjectFolderPath() + "/frontend/reporting/dist"),
+				new File(packageDirPath + "/" + topFolderName + "/lib/frontend"));
+
+		System.out.println(
+				"------------------------------------- DONE_02:DocumentBursterServer copy all the already 'verified' DocumentBurster files ... -------------------------------------");
+
 	}
 
 	@Override

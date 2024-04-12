@@ -79,7 +79,7 @@ export class SettingsService {
     },
   };
 
-  PORTABLE_EXECUTABLE_DIR: string;
+  //PORTABLE_EXECUTABLE_DIR: string;
   RUNNING_IN_E2E: boolean;
   SHOULD_SEND_STATS: boolean;
 
@@ -142,41 +142,57 @@ export class SettingsService {
       process = window.require('process');
     }
     if (process) {
-      this.PORTABLE_EXECUTABLE_DIR = process.env.PORTABLE_EXECUTABLE_DIR;
+      //this.PORTABLE_EXECUTABLE_DIR = process.env.PORTABLE_EXECUTABLE_DIR;
 
       this.RUNNING_IN_E2E = new Boolean(process.env.RUNNING_IN_E2E).valueOf();
       this.SHOULD_SEND_STATS = new Boolean(
         process.env.SHOULD_SEND_STATS,
       ).valueOf();
-    } else {
-      console.log(
-        `window.require('process') NOT AVAILABLE ==> PORTABLE_EXECUTABLE_DIR could not be read (why Virgil, in a Web App, are you using window.require('process')?! instead of using the Java Server for this stuff!!!!)`,
-      );
-    }
+    } //else {
+    //console.log(
+    //  `window.require('process') NOT AVAILABLE ==> PORTABLE_EXECUTABLE_DIR could not be read (why Virgil, in a Web App, are you using window.require('process')?! instead of using the Java Server for this stuff!!!!)`,
+    //);
+    //}
 
-    this.LOGS_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.logs}`;
-    this.QUARANTINE_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.quarantine}`;
+    //this.LOGS_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.logs}`;
+    //this.QUARANTINE_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.quarantine}`;
+
+    this.LOGS_FOLDER_PATH = `${APP_CONFIG.folders.logs}`;
+    this.QUARANTINE_FOLDER_PATH = `${APP_CONFIG.folders.quarantine}`;
 
     //console.log(`PORTABLE_EXECUTABLE_DIR = ${this.PORTABLE_EXECUTABLE_DIR}`);
 
     //console.log(`LOGS_FOLDER_PATH = ${this.LOGS_FOLDER_PATH}`);
 
-    this.JOBS_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.temp}`;
+    //this.JOBS_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.temp}`;
+    this.JOBS_FOLDER_PATH = `${APP_CONFIG.folders.temp}`;
 
-    this.CONFIGURATION_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.config}`;
+    //this.CONFIGURATION_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.config}`;
+
+    this.CONFIGURATION_FOLDER_PATH = `${APP_CONFIG.folders.config}`;
     this.INTERNAL_SETTINGS_FILE_PATH = `${this.CONFIGURATION_FOLDER_PATH}/_internal/settings.xml`;
 
     this.CONFIGURATION_DEFAULTS_FOLDER_PATH = `${this.CONFIGURATION_FOLDER_PATH}/_defaults`;
 
-    this.CONFIGURATION_BURST_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.config}/burst`;
+    //this.CONFIGURATION_BURST_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.config}/burst`;
 
-    this.CONFIGURATION_REPORTS_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.config}/reports`;
+    //this.CONFIGURATION_REPORTS_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.config}/reports`;
 
-    this.CONFIGURATION_SAMPLES_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.config}/samples`;
+    //this.CONFIGURATION_SAMPLES_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.config}/samples`;
 
-    this.CONFIGURATION_CONNECTIONS_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.config}/connections`;
+    //this.CONFIGURATION_CONNECTIONS_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/${APP_CONFIG.folders.config}/connections`;
 
-    this.CONFIGURATION_TEMPLATES_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/templates`;
+    //this.CONFIGURATION_TEMPLATES_FOLDER_PATH = `${this.PORTABLE_EXECUTABLE_DIR}/templates`;
+
+    this.CONFIGURATION_BURST_FOLDER_PATH = `${APP_CONFIG.folders.config}/burst`;
+
+    this.CONFIGURATION_REPORTS_FOLDER_PATH = `${APP_CONFIG.folders.config}/reports`;
+
+    this.CONFIGURATION_SAMPLES_FOLDER_PATH = `${APP_CONFIG.folders.config}/samples`;
+
+    this.CONFIGURATION_CONNECTIONS_FOLDER_PATH = `${APP_CONFIG.folders.config}/connections`;
+
+    this.CONFIGURATION_TEMPLATES_FOLDER_PATH = `templates`;
   }
 
   getDefaultsConfigurationValuesFilePath(): string {
@@ -192,12 +208,9 @@ export class SettingsService {
 
     this.isWindows = systemInfo.osName.startsWith('Windows');
 
-    const startServerScripts = await this.unixCliService.findAsync(
-      this.PORTABLE_EXECUTABLE_DIR,
-      {
-        matching: ['startServer.*'],
-      },
-    );
+   const startServerScripts = await this.unixCliService.findAsync('.', {
+      matching: ['startServer.*'],
+    });
 
     if (startServerScripts && startServerScripts.length > 0) {
       this.isServerVersion = true;
@@ -631,13 +644,15 @@ export class SettingsService {
       if (filePath.includes('samples/reports')) {
         tplType = 'template-report-sample';
         relativeFilePath = filePath.replace(
-          `${this.PORTABLE_EXECUTABLE_DIR}/templates/samples/reports/`,
+          //`${this.PORTABLE_EXECUTABLE_DIR}/templates/samples/reports/`,
+          `templates/samples/reports/`,
           '',
         );
       } else {
         tplType = 'template-report';
         relativeFilePath = filePath.replace(
-          `${this.PORTABLE_EXECUTABLE_DIR}/templates/reports/`,
+          //`${this.PORTABLE_EXECUTABLE_DIR}/templates/reports/`,
+          `templates/reports/`,
           '',
         );
       }

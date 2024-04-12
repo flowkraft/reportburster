@@ -149,17 +149,5 @@ export class FsService {
     );
   }
 
-  async resolveAsync(path: string): Promise<string> {
-    console.log(`path = ${path}`);
-    return this.apiService.get(
-      '/jobman/system/fs/resolve',
-      {
-        path: encodeURIComponent(Utilities.slash(path)),
-      },
-      new Headers({
-        Accept: 'text/plain',
-        'Content-Type': 'application/json',
-      }),
-    );
-  }
+  
 }

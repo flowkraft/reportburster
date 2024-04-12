@@ -17,9 +17,11 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
                   <th class="col-xs-3">
                     {{ 'AREAS.PROCESSING.TAB-MERGE-BURST.NAME' | translate }}
                   </th>
+                  <!--
                   <th class="col-xs-9">
                     {{ 'AREAS.PROCESSING.TAB-MERGE-BURST.PATH' | translate }}
                   </th>
+                  -->
                 </tr>
               </thead>
               <tbody>
@@ -30,7 +32,7 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
                   (click)="onFileSelected(file)"
                 >
                   <td>{{file.name}}</td>
-                  <td>{{file.path}}</td>
+                  <!--<td>{{file.path}}</td>-->
                 </tr>
               </tbody>
             </table>
@@ -170,12 +172,15 @@ export const tabMergeBurstTemplate = `<ng-template #tabMergeBurstTemplate>
           </div>
 
           <div class="col-xs-3" style="margin-left: -20px">
+          <!--
             <dburst-button-native-system-dialog style="display: none;"
               value="{{
               'AREAS.PROCESSING.TAB-BURST.VIEW-REPORTS' | translate }}"
               dialogType="file"
             >
             </dburst-button-native-system-dialog>
+            -->
+
           </div>
         </div>
 

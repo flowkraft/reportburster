@@ -16,9 +16,12 @@ export const tabSupportTemplate = `<ng-template #tabSupportTemplate>
     <br><span [innerHTML]="'AREAS.HELP.TAB-SUPPORT.INNER-HTML.SEND-LOG-FILES-LONG' | translate"></span>
     <br>
     <br>
+    <!--
+        
     <dburst-button-native-system-dialog value="{{
       'COMPONENTS.LOG-FILES-VIEWER-ALL-TOGETHER.VIEW-LOG-FILES' | translate }}" dialogType="file">
     </dburst-button-native-system-dialog>
+    -->
     <br>
     <h3>{{'AREAS.HELP.TAB-SUPPORT.HOW-IT-WORKS' | translate }}</h3>
     <br>

@@ -20,16 +20,15 @@ public class AppPaths {
 	public static String UPLOADS_DIR_PATH = StringUtils.EMPTY;
 	public static String JOBS_DIR_PATH = StringUtils.EMPTY;
 	public static String POLL_DIR_PATH = StringUtils.EMPTY;
-	public static String PROCESSING_DIR_PATH = StringUtils.EMPTY;
+	public static String POLL_RECEIVED_DIR_PATH = StringUtils.EMPTY;
+	
+	//public static String PROCESSING_DIR_PATH = StringUtils.EMPTY;
 	// end jobman only
 
 	static {
 
 		PORTABLE_EXECUTABLE_DIR_PATH = toAbsolutePath(
-				Utils.getJvmArgumentValue("-D" + Constants.PORTABLE_EXECUTABLE_DIR + "="));
-
-		// System.out.println("PORTABLE_EXECUTABLE_DIR_PATH: " +
-		// PORTABLE_EXECUTABLE_DIR_PATH);
+				Utils.getJvmArgumentValue("-D" + Constants.PORTABLE_EXECUTABLE_DIR + "=")).replace("\\", "/");
 
 		if (StringUtils.isNotBlank(PORTABLE_EXECUTABLE_DIR_PATH)) {
 
@@ -42,7 +41,8 @@ public class AppPaths {
 			UPLOADS_DIR_PATH = PORTABLE_EXECUTABLE_DIR_PATH + "/uploads";
 			JOBS_DIR_PATH = PORTABLE_EXECUTABLE_DIR_PATH + "/temp";
 			POLL_DIR_PATH = PORTABLE_EXECUTABLE_DIR_PATH + "/poll";
-			PROCESSING_DIR_PATH = POLL_DIR_PATH + "/" + Constants.PROCESSING_DIR_NAME;
+			POLL_RECEIVED_DIR_PATH = PORTABLE_EXECUTABLE_DIR_PATH + "/poll/received";
+			//PROCESSING_DIR_PATH = POLL_DIR_PATH + "/" + Constants.PROCESSING_DIR_NAME;
 		}
 	}
 

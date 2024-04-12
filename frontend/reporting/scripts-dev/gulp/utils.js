@@ -21,12 +21,20 @@ exports.beepSound = () => {
   process.stdout.write("\u0007");
 };
 
-gulp.task("utils:start-server-and-ui", () => {
-  _startServerAndDoX("custom:start");
+gulp.task("utils:start-server-and-ui-both", () => {
+  _startServerAndDoX("custom:start-ui-both");
 });
 
-gulp.task("utils:start-server-and-e2e", () => {
-  _startServerAndDoX("custom:e2e");
+gulp.task("utils:start-server-and-ui-web", () => {
+  _startServerAndDoX("custom:start-ui-web");
+});
+
+gulp.task("utils:start-server-and-ui-electron", () => {
+  _startServerAndDoX("custom:start-ui-electron");
+});
+
+gulp.task("utils:start-server-and-e2e-electron", () => {
+  _startServerAndDoX("custom:e2e-electron");
 });
 
 gulp.task("utils:start-javano-chocoyes-and-ui", () => {

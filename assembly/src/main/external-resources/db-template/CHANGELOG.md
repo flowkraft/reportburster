@@ -2,12 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## 9.2.0 - 2024-04-08
+## 10.1.0 - 2024-04-22
 
 ### Added
 
-- New java server which implements the older NodeJS/Electron functionality
-  (foundation for the upcoming DocumentBurster/DocumentBurster Server with common UI/functionalities)
+- New java server which implements the previous NodeJS/Electron functionality
+- New ReportBurster Server which has the same UI as ReportBurster.exe
 
 ## 9.1.7 - 2024-02-19
 

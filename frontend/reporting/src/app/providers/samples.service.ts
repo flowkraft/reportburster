@@ -73,7 +73,8 @@ export class SamplesService {
           "output/Payslips.pdf/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      //configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      configurationFilePath: `config/samples/split-only/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'employee',
@@ -115,7 +116,8 @@ export class SamplesService {
       },
       outputHtmlHardcoded:
         '<i class="fa fa-file-excel-o"></i> clyde.grew@northridgehealth.org.xls employee payslip<br><i class="fa fa-file-excel-o"></i> kyle.butford@northridgehealth.org.xls employee payslip<br><i class="fa fa-file-excel-o"></i> alfreda.waldback@northridgehealth.org.xls employee payslip',
-      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      //configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      configurationFilePath: `config/samples/split-only/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'employee',
@@ -149,7 +151,8 @@ export class SamplesService {
       },
       outputHtmlHardcoded:
         '<i class="fa fa-file-excel-o"></i> United States of America.xls<br><i class="fa fa-file-excel-o"></i> Australia.xls<br><i class="fa fa-file-excel-o"></i> Canada.xls<br><i class="fa fa-file-excel-o"></i> United Kingdom.xls<br><i class="fa fa-file-excel-o"></i> Germany.xls<br>etc... (separate file containing customer list for each country)',
-      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      //configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      configurationFilePath: `config/samples/split-only/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'customer',
@@ -190,7 +193,8 @@ export class SamplesService {
           "output/Payslips.pdf/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-two-times-split-only/settings.xml`,
+      //configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-two-times-split-only/settings.xml`,
+      configurationFilePath: `config/samples/split-two-times-split-only/settings.xml`,
       configurationFileName: 'split-two-times-split-only',
       notes: ``,
       recipientType: 'customer',
@@ -239,7 +243,8 @@ export class SamplesService {
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      //configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/split-only/settings.xml`,
+      configurationFilePath: `config/samples/split-only/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'customer',
@@ -278,7 +283,8 @@ export class SamplesService {
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/monthly-payslips-generate-docx/settings.xml`,
+      //configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/monthly-payslips-generate-docx/settings.xml`,
+      configurationFilePath: `config/samples/monthly-payslips-generate-docx/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'employee',
@@ -315,7 +321,8 @@ export class SamplesService {
       },
       outputHtmlHardcoded:
         '<i class="fa fa-envelope-o"></i> letter to student clyde.grew@northridgeschool.edu<br><i class="fa fa-envelope-o"></i> letter to student kyle.butford@northridgeschool.edu<br><i class="fa fa-envelope-o"></i> letter to student alfreda.waldback@northridgeschool.edu',
-      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/mail-merge-emails/settings.xml`,
+      //configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/mail-merge-emails/settings.xml`,
+      configurationFilePath: `config/samples/mail-merge-emails/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'student',
@@ -351,7 +358,8 @@ export class SamplesService {
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/newsletter-1/settings.xml`,
+      //configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/newsletter-1/settings.xml`,
+      configurationFilePath: `config/samples/newsletter-1/settings.xml`,
       configurationFileName: 'split-only',
       notes: ``,
       recipientType: 'student',
@@ -385,12 +393,14 @@ export class SamplesService {
 
     let inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${inputLabel}`;
     if (fullDetails)
-      inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}`;
+      //inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}`;
+      inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${inputLabel}`;
 
     if (inputUrl) {
       inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank">${inputLabel}</a>`;
       if (fullDetails)
-        inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank">${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}</a>`;
+        //inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank">${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}</a>`;
+        inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank">${inputLabel}</a>`;
     }
 
     for (let index = 1; index < inputs.length; index++) {
@@ -398,7 +408,8 @@ export class SamplesService {
       //inputLabel = inputs[index];
       let currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${inputLabel}`;
       if (fullDetails)
-        currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}`;
+        //currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}`;
+        currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${inputLabel}`;
 
       //console.log(`inputsUrl = ${JSON.stringify(inputsUrl)}`);
 
@@ -406,7 +417,8 @@ export class SamplesService {
         inputUrl = inputsUrl[index].replace('file:', '');
         currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank">${inputLabel}</a>`;
         if (fullDetails)
-          currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank>${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}</a>`;
+          //currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank>${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}</a>`;
+          currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank>${inputLabel}</a>`;
       }
 
       inputHtml = `${inputHtml}<br>${currentHtml}`;
@@ -433,7 +445,8 @@ export class SamplesService {
       if (inputs.length == 1) {
         const inputFileName = Utilities.basename(inputs[0]);
 
-        outputHtml = `<strong>Folder</strong><br>${this.settingsService.PORTABLE_EXECUTABLE_DIR}/output/${inputFileName}/\${now?format["yyyy.MM.dd_HH.mm.ss.SSS"]}<br>${outputHtml}`;
+        //outputHtml = `<strong>Folder</strong><br>${this.settingsService.PORTABLE_EXECUTABLE_DIR}/output/${inputFileName}/\${now?format["yyyy.MM.dd_HH.mm.ss.SSS"]}<br>${outputHtml}`;
+        outputHtml = `<strong>Folder</strong><br>output/${inputFileName}/\${now?format["yyyy.MM.dd_HH.mm.ss.SSS"]}<br>${outputHtml}`;
       }
     } else {
       if (sample.capReportDistribution)

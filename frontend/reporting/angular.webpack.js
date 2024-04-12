@@ -1,5 +1,7 @@
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
 const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
+const BundleAnalyzerPlugin =
+  require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 
 /**
  * Custom angular webpack configuration
@@ -26,33 +28,41 @@ module.exports = (config, options) => {
 
   config.plugins = [
     ...config.plugins,
+    //new webpack.DefinePlugin({
+    //  process: "process/browser",
+    //}),
     new NodePolyfillPlugin({
       excludeAliases: ["console"],
     }),
   ];
 
   //my own stuff
-  config.resolve = {
-    ...config.resolve,
-    fallback: {
-      //path: require.resolve("path-browserify"),
-      //os: false, //require.resolve("os-browserify/browser"),
-      fs: require.resolve("browserify-fs"),
-      //zlib: false,
-      //crypto: false,
-      "original-fs": false,
-      child_process: false,
-      //module: false,
-      process: false,
-      net: false,
-      tls: false,
-    },
-  };
+  //add BundleAnalyzerPlugin for non-production builds
+  if (!options.optimization) {
+    config.plugins.push(new BundleAnalyzerPlugin());
+  }
 
-  config.externals = {
-    ...config.externals,
-    electron: 'require("electron")',
-  };
+  if (process.env.TARGET === "electron") {
+    config.target = "electron-renderer";
+  } else {
+    config.target = "web";
+
+    config.resolve = {
+      ...config.resolve,
+      fallback: { fs: false, child_process: false },
+    };
+  }
+
+  console.log("config.target:", config.target);
+
+  //config.externals = {
+  //  ...config.externals,
+  //};
+
+  if (config.target === "electron-renderer") {
+    config.externals.electron = 'require("electron")';
+    console.log("Added electron to externals");
+  }
   //end my own stuff
 
   return config;

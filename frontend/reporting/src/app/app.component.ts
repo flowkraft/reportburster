@@ -1,7 +1,7 @@
 import { AfterViewInit, Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { setTheme } from 'ngx-bootstrap/utils';
-import { ElectronService } from './core/services';
+import { ElectronService } from './areas/electron-nodejs/electron.service';
 
 declare var $: any;
 

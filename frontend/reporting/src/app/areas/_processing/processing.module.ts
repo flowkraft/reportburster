@@ -4,7 +4,6 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { ProcessingComponent } from './processing.component';
 import { AppRoutingModule } from '../../app-routing.module';
 
-import { ButtonNativeSystemDialogModule } from '../../components/button-native-system-dialog/button-native-system-dialog.component.module';
 import { LicenseModule } from '../../components/license/license.module';
 import { SharedModule } from '../../shared/shared.module';
 import { TabsModule } from 'ngx-bootstrap/tabs';
@@ -19,7 +18,6 @@ import { LogFilesViewerSeparateTabsModule } from '../../components/log-files-vie
     AppRoutingModule,
     SharedModule,
     LogFilesViewerSeparateTabsModule,
-    ButtonNativeSystemDialogModule,
     LicenseModule,
   ],
 })

@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 
-import { ButtonNativeSystemDialogModule } from '../../components/button-native-system-dialog/button-native-system-dialog.component.module';
 
 import { LicenseModule } from '../../components/license/license.module';
 
@@ -20,7 +19,6 @@ import { NgSelectModule } from '@ng-select/ng-select';
     NgSelectModule,
     AppRoutingModule,
     SharedModule,
-    ButtonNativeSystemDialogModule,
     LicenseModule,
   ],
 })

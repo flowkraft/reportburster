@@ -46,8 +46,8 @@ public class Utils {
 
 		// System.out.println(lowerCaseFileName);
 
-		if (lowerCaseFileName.contains(Constants.PROCESSING_DIR_NAME))
-			return false;
+		//if (lowerCaseFileName.contains(Constants.PROCESSING_DIR_NAME))
+		//	return false;
 
 		return true;
 	});

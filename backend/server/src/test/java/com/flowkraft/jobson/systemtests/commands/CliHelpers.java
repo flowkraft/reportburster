@@ -63,10 +63,10 @@ public final class CliHelpers {
 		final int exitCode = process.waitFor();
 
 		//System.out.println(String.format("Process exited with exit code of %s", exitCode));
-		//System.out.println("Stdout:");
-		//System.out.print(new String(stdout));
-		//System.out.println("Stderr:");
-		//System.out.print(new String(stderr));
+		System.out.println("Stdout:");
+		System.out.print(new String(stdout));
+		System.out.println("Stderr:");
+		System.out.print(new String(stderr));
 
 		return new CliOutputs(stdout, stderr, exitCode);
 

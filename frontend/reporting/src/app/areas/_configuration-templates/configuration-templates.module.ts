@@ -5,7 +5,6 @@ import { TabsModule } from 'ngx-bootstrap/tabs';
 import { ConfigurationTemplatesComponent } from './configuration-templates.component';
 import { AppRoutingModule } from '../../app-routing.module';
 import { LicenseModule } from '../../components/license/license.module';
-import { ButtonNativeSystemDialogModule } from '../../components/button-native-system-dialog/button-native-system-dialog.component.module';
 import { SharedModule } from '../../shared/shared.module';
 import { EditorModule } from 'primeng/editor';
 
@@ -15,7 +14,6 @@ import { EditorModule } from 'primeng/editor';
   imports: [
     TabsModule.forRoot(),
     AppRoutingModule,
-    ButtonNativeSystemDialogModule,
     SharedModule,
     LicenseModule,
     EditorModule,

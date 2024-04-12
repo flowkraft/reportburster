@@ -46,12 +46,14 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
       </div>
 
       <div class="col-xs-3" style="margin-left: -20px">
+        <!--
         <dburst-button-native-system-dialog style="display: none;"
           value="{{
           'AREAS.PROCESSING.TAB-BURST.VIEW-REPORTS' | translate }}"
           dialogType="file"
         >
         </dburst-button-native-system-dialog>
+          -->
       </div>
     </div>
 

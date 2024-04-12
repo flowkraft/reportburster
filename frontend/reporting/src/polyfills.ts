@@ -52,6 +52,18 @@ import 'zone.js'; // Included with Angular CLI.
  */
 //required by Bootstrap3
 (window as any).$ = (window as any).jQuery = require('jquery');
-//import * as $ from 'jquery';
+window.global = window;
+
+// Define process.env.NODE_ENV for the browser environment
+(window as any).process = {
+  env: { NODE_ENV: 'production' },
+};
+
+// Define browser for the browser environment
+(window as any).browser = {};
+
+//console.log(window.process);
+
+//import * as $ from 'jqueNory';
 //declare var $: any;
-global.process = require('process');
+//global.process = require('process');

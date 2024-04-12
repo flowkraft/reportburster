@@ -42,9 +42,7 @@ export class AskForFeatureDialogComponent implements OnInit {
         this.settingsService.JOBS_FOLDER_PATH
       }/${Utilities.getRandomFileName('xml')}`;
 
-      xmlAskForFeatureFilePath = Utilities.slash(
-        await this.fsService.resolveAsync(xmlAskForFeatureFilePath),
-      );
+      xmlAskForFeatureFilePath = Utilities.slash(xmlAskForFeatureFilePath);
 
       await this.settingsService.saveSettingsFileAsync(
         xmlAskForFeatureFilePath,

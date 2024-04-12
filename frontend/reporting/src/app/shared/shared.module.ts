@@ -8,7 +8,6 @@ import { FormsModule } from '@angular/forms';
 import { ShellService } from '../providers/shell.service';
 import { ToastrMessagesService } from '../providers/toastr-messages.service';
 import { TabsModule } from 'ngx-bootstrap/tabs';
-import { ElectronService } from '../core/services';
 import { ConfirmService } from '../components/dialog-confirm/confirm.service';
 import { ModalModule } from 'ngx-bootstrap/modal';
 import { DialogModule } from 'primeng/dialog';
@@ -64,7 +63,6 @@ import { ApiService } from '../providers/api.service';
   ],
   providers: [
     StateStoreService,
-    ElectronService,
     SettingsService,
     SettingsService,
     FsService,
