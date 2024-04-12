@@ -3,8 +3,7 @@ import * as jetpack from 'fs-jetpack';
 import helpers from './updater.helpers';
 
 import * as PATHS from '../utils/paths';
-
-import { Updater } from '../../src/app/areas/install-setup-upgrade/updater';
+import { Updater } from '../../src/app/areas/electron-nodejs/updater';
 
 describe("updater: 'update' from v8.4 (LEIDOS)", function () {
   beforeAll(() => {
@@ -17,19 +16,19 @@ describe("updater: 'update' from v8.4 (LEIDOS)", function () {
     await jetpack.dirAsync(PATHS.EXECUTABLE_DIR_PATH, { empty: true });
 
     return jetpack.dirAsync(
-      `${helpers.updateDestinationDirectoryPath}/config/burst`
+      `${helpers.updateDestinationDirectoryPath}/config/burst`,
     );
   });
 
   it('migrate-99-coi-cert-email3-test-leidos-8.4', async function () {
     await jetpack.copyAsync(
       `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
-      `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
+      `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`,
     );
 
     let updater = new Updater(helpers.updateDestinationDirectoryPath);
     await updater.migrateSettingsFile(
-      `${helpers.filesToMigrateDirectoryPath}/config-leidos/99-coi-cert-email3.xml`
+      `${helpers.filesToMigrateDirectoryPath}/config-leidos/99-coi-cert-email3.xml`,
     );
 
     let exceptFor = new Map();
@@ -45,12 +44,12 @@ describe("updater: 'update' from v8.4 (LEIDOS)", function () {
     exceptFor.set('documentburster.settings.emailserver.userpassword', '');
     exceptFor.set(
       'documentburster.settings.emailserver.fromaddress',
-      'Leidos-Ethics-and-Compliance@leidos.com'
+      'Leidos-Ethics-and-Compliance@leidos.com',
     );
 
     exceptFor.set(
       'documentburster.settings.emailserver.name',
-      'Leidos Ethics and Compliance'
+      'Leidos Ethics and Compliance',
     );
 
     exceptFor.set('documentburster.settings.htmlemaileditcode', 'true');
@@ -60,12 +59,12 @@ describe("updater: 'update' from v8.4 (LEIDOS)", function () {
 
     exceptFor.set(
       'documentburster.settings.emailsettings.subject',
-      'Requirement Outstanding: Conflicts of Interest Certification Status Report'
+      'Requirement Outstanding: Conflicts of Interest Certification Status Report',
     );
 
     exceptFor.set(
       'documentburster.settings.emailsettings.html',
-      '<img src="images/bla.jpg">'
+      '<img src="images/bla.jpg">',
     );
 
     /*
@@ -127,7 +126,7 @@ describe("updater: 'update' from v8.4 (LEIDOS)", function () {
     await helpers._expectEqualConfigurationValuesExceptFor(
       `${helpers.updateDestinationDirectoryPath}/config/burst/99-coi-cert-email3.xml`,
       updater.defaultSettings,
-      exceptFor
+      exceptFor,
     );
   });
 });

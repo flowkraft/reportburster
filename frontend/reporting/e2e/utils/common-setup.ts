@@ -1,6 +1,11 @@
 import { exec } from 'child_process';
-import { ElectronApplication, Page } from 'playwright';
-import { test as base } from '@playwright/test';
+import {
+  Browser,
+  BrowserContext,
+  ElectronApplication,
+  Page,
+  test as base,
+} from '@playwright/test';
 
 import { Helpers } from './helpers';
 import { FluentTester } from '../helpers/fluent-tester';
@@ -16,83 +21,92 @@ process.on('unhandledRejection', (reason, p) => {
   throw reason;
 });
 
-export const electronBeforeAfterAllTest = base.extend<
-  {
-    beforeAfterEach: Page;
-  },
-  {
-    beforeAfterAll: ElectronApplication;
-  }
->({
-  beforeAfterAll: [
-    async ({}, run) => {
-      const electronApp = await Helpers.electronAppLaunch('../..');
+const isElectron = process.env.TEST_ENV === 'electron';
 
-      await run(electronApp);
-
-      await Helpers.electronAppClose(electronApp);
-    },
-    { scope: 'worker' },
-  ],
-  beforeAfterEach: [
-    async ({ beforeAfterAll: electronApp }, run) => {
-      try {
-        //const shouldDeactivateLicenseKey = true;
-        const shouldDeactivateLicenseKey = false;
-
-        //reload default "clean" configuration
-
-        await Helpers.restoreDocumentBursterCleanState(
-          shouldDeactivateLicenseKey
-        );
-
-        const firstPage = await electronApp.firstWindow();
-
-        //await firstPage.reload();
-
-        const ft = new FluentTester(firstPage);
-
-        await ft.gotoStartScreen();
-        await run(firstPage);
-      } catch (error) {
-        // Rethrow the error to fail the test
-        throw error;
+export const electronBeforeAfterAllTest = isElectron
+  ? base.extend<
+      {
+        beforeAfterEach: Page;
+      },
+      {
+        beforeAfterAll: ElectronApplication;
       }
-      //await Helpers.killHangingJavaProcesses();
-    },
-    { scope: 'test' },
-  ],
-});
+    >({
+      beforeAfterAll: [
+        async ({}, run) => {
+          const electronApp = await Helpers.electronAppLaunch('../..');
 
-/*
-export const electronBeforeAfterEachTest = base.extend<{
-  beforeAfterEach: Page;
-}>({
-  beforeAfterEach: [
-    async ({}, run) => {
-      //reload default "clean" configuration
-      const shouldDeactivateLicenseKey = false;
-      await Helpers.restoreDocumentBursterCleanState(
-        shouldDeactivateLicenseKey
-      );
+          await run(electronApp);
 
-      const electronApp = await Helpers.electronAppLaunch('../..');
+          await Helpers.electronAppClose(electronApp);
+        },
+        { scope: 'worker' },
+      ],
+      beforeAfterEach: [
+        async ({ beforeAfterAll: electronApp }, run) => {
+          try {
+            //const shouldDeactivateLicenseKey = true;
+            const shouldDeactivateLicenseKey = false;
 
-      const firstPage = await electronApp.firstWindow();
+            //reload default "clean" configuration
 
-      const ft = new FluentTester(firstPage);
+            await Helpers.restoreDocumentBursterCleanState(
+              shouldDeactivateLicenseKey,
+            );
 
-      await ft.gotoStartScreen();
+            const firstPage = await electronApp.firstWindow();
 
-      await run(firstPage);
-      await Helpers.killHangingJavaProcesses();
+            //await firstPage.reload();
 
-      await Helpers.electronAppClose(electronApp);
-    },
-    { scope: 'test' },
-  ],
-});
-*/
+            const ft = new FluentTester(firstPage);
+
+            await ft.gotoStartScreen();
+            await run(firstPage);
+          } catch (error) {
+            // Rethrow the error to fail the test
+            throw error;
+          }
+          //await Helpers.killHangingJavaProcesses();
+        },
+        { scope: 'test' },
+      ],
+    })
+  : base.extend<
+      {
+        beforeAfterEach: BrowserContext;
+      },
+      {
+        beforeAfterAll: Browser;
+      }
+    >({
+      beforeAfterAll: [
+        async ({}, run) => {
+          const { browser, context } = await Helpers.browserLaunch();
+
+          await run({ browser, context });
+
+          await Helpers.browserClose(browser, context);
+        },
+        { scope: 'worker' },
+      ],
+      beforeAfterEach: [
+        async ({ beforeAfterAll: { browser, context } }, run) => {
+          const shouldDeactivateLicenseKey = false;
+
+          await Helpers.restoreDocumentBursterCleanState(
+            shouldDeactivateLicenseKey,
+          );
+
+          const [firstPage] = await context.pages();
+
+          const ft = new FluentTester(firstPage);
+
+          await ft.gotoStartScreen();
+          await run(firstPage);
+        },
+        { scope: 'test' },
+      ],
+    });
 
 function findLockingProcess(filePath: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -106,7 +120,7 @@ function findLockingProcess(filePath: string): Promise<string> {
         } else {
           resolve(stdout);
         }
-      }
+      },
     );
   });
 }

@@ -3,8 +3,7 @@ import * as jetpack from 'fs-jetpack';
 import helpers from './updater.helpers';
 
 import * as PATHS from '../utils/paths';
-
-import { Updater } from '../../src/app/areas/install-setup-upgrade/updater';
+import { Updater } from '../../src/app/areas/electron-nodejs/updater';
 
 /*
 
@@ -33,19 +32,19 @@ describe("updater: issue64 - Problems with the 'auto-update' from v8.4 (CUNA)", 
     await jetpack.dirAsync(PATHS.EXECUTABLE_DIR_PATH, { empty: true });
 
     return jetpack.dirAsync(
-      `${helpers.updateDestinationDirectoryPath}/config/burst`
+      `${helpers.updateDestinationDirectoryPath}/config/burst`,
     );
   });
 
   it('migrate-settings-37-advertisement-test-cuna-8.4', async function () {
     await jetpack.copyAsync(
       `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
-      `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`
+      `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`,
     );
 
     let updater = new Updater(helpers.updateDestinationDirectoryPath);
     await updater.migrateSettingsFile(
-      `${helpers.filesToMigrateDirectoryPath}/config-cuna/37-advertisement-test-cuna-8.4.xml`
+      `${helpers.filesToMigrateDirectoryPath}/config-cuna/37-advertisement-test-cuna-8.4.xml`,
     );
 
     let exceptFor = new Map();
@@ -54,31 +53,31 @@ describe("updater: issue64 - Problems with the 'auto-update' from v8.4 (CUNA)", 
 
     exceptFor.set(
       'documentburster.settings.outputfolder',
-      'output/${input_document_name}/${now?string["yyyy.MM.dd"]}'
+      'output/${input_document_name}/${now?string["yyyy.MM.dd"]}',
     );
 
     exceptFor.set('documentburster.settings.sendfiles.email', 'true');
     exceptFor.set(
       'documentburster.settings.emailserver.host',
-      'smtp.office365.com'
+      'smtp.office365.com',
     );
 
     exceptFor.set('documentburster.settings.emailserver.port', '587');
     exceptFor.set(
       'documentburster.settings.emailserver.userid',
-      'noreply@corp.company.com'
+      'noreply@corp.company.com',
     );
 
     exceptFor.set(
       'documentburster.settings.emailserver.userpassword',
-      '********'
+      '********',
     );
 
     exceptFor.set('documentburster.settings.emailserver.usetls', 'true');
 
     exceptFor.set(
       'documentburster.settings.emailserver.fromaddress',
-      'MARKETING@company.com'
+      'MARKETING@company.com',
     );
 
     exceptFor.set('documentburster.settings.emailserver.name', 'Marketing');
@@ -87,28 +86,28 @@ describe("updater: issue64 - Problems with the 'auto-update' from v8.4 (CUNA)", 
 
     exceptFor.set(
       'documentburster.settings.emailsettings.to',
-      'kevans@company.com'
+      'kevans@company.com',
     );
 
     exceptFor.set(
       'documentburster.settings.emailsettings.bcc',
-      'kevans@company.com'
+      'kevans@company.com',
     );
 
     exceptFor.set(
       'documentburster.settings.emailsettings.subject',
-      'Test The Family Indemnity Plan - CUNA Caribbean Insurance'
+      'Test The Family Indemnity Plan - CUNA Caribbean Insurance',
     );
 
     exceptFor.set(
       'documentburster.settings.emailsettings.html',
-      '<img src="images/FIP_Flyer.jpg">'
+      '<img src="images/FIP_Flyer.jpg">',
     );
 
     await helpers._expectEqualConfigurationValuesExceptFor(
       `${helpers.updateDestinationDirectoryPath}/config/burst/37-advertisement-test-cuna-8.4.xml`,
       updater.defaultSettings,
-      exceptFor
+      exceptFor,
     );
   });
 });

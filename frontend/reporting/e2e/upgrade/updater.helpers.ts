@@ -8,13 +8,12 @@ import * as _ from 'lodash';
 import * as path from 'path';
 import * as semver from 'semver';
 
+import * as PATHS from '../utils/paths';
+import Utilities from '../../src/app/helpers/utilities';
 import {
   UpdateInfo,
   Updater,
-} from '../../src/app/areas/install-setup-upgrade/updater';
-
-import * as PATHS from '../utils/paths';
-import Utilities from '../../src/app/helpers/utilities';
+} from '../../src/app/areas/electron-nodejs/updater';
 //import SemVer from 'keep-a-changelog/types/deps/deno.land/x/semver@v1.4.0/mod';
 
 export default {
@@ -45,7 +44,7 @@ export default {
 
   async _fillUpdateInfo(
     updater: Updater,
-    updateInfo: UpdateInfo
+    updateInfo: UpdateInfo,
   ): Promise<UpdateInfo> {
     let _updateInfo = await updater.fillUpdateInfo(updateInfo);
 
@@ -63,7 +62,7 @@ export default {
 
   async _updateNowAndAssertEverythingWorkedWell(
     baselineVersionZipFilePath: string,
-    newVersionZipFilePath: string
+    newVersionZipFilePath: string,
   ) {
     let isServer = false;
 
@@ -88,11 +87,11 @@ export default {
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/config`,
       `${this.updateDestinationDirectoryPath}/config/burst`,
-      { matching: '*.xml', overwrite: true }
+      { matching: '*.xml', overwrite: true },
     );
 
     const files = await jetpack.listAsync(
-      `${this.updateDestinationDirectoryPath}/config/burst`
+      `${this.updateDestinationDirectoryPath}/config/burst`,
     );
     //console.log(
     //  `updateDestinationDirectoryPath/config/burst = ${this.updateDestinationDirectoryPath}/config/burst`
@@ -103,13 +102,13 @@ export default {
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/config-cuna`,
       `${this.updateDestinationDirectoryPath}/config/burst`,
-      { matching: '*.xml', overwrite: true }
+      { matching: '*.xml', overwrite: true },
     );
 
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/config-leidos`,
       `${this.updateDestinationDirectoryPath}/config/burst`,
-      { matching: '*.xml', overwrite: true }
+      { matching: '*.xml', overwrite: true },
     );
 
     //Step4 - copy all the "scripts" groovy files to 8.7.2 baseline dir with a version stamp
@@ -129,7 +128,7 @@ export default {
     for (let version of dbVersions) {
       let scriptFilePaths = await jetpack.findAsync(
         `${this.filesToMigrateDirectoryPath}/scripts/samples/${version}`,
-        { matching: '*.groovy' }
+        { matching: '*.groovy' },
       );
 
       for (let scriptFilePath of scriptFilePaths) {
@@ -137,7 +136,7 @@ export default {
 
         await jetpack.copyAsync(
           scriptFilePath,
-          `${this.updateDestinationDirectoryPath}/scripts/burst/${version}-${scriptFileName}`
+          `${this.updateDestinationDirectoryPath}/scripts/burst/${version}-${scriptFileName}`,
         );
       }
     }
@@ -147,42 +146,42 @@ export default {
 
     await jetpack.copyAsync(
       `${PATHS.E2E_RESOURCES_PATH}/license/license-active.xml`,
-      `${this.updateDestinationDirectoryPath}/config/_internal/license.xml`
+      `${this.updateDestinationDirectoryPath}/config/_internal/license.xml`,
     );
 
     //custom documentburster.properties
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/config-cuna/burst/internal/documentburster.properties`,
       `${this.updateDestinationDirectoryPath}/config/_internal/documentburster.properties`,
-      { overwrite: true }
+      { overwrite: true },
     );
 
     //Step7 - same as above but for the Output files
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/output`,
       `${this.updateDestinationDirectoryPath}/output`,
-      { overwrite: true }
+      { overwrite: true },
     );
 
     //Step8 - same as above but for the Log files
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/logs`,
       `${this.updateDestinationDirectoryPath}/logs`,
-      { overwrite: true }
+      { overwrite: true },
     );
 
     //Step9 - same as above but for the Quarantine files
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/quarantine`,
       `${this.updateDestinationDirectoryPath}/quarantine`,
-      { overwrite: true }
+      { overwrite: true },
     );
 
     //Step10 - same as above but for the Backup files
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/backup`,
       `${this.updateDestinationDirectoryPath}/backup`,
-      { overwrite: true }
+      { overwrite: true },
     );
 
     /*
@@ -210,36 +209,36 @@ export default {
       //the license is correctly copied when the configuration to copy is enabled.
       await jetpack.copyAsync(
         `${PATHS.E2E_RESOURCES_PATH}/license/license-just-downloaded-demo.xml`,
-        `${updateTempDestinationDirectoryPath}/config/_internal/license.xml`
+        `${updateTempDestinationDirectoryPath}/config/_internal/license.xml`,
       );
 
       //Step11 - copy the defaults.xml file
       await jetpack.copyAsync(
         `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
-        `${updateTempDestinationDirectoryPath}/config/_defaults/settings.xml`
+        `${updateTempDestinationDirectoryPath}/config/_defaults/settings.xml`,
       );
 
       await jetpack.copyAsync(
         `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
-        `${updateTempDestinationDirectoryPath}/config/burst/settings.xml`
+        `${updateTempDestinationDirectoryPath}/config/burst/settings.xml`,
       );
 
       //default documentburster.properties
       await jetpack.copyAsync(
         `${PATHS.E2E_ASSEMBLY_EXTERNAL_RESOURCES_FOLDER_PATH}/db-template/config/_internal/documentburster.properties`,
         `${updateTempDestinationDirectoryPath}/config/_internal/documentburster.properties`,
-        { overwrite: true }
+        { overwrite: true },
       );
 
       await jetpack.copyAsync(
         `${PATHS.E2E_ASSEMBLY_EXTERNAL_RESOURCES_FOLDER_PATH}/db-template/CHANGELOG.md`,
-        `${updateTempDestinationDirectoryPath}/CHANGELOG.md`
+        `${updateTempDestinationDirectoryPath}/CHANGELOG.md`,
       );
     };
 
     let updateInfo = this._getInitialUpdateInfo(
       this.updateDestinationDirectoryPath,
-      isServer
+      isServer,
     );
 
     updateInfo = await this._fillUpdateInfo(updater, updateInfo);
@@ -258,23 +257,23 @@ export default {
 
     return expect(tempExists)
       .withContext(
-        `upgdDbTempDirectoryPath: ${updater.upgdDbTempDirectoryPath} should not exist`
+        `upgdDbTempDirectoryPath: ${updater.upgdDbTempDirectoryPath} should not exist`,
       )
       .toBe(false);
   },
 
   async _extractBaseLineAndCopyCustomConfigAndScriptFiles(
     locationPath: string,
-    baselineVersionZipFilePath: string
+    baselineVersionZipFilePath: string,
   ) {
     const updateBaselineDirectoryPath = Utilities.slash(
-      path.resolve(`${locationPath}/baseline`)
+      path.resolve(`${locationPath}/baseline`),
     );
 
     let updateSourceDirectoryPath = `${updateBaselineDirectoryPath}/DocumentBurster`;
 
     const baselineVersionZipFullFilePath = Utilities.slash(
-      path.resolve(baselineVersionZipFilePath)
+      path.resolve(baselineVersionZipFilePath),
     );
 
     if (baselineVersionZipFilePath.includes('-server-')) {
@@ -309,11 +308,11 @@ export default {
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/config`,
       `${updateSourceDirectoryPath}/config/burst`,
-      { matching: '*.xml', overwrite: true }
+      { matching: '*.xml', overwrite: true },
     );
 
     const files = await jetpack.listAsync(
-      `${updateSourceDirectoryPath}/config/burst`
+      `${updateSourceDirectoryPath}/config/burst`,
     );
     //console.log(
     //  `updateSourceDirectoryPath}/config/burst = ${updateSourceDirectoryPath}/config/burst`
@@ -325,26 +324,26 @@ export default {
     await jetpack.copyAsync(
       `${PATHS.E2E_ASSEMBLY_EXTERNAL_RESOURCES_FOLDER_PATH}/db-template/config/_internal/documentburster.properties`,
       `${this.updateDestinationDirectoryPath}/config/_internal/documentburster.properties`,
-      { overwrite: true }
+      { overwrite: true },
     );
 
     //custom properties file
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/config-cuna/burst/internal/documentburster.properties`,
       `${updateSourceDirectoryPath}/config/burst/internal/documentburster.properties`,
-      { overwrite: true }
+      { overwrite: true },
     );
 
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/config-cuna`,
       `${updateSourceDirectoryPath}/config/burst`,
-      { matching: '*.xml', overwrite: true }
+      { matching: '*.xml', overwrite: true },
     );
 
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/config-leidos`,
       `${updateSourceDirectoryPath}/config/burst`,
-      { matching: '*.xml', overwrite: true }
+      { matching: '*.xml', overwrite: true },
     );
 
     //Step4 - copy all the "scripts" groovy files to 8.7.2 baseline dir with a version stamp
@@ -364,7 +363,7 @@ export default {
     for (let version of dbVersions) {
       let scriptFilePaths = await jetpack.findAsync(
         `${this.filesToMigrateDirectoryPath}/scripts/samples/${version}`,
-        { matching: '*.groovy' }
+        { matching: '*.groovy' },
       );
 
       for (let scriptFilePath of scriptFilePaths) {
@@ -372,7 +371,7 @@ export default {
 
         await jetpack.copyAsync(
           scriptFilePath,
-          `${updateSourceDirectoryPath}/scripts/burst/${version}-${scriptFileName}`
+          `${updateSourceDirectoryPath}/scripts/burst/${version}-${scriptFileName}`,
         );
       }
     }
@@ -382,64 +381,64 @@ export default {
     await jetpack.copyAsync(
       `${PATHS.E2E_RESOURCES_PATH}/license/license-active.xml`,
       `${updateSourceDirectoryPath}/config/burst/internal/license.xml`,
-      { overwrite: true }
+      { overwrite: true },
     );
     await jetpack.copyAsync(
       `${PATHS.E2E_RESOURCES_PATH}/license/license-just-downloaded-demo.xml`,
       `${this.updateDestinationDirectoryPath}/config/_internal/license.xml`,
-      { overwrite: true }
+      { overwrite: true },
     );
 
     await jetpack.copyAsync(
       `${PATHS.E2E_ASSEMBLY_EXTERNAL_RESOURCES_FOLDER_PATH}/db-template/CHANGELOG.md`,
       `${this.updateDestinationDirectoryPath}/CHANGELOG.md`,
-      { overwrite: true }
+      { overwrite: true },
     );
 
     //Step7 - same as above but for the Output files
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/output`,
       `${updateSourceDirectoryPath}/output`,
-      { overwrite: true }
+      { overwrite: true },
     );
 
     //Step8 - same as above but for the Log files
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/logs`,
       `${updateSourceDirectoryPath}/logs`,
-      { overwrite: true }
+      { overwrite: true },
     );
 
     //Step9 - same as above but for the Quarantine files
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/quarantine`,
       `${updateSourceDirectoryPath}/quarantine`,
-      { overwrite: true }
+      { overwrite: true },
     );
 
     //Step10 - same as above but for the Backup files
     await jetpack.copyAsync(
       `${this.filesToMigrateDirectoryPath}/backup`,
       `${updateSourceDirectoryPath}/backup`,
-      { overwrite: true }
+      { overwrite: true },
     );
 
     //Step11 - copy the defaults.xml file
     await jetpack.copyAsync(
       `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
       `${this.updateDestinationDirectoryPath}/config/_defaults/settings.xml`,
-      { overwrite: true }
+      { overwrite: true },
     );
     await jetpack.copyAsync(
       `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
       `${this.updateDestinationDirectoryPath}/config/burst/settings.xml`,
-      { overwrite: true }
+      { overwrite: true },
     );
   },
 
   async _updateLetMeAndAssertEverythingWorkedWell(
     baselineVersionZipFilePath: string,
-    newVersionZipFilePath: string
+    newVersionZipFilePath: string,
   ) {
     //Step1 - extract the new 9.9.9 zip file to the playground/upgrade working dir
 
@@ -452,7 +451,7 @@ export default {
 
     await this._extractBaseLineAndCopyCustomConfigAndScriptFiles(
       PATHS.EXECUTABLE_DIR_PATH,
-      baselineVersionZipFilePath
+      baselineVersionZipFilePath,
     );
 
     let updateSourceDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/baseline/DocumentBurster`;
@@ -469,7 +468,7 @@ export default {
 
     let updateInfo = this._getInitialUpdateInfo(
       updateSourceDirectoryPath,
-      isServer
+      isServer,
     );
     updateInfo = await this._fillUpdateInfo(updater, updateInfo);
 
@@ -486,14 +485,14 @@ export default {
     return this._expectThingsToBeMigratedAndValid(
       updateInfo,
       updater,
-      isServer
+      isServer,
     );
   },
 
   async _expectThingsToBeMigratedAndValid(
     updateInfo: UpdateInfo,
     updater: Updater,
-    isServer: boolean
+    isServer: boolean,
   ) {
     let dbDesktopServerDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster`;
     let dbWebConsoleDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster/web-console`;
@@ -511,26 +510,26 @@ export default {
 
     if (updateInfo.updateOptions.copybackupfiles)
       allTxtFilePaths = allTxtFilePaths.filter(
-        (path) => !path.includes('backup')
+        (path) => !path.includes('backup'),
       );
 
     if (updateInfo.updateOptions.copylogfiles)
       allTxtFilePaths = allTxtFilePaths.filter(
-        (path) => !path.includes('logs')
+        (path) => !path.includes('logs'),
       );
 
     if (updateInfo.updateOptions.copyoutputfiles)
       allTxtFilePaths = allTxtFilePaths.filter(
-        (path) => !path.includes('output')
+        (path) => !path.includes('output'),
       );
 
     if (updateInfo.updateOptions.copyquarantinefiles)
       allTxtFilePaths = allTxtFilePaths.filter(
-        (path) => !path.includes('quarantine')
+        (path) => !path.includes('quarantine'),
       );
 
     allTxtFilePaths = allTxtFilePaths.filter(
-      (path) => !path.includes('templates')
+      (path) => !path.includes('templates'),
     );
 
     for (let txtFilePath of allTxtFilePaths) {
@@ -547,42 +546,42 @@ export default {
 
     //assert all the above "folder" changes
     let exists = await jetpack.existsAsync(
-      `${dbDesktopServerDirectoryPath}/tools`
+      `${dbDesktopServerDirectoryPath}/tools`,
     );
     expect(exists)
       .withContext(
-        `${dbDesktopServerDirectoryPath}/tools folder should not exist`
+        `${dbDesktopServerDirectoryPath}/tools folder should not exist`,
       )
       .toBe(false);
 
     //console.log(`STEP15`);
 
     exists = await jetpack.existsAsync(
-      `${dbDesktopServerDirectoryPath}/extra-db1`
+      `${dbDesktopServerDirectoryPath}/extra-db1`,
     );
     expect(exists)
       .withContext(
-        `${dbDesktopServerDirectoryPath}/extra-db1 folder should exist`
+        `${dbDesktopServerDirectoryPath}/extra-db1 folder should exist`,
       )
       .toBe('dir');
 
     exists = await jetpack.existsAsync(
-      `${dbDesktopServerDirectoryPath}/extra-db2`
+      `${dbDesktopServerDirectoryPath}/extra-db2`,
     );
     expect(exists)
       .withContext(
-        `${dbDesktopServerDirectoryPath}/extra-db2 folder should exist`
+        `${dbDesktopServerDirectoryPath}/extra-db2 folder should exist`,
       )
       .toBe('dir');
 
     //console.log(`STEP16`);
 
     exists = await jetpack.existsAsync(
-      `${dbDesktopServerDirectoryPath}/scripts/extra-db3`
+      `${dbDesktopServerDirectoryPath}/scripts/extra-db3`,
     );
     expect(exists)
       .withContext(
-        `${dbDesktopServerDirectoryPath}/scripts/extra-db3 folder should exist`
+        `${dbDesktopServerDirectoryPath}/scripts/extra-db3 folder should exist`,
       )
       .toBe('dir');
 
@@ -590,31 +589,31 @@ export default {
 
     if (isServer) {
       exists = await jetpack.existsAsync(
-        `${dbWebConsoleDirectoryPath}/extra-db4`
+        `${dbWebConsoleDirectoryPath}/extra-db4`,
       );
       expect(exists)
         .withContext(
-          `${dbWebConsoleDirectoryPath}/extra-db4 folder should exist`
+          `${dbWebConsoleDirectoryPath}/extra-db4 folder should exist`,
         )
         .toBe('dir');
 
       //console.log(`STEP17 - server`);
 
       exists = await jetpack.existsAsync(
-        `${dbWebConsoleDirectoryPath}/console/extra-db5`
+        `${dbWebConsoleDirectoryPath}/console/extra-db5`,
       );
       expect(exists)
         .withContext(
-          `${dbWebConsoleDirectoryPath}/console/extra-db5 folder should exist`
+          `${dbWebConsoleDirectoryPath}/console/extra-db5 folder should exist`,
         )
         .toBe('dir');
 
       exists = await jetpack.existsAsync(
-        `${dbWebConsoleDirectoryPath}/console/webapps/extra-db6`
+        `${dbWebConsoleDirectoryPath}/console/webapps/extra-db6`,
       );
       expect(exists)
         .withContext(
-          `${dbWebConsoleDirectoryPath}/console/webapps/extra-db6 folder should exist`
+          `${dbWebConsoleDirectoryPath}/console/webapps/extra-db6 folder should exist`,
         )
         .toBe('dir');
       //console.log(`STEP18 - server`);
@@ -624,7 +623,7 @@ export default {
     await this._assertXmlConfigV51ExpectedNN(
       `${dbDesktopServerDirectoryPath}/config/burst/settings.xml`,
       updater.defaultSettings,
-      'My Report'
+      'My Report',
     );
 
     //console.log(`STEP19`);
@@ -632,12 +631,12 @@ export default {
     //assert that each and every xml configuration file is correctly upgraded
     await this._assertXmlConfigV51ExpectedDefaults(
       `${dbDesktopServerDirectoryPath}/config/burst/00-settings-5.1.xml`,
-      updater.defaultSettings
+      updater.defaultSettings,
     );
     await this._assertXmlConfigV51ExpectedNN(
       `${dbDesktopServerDirectoryPath}/config/burst/00-settings-5.1-nn.xml`,
       updater.defaultSettings,
-      '00-settings-5.1-nn.xml'
+      '00-settings-5.1-nn.xml',
     );
 
     //console.log(`STEP20`);
@@ -649,7 +648,7 @@ export default {
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/05-settings-5.8.1.xml`,
       updater.defaultSettings,
-      exceptFor
+      exceptFor,
     );
 
     //console.log(`STEP21`);
@@ -657,18 +656,18 @@ export default {
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/05-settings-5.8.1-custom.xml`,
       updater.defaultSettings,
-      this._getCustomExceptFor()
+      this._getCustomExceptFor(),
     );
 
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/10-settings-6.1.xml`,
       updater.defaultSettings,
-      exceptFor
+      exceptFor,
     );
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/10-settings-6.1-custom.xml`,
       updater.defaultSettings,
-      this._getCustomExceptFor()
+      this._getCustomExceptFor(),
     );
 
     //console.log(`STEP22`);
@@ -676,23 +675,23 @@ export default {
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/15-settings-6.2.xml`,
       updater.defaultSettings,
-      exceptFor
+      exceptFor,
     );
 
     let customExceptFor = this._getCustomExceptFor();
     customExceptFor.set(
       'documentburster.settings.emailsettings.text',
-      'custom text\r\n\r\nsecond line\r\n\r\n${var1}'
+      'custom text\r\n\r\nsecond line\r\n\r\n${var1}',
     );
     customExceptFor.set(
       'documentburster.settings.emailsettings.html',
-      'custom html\r\n\r\nsecond line<br>\r\n\r\n${var1}'
+      'custom html\r\n\r\nsecond line<br>\r\n\r\n${var1}',
     );
 
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/15-settings-6.2-custom.xml`,
       updater.defaultSettings,
-      customExceptFor
+      customExceptFor,
     );
 
     //console.log(`STEP23`);
@@ -700,12 +699,12 @@ export default {
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/20-settings-6.4.1.xml`,
       updater.defaultSettings,
-      exceptFor
+      exceptFor,
     );
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/20-settings-6.4.1-custom.xml`,
       updater.defaultSettings,
-      this._getCustomExceptFor()
+      this._getCustomExceptFor(),
     );
 
     //console.log(`STEP24`);
@@ -713,12 +712,12 @@ export default {
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/25-settings-7.1.xml`,
       updater.defaultSettings,
-      exceptFor
+      exceptFor,
     );
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/25-settings-7.1-custom.xml`,
       updater.defaultSettings,
-      this._getCustomExceptFor()
+      this._getCustomExceptFor(),
     );
 
     //console.log(`STEP25`);
@@ -726,19 +725,19 @@ export default {
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/30-settings-7.5.xml`,
       updater.defaultSettings,
-      exceptFor
+      exceptFor,
     );
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/30-settings-7.5-custom.xml`,
       updater.defaultSettings,
-      this._getCustomExceptFor()
+      this._getCustomExceptFor(),
     );
 
     //console.log(`STEP26`);
 
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/35-settings-8.1.xml`,
-      updater.defaultSettings
+      updater.defaultSettings,
     );
 
     customExceptFor = this._getCustomExceptFor();
@@ -746,7 +745,7 @@ export default {
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/35-settings-8.1-custom.xml`,
       updater.defaultSettings,
-      customExceptFor
+      customExceptFor,
     );
 
     //console.log(`STEP27`);
@@ -759,13 +758,13 @@ export default {
         recursive: false,
         files: true,
         directories: false,
-      }
+      },
     );
 
     for (let scriptFilePath of scriptsFilePaths) {
       await this._expectScriptContentToBeMigratedAndValid(
         scriptFilePath,
-        this.PDFBOX_VERSION
+        this.PDFBOX_VERSION,
       );
     }
 
@@ -782,7 +781,7 @@ export default {
     if (updateInfo.updateOptions.copylicensinginformation) {
       expect(licenseFileContent.includes('<status>valid</status>'))
         .withContext(
-          `licenseFilePath: ${licenseFilePath} license should be active i.e. <status>valid</status>.`
+          `licenseFilePath: ${licenseFilePath} license should be active i.e. <status>valid</status>.`,
         )
         .toBe(true);
 
@@ -795,20 +794,19 @@ export default {
     } else
       expect(licenseFileContent.includes('<status />'))
         .withContext(
-          `scriptFilePath: ${licenseFilePath} license should be demo i.e <status />.`
+          `scriptFilePath: ${licenseFilePath} license should be demo i.e <status />.`,
         )
         .toBe(true);
 
     //console.log(`STEP28`);
 
     const dbPropertiesFilePath = `${dbDesktopServerDirectoryPath}/config/_internal/documentburster.properties`;
-    const dbPropertiesFileContent = await jetpack.readAsync(
-      dbPropertiesFilePath
-    );
+    const dbPropertiesFileContent =
+      await jetpack.readAsync(dbPropertiesFilePath);
 
     expect(dbPropertiesFileContent.includes('-Xms1024m -Xmx1024m'))
       .withContext(
-        `dbPropertiesFilePath: ${dbPropertiesFilePath} documentburster.properties was not copied.`
+        `dbPropertiesFilePath: ${dbPropertiesFilePath} documentburster.properties was not copied.`,
       )
       .toBe(true);
 
@@ -887,12 +885,12 @@ export default {
           let data = zipEntry.getData().toString('utf8');
           expect(data.includes('file-872'))
             .withContext(
-              `zipEntry.entryName: ${zipEntry.entryName} should contain file-872`
+              `zipEntry.entryName: ${zipEntry.entryName} should contain file-872`,
             )
             .toBe(true);
           expect(data.includes('file-999'))
             .withContext(
-              `zipEntry.entryName: ${zipEntry.entryName} should not contain file-999`
+              `zipEntry.entryName: ${zipEntry.entryName} should not contain file-999`,
             )
             .toBe(false);
         } else if (zipEntry.entryName.endsWith('.groovy')) {
@@ -927,14 +925,14 @@ export default {
 
   async _expectScriptContentToBeMigratedAndValid(
     scriptFilePath: string,
-    pdfBoxVersion: string
+    pdfBoxVersion: string,
   ) {
     //checkPoint - "backupZipFile" should exist
     const scriptFileExists = await jetpack.existsAsync(scriptFilePath);
 
     if (!scriptFileExists)
       throw new Error(
-        `_expectScriptContentToBeMigratedAndValid - ${scriptFilePath} was not found`
+        `_expectScriptContentToBeMigratedAndValid - ${scriptFilePath} was not found`,
       );
 
     const scriptFileContent = await jetpack.readAsync(scriptFilePath);
@@ -1069,7 +1067,7 @@ export default {
 
   async _migrateAndValidateAllScriptsFromFolder(
     inputFolderScriptsFolderPath: string,
-    legacyVersion: string
+    legacyVersion: string,
   ) {
     const scriptsFilePaths = await jetpack.findAsync(
       inputFolderScriptsFolderPath,
@@ -1078,7 +1076,7 @@ export default {
         recursive: false,
         files: true,
         directories: false,
-      }
+      },
     );
 
     let updater = new Updater(PATHS.EXECUTABLE_DIR_PATH);
@@ -1086,11 +1084,11 @@ export default {
     for (let scriptFilePath of scriptsFilePaths) {
       const newScriptFilePath = await updater.migrateScriptFile(
         scriptFilePath,
-        legacyVersion
+        legacyVersion,
       );
       await this._expectScriptContentToBeMigratedAndValid(
         newScriptFilePath,
-        this.PDFBOX_VERSION
+        this.PDFBOX_VERSION,
       );
     }
   },
@@ -1104,7 +1102,7 @@ export default {
         let foundIndex = obj2Props.indexOf(prop);
         if (foundIndex < 0)
           throw new Error(
-            `Configuration ${prop} exists in one of the compared configuration but not in the other. Configuration ${prop} should exists in both migrated and default configurations.`
+            `Configuration ${prop} exists in one of the compared configuration but not in the other. Configuration ${prop} should exists in both migrated and default configurations.`,
           );
         return foundIndex >= 0;
       });
@@ -1116,7 +1114,7 @@ export default {
   async _expectEqualConfigurationValuesExceptFor(
     configSettingsFilePath: string,
     expectedSettings: any,
-    exceptFor: Map<string, string> = new Map()
+    exceptFor: Map<string, string> = new Map(),
   ) {
     const fileExists = await jetpack.existsAsync(configSettingsFilePath);
 
@@ -1156,12 +1154,12 @@ export default {
           */
           expectedValue = Utilities.getDeeplyNestedLastProp(
             expectedSettings,
-            currentConfigurationItemKeys
+            currentConfigurationItemKeys,
           );
 
           if (typeof expectedValue === 'undefined')
             throw new Error(
-              `Configuration ${joinedKeys} exists in the migrated settings but not in the expectedSettings (defaultSettings)`
+              `Configuration ${joinedKeys} exists in the migrated settings but not in the expectedSettings (defaultSettings)`,
             );
         } else {
           expectedValue = exceptFor.get(joinedKeys);
@@ -1180,6 +1178,7 @@ export default {
           //);
         }
 
+        //expect(value).withContext(joinedKeys).toBe(expectedValue);
         expect(value).withContext(joinedKeys).toBe(expectedValue);
       }
     });
@@ -1196,25 +1195,25 @@ export default {
 
     exceptFor.set(
       'documentburster.settings.burstfilename',
-      'custom-${var0}.${output_type_extension}'
+      'custom-${var0}.${output_type_extension}',
     );
 
     exceptFor.set(
       'documentburster.settings.outputfolder',
-      'custom-output path'
+      'custom-output path',
     );
     exceptFor.set(
       'documentburster.settings.quarantinefolder',
-      'custom-quarantine'
+      'custom-quarantine',
     );
 
     exceptFor.set(
       'documentburster.settings.emailsettings.subject',
-      'custom subject ${var0}'
+      'custom subject ${var0}',
     );
     exceptFor.set(
       'documentburster.settings.emailsettings.text',
-      'custom text ${var1}'
+      'custom text ${var1}',
     );
 
     return exceptFor;
@@ -1223,7 +1222,7 @@ export default {
   async _assertXmlConfigV51ExpectedNN(
     xmlConfigFilePath: string,
     baseLineXmlSettings: any,
-    templateValue: string
+    templateValue: string,
   ) {
     //console.log(
     //  `_assertXmlConfigV51ExpectedNN xmlConfigFilePath = ${xmlConfigFilePath}`
@@ -1265,13 +1264,13 @@ export default {
     return this._expectEqualConfigurationValuesExceptFor(
       xmlConfigFilePath,
       baseLineXmlSettings,
-      exceptFor
+      exceptFor,
     );
   },
 
   async _assertXmlConfigV51ExpectedDefaults(
     xmlConfigFilePath: string,
-    baseLineXmlSettings: any
+    baseLineXmlSettings: any,
   ) {
     //console.log(`Log 24 - xmlConfigFilePath = ${xmlConfigFilePath}`);
 
@@ -1283,7 +1282,7 @@ export default {
     return this._expectEqualConfigurationValuesExceptFor(
       xmlConfigFilePath,
       baseLineXmlSettings,
-      exceptFor
+      exceptFor,
     );
   },
 };

@@ -3,15 +3,13 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { FluentTester } from '../../helpers/fluent-tester';
 
 //DONE2
-test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly display all the screens from the Help area',
     async function ({ beforeAfterEach: firstPage }) {
-      const ft = new FluentTester(firstPage);
+      let ft = new FluentTester(firstPage);
 
-      return (
-        ft
-          .goToBurstScreen()
+    ft = ft
+        .goToBurstScreen()
           .click('#supportEmail')
           .elementShouldHaveText(
             '#checkPointHelpSupport',
@@ -91,8 +89,11 @@ test.describe('', async () => {
           .elementShouldHaveText(
             '#statusDemoLicense',
             'Demo / Trial (up to 25 recipients)',
-          )
-          .click('#leftMenuHelpInstallSetup')
+          );
+const isElectron=process.env.TEST_ENV==='electron';
+
+
+if(isElectron){ft=ft          .click('#leftMenuHelpInstallSetup')
           .elementShouldContainText(
             '#checkPointJavaPreRequisite',
             'as a prerequisite',
@@ -104,7 +105,10 @@ test.describe('', async () => {
           .click('#updateTab-link')
           .elementShouldBeVisible('#btnLetMeUpdateManually')
           .click('#extraPackagesTab-link')
-          .elementShouldBeVisible('#package-notepadplusplus')
+        .elementShouldBeVisible('#package-notepadplusplus');
+    }
+
+    ft = ft
           .click('#leftMenuHelpLicense')
           .elementShouldHaveText(
             '#statusDemoLicense',
@@ -202,8 +206,8 @@ test.describe('', async () => {
           .goToBurstScreen()
           .click('#topMenuHelp')
           .click('#topMenuHelpAbout')
-          .elementShouldHaveText('#checkPointHelpAbout', 'Copyright')
-      );
-    },
-  );
-});
+      .elementShouldHaveText('#checkPointHelpAbout', 'Copyright');
+
+    return ft;
+  },
+);
