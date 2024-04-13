@@ -36,7 +36,7 @@
 
 	<properties>
 
-		<revision>9.2.0</revision>
+		<revision>10.1.0</revision>
 
 		<!-- upgraded -->
 		<commons.beanutils.version>1.9.4</commons.beanutils.version>
