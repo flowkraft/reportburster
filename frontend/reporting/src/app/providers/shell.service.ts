@@ -81,7 +81,7 @@ export class ShellService {
 
   async generateMergeFileInTempFolder(filePaths: string[]): Promise<string> {
     console.log(`generateMergeFileInTempFolder filePaths = ${filePaths}`);
-    
+
     //const dir = `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/temp/`;
     const dir = `temp/`;
 
@@ -103,7 +103,7 @@ export class ShellService {
     });
 
     //const currentWorkingDirPath = `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/tools/test-email-server`;
-constcurrentWorkingDirPath=`tools/test-email-server`;
+    const currentWorkingDirPath = `tools/test-email-server`;
     const batFile = command + 'TestEmailServer.bat';
 
     const batScript = await this.apiService.post(
