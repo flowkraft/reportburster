@@ -67,7 +67,7 @@
     "custom:e2e-prepare-updatenow-for-manual-testing": "rimraf testground && mkdirp testground/e2e && npx gulp e2e-package-javastuff-if-needed && cross-env PORTABLE_EXECUTABLE_DIR=testground/upgrade SHOULD_SEND_STATS=false ts-node node_modules/jasmine/bin/jasmine --config=scripts-dev/jasmine/jasmine-updater-now.json && npx gulp e2e-prepare-updatenow-for-manual-testing",
     "custom:electron:windows": "npm run build:prod && electron-builder build --windows --ia32",
     "precustom:release": "npm run custom:clean-output && npm prune",
-    "custom:release": "npm run custom:electron:windows && rimraf dist && ng build --web-production"
+    "custom:release": "npm run custom:electron:windows && rimraf dist && ng build -c web-production"
   },
   "dependencies": {
     "@angular/common": "15.2.9",

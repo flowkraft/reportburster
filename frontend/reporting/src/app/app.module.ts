@@ -44,7 +44,6 @@ export function initApp(stateStore: StateStoreService) {
     BrowserModule,
     FormsModule,
     HttpClientModule,
-    CoreModule,
     AppRoutingModule,
     TranslateModule.forRoot({
       loader: {
