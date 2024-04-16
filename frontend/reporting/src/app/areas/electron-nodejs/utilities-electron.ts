@@ -8,6 +8,26 @@ export default class UtilitiesElectron {
     return typeof window.require !== 'undefined';
   }
 
+  static async getSystemInfo(): Promise<{
+    chocolatey: {
+      isChocoOk: boolean;
+      version: string;
+    };
+    java: {
+      isJavaOk: boolean;
+      version: string;
+    };
+    env: {
+      PATH: string;
+      JAVA_HOME: string;
+      JRE_HOME: string;
+    };
+  }> {
+    if (UtilitiesElectron.isIpcRendererAvailable()) {
+      return ipcRenderer.invoke('getSystemInfo');
+    }
+  }
+
   static async getBackendUrl(): Promise<string> {
     if (UtilitiesElectron.isIpcRendererAvailable()) {
       return ipcRenderer.invoke('getBackendUrl');

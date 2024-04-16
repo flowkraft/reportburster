@@ -21,9 +21,9 @@ public class DocumentBursterAssembler extends AbstractAssembler {
 
 	protected void compile() throws Exception {
 
-		//String npmRunCustomReleaseCommand = "npm run custom:release";
+		//String npmRunCustomReleaseCommand = "npm run custom:release-electron";
 		
-		String npmRunCustomReleaseCommand = "npm run custom:release --force";
+		String npmRunCustomReleaseCommand = "npm run custom:release-electron --force";
 
 		new ProcessExecutor().directory(new File(Utils.getTopProjectFolderPath() + "/frontend/reporting"))
 				.command("cmd", "/c", npmRunCustomReleaseCommand).redirectOutput(new LogOutputStream() {
@@ -34,7 +34,7 @@ public class DocumentBursterAssembler extends AbstractAssembler {
 				}).execute();
 
 		System.out.println(
-				"------------------------------------- DONE_01:DocumentBurster _generateDocumentBursterExe && generate angular production /dist ... -------------------------------------");
+				"------------------------------------- DONE_01:DocumentBurster _generateDocumentBursterExe ... -------------------------------------");
 
 	}
 
@@ -53,16 +53,9 @@ public class DocumentBursterAssembler extends AbstractAssembler {
 				new File(packageDirPath + "/" + topFolderName + "/ReportBurster.exe"));
 
 		System.out.println(
-				"------------------------------------- DONE_03:DocumentBurster _copyDocumentBursterExe... -------------------------------------");
+				"------------------------------------- DONE_03:DocumentBurster _copy DocumentBursterExe... -------------------------------------");
 
-		// copy the angular's production generated /dist folder
-		FileUtils.forceMkdir(new File(packageDirPath + "/" + topFolderName + "/lib/frontend"));
-		FileUtils.copyDirectory(new File(Utils.getTopProjectFolderPath() + "/frontend/reporting/dist"),
-				new File(packageDirPath + "/" + topFolderName + "/lib/frontend"));
-
-		System.out.println(
-				"------------------------------------- DONE_02:DocumentBursterServer copy all the already 'verified' DocumentBurster files ... -------------------------------------");
-
+		
 	}
 
 	@Override

@@ -9,4 +9,12 @@ export class ElectronService {
   get isElectron(): boolean {
     return false;
   }
+
+  async getSystemInfo(): Promise<any> {
+    return {};
+  }
+
+  async getBackendUrl(): Promise<string> {
+    return '';
+  }
 }

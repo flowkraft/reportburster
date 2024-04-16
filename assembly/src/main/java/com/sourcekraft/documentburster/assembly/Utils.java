@@ -32,16 +32,6 @@ public class Utils {
 		ignores.add("db-server-template");
 		ignores.add("template");
 
-		// because the *.sh files were removed from the packaging
-		ignores.add("documentburster.sh");
-		ignores.add("DocumentBurster-GUI.sh");
-
-		ignores.add("startServer.sh");
-		ignores.add("shutServer.sh");
-
-		ignores.add("startConsole.sh");
-		ignores.add("shutConsole.sh");
-
 		Set<String> dir1FileNames = new HashSet<String>();
 
 		Collection<File> dir1Files = FileUtils.listFilesAndDirs(dir1, TrueFileFilter.TRUE, TrueFileFilter.TRUE);

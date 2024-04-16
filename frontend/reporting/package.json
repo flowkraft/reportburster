@@ -32,10 +32,11 @@
     "e2e:show-trace": "playwright show-trace e2e/tracing/trace.zip",
     "version": "conventional-changelog -i CHANGELOG.md -s -r 0 && git add CHANGELOG.md",
     "lint": "ng lint",
-    "precustom:e2e-electron": "npm run custom:test-upgrade",
     "custom:e2e-electron": "npm run build:prod && npx gulp e2e-package-javastuff-if-needed && cross-env TEST_ENV=electron TEST_LICENSE_KEY=51b0aa18f2bbc066efdca8b53c2dacc8 RUNNING_IN_E2E=true PORTABLE_EXECUTABLE_DIR=testground/e2e playwright test -c e2e/playwright.config.ts e2e/",
     "custom:e2e-web": "wait-on tcp:4201 && cross-env TEST_ENV=web TEST_LICENSE_KEY=51b0aa18f2bbc066efdca8b53c2dacc8 RUNNING_IN_E2E=true PORTABLE_EXECUTABLE_DIR=testground/e2e playwright test -c e2e/playwright.config.ts e2e/",
     "custom:start-server-and-e2e-web": "npm-run-all -p custom:start-server-and-ui-web custom:e2e-web",
+    "precustom:start-server-and-e2e-electron": "npm run custom:test-upgrade",
+    "custom:start-server-and-e2e-electron": "npm-run-all -p custom:start-server-and-ui-electron custom:e2e-electron",
     "custom:start-javano-chocono-and-ui": "npx gulp e2e-package-javastuff-if-needed && npx gulp utils:start-javano-chocono-and-ui",
     "custom:start-javano-chocoyes-and-ui": "npx gulp e2e-package-javastuff-if-needed && npx gulp utils:start-javano-chocoyes-and-ui",
     "custom:e2e-show-trace": "npx playwright show-trace e2e/tracing/trace.zip",
@@ -66,8 +67,9 @@
     "custom:e2e-prepare-letmeupdate-for-manual-testing": "rimraf testground && mkdirp testground/e2e && npx gulp e2e-package-javastuff-if-needed && cross-env PORTABLE_EXECUTABLE_DIR=testground/upgrade SHOULD_SEND_STATS=false ts-node --project e2e/tsconfig.e2e.json node_modules/jasmine/bin/jasmine --config=scripts-dev/jasmine/jasmine-updater-letme.json && npx gulp e2e-copy-dbexe-to-letme-baseline",
     "custom:e2e-prepare-updatenow-for-manual-testing": "rimraf testground && mkdirp testground/e2e && npx gulp e2e-package-javastuff-if-needed && cross-env PORTABLE_EXECUTABLE_DIR=testground/upgrade SHOULD_SEND_STATS=false ts-node node_modules/jasmine/bin/jasmine --config=scripts-dev/jasmine/jasmine-updater-now.json && npx gulp e2e-prepare-updatenow-for-manual-testing",
     "custom:electron:windows": "npm run build:prod && electron-builder build --windows --ia32",
-    "precustom:release": "npm run custom:clean-output && npm prune",
-    "custom:release": "npm run custom:electron:windows && rimraf dist && ng build -c web-production"
+    "precustom:release-electron": "npm run custom:clean-output && npm prune",
+    "custom:release-electron": "npm run custom:electron:windows",
+    "custom:release-web": "rimraf dist && ng build -c web-production"
   },
   "dependencies": {
     "@angular/common": "15.2.9",

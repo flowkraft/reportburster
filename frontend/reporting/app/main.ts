@@ -32,9 +32,9 @@ log.transports.file.resolvePath = () => {
 
 log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] - {text}';
 
-log.info(
-  `process.env.PORTABLE_EXECUTABLE_DIR: ${process.env.PORTABLE_EXECUTABLE_DIR}`,
-);
+//log.info(
+//  `process.env.PORTABLE_EXECUTABLE_DIR: ${process.env.PORTABLE_EXECUTABLE_DIR}`,
+//);
 
 function createWindow(): BrowserWindow {
   /*
@@ -138,7 +138,7 @@ try {
       });
 
       serverProcess.stdout.on('data', (data) => {
-        //console.log(`stdout: ${data}`);
+        console.log(`stdout: ${data}`);
         const dataStr = data.toString();
 
         //if (

@@ -42,7 +42,7 @@ public class AssemblerTest {
 		System.out.println(
 				"------------------------------------- FINISHED Assembler:DocumentBursterAssembler ... -------------------------------------");
 
-		AbstractAssembler dbServerAssembler = new DocumentBursterServerSpringBatchAdminAssembler();
+		AbstractAssembler dbServerAssembler = new DocumentBursterServerSpringBootAssembler();
 
 		((DocumentBursterServerSpringBatchAdminAssembler) dbServerAssembler)
 				.setDocumentBursterVerifyDirPath(dbAssembler.getVerifyDirPath());
@@ -52,7 +52,7 @@ public class AssemblerTest {
 		dbServerAssembler.install();
 
 		System.out.println(
-				"------------------------------------- FINISHED Assembler:DocumentBursterServerSpringBatchAdminAssembler ... -------------------------------------");
+				"------------------------------------- FINISHED Assembler:DocumentBursterServerSpringBootAssembler ... -------------------------------------");
 
 	}
 

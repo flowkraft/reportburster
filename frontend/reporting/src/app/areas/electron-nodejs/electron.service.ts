@@ -130,6 +130,28 @@ export class ElectronService {
     return UtilitiesElectron.isRunningInsideElectron();
   }
 
+  async getSystemInfo(): Promise<{
+    chocolatey: {
+      isChocoOk: boolean;
+      version: string;
+    };
+    java: {
+      isJavaOk: boolean;
+      version: string;
+    };
+    env: {
+      PATH: string;
+      JAVA_HOME: string;
+      JRE_HOME: string;
+    };
+  }> {
+    return UtilitiesElectron.getSystemInfo();
+  }
+
+  async getBackendUrl(): Promise<string> {
+    return UtilitiesElectron.getBackendUrl();
+  }
+
   clock(start?: [number, number]): [number, number] {
     return [0, 0];
   }

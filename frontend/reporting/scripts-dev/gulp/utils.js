@@ -85,7 +85,7 @@ _startServerAndDoX = (npm_x_script) => {
   });
 
   server.stdout.on("data", (data) => {
-    console.log(`stdout: ${data}`);
+    console.log(`stdout99: ${data}`);
     if (data.includes("Started ServerApplication in")) {
       console.log(
         `stdout: ${data} !!!!!! ====>>>>> starting 'npm run "${npm_x_script}"'`,
@@ -111,7 +111,7 @@ _startServerAndDoX = (npm_x_script) => {
   });
 
   server.stderr.on("data", (data) => {
-    console.error(`stderr: ${data}`);
+    console.error(`stderr99: ${data}`);
   });
 
   server.on("close", (code) => {
