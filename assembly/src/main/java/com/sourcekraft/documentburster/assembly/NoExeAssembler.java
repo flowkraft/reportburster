@@ -50,9 +50,6 @@ public class NoExeAssembler extends AbstractAssembler {
 		FileUtils.copyDirectory(new File("src/main/external-resources/db-template"),
 				new File(packageDirPath + "/" + topFolderName));
 
-		FileUtils.forceDelete(new File(packageDirPath + "/" + topFolderName + "/DocumentBurster-GUI.sh"));
-		FileUtils.forceDelete(new File(packageDirPath + "/" + topFolderName + "/documentburster.sh"));
-
 		System.out.println(
 				"------------------------------------- DONE_03:NoExeAssembler copy db template files and folders ... -------------------------------------");
 

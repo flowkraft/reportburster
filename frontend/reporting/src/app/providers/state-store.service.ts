@@ -21,6 +21,7 @@ export class StateStoreService {
       JOBS_FOLDER_PATH: '',
       QUARANTINED_FOLDER_PATH: '',
       UPDATE_JAR_FILE_PATH: '',
+      FRONTEND: 'electron',
       isServerVersion: false,
       product: 'DocumentBurster',
       version: '9.1',

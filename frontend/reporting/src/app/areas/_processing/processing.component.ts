@@ -588,7 +588,7 @@ export class ProcessingComponent implements OnInit {
     files.forEach((file) => {
       this.processingService.procMergeBurstInfo.inputFiles.push({
         name: file.name,
-        path: file.path,
+        //path: file.path,
         file: file,
       });
     });
@@ -1106,26 +1106,26 @@ export class ProcessingComponent implements OnInit {
           this.router.navigate([
             '/processingSample',
             'burstMenuSelected',
-             Utilities.slash(
+            Utilities.slash(
               //`${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputDocumentShortPath}`,
               `${inputDocumentShortPath}`,
             ),
             Utilities.slash(clickedSample.configurationFilePath),
-         ]);
+          ]);
         } else if (clickedSample.input.data.length > 1) {
           this.processingService.procBurstInfo.isSample = true;
 
           let diezSeparatedListOfFilePathsToMerge = '';
           const filesToMerge = clickedSample.input.data;
           filesToMerge.forEach((fileToMerge: string) => {
-               //const filePath = Utilities.slash(
+            //const filePath = Utilities.slash(
             //  `${
             //    this.settingsService.PORTABLE_EXECUTABLE_DIR
             //  }/${fileToMerge.replace('file:', '')}`,
             //);
             const filePath = Utilities.slash(
               `${fileToMerge.replace('file:', '')}`,
-                   );
+            );
             if (diezSeparatedListOfFilePathsToMerge.length == 0) {
               diezSeparatedListOfFilePathsToMerge = filePath;
             } else {
@@ -1141,8 +1141,8 @@ export class ProcessingComponent implements OnInit {
             '/processingSample',
             'mergeBurstMenuSelected',
             diezSeparatedListOfFilePathsToMerge,
-                    Utilities.slash(clickedSample.configurationFilePath),
-		  ]);
+            Utilities.slash(clickedSample.configurationFilePath),
+          ]);
         }
       },
     });

@@ -29,6 +29,7 @@ export class LogsServiceWebSocket extends WebSocketEndpoint {
     protected executionStatsService: ExecutionStatsService,
   ) {
     super();
+    this.BACKEND_URL = apiService.BACKEND_URL;
   }
 
   async makeWSConnectionAndHandleMessages() {

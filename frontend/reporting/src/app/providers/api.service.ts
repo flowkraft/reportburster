@@ -17,7 +17,7 @@ export enum RequestMethod {
   providedIn: 'root',
 })
 export class ApiService {
-  private BACKEND_URL = '/api';
+  public BACKEND_URL = '/api';
 
   private headers: Headers;
   private jwtToken: string;
@@ -29,6 +29,10 @@ export class ApiService {
     });
 
     this.jwtToken = '';
+
+    if (this.stateStore.configSys.info.FRONTEND == 'electron') {
+      this.BACKEND_URL = stateStore.configSys.sysInfo.setup.BACKEND_URL;
+    }
   }
 
   private serialize(obj: any): HttpParams {
@@ -65,9 +69,8 @@ export class ApiService {
     body: any = '',
     customHeaders?: Headers,
   ): Promise<any> {
-    
     if (!this.stateStore.configSys.sysInfo.setup.java.isJavaOk) return;
-    //console.log(`apiService.request.path: ${JSON.stringify(path)}`);
+    console.log(`apiService.request.path: ${JSON.stringify(path)}`);
 
     const url = `${this.BACKEND_URL}${path}`;
     const headers = new Headers(customHeaders || this.headers);
@@ -130,11 +133,11 @@ export class ApiService {
   }
 
   public get(path: string, args?: any, customHeaders?: Headers): Promise<any> {
-     const params = args ? this.serialize(args).toString() : '';
+    const params = args ? this.serialize(args).toString() : '';
     const fullPath = params ? `${path}?${params}` : path;
 
     return this.request(fullPath, RequestMethod.get, undefined, customHeaders);
- }
+  }
 
   public post(path: string, body?: any, customHeaders?: Headers): Promise<any> {
     return this.request(path, RequestMethod.post, body, customHeaders);

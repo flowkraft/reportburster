@@ -8,6 +8,8 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,14 @@ public class PollScheduler {
 	// put the new files in a waitQueue just to be sure we don't try to process
 	// incomplete files which are not yet fully copied to the "poll" folder
 	private List<String> waitQueue = new LinkedList<String>();
+
+	@PostConstruct
+	public void init() {
+		File pollDir = new File(AppPaths.POLL_DIR_PATH);
+		if (!pollDir.exists()) {
+			pollDir.mkdirs();
+		}
+	}
 
 	@Scheduled(fixedRate = 5000)
 	public void poll() throws Exception {

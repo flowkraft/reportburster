@@ -16,20 +16,25 @@ import { AppComponent } from './app.component';
 import { ToastrModule } from 'ngx-toastr';
 import { AreasModule } from './areas/areas.module';
 import { StateStoreService } from './providers/state-store.service';
-import UtilitiesElectron from './helpers/utilities-electron';
-
-// AoT requires an exported function for factories
+import { ElectronService } from './areas/electron-nodejs/electron.service';
 const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>
   new TranslateHttpLoader(http, './assets/i18n/', '.json');
 
-export function initApp(stateStore: StateStoreService) {
+export function initApp(
+  stateStore: StateStoreService,
+  electronService: ElectronService,
+) {
   return async () => {
-    const systemInfo = await UtilitiesElectron.getSystemInfo();
-    stateStore.configSys.sysInfo.setup.chocolatey = systemInfo.chocolatey;
-    stateStore.configSys.sysInfo.setup.java = systemInfo.java;
-    stateStore.configSys.sysInfo.setup.env = systemInfo.env;
-    stateStore.configSys.sysInfo.setup.BACKEND_URL =
-      await UtilitiesElectron.getBackendUrl();
+    //if electron
+    if (electronService.isElectron) {
+      const systemInfo = await electronService.getSystemInfo();
+      stateStore.configSys.sysInfo.setup.chocolatey = systemInfo.chocolatey;
+      stateStore.configSys.sysInfo.setup.java = systemInfo.java;
+      stateStore.configSys.sysInfo.setup.env = systemInfo.env;
+      stateStore.configSys.sysInfo.setup.BACKEND_URL =
+        await electronService.getBackendUrl();
+    }
+
     //console.log(
     //  `stateStore.configSys.sysInfo.setup = ${JSON.stringify(stateStore.configSys.sysInfo.setup)}`,
     //);
@@ -61,10 +66,11 @@ export function initApp(stateStore: StateStoreService) {
   ],
   providers: [
     StateStoreService,
+    ElectronService,
     {
       provide: APP_INITIALIZER,
       useFactory: initApp,
-      deps: [StateStoreService],
+      deps: [StateStoreService, ElectronService],
       multi: true,
     },
   ],

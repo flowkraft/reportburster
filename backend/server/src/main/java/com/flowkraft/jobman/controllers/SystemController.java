@@ -119,7 +119,7 @@ public class SystemController {
 	Mono<String> cat(@RequestParam String path) throws Exception {
 
 		// System.out.println("/unix-cli/cat path = " + path);
-		
+
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
 
@@ -138,10 +138,11 @@ public class SystemController {
 
 	@GetMapping(value = "/fs/read-file-to-string", produces = MediaType.TEXT_PLAIN_VALUE)
 	Mono<String> readFileToString(@RequestParam String path) throws Exception {
-		// System.out.println("/fs/read-file-to-string");
 
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+
+		System.out.println("/fs/read-file-to-string: fullPath = " + fullPath);
 
 		String fileContent = systemService.unixCliCat(fullPath);
 		return Mono.just(fileContent);
@@ -155,7 +156,7 @@ public class SystemController {
 
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
-		
+
 		System.out.println("/fs/write-string-to-file fullPath = " + fullPath);
 
 		return Mono.fromCallable(() -> {
