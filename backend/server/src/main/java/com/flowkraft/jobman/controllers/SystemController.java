@@ -142,7 +142,7 @@ public class SystemController {
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
 
-		//System.out.println("/fs/read-file-to-string: fullPath = " + fullPath);
+		// System.out.println("/fs/read-file-to-string: fullPath = " + fullPath);
 
 		String fileContent = systemService.unixCliCat(fullPath);
 		return Mono.just(fileContent);
@@ -168,12 +168,19 @@ public class SystemController {
 	@PostMapping("/fs/copy")
 	public Mono<Void> copy(@RequestParam String fromPath, @RequestParam String toPath,
 			@RequestParam(defaultValue = "false") boolean overwrite, @RequestParam(required = false) String[] matching,
-			@RequestParam(defaultValue = "false") boolean ignoreCase) {
+			@RequestParam(defaultValue = "false") boolean ignoreCase) throws Exception {
 		// System.out.println("/fs/copy");
 
+		String fullFromPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+				+ URLDecoder.decode(fromPath, StandardCharsets.UTF_8.toString());
+
+		String fullToPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+				+ URLDecoder.decode(toPath, StandardCharsets.UTF_8.toString());
+
+
 		return Mono.fromCallable(() -> {
-			systemService.fsCopy(URLDecoder.decode(fromPath, StandardCharsets.UTF_8.toString()),
-					URLDecoder.decode(toPath, StandardCharsets.UTF_8.toString()), overwrite, matching, ignoreCase);
+			systemService.fsCopy(fullFromPath,
+					fullToPath, overwrite, matching, ignoreCase);
 			return null;
 		});
 	}
@@ -200,7 +207,10 @@ public class SystemController {
 	public Mono<Void> dir(@RequestParam String path, @RequestBody Optional<DirCriteria> criteria) throws Exception {
 		// System.out.println("/fs/dir = " + path);
 
-		systemService.fsDir(URLDecoder.decode(path, StandardCharsets.UTF_8.toString()), criteria);
+		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+
+		systemService.fsDir(fullPath, criteria);
 		return Mono.empty();
 
 	}

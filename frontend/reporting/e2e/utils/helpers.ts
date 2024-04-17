@@ -57,9 +57,16 @@ export class Helpers {
     });
   };
 
+  static currentElectronApp: ElectronApplication | null = null;
+
   static electronAppLaunch = async (
     relativePath: string,
   ): Promise<ElectronApplication> => {
+    // If an Electron app is already running, return it
+    if (this.currentElectronApp) {
+      return this.currentElectronApp;
+    }
+
     const electronApp = await electron.launch({
       args: [
         path.join(__dirname, `${relativePath}/app/main.js`),
@@ -77,13 +84,25 @@ export class Helpers {
     });
     const firstPage = await electronApp.firstWindow();
     await firstPage.waitForLoadState('domcontentloaded');
-
+    this.currentElectronApp = electronApp;
     return electronApp;
   };
 
   static electronAppClose = async (electronApp: ElectronApplication) => {
+    // If there's no running Electron app, there's nothing to close
+    if (!this.currentElectronApp) {
+      return;
+    }
+
     await electronApp.context().tracing.stop({ path: 'e2e/tracing/trace.zip' });
+    for (const page of electronApp.context().pages()) {
+      await page.close();
+    }
+
+    await electronApp.context().close();
     await electronApp.close();
+    // Set currentElectronApp to null
+    this.currentElectronApp = null;
   };
 
   static async browserLaunch(): Promise<{

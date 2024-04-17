@@ -73,10 +73,10 @@ export const electronBeforeAfterAllTest = isElectron
     })
   : base.extend<
       {
-        beforeAfterEach: BrowserContext;
+        beforeAfterEach: Page;
       },
       {
-        beforeAfterAll: Browser;
+        beforeAfterAll: { browser: Browser; context: BrowserContext };
       }
     >({
       beforeAfterAll: [
@@ -97,7 +97,7 @@ export const electronBeforeAfterAllTest = isElectron
             shouldDeactivateLicenseKey,
           );
 
-          const [firstPage] = await context.pages();
+          const [firstPage] = context.pages();
 
           const ft = new FluentTester(firstPage);
 
