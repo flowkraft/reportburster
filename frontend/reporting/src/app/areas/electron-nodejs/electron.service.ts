@@ -77,8 +77,8 @@ export class ElectronService {
   JAVA_HOME_REGISTRY: string;
   PATH_REGISTRY: string;
 
-  isJavaOk = false;
-  javaVersion: string;
+  //isJavaOk = false;
+  //javaVersion: string;
   checkJavaSubscription: Subscription;
 
   isRestartRequired = false;
@@ -90,8 +90,8 @@ export class ElectronService {
     jreHomeFolderExists: false,
   };
 
-  isChocoOk = false;
-  chocoVersion: string;
+  //isChocoOk = false;
+  //chocoVersion: string;
 
   logFilePath: string;
 
@@ -217,16 +217,16 @@ export class ElectronService {
       if (!semver.valid(javaVersion)) semVersion = semver.coerce(javaVersion);
 
       if (semver.gte(semVersion, semVersion1_8)) {
-        this.isJavaOk = true;
-        this.javaVersion = javaVersion.toString();
+        //this.isJavaOk = true;
+        //this.javaVersion = javaVersion.toString();
       }
 
-      this.isRestartRequired = false;
+      //this.isRestartRequired = false;
 
       return javaV;
     } catch (error) {
-      this.isJavaOk = false;
-      this.javaVersion = undefined;
+      //this.isJavaOk = false;
+      //this.javaVersion = undefined;
 
       if (!this.JAVA_HOME_REGISTRY) {
         try {
@@ -247,14 +247,10 @@ export class ElectronService {
           this.PATH_REGISTRY = pathEnvVariable;
 
           if (pathEnvVariable.includes(javaHomeEnvVariable)) {
-            this.isRestartRequired = true;
-
+            //this.isRestartRequired = true;
             //User should be allowed to restart the app in this situation
-
             //https://stackoverflow.com/questions/55982480/what-is-the-proper-way-to-restart-an-electron-app
-
             //https://www.electronjs.org/docs/api/app#apprelaunchoptions
-
             //https://stackoverflow.com/questions/41819632/how-to-call-a-function-module-in-electron-from-my-webpage
           }
         } catch (err) {}
@@ -269,14 +265,14 @@ export class ElectronService {
       const { stdout, stderr } =
         await UtilitiesElectron.execNativeCommand('choco --version');
 
-      if (!this.isChocoOk) this.isChocoOk = true;
-      this.chocoVersion = stdout;
+      //if (!this.isChocoOk) this.isChocoOk = true;
+      //this.chocoVersion = stdout;
       //console.log(`this.chocoVersion  = ${this.chocoVersion}`);
 
       return stdout;
     } catch (error) {
-      if (this.isChocoOk) this.isChocoOk = false;
-      this.chocoVersion = undefined;
+      //if (this.isChocoOk) this.isChocoOk = false;
+      //this.chocoVersion = undefined;
 
       if (throwError) throw error;
     }

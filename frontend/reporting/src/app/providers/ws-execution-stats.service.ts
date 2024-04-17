@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 import Utilities from '../helpers/utilities';
 import { ExecutionStatsService } from './execution-stats.service';
 import { ToastrMessagesService } from './toastr-messages.service';
+import { StateStoreService } from './state-store.service';
 
 @Injectable({
   providedIn: 'root',
@@ -30,6 +31,7 @@ export class WebSocketExecutionStatsService extends WebSocketEndpoint {
     public settingsService: SettingsService,
     protected executionStatsService: ExecutionStatsService,
     protected toastMessagesService: ToastrMessagesService,
+    protected stateStore: StateStoreService,
   ) {
     super();
   }
@@ -285,6 +287,7 @@ export class WebSocketExecutionStatsService extends WebSocketEndpoint {
     exceptionMessage: '';
   }) => {
     this.settingsService.isJServerStarted = true;
+    this.stateStore.configSys.sysInfo.setup.java.isJavaOk = true;
 
     const message = receivedEvent['message'];
 

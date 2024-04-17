@@ -4,6 +4,7 @@ import { javaTemplate } from './java.template';
 
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
 import { ElectronService } from '../electron.service';
+import { StateStoreService } from '../../../providers/state-store.service';
 
 @Component({
   selector: 'dburst-java',
@@ -12,6 +13,7 @@ import { ElectronService } from '../electron.service';
 export class JavaComponent {
   constructor(
     protected electronService: ElectronService,
+    protected stateStore: StateStoreService,
     protected confirmService: ConfirmService,
   ) {}
 
@@ -19,7 +21,7 @@ export class JavaComponent {
     this.confirmService.askConfirmation({
       message: 'Are you sure that you want to perform this action?',
       confirmAction: () => {
-        this.electronService.restartElectronApp();
+        //this.electronService.restartElectronApp();
       },
     });
   }

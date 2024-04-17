@@ -29,10 +29,18 @@ export class LogsServiceWebSocket extends WebSocketEndpoint {
     protected executionStatsService: ExecutionStatsService,
   ) {
     super();
-    this.BACKEND_URL = apiService.BACKEND_URL;
+    //this.BACKEND_URL = apiService.BACKEND_URL;
   }
 
   async makeWSConnectionAndHandleMessages() {
+    if (this.BACKEND_URL == '/api' && this.apiService.BACKEND_URL != '/api') {
+      this.BACKEND_URL = this.apiService.BACKEND_URL;
+
+      console.log(
+        `LogsServiceWebSocket.makeWSConnectionAndHandleMessages() BACKEND_URL: ${this.BACKEND_URL})}`,
+      );
+    }
+
     //if server is started and the subscription is not already active
     const sOptions = new SocketOptions(
       Constants.WS_ENDPOINT,
@@ -184,10 +192,10 @@ export class LogsServiceWebSocket extends WebSocketEndpoint {
       this.logsSubjects.get(logFileName).complete();
       this.subscriptionsLogFileContent.get(logFileName).unsubscribe();
       this.logsSubjects.delete(logFileName);
-await this.apiService.put('/jobman/logs/tailer', {
-      fileName: logFileName,
-      command: 'stop',
-    });
+      await this.apiService.put('/jobman/logs/tailer', {
+        fileName: logFileName,
+        command: 'stop',
+      });
     }
 
     if (this.logsSubjects.size == 0) {
@@ -196,8 +204,6 @@ await this.apiService.put('/jobman/logs/tailer', {
         this.wsSubscription = null;
       }
     }
-
-    
   }
 
   getLogs$(fileName: string) {

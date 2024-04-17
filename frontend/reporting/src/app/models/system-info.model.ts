@@ -1,14 +1,14 @@
 export const SystemInfo = {
   operatingSystem: 'Windows',
   setup: {
-    BACKEND_URL: '',
+    BACKEND_URL: '/api',
     isRestartRequired: false,
     chocolatey: {
-      isChocoOk: false,
+      isChocoOk: true,
       version: '',
     },
     java: {
-      isJavaOk: false,
+      isJavaOk: true,
       version: '',
     },
     env: {

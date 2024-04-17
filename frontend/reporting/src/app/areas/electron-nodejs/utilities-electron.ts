@@ -53,7 +53,7 @@ export default class UtilitiesElectron {
     command: string,
   ): Promise<{ stdout: string; stderr: string }> {
     const { stdout, stderr } = await ipcRenderer.invoke(
-      'execNativeCommand',
+      'child_process.exec',
       command,
     );
     //console.log(`stdout: ${stdout}`);

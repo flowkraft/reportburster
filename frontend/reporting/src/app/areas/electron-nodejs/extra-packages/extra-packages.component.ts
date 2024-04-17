@@ -8,7 +8,8 @@ import { ExecutionStatsService } from '../../../providers/execution-stats.servic
 import Utilities from '../../../helpers/utilities';
 import { TranslateService } from '@ngx-translate/core';
 import UtilitiesElectron from '../utilities-electron';
-import { ElectronService } from '../electron.service';
+import { StateStoreService } from '../../../providers/state-store.service';
+//import { ElectronService } from '../electron.service';
 
 interface ExtPackage {
   id: string;
@@ -82,7 +83,8 @@ export class ExtraPackagesComponent implements OnInit {
   constructor(
     protected translateService: TranslateService,
     protected bashService: BashService,
-    protected electronService: ElectronService,
+    //protected electronService: ElectronService,
+    protected stateStore: StateStoreService,
     protected executionStatsService: ExecutionStatsService,
     protected confirmService: ConfirmService,
   ) {}
