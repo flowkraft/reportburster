@@ -5,7 +5,7 @@ export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTem
 >
 <br /><br />
 
-<div class="row" *ngIf="!electronService.isJavaOk">
+<div class="row" *ngIf="!this.stateStore.configSys.sysInfo.setup.java.isJavaOk">
   <div class="col-xs-2">
     <span class="label label-warning"
       ><strong
@@ -24,11 +24,11 @@ export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTem
   </div>
 </div>
 
-<span class="label label-success" *ngIf="electronService.isJavaOk"
+<span class="label label-success" *ngIf="this.stateStore.configSys.sysInfo.setup.java.isJavaOk"
   ><i class="fa fa-check-square-o"></i>&nbsp;<strong
     >{{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.GREAT' | translate }},
     <em>Java</em>
-    {{electronService.javaVersion}}
+    {{this.stateStore.configSys.sysInfo.setup.java.version}}
     {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.FOUND' | translate }}
     <em>DocumentBurster</em></strong
   ></span
@@ -39,23 +39,27 @@ export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTem
 <br /><br />
 <ol>
   <li>
-    <em>%JAVA_HOME%</em> (process.env) <code>{{electronService.JAVA_HOME}}</code>
+    <em>%JAVA_HOME%</em> (process.env) <code>{{this.stateStore.configSys.sysInfo.setup.env.JAVA_HOME}}</code>
   </li>
   <li>
-    <em>%JRE_HOME%</em> (process.env) <code>{{electronService.JRE_HOME}}</code>
+    <em>%JRE_HOME%</em> (process.env) <code>{{this.stateStore.configSys.sysInfo.setup.env.JRE_HOME}}</code>
   </li>
-  <li><em>%PATH%</em> (process.env) <code>{{electronService.PATH}}</code></li>
+  <li><em>%PATH%</em> (process.env) <code>{{this.stateStore.configSys.sysInfo.setup.env.PATH}}</code></li>
 
-  <li *ngIf="electronService.isRestartRequired">
+  <!--
+  <li *ngIf="this.stateStore.configSys.sysInfo.setup.isRestartRequired">
     <em>%JAVA_HOME%</em> (registry)
-    <code>{{electronService.JAVA_HOME_REGISTRY}}</code>
+    <code>{{this.stateStore.configSys.sysInfo.setup.env.JAVA_HOME_REGISTRY}}</code>
   </li>
-  <li *ngIf="electronService.isRestartRequired">
-    <em>%PATH%</em> (registry) <code>{{electronService.PATH_REGISTRY}}</code>
+  <li *ngIf="this.stateStore.configSys.sysInfo.setup.isRestartRequired">
+    <em>%PATH%</em> (registry) <code>{{this.stateStore.configSys.sysInfo.setup.env.PATH_REGISTRY}}</code>
   </li>
+  -->  
 </ol>
 
+
 <br />
+<!--
 <strong
   >{{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.DIAGNOSTICS.HEALTH-CHECKS' |
   translate }}</strong
@@ -65,14 +69,14 @@ export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTem
   <li>
     <span
       class="label label-success"
-      *ngIf="electronService.javaDiagnostics.javaHomeFolderExists"
-      ><i class="fa fa-check-square-o"></i>&nbsp;{{electronService.JAVA_HOME}}
+      *ngIf="this.stateStore.configSys.sysInfo.setup.javaDiagnostics.javaHomeFolderExists"
+      ><i class="fa fa-check-square-o"></i>&nbsp;{{this.stateStore.configSys.sysInfo.setup.JAVA_HOME}}
       {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.DIAGNOSTICS.FOLDER-EXISTS' |
       translate }}</span
     >
     <span
       class="label label-warning"
-      *ngIf="!electronService.javaDiagnostics.javaHomeFolderExists"
+      *ngIf="!this.stateStore.configSys.sysInfo.setup.javaDiagnostics.javaHomeFolderExists"
       >&nbsp;<em>%JAVA_HOME%</em>
       {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.DIAGNOSTICS.FOLDER-NOT-FOUND' |
       translate }}</span
@@ -82,14 +86,14 @@ export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTem
   <li>
     <span
       class="label label-success"
-      *ngIf="electronService.javaDiagnostics.pathIncludesJavaHomeBin"
-      ><i class="fa fa-check-square-o"></i>&nbsp;{{electronService.JAVA_HOME}}/bin
+      *ngIf="this.stateStore.configSys.sysInfo.setup.javaDiagnostics.pathIncludesJavaHomeBin"
+      ><i class="fa fa-check-square-o"></i>&nbsp;{{this.stateStore.configSys.sysInfo.setup.JAVA_HOME}}/bin
       {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.DIAGNOSTICS.LOCATION-IN-PATH' |
       translate }} <em>%PATH%</em></span
     >
     <span
       class="label label-warning"
-      *ngIf="!electronService.javaDiagnostics.pathIncludesJavaHomeBin"
+      *ngIf="!this.stateStore.configSys.sysInfo.setup.javaDiagnostics.pathIncludesJavaHomeBin"
     >
       &nbsp;
       <strong>%JAVA_HOME%/bin</strong>
@@ -101,15 +105,15 @@ export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTem
   <li>
     <span
       class="label label-success"
-      *ngIf="electronService.javaDiagnostics.javaExeExists"
+      *ngIf="this.stateStore.configSys.sysInfo.setup.javaDiagnostics.javaExeExists"
       ><i class="fa fa-check-square-o"></i
-      >&nbsp;{{electronService.JAVA_HOME}}/bin/java.exe
+      >&nbsp;{{this.stateStore.configSys.sysInfo.setup.JAVA_HOME}}/bin/java.exe
       {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.DIAGNOSTICS.FILE-EXISTS' |
       translate }}</span
     >
     <span
       class="label label-warning"
-      *ngIf="!electronService.javaDiagnostics.javaExeExists"
+      *ngIf="!this.stateStore.configSys.sysInfo.setup.javaDiagnostics.javaExeExists"
     >
       &nbsp;
       <strong>%JAVA_HOME%/bin/java.exe</strong>
@@ -121,14 +125,14 @@ export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTem
   <li *ngIf="settingsService.isServerVersion">
     <span
       class="label label-success"
-      *ngIf="electronService.javaDiagnostics.jreHomeFolderExists"
-      ><i class="fa fa-check-square-o"></i>&nbsp;{{electronService.JRE_HOME}}
+      *ngIf="this.stateStore.configSys.sysInfo.setup.javaDiagnostics.jreHomeFolderExists"
+      ><i class="fa fa-check-square-o"></i>&nbsp;{{this.stateStore.configSys.sysInfo.setup.JRE_HOME}}
       {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.DIAGNOSTICS.FOLDER-EXISTS' |
       translate }}</span
     >
     <span
       class="label label-warning"
-      *ngIf="!electronService.javaDiagnostics.jreHomeFolderExists"
+      *ngIf="!this.stateStore.configSys.sysInfo.setup.javaDiagnostics.jreHomeFolderExists"
       >&nbsp;<em>%JRE_HOME%</em>
       ({{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.DIAGNOSTICS.REQUIRED-BY' |
       translate }}&nbsp;<em>DocumentBurster</em> Web Console)
@@ -137,6 +141,6 @@ export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTem
     >
   </li>
 </ol>
-
+-->
 <!--</ng-template> -->
 `;

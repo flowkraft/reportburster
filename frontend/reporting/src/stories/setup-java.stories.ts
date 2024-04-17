@@ -1,10 +1,10 @@
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 import { baseMeta } from './_utils/setup';
-import { JavaComponent } from '../app/areas/install-setup-upgrade/java/java.component';
-import { ChocolateyComponent } from '../app/areas/install-setup-upgrade/chocolatey/chocolatey.component';
 
 import { StateStoreService } from '../app/providers/state-store.service';
-import { ElectronService } from '../app/core/services';
+import { JavaComponent } from '../app/areas/electron-nodejs/java/java.component';
+import { ChocolateyComponent } from '../app/areas/electron-nodejs/chocolatey/chocolatey.component';
+import { ElectronService } from '../app/areas/electron-nodejs/electron.service';
 
 type Story = StoryObj<JavaComponent>;
 
@@ -30,7 +30,8 @@ const mockElectronService = {
 
 const storeServiceIsRestartRequiredTrue = new StateStoreService();
 
-storeServiceIsRestartRequiredTrue.setup.isRestartRequired = true;
+storeServiceIsRestartRequiredTrue.configSys.sysInfo.setup.isRestartRequired =
+  true;
 
 export const isRestartRequiredTrue: Story = {
   render: () => ({
@@ -53,12 +54,12 @@ export const isRestartRequiredTrue: Story = {
 const storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse1 =
   new StateStoreService();
 
-storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse1.setup.isRestartRequired =
+storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse1.configSys.sysInfo.setup.isRestartRequired =
   false;
 
-//storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse.setup.java.isJavaOk =
+//storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse.configSys.sysInfo.setup.java.isJavaOk =
 //  false;
-//storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse.setup.chocolatey.isChocoOk =
+//storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse.configSys.sysInfo.setup.chocolatey.isChocoOk =
 //  false;
 
 export const isRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse1: Story = {
@@ -83,12 +84,12 @@ export const isRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse1: Story = {
 const storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse2 =
   new StateStoreService();
 
-storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse2.setup.isRestartRequired =
+storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse2.configSys.sysInfo.setup.isRestartRequired =
   false;
 
-storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse2.setup.java.isJavaOk =
+storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse2.configSys.sysInfo.setup.java.isJavaOk =
   false;
-storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse2.setup.chocolatey.isChocoOk =
+storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse2.configSys.sysInfo.setup.chocolatey.isChocoOk =
   false;
 
 export const isRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse2: Story = {
@@ -113,12 +114,12 @@ export const isRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse2: Story = {
 const storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKTrue =
   new StateStoreService();
 
-storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKTrue.setup.isRestartRequired =
+storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKTrue.configSys.sysInfo.setup.isRestartRequired =
   false;
 
-storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKTrue.setup.java.isJavaOk =
+storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKTrue.configSys.sysInfo.setup.java.isJavaOk =
   false;
-storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKTrue.setup.chocolatey.isChocoOk =
+storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKTrue.configSys.sysInfo.setup.chocolatey.isChocoOk =
   true;
 
 export const isRestartRequiredFalseIsJavaOKFalseIsChocoOKTrue: Story = {
@@ -143,12 +144,12 @@ export const isRestartRequiredFalseIsJavaOKFalseIsChocoOKTrue: Story = {
 const storeServiceIsRestartRequiredFalseIsJavaOKTrueIsChocoOKTrue =
   new StateStoreService();
 
-storeServiceIsRestartRequiredFalseIsJavaOKTrueIsChocoOKTrue.setup.isRestartRequired =
+storeServiceIsRestartRequiredFalseIsJavaOKTrueIsChocoOKTrue.configSys.sysInfo.setup.isRestartRequired =
   false;
 
-storeServiceIsRestartRequiredFalseIsJavaOKTrueIsChocoOKTrue.setup.java.isJavaOk =
+storeServiceIsRestartRequiredFalseIsJavaOKTrueIsChocoOKTrue.configSys.sysInfo.setup.java.isJavaOk =
   true;
-storeServiceIsRestartRequiredFalseIsJavaOKTrueIsChocoOKTrue.setup.chocolatey.isChocoOk =
+storeServiceIsRestartRequiredFalseIsJavaOKTrueIsChocoOKTrue.configSys.sysInfo.setup.chocolatey.isChocoOk =
   true;
 
 export const isRestartRequiredFalseIsJavaOKTrueIsChocoOKTrue: Story = {

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import Utilities from '../helpers/utilities';
 import { HttpParams } from '@angular/common/http';
 import { StateStoreService } from './state-store.service';
+import { InitService } from './init.service';
 
 export enum RequestMethod {
   get = 'GET',
@@ -22,7 +23,10 @@ export class ApiService {
   private headers: Headers;
   private jwtToken: string;
 
-  constructor(protected stateStore: StateStoreService) {
+  constructor(
+    protected stateStore: StateStoreService,
+    protected initService: InitService,
+  ) {
     this.headers = new Headers({
       Accept: 'application/json',
       'Content-Type': 'application/json',
@@ -30,9 +34,9 @@ export class ApiService {
 
     this.jwtToken = '';
 
-    if (this.stateStore.configSys.info.FRONTEND == 'electron') {
-      this.BACKEND_URL = stateStore.configSys.sysInfo.setup.BACKEND_URL;
-    }
+    //console.log(
+    //  `apiService.constructor - stateStore.configSys.sysInfo.setup = ${JSON.stringify(stateStore.configSys.sysInfo.setup)}`,
+    //);
   }
 
   private serialize(obj: any): HttpParams {
@@ -69,10 +73,24 @@ export class ApiService {
     body: any = '',
     customHeaders?: Headers,
   ): Promise<any> {
-    if (!this.stateStore.configSys.sysInfo.setup.java.isJavaOk) return;
-    console.log(`apiService.request.path: ${JSON.stringify(path)}`);
+    //console.log(
+    //  `this.stateStore.configSys.sysInfo.setup = ${JSON.stringify(this.stateStore.configSys.sysInfo.setup)}`,
+    // );
+
+    if (
+      this.stateStore.configSys.info.FRONTEND == 'electron' &&
+      this.BACKEND_URL == '/api'
+    ) {
+      //console.log(
+      //  `apiService.constructor stateStore.configSys.sysInfo.setup.BACKEND_URL: ${JSON.stringify(this.stateStore.configSys.sysInfo.setup.BACKEND_URL)}`,
+      //);
+
+      this.BACKEND_URL = this.stateStore.configSys.sysInfo.setup.BACKEND_URL;
+    }
 
     const url = `${this.BACKEND_URL}${path}`;
+    //console.log(`apiService.request.url: ${JSON.stringify(url)}`);
+
     const headers = new Headers(customHeaders || this.headers);
     const options: RequestInit = {
       method,
@@ -98,9 +116,12 @@ export class ApiService {
     }
     //console.log(`options.body = ${JSON.stringify(options.body)}`);
 
+    //if (!this.stateStore.configSys.sysInfo.setup.java.isJavaOk) return;
+
     const response = await fetch(url, options);
 
     if (!response.ok) {
+      this.stateStore.configSys.sysInfo.setup.java.isJavaOk = false;
       this.checkError(response.status);
       throw new Error(`Request failed with status ${response.status}`);
     }

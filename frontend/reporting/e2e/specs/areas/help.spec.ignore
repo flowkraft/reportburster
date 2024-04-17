@@ -2,7 +2,7 @@ import { test } from '@playwright/test';
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE2
+//DONE4
 electronBeforeAfterAllTest(
   'should correctly display all the screens from the Help area',
   async function ({ beforeAfterEach: firstPage }) {

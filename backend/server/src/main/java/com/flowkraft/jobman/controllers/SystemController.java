@@ -142,7 +142,7 @@ public class SystemController {
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
 
-		System.out.println("/fs/read-file-to-string: fullPath = " + fullPath);
+		//System.out.println("/fs/read-file-to-string: fullPath = " + fullPath);
 
 		String fileContent = systemService.unixCliCat(fullPath);
 		return Mono.just(fileContent);

@@ -1,8 +1,8 @@
 import { Meta, StoryObj } from '@storybook/angular';
 import { baseMeta } from './_utils/setup';
 import { StateStoreService } from '../app/providers/state-store.service';
-import { ElectronService } from '../app/core/services';
-import { ChocolateyComponent } from '../app/areas/install-setup-upgrade/chocolatey/chocolatey.component';
+import { ChocolateyComponent } from '../app/areas/electron-nodejs/chocolatey/chocolatey.component';
+import { ElectronService } from '../app/areas/electron-nodejs/electron.service';
 
 type Story = StoryObj<ChocolateyComponent>;
 const defaultMeta: Meta<ChocolateyComponent> = {
@@ -20,7 +20,7 @@ const mockElectronService = {
 
 const storeServiceIsChocoOkFalse = new StateStoreService();
 
-storeServiceIsChocoOkFalse.setup.chocolatey.isChocoOk = false;
+storeServiceIsChocoOkFalse.configSys.sysInfo.setup.chocolatey.isChocoOk = false;
 
 export const IsChocoOkFalse: Story = {
   render: () => ({
@@ -42,7 +42,7 @@ export const IsChocoOkFalse: Story = {
 
 const storeServiceIsChocoOkTrue = new StateStoreService();
 
-storeServiceIsChocoOkTrue.setup.chocolatey.isChocoOk = true;
+storeServiceIsChocoOkTrue.configSys.sysInfo.setup.chocolatey.isChocoOk = true;
 
 export const IsChocoOkTrue: Story = {
   render: () => ({

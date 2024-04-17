@@ -15,7 +15,6 @@ interface ProcessOutputResult {
 })
 export class ShellService {
   logFilePath: string;
-  isJavaOk = true;
 
   constructor(
     protected settingsService: SettingsService,
@@ -23,10 +22,6 @@ export class ShellService {
     protected fsService: FsService,
     protected apiService: ApiService,
   ) {}
-
-  async checkJavaVersion() {
-    this.isJavaOk = this.settingsService.isJServerStarted;
-  }
 
   async doKillOldExeThenCopyAndStartNewExe(
     jobFilePath: string,

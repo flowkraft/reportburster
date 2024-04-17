@@ -17,6 +17,7 @@ import { ToastrModule } from 'ngx-toastr';
 import { AreasModule } from './areas/areas.module';
 import { StateStoreService } from './providers/state-store.service';
 import { ElectronService } from './areas/electron-nodejs/electron.service';
+import { InitService } from './providers/init.service';
 const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>
   new TranslateHttpLoader(http, './assets/i18n/', '.json');
 
@@ -27,16 +28,19 @@ export function initApp(
   return async () => {
     //if electron
     if (electronService.isElectron) {
-      const systemInfo = await electronService.getSystemInfo();
-      stateStore.configSys.sysInfo.setup.chocolatey = systemInfo.chocolatey;
-      stateStore.configSys.sysInfo.setup.java = systemInfo.java;
-      stateStore.configSys.sysInfo.setup.env = systemInfo.env;
       stateStore.configSys.sysInfo.setup.BACKEND_URL =
         await electronService.getBackendUrl();
+
+      const systemInfo = await electronService.getSystemInfo();
+      stateStore.configSys.sysInfo.setup.chocolatey = {
+        ...systemInfo.chocolatey,
+      };
+      stateStore.configSys.sysInfo.setup.java = { ...systemInfo.java };
+      stateStore.configSys.sysInfo.setup.env = { ...systemInfo.env };
     }
 
     //console.log(
-    //  `stateStore.configSys.sysInfo.setup = ${JSON.stringify(stateStore.configSys.sysInfo.setup)}`,
+    //  `app.module - stateStore.configSys.sysInfo.setup = ${JSON.stringify(stateStore.configSys.sysInfo.setup)}`,
     //);
   };
 }
@@ -65,8 +69,7 @@ export function initApp(
     BrowserAnimationsModule,
   ],
   providers: [
-    StateStoreService,
-    ElectronService,
+    InitService,
     {
       provide: APP_INITIALIZER,
       useFactory: initApp,

@@ -283,7 +283,7 @@ ipcMain.on('restart_app', () => {
 
 ipcMain.handle('getBackendUrl', async (event) => {
   //if non-"production"
-  if (!app.isPackaged) return 'http://localhost:9090';
+  if (!app.isPackaged) return 'http://localhost:9090/api';
 
   const internalSettingsXmlFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/config/_internal/settings.xml`;
   const internalSettingsXmlFileContent = await fs.promises.readFile(
@@ -410,45 +410,41 @@ async function _getSystemInfo(): Promise<{
     JRE_HOME: string;
   };
 }> {
-  let javaIsNotInstalled = true;
-  let chocoIsNotInstalled = true;
+  let javaIsInstalled = true;
+  let chocoIsInstalled = true;
 
   const electronLogFileContent = await fs.promises.readFile(
     electronLogFilePath,
     'utf-8',
   );
 
-  if (!electronLogFileContent.includes("'java' is not recognized")) {
-    javaIsNotInstalled = false;
+  if (electronLogFileContent.includes("'java' is not recognized")) {
+    javaIsInstalled = false;
   }
 
-  if (!electronLogFileContent.includes("'choco' is not recognized")) {
-    chocoIsNotInstalled = false;
+  if (electronLogFileContent.includes("'choco' is not recognized")) {
+    chocoIsInstalled = false;
   }
 
   // Extract Chocolatey version
   let chocoVersionMatch = electronLogFileContent.match(
     /choco version: (\d+\.\d+\.\d+)/,
   );
-  let chocoVersion = chocoVersionMatch
-    ? chocoVersionMatch[1]
-    : "'choco' is not recognized";
+  let chocoVersion = chocoVersionMatch ? chocoVersionMatch[1] : '';
 
   // Extract Java version
   let javaVersionMatch = electronLogFileContent.match(
     /using Java (\d+\.\d+\.\d+)/,
   );
-  let javaVersion = javaVersionMatch
-    ? javaVersionMatch[1]
-    : "'java' is not recognized";
+  let javaVersion = javaVersionMatch ? javaVersionMatch[1] : '';
 
   const sysInfo = {
     chocolatey: {
-      isChocoOk: !chocoIsNotInstalled,
+      isChocoOk: chocoIsInstalled,
       version: chocoVersion,
     },
     java: {
-      isJavaOk: !javaIsNotInstalled,
+      isJavaOk: javaIsInstalled,
       version: javaVersion,
     },
     env: {
@@ -457,6 +453,8 @@ async function _getSystemInfo(): Promise<{
       JRE_HOME: process.env.JRE_HOME || '',
     },
   };
+
+  //console.log(`_getSystemInfo: ${JSON.stringify(sysInfo)}`);
 
   return sysInfo;
 }
