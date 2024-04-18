@@ -4,7 +4,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
     {{ 'AREAS.EXTERNAL-CONNECTIONS.LEFT-MENU.EXTERNAL-CONNECTIONS' | translate }}
   </li>
 
-  <li class="active"><a href="#" [routerLink]="['/ext-connections']"><i class="fa fa-files-o"></i> <span>
+  <li class="active"><a href="#" [routerLink]="['/ext-connections']" skipLocationChange="true"><i class="fa fa-files-o"></i> <span>
         {{ 'AREAS.EXTERNAL-CONNECTIONS.LEFT-MENU.EXTERNAL-CONNECTIONS' | translate }}
       </span></a></li>
 </ul>`;

@@ -80,7 +80,7 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
       <br /><br />
 
       <a href="#" [routerLink]="['/help', 'installSetupMenuSelected']"
-        ><button type="button" class="btn btn-primary">
+      skipLocationChange="true"><button type="button" class="btn btn-primary">
           {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INSTALL' | translate }}
           <em>Java</em>
         </button></a
@@ -105,7 +105,7 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
           <a
             href="#"
             [routerLink]="['/processingQa','qualityMenuSelected', processingService.procBurstInfo.prefilledInputFilePath, processingService.procBurstInfo.prefilledConfigurationFilePath]"
-            >Quality Assurance</a
+            skipLocationChange="true">Quality Assurance</a
           >
           {{ 'AREAS.PROCESSING.TAB-BURST.FOR-THE-FILE' | translate }}
           <em>{{processingService.procBurstInfo.isSample ? processingService.procBurstInfo.prefilledInputFilePath : processingService.procBurstInfo.inputFileName}}</em>&nbsp;&nbsp;
@@ -114,7 +114,7 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
             type="button"
             class="btn btn-primary btn-sm"
             [routerLink]="['/processingQa','qualityMenuSelected', processingService.procBurstInfo.prefilledInputFilePath, processingService.procBurstInfo.prefilledConfigurationFilePath]"
-          >
+            skipLocationChange="true">
             {{ 'AREAS.PROCESSING.TAB-BURST.RUN-QA' | translate }}
           </button>
         </div>

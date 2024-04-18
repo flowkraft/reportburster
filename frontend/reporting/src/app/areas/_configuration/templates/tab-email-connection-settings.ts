@@ -70,7 +70,7 @@ export const tabEmailConnectionSettingsTemplate = `<ng-template
     'emailSettingsMenuSelected',
     settingsService.currentConfigurationTemplatePath,
     settingsService.currentConfigurationTemplateName
-  ]"
+  ]" skipLocationChange="true"
                 >{{
                 'AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.MANAGE-EMAIL-CONNECTIONS'
                 | translate }}</a

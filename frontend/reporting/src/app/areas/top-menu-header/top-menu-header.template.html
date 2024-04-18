@@ -1,6 +1,11 @@
 <header class="main-header">
   <!-- Logo -->
-  <a href="#" [routerLink]="['/processing', 'burstMenuSelected']" class="logo">
+  <a
+    href="#"
+    [routerLink]="['/processing', 'burstMenuSelected']"
+    class="logo"
+    skipLocationChange="true"
+  >
     <rb-brand></rb-brand>
   </a>
 
@@ -14,6 +19,7 @@
             id="topMenuBurst"
             href="#"
             [routerLink]="['/processing', 'burstMenuSelected']"
+            skipLocationChange="true"
             >{{ 'AREAS.TOP-MENU-HEADER.BURST' | translate }}</a
           >
         </li>
@@ -43,6 +49,7 @@
                   configurationFile.filePath,
                   configurationFile.templateName
                 ]"
+                skipLocationChange="true"
                 >{{ configurationFile.templateName }}
               </a>
             </li>
@@ -101,6 +108,7 @@
                   configurationFile.filePath,
                   configurationFile.templateName
                 ]"
+                    skipLocationChange="true"
                     >{{ configurationFile.templateName }}
                   </a>
                 </li>
@@ -124,6 +132,7 @@
                 id="topMenuHelpSupport"
                 href="#"
                 [routerLink]="['/help', 'supportMenuSelected']"
+                skipLocationChange="true"
                 >{{ 'AREAS.TOP-MENU-HEADER.GET-SOFTWARE-SUPPORT' | translate
                 }}</a
               >
@@ -133,6 +142,7 @@
                 id="topMenuHelpServices"
                 href="#"
                 [routerLink]="['/help', 'servicesMenuSelected']"
+                skipLocationChange="true"
               >
                 {{ 'AREAS.TOP-MENU-HEADER.DOCUMENTBURSTER-SERVICES' | translate
                 }}</a
@@ -144,6 +154,7 @@
                 id="topMenuHelpDocumentation"
                 href="#"
                 [routerLink]="['/help', 'docsMenuSelected']"
+                skipLocationChange="true"
                 >{{ 'AREAS.TOP-MENU-HEADER.DOCUMENTATION' | translate }}</a
               >
             </li>
@@ -152,6 +163,7 @@
                 id="topMenuHelpExamples"
                 href="#"
                 [routerLink]="['/help', 'useCasesMenuSelected']"
+                skipLocationChange="true"
                 >{{ 'AREAS.TOP-MENU-HEADER.EXAMPLES' | translate }}</a
               >
             </li>
@@ -161,6 +173,7 @@
                 id="topMenuHelpFreeForSchools"
                 href="#"
                 [routerLink]="['/help', 'freeForSchoolsMenuSelected']"
+                skipLocationChange="true"
                 >{{ 'AREAS.TOP-MENU-HEADER.FREE-FOR-SCHOOLS' | translate }}</a
               >
             </li>
@@ -169,6 +182,7 @@
                 id="topMenuHelpCustomerReviews"
                 href="#"
                 [routerLink]="['/help', 'reviewsMenuSelected']"
+                skipLocationChange="true"
                 >{{ 'AREAS.TOP-MENU-HEADER.CUSTOMER-REVIEWS' | translate }}</a
               >
             </li>
@@ -177,6 +191,7 @@
                 id="topMenuHelpBlog"
                 href="#"
                 [routerLink]="['/help', 'blogMenuSelected']"
+                skipLocationChange="true"
               >
                 {{ 'AREAS.TOP-MENU-HEADER.DOCUMENTBURSTER-BLOG' | translate
                 }}</a
@@ -190,6 +205,7 @@
                 id="topMenuHelpJava"
                 href="#"
                 [routerLink]="['/help', 'installSetupMenuSelected']"
+                skipLocationChange="true"
               >
                 {{ 'AREAS.TOP-MENU-HEADER.INSTALL-SETUP' | translate }}</a
               >
@@ -202,6 +218,7 @@
                 id="topMenuHelpLicense"
                 href="#"
                 [routerLink]="['/help','licenseMenuSelected']"
+                skipLocationChange="true"
               >
                 {{ 'AREAS.HELP.LEFT-MENU.LICENSE' | translate }}
               </a>
@@ -211,6 +228,7 @@
                 id="topMenuHelpAbout"
                 href="#"
                 [routerLink]="['/help', 'aboutMenuSelected']"
+                skipLocationChange="true"
                 >{{ 'AREAS.TOP-MENU-HEADER.ABOUT' | translate }}</a
               >
             </li>
@@ -235,6 +253,7 @@
             id="supportEmail"
             href="#"
             [routerLink]="['/help', 'supportMenuSelected']"
+            skipLocationChange="true"
             >contact@reportburster.org</a
           >
         </li>

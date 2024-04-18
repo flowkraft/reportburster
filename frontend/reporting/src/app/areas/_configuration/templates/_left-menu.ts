@@ -11,7 +11,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
         'generalSettingsMenuSelected',
         settingsService.currentConfigurationTemplatePath,
         settingsService.currentConfigurationTemplateName
-      ]">
+      ]" skipLocationChange="true">
       <i class="fa fa-pencil-square-o"></i>
       <span>{{ 'AREAS.CONFIGURATION.LEFT-MENU.GENERAL' | translate }}</span>
     </a>
@@ -23,7 +23,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
         'reportingSettingsMenuSelected',
         settingsService.currentConfigurationTemplatePath,
         settingsService.currentConfigurationTemplateName
-      ]">
+      ]" skipLocationChange="true">
       <i class="fa fa-file-text-o"></i>
       <span>{{ 'AREAS.CONFIGURATION.LEFT-MENU.REPORTING' | translate }}</span>
     </a>
@@ -35,7 +35,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
         'enableDisableDistributionMenuSelected',
         settingsService.currentConfigurationTemplatePath,
         settingsService.currentConfigurationTemplateName
-      ]">
+      ]" skipLocationChange="true">
       <i class="fa fa-check-square-o"></i>
       <span>{{
         'AREAS.CONFIGURATION.LEFT-MENU.ENABLE-DISABLE-DELIVERY' | translate
@@ -49,7 +49,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
         'emailSettingsMenuSelected',
         settingsService.currentConfigurationTemplatePath,
         settingsService.currentConfigurationTemplateName
-      ]">
+      ]" skipLocationChange="true">
       <i class="fa fa-envelope-o"></i>
       <span>{{ 'AREAS.CONFIGURATION.LEFT-MENU.EMAIL' | translate }}</span>
       <span class="pull-right-container">
@@ -63,7 +63,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
             'cloudEmailProvidersMenuSelected',
             settingsService.currentConfigurationTemplatePath,
             settingsService.currentConfigurationTemplateName
-          ]">
+          ]" skipLocationChange="true">
           <span>{{
             'AREAS.CONFIGURATION.LEFT-MENU.CLOUD-EMAIL-PROVIDERS' | translate
             }}</span>
@@ -78,7 +78,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
         'uploadSettingsMenuSelected',
         settingsService.currentConfigurationTemplatePath,
         settingsService.currentConfigurationTemplateName
-      ]">
+      ]" skipLocationChange="true">
       <i class="fa fa-upload"></i>
       <span>{{ 'AREAS.CONFIGURATION.LEFT-MENU.UPLOAD' | translate }}</span>
     </a>
@@ -90,7 +90,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
         'documentBursterWebSettingsMenuSelected',
         settingsService.currentConfigurationTemplatePath,
         settingsService.currentConfigurationTemplateName
-      ]">
+      ]" skipLocationChange="true">
       <i class="fa fa-credit-card"></i>
       <span>{{ 'AREAS.CONFIGURATION.LEFT-MENU.DOCUMENTS2WEB' | translate }}</span>
     </a>
@@ -102,7 +102,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
         'smsSettingsMenuSelected',
         settingsService.currentConfigurationTemplatePath,
         settingsService.currentConfigurationTemplateName
-      ]">
+      ]" skipLocationChange="true">
       <i class="fa fa-commenting-o"></i>
       <span>{{ 'AREAS.CONFIGURATION.LEFT-MENU.SMS' | translate }}</span>
       <span class="pull-right-container">
@@ -116,7 +116,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
             'smsSettingsMenuSelected',
             settingsService.currentConfigurationTemplatePath,
             settingsService.currentConfigurationTemplateName
-          ]">
+          ]" skipLocationChange="true">
           <span>{{ 'AREAS.CONFIGURATION.LEFT-MENU.TWILIO' | translate }}</span>
         </a>
       </li>
@@ -129,7 +129,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
         'qualitySettingsMenuSelected',
         settingsService.currentConfigurationTemplatePath,
         settingsService.currentConfigurationTemplateName
-      ]">
+      ]" skipLocationChange="true">
       <i class="fa fa-flag-checkered"></i>
       <span>{{
         'AREAS.CONFIGURATION.LEFT-MENU.QUALITY-ASSURANCE' | translate
@@ -145,7 +145,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
             'qualitySettingsMenuSelected',
             settingsService.currentConfigurationTemplatePath,
             settingsService.currentConfigurationTemplateName
-          ]">
+          ]" skipLocationChange="true">
           <span>{{ 'AREAS.CONFIGURATION.LEFT-MENU.TEST-EMAIL-SERVER' | translate }}</span>
         </a>
       </li>
@@ -158,7 +158,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
         'advancedSettingsMenuSelected',
         settingsService.currentConfigurationTemplatePath,
         settingsService.currentConfigurationTemplateName
-      ]">
+      ]" skipLocationChange="true">
       <i class="fa fa-list-ul"></i>
       <span>{{ 'AREAS.CONFIGURATION.LEFT-MENU.ADVANCED' | translate }}</span>
       <span class="pull-right-container" *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportdistribution">
@@ -172,7 +172,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
             'errorHandlingSettingsMenuSelected',
             settingsService.currentConfigurationTemplatePath,
             settingsService.currentConfigurationTemplateName
-          ]">
+          ]" skipLocationChange="true">
           <span>{{
             'AREAS.CONFIGURATION.LEFT-MENU.ERROR-HANDLING' | translate
             }}</span>

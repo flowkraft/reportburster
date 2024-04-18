@@ -208,7 +208,7 @@ export class SettingsService {
 
     this.isWindows = systemInfo.osName.startsWith('Windows');
 
-   const startServerScripts = await this.unixCliService.findAsync('.', {
+    const startServerScripts = await this.unixCliService.findAsync('.', {
       matching: ['startServer.*'],
     });
 
@@ -547,9 +547,9 @@ export class SettingsService {
       //console.log(`connXml = ${JSON.stringify(connXml)}`);
 
       const connectionFileName = Utilities.basename(connectionFilePath);
-      //console.log(
-      //  `this.configurationFiles = ${JSON.stringify(this.configurationFiles)}`
-      //);
+      console.log(
+        `this.configurationFiles = ${JSON.stringify(this.configurationFiles)}`,
+      );
       connectionFiles.push({
         fileName: connectionFileName,
         filePath: connectionFilePath,
@@ -561,7 +561,12 @@ export class SettingsService {
         activeClicked: false,
         defaultConnection: connXml.defaultConnection,
         usedBy: this.configurationFiles
-          .filter((conf) => conf.useEmlConn && conf.emlConnCode == connXml.code)
+          .filter(
+            (conf) =>
+              conf.useEmlConn &&
+              conf.emlConnCode == connXml.code &&
+              conf.type != 'config-samples',
+          )
           .map((conf) => conf.templateName)
           .join(', '),
         emailserver: {

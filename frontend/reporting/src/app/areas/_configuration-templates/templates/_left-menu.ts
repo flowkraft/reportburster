@@ -4,7 +4,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
     {{ 'AREAS.CONFIGURATION-TEMPLATES.LEFT-MENU.CONFIGURATION-TEMPLATES' | translate }}
   </li>
 
-  <li class="active"><a href="#" [routerLink]="['/configuration-templates']"><i class="fa fa-files-o"></i> <span>
+  <li class="active"><a href="#" [routerLink]="['/configuration-templates']" skipLocationChange="true"><i class="fa fa-files-o"></i> <span>
         {{ 'AREAS.CONFIGURATION-TEMPLATES.LEFT-MENU.CONFIGURATION-TEMPLATES' | translate }}
       </span></a></li>
 </ul>`;

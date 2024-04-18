@@ -132,7 +132,12 @@ public class SystemController {
 
 	@DeleteMapping("/fs/delete-quietly")
 	public Mono<Boolean> deleteQuietly(@RequestParam String path) throws Exception {
-		Boolean deleted = systemService.fsDelete(URLDecoder.decode(path, StandardCharsets.UTF_8.toString()));
+		
+		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+
+		
+		Boolean deleted = systemService.fsDelete(fullPath);
 		return Mono.just(deleted);
 	}
 
@@ -199,7 +204,10 @@ public class SystemController {
 
 	@GetMapping(value = "/fs/exists", produces = MediaType.TEXT_PLAIN_VALUE)
 	public Mono<String> exists(@RequestParam String path) throws Exception {
-		String exists = systemService.fsExists(URLDecoder.decode(path, StandardCharsets.UTF_8.toString()));
+		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+
+		String exists = systemService.fsExists(fullPath);
 		return Mono.just(exists);
 	}
 

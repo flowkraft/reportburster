@@ -1081,12 +1081,15 @@ export class ProcessingComponent implements OnInit {
     configFilePath: string,
     configFileName: string,
   ) {
-    this.router.navigate([
-      '/configuration',
-      'generalSettingsMenuSelected',
-      configFilePath,
-      configFileName,
-    ]);
+    this.router.navigate(
+      [
+        '/configuration',
+        'generalSettingsMenuSelected',
+        configFilePath,
+        configFileName,
+      ],
+      { skipLocationChange: true },
+    );
   }
 
   doSampleTryIt(clickedSample: SampleInfo) {
@@ -1103,15 +1106,18 @@ export class ProcessingComponent implements OnInit {
             '',
           );
 
-          this.router.navigate([
-            '/processingSample',
-            'burstMenuSelected',
-            Utilities.slash(
-              //`${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputDocumentShortPath}`,
-              `${inputDocumentShortPath}`,
-            ),
-            Utilities.slash(clickedSample.configurationFilePath),
-          ]);
+          this.router.navigate(
+            [
+              '/processingSample',
+              'burstMenuSelected',
+              Utilities.slash(
+                //`${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputDocumentShortPath}`,
+                `${inputDocumentShortPath}`,
+              ),
+              Utilities.slash(clickedSample.configurationFilePath),
+            ],
+            { skipLocationChange: true },
+          );
         } else if (clickedSample.input.data.length > 1) {
           this.processingService.procBurstInfo.isSample = true;
 
@@ -1137,12 +1143,15 @@ export class ProcessingComponent implements OnInit {
           console.log(
             `diezSeparatedListOfFilePathsToMerge = ${diezSeparatedListOfFilePathsToMerge}`,
           );
-          this.router.navigate([
-            '/processingSample',
-            'mergeBurstMenuSelected',
-            diezSeparatedListOfFilePathsToMerge,
-            Utilities.slash(clickedSample.configurationFilePath),
-          ]);
+          this.router.navigate(
+            [
+              '/processingSample',
+              'mergeBurstMenuSelected',
+              diezSeparatedListOfFilePathsToMerge,
+              Utilities.slash(clickedSample.configurationFilePath),
+            ],
+            { skipLocationChange: true },
+          );
         }
       },
     });
