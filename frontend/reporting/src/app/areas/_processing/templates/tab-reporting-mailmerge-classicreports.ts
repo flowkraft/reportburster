@@ -101,7 +101,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
 
       <br /><br />
 
-      <a href="#" [routerLink]="['/help', 'installSetupMenuSelected']"
+      <a href="#" [routerLink]="['/help', 'installSetupMenuSelected']" skipLocationChange="true"
         ><button type="button" class="btn btn-primary">
           {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INSTALL' | translate }}
           <em>Java</em>
@@ -129,7 +129,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
           <a
             href="#"
             [routerLink]="['/processingQa','qualityMenuSelected',processingService.procBurstInfo.mailMergeClassicReportInputFilePath, processingService.procBurstInfo.prefilledConfigurationFilePath, 'csv-generate-reports']"
-            >Quality Assurance</a
+            skipLocationChange="true">Quality Assurance</a
           >
           {{ 'AREAS.PROCESSING.TAB-BURST.FOR-THE-FILE' | translate }}
           <em>{{processingService.procBurstInfo.mailMergeClassicReportInputFilePath}}</em>&nbsp;&nbsp;
@@ -138,7 +138,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
             type="button"
             class="btn btn-primary btn-sm"
             [routerLink]="['/processingQa','qualityMenuSelected',processingService.procBurstInfo.mailMergeClassicReportInputFilePath, processingService.procBurstInfo.prefilledConfigurationFilePath, 'csv-generate-reports']"
-          >
+            skipLocationChange="true">
             {{ 'AREAS.PROCESSING.TAB-BURST.RUN-QA' | translate }}
           </button>
         </div>

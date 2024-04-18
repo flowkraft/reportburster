@@ -82,7 +82,7 @@ export const tabGeneralSettingsTemplate = `<ng-template #tabGeneralSettingsTempl
           'enableDisableDistributionMenuSelected',
           settingsService.currentConfigurationTemplatePath,
           settingsService.currentConfigurationTemplateName
-        ]">
+        ]" skipLocationChange="true">
           <button class="btn btn-primary" type="button"> {{
             'AREAS.CONFIGURATION.TAB-GENERAL-SETTINGS.NEXT-ENABLE-DISABLE' | translate }}</button>
         </a>

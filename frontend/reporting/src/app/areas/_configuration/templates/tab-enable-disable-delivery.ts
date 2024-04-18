@@ -24,7 +24,7 @@ export const tabEnableDisableDeliveryTemplate = `<ng-template #tabEnableDisableD
             'emailSettingsMenuSelected',
             settingsService.currentConfigurationTemplatePath,
             settingsService.currentConfigurationTemplateName
-          ]"
+          ]" skipLocationChange="true"
             >&nbsp;
             <button class="btn btn-primary btn-xs" type="button">
               {{
@@ -61,7 +61,7 @@ export const tabEnableDisableDeliveryTemplate = `<ng-template #tabEnableDisableD
           'ftpSettingsMenuSelected',
           settingsService.currentConfigurationTemplatePath,
           settingsService.currentConfigurationTemplateName
-        ]"
+        ]" skipLocationChange="true"
             >&nbsp;
             <button class="btn btn-primary btn-xs" type="button">
               {{
@@ -99,7 +99,7 @@ export const tabEnableDisableDeliveryTemplate = `<ng-template #tabEnableDisableD
           'documentBursterWebSettingsMenuSelected',
           settingsService.currentConfigurationTemplatePath,
           settingsService.currentConfigurationTemplateName
-        ]"
+        ]" skipLocationChange="true"
             >&nbsp;
             <button class="btn btn-primary btn-xs" type="button">
               {{
@@ -137,7 +137,7 @@ export const tabEnableDisableDeliveryTemplate = `<ng-template #tabEnableDisableD
           'smsSettingsMenuSelected',
           settingsService.currentConfigurationTemplatePath,
           settingsService.currentConfigurationTemplateName
-        ]"
+        ]" skipLocationChange="true"
             >&nbsp;
             <button class="btn btn-primary btn-xs" type="button">
               {{

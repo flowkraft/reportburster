@@ -24,7 +24,9 @@ export class NoJavaGuard {
       return true;
     } else {
       alert('To use ReportBurster, you need to have Java installed.');
-      this.router.navigate(['/help', 'installSetupMenuSelected']);
+      this.router.navigate(['/help', 'installSetupMenuSelected'], {
+        skipLocationChange: true,
+      });
       return false;
     }
   }

@@ -136,11 +136,17 @@ export class ExternalConnectionsComponent implements OnInit {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: async () => {
-        await this.fsService.removeAsync(this.getSelectedConnection().filePath);
+        console.log;
+
+        const filePath = this.getSelectedConnection().filePath;
+
+        console.log(`filePath = ${filePath}`);
+
+        await this.fsService.removeAsync(filePath);
 
         _.remove(
           this.settingsService.connectionFiles,
-          (o) => o.filePath === this.getSelectedConnection().filePath,
+          (o) => o.filePath === filePath,
         );
 
         this.messagesService.showInfo('Done');
@@ -305,13 +311,16 @@ export class ExternalConnectionsComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate([
-      '/configuration',
-      'emailSettingsMenuSelected',
-      this.configurationFilePath,
-      this.configurationFileName,
-      true,
-    ]);
+    this.router.navigate(
+      [
+        '/configuration',
+        'emailSettingsMenuSelected',
+        this.configurationFilePath,
+        this.configurationFileName,
+        true,
+      ],
+      { skipLocationChange: true },
+    );
   }
 
   doTestSMTPConnection() {

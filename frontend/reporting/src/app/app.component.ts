@@ -1,7 +1,8 @@
-import { AfterViewInit, Component } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { setTheme } from 'ngx-bootstrap/utils';
 import { ElectronService } from './areas/electron-nodejs/electron.service';
+import { Router } from '@angular/router';
 
 declare var $: any;
 
@@ -10,10 +11,11 @@ declare var $: any;
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent implements AfterViewInit {
+export class AppComponent implements AfterViewInit, OnInit {
   constructor(
     protected electronService: ElectronService,
     protected translate: TranslateService,
+    protected router: Router,
   ) {
     setTheme('bs3'); // or 'bs4'
 
@@ -30,6 +32,10 @@ export class AppComponent implements AfterViewInit {
     } else {
       //console.log('Run in browser');
     }
+  }
+
+  ngOnInit() {
+    this.router.initialNavigation(); // manually start the initial navigation
   }
 
   ngAfterViewInit() {
