@@ -4,7 +4,7 @@ import { ExecutionStatsService } from '../../providers/execution-stats.service';
 import { ConfirmService } from '../dialog-confirm/confirm.service';
 import { SettingsService } from '../../providers/settings.service';
 import { FsService } from '../../providers/fs.service';
-import { LogsServiceWebSocket } from '../../providers/ws-logs.service';
+import { WebSocketService } from '../../providers/websocket.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 
 @Component({
@@ -19,7 +19,7 @@ export class ButtonClearLogsComponent {
   @Input() question: string;
 
   constructor(
-    protected logsService: LogsServiceWebSocket,
+    protected logsService: WebSocketService,
     protected executionStatsService: ExecutionStatsService,
     protected confirmService: ConfirmService,
     protected messagesService: ToastrMessagesService,

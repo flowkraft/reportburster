@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
 import { ConfirmService } from '../dialog-confirm/confirm.service';
-import { LogsServiceWebSocket } from '../../providers/ws-logs.service';
+import { WebSocketService } from '../../providers/websocket.service';
 import { FsService } from '../../providers/fs.service';
 import { SettingsService } from '../../providers/settings.service';
 
@@ -14,7 +14,7 @@ export class LogFilesViewerAllTogetherComponent {
     protected confirmService: ConfirmService,
     protected executionStatsService: ExecutionStatsService,
     protected fsService: FsService,
-    protected logsService: LogsServiceWebSocket,
+    protected logsService: WebSocketService,
     protected settingsService: SettingsService,
   ) {}
 

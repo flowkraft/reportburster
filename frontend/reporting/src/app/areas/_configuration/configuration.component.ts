@@ -669,26 +669,26 @@ export class ConfigurationComponent implements OnInit {
           ...this.xmlSettings.documentburster.settings,
         };
 
-        console.log(
-          `1. ConfigurationComponent onInit - this.stateStore.configSys.currentConfigFile.configuration.settings = ${JSON.stringify(this.stateStore.configSys.currentConfigFile.configuration.settings)}`,
-        );
+        //console.log(
+        //  `1. ConfigurationComponent onInit - this.stateStore.configSys.currentConfigFile.configuration.settings = ${JSON.stringify(this.stateStore.configSys.currentConfigFile.configuration.settings)}`,
+        //);
       }
 
       if (this.currentLeftMenu === 'emailSettingsMenuSelected') {
         await this.settingsService.loadAllConnectionFilesAsync();
-        console.log(
-          `this.settingsService.defaultEmailConnectionFile = ${JSON.stringify(
-            this.settingsService.defaultEmailConnectionFile,
-          )}`,
-        );
+        //console.log(
+        //   `this.settingsService.defaultEmailConnectionFile = ${JSON.stringify(
+        //     this.settingsService.defaultEmailConnectionFile,
+        //   )}`,
+        // );
 
         if (!this.xmlSettings.documentburster.settings.emailserver.conncode)
           this.xmlSettings.documentburster.settings.emailserver.conncode =
             this.settingsService.defaultEmailConnectionFile.connectionCode;
 
-        console.log(
-          `this.xmlSettings.documentburster.settings.emailserver.conncode = ${this.xmlSettings.documentburster.settings.emailserver.conncode}`,
-        );
+        //console.log(
+        //  `this.xmlSettings.documentburster.settings.emailserver.conncode = ${this.xmlSettings.documentburster.settings.emailserver.conncode}`,
+        //);
         if (this.xmlSettings.documentburster.settings.emailserver.conncode) {
           this.selectedEmailConnectionFile =
             this.settingsService.connectionFiles.find(
@@ -698,11 +698,11 @@ export class ConfigurationComponent implements OnInit {
                   this.xmlSettings.documentburster.settings.emailserver
                     .conncode,
             );
-          console.log(
-            `this.selectedEmailConnectionFile = ${JSON.stringify(
-              this.settingsService.connectionFiles,
-            )}`,
-          );
+          //console.log(
+          //  `this.selectedEmailConnectionFile = ${JSON.stringify(
+          //    this.settingsService.connectionFiles,
+          //  )}`,
+          //);
           if (this.xmlSettings.documentburster.settings.emailserver.useconn)
             this.fillExistingEmailConnectionDetails(
               this.selectedEmailConnectionFile.connectionCode,

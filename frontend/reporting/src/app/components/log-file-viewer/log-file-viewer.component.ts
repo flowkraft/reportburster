@@ -1,7 +1,7 @@
 import { OnInit, Component, Input, OnDestroy } from '@angular/core';
 
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
-import { LogsServiceWebSocket } from '../../providers/ws-logs.service';
+import { WebSocketService } from '../../providers/websocket.service';
 
 @Component({
   selector: 'dburst-log-file-viewer',
@@ -14,7 +14,7 @@ export class LogFileViewerComponent implements OnInit, OnDestroy {
   constructor(
     //protected settingsService: SettingsServiceJava,
     protected executionStatsService: ExecutionStatsService,
-    protected logsService: LogsServiceWebSocket,
+    protected logsService: WebSocketService,
   ) {}
 
   async ngOnInit() {

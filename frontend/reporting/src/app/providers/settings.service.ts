@@ -3,7 +3,7 @@ import * as semver from 'semver';
 import { ApiService } from './api.service';
 import Utilities from '../helpers/utilities';
 import { APP_CONFIG } from '../../environments/environment';
-import { SocketOptions } from '../helpers/websocket-endpoint';
+import { TopicOptions } from '../helpers/websocket-endpoint';
 import { FsService } from './fs.service';
 import { UnixCliService } from './unix-cli.service';
 
@@ -129,7 +129,7 @@ export class SettingsService {
 
   connectionsLoading: number = 0;
 
-  activeWebSocketSubcriptions: SocketOptions[] = [];
+  //activeWebSocketSubcriptions: SocketOptions[] = [];
 
   constructor(
     public apiService: ApiService,
@@ -547,9 +547,9 @@ export class SettingsService {
       //console.log(`connXml = ${JSON.stringify(connXml)}`);
 
       const connectionFileName = Utilities.basename(connectionFilePath);
-      console.log(
-        `this.configurationFiles = ${JSON.stringify(this.configurationFiles)}`,
-      );
+      //console.log(
+      //  `this.configurationFiles = ${JSON.stringify(this.configurationFiles)}`,
+      //);
       connectionFiles.push({
         fileName: connectionFileName,
         filePath: connectionFilePath,
