@@ -583,10 +583,11 @@ export class ProcessingComponent implements OnInit {
 
     //alert('test');
 
-    //console.log(`onFilesAdded files = ${JSON.stringify(files)}`);
+    console.log(`onFilesAdded files = ${JSON.stringify(files)}`);
 
     files.forEach((file) => {
       this.processingService.procMergeBurstInfo.inputFiles.push({
+        id: this.processingService.procMergeBurstInfo.inputFiles.length,
         name: file.name,
         //path: file.path,
         file: file,
@@ -611,9 +612,10 @@ export class ProcessingComponent implements OnInit {
     target.value = '';
   }
 
-  onFileSelected(file: { path: string }) {
+  onFileSelected(file: { id: string }) {
     this.processingService.procMergeBurstInfo.inputFiles.forEach((each) => {
-      if (each.path === file.path) {
+      if (each.id === file.id) {
+        console.log(`selected id = ${file.id}`);
         each.selected = true;
         this.processingService.procMergeBurstInfo.selectedFile = file;
       } else {
@@ -631,8 +633,7 @@ export class ProcessingComponent implements OnInit {
         _.remove(
           this.processingService.procMergeBurstInfo.inputFiles,
           (o) =>
-            o.path ===
-            this.processingService.procMergeBurstInfo.selectedFile.path,
+            o.id === this.processingService.procMergeBurstInfo.selectedFile.id,
         );
       },
     });
