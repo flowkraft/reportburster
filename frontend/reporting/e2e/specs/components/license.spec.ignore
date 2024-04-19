@@ -9,7 +9,9 @@ import { Helpers } from '../../utils/helpers';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE2
+const isElectron = process.env.TEST_ENV === 'electron';
+
+//DONE4
 test.describe('', async () => {
   test('should correctly handle when the user will empty the license key', async function () {
     await jetpack.copyAsync(
@@ -22,8 +24,17 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    const electronApp = await Helpers.electronAppLaunch('../..');
-    const ft = new FluentTester(await electronApp.firstWindow());
+    let electronApp, browser, context, firstPage;
+
+    if (isElectron) {
+      electronApp = await Helpers.electronAppLaunch('../..');
+      firstPage = await electronApp.firstWindow();
+    } else {
+      ({ browser, context } = await Helpers.browserLaunch());
+      [firstPage] = context.pages();
+    }
+
+    const ft = new FluentTester(firstPage);
 
     await ft
       .click('#topMenuBurst')
@@ -32,7 +43,11 @@ test.describe('', async () => {
       .elementShouldBeVisible('#statusInvalidLicense')
       .elementShouldBeVisible('#version');
 
-    await Helpers.electronAppClose(electronApp);
+    if (isElectron) {
+      await Helpers.electronAppClose(electronApp);
+    } else {
+      await Helpers.browserClose(browser, context);
+    }
   });
 
   test('should correctly display the license screen in the initial empty key state', async () => {
@@ -46,8 +61,17 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    const electronApp = await Helpers.electronAppLaunch('../..');
-    const ft = new FluentTester(await electronApp.firstWindow());
+    let electronApp, browser, context, firstPage;
+
+    if (isElectron) {
+      electronApp = await Helpers.electronAppLaunch('../..');
+      firstPage = await electronApp.firstWindow();
+    } else {
+      ({ browser, context } = await Helpers.browserLaunch());
+      [firstPage] = context.pages();
+    }
+
+    const ft = new FluentTester(firstPage);
 
     await ft
       .click('#topMenuBurst')
@@ -62,7 +86,11 @@ test.describe('', async () => {
       .typeText(Constants.TEST_LICENSE_KEY)
       .elementShouldBeVisible('#btnActivateLicenseKey');
 
-    await Helpers.electronAppClose(electronApp);
+    if (isElectron) {
+      await Helpers.electronAppClose(electronApp);
+    } else {
+      await Helpers.browserClose(browser, context);
+    }
   });
 
   test('should correctly display a license in the deactivated state', async function () {
@@ -76,8 +104,17 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    const electronApp = await Helpers.electronAppLaunch('../..');
-    const ft = new FluentTester(await electronApp.firstWindow());
+    let electronApp, browser, context, firstPage;
+
+    if (isElectron) {
+      electronApp = await Helpers.electronAppLaunch('../..');
+      firstPage = await electronApp.firstWindow();
+    } else {
+      ({ browser, context } = await Helpers.browserLaunch());
+      [firstPage] = context.pages();
+    }
+
+    const ft = new FluentTester(firstPage);
 
     await ft
       .click('#topMenuBurst')
@@ -87,7 +124,11 @@ test.describe('', async () => {
       .elementShouldBeVisible('#statusDemoLicense')
       .elementShouldBeVisible('#version');
 
-    await Helpers.electronAppClose(electronApp);
+    if (isElectron) {
+      await Helpers.electronAppClose(electronApp);
+    } else {
+      await Helpers.browserClose(browser, context);
+    }
   });
 
   test('should correctly handle demo status', async function () {
@@ -101,8 +142,17 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    const electronApp = await Helpers.electronAppLaunch('../..');
-    const ft = new FluentTester(await electronApp.firstWindow());
+    let electronApp, browser, context, firstPage;
+
+    if (isElectron) {
+      electronApp = await Helpers.electronAppLaunch('../..');
+      firstPage = await electronApp.firstWindow();
+    } else {
+      ({ browser, context } = await Helpers.browserLaunch());
+      [firstPage] = context.pages();
+    }
+
+    const ft = new FluentTester(firstPage);
 
     await ft
       .click('#topMenuBurst')
@@ -117,7 +167,11 @@ test.describe('', async () => {
       .typeText(Constants.TEST_LICENSE_KEY)
       .elementShouldBeVisible('#btnActivateLicenseKey');
 
-    await Helpers.electronAppClose(electronApp);
+    if (isElectron) {
+      await Helpers.electronAppClose(electronApp);
+    } else {
+      await Helpers.browserClose(browser, context);
+    }
   });
 
   test('should correctly handle invalid status key', async function () {
@@ -131,8 +185,17 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    const electronApp = await Helpers.electronAppLaunch('../..');
-    const ft = new FluentTester(await electronApp.firstWindow());
+    let electronApp, browser, context, firstPage;
+
+    if (isElectron) {
+      electronApp = await Helpers.electronAppLaunch('../..');
+      firstPage = await electronApp.firstWindow();
+    } else {
+      ({ browser, context } = await Helpers.browserLaunch());
+      [firstPage] = context.pages();
+    }
+
+    const ft = new FluentTester(firstPage);
 
     await ft
       .click('#topMenuBurst')
@@ -141,7 +204,11 @@ test.describe('', async () => {
       .elementShouldBeVisible('#statusInvalidLicense')
       .elementShouldBeVisible('#version');
 
-    await Helpers.electronAppClose(electronApp);
+    if (isElectron) {
+      await Helpers.electronAppClose(electronApp);
+    } else {
+      await Helpers.browserClose(browser, context);
+    }
   });
 
   test('should correctly handle active status key', async function () {
@@ -155,8 +222,17 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    const electronApp = await Helpers.electronAppLaunch('../..');
-    const ft = new FluentTester(await electronApp.firstWindow());
+    let electronApp, browser, context, firstPage;
+
+    if (isElectron) {
+      electronApp = await Helpers.electronAppLaunch('../..');
+      firstPage = await electronApp.firstWindow();
+    } else {
+      ({ browser, context } = await Helpers.browserLaunch());
+      [firstPage] = context.pages();
+    }
+
+    const ft = new FluentTester(firstPage);
 
     await ft
       .click('#topMenuBurst')
@@ -166,7 +242,11 @@ test.describe('', async () => {
       .elementShouldBeVisible('#version')
       .elementShouldBeVisible('#deactivateLicenseKey');
 
-    await Helpers.electronAppClose(electronApp);
+    if (isElectron) {
+      await Helpers.electronAppClose(electronApp);
+    } else {
+      await Helpers.browserClose(browser, context);
+    }
   });
 
   test('should correctly handle expired status key', async function () {
@@ -180,8 +260,17 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    const electronApp = await Helpers.electronAppLaunch('../..');
-    const ft = new FluentTester(await electronApp.firstWindow());
+    let electronApp, browser, context, firstPage;
+
+    if (isElectron) {
+      electronApp = await Helpers.electronAppLaunch('../..');
+      firstPage = await electronApp.firstWindow();
+    } else {
+      ({ browser, context } = await Helpers.browserLaunch());
+      [firstPage] = context.pages();
+    }
+
+    const ft = new FluentTester(firstPage);
 
     await ft
       .click('#topMenuBurst')
@@ -190,7 +279,11 @@ test.describe('', async () => {
       .elementShouldBeVisible('#statusExpiredLicense')
       .elementShouldBeVisible('#version');
 
-    await Helpers.electronAppClose(electronApp);
+    if (isElectron) {
+      await Helpers.electronAppClose(electronApp);
+    } else {
+      await Helpers.browserClose(browser, context);
+    }
   });
 
   test('should allow user to (re) check a key', async function () {
@@ -204,8 +297,17 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    const electronApp = await Helpers.electronAppLaunch('../..');
-    const ft = new FluentTester(await electronApp.firstWindow());
+    let electronApp, browser, context, firstPage;
+
+    if (isElectron) {
+      electronApp = await Helpers.electronAppLaunch('../..');
+      firstPage = await electronApp.firstWindow();
+    } else {
+      ({ browser, context } = await Helpers.browserLaunch());
+      [firstPage] = context.pages();
+    }
+
+    const ft = new FluentTester(firstPage);
 
     await ft
       .click('#topMenuBurst')
@@ -214,7 +316,11 @@ test.describe('', async () => {
       .elementShouldBeVisible('#statusInvalidLicense')
       .elementShouldBeVisible('#version');
 
-    await Helpers.electronAppClose(electronApp);
+    if (isElectron) {
+      await Helpers.electronAppClose(electronApp);
+    } else {
+      await Helpers.browserClose(browser, context);
+    }
   });
 
   /*
