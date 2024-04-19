@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintWriter;
+import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.CopyOption;
@@ -74,7 +75,7 @@ public class SystemService {
 		File file = new File(path.trim());
 
 		if (!file.exists()) {
-			//System.out.println("File does not exist: " + path + "!");
+			// System.out.println("File does not exist: " + path + "!");
 			return StringUtils.EMPTY;
 		}
 
@@ -84,9 +85,10 @@ public class SystemService {
 
 	public List<String> unixCliFind(String path, FindCriteria criteria) throws Exception {
 
-		//System.out.println("PORTABLE_EXECUTABLE_DIR_PATH: " + AppPaths.PORTABLE_EXECUTABLE_DIR_PATH);
+		// System.out.println("PORTABLE_EXECUTABLE_DIR_PATH: " +
+		// AppPaths.PORTABLE_EXECUTABLE_DIR_PATH);
 
-		//System.out.println("path = " + path + ", criteria = " + criteria);
+		// System.out.println("path = " + path + ", criteria = " + criteria);
 		Stream<Path> stream;
 
 		if (criteria.recursive) {
@@ -115,12 +117,11 @@ public class SystemService {
 		}
 
 		List<String> list = stream.map(Path::toAbsolutePath).map(Path::normalize).map(Path::toString)
-				.map(p -> p.replace("\\", "/"))
-				.map(p -> p.replace(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, ""))
+				.map(p -> p.replace("\\", "/")).map(p -> p.replace(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, ""))
 				.collect(Collectors.toList());
 
-		//System.out.println("SystemService.unixCliFind before return");
-		//list.forEach(System.out::println);
+		// System.out.println("SystemService.unixCliFind before return");
+		// list.forEach(System.out::println);
 
 		return list;
 	}
@@ -128,7 +129,8 @@ public class SystemService {
 	public void startTailer(String fileName) throws Exception {
 		if (Objects.isNull(existingTailers.get(fileName))) {
 
-			//System.out.println("startTailer - AppPaths.LOGS_DIR_PATH = " + AppPaths.LOGS_DIR_PATH + "/" + fileName);
+			// System.out.println("startTailer - AppPaths.LOGS_DIR_PATH = " +
+			// AppPaths.LOGS_DIR_PATH + "/" + fileName);
 
 			Tailer tailer = new Tailer(new File(AppPaths.LOGS_DIR_PATH + "/" + fileName), new TailerListenerAdapter() {
 				public void handle(String line) {
@@ -156,7 +158,8 @@ public class SystemService {
 		Tailer tailer = existingTailers.get(fileName);
 
 		if (!Objects.isNull(tailer)) {
-			//System.out.println("stopTailer - AppPaths.LOGS_DIR_PATH = " + AppPaths.LOGS_DIR_PATH + "/" + fileName);
+			// System.out.println("stopTailer - AppPaths.LOGS_DIR_PATH = " +
+			// AppPaths.LOGS_DIR_PATH + "/" + fileName);
 
 			tailer.stop();
 			existingTailers.remove(fileName);
@@ -187,23 +190,24 @@ public class SystemService {
 		commandWithShell.addAll(args);
 
 		// Create a File object for the .bat file
-		File batFile = new File(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, args.get(0));
+		// File batFile = new File(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, args.get(0));
 
 		// Print whether the .bat file exists
-		//System.out.println("Does the .bat file exist? " + batFile.exists());
+
+		// Set the working directory
+		String workingDirectoryPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH;
+
+		if (cwdPath.isPresent()) {
+			workingDirectoryPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+					+ URLDecoder.decode(cwdPath.get(), StandardCharsets.UTF_8.toString());
+		}
 
 		ProcessBuilder processBuilder = new ProcessBuilder(commandWithShell);
 
-		// Set the working directory
-		File workingDirectory;
+		processBuilder.directory(new File(workingDirectoryPath));
 
-		if (cwdPath.isPresent()) {
-			workingDirectory = new File(cwdPath.get());
-		} else {
-			workingDirectory = new File(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH);
-		}
-
-		processBuilder.directory(workingDirectory);
+		System.out.println(
+				"spawn commandWithShell = " + commandWithShell + ", workingDirectoryPath = " + workingDirectoryPath);
 
 		Process process = processBuilder.start();
 
@@ -354,10 +358,10 @@ public class SystemService {
 
 				DirCriteria c = criteria.get();
 
-				//System.out.println("DirCriteria: " + c);
-				//System.out.println("Directory path: " + dirPath);
+				// System.out.println("DirCriteria: " + c);
+				// System.out.println("Directory path: " + dirPath);
 				String[] fileList = dirPath.toFile().list();
-				//System.out.println("File list: " + Arrays.toString(fileList));
+				// System.out.println("File list: " + Arrays.toString(fileList));
 
 				if (c.empty && dirPath.toFile().list().length > 0) {
 					try (Stream<Path> paths = Files.walk(dirPath)) {
