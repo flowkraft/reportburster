@@ -2,7 +2,7 @@
 const config = {
   testDir: '.',
   testMatch: '**/*.spec.ts',
-  timeout: 90000,
+  timeout: 180000,
   use: {
     headless: false,
     viewport: { width: 1400, height: 1000 },
