@@ -174,6 +174,10 @@ try {
       });
     } else {
       //if non-"production"
+      log.info(
+        `starting Electron App (Development)`,
+      );
+
       setTimeout(() => {
         createWindow();
 
