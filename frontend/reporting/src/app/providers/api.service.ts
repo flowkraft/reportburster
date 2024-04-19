@@ -136,9 +136,9 @@ export class ApiService {
     } else {
       let data = {};
       if (response.headers.get('Content-Length') === '0') {
-        console.log(
-          `No data returned from API call: ${url}, body: ${JSON.stringify(body)}`,
-        );
+        //console.log(
+        //  `No data returned from API call: ${url}, body: ${JSON.stringify(body)}`,
+        //);
       } else {
         //console.log(`apiService.request.response: ${JSON.stringify(response)}`);
 

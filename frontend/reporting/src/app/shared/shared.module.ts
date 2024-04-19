@@ -25,7 +25,7 @@ import { LogFilesViewerAllTogetherModule } from '../components/log-files-viewer-
 import { LogFilesViewerSeparateTabsModule } from '../components/log-files-viewer-separate-tabs/log-files-viewer-separate-tabs.module';
 import { LogFileViewerModule } from '../components/log-file-viewer/log-file-viewer.module';
 import { SettingsService } from '../providers/settings.service';
-import { LogsServiceWebSocket } from '../providers/ws-logs.service';
+import { WebSocketService } from '../providers/websocket.service';
 import { FsService } from '../providers/fs.service';
 import { StateStoreService } from '../providers/state-store.service';
 import { ApiService } from '../providers/api.service';
@@ -66,7 +66,7 @@ import { ApiService } from '../providers/api.service';
     SettingsService,
     SettingsService,
     FsService,
-    LogsServiceWebSocket,
+    WebSocketService,
     ShellService,
     ToastrMessagesService,
     ConfirmService,

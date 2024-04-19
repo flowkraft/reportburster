@@ -27,7 +27,7 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
         -->
       </div>
     </div>
-    <div class="row">
+    <div class="row" style="margin-bottom: 5px">
       <div class="col-xs-2"></div>
 
       <div class="col-xs-1" style="margin-right: 20px">

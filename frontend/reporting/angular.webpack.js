@@ -49,7 +49,7 @@ module.exports = (config, options) => {
 
     config.resolve = {
       ...config.resolve,
-      fallback: { fs: false, child_process: false },
+      fallback: { fs: false, child_process: false, net: false },
     };
   }
 

@@ -8,9 +8,10 @@ import { ExecutionStatsService } from '../../providers/execution-stats.service';
 //import * as path from 'path';
 import Utilities from '../../helpers/utilities';
 import { ConfirmService } from '../../components/dialog-confirm/confirm.service';
-import { WebSocketExecutionStatsService } from '../../providers/ws-execution-stats.service';
 import { FsService } from '../../providers/fs.service';
 import { StateStoreService } from '../../providers/state-store.service';
+import { WebSocketService } from '../../providers/websocket.service';
+import { SettingsService } from '../../providers/settings.service';
 
 @Component({
   selector: 'dburst-status-bar',
@@ -23,8 +24,9 @@ export class StatusBarComponent implements OnInit, OnDestroy {
     protected confirmService: ConfirmService,
     protected fsService: FsService,
     protected executionStatsService: ExecutionStatsService,
-    protected executionStatsWsService: WebSocketExecutionStatsService,
+    protected webSocketService: WebSocketService,
     protected storeService: StateStoreService,
+    protected settingsService: SettingsService,
   ) {}
 
   async ngOnInit() {
@@ -32,10 +34,10 @@ export class StatusBarComponent implements OnInit, OnDestroy {
     //  return;
     //}
 
-    this.executionStatsWsService.BACKEND_URL =
+    this.webSocketService.BACKEND_URL =
       this.storeService.configSys.sysInfo.setup.BACKEND_URL;
 
-    this.executionStatsWsService.makeWSConnectionAndHandleMessages();
+    this.webSocketService.makeWSConnectionAndHandleMessages();
     //FIXME define a constant CHECK_INTERVAL = 333 to be reused across all ).subscribe
 
     //const repeat = interval(333);
@@ -49,7 +51,10 @@ export class StatusBarComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.executionStatsWsService.wsSubscription.unsubscribe();
+    this.webSocketService.wsSubscriptions.forEach((subscription) => {
+      subscription.unsubscribe();
+    });
+    this.webSocketService.wsSubscriptions = [];
   }
 
   shouldShowPauseCancelButtons() {

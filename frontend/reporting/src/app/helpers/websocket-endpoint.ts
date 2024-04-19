@@ -1,13 +1,17 @@
 import { Observable, Subscriber } from 'rxjs';
-
-import { Stomp } from '@stomp/stompjs';
-import Utilities from './utilities';
+import Stomp from 'stompjs';
 import SockJS from 'sockjs-client';
 
 export class WebSocketEndpoint {
   BACKEND_URL = '/api';
 
-  _options: SocketOptions;
+  wsSubscriptions = [];
+
+  _topicsOptions: TopicOptions[];
+
+  socketUrl: string;
+  accessToken?: string;
+  reconnectionTimeout: number = 30000;
 
   _socket: SocketEndpoint = new SocketEndpoint();
 
@@ -21,8 +25,8 @@ export class WebSocketEndpoint {
 
   constructor() {}
 
-  async makeWSConnection(options: SocketOptions) {
-    this._options = options;
+  async makeWSConnection(topicsOptions: TopicOptions[]) {
+    this._topicsOptions = topicsOptions;
     this.createObservableSocket();
     return this.connect();
   }
@@ -74,16 +78,28 @@ export class WebSocketEndpoint {
     return out;
   };
 
-  //_socketListener = (frame: string) => {
   _socketListener = () => {
-    //console.log('WebSocket Connected: ' + frame);
-    //console.log('WebSocket Connected');
+    if (!this._socket.stomp.connected) {
+      console.log('Connection not ready, retrying...');
+      setTimeout(this._socketListener, 1000); // retry after 1 second
+      return;
+    }
 
-    this._socket.stomp.subscribe(this._options.topicName, (data: any) =>
-      this.subscribers.forEach((subscriber) =>
-        subscriber.observer.next(this.getMessage(data)),
-      ),
-    );
+    this._topicsOptions.forEach((topicOptions) => {
+      const wsSubscription = this._socket.stomp.subscribe(
+        topicOptions.topicName,
+        (data: any) => {
+          //console.log(`Received data: ${JSON.stringify(data)}`);
+          const result = topicOptions.processDataCallback(data.body);
+          //console.log(`Processed data: ${JSON.stringify(result)}`);
+          this.subscribers.forEach((subscriber) =>
+            subscriber.observer.next(result),
+          );
+        },
+      );
+
+      this.wsSubscriptions.push(wsSubscription);
+    });
   };
 
   _onSocketError = (errorMsg: any) => {
@@ -97,14 +113,17 @@ export class WebSocketEndpoint {
   };
 
   scheduleReconnection = () => {
+    if (this.reconnectionPromise) {
+      clearTimeout(this.reconnectionPromise);
+    }
     this.reconnectionPromise = setTimeout(() => {
       console.log(
         'Socket reconnecting... (if it fails, next attempt in ' +
-          this._options.reconnectionTimeout +
+          this.reconnectionTimeout +
           ' msec)',
       );
       this.connect();
-    }, this._options.reconnectionTimeout);
+    }, this.reconnectionTimeout);
   };
 
   reconnectNow = function (this: WebSocketEndpoint) {
@@ -114,56 +133,31 @@ export class WebSocketEndpoint {
     this.connect();
   };
 
-  send = (message: any) => {
-    var id = Math.floor(Math.random() * 1000000);
-    this._socket.stomp.send(
-      this._options.brokerName,
-      {
-        priority: 9,
-      },
-      JSON.stringify({
-        message: message,
-        id: id,
-      }),
-    );
-    this._messageIds.push(id);
-  };
-
   connect = async () => {
     const headers = {};
 
-    let socketUrl = this.BACKEND_URL + this._options.socketUrl;
-    if (this._options.getAccessToken())
-      socketUrl += `?access_token=${this._options.getAccessToken()}`;
+    let socketUrl = this.BACKEND_URL + this.socketUrl;
+    if (this.accessToken) socketUrl += `?access_token=${this.accessToken}`;
 
     this._socket.client = new SockJS(socketUrl);
-
-    //console.log(`socketUrl = ${socketUrl}`);
 
     this._socket.client.discardWebsocketOnCommFailure = true;
     this._socket.client.connectionTimeout = 500;
 
     this._socket.stomp = Stomp.over(this._socket.client);
+    //this._socket.stomp = Stomp.over(
+    //  () => new WebSocket(this._socket.client.url.replace('http', 'ws')),
+    //);
 
     //disable logging
     this._socket.stomp.debug = () => {};
-
     this._socket.stomp.onclose = this.scheduleReconnection;
 
-    return new Promise<void>((resolve, reject) => {
-      this._socket.stomp.connect(
-        headers,
-        async () => {
-          await Utilities.sleep(300);
-          this._socketListener();
-          resolve();
-        },
-        (error) => {
-          this._onSocketError(error);
-          reject(error);
-        },
-      );
-    });
+    return this._socket.stomp.connect(
+      headers,
+      this._socketListener,
+      this._onSocketError,
+    );
   };
 }
 
@@ -171,26 +165,21 @@ class SocketEndpoint {
   client: any;
   stomp: any;
 }
+``;
 
-export class SocketOptions {
-  socketUrl: string;
+export class TopicOptions {
   topicName: string;
-  brokerName: string;
-  reconnectionTimeout: number = 30000;
-
-  getAccessToken: Function = () => null;
+  processDataCallback: Function;
+  brokerName?: string;
 
   constructor(
-    socketUrl: string,
     topicName: string,
-    getAccessToken?: Function,
+    processDataCallback: Function,
     brokerName = '',
     reconnectionTimeout: number = 30000,
   ) {
-    this.socketUrl = socketUrl;
     this.topicName = topicName;
+    this.processDataCallback = processDataCallback;
     this.brokerName = brokerName;
-    this.reconnectionTimeout = reconnectionTimeout;
-    this.getAccessToken = getAccessToken || (() => null);
   }
 }
