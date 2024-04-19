@@ -41,13 +41,13 @@ public class SystemController {
 	@GetMapping("/check-url")
 	public Mono<Boolean> checkUrl(@RequestParam String url) throws Exception {
 
-		// System.out.println("/jobman/system/check-url");
-
 		String decodedUrl = URLDecoder.decode(url, StandardCharsets.UTF_8.toString());
+
+		//System.out.println("/jobman/system/check-url url = " + decodedUrl);
 
 		WebClient webClient = WebClient.create();
 
-		return webClient.head().uri(decodedUrl).exchangeToMono(response -> {
+		return webClient.get().uri(decodedUrl).exchangeToMono(response -> {
 
 			// System.out.println(
 			// "/jobman/system/check-url url = " + decodedUrl + ", response.status = " +
