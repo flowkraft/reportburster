@@ -6,7 +6,7 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE2
+//DONE4
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly split samples/burst/Payslips.pdf (My Report)',
