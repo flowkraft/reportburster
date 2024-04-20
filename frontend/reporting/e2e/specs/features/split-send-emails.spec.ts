@@ -7,7 +7,7 @@ import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE2
+//DONE4
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should split and send Payslips.pdf output files by email (My Report)',
