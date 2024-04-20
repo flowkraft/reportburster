@@ -552,11 +552,11 @@ del /f /s install.ps1
   async createJobFile(jobType: string): Promise<string> {
     let filePath = '';
     if (jobType === 'update')
-      filePath = `${this.PORTABLE_EXECUTABLE_DIR}/updating DocumentBurster, please wait`;
+      filePath = `samples/burst/updating DocumentBurster, please wait`;
 
     const jobFileName = Utilities.getRandomJobFileName();
 
-    const jobFilePath = `${this.PORTABLE_EXECUTABLE_DIR}/temp/${jobFileName}`;
+    const jobFilePath = `temp/${jobFileName}`;
     const jobFileContent = Utilities.getJobFileContent(
       filePath,
       jobType,

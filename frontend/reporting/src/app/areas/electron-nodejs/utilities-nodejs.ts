@@ -181,6 +181,10 @@ export default class UtilitiesNodeJs {
     return await jetpack.writeAsync(filePath, content);
   }
 
+  static async appendAsync(filePath: string, content: string) {
+    return await jetpack.appendAsync(filePath, content);
+  }
+
   static async readAsync(filePath: string) {
     return await jetpack.readAsync(filePath);
   }

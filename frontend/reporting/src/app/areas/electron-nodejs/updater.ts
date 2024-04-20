@@ -2,8 +2,6 @@ import dayjs from 'dayjs';
 
 import * as semver from 'semver';
 
-import ElectronLog from 'electron-log';
-
 import Utilities from '../../helpers/utilities';
 import UtilitiesNodeJs from './utilities-nodejs';
 
@@ -91,12 +89,7 @@ export class Updater {
       ],
     ]);
 
-  isElectron: boolean = false;
-
-  constructor(
-    protected portableExecutableDirectoryPath: string,
-    protected log?: typeof ElectronLog,
-  ) {
+  constructor(protected portableExecutableDirectoryPath: string) {
     this.updateDestinationDirectoryPath = Utilities.slash(
       this.portableExecutableDirectoryPath,
     );
@@ -551,6 +544,20 @@ export class Updater {
     }
   }
 
+  async logErrorAsync(message: string, level: string = 'error'): Promise<void> {
+    return this.logAsync(
+      `${this.portableExecutableDirectoryPath}/logs/update.log`,
+      `error`,
+    );
+  }
+
+  async logAsync(message: string, level: string = 'info'): Promise<void> {
+    return UtilitiesNodeJs.appendAsync(
+      `${this.portableExecutableDirectoryPath}/logs/update.log`,
+      `${level.toUpperCase()} - ${message}`,
+    );
+  }
+
   async migrateSettingsFile(settingsFilePath: string) {
     //console.log(
     //  `Log 86 - this.updateDestinationDirectoryPath = ${this.updateDestinationDirectoryPath}`
@@ -585,16 +592,14 @@ export class Updater {
     }
 
     if (previousXMLSettingsContent.includes('defaultmessage'))
-      if (this.log)
-        this.log.error(
-          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'defaultmessage' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateSettingsFile - ${newMigratedSettingsFilePath} 'defaultmessage' not expected!`,
+      );
 
     if (!previousXMLSettingsContent.includes('emailsettings'))
-      if (this.log)
-        this.log.error(
-          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'emailsettings' not found!`,
-        );
+      await this.logErrorAsync(
+        `migrateSettingsFile - ${newMigratedSettingsFilePath} 'emailsettings' not found!`,
+      );
 
     previousXMLSettingsContent = previousXMLSettingsContent
       .split('<defaultftp>')
@@ -604,16 +609,14 @@ export class Updater {
       .join('</uploadsettings>');
 
     if (previousXMLSettingsContent.includes('defaultftp'))
-      if (this.log)
-        this.log.error(
-          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'defaultftp' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateSettingsFile - ${newMigratedSettingsFilePath} 'defaultftp' not expected!`,
+      );
 
     if (!previousXMLSettingsContent.includes('uploadsettings'))
-      if (this.log)
-        this.log.error(
-          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'uploadsettings' not found!`,
-        );
+      await this.logErrorAsync(
+        `migrateSettingsFile - ${newMigratedSettingsFilePath} 'uploadsettings' not found!`,
+      );
 
     previousXMLSettingsContent = previousXMLSettingsContent
       .split('<url>')
@@ -623,16 +626,14 @@ export class Updater {
       .join('</ftpcommand>');
 
     if (previousXMLSettingsContent.includes('<url'))
-      if (this.log)
-        this.log.error(
-          `migrateSettingsFile - ${newMigratedSettingsFilePath} '<url' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateSettingsFile - ${newMigratedSettingsFilePath} '<url' not expected!`,
+      );
 
     if (!previousXMLSettingsContent.includes('ftpcommand'))
-      if (this.log)
-        this.log.error(
-          `migrateSettingsFile - ${newMigratedSettingsFilePath} 'ftpcommand' not found!`,
-        );
+      await this.logErrorAsync(
+        `migrateSettingsFile - ${newMigratedSettingsFilePath} 'ftpcommand' not found!`,
+      );
 
     const previousSettings = await Utilities.parseStringPromise(
       previousXMLSettingsContent,
@@ -950,10 +951,9 @@ export class Updater {
       scriptContent.includes('.Overlay') &&
       !scriptContent.includes('.OverlayPDF ${overlayOptions}')
     )
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '.OverlayPDF \${overlayOptions}' not found!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '.OverlayPDF \${overlayOptions}' not found!`,
+      );
 
     if (
       scriptContent.includes('org.apache.pdfbox.') &&
@@ -969,10 +969,9 @@ export class Updater {
         scriptContent.includes('org.apache.pdfbox.') &&
         !scriptContent.includes('org.apache.pdfbox.tools')
       )
-        if (this.log)
-          this.log.error(
-            `migrateScriptFile - ${newScriptFilePath} 'org.apache.pdfbox.tools' not found!`,
-          );
+        await this.logErrorAsync(
+          `migrateScriptFile - ${newScriptFilePath} 'org.apache.pdfbox.tools' not found!`,
+        );
     }
     scriptContent = scriptContent.replace(
       new RegExp('\\$hostName', 'g'),
@@ -980,10 +979,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$hostName'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$hostName' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$hostName' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$tempFilePath', 'g'),
@@ -991,10 +989,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$tempFilePath'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$tempFilePath' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$tempFilePath' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$curlOptions', 'g'),
@@ -1002,10 +999,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$curlOptions'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$curlOptions' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$curlOptions' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$userName', 'g'),
@@ -1013,10 +1009,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$userName'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$userName' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$userName' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$password', 'g'),
@@ -1024,10 +1019,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$password'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$password' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$password' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$absolutePath', 'g'),
@@ -1035,10 +1029,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$absolutePath'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$absolutePath' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$absolutePath' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$destDir', 'g'),
@@ -1046,10 +1039,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$destDir'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$destDir' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$destDir' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$sharedLocationPath', 'g'),
@@ -1057,10 +1049,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$sharedLocationPath'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$sharedLocationPath' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$sharedLocationPath' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$uploadFilePath', 'g'),
@@ -1068,10 +1059,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$uploadFilePath'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$uploadFilePath' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$uploadFilePath' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$execOptions', 'g'),
@@ -1079,10 +1069,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$execOptions'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$execOptions' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$execOptions' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$inputFile', 'g'),
@@ -1090,10 +1079,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$inputFile'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$inputFile' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$inputFile' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$pdfBoxClassPath', 'g'),
@@ -1101,10 +1089,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$pdfBoxClassPath'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$pdfBoxClassPath' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$pdfBoxClassPath' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$encryptOptions', 'g'),
@@ -1112,10 +1099,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$encryptOptions'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$encryptOptions' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$encryptOptions' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$extractedFilePath', 'g'),
@@ -1123,10 +1109,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$extractedFilePath'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$extractedFilePath' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$extractedFilePath' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$stampedFilePath', 'g'),
@@ -1134,10 +1119,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$stampedFilePath'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$stampedFilePath' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$stampedFilePath' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$overlayOptions', 'g'),
@@ -1145,10 +1129,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$overlayOptions'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$overlayOptions' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$overlayOptions' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$printOptions', 'g'),
@@ -1156,10 +1139,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$printOptions'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$printOptions' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$printOptions' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$numberedFilePath', 'g'),
@@ -1167,10 +1149,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$numberedFilePath'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$numberedFilePath' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$numberedFilePath' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$host', 'g'),
@@ -1178,10 +1159,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$host'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$host' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$host' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$port', 'g'),
@@ -1189,10 +1169,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$port'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$port' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$port' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$user', 'g'),
@@ -1200,10 +1179,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$user'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$user' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$user' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$subject', 'g'),
@@ -1211,10 +1189,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$subject'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$subject' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$subject' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$from', 'g'),
@@ -1222,18 +1199,16 @@ export class Updater {
     );
 
     if (scriptContent.includes('$from'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$from' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$from' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(new RegExp('\\$to', 'g'), '${to}');
 
     if (scriptContent.includes('$to'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$to' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$to' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$message', 'g'),
@@ -1241,18 +1216,16 @@ export class Updater {
     );
 
     if (scriptContent.includes('$message'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$message' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$message' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(new RegExp('\\$ssl', 'g'), '${ssl}');
 
     if (scriptContent.includes('$ssl'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$ssl' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$ssl' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$enableStartTLS', 'g'),
@@ -1260,10 +1233,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$enableStartTLS'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$enableStartTLS' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$enableStartTLS' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$mergedFileName', 'g'),
@@ -1271,10 +1243,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$mergedFileName'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$mergedFileName' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$mergedFileName' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\${employeeRow.employee_id}', 'g'),
@@ -1282,10 +1253,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('${employeeRow.employee_id}'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '\${employeeRow.employee_id}' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '\${employeeRow.employee_id}' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('String\\.valueOf\\("\\${token}"\\)', 'g'),
@@ -1308,10 +1278,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('String.valueOf'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'String.valueOf' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'String.valueOf' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$var0\\$', 'g'),
@@ -1319,10 +1288,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$var0$'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$var0$' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$var0$' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$var1\\$', 'g'),
@@ -1330,10 +1298,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$var1$'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$var1$' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$var1$' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$var2\\$', 'g'),
@@ -1341,10 +1308,9 @@ export class Updater {
     );
 
     if (scriptContent.includes('$var2$'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$var2$' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$var2$' not expected!`,
+      );
 
     scriptContent = scriptContent.replace(
       new RegExp('\\$var3\\$', 'g'),
@@ -1352,117 +1318,100 @@ export class Updater {
     );
 
     if (scriptContent.includes('$var3$'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} '$var3$' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} '$var3$' not expected!`,
+      );
     //end correct groovy vars
 
     //console.log(`scriptContent after = ${scriptContent}`);
 
     if (scriptContent.includes('import com.smartwish'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'import com.smartwish' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'import com.smartwish' not expected!`,
+      );
 
     if (scriptContent.includes('extractFilePath'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'extractFilePath' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'extractFilePath' not expected!`,
+      );
 
     if (
       scriptContent.includes(
         'samples/Stamp.pdf \\"$inputFile\\" \\"$inputFile\\"',
       )
     )
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'samples/Stamp.pdf \\"$inputFile\\" \\"$inputFile\\"' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'samples/Stamp.pdf \\"$inputFile\\" \\"$inputFile\\"' not expected!`,
+      );
 
     if (
       scriptContent.includes(
         'samples/stamp.pdf \\"$inputFile\\" \\"$inputFile\\"',
       )
     )
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'samples/stamp.pdf \\"$inputFile\\" \\"$inputFile\\"' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'samples/stamp.pdf \\"$inputFile\\" \\"$inputFile\\"' not expected!`,
+      );
 
     if (scriptContent.includes('org.apache.commons.vfs.tasks'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'org.apache.commons.vfs.tasks' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'org.apache.commons.vfs.tasks' not expected!`,
+      );
 
     if (scriptContent.includes('commons-logging'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'commons-logging' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'commons-logging' not expected!`,
+      );
 
     if (scriptContent.includes('jcl-over-slf4j-1.7.5.jar'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'jcl-over-slf4j-1.7.5.jar' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'jcl-over-slf4j-1.7.5.jar' not expected!`,
+      );
 
     if (scriptContent.includes('slf4j-api-1.7.5.jar'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'slf4j-api-1.7.5.jar' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'slf4j-api-1.7.5.jar' not expected!`,
+      );
 
     if (scriptContent.includes('pdfbox-1.0.0.jar'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'pdfbox-1.0.0.jar' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'pdfbox-1.0.0.jar' not expected!`,
+      );
 
     if (scriptContent.includes('pdfbox-1.8.2.jar'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'pdfbox-1.8.2.jar' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'pdfbox-1.8.2.jar' not expected!`,
+      );
 
     if (scriptContent.includes('jempbox-1.0.0.jar'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'jempbox-1.0.0.jar' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'jempbox-1.0.0.jar' not expected!`,
+      );
 
     if (scriptContent.includes('jempbox-1.8.2.jar'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'jempbox-1.8.2.jar' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'jempbox-1.8.2.jar' not expected!`,
+      );
 
     if (scriptContent.includes('fontbox-1.0.0.jar'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'fontbox-1.0.0.jar' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'fontbox-1.0.0.jar' not expected!`,
+      );
 
     if (scriptContent.includes('fontbox-1.8.2.jar'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'fontbox-1.8.2.jar' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'fontbox-1.8.2.jar' not expected!`,
+      );
 
     if (scriptContent.includes('bcmail-jdk15-1.44.jar'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'bcmail-jdk15-1.44.jar' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'bcmail-jdk15-1.44.jar' not expected!`,
+      );
 
     if (scriptContent.includes('bcprov-jdk15-1.44.jar'))
-      if (this.log)
-        this.log.error(
-          `migrateScriptFile - ${newScriptFilePath} 'bcprov-jdk15-1.44.jar' not expected!`,
-        );
+      await this.logErrorAsync(
+        `migrateScriptFile - ${newScriptFilePath} 'bcprov-jdk15-1.44.jar' not expected!`,
+      );
 
     //console.log('Log 29');
     await UtilitiesNodeJs.writeAsync(newScriptFilePath, scriptContent);

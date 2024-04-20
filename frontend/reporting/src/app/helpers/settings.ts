@@ -1,6 +1,6 @@
 import * as xml2js from 'xml2js';
 import Utilities from './utilities';
-import UtilitiesElectron from './utilities-electron';
+import UtilitiesNodeJs from '../areas/electron-nodejs/utilities-nodejs';
 
 export class Settings {
   constructor() {}
@@ -9,12 +9,12 @@ export class Settings {
     //console.log(`settings: ${JSON.stringify(settings)}`);
 
     try {
-      await UtilitiesElectron.removeAsync(filePath);
+      await UtilitiesNodeJs.removeAsync(filePath);
       //await this.fs.unlink(filePath);
     } catch (error) {
     } finally {
       const builder = new xml2js.Builder();
-      return UtilitiesElectron.writeAsync(
+      return UtilitiesNodeJs.writeAsync(
         filePath,
         builder.buildObject(settings),
       );
@@ -24,7 +24,7 @@ export class Settings {
   }
 
   async loadFileContentAsync(filePath: string): Promise<string> {
-    return UtilitiesElectron.readAsync(filePath);
+    return UtilitiesNodeJs.readAsync(filePath);
   }
 
   async loadReportingFileAsync(filePath: string): Promise<any> {
@@ -32,7 +32,7 @@ export class Settings {
 
     const configReportingFilePath = `${configFolderPath}/reporting.xml`;
 
-    const content = await UtilitiesElectron.readAsync(configReportingFilePath);
+    const content = await UtilitiesNodeJs.readAsync(configReportingFilePath);
 
     return Utilities.parseStringPromise(content, {
       trim: true,
@@ -44,7 +44,7 @@ export class Settings {
   async loadSettingsFileAsync(filePath: string): Promise<any> {
     //console.trace();
 
-    const content = await UtilitiesElectron.readAsync(filePath);
+    const content = await UtilitiesNodeJs.readAsync(filePath);
 
     const parsedString = await Utilities.parseStringPromise(content, {
       trim: true,
@@ -79,7 +79,7 @@ export class Settings {
   }
 
   async loadPreferencesFileAsync(filePath: string): Promise<any> {
-    const content = await UtilitiesElectron.readAsync(filePath);
+    const content = await UtilitiesNodeJs.readAsync(filePath);
 
     const parsedString = await Utilities.parseStringPromise(content, {
       trim: true,
@@ -93,7 +93,7 @@ export class Settings {
   async parseXmlFileAsync(filePath: string): Promise<any> {
     //console.trace();
 
-    const content = await UtilitiesElectron.readAsync(filePath);
+    const content = await UtilitiesNodeJs.readAsync(filePath);
 
     const xml = await Utilities.parseStringPromise(content, {
       trim: true,
