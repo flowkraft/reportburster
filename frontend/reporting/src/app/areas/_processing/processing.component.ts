@@ -572,6 +572,8 @@ export class ProcessingComponent implements OnInit {
             arrguments,
             this.processingService.procMergeBurstInfo.mergedFileName,
           );
+
+          this.resetProcInfo();
         },
       });
     }
@@ -826,6 +828,7 @@ export class ProcessingComponent implements OnInit {
             ['-f', inputFilePath].concat(arrguments),
             Utilities.basename(inputFilePath),
           );
+
           this.resetProcInfo();
         },
       });

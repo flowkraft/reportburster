@@ -6,7 +6,7 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE2
+//DONE4
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should properly merge Invoices-Oct.pdf, Invoices-Nov.pdf and Invoices-Dec.pdf PDF files',
