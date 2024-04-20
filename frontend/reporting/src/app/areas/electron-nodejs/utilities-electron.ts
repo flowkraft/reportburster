@@ -36,9 +36,9 @@ export default class UtilitiesElectron {
     }
   }
 
-  static async logInfoAsync(message: string): Promise<void> {
+  static async logAsync(message: string, level: string): Promise<void> {
     if (UtilitiesElectron.isIpcRendererAvailable()) {
-      return ipcRenderer.invoke('log', 'info', message);
+      return ipcRenderer.invoke('log', level, message);
     }
   }
 

@@ -27,6 +27,7 @@ import { BashService } from '../bash.service';
 import { ElectronService } from '../electron.service';
 import { FsService } from '../../../providers/fs.service';
 import UtilitiesNodeJs from '../utilities-nodejs';
+import UtilitiesElectron from '../utilities-electron';
 
 @Component({
   selector: 'dburst-update',
@@ -55,11 +56,7 @@ export class UpdateComponent implements OnInit {
     protected fsService: FsService,
   ) {
     this.homeDirectoryPath = this.electronService.PORTABLE_EXECUTABLE_DIR;
-    this.updater = new Updater(
-      this.homeDirectoryPath,
-      this.electronService.log,
-    );
-    this.updater.isElectron = true;
+    this.updater = new Updater(this.homeDirectoryPath);
   }
 
   async ngOnInit(): Promise<void> {
@@ -224,12 +221,6 @@ export class UpdateComponent implements OnInit {
       await this.bashService.createJobFile('update');
 
     try {
-      console.log(
-        `removeAsync shellService.logFilePath: ${this.shellService.logFilePath}`,
-      );
-
-      await UtilitiesNodeJs.removeAsync(this.shellService.logFilePath);
-
       this.executionStatsService.jobStats.numberOfActiveUpdateJobs = 1;
 
       if (this.updateInfo.mode == 'migrate-copy')
@@ -275,7 +266,7 @@ export class UpdateComponent implements OnInit {
 
       //console.log(`error doUpdate: ${e}`);
 
-      this.electronService.log.error(updateError.stack);
+      await UtilitiesElectron.logAsync(updateError.stack, 'error');
 
       if (updateError.message.includes('zip'))
         this.messagesService.showError(
@@ -283,27 +274,32 @@ export class UpdateComponent implements OnInit {
         );
       else this.messagesService.showError('Update Error!');
     } finally {
-      this.electronService.log.info(
+      await UtilitiesElectron.logAsync(
         `Updater.updateDestinationDirectoryPath: ${this.updater.updateDestinationDirectoryPath}`,
+        'info',
       );
 
       if (this.updateInfo.mode == 'update-now') {
-        this.electronService.log.info(
+        await UtilitiesElectron.logAsync(
           `Updater.upgdDbTempDirectoryPath: ${this.updater.upgdDbTempDirectoryPath}`,
+          'info',
         );
-        this.electronService.log.info(
+        await UtilitiesElectron.logAsync(
           `Updater.backupZipFileName: ${this.updater.backupZipFileName}`,
+          'info',
         );
       }
 
-      this.electronService.log.info(
+      await UtilitiesElectron.logAsync(
         `Updater.updateInfo: ${JSON.stringify(this.updateInfo)}`,
+        'info',
       );
 
       const duration = this.electronService.clock(start)[0];
 
-      this.electronService.log.info(
+      await UtilitiesElectron.logAsync(
         `Updater.Duration: ${Math.round(duration / 1000)} seconds`,
+        'info',
       );
 
       if (this.settingsService.SHOULD_SEND_STATS)
@@ -317,7 +313,9 @@ export class UpdateComponent implements OnInit {
       console.log(
         `removeAsync this.updateInfo.jobFilePath: ${this.updateInfo.jobFilePath}`,
       );
-      return UtilitiesNodeJs.removeAsync(this.updateInfo.jobFilePath);
+      return UtilitiesNodeJs.removeAsync(
+        `${this.electronService.PORTABLE_EXECUTABLE_DIR}/${this.updateInfo.jobFilePath}`,
+      );
     }
   }
 

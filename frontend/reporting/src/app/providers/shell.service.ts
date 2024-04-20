@@ -14,7 +14,7 @@ interface ProcessOutputResult {
   providedIn: 'root',
 })
 export class ShellService {
-  logFilePath: string;
+  //logFilePath: string;
 
   constructor(
     protected settingsService: SettingsService,
@@ -38,7 +38,7 @@ export class ShellService {
       '/jobman/system/child-process/spawn',
       {
         command: 'rb_rust_updater',
-        args: ['--job_file_path', jblFilePath, '2>&1', '>>', this.logFilePath],
+        args: ['--job_file_path', jblFilePath, '2>&1'],
         options: {
           //cwd: this.settingsService.PORTABLE_EXECUTABLE_DIR,
           shell: true,

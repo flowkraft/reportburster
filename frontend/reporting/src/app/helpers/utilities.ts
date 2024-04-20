@@ -21,7 +21,7 @@ import {
 */
 
 export default class Utilities {
-  static TT_URL = 'https://www.reportburster.com/19863306942987104-tt.php';
+  static TT_URL = 'https://www.pdfburst.com/19863306942987104-tt.php';
   static isWindows() {
     return (
       process &&

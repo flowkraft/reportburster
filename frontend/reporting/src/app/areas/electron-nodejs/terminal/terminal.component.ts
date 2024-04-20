@@ -149,8 +149,9 @@ export class TerminalComponent implements AfterViewInit {
         } finally {
           if (response) {
             //response = response.toString();
-            await UtilitiesElectron.logInfoAsync(
+            await UtilitiesElectron.logAsync(
               response.replace('undefined', ''),
+              'info',
             );
           }
           if (jobFilePath)
