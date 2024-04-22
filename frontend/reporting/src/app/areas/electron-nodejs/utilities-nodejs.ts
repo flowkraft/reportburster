@@ -1,19 +1,17 @@
 import * as xml2js from 'xml2js';
 import Utilities from '../../helpers/utilities';
 
-let fs, AdmZip, urling, path, os, jetpack;
+let fs, AdmZip, path, os, jetpack;
 
 if (typeof window !== 'undefined' && window.require) {
   fs = window.require('fs');
   AdmZip = window.require('adm-zip');
-  urling = window.require('urling');
   path = window.require('path');
   os = window.require('os');
   jetpack = window.require('fs-jetpack');
 } else {
   fs = require('fs');
   AdmZip = require('adm-zip');
-  urling = require('urling');
   path = require('path');
   os = require('os');
   jetpack = require('fs-jetpack');
@@ -26,28 +24,6 @@ export default class UtilitiesNodeJs {
 
   static osTmpDir(): string {
     return os.tmpdir();
-  }
-
-  static async checkUrl(url: string): Promise<boolean> {
-    //console.log(`urlExists(url: string): ${url}`);
-
-    // Save the original console.info function
-    const originalConsoleInfo = console.info;
-
-    // Override console.info with a no-op function
-    console.info = () => {};
-
-    // Call the function
-    const options = {
-      url: url,
-      immediate: true,
-    };
-    const result = await urling(options);
-
-    // Restore the original console.info function
-    console.info = originalConsoleInfo;
-
-    return result == 200;
   }
 
   static async download(

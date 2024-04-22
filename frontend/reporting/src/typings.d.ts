@@ -12,7 +12,6 @@ interface Window {
 }
 
 declare module 'vanilla-rss';
-declare module 'urling';
 declare module 'chai-files';
 declare module 'chai-wait-for';
 
