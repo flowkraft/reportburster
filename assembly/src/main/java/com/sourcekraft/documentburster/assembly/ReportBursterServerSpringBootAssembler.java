@@ -11,15 +11,15 @@ import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.stream.LogOutputStream;
 import org.zeroturnaround.zip.ZipUtil;
 
-public class DocumentBursterServerSpringBootAssembler extends AbstractAssembler {
+public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 
 	private String groovyCompilationLogs = StringUtils.EMPTY;
 
-	private String documentBursterVerifyDirPath;
+	private String reportBursterVerifyDirPath;
 
-	public DocumentBursterServerSpringBootAssembler() {
+	public ReportBursterServerSpringBootAssembler() {
 
-		super("target/package/db-server", "target/package/verified-db-server", "target/documentburster-server.zip");
+		super("target/package/db-server", "target/package/verified-db-server", "target/reportburster-server.zip");
 
 	}
 
@@ -36,30 +36,41 @@ public class DocumentBursterServerSpringBootAssembler extends AbstractAssembler 
 				}).execute();
 
 		System.out.println(
-				"------------------------------------- DONE_01:DocumentBursterServer npm run custom:release-web --force) ... -------------------------------------");
+				"------------------------------------- DONE_01:ReportBursterServer npm run custom:release-web --force) ... -------------------------------------");
 
 	}
 
 	protected void preparePackage() throws Exception {
 
-		// copy all the already "verified" DocumentBurster files
-		FileUtils.copyDirectory(new File(documentBursterVerifyDirPath + "/" + this.topFolderName),
-				new File(packageDirPath + "/" + this.topFolderName + "/server"));
+		// copy all the already "verified" ReportBurster files
+		FileUtils.copyDirectory(new File(reportBursterVerifyDirPath + "/" + this.topFolderName),
+				new File(packageDirPath + "/" + this.topFolderName));
 
 		System.out.println(
-				"------------------------------------- DONE_02:DocumentBursterServer copy all the already 'verified' DocumentBurster files ... -------------------------------------");
+				"------------------------------------- DONE_02:ReportBursterServer copy all the already 'verified' ReportBurster files ... -------------------------------------");
 
 		// copy db-server template files and folders
 		FileUtils.copyDirectory(new File("src/main/external-resources/db-server-template"),
 				new File(packageDirPath + "/" + this.topFolderName));
 
 		System.out.println(
-				"------------------------------------- DONE_03:DocumentBursterServer copy db-server template files and folders ... -------------------------------------");
+				"------------------------------------- DONE_03:ReportBursterServer copy db-server template files and folders ... -------------------------------------");
+
+		// copy "frontent" web app (compiled)
+		String frontEndFolderPath = packageDirPath + "/" + this.topFolderName + "/lib/frontend";
+
+		FileUtils.forceMkdir(new File(frontEndFolderPath));
+
+		FileUtils.copyDirectory(new File(Utils.getTopProjectFolderPath() + "/frontend/reporting/dist"),
+				new File(frontEndFolderPath));
+
+		System.out.println(
+				"------------------------------------- DONE_04:ReportBursterServer copy 'frontent' web app (compiled) ... -------------------------------------");
 
 		// COMPILE / CHECK the groovy scripts don't give errors
 
 		new ProcessExecutor().command("cmd", "/c", "java -cp " + packageDirPath + "/" + this.topFolderName
-				+ "/server/lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile build-groovy.xml -DtopFolderName="
+				+ "/lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile build-groovy.xml -DtopFolderName="
 				+ this.topFolderName).redirectOutput(new LogOutputStream() {
 					@Override
 					protected void processLine(String line) {
@@ -72,7 +83,7 @@ public class DocumentBursterServerSpringBootAssembler extends AbstractAssembler 
 			throw new Exception("Groovy Scripts COMPILATION FAILED");
 
 		System.out.println(
-				"------------------------------------- DONE_08:DocumentBursterServer COMPILE / CHECK the groovy scripts don't give errors ... -------------------------------------");
+				"------------------------------------- DONE_05:ReportBursterServer COMPILE / CHECK the groovy scripts don't give errors ... -------------------------------------");
 		// END COMPILE groovy scripts
 
 	}
@@ -82,55 +93,53 @@ public class DocumentBursterServerSpringBootAssembler extends AbstractAssembler 
 
 		ZipUtil.unpack(new File(targetPathZipFile), new File(verifyDirPath));
 
-		// copy all the already "verified" DocumentBurster files
-		assertThat(Utils.dir1ContainsAllDir2Files(new File(verifyDirPath + "/" + this.topFolderName + "/server"),
-				new File(documentBursterVerifyDirPath + "/" + this.topFolderName))).isTrue();
+		// copy all the already "verified" ReportBurster files
+		assertThat(Utils.dir1ContainsAllDir2Files(new File(verifyDirPath + "/" + this.topFolderName),
+				new File(reportBursterVerifyDirPath + "/" + this.topFolderName))).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_01:DocumentBursterServer copy all the already 'verified' DocumentBurster files ... -------------------------------------");
+				"------------------------------------- VERIFIED_02:ReportBursterServer copy all the already 'verified' ReportBurster files ... -------------------------------------");
 
 		// copy db-server template files and folders
 		assertThat(Utils.dir1ContainsAllDir2Files(new File(verifyDirPath + "/" + this.topFolderName),
 				new File("src/main/external-resources/db-server-template"))).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_02:DocumentBursterServer db-server template files and folders ... -------------------------------------");
+				"------------------------------------- VERIFIED_03:ReportBursterServer db-server template files and folders ... -------------------------------------");
 
-		// START MODULE_BATCH work
+		// copy "frontent" web app (compiled)
+		String content = FileUtils.readFileToString(
+				new File(packageDirPath + "/" + this.topFolderName + "/lib/frontend/index.html"), "UTF-8");
 
-		// copy all MODULE_BATCH's dependencies to the intermediate folder location
+		assertThat(assertThat(content.contains("skin-blue")).isTrue());
+
+		System.out.println(
+				"------------------------------------- VERIFIED_04:ReportBursterServer copy 'frontent' web app (compiled) ... -------------------------------------");
 
 		// COMPILE / CHECK the groovy scripts don't give errors
 
 		Collection<File> groovyScriptFiles = FileUtils.listFiles(
-				new File(verifyDirPath + "/" + this.topFolderName + "/server/scripts"), new String[] { "groovy" },
-				true);
+				new File(verifyDirPath + "/" + this.topFolderName + "/scripts"), new String[] { "groovy" }, true);
 
 		assertThat(groovyScriptFiles.size() > 0).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_07:DocumentBursterServer CHECK the groovy scripts ... -------------------------------------");
+				"------------------------------------- VERIFIED_07:ReportBursterServer CHECK the groovy scripts ... -------------------------------------");
 
 		// END COMPILE groovy scripts
 
 		// VERIFY ALL CUSTOM FILES
 
-		// service.bat file...
-		String content = FileUtils.readFileToString(
-				new File(verifyDirPath + "/" + this.topFolderName + "/web-console/console/bin/service.bat"), "UTF-8");
-
-		assertThat(content.contains("ReportBurster Web Console")).isTrue();
-
 		// log4j.xml
-		content = FileUtils.readFileToString(new File(verifyDirPath + "/" + this.topFolderName + "/server/log4j2.xml"),
+		content = FileUtils.readFileToString(new File(verifyDirPath + "/" + this.topFolderName + "/log4j2.xml"),
 				"UTF-8");
 
-		assertThat(content.contains("batch.log")).isTrue();
+		assertThat(content.contains("rbsj.log")).isTrue();
 
 	}
 
-	public void setDocumentBursterVerifyDirPath(String documentBursterVerifyDirPath) {
-		this.documentBursterVerifyDirPath = documentBursterVerifyDirPath;
+	public void setReportBursterVerifyDirPath(String reportBursterVerifyDirPath) {
+		this.reportBursterVerifyDirPath = reportBursterVerifyDirPath;
 	}
 
 }

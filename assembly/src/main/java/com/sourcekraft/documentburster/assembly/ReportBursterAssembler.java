@@ -9,13 +9,13 @@ import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.stream.LogOutputStream;
 import org.zeroturnaround.zip.ZipUtil;
 
-public class DocumentBursterAssembler extends AbstractAssembler {
+public class ReportBursterAssembler extends AbstractAssembler {
 
 	private String e2eVerifyDirPath;
 
-	public DocumentBursterAssembler() {
+	public ReportBursterAssembler() {
 
-		super("target/package/db", "target/package/verified-db", "target/documentburster.zip");
+		super("target/package/db", "target/package/verified-db", "target/reportburster.zip");
 
 	}
 
@@ -34,18 +34,18 @@ public class DocumentBursterAssembler extends AbstractAssembler {
 				}).execute();
 
 		System.out.println(
-				"------------------------------------- DONE_01:DocumentBurster _generateDocumentBursterExe ... -------------------------------------");
+				"------------------------------------- DONE_01:ReportBurster _generate ReportBurster.exe ... -------------------------------------");
 
 	}
 
 	protected void preparePackage() throws Exception {
 
-		// copy all the already "verified" DocumentBurster files
+		// copy all the already "verified" ReportBurster files
 		FileUtils.copyDirectory(new File(e2eVerifyDirPath),
 				new File(packageDirPath));
 
 		System.out.println(
-				"------------------------------------- DONE_02:DocumentBursterServer copy all the already 'verified' DocumentBurster files ... -------------------------------------");
+				"------------------------------------- DONE_02:ReportBursterServer copy all the already 'verified' ReportBurster files ... -------------------------------------");
 
 		
 		FileUtils.copyFile(
@@ -53,7 +53,7 @@ public class DocumentBursterAssembler extends AbstractAssembler {
 				new File(packageDirPath + "/" + topFolderName + "/ReportBurster.exe"));
 
 		System.out.println(
-				"------------------------------------- DONE_03:DocumentBurster _copy DocumentBursterExe... -------------------------------------");
+				"------------------------------------- DONE_03:ReportBurster _copy ReportBursterExe... -------------------------------------");
 
 		
 	}
@@ -63,14 +63,14 @@ public class DocumentBursterAssembler extends AbstractAssembler {
 
 		ZipUtil.unpack(new File(targetPathZipFile), new File(verifyDirPath));
 
-		// verify DocumentBursterExe();
+		// verify ReportBurster.exe;
 		assertThat(new File(verifyDirPath + "/" + topFolderName + "/ReportBurster.exe").exists()).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_01:DocumentBurster ReportBurster.exe... -------------------------------------");
+				"------------------------------------- VERIFIED_01:ReportBurster ReportBurster.exe... -------------------------------------");
 
 		System.out.println(
-				"------------------------------------- VERIFIED_DONE:DocumentBurster ... -------------------------------------");
+				"------------------------------------- VERIFIED_DONE:ReportBurster ... -------------------------------------");
 
 	}
 	

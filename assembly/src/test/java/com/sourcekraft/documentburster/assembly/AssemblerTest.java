@@ -11,7 +11,7 @@ public class AssemblerTest {
 	public void doAdHoc() throws Exception {
 
 		new ProcessExecutor().command("cmd", "/c",
-				"java -cp target/package/db/DocumentBurster/lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile build-groovy.xml")
+				"java -cp target/package/db/ReportBurster/lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile build-groovy.xml")
 				.redirectOutput(new LogOutputStream() {
 					@Override
 					protected void processLine(String line) {
@@ -22,7 +22,7 @@ public class AssemblerTest {
 	}
 
 	@Test
-	public void assembleDocumentBursterAndDocumentBursterServer() throws Exception {
+	public void assembleReportBursterAndReportBursterServer() throws Exception {
 
 		AbstractAssembler e2eAssembler = new NoExeAssembler();
 
@@ -32,27 +32,27 @@ public class AssemblerTest {
 		System.out.println(
 				"------------------------------------- FINISHED Assembler:NoExeAssembler ... -------------------------------------");
 
-		AbstractAssembler dbAssembler = new DocumentBursterAssembler();
-		((DocumentBursterAssembler) dbAssembler).setE2EVerifyDirPath(e2eAssembler.getVerifyDirPath());
+		AbstractAssembler rbAssembler = new ReportBursterAssembler();
+		((ReportBursterAssembler) rbAssembler).setE2EVerifyDirPath(e2eAssembler.getVerifyDirPath());
 
-		dbAssembler.assemble();
-		dbAssembler.verify();
-		dbAssembler.install();
-
-		System.out.println(
-				"------------------------------------- FINISHED Assembler:DocumentBursterAssembler ... -------------------------------------");
-
-		AbstractAssembler dbServerAssembler = new DocumentBursterServerSpringBootAssembler();
-
-		((DocumentBursterServerSpringBatchAdminAssembler) dbServerAssembler)
-				.setDocumentBursterVerifyDirPath(dbAssembler.getVerifyDirPath());
-
-		dbServerAssembler.assemble();
-		dbServerAssembler.verify();
-		dbServerAssembler.install();
+		rbAssembler.assemble();
+		rbAssembler.verify();
+		rbAssembler.install();
 
 		System.out.println(
-				"------------------------------------- FINISHED Assembler:DocumentBursterServerSpringBootAssembler ... -------------------------------------");
+				"------------------------------------- FINISHED Assembler:ReportBursterAssembler ... -------------------------------------");
+
+		AbstractAssembler rbServerAssembler = new ReportBursterServerSpringBootAssembler();
+
+		((ReportBursterServerSpringBootAssembler) rbServerAssembler)
+				.setReportBursterVerifyDirPath(rbAssembler.getVerifyDirPath());
+
+		rbServerAssembler.assemble();
+		rbServerAssembler.verify();
+		rbServerAssembler.install();
+
+		System.out.println(
+				"------------------------------------- FINISHED Assembler:ReportBursterServerSpringBootAssembler ... -------------------------------------");
 
 	}
 

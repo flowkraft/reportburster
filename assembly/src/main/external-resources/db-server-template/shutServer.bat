@@ -1,3 +1,5 @@
 @echo off
-set SERVE_STATIC_FRONTEND=TRUE
+
+set FRONTEND_PATH=lib/frontend
+
 call tools/rbsj/shutRbsjServer.bat

@@ -94,7 +94,7 @@ public class JobsService implements JobsApi {
 				String fileName = FilenameUtils.getName(filePath);
 
 				try {
-					FileUtils.moveFile(new File(filePath), new File(AppPaths.POLL_DIR_PATH + "/" + fileName));
+					FileUtils.moveFile(new File(filePath), new File(AppPaths.DEFAULT_POLL_DIR_PATH + "/" + fileName));
 					FileUtils.deleteDirectory(new File(AppPaths.UPLOADS_DIR_PATH + "/" + serverTransactionInfo.id));
 				} catch (Exception e) {
 					throw new RuntimeException(e);
