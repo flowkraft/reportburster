@@ -42,13 +42,6 @@ export default class UtilitiesElectron {
     }
   }
 
-  static async checkUrl(url: string): Promise<boolean> {
-    if (UtilitiesElectron.isIpcRendererAvailable())
-      return ipcRenderer.invoke('checkUrl', url);
-
-    return false;
-  }
-
   static async execNativeCommand(
     command: string,
   ): Promise<{ stdout: string; stderr: string }> {
