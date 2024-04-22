@@ -7,7 +7,7 @@ import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE2
+//DONE4
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should split Invoices-Oct.pdf and, with the help of User Variables, and the output files should be "Customer name-Invoice number-Invoice date.pdf" convention (My Report)',
