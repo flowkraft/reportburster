@@ -1,3 +1,8 @@
 @echo off
-set SERVE_STATIC_FRONTEND=TRUE
+
+set PORTABLE_EXECUTABLE_DIR_PATH=.
+set POLLING_PATH=%PORTABLE_EXECUTABLE_DIR_PATH%/poll
+
+set FRONTEND_PATH=lib/frontend
+
 call tools/rbsj/startRbsjServer.bat

@@ -1,3 +1,5 @@
+//TODO assemblerspringboot
+
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import log from 'electron-log';
 import * as path from 'path';
@@ -174,9 +176,7 @@ try {
       });
     } else {
       //if non-"production"
-      log.info(
-        `starting Electron App (Development)`,
-      );
+      log.info(`starting Electron App (Development)`);
 
       setTimeout(() => {
         createWindow();

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project name="groovy-compile" default="compile">
-	<property name="groovy-build.lib-dir" location="target/package/db-server/${topFolderName}/server/lib" />
+	<property name="groovy-build.lib-dir" location="target/package/db-server/${topFolderName}/lib" />
 
 	<path id="lib.path">
 		<fileset dir="${groovy-build.lib-dir}">
@@ -17,7 +17,7 @@
 		<!--<pathconvert property="classpath.path" refid="lib.path" />
 		<echo message="classpath = ${classpath.path}" />-->
 		<mkdir dir="target/groovy-classes" />
-		<groovyc srcdir="target/package/db-server/${topFolderName}/server/scripts" destdir="target/groovy-classes" classpathref="lib.path">
+		<groovyc srcdir="target/package/db-server/${topFolderName}/scripts" destdir="target/groovy-classes" classpathref="lib.path">
 		</groovyc>
 	</target>
 

@@ -12,11 +12,12 @@ import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.flowkraft.common.AppPaths;
 import com.flowkraft.common.Constants;
 import com.flowkraft.common.Utils;
 import com.flowkraft.jobman.models.FileInfo;
@@ -25,6 +26,9 @@ import com.flowkraft.jobman.services.ShellService;
 
 @Component
 public class PollScheduler {
+
+	@Value("${POLLING_PATH:}")
+	private String pollingPath;
 
 	@Autowired
 	JobsService jobsService;
@@ -38,16 +42,30 @@ public class PollScheduler {
 
 	@PostConstruct
 	public void init() {
-		File pollDir = new File(AppPaths.POLL_DIR_PATH);
-		if (!pollDir.exists()) {
-			pollDir.mkdirs();
+
+		if (!StringUtils.isBlank(pollingPath)) {
+
+			File pollDir = new File(pollingPath);
+			if (!pollDir.exists()) {
+				pollDir.mkdirs();
+			}
+
+			File pollDirReceived = new File(pollingPath + "/received");
+			if (!pollDirReceived.exists()) {
+				pollDirReceived.mkdirs();
+			}
 		}
 	}
 
 	@Scheduled(fixedRate = 5000)
 	public void poll() throws Exception {
 
-		Collection<File> allFilesInPollFolder = FileUtils.listFiles(new File(AppPaths.POLL_DIR_PATH),
+		if (StringUtils.isBlank(pollingPath))
+			return;
+
+		String pollingReceivedPath = pollingPath + "/received";
+
+		Collection<File> allFilesInPollFolder = FileUtils.listFiles(new File(pollingPath),
 				Utils.filesWhichCanBeProcessedFilter, null);
 
 		for (File polledFile : allFilesInPollFolder) {
@@ -62,7 +80,7 @@ public class PollScheduler {
 			// construct new filename with random UUID
 			String polledFileName = baseName + "-" + randomUUID + "." + extension;
 
-			Collection<File> processingFiles = FileUtils.listFiles(new File(AppPaths.POLL_RECEIVED_DIR_PATH),
+			Collection<File> processingFiles = FileUtils.listFiles(new File(pollingReceivedPath),
 					Utils.filesWhichCanBeProcessedFilter, null);
 
 			jobsService.state.numberOfActiveJobs = processingFiles.size();
@@ -74,7 +92,7 @@ public class PollScheduler {
 				waitQueue.add(polledFilePath);
 			} else {
 
-				String filePathToProcess = AppPaths.POLL_RECEIVED_DIR_PATH + "/" + polledFileName;
+				String filePathToProcess = pollingReceivedPath + "/" + polledFileName;
 
 				jobsService.state.numberOfActiveJobs = 1;
 

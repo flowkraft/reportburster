@@ -11,7 +11,7 @@ import org.zeroturnaround.zip.ZipUtil;
 
 public abstract class AbstractAssembler {
 
-	protected String topFolderName = "DocumentBurster";
+	protected String topFolderName;
 
 	protected String verifyDirPath;
 

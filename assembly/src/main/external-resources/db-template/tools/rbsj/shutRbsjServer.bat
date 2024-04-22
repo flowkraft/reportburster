@@ -1,6 +1,6 @@
 @echo off
-:: Check if SERVE_STATIC_FRONTEND is set to TRUE
-if "%SERVE_STATIC_FRONTEND%"=="TRUE" (
+:: Check if FRONTEND_PATH is set and points to a valid directory
+if exist "%FRONTEND_PATH%" (
     :: Find the file that contains the server port number
     for /R %%G in (server-*.port) do (
         set "FILE=%%~nG"
