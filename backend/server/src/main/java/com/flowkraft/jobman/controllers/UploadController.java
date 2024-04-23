@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,7 +24,7 @@ import com.flowkraft.jobman.services.SystemService;
 import reactor.core.publisher.Flux;
 
 @RestController
-@RequestMapping(value = "/jobman", produces = MediaType.APPLICATION_JSON_VALUE, consumes = {
+@RequestMapping(value = "/api/jobman", produces = MediaType.APPLICATION_JSON_VALUE, consumes = {
 		MediaType.MULTIPART_FORM_DATA_VALUE })
 public class UploadController {
 
