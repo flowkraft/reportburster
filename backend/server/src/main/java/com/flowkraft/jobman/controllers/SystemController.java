@@ -32,7 +32,7 @@ import com.flowkraft.jobman.services.SystemService.ProcessOutputResult;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping(value = "/jobman/system", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/jobman/system", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
 public class SystemController {
 
 	@Autowired
