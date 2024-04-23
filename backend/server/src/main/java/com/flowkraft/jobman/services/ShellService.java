@@ -64,9 +64,9 @@ public class ShellService {
 		DefaultExecutor executor = new DefaultExecutor();
 		executor.setWorkingDirectory(new File(AppPaths.WORKSPACE_DIR_PATH));
 
-		CommandLine cmdLine = CommandLine.parse("cmd.exe /c documentburster.bat" + " " + arrguments);
+		CommandLine cmdLine = CommandLine.parse("cmd.exe /c reportburster.bat" + " " + arrguments);
 
-		//System.out.println("cmd.exe /c documentburster.bat" + " " + arrguments);
+		//System.out.println("cmd.exe /c reportburster.bat" + " " + arrguments);
 		executor.execute(cmdLine, resultHandler);
 
 	}

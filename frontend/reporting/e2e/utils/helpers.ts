@@ -51,7 +51,7 @@ export class Helpers {
       { overwrite: true },
     );
 
-    spawnSync('documentburster.bat', ['-dl', '/c'], {
+    spawnSync('reportburster.bat', ['-dl', '/c'], {
       cwd: path.join(process.env.PORTABLE_EXECUTABLE_DIR),
       shell: true,
     });
@@ -142,11 +142,11 @@ export class Helpers {
     );
     */
 
-    //copy back the default documentburster.bat file
+    //copy back the default reportburster.bat file
     await jetpack.copyAsync(
       PATHS.E2E_RESOURCES_PATH +
         '/java-versions/documentburster-java-default.bat',
-      process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
+      process.env.PORTABLE_EXECUTABLE_DIR + '/reportburster.bat',
       { overwrite: true },
     );
 
