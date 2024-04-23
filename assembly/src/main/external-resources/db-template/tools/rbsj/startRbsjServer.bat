@@ -1,14 +1,24 @@
 @echo off
-set SETTINGS_FILE=../../config/_internal/settings.xml
-set JAR_FILE=../../lib/server/rb-server.jar
 
-IF NOT DEFINED PORTABLE_EXECUTABLE_DIR_PATH set PORTABLE_EXECUTABLE_DIR_PATH=../..
+:: Get the directory of the script
+set "SCRIPT_DIR=%~dp0"
+
+:: Remove trailing backslash
+set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+
+:: Navigate to the ReportBurster directory
+cd "%SCRIPT_DIR%\..\.."
+set "PORTABLE_EXECUTABLE_DIR_PATH=%cd%"
+
+:: Now you can use PORTABLE_EXECUTABLE_DIR_PATH to set the paths for SETTINGS_FILE and JAR_FILE
+set "SETTINGS_FILE=%PORTABLE_EXECUTABLE_DIR_PATH%\config\_internal\settings.xml"
+set "JAR_FILE=%PORTABLE_EXECUTABLE_DIR_PATH%\lib\server\rb-server.jar"
 
 :: Empty the electron.log file
 type nul > "%PORTABLE_EXECUTABLE_DIR_PATH%/logs/electron.log"
 
 :: Call shutRbsjServer.bat to ensure the port is not blocked
-call shutRbsjServer.bat
+call "%~dp0shutRbsjServer.bat"
 
 :: Find an available port
 for /L %%x in (9090, 1, 65535) do (
