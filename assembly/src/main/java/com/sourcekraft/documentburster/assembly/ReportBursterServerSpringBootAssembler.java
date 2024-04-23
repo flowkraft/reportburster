@@ -3,6 +3,8 @@ package com.sourcekraft.documentburster.assembly;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
@@ -86,6 +88,13 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 				"------------------------------------- DONE_05:ReportBursterServer COMPILE / CHECK the groovy scripts don't give errors ... -------------------------------------");
 		// END COMPILE groovy scripts
 
+		// by default, after it was checked that it is compilable, have the
+		// schedules.groovy to be only an "example" "schedules.groovy.example"
+		FileUtils.moveFile(
+				FileUtils.getFile(packageDirPath + "/" + this.topFolderName + "/scripts/batch/schedules.groovy"),
+				FileUtils.getFile(
+						packageDirPath + "/" + this.topFolderName + "/scripts/batch/schedules.groovy.example"));
+
 	}
 
 	@Override
@@ -111,7 +120,7 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 		String content = FileUtils.readFileToString(
 				new File(packageDirPath + "/" + this.topFolderName + "/lib/frontend/index.html"), "UTF-8");
 
-		assertThat(assertThat(content.contains("skin-blue")).isTrue());
+		assertThat(content.contains("skin-blue")).isTrue();
 
 		System.out.println(
 				"------------------------------------- VERIFIED_04:ReportBursterServer copy 'frontent' web app (compiled) ... -------------------------------------");
@@ -122,6 +131,13 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 				new File(verifyDirPath + "/" + this.topFolderName + "/scripts"), new String[] { "groovy" }, true);
 
 		assertThat(groovyScriptFiles.size() > 0).isTrue();
+
+		assertThat(
+				Files.exists(Paths.get(packageDirPath + "/" + this.topFolderName + "/scripts/batch/schedules.groovy")))
+				.isFalse();
+		assertThat(Files.exists(
+				Paths.get(packageDirPath + "/" + this.topFolderName + "/scripts/batch/schedules.groovy.example")))
+				.isTrue();
 
 		System.out.println(
 				"------------------------------------- VERIFIED_07:ReportBursterServer CHECK the groovy scripts ... -------------------------------------");

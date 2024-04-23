@@ -42,7 +42,7 @@ test.describe('', async () => {
     /*
     jetpack.copy(
       PATHS.E2E_RESOURCES_PATH + "/java-versions/documentburster-java6.bat",
-      process.env.PORTABLE_EXECUTABLE_DIR + "/documentburster.bat",
+      process.env.PORTABLE_EXECUTABLE_DIR + "/reportburster.bat",
       {
         overwrite: true,
       }
@@ -56,7 +56,7 @@ test.describe('', async () => {
     /*
     jetpack.copy(
       PATHS.E2E_RESOURCES_PATH + "/java-versions/documentburster-java7.bat",
-      process.env.PORTABLE_EXECUTABLE_DIR + "/documentburster.bat",
+      process.env.PORTABLE_EXECUTABLE_DIR + "/reportburster.bat",
       {
         overwrite: true,
       }
@@ -74,7 +74,7 @@ test.describe('', async () => {
     // copy the documentburster-javaX.bat file
     await jetpack.copyAsync(
       PATHS.E2E_RESOURCES_PATH + '/java-versions/documentburster-java8.bat',
-      process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
+      process.env.PORTABLE_EXECUTABLE_DIR + '/reportburster.bat',
       {
         overwrite: true,
       },
@@ -92,7 +92,7 @@ test.describe('', async () => {
     // copy the documentburster-javaX.bat file
     await jetpack.copyAsync(
       PATHS.E2E_RESOURCES_PATH + '/java-versions/documentburster-java11.bat',
-      process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
+      process.env.PORTABLE_EXECUTABLE_DIR + '/reportburster.bat',
       {
         overwrite: true,
       },
@@ -110,7 +110,7 @@ test.describe('', async () => {
     // copy the documentburster-javaX.bat file
     await jetpack.copyAsync(
       PATHS.E2E_RESOURCES_PATH + '/java-versions/documentburster-java14.bat',
-      process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
+      process.env.PORTABLE_EXECUTABLE_DIR + '/reportburster.bat',
       {
         overwrite: true,
       },
@@ -128,7 +128,7 @@ test.describe('', async () => {
     // copy the documentburster-javaX.bat file
     await jetpack.copyAsync(
       PATHS.E2E_RESOURCES_PATH + '/java-versions/documentburster-java16.bat',
-      process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
+      process.env.PORTABLE_EXECUTABLE_DIR + '/reportburster.bat',
       {
         overwrite: true,
       },
@@ -146,7 +146,7 @@ test.describe('', async () => {
     // copy the documentburster-javaX.bat file
     await jetpack.copyAsync(
       PATHS.E2E_RESOURCES_PATH + '/java-versions/documentburster-java17.bat',
-      process.env.PORTABLE_EXECUTABLE_DIR + '/documentburster.bat',
+      process.env.PORTABLE_EXECUTABLE_DIR + '/reportburster.bat',
       {
         overwrite: true,
       },

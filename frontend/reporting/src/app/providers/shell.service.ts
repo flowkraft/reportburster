@@ -64,7 +64,7 @@ export class ShellService {
       messageClass: 'java-started',
     });
 
-    const commands = ['documentburster.bat'].concat(arrguments);
+    const commands = ['reportburster.bat'].concat(arrguments);
     const batScript = await this.apiService.post(
       '/jobman/system/child-process/spawn',
       commands,
