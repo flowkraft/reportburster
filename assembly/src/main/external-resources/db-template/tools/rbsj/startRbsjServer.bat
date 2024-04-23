@@ -17,6 +17,9 @@ set "JAR_FILE=%PORTABLE_EXECUTABLE_DIR_PATH%\lib\server\rb-server.jar"
 :: Empty the electron.log file
 type nul > "%PORTABLE_EXECUTABLE_DIR_PATH%/logs/electron.log"
 
+:: Call killOlderExes.ps1 to kill older instances of ReportBurster.exe
+powershell -File "%~dp0killOlderExes.ps1" -scriptDir "%PORTABLE_EXECUTABLE_DIR_PATH%"
+
 :: Call shutRbsjServer.bat to ensure the port is not blocked
 call "%~dp0shutRbsjServer.bat"
 

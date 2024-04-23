@@ -24,6 +24,7 @@ goto :continue
 set "PORT=%FILE:~4,-5%"
 
 :continue
+
 :: Check if the port file exists
 if exist "%FILE%.port" (
     :: Use the port number as the unique identifier
