@@ -5,6 +5,11 @@ import java.util.concurrent.TimeUnit
 import java.util.Timer
 import java.util.TimerTask
 
+import com.flowkraft.common.AppPaths;
+
+def pollingPath = "${AppPaths.PORTABLE_EXECUTABLE_DIR_PATH}/poll"
+def scheduledPath = "${AppPaths.PORTABLE_EXECUTABLE_DIR_PATH}/input-files/scheduled"
+
 def timer = new Timer()
 
 //TimeUnit.DAYS
@@ -25,14 +30,14 @@ timer.schedule(new TimerTask() {
         */
 
         // Uncomment the following lines if you need the below code to be executed
-
+        
         def ant = new AntBuilder()
 
         // copy all files (indicated by the "**/*.*" pattern) from the 
         // "input-files/scheduled" directory to the "poll" directory
 
-        ant.copy(todir: "poll") {
-             fileset(dir: "input-files/scheduled") {
+        ant.copy(todir: pollingPath) {
+             fileset(dir: scheduledPath) {
                  include(name: "**/*.*")
              }
         }
@@ -41,7 +46,7 @@ timer.schedule(new TimerTask() {
         // "input-files/scheduled" directory
 
         ant.delete {
-             fileset(dir: "input-files/scheduled") {
+             fileset(dir: scheduledPath) {
                  include(name: "**/*.*")
              }
         }

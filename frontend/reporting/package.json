@@ -67,7 +67,7 @@
     "custom:e2e-prepare-letmeupdate-for-manual-testing": "rimraf testground && mkdirp testground/e2e && npx gulp e2e-package-javastuff-if-needed && cross-env PORTABLE_EXECUTABLE_DIR=testground/upgrade SHOULD_SEND_STATS=false ts-node --project e2e/tsconfig.e2e.json node_modules/jasmine/bin/jasmine --config=scripts-dev/jasmine/jasmine-updater-letme.json && npx gulp e2e-copy-dbexe-to-letme-baseline",
     "custom:e2e-prepare-updatenow-for-manual-testing": "rimraf testground && mkdirp testground/e2e && npx gulp e2e-package-javastuff-if-needed && cross-env PORTABLE_EXECUTABLE_DIR=testground/upgrade SHOULD_SEND_STATS=false ts-node node_modules/jasmine/bin/jasmine --config=scripts-dev/jasmine/jasmine-updater-now.json && npx gulp e2e-prepare-updatenow-for-manual-testing",
     "custom:electron:windows": "npm run build:prod && electron-builder build --windows --ia32",
-    "precustom:release-electron": "npm run custom:clean-output && npm prune",
+    "precustom:release-electron": "npm run custom:clean-output && npm prune --force",
     "custom:release-electron": "npm run custom:electron:windows",
     "custom:release-web": "rimraf dist && ng build -c web-production"
   },
