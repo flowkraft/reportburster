@@ -23,7 +23,7 @@ exit /b 1
 :found
 
 :: Update settings.xml with the correct port
-powershell -Command "(gc '%SETTINGS_FILE%') -replace 'http://localhost:\d+', 'http://localhost:%PORT%' | Out-File -encoding ASCII '%SETTINGS_FILE%'"
+powershell -Command "(gc '%SETTINGS_FILE%') -replace 'http://localhost:\d+/api', 'http://localhost:%PORT%/api' | Out-File -encoding ASCII '%SETTINGS_FILE%'"
 
 :: Check if FRONTEND_PATH is set and points to a valid directory
 if exist "%FRONTEND_PATH%" (

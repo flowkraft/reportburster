@@ -2,10 +2,10 @@
 <documentburster>
 
 	<settings>
-	    
-	  <skin>skin-blue</skin>
-	  <backendurl>http://localhost:9090</backendurl>
-  
+
+		<skin>skin-blue</skin>
+		<backendurl>http://localhost:9090/api</backendurl>
+
 	</settings>
 
 </documentburster>
