@@ -4,9 +4,13 @@ set JAR_FILE=../../lib/server/rb-server.jar
 
 IF NOT DEFINED PORTABLE_EXECUTABLE_DIR_PATH set PORTABLE_EXECUTABLE_DIR_PATH=../..
 
+:: Call shutRbsjServer.bat to ensure the port is not blocked
+call shutRbsjServer.bat
+
 :: Find an available port
 for /L %%x in (9090, 1, 65535) do (
-    >nul 2>nul netstat /a /n | find "%%x" || (
+    powershell -Command "if (!(Test-NetConnection -ComputerName localhost -Port %%x)) { exit 0 } else { exit 1 }" >nul 2>nul
+    if errorlevel 1 (
         set "PORT=%%x"
         goto :found
     )
