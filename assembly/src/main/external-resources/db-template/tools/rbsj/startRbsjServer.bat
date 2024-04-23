@@ -4,6 +4,9 @@ set JAR_FILE=../../lib/server/rb-server.jar
 
 IF NOT DEFINED PORTABLE_EXECUTABLE_DIR_PATH set PORTABLE_EXECUTABLE_DIR_PATH=../..
 
+:: Empty the electron.log file
+type nul > "%PORTABLE_EXECUTABLE_DIR_PATH%/logs/electron.log"
+
 :: Call shutRbsjServer.bat to ensure the port is not blocked
 call shutRbsjServer.bat
 
