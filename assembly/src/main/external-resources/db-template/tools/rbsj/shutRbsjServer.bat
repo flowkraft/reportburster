@@ -1,11 +1,17 @@
 @echo off
+:: Get the directory of the script
+set "SCRIPT_DIR=%~dp0"
+
+:: Remove trailing backslash
+set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+
 :: Find the file that contains the server port number
-for /R %%G in (server-*.port) do (
+for /R "%SCRIPT_DIR%" %%G in (server-*.port) do (
     set "FILE=%%~nG"
     goto :foundServer
 )
 :: If no server port file found, check for exe port file
-for /R %%G in (exe-*.port) do (
+for /R "%SCRIPT_DIR%" %%G in (exe-*.port) do (
     set "FILE=%%~nG"
     goto :foundExe
 )
@@ -26,7 +32,7 @@ set "PORT=%FILE:~4,-5%"
 :continue
 
 :: Check if the port file exists
-if exist "%FILE%.port" (
+if exist "%SCRIPT_DIR%\%FILE%.port" (
     :: Use the port number as the unique identifier
     set "UID=%PORT%"
 
@@ -34,5 +40,5 @@ if exist "%FILE%.port" (
     powershell -Command "Get-WmiObject Win32_Process -Filter \"name = 'java.exe'\" | Where-Object { $_.CommandLine -like '*rb-server.jar*' -and $_.CommandLine -like '*%UID%*' } | ForEach-Object { Stop-Process -Id $_.ProcessId }"
 
     :: Delete the port file
-    del "%FILE%.port"
+    del "%SCRIPT_DIR%\%FILE%.port"
 )
