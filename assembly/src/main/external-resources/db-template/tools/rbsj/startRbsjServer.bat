@@ -35,18 +35,33 @@ echo No available port found
 exit /b 1
 :found
 
-:: Update settings.xml with the correct port
-powershell -Command "(gc '%SETTINGS_FILE%') -replace 'http://localhost:\d+/api', 'http://localhost:%PORT%/api' | Out-File -encoding ASCII '%SETTINGS_FILE%'"
+:: Check if both POLLING_PATH and FRONTEND_PATH are not defined (only when called from ReportBurster.exe)
+IF NOT DEFINED POLLING_PATH IF NOT DEFINED FRONTEND_PATH (
+    :: Update settings.xml with the correct port
+    powershell -Command "(gc '%SETTINGS_FILE%') -replace 'http://localhost:\d+/api', 'http://localhost:%PORT%/api' | Out-File -encoding ASCII '%SETTINGS_FILE%'"
+)
+
+set "JAVA_CMD=java -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT% -jar %JAR_FILE% -serve"
+set "RB_SERVER_MODE=false"
 
 :: Check if FRONTEND_PATH is set and points to a valid directory
 if exist "%FRONTEND_PATH%" (
-    :: Write the port number to a different file
-    echo %PORT% > "server-%PORT%.port"
-    :: Start the Java process with the port number as the unique identifier and serve static content
-    java -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT% -Dspring.resources.static-locations=file:%FRONTEND_PATH% -jar %JAR_FILE% -serve
+    set "JAVA_CMD=%JAVA_CMD% -Dspring.resources.static-locations=file:%FRONTEND_PATH%"
+    set "RB_SERVER_MODE=true"
+)
+
+:: Check if POLLING_PATH is set and points to a valid directory
+if exist "%POLLING_PATH%" (
+    set "JAVA_CMD=%JAVA_CMD% -DPOLLING_PATH=%POLLING_PATH%"
+    set "RB_SERVER_MODE=true"
+)
+
+:: If either FRONTEND_PATH or POLLING_PATH exist, write the port number to a server file and start the Java process
+if "%RB_SERVER_MODE%"=="true" (
+    echo %PORT% > "%SCRIPT_DIR%\server-%PORT%.port"
+    %JAVA_CMD%
 ) else (
-    :: Write the port number to a file
-    echo %PORT% > "exe-%PORT%.port"
-    :: Start the Java process with the port number as the unique identifier
-    java -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT% -jar %JAR_FILE% -serve
+    :: If neither FRONTEND_PATH nor POLLING_PATH exist, write the port number to an exe file and start the Java process
+    echo %PORT% > "%SCRIPT_DIR%\exe-%PORT%.port"
+    %JAVA_CMD%
 )
