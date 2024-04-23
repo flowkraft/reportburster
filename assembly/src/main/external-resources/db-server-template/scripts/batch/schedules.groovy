@@ -5,10 +5,8 @@ import java.util.concurrent.TimeUnit
 import java.util.Timer
 import java.util.TimerTask
 
-import com.flowkraft.common.AppPaths;
-
-def pollingPath = "${AppPaths.PORTABLE_EXECUTABLE_DIR_PATH}/poll"
-def scheduledPath = "${AppPaths.PORTABLE_EXECUTABLE_DIR_PATH}/input-files/scheduled"
+def pollingPath = "${POLLING_PATH}"
+def scheduledPath = "${PORTABLE_EXECUTABLE_DIR_PATH}/input-files/scheduled"
 
 def timer = new Timer()
 

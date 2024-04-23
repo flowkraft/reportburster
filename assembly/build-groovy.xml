@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project name="groovy-compile" default="compile">
-	<property name="groovy-build.lib-dir" location="target/package/db-server/${topFolderName}/lib" />
+	<property name="groovy-build.lib-dir" location="target/package/db-server/${topFolderName}/lib/burst" />
 
 	<path id="lib.path">
 		<fileset dir="${groovy-build.lib-dir}">
