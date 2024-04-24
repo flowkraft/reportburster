@@ -47,27 +47,24 @@ if errorlevel 1 (
 )
 
 :: Build the JAVA_CMD with all options placed correctly before the -jar
-set "JAVA_CMD=java -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR="%PORTABLE_EXECUTABLE_DIR_PATH%" -DUID=%PORT%"
+set "JAVA_CMD=-Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT%"
 if not "%FRONTEND_PATH%"=="" (
     set "JAVA_CMD=%JAVA_CMD% -Dspring.resources.static-locations=file://%FRONTEND_PATH%"
 )
 if not "%POLLING_PATH%"=="" (
     set "JAVA_CMD=%JAVA_CMD% -DPOLLING_PATH=%POLLING_PATH%"
 )
-set "JAVA_CMD=%JAVA_CMD% -jar "%JAR_FILE%" -serve"
-
-:: Use call to execute Java command
-call %JAVA_CMD%
+set "JAVA_CMD=%JAVA_CMD% -jar %JAR_FILE% -serve"
 
 echo [DEBUG] Final JAVA command: %JAVA_CMD%
 
 :: Conditional logic based on RB_SERVER_MODE
 if "%RB_SERVER_MODE%"=="true" (
     if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log" del /F "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log"
-    powershell -Command "& { %JAVA_CMD% } | Tee-Object -FilePath %PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log"
+    powershell -Command "& { Start-Process 'java' -ArgumentList ('%JAVA_CMD%'.Split(' ')) -NoNewWindow -RedirectStandardOutput '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log' }"
 ) else (
-    :: Update settings.xml with the correct port
+    :: Update settings.xml with the port
     powershell -Command "(gc '%SETTINGS_FILE%') -replace 'http://localhost:\d+/api', 'http://localhost:%PORT%/api' | Out-File -encoding ASCII '%SETTINGS_FILE%'"
     if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log" del /F "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log"
-    powershell -Command "& { %JAVA_CMD% } | Tee-Object -FilePath %PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log"
+    powershell -Command "& { Start-Process 'java' -ArgumentList ('%JAVA_CMD%'.Split(' ')) -NoNewWindow -RedirectStandardOutput '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log' }"
 )
