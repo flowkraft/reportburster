@@ -14,12 +14,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-@ComponentScan(basePackages = "com.flowkraft", 
-excludeFilters = {
-    @ComponentScan.Filter(type = FilterType.REGEX, pattern = "com\\.flowkraft\\.jobson\\..*"),
-    @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = com.flowkraft.CommandLineHandler.class)
-}
-)public class ServerApplication implements ExitCodeGenerator {
+@ComponentScan(basePackages = "com.flowkraft", excludeFilters = {
+		@ComponentScan.Filter(type = FilterType.REGEX, pattern = "com\\.flowkraft\\.jobson\\..*"),
+		@ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = com.flowkraft.CommandLineHandler.class) })
+public class ServerApplication implements ExitCodeGenerator {
 
 	private static int exitCode;
 
@@ -38,17 +36,18 @@ excludeFilters = {
 
 		// System.out.println("main serveWeb: " + ApplicationConfig.serveWeb);
 		// System.out.println("main serveWeb: " + serveWeb);
-		// System.out.println("main PORTABLE_EXECUTABLE_DIR: " + System.getProperty("PORTABLE_EXECUTABLE_DIR"));
+		// System.out.println("main PORTABLE_EXECUTABLE_DIR: " +
+		// System.getProperty("PORTABLE_EXECUTABLE_DIR"));
 
 		// if (!ApplicationConfig.serveWeb) {
 		if (!serveWeb) {
 			appBuilder.web(WebApplicationType.NONE);
-			exitCode = SpringApplication.exit(appBuilder.run(args));
-		} else
-			appBuilder.run(args);
+		}
+
+		exitCode = SpringApplication.exit(appBuilder.run(args));
 
 		System.setProperty("spring.devtools.restart.enabled", "false");
-	
+
 	}
 
 	private static boolean _getShouldServeWeb(String... args) {
