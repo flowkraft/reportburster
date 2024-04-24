@@ -42,9 +42,9 @@ public class ServerApplication implements ExitCodeGenerator {
 		// if (!ApplicationConfig.serveWeb) {
 		if (!serveWeb) {
 			appBuilder.web(WebApplicationType.NONE);
-		}
-
-		exitCode = SpringApplication.exit(appBuilder.run(args));
+			exitCode = SpringApplication.exit(appBuilder.run(args));
+		} else
+			appBuilder.run(args);
 
 		System.setProperty("spring.devtools.restart.enabled", "false");
 

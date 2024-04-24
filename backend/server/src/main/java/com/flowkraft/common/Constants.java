@@ -16,7 +16,7 @@ public class Constants {
 
 	public static final String MAGIC_STRING_CLEAR_ALL_LOG_FILES = "8807842127";
 
-	public static final String WS_ENDPOINT = "/jobman/ws";
+	public static final String WS_ENDPOINT = "/api/jobman/ws";
 
 	public static final String WS_TOPIC_EXECUTION_STATS = "/topic/execution-stats";
 	public static final String WS_TOPIC_TAILER = "/topic/tailer";
