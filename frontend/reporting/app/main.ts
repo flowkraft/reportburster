@@ -14,7 +14,6 @@ import {
   setupTitlebar,
   attachTitlebarToWindow,
 } from 'custom-electron-titlebar/main';
-import Utilities from '../src/app/helpers/utilities';
 
 // setup the titlebar main process
 setupTitlebar();
@@ -136,8 +135,9 @@ try {
         `executing ${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj/startRbsjServer.bat`,
       );
 
-      serverProcess = spawn('startRbsjServer.bat', {
+      serverProcess = spawn('startRbsjServer.bat', [], {
         cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
+        env: { ...process.env, ELECTRON_PID: process.pid.toString() },
       });
 
       serverProcess.stdout.on('data', (data) => {
@@ -398,7 +398,11 @@ async function _shutServer() {
   spawn('shutRbsjServer.bat', {
     cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
   });
-  await Utilities.sleep(1000);
+  await sleep(1000);
+}
+
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function _getSystemInfo(): Promise<{
