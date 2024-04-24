@@ -61,10 +61,10 @@ echo [DEBUG] Final JAVA command: %JAVA_CMD%
 :: Conditional logic based on RB_SERVER_MODE
 if "%RB_SERVER_MODE%"=="true" (
     if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log" del /F "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log"
-    powershell -Command "& { Start-Process 'java' -ArgumentList ('%JAVA_CMD%'.Split(' ')) -NoNewWindow -RedirectStandardOutput '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log' }"
+    powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') | Tee-Object -FilePath '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log' }"
 ) else (
     :: Update settings.xml with the port
     powershell -Command "(gc '%SETTINGS_FILE%') -replace 'http://localhost:\d+/api', 'http://localhost:%PORT%/api' | Out-File -encoding ASCII '%SETTINGS_FILE%'"
     if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log" del /F "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log"
-    powershell -Command "& { Start-Process 'java' -ArgumentList ('%JAVA_CMD%'.Split(' ')) -NoNewWindow -RedirectStandardOutput '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log' }"
+    powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') | Tee-Object -FilePath '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log' }"
 )
