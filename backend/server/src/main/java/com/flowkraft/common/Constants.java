@@ -23,7 +23,7 @@ public class Constants {
 
 
 	public static final String PORTABLE_EXECUTABLE_DIR = "PORTABLE_EXECUTABLE_DIR";
-
+	
 	public static int KEEP_FIRST_N_CHARACTERS = 10;
 
 	public static final String LICENSE_STATUS_DEMO = "DEMO";

@@ -27,12 +27,13 @@ if exist "%POLLING_PATH%" (
     set "RB_SERVER_MODE=true"
 )
 
+echo ELECTRON_PID (startRbsjServer.bat): %ELECTRON_PID%
 echo FRONTEND PATH (startRbsjServer.bat): %FRONTEND_PATH%
 echo POLLING PATH (startRbsjServer.bat): %POLLING_PATH%
 echo RB_SERVER_MODE (startRbsjServer.bat): %RB_SERVER_MODE%
 
 :: Call shutRbsjServer to kill older SpringBoot instances and/or older ReportBurster.exe
-call "%~dp0shutRbsjServer.bat"
+:: call "%~dp0shutRbsjServer.bat"
 
 :: Find an available port
 set /a "PORT=9090"
@@ -48,23 +49,26 @@ if errorlevel 1 (
 
 :: Build the JAVA_CMD with all options placed correctly before the -jar
 set "JAVA_CMD=-Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT%"
+
 if not "%FRONTEND_PATH%"=="" (
     set "JAVA_CMD=%JAVA_CMD% -Dspring.resources.static-locations=file://%FRONTEND_PATH%"
 )
 if not "%POLLING_PATH%"=="" (
     set "JAVA_CMD=%JAVA_CMD% -DPOLLING_PATH=%POLLING_PATH%"
 )
+if not "%ELECTRON_PID%"=="" (
+    set "JAVA_CMD=%JAVA_CMD% -DELECTRON_PID=%ELECTRON_PID%"
+)
+
 set "JAVA_CMD=%JAVA_CMD% -jar %JAR_FILE% -serve"
 
 echo [DEBUG] Final JAVA command: %JAVA_CMD%
 
 :: Conditional logic based on RB_SERVER_MODE
 if "%RB_SERVER_MODE%"=="true" (
-    if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log" del /F "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log"
     powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') | Tee-Object -FilePath '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log' }"
 ) else (
     :: Update settings.xml with the port
     powershell -Command "(gc '%SETTINGS_FILE%') -replace 'http://localhost:\d+/api', 'http://localhost:%PORT%/api' | Out-File -encoding ASCII '%SETTINGS_FILE%'"
-    if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log" del /F "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log"
     powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') | Tee-Object -FilePath '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log' }"
 )
