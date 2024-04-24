@@ -16,7 +16,7 @@ if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 
 # Define the path of the log file based on the RB_SERVER_MODE environment variable
 $rbServerMode = [Environment]::GetEnvironmentVariable("RB_SERVER_MODE", "Process")
-Write-Host "RB_SERVER_MODE (killOlderExes.ps1) is set to: $rbServerMode"
+Write-Host "RB_SERVER_MODE (killOlderExesAndSpringBoots.ps1) is set to: $rbServerMode"
 
 $logFilePath = if ($rbServerMode -eq "true") {
     Join-Path $env:PORTABLE_EXECUTABLE_DIR_PATH "logs\rbsj-server.log"
@@ -37,11 +37,18 @@ if ($pidLine) {
     Write-Host "Java PID: $pidExistingSpringBoot"
     
     # Kill the Java process using the PID
-    Write-Host "Killing Java process with PID: $pidExistingSpringBoot"
-    Stop-Process -Id $pidExistingSpringBoot -Force -ErrorAction SilentlyContinue
+	Write-Host "Killing Java process with PID: $pidExistingSpringBoot"
+	do {
+		Stop-Process -Id $pidExistingSpringBoot -Force -ErrorAction SilentlyContinue
+		Start-Sleep -Seconds 1  # Wait for a short period to give the process time to stop
+	} while (Get-Process -Id $pidExistingSpringBoot -ErrorAction SilentlyContinue)
+	Write-Host "Java process with PID: $pidExistingSpringBoot has been killed"
+
 } else {
     Write-Host "No Java process found in log file."
 }
+
+Remove-Item -Path $logFilePath -ErrorAction Ignore
 
 # Existing functionality to manage ReportBurster.exe processes
 $processes = Get-Process -Name ReportBurster -ErrorAction SilentlyContinue
