@@ -14,6 +14,7 @@ import {
   setupTitlebar,
   attachTitlebarToWindow,
 } from 'custom-electron-titlebar/main';
+import Utilities from '../src/app/helpers/utilities';
 
 // setup the titlebar main process
 setupTitlebar();
@@ -188,7 +189,7 @@ try {
     }
   });
 
-  app.on('before-quit', () => {
+  app.on('before-quit', async () => {
     //stop the java server
     if (app.isPackaged) {
       if (serverProcess) {
@@ -196,16 +197,16 @@ try {
         //  `executing ${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj/shutRbsjServer.bat`,
         //);
 
-        _shutServer();
+        await _shutServer();
       }
     }
   });
 
-  app.on('will-quit', () => {
+  app.on('will-quit', async () => {
     if (app.isPackaged) {
       if (serverProcess && !serverProcess.killed) {
         //stop the java server
-        _shutServer();
+        await _shutServer();
       }
     }
   });
@@ -397,6 +398,7 @@ async function _shutServer() {
   spawn('shutRbsjServer.bat', {
     cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
   });
+  await Utilities.sleep(1000);
 }
 
 async function _getSystemInfo(): Promise<{
