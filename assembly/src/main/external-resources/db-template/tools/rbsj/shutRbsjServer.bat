@@ -1,44 +1,42 @@
 @echo off
+
 :: Get the directory of the script
 set "SCRIPT_DIR=%~dp0"
 
 :: Remove trailing backslash
 set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 
-:: Find the file that contains the server port number
-for /R "%SCRIPT_DIR%" %%G in (server-*.port) do (
-    set "FILE=%%~nG"
-    goto :foundServer
-)
-:: If no server port file found, check for exe port file
-for /R "%SCRIPT_DIR%" %%G in (exe-*.port) do (
-    set "FILE=%%~nG"
-    goto :foundExe
+:: Navigate to the ReportBurster directory
+cd "%SCRIPT_DIR%\..\.."
+set "PORTABLE_EXECUTABLE_DIR_PATH=%cd%"
+
+:: Only set RB_SERVER_MODE to false if it's not already defined
+if not defined RB_SERVER_MODE (
+    set "RB_SERVER_MODE=false"
 )
 
-:: If no server or exe port file found, stop the Java process without checking for the UID
-powershell -Command "Get-WmiObject Win32_Process -Filter \"name = 'java.exe'\" | Where-Object { $_.CommandLine -like '*rb-server.jar*' } | ForEach-Object { Stop-Process -Id $_.ProcessId }"
-goto :eof
+:: Check if FRONTEND_PATH is set and points to a valid directory
+if exist "%FRONTEND_PATH%" (
+    set "RB_SERVER_MODE=true"
+)
 
-:foundServer
-:: Extract the server port number from the file name
-set "PORT=%FILE:~7,-5%"
-goto :continue
+:: Check if POLLING_PATH is set and points to a valid directory
+if exist "%POLLING_PATH%" (
+    set "RB_SERVER_MODE=true"
+)
 
-:foundExe
-:: Extract the exe port number from the file name
-set "PORT=%FILE:~4,-5%"
+echo FRONTEND_PATH (shutRbsjServer.bat): %FRONTEND_PATH%
+echo POLLING_PATH (shutRbsjServer.bat): %POLLING_PATH%
+echo RB_SERVER_MODE (shutRbsjServer.bat): %RB_SERVER_MODE%
 
-:continue
+:: Export the environment variables (optional, demonstration purposes)
+echo PORTABLE_EXECUTABLE_DIR_PATH (shutRbsjServer.bat) is set to %PORTABLE_EXECUTABLE_DIR_PATH%
+echo RB_SERVER_MODE  (shutRbsjServer.bat) is set to %RB_SERVER_MODE%
 
-:: Check if the port file exists
-if exist "%SCRIPT_DIR%\%FILE%.port" (
-    :: Use the port number as the unique identifier
-    set "UID=%PORT%"
 
-    :: Stop the Java process
-    powershell -Command "Get-WmiObject Win32_Process -Filter \"name = 'java.exe'\" | Where-Object { $_.CommandLine -like '*rb-server.jar*' -and $_.CommandLine -like '*%UID%*' } | ForEach-Object { Stop-Process -Id $_.ProcessId }"
-
-    :: Delete the port file
-    del "%SCRIPT_DIR%\%FILE%.port"
+if "%RB_SERVER_MODE%"=="true" (
+    powershell -File "%~dp0killOlderExesAndSpringBoots.ps1"
+) else (
+    :: Call killOlderExes.ps1 to kill older instances of ReportBurster.exe
+    powershell -File "%~dp0killOlderExesAndSpringBoots.ps1" -scriptDir "%PORTABLE_EXECUTABLE_DIR_PATH%"
 )
