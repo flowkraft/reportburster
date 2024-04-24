@@ -21,7 +21,7 @@ import com.sourcekraft.documentburster.common.settings.model.ReportingSettings;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping(value = "/cfgman", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/cfgman", produces = MediaType.APPLICATION_JSON_VALUE)
 public class CfgManController {
 
 	@Autowired

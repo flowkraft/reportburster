@@ -16,7 +16,7 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
 	public void configureMessageBroker(MessageBrokerRegistry config) {
 		config.enableSimpleBroker(Constants.WS_TOPIC_EXECUTION_STATS, Constants.WS_TOPIC_TAILER);
 
-		config.setApplicationDestinationPrefixes("/jobman");
+		config.setApplicationDestinationPrefixes("/api/jobman");
 	}
 
 	@Override

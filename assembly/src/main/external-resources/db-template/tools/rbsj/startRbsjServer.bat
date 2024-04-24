@@ -2,8 +2,6 @@
 
 :: Get the directory of the script
 set "SCRIPT_DIR=%~dp0"
-
-:: Remove trailing backslash
 set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 
 :: Navigate to the ReportBurster directory
@@ -29,8 +27,8 @@ if exist "%POLLING_PATH%" (
     set "RB_SERVER_MODE=true"
 )
 
-echo FRONTEND_PATH (startRbsjServer.bat): %FRONTEND_PATH%
-echo POLLING_PATH (startRbsjServer.bat): %POLLING_PATH%
+echo FRONTEND PATH (startRbsjServer.bat): %FRONTEND_PATH%
+echo POLLING PATH (startRbsjServer.bat): %POLLING_PATH%
 echo RB_SERVER_MODE (startRbsjServer.bat): %RB_SERVER_MODE%
 
 :: Call shutRbsjServer to kill older SpringBoot instances and/or older ReportBurster.exe
@@ -46,35 +44,30 @@ if errorlevel 1 (
     goto :loop
 ) else (
     echo INFO: Port %PORT% is available.
-    goto :found
-)
-:found
-
-set "JAVA_CMD=java -jar %JAR_FILE% -serve -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT%"
-
-:: Check if FRONTEND_PATH is set and points to a valid directory
-if exist "%FRONTEND_PATH%" (
-   set "JAVA_CMD=%JAVA_CMD% -Dspring.resources.static-locations=file:%FRONTEND_PATH%"
 )
 
-:: Check if POLLING_PATH is set and points to a valid directory
-if exist "%POLLING_PATH%" (
-   set "JAVA_CMD=%JAVA_CMD% -DPOLLING_PATH=%POLLING_PATH%"
+:: Build the JAVA_CMD with all options placed correctly before the -jar
+set "JAVA_CMD=java -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR="%PORTABLE_EXECUTABLE_DIR_PATH%" -DUID=%PORT%"
+if not "%FRONTEND_PATH%"=="" (
+    set "JAVA_CMD=%JAVA_CMD% -Dspring.resources.static-locations=file://%FRONTEND_PATH%"
 )
+if not "%POLLING_PATH%"=="" (
+    set "JAVA_CMD=%JAVA_CMD% -DPOLLING_PATH=%POLLING_PATH%"
+)
+set "JAVA_CMD=%JAVA_CMD% -jar "%JAR_FILE%" -serve"
 
-echo %JAVA_CMD%
+:: Use call to execute Java command
+call %JAVA_CMD%
 
-:: If either FRONTEND_PATH or POLLING_PATH exist, write the port number to a server file and start the Java process
+echo [DEBUG] Final JAVA command: %JAVA_CMD%
+
+:: Conditional logic based on RB_SERVER_MODE
 if "%RB_SERVER_MODE%"=="true" (
     if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log" del /F "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log"
     powershell -Command "& { %JAVA_CMD% } | Tee-Object -FilePath %PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log"
-  ) else (
- 
+) else (
     :: Update settings.xml with the correct port
     powershell -Command "(gc '%SETTINGS_FILE%') -replace 'http://localhost:\d+/api', 'http://localhost:%PORT%/api' | Out-File -encoding ASCII '%SETTINGS_FILE%'"
-    
     if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log" del /F "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log"
     powershell -Command "& { %JAVA_CMD% } | Tee-Object -FilePath %PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log"
 )
-
-
