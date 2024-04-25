@@ -2,7 +2,7 @@
 REM ReportBurster Server
 REM
 REM -------------------------------------------------------------------------
-REM ReportBurster Server Service Script for Windows
+REM ReportBurster Server 'Windows Service' Script
 REM -------------------------------------------------------------------------
 
 @if not "%ECHO%" == "" echo %ECHO%
