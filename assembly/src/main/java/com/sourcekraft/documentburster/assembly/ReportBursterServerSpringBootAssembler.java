@@ -86,6 +86,12 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 
 		System.out.println(
 				"------------------------------------- DONE_05:ReportBursterServer COMPILE / CHECK the groovy scripts don't give errors ... -------------------------------------");
+
+		FileUtils.moveFile(
+				FileUtils.getFile(packageDirPath + "/" + this.topFolderName + "/scripts/batch/schedules.groovy"),
+				FileUtils.getFile(
+						packageDirPath + "/" + this.topFolderName + "/scripts/batch/schedules.groovy.example"));
+
 		// END COMPILE groovy scripts
 
 	}
@@ -127,16 +133,11 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 
 		// by default, after it was checked that it is compilable, have the
 		// schedules.groovy to be only an "example" "schedules.groovy.example"
-		FileUtils.moveFile(
-				FileUtils.getFile(packageDirPath + "/" + this.topFolderName + "/scripts/batch/schedules.groovy"),
-				FileUtils.getFile(
-						packageDirPath + "/" + this.topFolderName + "/scripts/batch/schedules.groovy.example"));
-
 		assertThat(
-				Files.exists(Paths.get(packageDirPath + "/" + this.topFolderName + "/scripts/batch/schedules.groovy")))
+				Files.exists(Paths.get(verifyDirPath + "/" + this.topFolderName + "/scripts/batch/schedules.groovy")))
 				.isFalse();
 		assertThat(Files.exists(
-				Paths.get(packageDirPath + "/" + this.topFolderName + "/scripts/batch/schedules.groovy.example")))
+				Paths.get(verifyDirPath + "/" + this.topFolderName + "/scripts/batch/schedules.groovy.example")))
 				.isTrue();
 
 		System.out.println(
