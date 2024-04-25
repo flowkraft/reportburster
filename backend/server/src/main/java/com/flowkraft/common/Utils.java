@@ -1,6 +1,8 @@
 package com.flowkraft.common;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.URLEncoder;
@@ -23,19 +25,19 @@ public class Utils {
 
 	@FunctionalInterface
 	public interface CheckedConsumer<T> {
-	    void accept(T t) throws Exception;
+		void accept(T t) throws Exception;
 	}
 
 	public static <T> Consumer<T> uncheckedConsumer(CheckedConsumer<T> consumer) {
-	    return t -> {
-	        try {
-	            consumer.accept(t);
-	        } catch (Exception e) {
-	            throw new RuntimeException(e);
-	        }
-	    };
+		return t -> {
+			try {
+				consumer.accept(t);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
 	}
-	
+
 	public interface CallBackMethod<T extends Object> {
 		void handle(T input) throws Exception;
 	}
@@ -46,8 +48,8 @@ public class Utils {
 
 		// System.out.println(lowerCaseFileName);
 
-		//if (lowerCaseFileName.contains(Constants.PROCESSING_DIR_NAME))
-		//	return false;
+		// if (lowerCaseFileName.contains(Constants.PROCESSING_DIR_NAME))
+		// return false;
 
 		return true;
 	});
@@ -105,6 +107,57 @@ public class Utils {
 			}
 		}
 		return value;
+	}
+
+	public static List<Long> getPidsOfProcessesOfExecutableRunning(String executableName)
+			throws Exception {
+		List<Long> pids = new ArrayList<>();
+		ProcessBuilder processBuilder = new ProcessBuilder("wmic", "process", "where",
+				"(ExecutablePath like '%" + executableName + "')", "get", "ExecutablePath,ProcessId");
+		Process process = processBuilder.start();
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				line = line.trim();
+				if (!line.isEmpty() && !line.equalsIgnoreCase("ExecutablePath  ProcessId")) {
+					String[] parts = line.split("\\s+");
+					if (parts.length == 2
+							&& parts[0].toLowerCase().endsWith(executableName.toLowerCase())) {
+						pids.add(Long.parseLong(parts[1]));
+					}
+				}
+			}
+		}
+		return pids;
+	}
+
+	public static String getProcessExecutablePath(Long pid) throws Exception {
+		Process process = Runtime.getRuntime().exec("wmic process where processid=" + pid + " get ExecutablePath");
+		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+		String line;
+		while ((line = reader.readLine()) != null) {
+			if (!line.trim().isEmpty() && !line.trim().equals("ExecutablePath")) {
+				// This line should contain the executable path of the process
+				String executablePath = line.trim();
+				return executablePath;
+			}
+		}
+
+		return StringUtils.EMPTY;
+	}
+	
+	public static String getProcessCreationDate(long pid) throws Exception {
+	    Process process = Runtime.getRuntime().exec("wmic process where processid=" + pid + " get CreationDate");
+	    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+	    String line;
+	    while ((line = reader.readLine()) != null) {
+	        line = line.trim();
+	        if (!line.isEmpty() && !line.equals("CreationDate")) {
+	            // This line should contain the start time of the process
+	            return line;
+	        }
+	    }
+	    return StringUtils.EMPTY;
 	}
 
 }
