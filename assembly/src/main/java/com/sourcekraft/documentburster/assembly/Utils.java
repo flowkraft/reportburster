@@ -50,9 +50,9 @@ public class Utils {
 
 			String fileName = FilenameUtils.getName(dir2File.getCanonicalPath());
 
-			// it should be ignored because it is renamed without version to
-			// ant-launcher.jar
-			if (!fileName.startsWith("ant-launcher"))
+			// these files should be ignored because they are renamed afterwards (for
+			// various reasons)
+			if (!fileName.startsWith("ant-launcher") && !fileName.startsWith("schedules.groovy"))
 				dir2FileNames.add(fileName);
 
 		}
