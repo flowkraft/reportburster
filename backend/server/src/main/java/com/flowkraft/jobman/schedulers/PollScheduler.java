@@ -60,17 +60,25 @@ public class PollScheduler {
 	@Scheduled(fixedRate = 5000)
 	public void poll() throws Exception {
 
-		if (StringUtils.isBlank(pollingPath))
+		System.out.println("Polling started...");
+
+		if (StringUtils.isBlank(pollingPath)) {
+			System.out.println("Polling path is blank, returning...");
 			return;
+		}
 
 		String pollingReceivedPath = pollingPath + "/received";
 
 		Collection<File> allFilesInPollFolder = FileUtils.listFiles(new File(pollingPath),
 				Utils.filesWhichCanBeProcessedFilter, null);
 
+		System.out.println("Found " + allFilesInPollFolder.size() + " files in poll folder.");
+
 		for (File polledFile : allFilesInPollFolder) {
 
 			String polledFilePath = polledFile.getAbsolutePath();
+
+			System.out.println("Processing file: " + polledFilePath);
 
 			String baseName = FilenameUtils.getBaseName(polledFilePath); // get filename without extension
 			String extension = FilenameUtils.getExtension(polledFilePath); // get file extension
@@ -85,10 +93,13 @@ public class PollScheduler {
 
 			jobsService.state.numberOfActiveJobs = processingFiles.size();
 
+			System.out.println("Number of active jobs: " + jobsService.state.numberOfActiveJobs);
+
 			if (jobsService.state.numberOfActiveJobs > 0)
 				return;
 
 			if (!waitQueue.contains(polledFilePath)) {
+				System.out.println("Adding file to wait queue: " + polledFilePath);
 				waitQueue.add(polledFilePath);
 			} else {
 
@@ -108,9 +119,12 @@ public class PollScheduler {
 
 					// if there is a corresponding .progress file do not remove the file since it
 					// might be "Resumed" later
-					if (Objects.isNull(progressFile) || progressFile.size() == 0)
+					if (Objects.isNull(progressFile) || progressFile.size() == 0) {
+						System.out.println("Deleting file: " + file.getAbsolutePath());
 						FileUtils.forceDelete(file);
+					}
 
+					System.out.println("Removing file from wait queue: " + polledFilePath);
 					waitQueue.remove(polledFilePath);
 					jobsService.state.numberOfActiveJobs = 0;
 
@@ -120,5 +134,7 @@ public class PollScheduler {
 
 		}
 
+		System.out.println("Polling ended...");
 	}
+
 }
