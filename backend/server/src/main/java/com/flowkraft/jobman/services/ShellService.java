@@ -62,7 +62,7 @@ public class ShellService {
 		};
 
 		DefaultExecutor executor = new DefaultExecutor();
-		executor.setWorkingDirectory(new File(AppPaths.WORKSPACE_DIR_PATH));
+		executor.setWorkingDirectory(new File(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH));
 
 		CommandLine cmdLine = CommandLine.parse("cmd.exe /c reportburster.bat" + " " + arrguments);
 
