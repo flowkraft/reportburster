@@ -51,7 +51,7 @@ if errorlevel 1 (
 set "JAVA_CMD=-Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT%"
 
 if not "%FRONTEND_PATH%"=="" (
-    set "JAVA_CMD=%JAVA_CMD% -Dspring.resources.static-locations=file://%FRONTEND_PATH%"
+    set "JAVA_CMD=%JAVA_CMD% -Dspring.resources.static-locations=file:///%FRONTEND_PATH%"
 )
 if not "%POLLING_PATH%"=="" (
     set "JAVA_CMD=%JAVA_CMD% -DPOLLING_PATH=%POLLING_PATH%"

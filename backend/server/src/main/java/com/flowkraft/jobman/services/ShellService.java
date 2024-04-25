@@ -29,35 +29,35 @@ public class ShellService {
 		DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler() {
 			@Override
 			public void onProcessComplete(int exitValue) {
-
 				try {
-					if (exitValue == 0)
-						exitHandler.handle(file);
+					exitHandler.handle(file);
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				} finally {
-
 					WebSocketJobsExecutionStatsInfo executeResultInfo = new WebSocketJobsExecutionStatsInfo(
 							"on.process.complete", exitValue);
 
 					messagingTemplate.convertAndSend(Constants.WS_TOPIC_EXECUTION_STATS, executeResultInfo);
 
 					super.onProcessComplete(exitValue);
-
 				}
 			}
 
 			@Override
 			public void onProcessFailed(ExecuteException e) {
+				try {
+					exitHandler.handle(file);
+				} catch (Exception ex) {
+					throw new RuntimeException(ex);
+				} finally {
+					WebSocketJobsExecutionStatsInfo executeResultInfo = new WebSocketJobsExecutionStatsInfo(
+							"on.process.failed");
 
-				WebSocketJobsExecutionStatsInfo executeResultInfo = new WebSocketJobsExecutionStatsInfo(
-						"on.process.failed");
+					executeResultInfo.setExceptionMessage(e.getMessage());
+					messagingTemplate.convertAndSend(Constants.WS_TOPIC_EXECUTION_STATS, executeResultInfo);
 
-				executeResultInfo.setExceptionMessage(e.getMessage());
-				messagingTemplate.convertAndSend(Constants.WS_TOPIC_EXECUTION_STATS, executeResultInfo);
-
-				super.onProcessFailed(e);
-
+					super.onProcessFailed(e);
+				}
 			}
 		};
 
@@ -66,9 +66,7 @@ public class ShellService {
 
 		CommandLine cmdLine = CommandLine.parse("cmd.exe /c reportburster.bat" + " " + arrguments);
 
-		//System.out.println("cmd.exe /c reportburster.bat" + " " + arrguments);
 		executor.execute(cmdLine, resultHandler);
-
 	}
 
 	public void runDocumentBursterBatScriptFile(String arrguments) throws Exception {

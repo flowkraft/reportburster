@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
@@ -45,13 +46,9 @@ public class Utils {
 	public static IOFileFilter filesWhichCanBeProcessedFilter = FileFilterUtils.asFileFilter((file) -> {
 
 		String lowerCaseFileName = file.getName().toLowerCase();
+		String extension = FilenameUtils.getExtension(lowerCaseFileName);
+		return extension.equals("pdf") || extension.equals("xls") || extension.equals("xlsx");
 
-		// System.out.println(lowerCaseFileName);
-
-		// if (lowerCaseFileName.contains(Constants.PROCESSING_DIR_NAME))
-		// return false;
-
-		return true;
 	});
 
 	public static void emptyFile(String filePath) throws Exception {
@@ -109,8 +106,7 @@ public class Utils {
 		return value;
 	}
 
-	public static List<Long> getPidsOfProcessesOfExecutableRunning(String executableName)
-			throws Exception {
+	public static List<Long> getPidsOfProcessesOfExecutableRunning(String executableName) throws Exception {
 		List<Long> pids = new ArrayList<>();
 		ProcessBuilder processBuilder = new ProcessBuilder("wmic", "process", "where",
 				"(ExecutablePath like '%" + executableName + "')", "get", "ExecutablePath,ProcessId");
@@ -121,8 +117,7 @@ public class Utils {
 				line = line.trim();
 				if (!line.isEmpty() && !line.equalsIgnoreCase("ExecutablePath  ProcessId")) {
 					String[] parts = line.split("\\s+");
-					if (parts.length == 2
-							&& parts[0].toLowerCase().endsWith(executableName.toLowerCase())) {
+					if (parts.length == 2 && parts[0].toLowerCase().endsWith(executableName.toLowerCase())) {
 						pids.add(Long.parseLong(parts[1]));
 					}
 				}
@@ -145,19 +140,19 @@ public class Utils {
 
 		return StringUtils.EMPTY;
 	}
-	
+
 	public static String getProcessCreationDate(long pid) throws Exception {
-	    Process process = Runtime.getRuntime().exec("wmic process where processid=" + pid + " get CreationDate");
-	    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-	    String line;
-	    while ((line = reader.readLine()) != null) {
-	        line = line.trim();
-	        if (!line.isEmpty() && !line.equals("CreationDate")) {
-	            // This line should contain the start time of the process
-	            return line;
-	        }
-	    }
-	    return StringUtils.EMPTY;
+		Process process = Runtime.getRuntime().exec("wmic process where processid=" + pid + " get CreationDate");
+		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+		String line;
+		while ((line = reader.readLine()) != null) {
+			line = line.trim();
+			if (!line.isEmpty() && !line.equals("CreationDate")) {
+				// This line should contain the start time of the process
+				return line;
+			}
+		}
+		return StringUtils.EMPTY;
 	}
 
 }
