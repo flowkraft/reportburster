@@ -196,8 +196,7 @@ try {
         //log.info(
         //  `executing ${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj/shutRbsjServer.bat`,
         //);
-
-        await _shutServer();
+        //await _shutServer();
       }
     }
   });
@@ -206,7 +205,7 @@ try {
     if (app.isPackaged) {
       if (serverProcess && !serverProcess.killed) {
         //stop the java server
-        await _shutServer();
+        //await _shutServer();
       }
     }
   });
