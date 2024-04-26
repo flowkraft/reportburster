@@ -6,6 +6,9 @@ set "SCRIPT_PATH=%~dp0"
 :: Remove trailing backslash
 set "SCRIPT_PATH=%SCRIPT_PATH:~0,-1%"
 
+:: Change the current directory to the directory of the script
+cd /d "%SCRIPT_PATH%"
+
 set PORTABLE_EXECUTABLE_DIR_PATH=%SCRIPT_PATH%
 
 set POLLING_PATH=%PORTABLE_EXECUTABLE_DIR_PATH%/poll

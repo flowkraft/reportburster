@@ -17,6 +17,10 @@ set SVCDISP=ReportBurster Server
 set SVCDESC=ReportBurster Server/Platform: Windows %PROCESSOR_ARCHITECTURE%
 set NOPAUSE=Y
 
+REM Update the rbsj.xml file with the correct path to the startServer.bat file
+set XMLFILE=tools\winsw\rbsj.xml
+set STARTSCRIPT=%DIRNAME%\startServer.bat
+powershell -Command "(gc '%XMLFILE%') -replace '../../startServer.bat', '%STARTSCRIPT%' | Out-File -encoding ASCII '%XMLFILE%'"
 REM Figure out the running mode
 
 if /I "%1" == "install"   goto cmdInstall
