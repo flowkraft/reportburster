@@ -1,7 +1,7 @@
 <service>
   <id>rbsj</id>
   <name>ReportBurster Server</name>
-  <description>This service runs ReportBurster Server reporting system.</description>
+  <description>ReportBurster Server (Reporting) Service</description>
   <executable>cmd.exe</executable>
   <arguments>/c "../../startServer.bat"</arguments>
   <log mode="roll"></log>
