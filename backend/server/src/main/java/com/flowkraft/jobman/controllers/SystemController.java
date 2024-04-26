@@ -162,7 +162,7 @@ public class SystemController {
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
 
-		System.out.println("/fs/write-string-to-file fullPath = " + fullPath);
+		//System.out.println("/fs/write-string-to-file fullPath = " + fullPath);
 
 		return Mono.fromCallable(() -> {
 			systemService.fsWriteStringToFile(fullPath, content);

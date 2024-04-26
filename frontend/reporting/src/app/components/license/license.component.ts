@@ -31,7 +31,7 @@ export class LicenseComponent {
       message: message,
       confirmAction: async () => {
         await this.licenseService.verifyLicense(action);
-        console.log(`verifyLicense done`);
+        //console.log(`verifyLicense done`);
         await this.licenseService.loadLicenseFileAsync();
 
         //this.router.navigate(['/help', 'licenseMenuSelected']);

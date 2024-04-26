@@ -25,7 +25,7 @@ export class FsService {
   constructor(protected apiService: ApiService) {}
 
   async removeAsync(path: string) {
-    console.log('removeAsync', path);
+    //console.log('removeAsync', path);
     return this.apiService.delete(
       `/jobman/system/fs/delete-quietly?path=${encodeURIComponent(
         Utilities.slash(path),
@@ -49,7 +49,7 @@ export class FsService {
         ? criteria.overwrite(sourcePath, destinationPath)
         : criteria.overwrite;
 
-    console.log(`overwrite = ${overwrite}`);
+    //console.log(`overwrite = ${overwrite}`);
 
     let postUrl = `/jobman/system/fs/copy?fromPath=${encodeURIComponent(
       Utilities.slash(sourcePath),
@@ -148,6 +148,4 @@ export class FsService {
       },
     );
   }
-
-  
 }

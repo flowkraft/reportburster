@@ -141,7 +141,7 @@ try {
       });
 
       serverProcess.stdout.on('data', (data) => {
-        console.log(`stdout: ${data}`);
+        //console.log(`stdout: ${data}`);
         const dataStr = data.toString();
 
         //if (

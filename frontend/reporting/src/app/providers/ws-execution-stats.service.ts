@@ -35,13 +35,11 @@ export class WebSocketExecutionStatsService extends WebSocketEndpoint {
   async makeWSConnectionAndHandleMessages() {
     //if server is started and the subscription is not already active
     const sOptions = new TopicOptions(
-      Constants.WS_ENDPOINT,
       Constants.WS_TOPIC_EXECUTION_STATS,
-      this.apiService.getToken,
+      this.handleExecutionStatsEvent,
     );
 
-    this.processDataCallback = this.handleExecutionStatsEvent;
-    await this.makeWSConnection(sOptions);
+    await this.makeWSConnection([sOptions]);
     //this.settingsService.activeWebSocketSubcriptions.push(sOptions);
   }
 

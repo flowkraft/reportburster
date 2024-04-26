@@ -297,11 +297,11 @@ export class SettingsService {
       },
     );
 
-    console.log(
-      `loadSettingsFileAsync filePath = ${filePath}, settings = ${JSON.stringify(
-        xmlConnectionSettings,
-      )}`,
-    );
+    //console.log(
+    //  `loadSettingsFileAsync filePath = ${filePath}, settings = ${JSON.stringify(
+    //    xmlConnectionSettings,
+    //  )}`,
+    //);
     return xmlConnectionSettings;
   }
 
@@ -640,7 +640,7 @@ export class SettingsService {
     //);
 
     for (let filePath of reportsTemplateFilePaths) {
-      console.log(`filePath = ${filePath}`);
+      //console.log(`filePath = ${filePath}`);
 
       const reportTemplateFileName = Utilities.basename(filePath);
 
@@ -681,9 +681,9 @@ export class SettingsService {
     filePath: string,
     xmlReporting: { documentburster: {} },
   ) {
-    console.log(
-      `saveReportingFileAsynce xmlReporting = ${JSON.stringify(xmlReporting)}`,
-    );
+    //console.log(
+    //  `saveReportingFileAsynce xmlReporting = ${JSON.stringify(xmlReporting)}`,
+    //);
     return this.apiService.post(
       `/cfgman/rb/save-reporting?path=${filePath}`,
       xmlReporting.documentburster,
