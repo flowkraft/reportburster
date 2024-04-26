@@ -33,6 +33,8 @@ timer.schedule(new TimerTask() {
 
         // copy all files (indicated by the "**/*.*" pattern) from the 
         // "input-files/scheduled" directory to the "poll" directory
+        
+        println "Copying files from $scheduledPath to $pollingPath..."
 
         ant.copy(todir: pollingPath) {
              fileset(dir: scheduledPath) {
@@ -40,13 +42,19 @@ timer.schedule(new TimerTask() {
              }
         }
 
+        println "Finished copying files."
+
         // delete all files (indicated by the "**/*.*" pattern) from the 
         // "input-files/scheduled" directory
+
+        println "Deleting files from $scheduledPath..."
 
         ant.delete {
              fileset(dir: scheduledPath) {
                  include(name: "**/*.*")
              }
         }
+
+        println "Finished deleting files."
     }
 }, 0, TimeUnit.MINUTES.toMillis(1))
