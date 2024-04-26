@@ -67,10 +67,6 @@ public class PollScheduler {
 			return;
 		}
 
-		// process one file at a time
-		if (jobsService.state.numberOfActiveJobs > 0)
-			return;
-
 		String pollingReceivedPath = pollingPath + "/received";
 
 		Collection<File> allFilesInPollFolder = FileUtils.listFiles(new File(pollingPath),
@@ -80,6 +76,12 @@ public class PollScheduler {
 			System.out.println("Found " + allFilesInPollFolder.size() + " files in poll folder.");
 
 		for (File polledFile : allFilesInPollFolder) {
+
+			// process one file at a time
+			// this condition should remain inside the for, when moved outside the for
+			// the system will try to process all the files in the same time (bad)
+			if (jobsService.state.numberOfActiveJobs > 0)
+				return;
 
 			String polledFilePath = polledFile.getAbsolutePath();
 
