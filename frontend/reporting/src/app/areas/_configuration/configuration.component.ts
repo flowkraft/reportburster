@@ -716,7 +716,7 @@ export class ConfigurationComponent implements OnInit {
             this.settingsService.currentConfigurationTemplatePath,
           );
 
-        console.log(`this.xmlReporting = ${JSON.stringify(this.xmlReporting)}`);
+        //console.log(`this.xmlReporting = ${JSON.stringify(this.xmlReporting)}`);
 
         this.onReportOutputTypeChanged();
       }
@@ -890,7 +890,7 @@ export class ConfigurationComponent implements OnInit {
   onAttachmentSelected(attachment) {
     this.xmlSettings.documentburster.settings.attachments.items.attachmentItems.forEach(
       (each) => {
-        console.log(`each = ${JSON.stringify(each)}`);
+        //console.log(`each = ${JSON.stringify(each)}`);
         if (each.path === attachment.path) {
           each.selected = true;
           this.selectedAttachment = attachment;
@@ -913,9 +913,9 @@ export class ConfigurationComponent implements OnInit {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: async () => {
-        console.log(
-          `this.selectedAttachment = ${JSON.stringify(this.selectedAttachment)}`,
-        );
+        //console.log(
+        //  `this.selectedAttachment = ${JSON.stringify(this.selectedAttachment)}`,
+        //);
         _.remove(
           this.xmlSettings.documentburster.settings.attachments.items
             .attachmentItems,
@@ -1209,11 +1209,11 @@ export class ConfigurationComponent implements OnInit {
             (tplFile) => tplFile.filePath == reportTemplateFilePath,
           );
 
-        console.log(
-          `this.selectedReportTemplateFile = ${JSON.stringify(
-            this.selectedReportTemplateFile,
-          )}`,
-        );
+        //console.log(
+        //  `this.selectedReportTemplateFile = ${JSON.stringify(
+        //    this.selectedReportTemplateFile,
+        //  )}`,
+        //);
       } else if (!reportTemplateFilePath) {
         this.settingsService.currentConfigurationTemplate = this.settingsService
           .getConfigurations()
@@ -1234,9 +1234,9 @@ export class ConfigurationComponent implements OnInit {
             );
           });
         if (reportTemplateSameFolderNameOrFileName) {
-          console.log(
-            `reportTemplateSameFolderNameOrFileName = ${reportTemplateSameFolderNameOrFileName}`,
-          );
+          //console.log(
+          //  `reportTemplateSameFolderNameOrFileName = ${reportTemplateSameFolderNameOrFileName}`,
+          //);
           this.selectedReportTemplateFile =
             reportTemplateSameFolderNameOrFileName;
           this.xmlReporting.documentburster.report.template.documentpath =
@@ -1260,7 +1260,7 @@ export class ConfigurationComponent implements OnInit {
       requestedFeature = (event.target as HTMLSelectElement).value;
     else requestedFeature = event;
 
-    console.log(`requestedFeature = ${requestedFeature}`);
+    //console.log(`requestedFeature = ${requestedFeature}`);
 
     if (
       requestedFeature &&

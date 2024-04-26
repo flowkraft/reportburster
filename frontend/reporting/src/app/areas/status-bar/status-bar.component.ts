@@ -99,9 +99,9 @@ export class StatusBarComponent implements OnInit, OnDestroy {
           dirPath + '/' + pauseCancelFileName,
         );
 
-        console.log(
-          `this.executionStatsService. = ${JSON.stringify(this.executionStatsService)}`,
-        );
+        //console.log(
+        //  `this.executionStatsService. = ${JSON.stringify(this.executionStatsService)}`,
+        //);
         this.fsService.fileAsync(pauseCancelFilePath);
       },
     });

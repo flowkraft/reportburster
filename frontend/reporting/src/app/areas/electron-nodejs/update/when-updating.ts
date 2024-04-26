@@ -15,6 +15,6 @@ export class WhenUpdatingComponent {
   @Input() updateInfo: UpdateInfo;
 
   constructor() {
-    console.log(`updateInfo = ${this.updateInfo}`);
+    //console.log(`updateInfo = ${this.updateInfo}`);
   }
 }

@@ -66,14 +66,14 @@ export class WebSocketService extends WebSocketEndpoint {
   subscriptionCheckIfLogFileWasCreatedIsEmptyOrRemoved: Subscription;
 
   handleFileTailerEvent(receivedEvent: string) {
-    console.log(`handleFileTailerEvent data = ${receivedEvent}`);
+    //console.log(`handleFileTailerEvent data = ${receivedEvent}`);
 
     const message = JSON.parse(receivedEvent);
     const payload = message.filesPayload[0];
 
-    console.log(
-      `handleFileTailerEvent payload = ${JSON.stringify(message.filesPayload[0])}`,
-    );
+    //console.log(
+    //  `handleFileTailerEvent payload = ${JSON.stringify(message.filesPayload[0])}`,
+    //);
 
     const fileName = payload.fileName;
     if (this.logsSubjects.has(fileName)) {
@@ -215,7 +215,7 @@ export class WebSocketService extends WebSocketEndpoint {
   }
 
   getLogs$(fileName: string) {
-    console.log(`getLogs$ fileName = ${fileName}`);
+    //console.log(`getLogs$ fileName = ${fileName}`);
 
     if (!this.logsSubjects.has(fileName)) {
       this.logsSubjects.set(fileName, new Subject<string>());

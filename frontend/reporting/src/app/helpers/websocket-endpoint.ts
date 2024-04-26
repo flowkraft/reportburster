@@ -80,7 +80,7 @@ export class WebSocketEndpoint {
 
   _socketListener = () => {
     if (!this._socket.stomp.connected) {
-      console.log('Connection not ready, retrying...');
+      //console.log('Connection not ready, retrying...');
       setTimeout(this._socketListener, 1000); // retry after 1 second
       return;
     }
@@ -103,7 +103,7 @@ export class WebSocketEndpoint {
   };
 
   _onSocketError = (errorMsg: any) => {
-    console.log(`WebSocket _onSocketError ${errorMsg}`);
+    //console.log(`WebSocket _onSocketError ${errorMsg}`);
 
     let out: any = {};
     out.type = 'ERROR';
@@ -117,11 +117,11 @@ export class WebSocketEndpoint {
       clearTimeout(this.reconnectionPromise);
     }
     this.reconnectionPromise = setTimeout(() => {
-      console.log(
-        'Socket reconnecting... (if it fails, next attempt in ' +
-          this.reconnectionTimeout +
-          ' msec)',
-      );
+      //console.log(
+      //  'Socket reconnecting... (if it fails, next attempt in ' +
+      //    this.reconnectionTimeout +
+      //    ' msec)',
+      //);
       this.connect();
     }, this.reconnectionTimeout);
   };

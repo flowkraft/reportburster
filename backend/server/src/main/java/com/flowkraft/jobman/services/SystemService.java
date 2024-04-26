@@ -206,8 +206,8 @@ public class SystemService {
 
 		processBuilder.directory(new File(workingDirectoryPath));
 
-		System.out.println(
-				"spawn commandWithShell = " + commandWithShell + ", workingDirectoryPath = " + workingDirectoryPath);
+		//System.out.println(
+		//		"spawn commandWithShell = " + commandWithShell + ", workingDirectoryPath = " + workingDirectoryPath);
 
 		Process process = processBuilder.start();
 

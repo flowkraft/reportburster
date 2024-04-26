@@ -40,11 +40,11 @@ export class LicenseService {
   }
 
   async saveLicenseFileAsync() {
-    console.log(
-      `saveLicenseFileAsync - this.licenseDetails = ${JSON.stringify(
-        this.licenseDetails,
-      )}`,
-    );
+    //console.log(
+    //  `saveLicenseFileAsync - this.licenseDetails = ${JSON.stringify(
+    //    this.licenseDetails,
+    //  )}`,
+    //);
 
     const builder = new xml2js.Builder();
 

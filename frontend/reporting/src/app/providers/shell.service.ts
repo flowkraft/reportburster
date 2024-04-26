@@ -75,7 +75,7 @@ export class ShellService {
   }
 
   async generateMergeFileInTempFolder(filePaths: string[]): Promise<string> {
-    console.log(`generateMergeFileInTempFolder filePaths = ${filePaths}`);
+    //console.log(`generateMergeFileInTempFolder filePaths = ${filePaths}`);
 
     //const dir = `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/temp/`;
     const dir = `temp/`;

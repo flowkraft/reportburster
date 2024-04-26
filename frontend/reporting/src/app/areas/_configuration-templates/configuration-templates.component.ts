@@ -210,9 +210,9 @@ export class ConfigurationTemplatesComponent implements OnInit {
           settingsXmlConfigurationValues,
         );
 
-        console.log(
-          `toggleVisibility selectedConfiguration.filePath: ${selectedConfiguration.filePath}`,
-        );
+        //console.log(
+        //  `toggleVisibility selectedConfiguration.filePath: ${selectedConfiguration.filePath}`,
+        //);
 
         this.getSelectedConfiguration().visibility = visibility;
         await this.samplesService.fillSamplesNotes();
@@ -281,7 +281,7 @@ export class ConfigurationTemplatesComponent implements OnInit {
       this.modalConfigurationTemplateInfo.fileInfo.isFallback = false;
       let copyFromXmlConfigurationValues: any;
 
-      console.log(`duplicate = ${duplicate}`);
+      //console.log(`duplicate = ${duplicate}`);
 
       if (!duplicate) {
         this.modalConfigurationTemplateInfo.copyFromPath =
@@ -302,11 +302,11 @@ export class ConfigurationTemplatesComponent implements OnInit {
           );
       }
 
-      console.log(
-        `copyFromXmlConfigurationValues = ${JSON.stringify(
-          copyFromXmlConfigurationValues,
-        )}`,
-      );
+      //console.log(
+      //  `copyFromXmlConfigurationValues = ${JSON.stringify(
+      //    copyFromXmlConfigurationValues,
+      //  )}`,
+      //);
 
       this.modalConfigurationTemplateInfo.fileInfo.capReportDistribution =
         copyFromXmlConfigurationValues.documentburster.settings.capabilities.reportdistribution;
@@ -453,11 +453,11 @@ export class ConfigurationTemplatesComponent implements OnInit {
 
       //console.log(JSON.stringify(settingsXmlConfigurationValues));
 
-      console.log(
-        `modalConfigurationTemplateInfo = ${JSON.stringify(
-          this.modalConfigurationTemplateInfo,
-        )}`,
-      );
+      //console.log(
+      //  `modalConfigurationTemplateInfo = ${JSON.stringify(
+      //    this.modalConfigurationTemplateInfo,
+      //  )}`,
+      //);
 
       const folderName = Utilities.basename(
         Utilities.dirname(
@@ -465,14 +465,14 @@ export class ConfigurationTemplatesComponent implements OnInit {
         ),
       );
 
-      console.log(
-        `FOLDER_PATH = ${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${folderName}`,
-      );
+      //console.log(
+      //  `FOLDER_PATH = ${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${folderName}`,
+      //);
 
       await this.fsService.dirAsync(
         `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${folderName}`,
       );
-      console.log('BEFORE SAVE');
+      //console.log('BEFORE SAVE');
 
       await this.settingsService.saveSettingsFileAsync(
         this.modalConfigurationTemplateInfo.fileInfo.filePath,

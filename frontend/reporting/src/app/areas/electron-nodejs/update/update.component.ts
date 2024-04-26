@@ -99,9 +99,9 @@ export class UpdateComponent implements OnInit {
       this.updateInfo.errorMsg = '';
       this.updateInfo.mode = 'migrate-copy';
 
-      console.log(
-        `this.letMeUpdateSourceDirectoryPath : ${this.letMeUpdateSourceDirectoryPath}`,
-      );
+      //console.log(
+      //  `this.letMeUpdateSourceDirectoryPath : ${this.letMeUpdateSourceDirectoryPath}`,
+      //);
 
       this.updateInfo.updateSourceDirectoryPath =
         this.letMeUpdateSourceDirectoryPath;
@@ -192,7 +192,7 @@ export class UpdateComponent implements OnInit {
     // Creates directory if doesn't exist
     const backupFolderPath = `${this.electronService.PORTABLE_EXECUTABLE_DIR}/backup/config-files-before-updating/${this.settingsService.version}/${nowFormatted}`;
 
-    console.log(`dirAsync.backupFolderPath: ${backupFolderPath}`);
+    //console.log(`dirAsync.backupFolderPath: ${backupFolderPath}`);
     await UtilitiesNodeJs.dirAsync(backupFolderPath);
 
     await UtilitiesNodeJs.copyAsync(
@@ -310,9 +310,9 @@ export class UpdateComponent implements OnInit {
       this.letMeUpdateSourceDirectoryPath = null;
       this.letMeUpdateManually = false;
 
-      console.log(
-        `removeAsync this.updateInfo.jobFilePath: ${this.updateInfo.jobFilePath}`,
-      );
+      //console.log(
+      //  `removeAsync this.updateInfo.jobFilePath: ${this.updateInfo.jobFilePath}`,
+      //);
       return UtilitiesNodeJs.removeAsync(
         `${this.electronService.PORTABLE_EXECUTABLE_DIR}/${this.updateInfo.jobFilePath}`,
       );

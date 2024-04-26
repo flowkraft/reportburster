@@ -113,9 +113,9 @@ export class Updater {
         `${updateInfo.updateSourceDirectoryPath}/DocumentBurster.exe`,
       );
 
-      console.log(
-        `validDbExeFilePath = ${updateInfo.updateSourceDirectoryPath}/DocumentBurster.exe`,
-      );
+      //console.log(
+      //  `validDbExeFilePath = ${updateInfo.updateSourceDirectoryPath}/DocumentBurster.exe`,
+      //);
 
       if (validDbExeFilePath !== 'file') {
         updateInfo.errorMsg = `DocumentBurster.exe was not found in the ${updateInfo.updateSourceDirectoryPath} selected location. Please select an existing DocumentBurster installation folder!`;

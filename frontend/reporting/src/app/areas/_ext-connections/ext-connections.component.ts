@@ -136,11 +136,9 @@ export class ExternalConnectionsComponent implements OnInit {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: async () => {
-        console.log;
-
         const filePath = this.getSelectedConnection().filePath;
 
-        console.log(`filePath = ${filePath}`);
+        //console.log(`filePath = ${filePath}`);
 
         await this.fsService.removeAsync(filePath);
 
@@ -300,9 +298,9 @@ export class ExternalConnectionsComponent implements OnInit {
 
       this.modalConnectionInfo.connectionFilePathExists =
         await this.fsService.existsAsync(this.modalConnectionInfo.filePath);
-      console.log(
-        `this.modalConnectionInfo.connectionFilePathExists = ${this.modalConnectionInfo.connectionFilePathExists}`,
-      );
+      //console.log(
+      //  `this.modalConnectionInfo.connectionFilePathExists = ${this.modalConnectionInfo.connectionFilePathExists}`,
+      //);
     }
   }
 

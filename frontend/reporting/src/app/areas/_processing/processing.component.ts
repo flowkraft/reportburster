@@ -260,9 +260,9 @@ export class ProcessingComponent implements OnInit {
             this.processingService.procBurstInfo.prefilledInputFilePath =
               params.prefilledInputFilePath;
           else if (this.currentLeftMenu == 'mergeBurstMenuSelected') {
-            console.log(
-              `params.prefilledInputFilePath = ${params.prefilledInputFilePath}`,
-            );
+            //console.log(
+            //  `params.prefilledInputFilePath = ${params.prefilledInputFilePath}`,
+            //);
 
             let pFilledInputFilePath = params.prefilledInputFilePath;
 
@@ -585,7 +585,7 @@ export class ProcessingComponent implements OnInit {
 
     //alert('test');
 
-    console.log(`onFilesAdded files = ${JSON.stringify(files)}`);
+    //console.log(`onFilesAdded files = ${JSON.stringify(files)}`);
 
     files.forEach((file) => {
       this.processingService.procMergeBurstInfo.inputFiles.push({
@@ -617,7 +617,7 @@ export class ProcessingComponent implements OnInit {
   onFileSelected(file: { id: string }) {
     this.processingService.procMergeBurstInfo.inputFiles.forEach((each) => {
       if (each.id === file.id) {
-        console.log(`selected id = ${file.id}`);
+        //console.log(`selected id = ${file.id}`);
         each.selected = true;
         this.processingService.procMergeBurstInfo.selectedFile = file;
       } else {
@@ -658,13 +658,13 @@ export class ProcessingComponent implements OnInit {
       );
     }
 
-    console.log(
-      JSON.stringify(
-        this.processingService.procMergeBurstInfo.inputFiles.map(
-          (inputFile) => inputFile.name,
-        ),
-      ),
-    );
+    //console.log(
+    //  JSON.stringify(
+    //    this.processingService.procMergeBurstInfo.inputFiles.map(
+    //      (inputFile) => inputFile.name,
+    //    ),
+    //  ),
+    //);
   }
 
   onSelectedFileDown() {
@@ -686,13 +686,13 @@ export class ProcessingComponent implements OnInit {
         this.processingService.procMergeBurstInfo.selectedFile,
       );
     }
-    console.log(
-      JSON.stringify(
-        this.processingService.procMergeBurstInfo.inputFiles.map(
-          (inputFile) => inputFile.name,
-        ),
-      ),
-    );
+    //console.log(
+    //  JSON.stringify(
+    //    this.processingService.procMergeBurstInfo.inputFiles.map(
+    //      (inputFile) => inputFile.name,
+    //    ),
+    //  ),
+    //);
   }
 
   onClearFiles() {
@@ -704,13 +704,13 @@ export class ProcessingComponent implements OnInit {
         this.processingService.procMergeBurstInfo.inputFiles = [];
       },
     });
-    console.log(
-      JSON.stringify(
-        this.processingService.procMergeBurstInfo.inputFiles.map(
-          (inputFile) => inputFile.name,
-        ),
-      ),
-    );
+    //console.log(
+    //   JSON.stringify(
+    //     this.processingService.procMergeBurstInfo.inputFiles.map(
+    //       (inputFile) => inputFile.name,
+    //     ),
+    //   ),
+    //);
   }
 
   async saveMergedFileSetting() {
@@ -966,7 +966,7 @@ export class ProcessingComponent implements OnInit {
         message: dialogQuestion,
         confirmAction: () => {
           this.executionStatsService.jobStats.jobsToResume = [];
-          console.log(`jobFilePath = ${jobFilePath}`);
+          //console.log(`jobFilePath = ${jobFilePath}`);
           this.shellService.runBatFile(
             ['-rf', '"' + jobFilePath + '"'],
             Utilities.basename(jobFilePath),
@@ -1144,9 +1144,9 @@ export class ProcessingComponent implements OnInit {
           });
 
           diezSeparatedListOfFilePathsToMerge = `${diezSeparatedListOfFilePathsToMerge}#burst-merged-file`;
-          console.log(
-            `diezSeparatedListOfFilePathsToMerge = ${diezSeparatedListOfFilePathsToMerge}`,
-          );
+          //console.log(
+          //  `diezSeparatedListOfFilePathsToMerge = ${diezSeparatedListOfFilePathsToMerge}`,
+          //);
           this.router.navigate(
             [
               '/processingSample',
