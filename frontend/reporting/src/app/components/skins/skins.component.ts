@@ -1,5 +1,6 @@
 import { OnInit, Component } from '@angular/core';
 import { SettingsService } from '../../providers/settings.service';
+import { StateStoreService } from '../../providers/state-store.service';
 
 @Component({
   selector: 'dburst-skins',
@@ -23,7 +24,10 @@ export class SkinsComponent implements OnInit {
 
   bodyElement = document.getElementsByTagName('body')[0];
 
-  constructor(protected settingsService: SettingsService) {}
+  constructor(
+    protected settingsService: SettingsService,
+    protected storeService: StateStoreService,
+  ) {}
 
   async ngOnInit() {
     this.settingsService.xmlInternalSettings.documentburster =
@@ -67,6 +71,11 @@ export class SkinsComponent implements OnInit {
   }
 
   async saveSkin(newSkin: string) {
+    if (!this.storeService.configSys.sysInfo.setup.java.isJavaOk) {
+      alert('To use ReportBurster, you need to have Java installed.');
+      return;
+    }
+
     this.settingsService.xmlInternalSettings.documentburster =
       await this.settingsService.loadPreferencesFileAsync(
         this.settingsService.INTERNAL_SETTINGS_FILE_PATH,

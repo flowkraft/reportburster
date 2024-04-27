@@ -9,6 +9,7 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
           id="burstFile"
           [(ngModel)]="processingService.procBurstInfo.isSample ? processingService.procBurstInfo.prefilledInputFilePath : processingService.procBurstInfo.inputFileName"
           class="form-control"
+          [disabled]="!this.storeService.configSys.sysInfo.setup.java.isJavaOk"
           autofocus
           required
         />
@@ -16,7 +17,8 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
 
       <div class="col-xs-3">
         <label for="burstFileUploadInput" class="btn btn-default btn-block"><i class="fa fa-folder-open-o' }}"></i>&nbsp;Select File</label>
-        <input style="display: none;" type="file" id="burstFileUploadInput" (change)="onBurstFileSelected($event)" accept=".pdf" #burstFileUploadInput/>
+        <input style="display: none;" type="file" id="burstFileUploadInput" (change)="onBurstFileSelected($event)" accept=".pdf" #burstFileUploadInput  [disabled]="!storeService.configSys.sysInfo.setup.java.isJavaOk"
+        />
       <!--  
       <dburst-button-native-system-dialog
           value="{{

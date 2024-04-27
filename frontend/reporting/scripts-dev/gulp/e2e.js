@@ -13,7 +13,7 @@ const FRONTEND_PLAYGROUND_FOLDER_PATH = "./testground";
 
 const e2eRuntimeDir = jetpack.cwd(`${FRONTEND_PLAYGROUND_FOLDER_PATH}/e2e`);
 const e2eUpdateRuntimeDir = jetpack.cwd(
-  `${FRONTEND_PLAYGROUND_FOLDER_PATH}/e2e-update`
+  `${FRONTEND_PLAYGROUND_FOLDER_PATH}/e2e-update`,
 );
 
 const VERIFIED_DB_NOEXE_ASSEMBLY_PATH =
@@ -26,22 +26,22 @@ const semver = require("semver");
 gulp.task("e2e-package-javastuff-if-needed", async () => {
   // Finds existing javaStuffFiles files inside 'e2eRuntimeDir' directory WITHOUT subdirectories
   let javaStuffFilesInE2eDirExists = fse.pathExistsSync(
-    e2eRuntimeDir.path() + "/documentburster.bat"
+    e2eRuntimeDir.path() + "/reportburster.bat",
   );
 
   //if-needed
   if (!javaStuffFilesInE2eDirExists) {
     console.log(
-      "e2e-package-javastuff-if-needed: DID NOT FIND javaStuffFilesInE2EDir"
+      "e2e-package-javastuff-if-needed: DID NOT FIND javaStuffFilesInE2EDir",
     );
 
     let verifiedDbNoExeDirExists = fse.pathExistsSync(
-      VERIFIED_DB_NOEXE_ASSEMBLY_PATH
+      VERIFIED_DB_NOEXE_ASSEMBLY_PATH,
     );
 
     if (!verifiedDbNoExeDirExists) {
       console.log(
-        "e2e-package-javastuff-if-needed: DID NOT FIND verifiedDbNoExeDir"
+        "e2e-package-javastuff-if-needed: DID NOT FIND verifiedDbNoExeDir",
       );
 
       childProcess.spawnSync(
@@ -53,7 +53,7 @@ gulp.task("e2e-package-javastuff-if-needed", async () => {
         {
           stdio: "inherit",
           cwd: "../assembly-documentburster",
-        }
+        },
       );
     }
 
@@ -64,11 +64,11 @@ gulp.task("e2e-package-javastuff-if-needed", async () => {
     let verifiedDbFolder = await jetpack.findAsync(
       VERIFIED_DB_NOEXE_ASSEMBLY_PATH,
       {
-        matching: "DocumentBurster*",
+        matching: "ReportBurster*",
         files: false,
         directories: true,
         recursive: false,
-      }
+      },
     );
 
     // Copy javaStuffFiles built files inside 'e2eRuntimeDir'
@@ -76,15 +76,15 @@ gulp.task("e2e-package-javastuff-if-needed", async () => {
 
     fse.move(
       `${e2eRuntimeDir.path()}/samples/reports/payslips/payslips-template.docx`,
-      `${e2eRuntimeDir.path()}/templates/reports/payslips/payslips-template.docx`
+      `${e2eRuntimeDir.path()}/templates/reports/payslips/payslips-template.docx`,
     );
 
     console.log(
-      "e2e-package-javastuff-if-needed: Java stuff was generated / copied and it is now ready in the 'playground/e2e' folder."
+      "e2e-package-javastuff-if-needed: Java stuff was generated / copied and it is now ready in the 'playground/e2e' folder.",
     );
   } else
     console.log(
-      "e2e-package-javastuff-if-needed: Nothing to do, Java stuff is already present in the 'playground/e2e' folder"
+      "e2e-package-javastuff-if-needed: Nothing to do, Java stuff is already present in the 'playground/e2e' folder",
     );
 
   return Promise.resolve();
@@ -96,33 +96,33 @@ gulp.task("e2e-file-replacements", async () => {
     "src/environments/environment.ts",
     {
       overwrite: true,
-    }
+    },
   );
 });
 
 gulp.task("e2e-generate-autoupdate-baseline", async () => {
   return _generateAutoupdateBaseline(
-    "../assembly-documentburster/target/package/verified-db-noexe"
+    "../assembly-documentburster/target/package/verified-db-noexe",
   );
 });
 
 gulp.task("e2e-generate-autoupdate-baseline-server", async () => {
   return _generateAutoupdateBaseline(
-    "../assembly-documentburster/target/package/verified-db-server"
+    "../assembly-documentburster/target/package/verified-db-server",
   );
 });
 
 gulp.task("e2e-generate-autoupdate-newer-version", async () => {
   return _generateAutoupdateNewerVersion(
     "e2e/_resources/upgrade/db-baseline-8.7.2.zip",
-    "9.9.9"
+    "9.9.9",
   );
 });
 
 gulp.task("e2e-generate-autoupdate-newer-version-server", async () => {
   return _generateAutoupdateNewerVersion(
     "e2e/_resources/upgrade/db-server-baseline-8.7.2.zip",
-    "9.9.9"
+    "9.9.9",
   );
 });
 
@@ -136,7 +136,7 @@ gulp.task("e2e-copy-dbexe-to-e2e", async () => {
 
 gulp.task("e2e-copy-updatejar-to-e2e", async () => {
   let ujf = await jetpack.findAsync(VERIFIED_DB_ASSEMBLY_PATH, {
-    matching: "DocumentBurster/lib/burst/update-*.jar",
+    matching: "ReportBurster/lib/burst/update-*.jar",
   });
 
   let ujfp = ujf[0];
@@ -149,7 +149,7 @@ gulp.task("e2e-copy-updatejar-to-e2e", async () => {
       `${e2eRuntimeDir.path()}/lib/burst/${path.basename(ujfp)}`,
       {
         overwrite: true,
-      }
+      },
     );
   }
 });
@@ -161,7 +161,7 @@ gulp.task("e2e-prepare-updatenow-for-manual-testing", async () => {
 
   const latestVersion = settingsFileContent.substring(
     settingsFileContent.lastIndexOf("<version>") + 9,
-    settingsFileContent.lastIndexOf("</version>")
+    settingsFileContent.lastIndexOf("</version>"),
   );
 
   const fromLatestVersion = `<version>${latestVersion}</version>`;
@@ -179,7 +179,7 @@ gulp.task("e2e-prepare-updatenow-for-manual-testing", async () => {
   await jetpack.copyAsync(
     `e2e/_resources/license/license-active.xml`,
     `${e2eRuntimeDir.path()}/config/burst/internal/license.xml`,
-    { overwrite: true }
+    { overwrite: true },
   );
 
   options = {
@@ -194,13 +194,13 @@ gulp.task("e2e-prepare-updatenow-for-manual-testing", async () => {
   await jetpack.copyAsync(
     `e2e/_resources/upgrade/files-to-migrate/config`,
     `${e2eRuntimeDir.path()}/config/burst`,
-    { matching: ["*.xml", "!settings.xml"], overwrite: true }
+    { matching: ["*.xml", "!settings.xml"], overwrite: true },
   );
 
   await jetpack.copyAsync(
     `e2e/_resources/upgrade/files-to-migrate/config-cuna`,
     `${e2eRuntimeDir.path()}/config/burst`,
-    { matching: ["*.xml", "!settings.xml"], overwrite: true }
+    { matching: ["*.xml", "!settings.xml"], overwrite: true },
   );
 
   //Step4 - copy all the "scripts" groovy files to 8.7.2 baseline dir with a version stamp
@@ -220,7 +220,7 @@ gulp.task("e2e-prepare-updatenow-for-manual-testing", async () => {
   for (let version of dbVersions) {
     let scriptFilePaths = await jetpack.findAsync(
       `e2e/_resources/upgrade/files-to-migrate/scripts/samples/${version}`,
-      { matching: "*.groovy" }
+      { matching: "*.groovy" },
     );
 
     for (let scriptFilePath of scriptFilePaths) {
@@ -228,7 +228,7 @@ gulp.task("e2e-prepare-updatenow-for-manual-testing", async () => {
 
       await jetpack.copyAsync(
         scriptFilePath,
-        `${e2eRuntimeDir.path()}/scripts/burst/${version}-${scriptFileName}`
+        `${e2eRuntimeDir.path()}/scripts/burst/${version}-${scriptFileName}`,
       );
     }
   }
@@ -237,35 +237,35 @@ gulp.task("e2e-prepare-updatenow-for-manual-testing", async () => {
   //the folder is correctly copied when the configuration to copy is enabled.
   await jetpack.copyAsync(
     `${e2eRuntimeDir.path()}/templates/html-basic-example`,
-    `${e2eRuntimeDir.path()}/templates/html-custom-example`
+    `${e2eRuntimeDir.path()}/templates/html-custom-example`,
   );
 
   //Step7 - same as above but for the Output files
   await jetpack.copyAsync(
     `e2e/_resources/upgrade/files-to-migrate/output`,
     `${e2eRuntimeDir.path()}/output`,
-    { overwrite: true }
+    { overwrite: true },
   );
 
   //Step8 - same as above but for the Log files
   await jetpack.copyAsync(
     `e2e/_resources/upgrade/files-to-migrate/logs`,
     `${e2eRuntimeDir.path()}/logs`,
-    { overwrite: true }
+    { overwrite: true },
   );
 
   //Step9 - same as above but for the Quarantine files
   await jetpack.copyAsync(
     `e2e/_resources/upgrade/files-to-migrate/quarantine`,
     `${e2eRuntimeDir.path()}/quarantine`,
-    { overwrite: true }
+    { overwrite: true },
   );
 
   //Step10 - same as above but for the Backup files
   await jetpack.copyAsync(
     `e2e/_resources/upgrade/files-to-migrate/backup`,
     `${e2eRuntimeDir.path()}/backup`,
-    { overwrite: true }
+    { overwrite: true },
   );
 
   _copyDbExe2FolderPath("e2e");
@@ -280,7 +280,7 @@ gulp.task("e2e-generate-keepachangelog-com", async () => {
   console.log(originalChangelogFilePath);
 
   const originalChangelogContent = await jetpack.readAsync(
-    originalChangelogFilePath
+    originalChangelogFilePath,
   );
 
   const allRawLines = originalChangelogContent.split(/\r\n|\n/);
@@ -328,7 +328,7 @@ gulp.task("e2e-generate-keepachangelog-com", async () => {
       _isNextChangeLine = _isStartChangeLine(_line);
 
       _isEndReleaseLine = _line.includes(
-        "=============================================="
+        "==============================================",
       );
       _isEndOfFile = _line.includes("Support for FTP Sender.");
 
@@ -359,7 +359,7 @@ gulp.task("e2e-generate-keepachangelog-com", async () => {
     const line = allLines[i];
 
     const isStartReleaseLine =
-      line.startsWith("DocumentBurster ") && line.endsWith(")");
+      line.startsWith("ReportBurster ") && line.endsWith(")");
 
     if (isStartReleaseLine) {
       let releaseInfo = line.split(" ");
@@ -378,7 +378,7 @@ gulp.task("e2e-generate-keepachangelog-com", async () => {
     }
 
     const isEndReleaseLine = line.includes(
-      "=============================================="
+      "==============================================",
     );
     const isEndOfFile = line.includes("Support for FTP Sender.");
 
@@ -393,7 +393,7 @@ gulp.task("e2e-generate-keepachangelog-com", async () => {
     i++;
   }
 
-  const changelog = new Changelog("DocumentBurster");
+  const changelog = new Changelog("ReportBurster");
   allReleases.forEach((release) => changelog.addRelease(release));
 
   console.log(changelog.toString());
@@ -402,17 +402,17 @@ gulp.task("e2e-generate-keepachangelog-com", async () => {
 
 async function _copyDbExe2FolderPath(where) {
   let verifiedDbDirExists = await jetpack.existsAsync(
-    VERIFIED_DB_ASSEMBLY_PATH
+    VERIFIED_DB_ASSEMBLY_PATH,
   );
 
   if (!verifiedDbDirExists)
     console.log(
-      "e2e-copy-dbexe-to-letme-baseline: DID NOT FIND verifiedDbDirExists"
+      "e2e-copy-dbexe-to-letme-baseline: DID NOT FIND verifiedDbDirExists",
     );
 
   //find the DocumentBurster-8.6 folder location
   let verifiedDbFolder = await jetpack.findAsync(VERIFIED_DB_ASSEMBLY_PATH, {
-    matching: "DocumentBurster*",
+    matching: "ReportBurster*",
     files: false,
     directories: true,
     recursive: false,
@@ -421,7 +421,7 @@ async function _copyDbExe2FolderPath(where) {
   console.log(`${verifiedDbFolder[0]}/DocumentBurster.exe`);
 
   let isServerVersion = await jetpack.existsAsync(
-    `${FRONTEND_PLAYGROUND_FOLDER_PATH}/upgrade/baseline/DocumentBurster/server`
+    `${FRONTEND_PLAYGROUND_FOLDER_PATH}/upgrade/baseline/DocumentBurster/server`,
   );
 
   let destinationExePath;
@@ -441,7 +441,7 @@ async function _copyDbExe2FolderPath(where) {
   jetpack.copy(
     `${verifiedDbFolder[0]}/DocumentBurster.exe`,
     destinationExePath,
-    { overwrite: true }
+    { overwrite: true },
   );
 }
 
@@ -465,15 +465,15 @@ async function _generateAutoupdateNewerVersion(zipFilePath, newVersion) {
 
   let verifiedDbFolder = path.resolve(
     jetpack.find(tmpFolderPath, {
-      matching: "DocumentBurster*",
+      matching: "ReportBurster*",
       files: false,
       directories: true,
       recursive: false,
-    })[0]
+    })[0],
   );
 
   let allDocumentBursterFolders = await jetpack.findAsync(tmpFolderPath, {
-    matching: "!*DocumentBurster*",
+    matching: "!*ReportBurster*",
     files: false,
     directories: true,
   });
@@ -504,11 +504,11 @@ async function _generateAutoupdateNewerVersion(zipFilePath, newVersion) {
 
   if (!isServer)
     allDocumentBursterFolders = allDocumentBursterFolders.filter(
-      (e) => !e.includes("DocumentBurster\\tools")
+      (e) => !e.includes("ReportBurster\\tools"),
     );
   else
     allDocumentBursterFolders = allDocumentBursterFolders.filter(
-      (e) => !e.includes("DocumentBurster\\server\\tools")
+      (e) => !e.includes("ReportBurster\\server\\tools"),
     );
 
   for (let folderEntry of allDocumentBursterFolders) {
@@ -528,7 +528,7 @@ async function _generateAutoupdateNewerVersion(zipFilePath, newVersion) {
 
       await jetpack.writeAsync(
         `${e2eUpdateRuntimePath}/DocumentBurster/${folderName}/${fileName}`,
-        fileContent
+        fileContent,
       );
     }
 
@@ -547,7 +547,7 @@ async function _generateAutoupdateNewerVersion(zipFilePath, newVersion) {
 
     await jetpack.writeAsync(
       `${e2eUpdateRuntimePath}/DocumentBurster/${fileName}`,
-      fileContent
+      fileContent,
     );
   }
 
@@ -573,18 +573,18 @@ async function _generateAutoupdateBaseline(verifiedFolderPath) {
 
   let verifiedDbFolder = path.resolve(
     jetpack.find(VERIFIED_DB872_NOEXE_ASSEMBLY_PATH, {
-      matching: "DocumentBurster*",
+      matching: "ReportBurster*",
       files: false,
       directories: true,
       recursive: false,
-    })[0]
+    })[0],
   );
 
   console.log(verifiedDbFolder);
 
   const allDocumentBursterFolders = await jetpack.findAsync(
     VERIFIED_DB872_NOEXE_ASSEMBLY_PATH,
-    { matching: "!*DocumentBurster*", files: false, directories: true }
+    { matching: "!*DocumentBurster*", files: false, directories: true },
   );
 
   const MAX_NUMBER_OF_FILES_IN_EACH_FOLDER = 5;
@@ -608,7 +608,7 @@ async function _generateAutoupdateBaseline(verifiedFolderPath) {
 
       await jetpack.writeAsync(
         `${e2eUpdateRuntimePath}/DocumentBurster/${folderName}/${fileName}`,
-        fileContent
+        fileContent,
       );
     }
 
@@ -627,7 +627,7 @@ async function _generateAutoupdateBaseline(verifiedFolderPath) {
 
     await jetpack.writeAsync(
       `${e2eUpdateRuntimePath}/DocumentBurster/${fileName}`,
-      fileContent
+      fileContent,
     );
   }
 

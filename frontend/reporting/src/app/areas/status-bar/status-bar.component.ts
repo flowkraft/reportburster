@@ -30,9 +30,9 @@ export class StatusBarComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit() {
-    //if (!this.storeService.configSys.sysInfo.setup.java.isJavaOk) {
-    //  return;
-    //}
+    if (!this.storeService.configSys.sysInfo.setup.java.isJavaOk) {
+      return;
+    }
 
     this.webSocketService.BACKEND_URL =
       this.storeService.configSys.sysInfo.setup.BACKEND_URL;

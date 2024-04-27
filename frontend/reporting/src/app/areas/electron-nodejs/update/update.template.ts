@@ -92,6 +92,7 @@ export const updateTemplate = `<div *ngIf="succint">
           type="checkbox"
           id="btnLetMeUpdateManually"
           [(ngModel)]="letMeUpdateManually"
+          [disabled]="!this.storeService.configSys.sysInfo.setup.java.isJavaOk"
         />
         <label for="btnLetMeUpdateManually" class="checkboxlabel"
           >{{ "AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.UPDATE-NOW.LET-ME1" |

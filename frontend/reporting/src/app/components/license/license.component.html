@@ -7,6 +7,7 @@
         [(ngModel)]="licenseService?.licenseDetails?.license.key"
         (ngModelChange)="saveLicenseKey()"
         class="form-control"
+        [disabled]="!this.storeService.configSys.sysInfo.setup.java.isJavaOk"
         autofocus
         required
       />

@@ -37,7 +37,7 @@ gulp.task("utils:start-server-and-e2e-electron", () => {
   _startServerAndDoX("custom:e2e-electron");
 });
 
-gulp.task("utils:start-javano-chocoyes-and-ui", () => {
+gulp.task("utils:start-javano-chocono-and-ui", () => {
   const chocoStatus = "not-installed";
   _startNoJavaAndUI(chocoStatus);
 });
@@ -72,7 +72,7 @@ _startNoJavaAndUI = async (chocoStatus) => {
   else logMessage += "\nchoco version: 0.11.2";
 
   await jetpack.writeAsync(logPath, logMessage);
-  spawn("npm", ["run", "custom:start"], {
+  spawn("npm", ["run", "custom:start-ui-electron"], {
     stdio: "pipe",
     shell: true,
   });

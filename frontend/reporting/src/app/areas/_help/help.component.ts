@@ -31,6 +31,7 @@ import { tabLogsTemplate } from './templates/tab-logs';
 import { tabLicenseTemplate } from './templates/tab-license';
 import { SettingsService } from '../../providers/settings.service';
 import Utilities from '../../helpers/utilities';
+import { StateStoreService } from '../../providers/state-store.service';
 //import { ElectronService } from '../../core/services/electron/electron.service';
 
 @Component({
@@ -240,6 +241,7 @@ export class HelpComponent implements OnInit, AfterViewChecked {
     protected route: ActivatedRoute,
     protected changeDetectorRef: ChangeDetectorRef,
     protected settingsService: SettingsService,
+    protected storeService: StateStoreService,
     //protected electronService: ElectronService,
   ) {}
 
