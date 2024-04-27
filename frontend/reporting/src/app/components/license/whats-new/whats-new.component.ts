@@ -14,6 +14,7 @@ import { FsService } from '../../../providers/fs.service';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../providers/api.service';
+import { StateStoreService } from '../../../providers/state-store.service';
 
 type BlogPost = {
   title: string;
@@ -48,9 +49,12 @@ export class WhatsNewComponent {
     protected settingsService: SettingsService,
     protected licenseService: LicenseService,
     protected fsService: FsService,
+    protected stateStore: StateStoreService,
   ) {}
 
   async ngOnInit() {
+    if (!this.stateStore.configSys.sysInfo.setup.java.isJavaOk) return;
+
     await this.licenseService.loadLicenseFileAsync();
     if (this.licenseService.changeLog) {
       this.changeLog = this.licenseService.changeLog;

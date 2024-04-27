@@ -116,12 +116,12 @@ export class ApiService {
     }
     //console.log(`options.body = ${JSON.stringify(options.body)}`);
 
-    //if (!this.stateStore.configSys.sysInfo.setup.java.isJavaOk) return;
+    if (!this.stateStore.configSys.sysInfo.setup.java.isJavaOk) return;
 
     const response = await fetch(url, options);
 
     if (!response.ok) {
-      this.stateStore.configSys.sysInfo.setup.java.isJavaOk = false;
+      //this.stateStore.configSys.sysInfo.setup.java.isJavaOk = false;
       this.checkError(response.status);
       throw new Error(`Request failed with status ${response.status}`);
     }
@@ -131,26 +131,22 @@ export class ApiService {
       this.setToken(jwtToken);
     }
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    let data = {};
+    if (response.headers.get('Content-Length') === '0') {
+      //console.log(
+      //  `No data returned from API call: ${url}, body: ${JSON.stringify(body)}`,
+      //);
     } else {
-      let data = {};
-      if (response.headers.get('Content-Length') === '0') {
-        //console.log(
-        //  `No data returned from API call: ${url}, body: ${JSON.stringify(body)}`,
-        //);
-      } else {
-        //console.log(`apiService.request.response: ${JSON.stringify(response)}`);
+      //console.log(`apiService.request.response: ${JSON.stringify(response)}`);
 
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          data = await response.json();
-        } else if (contentType && contentType.includes('text/plain')) {
-          data = await response.text();
-        }
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else if (contentType && contentType.includes('text/plain')) {
+        data = await response.text();
       }
-      return data;
     }
+    return data;
   }
 
   public get(path: string, args?: any, customHeaders?: Headers): Promise<any> {

@@ -28,6 +28,7 @@ import { ElectronService } from '../electron.service';
 import { FsService } from '../../../providers/fs.service';
 import UtilitiesNodeJs from '../utilities-nodejs';
 import UtilitiesElectron from '../utilities-electron';
+import { StateStoreService } from '../../../providers/state-store.service';
 
 @Component({
   selector: 'dburst-update',
@@ -54,12 +55,17 @@ export class UpdateComponent implements OnInit {
     protected bashService: BashService,
     protected electronService: ElectronService,
     protected fsService: FsService,
+    protected storeService: StateStoreService,
   ) {
     this.homeDirectoryPath = this.electronService.PORTABLE_EXECUTABLE_DIR;
     this.updater = new Updater(this.homeDirectoryPath);
   }
 
   async ngOnInit(): Promise<void> {
+    if (!this.storeService.configSys.sysInfo.setup.java.isJavaOk) {
+      return;
+    }
+
     this.updateInfo.updateSourceDirectoryPath =
       this.electronService.PORTABLE_EXECUTABLE_DIR;
 

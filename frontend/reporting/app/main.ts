@@ -139,6 +139,7 @@ try {
         cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
         env: { ...process.env, ELECTRON_PID: process.pid.toString() },
       });
+      let windowCreated = false;
 
       serverProcess.stdout.on('data', (data) => {
         //console.log(`stdout: ${data}`);
@@ -153,22 +154,21 @@ try {
 
         //createWindow() main application window in both situations
         //if java is installed 'Started ServerApplication in' or java is not installed 'process exited with code 1'
-        if (dataStr.includes('Started ServerApplication in')) {
+        if (
+          !windowCreated &&
+          dataStr.includes('Started ServerApplication in')
+        ) {
+          windowCreated = true;
           createWindow();
         }
       });
 
-      let windowCreated = false;
-
       serverProcess.stderr.on('data', (data) => {
         const dataStr = data.toString();
         log.error(dataStr);
-        if (
-          !windowCreated &&
-          dataStr.includes("'java' is not recognized as an internal")
-        ) {
-          createWindow();
+        if (!windowCreated && dataStr.includes("'java' is not recognized")) {
           windowCreated = true;
+          createWindow();
         }
       });
 

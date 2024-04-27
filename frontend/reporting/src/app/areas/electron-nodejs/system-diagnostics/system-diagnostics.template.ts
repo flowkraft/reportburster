@@ -15,6 +15,7 @@ export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTem
     >
   </div>
 
+  <!--
   <div class="col-xs-10">
     <button type="button" class="btn btn-primary" (click)="restartApp()">
       <i class="fa fa-play"></i
@@ -22,6 +23,7 @@ export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTem
       }} <em>DocumentBurster</em>
     </button>
   </div>
+  -->
 </div>
 
 <span class="label label-success" *ngIf="this.stateStore.configSys.sysInfo.setup.java.isJavaOk"

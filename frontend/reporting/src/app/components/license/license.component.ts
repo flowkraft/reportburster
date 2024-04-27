@@ -5,6 +5,7 @@ import { LicenseService } from '../../providers/license.service';
 import { ConfirmService } from '../dialog-confirm/confirm.service';
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
 import { SettingsService } from '../../providers/settings.service';
+import { StateStoreService } from '../../providers/state-store.service';
 
 @Component({
   selector: 'dburst-license',
@@ -18,6 +19,7 @@ export class LicenseComponent {
     protected confirmService: ConfirmService,
     protected settingsService: SettingsService,
     protected executionStatsService: ExecutionStatsService,
+    protected storeService: StateStoreService,
   ) {}
 
   verifyLicense(action) {
