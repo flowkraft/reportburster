@@ -72,7 +72,7 @@ export class SkinsComponent implements OnInit {
 
   async saveSkin(newSkin: string) {
     if (!this.storeService.configSys.sysInfo.setup.java.isJavaOk) {
-      alert('To use ReportBurster, you need to have Java installed.');
+      alert('To use ReportBurster, Java must be installed on your computer.');
       return;
     }
 
