@@ -139,6 +139,27 @@ export class TerminalComponent implements AfterViewInit {
             case 'choco uninstall openjdk --yes':
             case 'choco uninstall notepadplusplus --yes':
             case 'choco uninstall winmerge --yes':
+              try {
+                await this.electronService.emptyLogFile();
+
+                const testCommand = 'choco --version';
+                const elevatedScript =
+                  await this.electronService.getCommandReadyToBeRunAsAdministratorUsingPowerShell(
+                    command,
+                    testCommand,
+                  );
+
+                elevatedScript.stderr.on('data', (data) => {
+                  response = response + '\n' + data;
+                });
+
+                for await (const data of elevatedScript.stdout) {
+                  response = response + '\n' + data;
+                }
+              } catch (error) {
+                response = error;
+              }
+              break;
             case '':
               response = '';
               break;
@@ -168,9 +189,9 @@ export class TerminalComponent implements AfterViewInit {
       '.p-terminal-input',
     )[0];
 
-    this.electronService.typeCommandOnTerminalAndThenPressEnter(
-      'java -version',
-    );
+    //this.electronService.typeCommandOnTerminalAndThenPressEnter(
+    //  'java -version',
+    //);
 
     this.changeDetectorRef.detectChanges();
   }
