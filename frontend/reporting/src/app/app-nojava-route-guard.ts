@@ -23,7 +23,7 @@ export class NoJavaGuard {
     if (this.storeService.configSys.sysInfo.setup.java.isJavaOk) {
       return true;
     } else {
-      alert('To use ReportBurster, you need to have Java installed.');
+      alert('To use ReportBurster, Java must be installed on your computer.');
       this.router.navigate(['/help', 'installSetupMenuSelected'], {
         skipLocationChange: true,
       });
