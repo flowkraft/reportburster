@@ -1,3 +1,5 @@
+import { ChildProcess } from 'child_process';
+
 let ipcRenderer;
 if (window.require) {
   ipcRenderer = window.require('electron').ipcRenderer;
@@ -42,7 +44,15 @@ export default class UtilitiesElectron {
     }
   }
 
-  static async execNativeCommand(
+  static async getEnvVariableValue(envVariableName: string): Promise<string> {
+    if (UtilitiesElectron.isIpcRendererAvailable()) {
+      return ipcRenderer.invoke(envVariableName);
+    } else {
+      return '';
+    }
+  }
+
+  static async childProcessExec(
     command: string,
   ): Promise<{ stdout: string; stderr: string }> {
     const { stdout, stderr } = await ipcRenderer.invoke(
@@ -52,6 +62,14 @@ export default class UtilitiesElectron {
     //console.log(`stdout: ${stdout}`);
     //console.log(`stderr: ${stderr}`);
     return { stdout, stderr };
+  }
+
+  static async childProcessSpawn(
+    command: string,
+    args?: string[],
+    options?: {},
+  ): Promise<ChildProcess> {
+    return ipcRenderer.invoke('child_process.spawn', command, args, options);
   }
 
   static isIpcRendererAvailable(): boolean {

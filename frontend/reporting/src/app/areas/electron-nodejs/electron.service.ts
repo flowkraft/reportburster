@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
-import * as process from 'process';
-import { ChildProcess, spawn } from 'child_process';
+//import * as process from 'process';
+import { ChildProcess } from 'child_process';
 import * as childProcess from 'child_process';
 
 import * as ElectronLog from 'electron-log';
@@ -26,9 +26,7 @@ class Dialog {
       // Simulate a successful operation for demonstration purposes
       resolve({
         canceled: false, // change this to true to simulate a canceled operation
-        filePath: `${
-          window.require('process').env.PORTABLE_EXECUTABLE_DIR
-        }/temp/file`, // this will be undefined if the operation was canceled
+        filePath: `${await UtilitiesElectron.getEnvVariableValue('PORTABLE_EXECUTABLE_DIR')}/temp/file`, // this will be undefined if the operation was canceled
         bookmark: 'base64-encoded-bookmark', // this is optional and specific to macOS MAS
       });
     });
@@ -54,20 +52,22 @@ class Dialog {
   providedIn: 'root',
 })
 export class ElectronService {
-  process: typeof process;
-  childProcess: typeof childProcess;
-  exec: typeof childProcess.exec;
-  spawn: typeof childProcess.spawn;
+  //process: typeof process;
+  //childProcess: typeof childProcess;
+  //exec: typeof childProcess.exec;
+  //spawn: typeof childProcess.spawn;
 
-  log: typeof ElectronLog;
-  cet: typeof CustomElectronTitlebar;
+  //log: typeof ElectronLog;
+  cet: typeof CustomElectronTitlebar = window.require(
+    'custom-electron-titlebar',
+  );
 
   PORTABLE_EXECUTABLE_DIR: string;
 
   SHOULD_SEND_STATS: boolean = false;
   RUNNING_IN_E2E: boolean = false;
 
-  dialog: Dialog;
+  dialog: Dialog = new Dialog();
 
   JAVA_HOME: string;
   JRE_HOME: string;
@@ -98,23 +98,23 @@ export class ElectronService {
   pTerminalInput: HTMLInputElement;
 
   constructor(protected apiService: ApiService) {
-    this.process = window.require('process');
+    //this.process = window.require('process');
 
-    this.PORTABLE_EXECUTABLE_DIR = this.process.env.PORTABLE_EXECUTABLE_DIR;
+    this.PORTABLE_EXECUTABLE_DIR = await UtilitiesElectron.getEnvVariableValue(
+      'PORTABLE_EXECUTABLE_DIR',
+    );
 
     this.RUNNING_IN_E2E = new Boolean(
-      this.process.env.RUNNING_IN_E2E,
+      await UtilitiesElectron.getEnvVariableValue('RUNNING_IN_E2E'),
     ).valueOf();
 
-    this.dialog = new Dialog();
-
     //if (this.isElectron) {
-    this.childProcess = window.require('child_process');
-    this.exec = this.childProcess.exec;
-    this.spawn = this.childProcess.spawn;
+    //this.childProcess = window.require('child_process');
+    //this.exec = this.childProcess.exec;
+    //this.spawn = this.childProcess.spawn;
 
-    this.log = window.require('electron-log');
-    this.cet = window.require('custom-electron-titlebar');
+    //this.log = window.require('electron-log');
+    //this.cet = window.require('custom-electron-titlebar');
 
     this.logFilePath = Utilities.slash(
       `${this.PORTABLE_EXECUTABLE_DIR}/logs/bash.service.log`,
@@ -157,13 +157,18 @@ export class ElectronService {
   }
 
   async checkJavaVersion(throwError = false) {
-    if (process.env.JAVA_HOME)
-      this.JAVA_HOME = Utilities.slash(process.env.JAVA_HOME);
+    const envJavaHome =
+      await UtilitiesElectron.getEnvVariableValue('JAVA_HOME');
+    if (envJavaHome) this.JAVA_HOME = Utilities.slash(envJavaHome);
 
-    if (process.env.JRE_HOME)
-      this.JRE_HOME = Utilities.slash(process.env.JRE_HOME);
+    const envJreHome = await UtilitiesElectron.getEnvVariableValue('JRE_HOME');
 
-    this.PATH = process.env.PATH;
+    if (envJreHome)
+      this.JRE_HOME = Utilities.slash(
+        await UtilitiesElectron.getEnvVariableValue('JRE_HOME'),
+      );
+
+    this.PATH = await UtilitiesElectron.getEnvVariableValue('PATH');
 
     try {
       //on Windows 7 java 8 java --version is not working, the command is simply java -version
@@ -176,7 +181,7 @@ export class ElectronService {
       //);
 
       const { stdout, stderr } =
-        await UtilitiesElectron.execNativeCommand('java -version');
+        await UtilitiesElectron.childProcessExec('java -version');
 
       //console.log(stdout, stderr);
 
@@ -263,7 +268,7 @@ export class ElectronService {
   async checkChocoVersion(throwError = false) {
     try {
       const { stdout, stderr } =
-        await UtilitiesElectron.execNativeCommand('choco --version');
+        await UtilitiesElectron.childProcessExec('choco --version');
 
       //if (!this.isChocoOk) this.isChocoOk = true;
       //this.chocoVersion = stdout;
@@ -332,7 +337,7 @@ export class ElectronService {
 
     try {
       const { stdout, stderr } =
-        await UtilitiesElectron.execNativeCommand(queryCommand);
+        await UtilitiesElectron.childProcessExec(queryCommand);
       if (stdout) value = stdout;
     } catch (error) {
       //console.log(`error = ${error}, throwError = ${throwError}`);
@@ -381,10 +386,12 @@ del /f /s install.ps1
         command,
       );
 
-    return Promise.resolve(
-      spawn('cmd.exe', ['/c', elevatedScriptFilePath], {
+    return UtilitiesElectron.childProcessSpawn(
+      'cmd.exe',
+      ['/c', elevatedScriptFilePath],
+      {
         cwd: Utilities.slash(this.PORTABLE_EXECUTABLE_DIR + '/temp/'),
-      }),
+      },
     );
   }
 
@@ -398,10 +405,12 @@ del /f /s install.ps1
         testCommand,
       );
 
-    return Promise.resolve(
-      spawn('powershell.exe', [elevatedScriptFilePath], {
+    return UtilitiesElectron.childProcessSpawn(
+      'powershell.exe',
+      [elevatedScriptFilePath],
+      {
         cwd: Utilities.slash(this.PORTABLE_EXECUTABLE_DIR + '/temp/'),
-      }),
+      },
     );
   }
 

@@ -110,7 +110,7 @@ export class ExtraPackagesComponent implements OnInit {
 
       try {
         const { stdout, stderr } =
-          await UtilitiesElectron.execNativeCommand(chocoInfoCommand);
+          await UtilitiesElectron.childProcessExec(chocoInfoCommand);
 
         //console.log(`chocoInfo = ${chocoInfo}`);
 
