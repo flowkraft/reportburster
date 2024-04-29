@@ -353,6 +353,9 @@ SET DIR=%~dp0%
 ::run installer
 %systemroot%/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& '%DIR%install.ps1' %*"
 del /f /s install.ps1
+
+::show message box
+%systemroot%/System32/WindowsPowerShell/v1.0/powershell.exe -Command "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; [System.Windows.Forms.MessageBox]::Show('The Chocolatey installation has been completed. Please close and start again ReportBurster.', 'Info', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)"
 `;
 
     const scriptFilePath = Utilities.slash(
@@ -540,6 +543,10 @@ del /f /s install.ps1
      ${commandToElevate} 2>&1 >> ${this.logFilePath}
      del /f /s *.cmd 2>&1 >> ${this.logFilePath}
      cmd /k
+
+     ::show message box
+     [System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null
+     [System.Windows.Forms.MessageBox]::Show('Command execution completed, you may want to close and start again ReportBurster.', 'Info', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
      `;
 
     await UtilitiesNodeJs.writeAsync(elevatedScriptFilePath, scriptContent);
