@@ -543,10 +543,9 @@ del /f /s install.ps1
      REM Run shell as admin (example) - put here code as you like
      ${commandToElevate} 2>&1 >> ${this.logFilePath}
      del /f /s *.cmd 2>&1 >> ${this.logFilePath}
-     cmd /k
-
      ::show message box
-     powershell -Command "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; [System.Windows.Forms.MessageBox]::Show('Command execution completed, you may want to close and start again ReportBurster.', 'Info', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)"
+     powershell -ExecutionPolicy Bypass -NoProfile -Command "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; [System.Windows.Forms.MessageBox]::Show('Command execution completed, you may want to close and start again ReportBurster.', 'Info', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)"
+     ::cmd /k
     `;
 
     await UtilitiesNodeJs.writeAsync(elevatedScriptFilePath, scriptContent);
