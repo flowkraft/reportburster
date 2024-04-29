@@ -26,7 +26,7 @@ class Dialog {
       // Simulate a successful operation for demonstration purposes
       resolve({
         canceled: false, // change this to true to simulate a canceled operation
-        filePath: `${await UtilitiesElectron.getEnvVariableValue('PORTABLE_EXECUTABLE_DIR')}/temp/file`, // this will be undefined if the operation was canceled
+        filePath: `_EXECUTABLE_DIR')}/temp/file`, // this will be undefined if the operation was canceled
         bookmark: 'base64-encoded-bookmark', // this is optional and specific to macOS MAS
       });
     });
@@ -62,10 +62,11 @@ export class ElectronService {
     'custom-electron-titlebar',
   );
 
-  PORTABLE_EXECUTABLE_DIR: string;
+  PORTABLE_EXECUTABLE_DIR: string =
+    window.require('process').env.PORTABLE_EXECUTABLE_DIR;
 
-  SHOULD_SEND_STATS: boolean = false;
-  RUNNING_IN_E2E: boolean = false;
+  SHOULD_SEND_STATS: boolean = window.require('process').env.SHOULD_SEND_STATS;
+  RUNNING_IN_E2E: boolean = window.require('process').env.RUNNING_IN_E2E;
 
   dialog: Dialog = new Dialog();
 
@@ -99,14 +100,6 @@ export class ElectronService {
 
   constructor(protected apiService: ApiService) {
     //this.process = window.require('process');
-
-    this.PORTABLE_EXECUTABLE_DIR = await UtilitiesElectron.getEnvVariableValue(
-      'PORTABLE_EXECUTABLE_DIR',
-    );
-
-    this.RUNNING_IN_E2E = new Boolean(
-      await UtilitiesElectron.getEnvVariableValue('RUNNING_IN_E2E'),
-    ).valueOf();
 
     //if (this.isElectron) {
     //this.childProcess = window.require('child_process');
