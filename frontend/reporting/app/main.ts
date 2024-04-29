@@ -239,7 +239,8 @@ ipcMain.handle('child_process.exec', async (event, command) => {
 ipcMain.handle(
   'child_process.spawn',
   async (event, command, args?, options?) => {
-    return spawn(command, args, options);
+    const spawnPromise = promisify(spawn);
+    return spawnPromise(command, args, options);
   },
 );
 
