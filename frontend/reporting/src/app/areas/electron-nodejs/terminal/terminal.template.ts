@@ -79,7 +79,7 @@ export const terminalTemplate = `
 </p-sidebar>
 
 <p-panel #pnlTerminal header="{{headerLevel}}" (keydown)="honourReadOnly()">
-  <p-terminal id="p-terminal" prompt="documentburster> "></p-terminal>
+  <p-terminal id="p-terminal" prompt="rb> "></p-terminal>
 </p-panel>
 
 <button
