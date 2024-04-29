@@ -169,7 +169,7 @@ export class TerminalComponent implements AfterViewInit {
           }
         } finally {
           if (response) {
-            //response = response.toString();
+            response = response.toString();
             await UtilitiesElectron.logAsync(
               response.replace('undefined', ''),
               'info',
