@@ -1,13 +1,16 @@
 export const javaTemplate = `<!-- <ng-template #javaTemplate> -->
 
 <div *ngIf="!this.stateStore.configSys.sysInfo.setup.isRestartRequired">
-    <strong
+    <span
       id="checkPointJavaPreRequisite"
       [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INNER-HTML.REQUIRED-SHORT' | translate"
-    ></strong>
+    ></span>
+    <span
+      [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INNER-HTML.REQUIRED-LONG' | translate"
+    ></span>
 
     <br /><br /><span
-      [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INNER-HTML.REQUIRED-LONG' | translate"
+      [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INNER-HTML.EXTRA' | translate"
     ></span>
 
     <br />
