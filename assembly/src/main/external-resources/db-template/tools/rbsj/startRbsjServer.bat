@@ -15,6 +15,9 @@ set "JAR_FILE=%PORTABLE_EXECUTABLE_DIR_PATH%\lib\server\rb-server.jar"
 :: Empty the electron.log file
 type nul > "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log"
 
+:: Execute choco -version and redirect the output to a file
+choco --version > "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log" || echo.
+
 set "RB_SERVER_MODE=false"
 
 :: Check if FRONTEND_PATH is set and points to a valid directory
