@@ -61,6 +61,12 @@ export const terminalTemplate = `
       <span
         [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.INSTALL-JAVA8' | translate"
       ></span
+      >: <code>choco install jre8 --yes</code>
+    </li>
+    <li>
+      <span
+        [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.INSTALL-JAVA8-32BIT' | translate"
+      ></span
       >: <code>choco install jre8 -PackageParameters "/exclude:64" --yes</code>
     </li>
     <li>
