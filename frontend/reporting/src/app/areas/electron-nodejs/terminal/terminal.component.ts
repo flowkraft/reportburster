@@ -131,12 +131,12 @@ export class TerminalComponent implements AfterViewInit {
 
               break;
 
-            case 'choco install openjdk11 --yes':
             case 'choco install openjdk --yes':
+            case 'choco install openjdk11 --yes':
             case 'choco install notepadplusplus --yes':
             case 'choco install winmerge --yes':
-            case 'choco uninstall openjdk11 --yes':
             case 'choco uninstall openjdk --yes':
+            case 'choco uninstall openjdk11 --yes':
             case 'choco uninstall notepadplusplus --yes':
             case 'choco uninstall winmerge --yes':
               try {

@@ -602,8 +602,8 @@
           "RESTARTING": "Restarting",
           "RESTARTING-REQUIRED": "is required to complete the installation",
           "INNER-HTML": {
-            "REQUIRED-SHORT": "<em>ReportBurster</em> requires <em>Java 11</em> (or newer) as a prerequisite.",
-            "REQUIRED-LONG": "In order to use <em>ReportBurster</em> <em>Java 11</em> (or newer) runtime must be installed on your computer.",
+            "REQUIRED-SHORT": "<em>ReportBurster</em> requires <em>Java</em> 11 (or newer) as a prerequisite.",
+            "REQUIRED-LONG": "In order to use the software <em>Java</em> 11 (or newer) runtime must be installed on your computer.",
             "EXTRA": "Follow the guided installation steps provided. <strong>As the system processes each step, please wait patiently for its completion. After each step is finished, make sure to restart <em>ReportBurster</em></strong>."
           }
         },
