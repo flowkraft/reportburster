@@ -21,7 +21,9 @@ export class TopMenuHeaderComponent implements OnInit {
 
   async ngOnInit() {
     if (!this.storeService.configSys.sysInfo.setup.java.isJavaOk) {
-      alert('To use ReportBurster, Java must be installed on your computer.');
+      alert(
+        'To use ReportBurster, Java 11 (or newer) must be installed on your computer.',
+      );
       return;
     }
 
@@ -36,7 +38,9 @@ export class TopMenuHeaderComponent implements OnInit {
 
   onAskForFeatureModalShow() {
     if (!this.storeService.configSys.sysInfo.setup.java.isJavaOk) {
-      alert('To use ReportBurster, Java must be installed on your computer.');
+      alert(
+        'To use ReportBurster, Java 11 (or newer) must be installed on your computer.',
+      );
       return;
     }
 
