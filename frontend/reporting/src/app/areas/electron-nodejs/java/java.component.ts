@@ -31,8 +31,11 @@ export class JavaComponent {
     this.confirmService.askConfirmation({
       message: 'Are you sure that you want to perform this action?',
       confirmAction: () => {
+        //this.electronService.typeCommandOnTerminalAndThenPressEnter(
+        //  'choco install jre8 -PackageParameters "/exclude:64" --yes',
+        //);
         this.electronService.typeCommandOnTerminalAndThenPressEnter(
-          'choco install jre8 -PackageParameters "/exclude:64" --yes',
+          'choco install jre8 --yes',
         );
       },
     });

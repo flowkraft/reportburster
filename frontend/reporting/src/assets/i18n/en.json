@@ -621,7 +621,8 @@
             "UNINSTALL-CHOCOLATEY": "Uninstall <em>Chocolatey</em>",
             "INSTALL-JAVA": "Install Latest <em>Java</em> (requires <em>Chocolatey</em>)",
             "UNINSTALL-JAVA": "Uninstall <em>Java</em> (requires <em>Chocolatey</em>)",
-            "INSTALL-JAVA8": "Install <em>Java</em>8 (32bit) (requires <em>Chocolatey</em>)",
+            "INSTALL-JAVA8": "Install <em>Java</em>8 (requires <em>Chocolatey</em>)",
+            "INSTALL-JAVA8-32BIT": "Install <em>Java</em>8 (32bit) (requires <em>Chocolatey</em>)",
             "UNINSTALL-JAVA8": "Uninstall <em>Java</em>8 (requires <em>Chocolatey</em>)"
           }
         },

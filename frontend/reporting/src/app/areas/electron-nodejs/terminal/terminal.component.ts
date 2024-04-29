@@ -132,6 +132,7 @@ export class TerminalComponent implements AfterViewInit {
               break;
 
             case 'choco install jre8 -PackageParameters "/exclude:64" --yes':
+            case 'choco install jre8 --yes':
             case 'choco install openjdk --yes':
             case 'choco install notepadplusplus --yes':
             case 'choco install winmerge --yes':
