@@ -72,13 +72,24 @@ export const tabAdvancedTemplate = `<ng-template #tabAdvancedTemplate>
     </div>
 
     <div class="row" *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportdistribution">
-      <div class="col-xs-12">
+      <div class="col-xs-4">
         <input type="checkbox" id="btnHTMLEmailEditCode" [(ngModel)]="xmlSettings?.documentburster?.settings.htmlemaileditcode"
           (ngModelChange)="settingsChangedEventHandler($event)" />
         <label for="btnHTMLEmailEditCode" class="checkboxlabel">{{
           'AREAS.CONFIGURATION.TAB-ADVANCED.EDIT-EMAIL-MESSAGE' | translate }}</label>
       </div>
+      
     </div>
+    <br/>
+    <div class="row" *ngIf="xmlSettings?.documentburster?.settings.htmlemaileditcode">
+      <div class="col-xs-4">{{
+        'AREAS.CONFIGURATION.TAB-ADVANCED.DATASOURCE-RESOLVER' | translate }}</div>
+      <div class="col-xs-8" >
+        <input id="dataSourceResolver" [(ngModel)]="xmlSettings?.documentburster.settings.emailsettings.dsresolver"
+          (ngModelChange)="settingsChangedEventHandler($event)" class="form-control" />
+      </div>
+    </div>
+
     <br/>
     <div class="row">
       <div class="col-xs-12">

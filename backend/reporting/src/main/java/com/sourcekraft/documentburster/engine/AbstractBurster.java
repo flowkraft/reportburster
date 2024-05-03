@@ -62,7 +62,7 @@ public abstract class AbstractBurster implements Burstable {
 	protected LicenseUtils licenseUtils = new LicenseUtils();
 
 	public AbstractBurster(String configFilePath) {
-		if (StringUtils.isNotEmpty(configFilePath))
+		if (StringUtils.isNotBlank(configFilePath))
 			this.configurationFilePath = configFilePath;
 		else
 			this.configurationFilePath = "./config/burst/settings.xml";
@@ -76,12 +76,12 @@ public abstract class AbstractBurster implements Burstable {
 		return Utils.getTempFolder();
 	}
 
-	//@Profiled
+	// @Profiled
 	public List<String> parseBurstingMetaData() throws Exception {
 		return new ArrayList<String>();
 	}
 
-	//@Profiled
+	// @Profiled
 	public void extractOutputDocument() throws Exception {
 
 		extractOutputBurstDocument();
@@ -135,6 +135,8 @@ public abstract class AbstractBurster implements Burstable {
 			// configuration file
 			executeController();
 
+			validateConfigurationValues();
+
 			initializeResources();
 
 			List<String> parsedBurstTokens = parseBurstingMetaData();
@@ -163,7 +165,7 @@ public abstract class AbstractBurster implements Burstable {
 					ctx.testName += "quality-assurance-test-mode";
 					ctx.isQARunningMode = true;
 
-					if (StringUtils.isNotEmpty(listOfTestTokens)) {
+					if (StringUtils.isNotBlank(listOfTestTokens)) {
 
 						listOfTokens = Arrays.asList(listOfTestTokens.split(","));
 
@@ -265,6 +267,25 @@ public abstract class AbstractBurster implements Burstable {
 			writeStatsFile();
 
 		}
+
+	}
+
+	private void validateConfigurationValues() throws Exception {
+
+		if (StringUtils.isBlank(ctx.settings.getBurstFileName()))
+			throw new Exception(
+					"'Burst File Name' cannot be empty, please provide a valid 'Burst File Name' configuration value for the configuration template called '"
+							+ ctx.settings.getTemplateName() + "'");
+
+		if (StringUtils.isBlank(ctx.settings.getOutputFolder()))
+			throw new Exception(
+					"'Output Folder' cannot be empty, please provide a valid 'Output Folder' configuration value for the configuration template called '"
+							+ ctx.settings.getTemplateName() + "'");
+
+		if (shouldSendFiles() && StringUtils.isBlank(ctx.settings.getQuarantineFolder()))
+			throw new Exception(
+					"'Quarantine Folder' cannot be empty, please provide a valid 'Quarantine Folder' configuration value for the configuration template called '"
+							+ ctx.settings.getTemplateName() + "'");
 
 	}
 
@@ -517,13 +538,13 @@ public abstract class AbstractBurster implements Burstable {
 	}
 
 	private void _doStats(String statsFileContent) throws Exception {
-		
+
 	}
 
 	private boolean _isRunningInQualityAssuranceMode(boolean testAll, String listOfTestTokens,
 			int numberOfRandomTestTokens) {
 
-		return ((testAll) || (StringUtils.isNotEmpty(listOfTestTokens)) || (numberOfRandomTestTokens > 0));
+		return ((testAll) || (StringUtils.isNotBlank(listOfTestTokens)) || (numberOfRandomTestTokens > 0));
 
 	}
 
@@ -640,7 +661,7 @@ public abstract class AbstractBurster implements Burstable {
 				String archiveFileName = Utils.getStringFromTemplate(ctx.settings.getArchiveFileName(), ctx.variables,
 						ctx.token);
 
-				if (StringUtils.isNotEmpty(archiveFileName)) {
+				if (StringUtils.isNotBlank(archiveFileName)) {
 
 					ctx.archiveFilePath = ctx.outputFolder + "/" + archiveFileName;
 

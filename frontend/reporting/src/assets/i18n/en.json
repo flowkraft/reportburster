@@ -58,7 +58,8 @@
       },
       "TAB-ADVANCED": {
         "DELAY-EACH-BY": "Delay Each Distribution By",
-        "EDIT-EMAIL-MESSAGE": "Edit email message HTML code (Advanced)",
+        "EDIT-EMAIL-MESSAGE": "Edit email message HTML code",
+        "DATASOURCE-RESOLVER": "Image Source (./templates or https://)",
         "END-DELIMITER-TOKEN": "End Delimiter (1st split)",
         "NUMBER-USER-VARIABLES": "Number Of User Variables",
         "REUSE-LAST-TOKEN": "Reuse last token found in previous pages (when not available in the current page)",
