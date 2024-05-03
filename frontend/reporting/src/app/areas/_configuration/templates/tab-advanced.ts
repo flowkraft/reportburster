@@ -70,7 +70,7 @@ export const tabAdvancedTemplate = `<ng-template #tabAdvancedTemplate>
           'AREAS.CONFIGURATION.TAB-ADVANCED.REUSE-LAST-TOKEN' | translate }}</label>
       </div>
     </div>
-
+    <br />
     <div class="row" *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportdistribution">
       <div class="col-xs-4">
         <input type="checkbox" id="btnHTMLEmailEditCode" [(ngModel)]="xmlSettings?.documentburster?.settings.htmlemaileditcode"
@@ -80,7 +80,6 @@ export const tabAdvancedTemplate = `<ng-template #tabAdvancedTemplate>
       </div>
       
     </div>
-    <br/>
     <div class="row" *ngIf="xmlSettings?.documentburster?.settings.htmlemaileditcode">
       <div class="col-xs-4">{{
         'AREAS.CONFIGURATION.TAB-ADVANCED.DATASOURCE-RESOLVER' | translate }}</div>
