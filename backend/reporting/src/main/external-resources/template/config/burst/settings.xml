@@ -2,7 +2,7 @@
 <documentburster>
 	<settings>
 		<!-- DocumentBurster version -->
-		<version>10.1.0</version>
+		<version>10.1.1</version>
 		<!-- template name -->
 		<template>My Reports</template>
 		<!-- file name for the burst files -->
@@ -73,6 +73,7 @@
 			<subject></subject>
 			<text></text>
 			<html></html>
+			<dsresolver>./templates</dsresolver>
 		</emailsettings>
 		<!-- attachments. List with the attachments. Variables can be used (e.g. 
 			${extracted_file_path}) in order to dynamically provide attachment paths 

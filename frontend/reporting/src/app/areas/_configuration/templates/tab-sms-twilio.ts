@@ -15,7 +15,7 @@ export const tabSMSTwilioTemplate = `<ng-template #tabSMSTwilioTemplate>
         </div>
 
         <div class="col-xs-8">
-          <input type="text" id="fromNumber" class="form-control" (ngModel)="modalSMSInfo.fromNumber" size="25"
+          <input type="text" id="fromNumber" class="form-control" [(ngModel)]="this.modalSMSInfo.fromNumber" size="25"
             autofocus>
         </div>
 
@@ -29,7 +29,7 @@ export const tabSMSTwilioTemplate = `<ng-template #tabSMSTwilioTemplate>
         </div>
 
         <div class="col-xs-8">
-          <input type="text" id="toNumber" class="form-control" (ngModel)="modalSMSInfo.toNumber" size="25">
+          <input type="text" id="toNumber" class="form-control" [(ngModel)]="this.modalSMSInfo.toNumber" size="25">
         </div>
 
       </div>
@@ -38,7 +38,7 @@ export const tabSMSTwilioTemplate = `<ng-template #tabSMSTwilioTemplate>
     <p-footer>
 
       <button id='btnOKConfirmation' class="btn btn-primary" type="button" (click)="onSendTestSMS()"
-        [disabled]="!modalSMSInfo.fromNumber || !modalSMSInfo.toNumber">
+        [disabled]="!this.modalSMSInfo.fromNumber || !this.modalSMSInfo.toNumber">
         {{ 'AREAS.CONFIGURATION.TAB-SMS-TWILIO.SEND-TEST-SMS' | translate }}</button>
       <button class="btn btn-flat btn-default dburst-button-question-decline" type="button"
         (click)="onCloseSMSModal()">{{ 'BUTTONS.CANCEL' | translate }}</button>

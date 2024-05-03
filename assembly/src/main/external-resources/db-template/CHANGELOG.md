@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 10.1.1 - 2024-05-06
+
+### Added
+
+- call validateConfigurationValues() before processing any report
+- HTML email messages now can “embed” images from websites, i.e. src="https://barefoot5k.com/wp-content/uploads/2014/12/pepsi-logo-300x204.png"
+- fix "Send Test Email" functionality
+
 ## 10.1.0 - 2024-04-29
 
 ### Added

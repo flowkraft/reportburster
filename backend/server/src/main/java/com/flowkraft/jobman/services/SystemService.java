@@ -184,10 +184,16 @@ public class SystemService {
 	}
 
 	public Mono<ProcessOutputResult> spawn(List<String> args, Optional<String> cwdPath) throws Exception {
+
 		List<String> commandWithShell = new ArrayList<>();
 		commandWithShell.add("cmd.exe");
 		commandWithShell.add("/c");
-		commandWithShell.addAll(args);
+
+		List<String> newArgs = new ArrayList<>();
+		for (String arg : args) {
+			newArgs.add(arg.replace("PORTABLE_EXECUTABLE_DIR_PATH/", AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"));
+		}
+		commandWithShell.addAll(newArgs);
 
 		// Create a File object for the .bat file
 		// File batFile = new File(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, args.get(0));
@@ -206,8 +212,9 @@ public class SystemService {
 
 		processBuilder.directory(new File(workingDirectoryPath));
 
-		//System.out.println(
-		//		"spawn commandWithShell = " + commandWithShell + ", workingDirectoryPath = " + workingDirectoryPath);
+		// System.out.println(
+		// "spawn commandWithShell = " + commandWithShell + ", workingDirectoryPath = "
+		// + workingDirectoryPath);
 
 		Process process = processBuilder.start();
 

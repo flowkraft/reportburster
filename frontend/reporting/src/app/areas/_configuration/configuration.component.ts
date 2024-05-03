@@ -1151,7 +1151,7 @@ export class ConfigurationComponent implements OnInit {
             '"' +
               Utilities.slash(
                 this.settingsService.currentConfigurationTemplatePath,
-              ) +
+              ).replace('/config/', 'PORTABLE_EXECUTABLE_DIR_PATH/config/') +
               '"',
           ]);
         },
@@ -1173,6 +1173,7 @@ export class ConfigurationComponent implements OnInit {
   }
 
   onCloseSMSModal() {
+    //console.log(`this.modalSMSInfo = ${JSON.stringify(this.modalSMSInfo)}`);
     this.isModalSMSVisible = false;
   }
 
@@ -1184,7 +1185,11 @@ export class ConfigurationComponent implements OnInit {
       '-to',
       this.modalSMSInfo.toNumber,
       '-c',
-      '"' + this.settingsService.currentConfigurationTemplatePath + '"',
+      '"' +
+        Utilities.slash(
+          this.settingsService.currentConfigurationTemplatePath,
+        ).replace('/config/', 'PORTABLE_EXECUTABLE_DIR_PATH/config/') +
+        '"',
     ]);
   }
 

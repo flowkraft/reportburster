@@ -57,12 +57,18 @@ if (StringUtils.isNotBlank(message.textMessage)) {
 
 if (message.isHtmlEmail) {
 
-	//in HTML you'll define an image from the web like this src="http://barefoot5k.com/wp-content/uploads/2014/12/pepsi-logo-300x204.png"
-	//for images pointing to the web un-comment following line and change the URL (https not supported)
-	//((ImageHtmlEmail) commonsEmail).setDataSourceResolver(new DataSourceUrlResolver(new URL("http://barefoot5k.com")))
-	
-	//for images pointing to the web comment following line
-	((ImageHtmlEmail) commonsEmail).setDataSourceResolver(new DataSourceFileResolver(new File("./templates")))
+	def dsResolver = message.ctx.settings.getEmailSettings().dsresolver
+
+	if (StringUtils.isBlank(dsResolver))
+		dsResolver = "./templates"
+
+	//<img having href pointing to the web
+	//in HTML you'll define an image from the web like this src="https://barefoot5k.com/wp-content/uploads/2014/12/pepsi-logo-300x204.png"
+	if (dsResolver.toLowerCase().startsWith("http"))
+		((ImageHtmlEmail) commonsEmail).setDataSourceResolver(new DataSourceUrlResolver(new URL(dsResolver.toLowerCase()), true))
+	else
+		//<img having href pointing to local disk
+		((ImageHtmlEmail) commonsEmail).setDataSourceResolver(new DataSourceFileResolver(new File(dsResolver)))
 	
 	if (StringUtils.isNotBlank(message.htmlMessage)) 
 		((ImageHtmlEmail) commonsEmail).setHtmlMsg(message.htmlMessage)

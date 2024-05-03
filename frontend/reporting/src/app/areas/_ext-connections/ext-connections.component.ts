@@ -340,7 +340,12 @@ export class ExternalConnectionsComponent implements OnInit {
           this.shellService.runBatFile([
             '-cec',
             '-c',
-            '"' + Utilities.slash(selectedConnection.filePath) + '"',
+            '"' +
+              Utilities.slash(selectedConnection.filePath).replace(
+                '/config/',
+                'PORTABLE_EXECUTABLE_DIR_PATH/config/',
+              ) +
+              '"',
           ]);
         },
       });

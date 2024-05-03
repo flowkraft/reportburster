@@ -18,16 +18,17 @@ import com.sourcekraft.documentburster.common.utils.DumpToString;
 
 public class EmailSettings extends DumpToString {
 
-    /**
+	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -4384735191782810647L;
-	
+
 	public String to;
-    public String cc;
-    public String bcc;
-    public String subject;
-    public String text;
-    public String html;
+	public String cc;
+	public String bcc;
+	public String subject;
+	public String text;
+	public String html;
+	public String dsresolver;
 
 }

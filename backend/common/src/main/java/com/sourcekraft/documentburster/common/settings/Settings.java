@@ -157,6 +157,10 @@ public class Settings extends DumpToString {
 		return docSettings.settings.capabilities;
 	}
 
+	public String getTemplateName() {
+		return docSettings.settings.template.trim();
+	}
+
 	public String getVersion() {
 		return docSettings.settings.version;
 	}
@@ -165,6 +169,7 @@ public class Settings extends DumpToString {
 		return docSettings.settings.burstfilename.trim();
 	}
 
+	
 	public String getOutputFolder() {
 		return docSettings.settings.outputfolder.trim();
 	}
