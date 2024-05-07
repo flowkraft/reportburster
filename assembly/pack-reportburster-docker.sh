@@ -1,0 +1,1 @@
+docker build -f ./src/main/docker/build/Dockerfile .

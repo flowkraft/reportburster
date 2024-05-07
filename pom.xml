@@ -27,8 +27,6 @@
 		<module>backend/update</module>
 		<module>backend/reporting</module>
 		<module>backend/server</module>
-		<module>backend/batch</module>
-		<module>backend/batch-web-admin</module>
 		<module>documentation</module>
 		<module>assembly</module>
 
