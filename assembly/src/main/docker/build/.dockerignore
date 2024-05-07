@@ -1,0 +1,7 @@
+node_modules
+tools/chocolatey
+tools/curl
+tools/rbsj
+tools/test-email-server
+tools/winsw
+*.bat

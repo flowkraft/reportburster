@@ -1,1 +1,0 @@
-Here you can drop additional JAR files which will be automatically appended to the class path when the server is started.

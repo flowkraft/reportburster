@@ -2,9 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## 10.1.1 - 2024-05-06
+## 10.1.1 - 2024-05-13
 
 ### Added
+
+- Install/run ReportBurster under Linux (using Docker)
+
+### Fixed
 
 - call validateConfigurationValues() before processing any report
 - HTML email messages now can “embed” images from websites, i.e. src="https://barefoot5k.com/wp-content/uploads/2014/12/pepsi-logo-300x204.png"

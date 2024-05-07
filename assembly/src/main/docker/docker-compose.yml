@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  app:
+    image: organization/appname
+    ports:
+      - "9090:9090"
+    environment:
+      - PORTABLE_EXECUTABLE_DIR_PATH=/app
+      - FRONTEND_PATH=/app/static
+      - POLLING_PATH=/app/poll
+      - ELECTRON_PID=
+    extra_hosts:
+      - "localhost:mailhog"
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"

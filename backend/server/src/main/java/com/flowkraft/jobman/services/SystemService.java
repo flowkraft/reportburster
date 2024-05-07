@@ -184,23 +184,28 @@ public class SystemService {
 	}
 
 	public Mono<ProcessOutputResult> spawn(List<String> args, Optional<String> cwdPath) throws Exception {
-
 		List<String> commandWithShell = new ArrayList<>();
-		commandWithShell.add("cmd.exe");
-		commandWithShell.add("/c");
+		String os = System.getProperty("os.name").toLowerCase();
+
+		if (os.contains("win")) {
+			commandWithShell.add("cmd.exe");
+			commandWithShell.add("/c");
+		} else if (os.contains("nix") || os.contains("nux") || os.contains("mac")) {
+			commandWithShell.add("/bin/sh");
+			commandWithShell.add("-c");
+		}
 
 		List<String> newArgs = new ArrayList<>();
 		for (String arg : args) {
-			newArgs.add(arg.replace("PORTABLE_EXECUTABLE_DIR_PATH/", AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"));
+			String modifiedArg = arg.replace("PORTABLE_EXECUTABLE_DIR_PATH/",
+					AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/");
+			if (os.contains("nix") || os.contains("nux") || os.contains("mac")) {
+				modifiedArg = modifiedArg.replace(".bat", ".sh");
+			}
+			newArgs.add(modifiedArg);
 		}
 		commandWithShell.addAll(newArgs);
 
-		// Create a File object for the .bat file
-		// File batFile = new File(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, args.get(0));
-
-		// Print whether the .bat file exists
-
-		// Set the working directory
 		String workingDirectoryPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH;
 
 		if (cwdPath.isPresent()) {
@@ -209,12 +214,7 @@ public class SystemService {
 		}
 
 		ProcessBuilder processBuilder = new ProcessBuilder(commandWithShell);
-
 		processBuilder.directory(new File(workingDirectoryPath));
-
-		// System.out.println(
-		// "spawn commandWithShell = " + commandWithShell + ", workingDirectoryPath = "
-		// + workingDirectoryPath);
 
 		Process process = processBuilder.start();
 
