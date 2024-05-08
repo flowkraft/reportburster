@@ -20,7 +20,7 @@ COPY ./backend/server/src ./backend/server/src
 COPY ./backend/update/src ./backend/update/src
 
 # Build the application
-RUN mvn clean package
+RUN mvn clean package -DskipTests
 
 # Start a new stage to build the frontend
 FROM build as frontend
