@@ -18,20 +18,6 @@
 
 	<packaging>pom</packaging>
 
-	<modules>
-		<!-- commented because of a race condition when deleting a JUnit
-		suferire.jar 
-			file -->
-		<!-- <module>assembly-documentburster</module> -->
-		<module>backend/common</module>
-		<module>backend/update</module>
-		<module>backend/reporting</module>
-		<module>backend/server</module>
-		<module>documentation</module>
-		<module>assembly</module>
-
-	</modules>
-
 	<properties>
 
 		<revision>10.1.1</revision>
@@ -578,7 +564,23 @@
 			</plugins>
 		</pluginManagement>
 	</build>
+	
 	<profiles>
+		     <profile>
+        <id>default</id>
+        <activation>
+            <activeByDefault>true</activeByDefault>
+        </activation>
+        <modules>
+            <module>backend/common</module>
+            <module>backend/update</module>
+            <module>backend/reporting</module>
+            <module>backend/server</module>
+            <module>documentation</module>
+            <module>assembly</module>
+        </modules>
+    </profile>
+		 
 		 <profile>
         <id>docker</id>
         <modules>
