@@ -7,26 +7,35 @@ RUN apk add --update nodejs npm
 # Set the working directory in the container to /app
 WORKDIR /app
 
-# Copy the pom.xml file to download dependencies
+
+# Copy the pom.xml files and source code of the modules that are dependencies for other modules
 COPY ./pom.xml ./pom.xml
-
-# Copy the pom.xml files of the submodules
 COPY ./backend/common/pom.xml ./backend/common/pom.xml
-COPY ./backend/reporting/pom.xml ./backend/reporting/pom.xml
-COPY ./backend/server/pom.xml ./backend/server/pom.xml
-COPY ./backend/update/pom.xml ./backend/update/pom.xml
-
-# Copy the rest of your application's source code
 COPY ./backend/common/src ./backend/common/src
-COPY ./backend/reporting/src ./backend/reporting/src
-COPY ./backend/server/src ./backend/server/src
+
+# Build and install the modules that are dependencies for other modules
+RUN mvn clean install -DskipTests -pl backend/common -am
+
+# Copy the pom.xml files and source code of the modules that are dependencies for other modules
+COPY ./backend/update/pom.xml ./backend/update/pom.xml
 COPY ./backend/update/src ./backend/update/src
 
-# Download dependencies
-RUN mvn dependency:go-offline -B
+# Build and install the modules that are dependencies for other modules
+RUN mvn clean install -DskipTests -pl backend/update -am
 
-# Build the application
-RUN mvn clean package -DskipTests
+# Copy the pom.xml files of the dependent modules
+COPY ./backend/reporting/pom.xml ./backend/reporting/pom.xml
+COPY ./backend/server/pom.xml ./backend/server/pom.xml
+
+# Download dependencies of the dependent modules
+RUN mvn dependency:go-offline -B -pl backend/reporting,backend/server
+
+# Copy the source code of the dependent modules
+COPY ./backend/reporting/src ./backend/reporting/src
+COPY ./backend/server/src ./backend/server/src
+
+# Build the dependent modules
+RUN mvn clean install -DskipTests -pl backend/reporting,backend/server
 
 # Start a new stage to build the frontend
 FROM build as frontend
@@ -47,7 +56,7 @@ COPY ./frontend/reporting .
 RUN npm run custom:release-web
 
 # Start a new stage for the final image
-FROM eclipse-temurin:11-jdk-alpine
+FROM eclipse-temurin:11-jre-alpine
 
 # Install curl
 RUN apk --no-cache add curl
