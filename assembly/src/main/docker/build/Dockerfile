@@ -11,29 +11,30 @@ WORKDIR /app
 COPY ./xtra-tools/build/common-scripts/maven/pom.xml ./xtra-tools/build/common-scripts/maven/pom.xml
 
 COPY ./pom.xml ./pom.xml
+
 COPY ./backend/common/pom.xml ./backend/common/pom.xml
 COPY ./backend/common/src ./backend/common/src
-
-# Build and install the modules that are dependencies for other modules
-RUN mvn clean install -DskipTests -pl backend/common -am
 
 # Copy the pom.xml files and source code of the modules that are dependencies for other modules
 COPY ./backend/update/pom.xml ./backend/update/pom.xml
 COPY ./backend/update/src ./backend/update/src
 
+# Copy the pom.xml files of the dependent modules
+COPY ./backend/reporting/pom.xml ./backend/reporting/pom.xml
+COPY ./backend/reporting/src ./backend/reporting/src
+
+# Copy the source code of the dependent modules
+COPY ./backend/server/pom.xml ./backend/server/pom.xml
+COPY ./backend/server/src ./backend/server/src
+
+# Build and install the modules that are dependencies for other modules
+RUN mvn clean install -DskipTests -pl backend/common -am
+
 # Build and install the modules that are dependencies for other modules
 RUN mvn clean install -DskipTests -pl backend/update -am
 
-# Copy the pom.xml files of the dependent modules
-COPY ./backend/reporting/pom.xml ./backend/reporting/pom.xml
-COPY ./backend/server/pom.xml ./backend/server/pom.xml
-
 # Download dependencies of the dependent modules
 RUN mvn dependency:go-offline -B -pl backend/reporting,backend/server
-
-# Copy the source code of the dependent modules
-COPY ./backend/reporting/src ./backend/reporting/src
-COPY ./backend/server/src ./backend/server/src
 
 # Build the dependent modules
 RUN mvn clean install -DskipTests -pl backend/reporting,backend/server
