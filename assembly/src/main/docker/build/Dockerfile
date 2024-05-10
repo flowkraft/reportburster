@@ -7,14 +7,15 @@ RUN apk add --update nodejs npm
 # Set the working directory in the container to /app
 WORKDIR /app
 
-
 # Copy the pom.xml files and source code of the modules that are dependencies for other modules
+COPY ./xtra-tools/build/common-scripts/maven/pom.xml ./xtra-tools/build/common-scripts/maven/pom.xml
+
 COPY ./pom.xml ./pom.xml
 COPY ./backend/common/pom.xml ./backend/common/pom.xml
 COPY ./backend/common/src ./backend/common/src
 
 # Build and install the modules that are dependencies for other modules
-RUN mvn clean install -DskipTests -pl backend/common -am -X
+RUN mvn clean install -DskipTests -pl backend/common -am
 
 # Copy the pom.xml files and source code of the modules that are dependencies for other modules
 COPY ./backend/update/pom.xml ./backend/update/pom.xml
