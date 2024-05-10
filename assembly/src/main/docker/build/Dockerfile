@@ -28,14 +28,14 @@ COPY ./backend/server/pom.xml ./backend/server/pom.xml
 COPY ./backend/server/src ./backend/server/src
 
 # Build and install the modules that are dependencies for other modules
-RUN mvn clean install -DskipTests -pl backend/common -am
-RUN mvn clean install -DskipTests -pl backend/update -am
+RUN mvn clean install -DskipTests -pl '!documentation,!assembly,backend/common' -am
+RUN mvn clean install -DskipTests -pl '!documentation,!assembly,backend/update' -am
 
 # Download dependencies of the dependent modules
-RUN mvn dependency:go-offline -B -pl backend/reporting,backend/server
+RUN mvn dependency:go-offline -B -pl '!documentation,!assembly,backend/reporting,backend/server'
 
 # Build the dependent modules
-RUN mvn clean install -DskipTests -pl backend/reporting,backend/server
+RUN mvn clean install -DskipTests -pl '!documentation,!assembly,backend/reporting,backend/server'
 
 # Start a new stage to build the frontend
 FROM build as frontend
