@@ -14,10 +14,10 @@ COPY ./pom.xml ./pom.xml
 RUN mvn dependency:go-offline -B
 
 # Copy the rest of your application's source code
-COPY ../backend/common/src ./backend/common/src
-COPY ../backend/reporting/src ./backend/reporting/src
-COPY ../backend/server/src ./backend/server/src
-COPY ../backend/update/src ./backend/update/src
+COPY ./backend/common/src ./backend/common/src
+COPY ./backend/reporting/src ./backend/reporting/src
+COPY ./backend/server/src ./backend/server/src
+COPY ./backend/update/src ./backend/update/src
 
 # Build the application
 RUN mvn clean package -DskipTests
@@ -29,13 +29,13 @@ FROM build as frontend
 WORKDIR /app/frontend
 
 # Copy the package.json and package-lock.json
-COPY ../frontend/reporting/package*.json ./
+COPY ./frontend/reporting/package*.json ./
 
 # Install Angular CLI and the application's dependencies
 RUN npm install -g @angular/cli && npm install
 
 # Copy the rest of your application to the working directory
-COPY ../frontend/reporting .
+COPY ./frontend/reporting .
 
 # Build the application using the custom:release-web script
 RUN npm run custom:release-web
@@ -55,9 +55,9 @@ COPY --from=build /app/target/*.jar ./app.jar
 # Copy the frontend build output from the frontend stage
 COPY --from=frontend /app/frontend/dist ./static
 
-COPY ../reporting/src/main/external-resources/template .
-COPY ../assembly/src/main/external-resources/db-template .
-COPY ../assembly/src/main/external-resources/db-server-template .
+COPY ./reporting/src/main/external-resources/template .
+COPY ./assembly/src/main/external-resources/db-template .
+COPY ./assembly/src/main/external-resources/db-server-template .
 
 RUN echo '#!/bin/sh' > ./reportburster.sh && \
     echo 'java -DDOCUMENTBURSTER_HOME="$(pwd)" -cp lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml -Darg1="$1" -Darg2="$2" -Darg3="$3" -Darg4="$4" -Darg5="$5" -Darg6="$6" -Darg7="$7" -emacs > logs/documentburster.bat.log' >> ./reportburster.sh && \
