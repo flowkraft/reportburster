@@ -29,8 +29,6 @@ COPY ./backend/server/src ./backend/server/src
 
 # Build and install the modules that are dependencies for other modules
 RUN mvn clean install -DskipTests -pl backend/common -am
-
-# Build and install the modules that are dependencies for other modules
 RUN mvn clean install -DskipTests -pl backend/update -am
 
 # Download dependencies of the dependent modules
