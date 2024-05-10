@@ -14,7 +14,7 @@ COPY ./backend/common/pom.xml ./backend/common/pom.xml
 COPY ./backend/common/src ./backend/common/src
 
 # Build and install the modules that are dependencies for other modules
-RUN mvn clean install -DskipTests -pl backend/common -am
+RUN mvn clean install -DskipTests -pl backend/common -am -X
 
 # Copy the pom.xml files and source code of the modules that are dependencies for other modules
 COPY ./backend/update/pom.xml ./backend/update/pom.xml
