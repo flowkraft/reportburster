@@ -55,7 +55,7 @@ COPY --from=build /app/target/*.jar ./app.jar
 # Copy the frontend build output from the frontend stage
 COPY --from=frontend /app/frontend/dist ./static
 
-COPY ./reporting/src/main/external-resources/template .
+COPY ./backend/reporting/src/main/external-resources/template .
 COPY ./assembly/src/main/external-resources/db-template .
 COPY ./assembly/src/main/external-resources/db-server-template .
 
