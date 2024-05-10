@@ -10,14 +10,14 @@ WORKDIR /app
 # Copy the pom.xml file to download dependencies
 COPY ./pom.xml ./pom.xml
 
-# Download dependencies
-RUN mvn dependency:go-offline -B
-
 # Copy the rest of your application's source code
 COPY ./backend/common/src ./backend/common/src
 COPY ./backend/reporting/src ./backend/reporting/src
 COPY ./backend/server/src ./backend/server/src
 COPY ./backend/update/src ./backend/update/src
+
+# Download dependencies
+RUN mvn dependency:go-offline -B
 
 # Build the application
 RUN mvn clean package -DskipTests
