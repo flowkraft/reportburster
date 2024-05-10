@@ -579,6 +579,15 @@
 		</pluginManagement>
 	</build>
 	<profiles>
+		 <profile>
+        <id>docker</id>
+        <modules>
+            <module>backend/common</module>
+            <module>backend/update</module>
+            <module>backend/reporting</module>
+            <module>backend/server</module>
+        </modules>
+    </profile>
 		<profile>
 			<id>only-eclipse</id>
 			<activation>
