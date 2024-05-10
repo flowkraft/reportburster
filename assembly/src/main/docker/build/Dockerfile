@@ -10,6 +10,12 @@ WORKDIR /app
 # Copy the pom.xml file to download dependencies
 COPY ./pom.xml ./pom.xml
 
+# Copy the pom.xml files of the submodules
+COPY ./backend/common/pom.xml ./backend/common/pom.xml
+COPY ./backend/reporting/pom.xml ./backend/reporting/pom.xml
+COPY ./backend/server/pom.xml ./backend/server/pom.xml
+COPY ./backend/update/pom.xml ./backend/update/pom.xml
+
 # Copy the rest of your application's source code
 COPY ./backend/common/src ./backend/common/src
 COPY ./backend/reporting/src ./backend/reporting/src
