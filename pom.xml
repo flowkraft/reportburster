@@ -68,7 +68,6 @@
 		wasted 
 			too much time. 3.2.1 is the last v3 released -->
 		<stringtemplate.version>3.2.1</stringtemplate.version>
-		<sadun.version>1.5.2</sadun.version>
 		<itext.version>2.1.7</itext.version>
 		<poi.version>5.2.3</poi.version>
 		<openxml4j.version>1.0-beta</openxml4j.version>
@@ -287,16 +286,6 @@
 				<groupId>org.glassfish.jersey.media</groupId>
 				<artifactId>jersey-media-json-jackson</artifactId>
 				<version>${jersey.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.sadun</groupId>
-				<artifactId>org.sadun.util</artifactId>
-				<version>${sadun.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.sadun</groupId>
-				<artifactId>pollmgt</artifactId>
-				<version>${sadun.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>net.jodah</groupId>
