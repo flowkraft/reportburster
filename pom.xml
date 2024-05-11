@@ -70,13 +70,6 @@
 		<itext.version>2.1.7</itext.version>
 		<poi.version>5.2.3</poi.version>
 		<openxml4j.version>1.0-beta</openxml4j.version>
-		<spring.framework.version>3.0.5.RELEASE</spring.framework.version>
-		<spring.batch.version>2.1.9.RELEASE</spring.batch.version>
-		<spring.batch.admin.version>1.2.2.RELEASE</spring.batch.admin.version>
-		<spring.webflow.version>2.3.2.RELEASE</spring.webflow.version>
-		<spring.security.version>3.0.8.RELEASE</spring.security.version>
-		<hsqldb.version>2.2.9</hsqldb.version>
-		<javax.servlet.version>2.5</javax.servlet.version>
 		<!-- end upgraded -->
 	</properties>
 
@@ -91,11 +84,6 @@
 			<dependency>
 				<groupId>com.sourcekraft.documentburster</groupId>
 				<artifactId>rb-update</artifactId>
-				<version>${revision}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.sourcekraft.documentburster</groupId>
-				<artifactId>rb-batch</artifactId>
 				<version>${revision}</version>
 			</dependency>
 			<dependency>
@@ -365,52 +353,6 @@
 				<version>${simplejavamail.version}</version>
 			</dependency>
 
-			<!-- batch module dependencies -->
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-jdbc</artifactId>
-				<version>${spring.framework.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-context</artifactId>
-				<version>${spring.framework.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-tx</artifactId>
-				<version>${spring.framework.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework.batch</groupId>
-				<artifactId>spring-batch-core</artifactId>
-				<version>${spring.batch.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework.batch</groupId>
-				<artifactId>spring-batch-admin-manager</artifactId>
-				<version>${spring.batch.admin.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework.webflow</groupId>
-				<artifactId>spring-js</artifactId>
-				<version>${spring.webflow.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework.security</groupId>
-				<artifactId>spring-security-web</artifactId>
-				<version>${spring.security.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework.security</groupId>
-				<artifactId>spring-security-config</artifactId>
-				<version>${spring.security.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.hsqldb</groupId>
-				<artifactId>hsqldb</artifactId>
-				<version>${hsqldb.version}</version>
-			</dependency>
 			<!-- burst module dependencies -->
 			<dependency>
 				<groupId>commons-cli</groupId>
@@ -522,12 +464,6 @@
 				<version>${xml-apis.version}</version>
 			</dependency>
 
-			<dependency>
-				<groupId>javax.servlet</groupId>
-				<artifactId>servlet-api</artifactId>
-				<version>${javax.servlet.version}</version>
-				<scope>provided</scope>
-			</dependency>
 			<!-- Replaced Commons Logging with SL4J (JCL-over-SL4j)
 			<scope>provided</scope> 
 				is only a trick to exclude this dependency at global level. -->
