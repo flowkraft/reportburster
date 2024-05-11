@@ -25,7 +25,6 @@
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
 			<artifactId>rb-common</artifactId>
-			<version>${revision}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
