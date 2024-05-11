@@ -164,14 +164,14 @@
   <groupId>com.github.spotbugs</groupId>
   <artifactId>spotbugs-maven-plugin</artifactId>
   <version>${maven.spotbugs.plugin.version}</version>
+   <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs
   <dependencies>
-    <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
     <dependency>
       <groupId>com.github.spotbugs</groupId>
       <artifactId>spotbugs</artifactId>
       <version>${spotbugs.version}</version>
     </dependency>
-  </dependencies>
+  </dependencies> -->
 </plugin>
 
 		</plugins>
