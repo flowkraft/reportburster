@@ -14,7 +14,6 @@
 
 	</parent>
 
-	<groupId>com.sourcekraft.documentburster</groupId>
 	<artifactId>rb-reporting</artifactId>
 	<name>reporting module</name>
 
@@ -300,6 +299,13 @@
 			<groupId>xml-apis</groupId>
 			<artifactId>xml-apis</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>org.hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 
 	</dependencies>
 

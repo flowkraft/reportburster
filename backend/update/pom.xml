@@ -12,7 +12,6 @@
 
 	</parent>
 
-	<groupId>com.sourcekraft.documentburster</groupId>
 	<artifactId>rb-update</artifactId>
 	<name>update module</name>
 
@@ -22,8 +21,9 @@
 
 	<dependencies>
 
-		<!-- DON'T IMPORT ANY 3rd party Java library, only standard Java should be used here -->
-				
+		<!-- DON'T IMPORT ANY 3rd party Java library, only standard Java should
+		be used here -->
+
 	</dependencies>
 
 </project>
