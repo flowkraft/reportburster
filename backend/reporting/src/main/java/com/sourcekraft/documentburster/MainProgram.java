@@ -54,7 +54,6 @@ public class MainProgram {
 		mainOptionsGrp.setRequired(false);
 
 		mainOptionsGrp.addOption(new Option("f", "file", true, "Input file"));
-		mainOptionsGrp.addOption(new Option("p", "poll", true, "Start polling a folder for reports"));
 		mainOptionsGrp.addOption(new Option("mf", "mergefile", true, "Merge files"));
 
 		mainOptionsGrp.addOption(new Option("rf", "resumefile", true, "Resume file processing"));
@@ -129,8 +128,6 @@ public class MainProgram {
 				_checkTwilioConnection(cmd);
 			else if ((cmd.hasOption("al")) || (cmd.hasOption("dl")) || (cmd.hasOption("cl")))
 				_checkSoftwareLicense(cmd);
-			else if ((cmd.hasOption("p")))
-				_poll(cmd);
 			else if (cmd.hasOption("rnf"))
 				_handleOtherOptions(cmd);
 
@@ -172,21 +169,6 @@ public class MainProgram {
 		CliJob job = getJob(cmd);
 
 		job.doCheckTwilio(fromNumber, toNumber);
-
-	}
-
-	private void _poll(CommandLine cmd) throws Exception {
-
-		String pollFolderPath = cmd.getOptionValue('p');
-
-		File pollDir = new File(pollFolderPath);
-
-		CliJob job = getJob(cmd);
-
-		if (pollDir.exists())
-			job.doPoll(pollFolderPath);
-		else
-			throw new FileNotFoundException("Poll folder does not exist: " + pollFolderPath);
 
 	}
 
