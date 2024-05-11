@@ -28,17 +28,18 @@ COPY ./backend/server/pom.xml ./backend/server/pom.xml
 COPY ./backend/server/src ./backend/server/src
 
 # Build and install the modules that are dependencies for other modules
-RUN mvn clean install -DskipTests -P docker -pl backend/common -am
-RUN mvn clean install -DskipTests -P docker -pl backend/update -am
+RUN mvn clean install -DskipTests -P docker
+# RUN mvn clean install -DskipTests -P docker -pl backend/common -am
+# RUN mvn clean install -DskipTests -P docker -pl backend/update -am
 
 # List the contents of the directory where the rb-common-maven-configuration:pom:1 artifact should be stored
-RUN ls -la /root/.m2/repository/com/sourcekraft/documentburster && false
+# RUN ls -la /root/.m2/repository/com/sourcekraft/documentburster
 
 # Download dependencies of the dependent modules
 # RUN mvn dependency:go-offline -B -P docker -pl backend/reporting,backend/server -X
 
 # Build the dependent modules
-RUN mvn clean install -DskipTests -P docker -pl backend/reporting,backend/server
+# RUN mvn clean install -DskipTests -P docker -pl backend/reporting,backend/server
 
 # Start a new stage to build the frontend
 FROM build as frontend
