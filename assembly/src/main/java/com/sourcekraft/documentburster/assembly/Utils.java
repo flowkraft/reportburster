@@ -78,6 +78,10 @@ public class Utils {
 
 	public static void runMaven(String pomXmlFolderPath, String mavenCommand) throws Exception {
 
+		if (!mavenCommand.contains("-Djavac.compiler.path")) {
+			mavenCommand += " -Djavac.compiler.path=C:\\Program Files/Java/jdk-17.0.2/bin/javac.exe";
+		}
+
 		new ProcessExecutor().directory(new File(pomXmlFolderPath)).command("cmd", "/c", mavenCommand)
 				.redirectOutput(new LogOutputStream() {
 					@Override
