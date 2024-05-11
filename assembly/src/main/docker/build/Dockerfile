@@ -52,7 +52,7 @@ RUN mvn clean install -DskipTests -P docker
 # Build the dependent modules
 # RUN mvn clean install -DskipTests -P docker -pl backend/reporting,backend/server
 
-RUN mvn -pl ":rb-reporting" dependency:copy-dependencies -P docker
+RUN mvn -pl backend/reporting dependency:copy-dependencies -P docker
 
 # Start a new stage to build the frontend
 FROM build as frontend
