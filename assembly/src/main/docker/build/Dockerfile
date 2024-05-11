@@ -32,7 +32,7 @@ RUN mvn clean install -DskipTests -P docker -pl backend/common -am
 RUN mvn clean install -DskipTests -P docker -pl backend/update -am
 
 # Download dependencies of the dependent modules
-RUN mvn install:install-file -Dfile=./xtra-tools/build/common-scripts/maven/pom.xml
+RUN mvn install:install-file -Dfile=./xtra-tools/build/common-scripts/maven/pom.xml -P docker
 RUN mvn dependency:go-offline -B -P docker -pl backend/reporting,backend/server
 
 # Build the dependent modules
