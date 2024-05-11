@@ -11,8 +11,8 @@
 	<properties>
 
 		<!-- java compiler options -->
-		<!--<javac.compiler.path>C:/Program Files/OpenJDK/jdk-21.0.2/bin/javac.exe</javac.compiler.path>-->
-		<javac.compiler.path>C:\Program Files/Java/jdk-17.0.2/bin/javac.exe</javac.compiler.path>
+		<!--<javac.compiler.path>C:/Program Files/OpenJDK/jdk-21.0.2/bin/javac.exe</javac.compiler.path>
+		<javac.compiler.path>C:\Program Files/Java/jdk-17.0.2/bin/javac.exe</javac.compiler.path>-->
 
 		<java.source.version>1.8</java.source.version>
 		<java.target.version>1.8</java.target.version>
