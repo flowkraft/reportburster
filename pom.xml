@@ -62,6 +62,8 @@
 		<jaxb.api.version>2.4.0-b180830.0359</jaxb.api.version>
 		<jaxb.runtime.version>2.4.0-b180830.0438</jaxb.runtime.version>
 		<xml-apis.version>1.4.01</xml-apis.version>
+		<hsqldb.version>2.2.9</hsqldb.version>
+	
 		<!-- I tried upgrading to v4 however the API is heavily changed and I
 		wasted 
 			too much time. 3.2.1 is the last v3 released -->
@@ -353,6 +355,12 @@
 				<version>${simplejavamail.version}</version>
 			</dependency>
 
+			<dependency>
+				<groupId>org.hsqldb</groupId>
+				<artifactId>hsqldb</artifactId>
+				<version>${hsqldb.version}</version>
+			</dependency>
+			
 			<!-- burst module dependencies -->
 			<dependency>
 				<groupId>commons-cli</groupId>
