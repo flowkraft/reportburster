@@ -39,7 +39,8 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-collections4</artifactId>
 		</dependency>
-		<!-- <dependency> <groupId>org.apache.xmlbeans</groupId> <artifactId>xmlbeans</artifactId> 
+		<!-- <dependency> <groupId>org.apache.xmlbeans</groupId>
+		<artifactId>xmlbeans</artifactId> 
 			</dependency> -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -201,9 +202,11 @@
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
 		</dependency>
-		<!-- openxml4j adds a dependency to log4j v1 which has SEC vulnerabilities -->
+		<!-- openxml4j adds a dependency to log4j v1 which has SEC
+		vulnerabilities -->
 
-		<!-- <dependency> <groupId>org.apache.poi</groupId> <artifactId>openxml4j</artifactId> 
+		<!-- <dependency> <groupId>org.apache.poi</groupId>
+		<artifactId>openxml4j</artifactId> 
 			</dependency> -->
 		<dependency>
 			<groupId>org.codehaus.groovy</groupId>

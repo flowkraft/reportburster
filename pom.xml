@@ -564,32 +564,32 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-	
+
 	<profiles>
-		     <profile>
-        <id>default</id>
-        <activation>
-            <activeByDefault>true</activeByDefault>
-        </activation>
-        <modules>
-            <module>backend/common</module>
-            <module>backend/update</module>
-            <module>backend/reporting</module>
-            <module>backend/server</module>
-            <module>documentation</module>
-            <module>assembly</module>
-        </modules>
-    </profile>
-		 
-		 <profile>
-        <id>docker</id>
-        <modules>
-            <module>backend/common</module>
-            <module>backend/update</module>
-            <module>backend/reporting</module>
-            <module>backend/server</module>
-        </modules>
-    </profile>
+		<profile>
+			<id>default</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<modules>
+				<module>backend/common</module>
+				<module>backend/update</module>
+				<module>backend/reporting</module>
+				<module>backend/server</module>
+				<module>documentation</module>
+				<module>assembly</module>
+			</modules>
+		</profile>
+
+		<profile>
+			<id>docker</id>
+			<modules>
+				<module>backend/common</module>
+				<module>backend/update</module>
+				<module>backend/reporting</module>
+				<module>backend/server</module>
+			</modules>
+		</profile>
 		<profile>
 			<id>only-eclipse</id>
 			<activation>
