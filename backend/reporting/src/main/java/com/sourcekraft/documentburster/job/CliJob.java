@@ -28,7 +28,6 @@ import com.sourcekraft.documentburster.engine.BursterFactory;
 import com.sourcekraft.documentburster.engine.pdf.Merger;
 import com.sourcekraft.documentburster.job.model.JobDetails;
 import com.sourcekraft.documentburster.job.model.JobProgressDetails;
-import com.sourcekraft.documentburster.polling.Poller;
 import com.sourcekraft.documentburster.scripting.Scripting;
 import com.sourcekraft.documentburster.scripting.Scripts;
 import com.sourcekraft.documentburster.sender.factory.EmailMessageFactory;
@@ -248,24 +247,9 @@ public class CliJob {
 
 	}
 
-	public void doPoll(String pollFolderPath) throws Exception {
-
-		log.debug("pollFolderPath = " + pollFolderPath);
-
-		Poller poller = new Poller(this, getPollPidFilePath());
-		poller.poll(pollFolderPath);
-
-	}
-
 	private String getJobFilePath() {
 
 		return getTempFolder() + Utils.getRandomJobFileName();
-
-	}
-
-	private String getPollPidFilePath() {
-
-		return getTempFolder() + "poll.pid";
 
 	}
 
