@@ -32,7 +32,7 @@ RUN mvn clean install -DskipTests -P docker -pl backend/common -am
 RUN mvn clean install -DskipTests -P docker -pl backend/update -am
 
 # Download dependencies of the dependent modules
-RUN mvn dependency:go-offline -B -P docker -pl backend/reporting,backend/server
+RUN mvn dependency:go-offline -B -P docker -pl backend/reporting,backend/server -X
 
 # Build the dependent modules
 RUN mvn clean install -DskipTests -P docker -pl backend/reporting,backend/server
