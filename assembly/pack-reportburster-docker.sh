@@ -1,1 +1,1 @@
-docker build -f ./src/main/docker/build/Dockerfile ..
+docker build --no-cache -f ./src/main/docker/build/Dockerfile ..
