@@ -159,14 +159,6 @@
 			<artifactId>jakarta.mail</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.sadun</groupId>
-			<artifactId>org.sadun.util</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.sadun</groupId>
-			<artifactId>pollmgt</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.pdfbox</groupId>
 			<artifactId>pdfbox</artifactId>
 		</dependency>
