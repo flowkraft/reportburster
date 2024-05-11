@@ -38,6 +38,7 @@ RUN mvn install:install-file -Dfile=/tmp/pherialize-1.2.1.jar -DgroupId=de.ailis
     rm /tmp/pherialize-1.2.1.jar
 
 # Build and install the modules that are dependencies for other modules
+
 RUN mvn clean install -DskipTests -P docker
 # RUN mvn clean install -DskipTests -P docker -pl backend/common -am
 # RUN mvn clean install -DskipTests -P docker -pl backend/update -am
@@ -50,6 +51,8 @@ RUN mvn clean install -DskipTests -P docker
 
 # Build the dependent modules
 # RUN mvn clean install -DskipTests -P docker -pl backend/reporting,backend/server
+
+RUN mvn -pl ":rb-reporting" dependency:copy-dependencies -P docker
 
 # Start a new stage to build the frontend
 FROM build as frontend
@@ -78,15 +81,19 @@ RUN apk --no-cache add curl
 # Set the working directory
 WORKDIR /app
 
-# Copy the jar file from the build stage
-COPY --from=build /app/target/*.jar ./app.jar
+# Generate/copy "templated" folder structure
+COPY ./backend/reporting/src/main/external-resources/template/* .
+COPY ./assembly/src/main/external-resources/db-template/* .
+COPY ./assembly/src/main/external-resources/db-server-template/* .
 
 # Copy the frontend build output from the frontend stage
-COPY --from=frontend /app/frontend/dist ./static
+COPY --from=frontend /app/frontend/dist ./lib/frontend
 
-COPY ./backend/reporting/src/main/external-resources/template .
-COPY ./assembly/src/main/external-resources/db-template .
-COPY ./assembly/src/main/external-resources/db-server-template .
+# Copy the jar file from the build stage
+COPY --from=build /app/backend/reporting/target/dependencies/*.jar ./lib/burst
+COPY --from=build /app/backend/reporting/target/rb-reporting.jar ./lib/burst/rb-reporting.jar
+
+COPY --from=build /app/backend/server/target/rb-server.jar ./lib/server/rb-server.jar
 
 RUN echo '#!/bin/sh' > ./reportburster.sh && \
     echo 'java -DDOCUMENTBURSTER_HOME="$(pwd)" -cp lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml -Darg1="$1" -Darg2="$2" -Darg3="$3" -Darg4="$4" -Darg5="$5" -Darg6="$6" -Darg7="$7" -emacs > logs/documentburster.bat.log' >> ./reportburster.sh && \
@@ -94,9 +101,8 @@ RUN echo '#!/bin/sh' > ./reportburster.sh && \
 
 # Set the necessary environment variables
 ENV PORTABLE_EXECUTABLE_DIR_PATH=/app
-ENV FRONTEND_PATH=/app/static
+ENV FRONTEND_PATH=/app/lib/frontend
 ENV POLLING_PATH=/app/poll
-ENV ELECTRON_PID=
 
 # Run the jar file 
-CMD java -Dserver.port=9090 -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH -DUID=9090 -Dspring.resources.static-locations=file:///$FRONTEND_PATH -DPOLLING_PATH=$POLLING_PATH -DELECTRON_PID=$ELECTRON_PID -jar app.jar -serve
+CMD java -Dserver.port=9090 -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH -DUID=9090 -Dspring.resources.static-locations=file:///$FRONTEND_PATH -DPOLLING_PATH=$POLLING_PATH -jar /app/lib/server/rb-server.jar -serve
