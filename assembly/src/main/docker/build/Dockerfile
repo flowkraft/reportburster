@@ -27,11 +27,15 @@ COPY ./backend/reporting/src ./backend/reporting/src
 COPY ./backend/server/pom.xml ./backend/server/pom.xml
 COPY ./backend/server/src ./backend/server/src
 
-# Build and install the modules that are dependencies for other modules, download dependencies of the dependent modules, and build the dependent modules
-RUN mvn clean install -DskipTests -P docker -pl backend/common -am && \
-    mvn clean install -DskipTests -P docker -pl backend/update -am && \
-    mvn dependency:go-offline -B -P docker -pl backend/reporting,backend/server -X && \
-    mvn clean install -DskipTests -P docker -pl backend/reporting,backend/server
+# Build and install the modules that are dependencies for other modules
+RUN mvn clean install -DskipTests -P docker -pl backend/common -am
+RUN mvn clean install -DskipTests -P docker -pl backend/update -am
+
+# Download dependencies of the dependent modules
+# RUN mvn dependency:go-offline -B -P docker -pl backend/reporting,backend/server -X
+
+# Build the dependent modules
+RUN mvn clean install -DskipTests -P docker -pl backend/reporting,backend/server
 
 # Start a new stage to build the frontend
 FROM build as frontend
