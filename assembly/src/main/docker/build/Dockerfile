@@ -27,6 +27,16 @@ COPY ./backend/reporting/src ./backend/reporting/src
 COPY ./backend/server/pom.xml ./backend/server/pom.xml
 COPY ./backend/server/src ./backend/server/src
 
+COPY ./backend/server/src ./backend/server/src
+
+# Install on the local maven repository either
+# 1. jars which are not available on public maven repositories or
+# 2. jars which are old on the public maven repositories
+COPY ./xtra-tools/build/common-scripts/maven/lib-repository/burst/pherialize-1.2.1.jar /tmp/
+
+RUN mvn install:install-file -Dfile=/tmp/pherialize-1.2.1.jar -DgroupId=de.ailis.pherialize -DartifactId=pherialize -Dversion=1.2.1 -Dpackaging=jar && \
+    rm /tmp/pherialize-1.2.1.jar
+
 # Build and install the modules that are dependencies for other modules
 RUN mvn clean install -DskipTests -P docker
 # RUN mvn clean install -DskipTests -P docker -pl backend/common -am
