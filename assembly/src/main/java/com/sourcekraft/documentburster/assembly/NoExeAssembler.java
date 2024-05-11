@@ -41,10 +41,10 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// copy all MODULE_REPORTING's dependencies to the intermediate folder location
 		// MODULE_REPORTING/target/dependencies
-		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl \":rb-reporting,:rb-server\" dependency:copy-dependencies");
+		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl \":rb-reporting\" dependency:copy-dependencies");
 
 		System.out.println(
-				"------------------------------------- DONE_02:NoExeAssembler Utils.runMaven(Utils.getTopProjectFolderPath(), mvn -pl ':rb-reporting,:rb-server' dependency:copy-dependencies) ... -------------------------------------");
+				"------------------------------------- DONE_02:NoExeAssembler Utils.runMaven(Utils.getTopProjectFolderPath(), mvn -pl ':rb-reporting' dependency:copy-dependencies) ... -------------------------------------");
 
 		// copy db template files and folders
 		FileUtils.copyDirectory(new File("src/main/external-resources/db-template"),
