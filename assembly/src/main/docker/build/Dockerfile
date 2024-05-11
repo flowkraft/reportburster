@@ -34,8 +34,8 @@ COPY ./backend/server/src ./backend/server/src
 # 2. jars which are old on the public maven repositories
 COPY ./xtra-tools/build/common-scripts/maven/lib-repository/burst/pherialize-1.2.1.jar /tmp/
 
-RUN mvn install:install-file -Dfile=/tmp/pherialize-1.2.1.jar -DgroupId=de.ailis.pherialize -DartifactId=pherialize -Dversion=1.2.1 -Dpackaging=jar && \
-    rm /tmp/pherialize-1.2.1.jar -P docker
+RUN mvn install:install-file -Dfile=/tmp/pherialize-1.2.1.jar -DgroupId=de.ailis.pherialize -DartifactId=pherialize -Dversion=1.2.1 -Dpackaging=jar -P docker && \
+    rm /tmp/pherialize-1.2.1.jar
 
 # Build and install the modules that are dependencies for other modules
 RUN mvn clean install -DskipTests -P docker
