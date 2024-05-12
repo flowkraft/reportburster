@@ -65,13 +65,13 @@ WORKDIR /app/frontend
 COPY ./frontend/reporting/package*.json ./
 
 # Install Angular CLI and the application's dependencies
-RUN npm install -g @angular/cli && npm install
+RUN npm install -g @angular/cli && npm install --force
 
 # Copy the rest of your application to the working directory
 COPY ./frontend/reporting .
 
 # Build the application using the custom:release-web script
-RUN npm run custom:release-web
+RUN  npm prune --production --force && npm run custom:release-web
 
 # Start a new stage for the final image
 FROM eclipse-temurin:11-jre-alpine
