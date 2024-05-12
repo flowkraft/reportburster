@@ -71,7 +71,7 @@ RUN npm install -g @angular/cli && npm install --force
 COPY ./frontend/reporting .
 
 # Build the application using the custom:release-web script
-RUN  npm prune --production --force && npm run custom:release-web
+RUN npm run custom:release-web && npm prune --production --force
 
 # Start a new stage for the final image
 FROM eclipse-temurin:11-jre-alpine
