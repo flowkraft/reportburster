@@ -7,8 +7,15 @@ services:
       - "9090:9090"
     # environment:
     # - POLLING_PATH=/app/poll
-    extra_hosts:
-      - "localhost:mailhog"
+    volumes:
+      - ./config:/app/config
+      - ./input-files:/app/input-files
+      - ./logs:/app/logs
+      - ./output:/app/output
+      - ./quarantine:/app/quarantine
+      - ./poll:/app/poll
+      - ./samples:/app/samples
+      - ./scripts:/app/scripts
 
   mailhog:
     container_name: mailhog
