@@ -90,8 +90,11 @@ COPY ./assembly/src/main/external-resources/db-server-template/* .
 # Copy the frontend build output from the frontend stage
 COPY --from=frontend /app/frontend/dist ./lib/frontend
 
-RUN if [ -d "/app/backend/reporting/target/dependencies/" ]; then \
-    if [ "$(ls -A /app/backend/reporting/target/dependencies/)" ]; then \
+# Copy the jar file from the build stage
+COPY --from=build /app/backend/reporting/target/dependencies/*.jar ./lib/burst
+
+RUN if [ -d "./lib/burst" ]; then \
+    if [ "$(ls -A ./lib/burst)" ]; then \
         echo "Directory is not empty"; \
     else \
         echo "Directory is empty"; \
@@ -100,8 +103,6 @@ else \
     echo "Directory does not exist"; \
 fi
 
-# Copy the jar file from the build stage
-COPY --from=build /app/backend/reporting/target/dependencies/*.jar ./lib/burst
 COPY --from=build /app/backend/reporting/target/rb-reporting.jar ./lib/burst/rb-reporting.jar
 
 COPY --from=build /app/backend/server/target/rb-server.jar ./lib/server/rb-server.jar
