@@ -100,14 +100,16 @@ COPY --from=build /app/backend/reporting/target/rb-reporting.jar /app/lib/burst/
 
 COPY --from=build /app/backend/server/target/rb-server.jar /app/lib/server/rb-server.jar
 
+RUN rm -f /app/service.bat /app/shutServer.bat /app/startServer.bat /app/reportburster.bat
+
 RUN echo '#!/bin/sh' > ./reportburster.sh && \
     echo 'java -DDOCUMENTBURSTER_HOME="$(pwd)" -cp lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml -Darg1="$1" -Darg2="$2" -Darg3="$3" -Darg4="$4" -Darg5="$5" -Darg6="$6" -Darg7="$7" -emacs > logs/documentburster.bat.log' >> ./reportburster.sh && \
     chmod +x ./reportburster.sh
 
-RUN ls -la /app
-RUN ls -la /app/lib/frontend
-RUN ls -la /app/lib/burst
-RUN ls -la /app/lib/server
+# RUN ls -la /app
+# RUN ls -la /app/lib/frontend
+# RUN ls -la /app/lib/burst
+# RUN ls -la /app/lib/server
 
 # Set the necessary environment variables
 ENV PORTABLE_EXECUTABLE_DIR_PATH=/app
