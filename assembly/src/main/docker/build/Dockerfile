@@ -55,6 +55,9 @@ RUN mvn clean install -DskipTests -P docker
 #RUN mvn -pl backend/reporting dependency:copy-dependencies -P docker -X
 RUN mvn dependency:copy-dependencies -P docker -X
 
+# List the contents of the target/dependencies directory
+RUN ls -la /app/backend/reporting/target/dependencies/
+
 # Start a new stage to build the frontend
 FROM build as frontend
 
