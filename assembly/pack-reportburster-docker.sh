@@ -1,1 +1,1 @@
-docker build --no-cache --progress=plain -f ./src/main/docker/build/Dockerfile ..
+docker build --no-cache --progress=plain -t reportburster-server:10.1.1 -f ./src/main/docker/build/Dockerfile ..
