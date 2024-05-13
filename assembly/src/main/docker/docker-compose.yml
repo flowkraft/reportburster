@@ -1,19 +1,17 @@
 version: "3.8"
 
 services:
-  app:
-    image: organization/appname
+  reportburster-server:
+    image: reportburster-server:10.1.1
     ports:
       - "9090:9090"
-    environment:
-      - PORTABLE_EXECUTABLE_DIR_PATH=/app
-      - FRONTEND_PATH=/app/static
-      - POLLING_PATH=/app/poll
-      - ELECTRON_PID=
+    # environment:
+    # - POLLING_PATH=/app/poll
     extra_hosts:
       - "localhost:mailhog"
 
   mailhog:
+    container_name: mailhog
     image: mailhog/mailhog
     ports:
       - "8025:8025"
