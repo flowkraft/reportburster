@@ -56,7 +56,7 @@ RUN mvn clean install -DskipTests -P docker
 RUN mvn dependency:copy-dependencies -P docker -X
 
 # List the contents of the target/dependencies directory
-RUN ls -la /app/backend/reporting/target/dependencies/
+# RUN ls -la /app/backend/reporting/target/dependencies/
 
 # Start a new stage to build the frontend
 FROM build as frontend
@@ -93,28 +93,8 @@ COPY ./assembly/src/main/external-resources/db-server-template/* .
 # Copy the frontend build output from the frontend stage
 COPY --from=frontend /app/frontend/dist /app/lib/frontend
 
-RUN if [ -d "/app/lib/frontend" ]; then \
-    if [ "$(ls -A /app/lib/frontend)" ]; then \
-        echo "Directory /app/lib/frontend is not empty"; \
-    else \
-        echo "Directory /app/lib/frontend is empty"; \
-    fi; \
-else \
-    echo "Directory /app/lib/frontend does not exist"; \
-fi
-
 # Copy the jar file from the build stage
 COPY --from=build /app/backend/reporting/target/dependencies /app/lib/burst
-
-RUN if [ -d "/app/lib/burst" ]; then \
-    if [ "$(ls -A /app/lib/burst)" ]; then \
-        echo "Directory /app/lib/burst is not empty"; \
-    else \
-        echo "Directory /app/lib/burst is empty"; \
-    fi; \
-else \
-    echo "Directory /app/lib/burst does not exist"; \
-fi
 
 COPY --from=build /app/backend/reporting/target/rb-reporting.jar /app/lib/burst/rb-reporting.jar
 
@@ -123,6 +103,11 @@ COPY --from=build /app/backend/server/target/rb-server.jar /app/lib/server/rb-se
 RUN echo '#!/bin/sh' > ./reportburster.sh && \
     echo 'java -DDOCUMENTBURSTER_HOME="$(pwd)" -cp lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml -Darg1="$1" -Darg2="$2" -Darg3="$3" -Darg4="$4" -Darg5="$5" -Darg6="$6" -Darg7="$7" -emacs > logs/documentburster.bat.log' >> ./reportburster.sh && \
     chmod +x ./reportburster.sh
+
+RUN ls -la /app
+RUN ls -la /app/lib/frontend
+RUN ls -la /app/lib/burst
+RUN ls -la /app/lib/server
 
 # Set the necessary environment variables
 ENV PORTABLE_EXECUTABLE_DIR_PATH=/app
