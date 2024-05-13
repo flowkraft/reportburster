@@ -88,24 +88,34 @@ COPY ./assembly/src/main/external-resources/db-template/* .
 COPY ./assembly/src/main/external-resources/db-server-template/* .
 
 # Copy the frontend build output from the frontend stage
-COPY --from=frontend /app/frontend/dist ./lib/frontend
+COPY --from=frontend /app/frontend/dist /app/lib/frontend
 
-# Copy the jar file from the build stage
-COPY --from=build /app/backend/reporting/target/dependencies/*.jar ./lib/burst
-
-RUN if [ -d "./lib/burst" ]; then \
-    if [ "$(ls -A ./lib/burst)" ]; then \
-        echo "Directory is not empty"; \
+RUN if [ -d "/app/lib/frontend" ]; then \
+    if [ "$(ls -A /app/lib/frontend)" ]; then \
+        echo "Directory /app/lib/frontend is not empty"; \
     else \
-        echo "Directory is empty"; \
+        echo "Directory /app/lib/frontend is empty"; \
     fi; \
 else \
-    echo "Directory does not exist"; \
+    echo "Directory /app/lib/frontend does not exist"; \
 fi
 
-COPY --from=build /app/backend/reporting/target/rb-reporting.jar ./lib/burst/rb-reporting.jar
+# Copy the jar file from the build stage
+COPY --from=build /app/backend/reporting/target/dependencies/*.jar /app/lib/burst
 
-COPY --from=build /app/backend/server/target/rb-server.jar ./lib/server/rb-server.jar
+RUN if [ -d "/app/lib/burst" ]; then \
+    if [ "$(ls -A /app/lib/burst)" ]; then \
+        echo "Directory /app/lib/burst is not empty"; \
+    else \
+        echo "Directory /app/lib/burst is empty"; \
+    fi; \
+else \
+    echo "Directory /app/lib/burst does not exist"; \
+fi
+
+COPY --from=build /app/backend/reporting/target/rb-reporting.jar /app/lib/burst/rb-reporting.jar
+
+COPY --from=build /app/backend/server/target/rb-server.jar /app/lib/server/rb-server.jar
 
 RUN echo '#!/bin/sh' > ./reportburster.sh && \
     echo 'java -DDOCUMENTBURSTER_HOME="$(pwd)" -cp lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml -Darg1="$1" -Darg2="$2" -Darg3="$3" -Darg4="$4" -Darg5="$5" -Darg6="$6" -Darg7="$7" -emacs > logs/documentburster.bat.log' >> ./reportburster.sh && \
