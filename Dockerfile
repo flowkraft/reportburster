@@ -86,9 +86,9 @@ RUN apk --no-cache add curl
 WORKDIR /app
 
 # Generate/copy "templated" folder structure
-COPY ./backend/reporting/src/main/external-resources/template/* .
-COPY ./assembly/src/main/external-resources/db-template/* .
-COPY ./assembly/src/main/external-resources/db-server-template/* .
+COPY ./backend/reporting/src/main/external-resources/template .
+COPY ./assembly/src/main/external-resources/db-template .
+COPY ./assembly/src/main/external-resources/db-server-template .
 
 # Copy the frontend build output from the frontend stage
 COPY --from=frontend /app/frontend/dist /app/lib/frontend
