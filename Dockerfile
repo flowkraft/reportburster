@@ -90,28 +90,12 @@ COPY ./assembly/src/main/external-resources/db-template/ ./
 COPY ./assembly/src/main/external-resources/db-server-template/ ./
 COPY ./backend/reporting/src/main/external-resources/template/ ./
 
-RUN ls -la /app
-RUN ls -la /app/config
-RUN ls -la /app/config/_defaults
-RUN ls -la /app/config/_internal
-RUN ls -la /app/config/burst
-RUN ls -la /app/config/connections
-RUN ls -la /app/samples
-RUN ls -la /app/samples/burst
-RUN ls -la /app/scripts/burst
-RUN ls -la /app/scripts/burst/internal
-RUN ls -la /app/scripts/burst/samples
-
-# RUN ls -la /app/lib/frontend
-# RUN ls -la /app/lib/burst
-# RUN ls -la /app/lib/server
-
 RUN cp /app/config/burst/settings.xml /app/config/_defaults/settings.xml && \
     cp /app/config/burst/settings.xml /app/config/samples/split-only/settings.xml && \
     cp /app/config/burst/settings.xml /app/config/samples/split-two-times-split-only/settings.xml && \
     sed -i 's/<reportdistribution>true<\/reportdistribution>/<reportdistribution>false<\/reportdistribution>/g' /app/config/samples/split-two-times-split-only/settings.xml && \
     sed -i 's/<split2ndtime>false<\/split2ndtime>/<split2ndtime>true<\/split2ndtime>/g' /app/config/samples/split-two-times-split-only/settings.xml && \
-    cp /app/config/_internal/license.xml app/config/_defaults/license.xml
+    cp /app/config/_internal/license.xml /app/config/_defaults/license.xml
 
 # Copy the frontend build output from the frontend stage
 COPY --from=frontend /app/frontend/dist /app/lib/frontend
@@ -132,6 +116,11 @@ RUN echo '#!/bin/sh' > ./reportburster.sh && \
 ENV PORTABLE_EXECUTABLE_DIR_PATH=/app
 ENV FRONTEND_PATH=/app/lib/frontend
 ENV POLLING_PATH=/app/poll
+
+# RUN ls -la /app
+# RUN ls -la /app/lib/frontend
+# RUN ls -la /app/lib/burst
+# RUN ls -la /app/lib/server
 
 # Run the jar file 
 CMD java -Dserver.port=9090 -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH -DUID=9090 -Dspring.resources.static-locations=file:///$FRONTEND_PATH -DPOLLING_PATH=$POLLING_PATH -jar /app/lib/server/rb-server.jar -serve
