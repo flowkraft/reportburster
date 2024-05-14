@@ -122,5 +122,11 @@ ENV POLLING_PATH=/app/poll
 # RUN ls -la /app/lib/burst
 # RUN ls -la /app/lib/server
 
-# Run the jar file 
-CMD java -Dserver.port=9090 -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH -DUID=9090 -Dspring.resources.static-locations=file:///$FRONTEND_PATH -DPOLLING_PATH=$POLLING_PATH -jar /app/lib/server/rb-server.jar -serve
+# Copy the .init.sh script into the image
+COPY ./assembly/.init.sh /.init.sh
+
+# Make the .init.sh script executable
+RUN chmod +x /.init.sh
+
+# Set the .init.sh script as the entrypoint
+ENTRYPOINT ["/bin/sh", "/.init.sh"]
