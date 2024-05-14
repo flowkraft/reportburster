@@ -1,3 +1,5 @@
+rm -rf ../template-merged-directory/
+
 rsync -a ../backend/reporting/src/main/external-resources/template/ ../template-merged-directory/
 rsync -a ../assembly/src/main/external-resources/db-template/ ../template-merged-directory/
 rsync -a ../assembly/src/main/external-resources/db-server-template/ ../template-merged-directory/
