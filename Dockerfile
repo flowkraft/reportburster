@@ -88,6 +88,13 @@ WORKDIR /app
 # Copy the "templated" folder structure
 COPY ./template-merged-directory .
 
+RUN cp /app/config/burst/settings.xml /app/config/_defaults/settings.xml && \
+    cp /app/config/burst/settings.xml /app/config/samples/split-only/settings.xml && \
+    cp /app/config/burst/settings.xml /app/config/samples/split-two-times-split-only/settings.xml && \
+    sed -i 's/<reportdistribution>true<\/reportdistribution>/<reportdistribution>false<\/reportdistribution>/g' /app/config/samples/split-two-times-split-only/settings.xml && \
+    sed -i 's/<split2ndtime>false<\/split2ndtime>/<split2ndtime>true<\/split2ndtime>/g' /app/config/samples/split-two-times-split-only/settings.xml && \
+    cp /app/config/_internal/license.xml app/config/_defaults/license.xml
+
 # Copy the frontend build output from the frontend stage
 COPY --from=frontend /app/frontend/dist /app/lib/frontend
 
