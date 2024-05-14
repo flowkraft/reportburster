@@ -85,10 +85,8 @@ RUN apk --no-cache add curl
 # Set the working directory
 WORKDIR /app
 
-# Generate/copy "templated" folder structure
-COPY ./backend/reporting/src/main/external-resources/template .
-COPY ./assembly/src/main/external-resources/db-template .
-COPY ./assembly/src/main/external-resources/db-server-template .
+# Copy the "templated" folder structure
+COPY ./template-merged-directory .
 
 # Copy the frontend build output from the frontend stage
 COPY --from=frontend /app/frontend/dist /app/lib/frontend
@@ -104,9 +102,7 @@ RUN echo '#!/bin/sh' > ./reportburster.sh && \
     echo 'java -DDOCUMENTBURSTER_HOME="$(pwd)" -cp lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml -Darg1="$1" -Darg2="$2" -Darg3="$3" -Darg4="$4" -Darg5="$5" -Darg6="$6" -Darg7="$7" -emacs > logs/documentburster.bat.log' >> ./reportburster.sh && \
     chmod +x ./reportburster.sh
 
-# RUN ls -la /app
-RUN ls -la /app/config
-
+RUN ls -la /app
 # RUN ls -la /app/lib/frontend
 # RUN ls -la /app/lib/burst
 # RUN ls -la /app/lib/server
