@@ -123,7 +123,7 @@ ENV POLLING_PATH=/app/poll
 # RUN ls -la /app/lib/server
 
 # Copy the .init.sh script into the image
-COPY ./assembly/.init.sh /.init.sh
+COPY ./assembly/docker/.init.sh /.init.sh
 
 # Make the .init.sh script executable
 RUN chmod +x /.init.sh
