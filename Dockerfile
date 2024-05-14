@@ -99,8 +99,8 @@ RUN ls -la /app/config/connections
 RUN ls -la /app/samples
 RUN ls -la /app/samples/burst
 RUN ls -la /app/scripts/burst
-RUN ls -la /app/scripts/internal
-RUN ls -la /app/scripts/samples
+RUN ls -la /app/scripts/burst/internal
+RUN ls -la /app/scripts/burst/samples
 
 # RUN ls -la /app/lib/frontend
 # RUN ls -la /app/lib/burst
