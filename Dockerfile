@@ -119,19 +119,22 @@ RUN echo '#!/bin/sh' > ./reportburster.sh && \
 # Run the jar file
 
 # Generate the script that will handle the command-line arguments
-RUN echo '#!/bin/bash\n\
-if [ "$1" = "reportburster.sh" ]; then\n\
-    shift\n\
-    exec ./reportburster.sh "$@"\n\
-else\n\
-    export PORTABLE_EXECUTABLE_DIR_PATH=/app\n\
-    export FRONTEND_PATH=/app/lib/frontend\n\
-    export POLLING_PATH=/app/poll\n\
-    exec java -Dserver.port=9090 -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH -DUID=9090 -Dspring.resources.static-locations=file:///$FRONTEND_PATH -DPOLLING_PATH=$POLLING_PATH -jar /app/lib/server/rb-server.jar -serve\n\
-fi' > /usr/local/bin/docker-entrypoint.sh
+RUN echo '#!/bin/bash' > /usr/local/bin/docker-entrypoint.sh && \
+    echo 'if [ "$1" = "reportburster.sh" ]; then' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '    shift' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '    exec ./reportburster.sh "$@"' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'else' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '    export PORTABLE_EXECUTABLE_DIR_PATH=/app' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '    export FRONTEND_PATH=/app/lib/frontend' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '    export POLLING_PATH=/app/poll' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '    exec java -Dserver.port=9090 -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH -DUID=9090 -Dspring.resources.static-locations=file:///$FRONTEND_PATH -DPOLLING_PATH=$POLLING_PATH -jar /app/lib/server/rb-server.jar -serve' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'fi' >> /usr/local/bin/docker-entrypoint.sh
+
+# Print the contents of the file to check if it's created correctly
+RUN cat /usr/local/bin/docker-entrypoint.sh
 
 # Make the script executable
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Set the ENTRYPOINT
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
