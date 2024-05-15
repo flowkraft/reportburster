@@ -111,7 +111,6 @@ RUN echo '#!/bin/sh' > ./reportburster.sh && \
     echo 'java -DDOCUMENTBURSTER_HOME="$(pwd)" -cp lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml -Darg1="$1" -Darg2="$2" -Darg3="$3" -Darg4="$4" -Darg5="$5" -Darg6="$6" -Darg7="$7" -emacs > logs/documentburster.bat.log' >> ./reportburster.sh && \
     chmod +x ./reportburster.sh
 
-
 # Set the necessary environment variables
 ENV PORTABLE_EXECUTABLE_DIR_PATH=/app
 ENV FRONTEND_PATH=/app/lib/frontend
@@ -121,12 +120,6 @@ ENV POLLING_PATH=/app/poll
 # RUN ls -la /app/lib/frontend
 # RUN ls -la /app/lib/burst
 # RUN ls -la /app/lib/server
+# Run the jar file
 
-# Copy the .init.sh script into the image
-COPY ./assembly/docker/.init.sh /.init.sh
-
-# Make the .init.sh script executable
-RUN chmod +x /.init.sh
-
-# Set the .init.sh script as the entrypoint
-ENTRYPOINT ["/bin/sh", "/.init.sh"]
+CMD java -Dserver.port=9090 -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH -DUID=9090 -Dspring.resources.static-locations=file:///$FRONTEND_PATH -DPOLLING_PATH=$POLLING_PATH -jar /app/lib/server/rb-server.jar -serve
