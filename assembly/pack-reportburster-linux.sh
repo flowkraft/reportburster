@@ -11,12 +11,14 @@ version=$(grep -oPm1 "(?<=<version>)[^<]+" ../backend/reporting/src/main/externa
 docker build --no-cache --progress=plain -t reportburster_server:$version -f ../Dockerfile ..
 # docker push reportburster_server:$version
 
-# Step 4: Update docker-compose.yml and  with the version parsed previously
+# Step 4: Update docker-compose.yml with the version parsed previously
 sed -i "s/image:reportburster_server:.*/image:reportburster_server:$version/" ./docker/docker-compose.yml
 
-# Update the startServer.sh startServer.sh with the latest version
+# Update the reportburster.sh, startServer.sh with the latest version
+sed -i "s/\(image=\"reportburster_server:\).*\"/\1$version\"/" ./docker/reportburster.sh
 sed -i "s/\(image=\"reportburster_server:\).*\"/\1$version\"/" ./docker/startServer.sh
 
+chmod +x ./docker/reportburster.sh
 chmod +x ./docker/startServer.sh
 chmod +x ./docker/shutServer.sh
 
@@ -27,9 +29,12 @@ rm -rf ./docker-temp/
 mkdir ./docker-temp
 
 cp ./docker/docker-compose.yml ./docker-temp/docker-compose.yml 
+
+cp ./docker/startServer.sh ./docker-temp/reportburster.sh
 cp ./docker/startServer.sh ./docker-temp/startServer.sh 
 cp ./docker/shutServer.sh ./docker-temp/shutServer.sh 
 
+chmod +x ./docker-temp/reportburster.sh
 chmod +x ./docker-temp/startServer.sh
 chmod +x ./docker-temp/shutServer.sh
 
