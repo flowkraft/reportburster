@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Step 1: Get the latest from git
+git reset --hard
 git pull origin main
 
 # Step 2: Read the version from the XML file
@@ -11,13 +12,15 @@ docker build --no-cache --progress=plain -t reportburster_server:$version -f ../
 # docker push reportburster_server:$version
 
 # Step 4: Update docker-compose.yml and  with the version parsed previously
-sed -i "s/reportburster_server:.*/reportburster_server:$version/" ./docker/docker-compose.yml
+sed -i "s/image:reportburster_server:.*/image:reportburster_server:$version/" ./docker/docker-compose.yml
 
 # Update the startServer.sh startServer.sh with the latest version
 sed -i "s/\(image=\"reportburster_server:\).*\"/\1$version\"/" ./docker/startServer.sh
 
 chmod +x ./docker/startServer.sh
 chmod +x ./docker/shutServer.sh
+
+chmod +x ./docker/_clean.sh && cd ./docker && ./_clean.sh && cd ..
 
 # Step 5: Pack docker folder as a zip file
 rm -rf ./docker-temp/
