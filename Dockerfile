@@ -119,7 +119,7 @@ RUN echo '#!/bin/sh' > ./reportburster.sh && \
 # Run the jar file
 
 # Generate the script that will handle the command-line arguments
-RUN echo '#!/bin/bash' > /usr/local/bin/docker-entrypoint.sh && \
+RUN echo '#!/bin/sh' > /usr/local/bin/docker-entrypoint.sh && \
     echo 'if [ "$1" = "reportburster.sh" ]; then' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '    shift' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '    exec ./reportburster.sh "$@"' >> /usr/local/bin/docker-entrypoint.sh && \
