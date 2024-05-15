@@ -107,14 +107,10 @@ COPY --from=build /app/backend/reporting/target/rb-reporting.jar /app/lib/burst/
 
 COPY --from=build /app/backend/server/target/rb-server.jar /app/lib/server/rb-server.jar
 
+# Generate the script that will handle the command-line arguments
 RUN echo '#!/bin/sh' > ./reportburster.sh && \
     echo 'java -DDOCUMENTBURSTER_HOME="$(pwd)" -cp lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml -Darg1="$1" -Darg2="$2" -Darg3="$3" -Darg4="$4" -Darg5="$5" -Darg6="$6" -Darg7="$7" -emacs > logs/documentburster.bat.log' >> ./reportburster.sh && \
     chmod +x ./reportburster.sh
-
-# Set the necessary environment variables
-ENV PORTABLE_EXECUTABLE_DIR_PATH=/app
-ENV FRONTEND_PATH=/app/lib/frontend
-ENV POLLING_PATH=/app/poll
 
 # RUN ls -la /app
 # RUN ls -la /app/lib/frontend
@@ -122,4 +118,20 @@ ENV POLLING_PATH=/app/poll
 # RUN ls -la /app/lib/server
 # Run the jar file
 
-CMD java -Dserver.port=9090 -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH -DUID=9090 -Dspring.resources.static-locations=file:///$FRONTEND_PATH -DPOLLING_PATH=$POLLING_PATH -jar /app/lib/server/rb-server.jar -serve
+# Generate the script that will handle the command-line arguments
+RUN echo '#!/bin/bash\n\
+if [ "$1" = "reportburster.sh" ]; then\n\
+    shift\n\
+    exec ./reportburster.sh "$@"\n\
+else\n\
+    export PORTABLE_EXECUTABLE_DIR_PATH=/app\n\
+    export FRONTEND_PATH=/app/lib/frontend\n\
+    export POLLING_PATH=/app/poll\n\
+    exec java -Dserver.port=9090 -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH -DUID=9090 -Dspring.resources.static-locations=file:///$FRONTEND_PATH -DPOLLING_PATH=$POLLING_PATH -jar /app/lib/server/rb-server.jar -serve\n\
+fi' > /usr/local/bin/docker-entrypoint.sh
+
+# Make the script executable
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Set the ENTRYPOINT
+ENTRYPOINT ["docker-entrypoint.sh"]
