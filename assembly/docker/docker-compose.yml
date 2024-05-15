@@ -9,14 +9,14 @@ services:
     # environment:
     # - POLLING_PATH=/app/poll
     volumes:
-      - config:/app/config
-      - input-files:/app/input-files
-      - logs:/app/logs
-      - output:/app/output
-      - quarantine:/app/quarantine
-      - poll:/app/poll
-      - samples:/app/samples
-      - scripts:/app/scripts
+      - ./config:/app/config
+      - ./input-files:/app/input-files
+      - ./logs:/app/logs
+      - ./output:/app/output
+      - ./quarantine:/app/quarantine
+      - ./poll:/app/poll
+      - ./samples:/app/samples
+      - ./scripts:/app/scripts
     networks:
       - reportburster_server_network
 
@@ -30,21 +30,3 @@ services:
 
 networks:
   reportburster_server_network:
-
-volumes:
-  config:
-    driver: local
-  input-files:
-    driver: local
-  logs:
-    driver: local
-  output:
-    driver: local
-  quarantine:
-    driver: local
-  poll:
-    driver: local
-  samples:
-    driver: local
-  scripts:
-    driver: local
