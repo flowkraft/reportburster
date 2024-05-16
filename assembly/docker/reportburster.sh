@@ -4,7 +4,7 @@
 image="reportburster_server:10.1.1"
 
 # Define the directories to copy
-directories=("config" "input-files" "logs" "output" "quarantine" "poll" "samples" "scripts")
+directories=("backup", "config" "input-files" "logs" "output" "quarantine" "poll" "samples" "scripts")
 
 # Check if the config directory exists and is not empty
 if [ ! -d "config" ] || [ -z "$(ls -A config)" ]; then
@@ -26,6 +26,7 @@ args="$@"
 
 # Run the Docker command with the arguments
 docker run -it --rm \
+  -v $(pwd)/backup:/app/backup \
   -v $(pwd)/config:/app/config \
   -v $(pwd)/input-files:/app/input-files \
   -v $(pwd)/logs:/app/logs \
