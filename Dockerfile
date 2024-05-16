@@ -109,7 +109,7 @@ COPY --from=build /app/backend/server/target/rb-server.jar /app/lib/server/rb-se
 
 # Generate the script that will handle the command-line arguments
 RUN echo '#!/bin/sh' > ./reportburster.sh && \
-    echo 'java -DDOCUMENTBURSTER_HOME="$(pwd)" -cp lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml -Darg1="$1" -Darg2="$2" -Darg3="$3" -Darg4="$4" -Darg5="$5" -Darg6="$6" -Darg7="$7" -emacs > logs/documentburster.bat.log' >> ./reportburster.sh && \
+    echo 'java -DDOCUMENTBURSTER_HOME="$(pwd)" -cp lib/burst/ant-launcher*.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml -Darg1="$1" -Darg2="$2" -Darg3="$3" -Darg4="$4" -Darg5="$5" -Darg6="$6" -Darg7="$7" -emacs > logs/documentburster.bat.log' >> ./reportburster.sh && \
     chmod +x ./reportburster.sh
 
 # RUN ls -la /app
