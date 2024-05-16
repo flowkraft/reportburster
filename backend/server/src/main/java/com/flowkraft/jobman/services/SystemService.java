@@ -214,6 +214,8 @@ public class SystemService {
 		}
 
 		// Using the Stream API
+		System.out.println("workingDirectoryPath: " + workingDirectoryPath);
+
 		System.out.println("commandWithShell:");
 		commandWithShell.stream().forEach(System.out::println);
 
