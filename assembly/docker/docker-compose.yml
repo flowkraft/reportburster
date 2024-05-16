@@ -9,6 +9,7 @@ services:
     # environment:
     # - POLLING_PATH=/app/poll
     volumes:
+      - ./backup:/app/backup
       - ./config:/app/config
       - ./input-files:/app/input-files
       - ./logs:/app/logs

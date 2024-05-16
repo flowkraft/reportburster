@@ -192,7 +192,7 @@ public class SystemService {
 			commandWithShell.add("/c");
 		} else if (os.contains("nix") || os.contains("nux") || os.contains("mac")) {
 			commandWithShell.add("/bin/sh");
-			commandWithShell.add("-c");
+			//commandWithShell.add("-c");
 		}
 
 		List<String> newArgs = new ArrayList<>();
