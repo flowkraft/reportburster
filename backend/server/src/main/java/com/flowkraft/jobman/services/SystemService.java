@@ -213,6 +213,10 @@ public class SystemService {
 					+ URLDecoder.decode(cwdPath.get(), StandardCharsets.UTF_8.toString());
 		}
 
+		// Using the Stream API
+		System.out.println("commandWithShell:");
+		commandWithShell.stream().forEach(System.out::println);
+
 		ProcessBuilder processBuilder = new ProcessBuilder(commandWithShell);
 		processBuilder.directory(new File(workingDirectoryPath));
 
