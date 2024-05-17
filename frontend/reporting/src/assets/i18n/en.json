@@ -184,6 +184,7 @@
         "QUARANTINE-FOLDER": "Quarantine Folder"
       },
       "TAB-QA": {
+        "WEB-URL": "Web URL",
         "FROM-ADDRESS": "From Address",
         "FROM-NAME": "From Name",
         "HOST": "Host",

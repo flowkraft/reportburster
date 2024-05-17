@@ -1,7 +1,20 @@
 export const tabQATemplate = `<ng-template #tabQATemplate>
   <div class="well">
 
-    <div class="row">
+  <div class="row">
+
+      <div class="col-xs-2">{{
+        'AREAS.CONFIGURATION.TAB-QA.WEB-URL' | translate }}</div>
+      <div class="col-xs-7">
+        <input id="qaWebURL" [(ngModel)]="xmlSettings?.documentburster.settings.qualityassurance.emailserver.weburl"
+          (ngModelChange)='settingsChangedEventHandler($event)' class="form-control" />
+      </div>
+
+    </div>
+    <p></p>
+      
+  
+  <div class="row">
 
       <div class="col-xs-2">{{
         'AREAS.CONFIGURATION.TAB-QA.FROM-NAME' | translate }}</div>
