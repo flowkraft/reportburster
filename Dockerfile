@@ -116,12 +116,12 @@ RUN echo '#!/bin/sh' > ./reportburster.sh && \
 
 # Generate the startTestEmailServer.bat script
 RUN echo '#!/bin/sh' > ./tools/test-email-server/startTestEmailServer.sh && \
-    echo 'docker start mailhog' \
+    echo 'docker start mailhog' >> ./tools/test-email-server/startTestEmailServer.sh && \
     chmod +x ./tools/test-email-server/startTestEmailServer.sh
 
 # Generate the shutTestEmailServer.sh script
 RUN echo '#!/bin/sh' > ./tools/test-email-server/shutTestEmailServer.sh && \
-    echo 'docker stop mailhog' \
+    echo 'docker stop mailhog' >> ./tools/test-email-server/shutTestEmailServer.sh && \
     chmod +x ./tools/test-email-server/shutTestEmailServer.sh
 
 # RUN ls -la /app
