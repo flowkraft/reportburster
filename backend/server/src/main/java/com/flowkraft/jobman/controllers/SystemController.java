@@ -97,7 +97,7 @@ public class SystemController {
 	public Mono<SystemInfo> getSystemInfo() {
 
 		// System.out.println("/info");
-		SystemInfo info = SystemService.infoGet();
+		SystemInfo info = SystemService.getSystemInfo();
 		return Mono.just(info);
 
 	}
