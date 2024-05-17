@@ -107,10 +107,20 @@ COPY --from=build /app/backend/reporting/target/rb-reporting.jar /app/lib/burst/
 
 COPY --from=build /app/backend/server/target/rb-server.jar /app/lib/server/rb-server.jar
 
-# Generate the script that will handle the command-line arguments
+# Generate the reportburster.sh script
 RUN echo '#!/bin/sh' > ./reportburster.sh && \
     echo 'java -DDOCUMENTBURSTER_HOME="$(pwd)" -cp lib/burst/ant-launcher*.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml -Darg1="$1" -Darg2="$2" -Darg3="$3" -Darg4="$4" -Darg5="$5" -Darg6="$6" -Darg7="$7" -emacs > logs/documentburster.bat.log' >> ./reportburster.sh && \
     chmod +x ./reportburster.sh
+
+# Generate the startTestEmailServer.bat script
+RUN echo '#!/bin/sh' > ./tools/test-email-server/startTestEmailServer.sh && \
+    echo 'docker-compose up -d mailhog' \
+    chmod +x /tools/test-email-server/startTestEmailServer.sh
+
+# Generate the shutTestEmailServer.sh script
+RUN echo '#!/bin/sh' > ./tools/test-email-server/shutTestEmailServer.sh && \
+    echo 'docker-compose stop mailhog' \
+    chmod +x /tools/test-email-server/shutTestEmailServer.sh
 
 # RUN ls -la /app
 # RUN ls -la /app/lib/frontend
@@ -118,7 +128,7 @@ RUN echo '#!/bin/sh' > ./reportburster.sh && \
 # RUN ls -la /app/lib/server
 # Run the jar file
 
-# Generate the script that will handle the command-line arguments
+# Generate the docker-entrypoint.sh script
 RUN echo '#!/bin/sh' > /usr/local/bin/docker-entrypoint.sh && \
     echo 'if [ "$1" = "reportburster.sh" ]; then' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '    shift' >> /usr/local/bin/docker-entrypoint.sh && \
