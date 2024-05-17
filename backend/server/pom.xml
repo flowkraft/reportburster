@@ -10,7 +10,7 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
-	<version>10.1.1</version>
+	<version>10.2.0</version>
 
 	<groupId>com.flowkraft</groupId>
 	<artifactId>rb-server</artifactId>
@@ -21,7 +21,7 @@
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
 			<artifactId>rb-common</artifactId>
-			<version>10.1.1</version>
+			<version>10.2.0</version>
 		</dependency>
 
 		<dependency>
