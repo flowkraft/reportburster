@@ -79,8 +79,10 @@ RUN npm run custom:release-web && npm prune --production --force
 # Start a new stage for the final image
 FROM eclipse-temurin:11-jre-alpine
 
-# Install curl
-RUN apk --no-cache add curl
+# Install curl and Docker CLI
+RUN apk --no-cache add \
+    curl \
+    docker-cli
 
 # Set the working directory
 WORKDIR /app
@@ -114,13 +116,13 @@ RUN echo '#!/bin/sh' > ./reportburster.sh && \
 
 # Generate the startTestEmailServer.bat script
 RUN echo '#!/bin/sh' > ./tools/test-email-server/startTestEmailServer.sh && \
-    echo 'docker-compose up -d mailhog' \
-    chmod +x /tools/test-email-server/startTestEmailServer.sh
+    echo 'docker start mailhog' \
+    chmod +x ./tools/test-email-server/startTestEmailServer.sh
 
 # Generate the shutTestEmailServer.sh script
 RUN echo '#!/bin/sh' > ./tools/test-email-server/shutTestEmailServer.sh && \
-    echo 'docker-compose stop mailhog' \
-    chmod +x /tools/test-email-server/shutTestEmailServer.sh
+    echo 'docker stop mailhog' \
+    chmod +x ./tools/test-email-server/shutTestEmailServer.sh
 
 # RUN ls -la /app
 # RUN ls -la /app/lib/frontend
