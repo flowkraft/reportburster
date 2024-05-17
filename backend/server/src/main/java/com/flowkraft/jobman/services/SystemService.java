@@ -192,7 +192,6 @@ public class SystemService {
 			commandWithShell.add("/c");
 		} else if (os.contains("nix") || os.contains("nux") || os.contains("mac")) {
 			commandWithShell.add("/bin/sh");
-			//commandWithShell.add("-c");
 		}
 
 		List<String> newArgs = new ArrayList<>();
@@ -213,11 +212,10 @@ public class SystemService {
 					+ URLDecoder.decode(cwdPath.get(), StandardCharsets.UTF_8.toString());
 		}
 
-		// Using the Stream API
-		System.out.println("workingDirectoryPath: " + workingDirectoryPath);
+		// System.out.println("workingDirectoryPath: " + workingDirectoryPath);
 
-		System.out.println("commandWithShell:");
-		commandWithShell.stream().forEach(System.out::println);
+		// System.out.println("commandWithShell:");
+		// commandWithShell.stream().forEach(System.out::println);
 
 		ProcessBuilder processBuilder = new ProcessBuilder(commandWithShell);
 		processBuilder.directory(new File(workingDirectoryPath));
