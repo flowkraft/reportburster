@@ -101,7 +101,7 @@ export const tabQualityAssuranceTemplate = `<ng-template #tabQualityAssuranceTem
   </button>
 </a>
 <span *ngIf="xmlSettings.documentburster.settings.qualityassurance.emailserver.weburl.includes('mailhog')" style="color:dodgerblue">
-  'AREAS.PROCESSING.TAB-QUALITY-ASSURANCE.VIEW-TESTED-EMAILS' | translate @ http://your_reportburster_server_address:8025
+  {{'AREAS.PROCESSING.TAB-QUALITY-ASSURANCE.VIEW-TESTED-EMAILS' | translate }} at http://your_reportburster_server_address:8025
 </span>
       </div>
 
