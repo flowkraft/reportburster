@@ -61,7 +61,7 @@ public class SystemService {
 
 	private Map<String, Tailer> existingTailers = new HashMap<>();
 
-	public static SystemInfo infoGet() {
+	public static SystemInfo getSystemInfo() {
 		SystemInfo info = new SystemInfo();
 		info.osName = System.getProperty("os.name");
 		info.osVersion = System.getProperty("os.version");
@@ -212,10 +212,10 @@ public class SystemService {
 					+ URLDecoder.decode(cwdPath.get(), StandardCharsets.UTF_8.toString());
 		}
 
-		// System.out.println("workingDirectoryPath: " + workingDirectoryPath);
+		System.out.println("workingDirectoryPath: " + workingDirectoryPath);
 
-		// System.out.println("commandWithShell:");
-		// commandWithShell.stream().forEach(System.out::println);
+		System.out.println("commandWithShell:");
+		commandWithShell.stream().forEach(System.out::println);
 
 		ProcessBuilder processBuilder = new ProcessBuilder(commandWithShell);
 		processBuilder.directory(new File(workingDirectoryPath));
