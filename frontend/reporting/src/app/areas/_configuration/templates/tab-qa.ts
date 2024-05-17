@@ -10,9 +10,8 @@ export const tabQATemplate = `<ng-template #tabQATemplate>
           (ngModelChange)='settingsChangedEventHandler($event)' class="form-control" />
       </div>
 
-    </div>
-    <p></p>
-      
+  </div>
+  <p></p>
   
   <div class="row">
 
