@@ -199,6 +199,10 @@ export class SettingsService {
     return `${this.CONFIGURATION_DEFAULTS_FOLDER_PATH}/settings.xml`;
   }
 
+  getMyReportsConfigurationValuesFilePath(): string {
+    return `${this.CONFIGURATION_BURST_FOLDER_PATH}/settings.xml`;
+  }
+
   async loadDefaultSettingsFileAsync(): Promise<any> {
     const systemInfo = await this.apiService.get('/jobman/system/info');
 

@@ -297,7 +297,7 @@ export class ProcessingComponent implements OnInit {
     });
 
     this.xmlSettings = await this.settingsService.loadSettingsFileAsync(
-      this.settingsService.getDefaultsConfigurationValuesFilePath(),
+      this.settingsService.getMyReportsConfigurationValuesFilePath(),
     );
 
     //console.log(
@@ -715,21 +715,22 @@ export class ProcessingComponent implements OnInit {
 
   async saveMergedFileSetting() {
     const xmlSettings = await this.settingsService.loadSettingsFileAsync(
-      this.settingsService.getDefaultsConfigurationValuesFilePath(),
+      this.settingsService.getMyReportsConfigurationValuesFilePath(),
     );
 
     xmlSettings.documentburster.settings.mergefilename =
       this.processingService.procMergeBurstInfo.mergedFileName;
 
     this.settingsService.saveSettingsFileAsync(
-      this.settingsService.getDefaultsConfigurationValuesFilePath(),
+      this.settingsService.getMyReportsConfigurationValuesFilePath(),
       xmlSettings,
     );
   }
 
-  moveItemInArray(array, from, to) {
+  moveItemInArray<T>(array: T[], from: number, to: number): void {
     array.splice(to, 0, array.splice(from, 1)[0]);
   }
+
   // end tab Merge -> Burst
 
   // tab Quality Assurance
