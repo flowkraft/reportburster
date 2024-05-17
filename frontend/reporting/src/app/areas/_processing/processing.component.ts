@@ -910,7 +910,7 @@ export class ProcessingComponent implements OnInit {
       },
     );
 
-    //console.log(`qaEmailServerStarted = ${qaEmailServerStarted}`);
+    console.log(`qaEmailServerStarted = ${qaEmailServerStarted}`);
 
     if (qaEmailServerStarted) testEmailServerStatus = 'started';
 
