@@ -91,15 +91,18 @@ export const tabQualityAssuranceTemplate = `<ng-template #tabQualityAssuranceTem
     <div class="row">
       <div class="col-xs-6" *ngIf="processingService.procQualityAssuranceInfo.testEmailServerStatus === 'started'"
         style="margin-right: 40px">
-        <a href="{{ xmlSettings.documentburster.settings.qualityassurance.emailserver.weburl }}" target="_blank">
-          <button class="btn" type="button">
-            <span style="color:dodgerblue">
-              <i class="fa fa-paper-plane"></i> </span>&nbsp;&nbsp;&nbsp;<span [innerHTML]="
-                'AREAS.PROCESSING.TAB-QUALITY-ASSURANCE.VIEW-TESTED-EMAILS'
-                  | translate
-              "></span>
-          </button>
-        </a>
+        <a *ngIf="!xmlSettings.documentburster.settings.qualityassurance.emailserver.weburl.includes('mailhog')" href="{{ xmlSettings.documentburster.settings.qualityassurance.emailserver.weburl }}" target="_blank">
+  <button class="btn" type="button">
+    <span style="color:dodgerblue">
+      <i class="fa fa-paper-plane"></i> </span>&nbsp;&nbsp;&nbsp;<span [innerHTML]="
+        'AREAS.PROCESSING.TAB-QUALITY-ASSURANCE.VIEW-TESTED-EMAILS'
+          | translate
+      "></span>
+  </button>
+</a>
+<span *ngIf="xmlSettings.documentburster.settings.qualityassurance.emailserver.weburl.includes('mailhog')" style="color:dodgerblue">
+  'AREAS.PROCESSING.TAB-QUALITY-ASSURANCE.VIEW-TESTED-EMAILS' | translate @ http://your_reportburster_server_address:8025
+</span>
       </div>
 
       <div class=" col-xs-6" *ngIf="processingService.procQualityAssuranceInfo.testEmailServerStatus !== 'started'"
