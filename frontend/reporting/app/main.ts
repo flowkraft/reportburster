@@ -1,11 +1,4 @@
-// TODO improve Chocolatery/Java scripts (Alert is not displayed in the CMD on install chocolatey),
-// + Java installation window remains "doing nothing" until the user is pressing a key
-// + once the Java installation windows remained hidden but java was nethertheless installed in the background
-
-// TODO Microsoft antivirus says ReportBurster.exe is a trojan most likely because
-// it starts the rbsj server and then scans for open ports.
-// TODO add e2e playwright tests for report generation
-// TODO add one "Samples" for report generation
+//Bookkeeping January - March 2024
 
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import log from 'electron-log';
