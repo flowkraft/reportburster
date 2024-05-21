@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   reportburster_server:
-    image: reportburster_server:10.1.1
+    image: flowkraft/reportburster_server:10.1.1
     container_name: reportburster_server
     ports:
       - "9090:9090"
