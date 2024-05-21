@@ -50,25 +50,25 @@ chmod +x ./docker/shutServer.sh
 chmod +x ./docker/_clean.sh && cd ./docker && ./_clean.sh && cd ..
 
 # Step 5: Pack docker folder as a zip file
-rm -rf ./docker-temp/
-mkdir ./docker-temp
+rm -rf ./ReportBurster/
+mkdir ./ReportBurster
 
-cp ./docker/docker-compose.yml ./docker-temp/docker-compose.yml 
+cp ./docker/docker-compose.yml ./ReportBurster/docker-compose.yml 
 
-cp ./docker/startServer.sh ./docker-temp/reportburster.sh
-cp ./docker/startServer.sh ./docker-temp/startServer.sh 
-cp ./docker/shutServer.sh ./docker-temp/shutServer.sh 
+cp ./docker/startServer.sh ./ReportBurster/reportburster.sh
+cp ./docker/startServer.sh ./ReportBurster/startServer.sh 
+cp ./docker/shutServer.sh ./ReportBurster/shutServer.sh 
 
-chmod +x ./docker-temp/reportburster.sh
-chmod +x ./docker-temp/startServer.sh
-chmod +x ./docker-temp/shutServer.sh
+chmod +x ./ReportBurster/reportburster.sh
+chmod +x ./ReportBurster/startServer.sh
+chmod +x ./ReportBurster/shutServer.sh
 
 #create the dist directory if it doesn't already exist. If the directory does exist, mkdir -p will do nothing
 mkdir -p ./dist
 rm -f ./dist/reportburster-server-linux.zip
-zip -r ./dist/reportburster-server-linux.zip ./docker-temp
+zip -r ./dist/reportburster-server-linux.zip ./ReportBurster
 
-rm -rf ./docker-temp/
+rm -rf ./ReportBurster/
 
 # Step 6: Use rclone to sync/upload the newly generated local zip file to s3mkdir -p ~/.config/rclone
 if [ ! -f ~/.config/rclone/rclone.conf ]; then
