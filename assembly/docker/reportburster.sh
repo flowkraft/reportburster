@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the image name
-image="reportburster_server:10.1.1"
+image="flowkraft/reportburster_server:10.1.1"
 
 # Define the directories to copy
 directories=("backup", "config" "input-files" "logs" "output" "quarantine" "poll" "samples" "scripts")
