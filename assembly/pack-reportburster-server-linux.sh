@@ -83,4 +83,4 @@ region = us-east-1
 EOF
 fi
 
-rclone sync ./dist/reportburster-server-linux.zip s3://documentburster/newest/reportburster-server-linux.zip
+rclone sync ./dist/reportburster-server-linux.zip s3://documentburster/newest/
