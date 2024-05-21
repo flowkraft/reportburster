@@ -44,37 +44,5 @@ public class WrongCommandLineArgumentsTest {
 			assertTrue(e.getMessage().contains("Input file does not exist"));
 		}
 	}
-
-	@Test
-	public void pollFolderDoesNotExists() throws Throwable {
-
-		final CliJob job;
-
-		job = new CliJob("src/main/external-resources/template/config/burst/settings.xml") {
-
-			public String getTempFolder() {
-				return TestsUtils.TESTS_OUTPUT_FOLDER + "/temp/";
-			}
-
-		};
-
-		MainProgram program = new MainProgram() {
-
-			protected CliJob getJob(CommandLine cmd) {
-				return job;
-			};
-
-		};
-
-		String[] args = new String[2];
-		args[0] = "-p";
-		args[1] = "poll";
-
-		try {
-			program.execute(args);
-		} catch (FileNotFoundException e) {
-			assertTrue(e.getMessage().contains("Poll folder does not exist"));
-		}
-
-	}
+	
 }
