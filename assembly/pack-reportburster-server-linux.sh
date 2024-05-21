@@ -37,7 +37,7 @@ echo $DOCKER_HUB_PASSWORD | docker login --username $DOCKER_HUB_USERNAME --passw
 docker push $DOCKER_HUB_USERNAME/reportburster_server:$version
 
 # Step 4: Update docker-compose.yml with the version parsed previously
-sed -i "s|image:${DOCKER_HUB_USERNAME}/reportburster_server:.*|image:${DOCKER_HUB_USERNAME}/reportburster_server:${version}|" ./docker/docker-compose.yml
+sed -i "s|reportburster_server:.*|reportburster_server:${version}|" ./docker/docker-compose.yml
 
 # Update the reportburster.sh, startServer.sh with the latest version
 sed -i "s|\(image=\"${DOCKER_HUB_USERNAME}/reportburster_server:\).*\"|\1${version}\"|" ./docker/reportburster.sh
