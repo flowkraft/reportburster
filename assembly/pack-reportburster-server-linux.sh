@@ -70,5 +70,17 @@ zip -r ./dist/reportburster-server-linux.zip ./docker-temp
 
 rm -rf ./docker-temp/
 
-# Step 6: Use rclone to sync/upload the newly generated local zip file to s3
+# Step 6: Use rclone to sync/upload the newly generated local zip file to s3mkdir -p ~/.config/rclone
+if [ ! -f ~/.config/rclone/rclone.conf ]; then
+cat > ~/.config/rclone/rclone.conf <<EOF
+[s3]
+type = s3
+provider = AWS
+env_auth = false
+access_key_id = ${AWS_ACCESS_KEY_ID}
+secret_access_key = ${AWS_SECRET_ACCESS_KEY}
+region = us-east-1
+EOF
+fi
+
 rclone sync ./dist/reportburster-server-linux.zip s3://documentburster/newest/reportburster-server-linux.zip
