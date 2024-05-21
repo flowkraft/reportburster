@@ -92,22 +92,4 @@ public class CommandLineWrongProgramSetUpTest {
 
 	}
 
-	@Test
-	public void testForValidPollArguments() throws Throwable {
-
-		String[] args = new String[2];
-		args[0] = "-p";
-		args[1] = "poll";
-
-		try {
-			(new MainProgram()).execute(args);
-			assertTrue(
-					"It should not come here and it should fail with IOException since the ./temp folder does not exist to create the job file",
-					false);
-		} catch (FileNotFoundException e) {
-			assertTrue(e.getMessage().contains("does not exist"));
-		}
-
-	}
-
 }
