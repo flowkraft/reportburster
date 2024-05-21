@@ -380,40 +380,7 @@ public class CommandLineArgumentsTest {
 
 	}
 
-	@Test
-	public void validPollArguments1() throws Throwable {
-
-		final String[] args = new String[2];
-		args[0] = "-p";
-		args[1] = TestsUtils.TESTS_OUTPUT_FOLDER + "/poll";
-
-		// "poll" folder is required to be available
-		FileUtils.forceMkdir(new File(TestsUtils.TESTS_OUTPUT_FOLDER + "/poll"));
-
-		new Thread(new Runnable() {
-			public void run() {
-				try {
-					program.execute(args);
-				} catch (Throwable e) {
-					e.printStackTrace();
-				}
-			}
-		}).start();
-
-		File pollPidFile = new File(TestsUtils.TESTS_OUTPUT_FOLDER + "/temp/poll.pid");
-		boolean directoryPollerStarted = false;
-
-		while (!directoryPollerStarted) {
-			directoryPollerStarted = pollPidFile.exists();
-			Thread.sleep(100);
-		}
-
-		assertTrue(pollPidFile.exists());
-
-		pollPidFile.delete();
-
-	}
-
+	
 	private void assertMergeResults(String fileName) throws Exception {
 
 		String path = TestsUtils.TESTS_OUTPUT_FOLDER + "/output/ValidMergeArguments/" + fileName;

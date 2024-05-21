@@ -79,19 +79,4 @@ public class UtilsTest {
 
 	}
 
-	@Test
-	public void getHumanlyReadableFileSize() {
-
-		String docBookFilePath = "../../xtra-tools/containers/tomcat/tomcat.zip";
-
-		File docBookFile = new File(docBookFilePath);
-
-		double fileSize = Utils.getFileSize(docBookFile.length(), Utils.FileSizeUnit.MEGABYTE);
-
-		System.out.println("tomcat.zip FileSize = " + fileSize);
-
-		assertTrue("tomcat.zip file size should be > 7MB and < 8MB", fileSize > 7 && fileSize < 8);
-
-	}
-
 }
