@@ -65,8 +65,8 @@ chmod +x ./ReportBurster/shutServer.sh
 
 #create the dist directory if it doesn't already exist. If the directory does exist, mkdir -p will do nothing
 mkdir -p ./dist
-rm -f ./dist/reportburster-server-linux.zip
-zip -r ./dist/reportburster-server-linux.zip ./ReportBurster
+rm -f ./dist/reportburster-server-docker.zip
+zip -r ./dist/reportburster-server-docker.zip ./ReportBurster
 
 rm -rf ./ReportBurster/
 
@@ -83,4 +83,4 @@ region = us-east-1
 EOF
 fi
 
-rclone sync ./dist/reportburster-server-linux.zip s3://documentburster/newest/
+rclone sync ./dist/reportburster-server-docker.zip s3://documentburster/newest/
