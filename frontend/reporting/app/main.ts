@@ -301,7 +301,7 @@ ipcMain.handle('getBackendUrl', async (event) => {
   );
   const backendUrl = match ? match[1] : null;
 
-  //log.info(`getBackendUrl settings.xml: ${fileContent}`);
+  log.info(`getBackendUrl settings.xml: ${internalSettingsXmlFileContent}`);
 
   return backendUrl;
 });
