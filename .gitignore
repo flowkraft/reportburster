@@ -8,8 +8,8 @@ playground
 testground
 
 .venv
-assembly/uat/resources/__pycache__
-assembly/uat/results
+assembly/user-acceptance/resources/__pycache__
+assembly/user-acceptance/results
 
 **/backup/**/*.csv
 **/output/**/*.csv
