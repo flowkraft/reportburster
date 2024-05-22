@@ -1,2 +1,3 @@
+psutil
 robotframework
-robotframework-autoitlibrary
+robotframework-seleniumlibrary
