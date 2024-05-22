@@ -173,7 +173,7 @@
     "cross-env": "7.0.3",
     "electron": "21.1.1",
     "electron-builder": "23.6.0",
-    "electron-chromedriver": "19.0.0",
+    "electron-chromedriver": "21.0.0",
     "electron-debug": "3.2.0",
     "electron-reloader": "1.2.3",
     "eslint": "8.20.0",
