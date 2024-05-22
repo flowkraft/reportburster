@@ -1,12 +1,13 @@
 #################
 ## DocumentBurster
 #################
-applications-src.zip
-assembly-documentburster/**/*.zip
-assembly-documentburster/dist
+assembly/**/*.zip
+assembly/dist
 
 playground
 testground
+
+.venv
 
 **/backup/**/*.csv
 **/output/**/*.csv
