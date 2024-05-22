@@ -11,6 +11,8 @@ chromedriver_path = os.path.join(os.path.dirname(os.path.dirname(cwd)), "fronten
 signal_service = ChromeService(executable_path=chromedriver_path)
 
 # And here we construct options that point to use your actual electron app.
-reportburster_exe_path = os.path.join(os.path.dirname(cwd), "target/uat/ReportBurster/ReportBurster.exe")
+PORTABLE_EXECUTABLE_DIR = os.path.join(os.path.dirname(cwd), "target/uat/ReportBurster")
+
+reportburster_exe_path = os.path.join(PORTABLE_EXECUTABLE_DIR, "ReportBurster.exe")
 signal_electron = Options()
 signal_electron.binary_location = reportburster_exe_path
