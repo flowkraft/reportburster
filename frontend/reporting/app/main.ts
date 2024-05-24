@@ -438,13 +438,13 @@ async function _getSystemInfo(): Promise<{
 
   // Extract Chocolatey version
   let chocoVersionMatch = electronLogFileContent.match(
-    /choco version: (\d+\.\d+\.\d+)/,
+    /choco version: (\d+(?:\.\d+)?(?:\.\d+)?)/,
   );
   let chocoVersion = chocoVersionMatch ? chocoVersionMatch[1] : '';
 
   // Extract Java version
   let javaVersionMatch = electronLogFileContent.match(
-    /using Java (\d+\.\d+\.\d+)/,
+    /using Java (\d+(?:\.\d+)?(?:\.\d+)?)/,
   );
   let javaVersion = javaVersionMatch ? javaVersionMatch[1] : '';
 
@@ -454,7 +454,7 @@ async function _getSystemInfo(): Promise<{
       version: chocoVersion,
     },
     java: {
-      isJavaOk: javaIsInstalled,
+      isJavaOk: javaIsInstalled && parseInt(javaVersion.split('.')[0]) >= 11,
       version: javaVersion,
     },
     env: {

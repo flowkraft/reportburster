@@ -59,7 +59,7 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
       </div>
     </div>
 
-    <div class="row" *ngIf="!storeService.configSys.sysInfo.setup.java.isJavaOk">
+    <div class="row" *ngIf="!storeService.configSys.sysInfo.setup.java.isJavaOk && !storeService.configSys.sysInfo.setup.java.version">
       <br /><br />
       <span class="label label-warning"
         ><strong
@@ -85,13 +85,37 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
       <br /><br />
 
       <a href="#" [routerLink]="['/help', 'installSetupMenuSelected']"
-      skipLocationChange="true"><button type="button" class="btn btn-primary">
+      skipLocationChange="true"><button id="btnInstallJavaTabBurst" type="button" class="btn btn-primary">
           {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INSTALL' | translate }}
           <em>Java</em>
         </button></a
       >
     </div>
 
+    <div class="row" *ngIf="!storeService.configSys.sysInfo.setup.java.isJavaOk && storeService.configSys.sysInfo.setup.java.version">
+      <br /><br />
+      <span id="javaInstallationOld" class="label label-warning"
+        ><strong
+          ><em>Java</em>
+          {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.TOO-OLD' | translate
+          }}
+        </strong></span
+      >
+      <br /><br />
+
+      <span
+        [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INNER-HTML.TOO-OLD' | translate"
+      ></span>
+
+      <br /><br />
+
+      <span
+        id="checkPointJavaPreRequisite"
+        [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INNER-HTML.REQUIRED-SHORT' | translate"
+      ></span>
+      
+    </div>
+    
     <div
       class="row"
       *ngIf="(processingService.procBurstInfo.prefilledInputFilePath || processingService.procBurstInfo.inputFile) && !executionStatsService.logStats.foundDirtyLogFiles && executionStatsService.jobStats.numberOfActiveJobs === 0 && executionStatsService.jobStats.jobsToResume.length === 0"

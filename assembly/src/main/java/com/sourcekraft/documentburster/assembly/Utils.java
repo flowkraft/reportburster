@@ -2,9 +2,14 @@ package com.sourcekraft.documentburster.assembly;
 
 import java.io.File;
 import java.io.FileReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -79,7 +84,20 @@ public class Utils {
 	public static void runMaven(String pomXmlFolderPath, String mavenCommand) throws Exception {
 
 		if (!mavenCommand.contains("-Djavac.compiler.path")) {
-			mavenCommand += " -Djavac.compiler.path=\"C:/Program Files/Java/jdk-17.0.2/bin/javac.exe\"";
+			String rootPath = "C:/Program Files";
+			String pattern = ".*Eclipse Adoptium\\\\jdk-11.*-hotspot.*";
+
+			try (Stream<Path> paths = Files.walk(Paths.get(rootPath))) {
+				String compilerPath = paths.filter(Files::isDirectory).map(Path::toString)
+						.filter(Pattern.compile(pattern).asPredicate()).findFirst()
+						.orElseThrow(() -> new RuntimeException("Directory not found"));
+
+				System.out.println("Compiler path: " + compilerPath); // Debug output
+
+				mavenCommand += " -Djavac.compiler.path=\"" + compilerPath + "/bin/javac.exe\"";
+
+				System.out.println("Maven command: " + mavenCommand); // Debug output
+			}
 		}
 
 		new ProcessExecutor().directory(new File(pomXmlFolderPath)).command("cmd", "/c", mavenCommand)

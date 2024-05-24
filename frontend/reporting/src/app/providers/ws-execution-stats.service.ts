@@ -272,7 +272,7 @@ export class WebSocketExecutionStatsService extends WebSocketEndpoint {
     //console.log(`handleExecutionStatsEvent receivedEvent = ${receivedEvent}`);
 
     this.settingsService.isJServerStarted = true;
-    this.stateStore.configSys.sysInfo.setup.java.isJavaOk = true;
+    //this.stateStore.configSys.sysInfo.setup.java.isJavaOk = true;
 
     //const message = receivedEvent['message'];
     const message = JSON.parse(receivedEvent);

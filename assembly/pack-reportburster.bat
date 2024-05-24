@@ -11,3 +11,6 @@ IF EXIST target (
 IF EXIST pack-reportburster.log (del /f /q pack-reportburster.log)
 
 mvn clean test -Dtest=AssemblerTest#assembleReportBursterAndReportBursterServer -X > pack-reportburster.log
+
+:: cd src/user-acceptance
+:: call run-tests.bat > user-acceptance-tests.log

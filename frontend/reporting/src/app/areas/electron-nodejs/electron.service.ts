@@ -381,7 +381,7 @@ del /f /s install.ps1
 
     return UtilitiesElectron.childProcessSpawn(
       'cmd.exe',
-      ['/c', elevatedScriptFilePath],
+      ['/c', 'start', '/wait', '/b', elevatedScriptFilePath],
       {
         cwd: Utilities.slash(this.PORTABLE_EXECUTABLE_DIR + '/temp/'),
       },
@@ -397,10 +397,24 @@ del /f /s install.ps1
         command,
         testCommand,
       );
-
+    /*
     return UtilitiesElectron.childProcessSpawn(
       'powershell.exe',
-      [elevatedScriptFilePath],
+      [
+        '-Command',
+        `Start-Process -FilePath powershell.exe -ArgumentList '-File', '${elevatedScriptFilePath}' -Wait -Verb RunAs`,
+      ],
+      {
+        cwd: Utilities.slash(this.PORTABLE_EXECUTABLE_DIR + '/temp/'),
+      },
+    );
+    */
+    return UtilitiesElectron.childProcessSpawn(
+      'powershell.exe',
+      [
+        '-Command',
+        `Start-Process -FilePath powershell.exe -ArgumentList '-Command', '& { . \"${elevatedScriptFilePath}\" }' -Wait -Verb RunAs`,
+      ],
       {
         cwd: Utilities.slash(this.PORTABLE_EXECUTABLE_DIR + '/temp/'),
       },
@@ -419,6 +433,7 @@ del /f /s install.ps1
         Utilities.slash(this.PORTABLE_EXECUTABLE_DIR + '/temp/'),
         'elevated-powershell-script',
       ) + '.ps1';
+
     const now = dayjs().format('DD/MM/YYYY HH:mm:ss');
 
     const scriptContent = `if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -444,6 +459,12 @@ del /f /s install.ps1
       }
     }  
 
+    if (!(Test-Path -Path "${this.logFilePath}")) {
+      New-Item -ItemType File -Path "${this.logFilePath}" -Force
+    } else {
+      Clear-Content -Path "${this.logFilePath}"
+    }
+      
     ${testCommand}
     
     # if ${testCommand} was succesfull
@@ -456,8 +477,11 @@ del /f /s install.ps1
       Add-Content ${this.logFilePath} "${now} ERRROR - Could not execute '${commandToElevate}' because '${testCommand}' failed!"
     }
     
+    # Add this line at the end of your script
+    Write-Host "Script execution completed successfully"
+
     Remove-Item $PSCommandPath;
-    
+
     Add-Type -AssemblyName System.Windows.Forms
     [System.Windows.Forms.MessageBox]::Show('Command execution completed, you may want to close and start again ReportBurster.', 'Info', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
 
@@ -541,8 +565,11 @@ del /f /s install.ps1
      ::START
      ::::::::::::::::::::::::::::
      REM Run shell as admin (example) - put here code as you like
+     type nul > "${this.logFilePath}"
      ${commandToElevate} 2>&1 >> ${this.logFilePath}
      del /f /s *.cmd 2>&1 >> ${this.logFilePath}
+     
+     echo Script execution completed successfully
      ::show message box
      powershell -ExecutionPolicy Bypass -NoProfile -Command "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; [System.Windows.Forms.MessageBox]::Show('Command execution completed, you may want to close and start again ReportBurster.', 'Info', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)"
      ::cmd /k
@@ -553,9 +580,9 @@ del /f /s install.ps1
     return Promise.resolve(elevatedScriptFilePath);
   }
 
-  async emptyLogFile() {
-    return UtilitiesNodeJs.writeAsync(this.logFilePath, '');
-  }
+  //async emptyLogFile() {
+  //  return UtilitiesNodeJs.writeAsync(this.logFilePath, '');
+  //}
 
   async createJobFile(jobType: string): Promise<string> {
     let filePath = '';
