@@ -1,3 +1,6 @@
-psutil
 robotframework
 robotframework-seleniumlibrary
+robotframework-requests
+psutil
+pyautogui
+opencv-python

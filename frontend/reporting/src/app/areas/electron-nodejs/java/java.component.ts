@@ -35,7 +35,7 @@ export class JavaComponent {
         //  'choco install jre8 -PackageParameters "/exclude:64" --yes',
         //);
         this.electronService.typeCommandOnTerminalAndThenPressEnter(
-          'choco install openjdk11 --yes',
+          'choco install temurin11 --yes',
         );
       },
     });
@@ -46,7 +46,7 @@ export class JavaComponent {
       message: 'Are you sure that you want to perform this action?',
       confirmAction: () => {
         this.electronService.typeCommandOnTerminalAndThenPressEnter(
-          'choco uninstall jre8 --yes',
+          'choco uninstall temurin11 --yes',
         );
       },
     });

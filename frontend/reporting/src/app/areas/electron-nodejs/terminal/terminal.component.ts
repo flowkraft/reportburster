@@ -86,19 +86,21 @@ export class TerminalComponent implements AfterViewInit {
 
             case 'install chocolatey':
               try {
-                await this.electronService.emptyLogFile();
+                //await this.electronService.emptyLogFile();
 
                 await this.electronService.installChocolatey();
 
                 /*
-                    elevatedScript.stderr.on('data', (data) => {
-                    response = response + '\n' + data;
-                  });
+                elevatedScript.stderr.on('data', (data) => {
+                  response = response + '\n' + data;
+                  console.log(`installChocolatey.stderr.data = ${data}`);
+                });
 
-                  for await (const data of elevatedScript.stdout) {
-                    response = response + '\n' + data;
-                  }
-                  */
+                for await (const data of elevatedScript.stdout) {
+                  response = response + '\n' + data;
+                  console.log(`installChocolatey.stdout.data = ${data}`);
+                }
+                */
               } catch (error) {
                 response = error;
               }
@@ -107,7 +109,7 @@ export class TerminalComponent implements AfterViewInit {
 
             case 'uninstall chocolatey':
               try {
-                await this.electronService.emptyLogFile();
+                //await this.electronService.emptyLogFile();
 
                 const unInstallCommand = `& ../tools/chocolatey/uninstall.ps1`;
                 const testCommand = 'choco --version';
@@ -132,30 +134,36 @@ export class TerminalComponent implements AfterViewInit {
               break;
 
             case 'choco install openjdk --yes':
-            case 'choco install openjdk11 --yes':
+            case 'choco install temurin --yes':
+            case 'choco install temurin11 --yes':
             case 'choco install notepadplusplus --yes':
             case 'choco install winmerge --yes':
             case 'choco uninstall openjdk --yes':
-            case 'choco uninstall openjdk11 --yes':
+            case 'choco uninstall temurin --yes':
+            case 'choco uninstall temurin11 --yes':
             case 'choco uninstall notepadplusplus --yes':
             case 'choco uninstall winmerge --yes':
               try {
-                await this.electronService.emptyLogFile();
+                //await this.electronService.emptyLogFile();
 
                 const testCommand = 'choco --version';
-                const elevatedScript =
-                  await this.electronService.getCommandReadyToBeRunAsAdministratorUsingPowerShell(
-                    command,
-                    testCommand,
-                  );
 
-                elevatedScript.stderr.on('data', (data) => {
+                await this.electronService.getCommandReadyToBeRunAsAdministratorUsingPowerShell(
+                  command,
+                  testCommand,
+                );
+
+                /*
+                  elevatedScript.stderr.on('data', (data) => {
                   response = response + '\n' + data;
+                  console.log(`choco.stderr.data = ${data}`);
                 });
 
                 for await (const data of elevatedScript.stdout) {
                   response = response + '\n' + data;
+                  console.log(`choco.stdout.data = ${data}`);
                 }
+                */
               } catch (error) {
                 response = error;
               }

@@ -19,36 +19,20 @@ export const terminalTemplate = `
       ></span
       >: <code>java --version</code>
     </li>
+
     <li>
-      <span
-        [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.FIND-CHOCOLATEY-VERSION' | translate"
-      ></span
-      >: <code>choco --version</code>
-    </li>
-    <li>
-      <span
-        [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.INSTALL-CHOCOLATEY' | translate"
-      ></span
-      >: <code>install chocolatey</code>
-    </li>
-    <li>
-      <span
-        [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.UNINSTALL-CHOCOLATEY' | translate"
-      ></span
-      >: <code>uninstall chocolatey</code>
-    </li>
-    <li>
-      <span
-        [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.INSTALL-JAVA' | translate"
-      ></span
-      >: <code>choco install openjdk --yes</code>
-    </li>
-    <li>
-      <span
-        [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.UNINSTALL-JAVA' | translate"
-      ></span
-      >: <code>choco uninstall openjdk --yes</code>
-    </li>
+    <span
+      [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.INSTALL-JAVA11' | translate"
+    ></span
+    >: <code>choco install temurin11 --yes</code>
+  </li>
+  <li>
+    <span
+      [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.UNINSTALL-JAVA11' | translate"
+    ></span
+    >: <code>choco uninstall temurin11 --yes</code>
+  </li>
+
   </ol>
   <br />
   <strong
@@ -57,18 +41,38 @@ export const terminalTemplate = `
   >
   <br /><br />
   <ol>
-    <li>
-      <span
-        [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.INSTALL-JAVA11' | translate"
-      ></span
-      >: <code>choco install openjdk11 --yes</code>
-    </li>
-    <li>
-      <span
-        [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.UNINSTALL-JAVA11' | translate"
-      ></span
-      >: <code>choco uninstall openjdk11 --yes</code>
-    </li>
+
+  <li>
+  <span
+    [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.FIND-CHOCOLATEY-VERSION' | translate"
+  ></span
+  >: <code>choco --version</code>
+</li>
+<li>
+  <span
+    [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.INSTALL-CHOCOLATEY' | translate"
+  ></span
+  >: <code>install chocolatey</code>
+</li>
+<li>
+  <span
+    [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.UNINSTALL-CHOCOLATEY' | translate"
+  ></span
+  >: <code>uninstall chocolatey</code>
+</li>
+<li>
+  <span
+    [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.INSTALL-JAVA' | translate"
+  ></span
+  >: <code>choco install temurin --yes</code>
+</li>
+<li>
+  <span
+    [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.UNINSTALL-JAVA' | translate"
+  ></span
+  >: <code>choco uninstall temurin --yes</code>
+</li>
+
   </ol>
 </p-sidebar>
 

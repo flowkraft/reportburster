@@ -3,10 +3,9 @@ Library     SeleniumLibrary
 Library     OperatingSystem
 Library     resources/utilities.py
 Variables   resources/vars.py
-Suite Teardown   Close Electron Application
-Suite Setup      Open Electron Application
+Suite Setup      Ensure Java Prerequisite
 Test Teardown    Run Keyword If Test Failed    Capture Failed Test Screenshot
-Test Setup    Clean State
+Test Setup       Clean Output Folders and Log Files
 
 *** Keywords ***
 Open Electron Application
@@ -19,10 +18,6 @@ Close Electron Application
   [Documentation]  Kills the Electron application process
   Kill Reportburster Exe Process
 
-Clean State
-  [Documentation]  Clean Output Folders and Log Files
-  Clean Output Folders and Log Files
-
 Capture Failed Test Screenshot
   [Documentation]  Captures a screenshot with a name based on the test case name
   Capture Page Screenshot    EMBED
@@ -30,6 +25,7 @@ Capture Failed Test Screenshot
 *** Test Cases ***
 Quickstart Payslips.pdf Should Work Fine
     [Documentation]  Payslips.pdf Should Work Fine
+    Open Electron Application
     Wait Until Page Contains Element    id=burstFile    timeout=30
     Wait Until Page Contains Element    id=infoLog    timeout=30
     Page Should Contain Element    id=noJobsRunning
@@ -72,18 +68,4 @@ Quickstart Payslips.pdf Should Work Fine
     # Done without errors 
     Page Should Contain Element    id=btnGreatNoErrorsNoWarnings
     Sleep  5s
-
-# Command Line Payslips.pdf Should Work Fine
-#   [Documentation] Command Line Payslips.pdf Should Work Fine
-
-# Prerequisites Java Not Installed Should Work Fine
-#   [Documentation] Prerequisites Java Not Installed Should Work Fine
-
-# Prerequisites Java 8 Found Should Work Fine
-#   [Documentation] Prerequisites Java 8 Found Should Work Fine
-  
-# Prerequisites Chocolatey Not Installed Should Work Fine
-#   [Documentation] Prerequisites Chocolatey Not Installed Should Work Fine
-
-# Prerequisites Chocolatey Installed But Choco Minus Version Not Working Should Work Fine
-#   [Documentation] Chocolatey Installed But Choco Minus Version Not Working Should Work Fine
+    Close Electron Application
