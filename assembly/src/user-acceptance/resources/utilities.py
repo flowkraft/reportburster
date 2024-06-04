@@ -107,7 +107,7 @@ def ensure_java_is_not_installed():
         # Use Chocolatey to uninstall Java, if it's installed
         if choco_installed:
             output = subprocess.check_output('choco list', shell=True).decode('utf-8')
-            java_or_jdk_products = [line.strip() for line in output.split('\n') if 'java' in line.lower() or 'jdk' in line.lower() or 'temurin' in line.lower()]
+            java_or_jdk_products = [line.strip() for line in output.split('\n') if 'java' in line.lower() or 'jdk' in line.lower() or 'temurin' in line.lower() or 'maven' in line.lower()]
 
             for product in java_or_jdk_products:
                 product_name = product.split(' ')[0]  # get the product name from the line
@@ -138,6 +138,7 @@ def ensure_java_is_installed(version="11"):
             ensure_java_is_not_installed()
             if version == '11':
                 subprocess.check_call(f'choco install temurin11 -y', shell=True)
+                subprocess.check_call(f'choco install maven -y', shell=True)
             elif version == '8':
                 subprocess.check_call(f'choco install temurin8 -y', shell=True)
             else:
@@ -147,6 +148,7 @@ def ensure_java_is_installed(version="11"):
         ensure_chocolatey_is_installed()
         if version == '11':
             subprocess.check_call(f'choco install temurin11 -y', shell=True)
+            subprocess.check_call(f'choco install maven -y', shell=True)
         elif version == '8':
                 subprocess.check_call(f'choco install temurin8 -y', shell=True)
         else:

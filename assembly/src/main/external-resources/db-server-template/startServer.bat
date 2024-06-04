@@ -1,7 +1,7 @@
 @echo off
 
 :: Check if refreshenv is available and execute it if it is
-where /q refreshenv && refreshenv
+where /q refreshenv && call refreshenv
 
 :: Get the absolute path of the current script
 set "SCRIPT_PATH=%~dp0"
