@@ -101,18 +101,20 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
           }}
         </strong></span
       >
-      <br /><br />
-
-      <span
-        [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INNER-HTML.TOO-OLD' | translate"
-      ></span>
-
+      
       <br /><br />
 
       <span
         id="checkPointJavaPreRequisite"
         [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INNER-HTML.REQUIRED-SHORT' | translate"
       ></span>
+      
+      <br /><br />
+
+      <span
+        [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.INNER-HTML.TOO-OLD' | translate"
+      ></span>
+
       
     </div>
     

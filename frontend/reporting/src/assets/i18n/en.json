@@ -605,7 +605,7 @@
           "RESTARTING": "Restarting",
           "RESTARTING-REQUIRED": "is required to complete the installation",
           "INNER-HTML": {
-            "TOO-OLD": "Your computer is currently running a version of <em>Java</em> that is older than <em>Java 11</em>.<br><br>To upgrade, you will first need to uninstall this older version. Please be aware that if you have any software that relies on your current <em>Java</em> installation, removing it could cause those programs to malfunction.<br><br><strong>After you’ve successfully uninstalled the older version of <em>Java</em>, you can use <em>ReportBurster</em>, which will assist you in installing <em>Java 11</em></strong>.",
+            "TOO-OLD": "Your computer is currently running a version of <em>Java</em> that is older than <em>Java 11</em>.<br><br>To upgrade, you will first need to uninstall this older <em>Java</em> version. Please be aware that if you have any software that relies on your current <em>Java</em> installation, removing it could cause those programs to malfunction.<br><br><strong>Once the older version of <em>Java</em> has been successfully uninstalled, you can utilize <em>ReportBurster</em> to facilitate the installation of <em>Java 11</em></strong>.",
             "REQUIRED-SHORT": "<em>ReportBurster</em> requires <em>Java</em> 11 (or newer) as a prerequisite.",
             "REQUIRED-LONG": "In order to use the software <em>Java</em> 11 (or newer) runtime must be installed on your computer.",
             "EXTRA": "Follow the guided installation steps provided. <strong>As the system processes each step, please wait patiently for its completion. After each step is finished, make sure to restart <em>ReportBurster</em></strong>."

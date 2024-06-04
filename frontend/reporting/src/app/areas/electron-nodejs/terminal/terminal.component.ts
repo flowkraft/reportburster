@@ -111,7 +111,7 @@ export class TerminalComponent implements AfterViewInit {
               try {
                 //await this.electronService.emptyLogFile();
 
-                const unInstallCommand = `& ../tools/chocolatey/uninstall.ps1`;
+                const unInstallCommand = `& ${this.electronService.PORTABLE_EXECUTABLE_DIR}/tools/chocolatey/uninstall.ps1`;
                 const testCommand = 'choco --version';
 
                 const elevatedScript =

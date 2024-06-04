@@ -12,8 +12,20 @@ set "PORTABLE_EXECUTABLE_DIR_PATH=%cd%"
 set "SETTINGS_FILE=%PORTABLE_EXECUTABLE_DIR_PATH%\config\_internal\settings.xml"
 set "JAR_FILE=%PORTABLE_EXECUTABLE_DIR_PATH%\lib\server\rb-server.jar"
 
-:: Empty the electron.log file
-type nul > "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log"
+:: Check if the electron.log file exists and delete it
+if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log" (
+    del /F /Q "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log"
+)
+
+:: Check if the rbsj-server.log file exists and delete it
+if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log" (
+    del /F /Q "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log"
+)
+
+:: Check if the rbsj-exe.log file exists and delete it
+if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log" (
+    del /F /Q "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log"
+)
 
 :: Execute choco -version and redirect the output to a file
 choco --version > "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log" || echo.
@@ -69,9 +81,14 @@ echo [DEBUG] Final JAVA command: %JAVA_CMD%
 
 :: Conditional logic based on RB_SERVER_MODE
 if "%RB_SERVER_MODE%"=="true" (
+    
     powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') | Tee-Object -FilePath '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log' }"
+
 ) else (
     :: Update settings.xml with the port
     powershell -Command "(gc '%SETTINGS_FILE%') -replace 'http://localhost:\d+/api', 'http://localhost:%PORT%/api' | Out-File -encoding ASCII '%SETTINGS_FILE%'"
+    
+    java -version > "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log" 2>&1
+
     powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') | Tee-Object -FilePath '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log' }"
 )

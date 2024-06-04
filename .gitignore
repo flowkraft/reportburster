@@ -15,6 +15,7 @@ assembly/src/user-acceptance/results
 **/output/**/*.csv
 
 **/test-results/**/*.*
+frontend/reporting/temp
 
 #batch-web-lightmin
 #next
