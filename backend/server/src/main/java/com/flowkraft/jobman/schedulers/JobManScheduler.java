@@ -2,7 +2,6 @@ package com.flowkraft.jobman.schedulers;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.List;
 
 import javax.annotation.PostConstruct;
 
@@ -16,9 +15,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.flowkraft.common.AppPaths;
 import com.flowkraft.common.Constants;
-import com.flowkraft.common.Utils;
 import com.flowkraft.jobman.models.WebSocketJobsExecutionStatsInfo;
 import com.flowkraft.jobman.services.JobsService;
 import com.flowkraft.jobman.services.LogsService;
@@ -52,8 +49,17 @@ public class JobManScheduler {
 		// server
 		if (StringUtils.isNotBlank(parentElectronPid)) {
 			long pid = Long.parseLong(parentElectronPid);
-			ProcessHandle processHandle = ProcessHandle.of(pid).orElse(null);
-			if (processHandle == null || !processHandle.isAlive()) {
+			// Execute a command to check if the process is running
+			Process process = Runtime.getRuntime().exec("tasklist /FI \"PID eq " + pid + "\"");
+			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			String line;
+			boolean isRunning = false;
+			while ((line = reader.readLine()) != null && !isRunning) {
+				if (line.contains(String.valueOf(pid))) {
+					isRunning = true;
+				}
+			}
+			if (!isRunning) {
 				// Electron process is not running, stop the Spring Boot application
 				System.out.println("rbsj.JobManScheduler - ReportBurster.exe (Electron) process having PID " + pid
 						+ " was closed => stop its corresponding SpringBoot server application");

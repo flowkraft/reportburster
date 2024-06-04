@@ -3,8 +3,8 @@ Library     RequestsLibrary
 Library     OperatingSystem
 Library     resources/utilities.py
 Variables   resources/vars.py
-Suite Setup      Ensure Java Prerequisite
 Test Setup       Clean Output Folders and Log Files  product=server
+Test Teardown    Shut Server
 
 *** Variables ***
 ${SERVER_URL}    http://localhost:9090
@@ -14,15 +14,31 @@ ${BROWSER}    chrome
 startServer.bat and shutServer.bat Should Work Fine
     [Documentation]  startServer.bat and shutServer.bat Should Work Fine
   
+    Ensure Chocolatey Is Installed
+    Sleep  1s
+    Refresh Env Variables
+    Ensure Java Is Installed
+    Sleep  1s
+    Refresh Env Variables
+
     Start Server
     Wait Until Keyword Succeeds    10x    3s    Check Server Is Running
     Copy File    ${PORTABLE_EXECUTABLE_DIR_SERVER}/samples/burst/Payslips.pdf    ${PORTABLE_EXECUTABLE_DIR_SERVER}/poll
     Wait Until Keyword Succeeds    10x    3s    Check PDF Files Generated    3
     Shut Server
     Wait Until Keyword Succeeds    10x    3s    Check Server Is Not Running
+    
+    Ensure Java Is Not Installed
 
 service.bat Should Work Fine
     [Documentation]  service.bat install should check that the ReportBurster Server Windows Service was installed and service.bat uninstall should check that the Windows Service was removed
+
+    Ensure Chocolatey Is Installed
+    Sleep  1s
+    Refresh Env Variables
+    Ensure Java Is Installed
+    Sleep  1s
+    Refresh Env Variables
 
     # Uninstall the service
     ${output}=    Service Uninstall
@@ -53,6 +69,8 @@ service.bat Should Work Fine
     # Uninstall the service
     ${output}=    Service Uninstall
     Should Contain    ${output}    uninstalled successfully
+
+    Ensure Java Is Not Installed
 
 *** Keywords ***
 Check Server Is Running

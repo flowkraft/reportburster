@@ -56,7 +56,7 @@
 		
 	</RollingFile>
 
-	<RollingFile name="rbsj-out" fileName="${APP_LOG_ROOT}/rbsj.log" filePattern="${APP_LOG_ROOT}/rbsj-%d{MM-dd-yyyy}.log.zip">
+	<RollingFile name="rbsj-out" fileName="${APP_LOG_ROOT}/rbsj-server.log" filePattern="${APP_LOG_ROOT}/rbsj-server-%d{MM-dd-yyyy}.log.zip">
 
 		<PatternLayout pattern="${LOG_PATTERN}"/>
 		<Policies>

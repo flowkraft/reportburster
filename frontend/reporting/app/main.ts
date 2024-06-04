@@ -27,6 +27,7 @@ process.env.PORTABLE_EXECUTABLE_DIR = path
   .replace(/\\/g, '/');
 
 const electronLogFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/logs/electron.log`;
+const rbsjExeLogFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/logs/rbsj-exe.log`;
 
 log.transports.file.resolvePath = () => {
   return electronLogFilePath;
@@ -34,9 +35,9 @@ log.transports.file.resolvePath = () => {
 
 log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] - {text}';
 
-//log.info(
-//  `process.env.PORTABLE_EXECUTABLE_DIR: ${process.env.PORTABLE_EXECUTABLE_DIR}`,
-//);
+console.log(
+  `process.env.PORTABLE_EXECUTABLE_DIR: ${process.env.PORTABLE_EXECUTABLE_DIR}`,
+);
 
 function createWindow(): BrowserWindow {
   /*
@@ -182,9 +183,9 @@ try {
       setTimeout(() => {
         createWindow();
 
-        //console.log(
-        //  `electron.main.ts.process.env.PORTABLE_EXECUTABLE_DIR = ${process.env.PORTABLE_EXECUTABLE_DIR}`,
-        //);
+        console.log(
+          `electron.main.ts.process.env.PORTABLE_EXECUTABLE_DIR = ${process.env.PORTABLE_EXECUTABLE_DIR}`,
+        );
       }, 400);
     }
   });
@@ -425,27 +426,40 @@ async function _getSystemInfo(): Promise<{
 
   const electronLogFileContent = await fs.promises.readFile(
     electronLogFilePath,
-    'utf-8',
+    'utf8',
   );
 
-  if (electronLogFileContent.includes("'java' is not recognized")) {
-    javaIsInstalled = false;
+  let rbsjExeLogFileContent = await fs.promises.readFile(
+    rbsjExeLogFilePath,
+    'utf8',
+  );
+
+  if (!rbsjExeLogFileContent.toLowerCase().includes('java')) {
+    rbsjExeLogFileContent = await fs.promises.readFile(
+      rbsjExeLogFilePath,
+      'utf16le',
+    );
   }
 
   if (electronLogFileContent.includes("'choco' is not recognized")) {
     chocoIsInstalled = false;
   }
 
+  if (rbsjExeLogFileContent.includes("'java' is not recognized")) {
+    javaIsInstalled = false;
+  }
+
   // Extract Chocolatey version
-  let chocoVersionMatch = electronLogFileContent.match(
-    /choco version: (\d+(?:\.\d+)?(?:\.\d+)?)/,
-  );
-  let chocoVersion = chocoVersionMatch ? chocoVersionMatch[1] : '';
+  let chocoVersion = '';
+
+  let firstLineElectronLogFileContent = electronLogFileContent.split('\n')[0];
+
+  if (chocoIsInstalled) {
+    chocoVersion = firstLineElectronLogFileContent.trim();
+  }
 
   // Extract Java version
-  let javaVersionMatch = electronLogFileContent.match(
-    /using Java (\d+(?:\.\d+)?(?:\.\d+)?)/,
-  );
+  let javaVersionMatch = rbsjExeLogFileContent.match(/using Java ([\w\.]+)/);
   let javaVersion = javaVersionMatch ? javaVersionMatch[1] : '';
 
   const sysInfo = {

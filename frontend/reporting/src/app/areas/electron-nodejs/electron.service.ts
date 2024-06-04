@@ -340,6 +340,7 @@ export class ElectronService {
       return value;
     }
   }
+
   async installChocolatey(): Promise<ChildProcess> {
     //https://chocolatey.org/docs/installation#install-using-powershell-from-cmdexe
 
@@ -381,7 +382,7 @@ del /f /s install.ps1
 
     return UtilitiesElectron.childProcessSpawn(
       'cmd.exe',
-      ['/c', 'start', '/wait', '/b', elevatedScriptFilePath],
+      ['/c', 'call', elevatedScriptFilePath],
       {
         cwd: Utilities.slash(this.PORTABLE_EXECUTABLE_DIR + '/temp/'),
       },
@@ -567,11 +568,12 @@ del /f /s install.ps1
      REM Run shell as admin (example) - put here code as you like
      type nul > "${this.logFilePath}"
      ${commandToElevate} 2>&1 >> ${this.logFilePath}
-     del /f /s *.cmd 2>&1 >> ${this.logFilePath}
      
      echo Script execution completed successfully
      ::show message box
      powershell -ExecutionPolicy Bypass -NoProfile -Command "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; [System.Windows.Forms.MessageBox]::Show('Command execution completed, you may want to close and start again ReportBurster.', 'Info', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)"
+     del /f /s *.cmd 2>&1 >> ${this.logFilePath}
+     
      ::cmd /k
     `;
 

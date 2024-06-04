@@ -1,10 +1,39 @@
-import subprocess, glob, re, os, shutil, zipfile, time, pyautogui, psutil
+import subprocess, glob, re, os, importlib, shutil, zipfile, time, pyautogui, psutil
 from vars import reportburster_exe_path, PORTABLE_EXECUTABLE_DIR, PORTABLE_EXECUTABLE_DIR_SERVER
+
+def click_x_close_reportburster():
+
+    # Get the directory that this script is in
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+
+    # Construct the path to the image file
+    image_path = os.path.join(script_dir, 'images', 'x_button_close_reportburster.png')
+
+    button_location = None
+
+    # Wait for up to 100 seconds for the OK button to appear
+    for _ in range(100):
+        try:
+            button_location = pyautogui.locateOnScreen(image_path, grayscale=False, confidence=.8)
+            if button_location is not None:
+                break
+        except pyautogui.ImageNotFoundException:
+            pass  # Image not found, continue the loop
+        time.sleep(1)  # Wait for 1 second
+
+    # If the button is found, click it
+    if button_location is not None:
+        pyautogui.click(button_location)
+    else:
+        print("X button not found")
 
 def kill_reportburster_exe_process():
     
     log_file_path = os.path.join(os.path.dirname(reportburster_exe_path), 'logs', 'electron.log')
     print(f'Log file path: {log_file_path}')
+    
+    if not os.path.exists(log_file_path):
+        return
     
     with open(log_file_path, 'r') as log_file:
         log_content = log_file.read()
@@ -70,9 +99,11 @@ def ensure_java_is_not_installed():
         try:
             subprocess.check_output('choco -v', shell=True)
             choco_installed = True
+            print("Chocolatey is installed. (ensure_java_is_not_installed)")
         except subprocess.CalledProcessError:
             choco_installed = False
-
+            print("Chocolatey is not installed. (ensure_java_is_not_installed)")
+    
         # Use Chocolatey to uninstall Java, if it's installed
         if choco_installed:
             output = subprocess.check_output('choco list', shell=True).decode('utf-8')
@@ -84,12 +115,12 @@ def ensure_java_is_not_installed():
                 subprocess.check_call(f'choco uninstall {product_name} -y', shell=True)
         
         # Use WMIC to uninstall any remaining Java installations
-        output = subprocess.check_output('wmic product where "name like \'%%java%%\' or name like \'%%jdk%%\'" get name', shell=True).decode('utf-8')
-        java_or_jdk_products = [line.strip() for line in output.split('\n') if line.strip() != '' and line.strip() != 'Name']
+        # output = subprocess.check_output('wmic product where "name like \'%%java%%\' or name like \'%%jdk%%\'" get name', shell=True).decode('utf-8')
+        # java_or_jdk_products = [line.strip() for line in output.split('\n') if line.strip() != '' and line.strip() != 'Name']
 
-        for product in java_or_jdk_products:
-            print(f"Uninstalling {product} with WMIC...")
-            subprocess.check_call(f'wmic product where "name=\'{product}\'" call uninstall', shell=True)
+        # for product in java_or_jdk_products:
+        #     print(f"Uninstalling {product} with WMIC...")
+        #     subprocess.check_call(f'wmic product where "name=\'{product}\'" call uninstall', shell=True)
 
         print("Java is not installed on this computer.")
     except subprocess.CalledProcessError:
@@ -111,7 +142,6 @@ def ensure_java_is_installed(version="11"):
                 subprocess.check_call(f'choco install temurin8 -y', shell=True)
             else:
                 subprocess.check_call(f'choco install temurin -y', shell=True)
-            print(f"Java {version} has been installed.")
     except subprocess.CalledProcessError:
         print("Java is not installed. Installing now...")
         ensure_chocolatey_is_installed()
@@ -121,9 +151,9 @@ def ensure_java_is_installed(version="11"):
                 subprocess.check_call(f'choco install temurin8 -y', shell=True)
         else:
             subprocess.check_call(f'choco install temurin -y', shell=True)
-                
-    print(f"Java {version} is installed.")
-    
+    finally:
+        print(f"Java {version} has been installed.")
+
 def ensure_chocolatey_is_installed():
     try:
         output = subprocess.check_output('choco -v', shell=True, stderr=subprocess.STDOUT)
@@ -140,18 +170,53 @@ def ensure_chocolatey_is_installed():
         iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
         "
         """
-        subprocess.check_call(install_command, shell=True)
-        print("Chocolatey has been installed.")
+
+        process = subprocess.Popen('powershell', shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate(install_command.encode())
+
+        if process.returncode != 0:
+            print(f"Error occurred: {stderr.decode()}")
+        else:
+            print("Chocolatey has been installed.")
+
 
 def ensure_chocolatey_is_not_installed():
     try:
         subprocess.check_output('choco -v', shell=True)
         print("Chocolatey is installed. Uninstalling now...")
         choco_uninstall_script_path = os.path.join(PORTABLE_EXECUTABLE_DIR, 'tools', 'chocolatey', 'uninstall.ps1')
-        subprocess.check_call(['powershell', '-ExecutionPolicy', 'Bypass', choco_uninstall_script_path], shell=True)
-        print("Chocolatey has been uninstalled.")
+        try:
+            output = subprocess.check_output(['powershell', '-ExecutionPolicy', 'Bypass', choco_uninstall_script_path], shell=True)
+            print(output)
+            print("Chocolatey has been uninstalled: " + choco_uninstall_script_path)
+        except subprocess.CalledProcessError as e:
+            print("Error occurred:", e.output)
     except subprocess.CalledProcessError:
         print("Chocolatey is not installed.")
+
+def ensure_folder_location_in_path(folder_location_path):
+    # Get the current PATH
+    current_path = os.environ.get('PATH')
+
+    # Check if the folder location is already in the PATH
+    if folder_location_path not in current_path.split(os.pathsep):
+        # If not, add it to the PATH
+        os.environ['PATH'] = folder_location_path + os.pathsep + current_path
+
+def ensure_folder_location_not_in_path(folder_location_path):
+    # Get the current PATH
+    current_path = os.environ.get('PATH')
+
+    # Split the PATH into a list of locations
+    path_list = current_path.split(os.pathsep)
+
+    # Check if the folder location is in the PATH
+    if folder_location_path in path_list:
+        # If it is, remove it
+        path_list.remove(folder_location_path)
+
+    # Join the list back into a string and update the PATH
+    os.environ['PATH'] = os.pathsep.join(path_list)
 
 def extract_zip_files():
     paths = [
@@ -215,3 +280,15 @@ def service_uninstall():
 
 def text_contains_either(text, str1, str2):
     return str1 in text or str2 in text
+
+def get_parent_directory(file_path):
+    return os.path.dirname(file_path)
+
+def refresh_env_variables():
+    
+    importlib.reload(os)
+
+    # Import the chocolateyProfile.psm1 module and execute the refreshenv command in PowerShell
+    subprocess.run(["powershell", "-Command", "Import-Module $env:ChocolateyInstall\\helpers\\chocolateyProfile.psm1; refreshenv"], check=True)
+    
+    

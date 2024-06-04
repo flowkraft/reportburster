@@ -39,12 +39,36 @@ gulp.task("utils:start-server-and-e2e-electron", () => {
 
 gulp.task("utils:start-javano-chocono-and-ui", () => {
   const chocoStatus = "not-installed";
-  _startNoJavaAndUI(chocoStatus);
+  _startJavaNoAndUI(chocoStatus);
 });
 
 gulp.task("utils:start-javano-chocoyes-and-ui", () => {
   const chocoStatus = "installed";
-  _startNoJavaAndUI(chocoStatus);
+  _startJavaNoAndUI(chocoStatus);
+});
+
+gulp.task("utils:start-java8-chocoyes-and-ui", () => {
+  const javaVersion = "1.8.0_412";
+  const chocoStatus = "installed";
+  _startJavaYesAndUI(javaVersion, chocoStatus);
+});
+
+gulp.task("utils:start-java8-chocono-and-ui", () => {
+  const javaVersion = "1.8.0_412";
+  const chocoStatus = "not-installed";
+  _startJavaYesAndUI(javaVersion, chocoStatus);
+});
+
+gulp.task("utils:start-java11-chocoyes-and-ui", () => {
+  const javaVersion = "11.2.0_233";
+  const chocoStatus = "installed";
+  _startJavaYesAndUI(javaVersion, chocoStatus);
+});
+
+gulp.task("utils:start-java11-chocono-and-ui", () => {
+  const javaVersion = "11.2.0_233";
+  const chocoStatus = "not-installed";
+  _startJavaYesAndUI(javaVersion, chocoStatus);
 });
 
 gulp.task("utils:show-stats-memory", () => {
@@ -61,17 +85,39 @@ gulp.task("utils:check-broken-links", () => {
   return gulp.src("src/**/*.html").pipe(_checkBrokenLinks());
 });
 
-_startNoJavaAndUI = async (chocoStatus) => {
-  const logPath = "testground/e2e/logs/electron.log";
-  await jetpack.writeAsync(logPath, "");
+_startJavaYesAndUI = async (javaVersion, chocoStatus) => {
+  const rbsjExeLogPath = "testground/e2e/logs/rbsj-exe.log";
+  await jetpack.writeAsync(rbsjExeLogPath, "");
+  const javaLogMessage = `bla bla\nv10.2.0 using Java ${javaVersion} on`;
+  await jetpack.writeAsync(rbsjExeLogPath, javaLogMessage);
 
-  let logMessage = "bla bla\n'java' is not recognized";
+  const electronLogPath = "testground/e2e/logs/electron.log";
+  await jetpack.writeAsync(electronLogPath, "");
+  let chocoLogMessage = "bla bla\n'choco' is not recognized";
+  if (chocoStatus != "not-installed") chocoLogMessage = "0.11.2\nbla bla";
 
-  if (chocoStatus === "not-installed")
-    logMessage += "\n'choco' is not recognized";
-  else logMessage += "\nchoco version: 0.11.2";
+  await jetpack.writeAsync(electronLogPath, chocoLogMessage);
 
-  await jetpack.writeAsync(logPath, logMessage);
+  spawn("npm", ["run", "custom:start-ui-electron"], {
+    stdio: "pipe",
+    shell: true,
+  });
+};
+
+_startJavaNoAndUI = async (chocoStatus) => {
+  const rbsjExeLogPath = "testground/e2e/logs/rbsj-exe.log";
+  await jetpack.writeAsync(rbsjExeLogPath, "");
+  const javaLogMessage = "bla bla\n'java' is not recognized";
+  await jetpack.writeAsync(rbsjExeLogPath, javaLogMessage);
+
+  const electronLogPath = "testground/e2e/logs/electron.log";
+  await jetpack.writeAsync(electronLogPath, "");
+  let chocoLogMessage = "bla bla\n'choco' is not recognized";
+  if (chocoStatus != "not-installed")
+    chocoLogMessage = "bla bla\nchoco version: 0.11.2";
+
+  await jetpack.writeAsync(electronLogPath, chocoLogMessage);
+
   spawn("npm", ["run", "custom:start-ui-electron"], {
     stdio: "pipe",
     shell: true,

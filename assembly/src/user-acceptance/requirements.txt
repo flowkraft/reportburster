@@ -1,4 +1,5 @@
 robotframework
+robotframework-retryfailed
 robotframework-seleniumlibrary
 robotframework-requests
 psutil
