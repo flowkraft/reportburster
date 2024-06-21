@@ -19,7 +19,7 @@ test.describe('', async () => {
 
       const baselineVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_baseline/db-baseline-8.7.2.zip`;
       console.log(`baselineVersionFilePath = ${baselineVersionFilePath}`);
-      await helpers._extractBaseLineAndCopyCustomConfigAndScriptFiles(
+      await helpers.extractBaseLineAndCopyCustomConfigAndScriptFiles(
         UPGRADE_DIR,
         baselineVersionFilePath,
       );
@@ -44,7 +44,7 @@ test.describe('', async () => {
         .waitOnElementToBecomeVisible('#errorMsg')
         .elementShouldContainText(
           '#errorMsg',
-          'DocumentBurster.exe was not found',
+          'Neither DocumentBurster.exe or ReportBurster.exe was not found',
         )
         .click('#oldDbInstallationFolder')
         .typeText('')

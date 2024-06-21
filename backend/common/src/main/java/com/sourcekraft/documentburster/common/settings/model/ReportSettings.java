@@ -17,6 +17,7 @@ package com.sourcekraft.documentburster.common.settings.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.utils.DumpToString;
 
 public class ReportSettings extends DumpToString {
@@ -95,6 +96,15 @@ public class ReportSettings extends DumpToString {
 
 		public String outputtype;
 		public String documentpath;
+
+		public String retrieveTemplateFilePath() {
+			if (documentpath.startsWith("/") || documentpath.startsWith("\\"))
+				return documentpath.substring(1);
+			else
+				// paths like
+				// "src/main/external-resources/template/samples/reports/payslips/payslips-template.docx"
+				return documentpath;
+		}
 
 	}
 

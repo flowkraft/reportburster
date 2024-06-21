@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 
 import { chocolateyTemplate } from './chocolatey.template';
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
-import { ElectronService } from '../electron.service';
+import { RbElectronService } from '../electron.service';
 import { StateStoreService } from '../../../providers/state-store.service';
 
 @Component({
@@ -11,7 +11,7 @@ import { StateStoreService } from '../../../providers/state-store.service';
 })
 export class ChocolateyComponent {
   constructor(
-    protected electronService: ElectronService,
+    protected electronService: RbElectronService,
     protected stateStore: StateStoreService,
     protected confirmService: ConfirmService,
   ) {}

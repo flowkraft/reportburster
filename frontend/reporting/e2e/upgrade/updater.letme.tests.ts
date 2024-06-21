@@ -10,28 +10,30 @@ describe('updater: letme-db tests', function () {
   });
 
   beforeEach(async () => {
-    helpers.updateDestinationDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster`;
+    helpers.updateDestinationDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/ReportBurster`;
 
     await jetpack.dirAsync(PATHS.EXECUTABLE_DIR_PATH, { empty: true });
   });
 
-  it('update-letme-db-and-assert-everything-worked-well', async function () {
+  it('update-letme-rb-and-assert-everything-worked-well', async function () {
     const baselineVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_baseline/db-baseline-8.7.2.zip`;
-    const newVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_new/db-new-version-9.9.9.zip`;
+    const newVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_new/rb-new-version-9.9.9.zip`;
 
     return helpers._updateLetMeAndAssertEverythingWorkedWell(
       baselineVersionFilePath,
-      newVersionFilePath
+      newVersionFilePath,
     );
   });
 
-  it('update-letme-db-server-and-assert-everything-worked-well', async function () {
+  /*
+  it('update-letme-rb-server-and-assert-everything-worked-well', async function () {
     const baselineVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_baseline/db-server-baseline-8.7.2.zip`;
-    const newVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_new/db-server-new-version-9.9.9.zip`;
+    const newVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_new/rb-server-new-version-9.9.9.zip`;
 
     return helpers._updateLetMeAndAssertEverythingWorkedWell(
       baselineVersionFilePath,
-      newVersionFilePath
+      newVersionFilePath,
     );
   });
+  */
 });

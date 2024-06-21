@@ -15,7 +15,7 @@ describe('updater: smaler individual tests', function () {
   beforeEach(async () => {
     await jetpack.dirAsync(PATHS.EXECUTABLE_DIR_PATH, { empty: true });
 
-    helpers.updateDestinationDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster`;
+    helpers.updateDestinationDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/ReportBurster`;
 
     const files = await jetpack.listAsync(PATHS.EXECUTABLE_DIR_PATH);
 
@@ -508,6 +508,114 @@ describe('updater: smaler individual tests', function () {
       `${helpers.updateDestinationDirectoryPath}/config/burst/40-settings-8.7.1-custom.xml`,
       updater.defaultSettings,
       customExceptFor,
+    );
+  });
+
+  it('migrate-settings-from-version-8.8.9-expected-defaults', async function () {
+    await jetpack.copyAsync(
+      `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
+      `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`,
+    );
+
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
+    await updater.migrateSettingsFile(
+      `${helpers.filesToMigrateDirectoryPath}/config/45-settings-8.8.9.xml`,
+    );
+
+    await helpers._expectEqualConfigurationValuesExceptFor(
+      `${helpers.updateDestinationDirectoryPath}/config/burst/45-settings-8.8.9.xml`,
+      updater.defaultSettings,
+    );
+  });
+
+  it('migrate-settings-from-version-8.8.9-expected-custom', async function () {
+    await jetpack.copyAsync(
+      `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
+      `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`,
+    );
+
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
+
+    await updater.migrateSettingsFile(
+      `${helpers.filesToMigrateDirectoryPath}/config/45-settings-8.8.9-custom.xml`,
+    );
+
+    await helpers._expectEqualConfigurationValuesExceptFor(
+      `${helpers.updateDestinationDirectoryPath}/config/burst/45-settings-8.8.9-custom.xml`,
+      updater.defaultSettings,
+      helpers._getCustomExceptFor(),
+    );
+  });
+
+  it('migrate-settings-from-version-9.1.5-expected-defaults', async function () {
+    await jetpack.copyAsync(
+      `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
+      `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`,
+    );
+
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
+    await updater.migrateSettingsFile(
+      `${helpers.filesToMigrateDirectoryPath}/config/50-settings-9.1.5.xml`,
+    );
+
+    await helpers._expectEqualConfigurationValuesExceptFor(
+      `${helpers.updateDestinationDirectoryPath}/config/burst/50-settings-9.1.5.xml`,
+      updater.defaultSettings,
+    );
+  });
+
+  it('migrate-settings-from-version-9.1.5-expected-custom', async function () {
+    await jetpack.copyAsync(
+      `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
+      `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`,
+    );
+
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
+
+    await updater.migrateSettingsFile(
+      `${helpers.filesToMigrateDirectoryPath}/config/50-settings-9.1.5-custom.xml`,
+    );
+
+    await helpers._expectEqualConfigurationValuesExceptFor(
+      `${helpers.updateDestinationDirectoryPath}/config/burst/50-settings-9.1.5-custom.xml`,
+      updater.defaultSettings,
+      helpers._getCustomExceptFor(),
+    );
+  });
+
+  it('migrate-settings-from-version-10.2.0-expected-defaults', async function () {
+    await jetpack.copyAsync(
+      `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
+      `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`,
+    );
+
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
+    await updater.migrateSettingsFile(
+      `${helpers.filesToMigrateDirectoryPath}/config/55-settings-10.2.0.xml`,
+    );
+
+    await helpers._expectEqualConfigurationValuesExceptFor(
+      `${helpers.updateDestinationDirectoryPath}/config/burst/55-settings-10.2.0.xml`,
+      updater.defaultSettings,
+    );
+  });
+
+  it('migrate-settings-from-version-10.2.0-expected-custom', async function () {
+    await jetpack.copyAsync(
+      `${PATHS.BKEND_REPORTING_FOLDER_PATH}/src/main/external-resources/template/config/burst/settings.xml`,
+      `${helpers.updateDestinationDirectoryPath}/config/_defaults/settings.xml`,
+    );
+
+    let updater = new Updater(helpers.updateDestinationDirectoryPath);
+
+    await updater.migrateSettingsFile(
+      `${helpers.filesToMigrateDirectoryPath}/config/55-settings-10.2.0-custom.xml`,
+    );
+
+    await helpers._expectEqualConfigurationValuesExceptFor(
+      `${helpers.updateDestinationDirectoryPath}/config/burst/55-settings-10.2.0-custom.xml`,
+      updater.defaultSettings,
+      helpers._getCustomExceptFor(),
     );
   });
 });

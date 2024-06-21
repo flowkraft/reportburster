@@ -2,7 +2,7 @@ import { Meta, StoryObj } from '@storybook/angular';
 import { baseMeta } from './_utils/setup';
 import { StateStoreService } from '../app/providers/state-store.service';
 import { ChocolateyComponent } from '../app/areas/electron-nodejs/chocolatey/chocolatey.component';
-import { ElectronService } from '../app/areas/electron-nodejs/electron.service';
+import { RbElectronService } from '../app/areas/electron-nodejs/electron.service';
 
 type Story = StoryObj<ChocolateyComponent>;
 const defaultMeta: Meta<ChocolateyComponent> = {
@@ -32,7 +32,7 @@ export const IsChocoOkFalse: Story = {
           useValue: storeServiceIsChocoOkFalse,
         },
         {
-          provide: ElectronService,
+          provide: RbElectronService,
           useValue: mockElectronService,
         },
       ],
@@ -54,7 +54,7 @@ export const IsChocoOkTrue: Story = {
           useValue: storeServiceIsChocoOkTrue,
         },
         {
-          provide: ElectronService,
+          provide: RbElectronService,
           useValue: mockElectronService,
         },
       ],

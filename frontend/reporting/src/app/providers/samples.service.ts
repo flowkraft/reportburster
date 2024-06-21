@@ -257,8 +257,8 @@ export class SamplesService {
 
   samplesNotYetImplemented: Array<SampleInfo> = [
     {
-      id: 'GENERATE-EMAIL-PAYSLIPS',
-      name: '6. Monthly Payslips (again)',
+      id: 'GENERATE-PAYSLIPS',
+      name: '6. Generate Monthly Payslips',
       visibility: 'hidden',
       jobType: 'burst',
       input: {
@@ -271,13 +271,13 @@ export class SamplesService {
         ],
       },
       step1: 'generate',
-      step2: 'email',
+      step2: '',
       step3: '',
       output: {
         data: [
-          'email-file-attached:clyde.grew@northridgehealth.org.docx',
-          'email-file-attached:kyle.butford@northridgehealth.org.docx',
-          'email-file-attached:alfreda.waldback@northridgehealth.org.docx',
+          'file:clyde.grew@northridgehealth.org.docx',
+          'file:kyle.butford@northridgehealth.org.docx',
+          'file:alfreda.waldback@northridgehealth.org.docx',
         ],
         folder:
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
@@ -333,7 +333,7 @@ export class SamplesService {
     },
     {
       id: 'NEWSLETTER1',
-      name: '9. Newsletter 1',
+      name: '8. Newsletter 1',
       visibility: 'hidden',
       jobType: 'burst',
       input: {

@@ -2,6 +2,7 @@ robotframework
 robotframework-retryfailed
 robotframework-seleniumlibrary
 robotframework-requests
+pywinauto
 psutil
 pyautogui
 opencv-python

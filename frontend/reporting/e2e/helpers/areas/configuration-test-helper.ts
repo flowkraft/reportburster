@@ -7,7 +7,7 @@ import { Constants } from '../../utils/constants';
 export class ConfigurationTestHelper {
   static rollbackChangesToDefaultDocumentBursterConfiguration(
     ft: FluentTester,
-    folderName: string
+    folderName: string,
   ): FluentTester {
     //const escapedWhich = PATHS.SETTINGS_CONFIG_FILE; //.replace('.', '\\.');
 
@@ -17,7 +17,7 @@ export class ConfigurationTestHelper {
       .waitOnElementToHaveClass(
         `#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
         'info',
-        Constants.DELAY_FIVE_THOUSANDS_SECONDS
+        Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       )
       .click(`#btnActions_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .click(`#btnActionRestore_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
@@ -29,45 +29,45 @@ export class ConfigurationTestHelper {
 
   static assertDefaultDocumentBursterConfiguration(
     ft: FluentTester,
-    folderName: string
+    folderName: string,
   ): FluentTester {
-    ft = ft.goToBurstScreen().click('#topMenuConfiguration');
+    ft = ft.gotoBurstScreen().click('#topMenuConfiguration');
 
     if (folderName == 'burst') {
       ft = ft.waitOnElementToHaveText(
         `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-        'My Reports'
+        'My Reports',
       );
     }
 
     ft = ft.click(
-      `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
+      `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
     ); // general settings
 
     if (folderName == 'burst') {
       ft = ft
         .waitOnElementToHaveText(
           '#topMenuConfiguration',
-          'Configuration (My Reports) '
+          'Configuration (My Reports) ',
         )
         .waitOnElementToHaveText(
           '.sidebar-menu .header',
-          'CONFIGURATION (My Reports)'
+          'CONFIGURATION (My Reports)',
         );
     }
 
     return ft
       .inputShouldHaveValue(
         '#burstFileName',
-        '${burst_token}.${output_type_extension}'
+        '${burst_token}.${output_type_extension}',
       )
       .inputShouldHaveValue(
         '#outputFolder',
-        'output/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}'
+        'output/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}',
       )
       .inputShouldHaveValue(
         '#quarantineFolder',
-        'quarantine/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}'
+        'quarantine/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}',
       )
       .click('#btnEnableDisableDistribution') // Enable / Disable checkbox settings
       .elementCheckBoxShouldNotBeSelected('#btnSendDocumentsEmail')
@@ -94,11 +94,11 @@ export class ConfigurationTestHelper {
       .click('#attachmentsTab-link') // email attachments settings
       .elementShouldContainText(
         'tbody tr:first-child td',
-        '${extracted_file_path}'
+        '${extracted_file_path}',
       )
       .elementShouldContainText(
         'tbody tr:last-child td',
-        '${extracted_file_path}'
+        '${extracted_file_path}',
       )
       .elementCheckBoxShouldNotBeSelected('#btnArchiveAttachmentsTogether')
       .inputShouldHaveValue('#archiveFileName', 'reports-${burst_token}.zip')
@@ -211,13 +211,13 @@ export class ConfigurationTestHelper {
   }
 
   static changeSaveLoadAssertSavedConfiguration(
-    ft: FluentTester
+    ft: FluentTester,
   ): FluentTester {
     const escapedWhich = PATHS.SETTINGS_CONFIG_FILE; //;.replace('.', '\\.');
 
     return (
       ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .click('#topMenuConfiguration')
         .click('#topMenuConfigurationLoad_burst_' + escapedWhich) // STEP0 - CHANGE VALUES general settings
         .setValue('#burstFileName', '00')
@@ -357,17 +357,17 @@ export class ConfigurationTestHelper {
         .click('#topMenuConfiguration')
         .elementShouldHaveText(
           '#topMenuConfigurationLoad_burst_' + escapedWhich,
-          'My Reports'
+          'My Reports',
         )
         // general settings
         .click('#topMenuConfigurationLoad_burst_' + escapedWhich)
         .elementShouldHaveText(
           '#topMenuConfiguration',
-          'Configuration (My Reports) '
+          'Configuration (My Reports) ',
         )
         .elementShouldHaveText(
           '.sidebar-menu .header',
-          'CONFIGURATION (My Reports)'
+          'CONFIGURATION (My Reports)',
         )
         .inputShouldHaveValue('#burstFileName', '00')
         .inputShouldHaveValue('#outputFolder', '01')
@@ -404,11 +404,11 @@ export class ConfigurationTestHelper {
         .click('#attachmentsTab-link')
         .elementShouldHaveText(
           'tbody tr:first-child td',
-          '${extracted_file_path}'
+          '${extracted_file_path}',
         )
         .elementShouldHaveText(
           'tbody tr:last-child td',
-          '${extracted_file_path}'
+          '${extracted_file_path}',
         )
         .elementCheckBoxShouldBeSelected('#btnArchiveAttachmentsTogether')
         .inputShouldHaveValue('#archiveFileName', '01')
@@ -436,7 +436,7 @@ export class ConfigurationTestHelper {
         .click('#documentBursterWebTab-link')
         .inputShouldHaveValue(
           '#documentBursterWebCommand',
-          'documentbursterweb'
+          'documentbursterweb',
         )
         // SharePoint settings
         .click('#sharePointTab-link')
@@ -536,12 +536,12 @@ export class ConfigurationTestHelper {
 
   static assertDefaultDocumentBursterReportingConfiguration(
     ft: FluentTester,
-    folderName: string
+    folderName: string,
   ): FluentTester {
     ft = ft
       .gotoConfiguration()
       .click(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
+        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
       )
       .click('#leftMenuReportingSettings')
       //tab DataSource - assert the default values
@@ -591,7 +591,7 @@ export class ConfigurationTestHelper {
       .elementShouldNotBeVisible('#reportTemplate')
       .dropDownSelectOptionHavingLabel(
         '#reportOutputType',
-        'Microsoft Word Documents'
+        'Microsoft Word Documents',
       )
       .waitOnElementToBecomeVisible('#reportTemplate')
       .waitOnElementToBecomeVisible('#selectTemplateFile')
@@ -609,14 +609,14 @@ export class ConfigurationTestHelper {
 
   static changeSaveLoadAssertSavedReportingConfiguration(
     ft: FluentTester,
-    folderName: string
+    folderName: string,
   ): FluentTester {
     return (
       ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .click('#topMenuConfiguration')
         .click(
-          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
+          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
         )
         .click('#leftMenuReportingSettings')
         //tab DataSource
@@ -657,7 +657,7 @@ export class ConfigurationTestHelper {
         .waitOnElementToBecomeVisible('#reportOutputType')
         .dropDownSelectOptionHavingLabel(
           '#reportOutputType',
-          'Microsoft Word Documents'
+          'Microsoft Word Documents',
         )
         .waitOnElementToBecomeVisible('#reportTemplate')
         .waitOnElementToBecomeVisible('#selectTemplateFile')
@@ -668,11 +668,11 @@ export class ConfigurationTestHelper {
         .dropDownSelectOptionHavingLabel('#reportOutputType', 'None')
         .dropDownSelectOptionHavingLabel(
           '#reportOutputType',
-          'Microsoft Word Documents'
+          'Microsoft Word Documents',
         )
         .gotoConfiguration()
         .click(
-          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
+          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
         )
         .click('#leftMenuReportingSettings')
         //tab DataSource - assert the default values
@@ -698,7 +698,7 @@ export class ConfigurationTestHelper {
         .waitOnElementToBecomeVisible('#selectTemplateFile')
         .selectedOptionShouldContainText(
           '#reportOutputType',
-          'Microsoft Word Documents'
+          'Microsoft Word Documents',
         )
         .pageShouldContainText('payslips-template.docx')
     );

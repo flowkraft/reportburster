@@ -11,7 +11,7 @@ import { DomHandler } from 'primeng/dom';
 import { terminalTemplate } from './terminal.template';
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
 import { TerminalService } from 'primeng/terminal';
-import { ElectronService } from '../electron.service';
+import { RbElectronService } from '../electron.service';
 import UtilitiesElectron from '../utilities-electron';
 
 @Component({
@@ -34,7 +34,7 @@ export class TerminalComponent implements AfterViewInit {
 
   constructor(
     protected terminalService: TerminalService,
-    protected electronService: ElectronService,
+    protected electronService: RbElectronService,
     protected confirmService: ConfirmService,
     protected el: ElementRef,
     protected changeDetectorRef: ChangeDetectorRef,

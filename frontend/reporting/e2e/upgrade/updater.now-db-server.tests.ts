@@ -10,14 +10,14 @@ describe('updater: now-db-server tests', function () {
   });
 
   beforeEach(async () => {
-    helpers.updateDestinationDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster`;
+    helpers.updateDestinationDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/ReportBurster`;
 
     await jetpack.dirAsync(PATHS.EXECUTABLE_DIR_PATH, { empty: true });
   });
 
   it('update-now-db-server-and-assert-everything-worked-well', async function () {
     const baselineVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_baseline/db-server-baseline-8.7.2.zip`;
-    const newVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_new/db-server-new-version-9.9.9.zip`;
+    const newVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_new/rb-server-new-version-9.9.9.zip`;
 
     return helpers._updateNowAndAssertEverythingWorkedWell(
       baselineVersionFilePath,

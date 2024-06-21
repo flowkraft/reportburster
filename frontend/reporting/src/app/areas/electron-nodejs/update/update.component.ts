@@ -5,8 +5,8 @@ import { Component, Input, OnInit } from '@angular/core';
 
 //import * as path from 'path';
 
-import * as dayjs from 'dayjs';
-import * as utc from 'dayjs/plugin/utc';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 
 //import * as semver from 'semver';
@@ -24,7 +24,7 @@ import { ConfirmService } from '../../../components/dialog-confirm/confirm.servi
 import { SettingsService } from '../../../providers/settings.service';
 import { ShellService } from '../../../providers/shell.service';
 import { BashService } from '../bash.service';
-import { ElectronService } from '../electron.service';
+import { RbElectronService } from '../electron.service';
 import { FsService } from '../../../providers/fs.service';
 import UtilitiesNodeJs from '../utilities-nodejs';
 import UtilitiesElectron from '../utilities-electron';
@@ -53,7 +53,7 @@ export class UpdateComponent implements OnInit {
     protected messagesService: ToastrMessagesService,
     protected shellService: ShellService,
     protected bashService: BashService,
-    protected electronService: ElectronService,
+    protected electronService: RbElectronService,
     protected fsService: FsService,
     protected storeService: StateStoreService,
   ) {

@@ -667,7 +667,7 @@
           "WAIT2": "is being updated, it will be in maintenance mode. As soon as your updates are complete",
           "WAIT3": "will return to normal",
           "LET-ME1": "Let me choose an existing",
-          "LET-ME2": "folder from where to copy the configurations (I know what I am doing)",
+          "LET-ME2": "installation folder from where to copy existing configurations (I know what I am doing)",
           "SELECT": "select a folder which contains the file",
           "FOLLOWING1": "In addition, following items were found and will be copied from",
           "FOLLOWING2": "to",

@@ -10,6 +10,22 @@ export default class UtilitiesElectron {
     return typeof window.require !== 'undefined';
   }
 
+  static async showOpenDialog(
+    options: Electron.OpenDialogOptions,
+  ): Promise<Electron.OpenDialogReturnValue> {
+    if (UtilitiesElectron.isIpcRendererAvailable()) {
+      return ipcRenderer.invoke('dialog.show-open', options);
+    }
+  }
+
+  static async showSaveDialog(
+    options: Electron.SaveDialogOptions,
+  ): Promise<Electron.SaveDialogReturnValue> {
+    if (UtilitiesElectron.isIpcRendererAvailable()) {
+      return ipcRenderer.invoke('dialog.show-save', options);
+    }
+  }
+
   static async getSystemInfo(): Promise<{
     chocolatey: {
       isChocoOk: boolean;

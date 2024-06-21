@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<documentburster>
+	<settings>
+		<!-- DocumentBurster version -->
+		<version>9.1.5</version>
+		<!-- template name -->
+		<template>custom 9.1.5</template>
+		<!-- file name for the burst files -->
+		<burstfilename>custom-${var0}.${output_type_extension}
+		</burstfilename>
+		<!-- file name for the merged files -->
+		<mergefilename>merged.pdf</mergefilename>
+		<!-- where to place the burst files -->
+		<outputfolder>custom-output path
+		</outputfolder>
+		<!-- where to place the backup files -->
+		<backupfolder>backup/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}
+		</backupfolder>
+		<!-- quarantine output files which fail to be delivered (true|false) -->
+		<quarantinefiles>true</quarantinefiles>
+		<!-- where to place the quarantined files -->
+		<quarantinefolder>custom-quarantine
+		</quarantinefolder>
+
+		<!-- where to place logs archives -->
+		<logsarchivesfolder>logs/archives/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}
+		</logsarchivesfolder>
+
+		<!-- job burst stats file name -->
+		<statsfilename>_stats-${stats_info}.log
+		</statsfilename>
+
+		<!-- enable/disable different reportdistribution and reportgenerationmailmerge 
+			capabilities -->
+		<capabilities>
+			<reportdistribution>true</reportdistribution>
+			<reportgenerationmailmerge>false</reportgenerationmailmerge>
+		</capabilities>
+
+		<!-- send the output files by either Email and/or Upload or Web or SMS 
+			(true|false) -->
+		<sendfiles>
+			<email>true</email>
+			<upload>false</upload>
+			<web>false</web>
+			<sms>false</sms>
+		</sendfiles>
+		<!-- delete the output files after delivery (true|false) -->
+		<deletefiles>false</deletefiles>
+		<!-- email server settings -->
+		<emailserver>
+			<useconn>true</useconn>
+      		<conncode>eml-contact</conncode>
+      		<host>Email Server Host</host>
+			<!-- email server port. 25 is the default SMTP port -->
+			<port>25</port>
+			<userid>From Email User ID</userid>
+			<userpassword>From Email Password</userpassword>
+			<usessl>false</usessl>
+			<usetls>false</usetls>
+			<fromaddress>from@emailaddress.com</fromaddress>
+			<name>From Name</name>
+		</emailserver>
+		<!-- email message settings -->
+		<!-- send rich formatted HTML e-mails (true|false) -->
+		<htmlemail>false</htmlemail>
+		<!-- let the user edit the HTML email code directly (true|false) -->
+		<htmlemaileditcode>false</htmlemaileditcode>
+		<emailsettings>
+			<to>${burst_token}</to>
+			<cc></cc>
+			<bcc></bcc>
+			<subject>custom subject ${var0}</subject>
+			<text>custom text ${var1}</text>
+			<html></html>
+		</emailsettings>
+		<!-- attachments. List with the attachments. Variables can be used (e.g. 
+			${extracted_file_path}) in order to dynamically provide attachment paths 
+			during distribution. order="0", order="1" etc. should be properly configured -->
+		<attachments>
+			<items>
+				<attachment path="${extracted_file_path}" order="0"></attachment>
+			</items>
+			<archive>
+				<archiveattachments>false</archiveattachments>
+				<archivefilename>reports-${burst_token}.zip</archivefilename>
+			</archive>
+		</attachments>
+
+		<emailrfc2822validator>
+			<!-- EnumSet<EmailAddressCriteria> RECOMMENDED = of(ALLOW_QUOTED_IDENTIFIERS, 
+				ALLOW_PARENS_IN_LOCALPART); -->
+			<allowquotedidentifiers>true</allowquotedidentifiers>
+			<allowparensinlocalpart>true</allowparensinlocalpart>
+			<allowdomainliterals></allowdomainliterals>
+			<allowdotinatext></allowdotinatext>
+			<allowsquarebracketsinatext></allowsquarebracketsinatext>
+			<skipvalidationfor></skipvalidationfor>
+		</emailrfc2822validator>
+
+		<simplejavamail>
+
+			<!-- start used -->
+
+			<active></active>
+
+			<replytoname></replytoname>
+			<replytoaddress></replytoaddress>
+
+			<bouncetoname></bouncetoname>
+			<bouncetoaddress></bouncetoaddress>
+
+			<receipttoname></receipttoname>
+			<receipttoaddress></receipttoaddress>
+
+			<dispositionnotificationtoname></dispositionnotificationtoname>
+			<dispositionnotificationtoaddress></dispositionnotificationtoaddress>
+
+			<customemailheaders></customemailheaders>
+			<customsessionproperties></customsessionproperties>
+
+			<javaxmaildebug></javaxmaildebug>
+			<transportmodeloggingonly></transportmodeloggingonly>
+
+			<proxy>
+				<host></host>
+				<port>1080</port>
+				<username></username>
+				<password></password>
+				<socks5bridgeport>1081</socks5bridgeport>
+			</proxy>
+
+			<!-- end used -->
+
+			<!-- start not yet used -->
+
+			<async></async>
+			<poolsize></poolsize>
+			<poolsizekeepalivetime></poolsizekeepalivetime>
+
+			<connectionpool>
+				<clusterkeyuuid></clusterkeyuuid>
+				<coresize></coresize>
+				<maxsize></maxsize>
+				<claimtimeoutmillis></claimtimeoutmillis>
+				<expireaftermillis></expireaftermillis>
+				<loadbalancingstrategy></loadbalancingstrategy>
+			</connectionpool>
+
+			<sessiontimeoutmillis></sessiontimeoutmillis>
+
+			<trustallhosts></trustallhosts>
+			<trustedhosts></trustedhosts>
+			<verifyserveridentity></verifyserveridentity>
+
+			<opportunistictls></opportunistictls>
+
+			<dkim>
+				<privatekey></privatekey>
+				<signingdomain></signingdomain>
+				<selector></selector>
+			</dkim>
+
+			<smime>
+				<signingkeystore></signingkeystore>
+				<signingkeystorepassword></signingkeystorepassword>
+				<signingkeyalias></signingkeyalias>
+				<signingkeypassword></signingkeypassword>
+				<encryptioncertificate></encryptioncertificate>
+			</smime>
+
+			<!-- end not yet used -->
+
+		</simplejavamail>
+
+		<uploadsettings>
+			<ftpcommand />
+			<filesharecommand />
+			<ftpscommand />
+			<sftpcommand />
+			<httpcommand />
+			<cloudcommand />
+		</uploadsettings>
+
+		<webuploadsettings>
+			<documentbursterwebcommand />
+			<mssharepointcommand />
+			<wordpresscommand />
+			<drupalcommand />
+			<joomlacommand />
+			<otherwebcommand />
+		</webuploadsettings>
+
+		<smssettings>
+			<twilio>
+				<accountsid></accountsid>
+				<authtoken></authtoken>
+			</twilio>
+			<fromtelephonenumber></fromtelephonenumber>
+			<totelephonenumber></totelephonenumber>
+			<text></text>
+		</smssettings>
+
+		<qualityassurance>
+			<!-- test email server settings -->
+			<emailserver>
+				<host>localhost</host>
+				<!-- email server port. 1025 is the default SMTP port -->
+				<port>1025</port>
+				<userid></userid>
+				<userpassword></userpassword>
+				<usessl>false</usessl>
+				<usetls>false</usetls>
+				<fromaddress>from@emailaddress.com</fromaddress>
+				<name>From Name</name>
+				<weburl>http://localhost:8025</weburl>
+			</emailserver>
+		</qualityassurance>
+
+		<!-- if checked, using the tokens found in between start2nd and end2nd 
+			delimiters, will split the ${extracted_file_path} 2nd time -->
+		<split2ndtime>false</split2ndtime>
+		<!-- start/end burst token delimiters/separators -->
+		<bursttokendelimiters>
+			<start>{</start>
+			<end>}</end>
+			<start2nd>[</start2nd>
+			<end2nd>]</end2nd>
+		</bursttokendelimiters>
+		<!-- number of user variables -->
+		<numberofuservariables>20</numberofuservariables>
+		<!-- delay each distribution by -->
+		<delayeachdistributionby>0</delayeachdistributionby>
+		<!-- what should be done when a page contains no tokens -->
+		<reusetokenswhennotfound>false</reusetokenswhennotfound>
+		<!-- fail the job if any report distribution fails -->
+		<failjobifanydistributionfails>true</failjobifanydistributionfails>
+		<!-- enable retries in case report delivery fails but have a chance of 
+			succeeding on subsequent retries (sometimes emails might fail for ephemeral 
+			/ small network failures and subsequent retries could succeed) -->
+		<enableretrypolicy>false</enableretrypolicy>
+		<!-- retry policy -->
+		<retrypolicy>
+			<delay>3</delay>
+			<maxdelay>30</maxdelay>
+			<maxretries>3</maxretries>
+		</retrypolicy>
+
+		<!-- allow email addresses with local domain name and no TLD (e.g. documentburster@sharepoint, 
+			admin@mailserver1) (true|false) 1. In production it is advisable to keep 
+			this configuration on false 2. While doing local testing it might be required 
+			to allow email addresses with local domain name and no TLD (e.g. documentburster@sharepoint, 
+			admin@mailserver1) <allowlocalemailaddresses>false</allowlocalemailaddresses> -->
+
+		<!-- start date and time locale options -->
+		<locale>
+			<language></language>
+			<country></country>
+		</locale>
+		<!-- end date and time locale options -->
+
+		<!-- start text extraction options -->
+
+		<!-- The order of the text tokens in a PDF file may not be in the same 
+			as they appear visually on the screen. For example, a PDF writer may write 
+			out all text by font, so all bold or larger text, then make a second pass 
+			and write out the normal text. The default is to not sort by position. A 
+			PDF writer could choose to write each character in a different order. By 
+			default PDFBox does not sort the text tokens before processing them due to 
+			performance reasons. -->
+		<sortbyposition>false</sortbyposition>
+
+		<!-- By default the text stripper will attempt to remove text that overlaps 
+			each other. Word paints the same character several times in order to make 
+			it look bold. By setting this to false all text will be extracted, which 
+			means that certain sections will be duplicated, but better performance will 
+			be noticed. -->
+		<suppressduplicateoverlappingtext>false
+		</suppressduplicateoverlappingtext>
+
+		<!-- Set if the text stripper should group the text output by a list of 
+			beads. The default value is true! -->
+		<shouldseparatebybeads>true</shouldseparatebybeads>
+
+		<!-- Set the character width-based tolerance value that is used to estimate 
+			where spaces in text should be added. Note that the default value for this 
+			has been determined from trial and error. Setting this value larger will 
+			reduce the number of spaces added. -->
+		<averagechartolerancevalue></averagechartolerancevalue>
+
+		<!-- Set the space width-based tolerance value that is used to estimate 
+			where spaces in text should be added. Note that the default value for this 
+			has been determined from trial and error. Setting this value larger will 
+			reduce the number of spaces added. -->
+		<spacingtolerancevalue></spacingtolerancevalue>
+
+		<!-- end text extraction options -->
+
+		<!-- Make incubating features available in the UI -->
+		<enableincubatingfeatures>false</enableincubatingfeatures>
+
+		<!-- Visible in the menu -->
+		<visibility>visible</visibility>
+  
+	</settings>
+
+</documentburster>

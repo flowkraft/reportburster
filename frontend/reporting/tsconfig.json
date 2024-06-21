@@ -3,6 +3,7 @@
   "compilerOptions": {
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "outDir": "./dist/out-tsc",
     "module": "es2020",
     "sourceMap": true,

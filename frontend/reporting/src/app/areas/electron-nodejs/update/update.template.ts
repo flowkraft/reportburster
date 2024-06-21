@@ -115,14 +115,16 @@ export const updateTemplate = `<div *ngIf="succint">
             required
           /><em
             >(*) {{ "AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.UPDATE-NOW.SELECT" |
-            translate }} DocumentBurster.exe</em
+            translate }} DocumentBurster.exe/ReportBurster.exe</em
           >
         </div>
 
         <div class="col-xs-3">
           <dburst-button-native-system-dialog
-            value="Select"
-            dialogType="folder"
+            btnId="btnSelectExistingInstallation"
+            value="Select Existing Installation"
+            dialogType='folder'
+            screen='letmeupdate'
             (pathsSelected)="onExistingInstallationFolderSelected($event)"
           ></dburst-button-native-system-dialog>
         </div>

@@ -113,12 +113,18 @@ export class Updater {
         `${updateInfo.updateSourceDirectoryPath}/DocumentBurster.exe`,
       );
 
+      if (validDbExeFilePath !== 'file') {
+        validDbExeFilePath = await UtilitiesNodeJs.existsAsync(
+          `${updateInfo.updateSourceDirectoryPath}/ReportBurster.exe`,
+        );
+      }
+
       //console.log(
       //  `validDbExeFilePath = ${updateInfo.updateSourceDirectoryPath}/DocumentBurster.exe`,
       //);
 
       if (validDbExeFilePath !== 'file') {
-        updateInfo.errorMsg = `DocumentBurster.exe was not found in the ${updateInfo.updateSourceDirectoryPath} selected location. Please select an existing DocumentBurster installation folder!`;
+        updateInfo.errorMsg = `Neither DocumentBurster.exe or ReportBurster.exe was not found in the ${updateInfo.updateSourceDirectoryPath} selected location. Please select an existing DocumentBurster/ReportBurster installation folder!`;
       } else {
         let xmlSourceSettings = {
           documentburster: {
@@ -162,21 +168,39 @@ export class Updater {
             `!_defaults/**/*`,
             `!burst/internal/**/*`,
             `!burst/default/**/*`,
+            `!samples/**/*`,
           ],
         },
       );
 
       for (const configFilePath of configFilePaths) {
         const configFileName = Utilities.basename(configFilePath);
-
-        const fullConfigFilePath = Utilities.slash(
-          `${updateInfo.updateSourceDirectoryPath}/config/burst/${configFileName}`,
+        const configDirPath = Utilities.slash(
+          Utilities.dirname(configFilePath),
         );
+        const configDirName = Utilities.basename(
+          Utilities.dirname(configFilePath),
+        );
+
+        //console.log(
+        //  `Log 3 configFileName = ${configFileName}, configDirPath = ${configDirPath}, configDirName = ${configDirName}, configFilePath = ${configFilePath}`,
+        //);
+
+        let fullConfigFilePath = `${updateInfo.updateSourceDirectoryPath}/config/burst/${configFileName}`;
+        if (configDirPath.includes('config/reports'))
+          fullConfigFilePath = Utilities.slash(
+            `${updateInfo.updateSourceDirectoryPath}/config/reports/${configDirName}/${configFileName}`,
+          );
+        else if (configDirPath.includes('config/connections'))
+          fullConfigFilePath = Utilities.slash(
+            `${updateInfo.updateSourceDirectoryPath}/config/connections/${configFileName}`,
+          );
 
         //console.log(`Log 3.00 configFileName = ${configFileName}`);
 
         //console.log(`Log 3.0 configFilPath = ${configFilePath}`);
         //console.log(`Log 3 fullConfigFilePath = ${fullConfigFilePath}`);
+
         updateInfo.migrateConfigFiles.push([
           configFileName,
           fullConfigFilePath,
@@ -231,13 +255,39 @@ export class Updater {
         },
       );
 
+      //console.log(
+      //  `updateInfo.updateSourceDirectoryPath = ${updateInfo.updateSourceDirectoryPath}`,
+      //);
+
       for (const templateFolderPath of templatesFolderPaths) {
-        const fullTemplatePath = Utilities.slash(
-          `${updateInfo.updateSourceDirectoryPath}/${templateFolderPath}`,
+        const templateDirPath = Utilities.slash(
+          Utilities.dirname(templateFolderPath),
         );
+        const templateDirName = Utilities.basename(templateFolderPath);
+        let fullTemplatePath = '';
+
+        if (
+          templateDirName != 'html-email-templates' &&
+          templateFolderPath.includes('html-email-templates')
+        ) {
+          fullTemplatePath = Utilities.slash(
+            `${updateInfo.updateSourceDirectoryPath}/templates/html-email-templates/${templateDirName}`,
+          );
+        } else {
+          fullTemplatePath = Utilities.slash(
+            `${updateInfo.updateSourceDirectoryPath}/templates/${templateDirName}`,
+          );
+        }
+
         const templateName = Utilities.basename(fullTemplatePath);
-        //console.log(`fullTemplatePath = ${fullTemplatePath}`);
-        updateInfo.templatesFolders.push([templateName, fullTemplatePath]);
+
+        if (templateName != 'html-email-templates') {
+          //console.log(
+          //  `templateName = ${templateName}, fullTemplatePath = ${fullTemplatePath}, templateFolderPath = ${templateFolderPath}, templateDirPath= ${templateDirPath}, templateDirName = ${templateDirName}`,
+          //);
+
+          updateInfo.templatesFolders.push([templateName, fullTemplatePath]);
+        }
       }
     }
 
@@ -258,24 +308,25 @@ export class Updater {
     // console.log(updateInfo);
 
     if (updateInfo.mode == 'update-now') {
-      if (updateInfo.productInfo.isServerVersion)
-        this.updateDestinationDirectoryPath = `${this.upgdDbTempDirectoryPath}/to/${topFolderName}/server`;
-      else
-        this.updateDestinationDirectoryPath = `${this.upgdDbTempDirectoryPath}/to/${topFolderName}`;
+      //if (updateInfo.productInfo.isServerVersion)
+      //  this.updateDestinationDirectoryPath = `${this.upgdDbTempDirectoryPath}/to/${topFolderName}/server`;
+      //else
+      topFolderName = 'ReportBurster';
+      this.updateDestinationDirectoryPath = `${this.upgdDbTempDirectoryPath}/to/${topFolderName}`;
     }
 
     let homeDirectoryPath = this.portableExecutableDirectoryPath;
 
-    if (updateInfo.productInfo.isServerVersion)
-      homeDirectoryPath = Utilities.getParentFolderPath(homeDirectoryPath);
+    //if (updateInfo.productInfo.isServerVersion)
+    //  homeDirectoryPath = Utilities.getParentFolderPath(homeDirectoryPath);
     //homeDirectoryPath = path.resolve(homeDirectoryPath, '..');
 
     //console.log(`homeDirectoryPath = ${homeDirectoryPath}`);
 
-    const upgdDbFromFolderPath = `${this.upgdDbTempDirectoryPath}/from/DocumentBurster`;
-
     if (updateInfo.mode == 'update-now') {
-      //console.log('Log 4');
+      const upgdDbFromFolderPath = `${this.upgdDbTempDirectoryPath}/from/ReportBurster`;
+
+      //console.log(`Log 4 this.UPG_DB_FOLDER_PATH = ${this.UPG_DB_FOLDER_PATH}`);
 
       await UtilitiesNodeJs.dirAsync(this.UPG_DB_FOLDER_PATH, {
         empty: true,
@@ -316,7 +367,7 @@ export class Updater {
       topFolderNamePath = await UtilitiesNodeJs.findAsync(
         `${this.upgdDbTempDirectoryPath}/to`,
         {
-          matching: ['DocumentBurster*'],
+          matching: ['ReportBurster*'],
           files: false,
           directories: true,
           recursive: false,
@@ -324,24 +375,26 @@ export class Updater {
       )[0];
 
       if (!topFolderNamePath)
-        topFolderNamePath = `${this.upgdDbTempDirectoryPath}/to/DocumentBurster`;
+        topFolderNamePath = `${this.upgdDbTempDirectoryPath}/to/ReportBurster`;
 
       //console.log(`Log 61 - topFolderNamePath = ${topFolderNamePath}`);
 
       topFolderName = Utilities.basename(topFolderNamePath);
 
-      if (updateInfo.productInfo.isServerVersion)
-        this.updateDestinationDirectoryPath = `${this.upgdDbTempDirectoryPath}/to/${topFolderName}/server`;
-      else
-        this.updateDestinationDirectoryPath = `${this.upgdDbTempDirectoryPath}/to/${topFolderName}`;
+      //if (updateInfo.productInfo.isServerVersion)
+      //  this.updateDestinationDirectoryPath = `${this.upgdDbTempDirectoryPath}/to/${topFolderName}/server`;
+      //else
+      this.updateDestinationDirectoryPath = `${this.upgdDbTempDirectoryPath}/to/${topFolderName}`;
 
       // keep a backup of the existing installation
-      //console.log('Log 7');
+      //console.log(
+      //  `Log 7 - homeDirectoryPath = ${homeDirectoryPath}, upgdDbFromFolderPath = ${upgdDbFromFolderPath}`,
+      //);
 
       await UtilitiesNodeJs.copyAsync(homeDirectoryPath, upgdDbFromFolderPath);
     }
 
-    // console.log(updateInfo);
+    //console.log(`updateInfo = ${JSON.stringify(updateInfo)}`);
     /*
     if (updateInfo.mode == 'update-now') {
     } else if (updateInfo.mode == 'migrate-copy') {
@@ -350,10 +403,38 @@ export class Updater {
 
     // config files
     for (const configFile of updateInfo.migrateConfigFiles) {
+      const configFileName = configFile[0];
       const configFilePath = configFile[1];
 
       // console.log(configFilePath);
-      await this.migrateSettingsFile(configFilePath);
+
+      if (configFilePath.includes('config/burst')) {
+        //old 'config/burst' xml setting files
+        await this.migrateSettingsFile(configFilePath);
+      } else if (
+        configFilePath.includes('config/reports') &&
+        configFileName == 'settings.xml'
+      ) {
+        //new 'config/reports' xml setting files
+        await this.migrateSettingsFile(configFilePath);
+      } else {
+        //new 'config/connections' xml files
+        let newConfigFilePath = `${this.updateDestinationDirectoryPath}/config/connections/${configFileName}`;
+
+        if (
+          configFilePath.includes('config/reports') &&
+          configFileName == 'reporting.xml'
+        ) {
+          //new 'config/reports' reporting.xml files
+          const directoryName = Utilities.dirname(configFilePath);
+          const parentFolderName = Utilities.basename(directoryName);
+          newConfigFilePath = `${this.updateDestinationDirectoryPath}/config/reports/${parentFolderName}/reporting.xml`;
+        }
+
+        await UtilitiesNodeJs.copyAsync(configFilePath, newConfigFilePath, {
+          overwrite: true,
+        });
+      }
       // console.log(configFilePath);
     }
 
@@ -527,9 +608,9 @@ export class Updater {
       );
 
       if (updateInfo.productInfo.isServerVersion)
-        this.backupZipFileName = `documentburster-server-${updateInfo.productInfo.version}-${this.nowFormatted}.zip`;
+        this.backupZipFileName = `reportburster-server-${updateInfo.productInfo.version}-${this.nowFormatted}.zip`;
       else
-        this.backupZipFileName = `documentburster-${updateInfo.productInfo.version}-${this.nowFormatted}.zip`;
+        this.backupZipFileName = `reportburster-${updateInfo.productInfo.version}-${this.nowFormatted}.zip`;
 
       UtilitiesNodeJs.writeZip(
         `${this.upgdDbTempDirectoryPath}/${this.backupZipFileName}`,
@@ -571,12 +652,18 @@ export class Updater {
 
     if (!previousXMLSettingsContent) {
       Error.stackTraceLimit = 100;
-      console.log(`Log 25 - settingsFilePath = ${settingsFilePath}`);
+      console.log(`Log 25 - settingsFilePath_src = ${settingsFilePath}`);
     }
 
     const previousConfigFileName = Utilities.basename(settingsFilePath);
 
-    const newMigratedSettingsFilePath = `${this.updateDestinationDirectoryPath}/config/burst/${previousConfigFileName}`;
+    let newMigratedSettingsFilePath = `${this.updateDestinationDirectoryPath}/config/burst/${previousConfigFileName}`;
+
+    if (settingsFilePath.includes('config/reports')) {
+      const directoryName = Utilities.dirname(settingsFilePath);
+      const parentFolderName = Utilities.basename(directoryName);
+      newMigratedSettingsFilePath = `${this.updateDestinationDirectoryPath}/config/reports/${parentFolderName}/${previousConfigFileName}`;
+    }
 
     //STEP0 - some configuration settings node names were renamed (no structural changes)
 

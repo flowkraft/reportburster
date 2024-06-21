@@ -1,5 +1,8 @@
-import subprocess, glob, re, os, importlib, shutil, zipfile, time, pyautogui, psutil
-from vars import reportburster_exe_path, PORTABLE_EXECUTABLE_DIR, PORTABLE_EXECUTABLE_DIR_SERVER
+import subprocess, glob, re, os, importlib, shutil, zipfile, time, errno, pyautogui, psutil
+from distutils import dir_util
+from pywinauto.application import Application
+
+from vars import reportburster_exe_path, reportburster_exe_path_let_me_update, PORTABLE_EXECUTABLE_DIR, PORTABLE_EXECUTABLE_DIR_SERVER, PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE
 
 def click_x_close_reportburster():
 
@@ -27,9 +30,13 @@ def click_x_close_reportburster():
     else:
         print("X button not found")
 
-def kill_reportburster_exe_process():
+def kill_reportburster_exe_process(let_me_update=False):
     
     log_file_path = os.path.join(os.path.dirname(reportburster_exe_path), 'logs', 'electron.log')
+    
+    if let_me_update:
+        log_file_path = os.path.join(os.path.dirname(reportburster_exe_path_let_me_update), 'logs', 'electron.log')
+    
     print(f'Log file path: {log_file_path}')
     
     if not os.path.exists(log_file_path):
@@ -293,4 +300,199 @@ def refresh_env_variables():
     # Import the chocolateyProfile.psm1 module and execute the refreshenv command in PowerShell
     subprocess.run(["powershell", "-Command", "Import-Module $env:ChocolateyInstall\\helpers\\chocolateyProfile.psm1; refreshenv"], check=True)
     
+def get_project_path():
+
+    PROJECT_PATH = os.path.normpath(os.path.abspath('../../..')).replace('\\', '/')
+
+    print(f'PROJECT_PATH = {PROJECT_PATH}')
+
+    return PROJECT_PATH
+
+def generate_let_me_update_baseline():
+
+    PROJECT_PATH = get_project_path()
+
+    FRONTEND_REPORTING_PATH = f'{PROJECT_PATH}/frontend/reporting'
     
+    env = os.environ.copy()
+    command = 'cmd /c "npm --version"'
+    result = subprocess.run(command, capture_output=True, text=True, shell=True, env=env)
+
+    print("stdout:", result.stdout)
+    print("stderr:", result.stderr)
+
+    command = 'cmd /c "npm run \"_custom:e2e-generate-let-me-update-baseline-for-exe-update.robot\""'
+    result = subprocess.run(command, capture_output=True, text=True, shell=True, cwd=FRONTEND_REPORTING_PATH, env=env)
+
+    print("stdout:", result.stdout)
+    print("stderr:", result.stderr)
+
+    clean_output_folders_and_log_files()    
+
+    if os.path.exists(PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE):
+        empty_folder(PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE)
+        force_remove_dir(PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE)
+
+    # shutil.copytree(PORTABLE_EXECUTABLE_DIR, PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE)
+    dir_util.copy_tree(PORTABLE_EXECUTABLE_DIR, PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE)
+
+    # ONE
+    # specify your destination file
+    PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE = f'{FRONTEND_REPORTING_PATH}/testground/upgrade/baseline/DocumentBurster'
+    
+    destination_folder_path = f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/reports/my-reports-915'
+
+    # create necessary directories
+    os.makedirs(destination_folder_path, exist_ok=True)
+
+    # move the file
+    shutil.move(f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/burst/50-settings-9.1.5.xml', f'{destination_folder_path}/settings.xml')
+    shutil.copy(f'{PROJECT_PATH}/assembly/src/main/external-resources/db-template/config/_defaults/reporting.xml', f'{destination_folder_path}/reporting.xml')
+
+    # read the file
+    with open(f'{destination_folder_path}/settings.xml', 'r') as file:
+        file_data = file.read()
+
+    # replace <template>My Reports</template> with <template>My Reports 915</template>
+    file_data = file_data.replace('<template>My Reports</template>', '<template>My Reports 915</template>')
+
+    # write the new data back to the file
+    with open(f'{destination_folder_path}/settings.xml', 'w') as file:
+        file.write(file_data)
+
+    # TWO
+    # specify your destination file
+    destination_folder_path = f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/reports/custom-9-1-5'
+
+    # create necessary directories
+    os.makedirs(destination_folder_path, exist_ok=True)
+
+    # move the file
+    shutil.move(f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/burst/50-settings-9.1.5-custom.xml', f'{destination_folder_path}/settings.xml')    
+    shutil.copy(f'{PROJECT_PATH}/assembly/src/main/external-resources/db-template/config/_defaults/reporting.xml', f'{destination_folder_path}/reporting.xml')
+
+    # THREE
+    # specify your destination file
+    destination_folder_path = f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/reports/my-reports-1020'
+
+    # create necessary directories
+    os.makedirs(destination_folder_path, exist_ok=True)
+
+    # move the file
+    shutil.move(f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/burst/55-settings-10.2.0.xml', f'{destination_folder_path}/settings.xml')
+    shutil.copy(f'{PROJECT_PATH}/assembly/src/main/external-resources/db-template/config/_defaults/reporting.xml', f'{destination_folder_path}/reporting.xml')
+
+    # read the file
+    with open(f'{destination_folder_path}/settings.xml', 'r') as file:
+        file_data = file.read()
+
+    # replace <template>My Reports</template> with <template>My Reports 915</template>
+    file_data = file_data.replace('<template>My Reports</template>', '<template>My Reports 1020</template>')
+
+    # write the new data back to the file
+    with open(f'{destination_folder_path}/settings.xml', 'w') as file:
+        file.write(file_data)
+
+    # FOUR
+    # specify your destination file
+    destination_folder_path = f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/reports/custom-10-2-0'
+
+    # create necessary directories
+    os.makedirs(destination_folder_path, exist_ok=True)
+
+    # move the file
+    shutil.move(f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/burst/55-settings-10.2.0-custom.xml', f'{destination_folder_path}/settings.xml')    
+    shutil.copy(f'{PROJECT_PATH}/assembly/src/main/external-resources/db-template/config/_defaults/reporting.xml', f'{destination_folder_path}/reporting.xml')
+
+    # FIVE
+    destination_folder_path = f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/connections'
+
+    # create necessary directories
+    os.makedirs(destination_folder_path, exist_ok=True)
+    shutil.copy(f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE}/config/connections/eml-contact.xml', f'{destination_folder_path}/eml-contact.xml')
+
+    # read the file
+    with open(f'{destination_folder_path}/eml-contact.xml', 'r') as file:
+        file_data = file.read()
+
+    # replace <host>Email Server Host</host> with <host>127.0.0.1</host>
+    file_data = file_data.replace('<host>Email Server Host</host>', '<host>127.0.0.1</host>')
+
+    # write the new data back to the file
+    with open(f'{destination_folder_path}/eml-contact.xml', 'w') as file:
+        file.write(file_data)
+
+    shutil.move(f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/file-1.txt', f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/DocumentBurster.exe')    
+    
+def open_folder(window_title, folder_path):
+    
+    app = Application().connect(title=window_title)
+    dialog = app.window(title=window_title)
+    
+    # Set the focus to the 'Edit' control again
+    dialog.Edit.click_input()
+    dialog.Edit.set_text(folder_path.replace("/", "\\"))
+    # Send the {ENTER} key to the 'Edit' control
+    dialog.Edit.type_keys("{ENTER}")
+    time.sleep(1)
+    dialog['Select Existing Installation'].click()
+
+def force_remove_dir(dir_path):
+    try:
+        shutil.rmtree(dir_path)
+    except FileNotFoundError:
+        pass  # Directory does not exist
+    except OSError as e:
+        # If the error is due to an access error (read only file)
+        # it's because the files/folders aren't writable.
+        # To remove the dir and all its contents recursively
+        # os.chmod is used to make the item writable
+        if e.errno == errno.EACCES:
+            for root, dirs, files in os.walk(dir_path):
+                for dir in dirs:
+                    os.chmod(os.path.join(root, dir), 0o777)
+                for file in files:
+                    os.chmod(os.path.join(root, file), 0o777)
+            shutil.rmtree(dir_path)
+        else:
+            raise    
+
+def assert_configuration_files_were_migrated_correctly():
+
+    # assert eml-contact.xml
+    asserted_file_path = f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE}/config/connections/eml-contact.xml'
+
+    with open(asserted_file_path, 'r') as file:
+        file_data = file.read()
+
+    assert '<host>127.0.0.1</host>' in file_data, f'The file {PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE}/config/connections/eml-contact.xml was expected to contain <host>127.0.0.1</host> and does not'
+
+    config_reports_path = f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE}/config/reports'
+
+    # config/reports/my-reports-915
+    asserted_file_path = f'{config_reports_path}/my-reports-915/reporting.xml'
+    assert os.path.exists(asserted_file_path), f'The file {asserted_file_path} does not exist'
+
+    asserted_file_path = f'{config_reports_path}/my-reports-915/settings.xml'
+    assert os.path.exists(asserted_file_path), f'The file {asserted_file_path} does not exist'
+
+    # config/reports/custom-9-1-5
+    asserted_file_path = f'{config_reports_path}/custom-9-1-5/reporting.xml'
+    assert os.path.exists(asserted_file_path), f'The file {asserted_file_path} does not exist'
+
+    asserted_file_path = f'{config_reports_path}/custom-9-1-5/settings.xml'
+    assert os.path.exists(asserted_file_path), f'The file {asserted_file_path} does not exist'
+
+    # config/reports/my-reports-1020
+    asserted_file_path = f'{config_reports_path}/my-reports-1020/reporting.xml'
+    assert os.path.exists(asserted_file_path), f'The file {asserted_file_path} does not exist'
+
+    asserted_file_path = f'{config_reports_path}/my-reports-1020/settings.xml'
+    assert os.path.exists(asserted_file_path), f'The file {asserted_file_path} does not exist'
+
+    # config/reports/custom-10-2-0
+    asserted_file_path = f'{config_reports_path}/custom-10-2-0/reporting.xml'
+    assert os.path.exists(asserted_file_path), f'The file {asserted_file_path} does not exist'
+
+    asserted_file_path = f'{config_reports_path}/custom-10-2-0/settings.xml'
+    assert os.path.exists(asserted_file_path), f'The file {asserted_file_path} does not exist'

@@ -16,14 +16,14 @@ import { AppComponent } from './app.component';
 import { ToastrModule } from 'ngx-toastr';
 import { AreasModule } from './areas/areas.module';
 import { StateStoreService } from './providers/state-store.service';
-import { ElectronService } from './areas/electron-nodejs/electron.service';
+import { RbElectronService } from './areas/electron-nodejs/electron.service';
 import { InitService } from './providers/init.service';
 const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>
   new TranslateHttpLoader(http, './assets/i18n/', '.json');
 
 export function initApp(
   stateStore: StateStoreService,
-  electronService: ElectronService,
+  electronService: RbElectronService,
 ) {
   return async () => {
     //if electron
@@ -73,7 +73,7 @@ export function initApp(
     {
       provide: APP_INITIALIZER,
       useFactory: initApp,
-      deps: [StateStoreService, ElectronService],
+      deps: [StateStoreService, RbElectronService],
       multi: true,
     },
   ],

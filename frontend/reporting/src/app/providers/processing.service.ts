@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { CfgTmplFileInfo } from './settings.service';
 
 @Injectable({
   providedIn: 'root',
@@ -9,8 +10,16 @@ export class ProcessingService {
     inputFileName: '',
     prefilledInputFilePath: '',
     prefilledConfigurationFilePath: '',
-    mailMergeClassicReportInputFilePath: '',
     isSample: false,
+  };
+
+  procReportingMailMergeInfo = {
+    inputFile: null,
+    inputFileName: '',
+    prefilledInputFilePath: '',
+    prefilledConfigurationFilePath: '',
+    isSample: false,
+    selectedMailMergeClassicReport: {} as CfgTmplFileInfo,
   };
 
   procMergeBurstInfo = {
