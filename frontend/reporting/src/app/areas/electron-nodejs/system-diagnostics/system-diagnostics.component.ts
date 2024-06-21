@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { systemDiagnosticsTemplate } from './system-diagnostics.template';
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
 import { SettingsService } from '../../../providers/settings.service';
-import { ElectronService } from '../electron.service';
+import { RbElectronService } from '../electron.service';
 import { StateStoreService } from '../../../providers/state-store.service';
 
 @Component({

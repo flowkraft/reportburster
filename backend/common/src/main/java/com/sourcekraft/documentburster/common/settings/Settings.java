@@ -16,6 +16,7 @@ package com.sourcekraft.documentburster.common.settings;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,6 +27,7 @@ import java.util.Objects;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.slf4j.Logger;
@@ -53,6 +55,8 @@ public class Settings extends DumpToString {
 	/**
 	 * 
 	 */
+	public static String PORTABLE_EXECUTABLE_DIR_PATH = StringUtils.EMPTY;
+
 	private static final long serialVersionUID = 6953576182023603829L;
 
 	private Logger log = LoggerFactory.getLogger(Settings.class);
@@ -86,6 +90,16 @@ public class Settings extends DumpToString {
 			this.loadSettingsReporting(reportingConfigFilePath);
 		}
 
+		if (StringUtils.isBlank(PORTABLE_EXECUTABLE_DIR_PATH) && configFilePath.endsWith("config/burst/settings.xml")) {
+
+			Path path = Paths.get(configFilePath);
+			Path parentPath = path.getParent();
+			// Remove the last two directories from the path
+			Path grandParentPath = parentPath.getParent().getParent();
+
+			PORTABLE_EXECUTABLE_DIR_PATH = grandParentPath.toAbsolutePath().toString().replace("\\", "/");
+		}
+
 		log.debug("loadSettings - settings = [" + docSettings + "], reportingSettings = [" + reportingSettings + "]");
 
 	}
@@ -112,7 +126,8 @@ public class Settings extends DumpToString {
 
 	public void loadSettingsConnection(String connectionConfigFilePath) throws Exception {
 
-		//System.out.println("loadSettingsConnection connectionConfigFilePath = " + connectionConfigFilePath);
+		// System.out.println("loadSettingsConnection connectionConfigFilePath = " +
+		// connectionConfigFilePath);
 
 		JAXBContext jcr = JAXBContext.newInstance(DocumentBursterConnectionSettings.class);
 
@@ -148,7 +163,7 @@ public class Settings extends DumpToString {
 	public ReportSettings.Template getReportTemplate() {
 		return reportingSettings.report.template;
 	}
-
+	
 	public String getConfigurationFilePath() {
 		return this.configurationFilePath;
 	}
@@ -169,7 +184,6 @@ public class Settings extends DumpToString {
 		return docSettings.settings.burstfilename.trim();
 	}
 
-	
 	public String getOutputFolder() {
 		return docSettings.settings.outputfolder.trim();
 	}

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 
 import * as _ from 'lodash';
 
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
 //import * as path from 'path';
 

@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { setTheme } from 'ngx-bootstrap/utils';
-import { ElectronService } from './areas/electron-nodejs/electron.service';
+import { RbElectronService } from './areas/electron-nodejs/electron.service';
 import { Router } from '@angular/router';
 
 declare var $: any;
@@ -13,7 +13,7 @@ declare var $: any;
 })
 export class AppComponent implements AfterViewInit, OnInit {
   constructor(
-    protected electronService: ElectronService,
+    protected electronService: RbElectronService,
     protected translate: TranslateService,
     protected router: Router,
   ) {

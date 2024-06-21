@@ -17,12 +17,12 @@ export const javaTemplate = `<!-- <ng-template #javaTemplate> -->
     <div *ngIf="this.stateStore.configSys.sysInfo.setup.java.isJavaOk">
       <br />
       <span class="label label-success"
-        ><i class="fa fa-check-square-o"></i>&nbsp;<strong
+        id="labelGreatJavaWasFound"><i class="fa fa-check-square-o"></i>&nbsp;<strong
           >{{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.GREAT' | translate }},
           <em>Java</em>
           {{this.stateStore.configSys.sysInfo.setup.java.version}}
           {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.FOUND' | translate }}
-          <em>DocumentBurster</em></strong
+          <em>ReportBurster</em></strong
         ></span
       >
     </div>
@@ -112,7 +112,7 @@ export const javaTemplate = `<!-- <ng-template #javaTemplate> -->
         <u
           >{{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.RESTARTING' |
           translate }}
-          <em>DocumentBurster</em>
+          <em>ReportBurster</em>
           {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.RESTARTING-REQUIRED' |
           translate }}
         </u>
@@ -128,7 +128,7 @@ export const javaTemplate = `<!-- <ng-template #javaTemplate> -->
       >
         <i class="fa fa-play"></i
         >&nbsp;{{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.RESTART' |
-        translate }}Restart <em>DocumentBurster</em>
+        translate }}Restart <em>ReportBurster</em>
       </button>
     </p-panel>
   </div>

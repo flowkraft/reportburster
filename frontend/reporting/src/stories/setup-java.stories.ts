@@ -4,7 +4,7 @@ import { baseMeta } from './_utils/setup';
 import { StateStoreService } from '../app/providers/state-store.service';
 import { JavaComponent } from '../app/areas/electron-nodejs/java/java.component';
 import { ChocolateyComponent } from '../app/areas/electron-nodejs/chocolatey/chocolatey.component';
-import { ElectronService } from '../app/areas/electron-nodejs/electron.service';
+import { RbElectronService } from '../app/areas/electron-nodejs/electron.service';
 
 type Story = StoryObj<JavaComponent>;
 
@@ -43,7 +43,7 @@ export const isRestartRequiredTrue: Story = {
           useValue: storeServiceIsRestartRequiredTrue,
         },
         {
-          provide: ElectronService,
+          provide: RbElectronService,
           useValue: mockElectronService,
         },
       ],
@@ -73,7 +73,7 @@ export const isRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse1: Story = {
             storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse1,
         },
         {
-          provide: ElectronService,
+          provide: RbElectronService,
           useValue: mockElectronService,
         },
       ],
@@ -103,7 +103,7 @@ export const isRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse2: Story = {
             storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKFalse2,
         },
         {
-          provide: ElectronService,
+          provide: RbElectronService,
           useValue: mockElectronService,
         },
       ],
@@ -133,7 +133,7 @@ export const isRestartRequiredFalseIsJavaOKFalseIsChocoOKTrue: Story = {
             storeServiceIsRestartRequiredFalseIsJavaOKFalseIsChocoOKTrue,
         },
         {
-          provide: ElectronService,
+          provide: RbElectronService,
           useValue: mockElectronService,
         },
       ],
@@ -162,7 +162,7 @@ export const isRestartRequiredFalseIsJavaOKTrueIsChocoOKTrue: Story = {
           useValue: storeServiceIsRestartRequiredFalseIsJavaOKTrueIsChocoOKTrue,
         },
         {
-          provide: ElectronService,
+          provide: RbElectronService,
           useValue: mockElectronService,
         },
       ],

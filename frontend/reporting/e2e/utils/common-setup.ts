@@ -34,6 +34,10 @@ export const electronBeforeAfterAllTest = isElectron
     >({
       beforeAfterAll: [
         async ({}, run) => {
+          console.log(
+            `process.env.PORTABLE_EXECUTABLE_DIR: ${process.env.PORTABLE_EXECUTABLE_DIR}`,
+          );
+
           const electronApp = await Helpers.electronAppLaunch('../..');
 
           await run(electronApp);
@@ -45,11 +49,14 @@ export const electronBeforeAfterAllTest = isElectron
       beforeAfterEach: [
         async ({ beforeAfterAll: electronApp }, run) => {
           try {
+            //console.log(
+            //  `process.env.PORTABLE_EXECUTABLE_DIR: ${process.env.PORTABLE_EXECUTABLE_DIR}`,
+            //);
+
             //const shouldDeactivateLicenseKey = true;
             const shouldDeactivateLicenseKey = false;
 
             //reload default "clean" configuration
-
             await Helpers.restoreDocumentBursterCleanState(
               shouldDeactivateLicenseKey,
             );

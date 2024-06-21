@@ -16,6 +16,9 @@ const e2eUpdateRuntimeDir = jetpack.cwd(
   `${FRONTEND_PLAYGROUND_FOLDER_PATH}/e2e-update`,
 );
 
+//const helpers = require("../../frontend/reporting/e2e/upgrade/updater.helpers");
+//const PATHS = require("../../frontend/reporting/e2e/utils/paths");
+
 const VERIFIED_DB_NOEXE_ASSEMBLY_PATH =
   "../../assembly/target/package/verified-db-noexe";
 
@@ -71,12 +74,14 @@ gulp.task("e2e-package-javastuff-if-needed", async () => {
       },
     );
 
+    console.log(`verifiedDbFolder[0] = ${verifiedDbFolder[0]}`);
+
     // Copy javaStuffFiles built files inside 'e2eRuntimeDir'
     fse.copySync(verifiedDbFolder[0], e2eRuntimeDir.path());
 
-    fse.move(
-      `${e2eRuntimeDir.path()}/samples/reports/payslips/payslips-template.docx`,
-      `${e2eRuntimeDir.path()}/templates/reports/payslips/payslips-template.docx`,
+    fse.writeFileSync(
+      `${e2eRuntimeDir.path()}/logs/rbsj-exe.log`,
+      "Starting ServerApplication v10.2.0 using Java 11.0.23 on",
     );
 
     console.log(
@@ -400,6 +405,10 @@ gulp.task("e2e-generate-keepachangelog-com", async () => {
   jetpack.write(keepAChangelogFilePath, changelog.toString());
 });
 
+gulp.task("e2e-generate-letmeupdate-baseline", async () => {
+  _generateLetmeUpdateBaseline();
+});
+
 async function _copyDbExe2FolderPath(where) {
   let verifiedDbDirExists = await jetpack.existsAsync(
     VERIFIED_DB_ASSEMBLY_PATH,
@@ -418,7 +427,7 @@ async function _copyDbExe2FolderPath(where) {
     recursive: false,
   });
 
-  console.log(`${verifiedDbFolder[0]}/DocumentBurster.exe`);
+  console.log(`${verifiedDbFolder[0]}/ReportBurster.exe`);
 
   let isServerVersion = await jetpack.existsAsync(
     `${FRONTEND_PLAYGROUND_FOLDER_PATH}/upgrade/baseline/DocumentBurster/server`,
@@ -427,22 +436,20 @@ async function _copyDbExe2FolderPath(where) {
   let destinationExePath;
 
   if (where != "e2e") {
-    destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/upgrade/baseline/DocumentBurster/DocumentBurster.exe`;
+    destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/upgrade/baseline/DocumentBurster/ReportBurster.exe`;
     if (isServerVersion == "dir")
-      destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/upgrade/baseline/DocumentBurster/server/DocumentBurster.exe`;
+      destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/upgrade/baseline/DocumentBurster/server/ReportBurster.exe`;
   } else {
-    destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/e2e/DocumentBurster.exe`;
+    destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/e2e/ReportBurster.exe`;
     if (isServerVersion == "dir")
-      destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/e2e/server/DocumentBurster.exe`;
+      destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/e2e/server/ReportBurster.exe`;
   }
 
   console.log(destinationExePath);
 
-  jetpack.copy(
-    `${verifiedDbFolder[0]}/DocumentBurster.exe`,
-    destinationExePath,
-    { overwrite: true },
-  );
+  jetpack.copy(`${verifiedDbFolder[0]}/ReportBurster.exe`, destinationExePath, {
+    overwrite: true,
+  });
 }
 
 async function _generateAutoupdateNewerVersion(zipFilePath, newVersion) {
@@ -584,7 +591,7 @@ async function _generateAutoupdateBaseline(verifiedFolderPath) {
 
   const allDocumentBursterFolders = await jetpack.findAsync(
     VERIFIED_DB872_NOEXE_ASSEMBLY_PATH,
-    { matching: "!*DocumentBurster*", files: false, directories: true },
+    { matching: "!*ReportBurster*", files: false, directories: true },
   );
 
   const MAX_NUMBER_OF_FILES_IN_EACH_FOLDER = 5;
@@ -633,3 +640,22 @@ async function _generateAutoupdateBaseline(verifiedFolderPath) {
 
   return Promise.resolve(folderCount);
 }
+
+/*
+async function _generateLetmeUpdateBaseline() {
+  //the baseline should always be generated starting from 8.7.2, the first version when auto-update was introduced
+  //the baseline can be generated once and then can be source-controlled / storred on git
+  let DOCUMENTBURSTER_BASELINE_VERSION = "8.7.2".split(".").join("");
+
+  const UPGRADE_DIR = "testground/upgrade";
+
+  await jetpack.dirAsync(UPGRADE_DIR, { empty: true });
+
+  const baselineVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_baseline/db-baseline-8.7.2.zip`;
+  console.log(`baselineVersionFilePath = ${baselineVersionFilePath}`);
+  await helpers._extractBaseLineAndCopyCustomConfigAndScriptFiles(
+    UPGRADE_DIR,
+    baselineVersionFilePath,
+  );
+}
+*/

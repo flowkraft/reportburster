@@ -4,7 +4,7 @@ import { TerminalService } from 'primeng/terminal';
 import { ApiService } from '../../providers/api.service';
 import Utilities from '../../helpers/utilities';
 import { FsService } from '../../providers/fs.service';
-import { ElectronService } from './electron.service';
+import { RbElectronService } from './electron.service';
 
 @Injectable({
   providedIn: 'root',
@@ -17,7 +17,7 @@ export class BashService {
   constructor(
     protected apiService: ApiService,
     protected fsService: FsService,
-    protected electronService: ElectronService,
+    protected electronService: RbElectronService,
     public terminalService: TerminalService,
   ) {}
 

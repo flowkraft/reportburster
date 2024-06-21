@@ -669,16 +669,24 @@ export class FluentTester implements PromiseLike<void> {
     qaMode: string,
     n: number,
     attachmentsCommand: string,
+    attachmentType: string = 'pdf',
   ): FluentTester {
     const action = (): Promise<void> =>
-      this.doVerifyEmails(qaMode, n, attachmentsCommand);
+      this.doVerifyEmails(qaMode, n, attachmentsCommand, attachmentType);
 
     this.actions.push(action);
     return this;
   }
 
-  public goToBurstScreen(): FluentTester {
+  public gotoBurstScreen(): FluentTester {
     const action = (): Promise<void> => this.doGoToBurstScreen();
+
+    this.actions.push(action);
+    return this;
+  }
+
+  public gotoReportGenerationScreen(): FluentTester {
+    const action = (): Promise<void> => this.doGotoProcessingReportGeneration();
 
     this.actions.push(action);
     return this;
@@ -823,6 +831,7 @@ export class FluentTester implements PromiseLike<void> {
     qaMode: string,
     howManyEmails: number,
     attachmentsCommand: string,
+    attachmentType: string = 'pdf',
   ): Promise<void> {
     let emailMessages: any;
 
@@ -859,11 +868,14 @@ export class FluentTester implements PromiseLike<void> {
 
         // assert the email message is correct
         const emailSubject = emailMessages.items[i].Content.Headers.Subject[0];
+        emailSubject.startsWith('Subject ').should.be.true;
+
+        const identifiedToken = emailSubject.replace('Subject ', '');
+
         const emailBody = emailMessages.items[i].Content.Body;
 
         // body0.should.have.string('Message ' + recipientEmailAddress);
-        emailSubject.should.equal('Subject ' + recipientEmailAddress);
-        emailBody.should.have.string('Message ' + recipientEmailAddress);
+        emailBody.should.have.string(`Message ${identifiedToken}`);
 
         // assert there are no attachments
         if (attachmentsCommand === Constants.ATTACHMENTS_CLEAR)
@@ -871,13 +883,11 @@ export class FluentTester implements PromiseLike<void> {
         else if (attachmentsCommand === Constants.ATTACHMENTS_ADD_AND_ZIP) {
           // assert there is a correct zip file attached
           emailBody.should.have.string('Content-Disposition: attachment;');
-          emailBody.should.have.string(
-            'reports-' + recipientEmailAddress + '.zip',
-          );
+          emailBody.should.have.string(`reports-${identifiedToken}.zip`);
         } else if (attachmentsCommand === Constants.ATTACHMENTS_DEFAULT) {
           // assert there is a correct zip file attached
           emailBody.should.have.string('Content-Disposition: attachment;');
-          emailBody.should.have.string(recipientEmailAddress + '.pdf');
+          emailBody.should.have.string(`${identifiedToken}.${attachmentType}`);
         } else if (attachmentsCommand === Constants.ATTACHMENTS_XLS_ONLY) {
           // assert there is a correct zip file attached
           emailBody.should.have.string('Content-Disposition: attachment;');
@@ -888,17 +898,16 @@ export class FluentTester implements PromiseLike<void> {
           emailBody.should.have.string(recipientEmailAddress + '.pdf');
           emailBody.should.have.string('Customers-Distinct-Column-Values.xls');
         }
+        // assert ${recipientEmailAddress}_email.txt was generated
+        const emailFilePath = await jetpack.findAsync(
+          process.env.PORTABLE_EXECUTABLE_DIR,
+          {
+            matching: `output/**/${identifiedToken}_email.txt`,
+          },
+        );
+        should.exist(emailFilePath);
+        emailFilePath.length.should.equal(1);
       }
-
-      // assert ${recipientEmailAddress}_email.txt was generated
-      const emailFilePath = await jetpack.findAsync(
-        process.env.PORTABLE_EXECUTABLE_DIR,
-        {
-          matching: `output/**/${recipientEmailAddress}_email.txt`,
-        },
-      );
-      should.exist(emailFilePath);
-      emailFilePath.length.should.equal(1);
 
       recipientEmailAddresses.push(recipientEmailAddress);
     }
@@ -1469,6 +1478,12 @@ export class FluentTester implements PromiseLike<void> {
     await this.doClick('#topMenuBurst');
 
     await this.doClick('#leftMenuMergeBurst');
+  }
+
+  private async doGotoProcessingReportGeneration(): Promise<void> {
+    await this.doHover('#topMenuBurst');
+    await this.doClick('#topMenuBurst');
+    await this.doClick('#reportGenerationMailMergeTab-link');
   }
 
   private async doGotoStart(): Promise<void> {

@@ -7,6 +7,9 @@ import * as _ from 'lodash';
 
 import * as PATHS from './paths';
 import { Constants } from './constants';
+
+import * as updaterHelpers from '../upgrade/updater.helpers';
+
 import {
   Browser,
   BrowserContext,
@@ -20,6 +23,23 @@ const kill = require('tree-kill');
 const slash = require('slash');
 
 export class Helpers {
+  static generateLetmeUpdateBaseline = async () => {
+    //the baseline should always be generated starting from 8.7.2, the first version when auto-update was introduced
+    //the baseline can be generated once and then can be source-controlled / storred on git
+    let DOCUMENTBURSTER_BASELINE_VERSION = '8.7.2'.split('.').join('');
+
+    const UPGRADE_DIR = 'testground/upgrade';
+
+    await jetpack.dirAsync(UPGRADE_DIR, { empty: true });
+
+    const baselineVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_baseline/db-baseline-8.7.2.zip`;
+    console.log(`baselineVersionFilePath = ${baselineVersionFilePath}`);
+    await updaterHelpers.default.extractBaseLineAndCopyCustomConfigAndScriptFiles(
+      UPGRADE_DIR,
+      baselineVersionFilePath,
+    );
+  };
+
   static killHangingJavaProcesses = async () => {
     //kill "hanging" java processes
     let javaProcesses = await findProcess('name', 'java');
@@ -154,12 +174,26 @@ export class Helpers {
       await this.deActivateLicenseKey();
     }
 
+    // payslips-template.docx
+    await jetpack.dirAsync(
+      `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/payslips`,
+      {
+        empty: true,
+      },
+    );
+
+    // payslips-template.docx
+    await jetpack.copyAsync(
+      `${process.env.PORTABLE_EXECUTABLE_DIR}/samples/reports/payslips/payslips-template.docx`,
+      `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/payslips/payslips-template.docx`,
+    );
+
     //await this.killHangingJavaProcesses();
     // empty and refresh config
     const verifiedDbFolder = await jetpack.findAsync(
       path.resolve(PATHS.E2E_ASSEMBLY_FOLDER_PATH),
       {
-        matching: 'DocumentBurster*',
+        matching: 'ReportBurster*',
         files: false,
         directories: true,
         recursive: false,
@@ -283,6 +317,72 @@ export class Helpers {
       ),
       shell: true,
     });
+  };
+
+  static setupConfigurationTemplate = async (
+    templateName: string,
+    mailMergeCapability?: string,
+  ) => {
+    if (mailMergeCapability) {
+      await jetpack.dirAsync(
+        `${process.env.PORTABLE_EXECUTABLE_DIR}/config/reports/${templateName.toLowerCase()}`,
+        { empty: true },
+      );
+
+      await jetpack.copyAsync(
+        `${PATHS.E2E_ASSEMBLY_FOLDER_PATH}/config/_defaults/settings.xml`,
+        `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/${templateName.toLowerCase()}/settings.xml`,
+      );
+
+      await jetpack.copyAsync(
+        `${PATHS.E2E_ASSEMBLY_FOLDER_PATH}/config/_defaults/reporting.xml`,
+        `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/${templateName.toLowerCase()}/reporting.xml`,
+      );
+
+      let fileContent = await jetpack.readAsync(
+        `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/${templateName.toLowerCase()}/settings.xml`,
+      );
+
+      if (fileContent) {
+        fileContent = fileContent.replace(
+          /\<template\>My Reports\<\/template\>/g,
+          `<template>${templateName}</template>`,
+        );
+
+        fileContent = fileContent.replace(
+          /\<reportgenerationmailmerge\>false\<\/reportgenerationmailmerge\>/g,
+          `<reportgenerationmailmerge>true</reportgenerationmailmerge>`,
+        );
+
+        // Write the new content back to the file
+        await jetpack.writeAsync(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/${templateName.toLowerCase()}/settings.xml`,
+          fileContent,
+        );
+      }
+
+      fileContent = await jetpack.readAsync(
+        `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/${templateName.toLowerCase()}/reporting.xml`,
+      );
+
+      if (fileContent) {
+        fileContent = fileContent.replace(
+          /\<outputtype\>output.none\<\/outputtype\>/g,
+          `<outputtype>output.docx</outputtype>`,
+        );
+
+        fileContent = fileContent.replace(
+          /\<documentpath\/\>/g,
+          `<documentpath>/templates/reports/payslips/payslips-template.docx</documentpath>`,
+        );
+
+        // Write the new content back to the file
+        await jetpack.writeAsync(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/${templateName.toLowerCase()}/reporting.xml`,
+          fileContent,
+        );
+      }
+    }
   };
 
   static arrayEquals = (a: any[], b: any[]) => {

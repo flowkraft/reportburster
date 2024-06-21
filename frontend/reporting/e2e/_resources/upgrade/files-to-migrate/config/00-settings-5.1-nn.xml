@@ -9,9 +9,9 @@
     <pollfolder>05</pollfolder>
     <quarantinefiles>06</quarantinefiles>
     <quarantinefolder>07</quarantinefolder>
-    <sendfiles>08</sendfiles>
-    <deletefiles>09</deletefiles>
-    <htmlemail>10</htmlemail>
+    <sendfiles>true</sendfiles>
+    <deletefiles>true</deletefiles>
+    <htmlemail>false</htmlemail>
     <validatemailaddresses>11</validatemailaddresses>
     <encoding/>
     <sort>12</sort>

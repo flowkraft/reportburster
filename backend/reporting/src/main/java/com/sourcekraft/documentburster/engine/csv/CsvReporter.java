@@ -265,10 +265,10 @@ public class CsvReporter extends AbstractBurster {
 		// variablesDataForCurrentToken);
 		if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_DOCX))
 			generateDocxFromDocxTemplateUsingXDocReport(ctx.extractedFilePath,
-					ctx.settings.getReportTemplate().documentpath, ctx.variables.getUserVariables(ctx.token));
+					ctx.settings.getReportTemplate().retrieveTemplateFilePath(), ctx.variables.getUserVariables(ctx.token));
 		else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_HTML))
 			generateHtmlFromHtmlTemplateUsingFreemarker(ctx.extractedFilePath,
-					ctx.settings.getReportTemplate().documentpath, ctx.variables.getUserVariables(ctx.token));
+					ctx.settings.getReportTemplate().retrieveTemplateFilePath(), ctx.variables.getUserVariables(ctx.token));
 
 	}
 

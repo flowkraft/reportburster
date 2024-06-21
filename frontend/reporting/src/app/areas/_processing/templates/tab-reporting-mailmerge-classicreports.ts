@@ -11,7 +11,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
       <div class="col-xs-4">
         <ng-select
           id="selectMailMergeClassicReport"
-          [(ngModel)]="selectedMailMergeClassicReport"
+          [(ngModel)]="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport"
           [groupBy]="groupByMailMergeHelper"
           appendTo="body"
         >
@@ -26,18 +26,21 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
           >
         </ng-select>
       </div>
-      <div class="col-xs-4" *ngIf="selectedMailMergeClassicReport">
+      <div class="col-xs-4" *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport">
         <input
-          id="mailMergeClassicReportInputFilePath"
-          [(ngModel)]="processingService.procBurstInfo.mailMergeClassicReportInputFilePath"
+          id="mailMergeClassicReportInputFile"
+          [(ngModel)]="processingService.procReportingMailMergeInfo.isSample ? processingService.procReportingMailMergeInfo.prefilledInputFilePath : processingService.procReportingMailMergeInfo.inputFileName"
           class="form-control"
+          [disabled]="!this.storeService.configSys.sysInfo.setup.java.isJavaOk"
           autofocus
           required
         />
       </div>
 
-      <div id="browseMailMergeClassicReportInputFile" class="col-xs-3" *ngIf="selectedMailMergeClassicReport">
-        <!--  
+      <div id="browseMailMergeClassicReportInputFile" class="col-xs-3" *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport">
+        <label for="reportingFileUploadInput" class="btn btn-default btn-block"><i class="fa fa-folder-open-o' }}"></i>&nbsp;Select File</label>
+        <input style="display: none;" type="file" id="reportingFileUploadInput" (change)="onMailMergeClassicReportFileSelected($event)" accept=".csv" #reportingFileUploadInput  [disabled]="!storeService.configSys.sysInfo.setup.java.isJavaOk"/>
+      <!--  
         <dburst-button-native-system-dialog
           value="{{
           'COMPONENTS.BUTTON-NATIVE-SYSTEM-DIALOG.SELECT-FILE' | translate }}"
@@ -53,11 +56,11 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
 
       <div class="col-xs-1">
         <button
-          id="btnGenerateReports"
+          id="btnBurst"
           type="button"
           class="btn btn-primary"
           (click)="doGenerateReports()"
-          [disabled]="!processingService.procBurstInfo.mailMergeClassicReportInputFilePath || executionStatsService.jobStats.numberOfActiveJobs > 0"
+          [disabled]="!processingService.procReportingMailMergeInfo.inputFileName || executionStatsService.jobStats.numberOfActiveJobs > 0"
         >
           <i class="fa fa-play"></i>&nbsp;Burst
         </button>
@@ -110,7 +113,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
     </div>
     <div
       class="row"
-      *ngIf="processingService.procBurstInfo.mailMergeClassicReportInputFilePath && !executionStatsService.logStats.foundDirtyLogFiles && executionStatsService.jobStats.numberOfActiveJobs === 0 && executionStatsService.jobStats.jobsToResume.length === 0"
+      *ngIf="processingService.procReportingMailMergeInfo.inputFileName && !executionStatsService.logStats.foundDirtyLogFiles && executionStatsService.jobStats.numberOfActiveJobs === 0 && executionStatsService.jobStats.jobsToResume.length === 0"
     >
       <div class="col-xs-1">
         <i class="fa fa-flag-checkered fa-2x"></i>
@@ -118,26 +121,26 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
 
       <div class="col-xs-11">
         <a
-          id="qaReminderLinkGenerateReports"
+          id="qaReminderLink"
           href="#qaReminder"
           data-toggle="collapse"
           >{{ 'AREAS.PROCESSING.TAB-BURST.DID-YOU-RUN-QA' | translate }}
-          <em>{{processingService.procBurstInfo.mailMergeClassicReportInputFilePath}}</em>?</a
+          <em>{{processingService.procReportingMailMergeInfo.isSample ? processingService.procReportingMailMergeInfo.prefilledInputFilePath : processingService.procReportingMailMergeInfo.inputFileName}}</em>?</a
         >
         <div id="qaReminder" class="collapse">
           {{ 'AREAS.PROCESSING.TAB-BURST.BEFORE-EMAILING' | translate }}
           <a
             href="#"
-            [routerLink]="['/processingQa','qualityMenuSelected',processingService.procBurstInfo.mailMergeClassicReportInputFilePath, processingService.procBurstInfo.prefilledConfigurationFilePath, 'csv-generate-reports']"
+            [routerLink]="['/processingQa','qualityMenuSelected',processingService.procReportingMailMergeInfo.prefilledInputFilePath, processingService.procReportingMailMergeInfo.prefilledConfigurationFilePath, 'csv-generate-reports']"
             skipLocationChange="true">Quality Assurance</a
           >
           {{ 'AREAS.PROCESSING.TAB-BURST.FOR-THE-FILE' | translate }}
-          <em>{{processingService.procBurstInfo.mailMergeClassicReportInputFilePath}}</em>&nbsp;&nbsp;
+          <em>{{processingService.procReportingMailMergeInfo.isSample ? processingService.procReportingMailMergeInfo.prefilledInputFilePath : processingService.procReportingMailMergeInfo.inputFileName}}</em>&nbsp;&nbsp;
           <button
             id="goToQa"
             type="button"
             class="btn btn-primary btn-sm"
-            [routerLink]="['/processingQa','qualityMenuSelected',processingService.procBurstInfo.mailMergeClassicReportInputFilePath, processingService.procBurstInfo.prefilledConfigurationFilePath, 'csv-generate-reports']"
+            [routerLink]="['/processingQa','qualityMenuSelected',processingService.procReportingMailMergeInfo.prefilledInputFilePath, processingService.procReportingMailMergeInfo.prefilledConfigurationFilePath, 'csv-generate-reports']"
             skipLocationChange="true">
             {{ 'AREAS.PROCESSING.TAB-BURST.RUN-QA' | translate }}
           </button>

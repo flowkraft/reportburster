@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { javaTemplate } from './java.template';
 
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
-import { ElectronService } from '../electron.service';
+import { RbElectronService } from '../electron.service';
 import { StateStoreService } from '../../../providers/state-store.service';
 
 @Component({
@@ -12,7 +12,7 @@ import { StateStoreService } from '../../../providers/state-store.service';
 })
 export class JavaComponent {
   constructor(
-    protected electronService: ElectronService,
+    protected electronService: RbElectronService,
     protected stateStore: StateStoreService,
     protected confirmService: ConfirmService,
   ) {}

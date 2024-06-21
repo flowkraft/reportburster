@@ -30,7 +30,6 @@ import { tabLicenseTemplate } from './templates/tab-license';
 
 import { resumeJobsTemplate } from './templates/resume-jobs';
 
-import { CfgTmplFileInfo } from '../../providers/settings.service';
 import Utilities from '../../helpers/utilities';
 import { ConfirmService } from '../../components/dialog-confirm/confirm.service';
 import { InfoService } from '../../components/dialog-info/info.service';
@@ -98,6 +97,8 @@ export class ProcessingComponent implements OnInit {
   resumeJobsTemplate: TemplateRef<any>;
 
   @ViewChild('burstFileUploadInput') burstFileUploadInput: ElementRef;
+  @ViewChild('reportingFileUploadInput') reportingFileUploadInput: ElementRef;
+
   @ViewChild('qaFileUploadInput') qaFileUploadInput: ElementRef;
   @ViewChild('mergeFilesUploadInput') mergeFilesUploadInput: ElementRef;
 
@@ -179,8 +180,6 @@ export class ProcessingComponent implements OnInit {
     },
   };
   currentLeftMenu: string;
-
-  protected selectedMailMergeClassicReport: CfgTmplFileInfo;
 
   protected reportgenerationmailmerge = [
     { id: 'payslips.xml', name: 'Payslips' },
@@ -345,6 +344,8 @@ export class ProcessingComponent implements OnInit {
     this.processingService.procQualityAssuranceInfo.inputFileName =
       this.processingService.procBurstInfo.inputFileName;
 
+    this.processingService.procQualityAssuranceInfo.whichAction = 'burst';
+
     //console.log(
     //  `processingService.procQualityAssuranceInfo.inputFileName ( onBurstFileSelected) = ${this.processingService.procQualityAssuranceInfo.inputFileName}`,
     //);
@@ -369,9 +370,27 @@ export class ProcessingComponent implements OnInit {
       false;
     this.processingService.procMergeBurstInfo.mergedFileName = 'merged.pdf';
 
+    this.processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport =
+      null;
+
+    this.processingService.procReportingMailMergeInfo.inputFile = null;
+    this.processingService.procReportingMailMergeInfo.inputFileName = '';
+
+    this.processingService.procReportingMailMergeInfo.prefilledInputFilePath =
+      '';
+    this.processingService.procReportingMailMergeInfo.prefilledConfigurationFilePath =
+      '';
+    this.processingService.procReportingMailMergeInfo.isSample = false;
+
     if (this.burstFileUploadInput?.nativeElement) {
       (this.burstFileUploadInput.nativeElement as HTMLInputElement).value = '';
     }
+
+    if (this.reportingFileUploadInput?.nativeElement) {
+      (this.reportingFileUploadInput.nativeElement as HTMLInputElement).value =
+        '';
+    }
+
     if (this.qaFileUploadInput?.nativeElement) {
       (this.qaFileUploadInput.nativeElement as HTMLInputElement).value = '';
     }
@@ -380,12 +399,30 @@ export class ProcessingComponent implements OnInit {
     }
   }
 
-  async onMailMergeClassicReportFileSelected(filePath: string) {
-    this.processingService.procBurstInfo.mailMergeClassicReportInputFilePath =
-      Utilities.slash(filePath);
+  async onMailMergeClassicReportFileSelected(event: Event) {
+    const target = event.target as HTMLInputElement;
 
-    this.processingService.procBurstInfo.prefilledConfigurationFilePath =
-      Utilities.slash(this.selectedMailMergeClassicReport.filePath);
+    this.processingService.procReportingMailMergeInfo.inputFile =
+      target.files[0];
+    this.processingService.procReportingMailMergeInfo.inputFileName =
+      this.processingService.procReportingMailMergeInfo.inputFile.name;
+
+    this.processingService.procReportingMailMergeInfo.prefilledConfigurationFilePath =
+      Utilities.slash(
+        this.processingService.procReportingMailMergeInfo
+          .selectedMailMergeClassicReport.filePath,
+      );
+
+    this.processingService.procQualityAssuranceInfo.inputFile =
+      this.processingService.procReportingMailMergeInfo.inputFile;
+    this.processingService.procQualityAssuranceInfo.inputFileName =
+      this.processingService.procReportingMailMergeInfo.inputFileName;
+
+    this.processingService.procQualityAssuranceInfo.prefilledConfigurationFilePath =
+      this.processingService.procReportingMailMergeInfo.prefilledConfigurationFilePath;
+
+    this.processingService.procQualityAssuranceInfo.whichAction =
+      'csv-generate-reports';
   }
 
   disableRunTest() {}
@@ -417,7 +454,7 @@ export class ProcessingComponent implements OnInit {
         confirmAction: async () => {
           let inputFilePath =
             this.processingService.procBurstInfo.prefilledInputFilePath;
-          const configFilePath =
+          let configFilePath =
             this.processingService.procBurstInfo.prefilledConfigurationFilePath;
 
           if (!this.processingService.procBurstInfo.isSample) {
@@ -449,6 +486,12 @@ export class ProcessingComponent implements OnInit {
               this.processingService.procBurstInfo.inputFileName,
             );
           else {
+            if (!configFilePath.includes('PORTABLE_EXECUTABLE_DIR_PATH'))
+              configFilePath = Utilities.slash(configFilePath).replace(
+                '/config/',
+                'PORTABLE_EXECUTABLE_DIR_PATH/config/',
+              );
+
             this.shellService.runBatFile(
               ['-f', `"${inputFilePath}"`, '-c', `"${configFilePath}"`],
               this.processingService.procBurstInfo.inputFileName,
@@ -470,30 +513,65 @@ export class ProcessingComponent implements OnInit {
         message: dialogMessage,
       });
     } else {
-      const inputFileName = Utilities.basename(
-        this.processingService.procBurstInfo
-          .mailMergeClassicReportInputFilePath,
-      );
-
-      const dialogQuestion = `Process file '${inputFileName}'?`;
-
+      if (this.processingService.procReportingMailMergeInfo.isSample) {
+        this.processingService.procReportingMailMergeInfo.inputFileName =
+          Utilities.basename(
+            this.processingService.procReportingMailMergeInfo
+              .prefilledInputFilePath,
+          );
+      }
+      const dialogQuestion = `Burst file ${this.processingService.procReportingMailMergeInfo.inputFileName}?`;
       this.confirmService.askConfirmation({
         message: dialogQuestion,
-        confirmAction: () => {
-          const configFilePath =
-            this.processingService.procBurstInfo.prefilledConfigurationFilePath;
-          this.processingService.procBurstInfo.prefilledConfigurationFilePath =
-            '';
+        confirmAction: async () => {
+          let inputFilePath =
+            this.processingService.procReportingMailMergeInfo
+              .prefilledInputFilePath;
+          let configFilePath =
+            this.processingService.procReportingMailMergeInfo
+              .prefilledConfigurationFilePath;
+          if (!this.processingService.procReportingMailMergeInfo.isSample) {
+            const formData = new FormData();
+            formData.append(
+              'file',
+              this.processingService.procReportingMailMergeInfo.inputFile,
+              this.processingService.procReportingMailMergeInfo.inputFileName,
+            );
+            const customHeaders = new Headers({
+              Accept: 'application/json',
+            });
+            const uploadedFilesInfo = await this.apiService.post(
+              '/jobman/upload/process-single',
+              formData,
+              customHeaders,
+            );
 
-          this.shellService.runBatFile(
-            [
-              '-f',
-              `"${this.processingService.procBurstInfo.mailMergeClassicReportInputFilePath}"`,
-              '-c',
-              `"${configFilePath}"`,
-            ],
-            inputFileName,
-          );
+            if (!uploadedFilesInfo || !uploadedFilesInfo.length) {
+              return;
+            }
+
+            inputFilePath = uploadedFilesInfo[0].filePath;
+          }
+
+          if (!configFilePath)
+            this.shellService.runBatFile(
+              ['-f', `"${inputFilePath}"`],
+              this.processingService.procReportingMailMergeInfo.inputFileName,
+            );
+          else {
+            if (!configFilePath.includes('PORTABLE_EXECUTABLE_DIR_PATH'))
+              configFilePath = Utilities.slash(configFilePath).replace(
+                '/config/',
+                'PORTABLE_EXECUTABLE_DIR_PATH/config/',
+              );
+
+            this.shellService.runBatFile(
+              ['-f', `"${inputFilePath}"`, '-c', `"${configFilePath}"`],
+              this.processingService.procReportingMailMergeInfo.inputFileName,
+            );
+          }
+
+          this.resetProcInfo();
         },
       });
     }
@@ -785,7 +863,12 @@ export class ProcessingComponent implements OnInit {
           )
             arrguments = [
               '-c',
-              '"' + configFilePath + '"',
+              '"' +
+                Utilities.slash(configFilePath).replace(
+                  '/config/',
+                  'PORTABLE_EXECUTABLE_DIR_PATH/config/',
+                ) +
+                '"',
               '-' + this.processingService.procQualityAssuranceInfo.mode,
             ];
 

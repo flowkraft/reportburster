@@ -2,8 +2,8 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../out-tsc/e2e",
-    "module": "node16"
-    //"types": ["jasmine", "node"]
+    "module": "node16",
+    "types": ["jasmine", "node"]
   },
   "include": ["**.spec.ts", "**.tests.ts"]
 }

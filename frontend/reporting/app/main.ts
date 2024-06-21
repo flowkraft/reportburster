@@ -1,6 +1,6 @@
 //Bookkeeping January - March 2024
 
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import log from 'electron-log';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -231,6 +231,16 @@ try {
   // Catch Error
   // throw e;
 }
+
+ipcMain.handle('dialog.show-save', async (event, options) => {
+  const result = await dialog.showSaveDialog(options);
+  return result;
+});
+
+ipcMain.handle('dialog.show-open', async (event, options) => {
+  const result = await dialog.showOpenDialog(options);
+  return result;
+});
 
 ipcMain.handle('child_process.exec', async (event, command) => {
   const execPromise = promisify(exec);

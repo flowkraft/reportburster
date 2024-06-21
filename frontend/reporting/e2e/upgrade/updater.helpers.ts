@@ -21,7 +21,7 @@ export default {
 
   filesToMigrateDirectoryPath: `${PATHS.E2E_RESOURCES_PATH}/upgrade/files-to-migrate`,
 
-  updateDestinationDirectoryPath: `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster`,
+  updateDestinationDirectoryPath: `${PATHS.EXECUTABLE_DIR_PATH}/ReportBurster`,
 
   _getInitialUpdateInfo(folderPath: string, isServer: boolean): UpdateInfo {
     let updateInfo = new UpdateInfo();
@@ -68,15 +68,39 @@ export default {
 
     if (baselineVersionZipFilePath.includes('-server-')) {
       isServer = true;
-      this.updateDestinationDirectoryPath = `${this.updateDestinationDirectoryPath}/server`;
+      //this.updateDestinationDirectoryPath = `${this.updateDestinationDirectoryPath}/server`;
     }
 
     //console.log(
     //  `this.updateDestinationDirectoryPath2 = ${this.updateDestinationDirectoryPath}`
     // );
 
-    let admZip = new AdmZip(baselineVersionZipFilePath);
+    //console.log(`PATHS.EXECUTABLE_DIR_PATH = ${PATHS.EXECUTABLE_DIR_PATH}`);
+
+    let admZip = new AdmZip(newVersionZipFilePath);
     admZip.extractAllTo(PATHS.EXECUTABLE_DIR_PATH);
+
+    //START SIMULATE AN OLDER INSTALLATION
+    const txtFiles = await jetpack.findAsync(PATHS.EXECUTABLE_DIR_PATH, {
+      matching: 'ReportBurster/**/*.txt',
+    });
+
+    // Loop through each txt file
+    for (const txtFile of txtFiles) {
+      // Read the file
+      let fileContent = await jetpack.readAsync(txtFile);
+
+      // Replace 'file-999' with 'file-920'
+      if (fileContent) {
+        fileContent = fileContent.replace(/file-999/g, 'file-920');
+
+        // Write the new content back to the file
+        await jetpack.writeAsync(txtFile, fileContent);
+      }
+    }
+    //END SIMULATE AN OLDER INSTALLATION
+
+    //return;
 
     //console.log(
     //  `filesToMigrateDirectoryPath = ${this.filesToMigrateDirectoryPath}, updateDestinationDirectoryPath = ${this.updateDestinationDirectoryPath}`
@@ -133,7 +157,7 @@ export default {
 
       for (let scriptFilePath of scriptFilePaths) {
         let scriptFileName = path.basename(scriptFilePath);
-
+        //console.log(`version = ${version}, scriptFileName = ${scriptFileName}`);
         await jetpack.copyAsync(
           scriptFilePath,
           `${this.updateDestinationDirectoryPath}/scripts/burst/${version}-${scriptFileName}`,
@@ -184,11 +208,9 @@ export default {
       { overwrite: true },
     );
 
-    /*
-    console.log(
-      `updater.helpers.updateDestinationDirectoryPath = ${this.updateDestinationDirectoryPath}`
-    );
-    */
+    //console.log(
+    //  `updater.helpers.updateDestinationDirectoryPath = ${this.updateDestinationDirectoryPath}`,
+    //);
 
     let updater = new Updater(this.updateDestinationDirectoryPath);
     //mock the download function so that it will not do a real download but only extract a local newVersionZipFilePath file
@@ -201,9 +223,9 @@ export default {
         `${updater.upgdDbTempDirectoryPath}/to`
       );
       */
-      let updateTempDestinationDirectoryPath = `${updater.upgdDbTempDirectoryPath}/to/DocumentBurster`;
-      if (isServer)
-        updateTempDestinationDirectoryPath = `${updater.upgdDbTempDirectoryPath}/to/DocumentBurster/server`;
+      let updateTempDestinationDirectoryPath = `${updater.upgdDbTempDirectoryPath}/to/ReportBurster`;
+      //if (isServer)
+      //updateTempDestinationDirectoryPath = `${updater.upgdDbTempDirectoryPath}/to/DocumentBurster/server`;
 
       //Step6 - in the 8.7.2 tmp generate a sample license file with content to test that
       //the license is correctly copied when the configuration to copy is enabled.
@@ -247,6 +269,8 @@ export default {
 
     //console.log(`updateInfo.mode = ${updateInfo.mode}`);
 
+    //return;
+
     await updater.doUpdate(updateInfo);
 
     await this._expectThingsToBeMigratedAndValid(updateInfo, updater, isServer);
@@ -262,7 +286,7 @@ export default {
       .toBe(false);
   },
 
-  async _extractBaseLineAndCopyCustomConfigAndScriptFiles(
+  async extractBaseLineAndCopyCustomConfigAndScriptFiles(
     locationPath: string,
     baselineVersionZipFilePath: string,
   ) {
@@ -278,7 +302,7 @@ export default {
 
     if (baselineVersionZipFilePath.includes('-server-')) {
       updateSourceDirectoryPath = `${updateSourceDirectoryPath}/server`;
-      this.updateDestinationDirectoryPath = `${this.updateDestinationDirectoryPath}/server`;
+      //this.updateDestinationDirectoryPath = `${this.updateDestinationDirectoryPath}/server`;
     }
 
     //console.log(
@@ -449,7 +473,7 @@ export default {
 
     //await decompress(newVersionZipFilePath, PATHS.EXECUTABLE_DIR_PATH);
 
-    await this._extractBaseLineAndCopyCustomConfigAndScriptFiles(
+    await this.extractBaseLineAndCopyCustomConfigAndScriptFiles(
       PATHS.EXECUTABLE_DIR_PATH,
       baselineVersionZipFilePath,
     );
@@ -474,6 +498,9 @@ export default {
 
     updateInfo.mode = 'migrate-copy';
 
+    //console.log(
+    //  `isServer = ${isServer}, updateInfo.mode = ${updateInfo.mode}, updateInfo.updateSourceDirectoryPath = ${updateInfo.updateSourceDirectoryPath}`,
+    //);
     //console.log(`updateInfo.mode = ${updateInfo.mode}`);
 
     await updater.doUpdate(updateInfo);
@@ -494,18 +521,18 @@ export default {
     updater: Updater,
     isServer: boolean,
   ) {
-    let dbDesktopServerDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster`;
-    let dbWebConsoleDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster/web-console`;
+    let dbDesktopServerDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/ReportBurster`;
+    //let dbWebConsoleDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster/web-console`;
 
-    if (isServer)
-      dbDesktopServerDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster/server`;
+    //if (isServer)
+    //dbDesktopServerDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster/server`;
 
     //console.log(`STEP13`);
 
     //assert all the *.txt file in the "upgraded" folder contain
     // file-999 and do not contain file-872
     let allTxtFilePaths = await jetpack.findAsync(PATHS.EXECUTABLE_DIR_PATH, {
-      matching: 'DocumentBurster/**/*.txt',
+      matching: 'ReportBurster/**/*.txt',
     });
 
     if (updateInfo.updateOptions.copybackupfiles)
@@ -549,10 +576,8 @@ export default {
       `${dbDesktopServerDirectoryPath}/tools`,
     );
     expect(exists)
-      .withContext(
-        `${dbDesktopServerDirectoryPath}/tools folder should not exist`,
-      )
-      .toBe(false);
+      .withContext(`${dbDesktopServerDirectoryPath}/tools folder should exist`)
+      .toBe('dir');
 
     //console.log(`STEP15`);
 
@@ -586,38 +611,6 @@ export default {
       .toBe('dir');
 
     //console.log(`STEP16`);
-
-    if (isServer) {
-      exists = await jetpack.existsAsync(
-        `${dbWebConsoleDirectoryPath}/extra-db4`,
-      );
-      expect(exists)
-        .withContext(
-          `${dbWebConsoleDirectoryPath}/extra-db4 folder should exist`,
-        )
-        .toBe('dir');
-
-      //console.log(`STEP17 - server`);
-
-      exists = await jetpack.existsAsync(
-        `${dbWebConsoleDirectoryPath}/console/extra-db5`,
-      );
-      expect(exists)
-        .withContext(
-          `${dbWebConsoleDirectoryPath}/console/extra-db5 folder should exist`,
-        )
-        .toBe('dir');
-
-      exists = await jetpack.existsAsync(
-        `${dbWebConsoleDirectoryPath}/console/webapps/extra-db6`,
-      );
-      expect(exists)
-        .withContext(
-          `${dbWebConsoleDirectoryPath}/console/webapps/extra-db6 folder should exist`,
-        )
-        .toBe('dir');
-      //console.log(`STEP18 - server`);
-    }
 
     //assert settings.xml is correctly upgraded
     await this._assertXmlConfigV51ExpectedNN(
@@ -664,6 +657,7 @@ export default {
       updater.defaultSettings,
       exceptFor,
     );
+
     await this._expectEqualConfigurationValuesExceptFor(
       `${dbDesktopServerDirectoryPath}/config/burst/10-settings-6.1-custom.xml`,
       updater.defaultSettings,
@@ -748,6 +742,54 @@ export default {
       customExceptFor,
     );
 
+    await this._expectEqualConfigurationValuesExceptFor(
+      `${dbDesktopServerDirectoryPath}/config/burst/40-settings-8.7.1.xml`,
+      updater.defaultSettings,
+    );
+
+    customExceptFor = this._getCustomExceptFor();
+    customExceptFor.set('documentburster.settings.htmlemail', 'true');
+    await this._expectEqualConfigurationValuesExceptFor(
+      `${dbDesktopServerDirectoryPath}/config/burst/40-settings-8.7.1-custom.xml`,
+      updater.defaultSettings,
+      customExceptFor,
+    );
+
+    await this._expectEqualConfigurationValuesExceptFor(
+      `${dbDesktopServerDirectoryPath}/config/burst/45-settings-8.8.9.xml`,
+      updater.defaultSettings,
+    );
+
+    customExceptFor = this._getCustomExceptFor();
+    await this._expectEqualConfigurationValuesExceptFor(
+      `${dbDesktopServerDirectoryPath}/config/burst/45-settings-8.8.9-custom.xml`,
+      updater.defaultSettings,
+      customExceptFor,
+    );
+
+    await this._expectEqualConfigurationValuesExceptFor(
+      `${dbDesktopServerDirectoryPath}/config/burst/50-settings-9.1.5.xml`,
+      updater.defaultSettings,
+    );
+
+    customExceptFor = this._getCustomExceptFor();
+    await this._expectEqualConfigurationValuesExceptFor(
+      `${dbDesktopServerDirectoryPath}/config/burst/50-settings-9.1.5-custom.xml`,
+      updater.defaultSettings,
+      customExceptFor,
+    );
+
+    await this._expectEqualConfigurationValuesExceptFor(
+      `${dbDesktopServerDirectoryPath}/config/burst/55-settings-10.2.0.xml`,
+      updater.defaultSettings,
+    );
+
+    customExceptFor = this._getCustomExceptFor();
+    await this._expectEqualConfigurationValuesExceptFor(
+      `${dbDesktopServerDirectoryPath}/config/burst/55-settings-10.2.0-custom.xml`,
+      updater.defaultSettings,
+      customExceptFor,
+    );
     //console.log(`STEP27`);
 
     //assert that each and groovy script file is correctly upgraded
@@ -883,9 +925,9 @@ export default {
       for (let zipEntry of zipEntries) {
         if (zipEntry.entryName.endsWith('.txt')) {
           let data = zipEntry.getData().toString('utf8');
-          expect(data.includes('file-872'))
+          expect(data.includes('file-920'))
             .withContext(
-              `zipEntry.entryName: ${zipEntry.entryName} should contain file-872`,
+              `zipEntry.entryName: ${zipEntry.entryName} should contain file-920`,
             )
             .toBe(true);
           expect(data.includes('file-999'))
@@ -910,7 +952,7 @@ export default {
               .toBe(false);
         } else if (zipEntry.entryName.endsWith('.xml')) {
           let data = zipEntry.getData().toString('utf8');
-          if (data.includes('8.8.4'))
+          if (data.includes('8.8.4') || data.includes('8.8.9'))
             expect(data.includes('copylicensinginformation'))
               .withContext(`zipEntry.entryName: ${zipEntry.entryName}`)
               .toBe(true);
@@ -1176,10 +1218,15 @@ export default {
           //console.log(
           //  `Key: ${joinedKeys}, Value: ${value}, Expected Value: ${expectedValue}`
           //);
+          //console.log(`configSettingsFilePath: ${configSettingsFilePath}`);
         }
 
         //expect(value).withContext(joinedKeys).toBe(expectedValue);
-        expect(value).withContext(joinedKeys).toBe(expectedValue);
+        expect(value)
+          .withContext(
+            `${path.basename(configSettingsFilePath)}, ${joinedKeys}`,
+          )
+          .toBe(expectedValue);
       }
     });
 
@@ -1188,6 +1235,8 @@ export default {
 
   _getCustomExceptFor() {
     let exceptFor = new Map();
+
+    exceptFor.set('documentburster.settings.sendfiles.email', 'true');
 
     exceptFor.set('documentburster.settings.htmlemail', 'false');
 
@@ -1241,10 +1290,10 @@ export default {
     exceptFor.set('documentburster.settings.quarantinefiles', '06');
     exceptFor.set('documentburster.settings.quarantinefolder', '07');
 
-    exceptFor.set('documentburster.settings.deletefiles', '09');
-    exceptFor.set('documentburster.settings.htmlemail', '10');
+    exceptFor.set('documentburster.settings.deletefiles', 'true');
+    exceptFor.set('documentburster.settings.htmlemail', 'false');
 
-    exceptFor.set('documentburster.settings.sendfiles.email', '08');
+    exceptFor.set('documentburster.settings.sendfiles.email', 'true');
 
     exceptFor.set('documentburster.settings.emailserver.host', '15');
     exceptFor.set('documentburster.settings.emailserver.port', '16');

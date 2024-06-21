@@ -13,6 +13,13 @@ signal_service = ChromeService(executable_path=chromedriver_path)
 # And here we construct options that point to use your actual electron app.
 PORTABLE_EXECUTABLE_DIR = os.path.join(os.path.dirname(os.path.dirname(cwd)), "target/user-acceptance/rb/ReportBurster")
 PORTABLE_EXECUTABLE_DIR_SERVER = os.path.join(os.path.dirname(os.path.dirname(cwd)), "target/user-acceptance/rb-server/ReportBurster")
+
 reportburster_exe_path = os.path.join(PORTABLE_EXECUTABLE_DIR, "ReportBurster.exe")
 signal_electron = Options()
 signal_electron.binary_location = reportburster_exe_path
+
+PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), "target/user-acceptance/rb/ReportBurster-letmeupdate")
+reportburster_exe_path_let_me_update = os.path.join(PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE, "ReportBurster.exe")
+signal_electron_let_me_update = Options()
+signal_electron_let_me_update.binary_location = reportburster_exe_path_let_me_update
+    

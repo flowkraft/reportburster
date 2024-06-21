@@ -2,15 +2,12 @@ import { Injectable } from '@angular/core';
 
 //import * as process from 'process';
 import { ChildProcess } from 'child_process';
-import * as childProcess from 'child_process';
-
-import * as ElectronLog from 'electron-log';
 
 import * as semver from 'semver';
 import { SemVer } from 'semver';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
-import { Subscription, interval } from 'rxjs';
+import { Subscription } from 'rxjs';
 import * as CustomElectronTitlebar from 'custom-electron-titlebar/dist';
 
 import { ApiService } from '../../providers/api.service';
@@ -19,39 +16,22 @@ import UtilitiesElectron from './utilities-electron';
 import UtilitiesNodeJs from './utilities-nodejs';
 
 class Dialog {
-  showSaveDialog(options: {
-    defaultPath: string;
-  }): Promise<{ canceled: boolean; filePath?: string; bookmark?: string }> {
-    return new Promise((resolve, reject) => {
-      // Simulate a successful operation for demonstration purposes
-      resolve({
-        canceled: false, // change this to true to simulate a canceled operation
-        filePath: `_EXECUTABLE_DIR')}/temp/file`, // this will be undefined if the operation was canceled
-        bookmark: 'base64-encoded-bookmark', // this is optional and specific to macOS MAS
-      });
-    });
+  showSaveDialog(
+    options: Electron.SaveDialogOptions,
+  ): Promise<Electron.SaveDialogReturnValue> {
+    return UtilitiesElectron.showSaveDialog(options);
   }
 
-  showOpenDialog(options: { defaultPath: string }): Promise<{
-    canceled: boolean;
-    filePaths: string[];
-    bookmarks?: string[];
-  }> {
-    return new Promise((resolve, reject) => {
-      // Simulate a successful operation for demonstration purposes
-      resolve({
-        canceled: false, // change this to true to simulate a canceled operation
-        filePaths: window.require('process').env.PORTABLE_EXECUTABLE_DIR, // this will be an empty array if the operation was canceled
-        bookmarks: ['base64-encoded-bookmark1', 'base64-encoded-bookmark2'], // this is optional and specific to macOS MAS
-      });
-    });
+  showOpenDialog(
+    options: Electron.OpenDialogOptions,
+  ): Promise<Electron.OpenDialogReturnValue> {
+    return UtilitiesElectron.showOpenDialog(options);
   }
 }
-
 @Injectable({
   providedIn: 'root',
 })
-export class ElectronService {
+export class RbElectronService {
   //process: typeof process;
   //childProcess: typeof childProcess;
   //exec: typeof childProcess.exec;

@@ -28,6 +28,9 @@ export class Constants {
   static QA_TL = 'qa-tl';
   static QA_TR = 'qa-tr';
 
+  static PROC_BURST = 'proc-burst';
+  static PROC_GENERATE = 'proc-generate';
+  
   static SMS_DEFAULT = 'sms-default';
   static SMS_TWILIO = 'sms-twilio';
 

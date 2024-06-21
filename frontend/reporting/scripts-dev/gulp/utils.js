@@ -22,19 +22,23 @@ exports.beepSound = () => {
 };
 
 gulp.task("utils:start-server-and-ui-both", () => {
-  _startServerAndDoX("custom:start-ui-both");
+  _startServerAndDoX("_custom:start-ui-both");
 });
 
 gulp.task("utils:start-server-and-ui-web", () => {
-  _startServerAndDoX("custom:start-ui-web");
+  _startServerAndDoX("_custom:start-ui-web");
 });
 
 gulp.task("utils:start-server-and-ui-electron", () => {
-  _startServerAndDoX("custom:start-ui-electron");
+  _startServerAndDoX("_custom:start-ui-electron");
 });
 
 gulp.task("utils:start-server-and-e2e-electron", () => {
-  _startServerAndDoX("custom:e2e-electron");
+  _startServerAndDoX("_custom:playright-scripts-electron");
+});
+
+gulp.task("utils:start-server-and-e2e-web", () => {
+  _startServerAndDoX("_custom:playright-scripts-web");
 });
 
 gulp.task("utils:start-javano-chocono-and-ui", () => {
@@ -98,7 +102,7 @@ _startJavaYesAndUI = async (javaVersion, chocoStatus) => {
 
   await jetpack.writeAsync(electronLogPath, chocoLogMessage);
 
-  spawn("npm", ["run", "custom:start-ui-electron"], {
+  spawn("npm", ["run", "_custom:start-ui-electron"], {
     stdio: "pipe",
     shell: true,
   });
@@ -118,14 +122,14 @@ _startJavaNoAndUI = async (chocoStatus) => {
 
   await jetpack.writeAsync(electronLogPath, chocoLogMessage);
 
-  spawn("npm", ["run", "custom:start-ui-electron"], {
+  spawn("npm", ["run", "_custom:start-ui-electron"], {
     stdio: "pipe",
     shell: true,
   });
 };
 
 _startServerAndDoX = (npm_x_script) => {
-  const server = spawn("npm", ["run", "custom:start-server"], {
+  const server = spawn("npm", ["run", "_custom:start-server"], {
     stdio: "pipe",
     shell: true,
   });

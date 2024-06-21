@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { ElectronService } from '../electron.service';
+import { RbElectronService } from '../electron.service';
+import UtilitiesNodeJs from '../utilities-nodejs';
 
 @Component({
   selector: 'dburst-button-native-system-dialog',
@@ -10,6 +11,8 @@ export class ButtonNativeSystemDialogComponent {
   @Input() style: string;
 
   @Input() value: string;
+  @Input() screen: string;
+
   @Input() saveDialog: string;
 
   @Input() defaultPath: string;
@@ -19,7 +22,7 @@ export class ButtonNativeSystemDialogComponent {
 
   @Output() pathsSelected: EventEmitter<any> = new EventEmitter();
 
-  constructor(protected electronService: ElectronService) {}
+  constructor(protected rbElectronService: RbElectronService) {}
 
   async onClick() {
     let options: any;
@@ -29,7 +32,7 @@ export class ButtonNativeSystemDialogComponent {
         title:
           this.dialogTitle ||
           'Select ' + (this.dialogType === 'folder' ? 'Folder' : 'File'),
-        defaultPath: this.defaultPath || 'C:/Users/username/Desktop/test/',
+        defaultPath: this.defaultPath || 'C:/ReportBurster',
         buttonLabel: this.value,
         properties: [
           this.dialogType === 'folder' ? 'openDirectory' : 'openFile',
@@ -60,23 +63,43 @@ export class ButtonNativeSystemDialogComponent {
     );
      */
 
-    if (this.electronService.RUNNING_IN_E2E) {
+    if (this.rbElectronService.RUNNING_IN_E2E) {
       this.pathsSelected.emit('');
     } else {
       let paths: string[];
       if (this.saveDialog) {
         paths[0] = (
-          await this.electronService.dialog.showSaveDialog(options)
+          await this.rbElectronService.dialog.showSaveDialog(options)
         ).filePath;
         this.pathsSelected.emit(paths[0]);
       } else {
-        paths = (await this.electronService.dialog.showOpenDialog(options))
-          .filePaths;
-        if (this.dialogType === 'files') {
-          this.pathsSelected.emit(paths);
-        } else {
-          this.pathsSelected.emit(paths[0]);
+        if (this.screen === 'letmeupdate') {
+          let defaultFolderPath = 'C:/DocumentBurster';
+
+          let defaultFolderPathExists =
+            await UtilitiesNodeJs.existsAsync(defaultFolderPath);
+
+          if ((defaultFolderPathExists = !'dir')) {
+            defaultFolderPath = 'C:/ReportBurster';
+
+            defaultFolderPathExists =
+              await UtilitiesNodeJs.existsAsync(defaultFolderPath);
+          }
+
+          if ((defaultFolderPathExists = !'dir'))
+            defaultFolderPath = this.rbElectronService.PORTABLE_EXECUTABLE_DIR;
+
+          options.defaultPath = defaultFolderPath;
+          options.title =
+            'Select the installation/location path from where you want to migrate your existing configuration values and data. The selected folder should contain the DocumentBurster.exe/ReportBurster.exe file';
         }
+
+        console.log(`options = ${JSON.stringify(options)}`);
+
+        paths = (await this.rbElectronService.dialog.showOpenDialog(options))
+          .filePaths;
+        if (this.dialogType === 'files') this.pathsSelected.emit(paths);
+        else this.pathsSelected.emit(paths[0]);
       }
     }
   }

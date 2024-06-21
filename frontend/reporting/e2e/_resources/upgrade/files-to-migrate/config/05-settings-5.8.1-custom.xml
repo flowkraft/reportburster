@@ -29,7 +29,7 @@
 		<quarantinefolder>custom-quarantine</quarantinefolder>
 
 		<!-- send the bursted files by Email and/or FTP (true|false) -->
-		<sendfiles>false</sendfiles>
+		<sendfiles>true</sendfiles>
 
 		<!-- delete the bursted files (true|false) -->
 		<deletefiles>false</deletefiles>
