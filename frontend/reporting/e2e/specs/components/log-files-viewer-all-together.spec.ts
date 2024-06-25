@@ -19,7 +19,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .appShouldBeReadyToRunNewJobs()
         .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
         .appStatusShouldBeGreatNoErrorsNoWarnings()
@@ -98,7 +98,7 @@ test.describe('', async () => {
 
       const ft = new FluentTester(firstPage);
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .appShouldBeReadyToRunNewJobs()
         .waitOnElementToBecomeVisible('#btnErrors')
         .appStatusShouldShowErrors()
@@ -241,7 +241,7 @@ test.describe('', async () => {
 
       const ft = new FluentTester(firstPage);
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .appShouldBeReadyToRunNewJobs()
         .waitOnElementToBecomeVisible('#btnErrors')
         .appStatusShouldShowErrors()
@@ -410,7 +410,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .appShouldBeReadyToRunNewJobs()
         .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
         .appStatusShouldBeGreatNoErrorsNoWarnings()
@@ -471,7 +471,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       return ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .appShouldBeReadyToRunNewJobs()
         .waitOnElementToBecomeVisible('#btnWarnings')
         .appStatusShouldShowWarnings()
@@ -540,7 +540,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       return ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .appShouldBeReadyToRunNewJobs()
         .waitOnElementToBecomeVisible('#btnErrors')
         .appStatusShouldShowErrors()
@@ -634,7 +634,7 @@ test.describe('', async () => {
 
       const ft = new FluentTester(firstPage);
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .appShouldBeReadyToRunNewJobs()
         .waitOnElementToBecomeVisible('#btnErrors')
         .appStatusShouldShowErrors()
@@ -770,7 +770,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .appShouldBeReadyToRunNewJobs()
         .waitOnElementToBecomeVisible('#btnErrors')
         .appStatusShouldShowErrors()
@@ -868,21 +868,12 @@ async function _shouldCorrectlyDisplayLogFiles(
     { overwrite: true },
   );
 
-  let electronApp, browser, context;
-
-  if (shouldRestartApp) {
-    if (isElectron) {
-      electronApp = await Helpers.electronAppLaunch('../..');
-      fPage = await electronApp.firstWindow();
-    } else {
-      ({ browser, context } = await Helpers.browserLaunch());
-      [fPage] = context.pages();
-    }
-  }
-
+  if (shouldRestartApp)
+    fPage = await Helpers.appRestart();
+  
   const ft = new FluentTester(fPage);
   await ft
-    .goToBurstScreen()
+    .gotoBurstScreen()
     .appShouldBeReadyToRunNewJobs()
     .waitOnElementToBecomeVisible('#btnErrors')
     .appStatusShouldShowErrors()
@@ -915,13 +906,5 @@ async function _shouldCorrectlyDisplayLogFiles(
       '1',
     );
 
-  if (isElectron) {
-    if (electronApp) {
-      await Helpers.electronAppClose(electronApp);
-    }
-  } else {
-    if (browser) {
-      await Helpers.browserClose(browser, context);
-    }
-  }
+  await Helpers.appClose();
 }

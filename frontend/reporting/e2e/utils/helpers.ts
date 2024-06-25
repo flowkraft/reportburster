@@ -10,12 +10,15 @@ import { Constants } from './constants';
 
 import * as updaterHelpers from '../upgrade/updater.helpers';
 
+const isElectron = process.env.TEST_ENV === 'electron';
+
 import {
   Browser,
   BrowserContext,
   ElectronApplication,
   _electron as electron,
   chromium,
+  Page,
 } from '@playwright/test';
 
 const findProcess = require('find-process');
@@ -78,6 +81,10 @@ export class Helpers {
   };
 
   static currentElectronApp: ElectronApplication | null = null;
+  static currentBrowser: Browser;
+  static currentBrowserContext: BrowserContext;
+
+  static firstPage: Page | null = null;
 
   static electronAppLaunch = async (
     relativePath: string,
@@ -87,7 +94,7 @@ export class Helpers {
       return this.currentElectronApp;
     }
 
-    const electronApp = await electron.launch({
+    this.currentElectronApp = await electron.launch({
       args: [
         path.join(__dirname, `${relativePath}/app/main.js`),
         path.join(__dirname, `${relativePath}/app/package.json`),
@@ -98,57 +105,109 @@ export class Helpers {
         SHOULD_SEND_STATS: 'false',
       },
     });
-    electronApp.context().tracing.start({
+    this.currentElectronApp.context().tracing.start({
       screenshots: true,
       snapshots: true,
     });
-    const firstPage = await electronApp.firstWindow();
-    await firstPage.waitForLoadState('domcontentloaded');
-    this.currentElectronApp = electronApp;
-    return electronApp;
+    this.firstPage = await this.currentElectronApp.firstWindow();
+    await this.firstPage.waitForLoadState('domcontentloaded');
+    return this.currentElectronApp;
   };
 
-  static electronAppClose = async (electronApp: ElectronApplication) => {
+  static electronAppClose = async () => {
     // If there's no running Electron app, there's nothing to close
     if (!this.currentElectronApp) {
       return;
     }
 
-    await electronApp.context().tracing.stop({ path: 'e2e/tracing/trace.zip' });
-    for (const page of electronApp.context().pages()) {
+    const traceDir = path.join(
+      process.env.PORTABLE_EXECUTABLE_DIR,
+      'e2e/tracing',
+    );
+    const tracePath = path.join(traceDir, 'trace.zip');
+
+    try {
+      await jetpack.dirAsync(traceDir);
+
+      // Stop tracing and save the trace file
+      await this.currentElectronApp.context().tracing.stop({ path: tracePath });
+    } catch (error) {
+      console.error('Error stopping tracing or saving trace file:', error);
+    }
+
+    for (const page of this.currentElectronApp.context().pages()) {
       await page.close();
     }
 
-    await electronApp.context().close();
-    await electronApp.close();
+    await this.currentElectronApp.context().close();
+    await this.currentElectronApp.close();
     // Set currentElectronApp to null
     this.currentElectronApp = null;
+    this.firstPage = null;
   };
+
+  static appRestart = async (): Promise<Page> => {
+    if (isElectron) {
+      await Helpers.electronAppRestart('../..');
+    } else {
+      await Helpers.browserRestart();
+    }
+    return this.firstPage;
+  };
+
+  static appClose = async (): Promise<void> => {
+    if (isElectron) {
+      await Helpers.electronAppClose();
+    } else {
+      await Helpers.browserClose();
+    }
+  };
+
+  static electronAppRestart = async (relativePath: string): Promise<Page> => {
+    await Helpers.electronAppClose();
+    await Helpers.electronAppLaunch(relativePath);
+    return this.firstPage;
+  };
+
+  static async browserRestart(): Promise<Page> {
+    await Helpers.browserClose();
+    await Helpers.browserLaunch();
+    return this.firstPage;
+  }
 
   static async browserLaunch(): Promise<{
     browser: Browser;
     context: BrowserContext;
   }> {
-    const browser = await chromium.launch();
-    const context = await browser.newContext();
+    this.currentBrowser = await chromium.launch();
+    this.currentBrowserContext = await this.currentBrowser.newContext();
     //await context.tracing.start({
     //  screenshots: true,
     //  snapshots: true,
     //});
-    const page = await context.newPage(); // Create a new page in the context
-    await page.goto('http://localhost:4201'); // Navigate to the URL
-    await page.waitForLoadState('domcontentloaded'); // Wait for the 'domcontentloaded' event
+    this.firstPage = await this.currentBrowserContext.newPage(); // Create a new page in the context
+    await this.firstPage.goto('http://localhost:4201'); // Navigate to the URL
+    await this.firstPage.waitForLoadState('domcontentloaded'); // Wait for the 'domcontentloaded' event
+
+    const browser = this.currentBrowser;
+    const context = this.currentBrowserContext;
 
     return { browser, context };
   }
 
-  static async browserClose(
-    browser: Browser,
-    context: BrowserContext,
-  ): Promise<void> {
+  static async browserClose(): Promise<void> {
+    if (!this.currentBrowserContext || !this.currentBrowser) {
+      return;
+    }
+
     //await context.tracing.stop({ path: 'e2e/tracing/trace.zip' });
-    await context.close();
-    await browser.close();
+
+    await this.currentBrowserContext.close();
+    await this.currentBrowser.close();
+
+    this.currentBrowserContext = null;
+    this.currentBrowser = null;
+    this.firstPage = null;
   }
 
   static restoreDocumentBursterCleanState = async (
@@ -161,6 +220,14 @@ export class Helpers {
       )}`
     );
     */
+
+    // stop Test Email Server
+    spawnSync('shutTestEmailServer.bat', ['/c'], {
+      cwd: path.resolve(
+        process.env.PORTABLE_EXECUTABLE_DIR + '/tools/test-email-server',
+      ),
+      shell: true,
+    });
 
     //copy back the default reportburster.bat file
     await jetpack.copyAsync(
@@ -309,14 +376,6 @@ export class Helpers {
         await this.delay(Constants.DELAY_ONE_SECOND);
       }
     } while (!allCleared);
-
-    // stop Test Email Server
-    spawnSync('shutTestEmailServer.bat', ['/c'], {
-      cwd: path.resolve(
-        process.env.PORTABLE_EXECUTABLE_DIR + '/tools/test-email-server',
-      ),
-      shell: true,
-    });
   };
 
   static setupConfigurationTemplate = async (
@@ -330,17 +389,17 @@ export class Helpers {
       );
 
       await jetpack.copyAsync(
-        `${PATHS.E2E_ASSEMBLY_FOLDER_PATH}/config/_defaults/settings.xml`,
-        `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/${templateName.toLowerCase()}/settings.xml`,
+        `${PATHS.E2E_ASSEMBLY_FOLDER_PATH}/ReportBurster/config/_defaults/settings.xml`,
+        `${process.env.PORTABLE_EXECUTABLE_DIR}/config/reports/${templateName.toLowerCase()}/settings.xml`,
       );
 
       await jetpack.copyAsync(
-        `${PATHS.E2E_ASSEMBLY_FOLDER_PATH}/config/_defaults/reporting.xml`,
-        `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/${templateName.toLowerCase()}/reporting.xml`,
+        `${PATHS.E2E_ASSEMBLY_FOLDER_PATH}/ReportBurster/config/_defaults/reporting.xml`,
+        `${process.env.PORTABLE_EXECUTABLE_DIR}/config/reports/${templateName.toLowerCase()}/reporting.xml`,
       );
 
       let fileContent = await jetpack.readAsync(
-        `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/${templateName.toLowerCase()}/settings.xml`,
+        `${process.env.PORTABLE_EXECUTABLE_DIR}/config/reports/${templateName.toLowerCase()}/settings.xml`,
       );
 
       if (fileContent) {
@@ -356,13 +415,13 @@ export class Helpers {
 
         // Write the new content back to the file
         await jetpack.writeAsync(
-          `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/${templateName.toLowerCase()}/settings.xml`,
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/config/reports/${templateName.toLowerCase()}/settings.xml`,
           fileContent,
         );
       }
 
       fileContent = await jetpack.readAsync(
-        `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/${templateName.toLowerCase()}/reporting.xml`,
+        `${process.env.PORTABLE_EXECUTABLE_DIR}/config/reports/${templateName.toLowerCase()}/reporting.xml`,
       );
 
       if (fileContent) {
@@ -378,7 +437,7 @@ export class Helpers {
 
         // Write the new content back to the file
         await jetpack.writeAsync(
-          `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/${templateName.toLowerCase()}/reporting.xml`,
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/config/reports/${templateName.toLowerCase()}/reporting.xml`,
           fileContent,
         );
       }
