@@ -30,14 +30,14 @@ export class Constants {
 
   static PROC_BURST = 'proc-burst';
   static PROC_GENERATE = 'proc-generate';
-  
+
   static SMS_DEFAULT = 'sms-default';
   static SMS_TWILIO = 'sms-twilio';
 
   static PAYSLIPS_PDF_BURST_TOKENS = [
-    'alfreda.waldback@northridgehealth.org',
     'clyde.grew@northridgehealth.org',
     'kyle.butford@northridgehealth.org',
+    'alfreda.waldback@northridgehealth.org',
   ];
 
   static PAYSLIPS_XLS_BURST_TOKENS = [

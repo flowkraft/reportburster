@@ -63,8 +63,7 @@ test.describe('', async () => {
             ),
           ),
         )
-        .sleep(2000)
-        .click('#btnBurst')
+        .click('#btnGenerateReports')
         .clickYesDoThis()
         .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
         .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)

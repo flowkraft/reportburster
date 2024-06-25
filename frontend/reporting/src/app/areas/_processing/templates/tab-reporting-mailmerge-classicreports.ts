@@ -56,7 +56,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
 
       <div class="col-xs-1">
         <button
-          id="btnBurst"
+          id="btnGenerateReports"
           type="button"
           class="btn btn-primary"
           (click)="doGenerateReports()"

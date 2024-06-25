@@ -42,7 +42,7 @@ export const electronBeforeAfterAllTest = isElectron
 
           await run(electronApp);
 
-          await Helpers.electronAppClose(electronApp);
+          await Helpers.electronAppClose();
         },
         { scope: 'worker' },
       ],
@@ -92,7 +92,7 @@ export const electronBeforeAfterAllTest = isElectron
 
           await run({ browser, context });
 
-          await Helpers.browserClose(browser, context);
+          await Helpers.browserClose();
         },
         { scope: 'worker' },
       ],

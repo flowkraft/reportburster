@@ -164,6 +164,13 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  //public reload(): FluentTester {
+  //  const action = (): Promise<void> => this.doPageReload();
+
+  //this.actions.push(action);
+  //return this;
+  //}
+
   public waitOnElementWithTextToBecomeVisible(
     text: string,
     waitTime?: number,
@@ -887,7 +894,19 @@ export class FluentTester implements PromiseLike<void> {
         } else if (attachmentsCommand === Constants.ATTACHMENTS_DEFAULT) {
           // assert there is a correct zip file attached
           emailBody.should.have.string('Content-Disposition: attachment;');
-          emailBody.should.have.string(`${identifiedToken}.${attachmentType}`);
+
+          if (attachmentType == 'pdf')
+            emailBody.should.have.string(
+              `${identifiedToken}.${attachmentType}`,
+            );
+
+          // Log the entire email body for debugging
+          // console.log('Email Body:', emailBody);
+
+          if (attachmentType == 'docx')
+            emailBody.should.have.string(
+              `${Constants.PAYSLIPS_PDF_BURST_TOKENS.indexOf(recipientEmailAddress)}.${attachmentType}`,
+            );
         } else if (attachmentsCommand === Constants.ATTACHMENTS_XLS_ONLY) {
           // assert there is a correct zip file attached
           emailBody.should.have.string('Content-Disposition: attachment;');
@@ -899,12 +918,20 @@ export class FluentTester implements PromiseLike<void> {
           emailBody.should.have.string('Customers-Distinct-Column-Values.xls');
         }
         // assert ${recipientEmailAddress}_email.txt was generated
-        const emailFilePath = await jetpack.findAsync(
+        let emailFilePath = await jetpack.findAsync(
           process.env.PORTABLE_EXECUTABLE_DIR,
           {
             matching: `output/**/${identifiedToken}_email.txt`,
           },
         );
+        if (attachmentType == 'docx')
+          emailFilePath = await jetpack.findAsync(
+            process.env.PORTABLE_EXECUTABLE_DIR,
+            {
+              matching: `output/**/${Constants.PAYSLIPS_PDF_BURST_TOKENS.indexOf(recipientEmailAddress)}_email.txt`,
+            },
+          );
+
         should.exist(emailFilePath);
         emailFilePath.length.should.equal(1);
       }
@@ -1080,6 +1107,11 @@ export class FluentTester implements PromiseLike<void> {
   private async doPressKey(key: string): Promise<void> {
     return this.window.keyboard.press(key);
   }
+
+  //private async doPageReload(): Promise<void> {
+  //this.window.reload();
+  //this.window.goto(this.window.url());
+  //}
 
   private async doWaitOnElementToBecomeVisible(
     selector: string,
