@@ -8,7 +8,7 @@ import * as PATHS from '../../utils/paths';
 import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test-helper';
 import { ConnectionsTestHelper } from '../../helpers/areas/connections-test-helper';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     '(email-connection) should correctly CRUD create, read, update, duplicate and delete',

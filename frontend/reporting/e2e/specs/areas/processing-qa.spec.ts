@@ -9,7 +9,7 @@ import * as PATHS from '../../utils/paths';
 import { FluentTester } from '../../helpers/fluent-tester';
 import { Helpers } from '../../utils/helpers';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly split-test-all samples/burst/Payslips.pdf (My Report)',
@@ -68,7 +68,6 @@ test.describe('', async () => {
     );
 
     await Helpers.appClose();
-    
   });
 
   electronBeforeAfterAllTest(

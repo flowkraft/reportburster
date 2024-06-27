@@ -10,7 +10,7 @@ import { Constants } from '../../utils/constants';
 import path from 'path';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should Pause a Job and no output file should be created (because the Pause is called before the first output file is generated)',

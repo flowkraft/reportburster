@@ -5,7 +5,7 @@ import * as jetpack from 'fs-jetpack';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly display in the initial "No jobs are currently running and Great. No Errors / No Warnings." state',

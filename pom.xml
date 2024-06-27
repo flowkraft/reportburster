@@ -20,7 +20,7 @@
 
 	<properties>
 
-		<revision>10.2.0</revision>
+		<revision>10.2.1</revision>
 
 		<!-- upgraded -->
 		<commons.beanutils.version>1.9.4</commons.beanutils.version>
@@ -82,11 +82,13 @@
 				<artifactId>rb-reporting</artifactId>
 				<version>${revision}</version>
 			</dependency>
+			<!--
 			<dependency>
 				<groupId>com.sourcekraft.documentburster</groupId>
 				<artifactId>rb-update</artifactId>
 				<version>${revision}</version>
 			</dependency>
+			-->
 			<dependency>
 				<groupId>commons-beanutils</groupId>
 				<artifactId>commons-beanutils</artifactId>

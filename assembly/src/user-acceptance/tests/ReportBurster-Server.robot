@@ -2,6 +2,7 @@
 Library     RequestsLibrary
 Library     OperatingSystem
 Library     resources/utilities.py
+Resource    resources/utilities.robot
 Variables   resources/vars.py
 Test Setup       Clean Output Folders and Log Files  product=server
 Test Teardown    Shut Server
@@ -11,8 +12,8 @@ ${SERVER_URL}    http://localhost:9090
 ${BROWSER}    chrome
 
 *** Test Cases ***
-startServer.bat and shutServer.bat Should Work Fine
-    [Documentation]  startServer.bat and shutServer.bat Should Work Fine
+startServer.bat and shutServer.bat Scripts Should Work Fine
+    [Documentation]  startServer.bat and shutServer.bat Scripts Should Work Fine
   
     Ensure Chocolatey Is Installed
     Sleep  1s
@@ -26,9 +27,9 @@ startServer.bat and shutServer.bat Should Work Fine
     Sleep  1s
     startServer.bat and shutServer.bat Should Work Fine
 
-    Sleep 1s
+    Sleep  1s
     Ensure Java Is Not Installed
-    Sleep 1s
+    Sleep  1s
     Refresh Env Variables
     
 
@@ -72,8 +73,8 @@ service.bat Should Work Fine
     ${output}=    Service Uninstall
     Should Contain    ${output}    uninstalled successfully
 
-    Sleep 1s
-    Refresh Env Variables
+    Sleep  1s
+    Ensure Java Is Not Installed
 
 *** Keywords ***
 Check Server Is Running

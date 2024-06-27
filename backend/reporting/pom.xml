@@ -27,10 +27,12 @@
 			<artifactId>rb-common</artifactId>
 			<version>${revision}</version>
 		</dependency>
+		<!--
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
 			<artifactId>rb-update</artifactId>
 		</dependency>
+		-->
 		<dependency>
 			<groupId>commons-beanutils</groupId>
 			<artifactId>commons-beanutils</artifactId>

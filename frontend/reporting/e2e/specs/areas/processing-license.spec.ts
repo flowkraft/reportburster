@@ -4,7 +4,7 @@ import { Constants } from '../../utils/constants';
 import { Helpers } from '../../utils/helpers';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly activate, check and deactivate a valid license',

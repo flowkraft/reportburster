@@ -34,11 +34,11 @@ gulp.task("utils:start-server-and-ui-electron", () => {
 });
 
 gulp.task("utils:start-server-and-e2e-electron", () => {
-  _startServerAndDoX("_custom:playright-scripts-electron");
+  _startServerAndDoX("_custom:playwright-scripts-electron");
 });
 
 gulp.task("utils:start-server-and-e2e-web", () => {
-  _startServerAndDoX("_custom:playright-scripts-web");
+  _startServerAndDoX("_custom:playwright-scripts-web");
 });
 
 gulp.task("utils:start-javano-chocono-and-ui", () => {

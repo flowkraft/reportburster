@@ -22,9 +22,6 @@ python -c "import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath('r
 :: ensure java11 remains installed after the tests are performed
 python -c "import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath('resources/utilities.py'))); from resources.utilities import ensure_java_prerequisite; ensure_java_prerequisite()"
 
-:: Check if refreshenv is available and execute it if it is
-call refreshenv
-
 deactivate
 
 :: Check if refreshenv is available and execute it if it is

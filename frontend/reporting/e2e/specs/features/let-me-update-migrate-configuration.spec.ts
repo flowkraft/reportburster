@@ -7,11 +7,18 @@ import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 
-//DONE1
+const isElectron = process.env.TEST_ENV === 'electron'
+
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly update and migrate older configuration',
     async ({ beforeAfterEach: firstPage }) => {
+      
+      //should be executed only on Electron
+      if (!isElectron)
+        return;
+
       helpers.updateDestinationDirectoryPath = 'testground/e2e';
 
       const UPGRADE_DIR = 'testground/upgrade';
