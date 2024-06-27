@@ -16,8 +16,6 @@ set PORTABLE_EXECUTABLE_DIR_PATH=%SCRIPT_PATH%
 
 set POLLING_PATH=%PORTABLE_EXECUTABLE_DIR_PATH%/poll
 
-if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\temp\*.*" del /q "%PORTABLE_EXECUTABLE_DIR_PATH%\temp\*.*"
-
 if exist "%POLLING_PATH%\*.pdf" del /q "%POLLING_PATH%\*.pdf"
 if exist "%POLLING_PATH%\received\*.pdf" del /q "%POLLING_PATH%\received\*.pdf"
 
