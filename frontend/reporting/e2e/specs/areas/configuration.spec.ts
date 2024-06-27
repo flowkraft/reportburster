@@ -6,7 +6,7 @@ import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test
 import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     `(WITHOUT Report Generation) - should work changing/saving configuration values and should work rolling back to default configuration values 

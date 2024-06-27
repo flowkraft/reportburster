@@ -1,6 +1,6 @@
 // electron-nodejs-module.dummy.ts
 import { NgModule, Component } from '@angular/core';
-import { ElectronService } from './electron.service.empty-web';
+import { RbElectronService } from './electron.service.empty-web';
 
 @Component({
   selector: 'dburst-java',
@@ -47,6 +47,6 @@ export class SystemDiagnosticsComponent {}
     UpdateComponent,
     SystemDiagnosticsComponent,
   ],
-  providers: [ElectronService],
+  providers: [RbElectronService],
 })
 export class ElectronNodeJsModule {}

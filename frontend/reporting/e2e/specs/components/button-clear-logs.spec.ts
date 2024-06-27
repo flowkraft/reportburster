@@ -7,7 +7,7 @@ import _ from 'lodash';
 import { Helpers } from '../../utils/helpers';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'Bursting should not be allowed when dirty logs. Once the logs are cleared, bursting should be allowed',

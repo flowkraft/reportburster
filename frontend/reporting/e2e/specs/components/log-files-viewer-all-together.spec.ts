@@ -9,7 +9,7 @@ import * as PATHS from '../../utils/paths';
 import { Helpers } from '../../utils/helpers';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 test.describe('', async () => {
   test('should correctly, at runtime when already started, pick-up and display log files which contain data', async function () {
     //const shouldDeactivateLicenseKey = true;

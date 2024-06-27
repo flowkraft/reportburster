@@ -15,6 +15,15 @@ cd /d "%SCRIPT_PATH%"
 set PORTABLE_EXECUTABLE_DIR_PATH=%SCRIPT_PATH%
 
 set POLLING_PATH=%PORTABLE_EXECUTABLE_DIR_PATH%/poll
+
+if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\temp\*.*" del /q "%PORTABLE_EXECUTABLE_DIR_PATH%\temp\*.*"
+
+if exist "%POLLING_PATH%\*.pdf" del /q "%POLLING_PATH%\*.pdf"
+if exist "%POLLING_PATH%\received\*.pdf" del /q "%POLLING_PATH%\received\*.pdf"
+
+if exist "%POLLING_PATH%\*.xlsx" del /q "%POLLING_PATH%\*.xlsx"
+if exist "%POLLING_PATH%\received\*.xlsx" del /q "%POLLING_PATH%\received\*.xlsx"
+
 set FRONTEND_PATH=%PORTABLE_EXECUTABLE_DIR_PATH%/lib/frontend
 
 call tools/rbsj/startRbsjServer.bat

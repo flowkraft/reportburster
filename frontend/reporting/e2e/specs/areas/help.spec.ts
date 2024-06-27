@@ -1,7 +1,7 @@
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE1
+//DONE2
 electronBeforeAfterAllTest(
   'should correctly display all the screens from the Help area',
   async function ({ beforeAfterEach: firstPage }) {

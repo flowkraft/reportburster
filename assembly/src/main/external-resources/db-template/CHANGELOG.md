@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 10.2.1 - 2024-07-01
+
+### Added
+
+- user-acceptance tests for validating that the packaged reportburster.zip and reportburster-server.zip
+  work well
+
+### Fixed
+
+- 'Report Generation' which got broken since the new ReportBurster Server release
+- 'Let Me Update' which got broken since the new ReportBurster Server release
+- 'Chocolatey' and 'Java' (auto) installations, which got broken since the new ReportBurster Server release
+
 ## 10.2.0 - 2024-05-21
 
 ### Added

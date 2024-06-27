@@ -71,17 +71,16 @@ Close Electron Application
   Kill Reportburster Exe Process
 
 startServer.bat and shutServer.bat Should Work Fine
-    [Documentation]  startServer.bat and shutServer.bat Should Work Fine
-  
-    Sleep 1s
+    
+    Sleep  1s
     Start Server
     Wait Until Keyword Succeeds    10x    3s    Check Server Is Running
     
-    Sleep 1s
+    Sleep  1s
     Copy File    ${PORTABLE_EXECUTABLE_DIR_SERVER}/samples/burst/Payslips.pdf    ${PORTABLE_EXECUTABLE_DIR_SERVER}/poll
     Wait Until Keyword Succeeds    10x    3s    Check PDF Files Generated    3
     
-    Sleep 1s
+    Sleep  1s
     Shut Server
     Wait Until Keyword Succeeds    10x    3s    Check Server Is Not Running
     

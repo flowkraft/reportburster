@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 @Injectable({
   providedIn: 'root',
 })
-export class ElectronService {
+export class RbElectronService {
   cet: any;
 
   get isElectron(): boolean {
