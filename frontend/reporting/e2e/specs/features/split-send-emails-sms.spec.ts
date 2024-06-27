@@ -7,7 +7,7 @@ import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE4
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly send Payslips.pdf notifications by default SMS sender (My Report)',

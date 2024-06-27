@@ -10,7 +10,7 @@ import { Constants } from '../../utils/constants';
 import path from 'path';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE4
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should Pause a Job and no output file should be created (because the Pause is called before the first output file is generated)',
@@ -85,7 +85,7 @@ const _splitVerifyBigFile = (
 
   const ft = new FluentTester(firstPage);
 
-  ft.goToBurstScreen();
+  ft.gotoBurstScreen();
   if (pauseCancelMode.includes('after-pdf-generated')) {
     ft.click('#licenseTab-link')
       // STEP0 - start from a demo license key

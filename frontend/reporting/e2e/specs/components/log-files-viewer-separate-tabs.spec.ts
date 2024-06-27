@@ -7,7 +7,7 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Helpers } from '../../utils/helpers';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE4
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly not display any log when there is no log file to show',
@@ -15,7 +15,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .appShouldBeReadyToRunNewJobs()
         .appStatusShouldBeGreatNoErrorsNoWarnings()
         .elementShouldNotBeVisible(
@@ -38,7 +38,7 @@ test.describe('', async () => {
 
       const ft = new FluentTester(firstPage);
 
-      await ft.goToBurstScreen().appShouldBeReadyToRunNewJobs();
+      await ft.gotoBurstScreen().appShouldBeReadyToRunNewJobs();
 
       if (randomLogFiles.includes('info.log')) {
         await ft

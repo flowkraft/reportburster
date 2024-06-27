@@ -7,7 +7,7 @@ import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE4
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should split and send Payslips.pdf output files by email (My Report)',
@@ -142,7 +142,13 @@ const _splitSendVerifyEmails = (
       ),
     );
 
-  if (qaMode === Constants.QA_TR) {
+  let numberOfExpectedRecipients = 3;
+
+  if (qaMode === Constants.QA_TA) {
+    ft.click('#testTokensAll');
+  } else if (qaMode === Constants.QA_TR) {
+    numberOfExpectedRecipients = numberOfRandomRecipients;
+
     ft.click('#testTokensRandom')
       .click('#numberOfRandomTokens')
       .typeText(numberOfRandomRecipients.toString())
@@ -154,10 +160,6 @@ const _splitSendVerifyEmails = (
       )
       .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR);
   }
-
-  let numberOfExpectedRecipients = 3;
-  if (qaMode === Constants.QA_TR)
-    numberOfExpectedRecipients = numberOfRandomRecipients;
 
   ft.click('#btnRunTest')
     .clickYesDoThis()

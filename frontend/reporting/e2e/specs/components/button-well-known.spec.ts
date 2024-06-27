@@ -1,7 +1,8 @@
 import { test } from '@playwright/test';
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { FluentTester } from '../../helpers/fluent-tester';
-//DONE4
+
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly load and save settings for one Well Known Email Provider (My Report)',

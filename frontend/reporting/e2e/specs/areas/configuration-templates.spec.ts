@@ -5,7 +5,8 @@ import _ from 'lodash';
 
 import { Constants } from '../../utils/constants';
 import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test-helper';
-//DONE4
+
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly edit / save the name of the "fallback" configuration settings.xml to Payslips (from My Report)',

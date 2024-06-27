@@ -7,7 +7,8 @@ import { Constants } from '../../utils/constants';
 import * as PATHS from '../../utils/paths';
 import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test-helper';
 import { ConnectionsTestHelper } from '../../helpers/areas/connections-test-helper';
-//DONE4
+
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     '(email-connection) should correctly CRUD create, read, update, duplicate and delete',
@@ -181,7 +182,7 @@ test.describe('', async () => {
       );
 
       ft = ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .gotoConfiguration()
         .click(
           `#topMenuConfigurationLoad_second-test-configuration_${PATHS.SETTINGS_CONFIG_FILE}`,
@@ -198,7 +199,7 @@ test.describe('', async () => {
         .click('#eml-contact')
         .clickYesDoThis()
         .waitOnElementToBecomeInvisible('#selectedEmailConnectionDefault')
-        .goToBurstScreen();
+        .gotoBurstScreen();
 
       ft = ConnectionsTestHelper.assertConfigurationUsesEmailConnection(
         ft,
@@ -220,7 +221,7 @@ test.describe('', async () => {
         .click('#smtpPort')
         .typeText('')
         .typeText('777')
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .gotoConfiguration()
         .click(
           `#topMenuConfigurationLoad_second-test-configuration_${PATHS.SETTINGS_CONFIG_FILE}`,
@@ -265,7 +266,7 @@ test.describe('', async () => {
       //check back "Re-use existing email connection" and then "Manage Email Connections" and change email host and port
       //and come back to Connection and check things are working correctly
       ft = ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .gotoConfiguration()
         .click(
           `#topMenuConfigurationLoad_second-test-configuration_${PATHS.SETTINGS_CONFIG_FILE}`,
@@ -316,7 +317,7 @@ test.describe('', async () => {
         .elementShouldBeDisabled('#smtpPort');
 
       ft = ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .gotoConfiguration()
         .click(
           `#topMenuConfigurationLoad_second-test-configuration_${PATHS.SETTINGS_CONFIG_FILE}`,

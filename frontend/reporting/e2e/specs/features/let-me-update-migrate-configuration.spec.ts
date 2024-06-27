@@ -6,7 +6,8 @@ import helpers from '../../upgrade/updater.helpers';
 import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
-//DONE3
+
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly update and migrate older configuration',

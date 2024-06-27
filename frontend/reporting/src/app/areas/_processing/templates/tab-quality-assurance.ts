@@ -25,7 +25,7 @@ export const tabQualityAssuranceTemplate = `<ng-template #tabQualityAssuranceTem
 
     <div class="radio">
       <label>
-        <input type="radio" name="optradio" checked="checked" [(ngModel)]="processingService.procQualityAssuranceInfo.mode" value="ta" />{{
+        <input id="testTokensAll" type="radio" name="optradio" checked="checked" [(ngModel)]="processingService.procQualityAssuranceInfo.mode" value="ta" />{{
           'AREAS.PROCESSING.TAB-QUALITY-ASSURANCE.TEST-ALL-TOKENS' | translate
         }}</label>
     </div>

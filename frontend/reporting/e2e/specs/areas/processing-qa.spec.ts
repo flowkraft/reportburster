@@ -9,9 +9,8 @@ import * as PATHS from '../../utils/paths';
 import { FluentTester } from '../../helpers/fluent-tester';
 import { Helpers } from '../../utils/helpers';
 
-//DONE4
+//DONE1
 test.describe('', async () => {
-  
   electronBeforeAfterAllTest(
     'should correctly split-test-all samples/burst/Payslips.pdf (My Report)',
     async function ({ beforeAfterEach: firstPage }) {
@@ -51,18 +50,26 @@ test.describe('', async () => {
     },
   );
 
-  electronBeforeAfterAllTest(
-    'should correctly split-email-test-all samples/burst/Payslips.pdf (My Report)',
-    async function ({ beforeAfterEach: firstPage }) {
-      const sendEmails = true;
-      await _splitSendVerifyEmails(
-        firstPage,
-        sendEmails,
-        Constants.PROC_BURST,
-        Constants.QA_TA,
-      );
-    },
-  );
+  test('should correctly split-email-test-all samples/burst/Payslips.pdf (My Report)', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
+    const firstPage = await Helpers.appStart();
+
+    const sendEmails = true;
+    await _splitSendVerifyEmails(
+      firstPage,
+      sendEmails,
+      Constants.PROC_BURST,
+      Constants.QA_TA,
+    );
+
+    await Helpers.appClose();
+    
+  });
 
   electronBeforeAfterAllTest(
     'should correctly split-email-test-random2 samples/burst/Payslips.pdf (My Report)',
@@ -91,83 +98,154 @@ test.describe('', async () => {
   );
 
   //generate START
-  electronBeforeAfterAllTest(
-    'should correctly generate-test-all samples/reports/payslips/payslips-data.csv (Payslips)',
-    async function ({ beforeAfterEach: firstPage }) {
-      const sendEmails = false;
-      await _splitSendVerifyEmails(
-        firstPage,
-        sendEmails,
-        Constants.PROC_GENERATE,
-        Constants.QA_TA,
-      );
-    },
-  );
+  test('should correctly generate-test-all samples/reports/payslips/payslips-data.csv (Payslips)', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
 
-  electronBeforeAfterAllTest(
-    'should correctly generate-test-random2 samples/reports/payslips/payslips-data.csv (Payslips)',
-    async function ({ beforeAfterEach: firstPage }) {
-      const sendEmails = false;
-      await _splitSendVerifyEmails(
-        firstPage,
-        sendEmails,
-        Constants.PROC_GENERATE,
-        Constants.QA_TR,
-      );
-    },
-  );
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
 
-  electronBeforeAfterAllTest(
-    'should correctly generate-test-tokenlist samples/reports/payslips/payslips-data.csv (Payslips)',
-    async function ({ beforeAfterEach: firstPage }) {
-      const sendEmails = false;
-      await _splitSendVerifyEmails(
-        firstPage,
-        sendEmails,
-        Constants.PROC_GENERATE,
-        Constants.QA_TL,
-      );
-    },
-  );
+    await Helpers.setupConfigurationTemplate(
+      'Payslips',
+      'enableMailMergeCapability',
+    );
 
-  electronBeforeAfterAllTest(
-    'should correctly generate-email-test-all samples/reports/payslips/payslips-data.csv (Payslips)',
-    async function ({ beforeAfterEach: firstPage }) {
-      const sendEmails = true;
-      await _splitSendVerifyEmails(
-        firstPage,
-        sendEmails,
-        Constants.PROC_GENERATE,
-        Constants.QA_TA,
-      );
-    },
-  );
+    const firstPage = await Helpers.appStart();
 
-  electronBeforeAfterAllTest(
-    'should correctly generate-email-test-random2 samples/reports/payslips/payslips-data.csv (Payslips)',
-    async function ({ beforeAfterEach: firstPage }) {
-      const sendEmails = true;
-      await _splitSendVerifyEmails(
-        firstPage,
-        sendEmails,
-        Constants.PROC_GENERATE,
-        Constants.QA_TR,
-      );
-    },
-  );
+    const sendEmails = false;
+    await _splitSendVerifyEmails(
+      firstPage,
+      sendEmails,
+      Constants.PROC_GENERATE,
+      Constants.QA_TA,
+    );
 
-  electronBeforeAfterAllTest(
-    'should correctly generate-email-test-tokenlist samples/reports/payslips/payslips-data.csv (Payslips)',
-    async function ({ beforeAfterEach: firstPage }) {
-      const sendEmails = true;
-      await _splitSendVerifyEmails(
-        firstPage,
-        sendEmails,
-        Constants.PROC_GENERATE,
-        Constants.QA_TL,
-      );
-    },
-  );
+    await Helpers.appClose();
+  });
+
+  test('should correctly generate-test-random2 samples/reports/payslips/payslips-data.csv (Payslips)', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
+    await Helpers.setupConfigurationTemplate(
+      'Payslips',
+      'enableMailMergeCapability',
+    );
+
+    const firstPage = await Helpers.appStart();
+
+    const sendEmails = false;
+    await _splitSendVerifyEmails(
+      firstPage,
+      sendEmails,
+      Constants.PROC_GENERATE,
+      Constants.QA_TR,
+    );
+
+    await Helpers.appClose();
+  });
+
+  test('should correctly generate-test-tokenlist samples/reports/payslips/payslips-data.csv (Payslips)', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
+    await Helpers.setupConfigurationTemplate(
+      'Payslips',
+      'enableMailMergeCapability',
+    );
+
+    const firstPage = await Helpers.appStart();
+
+    const sendEmails = false;
+    await _splitSendVerifyEmails(
+      firstPage,
+      sendEmails,
+      Constants.PROC_GENERATE,
+      Constants.QA_TL,
+    );
+
+    await Helpers.appClose();
+  });
+
+  test('should correctly generate-email-test-all samples/reports/payslips/payslips-data.csv (Payslips)', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
+    await Helpers.setupConfigurationTemplate(
+      'Payslips',
+      'enableMailMergeCapability',
+    );
+
+    const firstPage = await Helpers.appStart();
+
+    const sendEmails = true;
+    await _splitSendVerifyEmails(
+      firstPage,
+      sendEmails,
+      Constants.PROC_GENERATE,
+      Constants.QA_TA,
+    );
+
+    await Helpers.appClose();
+  });
+
+  test('should correctly generate-email-test-random2 samples/reports/payslips/payslips-data.csv (Payslips)', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
+    await Helpers.setupConfigurationTemplate(
+      'Payslips',
+      'enableMailMergeCapability',
+    );
+    const firstPage = await Helpers.appStart();
+
+    const sendEmails = true;
+    await _splitSendVerifyEmails(
+      firstPage,
+      sendEmails,
+      Constants.PROC_GENERATE,
+      Constants.QA_TR,
+    );
+
+    await Helpers.appClose();
+  });
+
+  test('should correctly generate-email-test-tokenlist samples/reports/payslips/payslips-data.csv (Payslips)', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
+    await Helpers.setupConfigurationTemplate(
+      'Payslips',
+      'enableMailMergeCapability',
+    );
+
+    const firstPage = await Helpers.appStart();
+
+    const sendEmails = true;
+    await _splitSendVerifyEmails(
+      firstPage,
+      sendEmails,
+      Constants.PROC_GENERATE,
+      Constants.QA_TL,
+    );
+
+    await Helpers.appClose();
+  });
 
   //generate END
 });
@@ -187,23 +265,12 @@ const _splitSendVerifyEmails = async (
   let tokenId = '$burst_token$';
 
   if (processingMode == Constants.PROC_GENERATE) {
-    await Helpers.setupConfigurationTemplate(
-      'Payslips',
-      'enableMailMergeCapability',
-    );
-
     randomQAFlowChoice = 'PROC_2_QA';
     settingsXmlCssPath = `#topMenuConfigurationLoad_payslips_${PATHS.SETTINGS_CONFIG_FILE}`;
     tokenId = '${var17}';
   }
 
-  let fPage = firstPage;
-
-  if (processingMode == Constants.PROC_GENERATE) {
-    fPage = await Helpers.appRestart();
-  }
-
-  const ft = new FluentTester(fPage);
+  const ft = new FluentTester(firstPage);
 
   ft.click('#topMenuBurst');
 
@@ -214,6 +281,9 @@ const _splitSendVerifyEmails = async (
       .click(settingsXmlCssPath)
       .click('#btnEnableDisableDistribution')
       .click('#btnSendDocumentsEmail')
+      .click('#topMenuBurst')
+      .click('#topMenuConfiguration')
+      .click(settingsXmlCssPath)
       // email message settings
       .click('#leftMenuEmailSettings') // email message settings
       .click('#emailMessageTab-link')
@@ -287,8 +357,10 @@ const _splitSendVerifyEmails = async (
     'clyde.grew@northridgehealth.org,alfreda.waldback@northridgehealth.org';
   if (processingMode == Constants.PROC_GENERATE) listOfTokens = '0,2';
 
-  if (qaMode === Constants.QA_TR) {
-    ft.click('#testTokensRandom');
+  if (qaMode === Constants.QA_TA) {
+    ft.click('#testTokensAll');
+  } else if (qaMode === Constants.QA_TR) {
+    ft.click('#testTokensRandom').setValue('#numberOfRandomTokens', '2');
   } else if (qaMode === Constants.QA_TL) {
     ft.click('#testTokensList').setValue('#listOfTokens', listOfTokens);
   }

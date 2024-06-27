@@ -1,15 +1,14 @@
-import { test } from '@playwright/test';
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE4
+//DONE1
 electronBeforeAfterAllTest(
   'should correctly display all the screens from the Help area',
   async function ({ beforeAfterEach: firstPage }) {
     let ft = new FluentTester(firstPage);
 
     ft = ft
-      .goToBurstScreen()
+      .gotoBurstScreen()
       .click('#supportEmail')
       .elementShouldHaveText(
         '#checkPointHelpSupport',
@@ -124,21 +123,21 @@ electronBeforeAfterAllTest(
         '#checkPointHelpComparison',
         'DocumentBurster Server Features',
       )
-      .goToBurstScreen()
+      .gotoBurstScreen()
       .click('#topMenuHelp')
       .click('#topMenuHelpSupport')
       .elementShouldHaveText(
         '#checkPointHelpSupport',
         'ParkTrent Properties Group, Australia',
       )
-      .goToBurstScreen()
+      .gotoBurstScreen()
       .click('#topMenuHelp')
       .click('#topMenuHelpServices')
       .elementShouldHaveText(
         '#checkPointHelpServices',
         'sales@reportburster.com',
       )
-      .goToBurstScreen()
+      .gotoBurstScreen()
       .click('#topMenuHelp')
       .click('#topMenuHelpDocumentation')
       .elementShouldContainText(
@@ -150,7 +149,7 @@ electronBeforeAfterAllTest(
         '#statusDemoLicense',
         'Demo / Trial (up to 25 recipients)',
       )
-      .goToBurstScreen()
+      .gotoBurstScreen()
       .click('#topMenuHelp')
       .click('#topMenuHelpExamples')
       .elementShouldHaveText(
@@ -162,7 +161,7 @@ electronBeforeAfterAllTest(
         '#statusDemoLicense',
         'Demo / Trial (up to 25 recipients)',
       )
-      .goToBurstScreen()
+      .gotoBurstScreen()
       .click('#topMenuHelp')
       .click('#topMenuHelpFreeForSchools')
       .elementShouldHaveText(
@@ -174,7 +173,7 @@ electronBeforeAfterAllTest(
         '#statusDemoLicense',
         'Demo / Trial (up to 25 recipients)',
       )
-      .goToBurstScreen()
+      .gotoBurstScreen()
       .click('#topMenuHelp')
       .click('#topMenuHelpCustomerReviews')
       .elementShouldHaveText(
@@ -186,7 +185,7 @@ electronBeforeAfterAllTest(
         '#statusDemoLicense',
         'Demo / Trial (up to 25 recipients)',
       )
-      .goToBurstScreen()
+      .gotoBurstScreen()
       .click('#topMenuHelp')
       .click('#topMenuHelpBlog')
       .elementShouldBeVisible('#blogRss')
@@ -195,7 +194,7 @@ electronBeforeAfterAllTest(
         '#statusDemoLicense',
         'Demo / Trial (up to 25 recipients)',
       )
-      .goToBurstScreen()
+      .gotoBurstScreen()
       .click('#topMenuHelp')
       .click('#topMenuHelpLicense')
       .elementShouldHaveText(
@@ -204,7 +203,7 @@ electronBeforeAfterAllTest(
       )
       .click('#logsTab-link')
       .elementShouldBeVisible('#warningsLog')
-      .goToBurstScreen()
+      .gotoBurstScreen()
       .click('#topMenuHelp')
       .click('#topMenuHelpAbout')
       .elementShouldHaveText('#checkPointHelpAbout', 'Copyright');

@@ -9,11 +9,15 @@ import { Helpers } from '../../utils/helpers';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-const isElectron = process.env.TEST_ENV === 'electron';
-
-//DONE4
+//DONE1
 test.describe('', async () => {
   test('should correctly handle when the user will empty the license key', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
     await jetpack.copyAsync(
       `${PATHS.E2E_RESOURCES_PATH}/license/license-empty-key-but-with-status.xml`,
       path.resolve(
@@ -24,15 +28,7 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    let electronApp, browser, context, firstPage;
-
-    if (isElectron) {
-      electronApp = await Helpers.electronAppLaunch('../..');
-      firstPage = await electronApp.firstWindow();
-    } else {
-      ({ browser, context } = await Helpers.browserLaunch());
-      [firstPage] = context.pages();
-    }
+    const firstPage = await Helpers.appStart();
 
     const ft = new FluentTester(firstPage);
 
@@ -43,14 +39,18 @@ test.describe('', async () => {
       .elementShouldBeVisible('#statusInvalidLicense')
       .elementShouldBeVisible('#version');
 
-    if (isElectron) {
-      await Helpers.electronAppClose(electronApp);
-    } else {
-      await Helpers.browserClose(browser, context);
-    }
+    await ft.sleep(1000);
+
+    await Helpers.appClose();
   });
 
   test('should correctly display the license screen in the initial empty key state', async () => {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
     await jetpack.copyAsync(
       `${PATHS.E2E_RESOURCES_PATH}/license/license-just-downloaded-demo.xml`,
       path.resolve(
@@ -61,15 +61,7 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    let electronApp, browser, context, firstPage;
-
-    if (isElectron) {
-      electronApp = await Helpers.electronAppLaunch('../..');
-      firstPage = await electronApp.firstWindow();
-    } else {
-      ({ browser, context } = await Helpers.browserLaunch());
-      [firstPage] = context.pages();
-    }
+    const firstPage = await Helpers.appStart();
 
     const ft = new FluentTester(firstPage);
 
@@ -86,14 +78,18 @@ test.describe('', async () => {
       .typeText(Constants.TEST_LICENSE_KEY)
       .elementShouldBeVisible('#btnActivateLicenseKey');
 
-    if (isElectron) {
-      await Helpers.electronAppClose(electronApp);
-    } else {
-      await Helpers.browserClose(browser, context);
-    }
+    await ft.sleep(1000);
+
+    await Helpers.appClose();
   });
 
   test('should correctly display a license in the deactivated state', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
     await jetpack.copyAsync(
       `${PATHS.E2E_RESOURCES_PATH}/license/license-deactivated.xml`,
       path.resolve(
@@ -104,15 +100,7 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    let electronApp, browser, context, firstPage;
-
-    if (isElectron) {
-      electronApp = await Helpers.electronAppLaunch('../..');
-      firstPage = await electronApp.firstWindow();
-    } else {
-      ({ browser, context } = await Helpers.browserLaunch());
-      [firstPage] = context.pages();
-    }
+    const firstPage = await Helpers.appStart();
 
     const ft = new FluentTester(firstPage);
 
@@ -124,14 +112,18 @@ test.describe('', async () => {
       .elementShouldBeVisible('#statusDemoLicense')
       .elementShouldBeVisible('#version');
 
-    if (isElectron) {
-      await Helpers.electronAppClose(electronApp);
-    } else {
-      await Helpers.browserClose(browser, context);
-    }
+    await ft.sleep(1000);
+
+    await Helpers.appClose();
   });
 
   test('should correctly handle demo status', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
     await jetpack.copyAsync(
       `${PATHS.E2E_RESOURCES_PATH}/license/license-just-downloaded-demo.xml`,
       path.resolve(
@@ -142,15 +134,7 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    let electronApp, browser, context, firstPage;
-
-    if (isElectron) {
-      electronApp = await Helpers.electronAppLaunch('../..');
-      firstPage = await electronApp.firstWindow();
-    } else {
-      ({ browser, context } = await Helpers.browserLaunch());
-      [firstPage] = context.pages();
-    }
+    const firstPage = await Helpers.appStart();
 
     const ft = new FluentTester(firstPage);
 
@@ -167,14 +151,18 @@ test.describe('', async () => {
       .typeText(Constants.TEST_LICENSE_KEY)
       .elementShouldBeVisible('#btnActivateLicenseKey');
 
-    if (isElectron) {
-      await Helpers.electronAppClose(electronApp);
-    } else {
-      await Helpers.browserClose(browser, context);
-    }
+    await ft.sleep(1000);
+
+    await Helpers.appClose();
   });
 
   test('should correctly handle invalid status key', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
     await jetpack.copyAsync(
       `${PATHS.E2E_RESOURCES_PATH}/license/license-re-check-existing-license.xml`,
       path.resolve(
@@ -185,15 +173,7 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    let electronApp, browser, context, firstPage;
-
-    if (isElectron) {
-      electronApp = await Helpers.electronAppLaunch('../..');
-      firstPage = await electronApp.firstWindow();
-    } else {
-      ({ browser, context } = await Helpers.browserLaunch());
-      [firstPage] = context.pages();
-    }
+    const firstPage = await Helpers.appStart();
 
     const ft = new FluentTester(firstPage);
 
@@ -204,11 +184,9 @@ test.describe('', async () => {
       .elementShouldBeVisible('#statusInvalidLicense')
       .elementShouldBeVisible('#version');
 
-    if (isElectron) {
-      await Helpers.electronAppClose(electronApp);
-    } else {
-      await Helpers.browserClose(browser, context);
-    }
+    await ft.sleep(1000);
+
+    await Helpers.appClose();
   });
 
   test('should correctly handle active status key', async function () {
@@ -222,15 +200,7 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    let electronApp, browser, context, firstPage;
-
-    if (isElectron) {
-      electronApp = await Helpers.electronAppLaunch('../..');
-      firstPage = await electronApp.firstWindow();
-    } else {
-      ({ browser, context } = await Helpers.browserLaunch());
-      [firstPage] = context.pages();
-    }
+    const firstPage = await Helpers.appStart();
 
     const ft = new FluentTester(firstPage);
 
@@ -242,14 +212,18 @@ test.describe('', async () => {
       .elementShouldBeVisible('#version')
       .elementShouldBeVisible('#deactivateLicenseKey');
 
-    if (isElectron) {
-      await Helpers.electronAppClose(electronApp);
-    } else {
-      await Helpers.browserClose(browser, context);
-    }
+    await ft.sleep(1000);
+
+    await Helpers.appClose();
   });
 
   test('should correctly handle expired status key', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
     await jetpack.copyAsync(
       `${PATHS.E2E_RESOURCES_PATH}/license/license-expired.xml`,
       path.resolve(
@@ -260,15 +234,7 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    let electronApp, browser, context, firstPage;
-
-    if (isElectron) {
-      electronApp = await Helpers.electronAppLaunch('../..');
-      firstPage = await electronApp.firstWindow();
-    } else {
-      ({ browser, context } = await Helpers.browserLaunch());
-      [firstPage] = context.pages();
-    }
+    const firstPage = await Helpers.appStart();
 
     const ft = new FluentTester(firstPage);
 
@@ -279,14 +245,18 @@ test.describe('', async () => {
       .elementShouldBeVisible('#statusExpiredLicense')
       .elementShouldBeVisible('#version');
 
-    if (isElectron) {
-      await Helpers.electronAppClose(electronApp);
-    } else {
-      await Helpers.browserClose(browser, context);
-    }
+    await ft.sleep(1000);
+
+    await Helpers.appClose();
   });
 
   test('should allow user to (re) check a key', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
     await jetpack.copyAsync(
       `${PATHS.E2E_RESOURCES_PATH}/license/license-re-check-existing-license.xml`,
       path.resolve(
@@ -297,15 +267,7 @@ test.describe('', async () => {
       { overwrite: true },
     );
 
-    let electronApp, browser, context, firstPage;
-
-    if (isElectron) {
-      electronApp = await Helpers.electronAppLaunch('../..');
-      firstPage = await electronApp.firstWindow();
-    } else {
-      ({ browser, context } = await Helpers.browserLaunch());
-      [firstPage] = context.pages();
-    }
+    const firstPage = await Helpers.appStart();
 
     const ft = new FluentTester(firstPage);
 
@@ -316,11 +278,9 @@ test.describe('', async () => {
       .elementShouldBeVisible('#statusInvalidLicense')
       .elementShouldBeVisible('#version');
 
-    if (isElectron) {
-      await Helpers.electronAppClose(electronApp);
-    } else {
-      await Helpers.browserClose(browser, context);
-    }
+    await ft.sleep(1000);
+
+    await Helpers.appClose();
   });
 
   /*

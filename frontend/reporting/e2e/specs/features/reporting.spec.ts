@@ -8,7 +8,7 @@ import { FluentTester } from '../../helpers/fluent-tester';
 import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test-helper';
 import * as PATHS from '../../utils/paths';
 
-//DONE0
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly generate docx output from docx template using CSV as datasource (csv2docx_from_docx_template)',

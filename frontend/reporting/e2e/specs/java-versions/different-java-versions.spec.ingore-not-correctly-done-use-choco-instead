@@ -25,7 +25,6 @@ openjdk8
 
 */
 
-//DONE2
 test.describe('', async () => {
   test('java default installation - it should correctly do license-activation-quickstart-deactivation', async function () {
     //long running test
@@ -162,7 +161,7 @@ const _licenseActivationQuickStartDeActivation = async () => {
   const ft = new FluentTester(await electronApp.firstWindow());
 
   await ft
-    .goToBurstScreen()
+    .gotoBurstScreen()
     .click('#licenseTab-link')
     // STEP0 - start from a demo license key
     .elementShouldBeVisible('#statusDemoLicense')
@@ -229,5 +228,5 @@ const _licenseActivationQuickStartDeActivation = async () => {
         return burstToken + '.pdf';
       }),
     );
-  await Helpers.electronAppClose(electronApp);
+  await Helpers.appClose();
 };

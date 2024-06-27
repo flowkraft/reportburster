@@ -7,56 +7,6 @@ Variables   resources/vars.py
 Test Setup    Clean State
 Test Teardown    Kill Reportburster Exe Process
 
-*** Keywords ***
-#Open Electron Application
-#  [Documentation]  Open's your electron application by providing browser binary via
-#  ...  ${signal_electron} and chromedriver binary via ${signal_service}
-#  ...  see vars.py for more details.
-#  Create Webdriver    Chrome    options=${signal_electron}    service=${signal_service}
-
-Open Electron Application
-  [Documentation]  Open's your electron application by providing browser binary via
-  ...  ${signal_electron.binary_location} and chromedriver binary via ${chromedriver_path}
-  ...  see vars.py for more details.
-  ${electron_command}=    Set Variable    cmd /c "where /q refreshenv && (call refreshenv && start ${signal_electron.binary_location} --remote-debugging-port=9222) || start ${signal_electron.binary_location} --remote-debugging-port=9222"
-  ${working_dir}=    Get Parent Directory    ${signal_electron.binary_location}
-  Start Process    ${electron_command}    cwd=${working_dir}  shell=True
-  Sleep    1s
-  ${options}=    Evaluate    sys.modules['selenium.webdriver'].ChromeOptions()    sys, selenium.webdriver
-  Call Method    ${options}    add_experimental_option    debuggerAddress    localhost:9222
-  Create WebDriver    Chrome    service=${signal_service}    options=${options}
-
-Close Electron Application
-  [Documentation]  Kills the Electron application process
-  Close All Browsers
-  Terminate All Processes    kill=True
-  Kill Reportburster Exe Process
-
-Close ReportBurster Application
-  [Documentation]  Close ReportBurster Application
-#  Click X Close Reportburster
-  Kill Reportburster Exe Process
-
-Close And Open Electron Application
-    [Arguments]    ${condition_keyword}    ${condition_arg}    ${timeout}
-    Close ReportBurster Application
-    Sleep  1s
-    Refresh Env Variables
-    Sleep  1s
-    Open Electron Application
-    Wait Until Page Contains Element    id=burstFile    timeout=30
-    Sleep  1s
-    Run Keyword    ${condition_keyword}    ${condition_arg}    ${timeout}
-
-Clean State
-  [Documentation]  Clean Output Folders and Log Files
-  Clean Output Folders and Log Files
-  Close ReportBurster Application
-
-#Capture Failed Test Screenshot
-#  [Documentation]  Captures a screenshot with a name based on the test case name
-#  Capture Page Screenshot    EMBED
-
 *** Test Cases ***
 Prerequisites Java 8 Installed Should Let The User Know That At Least Java 11 Is Required
     [Documentation]  Prerequisites Java 8 Installed Should Let The User Know That At Least Java 11 Is Required
@@ -179,3 +129,54 @@ Prerequisites Chocolatey Not Installed and Java Not Installed Should Allow User 
 
 # Prerequisites Chocolatey Installed But Choco Minus Version Not Working Should Work Fine
 #   [Documentation] Chocolatey Installed But Choco Minus Version Not Working Should Work Fine
+
+*** Keywords ***
+#Open Electron Application
+#  [Documentation]  Open's your electron application by providing browser binary via
+#  ...  ${signal_electron} and chromedriver binary via ${signal_service}
+#  ...  see vars.py for more details.
+#  Create Webdriver    Chrome    options=${signal_electron}    service=${signal_service}
+
+Open Electron Application
+  [Documentation]  Open's your electron application by providing browser binary via
+  ...  ${signal_electron.binary_location} and chromedriver binary via ${chromedriver_path}
+  ...  see vars.py for more details.
+  ${electron_command}=    Set Variable    cmd /c "where /q refreshenv && (call refreshenv && start ${signal_electron.binary_location} --remote-debugging-port=9222) || start ${signal_electron.binary_location} --remote-debugging-port=9222"
+  ${working_dir}=    Get Parent Directory    ${signal_electron.binary_location}
+  Start Process    ${electron_command}    cwd=${working_dir}  shell=True
+  Sleep    1s
+  ${options}=    Evaluate    sys.modules['selenium.webdriver'].ChromeOptions()    sys, selenium.webdriver
+  Call Method    ${options}    add_experimental_option    debuggerAddress    localhost:9222
+  Create WebDriver    Chrome    service=${signal_service}    options=${options}
+
+Close Electron Application
+  [Documentation]  Kills the Electron application process
+  Close All Browsers
+  Terminate All Processes    kill=True
+  Kill Reportburster Exe Process
+
+Close ReportBurster Application
+  [Documentation]  Close ReportBurster Application
+#  Click X Close Reportburster
+  Kill Reportburster Exe Process
+
+Close And Open Electron Application
+    [Arguments]    ${condition_keyword}    ${condition_arg}    ${timeout}
+    Close ReportBurster Application
+    Sleep  1s
+    Refresh Env Variables
+    Sleep  1s
+    Open Electron Application
+    Wait Until Page Contains Element    id=burstFile    timeout=30
+    Sleep  1s
+    Run Keyword    ${condition_keyword}    ${condition_arg}    ${timeout}
+
+Clean State
+  [Documentation]  Clean Output Folders and Log Files
+  Clean Output Folders and Log Files
+  Close ReportBurster Application
+
+#Capture Failed Test Screenshot
+#  [Documentation]  Captures a screenshot with a name based on the test case name
+#  Capture Page Screenshot    EMBED
+

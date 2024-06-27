@@ -148,8 +148,11 @@ def ensure_java_is_installed(version="11"):
                 subprocess.check_call(f'choco install maven -y', shell=True)
             elif version == '8':
                 subprocess.check_call(f'choco install temurin8 -y', shell=True)
+            elif version == 'latest':
+                subprocess.check_call(f'choco install temurin -y', shell=True)
             else:
                 subprocess.check_call(f'choco install temurin -y', shell=True)
+                
     except subprocess.CalledProcessError:
         print("Java is not installed. Installing now...")
         ensure_chocolatey_is_installed()
