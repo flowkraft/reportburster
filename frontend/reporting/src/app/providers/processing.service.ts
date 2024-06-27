@@ -19,7 +19,7 @@ export class ProcessingService {
     prefilledInputFilePath: '',
     prefilledConfigurationFilePath: '',
     isSample: false,
-    selectedMailMergeClassicReport: {} as CfgTmplFileInfo,
+    selectedMailMergeClassicReport: null as CfgTmplFileInfo,
   };
 
   procMergeBurstInfo = {

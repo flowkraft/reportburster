@@ -5,7 +5,7 @@ import * as jetpack from 'fs-jetpack';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE4
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly display in the initial "No jobs are currently running and Great. No Errors / No Warnings." state',
@@ -19,7 +19,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
         .appShouldBeReadyToRunNewJobs()
         .appStatusShouldBeGreatNoErrorsNoWarnings();
@@ -39,7 +39,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR)
         .appShouldHaveNActiveJobs(1)
         .appStatusShouldBeGreatNoErrorsNoWarnings()
@@ -68,7 +68,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR)
         .appStatusShouldBeGreatNoErrorsNoWarnings()
         .elementShouldContainText(
@@ -90,7 +90,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
         .waitOnElementToBecomeVisible(
           '#btnErrors',
@@ -119,7 +119,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
         .appShouldBeReadyToRunNewJobs()
         .waitOnElementToBecomeVisible(
@@ -142,7 +142,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
         .waitOnElementToBecomeVisible(
           '#btnWarnings',
@@ -171,7 +171,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .appStatusShouldBeGreatNoErrorsNoWarnings()
         .elementShouldContainText(
           '#cancelJobFileExists',
@@ -198,7 +198,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
 
       await ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .appStatusShouldBeGreatNoErrorsNoWarnings()
         .elementShouldContainText(
           '#pauseJobFileExists',

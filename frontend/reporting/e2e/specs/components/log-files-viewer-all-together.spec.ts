@@ -9,10 +9,23 @@ import * as PATHS from '../../utils/paths';
 import { Helpers } from '../../utils/helpers';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-const isElectron = process.env.TEST_ENV === 'electron';
-
-//DONE4
+//DONE1
 test.describe('', async () => {
+  test('should correctly, at runtime when already started, pick-up and display log files which contain data', async function () {
+    //const shouldDeactivateLicenseKey = true;
+    const shouldDeactivateLicenseKey = false;
+
+    //reload default "clean" configuration
+    await Helpers.restoreDocumentBursterCleanState(shouldDeactivateLicenseKey);
+
+    const firstPage = await Helpers.appStart();
+
+    //const shouldRestartApp = false;
+    await _shouldCorrectlyDisplayLogFiles(firstPage);
+
+    return Helpers.appClose();
+  });
+
   electronBeforeAfterAllTest(
     'should correctly display the log viewers in the initial "Empty" state',
     async function ({ beforeAfterEach: firstPage }) {
@@ -43,25 +56,6 @@ test.describe('', async () => {
           'dburst-log-files-viewer-all-together #warningsLog dburst-log-file-viewer div',
           '',
         );
-    },
-  );
-
-  electronBeforeAfterAllTest(
-    'should correctly, at runtime when already started, pick-up and display log files which contain data',
-    async function ({ beforeAfterEach: firstPage }) {
-      const shouldRestartApp = false;
-      return _shouldCorrectlyDisplayLogFiles(shouldRestartApp, firstPage);
-    },
-  );
-
-  electronBeforeAfterAllTest(
-    'should correctly, when (re)starting, pick-up and display log files which contain data',
-    async function ({
-      beforeAfterAll: electronApp,
-      beforeAfterEach: firstPage,
-    }) {
-      const shouldRestartApp = true;
-      return _shouldCorrectlyDisplayLogFiles(shouldRestartApp, firstPage);
     },
   );
 
@@ -833,11 +827,7 @@ test.describe('', async () => {
   );
 });
 
-async function _shouldCorrectlyDisplayLogFiles(
-  shouldRestartApp: boolean,
-  firstPage: Page,
-) {
-  let fPage = firstPage;
+async function _shouldCorrectlyDisplayLogFiles(firstPage: Page) {
   await jetpack.copyAsync(
     `${PATHS.E2E_RESOURCES_PATH}/logs/errors-with-123data.log`,
     path.resolve(
@@ -868,10 +858,7 @@ async function _shouldCorrectlyDisplayLogFiles(
     { overwrite: true },
   );
 
-  if (shouldRestartApp)
-    fPage = await Helpers.appRestart();
-  
-  const ft = new FluentTester(fPage);
+  const ft = new FluentTester(firstPage);
   await ft
     .gotoBurstScreen()
     .appShouldBeReadyToRunNewJobs()

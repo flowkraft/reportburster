@@ -155,6 +155,15 @@ export class Helpers {
     return this.firstPage;
   };
 
+  static appStart = async (): Promise<Page> => {
+    if (isElectron) {
+      await Helpers.electronAppLaunch('../..');
+    } else {
+      await Helpers.browserLaunch();
+    }
+    return this.firstPage;
+  };
+
   static appClose = async (): Promise<void> => {
     if (isElectron) {
       await Helpers.electronAppClose();
@@ -220,14 +229,6 @@ export class Helpers {
       )}`
     );
     */
-
-    // stop Test Email Server
-    spawnSync('shutTestEmailServer.bat', ['/c'], {
-      cwd: path.resolve(
-        process.env.PORTABLE_EXECUTABLE_DIR + '/tools/test-email-server',
-      ),
-      shell: true,
-    });
 
     //copy back the default reportburster.bat file
     await jetpack.copyAsync(
@@ -360,6 +361,11 @@ export class Helpers {
           `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/warnings.log`,
           '',
         );
+
+        await jetpack.writeAsync(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/rbsj-exe.log`,
+          'Starting ServerApplication v10.2.0 using Java 11.0.23 on',
+        );
         //}
 
         allCleared = true;
@@ -376,6 +382,14 @@ export class Helpers {
         await this.delay(Constants.DELAY_ONE_SECOND);
       }
     } while (!allCleared);
+
+    // stop Test Email Server
+    spawnSync('shutTestEmailServer.bat', ['/c'], {
+      cwd: path.resolve(
+        process.env.PORTABLE_EXECUTABLE_DIR + '/tools/test-email-server',
+      ),
+      shell: true,
+    });
   };
 
   static setupConfigurationTemplate = async (

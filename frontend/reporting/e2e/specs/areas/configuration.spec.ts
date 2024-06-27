@@ -5,7 +5,8 @@ import { ConfigurationTestHelper } from '../../helpers/areas/configuration-test-
 import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test-helper';
 import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
-//DONE4
+
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     `(WITHOUT Report Generation) - should work changing/saving configuration values and should work rolling back to default configuration values 
@@ -30,6 +31,7 @@ test.describe('', async () => {
       );
     },
   );
+
   electronBeforeAfterAllTest(
     `(WITH Report Generation) - should check the correct and default values/behaviour`,
     async function ({ beforeAfterEach: firstPage }) {
@@ -57,10 +59,10 @@ test.describe('', async () => {
       );
 
       ft = ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .click('#reportGenerationMailMergeTab-link')
         .elementShouldBeVisible('#selectMailMergeClassicReport')
-        .elementShouldNotBeVisible('#mailMergeClassicReportInputFilePath')
+        .elementShouldNotBeVisible('#mailMergeClassicReportInputFile')
         .elementShouldNotBeVisible('#browseMailMergeClassicReportInputFile')
         .elementShouldBeVisible('#btnGenerateReports')
         .elementShouldBeDisabled('#btnGenerateReports')
@@ -70,11 +72,11 @@ test.describe('', async () => {
         .waitOnElementToBecomeVisible('#bills_ds\\.csvfile')
         .waitOnElementToBecomeVisible('#invoices_ds\\.csvfile')
         .click('#invoices_ds\\.csvfile')
-        .waitOnElementToBecomeVisible('#mailMergeClassicReportInputFilePath')
+        .waitOnElementToBecomeVisible('#mailMergeClassicReportInputFile')
         .elementShouldBeVisible('#browseMailMergeClassicReportInputFile')
         //click the x and clear the selection
         .click('.ng-clear-wrapper')
-        .waitOnElementToBecomeInvisible('#mailMergeClassicReportInputFilePath')
+        .waitOnElementToBecomeInvisible('#mailMergeClassicReportInputFile')
         .waitOnElementToBecomeInvisible(
           '#browseMailMergeClassicReportInputFile',
         )
@@ -82,11 +84,11 @@ test.describe('', async () => {
         .waitOnElementToBecomeVisible('#bills_ds\\.csvfile')
         .waitOnElementToBecomeVisible('#invoices_ds\\.csvfile')
         .click('#bills_ds\\.csvfile')
-        .waitOnElementToBecomeVisible('#mailMergeClassicReportInputFilePath')
+        .waitOnElementToBecomeVisible('#mailMergeClassicReportInputFile')
         .waitOnElementToBecomeVisible('#browseMailMergeClassicReportInputFile')
         //click the x and clear the selection
         .click('.ng-clear-wrapper')
-        .waitOnElementToBecomeInvisible('#mailMergeClassicReportInputFilePath')
+        .waitOnElementToBecomeInvisible('#mailMergeClassicReportInputFile')
         .waitOnElementToBecomeInvisible(
           '#browseMailMergeClassicReportInputFile',
         );
@@ -96,7 +98,7 @@ test.describe('', async () => {
       ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'bills');
 
       return ft
-        .goToBurstScreen()
+        .gotoBurstScreen()
         .elementShouldNotBeVisible('#reportGenerationMailMergeTab-link');
     },
   );

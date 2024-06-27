@@ -7,7 +7,7 @@ import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 
-//DONE4
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly upload Payslips.pdf to ftp, sftp, fileshare, ftps and http (My Report)',
@@ -18,7 +18,7 @@ test.describe('', async () => {
         },
       );
 
-      const expectedOutputUploadFiles = [];
+      const expectedOutputUploadFiles: string[] = [];
 
       Constants.PAYSLIPS_PDF_BURST_TOKENS.forEach(function (token) {
         ['ftp', 'sftp', 'fileshare', 'ftps', 'http', 'cloud'].forEach(
@@ -48,7 +48,7 @@ test.describe('', async () => {
         },
       );
 
-      const expectedOutputUploadFiles = [];
+      const expectedOutputUploadFiles: string[] = [];
 
       Constants.PAYSLIPS_PDF_BURST_TOKENS.forEach(function (token) {
         ['ftp', 'sftp', 'fileshare', 'ftps', 'http', 'cloud'].forEach(

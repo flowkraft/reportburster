@@ -17,18 +17,20 @@ startServer.bat and shutServer.bat Should Work Fine
     Ensure Chocolatey Is Installed
     Sleep  1s
     Refresh Env Variables
+    
+    Sleep  1s
     Ensure Java Is Installed
     Sleep  1s
     Refresh Env Variables
-
-    Start Server
-    Wait Until Keyword Succeeds    10x    3s    Check Server Is Running
-    Copy File    ${PORTABLE_EXECUTABLE_DIR_SERVER}/samples/burst/Payslips.pdf    ${PORTABLE_EXECUTABLE_DIR_SERVER}/poll
-    Wait Until Keyword Succeeds    10x    3s    Check PDF Files Generated    3
-    Shut Server
-    Wait Until Keyword Succeeds    10x    3s    Check Server Is Not Running
     
+    Sleep  1s
+    startServer.bat and shutServer.bat Should Work Fine
+
+    Sleep 1s
     Ensure Java Is Not Installed
+    Sleep 1s
+    Refresh Env Variables
+    
 
 service.bat Should Work Fine
     [Documentation]  service.bat install should check that the ReportBurster Server Windows Service was installed and service.bat uninstall should check that the Windows Service was removed
@@ -70,7 +72,8 @@ service.bat Should Work Fine
     ${output}=    Service Uninstall
     Should Contain    ${output}    uninstalled successfully
 
-    Ensure Java Is Not Installed
+    Sleep 1s
+    Refresh Env Variables
 
 *** Keywords ***
 Check Server Is Running
@@ -87,6 +90,4 @@ Check Server Is Not Running
 Check PDF Files Generated
     [Arguments]    ${expected_count}
     ${count}=    Count Files    ${PORTABLE_EXECUTABLE_DIR_SERVER}/output    pattern=*.pdf    recursive=True
-    Should Be Equal As Integers    ${count}    ${expected_count}    
-  
-    
+    Should Be Equal As Integers    ${count}    ${expected_count}

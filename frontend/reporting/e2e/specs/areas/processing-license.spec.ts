@@ -3,7 +3,8 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import { Helpers } from '../../utils/helpers';
 import { FluentTester } from '../../helpers/fluent-tester';
-//DONE4
+
+//DONE1
 test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should correctly activate, check and deactivate a valid license',
@@ -14,7 +15,7 @@ test.describe('', async () => {
 
       return (
         ft
-          .goToBurstScreen()
+          .gotoBurstScreen()
           .click('#licenseTab-link')
           // STEP0 - start from a demo license key
           .elementShouldBeVisible('#statusDemoLicense')
