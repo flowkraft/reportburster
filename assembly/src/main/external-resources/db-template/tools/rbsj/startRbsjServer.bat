@@ -12,6 +12,13 @@ set "PORTABLE_EXECUTABLE_DIR_PATH=%cd%"
 set "SETTINGS_FILE=%PORTABLE_EXECUTABLE_DIR_PATH%\config\_internal\settings.xml"
 set "JAR_FILE=%PORTABLE_EXECUTABLE_DIR_PATH%\lib\server\rb-server.jar"
 
+:: Remove dangling *.job files, but not the .progress files
+if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\temp\*.*" (
+    for %%F in ("%PORTABLE_EXECUTABLE_DIR_PATH%\temp\*.*") do (
+        echo %%F | findstr /I /V "progress" >nul && del /q "%%F"
+    )
+)
+
 :: Check if the electron.log file exists and delete it
 if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log" (
     del /F /Q "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log"
