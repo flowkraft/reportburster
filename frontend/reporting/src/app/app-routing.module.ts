@@ -23,7 +23,12 @@ const routes: Routes = [
     component: ProcessingComponent,
   },
   {
-    path: 'processingSample/:leftMenu/:prefilledInputFilePath/:prefilledConfigurationFilePath',
+    path: 'processingSampleBurst/:leftMenu/:prefilledInputFilePath/:prefilledConfigurationFilePath',
+    canActivate: [NoJavaGuard],
+    component: ProcessingComponent,
+  },
+  {
+    path: 'processingSampleGenerate/:leftMenu/:prefilledSelectedMailMergeClassicReport/:prefilledInputFilePath',
     canActivate: [NoJavaGuard],
     component: ProcessingComponent,
   },

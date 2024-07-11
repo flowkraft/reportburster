@@ -60,7 +60,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
             appendTo="body"
           >
             <ng-option
-              *ngFor="let reportTemplate of this.settingsService.getReportTemplates(xmlReporting?.documentburster.report.template.outputtype, {samples: false})"
+              *ngFor="let reportTemplate of settingsService.getReportTemplates(xmlReporting?.documentburster.report.template.outputtype, {samples: false})"
               [value]="reportTemplate"
               >
               <span id="{{reportTemplate.fileName}}">

@@ -62,7 +62,6 @@ import { InfoService } from '../../components/dialog-info/info.service';
 import { AskForFeatureService } from '../../components/ask-for-feature/ask-for-feature.service';
 import { SettingsService } from '../../providers/settings.service';
 import { ShellService } from '../../providers/shell.service';
-import { FsService } from '../../providers/fs.service';
 import { StateStoreService } from '../../providers/state-store.service';
 
 @Component({
@@ -436,6 +435,7 @@ export class ConfigurationComponent implements OnInit {
       settings: null,
     },
   };
+
   /*
       this initial declaration is required otherwise the view will generate "NullPointExceptions" until the async data will be
       loaded and ready from the XML file; having this initialization defined here avoids all these "NullPointExceptions"
@@ -596,14 +596,13 @@ export class ConfigurationComponent implements OnInit {
   };
 
   constructor(
+    protected settingsService: SettingsService,
     protected executionStatsService: ExecutionStatsService,
     protected shellService: ShellService,
+    protected stateStore: StateStoreService,
     protected confirmService: ConfirmService,
     protected infoService: InfoService,
-    protected settingsService: SettingsService,
-    protected stateStore: StateStoreService,
     protected messagesService: ToastrMessagesService,
-    protected fsService: FsService,
     protected askForFeatureService: AskForFeatureService,
     protected route: ActivatedRoute,
     protected changeDetectorRef: ChangeDetectorRef,
@@ -618,7 +617,7 @@ export class ConfigurationComponent implements OnInit {
   settingsChangedQuillEventHandler(newValue: any) {
     //console.log(`settingsChangedQuillEventHandler: newValue: ${newValue}`);
     this.xmlSettings.documentburster.settings.emailsettings.html = newValue;
-    this.settingsChanged.next(this.xmlSettings);
+    this.settingsChanged.next(this.xmlSettings.documentburster.settings);
   }
 
   editor: Quill;
@@ -657,20 +656,16 @@ export class ConfigurationComponent implements OnInit {
         this.settingsService.currentConfigurationTemplateName =
           params.configurationFileName;
 
-        // this.xmlSettings.documentburster =
-        //   await this.settingsService.loadSettingsFileAsync(
-        //     this.settingsService.currentConfigurationTemplatePath
-        //   );
-
         this.xmlSettings = await this.settingsService.loadSettingsFileAsync(
           this.settingsService.currentConfigurationTemplatePath,
         );
+
         this.stateStore.configSys.currentConfigFile.configuration.settings = {
           ...this.xmlSettings.documentburster.settings,
         };
 
         //console.log(
-        //  `1. ConfigurationComponent onInit - this.stateStore.configSys.currentConfigFile.configuration.settings = ${JSON.stringify(this.stateStore.configSys.currentConfigFile.configuration.settings)}`,
+        //  `1. ConfigurationComponent onInit - this.xmlSettings.documentburster.settings = ${JSON.stringify(this.xmlSettings.documentburster.settings)}`,
         //);
       }
 
@@ -741,7 +736,8 @@ export class ConfigurationComponent implements OnInit {
 
           if (
             this.xmlSettings.documentburster.settings.capabilities
-              .reportgenerationmailmerge
+              .reportgenerationmailmerge &&
+            this.xmlReporting.documentburster
           )
             await this.settingsService.saveReportingFileAsync(
               this.settingsService.currentConfigurationTemplatePath,
@@ -768,8 +764,8 @@ export class ConfigurationComponent implements OnInit {
     this.visibleTabs = this.ALL_TABS.filter((item) => {
       let shouldShow = true;
       if (
-        !this.xmlSettings.documentburster.settings.capabilities
-          .reportdistribution
+        !this.xmlSettings.documentburster.settings?.capabilities
+          ?.reportdistribution
       ) {
         if (item.visibleWhenCapability == 'reportdistribution')
           shouldShow = false;
@@ -867,7 +863,7 @@ export class ConfigurationComponent implements OnInit {
   }
 
   async onSaveHTMLTemplateClick(filePath: string) {
-    await this.fsService.writeAsync(
+    await this.settingsService.saveTemplateFileAsync(
       filePath + '.html',
       this.xmlSettings.documentburster.settings.emailsettings.html,
     );
@@ -875,7 +871,7 @@ export class ConfigurationComponent implements OnInit {
   }
 
   async onLoadHTMLTemplateClick(filePath: string) {
-    const data = await this.fsService.readAsync(filePath);
+    const data = await this.settingsService.loadTemplateFileAsync(filePath);
 
     (
       document.getElementById('htmlCodeEmailMessage') as HTMLInputElement
@@ -1008,7 +1004,7 @@ export class ConfigurationComponent implements OnInit {
   }
 
   getSortedAttachments() {
-    if (this.xmlSettings) {
+    if (this.xmlSettings.documentburster.settings) {
       return this.xmlSettings.documentburster.settings.attachments.items.attachmentItems.sort(
         (attach1: any, attach2: any): number => {
           return attach1.order - attach2.order;
@@ -1209,9 +1205,13 @@ export class ConfigurationComponent implements OnInit {
         this.xmlReporting.documentburster.report.template.documentpath;
 
       if (reportTemplateFilePath) {
+        //console.log(
+        //  `this.settingsService.templateFiles = ${JSON.stringify(this.settingsService.templateFiles)}`,
+        //);
+
         this.selectedReportTemplateFile =
-          this.settingsService.templateFiles.find(
-            (tplFile) => tplFile.filePath == reportTemplateFilePath,
+          this.settingsService.templateFiles.find((tplFile) =>
+            tplFile.filePath.includes(reportTemplateFilePath),
           );
 
         //console.log(
@@ -1283,12 +1283,12 @@ export class ConfigurationComponent implements OnInit {
     this.xmlReporting.documentburster.report.datasource.csvoptions.skiplines = 0;
 
     if (
-      this.xmlReporting?.documentburster.report.datasource.csvoptions.header ==
+      this.xmlReporting.documentburster.report.datasource.csvoptions.header ==
       'firstline'
     )
       this.xmlReporting.documentburster.report.datasource.csvoptions.skiplines = 1;
     else if (
-      this.xmlReporting?.documentburster.report.datasource.csvoptions.header ==
+      this.xmlReporting.documentburster.report.datasource.csvoptions.header ==
       'multiline'
     )
       this.xmlReporting.documentburster.report.datasource.csvoptions.skiplines = 2;
@@ -1296,15 +1296,15 @@ export class ConfigurationComponent implements OnInit {
 
   onSelectIdColumn() {
     if (
-      this.xmlReporting?.documentburster.report.datasource.csvoptions
-        .idcolumn == 'letmespecify'
+      this.xmlReporting.documentburster.report.datasource.csvoptions.idcolumn ==
+      'letmespecify'
     )
       this.xmlReporting.documentburster.report.datasource.csvoptions.idcolumnindex = 0;
   }
 
   toggleShowMoreCsvOptions() {
     this.xmlReporting.documentburster.report.datasource.showmorecsvoptions =
-      !this.xmlReporting?.documentburster.report.datasource.showmorecsvoptions;
+      !this.xmlReporting.documentburster.report.datasource.showmorecsvoptions;
     this.changeDetectorRef.detectChanges();
   }
 

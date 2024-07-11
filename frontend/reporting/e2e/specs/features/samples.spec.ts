@@ -172,6 +172,7 @@ test.describe('', async () => {
 
       await ft
         .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
         .waitOnElementToContainText(
           '#tdINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY',
           '(split only)',
@@ -220,6 +221,7 @@ test.describe('', async () => {
 
       await ft
         .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trINVOICES-MERGE-THEN-SPLIT')
         .waitOnElementToContainText('#tdINVOICES-MERGE-THEN-SPLIT', 'Merge and')
         .click('#trINVOICES-MERGE-THEN-SPLIT')
         .click('#btnSamplesLearnModeINVOICES-MERGE-THEN-SPLIT')
@@ -242,43 +244,41 @@ test.describe('', async () => {
     },
   );
 
-  /*
   electronBeforeAfterAllTest(
     'should work correctly (06_generate_payslips)',
     async ({ beforeAfterEach: firstPage }) => {
       //long running test
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
-      const expectedOutputFiles = [
-        'clyde.grew@northridgehealth.org.docx',
-        'kyle.butford@northridgehealth.org.docx',
-        'alfreda.waldback@northridgehealth.org.docx',
-      ];
-
       const ft = new FluentTester(firstPage);
 
       await ft
         .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS')
         .waitOnElementToContainText('#tdGENERATE-PAYSLIPS', 'Generate Monthly')
         .click('#trGENERATE-PAYSLIPS')
         .click('#btnSamplesLearnModeGENERATE-PAYSLIPS')
         .waitOnElementToContainText(
           '#divGENERATE-PAYSLIPS',
-          'you can generate payslips for all your company employees no matter if your company has few tens',
+          'you can process the data for all your company employees no matter if your company has few tens',
         )
         .click('#btnCloseSamplesLearnMoreModal')
         .click('#btnSampleTryItGENERATE-PAYSLIPS')
         .clickNoDontDoThis()
         .click('#btnSampleTryItGENERATE-PAYSLIPS')
         .clickYesDoThis()
-        .click('#btnRun')
+        .waitOnElementToBecomeVisible('#qaReminderLink')
+        .waitOnElementToBecomeEnabled('#btnGenerateReports')
+        .click('#btnGenerateReports')
         .clickYesDoThis()
         .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
         .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
         .appStatusShouldBeGreatNoErrorsNoWarnings()
-        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles)
+        .processingShouldHaveGeneratedOutputFiles(
+          ['0.docx', '1.docx', '2.docx'],
+          'docx',
+        )
         .appStatusShouldBeGreatNoErrorsNoWarnings();
     },
   );
-  */
 });

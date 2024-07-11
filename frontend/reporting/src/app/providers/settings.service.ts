@@ -1,11 +1,8 @@
 import { Injectable } from '@angular/core';
 import * as semver from 'semver';
 import { ApiService } from './api.service';
-import Utilities from '../helpers/utilities';
 import { APP_CONFIG } from '../../environments/environment';
-import { TopicOptions } from '../helpers/websocket-endpoint';
-import { FsService } from './fs.service';
-import { UnixCliService } from './unix-cli.service';
+import Utilities from '../helpers/utilities';
 
 export interface ExtConnection {
   fileName: string;
@@ -85,6 +82,7 @@ export class SettingsService {
 
   LOGS_FOLDER_PATH: string;
   QUARANTINE_FOLDER_PATH: string;
+  SAMPLES_FOLDER_PATH: string;
 
   JOBS_FOLDER_PATH: string;
 
@@ -133,8 +131,8 @@ export class SettingsService {
 
   constructor(
     public apiService: ApiService,
-    protected fsService: FsService,
-    protected unixCliService: UnixCliService,
+    //protected fsService: FsService,
+    //protected unixCliService: UnixCliService,
   ) {
     let process = undefined;
 
@@ -159,6 +157,7 @@ export class SettingsService {
 
     this.LOGS_FOLDER_PATH = `${APP_CONFIG.folders.logs}`;
     this.QUARANTINE_FOLDER_PATH = `${APP_CONFIG.folders.quarantine}`;
+    this.SAMPLES_FOLDER_PATH = 'samples';
 
     //console.log(`PORTABLE_EXECUTABLE_DIR = ${this.PORTABLE_EXECUTABLE_DIR}`);
 
@@ -212,13 +211,10 @@ export class SettingsService {
 
     this.isWindows = systemInfo.osName.startsWith('Windows');
 
-    const startServerScripts = await this.unixCliService.findAsync('.', {
-      matching: ['startServer.*'],
-    });
+    this.product = systemInfo.product;
 
-    if (startServerScripts && startServerScripts.length > 0) {
+    if (this.product.toLowerCase().includes('server')) {
       this.isServerVersion = true;
-      this.product = 'DocumentBurster Server';
     }
 
     let xmlSettings = {
@@ -244,6 +240,9 @@ export class SettingsService {
   ) {
     const path = encodeURIComponent(filePath);
 
+    console.log(
+      `saveSettingsFileAsync filePath = ${path}, xmlSettings.documentburster = ${JSON.stringify(xmlSettings.documentburster)}`,
+    );
     return this.apiService.post(
       `/cfgman/rb/save?path=${path}`,
       xmlSettings.documentburster,
@@ -259,15 +258,18 @@ export class SettingsService {
       documentburster: { settings: {} },
     };
 
+    //console.log(`loadSettingsFileAsync filePath = ${filePath}`);
+
     xmlSettings.documentburster = await this.apiService.get('/cfgman/rb/load', {
       path: filePath,
     });
 
     //console.log(
     //  `loadSettingsFileAsync filePath = ${filePath}, settings = ${JSON.stringify(
-    //    xmlSettings
-    //  )}`
+    //    xmlSettings,
+    //  )}`,
     //);
+
     return xmlSettings;
   }
 
@@ -338,176 +340,9 @@ export class SettingsService {
     )
       return this.configurationFiles;
 
-    //console.log(
-    //  `this.CONFIGURATION_BURST_FOLDER_PATH = ${this.CONFIGURATION_BURST_FOLDER_PATH}`
-    //);
+    this.configurationFiles = await this.apiService.get('/cfgman/rb/load-all');
 
-    const burstConfigFilePaths = await this.unixCliService.findAsync(
-      this.CONFIGURATION_BURST_FOLDER_PATH,
-      {
-        matching: ['*.xml'],
-      },
-    );
-
-    if (!burstConfigFilePaths || burstConfigFilePaths.length == 0) {
-      return [];
-    }
-
-    //console.log(
-    //  `burstConfigFilePaths1 = ${JSON.stringify(burstConfigFilePaths)}`
-    //);
-
-    const reportsConfigFilePaths = await this.unixCliService.findAsync(
-      this.CONFIGURATION_REPORTS_FOLDER_PATH,
-      {
-        matching: ['settings.xml'],
-        recursive: true,
-      },
-    );
-
-    //console.log(
-    //  `reportsConfigFilePaths2 = ${JSON.stringify(reportsConfigFilePaths)}`
-    //);
-
-    const samplesConfigFilePaths = await this.unixCliService.findAsync(
-      this.CONFIGURATION_SAMPLES_FOLDER_PATH,
-      {
-        matching: ['settings.xml'],
-        recursive: true,
-      },
-    );
-
-    // console.log(
-    //   `samplesConfigFilePaths3 = ${JSON.stringify(samplesConfigFilePaths)}`
-    // );
-
-    const configFilePaths = burstConfigFilePaths
-      .concat(reportsConfigFilePaths)
-      .concat(samplesConfigFilePaths);
-
-    const configurationFiles: Array<CfgTmplFileInfo> = [];
-
-    for (let filePath of configFilePaths) {
-      const configurationFilePath = filePath;
-      const configurationFileName = Utilities.basename(configurationFilePath);
-
-      const isFallbackSettings =
-        configurationFilePath.endsWith('burst/settings.xml');
-
-      const isNotSettings =
-        configurationFilePath.endsWith('_defaults/settings.xml') ||
-        configurationFilePath.endsWith('preferences/settings.xml');
-
-      if (isNotSettings) continue;
-
-      //console.log(
-      //  `configurationFilePath4 = ${JSON.stringify(configurationFilePath)}`
-      // );
-
-      const settingsFileContent = await this.unixCliService.catAsync(filePath);
-
-      let startPos =
-        settingsFileContent.indexOf('<template>') + '<template>'.length;
-      let endPos = settingsFileContent.indexOf('</template>');
-      const settingsTemplateName = settingsFileContent
-        .substring(startPos, endPos)
-        .trim();
-
-      startPos =
-        settingsFileContent.indexOf('<reportdistribution>') +
-        '<reportdistribution>'.length;
-      endPos = settingsFileContent.indexOf('</reportdistribution>');
-      const boolReportDistribution = Boolean(
-        JSON.parse(settingsFileContent.substring(startPos, endPos).trim()),
-      );
-
-      startPos =
-        settingsFileContent.indexOf('<reportgenerationmailmerge>') +
-        '<reportgenerationmailmerge>'.length;
-      endPos = settingsFileContent.indexOf('</reportgenerationmailmerge>');
-      const boolReportGenerationMailMerge = Boolean(
-        JSON.parse(settingsFileContent.substring(startPos, endPos).trim()),
-      );
-
-      startPos =
-        settingsFileContent.indexOf('<visibility>') + '<visibility>'.length;
-      endPos = settingsFileContent.indexOf('</visibility>');
-      const strVisibility = settingsFileContent
-        .substring(startPos, endPos)
-        .trim();
-
-      startPos = settingsFileContent.indexOf('<useconn>') + '<useconn>'.length;
-      endPos = settingsFileContent.indexOf('</useconn>');
-      const boolUseEmailConnection = Boolean(
-        JSON.parse(settingsFileContent.substring(startPos, endPos).trim()),
-      );
-
-      startPos =
-        settingsFileContent.indexOf('<conncode>') + '<conncode>'.length;
-      endPos = settingsFileContent.indexOf('</conncode>');
-      const strEmailConnectionCode = settingsFileContent
-        .substring(startPos, endPos)
-        .trim();
-
-      let templateRelativeFilePath = `./config/burst/${configurationFileName}`;
-      let typeOfConfiguration = 'config-burst-legacy';
-
-      const folderName = Utilities.basename(
-        Utilities.dirname(configurationFilePath),
-      );
-
-      let dsInputType = '';
-
-      if (configurationFilePath.includes(`config/reports/${folderName}`)) {
-        typeOfConfiguration = 'config-reports';
-        templateRelativeFilePath = `./config/reports/${folderName}/settings.xml`;
-
-        if (boolReportGenerationMailMerge) {
-          const reportingXmlFilePath = `${Utilities.dirname(
-            configurationFilePath,
-          )}/reporting.xml`;
-
-          const reportingXmlFileContent =
-            await this.unixCliService.catAsync(reportingXmlFilePath);
-          startPos =
-            reportingXmlFileContent.indexOf('<type>') + '<type>'.length;
-          endPos = reportingXmlFileContent.indexOf('</type>');
-          dsInputType = reportingXmlFileContent
-            .substring(startPos, endPos)
-            .trim();
-        }
-      } else if (
-        configurationFilePath.includes(`config/samples/${folderName}`)
-      ) {
-        typeOfConfiguration = 'config-samples';
-        templateRelativeFilePath = `./config/samples/${folderName}/settings.xml`;
-      }
-
-      configurationFiles.push({
-        fileName: configurationFileName,
-        filePath: Utilities.slash(configurationFilePath),
-        relativeFilePath: templateRelativeFilePath,
-        templateName: settingsTemplateName,
-        isFallback: isFallbackSettings,
-        capReportDistribution: boolReportDistribution,
-        capReportGenerationMailMerge: boolReportGenerationMailMerge,
-        dsInputType: dsInputType,
-        visibility: strVisibility,
-        notes: '',
-        folderName: folderName,
-        type: typeOfConfiguration,
-        activeClicked: false,
-        useEmlConn: boolUseEmailConnection,
-        emlConnCode: strEmailConnectionCode,
-      });
-    }
-
-    this.configurationFiles = configurationFiles;
-
-    // console.log(
-    //   `this.configurationFiles = ${JSON.stringify(this.configurationFiles)}`
-    // );
-    return configurationFiles;
+    return this.configurationFiles;
   }
 
   async loadAllConnectionFilesAsync() {
@@ -515,78 +350,38 @@ export class SettingsService {
 
     this.connectionsLoading = 1;
 
-    this.defaultEmailConnectionFile = undefined;
-
-    const connectionFiles: Array<ExtConnection> = [];
-
-    const connectionFilePaths = await this.unixCliService.findAsync(
-      this.CONFIGURATION_CONNECTIONS_FOLDER_PATH,
-      {
-        matching: ['*.xml'],
-      },
+    const connFiles = await this.apiService.get(
+      '/cfgman/rb/load-connection-all',
     );
 
-    if (!connectionFilePaths || connectionFilePaths.length == 0) {
-      this.connectionsLoading = 0;
-      return;
-    }
+    //console.log(
+    //  `this.configurationFiles = ${JSON.stringify(this.configurationFiles)}`,
+    //);
 
-    for (let connectionFilePath of connectionFilePaths) {
-      let connectionSettings = {
-        documentburster: {
-          connection: null,
-        },
-      };
+    this.connectionFiles = connFiles.map((connFile) => {
+      const matchingConfigs = this.configurationFiles
+        .filter(
+          (conf) =>
+            conf.useEmlConn &&
+            conf.emlConnCode == connFile.connectionCode &&
+            conf.type != 'config-samples',
+        )
+        .map((conf) => conf.templateName);
 
-      // console.log(`connectionFilePath = ${JSON.stringify(connectionFilePath)}`);
-
-      connectionSettings.documentburster = await this.apiService.get(
-        '/cfgman/rb/load-connection',
-        {
-          path: connectionFilePath,
-        },
-      );
-      const connXml = connectionSettings.documentburster.connection;
-
-      //console.log(`connXml = ${JSON.stringify(connXml)}`);
-
-      const connectionFileName = Utilities.basename(connectionFilePath);
       //console.log(
-      //  `this.configurationFiles = ${JSON.stringify(this.configurationFiles)}`,
-      //);
-      connectionFiles.push({
-        fileName: connectionFileName,
-        filePath: connectionFilePath,
-        connectionCode: connXml.code,
-        connectionName: connXml.name,
-        connectionType: connectionFileName.startsWith('eml-')
-          ? 'email-connection'
-          : 'database-connection',
-        activeClicked: false,
-        defaultConnection: connXml.defaultConnection,
-        usedBy: this.configurationFiles
-          .filter(
-            (conf) =>
-              conf.useEmlConn &&
-              conf.emlConnCode == connXml.code &&
-              conf.type != 'config-samples',
-          )
-          .map((conf) => conf.templateName)
-          .join(', '),
-        emailserver: {
-          host: connXml.emailserver.host,
-          port: connXml.emailserver.port,
-          userid: connXml.emailserver.userid,
-          userpassword: connXml.emailserver.userpassword,
-          usessl: connXml.emailserver.usessl,
-          usetls: connXml.emailserver.usetls,
-          fromaddress: connXml.emailserver.fromaddress,
-          name: connXml.emailserver.name,
-        },
-      });
-    }
+      //  `Matching configs for ${connFile.connectionCode}:`,
+      //  matchingConfigs,
+      //); // Debugging log
 
-    this.connectionFiles = connectionFiles;
+      return {
+        ...connFile,
+        usedBy: matchingConfigs.join(', ') || '--not used--', // Temporary change to identify empty matches
+      };
+    });
+
+    //console.log(
+    //  `this.connectionFiles = ${JSON.stringify(this.connectionFiles)}`,
+    //);
 
     this.defaultEmailConnectionFile = this.getConnectionDetails({
       connectionType: 'email-connection',
@@ -594,13 +389,8 @@ export class SettingsService {
       connectionCode: '',
     });
 
-    //console.log(
-    //  `this.defaultEmailConnectionFile = ${JSON.stringify(
-    //    this.defaultEmailConnectionFile
-    //  )}`
-    //);
-
     this.connectionsLoading = 0;
+    return this.connectionFiles;
   }
 
   isDefaultEmailConnectionConfigured(): boolean {
@@ -619,66 +409,11 @@ export class SettingsService {
   }
 
   async loadAllReportTemplatesFilesAsync() {
-    let relativeFilePath: string, tplType: string;
-    const emailsTemplateFiles: Array<TmplFileInfo> = [];
-    const reportsTemplateFiles: Array<TmplFileInfo> = [];
-
-    let reportsTemplateFilePaths = await this.unixCliService.findAsync(
-      `${this.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports`,
-      {
-        matching: ['*.docx', '*.html'],
-        files: true,
-        directories: false,
-        recursive: true,
-      },
+    this.templateFiles = await this.apiService.get(
+      '/cfgman/rb/load-templates-all',
     );
 
-    //console.log(
-    //  `reportsTemplateFilePaths = ${JSON.stringify(reportsTemplateFilePaths)}`
-    //);
-
-    //const samplesReportsTemplateFilePaths = [];
-
-    //reportsTemplateFilePaths = reportsTemplateFilePaths.concat(
-    //  samplesReportsTemplateFilePaths
-    //);
-
-    for (let filePath of reportsTemplateFilePaths) {
-      //console.log(`filePath = ${filePath}`);
-
-      const reportTemplateFileName = Utilities.basename(filePath);
-
-      const folderName = Utilities.basename(Utilities.dirname(filePath));
-
-      if (filePath.includes('samples/reports')) {
-        tplType = 'template-report-sample';
-        relativeFilePath = filePath.replace(
-          //`${this.PORTABLE_EXECUTABLE_DIR}/templates/samples/reports/`,
-          `templates/samples/reports/`,
-          '',
-        );
-      } else {
-        tplType = 'template-report';
-        relativeFilePath = filePath.replace(
-          //`${this.PORTABLE_EXECUTABLE_DIR}/templates/reports/`,
-          `templates/reports/`,
-          '',
-        );
-      }
-
-      reportsTemplateFiles.push({
-        fileName: reportTemplateFileName,
-        filePath: filePath,
-        type: tplType,
-        folderName: folderName,
-        relativeFilePath: relativeFilePath,
-      });
-    }
-
-    const templateFiles = emailsTemplateFiles.concat(reportsTemplateFiles);
-
-    this.templateFiles = templateFiles;
-    return templateFiles;
+    return this.templateFiles;
   }
 
   async saveReportingFileAsync(
@@ -700,6 +435,28 @@ export class SettingsService {
     });
   }
 
+  async saveTemplateFileAsync(filePath: string, content: string) {
+    const encodedPath = encodeURIComponent(Utilities.slash(filePath));
+    return this.apiService.post(
+      `/cfgman/rb/save-template?path=${encodedPath}`,
+      content,
+      new Headers({
+        'Content-Type': 'text/plain',
+      }),
+    );
+  }
+
+  async loadTemplateFileAsync(filePath: string): Promise<any> {
+    return this.apiService.get(
+      '/cfgman/rb/load-template',
+      { path: encodeURIComponent(filePath) },
+      new Headers({
+        Accept: 'text/plain',
+        'Content-Type': 'application/json',
+      }),
+    );
+  }
+
   getConfigurations(visibility?: string) {
     return this.configurationFiles.filter((configuration) => {
       let filterCondition = configuration.type != 'config-samples';
@@ -712,13 +469,20 @@ export class SettingsService {
     });
   }
 
-  getMailMergeConfigurations(visibility?: string) {
+  getMailMergeConfigurations(filter?: {
+    visibility?: string;
+    samples?: boolean;
+  }) {
     return this.configurationFiles.filter((configuration) => {
       let filterCondition = configuration.capReportGenerationMailMerge;
 
-      if (visibility)
+      if (filter && filter.visibility)
         filterCondition =
-          filterCondition && configuration.visibility === visibility;
+          filterCondition && configuration.visibility === filter.visibility;
+
+      if (filter && !filter.samples)
+        filterCondition =
+          filterCondition && !configuration.filePath.includes('samples');
 
       return filterCondition;
     });

@@ -34,7 +34,10 @@ import Utilities from '../../helpers/utilities';
 import { ConfirmService } from '../../components/dialog-confirm/confirm.service';
 import { InfoService } from '../../components/dialog-info/info.service';
 import { SampleInfo, SamplesService } from '../../providers/samples.service';
-import { SettingsService } from '../../providers/settings.service';
+import {
+  CfgTmplFileInfo,
+  SettingsService,
+} from '../../providers/settings.service';
 import { ShellService } from '../../providers/shell.service';
 import { ApiService } from '../../providers/api.service';
 import { FsService } from '../../providers/fs.service';
@@ -62,6 +65,7 @@ export class ProcessingComponent implements OnInit {
   modalSampleInfo = {
     id: '',
     title: '',
+    capReportSplitting: false,
     capReportDistribution: false,
     capReportGenerationMailMerge: false,
     inputDetails: '',
@@ -106,6 +110,7 @@ export class ProcessingComponent implements OnInit {
     id: string;
     heading: string;
     ngTemplateOutlet: string;
+    active: boolean;
   }[];
 
   ALL_TABS = [
@@ -225,6 +230,32 @@ export class ProcessingComponent implements OnInit {
     await this.samplesService.fillSamplesNotes();
 
     this.route.params.subscribe(async (params) => {
+      let processingMode = 'processing';
+      this.processingService.procReportingMailMergeInfo.isSample = false;
+      this.processingService.procBurstInfo.isSample = false;
+
+      if (params.prefilledInputFilePath) {
+        processingMode = 'processing-sample-burst';
+        this.processingService.procBurstInfo.isSample = true;
+      }
+
+      if (params.prefilledSelectedMailMergeClassicReport) {
+        processingMode = 'processing-sample-generate';
+        this.processingService.procReportingMailMergeInfo.isSample = true;
+
+        this.processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport =
+          this.settingsService
+            .getMailMergeConfigurations({
+              visibility: 'visible',
+              samples: true,
+            })
+            .find((configuration: CfgTmplFileInfo) =>
+              configuration.filePath.includes(
+                params.prefilledSelectedMailMergeClassicReport,
+              ),
+            );
+      }
+
       if (params.leftMenu) {
         this.currentLeftMenu = params.leftMenu;
       } else {
@@ -254,11 +285,21 @@ export class ProcessingComponent implements OnInit {
           },
         );
       } else {
-        if (params.prefilledInputFilePath) {
-          if (this.currentLeftMenu != 'mergeBurstMenuSelected')
-            this.processingService.procBurstInfo.prefilledInputFilePath =
-              params.prefilledInputFilePath;
-          else if (this.currentLeftMenu == 'mergeBurstMenuSelected') {
+        if (
+          processingMode == 'processing-sample-burst' ||
+          processingMode == 'processing-sample-generate'
+        ) {
+          if (this.currentLeftMenu != 'mergeBurstMenuSelected') {
+            if (processingMode == 'processing-sample-burst')
+              this.processingService.procBurstInfo.prefilledInputFilePath =
+                params.prefilledInputFilePath;
+
+            if (processingMode == 'processing-sample-generate')
+              this.processingService.procReportingMailMergeInfo.prefilledInputFilePath =
+                params.prefilledInputFilePath;
+          }
+
+          if (this.currentLeftMenu == 'mergeBurstMenuSelected') {
             //console.log(
             //  `params.prefilledInputFilePath = ${params.prefilledInputFilePath}`,
             //);
@@ -286,13 +327,26 @@ export class ProcessingComponent implements OnInit {
             });
           }
         }
-        if (params.prefilledConfigurationFilePath) {
+
+        if (processingMode == 'processing-sample-burst')
           this.processingService.procBurstInfo.prefilledConfigurationFilePath =
             params.prefilledConfigurationFilePath;
-        }
+        if (processingMode == 'processing-sample-generate')
+          this.processingService.procReportingMailMergeInfo.prefilledConfigurationFilePath =
+            params.prefilledSelectedMailMergeClassicReport;
       }
 
       this.refreshTabs();
+
+      if (processingMode == 'processing-sample-generate') {
+        this.visibleTabs[1].active = true;
+        this.visibleTabs[0].active = false;
+      } else {
+        this.visibleTabs[0].active = true;
+        this.visibleTabs[1].active = false;
+      }
+
+      this.changeDetectorRef.detectChanges();
     });
 
     this.xmlSettings = await this.settingsService.loadSettingsFileAsync(
@@ -316,8 +370,15 @@ export class ProcessingComponent implements OnInit {
     }).visibleTabs;
 
     //if (this.currentLeftMenu == 'burstMenuSelected') {
-    let mailMergeConfigurations =
-      this.settingsService.getMailMergeConfigurations('visible');
+    const mailMergeConfigurations =
+      this.settingsService.getMailMergeConfigurations({
+        visibility: 'visible',
+        samples: this.processingService.procReportingMailMergeInfo.isSample,
+      });
+
+    //console.log(
+    //  `refreshTabs mailMergeConfigurations = ${JSON.stringify(mailMergeConfigurations)}`,
+    //);
 
     if (!mailMergeConfigurations.length) {
       visibleTabsIds = visibleTabsIds.filter(
@@ -326,9 +387,12 @@ export class ProcessingComponent implements OnInit {
     }
     //}
 
-    this.visibleTabs = this.ALL_TABS.filter((item) => {
-      return visibleTabsIds.includes(item.id);
-    });
+    this.visibleTabs = this.ALL_TABS.filter((item) =>
+      visibleTabsIds.includes(item.id),
+    ).map((tab) => ({
+      ...tab,
+      active: false,
+    }));
   }
 
   // tab Burst
@@ -380,7 +444,7 @@ export class ProcessingComponent implements OnInit {
       '';
     this.processingService.procReportingMailMergeInfo.prefilledConfigurationFilePath =
       '';
-    this.processingService.procReportingMailMergeInfo.isSample = false;
+    //this.processingService.procReportingMailMergeInfo.isSample = false;
 
     if (this.burstFileUploadInput?.nativeElement) {
       (this.burstFileUploadInput.nativeElement as HTMLInputElement).value = '';
@@ -513,6 +577,10 @@ export class ProcessingComponent implements OnInit {
         message: dialogMessage,
       });
     } else {
+      //console.log(
+      //  `doGenerateReports procReportingMailMergeInfo = ${JSON.stringify(this.processingService.procReportingMailMergeInfo)}`,
+      //);
+
       if (this.processingService.procReportingMailMergeInfo.isSample) {
         this.processingService.procReportingMailMergeInfo.inputFileName =
           Utilities.basename(
@@ -552,6 +620,8 @@ export class ProcessingComponent implements OnInit {
 
             inputFilePath = uploadedFilesInfo[0].filePath;
           }
+
+          //console.log(`doGenerateReports configFilePath = ${configFilePath}`);
 
           if (!configFilePath)
             this.shellService.runBatFile(
@@ -994,7 +1064,7 @@ export class ProcessingComponent implements OnInit {
       },
     );
 
-    console.log(`qaEmailServerStarted = ${qaEmailServerStarted}`);
+    //console.log(`qaEmailServerStarted = ${qaEmailServerStarted}`);
 
     if (qaEmailServerStarted) testEmailServerStatus = 'started';
 
@@ -1088,10 +1158,13 @@ export class ProcessingComponent implements OnInit {
     this.modalSampleInfo.id = clickedSample.id;
 
     this.modalSampleInfo.title = clickedSample.name;
+
+    this.modalSampleInfo.capReportSplitting = clickedSample.capReportSplitting;
     this.modalSampleInfo.capReportDistribution =
       clickedSample.capReportDistribution;
     this.modalSampleInfo.capReportGenerationMailMerge =
       clickedSample.capReportGenerationMailMerge;
+
     this.modalSampleInfo.notes = clickedSample.notes;
 
     this.modalSampleInfo.configurationFilePath =
@@ -1181,62 +1254,97 @@ export class ProcessingComponent implements OnInit {
   }
 
   doSampleTryIt(clickedSample: SampleInfo) {
+    console.log(`clickedSample = ${JSON.stringify(clickedSample)}`);
+
     const dialogQuestion = clickedSample.notes;
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmLabel: "OK and I'll click 'Burst' in the following screen",
       declineLabel: "No, I'll do it later",
       confirmAction: () => {
-        if (clickedSample.input.data.length == 1) {
+        this.processingService.procBurstInfo.isSample = false;
+        this.processingService.procReportingMailMergeInfo.isSample = false;
+
+        if (['burst', 'merge-burst'].includes(clickedSample.jobType)) {
           this.processingService.procBurstInfo.isSample = true;
+
+          if (clickedSample.jobType == 'burst') {
+            const inputDocumentShortPath = clickedSample.input.data[0].replace(
+              'file:',
+              '',
+            );
+
+            console.log(`navigate /processingSampleBurst 'burstMenuSelected'`);
+
+            this.router.navigate(
+              [
+                '/processingSampleBurst',
+                'burstMenuSelected',
+                Utilities.slash(
+                  //`${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputDocumentShortPath}`,
+                  `${inputDocumentShortPath}`,
+                ),
+                Utilities.slash(clickedSample.configurationFilePath),
+              ],
+              { skipLocationChange: true },
+            );
+          }
+
+          if (clickedSample.jobType == 'merge-burst') {
+            let diezSeparatedListOfFilePathsToMerge = '';
+            const filesToMerge = clickedSample.input.data;
+            filesToMerge.forEach((fileToMerge: string) => {
+              //const filePath = Utilities.slash(
+              //  `${
+              //    this.settingsService.PORTABLE_EXECUTABLE_DIR
+              //  }/${fileToMerge.replace('file:', '')}`,
+              //);
+              const filePath = Utilities.slash(
+                `${fileToMerge.replace('file:', '')}`,
+              );
+              if (diezSeparatedListOfFilePathsToMerge.length == 0) {
+                diezSeparatedListOfFilePathsToMerge = filePath;
+              } else {
+                diezSeparatedListOfFilePathsToMerge = `${diezSeparatedListOfFilePathsToMerge}#${filePath}`;
+              }
+            });
+
+            diezSeparatedListOfFilePathsToMerge = `${diezSeparatedListOfFilePathsToMerge}#burst-merged-file`;
+            //console.log(
+            //  `diezSeparatedListOfFilePathsToMerge = ${diezSeparatedListOfFilePathsToMerge}`,
+            //);
+            this.router.navigate(
+              [
+                '/processingSampleBurst',
+                'mergeBurstMenuSelected',
+                diezSeparatedListOfFilePathsToMerge,
+                Utilities.slash(clickedSample.configurationFilePath),
+              ],
+              { skipLocationChange: true },
+            );
+          }
+        }
+
+        if (clickedSample.jobType == 'generate') {
+          this.processingService.procReportingMailMergeInfo.isSample = true;
+
           const inputDocumentShortPath = clickedSample.input.data[0].replace(
             'file:',
             '',
           );
 
+          this.processingService.procReportingMailMergeInfo.inputFileName =
+            Utilities.basename(inputDocumentShortPath);
+
           this.router.navigate(
             [
-              '/processingSample',
+              '/processingSampleGenerate',
               'burstMenuSelected',
               Utilities.slash(
                 //`${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputDocumentShortPath}`,
-                `${inputDocumentShortPath}`,
+                `${clickedSample.configurationFilePath}`,
               ),
-              Utilities.slash(clickedSample.configurationFilePath),
-            ],
-            { skipLocationChange: true },
-          );
-        } else if (clickedSample.input.data.length > 1) {
-          this.processingService.procBurstInfo.isSample = true;
-
-          let diezSeparatedListOfFilePathsToMerge = '';
-          const filesToMerge = clickedSample.input.data;
-          filesToMerge.forEach((fileToMerge: string) => {
-            //const filePath = Utilities.slash(
-            //  `${
-            //    this.settingsService.PORTABLE_EXECUTABLE_DIR
-            //  }/${fileToMerge.replace('file:', '')}`,
-            //);
-            const filePath = Utilities.slash(
-              `${fileToMerge.replace('file:', '')}`,
-            );
-            if (diezSeparatedListOfFilePathsToMerge.length == 0) {
-              diezSeparatedListOfFilePathsToMerge = filePath;
-            } else {
-              diezSeparatedListOfFilePathsToMerge = `${diezSeparatedListOfFilePathsToMerge}#${filePath}`;
-            }
-          });
-
-          diezSeparatedListOfFilePathsToMerge = `${diezSeparatedListOfFilePathsToMerge}#burst-merged-file`;
-          //console.log(
-          //  `diezSeparatedListOfFilePathsToMerge = ${diezSeparatedListOfFilePathsToMerge}`,
-          //);
-          this.router.navigate(
-            [
-              '/processingSample',
-              'mergeBurstMenuSelected',
-              diezSeparatedListOfFilePathsToMerge,
-              Utilities.slash(clickedSample.configurationFilePath),
+              Utilities.slash(inputDocumentShortPath),
             ],
             { skipLocationChange: true },
           );

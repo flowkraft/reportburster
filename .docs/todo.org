@@ -1,12 +1,25 @@
-* TODO Learn Emacs
-** TODO Learn basic commands
-*** DONE C-x C-f (find file)
-*** DONE C-x C-s (save file)
-*** TODO C-x C-c (exit Emacs)
-** TODO Learn about buffers
-** TODO Learn about Org mode
-* TODO Write a program in Python
-** TODO Learn Python syntax
-** TODO Write code
-** TODO Test code
-* DONE Set up Emacs
+
+DONE1 -  new sample id: 'GENERATE-PAYSLIPS', name: '6. Generate Monthly Payslips',
+DONE1 -  areas/configuration.component.ts:  API improvements
+     
+
+DONE1 - upgrade springboot, log4j, groovy
+DONE1 - different-java-versions.robot implement "LATEST" java
+
+!/jobman/system/fs (fsService.)
+!/jobman/system/unix-cli (.unixCliService) findAsync, catAsync
+!/jobman/system/child-process
+
+/jobman/upload/process-*
+/jobman/system/check-url
+/jobman/system/(in)uninstall
+/jobman/system/get-blog-posts
+/jobman/system/info
+/jobman/system/get-changelog
+
+/jobman/logs/(tailer)
+
+/cfgman/rb/load(save)
+/cfgman/rb/load-connection(save-connection)
+/cfgman/rb/load-reporting(save-reporting)
+/cfgman/rb/load-internal(save-internal)

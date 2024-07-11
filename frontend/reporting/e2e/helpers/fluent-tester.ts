@@ -72,6 +72,13 @@ export class FluentTester implements PromiseLike<void> {
 
   constructor(protected window: Page) {}
 
+  public scrollIntoViewIfNeeded(selector: string): FluentTester {
+    const action = (): Promise<void> => this.doScrollIntoViewIfNeeded(selector);
+
+    this.actions.push(action);
+    return this;
+  }
+
   public click(selector: string): FluentTester {
     const action = (): Promise<void> => this.doClick(selector);
 
@@ -1069,6 +1076,12 @@ export class FluentTester implements PromiseLike<void> {
     this.focusedElement = this.window.locator(selector);
 
     return this.focusedElement.focus();
+  }
+
+  protected async doScrollIntoViewIfNeeded(selector: string): Promise<void> {
+    this.focusedElement = this.window.locator(selector);
+
+    return this.focusedElement.scrollIntoViewIfNeeded();
   }
 
   protected async doClick(selector: string): Promise<void> {
