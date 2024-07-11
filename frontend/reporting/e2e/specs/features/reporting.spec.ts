@@ -59,7 +59,7 @@ test.describe('', async () => {
           slash(
             path.resolve(
               process.env.PORTABLE_EXECUTABLE_DIR +
-                '/samples/reports/payslips/payslips-data.csv',
+                '/samples/reports/payslips/Payslips.csv',
             ),
           ),
         )

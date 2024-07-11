@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## 10.2.2 - 2024-07-22
+
+### Added
+
+- "Samples/6. Generate Monthly Payslips" for users to quickly "Try It"
+
+### Changed
+
+- general API improvements
+- SpringBoot upgrade from v2.5.8 to v2.7.18 (which comes with a newer and more secure version
+  of the Apache log4j2 logging framework)
+
 ## 10.2.1 - 2024-07-01
 
 ### Added

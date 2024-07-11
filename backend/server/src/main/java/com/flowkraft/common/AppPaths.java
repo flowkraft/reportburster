@@ -17,6 +17,10 @@ public class AppPaths {
 	public static String LOGS_DIR_PATH = StringUtils.EMPTY;
 	public static String QUARANTINE_DIR_PATH = StringUtils.EMPTY;
 
+	public static String SAMPLES_DIR_PATH = StringUtils.EMPTY;
+
+	public static String TEMPLATES_DIR_PATH = StringUtils.EMPTY;
+
 	public static String UPLOADS_DIR_PATH = StringUtils.EMPTY;
 	public static String JOBS_DIR_PATH = StringUtils.EMPTY;
 	public static String DEFAULT_POLL_DIR_PATH = StringUtils.EMPTY;
@@ -37,6 +41,10 @@ public class AppPaths {
 			CONFIG_DIR_PATH = PORTABLE_EXECUTABLE_DIR_PATH + "/config";
 			LOGS_DIR_PATH = PORTABLE_EXECUTABLE_DIR_PATH + "/logs";
 			QUARANTINE_DIR_PATH = PORTABLE_EXECUTABLE_DIR_PATH + "/quarantine";
+
+			SAMPLES_DIR_PATH = PORTABLE_EXECUTABLE_DIR_PATH + "/samples";
+
+			TEMPLATES_DIR_PATH = PORTABLE_EXECUTABLE_DIR_PATH + "/templates";
 
 			UPLOADS_DIR_PATH = PORTABLE_EXECUTABLE_DIR_PATH + "/uploads";
 			JOBS_DIR_PATH = PORTABLE_EXECUTABLE_DIR_PATH + "/temp";

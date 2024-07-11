@@ -19,9 +19,6 @@ import com.flowkraft.jobman.models.WebSocketJobsExecutionStatsInfo;
 public class ShellService {
 
 	@Autowired
-	JobsService jobsService;
-
-	@Autowired
 	private SimpMessageSendingOperations messagingTemplate;
 
 	public void runDocumentBursterBatScriptFile(String arrguments, CallBackMethod<File> exitHandler, File file)

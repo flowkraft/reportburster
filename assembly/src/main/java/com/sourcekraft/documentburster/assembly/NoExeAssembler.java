@@ -197,7 +197,46 @@ public class NoExeAssembler extends AbstractAssembler {
 		content = content.replace("<split2ndtime>false</split2ndtime>", "<split2ndtime>true</split2ndtime>");
 		newFile = new File(splitTwoTimesSplitOnlyXmlConfigFilePath);
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
-
+		
+		
+		///config/samples/payslips-generate-only/settings.xml
+		String payslipsGenerateOnlyXmlConfigFilePath = packageDirPath + "/" + topFolderName
+				+ "/config/samples/payslips-generate-only/settings.xml";
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(payslipsGenerateOnlyXmlConfigFilePath));
+		// replace <reportdistribution>true</reportdistribution> with
+		// <reportdistribution>false</reportdistribution>
+		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyXmlConfigFilePath), "UTF-8");
+		
+		content = content.replace("<template>My Reports</template>",
+				"<template>Payslips Generate</template>");
+	
+		content = content.replace("<reportdistribution>true</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replace("<reportgenerationmailmerge>false</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		newFile = new File(payslipsGenerateOnlyXmlConfigFilePath);
+		FileUtils.writeStringToFile(newFile, content, "UTF-8");
+		
+		///config/samples/payslips-generate-only/reporting.xml
+		String payslipsGenerateOnlyReportingXmlConfigFilePath = packageDirPath + "/" + topFolderName
+				+ "/config/samples/payslips-generate-only/reporting.xml";
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(payslipsGenerateOnlyReportingXmlConfigFilePath));
+		// replace <reportdistribution>true</reportdistribution> with
+		// <reportdistribution>false</reportdistribution>
+		
+		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyReportingXmlConfigFilePath), "UTF-8");
+		content = content.replace("output.none",
+				"output.docx");
+		
+		content = content.replace("<documentpath/>",
+				"<documentpath>/samples/reports/payslips/payslips-template.docx</documentpath>");
+		
+		newFile = new File(payslipsGenerateOnlyReportingXmlConfigFilePath);
+		FileUtils.writeStringToFile(newFile, content, "UTF-8");
+		
+		
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_internal/license.xml"),
 				new File(packageDirPath + "/" + topFolderName + "/config/_defaults/license.xml"));
 

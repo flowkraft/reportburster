@@ -6,5 +6,7 @@ public class SystemInfo {
 	public String osVersion;
 	public String userName;
 	public String osArch;
+	
+	public String product;
 		
 }

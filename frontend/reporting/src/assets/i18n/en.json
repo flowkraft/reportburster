@@ -830,6 +830,11 @@
       "NOTES": {
         "INNER-HTML": "This example demonstrates how to merge and process multiple files containing invoices simultaneously, in one operation. This can be particularly useful when you have several documents, such as invoices from previous months, that also require processing. <br/><br/>When working with your real documents you can process the data for all your company invoices no matter if your company has few tens, few hundred or few thousands invoices."
       }
+    },
+    "GENERATE-PAYSLIPS": {
+      "NOTES": {
+        "INNER-HTML": "This example demonstrates how to generate payslips documents for all your company's employees using a single CSV text file as datasource. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundred or few thousands employees. Obviously, it is easy to email and/or upload the generated payslips documents to your employees."
+      }
     }
   }
 }

@@ -16,7 +16,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
           appendTo="body"
         >
           <ng-option
-            *ngFor="let report of this.settingsService.getMailMergeConfigurations('visible')"
+            *ngFor="let report of this.settingsService.getMailMergeConfigurations({visibility: 'visible', samples: this.processingService.procReportingMailMergeInfo.isSample})"
             [value]="report"
             >{{report.templateName}}
             <span *ngIf="report.type=='config-samples'">(sample)</span
@@ -60,7 +60,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
           type="button"
           class="btn btn-primary"
           (click)="doGenerateReports()"
-          [disabled]="!processingService.procReportingMailMergeInfo.inputFileName || executionStatsService.jobStats.numberOfActiveJobs > 0"
+          [disabled]="(!processingService.procReportingMailMergeInfo.inputFileName && !processingService.procReportingMailMergeInfo.prefilledInputFilePath) || executionStatsService.jobStats.numberOfActiveJobs > 0"
         >
           <i class="fa fa-play"></i>&nbsp;Burst
         </button>

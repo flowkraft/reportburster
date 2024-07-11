@@ -97,7 +97,7 @@ test.describe('', async () => {
   );
 
   //generate START
-  test('should correctly generate-test-all samples/reports/payslips/payslips-data.csv (Payslips)', async function () {
+  test('should correctly generate-test-all samples/reports/payslips/Payslips.csv (Payslips)', async function () {
     //const shouldDeactivateLicenseKey = true;
     const shouldDeactivateLicenseKey = false;
 
@@ -122,7 +122,7 @@ test.describe('', async () => {
     await Helpers.appClose();
   });
 
-  test('should correctly generate-test-random2 samples/reports/payslips/payslips-data.csv (Payslips)', async function () {
+  test('should correctly generate-test-random2 samples/reports/payslips/Payslips.csv (Payslips)', async function () {
     //const shouldDeactivateLicenseKey = true;
     const shouldDeactivateLicenseKey = false;
 
@@ -147,7 +147,7 @@ test.describe('', async () => {
     await Helpers.appClose();
   });
 
-  test('should correctly generate-test-tokenlist samples/reports/payslips/payslips-data.csv (Payslips)', async function () {
+  test('should correctly generate-test-tokenlist samples/reports/payslips/Payslips.csv (Payslips)', async function () {
     //const shouldDeactivateLicenseKey = true;
     const shouldDeactivateLicenseKey = false;
 
@@ -172,7 +172,7 @@ test.describe('', async () => {
     await Helpers.appClose();
   });
 
-  test('should correctly generate-email-test-all samples/reports/payslips/payslips-data.csv (Payslips)', async function () {
+  test('should correctly generate-email-test-all samples/reports/payslips/Payslips.csv (Payslips)', async function () {
     //const shouldDeactivateLicenseKey = true;
     const shouldDeactivateLicenseKey = false;
 
@@ -197,7 +197,7 @@ test.describe('', async () => {
     await Helpers.appClose();
   });
 
-  test('should correctly generate-email-test-random2 samples/reports/payslips/payslips-data.csv (Payslips)', async function () {
+  test('should correctly generate-email-test-random2 samples/reports/payslips/Payslips.csv (Payslips)', async function () {
     //const shouldDeactivateLicenseKey = true;
     const shouldDeactivateLicenseKey = false;
 
@@ -221,7 +221,7 @@ test.describe('', async () => {
     await Helpers.appClose();
   });
 
-  test('should correctly generate-email-test-tokenlist samples/reports/payslips/payslips-data.csv (Payslips)', async function () {
+  test('should correctly generate-email-test-tokenlist samples/reports/payslips/Payslips.csv (Payslips)', async function () {
     //const shouldDeactivateLicenseKey = true;
     const shouldDeactivateLicenseKey = false;
 
@@ -245,7 +245,6 @@ test.describe('', async () => {
 
     await Helpers.appClose();
   });
-
   //generate END
 });
 
@@ -326,7 +325,7 @@ const _splitSendVerifyEmails = async (
           slash(
             path.resolve(
               process.env.PORTABLE_EXECUTABLE_DIR +
-                '/samples/reports/payslips/payslips-data.csv',
+                '/samples/reports/payslips/Payslips.csv',
             ),
           ),
         );

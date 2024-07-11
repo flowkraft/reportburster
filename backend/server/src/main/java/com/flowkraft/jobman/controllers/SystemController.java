@@ -94,10 +94,10 @@ public class SystemController {
 	}
 
 	@GetMapping("/info")
-	public Mono<SystemInfo> getSystemInfo() {
+	public Mono<SystemInfo> getSystemInfo() throws Exception {
 
 		// System.out.println("/info");
-		SystemInfo info = SystemService.getSystemInfo();
+		SystemInfo info = systemService.getSystemInfo();
 		return Mono.just(info);
 
 	}

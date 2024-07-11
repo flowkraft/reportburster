@@ -28,7 +28,7 @@ export const modalSamplesLearnMoreTemplate = `<p-dialog [header]="modalSampleInf
       <input
           type="checkbox"
           id="btnCapReportSplitting"
-          [ngModel]="true" onclick="return false;"
+          [ngModel]="modalSampleInfo.capReportSplitting" onclick="return false;"
           />
         <label 
           for="btnCapReportSplitting" class="checkboxlabel">

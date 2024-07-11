@@ -6,11 +6,12 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.5.8</version>
+		<!--<version>2.5.8</version>-->
+		<version>2.7.18</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
-	<version>10.2.1</version>
+	<version>10.2.2</version>
 
 	<groupId>com.flowkraft</groupId>
 	<artifactId>rb-server</artifactId>
@@ -21,7 +22,7 @@
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
 			<artifactId>rb-common</artifactId>
-			<version>10.2.1</version>
+			<version>10.2.2</version>
 		</dependency>
 
 		<dependency>
@@ -161,10 +162,18 @@
 			<version>3.2</version>
 		</dependency>
 
+		<!--
 		<dependency>
 			<groupId>io.springfox</groupId>
 			<artifactId>springfox-boot-starter</artifactId>
 			<version>3.0.0</version>
+		</dependency>
+		-->
+
+		<dependency>
+    		<groupId>org.springdoc</groupId>
+    		<artifactId>springdoc-openapi-ui</artifactId>
+    		<version>1.8.0</version>
 		</dependency>
 
 		<dependency>

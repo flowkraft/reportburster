@@ -109,7 +109,7 @@ test.describe('', async () => {
         )
         .elementShouldHaveText(
           `#${secondEmailConnectionFileName} td:nth-child(3)`,
-          '',
+          '--not used--',
         );
       //toggle 1st time default and assert it worked
       ft = ConnectionsTestHelper.makeConnectionAsDefault(

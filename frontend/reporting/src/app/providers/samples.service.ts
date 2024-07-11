@@ -28,6 +28,7 @@ export interface SampleInfo {
   recipientType: string;
   documentType: string;
   activeClicked: boolean;
+  capReportSplitting: boolean;
   capReportDistribution: boolean;
   capReportGenerationMailMerge: boolean;
   documentation?: string;
@@ -79,6 +80,7 @@ export class SamplesService {
       notes: ``,
       recipientType: 'employee',
       documentType: 'payslip',
+      capReportSplitting: true,
       capReportDistribution: false,
       capReportGenerationMailMerge: false,
       activeClicked: false,
@@ -122,6 +124,7 @@ export class SamplesService {
       notes: ``,
       recipientType: 'employee',
       documentType: 'payslip',
+      capReportSplitting: true,
       capReportDistribution: false,
       capReportGenerationMailMerge: false,
       activeClicked: false,
@@ -157,6 +160,7 @@ export class SamplesService {
       notes: ``,
       recipientType: 'customer',
       documentType: 'invoices',
+      capReportSplitting: true,
       capReportDistribution: false,
       capReportGenerationMailMerge: false,
       activeClicked: false,
@@ -199,6 +203,7 @@ export class SamplesService {
       notes: ``,
       recipientType: 'customer',
       documentType: 'invoice',
+      capReportSplitting: true,
       capReportDistribution: false,
       capReportGenerationMailMerge: false,
       activeClicked: false,
@@ -249,20 +254,19 @@ export class SamplesService {
       notes: ``,
       recipientType: 'customer',
       documentType: 'invoice',
+      capReportSplitting: true,
       capReportDistribution: false,
       capReportGenerationMailMerge: false,
       activeClicked: false,
     },
-  ];
-
-  samplesNotYetImplemented: Array<SampleInfo> = [
     {
       id: 'GENERATE-PAYSLIPS',
       name: '6. Generate Monthly Payslips',
-      visibility: 'hidden',
-      jobType: 'burst',
+      visibility: 'visible',
+      jobType: 'generate',
       input: {
-        data: ['file:samples/All-Payslips.csv'],
+        data: ['file:samples/reports/payslips/Payslips.csv'],
+        dataUrl: ['file:https://www.pdfburst.com/samples/Payslips.csv'],
         numberOfPages: -1,
         tokens: [
           'clyde.grew@northridgehealth.org',
@@ -283,16 +287,19 @@ export class SamplesService {
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      //configurationFilePath: `${this.settingsService.PORTABLE_EXECUTABLE_DIR}/config/samples/monthly-payslips-generate-docx/settings.xml`,
-      configurationFilePath: `config/samples/monthly-payslips-generate-docx/settings.xml`,
-      configurationFileName: 'split-only',
+      configurationFilePath: `config/samples/payslips-generate-only/settings.xml`,
+      configurationFileName: 'Payslips Generate Sample',
       notes: ``,
       recipientType: 'employee',
       documentType: 'payslip',
+      capReportSplitting: false,
       capReportDistribution: false,
-      capReportGenerationMailMerge: false,
+      capReportGenerationMailMerge: true,
       activeClicked: false,
     },
+  ];
+
+  samplesNotYetImplemented: Array<SampleInfo> = [
     {
       id: 'MAIL-MERGE-EMAIL-LETTERS-TO-STUDENTS',
       name: '7. Mail Merge Email Letters to All Students',
@@ -327,6 +334,7 @@ export class SamplesService {
       notes: ``,
       recipientType: 'student',
       documentType: 'letter',
+      capReportSplitting: true,
       capReportDistribution: false,
       capReportGenerationMailMerge: false,
       activeClicked: false,
@@ -364,6 +372,7 @@ export class SamplesService {
       notes: ``,
       recipientType: 'student',
       documentType: 'letter',
+      capReportSplitting: true,
       capReportDistribution: false,
       capReportGenerationMailMerge: false,
       activeClicked: false,

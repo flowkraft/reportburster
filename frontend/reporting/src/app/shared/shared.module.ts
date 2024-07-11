@@ -27,8 +27,8 @@ import { LogFileViewerModule } from '../components/log-file-viewer/log-file-view
 import { SettingsService } from '../providers/settings.service';
 import { WebSocketService } from '../providers/websocket.service';
 import { FsService } from '../providers/fs.service';
-import { StateStoreService } from '../providers/state-store.service';
 import { ApiService } from '../providers/api.service';
+import { StateStoreService } from '../providers/state-store.service';
 
 @NgModule({
   imports: [

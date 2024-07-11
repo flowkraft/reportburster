@@ -61,12 +61,28 @@ public class SystemService {
 
 	private Map<String, Tailer> existingTailers = new HashMap<>();
 
-	public static SystemInfo getSystemInfo() {
+	public SystemInfo getSystemInfo() throws Exception {
 		SystemInfo info = new SystemInfo();
 		info.osName = System.getProperty("os.name");
 		info.osVersion = System.getProperty("os.version");
 		info.userName = System.getProperty("user.name");
 		info.osArch = System.getProperty("os.arch");
+		info.product = "ReportBurster";
+
+		List<String> matching = new ArrayList<String>();
+
+		matching.add("startServer.*");
+		Optional<Boolean> files = Optional.of(true);
+		Optional<Boolean> directories = Optional.of(false);
+		Optional<Boolean> recursive = Optional.of(false);
+		Optional<Boolean> ignoreCase = Optional.of(false);
+
+		FindCriteria criteria = new FindCriteria(matching, files, directories, recursive, ignoreCase);
+
+		List<String> startServerScripts = this.unixCliFind(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, criteria);
+		if (!Objects.isNull(startServerScripts) && startServerScripts.size() > 0)
+			info.product = "ReportBurster Server";
+
 		return info;
 	}
 
@@ -106,14 +122,20 @@ public class SystemService {
 		}
 
 		if (criteria.matching != null) {
-			stream = stream.filter(filePath -> {
-				String fileName = filePath.getFileName().toString();
-				return criteria.matching.stream().anyMatch(pattern -> {
-					String matchingPattern = criteria.ignoreCase ? "(?i)" + pattern : pattern;
-					String regexPattern = matchingPattern.replace(".", "\\.").replace("*", ".*").replace("?", ".");
-					return fileName.matches(regexPattern);
-				});
-			});
+		    stream = stream.filter(filePath -> {
+		        String fileName = filePath.getFileName().toString();
+		        return criteria.matching.stream().anyMatch(pattern -> {
+		            // Construct the regex pattern with case-insensitivity applied correctly.
+		            String regexPattern = pattern
+		                    .replace(".", "\\.")
+		                    .replace("*", ".*")
+		                    .replace("?", ".");
+		            if (criteria.ignoreCase) {
+		                regexPattern = "(?i)" + regexPattern;
+		            }
+		            return fileName.matches(regexPattern);
+		        });
+		    });
 		}
 
 		List<String> list = stream.map(Path::toAbsolutePath).map(Path::normalize).map(Path::toString)
