@@ -235,14 +235,21 @@ export class SettingsService {
   async saveSettingsFileAsync(
     filePath: string,
     xmlSettings: {
-      documentburster: {};
+      documentburster: any;
     },
   ) {
     const path = encodeURIComponent(filePath);
 
-    console.log(
-      `saveSettingsFileAsync filePath = ${path}, xmlSettings.documentburster = ${JSON.stringify(xmlSettings.documentburster)}`,
+    //console.log(
+    //  `saveSettingsFileAsync filePath = ${path}, xmlSettings.documentburster = ${JSON.stringify(xmlSettings.documentburster)}`,
+    //);
+
+    xmlSettings.documentburster.settings.attachments.items.attachmentItems.forEach(
+      (item: { selected: boolean }) => {
+        delete item.selected;
+      },
     );
+
     return this.apiService.post(
       `/cfgman/rb/save?path=${path}`,
       xmlSettings.documentburster,

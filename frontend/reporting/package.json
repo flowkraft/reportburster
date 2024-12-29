@@ -17,7 +17,7 @@
     "ng": "ng",
     "start": "npm-run-all -p electron:serve ng:serve",
     "ng:serve": "ng serve -c web -o",
-    "build": "npm run electron:serve-tsc && cross-env NODE_OPTIONS=--max_old_space_size=6144 ng build --base-href ./ --verbose > build.log",
+    "build": "npm run electron:serve-tsc && cross-env NODE_OPTIONS=--max_old_space_size=6144 ng build --base-href ./ --verbose --source-map > build.log",
     "build:dev": "npm run build -- -c dev",
     "build:prod": "npm run build -- -c production",
     "web:build": "npm run build -- -c web-production",

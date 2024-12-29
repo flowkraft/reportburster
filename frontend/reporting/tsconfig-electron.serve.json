@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
     "sourceMap": true,
-    "declaration": false,
+    "declaration": true,
+    "inlineSourceMap": false,
+    "inlineSources": true,
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

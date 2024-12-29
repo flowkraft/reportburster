@@ -883,18 +883,22 @@ export class ConfigurationComponent implements OnInit {
   }
   // attachments
 
-  onAttachmentSelected(attachment) {
-    this.xmlSettings.documentburster.settings.attachments.items.attachmentItems.forEach(
-      (each) => {
-        //console.log(`each = ${JSON.stringify(each)}`);
-        if (each.path === attachment.path) {
-          each.selected = true;
-          this.selectedAttachment = attachment;
-        } else {
-          each.selected = false;
-        }
-      },
-    );
+  onAttachmentSelected(attachment: { selected: boolean }) {
+    //console.log('=== DEBUG attachment selection ===');
+
+    if (
+      this.xmlSettings.documentburster.settings.attachments.items
+        .attachmentItems
+    ) {
+      this.xmlSettings.documentburster.settings.attachments.items.attachmentItems.forEach(
+        (item: { selected: boolean }) => {
+          item.selected = false;
+        },
+      );
+    }
+
+    attachment.selected = true;
+    this.selectedAttachment = attachment;
   }
 
   onDeleteSelectedAttachment() {
@@ -1053,12 +1057,6 @@ export class ConfigurationComponent implements OnInit {
     //  `this.settingsService.currentConfigurationTemplatePath = ${this.settingsService.currentConfigurationTemplatePath}`,
     //);
     //console.log(`this.xmlSettings = ${JSON.stringify(this.xmlSettings)}`);
-
-    this.xmlSettings.documentburster.settings.attachments.items.attachmentItems.forEach(
-      (item) => {
-        delete item.selected;
-      },
-    );
 
     await this.settingsService.saveSettingsFileAsync(
       this.settingsService.currentConfigurationTemplatePath,
@@ -1277,6 +1275,24 @@ export class ConfigurationComponent implements OnInit {
         requestedFeature: requestedFeature,
       });
     }
+  }
+
+  onDataSourceTypeChange() {
+    const newValue = this.xmlReporting?.documentburster.report.datasource.type;
+    //console.log('New data source type selected:', newValue);
+
+    if (newValue === 'ds.tsvfile') {
+      this.xmlReporting.documentburster.report.datasource.csvoptions.separatorchar =
+        '→ [tab character]';
+    }
+
+    if (newValue === 'ds.csvfile') {
+      this.xmlReporting.documentburster.report.datasource.csvoptions.separatorchar =
+        ',';
+    }
+
+    this.settingsChangedEventHandler(newValue);
+    this.onAskForFeatureModalShow(newValue);
   }
 
   onSelectCsvHeader() {

@@ -2,63 +2,50 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
   #tabReportingDataSourceDataTablesTemplate
 >
   <div class="well">
+    <!-- Datasource Type Dropdown -->
     <div class="row">
       <div class="col-xs-2">
-        {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE' |
-        translate }}
+        {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE' | translate }}
       </div>
       <div class="col-xs-6">
         <select
           id="dsTypes"
           class="form-control"
           [(ngModel)]="xmlReporting?.documentburster.report.datasource.type"
-          (ngModelChange)="settingsChangedEventHandler($event)"
-          (change)="onAskForFeatureModalShow($event)"
+          (ngModelChange)="onDataSourceTypeChange()"
         >
           <option value="ds.csvfile">
-            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-CSV' |
-            translate }}
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-CSV' | translate }}
           </option>
           <option value="ds.tsvfile">
-            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-TSV' |
-            translate }}
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-TSV' | translate }}
           </option>
           <option value="ds.fixedwidthfile">
-            {{
-            'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-FIXED-WIDTH'
-            | translate }}
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-FIXED-WIDTH' | translate }}
           </option>
           <option value="ds.excelfile">
-            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-EXCEL'
-            | translate }}
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-EXCEL' | translate }}
           </option>
           <option value="ds.gsheet">
-            {{
-            'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-CLOUD-GSHEET'
-            | translate }}
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-CLOUD-GSHEET' | translate }}
           </option>
           <option value="ds.o365sheet">
-            {{
-            'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-CLOUD-O365SHEET'
-            | translate }}
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-CLOUD-O365SHEET' | translate }}
           </option>
           <option value="ds.database">
-            {{
-            'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-DATABASE'
-            | translate }}
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-DATABASE' | translate }}
           </option>
         </select>
       </div>
     </div>
     <p></p>
-    <div
-      *ngIf="askForFeatureService.alreadyImplementedFeatures.includes(xmlReporting?.documentburster.report.datasource.type)"
-    >
+
+    <!-- CSV/TSV Section -->
+    <div *ngIf="xmlReporting?.documentburster.report.datasource.type === 'ds.csvfile' || 
+                 xmlReporting?.documentburster.report.datasource.type === 'ds.tsvfile'">
       <div class="row">
         <div class="col-xs-2">
-          {{
-          'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CSV-SEPARATOR-CHAR'
-          | translate }}
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CSV-SEPARATOR-CHAR' | translate }}
         </div>
         <div class="col-xs-9">
           <input
@@ -66,6 +53,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
             class="form-control"
             [(ngModel)]="xmlReporting?.documentburster.report.datasource.csvoptions.separatorchar"
             (ngModelChange)="settingsChangedEventHandler($event)"
+            [readonly]="xmlReporting?.documentburster.report.datasource.type === 'ds.tsvfile'"
           />
         </div>
       </div>
@@ -73,10 +61,8 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
       <p></p>
       <div class="row">
         <div class="col-xs-2">
-          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER' |
-          translate }}
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER' | translate }}
         </div>
-
         <div class="col-xs-9">
           <select
             id="selectHeader"
@@ -86,19 +72,13 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
             (ngModelChange)="settingsChangedEventHandler($event)"
           >
             <option id="optionNoHeader" value="noheader">
-              {{
-              'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER-NO-HEADER'
-              | translate }}
+              {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER-NO-HEADER' | translate }}
             </option>
             <option id="optionFirstLine" value="firstline">
-              {{
-              'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER-FIRST-LINE'
-              | translate }}
+              {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER-FIRST-LINE' | translate }}
             </option>
             <option id="optionFirstLine" value="multiline">
-              {{
-              'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER-MULTI-LINE'
-              | translate }}
+              {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER-MULTI-LINE' | translate }}
             </option>
           </select>
         </div>
@@ -106,8 +86,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
       <p></p>
       <div class="row">
         <div class="col-xs-2">
-          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.SKIP-LINES' |
-          translate }}
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.SKIP-LINES' | translate }}
         </div>
         <div class="col-xs-9">
           <input
@@ -122,12 +101,14 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
 
       <br />
 
-      <div class="row"
-      >
+      <div class="row">
         <div class="col-xs-12">
-          <label id="lblShowMoreCsvOptions" for="btnShowMoreCsvOptions" class="checkboxlabel" style="cursor: pointer;"
-            ><span><strong><u *ngIf="!xmlReporting?.documentburster.report.datasource.showmorecsvoptions">Show More CSV Options</u><u *ngIf="xmlReporting?.documentburster.report.datasource.showmorecsvoptions"><em>Show Less CSV Options</em></u></strong></span></label
-          >
+          <label id="lblShowMoreCsvOptions" for="btnShowMoreCsvOptions" class="checkboxlabel" style="cursor: pointer;">
+            <span><strong>
+              <u *ngIf="!xmlReporting?.documentburster.report.datasource.showmorecsvoptions">Show More CSV Options</u>
+              <u *ngIf="xmlReporting?.documentburster.report.datasource.showmorecsvoptions"><em>Show Less CSV Options</em></u>
+            </strong></span>
+          </label>
           <input
             type="checkbox"
             id="btnShowMoreCsvOptions"
@@ -135,7 +116,6 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
             [(ngModel)]="xmlReporting?.documentburster.report.datasource.showmorecsvoptions"
             (ngModelChange)="settingsChangedEventHandler($event)"
           />
-          
         </div>
       </div>
 
@@ -143,9 +123,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
 
       <div class="row" *ngIf="xmlReporting?.documentburster.report.datasource.showmorecsvoptions">
         <div class="col-xs-2">
-          {{
-          'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CSV-QUOTATION-CHAR'
-          | translate }}
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CSV-QUOTATION-CHAR' | translate }}
         </div>
         <div class="col-xs-9">
           <input
@@ -161,9 +139,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
 
       <div class="row" *ngIf="xmlReporting?.documentburster.report.datasource.showmorecsvoptions">
         <div class="col-xs-2">
-          {{
-          'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CSV-ESCAPE-CHAR'
-          | translate }}
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CSV-ESCAPE-CHAR' | translate }}
         </div>
         <div class="col-xs-9">
           <input
@@ -178,9 +154,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
       <p></p>
       <div class="row" *ngIf="xmlReporting?.documentburster.report.datasource.showmorecsvoptions">
         <div class="col-xs-2">
-          {{
-          'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CSV-STRICT-QUOTATIONS'
-          | translate }}
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CSV-STRICT-QUOTATIONS' | translate }}
         </div>
         <div class="col-xs-9">
           <input
@@ -195,9 +169,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
       <p></p>
       <div class="row" *ngIf="xmlReporting?.documentburster.report.datasource.showmorecsvoptions">
         <div class="col-xs-2">
-          {{
-          'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CSV-IGNORE-QUOTATIONS'
-          | translate }}
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CSV-IGNORE-QUOTATIONS' | translate }}
         </div>
         <div class="col-xs-9">
           <input
@@ -212,9 +184,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
       <p></p>
       <div class="row" *ngIf="xmlReporting?.documentburster.report.datasource.showmorecsvoptions">
         <div class="col-xs-2">
-          {{
-          'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CSV-IGNORE-LEADING-WHITESPACE'
-          | translate }}
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.IGNORE-LEADING-WHITESPACE' | translate }}
         </div>
         <div class="col-xs-9">
           <input
@@ -225,62 +195,110 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
           />
         </div>
       </div>
+    </div>
 
-      <!--
-      <p></p>
-      <div class="row" *ngIf="xmlReporting?.documentburster.report.datasource.showmorecsvoptions">
+    <!-- Fixed Width Section -->
+    <div *ngIf="xmlReporting?.documentburster.report.datasource.type === 'ds.fixedwidthfile'">
+      
+      <!-- Basic Options -->
+      <div class="row">
         <div class="col-xs-2">
-          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN'
-          | translate }}
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.FIXED-WIDTH-COLUMNS' | translate }}
         </div>
-        <div class="col-xs-6">
-          <select
-            id="selectIdColumn"
+        <div class="col-xs-9">
+          <textarea
+            id="fixedWidthColumns"
             class="form-control"
-            (change)="onSelectIdColumn()"
-            [(ngModel)]="xmlReporting?.documentburster.report.datasource.csvoptions.idcolumn"
+            rows="5"
+            [(ngModel)]="xmlReporting?.documentburster.report.datasource.fixedwidthoptions.columns"
+            (ngModelChange)="settingsChangedEventHandler($event)"
+            placeholder="Column 1, 10
+Column 2, 20
+Column 3, 15"
+          ></textarea>
+        </div>
+      </div>
+
+      <p></p>
+
+      <!-- Fixed Width Header -->
+      <div class="row">
+        <div class="col-xs-2">
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER' | translate }}
+        </div>
+        <div class="col-xs-9">
+          <select
+            id="selectFixedWidthHeader"
+            class="form-control"
+            [(ngModel)]="xmlReporting?.documentburster.report.datasource.fixedwidthoptions.header"
             (ngModelChange)="settingsChangedEventHandler($event)"
           >
-            <option value="notused">
-              {{
-              'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-NOT-USED'
-              | translate }}
-            </option>
-            <option value="firstcolumn">
-              {{
-              'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-FIRST-COLUMN'
-              | translate }}
-            </option>
-            <option value="lastcolumn">
-              {{
-              'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-LAST-COLUMN'
-              | translate }}
-            </option>
-            <option value="letmespecify">
-              {{
-              'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-LET-ME-SPECIFY'
-              | translate }}
-            </option>
+            <option value="noheader">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER-NO-HEADER' | translate }}</option>
+            <option value="firstline">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER-FIRST-LINE' | translate }}</option>
           </select>
         </div>
+      </div>
 
-        <div
-          class="col-xs-3"
-          *ngIf="xmlReporting?.documentburster.report.datasource.csvoptions.idcolumn=='letmespecify'"
-        >
+      <p></p>
+
+      <!-- Fixed Width Skip Lines -->
+      <div class="row">
+        <div class="col-xs-2">
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.SKIP-LINES' | translate }}
+        </div>
+        <div class="col-xs-9">
           <input
-            id="idColumnIndex"
+            id="fixedWidthSkipLines"
             class="form-control"
-            [(ngModel)]="xmlReporting?.documentburster.report.datasource.csvoptions.idcolumnindex"
+            [(ngModel)]="xmlReporting?.documentburster.report.datasource.fixedwidthoptions.skiplines"
             (ngModelChange)="settingsChangedEventHandler($event)"
           />
         </div>
       </div>
-      -->
+
+      <br />
+
+      <!-- Show More Options Toggle -->
+      <div class="row">
+        <div class="col-xs-12">
+          <label id="lblShowMoreFixedWidthOptions" for="btnShowMoreFixedWidthOptions" class="checkboxlabel" style="cursor: pointer;">
+            <span><strong>
+              <u *ngIf="!xmlReporting?.documentburster.report.datasource.showmorefixedwidthoptions">Show More Fixed Width Options</u>
+              <u *ngIf="xmlReporting?.documentburster.report.datasource.showmorefixedwidthoptions"><em>Show Less Fixed Width Options</em></u>
+            </strong></span>
+          </label>
+          <input
+            type="checkbox"
+            id="btnShowMoreFixedWidthOptions"
+            style="visibility: hidden;"
+            [(ngModel)]="xmlReporting?.documentburster.report.datasource.showmorefixedwidthoptions"
+            (ngModelChange)="settingsChangedEventHandler($event)"
+          />
+        </div>
+      </div>
+
+      <br />
+
+      <!-- Advanced Fixed Width Options -->
+      <div *ngIf="xmlReporting?.documentburster.report.datasource.showmorefixedwidthoptions">
+        <div class="row">
+          <div class="col-xs-2">
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.IGNORE-LEADING-WHITESPACE' | translate }}
+          </div>
+          <div class="col-xs-9">
+            <input
+              type="checkbox"
+              id="btnFixedWidthIgnoreLeadingWhitespace"
+              [(ngModel)]="xmlReporting?.documentburster.report.datasource.fixedwidthoptions.ignoreleadingwhitespace"
+              (ngModelChange)="settingsChangedEventHandler($event)"
+            />
+          </div>
+        </div>
+      </div>
     </div>
-    <div
-      *ngIf="!askForFeatureService.alreadyImplementedFeatures.includes(xmlReporting?.documentburster.report.datasource.type)"
-    >
+
+    <!-- Request Feature Section -->
+    <div *ngIf="!askForFeatureService.alreadyImplementedFeatures.includes(xmlReporting?.documentburster.report.datasource.type)">
       <div class="row">
         <div class="col-xs-2"></div>
         <div class="col-xs-5">
@@ -295,4 +313,4 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
       </div>
     </div>
   </div>
-</ng-template> `;
+</ng-template>`;

@@ -21,8 +21,14 @@
           </linematcher>
         </linesregexvalidator>
         <idcolumn>notused</idcolumn>
-        <idcolumnindex>-1</idcolumnindex>
       </csvoptions>
+      <showmorefixedwidthoptions>false</showmorefixedwidthoptions>
+	  <fixedwidthoptions>
+	    <columns></columns>
+	    <header>noheader</header>
+	    <skiplines>0</skiplines>
+	    <ignoreleadingwhitespace>true</ignoreleadingwhitespace>
+	 </fixedwidthoptions>
     </datasource>
     <template>
       <outputtype>output.none</outputtype>
