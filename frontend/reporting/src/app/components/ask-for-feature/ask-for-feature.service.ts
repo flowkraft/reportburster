@@ -9,6 +9,8 @@ import { ShellService } from '../../providers/shell.service';
 export class AskForFeatureService {
   alreadyImplementedFeatures = [
     'ds.csvfile',
+    'ds.tsvfile',
+    'ds.fixedwidthfile',
     'output.none',
     'output.docx',
     'output.html',

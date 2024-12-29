@@ -584,6 +584,39 @@ export class ConfigurationTestHelper {
       .waitOnElementToBecomeInvisible('#btnStrictQuotations')
       .waitOnElementToBecomeInvisible('#btnIgnoreQuotations')
       .waitOnElementToBecomeInvisible('#btnIgnoreLeadingWhitespace')
+      //TSV
+      .dropDownSelectOptionHavingLabel(
+        '#dsTypes',
+        'TSV File (local file containing tab-separated values)',
+      )
+      .waitOnElementToBecomeVisible('#separatorChar')
+      .inputShouldHaveValue('#separatorChar', '→ [tab character]')
+      .elementAttributeShouldHaveValue('#separatorChar', 'readonly', '')
+      // Test Fixed Width format
+      .dropDownSelectOptionHavingLabel(
+        '#dsTypes',
+        'Fixed-Width File (local file containing fixed-width columns)',
+      )
+      .waitOnElementToBecomeVisible('#fixedWidthColumns')
+      .elementShouldBeVisible('#selectFixedWidthHeader')
+      .elementShouldBeVisible('#fixedWidthSkipLines')
+      .inputShouldHaveValue('#fixedWidthColumns', '')
+      .selectedOptionShouldContainText('#selectFixedWidthHeader', 'No Header')
+      .inputShouldHaveValue('#fixedWidthSkipLines', '0')
+      .elementCheckBoxShouldNotBeSelected('#btnShowMoreFixedWidthOptions')
+      .elementShouldNotBeVisible('#btnFixedWidthIgnoreLeadingWhitespace')
+      // Test Show More Fixed Width Options
+      .click('#lblShowMoreFixedWidthOptions')
+      .waitOnElementToBecomeVisible('#btnFixedWidthIgnoreLeadingWhitespace')
+      .elementCheckBoxShouldBeSelected('#btnFixedWidthIgnoreLeadingWhitespace')
+      // Hide options again
+      .click('#lblShowMoreFixedWidthOptions')
+      .waitOnElementToBecomeInvisible('#btnFixedWidthIgnoreLeadingWhitespace')
+      // Return to CSV format
+      .dropDownSelectOptionHavingLabel(
+        '#dsTypes',
+        'CSV File (local file containing comma-separated values)',
+      )
       //tab Output/Template - assert the default values
       .click('#reportingTemplateOutputTab-link')
       .waitOnElementToBecomeVisible('#reportOutputType')
@@ -652,6 +685,29 @@ export class ConfigurationTestHelper {
         .click('#btnStrictQuotations')
         .click('#btnIgnoreQuotations')
         .click('#btnIgnoreLeadingWhitespace')
+        //TSV
+        .dropDownSelectOptionHavingLabel(
+          '#dsTypes',
+          'TSV File (local file containing tab-separated values)',
+        )
+        .waitOnElementToBecomeVisible('#separatorChar')
+        .inputShouldHaveValue('#separatorChar', '→ [tab character]')
+        //
+        .dropDownSelectOptionHavingLabel(
+          '#dsTypes',
+          'Fixed-Width File (local file containing fixed-width columns)',
+        )
+        .click('#fixedWidthColumns')
+        .typeText('Name, 20\nAge, 3\nCity, 15')
+        .dropDownSelectOptionHavingLabel(
+          '#selectFixedWidthHeader',
+          'First Line',
+        )
+        .click('#fixedWidthSkipLines')
+        .typeText('2')
+        .click('#lblShowMoreFixedWidthOptions')
+        .waitOnElementToBecomeVisible('#btnFixedWidthIgnoreLeadingWhitespace')
+        .click('#btnFixedWidthIgnoreLeadingWhitespace')
         //tab Output/Template
         .click('#reportingTemplateOutputTab-link')
         .waitOnElementToBecomeVisible('#reportOutputType')
@@ -677,8 +733,29 @@ export class ConfigurationTestHelper {
         .click('#leftMenuReportingSettings')
         //tab DataSource - assert the default values
         .waitOnElementToBecomeVisible('#dsTypes')
-        .selectedOptionShouldContainText('#dsTypes', 'CSV File')
-        .inputShouldHaveValue('#separatorChar', '|')
+        .selectedOptionShouldContainText(
+          '#dsTypes',
+          'Fixed-Width File (local file containing fixed-width columns)',
+        )
+        .inputShouldHaveValue(
+          '#fixedWidthColumns',
+          'Name, 20\nAge, 3\nCity, 15',
+        )
+        .selectedOptionShouldContainText(
+          '#selectFixedWidthHeader',
+          'First Line',
+        )
+        .inputShouldHaveValue('#fixedWidthSkipLines', '2')
+        .elementShouldBeVisible('#btnFixedWidthIgnoreLeadingWhitespace')
+        .elementCheckBoxShouldNotBeSelected(
+          '#btnFixedWidthIgnoreLeadingWhitespace',
+        )
+        // Return to CSV format
+        .dropDownSelectOptionHavingLabel(
+          '#dsTypes',
+          'CSV File (local file containing comma-separated values)',
+        )
+        .inputShouldHaveValue('#separatorChar', ',')
         .selectedOptionShouldContainText('#selectHeader', 'Multiple Lines')
         .elementShouldBeEnabled('#skipLines')
         .inputShouldHaveValue('#skipLines', '8')

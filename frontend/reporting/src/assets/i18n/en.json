@@ -36,7 +36,7 @@
         "CSV-ESCAPE-CHAR": "Escape Char",
         "CSV-STRICT-QUOTATIONS": "Strict Quotations",
         "CSV-IGNORE-QUOTATIONS": "Ignore Quotations",
-        "CSV-IGNORE-LEADING-WHITESPACE": "Ignore Leading Whitespace",
+        "IGNORE-LEADING-WHITESPACE": "Ignore Leading Whitespace",
         "HEADER": "Header",
         "HEADER-NO-HEADER": "No Header",
         "HEADER-FIRST-LINE": "First Line",
@@ -45,7 +45,8 @@
         "CODE-COLUMN-NOT-USED": "Not Used",
         "CODE-COLUMN-FIRST-COLUMN": "First Column",
         "CODE-COLUMN-LAST-COLUMN": "Last Column",
-        "CODE-COLUMN-LET-ME-SPECIFY": "Let Me Specify a Column Index"
+        "CODE-COLUMN-LET-ME-SPECIFY": "Let Me Specify a Column Index",
+        "FIXED-WIDTH-COLUMNS": "Columns"
       },
       "TAB-REPORT-TEMPLATE-OUTPUT": {
         "TEMPLATE-FILE": "Template File",

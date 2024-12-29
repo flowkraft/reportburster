@@ -301,6 +301,11 @@
 		</dependency>
 
 
+		<dependency>
+			<groupId>com.flowkraft.biz</groupId>
+			<artifactId>biz-bkeep-activities</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 	</dependencies>
 
 </project>

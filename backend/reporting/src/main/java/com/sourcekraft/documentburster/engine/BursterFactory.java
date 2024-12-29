@@ -1,8 +1,9 @@
 package com.sourcekraft.documentburster.engine;
 
-import com.sourcekraft.documentburster.engine.csv.CsvReporter;
 import com.sourcekraft.documentburster.engine.excel.PoiExcelBurster;
 import com.sourcekraft.documentburster.engine.pdf.PdfBurster;
+import com.sourcekraft.documentburster.engine.reporting.CsvReporter;
+
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

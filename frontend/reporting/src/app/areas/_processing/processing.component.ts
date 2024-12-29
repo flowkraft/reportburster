@@ -359,6 +359,18 @@ export class ProcessingComponent implements OnInit {
     if (this.xmlSettings && this.xmlSettings.documentburster)
       this.processingService.procMergeBurstInfo.mergedFileName =
         this.xmlSettings.documentburster.settings.mergefilename;
+
+    /*
+    console.log(
+      'QA Tab Init procBurstInfo:',
+      JSON.stringify(this.processingService.procBurstInfo),
+    );
+
+    console.log(
+      'QA Tab Init procQualityAssuranceInfo:',
+      JSON.stringify(this.processingService.procQualityAssuranceInfo),
+    );
+    */
   }
 
   refreshTabs() {
@@ -398,21 +410,47 @@ export class ProcessingComponent implements OnInit {
   // tab Burst
 
   onBurstFileSelected(event: Event) {
-    const target = event.target as HTMLInputElement;
-    this.processingService.procBurstInfo.inputFile = target.files[0];
-    this.processingService.procBurstInfo.inputFileName =
-      this.processingService.procBurstInfo.inputFile.name;
+    /*
+    console.log(
+      'onBurstFileSelected Before selection procBurstInfo:',
+      this.processingService.procBurstInfo,
+    );
 
+    console.log(
+      'onBurstFileSelected Before selection procQualityAssuranceInfo:',
+      this.processingService.procQualityAssuranceInfo,
+    );
+    */
+    const target = event.target as HTMLInputElement;
+
+    // Set burst info
+    this.processingService.procBurstInfo.inputFile = target.files[0];
+    this.processingService.procBurstInfo.inputFileName = target.files[0].name;
+    this.processingService.procBurstInfo.isSample = false;
+    this.processingService.procBurstInfo.prefilledInputFilePath = '';
+
+    // Set QA info
     this.processingService.procQualityAssuranceInfo.inputFile =
       this.processingService.procBurstInfo.inputFile;
     this.processingService.procQualityAssuranceInfo.inputFileName =
       this.processingService.procBurstInfo.inputFileName;
-
+    this.processingService.procQualityAssuranceInfo.prefilledInputFilePath = '';
     this.processingService.procQualityAssuranceInfo.whichAction = 'burst';
+    /*
+    console.log(
+      `processingService.procQualityAssuranceInfo.inputFileName ( onBurstFileSelected) = ${this.processingService.procQualityAssuranceInfo.inputFileName}`,
+    );
 
-    //console.log(
-    //  `processingService.procQualityAssuranceInfo.inputFileName ( onBurstFileSelected) = ${this.processingService.procQualityAssuranceInfo.inputFileName}`,
-    //);
+    console.log(
+      'onBurstFileSelected After selection procBurstInfo:',
+      JSON.stringify(this.processingService.procBurstInfo),
+    );
+
+    console.log(
+      'onBurstFileSelected After selection procQualityAssuranceInfo:',
+      JSON.stringify(this.processingService.procQualityAssuranceInfo),
+    );
+    */
   }
 
   resetProcInfo() {
@@ -461,6 +499,8 @@ export class ProcessingComponent implements OnInit {
     if (this.mergeFilesUploadInput?.nativeElement) {
       (this.mergeFilesUploadInput.nativeElement as HTMLInputElement).value = '';
     }
+
+    //console.log('resetProcInfo:');
   }
 
   async onMailMergeClassicReportFileSelected(event: Event) {
@@ -1254,7 +1294,7 @@ export class ProcessingComponent implements OnInit {
   }
 
   doSampleTryIt(clickedSample: SampleInfo) {
-    console.log(`clickedSample = ${JSON.stringify(clickedSample)}`);
+    //console.log(`clickedSample = ${JSON.stringify(clickedSample)}`);
 
     const dialogQuestion = clickedSample.notes;
     this.confirmService.askConfirmation({
@@ -1274,7 +1314,7 @@ export class ProcessingComponent implements OnInit {
               '',
             );
 
-            console.log(`navigate /processingSampleBurst 'burstMenuSelected'`);
+            //console.log(`navigate /processingSampleBurst 'burstMenuSelected'`);
 
             this.router.navigate(
               [

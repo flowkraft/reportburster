@@ -1,6 +1,7 @@
 package com.flowkraft.jobman.controllers;
 
 import java.io.File;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +31,7 @@ public class UploadController {
 
 	@Autowired
 	SystemService systemService;
-	
+
 	@PostMapping("/upload/process-multiple")
 	public Flux<FileInfo> handleUploadProcessMultipleFiles(@RequestPart("files") MultipartFile[] files)
 			throws Exception {
@@ -41,9 +42,9 @@ public class UploadController {
 		String directoryName = UUID.randomUUID().toString();
 
 		for (MultipartFile filePart : files) {
-			
+
 			String originalFilename = filePart.getOriginalFilename();
-			
+
 			// Generate a random UUID and use it as a directory name
 			String uploadedFilePath = AppPaths.UPLOADS_DIR_PATH + "/" + directoryName + "/" + originalFilename;
 
@@ -51,7 +52,9 @@ public class UploadController {
 
 			FileUtils.createParentDirectories(uploadedFile);
 
-			Files.copy(filePart.getInputStream(), uploadedFile.toPath());
+			try (InputStream in = filePart.getInputStream()) { // <-- Close stream
+				Files.copy(in, uploadedFile.toPath());
+			}
 
 			FileInfo fileInfo = new FileInfo(originalFilename, StringUtils.EMPTY, false);
 			fileInfo.filePath = uploadedFilePath;
@@ -78,7 +81,10 @@ public class UploadController {
 		File uploadedFile = new File(uploadedFilePath);
 		FileUtils.createParentDirectories(uploadedFile);
 
-		Files.copy(multipPartFile.getInputStream(), uploadedFile.toPath());
+		// Use try-with-resources to ensure stream is closed
+		try (InputStream in = multipPartFile.getInputStream()) {
+			Files.copy(in, uploadedFile.toPath());
+		}
 
 		// System.out.println("uploadedFilePath: " + uploadedFilePath);
 
@@ -90,7 +96,7 @@ public class UploadController {
 	@PostMapping("/upload/process-qa")
 	public Flux<FileInfo> handleUploadQa(@RequestPart("file") MultipartFile multipPartFile) throws Exception {
 
-		//System.out.println("UploadController - handleUploadQa");
+		// System.out.println("UploadController - handleUploadQa");
 
 		String originalFilename = multipPartFile.getOriginalFilename();
 
@@ -101,9 +107,12 @@ public class UploadController {
 		File uploadedFile = new File(uploadedFilePath);
 		FileUtils.createParentDirectories(uploadedFile);
 
-		Files.copy(multipPartFile.getInputStream(), uploadedFile.toPath());
+		try (InputStream in = multipPartFile.getInputStream()) { // <-- Close stream
+			Files.copy(in, uploadedFile.toPath());
+		}
 
-		//System.out.println("/upload/process-qa uploadedFilePath: " + uploadedFilePath);
+		// System.out.println("/upload/process-qa uploadedFilePath: " +
+		// uploadedFilePath);
 
 		List<FileInfo> uploadedFiles = Utils.getFilesToProcess(directoryName, AppPaths.UPLOADS_DIR_PATH);
 

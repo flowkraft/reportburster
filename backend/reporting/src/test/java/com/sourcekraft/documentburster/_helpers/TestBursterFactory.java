@@ -1,16 +1,27 @@
 package com.sourcekraft.documentburster._helpers;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.assertj.core.api.Assertions;
 
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
+import com.sourcekraft.documentburster.engine.AbstractReporter;
 import com.sourcekraft.documentburster.scripting.Scripting;
+import com.sourcekraft.documentburster.unit.further.other.UtilsTest;
+import com.sourcekraft.documentburster.utils.CsvUtils;
 import com.sourcekraft.documentburster.common.settings.EmailConnection;
 
 public class TestBursterFactory {
@@ -57,7 +68,7 @@ public class TestBursterFactory {
 
 			super.executeController();
 			TestBursterFactory.setUpTestFolders(ctx, testName);
-		
+
 		};
 
 		public String getTempFolder() {
@@ -146,7 +157,7 @@ public class TestBursterFactory {
 
 			super.executeController();
 			TestBursterFactory.setUpTestFolders(ctx, testName);
-		
+
 		};
 
 		protected void setUpMockEmail() throws Exception {
@@ -171,7 +182,7 @@ public class TestBursterFactory {
 		}
 	}
 
-	public static class CsvReporter extends com.sourcekraft.documentburster.engine.csv.CsvReporter {
+	public static class CsvReporter extends com.sourcekraft.documentburster.engine.reporting.CsvReporter {
 
 		protected String testName;
 
@@ -196,7 +207,65 @@ public class TestBursterFactory {
 		protected void executeController() throws Exception {
 
 			super.executeController();
-			
+
+			TestBursterFactory.setUpTestFolders(ctx, testName);
+
+			ctx.settings.setCapabilityReportGenerationMailMerge(true);
+
+			ctx.settings.loadSettingsReporting(REPORTING_CONFIG_PATH);
+
+			// a "temp" folder is required to be available
+			ctx.tempFolder = TestsUtils.TESTS_OUTPUT_FOLDER + "/temp";
+
+			File tempDir = new File(ctx.tempFolder);
+
+			if (!tempDir.exists())
+				try {
+					FileUtils.forceMkdir(tempDir);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+		};
+
+		protected void checkLicense() throws Exception {
+		}
+
+		protected void setUpScriptingRoots() {
+
+			scripting.setRoots(new String[] { "src/test/groovy", "src/test/groovy/senders-messages",
+					"src/test/groovy/bursting-context-lifecycle", "src/main/external-resources/template/scripts/burst",
+					"src/main/external-resources/template/scripts/burst/internal",
+					"src/main/external-resources/template/scripts/burst/samples" });
+		}
+	}
+
+	public static class FixedWidthReporter extends com.sourcekraft.documentburster.engine.reporting.FixedWidthReporter {
+
+		protected String testName;
+
+		public FixedWidthReporter(String configFilePath, String testName) {
+			super(configFilePath);
+			this.testName = testName;
+
+			if (StringUtils.isNotEmpty(configFilePath))
+				this.configurationFilePath = configFilePath;
+			else
+				this.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
+
+		}
+
+		protected void setUpMockEmail() throws Exception {
+
+			ctx.testName = this.testName;
+			TestBursterFactory.setUpMockEmail(scripting, ctx);
+
+		};
+
+		protected void executeController() throws Exception {
+
+			super.executeController();
+
 			TestBursterFactory.setUpTestFolders(ctx, testName);
 
 			ctx.settings.setCapabilityReportGenerationMailMerge(true);
@@ -336,6 +405,112 @@ public class TestBursterFactory {
 
 	public static AbstractBurster createPoiExcelBurster(String configFilePath, String testName) {
 		return new PoiExcelBurster(configFilePath, testName);
+	}
+
+	public static void assertThatCorrectOutputReportsWereGenerated(AbstractReporter burster, String pathToFile,
+			boolean expectAllFilesToBeGenerated, String outputType)
+			throws Exception, IOException, FileNotFoundException {
+
+		// assert 3 rows are parsed
+		assertEquals(3, burster.getParsedLines().size());
+
+		// assert 17 columns are parsed
+		boolean correctNumberOfColumns = ((burster.getParsedLines().get(0).length == 17)
+				|| (burster.getParsedLines().get(0).length == 18));
+		assertTrue("There should be 17 or 18 columns", correctNumberOfColumns);
+
+		assertEquals("Kyle Butford", burster.getParsedLines().get(1)[0]);
+		assertEquals("2890", burster.getParsedLines().get(1)[16]);
+
+		String outputFolder = burster.getCtx().outputFolder + "/";
+
+		int fileCount = new File(outputFolder).listFiles(UtilsTest.outputFilesFilter).length;
+
+		if (expectAllFilesToBeGenerated)
+			assertTrue("There should be 3 output files", fileCount == burster.getParsedLines().size());
+		else
+			assertTrue("There should be maximum 1, 2 or 3 output files",
+					fileCount > 0 && fileCount <= burster.getParsedLines().size());
+
+		int lineLength = 0;
+		int lineIndex = 0;
+		int codeColumnIndex = -1;
+
+		String ccIndex = burster.getCtx().settings.getReportDataSource().csvoptions.idcolumn;
+
+		if (!ccIndex.contains(CsvUtils.NOT_USED)) {
+			if (!ccIndex.contains(CsvUtils.COLUMN_LAST)) {
+				if (ccIndex.contains(CsvUtils.COLUMN_FIRST))
+					codeColumnIndex = 0;
+				else
+					codeColumnIndex = Integer.valueOf(ccIndex);
+			}
+		}
+
+		for (String[] currentCsvLine : burster.getParsedLines()) {
+
+			if (lineLength <= 0) {
+				lineLength = currentCsvLine.length;
+				if (ccIndex.contains(CsvUtils.COLUMN_LAST))
+					codeColumnIndex = lineLength - 1;
+			}
+
+			String token = StringUtils.EMPTY;
+
+			if (codeColumnIndex >= 0)
+				token = currentCsvLine[codeColumnIndex];
+			else
+				token = String.valueOf(lineIndex);
+
+			String outputReportPath = outputFolder + token + "." + FilenameUtils.getExtension(outputType);
+
+			File outputReport = new File(outputReportPath);
+			boolean outputReportExists = outputReport.exists();
+
+			if (outputReportExists) {
+				String currentReportText = StringUtils.EMPTY;
+
+				if (outputType.equals(CsvUtils.OUTPUT_TYPE_DOCX)) {
+					XWPFDocument docx = new XWPFDocument(new FileInputStream(outputReportPath));
+					int numPages = docx.getProperties().getExtendedProperties().getUnderlyingProperties().getPages();
+
+					XWPFWordExtractor we = new XWPFWordExtractor(docx);
+
+					if (numPages == 0) {
+						numPages = we.getExtendedProperties().getPages();
+					}
+
+					currentReportText = we.getText();
+
+					if (numPages > 0)
+						Assertions.assertThat(numPages).isEqualTo(1);
+
+					we.close();
+					docx.close();
+
+				} else if (outputType.equals(CsvUtils.OUTPUT_TYPE_HTML)) {
+					currentReportText = FileUtils.readFileToString(new File(outputReportPath), "UTF-8");
+				}
+
+				for (int currentColumnIndex = 0; currentColumnIndex < lineLength; currentColumnIndex++) {
+
+					if (currentColumnIndex < 17) {
+						String currentRowAndCurrentColumnValue = currentCsvLine[currentColumnIndex];
+
+						if (currentColumnIndex != lineLength - 1)
+							Assertions.assertThat(currentReportText).contains(currentRowAndCurrentColumnValue);
+
+						if ((currentColumnIndex == lineLength - 1) && !pathToFile.endsWith("id-column-last.csv")
+								&& !pathToFile.endsWith("id-column-specify-17-last.csv"))
+							Assertions.assertThat(currentReportText).contains(currentRowAndCurrentColumnValue);
+					}
+				}
+
+				lineIndex++;
+
+			}
+		}
+
 	}
 
 }

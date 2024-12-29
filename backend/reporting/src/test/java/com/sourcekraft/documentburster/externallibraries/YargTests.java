@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
 import com.sourcekraft.documentburster._helpers.TestsUtils;
-import com.sourcekraft.documentburster.engine.csv.CsvReporter;
+import com.sourcekraft.documentburster.engine.reporting.CsvReporter;
 
 public class YargTests {
 

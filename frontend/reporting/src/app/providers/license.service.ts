@@ -87,20 +87,27 @@ export class LicenseService {
       this.changeLogStr = this.licenseDetails.license.changelog;
     } // if it is a demo installation
     else {
-      const changeLogResponseAsJson =
-        await this.getChangeLogForTheDemoInstallationToo();
+      let changeLogResponseAsJson: any;
 
-      //console.log(
-      //  `changeLogResponseAsJson = ${JSON.stringify(changeLogResponseAsJson)}`,
-      //);
+      try {
+        changeLogResponseAsJson =
+          await this.getChangeLogForTheDemoInstallationToo();
+        //console.log(
+        //  `changeLogResponseAsJson = ${JSON.stringify(changeLogResponseAsJson)}`,
+        //);
 
-      this.latestVersion = changeLogResponseAsJson.new_version;
+        this.latestVersion = changeLogResponseAsJson.new_version;
 
-      const { changelog } = unserialize(changeLogResponseAsJson.sections, {
-        description: String,
-        changelog: String,
-      });
-      this.changeLogStr = changelog;
+        const { changelog } = unserialize(changeLogResponseAsJson.sections, {
+          description: String,
+          changelog: String,
+        });
+        this.changeLogStr = changelog;
+      } catch {
+        console.warn(
+          'Error while fetching the changelog for the demo installation',
+        );
+      }
     }
 
     this.isNewerVersionAvailable = false;
@@ -108,17 +115,20 @@ export class LicenseService {
     if (!this.settingsService.version)
       await this.settingsService.loadDefaultSettingsFileAsync();
 
-    this.latestVersion = semver.coerce(this.latestVersion);
-    this.settingsService.version = semver.coerce(this.settingsService.version);
+    if (this.latestVersion && this.settingsService.version) {
+      this.latestVersion = semver.coerce(this.latestVersion);
+      this.settingsService.version = semver.coerce(
+        this.settingsService.version,
+      );
 
-    //console.log(
-    //  `this.latestVersion = ${this.latestVersion}, this.settingsService.version = ${this.settingsService.version}`
-    //);
+      //console.log(
+      //  `this.latestVersion = ${this.latestVersion}, this.settingsService.version = ${this.settingsService.version}`
+      //);
 
-    if (semver.gt(this.latestVersion, this.settingsService.version)) {
-      this.isNewerVersionAvailable = true;
+      if (semver.gt(this.latestVersion, this.settingsService.version)) {
+        this.isNewerVersionAvailable = true;
+      }
     }
-
     try {
       //the "Improved software changelog" keepachangelog format was implemented in
       //DocumentBurster v8.8.0

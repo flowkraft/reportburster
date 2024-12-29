@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## 10.2.3 - 2024-12-30
+
+### Added
+
+- Implement "TSV File (local file containing tab-separated values)" and
+  "Fixed-Width File (local file containing fixed-width columns)" as
+  reporting datasources
+
+### Fixed
+
+- 'Delete, Up, Down attachments buttons did not save the changes'
+- 'Tomcat Exception when uploading files'
+- 'Using Quality Assurance successively the 2nd, 3rd times the file comes
+  as null in the input box (instead of the file selected for processing)'
+
 ## 10.2.2 - 2024-12-17
 
 ### Added

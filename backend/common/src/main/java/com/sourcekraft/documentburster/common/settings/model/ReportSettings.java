@@ -17,7 +17,6 @@ package com.sourcekraft.documentburster.common.settings.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.utils.DumpToString;
 
 public class ReportSettings extends DumpToString {
@@ -39,8 +38,10 @@ public class ReportSettings extends DumpToString {
 		public String type;
 		public String parser;
 		public boolean showmorecsvoptions;
+		public boolean showmorefixedwidthoptions;
 
 		public CSVOptions csvoptions;
+		public FixedWidthOptions fixedwidthoptions;
 
 		public static class CSVOptions extends DumpToString {
 
@@ -61,8 +62,7 @@ public class ReportSettings extends DumpToString {
 			public int skiplines;
 
 			public String idcolumn;
-			public String idcolumnindex;
-
+			
 			public LinesRegExValidator linesregexvalidator;
 
 			static class LinesRegExValidator extends DumpToString {
@@ -83,6 +83,20 @@ public class ReportSettings extends DumpToString {
 
 				public List<LineMatcher> linematcher = new ArrayList<LineMatcher>();;
 			}
+
+		}
+
+		public static class FixedWidthOptions extends DumpToString {
+
+			private static final long serialVersionUID = 2691588813086554914L;
+
+			public String columns;
+			public String header;
+			public int skiplines;
+			public boolean ignoreleadingwhitespace;
+
+			public String idcolumn;
+			public String idcolumnindex;
 
 		}
 	}
