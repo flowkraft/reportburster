@@ -8,7 +8,7 @@ I have extensive experience in software development, with a strong focus on crea
 
 In addition to development, I collaborate closely with the product management team to understand the product vision and user requirements. I translate these requirements into technical specifications and work with cross-functional teams to deliver high-quality solutions that meet user expectations and business objectives.
 
-Working closely with our CEO John, I ensure that our development efforts align with the company's strategic vision. I utilize Agile methodologies to quickly test, iterate, and optimize our product, fostering a culture of continuous improvement.
+Working closely with our CEO Virgil, I ensure that our development efforts align with the company's strategic vision. I utilize Agile methodologies to quickly test, iterate, and optimize our product, fostering a culture of continuous improvement.
 
 Given the technical nature of our product, I am proficient in org-mode documentation to maintain clear and organized records of our development processes.
 
