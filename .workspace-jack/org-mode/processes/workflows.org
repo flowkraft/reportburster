@@ -1,0 +1,42 @@
+#+TITLE: FlowKraft Workflows and Processes
+#+AUTHOR: Virgil Trașcă, Jack
+#+DATE: 2025-01-07
+
+* Requirements Management Workflow
+** Purpose
+Document the process for managing requirements documents from creation to implementation
+
+** Workflow Steps
+1. Requirements Document Creation
+   - Created in: .workspace-jack/org-mode/requirements/
+   - File naming: requirements-YYYYMMDD-vX.X.X.org
+   - Template: [[file:../templates/requirements-template.org][Requirements Template]]
+
+2. Approval Process
+   - Add approval section to document header
+   - Move to in-progress folder after approval
+   - Update status to "Approved"
+
+3. Developer Access
+   - Developers copy from in-progress folder to their workspace
+   - Maintain read-only access to original document
+
+4. Implementation Tracking
+   - Add implementation status for each requirement
+   - Track progress through status updates
+
+5. Post-Implementation
+   - Move to implemented folder
+   - Add cross-references to related documentation
+   - Update requirements index
+
+** Roles and Responsibilities
+- Product Owner: Creates initial requirements
+- CEO: Approves requirements
+- Developers: Implement requirements
+- QA: Verify implementation
+
+* Future Workflows
+** TODO: Add Development Process Workflow
+** TODO: Add Code Review Process
+** TODO: Add Release Management Process
