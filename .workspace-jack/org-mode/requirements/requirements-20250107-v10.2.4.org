@@ -11,14 +11,45 @@
   - What is explicitly out of scope.
 
 * Functional Requirements
-  ** Feature 1: <Feature Name>
-     - Description: <Detailed description of the feature>
+  ** Feature 1: License Screen Update
+     - Description: Update the license screen terminology from "Demo" to "Community" to better reflect the open-source nature of the software.
      - User Stories:
-       - As a <user role>, I want <goal> so that <reason>.
+       - As a user, I want clear terminology that reflects the software's open-source status so that I understand the licensing model.
      - Acceptance Criteria:
-       - <List of conditions that must be met for the feature to be considered complete>
-  ** Feature 2: <Feature Name>
-     - (Repeat the same structure as above)
+       - All instances of "Demo" in the license screen are replaced with "Community"
+       - The updated text is properly localized for all supported languages
+       - The change is reflected in both the UI and documentation
+
+  ** Feature 2: Local Excel File Datasource Support
+     - Description: Add support for local Excel files as a new datasource type.
+     - User Stories:
+       - As a user, I want to use local Excel files as a data source so that I can generate reports from my existing spreadsheets.
+     - Acceptance Criteria:
+       - Support for reading .xlsx files
+       - Ability to select specific sheets and ranges
+       - Proper handling of Excel data types
+       - Error handling for invalid or corrupted files
+
+  ** Feature 3: HTML and PDF Output Types
+     - Description: Implement HTML output type and PDF generation using HTML templates.
+     - User Stories:
+       - As a user, I want to generate reports in HTML format so that I can view them in web browsers.
+       - As a user, I want to generate PDFs from HTML templates so that I can create professional-looking documents.
+     - Acceptance Criteria:
+       - HTML output generation with proper styling
+       - PDF generation from HTML templates
+       - Support for custom HTML templates
+       - Consistent output across different browsers and PDF viewers
+
+  ** Feature 4: Database Connection Infrastructure
+     - Description: Implement basic infrastructure for database connections as a new datasource type.
+     - User Stories:
+       - As a user, I want to connect to databases directly so that I can generate reports from live data.
+     - Acceptance Criteria:
+       - Basic database connection framework implemented
+       - Support for common database types (MySQL, PostgreSQL)
+       - Secure credential handling
+       - Basic query execution and result handling
 
 * Non-Functional Requirements
   - Performance, scalability, security, etc.
