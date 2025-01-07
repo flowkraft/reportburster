@@ -10,8 +10,7 @@ Document the process for managing requirements documents from creation to implem
 1. Requirements Document Creation
    - Created in: .workspace-jack/org-mode/requirements/
    - File naming: requirements-YYYYMMDD-vX.X.X.org
-   - Template: [[file:../templates/requirements-template.org][Requirements Template]]
-
+   
 2. Approval Process
    - Add approval section to document header
    - Move to in-progress folder after approval
