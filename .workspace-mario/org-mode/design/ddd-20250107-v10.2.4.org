@@ -1,0 +1,225 @@
+#+TITLE: Detailed Design Document (DDD) for ReportBurster v10.2.4
+#+AUTHOR: Mario
+#+DATE: 2025-01-07
+#+STATUS: Draft
+#+REQUIREMENTS_DOC: requirements-20250107-v10.2.4.org
+
+* Introduction
+This DDD covers the implementation details for all requirements in the linked requirements document.
+
+* Feature 1: License Screen Update
+** Requirement Description
+*** Summary
+Update the license screen terminology from "Demo" to "Community" to better reflect the open-source nature of the software.
+
+*** User Stories
+- As a user, I want clear terminology that reflects the software's open-source status so that I understand the licensing model.
+
+*** Acceptance Criteria
+- All instances of "Demo" in the license screen are replaced with "Community".
+- The updated text is properly localized for all supported languages.
+- The change is reflected in both the UI and documentation.
+
+** Implementation Prompts
+*** Frontend Changes
+- Locate all instances of "Demo" in the Angular frontend code.
+- Replace "Demo" with "Community" in the relevant UI components.
+- Ensure the changes are localized for all supported languages.
+
+*** Backend Changes
+- Update any backend references to "Demo" in the license-related code.
+- Ensure the changes are consistent with the frontend updates.
+
+*** Documentation Updates
+- Update the user documentation to reflect the new terminology.
+- Ensure the documentation is consistent with the UI changes.
+
+** Files to Modify
+*** Frontend
+- `frontend/reporting/src/app/areas/license/license.component.html`
+- `frontend/reporting/src/app/areas/license/license.component.ts`
+- `frontend/reporting/src/assets/i18n/*.json` (for localization)
+
+*** Backend
+- `backend/server/src/main/java/com/flowkraft/jobson/license/LicenseService.java`
+- `backend/server/src/main/resources/license-messages.properties` (if applicable)
+
+*** Documentation
+- `docs/user-guide/license.md`
+
+** Code Snippets
+*** Frontend Example (Before)
+```html
+<h2>Demo License</h2>
+<p>This is a demo version of the software.</p>
+```
+
+*** Frontend Example (After)
+```html
+<h2>Community License</h2>
+<p>This is the community version of the software.</p>
+```
+
+*** Localization Example (Before)
+```json
+{
+  "license.demo": "Demo License"
+}
+```
+
+*** Localization Example (After)
+```json
+{
+  "license.community": "Community License"
+}
+```
+
+** Additional Notes
+- Coordinate with the localization team to ensure all language files are updated.
+- Verify that the changes do not break any existing functionality.
+- Update unit tests to reflect the new terminology.
+
+** Implementation Status
+- [ ] Frontend changes
+- [ ] Backend changes
+- [ ] Documentation updates
+- [ ] Localization updates
+- [ ] Testing and validation
+
+* Feature 2: Local Excel File Datasource Support
+** Requirement Description
+*** Summary
+Add support for local Excel files as a new datasource type.
+
+*** User Stories
+- As a user, I want to use local Excel files as a data source so that I can generate reports from my existing spreadsheets.
+
+*** Acceptance Criteria
+- Support for reading .xlsx files.
+- Ability to select specific sheets and ranges.
+- Proper handling of Excel data types.
+- Error handling for invalid or corrupted files.
+
+** Implementation Prompts
+*** Backend Changes
+- Implement a new Excel file reader module.
+- Add support for reading .xlsx files using a library like Apache POI or similar.
+- Implement sheet and range selection logic.
+- Add error handling for invalid or corrupted files.
+
+** Files to Modify
+*** Backend
+- `backend/common/src/main/java/com/sourcekraft/documentburster/common/utils/ExcelReader.java` (new file)
+- `backend/common/src/main/java/com/sourcekraft/documentburster/common/settings/DatasourceSettings.java`
+
+** Code Snippets
+*** Excel Reader Example
+```java
+public class ExcelReader {
+    public List<Map<String, String>> readExcel(String filePath, String sheetName) {
+        // Implementation for reading Excel files
+    }
+}
+```
+
+** Additional Notes
+- Ensure the Excel reader module is thread-safe.
+- Add unit tests for the new functionality.
+
+** Implementation Status
+- [ ] Backend changes
+- [ ] Testing and validation
+
+* Feature 3: HTML and PDF Output Types
+** Requirement Description
+*** Summary
+Implement HTML output type and PDF generation using HTML templates.
+
+*** User Stories
+- As a user, I want to generate reports in HTML format so that I can view them in web browsers.
+- As a user, I want to generate PDFs from HTML templates so that I can create professional-looking documents.
+
+*** Acceptance Criteria
+- HTML output generation with proper styling.
+- PDF generation from HTML templates.
+- Support for custom HTML templates.
+- Consistent output across different browsers and PDF viewers.
+
+** Implementation Prompts
+*** Backend Changes
+- Implement HTML template rendering using a library like Thymeleaf or Freemarker.
+- Add PDF generation using a library like Flying Saucer or similar.
+- Ensure support for custom HTML templates.
+
+** Files to Modify
+*** Backend
+- `backend/reporting/src/main/java/com/sourcekraft/documentburster/reporting/ReportGenerator.java`
+- `backend/reporting/src/main/resources/templates/` (new folder for templates)
+
+** Code Snippets
+*** HTML Template Example
+```html
+<h1>Report Title</h1>
+<p>Report content goes here.</p>
+```
+
+** Additional Notes
+- Ensure the HTML templates are customizable.
+- Add unit tests for the new functionality.
+
+** Implementation Status
+- [ ] Backend changes
+- [ ] Testing and validation
+
+* Feature 4: Database Connection Infrastructure
+** Requirement Description
+*** Summary
+Implement basic infrastructure for database connections as a new datasource type.
+
+*** User Stories
+- As a user, I want to connect to databases directly so that I can generate reports from live data.
+
+*** Acceptance Criteria
+- Basic database connection framework implemented.
+- Support for common database types (MySQL, PostgreSQL).
+- Secure credential handling.
+- Basic query execution and result handling.
+
+** Implementation Prompts
+*** Backend Changes
+- Implement a database connection manager.
+- Add support for MySQL and PostgreSQL.
+- Ensure secure handling of database credentials.
+- Implement basic query execution and result handling.
+
+** Files to Modify
+*** Backend
+- `backend/common/src/main/java/com/sourcekraft/documentburster/common/utils/DatabaseManager.java` (new file)
+- `backend/common/src/main/java/com/sourcekraft/documentburster/common/settings/DatasourceSettings.java`
+
+** Code Snippets
+*** Database Connection Example
+```java
+public class DatabaseManager {
+    public Connection getConnection(String url, String username, String password) {
+        // Implementation for database connection
+    }
+}
+```
+
+** Additional Notes
+- Ensure the database connection manager is thread-safe.
+- Add unit tests for the new functionality.
+
+** Implementation Status
+- [ ] Backend changes
+- [ ] Testing and validation
+
+* Review and Validation
+- Share the DDD with the team for review.
+- Ensure the implementation meets the acceptance criteria.
+- Update the DDD with implementation status and notes during development.
+
+* Post-Implementation
+- Move the DDD to the `implemented` folder.
+- Add cross-references to the DDD in the requirements document.
