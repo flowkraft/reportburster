@@ -1,6 +1,9 @@
 #+TITLE: Functional Requirements for ReportBurster v10.2.4
 #+AUTHOR: Virgil Trașcă, Jack
 #+DATE: 2025-01-07
+#+STATUS: Approved
+#+APPROVED_BY: Virgil Trașcă
+#+APPROVED_DATE: 2025-01-07
 
 * Introduction
   - Brief overview of the release goals and objectives.
