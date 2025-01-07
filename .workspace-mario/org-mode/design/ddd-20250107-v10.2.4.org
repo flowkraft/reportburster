@@ -223,3 +223,53 @@ public class DatabaseManager {
 * Post-Implementation
 - Move the DDD to the `implemented` folder.
 - Add cross-references to the DDD in the requirements document.
+
+* Improve a Bit the Codebase & Reduce Technical Debt
+** Purpose
+This section outlines non-functional improvements to the codebase that will be addressed during this development cycle. These changes are not tied to specific functional requirements but aim to improve the overall quality, maintainability, and performance of the codebase.
+
+** Guidelines
+- Identify areas of the codebase that could benefit from refactoring, optimization, or cleanup.
+- Focus on small, incremental improvements that can be completed within the current development cycle.
+- Ensure that changes do not introduce new bugs or regressions.
+- Document the rationale for each improvement and how it reduces technical debt.
+
+** Planned Improvements for This Cycle
+*** Refactor License Screen Code
+- Goal: Improve readability and maintainability of the license screen code.
+- Changes:
+  - Extract repeated logic into reusable utility methods.
+  - Improve error handling and logging.
+  - Add unit tests for edge cases.
+
+*** Optimize Excel Reader Performance
+- Goal: Enhance performance and memory efficiency of the Excel file reader.
+- Changes:
+  - Use streaming APIs for large Excel files to reduce memory usage.
+  - Add caching for frequently accessed sheets or ranges.
+  - Optimize data type conversion logic.
+
+*** Clean Up HTML/PDF Template Rendering
+- Goal: Simplify and standardize the template rendering process.
+- Changes:
+  - Consolidate duplicate template rendering logic.
+  - Add support for template inheritance to reduce redundancy.
+  - Improve error messages for invalid templates.
+
+*** Secure Database Connection Handling
+- Goal: Strengthen security around database connections.
+- Changes:
+  - Implement connection pooling for better resource management.
+  - Add encryption for database credentials in configuration files.
+  - Improve logging for connection-related errors.
+
+** Implementation Status
+- [ ] License Screen Refactoring
+- [ ] Excel Reader Optimization
+- [ ] HTML/PDF Template Cleanup
+- [ ] Database Connection Security
+
+** Post-Implementation Review
+- Verify that the improvements do not introduce new issues.
+- Update documentation to reflect any changes in best practices.
+- Share lessons learned with the team to inform future improvements.
