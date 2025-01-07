@@ -1,5 +1,5 @@
 # Activate the Python virtual environment
-& ../../../.chezmoi/.venv-aider/Scripts/Activate.ps1
+& ../../../.chezmoi/.venv-chezmoi/Scripts/Activate.ps1
 
 # Run aider
 
