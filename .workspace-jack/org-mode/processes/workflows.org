@@ -17,8 +17,7 @@ Document the process for managing requirements documents from creation to implem
    - Update status to "Approved"
 
 3. Developer Access
-   - Developers copy from in-progress folder to their workspace
-   - Maintain read-only access to original document
+   - Developers get and maintain read-only access to original document
 
 4. Implementation Tracking
    - Add implementation status for each requirement
