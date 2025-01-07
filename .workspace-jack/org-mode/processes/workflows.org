@@ -35,6 +35,41 @@ Document the process for managing requirements documents from creation to implem
 - Developers: Implement requirements
 - QA: Verify implementation
 
+* Detailed Design Document (DDD) Workflow
+** Purpose
+Document the process for creating and using Detailed Design Documents (DDDs) to guide implementation of requirements.
+
+** Workflow Steps
+1. DDD Creation
+   - After requirements approval, create a Detailed Design Document (DDD) for each requirement
+   - Store DDDs in: .workspace-<developer>/org-mode/design/
+   - File naming: ddd-YYYYMMDD-<requirement-name>.org
+
+2. DDD Structure
+   - Each DDD should include:
+     - Requirement Description: Brief summary of the requirement
+     - Implementation Prompts: Detailed prompts for the LLM and/or human developer
+     - Files to Modify: List of files to update or create
+     - Code Snippets: Examples of existing code and expected changes
+     - Acceptance Criteria: Clear criteria to verify implementation
+
+3. Implementation
+   - Use the DDD as a guide for implementation
+   - Update the DDD with implementation status and notes during development
+
+4. Review and Validation
+   - Share the DDD with the team for review before final implementation
+   - Ensure the implementation meets the acceptance criteria
+
+5. Post-Implementation
+   - Move the DDD to the implemented folder
+   - Add cross-references to the DDD in the requirements document
+
+** Roles and Responsibilities
+- Developers: Create and update DDDs
+- LLM: Assist with implementation based on DDD prompts
+- QA: Validate implementation against DDD acceptance criteria
+
 * Future Workflows
 ** TODO: Add Development Process Workflow
 ** TODO: Add Code Review Process
