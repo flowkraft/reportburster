@@ -1,0 +1,34 @@
+#+TITLE: Functional Requirements for ReportBurster v10.2.4
+#+AUTHOR: Virgil Trașcă, Jack
+#+DATE: 2025-01-07
+
+* Introduction
+  - Brief overview of the release goals and objectives.
+  - Key stakeholders and their roles.
+
+* Scope
+  - What is included in this release.
+  - What is explicitly out of scope.
+
+* Functional Requirements
+  ** Feature 1: <Feature Name>
+     - Description: <Detailed description of the feature>
+     - User Stories:
+       - As a <user role>, I want <goal> so that <reason>.
+     - Acceptance Criteria:
+       - <List of conditions that must be met for the feature to be considered complete>
+  ** Feature 2: <Feature Name>
+     - (Repeat the same structure as above)
+
+* Non-Functional Requirements
+  - Performance, scalability, security, etc.
+
+* Dependencies
+  - List of dependencies (e.g., third-party libraries, external systems).
+
+* Risks and Mitigations
+  - Potential risks and proposed mitigation strategies.
+
+* Appendix
+  - Glossary of terms.
+  - References to related documents or resources.
