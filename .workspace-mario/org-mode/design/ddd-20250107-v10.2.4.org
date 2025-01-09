@@ -109,6 +109,39 @@ Add support for local Excel files as a new datasource type, treating them simila
 
 ---
 
+#### **UI Configuration for Excel Datasource**
+
+1. **Input Type**  
+   - "Excel File (local .xlsx file)"
+
+2. **Header Row Handling**  
+   - "First Row as Headers" (default)  
+   - "No Headers"
+
+3. **Skip N# Rows**  
+   - Number input (default: 0)
+
+4. **Ignore Leading Whitespace**  
+   - Checkbox (default: checked)
+
+---
+
+#### **Header and Skip Rows Logic**
+
+1. **No Header**  
+   - Skip N# Rows: Set to 0 and Read Only.  
+   - **Example**: Data starts from Row 1.
+
+2. **First Row as Header**  
+   - Skip N# Rows: Set to 1 and Read Only.  
+   - **Example**: Row 1 is the header, data starts from Row 2.
+
+3. **Multiple Rows as Header**  
+   - Skip N# Rows: Set to 2 and becomes editable.  
+   - **Example**: Rows 1 and 2 are headers, data starts from Row 3 (user can adjust).
+
+---
+
 #### **Implementation Steps**
 
 **Step 1: Create the ExcelReporter Class**  
@@ -128,10 +161,10 @@ Add support for local Excel files as a new datasource type, treating them simila
    - Open the Excel file specified in `filePath`.  
    - Read the first sheet.  
    - Parse all rows and columns into a `List<String[]>`, where each `String[]` represents a row.  
-2. Handle errors such as:  
-   - Invalid file paths.  
-   - Unsupported file formats.  
-   - Empty sheets.  
+2. Handle the following configurations:  
+   - **Header Row Handling**: Skip the first row if "First Row as Headers" is selected.  
+   - **Skip N# Rows**: Skip the specified number of rows before processing data.  
+   - **Ignore Leading Whitespace**: Trim leading whitespace from cell values if enabled.  
 3. Ensure the method throws appropriate exceptions for error cases, following the same patterns as `CsvReporter`.  
 
 ---
@@ -176,8 +209,45 @@ public class ExcelReporter extends AbstractReporter {
 
     @Override
     protected void initializeResources() throws Exception {
-        // Use Apache POI to read the Excel file
-        // Store parsed data in parsedLines
+        try (FileInputStream file = new FileInputStream(filePath);
+             Workbook workbook = new XSSFWorkbook(file)) {
+
+            Sheet sheet = workbook.getSheetAt(0); // Read the first sheet
+            Iterator<Row> rowIterator = sheet.iterator();
+
+            // Handle Skip N# Rows
+            int skipRows = ctx.settings.getReportDataSource().exceloptions.skiprows;
+            for (int i = 0; i < skipRows && rowIterator.hasNext(); i++) {
+                rowIterator.next(); // Skip the specified number of rows
+            }
+
+            // Handle Header Row
+            boolean hasHeader = ctx.settings.getReportDataSource().exceloptions.hasheader;
+            if (hasHeader && rowIterator.hasNext()) {
+                Row headerRow = rowIterator.next();
+                // Process headers if needed
+            }
+
+            // Parse data rows
+            while (rowIterator.hasNext()) {
+                Row row = rowIterator.next();
+                Map<String, String> rowData = new HashMap<>();
+
+                for (int i = 0; i < row.getLastCellNum(); i++) {
+                    Cell cell = row.getCell(i, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                    String cellValue = getCellValueAsString(cell);
+
+                    // Handle Ignore Leading Whitespace
+                    if (ctx.settings.getReportDataSource().exceloptions.ignoreleadingwhitespace) {
+                        cellValue = cellValue.trim();
+                    }
+
+                    rowData.put("col" + i, cellValue); // Use column index if no headers
+                }
+
+                parsedLines.add(rowData);
+            }
+        }
     }
 
     @Override
@@ -197,13 +267,29 @@ public class ExcelReporter extends AbstractReporter {
 public class ExcelReporterTest {
 
     @Test
-    public void testInitializeResources() {
-        // Verify that initializeResources() correctly parses a sample Excel file
+    public void testInitializeResources_NoHeader() {
+        // Test with "No Header" configuration
+        ctx.settings.getReportDataSource().exceloptions.hasheader = false;
+        ctx.settings.getReportDataSource().exceloptions.skiprows = 0;
+
+        ExcelReporter reporter = new ExcelReporter("configFilePath");
+        reporter.initializeResources();
+
+        // Verify that all rows are treated as data
+        assertEquals(3, reporter.getParsedExcelLines().size());
     }
 
     @Test
-    public void testParseBurstingMetaData() {
-        // Verify that parseBurstingMetaData() correctly extracts tokens
+    public void testInitializeResources_FirstRowAsHeader() {
+        // Test with "First Row as Header" configuration
+        ctx.settings.getReportDataSource().exceloptions.hasheader = true;
+        ctx.settings.getReportDataSource().exceloptions.skiprows = 1;
+
+        ExcelReporter reporter = new ExcelReporter("configFilePath");
+        reporter.initializeResources();
+
+        // Verify that the first row is skipped
+        assertEquals(2, reporter.getParsedExcelLines().size());
     }
 }
 ```
