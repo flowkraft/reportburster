@@ -296,11 +296,63 @@ public class ExcelReporterTest {
 
 ---
 
+* Save/Load Excel Reporting Datasource Configurations
+** Overview
+This section describes the implementation steps for saving and loading Excel-related configurations from the UI 
+to the XML file. The implementation involves both backend (`ReportSettings.java`) and frontend (`tab-reporting-datasource-datatables.ts`) changes.
+
+---
+
+#### **Implementation Prompts**
+
+**Prompt 1: Add ExcelOptions Class to ReportSettings.java**  
+"Add a new nested class `ExcelOptions` to `ReportSettings.java` to store Excel-specific configurations. The class should include:  
+- `header`: String to store the header row handling option (e.g., "firstline", "noheader").  
+- `skiplines`: Integer to store the number of rows to skip.  
+- `ignoreleadingwhitespace`: Boolean to store whether to ignore leading whitespace.  
+Follow the same structure as the existing `CSVOptions` class but adapt it for Excel."
+
+---
+
+**Prompt 2: Update DataSource Class in ReportSettings.java**  
+"Update the `DataSource` class in `ReportSettings.java` to include a new field `exceloptions` of type `ExcelOptions`. This field will store the Excel-specific configurations. Ensure the field is initialized properly, similar to how `csvoptions` is handled."
+
+---
+
+**Prompt 3: Add Excel-Specific UI Bindings in tab-reporting-datasource-datatables.ts**  
+"Update the Angular component `tab-reporting-datasource-datatables.ts` to bind the new Excel configurations to the `xmlReporting` object. Add UI elements for:  
+- **Header Row Handling**: A dropdown to select "First Row as Headers" or "No Headers".  
+Bind these UI elements to `xmlReporting?.documentburster.report.datasource.exceloptions`, similar to how CSV configurations are bound."
+
+---
+
+**Prompt 4: Handle Excel Configurations in the Backend**
+"Update the backend logic in `ReportSettings.java` to handle the new `exceloptions` field. Ensure the configurations are properly serialized to and deserialized from the XML file, similar to how `csvoptions` is handled. Add 
+validation logic to ensure the configurations are valid (e.g., `skiplines` must be a non-negative integer)."    
+
+---
+
+**Prompt 5: Add Unit Tests for Excel Configurations**
+"Add unit tests to verify the save/load functionality for Excel configurations. Test scenarios should include:  
+- Saving and loading valid configurations.
+- Handling invalid configurations (e.g., negative `skiplines`).
+- Ensuring the configurations are consistent with the UI.
+Follow the same testing patterns as used for CSV configurations but adapt them for Excel."
+
+---
+
+#### **Files to Modify**
+1. **Backend**: `backend/common/src/main/java/com/sourcekraft/documentburster/common/settings/model/ReportSettings.java`
+2. **Frontend**: `frontend/reporting/src/app/areas/_configuration/templates/tab-reporting-datasource-datatables.ts`
+
+---
+
 #### **Implementation Status**
-- [ ] Step 1: Create the ExcelReporter Class  
-- [ ] Step 2: Implement Excel File Parsing  
-- [ ] Step 3: Implement Token Extraction  
-- [ ] Step 4: Add Unit Tests  
+- [ ] Prompt 1: Add ExcelOptions Class  
+- [ ] Prompt 2: Update DataSource Class  
+- [ ] Prompt 3: Add UI Bindings  
+- [ ] Prompt 4: Handle Excel Configurations in Backend  
+- [ ] Prompt 5: Add Unit Tests  
 
 * Feature 3: HTML and PDF Output Types
 ** Requirement Description
