@@ -95,46 +95,126 @@ Update the license screen terminology from "Demo" to "Community" to better refle
 * Feature 2: Local Excel File Datasource Support
 ** Requirement Description
 *** Summary
-Add support for local Excel files as a new datasource type.
+Add support for local Excel files as a new datasource type, treating them similarly to CSV files by reading all rows and columns from the main sheet.
 
 *** User Stories
 - As a user, I want to use local Excel files as a data source so that I can generate reports from my existing spreadsheets.
 
 *** Acceptance Criteria
-- Support for reading .xlsx files.
-- Ability to select specific sheets and ranges.
-- Proper handling of Excel data types.
-- Error handling for invalid or corrupted files.
+- Support for reading `.xlsx` files.  
+- Ability to read all rows and columns from the main sheet.  
+- Proper handling of Excel data types.  
+- Error handling for invalid or corrupted files.  
+- Consistent implementation with the existing `CsvReporter`.  
 
-** Implementation Prompts
-*** Backend Changes
-- Implement a new Excel file reader module.
-- Add support for reading .xlsx files using a library like Apache POI or similar.
-- Implement sheet and range selection logic.
-- Add error handling for invalid or corrupted files.
+---
 
-** Files to Modify
-*** Backend
-- `backend/common/src/main/java/com/sourcekraft/documentburster/common/utils/ExcelReader.java` (new file)
-- `backend/common/src/main/java/com/sourcekraft/documentburster/common/settings/DatasourceSettings.java`
+#### **Implementation Steps**
 
-** Code Snippets
-*** Excel Reader Example
+**Step 1: Create the ExcelReporter Class**  
+1. Create a new Java class called `ExcelReporter` in the `com.sourcekraft.documentburster.engine.reporting` package.  
+2. Extend `AbstractReporter` and follow the same structure as `CsvReporter`.  
+3. Include:  
+   - A constructor that accepts a `configFilePath` and calls the superclass constructor.  
+   - A private `List<String[]> parsedLines` field to store the parsed Excel data.  
+   - A method `initializeResources()` to read the Excel file.  
+   - A method `parseBurstingMetaData()` to extract tokens.  
+   - A method `getParsedExcelLines()` for testing purposes.  
+
+---
+
+**Step 2: Implement Excel File Parsing**  
+1. Use Apache POI to:  
+   - Open the Excel file specified in `filePath`.  
+   - Read the first sheet.  
+   - Parse all rows and columns into a `List<String[]>`, where each `String[]` represents a row.  
+2. Handle errors such as:  
+   - Invalid file paths.  
+   - Unsupported file formats.  
+   - Empty sheets.  
+3. Ensure the method throws appropriate exceptions for error cases, following the same patterns as `CsvReporter`.  
+
+---
+
+**Step 3: Implement Token Extraction**  
+1. Use the `parsedLines` field to extract tokens, similar to the `CsvReporter` implementation but adapted for Excel.  
+2. Support the same token extraction logic (e.g., `idcolumn` configuration for selecting the token column).  
+3. Handle edge cases such as:  
+   - Missing or invalid token columns.  
+   - Empty or malformed rows.  
+4. Return a `List<String>` of tokens, consistent with `CsvReporter`.  
+
+---
+
+**Step 4: Add Unit Tests**  
+1. Create a new test class called `ExcelReporterTest` in the `com.sourcekraft.documentburster.unit.documentation.userguide.reporting` package.  
+2. Write unit tests to:  
+   - Verify that `initializeResources()` correctly parses a sample Excel file.  
+   - Verify that `parseBurstingMetaData()` correctly extracts tokens.  
+   - Test error handling for invalid files, empty sheets, and missing token columns.  
+3. Ensure the test structure and naming conventions match `CsvReporterTest`.  
+
+---
+
+#### **Files to Modify**
+1. **New File**: `backend/reporting/src/main/java/com/sourcekraft/documentburster/engine/reporting/ExcelReporter.java`  
+2. **New File**: `backend/reporting/src/test/java/com/sourcekraft/documentburster/unit/documentation/userguide/reporting/ExcelReporterTest.java`  
+3. **Existing File**: Update relevant backend classes to support the new `ExcelReporter`.  
+
+---
+
+#### **Code Snippets**
+**ExcelReporter.java (Partial Implementation)**  
 ```java
-public class ExcelReader {
-    public List<Map<String, String>> readExcel(String filePath, String sheetName) {
-        // Implementation for reading Excel files
+public class ExcelReporter extends AbstractReporter {
+
+    private List<String[]> parsedLines;
+
+    public ExcelReporter(String configFilePath) {
+        super(configFilePath);
+    }
+
+    @Override
+    protected void initializeResources() throws Exception {
+        // Use Apache POI to read the Excel file
+        // Store parsed data in parsedLines
+    }
+
+    @Override
+    public List<String> parseBurstingMetaData() throws Exception {
+        // Extract tokens from parsedLines
+        // Follow the same logic as CsvReporter
+    }
+
+    public List<String[]> getParsedExcelLines() {
+        return parsedLines;
     }
 }
 ```
 
-** Additional Notes
-- Ensure the Excel reader module is thread-safe.
-- Add unit tests for the new functionality.
+**ExcelReporterTest.java (Partial Implementation)**  
+```java
+public class ExcelReporterTest {
 
-** Implementation Status
-- [ ] Backend changes
-- [ ] Testing and validation
+    @Test
+    public void testInitializeResources() {
+        // Verify that initializeResources() correctly parses a sample Excel file
+    }
+
+    @Test
+    public void testParseBurstingMetaData() {
+        // Verify that parseBurstingMetaData() correctly extracts tokens
+    }
+}
+```
+
+---
+
+#### **Implementation Status**
+- [ ] Step 1: Create the ExcelReporter Class  
+- [ ] Step 2: Implement Excel File Parsing  
+- [ ] Step 3: Implement Token Extraction  
+- [ ] Step 4: Add Unit Tests  
 
 * Feature 3: HTML and PDF Output Types
 ** Requirement Description
