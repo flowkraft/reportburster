@@ -369,15 +369,60 @@ Implement HTML output type and PDF generation using HTML templates.
 - Support for custom HTML templates.
 - Consistent output across different browsers and PDF viewers.
 
+** Implementation Notes
+- Previous attempts at PDF generation using docx4j and YARG have encountered issues
+- A new approach using FlywingSauce for HTML-to-PDF conversion is recommended
+- This approach should be more reliable and maintainable
+
+---
+
+#### **Implementation Prompt**
+
+**Prompt: Add FlywingSauce HTML-to-PDF Conversion**  
+"Add a new method `generatePDFFromHtmlTemplateUsingFlywingSauce` to `AbstractReporter.java` that:  
+1. Takes HTML template path and output PDF path as parameters  
+2. Uses FlywingSauce for HTML-to-PDF conversion  
+3. Handles template variables and processing  
+4. Includes proper error handling  
+5. Maintains consistent file handling with existing methods  
+
+The method signature should be:  
+```java
+public void generatePDFFromHtmlTemplateUsingFlywingSauce(String documentPath, String templatePath, 
+    Map<String, Object> variablesData) throws Exception
+```"
+
+---
+
+#### **Unit Test Requirements**
+
+**Test Case: HTML-to-PDF Conversion with FlywingSauce**  
+"Add a new unit test to `CsvReporterTest.java` that:  
+1. Verifies successful PDF generation from HTML template  
+2. Tests handling of template variables  
+3. Validates PDF file structure and content  
+4. Includes error case testing  
+5. Maintains consistent testing patterns with existing tests  
+
+The test should:  
+- Use a sample HTML template  
+- Verify proper variable substitution  
+- Check PDF file creation and validity  
+- Include assertions for error conditions"
+
+---
+
 ** Implementation Prompts
 *** Backend Changes
 - Implement HTML template rendering using a library like Thymeleaf or Freemarker.
-- Add PDF generation using a library like Flying Saucer or similar.
+- Add PDF generation using FlywingSauce.
 - Ensure support for custom HTML templates.
 
 ** Files to Modify
 *** Backend
 - `backend/reporting/src/main/java/com/sourcekraft/documentburster/reporting/ReportGenerator.java`
+- `backend/reporting/src/main/java/com/sourcekraft/documentburster/engine/AbstractReporter.java`
+- `backend/reporting/src/test/java/com/sourcekraft/documentburster/unit/documentation/userguide/reporting/CsvReporterTest.java`
 - `backend/reporting/src/main/resources/templates/` (new folder for templates)
 
 ** Code Snippets
@@ -387,13 +432,25 @@ Implement HTML output type and PDF generation using HTML templates.
 <p>Report content goes here.</p>
 ```
 
+*** FlywingSauce PDF Generation Example
+```java
+public void generatePDFFromHtmlTemplateUsingFlywingSauce(String documentPath, String templatePath,
+    Map<String, Object> variablesData) throws Exception {
+    // Implementation using FlywingSauce
+}
+```
+
 ** Additional Notes
 - Ensure the HTML templates are customizable.
 - Add unit tests for the new functionality.
+- Verify PDF generation performance with different template sizes.
 
 ** Implementation Status
-- [ ] Backend changes
-- [ ] Testing and validation
+- [ ] Add FlywingSauce HTML-to-PDF conversion method  
+- [ ] Implement unit tests for HTML-to-PDF conversion  
+- [ ] Update documentation  
+- [ ] Verify integration with existing systems  
+- [ ] Perform performance testing
 
 * Feature 4: Database Connection Infrastructure
 ** Requirement Description
