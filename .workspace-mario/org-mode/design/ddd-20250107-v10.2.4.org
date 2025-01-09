@@ -7,7 +7,7 @@
 * Introduction
 This DDD covers the implementation details for all requirements in the linked requirements document.
 
-* Feature 1: License Screen Update
+* DONE Feature 1: License Screen Update
 ** Requirement Description
 *** Summary
 Update the license screen terminology from "Demo" to "Community" to better reflect the open-source nature of the software.
