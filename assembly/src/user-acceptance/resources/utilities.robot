@@ -6,6 +6,26 @@ Library     resources/utilities.py
 Variables   resources/vars.py
 
 *** Keywords ***
+Take Screenshot If Requested
+    [Arguments]    ${screenshot_name}=${EMPTY}
+    [Documentation]    Takes a screenshot if SCREENSHOTS_FOLDER is provided.
+    ...                If screenshot_name is provided, the screenshot will be saved with that exact name.
+    ...                If screenshot_name is not provided, the default behavior of Capture Page Screenshot will be used.
+    Run Keyword If    '${SCREENSHOTS_FOLDER}' != '${EMPTY}'
+    ...    Run Keyword If    '${screenshot_name}' != '${EMPTY}'
+    ...    Take Screenshot With Exact Name    ${screenshot_name}
+    ...    ELSE
+    ...    Capture Page Screenshot
+
+Take Screenshot With Exact Name
+    [Arguments]    ${screenshot_name}
+    [Documentation]    Takes a screenshot with the exact provided name, ensuring it is the latest one.
+    ${screenshot_path}=    Set Variable    ${SCREENSHOTS_FOLDER}${/}${screenshot_name}.png
+    # Remove existing file if it exists
+    Run Keyword And Ignore Error    Remove File    ${screenshot_path}
+    # Capture the screenshot with the exact name
+    Capture Page Screenshot    ${screenshot_path}
+
 Quickstart Payslips.pdf Should Work Fine
     
     Sleep  1s
