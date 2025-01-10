@@ -70,6 +70,12 @@ Close Electron Application
   [Documentation]  Kills the Electron application process
   Kill Reportburster Exe Process
 
+Take Screenshot
+  [Arguments]    ${screenshot_name}
+  [Documentation]  Takes a screenshot if SCREENSHOTS_FOLDER is provided
+  Run Keyword If    '${SCREENSHOTS_FOLDER}' != '${EMPTY}'
+  ...    Capture Page Screenshot    ${SCREENSHOTS_FOLDER}${/}${screenshot_name}.png
+
 startServer.bat and shutServer.bat Should Work Fine
     
     Sleep  1s
