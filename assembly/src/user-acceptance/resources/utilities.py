@@ -1,5 +1,5 @@
 import subprocess, glob, re, os, importlib, shutil, zipfile, time, errno, pyautogui, psutil
-from distutils import dir_util
+import shutil
 from pywinauto.application import Application
 
 from vars import reportburster_exe_path, reportburster_exe_path_let_me_update, PORTABLE_EXECUTABLE_DIR, PORTABLE_EXECUTABLE_DIR_SERVER, PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE
@@ -336,8 +336,7 @@ def generate_let_me_update_baseline():
         empty_folder(PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE)
         force_remove_dir(PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE)
 
-    # shutil.copytree(PORTABLE_EXECUTABLE_DIR, PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE)
-    dir_util.copy_tree(PORTABLE_EXECUTABLE_DIR, PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE)
+    shutil.copytree(PORTABLE_EXECUTABLE_DIR, PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE, dirs_exist_ok=True)
 
     # ONE
     # specify your destination file
