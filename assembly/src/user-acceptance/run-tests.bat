@@ -6,14 +6,26 @@ set TEST_NAME=
 set SCREENSHOTS_FOLDER=
 
 :: Parse arguments
-for %%a in (%*) do (
-    echo %%a | findstr /b /c:"--test=" >nul && set TEST_NAME=%%a
-    echo %%a | findstr /b /c:"--screenshotsFolderPath=" >nul && set SCREENSHOTS_FOLDER=%%a
+:parse_args
+if "%~1"=="" goto args_parsed
+
+if "%~1"=="--test" (
+    set TEST_NAME=%~2
+    shift /2
+    goto parse_args
 )
 
-:: Extract values from arguments
-if defined TEST_NAME set TEST_NAME=%TEST_NAME:~7%
-if defined SCREENSHOTS_FOLDER set SCREENSHOTS_FOLDER=%SCREENSHOTS_FOLDER:~22%
+if "%~1"=="--screenshotsFolderPath" (
+    set SCREENSHOTS_FOLDER=%~2
+    shift /2
+    goto parse_args
+)
+
+:: Unknown argument
+echo Unknown argument: %~1
+exit /b 1
+
+:args_parsed
 
 cd /d "%~dp0"
 call .venv\Scripts\activate
