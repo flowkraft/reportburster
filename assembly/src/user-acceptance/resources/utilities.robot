@@ -70,7 +70,7 @@ Close Electron Application
   [Documentation]  Kills the Electron application process
   Kill Reportburster Exe Process
 
-Take Screenshot
+Take Screenshot If Requested
   [Arguments]    ${screenshot_name}
   [Documentation]  Takes a screenshot if SCREENSHOTS_FOLDER is provided
   Run Keyword If    '${SCREENSHOTS_FOLDER}' != '${EMPTY}'
