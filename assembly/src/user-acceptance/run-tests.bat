@@ -7,8 +7,8 @@ set SCREENSHOTS_FOLDER=
 
 :: Parse arguments
 for %%a in (%*) do (
-    if "%%a" starts with "--test=" set TEST_NAME=%%a
-    if "%%a" starts with "--screenshotsFolderPath=" set SCREENSHOTS_FOLDER=%%a
+    echo %%a | findstr /b /c:"--test=" >nul && set TEST_NAME=%%a
+    echo %%a | findstr /b /c:"--screenshotsFolderPath=" >nul && set SCREENSHOTS_FOLDER=%%a
 )
 
 :: Extract values from arguments
