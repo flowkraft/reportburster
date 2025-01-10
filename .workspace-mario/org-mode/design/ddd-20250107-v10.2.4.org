@@ -455,45 +455,87 @@ public void generatePDFFromHtmlTemplateUsingFlywingSauce(String documentPath, St
 * Feature 4: Database Connection Infrastructure
 ** Requirement Description
 *** Summary
-Implement basic infrastructure for database connections as a new datasource type.
+Implement database connection support by extending the existing external connections infrastructure to handle database connections alongside email connections.
 
 *** User Stories
-- As a user, I want to connect to databases directly so that I can generate reports from live data.
+- As a user, I want to manage database connections through the same interface as email connections.
+- As a user, I want to create, read, update and delete database connections.
+- As a user, I want to test database connections before saving them.
 
 *** Acceptance Criteria
-- Basic database connection framework implemented.
-- Support for common database types (MySQL, PostgreSQL).
-- Secure credential handling.
-- Basic query execution and result handling.
+- Database connection CRUD operations supported through existing UI
+- Secure credential handling
+- Connection testing functionality
+- Support for common database types (MySQL, PostgreSQL, MSSQL)
 
 ** Implementation Prompts
-*** Backend Changes
-- Implement a database connection manager.
-- Add support for MySQL and PostgreSQL.
-- Ensure secure handling of database credentials.
-- Implement basic query execution and result handling.
+*** Frontend Changes
+1. Extend the Connection Type Enum
+   - Add a new `ConnectionType` enum with values for both email and database connections
+   - Place in shared location accessible to components and templates
+
+2. Create Database Connection Interface
+   - Define `DatabaseConnectionSettings` interface with database-specific fields
+   - Look at `EmailProviderSettings` in `button-well-known.component.ts` as example
+
+3. Modify the Connection Info Model
+   - Extend `modalConnectionInfo` to support both email and database connections
+   - Add new `database` field using `DatabaseConnectionSettings` interface
+
+4. Update the Connection List UI
+   - Modify `tab-ext-connection.ts` to:
+     - Display connection type
+     - Show appropriate icons
+     - Handle both types in actions dropdown
+
+5. Extend the CRUD Modal
+   - Update `modal-ext-connection.ts` to:
+     - Show type-specific form fields
+     - Handle validation for both types
+     - Maintain existing email functionality
+
+6. Add Database Connection Validation
+   - Implement validation for database settings
+   - Look at email connection validation as example
+
+7. Update Connection Management Methods
+   - Modify `showCrudModal`, `onModalOK` etc. to handle both types
+   - Maintain existing email functionality
 
 ** Files to Modify
-*** Backend
-- `backend/common/src/main/java/com/sourcekraft/documentburster/common/utils/DatabaseManager.java` (new file)
-- `backend/common/src/main/java/com/sourcekraft/documentburster/common/settings/DatasourceSettings.java`
+*** Frontend
+- `frontend/reporting/src/app/areas/_ext-connections/ext-connections.component.ts`
+- `frontend/reporting/src/app/areas/_ext-connections/templates/tab-ext-connection.ts`
+- `frontend/reporting/src/app/areas/_ext-connections/templates/modal-ext-connection.ts`
 
 ** Code Snippets
 *** Database Connection Example
-```java
-public class DatabaseManager {
-    public Connection getConnection(String url, String username, String password) {
-        // Implementation for database connection
-    }
+```typescript
+enum ConnectionType {
+  EMAIL = 'email',
+  DATABASE = 'database'
+}
+
+interface DatabaseConnectionSettings {
+  dbType: 'mysql'|'postgresql'|'mssql';
+  host: string;
+  port: number;
+  database: string;
+  username: string;
+  password: string;
+  ssl: boolean;
 }
 ```
 
 ** Additional Notes
-- Ensure the database connection manager is thread-safe.
-- Add unit tests for the new functionality.
+- Leverage existing email connection infrastructure
+- Maintain consistent UI patterns
+- Ensure secure credential handling
+- Add comprehensive unit tests
 
 ** Implementation Status
-- [ ] Backend changes
+- [ ] Frontend changes
+- [ ] Backend integration
 - [ ] Testing and validation
 
 * Review and Validation
