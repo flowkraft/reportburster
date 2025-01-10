@@ -9,12 +9,28 @@ set SCREENSHOTS_FOLDER=
 :parse_args
 if "%~1"=="" goto args_parsed
 
+:: Handle --test=value format
+echo %~1 | findstr /b /c:"--test=" >nul && (
+    for /f "tokens=1,* delims==" %%a in ("%~1") do set TEST_NAME=%%b
+    shift
+    goto parse_args
+)
+
+:: Handle --test value format
 if "%~1"=="--test" (
     set TEST_NAME=%~2
     shift /2
     goto parse_args
 )
 
+:: Handle --screenshotsFolderPath=value format
+echo %~1 | findstr /b /c:"--screenshotsFolderPath=" >nul && (
+    for /f "tokens=1,* delims==" %%a in ("%~1") do set SCREENSHOTS_FOLDER=%%b
+    shift
+    goto parse_args
+)
+
+:: Handle --screenshotsFolderPath value format
 if "%~1"=="--screenshotsFolderPath" (
     set SCREENSHOTS_FOLDER=%~2
     shift /2
