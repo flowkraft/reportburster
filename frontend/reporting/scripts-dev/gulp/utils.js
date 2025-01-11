@@ -102,9 +102,17 @@ _startJavaYesAndUI = async (javaVersion, chocoStatus) => {
 
   await jetpack.writeAsync(electronLogPath, chocoLogMessage);
 
-  spawn("npm", ["run", "_custom:start-ui-electron"], {
-    stdio: "pipe",
+  const electronProcess = spawn("npm", ["run", "_custom:start-ui-electron"], {
+    stdio: "inherit",  // Changed from "pipe" to "inherit" to show output
     shell: true,
+  });
+
+  electronProcess.stdout.on('data', (data) => {
+    console.log(`Electron: ${data}`);
+  });
+
+  electronProcess.stderr.on('data', (data) => {
+    console.error(`Electron Error: ${data}`);
   });
 };
 
