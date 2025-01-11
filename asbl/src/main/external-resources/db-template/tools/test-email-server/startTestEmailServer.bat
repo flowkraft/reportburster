@@ -1,0 +1,1 @@
+"%~dp0internal/MailHog_windows_386.exe" >startlog.log 2>&1
