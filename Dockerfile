@@ -88,8 +88,8 @@ RUN apk --no-cache add \
 WORKDIR /app
 
 # Copy the "templated" folder structure
-COPY ./assembly/src/main/external-resources/db-template/ ./
-COPY ./assembly/src/main/external-resources/db-server-template/ ./
+COPY ./asbl/src/main/external-resources/db-template/ ./
+COPY ./asbl/src/main/external-resources/db-server-template/ ./
 COPY ./backend/reporting/src/main/external-resources/template/ ./
 
 RUN cp /app/config/burst/settings.xml /app/config/_defaults/settings.xml && \

@@ -26,7 +26,7 @@ import com.sourcekraft.documentburster.common.settings.EmailConnection;
 
 public class TestBursterFactory {
 
-	public static final String REPORTING_CONFIG_PATH = "../../assembly/src/main/external-resources/db-template/config/_defaults/reporting.xml";
+	public static final String REPORTING_CONFIG_PATH = "../../asbl/src/main/external-resources/db-template/config/_defaults/reporting.xml";
 
 	public static class PdfBurster extends com.sourcekraft.documentburster.engine.pdf.PdfBurster {
 

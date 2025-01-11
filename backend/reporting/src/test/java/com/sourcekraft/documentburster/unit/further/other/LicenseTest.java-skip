@@ -29,7 +29,7 @@ import com.sourcekraft.documentburster.utils.LicenseUtils;
 
 public class LicenseTest {
 
-	private static final String licenseXmlPath = "../../assembly/src/main/external-resources/db-template/config/_internal/license.xml";
+	private static final String licenseXmlPath = "../../asbl/src/main/external-resources/db-template/config/_internal/license.xml";
 	private static final String TEST_LICENSE_KEY = System.getProperty("TEST_LICENSE_KEY");
 	
 	private LicenseUtils _getTestLicenseUtils() throws Exception {

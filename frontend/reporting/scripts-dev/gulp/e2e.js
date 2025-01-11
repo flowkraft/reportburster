@@ -20,9 +20,9 @@ const e2eUpdateRuntimeDir = jetpack.cwd(
 //const PATHS = require("../../frontend/reporting/e2e/utils/paths");
 
 const VERIFIED_DB_NOEXE_ASSEMBLY_PATH =
-  "../../assembly/target/package/verified-db-noexe";
+  "../../asbl/target/package/verified-db-noexe";
 
-const VERIFIED_DB_ASSEMBLY_PATH = "../../assembly/target/package/verified-db";
+const VERIFIED_DB_ASSEMBLY_PATH = "../../asbl/target/package/verified-db";
 
 const semver = require("semver");
 
@@ -55,7 +55,7 @@ gulp.task("e2e-package-javastuff-if-needed", async () => {
         ],
         {
           stdio: "inherit",
-          cwd: "../assembly-documentburster",
+          cwd: "../asbl-documentburster",
         },
       );
     }
@@ -107,13 +107,13 @@ gulp.task("e2e-file-replacements", async () => {
 
 gulp.task("e2e-generate-autoupdate-baseline", async () => {
   return _generateAutoupdateBaseline(
-    "../assembly-documentburster/target/package/verified-db-noexe",
+    "../asbl-documentburster/target/package/verified-db-noexe",
   );
 });
 
 gulp.task("e2e-generate-autoupdate-baseline-server", async () => {
   return _generateAutoupdateBaseline(
-    "../assembly-documentburster/target/package/verified-db-server",
+    "../asbl-documentburster/target/package/verified-db-server",
   );
 });
 

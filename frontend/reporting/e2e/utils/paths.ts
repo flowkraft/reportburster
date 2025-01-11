@@ -14,7 +14,7 @@ export const E2E_SAMPLE_PAYSLIPS_PATH =
 export const BKEND_REPORTING_FOLDER_PATH = '../../backend/reporting';
 
 export const E2E_ASSEMBLY_EXTERNAL_RESOURCES_FOLDER_PATH =
-  '../../assembly/src/main/external-resources';
+  '../../asbl/src/main/external-resources';
 
 export const E2E_ASSEMBLY_FOLDER_PATH =
   '../../assembly/target/package/verified-db-noexe';
@@ -26,5 +26,5 @@ export const EML_CONTACT_FILE = 'eml-contact\\.xml';
 export const TEST_CONFIG_FILE = 'test\\.xml';
 
 export const EXECUTABLE_DIR_PATH = path.resolve(
-  process.env.PORTABLE_EXECUTABLE_DIR
+  process.env.PORTABLE_EXECUTABLE_DIR,
 );
