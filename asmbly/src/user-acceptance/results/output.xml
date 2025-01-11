@@ -1,0 +1,1114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Rebot 7.1.1 (Python 3.12.6 on win32)" generated="2025-01-11T09:04:20.353815" rpa="false" schemaversion="5">
+<suite id="s1" name="Tests" source="C:\Projects\all-repos\src\products\reportburster\assembly\src\user-acceptance\tests">
+<suite id="s1-s1" name="ReportBurster-Server" source="C:\Projects\all-repos\src\products\reportburster\assembly\src\user-acceptance\tests\ReportBurster-Server.robot">
+<test id="s1-s1-t1" name="startServer.bat and shutServer.bat Scripts Should Work Fine" line="15">
+<kw name="Clean Output Folders And Log Files" owner="utilities" type="SETUP">
+<msg time="2025-01-11T09:00:26.457832" level="TRACE">Arguments: [ product='server' ]</msg>
+<msg time="2025-01-11T09:00:26.457832" level="TRACE">Return: None</msg>
+<arg>product=server</arg>
+<status status="PASS" start="2025-01-11T09:00:26.457832" elapsed="0.000955"/>
+</kw>
+<kw name="Ensure Chocolatey Is Installed" owner="utilities">
+<msg time="2025-01-11T09:00:26.458787" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-11T09:00:27.341476" level="INFO">Output of 'choco -v': 2.4.1
+
+Chocolatey is already installed.</msg>
+<msg time="2025-01-11T09:00:27.341476" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-11T09:00:26.458787" elapsed="0.882689"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-11T09:00:27.341476" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-11T09:00:28.342298" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-11T09:00:28.342298" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-11T09:00:27.341476" elapsed="1.000822"/>
+</kw>
+<kw name="Refresh Env Variables" owner="utilities">
+<msg time="2025-01-11T09:00:28.344128" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-11T09:00:28.675784" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-11T09:00:28.343122" elapsed="0.332662"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-11T09:00:28.675784" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-11T09:00:29.676406" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-11T09:00:29.676406" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-11T09:00:28.675784" elapsed="1.000622"/>
+</kw>
+<kw name="Ensure Java Is Installed" owner="utilities">
+<msg time="2025-01-11T09:00:29.677447" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-11T09:00:29.781756" level="INFO">Java 11 is already installed.
+Java 11 has been installed.</msg>
+<msg time="2025-01-11T09:00:29.781756" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-11T09:00:29.677447" elapsed="0.104309"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-11T09:00:29.781756" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-11T09:00:30.782719" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-11T09:00:30.783386" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-11T09:00:29.781756" elapsed="1.001630"/>
+</kw>
+<kw name="Refresh Env Variables" owner="utilities">
+<msg time="2025-01-11T09:00:30.784436" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-11T09:00:31.104512" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-11T09:00:30.784436" elapsed="0.320076"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-11T09:00:31.105562" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-11T09:00:32.106230" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-11T09:00:32.106230" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-11T09:00:31.105562" elapsed="1.000668"/>
+</kw>
+<kw name="startServer.bat and shutServer.bat Should Work Fine" owner="utilities">
+<msg time="2025-01-11T09:00:32.106726" level="TRACE">Arguments: [  ]</msg>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-11T09:00:32.107782" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-11T09:00:33.108610" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-11T09:00:33.108610" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-11T09:00:32.106726" elapsed="1.001884"/>
+</kw>
+<kw name="Start Server" owner="utilities">
+<msg time="2025-01-11T09:00:33.108610" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-11T09:00:33.110136" level="TRACE">Return: &lt;Popen: returncode: None args: ['cmd.exe', '/c', 'C:\\Projects\\all-repos\\s...&gt;</msg>
+<status status="PASS" start="2025-01-11T09:00:33.108610" elapsed="0.001526"/>
+</kw>
+<kw name="Wait Until Keyword Succeeds" owner="BuiltIn">
+<msg time="2025-01-11T09:00:33.110136" level="TRACE">Arguments: [ '10x' | '3s' | 'Check Server Is Running' ]</msg>
+<kw name="Check Server Is Running">
+<msg time="2025-01-11T09:00:33.111140" level="TRACE">Arguments: [  ]</msg>
+<kw name="Create Session" owner="RequestsLibrary">
+<msg time="2025-01-11T09:00:33.111140" level="TRACE">Arguments: [ 'server' | 'http://localhost:9090' ]</msg>
+<msg time="2025-01-11T09:00:33.111140" level="INFO">Creating Session using : alias=server, url=http://localhost:9090, headers={},                     cookies={}, auth=None, timeout=None, proxies=None, verify=False,                     debug=0 </msg>
+<msg time="2025-01-11T09:00:33.111140" level="DEBUG">Creating session: server</msg>
+<msg time="2025-01-11T09:00:33.111140" level="TRACE">Return: &lt;requests.sessions.Session object at 0x000001C58FBBDD60&gt;</msg>
+<arg>server</arg>
+<arg>${SERVER_URL}</arg>
+<doc>Create Session: create a HTTP session to a server</doc>
+<status status="PASS" start="2025-01-11T09:00:33.111140" elapsed="0.000000"/>
+</kw>
+<kw name="GET On Session" owner="RequestsLibrary">
+<msg time="2025-01-11T09:00:33.112089" level="TRACE">Arguments: [ 'server' | '/' ]</msg>
+<msg time="2025-01-11T09:00:33.112089" level="DEBUG">Starting new HTTP connection (1): localhost:9090</msg>
+<msg time="2025-01-11T09:00:37.170966" level="DEBUG">Incremented Retry for (url='/'): RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)</msg>
+<msg time="2025-01-11T09:00:37.171967" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD6330&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:00:37.173911" level="DEBUG">Starting new HTTP connection (2): localhost:9090</msg>
+<msg time="2025-01-11T09:00:41.215691" level="DEBUG">Incremented Retry for (url='/'): RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)</msg>
+<msg time="2025-01-11T09:00:41.416331" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD6D20&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:00:41.416331" level="DEBUG">Starting new HTTP connection (3): localhost:9090</msg>
+<msg time="2025-01-11T09:00:45.496005" level="DEBUG">Incremented Retry for (url='/'): RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)</msg>
+<msg time="2025-01-11T09:00:45.897024" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD4200&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:00:45.898026" level="DEBUG">Starting new HTTP connection (4): localhost:9090</msg>
+<msg time="2025-01-11T09:00:47.018357" level="DEBUG">http://localhost:9090 "GET / HTTP/1.1" 200 4962</msg>
+<msg time="2025-01-11T09:00:47.018357" level="INFO">GET Request : url=http://localhost:9090/ 
+ path_url=/ 
+ headers={'User-Agent': 'python-requests/2.32.3', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive'} 
+ body=None 
+ </msg>
+<msg time="2025-01-11T09:00:47.018357" level="INFO">GET Response : url=http://localhost:9090/ 
+ status=200, reason= 
+ headers={'Access-Control-Allow-Credentials': 'true', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, PUT, POST, DELETE, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Vary': 'Origin, Access-Control-Request-Method, Access-Control-Request-Headers', 'Last-Modified': 'Fri, 10 Jan 2025 13:31:58 GMT', 'Accept-Ranges': 'bytes', 'Content-Type': 'text/html;charset=UTF-8', 'Content-Language': 'en-US', 'Content-Length': '4962', 'Date': 'Sat, 11 Jan 2025 08:00:47 GMT', 'Keep-Alive': 'timeout=60', 'Connection': 'keep-alive'} 
+ body=&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;
+    &lt;meta charset="utf-8"&gt;
+    &lt;title&gt;&lt;/title&gt;
+    &lt;base href="/"&gt;
+
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+    &lt;link rel="icon" type="image/x-icon" href="assets/icons/icon.ico"&gt;
+  &lt;style&gt;html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}@media print{*,:after,:before{color:#000!important;text-shadow:none!important;background:0 0!important;box-shadow:none!important}}:after,:before{box-sizing:border-box}html{font-size:10px;-webkit-tap-highlight-color:rgba(0,0,0,0)}body{font-family:Helvetica Neue,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.42857143;color:#333;background-color:#fff}@charset "UTF-8";html,body{height:100%}body{font-family:Source Sans Pro,Helvetica Neue,Helvetica,Arial,sans-serif;font-weight:400;overflow-x:hidden;overflow-y:auto}:root{--surface-a:#ffffff;--surface-b:#efefef;--surface-c:#e9ecef;--surface-d:#dee2e6;--surface-e:#ffffff;--surface-f:#ffffff;--text-color:#212529;--text-color-secondary:#6c757d;--primary-color:#007bff;--primary-color-text:#ffffff;--font-family:-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;--surface-0:#ffffff;--surface-50:#f9fafb;--surface-100:#f8f9fa;--surface-200:#e9ecef;--surface-300:#dee2e6;--surface-400:#ced4da;--surface-500:#adb5bd;--surface-600:#6c757d;--surface-700:#495057;--surface-800:#343a40;--surface-900:#212529;--gray-50:#f9fafb;--gray-100:#f8f9fa;--gray-200:#e9ecef;--gray-300:#dee2e6;--gray-400:#ced4da;--gray-500:#adb5bd;--gray-600:#6c757d;--gray-700:#495057;--gray-800:#343a40;--gray-900:#212529;--content-padding:1.25rem;--inline-spacing:.5rem;--border-radius:4px;--surface-ground:#efefef;--surface-section:#ffffff;--surface-card:#ffffff;--surface-overlay:#ffffff;--surface-border:#dee2e6;--surface-hover:#e9ecef;--maskbg:rgba(0, 0, 0, .4);--focus-ring:0 0 0 .2rem rgba(38, 143, 255, .5);color-scheme:light}*{box-sizing:border-box}:root{--blue-50:#f3f8ff;--blue-100:#c5dcff;--blue-200:#97c1fe;--blue-300:#69a5fe;--blue-400:#3b8afd;--blue-500:#0d6efd;--blue-600:#0b5ed7;--blue-700:#094db1;--blue-800:#073d8b;--blue-900:#052c65;--green-50:#f4f9f6;--green-100:#c8e2d6;--green-200:#9ccbb5;--green-300:#70b595;--green-400:#459e74;--green-500:#198754;--green-600:#157347;--green-700:#125f3b;--green-800:#0e4a2e;--green-900:#0a3622;--yellow-50:#fffcf3;--yellow-100:#fff0c3;--yellow-200:#ffe494;--yellow-300:#ffd965;--yellow-400:#ffcd36;--yellow-500:#ffc107;--yellow-600:#d9a406;--yellow-700:#b38705;--yellow-800:#8c6a04;--yellow-900:#664d03;--cyan-50:#f3fcfe;--cyan-100:#c5f2fb;--cyan-200:#97e8f9;--cyan-300:#69def6;--cyan-400:#3bd4f3;--cyan-500:#0dcaf0;--cyan-600:#0baccc;--cyan-700:#098da8;--cyan-800:#076f84;--cyan-900:#055160;--pink-50:#fdf5f9;--pink-100:#f5cee1;--pink-200:#eda7ca;--pink-300:#e681b3;--pink-400:#de5a9b;--pink-500:#d63384;--pink-600:#b62b70;--pink-700:#96245c;--pink-800:#761c49;--pink-900:#561435;--indigo-50:#f7f3fe;--indigo-100:#dac6fc;--indigo-200:#bd98f9;--indigo-300:#a06bf7;--indigo-400:#833df4;--indigo-500:#6610f2;--indigo-600:#570ece;--indigo-700:#470ba9;--indigo-800:#380985;--indigo-900:#290661;--teal-50:#f4fcfa;--teal-100:#c9f2e6;--teal-200:#9fe8d2;--teal-300:#75debf;--teal-400:#4ad3ab;--teal-500:#20c997;--teal-600:#1bab80;--teal-700:#168d6a;--teal-800:#126f53;--teal-900:#0d503c;--orange-50:#fff9f3;--orange-100:#ffe0c7;--orange-200:#fec89a;--orange-300:#feaf6d;--orange-400:#fd9741;--orange-500:#fd7e14;--orange-600:#d76b11;--orange-700:#b1580e;--orange-800:#8b450b;--orange-900:#653208;--bluegray-50:#f8f9fb;--bluegray-100:#e0e4ea;--bluegray-200:#c7ced9;--bluegray-300:#aeb9c8;--bluegray-400:#95a3b8;--bluegray-500:#7c8ea7;--bluegray-600:#69798e;--bluegray-700:#576375;--bluegray-800:#444e5c;--bluegray-900:#323943;--purple-50:#f8f6fc;--purple-100:#dcd2f0;--purple-200:#c1aee4;--purple-300:#a68ad9;--purple-400:#8a66cd;--purple-500:#6f42c1;--purple-600:#5e38a4;--purple-700:#4e2e87;--purple-800:#3d246a;--purple-900:#2c1a4d;--red-50:#fdf5f6;--red-100:#f7cfd2;--red-200:#f0a8af;--red-300:#e9828c;--red-400:#e35b68;--red-500:#dc3545;--red-600:#bb2d3b;--red-700:#9a2530;--red-800:#791d26;--red-900:#58151c;--primary-50:#f2f8ff;--primary-100:#c2dfff;--primary-200:#91c6ff;--primary-300:#61adff;--primary-400:#3094ff;--primary-500:#007bff;--primary-600:#0069d9;--primary-700:#0056b3;--primary-800:#00448c;--primary-900:#003166}&lt;/style&gt;&lt;link rel="stylesheet" href="styles.25311701cd7e1e35.css" media="print" onload="this.media='all'"&gt;&lt;noscript&gt;&lt;link rel="stylesheet" href="styles.25311701cd7e1e35.css"&gt;&lt;/noscript&gt;&lt;/head&gt;
+  &lt;body class="skin-blue"&gt;
+    &lt;app-root&gt;Loading...&lt;/app-root&gt;
+  &lt;script src="runtime.c1bd29ecf74be03c.js" type="module"&gt;&lt;/script&gt;&lt;script src="polyfills.4ae72b598e1b5927.js" type="module"&gt;&lt;/script&gt;&lt;script src="scripts.2212ee5021e2179d.js" defer&gt;&lt;/script&gt;&lt;script src="main.fc91aa85a54c2943.js" type="module"&gt;&lt;/script&gt;
+
+&lt;/body&gt;&lt;/html&gt; 
+ </msg>
+<msg time="2025-01-11T09:00:47.019357" level="TRACE">Return: &lt;Response [200]&gt;</msg>
+<msg time="2025-01-11T09:00:47.019357" level="INFO">${response} = &lt;Response [200]&gt;</msg>
+<var>${response}</var>
+<arg>server</arg>
+<arg>/</arg>
+<doc>Sends a GET request on a previously created HTTP Session.</doc>
+<status status="PASS" start="2025-01-11T09:00:33.112089" elapsed="13.907268"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:00:47.019357" level="TRACE">Arguments: [ 200 | '200' ]</msg>
+<msg time="2025-01-11T09:00:47.020356" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:00:47.020356" level="TRACE">Return: None</msg>
+<arg>${response.status_code}</arg>
+<arg>200</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="PASS" start="2025-01-11T09:00:47.019357" elapsed="0.000999"/>
+</kw>
+<msg time="2025-01-11T09:00:47.020356" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-11T09:00:33.111140" elapsed="13.909216"/>
+</kw>
+<msg time="2025-01-11T09:00:47.020356" level="TRACE">Return: None</msg>
+<arg>10x</arg>
+<arg>3s</arg>
+<arg>Check Server Is Running</arg>
+<doc>Runs the specified keyword and retries if it fails.</doc>
+<status status="PASS" start="2025-01-11T09:00:33.110136" elapsed="13.910220"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-11T09:00:47.020356" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-11T09:00:48.021108" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-11T09:00:48.021108" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-11T09:00:47.020356" elapsed="1.000752"/>
+</kw>
+<kw name="Copy File" owner="OperatingSystem">
+<msg time="2025-01-11T09:00:48.021108" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/samples/burst/Payslips.pdf' | 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/poll' ]</msg>
+<msg time="2025-01-11T09:00:48.023929" level="INFO" html="true">Copied file from '&lt;a href="file://C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\samples\burst\Payslips.pdf"&gt;C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\samples\burst\Payslips.pdf&lt;/a&gt;' to '&lt;a href="file://C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\poll\Payslips.pdf"&gt;C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\poll\Payslips.pdf&lt;/a&gt;'.</msg>
+<msg time="2025-01-11T09:00:48.023929" level="TRACE">Return: 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target\\user-acceptance\\rb-server\\ReportBurster\\poll\\Payslips.pdf'</msg>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/samples/burst/Payslips.pdf</arg>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/poll</arg>
+<doc>Copies the source file into the destination.</doc>
+<status status="PASS" start="2025-01-11T09:00:48.021108" elapsed="0.002821"/>
+</kw>
+<kw name="Wait Until Keyword Succeeds" owner="BuiltIn">
+<msg time="2025-01-11T09:00:48.023929" level="TRACE">Arguments: [ '10x' | '3s' | 'Check PDF Files Generated' | '3' ]</msg>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:00:48.024928" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:00:48.024928" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:00:48.024928" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:00:48.024928" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:00:48.024928" elapsed="0.000000"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:00:48.025928" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:00:48.025928" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:00:48.025928" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:00:48.025928" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:00:48.024928" elapsed="0.001000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:00:48.023929" elapsed="0.001999">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:00:51.027834" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:00:51.028829" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:00:51.029829" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:00:51.030830" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:00:51.028829" elapsed="0.002001"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:00:51.031784" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:00:51.031784" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:00:51.031784" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:00:51.032830" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:00:51.030830" elapsed="0.002000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:00:51.026840" elapsed="0.005990">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:00:54.034230" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:00:54.036228" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:00:54.037227" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:00:54.037227" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:00:54.035228" elapsed="0.001999"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:00:54.038203" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:00:54.038203" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:00:54.038203" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:00:54.038203" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:00:54.037227" elapsed="0.000976">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:00:54.033501" elapsed="0.004702">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:00:57.038515" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:00:57.038515" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:00:57.038515" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:00:57.038515" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:00:57.038515" elapsed="0.001001"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:00:57.039516" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:00:57.039516" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:00:57.039516" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:00:57.039516" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:00:57.039516" elapsed="0.000000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:00:57.038515" elapsed="0.001001">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:01:00.039795" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:01:00.039795" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:01:00.040796" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:01:00.040796" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:01:00.039795" elapsed="0.001001"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:01:00.040796" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:01:00.040796" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:01:00.040796" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:01:00.040796" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:01:00.040796" elapsed="0.000000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:01:00.039795" elapsed="0.001001">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:01:03.041539" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:01:03.041539" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:01:03.042593" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:01:03.042593" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:01:03.041539" elapsed="0.001054"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:01:03.042593" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:01:03.042593" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:01:03.042593" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:01:03.042593" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:01:03.042593" elapsed="0.000000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:01:03.041539" elapsed="0.001054">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:01:06.043661" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:01:06.044653" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:01:06.045658" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:01:06.046659" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:01:06.044653" elapsed="0.002006"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:01:06.047642" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:01:06.047642" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:01:06.047642" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:01:06.047642" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:01:06.046659" elapsed="0.000983">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:01:06.042924" elapsed="0.004718">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:01:09.048534" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:01:09.048534" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:01:09.049532" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:01:09.049532" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:01:09.048534" elapsed="0.000998"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:01:09.049532" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:01:09.050530" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:01:09.050530" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:01:09.050530" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:01:09.049532" elapsed="0.000998">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:01:09.047916" elapsed="0.002614">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:01:12.050686" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:01:12.051320" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:01:12.051320" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:01:12.051320" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:01:12.051320" elapsed="0.000000"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:01:12.051320" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:01:12.052318" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:01:12.052318" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:01:12.052318" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:01:12.051320" elapsed="0.000998">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:01:12.050686" elapsed="0.001632">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:01:15.053728" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:01:15.054724" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:01:15.055725" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:01:15.055725" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:01:15.053728" elapsed="0.001997"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:01:15.056701" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:01:15.056701" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:01:15.056701" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:01:15.056701" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:01:15.056701" elapsed="0.000000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:01:15.052652" elapsed="0.004049">0 != 3</status>
+</kw>
+<msg time="2025-01-11T09:01:15.056701" level="FAIL">Keyword 'Check PDF Files Generated' failed after retrying 10 times. The last error was: 0 != 3</msg>
+<msg time="2025-01-11T09:01:15.056701" level="DEBUG">robot.errors.UserKeywordExecutionFailed: 0 != 3
+
+During handling of the above exception, another exception occurred:
+
+AssertionError: Keyword 'Check PDF Files Generated' failed after retrying 10 times. The last error was: 0 != 3</msg>
+<arg>10x</arg>
+<arg>3s</arg>
+<arg>Check PDF Files Generated</arg>
+<arg>3</arg>
+<doc>Runs the specified keyword and retries if it fails.</doc>
+<status status="FAIL" start="2025-01-11T09:00:48.023929" elapsed="27.032772">Keyword 'Check PDF Files Generated' failed after retrying 10 times. The last error was: 0 != 3</status>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2025-01-11T09:01:15.056701" elapsed="0.000000"/>
+</kw>
+<kw name="Shut Server" owner="utilities">
+<status status="NOT RUN" start="2025-01-11T09:01:15.057703" elapsed="0.000000"/>
+</kw>
+<kw name="Wait Until Keyword Succeeds" owner="BuiltIn">
+<arg>10x</arg>
+<arg>3s</arg>
+<arg>Check Server Is Not Running</arg>
+<doc>Runs the specified keyword and retries if it fails.</doc>
+<status status="NOT RUN" start="2025-01-11T09:01:15.057703" elapsed="0.000000"/>
+</kw>
+<status status="FAIL" start="2025-01-11T09:00:32.106726" elapsed="42.950977">Keyword 'Check PDF Files Generated' failed after retrying 10 times. The last error was: 0 != 3</status>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2025-01-11T09:01:15.057703" elapsed="0.000000"/>
+</kw>
+<kw name="Ensure Java Is Not Installed" owner="utilities">
+<status status="NOT RUN" start="2025-01-11T09:01:15.058662" elapsed="0.000000"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2025-01-11T09:01:15.058662" elapsed="0.000000"/>
+</kw>
+<kw name="Refresh Env Variables" owner="utilities">
+<status status="NOT RUN" start="2025-01-11T09:01:15.058662" elapsed="0.000000"/>
+</kw>
+<kw name="Shut Server" owner="utilities" type="TEARDOWN">
+<msg time="2025-01-11T09:01:15.059662" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-11T09:01:15.060663" level="TRACE">Return: &lt;Popen: returncode: None args: ['cmd.exe', '/c', 'C:\\Projects\\all-repos\\s...&gt;</msg>
+<status status="PASS" start="2025-01-11T09:01:15.059662" elapsed="0.001001"/>
+</kw>
+<doc>startServer.bat and shutServer.bat Scripts Should Work Fine</doc>
+<status status="FAIL" start="2025-01-11T09:00:26.455783" elapsed="48.605882">Keyword 'Check PDF Files Generated' failed after retrying 10 times. The last error was: 0 != 3
+[RETRY] FAIL on 3. retry.</status>
+</test>
+<test id="s1-s1-t2" name="service.bat Should Work Fine" line="36">
+<kw name="Clean Output Folders And Log Files" owner="utilities" type="SETUP">
+<msg time="2025-01-11T09:03:33.996866" level="TRACE">Arguments: [ product='server' ]</msg>
+<msg time="2025-01-11T09:03:33.997878" level="TRACE">Return: None</msg>
+<arg>product=server</arg>
+<status status="PASS" start="2025-01-11T09:03:33.996866" elapsed="0.001012"/>
+</kw>
+<kw name="Ensure Chocolatey Is Installed" owner="utilities">
+<msg time="2025-01-11T09:03:33.998867" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-11T09:03:34.897862" level="INFO">Output of 'choco -v': 2.4.1
+
+Chocolatey is already installed.</msg>
+<msg time="2025-01-11T09:03:34.897862" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-11T09:03:33.997878" elapsed="0.899984"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-11T09:03:34.898861" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-11T09:03:35.899574" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-11T09:03:35.899574" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-11T09:03:34.898861" elapsed="1.000713"/>
+</kw>
+<kw name="Refresh Env Variables" owner="utilities">
+<msg time="2025-01-11T09:03:35.899574" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-11T09:03:36.246150" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-11T09:03:35.899574" elapsed="0.346576"/>
+</kw>
+<kw name="Ensure Java Is Installed" owner="utilities">
+<msg time="2025-01-11T09:03:36.247196" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-11T09:03:36.352224" level="INFO">Java 11 is already installed.
+Java 11 has been installed.</msg>
+<msg time="2025-01-11T09:03:36.352224" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-11T09:03:36.247196" elapsed="0.105028"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-11T09:03:36.353224" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-11T09:03:37.353829" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-11T09:03:37.353829" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-11T09:03:36.353224" elapsed="1.000605"/>
+</kw>
+<kw name="Refresh Env Variables" owner="utilities">
+<msg time="2025-01-11T09:03:37.354840" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-11T09:03:37.690493" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-11T09:03:37.354840" elapsed="0.335653"/>
+</kw>
+<kw name="Service Uninstall" owner="utilities">
+<msg time="2025-01-11T09:03:37.690493" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-11T09:03:38.318942" level="TRACE">Return: "2025-01-11 09:03:38,296 INFO  - Uninstalling service 'ReportBurster Server (rbsj)'...\r\n2025-01-11 09:03:38,302 INFO  - Service 'ReportBurster Server (rbsj)' was uninstalled successfully.\r\nService ReportBurster Server removed\r\n"</msg>
+<msg time="2025-01-11T09:03:38.319942" level="INFO">${output} = 2025-01-11 09:03:38,296 INFO  - Uninstalling service 'ReportBurster Server (rbsj)'...
+2025-01-11 09:03:38,302 INFO  - Service 'ReportBurster Server (rbsj)' was uninstalled successfully.
+Service Repo...</msg>
+<var>${output}</var>
+<status status="PASS" start="2025-01-11T09:03:37.690493" elapsed="0.629449"/>
+</kw>
+<kw name="Text Contains Either" owner="utilities">
+<msg time="2025-01-11T09:03:38.319942" level="TRACE">Arguments: [ "2025-01-11 09:03:38,296 INFO  - Uninstalling service 'ReportBurster Server (rbsj)'...\r\n2025-01-11 09:03:38,302 INFO  - Service 'ReportBurster Server (rbsj)' was uninstalled successfully.\r\nService ReportBurster Server removed\r\n" | 'uninstalled successfully' | 'does not exist' ]</msg>
+<msg time="2025-01-11T09:03:38.319942" level="TRACE">Return: True</msg>
+<arg>${output}</arg>
+<arg>uninstalled successfully</arg>
+<arg>does not exist</arg>
+<status status="PASS" start="2025-01-11T09:03:38.319942" elapsed="0.000000"/>
+</kw>
+<kw name="Service Install" owner="utilities">
+<msg time="2025-01-11T09:03:38.320960" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-11T09:03:38.955150" level="TRACE">Return: "2025-01-11 09:03:38,920 INFO  - Installing service 'ReportBurster Server (rbsj)'...\r\n2025-01-11 09:03:38,939 INFO  - Service 'ReportBurster Server (rbsj)' was installed successfully.\r\nService ReportBurster Server installed\r\n"</msg>
+<msg time="2025-01-11T09:03:38.955150" level="INFO">${output} = 2025-01-11 09:03:38,920 INFO  - Installing service 'ReportBurster Server (rbsj)'...
+2025-01-11 09:03:38,939 INFO  - Service 'ReportBurster Server (rbsj)' was installed successfully.
+Service ReportBu...</msg>
+<var>${output}</var>
+<status status="PASS" start="2025-01-11T09:03:38.320960" elapsed="0.634190"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<msg time="2025-01-11T09:03:38.956150" level="TRACE">Arguments: [ "2025-01-11 09:03:38,920 INFO  - Installing service 'ReportBurster Server (rbsj)'...\r\n2025-01-11 09:03:38,939 INFO  - Service 'ReportBurster Server (rbsj)' was installed successfully.\r\nService ReportBurster Server installed\r\n" | 'installed successfully' ]</msg>
+<msg time="2025-01-11T09:03:38.956150" level="TRACE">Return: None</msg>
+<arg>${output}</arg>
+<arg>installed successfully</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2025-01-11T09:03:38.956150" elapsed="0.000000"/>
+</kw>
+<kw name="Run" owner="OperatingSystem">
+<msg time="2025-01-11T09:03:38.956150" level="TRACE">Arguments: [ 'sc query rbsj' ]</msg>
+<msg time="2025-01-11T09:03:38.958150" level="INFO">Running command 'sc query rbsj 2&gt;&amp;1'.</msg>
+<msg time="2025-01-11T09:03:38.973150" level="TRACE">Return: '\nSERVICE_NAME: rbsj \n        TYPE               : 10  WIN32_OWN_PROCESS  \n        STATE              : 1  STOPPED \n        WIN32_EXIT_CODE    : 1077  (0x435)\n        SERVICE_EXIT_CODE  : 0  (0x0)\n        CHECKPOINT         : 0x0\n        WAIT_HINT          : 0x0'</msg>
+<msg time="2025-01-11T09:03:38.973150" level="INFO">${service_status} = 
+SERVICE_NAME: rbsj 
+        TYPE               : 10  WIN32_OWN_PROCESS  
+        STATE              : 1  STOPPED 
+        WIN32_EXIT_CODE    : 1077  (0x435)
+        SERVICE_EXIT_CODE  : 0  (0x0)
+    ...</msg>
+<var>${service_status}</var>
+<arg>sc query rbsj</arg>
+<doc>Runs the given command in the system and returns the output.</doc>
+<status status="PASS" start="2025-01-11T09:03:38.956150" elapsed="0.017000"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<msg time="2025-01-11T09:03:38.973150" level="TRACE">Arguments: [ '\nSERVICE_NAME: rbsj \n        TYPE               : 10  WIN32_OWN_PROCESS  \n        STATE              : 1  STOPPED \n        WIN32_EXIT_CODE    : 1077  (0x435)\n        SERVICE_EXIT_CODE  : 0  (0x0)\n        CHECKPOINT         : 0x0\n        WAIT_HINT          : 0x0' | 'STOPPED' ]</msg>
+<msg time="2025-01-11T09:03:38.973150" level="TRACE">Return: None</msg>
+<arg>${service_status}</arg>
+<arg>STOPPED</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="PASS" start="2025-01-11T09:03:38.973150" elapsed="0.000000"/>
+</kw>
+<kw name="Run" owner="OperatingSystem">
+<msg time="2025-01-11T09:03:38.973150" level="TRACE">Arguments: [ 'sc start rbsj' ]</msg>
+<msg time="2025-01-11T09:03:38.975150" level="INFO">Running command 'sc start rbsj 2&gt;&amp;1'.</msg>
+<msg time="2025-01-11T09:03:39.382173" level="TRACE">Return: '\nSERVICE_NAME: rbsj \n        TYPE               : 10  WIN32_OWN_PROCESS  \n        STATE              : 2  START_PENDING \n                                (NOT_STOPPABLE, NOT_PAUSABLE, IGNORES_SHUTDOWN)\n        WIN32_EXIT_CODE    : 0  (0x0)\n        SERVICE_EXIT_CODE  : 0  (0x0)\n        CHECKPOINT         : 0x0\n        WAIT_HINT          : 0x7d0\n        PID                : 16212\n        FLAGS              : '</msg>
+<arg>sc start rbsj</arg>
+<doc>Runs the given command in the system and returns the output.</doc>
+<status status="PASS" start="2025-01-11T09:03:38.973150" elapsed="0.409023"/>
+</kw>
+<kw name="Wait Until Keyword Succeeds" owner="BuiltIn">
+<msg time="2025-01-11T09:03:39.382173" level="TRACE">Arguments: [ '10x' | '3s' | 'Check Server Is Running' ]</msg>
+<kw name="Check Server Is Running">
+<msg time="2025-01-11T09:03:39.383172" level="TRACE">Arguments: [  ]</msg>
+<kw name="Create Session" owner="RequestsLibrary">
+<msg time="2025-01-11T09:03:39.383172" level="TRACE">Arguments: [ 'server' | 'http://localhost:9090' ]</msg>
+<msg time="2025-01-11T09:03:39.383172" level="INFO">Creating Session using : alias=server, url=http://localhost:9090, headers={},                     cookies={}, auth=None, timeout=None, proxies=None, verify=False,                     debug=0 </msg>
+<msg time="2025-01-11T09:03:39.383172" level="DEBUG">Creating session: server</msg>
+<msg time="2025-01-11T09:03:39.383172" level="TRACE">Return: &lt;requests.sessions.Session object at 0x000001C58FBD6CC0&gt;</msg>
+<arg>server</arg>
+<arg>${SERVER_URL}</arg>
+<doc>Create Session: create a HTTP session to a server</doc>
+<status status="PASS" start="2025-01-11T09:03:39.383172" elapsed="0.000000"/>
+</kw>
+<kw name="GET On Session" owner="RequestsLibrary">
+<msg time="2025-01-11T09:03:39.383172" level="TRACE">Arguments: [ 'server' | '/' ]</msg>
+<msg time="2025-01-11T09:03:39.384173" level="DEBUG">Starting new HTTP connection (1): localhost:9090</msg>
+<msg time="2025-01-11T09:03:43.427082" level="DEBUG">Incremented Retry for (url='/'): RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)</msg>
+<msg time="2025-01-11T09:03:43.427082" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD76E0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:03:43.427826" level="DEBUG">Starting new HTTP connection (2): localhost:9090</msg>
+<msg time="2025-01-11T09:03:47.463027" level="DEBUG">Incremented Retry for (url='/'): RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)</msg>
+<msg time="2025-01-11T09:03:47.663617" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD65A0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:03:47.664618" level="DEBUG">Starting new HTTP connection (3): localhost:9090</msg>
+<msg time="2025-01-11T09:03:51.717928" level="DEBUG">Incremented Retry for (url='/'): RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)</msg>
+<msg time="2025-01-11T09:03:52.118927" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD6AE0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:03:52.118927" level="DEBUG">Starting new HTTP connection (4): localhost:9090</msg>
+<msg time="2025-01-11T09:03:53.252837" level="DEBUG">http://localhost:9090 "GET / HTTP/1.1" 200 4962</msg>
+<msg time="2025-01-11T09:03:53.252837" level="INFO">GET Request : url=http://localhost:9090/ 
+ path_url=/ 
+ headers={'User-Agent': 'python-requests/2.32.3', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive'} 
+ body=None 
+ </msg>
+<msg time="2025-01-11T09:03:53.252837" level="INFO">GET Response : url=http://localhost:9090/ 
+ status=200, reason= 
+ headers={'Access-Control-Allow-Credentials': 'true', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, PUT, POST, DELETE, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Vary': 'Origin, Access-Control-Request-Method, Access-Control-Request-Headers', 'Last-Modified': 'Fri, 10 Jan 2025 13:31:58 GMT', 'Accept-Ranges': 'bytes', 'Content-Type': 'text/html;charset=UTF-8', 'Content-Language': 'en-US', 'Content-Length': '4962', 'Date': 'Sat, 11 Jan 2025 08:03:53 GMT', 'Keep-Alive': 'timeout=60', 'Connection': 'keep-alive'} 
+ body=&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;
+    &lt;meta charset="utf-8"&gt;
+    &lt;title&gt;&lt;/title&gt;
+    &lt;base href="/"&gt;
+
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+    &lt;link rel="icon" type="image/x-icon" href="assets/icons/icon.ico"&gt;
+  &lt;style&gt;html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}@media print{*,:after,:before{color:#000!important;text-shadow:none!important;background:0 0!important;box-shadow:none!important}}:after,:before{box-sizing:border-box}html{font-size:10px;-webkit-tap-highlight-color:rgba(0,0,0,0)}body{font-family:Helvetica Neue,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.42857143;color:#333;background-color:#fff}@charset "UTF-8";html,body{height:100%}body{font-family:Source Sans Pro,Helvetica Neue,Helvetica,Arial,sans-serif;font-weight:400;overflow-x:hidden;overflow-y:auto}:root{--surface-a:#ffffff;--surface-b:#efefef;--surface-c:#e9ecef;--surface-d:#dee2e6;--surface-e:#ffffff;--surface-f:#ffffff;--text-color:#212529;--text-color-secondary:#6c757d;--primary-color:#007bff;--primary-color-text:#ffffff;--font-family:-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;--surface-0:#ffffff;--surface-50:#f9fafb;--surface-100:#f8f9fa;--surface-200:#e9ecef;--surface-300:#dee2e6;--surface-400:#ced4da;--surface-500:#adb5bd;--surface-600:#6c757d;--surface-700:#495057;--surface-800:#343a40;--surface-900:#212529;--gray-50:#f9fafb;--gray-100:#f8f9fa;--gray-200:#e9ecef;--gray-300:#dee2e6;--gray-400:#ced4da;--gray-500:#adb5bd;--gray-600:#6c757d;--gray-700:#495057;--gray-800:#343a40;--gray-900:#212529;--content-padding:1.25rem;--inline-spacing:.5rem;--border-radius:4px;--surface-ground:#efefef;--surface-section:#ffffff;--surface-card:#ffffff;--surface-overlay:#ffffff;--surface-border:#dee2e6;--surface-hover:#e9ecef;--maskbg:rgba(0, 0, 0, .4);--focus-ring:0 0 0 .2rem rgba(38, 143, 255, .5);color-scheme:light}*{box-sizing:border-box}:root{--blue-50:#f3f8ff;--blue-100:#c5dcff;--blue-200:#97c1fe;--blue-300:#69a5fe;--blue-400:#3b8afd;--blue-500:#0d6efd;--blue-600:#0b5ed7;--blue-700:#094db1;--blue-800:#073d8b;--blue-900:#052c65;--green-50:#f4f9f6;--green-100:#c8e2d6;--green-200:#9ccbb5;--green-300:#70b595;--green-400:#459e74;--green-500:#198754;--green-600:#157347;--green-700:#125f3b;--green-800:#0e4a2e;--green-900:#0a3622;--yellow-50:#fffcf3;--yellow-100:#fff0c3;--yellow-200:#ffe494;--yellow-300:#ffd965;--yellow-400:#ffcd36;--yellow-500:#ffc107;--yellow-600:#d9a406;--yellow-700:#b38705;--yellow-800:#8c6a04;--yellow-900:#664d03;--cyan-50:#f3fcfe;--cyan-100:#c5f2fb;--cyan-200:#97e8f9;--cyan-300:#69def6;--cyan-400:#3bd4f3;--cyan-500:#0dcaf0;--cyan-600:#0baccc;--cyan-700:#098da8;--cyan-800:#076f84;--cyan-900:#055160;--pink-50:#fdf5f9;--pink-100:#f5cee1;--pink-200:#eda7ca;--pink-300:#e681b3;--pink-400:#de5a9b;--pink-500:#d63384;--pink-600:#b62b70;--pink-700:#96245c;--pink-800:#761c49;--pink-900:#561435;--indigo-50:#f7f3fe;--indigo-100:#dac6fc;--indigo-200:#bd98f9;--indigo-300:#a06bf7;--indigo-400:#833df4;--indigo-500:#6610f2;--indigo-600:#570ece;--indigo-700:#470ba9;--indigo-800:#380985;--indigo-900:#290661;--teal-50:#f4fcfa;--teal-100:#c9f2e6;--teal-200:#9fe8d2;--teal-300:#75debf;--teal-400:#4ad3ab;--teal-500:#20c997;--teal-600:#1bab80;--teal-700:#168d6a;--teal-800:#126f53;--teal-900:#0d503c;--orange-50:#fff9f3;--orange-100:#ffe0c7;--orange-200:#fec89a;--orange-300:#feaf6d;--orange-400:#fd9741;--orange-500:#fd7e14;--orange-600:#d76b11;--orange-700:#b1580e;--orange-800:#8b450b;--orange-900:#653208;--bluegray-50:#f8f9fb;--bluegray-100:#e0e4ea;--bluegray-200:#c7ced9;--bluegray-300:#aeb9c8;--bluegray-400:#95a3b8;--bluegray-500:#7c8ea7;--bluegray-600:#69798e;--bluegray-700:#576375;--bluegray-800:#444e5c;--bluegray-900:#323943;--purple-50:#f8f6fc;--purple-100:#dcd2f0;--purple-200:#c1aee4;--purple-300:#a68ad9;--purple-400:#8a66cd;--purple-500:#6f42c1;--purple-600:#5e38a4;--purple-700:#4e2e87;--purple-800:#3d246a;--purple-900:#2c1a4d;--red-50:#fdf5f6;--red-100:#f7cfd2;--red-200:#f0a8af;--red-300:#e9828c;--red-400:#e35b68;--red-500:#dc3545;--red-600:#bb2d3b;--red-700:#9a2530;--red-800:#791d26;--red-900:#58151c;--primary-50:#f2f8ff;--primary-100:#c2dfff;--primary-200:#91c6ff;--primary-300:#61adff;--primary-400:#3094ff;--primary-500:#007bff;--primary-600:#0069d9;--primary-700:#0056b3;--primary-800:#00448c;--primary-900:#003166}&lt;/style&gt;&lt;link rel="stylesheet" href="styles.25311701cd7e1e35.css" media="print" onload="this.media='all'"&gt;&lt;noscript&gt;&lt;link rel="stylesheet" href="styles.25311701cd7e1e35.css"&gt;&lt;/noscript&gt;&lt;/head&gt;
+  &lt;body class="skin-blue"&gt;
+    &lt;app-root&gt;Loading...&lt;/app-root&gt;
+  &lt;script src="runtime.c1bd29ecf74be03c.js" type="module"&gt;&lt;/script&gt;&lt;script src="polyfills.4ae72b598e1b5927.js" type="module"&gt;&lt;/script&gt;&lt;script src="scripts.2212ee5021e2179d.js" defer&gt;&lt;/script&gt;&lt;script src="main.fc91aa85a54c2943.js" type="module"&gt;&lt;/script&gt;
+
+&lt;/body&gt;&lt;/html&gt; 
+ </msg>
+<msg time="2025-01-11T09:03:53.252837" level="TRACE">Return: &lt;Response [200]&gt;</msg>
+<msg time="2025-01-11T09:03:53.252837" level="INFO">${response} = &lt;Response [200]&gt;</msg>
+<var>${response}</var>
+<arg>server</arg>
+<arg>/</arg>
+<doc>Sends a GET request on a previously created HTTP Session.</doc>
+<status status="PASS" start="2025-01-11T09:03:39.383172" elapsed="13.869665"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:03:53.253883" level="TRACE">Arguments: [ 200 | '200' ]</msg>
+<msg time="2025-01-11T09:03:53.253883" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:03:53.253883" level="TRACE">Return: None</msg>
+<arg>${response.status_code}</arg>
+<arg>200</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="PASS" start="2025-01-11T09:03:53.253883" elapsed="0.000000"/>
+</kw>
+<msg time="2025-01-11T09:03:53.253883" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-11T09:03:39.383172" elapsed="13.870711"/>
+</kw>
+<msg time="2025-01-11T09:03:53.253883" level="TRACE">Return: None</msg>
+<arg>10x</arg>
+<arg>3s</arg>
+<arg>Check Server Is Running</arg>
+<doc>Runs the specified keyword and retries if it fails.</doc>
+<status status="PASS" start="2025-01-11T09:03:39.382173" elapsed="13.871710"/>
+</kw>
+<kw name="Copy File" owner="OperatingSystem">
+<msg time="2025-01-11T09:03:53.254841" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/samples/burst/Payslips.pdf' | 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/poll' ]</msg>
+<msg time="2025-01-11T09:03:53.256839" level="INFO" html="true">Copied file from '&lt;a href="file://C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\samples\burst\Payslips.pdf"&gt;C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\samples\burst\Payslips.pdf&lt;/a&gt;' to '&lt;a href="file://C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\poll\Payslips.pdf"&gt;C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\poll\Payslips.pdf&lt;/a&gt;'.</msg>
+<msg time="2025-01-11T09:03:53.256839" level="TRACE">Return: 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target\\user-acceptance\\rb-server\\ReportBurster\\poll\\Payslips.pdf'</msg>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/samples/burst/Payslips.pdf</arg>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/poll</arg>
+<doc>Copies the source file into the destination.</doc>
+<status status="PASS" start="2025-01-11T09:03:53.254841" elapsed="0.001998"/>
+</kw>
+<kw name="Wait Until Keyword Succeeds" owner="BuiltIn">
+<msg time="2025-01-11T09:03:53.257838" level="TRACE">Arguments: [ '10x' | '3s' | 'Check PDF Files Generated' | '3' ]</msg>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:03:53.257838" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:03:53.257838" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:03:53.257838" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:03:53.258885" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:03:53.257838" elapsed="0.001047"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:03:53.258885" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:03:53.258885" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:03:53.258885" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:03:53.258885" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:03:53.258885" elapsed="0.000000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:03:53.257838" elapsed="0.001047">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:03:56.259946" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:03:56.260604" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:03:56.261564" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:03:56.261564" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:03:56.260604" elapsed="0.000960"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:03:56.261564" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:03:56.261564" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:03:56.262564" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:03:56.262564" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:03:56.261564" elapsed="0.001000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:03:56.259946" elapsed="0.002618">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:03:59.263249" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:03:59.263249" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:03:59.264294" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:03:59.264294" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:03:59.263249" elapsed="0.001045"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:03:59.264294" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:03:59.264294" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:03:59.264294" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:03:59.264294" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:03:59.264294" elapsed="0.000000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:03:59.263249" elapsed="0.001045">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:04:02.264397" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:04:02.265448" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:02.265448" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:04:02.265448" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:04:02.264397" elapsed="0.001051"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:04:02.266448" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:04:02.266448" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:04:02.266448" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:04:02.266448" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:04:02.265448" elapsed="0.001000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:04:02.264397" elapsed="0.002051">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:04:05.267568" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:04:05.268557" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:05.269564" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:04:05.270568" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:04:05.268557" elapsed="0.002011"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:04:05.271563" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:04:05.271563" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:04:05.271563" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:04:05.271563" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:04:05.270568" elapsed="0.000995">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:04:05.266793" elapsed="0.004770">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:04:08.273281" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:04:08.274277" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:08.275277" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:04:08.275277" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:04:08.273281" elapsed="0.001996"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:04:08.276277" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:04:08.276277" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:04:08.276277" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:04:08.276277" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:04:08.276277" elapsed="0.000000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:04:08.272203" elapsed="0.005056">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:04:11.279004" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:04:11.280047" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:11.281049" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:04:11.281049" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:04:11.279004" elapsed="0.002045"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:04:11.282048" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:04:11.282048" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:04:11.282048" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:04:11.282048" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:04:11.282048" elapsed="0.000000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:04:11.277884" elapsed="0.005140">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:04:14.285791" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:04:14.285791" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:14.286821" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:04:14.286821" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:04:14.285791" elapsed="0.001030"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:04:14.286821" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:04:14.286821" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:04:14.286821" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:04:14.286821" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:04:14.286821" elapsed="0.000000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:04:14.284842" elapsed="0.001979">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:04:17.288286" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:04:17.289275" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:17.290281" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:04:17.290281" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:04:17.288286" elapsed="0.002989"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:04:17.292276" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:04:17.292276" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:04:17.292276" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:04:17.292276" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:04:17.291275" elapsed="0.002002">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:04:17.287290" elapsed="0.005987">0 != 3</status>
+</kw>
+<kw name="Check PDF Files Generated">
+<msg time="2025-01-11T09:04:20.294544" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
+<kw name="Count Files" owner="utilities">
+<msg time="2025-01-11T09:04:20.295543" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:20.296540" level="TRACE">Return: 0</msg>
+<msg time="2025-01-11T09:04:20.296540" level="INFO">${count} = 0</msg>
+<var>${count}</var>
+<arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/output</arg>
+<arg>pattern=*.pdf</arg>
+<arg>recursive=True</arg>
+<status status="PASS" start="2025-01-11T09:04:20.294544" elapsed="0.002995"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2025-01-11T09:04:20.297539" level="TRACE">Arguments: [ 0 | '3' ]</msg>
+<msg time="2025-01-11T09:04:20.297539" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<msg time="2025-01-11T09:04:20.297539" level="FAIL">0 != 3</msg>
+<msg time="2025-01-11T09:04:20.297539" level="DEBUG">Traceback (most recent call last):
+  None
+AssertionError: 0 != 3</msg>
+<arg>${count}</arg>
+<arg>${expected_count}</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="FAIL" start="2025-01-11T09:04:20.297539" elapsed="0.000000">0 != 3</status>
+</kw>
+<arg>3</arg>
+<status status="FAIL" start="2025-01-11T09:04:20.293466" elapsed="0.004073">0 != 3</status>
+</kw>
+<msg time="2025-01-11T09:04:20.297539" level="FAIL">Keyword 'Check PDF Files Generated' failed after retrying 10 times. The last error was: 0 != 3</msg>
+<msg time="2025-01-11T09:04:20.298524" level="DEBUG">robot.errors.UserKeywordExecutionFailed: 0 != 3
+
+During handling of the above exception, another exception occurred:
+
+AssertionError: Keyword 'Check PDF Files Generated' failed after retrying 10 times. The last error was: 0 != 3</msg>
+<arg>10x</arg>
+<arg>3s</arg>
+<arg>Check PDF Files Generated</arg>
+<arg>3</arg>
+<doc>Runs the specified keyword and retries if it fails.</doc>
+<status status="FAIL" start="2025-01-11T09:03:53.257838" elapsed="27.040686">Keyword 'Check PDF Files Generated' failed after retrying 10 times. The last error was: 0 != 3</status>
+</kw>
+<kw name="Run" owner="OperatingSystem">
+<arg>sc stop rbsj</arg>
+<doc>Runs the given command in the system and returns the output.</doc>
+<status status="NOT RUN" start="2025-01-11T09:04:20.298524" elapsed="0.000000"/>
+</kw>
+<kw name="Wait Until Keyword Succeeds" owner="BuiltIn">
+<arg>10x</arg>
+<arg>3s</arg>
+<arg>Check Server Is Not Running</arg>
+<doc>Runs the specified keyword and retries if it fails.</doc>
+<status status="NOT RUN" start="2025-01-11T09:04:20.298524" elapsed="0.000000"/>
+</kw>
+<kw name="Service Uninstall" owner="utilities">
+<var>${output}</var>
+<status status="NOT RUN" start="2025-01-11T09:04:20.299477" elapsed="0.000000"/>
+</kw>
+<kw name="Should Contain" owner="BuiltIn">
+<arg>${output}</arg>
+<arg>uninstalled successfully</arg>
+<doc>Fails if ``container`` does not contain ``item`` one or more times.</doc>
+<status status="NOT RUN" start="2025-01-11T09:04:20.299477" elapsed="0.000000"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2025-01-11T09:04:20.299477" elapsed="0.000000"/>
+</kw>
+<kw name="Ensure Java Is Not Installed" owner="utilities">
+<status status="NOT RUN" start="2025-01-11T09:04:20.300477" elapsed="0.000000"/>
+</kw>
+<kw name="Shut Server" owner="utilities" type="TEARDOWN">
+<msg time="2025-01-11T09:04:20.301066" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-11T09:04:20.302026" level="TRACE">Return: &lt;Popen: returncode: None args: ['cmd.exe', '/c', 'C:\\Projects\\all-repos\\s...&gt;</msg>
+<status status="PASS" start="2025-01-11T09:04:20.301066" elapsed="0.000960"/>
+</kw>
+<doc>service.bat install should check that the ReportBurster Server Windows Service was installed and service.bat uninstall should check that the Windows Service was removed</doc>
+<status status="FAIL" start="2025-01-11T09:03:33.994868" elapsed="46.308215">Keyword 'Check PDF Files Generated' failed after retrying 10 times. The last error was: 0 != 3
+[RETRY] FAIL on 3. retry.</status>
+</test>
+<status status="FAIL" start="2025-01-11T08:58:00.379973" elapsed="379.925063"/>
+</suite>
+<status status="FAIL" start="2025-01-11T08:58:00.365973" elapsed="379.942062"/>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="2" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat pass="0" fail="2" skip="0" id="s1" name="Tests">Tests</stat>
+<stat pass="0" fail="2" skip="0" id="s1-s1" name="ReportBurster-Server">Tests.ReportBurster-Server</stat>
+</suite>
+</statistics>
+<errors>
+<msg time="2025-01-11T08:58:11.824954" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58D843AA0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T08:58:16.056370" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58CF3AFC0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T08:58:20.535510" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FB7EED0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T08:59:00.963659" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBA38F0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T08:59:05.194371" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBA2900&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T08:59:09.683377" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBA1310&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T08:59:49.047701" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBA36E0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T08:59:53.300559" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBA3800&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T08:59:57.787065" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBA1DC0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:00:26.455783" level="WARN" html="true">Test '&lt;a onclick="makeElementVisible('s1-s1-t1')" href="#s1-s1-t1" title="Link to details"&gt;startServer.bat and shutServer.bat Scripts Should Work Fine&lt;/a&gt;' has been retried 3 times (max: 3).</msg>
+<msg time="2025-01-11T09:00:37.171967" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD6330&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:00:41.416331" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD6D20&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:00:45.897024" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD4200&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:01:24.455537" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD7EF0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:01:28.695261" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FC00E60&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:01:33.178565" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBECF50&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:02:10.794083" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FC1E180&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:02:15.040283" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FC1EA50&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:02:19.502560" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FC1ED50&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:02:57.133262" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBEE8D0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:03:01.364040" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBEE930&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:03:05.826836" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD7B30&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:03:33.993867" level="WARN" html="true">Test '&lt;a onclick="makeElementVisible('s1-s1-t2')" href="#s1-s1-t2" title="Link to details"&gt;service.bat Should Work Fine&lt;/a&gt;' has been retried 3 times (max: 3).</msg>
+<msg time="2025-01-11T09:03:43.427082" level="WARN">Retrying (RetryAdapter(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD76E0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:03:47.663617" level="WARN">Retrying (RetryAdapter(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD65A0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+<msg time="2025-01-11T09:03:52.118927" level="WARN">Retrying (RetryAdapter(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x000001C58FBD6AE0&gt;: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it')': /</msg>
+</errors>
+</robot>
