@@ -168,7 +168,7 @@ Java 11 has been installed.</msg>
 <status status="PASS" start="2025-01-11T09:00:47.020356" elapsed="1.000752"/>
 </kw>
 <kw name="Copy File" owner="OperatingSystem">
-<msg time="2025-01-11T09:00:48.021108" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/samples/burst/Payslips.pdf' | 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/poll' ]</msg>
+<msg time="2025-01-11T09:00:48.021108" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/samples/burst/Payslips.pdf' | 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/poll' ]</msg>
 <msg time="2025-01-11T09:00:48.023929" level="INFO" html="true">Copied file from '&lt;a href="file://C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\samples\burst\Payslips.pdf"&gt;C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\samples\burst\Payslips.pdf&lt;/a&gt;' to '&lt;a href="file://C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\poll\Payslips.pdf"&gt;C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\poll\Payslips.pdf&lt;/a&gt;'.</msg>
 <msg time="2025-01-11T09:00:48.023929" level="TRACE">Return: 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target\\user-acceptance\\rb-server\\ReportBurster\\poll\\Payslips.pdf'</msg>
 <arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/samples/burst/Payslips.pdf</arg>
@@ -181,7 +181,7 @@ Java 11 has been installed.</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:00:48.024928" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:00:48.024928" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:00:48.024928" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:00:48.024928" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:00:48.024928" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -210,7 +210,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:00:51.027834" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:00:51.028829" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:00:51.028829" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:00:51.029829" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:00:51.030830" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -239,7 +239,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:00:54.034230" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:00:54.036228" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:00:54.036228" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:00:54.037227" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:00:54.037227" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -268,7 +268,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:00:57.038515" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:00:57.038515" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:00:57.038515" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:00:57.038515" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:00:57.038515" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -297,7 +297,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:01:00.039795" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:01:00.039795" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:01:00.039795" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:01:00.040796" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:01:00.040796" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -326,7 +326,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:01:03.041539" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:01:03.041539" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:01:03.041539" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:01:03.042593" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:01:03.042593" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -355,7 +355,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:01:06.043661" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:01:06.044653" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:01:06.044653" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:01:06.045658" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:01:06.046659" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -384,7 +384,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:01:09.048534" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:01:09.048534" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:01:09.048534" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:01:09.049532" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:01:09.049532" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -413,7 +413,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:01:12.050686" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:01:12.051320" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:01:12.051320" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:01:12.051320" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:01:12.051320" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -442,7 +442,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:01:15.053728" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:01:15.054724" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:01:15.054724" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:01:15.055725" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:01:15.055725" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -716,7 +716,7 @@ SERVICE_NAME: rbsj
 <status status="PASS" start="2025-01-11T09:03:39.382173" elapsed="13.871710"/>
 </kw>
 <kw name="Copy File" owner="OperatingSystem">
-<msg time="2025-01-11T09:03:53.254841" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/samples/burst/Payslips.pdf' | 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/poll' ]</msg>
+<msg time="2025-01-11T09:03:53.254841" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/samples/burst/Payslips.pdf' | 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/poll' ]</msg>
 <msg time="2025-01-11T09:03:53.256839" level="INFO" html="true">Copied file from '&lt;a href="file://C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\samples\burst\Payslips.pdf"&gt;C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\samples\burst\Payslips.pdf&lt;/a&gt;' to '&lt;a href="file://C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\poll\Payslips.pdf"&gt;C:\Projects\all-repos\src\products\reportburster\assembly\target\user-acceptance\rb-server\ReportBurster\poll\Payslips.pdf&lt;/a&gt;'.</msg>
 <msg time="2025-01-11T09:03:53.256839" level="TRACE">Return: 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target\\user-acceptance\\rb-server\\ReportBurster\\poll\\Payslips.pdf'</msg>
 <arg>${PORTABLE_EXECUTABLE_DIR_SERVER}/samples/burst/Payslips.pdf</arg>
@@ -729,7 +729,7 @@ SERVICE_NAME: rbsj
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:03:53.257838" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:03:53.257838" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:03:53.257838" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:03:53.257838" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:03:53.258885" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -758,7 +758,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:03:56.259946" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:03:56.260604" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:03:56.260604" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:03:56.261564" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:03:56.261564" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -787,7 +787,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:03:59.263249" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:03:59.263249" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:03:59.263249" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:03:59.264294" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:03:59.264294" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -816,7 +816,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:04:02.264397" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:04:02.265448" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:02.265448" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:04:02.265448" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:04:02.265448" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -845,7 +845,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:04:05.267568" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:04:05.268557" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:05.268557" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:04:05.269564" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:04:05.270568" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -874,7 +874,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:04:08.273281" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:04:08.274277" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:08.274277" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:04:08.275277" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:04:08.275277" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -903,7 +903,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:04:11.279004" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:04:11.280047" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:11.280047" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:04:11.281049" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:04:11.281049" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -932,7 +932,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:04:14.285791" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:04:14.285791" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:14.285791" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:04:14.286821" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:04:14.286821" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -961,7 +961,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:04:17.288286" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:04:17.289275" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:17.289275" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:04:17.290281" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:04:17.290281" level="INFO">${count} = 0</msg>
 <var>${count}</var>
@@ -990,7 +990,7 @@ AssertionError: 0 != 3</msg>
 <kw name="Check PDF Files Generated">
 <msg time="2025-01-11T09:04:20.294544" level="TRACE">Arguments: [ ${expected_count}='3' ]</msg>
 <kw name="Count Files" owner="utilities">
-<msg time="2025-01-11T09:04:20.295543" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/user-acceptance/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
+<msg time="2025-01-11T09:04:20.295543" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\products\\reportburster\\assembly\\target/uat/rb-server/ReportBurster/output' | pattern='*.pdf' | recursive=True ]</msg>
 <msg time="2025-01-11T09:04:20.296540" level="TRACE">Return: 0</msg>
 <msg time="2025-01-11T09:04:20.296540" level="INFO">${count} = 0</msg>
 <var>${count}</var>

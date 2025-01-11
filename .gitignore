@@ -1,15 +1,15 @@
 #################
 ## DocumentBurster
 #################
-assembly/**/*.zip
-assembly/dist
+asmbly/**/*.zip
+asmbly/dist
 
 playground
 testground
 
 .venv
-assembly/src/user-acceptance/resources/__pycache__
-assembly/src/user-acceptance/results
+asmbly/src/uat/resources/__pycache__
+asmbly/src/uat/results
 
 **/backup/**/*.csv
 **/output/**/*.csv
@@ -76,10 +76,4 @@ Desktop.ini
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
 
-# Include reguired bin folders (which were otherwise excluded in a more general rule earlier)
-!assembly-documentburster-server/src/main/external-resources/template/server/bin
-!assembly-documentburster-server/src/main/external-resources/template/server/bin/*
-
-!assembly-documentburster-server/src/main/external-resources/template/web-console/console/bin
-!assembly-documentburster-server/src/main/external-resources/template/web-console/console/bin/*
 .aider*
