@@ -232,8 +232,8 @@ def ensure_folder_location_not_in_path(folder_location_path):
 
 def extract_zip_files():
     paths = [
-        "../../target/user-acceptance/rb",
-        "../../target/user-acceptance/rb-server"
+        "../../target/uat/rb",
+        "../../target/uat/rb-server"
     ]
     zips = [
         "../../dist/reportburster.zip",
