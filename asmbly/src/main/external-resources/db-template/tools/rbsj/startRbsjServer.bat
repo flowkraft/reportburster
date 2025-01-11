@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 
 :: Get the directory of the script
 set "SCRIPT_DIR=%~dp0"
@@ -73,8 +74,11 @@ if errorlevel 1 (
 set "JAVA_CMD=-Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT%"
 
 if not "%FRONTEND_PATH%"=="" (
-    set "JAVA_CMD=%JAVA_CMD% -Dspring.resources.static-locations=file:///%FRONTEND_PATH%"
+    set "JAVA_CMD=!JAVA_CMD! -Dspring.resources.add-mappings=true"
+    set "JAVA_CMD=!JAVA_CMD! -Dspring.web.resources.static-locations=file:///%FRONTEND_PATH:/=\%"         
+    set "JAVA_CMD=!JAVA_CMD! -Dspring.mvc.static-path-pattern=/**"
 )
+
 if not "%POLLING_PATH%"=="" (
     set "JAVA_CMD=%JAVA_CMD% -DPOLLING_PATH=%POLLING_PATH%"
 )
