@@ -233,7 +233,7 @@ def ensure_folder_location_not_in_path(folder_location_path):
 def extract_zip_files():
     paths = [
         "../../target/uat/rb",
-        "../../target/uat/rb-server"
+        "../../target/uat/rbs"
     ]
     zips = [
         "../../dist/reportburster.zip",
@@ -349,7 +349,7 @@ def generate_let_me_update_baseline():
 
     # move the file
     shutil.move(f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/burst/50-settings-9.1.5.xml', f'{destination_folder_path}/settings.xml')
-    shutil.copy(f'{PROJECT_PATH}/assembly/src/main/external-resources/db-template/config/_defaults/reporting.xml', f'{destination_folder_path}/reporting.xml')
+    shutil.copy(f'{PROJECT_PATH}/asbl/src/main/external-resources/db-template/config/_defaults/reporting.xml', f'{destination_folder_path}/reporting.xml')
 
     # read the file
     with open(f'{destination_folder_path}/settings.xml', 'r') as file:
@@ -371,7 +371,7 @@ def generate_let_me_update_baseline():
 
     # move the file
     shutil.move(f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/burst/50-settings-9.1.5-custom.xml', f'{destination_folder_path}/settings.xml')    
-    shutil.copy(f'{PROJECT_PATH}/assembly/src/main/external-resources/db-template/config/_defaults/reporting.xml', f'{destination_folder_path}/reporting.xml')
+    shutil.copy(f'{PROJECT_PATH}/asbl/src/main/external-resources/db-template/config/_defaults/reporting.xml', f'{destination_folder_path}/reporting.xml')
 
     # THREE
     # specify your destination file
@@ -382,7 +382,7 @@ def generate_let_me_update_baseline():
 
     # move the file
     shutil.move(f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/burst/55-settings-10.2.0.xml', f'{destination_folder_path}/settings.xml')
-    shutil.copy(f'{PROJECT_PATH}/assembly/src/main/external-resources/db-template/config/_defaults/reporting.xml', f'{destination_folder_path}/reporting.xml')
+    shutil.copy(f'{PROJECT_PATH}/asbl/src/main/external-resources/db-template/config/_defaults/reporting.xml', f'{destination_folder_path}/reporting.xml')
 
     # read the file
     with open(f'{destination_folder_path}/settings.xml', 'r') as file:
@@ -404,7 +404,7 @@ def generate_let_me_update_baseline():
 
     # move the file
     shutil.move(f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/burst/55-settings-10.2.0-custom.xml', f'{destination_folder_path}/settings.xml')    
-    shutil.copy(f'{PROJECT_PATH}/assembly/src/main/external-resources/db-template/config/_defaults/reporting.xml', f'{destination_folder_path}/reporting.xml')
+    shutil.copy(f'{PROJECT_PATH}/asbl/src/main/external-resources/db-template/config/_defaults/reporting.xml', f'{destination_folder_path}/reporting.xml')
 
     # FIVE
     destination_folder_path = f'{PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE_BASELINE}/config/connections'
