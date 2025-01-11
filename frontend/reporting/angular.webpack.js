@@ -53,16 +53,24 @@ module.exports = (config, options) => {
     };
   }
 
+  console.log("=== Webpack Configuration ===");
+  console.log("TARGET:", process.env.TARGET);
   console.log("config.target:", config.target);
-
-  //config.externals = {
-  //  ...config.externals,
-  //};
+  console.log("Source maps enabled:", config.devtool ? true : false);
 
   if (config.target === "electron-renderer") {
     config.externals.electron = 'require("electron")';
     console.log("Added electron to externals");
   }
+
+  // Ensure source maps are enabled for development
+  if (!options.optimization) {
+    config.devtool = 'source-map';
+    console.log("Forced source-map devtool for development");
+  }
+
+  console.log("Final devtool:", config.devtool);
+  console.log("============================");
   //end my own stuff
 
   return config;
