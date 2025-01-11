@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+	<appender name="documentburster" class="org.apache.log4j.RollingFileAppender">
+
+		<param name="File" value="logs/documentburster.log" />
+		<param name="MaxFileSize" value="10MB" />
+		<param name="MaxBackupIndex" value="10" />
+
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{dd/MM/yyyy HH:mm:ss} [%t] %p %c - %m%n" />
+		</layout>
+
+	</appender>
+
+	<!-- Perf4J appenders -->
+	<!-- This AsyncCoalescingStatisticsAppender groups StopWatch log messages 
+		into GroupedTimingStatistics messages which it sends on the file appender 
+		defined below -->
+	<appender name="CoalescingStatistics"
+		class="org.perf4j.log4j.AsyncCoalescingStatisticsAppender">
+		<!-- The TimeSlice option is used to determine the time window for which 
+			all received StopWatch logs are aggregated to create a single GroupedTimingStatistics 
+			log. Here we set it to 10 seconds, overriding the default of 30000 ms -->
+		<param name="TimeSlice" value="10000" />
+
+		<appender-ref ref="perfFileAppender" />
+
+		<appender-ref ref="graphExecutionTimes" />
+		<appender-ref ref="graphExecutionTPS" />
+
+		<appender-ref ref="perf4jJmxAppender" />
+
+	</appender>
+
+	<!-- This file appender is used to output aggregated performance statistics -->
+	<appender name="perfFileAppender" class="org.apache.log4j.FileAppender">
+
+		<param name="File" value="logs/performance/statistics.log" />
+
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%m%n" />
+		</layout>
+
+	</appender>
+
+	<!-- Graphic statistics appender to display the mean execution times graph -->
+	<appender name="graphExecutionTimes" class="org.perf4j.log4j.GraphingStatisticsAppender">
+
+		<!-- Possible GraphTypes values are Mean, Min, Max, StdDev, Count and TPS -->
+		<param name="GraphType" value="Mean" />
+		<param name="TagNamesToGraph" value="processPage,extractOutputFile,send" />
+
+		<appender-ref ref="graphsFileAppender" />
+
+	</appender>
+
+	<!-- Graphic statistics appender to display the transactions per second 
+		graph -->
+	<appender name="graphExecutionTPS" class="org.perf4j.log4j.GraphingStatisticsAppender">
+
+		<!-- Possible GraphTypes values are Mean, Min, Max, StdDev, Count and TPS -->
+		<param name="GraphType" value="TPS" />
+		<param name="TagNamesToGraph" value="processPage,extractOutputFile,send" />
+
+		<appender-ref ref="graphsFileAppender" />
+
+	</appender>
+
+	<!-- This file appender is used to output aggregated performance statistics -->
+	<appender name="graphsFileAppender" class="org.apache.log4j.FileAppender">
+
+		<param name="File" value="logs/performance/graphs.log" />
+
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%m%n" />
+		</layout>
+
+	</appender>
+
+	<!-- This JMX appender creates a MBean and publishes it to the the platform 
+		MBean server by default. -->
+	<appender name="perf4jJmxAppender"
+		class="org.perf4j.log4j.JmxAttributeStatisticsAppender">
+
+		<param name="TagNamesToExpose" value="processPage,extractOutputFile,send" />
+
+	</appender>
+
+	<!-- Loggers -->
+	<!-- The Perf4J logger. Note that org.perf4j.TimingLogger is the value of 
+		the org.perf4j.StopWatch.DEFAULT_LOGGER_NAME constant. Also, note that additivity 
+		is set to false, which is usually what is desired - this means that timing 
+		statements will only be sent to this logger and NOT to upstream loggers. -->
+	<logger name="org.perf4j.TimingLogger" additivity="false">
+		<level value="info" />
+		<appender-ref ref="CoalescingStatistics" />
+	</logger>
+
+	<logger name="com.sourcekraft.documentburster">
+
+		<!-- Log level value="debug" will make DocumentBurster more verbose -->
+		<level value="info" />
+
+		<appender-ref ref="documentburster" />
+
+	</logger>
+
+	<root>
+
+		<priority value="debug" />
+
+		<!-- <appender-ref ref="documentburster" /> -->
+
+		<!-- Un-comment the following line for sending DocumentBurster problems 
+			by email -->
+		<!-- <appender-ref ref="mailAppender" /> -->
+
+	</root>
+
+	<!-- Send all DocumentBurster problems by email -->
+	<!-- Correct email account details should be provided -->
+	<appender name="mailAppender" class="org.apache.log4j.net.SMTPAppender">
+
+		<param name="SMTPHost" value="some.email.host.org" />
+		<param name="SMTPPort" value="25" />
+
+		<param name="SMTPUsername" value="email.user.name" />
+		<param name="SMTPPassword" value="password" />
+
+		<param name="From" value="appname@server.com" />
+		<param name="To" value="adminA@server.com,adminB@server.com" />
+
+		<param name="Subject" value="[DocumentBurster failure] ErrorList" />
+
+		<param name="BufferSize" value="50" />
+		<param name="threshold" value="error" />
+
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{dd/MM/yyyy HH:mm:ss} [%t] %p %c - %m%n" />
+		</layout>
+
+	</appender>
+
+
+</log4j:configuration>

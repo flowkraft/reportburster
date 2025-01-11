@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Chapter 4. Configuration Templates</title><link rel="stylesheet" href="css/skrf.css" type="text/css"/><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"/><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><script xmlns="" type="text/javascript" src="css/shCore.js"><!----></script><script xmlns="" type="text/javascript" src="css/shBrushJava.js"><!----></script><script xmlns="" type="text/javascript" src="css/shBrushGroovy.js"><!----></script><link xmlns="" href="css/shCore.css" rel="stylesheet" type="text/css"/><link xmlns="" href="css/shThemeDefault.css" rel="stylesheet" type="text/css"/><script xmlns="" type="text/javascript">
+     SyntaxHighlighter.all()
+</script><link rel="home" href="index.html" title="DocumentBurster User Guide"/><link rel="up" href="pt02.html" title="Part II.  DocumentBurster"/><link rel="prev" href="chapter.distributing.html" title="Chapter 3. Distribute Reports"/><link rel="next" href="chapter.variables.html" title="Chapter 5. Variables"/></head>
+				<body>
+				<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K63768" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript> <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+				new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src= '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+				})(window,document,'script','dataLayer','GTM-K63768');</script>
+			<ul class="docnav"><li class="previous"><a accesskey="p" href="chapter.distributing.html"><strong>Prev</strong></a></li><li class="next"><a accesskey="n" href="chapter.variables.html"><strong>Next</strong></a></li></ul><div class="chapter" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.templates"/>Chapter 4. Configuration Templates</h2></div></div></div><div class="toc"><dl><dt><span class="section"><a href="chapter.templates.html#chapter.templates.pdf">4.1. Process PDF Reports Using a Custom
+			Configuration File
+		</a></span></dt><dt><span class="section"><a href="chapter.templates.html#chapter.templates.excel">4.2. Process Excel Reports Using a Custom
+			Configuration File
+		</a></span></dt><dt><span class="section"><a href="chapter.templates.html#d0e3476">4.3. Add, Edit and Delete Configuration Templates</a></span></dt><dd><dl><dt><span class="section"><a href="chapter.templates.html#d0e3535">4.3.1. Create Similar Configuration Templates</a></span></dt></dl></dd></dl></div><p>
+		If required,
+		<span class="emphasis"><em>
+			<span class="trademark">DocumentBurster</span>™
+		</em></span>
+		has support to use a
+		different set of configuration settings
+		for each
+		separate report
+		type.
+		For example, using this capability, it
+		is possible
+		to use a different email subject, text or burst file name
+		for
+		<span class="emphasis"><em>invoices</em></span>
+		report type and
+		a different email subject, text or burst
+		file name when
+		processing
+		<span class="emphasis"><em>payslips</em></span>
+		report type.
+	</p><p>
+		By default, if no custom configuration file is provided,
+		<span class="emphasis"><em>
+			<span class="trademark">DocumentBurster</span>™
+		</em></span>
+		will process all the reports using the default configuration settings
+		which are saved
+		in
+		<code class="filename">./config/burst/settings.xml</code>
+		configuration file. This should be fine in most of the situations,
+		however there
+		are
+		cases
+		when it is required to process a different
+		report
+		type using
+		its
+		own set of
+		configuration settings.
+	</p><p>
+		<span class="bold"><strong>
+			Use case example
+		</strong></span>
+	</p><p>
+		The requirement is to burst and email to customers several
+		different
+		types
+		of financial documents, specifically
+	</p><div class="itemizedlist"><ul><li>invoices</li><li>statements</li><li>dunning letters</li></ul></div><p>
+		Each of the above report types should be delivered to customers
+		using
+		an email subject and text
+		which is specific to the report type
+		which
+		is
+		being distributed (i.e. invoices,
+		statements or dunning
+		letters).
+	</p><p>
+		The requirement can be achieved by defining
+	</p><div class="itemizedlist"><ul><li><span class="emphasis"><em>invoices</em></span>
+			email subject and text
+			in a configuration file such as
+			<code class="filename">./config/burst/invoices.xml</code></li><li><span class="emphasis"><em>statements</em></span>
+			email subject and text in a different
+			<code class="filename">./config/burst/statements.xml</code></li><li>
+			and
+			<span class="emphasis"><em>dunning letters</em></span>
+			email subject and text in its own configuration file
+			<code class="filename">./config/burst/dunning-letters.xml.</code></li></ul></div><p>
+		<span class="emphasis"><em>
+			<span class="trademark">DocumentBurster</span>™
+		</em></span>
+		will process and email each different report type by
+		using its own
+		distinct
+		set of configuration settings.
+	</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.templates.pdf"/>4.1. Process PDF Reports Using a Custom
+			Configuration File
+		</h2></div></div></div><p>
+			While bursting a PDF report,
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			checks the first page of the report for a custom defined
+			configuration file
+			by looking for a pattern like
+		</p><p>
+			<span class="emphasis"><em>&lt;config&gt;path-to-the-custom-settings-file.xml&lt;/config&gt; </em></span>
+		</p><p>
+			For example, in order to process
+			<span class="emphasis"><em>invoices</em></span>
+			report
+			using a custom configuration file, the first page of the input
+			<code class="filename">invoices.pdf</code>
+			report should contain
+			something similar with
+		</p><p>
+			<span class="emphasis"><em>&lt;config&gt;./config/burst/invoices.xml&lt;/config&gt; </em></span>
+		</p><div class="note"><h2>Note</h2><p>
+				The same result can be achieved by
+				using the shorter (while
+				being
+				less expressive) pattern
+			</p><p>
+				<span class="emphasis"><em>&lt;c&gt;path-to-the-custom-settings.xml&lt;/c&gt;,
+				</em></span>
+			</p><p>
+				for example
+				<span class="emphasis"><em>&lt;c&gt;./config/burst/invoices.xml&lt;/c&gt; </em></span>
+			</p></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="chapter.templates.excel"/>4.2. Process <em class="citetitle">Excel</em> Reports Using a Custom
+			Configuration File
+		</h2></div></div></div><p>
+			While bursting an <em class="citetitle">Excel</em> report,
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			checks for a custom configuration file defined
+			in
+			<span class="emphasis"><em>configFile</em></span>
+			column from
+			<span class="emphasis"><em>burst</em></span>
+			metadata sheet. If no custom configuration
+			file is found then
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			will burst the report
+			using the default
+			<code class="filename">./config/burst/settings.xml</code>
+			configuration file.
+		</p><p>
+			Following is how an <em class="citetitle">Excel</em> reports should be configured in
+			order
+			to achieve the above (i.e. invoices, statements and dunning letters)
+			requirement.
+		</p><p>
+			In
+			<span class="emphasis"><em>burst</em></span>
+			sheet,
+			<code class="filename">invoices.xls</code>
+			<em class="citetitle">Excel</em> report should have
+			the custom
+			<span class="emphasis"><em>configFile</em></span>
+			defined like that
+			</p><div class="mediaobject"><img src="images/email-invoices.png"/></div><p>
+		</p><p>
+			In
+			<span class="emphasis"><em>burst</em></span>
+			sheet,
+			<code class="filename">statements.xls</code>
+			<em class="citetitle">Excel</em> report should have
+			the custom
+			<span class="emphasis"><em>configFile</em></span>
+			defined like that
+			</p><div class="mediaobject"><img src="images/distribute-statements.png"/></div><p>
+		</p><p>
+			In
+			<span class="emphasis"><em>burst</em></span>
+			sheet,
+			<code class="filename">dunning-letters.xls</code>
+			<em class="citetitle">Excel</em> report should have
+			the custom
+			<span class="emphasis"><em>configFile</em></span>
+			defined like that
+			</p><div class="mediaobject"><img src="images/send-dunning-letters.png"/></div><p>
+		</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="d0e3476"/>4.3. Add, Edit and Delete Configuration Templates</h2></div></div></div><p>
+			In
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			main window select
+			<span class="guimenu"><strong>Actions</strong></span>
+			,
+			<span class="guimenu"><strong>Configuration Templates</strong></span>
+		</p><p>
+			</p><div class="mediaobject"><img src="images/configuration-templates1.png"/></div><p>
+			</p><div class="mediaobject"><img src="images/configuration-templates2.png"/></div><p>
+			</p><div class="mediaobject"><img src="images/configuration-templates3.png"/></div><p>
+			</p><div class="itemizedlist"><ul><li><span class="emphasis"><em>Add</em></span>
+					- Create a new configuration template.
+				</li><li><span class="emphasis"><em>Edit</em></span>
+					- Modify an existing configuration template.
+				</li><li><span class="emphasis"><em>Remove</em></span>
+					- Delete an existing configuration template.
+				</li></ul></div><p>
+		</p><p>
+			Each configuration template is saved in a different configuration
+			file.
+			For example,
+			<span class="emphasis"><em>Invoices</em></span>
+			configuration template might be saved in a
+			<code class="filename">./config/burst/invoices.xml</code>
+			file
+			while
+			<span class="emphasis"><em>Statements</em></span>
+			configuration template might be saved in a
+			<code class="filename">./config/burst/statements.xml</code>
+			file.
+		</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="d0e3535"/>4.3.1. Create Similar Configuration Templates</h3></div></div></div><p>
+				<span class="emphasis"><em>Copy Initial Values From</em></span>
+				- When creating a new configuration template it is required to
+				provide the
+				path to an existing and valid configuration file from
+				which the initial configuration values will be
+				copied. Once the new
+				configuration template is created you might modify only
+				the few
+				settings which should be
+				different between configuration
+				templates
+				(e.g. email subject, email
+				message, etc.). Most of the other
+				settings
+				will usually remain the same
+				(e.g. email server connection settings)
+				between
+				different
+				configuration templates.
+			</p><p>
+				<span class="emphasis"><em>Default Value</em></span>
+				-
+				<code class="filename">./config/burst/default/defaults.xml</code>
+			</p></div><p>
+			Once the configuration templates are created they will
+			become
+			available to be used throughout the
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			GUI.
+			</p><div class="mediaobject"><img src="images/report-bursting-configuration-templates.png"/></div><p>
+		</p></div></div><ul class="docnav"><li class="previous"><a accesskey="p" href="chapter.distributing.html"><strong>Prev</strong>Chapter 3. Distribute Reports</a></li><li class="up"><a accesskey="u" href="#"><strong>Top of page</strong></a></li><li class="home"><a accesskey="h" href="index.html"><strong>Front page</strong></a></li><li class="next"><a accesskey="n" href="chapter.variables.html"><strong>Next</strong>Chapter 5. Variables</a></li></ul>
+				<script type="text/javascript">
+				window.$zopim||(function(d,s){var z=$zopim=function(c){z._.push(c)},$=z.s= d.createElement(s),e=d.getElementsByTagName(s)[0];z.set=function(o){z.set. _.push(o)};z._=[];z.set._=[];$.async=!0;$.setAttribute('charset','utf-8'); $.src='//cdn.zopim.com/?h7mkkauOUJAVdDuy4BEr4FLv2scL9q1J';z.t=+new Date;$. type='text/javascript';e.parentNode.insertBefore($,e)})(document,'script');
+				</script>
+</body>
+			</html>

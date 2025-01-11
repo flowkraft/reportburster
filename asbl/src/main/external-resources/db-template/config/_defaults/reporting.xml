@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<documentburster>
+  <report>
+    <datasource>
+      <type>ds.csvfile</type>
+      <parser>opencsv</parser>
+      <showmorecsvoptions>false</showmorecsvoptions>  
+      <csvoptions>
+        <separatorchar>,</separatorchar>
+        <header>noheader</header>
+        <skiplines>0</skiplines>
+        <quotationchar>"</quotationchar>
+        <escapechar>\</escapechar>
+        <strictquotations>false</strictquotations>
+        <ignorequotations>false</ignorequotations>
+        <ignoreleadingwhitespace>true</ignoreleadingwhitespace>
+        <linesregexvalidator>
+          <linematcher>
+            <index>0</index>
+            <expressionpattern>col1,col2,col3</expressionpattern>
+          </linematcher>
+        </linesregexvalidator>
+        <idcolumn>notused</idcolumn>
+      </csvoptions>
+      <showmorefixedwidthoptions>false</showmorefixedwidthoptions>
+	  <fixedwidthoptions>
+	    <columns></columns>
+	    <header>noheader</header>
+	    <skiplines>0</skiplines>
+	    <ignoreleadingwhitespace>true</ignoreleadingwhitespace>
+	 </fixedwidthoptions>
+    </datasource>
+    <template>
+      <outputtype>output.none</outputtype>
+      <documentpath/>
+    </template>
+  </report>
+</documentburster>

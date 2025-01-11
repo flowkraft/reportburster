@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Appendix B. How to Do This and That</title><link rel="stylesheet" href="css/skrf.css" type="text/css"/><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"/><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><script xmlns="" type="text/javascript" src="css/shCore.js"><!----></script><script xmlns="" type="text/javascript" src="css/shBrushJava.js"><!----></script><script xmlns="" type="text/javascript" src="css/shBrushGroovy.js"><!----></script><link xmlns="" href="css/shCore.css" rel="stylesheet" type="text/css"/><link xmlns="" href="css/shThemeDefault.css" rel="stylesheet" type="text/css"/><script xmlns="" type="text/javascript">
+     SyntaxHighlighter.all()
+</script><link rel="home" href="index.html" title="DocumentBurster User Guide"/><link rel="up" href="pt05.html" title="Part V. Appendices"/><link rel="prev" href="appendix.flavors.html" title="Appendix A. DocumentBurster vs. DocumentBurster Server vs. DocumentBurster Portal"/><link rel="next" href="appendix.sharepoint.html" title="Appendix C. SharePoint Report Delivery"/></head>
+				<body>
+				<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K63768" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript> <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+				new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src= '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+				})(window,document,'script','dataLayer','GTM-K63768');</script>
+			<ul class="docnav"><li class="previous"><a accesskey="p" href="appendix.flavors.html"><strong>Prev</strong></a></li><li class="next"><a accesskey="n" href="appendix.sharepoint.html"><strong>Next</strong></a></li></ul><div class="appendix" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="appendix.howto"/>Appendix B. How to Do This and That</h2></div></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="d0e6576"/>B.1. How To Distribute External Reports?</h2></div></div></div><p>
+			Sometimes it might be required to distribute existing
+			reports which
+			are pre-generated
+			and already contain (only) the relevant data
+			for the
+			intended
+			recipient. Such reports don't require any further
+			splitting
+			but only to
+			be distributed, without any modification, to the
+			proper
+			destination. This
+			destination might be email
+			or any other
+			destination
+			type which is
+			currently
+			supported by
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			(e.g. FTP, SFTP, etc.).
+		</p><p>
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			can be configured to distribute
+			external/existing documents
+			which do
+			not require splitting.
+			</p><div class="warning"><h2>Warning</h2><p>
+					When distributing external reports
+					<span class="emphasis"><em>
+						<span class="trademark">DocumentBurster</span>™
+					</em></span>
+					doesn't perform any splitting so you need
+					to make sure
+					that the
+					reports contain
+					(only) the
+					relevant data for the intended
+					recipients.
+				</p></div><p>
+		</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="d0e6605"/>B.1.1. Configuration</h3></div></div></div><p>
+				</p><div class="mediaobject"><img src="images/attachments-settings1.png"/></div><p>
+			</p><p>
+				</p><div class="mediaobject"><img src="images/attachments-settings2.png"/></div><p>
+			</p><p>
+				<span class="emphasis"><em>$extracted_file_path$</em></span>
+				is the default configuration. This should
+				be changed with a dynamic
+				value to be filled at run-time (e.g.
+				<span class="emphasis"><em>$var0$</em></span>
+				user variable).
+			</p><p>
+				</p><div class="mediaobject"><img src="images/distribute-external-reports.png"/></div><p>
+			</p><p>
+				<span class="emphasis"><em>$var0$</em></span>
+				should be configured to point to the appropriate document
+				path to be
+				distributed for each recipient. The external documents can be in
+				any
+				format, including
+				PDF, Excel, Word, CSV,Txt, Xml or any other
+				report
+				format.
+			</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="d0e6639"/>B.1.2. Recipients List and Document(s) Paths</h3></div></div></div><p>
+				There are two different ways to configure the recipients list
+				and the
+				path to the document(s) to be distributed to each
+				separate
+				recipient.
+				</p><div class="itemizedlist"><ul><li>Provide the recipients and the document(s) paths
+						in an
+						Excel sheet
+					</li><li>Provide the recipients and the document(s) paths
+						in a PDF
+						report
+					</li></ul></div><p>
+			</p><div class="note"><h2>Note</h2><p>
+					These are two different ways for achieving the same business
+					requirements.
+					The alternative which is best fitting the
+					needs should
+					be used.
+				</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h4 class="title"><a id="d0e6653"/>B.1.2.1. Provide the recipients and the document(s) paths
+					in an Excel
+					sheet
+				</h4></div></div></div><p>
+					When using Excel for configuration
+					</p><div class="itemizedlist"><ul><li>
+							Recipients list can be provided using the
+							<span class="emphasis"><em>(*)burstTokens</em></span>
+							column from the metadata
+							<span class="emphasis"><em>
+								burst
+							</em></span>
+							sheet
+						</li><li>
+							The paths to the document(s) to be distributed can be provided
+							using
+							user variables, more
+							specifically using the
+							<span class="emphasis"><em>userVariables</em></span>
+							column from the metadata
+							<span class="emphasis"><em>burst</em></span>
+							sheet.
+							For example, mapping
+							<span class="emphasis"><em>$var0$</em></span>
+							user variable to the path
+							of the document to be distributed, it is
+							possible to distribute
+							a separate report to each distinct
+							recipient/burst token.
+						</li></ul></div><p>
+				</p><p>
+					Check the existing sample report
+					<code class="filename">samples/Distribute-External-Files.xls</code>
+					which can
+					be found in
+					<code class="filename">samples</code>
+					folder.
+					<code class="filename">Distribute-External-Files.xls</code>
+					report contains a list of recipients together
+					with the relevant
+					report to be distributed to each one of them.
+				</p><p>
+					</p><div class="mediaobject"><img src="images/distribute-external-reports-excel.png"/></div><p>
+				</p><p>
+					The document paths are dynamically mapped using the
+					<span class="emphasis"><em>$var0$</em></span>
+					user variable. In this sample
+					</p><div class="itemizedlist"><ul><li><span class="emphasis"><em>clyde.grew@northridgehealth.org</em></span>
+							will receive by
+							email
+							<code class="filename">samples/Invoices-Oct.pdf</code>
+							,
+						</li><li><span class="emphasis"><em>kyle.butford@northridgehealth.org</em></span>
+							will get
+							<code class="filename">samples/Invoices-Nov.pdf</code>
+							and
+						</li><li><span class="emphasis"><em>alfreda.waldback@northridgehealth.org</em></span>
+							will get
+							<code class="filename">samples/Invoices-Dec.pdf.</code></li></ul></div><p>
+				</p><div class="note"><h2>Fetch recipients list from other data sources</h2><p>
+						If required, using Excel, it should be possible to fetch the
+						recipients
+						list
+						and the document(s) paths from
+						other data sources.
+					</p><p>
+						Excel has the capability to connect and fetch data from
+						various data sources
+						including SQL Server, Oracle,
+						Microsoft Access,
+						MySQL and most of
+						the existing database types. Using Excel it is
+						also possible
+						to fetch
+						data from existing Xml, CSV, Txt or other
+						Excel reports.
+					</p><p>
+						For more details on how to use Excel to connect to an
+						external
+						data source, please consult
+						the official Microsoft Excel
+						documentation.
+					</p></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h4 class="title"><a id="d0e6732"/>B.1.2.2. Provide the recipients list and the document(s) paths
+					in
+					a
+					PDF
+					report
+				</h4></div></div></div><p>
+					As an alternative to Excel, it is also possible to provide
+					the
+					recipients and the document(s) paths in a PDF report. This
+					might be
+					convenient
+					when there is already in place an automated
+					PDF based
+					reporting
+					system which can generate the recipients list.
+				</p><p>
+					The PDF report should contain one distinct page for each
+					intended recipient and each page should
+					contain all the details
+					required for
+					the specific recipient (including the path(s) to the
+					document(s) to be distributed).
+				</p><p>
+					Check the existing sample report
+					<code class="filename">samples/Distribute-External-Files.pdf</code>
+					which can
+					be found in
+					<code class="filename">samples</code>
+					folder.
+					<code class="filename">Distribute-External-Files.pdf</code>
+					report has three pages, each page containing the path to the
+					document to be
+					distributed to the corresponding recipient
+					</p><div class="itemizedlist"><ul><li><span class="emphasis"><em>clyde.grew@northridgehealth.org</em></span>
+							,
+						</li><li><span class="emphasis"><em>kyle.butford@northridgehealth.org</em></span>
+							and
+						</li><li><span class="emphasis"><em>alfreda.waldback@northridgehealth.org</em></span></li></ul></div><p>
+				</p></div></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="appendix.howto.conditional"/>B.2. How To Implement Conditional Report Distribution?</h2></div></div></div><p>
+			Using
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			it is possible to implement
+			<span class="emphasis"><em>conditional report delivery</em></span>
+			.
+			While
+			bursting the reports,
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			can check and can distribute only
+			those reports which fail to meet a
+			specified
+			user defined condition and can be configured to skip the
+			delivery for
+			the reports which meet the condition.
+		</p><p>
+			<span class="bold"><strong>
+				Use case example
+			</strong></span>
+		</p><p>
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			can be deployed and can be easily configured to act as
+			a
+			<span class="emphasis"><em>management by exception</em></span>
+			reporting system which will alert
+			the management team only for the
+			cases
+			where the minimum performance levels are not met.
+		</p><p>For example, the management of your organization might
+			require
+			for getting each morning
+			only the reports for the sales with very
+			low
+			profit
+			margins or for the transactions with
+			deviations from the
+			approved
+			discounts.
+		</p><p>
+			<span class="bold"><strong>
+				Configuration
+			</strong></span>
+		</p><p>
+			By default, if configured to distribute reports,
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			will
+			deliver to the relevant recipients all reports which are being
+			generated during the bursting process. The default behavior can be
+			changed, and
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			can be configured to skip the report distribution, by placing a text
+			which has the pattern similar with
+			<span class="emphasis"><em>&lt;skip&gt;true&lt;/skip&gt;</em></span>
+			in each of the output documents
+			which should be skipped for report
+			distribution.
+		</p><div class="note"><h2>Note</h2><p>
+				The same result can be achieved by
+				using the shorter (while being
+				less expressive) pattern
+				<span class="emphasis"><em>&lt;s&gt;true&lt;/s&gt;.</em></span>
+			</p></div><p>
+			If configured to distribute reports,
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			will
+			distribute to the relevant recipients all the reports which are
+			being
+			generated during the bursting
+			process and for which
+			<span class="emphasis"><em>
+				<span class="trademark">DocumentBurster</span>™
+			</em></span>
+			:
+			</p><div class="itemizedlist"><ul><li>
+					Is not able to find any explicit positive skip instruction like
+					<span class="emphasis"><em>&lt;skip&gt;true&lt;/skip&gt;</em></span><span class="emphasis"><em>(or &lt;s&gt;true&lt;/s&gt;)</em></span>
+					which have the meaning to skip the distribution for the current
+					report
+				</li><li>
+					Finds an explicit negative skip instruction like
+					<span class="emphasis"><em>&lt;skip&gt;false&lt;/skip&gt;</em></span><span class="emphasis"><em>(or &lt;s&gt;false&lt;/s&gt;)</em></span>
+					which have the meaning to distribute the current report
+				</li><li>
+					Doesn't find any (positive or negative) skip instruction
+				</li></ul></div><p>
+		</p><div class="important"><h2>Important</h2><p>
+				Depending on the requirements, the report
+				writer software
+				should
+				properly fill the appropriate
+				<span class="emphasis"><em>&lt;skip&gt;true/false&lt;/skip&gt;</em></span>
+				tags into the reports which needs to be burst
+				and distributed.
+				Usually the value
+				<span class="emphasis"><em>(true/false)</em></span>
+				from within the
+				<span class="emphasis"><em>&lt;skip&gt;true/false&lt;/skip&gt;</em></span>
+				instruction tags will be calculated
+				by a formula defined in the
+				report writer engine and having a business meaning such as:
+				</p><div class="itemizedlist"><ul><li>Very low profit margins</li><li>Discounts higher than the maximum approved ones
+					</li><li>Low inventory levels</li><li>Production runs with very high scrap rates</li><li>Any other formula which makes business sense for your
+						organization
+					</li></ul></div><p>
+			</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="d0e6885"/>B.2.1. skip_current_file_distribution_if.groovy</a></h3></div></div></div><p>
+				This sample script can be used to achieve complex
+				<span class="emphasis"><em>conditional
+					report
+					delivery
+				</em></span>
+				scenarios.
+			</p><p>
+				<span class="emphasis"><em>
+					<span class="trademark">DocumentBurster</span>™
+				</em></span>
+				's
+				built-in capabilities (skip instruction) can be used to achieve
+				many
+				conditional distribution
+				scenarios while this sample script
+				<code class="filename">(scripts/burst/samples/skip_current_file_distribution_if.groovy)
+				</code>
+				should be used for achieving the remaining and more complex
+				situations which cannot be easily implemented using the built-in
+				<span class="emphasis"><em>skip</em></span>
+				instruction approach.
+			</p><p>
+				This sample script can be used to achieve
+				<span class="emphasis"><em>conditional report
+					distribution
+				</em></span>
+				in situations similar with the following
+				</p><div class="itemizedlist"><ul><li>
+						The condition to skip the distribution cannot be achieved
+						using a
+						<span class="emphasis"><em>skip</em></span>
+						report formula (e.g. skip the delivery for files which are
+						bigger
+						than 20MB)
+					</li><li>
+						The condition to skip the distribution is too complex and
+						it might
+						be more convenient to describe this condition in scripting than
+						with
+						a
+						<span class="emphasis"><em>skip</em></span>
+						report
+						formula
+					</li><li>
+						The input report cannot be modified (for whatever reason) to
+						accommodate any
+						<span class="emphasis"><em>skip</em></span>
+						instruction
+					</li></ul></div><p>
+			</p><p>
+				<code class="filename">skip_current_file_distribution_if.groovy</code>
+				approach
+				is described in detail
+				in
+				<a class="ulink" href="https://www.pdfburst.com/docs/html/advanced/chapter.scripting.html#skip_current_file_distribution_if.groovy">skip_current_file_distribution_if.groovy</a>
+				from
+				<em class="citetitle">
+					<span class="trademark">DocumentBurster</span>™
+					- Advanced
+					Report Delivery
+					Scenarios.
+				</em>
+			</p></div></div></div><ul class="docnav"><li class="previous"><a accesskey="p" href="appendix.flavors.html"><strong>Prev</strong>Appendix A. DocumentBurster vs. DocumentBurster S...</a></li><li class="up"><a accesskey="u" href="#"><strong>Top of page</strong></a></li><li class="home"><a accesskey="h" href="index.html"><strong>Front page</strong></a></li><li class="next"><a accesskey="n" href="appendix.sharepoint.html"><strong>Next</strong>Appendix C. SharePoint Report Delivery</a></li></ul>
+				<script type="text/javascript">
+				window.$zopim||(function(d,s){var z=$zopim=function(c){z._.push(c)},$=z.s= d.createElement(s),e=d.getElementsByTagName(s)[0];z.set=function(o){z.set. _.push(o)};z._=[];z.set._=[];$.async=!0;$.setAttribute('charset','utf-8'); $.src='//cdn.zopim.com/?h7mkkauOUJAVdDuy4BEr4FLv2scL9q1J';z.t=+new Date;$. type='text/javascript';e.parentNode.insertBefore($,e)})(document,'script');
+				</script>
+</body>
+			</html>
