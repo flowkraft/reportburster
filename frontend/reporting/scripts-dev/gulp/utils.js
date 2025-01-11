@@ -130,22 +130,30 @@ _startJavaNoAndUI = async (chocoStatus) => {
 
   await jetpack.writeAsync(electronLogPath, chocoLogMessage);
 
-  const electronProcess = spawn("npm", ["run", "_custom:start-ui-electron"], {
-    stdio: "inherit",
-    shell: true,
-    env: {
-      ...process.env,
-      DEBUG: "true"  // Add debug flag
+  try {
+    const electronProcess = spawn("npm", ["run", "_custom:start-ui-electron"], {
+      stdio: "inherit",
+      shell: true,
+      env: {
+        ...process.env,
+        DEBUG: "true"  // Add debug flag
+      }
+    });
+
+    if (electronProcess) {
+      electronProcess.stdout?.on('data', (data) => {
+        console.log(`Electron: ${data}`);
+      });
+
+      electronProcess.stderr?.on('data', (data) => {
+        console.error(`Electron Error: ${data}`);
+      });
+    } else {
+      console.error('Failed to start electron process');
     }
-  });
-
-  electronProcess.stdout.on('data', (data) => {
-    console.log(`Electron: ${data}`);
-  });
-
-  electronProcess.stderr.on('data', (data) => {
-    console.error(`Electron Error: ${data}`);
-  });
+  } catch (error) {
+    console.error('Error starting electron process:', error);
+  }
 };
 
 _startServerAndDoX = (npm_x_script) => {
