@@ -1,6 +1,12 @@
 if (process.env.DEBUG === "true") {
   console.log('=== ANGULAR WEBPACK CONFIG LOADED ===');
   console.log('If you see this message, angular.webpack.js is being used in the build process');
+  
+  console.log('\n=== Environment Variables ===');
+  console.log('TARGET:', process.env.TARGET);
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+  console.log('DEBUG:', process.env.DEBUG);
+  console.log('===========================\n');
 }
 
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
