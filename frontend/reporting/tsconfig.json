@@ -6,7 +6,6 @@
     "esModuleInterop": true,
     "outDir": "./dist/out-tsc",
     "module": "es2020",
-    "sourceMap": true,
     "inlineSources": true,
     "inlineSourceMap": true,
     "declaration": false,
