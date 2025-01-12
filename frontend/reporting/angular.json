@@ -63,11 +63,16 @@
             "dev": {
               "optimization": false,
               "outputHashing": "none",
-              "sourceMap": true,
-              "namedChunks": false,
+              "sourceMap": {
+                "scripts": true,
+                "styles": true,
+                "vendor": true,
+                "hidden": false
+              },
+              "namedChunks": true,
               "aot": false,
               "extractLicenses": true,
-              "vendorChunk": false,
+              "vendorChunk": true,
               "buildOptimizer": false,
               "fileReplacements": [
                 {
