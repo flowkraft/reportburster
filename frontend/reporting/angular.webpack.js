@@ -81,33 +81,7 @@ module.exports = (config, options) => {
       return `webpack:///${info.resourcePath.replace(/\\/g, '/')}`;
     };
     
-    // Add better source map support for TypeScript
-    config.module.rules.push({
-      test: /\.ts$/,
-      use: [
-        {
-          loader: 'ts-loader',
-          options: {
-            transpileOnly: true,
-            compilerOptions: {
-              sourceMap: true,
-              inlineSources: true
-            }
-          }
-        }
-      ],
-      exclude: /node_modules/
-    });
-    
-    // Add source map loader for existing source maps
-    config.module.rules.push({
-      test: /\.js$/,
-      enforce: 'pre',
-      use: ['source-map-loader'],
-      exclude: /node_modules/
-    });
-    
-    console.log("Enhanced source map configuration with eval-source-map");
+    console.log("Source maps enabled with eval-source-map");
   }
 
   console.log("Final devtool:", config.devtool);
