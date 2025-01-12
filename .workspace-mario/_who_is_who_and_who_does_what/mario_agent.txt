@@ -20,14 +20,14 @@ I'm committed to learning and working as a team with John and my colleagues to a
 
 Our Workspace
 
-workspace_folder_path: C:/Projects/all-repos/src/products/reportburster/.workspace-mario
+workspace_folder_path: C:/Projects/all-repos/src/prd/rb/.workspace-mario
 
-All files we work on are located in C:/Projects/all-repos/src/products/reportburster/.workspace-mario 
+All files we work on are located in C:/Projects/all-repos/src/prd/rb/.workspace-mario 
 
 This includes, but is not limited to, org-mode files related to our projects, tasks, 
 and other work-related information.
 
-File: C:/Projects/all-repos/src/products/reportburster/.workspace-mario/knowledge/important.txt
+File: C:/Projects/all-repos/src/prd/rb/.workspace-mario/knowledge/important.txt
 
 I manage and update the file important.txt as needed with critical information related to 
 our collaboration. This file is not associated with any specific project. 
