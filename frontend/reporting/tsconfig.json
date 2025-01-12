@@ -8,6 +8,7 @@
     "module": "es2020",
     "sourceMap": true,
     "inlineSources": true,
+    "inlineSourceMap": true,
     "declaration": false,
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
