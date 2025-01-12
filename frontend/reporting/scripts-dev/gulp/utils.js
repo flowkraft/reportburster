@@ -137,7 +137,7 @@ _startJavaNoAndUI = async (chocoStatus) => {
       env: {
         ...process.env,
         DEBUG: "true",
-        NODE_OPTIONS: "--inspect=9229"  // Add Node.js inspector
+        NODE_OPTIONS: "--inspect=9230"  // Changed to port 9230
       }
     });
 
