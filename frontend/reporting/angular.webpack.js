@@ -35,13 +35,17 @@ module.exports = (config, options) => {
     //     config.plugins.push(new BundleAnalyzerPlugin());
     // }
 
-    // Remove redundant source map config and add debugging
+    // Verify source map configuration
     if (process.env.DEBUG === "true") {
-        console.log('Webpack config:', {
-            devtool: config.devtool,
-            mode: config.mode,
-            target: config.target
+        console.log('Source map verification:', {
+            angularSourceMap: options.sourceMap, // Should be true
+            webpackDevtool: config.devtool, // Should be undefined (let Angular handle it)
+            mode: config.mode, // Should be 'development'
+            target: config.target // Electron-specific target
         });
+        
+        // Log all webpack rules to verify source map handling
+        console.log('Webpack rules:', config.module.rules);
     }
 
     return config;
