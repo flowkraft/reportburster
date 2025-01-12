@@ -35,10 +35,13 @@ module.exports = (config, options) => {
     //     config.plugins.push(new BundleAnalyzerPlugin());
     // }
 
-    // Enable source maps for development
-    if (!options.optimization) {
-        config.devtool = 'source-map';
-        console.log('Source maps enabled');
+    // Remove redundant source map config and add debugging
+    if (process.env.DEBUG === "true") {
+        console.log('Webpack config:', {
+            devtool: config.devtool,
+            mode: config.mode,
+            target: config.target
+        });
     }
 
     return config;
