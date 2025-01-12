@@ -96,7 +96,6 @@ module.exports = (config, options) => {
       ],
       exclude: /node_modules/
     });
-    });
     console.log("Forced source-map devtool for development with enhanced TypeScript support");
   }
 
