@@ -100,7 +100,14 @@
             "web": {
               "optimization": false,
               "outputHashing": "none",
-              "sourceMap": true,
+              "sourceMap": {
+                "scripts": true,
+                "styles": true,
+                "vendor": true,
+                "hidden": false
+              },
+              "vendorChunk": true,
+              "namedChunks": true,
               "namedChunks": false,
               "aot": false,
               "extractLicenses": true,
