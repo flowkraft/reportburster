@@ -23,10 +23,7 @@ export class ApiService {
   private headers: Headers;
   private jwtToken: string;
 
-  constructor(
-    protected stateStore: StateStoreService,
-    protected initService: InitService,
-  ) {
+  constructor(protected stateStore: StateStoreService) {
     this.headers = new Headers({
       Accept: 'application/json',
       'Content-Type': 'application/json',
