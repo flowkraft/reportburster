@@ -103,15 +103,15 @@ _startJavaYesAndUI = async (javaVersion, chocoStatus) => {
   await jetpack.writeAsync(electronLogPath, chocoLogMessage);
 
   const electronProcess = spawn("npm", ["run", "_custom:start-ui-electron"], {
-    stdio: "inherit",  // Changed from "pipe" to "inherit" to show output
+    stdio: "inherit", // Changed from "pipe" to "inherit" to show output
     shell: true,
   });
 
-  electronProcess.stdout.on('data', (data) => {
+  electronProcess.stdout.on("data", (data) => {
     console.log(`Electron: ${data}`);
   });
 
-  electronProcess.stderr.on('data', (data) => {
+  electronProcess.stderr.on("data", (data) => {
     console.error(`Electron Error: ${data}`);
   });
 };
@@ -137,23 +137,23 @@ _startJavaNoAndUI = async (chocoStatus) => {
       env: {
         ...process.env,
         DEBUG: "true",
-        NODE_OPTIONS: "--inspect=9230"  // Changed to port 9230
-      }
+        //NODE_OPTIONS: "--inspect=9230"  // Changed to port 9230
+      },
     });
 
     if (electronProcess) {
-      electronProcess.stdout?.on('data', (data) => {
+      electronProcess.stdout?.on("data", (data) => {
         console.log(`Electron: ${data}`);
       });
 
-      electronProcess.stderr?.on('data', (data) => {
+      electronProcess.stderr?.on("data", (data) => {
         console.error(`Electron Error: ${data}`);
       });
     } else {
-      console.error('Failed to start electron process');
+      console.error("Failed to start electron process");
     }
   } catch (error) {
-    console.error('Error starting electron process:', error);
+    console.error("Error starting electron process:", error);
   }
 };
 

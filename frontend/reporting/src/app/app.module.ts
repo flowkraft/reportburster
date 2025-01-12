@@ -21,34 +21,10 @@ import { StateStoreService } from './providers/state-store.service';
 const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>
   new TranslateHttpLoader(http, './assets/i18n/', '.json');
 
-export function initApp(
-  stateStore: StateStoreService,
-  electronService: RbElectronService,
-) {
-  return async () => {
-    //if electron
-    if (electronService.isElectron) {
-      stateStore.configSys.sysInfo.setup.BACKEND_URL =
-        await electronService.getBackendUrl();
-
-      const systemInfo = await electronService.getSystemInfo();
-      stateStore.configSys.sysInfo.setup.chocolatey = {
-        ...systemInfo.chocolatey,
-      };
-      stateStore.configSys.sysInfo.setup.java = { ...systemInfo.java };
-      stateStore.configSys.sysInfo.setup.env = { ...systemInfo.env };
-    }
-
-    //console.log(
-    //  `app.module - stateStore.configSys.sysInfo.setup = ${JSON.stringify(stateStore.configSys.sysInfo.setup)}`,
-    //);
-  };
-}
-
 @NgModule({
   declarations: [AppComponent],
   imports: [
-    SharedModule,
+    SharedModule.forRoot(),
     AreasModule,
     BrowserModule,
     FormsModule,
@@ -72,8 +48,8 @@ export function initApp(
     InitService,
     {
       provide: APP_INITIALIZER,
-      useFactory: initApp,
-      deps: [StateStoreService, RbElectronService],
+      useFactory: (initService: InitService) => () => initService.initialize(),
+      deps: [InitService],
       multi: true,
     },
   ],
