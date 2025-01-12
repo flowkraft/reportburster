@@ -98,12 +98,7 @@
             "web": {
               "optimization": false,
               "outputHashing": "none",
-              "sourceMap": {
-                "scripts": true,
-                "styles": true,
-                "vendor": true,
-                "hidden": false
-              },
+              "sourceMap": true,
               "vendorChunk": true,
               "namedChunks": true,
               "namedChunks": false,
