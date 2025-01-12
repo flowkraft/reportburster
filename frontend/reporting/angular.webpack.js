@@ -96,18 +96,6 @@ module.exports = (config, options) => {
       ],
       exclude: /node_modules/
     });
-      use: [
-        {
-          loader: 'ts-loader',
-          options: {
-            transpileOnly: true,
-            compilerOptions: {
-              sourceMap: true,
-              inlineSources: true
-            }
-          }
-        }
-      ]
     });
     console.log("Forced source-map devtool for development with enhanced TypeScript support");
   }
