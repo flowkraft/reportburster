@@ -136,7 +136,8 @@ _startJavaNoAndUI = async (chocoStatus) => {
       shell: true,
       env: {
         ...process.env,
-        DEBUG: "true"  // Add debug flag
+        DEBUG: "true",
+        NODE_OPTIONS: "--inspect=9229"  // Add Node.js inspector
       }
     });
 
