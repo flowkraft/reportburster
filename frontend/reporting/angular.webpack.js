@@ -76,12 +76,30 @@ module.exports = (config, options) => {
 
   // Ensure source maps are enabled for development
   if (!options.optimization) {
-    config.devtool = 'eval-source-map';
+    config.devtool = 'cheap-module-source-map';
     config.output.devtoolModuleFilenameTemplate = function(info) {
       return `webpack:///${info.resourcePath.replace(/\\/g, '/')}`;
     };
     
-    console.log("Source maps enabled with eval-source-map");
+    // Add better source map support for TypeScript
+    config.module.rules.push({
+      test: /\.ts$/,
+      use: [
+        {
+          loader: 'ts-loader',
+          options: {
+            transpileOnly: true,
+            compilerOptions: {
+              sourceMap: true,
+              inlineSources: true
+            }
+          }
+        }
+      ],
+      exclude: /node_modules/
+    });
+    
+    console.log("Source maps enabled with cheap-module-source-map");
   }
 
   console.log("Final devtool:", config.devtool);
