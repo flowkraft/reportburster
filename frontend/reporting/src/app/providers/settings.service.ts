@@ -352,25 +352,30 @@ export class SettingsService {
     return this.configurationFiles;
   }
 
-  async refreshConnectionsUsedByInformation() {
-    // Force reload configurations
-    this.configurationFiles = await this.loadAllSettingsFilesAsync({
-      forceReload: true,
-    });
+  async refreshConnectionsUsedByInformation(useConn: boolean, connectionCode: string) {
+    // Find and update the specific configuration file
+    const configToUpdate = this.configurationFiles.find(
+        config => config.filePath === this.currentConfigurationTemplatePath
+    );
+    
+    if (configToUpdate) {
+        configToUpdate.useEmlConn = useConn;
+        configToUpdate.emlConnCode = connectionCode;
+    }
 
-    // Recalculate "Used By"
+    // Recalculate "Used By" using the updated configuration
     this.connectionFiles = this.connectionFiles.map((connFile) => {
-      const matchingConfigs = this.configurationFiles
-        .filter(
-          (conf) =>
-            conf.useEmlConn && conf.emlConnCode == connFile.connectionCode,
-        )
-        .map((conf) => conf.templateName);
+        const matchingConfigs = this.configurationFiles
+            .filter(
+                (conf) =>
+                    conf.useEmlConn && conf.emlConnCode == connFile.connectionCode,
+            )
+            .map((conf) => conf.templateName);
 
-      return {
-        ...connFile,
-        usedBy: matchingConfigs.join(', ') || '--not used--',
-      };
+        return {
+            ...connFile,
+            usedBy: matchingConfigs.join(', ') || '--not used--',
+        };
     });
   }
 
