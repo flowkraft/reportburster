@@ -392,7 +392,7 @@ export class ProcessingComponent implements OnInit {
     //  `refreshTabs mailMergeConfigurations = ${JSON.stringify(mailMergeConfigurations)}`,
     //);
 
-    if (!mailMergeConfigurations.length) {
+    if (!mailMergeConfigurations?.length) {
       visibleTabsIds = visibleTabsIds.filter(
         (tab) => tab != 'reportGenerationMailMergeTab',
       );

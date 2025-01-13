@@ -509,33 +509,35 @@ export class SamplesService {
       const sampleConfigurations =
         this.settingsService.getSampleConfigurations();
 
-      for (let sample of this.samples) {
-        //console.log(JSON.stringify(sampleConfigurations));
-        const sampleConfigurationValues = sampleConfigurations.find(
-          (configuration) => {
-            return sample.configurationFilePath.endsWith(
-              configuration.filePath,
-            );
-          },
-        );
+      if (sampleConfigurations && sampleConfigurations.length) {
+        for (let sample of this.samples) {
+          //console.log(JSON.stringify(sampleConfigurations));
+          const sampleConfigurationValues = sampleConfigurations.find(
+            (configuration) => {
+              return sample.configurationFilePath.endsWith(
+                configuration.filePath,
+              );
+            },
+          );
 
-        if (sampleConfigurationValues) {
-          sample.capReportDistribution =
-            sampleConfigurationValues.capReportDistribution;
-          sample.capReportGenerationMailMerge =
-            sampleConfigurationValues.capReportGenerationMailMerge;
-          sample.visibility = sampleConfigurationValues.visibility;
+          if (sampleConfigurationValues) {
+            sample.capReportDistribution =
+              sampleConfigurationValues.capReportDistribution;
+            sample.capReportGenerationMailMerge =
+              sampleConfigurationValues.capReportGenerationMailMerge;
+            sample.visibility = sampleConfigurationValues.visibility;
+          }
+
+          const notes = await this.translateService.instant(
+            `SAMPLES.${sample.id}.NOTES.INNER-HTML`,
+          );
+          sample.notes = notes;
         }
 
-        const notes = await this.translateService.instant(
-          `SAMPLES.${sample.id}.NOTES.INNER-HTML`,
-        );
-        sample.notes = notes;
+        this.countVisibleSamples = this.samples.filter(
+          (sample) => sample.visibility == 'visible',
+        ).length;
       }
-
-      this.countVisibleSamples = this.samples.filter(
-        (sample) => sample.visibility == 'visible',
-      ).length;
     }
   }
 
