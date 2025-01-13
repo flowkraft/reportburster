@@ -744,8 +744,6 @@ export class ConfigurationComponent implements OnInit {
               this.xmlReporting,
             );
 
-          await this.settingsService.refreshConnectionsUsedByInformation();
-
           this.messagesService.showInfo('Saved');
           this.changeDetectorRef.detectChanges();
         });
@@ -817,6 +815,11 @@ export class ConfigurationComponent implements OnInit {
         this.fillExistingEmailConnectionDetails(code);
 
         await this.settingsService.saveSettingsFileAsync(
+          this.settingsService.currentConfigurationTemplatePath,
+          this.xmlSettings,
+        );
+
+        await this.settingsService.refreshConnectionsUsedByInformation(
           this.settingsService.currentConfigurationTemplatePath,
           this.xmlSettings,
         );

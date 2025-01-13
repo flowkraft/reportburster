@@ -1,124 +1,1364 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<robot generator="Rebot 7.1.1 (Python 3.12.6 on win32)" generated="2025-01-13T13:07:46.558816" rpa="false" schemaversion="5">
+<robot generator="Robot 7.1.1 (Python 3.12.6 on win32)" generated="2025-01-13T19:50:38.856502" rpa="false" schemaversion="5">
 <suite id="s1" name="Tests" source="C:\Projects\all-repos\src\prd\rb\asbl\src\uat\tests">
 <suite id="s1-s1" name="ReportBurster.exe-prerequisites" source="C:\Projects\all-repos\src\prd\rb\asbl\src\uat\tests\ReportBurster.exe-prerequisites.robot">
 <test id="s1-s1-t1" name="Prerequisites Java 8 Installed Should Let The User Know That At Least Java 11 Is Required" line="11">
 <kw name="Clean State" type="SETUP">
-<msg time="2025-01-13T13:07:46.457735" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:50:39.385873" level="TRACE">Arguments: [  ]</msg>
 <kw name="Clean Output Folders And Log Files" owner="utilities">
-<msg time="2025-01-13T13:07:46.457735" level="TRACE">Arguments: [  ]</msg>
-<msg time="2025-01-13T13:07:46.457735" level="FAIL">FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'</msg>
-<msg time="2025-01-13T13:07:46.465765" level="DEBUG">Traceback (most recent call last):
-  File "C:\Projects\all-repos\src\prd\rb\asbl\src\uat\resources\utilities.py", line 91, in clean_output_folders_and_log_files
-    empty_folder(folder_path)
-  File "C:\Projects\all-repos\src\prd\rb\asbl\src\uat\resources\utilities.py", line 57, in empty_folder
-    for filename in os.listdir(folder_path):
-                    ^^^^^^^^^^^^^^^^^^^^^^^
-FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'</msg>
-<status status="FAIL" start="2025-01-13T13:07:46.457735" elapsed="0.008030">FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'</status>
+<msg time="2025-01-13T19:50:39.385873" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:50:39.386877" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:50:39.385873" elapsed="0.001004"/>
 </kw>
 <kw name="Close ReportBurster Application">
-<doc>Close ReportBurster Application</doc>
-<status status="NOT RUN" start="2025-01-13T13:07:46.465765" elapsed="0.000000"/>
+<msg time="2025-01-13T19:50:39.387879" level="TRACE">Arguments: [  ]</msg>
+<kw name="Kill Reportburster Exe Process" owner="utilities">
+<msg time="2025-01-13T19:50:39.387879" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:50:39.387879" level="INFO">Log file path: C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\logs\electron.log
+No process found with PID: 8404</msg>
+<msg time="2025-01-13T19:50:39.388877" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:50:39.387879" elapsed="0.000998"/>
 </kw>
+<msg time="2025-01-13T19:50:39.388877" level="TRACE">Return: None</msg>
+<doc>Close ReportBurster Application</doc>
+<status status="PASS" start="2025-01-13T19:50:39.387879" elapsed="0.000998"/>
+</kw>
+<msg time="2025-01-13T19:50:39.388877" level="TRACE">Return: None</msg>
 <doc>Clean Output Folders and Log Files</doc>
-<status status="FAIL" start="2025-01-13T13:07:46.457735" elapsed="0.008030">FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'</status>
+<status status="PASS" start="2025-01-13T19:50:39.384877" elapsed="0.004000"/>
+</kw>
+<kw name="Ensure Chocolatey Is Installed" owner="utilities">
+<msg time="2025-01-13T19:50:39.388877" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:50:40.261229" level="INFO">Output of 'choco -v': 2.4.1
+
+Chocolatey is already installed.</msg>
+<msg time="2025-01-13T19:50:40.261229" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:50:39.388877" elapsed="0.872352"/>
+</kw>
+<kw name="Ensure Java Is Installed" owner="utilities">
+<msg time="2025-01-13T19:50:40.261229" level="TRACE">Arguments: [ version='8' ]</msg>
+<msg time="2025-01-13T19:51:10.719635" level="INFO">Java is installed but not version 8. Installing now...
+Output of 'choco -v': 2.4.1
+
+Chocolatey is already installed.
+Chocolatey is installed. (ensure_java_is_not_installed)
+Uninstalling maven with Chocolatey...
+Uninstalling Temurin11 with Chocolatey...
+Java is not installed on this computer.
+Java 8 has been installed.</msg>
+<msg time="2025-01-13T19:51:10.719635" level="TRACE">Return: None</msg>
+<arg>version=8</arg>
+<status status="PASS" start="2025-01-13T19:50:40.261229" elapsed="30.458406"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:51:10.719635" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:51:11.720419" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:51:11.720419" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:51:10.719635" elapsed="1.000784"/>
+</kw>
+<kw name="Refresh Env Variables" owner="utilities">
+<msg time="2025-01-13T19:51:11.721441" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:51:12.172163" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:51:11.720419" elapsed="0.451744"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:51:12.173185" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:51:13.173580" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:51:13.173580" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:51:12.173185" elapsed="1.000395"/>
+</kw>
+<kw name="Open Electron Application">
+<msg time="2025-01-13T19:51:13.174849" level="TRACE">Arguments: [  ]</msg>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2025-01-13T19:51:13.175851" level="TRACE">Arguments: [ 'cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222) || start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222"' ]</msg>
+<msg time="2025-01-13T19:51:13.175851" level="TRACE">Return: 'cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222) || start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222"'</msg>
+<msg time="2025-01-13T19:51:13.175851" level="INFO">${electron_command} = cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe --remote-debugging-port=9222) || start C:\Projects\all-repo...</msg>
+<var>${electron_command}</var>
+<arg>cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start ${signal_electron.binary_location} --remote-debugging-port=9222) || start ${signal_electron.binary_location} --remote-debugging-port=9222"</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2025-01-13T19:51:13.174849" elapsed="0.001002"/>
+</kw>
+<kw name="Get Parent Directory" owner="utilities">
+<msg time="2025-01-13T19:51:13.176848" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe' ]</msg>
+<msg time="2025-01-13T19:51:13.176848" level="TRACE">Return: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster'</msg>
+<msg time="2025-01-13T19:51:13.176848" level="INFO">${working_dir} = C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster</msg>
+<var>${working_dir}</var>
+<arg>${signal_electron.binary_location}</arg>
+<status status="PASS" start="2025-01-13T19:51:13.175851" elapsed="0.000997"/>
+</kw>
+<kw name="Start Process" owner="Process">
+<msg time="2025-01-13T19:51:13.176848" level="TRACE">Arguments: [ 'cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222) || start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222"' | cwd='C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster' | shell='True' ]</msg>
+<msg time="2025-01-13T19:51:13.176848" level="INFO">Starting process:
+cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe --remote-debugging-port=9222) || start C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe --remote-debugging-port=9222"</msg>
+<msg time="2025-01-13T19:51:13.176848" level="DEBUG">Process configuration:
+cwd:     C:\Projects\all-repos\src\prd\rb\asbl\target\uat\rb\ReportBurster
+shell:   True
+stdout:  PIPE
+stderr:  PIPE
+stdin:   None
+alias:   None
+env:     None</msg>
+<msg time="2025-01-13T19:51:13.184106" level="TRACE">Return: &lt;Popen: returncode: None args: 'cmd /c "where /q refreshenv &amp;&amp; (call refresh...&gt;</msg>
+<arg>${electron_command}</arg>
+<arg>cwd=${working_dir}</arg>
+<arg>shell=True</arg>
+<doc>Starts a new process on background.</doc>
+<status status="PASS" start="2025-01-13T19:51:13.176848" elapsed="0.007258"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:51:13.184106" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:51:14.184300" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:51:14.184300" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:51:13.184106" elapsed="1.000194"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2025-01-13T19:51:14.184300" level="TRACE">Arguments: [ "sys.modules['selenium.webdriver'].ChromeOptions()" | 'sys, selenium.webdriver' ]</msg>
+<msg time="2025-01-13T19:51:14.184300" level="TRACE">Return: &lt;selenium.webdriver.chrome.options.Options object at 0x00000201834AB710&gt;</msg>
+<msg time="2025-01-13T19:51:14.184300" level="INFO">${options} = &lt;selenium.webdriver.chrome.options.Options object at 0x00000201834AB710&gt;</msg>
+<var>${options}</var>
+<arg>sys.modules['selenium.webdriver'].ChromeOptions()</arg>
+<arg>sys, selenium.webdriver</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2025-01-13T19:51:14.184300" elapsed="0.000000"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<msg time="2025-01-13T19:51:14.184300" level="TRACE">Arguments: [ &lt;selenium.webdriver.chrome.options.Options object at 0x00000201834AB710&gt; | 'add_experimental_option' | 'debuggerAddress' | 'localhost:9222' ]</msg>
+<msg time="2025-01-13T19:51:14.184300" level="TRACE">Return: None</msg>
+<arg>${options}</arg>
+<arg>add_experimental_option</arg>
+<arg>debuggerAddress</arg>
+<arg>localhost:9222</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2025-01-13T19:51:14.184300" elapsed="0.001006"/>
+</kw>
+<kw name="Create Webdriver" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:51:14.185306" level="TRACE">Arguments: [ 'Chrome' | service=&lt;selenium.webdriver.chrome.service.Service object at 0x00000201821DF6B0&gt; | options=&lt;selenium.webdriver.chrome.options.Options object at 0x00000201834AB710&gt; ]</msg>
+<msg time="2025-01-13T19:51:14.185306" level="INFO">Creating an instance of the Chrome WebDriver.</msg>
+<msg time="2025-01-13T19:51:14.185306" level="DEBUG">Skipping Selenium Manager; path to chrome driver specified in Service class: C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe</msg>
+<msg time="2025-01-13T19:51:14.188306" level="DEBUG">Started executable: `C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe` in a child process with pid: 18536 using 0 to output -3</msg>
+<msg time="2025-01-13T19:51:14.697485" level="DEBUG">POST http://localhost:52016/session {'capabilities': {'firstMatch': [{}], 'alwaysMatch': {'browserName': 'chrome', 'pageLoadStrategy': &lt;PageLoadStrategy.normal: 'normal'&gt;, 'goog:chromeOptions': {'debuggerAddress': 'localhost:9222', 'extensions': [], 'args': []}}}}</msg>
+<msg time="2025-01-13T19:51:14.697485" level="DEBUG">Starting new HTTP connection (1): localhost:52016</msg>
+<msg time="2025-01-13T19:51:36.418716" level="DEBUG">http://localhost:52016 "POST /session HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:51:36.418716" level="DEBUG">Remote response: status=200 | data={"value":{"capabilities":{"acceptInsecureCerts":false,"browserName":"chrome","browserVersion":"106.0.5249.103","chrome":{"chromedriverVersion":"106.0.5249.51 (916bca209b16f8c0d4fac47d332c637cf07f2016-refs/heads/main@{#1037919})"},"goog:chromeOptions":{"debuggerAddress":"localhost:9222"},"pageLoadStrategy":"normal","platformName":"","proxy":{},"setWindowRect":false,"strictFileInteractability":false,"timeouts":{"implicit":0,"pageLoad":300000,"script":30000},"unhandledPromptBehavior":"dismiss and notify","webauthn:extension:credBlob":true,"webauthn:extension:largeBlob":true,"webauthn:virtualAuthenticators":true},"sessionId":"0362a64c75b29188a92c38f812030660"}} | headers=HTTPHeaderDict({'Content-Length': '665', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:51:36.418716" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:51:36.418716" level="DEBUG">Created Chrome WebDriver instance with session id 0362a64c75b29188a92c38f812030660.</msg>
+<msg time="2025-01-13T19:51:36.418716" level="TRACE">Return: 1</msg>
+<arg>Chrome</arg>
+<arg>service=${signal_service}</arg>
+<arg>options=${options}</arg>
+<doc>Creates an instance of Selenium WebDriver.</doc>
+<status status="PASS" start="2025-01-13T19:51:14.185306" elapsed="22.233410"/>
+</kw>
+<msg time="2025-01-13T19:51:36.418716" level="TRACE">Return: None</msg>
+<doc>Open's your electron application by providing browser binary via
+C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe and chromedriver binary via C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe
+see vars.py for more details.</doc>
+<status status="PASS" start="2025-01-13T19:51:13.173803" elapsed="23.244913"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:51:36.419715" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:51:37.420742" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:51:37.420742" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:51:36.419715" elapsed="1.001027"/>
+</kw>
+<kw name="Wait Until Page Contains Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:51:37.420742" level="TRACE">Arguments: [ 'id=burstFile' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:51:37.421789" level="DEBUG">POST http://localhost:52016/session/0362a64c75b29188a92c38f812030660/elements {'using': 'css selector', 'value': '[id="burstFile"]'}</msg>
+<msg time="2025-01-13T19:51:37.433286" level="DEBUG">http://localhost:52016 "POST /session/0362a64c75b29188a92c38f812030660/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:51:37.433459" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"05ea3bc1-f91f-4ee5-9112-249b0eb27507"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:51:37.433459" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:51:37.433459" level="TRACE">Return: None</msg>
+<arg>id=burstFile</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="PASS" start="2025-01-13T19:51:37.420742" elapsed="0.012717"/>
+</kw>
+<kw name="Wait Until Page Contains Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:51:37.433964" level="TRACE">Arguments: [ 'id=javaInstallationOld' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:51:37.433964" level="DEBUG">POST http://localhost:52016/session/0362a64c75b29188a92c38f812030660/elements {'using': 'css selector', 'value': '[id="javaInstallationOld"]'}</msg>
+<msg time="2025-01-13T19:51:37.443149" level="DEBUG">http://localhost:52016 "POST /session/0362a64c75b29188a92c38f812030660/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:51:37.443149" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"61d76b68-c567-4bec-9ad0-0c33a6077ef1"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:51:37.443149" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:51:37.443149" level="TRACE">Return: None</msg>
+<arg>id=javaInstallationOld</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="PASS" start="2025-01-13T19:51:37.433964" elapsed="0.009185"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:51:37.443149" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:51:38.443478" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:51:38.443577" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:51:37.443149" elapsed="1.000428"/>
+</kw>
+<kw name="Ensure Java Is Not Installed" owner="utilities">
+<msg time="2025-01-13T19:51:38.443577" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:22.070225" level="INFO">Chocolatey is installed. (ensure_java_is_not_installed)
+Uninstalling Temurin8 with Chocolatey...
+Java is not installed on this computer.</msg>
+<msg time="2025-01-13T19:52:22.070225" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:51:38.443577" elapsed="43.626648"/>
+</kw>
+<kw name="Close ReportBurster Application">
+<msg time="2025-01-13T19:52:22.071224" level="TRACE">Arguments: [  ]</msg>
+<kw name="Kill Reportburster Exe Process" owner="utilities">
+<msg time="2025-01-13T19:52:22.071224" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:22.071224" level="INFO">Log file path: C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\logs\electron.log</msg>
+<msg time="2025-01-13T19:52:22.072258" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:52:22.071224" elapsed="0.001034"/>
+</kw>
+<msg time="2025-01-13T19:52:22.072258" level="TRACE">Return: None</msg>
+<doc>Close ReportBurster Application</doc>
+<status status="PASS" start="2025-01-13T19:52:22.071224" elapsed="0.001034"/>
 </kw>
 <kw name="Kill Reportburster Exe Process" owner="utilities" type="TEARDOWN">
-<msg time="2025-01-13T13:07:46.465765" level="TRACE">Arguments: [  ]</msg>
-<msg time="2025-01-13T13:07:46.465765" level="INFO">Log file path: C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\logs\electron.log</msg>
-<msg time="2025-01-13T13:07:46.465765" level="TRACE">Return: None</msg>
-<status status="PASS" start="2025-01-13T13:07:46.465765" elapsed="0.000000"/>
+<msg time="2025-01-13T19:52:22.072523" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:22.088711" level="INFO">Log file path: C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\logs\electron.log</msg>
+<msg time="2025-01-13T19:52:22.088711" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:52:22.072523" elapsed="0.016188"/>
 </kw>
 <doc>Prerequisites Java 8 Installed Should Let The User Know That At Least Java 11 Is Required</doc>
-<status status="FAIL" start="2025-01-13T13:07:46.457735" elapsed="0.008030">Setup failed:
-FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'
-[RETRY] FAIL on 3. retry.</status>
+<status status="PASS" start="2025-01-13T19:50:39.383878" elapsed="102.704833"/>
 </test>
 <test id="s1-s1-t2" name="Prerequisites Chocolatey Is Installed and Java Not Installed Should Allow User To Install Java" line="26">
 <kw name="Clean State" type="SETUP">
-<msg time="2025-01-13T13:07:46.499831" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:22.092912" level="TRACE">Arguments: [  ]</msg>
 <kw name="Clean Output Folders And Log Files" owner="utilities">
-<msg time="2025-01-13T13:07:46.499831" level="TRACE">Arguments: [  ]</msg>
-<msg time="2025-01-13T13:07:46.499831" level="FAIL">FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'</msg>
-<msg time="2025-01-13T13:07:46.499831" level="DEBUG">Traceback (most recent call last):
-  File "C:\Projects\all-repos\src\prd\rb\asbl\src\uat\resources\utilities.py", line 91, in clean_output_folders_and_log_files
-    empty_folder(folder_path)
-  File "C:\Projects\all-repos\src\prd\rb\asbl\src\uat\resources\utilities.py", line 57, in empty_folder
-    for filename in os.listdir(folder_path):
-                    ^^^^^^^^^^^^^^^^^^^^^^^
-FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'</msg>
-<status status="FAIL" start="2025-01-13T13:07:46.499831" elapsed="0.000000">FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'</status>
+<msg time="2025-01-13T19:52:22.092912" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:22.094911" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:52:22.092912" elapsed="0.001999"/>
+</kw>
+<kw name="Close ReportBurster Application">
+<msg time="2025-01-13T19:52:22.094911" level="TRACE">Arguments: [  ]</msg>
+<kw name="Kill Reportburster Exe Process" owner="utilities">
+<msg time="2025-01-13T19:52:22.095912" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:22.111055" level="INFO">Log file path: C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\logs\electron.log
+No process found with PID: 21616</msg>
+<msg time="2025-01-13T19:52:22.111055" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:52:22.095912" elapsed="0.015143"/>
+</kw>
+<msg time="2025-01-13T19:52:22.111055" level="TRACE">Return: None</msg>
+<doc>Close ReportBurster Application</doc>
+<status status="PASS" start="2025-01-13T19:52:22.094911" elapsed="0.016144"/>
+</kw>
+<msg time="2025-01-13T19:52:22.111055" level="TRACE">Return: None</msg>
+<doc>Clean Output Folders and Log Files</doc>
+<status status="PASS" start="2025-01-13T19:52:22.092912" elapsed="0.018143"/>
+</kw>
+<kw name="Ensure Chocolatey Is Installed" owner="utilities">
+<msg time="2025-01-13T19:52:22.112058" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:23.055071" level="INFO">Output of 'choco -v': 2.4.1
+
+Chocolatey is already installed.</msg>
+<msg time="2025-01-13T19:52:23.055071" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:52:22.112058" elapsed="0.943013"/>
+</kw>
+<kw name="Ensure Java Is Not Installed" owner="utilities">
+<msg time="2025-01-13T19:52:23.056106" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:25.277165" level="INFO">Chocolatey is installed. (ensure_java_is_not_installed)
+Java is not installed on this computer.</msg>
+<msg time="2025-01-13T19:52:25.277165" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:52:23.056106" elapsed="2.221059"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:52:25.277165" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:52:26.278024" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:52:26.278024" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:52:25.277165" elapsed="1.000859"/>
+</kw>
+<kw name="Refresh Env Variables" owner="utilities">
+<msg time="2025-01-13T19:52:26.278024" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:26.621027" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:52:26.278024" elapsed="0.343003"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:52:26.621027" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:52:27.621464" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:52:27.621464" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:52:26.621027" elapsed="1.000437"/>
+</kw>
+<kw name="Open Electron Application">
+<msg time="2025-01-13T19:52:27.622701" level="TRACE">Arguments: [  ]</msg>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2025-01-13T19:52:27.622701" level="TRACE">Arguments: [ 'cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222) || start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222"' ]</msg>
+<msg time="2025-01-13T19:52:27.622701" level="TRACE">Return: 'cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222) || start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222"'</msg>
+<msg time="2025-01-13T19:52:27.623744" level="INFO">${electron_command} = cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe --remote-debugging-port=9222) || start C:\Projects\all-repo...</msg>
+<var>${electron_command}</var>
+<arg>cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start ${signal_electron.binary_location} --remote-debugging-port=9222) || start ${signal_electron.binary_location} --remote-debugging-port=9222"</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2025-01-13T19:52:27.622701" elapsed="0.001043"/>
+</kw>
+<kw name="Get Parent Directory" owner="utilities">
+<msg time="2025-01-13T19:52:27.623744" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe' ]</msg>
+<msg time="2025-01-13T19:52:27.623744" level="TRACE">Return: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster'</msg>
+<msg time="2025-01-13T19:52:27.623744" level="INFO">${working_dir} = C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster</msg>
+<var>${working_dir}</var>
+<arg>${signal_electron.binary_location}</arg>
+<status status="PASS" start="2025-01-13T19:52:27.623744" elapsed="0.000000"/>
+</kw>
+<kw name="Start Process" owner="Process">
+<msg time="2025-01-13T19:52:27.623744" level="TRACE">Arguments: [ 'cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222) || start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222"' | cwd='C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster' | shell='True' ]</msg>
+<msg time="2025-01-13T19:52:27.623744" level="INFO">Starting process:
+cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe --remote-debugging-port=9222) || start C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe --remote-debugging-port=9222"</msg>
+<msg time="2025-01-13T19:52:27.624745" level="DEBUG">Process configuration:
+cwd:     C:\Projects\all-repos\src\prd\rb\asbl\target\uat\rb\ReportBurster
+shell:   True
+stdout:  PIPE
+stderr:  PIPE
+stdin:   None
+alias:   None
+env:     None</msg>
+<msg time="2025-01-13T19:52:27.626702" level="TRACE">Return: &lt;Popen: returncode: None args: 'cmd /c "where /q refreshenv &amp;&amp; (call refresh...&gt;</msg>
+<arg>${electron_command}</arg>
+<arg>cwd=${working_dir}</arg>
+<arg>shell=True</arg>
+<doc>Starts a new process on background.</doc>
+<status status="PASS" start="2025-01-13T19:52:27.623744" elapsed="0.002958"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:52:27.626702" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:52:28.627732" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:52:28.627732" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:52:27.626702" elapsed="1.001030"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2025-01-13T19:52:28.627732" level="TRACE">Arguments: [ "sys.modules['selenium.webdriver'].ChromeOptions()" | 'sys, selenium.webdriver' ]</msg>
+<msg time="2025-01-13T19:52:28.627732" level="TRACE">Return: &lt;selenium.webdriver.chrome.options.Options object at 0x00000201834E3560&gt;</msg>
+<msg time="2025-01-13T19:52:28.627732" level="INFO">${options} = &lt;selenium.webdriver.chrome.options.Options object at 0x00000201834E3560&gt;</msg>
+<var>${options}</var>
+<arg>sys.modules['selenium.webdriver'].ChromeOptions()</arg>
+<arg>sys, selenium.webdriver</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2025-01-13T19:52:28.627732" elapsed="0.000000"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<msg time="2025-01-13T19:52:28.628641" level="TRACE">Arguments: [ &lt;selenium.webdriver.chrome.options.Options object at 0x00000201834E3560&gt; | 'add_experimental_option' | 'debuggerAddress' | 'localhost:9222' ]</msg>
+<msg time="2025-01-13T19:52:28.628641" level="TRACE">Return: None</msg>
+<arg>${options}</arg>
+<arg>add_experimental_option</arg>
+<arg>debuggerAddress</arg>
+<arg>localhost:9222</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2025-01-13T19:52:28.627732" elapsed="0.000909"/>
+</kw>
+<kw name="Create Webdriver" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:52:28.628641" level="TRACE">Arguments: [ 'Chrome' | service=&lt;selenium.webdriver.chrome.service.Service object at 0x00000201821DF6B0&gt; | options=&lt;selenium.webdriver.chrome.options.Options object at 0x00000201834E3560&gt; ]</msg>
+<msg time="2025-01-13T19:52:28.628641" level="INFO">Creating an instance of the Chrome WebDriver.</msg>
+<msg time="2025-01-13T19:52:28.628641" level="DEBUG">Skipping Selenium Manager; path to chrome driver specified in Service class: C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe</msg>
+<msg time="2025-01-13T19:52:28.631642" level="DEBUG">Started executable: `C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe` in a child process with pid: 5012 using 0 to output -3</msg>
+<msg time="2025-01-13T19:52:28.653400" level="DEBUG">POST http://localhost:52016/session {'capabilities': {'firstMatch': [{}], 'alwaysMatch': {'browserName': 'chrome', 'pageLoadStrategy': &lt;PageLoadStrategy.normal: 'normal'&gt;, 'goog:chromeOptions': {'debuggerAddress': 'localhost:9222', 'extensions': [], 'args': []}}}}</msg>
+<msg time="2025-01-13T19:52:28.653400" level="DEBUG">Starting new HTTP connection (1): localhost:52016</msg>
+<msg time="2025-01-13T19:52:48.126905" level="DEBUG">http://localhost:52016 "POST /session HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:48.126905" level="DEBUG">Remote response: status=200 | data={"value":{"capabilities":{"acceptInsecureCerts":false,"browserName":"chrome","browserVersion":"106.0.5249.103","chrome":{"chromedriverVersion":"106.0.5249.51 (916bca209b16f8c0d4fac47d332c637cf07f2016-refs/heads/main@{#1037919})"},"goog:chromeOptions":{"debuggerAddress":"localhost:9222"},"pageLoadStrategy":"normal","platformName":"","proxy":{},"setWindowRect":false,"strictFileInteractability":false,"timeouts":{"implicit":0,"pageLoad":300000,"script":30000},"unhandledPromptBehavior":"dismiss and notify","webauthn:extension:credBlob":true,"webauthn:extension:largeBlob":true,"webauthn:virtualAuthenticators":true},"sessionId":"7653a1e960f86a9959634d8301c9baa6"}} | headers=HTTPHeaderDict({'Content-Length': '665', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:48.126905" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:48.126905" level="DEBUG">Created Chrome WebDriver instance with session id 7653a1e960f86a9959634d8301c9baa6.</msg>
+<msg time="2025-01-13T19:52:48.126905" level="TRACE">Return: 2</msg>
+<arg>Chrome</arg>
+<arg>service=${signal_service}</arg>
+<arg>options=${options}</arg>
+<doc>Creates an instance of Selenium WebDriver.</doc>
+<status status="PASS" start="2025-01-13T19:52:28.628641" elapsed="19.498264"/>
+</kw>
+<msg time="2025-01-13T19:52:48.126905" level="TRACE">Return: None</msg>
+<doc>Open's your electron application by providing browser binary via
+C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe and chromedriver binary via C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe
+see vars.py for more details.</doc>
+<status status="PASS" start="2025-01-13T19:52:27.622411" elapsed="20.504494"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:52:48.126905" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:52:49.128291" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:52:49.128291" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:52:48.126905" elapsed="1.001386"/>
+</kw>
+<kw name="Wait Until Page Contains Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:52:49.129004" level="TRACE">Arguments: [ 'id=btnInstallJavaTabBurst' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:52:49.129004" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '[id="btnInstallJavaTabBurst"]'}</msg>
+<msg time="2025-01-13T19:52:49.138380" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:49.138380" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"d5e596cd-bcdf-40db-9ade-09f15d2c34ec"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:49.138380" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:49.138380" level="TRACE">Return: None</msg>
+<arg>id=btnInstallJavaTabBurst</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="PASS" start="2025-01-13T19:52:49.128291" elapsed="0.010089"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:52:49.139381" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:52:50.139539" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:52:50.139539" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:52:49.139381" elapsed="1.000158"/>
+</kw>
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:52:50.140173" level="TRACE">Arguments: [ 'id=btnInstallJavaTabBurst' ]</msg>
+<msg time="2025-01-13T19:52:50.140173" level="INFO">Clicking button 'id=btnInstallJavaTabBurst'.</msg>
+<msg time="2025-01-13T19:52:50.140173" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '[id="btnInstallJavaTabBurst"]'}</msg>
+<msg time="2025-01-13T19:52:50.146294" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:50.146294" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"d5e596cd-bcdf-40db-9ade-09f15d2c34ec"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:50.146294" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:50.146294" level="DEBUG">GET http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/element/d5e596cd-bcdf-40db-9ade-09f15d2c34ec/name {}</msg>
+<msg time="2025-01-13T19:52:50.151338" level="DEBUG">http://localhost:52016 "GET /session/7653a1e960f86a9959634d8301c9baa6/element/d5e596cd-bcdf-40db-9ade-09f15d2c34ec/name HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:50.151338" level="DEBUG">Remote response: status=200 | data={"value":"button"} | headers=HTTPHeaderDict({'Content-Length': '18', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:50.151338" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:50.151338" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '[id="btnInstallJavaTabBurst"]'}</msg>
+<msg time="2025-01-13T19:52:50.157438" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:50.157438" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"d5e596cd-bcdf-40db-9ade-09f15d2c34ec"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:50.157438" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:50.157438" level="DEBUG">GET http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/element/d5e596cd-bcdf-40db-9ade-09f15d2c34ec/name {}</msg>
+<msg time="2025-01-13T19:52:50.161481" level="DEBUG">http://localhost:52016 "GET /session/7653a1e960f86a9959634d8301c9baa6/element/d5e596cd-bcdf-40db-9ade-09f15d2c34ec/name HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:50.161481" level="DEBUG">Remote response: status=200 | data={"value":"button"} | headers=HTTPHeaderDict({'Content-Length': '18', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:50.161481" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:50.161481" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/element/d5e596cd-bcdf-40db-9ade-09f15d2c34ec/click {}</msg>
+<msg time="2025-01-13T19:52:50.296424" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/element/d5e596cd-bcdf-40db-9ade-09f15d2c34ec/click HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:50.296424" level="DEBUG">Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:50.296424" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:50.296424" level="TRACE">Return: None</msg>
+<arg>id=btnInstallJavaTabBurst</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2025-01-13T19:52:50.140173" elapsed="0.156251"/>
+</kw>
+<kw name="Wait Until Page Contains Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:52:50.296424" level="TRACE">Arguments: [ 'id=btnInstallJava' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:52:50.297423" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '[id="btnInstallJava"]'}</msg>
+<msg time="2025-01-13T19:52:50.311423" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:50.311423" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"67cf03cf-2c5d-4998-bb07-4ff633f5e5b6"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:50.311423" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:50.311423" level="TRACE">Return: None</msg>
+<arg>id=btnInstallJava</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="PASS" start="2025-01-13T19:52:50.296424" elapsed="0.014999"/>
+</kw>
+<kw name="Page Should Not Contain Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:52:50.312425" level="TRACE">Arguments: [ 'id=btnInstallChocolatey' ]</msg>
+<msg time="2025-01-13T19:52:50.312425" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '[id="btnInstallChocolatey"]'}</msg>
+<msg time="2025-01-13T19:52:50.323624" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:50.323624" level="DEBUG">Remote response: status=200 | data={"value":[]} | headers=HTTPHeaderDict({'Content-Length': '12', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:50.323624" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:50.323624" level="INFO">Current page does not contain element 'id=btnInstallChocolatey'.</msg>
+<msg time="2025-01-13T19:52:50.323624" level="TRACE">Return: None</msg>
+<arg>id=btnInstallChocolatey</arg>
+<doc>Verifies that element ``locator`` is not found on the current page.</doc>
+<status status="PASS" start="2025-01-13T19:52:50.312425" elapsed="0.011199"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:52:50.323624" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:52:51.325390" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:52:51.325390" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:52:50.323624" elapsed="1.001766"/>
+</kw>
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:52:51.326004" level="TRACE">Arguments: [ 'id=btnInstallJava' ]</msg>
+<msg time="2025-01-13T19:52:51.326004" level="INFO">Clicking button 'id=btnInstallJava'.</msg>
+<msg time="2025-01-13T19:52:51.326004" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '[id="btnInstallJava"]'}</msg>
+<msg time="2025-01-13T19:52:51.331962" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:51.331962" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"67cf03cf-2c5d-4998-bb07-4ff633f5e5b6"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:51.331962" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:51.331962" level="DEBUG">GET http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/element/67cf03cf-2c5d-4998-bb07-4ff633f5e5b6/name {}</msg>
+<msg time="2025-01-13T19:52:51.336228" level="DEBUG">http://localhost:52016 "GET /session/7653a1e960f86a9959634d8301c9baa6/element/67cf03cf-2c5d-4998-bb07-4ff633f5e5b6/name HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:51.336228" level="DEBUG">Remote response: status=200 | data={"value":"button"} | headers=HTTPHeaderDict({'Content-Length': '18', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:51.336228" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:51.336228" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '[id="btnInstallJava"]'}</msg>
+<msg time="2025-01-13T19:52:51.342365" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:51.342365" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"67cf03cf-2c5d-4998-bb07-4ff633f5e5b6"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:51.342365" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:51.342365" level="DEBUG">GET http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/element/67cf03cf-2c5d-4998-bb07-4ff633f5e5b6/name {}</msg>
+<msg time="2025-01-13T19:52:51.345374" level="DEBUG">http://localhost:52016 "GET /session/7653a1e960f86a9959634d8301c9baa6/element/67cf03cf-2c5d-4998-bb07-4ff633f5e5b6/name HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:51.345374" level="DEBUG">Remote response: status=200 | data={"value":"button"} | headers=HTTPHeaderDict({'Content-Length': '18', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:51.345374" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:51.345374" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/element/67cf03cf-2c5d-4998-bb07-4ff633f5e5b6/click {}</msg>
+<msg time="2025-01-13T19:52:51.386822" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/element/67cf03cf-2c5d-4998-bb07-4ff633f5e5b6/click HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:51.387821" level="DEBUG">Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:51.387821" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:51.387821" level="TRACE">Return: None</msg>
+<arg>id=btnInstallJava</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2025-01-13T19:52:51.325911" elapsed="0.061910"/>
+</kw>
+<kw name="Wait Until Page Contains Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:52:51.387821" level="TRACE">Arguments: [ 'css=.dburst-button-question-decline' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:52:51.388861" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '.dburst-button-question-decline'}</msg>
+<msg time="2025-01-13T19:52:51.397851" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:51.397851" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"1d0fd18a-7d2c-4ea6-a2cb-1c55b884a507"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:51.397851" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:51.397851" level="TRACE">Return: None</msg>
+<arg>css=.dburst-button-question-decline</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="PASS" start="2025-01-13T19:52:51.387821" elapsed="0.010030"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:52:51.398865" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:52:52.399792" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:52:52.399792" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:52:51.397851" elapsed="1.001941"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:52:52.400793" level="TRACE">Arguments: [ 'css=.dburst-button-question-decline' ]</msg>
+<msg time="2025-01-13T19:52:52.400793" level="INFO">Clicking element 'css=.dburst-button-question-decline'.</msg>
+<msg time="2025-01-13T19:52:52.400793" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '.dburst-button-question-decline'}</msg>
+<msg time="2025-01-13T19:52:52.407112" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:52.407112" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"1d0fd18a-7d2c-4ea6-a2cb-1c55b884a507"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:52.408128" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:52.408128" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/element/1d0fd18a-7d2c-4ea6-a2cb-1c55b884a507/click {}</msg>
+<msg time="2025-01-13T19:52:52.439680" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/element/1d0fd18a-7d2c-4ea6-a2cb-1c55b884a507/click HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:52.440689" level="DEBUG">Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:52.440689" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:52.440689" level="TRACE">Return: None</msg>
+<arg>css=.dburst-button-question-decline</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="PASS" start="2025-01-13T19:52:52.399792" elapsed="0.040897"/>
+</kw>
+<kw name="Wait Until Element Is Not Visible" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:52:52.441694" level="TRACE">Arguments: [ 'css=.dburst-button-question-decline' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:52:52.441694" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '.dburst-button-question-decline'}</msg>
+<msg time="2025-01-13T19:52:52.448680" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:52.448680" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"1d0fd18a-7d2c-4ea6-a2cb-1c55b884a507"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:52.448680" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:52.448680" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/execute/sync {'script': '/* isDisplayed */return (function(){return (function(){var g=this||self;\nfunction aa(a){var b=typeof...', 'args': [{'element-6066-11e4-a52e-4f735466cecf': '1d0fd18a-7d2c-4ea6-a2cb-1c55b884a507'}]}</msg>
+<msg time="2025-01-13T19:52:52.457686" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/execute/sync HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:52.458684" level="DEBUG">Remote response: status=200 | data={"value":true} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:52.458684" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:52.659706" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '.dburst-button-question-decline'}</msg>
+<msg time="2025-01-13T19:52:52.665835" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:52.665835" level="DEBUG">Remote response: status=200 | data={"value":[]} | headers=HTTPHeaderDict({'Content-Length': '12', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:52.665835" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:52.665835" level="TRACE">Return: None</msg>
+<arg>css=.dburst-button-question-decline</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` is not visible.</doc>
+<status status="PASS" start="2025-01-13T19:52:52.440689" elapsed="0.225146"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:52:52.666878" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:52:53.667910" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:52:53.667910" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:52:52.666878" elapsed="1.001032"/>
+</kw>
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:52:53.667910" level="TRACE">Arguments: [ 'id=btnInstallJava' ]</msg>
+<msg time="2025-01-13T19:52:53.668863" level="INFO">Clicking button 'id=btnInstallJava'.</msg>
+<msg time="2025-01-13T19:52:53.668863" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '[id="btnInstallJava"]'}</msg>
+<msg time="2025-01-13T19:52:53.675076" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:53.675076" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"67cf03cf-2c5d-4998-bb07-4ff633f5e5b6"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:53.676077" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:53.676077" level="DEBUG">GET http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/element/67cf03cf-2c5d-4998-bb07-4ff633f5e5b6/name {}</msg>
+<msg time="2025-01-13T19:52:53.679076" level="DEBUG">http://localhost:52016 "GET /session/7653a1e960f86a9959634d8301c9baa6/element/67cf03cf-2c5d-4998-bb07-4ff633f5e5b6/name HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:53.679076" level="DEBUG">Remote response: status=200 | data={"value":"button"} | headers=HTTPHeaderDict({'Content-Length': '18', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:53.679076" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:53.680076" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '[id="btnInstallJava"]'}</msg>
+<msg time="2025-01-13T19:52:53.685220" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:53.685220" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"67cf03cf-2c5d-4998-bb07-4ff633f5e5b6"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:53.685220" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:53.685220" level="DEBUG">GET http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/element/67cf03cf-2c5d-4998-bb07-4ff633f5e5b6/name {}</msg>
+<msg time="2025-01-13T19:52:53.689221" level="DEBUG">http://localhost:52016 "GET /session/7653a1e960f86a9959634d8301c9baa6/element/67cf03cf-2c5d-4998-bb07-4ff633f5e5b6/name HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:53.689221" level="DEBUG">Remote response: status=200 | data={"value":"button"} | headers=HTTPHeaderDict({'Content-Length': '18', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:53.689221" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:53.689221" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/element/67cf03cf-2c5d-4998-bb07-4ff633f5e5b6/click {}</msg>
+<msg time="2025-01-13T19:52:53.712851" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/element/67cf03cf-2c5d-4998-bb07-4ff633f5e5b6/click HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:53.713838" level="DEBUG">Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:53.713838" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:53.713838" level="TRACE">Return: None</msg>
+<arg>id=btnInstallJava</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2025-01-13T19:52:53.667910" elapsed="0.045928"/>
+</kw>
+<kw name="Wait Until Page Contains Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:52:53.713838" level="TRACE">Arguments: [ 'css=.dburst-button-question-confirm' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:52:53.713838" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '.dburst-button-question-confirm'}</msg>
+<msg time="2025-01-13T19:52:53.722839" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:53.722839" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"ceb871e6-2c96-4b43-987a-b9417b0c4270"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:53.722839" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:53.722839" level="TRACE">Return: None</msg>
+<arg>css=.dburst-button-question-confirm</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="PASS" start="2025-01-13T19:52:53.713838" elapsed="0.009001"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:52:53.723875" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:52:54.724504" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:52:54.724504" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:52:53.723875" elapsed="1.000629"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:52:54.724504" level="TRACE">Arguments: [ 'css=.dburst-button-question-confirm' ]</msg>
+<msg time="2025-01-13T19:52:54.724504" level="INFO">Clicking element 'css=.dburst-button-question-confirm'.</msg>
+<msg time="2025-01-13T19:52:54.724504" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '.dburst-button-question-confirm'}</msg>
+<msg time="2025-01-13T19:52:54.731458" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:54.731458" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"ceb871e6-2c96-4b43-987a-b9417b0c4270"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:54.731458" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:54.731458" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/element/ceb871e6-2c96-4b43-987a-b9417b0c4270/click {}</msg>
+<msg time="2025-01-13T19:52:54.763909" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/element/ceb871e6-2c96-4b43-987a-b9417b0c4270/click HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:54.763909" level="DEBUG">Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:54.763909" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:54.763909" level="TRACE">Return: None</msg>
+<arg>css=.dburst-button-question-confirm</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="PASS" start="2025-01-13T19:52:54.724504" elapsed="0.039405"/>
+</kw>
+<kw name="Wait Until Element Is Not Visible" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:52:54.764943" level="TRACE">Arguments: [ 'css=.dburst-button-question-confirm' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:52:54.764943" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '.dburst-button-question-confirm'}</msg>
+<msg time="2025-01-13T19:52:54.779906" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:54.779906" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"ceb871e6-2c96-4b43-987a-b9417b0c4270"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:54.779906" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:54.779906" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/execute/sync {'script': '/* isDisplayed */return (function(){return (function(){var g=this||self;\nfunction aa(a){var b=typeof...', 'args': [{'element-6066-11e4-a52e-4f735466cecf': 'ceb871e6-2c96-4b43-987a-b9417b0c4270'}]}</msg>
+<msg time="2025-01-13T19:52:54.789905" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/execute/sync HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:54.790905" level="DEBUG">Remote response: status=200 | data={"value":true} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:54.790905" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:54.991285" level="DEBUG">POST http://localhost:52016/session/7653a1e960f86a9959634d8301c9baa6/elements {'using': 'css selector', 'value': '.dburst-button-question-confirm'}</msg>
+<msg time="2025-01-13T19:52:54.997514" level="DEBUG">http://localhost:52016 "POST /session/7653a1e960f86a9959634d8301c9baa6/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:52:54.997514" level="DEBUG">Remote response: status=200 | data={"value":[]} | headers=HTTPHeaderDict({'Content-Length': '12', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:52:54.997514" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:52:54.997514" level="TRACE">Return: None</msg>
+<arg>css=.dburst-button-question-confirm</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` is not visible.</doc>
+<status status="PASS" start="2025-01-13T19:52:54.763909" elapsed="0.233605"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:52:54.998513" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:52:55.999122" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:52:55.999122" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:52:54.998513" elapsed="1.000609"/>
+</kw>
+<kw name="Wait For Powershell And Accept Completion" owner="utilities">
+<msg time="2025-01-13T19:52:55.999122" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:56.000083" level="FAIL">PyAutoGUIException: PyAutoGUI was unable to import pyscreeze. (This is likely because you're running a version of Python that Pillow (which pyscreeze depends on) doesn't support currently.) Please install this module to enable the function you tried to call.</msg>
+<msg time="2025-01-13T19:52:56.001029" level="DEBUG">Traceback (most recent call last):
+  File "C:\Projects\all-repos\src\prd\rb\asbl\src\uat\resources\utilities.py", line 262, in wait_for_powershell_and_accept_completion
+    button_location = pyautogui.locateOnScreen(image_path, grayscale=True, confidence=.8)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Projects\all-repos\src\prd\rb\asbl\src\uat\.venv\Lib\site-packages\pyautogui\__init__.py", line 228, in _couldNotImportPyScreeze
+    raise PyAutoGUIException(
+pyautogui.PyAutoGUIException: PyAutoGUI was unable to import pyscreeze. (This is likely because you're running a version of Python that Pillow (which pyscreeze depends on) doesn't support currently.) Please install this module to enable the function you tried to call.</msg>
+<status status="FAIL" start="2025-01-13T19:52:55.999122" elapsed="0.001907">PyAutoGUIException: PyAutoGUI was unable to import pyscreeze. (This is likely because you're running a version of Python that Pillow (which pyscreeze depends on) doesn't support currently.) Please install this module to enable the function you tried to call.</status>
 </kw>
 <kw name="Close ReportBurster Application">
 <doc>Close ReportBurster Application</doc>
-<status status="NOT RUN" start="2025-01-13T13:07:46.499831" elapsed="0.000000"/>
+<status status="NOT RUN" start="2025-01-13T19:52:56.001029" elapsed="0.000000"/>
 </kw>
-<doc>Clean Output Folders and Log Files</doc>
-<status status="FAIL" start="2025-01-13T13:07:46.499831" elapsed="0.000000">FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'</status>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2025-01-13T19:52:56.001029" elapsed="0.000000"/>
+</kw>
+<kw name="Refresh Env Variables" owner="utilities">
+<status status="NOT RUN" start="2025-01-13T19:52:56.002075" elapsed="0.000000"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2025-01-13T19:52:56.002075" elapsed="0.000000"/>
+</kw>
+<kw name="Open Electron Application">
+<doc>Open's your electron application by providing browser binary via
+C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe and chromedriver binary via C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe
+see vars.py for more details.</doc>
+<status status="NOT RUN" start="2025-01-13T19:52:56.002075" elapsed="0.000000"/>
+</kw>
+<kw name="Wait Until Page Contains Element" owner="SeleniumLibrary">
+<arg>id=burstFile</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="NOT RUN" start="2025-01-13T19:52:56.003029" elapsed="0.000000"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2025-01-13T19:52:56.003029" elapsed="0.000000"/>
+</kw>
+<kw name="Page Should Not Contain Element" owner="SeleniumLibrary">
+<arg>id=btnInstallJavaTabBurst</arg>
+<doc>Verifies that element ``locator`` is not found on the current page.</doc>
+<status status="NOT RUN" start="2025-01-13T19:52:56.003029" elapsed="0.000000"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2025-01-13T19:52:56.004107" elapsed="0.000000"/>
+</kw>
+<kw name="Ensure Java Is Not Installed" owner="utilities">
+<status status="NOT RUN" start="2025-01-13T19:52:56.004232" elapsed="0.000000"/>
+</kw>
+<kw name="Close ReportBurster Application">
+<doc>Close ReportBurster Application</doc>
+<status status="NOT RUN" start="2025-01-13T19:52:56.004232" elapsed="0.000000"/>
 </kw>
 <kw name="Kill Reportburster Exe Process" owner="utilities" type="TEARDOWN">
-<msg time="2025-01-13T13:07:46.499831" level="TRACE">Arguments: [  ]</msg>
-<msg time="2025-01-13T13:07:46.499831" level="INFO">Log file path: C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\logs\electron.log</msg>
-<msg time="2025-01-13T13:07:46.499831" level="TRACE">Return: None</msg>
-<status status="PASS" start="2025-01-13T13:07:46.499831" elapsed="0.000000"/>
+<msg time="2025-01-13T19:52:56.004232" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:56.005233" level="INFO">Log file path: C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\logs\electron.log</msg>
+<msg time="2025-01-13T19:52:56.005233" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:52:56.004232" elapsed="0.001001"/>
 </kw>
 <doc>Prerequisites Chocolatey Is Installed and Java Not Installed Should Allow User To Install Java</doc>
-<status status="FAIL" start="2025-01-13T13:07:46.499831" elapsed="0.000000">Setup failed:
-FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'
-[RETRY] FAIL on 3. retry.</status>
+<status status="SKIP" start="2025-01-13T19:52:22.090711" elapsed="33.914522">PyAutoGUIException: PyAutoGUI was unable to import pyscreeze. (This is likely because you're running a version of Python that Pillow (which pyscreeze depends on) doesn't support currently.) Please install this module to enable the function you tried to call.
+Skipped for Retry</status>
 </test>
-<test id="s1-s1-t3" name="Prerequisites Chocolatey Not Installed and Java Not Installed Should Allow User to Install Chocolatey and Then Java" line="66">
+<test id="s1-s1-t3" name="Prerequisites Chocolatey Is Installed and Java Not Installed Should Allow User To Install Java" line="26">
 <kw name="Clean State" type="SETUP">
-<msg time="2025-01-13T13:07:46.534208" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:56.015341" level="TRACE">Arguments: [  ]</msg>
 <kw name="Clean Output Folders And Log Files" owner="utilities">
-<msg time="2025-01-13T13:07:46.534208" level="TRACE">Arguments: [  ]</msg>
-<msg time="2025-01-13T13:07:46.534208" level="FAIL">FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'</msg>
-<msg time="2025-01-13T13:07:46.534208" level="DEBUG">Traceback (most recent call last):
-  File "C:\Projects\all-repos\src\prd\rb\asbl\src\uat\resources\utilities.py", line 91, in clean_output_folders_and_log_files
-    empty_folder(folder_path)
-  File "C:\Projects\all-repos\src\prd\rb\asbl\src\uat\resources\utilities.py", line 57, in empty_folder
-    for filename in os.listdir(folder_path):
-                    ^^^^^^^^^^^^^^^^^^^^^^^
-FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'</msg>
-<status status="FAIL" start="2025-01-13T13:07:46.534208" elapsed="0.000000">FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'</status>
+<msg time="2025-01-13T19:52:56.016341" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:56.017344" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:52:56.016341" elapsed="0.001003"/>
+</kw>
+<kw name="Close ReportBurster Application">
+<msg time="2025-01-13T19:52:56.017344" level="TRACE">Arguments: [  ]</msg>
+<kw name="Kill Reportburster Exe Process" owner="utilities">
+<msg time="2025-01-13T19:52:56.018343" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:56.031638" level="INFO">Log file path: C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\logs\electron.log
+No process found with PID: 25352</msg>
+<msg time="2025-01-13T19:52:56.031638" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:52:56.018343" elapsed="0.013295"/>
+</kw>
+<msg time="2025-01-13T19:52:56.031638" level="TRACE">Return: None</msg>
+<doc>Close ReportBurster Application</doc>
+<status status="PASS" start="2025-01-13T19:52:56.017344" elapsed="0.014294"/>
+</kw>
+<msg time="2025-01-13T19:52:56.031638" level="TRACE">Return: None</msg>
+<doc>Clean Output Folders and Log Files</doc>
+<status status="PASS" start="2025-01-13T19:52:56.015341" elapsed="0.016297"/>
+</kw>
+<kw name="Ensure Chocolatey Is Installed" owner="utilities">
+<msg time="2025-01-13T19:52:56.032776" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:57.036693" level="INFO">Output of 'choco -v': 2.4.1
+
+Chocolatey is already installed.</msg>
+<msg time="2025-01-13T19:52:57.036693" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:52:56.032675" elapsed="1.004018"/>
+</kw>
+<kw name="Ensure Java Is Not Installed" owner="utilities">
+<msg time="2025-01-13T19:52:57.037630" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:52:59.377199" level="INFO">Chocolatey is installed. (ensure_java_is_not_installed)
+Java is not installed on this computer.</msg>
+<msg time="2025-01-13T19:52:59.377199" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:52:57.037630" elapsed="2.339569"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:52:59.378140" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:53:00.379138" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:53:00.379138" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:52:59.378140" elapsed="1.000998"/>
+</kw>
+<kw name="Refresh Env Variables" owner="utilities">
+<msg time="2025-01-13T19:53:00.379138" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:53:00.723124" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:53:00.379138" elapsed="0.343986"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:53:00.723124" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:53:01.723313" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:53:01.723313" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:53:00.723124" elapsed="1.000189"/>
+</kw>
+<kw name="Open Electron Application">
+<msg time="2025-01-13T19:53:01.724312" level="TRACE">Arguments: [  ]</msg>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2025-01-13T19:53:01.726313" level="TRACE">Arguments: [ 'cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222) || start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222"' ]</msg>
+<msg time="2025-01-13T19:53:01.726313" level="TRACE">Return: 'cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222) || start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222"'</msg>
+<msg time="2025-01-13T19:53:01.726313" level="INFO">${electron_command} = cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe --remote-debugging-port=9222) || start C:\Projects\all-repo...</msg>
+<var>${electron_command}</var>
+<arg>cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start ${signal_electron.binary_location} --remote-debugging-port=9222) || start ${signal_electron.binary_location} --remote-debugging-port=9222"</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2025-01-13T19:53:01.724312" elapsed="0.002001"/>
+</kw>
+<kw name="Get Parent Directory" owner="utilities">
+<msg time="2025-01-13T19:53:01.726313" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe' ]</msg>
+<msg time="2025-01-13T19:53:01.727316" level="TRACE">Return: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster'</msg>
+<msg time="2025-01-13T19:53:01.727316" level="INFO">${working_dir} = C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster</msg>
+<var>${working_dir}</var>
+<arg>${signal_electron.binary_location}</arg>
+<status status="PASS" start="2025-01-13T19:53:01.726313" elapsed="0.001003"/>
+</kw>
+<kw name="Start Process" owner="Process">
+<msg time="2025-01-13T19:53:01.727316" level="TRACE">Arguments: [ 'cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222) || start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222"' | cwd='C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster' | shell='True' ]</msg>
+<msg time="2025-01-13T19:53:01.727316" level="INFO">Starting process:
+cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe --remote-debugging-port=9222) || start C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe --remote-debugging-port=9222"</msg>
+<msg time="2025-01-13T19:53:01.727316" level="DEBUG">Process configuration:
+cwd:     C:\Projects\all-repos\src\prd\rb\asbl\target\uat\rb\ReportBurster
+shell:   True
+stdout:  PIPE
+stderr:  PIPE
+stdin:   None
+alias:   None
+env:     None</msg>
+<msg time="2025-01-13T19:53:01.730313" level="TRACE">Return: &lt;Popen: returncode: None args: 'cmd /c "where /q refreshenv &amp;&amp; (call refresh...&gt;</msg>
+<arg>${electron_command}</arg>
+<arg>cwd=${working_dir}</arg>
+<arg>shell=True</arg>
+<doc>Starts a new process on background.</doc>
+<status status="PASS" start="2025-01-13T19:53:01.727316" elapsed="0.002997"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:53:01.730313" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:53:02.730579" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:53:02.730579" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:53:01.730313" elapsed="1.000266"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2025-01-13T19:53:02.730579" level="TRACE">Arguments: [ "sys.modules['selenium.webdriver'].ChromeOptions()" | 'sys, selenium.webdriver' ]</msg>
+<msg time="2025-01-13T19:53:02.730579" level="TRACE">Return: &lt;selenium.webdriver.chrome.options.Options object at 0x0000020183504B30&gt;</msg>
+<msg time="2025-01-13T19:53:02.730579" level="INFO">${options} = &lt;selenium.webdriver.chrome.options.Options object at 0x0000020183504B30&gt;</msg>
+<var>${options}</var>
+<arg>sys.modules['selenium.webdriver'].ChromeOptions()</arg>
+<arg>sys, selenium.webdriver</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2025-01-13T19:53:02.730579" elapsed="0.000998"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<msg time="2025-01-13T19:53:02.731577" level="TRACE">Arguments: [ &lt;selenium.webdriver.chrome.options.Options object at 0x0000020183504B30&gt; | 'add_experimental_option' | 'debuggerAddress' | 'localhost:9222' ]</msg>
+<msg time="2025-01-13T19:53:02.731577" level="TRACE">Return: None</msg>
+<arg>${options}</arg>
+<arg>add_experimental_option</arg>
+<arg>debuggerAddress</arg>
+<arg>localhost:9222</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2025-01-13T19:53:02.731577" elapsed="0.000000"/>
+</kw>
+<kw name="Create Webdriver" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:02.732610" level="TRACE">Arguments: [ 'Chrome' | service=&lt;selenium.webdriver.chrome.service.Service object at 0x00000201821DF6B0&gt; | options=&lt;selenium.webdriver.chrome.options.Options object at 0x0000020183504B30&gt; ]</msg>
+<msg time="2025-01-13T19:53:02.732706" level="INFO">Creating an instance of the Chrome WebDriver.</msg>
+<msg time="2025-01-13T19:53:02.732706" level="DEBUG">Skipping Selenium Manager; path to chrome driver specified in Service class: C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe</msg>
+<msg time="2025-01-13T19:53:02.736577" level="DEBUG">Started executable: `C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe` in a child process with pid: 19124 using 0 to output -3</msg>
+<msg time="2025-01-13T19:53:02.737578" level="DEBUG">POST http://localhost:52016/session {'capabilities': {'firstMatch': [{}], 'alwaysMatch': {'browserName': 'chrome', 'pageLoadStrategy': &lt;PageLoadStrategy.normal: 'normal'&gt;, 'goog:chromeOptions': {'debuggerAddress': 'localhost:9222', 'extensions': [], 'args': []}}}}</msg>
+<msg time="2025-01-13T19:53:02.737578" level="DEBUG">Starting new HTTP connection (1): localhost:52016</msg>
+<msg time="2025-01-13T19:53:21.733629" level="DEBUG">http://localhost:52016 "POST /session HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:21.733629" level="DEBUG">Remote response: status=200 | data={"value":{"capabilities":{"acceptInsecureCerts":false,"browserName":"chrome","browserVersion":"106.0.5249.103","chrome":{"chromedriverVersion":"106.0.5249.51 (916bca209b16f8c0d4fac47d332c637cf07f2016-refs/heads/main@{#1037919})"},"goog:chromeOptions":{"debuggerAddress":"localhost:9222"},"pageLoadStrategy":"normal","platformName":"","proxy":{},"setWindowRect":false,"strictFileInteractability":false,"timeouts":{"implicit":0,"pageLoad":300000,"script":30000},"unhandledPromptBehavior":"dismiss and notify","webauthn:extension:credBlob":true,"webauthn:extension:largeBlob":true,"webauthn:virtualAuthenticators":true},"sessionId":"78b59e5b72e91dbc1e85a13782615762"}} | headers=HTTPHeaderDict({'Content-Length': '665', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:21.734627" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:21.734627" level="DEBUG">Created Chrome WebDriver instance with session id 78b59e5b72e91dbc1e85a13782615762.</msg>
+<msg time="2025-01-13T19:53:21.734627" level="TRACE">Return: 3</msg>
+<arg>Chrome</arg>
+<arg>service=${signal_service}</arg>
+<arg>options=${options}</arg>
+<doc>Creates an instance of Selenium WebDriver.</doc>
+<status status="PASS" start="2025-01-13T19:53:02.731577" elapsed="19.003050"/>
+</kw>
+<msg time="2025-01-13T19:53:21.734627" level="TRACE">Return: None</msg>
+<doc>Open's your electron application by providing browser binary via
+C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe and chromedriver binary via C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe
+see vars.py for more details.</doc>
+<status status="PASS" start="2025-01-13T19:53:01.724312" elapsed="20.010315"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:53:21.734627" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:53:22.735013" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:53:22.735013" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:53:21.734627" elapsed="1.000386"/>
+</kw>
+<kw name="Wait Until Page Contains Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:22.735013" level="TRACE">Arguments: [ 'id=btnInstallJavaTabBurst' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:53:22.735925" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '[id="btnInstallJavaTabBurst"]'}</msg>
+<msg time="2025-01-13T19:53:22.744923" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:22.744923" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"a56dc913-d729-47ab-b843-e0202cdfb035"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:22.745960" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:22.745960" level="TRACE">Return: None</msg>
+<arg>id=btnInstallJavaTabBurst</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="PASS" start="2025-01-13T19:53:22.735013" elapsed="0.010947"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:53:22.745960" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:53:23.746268" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:53:23.746268" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:53:22.745960" elapsed="1.000308"/>
+</kw>
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:23.746268" level="TRACE">Arguments: [ 'id=btnInstallJavaTabBurst' ]</msg>
+<msg time="2025-01-13T19:53:23.746268" level="INFO">Clicking button 'id=btnInstallJavaTabBurst'.</msg>
+<msg time="2025-01-13T19:53:23.746268" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '[id="btnInstallJavaTabBurst"]'}</msg>
+<msg time="2025-01-13T19:53:23.753556" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:23.753556" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"a56dc913-d729-47ab-b843-e0202cdfb035"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:23.753556" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:23.753556" level="DEBUG">GET http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/element/a56dc913-d729-47ab-b843-e0202cdfb035/name {}</msg>
+<msg time="2025-01-13T19:53:23.758558" level="DEBUG">http://localhost:52016 "GET /session/78b59e5b72e91dbc1e85a13782615762/element/a56dc913-d729-47ab-b843-e0202cdfb035/name HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:23.758558" level="DEBUG">Remote response: status=200 | data={"value":"button"} | headers=HTTPHeaderDict({'Content-Length': '18', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:23.758558" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:23.758558" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '[id="btnInstallJavaTabBurst"]'}</msg>
+<msg time="2025-01-13T19:53:23.763779" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:23.763779" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"a56dc913-d729-47ab-b843-e0202cdfb035"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:23.764777" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:23.764777" level="DEBUG">GET http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/element/a56dc913-d729-47ab-b843-e0202cdfb035/name {}</msg>
+<msg time="2025-01-13T19:53:23.767734" level="DEBUG">http://localhost:52016 "GET /session/78b59e5b72e91dbc1e85a13782615762/element/a56dc913-d729-47ab-b843-e0202cdfb035/name HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:23.768778" level="DEBUG">Remote response: status=200 | data={"value":"button"} | headers=HTTPHeaderDict({'Content-Length': '18', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:23.768778" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:23.768778" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/element/a56dc913-d729-47ab-b843-e0202cdfb035/click {}</msg>
+<msg time="2025-01-13T19:53:23.895319" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/element/a56dc913-d729-47ab-b843-e0202cdfb035/click HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:23.895319" level="DEBUG">Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:23.895319" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:23.895319" level="TRACE">Return: None</msg>
+<arg>id=btnInstallJavaTabBurst</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2025-01-13T19:53:23.746268" elapsed="0.149051"/>
+</kw>
+<kw name="Wait Until Page Contains Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:23.896316" level="TRACE">Arguments: [ 'id=btnInstallJava' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:53:23.896316" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '[id="btnInstallJava"]'}</msg>
+<msg time="2025-01-13T19:53:23.909332" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:23.910317" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"12c0dea4-f3ba-45e7-b3a2-dde2b345436f"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:23.910317" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:23.910317" level="TRACE">Return: None</msg>
+<arg>id=btnInstallJava</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="PASS" start="2025-01-13T19:53:23.896316" elapsed="0.014001"/>
+</kw>
+<kw name="Page Should Not Contain Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:23.910317" level="TRACE">Arguments: [ 'id=btnInstallChocolatey' ]</msg>
+<msg time="2025-01-13T19:53:23.911317" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '[id="btnInstallChocolatey"]'}</msg>
+<msg time="2025-01-13T19:53:23.922374" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:23.922534" level="DEBUG">Remote response: status=200 | data={"value":[]} | headers=HTTPHeaderDict({'Content-Length': '12', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:23.922534" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:23.922534" level="INFO">Current page does not contain element 'id=btnInstallChocolatey'.</msg>
+<msg time="2025-01-13T19:53:23.922534" level="TRACE">Return: None</msg>
+<arg>id=btnInstallChocolatey</arg>
+<doc>Verifies that element ``locator`` is not found on the current page.</doc>
+<status status="PASS" start="2025-01-13T19:53:23.910317" elapsed="0.012217"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:53:23.922534" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:53:24.923192" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:53:24.923192" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:53:23.922534" elapsed="1.000658"/>
+</kw>
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:24.923356" level="TRACE">Arguments: [ 'id=btnInstallJava' ]</msg>
+<msg time="2025-01-13T19:53:24.923356" level="INFO">Clicking button 'id=btnInstallJava'.</msg>
+<msg time="2025-01-13T19:53:24.923356" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '[id="btnInstallJava"]'}</msg>
+<msg time="2025-01-13T19:53:24.930400" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:24.930400" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"12c0dea4-f3ba-45e7-b3a2-dde2b345436f"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:24.930400" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:24.930400" level="DEBUG">GET http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/element/12c0dea4-f3ba-45e7-b3a2-dde2b345436f/name {}</msg>
+<msg time="2025-01-13T19:53:24.935128" level="DEBUG">http://localhost:52016 "GET /session/78b59e5b72e91dbc1e85a13782615762/element/12c0dea4-f3ba-45e7-b3a2-dde2b345436f/name HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:24.935128" level="DEBUG">Remote response: status=200 | data={"value":"button"} | headers=HTTPHeaderDict({'Content-Length': '18', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:24.935128" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:24.935128" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '[id="btnInstallJava"]'}</msg>
+<msg time="2025-01-13T19:53:24.941157" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:24.941157" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"12c0dea4-f3ba-45e7-b3a2-dde2b345436f"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:24.941157" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:24.941157" level="DEBUG">GET http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/element/12c0dea4-f3ba-45e7-b3a2-dde2b345436f/name {}</msg>
+<msg time="2025-01-13T19:53:24.944441" level="DEBUG">http://localhost:52016 "GET /session/78b59e5b72e91dbc1e85a13782615762/element/12c0dea4-f3ba-45e7-b3a2-dde2b345436f/name HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:24.945423" level="DEBUG">Remote response: status=200 | data={"value":"button"} | headers=HTTPHeaderDict({'Content-Length': '18', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:24.945423" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:24.945423" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/element/12c0dea4-f3ba-45e7-b3a2-dde2b345436f/click {}</msg>
+<msg time="2025-01-13T19:53:24.988870" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/element/12c0dea4-f3ba-45e7-b3a2-dde2b345436f/click HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:24.988870" level="DEBUG">Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:24.988870" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:24.988870" level="TRACE">Return: None</msg>
+<arg>id=btnInstallJava</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2025-01-13T19:53:24.923356" elapsed="0.065514"/>
+</kw>
+<kw name="Wait Until Page Contains Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:24.989870" level="TRACE">Arguments: [ 'css=.dburst-button-question-decline' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:53:24.989870" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '.dburst-button-question-decline'}</msg>
+<msg time="2025-01-13T19:53:24.998871" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:24.998871" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"3891ca21-04c2-4490-b5ca-9486c876bf50"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:24.998871" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:24.998871" level="TRACE">Return: None</msg>
+<arg>css=.dburst-button-question-decline</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="PASS" start="2025-01-13T19:53:24.988870" elapsed="0.010001"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:53:24.998871" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:53:26.000042" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:53:26.000042" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:53:24.998871" elapsed="1.001171"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:26.001042" level="TRACE">Arguments: [ 'css=.dburst-button-question-decline' ]</msg>
+<msg time="2025-01-13T19:53:26.001042" level="INFO">Clicking element 'css=.dburst-button-question-decline'.</msg>
+<msg time="2025-01-13T19:53:26.001042" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '.dburst-button-question-decline'}</msg>
+<msg time="2025-01-13T19:53:26.007265" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:26.007265" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"3891ca21-04c2-4490-b5ca-9486c876bf50"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:26.007265" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:26.008265" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/element/3891ca21-04c2-4490-b5ca-9486c876bf50/click {}</msg>
+<msg time="2025-01-13T19:53:26.038726" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/element/3891ca21-04c2-4490-b5ca-9486c876bf50/click HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:26.038726" level="DEBUG">Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:26.038726" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:26.038726" level="TRACE">Return: None</msg>
+<arg>css=.dburst-button-question-decline</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="PASS" start="2025-01-13T19:53:26.001042" elapsed="0.037684"/>
+</kw>
+<kw name="Wait Until Element Is Not Visible" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:26.038726" level="TRACE">Arguments: [ 'css=.dburst-button-question-decline' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:53:26.039726" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '.dburst-button-question-decline'}</msg>
+<msg time="2025-01-13T19:53:26.046722" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:26.046722" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"3891ca21-04c2-4490-b5ca-9486c876bf50"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:26.046722" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:26.046722" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/execute/sync {'script': '/* isDisplayed */return (function(){return (function(){var g=this||self;\nfunction aa(a){var b=typeof...', 'args': [{'element-6066-11e4-a52e-4f735466cecf': '3891ca21-04c2-4490-b5ca-9486c876bf50'}]}</msg>
+<msg time="2025-01-13T19:53:26.054723" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/execute/sync HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:26.054723" level="DEBUG">Remote response: status=200 | data={"value":true} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:26.054723" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:26.255685" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '.dburst-button-question-decline'}</msg>
+<msg time="2025-01-13T19:53:26.262685" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:26.262804" level="DEBUG">Remote response: status=200 | data={"value":[]} | headers=HTTPHeaderDict({'Content-Length': '12', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:26.262967" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:26.262967" level="TRACE">Return: None</msg>
+<arg>css=.dburst-button-question-decline</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` is not visible.</doc>
+<status status="PASS" start="2025-01-13T19:53:26.038726" elapsed="0.224241"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:53:26.262967" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:53:27.264566" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:53:27.264566" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:53:26.262967" elapsed="1.001599"/>
+</kw>
+<kw name="Click Button" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:27.264566" level="TRACE">Arguments: [ 'id=btnInstallJava' ]</msg>
+<msg time="2025-01-13T19:53:27.264566" level="INFO">Clicking button 'id=btnInstallJava'.</msg>
+<msg time="2025-01-13T19:53:27.265564" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '[id="btnInstallJava"]'}</msg>
+<msg time="2025-01-13T19:53:27.271602" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:27.271602" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"12c0dea4-f3ba-45e7-b3a2-dde2b345436f"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:27.271602" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:27.271602" level="DEBUG">GET http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/element/12c0dea4-f3ba-45e7-b3a2-dde2b345436f/name {}</msg>
+<msg time="2025-01-13T19:53:27.275783" level="DEBUG">http://localhost:52016 "GET /session/78b59e5b72e91dbc1e85a13782615762/element/12c0dea4-f3ba-45e7-b3a2-dde2b345436f/name HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:27.275783" level="DEBUG">Remote response: status=200 | data={"value":"button"} | headers=HTTPHeaderDict({'Content-Length': '18', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:27.275783" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:27.275783" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '[id="btnInstallJava"]'}</msg>
+<msg time="2025-01-13T19:53:27.280820" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:27.280820" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"12c0dea4-f3ba-45e7-b3a2-dde2b345436f"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:27.280820" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:27.280820" level="DEBUG">GET http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/element/12c0dea4-f3ba-45e7-b3a2-dde2b345436f/name {}</msg>
+<msg time="2025-01-13T19:53:27.283783" level="DEBUG">http://localhost:52016 "GET /session/78b59e5b72e91dbc1e85a13782615762/element/12c0dea4-f3ba-45e7-b3a2-dde2b345436f/name HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:27.283783" level="DEBUG">Remote response: status=200 | data={"value":"button"} | headers=HTTPHeaderDict({'Content-Length': '18', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:27.283783" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:27.283783" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/element/12c0dea4-f3ba-45e7-b3a2-dde2b345436f/click {}</msg>
+<msg time="2025-01-13T19:53:27.307028" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/element/12c0dea4-f3ba-45e7-b3a2-dde2b345436f/click HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:27.307028" level="DEBUG">Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:27.307028" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:27.307028" level="TRACE">Return: None</msg>
+<arg>id=btnInstallJava</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<status status="PASS" start="2025-01-13T19:53:27.264566" elapsed="0.042462"/>
+</kw>
+<kw name="Wait Until Page Contains Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:27.308029" level="TRACE">Arguments: [ 'css=.dburst-button-question-confirm' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:53:27.308029" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '.dburst-button-question-confirm'}</msg>
+<msg time="2025-01-13T19:53:27.316030" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:27.316030" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"c4ccfdf9-a82a-4ff6-a1ad-898fb9509a12"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:27.316030" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:27.316030" level="TRACE">Return: None</msg>
+<arg>css=.dburst-button-question-confirm</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="PASS" start="2025-01-13T19:53:27.308029" elapsed="0.008001"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:53:27.317068" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:53:28.317474" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:53:28.317474" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:53:27.317068" elapsed="1.000406"/>
+</kw>
+<kw name="Click Element" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:28.317474" level="TRACE">Arguments: [ 'css=.dburst-button-question-confirm' ]</msg>
+<msg time="2025-01-13T19:53:28.317474" level="INFO">Clicking element 'css=.dburst-button-question-confirm'.</msg>
+<msg time="2025-01-13T19:53:28.317474" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '.dburst-button-question-confirm'}</msg>
+<msg time="2025-01-13T19:53:28.323694" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:28.323694" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"c4ccfdf9-a82a-4ff6-a1ad-898fb9509a12"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:28.323694" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:28.323694" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/element/c4ccfdf9-a82a-4ff6-a1ad-898fb9509a12/click {}</msg>
+<msg time="2025-01-13T19:53:28.354785" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/element/c4ccfdf9-a82a-4ff6-a1ad-898fb9509a12/click HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:28.355784" level="DEBUG">Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:28.355784" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:28.355784" level="TRACE">Return: None</msg>
+<arg>css=.dburst-button-question-confirm</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="PASS" start="2025-01-13T19:53:28.317474" elapsed="0.038310"/>
+</kw>
+<kw name="Wait Until Element Is Not Visible" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:28.355784" level="TRACE">Arguments: [ 'css=.dburst-button-question-confirm' | timeout=datetime.timedelta(seconds=30) ]</msg>
+<msg time="2025-01-13T19:53:28.356788" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '.dburst-button-question-confirm'}</msg>
+<msg time="2025-01-13T19:53:28.370786" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:28.371786" level="DEBUG">Remote response: status=200 | data={"value":[{"element-6066-11e4-a52e-4f735466cecf":"c4ccfdf9-a82a-4ff6-a1ad-898fb9509a12"}]} | headers=HTTPHeaderDict({'Content-Length': '90', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:28.371786" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:28.371786" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/execute/sync {'script': '/* isDisplayed */return (function(){return (function(){var g=this||self;\nfunction aa(a){var b=typeof...', 'args': [{'element-6066-11e4-a52e-4f735466cecf': 'c4ccfdf9-a82a-4ff6-a1ad-898fb9509a12'}]}</msg>
+<msg time="2025-01-13T19:53:28.379784" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/execute/sync HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:28.380785" level="DEBUG">Remote response: status=200 | data={"value":true} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:28.380785" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:28.580996" level="DEBUG">POST http://localhost:52016/session/78b59e5b72e91dbc1e85a13782615762/elements {'using': 'css selector', 'value': '.dburst-button-question-confirm'}</msg>
+<msg time="2025-01-13T19:53:28.585951" level="DEBUG">http://localhost:52016 "POST /session/78b59e5b72e91dbc1e85a13782615762/elements HTTP/1.1" 200 0</msg>
+<msg time="2025-01-13T19:53:28.585951" level="DEBUG">Remote response: status=200 | data={"value":[]} | headers=HTTPHeaderDict({'Content-Length': '12', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})</msg>
+<msg time="2025-01-13T19:53:28.585951" level="DEBUG">Finished Request</msg>
+<msg time="2025-01-13T19:53:28.585951" level="TRACE">Return: None</msg>
+<arg>css=.dburst-button-question-confirm</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` is not visible.</doc>
+<status status="PASS" start="2025-01-13T19:53:28.355784" elapsed="0.230167"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:53:28.586954" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:53:29.587331" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:53:29.587331" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:53:28.586954" elapsed="1.000377"/>
+</kw>
+<kw name="Wait For Powershell And Accept Completion" owner="utilities">
+<msg time="2025-01-13T19:53:29.587331" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:53:29.588282" level="FAIL">PyAutoGUIException: PyAutoGUI was unable to import pyscreeze. (This is likely because you're running a version of Python that Pillow (which pyscreeze depends on) doesn't support currently.) Please install this module to enable the function you tried to call.</msg>
+<msg time="2025-01-13T19:53:29.588282" level="DEBUG">Traceback (most recent call last):
+  File "C:\Projects\all-repos\src\prd\rb\asbl\src\uat\resources\utilities.py", line 262, in wait_for_powershell_and_accept_completion
+    button_location = pyautogui.locateOnScreen(image_path, grayscale=True, confidence=.8)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Projects\all-repos\src\prd\rb\asbl\src\uat\.venv\Lib\site-packages\pyautogui\__init__.py", line 228, in _couldNotImportPyScreeze
+    raise PyAutoGUIException(
+pyautogui.PyAutoGUIException: PyAutoGUI was unable to import pyscreeze. (This is likely because you're running a version of Python that Pillow (which pyscreeze depends on) doesn't support currently.) Please install this module to enable the function you tried to call.</msg>
+<status status="FAIL" start="2025-01-13T19:53:29.587331" elapsed="0.000951">PyAutoGUIException: PyAutoGUI was unable to import pyscreeze. (This is likely because you're running a version of Python that Pillow (which pyscreeze depends on) doesn't support currently.) Please install this module to enable the function you tried to call.</status>
 </kw>
 <kw name="Close ReportBurster Application">
 <doc>Close ReportBurster Application</doc>
-<status status="NOT RUN" start="2025-01-13T13:07:46.534208" elapsed="0.000000"/>
+<status status="NOT RUN" start="2025-01-13T19:53:29.588282" elapsed="0.000000"/>
 </kw>
-<doc>Clean Output Folders and Log Files</doc>
-<status status="FAIL" start="2025-01-13T13:07:46.534208" elapsed="0.000000">FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'</status>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2025-01-13T19:53:29.588282" elapsed="0.000000"/>
+</kw>
+<kw name="Refresh Env Variables" owner="utilities">
+<status status="NOT RUN" start="2025-01-13T19:53:29.589235" elapsed="0.000000"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2025-01-13T19:53:29.589235" elapsed="0.000000"/>
+</kw>
+<kw name="Open Electron Application">
+<doc>Open's your electron application by providing browser binary via
+C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe and chromedriver binary via C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe
+see vars.py for more details.</doc>
+<status status="NOT RUN" start="2025-01-13T19:53:29.589235" elapsed="0.000000"/>
+</kw>
+<kw name="Wait Until Page Contains Element" owner="SeleniumLibrary">
+<arg>id=burstFile</arg>
+<arg>timeout=30</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="NOT RUN" start="2025-01-13T19:53:29.590265" elapsed="0.000000"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2025-01-13T19:53:29.590265" elapsed="0.000000"/>
+</kw>
+<kw name="Page Should Not Contain Element" owner="SeleniumLibrary">
+<arg>id=btnInstallJavaTabBurst</arg>
+<doc>Verifies that element ``locator`` is not found on the current page.</doc>
+<status status="NOT RUN" start="2025-01-13T19:53:29.590265" elapsed="0.000000"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="NOT RUN" start="2025-01-13T19:53:29.590265" elapsed="0.000971"/>
+</kw>
+<kw name="Ensure Java Is Not Installed" owner="utilities">
+<status status="NOT RUN" start="2025-01-13T19:53:29.591236" elapsed="0.000000"/>
+</kw>
+<kw name="Close ReportBurster Application">
+<doc>Close ReportBurster Application</doc>
+<status status="NOT RUN" start="2025-01-13T19:53:29.591236" elapsed="0.000000"/>
 </kw>
 <kw name="Kill Reportburster Exe Process" owner="utilities" type="TEARDOWN">
-<msg time="2025-01-13T13:07:46.534208" level="TRACE">Arguments: [  ]</msg>
-<msg time="2025-01-13T13:07:46.534208" level="INFO">Log file path: C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\logs\electron.log</msg>
-<msg time="2025-01-13T13:07:46.534208" level="TRACE">Return: None</msg>
-<status status="PASS" start="2025-01-13T13:07:46.534208" elapsed="0.000000"/>
+<msg time="2025-01-13T19:53:29.591236" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:53:29.592404" level="INFO">Log file path: C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\logs\electron.log</msg>
+<msg time="2025-01-13T19:53:29.592508" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:53:29.591236" elapsed="0.001272"/>
 </kw>
-<doc>Chocolatey Not Installed and Java Not Installed Should Allow User to Install Chocolatey and Then Java</doc>
-<status status="FAIL" start="2025-01-13T13:07:46.525891" elapsed="0.008317">Setup failed:
-FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\backup'
-[RETRY] FAIL on 3. retry.</status>
+<doc>Prerequisites Chocolatey Is Installed and Java Not Installed Should Allow User To Install Java</doc>
+<status status="SKIP" start="2025-01-13T19:52:56.011232" elapsed="33.581276">PyAutoGUIException: PyAutoGUI was unable to import pyscreeze. (This is likely because you're running a version of Python that Pillow (which pyscreeze depends on) doesn't support currently.) Please install this module to enable the function you tried to call.
+Skipped for Retry</status>
 </test>
-<status status="FAIL" start="2025-01-13T13:07:45.872950" elapsed="0.669496"/>
-</suite>
-<status status="FAIL" start="2025-01-13T13:07:45.855853" elapsed="0.686593"/>
-</suite>
-<statistics>
-<total>
-<stat pass="0" fail="3" skip="0">All Tests</stat>
-</total>
-<tag>
-</tag>
-<suite>
-<stat pass="0" fail="3" skip="0" id="s1" name="Tests">Tests</stat>
-<stat pass="0" fail="3" skip="0" id="s1-s1" name="ReportBurster.exe-prerequisites">Tests.ReportBurster.exe-prerequisites</stat>
-</suite>
-</statistics>
+<test id="s1-s1-t4" name="Prerequisites Chocolatey Is Installed and Java Not Installed Should Allow User To Install Java" line="26">
+<kw name="Clean State" type="SETUP">
+<msg time="2025-01-13T19:53:29.599507" level="TRACE">Arguments: [  ]</msg>
+<kw name="Clean Output Folders And Log Files" owner="utilities">
+<msg time="2025-01-13T19:53:29.599507" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:53:29.600508" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:53:29.599507" elapsed="0.002003"/>
+</kw>
+<kw name="Close ReportBurster Application">
+<msg time="2025-01-13T19:53:29.601510" level="TRACE">Arguments: [  ]</msg>
+<kw name="Kill Reportburster Exe Process" owner="utilities">
+<msg time="2025-01-13T19:53:29.602542" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:53:29.614841" level="INFO">Log file path: C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\logs\electron.log</msg>
+<msg time="2025-01-13T19:53:29.614841" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:53:29.601510" elapsed="0.013331"/>
+</kw>
+<msg time="2025-01-13T19:53:29.614841" level="TRACE">Return: None</msg>
+<doc>Close ReportBurster Application</doc>
+<status status="PASS" start="2025-01-13T19:53:29.601510" elapsed="0.013331"/>
+</kw>
+<msg time="2025-01-13T19:53:29.614841" level="TRACE">Return: None</msg>
+<doc>Clean Output Folders and Log Files</doc>
+<status status="PASS" start="2025-01-13T19:53:29.599507" elapsed="0.015334"/>
+</kw>
+<kw name="Ensure Chocolatey Is Installed" owner="utilities">
+<msg time="2025-01-13T19:53:29.615841" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:53:30.638982" level="INFO">Output of 'choco -v': 2.4.1
+
+Chocolatey is already installed.</msg>
+<msg time="2025-01-13T19:53:30.638982" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:53:29.614841" elapsed="1.024141"/>
+</kw>
+<kw name="Ensure Java Is Not Installed" owner="utilities">
+<msg time="2025-01-13T19:53:30.638982" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:53:43.048687" level="INFO">Chocolatey is installed. (ensure_java_is_not_installed)
+Uninstalling Temurin11 with Chocolatey...
+Java is not installed on this computer.</msg>
+<msg time="2025-01-13T19:53:43.048687" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:53:30.638982" elapsed="12.409705"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:53:43.049731" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:53:44.050271" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:53:44.050271" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:53:43.049731" elapsed="1.000540"/>
+</kw>
+<kw name="Refresh Env Variables" owner="utilities">
+<msg time="2025-01-13T19:53:44.050970" level="TRACE">Arguments: [  ]</msg>
+<msg time="2025-01-13T19:53:44.376637" level="TRACE">Return: None</msg>
+<status status="PASS" start="2025-01-13T19:53:44.050271" elapsed="0.326366"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:53:44.377650" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:53:45.378683" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:53:45.378683" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:53:44.377650" elapsed="1.001033"/>
+</kw>
+<kw name="Open Electron Application">
+<msg time="2025-01-13T19:53:45.381732" level="TRACE">Arguments: [  ]</msg>
+<kw name="Set Variable" owner="BuiltIn">
+<msg time="2025-01-13T19:53:45.384391" level="TRACE">Arguments: [ 'cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222) || start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222"' ]</msg>
+<msg time="2025-01-13T19:53:45.384391" level="TRACE">Return: 'cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222) || start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222"'</msg>
+<msg time="2025-01-13T19:53:45.384391" level="INFO">${electron_command} = cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe --remote-debugging-port=9222) || start C:\Projects\all-repo...</msg>
+<var>${electron_command}</var>
+<arg>cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start ${signal_electron.binary_location} --remote-debugging-port=9222) || start ${signal_electron.binary_location} --remote-debugging-port=9222"</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<status status="PASS" start="2025-01-13T19:53:45.382968" elapsed="0.001423"/>
+</kw>
+<kw name="Get Parent Directory" owner="utilities">
+<msg time="2025-01-13T19:53:45.385390" level="TRACE">Arguments: [ 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe' ]</msg>
+<msg time="2025-01-13T19:53:45.385390" level="TRACE">Return: 'C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster'</msg>
+<msg time="2025-01-13T19:53:45.385390" level="INFO">${working_dir} = C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster</msg>
+<var>${working_dir}</var>
+<arg>${signal_electron.binary_location}</arg>
+<status status="PASS" start="2025-01-13T19:53:45.384391" elapsed="0.000999"/>
+</kw>
+<kw name="Start Process" owner="Process">
+<msg time="2025-01-13T19:53:45.385390" level="TRACE">Arguments: [ 'cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222) || start C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster\\ReportBurster.exe --remote-debugging-port=9222"' | cwd='C:\\Projects\\all-repos\\src\\prd\\rb\\asbl\\target/uat/rb/ReportBurster' | shell='True' ]</msg>
+<msg time="2025-01-13T19:53:45.385390" level="INFO">Starting process:
+cmd /c "where /q refreshenv &amp;&amp; (call refreshenv &amp;&amp; start C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe --remote-debugging-port=9222) || start C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe --remote-debugging-port=9222"</msg>
+<msg time="2025-01-13T19:53:45.385390" level="DEBUG">Process configuration:
+cwd:     C:\Projects\all-repos\src\prd\rb\asbl\target\uat\rb\ReportBurster
+shell:   True
+stdout:  PIPE
+stderr:  PIPE
+stdin:   None
+alias:   None
+env:     None</msg>
+<msg time="2025-01-13T19:53:45.387345" level="TRACE">Return: &lt;Popen: returncode: None args: 'cmd /c "where /q refreshenv &amp;&amp; (call refresh...&gt;</msg>
+<arg>${electron_command}</arg>
+<arg>cwd=${working_dir}</arg>
+<arg>shell=True</arg>
+<doc>Starts a new process on background.</doc>
+<status status="PASS" start="2025-01-13T19:53:45.385390" elapsed="0.001955"/>
+</kw>
+<kw name="Sleep" owner="BuiltIn">
+<msg time="2025-01-13T19:53:45.387345" level="TRACE">Arguments: [ '1s' ]</msg>
+<msg time="2025-01-13T19:53:46.387934" level="INFO">Slept 1 second.</msg>
+<msg time="2025-01-13T19:53:46.387934" level="TRACE">Return: None</msg>
+<arg>1s</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<status status="PASS" start="2025-01-13T19:53:45.387345" elapsed="1.000589"/>
+</kw>
+<kw name="Evaluate" owner="BuiltIn">
+<msg time="2025-01-13T19:53:46.387934" level="TRACE">Arguments: [ "sys.modules['selenium.webdriver'].ChromeOptions()" | 'sys, selenium.webdriver' ]</msg>
+<msg time="2025-01-13T19:53:46.387934" level="TRACE">Return: &lt;selenium.webdriver.chrome.options.Options object at 0x0000020183504C50&gt;</msg>
+<msg time="2025-01-13T19:53:46.387934" level="INFO">${options} = &lt;selenium.webdriver.chrome.options.Options object at 0x0000020183504C50&gt;</msg>
+<var>${options}</var>
+<arg>sys.modules['selenium.webdriver'].ChromeOptions()</arg>
+<arg>sys, selenium.webdriver</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<status status="PASS" start="2025-01-13T19:53:46.387934" elapsed="0.000000"/>
+</kw>
+<kw name="Call Method" owner="BuiltIn">
+<msg time="2025-01-13T19:53:46.388934" level="TRACE">Arguments: [ &lt;selenium.webdriver.chrome.options.Options object at 0x0000020183504C50&gt; | 'add_experimental_option' | 'debuggerAddress' | 'localhost:9222' ]</msg>
+<msg time="2025-01-13T19:53:46.388934" level="TRACE">Return: None</msg>
+<arg>${options}</arg>
+<arg>add_experimental_option</arg>
+<arg>debuggerAddress</arg>
+<arg>localhost:9222</arg>
+<doc>Calls the named method of the given object with the provided arguments.</doc>
+<status status="PASS" start="2025-01-13T19:53:46.387934" elapsed="0.001000"/>
+</kw>
+<kw name="Create Webdriver" owner="SeleniumLibrary">
+<msg time="2025-01-13T19:53:46.388934" level="TRACE">Arguments: [ 'Chrome' | service=&lt;selenium.webdriver.chrome.service.Service object at 0x00000201821DF6B0&gt; | options=&lt;selenium.webdriver.chrome.options.Options object at 0x0000020183504C50&gt; ]</msg>
+<msg time="2025-01-13T19:53:46.388934" level="INFO">Creating an instance of the Chrome WebDriver.</msg>
+<msg time="2025-01-13T19:53:46.388934" level="DEBUG">Skipping Selenium Manager; path to chrome driver specified in Service class: C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe</msg>
+<msg time="2025-01-13T19:53:46.391934" level="DEBUG">Started executable: `C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe` in a child process with pid: 22432 using 0 to output -3</msg>
+<msg time="2025-01-13T19:53:46.410202" level="DEBUG">POST http://localhost:52016/session {'capabilities': {'firstMatch': [{}], 'alwaysMatch': {'browserName': 'chrome', 'pageLoadStrategy': &lt;PageLoadStrategy.normal: 'normal'&gt;, 'goog:chromeOptions': {'debuggerAddress': 'localhost:9222', 'extensions': [], 'args': []}}}}</msg>
+<msg time="2025-01-13T19:53:46.410202" level="DEBUG">Starting new HTTP connection (1): localhost:52016</msg>
 <errors>
-<msg time="2025-01-13T13:07:46.457735" level="WARN" html="true">Test '&lt;a onclick="makeElementVisible('s1-s1-t1')" href="#s1-s1-t1" title="Link to details"&gt;Prerequisites Java 8 Installed Should Let The User Know That At Least Java 11 Is Required&lt;/a&gt;' has been retried 3 times (max: 3).</msg>
-<msg time="2025-01-13T13:07:46.499831" level="WARN" html="true">Test '&lt;a onclick="makeElementVisible('s1-s1-t2')" href="#s1-s1-t2" title="Link to details"&gt;Prerequisites Chocolatey Is Installed and Java Not Installed Should Allow User To Install Java&lt;/a&gt;' has been retried 3 times (max: 3).</msg>
-<msg time="2025-01-13T13:07:46.525891" level="WARN" html="true">Test '&lt;a onclick="makeElementVisible('s1-s1-t3')" href="#s1-s1-t3" title="Link to details"&gt;Prerequisites Chocolatey Not Installed and Java Not Installed Should Allow User to Install Chocolatey and Then Java&lt;/a&gt;' has been retried 3 times (max: 3).</msg>
+<msg time="2025-01-13T19:52:56.008232" level="WARN">Retry 1/3 of test 'Prerequisites Chocolatey Is Installed and Java Not Installed Should Allow User To Install Java':</msg>
+<msg time="2025-01-13T19:53:29.595508" level="WARN">Retry 2/3 of test 'Prerequisites Chocolatey Is Installed and Java Not Installed Should Allow User To Install Java':</msg>
+<msg time="2025-01-13T19:53:57.526216" level="ERROR">Execution stopped by user.</msg>
 </errors>
 </robot>
