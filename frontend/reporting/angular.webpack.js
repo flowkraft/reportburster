@@ -1,7 +1,6 @@
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
 const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
-// const BundleAnalyzerPlugin =
-//   require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
+const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 
 /**
  * Custom angular webpack configuration
@@ -31,6 +30,14 @@ module.exports = (config, options) => {
     }
   }
 
+  // Add fallback configuration for web target
+  if (config.target === "web") {
+    config.resolve = {
+      ...config.resolve,
+      fallback: { fs: false, child_process: false, net: false },
+    };
+  }
+
   config.plugins = [
     ...config.plugins,
     new NodePolyfillPlugin({
@@ -38,12 +45,19 @@ module.exports = (config, options) => {
     }),
   ];
 
-  // Commented out BundleAnalyzerPlugin for now
-  // if (!options.optimization) {
-  //     config.plugins.push(new BundleAnalyzerPlugin());
-  // }
+  // Add BundleAnalyzerPlugin for non-production builds
+  if (!options.optimization) {
+    config.plugins.push(new BundleAnalyzerPlugin());
+  }
 
-  // Verify source map configuration
+  // Add electron externals configuration
+  if (config.target === "electron-renderer") {
+    config.externals = config.externals || {};
+    config.externals.electron = 'require("electron")';
+    console.log("Added electron to externals");
+  }
+
+  // Debug logging
   if (process.env.DEBUG === "true") {
     console.log("Build configuration:", {
       optimization: options.optimization,
@@ -56,8 +70,6 @@ module.exports = (config, options) => {
       mode: config.mode,
       target: config.target,
     });
-
-    // Log all webpack rules to verify source map handling
     console.log("Webpack rules:", config.module.rules);
   }
 
