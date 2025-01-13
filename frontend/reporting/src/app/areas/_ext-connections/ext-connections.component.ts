@@ -280,7 +280,7 @@ export class ExternalConnectionsComponent implements OnInit {
       this.modalConnectionInfo.email,
     );
 
-    //await this.settingsService.loadAllConnectionFilesAsync();
+    await this.settingsService.loadAllConnectionFilesAsync();
 
     this.messagesService.showInfo('Saved');
 

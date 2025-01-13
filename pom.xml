@@ -20,7 +20,7 @@
 
 	<properties>
 
-		<revision>10.2.3</revision>
+		<revision>10.2.4</revision>
 
 		<!-- upgraded -->
 		<commons.beanutils.version>1.9.4</commons.beanutils.version>
@@ -512,7 +512,7 @@
 				<module>backend/reporting</module>
 				<module>backend/server</module>
 				<module>documentation</module>
-				<module>assembly</module>
+				<module>asbl</module>
 			</modules>
 		</profile>
 

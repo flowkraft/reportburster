@@ -17,7 +17,7 @@ export const E2E_ASSEMBLY_EXTERNAL_RESOURCES_FOLDER_PATH =
   '../../asbl/src/main/external-resources';
 
 export const E2E_ASSEMBLY_FOLDER_PATH =
-  '../../assembly/target/package/verified-db-noexe';
+  '../../asbl/target/package/verified-db-noexe';
 
 export const SETTINGS_CONFIG_FILE = 'settings\\.xml';
 

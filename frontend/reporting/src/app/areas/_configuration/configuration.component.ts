@@ -744,6 +744,8 @@ export class ConfigurationComponent implements OnInit {
               this.xmlReporting,
             );
 
+          await this.settingsService.refreshConnectionsUsedByInformation();
+
           this.messagesService.showInfo('Saved');
           this.changeDetectorRef.detectChanges();
         });

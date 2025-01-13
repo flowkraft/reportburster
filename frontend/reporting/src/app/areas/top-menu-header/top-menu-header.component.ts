@@ -28,10 +28,10 @@ export class TopMenuHeaderComponent implements OnInit {
     }
 
     //console.log('TopMenuHeaderComponent');
-    await this.settingsService.loadAllConnectionFilesAsync();
-
     this.settingsService.configurationFiles =
       await this.settingsService.loadAllSettingsFilesAsync();
+
+    await this.settingsService.loadAllConnectionFilesAsync();
 
     await this.samplesService.fillSamplesNotes();
   }

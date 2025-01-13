@@ -17,7 +17,7 @@ electronBeforeAfterAllTest(
       .click('#licenseTab-link')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       )
       .click('#logsTab-link')
       .elementShouldBeVisible('#warningsLog')
@@ -29,7 +29,7 @@ electronBeforeAfterAllTest(
       .click('#licenseTab-link')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       )
       .click('#leftMenuHelpSupport')
       .elementShouldHaveText(
@@ -44,7 +44,7 @@ electronBeforeAfterAllTest(
       .click('#licenseTab-link')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       )
       .click('#leftMenuHelpExamples')
       .elementShouldHaveText(
@@ -54,7 +54,7 @@ electronBeforeAfterAllTest(
       .click('#licenseTab-link')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       )
       .click('#leftMenuHelpFreeForSchools')
       .elementShouldHaveText(
@@ -64,7 +64,7 @@ electronBeforeAfterAllTest(
       .click('#licenseTab-link')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       )
       .click('#leftMenuHelpCustomerReviews')
       .elementShouldHaveText(
@@ -74,7 +74,7 @@ electronBeforeAfterAllTest(
       .click('#licenseTab-link')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       )
       .click('#leftMenuHelpBlog')
       //this depends on a specific website to be up and the specific website stopped working
@@ -87,7 +87,7 @@ electronBeforeAfterAllTest(
       .click('#licenseTab-link')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       );
     const isElectron = process.env.TEST_ENV === 'electron';
 
@@ -112,7 +112,7 @@ electronBeforeAfterAllTest(
       .click('#leftMenuHelpLicense')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       )
       .click('#logsTab-link')
       .elementShouldBeVisible('#warningsLog')
@@ -147,7 +147,7 @@ electronBeforeAfterAllTest(
       .click('#licenseTab-link')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       )
       .gotoBurstScreen()
       .click('#topMenuHelp')
@@ -159,7 +159,7 @@ electronBeforeAfterAllTest(
       .click('#licenseTab-link')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       )
       .gotoBurstScreen()
       .click('#topMenuHelp')
@@ -171,7 +171,7 @@ electronBeforeAfterAllTest(
       .click('#licenseTab-link')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       )
       .gotoBurstScreen()
       .click('#topMenuHelp')
@@ -183,7 +183,7 @@ electronBeforeAfterAllTest(
       .click('#licenseTab-link')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       )
       .gotoBurstScreen()
       .click('#topMenuHelp')
@@ -192,14 +192,14 @@ electronBeforeAfterAllTest(
       .click('#licenseTab-link')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       )
       .gotoBurstScreen()
       .click('#topMenuHelp')
       .click('#topMenuHelpLicense')
       .elementShouldHaveText(
         '#statusDemoLicense',
-        'Demo / Trial (up to 25 recipients)',
+        'Open Source (Community Support)',
       )
       .click('#logsTab-link')
       .elementShouldBeVisible('#warningsLog')
