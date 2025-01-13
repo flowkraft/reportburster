@@ -352,30 +352,37 @@ export class SettingsService {
     return this.configurationFiles;
   }
 
-  async refreshConnectionsUsedByInformation(useConn: boolean, connectionCode: string) {
+  async refreshConnectionsUsedByInformation(
+    filePath: string,
+    xmlSettings: {
+      documentburster: any;
+    },
+  ) {
     // Find and update the specific configuration file
     const configToUpdate = this.configurationFiles.find(
-        config => config.filePath === this.currentConfigurationTemplatePath
+      (config) => config.filePath === filePath,
     );
-    
+
     if (configToUpdate) {
-        configToUpdate.useEmlConn = useConn;
-        configToUpdate.emlConnCode = connectionCode;
+      configToUpdate.useEmlConn =
+        xmlSettings?.documentburster.settings.emailserver.useconn;
+      configToUpdate.emlConnCode =
+        xmlSettings?.documentburster.settings.emailserver.conncode;
     }
 
     // Recalculate "Used By" using the updated configuration
     this.connectionFiles = this.connectionFiles.map((connFile) => {
-        const matchingConfigs = this.configurationFiles
-            .filter(
-                (conf) =>
-                    conf.useEmlConn && conf.emlConnCode == connFile.connectionCode,
-            )
-            .map((conf) => conf.templateName);
+      const matchingConfigs = this.configurationFiles
+        .filter(
+          (conf) =>
+            conf.useEmlConn && conf.emlConnCode == connFile.connectionCode,
+        )
+        .map((conf) => conf.templateName);
 
-        return {
-            ...connFile,
-            usedBy: matchingConfigs.join(', ') || '--not used--',
-        };
+      return {
+        ...connFile,
+        usedBy: matchingConfigs.join(', ') || '--not used--',
+      };
     });
   }
 
