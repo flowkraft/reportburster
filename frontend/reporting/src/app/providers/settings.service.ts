@@ -365,37 +365,38 @@ export class SettingsService {
     //  `this.configurationFiles = ${JSON.stringify(this.configurationFiles)}`,
     //);
 
-    this.connectionFiles = connFiles.map((connFile) => {
-      const matchingConfigs = this.configurationFiles
-        .filter(
-          (conf) =>
-            conf.useEmlConn &&
-            conf.emlConnCode == connFile.connectionCode &&
-            conf.type != 'config-samples',
-        )
-        .map((conf) => conf.templateName);
+    if (connFiles && connFiles.length > 0) {
+      this.connectionFiles = connFiles.map((connFile) => {
+        const matchingConfigs = this.configurationFiles
+          .filter(
+            (conf) =>
+              conf.useEmlConn &&
+              conf.emlConnCode == connFile.connectionCode &&
+              conf.type != 'config-samples',
+          )
+          .map((conf) => conf.templateName);
+
+        //console.log(
+        //  `Matching configs for ${connFile.connectionCode}:`,
+        //  matchingConfigs,
+        //); // Debugging log
+
+        return {
+          ...connFile,
+          usedBy: matchingConfigs.join(', ') || '--not used--', // Temporary change to identify empty matches
+        };
+      });
 
       //console.log(
-      //  `Matching configs for ${connFile.connectionCode}:`,
-      //  matchingConfigs,
-      //); // Debugging log
+      //  `this.connectionFiles = ${JSON.stringify(this.connectionFiles)}`,
+      //);
 
-      return {
-        ...connFile,
-        usedBy: matchingConfigs.join(', ') || '--not used--', // Temporary change to identify empty matches
-      };
-    });
-
-    //console.log(
-    //  `this.connectionFiles = ${JSON.stringify(this.connectionFiles)}`,
-    //);
-
-    this.defaultEmailConnectionFile = this.getConnectionDetails({
-      connectionType: 'email-connection',
-      defaultConnection: true,
-      connectionCode: '',
-    });
-
+      this.defaultEmailConnectionFile = this.getConnectionDetails({
+        connectionType: 'email-connection',
+        defaultConnection: true,
+        connectionCode: '',
+      });
+    }
     this.connectionsLoading = 0;
     return this.connectionFiles;
   }
@@ -465,34 +466,38 @@ export class SettingsService {
   }
 
   getConfigurations(visibility?: string) {
-    return this.configurationFiles.filter((configuration) => {
-      let filterCondition = configuration.type != 'config-samples';
+    if (this.configurationFiles && this.configurationFiles.length > 0) {
+      return this.configurationFiles.filter((configuration) => {
+        let filterCondition = configuration.type != 'config-samples';
 
-      if (visibility)
-        filterCondition =
-          filterCondition && configuration.visibility === visibility;
+        if (visibility)
+          filterCondition =
+            filterCondition && configuration.visibility === visibility;
 
-      return filterCondition;
-    });
+        return filterCondition;
+      });
+    }
   }
 
   getMailMergeConfigurations(filter?: {
     visibility?: string;
     samples?: boolean;
   }) {
-    return this.configurationFiles.filter((configuration) => {
-      let filterCondition = configuration.capReportGenerationMailMerge;
+    if (this.configurationFiles && this.configurationFiles.length > 0) {
+      return this.configurationFiles.filter((configuration) => {
+        let filterCondition = configuration.capReportGenerationMailMerge;
 
-      if (filter && filter.visibility)
-        filterCondition =
-          filterCondition && configuration.visibility === filter.visibility;
+        if (filter && filter.visibility)
+          filterCondition =
+            filterCondition && configuration.visibility === filter.visibility;
 
-      if (filter && !filter.samples)
-        filterCondition =
-          filterCondition && !configuration.filePath.includes('samples');
+        if (filter && !filter.samples)
+          filterCondition =
+            filterCondition && !configuration.filePath.includes('samples');
 
-      return filterCondition;
-    });
+        return filterCondition;
+      });
+    }
   }
 
   getReportTemplates(outputType: string, filter: { samples: boolean }) {
@@ -523,15 +528,17 @@ export class SettingsService {
   }
 
   getSampleConfigurations(visibility?: string) {
-    return this.configurationFiles.filter((configuration) => {
-      let filterCondition = configuration.type == 'config-samples';
+    if (this.configurationFiles && this.configurationFiles.length > 0) {
+      return this.configurationFiles.filter((configuration) => {
+        let filterCondition = configuration.type == 'config-samples';
 
-      if (visibility)
-        filterCondition =
-          filterCondition && configuration.visibility === visibility;
+        if (visibility)
+          filterCondition =
+            filterCondition && configuration.visibility === visibility;
 
-      return filterCondition;
-    });
+        return filterCondition;
+      });
+    }
   }
 
   getConnectionDetails({

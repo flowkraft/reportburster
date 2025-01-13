@@ -11,7 +11,7 @@ module.exports = (config, options) => {
 
   if (!options.optimization || process.env.NODE_ENV === "development") {
     config.mode = "development";
-    config.devtool = "eval";
+    config.devtool = "source-map";
   }
 
   if (options.fileReplacements) {
