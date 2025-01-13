@@ -112,7 +112,7 @@ export const tabExternalConnectionsTemplate = `<ng-template #tabExternalConnecti
           type="button"
           class="btn btn-flat btn-default col-xs-12"
           (click)="onDeleteSelectedConnection()"
-          [ngClass]="{ 'disabled': !getSelectedConnection() || getSelectedConnection().defaultConnection || getSelectedConnection().usedBy}"
+          [ngClass]="{ 'disabled': !getSelectedConnection() || getSelectedConnection().defaultConnection || (getSelectedConnection().usedBy && getSelectedConnection().usedBy !== '--not used--')}"
           style="margin-bottom: 100px"
           >
           <i class="fa fa-minus"></i> {{ 'BUTTONS.DELETE' | translate }}

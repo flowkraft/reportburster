@@ -1,15 +1,15 @@
 #################
 ## DocumentBurster
 #################
-asmbly/**/*.zip
-asmbly/dist
+asbl/**/*.zip
+asbl/dist
 
 playground
 testground
 
 .venv
-asmbly/src/uat/resources/__pycache__
-asmbly/src/uat/results
+asbl/src/uat/resources/__pycache__
+asbl/src/uat/results
 
 **/backup/**/*.csv
 **/output/**/*.csv
