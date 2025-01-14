@@ -799,11 +799,16 @@ export class ConfigurationComponent implements OnInit {
   }
 
   onUseExistingEmailConnectionClick(event: Event) {
-    if (event instanceof Event)
+    if (event instanceof Event) {
       if ((event.target as HTMLInputElement).checked)
         this.fillExistingEmailConnectionDetails(
           this.selectedEmailConnectionFile.connectionCode,
         );
+      this.settingsService.refreshConnectionsUsedByInformation(
+        this.settingsService.currentConfigurationTemplatePath,
+        this.xmlSettings,
+      );
+    }
   }
 
   async onUsedExistingEmailConnectionChanged(code: string, name: string) {
@@ -819,7 +824,7 @@ export class ConfigurationComponent implements OnInit {
           this.xmlSettings,
         );
 
-        await this.settingsService.refreshConnectionsUsedByInformation(
+        this.settingsService.refreshConnectionsUsedByInformation(
           this.settingsService.currentConfigurationTemplatePath,
           this.xmlSettings,
         );
