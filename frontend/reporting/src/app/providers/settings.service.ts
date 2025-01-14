@@ -352,12 +352,16 @@ export class SettingsService {
     return this.configurationFiles;
   }
 
-  async refreshConnectionsUsedByInformation(
+  refreshConnectionsUsedByInformation(
     filePath: string,
     xmlSettings: {
       documentburster: any;
     },
   ) {
+    //console.log(
+    //  `refreshConnectionsUsedByInformation filePath = ${filePath}, useConn = ${xmlSettings?.documentburster.settings.emailserver.useconn}, connCode = ${xmlSettings?.documentburster.settings.emailserver.conncode}`,
+    //);
+
     // Find and update the specific configuration file
     const configToUpdate = this.configurationFiles.find(
       (config) => config.filePath === filePath,
