@@ -39,13 +39,8 @@ python -c "import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath('r
 python -c "import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath('resources.utilities.py'))); from resources.utilities import ensure_chocolatey_is_installed; ensure_chocolatey_is_installed()"
 python -c "import sys, os; sys.path.insert(0, os.path.dirname(os.path.abspath('resources.utilities.py'))); from resources.utilities import ensure_java_prerequisite; ensure_java_prerequisite()"
 
-:: Prepare additional robot arguments
+:: Prepare robot arguments
 set ROBOT_ARGS=--listener RetryFailed:3 --pythonpath . -d results -L TRACE
-
-:: Add TAKE_SCREENSHOTS if set
-if not "%TAKE_SCREENSHOTS%"=="" (
-    set ROBOT_ARGS=%ROBOT_ARGS% --variable TAKE_SCREENSHOTS:%TAKE_SCREENSHOTS%
-)
 
 :: Run tests with appropriate parameters
 if "%TEST_NAME%"=="" (
