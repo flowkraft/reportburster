@@ -15,9 +15,10 @@ echo %~1 | findstr /b /c:"--test=" >nul && (
     goto parse_args
 )
 
-:: Handle --screenshotsFolderPath=value format
-echo %~1 | findstr /b /c:"--screenshotsFolderPath=" >nul && (
-    for /f "tokens=1,* delims==" %%a in ("%~1") do set SCREENSHOTS_FOLDER=%%b
+:: Handle --screenshotsFolderPath value format
+if /i "%~1"=="--screenshotsFolderPath" (
+    set SCREENSHOTS_FOLDER=%~2
+    shift
     shift
     goto parse_args
 )
