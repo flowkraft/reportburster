@@ -5,6 +5,9 @@ Library     Process
 Library     resources/utilities.py
 Variables   resources/vars.py
 
+*** Variables ***
+${SCREENSHOTS_FOLDER}    ${EMPTY}    # Default empty value, can be overridden via command line
+
 *** Keywords ***
 Take Screenshot If Requested
     [Arguments]    ${screenshot_name}=${EMPTY}
