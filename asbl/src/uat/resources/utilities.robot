@@ -6,10 +6,11 @@ Library     resources/utilities.py
 Variables   resources/vars.py
 
 *** Keywords ***
-Take Named Screenshot
+Take Named Screenshot If Requested
     [Arguments]    ${screenshot_name}
-    [Documentation]    Takes a screenshot with the given name, saved in Robot's default results folder
-    Capture Page Screenshot    ${screenshot_name}.png
+    [Documentation]    Takes a screenshot with the given name only if TAKE_SCREENSHOTS env var is set to true
+    ${take_screenshots}=    Get Environment Variable    TAKE_SCREENSHOTS    default=False
+    Run Keyword If    '${take_screenshots.lower()}' == 'true'    Capture Page Screenshot    ${screenshot_name}.png
 
 Quickstart Payslips.pdf Should Work Fine
     
@@ -20,17 +21,17 @@ Quickstart Payslips.pdf Should Work Fine
     Page Should Contain Element    id=noJobsRunning
     Page Should Contain Element    id=btnGreatNoErrorsNoWarnings
     # screen "Before Selecting a File"
-    Take Named Screenshot    Before_Selecting_File
+    Take Named Screenshot If Requested    Before_Selecting_File
     ${payslips_pdf_path}=  Join Path  ${PORTABLE_EXECUTABLE_DIR}  samples/burst/Payslips.pdf
     Choose File  id=burstFileUploadInput  ${payslips_pdf_path}
     # screen "After the File Was Selected"
-    Take Named Screenshot    After_File_Selected
+    Take Named Screenshot If Requested    After_File_Selected
   	Sleep  1s
     # Click Burst (cannot because of log files)
     Click Button    id=btnBurst
     Wait Until Page Contains Element    css=.dburst-button-question-confirm    timeout=30
     # screen "After the Clicking Burst Button"
-    Take Named Screenshot    After_Clicking_Burst_Button
+    Take Named Screenshot If Requested    After_Clicking_Burst_Button
 	  Sleep  1s
     Click Element    css=.dburst-button-question-confirm
     Wait Until Element Is Not Visible    css=.dburst-button-question-confirm    timeout=30
@@ -56,11 +57,11 @@ Quickstart Payslips.pdf Should Work Fine
     # Working on ...
     Wait Until Page Contains Element    id=infoLog    timeout=30
     # screen "While Working On"
-    Take Named Screenshot    While_Working_On_1
+    Take Named Screenshot If Requested    While_Working_On_1
     # screen "While Working On 2nd"
-    Take Named Screenshot    While_Working_On_2
+    Take Named Screenshot If Requested    While_Working_On_2
     # screen "While Working On 3rd"
-    Take Named Screenshot    While_Working_On_3
+    Take Named Screenshot If Requested    While_Working_On_3
 	  Wait Until Element Is Not Visible    id=noJobsRunning    timeout=30
     Wait Until Page Contains Element    id=workingOn    timeout=30
     # Done
@@ -69,7 +70,7 @@ Quickstart Payslips.pdf Should Work Fine
     # Done without errors 
     Page Should Contain Element    id=btnGreatNoErrorsNoWarnings
     # screen "Done"
-    Take Named Screenshot    Done
+    Take Named Screenshot If Requested    Done
     Sleep  5s
     Close Electron Application
 
