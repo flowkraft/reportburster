@@ -24,13 +24,13 @@ Quickstart Payslips.pdf Should Work Fine
     ${payslips_pdf_path}=  Join Path  ${PORTABLE_EXECUTABLE_DIR}  samples/burst/Payslips.pdf
     Choose File  id=burstFileUploadInput  ${payslips_pdf_path}
     # screen "After the File Was Selected"
-    Take Screenshot If Requested    After_File_Selected
+    Take Named Screenshot    After_File_Selected
   	Sleep  1s
     # Click Burst (cannot because of log files)
     Click Button    id=btnBurst
     Wait Until Page Contains Element    css=.dburst-button-question-confirm    timeout=30
     # screen "After the Clicking Burst Button"
-    Take Screenshot If Requested    After_Clicking_Burst_Button
+    Take Named Screenshot    After_Clicking_Burst_Button
 	  Sleep  1s
     Click Element    css=.dburst-button-question-confirm
     Wait Until Element Is Not Visible    css=.dburst-button-question-confirm    timeout=30
@@ -56,11 +56,11 @@ Quickstart Payslips.pdf Should Work Fine
     # Working on ...
     Wait Until Page Contains Element    id=infoLog    timeout=30
     # screen "While Working On"
-    Take Screenshot If Requested    While_Working_On_1
+    Take Named Screenshot    While_Working_On_1
     # screen "While Working On 2nd"
-    Take Screenshot If Requested    While_Working_On_2
+    Take Named Screenshot    While_Working_On_2
     # screen "While Working On 3rd"
-    Take Screenshot If Requested    While_Working_On_3
+    Take Named Screenshot    While_Working_On_3
 	  Wait Until Element Is Not Visible    id=noJobsRunning    timeout=30
     Wait Until Page Contains Element    id=workingOn    timeout=30
     # Done
@@ -69,7 +69,7 @@ Quickstart Payslips.pdf Should Work Fine
     # Done without errors 
     Page Should Contain Element    id=btnGreatNoErrorsNoWarnings
     # screen "Done"
-    Take Screenshot If Requested    Done
+    Take Named Screenshot    Done
     Sleep  5s
     Close Electron Application
 
