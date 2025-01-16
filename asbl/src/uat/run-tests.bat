@@ -45,9 +45,15 @@ set ROBOT_ARGS=--listener RetryFailed:3 --pythonpath . -d results -L TRACE
 :: Run tests with appropriate parameters
 if "%TEST_NAME%"=="" (
     echo Running all tests...
+    if not "%TAKE_SCREENSHOTS%"=="" (
+        set TAKE_SCREENSHOTS=%TAKE_SCREENSHOTS%
+    )
     robot %ROBOT_ARGS% tests
 ) else (
     echo Running specific test: %TEST_NAME%
+    if not "%TAKE_SCREENSHOTS%"=="" (
+        set TAKE_SCREENSHOTS=%TAKE_SCREENSHOTS%
+    )
     robot %ROBOT_ARGS% -t "%TEST_NAME%" tests
 )
 
