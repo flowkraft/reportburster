@@ -8,26 +8,26 @@ set SCREENSHOTS_FOLDER=
 :parse_args
 if "%~1"=="" goto args_parsed
 
-:: Handle --test value format (both --test value and --test=value)
+:: Handle --test value format
 if /i "%~1"=="--test" (
+    if "%~2"=="" (
+        echo Error: Missing value for --test
+        exit /b 1
+    )
     set TEST_NAME=%~2
     shift
     shift
     goto parse_args
-) else if /i "%~1" GEQ "--test=" (
-    for /f "tokens=1,* delims==" %%a in ("%~1") do set TEST_NAME=%%b
-    shift
-    goto parse_args
 )
 
-:: Handle --screenshotsFolderPath value format (both --screenshotsFolderPath value and --screenshotsFolderPath=value)
+:: Handle --screenshotsFolderPath value format
 if /i "%~1"=="--screenshotsFolderPath" (
+    if "%~2"=="" (
+        echo Error: Missing value for --screenshotsFolderPath
+        exit /b 1
+    )
     set SCREENSHOTS_FOLDER=%~2
     shift
-    shift
-    goto parse_args
-) else if /i "%~1" GEQ "--screenshotsFolderPath=" (
-    for /f "tokens=1,* delims==" %%a in ("%~1") do set SCREENSHOTS_FOLDER=%%b
     shift
     goto parse_args
 )
