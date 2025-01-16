@@ -8,8 +8,9 @@ Variables   resources/vars.py
 *** Keywords ***
 Take Named Screenshot If Requested
     [Arguments]    ${screenshot_name}
-    [Documentation]    Takes a screenshot with the given name only if TAKE_SCREENSHOTS variable is set to true
-    Run Keyword If    '${TAKE_SCREENSHOTS.lower()}' == 'true'    Capture Page Screenshot    ${screenshot_name}.png
+    [Documentation]    Takes a screenshot with the given name only if TAKE_SCREENSHOTS env var is set to true
+    ${take_screenshots}=    Get Environment Variable    TAKE_SCREENSHOTS    default=False
+    Run Keyword If    '${take_screenshots.lower()}' == 'true'    Capture Page Screenshot    ${screenshot_name}.png
 
 Quickstart Payslips.pdf Should Work Fine
     
