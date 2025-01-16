@@ -34,13 +34,16 @@ Quickstart Payslips.pdf Should Work Fine
     Wait Until Page Contains Element    id=infoLog    timeout=30
     Page Should Contain Element    id=noJobsRunning
     Page Should Contain Element    id=btnGreatNoErrorsNoWarnings
-    ${payslips_pdf_path}=  Join Path  ${PORTABLE_EXECUTABLE_DIR}  samples/burst/Payslips.pdf
+    # screen "Before Selecting a File"
+	  ${payslips_pdf_path}=  Join Path  ${PORTABLE_EXECUTABLE_DIR}  samples/burst/Payslips.pdf
     Choose File  id=burstFileUploadInput  ${payslips_pdf_path}
-    Sleep  1s
+    # screen "After the File Was Selected"
+  	Sleep  1s
     # Click Burst (cannot because of log files)
     Click Button    id=btnBurst
     Wait Until Page Contains Element    css=.dburst-button-question-confirm    timeout=30
-    Sleep  1s
+    # screen "After the Clicking Burst Button"
+	  Sleep  1s
     Click Element    css=.dburst-button-question-confirm
     Wait Until Element Is Not Visible    css=.dburst-button-question-confirm    timeout=30
     Sleep  1s
@@ -64,15 +67,20 @@ Quickstart Payslips.pdf Should Work Fine
     Click Element    css=.dburst-button-question-confirm
     # Working on ...
     Wait Until Page Contains Element    id=infoLog    timeout=30
-    Wait Until Element Is Not Visible    id=noJobsRunning    timeout=30
+    # screen "While Working On"
+	  # screen "While Working On 2nd"
+	  # screen "While Working On 3rd"
+	  Wait Until Element Is Not Visible    id=noJobsRunning    timeout=30
     Wait Until Page Contains Element    id=workingOn    timeout=30
     # Done
     Wait Until Element Is Not Visible    id=workingOn    timeout=300
     Wait Until Page Contains Element    id=noJobsRunning    timeout=300
     # Done without errors 
     Page Should Contain Element    id=btnGreatNoErrorsNoWarnings
+    # screen "Done"
     Sleep  5s
     Close Electron Application
+
 
 Open Electron Application
   [Documentation]  Open's your electron application by providing browser binary via

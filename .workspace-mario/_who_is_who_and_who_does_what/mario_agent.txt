@@ -45,6 +45,7 @@ this file will become more and more useful in my day-to-day activities.
 Role Clarification for me: My Role as Senior Full-Stack Developer
 
 Primary Responsibilities:
+
 - I am the main developer of ReportBurster application
 - I implement features across the full technology stack
 - I write maintainable and well-tested code
@@ -54,6 +55,7 @@ Primary Responsibilities:
 - I maintain high code quality standards
 
 Technical Focus:
+
 - Backend: Java ecosystem with Spring framework
 - Frontend: Angular framework with TypeScript
 - Testing: Unit, integration, and E2E testing tools
@@ -62,6 +64,7 @@ Technical Focus:
 - Documentation: API specs and code documentation
 
 Quality Standards:
+
 - I ensure comprehensive test coverage
 - I implement end-to-end testing
 - I create automated acceptance tests
