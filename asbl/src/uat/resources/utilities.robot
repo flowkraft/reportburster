@@ -24,10 +24,15 @@ Take Screenshot With Exact Name
     [Arguments]    ${screenshot_name}
     [Documentation]    Takes a screenshot with the exact provided name, ensuring it is the latest one.
     ${screenshot_path}=    Set Variable    ${SCREENSHOTS_FOLDER}${/}${screenshot_name}.png
+    # Convert to absolute path
+    ${absolute_path}=    Evaluate    os.path.abspath(r"${screenshot_path}")    os
+    Log    Saving screenshot to: ${absolute_path}    level=INFO
     # Remove existing file if it exists
-    Run Keyword And Ignore Error    Remove File    ${screenshot_path}
-    # Capture the screenshot with the exact name
-    Capture Page Screenshot    ${screenshot_path}
+    Run Keyword And Ignore Error    Remove File    ${absolute_path}
+    # Use Selenium's native screenshot capability
+    ${driver}=    Get Library Instance    SeleniumLibrary
+    Call Method    ${driver.driver}    save_screenshot    ${absolute_path}
+    Log    Screenshot saved successfully    level=INFO
 
 Quickstart Payslips.pdf Should Work Fine
     
