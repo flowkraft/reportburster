@@ -11,34 +11,41 @@ ${SCREENSHOTS_FOLDER}    ${EMPTY}    # Default empty value, can be overridden vi
 *** Keywords ***
 Take Screenshot If Requested
     [Arguments]    ${screenshot_name}=${EMPTY}
-    [Documentation]    Takes a screenshot only if:
-    ...                - SCREENSHOTS_FOLDER is provided AND
-    ...                - screenshot_name is provided
-    ...                Otherwise no screenshot is taken.
+    [Documentation]    Takes a screenshot only if SCREENSHOTS_FOLDER and screenshot_name are provided
     
-    # Log the current configuration
-    Log    SCREENSHOTS_FOLDER is set to: ${SCREENSHOTS_FOLDER}    level=INFO
+    # Debug logging
+    Log    Current SCREENSHOTS_FOLDER value: '${SCREENSHOTS_FOLDER}'    level=DEBUG
+    Log    Current screenshot_name value: '${screenshot_name}'    level=DEBUG
     
-    # Only proceed if both SCREENSHOTS_FOLDER and screenshot_name are defined and not empty
-    ${should_take_screenshot}=    Evaluate    bool("${SCREENSHOTS_FOLDER}".strip() and "${screenshot_name}".strip())    modules=string
+    ${screenshots_folder_stripped}=    Set Variable    ${SCREENSHOTS_FOLDER.strip()}
+    ${screenshot_name_stripped}=    Set Variable    ${screenshot_name.strip()}
+    
+    ${should_take_screenshot}=    Evaluate    bool("""${screenshots_folder_stripped}""" and """${screenshot_name_stripped}""")
+    Log    Should take screenshot?: ${should_take_screenshot}    level=DEBUG
+    
     Run Keyword If    ${should_take_screenshot}
     ...    Take Screenshot With Exact Name    ${screenshot_name}
     ...    ELSE
-    ...    Log    Screenshots disabled - SCREENSHOTS_FOLDER or screenshot_name is empty/undefined    level=INFO
+    ...    Log    Screenshots disabled - SCREENSHOTS_FOLDER or screenshot_name is empty    level=INFO
 
 Take Screenshot With Exact Name
     [Arguments]    ${screenshot_name}
-    [Documentation]    Takes a screenshot with the exact provided name, ensuring it is the latest one.
+    [Documentation]    Takes a screenshot with exact name provided
     ${screenshot_path}=    Set Variable    ${SCREENSHOTS_FOLDER}${/}${screenshot_name}.png
-    # Convert to absolute path
     ${absolute_path}=    Evaluate    os.path.abspath(r"${screenshot_path}")    os
     Log    Saving screenshot to: ${absolute_path}    level=INFO
-    # Remove existing file if it exists
+    
+    # Ensure directory exists
+    ${directory}=    Evaluate    os.path.dirname(r"${absolute_path}")    os
+    Create Directory    ${directory}
+    
+    # Remove existing file if present
     Run Keyword And Ignore Error    Remove File    ${absolute_path}
-    # Use Selenium's native screenshot capability
+    
+    # Take screenshot using Selenium
     ${driver}=    Get Library Instance    SeleniumLibrary
     Call Method    ${driver.driver}    save_screenshot    ${absolute_path}
-    Log    Screenshot saved successfully    level=INFO
+    Log    Screenshot saved successfully to: ${absolute_path}    level=INFO
 
 Quickstart Payslips.pdf Should Work Fine
     
