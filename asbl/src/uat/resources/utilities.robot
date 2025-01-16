@@ -5,47 +5,11 @@ Library     Process
 Library     resources/utilities.py
 Variables   resources/vars.py
 
-*** Variables ***
-${SCREENSHOTS_FOLDER}    ${EMPTY}    # Default empty value, can be overridden via command line
-
 *** Keywords ***
-Take Screenshot If Requested
-    [Arguments]    ${screenshot_name}=${EMPTY}
-    [Documentation]    Takes a screenshot only if SCREENSHOTS_FOLDER and screenshot_name are provided
-    
-    # Debug logging
-    Log    Current SCREENSHOTS_FOLDER value: '${SCREENSHOTS_FOLDER}'    level=DEBUG
-    Log    Current screenshot_name value: '${screenshot_name}'    level=DEBUG
-    
-    ${screenshots_folder_stripped}=    Set Variable    ${SCREENSHOTS_FOLDER.strip()}
-    ${screenshot_name_stripped}=    Set Variable    ${screenshot_name.strip()}
-    
-    ${should_take_screenshot}=    Evaluate    bool("""${screenshots_folder_stripped}""" and """${screenshot_name_stripped}""")
-    Log    Should take screenshot?: ${should_take_screenshot}    level=DEBUG
-    
-    Run Keyword If    ${should_take_screenshot}
-    ...    Take Screenshot With Exact Name    ${screenshot_name}
-    ...    ELSE
-    ...    Log    Screenshots disabled - SCREENSHOTS_FOLDER or screenshot_name is empty    level=INFO
-
-Take Screenshot With Exact Name
+Take Named Screenshot
     [Arguments]    ${screenshot_name}
-    [Documentation]    Takes a screenshot with exact name provided
-    ${screenshot_path}=    Set Variable    ${SCREENSHOTS_FOLDER}${/}${screenshot_name}.png
-    ${absolute_path}=    Evaluate    os.path.abspath(r"${screenshot_path}")    os
-    Log    Saving screenshot to: ${absolute_path}    level=INFO
-    
-    # Ensure directory exists
-    ${directory}=    Evaluate    os.path.dirname(r"${absolute_path}")    os
-    Create Directory    ${directory}
-    
-    # Remove existing file if present
-    Run Keyword And Ignore Error    Remove File    ${absolute_path}
-    
-    # Take screenshot using Selenium
-    ${driver}=    Get Library Instance    SeleniumLibrary
-    Call Method    ${driver.driver}    save_screenshot    ${absolute_path}
-    Log    Screenshot saved successfully to: ${absolute_path}    level=INFO
+    [Documentation]    Takes a screenshot with the given name, saved in Robot's default results folder
+    Capture Page Screenshot    ${screenshot_name}.png
 
 Quickstart Payslips.pdf Should Work Fine
     
@@ -56,7 +20,7 @@ Quickstart Payslips.pdf Should Work Fine
     Page Should Contain Element    id=noJobsRunning
     Page Should Contain Element    id=btnGreatNoErrorsNoWarnings
     # screen "Before Selecting a File"
-    Take Screenshot If Requested    Before_Selecting_File
+    Take Named Screenshot    Before_Selecting_File
     ${payslips_pdf_path}=  Join Path  ${PORTABLE_EXECUTABLE_DIR}  samples/burst/Payslips.pdf
     Choose File  id=burstFileUploadInput  ${payslips_pdf_path}
     # screen "After the File Was Selected"
