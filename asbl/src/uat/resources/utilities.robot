@@ -11,22 +11,20 @@ ${SCREENSHOTS_FOLDER}    ${EMPTY}    # Default empty value, can be overridden vi
 *** Keywords ***
 Take Screenshot If Requested
     [Arguments]    ${screenshot_name}=${EMPTY}
-    [Documentation]    Takes a screenshot if SCREENSHOTS_FOLDER is provided.
-    ...                If screenshot_name is provided, the screenshot will be saved with that exact name.
-    ...                If screenshot_name is not provided, the default behavior of Capture Page Screenshot will be used.
+    [Documentation]    Takes a screenshot only if:
+    ...                - SCREENSHOTS_FOLDER is provided AND
+    ...                - screenshot_name is provided
+    ...                Otherwise no screenshot is taken.
     
     # Log the current configuration
     Log    SCREENSHOTS_FOLDER is set to: ${SCREENSHOTS_FOLDER}    level=INFO
     
-    # Only proceed if SCREENSHOTS_FOLDER is defined and not empty
-    ${should_take_screenshot}=    Evaluate    bool("${SCREENSHOTS_FOLDER}".strip())    modules=string
+    # Only proceed if both SCREENSHOTS_FOLDER and screenshot_name are defined and not empty
+    ${should_take_screenshot}=    Evaluate    bool("${SCREENSHOTS_FOLDER}".strip() and "${screenshot_name}".strip())    modules=string
     Run Keyword If    ${should_take_screenshot}
-    ...    Run Keyword If    '${screenshot_name}' != '${EMPTY}'
     ...    Take Screenshot With Exact Name    ${screenshot_name}
     ...    ELSE
-    ...    Capture Page Screenshot
-    ...    ELSE
-    ...    Log    Screenshots disabled - SCREENSHOTS_FOLDER is empty or undefined    level=INFO
+    ...    Log    Screenshots disabled - SCREENSHOTS_FOLDER or screenshot_name is empty/undefined    level=INFO
 
 Take Screenshot With Exact Name
     [Arguments]    ${screenshot_name}
