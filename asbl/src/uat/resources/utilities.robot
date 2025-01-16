@@ -11,7 +11,8 @@ Take Named Screenshot If Requested
     [Documentation]    Takes a screenshot with the given name only if TAKE_SCREENSHOTS env var is set to true
     ${take_screenshots}=    Get Environment Variable    TAKE_SCREENSHOTS    default=False
     Log    TAKE_SCREENSHOTS value: ${take_screenshots}    level=TRACE
-    Run Keyword If    '${take_screenshots}' == '1'    Capture Page Screenshot    ${screenshot_name}.png
+    ${is_truthy}=    Evaluate    bool('${take_screenshots}'.lower() not in ('false', '0', 'no', 'off', '', 'none'))
+    Run Keyword If    ${is_truthy}    Capture Page Screenshot    ${screenshot_name}.png
 
 Quickstart Payslips.pdf Should Work Fine
     
