@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import subprocess, glob, re, os, importlib, shutil, zipfile, time, errno, pyautogui, psutil
 import shutil
 from pywinauto.application import Application
