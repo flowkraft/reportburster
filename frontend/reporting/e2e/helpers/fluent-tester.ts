@@ -1,4 +1,5 @@
 import { Locator, Page } from 'playwright';
+import { takeScreenshotIfRequested } from '../utils/helpers';
 import { expect } from '@playwright/test';
 
 const slash = require('slash');
@@ -674,6 +675,14 @@ export class FluentTester implements PromiseLike<void> {
 
   public appShouldHaveNActiveJobs(n: number): FluentTester {
     const action = (): Promise<void> => this.doVerifyNActiveJobs(n);
+
+    this.actions.push(action);
+    return this;
+  }
+
+  public takeNamedScreenshotIfRequested(screenshotName: string): FluentTester {
+    const action = (): Promise<void> => 
+      takeScreenshotIfRequested(this.window, screenshotName);
 
     this.actions.push(action);
     return this;
