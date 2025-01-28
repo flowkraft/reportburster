@@ -47,6 +47,7 @@ Prerequisites Chocolatey Is Installed and Java Not Installed Should Allow User T
     Click Button    id=btnInstallJava
     Wait Until Page Contains Element    css=.dburst-button-question-confirm    timeout=30
     Sleep  1s
+    Take Named Screenshot If Requested    000_05_Prerequisites_ChocoYesJavaNo_InstallJava
     Click Element    css=.dburst-button-question-confirm
     Wait Until Element Is Not Visible    css=.dburst-button-question-confirm    timeout=30
     Sleep  1s
@@ -86,6 +87,7 @@ Prerequisites Chocolatey Not Installed and Java Not Installed Should Allow User 
    Click Button    id=btnInstallChocolatey
    Wait Until Page Contains Element    css=.dburst-button-question-confirm    timeout=30
    Sleep  1s
+   Take Named Screenshot If Requested    000_05_Prerequisites_ChocoNoJavaNo_InstallChoco
    Click Element    css=.dburst-button-question-confirm
    Wait Until Element Is Not Visible    css=.dburst-button-question-confirm    timeout=30
    Wait For Powershell And Accept Completion
