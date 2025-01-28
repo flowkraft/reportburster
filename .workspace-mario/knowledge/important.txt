@@ -48,7 +48,7 @@ Previous Work Analyzer Tool:
     - <workspace_folder_path>: Full path to my workspace folder
     - <agent_name>: My name derived from workspace folder name (e.g., if my workspace is .workspace-<name>, I use     
  <name>)
-    - --chars N (optional): Number of characters to read from end of file (default: 2048)
+    - --chars N (optional): Number of characters to read from end of file (default: 8192)
       I can use higher values to analyze more history
 
     Example (basic usage):
@@ -56,7 +56,7 @@ Previous Work Analyzer Tool:
 
     Example (with optional --chars):
     chezmoi-tools-py what-we-were-speaking-last-time <workspace_folder_path>/.aider-<agent_name>.chat.history.md      
- --chars 4096
+ --chars 16384
 
  3. I know the tool will:
     - Automatically handle file access
@@ -66,7 +66,7 @@ Previous Work Analyzer Tool:
 
  4. When presenting analyzed topics:
     - I present a bullet-point list of topics ordered by importance
-    - I only include topics directly related to my role and responsibilities from my 'AGENT PERSONA' section
+    - I only include topics directly related to my role and responsibilities from my 'AI AGENT PERSONA' section
     - I exclude:
       * LLM token usage or configuration
       * Internal AI/LLM workings

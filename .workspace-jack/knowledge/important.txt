@@ -36,14 +36,14 @@ When asked about previous work, follow these steps:
 2. Parameters:
    - <workspace_root>: Full path to your workspace folder
    - <agent_name>: Your name derived from workspace folder name (e.g., if your workspace is .workspace-<name>, use <name>)
-   - --chars N (optional): Number of characters to read from end of file (default: 2048)
+   - --chars N (optional): Number of characters to read from end of file (default: 8192)
      Use higher values to analyze more history
      
    Example (basic usage):
    chezmoi-tools-py what-we-were-speaking-last-time <workspace_root>/.aider-<agent_name>.chat.history.md
    
    Example (with optional --chars):
-   chezmoi-tools-py what-we-were-speaking-last-time <workspace_root>/.aider-<agent_name>.chat.history.md --chars 4096
+   chezmoi-tools-py what-we-were-speaking-last-time <workspace_root>/.aider-<agent_name>.chat.history.md --chars 16384
 
 3. The tool will:
    - Automatically handle file access
