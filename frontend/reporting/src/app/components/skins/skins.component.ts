@@ -45,7 +45,7 @@ export class SkinsComponent implements OnInit {
     let skin =
       this.settingsService.xmlInternalSettings.documentburster.settings.skin;
 
-    if (!skin) skin = 'skin-blue';
+    if (!skin) skin = 'skin-black';
 
     this.applySkin(skin);
   }

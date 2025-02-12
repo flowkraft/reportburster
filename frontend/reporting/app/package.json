@@ -1,14 +1,14 @@
 {
   "name": "reportburster",
   "productName": "ReportBurster",
-  "description": "ReportBurster is a report distribution software for bursting reports like invoices, statements and payslips in order to distribute by email, FTP, web or file share relevant parts to each of your customers, partners and employees.",
+  "license": "SSPL-1.0",
+  "description": "Server Side Public License (SSPL) - Desktop and Server versions. SSPL terms apply upon distribution or service provision.",
   "version": "10.2.4",
   "copyright": "2024, FlowKraft Systems & Consulting Ltd.",
   "homepage": "https://www.pdfburst.com",
-  "license": "Server Side Public License (SSPL)",
   "author": {
     "name": "FlowKraft Systems & Consulting Ltd",
-    "email": "contact@reportburster.org"
+    "email": "support@reportburster.com"
   },
   "main": "main.js",
   "private": true,

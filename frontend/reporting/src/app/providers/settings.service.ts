@@ -70,7 +70,7 @@ export class SettingsService {
   xmlInternalSettings = {
     documentburster: {
       settings: {
-        skin: 'skin-blue',
+        skin: 'skin-black',
         backendurl: 'http://localhost:9090',
       },
     },

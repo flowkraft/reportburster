@@ -3,6 +3,7 @@ Library     SeleniumLibrary
 Library     OperatingSystem
 Library     Process
 Library     resources/utilities.py
+Resource    resources/utilities.robot
 Variables   resources/vars.py
 Test Setup    Clean State
 Test Teardown    Kill Reportburster Exe Process

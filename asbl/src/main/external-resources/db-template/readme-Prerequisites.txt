@@ -1,12 +1,51 @@
-1. In order to use the DocumentBurster Java runtime (JRE) is required to be installed on user's computer. 
+Java Requirement
+--------------
+ReportBurster requires Java version 11 specifically to run properly.
 
-2. Many Windows computers already have Java runtime (JRE) installed and, if this is the case, you only need to run DocumentBurster software and see everything working. 
+Note 1: ReportBurster will not work with Java versions before 11 and is not guaranteed to work with versions after 11.
+Note 2: Before installing, uninstalling, or changing Java versions, please verify that no other business-critical software on your computer depends on Java. Modifying Java installations may affect or break other Java-dependent applications.
 
-3. DocumentBurster needs Java version 1.8 (or higher) as a prerequisite.
+Check Current Installation
+-------------------------
+1. Check if Java 11 is already installed:
+   - Open PowerShell
+   - Run:
+   
+   java -version
+   
+   If you see "version 11.x.x", Java 11 is already installed - no further action needed.
+   If Java 11 is not installed, Chocolatey (Windows) package manager provides an easy way to install it.
 
-It is advisable to run the software against the newest Java version.
+2. Check if Chocolatey is installed:
+   - In the same PowerShell window
+   - Run:
+   
+   choco -v
+   
+   If you see a version number, Chocolatey is installed - skip to "Install Java 11".
+   If you get an error, continue with "Install Chocolatey" below.
 
-DocumentBurster does not work on Java versions prior to Java 1.8  
+Installation Instructions
+------------------------
+1. Install Chocolatey Package Manager:
+   - Open PowerShell as Administrator
+   - Run this command:
+   
+   Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+   
+   Source: https://chocolatey.org/install
+   - Close PowerShell
 
-4. If required, you can download & install Java from here 
-http://www.java.com/en/download/index.jsp
+2. Install Java 11:
+   - Open a new PowerShell window as Administrator
+   - Run:
+   
+   choco install temurin11 --yes
+
+Uninstallation (if needed)
+-------------------------
+To remove Java 11:
+- Open PowerShell as Administrator
+- Run:
+
+choco uninstall temurin11 --yes

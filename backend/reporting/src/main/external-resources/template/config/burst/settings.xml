@@ -49,7 +49,7 @@
 		<deletefiles>false</deletefiles>
 		<!-- email server settings -->
 		<emailserver>
-			<useconn>true</useconn>
+			<useconn>false</useconn>
       		<conncode>eml-contact</conncode>
       		<host>Email Server Host</host>
 			<!-- email server port. 25 is the default SMTP port -->
