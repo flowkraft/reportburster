@@ -23,7 +23,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		// assembly is not required to be compiled and should be excluded otherwise
 		// 'mvn -pl -assembly clean install' command will be executed recursively in an
 		// INFINITE loop
-		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl -assembly clean install");
+		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl -asbl clean install");
 
 		System.out.println(
 				"------------------------------------- DONE_01:NoExeAssembler Utils.runMaven(Utils.getTopProjectFolderPath(), mvn clean install) ... -------------------------------------");
