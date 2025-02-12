@@ -3,7 +3,7 @@
 
 	<settings>
 
-		<skin>skin-blue</skin>
+		<skin>skin-black</skin>
 		<backendurl>http://localhost:9090/api</backendurl>
 
 	</settings>
