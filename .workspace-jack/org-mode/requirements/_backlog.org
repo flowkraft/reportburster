@@ -1,0 +1,6 @@
+
+Grafana LGTM - https://www.youtube.com/playlist?list=PLYrn63eEqAzZL2TaS0pXXw-_DEl3SsAF_
+
+    LGTM stands for Loki, Grafana, Tempo, and Mimir, which are the key components of this stack. 
+    The LGTM stack aims to provide a unified solution for monitoring and troubleshooting modern applications 
+    and infrastructure by addressing the three pillars of observability: logs, metrics, and traces.

@@ -26,7 +26,7 @@ test.describe('', async () => {
         .click('#\\$\\{var2\\}')
         .clickYesDoThis()
         .click('#leftMenuEmailSettings') // email SMTP settings
-        .click('#btnUseExistingEmailConnection')
+        //.click('#btnUseExistingEmailConnection')
         .click('#fromName')
         .typeText('')
         .click('#btnFromNameVariables')

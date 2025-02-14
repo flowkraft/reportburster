@@ -67,7 +67,7 @@ test.describe('', async () => {
         )
         .elementShouldContainText(
           `#${PATHS.EML_CONTACT_FILE} td:nth-child(3)`,
-          'My Reports',
+          '--not used--',
         )
         .elementShouldBeVisible(`#btnDefault_${PATHS.EML_CONTACT_FILE}`)
         .elementShouldNotBeVisible(`#btnActions_${PATHS.EML_CONTACT_FILE}`)
@@ -138,9 +138,17 @@ test.describe('', async () => {
       //long running test
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
-      let ft = new FluentTester(firstPage); //asser basic "default" connection things
+      let ft = new FluentTester(firstPage); //assert basic "default" connection things
 
-      //asser basic "default" connection things
+      const escapedWhich = PATHS.SETTINGS_CONFIG_FILE; //;.replace('.', '\\.');
+
+      ft.gotoBurstScreen()
+        .click('#topMenuConfiguration')
+        .click('#topMenuConfigurationLoad_burst_' + escapedWhich) // STEP0 - CHANGE VALUES general settings
+        .click('#leftMenuEmailSettings') // email SMTP settings
+        .click('#btnUseExistingEmailConnection');
+
+      //assert basic "default" connection things
       ft = ConnectionsTestHelper.assertConfigurationUsesEmailConnection(
         ft,
         'burst',
