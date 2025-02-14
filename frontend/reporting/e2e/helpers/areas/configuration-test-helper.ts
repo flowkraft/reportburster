@@ -235,7 +235,7 @@ export class ConfigurationTestHelper {
         .click('#btnDeleteDocuments')
         .click('#btnQuarantineDocuments')
         .click('#leftMenuEmailSettings') // email SMTP settings
-        .click('#btnUseExistingEmailConnection')
+        //.click('#btnUseExistingEmailConnection')
         .setValue('#fromName', '00')
         .setValue('#fromEmailAddress', '01')
         .setValue('#emailServerHost', '02')

@@ -681,7 +681,7 @@ export class FluentTester implements PromiseLike<void> {
   }
 
   public takeNamedScreenshotIfRequested(screenshotName: string): FluentTester {
-    const action = (): Promise<void> => 
+    const action = (): Promise<void> =>
       takeScreenshotIfRequested(this.window, screenshotName);
 
     this.actions.push(action);
@@ -749,7 +749,9 @@ export class FluentTester implements PromiseLike<void> {
     //await this.doClick('#supportEmail');
 
     await this.doHover('#topMenuBurst');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
     await this.doClick('#topMenuBurst');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
     //await this.doHover('#supportEmail');
     //await this.doClick('#supportEmail');
@@ -757,9 +759,11 @@ export class FluentTester implements PromiseLike<void> {
     //await this.doClick('#topMenuBurst');
 
     await this.doHover('#topMenuConfiguration');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
     //await this.doFocus('#topMenuConfiguration');
 
     await this.doClick('#topMenuConfiguration');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
     /*
     await this.doWaitOnElementToBecomeVisible(

@@ -161,6 +161,4 @@ test.describe('', async () => {
       return ConfTemplatesTestHelper.deleteTemplate(ft, 'statements');
     },
   );
-  /*
-   */
 });

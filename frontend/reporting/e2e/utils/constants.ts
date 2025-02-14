@@ -3,6 +3,7 @@ export class Constants {
   static DELAY_HALF_SECOND = Constants.DELAY_ONE_SECOND / 2;
 
   static DELAY_TEN_SECONDS = 10 * Constants.DELAY_ONE_SECOND;
+  static DELAY_HUNDRED_MILISECONDS = 100;
   static DELAY_HUNDRED_SECONDS = 100 * Constants.DELAY_ONE_SECOND;
 
   static DELAY_FIVE_THOUSANDS_SECONDS = 5000000;

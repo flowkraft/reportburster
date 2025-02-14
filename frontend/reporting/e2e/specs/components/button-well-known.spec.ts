@@ -10,7 +10,7 @@ test.describe('', async () => {
       const ft = new FluentTester(firstPage);
       await ft
         .gotoConfigurationEmailSettings()
-        .click('#btnUseExistingEmailConnection')
+        //.click('#btnUseExistingEmailConnection')
         .click('#btnWellKnownEmailProviders')
         .click('#btnShowMoreProviders')
         .click('#QQex')
