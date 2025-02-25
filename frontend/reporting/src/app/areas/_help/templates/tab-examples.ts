@@ -11,7 +11,7 @@ export const tabExamplesTemplate = `<ng-template #tabExamplesTemplate>
     <a
       title="Examples of how people are using DocumentBurster report distribution software"
       href="https://www.pdfburst.com/blog/report-distribution-software/"
-      >Report Distribution Software</a
+      target="_blank">Report Distribution Software</a
     >&nbsp;&nbsp;
     <a
       href="https://www.pdfburst.com/blog/report-distribution-software/"
@@ -29,7 +29,7 @@ export const tabExamplesTemplate = `<ng-template #tabExamplesTemplate>
     <a
       title="Examples of how people are using DocumentBurster to burst and distribute Crystal Reports documents"
       href="https://www.pdfburst.com/blog/crystal-reports-distribution/"
-      >Burst and Distribute Crystal Reports Documents</a
+      target="_blank">Burst and Distribute Crystal Reports Documents</a
     >
     using <em>ReportBurster</em>&nbsp;&nbsp;
     <a
@@ -47,7 +47,7 @@ export const tabExamplesTemplate = `<ng-template #tabExamplesTemplate>
     <a
       title="Examples of how people are using DocumentBurster for emailing payslips to employees"
       href="https://www.pdfburst.com/blog/email-payslips/"
-      >Email Payslips to Employees</a
+      target="_blank">Email Payslips to Employees</a
     >
     using <em>ReportBurster</em>&nbsp;&nbsp;
     <a href="https://www.pdfburst.com/blog/email-payslips/" target="_blank">

@@ -418,12 +418,12 @@
       "TAB-ABOUT": {
         "BUY-NOW": "Buy Now",
         "COPYRIGHT": "Copyright",
-        "COPYRIGHT-YEARS": "2008 - 2020 SourceKraft Systems &\n      Consulting Ltd",
+        "COPYRIGHT-YEARS": "2008 - 2025 SourceKraft Systems &\n      Consulting Ltd",
         "INNER-HTML": {
           "GET-FREE-SCHOOLS": "Get\n            <em>ReportBurster</em> Free For Schools",
           "LICENSE-2-OPTIONS": "<strong>License</strong> - two licensing options are available"
         },
-        "PURCHASE-COMMERCIAL-LICENSE": "Purchase a commercial license",
+        "PURCHASE-COMMERCIAL-LICENSE": "Enterprise License (Professional Support)",
         "VERSION": "Version"
       },
       "TAB-COMPARISON": {
@@ -435,20 +435,12 @@
         },
         "VIEW-ALL-FEATURES": "View All Features"
       },
-      "TAB-FREE": {
-        "FREE-FOR-SCHOOLS": "Free For Schools",
-        "HOW-TO-APPLY": "How to Apply",
-        "INNER-HTML": {
-          "DO-YOU-WORK": "Do you work for a school or university?\n    <em>ReportBurster</em> software is free for schools and universities.",
-          "IN-ORDER-APPLY": " In order to apply for a free license of\n    <em>ReportBurster</em> you will need to submit a case study describing the problem which\n    <em>ReportBurster</em> will solve for your school. The case study doesn’t have to be exhaustive just few\n    descriptive paragraphs\n    will be enough.\n"
-        }
-      },
       "TAB-SUPPORT": {
         "DB-SUPPORT": "Customer Support",
         "SEND-LOG-FILES-SHORT": "Send the log files",
         "HOW-IT-WORKS": "How our support works",
         "INNER-HTML": {
-          "SEND-LOG-FILES-LONG": "In the <em>ReportBurster</em> installation folder you will find a <strong><em>logs</em></strong> folder. Zip the <em>logs</em> folder (all the log files) and email to <a href='mailto:support@pdfburst.com' target='_blank'>support@pdfburst.com</a>.<br><br>By checking the log files we will better understand the difficulty you face."
+          "SEND-LOG-FILES-LONG": "In the <em>ReportBurster</em> installation folder you will find a <strong><em>logs</em></strong> folder. Zip the <em>logs</em> folder (all the log files) and email to <a href='mailto:support@reportburster.com' target='_blank'>support@reportburster.com</a>.<br><br>By checking the log files we will better understand the difficulty you face."
         }
       },
       "TAB-SERVICES": {
