@@ -11,7 +11,7 @@ public class AssemblerTest {
 	public void doAdHoc() throws Exception {
 
 		new ProcessExecutor().command("cmd", "/c",
-				"java -cp target/package/db/ReportBurster/lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile build-groovy.xml")
+				"java -cp target/package/db/ReportBurster/lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile bild-groovy.xml")
 				.redirectOutput(new LogOutputStream() {
 					@Override
 					protected void processLine(String line) {

@@ -138,7 +138,7 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 		// COMPILE / CHECK the groovy scripts don't give errors
 
 		new ProcessExecutor().command("cmd", "/c", "java -cp " + packageDirPath + "/" + this.topFolderName
-				+ "/server/lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile build-groovy.xml -DtopFolderName="
+				+ "/server/lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile bild-groovy.xml -DtopFolderName="
 				+ this.topFolderName).redirectOutput(new LogOutputStream() {
 					@Override
 					protected void processLine(String line) {
