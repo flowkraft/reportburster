@@ -16,13 +16,13 @@ export const tabReviewsTemplate = `<ng-template #tabReviewsTemplate>
     <a href="http://www.english-heritage.org.uk" target="_blank">English Heritage, United Kingdom</a>
     <br>
     <br>
-    <a href="https://www.reportburster.com/testimonials.html" target="_blank">
+    <a href="https://www.reportburster.com/uses" target="_blank">
       <button class="btn btn-primary" type="button">View More Customer Reviews</button>
     </a>
     <br>
     <br>
     <br>We helped
-    <a href="https://www.reportburster.com/clients.html" target="_blank">
+    <a href="https://www.pdfburst.com/clients.html" target="_blank">
       <em>Yale University, US Chamber of Commerce, GlaxoSmithKline, English Heritage, Oxford University</em>
     </a> and many other companies to automatically distribute their invoices, statements or payslips to thousands of
     employees,
@@ -31,7 +31,7 @@ export const tabReviewsTemplate = `<ng-template #tabReviewsTemplate>
     <br>We can help your company do the same.
     <br>
     <br>
-    <a href="https://www.reportburster.com/clients.html" target="_blank">
+    <a href="https://www.pdfburst.com/clients.html" target="_blank">
       <button class="btn btn-primary" type="button">Who is using
         <em>ReportBurster</em>
       </button>

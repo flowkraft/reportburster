@@ -54,6 +54,15 @@ public class AssemblerTest {
 		System.out.println(
 				"------------------------------------- FINISHED Assembler:ReportBursterServerSpringBootAssembler ... -------------------------------------");
 
+		AbstractAssembler rbSourceAssembler = new ReportBursterSourceAssembler();
+		
+		rbSourceAssembler.assemble();
+		rbSourceAssembler.verify();
+		rbSourceAssembler.install();
+
+		System.out.println(
+				"------------------------------------- FINISHED Assembler:ReportBursterSourceAssembler ... -------------------------------------");
+
 	}
 
 	@Test

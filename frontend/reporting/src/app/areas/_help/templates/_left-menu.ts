@@ -30,13 +30,6 @@ export const leftMenuTemplate = `<!-- Sidebar Menu-->
     </a>
   </li>
   <li routerLinkActive="active">
-    <a id='leftMenuHelpFreeForSchools' href="#" [routerLink]="['/help','freeForSchoolsMenuSelected']" skipLocationChange="true">
-      <i class="fa fa-graduation-cap"></i>
-      <span>{{
-        'AREAS.HELP.LEFT-MENU.FREE' | translate }}</span>
-    </a>
-  </li>
-  <li routerLinkActive="active">
     <a id='leftMenuHelpCustomerReviews' href="#" [routerLink]="['/help','reviewsMenuSelected']" skipLocationChange="true">
       <i class="fa fa-address-card-o"></i>
       <span>{{

@@ -2,7 +2,7 @@ export const tabComparisonTemplate = `<ng-template #tabComparisonTemplate>
   <div class="well">
 
     <strong>
-      <a href="https://www.reportburster.com/features.html" target="_blank">
+      <a href="https://www.pdfburst.com/features.html" target="_blank">
         <em>ReportBurster</em> {{
         'AREAS.HELP.TAB-COMPARISON.FEATURES' | translate }}</a>
     </strong>
@@ -17,7 +17,7 @@ export const tabComparisonTemplate = `<ng-template #tabComparisonTemplate>
     <br>
 
     <strong>
-      <a id='checkPointHelpComparison' href="https://www.reportburster.com/features.html" target="_blank">
+      <a id='checkPointHelpComparison' href="https://www.pdfburst.com/features.html" target="_blank">
         <em>DocumentBurster Server</em> {{
         'AREAS.HELP.TAB-COMPARISON.FEATURES' | translate }}</a>
     </strong>
@@ -33,7 +33,7 @@ export const tabComparisonTemplate = `<ng-template #tabComparisonTemplate>
 
     </ol>
     <br>
-    <a href="https://www.reportburster.com/features.html" target="_blank">
+    <a href="https://www.pdfburst.com/features.html" target="_blank">
       <button class="btn btn-primary" type="button">{{
         'AREAS.HELP.TAB-COMPARISON.VIEW-ALL-FEATURES' | translate }}</button>
     </a>

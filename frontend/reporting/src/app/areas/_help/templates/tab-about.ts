@@ -23,10 +23,7 @@ export const tabAboutTemplate = `<ng-template #tabAboutTemplate>
         </a>
       </li>
       <li>
-        <a href="https://www.pdfburst.com/services/free-for-schools/" target="_blank">
-          <button class="btn btn-xs" type="button"><span
-              [innerHTML]="'AREAS.HELP.TAB-ABOUT.INNER-HTML.GET-FREE-SCHOOLS' | translate"></span></button>
-        </a> (registered schools only)
+        Server Side Public License (SSPL) v1.0 Open Source License  
       </li>
     </ol>
 

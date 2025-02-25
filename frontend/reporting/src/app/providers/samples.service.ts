@@ -53,7 +53,7 @@ export class SamplesService {
       jobType: 'burst',
       input: {
         data: ['file:samples/burst/Payslips.pdf'],
-        dataUrl: ['file:https://www.pdfburst.com/samples/Payslips.pdf'],
+        dataUrl: ['file:https://www.reportburster.com/docs/Payslips.pdf'],
         numberOfPages: 3,
         tokens: [
           'clyde.grew@northridgehealth.org',
@@ -98,7 +98,7 @@ export class SamplesService {
       input: {
         data: ['file:samples/burst/Payslips-Distinct-Sheets.xls'],
         dataUrl: [
-          'file:https://www.pdfburst.com/samples/Payslips-Distinct-Sheets.xls',
+          'file:https://www.reportburster.com/docs/Payslips-Distinct-Sheets.xls',
         ],
         numberOfPages: -1,
         tokens: [
@@ -142,7 +142,7 @@ export class SamplesService {
       input: {
         data: ['file:samples/burst/Customers-Distinct-Column-Values.xls'],
         dataUrl: [
-          'file:https://www.pdfburst.com/samples/Customers-Distinct-Column-Values.xls',
+          'file:https://www.reportburster.com/docs/Customers-Distinct-Column-Values.xls',
         ],
         numberOfPages: -1,
         tokens: [],
@@ -177,7 +177,7 @@ export class SamplesService {
       step3: '',
       input: {
         data: ['file:samples/burst/Split2Times.pdf'],
-        dataUrl: ['file:https://www.pdfburst.com/samples/Split2Times.pdf'],
+        dataUrl: ['file:https://www.reportburster.com/docs/Split2Times.pdf'],
         numberOfPages: -1,
         tokens: [],
       },
@@ -222,9 +222,9 @@ export class SamplesService {
           'file:samples/burst/Invoices-Dec.pdf',
         ],
         dataUrl: [
-          'file:https://www.pdfburst.com/samples/Invoices-Oct.pdf',
-          'file:https://www.pdfburst.com/samples/Invoices-Nov.pdf',
-          'file:https://www.pdfburst.com/samples/Invoices-Dec.pdf',
+          'file:https://www.reportburster.com/docs/Invoices-Oct.pdf',
+          'file:https://www.reportburster.com/docs/Invoices-Nov.pdf',
+          'file:https://www.reportburster.com/docs/Invoices-Dec.pdf',
         ],
         numberOfPages: -1,
         tokens: [],
@@ -266,7 +266,7 @@ export class SamplesService {
       jobType: 'generate',
       input: {
         data: ['file:samples/reports/payslips/Payslips.csv'],
-        dataUrl: ['file:https://www.pdfburst.com/samples/Payslips.csv'],
+        dataUrl: ['file:https://www.reportburster.com/docs/Payslips.csv'],
         numberOfPages: -1,
         tokens: [
           'clyde.grew@northridgehealth.org',
