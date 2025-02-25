@@ -14,7 +14,6 @@
 
 	</parent>
 
-	<groupId>com.sourcekraft.documentburster</groupId>	
 	<artifactId>rb-common</artifactId>
 	<name>common module</name>
 

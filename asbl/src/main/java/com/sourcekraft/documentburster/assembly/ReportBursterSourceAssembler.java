@@ -8,67 +8,55 @@ import org.zeroturnaround.zip.ZipUtil;
 
 public class ReportBursterSourceAssembler extends AbstractAssembler {
 
-    public ReportBursterSourceAssembler() {
-        super("target/package/db-src", "target/package/verified-db-src", "target/reportburster-src.zip");
-    }
+	public ReportBursterSourceAssembler() {
+		super("target/package/db-src", "target/package/verified-db-src", "target/reportburster-src.zip");
+	}
 
-    @Override
-    protected void compile() throws Exception {
-        // No compilation needed for source package
-    }
+	@Override
+	protected void compile() throws Exception {
+		// No compilation needed for source package
+	}
 
-    @Override
-    protected void preparePackage() throws Exception {
-        // Copy all source files from top project folder except excluded directories
-        File sourceDir = new File(Utils.getTopProjectFolderPath());
-        File targetDir = new File(packageDirPath + "/" + topFolderName);
+	@Override
+	protected void preparePackage() throws Exception {
+		// Copy all source files from top project folder except excluded directories
+		File sourceDir = new File(Utils.getTopProjectFolderPath());
+		File targetDir = new File(packageDirPath + "/" + topFolderName);
 
-        // Define directories to exclude
-        String[] excludes = new String[] {
-            "node_modules",
-            "target",
-            "dist",
-            ".git",
-            ".settings",
-            "build"
-        };
+		// Define directories to exclude
+		String[] excludes = new String[] { "node_modules", ".venv", "__pycache__", "target", "results", "test-results",
+				"dist", ".git", ".angular", ".settings", "build" };
 
-        FileUtils.copyDirectory(sourceDir, targetDir, file -> {
-            String relativePath = sourceDir.toURI().relativize(file.toURI()).getPath();
-            
-            // Check if file path contains any excluded directory
-            for (String exclude : excludes) {
-                if (relativePath.contains("/" + exclude + "/")) {
-                    return false;
-                }
-            }
-            return true;
-        });
+		FileUtils.copyDirectory(sourceDir, targetDir, file -> {
+			String relativePath = sourceDir.toURI().relativize(file.toURI()).getPath();
 
-        System.out.println(
-            "------------------------------------- DONE:ReportBursterSourceAssembler copied source files ... -------------------------------------");
-    }
+			// Check if file path contains any excluded directory
+			for (String exclude : excludes) {
+				if (relativePath.contains("/" + exclude + "/")) {
+					return false;
+				}
+			}
+			return true;
+		});
 
-    @Override
-    public void verify() throws Exception {
-        ZipUtil.unpack(new File(targetPathZipFile), new File(verifyDirPath));
+		System.out.println(
+				"------------------------------------- DONE:ReportBursterSourceAssembler copied source files ... -------------------------------------");
+	}
 
-        // Verify key source directories/files exist
-        String[] requiredPaths = {
-            "/frontend",
-            "/backend",
-            "/documentation",
-            "pom.xml",
-            "README.md"
-        };
+	@Override
+	public void verify() throws Exception {
+		ZipUtil.unpack(new File(targetPathZipFile), new File(verifyDirPath));
 
-        for (String path : requiredPaths) {
-            assertThat(new File(verifyDirPath + "/" + topFolderName + path).exists())
-                .withFailMessage("Required path not found: " + path)
-                .isTrue();
-        }
+		// Verify key source directories/files exist
+		String[] requiredPaths = { "/frontend", "/backend", "/documentation", "pom.xml", "README.md" };
 
-        System.out.println(
-            "------------------------------------- VERIFIED:ReportBursterSourceAssembler source package ... -------------------------------------");
-    }
+		for (String path : requiredPaths) {
+			String verifyFilePath = verifyDirPath + "/" + topFolderName + path;
+			assertThat(new File(verifyFilePath).exists())
+					.withFailMessage("Required path not found verifyFilePath: " + verifyFilePath).isTrue();
+		}
+
+		System.out.println(
+				"------------------------------------- VERIFIED:ReportBursterSourceAssembler source package ... -------------------------------------");
+	}
 }
