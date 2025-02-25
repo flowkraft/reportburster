@@ -19,21 +19,39 @@ public class ReportBursterSourceAssembler extends AbstractAssembler {
 
 	@Override
 	protected void preparePackage() throws Exception {
-		// Copy all source files from top project folder except excluded directories
 		File sourceDir = new File(Utils.getTopProjectFolderPath());
 		File targetDir = new File(packageDirPath + "/" + topFolderName);
 
-		// Define directories to exclude
-		String[] excludes = new String[] { "node_modules", ".venv", "__pycache__", "target", "results", "test-results",
-				"dist", "release", ".git", ".angular", ".settings", "build" };
+		String[] excludePatterns = new String[] { "node_modules", ".venv", "__pycache__", "dependencies", "target",
+				"results", "test-results", "dist", "release", ".git", ".angular", ".settings", "build", ".aider",
+				".docs", ".workspace", ".log", "_ai_crew", ".flattened-pom" };
 
 		FileUtils.copyDirectory(sourceDir, targetDir, file -> {
 			String relativePath = sourceDir.toURI().relativize(file.toURI()).getPath();
+			String fileName = file.getName();
 
-			// Check if file path contains any excluded directory
-			for (String exclude : excludes) {
-				if (relativePath.contains("/" + exclude + "/")) {
+			for (String pattern : excludePatterns) {
+				// Check exact matches
+				if (fileName.equals(pattern)) {
 					return false;
+				}
+
+				// Check starts-with and ends-with for current file/folder
+				if (fileName.startsWith(pattern) || fileName.endsWith(pattern)) {
+					return false;
+				}
+
+				// Check exact matches in path
+				if (relativePath.contains("/" + pattern + "/")) {
+					return false;
+				}
+
+				// Check starts-with and ends-with in path components
+				String[] pathParts = relativePath.split("/");
+				for (String part : pathParts) {
+					if (part.startsWith(pattern) || part.endsWith(pattern)) {
+						return false;
+					}
 				}
 			}
 			return true;
