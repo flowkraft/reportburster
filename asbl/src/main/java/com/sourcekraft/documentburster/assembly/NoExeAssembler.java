@@ -93,93 +93,10 @@ public class NoExeAssembler extends AbstractAssembler {
 				"------------------------------------- DONE_06:NoExeAssembler copy rb-reporting.jar, rb-rserver.jar files ... -------------------------------------");
 
 		// END MODULE_REPORTING work
-
-		// documenation files
-		_gatherAndCopyDocumentationFiles();
-
-		System.out.println(
-				"------------------------------------- DONE_07:NoExeAssembler with quickstart and advanced documentation files ... -------------------------------------");
-
-	}
-
-	private void _gatherAndCopyDocumentationFiles() throws Exception {
-
-		// copy quickstart html files
-		String quickStartDocumentationFolderPath = Utils.getTopProjectFolderPath()
-				+ "/documentation/target/generated-docs/" + Utils.getProductVersion() + "/quickstart";
-		FileUtils.copyDirectory(new File(quickStartDocumentationFolderPath + "/images"),
-				new File(packageDirPath + "/" + topFolderName + "/docs/html_quickstart/images"));
-
-		FileUtils.copyFile(new File(quickStartDocumentationFolderPath + "/quickstart.html"),
-				new File(packageDirPath + "/" + topFolderName + "/docs/html_quickstart/quickstart.html"));
-
-		// copy quickstart.pdf
-		FileUtils.copyFile(new File(quickStartDocumentationFolderPath + "/quickstart.pdf"),
-				new File(packageDirPath + "/" + topFolderName + "/docs/report-bursting-quickstart.pdf"));
-
-		// copy advanced html files
-		String advancedDocumentationFolderPath = Utils.getTopProjectFolderPath()
-				+ "/documentation/target/generated-docs/" + Utils.getProductVersion() + "/advanced";
-		FileUtils.copyDirectory(new File(advancedDocumentationFolderPath + "/images"),
-				new File(packageDirPath + "/" + topFolderName + "/docs/html_advanced/images"));
-
-		FileUtils.copyFile(new File(advancedDocumentationFolderPath + "/advanced.html"),
-				new File(packageDirPath + "/" + topFolderName + "/docs/html_advanced/advanced.html"));
-
-		// copy advanced.pdf
-		FileUtils.copyFile(new File(advancedDocumentationFolderPath + "/advanced.pdf"),
-				new File(packageDirPath + "/" + topFolderName + "/docs/advanced-report-delivery.pdf"));
-
-	}
-
-	private void _addTrackingCodeToDocumentationFiles() throws Exception {
-
-		// add zopim chat code to quickstart.html
-		String content = FileUtils.readFileToString(
-				new File(packageDirPath + "/" + topFolderName + "/docs/html_quickstart/quickstart.html"), "UTF-8");
-		content = content.replace("</body>", "<script type=\"text/javascript\">\r\n"
-				+ "window.$zopim||(function(d,s){var z=$zopim=function(c){z._.push(c)},$=z.s= d.createElement(s),e=d.getElementsByTagName(s)[0];z.set=function(o){z.set. _.push(o)};z._=[];z.set._=[];$.async=!0;$.setAttribute('charset','utf-8'); $.src='//cdn.zopim.com/?h7mkkauOUJAVdDuy4BEr4FLv2scL9q1J';z.t=+new Date;$. type='text/javascript';e.parentNode.insertBefore($,e)})(document,'script');\r\n"
-				+ "</script>\r\n" + "</body>");
-		File newFile = new File(packageDirPath + "/" + topFolderName + "/docs/html_quickstart/quickstart.html");
-		FileUtils.writeStringToFile(newFile, content, "UTF-8");
-
-		// add google tag manager code to quickstart.html
-		content = FileUtils.readFileToString(
-				new File(packageDirPath + "/" + topFolderName + "/docs/html_quickstart/quickstart.html"), "UTF-8");
-		content = content.replace("<div id=\"header\">",
-				"<noscript><iframe src=\"//www.googletagmanager.com/ns.html?id=GTM-K63768\" height=\"0\" width=\"0\" style=\"display:none;visibility:hidden\"></iframe></noscript> <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':\r\n"
-						+ "new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src= '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);\r\n"
-						+ "})(window,document,'script','dataLayer','GTM-K63768');</script><div id=\"header\">");
-		newFile = new File(packageDirPath + "/" + topFolderName + "/docs/html_quickstart/quickstart.html");
-		FileUtils.writeStringToFile(newFile, content, "UTF-8");
-
-		// add zopim chat code to advanced.html
-		content = FileUtils.readFileToString(
-				new File(packageDirPath + "/" + topFolderName + "/docs/html_advanced/advanced.html"), "UTF-8");
-		content = content.replace("</body>", "<script type=\"text/javascript\">\r\n"
-				+ "window.$zopim||(function(d,s){var z=$zopim=function(c){z._.push(c)},$=z.s= d.createElement(s),e=d.getElementsByTagName(s)[0];z.set=function(o){z.set. _.push(o)};z._=[];z.set._=[];$.async=!0;$.setAttribute('charset','utf-8'); $.src='//cdn.zopim.com/?h7mkkauOUJAVdDuy4BEr4FLv2scL9q1J';z.t=+new Date;$. type='text/javascript';e.parentNode.insertBefore($,e)})(document,'script');\r\n"
-				+ "</script>\r\n" + "</body>");
-		newFile = new File(packageDirPath + "/" + topFolderName + "/docs/html_advanced/advanced.html");
-		FileUtils.writeStringToFile(newFile, content, "UTF-8");
-
-		// add google tag manager code to quickstart.html
-		content = FileUtils.readFileToString(
-				new File(packageDirPath + "/" + topFolderName + "/docs/html_advanced/advanced.html"), "UTF-8");
-		content = content.replace("<div id=\"header\">",
-				"<noscript><iframe src=\"//www.googletagmanager.com/ns.html?id=GTM-K63768\" height=\"0\" width=\"0\" style=\"display:none;visibility:hidden\"></iframe></noscript> <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':\r\n"
-						+ "new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src= '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);\r\n"
-						+ "})(window,document,'script','dataLayer','GTM-K63768');</script><div id=\"header\">");
-		newFile = new File(packageDirPath + "/" + topFolderName + "/docs/html_advanced/advanced.html");
-		FileUtils.writeStringToFile(newFile, content, "UTF-8");
-
+		
 	}
 
 	private void _performAdditionalRefinementsAndCopyAdditionalFiles() throws Exception {
-
-		_addTrackingCodeToDocumentationFiles();
-
-		System.out.println(
-				"------------------------------------- DONE_08:NoExeAssembler __addTrackingCodeToDocumentationFiles ... -------------------------------------");
 
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
 				new File(packageDirPath + "/" + topFolderName + "/config/_defaults/settings.xml"));

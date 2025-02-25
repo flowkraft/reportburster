@@ -514,7 +514,6 @@
 				<module>backend/update</module>
 				<module>backend/reporting</module>
 				<module>backend/server</module>
-				<module>documentation</module>
 				<module>asbl</module>
 			</modules>
 		</profile>
