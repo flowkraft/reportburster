@@ -19,14 +19,14 @@ public class NoExeAssembler extends AbstractAssembler {
 	protected void compile() throws Exception {
 
 		// First install the actual parent POM from its correct location
-		String mavenParentPomXmlPath = Utils.getTopProjectFolderPath() + "/xtra-tools/build/common-scripts/maven";
+		String mavenParentPomXmlPath = Utils.getTopProjectFolderPath() + "/xtra-tools/bild/common-scripts/maven";
 		System.out.println("Maven parent POM path: " + mavenParentPomXmlPath);
 
 		// First install the actual parent POM from its correct location
 		Utils.runMaven(mavenParentPomXmlPath, "mvn install");
 
 		System.out.println(
-				"------------------------------------- DONE_00:NoExeAssembler Utils.runMaven('../xtra-tools/build/common-scripts/maven', mvn install) ... -------------------------------------");
+				"------------------------------------- DONE_00:NoExeAssembler Utils.runMaven('../xtra-tools/bild/common-scripts/maven', mvn install) ... -------------------------------------");
 
 		// this will execute mvn clean install and generate the jar files for all sub
 		// projects

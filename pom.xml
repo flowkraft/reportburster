@@ -11,7 +11,7 @@
 		<groupId>com.sourcekraft.documentburster</groupId>
 		<artifactId>rb-common-maven-configuration</artifactId>
 		<version>1</version>
-		<relativePath>./xtra-tools/build/common-scripts/maven/pom.xml</relativePath>
+		<relativePath>./xtra-tools/bild/common-scripts/maven/pom.xml</relativePath>
 	</parent>
 	<artifactId>rb-product-reportburster</artifactId>
 	<version>${revision}</version>

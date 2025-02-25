@@ -4,7 +4,7 @@
 		Assembly project to build DocumentBurster documentation.
 	</description>
 
-	<import file="../src/build/common-scripts/ant/documentation/docbook.xml" />
+	<import file="../src/bild/common-scripts/ant/documentation/docbook.xml" />
 
 	<!-- ***********************************************************************
 	    * target: generate-documentation
