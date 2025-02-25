@@ -167,22 +167,12 @@ public class NoExeAssembler extends AbstractAssembler {
 		System.out.println(
 				"------------------------------------- DONE_09:NoExeAssembler _copyDefaultConfigurationAndLicenseFiles ... -------------------------------------");
 
-		FileUtils.moveFile(new File(packageDirPath + "/" + topFolderName + "/docs/report-bursting-quickstart.pdf"),
-				new File(packageDirPath + "/" + topFolderName + "/docs/readme-Getting-Started-in-5-Minutes.pdf"));
-
-		FileUtils.copyFileToDirectory(
-				new File(packageDirPath + "/" + topFolderName + "/docs/readme-Getting-Started-in-5-Minutes.pdf"),
-				new File(packageDirPath + "/" + topFolderName));
-
-		System.out.println(
-				"------------------------------------- DONE_10:NoExeAssembler _renameAndCopyPDFDocumentationFilesToHaveMoreDescriptiveNames ... -------------------------------------");
-
 		Utils.removeVersionFromAntLauncherFileName(packageDirPath + "/" + topFolderName + "/lib/burst");
 		FileUtils.copyFile(new File(Utils.getTopProjectFolderPath() + "/xtra-tools/other/distributed_by-dbc.groovy"),
 				new File(packageDirPath + "/" + topFolderName + "/scripts/burst/internal/distributed_by.groovy"));
 
 		System.out.println(
-				"------------------------------------- DONE_11:NoExeAssembler _copyDistributedByGroovyFile ... -------------------------------------");
+				"------------------------------------- DONE_10:NoExeAssembler _copyDistributedByGroovyFile ... -------------------------------------");
 
 	}
 
@@ -228,52 +218,6 @@ public class NoExeAssembler extends AbstractAssembler {
 		System.out.println(
 				"------------------------------------- VERIFIED_04:NoExeAssembler rb-reporting.jar, rbsj-server files are there ... -------------------------------------");
 
-		// verify quickstart images, html and PDF files
-		String quickStartDocumentationFolderPath = Utils.getTopProjectFolderPath()
-				+ "/documentation/target/generated-docs/" + Utils.getProductVersion() + "/quickstart";
-
-		assertThat(Utils.dir1ContainsAllDir2Files(
-				new File(verifyDirPath + "/" + topFolderName + "/docs/html_quickstart/images"),
-				new File(quickStartDocumentationFolderPath + "/images"))).isTrue();
-
-		String advancedDocumentationFolderPath = Utils.getTopProjectFolderPath()
-				+ "/documentation/target/generated-docs/" + Utils.getProductVersion() + "/advanced";
-
-		assertThat(Utils.dir1ContainsAllDir2Files(
-				new File(verifyDirPath + "/" + topFolderName + "/docs/html_advanced/images"),
-				new File(advancedDocumentationFolderPath + "/images"))).isTrue();
-
-		System.out.println(
-				"------------------------------------- VERIFIED_05:NoExeAssembler quickstart / advanced images, html and PDF files ... -------------------------------------");
-
-		// copy quickstart.pdf
-		assertThat(FileUtils.contentEquals(
-				new File(verifyDirPath + "/" + topFolderName + "/docs/readme-Getting-Started-in-5-Minutes.pdf"),
-				new File(quickStartDocumentationFolderPath + "/quickstart.pdf"))).isTrue();
-
-		assertThat(FileUtils.contentEquals(
-				new File(verifyDirPath + "/" + topFolderName + "/docs/advanced-report-delivery.pdf"),
-				new File(advancedDocumentationFolderPath + "/advanced.pdf"))).isTrue();
-
-		System.out.println(
-				"------------------------------------- VERIFIED_06:NoExeAssembler quickstart.pdf and advanced.pdf ... -------------------------------------");
-
-		// verify _addTrackingZopimCodeToHTMLDocumentation();
-		Collection<File> htmlFilesInDocs = FileUtils.listFiles(new File(verifyDirPath + "/" + topFolderName + "/docs"),
-				new String[] { "html" }, true);
-
-		for (File htmlFile : htmlFilesInDocs) {
-			String content = FileUtils.readFileToString(htmlFile, "UTF-8");
-
-			assertThat(content.contains("zopim")).isTrue();
-
-			assertThat(content.contains("googletagmanager")).isTrue();
-
-		}
-
-		System.out.println(
-				"------------------------------------- VERIFIED_07:NoExeAssembler _addTrackingZopimCodeToHTMLDocumentation() ... -------------------------------------");
-
 		// verify _copyDefaultConfigurationAndLicenseFiles();
 
 		assertThat(FileUtils.contentEquals(new File(verifyDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
@@ -285,17 +229,7 @@ public class NoExeAssembler extends AbstractAssembler {
 				.isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_08:NoExeAssembler _copyDefaultConfigurationAndLicenseFiles() ... -------------------------------------");
-
-		// verify _renameAndCopyPDFDocumentationFilesToHaveMoreDescriptiveNames();
-		assertThat(new File(verifyDirPath + "/" + topFolderName + "/docs/readme-Getting-Started-in-5-Minutes.pdf")
-				.exists()).isTrue();
-
-		assertThat(new File(verifyDirPath + "/" + topFolderName + "/readme-Getting-Started-in-5-Minutes.pdf").exists())
-				.isTrue();
-
-		System.out.println(
-				"------------------------------------- VERIFIED_09:NoExeAssembler _renameAndCopyPDFDocumentationFilesToHaveMoreDescriptiveNames()... -------------------------------------");
+				"------------------------------------- VERIFIED_05:NoExeAssembler _copyDefaultConfigurationAndLicenseFiles() ... -------------------------------------");
 
 		// verify doUtils.removeVersionFromAntLauncherFileName(packageDirPath + "/" +
 		// topFolderName + "/lib/burst");
@@ -303,7 +237,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		assertThat(new File(verifyDirPath + "/" + topFolderName + "/lib/burst/ant-launcher.jar").exists()).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_10:NoExeAssembler doUtils.removeVersionFromAntLauncherFileName... -------------------------------------");
+				"------------------------------------- VERIFIED_06:NoExeAssembler doUtils.removeVersionFromAntLauncherFileName... -------------------------------------");
 
 		// verify _copyDistributedByGroovyFile();
 
@@ -311,7 +245,7 @@ public class NoExeAssembler extends AbstractAssembler {
 				.exists()).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_11:NoExeAssembler _copyDistributedByGroovyFile... -------------------------------------");
+				"------------------------------------- VERIFIED_07:NoExeAssembler _copyDistributedByGroovyFile... -------------------------------------");
 
 		System.out.println(
 				"------------------------------------- VERIFIED_DONE:NoExeAssembler ... -------------------------------------");
