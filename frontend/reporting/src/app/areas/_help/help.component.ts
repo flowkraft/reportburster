@@ -17,7 +17,6 @@ import { tabSupportTemplate } from './templates/tab-support';
 import { tabDocumentationTemplate } from './templates/tab-documentation';
 import { tabServicesTemplate } from './templates/tab-services';
 import { tabExamplesTemplate } from './templates/tab-examples';
-import { tabFreeTemplate } from './templates/tab-free';
 import { tabReviewsTemplate } from './templates/tab-reviews';
 import { tabBlogTemplate } from './templates/tab-blog';
 import { tabAboutTemplate } from './templates/tab-about';
@@ -44,11 +43,10 @@ import { StateStoreService } from '../../providers/state-store.service';
       <section class="content"><div>${tabsTemplate}</div></section>
     </div>
     ${tabSupportTemplate} ${tabDocumentationTemplate} ${tabServicesTemplate}
-    ${tabExamplesTemplate} ${tabFreeTemplate} ${tabReviewsTemplate}
-    ${tabBlogTemplate} ${tabJavaTemplate} ${tabTerminalTemplate}
-    ${tabExtraPackagesTemplate} ${tabSystemDiagnosticsTemplate}
-    ${tabUpdateTemplate} ${tabAboutTemplate} ${tabComparisonTemplate}
-    ${tabLogsTemplate} ${tabLicenseTemplate}
+    ${tabExamplesTemplate} ${tabReviewsTemplate} ${tabBlogTemplate}
+    ${tabJavaTemplate} ${tabTerminalTemplate} ${tabExtraPackagesTemplate}
+    ${tabSystemDiagnosticsTemplate} ${tabUpdateTemplate} ${tabAboutTemplate}
+    ${tabComparisonTemplate} ${tabLogsTemplate} ${tabLicenseTemplate}
   `,
 })
 export class HelpComponent implements OnInit, AfterViewChecked {

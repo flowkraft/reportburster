@@ -4,11 +4,11 @@
   "license": "SSPL-1.0",
   "description": "Server Side Public License (SSPL) - Desktop and Server versions. SSPL terms apply upon distribution or service provision.",
   "version": "10.2.4",
-  "copyright": "2024, FlowKraft Systems & Consulting Ltd.",
-  "homepage": "https://www.pdfburst.com",
+  "copyright": "2025, FlowKraft Systems & Consulting Ltd.",
+  "homepage": "https://www.reportburster.com",
   "author": {
     "name": "FlowKraft Systems & Consulting Ltd",
-    "email": "contact@reportburster.org"
+    "email": "support@reportburster.com"
   },
   "main": "app/main.js",
   "private": true,

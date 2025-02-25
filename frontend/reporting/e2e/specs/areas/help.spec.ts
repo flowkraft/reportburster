@@ -56,16 +56,6 @@ electronBeforeAfterAllTest(
         '#statusDemoLicense',
         'Open Source (Community Support)',
       )
-      .click('#leftMenuHelpFreeForSchools')
-      .elementShouldHaveText(
-        '#checkPointHelpFreeForSchools',
-        'How Schools Use ReportBurster Software',
-      )
-      .click('#licenseTab-link')
-      .elementShouldHaveText(
-        '#statusDemoLicense',
-        'Open Source (Community Support)',
-      )
       .click('#leftMenuHelpCustomerReviews')
       .elementShouldHaveText(
         '#checkPointHelpCustomerReviews',
@@ -155,18 +145,6 @@ electronBeforeAfterAllTest(
       .elementShouldHaveText(
         '#checkPointHelpExamples',
         'ReportBurster Examples',
-      )
-      .click('#licenseTab-link')
-      .elementShouldHaveText(
-        '#statusDemoLicense',
-        'Open Source (Community Support)',
-      )
-      .gotoBurstScreen()
-      .click('#topMenuHelp')
-      .click('#topMenuHelpFreeForSchools')
-      .elementShouldHaveText(
-        '#checkPointHelpFreeForSchools',
-        'How Schools Use ReportBurster Software',
       )
       .click('#licenseTab-link')
       .elementShouldHaveText(
