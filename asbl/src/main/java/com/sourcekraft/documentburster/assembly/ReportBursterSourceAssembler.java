@@ -25,7 +25,7 @@ public class ReportBursterSourceAssembler extends AbstractAssembler {
 
 		// Define directories to exclude
 		String[] excludes = new String[] { "node_modules", ".venv", "__pycache__", "target", "results", "test-results",
-				"dist", ".git", ".angular", ".settings", "build" };
+				"dist", "release", ".git", ".angular", ".settings", "build" };
 
 		FileUtils.copyDirectory(sourceDir, targetDir, file -> {
 			String relativePath = sourceDir.toURI().relativize(file.toURI()).getPath();
@@ -48,7 +48,7 @@ public class ReportBursterSourceAssembler extends AbstractAssembler {
 		ZipUtil.unpack(new File(targetPathZipFile), new File(verifyDirPath));
 
 		// Verify key source directories/files exist
-		String[] requiredPaths = { "/frontend", "/backend", "/documentation", "pom.xml", "README.md" };
+		String[] requiredPaths = { "/frontend", "/backend", "/documentation", "/pom.xml", "/README.md" };
 
 		for (String path : requiredPaths) {
 			String verifyFilePath = verifyDirPath + "/" + topFolderName + path;
