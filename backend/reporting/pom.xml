@@ -113,10 +113,17 @@
 			<groupId>com.documents4j</groupId>
 			<artifactId>documents4j-local</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.jodconverter</groupId>
 			<artifactId>jodconverter-local</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.openhtmltopdf</groupId>
+			<artifactId>openhtmltopdf-core</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>com.openhtmltopdf</groupId>
+		    <artifactId>openhtmltopdf-pdfbox</artifactId>
 		</dependency>
 		<!-- end document conversion engines -->
 
@@ -299,13 +306,7 @@
 			<artifactId>hsqldb</artifactId>
 			<scope>test</scope>
 		</dependency>
-
-
-		<dependency>
-			<groupId>com.flowkraft.biz</groupId>
-			<artifactId>biz-bkeep-activities</artifactId>
-			<version>1.0.0</version>
-		</dependency>
+		
 	</dependencies>
 
 </project>

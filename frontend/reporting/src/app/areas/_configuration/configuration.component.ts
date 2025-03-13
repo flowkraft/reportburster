@@ -1199,13 +1199,28 @@ export class ConfigurationComponent implements OnInit {
 
   //reporting
   async onReportOutputTypeChanged() {
+    /*
+    console.log(
+      'ALL TEMPLATE FILES:',
+      this.settingsService.templateFiles
+        .filter(
+          (t) => t.fileName.endsWith('.html') || t.fileName.endsWith('.docx'),
+        )
+        .map((t) => ({
+          fileName: t.fileName,
+          filePath: t.filePath,
+          folderName: t.folderName,
+        })),
+    );
+    */
+
     if (
       this.xmlReporting.documentburster.report.template.outputtype ==
       'output.none'
     )
       this.xmlReporting.documentburster.report.template.documentpath = '';
     else if (
-      ['output.docx', 'output.html'].includes(
+      ['output.docx', 'output.html', 'output.pdf'].includes(
         this.xmlReporting.documentburster.report.template.outputtype,
       )
     ) {
@@ -1236,8 +1251,30 @@ export class ConfigurationComponent implements OnInit {
               this.settingsService.currentConfigurationTemplatePath,
           );
 
+        // First, filter by the selected output type
+        const templatesOfCorrectType = this.settingsService.getReportTemplates(
+          this.xmlReporting.documentburster.report.template.outputtype,
+          { samples: false },
+        );
+
+        /*
+        console.log(
+          'OUTPUT TYPE:',
+          this.xmlReporting.documentburster.report.template.outputtype,
+        );
+        console.log(
+          'CONFIG FOLDER NAME:',
+          this.settingsService.currentConfigurationTemplate.folderName,
+        );
+        console.log(
+          'FILTERED TEMPLATES:',
+          JSON.stringify(templatesOfCorrectType),
+        );
+        */
+
+        // Then find one with matching folder/file name
         const reportTemplateSameFolderNameOrFileName =
-          this.settingsService.templateFiles.find((tplFile) => {
+          templatesOfCorrectType.find((tplFile) => {
             return (
               tplFile.folderName ==
                 this.settingsService.currentConfigurationTemplate.folderName ||
@@ -1246,10 +1283,8 @@ export class ConfigurationComponent implements OnInit {
               )
             );
           });
+
         if (reportTemplateSameFolderNameOrFileName) {
-          //console.log(
-          //  `reportTemplateSameFolderNameOrFileName = ${reportTemplateSameFolderNameOrFileName}`,
-          //);
           this.selectedReportTemplateFile =
             reportTemplateSameFolderNameOrFileName;
           this.xmlReporting.documentburster.report.template.documentpath =

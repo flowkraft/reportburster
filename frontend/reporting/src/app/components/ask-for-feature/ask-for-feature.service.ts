@@ -14,6 +14,7 @@ export class AskForFeatureService {
     'output.none',
     'output.docx',
     'output.html',
+    'output.pdf',
   ];
 
   messageTemplate = {

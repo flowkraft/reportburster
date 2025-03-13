@@ -245,7 +245,7 @@ test.describe('', async () => {
   );
 
   electronBeforeAfterAllTest(
-    'should work correctly (06_generate_payslips)',
+    'should work correctly (06_generate_payslips_docx)',
     async ({ beforeAfterEach: firstPage }) => {
       //long running test
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
@@ -254,18 +254,21 @@ test.describe('', async () => {
 
       await ft
         .click('#leftMenuSamples')
-        .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS')
-        .waitOnElementToContainText('#tdGENERATE-PAYSLIPS', 'Generate Monthly')
-        .click('#trGENERATE-PAYSLIPS')
-        .click('#btnSamplesLearnModeGENERATE-PAYSLIPS')
+        .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-DOCX')
         .waitOnElementToContainText(
-          '#divGENERATE-PAYSLIPS',
+          '#tdGENERATE-PAYSLIPS-DOCX',
+          'Generate (DOCX) Monthly',
+        )
+        .click('#trGENERATE-PAYSLIPS-DOCX')
+        .click('#btnSamplesLearnModeGENERATE-PAYSLIPS-DOCX')
+        .waitOnElementToContainText(
+          '#divGENERATE-PAYSLIPS-DOCX',
           'you can process the data for all your company employees no matter if your company has few tens',
         )
         .click('#btnCloseSamplesLearnMoreModal')
-        .click('#btnSampleTryItGENERATE-PAYSLIPS')
+        .click('#btnSampleTryItGENERATE-PAYSLIPS-DOCX')
         .clickNoDontDoThis()
-        .click('#btnSampleTryItGENERATE-PAYSLIPS')
+        .click('#btnSampleTryItGENERATE-PAYSLIPS-DOCX')
         .clickYesDoThis()
         .waitOnElementToBecomeVisible('#qaReminderLink')
         .waitOnElementToBecomeEnabled('#btnGenerateReports')
@@ -277,6 +280,88 @@ test.describe('', async () => {
         .processingShouldHaveGeneratedOutputFiles(
           ['0.docx', '1.docx', '2.docx'],
           'docx',
+        )
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (07_generate_payslips_html)',
+    async ({ beforeAfterEach: firstPage }) => {
+      //long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-HTML')
+        .waitOnElementToContainText(
+          '#tdGENERATE-PAYSLIPS-HTML',
+          'Generate (HTML) Monthly',
+        )
+        .click('#trGENERATE-PAYSLIPS-HTML')
+        .click('#btnSamplesLearnModeGENERATE-PAYSLIPS-HTML')
+        .waitOnElementToContainText(
+          '#divGENERATE-PAYSLIPS-HTML',
+          'you can process the data for all your company employees no matter if your company has few tens',
+        )
+        .click('#btnCloseSamplesLearnMoreModal')
+        .click('#btnSampleTryItGENERATE-PAYSLIPS-HTML')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItGENERATE-PAYSLIPS-HTML')
+        .clickYesDoThis()
+        .waitOnElementToBecomeVisible('#qaReminderLink')
+        .waitOnElementToBecomeEnabled('#btnGenerateReports')
+        .click('#btnGenerateReports')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(
+          ['0.html', '1.html', '2.html'],
+          'html',
+        )
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (08_generate_payslips_pdf)',
+    async ({ beforeAfterEach: firstPage }) => {
+      //long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-PDF')
+        .waitOnElementToContainText(
+          '#tdGENERATE-PAYSLIPS-PDF',
+          'Generate (PDF) Monthly',
+        )
+        .click('#trGENERATE-PAYSLIPS-PDF')
+        .click('#btnSamplesLearnModeGENERATE-PAYSLIPS-PDF')
+        .waitOnElementToContainText(
+          '#divGENERATE-PAYSLIPS-PDF',
+          'you can process the data for all your company employees no matter if your company has few tens',
+        )
+        .click('#btnCloseSamplesLearnMoreModal')
+        .click('#btnSampleTryItGENERATE-PAYSLIPS-PDF')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItGENERATE-PAYSLIPS-PDF')
+        .clickYesDoThis()
+        .waitOnElementToBecomeVisible('#qaReminderLink')
+        .waitOnElementToBecomeEnabled('#btnGenerateReports')
+        .click('#btnGenerateReports')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(
+          ['0.pdf', '1.pdf', '2.pdf'],
+          'pdf',
         )
         .appStatusShouldBeGreatNoErrorsNoWarnings();
     },

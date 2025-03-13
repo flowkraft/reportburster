@@ -540,28 +540,40 @@ export class SettingsService {
 
   getReportTemplates(outputType: string, filter: { samples: boolean }) {
     return this.templateFiles.filter((template) => {
-      let filterConditionDocx = false;
-      let filterConditionHtml = false;
-
+      // For DOCX output type
       if (outputType == 'output.docx') {
-        if (filter.samples)
-          filterConditionDocx = template.fileName.endsWith('.docx');
-        else
-          filterConditionDocx =
+        if (filter.samples) {
+          return template.fileName.endsWith('.docx');
+        } else {
+          return (
             template.fileName.endsWith('.docx') &&
-            !template.type.includes('-sample');
-      }
-
-      if (outputType == 'output.html') {
-        if (filter.samples)
-          filterConditionHtml = template.fileName.endsWith('.html');
-        else
-          filterConditionHtml =
+            !template.type.includes('-sample')
+          );
+        }
+      } // For HTML output type
+      else if (outputType == 'output.html') {
+        if (filter.samples) {
+          return template.fileName.endsWith('.html');
+        } else {
+          return (
             template.fileName.endsWith('.html') &&
-            !template.type.includes('-sample');
+            !template.type.includes('-sample')
+          );
+        }
+      } // For PDF output type (also use HTML templates)
+      else if (outputType == 'output.pdf') {
+        if (filter.samples) {
+          return template.fileName.endsWith('.html');
+        } else {
+          return (
+            template.fileName.endsWith('.html') &&
+            !template.type.includes('-sample')
+          );
+        }
       }
 
-      return filterConditionDocx || filterConditionHtml;
+      // For other output types (fallback)
+      return false;
     });
   }
 

@@ -260,8 +260,8 @@ export class SamplesService {
       activeClicked: false,
     },
     {
-      id: 'GENERATE-PAYSLIPS',
-      name: '6. Generate Monthly Payslips',
+      id: 'GENERATE-PAYSLIPS-DOCX',
+      name: '6. Generate (DOCX) Monthly Payslips',
       visibility: 'visible',
       jobType: 'generate',
       input: {
@@ -287,8 +287,84 @@ export class SamplesService {
           "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
       outputHtmlHardcoded: '',
-      configurationFilePath: `config/samples/payslips-generate-only/settings.xml`,
-      configurationFileName: 'Payslips Generate Sample',
+      configurationFilePath: `config/samples/generate-only-docx/settings.xml`,
+      configurationFileName: 'generate-only-docx',
+      notes: ``,
+      recipientType: 'employee',
+      documentType: 'payslip',
+      capReportSplitting: false,
+      capReportDistribution: false,
+      capReportGenerationMailMerge: true,
+      activeClicked: false,
+    },
+    {
+      id: 'GENERATE-PAYSLIPS-HTML',
+      name: '7. Generate (HTML) Monthly Payslips',
+      visibility: 'visible',
+      jobType: 'generate',
+      input: {
+        data: ['file:samples/reports/payslips/Payslips.csv'],
+        dataUrl: ['file:https://www.reportburster.com/docs/Payslips.csv'],
+        numberOfPages: -1,
+        tokens: [
+          'clyde.grew@northridgehealth.org',
+          'kyle.butford@northridgehealth.org.pdf',
+          'alfreda.waldback@northridgehealth.org',
+        ],
+      },
+      step1: 'generate',
+      step2: '',
+      step3: '',
+      output: {
+        data: [
+          'file:clyde.grew@northridgehealth.org.html',
+          'file:kyle.butford@northridgehealth.org.html',
+          'file:alfreda.waldback@northridgehealth.org.html',
+        ],
+        folder:
+          "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
+      },
+      outputHtmlHardcoded: '',
+      configurationFilePath: `config/samples/generate-only-html/settings.xml`,
+      configurationFileName: 'generate-only-html',
+      notes: ``,
+      recipientType: 'employee',
+      documentType: 'payslip',
+      capReportSplitting: false,
+      capReportDistribution: false,
+      capReportGenerationMailMerge: true,
+      activeClicked: false,
+    },
+    {
+      id: 'GENERATE-PAYSLIPS-PDF',
+      name: '8. Generate (PDF) Monthly Payslips',
+      visibility: 'visible',
+      jobType: 'generate',
+      input: {
+        data: ['file:samples/reports/payslips/Payslips.csv'],
+        dataUrl: ['file:https://www.reportburster.com/docs/Payslips.csv'],
+        numberOfPages: -1,
+        tokens: [
+          'clyde.grew@northridgehealth.org',
+          'kyle.butford@northridgehealth.org.pdf',
+          'alfreda.waldback@northridgehealth.org',
+        ],
+      },
+      step1: 'generate',
+      step2: '',
+      step3: '',
+      output: {
+        data: [
+          'file:clyde.grew@northridgehealth.org.pdf',
+          'file:kyle.butford@northridgehealth.org.pdf',
+          'file:alfreda.waldback@northridgehealth.org.pdf',
+        ],
+        folder:
+          "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
+      },
+      outputHtmlHardcoded: '',
+      configurationFilePath: `config/samples/generate-only-pdf/settings.xml`,
+      configurationFileName: 'generate-only-html',
       notes: ``,
       recipientType: 'employee',
       documentType: 'payslip',
@@ -436,8 +512,13 @@ export class SamplesService {
     return inputHtml;
   }
 
-  getOutputHtml(id: string, fullDetails?: boolean) {
-    const sample = this.samples.find((sample) => sample.id == id);
+  getOutputType(sampleId: string): string {
+    const sample = this.samples.find((sample) => sample.id == sampleId);
+    return sample.output.data[0].split('.').pop().toLowerCase();
+  }
+
+  getOutputHtml(sampleId: string, fullDetails?: boolean): string {
+    const sample = this.samples.find((sample) => sample.id == sampleId);
 
     //console.log(`sample = ${JSON.stringify(sample)}`);
 
@@ -448,6 +529,8 @@ export class SamplesService {
 
     let attachmentFileIcon = 'fa-file-pdf-o';
     if (outputLabel.endsWith('.docx')) attachmentFileIcon = 'fa-file-word-o';
+    if (outputLabel.endsWith('.html')) attachmentFileIcon = 'fa-file-code-o';
+
     let outputHtml = '';
     if (fullDetails) {
       const inputs: string[] = sample.input.data;

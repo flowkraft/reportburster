@@ -37,6 +37,7 @@
 		<xdocreport.version>2.0.4</xdocreport.version>
 		<documents4j.version>1.1.10</documents4j.version>
 		<jodconverter.version>4.4.5</jodconverter.version>
+		<openhtmltopdf.version>1.0.10</openhtmltopdf.version>
 		<fop.version>2.8</fop.version>
 		<commons.cli.version>1.4</commons.cli.version>
 		<commons.email.version>1.5</commons.email.version>
@@ -250,6 +251,16 @@
 				<groupId>org.jodconverter</groupId>
 				<artifactId>jodconverter-local</artifactId>
 				<version>${jodconverter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.openhtmltopdf</groupId>
+				<artifactId>openhtmltopdf-core</artifactId>
+				<version>${openhtmltopdf.version}</version>
+			</dependency>
+			<dependency>
+			    <groupId>com.openhtmltopdf</groupId>
+			    <artifactId>openhtmltopdf-pdfbox</artifactId>
+			    <version>${openhtmltopdf.version}</version>
 			</dependency>
 			<!-- end document conversion engines -->
 

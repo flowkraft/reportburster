@@ -126,41 +126,118 @@ public class NoExeAssembler extends AbstractAssembler {
 		newFile = new File(splitTwoTimesSplitOnlyXmlConfigFilePath);
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
 
-		/// config/samples/payslips-generate-only/settings.xml
-		String payslipsGenerateOnlyXmlConfigFilePath = packageDirPath + "/" + topFolderName
-				+ "/config/samples/payslips-generate-only/settings.xml";
+		/// config/samples/generate-only-docx/settings.xml
+		String payslipsGenerateOnlyDocxXmlConfigFilePath = packageDirPath + "/" + topFolderName
+				+ "/config/samples/generate-only-docx/settings.xml";
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
-				new File(payslipsGenerateOnlyXmlConfigFilePath));
+				new File(payslipsGenerateOnlyDocxXmlConfigFilePath));
 		// replace <reportdistribution>true</reportdistribution> with
 		// <reportdistribution>false</reportdistribution>
-		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyXmlConfigFilePath), "UTF-8");
+		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyDocxXmlConfigFilePath), "UTF-8");
 
-		content = content.replace("<template>My Reports</template>", "<template>Payslips Generate</template>");
+		content = content.replace("<template>My Reports</template>", "<template>Payslips Generate DOCX</template>");
 
 		content = content.replace("<reportdistribution>true</reportdistribution>",
 				"<reportdistribution>false</reportdistribution>");
 		content = content.replace("<reportgenerationmailmerge>false</reportgenerationmailmerge>",
 				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
-		newFile = new File(payslipsGenerateOnlyXmlConfigFilePath);
+		newFile = new File(payslipsGenerateOnlyDocxXmlConfigFilePath);
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
 
-		/// config/samples/payslips-generate-only/reporting.xml
-		String payslipsGenerateOnlyReportingXmlConfigFilePath = packageDirPath + "/" + topFolderName
-				+ "/config/samples/payslips-generate-only/reporting.xml";
+		/// config/samples/generate-only-docx/reporting.xml
+		String payslipsGenerateOnlyDocxReportingXmlConfigFilePath = packageDirPath + "/" + topFolderName
+				+ "/config/samples/generate-only-docx/reporting.xml";
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
-				new File(payslipsGenerateOnlyReportingXmlConfigFilePath));
+				new File(payslipsGenerateOnlyDocxReportingXmlConfigFilePath));
 		// replace <reportdistribution>true</reportdistribution> with
 		// <reportdistribution>false</reportdistribution>
 
-		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyReportingXmlConfigFilePath), "UTF-8");
+		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyDocxReportingXmlConfigFilePath), "UTF-8");
 		content = content.replace("output.none", "output.docx");
 
 		content = content.replace("<documentpath/>",
 				"<documentpath>/samples/reports/payslips/payslips-template.docx</documentpath>");
 
-		newFile = new File(payslipsGenerateOnlyReportingXmlConfigFilePath);
+		newFile = new File(payslipsGenerateOnlyDocxReportingXmlConfigFilePath);
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
 
+		
+		//HTML
+		/// config/samples/generate-only-html/settings.xml
+		String payslipsGenerateOnlyHtmlXmlConfigFilePath = packageDirPath + "/" + topFolderName
+				+ "/config/samples/generate-only-html/settings.xml";
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(payslipsGenerateOnlyHtmlXmlConfigFilePath));
+		// replace <reportdistribution>true</reportdistribution> with
+		// <reportdistribution>false</reportdistribution>
+		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyHtmlXmlConfigFilePath), "UTF-8");
+
+		content = content.replace("<template>My Reports</template>", "<template>Payslips Generate HTML</template>");
+
+		content = content.replace("<reportdistribution>true</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replace("<reportgenerationmailmerge>false</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		newFile = new File(payslipsGenerateOnlyHtmlXmlConfigFilePath);
+		FileUtils.writeStringToFile(newFile, content, "UTF-8");
+
+		/// config/samples/generate-only-html/reporting.xml
+		String payslipsGenerateOnlyHtmlReportingXmlConfigFilePath = packageDirPath + "/" + topFolderName
+				+ "/config/samples/generate-only-html/reporting.xml";
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(payslipsGenerateOnlyHtmlReportingXmlConfigFilePath));
+		// replace <reportdistribution>true</reportdistribution> with
+		// <reportdistribution>false</reportdistribution>
+
+		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyHtmlReportingXmlConfigFilePath), "UTF-8");
+		content = content.replace("output.none", "output.html");
+
+		content = content.replace("<documentpath/>",
+				"<documentpath>/samples/reports/payslips/payslips-template.html</documentpath>");
+
+		newFile = new File(payslipsGenerateOnlyHtmlReportingXmlConfigFilePath);
+		FileUtils.writeStringToFile(newFile, content, "UTF-8");
+
+		//PDF
+		
+		/// config/samples/generate-only-pdf/settings.xml
+		String payslipsGenerateOnlyPdfXmlConfigFilePath = packageDirPath + "/" + topFolderName
+				+ "/config/samples/generate-only-pdf/settings.xml";
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(payslipsGenerateOnlyPdfXmlConfigFilePath));
+		// replace <reportdistribution>true</reportdistribution> with
+		// <reportdistribution>false</reportdistribution>
+		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyPdfXmlConfigFilePath), "UTF-8");
+
+		content = content.replace("<template>My Reports</template>", "<template>Payslips Generate PDF</template>");
+
+		content = content.replace("<reportdistribution>true</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replace("<reportgenerationmailmerge>false</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		newFile = new File(payslipsGenerateOnlyPdfXmlConfigFilePath);
+		FileUtils.writeStringToFile(newFile, content, "UTF-8");
+
+		/// config/samples/generate-only-pdf/reporting.xml
+		String payslipsGenerateOnlyPdfReportingXmlConfigFilePath = packageDirPath + "/" + topFolderName
+				+ "/config/samples/generate-only-pdf/reporting.xml";
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(payslipsGenerateOnlyPdfReportingXmlConfigFilePath));
+		// replace <reportdistribution>true</reportdistribution> with
+		// <reportdistribution>false</reportdistribution>
+
+		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyPdfReportingXmlConfigFilePath), "UTF-8");
+		content = content.replace("output.none", "output.pdf");
+
+		content = content.replace("<documentpath/>",
+				"<documentpath>/samples/reports/payslips/payslips-template.html</documentpath>");
+
+		newFile = new File(payslipsGenerateOnlyPdfReportingXmlConfigFilePath);
+		FileUtils.writeStringToFile(newFile, content, "UTF-8");
+
+		//PDF END
+
+		
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_internal/license.xml"),
 				new File(packageDirPath + "/" + topFolderName + "/config/_defaults/license.xml"));
 

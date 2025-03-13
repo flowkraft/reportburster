@@ -76,8 +76,12 @@ export const tabSamplesTemplate = `<ng-template #tabSamplesTemplate>
                 </span>
                 <span class="label label-default" *ngIf="sample.step1 == 'generate'">
                    <i class="fa fa-list-ol">&nbsp;</i> 
-                   <em>1. Generate </em>
-                   <i class="fa fa-file-word-o">&nbsp;</i>               
+                   <em *ngIf="samplesService.getOutputType(sample.id) == 'docx'">1. Generate .docx&nbsp;</em>
+                   <em *ngIf="samplesService.getOutputType(sample.id) == 'html'">1. Generate .html&nbsp;</em>
+                   <em *ngIf="samplesService.getOutputType(sample.id) == 'pdf'">1. Generate .pdf&nbsp;</em>
+                   <i class="fa fa-file-word-o" *ngIf="samplesService.getOutputType(sample.id) == 'docx'"></i>               
+                   <i class="fa fa-file-code-o" *ngIf="samplesService.getOutputType(sample.id) == 'html'"></i>               
+                   <i class="fa fa-file-pdf-o" *ngIf="samplesService.getOutputType(sample.id) == 'pdf'"></i>               
                 </span>
                 <span class="label label-default" *ngIf="sample.step2 == 'email'">
                   <i class="fa fa-envelope-open-o">&nbsp;</i>
