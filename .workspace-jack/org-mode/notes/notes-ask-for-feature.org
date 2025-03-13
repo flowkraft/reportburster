@@ -1,0 +1,29 @@
+# DocumentBurster Feature Implementation Status
+
+## Already Implemented Features
+
+### Data Source Types
+- **CSV File** (`ds.csvfile`)
+- **TSV File** (`ds.tsvfile`) 
+- **Fixed-Width File** (`ds.fixedwidthfile`)
+
+### Report Output Types
+- **None** (`output.none`) - No output generation
+- **DOCX** (`output.docx`) - Microsoft Word document output
+- **HTML** (`output.html`) - HTML document output
+
+## Not Yet Implemented Features (Feature Request Modal Shown)
+
+### Data Source Types
+- **Excel File** (`ds.excelfile`) - Reading data from Excel spreadsheets
+- **Google Sheets** (`ds.gsheet`) - Integration with Google cloud spreadsheets
+- **Microsoft Office 365 Excel** (`ds.o365sheet`) - Integration with Microsoft's cloud Excel
+- **Database** (`ds.database`) - Connecting to remote database servers
+
+### Report Output Types
+- **PDF** (`output.pdf`) - PDF document generation
+- **Excel XLSX** (`output.xlsx`) - Microsoft Excel spreadsheet generation
+
+When a user selects any of the not-yet-implemented features, the system displays the "Ask For Feature" 
+modal, allowing them to request implementation of that specific feature by sending a detailed message to 
+the support team.

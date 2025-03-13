@@ -67,7 +67,7 @@ while (i < n) {
     over.setTextMatrix(10, 10);
     
     //label text
-    over.showText("Distributed by DocumentBurster - http://www.pdfburst.com/go/dbc");
+    over.showText("Distributed by ReportBurster - https://www.reportburster.com/go/dbrb");
     
     over.endText();
 	

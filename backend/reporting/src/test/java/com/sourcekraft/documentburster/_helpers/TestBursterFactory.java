@@ -16,6 +16,9 @@ import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.assertj.core.api.Assertions;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.engine.AbstractReporter;
@@ -490,8 +493,14 @@ public class TestBursterFactory {
 
 				} else if (outputType.equals(CsvUtils.OUTPUT_TYPE_HTML)) {
 					currentReportText = FileUtils.readFileToString(new File(outputReportPath), "UTF-8");
+				} else if (outputType.equals(CsvUtils.OUTPUT_TYPE_PDF)) {
+					// Extract text from PDF using PDFBox (similar to how DOCX is handled)
+				    try (PDDocument document = PDDocument.load(outputReport)) {
+				        PDFTextStripper stripper = new PDFTextStripper();
+				        currentReportText = stripper.getText(document);
+				    }	
 				}
-
+				
 				for (int currentColumnIndex = 0; currentColumnIndex < lineLength; currentColumnIndex++) {
 
 					if (currentColumnIndex < 17) {

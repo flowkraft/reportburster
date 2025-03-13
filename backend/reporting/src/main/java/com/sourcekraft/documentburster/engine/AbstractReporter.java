@@ -27,6 +27,7 @@ import com.haulmont.yarg.structure.BandData;
 import com.haulmont.yarg.structure.BandOrientation;
 import com.haulmont.yarg.structure.ReportOutputType;
 import com.haulmont.yarg.structure.impl.ReportTemplateImpl;
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sourcekraft.documentburster.utils.CsvUtils;
 import com.sourcekraft.documentburster.utils.Utils;
 import com.sourcekraft.documentburster.variables.Variables;
@@ -41,68 +42,72 @@ import freemarker.template.Template;
 
 public abstract class AbstractReporter extends AbstractBurster {
 
-    protected List<String[]> parsedLines;
+	protected List<String[]> parsedLines;
 
-    public AbstractReporter(String configFilePath) {
-        super(configFilePath);
-    }
+	public AbstractReporter(String configFilePath) {
+		super(configFilePath);
+	}
 
-    @Override
-    protected void processAttachments() throws Exception {
-        if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_NONE))
-            ctx.settings.getAttachments()
-                    .removeIf(attachment -> attachment.path.contains(Variables.EXTRACTED_FILE_PATH));
+	@Override
+	protected void processAttachments() throws Exception {
+		if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_NONE))
+			ctx.settings.getAttachments()
+					.removeIf(attachment -> attachment.path.contains(Variables.EXTRACTED_FILE_PATH));
 
-        super.processAttachments();
-    }
+		super.processAttachments();
+	}
 
-    @Override
-    protected void quarantineDocument() throws Exception {
-        if (!ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_NONE))
-            super.quarantineDocument();
-    }
+	@Override
+	protected void quarantineDocument() throws Exception {
+		if (!ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_NONE))
+			super.quarantineDocument();
+	}
 
-    @Override
-    protected void extractDocument() throws Exception {
-        if (!ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_NONE))
-            super.extractDocument();
-        else
-            super.createOutputFoldersIfTheyDontExist();
-    }
+	@Override
+	protected void extractDocument() throws Exception {
+		if (!ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_NONE))
+			super.extractDocument();
+		else
+			super.createOutputFoldersIfTheyDontExist();
+	}
 
-    @Override
-    protected void extractOutputBurstDocument() throws Exception {
-        if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_DOCX))
-            generateDocxFromDocxTemplateUsingXDocReport(ctx.extractedFilePath,
-                    ctx.settings.getReportTemplate().retrieveTemplateFilePath(), 
-                    ctx.variables.getUserVariables(ctx.token));
-        else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_HTML))
-            generateHtmlFromHtmlTemplateUsingFreemarker(ctx.extractedFilePath,
-                    ctx.settings.getReportTemplate().retrieveTemplateFilePath(), 
-                    ctx.variables.getUserVariables(ctx.token));
-    }
+	@Override
+	protected void extractOutputBurstDocument() throws Exception {
+		if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_DOCX))
+			generateDocxFromDocxTemplateUsingXDocReport(ctx.extractedFilePath,
+					ctx.settings.getReportTemplate().retrieveTemplateFilePath(),
+					ctx.variables.getUserVariables(ctx.token));
+		else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_HTML))
+			generateHtmlFromHtmlTemplateUsingFreemarker(ctx.extractedFilePath,
+					ctx.settings.getReportTemplate().retrieveTemplateFilePath(),
+					ctx.variables.getUserVariables(ctx.token));
+		else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_PDF))
+			generatePDFFromHtmlTemplateUsingFlywingSauce(ctx.extractedFilePath,
+					ctx.settings.getReportTemplate().retrieveTemplateFilePath(),
+					ctx.variables.getUserVariables(ctx.token));
+	}
 
-    protected void generateHtmlFromHtmlTemplateUsingFreemarker(String extractedFilePath, String templatePath,
-            Map<String, Object> userVariables) throws Exception {
-        String template = FileUtils.readFileToString(new File(templatePath), "UTF-8");
-        Template engine = new Template("template", template, Utils.freeMarkerCfg);
-        StringWriter stringWriter = new StringWriter();
-        engine.process(userVariables, stringWriter);
-        stringWriter.flush();
-        FileUtils.writeStringToFile(new File(extractedFilePath), stringWriter.toString(), "UTF-8");
-    }
+	protected void generateHtmlFromHtmlTemplateUsingFreemarker(String extractedFilePath, String templatePath,
+			Map<String, Object> userVariables) throws Exception {
+		String template = FileUtils.readFileToString(new File(templatePath), "UTF-8");
+		Template engine = new Template("template", template, Utils.freeMarkerCfg);
+		StringWriter stringWriter = new StringWriter();
+		engine.process(userVariables, stringWriter);
+		stringWriter.flush();
+		FileUtils.writeStringToFile(new File(extractedFilePath), stringWriter.toString(), "UTF-8");
+	}
 
-    protected void generateDocxFromDocxTemplateUsingXDocReport(String documentPath, String templatePath,
-            Map<String, Object> variablesData) throws Exception {
-        InputStream is = Files.newInputStream(Paths.get(templatePath));
-        IXDocReport report = XDocReportRegistry.getRegistry().loadReport(is, TemplateEngineKind.Freemarker);
-        IContext context = report.createContext();
-        context.putMap(variablesData);
-        OutputStream out = new FileOutputStream(new File(documentPath));
-        report.process(context, out);
-    }
-    
-    public void generateDocxFromDocxTemplateUsingDocx4j(String documentPath, String templatePath,
+	protected void generateDocxFromDocxTemplateUsingXDocReport(String documentPath, String templatePath,
+			Map<String, Object> variablesData) throws Exception {
+		InputStream is = Files.newInputStream(Paths.get(templatePath));
+		IXDocReport report = XDocReportRegistry.getRegistry().loadReport(is, TemplateEngineKind.Freemarker);
+		IContext context = report.createContext();
+		context.putMap(variablesData);
+		OutputStream out = new FileOutputStream(new File(documentPath));
+		report.process(context, out);
+	}
+
+	public void generateDocxFromDocxTemplateUsingDocx4j(String documentPath, String templatePath,
 			Map<String, String> variablesData) throws Exception {
 
 		File outputFile = new File(documentPath);
@@ -116,8 +121,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 		wordMLPackage.save(outputFile);
 
 	}
-	
-	
+
 	public void convertDocxToPDFUsingDocx4j(String docxFilePath, String pdfFilePath) throws Exception {
 
 		InputStream templateInputStream = new FileInputStream(docxFilePath);
@@ -179,9 +183,34 @@ public abstract class AbstractReporter extends AbstractBurster {
 		}
 	}
 
-	
-    public List<String[]> getParsedLines() {
-        return parsedLines;
-    }
+	public void generatePDFFromHtmlTemplateUsingFlywingSauce(String documentPath, String templatePath,
+			Map<String, Object> variablesData) throws Exception {
+
+		// First generate the HTML using the existing method
+		String tempHtmlPath = documentPath.replace(".pdf", ".html");
+		generateHtmlFromHtmlTemplateUsingFreemarker(tempHtmlPath, templatePath, variablesData);
+
+		// Read the generated HTML
+		String html = Files.readString(Paths.get(tempHtmlPath));
+
+		// Setup the PDF renderer
+		File parentDir = new File(templatePath).getParentFile();
+		String baseUri = parentDir.toURI().toString();
+
+		// Create the PDF
+		try (FileOutputStream os = new FileOutputStream(documentPath)) {
+			PdfRendererBuilder builder = new PdfRendererBuilder();
+			builder.withHtmlContent(html, baseUri);
+			builder.toStream(os);
+			builder.run();
+		}
+
+		// Clean up temporary HTML file
+		Files.deleteIfExists(Paths.get(tempHtmlPath));
+	}
+
+	public List<String[]> getParsedLines() {
+		return parsedLines;
+	}
 
 }

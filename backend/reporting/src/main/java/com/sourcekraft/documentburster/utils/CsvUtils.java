@@ -39,5 +39,6 @@ public class CsvUtils {
 	public static final String OUTPUT_TYPE_NONE = "output.none";
 	public static final String OUTPUT_TYPE_DOCX = "output.docx";
 	public static final String OUTPUT_TYPE_HTML = "output.html";
+	public static final String OUTPUT_TYPE_PDF = "output.pdf";
 	
 }

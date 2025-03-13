@@ -3,17 +3,23 @@ import * as path from 'path';
 
 import { spawnSync } from 'child_process';
 
-export async function takeScreenshotIfRequested(page: Page, screenshotName: string): Promise<void> {
-    const takeScreenshots = process.env.TAKE_SCREENSHOTS === 'true';
-    
-    if (takeScreenshots) {
-        const screenshotsDir = path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'e2e/screenshots');
-        await jetpack.dirAsync(screenshotsDir);
-        
-        const screenshotPath = path.join(screenshotsDir, `${screenshotName}.png`);
-        await page.screenshot({ path: screenshotPath, fullPage: true });
-        console.log(`Screenshot saved: ${screenshotPath}`);
-    }
+export async function takeScreenshotIfRequested(
+  page: Page,
+  screenshotName: string,
+): Promise<void> {
+  const takeScreenshots = process.env.TAKE_SCREENSHOTS === 'true';
+
+  if (takeScreenshots) {
+    const screenshotsDir = path.join(
+      process.env.PORTABLE_EXECUTABLE_DIR,
+      'e2e/screenshots',
+    );
+    await jetpack.dirAsync(screenshotsDir);
+
+    const screenshotPath = path.join(screenshotsDir, `${screenshotName}.png`);
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+    console.log(`Screenshot saved: ${screenshotPath}`);
+  }
 }
 
 import * as _ from 'lodash';
@@ -267,6 +273,12 @@ export class Helpers {
     await jetpack.copyAsync(
       `${process.env.PORTABLE_EXECUTABLE_DIR}/samples/reports/payslips/payslips-template.docx`,
       `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/payslips/payslips-template.docx`,
+    );
+
+    // payslips-template.html
+    await jetpack.copyAsync(
+      `${process.env.PORTABLE_EXECUTABLE_DIR}/samples/reports/payslips/payslips-template.html`,
+      `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/payslips/payslips-template.html`,
     );
 
     //await this.killHangingJavaProcesses();

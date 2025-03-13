@@ -41,7 +41,7 @@ public class CsvReporterTest {
 	private static final String CSV_INPUT_SEPARATOR_CUSTOM_PIPE_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/separator-custom-pipe.csv";
 	private static final String CSV_INPUT_SEPARATOR_CUSTOM_TAB_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/separator-custom-tab.csv";
 	private static final String CSV_INPUT_SEPARATOR_CUSTOM_TAB_QUOTE_DEFINED_QUOTE_CHAR_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/separator-custom-tab-quote-defined-quote-char.csv";
-	
+
 	private static final String CSV_INPUT_HEADER_FIRSTLINE_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/header-firstline.csv";
 	private static final String CSV_INPUT_HEADER_MULTILINE_2_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/header-multiline-2.csv";
 	private static final String CSV_INPUT_HEADER_MULTILINE_8_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/header-multiline-8.csv";
@@ -86,8 +86,33 @@ public class CsvReporterTest {
 		burster.burst(CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
 
 		boolean expectAllFilesToBeGenerated = true;
-		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH,
-				expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_HTML);
+		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster,
+				CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, expectAllFilesToBeGenerated,
+				CsvUtils.OUTPUT_TYPE_HTML);
+
+	}
+
+	@Test
+	public final void generatePDFReports() throws Exception {
+
+		CsvReporter burster = new TestBursterFactory.CsvReporter(StringUtils.EMPTY,
+				"CsvReporterTest-generatePDFReports") {
+			protected void executeController() throws Exception {
+
+				super.executeController();
+
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_PDF;
+				ctx.settings.getReportTemplate().documentpath = PAYSLIPS_HTML_TEMPLATE_PATH;
+
+			};
+		};
+
+		burster.burst(CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
+
+		boolean expectAllFilesToBeGenerated = true;
+		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster,
+				CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, expectAllFilesToBeGenerated,
+				CsvUtils.OUTPUT_TYPE_PDF);
 
 	}
 
@@ -109,8 +134,9 @@ public class CsvReporterTest {
 		burster.burst(CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
 
 		boolean expectAllFilesToBeGenerated = true;
-		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH,
-				expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
+		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster,
+				CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, expectAllFilesToBeGenerated,
+				CsvUtils.OUTPUT_TYPE_DOCX);
 
 	}
 
@@ -135,8 +161,9 @@ public class CsvReporterTest {
 
 		boolean expectAllFilesToBeGenerated = true;
 
-		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, CSV_INPUT_SEPARATOR_CUSTOM_PIPE_DATASOURCE_PATH,
-				expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
+		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster,
+				CSV_INPUT_SEPARATOR_CUSTOM_PIPE_DATASOURCE_PATH, expectAllFilesToBeGenerated,
+				CsvUtils.OUTPUT_TYPE_DOCX);
 
 	}
 
@@ -188,8 +215,8 @@ public class CsvReporterTest {
 
 		boolean expectAllFilesToBeGenerated = true;
 
-		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, CSV_INPUT_HEADER_FIRSTLINE_DATASOURCE_PATH,
-				expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
+		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster,
+				CSV_INPUT_HEADER_FIRSTLINE_DATASOURCE_PATH, expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
 
 	}
 
@@ -215,8 +242,8 @@ public class CsvReporterTest {
 
 		boolean expectAllFilesToBeGenerated = true;
 
-		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, CSV_INPUT_HEADER_MULTILINE_2_DATASOURCE_PATH,
-				expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
+		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster,
+				CSV_INPUT_HEADER_MULTILINE_2_DATASOURCE_PATH, expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
 
 	}
 
@@ -242,8 +269,8 @@ public class CsvReporterTest {
 
 		boolean expectAllFilesToBeGenerated = true;
 
-		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, CSV_INPUT_HEADER_MULTILINE_8_DATASOURCE_PATH,
-				expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
+		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster,
+				CSV_INPUT_HEADER_MULTILINE_8_DATASOURCE_PATH, expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
 
 	}
 
@@ -274,8 +301,9 @@ public class CsvReporterTest {
 
 		boolean expectAllFilesToBeGenerated = true;
 
-		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, CSV_INPUT_QUOTE_SIMPLE_QUOTED_STRINGS_DATASOURCE_PATH,
-				expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
+		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster,
+				CSV_INPUT_QUOTE_SIMPLE_QUOTED_STRINGS_DATASOURCE_PATH, expectAllFilesToBeGenerated,
+				CsvUtils.OUTPUT_TYPE_DOCX);
 
 	}
 
@@ -660,12 +688,11 @@ public class CsvReporterTest {
 
 		boolean expectAllFilesToBeGenerated = true;
 
-		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, CSV_INPUT_SEPARATOR_CUSTOM_TAB_DATASOURCE_PATH,
-				expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
+		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster,
+				CSV_INPUT_SEPARATOR_CUSTOM_TAB_DATASOURCE_PATH, expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
 
 	}
 
-	
 	@Test
 	public final void generateReportsFromTabSeparatedQuoteDefinedQuoteCharInputFile() throws Exception {
 
@@ -684,7 +711,8 @@ public class CsvReporterTest {
 			};
 		};
 
-		burster.burst(CSV_INPUT_SEPARATOR_CUSTOM_TAB_QUOTE_DEFINED_QUOTE_CHAR_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
+		burster.burst(CSV_INPUT_SEPARATOR_CUSTOM_TAB_QUOTE_DEFINED_QUOTE_CHAR_DATASOURCE_PATH, false, StringUtils.EMPTY,
+				-1);
 
 		// assert 3 rows are parsed
 		assertEquals(3, burster.getParsedCsvLines().size());
@@ -696,7 +724,7 @@ public class CsvReporterTest {
 		assertEquals("2890", burster.getParsedCsvLines().get(1)[16]);
 
 	}
-	
+
 	@Test
 	public void libOpenCsvParseQuotedStringWithDefinedSeparatorAndQuote() throws IOException {
 		csvParser = new CSVParserBuilder().withSeparator(':').withQuoteChar('\'').build();
@@ -1372,8 +1400,8 @@ public class CsvReporterTest {
 
 		boolean expectAllFilesToBeGenerated = true;
 		// PdfTestUtils.assertDefaultResults(burster, tokens);
-		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, inputFilePath, expectAllFilesToBeGenerated,
-				CsvUtils.OUTPUT_TYPE_DOCX);
+		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, inputFilePath,
+				expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
 
 		assertEquals(3, burster.getCtx().numberOfExtractedFiles);
 
@@ -1512,8 +1540,8 @@ public class CsvReporterTest {
 		}
 
 		boolean expectAllFilesToBeGenerated = false;
-		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, inputFilePath, expectAllFilesToBeGenerated,
-				CsvUtils.OUTPUT_TYPE_DOCX);
+		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, inputFilePath,
+				expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
 
 		assertEquals(0, burster.getCtx().numberOfSkippedFiles);
 
@@ -1566,8 +1594,8 @@ public class CsvReporterTest {
 		assertEquals(howMany, new File(burster.getCtx().outputFolder).listFiles(UtilsTest.outputFilesFilter).length);
 
 		boolean expectAllFilesToBeGenerated = false;
-		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, inputFilePath, expectAllFilesToBeGenerated,
-				CsvUtils.OUTPUT_TYPE_DOCX);
+		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster, inputFilePath,
+				expectAllFilesToBeGenerated, CsvUtils.OUTPUT_TYPE_DOCX);
 
 		assertEquals(howMany, burster.getCtx().numberOfExtractedFiles);
 		assertEquals(howMany, burster.getCtx().burstTokens.size());
