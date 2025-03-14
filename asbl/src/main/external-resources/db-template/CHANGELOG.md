@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 10.2.5 - 2025-03-17
+
+### Added
+
+- "Samples/7. Generate (HTML) Monthly Payslips" for users to quickly "Try It"
+- "Samples/8. Generate (PDF) Monthly Payslips" for users to quickly "Try It"
+
 ## 10.2.4 - 2024-02-25
 
 ### Fixed

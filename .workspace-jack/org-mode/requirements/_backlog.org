@@ -41,13 +41,27 @@ Biz
     
 
 Portal
+    
     Nextjs - https://github.com/shadcn-ui/taxonomy
-    https://github.com/premieroctet/next-crud
-    Prisma + Nextjs
+        
+        https://github.com/ixartz/Next-js-Boilerplate
+            
+        https://github.com/premieroctet/next-crud
+        Prisma + Nextjs
 
 Workflow
 
     https://github.com/n8n-io/n8n
+
+Diagrams
+
+    https://mermaid.js.org/syntax/entityRelationshipDiagram.html
+
+    https://plantuml.com
+
+    https://github.com/skanaar/nomnoml
+        https://github.com/jhipster/jdl-studio
+
 
 Invoicing
     
@@ -55,25 +69,38 @@ Invoicing
     https://github.com/natsumi-h/smartinvoice
     https://github.com/JaneMoroz/invoice-app    
 
-Grafana LGTM - https://www.youtube.com/playlist?list=PLYrn63eEqAzZL2TaS0pXXw-_DEl3SsAF_
+Chat
 
-    LGTM stands for Loki, Grafana, Tempo, and Mimir, which are the key components of this stack. 
-    The LGTM stack aims to provide a unified solution for monitoring and troubleshooting modern applications 
-    and infrastructure by addressing the three pillars of observability: logs, metrics, and traces.
+    https://deepchat.dev
+    https://www.npmjs.com/package/ngx-monaco-editor-v2
+    https://github.com/spring-projects/spring-ai
+    https://github.com/langchain4j/langchain4j
+    https://github.com/ChinaYiqun/java-rag
+    https://gaetanopiazzolla.github.io/java/rag/2024/05/29/rag-spring-ai.html
+    https://github.com/danvega/java-rag
+    https://github.com/sigoden/aichat
 
-Other
 
-    https://github.com/orgs/WordPress/repositories
-    https://wagtail.org
+Libraries
 
-        Wagtail is the leading open-source Python CMS
+    https://github.com/alanhay/html-exporter
+    Java Library to convert HTML/CSS to MS Excel and ODS Spreadhseets.
 
-    
-    https://github.com/SolidInvoice/SolidInvoice
-    https://github.com/invoiceninja/invoiceninja
-    https://github.com/crater-invoice-inc/crater
-    https://github.com/InvoiceShelf/InvoiceShelf
-    https://akaunting.com
+    Google Sheet & Office 365 Download
 
-    https://github.com/medusajs/medusa
-    The world's most flexible commerce platform.
+        https://rclone.org/drive/#import-export-of-google-documents
+
+        https://www.baeldung.com/google-sheets-java-client
+        https://github.com/cristoper/gsheet
+
+
+    https://github.com/jxlsteam/jxls
+    500stars - Java library for creating Excel reports using Excel templates
+
+    https://github.com/Sayi/poi-tl
+    5k stars - Generate awesome word(docx) with template
+
+    https://github.com/sgoeschl/freemarker-cli
+    Apache FreeMarker CLI (JDK)
+
+   
