@@ -20,7 +20,7 @@
 
 	<properties>
 
-		<revision>10.2.5</revision>
+		<revision>10.2.6</revision>
 
 		<!-- upgraded -->
 		<commons.beanutils.version>1.9.4</commons.beanutils.version>
@@ -38,6 +38,7 @@
 		<documents4j.version>1.1.10</documents4j.version>
 		<jodconverter.version>4.4.5</jodconverter.version>
 		<openhtmltopdf.version>1.0.10</openhtmltopdf.version>
+		<html-exporter.version>0.5.5</html-exporter.version>
 		<fop.version>2.8</fop.version>
 		<commons.cli.version>1.4</commons.cli.version>
 		<commons.email.version>1.5</commons.email.version>
@@ -258,10 +259,27 @@
 				<version>${openhtmltopdf.version}</version>
 			</dependency>
 			<dependency>
-			    <groupId>com.openhtmltopdf</groupId>
-			    <artifactId>openhtmltopdf-pdfbox</artifactId>
-			    <version>${openhtmltopdf.version}</version>
+				<groupId>com.openhtmltopdf</groupId>
+				<artifactId>openhtmltopdf-pdfbox</artifactId>
+				<version>${openhtmltopdf.version}</version>
 			</dependency>
+
+			<dependency>
+				<groupId>io.github.alanhay</groupId>
+				<artifactId>html-exporter</artifactId>
+				<version>${html-exporter.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.xhtmlrenderer</groupId>
+						<artifactId>flying-saucer-pdf-openpdf</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.apache.velocity</groupId>
+						<artifactId>velocity-engine-core</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+
 			<!-- end document conversion engines -->
 
 			<dependency>

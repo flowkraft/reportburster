@@ -36,6 +36,7 @@ public class CsvReporterTest {
 
 	private static final String PAYSLIPS_DOCX_TEMPLATE_PATH = "src/main/external-resources/template/samples/reports/payslips/payslips-template.docx";
 	private static final String PAYSLIPS_HTML_TEMPLATE_PATH = "src/main/external-resources/template/samples/reports/payslips/payslips-template.html";
+	private static final String PAYSLIPS_HTML_EXCEL_TEMPLATE_PATH = "src/main/external-resources/template/samples/reports/payslips/payslips-template-excel.html";
 
 	private static final String CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/separator-comma-standard.csv";
 	private static final String CSV_INPUT_SEPARATOR_CUSTOM_PIPE_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/separator-custom-pipe.csv";
@@ -114,6 +115,27 @@ public class CsvReporterTest {
 				CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, expectAllFilesToBeGenerated,
 				CsvUtils.OUTPUT_TYPE_PDF);
 
+	}
+
+	@Test
+	public final void generateExcelReports() throws Exception {
+		CsvReporter burster = new TestBursterFactory.CsvReporter(StringUtils.EMPTY,
+				"CsvReporterTest-generateExcelReports") {
+			protected void executeController() throws Exception {
+				super.executeController();
+
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_EXCEL;
+				ctx.settings.getReportTemplate().documentpath = PAYSLIPS_HTML_EXCEL_TEMPLATE_PATH;
+
+			}
+		};
+
+		burster.burst(CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
+
+		boolean expectAllFilesToBeGenerated = true;
+		TestBursterFactory.assertThatCorrectOutputReportsWereGenerated(burster,
+				CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, expectAllFilesToBeGenerated,
+				CsvUtils.OUTPUT_TYPE_EXCEL);
 	}
 
 	@Test

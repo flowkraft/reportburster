@@ -1,4 +1,6 @@
 
+jobson, cms keystonejs & portal shadcn-ui/taxonomy, supabase, n8n, nestjs crons
+
 CMS
     https://github.com/strapi/strapi
     
@@ -49,6 +51,11 @@ Portal
         https://github.com/premieroctet/next-crud
         Prisma + Nextjs
 
+Jobs
+    
+    https://github.com/adamkewley/jobson
+    Customized jobson
+
 Workflow
 
     https://github.com/n8n-io/n8n
@@ -70,6 +77,12 @@ Invoicing
     https://github.com/JaneMoroz/invoice-app    
 
 Chat
+
+    Free ChatGPT - https://github.com/acheong08/EdgeGPT
+                   8k stars - Reverse engineered API of Microsoft's Bing Chat AI
+
+                   https://github.com/xiaotao-xiaotao/BingChat
+                   https://github.com/javpower/chat-bot
 
     https://deepchat.dev
     https://www.npmjs.com/package/ngx-monaco-editor-v2
@@ -93,6 +106,8 @@ Libraries
         https://www.baeldung.com/google-sheets-java-client
         https://github.com/cristoper/gsheet
 
+    https://pandoc.org
+    If you need to convert files from one markup format into another, pandoc is your swiss-army knife. 
 
     https://github.com/jxlsteam/jxls
     500stars - Java library for creating Excel reports using Excel templates
@@ -102,5 +117,3 @@ Libraries
 
     https://github.com/sgoeschl/freemarker-cli
     Apache FreeMarker CLI (JDK)
-
-   

@@ -12,6 +12,11 @@ import java.util.Random;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.assertj.core.api.Assertions;
@@ -22,6 +27,7 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.engine.AbstractReporter;
+import com.sourcekraft.documentburster.engine.excel.ExcelUtils;
 import com.sourcekraft.documentburster.scripting.Scripting;
 import com.sourcekraft.documentburster.unit.further.other.UtilsTest;
 import com.sourcekraft.documentburster.utils.CsvUtils;
@@ -495,12 +501,14 @@ public class TestBursterFactory {
 					currentReportText = FileUtils.readFileToString(new File(outputReportPath), "UTF-8");
 				} else if (outputType.equals(CsvUtils.OUTPUT_TYPE_PDF)) {
 					// Extract text from PDF using PDFBox (similar to how DOCX is handled)
-				    try (PDDocument document = PDDocument.load(outputReport)) {
-				        PDFTextStripper stripper = new PDFTextStripper();
-				        currentReportText = stripper.getText(document);
-				    }	
+					try (PDDocument document = PDDocument.load(outputReport)) {
+						PDFTextStripper stripper = new PDFTextStripper();
+						currentReportText = stripper.getText(document);
+					}
+				} else if (outputType.equals(CsvUtils.OUTPUT_TYPE_EXCEL)) {
+					currentReportText = ExcelUtils.getExcelText(outputReport);
 				}
-				
+
 				for (int currentColumnIndex = 0; currentColumnIndex < lineLength; currentColumnIndex++) {
 
 					if (currentColumnIndex < 17) {

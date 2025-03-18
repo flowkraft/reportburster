@@ -79,9 +79,11 @@ export const tabSamplesTemplate = `<ng-template #tabSamplesTemplate>
                    <em *ngIf="samplesService.getOutputType(sample.id) == 'docx'">1. Generate .docx&nbsp;</em>
                    <em *ngIf="samplesService.getOutputType(sample.id) == 'html'">1. Generate .html&nbsp;</em>
                    <em *ngIf="samplesService.getOutputType(sample.id) == 'pdf'">1. Generate .pdf&nbsp;</em>
+                   <em *ngIf="samplesService.getOutputType(sample.id) == 'xlsx'">1. Generate .xlsx&nbsp;</em>
                    <i class="fa fa-file-word-o" *ngIf="samplesService.getOutputType(sample.id) == 'docx'"></i>               
                    <i class="fa fa-file-code-o" *ngIf="samplesService.getOutputType(sample.id) == 'html'"></i>               
-                   <i class="fa fa-file-pdf-o" *ngIf="samplesService.getOutputType(sample.id) == 'pdf'"></i>               
+                   <i class="fa fa-file-pdf-o" *ngIf="samplesService.getOutputType(sample.id) == 'pdf'"></i>
+                   <i class="fa fa-file-excel-o" *ngIf="samplesService.getOutputType(sample.id) == 'xlsx'"></i>                  
                 </span>
                 <span class="label label-default" *ngIf="sample.step2 == 'email'">
                   <i class="fa fa-envelope-open-o">&nbsp;</i>
@@ -92,11 +94,11 @@ export const tabSamplesTemplate = `<ng-template #tabSamplesTemplate>
                  <em>3. Email</em> 
                 </span>
             </td>
-            <td [innerHTML]="samplesService.getInputHtml(sample.id)"></td>
-            <td [innerHTML]="samplesService.getOutputHtml(sample.id)"></td>
+            <td id="tdInputSample{{sample.id}}" [innerHTML]="samplesService.getInputHtml(sample.id)"></td>
+            <td id="tdOutputSample{{sample.id}}" [innerHTML]="samplesService.getOutputHtml(sample.id)"></td>
             <td>
             
-              <button type="button" id="btnSampleTryIt{{sample.id}}" class="btn btn-xs btn-primary" (click)="doSampleTryIt(sample)">&nbsp;&nbsp;&nbsp;&nbsp;Try it&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+              <button type="button" id="btnSampleTryIt{{sample.id}}" class="btn btn-xs btn-primary" (click)="doSampleTryIt(sample)">&nbsp;&nbsp;&nbsp;&nbsp;Try It&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
               <br><br>
               <!--
               <div class="btn-group dropup"> 

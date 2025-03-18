@@ -364,7 +364,45 @@ export class SamplesService {
       },
       outputHtmlHardcoded: '',
       configurationFilePath: `config/samples/generate-only-pdf/settings.xml`,
-      configurationFileName: 'generate-only-html',
+      configurationFileName: 'generate-only-pdf',
+      notes: ``,
+      recipientType: 'employee',
+      documentType: 'payslip',
+      capReportSplitting: false,
+      capReportDistribution: false,
+      capReportGenerationMailMerge: true,
+      activeClicked: false,
+    },
+    {
+      id: 'GENERATE-PAYSLIPS-EXCEL',
+      name: '9. Generate (Excel) Monthly Payslips',
+      visibility: 'visible',
+      jobType: 'generate',
+      input: {
+        data: ['file:samples/reports/payslips/Payslips.csv'],
+        dataUrl: ['file:https://www.reportburster.com/docs/Payslips.csv'],
+        numberOfPages: -1,
+        tokens: [
+          'clyde.grew@northridgehealth.org',
+          'kyle.butford@northridgehealth.org.pdf',
+          'alfreda.waldback@northridgehealth.org',
+        ],
+      },
+      step1: 'generate',
+      step2: '',
+      step3: '',
+      output: {
+        data: [
+          'file:clyde.grew@northridgehealth.org.xlsx',
+          'file:kyle.butford@northridgehealth.org.xlsx',
+          'file:alfreda.waldback@northridgehealth.org.xlsx',
+        ],
+        folder:
+          "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
+      },
+      outputHtmlHardcoded: '',
+      configurationFilePath: `config/samples/generate-only-excel/settings.xml`,
+      configurationFileName: 'generate-only-excel',
       notes: ``,
       recipientType: 'employee',
       documentType: 'payslip',
@@ -467,8 +505,6 @@ export class SamplesService {
       inputUrl = inputsUrl[0].replace('file:', '');
     }
 
-    //let inputLabel = inputs[0];
-
     let inputFileIcon = 'fa-file-pdf-o';
     if (inputLabel.endsWith('.xls')) {
       inputFileIcon = 'fa-file-excel-o';
@@ -478,32 +514,26 @@ export class SamplesService {
 
     let inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${inputLabel}`;
     if (fullDetails)
-      //inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}`;
       inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${inputLabel}`;
 
     if (inputUrl) {
       inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank">${inputLabel}</a>`;
       if (fullDetails)
-        //inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank">${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}</a>`;
         inputHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank">${inputLabel}</a>`;
     }
 
     for (let index = 1; index < inputs.length; index++) {
       inputLabel = inputs[index].replace('file:', '');
-      //inputLabel = inputs[index];
       let currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${inputLabel}`;
       if (fullDetails)
-        //currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}`;
         currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;${inputLabel}`;
-
-      //console.log(`inputsUrl = ${JSON.stringify(inputsUrl)}`);
 
       if (inputUrl) {
         inputUrl = inputsUrl[index].replace('file:', '');
+        // Fixed: Added missing quote in target="_blank" attribute
         currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank">${inputLabel}</a>`;
         if (fullDetails)
-          //currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank>${this.settingsService.PORTABLE_EXECUTABLE_DIR}/${inputLabel}</a>`;
-          currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank>${inputLabel}</a>`;
+          currentHtml = `<i class="fa ${inputFileIcon}"></i>&nbsp;<a href="${inputUrl}" target="_blank">${inputLabel}</a>`;
       }
 
       inputHtml = `${inputHtml}<br>${currentHtml}`;
@@ -530,6 +560,9 @@ export class SamplesService {
     let attachmentFileIcon = 'fa-file-pdf-o';
     if (outputLabel.endsWith('.docx')) attachmentFileIcon = 'fa-file-word-o';
     if (outputLabel.endsWith('.html')) attachmentFileIcon = 'fa-file-code-o';
+
+    if (outputLabel.endsWith('.xls')) attachmentFileIcon = 'fa-file-excel-o';
+    if (outputLabel.endsWith('.xlsx')) attachmentFileIcon = 'fa-file-excel-o';
 
     let outputHtml = '';
     if (fullDetails) {

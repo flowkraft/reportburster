@@ -459,6 +459,8 @@ export class SettingsService {
       '/cfgman/rb/load-templates-all',
     );
 
+    //console.log('Loaded templates:', this.templateFiles);
+
     return this.templateFiles;
   }
 
@@ -539,41 +541,43 @@ export class SettingsService {
   }
 
   getReportTemplates(outputType: string, filter: { samples: boolean }) {
+    // Uncomment to debug input parameters
+    //console.log(`getReportTemplates called with outputType=${outputType}, samples=${filter.samples}`);
+    //console.log(`Available templates:`, this.templateFiles);
+
     return this.templateFiles.filter((template) => {
-      // For DOCX output type
-      if (outputType == 'output.docx') {
-        if (filter.samples) {
-          return template.fileName.endsWith('.docx');
-        } else {
-          return (
-            template.fileName.endsWith('.docx') &&
-            !template.type.includes('-sample')
-          );
-        }
-      } // For HTML output type
-      else if (outputType == 'output.html') {
-        if (filter.samples) {
-          return template.fileName.endsWith('.html');
-        } else {
-          return (
-            template.fileName.endsWith('.html') &&
-            !template.type.includes('-sample')
-          );
-        }
-      } // For PDF output type (also use HTML templates)
-      else if (outputType == 'output.pdf') {
-        if (filter.samples) {
-          return template.fileName.endsWith('.html');
-        } else {
-          return (
-            template.fileName.endsWith('.html') &&
-            !template.type.includes('-sample')
-          );
-        }
+      let isValidTemplate = false;
+      let fileExtension = '';
+
+      switch (outputType) {
+        case 'output.docx':
+          fileExtension = '.docx';
+          break;
+        case 'output.pdf':
+        case 'output.xlsx':
+        case 'output.html':
+          fileExtension = '.html';
+          break;
+        default:
+          // Uncomment to debug unknown output types
+          //console.log(`Unsupported output type: ${outputType}`);
+          return false;
       }
 
-      // For other output types (fallback)
-      return false;
+      // Check if template matches required extension
+      isValidTemplate = template.fileName.endsWith(fileExtension);
+
+      // If not including samples, filter out sample templates
+      if (!filter.samples) {
+        isValidTemplate = isValidTemplate && !template.type.includes('-sample');
+      }
+
+      // Uncomment to debug template filtering
+      //console.log(
+      //  `Template ${template.fileName}: isValid=${isValidTemplate}, extension=${fileExtension}, isSample=${template.type.includes('-sample')}`,
+      //);
+
+      return isValidTemplate;
     });
   }
 

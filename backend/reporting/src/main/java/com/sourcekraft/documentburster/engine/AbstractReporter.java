@@ -39,6 +39,7 @@ import fr.opensagres.xdocreport.document.registry.XDocReportRegistry;
 import fr.opensagres.xdocreport.template.IContext;
 import fr.opensagres.xdocreport.template.TemplateEngineKind;
 import freemarker.template.Template;
+import uk.co.certait.htmlexporter.writer.excel.ExcelExporter;
 
 public abstract class AbstractReporter extends AbstractBurster {
 
@@ -85,9 +86,30 @@ public abstract class AbstractReporter extends AbstractBurster {
 			generatePDFFromHtmlTemplateUsingFlywingSauce(ctx.extractedFilePath,
 					ctx.settings.getReportTemplate().retrieveTemplateFilePath(),
 					ctx.variables.getUserVariables(ctx.token));
+		else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_EXCEL))
+			generateExcelFromHtmlTemplateUsingHtmlExporter(ctx.extractedFilePath,
+					ctx.settings.getReportTemplate().retrieveTemplateFilePath(),
+					ctx.variables.getUserVariables(ctx.token));
 	}
 
-	protected void generateHtmlFromHtmlTemplateUsingFreemarker(String extractedFilePath, String templatePath,
+	protected void generateExcelFromHtmlTemplateUsingHtmlExporter(String documentPath, String templatePath,
+			Map<String, Object> userVariables) throws Exception {
+
+		// First generate HTML content using existing method
+		String tempHtmlPath = documentPath.replace(".xlsx", ".html");
+		generateHtmlFromHtmlTemplateUsingFreemarker(tempHtmlPath, templatePath, userVariables);
+
+		// Read the generated HTML
+		String html = Files.readString(Paths.get(tempHtmlPath));
+
+		// Convert HTML to Excel using html-exporter
+		new ExcelExporter().exportHtml(html, new File(documentPath));
+
+		// Clean up temporary HTML file
+		Files.deleteIfExists(Paths.get(tempHtmlPath));
+	}
+
+	private void generateHtmlFromHtmlTemplateUsingFreemarker(String extractedFilePath, String templatePath,
 			Map<String, Object> userVariables) throws Exception {
 		String template = FileUtils.readFileToString(new File(templatePath), "UTF-8");
 		Template engine = new Template("template", template, Utils.freeMarkerCfg);
@@ -97,7 +119,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 		FileUtils.writeStringToFile(new File(extractedFilePath), stringWriter.toString(), "UTF-8");
 	}
 
-	protected void generateDocxFromDocxTemplateUsingXDocReport(String documentPath, String templatePath,
+	private void generateDocxFromDocxTemplateUsingXDocReport(String documentPath, String templatePath,
 			Map<String, Object> variablesData) throws Exception {
 		InputStream is = Files.newInputStream(Paths.get(templatePath));
 		IXDocReport report = XDocReportRegistry.getRegistry().loadReport(is, TemplateEngineKind.Freemarker);
@@ -183,7 +205,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 		}
 	}
 
-	public void generatePDFFromHtmlTemplateUsingFlywingSauce(String documentPath, String templatePath,
+	private void generatePDFFromHtmlTemplateUsingFlywingSauce(String documentPath, String templatePath,
 			Map<String, Object> variablesData) throws Exception {
 
 		// First generate the HTML using the existing method

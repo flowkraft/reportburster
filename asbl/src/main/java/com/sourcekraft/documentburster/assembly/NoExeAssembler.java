@@ -93,7 +93,7 @@ public class NoExeAssembler extends AbstractAssembler {
 				"------------------------------------- DONE_06:NoExeAssembler copy rb-reporting.jar, rb-rserver.jar files ... -------------------------------------");
 
 		// END MODULE_REPORTING work
-		
+
 	}
 
 	private void _performAdditionalRefinementsAndCopyAdditionalFiles() throws Exception {
@@ -161,8 +161,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		newFile = new File(payslipsGenerateOnlyDocxReportingXmlConfigFilePath);
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
 
-		
-		//HTML
+		// HTML
 		/// config/samples/generate-only-html/settings.xml
 		String payslipsGenerateOnlyHtmlXmlConfigFilePath = packageDirPath + "/" + topFolderName
 				+ "/config/samples/generate-only-html/settings.xml";
@@ -198,8 +197,8 @@ public class NoExeAssembler extends AbstractAssembler {
 		newFile = new File(payslipsGenerateOnlyHtmlReportingXmlConfigFilePath);
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
 
-		//PDF
-		
+		// PDF
+
 		/// config/samples/generate-only-pdf/settings.xml
 		String payslipsGenerateOnlyPdfXmlConfigFilePath = packageDirPath + "/" + topFolderName
 				+ "/config/samples/generate-only-pdf/settings.xml";
@@ -235,9 +234,47 @@ public class NoExeAssembler extends AbstractAssembler {
 		newFile = new File(payslipsGenerateOnlyPdfReportingXmlConfigFilePath);
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
 
-		//PDF END
+		// PDF END
 
-		
+		// EXCEL
+
+		/// config/samples/generate-only-pdf/settings.xml
+		String payslipsGenerateOnlyExcelXmlConfigFilePath = packageDirPath + "/" + topFolderName
+				+ "/config/samples/generate-only-excel/settings.xml";
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(payslipsGenerateOnlyExcelXmlConfigFilePath));
+		// replace <reportdistribution>true</reportdistribution> with
+		// <reportdistribution>false</reportdistribution>
+		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyExcelXmlConfigFilePath), "UTF-8");
+
+		content = content.replace("<template>My Reports</template>", "<template>Payslips Generate Excel</template>");
+
+		content = content.replace("<reportdistribution>true</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replace("<reportgenerationmailmerge>false</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		newFile = new File(payslipsGenerateOnlyExcelXmlConfigFilePath);
+		FileUtils.writeStringToFile(newFile, content, "UTF-8");
+
+		/// config/samples/generate-only-excel/reporting.xml
+		String payslipsGenerateOnlyExcelReportingXmlConfigFilePath = packageDirPath + "/" + topFolderName
+				+ "/config/samples/generate-only-excel/reporting.xml";
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(payslipsGenerateOnlyExcelReportingXmlConfigFilePath));
+		// replace <reportdistribution>true</reportdistribution> with
+		// <reportdistribution>false</reportdistribution>
+
+		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyExcelReportingXmlConfigFilePath), "UTF-8");
+		content = content.replace("output.none", "output.xlsx");
+
+		content = content.replace("<documentpath/>",
+				"<documentpath>/samples/reports/payslips/payslips-template-excel.html</documentpath>");
+
+		newFile = new File(payslipsGenerateOnlyExcelReportingXmlConfigFilePath);
+		FileUtils.writeStringToFile(newFile, content, "UTF-8");
+
+		// EXCEL END
+
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_internal/license.xml"),
 				new File(packageDirPath + "/" + topFolderName + "/config/_defaults/license.xml"));
 

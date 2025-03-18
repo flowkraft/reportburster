@@ -595,6 +595,8 @@ export class ConfigurationComponent implements OnInit {
     relativeFilePath: '',
   };
 
+  reportTemplateHtmlContent: string = '';
+
   constructor(
     protected settingsService: SettingsService,
     protected executionStatsService: ExecutionStatsService,
@@ -664,6 +666,14 @@ export class ConfigurationComponent implements OnInit {
           ...this.xmlSettings.documentburster.settings,
         };
 
+        this.settingsService.currentConfigurationTemplate = this.settingsService
+          .getConfigurations()
+          .find(
+            (confTemplate) =>
+              confTemplate.filePath ==
+              this.settingsService.currentConfigurationTemplatePath,
+          );
+
         //console.log(
         //  `1. ConfigurationComponent onInit - this.xmlSettings.documentburster.settings = ${JSON.stringify(this.xmlSettings.documentburster.settings)}`,
         //);
@@ -711,7 +721,7 @@ export class ConfigurationComponent implements OnInit {
             this.settingsService.currentConfigurationTemplatePath,
           );
 
-        //console.log(`this.xmlReporting = ${JSON.stringify(this.xmlReporting)}`);
+        console.log(`this.xmlReporting = ${JSON.stringify(this.xmlReporting)}`);
 
         this.onReportOutputTypeChanged();
       }
@@ -1214,43 +1224,45 @@ export class ConfigurationComponent implements OnInit {
     );
     */
 
+    console.log(
+      'Current reportTemplateFilePath:',
+      this.xmlReporting.documentburster.report.template.documentpath,
+    );
+    console.log('Current template files:', this.settingsService.templateFiles);
+    console.log(
+      'Current configuration template:',
+      this.settingsService.currentConfigurationTemplate,
+    );
+
     if (
       this.xmlReporting.documentburster.report.template.outputtype ==
       'output.none'
     )
       this.xmlReporting.documentburster.report.template.documentpath = '';
     else if (
-      ['output.docx', 'output.html', 'output.pdf'].includes(
+      ['output.docx', 'output.pdf', 'output.xlsx', 'output.html'].includes(
         this.xmlReporting.documentburster.report.template.outputtype,
       )
     ) {
       const reportTemplateFilePath =
         this.xmlReporting.documentburster.report.template.documentpath;
 
+      //console.log(`reportTemplateFilePath = ${reportTemplateFilePath}`);
+
       if (reportTemplateFilePath) {
-        //console.log(
-        //  `this.settingsService.templateFiles = ${JSON.stringify(this.settingsService.templateFiles)}`,
-        //);
-
+        // Simple exact path match is sufficient now
         this.selectedReportTemplateFile =
-          this.settingsService.templateFiles.find((tplFile) =>
-            tplFile.filePath.includes(reportTemplateFilePath),
+          this.settingsService.templateFiles.find(
+            (tplFile) => tplFile.filePath === reportTemplateFilePath,
           );
 
-        //console.log(
-        //  `this.selectedReportTemplateFile = ${JSON.stringify(
-        //    this.selectedReportTemplateFile,
-        //  )}`,
-        //);
+        // Load HTML content if needed
+        if (!reportTemplateFilePath.endsWith('.docx')) {
+          await this.loadHtmlTemplateContent(
+            this.xmlReporting.documentburster.report.template.outputtype,
+          );
+        }
       } else if (!reportTemplateFilePath) {
-        this.settingsService.currentConfigurationTemplate = this.settingsService
-          .getConfigurations()
-          .find(
-            (confTemplate) =>
-              confTemplate.filePath ==
-              this.settingsService.currentConfigurationTemplatePath,
-          );
-
         // First, filter by the selected output type
         const templatesOfCorrectType = this.settingsService.getReportTemplates(
           this.xmlReporting.documentburster.report.template.outputtype,
@@ -1376,6 +1388,46 @@ export class ConfigurationComponent implements OnInit {
     else this.xmlReporting.documentburster.report.template.documentpath = '';
 
     this.settingsChangedEventHandler(event);
+  }
+
+  async onTemplateHtmlContentChanged(htmlContent: string) {
+    // Get template path (could be extracted to a reusable function)
+    const outputType =
+      this.xmlReporting.documentburster.report.template.outputtype.replace(
+        'output.',
+        '',
+      );
+    const configName =
+      this.settingsService.currentConfigurationTemplate?.folderName ||
+      'template';
+    const templatePath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}_${outputType}_template.html`;
+
+    // Save content and update path in one transaction
+    await this.settingsService.saveTemplateFileAsync(templatePath, htmlContent);
+    this.xmlReporting.documentburster.report.template.documentpath =
+      templatePath;
+    await this.settingsService.saveReportingFileAsync(
+      this.settingsService.currentConfigurationTemplatePath,
+      this.xmlReporting,
+    );
+
+    this.messagesService.showInfo('Saved');
+  }
+
+  async loadHtmlTemplateContent(outputType: string) {
+    //console.log(`outputType = ${outputType}`);
+    if (!['output.html', 'output.pdf', 'output.xlsx'].includes(outputType)) {
+      this.reportTemplateHtmlContent = '';
+      return;
+    }
+
+    const path = this.xmlReporting.documentburster.report.template.documentpath;
+    if (path && path.endsWith('.html')) {
+      this.reportTemplateHtmlContent =
+        await this.settingsService.loadTemplateFileAsync(path);
+    } else {
+      this.reportTemplateHtmlContent = '';
+    }
   }
   //end reporting
 }

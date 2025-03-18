@@ -49,13 +49,18 @@
         "FIXED-WIDTH-COLUMNS": "Columns"
       },
       "TAB-REPORT-TEMPLATE-OUTPUT": {
-        "TEMPLATE-FILE": "Template File",
         "OUTPUT-TYPE": "Output Type",
+        "TEMPLATE-FILE": "Template File",
+        "TEMPLATE-HTML": "HTML Template",
+        "TEMPLATE-PLACEHOLDER": "Enter HTML template code here ...",
         "TYPE-NONE": "None",
         "TYPE-DOCX": "Microsoft Word Documents",
         "TYPE-PDF": "PDF Documents",
         "TYPE-XLSX": "Microsoft Excel Documents",
-        "TYPE-HTML": "HTML Documents"
+        "TYPE-HTML": "HTML Documents",
+        "NO-TEMPLATES-FOUND": "No DOCX templates found! Please add a .docx file to:",
+        "TEMPLATE-LOCATION": "Template Location:",
+        "SUGGESTED-FILENAME": "Suggested filename:"
       },
       "TAB-ADVANCED": {
         "DELAY-EACH-BY": "Delay Each Distribution By",
@@ -837,6 +842,11 @@
     "GENERATE-PAYSLIPS-PDF": {
       "NOTES": {
         "INNER-HTML": "This example demonstrates how to generate payslips documents (Adobe Acrobat .pdf) for all your company's employees using a single CSV text file as datasource. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundred or few thousands employees. Obviously, it is easy to email and/or upload the generated payslips documents to your employees."
+      }
+    },
+    "GENERATE-PAYSLIPS-EXCEL": {
+      "NOTES": {
+        "INNER-HTML": "This example demonstrates how to generate payslips documents (Microsoft Excel .xlsx) for all your company's employees using a single CSV text file as datasource. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundred or few thousands employees. Obviously, it is easy to email and/or upload the generated payslips documents to your employees."
       }
     }
   }
