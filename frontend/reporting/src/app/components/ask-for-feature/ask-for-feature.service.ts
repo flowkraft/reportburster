@@ -13,8 +13,9 @@ export class AskForFeatureService {
     'ds.fixedwidthfile',
     'output.none',
     'output.docx',
-    'output.html',
     'output.pdf',
+    'output.xlsx',
+    'output.html',
   ];
 
   messageTemplate = {

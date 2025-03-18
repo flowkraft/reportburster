@@ -43,6 +43,7 @@ import { ApiService } from '../../providers/api.service';
 import { FsService } from '../../providers/fs.service';
 import { ProcessingService } from '../../providers/processing.service';
 import { StateStoreService } from '../../providers/state-store.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
   selector: 'dburst-processing',
@@ -68,7 +69,7 @@ export class ProcessingComponent implements OnInit {
     capReportSplitting: false,
     capReportDistribution: false,
     capReportGenerationMailMerge: false,
-    inputDetails: '',
+    inputDetails: '' as string | SafeHtml,
     outputDetails: '',
     notes: '',
     configurationFilePath: '',
@@ -206,6 +207,7 @@ export class ProcessingComponent implements OnInit {
     protected executionStatsService: ExecutionStatsService,
     protected fsService: FsService,
     protected samplesService: SamplesService,
+    private sanitizer: DomSanitizer,
   ) {}
 
   ngOnDestroy() {
@@ -1213,14 +1215,15 @@ export class ProcessingComponent implements OnInit {
     this.modalSampleInfo.configurationFileName =
       clickedSample.configurationFileName;
 
-    this.modalSampleInfo.inputDetails = this.samplesService.getInputHtml(
+    const inputDetailsHTML = this.samplesService.getInputHtml(
       clickedSample.id,
       true,
     );
-    this.modalSampleInfo.outputDetails = this.samplesService.getOutputHtml(
-      clickedSample.id,
-      true,
-    );
+
+    console.log('inputDetailsHTML:', inputDetailsHTML);
+
+    this.modalSampleInfo.inputDetails =
+      this.sanitizer.bypassSecurityTrustHtml(inputDetailsHTML);
 
     this.modalSampleInfo.outputDetails = this.samplesService.getOutputHtml(
       clickedSample.id,
@@ -1230,6 +1233,8 @@ export class ProcessingComponent implements OnInit {
     this.modalSampleInfo.documentation = clickedSample.documentation;
 
     this.isModalSamplesLearnMoreVisible = true;
+
+    console.log('Modal input details:', this.modalSampleInfo.inputDetails);
   }
 
   async doCloseSamplesLearnMoreModal() {

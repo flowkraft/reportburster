@@ -104,10 +104,15 @@ test.describe('', async () => {
         .click('#reportingTemplateOutputTab-link')
         .waitOnElementToBecomeVisible('#reportOutputType')
         .dropDownSelectOptionHavingLabel('#reportOutputType', 'HTML Documents')
-        .waitOnElementToBecomeVisible('#reportTemplate')
-        .waitOnElementToContainText(
-          '#selectTemplateFile',
-          'payslips-template.html',
+        .waitOnElementToBecomeVisible('#reportTemplateHtmlContent')
+        .setTextContentFromFile(
+          '#reportTemplateHtmlContent',
+          slash(
+            path.resolve(
+              process.env.PORTABLE_EXECUTABLE_DIR +
+                '/samples/reports/payslips/payslips-template.html',
+            ),
+          ),
         )
         .waitOnElementWithTextToBecomeVisible('Saved')
         .gotoReportGenerationScreen()
@@ -167,10 +172,15 @@ test.describe('', async () => {
         .click('#reportingTemplateOutputTab-link')
         .waitOnElementToBecomeVisible('#reportOutputType')
         .dropDownSelectOptionHavingLabel('#reportOutputType', 'PDF Documents')
-        .waitOnElementToBecomeVisible('#reportTemplate')
-        .waitOnElementToContainText(
-          '#selectTemplateFile',
-          'payslips-template.html',
+        .waitOnElementToBecomeVisible('#reportTemplateHtmlContent')
+        .setTextContentFromFile(
+          '#reportTemplateHtmlContent',
+          slash(
+            path.resolve(
+              process.env.PORTABLE_EXECUTABLE_DIR +
+                '/samples/reports/payslips/payslips-template.html',
+            ),
+          ),
         )
         .waitOnElementWithTextToBecomeVisible('Saved')
         .gotoReportGenerationScreen()
@@ -194,6 +204,77 @@ test.describe('', async () => {
         .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
         .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
         .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'pdf')
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+
+      ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'payslips');
+
+      return ft;
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should correctly generate Excel output from HTML template using CSV as datasource (csv2excel_from_html_template)',
+    async ({ beforeAfterEach: firstPage }) => {
+      //long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const expectedOutputFiles = ['0.xlsx', '1.xlsx', '2.xlsx'];
+
+      let ft = new FluentTester(firstPage);
+
+      ft = ConfTemplatesTestHelper.createNewTemplate(
+        ft,
+        'Payslips',
+        'enableMailMergeCapability',
+      );
+
+      ft = ft
+        .gotoConfiguration()
+        .click(
+          `#topMenuConfigurationLoad_payslips_${PATHS.SETTINGS_CONFIG_FILE}`,
+        )
+        .click('#leftMenuReportingSettings')
+        //tab DataSource - assert the default values
+        .waitOnElementToBecomeVisible('#dsTypes')
+        //tab Output/Template - assert the default values
+        .click('#reportingTemplateOutputTab-link')
+        .waitOnElementToBecomeVisible('#reportOutputType')
+        .dropDownSelectOptionHavingLabel(
+          '#reportOutputType',
+          'Microsoft Excel Documents',
+        )
+        .waitOnElementToBecomeVisible('#reportTemplateHtmlContent')
+        .setTextContentFromFile(
+          '#reportTemplateHtmlContent',
+          slash(
+            path.resolve(
+              process.env.PORTABLE_EXECUTABLE_DIR +
+                '/samples/reports/payslips/payslips-template-excel.html',
+            ),
+          ),
+        )
+        .waitOnElementWithTextToBecomeVisible('Saved')
+        .gotoReportGenerationScreen()
+        .click('#selectMailMergeClassicReport')
+        .waitOnElementToBecomeVisible(
+          'span.ng-option-label:has-text("Payslips (input CSV)")',
+        )
+        .click('span.ng-option-label:has-text("Payslips (input CSV)")')
+        .waitOnElementToBecomeVisible('#browseMailMergeClassicReportInputFile')
+        .setInputFiles(
+          '#reportingFileUploadInput',
+          slash(
+            path.resolve(
+              process.env.PORTABLE_EXECUTABLE_DIR +
+                '/samples/reports/payslips/Payslips.csv',
+            ),
+          ),
+        )
+        .click('#btnGenerateReports')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'xlsx')
         .appStatusShouldBeGreatNoErrorsNoWarnings();
 
       ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'payslips');

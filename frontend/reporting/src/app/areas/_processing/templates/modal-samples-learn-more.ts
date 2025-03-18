@@ -1,5 +1,10 @@
-export const modalSamplesLearnMoreTemplate = `<p-dialog [header]="modalSampleInfo.title" [(visible)]="isModalSamplesLearnMoreVisible" [modal]="true" width="800"
-  height="200" class="modal-dialog-center">
+export const modalSamplesLearnMoreTemplate = `<p-dialog 
+  [header]="modalSampleInfo.title" 
+  [(visible)]="isModalSamplesLearnMoreVisible" 
+  [modal]="true" 
+  [style]="{width: '800px'}"
+  [contentStyle]="{overflow: 'auto', minHeight: '400px'}"
+  class="modal-dialog-center">
   <div style="margin: 25px;">
   
   <div class="row">
@@ -70,7 +75,18 @@ export const modalSamplesLearnMoreTemplate = `<p-dialog [header]="modalSampleInf
 
     <div class="col-xs-10">
 
-        <span [innerHTML]="modalSampleInfo.inputDetails"></span>
+        <div id="modalInputDetails" 
+         [innerHTML]="modalSampleInfo.inputDetails"
+         style="
+           display: block;
+           white-space: pre-wrap !important;
+           word-break: break-word;
+           word-wrap: break-word;
+           overflow-wrap: break-word;
+           line-height: 2;
+           margin: 10px 0;
+         ">
+    </div>
             
     </div>
   </div>
@@ -85,7 +101,7 @@ export const modalSamplesLearnMoreTemplate = `<p-dialog [header]="modalSampleInf
   }}
   </div>
 
-  <div class="col-xs-10" [innerHTML]="modalSampleInfo.outputDetails">
+  <div id="modalOutputDetails" class="col-xs-10" [innerHTML]="modalSampleInfo.outputDetails">
   </div>
 </div>
 
@@ -129,7 +145,7 @@ export const modalSamplesLearnMoreTemplate = `<p-dialog [header]="modalSampleInf
     </div>
   
     <div class="col-xs-10">
-      <button type="button" id="btnViewConfigurationFile{{modalSampleInfo.id}}" class="btn btn-xs btn-default" (click)="doSampleViewConfigurationFile(modalSampleInfo.configurationFilePath, modalSampleInfo.configurationFileName)">&nbsp;&nbsp;&nbsp;&nbsp;View Configuration File&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+      <button type="button" id="btnViewConfigurationFile{{modalSampleInfo.id}}" class="btn btn-primary btn-xs" (click)="doSampleViewConfigurationFile(modalSampleInfo.configurationFilePath, modalSampleInfo.configurationFileName)">&nbsp;&nbsp;&nbsp;&nbsp;View Configuration&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
     </div>
    
    </div>

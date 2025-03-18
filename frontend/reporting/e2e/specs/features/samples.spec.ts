@@ -5,6 +5,7 @@ import { Page, test } from '@playwright/test';
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
+import { SamplesTestHelper } from '../../helpers/samples-test-helper';
 
 //DONE2
 test.describe('', async () => {
@@ -20,21 +21,28 @@ test.describe('', async () => {
         },
       );
 
-      const ft = new FluentTester(firstPage);
+      let ft = new FluentTester(firstPage);
 
+      // First navigate to samples page and make the sample visible
       await ft
         .click('#leftMenuSamples')
         .waitOnElementToContainText(
           '#tdMONTHLY-PAYSLIPS-SPLIT-ONLY',
           '(split only)',
-        )
+        );
+
+      // Now verify the Learn More modal
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'MONTHLY-PAYSLIPS-SPLIT-ONLY',
+        //['config/samples/split-only/settings.xml'],
+        'Payslips.pdf',
+        'kyle.butford@northridgehealth.org.pdf',
+      );
+
+      // Continue with the test workflow
+      await ft
         .click('#trMONTHLY-PAYSLIPS-SPLIT-ONLY')
-        .click('#btnSamplesLearnModeMONTHLY-PAYSLIPS-SPLIT-ONLY')
-        .waitOnElementToContainText(
-          '#divMONTHLY-PAYSLIPS-SPLIT-ONLY',
-          'you can process the data for all your company employees no matter if your company has few tens',
-        )
-        .click('#btnCloseSamplesLearnMoreModal')
         .click('#btnSampleTryItMONTHLY-PAYSLIPS-SPLIT-ONLY')
         .clickNoDontDoThis()
         .click('#btnSampleTryItMONTHLY-PAYSLIPS-SPLIT-ONLY')
@@ -60,14 +68,25 @@ test.describe('', async () => {
         },
       );
 
-      const ft = new FluentTester(firstPage);
+      let ft = new FluentTester(firstPage);
 
       await ft
         .click('#leftMenuSamples')
         .waitOnElementToContainText(
           '#tdEXCEL-DISTINCT-SHEETS-SPLIT-ONLY',
           '(split only)',
-        )
+        );
+
+      // Now verify the Learn More modal
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'EXCEL-DISTINCT-SHEETS-SPLIT-ONLY',
+        //['config/samples/split-only/settings.xml'],
+        'Payslips-Distinct-Sheets.xls',
+        'alfreda.waldback@northridgehealth.org.xls',
+      );
+
+      await ft
         .click('#trEXCEL-DISTINCT-SHEETS-SPLIT-ONLY')
         .click('#btnSamplesLearnModeEXCEL-DISTINCT-SHEETS-SPLIT-ONLY')
         .waitOnElementToContainText(
@@ -118,14 +137,25 @@ test.describe('', async () => {
         'Poland.xls',
       ];
 
-      const ft = new FluentTester(firstPage);
+      let ft = new FluentTester(firstPage);
 
       await ft
         .click('#leftMenuSamples')
         .waitOnElementToContainText(
           '#tdEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY',
           '(split only)',
-        )
+        );
+
+      // Now verify the Learn More modal
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'EXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY',
+        //['config/samples/split-only/settings.xml'],
+        'Customers-Distinct-Column-Values.xls',
+        'Canada.xls',
+      );
+
+      await ft
         .click('#trEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY')
         .click('#btnSamplesLearnModeEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY')
         .waitOnElementToContainText(
@@ -168,7 +198,25 @@ test.describe('', async () => {
         'accounting@gammahealth.biz.pdf',
       ];
 
-      const ft = new FluentTester(firstPage);
+      let ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
+        .waitOnElementToContainText(
+          '#tdINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY',
+          '(split only)',
+        )
+        .click('#trINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY');
+
+      // Now verify the Learn More modal
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'INVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY',
+        //['config/samples/split-only/settings.xml'],
+        'Split2Times.pdf',
+        '6.pdf',
+      );
 
       await ft
         .click('#leftMenuSamples')
@@ -178,12 +226,6 @@ test.describe('', async () => {
           '(split only)',
         )
         .click('#trINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
-        .click('#btnSamplesLearnModeINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
-        .waitOnElementToContainText(
-          '#divINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY',
-          'you can process the data for all your company customers no matter if your company has few tens',
-        )
-        .click('#btnCloseSamplesLearnMoreModal')
         .click('#btnSampleTryItINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
         .clickNoDontDoThis()
         .click('#btnSampleTryItINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
@@ -217,19 +259,26 @@ test.describe('', async () => {
         'merged.pdf',
       ];
 
-      const ft = new FluentTester(firstPage);
+      let ft = new FluentTester(firstPage);
 
       await ft
         .click('#leftMenuSamples')
         .scrollIntoViewIfNeeded('#trINVOICES-MERGE-THEN-SPLIT')
         .waitOnElementToContainText('#tdINVOICES-MERGE-THEN-SPLIT', 'Merge and')
+        .click('#trINVOICES-MERGE-THEN-SPLIT');
+
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'INVOICES-MERGE-THEN-SPLIT',
+        //['config/samples/split-only/settings.xml'],
+        'Invoices-Nov.pdf',
+        '0018.pdf customer invoice',
+      );
+
+      await ft
+        .scrollIntoViewIfNeeded('#trINVOICES-MERGE-THEN-SPLIT')
+        .waitOnElementToContainText('#tdINVOICES-MERGE-THEN-SPLIT', 'Merge and')
         .click('#trINVOICES-MERGE-THEN-SPLIT')
-        .click('#btnSamplesLearnModeINVOICES-MERGE-THEN-SPLIT')
-        .waitOnElementToContainText(
-          '#divINVOICES-MERGE-THEN-SPLIT',
-          'you can process the data for all your company invoices no matter if your company has few tens',
-        )
-        .click('#btnCloseSamplesLearnMoreModal')
         .click('#btnSampleTryItINVOICES-MERGE-THEN-SPLIT')
         .clickNoDontDoThis()
         .click('#btnSampleTryItINVOICES-MERGE-THEN-SPLIT')
@@ -250,7 +299,7 @@ test.describe('', async () => {
       //long running test
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
-      const ft = new FluentTester(firstPage);
+      let ft = new FluentTester(firstPage);
 
       await ft
         .click('#leftMenuSamples')
@@ -259,13 +308,24 @@ test.describe('', async () => {
           '#tdGENERATE-PAYSLIPS-DOCX',
           'Generate (DOCX) Monthly',
         )
-        .click('#trGENERATE-PAYSLIPS-DOCX')
-        .click('#btnSamplesLearnModeGENERATE-PAYSLIPS-DOCX')
+        .click('#trGENERATE-PAYSLIPS-DOCX');
+
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'GENERATE-PAYSLIPS-DOCX',
+        //['config/samples/split-only/settings.xml'],
+        'Payslips.csv',
+        'kyle.butford@northridgehealth.org.docx employee payslip',
+        'payslips-template.docx',
+      );
+
+      await ft
+        .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-DOCX')
         .waitOnElementToContainText(
-          '#divGENERATE-PAYSLIPS-DOCX',
-          'you can process the data for all your company employees no matter if your company has few tens',
+          '#tdGENERATE-PAYSLIPS-DOCX',
+          'Generate (DOCX) Monthly',
         )
-        .click('#btnCloseSamplesLearnMoreModal')
+        .click('#trGENERATE-PAYSLIPS-DOCX')
         .click('#btnSampleTryItGENERATE-PAYSLIPS-DOCX')
         .clickNoDontDoThis()
         .click('#btnSampleTryItGENERATE-PAYSLIPS-DOCX')
@@ -291,7 +351,7 @@ test.describe('', async () => {
       //long running test
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
-      const ft = new FluentTester(firstPage);
+      let ft = new FluentTester(firstPage);
 
       await ft
         .click('#leftMenuSamples')
@@ -300,13 +360,25 @@ test.describe('', async () => {
           '#tdGENERATE-PAYSLIPS-HTML',
           'Generate (HTML) Monthly',
         )
-        .click('#trGENERATE-PAYSLIPS-HTML')
-        .click('#btnSamplesLearnModeGENERATE-PAYSLIPS-HTML')
+        .click('#trGENERATE-PAYSLIPS-HTML');
+
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'GENERATE-PAYSLIPS-HTML',
+        //['config/samples/split-only/settings.xml'],
+        'Payslips.csv',
+        'kyle.butford@northridgehealth.org.html employee payslip',
+        undefined,
+        'class="company-info"',
+      );
+
+      await ft
+        .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-HTML')
         .waitOnElementToContainText(
-          '#divGENERATE-PAYSLIPS-HTML',
-          'you can process the data for all your company employees no matter if your company has few tens',
+          '#tdGENERATE-PAYSLIPS-HTML',
+          'Generate (HTML) Monthly',
         )
-        .click('#btnCloseSamplesLearnMoreModal')
+        .click('#trGENERATE-PAYSLIPS-HTML')
         .click('#btnSampleTryItGENERATE-PAYSLIPS-HTML')
         .clickNoDontDoThis()
         .click('#btnSampleTryItGENERATE-PAYSLIPS-HTML')
@@ -332,7 +404,7 @@ test.describe('', async () => {
       //long running test
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
-      const ft = new FluentTester(firstPage);
+      let ft = new FluentTester(firstPage);
 
       await ft
         .click('#leftMenuSamples')
@@ -340,14 +412,24 @@ test.describe('', async () => {
         .waitOnElementToContainText(
           '#tdGENERATE-PAYSLIPS-PDF',
           'Generate (PDF) Monthly',
-        )
-        .click('#trGENERATE-PAYSLIPS-PDF')
-        .click('#btnSamplesLearnModeGENERATE-PAYSLIPS-PDF')
+        );
+
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'GENERATE-PAYSLIPS-PDF',
+        //['config/samples/split-only/settings.xml'],
+        'Payslips.csv',
+        'kyle.butford@northridgehealth.org.pdf employee payslip',
+        undefined,
+        'class="company-info"',
+      );
+
+      await ft
+        .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-PDF')
         .waitOnElementToContainText(
-          '#divGENERATE-PAYSLIPS-PDF',
-          'you can process the data for all your company employees no matter if your company has few tens',
+          '#tdGENERATE-PAYSLIPS-PDF',
+          'Generate (PDF) Monthly',
         )
-        .click('#btnCloseSamplesLearnMoreModal')
         .click('#btnSampleTryItGENERATE-PAYSLIPS-PDF')
         .clickNoDontDoThis()
         .click('#btnSampleTryItGENERATE-PAYSLIPS-PDF')
@@ -362,6 +444,59 @@ test.describe('', async () => {
         .processingShouldHaveGeneratedOutputFiles(
           ['0.pdf', '1.pdf', '2.pdf'],
           'pdf',
+        )
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (09_generate_payslips_excel)',
+    async ({ beforeAfterEach: firstPage }) => {
+      //long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      let ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-EXCEL')
+        .waitOnElementToContainText(
+          '#tdGENERATE-PAYSLIPS-EXCEL',
+          'Generate (Excel) Monthly',
+        )
+        .click('#trGENERATE-PAYSLIPS-EXCEL');
+
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'GENERATE-PAYSLIPS-EXCEL',
+        //['config/samples/split-only/settings.xml'],
+        'Payslips.csv',
+        'kyle.butford@northridgehealth.org.xlsx employee payslip',
+        undefined,
+        'data-text-cell',
+      );
+
+      await ft
+        .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-EXCEL')
+        .waitOnElementToContainText(
+          '#tdGENERATE-PAYSLIPS-EXCEL',
+          'Generate (Excel) Monthly',
+        )
+        .click('#trGENERATE-PAYSLIPS-EXCEL')
+        .click('#btnSampleTryItGENERATE-PAYSLIPS-EXCEL')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItGENERATE-PAYSLIPS-EXCEL')
+        .clickYesDoThis()
+        .waitOnElementToBecomeVisible('#qaReminderLink')
+        .waitOnElementToBecomeEnabled('#btnGenerateReports')
+        .click('#btnGenerateReports')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(
+          ['0.xlsx', '1.xlsx', '2.xlsx'],
+          'xlsx',
         )
         .appStatusShouldBeGreatNoErrorsNoWarnings();
     },

@@ -107,6 +107,7 @@ export class FluentTester implements PromiseLike<void> {
     this.actions.push(action);
     return this;
   }
+
   public dblClick(selector: string): FluentTester {
     const action = (): Promise<void> => this.doDblClick(selector);
 
@@ -137,6 +138,11 @@ export class FluentTester implements PromiseLike<void> {
 
     this.actions.push(action);
     return this;
+  }
+
+  public async getElementTextContent(selector: string): Promise<string> {
+    const content = await this.window.locator(selector).textContent();
+    return content ? content.trim() : '';
   }
 
   public consoleLog(message: string): FluentTester {
@@ -412,6 +418,17 @@ export class FluentTester implements PromiseLike<void> {
   ): FluentTester {
     let action = (): Promise<void> =>
       this.doDropDownSelectOptionHavingLabel(selector, label);
+
+    this.actions.push(action);
+    return this;
+  }
+
+  public dropDownShouldHaveSelectedOption(
+    selector: string,
+    expectedValue: string,
+  ): FluentTester {
+    const action = (): Promise<void> =>
+      this.doDropDownShouldHaveSelectedOption(selector, expectedValue);
 
     this.actions.push(action);
     return this;
@@ -852,6 +869,17 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  public setTextContentFromFile(
+    selector: string,
+    filePath: string,
+  ): FluentTester {
+    const action = (): Promise<void> =>
+      this.doSetTextContentFromFile(selector, filePath);
+
+    this.actions.push(action);
+    return this;
+  }
+
   //PRIVATE STUFF
 
   private async doVerifyEmails(
@@ -1049,6 +1077,22 @@ export class FluentTester implements PromiseLike<void> {
     }
   }
 
+  private async doDropDownShouldHaveSelectedOption(
+    selector: string,
+    expectedValue: string,
+  ): Promise<void> {
+    const selectElement = this.window.locator(selector);
+
+    // Get the currently selected option's value
+    const actualValue = await selectElement.evaluate((select) => {
+      const selectElem = select as HTMLSelectElement;
+      return selectElem.value;
+    });
+
+    // Assert that the actual value matches the expected value
+    return expect(actualValue).toEqual(expectedValue);
+  }
+
   private async doVerifyQuarantineFiles(
     listOfFiles: string[],
     fileSuffix: string = 'pdf',
@@ -1132,6 +1176,37 @@ export class FluentTester implements PromiseLike<void> {
 
   private async doPressKey(key: string): Promise<void> {
     return this.window.keyboard.press(key);
+  }
+
+  private async doSetTextContentFromFile(
+    selector: string,
+    filePath: string,
+  ): Promise<void> {
+    const content = await jetpack.readAsync(filePath);
+
+    if (!content) {
+      throw new Error(`Failed to read file content from ${filePath}`);
+    }
+
+    // Set the textarea content
+    const textarea = this.window.locator(selector);
+    await textarea.fill(content);
+
+    // Trigger change event with proper type casting
+    await this.window.evaluate(
+      ([selector, value]) => {
+        const element = document.querySelector(selector) as HTMLTextAreaElement;
+        if (element) {
+          const event = new Event('input', { bubbles: true });
+          element.value = value;
+          element.dispatchEvent(event);
+
+          const changeEvent = new Event('change', { bubbles: true });
+          element.dispatchEvent(changeEvent);
+        }
+      },
+      [selector, content],
+    );
   }
 
   //private async doPageReload(): Promise<void> {

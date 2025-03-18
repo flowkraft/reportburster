@@ -125,6 +125,10 @@
 		    <groupId>com.openhtmltopdf</groupId>
 		    <artifactId>openhtmltopdf-pdfbox</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>io.github.alanhay</groupId>
+			<artifactId>html-exporter</artifactId>
+		</dependency>
 		<!-- end document conversion engines -->
 
 		<dependency>

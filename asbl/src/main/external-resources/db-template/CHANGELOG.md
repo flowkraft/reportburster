@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 10.2.6 - 2025-03-18
+
+### Added
+
+- "Samples/9. Generate (Excel) Monthly Payslips" for users to quickly "Try It"
+
+### Fixed
+
+- "Samples -> Learn More -> View Configuration small issue"
+
 ## 10.2.5 - 2025-03-17
 
 ### Added
