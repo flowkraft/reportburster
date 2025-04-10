@@ -41,7 +41,7 @@ export const tabWebUploadOtherWebPlatformsTemplate = `<ng-template #tabWebUpload
 
       <div class="col-xs-2">{{'AREAS.CONFIGURATION.TAB-WEB-UPLOAD-OTHER.EXAMPLE' | translate }}</div>
       <div class="col-xs-7">
-        <em>-T $extracted_file_path$ http://www.example.com/ </em>
+        <em [innerHTML]="'-T \\$\\{extracted_file_path\\} http://www.example.com/'"></em>
       </div>
 
     </div>

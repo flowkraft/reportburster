@@ -13,10 +13,10 @@ BaseFont bf = BaseFont.createFont(BaseFont.HELVETICA_OBLIQUE,
 				BaseFont.WINANSI, BaseFont.EMBEDDED);
 
 def tempFilePath = "./temp/" + 
-                       FilenameUtils.getBaseName(ctx.extractFilePath) +
+                       FilenameUtils.getBaseName(ctx.extractedFilePath) +
                        "_tmp.pdf"
 
-PdfReader reader = new PdfReader(ctx.extractFilePath);
+PdfReader reader = new PdfReader(ctx.extractedFilePath);
 
 //get the number of pages
 int n = reader.getNumberOfPages();
@@ -67,7 +67,7 @@ while (i < n) {
     over.setTextMatrix(10, 10);
     
     //label text
-    over.showText("Distributed by ReportBurster - https://www.reportburster.com/go/dbrb");
+    over.showText("Sent by ReportBurster - https://reportburster.com/g/dbrb/br");
     
     over.endText();
 	
@@ -79,5 +79,5 @@ def ant = new AntBuilder()
 
 //replace the original burst report
 //with the numbered one
-ant.delete(file:ctx.extractFilePath)
-ant.move(file:"$tempFilePath", tofile:ctx.extractFilePath)
+ant.delete(file:ctx.extractedFilePath)
+ant.move(file:"$tempFilePath", tofile:ctx.extractedFilePath)

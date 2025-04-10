@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Payslip Template</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      .company-info {
+        text-align: center;
+        color: white;
+        background-color: #234e70; /* Corporate blue */
+      }
+      .header {
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        color: #234e70; /* Corporate blue */
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td {
+        padding: 8px;
+        border: 1px solid #a3b4c7;
+      }
+      td.no-border {
+        border: none;
+      }
+      td.amount {
+        text-align: right;
+      }
+      .section-header {
+        font-weight: bold;
+        background-color: #3b719f; /* Lighter corporate blue */
+        color: white;
+      }
+      .employee-header {
+        background-color: #f0f5fa; /* Very light blue */
+      }
+      .earnings-cell {
+        background-color: #eaf5ea; /* Light green for earnings */
+      }
+      .deductions-cell {
+        background-color: #f9f0f0; /* Light red for deductions */
+      }
+      .totals {
+        font-weight: bold;
+        background-color: #dde8f3; /* Light blue-gray */
+      }
+      .net-pay {
+        background-color: #2e8b57; /* Sea green */
+        color: white;
+        text-align: right;
+        font-weight: bold;
+      }
+      .signature {
+        border-top: 1px solid #234e70;
+        text-align: center;
+        color: #555;
+        background-color: #f9f9f9;
+      }
+      .period-row {
+        background-color: #fffae6; /* Light yellow */
+      }
+      .white-on-white {
+        color: #ffffff;
+        background-color: #ffffff;
+        border: none"
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Single comprehensive table for Excel output -->
+    <table data-sheet-name="Payslip">
+      <!-- Company info section - separate rows instead of <br> tags -->
+      <!-- Row 1: Company name -->
+      <tr>
+        <td
+          colspan="4"
+          class="company-info no-border"
+          data-text-cell="true"
+          data-text-color="#FFFFFF"
+          data-bg-color="#234e70"
+          data-align="center"
+          data-font-size="14"
+          data-bold="true"
+        >
+          Northridge Pharmaceuticals
+        </td>
+      </tr>
+      <!-- Row 2: Street address -->
+      <tr>
+        <td
+          colspan="4"
+          class="company-info no-border"
+          data-text-cell="true"
+          data-text-color="#FFFFFF"
+          data-bg-color="#234e70"
+          data-align="center"
+        >
+          7649F Diamond Hts Blvd
+        </td>
+      </tr>
+      <!-- Row 3: City -->
+      <tr>
+        <td
+          colspan="4"
+          class="company-info no-border"
+          data-text-cell="true"
+          data-text-color="#FFFFFF"
+          data-bg-color="#234e70"
+          data-align="center"
+        >
+          San Francisco
+        </td>
+      </tr>
+      <!-- Row 4: Phone number -->
+      <tr>
+        <td
+          colspan="4"
+          class="company-info no-border"
+          data-text-cell="true"
+          data-text-color="#FFFFFF"
+          data-bg-color="#234e70"
+          data-align="center"
+        >
+          (415) 872-9214
+        </td>
+      </tr>
+
+      <tr data-height="20">
+        <td class="no-border" colspan="4"></td>
+      </tr>
+
+      <!-- Header/title -->
+      <tr>
+        <td
+          colspan="4"
+          class="header no-border"
+          data-text-cell="true"
+          data-font-size="14"
+          data-width="100"
+        >
+          STATEMENT OF MONTHLY INCOME
+        </td>
+      </tr>
+      <tr data-height="20">
+        <td colspan="4" class="no-border"></td>
+      </tr>
+      <!-- Employee details section -->
+      <tr>
+        <td class="employee-header">Employee Name</td>
+        <td>${col0}</td>
+        <td class="employee-header">Department</td>
+        <td>${col4}</td>
+      </tr>
+      <tr>
+        <td class="employee-header">Employee ID</td>
+        <td>${col1}</td>
+        <td class="employee-header">Position/Grade</td>
+        <td>${col5}</td>
+      </tr>
+      <tr>
+        <td class="employee-header">Social Security #</td>
+        <td data-text-cell="true">${col2}</td>
+        <td colspan="2"></td>
+      </tr>
+      <tr>
+        <td class="employee-header">Pay Period</td>
+        <td>${col3}</td>
+        <td colspan="2"></td>
+      </tr>
+
+      <tr data-height="20">
+        <td colspan="4" class="no-border"></td>
+      </tr>
+
+      <!-- Earnings/Deductions header -->
+      <tr class="section-header">
+        <td>EARNINGS</td>
+        <td class="amount">AMOUNT</td>
+        <td>TAXES/DEDUCTIONS</td>
+        <td class="amount">AMOUNT</td>
+      </tr>
+
+      <!-- Earnings/Deductions data -->
+      <tr>
+        <td class="earnings-cell">Basic Salary</td>
+        <td class="amount earnings-cell" data-group="earnings">${col6}</td>
+        <td class="deductions-cell">Federal Tax</td>
+        <td class="amount deductions-cell" data-group="deductions">${col7}</td>
+      </tr>
+      <tr>
+        <td class="earnings-cell">Bonuses</td>
+        <td class="amount earnings-cell" data-group="earnings">${col8}</td>
+        <td class="deductions-cell">Social Security Tax</td>
+        <td class="amount deductions-cell" data-group="deductions">${col9}</td>
+      </tr>
+      <tr>
+        <td class="earnings-cell"></td>
+        <td class="earnings-cell"></td>
+        <td class="deductions-cell">Medicare Tax</td>
+        <td class="amount deductions-cell" data-group="deductions">${col10}</td>
+      </tr>
+      <tr>
+        <td class="earnings-cell"></td>
+        <td class="earnings-cell"></td>
+        <td class="deductions-cell">State Tax</td>
+        <td class="amount deductions-cell" data-group="deductions">${col11}</td>
+      </tr>
+      <tr>
+        <td class="earnings-cell"></td>
+        <td class="earnings-cell"></td>
+        <td class="deductions-cell">Medical</td>
+        <td class="amount deductions-cell" data-group="deductions">${col12}</td>
+      </tr>
+      <tr>
+        <td class="earnings-cell"></td>
+        <td class="earnings-cell"></td>
+        <td class="deductions-cell">Dental</td>
+        <td class="amount deductions-cell" data-group="deductions">${col13}</td>
+      </tr>
+
+      <!-- Totals -->
+      <tr class="totals">
+        <td>Total Earnings</td>
+        <td class="amount" data-group-output="earnings">${col14}</td>
+        <td>Total Deductions</td>
+        <td class="amount" data-group-output="deductions">${col15}</td>
+      </tr>
+
+      <tr data-height="20">
+        <td colspan="4" class="no-border"></td>
+      </tr>
+
+      <!-- Net Pay -->
+      <tr>
+        <td colspan="2" class="no-border"></td>
+        <td class="net-pay">Net Pay</td>
+        <td class="amount net-pay">${col16}</td>
+      </tr>
+
+      <tr data-height="20">
+        <td colspan="4" class="no-border"></td>
+      </tr>
+      <tr data-height="20">
+        <td colspan="4" class="no-border"></td>
+      </tr>
+      <!-- Signatures -->
+      <tr>
+        <td class="signature" colspan="2">Employee signature:</td>
+        <td class="signature" colspan="2">Director:</td>
+      </tr>
+      <!-- Hidden row with fixed-width content -->
+      <tr>
+        <td class="white-on-white">_______________</td>
+        <td class="white-on-white">_______________</td>
+        <td class="white-on-white">_______________</td>
+        <td class="white-on-white">_______________</td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -163,27 +163,99 @@ _startServerAndDoX = (npm_x_script) => {
     shell: true,
   });
 
+  // Create a flag to ensure we only start the tests once
+  let testProcessStarted = false;
+  let serverKilled = false;
+
   server.stdout.on("data", (data) => {
     console.log(`stdout: ${data}`);
-    if (data.includes("Started ServerApplication in")) {
+
+    // Only start the test process once, no matter how many times this matches
+    if (!testProcessStarted && data.includes("Started ServerApplication in")) {
+      testProcessStarted = true; // Set the flag immediately
       console.log(
         `stdout: ${data} !!!!!! ====>>>>> starting 'npm run "${npm_x_script}"'`,
       );
 
-      const npmXScriptSpawned = spawn("npm", ["run", npm_x_script], {
-        stdio: "pipe",
-        shell: true,
-      });
-      npmXScriptSpawned.stdout.on("data", (data) => {
-        console.log(`stdout: ${data}`);
-      });
-      npmXScriptSpawned.stderr.on("data", (data) => {
-        console.error(`stderr: ${data}`);
-      });
-      npmXScriptSpawned.on("close", (code) => {
-        console.log(`npmXScriptSpawned exited with code ${code}`);
-        kill(server.pid, () => {
-          console.error(`DONE: SpringBoot Server was killed`);
+      // Create a lock file to ensure other processes know tests are running
+      const lockfile = require("lockfile");
+      const path = require("path");
+      // Use the existing constant for consistency
+      const lockPath = path.join(
+        FRONTEND_PLAYGROUND_FOLDER_PATH,
+        "e2e/temp/playwright.lock",
+      );
+
+      // Try to create the lock - if it exists, it means another process is already running tests
+      lockfile.lock(lockPath, { stale: 60000 }, (err) => {
+        if (err) {
+          console.error(
+            "Another test process is already running! Exiting this one.",
+          );
+          kill(server.pid, () => {
+            console.error(
+              `DONE: SpringBoot Server was killed (duplicate run prevented)`,
+            );
+            process.exit(1);
+          });
+          return;
+        }
+
+        // We got the lock, proceed with tests
+        console.log("Got exclusive lock, starting tests...");
+
+        const npmXScriptSpawned = spawn("npm", ["run", npm_x_script], {
+          stdio: "pipe",
+          shell: true,
+        });
+
+        npmXScriptSpawned.stdout.on("data", (data) => {
+          console.log(`stdout: ${data}`);
+        });
+
+        npmXScriptSpawned.stderr.on("data", (data) => {
+          console.error(`stderr: ${data}`);
+        });
+
+        npmXScriptSpawned.on("close", (code) => {
+          console.log(`Main Playwright process exited with code ${code}`);
+
+          // Use find-process to check for any remaining Playwright processes
+          const findProcess = require("find-process");
+
+          const checkForPlaywrightProcesses = () => {
+            findProcess("name", "playwright").then((list) => {
+              // Filter to ensure we're only looking at our own test processes
+              const relevantProcesses = list.filter(
+                (p) => p.cmd.includes("playwright") && p.cmd.includes("e2e"),
+              );
+
+              if (relevantProcesses.length > 0) {
+                console.log(
+                  `${relevantProcesses.length} Playwright processes still running. Waiting...`,
+                );
+                setTimeout(checkForPlaywrightProcesses, 1000);
+              } else {
+                if (!serverKilled) {
+                  serverKilled = true;
+                  console.log(
+                    "All Playwright processes have completed. Shutting down server...",
+                  );
+
+                  // Release the lock file first
+                  lockfile.unlock(lockPath, (err) => {
+                    if (err) console.error("Error releasing lock:", err);
+
+                    kill(server.pid, () => {
+                      console.error(`DONE: SpringBoot Server was killed`);
+                    });
+                  });
+                }
+              }
+            });
+          };
+
+          checkForPlaywrightProcesses();
         });
       });
     }

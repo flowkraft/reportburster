@@ -234,9 +234,9 @@ public class SystemService {
 					+ URLDecoder.decode(cwdPath.get(), StandardCharsets.UTF_8.toString());
 		}
 
-		System.out.println("workingDirectoryPath: " + workingDirectoryPath);
+		//System.out.println("workingDirectoryPath: " + workingDirectoryPath);
 
-		System.out.println("commandWithShell:");
+		//System.out.println("commandWithShell:");
 		commandWithShell.stream().forEach(System.out::println);
 
 		ProcessBuilder processBuilder = new ProcessBuilder(commandWithShell);
@@ -299,11 +299,16 @@ public class SystemService {
 	}
 
 	public void fsWriteStringToFile(String path, Optional<String> content) throws Exception {
+		Path filePath = Paths.get(path);
+		
+		// Create parent directories if they don't exist
+		Files.createDirectories(filePath.getParent());
 
+		// Write the file
 		if (content.isPresent())
-			Files.write(Paths.get(path), content.get().getBytes(StandardCharsets.UTF_8));
+			Files.write(filePath, content.get().getBytes(StandardCharsets.UTF_8));
 		else
-			Files.write(Paths.get(path), StringUtils.EMPTY.getBytes(StandardCharsets.UTF_8));
+			Files.write(filePath, StringUtils.EMPTY.getBytes(StandardCharsets.UTF_8));
 	}
 
 	public boolean fsDelete(String path) throws Exception {

@@ -12,18 +12,13 @@ import java.util.Random;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.assertj.core.api.Assertions;
 
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
-
+import com.sourcekraft.documentburster.common.settings.EmailConnection;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.engine.AbstractReporter;
@@ -31,7 +26,6 @@ import com.sourcekraft.documentburster.engine.excel.ExcelUtils;
 import com.sourcekraft.documentburster.scripting.Scripting;
 import com.sourcekraft.documentburster.unit.further.other.UtilsTest;
 import com.sourcekraft.documentburster.utils.CsvUtils;
-import com.sourcekraft.documentburster.common.settings.EmailConnection;
 
 public class TestBursterFactory {
 
@@ -307,6 +301,64 @@ public class TestBursterFactory {
 		}
 	}
 
+	public static class ExcelReporter extends com.sourcekraft.documentburster.engine.reporting.ExcelReporter {
+
+		protected String testName;
+
+		public ExcelReporter(String configFilePath, String testName) {
+			super(configFilePath);
+			this.testName = testName;
+
+			if (StringUtils.isNotEmpty(configFilePath))
+				this.configurationFilePath = configFilePath;
+			else
+				this.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
+
+		}
+		protected void setUpMockEmail() throws Exception {
+
+			ctx.testName = this.testName;
+			TestBursterFactory.setUpMockEmail(scripting, ctx);
+
+		};
+
+		protected void executeController() throws Exception {
+
+			super.executeController();
+
+			TestBursterFactory.setUpTestFolders(ctx, testName);
+
+			ctx.settings.setCapabilityReportGenerationMailMerge(true);
+
+			ctx.settings.loadSettingsReporting(REPORTING_CONFIG_PATH);
+
+			// a "temp" folder is required to be available
+			ctx.tempFolder = TestsUtils.TESTS_OUTPUT_FOLDER + "/temp";
+
+			File tempDir = new File(ctx.tempFolder);
+
+			if (!tempDir.exists())
+				try {
+					FileUtils.forceMkdir(tempDir);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+		};
+
+		protected void checkLicense() throws Exception {
+		}
+
+		protected void setUpScriptingRoots() {
+
+			scripting.setRoots(new String[] { "src/test/groovy", "src/test/groovy/senders-messages",
+					"src/test/groovy/bursting-context-lifecycle", "src/main/external-resources/template/scripts/burst",
+					"src/main/external-resources/template/scripts/burst/internal",
+					"src/main/external-resources/template/scripts/burst/samples" });
+		}
+
+	}
+
 	static private void setUpTestFolders(BurstingContext ctx, String testName) throws Exception {
 
 		ctx.settings.setOutputFolder(TestsUtils.TESTS_OUTPUT_FOLDER + "/output/${input_document_name}/" + testName
@@ -508,6 +560,10 @@ public class TestBursterFactory {
 				} else if (outputType.equals(CsvUtils.OUTPUT_TYPE_EXCEL)) {
 					currentReportText = ExcelUtils.getExcelText(outputReport);
 				}
+
+				// assert branding
+				if (!outputType.equals(CsvUtils.OUTPUT_TYPE_DOCX) && !outputType.equals(CsvUtils.OUTPUT_TYPE_EXCEL))
+					Assertions.assertThat(currentReportText).contains("Built by");
 
 				for (int currentColumnIndex = 0; currentColumnIndex < lineLength; currentColumnIndex++) {
 

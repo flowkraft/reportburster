@@ -108,6 +108,13 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  public moveFile(srcPath: string, destPath: string): FluentTester {
+    const action = (): Promise<void> => this.doMoveFile(srcPath, destPath);
+
+    this.actions.push(action);
+    return this;
+  }
+
   public dblClick(selector: string): FluentTester {
     const action = (): Promise<void> => this.doDblClick(selector);
 
@@ -421,6 +428,112 @@ export class FluentTester implements PromiseLike<void> {
 
     this.actions.push(action);
     return this;
+  }
+
+  // Add this public method
+  public dropDownSelectOptionHavingValue(
+    selector: string,
+    value: string,
+  ): FluentTester {
+    let action = (): Promise<void> =>
+      this.doDropDownSelectOptionHavingValue(selector, value);
+
+    this.actions.push(action);
+    return this;
+  }
+
+  public selectNgOption(
+    dropdownSelector: string,
+    optionText: string,
+    waitForValueSelection: boolean = true,
+  ): FluentTester {
+    const action = (): Promise<void> =>
+      this.doSelectNgOption(
+        dropdownSelector,
+        optionText,
+        waitForValueSelection,
+      );
+    this.actions.push(action);
+    return this;
+  }
+
+  public waitOnToastToBecomeVisible(
+    type: 'success' | 'warning' | 'error' | 'info',
+    messageText?: string,
+    waitTime?: number,
+  ): FluentTester {
+    let delay = Constants.DELAY_TEN_SECONDS; // Use a shorter default timeout
+    if (waitTime) delay = waitTime;
+
+    const action = (): Promise<void> =>
+      this.doWaitOnToastToBecomeVisible(type, messageText, delay);
+
+    this.actions.push(action);
+    return this;
+  }
+
+  private async doWaitOnToastToBecomeVisible(
+    type: 'success' | 'warning' | 'error' | 'info',
+    messageText?: string,
+    waitTime?: number,
+  ): Promise<void> {
+    // Map type to the appropriate toast class
+    const typeClass = `toast-${type}`;
+
+    // First wait for any toast of the specified type
+    await this.window.waitForSelector(`.${typeClass}`, {
+      state: 'visible',
+      timeout: waitTime,
+    });
+
+    // If no specific message checking is needed, return immediately
+    if (!messageText) return;
+
+    // For specific message text, find all toast messages of this type
+    const toastElements = await this.window.$$(`.${typeClass} .toast-message`);
+
+    // Check each toast message's text content
+    for (const toast of toastElements) {
+      const text = await toast.textContent();
+      if (text && text.toLowerCase().includes(messageText.toLowerCase())) {
+        return; // Found the message, exit immediately
+      }
+    }
+
+    // If we get here, the specific message wasn't found
+    throw new Error(
+      `Toast of type ${type} with message "${messageText}" not found`,
+    );
+  }
+
+  private async doSelectNgOption(
+    dropdownSelector: string,
+    optionText: string,
+    waitForValueSelection: boolean = true,
+  ): Promise<void> {
+    // Click the dropdown to open it
+    await this.doClick(dropdownSelector);
+
+    // Find and click the specific option
+    const optionSelector = `span.ng-option-label:has-text("${optionText}")`;
+    await this.window.waitForSelector(optionSelector, {
+      state: 'visible',
+      timeout: Constants.DELAY_HUNDRED_SECONDS,
+    });
+    await this.window.click(optionSelector);
+
+    // If requested, wait for selection to be visible
+    if (waitForValueSelection) {
+      await this.window
+        .waitForSelector('.ng-value', {
+          state: 'visible',
+          timeout: Constants.DELAY_HUNDRED_SECONDS,
+        })
+        .catch(() => {
+          // Some dropdowns may have different selection indicators
+          console.log('Warning: .ng-value not found after option selection');
+        });
+    }
   }
 
   public dropDownShouldHaveSelectedOption(
@@ -869,12 +982,12 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
-  public setTextContentFromFile(
+  public setCodeJarContentFromFile(
     selector: string,
     filePath: string,
   ): FluentTester {
     const action = (): Promise<void> =>
-      this.doSetTextContentFromFile(selector, filePath);
+      this.doSetCodeJarContentFromFile(selector, filePath);
 
     this.actions.push(action);
     return this;
@@ -931,6 +1044,9 @@ export class FluentTester implements PromiseLike<void> {
 
         // body0.should.have.string('Message ' + recipientEmailAddress);
         emailBody.should.have.string(`Message ${identifiedToken}`);
+
+        //assert branding
+        emailBody.should.have.string('Sent by');
 
         // assert there are no attachments
         if (attachmentsCommand === Constants.ATTACHMENTS_CLEAR)
@@ -1124,6 +1240,10 @@ export class FluentTester implements PromiseLike<void> {
     return jetpack.renameAsync(path, newName);
   }
 
+  private async doMoveFile(srcPath: string, destPath: string): Promise<void> {
+    return jetpack.moveAsync(srcPath, destPath);
+  }
+
   protected async doHover(selector: string): Promise<void> {
     this.focusedElement = this.window.locator(selector);
     return this.focusedElement.hover();
@@ -1178,7 +1298,7 @@ export class FluentTester implements PromiseLike<void> {
     return this.window.keyboard.press(key);
   }
 
-  private async doSetTextContentFromFile(
+  private async doSetCodeJarContentFromFile(
     selector: string,
     filePath: string,
   ): Promise<void> {
@@ -1188,25 +1308,7 @@ export class FluentTester implements PromiseLike<void> {
       throw new Error(`Failed to read file content from ${filePath}`);
     }
 
-    // Set the textarea content
-    const textarea = this.window.locator(selector);
-    await textarea.fill(content);
-
-    // Trigger change event with proper type casting
-    await this.window.evaluate(
-      ([selector, value]) => {
-        const element = document.querySelector(selector) as HTMLTextAreaElement;
-        if (element) {
-          const event = new Event('input', { bubbles: true });
-          element.value = value;
-          element.dispatchEvent(event);
-
-          const changeEvent = new Event('change', { bubbles: true });
-          element.dispatchEvent(changeEvent);
-        }
-      },
-      [selector, content],
-    );
+    return this.doSetCodeJarContentSingleShot(selector, content);
   }
 
   //private async doPageReload(): Promise<void> {
@@ -1258,7 +1360,7 @@ export class FluentTester implements PromiseLike<void> {
     value: string,
     waitTime?: number,
   ): Promise<void> {
-    let wTime = Constants.DELAY_FIVE_THOUSANDS_SECONDS;
+    let wTime = Constants.DELAY_TEN_SECONDS;
     if (waitTime) wTime = waitTime;
 
     return expect(this.window.locator(selector)).toHaveValue(value, {
@@ -1274,6 +1376,297 @@ export class FluentTester implements PromiseLike<void> {
     return expect(this.window.locator(selector)).toHaveText(text, {
       timeout: waitTime,
     });
+  }
+
+  public waitOnElementToBecomeReadonly(
+    selector: string,
+    waitTime?: number,
+  ): FluentTester {
+    let delay = Constants.DELAY_HUNDRED_SECONDS;
+    if (waitTime) delay = waitTime;
+    const action = (): Promise<void> =>
+      this.doWaitOnElementToBecomeReadonlyEditable(selector, true, delay);
+
+    this.actions.push(action);
+    return this;
+  }
+
+  public waitOnElementToBecomeEditable(
+    selector: string,
+    waitTime?: number,
+  ): FluentTester {
+    let delay = Constants.DELAY_HUNDRED_SECONDS;
+    if (waitTime) delay = waitTime;
+    const action = (): Promise<void> =>
+      this.doWaitOnElementToBecomeReadonlyEditable(selector, false, delay);
+
+    this.actions.push(action);
+    return this;
+  }
+
+  // Add this to your FluentTester class
+  public codeJarShouldContainText(
+    selector: string,
+    text: string,
+  ): FluentTester {
+    const action = (): Promise<void> =>
+      this.doCheckCodeJarContainsText(selector, text);
+    this.actions.push(action);
+    return this;
+  }
+
+  private async doCheckCodeJarContainsText(
+    selector: string,
+    text: string,
+  ): Promise<void> {
+    // Find the code content inside the codejar component
+    const content = await this.window.evaluate((sel) => {
+      const element = document.querySelector(sel);
+      if (!element) return '';
+      // Get text from all pre/code elements inside
+      return Array.from(element.querySelectorAll('pre, code'))
+        .map((el) => el.textContent)
+        .join('');
+    }, selector);
+
+    return expect(content?.includes(text)).toBeTruthy();
+  }
+
+  public setCodeJarContent(selector: string, content: string): FluentTester {
+    const action = (): Promise<void> =>
+      this.doSetCodeJarContent(selector, content);
+    this.actions.push(action);
+    return this;
+  }
+
+  private async doSetCodeJarContent(
+    selector: string,
+    content: string,
+  ): Promise<void> {
+    // First find and focus the editor
+    await this.window.locator(`${selector} [contenteditable=true]`).click();
+
+    // Clear existing content using keyboard shortcuts
+    await this.window.keyboard.press('Control+a');
+    await this.window.keyboard.press('Delete');
+
+    // Wait briefly for the editor to update
+    await this.window.waitForTimeout(100);
+
+    // Type the content using the keyboard API
+    await this.window.keyboard.type(content, { delay: 0 });
+
+    // Wait for CodeJar to process events and trigger change detection
+    await this.window.waitForTimeout(500);
+
+    // Force save by pressing Ctrl+S (optional - only if your app supports this)
+    await this.window.keyboard.press('Control+s');
+
+    // Wait for potential toast notifications
+    try {
+      await this.window.waitForSelector('.toast-success', {
+        state: 'visible',
+        timeout: 5000,
+      });
+      //console.log('Toast success notification appeared');
+    } catch (err) {
+      console.warn('No success toast appeared after setting content');
+    }
+  }
+
+  private async doSetCodeJarContentSingleShot(
+    selector: string,
+    content: string,
+  ): Promise<void> {
+    // First directly set the content using JavaScript
+    await this.window.evaluate(
+      ({ selector, content }) => {
+        const editor = document.querySelector(
+          `${selector} [contenteditable=true]`,
+        );
+        if (!editor) {
+          throw new Error('CodeJar editor element not found');
+        }
+
+        // Use textContent first to avoid HTML interpretation, then convert to innerHTML
+        editor.textContent = content;
+        const rawContent = editor.innerHTML;
+        editor.innerHTML = rawContent;
+
+        // Dispatch events to ensure Angular detects the changes
+        editor.dispatchEvent(new Event('input', { bubbles: true }));
+        editor.dispatchEvent(new Event('change', { bubbles: true }));
+
+        return true;
+      },
+      { selector, content },
+    );
+
+    // Continue with the rest of your method...
+    await this.window.locator(`${selector} [contenteditable=true]`).focus();
+    await this.window.keyboard.press('End');
+    await this.sleep(Constants.DELAY_HALF_SECOND);
+    await this.window.keyboard.press('Control+s');
+    await this.sleep(Constants.DELAY_HALF_SECOND);
+  }
+
+  /*
+  private async doSetCodeJarContent(
+    selector: string,
+    content: string,
+  ): Promise<void> {
+    // Set content in the code jar component
+    await this.window.evaluate(
+      ({ selector, content }) => {
+        // Find the ngx-codejar component
+        const codeJarComponent = document.querySelector(selector);
+        if (!codeJarComponent) {
+          throw new Error(`CodeJar component not found: ${selector}`);
+        }
+
+        // Find the actual editor div (contenteditable element)
+        const editor = codeJarComponent.querySelector('[contenteditable=true]');
+        if (!editor) {
+          throw new Error('CodeJar editor element not found');
+        }
+
+        // Set the content
+        editor.innerHTML = content;
+
+        // Trigger input event to notify Angular
+        const inputEvent = new Event('input', { bubbles: true });
+        editor.dispatchEvent(inputEvent);
+
+        // Also dispatch change event for good measure
+        const changeEvent = new Event('change', { bubbles: true });
+        editor.dispatchEvent(changeEvent);
+
+        // Get the CodeJar component instance
+        const ngCodeJarInstance = Array.from(
+          Object.entries(codeJarComponent),
+        ).find(
+          ([key, value]) =>
+            key.startsWith('__ngContext') && value && typeof value === 'object',
+        )?.[1];
+
+        // Update the model if possible
+        if (ngCodeJarInstance) {
+          // Try different property names that could represent the model
+          const possibleModelProps = ['code', '_code', 'value'];
+          for (const prop of possibleModelProps) {
+            if (prop in ngCodeJarInstance) {
+              ngCodeJarInstance[prop] = content;
+              break;
+            }
+          }
+
+          // Try to emit the change event
+          if (
+            'codeChange' in ngCodeJarInstance &&
+            typeof ngCodeJarInstance.codeChange?.emit === 'function'
+          ) {
+            ngCodeJarInstance.codeChange.emit(content);
+          }
+        }
+
+        return true;
+      },
+      { selector, content },
+    );
+
+    // Small delay to allow Angular to process the change
+    await this.window.waitForTimeout(500);
+
+    // Explicitly call the component's onTemplateHtmlContentChanged handler
+    await this.window.evaluate((selector) => {
+      // Find the configuration component
+      const configComponent = document.querySelector('dburst-configuration');
+      if (!configComponent) return false;
+
+      // Find the Angular component instance with the handler method
+      let componentInstance = null;
+
+      // Try different ways to access the component instance
+      // Method 1: Look through __ngContext__
+      for (const key in configComponent) {
+        if (key.startsWith('__ngContext')) {
+          const context = configComponent[key];
+          // Look for the component instance
+          for (
+            let i = 0;
+            context && Array.isArray(context) && i < context.length;
+            i++
+          ) {
+            if (
+              context[i] &&
+              typeof context[i].onTemplateHtmlContentChanged === 'function'
+            ) {
+              componentInstance = context[i];
+              break;
+            }
+          }
+        }
+      }
+
+      // Method 2: Try accessing instance directly
+      if (
+        !componentInstance &&
+        typeof configComponent['onTemplateHtmlContentChanged'] === 'function'
+      ) {
+        componentInstance = configComponent;
+      }
+
+      // Call the handler if we found it
+      if (componentInstance) {
+        const editorContent = document.querySelector(
+          `${selector} [contenteditable=true]`,
+        )?.innerHTML;
+        if (editorContent) {
+          componentInstance.onTemplateHtmlContentChanged(editorContent);
+          console.log(
+            'Successfully called onTemplateHtmlContentChanged with content',
+          );
+          return true;
+        }
+      }
+
+      console.warn(
+        'Could not find component instance with onTemplateHtmlContentChanged method',
+      );
+      return false;
+    }, selector);
+
+    // Wait for toast notification indicating save success
+    try {
+      await this.window.waitForSelector('.toast-success', {
+        state: 'visible',
+        timeout: 5000,
+      });
+      console.log('Toast success notification appeared');
+    } catch (err) {
+      console.warn('No success toast appeared after setting content');
+    }
+  }
+*/
+
+  protected async doWaitOnElementToBecomeReadonlyEditable(
+    selector: string,
+    isReadonly: boolean,
+    waitTime: number,
+  ): Promise<void> {
+    const locator = this.window.locator(selector);
+
+    if (isReadonly) {
+      // Wait for readonly attribute to exist with any value
+      return expect(locator).toHaveAttribute('readonly', '', {
+        timeout: waitTime,
+      });
+    } else {
+      // Wait for readonly attribute to not exist
+      return expect(locator).not.toHaveAttribute('readonly', {
+        timeout: waitTime,
+      });
+    }
   }
 
   private async doWaitOnElementWithTextToBecome(
@@ -1338,6 +1731,37 @@ export class FluentTester implements PromiseLike<void> {
     selectElement.selectOption({ label: label });
   }
 
+  // Add this private implementation method
+  private async doDropDownSelectOptionHavingValue(
+    selector: string,
+    value: string,
+  ): Promise<void> {
+    const selectElement = this.window.locator(selector);
+
+    selectElement.selectOption({ value: value });
+  }
+
+  // Add this public method
+  public setCheckboxState(selector: string, checked: boolean): FluentTester {
+    const action = (): Promise<void> =>
+      this.doSetCheckboxState(selector, checked);
+    this.actions.push(action);
+    return this;
+  }
+
+  // Add this private implementation method
+  private async doSetCheckboxState(
+    selector: string,
+    checked: boolean,
+  ): Promise<void> {
+    const isCurrentlyChecked = await this.window.locator(selector).isChecked();
+
+    // Toggle the checkbox only if its current state doesn't match the desired state
+    if (isCurrentlyChecked !== checked) {
+      await this.window.locator(selector).click();
+    }
+  }
+
   private async doSetValue(selector: string, value: string): Promise<void> {
     await this.doClick(selector);
     await this.doTypeText(value);
@@ -1368,7 +1792,7 @@ export class FluentTester implements PromiseLike<void> {
 
     do {
       content = await jetpack.readAsync(filePath);
-      console.log(`filePath = ${filePath}, content = ${content}`);
+      //console.log(`filePath = ${filePath}, content = ${content}`);
       const endTime = new Date().getTime();
       if ((endTime - startTime) / 1000 > Constants.DELAY_FIVE_THOUSANDS_SECONDS)
         throw new Error(

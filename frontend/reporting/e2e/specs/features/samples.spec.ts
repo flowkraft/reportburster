@@ -91,7 +91,7 @@ test.describe('', async () => {
         .click('#btnSamplesLearnModeEXCEL-DISTINCT-SHEETS-SPLIT-ONLY')
         .waitOnElementToContainText(
           '#divEXCEL-DISTINCT-SHEETS-SPLIT-ONLY',
-          'you can process the data for all your company employees no matter if your company has few tens',
+          'When processing your actual reports',
         )
         .click('#btnCloseSamplesLearnMoreModal')
         .click('#btnSampleTryItEXCEL-DISTINCT-SHEETS-SPLIT-ONLY')
@@ -160,7 +160,7 @@ test.describe('', async () => {
         .click('#btnSamplesLearnModeEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY')
         .waitOnElementToContainText(
           '#divEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY',
-          'you can process the data for all your company customers no matter if your company has few tens',
+          'When processing your actual reports',
         )
         .click('#btnCloseSamplesLearnMoreModal')
         .click('#btnSampleTryItEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY')
@@ -486,6 +486,59 @@ test.describe('', async () => {
         .click('#btnSampleTryItGENERATE-PAYSLIPS-EXCEL')
         .clickNoDontDoThis()
         .click('#btnSampleTryItGENERATE-PAYSLIPS-EXCEL')
+        .clickYesDoThis()
+        .waitOnElementToBecomeVisible('#qaReminderLink')
+        .waitOnElementToBecomeEnabled('#btnGenerateReports')
+        .click('#btnGenerateReports')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(
+          ['0.xlsx', '1.xlsx', '2.xlsx'],
+          'xlsx',
+        )
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (10_generate_xlsx_from_xlsx_ds)',
+    async ({ beforeAfterEach: firstPage }) => {
+      //long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      let ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-EXCEL-XLSX-DS')
+        .waitOnElementToContainText(
+          '#tdGENERATE-PAYSLIPS-EXCEL-XLSX-DS',
+          'Generate Reports From Excel Data Source',
+        )
+        .click('#trGENERATE-PAYSLIPS-EXCEL-XLSX-DS');
+
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'GENERATE-PAYSLIPS-EXCEL-XLSX-DS',
+        //['config/samples/split-only/settings.xml'],
+        'Payslips.xlsx',
+        'kyle.butford@northridgehealth.org.xlsx employee payslip',
+        undefined,
+        'data-text-cell',
+      );
+
+      await ft
+        .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-EXCEL-XLSX-DS')
+        .waitOnElementToContainText(
+          '#tdGENERATE-PAYSLIPS-EXCEL-XLSX-DS',
+          'Generate Reports From Excel',
+        )
+        .click('#trGENERATE-PAYSLIPS-EXCEL-XLSX-DS')
+        .click('#btnSampleTryItGENERATE-PAYSLIPS-EXCEL-XLSX-DS')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItGENERATE-PAYSLIPS-EXCEL-XLSX-DS')
         .clickYesDoThis()
         .waitOnElementToBecomeVisible('#qaReminderLink')
         .waitOnElementToBecomeEnabled('#btnGenerateReports')

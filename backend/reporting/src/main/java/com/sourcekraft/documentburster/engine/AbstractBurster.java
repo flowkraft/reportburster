@@ -52,6 +52,7 @@ public abstract class AbstractBurster implements Burstable {
 
 	protected Scripting scripting;
 
+	protected String jobType;
 	protected String jobFilePath;
 
 	protected String filePath;
@@ -89,6 +90,12 @@ public abstract class AbstractBurster implements Burstable {
 		ctx.extractedFilePaths.put(ctx.token, ctx.extractedFilePath);
 
 		ctx.numberOfExtractedFiles++;
+
+	}
+
+	public void setJobType(String jobType) {
+
+		this.jobType = jobType;
 
 	}
 
@@ -735,8 +742,11 @@ public abstract class AbstractBurster implements Burstable {
 
 		JobProgressDetails currentJobExecutionProgressDetails = new JobProgressDetails();
 
+
 		currentJobExecutionProgressDetails.currentdate = currentDate;
 		currentJobExecutionProgressDetails.filepath = filePath;
+		currentJobExecutionProgressDetails.jobtype = jobType;
+		currentJobExecutionProgressDetails.configurationFilePath = configurationFilePath;
 
 		currentJobExecutionProgressDetails.lasttokenprocessed = lastTokenProcessed;
 		currentJobExecutionProgressDetails.lasttokenindocument = lastTokenInDocument;

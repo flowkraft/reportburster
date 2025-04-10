@@ -18,15 +18,9 @@ test.describe('', async () => {
         .gotoBurstScreen()
         .appShouldBeReadyToRunNewJobs()
         .appStatusShouldBeGreatNoErrorsNoWarnings()
-        .elementShouldNotBeVisible(
-          'dburst-log-files-viewer-separate-tabs #infoLog',
-        )
-        .elementShouldNotBeVisible(
-          'dburst-log-files-viewer-separate-tabs #errorsLog',
-        )
-        .elementShouldNotBeVisible(
-          'dburst-log-files-viewer-separate-tabs #warningsLog',
-        );
+        .elementShouldNotBeVisible('#logsViewerBurstReportsTab #infoLog')
+        .elementShouldNotBeVisible('#logsViewerBurstReportsTab #errorsLog')
+        .elementShouldNotBeVisible('#logsViewerBurstReportsTab #warningsLog');
     },
   );
 
@@ -41,28 +35,21 @@ test.describe('', async () => {
       await ft.gotoBurstScreen().appShouldBeReadyToRunNewJobs();
 
       if (randomLogFiles.includes('info.log')) {
-        await ft
-          .waitOnElementToBecomeVisible('dburst-log-files-viewer-separate-tabs')
-          .waitOnElementToBecomeVisible(
-            'dburst-log-files-viewer-separate-tabs #infoLog',
-          );
+        await ft.waitOnElementToBecomeVisible(
+          '#logsViewerBurstReportsTab #infoLog',
+        );
       }
 
       if (randomLogFiles.includes('errors.log')) {
         await ft
-          .waitOnElementToBecomeVisible('dburst-log-files-viewer-separate-tabs')
-          .waitOnElementToBecomeVisible(
-            'dburst-log-files-viewer-separate-tabs #errorsLog',
-          )
+          .waitOnElementToBecomeVisible('#logsViewerBurstReportsTab #errorsLog')
           .appStatusShouldShowErrors();
       }
 
       if (randomLogFiles.includes('warnings.log')) {
-        await ft
-          .waitOnElementToBecomeVisible('dburst-log-files-viewer-separate-tabs')
-          .waitOnElementToBecomeVisible(
-            'dburst-log-files-viewer-separate-tabs #warningsLog',
-          );
+        await ft.waitOnElementToBecomeVisible(
+          '#logsViewerBurstReportsTab #warningsLog',
+        );
 
         if (!randomLogFiles.includes('errors.log'))
           await ft.appStatusShouldShowWarnings();
@@ -70,19 +57,15 @@ test.describe('', async () => {
       }
 
       if (!randomLogFiles.includes('info.log')) {
-        await ft
-          .waitOnElementToBecomeVisible('dburst-log-files-viewer-separate-tabs')
-          .elementShouldNotBeVisible(
-            'dburst-log-files-viewer-separate-tabs #infoLog',
-          );
+        await ft.elementShouldNotBeVisible(
+          '#logsViewerBurstReportsTab #infoLog',
+        );
       }
 
       if (!randomLogFiles.includes('errors.log')) {
-        await ft
-          .waitOnElementToBecomeVisible('dburst-log-files-viewer-separate-tabs')
-          .elementShouldNotBeVisible(
-            'dburst-log-files-viewer-separate-tabs #errorsLog',
-          );
+        await ft.elementShouldNotBeVisible(
+          '#logsViewerBurstReportsTab #errorsLog',
+        );
 
         if (!randomLogFiles.includes('warnings.log'))
           await ft.appStatusShouldBeGreatNoErrorsNoWarnings();
@@ -90,11 +73,9 @@ test.describe('', async () => {
       }
 
       if (!randomLogFiles.includes('warnings.log')) {
-        await ft
-          .waitOnElementToBecomeVisible('dburst-log-files-viewer-separate-tabs')
-          .elementShouldNotBeVisible(
-            'dburst-log-files-viewer-separate-tabs #warningsLog',
-          );
+        await ft.elementShouldNotBeVisible(
+          '#logsViewerBurstReportsTab #warningsLog',
+        );
 
         if (!randomLogFiles.includes('errors.log'))
           await ft.appStatusShouldBeGreatNoErrorsNoWarnings();

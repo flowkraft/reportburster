@@ -2,10 +2,19 @@ package com.flowkraft.cfgman;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.flowkraft.common.AppPaths;
+import com.flowkraft.common.Utils;
+import com.flowkraft.jobman.services.IOUtilsService;
 import com.flowkraft.jobman.services.SystemService;
 import com.sourcekraft.documentburster.common.settings.model.ConfigurationFileInfo;
 import com.sourcekraft.documentburster.common.settings.model.ConnectionFileInfo;
@@ -26,7 +37,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping(value = "/api/cfgman", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/cfgman")
 public class CfgManController {
 
 	@Autowired
@@ -34,6 +45,9 @@ public class CfgManController {
 
 	@Autowired
 	SystemService systemService;
+
+	@Autowired
+	IOUtilsService ioUtilsService;
 
 	@GetMapping(value = "/rb/load-all")
 	public Flux<ConfigurationFileInfo> loadRbSettingsAll() throws Exception {
@@ -179,4 +193,189 @@ public class CfgManController {
 
 	}
 
+	@GetMapping(value = "/rb/serve-asset", produces = MediaType.ALL_VALUE)
+	public Mono<ResponseEntity<?>> serveAsset(@RequestParam String path) throws Exception {
+		//System.out.println("========== SERVE ASSET ENDPOINT CALLED ==========");
+		//System.out.println("Path requested: " + path);
+
+		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+
+		//System.out.println("Full path: " + fullPath);
+
+		// Determine content type based on file extension
+		String contentType = determineContentType(fullPath);
+		//System.out.println("Content type: " + contentType);
+
+		// For images and binary files
+		if (!contentType.startsWith("text/")) {
+			return Mono.fromCallable(() -> {
+				byte[] fileData = ioUtilsService.readBinaryFile(fullPath);
+				return ResponseEntity.ok().header("Content-Type", contentType) // Set content type explicitly
+						.header("Accept", "*/*") // Accept any content type
+						.body(fileData);
+			});
+		}
+		// For text files (CSS, JS, etc.)
+		else {
+			return Mono.fromCallable(() -> {
+				String fileContent = systemService.unixCliCat(fullPath);
+				return ResponseEntity.ok().header("Content-Type", contentType) // Set content type explicitly
+						.header("Accept", "*/*") // Accept any content type
+						.body(fileContent);
+			});
+		}
+	}
+
+	@GetMapping(value = "/rb/view-template", produces = MediaType.TEXT_HTML_VALUE)
+	public Mono<ResponseEntity<String>> viewTemplate(@RequestParam String path) throws Exception {
+		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+
+		return Mono.fromCallable(() -> {
+			// Read the HTML content
+			String htmlContent = systemService.unixCliCat(fullPath);
+
+			// Get the base directory from the path
+			String baseDir = path.substring(0, path.lastIndexOf('/') + 1);
+
+			// Process the HTML to fix relative URLs
+			Document doc = Jsoup.parse(htmlContent);
+
+			// Fix image sources
+			Elements images = doc.select("img[src]");
+			for (Element img : images) {
+				String src = img.attr("src");
+				if (!src.startsWith("http") && !src.startsWith("data:") && !src.startsWith("/api/")) {
+					// Remove ./ if present
+					src = src.replaceFirst("^\\./", "");
+					img.attr("src", "/api/cfgman/rb/serve-asset?path=" + Utils.encodeURIComponent(baseDir + src));
+				}
+			}
+
+			// Fix CSS links
+			Elements links = doc.select("link[href]");
+			for (Element link : links) {
+				String href = link.attr("href");
+				if (!href.startsWith("http") && !href.startsWith("data:") && !href.startsWith("/api/")) {
+					// Remove ./ if present
+					href = href.replaceFirst("^\\./", "");
+					link.attr("href", "/api/cfgman/rb/serve-asset?path=" + Utils.encodeURIComponent(baseDir + href));
+				}
+			}
+
+			// Fix background images and font URLs in style elements
+			Elements styles = doc.select("style");
+			for (Element style : styles) {
+				String css = style.html();
+
+				// Fix background-image URLs
+				Pattern bgPattern = Pattern
+						.compile("background-image:\\s*url\\(['\"]((?!http|data:|/api)[^'\"]*)['\"]*\\)");
+				Matcher bgMatcher = bgPattern.matcher(css);
+				StringBuffer bgSb = new StringBuffer();
+				while (bgMatcher.find()) {
+					String path1 = bgMatcher.group(1).replaceFirst("^\\./", "");
+					bgMatcher.appendReplacement(bgSb,
+							"background-image: url('/api/cfgman/rb/serve-asset?path=" + baseDir + path1 + "')");
+				}
+				bgMatcher.appendTail(bgSb);
+				css = bgSb.toString();
+
+				// Fix @font-face src URLs
+				Pattern fontPattern = Pattern.compile("src:\\s*url\\(['\"]((?!http|data:|/api)[^'\"]*)['\"]*\\)");
+				Matcher fontMatcher = fontPattern.matcher(css);
+				StringBuffer fontSb = new StringBuffer();
+				while (fontMatcher.find()) {
+					String path1 = fontMatcher.group(1).replaceFirst("^\\./", "");
+					fontMatcher.appendReplacement(fontSb,
+							"src: url('/api/cfgman/rb/serve-asset?path=" + baseDir + path1 + "')");
+				}
+				fontMatcher.appendTail(fontSb);
+				css = fontSb.toString();
+
+				style.html(css);
+			}
+
+			// Fix background images in style attributes
+			Elements elementsWithStyle = doc.select("[style*=background-image]");
+			for (Element el : elementsWithStyle) {
+				String style = el.attr("style");
+				Pattern pattern = Pattern
+						.compile("background-image:\\s*url\\(['\"]((?!http|data:|/api)[^'\"]*)['\"]*\\)");
+				Matcher matcher = pattern.matcher(style);
+				StringBuffer sb = new StringBuffer();
+				while (matcher.find()) {
+					String path1 = matcher.group(1).replaceFirst("^\\./", "");
+					matcher.appendReplacement(sb,
+							"background-image: url('/api/cfgman/rb/serve-asset?path=" + baseDir + path1 + "')");
+				}
+				matcher.appendTail(sb);
+				el.attr("style", sb.toString());
+			}
+
+			// Convert back to HTML string
+			String processedHtml = doc.outerHtml();
+
+			return ResponseEntity.ok().header("Content-Type", "text/html").body(processedHtml);
+		});
+	}
+
+	private String determineContentType(String filePath) {
+		String extension = "";
+		int i = filePath.lastIndexOf('.');
+		if (i > 0) {
+			extension = filePath.substring(i + 1).toLowerCase();
+		}
+
+		switch (extension) {
+		// Images
+		case "png":
+			return "image/png";
+		case "jpg":
+		case "jpeg":
+			return "image/jpeg";
+		case "gif":
+			return "image/gif";
+		case "svg":
+			return "image/svg+xml";
+		case "webp":
+			return "image/webp";
+		case "ico":
+			return "image/x-icon";
+		case "bmp":
+			return "image/bmp";
+
+		// Web fonts
+		case "woff":
+			return "font/woff";
+		case "woff2":
+			return "font/woff2";
+		case "ttf":
+			return "font/ttf";
+		case "eot":
+			return "application/vnd.ms-fontobject";
+		case "otf":
+			return "font/otf";
+
+		// Web assets
+		case "css":
+			return "text/css";
+		case "js":
+			return "application/javascript";
+		case "json":
+			return "application/json";
+		case "xml":
+			return "application/xml";
+		case "html":
+		case "htm":
+			return "text/html";
+		case "txt":
+			return "text/plain";
+
+		// Default binary
+		default:
+			return "application/octet-stream";
+		}
+	}
 }

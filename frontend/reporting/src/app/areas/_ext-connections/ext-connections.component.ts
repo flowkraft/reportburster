@@ -338,7 +338,8 @@ export class ExternalConnectionsComponent implements OnInit {
           const selectedConnection = this.getSelectedConnection();
 
           this.shellService.runBatFile([
-            '-cec',
+            'system',
+            'test-email',
             '-c',
             '"' +
               Utilities.slash(selectedConnection.filePath).replace(

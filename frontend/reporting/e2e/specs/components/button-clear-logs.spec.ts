@@ -15,27 +15,30 @@ test.describe('', async () => {
       await Helpers.generateRandomLogFiles();
 
       await new FluentTester(firstPage)
-        .waitOnElementToBecomeVisible('#logsViewer')
+        .waitOnElementToBecomeVisible('#logsViewerBurstReportsTab')
+        .elementShouldBeDisabled('#btnBurst')
         .click('#burstFile')
         .setInputFiles(
           '#burstFileUploadInput',
           path.resolve(
             slash(
-              process.env.PORTABLE_EXECUTABLE_DIR + '/samples/Payslips.pdf',
+              process.env.PORTABLE_EXECUTABLE_DIR +
+                '/samples/burst/Payslips.pdf',
             ),
           ),
         )
-        .elementShouldNotBeVisible('#qaReminderLink')
+        .waitOnElementToBecomeEnabled('#btnBurst')
+        .waitOnElementToBecomeInvisible('#qaReminderLink')
         .click('#btnBurst')
         .infoDialogShouldBeVisible()
         .clickYesDoThis()
-        .click('#btnClearLogs')
+        .click('#btnClearLogsBurstReportsTab')
         .confirmDialogShouldBeVisible()
         .clickNoDontDoThis()
         .click('#btnBurst')
         .infoDialogShouldBeVisible()
         .clickYesDoThis()
-        .click('#btnClearLogs')
+        .click('#btnClearLogsBurstReportsTab')
         .confirmDialogShouldBeVisible()
         .clickYesDoThis()
         .waitOnElementToBecomeVisible('#qaReminderLink')

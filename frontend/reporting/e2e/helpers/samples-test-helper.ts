@@ -110,7 +110,7 @@ export class SamplesTestHelper {
       if (expectedOutputFile.endsWith('.docx') && expectedTemplateFile) {
         ft = ft
           .dropDownShouldHaveSelectedOption('#reportOutputType', 'output.docx')
-          .elementShouldNotBeVisible('#reportTemplateHtmlContent')
+          .elementShouldNotBeVisible('#codeJarHtmlTemplateEditor')
           .elementShouldContainText(
             '#selectTemplateFile',
             expectedTemplateFile,
@@ -122,7 +122,7 @@ export class SamplesTestHelper {
           .dropDownShouldHaveSelectedOption('#reportOutputType', 'output.html')
           .elementShouldNotBeVisible('#selectTemplateFile')
           .elementShouldContainText(
-            '#reportTemplateHtmlContent',
+            '#codeJarHtmlTemplateEditor',
             expectedTemplateContent,
           );
       }
@@ -132,7 +132,7 @@ export class SamplesTestHelper {
           .dropDownShouldHaveSelectedOption('#reportOutputType', 'output.pdf')
           .elementShouldNotBeVisible('#selectTemplateFile')
           .elementShouldContainText(
-            '#reportTemplateHtmlContent',
+            '#codeJarHtmlTemplateEditor',
             expectedTemplateContent,
           );
       }
@@ -142,7 +142,7 @@ export class SamplesTestHelper {
           .dropDownShouldHaveSelectedOption('#reportOutputType', 'output.xlsx')
           .elementShouldNotBeVisible('#selectTemplateFile')
           .elementShouldContainText(
-            '#reportTemplateHtmlContent',
+            '#codeJarHtmlTemplateEditor',
             expectedTemplateContent,
           );
       }

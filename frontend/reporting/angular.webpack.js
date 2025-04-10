@@ -1,6 +1,7 @@
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
 const NodePolyfillPlugin = require("node-polyfill-webpack-plugin");
-const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
+const BundleAnalyzerPlugin =
+  require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 
 /**
  * Custom angular webpack configuration

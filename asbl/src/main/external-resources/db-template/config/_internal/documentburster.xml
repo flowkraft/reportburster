@@ -1,127 +1,142 @@
 <project name="documentburster" default="documentburster">
 
-	<property file="documentburster.properties" />
+    <property file="documentburster.properties" />
 
-	<echo>DOCUMENTBURSTER_HOME = ${DOCUMENTBURSTER_HOME}</echo>
-	<echo>CLIENT_JVM_OPTS = ${CLIENT_JVM_OPTS}</echo>
+    <echo>DOCUMENTBURSTER_HOME = ${DOCUMENTBURSTER_HOME}</echo>
+    <echo>CLIENT_JVM_OPTS = ${CLIENT_JVM_OPTS}</echo>
 
-	<echo>arg1 = ${arg1}</echo>
-	<echo>arg2 = ${arg2}</echo>
-	<echo>arg3 = ${arg3}</echo>
-	<echo>arg4 = ${arg4}</echo>
-	<echo>arg5 = ${arg5}</echo>
-	<echo>arg6 = ${arg6}</echo>
-	<echo>arg7 = ${arg7}</echo>
-	
-	<path id="documentburster.class.path">
-		
-		<fileset dir="${DOCUMENTBURSTER_HOME}/lib/burst">
-			<include name="**/*.jar" />
-		</fileset>
-		
-		<pathelement location="${DOCUMENTBURSTER_HOME}" />
-	
-	</path>
+    <echo>arg1 = ${arg1}</echo>
+    <echo>arg2 = ${arg2}</echo>
+    <echo>arg3 = ${arg3}</echo>
+    <echo>arg4 = ${arg4}</echo>
+    <echo>arg5 = ${arg5}</echo>
+    <echo>arg6 = ${arg6}</echo>
+    <echo>arg7 = ${arg7}</echo>
+    <echo>arg8 = ${arg8}</echo>
+    <echo>arg9 = ${arg9}</echo>
+    <echo>arg10 = ${arg10}</echo>
+    <echo>arg11 = ${arg11}</echo>
+    <echo>arg12 = ${arg12}</echo>
+    <echo>arg13 = ${arg13}</echo>
+    <echo>arg14 = ${arg14}</echo>
+    <echo>arg15 = ${arg15}</echo>
+    
+    <path id="documentburster.class.path">
+        <fileset dir="${DOCUMENTBURSTER_HOME}/lib/burst">
+            <include name="**/*.jar" />
+        </fileset>
+        
+        <pathelement location="${DOCUMENTBURSTER_HOME}" />
+    </path>
 
-	<path id="class.path">
-		<path refid="documentburster.class.path" />
-	</path>
+    <path id="class.path">
+        <path refid="documentburster.class.path" />
+    </path>
 
-	<target name="documentburster">
+    <target name="documentburster">
+        <java classname="com.sourcekraft.documentburster.DocumentBurster" fork="true" dir="${DOCUMENTBURSTER_HOME}">
+            <jvmarg line="${CLIENT_JVM_OPTS}" />
 
-		<java classname="com.sourcekraft.documentburster.DocumentBurster" fork="true" dir="${DOCUMENTBURSTER_HOME}">
+            <arg value="${arg1}" />
+            <arg value="${arg2}" />
+            <arg value="${arg3}" />
+            <arg value="${arg4}" />
+            <arg value="${arg5}" />
+            <arg value="${arg6}" />
+            <arg value="${arg7}" />
+            <arg value="${arg8}" />
+            <arg value="${arg9}" />
+            <arg value="${arg10}" />
+            <arg value="${arg11}" />
+            <arg value="${arg12}" />
+            <arg value="${arg13}" />
+            <arg value="${arg14}" />
+            <arg value="${arg15}" />
+                
+            <classpath refid="class.path" />
+        </java>
+    </target>
 
-			<jvmarg line="${CLIENT_JVM_OPTS}" />
+    <target name="hprof-profile">
+        <java classname="com.sourcekraft.documentburster.MainProgram" fork="true" dir="${DOCUMENTBURSTER_HOME}">
+            <jvmarg line="${CLIENT_JVM_OPTS}" />
+            <jvmarg value="-agentlib:hprof=cpu=samples,depth=64,interval=1" />
+            
+            <arg value="${arg1}" />
+            <arg value="${arg2}" />
+            <arg value="${arg3}" />
+            <arg value="${arg4}" />
+            <arg value="${arg5}" />
+            <arg value="${arg6}" />
+            <arg value="${arg7}" />
+            <arg value="${arg8}" />
+            <arg value="${arg9}" />
+            <arg value="${arg10}" />
+            <arg value="${arg11}" />
+            <arg value="${arg12}" />
+            <arg value="${arg13}" />
+            <arg value="${arg14}" />
+            <arg value="${arg15}" />
+            
+            <classpath refid="class.path" />
+        </java>
+    </target>
 
-			<arg value="${arg1}" />
-			<arg value="${arg2}" />
-			<arg value="${arg3}" />
-			<arg value="${arg4}" />
-			<arg value="${arg5}" />
-			<arg value="${arg6}" />
-			<arg value="${arg7}" />
-				
-			<classpath refid="class.path" />
+    <target name="jip-profile">
+        <java classname="com.sourcekraft.documentburster.MainProgram" fork="true" dir="${DOCUMENTBURSTER_HOME}">
+            <jvmarg line="${CLIENT_JVM_OPTS}" />
+            <jvmarg value="-javaagent:lib/perf/jip/profile/profile.jar" />
+            <jvmarg value="-Dprofile.properties=lib/perf/jip/profile/profile.properties" />
+            
+            <arg value="${arg1}" />
+            <arg value="${arg2}" />
+            <arg value="${arg3}" />
+            <arg value="${arg4}" />
+            <arg value="${arg5}" />
+            <arg value="${arg6}" />
+            <arg value="${arg7}" />
+            <arg value="${arg8}" />
+            <arg value="${arg9}" />
+            <arg value="${arg10}" />
+            <arg value="${arg11}" />
+            <arg value="${arg12}" />
+            <arg value="${arg13}" />
+            <arg value="${arg14}" />
+            <arg value="${arg15}" />
+            
+            <classpath refid="class.path" />
+        </java>
+    </target>
 
-		</java>
-
-	</target>
-
-	<target name="hprof-profile">
-
-		<java classname="com.sourcekraft.documentburster.DocumentBurster" fork="true" dir="${DOCUMENTBURSTER_HOME}">
-
-			<jvmarg line="${CLIENT_JVM_OPTS}" />
-
-			<jvmarg value="-agentlib:hprof=cpu=samples,depth=64,interval=1" />
-
-			<arg value="${arg1}" />
-			<arg value="${arg2}" />
-			<arg value="${arg3}" />
-			<arg value="${arg4}" />
-			<arg value="${arg5}" />
-			<arg value="${arg6}" />
-			<arg value="${arg7}" />
-			
-			<classpath refid="class.path" />
-
-		</java>
-
-	</target>
-
-	<target name="jip-profile">
-
-		<java classname="com.sourcekraft.documentburster.DocumentBurster" fork="true" dir="${DOCUMENTBURSTER_HOME}">
-
-			<jvmarg line="${CLIENT_JVM_OPTS}" />
-
-			<jvmarg value="-javaagent:lib/perf/jip/profile/profile.jar" />
-			<jvmarg value="-Dprofile.properties=lib/perf/jip/profile/profile.properties" />
-
-			<arg value="${arg1}" />
-			<arg value="${arg2}" />
-			<arg value="${arg3}" />
-			<arg value="${arg4}" />
-			<arg value="${arg5}" />
-			<arg value="${arg6}" />
-			<arg value="${arg7}" />
-			
-			<classpath refid="class.path" />
-
-		</java>
-
-	</target>
-
-	<target name="performance-statistics">
-
-		<java classname="com.sourcekraft.documentburster.DocumentBurster" fork="true" dir="${DOCUMENTBURSTER_HOME}">
-
-			<jvmarg line="${CLIENT_JVM_OPTS}" />
-
-			<jvmarg value="-javaagent:lib/perf/perf4j/weaver/aspectjweaver.jar" />
-			<jvmarg value="-Dorg.aspectj.weaver.loadtime.configuration=config/_internal/aop-perf4j.xml" />
-			<jvmarg value="-Dlog4j.configuration=config/_internal/log4j-perf4j.xml" />
-
-			<arg value="${arg1}" />
-			<arg value="${arg2}" />
-			<arg value="${arg3}" />
-			<arg value="${arg4}" />
-			<arg value="${arg5}" />
-			<arg value="${arg6}" />
-			<arg value="${arg7}" />
-			
-			<classpath>
-
-				<path refid="class.path" />
-	
-				<fileset dir="${DOCUMENTBURSTER_HOME}/lib/perf/perf4j/jars">
-					<include name="**/*.jar"/>
-				</fileset>
-
-			</classpath>
-
-		</java>
-
-	</target>
-
+    <target name="performance-statistics">
+        <java classname="com.sourcekraft.documentburster.MainProgram" fork="true" dir="${DOCUMENTBURSTER_HOME}">
+            <jvmarg line="${CLIENT_JVM_OPTS}" />
+            <jvmarg value="-javaagent:lib/perf/perf4j/weaver/aspectjweaver.jar" />
+            <jvmarg value="-Dorg.aspectj.weaver.loadtime.configuration=config/_internal/aop-perf4j.xml" />
+            <jvmarg value="-Dlog4j.configuration=config/_internal/log4j-perf4j.xml" />
+            
+            <arg value="${arg1}" />
+            <arg value="${arg2}" />
+            <arg value="${arg3}" />
+            <arg value="${arg4}" />
+            <arg value="${arg5}" />
+            <arg value="${arg6}" />
+            <arg value="${arg7}" />
+            <arg value="${arg8}" />
+            <arg value="${arg9}" />
+            <arg value="${arg10}" />
+            <arg value="${arg11}" />
+            <arg value="${arg12}" />
+            <arg value="${arg13}" />
+            <arg value="${arg14}" />
+            <arg value="${arg15}" />
+            
+            <classpath>
+                <path refid="class.path" />
+                <fileset dir="${DOCUMENTBURSTER_HOME}/lib/perf/perf4j/jars">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+        </java>
+    </target>
 </project>

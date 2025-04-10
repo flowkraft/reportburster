@@ -41,19 +41,19 @@ public class LicenseService {
 
 	public void activateLicense() throws Exception {
 
-		shellService.runDocumentBursterBatScriptFile("-al");
+		shellService.runDocumentBursterBatScriptFile("system license activate");
 
 	}
 
 	public void deActivateLicense() throws Exception {
 
-		shellService.runDocumentBursterBatScriptFile("-dl");
+		shellService.runDocumentBursterBatScriptFile("system license deactivate");
 
 	}
 
 	public void checkLicense() throws Exception {
 
-		shellService.runDocumentBursterBatScriptFile("-cl");
+		shellService.runDocumentBursterBatScriptFile("system license check");
 
 	}
 

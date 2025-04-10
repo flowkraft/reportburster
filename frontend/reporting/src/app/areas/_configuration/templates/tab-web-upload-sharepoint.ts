@@ -41,7 +41,7 @@ export const tabWebUploadSharePointTemplate = `<ng-template #tabWebUploadSharePo
 
       <div class="col-xs-2">{{'AREAS.CONFIGURATION.TAB-WEB-UPLOAD-SHAREPOINT.EXAMPLE' | translate }}</div>
       <div class="col-xs-7">
-        <em>--ntlm -T $extracted_file_path$ -u user:password https://sharepointserver.com/reports/ </em>
+        <em [innerHTML]="'--ntlm -T \\$\\{extracted_file_path\\} -u user:password https://sharepointserver.com/reports/'"></em>
       </div>
 
     </div>

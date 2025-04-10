@@ -202,6 +202,34 @@ export class SettingsService {
     return `${this.CONFIGURATION_BURST_FOLDER_PATH}/settings.xml`;
   }
 
+  async loadImageAsDataUrl(imagePath: string): Promise<string> {
+    // Important: Explicitly set Accept header to image/*
+    const response = await fetch(
+      `/api/cfgman/rb/serve-asset?path=${encodeURIComponent(imagePath)}`,
+      {
+        headers: {
+          Accept: 'image/*', // This is critical
+        },
+      },
+    );
+
+    if (!response.ok) {
+      console.error(
+        `Failed to load image: ${imagePath}, status: ${response.status}`,
+      );
+      return null;
+    }
+
+    const blob = await response.blob();
+
+    // Convert blob to data URL
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  }
+
   async loadDefaultSettingsFileAsync(): Promise<any> {
     const systemInfo = await this.apiService.get('/jobman/system/info');
 
@@ -230,6 +258,23 @@ export class SettingsService {
     this.version = xmlSettings.documentburster.settings.version;
 
     return xmlSettings;
+  }
+
+  async resolveAbsolutePath(relativePath: string): Promise<string> {
+    // Normalize relativePath by removing leading slash if present
+    if (relativePath.startsWith('/')) {
+      relativePath = relativePath.substring(1);
+    }
+
+    // Call the backend API to resolve the path
+    const response = await this.apiService.get(
+      '/jobman/system/fs/resolve-absolute-path',
+      {
+        path: relativePath,
+      },
+    );
+
+    return response.absolutePath;
   }
 
   async saveSettingsFileAsync(
@@ -494,7 +539,7 @@ export class SettingsService {
     );
   }
 
-  async loadTemplateFileAsync(filePath: string): Promise<any> {
+  async loadTemplateFileAsync(filePath: string): Promise<string> {
     return this.apiService.get(
       '/cfgman/rb/load-template',
       { path: encodeURIComponent(filePath) },
@@ -502,6 +547,7 @@ export class SettingsService {
         Accept: 'text/plain',
         'Content-Type': 'application/json',
       }),
+      'text',
     );
   }
 
@@ -540,45 +586,43 @@ export class SettingsService {
     }
   }
 
-  getReportTemplates(outputType: string, filter: { samples: boolean }) {
-    // Uncomment to debug input parameters
-    //console.log(`getReportTemplates called with outputType=${outputType}, samples=${filter.samples}`);
-    //console.log(`Available templates:`, this.templateFiles);
-
-    return this.templateFiles.filter((template) => {
-      let isValidTemplate = false;
-      let fileExtension = '';
-
-      switch (outputType) {
-        case 'output.docx':
-          fileExtension = '.docx';
-          break;
-        case 'output.pdf':
-        case 'output.xlsx':
-        case 'output.html':
-          fileExtension = '.html';
-          break;
-        default:
-          // Uncomment to debug unknown output types
-          //console.log(`Unsupported output type: ${outputType}`);
-          return false;
-      }
-
-      // Check if template matches required extension
-      isValidTemplate = template.fileName.endsWith(fileExtension);
-
-      // If not including samples, filter out sample templates
-      if (!filter.samples) {
-        isValidTemplate = isValidTemplate && !template.type.includes('-sample');
-      }
-
-      // Uncomment to debug template filtering
-      //console.log(
-      //  `Template ${template.fileName}: isValid=${isValidTemplate}, extension=${fileExtension}, isSample=${template.type.includes('-sample')}`,
-      //);
-
-      return isValidTemplate;
+  getReportTemplates(outputType: string, options: any = {}) {
+    // Filter templates by output type
+    const templatesOfType = this.templateFiles.filter((tplFile) => {
+      if (outputType === 'output.docx' && tplFile.fileName.endsWith('.docx'))
+        return true;
+      if (
+        (outputType === 'output.html' ||
+          outputType === 'output.pdf' ||
+          outputType === 'output.xlsx') &&
+        tplFile.fileName.endsWith('.html')
+      )
+        return true;
+      return false;
     });
+
+    // Further filter by configuration folder for DOCX templates only
+    let filteredTemplates = templatesOfType;
+    if (
+      outputType === 'output.docx' &&
+      this.currentConfigurationTemplate?.folderName
+    ) {
+      const folderToMatch = `/reports/${this.currentConfigurationTemplate.folderName}/`;
+      filteredTemplates = templatesOfType.filter((tplFile) => {
+        // Only include templates that are in the specific subfolder matching the current configuration
+        return tplFile.filePath.includes(folderToMatch);
+      });
+    }
+
+    // Apply sample filter if needed
+    if (options && options.hasOwnProperty('samples')) {
+      return filteredTemplates.filter((tplFile) => {
+        if (options.samples) return tplFile.type.includes('-sample');
+        return !tplFile.type.includes('-sample');
+      });
+    }
+
+    return filteredTemplates;
   }
 
   getSampleConfigurations(visibility?: string) {
@@ -631,5 +675,18 @@ export class SettingsService {
       }
     }
     return undefined;
+  }
+
+  // Add to SettingsService
+  private templateContentCache: { [key: string]: string } = {};
+
+  saveTemplateContent(configName: string, outputType: string, content: string) {
+    const key = `${configName}_${outputType}`;
+    this.templateContentCache[key] = content;
+  }
+
+  getTemplateContent(configName: string, outputType: string): string {
+    const key = `${configName}_${outputType}`;
+    return this.templateContentCache[key] || '';
   }
 }

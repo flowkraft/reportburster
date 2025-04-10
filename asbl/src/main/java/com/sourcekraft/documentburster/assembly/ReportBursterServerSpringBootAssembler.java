@@ -119,7 +119,7 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 		String content = FileUtils.readFileToString(
 				new File(packageDirPath + "/" + this.topFolderName + "/lib/frontend/index.html"), "UTF-8");
 
-		assertThat(content.contains("skin-blue")).isTrue();
+		assertThat(content.contains("skin-black")).isTrue();
 
 		System.out.println(
 				"------------------------------------- VERIFIED_04:ReportBursterServer copy 'frontent' web app (compiled) ... -------------------------------------");

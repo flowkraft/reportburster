@@ -98,35 +98,35 @@ const _splitSendVerifyEmailsAndUploads = (
     .click('#ftpTab-link')
     .click('#ftpCommand')
     .typeText(
-      '-T $extracted_file_path$ --ftp-create-dirs -u user:password ftp://ftp.example.com/reports/',
+      '-T ${extracted_file_path} --ftp-create-dirs -u user:password ftp://ftp.example.com/reports/',
     )
     // File Share settings
     .click('#fileShareTab-link')
     .click('#fileShareCommand')
-    .typeText('-T $extracted_file_path$ file://hostname/path/to/the%20folder')
+    .typeText('-T ${extracted_file_path} file://hostname/path/to/the%20folder')
     // FTPS settings
     .click('#ftpsTab-link')
     .click('#ftpsCommand')
     .typeText(
-      '-T $extracted_file_path$ --ssl -u user:password ftp://ftp.example.com/reports/',
+      '-T ${extracted_file_path} --ssl -u user:password ftp://ftp.example.com/reports/',
     )
     // SFTP settings
     .click('#sftpTab-link')
     .click('#sftpCommand')
     .typeText(
-      '-T $extracted_file_path$ --ftp-create-dirs -u user:password sftp://ftp.example.com/reports/',
+      '-T ${extracted_file_path} --ftp-create-dirs -u user:password sftp://ftp.example.com/reports/',
     )
     // HTTPS settings
     .click('#httpTab-link')
     .click('#httpCommand')
     .typeText(
-      '-T $extracted_file_path$ --ntlm -u user:password https://sharepointserver.com/reports/',
+      '-T ${extracted_file_path} --ntlm -u user:password https://sharepointserver.com/reports/',
     )
     // Cloud Upload settings
     .click('#cloudUploadTab-link')
     .click('#cloudUploadCommand')
     .typeText(
-      '-T $extracted_file_path$ --ntlm -u user:password https://s3.amazonaws.com/documentburster',
+      '-T ${extracted_file_path} --ntlm -u user:password https://s3.amazonaws.com/documentburster',
     )
     .click('#topMenuBurst')
     .click('#leftMenuQualityAssurance')

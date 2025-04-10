@@ -34,7 +34,7 @@ public class CsvReporter extends AbstractReporter {
 		if (StringUtils.isNotEmpty(sSeparator)) {
 			if (sSeparator.equals(CsvUtils.AUTODETECT)) {
 				// Future: Implement autodetect
-			} else if (sSeparator.equals("→ [tab character]")) {
+			} else if (sSeparator.contains("[tab character]") || sSeparator.equals("\\t")) {
 				separatorChar = '\t';
 			} else {
 				separatorChar = sSeparator.charAt(0);
@@ -71,6 +71,20 @@ public class CsvReporter extends AbstractReporter {
 		try (CSVReader csvReader = csvReaderBuilder.build()) {
 			this.parsedLines = csvReader.readAll();
 
+			// Fix OpenCSV's whitespace handling bug - if ignoreleadingwhitespace is true,
+			// we should actually trim both leading AND trailing whitespace from all fields
+			// https://stackoverflow.com/questions/15439162/trim-leading-and-trailing-spaces-in-opencsv
+
+			// This is a pragmatic fix that prioritizes expected behavior over
+			// perfectly replicating all OpenCSV's setting interactions
+			if (ctx.settings.getReportDataSource().csvoptions.ignoreleadingwhitespace) {
+				for (String[] line : this.parsedLines) {
+					for (int i = 0; i < line.length; i++) {
+						line[i] = line[i].trim(); // Trim both leading and trailing spaces
+					}
+				}
+			}
+
 			if ((this.parsedLines.size() > 0) && (1 == this.parsedLines.get(0).length)) {
 				throw new IllegalArgumentException("Probably the configured separator '" + separatorChar
 						+ "' is incorrect since only 1 column was parsed having the value '"
@@ -92,7 +106,7 @@ public class CsvReporter extends AbstractReporter {
 		// Empty/null would indicate misconfiguration
 		if (StringUtils.isEmpty(idColumn))
 			throw new IllegalArgumentException(
-					"idcolumn setting must be configured - use 'not-used' for sequential numbering");
+					"idcolumn setting must be configured - use 'notused' for sequential numbering");
 
 		if (!idColumn.contains(CsvUtils.NOT_USED)) {
 			if (idColumn.contains(CsvUtils.COLUMN_FIRST))
@@ -102,7 +116,7 @@ public class CsvReporter extends AbstractReporter {
 			else if (StringUtils.isNumeric(idColumn))
 				codeColumnIndex = Integer.valueOf(idColumn);
 			else
-				throw new IllegalArgumentException("idcolumn must be 'first', 'last', 'not-used' or a number");
+				throw new IllegalArgumentException("idcolumn must be 'first', 'last', 'notused' or a number");
 		}
 
 		for (String[] currentLine : this.parsedLines) {

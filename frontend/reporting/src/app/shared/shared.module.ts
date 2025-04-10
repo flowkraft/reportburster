@@ -29,6 +29,9 @@ import { WebSocketService } from '../providers/websocket.service';
 import { FsService } from '../providers/fs.service';
 import { ApiService } from '../providers/api.service';
 import { StateStoreService } from '../providers/state-store.service';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
+import { LiveChatComponent } from '../components/live-chat/live-chat.component';
 
 @NgModule({
   imports: [
@@ -39,6 +42,7 @@ import { StateStoreService } from '../providers/state-store.service';
     TranslateModule,
   ],
   declarations: [
+    LiveChatComponent,
     ConfirmDialogComponent,
     InfoDialogComponent,
     AskForFeatureDialogComponent,
@@ -50,9 +54,11 @@ import { StateStoreService } from '../providers/state-store.service';
     CommonModule,
     BrowserModule,
     FormsModule,
+    ConfirmDialogModule,
     TranslateModule,
     TabsModule,
     DialogModule,
+    LiveChatComponent,
     LogFileViewerModule,
     LogFilesViewerAllTogetherModule,
     LogFilesViewerSeparateTabsModule,
@@ -70,6 +76,7 @@ import { StateStoreService } from '../providers/state-store.service';
     ShellService,
     ToastrMessagesService,
     ConfirmService,
+    ConfirmationService,
     InfoService,
     AskForFeatureService,
     ApiService,

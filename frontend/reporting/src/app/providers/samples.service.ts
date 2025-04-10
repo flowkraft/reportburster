@@ -34,6 +34,34 @@ export interface SampleInfo {
   documentation?: string;
 }
 
+export interface HtmlDocTemplateInfo {
+  id: string;
+  name: string;
+  tags: string[];
+  sourceUrl: string;
+  gitHubStars: string;
+  license: string;
+  infoAbout: string;
+  templateFilePaths: string[];
+  readmeFilePaths?: string[];
+  aiPromptFilePaths?: string[];
+  previewImagePaths?: string[];
+}
+
+export interface HtmlDocTemplateDisplay extends HtmlDocTemplateInfo {
+  displayName?: string;
+  isLoaded?: boolean;
+  htmlContent?: string[];
+  readmeContent?: string;
+  selectedTemplateModifyPrompt?: string;
+  selectedTemplateScratchPrompt?: string;
+  category?: string;
+  originalTemplate?: HtmlDocTemplateInfo;
+  collectionIndex?: number;
+  collectionTotal?: number;
+  currentVariantIndex?: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -103,7 +131,7 @@ export class SamplesService {
         numberOfPages: -1,
         tokens: [
           'clyde.grew@northridgehealth.org',
-          'kyle.butford@northridgehealth.org.pdf',
+          'kyle.butford@northridgehealth.orgf',
           'alfreda.waldback@northridgehealth.org',
         ],
       },
@@ -270,7 +298,7 @@ export class SamplesService {
         numberOfPages: -1,
         tokens: [
           'clyde.grew@northridgehealth.org',
-          'kyle.butford@northridgehealth.org.pdf',
+          'kyle.butford@northridgehealth.org',
           'alfreda.waldback@northridgehealth.org',
         ],
       },
@@ -308,7 +336,7 @@ export class SamplesService {
         numberOfPages: -1,
         tokens: [
           'clyde.grew@northridgehealth.org',
-          'kyle.butford@northridgehealth.org.pdf',
+          'kyle.butford@northridgehealth.org',
           'alfreda.waldback@northridgehealth.org',
         ],
       },
@@ -346,7 +374,7 @@ export class SamplesService {
         numberOfPages: -1,
         tokens: [
           'clyde.grew@northridgehealth.org',
-          'kyle.butford@northridgehealth.org.pdf',
+          'kyle.butford@northridgehealth.org',
           'alfreda.waldback@northridgehealth.org',
         ],
       },
@@ -384,7 +412,7 @@ export class SamplesService {
         numberOfPages: -1,
         tokens: [
           'clyde.grew@northridgehealth.org',
-          'kyle.butford@northridgehealth.org.pdf',
+          'kyle.butford@northridgehealth.org',
           'alfreda.waldback@northridgehealth.org',
         ],
       },
@@ -403,6 +431,44 @@ export class SamplesService {
       outputHtmlHardcoded: '',
       configurationFilePath: `config/samples/generate-only-excel/settings.xml`,
       configurationFileName: 'generate-only-excel',
+      notes: ``,
+      recipientType: 'employee',
+      documentType: 'payslip',
+      capReportSplitting: false,
+      capReportDistribution: false,
+      capReportGenerationMailMerge: true,
+      activeClicked: false,
+    },
+    {
+      id: 'GENERATE-PAYSLIPS-EXCEL-XLSX-DS',
+      name: '10. Generate Reports From Excel Data Source',
+      visibility: 'visible',
+      jobType: 'generate',
+      input: {
+        data: ['file:samples/reports/payslips/Payslips.xlsx'],
+        dataUrl: ['file:https://www.reportburster.com/docs/Payslips.xlsx'],
+        numberOfPages: -1,
+        tokens: [
+          'clyde.grew@northridgehealth.org',
+          'kyle.butford@northridgehealth.org',
+          'alfreda.waldback@northridgehealth.org',
+        ],
+      },
+      step1: 'generate',
+      step2: '',
+      step3: '',
+      output: {
+        data: [
+          'file:clyde.grew@northridgehealth.org.xlsx',
+          'file:kyle.butford@northridgehealth.org.xlsx',
+          'file:alfreda.waldback@northridgehealth.org.xlsx',
+        ],
+        folder:
+          "output/${input_document_name}/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
+      },
+      outputHtmlHardcoded: '',
+      configurationFilePath: `config/samples/generate-only-excel-xlsx-datasource/settings.xml`,
+      configurationFileName: 'generate-only-excel-xlsx-datasource',
       notes: ``,
       recipientType: 'employee',
       documentType: 'payslip',
@@ -689,4 +755,104 @@ export class SamplesService {
       this.toggleSampleVisibility(sample, 'hidden');
     }
   }
+
+  //HTML DOC TEMPLATES START
+  htmlDocTemplatesSamples: Array<HtmlDocTemplateInfo> = [
+    {
+      id: 'HTML-INVOICE-TEMPLATES-BASIC-PDF',
+      name: 'Simple table layout payslip template demonstrating colors and variables (PDF output)',
+      tags: ['payslip', 'table-layout', 'colors', 'variables'],
+      sourceUrl: '',
+      license: '',
+      gitHubStars: '',
+      infoAbout:
+        'Simple table layout payslip template demonstrating colors and variables (PDF output)',
+      templateFilePaths: ['templates/gallery/_basic/payslips-template.html'],
+    },
+    {
+      id: 'HTML-INVOICE-TEMPLATES-BASIC-EXCEL',
+      name: 'Simple table layout payslip template demonstrating colors and variables (Excel output)',
+      tags: ['excel', 'payslip', 'table-layout', 'colors', 'variables'],
+      sourceUrl: '',
+      license: '',
+      gitHubStars: '',
+      infoAbout:
+        'Simple table layout payslip template demonstrating colors and variables (Excel output)',
+      templateFilePaths: [
+        'templates/gallery/_basic/payslips-template-excel.html',
+      ],
+    },
+    {
+      id: 'HTML-INVOICE-TEMPLATES-BS3GRID-GOOGLE-FONTS',
+      name: '3x clean, modern, responsive html invoice templates based on Bootstrap 3`s grid system and support for Google Fonts',
+      tags: ['invoice', 'grid-layout', 'google-fonts', 'responsive'],
+      sourceUrl: 'https://github.com/nirajrajgor/html-invoice-templates',
+      license: 'MIT',
+      gitHubStars: '26',
+      infoAbout:
+        '3x clean, modern, responsive html invoice templates based on Bootstrap 3`s grid system and support for Google Fonts',
+      templateFilePaths: [
+        'templates/gallery/nirajrajgor-html-invoice-templates/invoice1.html',
+        'templates/gallery/nirajrajgor-html-invoice-templates/invoice2.html',
+        'templates/gallery/nirajrajgor-html-invoice-templates/invoice3.html',
+      ],
+    },
+    {
+      id: 'SPARKSUITE-HTML-INVOICE-TEMPLATE',
+      name: 'A modern, clean, and very simple responsive HTML invoice template, because sometimes you just need something quick and simple',
+      tags: [
+        'invoice',
+        'minimalist',
+        'table-layout',
+        'system-fonts',
+        'responsive',
+        'rtl-support',
+      ],
+      sourceUrl: 'https://github.com/sparksuite/simple-html-invoice-template',
+      license: 'MIT',
+      gitHubStars: '1.7k',
+      infoAbout:
+        'A modern, clean, and very simple responsive HTML invoice template',
+      templateFilePaths: [
+        'templates/gallery/sparksuite-simple-html-invoice-template/invoice.html',
+      ],
+    },
+    {
+      id: 'ANVIL-HTML-INVOICE-TEMPLATE',
+      name: 'An HTML invoice template with support for generating PDFs',
+      tags: [
+        'invoice',
+        'minimalist',
+        'table-layout',
+        'pdf-optimized',
+        'paginated',
+      ],
+      sourceUrl: 'https://github.com/anvilco/html-pdf-invoice-template',
+      license: 'MIT',
+      gitHubStars: '81',
+      infoAbout: 'An HTML invoice template with support for generating PDFs',
+      templateFilePaths: [
+        'templates/gallery/anvilco-html-pdf-invoice-template/invoice.html',
+      ],
+    },
+    {
+      id: 'COMPLEX-HTML-INVOICE-TEMPLATE',
+      name: "Complex invoice template with a grid layout similar with Bootstrap 3's grid system and support for generating PDFs",
+      tags: ['invoice', 'complex', 'grid-layout', 'pdf'],
+      sourceUrl: 'https://github.com/barbosa89/invoice-template',
+      license: 'MIT',
+      gitHubStars: '24',
+      infoAbout:
+        "Complex invoice template with a grid layout similar with Bootstrap 3's grid system and support for generating PDFs",
+      templateFilePaths: [
+        'templates/gallery/barbosa89-invoice-template/invoice.html',
+      ],
+    },
+  ];
+
+  async getHtmlDocTemplates(): Promise<HtmlDocTemplateInfo[]> {
+    // Return a copy of the templates array to avoid accidental mutations
+    return [...this.htmlDocTemplatesSamples];
+  }
+  //HTML DOC TEMPLATES END
 }

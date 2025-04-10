@@ -18,7 +18,7 @@ export async function takeScreenshotIfRequested(
 
     const screenshotPath = path.join(screenshotsDir, `${screenshotName}.png`);
     await page.screenshot({ path: screenshotPath, fullPage: true });
-    console.log(`Screenshot saved: ${screenshotPath}`);
+    //console.log(`Screenshot saved: ${screenshotPath}`);
   }
 }
 
@@ -55,7 +55,7 @@ export class Helpers {
     await jetpack.dirAsync(UPGRADE_DIR, { empty: true });
 
     const baselineVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_baseline/db-baseline-8.7.2.zip`;
-    console.log(`baselineVersionFilePath = ${baselineVersionFilePath}`);
+    //console.log(`baselineVersionFilePath = ${baselineVersionFilePath}`);
     await updaterHelpers.default.extractBaseLineAndCopyCustomConfigAndScriptFiles(
       UPGRADE_DIR,
       baselineVersionFilePath,
@@ -93,7 +93,7 @@ export class Helpers {
       { overwrite: true },
     );
 
-    spawnSync('reportburster.bat', ['-dl', '/c'], {
+    spawnSync('reportburster.bat', ['system', 'license', 'deactivate'], {
       cwd: path.join(process.env.PORTABLE_EXECUTABLE_DIR),
       shell: true,
     });

@@ -101,10 +101,10 @@ const _splitVerifyBigFile = (
       .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
       .waitOnElementToBecomeVisible('#btnCheckLicenseKey')
       .click('#burstTab-link')
-      .waitOnElementToBecomeVisible('#logsViewer')
-      .click('#btnClearLogs')
+      .waitOnElementToBecomeVisible('#logsViewerBurstReportsTab')
+      .click('#btnClearLogsBurstReportsTab')
       .clickYesDoThis()
-      .waitOnElementToBecomeInvisible('#logsViewer')
+      .waitOnElementToBecomeInvisible('#logsViewerBurstReportsTab')
       .click('#licenseTab-link')
       .click('#btnCheckLicenseKey')
       .clickYesDoThis()
@@ -126,10 +126,10 @@ const _splitVerifyBigFile = (
       .sleep(Constants.DELAY_ONE_SECOND)
       .appShouldBeReadyToRunNewJobs()
       .click('#burstTab-link')
-      .waitOnElementToBecomeVisible('#logsViewer')
-      .click('#btnClearLogs')
+      .waitOnElementToBecomeVisible('#logsViewerBurstReportsTab')
+      .click('#btnClearLogsBurstReportsTab')
       .clickYesDoThis()
-      .waitOnElementToBecomeInvisible('#logsViewer');
+      .waitOnElementToBecomeInvisible('#logsViewerBurstReportsTab');
   }
 
   ft.appStatusShouldBeGreatNoErrorsNoWarnings().setInputFiles(
@@ -172,15 +172,15 @@ const _splitVerifyBigFile = (
     .appStatusShouldBeGreatNoErrorsNoWarnings();
   //.killHangingJavaProcesses();
 
-  //.waitOnElementToBecomeVisible('#btnResume')
+  //.waitOnElementToBecomeVisible('#resumeJobsBurstReportsTab #btnResume')
   if (pauseCancelMode === 'pause-after-pdf-generated-and-then-resume') {
-    ft.click('#btnResume')
+    ft.click('#resumeJobsBurstReportsTab #btnResume')
       // wait for the 'Clear Logs' modal to come
       .clickYesDoThis()
-      .click('#btnClearLogs')
+      .click('#btnClearLogsBurstReportsTab')
       .clickYesDoThis()
-      //.waitOnElementToBecomeInvisible('#logsViewer')
-      .click('#btnResume')
+      //.waitOnElementToBecomeInvisible('#logsViewerBurstReportsTab')
+      .click('#resumeJobsBurstReportsTab #btnResume')
       .clickYesDoThis()
       .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR)
       // check when the first PDF file was created
@@ -211,9 +211,9 @@ const _splitVerifyBigFile = (
   }
 
   ft.click('#burstTab-link')
-    .click('#btnClearLogs')
+    .click('#btnClearLogsBurstReportsTab')
     .clickYesDoThis()
-    .waitOnElementToBecomeInvisible('#logsViewer')
+    .waitOnElementToBecomeInvisible('#logsViewerBurstReportsTab')
     .appShouldBeReadyToRunNewJobs();
 
   if (pauseCancelMode === 'pause-after-pdf-generated-and-then-resume')

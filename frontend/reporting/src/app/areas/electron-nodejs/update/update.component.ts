@@ -143,7 +143,7 @@ export class UpdateComponent implements OnInit {
         await this.licenseService.loadLicenseFileAsync();
 
         if (this.licenseService.licenseDetails.license.key)
-          await this.licenseService.verifyLicense('-cl');
+          await this.licenseService.verifyLicense('check');
 
         this.settingsService.configurationFiles =
           await this.settingsService.loadAllSettingsFilesAsync({
@@ -257,7 +257,7 @@ export class UpdateComponent implements OnInit {
         await this.licenseService.loadLicenseFileAsync();
 
         if (this.licenseService.licenseDetails.license.key)
-          await this.licenseService.verifyLicense('-cl');
+          await this.licenseService.verifyLicense('check');
 
         await this.shellService.doKillOldExeThenCopyAndStartNewExe(
           this.updateInfo.jobFilePath,

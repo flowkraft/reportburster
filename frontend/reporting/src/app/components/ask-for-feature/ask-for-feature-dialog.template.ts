@@ -73,7 +73,7 @@ export const askForFeatureDialogTemplate = `<div
       [innerHTML]="'COMPONENTS.ASK-FOR-FEATURE-DIALOG.INNER-HTML.CONFIGURE-EMAIL-PROPERLY' | translate"
       *ngIf="!settingsService.isDefaultEmailConnectionConfigured()"
     ></button>
-    <button id="btnClose" class="btn btn-flat btn-default dburst-button-question-decline" type="button" (click)="confirm()">
+    <button id="btnCloseAskForFeatureModal" class="btn btn-flat btn-default dburst-button-question-decline" type="button" (click)="confirm()">
       {{ 'BUTTONS.CANCEL' | translate }}
     </button>
   </div> `;

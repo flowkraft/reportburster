@@ -44,7 +44,7 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
       </div>
 
       <div class="col-xs-3">
-        <dburst-button-clear-logs></dburst-button-clear-logs>
+        <dburst-button-clear-logs btnId="btnClearLogsBurstReportsTab"></dburst-button-clear-logs>
       </div>
 
       <div class="col-xs-3" style="margin-left: -20px">
@@ -120,7 +120,7 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
     
     <div
       class="row"
-      *ngIf="(processingService.procBurstInfo.prefilledInputFilePath || processingService.procBurstInfo.inputFile) && !executionStatsService.logStats.foundDirtyLogFiles && executionStatsService.jobStats.numberOfActiveJobs === 0 && executionStatsService.jobStats.jobsToResume.length === 0"
+      *ngIf="!executionStatsService.logStats.foundDirtyLogFiles && executionStatsService.jobStats.numberOfActiveJobs === 0 && executionStatsService.jobStats.jobsToResume.length === 0 && (processingService.procBurstInfo.prefilledInputFilePath || processingService.procBurstInfo.inputFile)"
     >
       <div class="col-xs-1">
         <i class="fa fa-flag-checkered fa-2x"></i>
@@ -156,13 +156,13 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
       *ngIf="executionStatsService.jobStats.numberOfActiveJobs === 0 && executionStatsService.jobStats.jobsToResume.length > 0"
       class="row"
     >
-      <div class="col-xs-12">
+      <div class="col-xs-12" id="resumeJobsBurstReportsTab">
         <ng-container [ngTemplateOutlet]="resumeJobs"> </ng-container>
       </div>
     </div>
 
     <div class="row">
-      <dburst-log-files-viewer-separate-tabs></dburst-log-files-viewer-separate-tabs>
+      <dburst-log-files-viewer-separate-tabs viewerId="logsViewerBurstReportsTab"></dburst-log-files-viewer-separate-tabs>
     </div>
   </div>
 </ng-template>

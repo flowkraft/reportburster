@@ -69,6 +69,7 @@ export class ApiService {
     method: RequestMethod,
     body: any = '',
     customHeaders?: Headers,
+    responseType?: string,
   ): Promise<any> {
     //console.log(
     //  `this.stateStore.configSys.sysInfo.setup = ${JSON.stringify(this.stateStore.configSys.sysInfo.setup)}`,
@@ -128,6 +129,15 @@ export class ApiService {
       this.setToken(jwtToken);
     }
 
+    // Handle blob response type
+    if (responseType === 'blob') {
+      return response.blob();
+    }
+    // Add this new line to handle text response type
+    else if (responseType === 'text') {
+      return response.text();
+    }
+
     let data = {};
     if (response.headers.get('Content-Length') === '0') {
       //console.log(
@@ -146,11 +156,22 @@ export class ApiService {
     return data;
   }
 
-  public get(path: string, args?: any, customHeaders?: Headers): Promise<any> {
+  public get(
+    path: string,
+    args?: any,
+    customHeaders?: Headers,
+    responseType?: string,
+  ): Promise<any> {
     const params = args ? this.serialize(args).toString() : '';
     const fullPath = params ? `${path}?${params}` : path;
 
-    return this.request(fullPath, RequestMethod.get, undefined, customHeaders);
+    return this.request(
+      fullPath,
+      RequestMethod.get,
+      undefined,
+      customHeaders,
+      responseType,
+    );
   }
 
   public post(path: string, body?: any, customHeaders?: Headers): Promise<any> {

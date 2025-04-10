@@ -36,7 +36,7 @@
         "CSV-ESCAPE-CHAR": "Escape Char",
         "CSV-STRICT-QUOTATIONS": "Strict Quotations",
         "CSV-IGNORE-QUOTATIONS": "Ignore Quotations",
-        "IGNORE-LEADING-WHITESPACE": "Ignore Leading Whitespace",
+        "IGNORE-LEADING-WHITESPACE": "Trim Whitespaces",
         "HEADER": "Header",
         "HEADER-NO-HEADER": "No Header",
         "HEADER-FIRST-LINE": "First Line",
@@ -45,8 +45,10 @@
         "CODE-COLUMN-NOT-USED": "Not Used",
         "CODE-COLUMN-FIRST-COLUMN": "First Column",
         "CODE-COLUMN-LAST-COLUMN": "Last Column",
-        "CODE-COLUMN-LET-ME-SPECIFY": "Let Me Specify a Column Index",
-        "FIXED-WIDTH-COLUMNS": "Columns"
+        "CODE-COLUMN-LET-ME-SPECIFY": "Custom Column Index...",
+        "FIXED-WIDTH-COLUMNS": "Columns",
+        "EXCEL-SHEET-INDEX": "Sheet Index",
+        "EXCEL-USE-FORMULA-RESULTS": "Use Formula Results"
       },
       "TAB-REPORT-TEMPLATE-OUTPUT": {
         "OUTPUT-TYPE": "Output Type",
@@ -54,13 +56,49 @@
         "TEMPLATE-HTML": "HTML Template",
         "TEMPLATE-PLACEHOLDER": "Enter HTML template code here ...",
         "TYPE-NONE": "None",
-        "TYPE-DOCX": "Microsoft Word Documents",
-        "TYPE-PDF": "PDF Documents",
-        "TYPE-XLSX": "Microsoft Excel Documents",
-        "TYPE-HTML": "HTML Documents",
+        "TYPE-PDF": "PDF Documents (html_template2pdf_documents)",
+        "TYPE-XLSX": "Microsoft Excel Documents (html_template2xlsx_documents)",
+        "TYPE-HTML": "HTML Documents (html_template2html_documents)",
+        "TYPE-DOCX": "Microsoft Word Documents (docx_template2docx_documents)",
         "NO-TEMPLATES-FOUND": "No DOCX templates found! Please add a .docx file to:",
         "TEMPLATE-LOCATION": "Template Location:",
-        "SUGGESTED-FILENAME": "Suggested filename:"
+        "SUGGESTED-FILENAME": "Suggested filename:",
+        "DOCX-HTML-WARNING": "HTML templates cannot be used with DOCX output type. To use these templates, please change your output type to HTML, PDF, or XLSX. HTML templates provide more flexibility and customization options.",
+        "CANNOT-USE-TEMPLATE": "Template Not Compatible",
+        "NONE-OUTPUT-HELP": "Note: Output Type 'None' is useful for sending emails without attachments (e.g., newsletters). Select a different Output Type when you need to generate reports.",
+        "BUTTONS": {
+          "EXAMPLES-GALLERY": "Examples (Gallery)",
+          "HEY-AI": "Hey, you smart AI, help me...",
+          "LAUNCH-COPILOT": "AI Copilot",
+          "SHOW-PREVIEW": "Show Template Preview",
+          "EXPAND-EDITOR": "Expand Code Editor",
+          "VIEW-IN-BROWSER": "View Template in Browser",
+          "USE-TEMPLATE": "Use This Template",
+          "GET-AI-PROMPT": "Get AI Prompt To ...",
+          "COPY-CLIPBOARD": "Copy to Clipboard",
+          "COPY-CLIPBOARD-PROMPT": "Copy the Prompt to Clipboard",
+          "BACK-TO-TEMPLATE": "Back to Template",
+          "CLOSE": "Close",
+          "README": "Readme",
+          "REQUEST-FEATURE": "Request <span class=\"badge\">New</span> Feature"
+        },
+        "DIALOG": {
+          "LOADING": "Loading templates...",
+          "README-TITLE": "README",
+          "SAMPLE-LABEL": "(sample)",
+          "PROMPT-MODIFY": "prompt 1: modify this HTML template with some changes, as needed",
+          "PROMPT-REBUILD": "prompt 2: build your HTML template from scratch, using this template's (full) prompt as a guide",
+          "GALLERY-CONFIRM": "Got it! I'll check out the ReportBurster templates gallery now",
+          "AI-HELP-CONFIRM": "Ask Artificial Intelligence to help you, find out how!"
+        },
+        "AI-INSTRUCTIONS": {
+          "STEP1": "1. Click <strong>Copy to Clipboard</strong> below to copy the entire prompt",
+          "STEP2-GENERAL": "2. Carefully read (yes, do read it) and <strong>tailor the prompt</strong> to meet your specific requirements",
+          "STEP2-CUSTOM": "2. Tailor <strong>Customization Instructions</strong> to meet your specific requirements",
+          "STEP3": "3. Paste the entire (modified) prompt into <strong><a href=\"https://copilot.microsoft.com\" target=\"_blank\">Microsoft Copilot</a></strong> or your preferred AI assistant",
+          "STEP4": "4. Copy the complete HTML code the AI generates and paste it into the ReportBurster editor",
+          "COLOR-TIP": "Go to <a href=\"https://color.adobe.com/explore\" target=\"_blank\">Adobe Color Explore</a> for choosing a beautiful color theme (based on color theory)"
+        }
       },
       "TAB-ADVANCED": {
         "DELAY-EACH-BY": "Delay Each Distribution By",
@@ -506,7 +544,8 @@
         "CLEAR-JOB": "Clear Job"
       },
       "TAB-REPORTING-MAILMERGE-CLASSICREPORTS": {
-        "CHOOSE-REPORT": "Report"
+        "CHOOSE-REPORT": "Report",
+        "SHOW-ME-HOW-TO": "Show me how to configure reports"
       },
       "TAB-MERGE-BURST": {
         "BURST-MERGED-FILE": "Burst Merged File",
@@ -540,8 +579,8 @@
         "STOPPING": "Stopping ..."
       },
       "TABS": {
-        "BURST": "Burst",
-        "MAILMERGE-CLASSICREPORTS": "Reporting / Mail Merge",
+        "BURST": "Burst Reports",
+        "MAILMERGE-CLASSICREPORTS": "Generate Reports",
         "LOGGING-TRACING": "Logging and Tracing",
         "MERGE-BURST": "Merge -> Burst",
         "QUALITY-ASSURANCE": "Quality Assurance",
@@ -806,47 +845,52 @@
     },
     "MONTHLY-PAYSLIPS-SPLIT-ONLY": {
       "NOTES": {
-        "INNER-HTML": "<em>Payslips.pdf</em> sample document contains three pages corresponding for three employees and, when 'bursting' <em>Payslips.pdf</em> sample document, three output PDF files of one page each will be generated for each employee found in the input file. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundred or few thousands employees."
+        "INNER-HTML": "<em>Payslips.pdf</em> sample document contains three pages corresponding for three employees and, when 'bursting' <em>Payslips.pdf</em> sample document, three output PDF files of one page each will be generated for each employee found in the input file. <br/><br/>When processing your actual reports, you can handle the data efficiently, whether your company manages a few dozen, a few hundred, or even a few thousand documents. You can easily email or upload the generated reports, ensuring they are readily accessible to your employees or customers."
       }
     },
     "EXCEL-DISTINCT-SHEETS-SPLIT-ONLY": {
       "NOTES": {
-        "INNER-HTML": "<em>Payslips-Distinct-Sheets.xls</em> sample document contains three sheets for three employees and, when 'bursting' <em>Payslips-Distinct-Sheets.xls</em> sample document, three output Excel files of one sheet each will be generated for each employee found in the input file. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundred or few thousands employees."
+        "INNER-HTML": "<em>Payslips-Distinct-Sheets.xls</em> sample document contains three sheets for three employees and, when 'bursting' <em>Payslips-Distinct-Sheets.xls</em> sample document, three output Excel files of one sheet each will be generated for each employee found in the input file. <br/><br/>When processing your actual reports, you can handle the data efficiently, whether your company manages a few dozen, a few hundred, or even a few thousand documents. You can easily email or upload the generated reports, ensuring they are readily accessible to your employees or customers."
       }
     },
     "EXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY": {
       "NOTES": {
-        "INNER-HTML": "<em>Customers-Distinct-Column-Values.xls</em> sample document contains one sheet with customer data for 21 countries and, when 'bursting' <em>Customers-Distinct-Column-Values.xls</em> sample document, 21 output Excel files will be generated, each file containing the customer data for the corresponding country found in the input file. <br/><br/>When working with your real documents you can process the data for all your company customers no matter if your company has few tens, few hundred or few thousands customers."
+        "INNER-HTML": "<em>Customers-Distinct-Column-Values.xls</em> sample document contains one sheet with customer data for 21 countries and, when 'bursting' <em>Customers-Distinct-Column-Values.xls</em> sample document, 21 output Excel files will be generated, each file containing the customer data for the corresponding country found in the input file. <br/><br/>When processing your actual reports, you can handle the data efficiently, whether your company manages a few dozen, a few hundred, or even a few thousand documents. You can easily email or upload the generated reports, ensuring they are readily accessible to your employees or customers."
       }
     },
     "INVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY": {
       "NOTES": {
-        "INNER-HTML": "<em>Split2Times.pdf</em> sample document contains multiple invoices for three different customers. Normally, with a single split per customer, each customer will receive one PDF containing multiple invoices together. There are situations where you'd prefer, for each customer, to send their invoices separated with one invoice per document. This is where the 'Split Once More' feature comes in handy. The first split will be done based on the customer and then, for each customer, a second split will be done based on the invoice number. <br/><br/>When working with your real documents you can process the data for all your company customers no matter if your company has few tens, few hundred or few thousands customers."
+        "INNER-HTML": "<em>Split2Times.pdf</em> sample document contains multiple invoices for three different customers. Normally, with a single split per customer, each customer will receive one PDF containing multiple invoices together. There are situations where you'd prefer, for each customer, to send their invoices separated with one invoice per document. This is where the 'Split Once More' feature comes in handy. The first split will be done based on the customer and then, for each customer, a second split will be done based on the invoice number. <br/><br/>When processing your actual reports, you can handle the data efficiently, whether your company manages a few dozen, a few hundred, or even a few thousand documents. You can easily email or upload the generated reports, ensuring they are readily accessible to your employees or customers."
       }
     },
     "INVOICES-MERGE-THEN-SPLIT": {
       "NOTES": {
-        "INNER-HTML": "This example demonstrates how to merge and process multiple files containing invoices simultaneously, in one operation. This can be particularly useful when you have several documents, such as invoices from previous months, that also require processing. <br/><br/>When working with your real documents you can process the data for all your company invoices no matter if your company has few tens, few hundred or few thousands invoices."
+        "INNER-HTML": "This example demonstrates how to merge and process multiple files containing invoices simultaneously, in one operation. This can be particularly useful when you have several documents, such as invoices from previous months, that also require processing. <br/><br/>When processing your actual reports, you can handle the data efficiently, whether your company manages a few dozen, a few hundred, or even a few thousand documents. You can easily email or upload the generated reports, ensuring they are readily accessible to your employees or customers."
       }
     },
     "GENERATE-PAYSLIPS-DOCX": {
       "NOTES": {
-        "INNER-HTML": "This example demonstrates how to generate payslips documents (Microsoft Word .docx) for all your company's employees using a single CSV text file as datasource. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundred or few thousands employees. Obviously, it is easy to email and/or upload the generated payslips documents to your employees."
+        "INNER-HTML": "This example demonstrates how to generate payslips documents (Microsoft Word .docx) for all your company's employees using a single CSV text file as datasource. <br/><br/>When processing your actual reports, you can handle the data efficiently, whether your company manages a few dozen, a few hundred, or even a few thousand documents. You can easily email or upload the generated reports, ensuring they are readily accessible to your employees or customers."
       }
     },
     "GENERATE-PAYSLIPS-HTML": {
       "NOTES": {
-        "INNER-HTML": "This example demonstrates how to generate payslips documents (.html) for all your company's employees using a single CSV text file as datasource. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundred or few thousands employees. Obviously, it is easy to email and/or upload the generated payslips documents to your employees."
+        "INNER-HTML": "This example demonstrates how to generate payslips documents (.html) for all your company's employees using a single CSV text file as datasource. <br/><br/>When processing your actual reports, you can handle the data efficiently, whether your company manages a few dozen, a few hundred, or even a few thousand documents. You can easily email or upload the generated reports, ensuring they are readily accessible to your employees or customers."
       }
     },
     "GENERATE-PAYSLIPS-PDF": {
       "NOTES": {
-        "INNER-HTML": "This example demonstrates how to generate payslips documents (Adobe Acrobat .pdf) for all your company's employees using a single CSV text file as datasource. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundred or few thousands employees. Obviously, it is easy to email and/or upload the generated payslips documents to your employees."
+        "INNER-HTML": "This example demonstrates how to generate payslips documents (Adobe Acrobat .pdf) for all your company's employees using a single CSV text file as datasource. <br/><br/>When processing your actual reports, you can handle the data efficiently, whether your company manages a few dozen, a few hundred, or even a few thousand documents. You can easily email or upload the generated reports, ensuring they are readily accessible to your employees or customers."
       }
     },
     "GENERATE-PAYSLIPS-EXCEL": {
       "NOTES": {
-        "INNER-HTML": "This example demonstrates how to generate payslips documents (Microsoft Excel .xlsx) for all your company's employees using a single CSV text file as datasource. <br/><br/>When working with your real documents you can process the data for all your company employees no matter if your company has few tens, few hundred or few thousands employees. Obviously, it is easy to email and/or upload the generated payslips documents to your employees."
+        "INNER-HTML": "This example demonstrates how to generate payslips documents (Microsoft Excel .xlsx) for all your company's employees using a single CSV text file as datasource. <br/><br/>When processing your actual reports, you can handle the data efficiently, whether your company manages a few dozen, a few hundred, or even a few thousand documents. You can easily email or upload the generated reports, ensuring they are readily accessible to your employees or customers."
+      }
+    },
+    "GENERATE-PAYSLIPS-EXCEL-XLSX-DS": {
+      "NOTES": {
+        "INNER-HTML": "This example demonstrates how to generate payslips documents (Microsoft Excel .xlsx) for all your company's employees using a single Excel file as data source. <br/><br/>When processing your actual reports, you can handle the data efficiently, whether your company manages a few dozen, a few hundred, or even a few thousand documents. You can easily email or upload the generated reports, ensuring they are readily accessible to your employees or customers."
       }
     }
   }

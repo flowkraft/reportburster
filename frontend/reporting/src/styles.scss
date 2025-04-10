@@ -17,6 +17,88 @@
 @import "ngx-toastr/toastr";
 @import "~@ng-select/ng-select/themes/default.theme.css";
 
+//angular-split start
+// Angular Split styles
+as-split {
+  display: flex;
+}
+
+as-split.as-horizontal {
+  flex-direction: row;
+}
+
+as-split.as-vertical {
+  flex-direction: column;
+}
+
+as-split > as-split-gutter {
+  background-color: #e4e4e4;
+  transition: background-color 0.2s;
+}
+
+as-split > as-split-gutter:hover {
+  background-color: #c8c8c8;
+}
+
+as-split.as-horizontal > as-split-gutter {
+  cursor: col-resize;
+}
+
+as-split.as-vertical > as-split-gutter {
+  cursor: row-resize;
+}
+//angular-split end
+
+// Fullscreen-preview start
+.fullscreen-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: white;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+}
+
+.fullscreen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.fullscreen-header span {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.fullscreen-iframe {
+  flex: 1;
+  width: 100%;
+  height: calc(100% - 50px);
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+// Fullscreen Preview styles
+
+.template-tags {
+  margin-top: 5px;
+}
+
+.tag-badge {
+  margin-right: 4px;
+  background-color: #f8f9fa;
+  color: #495057;
+  border: 1px solid #6c757d;
+  font-weight: normal;
+  font-size: 85%;
+}
+
 label {
   font-weight: 400;
 }
@@ -60,6 +142,30 @@ body .p-terminal {
 
 .modal {
   top: 30px;
+}
+
+/* Custom styles for the confirmation dialog */
+.p-confirm-dialog .p-dialog-footer {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+
+.p-confirm-dialog .p-dialog-footer button {
+  margin-right: 0.5rem;
+}
+
+.p-confirm-dialog .p-dialog-footer button:first-child {
+  margin-right: 0;
+}
+
+.fade-transition {
+  transition: opacity 0.1s ease-in-out;
+  opacity: 1;
+}
+
+.fade-hidden {
+  opacity: 0;
 }
 
 #samplesTable thead th {

@@ -4,6 +4,7 @@ import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import log from 'electron-log';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 
 import { ChildProcessWithoutNullStreams, exec, spawn } from 'child_process';
 import { promisify } from 'util';
@@ -35,9 +36,9 @@ log.transports.file.resolvePath = () => {
 
 log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] - {text}';
 
-console.log(
-  `process.env.PORTABLE_EXECUTABLE_DIR: ${process.env.PORTABLE_EXECUTABLE_DIR}`,
-);
+//console.log(
+//  `process.env.PORTABLE_EXECUTABLE_DIR: ${process.env.PORTABLE_EXECUTABLE_DIR}`,
+//);
 
 function createWindow(): BrowserWindow {
   /*
@@ -183,9 +184,9 @@ try {
       setTimeout(() => {
         createWindow();
 
-        console.log(
-          `electron.main.ts.process.env.PORTABLE_EXECUTABLE_DIR = ${process.env.PORTABLE_EXECUTABLE_DIR}`,
-        );
+        //console.log(
+        //  `electron.main.ts.process.env.PORTABLE_EXECUTABLE_DIR = ${process.env.PORTABLE_EXECUTABLE_DIR}`,
+        //);
       }, 400);
     }
   });
@@ -295,6 +296,25 @@ ipcMain.handle('app.shutserver', async (event) => {
 ipcMain.on('restart_app', () => {
   app.relaunch();
   app.exit(0);
+});
+
+// Handle opening HTML in browser
+ipcMain.on('open-html-in-browser', (event, args) => {
+  try {
+    // Create a more unique filename with template name
+    const tempName = args.title
+      ? args.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()
+      : 'template';
+
+    const tempPath = path.join(os.tmpdir(), `${tempName}-${Date.now()}.html`);
+    fs.writeFileSync(tempPath, args.html, 'utf8');
+
+    // Use shell.openExternal which is more reliable
+    shell.openExternal(`file://${tempPath}`);
+  } catch (error) {
+    console.error('Error opening HTML in browser:', error);
+    event.sender.send('open-html-in-browser-error', { error: error.message });
+  }
 });
 
 ipcMain.handle('getBackendUrl', async (event) => {

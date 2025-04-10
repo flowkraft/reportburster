@@ -36,7 +36,7 @@ export const tabUploadFTPSTemplate = `<ng-template #tabUploadFTPSTemplate>
       <div class="col-xs-2">{{
         'AREAS.CONFIGURATION.TAB-UPLOAD-FTPS.EXAMPLE' | translate }}</div>
       <div class="col-xs-7">
-        <em>-ssl -T $extracted_file_path$ -u user:password ftp://ftp.example.com/reports/</em>
+        <em [innerHTML]="'-ssl -T \\$\\{extracted_file_path\\} -u user:password ftp://ftp.example.com/reports/'"></em>
       </div>
 
     </div>

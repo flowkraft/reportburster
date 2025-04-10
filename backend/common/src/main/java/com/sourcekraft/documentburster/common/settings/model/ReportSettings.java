@@ -43,27 +43,29 @@ public class ReportSettings extends DumpToString {
 		public CSVOptions csvoptions;
 		public FixedWidthOptions fixedwidthoptions;
 
+		// Add these fields to the DataSource class
+		public ExcelOptions exceloptions;
+		public boolean showmoreexceloptions;
+
 		public static class CSVOptions extends DumpToString {
 
-			/**
-			 * 
-			 */
 			private static final long serialVersionUID = 2691588813086554914L;
 
-			public String separatorchar;
-			public String quotationchar;
-			public String escapechar;
+			// Default values based on reporting.xml
+			public String separatorchar = ",";
+			public String quotationchar = "\"";
+			public String escapechar = "\\";
 
-			public boolean strictquotations;
-			public boolean ignorequotations;
-			public boolean ignoreleadingwhitespace;
+			public boolean strictquotations = false;
+			public boolean ignorequotations = false;
+			public boolean ignoreleadingwhitespace = true; // Updated to match XML
 
-			public String header;
-			public int skiplines;
+			public String header = "noheader"; // Updated to match XML
+			public int skiplines = 0;
 
-			public String idcolumn;
-			
-			public LinesRegExValidator linesregexvalidator;
+			public String idcolumn = "notused"; // Updated to match XML (no hyphen)
+
+			public LinesRegExValidator linesregexvalidator = new LinesRegExValidator();
 
 			static class LinesRegExValidator extends DumpToString {
 				/**
@@ -90,14 +92,25 @@ public class ReportSettings extends DumpToString {
 
 			private static final long serialVersionUID = 2691588813086554914L;
 
-			public String columns;
-			public String header;
-			public int skiplines;
-			public boolean ignoreleadingwhitespace;
+			public String columns = "";
+			public String header = "noheader"; // Updated to match XML
+			public int skiplines = 0;
+			public boolean ignoreleadingwhitespace = true; // Updated to match XML
 
-			public String idcolumn;
-			public String idcolumnindex;
+			public String idcolumn = "notused"; // Updated to match XML (no hyphen)
 
+		}
+
+		public static class ExcelOptions extends DumpToString {
+			private static final long serialVersionUID = 2691588813086554914L;
+
+			// Initialize with values from reporting.xml
+			public String header = "noheader"; // Updated to match XML
+			public int skiplines = 0;
+			public boolean ignoreleadingwhitespace = true;
+			public String idcolumn = "notused"; // Updated to match XML (no hyphen)
+			public int sheetindex = 0;
+			public boolean useformularesults = true;
 		}
 	}
 

@@ -6,7 +6,7 @@ export class ConfTemplatesTestHelper {
   static createNewTemplate = (
     ft: FluentTester,
     templateName: string,
-    mailMergeCapability?: string
+    mailMergeCapability?: string,
   ): FluentTester => {
     const folderName = _.kebabCase(templateName);
 
@@ -35,7 +35,7 @@ export class ConfTemplatesTestHelper {
     if (!mailMergeCapability) {
       ft = ft.waitOnInputValueToContainText(
         '#templateHowTo',
-        `settings/${PATHS.SETTINGS_CONFIG_FILE}`
+        `settings/${PATHS.SETTINGS_CONFIG_FILE}`,
       );
     }
     ft = ft.typeText('');
@@ -46,20 +46,20 @@ export class ConfTemplatesTestHelper {
     if (!mailMergeCapability) {
       ft = ft.waitOnInputValueToContainText(
         '#templateHowTo',
-        `/reports/${folderName}/${PATHS.SETTINGS_CONFIG_FILE}`
+        `/reports/${folderName}/${PATHS.SETTINGS_CONFIG_FILE}`,
       );
     }
     return ft
       .clickYesDoThis()
       .waitOnElementToHaveText(
         `#${folderName}_${PATHS.SETTINGS_CONFIG_FILE} td:first-child`,
-        templateName
+        templateName,
       );
   };
 
   static assertShowHideWorksFine = (
     ft: FluentTester,
-    folderName: string
+    folderName: string,
   ): FluentTester => {
     const selector = `${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`;
 
@@ -96,7 +96,7 @@ export class ConfTemplatesTestHelper {
   static assertBCCSubjectValues = (
     ft: FluentTester,
     folderName: string,
-    value: string
+    value: string,
   ): FluentTester => {
     let bccValue = '';
     let subjectValue = '';
@@ -109,7 +109,7 @@ export class ConfTemplatesTestHelper {
     return ft
       .gotoConfiguration()
       .click(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
+        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
       )
       .click('#leftMenuEmailSettings') // email SMTP settings
       .click('#emailMessageTab-link') // email message settings
@@ -120,13 +120,13 @@ export class ConfTemplatesTestHelper {
   static modifyEmailBCCAndSubjectAndAssertCorrectValues = (
     ft: FluentTester,
     folderName: string,
-    templateName: string
+    templateName: string,
   ): FluentTester => {
     ft = ft
       .gotoConfiguration()
       // STEP0 - CHANGE VALUES
       .click(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
+        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
       )
       .click('#leftMenuEmailSettings') // email SMTP settings
       .click('#emailMessageTab-link') // email message settings
@@ -142,13 +142,13 @@ export class ConfTemplatesTestHelper {
     return ConfTemplatesTestHelper.assertBCCSubjectValues(
       ft,
       folderName,
-      templateName
+      templateName,
     );
   };
 
   static modifyConfigurationValuesAssertSavedValues = (
     ft: FluentTester,
-    folderName: string
+    folderName: string,
   ): FluentTester => {
     return (
       ft
@@ -157,7 +157,7 @@ export class ConfTemplatesTestHelper {
         // STEP0 - CHANGE VALUES
         // general settings
         .click(
-          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
+          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
         )
         .click('#burstFileName')
         .typeText('00')
@@ -180,7 +180,7 @@ export class ConfTemplatesTestHelper {
         .click('#topMenuConfiguration')
         // general settings
         .click(
-          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
+          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
         )
         .inputShouldHaveValue('#burstFileName', '00')
         .inputShouldHaveValue('#outputFolder', '01')
@@ -196,7 +196,7 @@ export class ConfTemplatesTestHelper {
     ft: FluentTester,
     folderName: string,
     newTemplateName: string,
-    mailMergeCapability?: string
+    mailMergeCapability?: string,
   ): FluentTester => {
     const newFolderName = _.kebabCase(newTemplateName);
     ft = ft
@@ -217,20 +217,20 @@ export class ConfTemplatesTestHelper {
     if (!mailMergeCapability) {
       ft = ft.waitOnInputValueToContainText(
         '#templateHowTo',
-        `/reports/${newFolderName}/${PATHS.SETTINGS_CONFIG_FILE}`
+        `/reports/${newFolderName}/${PATHS.SETTINGS_CONFIG_FILE}`,
       );
     }
     return ft
       .clickYesDoThis()
       .waitOnElementToHaveText(
         `#${newFolderName}_${PATHS.SETTINGS_CONFIG_FILE} td:first-child`,
-        newTemplateName
+        newTemplateName,
       );
   };
 
   static rollbackChangesToDefaultDocumentBursterConfiguration = (
     ft: FluentTester,
-    folderName: string
+    folderName: string,
   ): FluentTester => {
     return ft
       .gotoStartScreen()
@@ -248,25 +248,25 @@ export class ConfTemplatesTestHelper {
     ft: FluentTester,
     folderName: string,
     templateName: string,
-    mailMergeCapability?: string
+    mailMergeCapability?: string,
   ): FluentTester => {
     ft = ft
       .gotoStartScreen()
       .gotoConfiguration()
       .elementShouldContainText(
         `#topMenuConfigurationLoad_burst_${PATHS.SETTINGS_CONFIG_FILE}`,
-        'My Report'
+        'My Report',
       )
       .elementShouldContainText(
         `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-        templateName
+        templateName,
       )
       .click(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
+        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
       )
       .waitOnElementToHaveText(
         '.sidebar-menu .header',
-        `CONFIGURATION (${templateName})`
+        `CONFIGURATION (${templateName})`,
       );
 
     if (mailMergeCapability) {
@@ -279,7 +279,7 @@ export class ConfTemplatesTestHelper {
       .gotoConfigurationTemplates()
       .waitOnElementToHaveText(
         `#${folderName}_${PATHS.SETTINGS_CONFIG_FILE} td:first-child`,
-        templateName
+        templateName,
       )
       .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .waitOnElementToBecomeEnabled('#btnEdit')
@@ -299,7 +299,7 @@ export class ConfTemplatesTestHelper {
         .waitOnElementToBecomeVisible('#templateHowTo')
         .inputValueShouldContainText(
           '#templateHowTo',
-          `/reports/${folderName}/${PATHS.SETTINGS_CONFIG_FILE}`
+          `/reports/${folderName}/${PATHS.SETTINGS_CONFIG_FILE}`,
         );
     }
 
@@ -308,7 +308,7 @@ export class ConfTemplatesTestHelper {
 
   static assertDefaultConfigurationValues = (
     ft: FluentTester,
-    folderName: string
+    folderName: string,
   ): FluentTester => {
     return (
       ft
@@ -317,20 +317,20 @@ export class ConfTemplatesTestHelper {
         .click('#topMenuConfiguration')
         // general settings
         .click(
-          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
+          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
         )
         .click('#leftMenuGeneralSettings')
         .inputShouldHaveValue(
           '#burstFileName',
-          '${burst_token}.${output_type_extension}'
+          '${burst_token}.${output_type_extension}',
         )
         .inputShouldHaveValue(
           '#outputFolder',
-          'output/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}'
+          'output/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}',
         )
         .inputShouldHaveValue(
           '#quarantineFolder',
-          'quarantine/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}'
+          'quarantine/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}',
         )
         .click('#quarantineFolder')
         .click('#leftMenuEnableDisableDistribution')
@@ -342,7 +342,7 @@ export class ConfTemplatesTestHelper {
 
   static deleteTemplate = (
     ft: FluentTester,
-    folderName: string
+    folderName: string,
   ): FluentTester => {
     return ft
       .gotoStartScreen()
@@ -357,19 +357,19 @@ export class ConfTemplatesTestHelper {
       .click('#btnDelete')
       .clickYesDoThis()
       .waitOnElementToBecomeInvisible(
-        `#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
+        `#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
       )
       .click('#topMenuBurst')
       .click('#topMenuConfiguration')
       .elementShouldNotBeVisible(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
+        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
       );
   };
 
   static modifyTemplateName = (
     ft: FluentTester,
     folderName: string,
-    newTemplateName: string
+    newTemplateName: string,
   ): FluentTester => {
     return ft
       .gotoStartScreen()
@@ -382,13 +382,13 @@ export class ConfTemplatesTestHelper {
       .clickYesDoThis()
       .waitOnElementToContainText(
         `#${folderName}_${PATHS.SETTINGS_CONFIG_FILE} td:first-child`,
-        newTemplateName
+        newTemplateName,
       );
   };
 
   static assertFallbackTemplate = (
     ft: FluentTester,
-    templateName: string
+    templateName: string,
   ): FluentTester => {
     return ft
       .gotoConfigurationTemplates()
@@ -399,16 +399,16 @@ export class ConfTemplatesTestHelper {
       .elementShouldBeVisible('#fallbackTemplateSpan')
       .elementShouldContainText(
         '#fallbackTemplateSpan',
-        'used automatically when no other (more specific) configuration is defined'
+        'used automatically when no other (more specific) configuration is defined',
       )
       .click('#btnClose')
       .elementShouldContainText(
         `#burst_${PATHS.SETTINGS_CONFIG_FILE} td:first-child`,
-        templateName + ' (fallback)'
+        templateName + ' (fallback)',
       )
       .elementShouldContainText(
         `#burst_${PATHS.SETTINGS_CONFIG_FILE} td:nth-child(3)`,
-        'used automatically when no other (more specific) configuration is defined'
+        'used automatically when no other (more specific) configuration is defined',
       );
   };
 }

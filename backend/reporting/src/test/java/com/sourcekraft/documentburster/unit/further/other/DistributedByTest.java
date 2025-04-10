@@ -65,7 +65,7 @@ public class DistributedByTest {
             tester.assertPageCountEquals(1);
 
             // assert content
-            tester.assertContentContainsTextOnPage("Distributed by DocumentBurster - http://www.pdfburst.com/go/db", 1,
+            tester.assertContentContainsTextOnPage("Sent by ReportBurster - https://reportburster.com/g/dbrb/br", 1,
                     TextSearchType.CONTAINS);
 
             // assert PDF keywords

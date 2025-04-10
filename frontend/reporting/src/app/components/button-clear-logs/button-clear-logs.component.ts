@@ -13,7 +13,7 @@ import { ToastrMessagesService } from '../../providers/toastr-messages.service';
   styles: [':host {display: inline-block; width: 100%}'],
 })
 export class ButtonClearLogsComponent {
-  @Input() id: string;
+  @Input() btnId: string;
   @Input() value: string;
   @Input() title: string;
   @Input() question: string;

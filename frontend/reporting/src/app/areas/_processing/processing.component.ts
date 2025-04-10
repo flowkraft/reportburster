@@ -107,6 +107,8 @@ export class ProcessingComponent implements OnInit {
   @ViewChild('qaFileUploadInput') qaFileUploadInput: ElementRef;
   @ViewChild('mergeFilesUploadInput') mergeFilesUploadInput: ElementRef;
 
+  numberOfGenerateReportsConfigured: number = 0;
+
   visibleTabs: {
     id: string;
     heading: string;
@@ -207,7 +209,7 @@ export class ProcessingComponent implements OnInit {
     protected executionStatsService: ExecutionStatsService,
     protected fsService: FsService,
     protected samplesService: SamplesService,
-    private sanitizer: DomSanitizer,
+    protected sanitizer: DomSanitizer,
   ) {}
 
   ngOnDestroy() {
@@ -227,7 +229,9 @@ export class ProcessingComponent implements OnInit {
     await this.settingsService.loadAllConnectionFilesAsync();
 
     this.settingsService.configurationFiles =
-      await this.settingsService.loadAllSettingsFilesAsync();
+      await this.settingsService.loadAllSettingsFilesAsync({
+        forceReload: true,
+      });
 
     await this.samplesService.fillSamplesNotes();
 
@@ -394,11 +398,9 @@ export class ProcessingComponent implements OnInit {
     //  `refreshTabs mailMergeConfigurations = ${JSON.stringify(mailMergeConfigurations)}`,
     //);
 
-    if (!mailMergeConfigurations?.length) {
-      visibleTabsIds = visibleTabsIds.filter(
-        (tab) => tab != 'reportGenerationMailMergeTab',
-      );
-    }
+    this.numberOfGenerateReportsConfigured =
+      mailMergeConfigurations?.length || 0;
+
     //}
 
     this.visibleTabs = this.ALL_TABS.filter((item) =>
@@ -588,7 +590,7 @@ export class ProcessingComponent implements OnInit {
 
           if (!configFilePath)
             this.shellService.runBatFile(
-              ['-f', `"${inputFilePath}"`],
+              ['burst', `"${inputFilePath}"`],
               this.processingService.procBurstInfo.inputFileName,
             );
           else {
@@ -599,7 +601,7 @@ export class ProcessingComponent implements OnInit {
               );
 
             this.shellService.runBatFile(
-              ['-f', `"${inputFilePath}"`, '-c', `"${configFilePath}"`],
+              ['burst', `"${inputFilePath}"`, '-c', `"${configFilePath}"`],
               this.processingService.procBurstInfo.inputFileName,
             );
           }
@@ -667,7 +669,7 @@ export class ProcessingComponent implements OnInit {
 
           if (!configFilePath)
             this.shellService.runBatFile(
-              ['-f', `"${inputFilePath}"`],
+              ['generate', `"${inputFilePath}"`],
               this.processingService.procReportingMailMergeInfo.inputFileName,
             );
           else {
@@ -678,7 +680,7 @@ export class ProcessingComponent implements OnInit {
               );
 
             this.shellService.runBatFile(
-              ['-f', `"${inputFilePath}"`, '-c', `"${configFilePath}"`],
+              ['generate', `"${inputFilePath}"`, '-c', `"${configFilePath}"`],
               this.processingService.procReportingMailMergeInfo.inputFileName,
             );
           }
@@ -745,8 +747,9 @@ export class ProcessingComponent implements OnInit {
           }
 
           const arrguments = [
-            '-mf',
-            '"' + mergeFilePath + '"',
+            'document',
+            'merge',
+            `"${mergeFilePath}"`,
             '-o',
             this.processingService.procMergeBurstInfo.mergedFileName,
           ];
@@ -960,20 +963,26 @@ export class ProcessingComponent implements OnInit {
             this.processingService.procQualityAssuranceInfo
               .prefilledConfigurationFilePath;
 
-          let arrguments = [];
+          let commandArgs = [];
 
+          // Determine base command based on action type
           if (
             this.processingService.procQualityAssuranceInfo.whichAction ==
             'burst'
-          )
-            arrguments = [
+          ) {
+            commandArgs = ['burst', `"${inputFilePath}"`];
+
+            // Add the QA testing mode
+            commandArgs.push(
               '-' + this.processingService.procQualityAssuranceInfo.mode,
-            ];
-          else if (
+            );
+          } else if (
             this.processingService.procQualityAssuranceInfo.whichAction ==
             'csv-generate-reports'
-          )
-            arrguments = [
+          ) {
+            commandArgs = [
+              'generate',
+              `"${inputFilePath}"`,
               '-c',
               '"' +
                 Utilities.slash(configFilePath).replace(
@@ -981,11 +990,18 @@ export class ProcessingComponent implements OnInit {
                   'PORTABLE_EXECUTABLE_DIR_PATH/config/',
                 ) +
                 '"',
-              '-' + this.processingService.procQualityAssuranceInfo.mode,
             ];
 
+            // Add the QA testing mode
+            commandArgs.push(
+              '-' + this.processingService.procQualityAssuranceInfo.mode,
+            );
+          }
+
+          // Add details for the selected testing mode
           if (this.processingService.procQualityAssuranceInfo.mode === 'tl') {
-            arrguments.push(
+            // Add the list of tokens to test
+            commandArgs.push(
               '"' +
                 this.processingService.procQualityAssuranceInfo.listOfTokens
                   .toString()
@@ -995,12 +1011,14 @@ export class ProcessingComponent implements OnInit {
           } else if (
             this.processingService.procQualityAssuranceInfo.mode === 'tr'
           ) {
-            arrguments.push(
+            // Add the number of random tokens
+            commandArgs.push(
               this.processingService.procQualityAssuranceInfo
                 .numberOfRandomTokens,
             );
           }
 
+          // Handle file upload if needed
           if (!this.processingService.procBurstInfo.isSample) {
             const formData = new FormData();
             formData.append(
@@ -1012,16 +1030,21 @@ export class ProcessingComponent implements OnInit {
             const customHeaders = new Headers({
               Accept: 'application/json',
             });
+
             const uploadedFilesInfo = await this.apiService.post(
               '/jobman/upload/process-qa',
               formData,
               customHeaders,
             );
             inputFilePath = uploadedFilesInfo[0].filePath;
+
+            // Update the input file path in the command arguments
+            commandArgs[1] = `"${inputFilePath}"`;
           }
 
+          // Execute the command
           this.shellService.runBatFile(
-            ['-f', inputFilePath].concat(arrguments),
+            commandArgs,
             Utilities.basename(inputFilePath),
           );
 
@@ -1164,7 +1187,7 @@ export class ProcessingComponent implements OnInit {
           this.executionStatsService.jobStats.jobsToResume = [];
           //console.log(`jobFilePath = ${jobFilePath}`);
           this.shellService.runBatFile(
-            ['-rf', '"' + jobFilePath + '"'],
+            ['resume', '"' + jobFilePath + '"'],
             Utilities.basename(jobFilePath),
           );
 
@@ -1220,7 +1243,7 @@ export class ProcessingComponent implements OnInit {
       true,
     );
 
-    console.log('inputDetailsHTML:', inputDetailsHTML);
+    //console.log('inputDetailsHTML:', inputDetailsHTML);
 
     this.modalSampleInfo.inputDetails =
       this.sanitizer.bypassSecurityTrustHtml(inputDetailsHTML);
@@ -1234,7 +1257,7 @@ export class ProcessingComponent implements OnInit {
 
     this.isModalSamplesLearnMoreVisible = true;
 
-    console.log('Modal input details:', this.modalSampleInfo.inputDetails);
+    //console.log('Modal input details:', this.modalSampleInfo.inputDetails);
   }
 
   async doCloseSamplesLearnMoreModal() {
