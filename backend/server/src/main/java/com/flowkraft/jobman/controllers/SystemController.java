@@ -3,7 +3,9 @@ package com.flowkraft.jobman.controllers;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +45,7 @@ public class SystemController {
 
 		String decodedUrl = URLDecoder.decode(url, StandardCharsets.UTF_8.toString());
 
-		//System.out.println("/jobman/system/check-url url = " + decodedUrl);
+		// System.out.println("/jobman/system/check-url url = " + decodedUrl);
 
 		WebClient webClient = WebClient.create();
 
@@ -132,11 +134,10 @@ public class SystemController {
 
 	@DeleteMapping("/fs/delete-quietly")
 	public Mono<Boolean> deleteQuietly(@RequestParam String path) throws Exception {
-		
+
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
 
-		
 		Boolean deleted = systemService.fsDelete(fullPath);
 		return Mono.just(deleted);
 	}
@@ -154,6 +155,21 @@ public class SystemController {
 
 	}
 
+	// Add this to SystemController.java
+	@GetMapping("/fs/resolve-absolute-path")
+	public Map<String, String> resolveAbsolutePath(@RequestParam("path") String relativePath) {
+		//System.out.println("Controller resolveAbsolutePath called with path: " + relativePath);
+
+		// Use the existing SystemService method to resolve the path
+		String absolutePath = systemService.fsResolvePath(relativePath);
+		//System.out.println("Controller returning absolutePath: " + absolutePath);
+
+		// Return the result as a map
+		Map<String, String> result = new HashMap<>();
+		result.put("absolutePath", absolutePath);
+		return result;
+	}
+
 	@PostMapping(value = "/fs/write-string-to-file", consumes = "text/plain")
 	Mono<Void> writeStringToFile(@RequestParam String path, @RequestBody Optional<String> content) throws Exception {
 
@@ -162,7 +178,7 @@ public class SystemController {
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
 
-		//System.out.println("/fs/write-string-to-file fullPath = " + fullPath);
+		// System.out.println("/fs/write-string-to-file fullPath = " + fullPath);
 
 		return Mono.fromCallable(() -> {
 			systemService.fsWriteStringToFile(fullPath, content);
@@ -182,10 +198,8 @@ public class SystemController {
 		String fullToPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(toPath, StandardCharsets.UTF_8.toString());
 
-
 		return Mono.fromCallable(() -> {
-			systemService.fsCopy(fullFromPath,
-					fullToPath, overwrite, matching, ignoreCase);
+			systemService.fsCopy(fullFromPath, fullToPath, overwrite, matching, ignoreCase);
 			return null;
 		});
 	}

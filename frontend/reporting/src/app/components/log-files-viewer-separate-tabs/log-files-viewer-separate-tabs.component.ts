@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
 
 @Component({
@@ -6,5 +6,7 @@ import { ExecutionStatsService } from '../../providers/execution-stats.service';
   templateUrl: './log-files-viewer-separate-tabs.component.html',
 })
 export class LogFilesViewerSeparateTabsComponent {
+  @Input() viewerId = 'logsViewer';
+
   constructor(protected executionStatsService: ExecutionStatsService) {}
 }

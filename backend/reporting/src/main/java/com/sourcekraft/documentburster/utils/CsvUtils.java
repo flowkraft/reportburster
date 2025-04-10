@@ -32,8 +32,8 @@ public class CsvUtils {
 
 	public static final String AUTODETECT = "autodetect";
 
-	public static final String COLUMN_LAST = "columnlast";
-	public static final String COLUMN_FIRST = "columnfirst";
+	public static final String COLUMN_LAST = "lastcolumn";
+	public static final String COLUMN_FIRST = "firstcolumn";
 	public static final String NOT_USED = "notused";
 	
 	public static final String OUTPUT_TYPE_NONE = "output.none";

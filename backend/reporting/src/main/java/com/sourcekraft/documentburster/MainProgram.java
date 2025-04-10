@@ -1,305 +1,445 @@
-/*
-    DocumentBurster is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
-
-    DocumentBurster is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with DocumentBurster.  If not, see <http://www.gnu.org/licenses/>
- */
 package com.sourcekraft.documentburster;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.Callable;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionGroup;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.job.CliJob;
 
-public class MainProgram {
+import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
+import picocli.CommandLine.ParentCommand;
+import picocli.CommandLine.Spec;
+
+@Command(name = "reportburster", mixinStandardHelpOptions = true, version = "ReportBurster 10.3.0", description = "Report bursting and report generation software", subcommands = {
+		MainProgram.BurstCommand.class, MainProgram.GenerateCommand.class, MainProgram.ResumeCommand.class,
+		MainProgram.DocumentCommand.class, MainProgram.SystemCommand.class })
+public class MainProgram implements Callable<Integer> {
 
 	private static Logger log = LoggerFactory.getLogger(MainProgram.class);
 
-	private GlobalContext global;
+	// Job type constants for tagging
+	public static final String JOB_TYPE_BURST = "burst";
+	public static final String JOB_TYPE_GENERATE = "generate";
+	public static final String JOB_TYPE_MERGE = "merge";
+
+	private GlobalContext global = new GlobalContext();
+
+	@Spec
+	CommandSpec spec;
 
 	public void setGlobal(GlobalContext global) {
 		this.global = global;
 	}
 
+	public GlobalContext getGlobal() {
+		return this.global;
+	}
+
+	@Override
+	public Integer call() {
+		// Show help when no command is specified
+		spec.commandLine().usage(System.out);
+		return 0;
+	}
+
 	public void execute(String[] args) throws Throwable {
-
-		Options options = new Options();
-
-		OptionGroup mainOptionsGrp = new OptionGroup();
-		mainOptionsGrp.setRequired(false);
-
-		mainOptionsGrp.addOption(new Option("f", "file", true, "Input file"));
-		mainOptionsGrp.addOption(new Option("mf", "mergefile", true, "Merge files"));
-
-		mainOptionsGrp.addOption(new Option("rf", "resumefile", true, "Resume file processing"));
-
-		options.addOptionGroup(mainOptionsGrp);
-
-		options.addOption("c", "configuration", true, "Configuration file");
-
-		options.addOption("o", "output", true, "Name of the output merged file");
-		options.addOption("b", "burst", false, "Burst the merged file");
-
-		OptionGroup checkConnectionsOptionsGrp = new OptionGroup();
-		checkConnectionsOptionsGrp.setRequired(false);
-
-		checkConnectionsOptionsGrp.addOption(new Option("cec", "checkemailconn", false,
-				"Send a single test email using the main SMTP configured server"));
-
-		checkConnectionsOptionsGrp
-				.addOption(new Option("ctwlc", "checktwilioconn", false, "Send a single test SMS using Twilio"));
-
-		options.addOption(new Option("from", "fromnumber", true, "From number"));
-		options.addOption(new Option("to", "tonumber", true, "To number"));
-
-		options.addOptionGroup(checkConnectionsOptionsGrp);
-
-		OptionGroup qaOptionsGrp = new OptionGroup();
-		qaOptionsGrp.setRequired(false);
-
-		qaOptionsGrp
-				.addOption(new Option("ta", "testall", false, "Test all the burst tokens found in the input document"));
-		qaOptionsGrp.addOption(
-				new Option("tl", "testlist", true, "Comma separated list of burst tokens which should be tested"));
-		qaOptionsGrp.addOption(
-				new Option("tr", "testrandom", true, "Number of random burst tokens which should be tested"));
-
-		options.addOptionGroup(qaOptionsGrp);
-
-		OptionGroup licenseOptionsGrp = new OptionGroup();
-		licenseOptionsGrp.setRequired(false);
-
-		licenseOptionsGrp.addOption(new Option("al", "activatelicense", false, "Activate license key"));
-		licenseOptionsGrp.addOption(new Option("dl", "deactivatelicense", false, "Deactivate license key"));
-		licenseOptionsGrp.addOption(
-				new Option("cl", "checklicense", false, "Check if license key is valid, invalid or expired"));
-
-		options.addOptionGroup(licenseOptionsGrp);
-
-		OptionGroup otherOptionsGrp = new OptionGroup();
-		otherOptionsGrp.setRequired(false);
-
-		otherOptionsGrp.addOption(new Option("rnf", "requestnewfeature", true,
-				"Full file path to an XML file containing the new feature details"));
-
-		options.addOptionGroup(otherOptionsGrp);
-
-		CommandLineParser parser = new DefaultParser();
-		CommandLine cmd;
-
-		try {
-
-			cmd = parser.parse(options, args);
-
-			if (cmd.hasOption("f"))
-				_burst(cmd);
-			else if (cmd.hasOption("rf"))
-				_resumeBurst(cmd);
-			else if (cmd.hasOption("mf"))
-				_mergeAndBurst(cmd);
-			else if ((cmd.hasOption("cec")))
-				_checkEmailConnection(cmd);
-			else if (cmd.hasOption("ctwlc"))
-				_checkTwilioConnection(cmd);
-			else if ((cmd.hasOption("al")) || (cmd.hasOption("dl")) || (cmd.hasOption("cl")))
-				_checkSoftwareLicense(cmd);
-			else if (cmd.hasOption("rnf"))
-				_handleOtherOptions(cmd);
-
-		} catch (ParseException e) {
-			_usage(options);
-			throw e;
-		}
-
-	}
-
-	private void _checkSoftwareLicense(CommandLine cmd) throws Exception {
-
-		CliJob job = getJob(cmd);
-
-		if (cmd.hasOption("al")) {
-			job.doActivateLicenseKey();
-		} else if (cmd.hasOption("dl")) {
-			job.doDeactivateLicense();
-		} else if (cmd.hasOption("cl")) {
-			job.doCheckLicense();
+		int exitCode = new CommandLine(this).execute(args);
+		if (exitCode != 0) {
+			throw new RuntimeException("Command execution failed with exit code: " + exitCode);
 		}
 	}
 
-	private void _checkEmailConnection(CommandLine cmd) throws Exception {
-
-		CliJob job = getJob(cmd);
-
-		if (cmd.hasOption("cec")) {
-			job.doCheckEmail();
-		}
-
+	// Common options for configuration
+	public static class ConfigOptions {
+		@Option(names = { "-c", "--config" }, description = "Configuration file path")
+		String configFile;
 	}
 
-	private void _checkTwilioConnection(CommandLine cmd) throws Exception {
+	public static class QaOptions {
+		@ArgGroup(exclusive = true, multiplicity = "0..1")
+		private TestOptions testOptions = new TestOptions();
 
-		String fromNumber = cmd.getOptionValue("from");
-		String toNumber = cmd.getOptionValue("to");
-
-		CliJob job = getJob(cmd);
-
-		job.doCheckTwilio(fromNumber, toNumber);
-
-	}
-
-	private void _mergeAndBurst(CommandLine cmd) throws Exception {
-
-		String mergeFilePath = cmd.getOptionValue("mf");
-		File mergeFile = new File(mergeFilePath);
-
-		if (mergeFile.exists()) {
-
-			List<String> filePaths = Files.readAllLines(Paths.get(mergeFilePath), StandardCharsets.UTF_8);
-
-			for (String filePath : filePaths) {
-
-				File file = new File(filePath);
-
-				if (!file.exists())
-					throw new FileNotFoundException("Input file does not exist: " + filePath);
-
-			}
-
-			String outputMergedFileName = null;
-
-			if (cmd.hasOption("o"))
-				outputMergedFileName = cmd.getOptionValue('o');
-
-			CliJob job = getJob(cmd);
-
-			String outputMergedFilePath = job.doMerge(filePaths, outputMergedFileName);
-			if (cmd.hasOption("b"))
-				job.doBurst(outputMergedFilePath, false, StringUtils.EMPTY, -1);
-
-			FileUtils.deleteQuietly(mergeFile);
-
-		} else
-			throw new FileNotFoundException("Merge file does not exist: " + mergeFilePath);
-
-	}
-
-	private void _burst(CommandLine cmd) throws Exception {
-
-		// either Burst an input file
-		String filePath = cmd.getOptionValue('f');
-
-		File file = new File(filePath);
-
-		if (file.exists()) {
-
+		static class TestOptions {
+			@Option(names = { "-ta", "--testall" }, description = "Test all entries")
 			boolean testAll = false;
-			String listOfTestTokens = StringUtils.EMPTY;
-			int numberOfRandomTestTokens = -1;
 
-			if (cmd.hasOption("ta")) {
-				testAll = true;
-			} else if (cmd.hasOption("tl")) {
-				listOfTestTokens = cmd.getOptionValue("tl");
+			@Option(names = { "-tl", "--testlist" }, description = "Comma separated list of entries to test")
+			String testList;
+
+			@Option(names = { "-tr",
+					"--testrandom" }, description = "Number of randomly selected entries to test (must be positive)", paramLabel = "<count>")
+			Integer randomTests;
+		}
+
+		// Accessor methods to maintain compatibility with existing code
+		public boolean isTestAll() {
+			return testOptions != null && testOptions.testAll;
+		}
+
+		public String getTestList() {
+			return (testOptions == null || testOptions.testList == null) ? StringUtils.EMPTY : testOptions.testList;
+		}
+
+		public int getRandomTestsCount() {
+			return (testOptions == null || testOptions.randomTests == null) ? -1 : testOptions.randomTests;
+		}
+	}
+
+	// Base command with shared functionality
+	abstract static class BaseCommand {
+		protected CliJob getJob(String configFilePath) throws Exception {
+			if (configFilePath != null) {
+				File file = new File(configFilePath);
+				if (!file.exists()) {
+					throw new FileNotFoundException("Configuration file does not exist: " + configFilePath);
+				}
 			}
 
-			if (cmd.hasOption("tr"))
-				try {
-					numberOfRandomTestTokens = Integer.parseInt(cmd.getOptionValue("tr"));
+			MainProgram parent = getMainProgram();
+			CliJob job = new CliJob(configFilePath);
+			job.setGlobal(parent.global);
+			return job;
+		}
 
-					if (numberOfRandomTestTokens < 0)
-						throw new NumberFormatException();
+		protected abstract MainProgram getMainProgram();
+	}
 
-				} catch (NumberFormatException e) {
-					throw new NumberFormatException(cmd.getOptionValue("tr")
-							+ " is not a valid positive (>0) integer number. Please provide a valid positive (>0) integer number of random burst tokens which should be tested!"
-							+ filePath);
+	@Command(name = "burst", description = "Burst a document into multiple documents")
+	public static class BurstCommand extends BaseCommand implements Callable<Integer> {
+		@ParentCommand
+		protected MainProgram parent;
+
+		@Parameters(index = "0", description = "Input file to process", arity = "1")
+		protected File inputFile;
+
+		@Mixin
+		protected ConfigOptions config;
+
+		@Mixin
+		protected QaOptions qa;
+
+		@Override
+		protected MainProgram getMainProgram() {
+			return parent;
+		}
+
+		@Override
+		public Integer call() throws Exception {
+			if (!inputFile.exists()) {
+				throw new FileNotFoundException("Input file does not exist: " + inputFile.getAbsolutePath());
+			}
+
+			// Validate random tests parameter if it's provided (not -1)
+			int randomTestsCount = qa.getRandomTestsCount();
+			if (randomTestsCount != -1 && randomTestsCount <= 0) {
+				throw new CommandLine.ParameterException(parent.spec.commandLine(),
+						"Number of randomly selected entries to test must be positive");
+			}
+
+			CliJob job = getJob(config.configFile);
+			job.doBurst(inputFile.getAbsolutePath(), qa.isTestAll(), qa.getTestList(), qa.getRandomTestsCount());
+			return 0;
+		}
+	}
+
+	@Command(name = "generate", description = "Generate reports from input data")
+	public static class GenerateCommand extends BaseCommand implements Callable<Integer> {
+		@ParentCommand
+		MainProgram parent;
+
+		@Parameters(index = "0", description = "Input to process", arity = "1")
+		private String input;
+
+		@Mixin
+		private ConfigOptions config;
+
+		@Mixin
+		private QaOptions qa;
+
+		@Override
+		protected MainProgram getMainProgram() {
+			return parent;
+		}
+
+		@Override
+		public Integer call() throws Exception {
+			// Check config required for all types
+			if (config.configFile == null) {
+				throw new CommandLine.ParameterException(parent.spec.commandLine(),
+						"Configuration file (-c/--config) is required");
+			}
+
+			// Validate random tests parameter if provided (must be positive)
+			int randomTestsCount = qa.getRandomTestsCount();
+			if (randomTestsCount > 0 && randomTestsCount <= 0) {
+				throw new CommandLine.ParameterException(parent.spec.commandLine(),
+						"Number of random tests must be positive");
+			}
+
+			Settings settings = new Settings();
+			settings.loadSettings(config.configFile);
+
+			boolean isReportGenerationJob = settings.getCapabilities().reportgenerationmailmerge;
+
+			CliJob job = getJob(config.configFile);
+			job.setJobType(isReportGenerationJob ? settings.getReportDataSource().type : "burst");
+			job.doBurst(input, qa.isTestAll(), qa.getTestList(), qa.getRandomTestsCount());
+
+			return 0;
+		}
+	}
+
+	@Command(name = "resume", description = "Resume a previously paused job")
+	public static class ResumeCommand extends BaseCommand implements Callable<Integer> {
+		@ParentCommand
+		MainProgram parent;
+
+		@Parameters(index = "0", description = "Job progress file to resume", arity = "1")
+		private File jobProgressFile;
+
+		@Override
+		protected MainProgram getMainProgram() {
+			return parent;
+		}
+
+		@Override
+		public Integer call() throws Exception {
+			if (!jobProgressFile.exists()) {
+				throw new FileNotFoundException(
+						"Job progress file does not exist: " + jobProgressFile.getAbsolutePath());
+			}
+
+			CliJob job = getJob(null);
+			job.doResume(jobProgressFile.getAbsolutePath());
+			return 0;
+		}
+	}
+
+	@Command(name = "document", description = "Document operations", subcommands = {
+			MainProgram.DocumentCommand.MergeCommand.class })
+	public static class DocumentCommand implements Callable<Integer> {
+		@ParentCommand
+		MainProgram parent;
+
+		@Spec
+		CommandSpec spec;
+
+		@Override
+		public Integer call() {
+			spec.commandLine().usage(System.out);
+			return 0;
+		}
+
+		@Command(name = "merge", description = "Merge multiple documents into one")
+		public static class MergeCommand extends BaseCommand implements Callable<Integer> {
+			@ParentCommand
+			DocumentCommand documentCommand;
+
+			@Parameters(index = "0", description = "File containing list of documents to merge", arity = "1")
+			private File listFile;
+
+			@Option(names = { "-o", "--output" }, description = "Output file name")
+			private String outputFileName;
+
+			@Option(names = { "-b", "--burst" }, description = "Burst the merged file")
+			private boolean burst = false;
+
+			@Mixin
+			private ConfigOptions config;
+
+			@Override
+			protected MainProgram getMainProgram() {
+				return documentCommand.parent;
+			}
+
+			@Override
+			public Integer call() throws Exception {
+				if (!listFile.exists()) {
+					throw new FileNotFoundException("List file does not exist: " + listFile.getAbsolutePath());
 				}
 
-			CliJob job = getJob(cmd);
+				List<String> filePaths = Files.readAllLines(listFile.toPath(), StandardCharsets.UTF_8);
 
-			job.doBurst(filePath, testAll, listOfTestTokens, numberOfRandomTestTokens);
+				for (String filePath : filePaths) {
+					File file = new File(filePath);
+					if (!file.exists()) {
+						throw new FileNotFoundException("Input file does not exist: " + filePath);
+					}
+				}
 
-		} else
-			throw new FileNotFoundException("Input file does not exist: " + filePath);
+				CliJob job = getJob(config.configFile);
+				String outputMergedFilePath = job.doMerge(filePaths, outputFileName);
 
+				if (burst) {
+					job.doBurst(outputMergedFilePath, false, StringUtils.EMPTY, -1);
+				}
+
+				FileUtils.deleteQuietly(listFile);
+				return 0;
+			}
+		}
 	}
 
-	private void _resumeBurst(CommandLine cmd) throws Exception {
+	@Command(name = "system", description = "System operations", subcommands = {
+			MainProgram.SystemCommand.TestEmailCommand.class, MainProgram.SystemCommand.TestSmsCommand.class,
+			MainProgram.SystemCommand.LicenseCommand.class, MainProgram.SystemCommand.FeatureRequestCommand.class })
+	public static class SystemCommand implements Callable<Integer> {
+		@ParentCommand
+		MainProgram parent;
 
-		String jobProgressFilePath = cmd.getOptionValue("rf");
+		@Spec
+		CommandSpec spec;
 
-		File jobProgressFile = new File(jobProgressFilePath);
-
-		if (jobProgressFile.exists()) {
-
-			CliJob job = getJob(cmd);
-			job.doResumeBurst(jobProgressFilePath);
-
-		} else
-			throw new FileNotFoundException("Job progress file does not exist: " + jobProgressFilePath);
-
-	}
-
-	private void _handleOtherOptions(CommandLine cmd) throws Exception {
-
-		CliJob job = getJob(cmd);
-
-		if (cmd.hasOption("rnf")) {
-			job.doSendFeatureRequestEmail(cmd.getOptionValue("rnf"));
+		@Override
+		public Integer call() {
+			spec.commandLine().usage(System.out);
+			return 0;
 		}
 
-	}
+		@Command(name = "test-email", description = "Test email connection")
+		static class TestEmailCommand extends BaseCommand implements Callable<Integer> {
+			@ParentCommand
+			SystemCommand systemCommand;
 
-	private void _usage(Options options) {
+			@Mixin
+			private ConfigOptions config;
 
-		log.debug("usage(Options options)");
+			@Override
+			protected MainProgram getMainProgram() {
+				return systemCommand.parent;
+			}
 
-		HelpFormatter formatter = new HelpFormatter();
-		formatter.printHelp("DocumentBurster", options);
-
-	}
-
-	protected CliJob getJob(CommandLine cmd) throws Exception {
-
-		String configurationFilePath = null;
-
-		if (cmd.hasOption("c")) {
-			File file = new File(cmd.getOptionValue("c"));
-			if (file.exists())
-				configurationFilePath = cmd.getOptionValue("c");
-			else
-				throw new FileNotFoundException("Configuration file does not exist: " + cmd.getOptionValue("c"));
+			@Override
+			public Integer call() throws Exception {
+				CliJob job = getJob(config.configFile);
+				job.doCheckEmail();
+				return 0;
+			}
 		}
 
-		CliJob job = new CliJob(configurationFilePath);
-		job.setGlobal(global);
+		@Command(name = "test-sms", description = "Test SMS through Twilio")
+		static class TestSmsCommand extends BaseCommand implements Callable<Integer> {
+			@ParentCommand
+			SystemCommand systemCommand;
 
-		return job;
+			@Option(names = { "--from", "--from-number" }, required = true, description = "From phone number")
+			private String fromNumber;
+
+			@Option(names = { "--to", "--to-number" }, required = true, description = "To phone number")
+			private String toNumber;
+
+			@Mixin
+			private ConfigOptions config;
+
+			@Override
+			protected MainProgram getMainProgram() {
+				return systemCommand.parent;
+			}
+
+			@Override
+			public Integer call() throws Exception {
+				CliJob job = getJob(config.configFile);
+				job.doCheckTwilio(fromNumber, toNumber);
+				return 0;
+			}
+		}
+
+		@Command(name = "license", description = "License management", subcommands = {
+				SystemCommand.LicenseCommand.ActivateCommand.class,
+				SystemCommand.LicenseCommand.DeactivateCommand.class, SystemCommand.LicenseCommand.CheckCommand.class })
+		public static class LicenseCommand implements Callable<Integer> {
+			@ParentCommand
+			SystemCommand systemCommand;
+
+			@Spec
+			CommandSpec spec;
+
+			@Override
+			public Integer call() {
+				spec.commandLine().usage(System.out);
+				return 0;
+			}
+
+			abstract static class LicenseBaseCommand extends BaseCommand {
+				@ParentCommand
+				LicenseCommand licenseCommand;
+
+				@Override
+				protected MainProgram getMainProgram() {
+					return licenseCommand.systemCommand.parent;
+				}
+			}
+
+			@Command(name = "activate", description = "Activate license key")
+			public static class ActivateCommand extends LicenseBaseCommand implements Callable<Integer> {
+				@Override
+				public Integer call() throws Exception {
+					CliJob job = getJob(null);
+					job.doActivateLicenseKey();
+					return 0;
+				}
+			}
+
+			@Command(name = "deactivate", description = "Deactivate license key")
+			public static class DeactivateCommand extends LicenseBaseCommand implements Callable<Integer> {
+				@Override
+				public Integer call() throws Exception {
+					CliJob job = getJob(null);
+					job.doDeactivateLicense();
+					return 0;
+				}
+			}
+
+			@Command(name = "check", description = "Check license status")
+			public static class CheckCommand extends LicenseBaseCommand implements Callable<Integer> {
+				@Override
+				public Integer call() throws Exception {
+					CliJob job = getJob(null);
+					job.doCheckLicense();
+					return 0;
+				}
+			}
+		}
+
+		@Command(name = "feature-request", description = "Submit a feature request")
+		public static class FeatureRequestCommand extends BaseCommand implements Callable<Integer> {
+			@ParentCommand
+			SystemCommand systemCommand;
+
+			@Option(names = { "-f", "--file" }, required = true, description = "XML file with feature request details")
+			private File featureRequestFile;
+
+			@Override
+			protected MainProgram getMainProgram() {
+				return systemCommand.parent;
+			}
+
+			@Override
+			public Integer call() throws Exception {
+				if (!featureRequestFile.exists()) {
+					throw new FileNotFoundException(
+							"Feature request file does not exist: " + featureRequestFile.getAbsolutePath());
+				}
+
+				CliJob job = getJob(null);
+				job.doSendFeatureRequestEmail(featureRequestFile.getAbsolutePath());
+				return 0;
+			}
+		}
 	}
-
 }

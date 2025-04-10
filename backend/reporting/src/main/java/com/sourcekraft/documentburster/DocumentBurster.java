@@ -1,17 +1,3 @@
-/*
-    DocumentBurster is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
-
-    DocumentBurster is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with DocumentBurster.  If not, see <http://www.gnu.org/licenses/>
- */
 package com.sourcekraft.documentburster;
 
 import java.util.Arrays;
@@ -22,38 +8,64 @@ import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.utils.Utils;
 
+import picocli.CommandLine;
+
 public class DocumentBurster {
 
 	private static Logger log = LoggerFactory.getLogger(DocumentBurster.class);
 
 	public static void main(String[] args) throws Throwable {
-
 		int exitCode = 0;
+
+		// Filter out empty arguments
+		args = Arrays.stream(args).filter(arg -> arg != null && !arg.trim().isEmpty() && !arg.startsWith("${arg"))
+				.toArray(String[]::new);
 
 		log.info("***********************Program Started with Arguments : " + Arrays.toString(args)
 				+ "***********************");
 
+		// Enable Picocli debug tracing
+		// System.setProperty("picocli.trace", "DEBUG");
+
 		GlobalContext global = new GlobalContext();
 
-		MainProgram program = new MainProgram();
-		program.setGlobal(global);
-
 		try {
+			// Create a MainProgram instance
+			MainProgram program = new MainProgram();
+			program.setGlobal(global);
 
-			program.execute(args);
+			// Use picocli to execute the command directly with custom exception handlers
+			CommandLine commandLine = new CommandLine(program);
 
-			exitCode = 0;
+			// Set parameter exception handler to capture validation errors
+			commandLine.setParameterExceptionHandler((ex, args1) -> {
+				String errorMsg = "Command parameter validation error: " + ex.getMessage();
+				log.error(errorMsg, ex);
+				ex.getCommandLine().usage(System.err);
+				return 2; // Standard exit code for user errors
+			});
+
+			// Set execution exception handler to capture runtime errors
+			commandLine.setExecutionExceptionHandler((ex, cmd, parseResult) -> {
+				String errorMsg = ex.getMessage();
+				log.error(errorMsg, ex);
+				return 1; // Standard exit code for runtime errors
+			});
+
+			exitCode = commandLine.execute(args);
+
+			// Check if execution failed
+			if (exitCode != 0) {
+				String errorMsg = "Command execution failed with exit code: " + exitCode;
+				log.error(errorMsg);
+				// Not throwing exception here to avoid hiding the real error
+			}
 
 		} catch (Throwable e) {
-
 			exitCode = -1;
-
 			log.error("Exception: ", e);
-
 			throw e;
-
 		} finally {
-
 			log.info("***************************Execution Ended***************************");
 
 			if (StringUtils.isNotEmpty(global.logsArchivesFolder))
@@ -61,7 +73,5 @@ public class DocumentBurster {
 
 			System.exit(exitCode);
 		}
-
 	}
-
 }

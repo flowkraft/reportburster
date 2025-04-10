@@ -143,10 +143,18 @@ export class LicenseService {
   }
 
   verifyLicense(action, exitCallback?): Promise<void> {
-    return this.shellService.runBatFile([action], 'license', exitCallback);
+    return this.shellService.runBatFile(
+      ['system', 'license', action],
+      'license',
+      exitCallback,
+    );
   }
 
   deActivateLicense(exitCallback?) {
-    this.shellService.runBatFile(['-dl'], 'license', exitCallback);
+    return this.shellService.runBatFile(
+      ['system', 'license', 'deactivate'],
+      'license',
+      exitCallback,
+    );
   }
 }

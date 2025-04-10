@@ -113,7 +113,7 @@ public class PdfBurster extends AbstractBurster {
 
 	}
 
-	//@Profiled
+	// @Profiled
 	public void processPage(int pageIndex) throws Exception {
 
 		PDFTextStripper stripper;
@@ -211,7 +211,7 @@ public class PdfBurster extends AbstractBurster {
 		extractor.doExtract(pages);
 
 		writeDistributedBy();
-	
+
 		if (ctx.settings.isSplit2ndTime())
 			// make sure it will not go here more than 2 levels deep
 			if (!ctx.configurationFilePath.contains(Utils.SPLIT_2ND_TIME))
@@ -237,6 +237,7 @@ public class PdfBurster extends AbstractBurster {
 		try {
 			scripting.executeBurstingLifeCycleScript(ctx.scripts.distributedBy, ctx);
 		} catch (Exception e) {
+			// log.error("Error executing distributedBy script", e);
 		}
 	}
 

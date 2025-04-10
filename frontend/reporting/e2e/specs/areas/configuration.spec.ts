@@ -33,23 +33,48 @@ test.describe('', async () => {
   );
 
   electronBeforeAfterAllTest(
-    `(WITH Report Generation) - should check the correct and default values/behaviour`,
+    `(WITH Report Generation) - should properly 'Generate Reports' templates, verify datasource defaults, do the 'Read Only' template/Output checks and then cleanup`,
     async function ({ beforeAfterEach: firstPage }) {
       //long running test
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
       let ft = new FluentTester(firstPage);
 
+      const docxTemplatePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/payslips/payslips-template.docx`;
+      const tempStoragePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/temp/payslips-template.docx`;
+
+      ft = ft.moveFile(docxTemplatePath, tempStoragePath);
+
       ft = ConfTemplatesTestHelper.createNewTemplate(
         ft,
-        'Invoices',
+        'Payslips',
         'enableMailMergeCapability',
       );
 
       ft =
         ConfigurationTestHelper.assertDefaultDocumentBursterReportingConfiguration(
           ft,
-          'invoices',
+          'payslips',
+        );
+
+      // Select random output type for comprehensive testing
+      const outputTypes = ['output.pdf', 'output.xlsx', 'output.html'];
+      const randomOutputType =
+        outputTypes[Math.floor(Math.random() * outputTypes.length)];
+
+      // Test the gallery and AI features for the random output type
+      // Use 7 for gallery template count
+      let galleryTemplateCount = 7;
+
+      if (randomOutputType === 'output.xlsx') {
+        galleryTemplateCount = 1;
+      }
+
+      ft =
+        ConfigurationTestHelper.assertTemplateOutputAIToolbarAndGalleryFeatures(
+          ft,
+          randomOutputType,
+          galleryTemplateCount,
         );
 
       ft = ConfTemplatesTestHelper.createNewTemplate(
@@ -67,11 +92,11 @@ test.describe('', async () => {
         .elementShouldBeVisible('#btnGenerateReports')
         .elementShouldBeDisabled('#btnGenerateReports')
         .elementShouldNotBeVisible('#bills_ds\\.csvfile')
-        .elementShouldNotBeVisible('#invoices_ds\\.csvfile')
+        .elementShouldNotBeVisible('#payslips_ds\\.csvfile')
         .click('#selectMailMergeClassicReport')
         .waitOnElementToBecomeVisible('#bills_ds\\.csvfile')
-        .waitOnElementToBecomeVisible('#invoices_ds\\.csvfile')
-        .click('#invoices_ds\\.csvfile')
+        .waitOnElementToBecomeVisible('#payslips_ds\\.csvfile')
+        .click('#payslips_ds\\.csvfile')
         .waitOnElementToBecomeVisible('#mailMergeClassicReportInputFile')
         .elementShouldBeVisible('#browseMailMergeClassicReportInputFile')
         //click the x and clear the selection
@@ -82,7 +107,7 @@ test.describe('', async () => {
         )
         .click('#selectMailMergeClassicReport')
         .waitOnElementToBecomeVisible('#bills_ds\\.csvfile')
-        .waitOnElementToBecomeVisible('#invoices_ds\\.csvfile')
+        .waitOnElementToBecomeVisible('#payslips_ds\\.csvfile')
         .click('#bills_ds\\.csvfile')
         .waitOnElementToBecomeVisible('#mailMergeClassicReportInputFile')
         .waitOnElementToBecomeVisible('#browseMailMergeClassicReportInputFile')
@@ -93,13 +118,14 @@ test.describe('', async () => {
           '#browseMailMergeClassicReportInputFile',
         );
 
-      ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'invoices');
+      ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'payslips');
 
       ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'bills');
 
       return ft
+        .moveFile(tempStoragePath, docxTemplatePath)
         .gotoBurstScreen()
-        .elementShouldNotBeVisible('#reportGenerationMailMergeTab-link');
+        .elementShouldBeVisible('#reportGenerationMailMergeTab-link');
     },
   );
 
@@ -113,32 +139,47 @@ test.describe('', async () => {
 
       ft = ConfTemplatesTestHelper.createNewTemplate(
         ft,
-        'Bills',
+        'Payslips',
         'enableMailMergeCapability',
       );
+
+      // Select random output type for comprehensive testing
+      const outputTypes = ['output.pdf', 'output.xlsx', 'output.html'];
+      const randomOutputType =
+        outputTypes[Math.floor(Math.random() * outputTypes.length)];
+
+      // Test the gallery and AI features for the random output type
+      // Use 7 for gallery template count
+      let galleryTemplateCount = 7;
+
+      if (randomOutputType === 'output.xlsx') {
+        galleryTemplateCount = 1;
+      }
 
       ft =
         ConfigurationTestHelper.changeSaveLoadAssertSavedReportingConfiguration(
           ft,
-          'bills',
+          'payslips',
+          randomOutputType,
+          galleryTemplateCount,
         );
 
       ft =
         ConfigurationTestHelper.rollbackChangesToDefaultDocumentBursterConfiguration(
           ft,
-          'bills',
+          'payslips',
         );
 
       //#btnCapReportGenerationMailMerge will be changed to "off" after rollback => assert without the Reporting part
       ft = ConfigurationTestHelper.assertDefaultDocumentBursterConfiguration(
         ft,
-        'bills',
+        'payslips',
       );
 
       //Update #btnCapReportGenerationMailMerge to be "on" again
       ft = ft
         .gotoConfigurationTemplates()
-        .clickAndSelectTableRow(`#bills_${PATHS.SETTINGS_CONFIG_FILE}`)
+        .clickAndSelectTableRow(`#payslips_${PATHS.SETTINGS_CONFIG_FILE}`)
         .waitOnElementToBecomeEnabled('#btnEdit')
         .click('#btnEdit')
         .waitOnElementToBecomeVisible('#btnCapReportGenerationMailMerge')
@@ -147,14 +188,18 @@ test.describe('', async () => {
         .clickYesDoThis()
         .waitOnElementToBecomeInvisible('#btnCapReportGenerationMailMerge');
 
+      const docxTemplatePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/payslips/payslips-template.docx`;
+      const tempStoragePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/temp/payslips-template.docx`;
+
+      ft = ft.moveFile(docxTemplatePath, tempStoragePath);
       //assert with the Reporting part
       ft =
         ConfigurationTestHelper.assertDefaultDocumentBursterReportingConfiguration(
           ft,
-          'bills',
-        );
+          'payslips',
+        ).moveFile(tempStoragePath, docxTemplatePath);
 
-      return ConfTemplatesTestHelper.deleteTemplate(ft, 'bills');
+      return ConfTemplatesTestHelper.deleteTemplate(ft, 'payslips');
     },
   );
 });

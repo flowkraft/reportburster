@@ -7,9 +7,13 @@ export class ConfirmService {
   modalRef?: BsModalRef;
   constructor(protected modalService: BsModalService) {}
 
-  askConfirmation(options: any): Promise<any> {
+  askConfirmation(options: any, modalConfig?: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.modalRef = this.modalService.show(ConfirmDialogComponent);
+      // Use the modalConfig parameter if provided, otherwise empty object
+      this.modalRef = this.modalService.show(
+        ConfirmDialogComponent,
+        modalConfig || {},
+      );
       this.modalRef.content.title = options.title
         ? options.title
         : 'Confirmation';

@@ -36,7 +36,7 @@ export const tabUploadFileShareTemplate = `<ng-template #tabUploadFileShareTempl
       <div class="col-xs-2">{{
         'AREAS.CONFIGURATION.TAB-UPLOAD-FILE-SHARE.EXAMPLE' | translate }}</div>
       <div class="col-xs-7">
-        <em>-T $extracted_file_path$ file://hostname/path/to/the%20folder</em>
+        <em [innerHTML]="'-T \\$\\{extracted_file_path\\} file://hostname/path/to/the%20folder'"></em>
       </div>
 
     </div>

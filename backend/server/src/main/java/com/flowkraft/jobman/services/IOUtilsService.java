@@ -28,4 +28,8 @@ public class IOUtilsService {
 
 	}
 
+	public byte[] readBinaryFile(String path) throws Exception {
+		return java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path));
+	}
+
 }

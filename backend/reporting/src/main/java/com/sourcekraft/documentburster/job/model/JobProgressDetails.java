@@ -26,8 +26,11 @@ public class JobProgressDetails extends DumpToString {
 	 */
 	private static final long serialVersionUID = 345147044901906731L;
 	
+	public String jobtype = "burst";
+	
 	public String currentdate;
     public String filepath;
+    public String configurationFilePath;
 
     public String lasttokenprocessed;
     public String lasttokenindocument;

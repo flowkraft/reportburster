@@ -25,7 +25,7 @@ export class LicenseComponent {
   verifyLicense(action) {
     let message = 'Activate license?';
 
-    if (action === '-cl') {
+    if (action === 'check') {
       message = 'Check license?';
     }
 

@@ -91,6 +91,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
         <div class="col-xs-9">
           <input
             id="skipLines"
+            type="number"
             class="form-control"
             [(ngModel)]="xmlReporting?.documentburster.report.datasource.csvoptions.skiplines"
             (ngModelChange)="settingsChangedEventHandler($event)"
@@ -121,6 +122,38 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
 
       <br />
 
+      <div class="row" *ngIf="xmlReporting?.documentburster.report.datasource.showmorecsvoptions">
+        <div class="col-xs-2">
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN' | translate }}
+        </div>
+        <div class="col-xs-5">
+          <select
+            id="csvIdColumn"
+            class="form-control"
+            [(ngModel)]="csvIdColumnSelection"
+            (ngModelChange)="onCsvIdColumnSelectionChange($event)"
+          >
+            <option value="notused">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-NOT-USED' | translate }}</option>
+            <option value="firstcolumn">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-FIRST-COLUMN' | translate }}</option>
+            <option value="lastcolumn">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-LAST-COLUMN' | translate }}</option>
+            <option value="custom">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-LET-ME-SPECIFY' | translate }}</option>
+          </select>
+        </div>
+        <div class="col-xs-4" *ngIf="csvIdColumnSelection === 'custom'">
+          <input
+            type="number"
+            id="csvCustomIdColumnIndex"
+            class="form-control"
+            min="0"
+            [(ngModel)]="xmlReporting.documentburster.report.datasource.csvoptions.idcolumn"
+            (ngModelChange)="settingsChangedEventHandler($event)"
+            placeholder="Enter column index (0-based)"
+          />
+        </div>
+      </div>
+
+      <p></p>
+      
       <div class="row" *ngIf="xmlReporting?.documentburster.report.datasource.showmorecsvoptions">
         <div class="col-xs-2">
           {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CSV-QUOTATION-CHAR' | translate }}
@@ -230,6 +263,7 @@ Column 3, 15"
           <select
             id="selectFixedWidthHeader"
             class="form-control"
+            (change)="onSelectFixedWidthHeader()"
             [(ngModel)]="xmlReporting?.documentburster.report.datasource.fixedwidthoptions.header"
             (ngModelChange)="settingsChangedEventHandler($event)"
           >
@@ -249,9 +283,11 @@ Column 3, 15"
         <div class="col-xs-9">
           <input
             id="fixedWidthSkipLines"
+            type="number"
             class="form-control"
             [(ngModel)]="xmlReporting?.documentburster.report.datasource.fixedwidthoptions.skiplines"
             (ngModelChange)="settingsChangedEventHandler($event)"
+            [disabled]="true"
           />
         </div>
       </div>
@@ -280,6 +316,38 @@ Column 3, 15"
       <br />
 
       <!-- Advanced Fixed Width Options -->
+      <div class="row" *ngIf="xmlReporting?.documentburster.report.datasource.showmorefixedwidthoptions">
+        <div class="col-xs-2">
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN' | translate }}
+        </div>
+        <div class="col-xs-5">
+          <select
+            id="fixedWidthIdColumn"
+            class="form-control"
+            [(ngModel)]="fixedWidthIdColumnSelection"
+            (ngModelChange)="onFixedWidthIdColumnSelectionChange($event)"
+          >
+            <option value="notused">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-NOT-USED' | translate }}</option>
+            <option value="firstcolumn">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-FIRST-COLUMN' | translate }}</option>
+            <option value="lastcolumn">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-LAST-COLUMN' | translate }}</option>
+            <option value="custom">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-LET-ME-SPECIFY' | translate }}</option>
+          </select>
+        </div>
+        <div class="col-xs-4" *ngIf="fixedWidthIdColumnSelection === 'custom'">
+          <input
+            type="number"
+            id="fixedWidthCustomIdColumnIndex"
+            class="form-control"
+            min="0"
+            [(ngModel)]="xmlReporting.documentburster.report.datasource.fixedwidthoptions.idcolumn"
+            (ngModelChange)="settingsChangedEventHandler($event)"
+            placeholder="Enter column index (0-based)"
+          />
+        </div>
+      </div>
+      
+      <p></p>
+
       <div *ngIf="xmlReporting?.documentburster.report.datasource.showmorefixedwidthoptions">
         <div class="row">
           <div class="col-xs-2">
@@ -290,6 +358,151 @@ Column 3, 15"
               type="checkbox"
               id="btnFixedWidthIgnoreLeadingWhitespace"
               [(ngModel)]="xmlReporting?.documentburster.report.datasource.fixedwidthoptions.ignoreleadingwhitespace"
+              (ngModelChange)="settingsChangedEventHandler($event)"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Excel Section -->
+    <div *ngIf="xmlReporting?.documentburster.report.datasource.type === 'ds.excelfile'">
+      <div class="row">
+        <div class="col-xs-2">
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER' | translate }}
+        </div>
+        <div class="col-xs-9">
+          <select
+            id="selectExcelHeader"
+            class="form-control"
+            (change)="onSelectExcelHeader()"
+            [(ngModel)]="xmlReporting?.documentburster.report.datasource.exceloptions.header"
+            (ngModelChange)="settingsChangedEventHandler($event)"
+          >
+            <option value="noheader">
+              {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER-NO-HEADER' | translate }}
+            </option>
+            <option value="firstline">
+              {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER-FIRST-LINE' | translate }}
+            </option>
+            <option value="multiline">
+              {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.HEADER-MULTI-LINE' | translate }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <p></p>
+      <div class="row">
+        <div class="col-xs-2">
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.SKIP-LINES' | translate }}
+        </div>
+        <div class="col-xs-9">
+          <input
+            id="excelSkipLines"
+            class="form-control"
+            type="number"
+            [(ngModel)]="xmlReporting?.documentburster.report.datasource.exceloptions.skiplines"
+            (ngModelChange)="settingsChangedEventHandler($event)"
+            [disabled]="xmlReporting?.documentburster.report.datasource.exceloptions.header != 'multiline'"
+          />
+        </div>
+      </div>
+
+      <p></p>
+      <div class="row">
+        <div class="col-xs-2">
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.EXCEL-SHEET-INDEX' | translate }}
+        </div>
+        <div class="col-xs-9">
+          <input
+            id="excelSheetIndex"
+            class="form-control"
+            type="number"
+            [(ngModel)]="xmlReporting?.documentburster.report.datasource.exceloptions.sheetindex"
+            (ngModelChange)="settingsChangedEventHandler($event)"
+          />
+        </div>
+      </div>
+
+      <br />
+
+      <div class="row">
+        <div class="col-xs-12">
+          <label id="lblShowMoreExcelOptions" for="btnShowMoreExcelOptions" class="checkboxlabel" style="cursor: pointer;">
+            <span><strong>
+              <u *ngIf="!xmlReporting?.documentburster.report.datasource.showmoreexceloptions">Show More Excel Options</u>
+              <u *ngIf="xmlReporting?.documentburster.report.datasource.showmoreexceloptions"><em>Show Less Excel Options</em></u>
+            </strong></span>
+          </label>
+          <input
+            type="checkbox"
+            id="btnShowMoreExcelOptions"
+            style="visibility: hidden;"
+            [(ngModel)]="xmlReporting?.documentburster.report.datasource.showmoreexceloptions"
+            (ngModelChange)="settingsChangedEventHandler($event)"
+          />
+        </div>
+      </div>
+
+      <br />
+
+      <div *ngIf="xmlReporting?.documentburster.report.datasource.showmoreexceloptions">
+        <div class="row">
+          <div class="col-xs-2">
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN' | translate }}
+          </div>
+          <div class="col-xs-5">
+            <select
+              id="excelIdColumn"
+              class="form-control"
+              [(ngModel)]="excelIdColumnSelection"
+              (ngModelChange)="onExcelIdColumnSelectionChange($event)"
+            >
+              <option value="notused">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-NOT-USED' | translate }}</option>
+              <option value="firstcolumn">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-FIRST-COLUMN' | translate }}</option>
+              <option value="lastcolumn">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-LAST-COLUMN' | translate }}</option>
+              <option value="custom">{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.CODE-COLUMN-LET-ME-SPECIFY' | translate }}</option>
+            </select>
+          </div>
+          <div class="col-xs-4" *ngIf="excelIdColumnSelection === 'custom'">
+            <input
+              type="number"
+              id="excelCustomIdColumnIndex"
+              class="form-control"
+              min="0"
+              [(ngModel)]="xmlReporting.documentburster.report.datasource.exceloptions.idcolumn"
+              (ngModelChange)="settingsChangedEventHandler($event)"
+              placeholder="Enter column index (0-based)"
+            />
+          </div>
+        </div>
+
+        <p></p>
+        <div class="row">
+          <div class="col-xs-2">
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.IGNORE-LEADING-WHITESPACE' | translate }}
+          </div>
+          <div class="col-xs-9">
+            <input
+              type="checkbox"
+              id="btnExcelIgnoreLeadingWhitespace"
+              [(ngModel)]="xmlReporting?.documentburster.report.datasource.exceloptions.ignoreleadingwhitespace"
+              (ngModelChange)="settingsChangedEventHandler($event)"
+            />
+          </div>
+        </div>
+
+        <p></p>
+        <div class="row">
+          <div class="col-xs-2">
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.EXCEL-USE-FORMULA-RESULTS' | translate }}
+          </div>
+          <div class="col-xs-9">
+            <input
+              type="checkbox"
+              id="btnExcelUseFormulaResults"
+              [(ngModel)]="xmlReporting?.documentburster.report.datasource.exceloptions.useformularesults"
               (ngModelChange)="settingsChangedEventHandler($event)"
             />
           </div>

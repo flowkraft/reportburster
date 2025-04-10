@@ -51,7 +51,7 @@
         id="btnCheckLicenseKey"
         class="btn btn-primary"
         type="button"
-        (click)="verifyLicense('-cl')"
+        (click)="verifyLicense('check')"
         [disabled]="executionStatsService?.jobStats.numberOfActiveJobs > 0"
       >
         {{ "COMPONENTS.LICENSE.CHECK-LICENSE-KEY" | translate }}
@@ -65,7 +65,7 @@
         id="btnActivateLicenseKey"
         class="btn btn-primary"
         type="button"
-        (click)="verifyLicense('-al')"
+        (click)="verifyLicense('activate')"
         [disabled]="executionStatsService?.jobStats.numberOfActiveJobs > 0"
       >
         {{ "COMPONENTS.LICENSE.ACTIVATE-LICENSE-KEY" | translate }}

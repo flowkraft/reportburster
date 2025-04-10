@@ -45,7 +45,9 @@
               "src/styles.scss",
               "./node_modules/quill/dist/quill.core.css",
               "./node_modules/quill/dist/quill.snow.css",
-              "./node_modules/quill/dist/quill.bubble.css"
+              "./node_modules/quill/dist/quill.bubble.css",
+              "./node_modules/prismjs/themes/prism.css",
+              "./node_modules/codejar-linenumbers/es/codejar-linenumbers.css"
             ],
             "scripts": [
               "./node_modules/jquery/dist/jquery.min.js",
@@ -143,6 +145,7 @@
         "serve": {
           "builder": "@angular-builders/custom-webpack:dev-server",
           "options": {
+            "proxyConfig": "proxy.conf.js",
             "browserTarget": "angular-electron:build"
           },
           "configurations": {

@@ -1,0 +1,4 @@
+"simple quoted","not ignored","third"
+field with "quotes" inside,normal,"quoted, with comma"
+"fully,"quoted","test"
+"quote with ""escaped"" quotes",regular,data

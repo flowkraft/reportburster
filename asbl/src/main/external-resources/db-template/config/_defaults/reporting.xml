@@ -23,12 +23,22 @@
         <idcolumn>notused</idcolumn>
       </csvoptions>
       <showmorefixedwidthoptions>false</showmorefixedwidthoptions>
-	  <fixedwidthoptions>
-	    <columns></columns>
-	    <header>noheader</header>
-	    <skiplines>0</skiplines>
-	    <ignoreleadingwhitespace>true</ignoreleadingwhitespace>
-	 </fixedwidthoptions>
+      <fixedwidthoptions>
+        <columns></columns>
+        <header>noheader</header>
+        <skiplines>0</skiplines>
+        <ignoreleadingwhitespace>true</ignoreleadingwhitespace>
+        <idcolumn>notused</idcolumn>
+      </fixedwidthoptions>
+      <showmoreexceloptions>false</showmoreexceloptions>
+      <exceloptions>
+        <header>noheader</header>
+        <skiplines>0</skiplines>
+        <sheetindex>0</sheetindex>
+        <idcolumn>notused</idcolumn>
+        <ignoreleadingwhitespace>true</ignoreleadingwhitespace>
+        <useformularesults>true</useformularesults>
+      </exceloptions>
     </datasource>
     <template>
       <outputtype>output.none</outputtype>

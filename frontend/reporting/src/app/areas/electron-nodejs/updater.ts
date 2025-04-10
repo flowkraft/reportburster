@@ -652,7 +652,7 @@ export class Updater {
 
     if (!previousXMLSettingsContent) {
       Error.stackTraceLimit = 100;
-      console.log(`Log 25 - settingsFilePath_src = ${settingsFilePath}`);
+      //console.log(`Log 25 - settingsFilePath_src = ${settingsFilePath}`);
     }
 
     const previousConfigFileName = Utilities.basename(settingsFilePath);

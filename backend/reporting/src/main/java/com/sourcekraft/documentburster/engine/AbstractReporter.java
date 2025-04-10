@@ -81,9 +81,9 @@ public abstract class AbstractReporter extends AbstractBurster {
 		else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_HTML))
 			generateHtmlFromHtmlTemplateUsingFreemarker(ctx.extractedFilePath,
 					ctx.settings.getReportTemplate().retrieveTemplateFilePath(),
-					ctx.variables.getUserVariables(ctx.token));
+					ctx.variables.getUserVariables(ctx.token), "Built by");
 		else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_PDF))
-			generatePDFFromHtmlTemplateUsingFlywingSauce(ctx.extractedFilePath,
+			generatePDFFromHtmlTemplateUsingFlywingSaucer(ctx.extractedFilePath,
 					ctx.settings.getReportTemplate().retrieveTemplateFilePath(),
 					ctx.variables.getUserVariables(ctx.token));
 		else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_EXCEL))
@@ -97,7 +97,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 		// First generate HTML content using existing method
 		String tempHtmlPath = documentPath.replace(".xlsx", ".html");
-		generateHtmlFromHtmlTemplateUsingFreemarker(tempHtmlPath, templatePath, userVariables);
+		generateHtmlFromHtmlTemplateUsingFreemarker(tempHtmlPath, templatePath, userVariables, "none");
 
 		// Read the generated HTML
 		String html = Files.readString(Paths.get(tempHtmlPath));
@@ -110,13 +110,19 @@ public abstract class AbstractReporter extends AbstractBurster {
 	}
 
 	private void generateHtmlFromHtmlTemplateUsingFreemarker(String extractedFilePath, String templatePath,
-			Map<String, Object> userVariables) throws Exception {
+			Map<String, Object> userVariables, String bType) throws Exception {
 		String template = FileUtils.readFileToString(new File(templatePath), "UTF-8");
 		Template engine = new Template("template", template, Utils.freeMarkerCfg);
 		StringWriter stringWriter = new StringWriter();
 		engine.process(userVariables, stringWriter);
 		stringWriter.flush();
-		FileUtils.writeStringToFile(new File(extractedFilePath), stringWriter.toString(), "UTF-8");
+
+		String htmlContent = stringWriter.toString();
+
+		if (!bType.equals("none"))
+			htmlContent = com.sourcekraft.documentburster.common.utils.Utils.ibContent(htmlContent, bType);
+
+		FileUtils.writeStringToFile(new File(extractedFilePath), htmlContent, "UTF-8");
 	}
 
 	private void generateDocxFromDocxTemplateUsingXDocReport(String documentPath, String templatePath,
@@ -205,12 +211,12 @@ public abstract class AbstractReporter extends AbstractBurster {
 		}
 	}
 
-	private void generatePDFFromHtmlTemplateUsingFlywingSauce(String documentPath, String templatePath,
+	private void generatePDFFromHtmlTemplateUsingFlywingSaucer(String documentPath, String templatePath,
 			Map<String, Object> variablesData) throws Exception {
 
 		// First generate the HTML using the existing method
 		String tempHtmlPath = documentPath.replace(".pdf", ".html");
-		generateHtmlFromHtmlTemplateUsingFreemarker(tempHtmlPath, templatePath, variablesData);
+		this.generateHtmlFromHtmlTemplateUsingFreemarker(tempHtmlPath, templatePath, variablesData, "Built by");
 
 		// Read the generated HTML
 		String html = Files.readString(Paths.get(tempHtmlPath));

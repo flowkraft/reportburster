@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## 10.3.0 - 2025-04-14
+
+### Added
+
+- Artificial Intelligence and LLM features assist in designing HTML report layouts
+- ReportBurster now generates reports (DOCX, PDF, XLSX, HTML) using (also) Excel files as the input data source
+- The HTML editor and previewer have been enhanced to improve the report layout design process
+- A new sample named "10. Generate Reports From Excel Data Source" is included
+
 ## 10.2.6 - 2025-03-18
 
 ### Added
 
-- "Samples/9. Generate (Excel) Monthly Payslips" for users to quickly "Try It"
+- ReportBurster now generates (also) Excel (.XLSX) reports
+- A sample titled "9. Generate (Excel) Monthly Payslips" is available for users to quickly try it out
 
 ### Fixed
 

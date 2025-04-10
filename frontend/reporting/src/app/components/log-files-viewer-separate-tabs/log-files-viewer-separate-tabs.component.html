@@ -1,4 +1,4 @@
-<div *ngIf="executionStatsService.logStats.foundDirtyLogFiles" id="logsViewer">
+<div *ngIf="executionStatsService.logStats.foundDirtyLogFiles" [id]="viewerId">
   <tabset>
     <tab
       heading="{{

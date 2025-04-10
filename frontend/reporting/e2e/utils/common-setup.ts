@@ -34,9 +34,9 @@ export const electronBeforeAfterAllTest = isElectron
     >({
       beforeAfterAll: [
         async ({}, run) => {
-          console.log(
-            `process.env.PORTABLE_EXECUTABLE_DIR: ${process.env.PORTABLE_EXECUTABLE_DIR}`,
-          );
+          //console.log(
+          //  `process.env.PORTABLE_EXECUTABLE_DIR: ${process.env.PORTABLE_EXECUTABLE_DIR}`,
+          //);
 
           const electronApp = await Helpers.electronAppLaunch('../..');
 

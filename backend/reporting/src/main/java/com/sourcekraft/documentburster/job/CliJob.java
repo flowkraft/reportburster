@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.GlobalContext;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
+import com.sourcekraft.documentburster.engine.AbstractReporter;
 import com.sourcekraft.documentburster.engine.BursterFactory;
 import com.sourcekraft.documentburster.engine.pdf.Merger;
 import com.sourcekraft.documentburster.job.model.JobDetails;
@@ -47,10 +48,11 @@ public class CliJob {
 	private Settings settings = new Settings();
 	private LicenseUtils licenseUtils = new LicenseUtils();
 
-	protected String configurationFilePath;
+	public String configurationFilePath;
 
 	private String jobProgressFilePath;
 	private String jobFilePath;
+	private String jobType = "burst";
 
 	public static String STATUS_COMPLETED = "COMPLETED";
 	public static String STATUS_FAILED = "FAILED";
@@ -82,6 +84,12 @@ public class CliJob {
 	public void setJobProgressFilePath(String jobProgressFilePath) {
 
 		this.jobProgressFilePath = jobProgressFilePath;
+
+	}
+
+	public void setJobType(String jobType) {
+
+		this.jobType = jobType;
 
 	}
 
@@ -161,7 +169,7 @@ public class CliJob {
 
 	}
 
-	public void doResumeBurst(String jobProgressFilePath) throws Exception {
+	public void doResume(String jobProgressFilePath) throws Exception {
 
 		log.debug("doResumeBurst(String jobProgressFilePath) : jobProgressFilePath = " + jobProgressFilePath);
 
@@ -173,7 +181,9 @@ public class CliJob {
 			JobProgressDetails jobProgressDetails = JobUtils.loadJobProgressFile(jobProgressFilePath);
 			jobProgressFile.delete();
 
-			jobFile = _createJobFile(jobProgressDetails.filepath, "burst");
+			jobFile = _createJobFile(jobProgressDetails.filepath, jobProgressDetails.jobtype);
+
+			this.configurationFilePath = jobProgressDetails.configurationFilePath;
 
 			AbstractBurster burster = getBurster(jobProgressDetails.filepath);
 
@@ -201,7 +211,7 @@ public class CliJob {
 
 		try {
 
-			jobFile = _createJobFile(filePath, "burst");
+			jobFile = _createJobFile(filePath, jobType);
 
 			AbstractBurster burster = getBurster(filePath);
 
@@ -219,33 +229,33 @@ public class CliJob {
 
 	}
 
-	public void doReportsGenerate(String filePath, String configFilePath, boolean testAll, String listOfTestTokens,
-			int numberOfRandomTestTokens) throws Exception {
-
-		log.debug("doReportsGenerate(String filePath, String configFilePath), filePath = " + filePath
-				+ ", configFilePath = " + configFilePath);
-
-		File jobFile = null;
-
-		try {
-
-			jobFile = _createJobFile(filePath, "reporting");
-
-			AbstractBurster burster = getBurster(filePath);
-
-			burster.setJobFilePath(jobFilePath);
-
-			if (jobProgressFilePath != null)
-				burster.setJobFilePath(jobProgressFilePath);
-
-			burster.burst(filePath, testAll, listOfTestTokens, numberOfRandomTestTokens);
-
-		} finally {
-			if ((jobFile != null) && (jobFile.exists()))
-				jobFile.delete();
-		}
-
-	}
+	/*
+	 * public void doReportsGenerate(String filePath, String configFilePath, boolean
+	 * testAll, String listOfTestTokens, int numberOfRandomTestTokens) throws
+	 * Exception {
+	 * 
+	 * log.
+	 * debug("doReportsGenerate(String filePath, String configFilePath), filePath = "
+	 * + filePath + ", configFilePath = " + configFilePath);
+	 * 
+	 * File jobFile = null;
+	 * 
+	 * try {
+	 * 
+	 * jobFile = _createJobFile(filePath, "reporting");
+	 * 
+	 * AbstractBurster burster = getBurster(filePath);
+	 * 
+	 * burster.setJobFilePath(jobFilePath);
+	 * 
+	 * if (jobProgressFilePath != null) burster.setJobFilePath(jobProgressFilePath);
+	 * 
+	 * burster.burst(filePath, testAll, listOfTestTokens, numberOfRandomTestTokens);
+	 * 
+	 * } finally { if ((jobFile != null) && (jobFile.exists())) jobFile.delete(); }
+	 * 
+	 * }
+	 */
 
 	private String getJobFilePath() {
 
@@ -276,7 +286,7 @@ public class CliJob {
 
 	protected AbstractBurster getBurster(String filePath) throws Exception {
 
-		AbstractBurster burster = BursterFactory.create(filePath, configurationFilePath);
+		AbstractBurster burster = BursterFactory.create(filePath, configurationFilePath, jobType);
 		burster.setGlobal(global);
 
 		return burster;

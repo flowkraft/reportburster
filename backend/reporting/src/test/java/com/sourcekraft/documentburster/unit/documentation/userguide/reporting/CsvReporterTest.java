@@ -9,6 +9,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -50,6 +51,7 @@ public class CsvReporterTest {
 	private static final String CSV_INPUT_QUOTE_SIMPLE_QUOTED_STRINGS_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/quote-simple-quoted-strings.csv";
 	private static final String CSV_INPUT_QUOTE_SIMPLE_QUOTED_STRINGS_WITH_SPACES_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/quote-simple-quoted-strings-with-spaces.csv";
 	private static final String CSV_INPUT_QUOTE_SIMPLE_QUOTED_STRINGS_WITH_COMMAS_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/quote-simple-quoted-strings-with-commas.csv";
+	private static final String CSV_INPUT_INTERNAL_WHITESPACE_PATH = "src/test/resources/input/unit/reporting/csvreporter/quote-with-internal-leading-whitespace.csv";
 
 	private static final String CSV_INPUT_QUOTE_SIMPLE_QUOTED_STRINGS_WITH_DEFINED_SEPARATOR_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/quote-simple-quoted-strings-with-defined-separator.csv";
 
@@ -57,7 +59,7 @@ public class CsvReporterTest {
 
 	private static final String CSV_INPUT_QUOTE_DEFINED_QUOTE_CHAR_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/quote-defined-quote-char.csv";
 	private static final String CSV_INPUT_QUOTE_DEFINED_QUOTE_ESCAPE_CHARS_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/quote-defined-quote-escape-chars.csv";
-
+	private static final String CSV_INPUT_QUOTE_IGNORE_QUOTATIONS = "src/test/resources/input/unit/reporting/csvreporter/quote-ignore-quotations.csv";
 	private static final String CSV_INPUT_QUALITY_ASSURANCE_DATASOURCE_PATH = "src/test/resources/input/unit/reporting/csvreporter/quality-assurance.csv";
 
 	private static final String ESCAPE_TEST_STRING = "\\\\1\\2\\\"3\\"; // \\1\2\"\
@@ -297,6 +299,50 @@ public class CsvReporterTest {
 	}
 
 	@Test
+	public final void generateReportsFromIdColumnWithMultiLineHeader() throws Exception {
+		// This test verifies that ID column selection works correctly when combined
+		// with multi-line headers and skip lines configuration
+
+		CsvReporter burster = new TestBursterFactory.CsvReporter(StringUtils.EMPTY,
+				"CsvReporterTest-generateReportsFromIdColumnWithMultiLineHeader") {
+			@Override
+			protected void executeController() throws Exception {
+				super.executeController();
+
+				// Configure multi-line header with skip lines
+				ctx.settings.getReportDataSource().csvoptions.header = "multiline";
+				ctx.settings.getReportDataSource().csvoptions.skiplines = 8; // Skip first 2 rows
+
+				// Use last column as ID
+				ctx.settings.getReportDataSource().csvoptions.idcolumn = "lastcolumn";
+
+				// Set output type to ensure consistent extension
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_DOCX;
+				ctx.settings.getReportTemplate().documentpath = PAYSLIPS_DOCX_TEMPLATE_PATH;
+
+			}
+		};
+
+		// Use the multi-line header CSV file
+		burster.burst(CSV_INPUT_HEADER_MULTILINE_8_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
+
+		// Get parsed lines to verify correct token extraction
+		List<String[]> parsedLines = burster.getParsedCsvLines();
+		assertNotNull("Parsed lines should not be null", parsedLines);
+
+		// Verify the header rows were properly skipped
+		// Since first 2 rows are skipped and header is set to "multiline",
+		// the parse should start from line 3
+
+		// Verify that output files exist with the correct name based on last column
+		for (String[] row : parsedLines) {
+			String expectedToken = row[row.length - 1]; // Last column
+			File outputFile = new File(burster.getCtx().outputFolder + "/" + expectedToken + ".docx");
+			assertTrue("Output file should exist: " + outputFile.getPath(), outputFile.exists());
+		}
+	}
+
+	@Test
 	public final void generateReportsFromQuoteSimpleQuotedStrings() throws Exception {
 
 		ICSVParser parser = new CSVParserBuilder().build();
@@ -448,6 +494,181 @@ public class CsvReporterTest {
 	}
 
 	@Test
+	public final void generateReportsFromQuoteIgnoreQuotations() throws Exception {
+		// Test with ignorequotations = false (default behavior)
+		CsvReporter bursterRespectQuotes = new TestBursterFactory.CsvReporter(StringUtils.EMPTY,
+				"CsvReporterTest-generateReportsFromQuoteIgnoreQuotations-false") {
+			protected void executeController() throws Exception {
+				super.executeController();
+				ctx.settings.getReportDataSource().csvoptions.ignorequotations = false;
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_DOCX;
+				ctx.settings.getReportTemplate().documentpath = PAYSLIPS_DOCX_TEMPLATE_PATH;
+			};
+		};
+
+		try {
+			bursterRespectQuotes.burst(CSV_INPUT_QUOTE_IGNORE_QUOTATIONS, false, StringUtils.EMPTY, -1);
+			// If we get here, the test should fail because we expected an exception
+			fail("Expected exception was not thrown");
+		} catch (Exception e) {
+			// Expected exception with malformed CSV - this is normal behavior
+			assertTrue("Expected error message about unterminated quoted field",
+					e.toString().contains("Unterminated quoted field at end of CSV line"));
+		}
+
+		// Test with ignorequotations = true
+		CsvReporter bursterIgnoreQuotes = new TestBursterFactory.CsvReporter(StringUtils.EMPTY,
+				"CsvReporterTest-generateReportsFromQuoteIgnoreQuotations-true") {
+			protected void executeController() throws Exception {
+				super.executeController();
+				ctx.settings.getReportDataSource().csvoptions.ignoreleadingwhitespace = false;
+				ctx.settings.getReportDataSource().csvoptions.ignorequotations = true;
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_DOCX;
+				ctx.settings.getReportTemplate().documentpath = PAYSLIPS_DOCX_TEMPLATE_PATH;
+			};
+		};
+
+		bursterIgnoreQuotes.burst(CSV_INPUT_QUOTE_IGNORE_QUOTATIONS, false, StringUtils.EMPTY, -1);
+
+		// Verify quotes are processed with ignorequotations=true
+		// First line - quotes are still recognized as quotes in well-formed fields
+		assertEquals("simple quoted", bursterIgnoreQuotes.getParsedCsvLines().get(0)[0]);
+		assertEquals("not ignored", bursterIgnoreQuotes.getParsedCsvLines().get(0)[1]);
+		assertEquals("third", bursterIgnoreQuotes.getParsedCsvLines().get(0)[2]);
+
+		// Second line - internal quotes remain unchanged
+		assertEquals("field with \"quotes\" inside", bursterIgnoreQuotes.getParsedCsvLines().get(1)[0]);
+		assertEquals("normal", bursterIgnoreQuotes.getParsedCsvLines().get(1)[1]);
+		assertEquals("quoted", bursterIgnoreQuotes.getParsedCsvLines().get(1)[2]);
+		assertEquals(" with comma", bursterIgnoreQuotes.getParsedCsvLines().get(1)[3]);
+
+		// Third line - with ignorequotations=true, quotes don't prevent splitting on
+		// commas
+		// and both opening and closing quotes are removed at field boundaries
+		assertEquals("fully", bursterIgnoreQuotes.getParsedCsvLines().get(2)[0]);
+		assertEquals("quoted", bursterIgnoreQuotes.getParsedCsvLines().get(2)[1]); // No trailing quote
+		assertEquals("test", bursterIgnoreQuotes.getParsedCsvLines().get(2)[2]);
+
+		// Fourth line - escaped quotes are now treated as separate quotes
+		assertEquals("quote with \"escaped\" quotes", bursterIgnoreQuotes.getParsedCsvLines().get(3)[0]);
+		assertEquals("regular", bursterIgnoreQuotes.getParsedCsvLines().get(3)[1]);
+		assertEquals("data", bursterIgnoreQuotes.getParsedCsvLines().get(3)[2]);
+	}
+
+	@Test
+	public final void generateReportsFromMixedQuotationStylesWithIdColumn() throws Exception {
+		// Create test file with mixed quotation styles if needed
+		String MIXED_QUOTES_CSV_PATH = "src/test/resources/input/unit/reporting/csvreporter/mixed-quotation-styles.csv";
+
+		if (!new File(MIXED_QUOTES_CSV_PATH).exists()) {
+			FileWriter writer = new FileWriter(MIXED_QUOTES_CSV_PATH);
+			writer.write("UnquotedID,\"Quoted Column\",\"Some, comma\",Unquoted Text\n");
+			writer.write("ID001,\"Normal quotes\",\"Data, with comma\",Plain text\n");
+			writer.write("\"ID002\",Text with \"internal\" quotes,\"More, data\",More text\n");
+			writer.write("ID003,\"Special \"\"double\"\" quotes\",\"Final, row\",End\n");
+			writer.close();
+		}
+
+		CsvReporter burster = new TestBursterFactory.CsvReporter(StringUtils.EMPTY,
+				"CsvReporterTest-generateReportsFromMixedQuotationStylesWithIdColumn") {
+			@Override
+			protected void executeController() throws Exception {
+				super.executeController();
+
+				// Configure to use first column as ID with mixed quotation handling
+				ctx.settings.getReportDataSource().csvoptions.idcolumn = "firstcolumn";
+				ctx.settings.getReportDataSource().csvoptions.header = "firstline";
+
+				// Handle mixed quotation styles
+				ctx.settings.getReportDataSource().csvoptions.strictquotations = false;
+
+				// Set output type
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_DOCX;
+				ctx.settings.getReportTemplate().documentpath = PAYSLIPS_DOCX_TEMPLATE_PATH;
+
+			}
+		};
+
+		burster.burst(MIXED_QUOTES_CSV_PATH, false, StringUtils.EMPTY, -1);
+
+		// Verify correct handling of mixed quotation styles
+		List<String[]> parsedLines = burster.getParsedCsvLines();
+		assertNotNull("Parsed lines should not be null", parsedLines);
+
+		// Verify proper ID extraction despite mixed quoting styles
+		assertEquals("ID001", parsedLines.get(1)[0]);
+		assertEquals("ID002", parsedLines.get(2)[0]);
+		assertEquals("ID003", parsedLines.get(3)[0]);
+
+		// Verify file generation with correct IDs
+		for (int i = 1; i < parsedLines.size(); i++) {
+			String expectedToken = parsedLines.get(i)[0];
+			File outputFile = new File(burster.getCtx().outputFolder + "/" + expectedToken + ".docx");
+			assertTrue("Output file should exist: " + outputFile.getPath(), outputFile.exists());
+		}
+	}
+
+	@Test
+	public final void generateReportsFromQuoteWithInternalLeadingWhitespace() throws Exception {
+		// Test with ignoreleadingwhitespace = false - spaces should be preserved
+		CsvReporter bursterPreserveSpaces = new TestBursterFactory.CsvReporter(StringUtils.EMPTY,
+				"CsvReporterTest-generateReportsFromQuoteWithInternalLeadingWhitespace-false") {
+			protected void executeController() throws Exception {
+				super.executeController();
+				ctx.settings.getReportDataSource().csvoptions.ignoreleadingwhitespace = false;
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_DOCX;
+				ctx.settings.getReportTemplate().documentpath = PAYSLIPS_DOCX_TEMPLATE_PATH;
+			}
+		};
+
+		bursterPreserveSpaces.burst(CSV_INPUT_INTERNAL_WHITESPACE_PATH, false, StringUtils.EMPTY, -1);
+
+		// Verify whitespace is preserved when ignoreleadingwhitespace = false
+		assertEquals(2, bursterPreserveSpaces.getParsedCsvLines().size());
+		assertEquals(3, bursterPreserveSpaces.getParsedCsvLines().get(0).length);
+
+		// First line should preserve leading spaces
+		assertEquals("  a", bursterPreserveSpaces.getParsedCsvLines().get(0)[0]);
+		assertEquals("   b", bursterPreserveSpaces.getParsedCsvLines().get(0)[1]);
+		assertEquals("    c", bursterPreserveSpaces.getParsedCsvLines().get(0)[2]);
+
+		// Second line should also preserve spaces
+		assertEquals("x", bursterPreserveSpaces.getParsedCsvLines().get(1)[0]);
+		assertEquals("  y  ", bursterPreserveSpaces.getParsedCsvLines().get(1)[1]); // Full spaces preserved
+		assertEquals("   z", bursterPreserveSpaces.getParsedCsvLines().get(1)[2]);
+
+		// Test with ignoreleadingwhitespace = true - leading spaces should be trimmed
+		// but note that OpenCSV's behavior may vary depending on quotes and field
+		// structure
+		CsvReporter bursterTrimSpaces = new TestBursterFactory.CsvReporter(StringUtils.EMPTY,
+				"CsvReporterTest-generateReportsFromQuoteWithInternalLeadingWhitespace-true") {
+			protected void executeController() throws Exception {
+				super.executeController();
+				ctx.settings.getReportDataSource().csvoptions.ignoreleadingwhitespace = true;
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_DOCX;
+				ctx.settings.getReportTemplate().documentpath = PAYSLIPS_DOCX_TEMPLATE_PATH;
+			}
+		};
+
+		bursterTrimSpaces.burst(CSV_INPUT_INTERNAL_WHITESPACE_PATH, false, StringUtils.EMPTY, -1);
+
+		// Verify results match actual behavior of OpenCSV
+		assertEquals(2, bursterTrimSpaces.getParsedCsvLines().size());
+		assertEquals(3, bursterTrimSpaces.getParsedCsvLines().get(0).length);
+
+		// First line - asserting actual behavior (spaces may remain if fields are
+		// quoted)
+		assertEquals("a", bursterTrimSpaces.getParsedCsvLines().get(0)[0]);
+		assertEquals("b", bursterTrimSpaces.getParsedCsvLines().get(0)[1]);
+		assertEquals("c", bursterTrimSpaces.getParsedCsvLines().get(0)[2]);
+
+		// Second line - asserting actual behavior
+		assertEquals("x", bursterTrimSpaces.getParsedCsvLines().get(1)[0]);
+		assertEquals("y", bursterTrimSpaces.getParsedCsvLines().get(1)[1]);
+		assertEquals("z", bursterTrimSpaces.getParsedCsvLines().get(1)[2]);
+	}
+
+	@Test
 	public final void generateReportsFromQuoteInternal() throws Exception {
 
 		ICSVParser parser = new CSVParserBuilder().build();
@@ -559,6 +780,149 @@ public class CsvReporterTest {
 		assertEquals("b:b:b", burster.getParsedCsvLines().get(1)[1]);
 		assertEquals("c", burster.getParsedCsvLines().get(1)[2]);
 
+	}
+
+	@Test
+	public final void generateReportsFromUsingFirstColumnAsId() throws Exception {
+		CsvReporter burster = new TestBursterFactory.CsvReporter(StringUtils.EMPTY,
+				"CsvReporterTest-generateReportsFromUsingFirstColumnAsId") {
+			@Override
+			protected void executeController() throws Exception {
+				super.executeController();
+
+				// Configure to use first column as ID
+				ctx.settings.getReportDataSource().csvoptions.idcolumn = "firstcolumn";
+
+				// Set custom filename to clearly show which token is used
+				ctx.settings.setBurstFileName("FirstColumn-${burst_token}.${output_type_extension}");
+
+				// Set output type to ensure consistent extension
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_PDF;
+				ctx.settings.getReportTemplate().documentpath = PAYSLIPS_HTML_TEMPLATE_PATH;
+			}
+		};
+
+		burster.burst(CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
+
+		// Get the parsed lines to know what values to expect in filenames
+		List<String[]> parsedLines = burster.getParsedCsvLines();
+		assertNotNull("Parsed lines should not be null", parsedLines);
+
+		// Verify that output files exist with the expected filenames based on first
+		// column
+		for (String[] row : parsedLines) {
+			String expectedToken = row[0];
+			File outputFile = new File(burster.getCtx().outputFolder + "/FirstColumn-" + expectedToken + ".pdf");
+			assertTrue("Output file should exist: " + outputFile.getPath(), outputFile.exists());
+		}
+	}
+
+	@Test
+	public final void generateReportsFromUsingLastColumnAsId() throws Exception {
+		CsvReporter burster = new TestBursterFactory.CsvReporter(StringUtils.EMPTY,
+				"CsvReporterTest-generateReportsFromUsingLastColumnAsId") {
+			@Override
+			protected void executeController() throws Exception {
+				super.executeController();
+
+				// Configure to use last column as ID
+				ctx.settings.getReportDataSource().csvoptions.idcolumn = "lastcolumn";
+
+				// Set custom filename to clearly show which token is used
+				ctx.settings.setBurstFileName("LastColumn-${burst_token}.${output_type_extension}");
+
+				// Set output type to ensure consistent extension
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_PDF;
+				ctx.settings.getReportTemplate().documentpath = PAYSLIPS_HTML_TEMPLATE_PATH;
+			}
+		};
+
+		burster.burst(CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
+
+		// Get the parsed lines to know what values to expect in filenames
+		List<String[]> parsedLines = burster.getParsedCsvLines();
+		assertNotNull("Parsed lines should not be null", parsedLines);
+
+		// Verify that output files exist with the expected filenames based on last
+		// column
+		for (String[] row : parsedLines) {
+			String expectedToken = row[row.length - 1];
+			File outputFile = new File(burster.getCtx().outputFolder + "/LastColumn-" + expectedToken + ".pdf");
+			assertTrue("Output file should exist: " + outputFile.getPath(), outputFile.exists());
+		}
+	}
+
+	@Test
+	public final void generateReportsFromUsingCustomColumnIndexAsId() throws Exception {
+		final int columnIndex = 2; // Use third column (index 2)
+
+		CsvReporter burster = new TestBursterFactory.CsvReporter(StringUtils.EMPTY,
+				"CsvReporterTest-generateReportsFromUsingCustomColumnIndexAsId") {
+			@Override
+			protected void executeController() throws Exception {
+				super.executeController();
+
+				// Configure to use specific column index as ID
+				ctx.settings.getReportDataSource().csvoptions.idcolumn = String.valueOf(columnIndex);
+
+				// Set custom filename to clearly show which token is used
+				ctx.settings.setBurstFileName("Column" + columnIndex + "-${burst_token}.${output_type_extension}");
+
+				// Set output type to ensure consistent extension
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_PDF;
+				ctx.settings.getReportTemplate().documentpath = PAYSLIPS_HTML_TEMPLATE_PATH;
+			}
+		};
+
+		burster.burst(CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
+
+		// Get the parsed lines to know what values to expect in filenames
+		List<String[]> parsedLines = burster.getParsedCsvLines();
+		assertNotNull("Parsed lines should not be null", parsedLines);
+
+		// Verify that output files exist with the expected filenames based on specified
+		// column
+		for (String[] row : parsedLines) {
+			String expectedToken = row[columnIndex];
+			File outputFile = new File(
+					burster.getCtx().outputFolder + "/Column" + columnIndex + "-" + expectedToken + ".pdf");
+			assertTrue("Output file should exist: " + outputFile.getPath(), outputFile.exists());
+		}
+	}
+
+	@Test
+	public final void generateReportsFromUsingNoIdColumn() throws Exception {
+		CsvReporter burster = new TestBursterFactory.CsvReporter(StringUtils.EMPTY,
+				"CsvReporterTest-generateReportsFromUsingNoIdColumn") {
+			@Override
+			protected void executeController() throws Exception {
+				super.executeController();
+
+				// Configure to use sequential numbering instead of columns
+				ctx.settings.getReportDataSource().csvoptions.idcolumn = "notused";
+
+				// Set custom filename to clearly show which token is used
+				ctx.settings.setBurstFileName("SequenceNum-${burst_token}.${output_type_extension}");
+
+				// Set output type to ensure consistent extension
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_PDF;
+				ctx.settings.getReportTemplate().documentpath = PAYSLIPS_HTML_TEMPLATE_PATH;
+			}
+		};
+
+		burster.burst(CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
+
+		// Get the parsed lines to know how many files to expect
+		List<String[]> parsedLines = burster.getParsedCsvLines();
+		assertNotNull("Parsed lines should not be null", parsedLines);
+
+		// Verify that output files exist with the expected filenames based on sequence
+		// number
+		for (int i = 0; i < parsedLines.size(); i++) {
+			String expectedToken = String.valueOf(i);
+			File outputFile = new File(burster.getCtx().outputFolder + "/SequenceNum-" + expectedToken + ".pdf");
+			assertTrue("Output file should exist: " + outputFile.getPath(), outputFile.exists());
+		}
 	}
 
 	@Test
@@ -698,7 +1062,7 @@ public class CsvReporterTest {
 
 				super.executeController();
 
-				ctx.settings.getReportDataSource().csvoptions.separatorchar = "\t";
+				ctx.settings.getReportDataSource().csvoptions.separatorchar = "→ [tab character]";
 
 				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_DOCX;
 				ctx.settings.getReportTemplate().documentpath = PAYSLIPS_DOCX_TEMPLATE_PATH;

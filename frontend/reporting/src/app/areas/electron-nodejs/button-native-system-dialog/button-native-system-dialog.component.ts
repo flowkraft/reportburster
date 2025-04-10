@@ -94,7 +94,7 @@ export class ButtonNativeSystemDialogComponent {
             'Select the installation/location path from where you want to migrate your existing configuration values and data. The selected folder should contain the DocumentBurster.exe/ReportBurster.exe file';
         }
 
-        console.log(`options = ${JSON.stringify(options)}`);
+        //console.log(`options = ${JSON.stringify(options)}`);
 
         paths = (await this.rbElectronService.dialog.showOpenDialog(options))
           .filePaths;

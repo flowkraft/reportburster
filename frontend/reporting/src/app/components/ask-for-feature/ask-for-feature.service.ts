@@ -11,6 +11,7 @@ export class AskForFeatureService {
     'ds.csvfile',
     'ds.tsvfile',
     'ds.fixedwidthfile',
+    'ds.excelfile',
     'output.none',
     'output.docx',
     'output.pdf',

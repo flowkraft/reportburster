@@ -73,7 +73,7 @@ public class PollScheduler {
 				Utils.filesWhichCanBeProcessedFilter, null);
 
 		if (allFilesInPollFolder.size() > 0)
-			System.out.println("Found " + allFilesInPollFolder.size() + " files in poll folder.");
+			//System.out.println("Found " + allFilesInPollFolder.size() + " files in poll folder.");
 
 		for (File polledFile : allFilesInPollFolder) {
 
@@ -85,7 +85,7 @@ public class PollScheduler {
 
 			String polledFilePath = polledFile.getAbsolutePath();
 
-			System.out.println("Processing file: " + polledFilePath);
+			//System.out.println("Processing file: " + polledFilePath);
 
 			String baseName = FilenameUtils.getBaseName(polledFilePath); // get filename without extension
 			String extension = FilenameUtils.getExtension(polledFilePath); // get file extension

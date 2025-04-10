@@ -6,6 +6,8 @@ asbl/dist
 asbl/src/uat/resources/__pycache__
 asbl/src/uat/results
 
+backend/reporting/backup
+
 playground
 testground
 

@@ -22,33 +22,55 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
             <span *ngIf="report.type=='config-samples'">(sample)</span
             ><span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.csvfile'"
               >(input CSV)</span
-            ></ng-option
+            >
+            <span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.tsvfile'"
+              >(input TSV)</span
+            >  
+            <span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.fixedwidthfile'"
+              >(input Fixed-Width)</span
+            >
+            <span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.excelfile'"
+              >(input Excel)</span
+            >  
+            </ng-option
           >
         </ng-select>
       </div>
-      <div class="col-xs-4" *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport">
-        <input
-          id="mailMergeClassicReportInputFile"
-          [(ngModel)]="processingService.procReportingMailMergeInfo.isSample ? processingService.procReportingMailMergeInfo.prefilledInputFilePath : processingService.procReportingMailMergeInfo.inputFileName"
-          class="form-control"
-          [disabled]="!this.storeService.configSys.sysInfo.setup.java.isJavaOk"
-          autofocus
-          required
-        />
+      
+      <div class="col-xs-7" *ngIf="!numberOfGenerateReportsConfigured" style="padding-top: 6px;">
+        <i class="fa fa-info-circle"></i>&nbsp;No report generation templates configured&nbsp;
+        <a href="https://www.reportburster.com/docs/generate-reports" target="_blank" class="btn btn-primary btn-sm">
+            <i class="fa fa-book"></i>&nbsp;{{'AREAS.PROCESSING.TAB-REPORTING-MAILMERGE-CLASSICREPORTS.SHOW-ME-HOW-TO' | translate
+          }}
+        </a>
       </div>
+      
+      <ng-container *ngIf="numberOfGenerateReportsConfigured">
+    
+        <div class="col-xs-4" *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport">
+          <input
+            id="mailMergeClassicReportInputFile"
+            [(ngModel)]="processingService.procReportingMailMergeInfo.isSample ? processingService.procReportingMailMergeInfo.prefilledInputFilePath : processingService.procReportingMailMergeInfo.inputFileName"
+            class="form-control"
+            [disabled]="!this.storeService.configSys.sysInfo.setup.java.isJavaOk"
+            autofocus
+            required
+          />
+        </div>
 
-      <div id="browseMailMergeClassicReportInputFile" class="col-xs-3" *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport">
-        <label for="reportingFileUploadInput" class="btn btn-default btn-block"><i class="fa fa-folder-open-o' }}"></i>&nbsp;Select File</label>
-        <input style="display: none;" type="file" id="reportingFileUploadInput" (change)="onMailMergeClassicReportFileSelected($event)" accept=".csv" #reportingFileUploadInput  [disabled]="!storeService.configSys.sysInfo.setup.java.isJavaOk"/>
-      <!--  
-        <dburst-button-native-system-dialog
-          value="{{
-          'COMPONENTS.BUTTON-NATIVE-SYSTEM-DIALOG.SELECT-FILE' | translate }}"
-          dialogType="file"
-          (pathsSelected)="onMailMergeClassicReportFileSelected($event)"
-        ></dburst-button-native-system-dialog>-->
+        <div id="browseMailMergeClassicReportInputFile" class="col-xs-3" *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport">
+          <label for="reportingFileUploadInput" class="btn btn-default btn-block"><i class="fa fa-folder-open-o' }}"></i>&nbsp;Select File</label>
+          <input style="display: none;" type="file" id="reportingFileUploadInput" (change)="onMailMergeClassicReportFileSelected($event)" accept=".csv, .xlsx, .xls, .tsv, .tab, .txt, .prn, .dat" #reportingFileUploadInput [disabled]="!storeService.configSys.sysInfo.setup.java.isJavaOk"/>
+        <!--  
+          <dburst-button-native-system-dialog
+            value="{{
+            'COMPONENTS.BUTTON-NATIVE-SYSTEM-DIALOG.SELECT-FILE' | translate }}"
+            dialogType="file"
+            (pathsSelected)="onMailMergeClassicReportFileSelected($event)"
+          ></dburst-button-native-system-dialog>-->
 
-      </div>
+        </div>
+      </ng-container>
     </div>
 
     <div class="row">
@@ -158,7 +180,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
     </div>
 
     <div class="row">
-      <dburst-log-files-viewer-separate-tabs></dburst-log-files-viewer-separate-tabs>
+      <dburst-log-files-viewer-separate-tabs viewerId="logsViewerGenerateReportsTab"></dburst-log-files-viewer-separate-tabs>
     </div>
   </div>
 </ng-template> `;

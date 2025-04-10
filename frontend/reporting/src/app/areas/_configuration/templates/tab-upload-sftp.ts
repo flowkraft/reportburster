@@ -38,7 +38,7 @@ export const tabUploadSFTPTemplate = `<ng-template #tabUploadSFTPTemplate>
       <div class="col-xs-2">{{
         'AREAS.CONFIGURATION.TAB-UPLOAD-SFTP.EXAMPLE' | translate }}</div>
       <div class="col-xs-7">
-        <em>-T $extracted_file_path$ -u user:password sftp://ftp.example.com/reports/</em>
+        <em [innerHTML]="'-T \\$\\{extracted_file_path\\} -u user:password sftp://ftp.example.com/reports/'"></em>
       </div>
 
     </div>
