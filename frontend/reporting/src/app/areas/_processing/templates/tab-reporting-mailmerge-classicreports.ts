@@ -39,7 +39,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
       
       <div class="col-xs-7" *ngIf="!numberOfGenerateReportsConfigured" style="padding-top: 6px;">
         <i class="fa fa-info-circle"></i>&nbsp;No report generation templates configured&nbsp;
-        <a href="https://www.reportburster.com/docs/generate-reports" target="_blank" class="btn btn-primary btn-sm">
+        <a href="https://www.reportburster.com/docs/report-generation" target="_blank" class="btn btn-primary btn-sm">
             <i class="fa fa-book"></i>&nbsp;{{'AREAS.PROCESSING.TAB-REPORTING-MAILMERGE-CLASSICREPORTS.SHOW-ME-HOW-TO' | translate
           }}
         </a>

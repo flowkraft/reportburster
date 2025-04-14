@@ -33,7 +33,6 @@ public class JobsService implements JobsApi {
 	@Override
 	public Stream<FileInfo> fetchStats() throws Exception {
 
-		
 		List<String> allJobFileNames = Unix4j.cd(AppPaths.JOBS_DIR_PATH).ls().toStringList();
 		List<FileInfo> allJobDetails = new ArrayList<FileInfo>();
 
@@ -68,7 +67,10 @@ public class JobsService implements JobsApi {
 
 		this.state.numberOfActiveJobs = 1;
 
-		this.shellService.runDocumentBursterBatScriptFile("-rf \"" + jobFilePath + "\"", file -> {
+		// Updated to use the new CLI interface
+		// Instead of passing "-rf filepath", we now use the new command structure
+		// "resume filepath"
+		this.shellService.runDocumentBursterBatScriptFile("resume \"" + jobFilePath + "\"", file -> {
 			FileUtils.forceDelete(file);
 			this.state.numberOfActiveJobs = 0;
 		}, new File(serverTransactionInfo.info));
@@ -77,18 +79,22 @@ public class JobsService implements JobsApi {
 
 	public void doBurst(ClientServerCommunicationInfo serverTransactionInfo) throws Exception {
 
-		//System.out.println("submitJob - ClientServerCommunicationInfo = " + serverTransactionInfo);
+		// System.out.println("submitJob - ClientServerCommunicationInfo = " +
+		// serverTransactionInfo);
 
 		if (serverTransactionInfo.info.toLowerCase().equals(Constants.COMMAND_BURST)) {
 
-			List<FileInfo> filesToProcess = Utils.getFilesToProcess(serverTransactionInfo.id, AppPaths.UPLOADS_DIR_PATH);
+			List<FileInfo> filesToProcess = Utils.getFilesToProcess(serverTransactionInfo.id,
+					AppPaths.UPLOADS_DIR_PATH);
 
-			//System.out.println("submitJob - filesToProcess.size = " + filesToProcess.size());
+			// System.out.println("submitJob - filesToProcess.size = " +
+			// filesToProcess.size());
 
 			if (filesToProcess.size() == 1) {
 
 				FileInfo fileToProcess = filesToProcess.get(0);
-				//System.out.println("submitJob - fileToProcess.filePath: " + fileToProcess.filePath);
+				// System.out.println("submitJob - fileToProcess.filePath: " +
+				// fileToProcess.filePath);
 
 				String filePath = fileToProcess.filePath;
 				String fileName = FilenameUtils.getName(filePath);

@@ -2,7 +2,7 @@
 
 <br/><br/>
 
-##### 1. Don't be shy and ask **Artificial Intelligence** to help you!&nbsp;&nbsp;&nbsp;<a href="https://create.microsoft.com/en-us/search?query=business" target="_blank">**See How**</a>
+##### 1. Don't be shy and ask **Artificial Intelligence** to help you!&nbsp;&nbsp;&nbsp;<a href="https://www.reportburster.com/docs/artificial-intelligence" target="_blank">**See How**</a>
 
 <br/><br/>
 
