@@ -59,7 +59,6 @@ public class PollScheduler {
 
 	@Scheduled(fixedRate = 5000)
 	public void poll() throws Exception {
-
 		// System.out.println("Polling started...");
 
 		if (StringUtils.isBlank(pollingPath)) {
@@ -73,72 +72,74 @@ public class PollScheduler {
 				Utils.filesWhichCanBeProcessedFilter, null);
 
 		if (allFilesInPollFolder.size() > 0)
-			//System.out.println("Found " + allFilesInPollFolder.size() + " files in poll folder.");
+			// System.out.println("Found " + allFilesInPollFolder.size() + " files in poll
+			// folder.");
 
-		for (File polledFile : allFilesInPollFolder) {
+			for (File polledFile : allFilesInPollFolder) {
 
-			// process one file at a time
-			// this condition should remain inside the for, when moved outside the for
-			// the system will try to process all the files in the same time (bad)
-			if (jobsService.state.numberOfActiveJobs > 0)
-				return;
+				// process one file at a time
+				// this condition should remain inside the for, when moved outside the for
+				// the system will try to process all the files in the same time (bad)
+				if (jobsService.state.numberOfActiveJobs > 0)
+					return;
 
-			String polledFilePath = polledFile.getAbsolutePath();
+				String polledFilePath = polledFile.getAbsolutePath();
 
-			//System.out.println("Processing file: " + polledFilePath);
+				// System.out.println("Processing file: " + polledFilePath);
 
-			String baseName = FilenameUtils.getBaseName(polledFilePath); // get filename without extension
-			String extension = FilenameUtils.getExtension(polledFilePath); // get file extension
+				String baseName = FilenameUtils.getBaseName(polledFilePath); // get filename without extension
+				String extension = FilenameUtils.getExtension(polledFilePath); // get file extension
 
-			String randomUUID = UUID.randomUUID().toString(); // generate random UUID
+				String randomUUID = UUID.randomUUID().toString(); // generate random UUID
 
-			// construct new filename with random UUID
-			String polledFileName = baseName + "-" + randomUUID + "." + extension;
+				// construct new filename with random UUID
+				String polledFileName = baseName + "-" + randomUUID + "." + extension;
 
-			Collection<File> processingFiles = FileUtils.listFiles(new File(pollingReceivedPath),
-					Utils.filesWhichCanBeProcessedFilter, null);
+				Collection<File> processingFiles = FileUtils.listFiles(new File(pollingReceivedPath),
+						Utils.filesWhichCanBeProcessedFilter, null);
 
-			jobsService.state.numberOfActiveJobs = processingFiles.size();
+				jobsService.state.numberOfActiveJobs = processingFiles.size();
 
-			// System.out.println("Number of active jobs: " +
-			// jobsService.state.numberOfActiveJobs);
+				// System.out.println("Number of active jobs: " +
+				// jobsService.state.numberOfActiveJobs);
 
-			if (!waitQueue.contains(polledFilePath)) {
-				// System.out.println("Adding file to wait queue: " + polledFilePath);
-				waitQueue.add(polledFilePath);
-			} else {
+				if (!waitQueue.contains(polledFilePath)) {
+					// System.out.println("Adding file to wait queue: " + polledFilePath);
+					waitQueue.add(polledFilePath);
+				} else {
 
-				String filePathToProcess = pollingReceivedPath + "/" + polledFileName;
+					String filePathToProcess = pollingReceivedPath + "/" + polledFileName;
 
-				jobsService.state.numberOfActiveJobs = 1;
+					jobsService.state.numberOfActiveJobs = 1;
 
-				File fileToProcess = new File(filePathToProcess);
+					File fileToProcess = new File(filePathToProcess);
 
-				FileUtils.moveFile(polledFile, fileToProcess);
-				shellService.runDocumentBursterBatScriptFile("-f \"" + filePathToProcess + "\"", file -> {
+					FileUtils.moveFile(polledFile, fileToProcess);
 
-					List<FileInfo> progressFile = this.jobsService.fetchStats()
-							.filter(f -> f.fileName.endsWith(Constants.EXTENTION_PROGRESS_FILE)
-									&& f.fileContent.contains(filePathToProcess))
-							.collect(Collectors.toList());
+					// Updated to use the new CLI interface
+					// Instead of passing "-f filepath", we now use the new command structure "burst
+					// filepath"
+					shellService.runDocumentBursterBatScriptFile("burst \"" + filePathToProcess + "\"", file -> {
 
-					// if there is a corresponding .progress file do not remove the file since it
-					// might be "Resumed" later
-					if (Objects.isNull(progressFile) || progressFile.size() == 0) {
-						// System.out.println("Deleting file: " + file.getAbsolutePath());
-						FileUtils.forceDelete(file);
-					}
+						List<FileInfo> progressFile = this.jobsService.fetchStats()
+								.filter(f -> f.fileName.endsWith(Constants.EXTENTION_PROGRESS_FILE)
+										&& f.fileContent.contains(filePathToProcess))
+								.collect(Collectors.toList());
 
-					// System.out.println("Removing file from wait queue: " + polledFilePath);
-					waitQueue.remove(polledFilePath);
-					jobsService.state.numberOfActiveJobs = 0;
+						// if there is a corresponding .progress file do not remove the file since it
+						// might be "Resumed" later
+						if (Objects.isNull(progressFile) || progressFile.size() == 0) {
+							// System.out.println("Deleting file: " + file.getAbsolutePath());
+							FileUtils.forceDelete(file);
+						}
 
-				}, fileToProcess);
+						// System.out.println("Removing file from wait queue: " + polledFilePath);
+						waitQueue.remove(polledFilePath);
+						jobsService.state.numberOfActiveJobs = 0;
 
+					}, fileToProcess);
+				}
 			}
-
-		}
-
 		// System.out.println("Polling ended...");
 	}
 

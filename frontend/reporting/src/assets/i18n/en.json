@@ -65,7 +65,7 @@
         "SUGGESTED-FILENAME": "Suggested filename:",
         "DOCX-HTML-WARNING": "HTML templates cannot be used with DOCX output type. To use these templates, please change your output type to HTML, PDF, or XLSX. HTML templates provide more flexibility and customization options.",
         "CANNOT-USE-TEMPLATE": "Template Not Compatible",
-        "NONE-OUTPUT-HELP": "Note: Output Type 'None' is useful for sending emails without attachments (e.g., newsletters). Select a different Output Type when you need to generate reports.",
+        "NONE-OUTPUT-HELP": "Note: Output Type 'None' is useful when you only need to send emails without attachments (like newsletters). If you need to generate actual documents (PDF, Excel, etc.), select a specific Output Type that matches your requirements.",
         "BUTTONS": {
           "EXAMPLES-GALLERY": "Examples (Gallery)",
           "HEY-AI": "Hey, you smart AI, help me...",
@@ -545,7 +545,7 @@
       },
       "TAB-REPORTING-MAILMERGE-CLASSICREPORTS": {
         "CHOOSE-REPORT": "Report",
-        "SHOW-ME-HOW-TO": "Show me how to configure reports"
+        "SHOW-ME-HOW-TO": "Show me how to build reports with AI"
       },
       "TAB-MERGE-BURST": {
         "BURST-MERGED-FILE": "Burst Merged File",
