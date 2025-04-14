@@ -79,7 +79,7 @@ public class Utils {
 			// Determine URL suffix based on branding type
 			String urlSuffix;
 			if ("Sent by".equals(bType)) {
-				urlSuffix = "emrb";
+				urlSuffix = "eml";
 			} else if ("Built by".equals(bType)) {
 				urlSuffix = "gr";
 			} else {
@@ -87,8 +87,8 @@ public class Utils {
 			}
 
 			// Replace the URL base pattern
-			brandingContent = brandingContent.replaceAll("href=\"https://www.reportburster.com/g/dbrb/\\w+\"",
-					"href=\"https://www.reportburster.com/g/dbrb/" + urlSuffix + "\"");
+			brandingContent = brandingContent.replaceAll("href=\"https://www.reportburster.com/g/rb/\\w+\"",
+					"href=\"https://www.reportburster.com/g/rb/" + urlSuffix + "\"");
 
 			// Add encoded email parameter if provided
 			if (StringUtils.isNotBlank(ea)) {
@@ -101,7 +101,7 @@ public class Utils {
 
 					// Add to URL as ee parameter (ensure we're only modifying the URL once)
 					brandingContent = brandingContent.replaceAll(
-							"href=\"(https://www.reportburster.com/g/dbrb/" + urlSuffix + ")\"",
+							"href=\"(https://www.reportburster.com/g/rb/" + urlSuffix + ")\"",
 							"href=\"$1?ee=" + urlEncodedEmail + "\"");
 				} catch (Exception e) {
 					// If encoding fails, use URL without email parameter

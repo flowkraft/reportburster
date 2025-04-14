@@ -24,10 +24,10 @@ template viewed in the gallery/click open/close/PDF/Excel/HTMML/next template/ba
 ** TODO DONE1 - get samples.spect.ts passing
 ** TODO DONE1 - get all e2e passing Electron
 ** TODO DONE1 - get all e2e passing Web
-** TODO get all acceptance testing passing
-** TODO Write docs for https://www.reportburster.com/docs/generate-reports
-** TODO Write docs for https://www.reportburster.com/docs/generate-reports-excel
-** TODO Write docs for https://www.reportburster.com/docs/artificial-intelligence (including how to use AI to screenshot2htmltemplate)
+** TODO DONE1 - get all acceptance testing passing
+** TODO DONE1 - Write docs for https://www.reportburster.com/docs/generate-reports
+** TODO DONE1 - Write docs for https://www.reportburster.com/docs/generate-reports-excel
+** TODO DONE1 - Write docs for https://www.reportburster.com/docs/artificial-intelligence (including how to use AI to screenshot2htmltemplate)
 ** TODO make 10.3.0 release
 ** TODO Send 10.3.0 announcing newsletter
 

@@ -67,7 +67,7 @@ while (i < n) {
     over.setTextMatrix(10, 10);
     
     //label text
-    over.showText("Sent by ReportBurster - https://reportburster.com/g/dbrb/br");
+    over.showText("Sent by ReportBurster - https://reportburster.com/g/rb/br");
     
     over.endText();
 	
