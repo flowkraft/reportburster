@@ -35,13 +35,13 @@ Quickstart Payslips.pdf Should Work Fine
     Click Element    css=.dburst-button-question-confirm
     Wait Until Element Is Not Visible    css=.dburst-button-question-confirm    timeout=30
     Sleep  1s
-    Click Button    id=btnClearLogs
+    Click Button    id=btnClearLogsBurstReportsTab
     Wait Until Page Contains Element    css=.dburst-button-question-decline    timeout=30
     Sleep  1s
     Click Element    css=.dburst-button-question-decline
     Wait Until Element Is Not Visible    css=.dburst-button-question-decline    timeout=30
     Sleep  1s
-    Click Button    id=btnClearLogs
+    Click Button    id=btnClearLogsBurstReportsTab
     Wait Until Page Contains Element    css=.dburst-button-question-confirm    timeout=30
     Sleep  1s
     Click Element    css=.dburst-button-question-confirm
@@ -56,7 +56,7 @@ Quickstart Payslips.pdf Should Work Fine
     Take Named Screenshot If Requested     005_10_Quickstart_Asking_Confirmation_to_Burst
 	  Click Element    css=.dburst-button-question-confirm
     # Working on ...
-    Wait Until Page Contains Element    id=infoLog    timeout=30
+    Wait Until Page Contains Element    css=#logsViewerBurstReportsTab #infoLog    timeout=30
     Wait Until Page Contains Element    id=workingOn    timeout=30
     Sleep  1s
     # screen "While Working On"
