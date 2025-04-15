@@ -25,7 +25,7 @@ public class ReportBursterAssembler extends AbstractAssembler {
 		
 		String npmRunCustomReleaseCommand = "npm run custom:release-electron --force";
 
-		new ProcessExecutor().directory(new File(Utils.getTopProjectFolderPath() + "/frontend/reporting"))
+		new ProcessExecutor().directory(new File(Utils.getTopProjectFolderPath() + "/frend/reporting"))
 				.command("cmd", "/c", npmRunCustomReleaseCommand).redirectOutput(new LogOutputStream() {
 					@Override
 					protected void processLine(String line) {
@@ -49,7 +49,7 @@ public class ReportBursterAssembler extends AbstractAssembler {
 
 		
 		FileUtils.copyFile(
-				new File(Utils.getTopProjectFolderPath() + "/frontend/reporting/release/ReportBurster.exe"),
+				new File(Utils.getTopProjectFolderPath() + "/frend/reporting/release/ReportBurster.exe"),
 				new File(packageDirPath + "/" + topFolderName + "/ReportBurster.exe"));
 
 		System.out.println(

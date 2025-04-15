@@ -68,25 +68,25 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// copy MODULE_REPORTING's template files and folders
 		FileUtils.copyDirectory(new File(
-				Utils.getTopProjectFolderPath() + "/backend/reporting/" + "src/main/external-resources/template"),
+				Utils.getTopProjectFolderPath() + "/bkend/reporting/" + "src/main/external-resources/template"),
 				new File(packageDirPath + "/" + topFolderName));
 
 		System.out.println(
 				"------------------------------------- DONE_04:NoExeAssembler copy MODULE_REPORTING's template files and folders ... -------------------------------------");
 
 		// copy MODULE_REPORTING's dependencies jar files
-		FileUtils.copyDirectory(new File(Utils.getTopProjectFolderPath() + "/backend/reporting/target/dependencies"),
+		FileUtils.copyDirectory(new File(Utils.getTopProjectFolderPath() + "/bkend/reporting/target/dependencies"),
 				new File(packageDirPath + "/" + topFolderName + "/lib/burst"));
 
 		System.out.println(
 				"------------------------------------- DONE_05:NoExeAssembler copy MODULE_REPORTING's dependencies jar files ... -------------------------------------");
 
 		// copy rb-reporting.jar
-		FileUtils.copyFile(new File(Utils.getTopProjectFolderPath() + "/backend/reporting/target/rb-reporting.jar"),
+		FileUtils.copyFile(new File(Utils.getTopProjectFolderPath() + "/bkend/reporting/target/rb-reporting.jar"),
 				new File(packageDirPath + "/" + topFolderName + "/lib/burst/rb-reporting.jar"));
 
 		// copy "FAT UBER" rb-server.jar
-		FileUtils.copyFile(new File(Utils.getTopProjectFolderPath() + "/backend/server/target/rb-server.jar"),
+		FileUtils.copyFile(new File(Utils.getTopProjectFolderPath() + "/bkend/server/target/rb-server.jar"),
 				new File(packageDirPath + "/" + topFolderName + "/lib/server/rb-server.jar"));
 
 		System.out.println(
@@ -342,7 +342,7 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// verify burst module template files and folders
 		assertThat(Utils.dir1ContainsAllDir2Files(new File(verifyDirPath + "/" + topFolderName), new File(
-				Utils.getTopProjectFolderPath() + "/backend/reporting/" + "src/main/external-resources/template")))
+				Utils.getTopProjectFolderPath() + "/bkend/reporting/" + "src/main/external-resources/template")))
 				.isTrue();
 
 		System.out.println(
@@ -350,7 +350,7 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// verify burst dependencies files are there
 		assertThat(Utils.dir1ContainsAllDir2Files(new File(verifyDirPath + "/" + topFolderName + "/lib/burst"),
-				new File(Utils.getTopProjectFolderPath() + "/backend/reporting/target/dependencies"))).isTrue();
+				new File(Utils.getTopProjectFolderPath() + "/bkend/reporting/target/dependencies"))).isTrue();
 
 		System.out.println(
 				"------------------------------------- VERIFIED_03:NoExeAssembler burst dependencies files are there ... -------------------------------------");
@@ -358,13 +358,13 @@ public class NoExeAssembler extends AbstractAssembler {
 		// verify rb-reporting.jar files are there
 		assertThat(
 				FileUtils.contentEquals(new File(verifyDirPath + "/" + topFolderName + "/lib/burst/rb-reporting.jar"),
-						new File(Utils.getTopProjectFolderPath() + "/backend/reporting/target/rb-reporting.jar")))
+						new File(Utils.getTopProjectFolderPath() + "/bkend/reporting/target/rb-reporting.jar")))
 				.isTrue();
 
 		// verify rb-server.jar file is there
 		assertThat(
 				FileUtils.contentEquals(new File(verifyDirPath + "/" + topFolderName + "/lib/server/rbsj-server.jar"),
-						new File(Utils.getTopProjectFolderPath() + "/backend/server/target/rbsj-server.jar")))
+						new File(Utils.getTopProjectFolderPath() + "/bkend/server/target/rbsj-server.jar")))
 				.isTrue();
 
 		System.out.println(

@@ -16,8 +16,8 @@ const e2eUpdateRuntimeDir = jetpack.cwd(
   `${FRONTEND_PLAYGROUND_FOLDER_PATH}/e2e-update`,
 );
 
-//const helpers = require("../../frontend/reporting/e2e/upgrade/updater.helpers");
-//const PATHS = require("../../frontend/reporting/e2e/utils/paths");
+//const helpers = require("../../frend/reporting/e2e/upgrade/updater.helpers");
+//const PATHS = require("../../frend/reporting/e2e/utils/paths");
 
 const VERIFIED_DB_NOEXE_ASSEMBLY_PATH =
   "../../asbl/target/package/verified-db-noexe";
