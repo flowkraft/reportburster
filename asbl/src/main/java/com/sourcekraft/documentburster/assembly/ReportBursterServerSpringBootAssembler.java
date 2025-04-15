@@ -29,7 +29,7 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 
 		String npmRunCustomReleaseCommand = "npm run custom:release-web --force";
 
-		new ProcessExecutor().directory(new File(Utils.getTopProjectFolderPath() + "/frontend/reporting"))
+		new ProcessExecutor().directory(new File(Utils.getTopProjectFolderPath() + "/frend/reporting"))
 				.command("cmd", "/c", npmRunCustomReleaseCommand).redirectOutput(new LogOutputStream() {
 					@Override
 					protected void processLine(String line) {
@@ -63,7 +63,7 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 
 		FileUtils.forceMkdir(new File(frontEndFolderPath));
 
-		FileUtils.copyDirectory(new File(Utils.getTopProjectFolderPath() + "/frontend/reporting/dist"),
+		FileUtils.copyDirectory(new File(Utils.getTopProjectFolderPath() + "/frend/reporting/dist"),
 				new File(frontEndFolderPath));
 
 		System.out.println(
@@ -117,7 +117,7 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 
 		// copy "frontent" web app (compiled)
 		String content = FileUtils.readFileToString(
-				new File(packageDirPath + "/" + this.topFolderName + "/lib/frontend/index.html"), "UTF-8");
+				new File(packageDirPath + "/" + this.topFolderName + "/lib/frend/index.html"), "UTF-8");
 
 		assertThat(content.contains("skin-black")).isTrue();
 

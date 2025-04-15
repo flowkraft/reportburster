@@ -74,7 +74,7 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 
 		// copy MODULE_BATCH's template files and folders
 		FileUtils.copyDirectory(
-				new File(Utils.getTopProjectFolderPath() + "/backend/batch/" + "src/main/external-resources/template"),
+				new File(Utils.getTopProjectFolderPath() + "/bkend/batch/" + "src/main/external-resources/template"),
 				new File(packageDirPath + "/" + this.topFolderName + "/server"));
 
 		// put back the customized files
@@ -95,14 +95,14 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 				"------------------------------------- DONE_04:DocumentBursterServer copy MODULE_BATCH's template files and folders ... -------------------------------------");
 
 		// copy MODULE_BATCH's dependencies jar files
-		FileUtils.copyDirectory(new File(Utils.getTopProjectFolderPath() + "/backend/batch/target/dependencies"),
+		FileUtils.copyDirectory(new File(Utils.getTopProjectFolderPath() + "/bkend/batch/target/dependencies"),
 				new File(packageDirPath + "/" + this.topFolderName + "/server/lib/batch"));
 
 		System.out.println(
 				"------------------------------------- DONE_05:DocumentBursterServer copy MODULE_BATCH's dependencies jar files ... -------------------------------------");
 
 		// copy rb-batch.jar
-		FileUtils.copyFile(new File(Utils.getTopProjectFolderPath() + "/backend/batch/target/rb-batch.jar"),
+		FileUtils.copyFile(new File(Utils.getTopProjectFolderPath() + "/bkend/batch/target/rb-batch.jar"),
 				new File(packageDirPath + "/" + this.topFolderName + "/server/lib/batch/rb-batch.jar"));
 
 		System.out.println(
@@ -165,12 +165,12 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 
 		// START MODULE_BATCH_WEB_ADMIN work
 		ZipUtil.unpack(
-				new File(Utils.getTopProjectFolderPath() + "/backend/batch-web-admin/target/rb-batch-web-admin.war"),
+				new File(Utils.getTopProjectFolderPath() + "/bkend/batch-web-admin/target/rb-batch-web-admin.war"),
 				new File(packageDirPath + "/" + this.topFolderName + "/web-console/console/webapps/burst"));
 
 		FileUtils.copyFile(
 				new File(Utils.getTopProjectFolderPath()
-						+ "/backend/batch-web-admin/src/main/resources/batch-hsql.properties"),
+						+ "/bkend/batch-web-admin/src/main/resources/batch-hsql.properties"),
 				new File(packageDirPath + "/" + this.topFolderName
 						+ "/web-console/console/webapps/burst/WEB-INF/classes/batch-hsql.properties"));
 
@@ -179,7 +179,7 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 
 		// Copy batch web admin license files...
 		FileUtils.copyDirectory(
-				new File(Utils.getTopProjectFolderPath() + "/backend/batch-web-admin/lib/runtime/license"),
+				new File(Utils.getTopProjectFolderPath() + "/bkend/batch-web-admin/lib/runtime/license"),
 				new File(packageDirPath + "/" + this.topFolderName
 						+ "/web-console/console/webapps/burst/WEB-INF/lib/license"));
 
@@ -223,7 +223,7 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 
 		// copy MODULE_BATCH's template files and folders
 		assertThat(Utils.dir1ContainsAllDir2Files(new File(verifyDirPath + "/" + this.topFolderName + "/server"),
-				new File(Utils.getTopProjectFolderPath() + "/backend/batch/" + "src/main/external-resources/template")))
+				new File(Utils.getTopProjectFolderPath() + "/bkend/batch/" + "src/main/external-resources/template")))
 						.isTrue();
 
 		System.out.println(
@@ -232,7 +232,7 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 		// copy MODULE_BATCH's dependencies jar files
 		assertThat(
 				Utils.dir1ContainsAllDir2Files(new File(verifyDirPath + "/" + this.topFolderName + "/server/lib/batch"),
-						new File(Utils.getTopProjectFolderPath() + "/backend/batch/target/dependencies"))).isTrue();
+						new File(Utils.getTopProjectFolderPath() + "/bkend/batch/target/dependencies"))).isTrue();
 
 		System.out.println(
 				"------------------------------------- VERIFIED_04:DocumentBursterServer copy MODULE_BATCH's dependencies jar files ... -------------------------------------");
@@ -240,7 +240,7 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 		// copy rb-batch.jar
 		assertThat(FileUtils.contentEquals(
 				new File(verifyDirPath + "/" + this.topFolderName + "/server/lib/batch/rb-batch.jar"),
-				new File(Utils.getTopProjectFolderPath() + "/backend/batch/target/rb-batch.jar"))).isTrue();
+				new File(Utils.getTopProjectFolderPath() + "/bkend/batch/target/rb-batch.jar"))).isTrue();
 
 		System.out.println(
 				"------------------------------------- VERIFIED_05:DocumentBursterServer copy rb-batch.jar ... -------------------------------------");
@@ -299,7 +299,7 @@ public class DocumentBursterServerSpringBatchAdminAssembler extends AbstractAsse
 		assertThat(Utils.dir1ContainsAllDir2Files(
 				new File(verifyDirPath + "/" + this.topFolderName
 						+ "/web-console/console/webapps/burst/WEB-INF/lib/license"),
-				new File(Utils.getTopProjectFolderPath() + "/backend/batch-web-admin/lib/runtime/license"))).isTrue();
+				new File(Utils.getTopProjectFolderPath() + "/bkend/batch-web-admin/lib/runtime/license"))).isTrue();
 
 		System.out.println(
 				"------------------------------------- VERIFIED_09:DocumentBursterServer batch web admin license files ... -------------------------------------");
