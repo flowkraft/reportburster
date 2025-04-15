@@ -144,8 +144,8 @@ env:     None</msg>
 <kw name="Create Webdriver" owner="SeleniumLibrary">
 <msg time="2025-01-16T19:03:36.624020" level="TRACE">Arguments: [ 'Chrome' | service=&lt;selenium.webdriver.chrome.service.Service object at 0x00000280748025A0&gt; | options=&lt;selenium.webdriver.chrome.options.Options object at 0x0000028075AF5F70&gt; ]</msg>
 <msg time="2025-01-16T19:03:36.624020" level="INFO">Creating an instance of the Chrome WebDriver.</msg>
-<msg time="2025-01-16T19:03:36.624020" level="DEBUG">Skipping Selenium Manager; path to chrome driver specified in Service class: C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe</msg>
-<msg time="2025-01-16T19:03:36.627070" level="DEBUG">Started executable: `C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe` in a child process with pid: 10452 using 0 to output -3</msg>
+<msg time="2025-01-16T19:03:36.624020" level="DEBUG">Skipping Selenium Manager; path to chrome driver specified in Service class: C:\Projects\all-repos\src\prd\rb\frend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe</msg>
+<msg time="2025-01-16T19:03:36.627070" level="DEBUG">Started executable: `C:\Projects\all-repos\src\prd\rb\frend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe` in a child process with pid: 10452 using 0 to output -3</msg>
 <msg time="2025-01-16T19:03:37.156648" level="DEBUG">POST http://localhost:64814/session {'capabilities': {'firstMatch': [{}], 'alwaysMatch': {'browserName': 'chrome', 'pageLoadStrategy': &lt;PageLoadStrategy.normal: 'normal'&gt;, 'goog:chromeOptions': {'debuggerAddress': 'localhost:9222', 'extensions': [], 'args': []}}}}</msg>
 <msg time="2025-01-16T19:03:37.157647" level="DEBUG">Starting new HTTP connection (1): localhost:64814</msg>
 <msg time="2025-01-16T19:03:58.865311" level="DEBUG">http://localhost:64814 "POST /session HTTP/1.1" 200 0</msg>
@@ -161,7 +161,7 @@ env:     None</msg>
 </kw>
 <msg time="2025-01-16T19:03:58.865311" level="TRACE">Return: None</msg>
 <doc>Open's your electron application by providing browser binary via
-C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe and chromedriver binary via C:\Projects\all-repos\src\prd\rb\frontend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe
+C:\Projects\all-repos\src\prd\rb\asbl\target/uat/rb/ReportBurster\ReportBurster.exe and chromedriver binary via C:\Projects\all-repos\src\prd\rb\frend/reporting/node_modules/electron-chromedriver/bin/chromedriver.exe
 see vars.py for more details.</doc>
 <status status="PASS" start="2025-01-16T19:03:35.614498" elapsed="23.250813"/>
 </kw>

@@ -539,10 +539,10 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<modules>
-				<module>backend/common</module>
-				<module>backend/update</module>
-				<module>backend/reporting</module>
-				<module>backend/server</module>
+				<module>bkend/common</module>
+				<module>bkend/update</module>
+				<module>bkend/reporting</module>
+				<module>bkend/server</module>
 				<module>asbl</module>
 			</modules>
 		</profile>
@@ -550,10 +550,10 @@
 		<profile>
 			<id>docker</id>
 			<modules>
-				<module>backend/common</module>
-				<module>backend/update</module>
-				<module>backend/reporting</module>
-				<module>backend/server</module>
+				<module>bkend/common</module>
+				<module>bkend/update</module>
+				<module>bkend/reporting</module>
+				<module>bkend/server</module>
 			</modules>
 		</profile>
 		<profile>
