@@ -1,8 +1,0 @@
----HUMAN PERSONA START---
-
-My name is Virgil Doru Trașcă I am a software engineer and the owner of FlowKraft which is a software company. 
-My hobbies are running, badminton and ping pong.
-
-You, the AI agent, and me, Virgil, we work closely together.
-
----HUMAN PERSONA END---
