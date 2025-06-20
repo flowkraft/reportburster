@@ -13,6 +13,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
           id="selectMailMergeClassicReport"
           [(ngModel)]="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport"
           [groupBy]="groupByMailMergeHelper"
+          (change)="onReportSelectionChange($event)"
           appendTo="body"
         >
           <ng-option
@@ -20,10 +21,19 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
             [value]="report"
             >{{report.templateName}}
             <span *ngIf="report.type=='config-samples'">(sample)</span
-            ><span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.csvfile'"
-              >(input CSV)</span
+            ><span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.sqlquery'"
+              >(input SQL Query)</span
             >
-            <span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.tsvfile'"
+            <span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.scriptfile'"
+              >(input Script Execution)</span
+            >
+            <span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.xmlfile'"
+              >(input XML)</span
+            >
+             <span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.csvfile'"
+              >(input CSV)</span
+            >  
+                       <span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.tsvfile'"
               >(input TSV)</span
             >  
             <span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.fixedwidthfile'"
@@ -45,7 +55,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
         </a>
       </div>
       
-      <ng-container *ngIf="numberOfGenerateReportsConfigured">
+      <ng-container *ngIf="numberOfGenerateReportsConfigured && allowedInputFileTypes() !== 'notused'">
     
         <div class="col-xs-4" *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport">
           <input
@@ -60,7 +70,15 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
 
         <div id="browseMailMergeClassicReportInputFile" class="col-xs-3" *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport">
           <label for="reportingFileUploadInput" class="btn btn-default btn-block"><i class="fa fa-folder-open-o' }}"></i>&nbsp;Select File</label>
-          <input style="display: none;" type="file" id="reportingFileUploadInput" (change)="onMailMergeClassicReportFileSelected($event)" accept=".csv, .xlsx, .xls, .tsv, .tab, .txt, .prn, .dat" #reportingFileUploadInput [disabled]="!storeService.configSys.sysInfo.setup.java.isJavaOk"/>
+          <input
+  style="display: none"
+  type="file"
+  id="reportingFileUploadInput"
+  (change)="onMailMergeClassicReportFileSelected($event)"
+  [attr.accept]="allowedInputFileTypes()"
+  #reportingFileUploadInput
+  [disabled]="!storeService.configSys.sysInfo.setup.java.isJavaOk"
+/>
         <!--  
           <dburst-button-native-system-dialog
             value="{{
@@ -71,8 +89,10 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
 
         </div>
       </ng-container>
+    
     </div>
 
+    <p></p>
     <div class="row">
       <div class="col-xs-1"></div>
 
@@ -168,6 +188,20 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
           </button>
         </div>
       </div>
+    </div>
+
+    <div
+      *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport && processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.reportParameters.length > 0"
+      class="row"
+    >
+      <div class="col-xs-3">
+        <dburst-report-parameters-form
+          [parameters]="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.reportParameters"
+          (validChange)="onReportParamsValidChange($event)"
+          (valueChange)="onReportParamsValueChange($event)"
+        ></dburst-report-parameters-form>
+      </div>
+    
     </div>
 
     <div

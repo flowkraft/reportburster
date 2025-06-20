@@ -590,10 +590,29 @@ export class ConfigurationTestHelper {
       .waitOnElementToBecomeInvisible('#btnIgnoreQuotations')
       .waitOnElementToBecomeInvisible('#btnIgnoreLeadingWhitespace')
 
+      // Test "Additional Data Transformation" for SQL Query
+      .elementShouldBeVisible('#lblShowAdditionalTransformation')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#transformationCodeEditor')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
+
+      // Expand "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .codeJarShouldContainText('#transformationCodeEditor', '') // Check default empty content
+      .waitOnElementToBecomeVisible('#btnHelpWithTransformationAI') // Assumed ID
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+
+      // Collapse "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeInvisible('#transformationCodeEditor')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
+
       // Test TSV Default Settings
       .dropDownSelectOptionHavingLabel(
         '#dsTypes',
-        'TSV File (local file containing tab-separated values)',
+        'TSV File (with tab-separated values)',
       )
       .waitOnElementToBecomeVisible('#separatorChar')
       .inputShouldHaveValue('#separatorChar', '→ [tab character]')
@@ -619,8 +638,27 @@ export class ConfigurationTestHelper {
       .click('#lblShowMoreCsvOptions')
       .waitOnElementToBecomeInvisible('#quotationChar')
 
+      // Test "Additional Data Transformation" for SQL Query
+      .elementShouldBeVisible('#lblShowAdditionalTransformation')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#transformationCodeEditor')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
+
+      // Expand "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .codeJarShouldContainText('#transformationCodeEditor', '') // Check default empty content
+      .waitOnElementToBecomeVisible('#btnHelpWithTransformationAI') // Assumed ID
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+
+      // Collapse "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeInvisible('#transformationCodeEditor')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
+
       // Test Excel Default Settings
-      .dropDownSelectOptionHavingLabel('#dsTypes', 'Excel File (local file)')
+      .dropDownSelectOptionHavingLabel('#dsTypes', 'Excel File')
       .selectedOptionShouldContainText('#selectExcelHeader', 'No Header')
       .inputShouldHaveValue('#excelSkipLines', '0')
       .inputShouldHaveValue('#excelSheetIndex', '0')
@@ -664,10 +702,29 @@ export class ConfigurationTestHelper {
       .waitOnElementToBecomeInvisible('#btnExcelIgnoreLeadingWhitespace')
       .waitOnElementToBecomeInvisible('#btnExcelUseFormulaResults')
 
+      // Test "Additional Data Transformation" for SQL Query
+      .elementShouldBeVisible('#lblShowAdditionalTransformation')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#transformationCodeEditor')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
+
+      // Expand "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .codeJarShouldContainText('#transformationCodeEditor', '') // Check default empty content
+      .waitOnElementToBecomeVisible('#btnHelpWithTransformationAI') // Assumed ID
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+
+      // Collapse "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeInvisible('#transformationCodeEditor')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
+
       // Test Fixed Width Default Settings
       .dropDownSelectOptionHavingLabel(
         '#dsTypes',
-        'Fixed-Width File (local file containing fixed-width columns)',
+        'Fixed-Width File (with fixed-width columns)',
       )
       .waitOnElementToBecomeVisible('#fixedWidthColumns')
       .elementShouldBeVisible('#selectFixedWidthHeader')
@@ -691,6 +748,7 @@ export class ConfigurationTestHelper {
       .typeText('Column1, 10\nColumn2, 15')
 
       // Test Fixed Width advanced options
+      .elementShouldBeVisible('#lblShowMoreFixedWidthOptions')
       .click('#lblShowMoreFixedWidthOptions')
       .waitOnElementToBecomeVisible('#btnFixedWidthIgnoreLeadingWhitespace')
       .waitOnElementToBecomeVisible('#fixedWidthIdColumn')
@@ -707,6 +765,25 @@ export class ConfigurationTestHelper {
       .click('#lblShowMoreFixedWidthOptions')
       .waitOnElementToBecomeInvisible('#btnFixedWidthIgnoreLeadingWhitespace')
 
+      // Test "Additional Data Transformation" for SQL Query
+      .elementShouldBeVisible('#lblShowAdditionalTransformation')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#transformationCodeEditor')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
+
+      // Expand "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .codeJarShouldContainText('#transformationCodeEditor', '') // Check default empty content
+      .waitOnElementToBecomeVisible('#btnHelpWithTransformationAI') // Assumed ID
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+
+      // Collapse "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeInvisible('#transformationCodeEditor')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
+
       // Test Google Sheets feature request modal
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.gsheet')
       .waitOnElementToBecomeVisible('#btnCloseAskForFeatureModal')
@@ -718,42 +795,114 @@ export class ConfigurationTestHelper {
       .click('#btnCloseAskForFeatureModal')
 
       // Test Database feature request modal
-      .dropDownSelectOptionHavingValue('#dsTypes', 'ds.database')
-      .waitOnElementToBecomeVisible('#btnCloseAskForFeatureModal')
-      .click('#btnCloseAskForFeatureModal')
+      .dropDownSelectOptionHavingValue('#dsTypes', 'ds.sqlquery')
+      // If settingsService.getDatabaseConnectionFiles().length === 0 initially:
+      .waitOnElementToBecomeVisible('#noDbConnectionsMessageSql') // Using new ID
+      .waitOnElementToBecomeVisible('#createDbConnectionLinkSql') // Using new ID
+      // Assuming no connections by default for a clean test, or check for default selection if connections exist
+      // If connections can exist, you might need conditional logic or ensure a specific state
+      // .selectedOptionShouldContainText('#sqlDatabaseConnection', 'EXPECTED_DEFAULT_CONNECTION_NAME_OR_NONE') // Or check if it's empty/first option
+      .waitOnElementToBecomeVisible('#sqlQueryEditor')
+      .codeJarShouldContainText('#sqlQueryEditor', '') // Assumes codejar content is checkable this way or use codeJarShouldContainText(selector, '')
+      .waitOnElementToBecomeVisible('#btnHelpWithSqlQueryAI') // Assumed ID
+      .elementShouldBeDisabled('#btnHelpWithSqlQueryAI') // Assumed ID
+      // .elementShouldBeDisabled('#btnHelpWithSqlQueryAI') // If no connection selected or available
+      .elementCheckBoxShouldNotBeSelected('#btnShowMoreSqlOptions')
+      .elementShouldNotBeVisible('#sqlIdColumn')
+
+      // Test SQL Query advanced options
+      .click('#lblShowMoreSqlOptions')
+      .waitOnElementToBecomeVisible('#sqlIdColumn')
+      .selectedOptionShouldContainText('#sqlIdColumn', 'Not Used')
+      .elementShouldNotBeVisible('#sqlCustomIdColumnIndex')
+      .click('#lblShowMoreSqlOptions') // Hide advanced options
+      .waitOnElementToBecomeInvisible('#sqlIdColumn')
+
+      // Test "Additional Data Transformation" for SQL Query
+      .elementShouldBeVisible('#lblShowAdditionalTransformation')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#transformationCodeEditor')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
+
+      // Expand "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .codeJarShouldContainText('#transformationCodeEditor', '') // Check default empty content
+      .waitOnElementToBecomeVisible('#btnHelpWithTransformationAI') // Assumed ID
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+
+      // Collapse "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeInvisible('#transformationCodeEditor')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
+
+      // Test Script Default Settings
+      .dropDownSelectOptionHavingValue('#dsTypes', 'ds.scriptfile')
+      .waitOnElementToBecomeVisible('#noDbConnectionsMessageScript') // Using new ID
+      .waitOnElementToBecomeVisible('#createDbConnectionLinkScript') // Using new ID
+      .waitOnElementToBecomeVisible('#groovyScriptEditor') // Wait for the section to be visible
+      .waitOnElementToBecomeVisible('#btnHelpWithScriptAI') // Assumed ID
+      .elementCheckBoxShouldNotBeSelected('#btnShowMoreScriptOptions')
+      .elementShouldNotBeVisible('#scriptIdColumn')
+
+      // Test Script advanced options
+      .click('#lblShowMoreScriptOptions')
+      .waitOnElementToBecomeVisible('#scriptIdColumn')
+      .selectedOptionShouldContainText('#scriptIdColumn', 'Not Used')
+      .elementShouldNotBeVisible('#scriptCustomIdColumnIndex')
+      .waitOnElementToBecomeInvisible('#scriptCustomIdColumnIndex')
+      .click('#lblShowMoreScriptOptions') // Hide advanced options
+      .waitOnElementToBecomeInvisible('#scriptIdColumn')
+
+      // Test "Additional Data Transformation" for Script
+      .elementShouldBeVisible('#lblShowAdditionalTransformation')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#transformationCodeEditor')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
+
+      // Expand "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldBeVisible('#btnHelpWithTransformationAI') // Assumed ID
+      .codeJarShouldContainText('#transformationCodeEditor', '') // Check default empty content
+
+      // Collapse "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeInvisible('#transformationCodeEditor')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
 
       // Return to CSV format to reset for other tests
-      .dropDownSelectOptionHavingLabel(
-        '#dsTypes',
-        'CSV File (local file containing comma-separated values)',
-      );
+      .dropDownSelectOptionHavingLabel('#dsTypes', 'CSV File');
 
     // Test Template/Output tab basic functionality and UI elements
     ft = ft
       .click('#reportingTemplateOutputTab-link')
       .waitOnElementToBecomeVisible('#reportOutputType')
       .selectedOptionShouldContainText('#reportOutputType', 'None')
-      .waitOnElementToBecomeInvisible('#reportTemplateContainer')
-      .elementShouldNotBeVisible('#reportTemplateContainer')
-      // Test for help text presence when 'None' is selected
+      .waitOnElementToBecomeVisible('#btnAskAiForHelpOutput')
+      .elementShouldNotBeVisible('#btnOpenTemplateGallery')
       .waitOnElementToBecomeVisible('#noneOutputTypeHelp')
       .elementShouldContainText(
         '#noneOutputTypeHelp',
-        "Output Type 'None' is useful for sending emails without attachments",
+        "Output Type 'None' is useful when you only need to send emails",
       )
+      .waitOnElementToBecomeInvisible('#reportTemplateContainer')
+      .elementShouldNotBeVisible('#reportTemplateContainer')
+      // Test for help text presence when 'None' is selected
       // Test PDF output type
       .dropDownSelectOptionHavingLabel(
         '#reportOutputType',
-        'PDF Documents (html_template2pdf_documents)',
+        'PDF Docs (html_template2pdf_docs)',
       )
       .waitOnElementToBecomeVisible('#reportTemplateContainer')
-      .elementShouldBeVisible('#codeJarHtmlTemplateEditor')
-      // Test AI and Gallery buttons exist
-      .elementShouldBeVisible('#btnAiCopilot')
-      .elementShouldBeVisible('#btnAiDropdownToggle')
-      .elementShouldBeVisible('#btnOpenTemplateGallery')
-      .elementShouldBeVisible('#divTruncatedAbsoluteTemplateFolderPath')
-      .elementShouldBeVisible('#btnCopyTemplatePathToClipboard')
+      .waitOnElementToBecomeVisible('#btnAskAiForHelpOutput')
+      .waitOnElementToBecomeVisible('#codeJarHtmlTemplateEditor')
+      .waitOnElementToBecomeVisible('#btnOpenTemplateGallery')
+      .elementShouldNotBeVisible('#divTruncatedAbsoluteTemplateFolderPath')
+      .elementShouldNotBeVisible('#btnCopyTemplatePathToClipboard')
 
       // Test preview toggle - should be visible by default
       .waitOnElementToBecomeVisible('#reportPreviewPane')
@@ -772,34 +921,34 @@ export class ConfigurationTestHelper {
       // Test Excel output type
       .dropDownSelectOptionHavingLabel(
         '#reportOutputType',
-        'Microsoft Excel Documents (html_template2xlsx_documents)',
+        'Microsoft Excel Docs (html_template2xlsx_docs)',
       )
       .waitOnElementToBecomeVisible('#reportTemplateContainer')
-      .elementShouldBeVisible('#codeJarHtmlTemplateEditor')
-      .elementShouldBeVisible('#btnAiCopilot')
-      .elementShouldBeVisible('#btnAiDropdownToggle')
-      .elementShouldBeVisible('#btnOpenTemplateGallery')
-      .elementShouldBeVisible('#divTruncatedAbsoluteTemplateFolderPath')
-      .elementShouldBeVisible('#btnCopyTemplatePathToClipboard')
       .waitOnElementToBecomeVisible('#reportPreviewPane')
+      .waitOnElementToBecomeVisible('#btnAskAiForHelpOutput')
+      .waitOnElementToBecomeVisible('#codeJarHtmlTemplateEditor')
+      .waitOnElementToBecomeVisible('#btnOpenTemplateGallery')
+      .elementShouldNotBeVisible('#divTruncatedAbsoluteTemplateFolderPath')
+      .elementShouldNotBeVisible('#btnCopyTemplatePathToClipboard')
 
       // Test HTML output type
       .dropDownSelectOptionHavingLabel(
         '#reportOutputType',
-        'HTML Documents (html_template2html_documents)',
+        'HTML Docs (html_template2html_docs)',
       )
       .waitOnElementToBecomeVisible('#reportTemplateContainer')
-      .elementShouldBeVisible('#codeJarHtmlTemplateEditor')
-      .elementShouldBeVisible('#btnAiCopilot')
-      .elementShouldBeVisible('#btnAiDropdownToggle')
-      .elementShouldBeVisible('#btnOpenTemplateGallery')
-      .elementShouldBeVisible('#divTruncatedAbsoluteTemplateFolderPath')
-      .elementShouldBeVisible('#btnCopyTemplatePathToClipboard')
-      .waitOnElementToBecomeVisible('#reportPreviewPane');
+      .waitOnElementToBecomeVisible('#reportPreviewPane')
+      .waitOnElementToBecomeVisible('#codeJarHtmlTemplateEditor')
+      .waitOnElementToBecomeVisible('#btnAskAiForHelpOutput')
+      .waitOnElementToBecomeVisible('#btnOpenTemplateGallery')
+      .elementShouldNotBeVisible('#divTruncatedAbsoluteTemplateFolderPath')
+      .elementShouldNotBeVisible('#btnCopyTemplatePathToClipboard');
 
     // Test DOCX Output Type UI elements
     ft = ft
       .dropDownSelectOptionHavingValue('#reportOutputType', 'output.docx')
+      .waitOnElementToBecomeVisible('#btnAskAiForHelpOutput')
+      .waitOnElementToBecomeVisible('#btnOpenTemplateGallery')
       .waitOnElementToBecomeVisible('#reportTemplateContainer')
       .waitOnElementToBecomeVisible('#selectTemplateFile')
       .click('.ng-select-container') // Open dropdown to see "no templates found" message
@@ -823,7 +972,9 @@ export class ConfigurationTestHelper {
     // Reset to None for clean state
     ft = ft
       .dropDownSelectOptionHavingLabel('#reportOutputType', 'None')
+      .waitOnElementToBecomeVisible('#btnAskAiForHelpOutput')
       .waitOnElementToBecomeInvisible('#reportTemplateContainer')
+      .waitOnElementToBecomeInvisible('#btnOpenTemplateGallery')
       .waitOnElementToBecomeInvisible('#selectTemplateFile');
 
     return ft;
@@ -838,6 +989,16 @@ export class ConfigurationTestHelper {
     // Global counter for all text/numeric fields
     let globalCounter = 1;
 
+    const uniqueTimestamp = Date.now();
+    let lastSetTransformationValue = '';
+
+    // --- Define unique values for new fields ---
+    const uniqueSqlValue = `SELECT column_a, column_b FROM your_table WHERE created_at > '${uniqueTimestamp}';`;
+    const uniqueScriptValue = `// Unique Groovy Script Content ${uniqueTimestamp}\ndef currentTime = ${uniqueTimestamp}\nprintln "Executing script at: " + currentTime`;
+
+    const sqlIdColumnCustomIndex = `${(uniqueTimestamp % 3) + 1}`; // e.g., 1, 2, or 3
+    const scriptIdColumnCustomIndex = `${(uniqueTimestamp % 3) + 2}`; // e.g., 2, 3, or 4 to be different
+
     // First, handle the datasource tab
     ft = ft
       .gotoBurstScreen()
@@ -848,14 +1009,13 @@ export class ConfigurationTestHelper {
       .click('#leftMenuReportingSettings')
       .click('#reportingDataSourceDataTablesTab-link');
 
-    // Start with CSV datasource to verify separator is editable
     ft = ft
+      .dropDownSelectOptionHavingValue('#dsTypes', 'ds.csvfile')
       .waitOnElementToBecomeVisible('#separatorChar')
       // Verify separator is editable for CSV
       .elementShouldNotHaveAttribute('#separatorChar', 'readonly')
       // Set separator char to deterministic value using global counter
       .setValue('#separatorChar', `Field Value ${globalCounter++}`)
-
       // Select "Multiline" for header so we can set skipLines
       .dropDownSelectOptionHavingValue('#selectHeader', 'multiline')
 
@@ -878,7 +1038,19 @@ export class ConfigurationTestHelper {
       .setCheckboxState(
         '#btnIgnoreLeadingWhitespace',
         globalCounter++ % 2 === 0,
-      );
+      ) // Set Additional Transformation (shared, so set once, assert many times)
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor');
+
+    // Start with CSV datasource to verify separator is editable
+    const csvTransformationValue = `// CSV Transformation ${uniqueTimestamp}-${globalCounter++}`;
+
+    ft = ft
+      .setCodeJarContent('#transformationCodeEditor', csvTransformationValue)
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation') // Verify it's checked after click/set
+      .click('#lblShowAdditionalTransformation'); // Collapse
+
+    lastSetTransformationValue = csvTransformationValue;
 
     // Store expected values for later verification of both CSV and TSV (since they share the model)
     const csvTsvSeparatorCharValue = 'Field Value 1';
@@ -889,18 +1061,26 @@ export class ConfigurationTestHelper {
     const csvTsvIgnoreQuotationsState = 6 % 2 === 0; // false
     const csvTsvIgnoreLeadingWhitespaceState = 7 % 2 === 0; // true
 
-    // Change to TSV to verify the readonly separator char (the only difference)
     ft = ft
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.tsvfile')
       .waitOnElementToBecomeReadonly('#separatorChar')
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor');
+
+    // Change to TSV to verify the readonly separator char (the only difference)
+    const tsvTransformationValue = `// TSV Transformation ${uniqueTimestamp}-${globalCounter++}`;
+
+    ft = ft
+      .setCodeJarContent('#transformationCodeEditor', tsvTransformationValue)
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .click('#lblShowAdditionalTransformation'); // Collapse
+    lastSetTransformationValue = tsvTransformationValue;
+
+    ft = ft
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.csvfile')
       .waitOnElementToBecomeEditable('#separatorChar')
-      .sleep(Constants.DELAY_HALF_SECOND) // Wait for the value to be set
-      .setValue('#separatorChar', csvTsvSeparatorCharValue)
-      .sleep(Constants.DELAY_HALF_SECOND); // Wait for the value to be set
-    //.waitOnToastToBecomeVisible('success', 'Saved');
+      .setValue('#separatorChar', csvTsvSeparatorCharValue);
 
-    // Change to Fixed Width datasource and test its settings
     ft = ft
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.fixedwidthfile')
 
@@ -909,7 +1089,6 @@ export class ConfigurationTestHelper {
         '#fixedWidthColumns',
         `Column 1, 10\nColumn 2, 20\nColumn 3, 15`,
       )
-
       // Select "No Header" option for Fixed Width Header dropdown
       .dropDownSelectOptionHavingValue('#selectFixedWidthHeader', 'noheader')
 
@@ -917,20 +1096,32 @@ export class ConfigurationTestHelper {
       .click('#lblShowMoreFixedWidthOptions')
 
       // Set ID Column to "Not Used" (consistent with requirement)
+      .waitOnElementToBecomeVisible('#fixedWidthIdColumn')
       .dropDownSelectOptionHavingValue('#fixedWidthIdColumn', 'notused')
 
       // Set Trim Whitespaces checkbox state using global counter for deterministic testing
       .setCheckboxState(
         '#btnFixedWidthIgnoreLeadingWhitespace',
         globalCounter++ % 2 === 0,
-      );
+      ) // Set Additional Transformation for Fixed Width
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor');
+
+    // Change to Fixed Width datasource and test its settings
+    const fwTransformationValue = `// Fixed Width Transformation ${uniqueTimestamp}-${globalCounter++}`;
+
+    ft = ft
+      .setCodeJarContent('#transformationCodeEditor', fwTransformationValue)
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .click('#lblShowAdditionalTransformation'); // Collapse
+
+    lastSetTransformationValue = fwTransformationValue;
 
     // Store expected values for Fixed Width verification
     const fixedWidthColumnsValue = 'Column 1, 10\nColumn 2, 20\nColumn 3, 15';
     const fixedWidthSkipLinesValue = '0'; // Always 0 for noheader, regardless of what we tried to set
     const fixedWidthIgnoreLeadingWhitespaceState = 8 % 2 === 0; // false
 
-    // Change to Excel
     ft = ft
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.excelfile')
       // Excel options
@@ -944,17 +1135,80 @@ export class ConfigurationTestHelper {
       .setValue('#excelCustomIdColumnIndex', `${globalCounter++}`)
       // More Excel toggle options - set specific states
       .setCheckboxState('#btnExcelIgnoreLeadingWhitespace', true)
-      .setCheckboxState('#btnExcelUseFormulaResults', true);
+      .setCheckboxState('#btnExcelUseFormulaResults', true) // Set Additional Transformation for Excel
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor');
+
+    // Change to Excel
+    const excelTransformationValue = `// Excel Transformation ${uniqueTimestamp}-${globalCounter++}`;
+
+    ft = ft
+      .setCodeJarContent('#transformationCodeEditor', excelTransformationValue)
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .click('#lblShowAdditionalTransformation'); // Collapse
+    lastSetTransformationValue = excelTransformationValue;
 
     // Store expected values for Excel verification
-    const excelSkipLinesValue = '9';
-    const excelSheetIndexValue = '10';
-    const excelCustomIdColumnIndexValue = '11';
+    const excelSkipLinesValue = '12';
+    const excelSheetIndexValue = '13';
+    const excelCustomIdColumnIndexValue = '14';
+
+    ft = ft
+      .dropDownSelectOptionHavingValue('#dsTypes', 'ds.sqlquery')
+      .waitOnElementToBecomeVisible('#sqlQueryEditor')
+      .setCodeJarContent('#sqlQueryEditor', uniqueSqlValue)
+      // .dropDownSelectOptionHavingValue('#sqlDatabaseConnection', 'yourTestConnectionCode') // If testing with a connection
+      .click('#lblShowMoreSqlOptions')
+      .waitOnElementToBecomeVisible('#sqlIdColumn')
+      .dropDownSelectOptionHavingValue('#sqlIdColumn', 'custom')
+      .waitOnElementToBecomeVisible('#sqlCustomIdColumnIndex')
+      .setValue('#sqlCustomIdColumnIndex', sqlIdColumnCustomIndex)
+      .click('#lblShowMoreSqlOptions') // Collapse "Show More"
+      // Set Additional Transformation for SQL Query
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor');
+
+    // --- SQL Query (New Input Type) ---
+    const sqlTransformationValue = `// SQL Transformation ${uniqueTimestamp}-${globalCounter++}`;
+
+    ft = ft
+      .setCodeJarContent('#transformationCodeEditor', sqlTransformationValue)
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .click('#lblShowAdditionalTransformation'); // Collapse
+
+    lastSetTransformationValue = sqlTransformationValue;
+
+    ft = ft
+      .dropDownSelectOptionHavingValue('#dsTypes', 'ds.scriptfile')
+      .waitOnElementToBecomeVisible('#groovyScriptEditor')
+      .setCodeJarContent('#groovyScriptEditor', uniqueScriptValue)
+      // .dropDownSelectOptionHavingValue('#scriptDatabaseConnection', 'yourTestConnectionCode') // If testing with a connection
+      .click('#lblShowMoreScriptOptions')
+      .waitOnElementToBecomeVisible('#scriptIdColumn')
+      .dropDownSelectOptionHavingValue('#scriptIdColumn', 'custom')
+      .waitOnElementToBecomeVisible('#scriptCustomIdColumnIndex')
+      .setValue('#scriptCustomIdColumnIndex', scriptIdColumnCustomIndex)
+      .click('#lblShowMoreScriptOptions') // Collapse "Show More"
+      // Set Additional Transformation for Script
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor');
+
+    // --- Script (New Input Type) ---
+    const scriptTransformationValue = `// Script Transformation ${uniqueTimestamp}-${globalCounter++}`;
+
+    ft = ft
+      .setCodeJarContent('#transformationCodeEditor', scriptTransformationValue)
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .click('#lblShowAdditionalTransformation'); // Collapse
+
+    lastSetTransformationValue = scriptTransformationValue; // This will be the final value
 
     ft = ft
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.csvfile')
+      .waitOnToastToBecomeVisible('info', 'Saved')
       .waitOnElementToBecomeVisible('#separatorChar')
-      .setValue('#separatorChar', csvTsvSeparatorCharValue);
+      .setValue('#separatorChar', csvTsvSeparatorCharValue)
+      .waitOnToastToBecomeVisible('info', 'Saved');
 
     // Now move to Template Output tab
     ft = ft.click('#reportingTemplateOutputTab-link');
@@ -1098,6 +1352,7 @@ export class ConfigurationTestHelper {
       .waitOnElementToBecomeVisible('#separatorChar')
       .inputShouldHaveValue('#separatorChar', csvTsvSeparatorCharValue)
       // Verify "Show More Options" is checked
+      .click('#lblShowMoreCsvOptions')
       .elementCheckBoxShouldBeSelected('#btnShowMoreCsvOptions')
       // Verify ID Column is "notused" (by checking custom input is not visible)
       .elementShouldNotBeVisible('#csvCustomIdColumnIndex')
@@ -1124,6 +1379,18 @@ export class ConfigurationTestHelper {
       ft = ft.elementCheckBoxShouldNotBeSelected('#btnIgnoreLeadingWhitespace');
     }
 
+    // Assert Additional Transformation for CSV (should have the last set value)
+    ft = ft
+      .click('#lblShowMoreCsvOptions')
+      .click('#lblShowAdditionalTransformation')
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .codeJarShouldContainText(
+        '#transformationCodeEditor',
+        lastSetTransformationValue,
+      )
+      .click('#lblShowAdditionalTransformation');
+
     // Verify TSV datasource settings - only check TSV-specific aspects
     // (readonly separator and that it retained the multiline header option)
     ft = ft
@@ -1134,6 +1401,17 @@ export class ConfigurationTestHelper {
       .dropDownShouldHaveSelectedOption('#selectHeader', 'multiline')
       // Verify skipLines value
       .inputShouldHaveValue('#skipLines', csvTsvSkipLinesValue);
+
+    // Assert Additional Transformation for CSV (should have the last set value)
+    ft = ft
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .codeJarShouldContainText(
+        '#transformationCodeEditor',
+        lastSetTransformationValue,
+      )
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .click('#lblShowAdditionalTransformation');
 
     // Verify Fixed Width datasource settings were correctly saved
     ft = ft
@@ -1146,6 +1424,7 @@ export class ConfigurationTestHelper {
       // Verify skip lines is 0 and disabled (as expected with noheader)
       .inputShouldHaveValue('#fixedWidthSkipLines', fixedWidthSkipLinesValue)
       // Verify "Show More Options" is checked
+      .click('#lblShowMoreFixedWidthOptions')
       .elementCheckBoxShouldBeSelected('#btnShowMoreFixedWidthOptions')
       // Verify ID Column is "notused"
       .dropDownShouldHaveSelectedOption('#fixedWidthIdColumn', 'notused')
@@ -1163,12 +1442,25 @@ export class ConfigurationTestHelper {
       );
     }
 
+    // Assert Additional Transformation for CSV (should have the last set value)
+    ft = ft
+      .click('#lblShowMoreFixedWidthOptions')
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .codeJarShouldContainText(
+        '#transformationCodeEditor',
+        lastSetTransformationValue,
+      )
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .click('#lblShowAdditionalTransformation');
+
     // Excel - verify values
     ft = ft
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.excelfile')
       .waitOnElementToBecomeVisible('#excelSkipLines')
       .inputShouldHaveValue('#excelSkipLines', excelSkipLinesValue)
       .inputShouldHaveValue('#excelSheetIndex', excelSheetIndexValue)
+      .click('#lblShowMoreExcelOptions')
       .elementCheckBoxShouldBeSelected('#btnShowMoreExcelOptions')
       .inputShouldHaveValue(
         '#excelCustomIdColumnIndex',
@@ -1176,6 +1468,70 @@ export class ConfigurationTestHelper {
       )
       .elementCheckBoxShouldBeSelected('#btnExcelIgnoreLeadingWhitespace')
       .elementCheckBoxShouldBeSelected('#btnExcelUseFormulaResults');
+
+    // Assert Additional Transformation for CSV (should have the last set value)
+    ft = ft
+      .click('#lblShowMoreExcelOptions')
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .codeJarShouldContainText(
+        '#transformationCodeEditor',
+        lastSetTransformationValue,
+      )
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .click('#lblShowAdditionalTransformation');
+
+    // --- Assert SQL Query (New Input Type) ---
+    ft = ft
+      .dropDownSelectOptionHavingValue('#dsTypes', 'ds.sqlquery')
+      .waitOnElementToBecomeVisible('#sqlQueryEditor')
+      .codeJarShouldContainText('#sqlQueryEditor', uniqueSqlValue)
+      // .selectedOptionShouldContainText('#sqlDatabaseConnection', 'Your Test Connection Name') // If asserting
+      .click('#lblShowMoreSqlOptions')
+      .waitOnElementToBecomeVisible('#sqlIdColumn')
+      .elementCheckBoxShouldBeSelected('#btnShowMoreSqlOptions')
+      .selectedOptionShouldContainText('#sqlIdColumn', 'Custom Column Index...')
+      .waitOnElementToBecomeVisible('#sqlCustomIdColumnIndex')
+      .inputShouldHaveValue('#sqlCustomIdColumnIndex', sqlIdColumnCustomIndex)
+      .click('#lblShowMoreSqlOptions') // Collapse
+      // Assert Additional Transformation for SQL Query (should have the last set value)
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .codeJarShouldContainText(
+        '#transformationCodeEditor',
+        lastSetTransformationValue,
+      )
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .click('#lblShowAdditionalTransformation');
+
+    // --- Assert Script (New Input Type) ---
+    ft = ft
+      .dropDownSelectOptionHavingValue('#dsTypes', 'ds.scriptfile')
+      .waitOnElementToBecomeVisible('#groovyScriptEditor')
+      .codeJarShouldContainText('#groovyScriptEditor', uniqueScriptValue)
+      // .selectedOptionShouldContainText('#scriptDatabaseConnection', 'Your Test Connection Name') // If asserting
+      .click('#lblShowMoreScriptOptions')
+      .waitOnElementToBecomeVisible('#scriptIdColumn')
+      .elementCheckBoxShouldBeSelected('#btnShowMoreScriptOptions')
+      .selectedOptionShouldContainText(
+        '#scriptIdColumn',
+        'Custom Column Index...',
+      )
+      .waitOnElementToBecomeVisible('#scriptCustomIdColumnIndex')
+      .inputShouldHaveValue(
+        '#scriptCustomIdColumnIndex',
+        scriptIdColumnCustomIndex,
+      )
+      .click('#lblShowMoreScriptOptions') // Collapse
+      // Assert Additional Transformation for Script (should have the last set value)
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .codeJarShouldContainText(
+        '#transformationCodeEditor',
+        lastSetTransformationValue,
+      )
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .click('#lblShowAdditionalTransformation');
 
     // Verify the template output settings
     ft = ft.click('#reportingTemplateOutputTab-link');
@@ -1200,7 +1556,6 @@ export class ConfigurationTestHelper {
       .elementShouldBeVisible('#reportPreviewPane')
       .sleep(Constants.DELAY_ONE_SECOND); // Wait for the value to be set
 
-    // IMPROVED: Check the simple templates match their expected format exactly
     for (const outputType of remainingHtmlOutputTypes) {
       ft = ft
         .dropDownSelectOptionHavingValue('#reportOutputType', outputType)
@@ -1217,17 +1572,16 @@ export class ConfigurationTestHelper {
     return ft;
   }
 
-  static assertTemplateOutputAIToolbarAndGalleryFeatures(
+  static assertTemplateOutputAIHelpFeatures(
     ft: FluentTester,
     outputTypeCode: string,
-    galleryTemplateCount: number,
   ): FluentTester {
     // Map output type codes to their dropdown label equivalents
     const outputTypeLabels = {
-      'output.pdf': 'PDF Documents (html_template2pdf_documents)',
-      'output.xlsx': 'Microsoft Excel Documents (html_template2xlsx_documents)',
-      'output.html': 'HTML Documents (html_template2html_documents)',
-      'output.docx': 'Microsoft Word Documents (docx_template2docx_documents)',
+      'output.pdf': 'PDF Docs (html_template2pdf_docs)',
+      'output.xlsx': 'Microsoft Excel Docs (html_template2xlsx_docs)',
+      'output.html': 'HTML Docs (html_template2html_docs)',
+      'output.docx': 'Microsoft Word Docs (docx_template2docx_docs)',
       'output.none': 'None',
     };
 
@@ -1237,31 +1591,98 @@ export class ConfigurationTestHelper {
       .dropDownSelectOptionHavingLabel(
         '#reportOutputType',
         outputTypeLabels[outputTypeCode],
-      );
+      )
+      .waitOnElementToBecomeVisible('#btnAskAiForHelpOutput');
 
     // Wait for appropriate element based on output type
     if (outputTypeCode === 'output.docx') {
       ft = ft.waitOnElementToBecomeVisible('#selectTemplateFile');
-    } else if (outputTypeCode !== 'output.none') {
-      ft = ft.waitOnElementToBecomeVisible('#codeJarHtmlTemplateEditor');
+    } else {
+      if (outputTypeCode !== 'output.none') {
+        ft = ft.waitOnElementToBecomeVisible('#codeJarHtmlTemplateEditor');
+      }
     }
 
-    // Step 1: Verify AI Copilot button exists
-    ft = ft.elementShouldBeVisible('#btnAiCopilot');
-
+    // Step 1: Check the AI Help button has correct text
+    if (outputTypeCode === 'output.docx' || outputTypeCode === 'output.none') {
+      ft = ft.elementShouldContainText(
+        '#btnAskAiForHelpOutput',
+        'Hey, You Smart AI, Help Me',
+      );
+    }
     // Step 2: Test "Hey AI" workflow
+    ft = ft.click('#btnAskAiForHelpOutput');
+
+    if (outputTypeCode === 'output.docx' || outputTypeCode === 'output.none') {
+      ft = ft
+        .waitOnElementToBecomeVisible('#btnConfirmAiHelp')
+        .waitOnElementToBecomeVisible('#btnCloseTemplateGallery');
+    }
+
+    if (outputTypeCode === 'output.pdf') {
+      ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText');
+
+      ft = ft
+        .click('#btnCopyPromptText')
+        .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+        .click('.dburst-button-question-confirm')
+        .waitOnElementToBecomeInvisible('.dburst-button-question-confirm');
+
+      ft = ft.clipboardShouldContainText(
+        'Generate HTML optimized for PDF conversion',
+      );
+    }
+
+    if (outputTypeCode === 'output.xlsx') {
+      ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText');
+
+      ft = ft
+        .click('#btnCopyPromptText')
+        .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+        .click('.dburst-button-question-confirm')
+        .waitOnElementToBecomeInvisible('.dburst-button-question-confirm');
+
+      ft = ft.clipboardShouldContainText(
+        'Excel "HTML-based" Report Template Generator',
+      );
+    }
+
+    if (outputTypeCode === 'output.html') {
+      ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText');
+
+      ft = ft
+        .click('#btnCopyPromptText')
+        .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+        .click('.dburst-button-question-confirm')
+        .waitOnElementToBecomeInvisible('.dburst-button-question-confirm');
+
+      ft = ft.clipboardShouldContainText(
+        'You are tasked with creating a professional HTML template',
+      );
+    }
+
+    if (outputTypeCode === 'output.docx' || outputTypeCode === 'output.none')
+      return ft
+        .click('#btnCloseTemplateGallery')
+        .waitOnElementToBecomeInvisible('#btnCloseTemplateGallery');
+
+    return ft
+      .click('#btnCloseAiCopilotModal')
+      .waitOnElementToBecomeInvisible('#btnCloseAiCopilotModal');
+  }
+
+  static assertTemplateOutputGalleryFeatures(
+    ft: FluentTester,
+    outputTypeCode: string,
+    galleryTemplateCount: number,
+  ): FluentTester {
+    if (outputTypeCode === 'output.none') return ft;
     ft = ft
-      .click('#btnAiDropdownToggle')
-      .waitOnElementToBecomeVisible('#btnAskAiForHelp')
-      .click('#btnAskAiForHelp')
-      .waitOnElementToBecomeVisible('#aiInstructionsContainer')
-      .elementShouldBeVisible('#aiInstructionsContent')
-      .elementShouldBeVisible('#btnConfirmAiHelp')
-      .click('#btnCloseTemplateGalleryX')
       .waitOnElementToBecomeVisible('#btnOpenTemplateGallery')
       .click('#btnOpenTemplateGallery')
       .waitOnElementToBecomeVisible('#aiInstructionsContainer')
       .elementShouldBeVisible('#aiInstructionsContent')
+      .waitOnElementToBecomeVisible('#btnConfirmAiGalleryInstructions')
       .click('#btnConfirmAiGalleryInstructions')
       .waitOnElementToBecomeVisible('.p-carousel-next')
       .pageShouldContainText('View Template'); // Verify at least one template exists
@@ -1281,6 +1702,15 @@ export class ConfigurationTestHelper {
 
     // Navigate through all templates
     for (let i = 1; i < galleryTemplateCount; i++) {
+      if (outputTypeCode === 'output.xlsx') {
+        ft = ft.waitOnElementToBecomeVisible(
+          '.template-tags span.tag-badge:text("excel")',
+        );
+      } else
+        ft = ft.elementShouldNotBeVisible(
+          '.template-tags span.tag-badge:text("excel")',
+        );
+
       ft = ft
         .click('.p-carousel-next')
         .waitOnElementToBecomeVisible('.template-footer')

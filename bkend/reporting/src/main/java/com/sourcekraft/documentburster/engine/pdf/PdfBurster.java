@@ -30,7 +30,6 @@ public class PdfBurster extends AbstractBurster {
 
 	private PDDocument document;
 
-	protected List<String> burstTokens;
 	protected Map<String, List<PDPage>> burstDocuments;
 
 	private PDPage currentPage;
@@ -43,7 +42,7 @@ public class PdfBurster extends AbstractBurster {
 
 	protected void initializeResources() throws Exception {
 
-		burstTokens = new ArrayList<String>();
+		ctx.burstTokens = new ArrayList<String>();
 		burstDocuments = new HashMap<String, List<PDPage>>();
 
 		document = PDDocument.load(new File(filePath));
@@ -57,7 +56,7 @@ public class PdfBurster extends AbstractBurster {
 
 	}
 
-	public List<String> parseBurstingMetaData() throws Exception {
+	protected void parseBurstingMetaData() throws Exception {
 
 		int numberOfPages = document.getNumberOfPages();
 
@@ -92,7 +91,7 @@ public class PdfBurster extends AbstractBurster {
 		ctx.currentPageText = StringUtils.EMPTY;
 		ctx.currentPageIndex = -1;
 
-		if (burstTokens.size() == 0) {
+		if (ctx.burstTokens.size() == 0) {
 
 			log.info("No burst tokens were found in the document -> Burting the document into " + numberOfPages
 					+ " documents of one page each...");
@@ -100,7 +99,7 @@ public class PdfBurster extends AbstractBurster {
 			for (int i = 1; i <= numberOfPages; i++) {
 				String token = Integer.toString(i);
 
-				burstTokens.add(token);
+				ctx.burstTokens.add(token);
 
 				List<PDPage> pages = new ArrayList<PDPage>();
 				pages.add(((PDPage) document.getDocumentCatalog().getPages().get(i - 1)));
@@ -108,8 +107,6 @@ public class PdfBurster extends AbstractBurster {
 
 			}
 		}
-
-		return burstTokens;
 
 	}
 
@@ -165,10 +162,10 @@ public class PdfBurster extends AbstractBurster {
 
 				if (token.length() > 0) {
 
-					if (burstTokens.contains(token))
+					if (ctx.burstTokens.contains(token))
 						burstDocuments.get(token).add(currentPage);
 					else {
-						burstTokens.add(token);
+						ctx.burstTokens.add(token);
 						List<PDPage> pages = new ArrayList<PDPage>();
 						pages.add(currentPage);
 						burstDocuments.put(token, pages);
@@ -197,6 +194,7 @@ public class PdfBurster extends AbstractBurster {
 
 		if (StringUtils.isNotEmpty(customConfigFilePath)) {
 			ctx.configurationFilePath = customConfigFilePath;
+			ctx.settings.setConfigurationFilePath(customConfigFilePath);
 			executeController();
 		}
 

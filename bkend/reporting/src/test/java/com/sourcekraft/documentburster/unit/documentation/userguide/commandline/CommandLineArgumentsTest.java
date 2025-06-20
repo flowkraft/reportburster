@@ -7,6 +7,8 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -46,7 +48,7 @@ public class CommandLineArgumentsTest {
 
 	private static final String PAYSLIPS_REPORT_PATH = "src/main/external-resources/template/samples/burst/Payslips.pdf";
 
-	private static Settings settings = new Settings();
+	private static Settings settings;
 
 	private final static AbstractBurster burster = new TestBursterFactory.PdfBurster(StringUtils.EMPTY,
 			"PicocliCommandLineArgumentsTest");
@@ -59,7 +61,12 @@ public class CommandLineArgumentsTest {
 	 */
 	static class TestCliJob extends CliJob {
 		public TestCliJob(String configFilePath) {
-			super(configFilePath);
+			super((StringUtils.isNoneEmpty(configFilePath) && Files.exists(Paths.get(configFilePath))) ? configFilePath
+					: "src/main/external-resources/template/config/burst/settings.xml");
+
+			settings = new Settings((StringUtils.isNoneEmpty(configFilePath) && Files.exists(Paths.get(configFilePath)))
+					? configFilePath
+					: "src/main/external-resources/template/config/burst/settings.xml");
 		}
 
 		@Override
@@ -74,7 +81,7 @@ public class CommandLineArgumentsTest {
 
 		@Override
 		protected Merger getMerger() throws Exception {
-			settings.loadSettings(configurationFilePath);
+			settings.loadSettings();
 			settings.setOutputFolder(TestsUtils.TESTS_OUTPUT_FOLDER + "/output/ValidMergeArguments/");
 			settings.setBackupFolder(TestsUtils.TESTS_OUTPUT_FOLDER
 					+ "/backup/${input_document_name}/${now?string[\"yyyy.MM.dd_HH.mm.ss.SSS\"]}");
@@ -262,14 +269,15 @@ public class CommandLineArgumentsTest {
 
 	@Test(expected = ParameterException.class)
 	public void burstCommandWithNonNumericRandomTestsValue() throws Throwable {
-	    String[] args = new String[] { "burst", PAYSLIPS_REPORT_PATH, "--testrandom=abc" };
-	    CommandLine cmd = new CommandLine(program, createTestFactory());
-	    
-	    // This will throw ParameterException because "abc" can't be converted to an Integer
-	    cmd.parseArgs(args);
-	    
-	    // We shouldn't get here
-	    fail("Expected exception was not thrown");
+		String[] args = new String[] { "burst", PAYSLIPS_REPORT_PATH, "--testrandom=abc" };
+		CommandLine cmd = new CommandLine(program, createTestFactory());
+
+		// This will throw ParameterException because "abc" can't be converted to an
+		// Integer
+		cmd.parseArgs(args);
+
+		// We shouldn't get here
+		fail("Expected exception was not thrown");
 	}
 
 	@Test(expected = MutuallyExclusiveArgsException.class)
@@ -476,18 +484,18 @@ public class CommandLineArgumentsTest {
 
 	@Test(expected = FileNotFoundException.class)
 	public void resumeCommandWithNonExistingFile() throws Throwable {
-	    String[] args = new String[] { "resume",
-	            "src/test/resources/input/unit/other/non-existing-job-progress-file.jpr" };
-	    
-	    // Parse arguments
-	    CommandLine cmd = new CommandLine(program, createTestFactory());
-	    cmd.parseArgs(args);
-	    
-	    // Get the resume command
-	    MainProgram.ResumeCommand resumeCommand = cmd.getSubcommands().get("resume").getCommand();
-	    
-	    // Call the command directly - this will throw FileNotFoundException
-	    resumeCommand.call();
+		String[] args = new String[] { "resume",
+				"src/test/resources/input/unit/other/non-existing-job-progress-file.jpr" };
+
+		// Parse arguments
+		CommandLine cmd = new CommandLine(program, createTestFactory());
+		cmd.parseArgs(args);
+
+		// Get the resume command
+		MainProgram.ResumeCommand resumeCommand = cmd.getSubcommands().get("resume").getCommand();
+
+		// Call the command directly - this will throw FileNotFoundException
+		resumeCommand.call();
 	}
 
 	/*
@@ -521,50 +529,53 @@ public class CommandLineArgumentsTest {
 		// Call the command's business logic - this should throw the exception
 		generateCommand.call();
 	}
-	
+
 	@Test(expected = MissingParameterException.class)
 	public void missingArgumentForTestRandomOption() throws Throwable {
-	    // Test what happens when --testrandom is used without a value
-	    String[] args = new String[] { "burst", PAYSLIPS_REPORT_PATH, "--testrandom" };
-	    CommandLine cmd = new CommandLine(program, createTestFactory());
-	    
-	    // This should throw MissingParameterException because --testrandom requires a value
-	    cmd.parseArgs(args);
-	    
-	    // We shouldn't get here
-	    fail("Expected exception was not thrown");
+		// Test what happens when --testrandom is used without a value
+		String[] args = new String[] { "burst", PAYSLIPS_REPORT_PATH, "--testrandom" };
+		CommandLine cmd = new CommandLine(program, createTestFactory());
+
+		// This should throw MissingParameterException because --testrandom requires a
+		// value
+		cmd.parseArgs(args);
+
+		// We shouldn't get here
+		fail("Expected exception was not thrown");
 	}
 
 	@Test(expected = ParameterException.class)
 	public void nonNumericValueForTestRandomOption() throws Throwable {
-	    // Test what happens when --testrandom has a non-numeric value
-	    String[] args = new String[] { "burst", PAYSLIPS_REPORT_PATH, "--testrandom=a" };
-	    CommandLine cmd = new CommandLine(program, createTestFactory());
-	    
-	    // This should throw ParameterException because "a" can't be converted to Integer
-	    cmd.parseArgs(args);
-	    
-	    // We shouldn't get here
-	    fail("Expected exception was not thrown");
+		// Test what happens when --testrandom has a non-numeric value
+		String[] args = new String[] { "burst", PAYSLIPS_REPORT_PATH, "--testrandom=a" };
+		CommandLine cmd = new CommandLine(program, createTestFactory());
+
+		// This should throw ParameterException because "a" can't be converted to
+		// Integer
+		cmd.parseArgs(args);
+
+		// We shouldn't get here
+		fail("Expected exception was not thrown");
 	}
 
 	@Test(expected = ParameterException.class)
 	public void negativeValueForTestRandomOption() throws Throwable {
-	    // Test what happens when --testrandom has a negative value
-	    String[] args = new String[] { "burst", PAYSLIPS_REPORT_PATH, "--testrandom=-2" };
-	    CommandLine cmd = new CommandLine(program, createTestFactory());
-	    
-	    // Parse the arguments first (this will pass since -2 is a valid integer)
-	    cmd.parseArgs(args);
-	    
-	    // Get the burst command instance
-	    MainProgram.BurstCommand burstCommand = cmd.getSubcommands().get("burst").getCommand();
-	    
-	    // Call the command - this should throw ParameterException due to validation in call() method
-	    burstCommand.call();
-	    
-	    // We shouldn't get here
-	    fail("Expected exception was not thrown");
+		// Test what happens when --testrandom has a negative value
+		String[] args = new String[] { "burst", PAYSLIPS_REPORT_PATH, "--testrandom=-2" };
+		CommandLine cmd = new CommandLine(program, createTestFactory());
+
+		// Parse the arguments first (this will pass since -2 is a valid integer)
+		cmd.parseArgs(args);
+
+		// Get the burst command instance
+		MainProgram.BurstCommand burstCommand = cmd.getSubcommands().get("burst").getCommand();
+
+		// Call the command - this should throw ParameterException due to validation in
+		// call() method
+		burstCommand.call();
+
+		// We shouldn't get here
+		fail("Expected exception was not thrown");
 	}
 	/*
 	 * HELPER METHODS

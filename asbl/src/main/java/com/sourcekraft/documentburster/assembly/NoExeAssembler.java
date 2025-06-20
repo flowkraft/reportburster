@@ -3,10 +3,11 @@ package com.sourcekraft.documentburster.assembly;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
-import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+
+import com.sourcekraft.documentburster.common.db.northwind.NorthwindManager;
 
 public class NoExeAssembler extends AbstractAssembler {
 
@@ -67,8 +68,9 @@ public class NoExeAssembler extends AbstractAssembler {
 		// START MODULE_REPORTING work
 
 		// copy MODULE_REPORTING's template files and folders
-		FileUtils.copyDirectory(new File(
-				Utils.getTopProjectFolderPath() + "/bkend/reporting/" + "src/main/external-resources/template"),
+		FileUtils.copyDirectory(
+				new File(
+						Utils.getTopProjectFolderPath() + "/bkend/reporting/" + "src/main/external-resources/template"),
 				new File(packageDirPath + "/" + topFolderName));
 
 		System.out.println(
@@ -282,9 +284,11 @@ public class NoExeAssembler extends AbstractAssembler {
 				new File(payslipsGenerateOnlyExcelXlsxDatasourceXmlConfigFilePath));
 		// replace <reportdistribution>true</reportdistribution> with
 		// <reportdistribution>false</reportdistribution>
-		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyExcelXlsxDatasourceXmlConfigFilePath), "UTF-8");
+		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyExcelXlsxDatasourceXmlConfigFilePath),
+				"UTF-8");
 
-		content = content.replace("<template>My Reports</template>", "<template>Payslips XlsxDatasource2XlsxReports</template>");
+		content = content.replace("<template>My Reports</template>",
+				"<template>Payslips XlsxDatasource2XlsxReports</template>");
 
 		content = content.replace("<reportdistribution>true</reportdistribution>",
 				"<reportdistribution>false</reportdistribution>");
@@ -301,7 +305,8 @@ public class NoExeAssembler extends AbstractAssembler {
 		// replace <reportdistribution>true</reportdistribution> with
 		// <reportdistribution>false</reportdistribution>
 
-		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyExcelReportingXlsxDatasourceXmlConfigFilePath), "UTF-8");
+		content = FileUtils
+				.readFileToString(new File(payslipsGenerateOnlyExcelReportingXlsxDatasourceXmlConfigFilePath), "UTF-8");
 		content = content.replace("ds.csvfile", "ds.excelfile");
 		content = content.replace("output.none", "output.xlsx");
 
@@ -326,6 +331,57 @@ public class NoExeAssembler extends AbstractAssembler {
 		System.out.println(
 				"------------------------------------- DONE_10:NoExeAssembler _copyDistributedByGroovyFile ... -------------------------------------");
 
+		_generateSampleNorthwindDatabase();
+
+		System.out.println(
+				"------------------------------------- DONE_11:NoExeAssembler _generateSampleNorthwindDatabase() ... -------------------------------------");
+
+	}
+
+	private void _generateSampleNorthwindDatabase() throws Exception {
+		// Define the target directory for the SQLite DB within the package structure
+		// NorthwindManager will create 'sample-northwind-sqlite/northwind.db' inside
+		// this base path
+		String sampleDbBasePath = packageDirPath + "/" + topFolderName + "/db/sample-northwind-sqlite"; // Changed base
+																										// to /data/db
+		File sampleDbDir = new File(sampleDbBasePath);
+		if (!sampleDbDir.exists()) {
+			System.out.println("Creating directory for sample database base: " + sampleDbBasePath);
+			FileUtils.forceMkdir(sampleDbDir); // Use FileUtils to ensure creation
+		}
+
+		System.out.println("Attempting to generate Northwind SQLite database in base directory: " + sampleDbBasePath);
+
+		// Use try-with-resources for NorthwindManager as it implements AutoCloseable
+		try (NorthwindManager northwindManager = new NorthwindManager()) {
+
+			// Pass the base path where the 'sample-northwind-sqlite' folder will be created
+			boolean success = northwindManager.startDatabase(NorthwindManager.DatabaseVendor.SQLITE, sampleDbBasePath);
+
+			if (success) {
+				// Construct the expected path for logging/checking if needed here
+				String expectedDbPath = sampleDbBasePath + File.separator + File.separator + "northwind.db";
+				File dbFile = new File(expectedDbPath);
+
+				// Check if the file actually exists after reported success
+				if (dbFile.exists() && dbFile.length() > 0) {
+					System.out.println("Successfully generated/verified Northwind SQLite database: " + expectedDbPath);
+				} else {
+					throw new RuntimeException(
+							"NorthwindManager reported success, but database file is missing or empty: "
+									+ expectedDbPath);
+				}
+			} else {
+				// Decide how to handle failure: log, throw exception to fail build?
+				throw new RuntimeException("Failed to generate Northwind SQLite database using NorthwindManager.");
+			}
+		} catch (Exception e) {
+			System.err.println("Error during Northwind SQLite database generation: " + e.getMessage());
+			e.printStackTrace(); // Print stack trace for debugging
+			throw e; // Re-throw to potentially fail the build
+		}
+		System.out.println(
+				"------------------------------------- DONE_07:NoExeAssembler Generate Northwind SQLite DB ... -------------------------------------");
 	}
 
 	@Override

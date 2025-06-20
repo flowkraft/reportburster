@@ -38,6 +38,9 @@ if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log" (
 :: Execute choco -version and redirect the output to a file
 choco --version > "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log" || echo.
 
+:: Execute docker -version and redirect the output to a file
+docker --version >> "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log" || echo.
+
 set "RB_SERVER_MODE=false"
 
 :: Check if FRONTEND_PATH is set and points to a valid directory

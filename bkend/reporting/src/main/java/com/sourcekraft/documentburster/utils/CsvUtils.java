@@ -23,11 +23,11 @@ public class CsvUtils {
 	public static final char DEFAULT_QUOTE_CHARACTER = ICSVParser.DEFAULT_QUOTE_CHARACTER;
 
 	public static final char DEFAULT_ESCAPE_CHARACTER = ICSVParser.DEFAULT_ESCAPE_CHARACTER;
-	
+
 	public static final boolean DEFAULT_STRICT_QUOTES = ICSVParser.DEFAULT_STRICT_QUOTES;
 	public static final boolean DEFAULT_IGNORE_QUOTATIONS = ICSVParser.DEFAULT_IGNORE_QUOTATIONS;
 	public static final boolean DEFAULT_IGNORE_LEADING_WHITESPACE = ICSVParser.DEFAULT_IGNORE_LEADING_WHITESPACE;
-	
+
 	public static final CSVReaderNullFieldIndicator DEFAULT_NULL_FIELD_INDICATOR = CSVReaderNullFieldIndicator.NEITHER;
 
 	public static final String AUTODETECT = "autodetect";
@@ -35,11 +35,18 @@ public class CsvUtils {
 	public static final String COLUMN_LAST = "lastcolumn";
 	public static final String COLUMN_FIRST = "firstcolumn";
 	public static final String NOT_USED = "notused";
-	
+
 	public static final String OUTPUT_TYPE_NONE = "output.none";
 	public static final String OUTPUT_TYPE_DOCX = "output.docx";
 	public static final String OUTPUT_TYPE_HTML = "output.html";
 	public static final String OUTPUT_TYPE_PDF = "output.pdf";
-	public static final String OUTPUT_TYPE_EXCEL = "output.xlsx";
+	public static final String OUTPUT_TYPE_FOP2PDF = "output.fop2pdf";
+	public static final String OUTPUT_TYPE_ANY = "output.any";
 	
+	public static final String OUTPUT_TYPE_EXCEL = "output.xlsx";
+
+	public static final String HEADER_NOHEADER = "noheader";
+	public static final String HEADER_FIRSTLINE = "firstline";
+	public static final String HEADER_MULTILINE = "multiline";
+
 }

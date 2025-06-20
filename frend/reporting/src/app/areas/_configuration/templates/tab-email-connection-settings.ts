@@ -49,7 +49,7 @@ export const tabEmailConnectionSettingsTemplate = `<ng-template
             <span class="sr-only">Toggle Dropdown</span>
           </button>
           <ul class="dropdown-menu">
-            <li *ngFor="let connectionFile of settingsService.connectionFiles">
+            <li *ngFor="let connectionFile of settingsService.getEmailConnectionFiles()">
               <a
                 id="{{connectionFile.connectionCode}}"
                 href="javascript:;"
@@ -66,7 +66,7 @@ export const tabEmailConnectionSettingsTemplate = `<ng-template
                 id="manageEmailConnections"
                 href="#"
                 [routerLink]="[
-    '/ext-connections',
+    '/configuration-connections',
     'emailSettingsMenuSelected',
     settingsService.currentConfigurationTemplatePath,
     settingsService.currentConfigurationTemplateName

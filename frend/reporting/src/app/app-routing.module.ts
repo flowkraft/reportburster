@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { ConfigurationTemplatesComponent } from './areas/_configuration-templates/configuration-templates.component';
 import { ConfigurationComponent } from './areas/_configuration/configuration.component';
-import { ExternalConnectionsComponent } from './areas/_ext-connections/ext-connections.component';
+import { ConnectionListComponent } from './areas/_configuration-connections/configuration-connections.component';
 import { HelpComponent } from './areas/_help/help.component';
 
 import { ProcessingComponent } from './areas/_processing/processing.component';
@@ -68,14 +68,14 @@ const routes: Routes = [
     component: ConfigurationTemplatesComponent,
   },
   {
-    path: 'ext-connections/:goBackLocation/:configurationFilePath/:configurationFileName',
+    path: 'configuration-connections/:goBackLocation/:configurationFilePath/:configurationFileName',
     canActivate: [NoJavaGuard],
-    component: ExternalConnectionsComponent,
+    component: ConnectionListComponent,
   },
   {
-    path: 'ext-connections',
+    path: 'configuration-connections',
     canActivate: [NoJavaGuard],
-    component: ExternalConnectionsComponent,
+    component: ConnectionListComponent,
   },
   {
     path: 'help/:leftMenu',

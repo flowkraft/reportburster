@@ -4,12 +4,9 @@ import com.sourcekraft.documentburster.common.utils.DumpToString;
 
 public class Scripts extends DumpToString {
 
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = -4487763056638168490L;
+    private static final long serialVersionUID = -4487763056638168490L;
 
-	public static final String CONTROLLER = "controller.groovy";
+    public static final String CONTROLLER = "controller.groovy";
 
     public static final String START_BURSTING = "startBursting.groovy";
     public static final String END_BURSTING = "endBursting.groovy";
@@ -39,6 +36,10 @@ public class Scripts extends DumpToString {
 
     private static final String DISTRIBUTE_REPORT_ERROR_HANDLING = "distributeReportErrorHandling.groovy";
 
+    // New constants for report generation
+    public static final String TRANSFORM_FETCHED_DATA = "transformFetchedData.groovy";
+    public static final String BEFORE_TEMPLATE_PROCESSING = "beforeTemplateProcessing.groovy";
+
     public String startBursting = START_BURSTING;
     public String endBursting = END_BURSTING;
 
@@ -67,4 +68,7 @@ public class Scripts extends DumpToString {
 
     public String distributeReportErrorHandling = DISTRIBUTE_REPORT_ERROR_HANDLING;
 
+    // New fields for report generation
+    public String transformFetchedData = TRANSFORM_FETCHED_DATA;
+    public String beforeTemplateProcessing = BEFORE_TEMPLATE_PROCESSING;
 }

@@ -1,8 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
 @import "~bootstrap/dist/css/bootstrap.min.css";
-
 @import "~font-awesome/css/font-awesome.min.css";
-
 @import "~office-ui-fabric-core/dist/css/fabric.min.css";
 
 // Admin LTE css
@@ -16,6 +14,119 @@
 
 @import "ngx-toastr/toastr";
 @import "~@ng-select/ng-select/themes/default.theme.css";
+
+.p-dialog-mask {
+  z-index: 9999999 !important;
+}
+.p-dialog {
+  z-index: 10000000 !important;
+}
+
+/* ngx-bootstrap modals - add these */
+.modal-backdrop {
+  z-index: 10000001 !important; /* Higher than PrimeNG */
+}
+.modal,
+.modal-dialog {
+  z-index: 10000002 !important; /* Higher than backdrop */
+}
+
+/* target the internal .codejar <pre> */
+ngx-codejar .codejar pre {
+  white-space: pre !important; /* no wrap */
+  overflow-x: auto !important; /* horizontal scroll */
+  overflow-y: auto !important;
+}
+
+/* make sure the container will show scrollbars */
+ngx-codejar .codejar {
+  overflow-x: auto !important;
+}
+
+/* AI Copilot Modal - Maximum Size While Visible */
+body > #aiCopilotModal.p-dialog {
+  position: fixed !important;
+  top: 10px !important;
+  left: 10px !important;
+  right: 10px !important;
+  bottom: 30px !important; /* Decreased bottom margin to allow more vertical space */
+  width: calc(100vw - 20px) !important;
+  height: calc(
+    100vh - 95px
+  ) !important; /* Increased height by 30px from previous value */
+  max-width: none !important;
+  max-height: none !important;
+  background: #fff !important;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5) !important;
+  margin: 0 !important;
+  transform: none !important;
+  z-index: 1051 !important;
+  overflow: hidden !important; /* Prevent all overflow - both horizontal and vertical */
+}
+
+/* Content area */
+body > #aiCopilotModal.p-dialog .p-dialog-content {
+  height: calc(
+    100vh - 175px
+  ) !important; /* Adjusted to account for the larger modal height */
+  max-height: none !important;
+  overflow: visible !important; /* Changed from auto to visible to remove unnecessary scrollbars */
+  overflow-x: hidden !important; /* Prevent horizontal scrollbar */
+}
+
+/* Remove all previous AI Copilot modal styles */
+// ...rest of existing styles that don't relate to #aiCopilotModal...
+
+/* AI Copilot ngx-bootstrap Modal Styles */
+.ai-copilot-modal-large {
+  max-width: none;
+  width: calc(100% - 20px) !important; /* Full width with minimal margin */
+  margin-left: 10px; /* Small margin from left edge */
+  margin-right: 10px;
+  margin-top: 10px;
+  margin-bottom: 30px; /* Decreased bottom margin to match p-dialog changes */
+  overflow: hidden !important; /* Prevent all overflow */
+}
+
+.ai-copilot-modal-large .modal-content {
+  height: calc(100vh - 105px); /* Increased height to match p-dialog changes */
+  max-height: none;
+  overflow: hidden !important; /* Prevent all overflow */
+}
+
+.ai-copilot-modal-large .modal-body {
+  height: calc(
+    100vh - 195px
+  ); /* Adjusted to account for the increased modal height */
+  max-height: none;
+  overflow: hidden; /* Changed from auto to hidden to remove unnecessary scrollbars */
+}
+
+.ai-copilot-modal-large .modal-dialog {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  overflow: hidden !important; /* Prevent all overflow */
+}
+
+/* Make sure this modal is on top of everything else but not affecting other modals */
+.ai-copilot-modal-large {
+  z-index: 1060 !important; /* Higher than standard Bootstrap modals */
+}
+
+/* Modal Footer - ensure visibility of close button */
+.ai-copilot-modal-large .modal-footer {
+  padding: 10px;
+  margin-top: 0;
+  width: 100%;
+  border-top: 1px solid #ddd;
+  background: #fff;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+}
 
 //angular-split start
 // Angular Split styles
@@ -124,12 +235,24 @@ label {
   height: 100%;
 }
 
+/*
 #statusBar {
   position: absolute;
   right: 0px;
   bottom: 1px;
   width: 100%;
   //height: 30px;
+}
+
+*/
+
+#statusBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; /* Ensures the status bar stays above other content */
+  background-color: inherit; /* Maintain your current background color */
 }
 
 body .p-terminal {

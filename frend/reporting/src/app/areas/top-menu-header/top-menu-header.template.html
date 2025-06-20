@@ -55,33 +55,32 @@
             </li>
             <li class="divider"></li>
             <li>
-              <a id="topMenuConfigurationManage" href="#"
-                >Manage&nbsp;<i
-                  style="margin-top: 5px"
-                  class="fa fa-caret-right pull-right"
-                  >&nbsp;</i
-                ></a
+              <a
+                id="topMenuConfigurationTemplates"
+                href="#"
+                routerLink="/configuration-templates"
+                skipLocationChange="true"
+                >Reports</a
               >
-              <ul class="dropdown-menu">
-                <li>
-                  <a
-                    id="topMenuConfigurationTemplates"
-                    href="#"
-                    routerLink="/configuration-templates"
-                    skipLocationChange="true"
-                    >Reports</a
-                  >
-                </li>
-                <li>
-                  <a
-                    id="topMenuConfigurationExternalConnections"
-                    href="#"
-                    routerLink="/ext-connections"
-                    skipLocationChange="true"
-                    >Connections (Email, etc)</a
-                  >
-                </li>
-              </ul>
+            </li>
+            <li>
+              <a
+                id="topMenuConfigurationExternalConnections"
+                href="#"
+                routerLink="/configuration-connections"
+                skipLocationChange="true"
+                >Web Portal / Content Management</a
+              >
+            </li>
+            <li class="divider"></li>
+            <li>
+              <a
+                id="topMenuConfigurationExternalConnections"
+                href="#"
+                routerLink="/configuration-connections"
+                skipLocationChange="true"
+                >Connections (Email, Databases, etc)</a
+              >
             </li>
             <li *ngIf="false" class="divider"></li>
             <li *ngIf="false">

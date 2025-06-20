@@ -23,13 +23,15 @@
       },
       "TAB-REPORT-DATASOURCE-DATATABLES": {
         "TYPE": "Input Type",
-        "TYPE-CSV": "CSV File (local file containing comma-separated values)",
-        "TYPE-TSV": "TSV File (local file containing tab-separated values)",
-        "TYPE-FIXED-WIDTH": "Fixed-Width File (local file containing fixed-width columns)",
-        "TYPE-EXCEL": "Excel File (local file)",
-        "TYPE-CLOUD-GSHEET": "Google Sheet (cloud/saas service)",
-        "TYPE-CLOUD-O365SHEET": "Microsoft Office365 Excel Sheet (cloud/saas service)",
-        "TYPE-DATABASE": "Database (remote server)",
+        "TYPE-SQL-QUERY": "SQL Query",
+        "TYPE-SCRIPT": "Script (Master-Details or Cross-Tab reports)",
+        "TYPE-XML": "XML File",
+        "TYPE-CSV": "CSV File",
+        "TYPE-TSV": "TSV File (tab-separated values)",
+        "TYPE-FIXED-WIDTH": "Fixed-Width File (fixed-width columns)",
+        "TYPE-EXCEL": "Excel File",
+        "TYPE-CLOUD-GSHEET": "Google Spreadsheet",
+        "TYPE-CLOUD-O365SHEET": "Microsoft Office365 Excel Sheet",
         "SKIP-LINES": "Skip N# Lines",
         "CSV-SEPARATOR-CHAR": "Separator Char",
         "CSV-QUOTATION-CHAR": "Quotation Char",
@@ -48,28 +50,39 @@
         "CODE-COLUMN-LET-ME-SPECIFY": "Custom Column Index...",
         "FIXED-WIDTH-COLUMNS": "Columns",
         "EXCEL-SHEET-INDEX": "Sheet Index",
-        "EXCEL-USE-FORMULA-RESULTS": "Use Formula Results"
+        "EXCEL-USE-FORMULA-RESULTS": "Use Formula Results",
+        "SCRIPT-CODE": "Script",
+        "FILE-EXPLORER-NOT-USED": "Do Not Show File Explorer",
+        "FILE-EXPLORER": "File Explorer",
+        "FILE-EXPLORER-GLOB-PATTERN": "Allowed File Types"
       },
       "TAB-REPORT-TEMPLATE-OUTPUT": {
         "OUTPUT-TYPE": "Output Type",
         "TEMPLATE-FILE": "Template File",
+        "TEMPLATE-DOCX": "DOCX Template File",
         "TEMPLATE-HTML": "HTML Template",
+        "TEMPLATE-XSLFO": "XSL-FO Template",
+        "TEMPLATE-FREEM": "FreeMarker Template",
         "TEMPLATE-PLACEHOLDER": "Enter HTML template code here ...",
         "TYPE-NONE": "None",
-        "TYPE-PDF": "PDF Documents (html_template2pdf_documents)",
-        "TYPE-XLSX": "Microsoft Excel Documents (html_template2xlsx_documents)",
-        "TYPE-HTML": "HTML Documents (html_template2html_documents)",
-        "TYPE-DOCX": "Microsoft Word Documents (docx_template2docx_documents)",
+        "TYPE-PDF": "PDF Docs (html_template2pdf_docs)",
+        "TYPE-XLSX": "Microsoft Excel Docs (html_template2xlsx_docs)",
+        "TYPE-HTML": "HTML Docs (html_template2html_docs)",
+        "TYPE-DOCX": "Microsoft Word Docs (docx_template2docx_docs)",
+        "TYPE-PDF-USING-FOP": "PDF Docs Using xslfo FOP (xslfo_template2pdf_docs)",
+        "TYPE-ANY": "Any Docs (freemarker_template2any_docs)",
         "NO-TEMPLATES-FOUND": "No DOCX templates found! Please add a .docx file to:",
         "TEMPLATE-LOCATION": "Template Location:",
         "SUGGESTED-FILENAME": "Suggested filename:",
         "DOCX-HTML-WARNING": "HTML templates cannot be used with DOCX output type. To use these templates, please change your output type to HTML, PDF, or XLSX. HTML templates provide more flexibility and customization options.",
         "CANNOT-USE-TEMPLATE": "Template Not Compatible",
-        "NONE-OUTPUT-HELP": "Note: Output Type 'None' is useful when you only need to send emails without attachments (like newsletters). If you need to generate actual documents (PDF, Excel, etc.), select a specific Output Type that matches your requirements.",
+        "NONE-OUTPUT-HELP": "Note: Output Type 'None' is useful when you only need to send emails without attachments (like newsletters). If you need to generate (and attach to emails) actual documents like PDF, Excel, etc., select a specific Output Type that matches your requirements.",
         "BUTTONS": {
           "EXAMPLES-GALLERY": "Examples (Gallery)",
           "HEY-AI": "Hey, you smart AI, help me...",
-          "LAUNCH-COPILOT": "AI Copilot",
+          "AI-PROMPTS": "AI Prompts",
+          "LAUNCH-COPILOT": "Launch Copilot",
+          "CHAT-WITH-DB": "Chat with Your SQL Database",
           "SHOW-PREVIEW": "Show Template Preview",
           "EXPAND-EDITOR": "Expand Code Editor",
           "VIEW-IN-BROWSER": "View Template in Browser",
@@ -99,6 +112,13 @@
           "STEP4": "4. Copy the complete HTML code the AI generates and paste it into the ReportBurster editor",
           "COLOR-TIP": "Go to <a href=\"https://color.adobe.com/explore\" target=\"_blank\">Adobe Color Explore</a> for choosing a beautiful color theme (based on color theory)"
         }
+      },
+      "TAB-REPORTING-TABULATOR": {
+        "GENERAL-CONFIG": "General",
+        "COLUMNS": "Columns",
+        "SORTING": "Sorting",
+        "PAGINATION": "Pagination",
+        "TABLE-PREVIEW": "Table Preview"
       },
       "TAB-ADVANCED": {
         "DELAY-EACH-BY": "Delay Each Distribution By",
@@ -187,9 +207,11 @@
         "MANAGE-EMAIL-CONNECTIONS": "Manage Email Connections ...",
         "FROM-ADDRESS": "From Address",
         "FROM-NAME": "From Name",
+        "DATABASE-FILE": "Database File",
         "HOST": "Host",
         "INNER-HTML": {
-          "DB-ALL-CLOUD-PROVIDERS": "<em>ReportBurster</em> works with any SMTP email server including\n<a href=\"https://products.office.com/en-us/exchange \" target=\"_blank \">Microsoft Exchange Server</a> and the below cloud email service providers."
+          "DB-ALL-CLOUD-PROVIDERS": "<em>ReportBurster</em> works with any SMTP email server including\n<a href=\"https://products.office.com/en-us/exchange \" target=\"_blank \">Microsoft Exchange Server</a> and the below cloud email service providers.",
+          "DB-ALL-DATABASE-SYSTEMS": "<em>ReportBurster</em> works with all major database systems including\n<a href=\"https://www.oracle.com/database/\" target=\"_blank\">Oracle</a>, <a href=\"https://www.microsoft.com/sql-server/\" target=\"_blank\">Microsoft SQL Server</a>, <a href=\"https://www.postgresql.org/\" target=\"_blank\">PostgreSQL</a>, and <a href=\"https://www.mysql.com/\" target=\"_blank\">MySQL</a>."
         },
         "PASSWORD": "Password",
         "PORT": "Port",
@@ -197,7 +219,13 @@
         "SSL-ENABLED": "SSL Enabled",
         "TEST-CONNECTION": "Test Connection",
         "TLS-ENABLED": "TLS Enabled",
-        "USER-NAME": "User Name"
+        "USER-NAME": "User Name",
+        "DATABASE-TYPE": "Database Type",
+        "DATABASE": "Database",
+        "USERNAME": "Username",
+        "USE-SSL": "Use SSL",
+        "SQL-QUERY-PLACEHOLDER": "SQL Query",
+        "TEST-DB-CONNECTION": "Test Connection & Fetch Database Schema"
       },
       "TAB-EMAIL-MESSAGE": {
         "BCC": "BCC",
@@ -206,7 +234,13 @@
         "SUBJECT": "Subject",
         "TO": "To",
         "LOAD-TEMPLATE": "Load Template",
-        "SAVE-TEMPLATE": "Save Template"
+        "SAVE-TEMPLATE": "Save Template",
+        "BUTTONS": {
+          "EXAMPLES-GALLERY": "Examples (Gallery)",
+          "SHOW-PREVIEW": "Show Preview",
+          "EXPAND-EDITOR": "Expand Editor",
+          "VIEW-IN-BROWSER": "View in Browser"
+        }
       },
       "TAB-ENABLE-DISABLE-DELIVERY": {
         "DELETE-DOCUMENTS-AFTER-DELIVERY": "Delete documents after delivery",
@@ -373,6 +407,7 @@
         "GENERAL": "General Settings",
         "REPORTING-DATASOURCE-DATATABLES": "DataSource",
         "REPORTING-TEMPLATE-OUTPUT": "Output / Template",
+        "REPORTING-TABULATOR": "Tabulator",
         "QA": "Test Email Server",
         "SMS": {
           "MESSAGE": "Message",
@@ -396,21 +431,23 @@
         }
       }
     },
-    "EXTERNAL-CONNECTIONS": {
+    "CONFIGURATION-CONNECTIONS": {
       "LEFT-MENU": {
-        "EXTERNAL-CONNECTIONS": "Connections"
+        "CONFIGURATION-CONNECTIONS": "Connections"
       },
-      "TAB-EXT-CONNECTIONS": {
+      "TAB-CONFIGURATION-CONNECTIONS": {
         "NAME": "Name",
         "TYPE": "Type",
         "DEFAULT": "Default",
         "USED-BY": "Used By",
         "CONNECTION": "Connection",
         "SETTINGS": "Settings",
-        "GO-BACK": "Go Back to"
+        "GO-BACK": "Go Back to",
+        "NEW-EMAIL-CONNECTION": "Email Connection",
+        "NEW-DB-CONNECTION": "Database Connection"
       },
       "TABS": {
-        "EXT-CONNECTIONS": "Connections"
+        "CONFIGURATION-CONNECTIONS": "Connections"
       }
     },
     "CONFIGURATION-TEMPLATES": {
@@ -422,7 +459,7 @@
         "CAPABILITIES": "Capabilities",
         "CAP-REPORT-SPLITTING": "Report Splitting",
         "CAP-REPORT-DISTRIBUTION": "Report Distribution",
-        "CAP-REPORT-GENERATION": "Report Generation / Mail Merge",
+        "CAP-REPORT-GENERATION": "Report Generation",
         "NOTES": "Notes",
         "VISIBILITY": "Visibility",
         "VISIBILITY-HIDDEN": "Hidden",
@@ -503,7 +540,8 @@
         "BLOG": "ReportBurster Blog",
         "JAVA": "Java",
         "TERMINAL": "Terminal",
-        "EXTRA-PACKAGES": "Extra Packages",
+        "STARTER-PACKS": "Starter Packs",
+        "EXTRA-PACKAGES": "Extra Utilities",
         "SYSTEM-DIAGNOSTICS": "System Diagnostics",
         "UPDATE": "Update",
         "COMPARISON": "ReportBurster vs. ReportBurster Server",
@@ -581,6 +619,7 @@
       "TABS": {
         "BURST": "Burst Reports",
         "MAILMERGE-CLASSICREPORTS": "Generate Reports",
+        "CMS-WEBPORTAL": "Web Portal / Content Management",
         "LOGGING-TRACING": "Logging and Tracing",
         "MERGE-BURST": "Merge -> Burst",
         "QUALITY-ASSURANCE": "Quality Assurance",
@@ -615,7 +654,7 @@
       "GET-SOFTWARE-SUPPORT": "Get Software Support",
       "HELP-AND-SUPPORT": "Help & Support",
       "MANAGE-CONFIGURATION-TEMPLATES": "Manage Configuration Templates",
-      "MANAGE-EXTERNAL-CONNECTIONS": "Manage Connections (Email, etc)"
+      "MANAGE-CONFIGURATION-CONNECTIONS": "Manage Connections (Email, etc)"
     },
     "INSTALL-SETUP-UPGRADE": {
       "COMPONENTS": {
@@ -647,6 +686,26 @@
             "REQUIRED-LONG": "In order to use the software <em>Java</em> 11 (or newer) runtime must be installed on your computer.",
             "EXTRA": "Follow the guided installation steps provided. <strong>As the system processes each step, please wait patiently for its completion. After each step is finished, make sure to restart <em>ReportBurster</em></strong>."
           }
+        },
+        "DOCKER": {
+          "NOT-FOUND": "NOT FOUND",
+          "TOO-OLD": "TOO OLD",
+          "INNER-HTML": {
+            "REQUIRED-SHORT": "Docker Desktop is required for container functionality.",
+            "REQUIRED-LONG": "Docker Desktop lets you run containers that are needed for certain features.",
+            "EXTRA": "You can install Docker Desktop using the button below.",
+            "TOO-OLD": "Your Docker Desktop version is too old. Please update to the latest version."
+          },
+          "INSTALL": "Install",
+          "GREAT": "Great",
+          "FOUND": "was found and can be used with",
+          "BELOW-INSTRUCTIONS": "Please follow the instructions below to install",
+          "FOUND-READY": "is installed and ready to install",
+          "STEP2": "Step 2: Install",
+          "FIRST": "install Chocolatey first",
+          "RESTARTING": "Restarting",
+          "RESTARTING-REQUIRED": "is required",
+          "RESTART": "Restart"
         },
         "TERMINAL": {
           "MAIN-COMMANDS": "Main Commands",
@@ -724,11 +783,12 @@
         },
         "EXTRA-PACKAGES": {
           "INNER-HTML": {
-            "ABOUT": "<h5><strong>Extra packages are a list of external software which bring additional value when used together with <em>ReportBurster</em></strong></h5><p><br/>A good chunk of the below extra packages can be easily installed and/or uninstalled using <strong>Chocolatey</strong>, a very good <strong>package manager</strong> for <strong>Windows</strong>. All the below commands should be executed by first starting a DOS/Windows Powershell command prompt and then by typing the respective commands inside the DOS/Windows Powershell command prompt.<br/></p><p>It is recommended to start the <strong>DOS/Powershell command prompt</strong> using Windows Start button -> Search for DOS/Powershell -> Right mouse click and then select &quot;<strong>Run as administrator</strong>&quot;<br /><br /></p>",
+            "ABOUT": "<h5><strong>A list of external tools which bring additional value when used together with <em>ReportBurster</em></strong></h5><p><br/>A good chunk of the below tools can be easily installed and/or uninstalled using <strong>Chocolatey</strong>, a very good <strong>package manager</strong> for <strong>Windows</strong>. All the below commands should be executed by first starting a DOS/Windows Powershell command prompt and then by typing the respective commands inside the DOS/Windows Powershell command prompt.<br/></p><p>It is recommended to start the <strong>DOS/Powershell command prompt</strong> using Windows Start button -> Search for DOS/Powershell -> Right mouse click and then select &quot;<strong>Run as administrator</strong>&quot;<br /><br /></p>",
             "NOTEPADPLUSPLUS": " is a free (as in “free speech” and also as in “free beer”) source code editor and Notepad replacement. Notepad++ is useful when editing ReportBurster configuration files and scripts.",
             "VSCODE": "  is a code editor redefined and optimized for building and debugging modern applications.",
             "WINMERGE": " is an Open Source differencing and merging tool for Windows. WinMerge can compare both folders and files, presenting differences in a visual text format that is easy to understand and handle. WinMerge can be used for comparing ReportBurster configuration files and scripts.",
-            "DOCKER-DESKTOP": " a very good containerization software. Docker is required for running other ReportBurster extra packages."
+            "DOCKER-DESKTOP": " a very good containerization software. Docker is required for running other ReportBurster modules.",
+            "TOOLS-VANNA-AI": "🤖 Chat with your SQL database is the fastest way to get actionable insights from your database just by asking questions."
           },
           "INSTALLED": {
             "ALREADY": "already installed",

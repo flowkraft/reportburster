@@ -3,6 +3,10 @@ package com.sourcekraft.documentburster._helpers;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -14,6 +18,14 @@ import com.sourcekraft.documentburster.utils.Utils;
 public class TestsUtils {
 
 	public static final String TESTS_OUTPUT_FOLDER = "./target/test-output";
+
+	public static List<String[]> toArrayRows(List<LinkedHashMap<String, Object>> data) {
+		if (data == null)
+			return Collections.emptyList();
+		return data.stream()
+				.map(row -> row.values().stream().map(v -> v == null ? "" : v.toString()).toArray(String[]::new))
+				.collect(Collectors.toList());
+	}
 
 	public static void cleanOutputFolder() throws Exception {
 
@@ -63,5 +75,5 @@ public class TestsUtils {
 			assertTrue(statsFileContent.contains("Quarantine Folder = '" + burster.getCtx().quarantineFolder + "'"));
 
 	}
-	
+
 }

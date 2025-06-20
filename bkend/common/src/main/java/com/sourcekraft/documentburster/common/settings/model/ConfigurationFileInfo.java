@@ -14,6 +14,10 @@
  */
 package com.sourcekraft.documentburster.common.settings.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.sourcekraft.documentburster.common.reportparameters.ReportParameter;
 import com.sourcekraft.documentburster.common.utils.DumpToString;
 
 public class ConfigurationFileInfo extends DumpToString {
@@ -33,4 +37,9 @@ public class ConfigurationFileInfo extends DumpToString {
 	public boolean activeClicked;
 	public boolean useEmlConn;
 	public String emlConnCode;
+
+	public String scriptOptionsSelectFileExplorer;
+
+	public List<ReportParameter> reportParameters = new ArrayList<>();
+
 }

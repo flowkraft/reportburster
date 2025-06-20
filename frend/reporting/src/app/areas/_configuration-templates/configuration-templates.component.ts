@@ -71,6 +71,8 @@ export class ConfigurationTemplatesComponent implements OnInit {
         folderName: '',
         relativeFilePath: '',
         isFallback: false,
+        scriptOptionsSelectFileExplorer: 'notused',
+        reportParameters: [],
       },
       copyFromPath: '',
       //invalidCopyFromPath: {},
@@ -540,6 +542,7 @@ export class ConfigurationTemplatesComponent implements OnInit {
           this.modalConfigurationTemplateInfo.fileInfo.capReportDistribution,
         capReportGenerationMailMerge: capReportGenerationMailMerge,
         dsInputType: capReportGenerationMailMerge ? 'ds.csvfile' : '',
+        scriptOptionsSelectFileExplorer: 'notused',
         folderName: folderName,
         relativeFilePath:
           this.modalConfigurationTemplateInfo.fileInfo.relativeFilePath,
@@ -547,6 +550,7 @@ export class ConfigurationTemplatesComponent implements OnInit {
         visibility: this.modalConfigurationTemplateInfo.fileInfo.visibility,
         type: 'config-reports',
         notes: '',
+        reportParameters: [],
       });
     } else if (this.modalConfigurationTemplateInfo.crudMode == 'update') {
       // if Edit mode

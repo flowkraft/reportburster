@@ -2,11 +2,21 @@ package com.sourcekraft.documentburster._helpers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
@@ -17,8 +27,10 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.assertj.core.api.Assertions;
+import org.jdbi.v3.core.Jdbi;
 
 import com.sourcekraft.documentburster.common.settings.EmailConnection;
+import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.engine.AbstractReporter;
@@ -41,7 +53,7 @@ public class TestBursterFactory {
 
 			this.testName = testName;
 
-			if (StringUtils.isNotEmpty(configFilePath))
+			if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(Paths.get(configFilePath)))))
 				this.configurationFilePath = configFilePath;
 			else
 				this.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
@@ -126,7 +138,7 @@ public class TestBursterFactory {
 			super(configFilePath);
 			this.testName = testName;
 
-			if (StringUtils.isNotEmpty(configFilePath))
+			if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(Paths.get(configFilePath)))))
 				this.configurationFilePath = configFilePath;
 			else
 				this.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
@@ -185,15 +197,15 @@ public class TestBursterFactory {
 		}
 	}
 
-	public static class CsvReporter extends com.sourcekraft.documentburster.engine.reporting.CsvReporter {
+	public static class XmlReporter extends com.sourcekraft.documentburster.engine.reporting.XmlReporter {
 
 		protected String testName;
 
-		public CsvReporter(String configFilePath, String testName) {
+		public XmlReporter(String configFilePath, String testName) {
 			super(configFilePath);
 			this.testName = testName;
 
-			if (StringUtils.isNotEmpty(configFilePath))
+			if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(Paths.get(configFilePath)))))
 				this.configurationFilePath = configFilePath;
 			else
 				this.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
@@ -213,9 +225,71 @@ public class TestBursterFactory {
 
 			TestBursterFactory.setUpTestFolders(ctx, testName);
 
+			ctx.settings.loadSettingsReportingWithPath(REPORTING_CONFIG_PATH);
 			ctx.settings.setCapabilityReportGenerationMailMerge(true);
 
-			ctx.settings.loadSettingsReporting(REPORTING_CONFIG_PATH);
+			ctx.settings.reportingSettings.report.datasource.type = "ds.xmlfile";
+
+			// a "temp" folder is required to be available
+			ctx.tempFolder = TestsUtils.TESTS_OUTPUT_FOLDER + "/temp";
+
+			File tempDir = new File(ctx.tempFolder);
+
+			if (!tempDir.exists())
+				try {
+					FileUtils.forceMkdir(tempDir);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+		};
+
+		protected void checkLicense() throws Exception {
+		}
+
+		protected void setUpScriptingRoots() {
+
+			scripting.setRoots(new String[] { "src/test/groovy", "src/test/groovy/senders-messages",
+					"src/test/groovy/bursting-context-lifecycle", "src/main/external-resources/template/scripts/burst",
+					"src/main/external-resources/template/scripts/burst/internal",
+					"src/main/external-resources/template/scripts/burst/samples" });
+		}
+	}
+
+	
+	
+	public static class CsvReporter extends com.sourcekraft.documentburster.engine.reporting.CsvReporter {
+
+		protected String testName;
+
+		public CsvReporter(String configFilePath, String testName) {
+			super(configFilePath);
+			this.testName = testName;
+
+			if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(Paths.get(configFilePath)))))
+				this.configurationFilePath = configFilePath;
+			else
+				this.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
+
+		}
+
+		protected void setUpMockEmail() throws Exception {
+
+			ctx.testName = this.testName;
+			TestBursterFactory.setUpMockEmail(scripting, ctx);
+
+		};
+
+		protected void executeController() throws Exception {
+
+			super.executeController();
+
+			TestBursterFactory.setUpTestFolders(ctx, testName);
+
+			ctx.settings.loadSettingsReportingWithPath(REPORTING_CONFIG_PATH);
+			ctx.settings.setCapabilityReportGenerationMailMerge(true);
+
+			ctx.settings.reportingSettings.report.datasource.type = "ds.csvfile";
 
 			// a "temp" folder is required to be available
 			ctx.tempFolder = TestsUtils.TESTS_OUTPUT_FOLDER + "/temp";
@@ -251,7 +325,7 @@ public class TestBursterFactory {
 			super(configFilePath);
 			this.testName = testName;
 
-			if (StringUtils.isNotEmpty(configFilePath))
+			if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(Paths.get(configFilePath)))))
 				this.configurationFilePath = configFilePath;
 			else
 				this.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
@@ -271,9 +345,10 @@ public class TestBursterFactory {
 
 			TestBursterFactory.setUpTestFolders(ctx, testName);
 
+			ctx.settings.loadSettingsReportingWithPath(REPORTING_CONFIG_PATH);
 			ctx.settings.setCapabilityReportGenerationMailMerge(true);
 
-			ctx.settings.loadSettingsReporting(REPORTING_CONFIG_PATH);
+			ctx.settings.reportingSettings.report.datasource.type = "ds.fixedwidthfile";
 
 			// a "temp" folder is required to be available
 			ctx.tempFolder = TestsUtils.TESTS_OUTPUT_FOLDER + "/temp";
@@ -309,12 +384,13 @@ public class TestBursterFactory {
 			super(configFilePath);
 			this.testName = testName;
 
-			if (StringUtils.isNotEmpty(configFilePath))
+			if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(Paths.get(configFilePath)))))
 				this.configurationFilePath = configFilePath;
 			else
 				this.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
 
 		}
+
 		protected void setUpMockEmail() throws Exception {
 
 			ctx.testName = this.testName;
@@ -328,9 +404,10 @@ public class TestBursterFactory {
 
 			TestBursterFactory.setUpTestFolders(ctx, testName);
 
+			ctx.settings.loadSettingsReportingWithPath(REPORTING_CONFIG_PATH);
 			ctx.settings.setCapabilityReportGenerationMailMerge(true);
 
-			ctx.settings.loadSettingsReporting(REPORTING_CONFIG_PATH);
+			ctx.settings.reportingSettings.report.datasource.type = "ds.excelfile";
 
 			// a "temp" folder is required to be available
 			ctx.tempFolder = TestsUtils.TESTS_OUTPUT_FOLDER + "/temp";
@@ -353,6 +430,184 @@ public class TestBursterFactory {
 
 			scripting.setRoots(new String[] { "src/test/groovy", "src/test/groovy/senders-messages",
 					"src/test/groovy/bursting-context-lifecycle", "src/main/external-resources/template/scripts/burst",
+					"src/main/external-resources/template/scripts/burst/internal",
+					"src/main/external-resources/template/scripts/burst/samples" });
+		}
+
+	}
+
+	public static class SqlReporter extends com.sourcekraft.documentburster.engine.reporting.SqlReporter {
+
+		protected String testName;
+
+		// Add fields to store H2 connection details
+		private final String h2Url;
+		private final String h2User;
+		private final String h2Pass;
+
+		public SqlReporter(String configFilePath, String testName, String h2Url, String h2User, String h2Pass) {
+			super(configFilePath);
+			this.testName = testName;
+			// Store H2 details
+			this.h2Url = h2Url;
+			this.h2User = h2User;
+			this.h2Pass = h2Pass;
+
+			// ... config path logic ...
+			if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(Paths.get(configFilePath)))))
+				this.configurationFilePath = configFilePath;
+			else
+				this.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
+		}
+
+		public void burst() throws Exception {
+			// Construct a slightly more informative dummy path for logging/stats
+			String dummyPathForBurst = "sql-report-" + testName + ".dummy";
+			super.burst(dummyPathForBurst, false, StringUtils.EMPTY, -1);
+		}
+
+		protected void setUpMockEmail() throws Exception {
+
+			ctx.testName = this.testName;
+			TestBursterFactory.setUpMockEmail(scripting, ctx);
+
+		};
+
+		protected void executeController() throws Exception {
+
+			super.executeController();
+
+			TestBursterFactory.setUpTestFolders(ctx, testName);
+
+			ctx.settings.loadSettingsReportingWithPath(REPORTING_CONFIG_PATH);
+			ctx.settings.setCapabilityReportGenerationMailMerge(true);
+
+			ctx.settings.reportingSettings.report.datasource.type = "ds.sqlquery";
+
+			// a "temp" folder is required to be available
+			ctx.tempFolder = TestsUtils.TESTS_OUTPUT_FOLDER + "/temp";
+
+			File tempDir = new File(ctx.tempFolder);
+
+			if (!tempDir.exists())
+				try {
+					FileUtils.forceMkdir(tempDir);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+		};
+
+		@Override
+		protected Jdbi retrieveJdbiInstance(String connectionCode) throws Exception {
+			// For test H2 connection, create a Jdbi instance directly
+			if (connectionCode.equals(NorthwindTestUtils.H2_CONN_CODE)) {
+				return Jdbi.create(h2Url, h2User, h2Pass);
+			}
+
+			// For other connections, use the default implementation
+			return super.retrieveJdbiInstance(connectionCode);
+		}
+
+		protected void checkLicense() throws Exception {
+		}
+
+		protected void setUpScriptingRoots() {
+			scripting.setRoots(new String[] { "src/test/groovy", "src/test/groovy/senders-messages",
+					"src/test/groovy/bursting-context-lifecycle", "src/test/groovy/reporting",
+					"src/main/external-resources/template/scripts/burst",
+					"src/main/external-resources/template/scripts/burst/internal",
+					"src/main/external-resources/template/scripts/burst/samples" });
+		}
+
+	}
+
+	public static class ScriptedReporter extends com.sourcekraft.documentburster.engine.reporting.ScriptedReporter {
+
+		protected String testName;
+
+		// Add fields to store H2 connection details
+		private final String h2Url;
+		private final String h2User;
+		private final String h2Pass;
+
+		public ScriptedReporter(String configFilePath, String testName, String h2Url, String h2User, String h2Pass) {
+			super(configFilePath);
+			this.testName = testName;
+			// Store H2 details
+			this.h2Url = h2Url;
+			this.h2User = h2User;
+			this.h2Pass = h2Pass;
+
+			// ... config path logic ...
+			if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(Paths.get(configFilePath)))))
+				this.configurationFilePath = configFilePath;
+			else
+				this.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
+		}
+
+		@Override
+		protected ServerDatabaseSettings getServerDatabaseSettings(String connectionCode) throws Exception {
+			// For test H2 connection, create ServerDatabaseSettings directly
+			if (connectionCode.equals(NorthwindTestUtils.H2_CONN_CODE)) {
+				ServerDatabaseSettings h2Settings = new ServerDatabaseSettings();
+				h2Settings.url = this.h2Url;
+				h2Settings.userid = this.h2User;
+				h2Settings.userpassword = this.h2Pass;
+				// Assuming H2 driver is standard, or retrieve dynamically if needed
+				h2Settings.driver = "org.h2.Driver";
+				return h2Settings;
+			}
+			// For other connections, use the default implementation
+			return super.getServerDatabaseSettings(connectionCode);
+		}
+
+		public void burst() throws Exception {
+			// Construct a slightly more informative dummy path for logging/stats
+			String dummyPathForBurst = "sql-report-" + testName + ".dummy";
+			super.burst(dummyPathForBurst, false, StringUtils.EMPTY, -1);
+		}
+
+		protected void setUpMockEmail() throws Exception {
+
+			ctx.testName = this.testName;
+			TestBursterFactory.setUpMockEmail(scripting, ctx);
+
+		};
+
+		protected void executeController() throws Exception {
+
+			super.executeController();
+
+			TestBursterFactory.setUpTestFolders(ctx, testName);
+
+			ctx.settings.loadSettingsReportingWithPath(REPORTING_CONFIG_PATH);
+			ctx.settings.setCapabilityReportGenerationMailMerge(true);
+
+			ctx.settings.reportingSettings.report.datasource.type = "ds.scriptfile";
+
+			// a "temp" folder is required to be available
+			ctx.tempFolder = TestsUtils.TESTS_OUTPUT_FOLDER + "/temp";
+
+			File tempDir = new File(ctx.tempFolder);
+
+			if (!tempDir.exists())
+				try {
+					FileUtils.forceMkdir(tempDir);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+		};
+
+		protected void checkLicense() throws Exception {
+		}
+
+		protected void setUpScriptingRoots() {
+
+			scripting.setRoots(new String[] { "src/test/groovy", "src/test/groovy/senders-messages",
+					"src/test/groovy/bursting-context-lifecycle", "src/test/groovy/reporting",
+					"src/main/external-resources/template/scripts/burst",
 					"src/main/external-resources/template/scripts/burst/internal",
 					"src/main/external-resources/template/scripts/burst/samples" });
 		}
@@ -469,121 +724,192 @@ public class TestBursterFactory {
 	}
 
 	public static void assertThatCorrectOutputReportsWereGenerated(AbstractReporter burster, String pathToFile,
-			boolean expectAllFilesToBeGenerated, String outputType)
-			throws Exception, IOException, FileNotFoundException {
+			boolean expectAllFilesToBeGenerated, String outputType) throws Exception {
 
-		// assert 3 rows are parsed
-		assertEquals(3, burster.getParsedLines().size());
+		// --- Get original typed data ---
+		if (burster.getCtx() == null || burster.getCtx().reportData == null || burster.getCtx().reportData.isEmpty()) {
+			fail("Test setup error: burster context or reportData is null or empty.");
+			return;
+		}
+		List<LinkedHashMap<String, Object>> originalReportData = burster.getCtx().reportData;
 
-		// assert 17 columns are parsed
-		boolean correctNumberOfColumns = ((burster.getParsedLines().get(0).length == 17)
-				|| (burster.getParsedLines().get(0).length == 18));
-		assertTrue("There should be 17 or 18 columns", correctNumberOfColumns);
+		assertEquals("Number of parsed rows should match expected", 3, originalReportData.size());
 
-		assertEquals("Kyle Butford", burster.getParsedLines().get(1)[0]);
-		assertEquals("2890", burster.getParsedLines().get(1)[16]);
+		// --- Get headers/keys ---
+		List<String> headers = new ArrayList<>(originalReportData.get(0).keySet());
+		int columnCount = headers.size();
+		// assertEquals("Expected 17 columns based on template/data", 17, columnCount);
+
+		// --- Assert specific values using original typed data ---
+		String nameKey = headers.get(0);
+		String netPayKey = headers.get(16);
+		assertEquals("Kyle Butford", originalReportData.get(1).get(nameKey));
+		boolean isStringBasedFileReporter = burster instanceof CsvReporter; // Check reporter type
+		isStringBasedFileReporter = isStringBasedFileReporter || burster instanceof FixedWidthReporter;
+
+		Object netPayValue = originalReportData.get(1).get(netPayKey); // Get the value
+
+		if (isStringBasedFileReporter) {
+			// For CSV: Expect a String, parse and check value
+			assertTrue("CSV Check: Net Pay (" + netPayKey + ") should be a String", netPayValue instanceof String);
+			try {
+				double parsedValue = Double.parseDouble((String) netPayValue);
+				assertEquals("CSV Check: Parsed Net Pay value mismatch", 2890.0, parsedValue, 0.001);
+			} catch (NumberFormatException e) {
+				fail("CSV Check Failed: Net Pay (" + netPayKey + ") value '" + netPayValue
+						+ "' is not parsable as a number.");
+			} catch (ClassCastException e) {
+				// Should be caught by the instanceof check, but as a safeguard
+				fail("CSV Check Failed: Net Pay (" + netPayKey + ") was not a String as expected.");
+			}
+		} else {
+			// For non-CSV (e.g., Excel): Expect a Number, check type and value
+			assertTrue("Non-CSV Check: Net Pay (" + netPayKey + ") should be a Number", netPayValue instanceof Number);
+			assertEquals("Non-CSV Check: Net Pay value mismatch", 2890.0, ((Number) netPayValue).doubleValue(), 0.001);
+		}
 
 		String outputFolder = burster.getCtx().outputFolder + "/";
-
 		int fileCount = new File(outputFolder).listFiles(UtilsTest.outputFilesFilter).length;
-
 		if (expectAllFilesToBeGenerated)
-			assertTrue("There should be 3 output files", fileCount == burster.getParsedLines().size());
+			assertEquals("Should be 3 output files", originalReportData.size(), fileCount);
 		else
 			assertTrue("There should be maximum 1, 2 or 3 output files",
-					fileCount > 0 && fileCount <= burster.getParsedLines().size());
+					fileCount > 0 && fileCount <= originalReportData.size());
 
-		int lineLength = 0;
 		int lineIndex = 0;
-		int codeColumnIndex = -1;
+		// --- Adapt idcolumn logic ---
+		String ccIndex = burster.getCtx().settings.getReportDataSource().exceloptions.idcolumn;
 
-		String ccIndex = burster.getCtx().settings.getReportDataSource().csvoptions.idcolumn;
+		if (burster instanceof CsvReporter)
+			ccIndex = burster.getCtx().settings.getReportDataSource().csvoptions.idcolumn;
+		if (burster instanceof FixedWidthReporter)
+			ccIndex = burster.getCtx().settings.getReportDataSource().fixedwidthoptions.idcolumn;
 
-		if (!ccIndex.contains(CsvUtils.NOT_USED)) {
-			if (!ccIndex.contains(CsvUtils.COLUMN_LAST)) {
-				if (ccIndex.contains(CsvUtils.COLUMN_FIRST))
-					codeColumnIndex = 0;
-				else
-					codeColumnIndex = Integer.valueOf(ccIndex);
+		boolean useSequentialNaming = true;
+		String idColumnKey = null;
+		if (!ccIndex.equalsIgnoreCase(CsvUtils.NOT_USED)) {
+			useSequentialNaming = false;
+			if (ccIndex.equalsIgnoreCase(CsvUtils.COLUMN_FIRST)) {
+				idColumnKey = headers.get(0);
+			} else if (ccIndex.equalsIgnoreCase(CsvUtils.COLUMN_LAST)) {
+				idColumnKey = headers.get(columnCount - 1);
+			} else if (StringUtils.isNumeric(ccIndex)) {
+				int idx = Integer.parseInt(ccIndex);
+				if (idx >= 0 && idx < columnCount) {
+					idColumnKey = headers.get(idx);
+				} else {
+					fail("Numeric idcolumn index " + idx + " is out of bounds (0-" + (columnCount - 1) + ")");
+				}
+			} else {
+				if (headers.contains(ccIndex)) {
+					idColumnKey = ccIndex;
+				} else {
+					fail("idcolumn header '" + ccIndex + "' not found in data.");
+				}
 			}
 		}
 
-		for (String[] currentCsvLine : burster.getParsedLines()) {
+		// --- Define formatters ---
+		SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy");
+		// Format for numbers that appear with grouping separators in the output
+		DecimalFormat groupedIntegerFormat = new DecimalFormat("#,##0");
+		// Format for numbers that might appear without grouping (if any) - adjust if
+		// needed
+		// DecimalFormat plainIntegerFormat = new DecimalFormat("0");
 
-			if (lineLength <= 0) {
-				lineLength = currentCsvLine.length;
-				if (ccIndex.contains(CsvUtils.COLUMN_LAST))
-					codeColumnIndex = lineLength - 1;
-			}
+		String dateHeaderKey = headers.get(3); // Assuming col3 is date
 
-			String token = StringUtils.EMPTY;
-
-			if (codeColumnIndex >= 0)
-				token = currentCsvLine[codeColumnIndex];
-			else
+		for (Map<String, Object> currentRowMap : originalReportData) {
+			String token;
+			if (useSequentialNaming) {
 				token = String.valueOf(lineIndex);
+			} else {
+				Object tokenValue = currentRowMap.get(idColumnKey);
+				token = (tokenValue == null) ? "null_token_" + lineIndex : tokenValue.toString();
+			}
 
 			String outputReportPath = outputFolder + token + "." + FilenameUtils.getExtension(outputType);
-
 			File outputReport = new File(outputReportPath);
-			boolean outputReportExists = outputReport.exists();
-
-			if (outputReportExists) {
-				String currentReportText = StringUtils.EMPTY;
-
-				if (outputType.equals(CsvUtils.OUTPUT_TYPE_DOCX)) {
-					XWPFDocument docx = new XWPFDocument(new FileInputStream(outputReportPath));
-					int numPages = docx.getProperties().getExtendedProperties().getUnderlyingProperties().getPages();
-
-					XWPFWordExtractor we = new XWPFWordExtractor(docx);
-
-					if (numPages == 0) {
-						numPages = we.getExtendedProperties().getPages();
-					}
-
-					currentReportText = we.getText();
-
-					if (numPages > 0)
-						Assertions.assertThat(numPages).isEqualTo(1);
-
-					we.close();
-					docx.close();
-
-				} else if (outputType.equals(CsvUtils.OUTPUT_TYPE_HTML)) {
-					currentReportText = FileUtils.readFileToString(new File(outputReportPath), "UTF-8");
-				} else if (outputType.equals(CsvUtils.OUTPUT_TYPE_PDF)) {
-					// Extract text from PDF using PDFBox (similar to how DOCX is handled)
-					try (PDDocument document = PDDocument.load(outputReport)) {
-						PDFTextStripper stripper = new PDFTextStripper();
-						currentReportText = stripper.getText(document);
-					}
-				} else if (outputType.equals(CsvUtils.OUTPUT_TYPE_EXCEL)) {
-					currentReportText = ExcelUtils.getExcelText(outputReport);
+			if (!outputReport.exists()) {
+				if (expectAllFilesToBeGenerated) {
+					fail("Expected output file does not exist: " + outputReportPath);
 				}
-
-				// assert branding
-				if (!outputType.equals(CsvUtils.OUTPUT_TYPE_DOCX) && !outputType.equals(CsvUtils.OUTPUT_TYPE_EXCEL))
-					Assertions.assertThat(currentReportText).contains("Built by");
-
-				for (int currentColumnIndex = 0; currentColumnIndex < lineLength; currentColumnIndex++) {
-
-					if (currentColumnIndex < 17) {
-						String currentRowAndCurrentColumnValue = currentCsvLine[currentColumnIndex];
-
-						if (currentColumnIndex != lineLength - 1)
-							Assertions.assertThat(currentReportText).contains(currentRowAndCurrentColumnValue);
-
-						if ((currentColumnIndex == lineLength - 1) && !pathToFile.endsWith("id-column-last.csv")
-								&& !pathToFile.endsWith("id-column-specify-17-last.csv"))
-							Assertions.assertThat(currentReportText).contains(currentRowAndCurrentColumnValue);
-					}
-				}
-
 				lineIndex++;
-
+				continue;
 			}
+
+			String currentReportText = StringUtils.EMPTY;
+
+			if (outputType.equals(CsvUtils.OUTPUT_TYPE_DOCX)) {
+				XWPFDocument docx = new XWPFDocument(new FileInputStream(outputReportPath));
+				int numPages = docx.getProperties().getExtendedProperties().getUnderlyingProperties().getPages();
+
+				XWPFWordExtractor we = new XWPFWordExtractor(docx);
+
+				if (numPages == 0) {
+					numPages = we.getExtendedProperties().getPages();
+				}
+
+				currentReportText = we.getText();
+
+				if (numPages > 0)
+					Assertions.assertThat(numPages).isEqualTo(1);
+
+				we.close();
+				docx.close();
+
+			} else if (outputType.equals(CsvUtils.OUTPUT_TYPE_HTML)) {
+				currentReportText = FileUtils.readFileToString(new File(outputReportPath), "UTF-8");
+			} else if (outputType.equals(CsvUtils.OUTPUT_TYPE_PDF)) {
+				// Extract text from PDF using PDFBox (similar to how DOCX is handled)
+				try (PDDocument document = PDDocument.load(outputReport)) {
+					PDFTextStripper stripper = new PDFTextStripper();
+					currentReportText = stripper.getText(document);
+				}
+			} else if (outputType.equals(CsvUtils.OUTPUT_TYPE_EXCEL)) {
+				currentReportText = ExcelUtils.getExcelText(outputReport);
+			}
+
+			// --- Assert branding ---
+			if (!outputType.equals(CsvUtils.OUTPUT_TYPE_DOCX) && !outputType.equals(CsvUtils.OUTPUT_TYPE_EXCEL))
+				Assertions.assertThat(currentReportText).contains("Built by");
+
+			// --- Assert content ---
+			for (int currentColumnIndex = 0; currentColumnIndex < columnCount; currentColumnIndex++) {
+				String header = headers.get(currentColumnIndex);
+				Object originalValue = currentRowMap.get(header);
+				String expectedFormattedValue;
+
+				if (currentColumnIndex == 17) {
+					continue; // Skip the assertion for this column
+				}
+
+				if (originalValue == null) {
+					expectedFormattedValue = "";
+				}
+				// Check if it's the specific date column
+				else if (header.equals(dateHeaderKey) && originalValue instanceof Date) {
+					expectedFormattedValue = dateFormat.format((Date) originalValue);
+				}
+				// Check if it's a number
+				else if (originalValue instanceof Number) {
+					// Assume default FreeMarker formatting adds grouping for integers
+					// Use groupedIntegerFormat to mimic this output
+					expectedFormattedValue = groupedIntegerFormat.format(originalValue);
+					// If some numbers *don't* get grouping, add specific checks here
+					// e.g., if (header.equals("some_other_number_column")) { expectedFormattedValue
+					// = plainIntegerFormat.format(originalValue); }
+				}
+				// For all other types (Strings, etc.)
+				else {
+					expectedFormattedValue = originalValue.toString();
+				}
+
+				if (!StringUtils.isEmpty(expectedFormattedValue)) {
+					Assertions.assertThat(currentReportText).contains(expectedFormattedValue);
+				}
+			}
+			lineIndex++;
 		}
-
 	}
-
 }

@@ -23,6 +23,6 @@ public class QualityAssurance extends DumpToString {
 	 */
 	private static final long serialVersionUID = -2839746487852265848L;
 	
-	public EmailServer emailserver;
+	public ServerEmailSettings emailserver;
 
 }

@@ -405,6 +405,15 @@ export default class Utilities {
     });
   }
 
+  static toTitleCase(str: string): string {
+    if (!str) return '';
+    // Simple title case for underscore or all-caps names
+    return str
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
   static setCursor(htmlElement: HTMLElement, pos: number) {
     // Creates range object
     const setPos = document.createRange();

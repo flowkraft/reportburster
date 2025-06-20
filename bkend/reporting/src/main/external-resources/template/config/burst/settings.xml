@@ -297,6 +297,10 @@
 
 		<!-- end text extraction options -->
 
+		<!-- Dump XML files with record data -->
+		<dumprecorddataasxml>false</dumprecorddataasxml>
+
+		
 		<!-- Make incubating features available in the UI -->
 		<enableincubatingfeatures>false</enableincubatingfeatures>
 

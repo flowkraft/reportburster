@@ -1,0 +1,58 @@
+services:
+  webapp:
+    container_name: www-cmswebportal-com-playground-dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      # This is the key for live-reloading. It maps your local
+      # source code folders into the container.
+      - ./app:/app/app
+      - ./components:/app/components
+      - ./lib:/app/lib
+      - ./prisma:/app/prisma # This also persists your SQLite DB file
+      - ./content:/app/content
+      - ./public:/app/public
+      - ./styles:/app/styles
+      # Add any other folders you are actively developing in
+    env_file:
+      - .env # Make sure DATABASE_URL="file:./prisma/dev.db" is in here
+    environment:
+      - NODE_ENV=development
+    # This command starts the Next.js dev server, which handles hot-reloading.
+    command: npm run dev
+
+  # --- Example: Postgres ---
+  # db_postgres:
+  #   image: postgres:13
+  #   restart: unless-stopped
+  #   environment:
+  #     - POSTGRES_USER=user
+  #     - POSTGRES_PASSWORD=password
+  #     - POSTGRES_DB=portal
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - portal_data:/var/lib/postgresql/data
+
+  # --- Example: MySQL ---
+  # db_mysql:
+  #   image: mysql:8
+  #   restart: unless-stopped
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=password
+  #     - MYSQL_DATABASE=portal
+  #     - MYSQL_USER=user
+  #     - MYSQL_PASSWORD=password
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+
+# The 'volumes' section below is only needed if you use Postgres or MySQL.
+# It is not needed for the default SQLite setup.
+# volumes:
+#   portal_data:
+#   mysql_data:

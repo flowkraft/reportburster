@@ -74,13 +74,55 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
 
           <p></p>
 
+          <!-- Message row with label -->
           <div class="row">
-
             <div class="col-xs-1">{{
-                'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.MESSAGE' | translate }}</div>
+              'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.MESSAGE' | translate }}</div>
             <div class="col-xs-8">
-
-              <p-editor [style]="{'height':'250px'}"
+              <!-- Split Button Dropdown -->
+              <div class="btn-group" *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings?.documentburster.settings.htmlemaileditcode">
+                <!-- Primary button - direct action -->
+                <button type="button" class="btn btn-default" (click)="openTemplateGallery()">
+                  <i class="fa fa-list-alt"></i> {{ 'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.BUTTONS.EXAMPLES-GALLERY' | translate }}
+                </button>
+                
+                <!-- Dropdown toggle button -->
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                  <span class="caret"></span>
+                </button>
+                
+                <!-- Dropdown menu -->
+                <ul class="dropdown-menu" role="menu">
+                  <li>
+                    <a href="javascript:void(0)" (click)="openTemplateGallery()">
+                      <i class="fa fa-list-alt"></i> {{ 'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.BUTTONS.EXAMPLES-GALLERY' | translate }}
+                    </a>
+                  </li>
+                  <li>
+                    <a href="javascript:void(0)" (click)="showDbConnectionModal()">
+                      <i class="fa fa-magic"></i> Hey, You Smart AI, Help Me Get a Custom Email (HTML) Template ...
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-xs-3">
+              <dburst-button-variables 
+                id="btnHtmlCodeEmailMessageVariables"
+                (sendSelectedVariable)="updateFormControlWithSelectedVariable('htmlCodeEmailMessage',$event)" *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings?.documentburster.settings.htmlemaileditcode">
+              </dburst-button-variables>
+              <dburst-button-variables id="btnWysiwygEmailMessageVariables"
+                (sendSelectedVariable)="updateQuillFormControlWithSelectedVariable($event)"
+                *ngIf="xmlSettings?.documentburster.settings.htmlemail && !xmlSettings?.documentburster.settings.htmlemaileditcode">
+              </dburst-button-variables>
+            </div>
+          </div>
+          
+          <!-- Editor row (full width) -->
+          <div class="row" style="margin-top: 5px;">
+            <div class="col-xs-12">
+              <!-- WYSIWYG editor -->
+              <p-editor [style]="{'height':'300px'}"
                 id="wysiwygEmailMessage"
                 *ngIf="xmlSettings?.documentburster.settings.htmlemail && 
                 !xmlSettings?.documentburster.settings.htmlemaileditcode"
@@ -101,54 +143,80 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
                 </ng-template>
               </p-editor>
 
-              <textarea class="form-control" rows="14" id="htmlCodeEmailMessage"
-                *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings?.documentburster.settings.htmlemaileditcode"
-                [(ngModel)]="xmlSettings?.documentburster.settings.emailsettings.html"
-                (ngModelChange)='settingsChangedEventHandler($event)'></textarea>
+              <!-- Enhanced HTML code editor with preview -->
+              <div *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings?.documentburster.settings.htmlemaileditcode">
+                <!-- Code editor only (when preview is hidden) -->
+                <div id="codeJarHtmlEmailEditorDiv" *ngIf="!emailPreviewVisible">
+                  <ngx-codejar
+                    id="codeJarHtmlEmailEditor"  
+                    [(code)]="xmlSettings.documentburster.settings.emailsettings.html"
+                    (codeChange)="onEmailHtmlContentChanged($event)"
+                    [highlightMethod]="highlightEmailMethod"
+                    [highlighter]="'prism'"
+                    [showLineNumbers]="true"
+                    style="height: 310px; border: 1px solid #ccc; border-radius: 4px 4px 0 0; overflow-y: auto;"
+                  ></ngx-codejar>
+                  <button type="button" 
+                          id="btnToggleEmailPreviewShow"
+                          class="btn btn-default btn-block" 
+                          style="border-top-left-radius: 0; border-top-right-radius: 0; margin: 0; border: 1px solid #ddd; border-top: none; box-sizing: border-box;"
+                          (click)="toggleEmailPreview()">
+                    <i class="fa fa-eye"></i> {{ 'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.BUTTONS.SHOW-PREVIEW' | translate }}
+                  </button>
+                </div>
 
+                <!-- Split pane with editor and preview -->
+                <as-split *ngIf="emailPreviewVisible" direction="horizontal" 
+                          [gutterSize]="8" [useTransition]="true"
+                          style="height: 340px;">
+                  
+                  <!-- Editor Pane -->
+                  <as-split-area [size]="50" [minSize]="20">
+                    <div id="codeJarHtmlEmailEditorDiv" style="height: 100%; display: flex; flex-direction: column;">
+                      <ngx-codejar
+                        id="codeJarHtmlEmailEditor"
+                        [(code)]="xmlSettings.documentburster.settings.emailsettings.html"
+                        (codeChange)="onEmailHtmlContentChanged($event)"
+                        [highlightMethod]="highlightEmailMethod"
+                        [highlighter]="'prism'"
+                        [showLineNumbers]="true"
+                        style="flex: 1; border: 1px solid #ccc; border-radius: 4px 4px 0 0; overflow-y: auto;"
+                      ></ngx-codejar>
+                      <button type="button" 
+                              id="btnToggleEmailPreviewHide"
+                              class="btn btn-default btn-block" 
+                              style="border-top-left-radius: 0; border-top-right-radius: 0; margin: 0; border: 1px solid #ddd; border-top: none; box-sizing: border-box;"
+                              (click)="toggleEmailPreview()">
+                        <i class="fa fa-code"></i> {{ 'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.BUTTONS.EXPAND-EDITOR' | translate }}
+                      </button>
+                    </div>
+                  </as-split-area>
+                  
+                  <!-- Preview Pane -->
+                  <as-split-area [size]="50" [minSize]="20">
+                    <div class="preview-container" style="height: 100%; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;">
+                      <iframe 
+                              id="emailPreviewPane"
+                              [srcdoc]="sanitizedEmailPreview" 
+                              style="width: 100%; flex: 1; border: 1px solid #ddd; border-radius: 4px 4px 0 0; overflow: auto; box-sizing: border-box;" 
+                              frameborder="0">
+                      </iframe>
+                      <button id="btnViewEmailInBrowser" type="button" class="btn btn-default btn-block" 
+                              style="border-top-left-radius: 0; border-top-right-radius: 0; margin: 0; border: 1px solid #ddd; border-top: none; box-sizing: border-box;"
+                              (click)="openEmailInBrowser()">
+                        <i class="fa fa-external-link"></i> {{ 'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.BUTTONS.VIEW-IN-BROWSER' | translate }}
+                      </button>
+                    </div>
+                  </as-split-area>
+                </as-split>
+              </div>
+
+              <!-- Plain text editor -->
               <textarea class="form-control" rows="14" id="textEmailMessage"
                 *ngIf="!xmlSettings?.documentburster.settings.htmlemail"
                 [(ngModel)]="xmlSettings?.documentburster.settings.emailsettings.text"
                 (ngModelChange)='settingsChangedEventHandler($event)'></textarea>
-
             </div>
-
-            <div class="col-xs-3">
-
-              <dburst-button-variables id="btnWysiwygEmailMessageVariables"
-                (sendSelectedVariable)="updateQuillFormControlWithSelectedVariable($event)"
-                *ngIf="xmlSettings?.documentburster.settings.htmlemail && !xmlSettings?.documentburster.settings.htmlemaileditcode">
-              </dburst-button-variables>
-              <dburst-button-variables id="btnHtmlCodeEmailMessageVariables"
-                (sendSelectedVariable)="updateFormControlWithSelectedVariable('htmlCodeEmailMessage',$event)"
-                *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings?.documentburster.settings.htmlemaileditcode">
-              </dburst-button-variables>
-              <dburst-button-variables id="btnTextEmailMessageVariables"
-                (sendSelectedVariable)="updateFormControlWithSelectedVariable('textEmailMessage',$event)"
-                *ngIf="!xmlSettings?.documentburster.settings.htmlemail">
-              </dburst-button-variables>
-
-              <dburst-button-html-preview [htmlCode]="xmlSettings?.documentburster.settings.emailsettings.html"
-                *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings?.documentburster.settings.htmlemaileditcode">
-              </dburst-button-html-preview>
-
-              <!--
-        
-              <dburst-button-native-system-dialog value="{{
-                  'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.LOAD-TEMPLATE' | translate }}" dialogType="file"
-                (pathsSelected)="onLoadHTMLTemplateClick($event)"
-                *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings.documentburster.settings.htmlemaileditcode">
-              </dburst-button-native-system-dialog>
-
-              <dburst-button-native-system-dialog value="{{
-                  'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.SAVE-TEMPLATE' | translate }}" dialogType="file"
-                saveDialog="true" (pathsSelected)="onSaveHTMLTemplateClick($event)"
-                *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings.documentburster.settings.htmlemaileditcode">
-              </dburst-button-native-system-dialog>
-              -->
-
-            </div>
-
           </div>
 
   </div>

@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 
 import { TranslateModule } from '@ngx-translate/core';
 
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NgxCodeJarComponent } from 'ngx-codejar';
 
 import { ShellService } from '../providers/shell.service';
 import { ToastrMessagesService } from '../providers/toastr-messages.service';
@@ -19,7 +20,7 @@ import { AskForFeatureService } from '../components/ask-for-feature/ask-for-feat
 import { AskForFeatureDialogComponent } from '../components/ask-for-feature/ask-for-feature-dialog.component';
 import { ButtonVariablesComponent } from '../components/button-variables/button-variables.component';
 import { ButtonWellKnownEmailProvidersComponent } from '../components/button-well-known/button-well-known.component';
-import { ButtonClearLogsModule } from '../components/button-clear-logs/button-clear-logs.component.component.module';
+import { ButtonClearLogsModule } from '../components/button-clear-logs/button-clear-logs.module';
 import { ButtonHtmlPreviewComponent } from '../components/button-html-preview/button-html-preview.component';
 import { LogFilesViewerAllTogetherModule } from '../components/log-files-viewer-all-together/log-files-viewer-all-together.module';
 import { LogFilesViewerSeparateTabsModule } from '../components/log-files-viewer-separate-tabs/log-files-viewer-separate-tabs.module';
@@ -32,14 +33,18 @@ import { StateStoreService } from '../providers/state-store.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { LiveChatComponent } from '../components/live-chat/live-chat.component';
+import { SafePipe } from './safe.pipe';
+import { ReportParametersFormComponent } from '../components/report-parameters-form/report-parameters-form.component';
 
 @NgModule({
   imports: [
     ModalModule.forRoot(),
+    TranslateModule.forRoot(),
     DialogModule,
     CommonModule,
     FormsModule,
-    TranslateModule,
+    NgxCodeJarComponent,
+    ReactiveFormsModule,
   ],
   declarations: [
     LiveChatComponent,
@@ -47,25 +52,30 @@ import { LiveChatComponent } from '../components/live-chat/live-chat.component';
     InfoDialogComponent,
     AskForFeatureDialogComponent,
     ButtonVariablesComponent,
+    ReportParametersFormComponent,
     ButtonWellKnownEmailProvidersComponent,
     ButtonHtmlPreviewComponent,
+    SafePipe,
   ],
   exports: [
     CommonModule,
     BrowserModule,
+    TranslateModule,
     FormsModule,
     ConfirmDialogModule,
-    TranslateModule,
     TabsModule,
     DialogModule,
+    NgxCodeJarComponent,
     LiveChatComponent,
     LogFileViewerModule,
     LogFilesViewerAllTogetherModule,
     LogFilesViewerSeparateTabsModule,
     ButtonClearLogsModule,
     ButtonVariablesComponent,
+    ReportParametersFormComponent,
     ButtonWellKnownEmailProvidersComponent,
     ButtonHtmlPreviewComponent,
+    SafePipe,
   ],
   providers: [
     StateStoreService,

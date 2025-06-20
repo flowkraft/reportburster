@@ -4,7 +4,8 @@
     <datasource>
       <type>ds.csvfile</type>
       <parser>opencsv</parser>
-      <showmorecsvoptions>false</showmorecsvoptions>  
+      <showmoreoptions>false</showmoreoptions>
+      <showadditionaltransformations>false</showadditionaltransformations>
       <csvoptions>
         <separatorchar>,</separatorchar>
         <header>noheader</header>
@@ -22,7 +23,6 @@
         </linesregexvalidator>
         <idcolumn>notused</idcolumn>
       </csvoptions>
-      <showmorefixedwidthoptions>false</showmorefixedwidthoptions>
       <fixedwidthoptions>
         <columns></columns>
         <header>noheader</header>
@@ -30,7 +30,6 @@
         <ignoreleadingwhitespace>true</ignoreleadingwhitespace>
         <idcolumn>notused</idcolumn>
       </fixedwidthoptions>
-      <showmoreexceloptions>false</showmoreexceloptions>
       <exceloptions>
         <header>noheader</header>
         <skiplines>0</skiplines>
@@ -39,6 +38,18 @@
         <ignoreleadingwhitespace>true</ignoreleadingwhitespace>
         <useformularesults>true</useformularesults>
       </exceloptions>
+      <sqloptions>
+        <conncode></conncode>
+        <query></query>
+      </sqloptions>
+      <scriptoptions>
+        <conncode></conncode>
+        <scriptpath></scriptpath>
+      </scriptoptions>
+      <transformationoptions>
+        <transformationcode></transformationcode>
+        <transformationscriptpath></transformationscriptpath>
+      </transformationoptions>
     </datasource>
     <template>
       <outputtype>output.none</outputtype>

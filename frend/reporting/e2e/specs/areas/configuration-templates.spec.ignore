@@ -1,0 +1,164 @@
+import { test } from '@playwright/test';
+import { FluentTester } from '../../helpers/fluent-tester';
+import { electronBeforeAfterAllTest } from '../../utils/common-setup';
+import _ from 'lodash';
+
+import { Constants } from '../../utils/constants';
+import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test-helper';
+
+//DONE2
+test.describe('', async () => {
+  electronBeforeAfterAllTest(
+    'should correctly edit / save the name of the "fallback" configuration settings.xml to Payslips (from My Report)',
+    async function ({ beforeAfterEach: firstPage }) {
+      let ft = new FluentTester(firstPage);
+      ft = ConfTemplatesTestHelper.assertFallbackTemplate(ft, 'My Reports');
+      ft = ConfTemplatesTestHelper.modifyTemplateName(ft, 'burst', 'Payslips');
+      ft = ConfTemplatesTestHelper.assertFallbackTemplate(ft, 'Payslips');
+      ft = ConfTemplatesTestHelper.modifyTemplateName(
+        ft,
+        'burst',
+        'My Reports',
+      );
+      return ConfTemplatesTestHelper.assertFallbackTemplate(ft, 'My Reports');
+    },
+  );
+
+  // tslint:disable-next-line:max-line-length
+  electronBeforeAfterAllTest(
+    'should correctly create a new configuration, allow to alter few configuration values, rollback the changes and also change the displayable name of the configuration and finally remove it (test.xml)',
+    async function ({ beforeAfterEach: firstPage }) {
+      //long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      let ft = new FluentTester(firstPage);
+      ft.consoleLog(`ConfTemplatesTestHelper.createNewTemplate`);
+      ft = ConfTemplatesTestHelper.createNewTemplate(ft, 'Test');
+      //ft.consoleLog(`ConfTemplatesTestHelper.assertTemplate`);
+      ft = ConfTemplatesTestHelper.assertTemplate(ft, 'test', 'Test');
+      //ft.consoleLog(`ConfTemplatesTestHelper.modifyTemplateName`);
+      ft = ConfTemplatesTestHelper.modifyTemplateName(
+        ft,
+        'test',
+        'Test Modified',
+      );
+      ft.consoleLog(
+        `ConfTemplatesTestHelper.modifyConfigurationValuesAssertSavedValues`,
+      );
+      ft = ConfTemplatesTestHelper.modifyConfigurationValuesAssertSavedValues(
+        ft,
+        'test',
+      );
+      ft.consoleLog(
+        `ConfTemplatesTestHelper.rollbackChangesToDefaultDocumentBursterConfiguration`,
+      );
+      ft =
+        ConfTemplatesTestHelper.rollbackChangesToDefaultDocumentBursterConfiguration(
+          ft,
+          'test',
+        );
+      ft.consoleLog(`ConfTemplatesTestHelper.assertTemplate`);
+      ft = ConfTemplatesTestHelper.assertTemplate(ft, 'test', 'Test Modified');
+      ft.consoleLog(`ConfTemplatesTestHelper.assertDefaultConfigurationValues`);
+      ft = ConfTemplatesTestHelper.assertDefaultConfigurationValues(ft, 'test');
+      ft.consoleLog(`ConfTemplatesTestHelper.deleteTemplate`);
+      return ConfTemplatesTestHelper.deleteTemplate(ft, 'test');
+    },
+  );
+  electronBeforeAfterAllTest(
+    'should correctly create two distinct configuration templates, allow altering email subject / message configuration values, assert both are correctly saved / loaded, rollback default values and assert correctness in one of them and finally remove both',
+    async function ({ beforeAfterEach: firstPage }) {
+      //long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      let ft = new FluentTester(firstPage);
+
+      ft = ConfTemplatesTestHelper.createNewTemplate(ft, 'Statements');
+      ft = ConfTemplatesTestHelper.assertTemplate(
+        ft,
+        'statements',
+        'Statements',
+      );
+
+      ft = ConfTemplatesTestHelper.createNewTemplate(ft, 'Bills');
+      ft = ConfTemplatesTestHelper.assertTemplate(ft, 'bills', 'Bills');
+
+      ft =
+        ConfTemplatesTestHelper.modifyEmailBCCAndSubjectAndAssertCorrectValues(
+          ft,
+          'statements',
+          'Statements',
+        );
+      ft = ConfTemplatesTestHelper.assertTemplate(
+        ft,
+        'statements',
+        'Statements',
+      );
+
+      ft =
+        ConfTemplatesTestHelper.modifyEmailBCCAndSubjectAndAssertCorrectValues(
+          ft,
+          'bills',
+          'Bills',
+        );
+      ft = ConfTemplatesTestHelper.assertTemplate(ft, 'bills', 'Bills');
+
+      ft =
+        ConfTemplatesTestHelper.rollbackChangesToDefaultDocumentBursterConfiguration(
+          ft,
+          'statements',
+        );
+      ft = ConfTemplatesTestHelper.assertTemplate(
+        ft,
+        'statements',
+        'Statements',
+      );
+
+      //assert that BCC and Subject were rolledback to '' values
+      ft = ConfTemplatesTestHelper.assertBCCSubjectValues(ft, 'statements', '');
+
+      ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'bills');
+      return ConfTemplatesTestHelper.deleteTemplate(ft, 'statements');
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should verify that show/hide and duplicate actions work correctly',
+    async function ({ beforeAfterEach: firstPage }) {
+      //long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      let ft = new FluentTester(firstPage);
+
+      ft = ConfTemplatesTestHelper.createNewTemplate(
+        ft,
+        'Statements',
+        'enableMailMergeCapability',
+      );
+      ft = ConfTemplatesTestHelper.assertTemplate(
+        ft,
+        'statements',
+        'Statements',
+        'enableMailMergeCapability',
+      );
+
+      ft = ConfTemplatesTestHelper.duplicateTemplate(
+        ft,
+        'statements',
+        'Bills',
+        'enableMailMergeCapability',
+      );
+      ft = ConfTemplatesTestHelper.assertTemplate(
+        ft,
+        'bills',
+        'Bills',
+        'enableMailMergeCapability',
+      );
+
+      ft = ConfTemplatesTestHelper.assertShowHideWorksFine(ft, 'bills');
+
+      ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'bills');
+      return ConfTemplatesTestHelper.deleteTemplate(ft, 'statements');
+    },
+  );
+});

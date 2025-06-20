@@ -15,7 +15,7 @@ import { ConfigurationTemplatesModule } from './_configuration-templates/configu
 import { HelpModule } from './_help/help.module';
 import { ConfigurationModule } from './_configuration/configuration.module';
 import { SkinsComponent } from '../components/skins/skins.component';
-import { ExternalConnectionsModule } from './_ext-connections/ext-connections.module';
+import { ConfigurationConnectionsModule } from './_configuration-connections/configuration-connections.module';
 import { BrandComponent } from '../components/brand/brand.component';
 
 @NgModule({
@@ -28,12 +28,12 @@ import { BrandComponent } from '../components/brand/brand.component';
   ],
   exports: [AreasComponent],
   imports: [
+    SharedModule,
     ProcessingModule,
     ConfigurationModule,
     ConfigurationTemplatesModule,
-    ExternalConnectionsModule,
+    ConfigurationConnectionsModule,
     HelpModule,
-    SharedModule,
     AppRoutingModule,
     ProgressbarModule.forRoot(),
   ],

@@ -1,7 +1,7 @@
 package com.sourcekraft.documentburster.engine.reporting;
 
+import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.common.settings.model.ReportSettings.DataSource.SQLOptions;
 import com.sourcekraft.documentburster.engine.AbstractReporter;
-import com.sourcekraft.documentburster.utils.CsvUtils;
 
 public class SqlReporter extends AbstractReporter {
 
@@ -26,25 +25,6 @@ public class SqlReporter extends AbstractReporter {
 	public SqlReporter(String configFilePath) {
 		super(configFilePath);
 		log.debug("SqlReporter initialized with config path: {}", configFilePath);
-	}
-
-	protected Jdbi retrieveJdbiInstance(String connectionCode) throws Exception {
-		log.debug("Requesting Jdbi instance for connection code: {}", connectionCode);
-		Jdbi jdbiInstance = ctx.dbManager.getJdbi(connectionCode);
-		if (jdbiInstance == null) {
-			log.error("DatabaseConnectionManager returned a null Jdbi instance for code: {}", connectionCode);
-			throw new IllegalStateException("Failed to obtain Jdbi instance for connection: " + connectionCode);
-		}
-		log.debug("Obtained Jdbi instance for code: {}", connectionCode);
-		return jdbiInstance;
-	}
-
-	@Override
-	protected void initializeResources() throws Exception {
-		log.trace("Entering initializeResources...");
-		ctx.burstTokens = new ArrayList<>();
-		ctx.variables.setVarAliases(Arrays.asList("col"));
-		log.trace("Exiting initializeResources.");
 	}
 
 	@Override
@@ -91,67 +71,45 @@ public class SqlReporter extends AbstractReporter {
 			}
 
 			// Execute query and store results directly
-			// Execute query and get List<Map<String, Object>>
-            List<Map<String, Object>> queryResult = query.mapToMap().list();
+			// Execute query and map each row preserving column label case
+			List<LinkedHashMap<String, Object>> dataRows = query.map((rs, rctx) -> {
+				ResultSetMetaData md = rs.getMetaData();
+				LinkedHashMap<String, Object> row = new LinkedHashMap<>();
+				for (int i = 1; i <= md.getColumnCount(); i++) {
+					// Use getColumnLabel for potential aliases, fallback to getColumnName
+					String columnName = md.getColumnLabel(i);
+					if (StringUtils.isBlank(columnName)) {
+						columnName = md.getColumnName(i);
+					}
+					row.put(columnName, rs.getObject(i));
+				}
+				return row;
+			}).list();
 
-            // --- Convert to List<LinkedHashMap<String, Object>> ---
-            ctx.sourceData = queryResult.stream()
-                                        .map(LinkedHashMap::new) // Convert each Map to a LinkedHashMap
-                                        .collect(Collectors.toList());
-            
-			log.info("SQL query executed. Fetched {} result rows.", ctx.sourceData.size());
+			// Build header row
+			LinkedHashMap<String, Object> headerMap = new LinkedHashMap<>();
+			if (!dataRows.isEmpty()) {
+				for (String col : dataRows.get(0).keySet()) {
+					headerMap.put(col, col);
+				}
+			}
+			List<LinkedHashMap<String, Object>> finalRows = new ArrayList<>();
+			// Decide whether to include header row based on a setting? For now, assume yes.
+			// if (!headerMap.isEmpty())
+			// finalRows.add(headerMap);
+			finalRows.addAll(dataRows);
+			ctx.reportData = finalRows; // reportData now contains only data rows
+
+			// Store header separately if needed, or assume first row of dataRows has keys
+			if (!dataRows.isEmpty()) {
+				ctx.reportColumnNames = new ArrayList<>(dataRows.get(0).keySet()); // Store column names if needed later
+			} else {
+				ctx.reportColumnNames = new ArrayList<>();
+			}
+
+			log.info("SQL query executed. Fetched {} result rows.", ctx.reportData.size());
 		}
 		log.trace("Exiting fetchData.");
-	}
-
-	@Override
-	public void parseBurstingMetaData() throws Exception {
-		log.trace("Entering parseBurstingMetaData...");
-
-		if (ctx.sourceData == null || ctx.sourceData.isEmpty()) {
-			log.warn("No data available (sourceData is null or empty).");
-			ctx.burstTokens = new ArrayList<>();
-			return;
-		}
-
-		// Get idcolumn configuration
-		String configuredIdColumn = ctx.settings.getReportDataSource().sqloptions.idcolumn;
-		if (StringUtils.isEmpty(configuredIdColumn)) {
-			throw new IllegalArgumentException(
-					"idcolumn setting must be configured - use 'notused' for sequential numbering");
-		}
-
-		// Process data rows
-		ctx.burstTokens.clear();
-		int lineIndex = 0;
-		for (Map<String, Object> row : ctx.sourceData) {
-			// Generate token based on configuration
-			String token;
-			if (configuredIdColumn.equalsIgnoreCase(CsvUtils.NOT_USED)) {
-				token = String.valueOf(lineIndex);
-			} else {
-				Object idValue = row.get(configuredIdColumn);
-				token = idValue != null ? String.valueOf(idValue) : String.valueOf(lineIndex);
-			}
-
-			// Generate variables XML
-			StringBuilder varsXml = new StringBuilder();
-			int colIndex = 0;
-			for (Map.Entry<String, Object> entry : row.entrySet()) {
-				String value = entry.getValue() != null ? String.valueOf(entry.getValue()) : "";
-				varsXml.append("<").append(colIndex).append(">")
-					  .append(value)
-					  .append("</").append(colIndex).append(">");
-				colIndex++;
-			}
-
-			ctx.variables.parseUserVariables(token, varsXml.toString());
-			ctx.burstTokens.add(token);
-			lineIndex++;
-		}
-
-		log.info("Generated {} tokens from {} data rows", ctx.burstTokens.size(), ctx.sourceData.size());
-		log.trace("Exiting parseBurstingMetaData.");
 	}
 
 	/**
@@ -160,7 +118,7 @@ public class SqlReporter extends AbstractReporter {
 	private String convertToJdbiParameters(String sql) {
 		Pattern pattern = Pattern.compile("[\\$#]\\{([^}]+)\\}|@(\\w+)@");
 		Matcher matcher = pattern.matcher(sql);
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 
 		while (matcher.find()) {
 			String varName = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
@@ -187,10 +145,15 @@ public class SqlReporter extends AbstractReporter {
 		return params.stream().distinct().collect(Collectors.toList());
 	}
 
-	@Override
-	protected void closeResources() throws Exception {
-		// Resource cleanup handled by DatabaseConnectionManager and try-with-resources
-		log.trace("closeResources - no explicit cleanup needed");
+	protected Jdbi retrieveJdbiInstance(String connectionCode) throws Exception {
+		log.debug("Requesting Jdbi instance for connection code: {}", connectionCode);
+		Jdbi jdbiInstance = ctx.dbManager.getJdbi(connectionCode);
+		if (jdbiInstance == null) {
+			log.error("DatabaseConnectionManager returned a null Jdbi instance for code: {}", connectionCode);
+			throw new IllegalStateException("Failed to obtain Jdbi instance for connection: " + connectionCode);
+		}
+		log.debug("Obtained Jdbi instance for code: {}", connectionCode);
+		return jdbiInstance;
 	}
 
 	@Override

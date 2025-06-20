@@ -22,6 +22,7 @@ import { tabBlogTemplate } from './templates/tab-blog';
 import { tabAboutTemplate } from './templates/tab-about';
 import { tabJavaTemplate } from './templates/tab-java';
 import { tabTerminalTemplate } from './templates/tab-terminal';
+import { tabStarterPacksTemplate } from './templates/tab-starter-packs';
 import { tabExtraPackagesTemplate } from './templates/tab-extra-packages';
 import { tabSystemDiagnosticsTemplate } from './templates/tab-system-diagnostics';
 import { tabUpdateTemplate } from './templates/tab-update';
@@ -44,9 +45,10 @@ import { StateStoreService } from '../../providers/state-store.service';
     </div>
     ${tabSupportTemplate} ${tabDocumentationTemplate} ${tabServicesTemplate}
     ${tabExamplesTemplate} ${tabReviewsTemplate} ${tabBlogTemplate}
-    ${tabJavaTemplate} ${tabTerminalTemplate} ${tabExtraPackagesTemplate}
-    ${tabSystemDiagnosticsTemplate} ${tabUpdateTemplate} ${tabAboutTemplate}
-    ${tabComparisonTemplate} ${tabLogsTemplate} ${tabLicenseTemplate}
+    ${tabJavaTemplate} ${tabTerminalTemplate} ${tabStarterPacksTemplate}
+    ${tabExtraPackagesTemplate} ${tabSystemDiagnosticsTemplate}
+    ${tabUpdateTemplate} ${tabAboutTemplate} ${tabComparisonTemplate}
+    ${tabLogsTemplate} ${tabLicenseTemplate}
   `,
 })
 export class HelpComponent implements OnInit, AfterViewChecked {
@@ -72,6 +74,9 @@ export class HelpComponent implements OnInit, AfterViewChecked {
 
   @ViewChild('tabTerminalTemplate', { static: true })
   tabTerminalTemplate: TemplateRef<any>;
+
+  @ViewChild('tabStarterPacksTemplate', { static: true })
+  tabStarterPacksTemplate: TemplateRef<any>;
 
   @ViewChild('tabExtraPackagesTemplate', { static: true })
   tabExtraPackagesTemplate: TemplateRef<any>;
@@ -155,6 +160,11 @@ export class HelpComponent implements OnInit, AfterViewChecked {
       ngTemplateOutlet: 'tabUpdateTemplate',
     },
     {
+      id: 'starterPacksTab',
+      heading: 'AREAS.HELP.TABS.STARTER-PACKS',
+      ngTemplateOutlet: 'tabStarterPacksTemplate',
+    },
+    {
       id: 'extraPackagesTab',
       heading: 'AREAS.HELP.TABS.EXTRA-PACKAGES',
       ngTemplateOutlet: 'tabExtraPackagesTemplate',
@@ -187,12 +197,16 @@ export class HelpComponent implements OnInit, AfterViewChecked {
       visibleTabs: ['supportTab', 'licenseTab', 'logsTab'],
     },
     {
-      selectedMenu: 'docsMenuSelected',
-      visibleTabs: ['docsTab', 'licenseTab'],
+      selectedMenu: 'starterPacksMenuSelected',
+      visibleTabs: ['starterPacksTab', 'extraPackagesTab', 'licenseTab'],
     },
     {
       selectedMenu: 'servicesMenuSelected',
       visibleTabs: ['servicesTab', 'licenseTab'],
+    },
+    {
+      selectedMenu: 'docsMenuSelected',
+      visibleTabs: ['docsTab', 'licenseTab'],
     },
     {
       selectedMenu: 'useCasesMenuSelected',
@@ -217,7 +231,6 @@ export class HelpComponent implements OnInit, AfterViewChecked {
         'systemDiagnosticsTab',
         'terminalTab',
         'updateTab',
-        'extraPackagesTab',
         'licenseTab',
       ],
     },

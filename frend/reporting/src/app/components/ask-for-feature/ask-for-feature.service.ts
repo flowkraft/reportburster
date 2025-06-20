@@ -8,6 +8,9 @@ import { ShellService } from '../../providers/shell.service';
 @Injectable()
 export class AskForFeatureService {
   alreadyImplementedFeatures = [
+    'ds.sqlquery',
+    'ds.scriptfile',
+    'ds.xmlfile',
     'ds.csvfile',
     'ds.tsvfile',
     'ds.fixedwidthfile',
@@ -17,6 +20,8 @@ export class AskForFeatureService {
     'output.pdf',
     'output.xlsx',
     'output.html',
+    'output.fop2pdf',
+    'output.any',
   ];
 
   messageTemplate = {
@@ -98,8 +103,8 @@ Sincerely,
           requestedFeatureFriendly =
             'Microsoft Office365 Excel (cloud/saas service) (DataSource)';
           break;
-        case 'ds.database':
-          requestedFeatureFriendly = 'Database (remote server) (DataSource)';
+        case 'ds.sqlquery':
+          requestedFeatureFriendly = 'SQL query (DataSource)';
           break;
         case 'output.pdf':
           requestedFeatureFriendly = 'PDF Files (Output Type)';

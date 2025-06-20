@@ -23,22 +23,22 @@ import javax.xml.bind.Unmarshaller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sourcekraft.documentburster.common.settings.model.connection.EmailConnectionDetails;
+import com.sourcekraft.documentburster.common.settings.model.connection.ConnectionEmailDetails;
 import com.sourcekraft.documentburster.common.utils.Utils;
 
 public class EmailConnection {
 
 	private Logger log = LoggerFactory.getLogger(EmailConnection.class);
 
-	private EmailConnectionDetails emailConnectionDetails = new EmailConnectionDetails();
+	private ConnectionEmailDetails emailConnectionDetails = new ConnectionEmailDetails();
 
 	public void loadDetails(String connectionFilePath) throws Exception {
 
-		JAXBContext jc = JAXBContext.newInstance(EmailConnectionDetails.class);
+		JAXBContext jc = JAXBContext.newInstance(ConnectionEmailDetails.class);
 
 		Unmarshaller u = jc.createUnmarshaller();
 
-		emailConnectionDetails = (EmailConnectionDetails) u.unmarshal(new File(connectionFilePath));
+		emailConnectionDetails = (ConnectionEmailDetails) u.unmarshal(new File(connectionFilePath));
 
 		log.debug("loadDetails - emailConnectionDetails = [" + emailConnectionDetails + "]");
 
@@ -94,7 +94,7 @@ public class EmailConnection {
 		}
 	}
 
-	public EmailConnectionDetails getDetails() {
+	public ConnectionEmailDetails getDetails() {
 		return emailConnectionDetails;
 	};
 

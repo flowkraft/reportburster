@@ -88,7 +88,7 @@
         </tr>
         <tr>
           <td>Pay Period</td>
-          <td>${col3}</td>
+          <td><#if col3?is_date>${col3?string("MM/dd/yy")}<#else>${col3}</#if></td>
         </tr>
         <tr>
           <td>Department</td>

@@ -37,15 +37,71 @@ public class ReportSettings extends DumpToString {
 		private static final long serialVersionUID = -989054855315988479L;
 		public String type;
 		public String parser;
-		public boolean showmorecsvoptions;
-		public boolean showmorefixedwidthoptions;
+		public boolean showmoreoptions;
 
+		// public String parametersspecpath;
+
+		public XmlOptions xmloptions;
+		
 		public CSVOptions csvoptions;
 		public FixedWidthOptions fixedwidthoptions;
 
 		// Add these fields to the DataSource class
 		public ExcelOptions exceloptions;
-		public boolean showmoreexceloptions;
+
+		public SQLOptions sqloptions;
+		public ScriptOptions scriptoptions;
+		public String scriptnameparamsspec = "";
+
+		public boolean showadditionaltransformation = false; // Just one flag
+		public String scriptnameadditionaltransformation = "";
+
+		public static class SQLOptions extends DumpToString {
+			private static final long serialVersionUID = 2691588813086554915L;
+
+			public String conncode = "";
+			public String query = "";
+			public String scriptname = "";
+			// public String querypath = "";
+			public String idcolumn = "notused";
+		}
+
+		public static class ScriptOptions extends DumpToString {
+			private static final long serialVersionUID = 2691588813086554916L;
+
+			public String conncode = "";
+			public String scriptname = "";
+			public String idcolumn = "notused";
+			public String selectfileexplorer = "notused";
+		}
+
+		public static class XmlOptions extends DumpToString {
+			private static final long serialVersionUID = 2691588813086554916L;
+
+			/** XPath to select the repeating node (e.g. /root/records/record) */
+			public String repeatingnodexpath = "";
+
+			/** Name or XPath of the ID column/attribute (relative or absolute) */
+			public String idcolumn = "notused";
+
+			/** Whether to use namespace-aware parsing */
+			public String namespaceMappings = "";
+
+			/** Character encoding for the XML file */
+			public String encoding = "UTF-8";
+
+			/** Optional: XSD schema path for validation */
+			public String validationSchema = "";
+
+			/**
+			 * Optional: Map XML fields to report columns (comma-separated, e.g.
+			 * "name:fullName,amount:total")
+			 */
+			public String fieldMappings = "";
+
+			/** Optional: Trim whitespace from text content */
+			public boolean ignoreleadingwhitespace = true;
+		}
 
 		public static class CSVOptions extends DumpToString {
 

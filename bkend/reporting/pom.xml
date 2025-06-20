@@ -27,6 +27,7 @@
 			<artifactId>rb-common</artifactId>
 			<version>${revision}</version>
 		</dependency>
+		
 		<!--
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
@@ -129,6 +130,11 @@
 			<groupId>io.github.alanhay</groupId>
 			<artifactId>html-exporter</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+		</dependency>
+
 		<!-- end document conversion engines -->
 
 		<dependency>
@@ -210,6 +216,66 @@
 		<!-- openxml4j adds a dependency to log4j v1 which has SEC
 		vulnerabilities -->
 
+		<!--DATABASE
+		START -->
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate.orm</groupId>
+			<artifactId>hibernate-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.calcite</groupId>
+			<artifactId>calcite-core</artifactId>
+		</dependency>
+
+		<!-- Core QueryDSL needed for all operations -->
+		<dependency>
+			<groupId>com.querydsl</groupId>
+			<artifactId>querydsl-core</artifactId>
+		</dependency>
+
+		<!-- SQL support for direct database queries -->
+		<dependency>
+			<groupId>com.querydsl</groupId>
+			<artifactId>querydsl-sql</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.querydsl</groupId>
+			<artifactId>querydsl-jpa</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jdbi</groupId>
+			<artifactId>jdbi3-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jdbi</groupId>
+			<artifactId>jdbi3-sqlobject</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jdbi</groupId>
+			<artifactId>jdbi3-postgres</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+		</dependency>
+		<!--DATABASE END -->
+
+		<dependency>
+			<groupId>org.dflib</groupId>
+			<artifactId>dflib</artifactId>
+		</dependency>
+
 		<!-- <dependency> <groupId>org.apache.poi</groupId>
 		<artifactId>openxml4j</artifactId> 
 			</dependency> -->
@@ -266,6 +332,10 @@
 			<artifactId>jackson-core</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-xml</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>de.ailis.pherialize</groupId>
 			<artifactId>pherialize</artifactId>
 		</dependency>
@@ -306,11 +376,12 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.hsqldb</groupId>
-			<artifactId>hsqldb</artifactId>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
 
+	
 	</dependencies>
 
 </project>

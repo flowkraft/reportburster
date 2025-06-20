@@ -4,11 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
 import com.sourcekraft.documentburster._helpers.TestBursterFactory;
+import com.sourcekraft.documentburster._helpers.TestsUtils;
 import com.sourcekraft.documentburster._helpers.TestBursterFactory.FixedWidthReporter;
 import com.sourcekraft.documentburster.unit.further.other.UtilsTest;
 import com.sourcekraft.documentburster.utils.CsvUtils;
@@ -69,13 +71,14 @@ public class FixedWidthReporterTest {
 		burster.burst(FIXED_WIDTH_INPUT_HEADER_PATH, false, StringUtils.EMPTY, -1);
 
 		// Verify basic parsing results - should have 3 data lines, not counting header
-		assertEquals(3, burster.getParsedLines().size());
-		assertEquals("Kyle Butford", burster.getParsedLines().get(1)[0]);
-		assertEquals("2890", burster.getParsedLines().get(1)[16]);
+		List<String[]> arrayData = TestsUtils.toArrayRows(burster.getCtx().reportData);
+		assertEquals(3, arrayData.size());
+		assertEquals("Kyle Butford", arrayData.get(1)[0]);
+		assertEquals("2890", arrayData.get(1)[16]);
 
 		// Verify first data line is the actual first data line, not the header
-		assertEquals("Clyde Grew", burster.getParsedLines().get(0)[0]);
-		assertEquals("3790", burster.getParsedLines().get(0)[16]);
+		assertEquals("Clyde Grew", arrayData.get(0)[0]);
+		assertEquals("3790", arrayData.get(0)[16]);
 
 		// Verify files were generated only for data rows (not the header)
 		String outputFolder = burster.getCtx().outputFolder + "/";
@@ -145,13 +148,14 @@ public class FixedWidthReporterTest {
 		burster.burst(FIXED_WIDTH_INPUT_NOHEADER_PATH, false, StringUtils.EMPTY, -1);
 
 		// Verify basic parsing results
-		assertEquals(3, burster.getParsedLines().size());
-		assertEquals("Kyle Butford", burster.getParsedLines().get(1)[0]);
-		assertEquals("2890", burster.getParsedLines().get(1)[16]);
+		List<String[]> arrayData = TestsUtils.toArrayRows(burster.getCtx().reportData);
+		assertEquals(3, arrayData.size());
+		assertEquals("Kyle Butford", arrayData.get(1)[0]);
+		assertEquals("2890", arrayData.get(1)[16]);
 
 		// Verify all lines were parsed as data (since there's no header)
-		assertEquals("Clyde Grew", burster.getParsedLines().get(0)[0]);
-		assertEquals("3790", burster.getParsedLines().get(0)[16]);
+		assertEquals("Clyde Grew", arrayData.get(0)[0]);
+		assertEquals("3790", arrayData.get(0)[16]);
 
 		// Verify files were generated for all rows (since none was treated as header)
 		String outputFolder = burster.getCtx().outputFolder + "/";
@@ -205,9 +209,10 @@ public class FixedWidthReporterTest {
 		burster.burst(FIXED_WIDTH_INPUT_ID_COLUMN_INDEX_PATH, false, StringUtils.EMPTY, -1);
 
 		// Verify basic parsing results
-		assertEquals(3, burster.getParsedLines().size());
-		assertEquals("Kyle Butford", burster.getParsedLines().get(1)[0]);
-		assertEquals("2890", burster.getParsedLines().get(1)[16]);
+		List<String[]> arrayData = TestsUtils.toArrayRows(burster.getCtx().reportData);
+		assertEquals(3, arrayData.size());
+		assertEquals("Kyle Butford", arrayData.get(1)[0]);
+		assertEquals("2890", arrayData.get(1)[16]);
 
 		// Verify files were generated using custom column index values as tokens
 		String outputFolder = burster.getCtx().outputFolder + "/";
@@ -278,9 +283,10 @@ public class FixedWidthReporterTest {
 		burster.burst(FIXED_WIDTH_INPUT_ID_COLUMN_LAST_PATH, false, StringUtils.EMPTY, -1);
 
 		// Verify basic parsing results
-		assertEquals(3, burster.getParsedLines().size());
-		assertEquals("Kyle Butford", burster.getParsedLines().get(1)[0]);
-		assertEquals("2890", burster.getParsedLines().get(1)[16]);
+		List<String[]> arrayData = TestsUtils.toArrayRows(burster.getCtx().reportData);
+		assertEquals(3, arrayData.size());
+		assertEquals("Kyle Butford", arrayData.get(1)[0]);
+		assertEquals("2890", arrayData.get(1)[16]);
 
 		// Verify files were generated using last column values as tokens
 		String outputFolder = burster.getCtx().outputFolder + "/";
@@ -353,9 +359,10 @@ public class FixedWidthReporterTest {
 		burster.burst(FIXED_WIDTH_INPUT_ID_COLUMN_FIRST_PATH, false, StringUtils.EMPTY, -1);
 
 		// Verify basic parsing results
-		assertEquals(3, burster.getParsedLines().size());
-		assertEquals("Kyle Butford", burster.getParsedLines().get(1)[0]);
-		assertEquals("2890", burster.getParsedLines().get(1)[16]);
+		List<String[]> arrayData = TestsUtils.toArrayRows(burster.getCtx().reportData);
+		assertEquals(3, arrayData.size());
+		assertEquals("Kyle Butford", arrayData.get(1)[0]);
+		assertEquals("2890", arrayData.get(1)[16]);
 
 		// Verify files were generated using first column values as tokens
 		String outputFolder = burster.getCtx().outputFolder + "/";
@@ -427,9 +434,10 @@ public class FixedWidthReporterTest {
 		burster.burst(FIXED_WIDTH_INPUT_ID_COLUMN_NOT_USED_PATH, false, StringUtils.EMPTY, -1);
 
 		// Verify basic parsing results
-		assertEquals(3, burster.getParsedLines().size());
-		assertEquals("Kyle Butford", burster.getParsedLines().get(1)[0]);
-		assertEquals("2890", burster.getParsedLines().get(1)[16]);
+		List<String[]> arrayData = TestsUtils.toArrayRows(burster.getCtx().reportData);
+		assertEquals(3, arrayData.size());
+		assertEquals("Kyle Butford", arrayData.get(1)[0]);
+		assertEquals("2890", arrayData.get(1)[16]);
 
 		// Verify files were generated with sequential numbers as tokens
 		String outputFolder = burster.getCtx().outputFolder + "/";

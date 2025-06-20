@@ -1,5 +1,6 @@
 package com.flowkraft.jobman.controllers;
 
+import java.io.File;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
@@ -23,14 +24,16 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.flowkraft.common.AppPaths;
+import com.flowkraft.jobman.dtos.DirCriteriaDto;
+import com.flowkraft.jobman.dtos.FileCriteriaDto;
+import com.flowkraft.jobman.dtos.FindCriteriaDto;
+import com.flowkraft.jobman.dtos.InspectResultDto;
+import com.flowkraft.jobman.dtos.ProcessOutputResultDto;
+import com.flowkraft.jobman.models.FileInfo;
 import com.flowkraft.jobman.models.SystemInfo;
 import com.flowkraft.jobman.services.SystemService;
-import com.flowkraft.jobman.services.SystemService.DirCriteria;
-import com.flowkraft.jobman.services.SystemService.FileCriteria;
-import com.flowkraft.jobman.services.SystemService.FindCriteria;
-import com.flowkraft.jobman.services.SystemService.InspectResult;
-import com.flowkraft.jobman.services.SystemService.ProcessOutputResult;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -112,8 +115,14 @@ public class SystemController {
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
 
-		List<String> results = systemService.unixCliFind(fullPath,
-				new FindCriteria(matching, files, directories, recursive, ignoreCase));
+		FindCriteriaDto criteriaDto = new FindCriteriaDto(matching, files.orElse(null), // Use orElse(null)
+				directories.orElse(null), // Use orElse(null)
+				recursive.orElse(null), // Use orElse(null)
+				ignoreCase.orElse(null) // Use orElse(null)
+		);
+
+		List<String> results = systemService.unixCliFind(fullPath, criteriaDto);
+
 		return Mono.just(results);
 	}
 
@@ -134,11 +143,35 @@ public class SystemController {
 
 	@DeleteMapping("/fs/delete-quietly")
 	public Mono<Boolean> deleteQuietly(@RequestParam String path) throws Exception {
+		String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+		String fullPath;
 
-		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
-				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+		// Normalize path separators for reliable comparison, especially on Windows
+		String normalizedDecodedPath = decodedPath.replace("\\", "/");
+		String normalizedBaseDirPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH.replace("\\", "/");
 
-		Boolean deleted = systemService.fsDelete(fullPath);
+		// Ensure the base path itself ends with a slash for startsWith comparison if
+		// needed,
+		// or handle it by checking startsWith(normalizedBaseDirPath + "/") if
+		// decodedPath is just a sub-path.
+		// For simplicity, assuming direct startsWith check is sufficient if paths are
+		// well-formed.
+
+		if (normalizedDecodedPath.startsWith(normalizedBaseDirPath)) {
+			// Path already seems to be absolute and correctly rooted
+			fullPath = decodedPath;
+		} else {
+			// Path is relative, prepend the base directory
+			fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/" + decodedPath;
+		}
+
+		// Optional: Further normalize fullPath to resolve any ".." or "." and ensure
+		// correct separators
+		// Path finalFullPath = Paths.get(fullPath).normalize();
+		// Boolean deleted = systemService.fsDelete(finalFullPath.toString());
+
+		Boolean deleted = systemService.fsDelete(fullPath); // Assuming fsDelete handles normalization or expects this
+															// format
 		return Mono.just(deleted);
 	}
 
@@ -158,11 +191,12 @@ public class SystemController {
 	// Add this to SystemController.java
 	@GetMapping("/fs/resolve-absolute-path")
 	public Map<String, String> resolveAbsolutePath(@RequestParam("path") String relativePath) {
-		//System.out.println("Controller resolveAbsolutePath called with path: " + relativePath);
+		// System.out.println("Controller resolveAbsolutePath called with path: " +
+		// relativePath);
 
 		// Use the existing SystemService method to resolve the path
 		String absolutePath = systemService.fsResolvePath(relativePath);
-		//System.out.println("Controller returning absolutePath: " + absolutePath);
+		// System.out.println("Controller returning absolutePath: " + absolutePath);
 
 		// Return the result as a map
 		Map<String, String> result = new HashMap<>();
@@ -226,7 +260,7 @@ public class SystemController {
 	}
 
 	@PostMapping(value = "/fs/dir")
-	public Mono<Void> dir(@RequestParam String path, @RequestBody Optional<DirCriteria> criteria) throws Exception {
+	public Mono<Void> dir(@RequestParam String path, @RequestBody Optional<DirCriteriaDto> criteria) throws Exception {
 		// System.out.println("/fs/dir = " + path);
 
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
@@ -238,7 +272,8 @@ public class SystemController {
 	}
 
 	@PostMapping("/fs/file")
-	public Mono<String> file(@RequestParam String path, @RequestBody Optional<FileCriteria> criteria) throws Exception {
+	public Mono<String> file(@RequestParam String path, @RequestBody Optional<FileCriteriaDto> criteria)
+			throws Exception {
 		// System.out.println("/fs/file");
 
 		String file = systemService.fsFile(URLDecoder.decode(path, StandardCharsets.UTF_8.toString()), criteria);
@@ -247,20 +282,41 @@ public class SystemController {
 	}
 
 	@GetMapping("/fs/inspect")
-	public Mono<Optional<InspectResult>> inspect(@RequestParam String path, @RequestParam Optional<String> checksum,
+	public Mono<Optional<InspectResultDto>> inspect(@RequestParam String path, @RequestParam Optional<String> checksum,
 			@RequestParam Optional<Boolean> mode, @RequestParam Optional<Boolean> times,
 			@RequestParam Optional<Boolean> absolutePath, @RequestParam Optional<String> symlinks) throws Exception {
 		// System.out.println("/fs/inspect");
 
-		Optional<InspectResult> inspect = systemService.fsInspect(
+		Optional<InspectResultDto> inspect = systemService.fsInspect(
 				URLDecoder.decode(path, StandardCharsets.UTF_8.toString()), checksum, mode, times, absolutePath,
 				symlinks);
 		return Mono.just(inspect);
 
 	}
 
+	@GetMapping("/fs/list")
+	public Flux<FileInfo> listFiles(@RequestParam String path) throws Exception {
+		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+
+		File directory = new File(fullPath);
+		if (!directory.exists() || !directory.isDirectory()) {
+			return Flux.empty();
+		}
+
+		return Flux.fromArray(directory.listFiles()).map(file -> {
+			FileInfo info = new FileInfo();
+			info.setName(file.getName());
+			info.setPath(file.getAbsolutePath());
+			info.setDirectory(file.isDirectory());
+			info.setSize(file.length());
+			info.setLastModified(file.lastModified());
+			return info;
+		});
+	}
+
 	@PostMapping("/child-process/spawn")
-	public Mono<ProcessOutputResult> spawn(@RequestBody List<String> args, @RequestParam Optional<String> cwdPath)
+	public Mono<ProcessOutputResultDto> spawn(@RequestBody List<String> args, @RequestParam Optional<String> cwdPath)
 			throws Exception {
 
 		// System.out.println("/child-process/spawn commands: " + args);
@@ -270,7 +326,7 @@ public class SystemController {
 	}
 
 	@PostMapping("/install/chocolatey")
-	public Mono<ProcessOutputResult> installChocolatey() throws Exception {
+	public Mono<ProcessOutputResultDto> installChocolatey() throws Exception {
 		// System.out.println("/install/chocolatey");
 
 		return systemService.installChocolatey();
@@ -278,7 +334,7 @@ public class SystemController {
 	}
 
 	@PostMapping("/uninstall/chocolatey")
-	public Mono<ProcessOutputResult> unInstallChocolatey() throws Exception {
+	public Mono<ProcessOutputResultDto> unInstallChocolatey() throws Exception {
 		// System.out.println("/uninstall/chocolatey");
 
 		return systemService.unInstallChocolatey();

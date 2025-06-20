@@ -63,7 +63,9 @@ export class AskForFeatureDialogComponent implements OnInit {
         `"${xmlAskForFeatureFilePath}"`,
       ]);
     } else if (action == 'configure-email-properly') {
-      this.router.navigate(['/ext-connections'], { skipLocationChange: true });
+      this.router.navigate(['/configuration-connections'], {
+        skipLocationChange: true,
+      });
     }
 
     this.onClose?.next(true);

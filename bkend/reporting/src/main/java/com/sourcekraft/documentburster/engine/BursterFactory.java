@@ -9,6 +9,7 @@ import com.sourcekraft.documentburster.engine.pdf.PdfBurster;
 import com.sourcekraft.documentburster.engine.reporting.CsvReporter;
 import com.sourcekraft.documentburster.engine.reporting.ExcelReporter;
 import com.sourcekraft.documentburster.engine.reporting.FixedWidthReporter;
+import com.sourcekraft.documentburster.engine.reporting.XmlReporter;
 
 public class BursterFactory {
 
@@ -41,6 +42,9 @@ public class BursterFactory {
 			AbstractReporter reporter = null;
 
 			switch (jobType) {
+			case "ds.xmlfile":
+				reporter = new XmlReporter(configurationFilePath);
+				break;
 			case "ds.csvfile":
 				reporter = new CsvReporter(configurationFilePath);
 				break;
@@ -50,7 +54,7 @@ public class BursterFactory {
 			case "ds.excelfile":
 				reporter = new ExcelReporter(configurationFilePath);
 				break;
-			case "ds.database":
+			case "ds.sqlquery":
 				//System.out.println("Processing database connection");
 				break;
 			case "ds.gsheet":

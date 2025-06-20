@@ -16,6 +16,7 @@ package com.sourcekraft.documentburster.common.settings;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -35,7 +36,8 @@ import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.common.settings.model.Attachment;
 import com.sourcekraft.documentburster.common.settings.model.Capabilities;
-import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionSettings;
+import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
+import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionEmailSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSettingsInternal;
 import com.sourcekraft.documentburster.common.settings.model.EmailRfc2822Validator;
@@ -66,45 +68,66 @@ public class Settings extends DumpToString {
 	public DocumentBursterSettings docSettings;
 	public DocumentBursterSettingsInternal docSettingsInternal;
 	public ReportingSettings reportingSettings;
-	public DocumentBursterConnectionSettings connectionSettings;
+	public DocumentBursterConnectionEmailSettings connectionEmailSettings;
+	public DocumentBursterConnectionDatabaseSettings connectionDatabaseSettings;
 
-	public void loadSettings(String configFilePath) throws Exception {
+	public Settings(String configFilePath) {
 
-		log.debug("loadSettings - configFilePath='" + configFilePath + "'");
+		if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(Paths.get(configFilePath)))))
+			this.configurationFilePath = configFilePath;
+		else
+			this.configurationFilePath = "./config/burst/settings.xml";
 
-		this.configurationFilePath = configFilePath;
+		Path path = Paths.get(this.configurationFilePath);
+		Path parentPath = path.getParent();
+		// Remove the last two directories from the path
+		Path grandParentPath = parentPath.getParent().getParent();
+
+		if (this.configurationFilePath.endsWith("config/burst/settings.xml")) {
+			PORTABLE_EXECUTABLE_DIR_PATH = grandParentPath.toAbsolutePath().toString().replace("\\", "/");
+		} else {
+			PORTABLE_EXECUTABLE_DIR_PATH = grandParentPath.getParent().toAbsolutePath().toString().replace("\\", "/");
+		}
+
+	}
+
+	public String getPrimaryDatabaseConnectionCode() {
+
+		if (!Objects.isNull(this.reportingSettings.report.datasource.sqloptions))
+			return this.reportingSettings.report.datasource.sqloptions.conncode;
+
+		return this.reportingSettings.report.datasource.scriptoptions.conncode;
+
+	}
+
+	public DocumentBursterSettings loadSettings() throws Exception {
+
+		log.debug("loadSettings()");
+
 		JAXBContext jc = JAXBContext.newInstance(DocumentBursterSettings.class);
 
 		Unmarshaller u = jc.createUnmarshaller();
 
-		try (FileInputStream fis = new FileInputStream(new File(configFilePath))) {
+		try (FileInputStream fis = new FileInputStream(new File(this.configurationFilePath))) {
 			docSettings = (DocumentBursterSettings) u.unmarshal(fis);
 		}
 
 		_sortAttachments();
 
-		if (!Objects.isNull(docSettings.settings.capabilities)
-				&& docSettings.settings.capabilities.reportgenerationmailmerge) {
-			String configFolderPath = Paths.get(configFilePath).getParent().toString();
-			String reportingConfigFilePath = configFolderPath + "/reporting.xml";
-			this.loadSettingsReporting(reportingConfigFilePath);
-		}
-
-		if (StringUtils.isBlank(PORTABLE_EXECUTABLE_DIR_PATH) && configFilePath.endsWith("config/burst/settings.xml")) {
-
-			Path path = Paths.get(configFilePath);
-			Path parentPath = path.getParent();
-			// Remove the last two directories from the path
-			Path grandParentPath = parentPath.getParent().getParent();
-
-			PORTABLE_EXECUTABLE_DIR_PATH = grandParentPath.toAbsolutePath().toString().replace("\\", "/");
-		}
+		if ((!Objects.isNull(docSettings.settings.capabilities)
+				&& docSettings.settings.capabilities.reportgenerationmailmerge))
+			loadSettingsReporting();
 
 		log.debug("loadSettings - settings = [" + docSettings + "], reportingSettings = [" + reportingSettings + "]");
 
+		return docSettings;
 	}
 
-	public void loadSettingsInternal(String internalConfigFilePath) throws Exception {
+	public DocumentBursterSettingsInternal loadSettingsInternal() throws Exception {
+
+		String internalConfigFilePath = Paths.get(PORTABLE_EXECUTABLE_DIR_PATH, "config/_internal/settings.xml")
+				.normalize().toString();
+
 		JAXBContext jcr = JAXBContext.newInstance(DocumentBursterSettingsInternal.class);
 
 		Unmarshaller ur = jcr.createUnmarshaller();
@@ -112,9 +135,16 @@ public class Settings extends DumpToString {
 		try (FileInputStream fis = new FileInputStream(new File(internalConfigFilePath))) {
 			docSettingsInternal = (DocumentBursterSettingsInternal) ur.unmarshal(fis);
 		}
+
+		return docSettingsInternal;
 	}
 
-	public void loadSettingsReporting(String reportingConfigFilePath) throws Exception {
+	public void loadSettingsReporting() throws Exception {
+
+		// config/reports/payslips
+		String configFolderPath = Paths.get(this.configurationFilePath).getParent().toString();
+		String reportingConfigFilePath = configFolderPath + "/reporting.xml";
+
 		JAXBContext jcr = JAXBContext.newInstance(ReportingSettings.class);
 
 		Unmarshaller ur = jcr.createUnmarshaller();
@@ -122,20 +152,103 @@ public class Settings extends DumpToString {
 		try (FileInputStream fis = new FileInputStream(new File(reportingConfigFilePath))) {
 			reportingSettings = (ReportingSettings) ur.unmarshal(fis);
 		}
+
+		if (!Objects.isNull(reportingSettings.report.datasource.sqloptions)
+				&& !Objects.isNull(reportingSettings.report.datasource.sqloptions.conncode)) {
+
+			String connCode = reportingSettings.report.datasource.sqloptions.conncode;
+
+			if (StringUtils.isNotBlank(connCode)) {
+				// config/reports/payslips
+				configFolderPath = Paths.get(this.configurationFilePath).getParent().toString();
+
+				// config/reports
+				configFolderPath = Paths.get(configFolderPath).getParent().toString();
+
+				// config
+				configFolderPath = Paths.get(configFolderPath).getParent().toString();
+
+				String dbConfigFilePath = configFolderPath + "/connections/" + connCode + "/" + connCode + ".xml";
+
+				jcr = JAXBContext.newInstance(DocumentBursterConnectionDatabaseSettings.class);
+
+				ur = jcr.createUnmarshaller();
+				try (FileInputStream fis = new FileInputStream(new File(dbConfigFilePath))) {
+					connectionDatabaseSettings = (DocumentBursterConnectionDatabaseSettings) ur.unmarshal(fis);
+				}
+
+			}
+
+		}
 	}
 
-	public void loadSettingsConnection(String connectionConfigFilePath) throws Exception {
+	public ReportingSettings loadSettingsReportingWithCode(String reportCode) throws Exception {
 
-		// System.out.println("loadSettingsConnection connectionConfigFilePath = " +
-		// connectionConfigFilePath);
+		String reportingFilePath = Paths
+				.get(PORTABLE_EXECUTABLE_DIR_PATH, "config/reports", reportCode, "reporting.xml").normalize()
+				.toString();
 
-		JAXBContext jcr = JAXBContext.newInstance(DocumentBursterConnectionSettings.class);
+		JAXBContext jcr = JAXBContext.newInstance(ReportingSettings.class);
+
+		Unmarshaller ur = jcr.createUnmarshaller();
+		ReportingSettings repSettings;
+		try (FileInputStream fis = new FileInputStream(new File(reportingFilePath))) {
+			repSettings = (ReportingSettings) ur.unmarshal(fis);
+		}
+		return repSettings;
+	}
+
+	public ReportingSettings loadSettingsReportingWithPath(String reportPath) throws Exception {
+
+		JAXBContext jcr = JAXBContext.newInstance(ReportingSettings.class);
+
+		Unmarshaller ur = jcr.createUnmarshaller();
+		try (FileInputStream fis = new FileInputStream(new File(reportPath))) {
+			reportingSettings = (ReportingSettings) ur.unmarshal(fis);
+		}
+		return reportingSettings;
+	}
+
+	public DocumentBursterConnectionEmailSettings loadSettingsConnectionEmail(String connectionCode) throws Exception {
+
+		String connectionFilePath = Paths.get(PORTABLE_EXECUTABLE_DIR_PATH, connectionCode).normalize().toString();
+
+		JAXBContext jcr = JAXBContext.newInstance(DocumentBursterConnectionEmailSettings.class);
 
 		Unmarshaller ur = jcr.createUnmarshaller();
 
-		try (FileInputStream fis = new FileInputStream(new File(connectionConfigFilePath))) {
-			connectionSettings = (DocumentBursterConnectionSettings) ur.unmarshal(fis);
+		try (FileInputStream fis = new FileInputStream(new File(connectionFilePath))) {
+			connectionEmailSettings = (DocumentBursterConnectionEmailSettings) ur.unmarshal(fis);
 		}
+
+		return connectionEmailSettings;
+	}
+
+	public DocumentBursterConnectionDatabaseSettings loadSettingsConnectionDatabase(String connectionCode)
+			throws Exception {
+
+		String connectionConfigFilePath = Paths
+				.get(PORTABLE_EXECUTABLE_DIR_PATH, "config/connections", connectionCode, connectionCode + ".xml")
+				.normalize().toString();
+
+		return this.loadSettingsConnectionDatabaseByPath(connectionConfigFilePath);
+
+	}
+
+	public DocumentBursterConnectionDatabaseSettings loadSettingsConnectionDatabaseByPath(String connectionFilePath)
+			throws Exception {
+		// System.out.println("loadSettingsConnection connectionConfigFilePath = " +
+		// connectionConfigFilePath);
+
+		JAXBContext jcr = JAXBContext.newInstance(DocumentBursterConnectionDatabaseSettings.class);
+
+		Unmarshaller ur = jcr.createUnmarshaller();
+		DocumentBursterConnectionDatabaseSettings connDatabaseSettings;
+		try (FileInputStream fis = new FileInputStream(new File(connectionFilePath))) {
+			connDatabaseSettings = (DocumentBursterConnectionDatabaseSettings) ur.unmarshal(fis);
+		}
+
+		return connDatabaseSettings;
 	}
 
 	private void _sortAttachments() {
@@ -160,12 +273,24 @@ public class Settings extends DumpToString {
 		return reportingSettings.report.datasource;
 	}
 
+	public String getReportFolderNameId() {
+
+		if (!this.getCapabilities().reportgenerationmailmerge)
+			return StringUtils.EMPTY;
+
+		return this.getTemplateName().toLowerCase();
+	}
+
 	public ReportSettings.Template getReportTemplate() {
 		return reportingSettings.report.template;
 	}
-	
+
 	public String getConfigurationFilePath() {
 		return this.configurationFilePath;
+	}
+
+	public String setConfigurationFilePath(String configurationFilePath) {
+		return this.configurationFilePath = configurationFilePath;
 	}
 
 	public Capabilities getCapabilities() {
@@ -592,6 +717,14 @@ public class Settings extends DumpToString {
 
 	public void setStartBurstTokenDelimiter(String startDelimiter) {
 		docSettings.settings.bursttokendelimiters.start = startDelimiter;
+	}
+
+	public boolean getDumpRecordDataAsXml() {
+		return docSettings.settings.dumprecorddataasxml;
+	}
+
+	public void setDumpRecordDataAsXml(boolean dumprecorddataasxml) {
+		docSettings.settings.dumprecorddataasxml = dumprecorddataasxml;
 	}
 
 	public void setEndBurstTokenDelimiter(String endDelimiter) {

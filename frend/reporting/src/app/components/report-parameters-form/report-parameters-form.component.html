@@ -1,0 +1,112 @@
+<form
+  *ngIf="form && parameters"
+  [formGroup]="form"
+  class="report-parameters-form"
+  style="display: flex; flex-direction: column; gap: 1rem"
+>
+  <div *ngFor="let p of parameters" class="form-group">
+    <label [for]="p.id">{{ p.label || p.id }}</label>
+
+    <ng-container [ngSwitch]="getControlType(p)">
+      <!-- DATE -->
+      <input
+        *ngSwitchCase="'date'"
+        type="date"
+        [formControlName]="p.id"
+        [id]="p.id"
+        [attr.min]="resolveMin(p)"
+        [attr.max]="resolveMax(p)"
+        [title]="p.description"
+        class="form-control"
+      />
+
+      <!-- DATETIME -->
+      <input
+        *ngSwitchCase="'datetime'"
+        type="datetime-local"
+        [formControlName]="p.id"
+        [id]="p.id"
+        [attr.min]="resolveMin(p)"
+        [attr.max]="resolveMax(p)"
+        [title]="p.description"
+        class="form-control"
+      />
+
+      <!-- INTEGER -->
+      <input
+        *ngSwitchCase="'integer'"
+        type="number"
+        [formControlName]="p.id"
+        [id]="p.id"
+        step="1"
+        [attr.min]="resolveMin(p)"
+        [attr.max]="resolveMax(p)"
+        [title]="p.description"
+        class="form-control"
+      />
+
+      <!-- DECIMAL -->
+      <input
+        *ngSwitchCase="'decimal'"
+        type="number"
+        [formControlName]="p.id"
+        [id]="p.id"
+        step="any"
+        [attr.min]="resolveMin(p)"
+        [attr.max]="resolveMax(p)"
+        [title]="p.description"
+        class="form-control"
+      />
+
+      <!-- BOOLEAN -->
+      <input
+        *ngSwitchCase="'boolean'"
+        type="checkbox"
+        [formControlName]="p.id"
+        [id]="p.id"
+        [title]="p.description"
+      />
+
+      <!-- SELECT -->
+      <select
+        *ngSwitchCase="'select'"
+        [formControlName]="p.id"
+        [id]="p.id"
+        [title]="p.description"
+        class="form-control"
+      >
+        <option *ngFor="let o of loadOptions(p)" [ngValue]="o.value">
+          {{ o.label }}
+        </option>
+      </select>
+
+      <!-- TEXT DEFAULT -->
+      <input
+        *ngSwitchDefault
+        type="text"
+        [formControlName]="p.id"
+        [id]="p.id"
+        [title]="p.description"
+        class="form-control"
+      />
+    </ng-container>
+
+    <div
+      *ngIf="form.get(p.id)?.invalid && form.get(p.id)?.touched"
+      class="text-danger"
+    >
+      <div *ngIf="form.get(p.id)?.hasError('required')">
+        {{ p.label || p.id }} is required.
+      </div>
+      <div *ngIf="form.get(p.id)?.hasError('min')">
+        Minimum: {{ displayConstraint(p, "min") }}
+      </div>
+      <div *ngIf="form.get(p.id)?.hasError('max')">
+        Maximum: {{ displayConstraint(p, "max") }}
+      </div>
+      <div *ngIf="form.get(p.id)?.hasError('pattern')">
+        Pattern: {{ p.constraints?.pattern }}
+      </div>
+    </div>
+  </div>
+</form>

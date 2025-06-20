@@ -1,0 +1,79 @@
+<div id="{{ picklistId }}" class="p-picklist p-component">
+  <!-- Source Tree -->
+  <div class="p-picklist-list-container p-picklist-source-list-container">
+    <div class="p-picklist-header">
+      {{ sourceHeader }} ({{ sourceItems?.length }})
+    </div>
+    <dburst-tree
+      [treeId]="'sourceTree' + picklistId"
+      [value]="sourceItems"
+      selectionMode="checkbox"
+      [(selection)]="selectedSourceNodes"
+      [filter]="true"
+      [filterPlaceholder]="sourceFilterPlaceholder"
+      [propagateSelectionUp]="false"
+      [propagateSelectionDown]="false"
+      style="height: 200px; display: block"
+    ></dburst-tree>
+  </div>
+  <!-- Transfer Buttons -->
+  <div class="p-picklist-controls p-picklist-transfer-controls">
+    <button
+      id="btnMoveToTarget{{ picklistId }}"
+      type="button"
+      class="p-button p-button-icon-only"
+      aria-label="Move to Target"
+      (click)="moveToTarget()"
+      [disabled]="!selectedSourceNodes?.length"
+    >
+      <span class="pi pi-angle-right"></span>
+    </button>
+    <button
+      id="btnMoveAllToTarget{{ picklistId }}"
+      type="button"
+      class="p-button p-button-icon-only"
+      aria-label="Move All to Target"
+      (click)="moveAllToTarget()"
+      [disabled]="!sourceItems?.length"
+    >
+      <span class="pi pi-angle-double-right"></span>
+    </button>
+    <button
+      id="btnMoveAllToSource{{ picklistId }}"
+      type="button"
+      class="p-button p-button-icon-only"
+      aria-label="Move All to Source"
+      (click)="moveAllToSource()"
+      [disabled]="!targetItems?.length"
+    >
+      <span class="pi pi-angle-double-left"></span>
+    </button>
+    <button
+      id="btnMoveToSource{{ picklistId }}"
+      type="button"
+      class="p-button p-button-icon-only"
+      aria-label="Move to Source"
+      (click)="moveToSource()"
+      [disabled]="!selectedTargetNodes?.length"
+    >
+      <span class="pi pi-angle-left"></span>
+    </button>
+  </div>
+  <!-- Target Tree -->
+  <div class="p-picklist-list-container p-picklist-target-list-container">
+    <div class="p-picklist-header">
+      {{ targetHeader }} ({{ targetItems?.length }})
+    </div>
+    <dburst-tree
+      [treeId]="'targetTree' + picklistId"
+      [value]="targetItems"
+      selectionMode="checkbox"
+      [(selection)]="selectedTargetNodes"
+      [filter]="true"
+      [filterPlaceholder]="targetFilterPlaceholder"
+      [propagateSelectionUp]="false"
+      [propagateSelectionDown]="false"
+      style="height: 304px; display: block"
+    ></dburst-tree>
+  </div>
+</div>
