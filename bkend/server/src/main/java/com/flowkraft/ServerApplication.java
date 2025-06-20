@@ -7,16 +7,13 @@ import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 //import com.flowkraft.jobson.config.ApplicationConfig;
 
 @SpringBootApplication
 @EnableScheduling
-@ComponentScan(basePackages = "com.flowkraft", excludeFilters = {
-		@ComponentScan.Filter(type = FilterType.REGEX, pattern = "com\\.flowkraft\\.jobson\\..*"),
-		@ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = com.flowkraft.CommandLineHandler.class) })
+@ComponentScan(basePackages = "com.flowkraft")
 public class ServerApplication implements ExitCodeGenerator {
 
 	private static int exitCode;
