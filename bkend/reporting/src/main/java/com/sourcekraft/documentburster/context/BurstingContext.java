@@ -16,14 +16,18 @@ package com.sourcekraft.documentburster.context;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.sourcekraft.documentburster.scripting.Scripts;
+import com.sourcekraft.documentburster.utils.DatabaseConnectionManager;
+import com.sourcekraft.documentburster.utils.SqlExecutor;
 import com.sourcekraft.documentburster.common.settings.EmailConnection;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.utils.DumpToString;
 import com.sourcekraft.documentburster.variables.Variables;
+import groovy.sql.Sql;
 
 /*
  * 
@@ -44,13 +48,19 @@ public class BurstingContext extends DumpToString {
 
 	public List<String> burstTokens;
 
+	public List<LinkedHashMap<String, Object>> reportData;
+	public List<String> reportColumnNames;
+
 	public String configurationFilePath;
 
 	public String inputDocumentFilePath;
 
+	public DatabaseConnectionManager dbManager;
+	public SqlExecutor sql;
+
 	public Settings settings;
 	public EmailConnection emailConnection;
-	
+
 	public Variables variables;
 	public Scripts scripts;
 
@@ -64,14 +74,14 @@ public class BurstingContext extends DumpToString {
 	public String quarantineFolder;
 
 	public String tempFolder = "temp";
-	
+
 	public String logsFolder;
 	public String logsArchivesFolder;
 
 	public String token;
-	
+
 	public String extractedFilePath;
-	
+
 	public Map<String, String> extractedFilePaths = new HashMap<String, String>();;
 	public Map<String, String> extractedFilePathsAfterSplitting2ndTime = new HashMap<String, String>();;
 
@@ -80,7 +90,7 @@ public class BurstingContext extends DumpToString {
 	public int numberOfExtractedFiles = 0;
 	public int numberOfDistributedFiles = 0;
 	public int numberOfMessagesSent = 0;
-	
+
 	public int numberOfSkippedFiles = 0;
 	public int numberOfQuarantinedFiles = 0;
 
@@ -96,206 +106,136 @@ public class BurstingContext extends DumpToString {
 	public boolean isQARunningMode = false;
 	public String testName;
 
+	// Transient Groovy Sql instance provided to scripts when conncode is specified
+	public transient Sql dbSql;
+
 	/*
-	public List<String> getBurstTokens() {
-		return burstTokens;
-	}
-
-	public void setBurstTokens(List<String> burstTokens) {
-		this.burstTokens = burstTokens;
-	}
-
-	public String getConfigurationFilePath() {
-		return configurationFilePath;
-	}
-
-	public void setConfigurationFilePath(String configurationFilePath) {
-		this.configurationFilePath = configurationFilePath;
-	}
-
-	public String getInputDocumentFilePath() {
-		return inputDocumentFilePath;
-	}
-
-	public void setInputDocumentFilePath(String inputDocumentFilePath) {
-		this.inputDocumentFilePath = inputDocumentFilePath;
-	}
-
-	public int getNumberOfPages() {
-		return numberOfPages;
-	}
-
-	public void setNumberOfPages(int numberOfPages) {
-		this.numberOfPages = numberOfPages;
-	}
-
-	public Settings getSettings() {
-		return settings;
-	}
-
-	public void setSettings(Settings settings) {
-		this.settings = settings;
-	}
-
-	public Variables getVariables() {
-		return variables;
-	}
-
-	public void setVariables(Variables variables) {
-		this.variables = variables;
-	}
-
-	public Scripts getScripts() {
-		return scripts;
-	}
-
-	public void setScripts(Scripts scripts) {
-		this.scripts = scripts;
-	}
-
-	public int getCurrentPageIndex() {
-		return currentPageIndex;
-	}
-
-	public void setCurrentPageIndex(int currentPageIndex) {
-		this.currentPageIndex = currentPageIndex;
-	}
-
-	public String getCurrentPageText() {
-		return currentPageText;
-	}
-
-	public void setCurrentPageText(String currentPageText) {
-		this.currentPageText = currentPageText;
-	}
-
-	public String getPreviousPageText() {
-		return previousPageText;
-	}
-
-	public void setPreviousPageText(String previousPageText) {
-		this.previousPageText = previousPageText;
-	}
-
-	public String getOutputFolder() {
-		return outputFolder;
-	}
-
-	public void setOutputFolder(String outputFolder) {
-		this.outputFolder = outputFolder;
-	}
-
-	public String getBackupFolder() {
-		return backupFolder;
-	}
-
-	public void setBackupFolder(String backupFolder) {
-		this.backupFolder = backupFolder;
-	}
-
-	public String getQuarantineFolder() {
-		return quarantineFolder;
-	}
-
-	public void setQuarantineFolder(String quarantineFolder) {
-		this.quarantineFolder = quarantineFolder;
-	}
-
-	public String getToken() {
-		return token;
-	}
-
-	public void setToken(String token) {
-		this.token = token;
-	}
-
-	public String getExtractedFilePath() {
-		return extractedFilePath;
-	}
-
-	public void setExtractedFilePath(String extractedFilePath) {
-		this.extractedFilePath = extractedFilePath;
-	}
-
-	public Map<String, String> getExtractedFilePaths() {
-		return extractedFilePaths;
-	}
-
-	public void setExtractedFilePaths(Map<String, String> extractedFilePaths) {
-		this.extractedFilePaths = extractedFilePaths;
-	}
-
-	public boolean isSkipCurrentFileDistribution() {
-		return skipCurrentFileDistribution;
-	}
-
-	public void setSkipCurrentFileDistribution(boolean skipCurrentFileDistribution) {
-		this.skipCurrentFileDistribution = skipCurrentFileDistribution;
-	}
-
-	public Object getAdditionalInformation() {
-		return additionalInformation;
-	}
-
-	public void setAdditionalInformation(Object additionalInformation) {
-		this.additionalInformation = additionalInformation;
-	}
-
-	public int getNumberOfExtractedFiles() {
-		return numberOfExtractedFiles;
-	}
-
-	public void setNumberOfExtractedFiles(int numberOfExtractedFiles) {
-		this.numberOfExtractedFiles = numberOfExtractedFiles;
-	}
-
-	public int getNumberOfDistributedFiles() {
-		return numberOfDistributedFiles;
-	}
-
-	public void setNumberOfDistributedFiles(int numberOfDistributedFiles) {
-		this.numberOfDistributedFiles = numberOfDistributedFiles;
-	}
-
-	public int getNumberOfSkippedFiles() {
-		return numberOfSkippedFiles;
-	}
-
-	public void setNumberOfSkippedFiles(int numberOfSkippedFiles) {
-		this.numberOfSkippedFiles = numberOfSkippedFiles;
-	}
-
-	public int getNumberOfQuarantinedFiles() {
-		return numberOfQuarantinedFiles;
-	}
-
-	public void setNumberOfQuarantinedFiles(int numberOfQuarantinedFiles) {
-		this.numberOfQuarantinedFiles = numberOfQuarantinedFiles;
-	}
-
-	public List<String> getAttachments() {
-		return attachments;
-	}
-
-	public void setAttachments(List<String> attachments) {
-		this.attachments = attachments;
-	}
-
-	public String getArchiveFilePath() {
-		return archiveFilePath;
-	}
-
-	public void setArchiveFilePath(String archiveFilePath) {
-		this.archiveFilePath = archiveFilePath;
-	}
+	 * public List<String> getBurstTokens() { return burstTokens; }
+	 * 
+	 * public void setBurstTokens(List<String> burstTokens) { this.burstTokens =
+	 * burstTokens; }
+	 * 
+	 * public String getConfigurationFilePath() { return configurationFilePath; }
+	 * 
+	 * public void setConfigurationFilePath(String configurationFilePath) {
+	 * this.configurationFilePath = configurationFilePath; }
+	 * 
+	 * public String getInputDocumentFilePath() { return inputDocumentFilePath; }
+	 * 
+	 * public void setInputDocumentFilePath(String inputDocumentFilePath) {
+	 * this.inputDocumentFilePath = inputDocumentFilePath; }
+	 * 
+	 * public int getNumberOfPages() { return numberOfPages; }
+	 * 
+	 * public void setNumberOfPages(int numberOfPages) { this.numberOfPages =
+	 * numberOfPages; }
+	 * 
+	 * public Settings getSettings() { return settings; }
+	 * 
+	 * public void setSettings(Settings settings) { this.settings = settings; }
+	 * 
+	 * public Variables getVariables() { return variables; }
+	 * 
+	 * public void setVariables(Variables variables) { this.variables = variables; }
+	 * 
+	 * public Scripts getScripts() { return scripts; }
+	 * 
+	 * public void setScripts(Scripts scripts) { this.scripts = scripts; }
+	 * 
+	 * public int getCurrentPageIndex() { return currentPageIndex; }
+	 * 
+	 * public void setCurrentPageIndex(int currentPageIndex) { this.currentPageIndex
+	 * = currentPageIndex; }
+	 * 
+	 * public String getCurrentPageText() { return currentPageText; }
+	 * 
+	 * public void setCurrentPageText(String currentPageText) { this.currentPageText
+	 * = currentPageText; }
+	 * 
+	 * public String getPreviousPageText() { return previousPageText; }
+	 * 
+	 * public void setPreviousPageText(String previousPageText) {
+	 * this.previousPageText = previousPageText; }
+	 * 
+	 * public String getOutputFolder() { return outputFolder; }
+	 * 
+	 * public void setOutputFolder(String outputFolder) { this.outputFolder =
+	 * outputFolder; }
+	 * 
+	 * public String getBackupFolder() { return backupFolder; }
+	 * 
+	 * public void setBackupFolder(String backupFolder) { this.backupFolder =
+	 * backupFolder; }
+	 * 
+	 * public String getQuarantineFolder() { return quarantineFolder; }
+	 * 
+	 * public void setQuarantineFolder(String quarantineFolder) {
+	 * this.quarantineFolder = quarantineFolder; }
+	 * 
+	 * public String getToken() { return token; }
+	 * 
+	 * public void setToken(String token) { this.token = token; }
+	 * 
+	 * public String getExtractedFilePath() { return extractedFilePath; }
+	 * 
+	 * public void setExtractedFilePath(String extractedFilePath) {
+	 * this.extractedFilePath = extractedFilePath; }
+	 * 
+	 * public Map<String, String> getExtractedFilePaths() { return
+	 * extractedFilePaths; }
+	 * 
+	 * public void setExtractedFilePaths(Map<String, String> extractedFilePaths) {
+	 * this.extractedFilePaths = extractedFilePaths; }
+	 * 
+	 * public boolean isSkipCurrentFileDistribution() { return
+	 * skipCurrentFileDistribution; }
+	 * 
+	 * public void setSkipCurrentFileDistribution(boolean
+	 * skipCurrentFileDistribution) { this.skipCurrentFileDistribution =
+	 * skipCurrentFileDistribution; }
+	 * 
+	 * public Object getAdditionalInformation() { return additionalInformation; }
+	 * 
+	 * public void setAdditionalInformation(Object additionalInformation) {
+	 * this.additionalInformation = additionalInformation; }
+	 * 
+	 * public int getNumberOfExtractedFiles() { return numberOfExtractedFiles; }
+	 * 
+	 * public void setNumberOfExtractedFiles(int numberOfExtractedFiles) {
+	 * this.numberOfExtractedFiles = numberOfExtractedFiles; }
+	 * 
+	 * public int getNumberOfDistributedFiles() { return numberOfDistributedFiles; }
+	 * 
+	 * public void setNumberOfDistributedFiles(int numberOfDistributedFiles) {
+	 * this.numberOfDistributedFiles = numberOfDistributedFiles; }
+	 * 
+	 * public int getNumberOfSkippedFiles() { return numberOfSkippedFiles; }
+	 * 
+	 * public void setNumberOfSkippedFiles(int numberOfSkippedFiles) {
+	 * this.numberOfSkippedFiles = numberOfSkippedFiles; }
+	 * 
+	 * public int getNumberOfQuarantinedFiles() { return numberOfQuarantinedFiles; }
+	 * 
+	 * public void setNumberOfQuarantinedFiles(int numberOfQuarantinedFiles) {
+	 * this.numberOfQuarantinedFiles = numberOfQuarantinedFiles; }
+	 * 
+	 * public List<String> getAttachments() { return attachments; }
+	 * 
+	 * public void setAttachments(List<String> attachments) { this.attachments =
+	 * attachments; }
+	 * 
+	 * public String getArchiveFilePath() { return archiveFilePath; }
+	 * 
+	 * public void setArchiveFilePath(String archiveFilePath) { this.archiveFilePath
+	 * = archiveFilePath; }
 	 */
-	
+
 	public Exception getLastException() {
 		return lastException;
 	}
-	
+
 	public void setLastException(Exception lastException) {
 		this.lastException = lastException;
 	}
-	
+
 }

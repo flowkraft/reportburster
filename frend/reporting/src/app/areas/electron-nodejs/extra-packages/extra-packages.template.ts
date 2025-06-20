@@ -22,16 +22,33 @@ export const extraPackagesTemplate = `<!-- <ng-template #extraPackagesTemplate> 
       </div>
 
       <div id="package-{{extraPackage.id}}" class="panel-body">
-        <a href="{{extraPackage.website}}" target="_blank"
-          ><img src="assets/images/{{extraPackage.icon}}" height="48" />
-          {{extraPackage.name}}</a
-        >
+        <a href="{{extraPackage.website}}" target="_blank">
+          <img *ngIf="extraPackage.icon && extraPackage.icon.length > 0" src="assets/images/{{extraPackage.icon}}" height="48" />
+          {{extraPackage.name}}
+        </a>
         {{extraPackage.description}}
-        <br/><br/>{{ 'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.EXTRA-PACKAGES.COMMANDS.INSTALL' | translate }}:&nbsp;<em><strong>{{extraPackage.cmdInstall}}</strong></em>
-        <br/>{{ 'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.EXTRA-PACKAGES.COMMANDS.UNINSTALL' | translate }}:&nbsp;<em><strong>{{extraPackage.cmdUnInstall}}</strong></em>
-        <br/>{{ 'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.EXTRA-PACKAGES.COMMANDS.GET-INFO' | translate }}:&nbsp;<em><strong>{{extraPackage.cmdGetInfo}}</strong></em>
+        
+        <!-- Show dependency information if it exists -->
+        <div *ngIf="extraPackage.dependsOn && extraPackage.dependsOn.length > 0">
+          <br/>Depends on: <em><strong>{{extraPackage.dependsOn}}</strong></em>
+        </div>
+        
+        <!-- Only show commands if they exist -->
+        <div *ngIf="extraPackage.cmdInstall && extraPackage.cmdInstall.length > 0">
+          <br/>{{ 'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.EXTRA-PACKAGES.COMMANDS.INSTALL' | translate }}:&nbsp;<em><strong>{{extraPackage.cmdInstall}}</strong></em>
+        </div>
+        
+        <div *ngIf="extraPackage.cmdUnInstall && extraPackage.cmdUnInstall.length > 0">
+          <br/>{{ 'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.EXTRA-PACKAGES.COMMANDS.UNINSTALL' | translate }}:&nbsp;<em><strong>{{extraPackage.cmdUnInstall}}</strong></em>
+        </div>
+        
+        <div *ngIf="extraPackage.cmdGetInfo && extraPackage.cmdGetInfo.length > 0">
+          <br/>{{ 'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.EXTRA-PACKAGES.COMMANDS.GET-INFO' | translate }}:&nbsp;<em><strong>{{extraPackage.cmdGetInfo}}</strong></em>
+        </div>
+        
         <br />
       </div>
+      
     </div>
   </div>
   <!--  </ng-template>-->`;

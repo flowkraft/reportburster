@@ -445,6 +445,10 @@ async function _getSystemInfo(): Promise<{
     isJavaOk: boolean;
     version: string;
   };
+  docker: {
+    isDockerOk: boolean;
+    version: string;
+  };
   env: {
     PATH: string;
     JAVA_HOME: string;
@@ -452,6 +456,7 @@ async function _getSystemInfo(): Promise<{
   };
 }> {
   let javaIsInstalled = true;
+  let dockerIsInstalled = true;
   let chocoIsInstalled = true;
 
   const electronLogFileContent = await fs.promises.readFile(
@@ -475,17 +480,30 @@ async function _getSystemInfo(): Promise<{
     chocoIsInstalled = false;
   }
 
+  if (electronLogFileContent.includes("'docker' is not recognized")) {
+    dockerIsInstalled = false;
+  }
+
   if (rbsjExeLogFileContent.includes("'java' is not recognized")) {
     javaIsInstalled = false;
   }
 
   // Extract Chocolatey version
   let chocoVersion = '';
+  let dockerVersion = '';
 
   let firstLineElectronLogFileContent = electronLogFileContent.split('\n')[0];
+  let secondLineElectronLogFileContent = electronLogFileContent.split('\n')[1];
 
   if (chocoIsInstalled) {
     chocoVersion = firstLineElectronLogFileContent.trim();
+  }
+
+  if (dockerIsInstalled) {
+    const dockerVersionMatch = secondLineElectronLogFileContent.match(
+      /Docker version ([\d\.]+)/,
+    );
+    dockerVersion = dockerVersionMatch ? dockerVersionMatch[1] : '';
   }
 
   // Extract Java version
@@ -500,6 +518,10 @@ async function _getSystemInfo(): Promise<{
     java: {
       isJavaOk: javaIsInstalled && parseInt(javaVersion.split('.')[0]) >= 11,
       version: javaVersion,
+    },
+    docker: {
+      isDockerOk: dockerIsInstalled,
+      version: dockerVersion,
     },
     env: {
       PATH: process.env.PATH || '',

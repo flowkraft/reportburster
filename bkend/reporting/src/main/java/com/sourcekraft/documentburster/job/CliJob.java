@@ -16,15 +16,27 @@ package com.sourcekraft.documentburster.job;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.GlobalContext;
+import com.sourcekraft.documentburster.common.db.DatabaseConnectionTester;
+import com.sourcekraft.documentburster.common.db.DatabaseSchemaFetcher;
+import com.sourcekraft.documentburster.common.db.schema.SchemaInfo;
+import com.sourcekraft.documentburster.common.settings.EmailConnection;
+import com.sourcekraft.documentburster.common.settings.NewFeatureRequest;
+import com.sourcekraft.documentburster.common.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
+import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
-import com.sourcekraft.documentburster.engine.AbstractReporter;
 import com.sourcekraft.documentburster.engine.BursterFactory;
 import com.sourcekraft.documentburster.engine.pdf.Merger;
 import com.sourcekraft.documentburster.job.model.JobDetails;
@@ -35,9 +47,6 @@ import com.sourcekraft.documentburster.sender.factory.EmailMessageFactory;
 import com.sourcekraft.documentburster.sender.factory.SmsMessageFactory;
 import com.sourcekraft.documentburster.sender.model.EmailMessage;
 import com.sourcekraft.documentburster.sender.model.SmsMessage;
-import com.sourcekraft.documentburster.common.settings.EmailConnection;
-import com.sourcekraft.documentburster.common.settings.NewFeatureRequest;
-import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.utils.LicenseUtils;
 import com.sourcekraft.documentburster.utils.Utils;
 
@@ -45,10 +54,13 @@ public class CliJob {
 
 	private static Logger log = LoggerFactory.getLogger(CliJob.class);
 
-	private Settings settings = new Settings();
+	private Map<String, Object> parameters = new HashMap<>();
+
 	private LicenseUtils licenseUtils = new LicenseUtils();
 
 	public String configurationFilePath;
+
+	private Settings settings;
 
 	private String jobProgressFilePath;
 	private String jobFilePath;
@@ -66,14 +78,20 @@ public class CliJob {
 		this.global = global;
 	}
 
+	public void setParameters(Map<String, Object> parameters) {
+		this.parameters = parameters;
+	}
+
 	public CliJob(String configFilePath) {
 
 		log.debug("configurationFilePath = " + configFilePath);
 
-		if (configFilePath != null)
+		if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(Paths.get(configFilePath)))))
 			this.configurationFilePath = configFilePath;
 		else
 			this.configurationFilePath = "./config/burst/settings.xml";
+
+		settings = new Settings(configurationFilePath);
 
 	}
 
@@ -105,7 +123,8 @@ public class CliJob {
 			message = (new EmailMessageFactory()).createCheckEmailMessageFromConnection(emailConnection);
 
 		} else {
-			settings.loadSettings(configurationFilePath);
+			settings.setConfigurationFilePath(configurationFilePath);
+			settings.loadSettings();
 
 			message = (new EmailMessageFactory()).createCheckEmailMessageFromSettings(settings);
 
@@ -162,8 +181,7 @@ public class CliJob {
 				}
 
 			} else
-				throw new FileNotFoundException(
-						"'Request New Feature' XML file does not exist: " + newFeatureRequestFilePath);
+				throw new Exception("'Request New Feature' XML file does not exist: " + newFeatureRequestFilePath);
 
 		}
 
@@ -184,6 +202,7 @@ public class CliJob {
 			jobFile = _createJobFile(jobProgressDetails.filepath, jobProgressDetails.jobtype);
 
 			this.configurationFilePath = jobProgressDetails.configurationFilePath;
+			this.jobType = jobProgressDetails.jobtype;
 
 			AbstractBurster burster = getBurster(jobProgressDetails.filepath);
 
@@ -295,7 +314,8 @@ public class CliJob {
 
 	protected Merger getMerger() throws Exception {
 
-		settings.loadSettings(configurationFilePath);
+		settings.setConfigurationFilePath(configurationFilePath);
+		settings.loadSettings();
 		return new Merger(settings);
 
 	}
@@ -377,7 +397,8 @@ public class CliJob {
 
 		log.debug("doCheckTwilio(String from, String to) : from = " + from + ", to = " + to);
 
-		settings.loadSettings(configurationFilePath);
+		settings.setConfigurationFilePath(configurationFilePath);
+		settings.loadSettings();
 
 		SmsMessage message = (new SmsMessageFactory()).createCheckSmsMessage(from, to);
 		message.twilio = settings.getSmsSettings().twilio;
@@ -390,6 +411,91 @@ public class CliJob {
 		} finally {
 			if ((jobFile != null) && (jobFile.exists()))
 				jobFile.delete();
+		}
+
+	}
+
+	public void doTestSqlQuery(String sqlQuery, String dbConnectionCode, Map<String, Object> parameters)
+			throws Exception {
+		// Use parameters when executing the query
+	}
+
+	public void doTestAndFetchDatabaseSchema(String connectionFilePath) throws Exception {
+		log.info("Starting database connection test and schema fetch for: {}", connectionFilePath);
+
+		File connectionFile = new File(connectionFilePath);
+		if (!connectionFile.exists() || !connectionFile.isFile()) {
+			// This check is redundant if MainProgram already did it, but good practice.
+			throw new FileNotFoundException("Connection file not found or is not a file: " + connectionFilePath);
+		}
+
+		// Determine a job name based on the connection file for the temp job file
+		String jobName = connectionFile.getName();
+		File jobFile = null; // Declare outside try
+
+		try {
+			// Create the temporary job file to signal work is in progress
+			// Using connectionFilePath as the "target" for context, and jobName for type/id
+			jobFile = _createJobFile(connectionFilePath, "test-and-fetch-database-schema-" + jobName);
+			log.debug("Created job file: {}", jobFilePath);
+
+			// --- Core Logic ---
+
+			Settings settings = new Settings(StringUtils.EMPTY);
+
+			// 1. Load connection settings directly using JAXB (similar to doCheckEmail
+			// pattern)
+			DocumentBursterConnectionDatabaseSettings dbSettings = settings
+					.loadSettingsConnectionDatabaseByPath(connectionFilePath);
+
+			ServerDatabaseSettings serverSettings = dbSettings.connection.databaseserver;
+
+			// 2. Test Connection
+			DatabaseConnectionTester tester = new DatabaseConnectionTester();
+			log.info("Attempting to test database connection...");
+			tester.testConnection(serverSettings);
+			log.info("Database connection test successful.");
+
+			// 3. Fetch Schema
+			DatabaseSchemaFetcher fetcher = new DatabaseSchemaFetcher();
+			SchemaInfo schemaInfo;
+			log.info("Attempting to fetch database schema...");
+			schemaInfo = fetcher.fetchSchema(serverSettings);
+			log.info("Successfully fetched database schema.");
+
+			// 4. Determine Output Path and Save Schema
+			String outputJsonPath;
+			Path inputPath = connectionFile.toPath();
+			Path parentDir = inputPath.getParent();
+			if (parentDir == null) {
+				throw new Exception("Cannot determine parent directory for connection file.");
+			}
+			String baseName = connectionFile.getName();
+			if (baseName.toLowerCase().endsWith(".xml")) {
+				baseName = baseName.substring(0, baseName.length() - 4);
+			}
+			// Convention: <connection-code>-information-schema.json
+			String outputFileName = baseName + "-information-schema.json";
+			outputJsonPath = parentDir.resolve(outputFileName).toString();
+			log.debug("Determined output schema JSON path: {}", outputJsonPath);
+
+			log.info("Attempting to save schema to JSON file: {}", outputJsonPath);
+			fetcher.saveSchemaToJson(schemaInfo, outputJsonPath);
+			log.info("Successfully saved schema to: {}", outputJsonPath);
+
+			log.info("Database connection test and schema fetch completed successfully for: {}", connectionFilePath);
+			// --- End Core Logic ---
+
+		} finally {
+			// Ensure the temporary job file is deleted regardless of success or failure
+
+			// System.out.println("jobFile.getAbsolutePath(): " +
+			// jobFile.getAbsolutePath());
+
+			if ((jobFile != null) && (jobFile.exists())) {
+				log.debug("Deleting job file: {}", jobFile.getAbsolutePath());
+				jobFile.delete();
+			}
 		}
 
 	}

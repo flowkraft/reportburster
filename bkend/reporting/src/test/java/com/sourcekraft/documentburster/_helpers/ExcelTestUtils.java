@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -15,6 +16,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.DataValidation;
 import org.apache.poi.ss.usermodel.DataValidationConstraint;
 import org.apache.poi.ss.usermodel.DataValidationHelper;
@@ -273,11 +276,11 @@ public class ExcelTestUtils {
 				tableColumns.setCount(4);
 
 				// Add column definitions
-				String[] columnNames = { "Column 1", "Column 2", "Column 3", "Column 4" };
+				String[] reportColumnNames = { "Column 1", "Column 2", "Column 3", "Column 4" };
 				for (int i = 0; i < 4; i++) {
 					CTTableColumn column = tableColumns.addNewTableColumn();
 					column.setId(i + 1);
-					column.setName(columnNames[i]);
+					column.setName(reportColumnNames[i]);
 				}
 			}
 
@@ -363,6 +366,13 @@ public class ExcelTestUtils {
 	 */
 	public static void generateVaryingColumnWidthsExcelFile(String filePath) {
 		try (Workbook workbook = new XSSFWorkbook()) {
+			
+			// --- Create Date Style ---
+            CellStyle dateCellStyle = workbook.createCellStyle();
+            CreationHelper createHelper = workbook.getCreationHelper();
+            dateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("MM/dd/yy"));
+            
+            
 			// Create first sheet with 5 columns
 			Sheet sheet1 = workbook.createSheet("Sheet1-5Columns");
 
@@ -380,7 +390,11 @@ public class ExcelTestUtils {
 				row.createCell(0).setCellValue("Sheet1-Row" + i + "-Col1");
 				row.createCell(1).setCellValue("Sheet1-Row" + i + "-Col2");
 				row.createCell(2).setCellValue("Sheet1-Row" + i + "-Col3");
-				row.createCell(3).setCellValue("Sheet1-Row" + i + "-Col4");
+				// --- Set Date Value for Column 4 (index 3) ---
+                Cell dateCell1 = row.createCell(3);
+                dateCell1.setCellValue(new Date()); // Use current date or a specific fixed date
+                dateCell1.setCellStyle(dateCellStyle);
+                // --- End Set Date Value ---
 				row.createCell(4).setCellValue("Sheet1-Data" + i); // Last column has ID value
 			}
 

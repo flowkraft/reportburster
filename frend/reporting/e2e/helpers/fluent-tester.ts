@@ -115,6 +115,24 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  public createFolder(path: string): FluentTester {
+    const action = (): Promise<void> => this.doCreateFolder(path);
+    this.actions.push(action);
+    return this;
+  }
+
+  public copyFile(srcPath: string, destPath: string): FluentTester {
+    const action = (): Promise<void> => this.doCopyFile(srcPath, destPath);
+    this.actions.push(action);
+    return this;
+  }
+
+  public deleteFolder(path: string): FluentTester {
+    const action = (): Promise<void> => this.doDeleteFolder(path);
+    this.actions.push(action);
+    return this;
+  }
+
   public dblClick(selector: string): FluentTester {
     const action = (): Promise<void> => this.doDblClick(selector);
 
@@ -150,6 +168,30 @@ export class FluentTester implements PromiseLike<void> {
   public async getElementTextContent(selector: string): Promise<string> {
     const content = await this.window.locator(selector).textContent();
     return content ? content.trim() : '';
+  }
+
+  public clipboardShouldContainText(text: string): FluentTester {
+    const action = (): Promise<void> => this.doClipboardShouldContainText(text);
+    this.actions.push(action);
+    return this;
+  }
+
+  private async doClipboardShouldContainText(text: string): Promise<void> {
+    try {
+      const clipboardText = await this.window.evaluate(() =>
+        navigator.clipboard.readText(),
+      );
+      // Using Playwright's expect for assertion within the async action
+      expect(clipboardText).toContain(text);
+    } catch (error) {
+      console.error(
+        'Failed to read clipboard text or assertion failed:',
+        error,
+      );
+      throw new Error(
+        `Failed to read clipboard or assert text: ${error.message}`,
+      );
+    }
   }
 
   public consoleLog(message: string): FluentTester {
@@ -220,6 +262,13 @@ export class FluentTester implements PromiseLike<void> {
 
   public pageShouldContainText(text: string): FluentTester {
     const action = (): Promise<void> => this.doCheckPageToContainText(text);
+
+    this.actions.push(action);
+    return this;
+  }
+
+  public pageShouldNotContainText(text: string): FluentTester {
+    const action = (): Promise<void> => this.doCheckPageNotToContainText(text);
 
     this.actions.push(action);
     return this;
@@ -1244,6 +1293,18 @@ export class FluentTester implements PromiseLike<void> {
     return jetpack.moveAsync(srcPath, destPath);
   }
 
+  private async doCreateFolder(path: string): Promise<void> {
+    await jetpack.dirAsync(path);
+  }
+
+  private async doCopyFile(srcPath: string, destPath: string): Promise<void> {
+    await jetpack.copyAsync(srcPath, destPath, { overwrite: true });
+  }
+
+  private async doDeleteFolder(path: string): Promise<void> {
+    await jetpack.removeAsync(path);
+  }
+
   protected async doHover(selector: string): Promise<void> {
     this.focusedElement = this.window.locator(selector);
     return this.focusedElement.hover();
@@ -1327,6 +1388,10 @@ export class FluentTester implements PromiseLike<void> {
 
   private async doCheckPageToContainText(text: string): Promise<void> {
     return expect(this.window.getByText(text) !== undefined).toBeTruthy();
+  }
+
+  private async doCheckPageNotToContainText(text: string): Promise<void> {
+    return expect(this.window.getByText(text) !== undefined).toBeFalsy();
   }
 
   private async doWaitOnElementToHaveCount(
@@ -1416,25 +1481,68 @@ export class FluentTester implements PromiseLike<void> {
   }
 
   private async doCheckCodeJarContainsText(
-    selector: string,
-    text: string,
+    selector: string, // This is the main CodeJar container, e.g., '#sqlQueryEditor'
+    expectedText: string,
   ): Promise<void> {
-    // Find the code content inside the codejar component
-    const content = await this.window.evaluate((sel) => {
-      const element = document.querySelector(sel);
-      if (!element) return '';
-      // Get text from all pre/code elements inside
-      return Array.from(element.querySelectorAll('pre, code'))
-        .map((el) => el.textContent)
-        .join('');
-    }, selector);
+    //const codeJarContainer = this.window.locator(selector);
+    //await expect(codeJarContainer).toBeVisible({
+    //  timeout: Constants.DELAY_FIVE_THOUSANDS_SECONDS,
+    //});
 
-    return expect(content?.includes(text)).toBeTruthy();
+    // Selector for the actual editable <pre> element within the CodeJar component
+    const editablePreSelector = `${selector} pre[contenteditable=true]`;
+
+    const actualContent = await this.window.evaluate((sel) => {
+      const preElement = document.querySelector(sel) as HTMLPreElement | null;
+      if (!preElement) {
+        return null;
+      }
+      // For an empty editor, textContent should be "" or perhaps "\n" if it contains a single <br>
+      // Using innerText might be slightly more robust for how browsers interpret visible text
+      // but textContent is generally faster. Let's stick with textContent and normalize.
+      //return preElement.textContent || '';
+      return preElement.innerText || '';
+    }, editablePreSelector);
+
+    if (actualContent === null) {
+      throw new Error(
+        `CodeJar editor's editable <pre> element with selector "${editablePreSelector}" was not found.`,
+      );
+    }
+
+    // Normalize newline characters and trim whitespace.
+    // Trimming is important because an "empty" editor might have a newline character.
+    const normalizeAndTrim = (str: string) =>
+      str.replace(/\r\n|\r/g, '\n').trim();
+
+    const normalizedActualContent = normalizeAndTrim(actualContent);
+    const normalizedExpectedText = normalizeAndTrim(expectedText);
+
+    if (normalizedExpectedText === '') {
+      // If expecting an empty string, the normalized content must be exactly empty.
+      expect(normalizedActualContent).toEqual('');
+    } else {
+      // If expecting non-empty text, check if the normalized content includes it.
+      // Using toEqual for non-empty might be too strict if formatting/whitespace within the expected text matters.
+      // Using toContain is generally safer for "contains" checks.
+      // If an exact match is needed for non-empty strings, change toEqual here too.
+      expect(normalizedActualContent).toContain(normalizedExpectedText);
+    }
   }
 
   public setCodeJarContent(selector: string, content: string): FluentTester {
     const action = (): Promise<void> =>
       this.doSetCodeJarContent(selector, content);
+    this.actions.push(action);
+    return this;
+  }
+
+  public setCodeJarContentSingleShot(
+    selector: string,
+    content: string,
+  ): FluentTester {
+    const action = (): Promise<void> =>
+      this.doSetCodeJarContentSingleShot(selector, content);
     this.actions.push(action);
     return this;
   }
@@ -1577,7 +1685,7 @@ export class FluentTester implements PromiseLike<void> {
     // Small delay to allow Angular to process the change
     await this.window.waitForTimeout(500);
 
-    // Explicitly call the component's onTemplateHtmlContentChanged handler
+    // Explicitly call the component's onTemplateContentChanged handler
     await this.window.evaluate((selector) => {
       // Find the configuration component
       const configComponent = document.querySelector('dburst-configuration');
@@ -1599,7 +1707,7 @@ export class FluentTester implements PromiseLike<void> {
           ) {
             if (
               context[i] &&
-              typeof context[i].onTemplateHtmlContentChanged === 'function'
+              typeof context[i].onTemplateContentChanged === 'function'
             ) {
               componentInstance = context[i];
               break;
@@ -1611,7 +1719,7 @@ export class FluentTester implements PromiseLike<void> {
       // Method 2: Try accessing instance directly
       if (
         !componentInstance &&
-        typeof configComponent['onTemplateHtmlContentChanged'] === 'function'
+        typeof configComponent['onTemplateContentChanged'] === 'function'
       ) {
         componentInstance = configComponent;
       }
@@ -1622,16 +1730,16 @@ export class FluentTester implements PromiseLike<void> {
           `${selector} [contenteditable=true]`,
         )?.innerHTML;
         if (editorContent) {
-          componentInstance.onTemplateHtmlContentChanged(editorContent);
+          componentInstance.onTemplateContentChanged(editorContent);
           console.log(
-            'Successfully called onTemplateHtmlContentChanged with content',
+            'Successfully called onTemplateContentChanged with content',
           );
           return true;
         }
       }
 
       console.warn(
-        'Could not find component instance with onTemplateHtmlContentChanged method',
+        'Could not find component instance with onTemplateContentChanged method',
       );
       return false;
     }, selector);

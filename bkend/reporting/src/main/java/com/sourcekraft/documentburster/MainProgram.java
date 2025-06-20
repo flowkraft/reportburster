@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.io.FileUtils;
@@ -103,7 +105,7 @@ public class MainProgram implements Callable<Integer> {
 	// Base command with shared functionality
 	abstract static class BaseCommand {
 		protected CliJob getJob(String configFilePath) throws Exception {
-			if (configFilePath != null) {
+			if (StringUtils.isNotEmpty(configFilePath)) {
 				File file = new File(configFilePath);
 				if (!file.exists()) {
 					throw new FileNotFoundException("Configuration file does not exist: " + configFilePath);
@@ -171,6 +173,10 @@ public class MainProgram implements Callable<Integer> {
 		@Mixin
 		private QaOptions qa;
 
+		@Option(names = { "-p",
+				"--param" }, description = "Report parameters in key=value format (can be repeated)", paramLabel = "KEY=VALUE")
+		private Map<String, String> parameters = new HashMap<>();
+
 		@Override
 		protected MainProgram getMainProgram() {
 			return parent;
@@ -191,13 +197,19 @@ public class MainProgram implements Callable<Integer> {
 						"Number of random tests must be positive");
 			}
 
-			Settings settings = new Settings();
-			settings.loadSettings(config.configFile);
+			Settings settings = new Settings(config.configFile);
+			settings.loadSettings();
 
 			boolean isReportGenerationJob = settings.getCapabilities().reportgenerationmailmerge;
 
+			// Validate and process parameters
+	        Map<String, Object> typedParameters = ParameterParser.parseParameters(parameters);
+	        
 			CliJob job = getJob(config.configFile);
 			job.setJobType(isReportGenerationJob ? settings.getReportDataSource().type : "burst");
+			
+			job.setParameters(typedParameters);
+			
 			job.doBurst(input, qa.isTestAll(), qa.getTestList(), qa.getRandomTestsCount());
 
 			return 0;
@@ -297,7 +309,8 @@ public class MainProgram implements Callable<Integer> {
 
 	@Command(name = "system", description = "System operations", subcommands = {
 			MainProgram.SystemCommand.TestEmailCommand.class, MainProgram.SystemCommand.TestSmsCommand.class,
-			MainProgram.SystemCommand.LicenseCommand.class, MainProgram.SystemCommand.FeatureRequestCommand.class })
+			MainProgram.SystemCommand.LicenseCommand.class, MainProgram.SystemCommand.FeatureRequestCommand.class,
+			MainProgram.SystemCommand.TestAndFetchDatabaseSchemaCommand.class })
 	public static class SystemCommand implements Callable<Integer> {
 		@ParentCommand
 		MainProgram parent;
@@ -316,8 +329,16 @@ public class MainProgram implements Callable<Integer> {
 			@ParentCommand
 			SystemCommand systemCommand;
 
-			@Mixin
-			private ConfigOptions config;
+			// --- START: Modification ---
+			// Remove Mixin for ConfigOptions
+			// @Mixin
+			// private ConfigOptions config;
+
+			// Add specific option for email connection file
+			@Option(names = {
+					"--email-connection-file" }, required = true, description = "Path to the email connection XML file (e.g., config/connections/eml-my-email.xml)")
+			private File emailConnectionFile;
+			// --- END: Modification ---
 
 			@Override
 			protected MainProgram getMainProgram() {
@@ -326,7 +347,20 @@ public class MainProgram implements Callable<Integer> {
 
 			@Override
 			public Integer call() throws Exception {
-				CliJob job = getJob(config.configFile);
+				// --- START: Modification ---
+				// Validate the new option
+				if (!emailConnectionFile.exists()) {
+					throw new FileNotFoundException(
+							"Email connection file does not exist: " + emailConnectionFile.getAbsolutePath());
+				}
+				if (!emailConnectionFile.isFile()) {
+					throw new IllegalArgumentException("Email connection file path does not point to a file: "
+							+ emailConnectionFile.getAbsolutePath());
+				}
+
+				// Use the specific file path in getJob
+				CliJob job = getJob(emailConnectionFile.getAbsolutePath());
+				// --- END: Modification ---
 				job.doCheckEmail();
 				return 0;
 			}
@@ -355,6 +389,79 @@ public class MainProgram implements Callable<Integer> {
 			public Integer call() throws Exception {
 				CliJob job = getJob(config.configFile);
 				job.doCheckTwilio(fromNumber, toNumber);
+				return 0;
+			}
+		}
+
+		@Command(name = "test-and-fetch-database-schema", description = "Test database connection and fetch schema information")
+		static class TestAndFetchDatabaseSchemaCommand extends BaseCommand implements Callable<Integer> {
+
+			@ParentCommand
+			SystemCommand systemCommand;
+
+			// --- START: Modification ---
+			// Rename option and update description for clarity
+			@Option(names = {
+					"--database-connection-file" }, required = true, description = "Path to the database connection XML file (e.g., config/connections/db-my-db/db-my-db.xml)")
+			private File databaseConnectionFile; // Renamed from connectionFile
+			// --- END: Modification ---
+
+			@Override
+			protected MainProgram getMainProgram() {
+				return systemCommand.parent;
+			}
+
+			@Override
+			public Integer call() throws Exception {
+				log.info("Initiating test-and-fetch-database-schema via CliJob...");
+
+				// Validate file existence
+				if (!databaseConnectionFile.exists()) {
+					throw new FileNotFoundException(
+							"Database connection file does not exist: " + databaseConnectionFile.getAbsolutePath());
+				}
+				if (!databaseConnectionFile.isFile()) {
+					throw new IllegalArgumentException("Database connection file path does not point to a file: "
+							+ databaseConnectionFile.getAbsolutePath());
+				}
+
+				// instantiate job and execute
+				CliJob job = getJob(databaseConnectionFile.getAbsolutePath());
+				job.doTestAndFetchDatabaseSchema(databaseConnectionFile.getAbsolutePath());
+
+				log.info("CliJob execution for test-and-fetch-database-schema requested.");
+				return 0;
+			}
+		}
+
+		@Command(name = "test-sql-query", description = "Test SQL query execution")
+		static class TestSqlQueryCommand extends BaseCommand implements Callable<Integer> {
+
+			@ParentCommand
+			SystemCommand systemCommand;
+
+			@Option(names = { "--sql-query" }, required = true, description = "SQL query to execute")
+			private String sqlQuery;
+
+			@Option(names = { "--db-connection-code" }, required = true, description = "Database connection code")
+			private String dbConnectionCode;
+			
+			@Option(names = {"-p", "--param"}, 
+		            description = "Query parameters in key=value format (can be repeated)",
+		            paramLabel = "KEY=VALUE")
+		    private Map<String, String> parameters = new HashMap<>();
+
+			@Override
+			protected MainProgram getMainProgram() {
+				return systemCommand.parent;
+			}
+
+			@Override
+			public Integer call() throws Exception {
+				Map<String, Object> typedParameters = ParameterParser.parseParameters(parameters);
+			       
+				CliJob job = getJob(null);
+				job.doTestSqlQuery(sqlQuery, dbConnectionCode, typedParameters);
 				return 0;
 			}
 		}
@@ -442,4 +549,7 @@ public class MainProgram implements Callable<Integer> {
 			}
 		}
 	}
+	
+	
+
 }

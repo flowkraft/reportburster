@@ -26,9 +26,9 @@ public class SettingsTest {
 	@Test
 	public void defaultSettings() throws Exception {
 
-		Settings settings = new Settings();
+		Settings settings = new Settings("src/main/external-resources/template/config/burst/settings.xml");
 
-		settings.loadSettings("src/main/external-resources/template/config/burst/settings.xml");
+		settings.loadSettings();
 
 		// assertEquals("5.5.6", settings.getVersion());
 
@@ -174,9 +174,9 @@ public class SettingsTest {
 	@Test
 	public void noAttachments() throws Exception {
 
-		Settings settings = new Settings();
+		Settings settings = new Settings("src/test/resources/config/no-attachments.xml");
 
-		settings.loadSettings("src/test/resources/config/no-attachments.xml");
+		settings.loadSettings();
 
 		assertEquals(0, settings.getAttachments().size());
 
@@ -188,9 +188,9 @@ public class SettingsTest {
 	@Test
 	public void twoAttachments() throws Exception {
 
-		Settings settings = new Settings();
+		Settings settings = new Settings("src/test/resources/config/two-attachments.xml");
 
-		settings.loadSettings("src/test/resources/config/two-attachments.xml");
+		settings.loadSettings();
 
 		assertEquals(2, settings.getAttachments().size());
 

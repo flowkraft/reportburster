@@ -18,7 +18,7 @@ import javax.xml.bind.annotation.XmlElement;
 
 import com.sourcekraft.documentburster.common.utils.DumpToString;
 
-public class ConnectionSettings extends DumpToString {
+public class ConnectionEmailSettings extends DumpToString {
 
 	/**
 	 * 
@@ -32,6 +32,6 @@ public class ConnectionSettings extends DumpToString {
 	@XmlElement(name = "default")
 	public boolean defaultConnection;
 
-	public EmailServer emailserver;
+	public ServerEmailSettings emailserver;
 
 }

@@ -19,13 +19,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 import com.sourcekraft.documentburster.common.utils.DumpToString;
 
 @XmlRootElement(name = "documentburster")
-public class DocumentBursterConnectionSettings extends DumpToString {
+public class DocumentBursterConnectionEmailSettings extends DumpToString {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 481844441986495616L;
 
-	public ConnectionSettings connection;
+	public ConnectionEmailSettings connection;
 
 }

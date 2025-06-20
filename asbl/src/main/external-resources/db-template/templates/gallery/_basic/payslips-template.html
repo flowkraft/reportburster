@@ -78,39 +78,23 @@
       <!-- Company info section - separate rows instead of <br> tags -->
       <!-- Row 1: Company name -->
       <tr>
-        <td
-          colspan="4"
-          class="company-info no-border"
-        >
+        <td colspan="4" class="company-info no-border">
           Northridge Pharmaceuticals
         </td>
       </tr>
       <!-- Row 2: Street address -->
       <tr>
-        <td
-          colspan="4"
-          class="company-info no-border"
-        >
+        <td colspan="4" class="company-info no-border">
           7649F Diamond Hts Blvd
         </td>
       </tr>
       <!-- Row 3: City -->
       <tr>
-        <td
-          colspan="4"
-          class="company-info no-border"
-        >
-          San Francisco
-        </td>
+        <td colspan="4" class="company-info no-border">San Francisco</td>
       </tr>
       <!-- Row 4: Phone number -->
       <tr>
-        <td
-          colspan="4"
-          class="company-info no-border"
-        >
-          (415) 872-9214
-        </td>
+        <td colspan="4" class="company-info no-border">(415) 872-9214</td>
       </tr>
 
       <tr>
@@ -119,10 +103,7 @@
 
       <!-- Header/title -->
       <tr>
-        <td
-          colspan="4"
-          class="header no-border"
-        >
+        <td colspan="4" class="header no-border">
           STATEMENT OF MONTHLY INCOME
         </td>
       </tr>
@@ -149,7 +130,7 @@
       </tr>
       <tr>
         <td class="employee-header">Pay Period</td>
-        <td>${col3}</td>
+        <td><#if col3?is_date>${col3?string("MM/dd/yy")}<#else>${col3}</#if></td>
         <td colspan="2"></td>
       </tr>
 

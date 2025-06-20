@@ -1,0 +1,285 @@
+import { test } from '@playwright/test';
+import { electronBeforeAfterAllTest } from '../../utils/common-setup';
+import { FluentTester } from '../../helpers/fluent-tester';
+
+//DONE2
+test.describe('', async () => {
+  electronBeforeAfterAllTest(
+    'should correctly handle all Variables buttons (My Report)',
+    async ({ beforeAfterEach: firstPage }) => {
+      const ft = new FluentTester(firstPage);
+      await ft
+        .gotoConfigurationGeneralSettings()
+        .click('#burstFileName')
+        .typeText('')
+        .click('#btnBurstFileNameVariables')
+        .click('#\\$\\{var0\\}')
+        .clickYesDoThis()
+        .click('#outputFolder')
+        .typeText('')
+        .click('#btnOutputFolderVariables')
+        .click('#\\$\\{var1\\}')
+        .clickYesDoThis()
+        .click('#quarantineFolder')
+        .typeText('')
+        .click('#btnQuarantineFolderVariables')
+        .click('#\\$\\{var2\\}')
+        .clickYesDoThis()
+        .click('#leftMenuEmailSettings') // email SMTP settings
+        //.click('#btnUseExistingEmailConnection')
+        .click('#fromName')
+        .typeText('')
+        .click('#btnFromNameVariables')
+        .click('#\\$\\{var0\\}')
+        .clickYesDoThis()
+        .click('#fromEmailAddress')
+        .typeText('')
+        .click('#btnFromEmailAddressVariables')
+        .click('#\\$\\{var1\\}')
+        .clickYesDoThis()
+        .click('#emailServerHost')
+        .typeText('')
+        .click('#btnEmailServerHostVariables')
+        .click('#\\$\\{var2\\}')
+        .clickYesDoThis()
+        .click('#userName')
+        .typeText('')
+        .click('#btnUserNameVariables')
+        .click('#btnShowMoreVariables')
+        .click('#\\$\\{var3\\}')
+        .clickYesDoThis()
+        .click('#smtpPassword')
+        .typeText('')
+        .click('#btnSmtpPasswordVariables')
+        .click('#btnShowMoreVariables')
+        .click('#\\$\\{var4\\}')
+        .clickYesDoThis()
+        .click('#smtpPort')
+        .typeText('')
+        .click('#btnSmtpPortVariables')
+        .click('#btnShowMoreVariables')
+        .click('#\\$\\{var5\\}')
+        .clickYesDoThis()
+        .click('#emailMessageTab-link') // email message settings
+        .click('#emailToAddress')
+        .typeText('')
+        .click('#btnEmailToAddressVariables')
+        .click('#\\$\\{var0\\}')
+        .clickYesDoThis()
+        .click('#emailCcAddress')
+        .typeText('')
+        .click('#btnEmailCcAddressVariables')
+        .click('#\\$\\{var1\\}')
+        .clickYesDoThis()
+        .click('#emailBccAddress')
+        .typeText('')
+        .click('#btnEmailBccAddressVariables')
+        .click('#\\$\\{var2\\}')
+        .clickYesDoThis()
+        .click('#emailSubject')
+        .typeText('')
+        .click('#btnEmailSubjectVariables')
+        .click('#btnShowMoreVariables')
+        .click('#\\$\\{var3\\}')
+        .clickYesDoThis()
+        .click('#wysiwygEmailMessage .ql-editor')
+        .typeText('')
+        .click('#btnWysiwygEmailMessageVariables')
+        .click('#btnShowMoreVariables')
+        .click('#\\$\\{var4\\}')
+        .clickYesDoThis()
+        .click('#attachmentsTab-link') // email attachments settings
+        .click('#btnNewAttachment')
+        .click('#btnAttachmentPathVariables')
+        .click('#\\$\\{var0\\}')
+        .click('#modalSelectVariable .dburst-button-question-confirm')
+        .click(
+          '#modalSelectAttachment .dburst-button-question-confirm-attachment',
+        )
+        .click('#archiveFileName')
+        .typeText('')
+        .click('#btnArchiveFileNameVariables')
+        .click('#\\$\\{var1\\}')
+        .clickYesDoThis()
+        .click('#leftMenuUploadSettings') // FTP settings
+        .click('#ftpTab-link')
+        .click('#ftpCommand')
+        .typeText('')
+        .click('#btnFtpVariables')
+        .click('#\\$\\{var0\\}')
+        .clickYesDoThis()
+        .click('#fileShareTab-link') // File Share settings
+        .click('#fileShareCommand')
+        .typeText('')
+        .click('#btnFileShareVariables')
+        .click('#\\$\\{var2\\}')
+        .clickYesDoThis()
+        .click('#ftpsTab-link') // FTPS settings
+        .click('#ftpsCommand')
+        .typeText('')
+        .click('#btnFtpsVariables')
+        .click('#btnShowMoreVariables')
+        .click('#\\$\\{var3\\}')
+        .clickYesDoThis()
+        .click('#sftpTab-link') // SFTP settings
+        .click('#sftpCommand')
+        .typeText('')
+        .click('#btnSftpVariables')
+        .click('#\\$\\{var1\\}')
+        .clickYesDoThis()
+        .click('#httpTab-link') // HTTPS settings
+        .click('#httpCommand')
+        .typeText('')
+        .click('#btnHttpVariables')
+        .click('#btnShowMoreVariables')
+        .click('#\\$\\{var4\\}')
+        .clickYesDoThis()
+        .click('#cloudUploadTab-link') // Cloud Upload settings
+        .click('#cloudUploadCommand')
+        .typeText('')
+        .click('#btnCloudUploadVariables')
+        .click('#btnShowMoreVariables')
+        .click('#\\$\\{var5\\}')
+        .clickYesDoThis()
+        .click('#leftMenuDocuments2WebSettings') // documents2web settings)
+        //.click('documentBursterWebTab-link')
+        .click('#documentBursterWebCommand')
+        .typeText('')
+        .click('#btnDocumentBursterWebVariables')
+        .click('#\\$\\{var0\\}')
+        .clickYesDoThis()
+        .click('#sharePointTab-link') // SharePoint settings
+        .click('#sharePointCommand')
+        .typeText('')
+        .click('#btnSharePointVariables')
+        .click('#\\$\\{var1\\}')
+        .clickYesDoThis()
+        .click('#wordPressTab-link') // WordPress settings
+        .click('#wordPressCommand')
+        .typeText('')
+        .click('#btnWordPressVariables')
+        .click('#\\$\\{var2\\}')
+        .clickYesDoThis()
+        .click('#drupalTab-link') // Drupal settings
+        .click('#drupalCommand')
+        .typeText('')
+        .click('#btnDrupalVariables')
+        .click('#btnShowMoreVariables')
+        .click('#\\$\\{var3\\}')
+        .clickYesDoThis()
+        .click('#joomlaTab-link') // Joomla settings
+        .click('#joomlaCommand')
+        .typeText('')
+        .click('#btnJoomlaVariables')
+        .click('#btnShowMoreVariables')
+        .click('#\\$\\{var4\\}')
+        .clickYesDoThis()
+        .click('#otherWebPlatformsTab-link') // Other Web Platforms settings
+        .click('#otherWebPlatformsCommand')
+        .typeText('')
+        .click('#btnOtherWebPlatformsVariables')
+        .click('#btnShowMoreVariables')
+        .click('#\\$\\{var5\\}')
+        .clickYesDoThis()
+        .click('#leftMenuSMSSettings') // SMS settings
+        .click('#accountSid')
+        .typeText('')
+        .click('#btnAccountSidVariables')
+        .click('#\\$\\{var0\\}')
+        .clickYesDoThis()
+        .click('#authToken')
+        .typeText('')
+        .click('#btnAuthTokenVariables')
+        .click('#\\$\\{var1\\}')
+        .clickYesDoThis()
+        .click('#smsMessageTab-link') // SMS Message settings
+        .click('#fromTelephoneNumber')
+        .typeText('')
+        .click('#btnFromTelephoneNumberVariables')
+        .click('#\\$\\{var0\\}')
+        .clickYesDoThis()
+        .click('#toTelephoneNumber')
+        .typeText('')
+        .click('#btnToTelephoneNumberVariables')
+        .click('#\\$\\{var1\\}')
+        .clickYesDoThis()
+        .click('#smsText')
+        .typeText('')
+        .click('#btnSmsTextVariables')
+        .click('#\\$\\{var2\\}')
+        .clickYesDoThis()
+        .click('#leftMenuQualitySettings') // QA settings
+        .click('#qaFromName')
+        .typeText('')
+        .click('#btnQaFromNameVariables')
+        .click('#\\$\\{var0\\}')
+        .clickYesDoThis()
+        .click('#qaFromEmailAddress')
+        .typeText('')
+        .click('#btnQaFromEmailAddressVariables')
+        .click('#\\$\\{var1\\}')
+        .clickYesDoThis()
+        .click('#topMenuBurst')
+        .gotoConfigurationGeneralSettings()
+        .click('#leftMenuGeneralSettings') // general settings
+        .inputShouldHaveValue('#burstFileName', '${var0}')
+        .inputShouldHaveValue('#outputFolder', '${var1}')
+        .inputShouldHaveValue('#quarantineFolder', '${var2}')
+        .click('#leftMenuEmailSettings') // email SMTP settings
+        .inputShouldHaveValue('#fromName', '${var0}')
+        .inputShouldHaveValue('#fromEmailAddress', '${var1}')
+        .inputShouldHaveValue('#emailServerHost', '${var2}')
+        .inputShouldHaveValue('#userName', '${var3}')
+        .inputShouldHaveValue('#smtpPassword', '${var4}')
+        .inputShouldHaveValue('#smtpPort', '${var5}')
+        .click('#emailMessageTab-link') // email message settings
+        .inputShouldHaveValue('#emailToAddress', '${var0}')
+        .inputShouldHaveValue('#emailCcAddress', '${var1}')
+        .inputShouldHaveValue('#emailBccAddress', '${var2}')
+        .inputShouldHaveValue('#emailSubject', '${var3}')
+        .elementShouldContainText('#wysiwygEmailMessage .ql-editor', '${var4}')
+        .click('#attachmentsTab-link') // email attachments settings
+        .elementShouldContainText(
+          '#attachmentsTable tbody tr:nth-child(2) td',
+          '${var0}',
+        )
+        .inputShouldHaveValue('#archiveFileName', '${var1}')
+        .click('#leftMenuUploadSettings') // Upload settings
+        .click('#ftpTab-link')
+        .inputShouldHaveValue('#ftpCommand', '${var0}')
+        .click('#fileShareTab-link') // File Share settings
+        .inputShouldHaveValue('#fileShareCommand', '${var2}')
+        .click('#ftpsTab-link') // FTPS settings
+        .inputShouldHaveValue('#ftpsCommand', '${var3}')
+        .click('#sftpTab-link') // SFTP settings
+        .inputShouldHaveValue('#sftpCommand', '${var1}')
+        .click('#httpTab-link') // HTTPS settings
+        .inputShouldHaveValue('#httpCommand', '${var4}')
+        .click('#cloudUploadTab-link') // Upload to Cloud settings
+        .inputShouldHaveValue('#cloudUploadCommand', '${var5}')
+        .click('#leftMenuDocuments2WebSettings') // documents2web settings)
+        //.click('#documentBursterWebTab-link') // Documents2Web settings
+        .inputShouldHaveValue('#documentBursterWebCommand', '${var0}')
+        .click('#sharePointTab-link') // SharePoint settings
+        .inputShouldHaveValue('#sharePointCommand', '${var1}')
+        .click('#wordPressTab-link') // WordPress settings
+        .inputShouldHaveValue('#wordPressCommand', '${var2}')
+        .click('#drupalTab-link') // Drupal settings
+        .inputShouldHaveValue('#drupalCommand', '${var3}')
+        .click('#joomlaTab-link') // Joomla settings
+        .inputShouldHaveValue('#joomlaCommand', '${var4}')
+        .click('#otherWebPlatformsTab-link') // Other Web Platforms settings
+        .inputShouldHaveValue('#otherWebPlatformsCommand', '${var5}')
+        .click('#leftMenuSMSSettings') // SMS settings
+        .inputShouldHaveValue('#accountSid', '${var0}')
+        .inputShouldHaveValue('#authToken', '${var1}')
+        .click('#smsMessageTab-link') // SMS Message settings
+        .inputShouldHaveValue('#fromTelephoneNumber', '${var0}')
+        .inputShouldHaveValue('#toTelephoneNumber', '${var1}')
+        .inputShouldHaveValue('#smsText', '${var2}')
+        .click('#leftMenuQualitySettings') // QA settings
+        .inputShouldHaveValue('#qaFromName', '${var0}')
+        .inputShouldHaveValue('#qaFromEmailAddress', '${var1}');
+    },
+  );
+});

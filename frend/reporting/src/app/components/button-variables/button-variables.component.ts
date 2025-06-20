@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, Input, OnInit } from '@angular/core';
+import { Component, Output, EventEmitter, Input } from '@angular/core';
 
 import { modalVariablesTemplate } from './modal-variables.template';
 import { StateStoreService } from '../../providers/state-store.service';

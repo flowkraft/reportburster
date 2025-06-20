@@ -29,6 +29,7 @@ import com.sourcekraft.documentburster.engine.reporting.CsvReporter;
 import com.sourcekraft.documentburster.unit.documentation.userguide.qualityassurance.QualityAssuranceTest;
 import com.sourcekraft.documentburster.unit.further.other.UtilsTest;
 import com.sourcekraft.documentburster.utils.CsvUtils;
+import com.sourcekraft.documentburster._helpers.TestsUtils;
 
 public class CsvReporterTest {
 
@@ -323,19 +324,20 @@ public class CsvReporterTest {
 			}
 		};
 
-		// Use the multi-line header CSV file
 		burster.burst(CSV_INPUT_HEADER_MULTILINE_8_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
 
 		// Get parsed lines to verify correct token extraction
-		List<String[]> parsedLines = burster.getParsedCsvLines();
-		assertNotNull("Parsed lines should not be null", parsedLines);
+		List<String[]> arrayData = TestsUtils.toArrayRows(burster.getCtx().reportData);
+		assertEquals("Should be 3 lines of data", 3, arrayData.size());
+
+		assertNotNull("Parsed lines should not be null", arrayData);
 
 		// Verify the header rows were properly skipped
 		// Since first 2 rows are skipped and header is set to "multiline",
 		// the parse should start from line 3
 
 		// Verify that output files exist with the correct name based on last column
-		for (String[] row : parsedLines) {
+		for (String[] row : arrayData) {
 			String expectedToken = row[row.length - 1]; // Last column
 			File outputFile = new File(burster.getCtx().outputFolder + "/" + expectedToken + ".docx");
 			assertTrue("Output file should exist: " + outputFile.getPath(), outputFile.exists());
@@ -402,14 +404,16 @@ public class CsvReporterTest {
 
 		burster.burst(CSV_INPUT_QUOTE_DEFINED_QUOTE_CHAR_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
 
+		List<String[]> arrayData = TestsUtils.toArrayRows(burster.getCtx().reportData);
+
 		// assert 3 rows are parsed
-		assertEquals(3, burster.getParsedCsvLines().size());
+		assertEquals(3, arrayData.size());
 
 		// assert 17 columns are parsed
-		assertEquals(17, burster.getParsedCsvLines().get(0).length);
+		assertEquals(17, arrayData.get(0).length);
 
-		assertEquals("Kyle Butford's birthday", burster.getParsedCsvLines().get(1)[0]);
-		assertEquals("2890", burster.getParsedCsvLines().get(1)[16]);
+		assertEquals("Kyle Butford's birthday", arrayData.get(1)[0]);
+		assertEquals("2890", arrayData.get(1)[16]);
 
 	}
 
@@ -441,14 +445,16 @@ public class CsvReporterTest {
 
 		burster.burst(CSV_INPUT_QUOTE_DEFINED_QUOTE_ESCAPE_CHARS_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
 
+		List<String[]> arrayData = TestsUtils.toArrayRows(burster.getCtx().reportData);
+
 		// assert 3 rows are parsed
-		assertEquals(3, burster.getParsedCsvLines().size());
+		assertEquals(3, arrayData.size());
 
 		// assert 17 columns are parsed
-		assertEquals(17, burster.getParsedCsvLines().get(0).length);
+		assertEquals(17, arrayData.get(0).length);
 
-		assertEquals("Kyle Butford's birthday", burster.getParsedCsvLines().get(1)[0]);
-		assertEquals("2890", burster.getParsedCsvLines().get(1)[16]);
+		assertEquals("Kyle Butford's birthday", arrayData.get(1)[0]);
+		assertEquals("2890", arrayData.get(1)[16]);
 
 	}
 
@@ -479,17 +485,19 @@ public class CsvReporterTest {
 
 		burster.burst(CSV_INPUT_QUOTE_SIMPLE_QUOTED_STRINGS_WITH_SPACES_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
 
-		assertEquals(2, burster.getParsedCsvLines().size());
+		List<String[]> arrayData = TestsUtils.toArrayRows(burster.getCtx().reportData);
 
-		assertEquals(3, burster.getParsedCsvLines().get(0).length);
+		assertEquals(2, arrayData.size());
 
-		assertEquals("a", burster.getParsedCsvLines().get(0)[0]);
-		assertEquals("b", burster.getParsedCsvLines().get(0)[1]);
-		assertEquals("c", burster.getParsedCsvLines().get(0)[2]);
+		assertEquals(3, arrayData.get(0).length);
 
-		assertEquals("a", burster.getParsedCsvLines().get(1)[0]);
-		assertEquals("b", burster.getParsedCsvLines().get(1)[1]);
-		assertEquals("c", burster.getParsedCsvLines().get(1)[2]);
+		assertEquals("a", arrayData.get(0)[0]);
+		assertEquals("b", arrayData.get(0)[1]);
+		assertEquals("c", arrayData.get(0)[2]);
+
+		assertEquals("a", arrayData.get(1)[0]);
+		assertEquals("b", arrayData.get(1)[1]);
+		assertEquals("c", arrayData.get(1)[2]);
 
 	}
 
@@ -530,29 +538,30 @@ public class CsvReporterTest {
 
 		bursterIgnoreQuotes.burst(CSV_INPUT_QUOTE_IGNORE_QUOTATIONS, false, StringUtils.EMPTY, -1);
 
+		List<String[]> arrayData = TestsUtils.toArrayRows(bursterIgnoreQuotes.getCtx().reportData);
+
 		// Verify quotes are processed with ignorequotations=true
 		// First line - quotes are still recognized as quotes in well-formed fields
-		assertEquals("simple quoted", bursterIgnoreQuotes.getParsedCsvLines().get(0)[0]);
-		assertEquals("not ignored", bursterIgnoreQuotes.getParsedCsvLines().get(0)[1]);
-		assertEquals("third", bursterIgnoreQuotes.getParsedCsvLines().get(0)[2]);
+		assertEquals("simple quoted", arrayData.get(0)[0]);
+		assertEquals("not ignored", arrayData.get(0)[1]);
+		assertEquals("third", arrayData.get(0)[2]);
 
 		// Second line - internal quotes remain unchanged
-		assertEquals("field with \"quotes\" inside", bursterIgnoreQuotes.getParsedCsvLines().get(1)[0]);
-		assertEquals("normal", bursterIgnoreQuotes.getParsedCsvLines().get(1)[1]);
-		assertEquals("quoted", bursterIgnoreQuotes.getParsedCsvLines().get(1)[2]);
-		assertEquals(" with comma", bursterIgnoreQuotes.getParsedCsvLines().get(1)[3]);
-
+		assertEquals("field with \"quotes\" inside", arrayData.get(1)[0]);
+		assertEquals("normal", arrayData.get(1)[1]);
+		assertEquals("quoted", arrayData.get(1)[2]);
+		
 		// Third line - with ignorequotations=true, quotes don't prevent splitting on
 		// commas
 		// and both opening and closing quotes are removed at field boundaries
-		assertEquals("fully", bursterIgnoreQuotes.getParsedCsvLines().get(2)[0]);
-		assertEquals("quoted", bursterIgnoreQuotes.getParsedCsvLines().get(2)[1]); // No trailing quote
-		assertEquals("test", bursterIgnoreQuotes.getParsedCsvLines().get(2)[2]);
+		assertEquals("fully", arrayData.get(2)[0]);
+		assertEquals("quoted", arrayData.get(2)[1]); // No trailing quote
+		assertEquals("test", arrayData.get(2)[2]);
 
 		// Fourth line - escaped quotes are now treated as separate quotes
-		assertEquals("quote with \"escaped\" quotes", bursterIgnoreQuotes.getParsedCsvLines().get(3)[0]);
-		assertEquals("regular", bursterIgnoreQuotes.getParsedCsvLines().get(3)[1]);
-		assertEquals("data", bursterIgnoreQuotes.getParsedCsvLines().get(3)[2]);
+		assertEquals("quote with \"escaped\" quotes", arrayData.get(3)[0]);
+		assertEquals("regular", arrayData.get(3)[1]);
+		assertEquals("data", arrayData.get(3)[2]);
 	}
 
 	@Test
@@ -592,13 +601,13 @@ public class CsvReporterTest {
 		burster.burst(MIXED_QUOTES_CSV_PATH, false, StringUtils.EMPTY, -1);
 
 		// Verify correct handling of mixed quotation styles
-		List<String[]> parsedLines = burster.getParsedCsvLines();
+		List<String[]> parsedLines = TestsUtils.toArrayRows(burster.getCtx().reportData);
 		assertNotNull("Parsed lines should not be null", parsedLines);
 
 		// Verify proper ID extraction despite mixed quoting styles
-		assertEquals("ID001", parsedLines.get(1)[0]);
-		assertEquals("ID002", parsedLines.get(2)[0]);
-		assertEquals("ID003", parsedLines.get(3)[0]);
+		assertEquals("ID001", parsedLines.get(0)[0]);
+		assertEquals("ID002", parsedLines.get(1)[0]);
+		assertEquals("ID003", parsedLines.get(2)[0]);
 
 		// Verify file generation with correct IDs
 		for (int i = 1; i < parsedLines.size(); i++) {
@@ -623,19 +632,21 @@ public class CsvReporterTest {
 
 		bursterPreserveSpaces.burst(CSV_INPUT_INTERNAL_WHITESPACE_PATH, false, StringUtils.EMPTY, -1);
 
+		List<String[]> arrayData = TestsUtils.toArrayRows(bursterPreserveSpaces.getCtx().reportData);
+
 		// Verify whitespace is preserved when ignoreleadingwhitespace = false
-		assertEquals(2, bursterPreserveSpaces.getParsedCsvLines().size());
-		assertEquals(3, bursterPreserveSpaces.getParsedCsvLines().get(0).length);
+		assertEquals(2, arrayData.size());
+		assertEquals(3, arrayData.get(0).length);
 
 		// First line should preserve leading spaces
-		assertEquals("  a", bursterPreserveSpaces.getParsedCsvLines().get(0)[0]);
-		assertEquals("   b", bursterPreserveSpaces.getParsedCsvLines().get(0)[1]);
-		assertEquals("    c", bursterPreserveSpaces.getParsedCsvLines().get(0)[2]);
+		assertEquals("  a", arrayData.get(0)[0]);
+		assertEquals("   b", arrayData.get(0)[1]);
+		assertEquals("    c", arrayData.get(0)[2]);
 
 		// Second line should also preserve spaces
-		assertEquals("x", bursterPreserveSpaces.getParsedCsvLines().get(1)[0]);
-		assertEquals("  y  ", bursterPreserveSpaces.getParsedCsvLines().get(1)[1]); // Full spaces preserved
-		assertEquals("   z", bursterPreserveSpaces.getParsedCsvLines().get(1)[2]);
+		assertEquals("x", arrayData.get(1)[0]);
+		assertEquals("  y  ", arrayData.get(1)[1]); // Full spaces preserved
+		assertEquals("   z", arrayData.get(1)[2]);
 
 		// Test with ignoreleadingwhitespace = true - leading spaces should be trimmed
 		// but note that OpenCSV's behavior may vary depending on quotes and field
@@ -652,20 +663,22 @@ public class CsvReporterTest {
 
 		bursterTrimSpaces.burst(CSV_INPUT_INTERNAL_WHITESPACE_PATH, false, StringUtils.EMPTY, -1);
 
+		arrayData = TestsUtils.toArrayRows(bursterTrimSpaces.getCtx().reportData);
+
 		// Verify results match actual behavior of OpenCSV
-		assertEquals(2, bursterTrimSpaces.getParsedCsvLines().size());
-		assertEquals(3, bursterTrimSpaces.getParsedCsvLines().get(0).length);
+		assertEquals(2, arrayData.size());
+		assertEquals(3, arrayData.get(0).length);
 
 		// First line - asserting actual behavior (spaces may remain if fields are
 		// quoted)
-		assertEquals("a", bursterTrimSpaces.getParsedCsvLines().get(0)[0]);
-		assertEquals("b", bursterTrimSpaces.getParsedCsvLines().get(0)[1]);
-		assertEquals("c", bursterTrimSpaces.getParsedCsvLines().get(0)[2]);
+		assertEquals("a", arrayData.get(0)[0]);
+		assertEquals("b", arrayData.get(0)[1]);
+		assertEquals("c", arrayData.get(0)[2]);
 
 		// Second line - asserting actual behavior
-		assertEquals("x", bursterTrimSpaces.getParsedCsvLines().get(1)[0]);
-		assertEquals("y", bursterTrimSpaces.getParsedCsvLines().get(1)[1]);
-		assertEquals("z", bursterTrimSpaces.getParsedCsvLines().get(1)[2]);
+		assertEquals("x", arrayData.get(1)[0]);
+		assertEquals("y", arrayData.get(1)[1]);
+		assertEquals("z", arrayData.get(1)[2]);
 	}
 
 	@Test
@@ -692,12 +705,14 @@ public class CsvReporterTest {
 
 		burster.burst(CSV_INPUT_QUOTE_INTERNAL_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
 
-		assertEquals(3, burster.getParsedCsvLines().size());
+		List<String[]> arrayData = TestsUtils.toArrayRows(burster.getCtx().reportData);
 
-		assertEquals(17, burster.getParsedCsvLines().get(0).length);
+		assertEquals(3, arrayData.size());
 
-		assertEquals("Kyle \"Butford\"", burster.getParsedCsvLines().get(1)[0]);
-		assertEquals("2890", burster.getParsedCsvLines().get(1)[16]);
+		assertEquals(17, arrayData.get(0).length);
+
+		assertEquals("Kyle \"Butford\"", arrayData.get(1)[0]);
+		assertEquals("2890", arrayData.get(1)[16]);
 
 	}
 
@@ -726,17 +741,19 @@ public class CsvReporterTest {
 
 		burster.burst(CSV_INPUT_QUOTE_SIMPLE_QUOTED_STRINGS_WITH_COMMAS_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
 
-		assertEquals(2, burster.getParsedCsvLines().size());
+		List<String[]> arrayData = TestsUtils.toArrayRows(burster.getCtx().reportData);
 
-		assertEquals(3, burster.getParsedCsvLines().get(0).length);
+		assertEquals(2, arrayData.size());
 
-		assertEquals("a", burster.getParsedCsvLines().get(0)[0]);
-		assertEquals("b", burster.getParsedCsvLines().get(0)[1]);
-		assertEquals("c", burster.getParsedCsvLines().get(0)[2]);
+		assertEquals(3, arrayData.get(0).length);
 
-		assertEquals("a", burster.getParsedCsvLines().get(1)[0]);
-		assertEquals("b,b,b", burster.getParsedCsvLines().get(1)[1]);
-		assertEquals("c", burster.getParsedCsvLines().get(1)[2]);
+		assertEquals("a", arrayData.get(0)[0]);
+		assertEquals("b", arrayData.get(0)[1]);
+		assertEquals("c", arrayData.get(0)[2]);
+
+		assertEquals("a", arrayData.get(1)[0]);
+		assertEquals("b,b,b", arrayData.get(1)[1]);
+		assertEquals("c", arrayData.get(1)[2]);
 
 	}
 
@@ -768,17 +785,19 @@ public class CsvReporterTest {
 		burster.burst(CSV_INPUT_QUOTE_SIMPLE_QUOTED_STRINGS_WITH_DEFINED_SEPARATOR_DATASOURCE_PATH, false,
 				StringUtils.EMPTY, -1);
 
-		assertEquals(2, burster.getParsedCsvLines().size());
+		List<String[]> arrayData = TestsUtils.toArrayRows(burster.getCtx().reportData);
 
-		assertEquals(3, burster.getParsedCsvLines().get(0).length);
+		assertEquals(2, arrayData.size());
 
-		assertEquals("a", burster.getParsedCsvLines().get(0)[0]);
-		assertEquals("b", burster.getParsedCsvLines().get(0)[1]);
-		assertEquals("c", burster.getParsedCsvLines().get(0)[2]);
+		assertEquals(3, arrayData.get(0).length);
 
-		assertEquals("a", burster.getParsedCsvLines().get(1)[0]);
-		assertEquals("b:b:b", burster.getParsedCsvLines().get(1)[1]);
-		assertEquals("c", burster.getParsedCsvLines().get(1)[2]);
+		assertEquals("a", arrayData.get(0)[0]);
+		assertEquals("b", arrayData.get(0)[1]);
+		assertEquals("c", arrayData.get(0)[2]);
+
+		assertEquals("a", arrayData.get(1)[0]);
+		assertEquals("b:b:b", arrayData.get(1)[1]);
+		assertEquals("c", arrayData.get(1)[2]);
 
 	}
 
@@ -805,7 +824,7 @@ public class CsvReporterTest {
 		burster.burst(CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
 
 		// Get the parsed lines to know what values to expect in filenames
-		List<String[]> parsedLines = burster.getParsedCsvLines();
+		List<String[]> parsedLines = TestsUtils.toArrayRows(burster.getCtx().reportData);
 		assertNotNull("Parsed lines should not be null", parsedLines);
 
 		// Verify that output files exist with the expected filenames based on first
@@ -840,7 +859,7 @@ public class CsvReporterTest {
 		burster.burst(CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
 
 		// Get the parsed lines to know what values to expect in filenames
-		List<String[]> parsedLines = burster.getParsedCsvLines();
+		List<String[]> parsedLines = TestsUtils.toArrayRows(burster.getCtx().reportData);
 		assertNotNull("Parsed lines should not be null", parsedLines);
 
 		// Verify that output files exist with the expected filenames based on last
@@ -877,7 +896,7 @@ public class CsvReporterTest {
 		burster.burst(CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
 
 		// Get the parsed lines to know what values to expect in filenames
-		List<String[]> parsedLines = burster.getParsedCsvLines();
+		List<String[]> parsedLines = TestsUtils.toArrayRows(burster.getCtx().reportData);
 		assertNotNull("Parsed lines should not be null", parsedLines);
 
 		// Verify that output files exist with the expected filenames based on specified
@@ -913,7 +932,7 @@ public class CsvReporterTest {
 		burster.burst(CSV_INPUT_SEPARATOR_COMMA_STANDARD_DATASOURCE_PATH, false, StringUtils.EMPTY, -1);
 
 		// Get the parsed lines to know how many files to expect
-		List<String[]> parsedLines = burster.getParsedCsvLines();
+		List<String[]> parsedLines = TestsUtils.toArrayRows(burster.getCtx().reportData);
 		assertNotNull("Parsed lines should not be null", parsedLines);
 
 		// Verify that output files exist with the expected filenames based on sequence
@@ -1101,13 +1120,13 @@ public class CsvReporterTest {
 				-1);
 
 		// assert 3 rows are parsed
-		assertEquals(3, burster.getParsedCsvLines().size());
+		assertEquals(3, burster.getCtx().reportData.size());
 
 		// assert 17 columns are parsed
-		assertEquals(17, burster.getParsedCsvLines().get(0).length);
+		assertEquals(17, burster.getCtx().reportData.get(0).size());
 
-		assertEquals("Kyle Butford's birthday", burster.getParsedCsvLines().get(1)[0]);
-		assertEquals("2890", burster.getParsedCsvLines().get(1)[16]);
+		assertEquals("Kyle Butford's birthday", TestsUtils.toArrayRows(burster.getCtx().reportData).get(1)[0]);
+		assertEquals("2890", TestsUtils.toArrayRows(burster.getCtx().reportData).get(1)[16]);
 
 	}
 

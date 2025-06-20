@@ -3,6 +3,8 @@ package com.sourcekraft.documentburster.engine;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +13,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -20,6 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.GlobalContext;
+import com.sourcekraft.documentburster.common.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.model.Attachment;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.job.JobUtils;
 import com.sourcekraft.documentburster.job.model.JobProgressDetails;
@@ -27,15 +33,17 @@ import com.sourcekraft.documentburster.scripting.Scripting;
 import com.sourcekraft.documentburster.scripting.Scripts;
 import com.sourcekraft.documentburster.sender.AbstractSender;
 import com.sourcekraft.documentburster.sender.factory.SendersFactory;
-import com.sourcekraft.documentburster.common.settings.Settings;
-import com.sourcekraft.documentburster.common.settings.model.Attachment;
+import com.sourcekraft.documentburster.utils.DatabaseConnectionManager;
 import com.sourcekraft.documentburster.utils.LicenseUtils;
+import com.sourcekraft.documentburster.utils.SqlExecutor;
 import com.sourcekraft.documentburster.utils.Utils;
 import com.sourcekraft.documentburster.variables.Variables;
 
-public abstract class AbstractBurster implements Burstable {
+public abstract class AbstractBurster {
 
-	private static Logger log = LoggerFactory.getLogger(AbstractBurster.class);
+	protected static Logger log = LoggerFactory.getLogger(AbstractBurster.class);
+
+	private static final Pattern BURSTING_PLACEHOLDER_PATTERN = Pattern.compile("\\$\\{[^}]+\\}");
 
 	private long startExecutionTime = 0;
 
@@ -63,7 +71,8 @@ public abstract class AbstractBurster implements Burstable {
 	protected LicenseUtils licenseUtils = new LicenseUtils();
 
 	public AbstractBurster(String configFilePath) {
-		if (StringUtils.isNotBlank(configFilePath))
+		if ((StringUtils.isNoneEmpty(configFilePath)
+				&& ((configFilePath.contains(Utils.SPLIT_2ND_TIME) || Files.exists(Paths.get(configFilePath))))))
 			this.configurationFilePath = configFilePath;
 		else
 			this.configurationFilePath = "./config/burst/settings.xml";
@@ -77,13 +86,14 @@ public abstract class AbstractBurster implements Burstable {
 		return Utils.getTempFolder();
 	}
 
-	// @Profiled
-	public List<String> parseBurstingMetaData() throws Exception {
-		return new ArrayList<String>();
+	protected void fetchData() throws Exception {
+	};
+
+	protected void parseBurstingMetaData() throws Exception {
 	}
 
 	// @Profiled
-	public void extractOutputDocument() throws Exception {
+	protected void processOutputDocument() throws Exception {
 
 		extractOutputBurstDocument();
 
@@ -146,118 +156,172 @@ public abstract class AbstractBurster implements Burstable {
 
 			initializeResources();
 
-			List<String> parsedBurstTokens = parseBurstingMetaData();
+			fetchData();
 
-			if ((ctx.burstTokens == null) || (ctx.burstTokens.size() == 0))
-				ctx.burstTokens = parsedBurstTokens;
+			// After data is fetched but before processing
+			executeBurstingLifeCycleScript(ctx.scripts.transformFetchedData, ctx);
+
+			parseBurstingMetaData();
 
 			log.debug("burstTokens = " + ctx.burstTokens);
 
 			this.requestedCancelOrPauseProcessing = checkIfRequestedCancelOrPauseProcessing();
 
-			if (ctx.burstTokens.size() == 0) {
-				throw new Exception("No burst tokens were provided or fetched for the document : " + pathToFile);
-			} else if (!this.requestedCancelOrPauseProcessing) {
+			// *** START: SIMPLIFIED SINGLE REPORT MODE IMPLEMENTATION ***
 
-				boolean shouldSendFiles = shouldSendFiles();
+			// Determine if we are in single report mode based SOLELY on burstFileName and
+			// reportData presence
+			boolean isSingleReportMode = false;
+			String burstFileName = ctx.settings.getBurstFileName();
 
-				List<String> listOfTokens = new ArrayList<String>();
-
-				if (_isRunningInQualityAssuranceMode(testAll, listOfTestTokens, numberOfRandomTestTokens)) {
-
-					// in QA mode make sure job will continue to run so that it can
-					// find all errors in a single execution
-					ctx.settings.setFailJobIfAnyDistributionFails(false);
-
-					ctx.testName += "quality-assurance-test-mode";
-					ctx.isQARunningMode = true;
-
-					if (StringUtils.isNotBlank(listOfTestTokens)) {
-
-						listOfTokens = Arrays.asList(listOfTestTokens.split(","));
-
-						if (ctx.burstTokens.containsAll(listOfTokens))
-							ctx.burstTokens.retainAll(listOfTokens);
-						else
-							throw new IllegalArgumentException("You provided the list: " + listOfTestTokens
-									+ ", which is not correct. Please provide a comma separated list of burst tokens which should be tested. Each of the elements from this"
-									+ " list should be a valid burst token from '" + pathToFile + "'!");
-					}
-
-					if (numberOfRandomTestTokens > 0) {
-						Collections.shuffle(ctx.burstTokens);
-						while (ctx.burstTokens.size() > numberOfRandomTestTokens)
-							ctx.burstTokens.remove(ctx.burstTokens.size() - 1);
+			if (burstFileName != null && !burstFileName.isEmpty()) {
+				// Check if the filename contains specific bursting placeholders
+				if (!BURSTING_PLACEHOLDER_PATTERN.matcher(burstFileName).find()) {
+					// It's potentially single report mode, but only if data exists
+					if (ctx.reportData != null && !ctx.reportData.isEmpty()) {
+						isSingleReportMode = true;
+					} else {
+						log.warn(
+								"Filename '{}' suggests single report mode, but reportData is empty. Cannot generate report.",
+								burstFileName);
+						// Let it fall through to the empty token check if parseBurstingMetaData also
+						// yielded no tokens
 					}
 				}
+				// If pattern matches, it's definitely NOT single report mode
+			} else {
+				log.warn("BurstFileName is null or empty. Cannot determine report mode or generate file.");
+				// Let it fall through to the empty token check
+			}
 
-				// validate jobProgressDetails
-				if (previousJobExecutionProgressDetails != null)
-					_validatePreviousJobExecutionProgressDetails();
+			if (isSingleReportMode) {
 
-				String lastTokenInDocument = ctx.burstTokens.get(ctx.burstTokens.size() - 1);
-
-				this.requestedCancelOrPauseProcessing = checkIfRequestedCancelOrPauseProcessing();
-				boolean doMore = !this.requestedCancelOrPauseProcessing;
-
-				int doneCount = 0;
-
-				for (String token : ctx.burstTokens) {
-
-					ctx.token = token;
-
+				log.info("Detected single report mode (Filename: '{}', reportData present). Processing once.",
+						burstFileName);
+				if (!this.requestedCancelOrPauseProcessing) {
+					// 1. Set a fixed token for context consistency
+					ctx.token = "1"; // Use "1" as the standard single token
 					ctx.variables.set(Variables.BURST_TOKEN, ctx.token);
-					ctx.variables.set(Variables.BURST_INDEX, doneCount + 1);
+					ctx.variables.setUserVariable(ctx.token, "burst_token", ctx.token);
+					ctx.variables.setUserVariable(ctx.token, "row_index", "0");
+					ctx.variables.setUserVariable(ctx.token, "row_number", "1");
 
-					if (doMore) {
+					// 2. *** Make ctx.reportData available to the template as 'reportData' ***
+					ctx.variables.set("reportData", ctx.reportData);
+					log.debug("Made ctx.reportData available to template as 'reportData'");
 
-						if (previousJobExecutionProgressDetails != null) {
+					// 3. Directly process the report once
+					_processReportForCurrentToken(shouldSendFiles(), true);
 
-							boolean wasAlreadyProcessed = _checkIfCurrentTokenWasAlreadyProcessedInPreviousJobExecution();
+				}
+			} else {
 
-							if (!wasAlreadyProcessed)
+				if (ctx.burstTokens.size() == 0) {
+					throw new Exception("No burst tokens were provided or fetched for the document : " + pathToFile);
+				} else if (!this.requestedCancelOrPauseProcessing) {
+
+					boolean shouldSendFiles = shouldSendFiles();
+
+					List<String> listOfTokens = new ArrayList<String>();
+
+					if (_isRunningInQualityAssuranceMode(testAll, listOfTestTokens, numberOfRandomTestTokens)) {
+
+						// in QA mode make sure job will continue to run so that it can
+						// find all errors in a single execution
+						ctx.settings.setFailJobIfAnyDistributionFails(false);
+
+						ctx.testName += "quality-assurance-test-mode";
+						ctx.isQARunningMode = true;
+
+						if (StringUtils.isNotBlank(listOfTestTokens)) {
+
+							listOfTokens = Arrays.asList(listOfTestTokens.split(","));
+
+							if (ctx.burstTokens.containsAll(listOfTokens))
+								ctx.burstTokens.retainAll(listOfTokens);
+							else
+								throw new IllegalArgumentException("You provided the list: " + listOfTestTokens
+										+ ", which is not correct. Please provide a comma separated list of burst tokens which should be tested. Each of the elements from this"
+										+ " list should be a valid burst token from '" + pathToFile + "'!");
+						}
+
+						if (numberOfRandomTestTokens > 0) {
+							Collections.shuffle(ctx.burstTokens);
+							while (ctx.burstTokens.size() > numberOfRandomTestTokens)
+								ctx.burstTokens.remove(ctx.burstTokens.size() - 1);
+						}
+					}
+
+					// validate jobProgressDetails
+					if (previousJobExecutionProgressDetails != null)
+						_validatePreviousJobExecutionProgressDetails();
+
+					String lastTokenInDocument = ctx.burstTokens.get(ctx.burstTokens.size() - 1);
+
+					this.requestedCancelOrPauseProcessing = checkIfRequestedCancelOrPauseProcessing();
+					boolean doMore = !this.requestedCancelOrPauseProcessing;
+
+					int doneCount = 0;
+
+					for (String token : ctx.burstTokens) {
+
+						ctx.token = token;
+
+						ctx.variables.set(Variables.BURST_TOKEN, ctx.token);
+						ctx.variables.set(Variables.BURST_INDEX, doneCount + 1);
+
+						if (doMore) {
+
+							if (previousJobExecutionProgressDetails != null) {
+
+								boolean wasAlreadyProcessed = _checkIfCurrentTokenWasAlreadyProcessedInPreviousJobExecution();
+
+								if (!wasAlreadyProcessed)
+									_processReportForCurrentToken(shouldSendFiles, !testAll);
+
+							} else
 								_processReportForCurrentToken(shouldSendFiles, !testAll);
 
-						} else
-							_processReportForCurrentToken(shouldSendFiles, !testAll);
+							if (token.equals(lastTokenInDocument)) {
+								File progressFile = new File(getTempFolder() + getJobProgressFileName());
+								progressFile.delete();
+							} else
+								_updateJobProgressAndSaveToFile(testAll, listOfTestTokens, numberOfRandomTestTokens);
 
-						if (token.equals(lastTokenInDocument)) {
-							File progressFile = new File(getTempFolder() + getJobProgressFileName());
-							progressFile.delete();
-						} else
-							_updateJobProgressAndSaveToFile(testAll, listOfTestTokens, numberOfRandomTestTokens);
+							doneCount++;
 
-						doneCount++;
+							licenseLimitExceeded = (doneCount < licenseLimit) ? false : true;
+							this.requestedCancelOrPauseProcessing = checkIfRequestedCancelOrPauseProcessing();
 
-						licenseLimitExceeded = (doneCount < licenseLimit) ? false : true;
-						this.requestedCancelOrPauseProcessing = checkIfRequestedCancelOrPauseProcessing();
+							doMore = (!this.requestedCancelOrPauseProcessing) && (!licenseLimitExceeded);
 
-						doMore = (!this.requestedCancelOrPauseProcessing) && (!licenseLimitExceeded);
-
-					}
-				}
-
-				boolean isDeleteFiles = ctx.settings.isDeleteFiles();
-
-				if (isDeleteFiles) {
-
-					String backupFilePath = ctx.backupFolder + "/" + FilenameUtils.getName(pathToFile);
-
-					File backupFile = new File(backupFilePath);
-
-					if ((backupFile.exists()) && (!FileUtils.deleteQuietly(backupFile))) {
-						log.error("Failed to delete " + backupFilePath);
+						}
 					}
 
+					boolean isDeleteFiles = ctx.settings.isDeleteFiles();
+
+					if (isDeleteFiles) {
+
+						String backupFilePath = ctx.backupFolder + "/" + FilenameUtils.getName(pathToFile);
+
+						File backupFile = new File(backupFilePath);
+
+						if ((backupFile.exists()) && (!FileUtils.deleteQuietly(backupFile))) {
+							log.error("Failed to delete " + backupFilePath);
+						}
+
+					}
+
+					ctx.token = StringUtils.EMPTY;
+					ctx.extractedFilePath = StringUtils.EMPTY;
+
+					if (licenseLimitExceeded)
+						log.warn(
+								"DEMO version limit - " + "DocumentBurster DEMO version can burst and distribute up to "
+										+ licenseLimit + " reports. If you need more please "
+										+ "license DocumentBurster from https://www.pdfburst.com/store/ ");
+
 				}
-
-				ctx.token = StringUtils.EMPTY;
-				ctx.extractedFilePath = StringUtils.EMPTY;
-
-				if (licenseLimitExceeded)
-					log.warn("DEMO version limit - " + "DocumentBurster DEMO version can burst and distribute up to "
-							+ licenseLimit + " reports. If you need more please "
-							+ "license DocumentBurster from https://www.pdfburst.com/store/ ");
 
 			}
 
@@ -421,7 +485,10 @@ public abstract class AbstractBurster implements Burstable {
 
 		ctx.configurationFilePath = configurationFilePath;
 
-		ctx.settings = new Settings();
+		ctx.settings = new Settings(configurationFilePath);
+
+		ctx.dbManager = new DatabaseConnectionManager(ctx);
+		ctx.sql = new SqlExecutor(ctx.dbManager);
 
 		ctx.scripts = new Scripts();
 
@@ -448,6 +515,9 @@ public abstract class AbstractBurster implements Burstable {
 	}
 
 	protected void writeStatsFile() throws Exception {
+
+		if (Objects.isNull(ctx.variables))
+			return;
 
 		_initializeLogsArchivesFolder();
 
@@ -591,6 +661,8 @@ public abstract class AbstractBurster implements Burstable {
 
 	protected void extractDocument() throws Exception {
 
+		executeBurstingLifeCycleScript(ctx.scripts.beforeTemplateProcessing, ctx);
+
 		executeBurstingLifeCycleScript(ctx.scripts.startExtractDocument, ctx);
 
 		createOutputFoldersIfTheyDontExist();
@@ -601,12 +673,23 @@ public abstract class AbstractBurster implements Burstable {
 				+ Utils.getStringFromTemplate(burstFileName, ctx.variables, ctx.token);
 		ctx.variables.set(Variables.EXTRACTED_FILE_PATH, ctx.extractedFilePath);
 
-		extractOutputDocument();
+		if (ctx.settings.getDumpRecordDataAsXml()) {
+			this.dumpCurrentRecordDataAsXml();
+		}
+
+		processOutputDocument();
 
 		executeBurstingLifeCycleScript(ctx.scripts.endExtractDocument, ctx);
 
 		log.info("Document '" + ctx.extractedFilePath + "' was extracted for token '" + ctx.token + "'");
 
+	}
+
+	protected void dumpCurrentRecordDataAsXml() throws Exception {
+		String xmlDumpFilePath = ctx.extractedFilePath.substring(0, ctx.extractedFilePath.length() - 4)
+				+ "-record-data.xml";
+		String xmlDumpFileContent = Utils.dumpRowAsXml(ctx.variables.getUserVariables(ctx.token));
+		FileUtils.writeStringToFile(new File(xmlDumpFilePath), xmlDumpFileContent, "UTF-8");
 	}
 
 	protected void processAttachments() throws Exception {
@@ -741,7 +824,6 @@ public abstract class AbstractBurster implements Burstable {
 		int numberOfRemainingTokens = ctx.burstTokens.size() - 1 - indexOfLastTokenProcessed;
 
 		JobProgressDetails currentJobExecutionProgressDetails = new JobProgressDetails();
-
 
 		currentJobExecutionProgressDetails.currentdate = currentDate;
 		currentJobExecutionProgressDetails.filepath = filePath;

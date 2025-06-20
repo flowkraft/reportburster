@@ -45,10 +45,14 @@ import org.unix4j.Unix4j;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowkraft.common.AppPaths;
 import com.flowkraft.common.Utils;
+import com.flowkraft.jobman.dtos.DirCriteriaDto;
+import com.flowkraft.jobman.dtos.FileCriteriaDto;
+import com.flowkraft.jobman.dtos.FindCriteriaDto;
+import com.flowkraft.jobman.dtos.InspectResultDto;
+import com.flowkraft.jobman.dtos.ProcessOutputResultDto;
 import com.flowkraft.jobman.models.FileInfo;
 import com.flowkraft.jobman.models.SystemInfo;
 import com.flowkraft.jobman.models.WebSocketJobsExecutionStatsInfo;
-import com.sourcekraft.documentburster.common.utils.DumpToString;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -77,7 +81,11 @@ public class SystemService {
 		Optional<Boolean> recursive = Optional.of(false);
 		Optional<Boolean> ignoreCase = Optional.of(false);
 
-		FindCriteria criteria = new FindCriteria(matching, files, directories, recursive, ignoreCase);
+		FindCriteriaDto criteria = new FindCriteriaDto(matching, files.orElse(null), // Extract Boolean or null
+				directories.orElse(null), // Extract Boolean or null
+				recursive.orElse(null), // Extract Boolean or null
+				ignoreCase.orElse(null) // Extract Boolean or null
+		);
 
 		List<String> startServerScripts = this.unixCliFind(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, criteria);
 		if (!Objects.isNull(startServerScripts) && startServerScripts.size() > 0)
@@ -99,7 +107,7 @@ public class SystemService {
 		return stream.collect(Collectors.joining("\n"));
 	}
 
-	public List<String> unixCliFind(String path, FindCriteria criteria) throws Exception {
+	public List<String> unixCliFind(String path, FindCriteriaDto criteria) throws Exception {
 
 		// System.out.println("PORTABLE_EXECUTABLE_DIR_PATH: " +
 		// AppPaths.PORTABLE_EXECUTABLE_DIR_PATH);
@@ -107,35 +115,32 @@ public class SystemService {
 		// System.out.println("path = " + path + ", criteria = " + criteria);
 		Stream<Path> stream;
 
-		if (criteria.recursive) {
+		if (criteria.isRecursive()) {
 			stream = Files.walk(Paths.get(path));
 		} else {
 			stream = Files.list(Paths.get(path));
 		}
 
-		if (criteria.files) {
+		if (criteria.isFiles()) {
 			stream = stream.filter(Files::isRegularFile);
 		}
 
-		if (criteria.directories) {
+		if (criteria.isDirectories()) {
 			stream = stream.filter(Files::isDirectory);
 		}
 
-		if (criteria.matching != null) {
-		    stream = stream.filter(filePath -> {
-		        String fileName = filePath.getFileName().toString();
-		        return criteria.matching.stream().anyMatch(pattern -> {
-		            // Construct the regex pattern with case-insensitivity applied correctly.
-		            String regexPattern = pattern
-		                    .replace(".", "\\.")
-		                    .replace("*", ".*")
-		                    .replace("?", ".");
-		            if (criteria.ignoreCase) {
-		                regexPattern = "(?i)" + regexPattern;
-		            }
-		            return fileName.matches(regexPattern);
-		        });
-		    });
+		if (criteria.getMatching() != null) {
+			stream = stream.filter(filePath -> {
+				String fileName = filePath.getFileName().toString();
+				return criteria.getMatching().stream().anyMatch(pattern -> {
+					// Construct the regex pattern with case-insensitivity applied correctly.
+					String regexPattern = pattern.replace(".", "\\.").replace("*", ".*").replace("?", ".");
+					if (criteria.isIgnoreCase()) {
+						regexPattern = "(?i)" + regexPattern;
+					}
+					return fileName.matches(regexPattern);
+				});
+			});
 		}
 
 		List<String> list = stream.map(Path::toAbsolutePath).map(Path::normalize).map(Path::toString)
@@ -194,18 +199,7 @@ public class SystemService {
 		public Stream<String> stderr;
 	}
 
-	public class ProcessOutputResult {
-		public boolean success;
-		public List<String> stdOutErrlines;
-
-		public ProcessOutputResult(boolean success, List<String> stdOutErrlines) {
-			super();
-			this.success = success;
-			this.stdOutErrlines = stdOutErrlines;
-		}
-	}
-
-	public Mono<ProcessOutputResult> spawn(List<String> args, Optional<String> cwdPath) throws Exception {
+	public Mono<ProcessOutputResultDto> spawn(List<String> args, Optional<String> cwdPath) throws Exception {
 		List<String> commandWithShell = new ArrayList<>();
 		String os = System.getProperty("os.name").toLowerCase();
 
@@ -218,6 +212,8 @@ public class SystemService {
 
 		List<String> newArgs = new ArrayList<>();
 		for (String arg : args) {
+			//System.out.println("arg: " + arg);
+			
 			String modifiedArg = arg.replace("PORTABLE_EXECUTABLE_DIR_PATH/",
 					AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/");
 			if (os.contains("nix") || os.contains("nux") || os.contains("mac")) {
@@ -234,9 +230,9 @@ public class SystemService {
 					+ URLDecoder.decode(cwdPath.get(), StandardCharsets.UTF_8.toString());
 		}
 
-		//System.out.println("workingDirectoryPath: " + workingDirectoryPath);
+		// System.out.println("workingDirectoryPath: " + workingDirectoryPath);
 
-		//System.out.println("commandWithShell:");
+		// System.out.println("commandWithShell:");
 		commandWithShell.stream().forEach(System.out::println);
 
 		ProcessBuilder processBuilder = new ProcessBuilder(commandWithShell);
@@ -251,7 +247,7 @@ public class SystemService {
 				reader -> Flux.fromStream(reader.lines()), Utils.uncheckedConsumer(BufferedReader::close));
 
 		return Flux.merge(stdoutFlux, stderrFlux).collectList()
-				.map(outputLines -> new ProcessOutputResult(process.exitValue() == 0, outputLines))
+				.map(outputLines -> new ProcessOutputResultDto(process.exitValue() == 0, outputLines))
 				.doOnTerminate(process::destroy);
 	}
 
@@ -300,7 +296,7 @@ public class SystemService {
 
 	public void fsWriteStringToFile(String path, Optional<String> content) throws Exception {
 		Path filePath = Paths.get(path);
-		
+
 		// Create parent directories if they don't exist
 		Files.createDirectories(filePath.getParent());
 
@@ -385,7 +381,7 @@ public class SystemService {
 		}
 	}
 
-	public String fsDir(String path, Optional<DirCriteria> criteria) throws Exception {
+	public String fsDir(String path, Optional<DirCriteriaDto> criteria) throws Exception {
 		Path dirPath = Paths.get(path);
 		if (Files.exists(dirPath)) {
 			if (!Files.isDirectory(dirPath)) {
@@ -394,22 +390,22 @@ public class SystemService {
 
 			if (criteria.isPresent()) {
 
-				DirCriteria c = criteria.get();
+				DirCriteriaDto c = criteria.get();
 
 				// System.out.println("DirCriteria: " + c);
 				// System.out.println("Directory path: " + dirPath);
-				String[] fileList = dirPath.toFile().list();
+				// String[] fileList = dirPath.toFile().list();
 				// System.out.println("File list: " + Arrays.toString(fileList));
 
-				if (c.empty && dirPath.toFile().list().length > 0) {
+				if (c.isEmpty() && dirPath.toFile().list().length > 0) {
 					try (Stream<Path> paths = Files.walk(dirPath)) {
 						paths.filter(p -> !p.equals(dirPath)).sorted(Comparator.reverseOrder()).map(Path::toFile)
 								.forEach(File::delete);
 					}
 				}
 
-				if (!StringUtils.isBlank(c.mode)) {
-					Set<PosixFilePermission> perms = PosixFilePermissions.fromString(c.mode);
+				if (!StringUtils.isBlank(c.getMode())) {
+					Set<PosixFilePermission> perms = PosixFilePermissions.fromString(c.getMode());
 					Files.setPosixFilePermissions(dirPath, perms);
 				}
 			}
@@ -420,7 +416,7 @@ public class SystemService {
 		return dirPath.toString().replace("\\", "/");
 	}
 
-	public String fsFile(String path, Optional<FileCriteria> criteria) throws Exception {
+	public String fsFile(String path, Optional<FileCriteriaDto> criteria) throws Exception {
 		Path filePath = Paths.get(path);
 		if (!Files.exists(filePath)) {
 			Files.createDirectories(filePath.getParent());
@@ -428,22 +424,22 @@ public class SystemService {
 		}
 
 		if (criteria.isPresent()) {
-			FileCriteria c = criteria.get();
-			if (!Objects.isNull(c.content)) {
-				if (c.content instanceof String) {
-					Files.write(filePath, ((String) c.content).getBytes(StandardCharsets.UTF_8));
-				} else if (c.content instanceof byte[]) {
-					Files.write(filePath, (byte[]) c.content);
-				} else if (c.content instanceof ByteBuffer) {
-					Files.write(filePath, ((ByteBuffer) c.content).array());
+			FileCriteriaDto c = criteria.get();
+			if (!Objects.isNull(c.getContent())) {
+				if (c.getContent() instanceof String) {
+					Files.write(filePath, ((String) c.getContent()).getBytes(StandardCharsets.UTF_8));
+				} else if (c.getContent() instanceof byte[]) {
+					Files.write(filePath, (byte[]) c.getContent());
+				} else if (c.getContent() instanceof ByteBuffer) {
+					Files.write(filePath, ((ByteBuffer) c.getContent()).array());
 				} else {
 					ObjectMapper objectMapper = new ObjectMapper();
-					objectMapper.writerWithDefaultPrettyPrinter().writeValue(filePath.toFile(), c.content);
+					objectMapper.writerWithDefaultPrettyPrinter().writeValue(filePath.toFile(), c.getContent());
 				}
 			}
 
-			if (!Objects.isNull(c.mode)) {
-				Set<PosixFilePermission> perms = PosixFilePermissions.fromString(c.mode);
+			if (!Objects.isNull(c.getMode())) {
+				Set<PosixFilePermission> perms = PosixFilePermissions.fromString(c.getMode());
 				Files.setPosixFilePermissions(filePath, perms);
 			}
 		}
@@ -451,7 +447,7 @@ public class SystemService {
 		return path;
 	}
 
-	public Optional<InspectResult> fsInspect(String path, Optional<String> checksum, Optional<Boolean> mode,
+	public Optional<InspectResultDto> fsInspect(String path, Optional<String> checksum, Optional<Boolean> mode,
 			Optional<Boolean> times, Optional<Boolean> absolutePath, Optional<String> symlinks) throws Exception {
 		Path filePath;
 
@@ -465,26 +461,26 @@ public class SystemService {
 			return Optional.empty();
 		}
 
-		InspectResult result = new InspectResult();
-		result.name = filePath.getFileName().toString();
-		result.type = Files.isDirectory(filePath) ? "dir" : "file";
+		InspectResultDto result = new InspectResultDto();
+		result.setName(filePath.getFileName().toString());
+		result.setType(Files.isDirectory(filePath) ? "dir" : "file");
 
 		if (Files.isRegularFile(filePath)) {
-			result.size = Files.size(filePath);
+			result.setSize(Files.size(filePath));
 		}
 
 		if (mode.isPresent()) {
 			if (mode.get()) {
-				result.mode = (int) Files.getAttribute(filePath, "unix:mode");
+				result.setMode((int) Files.getAttribute(filePath, "unix:mode"));
 			}
 		}
 
 		if (times.isPresent()) {
 			if (times.get()) {
 				BasicFileAttributes attrs = Files.readAttributes(filePath, BasicFileAttributes.class);
-				result.accessTime = Instant.ofEpochMilli(attrs.lastAccessTime().toMillis());
-				result.modifyTime = Instant.ofEpochMilli(attrs.lastModifiedTime().toMillis());
-				result.changeTime = Instant.ofEpochMilli(attrs.creationTime().toMillis());
+				result.setAccessTime(Instant.ofEpochMilli(attrs.lastAccessTime().toMillis()));
+				result.setModifyTime(Instant.ofEpochMilli(attrs.lastModifiedTime().toMillis()));
+				result.setChangeTime(Instant.ofEpochMilli(attrs.creationTime().toMillis()));
 			}
 
 		}
@@ -494,7 +490,7 @@ public class SystemService {
 		return Optional.of(result);
 	}
 
-	public Mono<ProcessOutputResult> installChocolatey() throws Exception {
+	public Mono<ProcessOutputResultDto> installChocolatey() throws Exception {
 
 		String INSTALL_CHOCOLATEY_SCRIPT_CONTENT = "@echo off\n" + "\n" + "SET DIR=%~dp0%\n" + "    \n"
 				+ "::download install.ps1\n"
@@ -518,7 +514,7 @@ public class SystemService {
 
 	}
 
-	public Mono<ProcessOutputResult> unInstallChocolatey() throws Exception {
+	public Mono<ProcessOutputResultDto> unInstallChocolatey() throws Exception {
 
 		String elevatedScriptFilePath = getCommandReadyToBeRunAsAdministratorUsingBatchCmd(
 				"& ../tools/chocolatey/uninstall.ps1");
@@ -578,74 +574,6 @@ public class SystemService {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	public static class DirCriteria extends DumpToString {
-		private static final long serialVersionUID = 5563826436868324773L;
-		public boolean empty = false;
-		public String mode;
-	}
-
-	public static class FileCriteria {
-		public Object content;
-		public Integer jsonIndent;
-		public String mode;
-	}
-
-	public static class FindCriteria extends DumpToString {
-		public List<String> matching;
-		public boolean files;
-		public boolean directories;
-		public boolean recursive;
-		public boolean ignoreCase;
-
-		public FindCriteria(List<String> matching, Optional<Boolean> files, Optional<Boolean> directories,
-				Optional<Boolean> recursive, Optional<Boolean> ignoreCase) {
-			this.matching = matching;
-			this.files = files.orElse(true);
-			this.directories = directories.orElse(false);
-			this.recursive = recursive.orElse(false);
-			this.ignoreCase = ignoreCase.orElse(false);
-		}
-
-		public String[] getUnix4jOptions() {
-			List<String> options = new ArrayList<>();
-			if (files) {
-				options.add("--typeFile");
-			}
-			if (ignoreCase) {
-				options.add("--ignoreCase");
-			}
-			options.add("--name");
-			if (matching != null) {
-				for (String match : matching) {
-					options.add("--name");
-					options.add(match);
-				}
-			}
-
-			return options.toArray(new String[0]);
-		}
-	}
-
-	public static class InspectCriteria {
-		public String checksum;
-		public Boolean mode;
-		public Boolean times;
-		public Boolean absolutePath;
-		public String symlinks;
-	}
-
-	public static class InspectResult {
-		public String name;
-		public String type;
-		public Long size;
-		public String md5;
-		public Integer mode;
-		public Instant accessTime;
-		public Instant modifyTime;
-		public Instant changeTime;
-		public Instant birthTime;
 	}
 
 }

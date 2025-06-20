@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Supplier Scorecard - ${SupplierID}</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    .scorecard { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; max-width: 600px; background-color: #f9f9f9; }
+    h1, h2, h3 { color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+    .kpi-section { margin-bottom: 15px; }
+    .kpi { margin-bottom: 8px; }
+    .kpi-label { font-weight: bold; display: inline-block; width: 180px; color: #555; }
+    .kpi-value { display: inline-block; }
+    .rating-good { color: green; font-weight: bold; }
+    .rating-average { color: orange; font-weight: bold; }
+    .rating-poor { color: red; font-weight: bold; }
+    .rating-na { color: grey; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="scorecard">
+    <h1>Supplier Scorecard</h1>
+    <h2>${CompanyName!'N/A'} (ID: ${SupplierID})</h2>
+
+    <div class="kpi-section">
+      <h3>Overall</h3>
+      <div class="kpi">
+        <span class="kpi-label">Rating:</span>
+        <span class="kpi-value rating-${((OverallRating!'N/A') == 'N/A')?then('na', (OverallRating!'average')?lower_case)}">${OverallRating!'N/A'}</span>
+      </div>
+    </div>
+
+    <div class="kpi-section">
+      <h3>Product Metrics</h3>
+      <div class="kpi">
+        <span class="kpi-label">Product Count:</span>
+        <span class="kpi-value">${(ProductCount!0)?string("0")}</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label">Avg. Unit Price:</span>
+        <span class="kpi-value">${(AvgUnitPrice!0)?string("$0.00")}</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label">Low Stock Products:</span>
+        <span class="kpi-value">${(LowStockCount!0)?string("0")}</span>
+      </div>
+    </div>
+
+    <div class="kpi-section">
+      <h3>Delivery Performance</h3>
+      <div class="kpi">
+        <span class="kpi-label">Avg. Delivery Days:</span>
+        <span class="kpi-value"><#if AvgDeliveryDays??>${AvgDeliveryDays?string("0.0")}<#else>N/A</#if></span>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label">Late Delivery %:</span>
+        <span class="kpi-value"><#if LateDeliveryPercent??>${LateDeliveryPercent?string("0.0%")}<#else>N/A</#if></span>
+      </div>
+    </div>
+
+    <#-- Placeholder for potential future sections -->
+
+  </div>
+</body>
+</html>

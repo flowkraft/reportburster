@@ -28,9 +28,9 @@ public class MergeReportsTest {
 	@Test
 	public final void merge() throws Exception {
 
-		Settings settings = new Settings();
-		
-		settings.loadSettings("src/main/external-resources/template/config/burst/settings.xml");
+		Settings settings = new Settings("src/main/external-resources/template/config/burst/settings.xml");
+
+		settings.loadSettings();
 
 		settings.setOutputFolder(TestsUtils.TESTS_OUTPUT_FOLDER
 				+ "/output/${input_document_name}/MergeReportsTest-merge/${now?string[\"yyyy.MM.dd_HH.mm.ss.SSS\"]}");

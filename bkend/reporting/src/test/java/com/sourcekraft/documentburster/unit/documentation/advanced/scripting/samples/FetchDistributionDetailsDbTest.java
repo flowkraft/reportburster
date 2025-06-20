@@ -9,8 +9,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hsqldb.server.Server;
-import org.hsqldb.server.ServerConstants;
+// Removed HSQLDB Server imports
+// import org.hsqldb.server.Server;
+// import org.hsqldb.server.ServerConstants;
 import org.junit.Test;
 
 import com.sourcekraft.documentburster._helpers.TestBursterFactory;
@@ -20,146 +21,148 @@ import com.sourcekraft.documentburster._helpers.DocumentTester;
 
 public class FetchDistributionDetailsDbTest {
 
-    private static final String LEGACY_NO_BURST_TOKENS_PATH =
-            "src/test/resources/input/unit/pdf/legacy-no-burst-tokens.pdf";
+	private static final String LEGACY_NO_BURST_TOKENS_PATH = "src/test/resources/input/unit/pdf/legacy-no-burst-tokens.pdf";
 
-    private static final List<String> tokens = Arrays.asList("1", "2", "3", "4");
+	private static final List<String> tokens = Arrays.asList("1", "2", "3", "4");
 
-    @Test
-    public void burst() throws Exception {
+	// H2 Database file path and URL
+	private static final String H2_DB_PATH = "./target/fetch_details_testdb"; // Store in target directory
+	private static final String H2_URL = "jdbc:h2:file:" + H2_DB_PATH + ";DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE"; // Keep
+																												// DB
+																												// open,
+																												// allow
+																												// multiple
+																												// connections
+																												// if
+																												// needed
+	private static final String H2_USER = "sa";
+	private static final String H2_PASS = "";
 
-        Server dbServer = null;
+	@Test
+	public void burst() throws Exception {
 
-        try {
+		// Server dbServer = null; // Removed HSQLDB server instance
 
-            dbServer = startDbServer();
+		try {
 
-            while (dbServer.getState() == ServerConstants.SERVER_STATE_OPENING) {
-                Thread.sleep(500);
-            }
+			// dbServer = startDbServer(); // Removed HSQLDB server start
 
-            createDbConnectionAndTestData();
+			// Removed wait loop for HSQLDB server
+			// while (dbServer.getState() == ServerConstants.SERVER_STATE_OPENING) {
+			// Thread.sleep(500);
+			// }
 
-            AbstractBurster burster =
-                    new TestBursterFactory.PdfBurster(StringUtils.EMPTY, "FetchDistributionDetailsDbTest-burst") {
-                        protected void executeController() throws Exception {
+			createDbConnectionAndTestData(); // This now uses H2
 
-                            super.executeController();
+			AbstractBurster burster = new TestBursterFactory.PdfBurster(StringUtils.EMPTY,
+					"FetchDistributionDetailsDbTest-burst") {
+				protected void executeController() throws Exception {
 
-                            ctx.settings.setBurstFileName("${var0}_${var1}_${var2}.${input_document_extension}");
-                            ctx.scripts.startExtractDocument = "fetch_distribution_details_from_database.groovy";
+					super.executeController();
 
-                        };
-                    };
+					ctx.settings.setBurstFileName("${var0}_${var1}_${var2}.${input_document_extension}");
+					ctx.scripts.startExtractDocument = "fetch_distribution_details_from_database.groovy";
 
-            burster.burst(LEGACY_NO_BURST_TOKENS_PATH, false, StringUtils.EMPTY, -1);
+				};
+			};
 
-            String outputFolder = burster.getCtx().outputFolder + "/";
+			burster.burst(LEGACY_NO_BURST_TOKENS_PATH, false, StringUtils.EMPTY, -1);
 
-            assertEquals(tokens.size(), new File(outputFolder).listFiles(UtilsTest.outputFilesFilter).length);
+			String outputFolder = burster.getCtx().outputFolder + "/";
 
-            // assert output reports
-            for (String token : tokens) {
+			assertEquals(tokens.size(), new File(outputFolder).listFiles(UtilsTest.outputFilesFilter).length);
 
-                String path =
-                        burster.getCtx().outputFolder + "/email" + token + "@address" + token + ".com_firstName"
-                                + token + "_lastName" + token + ".pdf";
+			// assert output reports
+			for (String token : tokens) {
 
-                File outputReport = new File(path);
-                assertTrue(outputReport.exists());
+				String path = burster.getCtx().outputFolder + "/email" + token + "@address" + token + ".com_firstName"
+						+ token + "_lastName" + token + ".pdf";
 
-                DocumentTester tester = new DocumentTester(path);
+				File outputReport = new File(path);
+				assertTrue(outputReport.exists());
 
-                // assert number of pages
-                tester.assertPageCountEquals(1);
+				DocumentTester tester = new DocumentTester(path);
 
-                tester.close();
-            }
+				// assert number of pages
+				tester.assertPageCountEquals(1);
 
-        } finally {
+				tester.close();
+			}
 
-            // Closing the server
-            if (dbServer != null) {
-                dbServer.stop();
-            }
+		} finally {
 
-        }
+			// Closing the server - No longer needed for embedded H2
+			// if (dbServer != null) {
+			// dbServer.stop();
+			// }
 
-    }
+			// Optional: Clean up H2 database files after test if desired
+			deleteDatabaseFiles();
 
-    private Server startDbServer() {
+		}
 
-        // 'Server' is a class of HSQLDB representing
-        // the database server
-        Server hsqlServer = new Server();
+	}
 
-        // HSQLDB prints out a lot of informations when
-        // starting and closing, which we don't need now.
-        // Normally you should point the setLogWriter
-        // to some Writer object that could store the logs.
-        hsqlServer.setLogWriter(null);
-        hsqlServer.setSilent(false);
+	// Removed startDbServer() method as it's HSQLDB specific
 
-        // The actual database will be named 'xdb' and its
-        // settings and data will be stored in files
-        // testdb.properties and testdb.script
-        hsqlServer.setDatabaseName(0, "xdb");
-        hsqlServer.setDatabasePath(0, "file:target/testdb");
+	private void createDbConnectionAndTestData() throws Exception {
 
-        // Start the database!
-        hsqlServer.start();
+		// Load H2 Driver
+		Class.forName("org.h2.Driver");
 
-        return hsqlServer;
-    }
+		// Getting a connection to the H2 database file
+		Connection connection = null;
+		try {
 
-    private void createDbConnectionAndTestData() throws Exception {
+			// Use H2 URL, user, and password
+			connection = DriverManager.getConnection(H2_URL, H2_USER, H2_PASS);
 
-        Class.forName("org.hsqldb.jdbcDriver");
+			// Create test data (SQL remains the same)
 
-        // Getting a connection to the newly started database
-        Connection connection = null;
-        try {
+			try {
+				// Use standard SQL DROP TABLE IF EXISTS for better compatibility
+				connection.prepareStatement("DROP TABLE IF EXISTS employees;").execute();
+			} catch (Exception e) {
+				// Log or ignore if drop fails (e.g., table didn't exist)
+				System.err.println("Ignoring error during table drop (likely didn't exist): " + e.getMessage());
+			}
 
-            // Default user of the HSQLDB is 'sa'
-            // with an empty password
-            connection = DriverManager.getConnection("jdbc:hsqldb:hsql://localhost/xdb", "sa", "");
+			connection.prepareStatement("create table employees (employee_id VARCHAR(50), "
+					+ "email_address VARCHAR(50), first_name VARCHAR(50), last_name VARCHAR(50));").execute();
 
-            // Create test data
+			connection.prepareStatement("insert into employees(employee_id, email_address, first_name, last_name) "
+					+ "values ('1','email1@address1.com','firstName1','lastName1');").execute();
 
-            try {
-                connection.prepareStatement("drop table employees;").execute();
-            } catch (Exception e) {
-            }
+			connection.prepareStatement("insert into employees(employee_id, email_address, first_name, last_name) "
+					+ "values ('2','email2@address2.com','firstName2','lastName2');").execute();
 
-            connection.prepareStatement(
-                    "create table employees (employee_id VARCHAR(50), "
-                            + "email_address VARCHAR(50), first_name VARCHAR(50), last_name VARCHAR(50));").execute();
+			connection.prepareStatement("insert into employees(employee_id, email_address, first_name, last_name) "
+					+ "values ('3','email3@address3.com','firstName3','lastName3');").execute();
 
-            connection.prepareStatement(
-                    "insert into employees(employee_id, email_address, first_name, last_name) "
-                            + "values ('1','email1@address1.com','firstName1','lastName1');").execute();
+			connection.prepareStatement("insert into employees(employee_id, email_address, first_name, last_name) "
+					+ "values ('4','email4@address4.com','firstName4','lastName4');").execute();
 
-            connection.prepareStatement(
-                    "insert into employees(employee_id, email_address, first_name, last_name) "
-                            + "values ('2','email2@address2.com','firstName2','lastName2');").execute();
+		} finally {
 
-            connection.prepareStatement(
-                    "insert into employees(employee_id, email_address, first_name, last_name) "
-                            + "values ('3','email3@address3.com','firstName3','lastName3');").execute();
+			// Closing the connection
+			if (connection != null) {
+				connection.close();
+			}
 
-            connection.prepareStatement(
-                    "insert into employees(employee_id, email_address, first_name, last_name) "
-                            + "values ('4','email4@address4.com','firstName4','lastName4');").execute();
+		}
 
-        } finally {
+	}
 
-            // Closing the connection
-            if (connection != null) {
-                connection.close();
-            }
-
-        }
-
-    }
+	// Optional helper method to delete H2 files after test run
+	private void deleteDatabaseFiles() {
+		File dbFile = new File(H2_DB_PATH + ".mv.db");
+		File traceFile = new File(H2_DB_PATH + ".trace.db");
+		if (dbFile.exists()) {
+			dbFile.delete();
+		}
+		if (traceFile.exists()) {
+			traceFile.delete();
+		}
+	}
 
 };

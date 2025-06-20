@@ -11,6 +11,13 @@ export const SystemInfo = {
       isJavaOk: true,
       version: '',
     },
+    docker: {
+      isDockerOk: true,
+      version: '',
+    },
+    portal: {
+      isPortalRunning: true,
+    },
     env: {
       PATH: '',
       JAVA_HOME: '',

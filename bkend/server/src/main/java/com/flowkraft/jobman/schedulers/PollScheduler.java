@@ -123,7 +123,7 @@ public class PollScheduler {
 
 						List<FileInfo> progressFile = this.jobsService.fetchStats()
 								.filter(f -> f.fileName.endsWith(Constants.EXTENTION_PROGRESS_FILE)
-										&& f.fileContent.contains(filePathToProcess))
+										&& f.getFileContent().contains(filePathToProcess))
 								.collect(Collectors.toList());
 
 						// if there is a corresponding .progress file do not remove the file since it

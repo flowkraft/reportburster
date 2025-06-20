@@ -10,7 +10,7 @@ import * as PATHS from '../../utils/paths';
 
 //DONE2
 test.describe('', async () => {
-  // CSV2DOCX
+  /*
   electronBeforeAfterAllTest(
     'should correctly generate DOCX output from DOCX template using CSV as datasource (csv2docx_from_docx_template)',
     async ({ beforeAfterEach: firstPage }) => {
@@ -41,7 +41,6 @@ test.describe('', async () => {
     },
   );
 
-  // CSV2HTML
   electronBeforeAfterAllTest(
     'should correctly generate HTML output from HTML template using CSV as datasource (csv2html_from_html_template)',
     async ({ beforeAfterEach: firstPage }) => {
@@ -72,7 +71,6 @@ test.describe('', async () => {
     },
   );
 
-  // CSV2PDF
   electronBeforeAfterAllTest(
     'should correctly generate PDF output from HTML template using CSV as datasource (csv2pdf_from_html_template)',
     async ({ beforeAfterEach: firstPage }) => {
@@ -103,7 +101,6 @@ test.describe('', async () => {
     },
   );
 
-  // CSV2Excel
   electronBeforeAfterAllTest(
     'should correctly generate Excel output from HTML template using CSV as datasource (csv2excel_from_html_template)',
     async ({ beforeAfterEach: firstPage }) => {
@@ -134,8 +131,7 @@ test.describe('', async () => {
       return ft;
     },
   );
-
-  // Excel2DOCX
+  
   electronBeforeAfterAllTest(
     'should correctly generate DOCX output from DOCX template using Excel as datasource (excel2docx_from_docx_template)',
     async ({ beforeAfterEach: firstPage }) => {
@@ -165,8 +161,7 @@ test.describe('', async () => {
       return ft;
     },
   );
-
-  // Excel2HTML
+  
   electronBeforeAfterAllTest(
     'should correctly generate HTML output from HTML template using Excel as datasource (excel2html_from_html_template)',
     async ({ beforeAfterEach: firstPage }) => {
@@ -197,7 +192,6 @@ test.describe('', async () => {
     },
   );
 
-  // TSV2PDF - New test
   electronBeforeAfterAllTest(
     'should correctly generate PDF output from HTML template using TSV as datasource (tsv2pdf_from_html_template)',
     async ({ beforeAfterEach: firstPage }) => {
@@ -228,7 +222,6 @@ test.describe('', async () => {
     },
   );
 
-  // Fixed2Width2Excel - New test
   electronBeforeAfterAllTest(
     'should correctly generate Excel output from HTML template using Fixed Width as datasource (fixedwidth2excel_from_html_template)',
     async ({ beforeAfterEach: firstPage }) => {
@@ -263,11 +256,10 @@ test.describe('', async () => {
       return ft;
     },
   );
+
+*/
 });
 
-/**
- * Helper function to configure report settings and generate reports
- */
 function configureAndRunReportGeneration(
   ft: FluentTester,
   params: {

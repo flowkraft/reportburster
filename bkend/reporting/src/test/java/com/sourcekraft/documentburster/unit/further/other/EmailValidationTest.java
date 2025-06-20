@@ -160,8 +160,8 @@ public class EmailValidationTest {
 		ctx.token = "token1";
 		ctx.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
 
-		ctx.settings = new Settings();
-		ctx.settings.loadSettings(ctx.configurationFilePath);
+		ctx.settings = new Settings(ctx.configurationFilePath);
+		ctx.settings.loadSettings();
 
 		ctx.scripts = new Scripts();
 		ctx.variables = new Variables("fileName", "en", "en", 10);
@@ -196,8 +196,8 @@ public class EmailValidationTest {
 		ctx.token = "token1";
 		ctx.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
 
-		ctx.settings = new Settings();
-		ctx.settings.loadSettings(ctx.configurationFilePath);
+		ctx.settings = new Settings(ctx.configurationFilePath);
+		ctx.settings.loadSettings();
 
 		ctx.scripts = new Scripts();
 		ctx.variables = new Variables("fileName", "en", "en", 10);
@@ -225,8 +225,8 @@ public class EmailValidationTest {
 		ctx.token = "token1";
 		ctx.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
 
-		ctx.settings = new Settings();
-		ctx.settings.loadSettings(ctx.configurationFilePath);
+		ctx.settings = new Settings(ctx.configurationFilePath);
+		ctx.settings.loadSettings();
 
 		ctx.scripts = new Scripts();
 		ctx.variables = new Variables("fileName", "en", "en", 10);
@@ -260,8 +260,8 @@ public class EmailValidationTest {
 		ctx.token = "token1";
 		ctx.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
 
-		ctx.settings = new Settings();
-		ctx.settings.loadSettings(ctx.configurationFilePath);
+		ctx.settings = new Settings(ctx.configurationFilePath);
+		ctx.settings.loadSettings();
 
 		ctx.scripts = new Scripts();
 		ctx.variables = new Variables("fileName", "en", "en", 10);
@@ -296,8 +296,8 @@ public class EmailValidationTest {
 		ctx.token = "token1";
 		ctx.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
 
-		ctx.settings = new Settings();
-		ctx.settings.loadSettings(ctx.configurationFilePath);
+		ctx.settings = new Settings(ctx.configurationFilePath);
+		ctx.settings.loadSettings();
 
 		ctx.scripts = new Scripts();
 		ctx.variables = new Variables("fileName", "en", "en", 10);
@@ -322,8 +322,8 @@ public class EmailValidationTest {
 		BurstingContext ctx = new BurstingContext();
 		ctx.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
 
-		ctx.settings = new Settings();
-		ctx.settings.loadSettings(ctx.configurationFilePath);
+		ctx.settings = new Settings(ctx.configurationFilePath);
+		ctx.settings.loadSettings();
 
 		ctx.scripts = new Scripts();
 		ctx.variables = new Variables("fileName", "en", "en", 10);
@@ -339,8 +339,8 @@ public class EmailValidationTest {
 		BurstingContext ctx = new BurstingContext();
 		ctx.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
 
-		ctx.settings = new Settings();
-		ctx.settings.loadSettings(ctx.configurationFilePath);
+		ctx.settings = new Settings(ctx.configurationFilePath);
+		ctx.settings.loadSettings();
 
 		ctx.scripts = new Scripts();
 		ctx.variables = new Variables("fileName", "en", "en", 10);
@@ -362,8 +362,8 @@ public class EmailValidationTest {
 		BurstingContext ctx = new BurstingContext();
 		ctx.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
 
-		ctx.settings = new Settings();
-		ctx.settings.loadSettings(ctx.configurationFilePath);
+		ctx.settings = new Settings(ctx.configurationFilePath);
+		ctx.settings.loadSettings();
 
 		ctx.scripts = new Scripts();
 		ctx.variables = new Variables("fileName", "en", "en", 10);
@@ -379,8 +379,8 @@ public class EmailValidationTest {
 		BurstingContext ctx = new BurstingContext();
 		ctx.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
 
-		ctx.settings = new Settings();
-		ctx.settings.loadSettings(ctx.configurationFilePath);
+		ctx.settings = new Settings(ctx.configurationFilePath);
+		ctx.settings.loadSettings();
 
 		ctx.scripts = new Scripts();
 		ctx.variables = new Variables("fileName", "en", "en", 10);
@@ -399,8 +399,8 @@ public class EmailValidationTest {
 		BurstingContext ctx = new BurstingContext();
 		ctx.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
 
-		ctx.settings = new Settings();
-		ctx.settings.loadSettings(ctx.configurationFilePath);
+		ctx.settings = new Settings(ctx.configurationFilePath);
+		ctx.settings.loadSettings();
 
 		ctx.scripts = new Scripts();
 		ctx.variables = new Variables("fileName", "en", "en", 10);
@@ -419,8 +419,8 @@ public class EmailValidationTest {
 		BurstingContext ctx = new BurstingContext();
 		ctx.configurationFilePath = "src/main/external-resources/template/config/burst/settings.xml";
 
-		ctx.settings = new Settings();
-		ctx.settings.loadSettings(ctx.configurationFilePath);
+		ctx.settings = new Settings(ctx.configurationFilePath);
+		ctx.settings.loadSettings();
 
 		ctx.scripts = new Scripts();
 		ctx.variables = new Variables("fileName", "en", "en", 10);
@@ -558,7 +558,7 @@ public class EmailValidationTest {
 	public void testListofInvalidEmailAddresses() {
 
 		_assertEmail("Joe Smith <email@example.com>", true);
-		
+
 		_assertEmail("plainaddress", false);
 		_assertEmail("#@%^%#$@#$@#.com", false);
 		_assertEmail("@example.com", false);

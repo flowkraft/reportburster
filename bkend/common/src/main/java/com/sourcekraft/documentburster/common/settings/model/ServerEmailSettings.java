@@ -16,7 +16,7 @@ package com.sourcekraft.documentburster.common.settings.model;
 
 import com.sourcekraft.documentburster.common.utils.DumpToString;
 
-public class EmailServer extends DumpToString {
+public class ServerEmailSettings extends DumpToString {
 
 	/**
 	 * 

@@ -66,7 +66,7 @@ public class BursterSettings extends DumpToString {
 
 	/* end text extraction options */
 
-	public EmailServer emailserver;
+	public ServerEmailSettings emailserver;
 
 	public boolean htmlemail;
 	public boolean htmlemaileditcode;
@@ -100,6 +100,8 @@ public class BursterSettings extends DumpToString {
 	public boolean split2ndtime;
 	public BurstTokenDelimiters bursttokendelimiters;
 	
+	public boolean dumprecorddataasxml;
+
 	public boolean enableincubatingfeatures;
 
 	public String notes;

@@ -6,7 +6,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
       <div class="col-xs-2">
         {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.OUTPUT-TYPE' | translate }}
       </div>
-      <div class="col-xs-10">
+      <div class="col-xs-5">
         <select
           id="reportOutputType"
           class="form-control"
@@ -29,8 +29,21 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
           <option value="output.docx">
             {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TYPE-DOCX' | translate }}
           </option>
+
+          <option value="output.fop2pdf">
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TYPE-PDF-USING-FOP' | translate }}
+          </option>
+          <option value="output.any">
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TYPE-ANY' | translate }}
+          </option>
         </select>
       </div>
+      <div class="col-xs-5">
+        <button id="btnAskAiForHelpOutput" type="button" class="btn btn-default" (click)="askAiForHelp((xmlReporting?.documentburster.report.template.outputtype))">
+              <strong>{{ getAiHelpButtonLabel(xmlReporting?.documentburster.report.template.outputtype) }}</strong>
+        </button>
+      </div>
+     
     </div>
     <p></p>
     <!-- Add this help text when None is selected -->
@@ -52,9 +65,29 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
         *ngIf="xmlReporting?.documentburster.report.template.outputtype != 'output.none'"
       >
         <div class="col-xs-2">
-          {{ (xmlReporting?.documentburster.report.template.outputtype === 'output.docx' ? 
-            'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TEMPLATE-FILE': 
-            'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TEMPLATE-HTML') | translate }}
+          {{(
+            xmlReporting?.documentburster.report.template.outputtype === 'output.docx' ? 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TEMPLATE-DOCX' :
+            xmlReporting?.documentburster.report.template.outputtype === 'output.fop2pdf' ? 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TEMPLATE-XSLFO' :
+            xmlReporting?.documentburster.report.template.outputtype === 'output.any' ? 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TEMPLATE-FREEM' :
+            'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TEMPLATE-HTML'
+          ) | translate}}
+          <br/><br/>
+          <button type="button" 
+                  id="btnOpenTemplateGallery"
+                  class="btn btn-sm btn-default" 
+                  (click)="openTemplateGallery()"
+                  style="margin-top: 6px"
+                  >
+            <i class="fa fa-list-alt"></i> {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.EXAMPLES-GALLERY' | translate }}
+          </button>
+          <dburst-ai-copilot
+              #aiCopilotInstance
+              [hidden]="true"
+              dropdownDirection="down"
+              [initialActiveTabKey]="'PROMPTS'"
+              [initialSelectedCategory]="'Template Creation/Modification'"
+            >
+          </dburst-ai-copilot>  
         </div>
 
         <div class="col-xs-10">
@@ -72,7 +105,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
                 <div id="noDocxTemplatesFound" class="ng-option disabled">
                   <i class="fa fa-exclamation-triangle text-warning"></i> 
                   {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.NO-TEMPLATES-FOUND' | translate }}<br>
-                  <code id="noDocxTemplatesFoundCode" style="background-color: #f8f8f8; padding: 4px; margin-top: 5px; display: block; word-break: break-all;">
+                  <code id="noDocxTemplatesFoundCode" style="background-color: #f8f8f8; padding: 4px; display: block; word-break: break-all;">
                     {{absoluteTemplateFolderPath ? absoluteTemplateFolderPath : 
                       (settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH + '/reports/' + 
                       settingsService.currentConfigurationTemplate?.folderName)}}
@@ -97,49 +130,12 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
           <!-- Shared toolbar for all output types except 'none' -->
           <div class="shared-toolbar" 
               *ngIf="xmlReporting?.documentburster.report.template.outputtype !== 'output.none'"
-              style="margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; flex-wrap: nowrap; min-width: fit-content;">
-              <div class="btn-group" style="white-space: nowrap; display: inline-flex;">
-                <button type="button" 
-                        id="btnAiCopilot"
-                        class="btn btn-sm btn-default" 
-                        style="border-top-right-radius: 0; border-bottom-right-radius: 0;"
-                        (click)="openBingAICopilot()">
-                  {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.LAUNCH-COPILOT' | translate }}&nbsp;
-                  <img src="https://studiostaticassetsprod.azureedge.net/bundle-cmc/favicon.svg" 
-                      style="height: 16px; width: 16px" 
-                      alt="Copilot" /> 
-                </button>
-                <button type="button" 
-                        id="btnAiDropdownToggle"
-                        class="btn btn-sm btn-default dropdown-toggle" 
-                        style="border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 1px solid #ccc; width: 20px; padding-left: 5px; padding-right: 5px;"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <span class="caret"></span>
-                  <span class="sr-only">Toggle Dropdown</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-right">
-                  <li>
-                    <a href="javascript:void(0)" 
-                      id="btnAskAiForHelp"  
-                      (click)="askAiForHelp()">
-                      <i class="fa fa-star"></i> <strong>{{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.HEY-AI' | translate }}</strong>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              
-              <button type="button" 
-                      id="btnOpenTemplateGallery"
-                      class="btn btn-sm btn-default" style="margin-left: 5px;" 
-                      (click)="openTemplateGallery()">
-                <i class="fa fa-list-alt"></i> {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.EXAMPLES-GALLERY' | translate }}
-              </button>
-            </div>
+              style="display: flex; align-items: center;">
+            
             
             <!-- Template path display (right-aligned, expanded) -->
-            <div *ngIf="absoluteTemplateFolderPath" 
-                style="display: flex; align-items: center; overflow: hidden; flex: 1; margin-left: 15px; max-width: 70%;">
+            <div *ngIf="xmlReporting?.documentburster.report.template.outputtype == 'output.docx'" 
+                style="display: flex; align-items: center; overflow: hidden; flex: 1; margin-left: auto;">
               <div id="divTruncatedAbsoluteTemplateFolderPath" class="truncated-path" 
                   style="font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background-color: #f8f8f8; padding: 4px 8px; border-radius: 3px; border: 1px solid #e0e0e0; margin-right: 5px; width: 100%;"
                   [title]="absoluteTemplateFolderPath || getTemplateRelativeFolderPath()">
@@ -152,25 +148,25 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
                       (click)="copyTemplatePathToClipboard()">
                 <i class="fa fa-clipboard"></i>
               </button>
-            </div>
+             </div>
           </div>
 
 
           <!-- HTML editor for HTML, PDF and XLSX -->
-          <div>
+          <div *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.html' || 
+                    xmlReporting?.documentburster.report.template.outputtype === 'output.pdf' || 
+                    xmlReporting?.documentburster.report.template.outputtype === 'output.xlsx'">
               
               <!-- Code editor only (when preview is hidden) -->
-              <div id="codeJarHtmlTemplateEditorDiv" *ngIf="!reportPreviewVisible && (xmlReporting?.documentburster.report.template.outputtype === 'output.html' || 
-                    xmlReporting?.documentburster.report.template.outputtype === 'output.pdf' || 
-                    xmlReporting?.documentburster.report.template.outputtype === 'output.xlsx')">
+              <div id="codeJarHtmlTemplateEditorDiv" *ngIf="!reportPreviewVisible">
                 <ngx-codejar
                   id="codeJarHtmlTemplateEditor"  
-                  [(code)]="activeReportTemplateHtml"
-                  (codeChange)="onTemplateHtmlContentChanged($event)"
-                  [highlightMethod]="highlightMethod"
+                  [(code)]="activeReportTemplateContent"
+                  (codeChange)="onTemplateContentChanged($event)"
+                  [highlightMethod]="highlightHtmlCode"
                   [highlighter]="'prism'"
                   [showLineNumbers]="true"
-                  style="height: 446px; border: 1px solid #ccc; border-radius: 4px 4px 0 0; overflow-y: auto;"
+                  style="height: 476px; border: 1px solid #ccc; border-radius: 4px 4px 0 0; overflow-y: auto;"
                 ></ngx-codejar>
                 <button type="button" 
                         id="btnToggleHtmlPreviewShow"
@@ -182,20 +178,18 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
               </div>
 
               <!-- Split pane with editor and preview -->
-              <as-split *ngIf="reportPreviewVisible && (xmlReporting?.documentburster.report.template.outputtype === 'output.html' || 
-                    xmlReporting?.documentburster.report.template.outputtype === 'output.pdf' || 
-                    xmlReporting?.documentburster.report.template.outputtype === 'output.xlsx')" direction="horizontal" 
+              <as-split *ngIf="reportPreviewVisible" direction="horizontal" 
                         [gutterSize]="8" [useTransition]="true"
-                        style="height: 480px;">
+                        style="height: 510px;">
                 
                 <!-- Editor Pane -->
                 <as-split-area [size]="50" [minSize]="20">
                   <div id="codeJarHtmlTemplateEditorDiv" style="height: 100%; display: flex; flex-direction: column;">
                     <ngx-codejar
                       id="codeJarHtmlTemplateEditor"
-                      [(code)]="activeReportTemplateHtml"
-                      (codeChange)="onTemplateHtmlContentChanged($event)"
-                      [highlightMethod]="highlightMethod"
+                      [(code)]="activeReportTemplateContent"
+                      (codeChange)="onTemplateContentChanged($event)"
+                      [highlightMethod]="highlightHtmlCode"
                       [highlighter]="'prism'"
                       [showLineNumbers]="true"
                       style="flex: 1; border: 1px solid #ccc; border-radius: 4px 4px 0 0; overflow-y: auto;"
@@ -229,6 +223,34 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
               </as-split>
               
           </div>
+
+          <!-- Template file selector for output.fop2pdf and output.any -->
+          <div *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.fop2pdf' || 
+                    xmlReporting?.documentburster.report.template.outputtype === 'output.any'">
+          
+                    <ngx-codejar
+                      id="codeJarXslFoTemplateEditor"
+                      *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.fop2pdf'"
+                      [(code)]="activeReportTemplateContent"
+                      (codeChange)="onTemplateContentChanged($event)"
+                      [highlightMethod]="highlightXmlCode"
+                      [highlighter]="'prism'"
+                      [showLineNumbers]="true"
+                      style="height: 476px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto;">
+                    </ngx-codejar>
+          
+                    <ngx-codejar
+                      id="codeJarFreeMarkerTemplateEditor"
+                      *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.any'"
+                      [(code)]="activeReportTemplateContent"
+                      (codeChange)="onTemplateContentChanged($event)"
+                      [highlightMethod]="highlightFreeMarkerCode"
+                      [highlighter]="'prism'"
+                      [showLineNumbers]="true"
+                      style="height: 476px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto;">
+                    </ngx-codejar>
+          </div>
+          
         </div>
       </div>
     </div>

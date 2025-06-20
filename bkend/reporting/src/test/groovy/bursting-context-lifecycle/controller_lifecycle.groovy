@@ -1,10 +1,13 @@
 if (ctx.inputDocumentFilePath.contains("Invoices-Oct.pdf"))
 {
-	ctx.settings.loadSettings("src/test/resources/config/settings-custom.xml");
+	ctx.settings.setConfigurationFilePath("src/test/resources/config/settings-custom.xml")
+	ctx.settings.loadSettings();
 }
 else if (ctx.inputDocumentFilePath.contains("Invoices-Nov.pdf"))
 {
-	ctx.settings.loadSettings("src/main/external-resources/template/config/burst/settings.xml");
+	ctx.settings.setConfigurationFilePath("src/main/external-resources/template/config/burst/settings.xml")
+	
+	ctx.settings.loadSettings();
 	
 	ctx.settings.setBurstFileName("\$var1\$-\$var0\$.\$input_document_extension\$")
 

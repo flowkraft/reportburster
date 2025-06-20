@@ -4,18 +4,22 @@ import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.engine.AbstractReporter;
 import com.sourcekraft.documentburster.engine.excel.ExcelUtils;
 import com.sourcekraft.documentburster.utils.CsvUtils;
-import com.sourcekraft.documentburster.variables.Variables;
 
 public class ExcelReporter extends AbstractReporter {
 
@@ -24,162 +28,300 @@ public class ExcelReporter extends AbstractReporter {
 	public ExcelReporter(String configFilePath) {
 		super(configFilePath);
 	}
-
 	@Override
-	protected void initializeResources() throws Exception {
-		ctx.variables.setVarAliases(Arrays.asList("col"));
-		ctx.variables.set(Variables.OUTPUT_TYPE_EXTENSION,
-				FilenameUtils.getExtension(ctx.settings.getReportTemplate().outputtype));
+    protected void fetchData() throws Exception {
+        log.trace("Entering fetchData..."); // Added logging
 
-		try (FileInputStream excelFile = new FileInputStream(filePath);
-				Workbook workbook = WorkbookFactory.create(excelFile)) {
+        // --- Read Excel Options ---
+        String idColumn = ctx.settings.getReportDataSource().exceloptions.idcolumn;
+        String headerSetting = ctx.settings.getReportDataSource().exceloptions.header;
+        int userSkipLines = ctx.settings.getReportDataSource().exceloptions.skiplines;
+        boolean ignoreLeadingWhitespace = ctx.settings.getReportDataSource().exceloptions.ignoreleadingwhitespace;
+        boolean useFormulaResults = ctx.settings.getReportDataSource().exceloptions.useformularesults;
+        int sheetIndex = ctx.settings.getReportDataSource().exceloptions.sheetindex;
 
-			// Get sheet based on settings or default to first sheet
-			int sheetIndex = ctx.settings.getReportDataSource().exceloptions.sheetindex;
-			Sheet sheet = workbook.getSheetAt(sheetIndex);
+        // --- Validate idColumn --- (Kept from original)
+        if (StringUtils.isEmpty(idColumn)) {
+            throw new IllegalArgumentException(
+                    "idcolumn setting must be configured - use 'notused' for sequential numbering");
+        }
+        if (!idColumn.equalsIgnoreCase(CsvUtils.NOT_USED) && !idColumn.equalsIgnoreCase(CsvUtils.COLUMN_FIRST)
+                && !idColumn.equalsIgnoreCase(CsvUtils.COLUMN_LAST) && !StringUtils.isNumeric(idColumn)) {
+            // Allow header names later? For now, stick to original validation.
+            // Consider adding check if header name exists if hasHeader is true.
+            log.warn("idcolumn validation passed for: {}", idColumn);
+            throw new IllegalArgumentException(
+             		"idcolumn must be 'first', 'last', 'notused' or a numeric column index (e.g., 0, 1, ...)");
+        }
 
-			// Parse settings
-			boolean hasHeader = ctx.settings.getReportDataSource().exceloptions.header.equals("firstline");
-			int skipLines = ctx.settings.getReportDataSource().exceloptions.skiplines;
-			boolean ignoreLeadingWhitespace = ctx.settings.getReportDataSource().exceloptions.ignoreleadingwhitespace;
-			boolean useFormulaResults = ctx.settings.getReportDataSource().exceloptions.useformularesults;
+        // Ensure skipLines is non-negative
+        if (userSkipLines < 0) {
+            log.warn("Invalid negative skipLines ({}) provided. Defaulting to 0.", userSkipLines);
+            userSkipLines = 0;
+        }
 
-			// Parse Excel sheet
-			this.parsedLines = convertSheetToStringArrays(sheet, hasHeader, skipLines, ignoreLeadingWhitespace,
-					useFormulaResults);
+        // Determine if a header row is expected based on settings
+        // Correctly interpret 'firstline' and 'multiline' as having a header on the first line.
+        boolean hasHeader = CsvUtils.HEADER_FIRSTLINE.equalsIgnoreCase(headerSetting) ||
+                            CsvUtils.HEADER_MULTILINE.equalsIgnoreCase(headerSetting);
 
-			// Basic validation check
-			if ((this.parsedLines.size() > 0) && (1 == this.parsedLines.get(0).length)) {
-				throw new IllegalArgumentException(
-						"Excel file appears to contain only 1 column with value: '" + this.parsedLines.get(0)[0] + "'");
-			}
+        log.debug(
+                "Excel Options: headerSetting={}, userSkipLines={}, hasHeader={}, ignoreLeadingWhitespace={}, useFormulaResults={}, sheetIndex={}",
+                headerSetting, userSkipLines, hasHeader, ignoreLeadingWhitespace, useFormulaResults, sheetIndex);
 
-			log.debug("Parsed " + this.parsedLines.size() + " rows from Excel file");
-		}
-	}
+        // Initialize results
+        ctx.reportData = new ArrayList<>();
+        ctx.reportColumnNames = new ArrayList<>(); // Initialize reportColumnNames list
+        String[] headers = null;
+        int maxColsBasedOnHeader = 0; // Track header width if read
 
-	private List<String[]> convertSheetToStringArrays(Sheet sheet, boolean hasHeader, int skipLines,
-			boolean ignoreLeadingWhitespace, boolean useFormulaResults) {
-		List<String[]> result = new ArrayList<>();
-		Iterator<Row> rowIterator = sheet.iterator();
+        try (FileInputStream excelFile = new FileInputStream(filePath);
+                Workbook workbook = WorkbookFactory.create(excelFile)) {
 
-		// Handle header and skip lines
-		int skipCount = 0;
-		// Don't add extra skip for header - only use skipLines value
-		// This matches CsvReporter behavior
-		skipCount = skipLines;
+            // Get sheet based on settings
+            Sheet sheet;
+            try {
+                sheet = workbook.getSheetAt(sheetIndex);
+                if (sheet == null) {
+                    throw new IllegalArgumentException(
+                            "Sheet index " + sheetIndex + " does not exist in the workbook.");
+                }
+            } catch (IllegalArgumentException e) { // Catch index out of bounds
+                throw new IllegalArgumentException(
+                        "Invalid sheet index: " + sheetIndex + ". Workbook has " + workbook.getNumberOfSheets() + " sheets.", e);
+            }
+            log.debug("Selected sheet '{}' at index {}.", sheet.getSheetName(), sheetIndex);
 
-		// Skip rows if configured
-		for (int i = 0; i < skipCount && rowIterator.hasNext(); i++) {
-			rowIterator.next();
-		}
 
-		// Process data rows
-		while (rowIterator.hasNext()) {
-			Row row = rowIterator.next();
-			int lastColumn = (int) row.getLastCellNum();
-			if (lastColumn < 0) {
-				lastColumn = 0;
-			}
+            // --- Read Header Row (if applicable) ---
+            // The header is always the *first* row (index 0) if hasHeader is true.
+            if (hasHeader) {
+                log.debug("Attempting to read header from the first row (index 0).");
+                Row headerRow = sheet.getRow(0); // Get the first row directly
+                if (headerRow == null) {
+                    log.warn(
+                            "Header row (index 0) is null or physically missing, but header setting was '{}'. Will attempt to generate generic headers from data.", headerSetting);
+                } else {
+                    // Determine the number of cells in the header row
+                    maxColsBasedOnHeader = headerRow.getLastCellNum();
+                    if (maxColsBasedOnHeader < 0) maxColsBasedOnHeader = 0; // Handle empty header row
 
-			String[] rowData = new String[lastColumn];
-			boolean hasContent = false; // Flag to track if row has any non-empty content
+                    if (maxColsBasedOnHeader == 0) {
+                        log.warn("Header row (index 0) has no cells. Will attempt to generate generic headers from data.");
+                    } else {
+                        headers = new String[maxColsBasedOnHeader];
+                        log.trace("Header row has {} potential columns.", maxColsBasedOnHeader);
+                        for (int i = 0; i < maxColsBasedOnHeader; i++) {
+                            Cell cell = headerRow.getCell(i, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                            // Always get header as string, don't evaluate formulas here
+                            headers[i] = ExcelUtils.getCellValueAsString(cell); // Use utility for consistency
+                            if (ignoreLeadingWhitespace && headers[i] != null) {
+                                headers[i] = headers[i].trim();
+                            }
+                            // Generate default name if header cell is blank (Original used ColumnX+1, using colX for consistency)
+                            if (StringUtils.isBlank(headers[i])) {
+                                headers[i] = "col" + i;
+                                log.trace("Header cell at index {} was blank, assigned default name '{}'.", i, headers[i]);
+                            }
+                        }
+                        log.debug("Successfully read header from first row ({} columns): {}", headers.length,
+                                Arrays.toString(headers));
+                    }
+                }
+            } else {
+                log.debug("Header setting is 'noheader'. No header row will be read.");
+            }
 
-			for (int i = 0; i < lastColumn; i++) {
-				Cell cell = row.getCell(i, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-				String cellValue = getCellValueAsString(cell, useFormulaResults);
 
-				if (ignoreLeadingWhitespace && cellValue != null) {
-					cellValue = cellValue.trim();
-				}
+            // --- Calculate Data Start Row Index ---
+            // If hasHeader, we must skip at least 1 row (the header itself).
+            // The effective skip count is the *maximum* of userSkipLines and 1 (if header exists).
+            // If no header, the effective skip count is just userSkipLines.
+            int dataStartRowIndex = hasHeader ? Math.max(userSkipLines, 1) : userSkipLines;
+            log.debug("Calculated data start row index (0-based): {}. (Based on hasHeader={}, userSkipLines={})",
+                    dataStartRowIndex, hasHeader, userSkipLines);
 
-				rowData[i] = cellValue;
 
-				// Check if this cell has content
-				if (cellValue != null && !cellValue.trim().isEmpty()) {
-					hasContent = true;
-				}
-			}
+            // --- Process Data Rows ---
+            Iterator<Row> rowIterator = sheet.iterator();
+            int currentRowIndex = 0; // Physical row index (0-based)
 
-			// Only add rows that have at least one non-empty cell
-			if (hasContent) {
-				result.add(rowData);
-			}
-		}
+            // Skip rows before the data start index
+            while (currentRowIndex < dataStartRowIndex && rowIterator.hasNext()) {
+                rowIterator.next(); // Consume the row
+                currentRowIndex++;
+            }
 
-		return result;
-	}
+            if (currentRowIndex < dataStartRowIndex) {
+                log.warn("Reached end of sheet while skipping initial rows. Expected to start data at index {}, but sheet only has {} rows.", dataStartRowIndex, currentRowIndex);
+            } else {
+                log.debug("Starting data processing from physical row index {}.", currentRowIndex);
+            }
 
-	private String getCellValueAsString(Cell cell, boolean useFormulaResults) {
-		if (cell == null) {
-			return "";
-		}
+            int dataRowCounter = 0; // Counter for data rows processed
+            while (rowIterator.hasNext()) {
+                Row row = rowIterator.next();
+                log.trace("Processing physical row index: {}", currentRowIndex);
 
-		// Handle formula cells specially based on settings
-		if (cell.getCellType() == CellType.FORMULA && !useFormulaResults) {
-			// Return the formula itself
-			return cell.getCellFormula();
-		}
+                // Determine the number of columns for this specific row
+                int lastColumnForRow = row.getLastCellNum();
+                if (lastColumnForRow < 0) lastColumnForRow = 0;
 
-		// Otherwise use the existing robust implementation
-		return ExcelUtils.getCellValueAsString(cell);
-	}
+                // --- Generate Generic Headers (if needed) ---
+                // This happens only on the *first* data row encountered if headers are still null.
+                if (headers == null && dataRowCounter == 0) {
+                    if (lastColumnForRow == 0) {
+                        log.warn("First data row encountered (index {}) has no cells. Cannot generate headers.", currentRowIndex);
+                        // Decide whether to continue or stop if headers are essential
+                        currentRowIndex++; // Move to next potential row index
+                        continue; // Skip this empty row
+                    }
+                    headers = new String[lastColumnForRow];
+                    for (int i = 0; i < lastColumnForRow; i++) {
+                        // Use original ColumnX+1 naming convention if preferred
+                        headers[i] = "Column" + (i + 1);
+                    }
+                    maxColsBasedOnHeader = lastColumnForRow; // Update maxCols based on generated headers
+                    log.debug("Generated generic headers based on first data row read ({} columns): {}", headers.length, Arrays.toString(headers));
+                } else if (headers == null) {
+                    // Should not happen if headers were generated or read previously, but safeguard
+                    log.error("Headers are unexpectedly null while processing data row index {}. Stopping data read.", currentRowIndex);
+                    break;
+                }
 
-	@Override
-	public List<String> parseBurstingMetaData() throws Exception {
-		List<String> tokens = new ArrayList<>();
-		int lineLength = 0;
-		int lineIndex = 0;
-		int codeColumnIndex = -1;
+                // Use the header width if defined, otherwise the row's width for processing this row
+                int colsToProcess = (maxColsBasedOnHeader > 0) ? maxColsBasedOnHeader : lastColumnForRow;
 
-		String idColumn = ctx.settings.getReportDataSource().exceloptions.idcolumn;
+                // --- Process Cells in the Current Data Row ---
+                LinkedHashMap<String, Object> rowMap = new LinkedHashMap<>();
+                boolean hasContent = false; // Track if the row has any non-blank content
 
-		// Explicit NOT_USED means use sequential numbering
-		// Empty/null would indicate misconfiguration
-		if (StringUtils.isEmpty(idColumn))
-			throw new IllegalArgumentException(
-					"idcolumn setting must be configured - use 'notused' for sequential numbering");
+                for (int i = 0; i < colsToProcess; i++) {
+                    Cell cell = row.getCell(i, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                    Object cellValue = null;
+                    // Use header if available and index is within bounds, otherwise generate column name
+                    String columnName = (headers != null && i < headers.length) ? headers[i] : "Column" + (i + 1);
 
-		if (!idColumn.contains(CsvUtils.NOT_USED)) {
-			if (idColumn.contains(CsvUtils.COLUMN_FIRST))
-				codeColumnIndex = 0;
-			else if (idColumn.contains(CsvUtils.COLUMN_LAST))
-				codeColumnIndex = -1; // Will be set when we know line length
-			else if (StringUtils.isNumeric(idColumn))
-				codeColumnIndex = Integer.valueOf(idColumn);
-			else
-				throw new IllegalArgumentException("idcolumn must be 'first', 'last', 'notused' or a number");
-		}
+                    // Get typed value based on cell type (kept original logic)
+                    try { // Added try-catch around cell reading
+                        switch (cell.getCellType()) {
+                        case NUMERIC:
+                            if (DateUtil.isCellDateFormatted(cell)) {
+                                cellValue = cell.getDateCellValue();
+                            } else {
+                                cellValue = cell.getNumericCellValue();
+                            }
+                            break;
+                        case BOOLEAN:
+                            cellValue = cell.getBooleanCellValue();
+                            break;
+                        case FORMULA:
+                            if (useFormulaResults) {
+                                // Evaluate formula - try numeric first, then string, then fallback to formula string
+                                try {
+                                    cellValue = cell.getNumericCellValue();
+                                } catch (IllegalStateException | NumberFormatException eNum) {
+                                    try {
+                                        cellValue = cell.getStringCellValue();
+                                        if (ignoreLeadingWhitespace && cellValue != null) {
+                                            cellValue = ((String) cellValue).trim();
+                                        }
+                                    } catch (IllegalStateException eStr) {
+                                        log.trace("Could not evaluate formula at [{},{}] as numeric or string, using formula string.", row.getRowNum(), i, eStr);
+                                        cellValue = cell.getCellFormula(); // Fallback to formula string
+                                    }
+                                }
+                            } else {
+                                cellValue = cell.getCellFormula(); // Use the formula string itself
+                            }
+                            break;
+                        case BLANK: // Explicitly handle BLANK as null
+                            cellValue = null;
+                            break;
+                        case STRING: // Handle STRING separately for trimming
+                            cellValue = cell.getStringCellValue();
+                            if (ignoreLeadingWhitespace && cellValue != null) {
+                                cellValue = ((String) cellValue).trim();
+                            }
+                            break;
+                        default: // Fallback for other types (Error, _NONE) - treat as blank/null
+                            log.trace("Unhandled cell type {} at [{},{}]. Treating as null.", cell.getCellType(), row.getRowNum(), i);
+                            cellValue = null;
+                            break;
+                        }
+                    } catch (Exception e) {
+                        log.warn("Error reading cell at [{},{}] (Header: '{}'). Using null. Error: {}", row.getRowNum(), i, columnName, e.getMessage());
+                        cellValue = null; // Fallback to null on error
+                    }
 
-		for (String[] currentLine : this.parsedLines) {
-			if (lineLength <= 0) {
-				lineLength = currentLine.length;
-				if (idColumn.contains(CsvUtils.COLUMN_LAST)) // Handle COLUMN_LAST case
-					codeColumnIndex = lineLength - 1;
-			}
+                    // Handle potential duplicate header names when putting into map
+                    String uniqueHeaderName = columnName;
+                    int duplicateCount = 2;
+                    while (rowMap.containsKey(uniqueHeaderName)) {
+                        uniqueHeaderName = columnName + "_" + duplicateCount++;
+                    }
+                    if (!uniqueHeaderName.equals(columnName)) {
+                        log.trace("Duplicate header '{}' encountered for this row, using '{}' in map.", columnName, uniqueHeaderName);
+                    }
+                    rowMap.put(uniqueHeaderName, cellValue);
 
-			String token = codeColumnIndex >= 0 ? currentLine[codeColumnIndex] : String.valueOf(lineIndex);
 
-			StringBuilder userVariablesStringBuilder = new StringBuilder();
-			for (int currentColumnIndex = 0; currentColumnIndex < lineLength; currentColumnIndex++) {
-				userVariablesStringBuilder.append("<").append(currentColumnIndex).append(">")
-						.append(currentLine[currentColumnIndex]).append("</").append(currentColumnIndex).append(">");
-			}
+                    // Check if this cell has content (null or blank strings are considered no content)
+                    // Kept original check: !((cellValue instanceof String) && ((String) cellValue).trim().isEmpty())
+                    if (cellValue != null
+                            && !((cellValue instanceof String) && ((String) cellValue).trim().isEmpty())) {
+                        hasContent = true;
+                    }
+                } // End cell processing loop
 
-			ctx.variables.parseUserVariables(token, userVariablesStringBuilder.toString());
-			tokens.add(token);
-			lineIndex++;
-		}
+                // Only add rows that have at least one non-empty cell (kept original logic)
+                if (hasContent) {
+                    ctx.reportData.add(rowMap);
+                    log.trace("Added data row map (physical index {}): {}", currentRowIndex, rowMap);
+                    dataRowCounter++;
+                } else {
+                    log.trace("Skipped row at physical index {} because it contained no content.", currentRowIndex);
+                }
+                currentRowIndex++;
+            } // End row processing loop
+            log.info("Finished reading Excel data. Total data rows processed: {}", dataRowCounter);
 
-		return tokens;
-	}
+        } // End try-with-resources (Workbook)
 
-	/**
-	 * Get the parsed Excel lines.
-	 * 
-	 * @return List of String arrays representing the parsed data rows
-	 */
-	public List<String[]> getParsedExcelLines() {
-		return this.parsedLines;
-	}
+
+        // --- Store Final Column Names ---
+        if (headers != null) {
+            // Handle potential duplicates in the final header list for ctx.reportColumnNames
+            // This ensures ctx.reportColumnNames matches the keys used in the rowMaps if duplicates existed
+            Map<String, Integer> headerCounts = new LinkedHashMap<>();
+            for (String header : headers) {
+                int count = headerCounts.getOrDefault(header, 0) + 1;
+                headerCounts.put(header, count);
+                // Only append suffix if it's actually a duplicate *within the header row itself*
+                String uniqueHeader = (count > 1 && Arrays.stream(headers).filter(h -> h.equals(header)).count() > 1)
+                        ? header + "_" + count
+                        : header;
+                ctx.reportColumnNames.add(uniqueHeader);
+            }
+            log.debug("Stored final column names (duplicates adjusted): {}", ctx.reportColumnNames);
+        } else if (!ctx.reportData.isEmpty()) {
+            log.warn("No headers were read or generated, but data rows exist. Column names context will be empty.");
+        } else {
+            log.debug("No headers found and no data rows processed.");
+        }
+
+
+        // Basic validation check (kept from original) - Consider if this is still needed/correct
+        if (!ctx.reportData.isEmpty() && ctx.reportData.get(0).size() == 1) {
+            log.warn("Validation check: Excel file appears to contain only 1 column with value: '{}'", ctx.reportData.get(0).values().iterator().next());
+            // throw new IllegalArgumentException("Excel file appears to contain only 1 column with value: '"
+            // 		+ ctx.reportData.get(0).values().iterator().next() + "'");
+        }
+
+        log.info("Excel data fetched successfully. Headers: {}. Data rows: {}", ctx.reportColumnNames.size(),
+                ctx.reportData.size());
+        log.trace("Exiting fetchData.");
+    }
+
+	
 }

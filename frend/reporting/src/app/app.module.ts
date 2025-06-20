@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { APP_INITIALIZER, NgModule } from '@angular/core';
+import { APP_INITIALIZER, inject, NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { SharedModule } from './shared/shared.module';
@@ -15,21 +15,13 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { AppComponent } from './app.component';
 import { ToastrModule } from 'ngx-toastr';
 import { AreasModule } from './areas/areas.module';
-import { RbElectronService } from './areas/electron-nodejs/electron.service';
 import { InitService } from './providers/init.service';
-import { StateStoreService } from './providers/state-store.service';
 const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>
   new TranslateHttpLoader(http, './assets/i18n/', '.json');
 
 @NgModule({
   declarations: [AppComponent],
   imports: [
-    SharedModule.forRoot(),
-    AreasModule,
-    BrowserModule,
-    FormsModule,
-    HttpClientModule,
-    AppRoutingModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -37,6 +29,12 @@ const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>
         deps: [HttpClient],
       },
     }),
+    SharedModule.forRoot(),
+    AreasModule,
+    BrowserModule,
+    FormsModule,
+    HttpClientModule,
+    AppRoutingModule,
     ToastrModule.forRoot({
       timeOut: 5000,
       positionClass: 'toast-bottom-right',
@@ -51,7 +49,7 @@ const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>
       useFactory: (initService: InitService) => () => initService.initialize(),
       deps: [InitService],
       multi: true,
-    },
+    }, // Add the icon loader provider here
   ],
   bootstrap: [AppComponent],
 })

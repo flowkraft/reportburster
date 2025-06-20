@@ -68,9 +68,6 @@ public class AttachmentsTest {
 
                         super.executeController();
 
-                        scripting.setRoots(new String[]{"src/test/groovy", "src/test/groovy/senders-messages",
-                                "src/main/external-resources/template/scripts/burst/internal"});
-
                         ctx.settings.getAttachments().clear();
 
                     };
@@ -89,9 +86,6 @@ public class AttachmentsTest {
                     protected void executeController() throws Exception {
 
                         super.executeController();
-
-                        scripting.setRoots(new String[]{"src/test/groovy", "src/test/groovy/senders-messages",
-                                "src/main/external-resources/template/scripts/burst/internal"});
 
                         ctx.settings.setArchiveAttachments(true);
 
@@ -136,9 +130,6 @@ public class AttachmentsTest {
                     protected void executeController() throws Exception {
 
                         super.executeController();
-
-                        scripting.setRoots(new String[]{"src/test/groovy", "src/test/groovy/senders-messages",
-                                "src/main/external-resources/template/scripts/burst/internal"});
 
                         ctx.settings.getAttachments().clear();
 
@@ -194,9 +185,6 @@ public class AttachmentsTest {
                     protected void executeController() throws Exception {
 
                         super.executeController();
-
-                        scripting.setRoots(new String[]{"src/test/groovy", "src/test/groovy/senders-messages",
-                                "src/main/external-resources/template/scripts/burst/internal"});
 
                         ctx.settings.getAttachments().clear();
 

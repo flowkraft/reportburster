@@ -1,29 +1,37 @@
 package com.flowkraft.cfgman;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.flowkraft.common.AppPaths;
+import com.flowkraft.jobman.dtos.FindCriteriaDto;
 import com.flowkraft.jobman.services.SystemService;
-import com.flowkraft.jobman.services.SystemService.FindCriteria;
+import com.sourcekraft.documentburster.common.reportparameters.ReportParameter;
+import com.sourcekraft.documentburster.common.reportparameters.ReportParametersHelper;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ConfigurationFileInfo;
 import com.sourcekraft.documentburster.common.settings.model.ConnectionFileInfo;
-import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionSettings;
+import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
+import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionEmailSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSettingsInternal;
 import com.sourcekraft.documentburster.common.settings.model.ReportingSettings;
@@ -47,12 +55,17 @@ public class DocumentBursterSettingsService {
 		Optional<Boolean> recursive = Optional.of(false);
 		Optional<Boolean> ignoreCase = Optional.of(true);
 
-		FindCriteria criteria = new FindCriteria(matching, files, directories, recursive, ignoreCase);
+		// CORRECTED: Construct the DTO using orElse(null)
+		FindCriteriaDto criteriaDto = new FindCriteriaDto(matching, files.orElse(null), // Use orElse(null) here
+				directories.orElse(null), // Use orElse(null) here
+				recursive.orElse(null), // Use orElse(null) here
+				ignoreCase.orElse(null) // Use orElse(null) here
+		);
 
 		// System.out.println("burst folder path = " + AppPaths.CONFIG_DIR_PATH +
 		// "/burst");
 
-		List<String> burstConfigFilePaths = systemService.unixCliFind(AppPaths.CONFIG_DIR_PATH + "/burst", criteria);
+		List<String> burstConfigFilePaths = systemService.unixCliFind(AppPaths.CONFIG_DIR_PATH + "/burst", criteriaDto);
 
 		// System.out.println("burstConfigFilePaths = " + burstConfigFilePaths);
 
@@ -65,10 +78,11 @@ public class DocumentBursterSettingsService {
 		recursive = Optional.of(true);
 		ignoreCase = Optional.of(true);
 
-		criteria = new FindCriteria(matching, files, directories, recursive, ignoreCase);
+		criteriaDto = new FindCriteriaDto(matching, files.orElse(null), directories.orElse(null),
+				recursive.orElse(null), ignoreCase.orElse(null));
 
 		List<String> reportsConfigFilePaths = systemService.unixCliFind(AppPaths.CONFIG_DIR_PATH + "/reports",
-				criteria);
+				criteriaDto);
 
 		// System.out.println("reportsConfigFilePaths = " + reportsConfigFilePaths);
 
@@ -85,7 +99,7 @@ public class DocumentBursterSettingsService {
 		// ignoreCase);
 
 		List<String> samplesConfigFilePaths = systemService.unixCliFind(AppPaths.CONFIG_DIR_PATH + "/samples",
-				criteria);
+				criteriaDto);
 
 		// System.out.println("samplesConfigFilePaths = " + samplesConfigFilePaths);
 
@@ -150,25 +164,34 @@ public class DocumentBursterSettingsService {
 				String folderName = Paths.get(filePath).getParent().getFileName().toString();
 
 				String dsInputType = StringUtils.EMPTY;
+				String scriptOptionsSelectFileExplorer = "globpattern";
+
 				if (filePath.contains("config/reports/" + folderName)) {
 					typeOfConfiguration = "config-reports";
 					templateRelativeFilePath = "./config/reports/" + folderName + "/settings.xml";
 
-					if (boolReportGenerationMailMerge) {
-						String reportingXmlFilePath = Paths.get(fullFilePath).getParent().toString() + "/reporting.xml";
-
-						String reportingXmlFileContent = systemService.unixCliCat(reportingXmlFilePath);
-
-						// System.out.println("reportingXmlFileContent = " + reportingXmlFileContent);
-
-						startPos = reportingXmlFileContent.indexOf("<type>") + "<type>".length();
-						endPos = reportingXmlFileContent.indexOf("</type>");
-						dsInputType = reportingXmlFileContent.substring(startPos, endPos).trim();
-					}
-
 				} else if (filePath.contains("config/samples/" + folderName)) {
 					typeOfConfiguration = "config-samples";
 					templateRelativeFilePath = "./config/samples/" + folderName + "/settings.xml";
+				}
+
+				if (boolReportGenerationMailMerge) {
+					String reportingXmlFilePath = Paths.get(fullFilePath).getParent().toString() + "/reporting.xml";
+
+					String reportingXmlFileContent = systemService.unixCliCat(reportingXmlFilePath);
+
+					// System.out.println("reportingXmlFileContent = " + reportingXmlFileContent);
+
+					startPos = reportingXmlFileContent.indexOf("<type>") + "<type>".length();
+					endPos = reportingXmlFileContent.indexOf("</type>");
+					dsInputType = reportingXmlFileContent.substring(startPos, endPos).trim();
+
+					startPos = reportingXmlFileContent.indexOf("<selectfileexplorer>")
+							+ "<selectfileexplorer>".length();
+					endPos = reportingXmlFileContent.indexOf("</selectfileexplorer>");
+					if (startPos >= 0 && endPos > startPos)
+						scriptOptionsSelectFileExplorer = reportingXmlFileContent.substring(startPos, endPos).trim();
+
 				}
 
 				ConfigurationFileInfo configFile = new ConfigurationFileInfo();
@@ -180,6 +203,7 @@ public class DocumentBursterSettingsService {
 				configFile.capReportDistribution = boolReportDistribution;
 				configFile.capReportGenerationMailMerge = boolReportGenerationMailMerge;
 				configFile.dsInputType = dsInputType;
+				configFile.scriptOptionsSelectFileExplorer = scriptOptionsSelectFileExplorer;
 				configFile.visibility = strVisibility;
 				configFile.notes = StringUtils.EMPTY;
 				configFile.folderName = folderName;
@@ -187,6 +211,56 @@ public class DocumentBursterSettingsService {
 				configFile.activeClicked = false;
 				configFile.useEmlConn = boolUseEmailConnection;
 				configFile.emlConnCode = strEmailConnectionCode;
+
+				if (configFile.capReportGenerationMailMerge
+						&& ("config-reports".equals(configFile.type) || "config-samples".equals(configFile.type))) {
+
+					Path baseConfigDir;
+					if ("config-reports".equals(configFile.type)) {
+						baseConfigDir = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "reports");
+					} else { // "config-samples"
+						baseConfigDir = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples");
+					}
+					Path itemDir = baseConfigDir.resolve(configFile.folderName);
+					String paramsSpecFileName = configFile.folderName + "-report-parameters-spec.groovy";
+					Path paramsSpecPath = itemDir.resolve(paramsSpecFileName);
+
+					if (Files.exists(paramsSpecPath)) {
+						// 1) parse the DSL
+						ReportParametersHelper helper = new ReportParametersHelper();
+						List<Map<String, Object>> paramsMetadataList = helper
+								.processGroovyParametersDsl(paramsSpecPath);
+
+						// 2) turn each Map into your ReportParameter
+						if (paramsMetadataList != null) {
+							for (Map<String, Object> paramMap : paramsMetadataList) {
+								ReportParameter rp = new ReportParameter();
+
+								// top-level properties
+								rp.id = (String) paramMap.get("id");
+								rp.label = (String) paramMap.get("label");
+								Object t = paramMap.get("type");
+								rp.type = t instanceof Class ? ((Class<?>) t).getSimpleName() : String.valueOf(t);
+								rp.description = (String) paramMap.get("description");
+								Object defVal = paramMap.get("defaultValue");
+								rp.defaultValue = defVal != null ? String.valueOf(defVal) : null;
+
+								Map<String, Object> constraints = (Map<String, Object>) paramMap
+										.getOrDefault("constraints", Collections.emptyMap());
+								Map<String, Object> uiHints = (Map<String, Object>) paramMap.getOrDefault("ui",
+										Collections.emptyMap());
+
+								// shove the maps straight onto the model
+								rp.constraints.putAll(constraints);
+								rp.uiHints.putAll(uiHints);
+
+								// finally add to your config
+								configFile.reportParameters.add(rp);
+							}
+						}
+					}
+
+				}
 
 				configurationFiles.add(configFile);
 			}
@@ -200,10 +274,8 @@ public class DocumentBursterSettingsService {
 	}
 
 	public DocumentBursterSettings loadSettings(String configFilePath) throws Exception {
-		Settings settings = new Settings();
-		settings.loadSettings(configFilePath);
-
-		return settings.docSettings;
+		Settings settings = new Settings(configFilePath);
+		return settings.loadSettings();
 	}
 
 	public void saveSettings(DocumentBursterSettings settings, String configFilePath) throws Exception {
@@ -220,13 +292,10 @@ public class DocumentBursterSettingsService {
 
 	public ReportingSettings loadSettingsReporting(String configFilePath) throws Exception {
 
-		String configFolderPath = Paths.get(configFilePath).getParent().toString();
-		String reportingConfigFilePath = configFolderPath + "/reporting.xml";
-
-		Settings settings = new Settings();
-		settings.loadSettingsReporting(reportingConfigFilePath);
-
+		Settings settings = new Settings(configFilePath);
+		settings.loadSettings();
 		return settings.reportingSettings;
+
 	}
 
 	public void saveSettingsReporting(ReportingSettings settings, String configFilePath) throws Exception {
@@ -244,7 +313,7 @@ public class DocumentBursterSettingsService {
 
 	}
 
-	public Stream<ConnectionFileInfo> loadSettingsConnectionAll() throws Exception {
+	public Stream<ConnectionFileInfo> loadSettingsConnectionEmailAll() throws Exception {
 
 		List<ConnectionFileInfo> connectionFiles = new ArrayList<ConnectionFileInfo>();
 
@@ -257,16 +326,22 @@ public class DocumentBursterSettingsService {
 		Optional<Boolean> recursive = Optional.of(false);
 		Optional<Boolean> ignoreCase = Optional.of(true);
 
-		FindCriteria criteria = new FindCriteria(matching, files, directories, recursive, ignoreCase);
+		FindCriteriaDto criteriaDto = new FindCriteriaDto(matching, files.orElse(null), directories.orElse(null),
+				recursive.orElse(null), ignoreCase.orElse(null));
 
 		List<String> connectionFilePaths = systemService.unixCliFind(AppPaths.CONFIG_DIR_PATH + "/connections",
-				criteria);
+				criteriaDto);
+
+		// System.out.println("List<String> connectionFilePaths = " +
+		// connectionFilePaths.toString());
 
 		for (String filePath : connectionFilePaths) {
 
 			String connectionFileName = Paths.get(filePath).getFileName().toString();
 
-			DocumentBursterConnectionSettings rbConnection = this.loadSettingsConnection(filePath);
+			DocumentBursterConnectionEmailSettings rbConnection = this.loadSettingsConnectionEmail(filePath);
+
+			// System.out.println("rbConnection = " + rbConnection.toString());
 
 			ConnectionFileInfo connFileInfo = new ConnectionFileInfo();
 			connFileInfo.fileName = connectionFileName;
@@ -296,18 +371,23 @@ public class DocumentBursterSettingsService {
 
 	}
 
-	public DocumentBursterConnectionSettings loadSettingsConnection(String connectionFilePath) throws Exception {
+	public DocumentBursterConnectionEmailSettings loadSettingsConnectionEmail(String connectionCode) throws Exception {
 
-		Settings settings = new Settings();
-		settings.loadSettingsConnection(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + connectionFilePath);
+		Settings settings = new Settings(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/burst/settings.xml");
 
-		return settings.connectionSettings;
+		settings.loadSettingsConnectionEmail(connectionCode);
+
+		// System.out.println(
+		// "DocumentBursterConnectionEmailSettings settings.connectionEmailSettings = "
+		// + settings.connectionEmailSettings.toString());
+
+		return settings.connectionEmailSettings;
 	}
 
-	public void saveSettingsConnection(DocumentBursterConnectionSettings settings, String connectionFilePath)
+	public void saveSettingsConnectionEmail(DocumentBursterConnectionEmailSettings settings, String connectionFilePath)
 			throws Exception {
 
-		JAXBContext jc = JAXBContext.newInstance(DocumentBursterConnectionSettings.class);
+		JAXBContext jc = JAXBContext.newInstance(DocumentBursterConnectionEmailSettings.class);
 		Marshaller marshaller = jc.createMarshaller();
 		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 
@@ -316,12 +396,113 @@ public class DocumentBursterSettingsService {
 		}
 	}
 
+	// DATABASE START
+	public Stream<ConnectionFileInfo> loadSettingsConnectionDatabaseAll() throws Exception {
+		File connectionsFolder = new File(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/" + "config/connections");
+
+		if (!connectionsFolder.exists()) {
+			return Stream.empty();
+		}
+
+		// Get all folders that start with "db-" instead of files
+		File[] connectionFolders = connectionsFolder
+				.listFiles((dir, name) -> new File(dir, name).isDirectory() && name.toLowerCase().startsWith("db-"));
+
+		if (connectionFolders == null || connectionFolders.length == 0) {
+			return Stream.empty();
+		}
+
+		List<ConnectionFileInfo> connectionInfoFiles = new ArrayList<>();
+
+		for (File connectionFolder : connectionFolders) {
+			// Look for the main XML file inside the folder
+			File mainXmlFile = new File(connectionFolder, connectionFolder.getName() + ".xml");
+
+			if (mainXmlFile.exists()) {
+				// Load the connection file
+				DocumentBursterConnectionDatabaseSettings connectionSettings = loadSettingsConnectionDatabase(
+						mainXmlFile.getAbsolutePath());
+
+				if (connectionSettings != null && connectionSettings.connection != null) {
+					ConnectionFileInfo connectionInfo = new ConnectionFileInfo();
+
+					// Populate connection info
+					connectionInfo.fileName = mainXmlFile.getName();
+					connectionInfo.filePath = mainXmlFile.getAbsolutePath().replace("\\", "/");
+
+					connectionInfo.connectionCode = connectionSettings.connection.code;
+
+					connectionInfo.connectionName = connectionSettings.connection.name;
+					connectionInfo.connectionType = "database-connection";
+
+					connectionInfo.defaultConnection = connectionSettings.connection.defaultConnection;
+					connectionInfo.usedBy = StringUtils.EMPTY;
+
+					// Map all database server fields
+					connectionInfo.dbserver.type = connectionSettings.connection.databaseserver.type;
+					connectionInfo.dbserver.host = connectionSettings.connection.databaseserver.host;
+					connectionInfo.dbserver.port = connectionSettings.connection.databaseserver.port;
+					connectionInfo.dbserver.database = connectionSettings.connection.databaseserver.database;
+					connectionInfo.dbserver.userid = connectionSettings.connection.databaseserver.userid;
+					connectionInfo.dbserver.userpassword = connectionSettings.connection.databaseserver.userpassword;
+					connectionInfo.dbserver.usessl = connectionSettings.connection.databaseserver.usessl;
+					connectionInfo.dbserver.connectionstring = connectionSettings.connection.databaseserver.connectionstring;
+					connectionInfo.dbserver.defaultquery = connectionSettings.connection.databaseserver.defaultquery;
+					connectionInfo.dbserver.driver = connectionSettings.connection.databaseserver.driver;
+					connectionInfo.dbserver.url = connectionSettings.connection.databaseserver.url;
+
+					connectionInfoFiles.add(connectionInfo);
+				}
+			}
+
+		}
+
+		return connectionInfoFiles.stream();
+	}
+
+	public DocumentBursterConnectionDatabaseSettings loadSettingsConnectionDatabase(String filePath) throws Exception {
+		File connectionFile = new File(filePath);
+
+		if (!connectionFile.exists()) {
+			throw new Exception("Database connection file not found: " + filePath);
+		}
+
+		try (FileInputStream inputStream = new FileInputStream(connectionFile)) {
+			// Use JAXB to unmarshal the XML content
+			JAXBContext jaxbContext = JAXBContext.newInstance(DocumentBursterConnectionDatabaseSettings.class);
+			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+
+			return (DocumentBursterConnectionDatabaseSettings) unmarshaller.unmarshal(inputStream);
+		}
+	}
+
+	public void saveSettingsConnectionDatabase(DocumentBursterConnectionDatabaseSettings dbSettings, String filePath)
+			throws Exception {
+		// Extract folder path from the file path
+		File file = new File(filePath);
+		File folderPath = file.getParentFile();
+
+		// Create folder if it doesn't exist
+		if (!folderPath.exists()) {
+			folderPath.mkdirs();
+		}
+
+		// Rest of your saving logic...
+		JAXBContext jaxbContext = JAXBContext.newInstance(DocumentBursterConnectionDatabaseSettings.class);
+		Marshaller marshaller = jaxbContext.createMarshaller();
+		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+
+		try (FileOutputStream outputStream = new FileOutputStream(filePath)) {
+			marshaller.marshal(dbSettings, outputStream);
+		}
+
+	}
+	// DATABASE END
+
 	public DocumentBursterSettingsInternal loadSettingsInternal(String internalConfigFilePath) throws Exception {
 
-		Settings settings = new Settings();
-		settings.loadSettingsInternal(internalConfigFilePath);
-
-		return settings.docSettingsInternal;
+		Settings settings = new Settings(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/burst/settings.xml");
+		return settings.loadSettingsInternal();
 	}
 
 	public void saveSettingsInternal(DocumentBursterSettingsInternal dbSettingsInternal, String internalConfigFilePath)
@@ -352,13 +533,14 @@ public class DocumentBursterSettingsService {
 		Optional<Boolean> recursive = Optional.of(true);
 		Optional<Boolean> ignoreCase = Optional.of(true);
 
-		FindCriteria criteria = new FindCriteria(matching, files, directories, recursive, ignoreCase);
+		FindCriteriaDto criteriaDto = new FindCriteriaDto(matching, files.orElse(null), directories.orElse(null),
+				recursive.orElse(null), ignoreCase.orElse(null));
 
 		List<String> reportTemplatesFilePaths = systemService.unixCliFind(AppPaths.TEMPLATES_DIR_PATH + "/reports",
-				criteria);
+				criteriaDto);
 
 		List<String> samplesTemplatesFilePaths = systemService.unixCliFind(AppPaths.SAMPLES_DIR_PATH + "/reports",
-				criteria);
+				criteriaDto);
 
 		List<String> templateFilePaths = new ArrayList<>();
 		templateFilePaths.addAll(reportTemplatesFilePaths);

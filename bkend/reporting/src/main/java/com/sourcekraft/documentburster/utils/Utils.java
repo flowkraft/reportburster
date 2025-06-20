@@ -24,6 +24,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -42,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.context.BurstingContext;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.sourcekraft.documentburster.common.settings.model.EmailSettings;
 import com.sourcekraft.documentburster.common.settings.model.SmsSettings;
 import com.sourcekraft.documentburster.common.settings.model.UploadSettings;
@@ -560,7 +562,7 @@ public class Utils {
 				&& StringUtils.isNotEmpty(authToken);
 
 	}
-	
+
 	public static Map<String, Object> loadHeadersPropertiesFromText(String text) {
 
 		Map<String, Object> properties = new HashMap<String, Object>();
@@ -655,6 +657,23 @@ public class Utils {
 
 		return inputString.replaceAll("(?U)\\p{Cntrl}|\\p{Gc=Cf}", "");
 
+	}
+
+	public static class RowWrapper {
+		public Map<String, Object> record;
+
+		public RowWrapper(Map<String, Object> row) {
+			this.record = row;
+		}
+
+		public RowWrapper() {
+		}
+	}
+
+	public static String dumpRowAsXml(Map<String, Object> row) throws Exception {
+		XmlMapper xmlMapper = new XmlMapper();
+		// Wrap in a root element for valid XML
+		return xmlMapper.writerWithDefaultPrettyPrinter().writeValueAsString(new RowWrapper(row));
 	}
 
 }

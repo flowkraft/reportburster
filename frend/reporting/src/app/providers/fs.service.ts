@@ -64,7 +64,7 @@ export class FsService {
   }
 
   async existsAsync(path: string): Promise<'dir' | 'file' | 'other' | false> {
-    return this.apiService.get(
+    const result = await this.apiService.get(
       '/jobman/system/fs/exists',
       {
         path: encodeURIComponent(Utilities.slash(path)),
@@ -74,6 +74,15 @@ export class FsService {
         'Content-Type': 'application/json',
       }),
     );
+
+    console.log('existsAsync', path, result);
+    // Convert the literal string "false" to the boolean false
+    if (result === 'false') {
+      return false;
+    }
+
+    // Otherwise, return the original result
+    return result;
   }
 
   async dirAsync(

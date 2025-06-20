@@ -4,9 +4,22 @@ import { FluentTester } from '../fluent-tester';
 import * as PATHS from '../../utils/paths';
 
 export class ConnectionsTestHelper {
+  // Database vendor constants
+  static DB_VENDORS_SUPPORTED = [
+    // 'oracle',
+    // 'sqlserver',
+    // 'postgresql',
+    // 'mysql',
+    // 'mariadb',
+    // 'ibmdb2',
+    'sqlite',
+  ];
+  static DB_VENDORS_DEFAULT = 'sqlite';
+  static DB_VENDORS_TEST_RANDOM = true;
+
   static deleteAndAssertEmailConnection(
     ft: FluentTester,
-    connectionFileName: string
+    connectionFileName: string,
   ): FluentTester {
     return ft
       .gotoConnections()
@@ -24,7 +37,7 @@ export class ConnectionsTestHelper {
 
   static duplicateAndAssertEmailConnection(
     ft: FluentTester,
-    connectionName: string
+    connectionName: string,
   ): FluentTester {
     const connectionFileName = `eml-${_.kebabCase(connectionName)}\\.xml`;
     const newConnectionName = `${connectionName} Duplicated`;
@@ -34,7 +47,7 @@ export class ConnectionsTestHelper {
       .gotoConnections()
       .waitOnElementToHaveText(
         `#${connectionFileName} td:first-child`,
-        `${connectionName} Modified`
+        `${connectionName} Modified`,
       )
       .clickAndSelectTableRow(`#${connectionFileName}`)
       .waitOnElementToBecomeEnabled('#btnDuplicate')
@@ -58,16 +71,16 @@ export class ConnectionsTestHelper {
       .click('#btnOKConfirmationConnectionModal')
       .waitOnElementToHaveText(
         `#${newConnectionFileName} td:first-child`,
-        `${newConnectionName}`
+        `${newConnectionName}`,
       )
       .gotoConnections()
       .waitOnElementToHaveText(
         `#${connectionFileName} td:first-child`,
-        `${connectionName} Modified`
+        `${connectionName} Modified`,
       )
       .waitOnElementToHaveText(
         `#${newConnectionFileName} td:first-child`,
-        `${newConnectionName}`
+        `${newConnectionName}`,
       )
       .clickAndSelectTableRow(`#${newConnectionFileName}`)
       .waitOnElementToBecomeEnabled('#btnEdit')
@@ -81,7 +94,7 @@ export class ConnectionsTestHelper {
 
   static readUpdateAndAssertEmailConnection(
     ft: FluentTester,
-    connectionName: string
+    connectionName: string,
   ): FluentTester {
     const connectionFileName = `eml-${_.kebabCase(connectionName)}\\.xml`;
 
@@ -89,7 +102,7 @@ export class ConnectionsTestHelper {
       .gotoConnections()
       .waitOnElementToHaveText(
         `#${connectionFileName} td:first-child`,
-        connectionName
+        connectionName,
       )
       .clickAndSelectTableRow(`#${connectionFileName}`)
       .waitOnElementToBecomeEnabled('#btnEdit')
@@ -108,7 +121,7 @@ export class ConnectionsTestHelper {
       .click('#btnCloseConnectionModal')
       .elementShouldHaveText(
         `#${connectionFileName} td:first-child`,
-        connectionName
+        connectionName,
       )
       .click('#btnEdit')
       .waitOnElementToBecomeEnabled('#btnOKConfirmationConnectionModal')
@@ -131,12 +144,12 @@ export class ConnectionsTestHelper {
       .click('#btnOKConfirmationConnectionModal')
       .waitOnElementToHaveText(
         `#${connectionFileName} td:first-child`,
-        `${connectionName} Modified`
+        `${connectionName} Modified`,
       )
       .gotoConnections()
       .waitOnElementToHaveText(
         `#${connectionFileName} td:first-child`,
-        `${connectionName} Modified`
+        `${connectionName} Modified`,
       )
       .clickAndSelectTableRow(`#${connectionFileName}`)
       .waitOnElementToBecomeEnabled('#btnEdit')
@@ -156,17 +169,22 @@ export class ConnectionsTestHelper {
 
   static createAndAssertNewEmailConnection(
     ft: FluentTester,
-    connectionName: string
+    connectionName: string,
   ): FluentTester {
     const connectionFileName = `eml-${_.kebabCase(connectionName)}\\.xml`;
 
     return ft
       .gotoConnections()
-      .click('#btnNew')
+      .waitOnElementToBecomeEnabled('#btnNewDropdown') // Wait for the dropdown button to be enabled
+      .click('#btnNewDropdown') // Click the dropdown button
+      .waitOnElementToBecomeVisible('#btnNewEmail') // Wait for the email option to appear
+      .click('#btnNewEmail')
       .waitOnElementToBecomeVisible('#connectionName')
       .elementShouldBeDisabled('#btnOKConfirmationConnectionModal')
       .clickNoDontDoThis()
-      .click('#btnNew')
+      .click('#btnNewDropdown') // Click the dropdown button
+      .waitOnElementToBecomeVisible('#btnNewEmail') // Wait for the email option to appear
+      .click('#btnNewEmail')
       .waitOnElementToBecomeVisible('#connectionName')
       .click('#connectionName')
       .typeText('Contact')
@@ -213,13 +231,13 @@ export class ConnectionsTestHelper {
       .click('#btnOKConfirmationConnectionModal')
       .waitOnElementToHaveText(
         `#${connectionFileName} td:first-child`,
-        connectionName
+        connectionName,
       );
   }
 
   static makeConnectionAsDefault(
     ft: FluentTester,
-    connectionFileName: string
+    connectionFileName: string,
   ): FluentTester {
     return ft
       .clickAndSelectTableRow(`#${connectionFileName}`)
@@ -241,19 +259,19 @@ export class ConnectionsTestHelper {
     ft: FluentTester,
     folderName: string,
     emailConnectionName: string,
-    shouldBeTheDefaultEmailConnection: string
+    shouldBeTheDefaultEmailConnection: string,
   ): FluentTester {
     ft = ft
       .gotoConfiguration()
       .click(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`
+        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
       )
       .click('#leftMenuEmailSettings') // email SMTP settings
       .elementCheckBoxShouldBeSelected('#btnUseExistingEmailConnection')
       .elementShouldBeEnabled('#btnSelectedEmailConnection')
       .elementShouldContainText(
         '#btnSelectedEmailConnection',
-        emailConnectionName
+        emailConnectionName,
       );
 
     if (shouldBeTheDefaultEmailConnection == 'yes-default-connection')
@@ -293,19 +311,447 @@ export class ConnectionsTestHelper {
       .elementShouldHaveAttribute('#btnFromNameVariables button', 'disabled')
       .elementShouldHaveAttribute(
         '#btnFromEmailAddressVariables button',
-        'disabled'
+        'disabled',
       )
       .elementShouldHaveAttribute(
         '#btnEmailServerHostVariables button',
-        'disabled'
+        'disabled',
       )
       .elementShouldHaveAttribute('#btnSmtpPortVariables button', 'disabled')
       .elementShouldHaveAttribute('#btnUserNameVariables button', 'disabled')
       .elementShouldHaveAttribute(
         '#btnSmtpPasswordVariables button',
-        'disabled'
+        'disabled',
       );
 
+    return ft;
+  }
+
+  /**
+   * Creates a new database connection and asserts that it was created correctly
+   * @param ft FluentTester instance
+   * @param connectionName Name for the new connection
+   * @param dbVendor Database vendor type (one of Constants.DB_VENDORS_SUPPORTED)
+   */
+  static createAndAssertNewDatabaseConnection(
+    ft: FluentTester,
+    connectionName: string,
+    dbVendor: string,
+  ): FluentTester {
+    const connectionCode = `db-${_.kebabCase(connectionName)}`;
+    const kebabConnectionName = _.kebabCase(connectionName); // Needed for fillNewDatabaseConnectionDetails
+
+    // Navigate and open the modal
+    ft = ft
+      .gotoConnections()
+      .waitOnElementToBecomeEnabled('#btnNewDropdown')
+      .click('#btnNewDropdown')
+      .waitOnElementToBecomeVisible('#btnNewDatabase')
+      .click('#btnNewDatabase')
+      .waitOnElementToBecomeVisible('#modalDbConnection')
+      // Wait for a field to be ready before filling, e.g., connection name input
+      .waitOnElementToBecomeEnabled('#dbConnectionName');
+
+    // Fill connection details using the reusable helper
+    // This replaces the manual .typeText, .dropDownSelectOptionHavingValue, and if/else block for vendor specifics
+    ft = ConnectionsTestHelper.fillNewDatabaseConnectionDetails(
+      ft,
+      connectionName,
+      dbVendor,
+      kebabConnectionName,
+    );
+
+    // Save the connection and perform assertions (this part remains the same as your original)
+    return ft
+      .waitOnElementToBecomeEnabled('#btnOKConfirmationDbConnectionModal')
+      .click('#btnOKConfirmationDbConnectionModal')
+      .waitOnToastToBecomeVisible(
+        'info',
+        `Connection '${connectionName}' saved successfully.`,
+      )
+      .waitOnElementToBecomeVisible(`#${connectionCode}\\.xml`)
+      .clickAndSelectTableRow(`#${connectionCode}\\.xml`)
+      .elementShouldContainText(
+        `#${connectionCode}\\.xml td:first-child`,
+        connectionName,
+      )
+      .elementShouldContainText(
+        `#${connectionCode}\\.xml td:nth-child(2)`,
+        'database-connection',
+      )
+      .elementShouldHaveText(
+        `#${connectionCode}\\.xml td:nth-child(3)`,
+        '--not used--',
+      );
+  }
+
+  /**
+   * Reads an existing database connection, updates its values, and asserts the changes
+   * @param ft FluentTester instance
+   * @param connectionName Name of the connection to update
+   * @param dbVendor Database vendor type (one of Constants.DB_VENDORS_SUPPORTED)
+   */
+  static readUpdateAndAssertDatabaseConnection(
+    ft: FluentTester,
+    connectionName: string,
+    dbVendor: string,
+  ): FluentTester {
+    const connectionCode = `db-${_.kebabCase(connectionName)}`;
+    const updatedConnectionName = `${connectionName} Updated`;
+
+    // Start sequence for updating
+    let sequence = ft
+      .gotoConnections()
+      .clickAndSelectTableRow(`#${connectionCode}\\.xml`)
+      .waitOnElementToBecomeEnabled('#btnEdit')
+      .click('#btnEdit')
+      .waitOnElementToBecomeVisible('#dbConnectionName')
+      .click('#dbConnectionName')
+      .typeText('')
+      .typeText(updatedConnectionName);
+
+    // Vendor-specific update logic
+    if (dbVendor === 'sqlite') {
+      // For SQLite, we only update the database file path
+      sequence = sequence
+        .createFolder(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/db/sample-northwind-sqlite-test`,
+        )
+        .copyFile(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/db/sample-northwind-sqlite/northwind.db`,
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/db/sample-northwind-sqlite-test/northwind-test.db`,
+        )
+        .click('#btnBrowseSqliteFile')
+        .waitOnElementToBecomeEnabled(
+          '#childDirLinksample-northwind-sqlite-test',
+        )
+        .click('#childDirLinksample-northwind-sqlite-test')
+        .waitOnElementToBecomeVisible('#tdFileNamenorthwind-test\\.db')
+        .elementShouldBeDisabled('#btnSelectFileExplorer')
+        .click('#tdFileNamenorthwind-test\\.db');
+      sequence = sequence
+        .waitOnElementToBecomeEnabled('#btnSelectFileExplorer')
+        .click('#btnSelectFileExplorer')
+        .waitOnElementToBecomeInvisible('#btnSelectFileExplorer')
+        .waitOnInputValueToContainText(
+          '#dbName',
+          '/db/sample-northwind-sqlite-test/northwind-test.db',
+        );
+    } else {
+      // For other database types, update host and port
+      sequence = sequence
+        .click('#dbHost')
+        .typeText('')
+        .typeText('db.example.com')
+        .click('#dbPort')
+        .typeText('')
+        .typeText('5433');
+    }
+
+    // Complete the update sequence
+    return sequence
+      .waitOnElementToBecomeEnabled('#btnOKConfirmationDbConnectionModal')
+      .click('#btnOKConfirmationDbConnectionModal')
+      .waitOnToastToBecomeVisible(
+        'info',
+        `Connection '${updatedConnectionName}' saved successfully.`,
+      )
+      .waitOnElementToBecomeVisible(`#${connectionCode}\\.xml`)
+      .clickAndSelectTableRow(`#${connectionCode}\\.xml`)
+      .elementShouldContainText(
+        `#${connectionCode}\\.xml td:first-child`,
+        updatedConnectionName,
+      );
+  }
+
+  /**
+   * Duplicates an existing database connection and asserts the duplicate was created
+   * @param ft FluentTester instance
+   * @param connectionName Name of the connection to duplicate
+   * @param dbVendor Database vendor type (one of Constants.DB_VENDORS_SUPPORTED)
+   */
+  static duplicateAndAssertDatabaseConnection(
+    ft: FluentTester,
+    connectionName: string,
+    dbVendor: string,
+  ): FluentTester {
+    const originalConnectionCode = `db-${_.kebabCase(connectionName)}`; // e.g., "db-test-database-connection"
+
+    // This will be the new unique name we type for the duplicated connection.
+    const newNameForDuplicate = `${connectionName} Duplicated`; // e.g., "Test Database Connection Updated Duplicated"
+    // This will be the code/ID of the newly created duplicated connection based on the new unique name.
+    const newDuplicateConnectionCode = `db-${_.kebabCase(newNameForDuplicate)}`;
+
+    return (
+      ft
+        .gotoConnections()
+        .clickAndSelectTableRow(`#${originalConnectionCode}\\.xml`)
+        .waitOnElementToBecomeEnabled('#btnDuplicate')
+        .click('#btnDuplicate')
+        .waitOnElementToBecomeVisible('#dbConnectionName')
+        // --- Start: New logic similar to the email duplication test ---
+        .click('#dbConnectionName') // Focus the name field
+        .typeText(connectionName) // Type the current name of the connection being duplicated
+        .waitOnElementToContainText('#dbAlreadyExistsWarning', 'already exists') // Check for the warning
+        .waitOnElementToBecomeDisabled('#btnOKConfirmationDbConnectionModal') // Save button should be disabled
+
+        .click('#dbConnectionName') // Focus again to clear
+        .typeText('') // Clear the name field
+        .waitOnElementToBecomeInvisible('#dbAlreadyExistsWarning') // Warning should disappear
+        .elementShouldBeDisabled('#btnOKConfirmationDbConnectionModal') // Save button still disabled (empty name)
+
+        .typeText(newNameForDuplicate) // Type the new, unique name for the duplicate
+        .waitOnElementToBecomeEnabled('#btnOKConfirmationDbConnectionModal') // Save button should become enabled
+        // --- End: New logic ---
+
+        .pageShouldContainText('Create Database Connection') // Verify modal title for duplicate is "Create..."
+        .click('#btnOKConfirmationDbConnectionModal') // Click Save
+        .waitOnToastToBecomeVisible(
+          'info',
+          `Connection '${newNameForDuplicate}' saved successfully.`, // Toast should use the new unique name
+        )
+        .waitOnElementToBecomeVisible(`#${newDuplicateConnectionCode}\\.xml`) // Wait for the new duplicated entry in the list
+        .clickAndSelectTableRow(`#${newDuplicateConnectionCode}\\.xml`) // Select the new duplicated entry
+        .elementShouldContainText(
+          `#${newDuplicateConnectionCode}\\.xml td:first-child`, // Verify the name in the list
+          newNameForDuplicate,
+        )
+        .elementShouldContainText(
+          `#${newDuplicateConnectionCode}\\.xml td:nth-child(2)`,
+          'database-connection',
+        )
+        .elementShouldHaveText(
+          `#${newDuplicateConnectionCode}\\.xml td:nth-child(3)`,
+          '--not used--',
+        )
+    );
+  }
+
+  /**
+   * Deletes a database connection and verifies that it and all its associated files are deleted
+   * @param ft FluentTester instance
+   * @param connectionFileName Name of the connection file (with xml extension)
+   * @param dbVendor Database vendor type (one of Constants.DB_VENDORS_SUPPORTED)
+   */
+  static deleteAndAssertDatabaseConnection(
+    ft: FluentTester,
+    connectionFileName: string,
+    dbVendor: string,
+  ): FluentTester {
+    // We'll verify the deletion in the UI first
+    return ft
+      .gotoConnections()
+      .clickAndSelectTableRow(`#${connectionFileName}`)
+      .waitOnElementToBecomeEnabled('#btnDelete')
+      .click('#btnDelete')
+      .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+      .clickYesDoThis()
+      .waitOnElementToBecomeInvisible(`#${connectionFileName}`)
+      .gotoConnections()
+      .elementShouldNotBeVisible(`#${connectionFileName}`);
+  }
+
+  // Helper methods for database vendors default values
+  /**
+   * Get the default host name for the given database vendor
+   */
+  static getDefaultHostForVendor(dbVendor: string): string {
+    switch (dbVendor) {
+      case 'oracle':
+        return 'oracle-db.example.com';
+      case 'sqlserver':
+        return 'sqlserver.example.com';
+      case 'postgresql':
+        return 'localhost';
+      case 'mysql':
+        return 'mysql.example.com';
+      case 'mariadb':
+        return 'mariadb.example.com';
+      case 'ibmdb2':
+        return 'db2.example.com';
+      default:
+        return 'localhost';
+    }
+  }
+
+  /**
+   * Get the default port for the given database vendor
+   */
+  static getDefaultPortForVendor(dbVendor: string): string {
+    switch (dbVendor) {
+      case 'oracle':
+        return '1521';
+      case 'sqlserver':
+        return '1433';
+      case 'postgresql':
+        return '5432';
+      case 'mysql':
+        return '3306';
+      case 'mariadb':
+        return '3306';
+      case 'ibmdb2':
+        return '50000';
+      default:
+        return '5432';
+    }
+  }
+
+  /**
+   * Get the default database name for the given database vendor
+   */
+  static getDefaultDatabaseNameForVendor(dbVendor: string): string {
+    switch (dbVendor) {
+      case 'oracle':
+        return 'ORCL';
+      case 'sqlserver':
+        return 'master';
+      case 'postgresql':
+        return 'postgres';
+      case 'mysql':
+        return 'test';
+      case 'mariadb':
+        return 'test';
+      case 'ibmdb2':
+        return 'sample';
+      default:
+        return 'test';
+    }
+  }
+
+  /**
+   * Get the default username for the given database vendor
+   */
+  static getDefaultUsernameForVendor(dbVendor: string): string {
+    switch (dbVendor) {
+      case 'oracle':
+        return 'system';
+      case 'sqlserver':
+        return 'sa';
+      case 'postgresql':
+        return 'postgres';
+      case 'mysql':
+        return 'root';
+      case 'mariadb':
+        return 'root';
+      case 'ibmdb2':
+        return 'db2admin';
+      default:
+        return 'admin';
+    }
+  }
+
+  /**
+   * Get the default password for the given database vendor
+   */
+  static getDefaultPasswordForVendor(dbVendor: string): string {
+    // Use simple passwords for testing
+    switch (dbVendor) {
+      case 'oracle':
+        return 'oracle';
+      case 'sqlserver':
+        return 'Password123!';
+      case 'postgresql':
+        return 'postgres';
+      case 'mysql':
+        return 'password';
+      case 'mariadb':
+        return 'password';
+      case 'ibmdb2':
+        return 'db2admin';
+      default:
+        return 'password';
+    }
+  }
+
+  /**
+   * Get a random database vendor from Constants.DB_VENDORS_SUPPORTED
+   */
+  static getRandomDbVendor(): string {
+    const vendors = ConnectionsTestHelper.DB_VENDORS_SUPPORTED;
+    const randomIndex = Math.floor(Math.random() * vendors.length);
+    return vendors[randomIndex];
+  }
+
+  /**
+   * Fills the details in an already open "New/Edit Database Connection" modal.
+   * For SQLite, this includes interacting with the file browser to create the DB file.
+   * This function does NOT click the final "OK" or "Save" button of the modal.
+   */
+  public static fillNewDatabaseConnectionDetails(
+    ft: FluentTester,
+    connectionName: string,
+    dbVendor: string,
+    kebabConnectionName: string, // Used for generating default DB names and SQLite filename
+  ): FluentTester {
+    ft = ft.consoleLog(
+      `Filling database connection details for: ${connectionName}, Vendor: ${dbVendor}`,
+    );
+
+    // 1. Fill Connection Name
+    ft = ft
+      .waitOnElementToBecomeEnabled('#dbConnectionName')
+      .click('#dbConnectionName') // Ensure focus
+      .typeText(connectionName);
+
+    // 2. Select Database Type
+    const dbVendorSelectValue = dbVendor.toLowerCase();
+    ft = ft.dropDownSelectOptionHavingValue('#dbType', dbVendorSelectValue);
+
+    // 3. Fill vendor-specific details
+    const defaultHost = 'localhost';
+    const defaultDbNameNonSqlite = `testdb_${kebabConnectionName}`;
+    const defaultUser = 'testuser';
+    const defaultPass = 'testpassword';
+
+    if (dbVendorSelectValue !== 'sqlite') {
+      ft = ft
+        .waitOnElementToBecomeEnabled('#dbHost')
+        .click('#dbHost')
+        .typeText(defaultHost);
+
+      // Port is often auto-filled. We'll rely on that for now.
+      // Verification or explicit typing can be added if needed.
+
+      ft = ft
+        .waitOnElementToBecomeEnabled('#dbName')
+        .click('#dbName')
+        .typeText(defaultDbNameNonSqlite);
+      ft = ft
+        .waitOnElementToBecomeEnabled('#dbUsername')
+        .click('#dbUsername')
+        .typeText(defaultUser);
+      ft = ft
+        .waitOnElementToBecomeEnabled('#dbPassword')
+        .click('#dbPassword')
+        .typeText(defaultPass);
+    } else {
+      // SQLite requires a file path
+      // For testing, we'll use a placeholder path that would be selected in the UI
+      ft = ft.waitOnElementToBecomeEnabled('#btnBrowseSqliteFile');
+      ft = ft.click('#btnBrowseSqliteFile');
+
+      ft = ft.waitOnElementToBecomeEnabled(
+        '#childDirLinksample-northwind-sqlite',
+      );
+      ft = ft.click('#childDirLinksample-northwind-sqlite');
+
+      ft = ft.waitOnElementToBecomeVisible('#tdFileNamenorthwind\\.db');
+
+      ft = ft.elementShouldBeDisabled('#btnSelectFileExplorer');
+      ft = ft.click('#tdFileNamenorthwind\\.db');
+      ft = ft.waitOnElementToBecomeEnabled('#btnSelectFileExplorer');
+
+      ft = ft.click('#btnSelectFileExplorer');
+      ft = ft.waitOnElementToBecomeInvisible('#btnSelectFileExplorer');
+      ft = ft.waitOnInputValueToContainText(
+        '#dbName',
+        '/db/sample-northwind-sqlite/northwind.db',
+      );
+    }
+
+    ft = ft.consoleLog(
+      `Finished filling database connection details for: ${connectionName}`,
+    );
     return ft;
   }
 }

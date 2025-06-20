@@ -16,6 +16,12 @@ export const leftMenuTemplate = `<!-- Sidebar Menu-->
     </a>
   </li>
   <li routerLinkActive="active">
+    <a id='leftMenuStarterPacks' href="#" [routerLink]="['/help','starterPacksMenuSelected']" skipLocationChange="true">
+      <i class="fa fa-th-large"></i>
+      <span>Starter Packs / Extra Utils</span>
+    </a>
+  </li>
+  <li routerLinkActive="active">
     <a id='leftMenuHelpDocumentation' href="#" [routerLink]="['/help','docsMenuSelected']" skipLocationChange="true">
       <i class="fa fa-question-circle-o"></i>
       <span>{{

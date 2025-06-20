@@ -35,6 +35,10 @@ export default class UtilitiesElectron {
       isJavaOk: boolean;
       version: string;
     };
+    docker: {
+      isDockerOk: boolean;
+      version: string;
+    };
     env: {
       PATH: string;
       JAVA_HOME: string;

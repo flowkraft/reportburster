@@ -19,6 +19,7 @@ import { tabsTemplate } from './templates/_tabs';
 
 import { tabBurstTemplate } from './templates/tab-burst';
 import { tabReportGenerationMailMergeTemplate } from './templates/tab-reporting-mailmerge-classicreports';
+import { tabCmsWebPortalTemplate } from './templates/tab-cms-webportal';
 
 import { tabMergeBurstTemplate } from './templates/tab-merge-burst';
 import { tabQualityAssuranceTemplate } from './templates/tab-quality-assurance';
@@ -55,9 +56,9 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
       <section class="content"><div>${tabsTemplate}</div></section>
     </div>
     ${tabBurstTemplate} ${tabReportGenerationMailMergeTemplate}
-    ${tabMergeBurstTemplate} ${tabQualityAssuranceTemplate} ${tabLogsTemplate}
-    ${tabSamplesTemplate} ${modalSamplesLearnMoreTemplate} ${tabLicenseTemplate}
-    ${resumeJobsTemplate}
+    ${tabCmsWebPortalTemplate} ${tabMergeBurstTemplate}
+    ${tabQualityAssuranceTemplate} ${tabLogsTemplate} ${tabSamplesTemplate}
+    ${modalSamplesLearnMoreTemplate} ${tabLicenseTemplate} ${resumeJobsTemplate}
   `,
 })
 export class ProcessingComponent implements OnInit {
@@ -84,6 +85,9 @@ export class ProcessingComponent implements OnInit {
 
   @ViewChild('tabReportGenerationMailMergeTemplate', { static: true })
   tabReportGenerationMailMergeTemplate: TemplateRef<any>;
+
+  @ViewChild('tabCmsWebPortalTemplate', { static: true })
+  tabCmsWebPortalTemplate: TemplateRef<any>;
 
   @ViewChild('tabMergeBurstTemplate', { static: true })
   tabMergeBurstTemplate: TemplateRef<any>;
@@ -128,6 +132,11 @@ export class ProcessingComponent implements OnInit {
       ngTemplateOutlet: 'tabReportGenerationMailMergeTemplate',
     },
     {
+      id: 'cmsWebPortalTab',
+      heading: 'AREAS.PROCESSING.TABS.CMS-WEBPORTAL',
+      ngTemplateOutlet: 'tabCmsWebPortalTemplate',
+    },
+    {
       id: 'mergeBurstTab',
       heading: 'AREAS.PROCESSING.TABS.MERGE-BURST',
       ngTemplateOutlet: 'tabMergeBurstTemplate',
@@ -160,6 +169,7 @@ export class ProcessingComponent implements OnInit {
       visibleTabs: [
         'burstTab',
         'reportGenerationMailMergeTab',
+        'cmsWebPortalTab',
         'logsTab',
         'licenseTab',
       ],
@@ -225,6 +235,9 @@ export class ProcessingComponent implements OnInit {
 
     this.settingsService.currentConfigurationTemplateName = '';
     this.settingsService.currentConfigurationTemplatePath = '';
+
+    delete this.processingService.procReportingMailMergeInfo
+      .selectedMailMergeClassicReport;
 
     await this.settingsService.loadAllConnectionFilesAsync();
 
@@ -1422,4 +1435,105 @@ export class ProcessingComponent implements OnInit {
   }
 
   //end samples
+
+  reportParamsValid = false;
+  reportParamsValue: { [key: string]: any } = {};
+
+  onReportParamsValidChange(isValid: boolean) {
+    this.reportParamsValid = isValid;
+    console.log('Report parameters form validity:', isValid);
+  }
+
+  // Add handler for the form's value
+  onReportParamsValueChange(values: { [key: string]: any }) {
+    this.reportParamsValue = values;
+    console.log('Report parameters form values:', values);
+  }
+
+  onReportSelectionChange($event: any) {
+    console.log(`onReportSelectionChange: ${JSON.stringify($event)}`);
+    // Update the selected report in the processing service
+  }
+
+  allowedInputFileTypes(): string {
+    let allowedFileTypes = 'notused';
+
+    if (
+      !this.processingService.procReportingMailMergeInfo
+        ?.selectedMailMergeClassicReport
+    ) {
+      allowedFileTypes = 'notused';
+    } else {
+      // Get the selected report which already contains the data source type
+      const selectedReport =
+        this.processingService.procReportingMailMergeInfo
+          .selectedMailMergeClassicReport;
+      const dsInputType = selectedReport.dsInputType;
+      const scriptOptionsSelectFileExplorer =
+        selectedReport.scriptOptionsSelectFileExplorer;
+
+      //console.log(`dsInputType = ${dsInputType}`);
+
+      // If no datasource type is available, return none
+      if (!dsInputType) {
+        allowedFileTypes = 'notused';
+      }
+
+      // Check for text-based file formats
+      if (
+        [
+          'ds.xmlfile',
+          'ds.csvfile',
+          'ds.tsvfile',
+          'ds.fixedwidthfile',
+        ].includes(dsInputType)
+      ) {
+        allowedFileTypes = '.csv, .tsv, .tab, .txt, .prn, .dat';
+      }
+
+      // Check for Excel formats
+      if (dsInputType === 'ds.excelfile') {
+        allowedFileTypes = '.xlsx, .xls';
+      }
+
+      // Check for script files
+      if (dsInputType === 'ds.script') {
+        allowedFileTypes = scriptOptionsSelectFileExplorer; // Return the pattern specified in the configuration
+      }
+    }
+
+    //console.log(`allowedFileTypes = ${allowedFileTypes}`);
+
+    return allowedFileTypes;
+  }
+
+  //start portal
+  launchPortal(event: Event) {
+    event.preventDefault();
+    // Opens the portal URL in a browser
+    //this.electronService.openExternalUrl('http://localhost:3000');
+  }
+
+  togglePortal(event: Event) {
+    event.preventDefault();
+
+    if (this.storeService.configSys.sysInfo.setup.portal.isPortalRunning) {
+      // Portal is running, so stop it
+      this.confirmService.askConfirmation({
+        message: 'Are you sure you want to stop the ReportBurster Portal?',
+        confirmAction: () => {
+          //this.stopPortal(event);
+        },
+      });
+    } else {
+      // Portal is not running, so start it
+      this.confirmService.askConfirmation({
+        message: 'Are you sure you want to start the ReportBurster Portal?',
+        confirmAction: () => {
+          //this.startPortal(event);
+        },
+      });
+    }
+  }
+  //end portal
 }

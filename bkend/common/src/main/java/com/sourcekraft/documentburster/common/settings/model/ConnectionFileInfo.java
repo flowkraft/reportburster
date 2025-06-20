@@ -26,6 +26,7 @@ public class ConnectionFileInfo extends DumpToString {
 	public boolean activeClicked;
 	public boolean defaultConnection;
 	public String usedBy;
-	public EmailServer emailserver = new EmailServer();
+	public ServerEmailSettings emailserver = new ServerEmailSettings();
+	public ServerDatabaseSettings dbserver = new ServerDatabaseSettings();
 
 }

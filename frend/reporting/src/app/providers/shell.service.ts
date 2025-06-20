@@ -121,22 +121,20 @@ export class ShellService {
     workItemName?: string,
     exitCallback?: Function,
   ) {
-    // Handle the result here. This will be called when the process has finished executing.
+    // Normalize result, handle nested data
+    const res = (result as any).data ?? result;
     let message = 'Done';
     if (workItemName) {
       message = 'Done ' + workItemName;
     }
-    if (result.success) {
-      this.messagesService.showInfo(message, '', {
-        messageClass: 'java-exited',
-      });
+    if (res.success) {
+      this.messagesService.showInfo(message, '', { messageClass: 'java-exited' });
     } else {
-      this.messagesService.showError('Error', '', {
-        messageClass: 'java-exited',
-      });
+      this.messagesService.showError('Error', '', { messageClass: 'java-exited' });
     }
+    // Pass normalized result to callback
     if (exitCallback) {
-      exitCallback();
+      exitCallback(res);
     }
   }
 }

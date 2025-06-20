@@ -334,6 +334,8 @@ export class WebSocketService extends WebSocketEndpoint {
       fileContent: string;
     }[],
   ) => {
+    //console.log(`jobsEventDetails = ${JSON.stringify(jobsEventDetails)}`);
+
     this.handleRunningJobs(jobsEventDetails);
     this.handleResumeJobs(jobsEventDetails);
   };
@@ -346,10 +348,15 @@ export class WebSocketService extends WebSocketEndpoint {
     }[],
   ) => {
     const allJobFiles = jobsEventDetails;
+    //console.log(`allJobFiles = ${JSON.stringify(allJobFiles)}`);
+
     const processingJobs = [];
     for (const jobFile of allJobFiles) {
+      //console.log(`jobFile = ${JSON.stringify(jobFile)}`);
+
       // jobtype === 'burst' job files
-      if (jobFile.fileName.endsWith('.job')) {
+      if (jobFile.filePath.endsWith('.job')) {
+        //console.log(jobFile.fileContent);
         const jobDetails = await Utilities.parseStringPromise(
           jobFile.fileContent,
           {

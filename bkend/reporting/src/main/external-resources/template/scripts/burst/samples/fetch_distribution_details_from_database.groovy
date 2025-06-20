@@ -41,14 +41,14 @@
  
 import groovy.sql.Sql
 
-//HSQLDB sample
+// H2 Database connection details (matching the Java test setup)
+def h2Url = 'jdbc:h2:file:./target/fetch_details_testdb;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE' // Use the same path and options as the test
+def h2User = 'sa'
+def h2Pass = ''
+def h2Driver = 'org.h2.Driver'
 
-//Replace localhost with your host
-//Replace xdb with your own database name
-//Replace sa and '' with your own database login details
+def sql = Sql.newInstance(h2Url, h2User, h2Pass, h2Driver)
 
-def sql = Sql.newInstance('jdbc:hsqldb:hsql://localhost/xdb', 
-                          'sa', '','org.hsqldb.jdbcDriver')
 
 //Oracle sample
 

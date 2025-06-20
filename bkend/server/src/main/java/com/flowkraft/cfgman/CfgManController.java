@@ -2,6 +2,8 @@ package com.flowkraft.cfgman;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -28,7 +30,8 @@ import com.flowkraft.jobman.services.IOUtilsService;
 import com.flowkraft.jobman.services.SystemService;
 import com.sourcekraft.documentburster.common.settings.model.ConfigurationFileInfo;
 import com.sourcekraft.documentburster.common.settings.model.ConnectionFileInfo;
-import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionSettings;
+import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
+import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionEmailSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSettingsInternal;
 import com.sourcekraft.documentburster.common.settings.model.ReportingSettings;
@@ -107,13 +110,13 @@ public class CfgManController {
 
 	}
 
-	@GetMapping(value = "/rb/load-connection-all")
-	public Flux<ConnectionFileInfo> loadRbSettingsConnectionAll() throws Exception {
-		return Flux.fromStream(rbSettingsService.loadSettingsConnectionAll());
+	@GetMapping(value = "/rb/load-connection-email-all")
+	public Flux<ConnectionFileInfo> loadRbSettingsConnectionEmailAll() throws Exception {
+		return Flux.fromStream(rbSettingsService.loadSettingsConnectionEmailAll());
 	}
 
-	@GetMapping(value = "/rb/load-connection")
-	public Mono<DocumentBursterConnectionSettings> loadRbSettingsConnection(@RequestParam String path)
+	@GetMapping(value = "/rb/load-connection-email")
+	public Mono<DocumentBursterConnectionEmailSettings> loadRbSettingsConnectionEmail(@RequestParam String path)
 			throws Exception {
 
 		// System.out.println("loadRbSettingsConnection path = " + path);
@@ -121,21 +124,60 @@ public class CfgManController {
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
 
-		return Mono.just(rbSettingsService.loadSettingsConnection(fullPath));
+		return Mono.just(rbSettingsService.loadSettingsConnectionEmail(fullPath));
 
 	}
 
-	@PostMapping(value = "/rb/save-connection")
+	@PostMapping(value = "/rb/save-connection-email")
 	public void saveRbReportSettingsConnection(@RequestParam String path,
-			@RequestBody DocumentBursterConnectionSettings dbSettings) throws Exception {
+			@RequestBody DocumentBursterConnectionEmailSettings dbSettings) throws Exception {
 
-		// System.out.println("saveRbReportSettingsReporting dbSettings = " +
-		// dbSettings);
+		String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+		Path requestedPath = Paths.get(decodedPath);
+		String fullPath;
+
+		// Check if the decoded path from the request is already absolute
+		if (requestedPath.isAbsolute()) {
+			fullPath = decodedPath; // Use the absolute path directly
+		} else {
+			// If the path is relative, prepend the base directory
+			fullPath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, decodedPath).toString();
+		}
+
+		rbSettingsService.saveSettingsConnectionEmail(dbSettings, fullPath);
+
+	}
+
+	@GetMapping(value = "/rb/load-connection-database-all")
+	public Flux<ConnectionFileInfo> loadRbSettingsConnectionDatabaseAll() throws Exception {
+		return Flux.fromStream(rbSettingsService.loadSettingsConnectionDatabaseAll());
+	}
+
+	@GetMapping(value = "/rb/load-connection-database")
+	public Mono<DocumentBursterConnectionDatabaseSettings> loadRbSettingsConnectionDatabase(@RequestParam String path)
+			throws Exception {
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+		return Mono.just(rbSettingsService.loadSettingsConnectionDatabase(fullPath));
+	}
 
-		rbSettingsService.saveSettingsConnection(dbSettings, fullPath);
+	@PostMapping(value = "/rb/save-connection-database")
+	public void saveRbSettingsConnectionDatabase(@RequestParam String path,
+			@RequestBody DocumentBursterConnectionDatabaseSettings dbSettings) throws Exception {
 
+		String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+		Path requestedPath = Paths.get(decodedPath);
+		String fullPath;
+
+		// Check if the decoded path from the request is already absolute
+		if (requestedPath.isAbsolute()) {
+			fullPath = decodedPath; // Use the absolute path directly
+		} else {
+			// If the path is relative, prepend the base directory
+			fullPath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, decodedPath).toString();
+		}
+
+		rbSettingsService.saveSettingsConnectionDatabase(dbSettings, fullPath);
 	}
 
 	@GetMapping(value = "/rb/load-internal")
@@ -182,30 +224,39 @@ public class CfgManController {
 
 	@GetMapping(value = "/rb/load-template", produces = MediaType.TEXT_PLAIN_VALUE)
 	Mono<String> readFileToString(@RequestParam String path) throws Exception {
+		String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+		Path requestedPath = Paths.get(decodedPath);
+		String fullPath;
 
-		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
-				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+		// Check if the decoded path from the request is already absolute
+		if (requestedPath.isAbsolute()) {
+			fullPath = decodedPath; // Use the absolute path directly
+		} else {
+			// If the path is relative, prepend the base directory
+			fullPath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, decodedPath).toString();
+		}
 
-		// System.out.println("/fs/read-file-to-string: fullPath = " + fullPath);
-
+		// Ensure systemService.unixCliCat can handle the corrected fullPath
 		String fileContent = systemService.unixCliCat(fullPath);
-		return Mono.just(fileContent);
+		// Return empty string if content is null to avoid potential NPEs downstream
+		// and align with previous behavior causing JSON parse error on failure.
+		return Mono.just(fileContent != null ? fileContent : "");
 
 	}
 
 	@GetMapping(value = "/rb/serve-asset", produces = MediaType.ALL_VALUE)
 	public Mono<ResponseEntity<?>> serveAsset(@RequestParam String path) throws Exception {
-		//System.out.println("========== SERVE ASSET ENDPOINT CALLED ==========");
-		//System.out.println("Path requested: " + path);
+		// System.out.println("========== SERVE ASSET ENDPOINT CALLED ==========");
+		// System.out.println("Path requested: " + path);
 
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
 
-		//System.out.println("Full path: " + fullPath);
+		// System.out.println("Full path: " + fullPath);
 
 		// Determine content type based on file extension
 		String contentType = determineContentType(fullPath);
-		//System.out.println("Content type: " + contentType);
+		// System.out.println("Content type: " + contentType);
 
 		// For images and binary files
 		if (!contentType.startsWith("text/")) {

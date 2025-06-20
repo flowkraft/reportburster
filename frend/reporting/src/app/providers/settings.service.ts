@@ -9,11 +9,11 @@ export interface ExtConnection {
   filePath: string;
   connectionCode: string;
   connectionName: string;
-  connectionType: string;
+  connectionType: 'email-connection' | 'database-connection';
   activeClicked: boolean;
   defaultConnection: boolean;
-  usedBy?: string;
-  emailserver: {
+  usedBy: string;
+  emailserver?: {
     host: string;
     port: string;
     userid: string;
@@ -22,6 +22,17 @@ export interface ExtConnection {
     usetls: boolean;
     fromaddress: string;
     name: string;
+  };
+  dbserver?: {
+    type: string; // mysql, postgresql, sqlserver, oracle
+    host: string;
+    port: string;
+    database: string;
+    userid: string;
+    userpassword: string;
+    usessl: boolean;
+    connectionstring: string;
+    defaultquery: string;
   };
 }
 
@@ -36,6 +47,18 @@ export const newEmailServer = {
   name: 'From Name',
 };
 
+export const newDatabaseServer = {
+  type: 'oracle',
+  host: 'Database Server Host',
+  port: '1521', // SQL Server 1433, MySQL 3306, PostgreSQL 5432, Oracle 1521
+  database: 'Database Name',
+  userid: 'Database Username',
+  userpassword: 'Database Password',
+  usessl: false,
+  connectionstring: '',
+  defaultquery: 'SELECT 1 AS connection_test',
+};
+
 export interface TmplFileInfo {
   fileName: string;
   filePath: string;
@@ -43,6 +66,27 @@ export interface TmplFileInfo {
   content?: string;
   folderName: string;
   relativeFilePath: string;
+}
+
+export interface ReportParameter {
+  id: string;
+  type: string;
+  label?: string;
+  description?: string;
+  defaultValue?: any;
+  constraints?: {
+    [key: string]: any;
+    required?: boolean;
+    min?: number | string;
+    max?: number | string;
+    pattern?: string;
+  };
+  uiHints?: {
+    [key: string]: any;
+    control?: string;
+    list?: any[];
+    sql?: string;
+  };
 }
 
 export interface CfgTmplFileInfo {
@@ -58,9 +102,12 @@ export interface CfgTmplFileInfo {
   folderName: string;
   relativeFilePath: string;
   isFallback: boolean;
+  scriptOptionsSelectFileExplorer: string;
   activeClicked?: boolean;
   useEmlConn?: boolean;
   emlConnCode?: string;
+
+  reportParameters: ReportParameter[];
 }
 
 @Injectable({
@@ -112,6 +159,10 @@ export class SettingsService {
   templateFiles: Array<TmplFileInfo> = [];
 
   defaultEmailConnectionFile: ExtConnection;
+  defaultDatabaseConnectionFile: ExtConnection;
+
+  _emailConnectionsFiles: ExtConnection[] | null = null;
+  _databaseConnectionsFiles: ExtConnection[] | null = null;
   connectionFiles: Array<ExtConnection> = [];
 
   numberOfUserVariables: number;
@@ -333,8 +384,17 @@ export class SettingsService {
   ) {
     const path = encodeURIComponent(filePath);
 
+    // Determine if this is a database connection based on the file path
+    const isDbConnection =
+      filePath.includes('/db-') || filePath.includes('\\db-');
+
+    // Use the appropriate endpoint based on connection type
+    const endpoint = isDbConnection
+      ? `/cfgman/rb/save-connection-database?path=${path}`
+      : `/cfgman/rb/save-connection-email?path=${path}`;
+
     return this.apiService.post(
-      `/cfgman/rb/save-connection?path=${path}`,
+      endpoint,
       xmlConnectionSettings.documentburster,
     );
   }
@@ -435,14 +495,42 @@ export class SettingsService {
     });
   }
 
+  getEmailConnectionFiles(): ExtConnection[] {
+    if (!this._emailConnectionsFiles) {
+      this._emailConnectionsFiles = this.connectionFiles.filter(
+        (conn) => conn.connectionType === 'email-connection',
+      );
+    }
+    return this._emailConnectionsFiles;
+  }
+
+  getDatabaseConnectionFiles(): ExtConnection[] {
+    if (!this._databaseConnectionsFiles) {
+      this._databaseConnectionsFiles = this.connectionFiles.filter(
+        (conn) => conn.connectionType === 'database-connection',
+      );
+    }
+    return this._databaseConnectionsFiles;
+  }
+
+  async loadSqlOptionsAsync(sql: string) {
+    return this.apiService.get('/cfgman/rb/load-sql-options', { sql });
+  }
+
   async loadAllConnectionFilesAsync() {
     if (this.connectionsLoading == 1) return;
 
     this.connectionsLoading = 1;
 
-    const connFiles = await this.apiService.get(
-      '/cfgman/rb/load-connection-all',
+    const emailConnFiles = await this.apiService.get(
+      '/cfgman/rb/load-connection-email-all',
     );
+    const dbConnFiles = await this.apiService.get(
+      '/cfgman/rb/load-connection-database-all',
+    );
+
+    // Combine all connection files
+    const connFiles = [...(emailConnFiles || []), ...(dbConnFiles || [])];
 
     //console.log(
     //  `this.configurationFiles = ${JSON.stringify(this.configurationFiles)}`,
@@ -476,6 +564,12 @@ export class SettingsService {
 
       this.defaultEmailConnectionFile = this.getConnectionDetails({
         connectionType: 'email-connection',
+        defaultConnection: true,
+        connectionCode: '',
+      });
+
+      this.defaultDatabaseConnectionFile = this.getConnectionDetails({
+        connectionType: 'database-connection',
         defaultConnection: true,
         connectionCode: '',
       });
@@ -675,18 +769,5 @@ export class SettingsService {
       }
     }
     return undefined;
-  }
-
-  // Add to SettingsService
-  private templateContentCache: { [key: string]: string } = {};
-
-  saveTemplateContent(configName: string, outputType: string, content: string) {
-    const key = `${configName}_${outputType}`;
-    this.templateContentCache[key] = content;
-  }
-
-  getTemplateContent(configName: string, outputType: string): string {
-    const key = `${configName}_${outputType}`;
-    return this.templateContentCache[key] || '';
   }
 }

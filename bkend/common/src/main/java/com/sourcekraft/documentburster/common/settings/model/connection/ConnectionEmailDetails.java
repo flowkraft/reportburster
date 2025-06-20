@@ -19,16 +19,17 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.sourcekraft.documentburster.common.settings.model.ServerEmailSettings;
 import com.sourcekraft.documentburster.common.utils.DumpToString;
 
 @XmlRootElement(name = "documentburster")
-public class EmailConnectionDetails extends DumpToString {
+public class ConnectionEmailDetails extends DumpToString {
 
 	private static final long serialVersionUID = -7381519393251971179L;
 
-	public EmailDocumentBursterConnection connection = new EmailDocumentBursterConnection();
+	public DocumentBursterConnectionEmail connection = new DocumentBursterConnectionEmail();
 
-	public static class EmailDocumentBursterConnection extends DumpToString {
+	public static class DocumentBursterConnectionEmail extends DumpToString {
 
 		private static final long serialVersionUID = -7846509982169848227L;
 
@@ -38,21 +39,9 @@ public class EmailConnectionDetails extends DumpToString {
 		@XmlElement(name = "default")
 		public boolean defaultConnection = false;
 
-		public EmailServer emailserver = new EmailServer();
+		public ServerEmailSettings emailserver = new ServerEmailSettings();
 
-		public static class EmailServer extends DumpToString {
-
-			private static final long serialVersionUID = 8946763965142587248L;
-
-			public String host = StringUtils.EMPTY;
-			public String port = StringUtils.EMPTY;
-			public String userid = StringUtils.EMPTY;
-			public String userpassword = StringUtils.EMPTY;
-			public boolean usessl = false;
-			public boolean usetls = false;
-			public String fromaddress = StringUtils.EMPTY;
-			public String name = StringUtils.EMPTY;
-		}
+		
 	}
 
 }

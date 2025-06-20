@@ -1,0 +1,200 @@
+@startuml Northwind Database Schema
+
+' PlantUML entity relationship diagram for Northwind database
+' Display settings
+!define TABLE_BORDER_COLOR #4c4c4c
+!define HEADER_COLOR #b0c4de
+!define ENTITY_TITLE_COLOR #1e90ff
+!define PRIMARY_KEY_COLOR #ff7f50
+!define FOREIGN_KEY_COLOR #32cd32
+!define COLUMN_COLOR #000000
+
+skinparam {
+  classFontColor COLUMN_COLOR
+  classFontSize 12
+  classAttributeFontColor COLUMN_COLOR
+  classAttributeFontSize 11
+  classBackgroundColor white
+  classBorderColor TABLE_BORDER_COLOR
+  classBorderThickness 1
+  classFontName Arial
+  classAttributeFontName Arial
+  ArrowColor #2c3e50
+  ArrowThickness 1
+  shadowing false
+}
+
+' Entities
+
+entity "Customers" as customers {
+  * CustomerID : VARCHAR(5)
+  --
+  CompanyName : VARCHAR(40)
+  ContactName : VARCHAR(30)
+  ContactTitle : VARCHAR(30)
+  Address : VARCHAR(60)
+  City : VARCHAR(15)
+  Region : VARCHAR(15)
+  PostalCode : VARCHAR(10)
+  Country : VARCHAR(15)
+  Phone : VARCHAR(24)
+  Fax : VARCHAR(24)
+  Email : VARCHAR(225)
+}
+
+entity "CustomerDemographics" as customerDemographics {
+  * CustomerTypeID : VARCHAR(10)
+  --
+  CustomerDesc : TEXT
+}
+
+entity "CustomerCustomerDemo" as customerCustomerDemo {
+  * CustomerID : VARCHAR(5) <<FK>>
+  * CustomerTypeID : VARCHAR(10) <<FK>>
+}
+
+entity "Orders" as orders {
+  * OrderID : INTEGER <<generated>>
+  --
+  # CustomerID : VARCHAR(5) <<FK>>
+  # EmployeeID : INTEGER <<FK>>
+  OrderDate : DATETIME
+  RequiredDate : DATETIME
+  ShippedDate : DATETIME
+  # ShipVia : INTEGER <<FK>>
+  Freight : DECIMAL(19,4)
+  ShipName : VARCHAR(40)
+  ShipAddress : VARCHAR(60)
+  ShipCity : VARCHAR(15)
+  ShipRegion : VARCHAR(15)
+  ShipPostalCode : VARCHAR(10)
+  ShipCountry : VARCHAR(15)
+}
+
+entity "OrderDetails" as orderDetails {
+  * OrderID : INTEGER <<FK>>
+  * ProductID : INTEGER <<FK>>
+  --
+  UnitPrice : DECIMAL(19,4)
+  Quantity : SMALLINT
+  Discount : DECIMAL(8,4)
+}
+
+entity "Products" as products {
+  * ProductID : INTEGER <<generated>>
+  --
+  ProductName : VARCHAR(40)
+  # SupplierID : INTEGER <<FK>>
+  # CategoryID : INTEGER <<FK>>
+  QuantityPerUnit : VARCHAR(20)
+  UnitPrice : DECIMAL(19,4)
+  UnitsInStock : SMALLINT
+  UnitsOnOrder : SMALLINT
+  ReorderLevel : SMALLINT
+  Discontinued : BOOLEAN
+}
+
+entity "Categories" as categories {
+  * CategoryID : INTEGER <<generated>>
+  --
+  CategoryName : VARCHAR(15)
+  Description : TEXT
+  Picture : BLOB
+}
+
+entity "Suppliers" as suppliers {
+  * SupplierID : INTEGER <<generated>>
+  --
+  CompanyName : VARCHAR(40)
+  ContactName : VARCHAR(30)
+  ContactTitle : VARCHAR(30)
+  Address : VARCHAR(60)
+  City : VARCHAR(15)
+  Region : VARCHAR(15)
+  PostalCode : VARCHAR(10)
+  Country : VARCHAR(15)
+  Phone : VARCHAR(24)
+  Fax : VARCHAR(24)
+  Email : VARCHAR(225)
+  HomePage : TEXT
+}
+
+entity "Shippers" as shippers {
+  * ShipperID : INTEGER <<generated>>
+  --
+  CompanyName : VARCHAR(40)
+  Phone : VARCHAR(24)
+}
+
+entity "Employees" as employees {
+  * EmployeeID : INTEGER <<generated>>
+  --
+  LastName : VARCHAR(20)
+  FirstName : VARCHAR(10)
+  Title : VARCHAR(30)
+  TitleOfCourtesy : VARCHAR(25)
+  BirthDate : DATE
+  HireDate : DATE
+  Address : VARCHAR(60)
+  City : VARCHAR(15)
+  Region : VARCHAR(15)
+  PostalCode : VARCHAR(10)
+  Country : VARCHAR(15)
+  Phone : VARCHAR(24)
+  Extension : VARCHAR(4)
+  Mobile : VARCHAR(24)
+  Email : VARCHAR(225)
+  # ReportsTo : INTEGER <<FK>>
+  Notes : TEXT
+  Photo : BLOB
+}
+
+entity "EmployeeTerritories" as employeeTerritories {
+  * EmployeeID : INTEGER <<FK>>
+  * TerritoryID : VARCHAR(20) <<FK>>
+}
+
+entity "Territories" as territories {
+  * TerritoryID : VARCHAR(20)
+  --
+  TerritoryDescription : VARCHAR(50)
+  # RegionID : INTEGER <<FK>>
+}
+
+entity "Region" as region {
+  * RegionID : INTEGER
+  --
+  RegionDescription : VARCHAR(50)
+}
+
+' Relationships
+
+' Customer relationships
+customers ||--o{ orders : places
+customers }--{ customerDemographics : (CustomerCustomerDemo)
+
+' Order relationships
+orders ||--o{ orderDetails : contains
+orders }o--|| shippers : shipped by
+orders }o--|| employees : handled by
+
+' Product relationships
+products ||--o{ orderDetails : ordered in
+products }o--|| categories : belongs to
+products }o--|| suppliers : supplied by
+
+' Employee relationships
+employees ||--o{ orders : processes
+employees ||--o{ employees : manages
+employees }--{ territories : (EmployeeTerritories)
+
+' Territory relationships
+territories }o--|| region : belongs to
+
+' Junction tables
+customerDemographics ||--o{ customerCustomerDemo : has
+customers ||--o{ customerCustomerDemo : belongs to
+employees ||--o{ employeeTerritories : works in
+territories ||--o{ employeeTerritories : contains
+
+@enduml

@@ -420,9 +420,6 @@ public class EmailTest {
 
 				super.setUpMockEmail();
 
-				scripting.setRoots(new String[] { "src/test/groovy", "src/test/groovy/senders-messages",
-						"src/main/external-resources/template/scripts/burst/internal" });
-
 				ctx.settings.getAttachments().clear();
 
 				Attachment item0 = new Attachment();

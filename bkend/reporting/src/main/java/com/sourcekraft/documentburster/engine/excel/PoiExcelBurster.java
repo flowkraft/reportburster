@@ -38,6 +38,7 @@ public class PoiExcelBurster extends AbstractBurster {
 	}
 
 	protected void initializeResources() throws Exception {
+		ctx.burstTokens = new ArrayList<String>();
 		tempWorkBookPath = getTempWorkBookPath();
 	}
 
@@ -81,7 +82,7 @@ public class PoiExcelBurster extends AbstractBurster {
 
 	}
 
-	public List<String> parseBurstingMetaData() throws Exception {
+	protected void parseBurstingMetaData() throws Exception {
 
 		InputStream input = new FileInputStream(new File(filePath));
 		Workbook workBook = WorkbookFactory.create(input);
@@ -92,20 +93,16 @@ public class PoiExcelBurster extends AbstractBurster {
 
 		Sheet burstMetaDataSheet = workBook.getSheet("burst");
 
-		List<String> burstTokens;
-
 		if (burstMetaDataSheet == null)
-			burstTokens = getBurstTokensFromDistinctSheets(workBook);
+			ctx.burstTokens = getBurstTokensFromDistinctSheets(workBook);
 		else
-			burstTokens = getBurstTokensAndParseBurstMetaData(workBook, burstMetaDataSheet);
+			ctx.burstTokens = getBurstTokensAndParseBurstMetaData(workBook, burstMetaDataSheet);
 
-		if (burstTokens.size() == 0)
+		if (ctx.burstTokens.size() == 0)
 			log.warn(
 					"The list of burst tokens found in the 'burst' sheet metadata is empty. Is that what you want? Please consider to provide a valid list of burst tokens in the 'burstTokens' column of the 'burst' metadata sheet!");
 
 		log.debug("Excel burstMetaData : " + burstMetaData);
-
-		return burstTokens;
 
 	}
 
@@ -153,6 +150,7 @@ public class PoiExcelBurster extends AbstractBurster {
 
 		if (StringUtils.isNotEmpty(customConfigFilePath)) {
 			ctx.configurationFilePath = customConfigFilePath;
+			ctx.settings.setConfigurationFilePath(customConfigFilePath);
 			executeController();
 		}
 
