@@ -16,9 +16,9 @@ package com.sourcekraft.documentburster.common.settings.model;
 
 import java.util.*;
 
-import javax.xml.bind.annotation.XmlElement;
+import com.sourcekraft.documentburster.utils.DumpToString;
 
-import com.sourcekraft.documentburster.common.utils.DumpToString;
+import jakarta.xml.bind.annotation.XmlElement;
 
 public class Items extends DumpToString {
 	

@@ -25,8 +25,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Unmarshaller;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
@@ -50,7 +50,7 @@ import com.sourcekraft.documentburster.common.settings.model.SimpleJavaMail;
 import com.sourcekraft.documentburster.common.settings.model.SmsSettings;
 import com.sourcekraft.documentburster.common.settings.model.UploadSettings;
 import com.sourcekraft.documentburster.common.settings.model.WebUploadSettings;
-import com.sourcekraft.documentburster.common.utils.DumpToString;
+import com.sourcekraft.documentburster.utils.DumpToString;
 
 public class Settings extends DumpToString {
 

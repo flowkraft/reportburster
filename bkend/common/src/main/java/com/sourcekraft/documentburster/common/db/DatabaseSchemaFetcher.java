@@ -21,6 +21,8 @@ import com.sourcekraft.documentburster.common.db.schema.ForeignKeySchema;
 import com.sourcekraft.documentburster.common.db.schema.IndexSchema;
 import com.sourcekraft.documentburster.common.db.schema.SchemaInfo;
 import com.sourcekraft.documentburster.common.db.schema.TableSchema;
+import com.sourcekraft.documentburster.common.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
 import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 
 /**
@@ -69,19 +71,29 @@ public class DatabaseSchemaFetcher {
      * @return A {@link SchemaInfo} object populated with the fetched schema details.
      * @throws Exception If any error occurs during the process (connection, SQL, driver issues).
      */
-    public SchemaInfo fetchSchema(ServerDatabaseSettings settings) throws Exception {
-        // ... (validation remains the same) ...
-        if (settings == null || StringUtils.isBlank(settings.type)) {
+    public SchemaInfo fetchSchema(String connectionFilePath) throws Exception {
+    	Settings settings = new Settings(StringUtils.EMPTY);
+
+		// 1. Load connection settings directly using JAXB (similar to doCheckEmail
+		// pattern)
+		DocumentBursterConnectionDatabaseSettings dbSettings = settings
+				.loadSettingsConnectionDatabaseByPath(connectionFilePath);
+
+		ServerDatabaseSettings serverSettings = dbSettings.connection.databaseserver;
+
+    	
+    	// ... (validation remains the same) ...
+        if (settings == null || StringUtils.isBlank(serverSettings.type)) {
             throw new IllegalArgumentException("Database settings or type cannot be null or blank.");
         }
 
-        String dbType = settings.type.toLowerCase();
+        String dbType = serverSettings.type.toLowerCase();
         log.info("Attempting to fetch schema for database type: {}", dbType);
 
         Connection connection = null;
         try {
             // --- Step 1: Establish Connection ---
-            connection = getConnection(settings);
+            connection = getConnection(serverSettings);
             log.info("Successfully established connection for schema fetching.");
 
             // --- Step 2: Fetch Metadata ---
@@ -90,7 +102,7 @@ public class DatabaseSchemaFetcher {
 
             // --- Fetch Core Schema Elements ---
             // This method now fetches tables, views, columns, PKs, FKs, and indexes.
-            fetchTablesAndColumns(metaData, schemaInfo, settings);
+            fetchTablesAndColumns(metaData, schemaInfo, serverSettings);
 
             log.info("Successfully fetched schema metadata.");
             return schemaInfo;

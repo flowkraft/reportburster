@@ -24,18 +24,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.GlobalContext;
+import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
+import com.sourcekraft.documentburster.common.db.SqlExecutor;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.Attachment;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.job.JobUtils;
 import com.sourcekraft.documentburster.job.model.JobProgressDetails;
 import com.sourcekraft.documentburster.scripting.Scripting;
-import com.sourcekraft.documentburster.scripting.Scripts;
 import com.sourcekraft.documentburster.sender.AbstractSender;
 import com.sourcekraft.documentburster.sender.factory.SendersFactory;
-import com.sourcekraft.documentburster.utils.DatabaseConnectionManager;
 import com.sourcekraft.documentburster.utils.LicenseUtils;
-import com.sourcekraft.documentburster.utils.SqlExecutor;
+import com.sourcekraft.documentburster.utils.Scripts;
 import com.sourcekraft.documentburster.utils.Utils;
 import com.sourcekraft.documentburster.variables.Variables;
 
@@ -487,7 +487,7 @@ public abstract class AbstractBurster {
 
 		ctx.settings = new Settings(configurationFilePath);
 
-		ctx.dbManager = new DatabaseConnectionManager(ctx);
+		ctx.dbManager = new DatabaseConnectionManager(ctx.settings);
 		ctx.sql = new SqlExecutor(ctx.dbManager);
 
 		ctx.scripts = new Scripts();

@@ -14,11 +14,11 @@
  */
 package com.sourcekraft.documentburster.common.settings.model.license;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.sourcekraft.documentburster.common.utils.DumpToString;
+import com.sourcekraft.documentburster.utils.DumpToString;
 
 @XmlRootElement(name = "license")
 public class LicenseDetails extends DumpToString {

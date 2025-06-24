@@ -142,12 +142,13 @@ public class LicenseUtils {
 	}
 
 	/*
-	 * This disables the SSL validation on https://www.pdfburst.com
-	 * SSL was working fine and suddenly, after a Java update (or Godaddy SSL update)
-	 * it started to fail with various SSL validation exceptions.
-	 * I had to disable the SSL validation otherwise nothing will work.
+	 * This disables the SSL validation on https://www.pdfburst.com SSL was working
+	 * fine and suddenly, after a Java update (or Godaddy SSL update) it started to
+	 * fail with various SSL validation exceptions. I had to disable the SSL
+	 * validation otherwise nothing will work.
 	 * 
-	 * This method should be removed once the https://www.pdfburst.com SSL certificate will be fixed
+	 * This method should be removed once the https://www.pdfburst.com SSL
+	 * certificate will be fixed
 	 * 
 	 */
 	private Client _newClient() throws Exception {

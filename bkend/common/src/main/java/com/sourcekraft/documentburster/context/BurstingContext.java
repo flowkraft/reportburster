@@ -20,13 +20,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.sourcekraft.documentburster.scripting.Scripts;
-import com.sourcekraft.documentburster.utils.DatabaseConnectionManager;
-import com.sourcekraft.documentburster.utils.SqlExecutor;
+import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
+import com.sourcekraft.documentburster.common.db.SqlExecutor;
 import com.sourcekraft.documentburster.common.settings.EmailConnection;
 import com.sourcekraft.documentburster.common.settings.Settings;
-import com.sourcekraft.documentburster.common.utils.DumpToString;
+import com.sourcekraft.documentburster.utils.DumpToString;
+import com.sourcekraft.documentburster.utils.Scripts;
 import com.sourcekraft.documentburster.variables.Variables;
+
 import groovy.sql.Sql;
 
 /*

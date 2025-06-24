@@ -1,6 +1,6 @@
 package com.sourcekraft.documentburster.common.settings.model;
 
-import com.sourcekraft.documentburster.common.utils.DumpToString;
+import com.sourcekraft.documentburster.utils.DumpToString;
 
 public class ServerDatabaseSettings extends DumpToString {
 	private static final long serialVersionUID = 1L;

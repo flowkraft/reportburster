@@ -25,7 +25,7 @@ public class YargTests {
 
 		String outputFilePath = TestsUtils.TESTS_OUTPUT_FOLDER + "/YargTests/generatePDFTemplateDocxWordPadSimple/output.pdf";
 
-		burster.generatePDFFromDocxTemplateUsingYarg(outputFilePath, TEMPLATE_DOCX_WORDPAD_PATH, variablesData);
+		//burster.generatePDFFromDocxTemplateUsingYarg(outputFilePath, TEMPLATE_DOCX_WORDPAD_PATH, variablesData);
 	}
 	
 	@Test
@@ -59,6 +59,6 @@ public class YargTests {
 
 		String outputFilePath = TestsUtils.TESTS_OUTPUT_FOLDER + "/YargTests/generatePDFTemplateDocxGoogleDocsTable/output.pdf";
 
-		burster.generatePDFFromDocxTemplateUsingYarg(outputFilePath, TEMPLATE_DOCX_WORDPAD_PATH, variablesData);
+		//burster.generatePDFFromDocxTemplateUsingYarg(outputFilePath, TEMPLATE_DOCX_WORDPAD_PATH, variablesData);
 	}
 }

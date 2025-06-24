@@ -1,10 +1,11 @@
+// rb-tabulator web component
+import '../assets/web-components/rb-tabulator.es';
+
 import { BrowserModule } from '@angular/platform-browser';
-import { APP_INITIALIZER, inject, NgModule } from '@angular/core';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { SharedModule } from './shared/shared.module';
-
-import { AppRoutingModule } from './app-routing.module';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -29,12 +30,11 @@ const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>
         deps: [HttpClient],
       },
     }),
-    SharedModule.forRoot(),
+    SharedModule,
     AreasModule,
     BrowserModule,
     FormsModule,
     HttpClientModule,
-    AppRoutingModule,
     ToastrModule.forRoot({
       timeOut: 5000,
       positionClass: 'toast-bottom-right',

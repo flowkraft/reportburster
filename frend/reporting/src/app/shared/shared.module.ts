@@ -18,7 +18,6 @@ import { InfoService } from '../components/dialog-info/info.service';
 import { InfoDialogComponent } from '../components/dialog-info/info-dialog.component';
 import { AskForFeatureService } from '../components/ask-for-feature/ask-for-feature.service';
 import { AskForFeatureDialogComponent } from '../components/ask-for-feature/ask-for-feature-dialog.component';
-import { ButtonVariablesComponent } from '../components/button-variables/button-variables.component';
 import { ButtonWellKnownEmailProvidersComponent } from '../components/button-well-known/button-well-known.component';
 import { ButtonClearLogsModule } from '../components/button-clear-logs/button-clear-logs.module';
 import { ButtonHtmlPreviewComponent } from '../components/button-html-preview/button-html-preview.component';
@@ -35,24 +34,29 @@ import { ConfirmationService } from 'primeng/api';
 import { LiveChatComponent } from '../components/live-chat/live-chat.component';
 import { SafePipe } from './safe.pipe';
 import { ReportParametersFormComponent } from '../components/report-parameters-form/report-parameters-form.component';
+import { AppRoutingModule } from '../app-routing.module';
+import { RouterModule } from '@angular/router';
+import { ButtonVariablesComponent } from '../components/button-variables/button-variables.component';
 
 @NgModule({
   imports: [
+    TranslateModule,
     ModalModule.forRoot(),
-    TranslateModule.forRoot(),
+    RouterModule,
     DialogModule,
     CommonModule,
     FormsModule,
     NgxCodeJarComponent,
     ReactiveFormsModule,
+    AppRoutingModule,
   ],
   declarations: [
     LiveChatComponent,
     ConfirmDialogComponent,
     InfoDialogComponent,
     AskForFeatureDialogComponent,
-    ButtonVariablesComponent,
     ReportParametersFormComponent,
+    ButtonVariablesComponent,
     ButtonWellKnownEmailProvidersComponent,
     ButtonHtmlPreviewComponent,
     SafePipe,
@@ -60,6 +64,7 @@ import { ReportParametersFormComponent } from '../components/report-parameters-f
   exports: [
     CommonModule,
     BrowserModule,
+    RouterModule,
     TranslateModule,
     FormsModule,
     ConfirmDialogModule,
@@ -71,8 +76,8 @@ import { ReportParametersFormComponent } from '../components/report-parameters-f
     LogFilesViewerAllTogetherModule,
     LogFilesViewerSeparateTabsModule,
     ButtonClearLogsModule,
-    ButtonVariablesComponent,
     ReportParametersFormComponent,
+    ButtonVariablesComponent,
     ButtonWellKnownEmailProvidersComponent,
     ButtonHtmlPreviewComponent,
     SafePipe,

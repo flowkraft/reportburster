@@ -19,7 +19,6 @@ import java.util.Objects;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXResult;
-import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.FileUtils;
@@ -36,13 +35,13 @@ import org.docx4j.openpackaging.parts.WordprocessingML.MainDocumentPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.haulmont.yarg.formatters.ReportFormatter;
-import com.haulmont.yarg.formatters.factory.DefaultFormatterFactory;
-import com.haulmont.yarg.formatters.factory.FormatterFactoryInput;
-import com.haulmont.yarg.structure.BandData;
-import com.haulmont.yarg.structure.BandOrientation;
-import com.haulmont.yarg.structure.ReportOutputType;
-import com.haulmont.yarg.structure.impl.ReportTemplateImpl;
+//import com.haulmont.yarg.formatters.ReportFormatter;
+//import com.haulmont.yarg.formatters.factory.DefaultFormatterFactory;
+//import com.haulmont.yarg.formatters.factory.FormatterFactoryInput;
+//import com.haulmont.yarg.structure.BandData;
+//import com.haulmont.yarg.structure.BandOrientation;
+//import com.haulmont.yarg.structure.ReportOutputType;
+//import com.haulmont.yarg.structure.impl.ReportTemplateImpl;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sourcekraft.documentburster.common.settings.model.ReportSettings;
 import com.sourcekraft.documentburster.utils.CsvUtils;
@@ -345,7 +344,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 		if (!bType.equals("none")) {
 			// Assuming com.sourcekraft.documentburster.common.utils.Utils.ibContent exists
 			try {
-				htmlContent = com.sourcekraft.documentburster.common.utils.Utils.ibContent(htmlContent, bType);
+				htmlContent = com.sourcekraft.documentburster.utils.Utils.ibContent(htmlContent, bType);
 			} catch (Exception e) {
 				log.error("Error calling common.utils.Utils.ibContent", e);
 			}
@@ -411,6 +410,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 		}
 	}
 
+	/*
 	public void generatePDFFromDocxTemplateUsingYarg(String documentPath, String templatePath,
 			Map<String, Object> variablesData) throws IOException {
 
@@ -448,7 +448,8 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 		}
 	}
-
+	*/
+	
 	private void generatePDFFromXslFoTemplate(String pdfPath, String xslFoPath, String xmlPath) throws Exception {
 		// Base URI for resolving includes/images/fonts:
 		URI baseUri = new File(".").toURI();

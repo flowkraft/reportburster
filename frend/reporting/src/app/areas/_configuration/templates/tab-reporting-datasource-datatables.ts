@@ -110,16 +110,23 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
   
               <div class="row" style="margin-top: 10px;">
                 <div class="col-xs-6">
-                    <!-- Help text below editor -->
-                    <small class="text-muted" style="display: block; margin-top: 5px;">
-                      <i class="fa fa-info-circle"></i> Write SQL code to fetch report data from the database
-                    </small>
-                </div>
-                <div class="col-xs-6">
-                  <button id="btnHelpWithSqlQueryAI" type="button" class="btn btn-default btn-block" (click)="showDbConnectionModal()" 
+                  <button id="btnHelpWithSqlQueryAI" type="button" title="Write SQL code to fetch report data from the database" class="btn btn-default btn-block" (click)="showDbConnectionModal()" 
                   [disabled]="settingsService.getDatabaseConnectionFiles().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode">
-                    <strong>Hey, You Smart AI, Help Me With This SQL Query ...</strong>
+                    Hey, You Smart AI, Help Me With This SQL Query ...
                   </button>
+                </div>
+                <div class="col-xs-3">
+                  <button
+                    id="btnTestSqlQuery"
+                    type="button"
+                    class="btn btn-primary btn-block"
+                    (click)="doTestSqlQuery()"
+                  >
+                    <i class="fa fa-paper-plane"></i>&nbsp;&nbsp;Test SQL Query
+                  </button>
+                </div>
+                <div class="col-xs-3">
+                  <dburst-button-clear-logs></dburst-button-clear-logs>
                 </div>
               </div>
 
@@ -133,7 +140,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 [highlightMethod]="highlightGroovyCode"
                 [highlighter]="'prism'"
                 [showLineNumbers]="true"
-                style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace;"
+                style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; margin-top: 10px;"
               ></ngx-codejar>
             </tab>
             <tab id="tabSqlExampleReportParameters" heading="Example (Report Parameters)">
@@ -144,7 +151,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 [highlighter]="'prism'"
                 [showLineNumbers]="true"
                 [readonly]="true"
-                style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; background-color: #f8f8f8;"
+                style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; background-color: #f8f8f8; margin-top: 10px;"
               ></ngx-codejar>
               <button id="btnCopyToClipboardParametersSpecExample" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardParametersSpecExample()">
                 Copy Example Params Script To Clipboard
@@ -170,7 +177,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                     [highlightMethod]="highlightGroovyCode"
                     [highlighter]="'prism'"
                     [showLineNumbers]="true"
-                    style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace;"
+                    style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; margin-top: 10px;"
                   ></ngx-codejar>
                   </div>
                 </div>
@@ -178,16 +185,24 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 <div class="row" style="margin-top: 10px;">
                   
                   <div class="col-xs-6">
-                    <!-- Help text below editor -->
-                    <small class="text-muted" style="display: block; margin-top: 5px;">
-                      <i class="fa fa-info-circle"></i> Write Groovy script code to fetch report data from one or multiple datasources
-                    </small>
-                  </div>
-                  <div class="col-xs-6">
                     <button id="btnHelpWithScriptAI" type="button" class="btn btn-default btn-block" (click)="showDbConnectionModal()">
-                      <strong>Hey, You Smart AI, Help Me With This Script ...</strong>
+                      Hey, You Smart AI, Help Me With This Script ...
                     </button>
                   </div>
+                  <div class="col-xs-3">
+                    <button
+                      id="btnTestScript"
+                      type="button"
+                      class="btn btn-primary btn-block"
+                      (click)="doRunTestScript()"
+                    >
+                      <i class="fa fa-paper-plane"></i>&nbsp;&nbsp;Run / Test Script
+                    </button>
+                  </div>
+                  <div class="col-xs-3">
+                    <dburst-button-clear-logs></dburst-button-clear-logs>
+                  </div>
+                
                 </div>
             
             </tab>
@@ -199,7 +214,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 [highlightMethod]="highlightGroovyCode"
                 [highlighter]="'prism'"
                 [showLineNumbers]="true"
-                style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace;"
+                style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; margin-top: 10px;"
               ></ngx-codejar>
             </tab>
             <tab id="tabScriptExampleReportParameters" heading="Example (Report Parameters)">
@@ -210,7 +225,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 [highlighter]="'prism'"
                 [showLineNumbers]="true"
                 [readonly]="true"
-                style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; background-color: #f8f8f8;"
+                style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; background-color: #f8f8f8; margin-top: 10px;"
               ></ngx-codejar>
               <button id="btnCopyToClipboardParametersSpecExample" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardParametersSpecExample()">
                 Copy Example Params Script To Clipboard
@@ -1027,4 +1042,28 @@ Column 3, 15"
       </div>
     </div>
   </div>
-</ng-template>`;
+</ng-template>
+<p-dialog 
+    header="Enter Report Parameters"
+    [(visible)]="isModalParametersVisible"
+    [modal]="true"
+    [style]="{width: '50vw'}">
+    <dburst-report-parameters-form
+        [parameters]="reportParameters"
+        (validChange)="onReportParamsValidChange($event)"
+        (valueChange)="onReportParamsValueChange($event)">
+    </dburst-report-parameters-form>
+    <p-footer>
+        <button pButton 
+            type="button" 
+            label="Cancel" 
+            (click)="isModalParametersVisible = false"
+            class="p-button-secondary"></button>
+        <button pButton 
+            type="button" 
+            label="Run Query" 
+            (click)="onRunQueryWithParams()"
+            [disabled]="!reportParamsValid"></button>
+    </p-footer>
+</p-dialog>
+`;

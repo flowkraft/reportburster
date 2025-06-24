@@ -1,4 +1,4 @@
-package com.sourcekraft.documentburster.utils;
+package com.sourcekraft.documentburster.common.db;
 
 import java.util.List;
 import java.util.Map;
@@ -45,7 +45,7 @@ public class SqlExecutor {
 	 */
 	public List<Map<String, Object>> query(String sql, Map<String, Object> params) throws Exception {
 		log.debug("Executing primary query: {}", sql);
-		String primaryCode = dbManager.ctx.settings.getPrimaryDatabaseConnectionCode(); // Throws IllegalStateException
+		String primaryCode = dbManager.getSettings().getPrimaryDatabaseConnectionCode(); // Throws IllegalStateException
 																						// if not found
 		Jdbi jdbi = dbManager.getJdbi(primaryCode); // Throws Exception if fails
 		// Exceptions within withHandle (like SQL errors) will propagate
@@ -75,7 +75,7 @@ public class SqlExecutor {
 	 */
 	public int update(String sql, Map<String, Object> params) throws Exception {
 		log.debug("Executing primary update: {}", sql);
-		String primaryCode = dbManager.ctx.settings.getPrimaryDatabaseConnectionCode(); // Throws IllegalStateException
+		String primaryCode = dbManager.getSettings().getPrimaryDatabaseConnectionCode(); // Throws IllegalStateException
 																						// if not found
 		Jdbi jdbi = dbManager.getJdbi(primaryCode); // Throws Exception if fails
 		// Exceptions within withHandle (like SQL errors) will propagate

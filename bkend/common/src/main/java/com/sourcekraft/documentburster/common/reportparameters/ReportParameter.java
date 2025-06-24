@@ -3,7 +3,7 @@ package com.sourcekraft.documentburster.common.reportparameters;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.sourcekraft.documentburster.common.utils.DumpToString;
+import com.sourcekraft.documentburster.utils.DumpToString;
 
 public class ReportParameter extends DumpToString {
 

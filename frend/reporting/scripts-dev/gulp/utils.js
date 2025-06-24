@@ -171,7 +171,10 @@ _startServerAndDoX = (npm_x_script) => {
     console.log(`stdout: ${data}`);
 
     // Only start the test process once, no matter how many times this matches
-    if (!testProcessStarted && data.includes("Started ServerApplication in")) {
+    if (
+      !testProcessStarted &&
+      data.includes("org.apache.coyote.AbstractProtocol start")
+    ) {
       testProcessStarted = true; // Set the flag immediately
       console.log(
         `stdout: ${data} !!!!!! ====>>>>> starting 'npm run "${npm_x_script}"'`,

@@ -21,7 +21,7 @@ package com.flowkraft.licenseman;
 
 import java.sql.Timestamp;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

@@ -19,9 +19,9 @@ import java.io.File;
 import org.apache.commons.io.FileUtils;
 
 import com.sourcekraft.documentburster.context.BurstingContext;
-import com.sourcekraft.documentburster.scripting.Scripts;
 import com.sourcekraft.documentburster.sender.model.SmsMessage;
 import com.sourcekraft.documentburster.common.settings.model.SmsSettings;
+import com.sourcekraft.documentburster.utils.Scripts;
 import com.sourcekraft.documentburster.utils.Utils;
 
 public class SmsSender extends AbstractSender {
