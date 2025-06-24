@@ -1,6 +1,6 @@
 package com.sourcekraft.documentburster.common.settings.model;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 public class TrimmedStringAdapter extends XmlAdapter<String, String> {
 

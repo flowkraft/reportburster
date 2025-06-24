@@ -203,13 +203,13 @@ public class MainProgram implements Callable<Integer> {
 			boolean isReportGenerationJob = settings.getCapabilities().reportgenerationmailmerge;
 
 			// Validate and process parameters
-	        Map<String, Object> typedParameters = ParameterParser.parseParameters(parameters);
-	        
+			Map<String, String> typedParameters = ParameterParser.parseParameters(parameters);
+
 			CliJob job = getJob(config.configFile);
 			job.setJobType(isReportGenerationJob ? settings.getReportDataSource().type : "burst");
-			
+
 			job.setParameters(typedParameters);
-			
+
 			job.doBurst(input, qa.isTestAll(), qa.getTestList(), qa.getRandomTestsCount());
 
 			return 0;
@@ -443,13 +443,12 @@ public class MainProgram implements Callable<Integer> {
 			@Option(names = { "--sql-query" }, required = true, description = "SQL query to execute")
 			private String sqlQuery;
 
-			@Option(names = { "--db-connection-code" }, required = true, description = "Database connection code")
-			private String dbConnectionCode;
-			
-			@Option(names = {"-p", "--param"}, 
-		            description = "Query parameters in key=value format (can be repeated)",
-		            paramLabel = "KEY=VALUE")
-		    private Map<String, String> parameters = new HashMap<>();
+			@Mixin
+			protected ConfigOptions config;
+
+			@Option(names = { "-p",
+					"--param" }, description = "Query parameters in key=value format (can be repeated)", paramLabel = "KEY=VALUE")
+			private Map<String, String> parameters = new HashMap<>();
 
 			@Override
 			protected MainProgram getMainProgram() {
@@ -458,10 +457,10 @@ public class MainProgram implements Callable<Integer> {
 
 			@Override
 			public Integer call() throws Exception {
-				Map<String, Object> typedParameters = ParameterParser.parseParameters(parameters);
-			       
-				CliJob job = getJob(null);
-				job.doTestSqlQuery(sqlQuery, dbConnectionCode, typedParameters);
+				Map<String, String> typedParameters = ParameterParser.parseParameters(parameters);
+
+				CliJob job = getJob(config.configFile);
+				job.doTestSqlQuery(sqlQuery, typedParameters);
 				return 0;
 			}
 		}
@@ -549,7 +548,5 @@ public class MainProgram implements Callable<Integer> {
 			}
 		}
 	}
-	
-	
 
 }

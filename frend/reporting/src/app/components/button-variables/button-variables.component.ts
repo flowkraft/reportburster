@@ -2,6 +2,7 @@ import { Component, Output, EventEmitter, Input } from '@angular/core';
 
 import { modalVariablesTemplate } from './modal-variables.template';
 import { StateStoreService } from '../../providers/state-store.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'dburst-button-variables',
@@ -27,7 +28,10 @@ export class ButtonVariablesComponent {
   @Input() shouldBeDisabled: boolean = false;
   @Output() sendSelectedVariable: EventEmitter<string> = new EventEmitter();
 
-  constructor(protected stateStore: StateStoreService) {}
+  constructor(
+    protected stateStore: StateStoreService,
+    private translate: TranslateService,
+  ) {}
 
   builtInVariables = [
     {

@@ -2,11 +2,10 @@ export const tabReportingTabulatorTemplate = `<ng-template
   #tabReportingTabulatorTemplate
 >
   <div class="well">
-    <!-- Top Area: Setup Options -->
+    <!-- Top Area: Setup Options 
     <div class="row">
       <div class="col-xs-12">
         <tabset>
-          <!-- Tab 1: General Table Configuration -->
           <tab heading="{{ 'AREAS.CONFIGURATION.TAB-REPORTING-TABULATOR.GENERAL-CONFIG' | translate }}">
             <div class="row" style="margin-top: 10px;">
               <div class="col-xs-12">
@@ -17,7 +16,6 @@ export const tabReportingTabulatorTemplate = `<ng-template
             </div>
           </tab>
           
-          <!-- Tab 2: Columns -->
           <tab heading="{{ 'AREAS.CONFIGURATION.TAB-REPORTING-TABULATOR.COLUMNS' | translate }}">
             <div class="row" style="margin-top: 10px;">
               <div class="col-xs-12">
@@ -28,7 +26,6 @@ export const tabReportingTabulatorTemplate = `<ng-template
             </div>
           </tab>
           
-          <!-- Tab 3: Sorting -->
           <tab heading="{{ 'AREAS.CONFIGURATION.TAB-REPORTING-TABULATOR.SORTING' | translate }}">
             <div class="row" style="margin-top: 10px;">
               <div class="col-xs-12">
@@ -39,7 +36,6 @@ export const tabReportingTabulatorTemplate = `<ng-template
             </div>
           </tab>
           
-          <!-- Tab 4: Pagination -->
           <tab heading="{{ 'AREAS.CONFIGURATION.TAB-REPORTING-TABULATOR.PAGINATION' | translate }}">
             <div class="row" style="margin-top: 10px;">
               <div class="col-xs-12">
@@ -52,7 +48,8 @@ export const tabReportingTabulatorTemplate = `<ng-template
         </tabset>
       </div>
     </div>
-    
+    -->
+
     <!-- Bottom Area: Table Preview -->
     <div class="row" style="margin-top: 20px;">
       <div class="col-xs-12">
@@ -61,9 +58,7 @@ export const tabReportingTabulatorTemplate = `<ng-template
             <h3 class="panel-title">{{ 'AREAS.CONFIGURATION.TAB-REPORTING-TABULATOR.TABLE-PREVIEW' | translate }}</h3>
           </div>
           <div class="panel-body">
-            <div class="alert alert-info">
-              Tabulator preview would be displayed here
-            </div>
+            <rb-tabulator></rb-tabulator>
           </div>
         </div>
       </div>

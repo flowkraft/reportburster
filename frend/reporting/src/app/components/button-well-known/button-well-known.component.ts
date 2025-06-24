@@ -3,6 +3,7 @@ import { Component, Output, EventEmitter, Input } from '@angular/core';
 import * as allWellKnownEmailProviders from 'nodemailer-wellknown/services.json';
 
 import { modalWellKnownTemplate } from './modal-well-known.template';
+import { TranslateService } from '@ngx-translate/core';
 
 export type EmailProviderSettings = {
   host: string;
@@ -42,6 +43,8 @@ export class ButtonWellKnownEmailProvidersComponent {
 
   @Output() sendSelectedProvider: EventEmitter<EmailProviderSettings> =
     new EventEmitter();
+
+  constructor(private translate: TranslateService) {}
 
   getShortListWellKnownEmailProviders() {
     return this.getAllWellKnownEmailProviders().filter((provider) => {

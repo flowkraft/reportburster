@@ -14,10 +14,10 @@
  */
 package com.sourcekraft.documentburster.common.settings.model;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.sourcekraft.documentburster.utils.DumpToString;
 
-import com.sourcekraft.documentburster.common.utils.DumpToString;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "documentburster")
 public class DocumentBursterSettingsInternal extends DumpToString {

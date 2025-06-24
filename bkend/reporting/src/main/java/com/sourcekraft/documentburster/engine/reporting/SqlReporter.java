@@ -5,9 +5,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
@@ -15,6 +12,7 @@ import org.jdbi.v3.core.Jdbi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sourcekraft.documentburster.common.db.DatabaseHelper;
 import com.sourcekraft.documentburster.common.settings.model.ReportSettings.DataSource.SQLOptions;
 import com.sourcekraft.documentburster.engine.AbstractReporter;
 
@@ -22,11 +20,15 @@ public class SqlReporter extends AbstractReporter {
 
 	private static final Logger log = LoggerFactory.getLogger(SqlReporter.class);
 
+	protected DatabaseHelper dbHelper;
+	
 	public SqlReporter(String configFilePath) {
 		super(configFilePath);
+		dbHelper = new DatabaseHelper(configFilePath);
 		log.debug("SqlReporter initialized with config path: {}", configFilePath);
 	}
 
+	
 	@Override
 	protected void fetchData() throws Exception {
 		log.trace("Entering fetchData...");
@@ -50,8 +52,8 @@ public class SqlReporter extends AbstractReporter {
 
 		// Get JDBI instance and execute query
 		Jdbi jdbiInstance = this.retrieveJdbiInstance(connectionCode);
-		String jdbiQuery = convertToJdbiParameters(sqlQuery);
-		List<String> queryParams = findQueryParameters(jdbiQuery);
+		String jdbiQuery = this.dbHelper.convertToJdbiParameters(sqlQuery);
+		List<String> queryParams = this.dbHelper.findQueryParameters(jdbiQuery);
 		log.debug("Converted JDBI query: '{}' with params: {}", jdbiQuery, queryParams);
 
 		try (Handle handle = jdbiInstance.open()) {
@@ -112,50 +114,12 @@ public class SqlReporter extends AbstractReporter {
 		log.trace("Exiting fetchData.");
 	}
 
-	/**
-	 * Converts template variables to JDBI parameters.
-	 */
-	private String convertToJdbiParameters(String sql) {
-		Pattern pattern = Pattern.compile("[\\$#]\\{([^}]+)\\}|@(\\w+)@");
-		Matcher matcher = pattern.matcher(sql);
-		StringBuilder sb = new StringBuilder();
-
-		while (matcher.find()) {
-			String varName = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
-			if (varName != null) {
-				matcher.appendReplacement(sb, ":" + varName);
-			}
-		}
-		matcher.appendTail(sb);
-		return sb.toString();
-	}
-
-	/**
-	 * Finds JDBI-style parameters in SQL query.
-	 */
-	private List<String> findQueryParameters(String sql) {
-		Pattern pattern = Pattern.compile("(?<!')(:(\\w+))(?!')");
-		Matcher matcher = pattern.matcher(sql);
-		List<String> params = new ArrayList<>();
-
-		while (matcher.find()) {
-			params.add(matcher.group(2));
-		}
-
-		return params.stream().distinct().collect(Collectors.toList());
-	}
-
 	protected Jdbi retrieveJdbiInstance(String connectionCode) throws Exception {
-		log.debug("Requesting Jdbi instance for connection code: {}", connectionCode);
-		Jdbi jdbiInstance = ctx.dbManager.getJdbi(connectionCode);
-		if (jdbiInstance == null) {
-			log.error("DatabaseConnectionManager returned a null Jdbi instance for code: {}", connectionCode);
-			throw new IllegalStateException("Failed to obtain Jdbi instance for connection: " + connectionCode);
-		}
-		log.debug("Obtained Jdbi instance for code: {}", connectionCode);
-		return jdbiInstance;
+	
+		// For other connections, use the default implementation
+		return this.dbHelper.retrieveJdbiInstance(connectionCode);
 	}
-
+	
 	@Override
 	protected void backupFile() throws Exception {
 		// Override backupFile to do nothing for SqlReporter tests,

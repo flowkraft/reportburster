@@ -71,6 +71,7 @@ export interface TmplFileInfo {
 export interface ReportParameter {
   id: string;
   type: string;
+  value?: any;
   label?: string;
   description?: string;
   defaultValue?: any;

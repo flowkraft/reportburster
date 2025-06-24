@@ -21,7 +21,10 @@ import * as _ from 'lodash';
 import { leftMenuTemplate } from './templates/_left-menu';
 import { tabsTemplate } from './templates/_tabs';
 
-import { ExtConnection } from '../../providers/settings.service';
+import {
+  ExtConnection,
+  ReportParameter,
+} from '../../providers/settings.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 
 import { tabGeneralSettingsTemplate } from './templates/tab-general-settings';
@@ -89,6 +92,7 @@ import {
   AiCopilotComponent,
   AiCopilotLaunchConfig,
 } from '../../components/ai-copilot/ai-copilot.component';
+import { ReportingService } from '../../providers/reporting.service';
 
 @Component({
   selector: 'dburst-configuration',
@@ -498,6 +502,7 @@ export class ConfigurationComponent implements OnInit {
     protected fsService: FsService,
     protected executionStatsService: ExecutionStatsService,
     protected shellService: ShellService,
+    protected reportingService: ReportingService,
     protected stateStore: StateStoreService,
     protected confirmService: ConfirmService,
     protected primeNgConfirmService: ConfirmationService,
@@ -1617,6 +1622,8 @@ export class ConfigurationComponent implements OnInit {
     this.messagesService.showInfo('Saved');
   }
 
+  doRunTestScript() {}
+
   doTestSMTPConnection() {
     if (this.executionStatsService.logStats.foundDirtyLogFiles) {
       const dialogMessage =
@@ -1847,6 +1854,8 @@ export class ConfigurationComponent implements OnInit {
   highlightGroovyCode = (editor: CodeJarContainer) => {
     if (!editor) return;
     const code = this.getRawCode(editor);
+    if (!code) return;
+
     try {
       if (Prism.languages.groovy) {
         const html = Prism.highlight(code, Prism.languages.groovy, 'groovy');
@@ -2929,6 +2938,8 @@ export class ConfigurationComponent implements OnInit {
   highlightHtmlCode = (editor: CodeJarContainer) => {
     if (!editor) return;
     const code = this.getRawCode(editor);
+    if (!code) return;
+
     editor.style.whiteSpace = 'pre-wrap';
     try {
       // note: use `markup` not `html`
@@ -3264,5 +3275,118 @@ if (reportParametersProvided) {
     //     return;
     // }
     await this.settingsService.saveTemplateFileAsync(path, contentToSave);
+  }
+
+  reportParameters: ReportParameter[];
+  isModalParametersVisible = false; // Changed from showParamsModal
+  reportParamsValid = false;
+  reportParamsValue: { [key: string]: any } = {};
+
+  onReportParamsValidChange(isValid: boolean) {
+    this.reportParamsValid = isValid;
+    console.log('Report parameters form validity:', isValid);
+  }
+
+  // Add handler for the form's value
+  onReportParamsValueChange(values: { [key: string]: any }) {
+    console.log('Form parameter values:', values);
+    this.reportParamsValue = values;
+  }
+
+  async onRunQueryWithParams() {
+    try {
+      const result = await this.runQueryWithParams(this.reportParameters);
+      this.infoService.showInformation({
+        message: `SQL query executed successfully`,
+      });
+      this.isModalParametersVisible = false;
+    } catch (error) {
+      this.infoService.showInformation({
+        message: `Error executing SQL query: ${error.message}`,
+      });
+    }
+  }
+
+  async runQueryWithParams(parameters: ReportParameter[]) {
+    // Convert parameters to key-value pairs with proper types
+    const paramsObject = parameters.reduce(
+      (acc, param) => {
+        acc[param.id] = this.convertParamValue(
+          param.type,
+          this.reportParamsValue[param.id],
+        );
+        return acc;
+      },
+      {} as { [key: string]: any },
+    );
+
+    return this.reportingService.testSqlQuery(
+      this.xmlReporting.documentburster.report.datasource.sqloptions.query,
+      paramsObject,
+    );
+  }
+
+  async doTestSqlQuery() {
+    if (this.executionStatsService.logStats.foundDirtyLogFiles) {
+      const dialogMessage =
+        'Log files are not empty. You need to press the Clear Logs button first.';
+      this.infoService.showInformation({ message: dialogMessage });
+      return;
+    }
+
+    const dbConnectionCode =
+      this.xmlReporting.documentburster.report.datasource.sqloptions.conncode;
+
+    const dialogQuestion = `Test SQL query with connection ${dbConnectionCode}?`;
+
+    this.confirmService.askConfirmation({
+      message: dialogQuestion,
+      confirmAction: async () => {
+        // Parse Groovy DSL to get parameters
+        const parameters =
+          await this.reportingService.processGroovyParametersDsl(
+            this.activeParamsSpecScriptGroovy,
+          );
+
+        // Access user-provided values
+        const paramValues = this.reportParamsValue;
+
+        // Convert values to correct types based on parameter definitions
+        const typedParams = parameters.map((param) => {
+          return {
+            ...param,
+            value: this.convertParamValue(param.type, paramValues[param.id]),
+          };
+        });
+
+        console.log(`typedParams = ${JSON.stringify(typedParams)}`);
+
+        console.log('Parameters before execution:', {
+          parameters,
+          values: this.reportParamsValue,
+        });
+        // Show modal if parameters exist
+        if (parameters && parameters.length > 0) {
+          this.reportParameters = parameters;
+          this.isModalParametersVisible = true;
+        }
+      },
+    });
+  }
+
+  // Helper function to convert parameter values
+  private convertParamValue(type: string, value: any): any {
+    switch (type) {
+      case 'LocalDate':
+        return new Date(value);
+      case 'Integer':
+        return parseInt(value, 10);
+      case 'Boolean':
+        return Boolean(value);
+      case 'LocalDateTime':
+        return new Date(value);
+      default:
+        return value;
+    }
   }
 }

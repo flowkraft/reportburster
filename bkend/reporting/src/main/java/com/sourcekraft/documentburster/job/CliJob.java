@@ -29,32 +29,32 @@ import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.GlobalContext;
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionTester;
+import com.sourcekraft.documentburster.common.db.DatabaseHelper;
 import com.sourcekraft.documentburster.common.db.DatabaseSchemaFetcher;
+import com.sourcekraft.documentburster.common.db.SqlQueryResult;
 import com.sourcekraft.documentburster.common.db.schema.SchemaInfo;
 import com.sourcekraft.documentburster.common.settings.EmailConnection;
 import com.sourcekraft.documentburster.common.settings.NewFeatureRequest;
 import com.sourcekraft.documentburster.common.settings.Settings;
-import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
-import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.engine.BursterFactory;
 import com.sourcekraft.documentburster.engine.pdf.Merger;
 import com.sourcekraft.documentburster.job.model.JobDetails;
 import com.sourcekraft.documentburster.job.model.JobProgressDetails;
 import com.sourcekraft.documentburster.scripting.Scripting;
-import com.sourcekraft.documentburster.scripting.Scripts;
 import com.sourcekraft.documentburster.sender.factory.EmailMessageFactory;
 import com.sourcekraft.documentburster.sender.factory.SmsMessageFactory;
 import com.sourcekraft.documentburster.sender.model.EmailMessage;
 import com.sourcekraft.documentburster.sender.model.SmsMessage;
 import com.sourcekraft.documentburster.utils.LicenseUtils;
+import com.sourcekraft.documentburster.utils.Scripts;
 import com.sourcekraft.documentburster.utils.Utils;
 
 public class CliJob {
 
 	private static Logger log = LoggerFactory.getLogger(CliJob.class);
 
-	private Map<String, Object> parameters = new HashMap<>();
+	private Map<String, String> parameters = new HashMap<>();
 
 	private LicenseUtils licenseUtils = new LicenseUtils();
 
@@ -78,7 +78,7 @@ public class CliJob {
 		this.global = global;
 	}
 
-	public void setParameters(Map<String, Object> parameters) {
+	public void setParameters(Map<String, String> parameters) {
 		this.parameters = parameters;
 	}
 
@@ -415,9 +415,8 @@ public class CliJob {
 
 	}
 
-	public void doTestSqlQuery(String sqlQuery, String dbConnectionCode, Map<String, Object> parameters)
-			throws Exception {
-		// Use parameters when executing the query
+	public SqlQueryResult doTestSqlQuery(String sqlQuery, Map<String, String> parameters) throws Exception {
+		return new DatabaseHelper(configurationFilePath).doTestSqlQuery(sqlQuery, parameters);
 	}
 
 	public void doTestAndFetchDatabaseSchema(String connectionFilePath) throws Exception {
@@ -441,26 +440,18 @@ public class CliJob {
 
 			// --- Core Logic ---
 
-			Settings settings = new Settings(StringUtils.EMPTY);
-
-			// 1. Load connection settings directly using JAXB (similar to doCheckEmail
-			// pattern)
-			DocumentBursterConnectionDatabaseSettings dbSettings = settings
-					.loadSettingsConnectionDatabaseByPath(connectionFilePath);
-
-			ServerDatabaseSettings serverSettings = dbSettings.connection.databaseserver;
-
+			
 			// 2. Test Connection
 			DatabaseConnectionTester tester = new DatabaseConnectionTester();
 			log.info("Attempting to test database connection...");
-			tester.testConnection(serverSettings);
+			tester.testConnection(connectionFilePath);
 			log.info("Database connection test successful.");
 
 			// 3. Fetch Schema
 			DatabaseSchemaFetcher fetcher = new DatabaseSchemaFetcher();
 			SchemaInfo schemaInfo;
 			log.info("Attempting to fetch database schema...");
-			schemaInfo = fetcher.fetchSchema(serverSettings);
+			schemaInfo = fetcher.fetchSchema(connectionFilePath);
 			log.info("Successfully fetched database schema.");
 
 			// 4. Determine Output Path and Save Schema

@@ -1,6 +1,6 @@
 package com.sourcekraft.documentburster.common.settings.model;
 
-import com.sourcekraft.documentburster.common.utils.DumpToString;
+import com.sourcekraft.documentburster.utils.DumpToString;
 
 public class Capabilities extends DumpToString{
 

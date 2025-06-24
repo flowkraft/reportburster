@@ -12,7 +12,7 @@
     You should have received a copy of the GNU General Public License
     along with DocumentBurster.  If not, see <http://www.gnu.org/licenses/>
  */
-package com.sourcekraft.documentburster.common.utils;
+package com.sourcekraft.documentburster.utils;
 
 import java.io.Serializable;
 

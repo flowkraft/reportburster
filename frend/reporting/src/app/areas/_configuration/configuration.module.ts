@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 import { LicenseModule } from '../../components/license/license.module';
 
@@ -16,6 +16,7 @@ import { ConnectionDetailsModule } from '../../components/connection-details/con
 import { AiCopilotModule } from '../../components/ai-copilot/ai-copilot.module';
 
 @NgModule({
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   declarations: [ConfigurationComponent, ScaleIframeDirective],
   exports: [ConfigurationComponent],
   imports: [

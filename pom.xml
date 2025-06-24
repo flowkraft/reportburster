@@ -29,18 +29,18 @@
 		<jackrabbit.webdav.version>2.21.3</jackrabbit.webdav.version>
 		<commons.logging.version>1.2</commons.logging.version>
 		<commons.lang.version>3.11</commons.lang.version>
-		<commons.io.version>2.7</commons.io.version>
+		<commons.io.version>2.19.0</commons.io.version>
 		<opencsv.version>5.7.1</opencsv.version>
 		<univocity-parsers.version>2.9.1</univocity-parsers.version>
 		<docx4j.version>8.2.9</docx4j.version>
 		<yarg.version>2.2.14</yarg.version>
-		<xdocreport.version>2.0.4</xdocreport.version>
+		<xdocreport.version>2.1.0</xdocreport.version>
 		<documents4j.version>1.1.10</documents4j.version>
 		<jodconverter.version>4.4.5</jodconverter.version>
 		<openhtmltopdf.version>1.0.10</openhtmltopdf.version>
 		<html-exporter.version>0.5.5</html-exporter.version>
 		<fop.version>2.11</fop.version>
-		<picocli.version>4.7.6</picocli.version>
+		<picocli.version>4.7.7</picocli.version>
 		<commons.email.version>1.5</commons.email.version>
 		<commons.vfs.version>2.6.0</commons.vfs.version>
 		<hikaricp.version>6.3.0</hikaricp.version>
@@ -49,20 +49,21 @@
 		<mail.version>1.6.5</mail.version>
 		<twilio.version>6.3.0</twilio.version>
 		<failsafe.version>2.4.0</failsafe.version>
-		<ant.version>1.10.8</ant.version>
-		<zt-zip.version>1.14</zt-zip.version>
+		<ant.version>1.10.15</ant.version>
+		<zt-zip.version>1.17</zt-zip.version>
+		<zt-exec.version>1.12</zt-exec.version>
 		<pdfbox.version>2.0.20</pdfbox.version>
 		<bouncycastle.version>1.46</bouncycastle.version>
 		<icu4j.version>67.1</icu4j.version>
 		<groovy.all.version>3.0.9</groovy.all.version>
-		<jackson.version>2.19.0</jackson.version>
-		<jersey.version>2.41</jersey.version>
+		<jackson.version>2.19.1</jackson.version>
+		<jersey.version>2.47</jersey.version>
 		<freemarker.version>2.3.30</freemarker.version>
 		<emailaddress-rfc2822-validator.version>2.2.0</emailaddress-rfc2822-validator.version>
 		<simplejavamail.version>6.4.3</simplejavamail.version>
 		<pherialize.version>1.2.1</pherialize.version>
-		<jaxb.api.version>2.4.0-b180830.0359</jaxb.api.version>
-		<jaxb.runtime.version>2.4.0-b180830.0438</jaxb.runtime.version>
+		<jaxb.api.version>4.0.1</jaxb.api.version>
+		<jaxb.runtime.version>4.0.1</jaxb.runtime.version>
 		<xml-apis.version>1.4.01</xml-apis.version>
 		
 		<!--DATABASE START -->
@@ -226,18 +227,20 @@
 
 			<!-- reporting engines -->
 
-			<!-- reporting engines -->
+			<!--
 			<dependency>
 				<groupId>com.haulmont.yarg</groupId>
 				<artifactId>yarg</artifactId>
 				<type>pom</type>
 				<exclusions>
-					<exclusion>  <!-- declare the exclusion here -->
+					<exclusion> 
 						<groupId>sample.ProjectB</groupId>
 						<artifactId>Project-B</artifactId>
 					</exclusion>
 				</exclusions>
 			</dependency>
+			-->
+
 			<dependency>
 				<groupId>fr.opensagres.xdocreport</groupId>
 				<artifactId>fr.opensagres.xdocreport.document</artifactId>
@@ -473,8 +476,8 @@
 				<version>${slf4j.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>javax.xml.bind</groupId>
-				<artifactId>jaxb-api</artifactId>
+				<groupId>jakarta.xml.bind</groupId>
+				<artifactId>jakarta.xml.bind-api</artifactId>
 				<version>${jaxb.api.version}</version>
 			</dependency>
 			<dependency>
@@ -609,6 +612,11 @@
 				<groupId>org.zeroturnaround</groupId>
 				<artifactId>zt-zip</artifactId>
 				<version>${zt-zip.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.zeroturnaround</groupId>
+				<artifactId>zt-exec</artifactId>
+				<version>${zt-exec.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.ant</groupId>

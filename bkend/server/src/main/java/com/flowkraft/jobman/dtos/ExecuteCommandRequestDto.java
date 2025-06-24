@@ -1,6 +1,6 @@
 package com.flowkraft.jobman.dtos;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.util.Objects;
 
 /**

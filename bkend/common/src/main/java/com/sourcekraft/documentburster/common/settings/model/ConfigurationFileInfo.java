@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.sourcekraft.documentburster.common.reportparameters.ReportParameter;
-import com.sourcekraft.documentburster.common.utils.DumpToString;
+import com.sourcekraft.documentburster.utils.DumpToString;
 
 public class ConfigurationFileInfo extends DumpToString {
 

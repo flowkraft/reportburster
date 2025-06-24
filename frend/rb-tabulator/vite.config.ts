@@ -58,19 +58,16 @@ export default defineConfig(({ command }) => {
         lib: {
           // Use the web component registration file as the library entry point
           entry: resolve(__dirname, "src/wc/web-components.ts"),
-          name: "MyWebComponents",
-          fileName: (format) => `my-web-components.${format}.js`,
+          name: "RbTabulator",
+          fileName: (format) => `rb-tabulator.${format}.js`,
           // Build both ES and UMD formats
           formats: ["es", "umd"],
         },
         rollupOptions: {
-          // Externalize Svelte runtime to remove it from the bundle
-          external: ["svelte", "svelte/internal"],
+          // Remove 'svelte' from the externals so it's bundled in
+          external: [],
           output: {
-            globals: {
-              svelte: "Svelte",
-              "svelte/internal": "SvelteInternal",
-            },
+            // no need to declare globals if nothing is external
           },
         },
         // Disable sourcemaps for production

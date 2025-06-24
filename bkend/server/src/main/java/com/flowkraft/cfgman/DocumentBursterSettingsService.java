@@ -14,9 +14,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -226,38 +226,8 @@ public class DocumentBursterSettingsService {
 					Path paramsSpecPath = itemDir.resolve(paramsSpecFileName);
 
 					if (Files.exists(paramsSpecPath)) {
-						// 1) parse the DSL
-						ReportParametersHelper helper = new ReportParametersHelper();
-						List<Map<String, Object>> paramsMetadataList = helper
-								.processGroovyParametersDsl(paramsSpecPath);
-
-						// 2) turn each Map into your ReportParameter
-						if (paramsMetadataList != null) {
-							for (Map<String, Object> paramMap : paramsMetadataList) {
-								ReportParameter rp = new ReportParameter();
-
-								// top-level properties
-								rp.id = (String) paramMap.get("id");
-								rp.label = (String) paramMap.get("label");
-								Object t = paramMap.get("type");
-								rp.type = t instanceof Class ? ((Class<?>) t).getSimpleName() : String.valueOf(t);
-								rp.description = (String) paramMap.get("description");
-								Object defVal = paramMap.get("defaultValue");
-								rp.defaultValue = defVal != null ? String.valueOf(defVal) : null;
-
-								Map<String, Object> constraints = (Map<String, Object>) paramMap
-										.getOrDefault("constraints", Collections.emptyMap());
-								Map<String, Object> uiHints = (Map<String, Object>) paramMap.getOrDefault("ui",
-										Collections.emptyMap());
-
-								// shove the maps straight onto the model
-								rp.constraints.putAll(constraints);
-								rp.uiHints.putAll(uiHints);
-
-								// finally add to your config
-								configFile.reportParameters.add(rp);
-							}
-						}
+						configFile.reportParameters = ReportParametersHelper
+								.parseGroovyParametersDslCode(Files.readString(paramsSpecPath));
 					}
 
 				}

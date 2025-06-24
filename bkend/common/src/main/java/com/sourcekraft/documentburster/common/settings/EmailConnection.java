@@ -17,14 +17,14 @@ package com.sourcekraft.documentburster.common.settings;
 import java.io.File;
 import java.io.FilenameFilter;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Unmarshaller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.common.settings.model.connection.ConnectionEmailDetails;
-import com.sourcekraft.documentburster.common.utils.Utils;
+import com.sourcekraft.documentburster.utils.Utils;
 
 public class EmailConnection {
 

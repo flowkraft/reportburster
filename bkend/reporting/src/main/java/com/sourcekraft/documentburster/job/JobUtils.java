@@ -16,9 +16,9 @@ package com.sourcekraft.documentburster.job;
 
 import java.io.File;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
 
 import com.sourcekraft.documentburster.job.model.JobDetails;
 import com.sourcekraft.documentburster.job.model.JobProgressDetails;

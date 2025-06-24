@@ -81,17 +81,21 @@
 			<groupId>org.docx4j</groupId>
 			<artifactId>docx4j-core</artifactId>
 		</dependency>
+		
+		<!--
 		<dependency>
 			<groupId>com.haulmont.yarg</groupId>
 			<artifactId>yarg</artifactId>
 			<version>${yarg.version}</version>
 			<exclusions>
-				<exclusion>  <!-- declare the exclusion here -->
+				<exclusion> 
 					<groupId>org.codehaus.groovy</groupId>
 					<artifactId>groovy-all</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
+		-->
+
 		<dependency>
 			<groupId>fr.opensagres.xdocreport</groupId>
 			<artifactId>fr.opensagres.xdocreport.document</artifactId>
@@ -362,8 +366,8 @@
 			<artifactId>failsafe</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>javax.xml.bind</groupId>
-			<artifactId>jaxb-api</artifactId>
+			<groupId>jakarta.xml.bind</groupId>
+			<artifactId>jakarta.xml.bind-api</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish.jaxb</groupId>

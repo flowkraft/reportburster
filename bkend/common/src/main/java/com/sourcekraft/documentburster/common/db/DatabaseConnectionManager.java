@@ -1,5 +1,7 @@
-package com.sourcekraft.documentburster.utils;
+package com.sourcekraft.documentburster.common.db;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -7,13 +9,14 @@ import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils; // Keep StringUtils
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ConnectionDatabaseSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings; // Import needed
 import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
-import com.sourcekraft.documentburster.context.BurstingContext;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -27,7 +30,8 @@ public class DatabaseConnectionManager {
 
 	private static final Logger log = LoggerFactory.getLogger(DatabaseConnectionManager.class);
 
-	public final BurstingContext ctx;
+	private final Settings settings;
+
 	// Cache for DataSource pools (Connection Code -> DataSource)
 	private final Map<String, HikariDataSource> dataSourcePools = new ConcurrentHashMap<>();
 	// Cache for Jdbi instances (Connection Code -> Jdbi)
@@ -35,9 +39,44 @@ public class DatabaseConnectionManager {
 	// Cache for loaded connection details (Connection Code -> Settings)
 	private final Map<String, ConnectionDatabaseSettings> loadedConnectionDetails = new ConcurrentHashMap<>();
 
-	public DatabaseConnectionManager(BurstingContext context) {
-		this.ctx = context;
+	public DatabaseConnectionManager(Settings settings) {
+		this.settings = settings;
 		log.debug("DatabaseConnectionManager initialized.");
+	}
+
+	public Settings getSettings() {
+		return settings;
+	}
+
+	// Add driver class mapping
+	private String getDriverClass(String dbType) {
+		switch (dbType.toLowerCase()) {
+		case "sqlite":
+			return "org.sqlite.JDBC";
+		case "oracle":
+			return "oracle.jdbc.driver.OracleDriver";
+		case "sqlserver":
+			return "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+		case "postgresql":
+			return "org.postgresql.Driver";
+		case "mysql":
+			return "com.mysql.cj.jdbc.Driver";
+		case "mariadb":
+			return "org.mariadb.jdbc.Driver";
+		case "ibmdb2":
+			return "com.ibm.db2.jcc.DB2Driver";
+		default:
+			log.warn("No JDBC driver class configured for database type: {}", dbType);
+			return null;
+		}
+	}
+
+	public Connection getDirectConnection() throws Exception {
+		ConnectionDatabaseSettings settings = getConnectionSettings(this.settings.getPrimaryDatabaseConnectionCode());
+		String driverClass = getDriverClass(settings.databaseserver.type);
+		Class.forName(driverClass);
+		return DriverManager.getConnection(settings.databaseserver.url, settings.databaseserver.userid,
+				settings.databaseserver.userpassword);
 	}
 
 	/**
@@ -50,61 +89,16 @@ public class DatabaseConnectionManager {
 	 * @throws Exception If settings cannot be retrieved.
 	 */
 	private synchronized ConnectionDatabaseSettings getConnectionSettings(String connectionCode) throws Exception {
-		log.trace("Entering getConnectionSettings for code: {}", connectionCode);
-		// 0. Check cache first
-		if (loadedConnectionDetails.containsKey(connectionCode)) {
-			log.debug("Cache hit for connection settings: {}", connectionCode);
-			log.trace("Exiting getConnectionSettings (cached) for code: {}", connectionCode);
-			return loadedConnectionDetails.get(connectionCode);
-		}
-		log.debug("Cache miss for connection settings: {}. Attempting retrieval.", connectionCode);
+		// Remove ctx.settings references and use this.settings instead
+		String primaryCode = this.settings.getPrimaryDatabaseConnectionCode();
 
-		// 1. Get the primary connection code defined in reporting settings
-		String primaryCode = ctx.settings.getPrimaryDatabaseConnectionCode(); // Assumes this method exists and works
-		log.trace("Primary connection code from settings: {}", primaryCode);
-
-		// 2. Check if the requested code is the primary one AND if it was pre-loaded by
-		// Settings.loadSettings()
 		if (StringUtils.isNotEmpty(primaryCode) && primaryCode.equals(connectionCode)
-				&& ctx.settings.connectionDatabaseSettings != null) {
-			log.debug("Using pre-loaded primary connection settings for code: {}", connectionCode);
-			ConnectionDatabaseSettings settings = ctx.settings.connectionDatabaseSettings.connection;
-			if (settings == null) {
-				log.error(
-						"Pre-loaded primary connection settings object (connectionDatabaseSettings.connection) is null for code: {}",
-						connectionCode);
-				throw new Exception(
-						"Pre-loaded primary connection settings object is null for code: " + connectionCode);
-			}
-			loadedConnectionDetails.put(connectionCode, settings); // Cache it
-			log.trace("Exiting getConnectionSettings (pre-loaded) for code: {}", connectionCode);
-			return settings;
+				&& this.settings.connectionDatabaseSettings != null) {
+			return this.settings.connectionDatabaseSettings.connection;
 		} else {
-			// 3. Fallback: Load from file for secondary connections OR if primary wasn't
-			// pre-loaded
-			log.debug("Falling back to file loading for connection code: {}", connectionCode);
-			try {
-				// Assuming Settings has a static method to load just connection details
-				// and ctx provides the base directory for connection files.
-				log.trace("Calling ctx.settings.loadSettingsConnectionDatabase for code: {}", connectionCode);
-				DocumentBursterConnectionDatabaseSettings dbSettings = ctx.settings
-						.loadSettingsConnectionDatabase(connectionCode);
-				if (dbSettings == null || dbSettings.connection == null) {
-					log.error(
-							"Failed to load connection details from file for code: {}. loadSettingsConnectionDatabase returned null or connection object is null.",
-							connectionCode);
-					throw new Exception("Failed to load connection details from file for code: " + connectionCode);
-				}
-				log.info("Successfully loaded connection details from file for code: {}", connectionCode);
-				ConnectionDatabaseSettings settings = dbSettings.connection;
-				loadedConnectionDetails.put(connectionCode, settings); // Cache it
-				log.trace("Exiting getConnectionSettings (file loaded) for code: {}", connectionCode);
-				return settings;
-			} catch (Exception e) {
-				log.error("Error loading connection details file for code '{}': {}", connectionCode, e.getMessage(), e); // Log
-																															// exception
-				throw new Exception("Could not retrieve connection settings for code: " + connectionCode, e);
-			}
+			DocumentBursterConnectionDatabaseSettings dbSettings = this.settings
+					.loadSettingsConnectionDatabase(connectionCode);
+			return dbSettings.connection;
 		}
 	}
 
@@ -139,16 +133,31 @@ public class DatabaseConnectionManager {
 			throw new Exception("Failed to retrieve valid database server settings for code: " + connectionCode);
 		}
 
+		System.out.println("connSettings: " + connSettings.toString());
+		
 		// Create DataSource using HikariCP
 		log.trace("Creating HikariConfig for code: {}", connectionCode);
 		HikariConfig config = new HikariConfig();
+
+		// In DatabaseConnectionManager.java
+		if (StringUtils.isBlank(connSettings.databaseserver.driver)) {
+			// Try to determine driver from database type
+			connSettings.databaseserver.driver = getDriverClass(connSettings.databaseserver.type);
+			if (StringUtils.isBlank(connSettings.databaseserver.driver)) {
+				throw new Exception("Database driver not specified and could not be determined for type: "
+						+ connSettings.databaseserver.type);
+			}
+		}
+
+		System.out.println("connSettings.databaseserver.driver: " + connSettings.databaseserver.driver);
+
 		config.setDriverClassName(connSettings.databaseserver.driver);
-		config.setJdbcUrl(connSettings.databaseserver.url);
+		config.setJdbcUrl(connSettings.databaseserver.connectionstring);
 		config.setUsername(connSettings.databaseserver.userid);
 		// Log password presence/absence, not the value itself
 		config.setPassword(connSettings.databaseserver.userpassword);
 		log.trace("HikariConfig: Driver={}, URL={}, User={}, Password provided={}", connSettings.databaseserver.driver,
-				connSettings.databaseserver.url, connSettings.databaseserver.userid,
+				connSettings.databaseserver.connectionstring, connSettings.databaseserver.userid,
 				StringUtils.isNotEmpty(connSettings.databaseserver.userpassword));
 
 		// Add common pool properties (can be customized further)
@@ -175,6 +184,12 @@ public class DatabaseConnectionManager {
 		log.info("Created and cached new DataSource pool for code: {}", connectionCode);
 		log.trace("Exiting getDataSource (created) for code: {}", connectionCode);
 		return dataSource;
+	}
+
+	// In DatabaseConnectionManager
+	public Query createQuery(String connectionCode, String sql) throws Exception {
+		Jdbi jdbi = getJdbi(connectionCode);
+		return jdbi.open().createQuery(sql);
 	}
 
 	/**
