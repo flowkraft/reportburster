@@ -848,6 +848,50 @@ export class SamplesService {
         'templates/gallery/barbosa89-invoice-template/invoice.html',
       ],
     },
+    /*{
+      id: 'HTML-MAILCHIMP-EMAIL-MODULAR-TEMPLATE-PATTERNS',
+      name: 'Modular blocks of common design patterns',
+      tags: ['mailchimp-email-blueprints', 'modular-blocks-patterns'],
+      sourceUrl: 'https://github.com/mailchimp/email-blueprints',
+      license: 'Creative Commons Attribution-ShareAlike 3.0 Unported',
+      gitHubStars: '7000',
+      infoAbout:
+        'Contains a single template built out of modular blocks of common design patterns.',
+      templateFilePaths: [
+        'templates/mailchimp-email-blueprints/modular-template-patterns/modular-template-patterns.html',
+      ],
+    },*/
+    {
+      id: 'HTML-MAILCHIMP-EMAIL-2COLUMN-QUERY-RESPONSIVE',
+      name: 'Responsive Two-Column Email Template',
+      tags: ['mailchimp-email-blueprints', 'responsive', 'two-column'],
+      sourceUrl: 'https://github.com/mailchimp/email-blueprints',
+      license: 'Creative Commons Attribution-ShareAlike 3.0 Unported',
+      gitHubStars: '7000',
+      infoAbout:
+        'A classic, fully responsive two-column email template from Mailchimp, featuring modular content blocks, repeatable sections, and mobile-friendly styles. Ideal for newsletters, announcements, and marketing campaigns.',
+      templateFilePaths: [
+        'templates/mailchimp-email-blueprints/responsive-templates/base_boxed_2column_query.html',
+      ],
+    },
+    {
+      id: 'HTML-MAILCHIMP-EMAIL-2COLUMN-LEFTSIDEBAR',
+      name: 'Fixed-Width Two-Column Email with Left Sidebar',
+      tags: [
+        'mailchimp-email-blueprints',
+        'fixed-width',
+        'two-column',
+        'left-sidebar',
+      ],
+      sourceUrl: 'https://github.com/mailchimp/email-blueprints',
+      license: 'Creative Commons Attribution-ShareAlike 3.0 Unported',
+      gitHubStars: '7000',
+      infoAbout:
+        'A fixed-width, two-column email template from Mailchimp featuring a prominent left sidebar for navigation or social links, modular repeatable content blocks, and a clean, professional layout. Ideal for newsletters, announcements, and marketing campaigns.',
+      templateFilePaths: [
+        'templates/mailchimp-email-blueprints/templates/2col-1-2-leftsidebar.html',
+      ],
+    },
   ];
 
   async getHtmlDocTemplates(): Promise<HtmlDocTemplateInfo[]> {

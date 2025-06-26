@@ -60,6 +60,8 @@ import { tabLogsTemplate } from './templates/tab-logs';
 import { tabLicenseTemplate } from './templates/tab-license';
 
 import { modalAttachmentTemplate } from './templates/modal-attachment';
+import { modalGalleryTemplate } from './templates/modal-gallery';
+
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
 import Utilities from '../../helpers/utilities';
 import { ConfirmService } from '../../components/dialog-confirm/confirm.service';
@@ -122,6 +124,7 @@ import {
     ${tabAdvancedTemplate} ${tabAdvancedErrorHandlingTemplate}
     ${tabEmailAddressValidationTemplate} ${tabEmailTuningTemplate}
     ${tabLogsTemplate} ${tabLicenseTemplate} ${modalAttachmentTemplate}
+    ${modalGalleryTemplate}
   `,
 })
 export class ConfigurationComponent implements OnInit {
@@ -1297,31 +1300,6 @@ export class ConfigurationComponent implements OnInit {
     }
   }
 
-  // Add this method to ConfigurationComponent
-  openEmailTemplateGallery() {
-    // Temporarily set the tab to reporting template output tab and call the existing method
-    // Store current output type
-    const currentOutputType =
-      this.xmlReporting?.documentburster?.report?.template?.outputtype;
-
-    // Set to HTML output type temporarily
-    if (this.xmlReporting?.documentburster?.report?.template) {
-      this.xmlReporting.documentburster.report.template.outputtype =
-        'output.html';
-    }
-
-    // Call the existing method
-    this.openTemplateGallery();
-
-    // Restore the original output type after gallery opens
-    setTimeout(() => {
-      if (this.xmlReporting?.documentburster?.report?.template) {
-        this.xmlReporting.documentburster.report.template.outputtype =
-          currentOutputType;
-      }
-    }, 100);
-  }
-
   // Toggle preview visibility
   toggleEmailPreview() {
     this.emailPreviewVisible = !this.emailPreviewVisible;
@@ -2000,7 +1978,7 @@ export class ConfigurationComponent implements OnInit {
     );
   }
 
-  async loadGalleryTemplates() {
+  async loadGalleryTemplates(filterTag?: string) {
     this.galleryTemplates = [];
 
     // Reset display properties
@@ -2028,28 +2006,32 @@ export class ConfigurationComponent implements OnInit {
       //  `Evaluating template: ${template.name}, tags:`,
       //  template.tags,
       //);
-
-      // For Excel mode, only keep Excel templates
-      if (currentOutputType?.includes('xlsx')) {
-        if (!template.tags?.includes('excel')) {
-          //console.log(
-          //  `Skipping non-Excel template ${template.name} because we're in Excel mode`,
-          //);
-          return false;
+      if (filterTag) {
+        // If a specific tag is provided, use it for filtering
+        return template.tags && template.tags.includes(filterTag);
+      } else {
+        // For Excel mode, only keep Excel templates
+        if (currentOutputType?.includes('xlsx')) {
+          if (!template.tags?.includes('excel')) {
+            //console.log(
+            //  `Skipping non-Excel template ${template.name} because we're in Excel mode`,
+            //);
+            return false;
+          }
+          //console.log(`Keeping Excel template: ${template.name}`);
+          return true;
         }
-        //console.log(`Keeping Excel template: ${template.name}`);
-        return true;
-      }
-      // For non-Excel modes, filter out Excel templates
-      else {
-        if (template.tags?.includes('excel')) {
-          //console.log(
-          //  `Skipping Excel template ${template.name} because we're not in Excel mode`,
-          //);
-          return false;
+        // For non-Excel modes, filter out Excel templates
+        else {
+          if (template.tags?.includes('excel')) {
+            //console.log(
+            //  `Skipping Excel template ${template.name} because we're not in Excel mode`,
+            //);
+            return false;
+          }
+          //console.log(`Keeping non-Excel template: ${template.name}`);
+          return true;
         }
-        //console.log(`Keeping non-Excel template: ${template.name}`);
-        return true;
       }
     });
 
@@ -2107,7 +2089,7 @@ export class ConfigurationComponent implements OnInit {
     }
   }
 
-  async openTemplateGallery() {
+  async openTemplateGallery(filterTag?: string) {
     // Reset template index
     this.selectedGalleryTemplateIndex = 0;
 
@@ -2115,7 +2097,9 @@ export class ConfigurationComponent implements OnInit {
     this.templateGalleryState = 'examples-gallery';
 
     // Set initial dialog header
-    this.galleryDialogTitle = 'Examples (Gallery)';
+    this.galleryDialogTitle = filterTag
+      ? 'Email Templates Gallery'
+      : 'Examples (Gallery)';
 
     // Clear the HTML cache to ensure fresh rendering
     this.templateSanitizedHtmlCache.clear();
@@ -2130,7 +2114,7 @@ export class ConfigurationComponent implements OnInit {
 
     // Reset examples and reload
     this.galleryTemplates = [];
-    await this.loadGalleryTemplates();
+    await this.loadGalleryTemplates(filterTag);
 
     if (this.templateCarousel) {
       this.templateCarousel.page = 0;
@@ -2682,6 +2666,17 @@ export class ConfigurationComponent implements OnInit {
         initialActiveTabKey: 'PROMPTS',
         initialSelectedCategory: 'Template Creation/Modification',
         initialExpandedPromptId: 'BUILD_TEMPLATE_FROM_SCRATCH',
+      };
+
+      if (this.aiCopilotInstance) {
+        this.aiCopilotInstance.launchWithConfiguration(launchConfig);
+      }
+    }
+
+    if (outputTypeCode === 'email.message') {
+      const launchConfig: AiCopilotLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'Email Templates',
       };
 
       if (this.aiCopilotInstance) {
