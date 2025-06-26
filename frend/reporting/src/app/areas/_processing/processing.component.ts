@@ -37,6 +37,7 @@ import { InfoService } from '../../components/dialog-info/info.service';
 import { SampleInfo, SamplesService } from '../../providers/samples.service';
 import {
   CfgTmplFileInfo,
+  ReportParameter,
   SettingsService,
 } from '../../providers/settings.service';
 import { ShellService } from '../../providers/shell.service';
@@ -45,6 +46,10 @@ import { FsService } from '../../providers/fs.service';
 import { ProcessingService } from '../../providers/processing.service';
 import { StateStoreService } from '../../providers/state-store.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import {
+  ReportingService,
+  SqlQueryResult,
+} from '../../providers/reporting.service';
 
 @Component({
   selector: 'dburst-processing',
@@ -216,6 +221,7 @@ export class ProcessingComponent implements OnInit {
     protected changeDetectorRef: ChangeDetectorRef,
     protected storeService: StateStoreService,
     protected shellService: ShellService,
+    protected reportingService: ReportingService,
     protected executionStatsService: ExecutionStatsService,
     protected fsService: FsService,
     protected samplesService: SamplesService,
@@ -223,6 +229,9 @@ export class ProcessingComponent implements OnInit {
   ) {}
 
   ngOnDestroy() {
+    this.sqlQueryResult = null;
+    this.isReportDataLoading = false;
+
     if (this.subscriptionCheckIfTestEmailServerIsStarted) {
       this.subscriptionCheckIfTestEmailServerIsStarted.unsubscribe();
     }
@@ -638,65 +647,115 @@ export class ProcessingComponent implements OnInit {
       //  `doGenerateReports procReportingMailMergeInfo = ${JSON.stringify(this.processingService.procReportingMailMergeInfo)}`,
       //);
 
+      const selectedReport =
+        this.processingService.procReportingMailMergeInfo
+          .selectedMailMergeClassicReport;
+      const doesSelectedReportRequiresAnInputFile =
+        this.doesSelectedReportRequiresAnInputFile();
+
+      const doesSelectedReportRequiresParameters =
+        this.doesSelectedReportRequiresParameters();
+
       if (this.processingService.procReportingMailMergeInfo.isSample) {
-        this.processingService.procReportingMailMergeInfo.inputFileName =
-          Utilities.basename(
-            this.processingService.procReportingMailMergeInfo
-              .prefilledInputFilePath,
-          );
+        if (doesSelectedReportRequiresAnInputFile)
+          this.processingService.procReportingMailMergeInfo.inputFileName =
+            Utilities.basename(
+              this.processingService.procReportingMailMergeInfo
+                .prefilledInputFilePath,
+            );
       }
-      const dialogQuestion = `Burst file ${this.processingService.procReportingMailMergeInfo.inputFileName}?`;
+      let dialogQuestion = `Burst file ${this.processingService.procReportingMailMergeInfo.inputFileName}?`;
+
+      if (!this.doesSelectedReportRequiresAnInputFile())
+        dialogQuestion = `Burst report ${selectedReport.templateName}?`;
+
       this.confirmService.askConfirmation({
         message: dialogQuestion,
         confirmAction: async () => {
-          let inputFilePath =
-            this.processingService.procReportingMailMergeInfo
-              .prefilledInputFilePath;
           let configFilePath =
             this.processingService.procReportingMailMergeInfo
               .prefilledConfigurationFilePath;
-          if (!this.processingService.procReportingMailMergeInfo.isSample) {
-            const formData = new FormData();
-            formData.append(
-              'file',
-              this.processingService.procReportingMailMergeInfo.inputFile,
-              this.processingService.procReportingMailMergeInfo.inputFileName,
-            );
-            const customHeaders = new Headers({
-              Accept: 'application/json',
-            });
-            const uploadedFilesInfo = await this.apiService.post(
-              '/jobman/upload/process-single',
-              formData,
-              customHeaders,
-            );
+          let inputFilePath = '';
 
-            if (!uploadedFilesInfo || !uploadedFilesInfo.length) {
-              return;
+          if (doesSelectedReportRequiresAnInputFile) {
+            inputFilePath =
+              this.processingService.procReportingMailMergeInfo
+                .prefilledInputFilePath;
+            if (!this.processingService.procReportingMailMergeInfo.isSample) {
+              const formData = new FormData();
+              formData.append(
+                'file',
+                this.processingService.procReportingMailMergeInfo.inputFile,
+                this.processingService.procReportingMailMergeInfo.inputFileName,
+              );
+              const customHeaders = new Headers({
+                Accept: 'application/json',
+              });
+              const uploadedFilesInfo = await this.apiService.post(
+                '/jobman/upload/process-single',
+                formData,
+                customHeaders,
+              );
+
+              if (!uploadedFilesInfo || !uploadedFilesInfo.length) {
+                return;
+              }
+
+              inputFilePath = uploadedFilesInfo[0].filePath;
             }
 
-            inputFilePath = uploadedFilesInfo[0].filePath;
+            if (!configFilePath)
+              this.shellService.runBatFile(
+                ['generate', `"${inputFilePath}"`],
+                this.processingService.procReportingMailMergeInfo.inputFileName,
+              );
+            else {
+              if (!configFilePath.includes('PORTABLE_EXECUTABLE_DIR_PATH'))
+                configFilePath = Utilities.slash(configFilePath).replace(
+                  '/config/',
+                  'PORTABLE_EXECUTABLE_DIR_PATH/config/',
+                );
+            }
+          }
+          let parametersString = '';
+          if (doesSelectedReportRequiresParameters) {
+            // Build parameters string if parameters exist
+            if (
+              this.reportParamsValues &&
+              Object.keys(this.reportParamsValues).length > 0
+            ) {
+              parametersString = Object.entries(this.reportParamsValues)
+                .map(([key, value]) => `-p ${key}=${value}`)
+                .join(' ');
+            }
           }
 
-          //console.log(`doGenerateReports configFilePath = ${configFilePath}`);
+          let command = `generate`;
 
-          if (!configFilePath)
-            this.shellService.runBatFile(
-              ['generate', `"${inputFilePath}"`],
-              this.processingService.procReportingMailMergeInfo.inputFileName,
-            );
-          else {
-            if (!configFilePath.includes('PORTABLE_EXECUTABLE_DIR_PATH'))
+          if (configFilePath) {
+            if (!configFilePath.includes('PORTABLE_EXECUTABLE_DIR_PATH')) {
               configFilePath = Utilities.slash(configFilePath).replace(
                 '/config/',
                 'PORTABLE_EXECUTABLE_DIR_PATH/config/',
               );
-
-            this.shellService.runBatFile(
-              ['generate', `"${inputFilePath}"`, '-c', `"${configFilePath}"`],
-              this.processingService.procReportingMailMergeInfo.inputFileName,
-            );
+            }
+            command += ` -c "${configFilePath}"`;
           }
+
+          if (inputFilePath) {
+            command += ` ${inputFilePath}`;
+          }
+
+          if (parametersString) {
+            command += ` ${parametersString}`;
+          }
+
+          this.shellService.runBatFile(
+            command.split(' '),
+            this.processingService.procReportingMailMergeInfo.inputFileName,
+          );
+
+          //console.log(`doGenerateReports configFilePath = ${configFilePath}`);
 
           this.resetProcInfo();
         },
@@ -1225,10 +1284,58 @@ export class ProcessingComponent implements OnInit {
   // end stop / cancel / resume
 
   //start Mail Merge
+  reportParamsValid = false;
+  reportParamsValues: { [key: string]: any } = {};
+
+  sqlQueryResult: SqlQueryResult | null = null;
+  isReportDataLoading = false;
+
+  onReportParamsValidChange(isValid: boolean) {
+    this.reportParamsValid = isValid;
+    this.changeDetectorRef.detectChanges();
+    console.log('Report parameters form validity:', isValid);
+  }
+
+  // Add handler for the form's value
+  onReportParamsValuesChange(values: { [key: string]: any }) {
+    console.log('Form parameter values:', values);
+    this.reportParamsValues = values;
+  }
+
   groupByMailMergeHelper(report: any) {
     if (report.type == 'config-reports') return 'Reports';
     else return 'Samples';
   }
+
+  onTabReady() {
+    console.log('📊 Tabulator ready');
+  }
+
+  onTabError(msg: string) {
+    console.error('❌ Tabulator error:', msg);
+  }
+
+  getTabulatorColumns(
+    columnNames: string[],
+  ): { title: string; field: string }[] {
+    if (!columnNames || !Array.isArray(columnNames)) {
+      return [];
+    }
+
+    return columnNames
+      .map((name) => {
+        if (typeof name !== 'string') {
+          console.warn('Invalid column name:', name);
+          return null;
+        }
+        return {
+          title: name.replace(/([A-Z])/g, ' $1').trim(),
+          field: name,
+        };
+      })
+      .filter(Boolean); // Remove any null values
+  }
+
   //end Mail Merge
 
   //start samples
@@ -1436,20 +1543,6 @@ export class ProcessingComponent implements OnInit {
 
   //end samples
 
-  reportParamsValid = false;
-  reportParamsValue: { [key: string]: any } = {};
-
-  onReportParamsValidChange(isValid: boolean) {
-    this.reportParamsValid = isValid;
-    console.log('Report parameters form validity:', isValid);
-  }
-
-  // Add handler for the form's value
-  onReportParamsValueChange(values: { [key: string]: any }) {
-    this.reportParamsValue = values;
-    console.log('Report parameters form values:', values);
-  }
-
   onReportSelectionChange($event: any) {
     console.log(`onReportSelectionChange: ${JSON.stringify($event)}`);
     // Update the selected report in the processing service
@@ -1536,4 +1629,137 @@ export class ProcessingComponent implements OnInit {
     }
   }
   //end portal
+
+  doesSelectedReportRequiresParameters(): boolean {
+    const selectedReport =
+      this.processingService.procReportingMailMergeInfo
+        .selectedMailMergeClassicReport;
+
+    if (!selectedReport) return true;
+
+    return (
+      selectedReport.reportParameters &&
+      selectedReport.reportParameters.length > 0
+    );
+  }
+
+  doesSelectedReportRequiresAnInputFile(): boolean {
+    const selectedReport =
+      this.processingService.procReportingMailMergeInfo
+        .selectedMailMergeClassicReport;
+
+    if (!selectedReport) return true;
+
+    if (selectedReport.dsInputType == 'ds.sqlquery') return false;
+
+    return true;
+  }
+
+  shouldBeDisabledGenerateReportsButton(): boolean {
+    const selectedReport =
+      this.processingService.procReportingMailMergeInfo
+        .selectedMailMergeClassicReport;
+
+    if (!selectedReport) return true;
+
+    const doesSelectedReportRequiresAnInputFile =
+      this.doesSelectedReportRequiresAnInputFile();
+    let shouldBeDisabled = true;
+
+    if (doesSelectedReportRequiresAnInputFile) {
+      shouldBeDisabled =
+        !this.processingService.procReportingMailMergeInfo.inputFileName &&
+        !this.processingService.procReportingMailMergeInfo
+          .prefilledInputFilePath;
+    } else {
+      if (
+        selectedReport.reportParameters &&
+        selectedReport.reportParameters.length > 0
+      ) {
+        shouldBeDisabled = !this.reportParamsValid;
+      }
+    }
+
+    shouldBeDisabled =
+      shouldBeDisabled ||
+      this.executionStatsService.jobStats.numberOfActiveJobs > 0;
+
+    return shouldBeDisabled;
+  }
+
+  shouldBeDisabledViewDataButton(): boolean {
+    return !this.reportParamsValid;
+  }
+
+  private convertParamValue(type: string, value: any): any {
+    switch (type) {
+      case 'LocalDate':
+      case 'LocalDateTime':
+        return value; // Return the raw ISO string
+      case 'Integer':
+        return parseInt(value, 10);
+      case 'Boolean':
+        return Boolean(value);
+      default:
+        return value;
+    }
+  }
+
+  async doViewData() {
+    if (this.executionStatsService.logStats.foundDirtyLogFiles) {
+      const dialogMessage =
+        'Log files are not empty. You need to press the Clear Logs button first.';
+      this.infoService.showInformation({ message: dialogMessage });
+      return;
+    }
+
+    const dialogQuestion = `Execute the SQL query associated with this report?`;
+
+    this.confirmService.askConfirmation({
+      message: dialogQuestion,
+      confirmAction: async () => {
+        try {
+          console.log('Confirmation received, starting API call');
+
+          this.isReportDataLoading = true;
+
+          // Convert parameters to key-value pairs with proper types
+          const paramsObject =
+            this.processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.reportParameters.reduce(
+              (acc, param) => {
+                const value = this.convertParamValue(
+                  param.type,
+                  this.reportParamsValues[param.id],
+                );
+                console.log(`Parameter ${param.id}: ${value}`); // Debug log
+                acc[param.id] = value;
+                return acc;
+              },
+              {} as { [key: string]: any },
+            );
+          console.log('Calling API with params:', paramsObject); // Debug log
+
+          // Call the API
+          this.sqlQueryResult = await this.reportingService.testFetchData(
+            paramsObject,
+            this.processingService.procReportingMailMergeInfo
+              .selectedMailMergeClassicReport.filePath,
+          );
+
+          console.log(`API response: ${JSON.stringify(this.sqlQueryResult)}`);
+          this.infoService.showInformation({
+            message: `SQL query executed successfully`,
+          });
+        } catch (error) {
+          console.error('API call failed:', error); // Debug log
+          this.infoService.showInformation({
+            message: `Error executing SQL query: ${error.message}`,
+          });
+        } finally {
+          console.log('API call completed'); // Debug log
+          this.isReportDataLoading = false;
+        }
+      },
+    });
+  }
 }

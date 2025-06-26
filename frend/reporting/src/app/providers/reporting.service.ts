@@ -2,6 +2,14 @@ import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { ReportParameter, SettingsService } from './settings.service';
 
+export interface SqlQueryResult {
+  reportData: Array<Record<string, any>>;
+  reportColumnNames: string[];
+  executionTimeMillis: number;
+  isPreview: boolean;
+  totalRows: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -11,16 +19,20 @@ export class ReportingService {
     protected settingsService: SettingsService,
   ) {}
 
-  async testSqlQuery(sqlQuery: string, parameters: { [key: string]: any }) {
+  async testFetchData(
+    parameters: { [key: string]: any },
+    configurationFilePath: string = this.settingsService
+      .currentConfigurationTemplatePath,
+  ) {
+    console.log(
+      `testFetchData parameters: ${JSON.stringify(parameters)}, configurationFilePath: ${configurationFilePath}`,
+    );
+
     // Create URLSearchParams object
     const params = new URLSearchParams();
 
     // Add required parameters
-    params.set('sqlQuery', sqlQuery);
-    params.set(
-      'configurationFilePath',
-      this.settingsService.currentConfigurationTemplatePath,
-    );
+    params.set('configurationFilePath', configurationFilePath);
 
     // Add optional parameters
     Object.entries(parameters).forEach(([key, value]) => {
@@ -35,10 +47,10 @@ export class ReportingService {
       paramsObj[key] = value;
     });
 
-    console.log('Sending parameters:', paramsObj);
+    console.log('Sending parameters:', JSON.stringify(paramsObj));
 
     // Make GET request with query parameters
-    return this.apiService.get('/jobman/reporting/test-sql-query', paramsObj);
+    return this.apiService.get('/jobman/reporting/test-fetch-data', paramsObj);
   }
 
   async processGroovyParametersDsl(

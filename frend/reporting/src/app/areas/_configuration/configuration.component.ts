@@ -92,7 +92,10 @@ import {
   AiCopilotComponent,
   AiCopilotLaunchConfig,
 } from '../../components/ai-copilot/ai-copilot.component';
-import { ReportingService } from '../../providers/reporting.service';
+import {
+  ReportingService,
+  SqlQueryResult,
+} from '../../providers/reporting.service';
 
 @Component({
   selector: 'dburst-configuration',
@@ -3280,30 +3283,58 @@ if (reportParametersProvided) {
   reportParameters: ReportParameter[];
   isModalParametersVisible = false; // Changed from showParamsModal
   reportParamsValid = false;
-  reportParamsValue: { [key: string]: any } = {};
+  reportParamsValues: { [key: string]: any } = {};
+
+  sqlQueryResult: SqlQueryResult | null = null;
+  isReportDataLoading = false;
+
+  /*
+  reportColumns: any[] = [];
+  
+  @ViewChild('tabulator') tabulatorRef: ElementRef;
+  
+  async refreshTabulatorTable() {
+    const tabulator = this.tabulatorRef.nativeElement;
+    if (tabulator && typeof tabulator.updateTable === 'function') {
+      return tabulator.updateTable();
+    }
+  }
+
+  */
 
   onReportParamsValidChange(isValid: boolean) {
     this.reportParamsValid = isValid;
+    this.changeDetectorRef.detectChanges();
     console.log('Report parameters form validity:', isValid);
   }
 
   // Add handler for the form's value
-  onReportParamsValueChange(values: { [key: string]: any }) {
+  onReportParamsValuesChange(values: { [key: string]: any }) {
     console.log('Form parameter values:', values);
-    this.reportParamsValue = values;
+    this.reportParamsValues = values;
   }
 
   async onRunQueryWithParams() {
     try {
-      const result = await this.runQueryWithParams(this.reportParameters);
+      this.isModalParametersVisible = false;
+
+      this.isReportDataLoading = true;
+      this.sqlQueryResult = await this.runQueryWithParams(
+        this.reportParameters,
+      );
+      //await this.refreshTabulatorTable();
+      console.log(
+        `this.sqlQueryResult: ${JSON.stringify(this.sqlQueryResult)}`,
+      );
       this.infoService.showInformation({
         message: `SQL query executed successfully`,
       });
-      this.isModalParametersVisible = false;
     } catch (error) {
       this.infoService.showInformation({
         message: `Error executing SQL query: ${error.message}`,
       });
+    } finally {
+      this.isReportDataLoading = false;
     }
   }
 
@@ -3313,17 +3344,14 @@ if (reportParametersProvided) {
       (acc, param) => {
         acc[param.id] = this.convertParamValue(
           param.type,
-          this.reportParamsValue[param.id],
+          this.reportParamsValues[param.id],
         );
         return acc;
       },
       {} as { [key: string]: any },
     );
 
-    return this.reportingService.testSqlQuery(
-      this.xmlReporting.documentburster.report.datasource.sqloptions.query,
-      paramsObject,
-    );
+    return this.reportingService.testFetchData(paramsObject);
   }
 
   async doTestSqlQuery() {
@@ -3349,7 +3377,7 @@ if (reportParametersProvided) {
           );
 
         // Access user-provided values
-        const paramValues = this.reportParamsValue;
+        const paramValues = this.reportParamsValues;
 
         // Convert values to correct types based on parameter definitions
         const typedParams = parameters.map((param) => {
@@ -3363,7 +3391,7 @@ if (reportParametersProvided) {
 
         console.log('Parameters before execution:', {
           parameters,
-          values: this.reportParamsValue,
+          values: this.reportParamsValues,
         });
         // Show modal if parameters exist
         if (parameters && parameters.length > 0) {
@@ -3374,19 +3402,46 @@ if (reportParametersProvided) {
     });
   }
 
-  // Helper function to convert parameter values
   private convertParamValue(type: string, value: any): any {
     switch (type) {
       case 'LocalDate':
-        return new Date(value);
+      case 'LocalDateTime':
+        return value; // Return the raw ISO string
       case 'Integer':
         return parseInt(value, 10);
       case 'Boolean':
         return Boolean(value);
-      case 'LocalDateTime':
-        return new Date(value);
       default:
         return value;
     }
+  }
+
+  onTabReady() {
+    console.log('📊 Tabulator ready');
+  }
+
+  onTabError(msg: string) {
+    console.error('❌ Tabulator error:', msg);
+  }
+
+  getTabulatorColumns(
+    columnNames: string[],
+  ): { title: string; field: string }[] {
+    if (!columnNames || !Array.isArray(columnNames)) {
+      return [];
+    }
+
+    return columnNames
+      .map((name) => {
+        if (typeof name !== 'string') {
+          console.warn('Invalid column name:', name);
+          return null;
+        }
+        return {
+          title: name.replace(/([A-Z])/g, ' $1').trim(),
+          field: name,
+        };
+      })
+      .filter(Boolean); // Remove any null values
   }
 }

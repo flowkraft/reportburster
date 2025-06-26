@@ -58,7 +58,23 @@ export const tabReportingTabulatorTemplate = `<ng-template
             <h3 class="panel-title">{{ 'AREAS.CONFIGURATION.TAB-REPORTING-TABULATOR.TABLE-PREVIEW' | translate }}</h3>
           </div>
           <div class="panel-body">
-            <rb-tabulator></rb-tabulator>
+            <!-- in your Angular template -->
+            <rb-tabulator #tabulator
+              [data]="sqlQueryResult?.reportData"
+              [columns]="sqlQueryResult?.reportColumnNames | tabulatorColumns"
+              [loading]="isReportDataLoading"
+              (ready)="onTabReady()"
+              (initError)="onTabError($any($event).detail.message)"
+              (tableError)="onTabError($any($event).detail.message)"
+            ></rb-tabulator>
+
+            <div *ngIf="sqlQueryResult">
+              <br/>
+              <p>Execution Time: {{ sqlQueryResult.executionTimeMillis }}ms</p>
+              <p>Total Rows: {{ sqlQueryResult.reportData?.length || 0 }}</p>
+              <p>Preview Mode: {{ sqlQueryResult.isPreview ? 'Yes' : 'No' }}</p>
+            </div>
+
           </div>
         </div>
       </div>

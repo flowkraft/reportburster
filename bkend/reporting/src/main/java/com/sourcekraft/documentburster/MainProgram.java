@@ -460,7 +460,7 @@ public class MainProgram implements Callable<Integer> {
 				Map<String, String> typedParameters = ParameterParser.parseParameters(parameters);
 
 				CliJob job = getJob(config.configFile);
-				job.doTestSqlQuery(sqlQuery, typedParameters);
+				job.doTestFetchData(typedParameters);
 				return 0;
 			}
 		}

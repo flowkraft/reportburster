@@ -57,20 +57,20 @@ public class ReportingController {
 				new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to parse report parameters", e)));
 	}
 
-	@GetMapping("/test-sql-query")
-	public Mono<SqlQueryResult> testSqlQuery(@RequestParam String sqlQuery,
+	@GetMapping("/test-fetch-data")
+	public Mono<SqlQueryResult> testFetchData(
 		    @RequestParam String configurationFilePath,
 		    @RequestParam Map<String, String> parameters) {
 
-		System.out.println("/test-sql-query Received request to test SQL query: " + sqlQuery);
-		System.out.println("/test-sql-query Received parameters: " + parameters.toString());
+		System.out.println("/test-fetch-data Received request to test SQL query: " + configurationFilePath);
+		System.out.println("/test-fetch-data Received parameters: " + parameters.toString());
 
 		return Mono.fromCallable(() -> {
 			String cfgFilePath = configurationFilePath;
 			if (configurationFilePath.startsWith("/") || configurationFilePath.startsWith("\\")) {
 				cfgFilePath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + configurationFilePath;
 			}
-			System.out.println("/test-sql-query cfgFilePath: " + cfgFilePath);
+			System.out.println("/test-fetch-data cfgFilePath: " + cfgFilePath);
 
 			// Debug print parameter values
 			System.out.println("Parameter values:");
@@ -78,7 +78,7 @@ public class ReportingController {
 				System.out.println(key + " = " + value);
 			});
 
-			return reportingService.testSqlQuery(sqlQuery, cfgFilePath, parameters);
+			return reportingService.testFetchData(cfgFilePath, parameters);
 		}).doOnError(e -> {
 			System.out.println("Error testing SQL query: " + e.getMessage());
 			log.error("Error testing SQL query", e);

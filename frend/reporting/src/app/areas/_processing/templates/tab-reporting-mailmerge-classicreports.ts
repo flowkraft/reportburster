@@ -102,7 +102,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
           type="button"
           class="btn btn-primary"
           (click)="doGenerateReports()"
-          [disabled]="(!processingService.procReportingMailMergeInfo.inputFileName && !processingService.procReportingMailMergeInfo.prefilledInputFilePath) || executionStatsService.jobStats.numberOfActiveJobs > 0"
+          [disabled]="shouldBeDisabledGenerateReportsButton()"
         >
           <i class="fa fa-play"></i>&nbsp;Burst
         </button>
@@ -192,17 +192,63 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
 
     <div
       *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport && processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.reportParameters.length > 0"
-      class="row"
+      class="row" style="margin-top: 10px"
     >
       <div class="col-xs-3">
-        <dburst-report-parameters-form
+        <dburst-report-parameters-form #reportParamsForm)
           [parameters]="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.reportParameters"
           (validChange)="onReportParamsValidChange($event)"
-          (valueChange)="onReportParamsValueChange($event)"
+          (valueChange)="onReportParamsValuesChange($event)"
         ></dburst-report-parameters-form>
       </div>
     
     </div>
+
+    <div
+      *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport && processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.dsInputType == 'ds.sqlquery'"
+      class="row" style="margin-top: 10px"
+    >
+      <div class="col-xs-3">
+
+        <button
+          id="btnViewData"
+          type="button"
+          class="btn btn-default btn-block"
+          (click)="doViewData()"
+          [disabled]="shouldBeDisabledViewDataButton()"
+        >
+          <i class="fa fa-play"></i>&nbsp;View Data
+        </button>
+        
+      </div>
+    
+    </div>
+
+    <div
+      *ngIf="sqlQueryResult"
+      class="row" style="margin-top: 10px"
+    >
+       <div class="col-xs-12">
+
+            <!-- in your Angular template -->
+            <rb-tabulator #tabulator
+              [data]="sqlQueryResult?.reportData"
+              [columns]="sqlQueryResult?.reportColumnNames | tabulatorColumns"
+              [loading]="isReportDataLoading"
+              (ready)="onTabReady()"
+              (initError)="onTabError($any($event).detail.message)"
+              (tableError)="onTabError($any($event).detail.message)"
+            ></rb-tabulator>
+
+            <div *ngIf="sqlQueryResult">
+              <br/>
+              <p>Execution Time: {{ sqlQueryResult.executionTimeMillis }}ms</p>
+              <p>Total Rows: {{ sqlQueryResult.reportData?.length || 0 }}</p>
+              <p>Preview Mode: {{ sqlQueryResult.isPreview ? 'Yes' : 'No' }}</p>
+            </div>
+
+          </div> 
+        </div>
 
     <div
       *ngIf="executionStatsService.jobStats.numberOfActiveJobs === 0 && executionStatsService.jobStats.jobsToResume.length > 0"

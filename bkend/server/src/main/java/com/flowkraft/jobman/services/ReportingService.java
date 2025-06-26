@@ -10,11 +10,11 @@ import com.sourcekraft.documentburster.job.CliJob;
 @Service
 public class ReportingService {
 
-	public SqlQueryResult testSqlQuery(String sqlQuery, String configurationFilePath, Map<String, String> parameters)
+	public SqlQueryResult testFetchData(String configurationFilePath, Map<String, String> parameters)
 			throws Exception {
 		CliJob cliJob = new CliJob(configurationFilePath);
 
-		return cliJob.doTestSqlQuery(sqlQuery, parameters);
+		return cliJob.doTestFetchData(parameters);
 
 	}
 

@@ -1051,17 +1051,19 @@ Column 3, 15"
     <dburst-report-parameters-form
         [parameters]="reportParameters"
         (validChange)="onReportParamsValidChange($event)"
-        (valueChange)="onReportParamsValueChange($event)">
+        (valueChange)="onReportParamsValuesChange($event)">
     </dburst-report-parameters-form>
     <p-footer>
         <button pButton 
             type="button" 
             label="Cancel" 
+            id="btnTestQueryCancel"
             (click)="isModalParametersVisible = false"
             class="p-button-secondary"></button>
         <button pButton 
             type="button" 
-            label="Run Query" 
+            label="Test Query" 
+            id="btnTestQueryRun"
             (click)="onRunQueryWithParams()"
             [disabled]="!reportParamsValid"></button>
     </p-footer>

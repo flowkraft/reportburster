@@ -37,6 +37,7 @@ import { ReportParametersFormComponent } from '../components/report-parameters-f
 import { AppRoutingModule } from '../app-routing.module';
 import { RouterModule } from '@angular/router';
 import { ButtonVariablesComponent } from '../components/button-variables/button-variables.component';
+import { TabulatorColumnsPipe } from './tabulator-columns.pipe';
 
 @NgModule({
   imports: [
@@ -60,6 +61,7 @@ import { ButtonVariablesComponent } from '../components/button-variables/button-
     ButtonWellKnownEmailProvidersComponent,
     ButtonHtmlPreviewComponent,
     SafePipe,
+    TabulatorColumnsPipe,
   ],
   exports: [
     CommonModule,
@@ -81,6 +83,7 @@ import { ButtonVariablesComponent } from '../components/button-variables/button-
     ButtonWellKnownEmailProvidersComponent,
     ButtonHtmlPreviewComponent,
     SafePipe,
+    TabulatorColumnsPipe,
   ],
   providers: [
     StateStoreService,
