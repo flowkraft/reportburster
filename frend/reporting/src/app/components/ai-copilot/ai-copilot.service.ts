@@ -11,6 +11,7 @@ export interface PromptInfo {
     | 'Database Schema'
     | 'Template Creation/Modification'
     | 'Email Templates'
+    | 'Email Templates (Responsive)'
     | 'Excel Report Generation'
     | 'PDF Report Generation'
     | 'SQL Writing Assistance'
@@ -187,7 +188,7 @@ The generated PlantUML script should contain only the PlantUML syntax necessary 
 6. Use a clean, professional layout with minimal formatting (suitable for email clients)
 
 Please provide the complete email template with HTML formatting and inline CSS.`,
-      tags: ['payslip', 'notification', 'employee'],
+      tags: ['email-template', 'payslip', 'notification', 'employee'],
       category: 'Email Templates',
     },
     {
@@ -207,8 +208,231 @@ Please provide the complete email template with HTML formatting and inline CSS.`
 9. Include necessary legal/confidentiality text in the footer
 
 Please provide the complete email template with HTML formatting and inline CSS.`,
-      tags: ['invoice', 'notification', 'customer'],
+      tags: ['email-template', 'invoice', 'notification', 'customer'],
       category: 'Email Templates',
+    },
+
+    {
+      id: 'EMAIL_BOXED_1COLUMN_RESPONSIVE',
+      title:
+        'A fundamental, single-column responsive template with a boxed layout',
+      description:
+        'A fundamental, single-column responsive template with a boxed layout',
+      promptText: `You are an expert front-end developer specializing in creating bulletproof, responsive HTML emails that are fully compatible with all major email clients, 
+including Outlook (all versions), Gmail, Apple Mail, and Office 365.
+
+Your task is to generate the complete HTML and CSS for a responsive email template. This template should be a modern interpretation of a classic, 
+industry-standard email blueprint that features a **fundamental, single-column responsive template with a boxed layout**.
+
+**Core Requirements:**
+
+1.  **Layout:**
+    *   A centered, **boxed layout** with a maximum width of 600px.  
+    *   The email body background (outside the 600px box) should be a light gray (\`#f4f4f4\`).  
+    *   The main content box should have a white background (\`#ffffff\`).  
+
+2.  **Structure:**
+    *   A **single-column layout** throughout.  
+    *   Include sections for a preheader, a main header (for a logo), a main content area for a headline, body text, and a call-to-action button, and a footer section.  
+
+3.  **Responsiveness:**
+    *   The template must be fully responsive using **CSS media queries**.  
+    *   The layout should scale fluidly to fit the screen width on mobile devices.  
+
+**Technical Implementation Details:**
+
+*   **Tables for Layout:** Use \`<table>\` elements for the entire structure to ensure maximum compatibility. Set \`role="presentation"\`, \`cellpadding="0"\`, \`cellspacing="0"\`, and \`border="0"\` on all layout tables.  
+*   **Inline CSS:** All critical presentation styles (colors, fonts, padding, borders) must be inlined on the HTML elements to work in clients like Gmail.  
+*   **\`<style>\` Block:** Use a \`<style>\` block in the \`<head>\` for:  
+    *   Responsive styles inside an \`@media (max-width: 600px)\` block.  
+    *   Class-based styles and link styling (\`a:hover\`, etc.) for clients that support it.  
+*   **Outlook Compatibility:** Use \`<!--[if mso]> ... <![endif]-->\` conditional comments where necessary to ensure proper rendering in Outlook.  
+*   **Content Placeholders:** Use clear, descriptive placeholders for all content, such as \`[LOGO_URL]\`, \`[HEADLINE_TEXT]\`, \`[MAIN_CONTENT_PARAGRAPH]\`, \`[CTA_BUTTON_LINK]\`, and \`[UNSUBSCRIBE_LINK]\`.  
+*   **Accessibility:** Ensure all \`<img>\` tags have descriptive \`alt\` text.  
+
+Provide the complete, ready-to-use HTML file in a single code block.`,
+      tags: ['email-template-responsive', 'one-column'],
+      category: 'Email Templates (Responsive)',
+    },
+
+    {
+      id: 'EMAIL_BOXED_1COLUMN_IMAGE_RESPONSIVE',
+      title:
+        'A basic responsive template with a boxed layout designed to feature a prominent body image',
+      description:
+        'A basic responsive template with a boxed layout designed to feature a prominent body image',
+      promptText: `You are an expert front-end developer specializing in creating bulletproof, responsive HTML emails that are fully compatible with all major email clients, 
+including Outlook (all versions), Gmail, Apple Mail, and Office 365.
+
+Your task is to generate the complete HTML and CSS for a responsive email template. This template should be a modern interpretation of a classic, industry-standard email blueprint that features a **basic, single-column, boxed layout with a prominent, full-width body image**.
+
+**Core Requirements:**
+
+1.  **Layout:**
+    *   A centered, **boxed layout** with a maximum width of 600px.  
+    *   The email body background (outside the 600px box) should be a light gray (\`#f4f4f4\`).  
+    *   The main content box should have a white background (\`#ffffff\`).  
+
+2.  **Structure:**
+    *   A **single-column layout** throughout.  
+    *   Include sections for a preheader and a main header (for a logo).  
+    *   A **prominent hero image section** where the image spans the full width of the 600px container.  
+    *   A main content area below the image for a headline, body text, and a call-to-action button.  
+    *   A footer section.  
+
+3.  **Responsiveness:**
+    *   The template must be fully responsive using **CSS media queries**.  
+    *   The hero image must scale fluidly to fit the screen width on mobile devices.  
+
+**Technical Implementation Details:**
+
+*   **Tables for Layout:** Use \`<table>\` elements for the entire structure to ensure maximum compatibility. Set \`role="presentation"\`, \`cellpadding="0"\`, \`cellspacing="0"\`, and \`border="0"\` on all layout tables.  
+*   **Inline CSS:** All critical presentation styles (colors, fonts, padding, borders) must be inlined on the HTML elements to work in clients like Gmail.  
+*   **\`<style>\` Block:** Use a \`<style>\` block in the \`<head>\` for:  
+    *   Responsive styles inside an \`@media (max-width: 600px)\` block, including styles to make images fluid.  
+    *   Class-based styles and link styling (\`a:hover\`, etc.) for clients that support it.  
+*   **Outlook Compatibility:** Use \`<!--[if mso]> ... <![endif]-->\` conditional comments where necessary to ensure proper rendering in Outlook.  
+*   **Content Placeholders:** Use clear, descriptive placeholders for all content, such as \`[LOGO_URL]\`, \`[HERO_IMAGE_URL]\`, \`[HEADLINE_TEXT]\`, \`[MAIN_CONTENT_PARAGRAPH]\`, \`[CTA_BUTTON_LINK]\`, and \`[UNSUBSCRIBE_LINK]\`.  
+*   **Accessibility:** Ensure all \`<img>\` tags have descriptive \`alt\` text.  
+
+Provide the complete, ready-to-use HTML file in a single code block.`,
+      tags: ['email-template-responsive', 'one-column', 'email-image'],
+      category: 'Email Templates (Responsive)',
+    },
+
+    {
+      id: 'EMAIL_BOXED_2COLUMN_RESPONSIVE',
+      title:
+        'A responsive template with a boxed layout and a two-column structure',
+      description:
+        'A responsive template with a boxed layout and a two-column structure',
+      promptText: `You are an expert front-end developer specializing in creating bulletproof, responsive HTML emails that are fully compatible with all major email clients, 
+including Outlook (all versions), Gmail, Apple Mail, and Office 365.
+
+Your task is to generate the complete HTML and CSS for a responsive email template. This template should be a modern interpretation of a classic, 
+industry-standard email blueprint that features a **boxed layout with a two-column structure that becomes a single column on mobile devices using media queries**.
+
+**Core Requirements:**
+
+1.  **Layout:**
+    *   A centered, **boxed layout** with a maximum width of 600px.  
+    *   The email body background (outside the 600px box) should be a light gray (\`#f4f4f4\`).  
+    *   The main content box should have a white background (\`#ffffff\`).
+
+2.  **Structure:**
+    *   A **two-column layout** for the main content area.  
+        *   The left column should be the main content area, approximately 400px wide.  
+        *   The right column should be a sidebar, approximately 200px wide.  
+    *   Include sections for a preheader, a main header (for a logo), the two-column content body, and a footer.
+
+3.  **Responsiveness:**
+    *   The template must be fully responsive using **CSS media queries**.  
+    *   On screens narrower than 600px, the two columns must stack vertically, with the main content appearing above the sidebar. Each stacked column should expand to fill the full width of the container.
+
+**Technical Implementation Details:**
+
+*   **Tables for Layout:** Use \`<table>\` elements for the entire structure to ensure maximum compatibility. Set \`role="presentation"\`, \`cellpadding="0"\`, \`cellspacing="0"\`, and \`border="0"\` on all layout tables.  
+*   **Inline CSS:** All critical presentation styles (colors, fonts, padding, borders) must be inlined on the HTML elements to work in clients like Gmail.  
+*   **\`<style>\` Block:** Use a \`<style>\` block in the \`<head>\` for:  
+    *   Responsive styles inside an \`@media (max-width: 600px)\` block.  
+    *   Class-based styles and link styling (\`a:hover\`, etc.) for clients that support it.  
+*   **Outlook Compatibility:** Use \`<!--[if mso]> ... <![endif]-->\` conditional comments (ghost tables) to wrap the columns and ensure Outlook renders the two-column layout correctly without adding extra spacing.  
+*   **Content Placeholders:** Use clear, descriptive placeholders for all content, such as \`[LOGO_URL]\`, \`[HEADLINE_TEXT]\`, \`[MAIN_CONTENT_PARAGRAPH]\`, \`[CTA_BUTTON_LINK]\`, and \`[UNSUBSCRIBE_LINK]\`.  
+*   **Accessibility:** Ensure all \`<img>\` tags have descriptive \`alt\` text.
+
+Provide the complete, ready-to-use HTML file in a single code block.`,
+      tags: ['email-template-responsive', 'two-column'],
+      category: 'Email Templates (Responsive)',
+    },
+
+    {
+      id: 'EMAIL_BOXED_2COLUMN_IMAGE_RESPONSIVE',
+      title:
+        'A responsive two-column template with a boxed layout that includes a body image',
+      description:
+        'A responsive two-column template with a boxed layout that includes a body image',
+      promptText: `You are an expert front-end developer specializing in creating bulletproof, responsive HTML emails that are fully compatible with all major email clients in 2025, including Outlook (all versions), Gmail, Apple Mail, and Office 365.
+
+Your task is to generate the complete HTML and CSS for a responsive email template. This template should be a modern interpretation of a classic, industry-standard email blueprint that features a **boxed layout, a prominent body image, and a two-column content section**.
+
+**Core Requirements:**
+
+1.  **Layout:**
+    *   A centered, **boxed layout** with a maximum width of 600px.  
+    *   The email body background (outside the 600px box) should be a light gray (\`#f4f4f4\`).  
+    *   The main content box should have a white background (\`#ffffff\`).  
+
+2.  **Structure:**
+    *   Include sections for a preheader and a main header (for a logo).  
+    *   A **prominent hero image** section where the image spans the full width of the 600px container.  
+    *   Below the image, a **two-column layout** for the main content area:  
+        *   The left column should be the main content area, approximately 400px wide.  
+        *   The right column should be a sidebar, approximately 200px wide.  
+    *   A footer section.  
+
+3.  **Responsiveness:**
+    *   The template must be fully responsive using **CSS media queries**.  
+    *   On screens narrower than 600px, the two columns must stack vertically, with the main content appearing above the sidebar. Each stacked column should fill the full width.  
+    *   The hero image must scale fluidly to fit the screen width on mobile devices.  
+
+**Technical Implementation Details:**
+
+*   **Tables for Layout:** Use \`<table>\` elements for the entire structure to ensure maximum compatibility. Set \`role="presentation"\`, \`cellpadding="0"\`, \`cellspacing="0"\`, and \`border="0"\` on all layout tables.  
+*   **Inline CSS:** All critical presentation styles (colors, fonts, padding, borders) must be inlined on the HTML elements to work in clients like Gmail.  
+*   **\`<style>\` Block:** Use a \`<style>\` block in the \`<head>\` for:  
+    *   Responsive styles inside an \`@media (max-width: 600px)\` block, including fluid image styles.  
+    *   Class-based styles and link styling (\`a:hover\`, etc.) for clients that support them.  
+*   **Outlook Compatibility:** Use \`<!--[if mso]> ... <![endif]-->\` conditional comments (ghost tables) to wrap the two-column section and ensure Outlook renders it correctly without extra spacing.  
+*   **Content Placeholders:** Use clear, descriptive placeholders for all content, such as \`[LOGO_URL]\`, \`[HERO_IMAGE_URL]\`, \`[HEADLINE_TEXT]\`, \`[MAIN_CONTENT_PARAGRAPH]\`, \`[CTA_BUTTON_LINK]\`, and \`[UNSUBSCRIBE_LINK]\`.  
+*   **Accessibility:** Ensure all \`<img>\` tags have descriptive \`alt\` text.  
+
+Provide the complete, ready-to-use HTML file in a single code block.`,
+      tags: ['email-template-responsive', 'two-column', 'email-image'],
+      category: 'Email Templates (Responsive)',
+    },
+
+    {
+      id: 'EMAIL_BOXED_3COLUMN_RESPONSIVE',
+      title:
+        'A responsive template with a boxed layout and a three-column structure',
+      description:
+        'A responsive template with a boxed layout and a three-column structure',
+      promptText: `You are an expert front-end developer specializing in creating bulletproof, responsive HTML emails that are fully compatible with all major email clients, 
+including Outlook (all versions), Gmail, Apple Mail, and Office 365.
+
+Your task is to generate the complete HTML and CSS for a responsive email template. This template should be a modern interpretation of a classic, industry-standard email 
+blueprint that features a **boxed layout with a three-column structure that becomes a single column on mobile devices using media queries**.
+
+**Core Requirements:**
+
+1.  **Layout:**
+    *   A centered, **boxed layout** with a maximum width of 600px.  
+    *   The email body background (outside the 600px box) should be a light gray (\`#f4f4f4\`).  
+    *   The main content box should have a white background (\`#ffffff\`).
+
+2.  **Structure:**
+    *   A **three-column layout** for the main content area.  
+        *   Each column should be approximately 200px wide.  
+    *   Include sections for a preheader, a main header (for a logo), the three-column content body, and a footer.
+
+3.  **Responsiveness:**
+    *   The template must be fully responsive using **CSS media queries**.  
+    *   On screens narrower than 600px, the three columns must stack vertically, each expanding to fill the full width of the container.
+
+**Technical Implementation Details:**
+
+*   **Tables for Layout:** Use \`<table>\` elements for the entire structure to ensure maximum compatibility. Set \`role="presentation"\`, \`cellpadding="0"\`, \`cellspacing="0"\`, and \`border="0"\` on all layout tables.  
+*   **Inline CSS:** All critical presentation styles (colors, fonts, padding, borders) must be inlined on the HTML elements to work in clients like Gmail.  
+*   **\`<style>\` Block:** Use a \`<style>\` block in the \`<head>\` for:  
+    *   Responsive styles inside an \`@media (max-width: 600px)\` block.  
+    *   Class-based styles and link styling (\`a:hover\`, etc.) for clients that support it.  
+*   **Outlook Compatibility:** Use \`<!--[if mso]> ... <![endif]-->\` conditional comments (ghost tables) to wrap the columns and ensure Outlook renders the three-column layout correctly without adding extra spacing.  
+*   **Content Placeholders:** Use clear, descriptive placeholders for all content, such as \`[LOGO_URL]\`, \`[HEADLINE_TEXT]\`, \`[COLUMN_CONTENT]\`, \`[CTA_BUTTON_LINK]\`, and \`[UNSUBSCRIBE_LINK]\`.  
+*   **Accessibility:** Ensure all \`<img>\` tags have descriptive \`alt\` text.
+
+Provide the complete, ready-to-use HTML file in a single code block.`,
+      tags: ['email-template-responsive', 'three-column'],
+      category: 'Email Templates (Responsive)',
     },
 
     // --- Template Creation/Modification ---

@@ -82,8 +82,8 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
               <!-- Split Button Dropdown -->
               <div class="btn-group" *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings?.documentburster.settings.htmlemaileditcode">
                 <!-- Primary button - direct action -->
-                <button type="button" class="btn btn-default" (click)="openTemplateGallery()">
-                  <i class="fa fa-list-alt"></i> {{ 'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.BUTTONS.EXAMPLES-GALLERY' | translate }}
+                <button type="button" class="btn btn-default" (click)="askAiForHelp('email.message')">
+                  <i class="fa fa-magic"></i> Hey, You Smart AI, Help Me Get a Custom Email (HTML) Template ...
                 </button>
                 
                 <!-- Dropdown toggle button -->
@@ -94,13 +94,13 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
                 <!-- Dropdown menu -->
                 <ul class="dropdown-menu" role="menu">
                   <li>
-                    <a href="javascript:void(0)" (click)="openTemplateGallery()">
-                      <i class="fa fa-list-alt"></i> {{ 'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.BUTTONS.EXAMPLES-GALLERY' | translate }}
-                    </a>
-                  </li>
+                      <a href="javascript:void(0)" (click)="askAiForHelp('email.message')">
+                        <i class="fa fa-magic"></i> Hey, You Smart AI, Help Me Get a Custom Email (HTML) Template ...
+                      </a>
+                    </li>  
                   <li>
-                    <a href="javascript:void(0)" (click)="showDbConnectionModal()">
-                      <i class="fa fa-magic"></i> Hey, You Smart AI, Help Me Get a Custom Email (HTML) Template ...
+                      <a href="javascript:void(0)" (click)="openTemplateGallery('mailchimp-email-blueprints')">
+                      <i class="fa fa-list-alt"></i> {{ 'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.BUTTONS.EXAMPLES-GALLERY' | translate }}
                     </a>
                   </li>
                 </ul>
