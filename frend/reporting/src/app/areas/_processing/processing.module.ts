@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { NgSelectModule } from '@ng-select/ng-select';
 
 import { ProcessingComponent } from './processing.component';
@@ -10,6 +10,7 @@ import { TabsModule } from 'ngx-bootstrap/tabs';
 import { LogFilesViewerSeparateTabsModule } from '../../components/log-files-viewer-separate-tabs/log-files-viewer-separate-tabs.module';
 
 @NgModule({
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   declarations: [ProcessingComponent],
   exports: [ProcessingComponent],
   imports: [

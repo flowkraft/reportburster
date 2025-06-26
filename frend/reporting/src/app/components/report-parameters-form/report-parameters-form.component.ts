@@ -46,6 +46,9 @@ export class ReportParametersFormComponent implements OnInit, OnChanges {
   ngOnInit() {
     if (this.parameters?.length) {
       this.buildForm(this.parameters);
+      // Emit initial values after form is built
+      this.valueChange.emit(this.form.value);
+      this.validChange.emit(this.form.valid);
     }
   }
 
@@ -103,6 +106,11 @@ export class ReportParametersFormComponent implements OnInit, OnChanges {
       this.validChange.emit(this.form.valid),
     );
     this.form.valueChanges.subscribe((v) => this.valueChange.emit(v));
+
+    setTimeout(() => {
+      this.valueChange.emit(this.form.value);
+      this.validChange.emit(this.form.valid);
+    });
   }
 
   private isRef(x: any): x is ParamRef {

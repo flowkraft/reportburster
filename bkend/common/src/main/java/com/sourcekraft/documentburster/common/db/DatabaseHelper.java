@@ -32,7 +32,7 @@ public class DatabaseHelper {
 		log.debug("SqlReporter initialized with config path: {}", configFilePath);
 	}
 
-	public SqlQueryResult doTestSqlQuery(String sqlQuery, Map<String, String> parameters) throws Exception {
+	public SqlQueryResult doExecSqlQuery(String sqlQuery, Map<String, String> parameters) throws Exception {
 		SqlQueryResult result = new SqlQueryResult();
 		long startTime = System.currentTimeMillis();
 

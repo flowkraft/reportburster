@@ -23,7 +23,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tools.ant.types.CharSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -415,8 +418,51 @@ public class CliJob {
 
 	}
 
-	public SqlQueryResult doTestSqlQuery(String sqlQuery, Map<String, String> parameters) throws Exception {
-		return new DatabaseHelper(configurationFilePath).doTestSqlQuery(sqlQuery, parameters);
+	public SqlQueryResult doTestFetchData(Map<String, String> parameters) throws Exception {
+
+		Settings settings = new Settings(configurationFilePath);
+		settings.loadSettings();
+
+		String configurationFolderPath = (new File(configurationFilePath)).getParent();
+		String reportFolderName = FilenameUtils.getBaseName(configurationFolderPath);
+
+		String dsType = settings.reportingSettings.report.datasource.type;
+		String scriptContent = StringUtils.EMPTY;
+
+		if (dsType.equals("ds.sqlquery"))
+			scriptContent = settings.reportingSettings.report.datasource.sqloptions.query;
+		else if (dsType.equals("ds.scriptfile")) {
+			scriptContent = FileUtils.readFileToString(
+					new File(configurationFolderPath + "/" + reportFolderName + "-script.groovy"), "UTF-8");
+		}
+
+		log.debug("doTestFetchData(Map<String, String> parameters) scriptContent: " + scriptContent);
+
+		File jobFile = null;
+		try {
+
+			System.out.println("CliJob doTestSqlQuery reportFolderName = " + reportFolderName);
+
+			jobFile = _createJobFile(reportFolderName, "test-fetch-data");
+
+			if (dsType.equals("ds.sqlquery")) {
+				DatabaseHelper dbHelper = new DatabaseHelper(configurationFilePath);
+
+				return dbHelper.doExecSqlQuery(scriptContent, parameters);
+			} else if (dsType.equals("ds.scriptfile")) {
+				/*
+				 * run the script new File(configurationFolderPath + "/" + reportFolderName +
+				 * "-script.groovy") (or scriptContent) with the correct Binding and return the
+				 * results as SqlQueryResult
+				 */
+			}
+
+			return new SqlQueryResult();
+
+		} finally {
+			if ((jobFile != null) && (jobFile.exists()))
+				jobFile.delete();
+		}
 	}
 
 	public void doTestAndFetchDatabaseSchema(String connectionFilePath) throws Exception {
@@ -440,7 +486,6 @@ public class CliJob {
 
 			// --- Core Logic ---
 
-			
 			// 2. Test Connection
 			DatabaseConnectionTester tester = new DatabaseConnectionTester();
 			log.info("Attempting to test database connection...");

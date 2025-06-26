@@ -70,7 +70,7 @@
         "TYPE-HTML": "HTML Docs (html_template2html_docs)",
         "TYPE-DOCX": "Microsoft Word Docs (docx_template2docx_docs)",
         "TYPE-PDF-USING-FOP": "PDF Docs Using xslfo FOP (xslfo_template2pdf_docs)",
-        "TYPE-ANY": "Any Docs (freemarker_template2any_docs)",
+        "TYPE-ANY": "XML/Any Docs (freemarker_template2any_docs)",
         "NO-TEMPLATES-FOUND": "No DOCX templates found! Please add a .docx file to:",
         "TEMPLATE-LOCATION": "Template Location:",
         "SUGGESTED-FILENAME": "Suggested filename:",

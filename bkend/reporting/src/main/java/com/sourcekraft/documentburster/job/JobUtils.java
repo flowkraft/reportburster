@@ -32,6 +32,10 @@ public class JobUtils {
 		Marshaller m = jc.createMarshaller();
 		m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 
+		File file = new File(jobFilePath);
+		System.out.println("JobUtils.saveJobDetails(JobDetails jobDetails, String jobFilePath) - jobDetails: "
+				+ jobDetails.toString() + ", jobFilePath: " + file.getAbsolutePath());
+
 		m.marshal(jobDetails, new File(jobFilePath));
 
 	}
@@ -44,8 +48,9 @@ public class JobUtils {
 		Marshaller m = jc.createMarshaller();
 		m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 
-		//this "created" trick is done because sometimes (very rarely but it happens) a simple 
-		//m.marshal call fails with 105421439.progress (Access is denied) exception
+		// this "created" trick is done because sometimes (very rarely but it happens) a
+		// simple
+		// m.marshal call fails with 105421439.progress (Access is denied) exception
 		boolean created = false;
 
 		do {
