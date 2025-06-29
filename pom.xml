@@ -30,9 +30,10 @@
 		<commons.logging.version>1.2</commons.logging.version>
 		<commons.lang.version>3.11</commons.lang.version>
 		<commons.io.version>2.19.0</commons.io.version>
+		<commons.compress.version>1.27.1</commons.compress.version>
 		<opencsv.version>5.7.1</opencsv.version>
 		<univocity-parsers.version>2.9.1</univocity-parsers.version>
-		<docx4j.version>8.2.9</docx4j.version>
+		<docx4j.version>11.5.3</docx4j.version>
 		<yarg.version>2.2.14</yarg.version>
 		<xdocreport.version>2.1.0</xdocreport.version>
 		<documents4j.version>1.1.10</documents4j.version>
@@ -52,7 +53,7 @@
 		<ant.version>1.10.15</ant.version>
 		<zt-zip.version>1.17</zt-zip.version>
 		<zt-exec.version>1.12</zt-exec.version>
-		<pdfbox.version>2.0.20</pdfbox.version>
+		<pdfbox.version>2.0.34</pdfbox.version>
 		<bouncycastle.version>1.46</bouncycastle.version>
 		<icu4j.version>67.1</icu4j.version>
 		<groovy.all.version>3.0.9</groovy.all.version>
@@ -131,6 +132,12 @@
 				<artifactId>commons-io</artifactId>
 				<version>${commons.io.version}</version>
 			</dependency>
+
+			<dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${commons.compress.version}</version>
+            </dependency>
 			<!-- csv libraries -->
 			<dependency>
 				<groupId>com.opencsv</groupId>
@@ -151,6 +158,11 @@
 				<artifactId>pdfbox</artifactId>
 				<version>${pdfbox.version}</version>
 			</dependency>
+			<dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>fontbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
 			<dependency>
 				<groupId>org.apache.pdfbox</groupId>
 				<artifactId>pdfbox-tools</artifactId>
@@ -195,6 +207,11 @@
 				<artifactId>docx4j-core</artifactId>
 				<version>${docx4j.version}</version>
 			</dependency>
+			<dependency>
+            	<groupId>org.docx4j</groupId>
+            	<artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
+    			<version>${docx4j.version}</version>
+	    	</dependency>
 			<dependency>
 				<groupId>org.docx4j</groupId>
 				<artifactId>docx4j-export-fo</artifactId>

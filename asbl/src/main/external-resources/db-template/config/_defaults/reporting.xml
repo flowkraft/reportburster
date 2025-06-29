@@ -30,6 +30,15 @@
         <ignoreleadingwhitespace>true</ignoreleadingwhitespace>
         <idcolumn>notused</idcolumn>
       </fixedwidthoptions>
+      <xmloptions>
+        <repeatingnodexpath></repeatingnodexpath>
+        <idcolumn>notused</idcolumn>
+        <namespacemappings></namespacemappings>
+        <encoding>UTF-8</encoding>
+        <validationschema></validationschema>
+        <fieldmappings></fieldmappings>
+        <ignoreleadingwhitespace>true</ignoreleadingwhitespace>
+      </xmloptions>
       <exceloptions>
         <header>noheader</header>
         <skiplines>0</skiplines>

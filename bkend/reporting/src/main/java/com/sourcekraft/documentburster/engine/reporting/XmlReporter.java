@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,7 +45,7 @@ public class XmlReporter extends AbstractReporter {
 		// --- Read XML Options ---
 		String repeatingNodeXPath = ctx.settings.getReportDataSource().xmloptions.repeatingnodexpath;
 		String idColumn = ctx.settings.getReportDataSource().xmloptions.idcolumn;
-		String namespaceMappings = ctx.settings.getReportDataSource().xmloptions.namespaceMappings;
+		String namespaceMappings = ctx.settings.getReportDataSource().xmloptions.namespacemappings;
 		String encoding = ctx.settings.getReportDataSource().xmloptions.encoding;
 		boolean ignoreLeadingWhitespace = ctx.settings.getReportDataSource().xmloptions.ignoreleadingwhitespace;
 
@@ -153,7 +154,7 @@ public class XmlReporter extends AbstractReporter {
 				if (ignoreLeadingWhitespace && value != null) {
 					value = value.trim();
 				}
-				rowMap.put(attrName, value);
+				rowMap.put(attrName, toObject(value));
 			}
 
 			// Add child elements
@@ -165,7 +166,7 @@ public class XmlReporter extends AbstractReporter {
 					if (ignoreLeadingWhitespace && value != null) {
 						value = value.trim();
 					}
-					rowMap.put(child.getNodeName(), value);
+					rowMap.put(child.getNodeName(), toObject(value));
 				}
 			}
 
@@ -173,8 +174,54 @@ public class XmlReporter extends AbstractReporter {
 			log.trace("Added data row map: {}", rowMap);
 		}
 
+		String fm = ctx.settings.getReportDataSource().xmloptions.fieldmappings;
+
+		if (StringUtils.isNotBlank(fm))
+			applyFieldMappings(fm);
+
 		log.info("XML data fetched successfully. Columns: {}. Data rows: {}", ctx.reportColumnNames.size(),
 				ctx.reportData.size());
 		log.trace("Exiting fetchData.");
+	}
+
+	/**
+	 * Parse and apply field-mappings (origName:newName,…) to headers and data rows
+	 */
+	private void applyFieldMappings(String fieldMappings) {
+		if (StringUtils.isBlank(fieldMappings)) {
+			return;
+		}
+		Map<String, String> mappings = parseFieldMappings(fieldMappings);
+
+		// 1) rename headers in place
+		ListIterator<String> headerIt = ctx.reportColumnNames.listIterator();
+		while (headerIt.hasNext()) {
+			String col = headerIt.next();
+			if (mappings.containsKey(col)) {
+				headerIt.set(mappings.get(col));
+			}
+		}
+		// 2) rename each key in each data row
+		for (Map<String, Object> row : ctx.reportData) {
+			for (Map.Entry<String, String> me : mappings.entrySet()) {
+				String orig = me.getKey();
+				if (row.containsKey(orig)) {
+					Object val = row.remove(orig);
+					row.put(me.getValue(), val);
+				}
+			}
+		}
+	}
+
+	/** Turn "a:b,c:d" into a map {a→b, c→d} */
+	private Map<String, String> parseFieldMappings(String fm) {
+		Map<String, String> m = new LinkedHashMap<>();
+		for (String pair : fm.split("\\s*,\\s*")) {
+			String[] kv = pair.split("\\s*:\\s*");
+			if (kv.length == 2) {
+				m.put(kv[0], kv[1]);
+			}
+		}
+		return m;
 	}
 }

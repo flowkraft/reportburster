@@ -2641,7 +2641,7 @@ export class ConfigurationComponent implements OnInit {
       const launchConfig: AiCopilotLaunchConfig = {
         initialActiveTabKey: 'PROMPTS',
         initialSelectedCategory: 'PDF Report Generation',
-        initialExpandedPromptId: 'PDF_CORE_OPTIMIZATION',
+        initialExpandedPromptId: 'PDF_SAMPLE_A4_ORDER_SUMMARY',
       };
 
       if (this.aiCopilotInstance) {
