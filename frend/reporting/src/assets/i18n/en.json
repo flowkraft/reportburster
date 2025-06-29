@@ -24,7 +24,7 @@
       "TAB-REPORT-DATASOURCE-DATATABLES": {
         "TYPE": "Input Type",
         "TYPE-SQL-QUERY": "SQL Query",
-        "TYPE-SCRIPT": "Script (Master-Details or Cross-Tab reports)",
+        "TYPE-SCRIPT": "Script (for custom logic or any data source)",
         "TYPE-XML": "XML File",
         "TYPE-CSV": "CSV File",
         "TYPE-TSV": "TSV File (tab-separated values)",

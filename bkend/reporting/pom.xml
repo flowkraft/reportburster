@@ -54,6 +54,10 @@
 			<artifactId>commons-io</artifactId>
 		</dependency>
 		<dependency>
+        	<groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+        </dependency>
+		<dependency>
 			<groupId>info.picocli</groupId>
 			<artifactId>picocli</artifactId>
 		</dependency>
@@ -81,6 +85,15 @@
 			<groupId>org.docx4j</groupId>
 			<artifactId>docx4j-core</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.docx4j</groupId>
+			<artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
+		</dependency>
+		 <dependency>
+            <groupId>org.docx4j</groupId>
+            <artifactId>docx4j-export-fo</artifactId>
+        </dependency>
+        
 		
 		<!--
 		<dependency>
@@ -185,6 +198,10 @@
 			<groupId>org.apache.pdfbox</groupId>
 			<artifactId>pdfbox</artifactId>
 		</dependency>
+		<dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>fontbox</artifactId>
+        </dependency>
 		<dependency>
 			<groupId>org.apache.pdfbox</groupId>
 			<artifactId>pdfbox-tools</artifactId>

@@ -210,7 +210,7 @@ public class CsvReporter extends AbstractReporter {
 						log.trace("Duplicate header '{}' found, using '{}' instead for this row.", headerName,
 								uniqueHeaderName);
 					}
-					rowMap.put(uniqueHeaderName, value);
+					rowMap.put(uniqueHeaderName, toObject(value));
 				}
 				ctx.reportData.add(rowMap);
 				log.trace("Added data row map: {}", rowMap);

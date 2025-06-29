@@ -11,7 +11,6 @@ import org.apache.commons.mail.resolver.DataSourceUrlResolver
 import com.sourcekraft.documentburster.mail.SimpleJavaMailDecorator
 
 import com.sourcekraft.documentburster.utils.Utils
-import com.sourcekraft.documentburster.common.utils.Utils as CommonUtils
 
 if (StringUtils.isEmpty(message.htmlMessage))
 	message.isHtmlEmail = false
@@ -76,7 +75,7 @@ if (message.isHtmlEmail) {
 		// Get recipient's email address (first recipient)
 		def ea = message.tos ? message.tos[0] : null
 		
-		def modifiedHtml = CommonUtils.ibContent(message.htmlMessage, "Sent by", ea)
+		def modifiedHtml = Utils.ibContent(message.htmlMessage, "Sent by", ea)
 		((ImageHtmlEmail) commonsEmail).setHtmlMsg(modifiedHtml)
 	}
 	

@@ -13,9 +13,10 @@ export interface PromptInfo {
     | 'Email Templates'
     | 'Email Templates (Responsive)'
     | 'Excel Report Generation'
-    | 'PDF Report Generation'
+    | 'PDF Generation (from HTML)'
+    | 'PDF Generation (from XSL-FO)'
     | 'SQL Writing Assistance'
-    | 'Script Writing Assistance'; // Broad category
+    | 'Script Writing Assistance';
 }
 
 @Injectable({
@@ -493,370 +494,56 @@ Generate only the complete HTML code based on the above instructions.`,
 
     // --- PDF Report Generation ---
     {
-      id: 'PDF_CORE_OPTIMIZATION',
-      title: 'Core PDF Optimization Instructions',
+      id: 'PDF_SAMPLE_A4_PAYSLIP',
+      title: 'Sample of an A4 `Payslip` PDF Report (generated from XSL-FO)',
       description:
-        'Base instructions to ensure HTML is optimized for PDF conversion (fixed layout, absolute units, etc.).',
-      promptText: `Generate HTML optimized for PDF conversion with the following requirements:
+        'Sample of an A4 `Payslip` PDF Report (generated from XSL-FO)',
+      promptText: `Create a clean, professional FreeMarker template in XSL-FO (XSL Formatting Objects) format for a payslip report. 
+The template should be designed for processing with Apache FOP and must generate a single-page PDF document.
 
-- Fixed-Width Layout: All layout dimensions must be specified using absolute pixel values (\`px\`). Do not use percentages, responsive units (e.g., \`%\`, \`em\`, or \`rem\`), or any other relative measurement units.
-- Consistent Spacing: Apply explicit margin and padding values for every HTML element to ensure consistent spacing throughout the layout. Avoid using default or unspecified spacing.
-- Explicit Dimensions: Define fixed dimensions (in pixel values) for all containers, elements, and components. No container should have undefined or relative dimensions.
-- Strategic Page Breaks: Use CSS \`page-break-before\`, \`page-break-after\`, and \`page-break-inside\` properties strategically to control where page breaks occur in the PDF output.
-- Print-Optimized Colors: Avoid subtle gradients and ensure all colors have sufficient contrast for print clarity. Use solid colors whenever possible.
-- Font Consistency: Use consistent fonts throughout the document, and define appropriate font-family fallbacks. Avoid font variations that might not be supported in PDF rendering.
-- Proper Box-Sizing: Set \`box-sizing: border-box\` for all elements to ensure predictable element dimensions and alignment in the layout.
-- Close All HTML Tags: All HTML tags must be properly closed, including self-closing tags like \`<br>\` and \`<img>\`. Do not leave any tag unclosed or partially closed.
-- Use \`&amp;\` Instead of \`&\`: Replace every instance of the raw \`&\` character with the encoded entity \`&amp;\`. The raw \`&\` character must never appear in the HTML code.
-- Avoid Using \`&nbsp;\`: Do not use the non-breaking space entity \`&nbsp;\`. Replace it with alternative spacing methods if needed.
-- Absolute Measurements Only: All measurements (e.g., width, height, font-size) must use absolute units such as \`px\` or \`pt\`. Relative units like \`%\`, \`em\`, or \`rem\` are strictly prohibited.`,
-      tags: ['optimization', 'layout', 'core'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PAGE_SIZE_A4_PORTRAIT',
-      title: 'Set PDF Page Size: A4 Portrait',
-      description:
-        'Instructs the AI to format the document as A4 portrait with standard margins.',
-      promptText: `Format the document as A4 portrait with standard margins.`,
-      tags: ['format', 'a4', 'portrait'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PAGE_SIZE_US_LETTER',
-      title: 'Set PDF Page Size: US Letter',
-      description:
-        'Instructs the AI to format the document as US Letter size with standard margins.',
-      promptText: `Format the document as US Letter size with standard margins.`,
-      tags: ['format', 'letter', 'us-size'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_MARGINS_NARROW',
-      title: 'Set PDF Margins: Narrow',
-      description:
-        'Instructs the AI to apply narrow margins (1.5cm) to maximize content area.',
-      promptText: `Apply narrow margins (1.5cm) to maximize content area.`,
-      tags: ['margins', 'narrow', 'layout'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_MARGINS_WIDE',
-      title: 'Set PDF Margins: Wide',
-      description:
-        'Instructs the AI to apply wide margins (3cm) for a more formal appearance.',
-      promptText: `Apply wide margins (3cm) for a more formal document appearance.`,
-      tags: ['margins', 'wide', 'formal'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PAGE_NUMBERING_BOTTOM_CENTER_X_OF_Y',
-      title: 'Add Page Numbering: Bottom Center (X of Y)',
-      description:
-        'Adds page numbering at the bottom center showing "Page X of Y".',
-      promptText: `Add page numbering at the bottom center of each page showing "Page X of Y".`,
-      tags: ['numbering', 'pagination', 'footer'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PAGE_NUMBERING_BOTTOM_RIGHT_CURRENT',
-      title: 'Add Page Numbering: Bottom Right (Current Page)',
-      description:
-        'Adds page numbering at the bottom right showing only the current page number.',
-      promptText: `Add page numbering at the bottom right corner showing only the current page number.`,
-      tags: ['numbering', 'pagination', 'footer'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PAGE_NUMBERING_START_SECOND_PAGE',
-      title: 'Start Page Numbering from Second Page',
-      description:
-        'Starts page numbering from the second page, leaving the first page unnumbered.',
-      promptText: `Start page numbering from the second page, leaving the first page without a number.`,
-      tags: ['numbering', 'pagination', 'multi-page'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PAGE_NUMBERING_SECTION_PREFIX',
-      title: 'Add Page Numbering: With Section Prefix',
-      description:
-        'Adds page numbering with a section prefix (e.g., "Section 1, Page 2").',
-      promptText: `Add page numbering with section prefix, like "Section 1, Page 2".`,
-      tags: ['numbering', 'sections', 'organization'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_HEADER_CONSISTENT_LOGO_TITLE',
-      title: 'Add Header: Consistent Logo & Title',
-      description:
-        'Adds a consistent header on each page with company logo and document title.',
-      promptText: `Add a consistent header on each page containing the company logo and document title.`,
-      tags: ['header', 'branding', 'consistency'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_FOOTER_CONSISTENT_CONTACT_COPYRIGHT',
-      title: 'Add Footer: Consistent Contact & Copyright',
-      description:
-        'Includes a footer on each page with contact information and copyright notice.',
-      promptText: `Include a footer on each page with contact information and copyright notice.`,
-      tags: ['footer', 'legal', 'contact'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_HEADER_DIFFERENT_FIRST_PAGE',
-      title: 'Set Header: Different First Page',
-      description:
-        'Applies a different header on the first page compared to subsequent pages.',
-      promptText: `Apply a different header on the first page than on subsequent pages.`,
-      tags: ['header', 'first-page', 'styling'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_HEADER_TITLE_FOOTER_DATE',
-      title: 'Set Header/Footer: Title & Date',
-      description:
-        'Includes the document title in the header and the date in the footer.',
-      promptText: `Include the document title in the header and the date in the footer.`,
-      tags: ['header', 'footer', 'metadata'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_HEADER_TOC',
-      title: 'Add Header: Table of Contents',
-      description:
-        'Includes a table of contents in the header for navigation (requires specific implementation).',
-      promptText: `Include a table of contents in the header for easy navigation.`,
-      tags: ['toc', 'navigation', 'header'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_WATERMARK',
-      title: 'Add Watermark',
-      description: 'Includes a watermark in the background of each page.',
-      promptText: `Include a watermark in the background of each page.`,
-      tags: ['watermark', 'security', 'background'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_FOOTER_DISCLAIMER',
-      title: 'Add Footer: Disclaimer',
-      description: 'Includes a disclaimer in the footer of each page.',
-      promptText: `Include a disclaimer in the footer of each page.`,
-      tags: ['footer', 'legal', 'disclaimer'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_HEADER_DATE_FOOTER_PAGENUM',
-      title: 'Set Header/Footer: Date & Page Numbers',
-      description:
-        'Includes the document date in the header and page numbers in the footer.',
-      promptText: `Include the document date in the header and page numbers in the footer.`,
-      tags: ['header', 'footer', 'metadata'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_MULTIPAGE_BREAK_HANDLING',
-      title: 'Handle Multi-Page: Page Breaks',
-      description:
-        'Ensures proper page break handling, keeping related content together.',
-      promptText: `Ensure proper page break handling for a multi-page document, keeping related content together.`,
-      tags: ['page-breaks', 'multi-page', 'content'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_MULTIPAGE_TABLE_HEADERS',
-      title: 'Handle Multi-Page: Repeat Table Headers',
-      description:
-        'Repeats table headers on each new page for tables spanning multiple pages.',
-      promptText: `For tables that span multiple pages, repeat the table headers on each new page.`,
-      tags: ['tables', 'headers', 'multi-page'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_MULTIPAGE_WIDOWS_ORPHANS',
-      title: 'Handle Multi-Page: Prevent Widows/Orphans',
-      description:
-        'Prevents single lines of a paragraph at the start or end of pages.',
-      promptText: `Prevent widows and orphans (single lines at start/end of pages) throughout the document.`,
-      tags: ['typography', 'readability', 'formatting'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_MULTIPAGE_SECTIONS',
-      title: 'Handle Multi-Page: Sections',
-      description:
-        'Sets up sections with different formatting, each starting on a new page.',
-      promptText: `Set up sections with different formatting, each starting on a new page.`,
-      tags: ['sections', 'organization', 'formatting'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_TABLE_PAGINATION_HEADERS',
-      title: 'Handle Tables: Pagination & Headers',
-      description:
-        'Creates tables that paginate correctly across pages with repeating headers.',
-      promptText: `Create tables that properly paginate across multiple pages with repeating headers.`,
-      tags: ['tables', 'pagination', 'headers'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_TABLE_FINANCIAL_FORMATTING',
-      title: 'Handle Tables: Financial Formatting',
-      description:
-        'Formats financial tables with right-aligned currency values.',
-      promptText: `Format financial tables with right-aligned monetary values and proper currency symbols.`,
-      tags: ['financial', 'tables', 'currency'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_TABLE_ALTERNATING_ROWS',
-      title: 'Handle Tables: Alternating Row Colors',
-      description:
-        'Designs data tables with alternating row colors suitable for printing.',
-      promptText: `Design data tables with alternating row colors that print properly.`,
-      tags: ['tables', 'visual', 'readability'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_TABLE_FIXED_COLUMNS',
-      title: 'Handle Tables: Fixed-Width Columns',
-      description:
-        'Uses fixed-width columns for tables to maintain alignment across pages.',
-      promptText: `Use fixed-width columns for tables to maintain alignment across pages.`,
-      tags: ['tables', 'alignment', 'layout'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_TABLE_BORDERS_PADDING',
-      title: 'Handle Tables: Borders & Padding',
-      description:
-        'Ensures tables have proper borders and padding for readability.',
-      promptText: `Ensure tables have proper borders and padding for readability.`,
-      tags: ['tables', 'borders', 'spacing'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_TABLE_CSS_STYLING',
-      title: 'Handle Tables: Use CSS for Styling',
-      description: 'Uses CSS for table styling instead of HTML attributes.',
-      promptText: `Use CSS for table styling instead of relying on HTML attributes.`,
-      tags: ['tables', 'css', 'styling'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PRINT_HIDE_SCREEN_ELEMENTS',
-      title: 'Print Styling: Hide Screen Elements',
-      description:
-        'Hides elements meant only for screen display when printing to PDF.',
-      promptText: `Hide screen-only elements when printing to PDF.`,
-      tags: ['printing', 'visibility', 'optimization'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PRINT_ADJUST_LAYOUT',
-      title: 'Print Styling: Adjust Layout/Visibility',
-      description:
-        'Uses print-specific styles to adjust layout and visibility for PDF output.',
-      promptText: `Use print-specific styles to adjust layout and visibility of elements.`,
-      tags: ['printing', 'layout', 'visibility'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PRINT_EMBED_IMAGES',
-      title: 'Print Styling: Embed Images',
-      description:
-        'Ensures all images are embedded in the document for proper printing.',
-      promptText: `Ensure all images are embedded in the document for proper printing.`,
-      tags: ['images', 'embedding', 'printing'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PRINT_HIGH_RES_IMAGES',
-      title: 'Print Styling: High-Resolution Images',
-      description: 'Uses high-resolution images for better print quality.',
-      promptText: `Use high-resolution images for better print quality.`,
-      tags: ['images', 'resolution', 'quality'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PRINT_AVOID_BACKGROUNDS',
-      title: 'Print Styling: Avoid Backgrounds',
-      description:
-        'Avoids background images or colors that may not print well.',
-      promptText: `Avoid using background images or colors that may not print well.`,
-      tags: ['backgrounds', 'printing', 'optimization'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PRINT_STYLE_LINKS',
-      title: 'Print Styling: Style Hyperlinks',
-      description: 'Ensures hyperlinks are styled appropriately for print.',
-      promptText: `Ensure all hyperlinks are styled appropriately for print.`,
-      tags: ['hyperlinks', 'styling', 'printing'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PRINT_MEDIA_QUERIES',
-      title: 'Print Styling: Use Media Queries',
-      description:
-        'Uses CSS media queries (@media print) to apply print-specific styles.',
-      promptText: `Use CSS media queries to apply print-specific styles.`,
-      tags: ['media-queries', 'css', 'printing'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PRINT_LINK_LAYOUT',
-      title: 'Print Styling: Ensure Link Layout',
-      description:
-        'Ensures hyperlinks appear properly without disrupting the layout.',
-      promptText: `Ensure all hyperlinks appear properly in the PDF without disrupting the layout.`,
-      tags: ['hyperlinks', 'layout', 'printing'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_PRINT_BACKGROUNDS_CORRECTLY',
-      title: 'Print Styling: Print Backgrounds Correctly',
-      description: 'Makes sure background colors and images print correctly.',
-      promptText: `Make sure background colors and images print correctly in the PDF.`,
-      tags: ['backgrounds', 'colors', 'printing'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_FONT_WEBSAFE_EMBED',
-      title: 'Font Handling: Web-Safe or Embed',
-      description:
-        'Uses only web-safe fonts or embeds custom fonts for consistent rendering.',
-      promptText: `Use only web-safe fonts or embed custom fonts properly to ensure consistent rendering.`,
-      tags: ['fonts', 'embedding', 'consistency'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_FONT_OPTIMIZE_TEXT',
-      title: 'Font Handling: Optimize Text',
-      description:
-        'Optimizes text with proper line heights and character spacing for PDF.',
-      promptText: `Optimize text for PDF output with proper line heights and character spacing.`,
-      tags: ['typography', 'spacing', 'readability'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_FONT_SIZE_READABILITY',
-      title: 'Font Handling: Ensure Readability',
-      description:
-        'Ensures proper font sizing (min 10pt body text) for print readability.',
-      promptText: `Ensure proper font sizing for headability in print format (minimum 10pt for body text).`,
-      tags: ['fonts', 'size', 'readability'],
-      category: 'PDF Report Generation',
-    },
-    {
-      id: 'PDF_METADATA',
-      title: 'Include PDF Metadata',
-      description:
-        'Includes document metadata (title, author, subject) for PDF cataloging.',
-      promptText: `Include proper document metadata (title, author, subject) for PDF cataloging.`,
-      tags: ['metadata', 'seo', 'cataloging'],
-      category: 'PDF Report Generation',
+The generated XSL-FO template must fulfill the following requirements:
+
+1.  **Document Structure & Page Layout**:
+    *   The root element must be \`<fo:root xmlns:fo="http://www.w3.org/1999/XSL/Format">\`.
+    *   Define a single \`<fo:simple-page-master>\` for a standard A4 portrait page (\`page-height="29.7cm"\`, \`page-width="21cm"\`).
+    *   Set page margins to \`1.5cm\` on the left and right, and \`1cm\` on the top and bottom.
+    *   The entire content must be within a single \`<fo:page-sequence>\` and flow into the \`xsl-region-body\`.
+
+2.  **Content Sections**:
+    The payslip must be clearly organized into the following sections using \`fo:block\` and \`fo:table\` elements:
+    *   **Company Information**: Centered block at the top for the company name (bold), address, and phone number.
+    *   **Report Header**: A clear, centered title, such as "STATEMENT OF MONTHLY INCOME," in a larger, bold font.
+    *   **Employee Details**: A two-column table with a fixed layout (\`table-layout="fixed"\`) to display:
+        *   Employee Name
+        *   Employee ID
+        *   Social Security #
+        *   Pay Period
+        *   Department
+        *   Position/Grade
+    *   **Earnings & Deductions**: A single, four-column table with a fixed layout to display earnings and deductions side-by-side.
+        *   **Header**: The table must have a header row with the titles: "EARNINGS", "AMOUNT", "TAXES/DEDUCTIONS", "AMOUNT".
+        *   **Body**: List individual items like "Basic Salary" and "Bonuses" under Earnings, and "Federal Tax," "Social Security Tax," etc., under Taxes/Deductions. Use empty cells on the left to align with the longer list of deductions on the right.
+        *   **Footer**: The table must have a footer row summarizing "Total Earnings" and "Total Deductions".
+    *   **Net Pay Summary**: A block or container showing the final "Net Pay". This should be right-aligned on the page.
+    *   **Signatures**: A two-column table at the bottom with top borders to create signature lines for the "Employee" and "Director".
+
+3.  **Styling and Formatting (XSL-FO Properties)**:
+    *   **Fonts**: Use standard fonts. Specify \`font-weight="bold"\` for headers and labels. Use \`font-size\` with absolute units (e.g., \`10pt\`, \`16pt\`).
+    *   **Spacing**: Use \`space-after\`, \`space-before\`, and \`padding\` properties with absolute units (e.g., \`10pt\`, \`5pt\`) to ensure consistent spacing. Do not rely on default spacing.
+    *   **Borders**: Use solid black 1pt borders for all table cells (\`border="1pt solid black"\`).
+    *   **Alignment**: Use \`text-align\` property for text alignment (\`center\`, \`end\`). Financial amounts should be right-aligned (\`text-align="end"\`).
+    *   **Colors**: Use high-contrast, print-friendly colors. The header and footer rows of the main table should have a light gray background (e.g., \`background-color="#f2f2f2"\`).
+
+4.  **FreeMarker Integration**:
+    *   Use FreeMarker placeholders \`\${colN}\` (e.g., \`\${col0}\`, \`\${col1}\`, etc.) for all dynamic data fields.
+    *   Include a conditional check for the "Pay Period" field to format it as a date if possible: \`<#if col3?is_date>\${col3?string("MM/dd/yy")}<#else>\${col3}</#if>\`.
+
+5.  **XML Validity**:
+    *   Ensure the entire output is a well-formed XML document. All tags must be properly closed.
+
+**Return a single, complete, and self-contained XSL-FO FreeMarker template (\`.ftl\`) that strictly adheres to all the things mentioned above.`,
+      tags: ['payslip', 'sample-xslfo2pdf'],
+      category: 'PDF Generation (from XSL-FO)',
     },
     {
       id: 'PDF_COMBINED_PAYSLIP_EXAMPLE',
@@ -932,10 +619,434 @@ PDF conversion:**
 **Return fully self-contained HTML code with inline CSS—no partial or snippet formats—and
 ensure the design aligns with both the requirements of the payslip template and
 PDF conversion rules.**`,
-      tags: ['payslip', 'comprehensive', 'example'],
-      category: 'PDF Report Generation',
+      tags: ['payslip', 'comprehensive', 'sample-html2pdf'],
+      category: 'PDF Generation (from HTML)',
     },
+    {
+      id: 'PDF_SAMPLE_A4_ORDER_SUMMARY',
+      title: 'Sample of an A4 `Order Summary` PDF Report (generated from HTML)',
+      description:
+        'Sample of an A4 `Order Summary` PDF Report (generated from HTML)',
+      promptText: `**Role:** You are an expert web developer specializing in creating pixel-perfect HTML templates for generating professional PDF documents.
 
+**Objective:** Generate a complete, self-contained HTML template with embedded CSS to render a professional A4-sized **Order Summary**. This template will be used by 
+a Java-based rendering engine to convert the XHTML into a PDF, so it must adhere to strict formatting rules for print output.
+
+**Data Placeholders:**
+The template must use two types of placeholders:
+
+1.  **Dynamic Data Placeholders (for template engine):** These will be populated at runtime. Use the exact \`\${FieldName}\` syntax.
+    *   \`\${OrderID}\`
+    *   \`\${OrderDate}\`
+    *   \`\${RequiredDate}\`
+    *   \`\${ShippedDate}\`
+    *   \`\${CustomerName}\`
+    *   \`\${EmployeeName}\`
+    *   \`\${TotalAmount}\`
+
+2.  **Static Configuration Placeholders (for manual replacement):** These are meant to be replaced with hardcoded values directly in the template file. Use the exact \`[[...]]\` syntax.
+    *   \`[[PUT_YOUR_COMPANY_NAME_HERE]]\`
+    *   \`[[PUT_YOUR_COMPANY_ADDRESS_HERE]]\`
+    *   \`[[PUT_YOUR_COMPANY_CONTACT_INFO_HERE]]\`
+
+**Layout Requirements:**
+1.  **Header:**
+    *   Top-left: Your company details (\`[[PUT_YOUR_COMPANY_NAME_HERE]]\`, \`[[PUT_YOUR_COMPANY_ADDRESS_HERE]]\`, \`[[PUT_YOUR_COMPANY_CONTACT_INFO_HERE]]\`).
+    *   Top-right: A large "ORDER SUMMARY" title, followed by Order # (\`\${OrderID}\`), Order Date (\`\${OrderDate}\`), Required Date (\`\${RequiredDate}\`), and Shipped Date (\`\${ShippedDate}\`).
+2.  **Customer Information:**
+    *   A section below the header for "BILL TO" containing only the customer's name (\`\${CustomerName}\`).
+3.  **Total Amount Section:**
+    *   Create a clean and prominent section in the main body.
+    *   It should feature a single, clear line item: "Order Total".
+    *   Align the "Order Total" label to the left and the \`\${TotalAmount}\` value to the right. Make the total amount large and bold.
+4.  **Footer:**
+    *   A section at the bottom of the page for any notes, a "Thank you for your business!" message, and the sales representative's name (\`\${EmployeeName}\`).
+
+**CRITICAL Technical & Styling Constraints:**
+You must follow these rules precisely to ensure proper PDF rendering.
+
+1.  **Well-Formed XHTML:** The entire output must be valid XHTML. All tags must be properly nested and closed (e.g., \`<br/>\`, \`<hr/>\`).
+2.  **Character Encoding:** Use \`&amp;\` for all ampersand characters. Do not use the raw \`&\` character.
+3.  **Internal CSS:** All CSS must be placed within a \`<style type="text/css">\` tag in the \`<head>\` section.
+4.  **A4 Page Setup:** Use the \`@page\` CSS rule to define the document size as A4 portrait and set margins (e.g., \`size: A4 portrait; margin: 25mm;\`).
+5.  **Absolute Units ONLY:** All measurements for layout, fonts, margins, padding, and borders **must** be in absolute units (\`px\` or \`pt\`). **DO NOT USE** relative units like \`%\`, \`em\`, or \`rem\`.
+6.  **Box Model:** Apply \`* { box-sizing: border-box; }\` at the beginning of your CSS for predictable layout calculations.
+7.  **Fixed Layout:** Use \`div\` elements with fixed pixel widths for the main layout structure. Use \`display: table;\` and \`display: table-cell;\` for creating columns instead of floats to ensure robust alignment.
+8.  **Font Specification:** Use a common, print-safe font stack like \`font-family: Arial, Helvetica, sans-serif;\`. Define all font sizes in \`pt\`.
+9.  **Color:** Use high-contrast, solid colors (e.g., \`#000000\` for text).
+10. **Spacing:** Do not use \`&nbsp;\` for spacing. Define all spacing explicitly using \`margin\` and \`padding\` with absolute \`px\` or \`pt\` values.
+11. **Page Break Control:** Apply \`page-break-inside: avoid;\` to the main content containers.
+
+Please provide the complete, single HTML file as the final output, ready for rendering.`,
+      tags: ['format-a4-portrait', 'order-summary', 'sample-html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_CORE_OPTIMIZATION',
+      title: 'Core PDF Optimization Instructions',
+      description:
+        'Base instructions to ensure HTML is optimized for PDF conversion (fixed layout, absolute units, etc.).',
+      promptText: `Generate HTML optimized for PDF conversion with the following requirements:
+
+- Fixed-Width Layout: All layout dimensions must be specified using absolute pixel values (\`px\`). Do not use percentages, responsive units (e.g., \`%\`, \`em\`, or \`rem\`), or any other relative measurement units.
+- Consistent Spacing: Apply explicit margin and padding values for every HTML element to ensure consistent spacing throughout the layout. Avoid using default or unspecified spacing.
+- Explicit Dimensions: Define fixed dimensions (in pixel values) for all containers, elements, and components. No container should have undefined or relative dimensions.
+- Strategic Page Breaks: Use CSS \`page-break-before\`, \`page-break-after\`, and \`page-break-inside\` properties strategically to control where page breaks occur in the PDF output.
+- Print-Optimized Colors: Avoid subtle gradients and ensure all colors have sufficient contrast for print clarity. Use solid colors whenever possible.
+- Font Consistency: Use consistent fonts throughout the document, and define appropriate font-family fallbacks. Avoid font variations that might not be supported in PDF rendering.
+- Proper Box-Sizing: Set \`box-sizing: border-box\` for all elements to ensure predictable element dimensions and alignment in the layout.
+- Close All HTML Tags: All HTML tags must be properly closed, including self-closing tags like \`<br>\` and \`<img>\`. Do not leave any tag unclosed or partially closed.
+- Use \`&amp;\` Instead of \`&\`: Replace every instance of the raw \`&\` character with the encoded entity \`&amp;\`. The raw \`&\` character must never appear in the HTML code.
+- Avoid Using \`&nbsp;\`: Do not use the non-breaking space entity \`&nbsp;\`. Replace it with alternative spacing methods if needed.
+- Absolute Measurements Only: All measurements (e.g., width, height, font-size) must use absolute units such as \`px\` or \`pt\`. Relative units like \`%\`, \`em\`, or \`rem\` are strictly prohibited.`,
+      tags: ['optimization', 'layout', 'core', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PAGE_SIZE_A4_PORTRAIT',
+      title: 'Set PDF Page Size: A4 Portrait',
+      description:
+        'Instructs the AI to format the document as A4 portrait with standard margins.',
+      promptText: `Format the document as A4 portrait with standard margins.`,
+      tags: ['format-a4-portrait', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PAGE_SIZE_US_LETTER',
+      title: 'Set PDF Page Size: US Letter',
+      description:
+        'Instructs the AI to format the document as US Letter size with standard margins.',
+      promptText: `Format the document as US Letter size with standard margins.`,
+      tags: ['format-letter-us-size', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_MARGINS_NARROW',
+      title: 'Set PDF Margins: Narrow',
+      description:
+        'Instructs the AI to apply narrow margins (1.5cm) to maximize content area.',
+      promptText: `Apply narrow margins (1.5cm) to maximize content area.`,
+      tags: ['margins', 'narrow', 'layout', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_MARGINS_WIDE',
+      title: 'Set PDF Margins: Wide',
+      description:
+        'Instructs the AI to apply wide margins (3cm) for a more formal appearance.',
+      promptText: `Apply wide margins (3cm) for a more formal document appearance.`,
+      tags: ['margins', 'wide', 'formal', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PAGE_NUMBERING_BOTTOM_CENTER_X_OF_Y',
+      title: 'Add Page Numbering: Bottom Center (X of Y)',
+      description:
+        'Adds page numbering at the bottom center showing "Page X of Y".',
+      promptText: `Add page numbering at the bottom center of each page showing "Page X of Y".`,
+      tags: ['numbering', 'pagination', 'footer', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PAGE_NUMBERING_BOTTOM_RIGHT_CURRENT',
+      title: 'Add Page Numbering: Bottom Right (Current Page)',
+      description:
+        'Adds page numbering at the bottom right showing only the current page number.',
+      promptText: `Add page numbering at the bottom right corner showing only the current page number.`,
+      tags: ['numbering', 'pagination', 'footer', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PAGE_NUMBERING_START_SECOND_PAGE',
+      title: 'Start Page Numbering from Second Page',
+      description:
+        'Starts page numbering from the second page, leaving the first page unnumbered.',
+      promptText: `Start page numbering from the second page, leaving the first page without a number.`,
+      tags: ['numbering', 'pagination', 'multi-page', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PAGE_NUMBERING_SECTION_PREFIX',
+      title: 'Add Page Numbering: With Section Prefix',
+      description:
+        'Adds page numbering with a section prefix (e.g., "Section 1, Page 2").',
+      promptText: `Add page numbering with section prefix, like "Section 1, Page 2".`,
+      tags: ['numbering', 'sections', 'organization', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_HEADER_CONSISTENT_LOGO_TITLE',
+      title: 'Add Header: Consistent Logo & Title',
+      description:
+        'Adds a consistent header on each page with company logo and document title.',
+      promptText: `Add a consistent header on each page containing the company logo and document title.`,
+      tags: ['header', 'branding', 'consistency', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_FOOTER_CONSISTENT_CONTACT_COPYRIGHT',
+      title: 'Add Footer: Consistent Contact & Copyright',
+      description:
+        'Includes a footer on each page with contact information and copyright notice.',
+      promptText: `Include a footer on each page with contact information and copyright notice.`,
+      tags: ['footer', 'legal', 'contact', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_HEADER_DIFFERENT_FIRST_PAGE',
+      title: 'Set Header: Different First Page',
+      description:
+        'Applies a different header on the first page compared to subsequent pages.',
+      promptText: `Apply a different header on the first page than on subsequent pages.`,
+      tags: ['header', 'first-page', 'styling', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_HEADER_TITLE_FOOTER_DATE',
+      title: 'Set Header/Footer: Title & Date',
+      description:
+        'Includes the document title in the header and the date in the footer.',
+      promptText: `Include the document title in the header and the date in the footer.`,
+      tags: ['header', 'footer', 'metadata', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_HEADER_TOC',
+      title: 'Add Header: Table of Contents',
+      description:
+        'Includes a table of contents in the header for navigation (requires specific implementation).',
+      promptText: `Include a table of contents in the header for easy navigation.`,
+      tags: ['toc', 'navigation', 'header', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_WATERMARK',
+      title: 'Add Watermark',
+      description: 'Includes a watermark in the background of each page.',
+      promptText: `Include a watermark in the background of each page.`,
+      tags: ['watermark', 'security', 'background', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_FOOTER_DISCLAIMER',
+      title: 'Add Footer: Disclaimer',
+      description: 'Includes a disclaimer in the footer of each page.',
+      promptText: `Include a disclaimer in the footer of each page.`,
+      tags: ['footer', 'legal', 'disclaimer', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_HEADER_DATE_FOOTER_PAGENUM',
+      title: 'Set Header/Footer: Date & Page Numbers',
+      description:
+        'Includes the document date in the header and page numbers in the footer.',
+      promptText: `Include the document date in the header and page numbers in the footer.`,
+      tags: ['header', 'footer', 'metadata', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_MULTIPAGE_BREAK_HANDLING',
+      title: 'Handle Multi-Page: Page Breaks',
+      description:
+        'Ensures proper page break handling, keeping related content together.',
+      promptText: `Ensure proper page break handling for a multi-page document, keeping related content together.`,
+      tags: ['page-breaks', 'multi-page', 'content', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_MULTIPAGE_TABLE_HEADERS',
+      title: 'Handle Multi-Page: Repeat Table Headers',
+      description:
+        'Repeats table headers on each new page for tables spanning multiple pages.',
+      promptText: `For tables that span multiple pages, repeat the table headers on each new page.`,
+      tags: ['tables', 'headers', 'multi-page', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_MULTIPAGE_WIDOWS_ORPHANS',
+      title: 'Handle Multi-Page: Prevent Widows/Orphans',
+      description:
+        'Prevents single lines of a paragraph at the start or end of pages.',
+      promptText: `Prevent widows and orphans (single lines at start/end of pages) throughout the document.`,
+      tags: ['typography', 'readability', 'formatting', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_MULTIPAGE_SECTIONS',
+      title: 'Handle Multi-Page: Sections',
+      description:
+        'Sets up sections with different formatting, each starting on a new page.',
+      promptText: `Set up sections with different formatting, each starting on a new page.`,
+      tags: ['sections', 'organization', 'formatting', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_TABLE_PAGINATION_HEADERS',
+      title: 'Handle Tables: Pagination & Headers',
+      description:
+        'Creates tables that paginate correctly across pages with repeating headers.',
+      promptText: `Create tables that properly paginate across multiple pages with repeating headers.`,
+      tags: ['tables', 'pagination', 'headers', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_TABLE_FINANCIAL_FORMATTING',
+      title: 'Handle Tables: Financial Formatting',
+      description:
+        'Formats financial tables with right-aligned currency values.',
+      promptText: `Format financial tables with right-aligned monetary values and proper currency symbols.`,
+      tags: ['financial', 'tables', 'currency', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_TABLE_ALTERNATING_ROWS',
+      title: 'Handle Tables: Alternating Row Colors',
+      description:
+        'Designs data tables with alternating row colors suitable for printing.',
+      promptText: `Design data tables with alternating row colors that print properly.`,
+      tags: ['tables', 'visual', 'readability', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_TABLE_FIXED_COLUMNS',
+      title: 'Handle Tables: Fixed-Width Columns',
+      description:
+        'Uses fixed-width columns for tables to maintain alignment across pages.',
+      promptText: `Use fixed-width columns for tables to maintain alignment across pages.`,
+      tags: ['tables', 'alignment', 'layout', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_TABLE_BORDERS_PADDING',
+      title: 'Handle Tables: Borders & Padding',
+      description:
+        'Ensures tables have proper borders and padding for readability.',
+      promptText: `Ensure tables have proper borders and padding for readability.`,
+      tags: ['tables', 'borders', 'spacing', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_TABLE_CSS_STYLING',
+      title: 'Handle Tables: Use CSS for Styling',
+      description: 'Uses CSS for table styling instead of HTML attributes.',
+      promptText: `Use CSS for table styling instead of relying on HTML attributes.`,
+      tags: ['tables', 'css', 'styling', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PRINT_HIDE_SCREEN_ELEMENTS',
+      title: 'Print Styling: Hide Screen Elements',
+      description:
+        'Hides elements meant only for screen display when printing to PDF.',
+      promptText: `Hide screen-only elements when printing to PDF.`,
+      tags: ['printing', 'visibility', 'optimization', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PRINT_ADJUST_LAYOUT',
+      title: 'Print Styling: Adjust Layout/Visibility',
+      description:
+        'Uses print-specific styles to adjust layout and visibility for PDF output.',
+      promptText: `Use print-specific styles to adjust layout and visibility of elements.`,
+      tags: ['printing', 'layout', 'visibility', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PRINT_EMBED_IMAGES',
+      title: 'Print Styling: Embed Images',
+      description:
+        'Ensures all images are embedded in the document for proper printing.',
+      promptText: `Ensure all images are embedded in the document for proper printing.`,
+      tags: ['images', 'embedding', 'printing', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PRINT_HIGH_RES_IMAGES',
+      title: 'Print Styling: High-Resolution Images',
+      description: 'Uses high-resolution images for better print quality.',
+      promptText: `Use high-resolution images for better print quality.`,
+      tags: ['images', 'resolution', 'quality', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PRINT_AVOID_BACKGROUNDS',
+      title: 'Print Styling: Avoid Backgrounds',
+      description:
+        'Avoids background images or colors that may not print well.',
+      promptText: `Avoid using background images or colors that may not print well.`,
+      tags: ['backgrounds', 'printing', 'optimization', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PRINT_STYLE_LINKS',
+      title: 'Print Styling: Style Hyperlinks',
+      description: 'Ensures hyperlinks are styled appropriately for print.',
+      promptText: `Ensure all hyperlinks are styled appropriately for print.`,
+      tags: ['hyperlinks', 'styling', 'printing', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PRINT_MEDIA_QUERIES',
+      title: 'Print Styling: Use Media Queries',
+      description:
+        'Uses CSS media queries (@media print) to apply print-specific styles.',
+      promptText: `Use CSS media queries to apply print-specific styles.`,
+      tags: ['media-queries', 'css', 'printing', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PRINT_LINK_LAYOUT',
+      title: 'Print Styling: Ensure Link Layout',
+      description:
+        'Ensures hyperlinks appear properly without disrupting the layout.',
+      promptText: `Ensure all hyperlinks appear properly in the PDF without disrupting the layout.`,
+      tags: ['hyperlinks', 'layout', 'printing', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_PRINT_BACKGROUNDS_CORRECTLY',
+      title: 'Print Styling: Print Backgrounds Correctly',
+      description: 'Makes sure background colors and images print correctly.',
+      promptText: `Make sure background colors and images print correctly in the PDF.`,
+      tags: ['backgrounds', 'colors', 'printing', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_FONT_WEBSAFE_EMBED',
+      title: 'Font Handling: Web-Safe or Embed',
+      description:
+        'Uses only web-safe fonts or embeds custom fonts for consistent rendering.',
+      promptText: `Use only web-safe fonts or embed custom fonts properly to ensure consistent rendering.`,
+      tags: ['fonts', 'embedding', 'consistency', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_FONT_OPTIMIZE_TEXT',
+      title: 'Font Handling: Optimize Text',
+      description:
+        'Optimizes text with proper line heights and character spacing for PDF.',
+      promptText: `Optimize text for PDF output with proper line heights and character spacing.`,
+      tags: ['typography', 'spacing', 'readability', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_FONT_SIZE_READABILITY',
+      title: 'Font Handling: Ensure Readability',
+      description:
+        'Ensures proper font sizing (min 10pt body text) for print readability.',
+      promptText: `Ensure proper font sizing for headability in print format (minimum 10pt for body text).`,
+      tags: ['fonts', 'size', 'readability', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
+    {
+      id: 'PDF_METADATA',
+      title: 'Include PDF Metadata',
+      description:
+        'Includes document metadata (title, author, subject) for PDF cataloging.',
+      promptText: `Include proper document metadata (title, author, subject) for PDF cataloging.`,
+      tags: ['metadata', 'seo', 'cataloging', 'html2pdf'],
+      category: 'PDF Generation (from HTML)',
+    },
     // --- Excel Report Generation ---
     {
       id: 'EXCEL_TEMPLATE_GENERATOR',
@@ -1228,38 +1339,349 @@ Please provide:
 
     // --- Script Writing Assistance ---
     {
-      id: 'POWERSHELL_FILE_PROCESSING',
-      title: 'PowerShell File Processing Script',
+      id: 'GROOVY_SCRIPT_INPUT_SOURCE',
+      title:
+        'Groovy `Input Source` Script (Master-Details, Cross-Tab, KPI, etc.)',
       description:
-        'Generates a PowerShell script for automated file processing tasks',
-      promptText: `Create a PowerShell script that:
+        'Generates a Groovy script which can be used as `Input Source` in reports (Master-Details, Cross-Tab, KPIs, etc.)',
+      promptText: `You are an expert Groovy developer specializing in creating data processing scripts for a reporting tool called ReportBurster. 
+Your task is to write a complete Groovy script based on the user's business requirements.
 
-1. Monitors a specific folder for new PDF files
-2. When a new file is detected, processes it according to predefined rules
-3. Logs all operations to a log file
-4. Handles errors gracefully with appropriate notifications
-5. Includes detailed comments explaining each section of code
+**YOUR TASK:**
 
-Include proper parameter handling, error checking, and logging functionality. The script should be production-ready and follow PowerShell best practices.`,
-      tags: ['powershell', 'automation', 'file-handling'],
-      category: 'Script Writing Assistance',
-    },
-    {
-      id: 'BATCH_DATABASE_BACKUP',
-      title: 'Batch Database Backup Script',
-      description:
-        'Creates a Windows batch script for automating database backups',
-      promptText: `Create a Windows batch script (.bat) for automating database backups with the following requirements:
+Based on all the rules and examples below, write a complete Groovy script for the following business requirement. 
+Provide **only** the final Groovy script in a single Markdown code block, with no other text or explanation.
 
-1. Connect to a SQL Server database
-2. Create a backup with timestamp in the filename
-3. Compress the backup file to save space
-4. Implement retention policy (keep last 7 daily backups)
-5. Log all operations with timestamps
-6. Send email notification on completion or failure
+<BUSINESS_REQUIREMENT>
+[USER: PASTE YOUR PLAIN ENGLISH BUSINESS REQUIREMENT HERE]
+</BUSINESS_REQUIREMENT>
 
-The script should be robust, handle errors appropriately, and include comments explaining each major section.`,
-      tags: ['batch', 'backup', 'database'],
+This script will be used as the "Input Source" for a report. It runs within a Java application and has access to a context object named \`ctx\`. 
+A pre-configured \`groovy.sql.Sql\` instance is available as \`ctx.dbSql\` for database queries.
+
+**CRITICAL INSTRUCTIONS: You must follow these "Golden Rules" precisely.**
+
+1.  **The Script's One Job: Populate \`ctx.reportData\`**
+    *   The script's entire purpose is to create and assign a \`List<Map<String, Object>>\` to the \`ctx.reportData\` variable. This is the final output of the script.
+
+2.  **Think in Rows and Columns: \`List<Map>\` is Law**
+    *   The data structure must be a \`List\` of \`Map\`s.
+    *   The **\`List\`** represents the entire dataset (all the rows).
+    *   Each **\`Map\`** inside the list represents a single row of data.
+    *   The **\`Map\`'s keys** (which must be \`String\`s) become the column names available in the report template (e.g., \`\${OrderID}\`, \`$\{CustomerName}\`, etc.). Use \`LinkedHashMap\` if column order is important.
+
+3.  **Let the Database Do the Heavy Lifting**
+    *   **DO** use SQL \`JOIN\`, \`WHERE\`, \`GROUP BY\`, and aggregate functions (\`SUM()\`, \`AVG()\`, \`COUNT()\`) to pre-process data into a clean, minimal result set directly from the database.
+    *   **DON'T** pull thousands of raw rows into the script to loop through them and perform calculations that the database could have done much more efficiently.
+
+4.  **The Script Prepares, The Template Presents**
+    *   **DO** perform complex calculations, data lookups, and business logic inside the script to create the final, clean \`Map\` of data for each row. The template should be as simple as possible.
+    *   **DON'T** put complex conditional logic or calculations in the report template. Prepare the data fully in the script first.
+
+---
+
+**EXAMPLES OF HIGH-QUALITY SCRIPTS:**
+
+Here are examples of scripts that correctly follow these rules for different reporting scenarios.
+
+**Example 1: Master-Detail Report (like an invoice with line items)**
+*Goal: Fetch master records (invoices) and their related detail records (line items), combining them into a single data structure where details are a nested list.*
+
+\`\`\`groovy
+// Filename: scriptedReport_invoice.groovy
+// ... imports ...
+import java.math.BigDecimal
+import java.math.RoundingMode
+
+def dbSql = ctx.dbSql
+
+log.info("Starting scriptedReport_invoice.groovy...")
+
+// --- 1. Define SQL Queries ---
+def masterSql = """
+SELECT
+    O."OrderID",
+    O."OrderDate",
+    O."CustomerID",
+    C."CompanyName",
+    O."Freight"
+FROM "Orders" O
+JOIN "Customers" C ON O."CustomerID" = C."CustomerID"
+WHERE O."CustomerID" IN ('ALFKI', 'ANATR')  
+ORDER BY O."OrderID" 
+""" 
+
+def detailSql = """
+SELECT
+    OD."Quantity",
+    OD."UnitPrice",
+    OD."Discount",
+    P."ProductName"
+FROM "Order Details" OD
+JOIN "Products" P ON OD."ProductID" = P."ProductID"
+WHERE OD."OrderID" = ?
+ORDER BY P."ProductName"
+"""
+
+// --- 2. Fetch Data and Structure It ---
+def allInvoicesData = [] 
+
+try {
+    log.debug("Executing master query for customers ALFKI, ANATR...")
+    def masterRows = dbSql.rows(masterSql) 
+    log.info("Fetched {} master order rows.", masterRows.size())
+
+    masterRows.each { masterRow ->
+        def invoiceData = new LinkedHashMap<String, Object>()
+        invoiceData.putAll(masterRow)
+
+        def orderId = masterRow.OrderID
+        log.debug("Fetching details for OrderID: {}", orderId)
+
+        def detailRows = dbSql.rows(detailSql, orderId)
+        log.debug("Fetched {} detail rows for OrderID: {}", detailRows.size(), orderId)
+
+        def detailsList = []
+        detailRows.each { detailRow ->
+            def detailMap = new LinkedHashMap<String, Object>()
+            detailMap.putAll(detailRow)
+            detailsList.add(detailMap)
+        }
+        invoiceData.put("details", detailsList)
+
+        BigDecimal subtotal = BigDecimal.ZERO
+        detailsList.each { detail ->
+            BigDecimal price = detail.UnitPrice instanceof BigDecimal ? detail.UnitPrice : new BigDecimal(detail.UnitPrice.toString())
+            BigDecimal qty = new BigDecimal(detail.Quantity.toString())
+            BigDecimal discount = detail.Discount instanceof BigDecimal ? detail.Discount : new BigDecimal(detail.Discount.toString())
+            BigDecimal lineTotal = price.multiply(qty).multiply(BigDecimal.ONE.subtract(discount))
+            subtotal = subtotal.add(lineTotal)
+        }
+        BigDecimal freight = masterRow.Freight instanceof BigDecimal ? masterRow.Freight : new BigDecimal(masterRow.Freight.toString())
+        BigDecimal taxRate = new BigDecimal("0.08")
+        BigDecimal taxableAmount = subtotal.add(freight)
+        BigDecimal tax = taxableAmount.multiply(taxRate)
+        BigDecimal grandTotal = taxableAmount.add(tax)
+
+        invoiceData.put("Subtotal", subtotal.setScale(2, RoundingMode.HALF_UP).toString())
+        invoiceData.put("Tax", tax.setScale(2, RoundingMode.HALF_UP).toString())
+        invoiceData.put("GrandTotal", grandTotal.setScale(2, RoundingMode.HALF_UP).toString())
+
+        allInvoicesData.add(invoiceData)
+    }
+
+    // --- 3. Set Context Variables ---
+    ctx.reportData = allInvoicesData
+
+    if (!allInvoicesData.isEmpty()) {
+        ctx.reportColumnNames = new ArrayList<>(allInvoicesData.get(0).keySet().findAll { it != 'details' })
+    } else {
+        ctx.reportColumnNames = []
+    }
+    log.info("Finished scriptedReport_invoice.groovy. Prepared data for {} invoices.", ctx.reportData.size())
+
+} catch (Exception e) {
+    log.error("Error during script execution: {}", e.getMessage(), e)
+    throw e
+}
+\`\`\`
+
+**Example 2: Crosstab / Pivot Report**
+*Goal: Take transactional data and pivot it, turning unique values from a column (e.g., \`Country\`) into new columns in the output.*
+
+\`\`\`groovy
+// Filename: scriptedReport_categoryRegionCrosstabReport.groovy
+import groovy.sql.Sql
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.util.LinkedHashMap
+import java.util.HashSet
+import java.util.TreeSet
+
+def dbSql = ctx.dbSql 
+log.info("Starting scriptedReport_categoryRegionCrosstabReport.groovy...")
+
+def rawDataSql = """
+SELECT
+    C."CategoryName",
+    Cust."Country",
+    (OD."UnitPrice" * OD."Quantity" * (1 - OD."Discount")) AS LineSalesAmount
+FROM "Categories" C
+JOIN "Products" P ON C."CategoryID" = P."CategoryID"
+JOIN "Order Details" OD ON P."ProductID" = OD."ProductID"
+JOIN "Orders" O ON OD."OrderID" = O."OrderID"
+JOIN "Customers" Cust ON O."CustomerID" = Cust."CustomerID"
+WHERE Cust."Country" IS NOT NULL
+"""
+
+def salesByCategoryAndCountry = [:]
+def allCountries = new HashSet<String>()
+def crosstabData = []
+
+try {
+    def rawRows = dbSql.rows(rawDataSql)
+    if (!rawRows.isEmpty()) {
+        rawRows.each { row ->
+            String category = row.CategoryName
+            String country = row.Country
+            BigDecimal sales = row.LineSalesAmount instanceof BigDecimal ? row.LineSalesAmount : (row.LineSalesAmount != null ? new BigDecimal(row.LineSalesAmount.toString()) : BigDecimal.ZERO)
+            allCountries.add(country)
+            if (!salesByCategoryAndCountry.containsKey(category)) { salesByCategoryAndCountry[category] = [:] }
+            if (!salesByCategoryAndCountry[category].containsKey(country)) { salesByCategoryAndCountry[category][country] = BigDecimal.ZERO }
+            salesByCategoryAndCountry[category][country] += sales
+        }
+
+        def sortedCountries = new TreeSet<>(allCountries) 
+        salesByCategoryAndCountry.keySet().sort().each { categoryName ->
+            def categorySales = salesByCategoryAndCountry[categoryName]
+            def rowMap = new LinkedHashMap<String, Object>() 
+            rowMap.put("CategoryName", categoryName)
+            BigDecimal categoryTotalSales = BigDecimal.ZERO
+            sortedCountries.each { country ->
+                BigDecimal salesInCountry = categorySales.get(country, BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP) 
+                rowMap.put(country, salesInCountry) 
+                categoryTotalSales += salesInCountry
+            }
+            rowMap.put("TotalSales", categoryTotalSales.setScale(2, RoundingMode.HALF_UP)) 
+            crosstabData.add(rowMap)
+        }
+    }
+
+    ctx.reportData = crosstabData
+    if (!crosstabData.isEmpty()) {
+        ctx.reportColumnNames = new ArrayList<>(crosstabData.get(0).keySet())
+    } else {
+        ctx.reportColumnNames = []
+    }
+    log.info("Finished scriptedReport_categoryRegionCrosstabReport.groovy. Prepared data for {} categories.", ctx.reportData.size())
+
+} catch (Exception e) {
+    log.error("FATAL Error during script execution: {}", e.message, e)
+    ctx.reportData = []
+    ctx.reportColumnNames = []
+    throw e
+}
+\`\`\`
+
+**Example 3: Aggregated Data for Charting**
+*Goal: Use a single, efficient SQL query to aggregate data by a time period, preparing it for a trend chart.*
+
+\`\`\`groovy
+// Filename: scriptedReport_monthlySalesTrendReport.groovy
+import groovy.sql.Sql
+import java.math.BigDecimal
+import java.time.format.DateTimeFormatter
+
+def dbSql = ctx.dbSql
+log.info("Starting scriptedReport_monthlySalesTrendReport.groovy...")
+
+def monthlyDataSql = """
+SELECT
+    FORMATDATETIME(O."OrderDate", 'yyyy-MM') AS YearMonth,
+    SUM(OD."UnitPrice" * OD."Quantity" * (1 - OD."Discount")) AS MonthlySales,
+    COUNT(DISTINCT O."OrderID") AS OrderCount
+FROM "Orders" O
+JOIN "Order Details" OD ON O."OrderID" = OD."OrderID"
+WHERE O."OrderDate" IS NOT NULL
+GROUP BY FORMATDATETIME(O."OrderDate", 'yyyy-MM')
+ORDER BY YearMonth ASC
+"""
+
+try {
+    def aggregatedData = dbSql.rows(monthlyDataSql)
+    log.info("Fetched {} aggregated monthly data points.", aggregatedData.size())
+    ctx.reportData = aggregatedData
+    log.info("Finished scriptedReport_monthlySalesTrendReport.groovy successfully.")
+} catch (Exception e) {
+    log.error("Error during script execution: {}", e.message, e)
+    ctx.reportData = []
+    ctx.reportColumnNames = []
+    throw e
+}
+\`\`\`
+
+**Example 4: Complex Calculation (KPIs)**
+*Goal: For each entity (e.g., a Supplier/SupplierID), run multiple queries and perform calculations to generate a set of Key Performance Indicators (KPIs).
+
+\`\`\`groovy
+// Filename: scriptedReport_supplierScorecardReport.groovy
+import groovy.sql.Sql
+import java.time.temporal.ChronoUnit
+
+log.info("Starting scriptedReport_supplierScorecardReport.groovy...")
+def dbSql = ctx.dbSql
+def supplierDataList = []
+
+try {
+    def suppliers = dbSql.rows("SELECT SupplierID, CompanyName FROM Suppliers ORDER BY SupplierID")
+    log.info("Found {} suppliers.", suppliers.size())
+
+    suppliers.each { supplier ->
+        def supplierId = supplier.SupplierID
+        def metrics = [:]
+        metrics['SupplierID'] = supplierId
+        metrics['CompanyName'] = supplier.CompanyName
+
+        def productStats = dbSql.firstRow("""
+            SELECT COUNT(*) AS ProductCount, AVG(UnitPrice) AS AvgUnitPrice
+            FROM Products WHERE SupplierID = :supplierId
+        """, [supplierId: supplierId])
+        metrics['ProductCount'] = productStats?.ProductCount ?: 0
+        metrics['AvgUnitPrice'] = productStats?.AvgUnitPrice ?: 0.0
+
+        def deliveryStatsList = dbSql.rows("""
+            SELECT o.OrderDate, o.RequiredDate, o.ShippedDate
+            FROM Orders o JOIN "Order Details" od ON o.OrderID = od.OrderID
+            JOIN Products p ON od.ProductID = p.ProductID
+            WHERE p.SupplierID = :supplierId AND o.ShippedDate IS NOT NULL
+        """, [supplierId: supplierId])
+
+        def totalDeliveryDays = 0L
+        def shippedOrdersCount = deliveryStatsList.size()
+        def lateOrdersCount = 0
+
+        if (shippedOrdersCount > 0) {
+            deliveryStatsList.each { order ->
+                def deliveryDays = dbSql.firstRow("SELECT DATEDIFF('DAY', CAST(:orderDate AS TIMESTAMP), CAST(:shippedDate AS TIMESTAMP)) AS days",
+                                               [orderDate: order.OrderDate, shippedDate: order.ShippedDate]).days
+                totalDeliveryDays += (deliveryDays ?: 0)
+                if (order.ShippedDate != null && order.RequiredDate != null && order.ShippedDate.toLocalDateTime().isAfter(order.RequiredDate.toLocalDateTime())) {
+                    lateOrdersCount++
+                }
+            }
+            metrics['AvgDeliveryDays'] = (double) totalDeliveryDays / shippedOrdersCount
+            metrics['LateDeliveryPercent'] = (double) lateOrdersCount / shippedOrdersCount
+        } else {
+            metrics['AvgDeliveryDays'] = null
+            metrics['LateDeliveryPercent'] = null
+        }
+        
+        def latePercent = metrics.LateDeliveryPercent
+        def rating = "Average"
+        if (latePercent != null) {
+            if (latePercent == 0.0) rating = "Good"
+            else if (latePercent > 0.5) rating = "Poor"
+        } else if (shippedOrdersCount == 0) {
+             rating = "N/A"
+        }
+        metrics['OverallRating'] = rating
+        supplierDataList.add(metrics)
+    }
+
+    ctx.reportData = supplierDataList
+    if (!supplierDataList.isEmpty()) {
+        ctx.reportColumnNames = new ArrayList<>(supplierDataList[0].keySet())
+    } else {
+        ctx.reportColumnNames = []
+    }
+    log.info("Successfully processed {} suppliers.", suppliers.size())
+} catch (Exception e) {
+    log.error("Error during supplier scorecard script execution: {}", e.message, e)
+    throw e
+}
+\`\`\`
+`,
+      tags: ['groovy', 'input-source', 'master-details', 'cross-tab', 'kpi'],
       category: 'Script Writing Assistance',
     },
   ];

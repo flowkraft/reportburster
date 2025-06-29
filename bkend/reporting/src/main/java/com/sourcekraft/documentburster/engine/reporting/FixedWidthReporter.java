@@ -59,7 +59,7 @@ public class FixedWidthReporter extends AbstractReporter {
 		for (String[] row : rawData) {
 			LinkedHashMap<String, Object> rowMap = new LinkedHashMap<>();
 			for (int i = 0; i < Math.min(row.length, reportColumnNames.size()); i++) {
-				rowMap.put(reportColumnNames.get(i), row[i]);
+				rowMap.put(reportColumnNames.get(i), toObject(row[i]));
 			}
 			// Only add non-empty rows
 			if (!rowMap.isEmpty()

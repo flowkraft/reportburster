@@ -85,19 +85,19 @@ public class ReportSettings extends DumpToString {
 			public String idcolumn = "notused";
 
 			/** Whether to use namespace-aware parsing */
-			public String namespaceMappings = "";
+			public String namespacemappings = "";
 
 			/** Character encoding for the XML file */
 			public String encoding = "UTF-8";
 
 			/** Optional: XSD schema path for validation */
-			public String validationSchema = "";
+			public String validationschema = "";
 
 			/**
 			 * Optional: Map XML fields to report columns (comma-separated, e.g.
 			 * "name:fullName,amount:total")
 			 */
-			public String fieldMappings = "";
+			public String fieldmappings = "";
 
 			/** Optional: Trim whitespace from text content */
 			public boolean ignoreleadingwhitespace = true;

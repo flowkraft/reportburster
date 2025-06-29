@@ -1,5 +1,6 @@
 package com.sourcekraft.documentburster.engine;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -8,8 +9,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -260,6 +264,8 @@ public abstract class AbstractReporter extends AbstractBurster {
 			return dataSource.csvoptions.idcolumn;
 		} else if (typeString.equalsIgnoreCase("ds.fixedwidthfile")) {
 			return dataSource.fixedwidthoptions.idcolumn;
+		} else if (typeString.equalsIgnoreCase("ds.xmlfile")) {
+			return dataSource.xmloptions.idcolumn;
 		} else if (typeString.equalsIgnoreCase("ds.excelfile")) {
 			return dataSource.exceloptions.idcolumn;
 		} else if (typeString.equalsIgnoreCase("ds.scriptfile")) {
@@ -294,19 +300,10 @@ public abstract class AbstractReporter extends AbstractBurster {
 			generatePDFFromHtmlTemplateUsingFlywingSaucer(ctx.extractedFilePath, templateFilePath,
 					ctx.variables.getUserVariables(ctx.token));
 		} else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_FOP2PDF)) {
-			String xmlDumpFilePath = ctx.extractedFilePath.substring(0, ctx.extractedFilePath.length() - 4)
-					+ "-record-data.xml";
+			String foContent = generateFileContentFromFreemarkerTemplate(templateFilePath,
+					ctx.variables.getUserVariables(ctx.token));
 
-			// otherwise the xmlDumpFilePath is already generated
-			if (!ctx.settings.getDumpRecordDataAsXml()) {
-				this.dumpCurrentRecordDataAsXml();
-			}
-
-			generatePDFFromXslFoTemplate(ctx.extractedFilePath, templateFilePath, xmlDumpFilePath);
-
-			if (!ctx.settings.getDumpRecordDataAsXml()) {
-				FileUtils.deleteQuietly(new File(xmlDumpFilePath));
-			}
+			renderPdfFromFoContent(ctx.extractedFilePath, foContent);
 		} else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_EXCEL))
 			generateExcelFromHtmlTemplateUsingHtmlExporter(ctx.extractedFilePath, templateFilePath,
 					ctx.variables.getUserVariables(ctx.token));
@@ -331,6 +328,45 @@ public abstract class AbstractReporter extends AbstractBurster {
 		Files.deleteIfExists(Paths.get(tempHtmlPath));
 	}
 
+	protected Object toObject(String value) {
+		if (value == null || value.trim().isEmpty()) {
+			return value;
+		}
+		String trimmed = value.trim();
+
+		// 1) If it's an integer, return Integer
+		if (trimmed.matches("-?\\d+")) {
+			try {
+				return Integer.parseInt(trimmed);
+			} catch (NumberFormatException e) {
+				// fallback below
+			}
+		}
+		// 2) If it's a decimal, return Double
+		if (trimmed.matches("-?\\d+\\.\\d+")) {
+			try {
+				return Double.parseDouble(trimmed);
+			} catch (NumberFormatException e) {
+				// fallback below
+			}
+		}
+		// 3) Try to parse as a date
+		List<SimpleDateFormat> dateFormats = new ArrayList<>();
+		dateFormats.add(new SimpleDateFormat("MMMM yyyy"));
+		dateFormats.add(new SimpleDateFormat("yyyy-MM-dd"));
+		dateFormats.add(new SimpleDateFormat("MM/dd/yyyy"));
+		dateFormats.add(new SimpleDateFormat("dd-MMM-yyyy"));
+		for (SimpleDateFormat fmt : dateFormats) {
+			try {
+				fmt.setLenient(false);
+				return fmt.parse(trimmed);
+			} catch (ParseException ignored) {
+			}
+		}
+		// 4) Fallback to the original string
+		return value;
+	}
+
 	private void generateFileFromFreemarkerTemplate(String extractedFilePath, String templatePath,
 			Map<String, Object> userVariables, String bType) throws Exception {
 		String template = FileUtils.readFileToString(new File(templatePath), "UTF-8");
@@ -351,6 +387,18 @@ public abstract class AbstractReporter extends AbstractBurster {
 		}
 
 		FileUtils.writeStringToFile(new File(extractedFilePath), htmlContent, "UTF-8");
+	}
+
+	private String generateFileContentFromFreemarkerTemplate(String templatePath, Map<String, Object> userVariables)
+			throws Exception {
+		String template = FileUtils.readFileToString(new File(templatePath), "UTF-8");
+		Template engine = new Template("template", template, Utils.freeMarkerCfg);
+		StringWriter stringWriter = new StringWriter();
+		engine.process(userVariables, stringWriter);
+		stringWriter.flush();
+
+		return stringWriter.toString();
+
 	}
 
 	private void generateDocxFromDocxTemplateUsingXDocReport(String documentPath, String templatePath,
@@ -411,54 +459,68 @@ public abstract class AbstractReporter extends AbstractBurster {
 	}
 
 	/*
-	public void generatePDFFromDocxTemplateUsingYarg(String documentPath, String templatePath,
-			Map<String, Object> variablesData) throws IOException {
+	 * public void generatePDFFromDocxTemplateUsingYarg(String documentPath, String
+	 * templatePath, Map<String, Object> variablesData) throws IOException {
+	 * 
+	 * BandData root = new BandData("Root", null, BandOrientation.HORIZONTAL);
+	 * 
+	 * BandData documentData = new BandData("documentData", root,
+	 * BandOrientation.HORIZONTAL);
+	 * 
+	 * for (Map.Entry<String, Object> entry : variablesData.entrySet()) {
+	 * documentData.addData(entry.getKey(), entry.getValue()); }
+	 * 
+	 * root.addChild(documentData);
+	 * 
+	 * String templateCode = FilenameUtils.getBaseName(templatePath); String
+	 * templateName = FilenameUtils.getName(templatePath); String templateExtension
+	 * = FilenameUtils.getExtension(templatePath);
+	 * 
+	 * String documentExtension = FilenameUtils.getExtension(documentPath);
+	 * 
+	 * ReportOutputType outputType = ReportOutputType.pdf;
+	 * 
+	 * if (documentExtension.equals("xlsx")) outputType = ReportOutputType.xlsx;
+	 * 
+	 * try (FileOutputStream outputStream = FileUtils.openOutputStream(new
+	 * File(documentPath))) {
+	 * 
+	 * DefaultFormatterFactory defaultFormatterFactory = new
+	 * DefaultFormatterFactory(); // Consider making font directory configurable or
+	 * finding fonts differently
+	 * defaultFormatterFactory.setFontsDirectory("C:/Windows/Fonts");
+	 * ReportFormatter formatter = defaultFormatterFactory.createFormatter(new
+	 * FormatterFactoryInput( templateExtension, documentData, // Changed rootBand
+	 * to documentData as it holds the variables new
+	 * ReportTemplateImpl(templateCode, templateName, templatePath, outputType),
+	 * outputStream));
+	 * 
+	 * formatter.renderDocument();
+	 * 
+	 * } }
+	 */
 
-		BandData root = new BandData("Root", null, BandOrientation.HORIZONTAL);
-
-		BandData documentData = new BandData("documentData", root, BandOrientation.HORIZONTAL);
-
-		for (Map.Entry<String, Object> entry : variablesData.entrySet()) {
-			documentData.addData(entry.getKey(), entry.getValue());
-		}
-
-		root.addChild(documentData);
-
-		String templateCode = FilenameUtils.getBaseName(templatePath);
-		String templateName = FilenameUtils.getName(templatePath);
-		String templateExtension = FilenameUtils.getExtension(templatePath);
-
-		String documentExtension = FilenameUtils.getExtension(documentPath);
-
-		ReportOutputType outputType = ReportOutputType.pdf;
-
-		if (documentExtension.equals("xlsx"))
-			outputType = ReportOutputType.xlsx;
-
-		try (FileOutputStream outputStream = FileUtils.openOutputStream(new File(documentPath))) {
-
-			DefaultFormatterFactory defaultFormatterFactory = new DefaultFormatterFactory();
-			// Consider making font directory configurable or finding fonts differently
-			defaultFormatterFactory.setFontsDirectory("C:/Windows/Fonts");
-			ReportFormatter formatter = defaultFormatterFactory.createFormatter(new FormatterFactoryInput(
-					templateExtension, documentData, // Changed rootBand to documentData as it holds the variables
-					new ReportTemplateImpl(templateCode, templateName, templatePath, outputType), outputStream));
-
-			formatter.renderDocument();
-
-		}
-	}
-	*/
-	
-	private void generatePDFFromXslFoTemplate(String pdfPath, String xslFoPath, String xmlPath) throws Exception {
-		// Base URI for resolving includes/images/fonts:
+	private void renderPdfFromFoContent(String pdfPath, String foContent) throws Exception {
+		// Base URI for resolving includes/images/fonts
 		URI baseUri = new File(".").toURI();
 		FopFactory fopFactory = FopFactory.newInstance(baseUri);
 
-		try (OutputStream out = new FileOutputStream(pdfPath)) {
+		try (OutputStream out = new FileOutputStream(pdfPath);
+				InputStream in = new ByteArrayInputStream(foContent.getBytes(StandardCharsets.UTF_8))) {
+
 			Fop fop = fopFactory.newFop(MimeConstants.MIME_PDF, out);
-			Transformer transformer = TransformerFactory.newInstance().newTransformer(new StreamSource(xslFoPath));
-			transformer.transform(new StreamSource(xmlPath), new SAXResult(fop.getDefaultHandler()));
+
+			// Use an "identity" transformer (no stylesheet) to pass the FO content to FOP
+			Transformer transformer = TransformerFactory.newInstance().newTransformer();
+
+			// The source is now the in-memory stream of our FO content
+			StreamSource src = new StreamSource(in);
+
+			// The result is still the FOP handler
+			SAXResult res = new SAXResult(fop.getDefaultHandler());
+
+			// Start the transformation (which is just a pass-through)
+			transformer.transform(src, res);
 		}
 	}
 
