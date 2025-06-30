@@ -1,9 +1,0 @@
-
-Components migrated from 
-
-    https://github.com/leoMirandaa/shadcn-landing-page
-    1.3k stars - Free Landing page template using Shadcn, React, 
-    Typescript and Tailwind 
-
-    https://shadcn-landing-page.vercel.app/
-    
