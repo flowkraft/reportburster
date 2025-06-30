@@ -1,9 +1,0 @@
-
-Built from 
-
-    https://github.com/shadcn-ui/taxonomy
-    19k stars - An open source application built using the new router, server 
-    components and everything new in Next.js 13.
-
-    https://tx.shadcn.com
-    
