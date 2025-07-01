@@ -1,3 +1,0 @@
-import com.sourcekraft.documentburster.unit.documentation.userguide.distribute.UploadWebTest
-
-UploadWebTest.assertUploadOtherWebMessage(message)

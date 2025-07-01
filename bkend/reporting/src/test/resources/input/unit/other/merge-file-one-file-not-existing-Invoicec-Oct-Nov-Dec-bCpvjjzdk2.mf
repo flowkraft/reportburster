@@ -1,3 +1,0 @@
-src/main/external-resources/template/samples/bursting/Invoices-Oct.pdf
-src/main/external-resources/template/samples/bursting/not-existing-Invoices-Nov.pdf
-src/main/external-resources/template/samples/bursting/Invoices-Dec.pdf

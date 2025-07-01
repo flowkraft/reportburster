@@ -1,7 +1,0 @@
-[dependencies]
-serde = { version = "1.0", features = ["derive"] }
-serde_xml_rs = "0.5.1"
-clap = "3.0.0-beta.5"
-
-[[bin]]
-name = "rb_rust_updater"

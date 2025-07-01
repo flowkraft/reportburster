@@ -1,4 +1,0 @@
-UnquotedID,"Quoted Column","Some, comma",Unquoted Text
-ID001,"Normal quotes","Data, with comma",Plain text
-"ID002",Text with "internal" quotes,"More, data",More text
-ID003,"Special ""double"" quotes","Final, row",End

@@ -1,1 +1,0 @@
-rm -rf config/ logs/ input-files/ output/ poll/ quarantine/ samples/ scripts/

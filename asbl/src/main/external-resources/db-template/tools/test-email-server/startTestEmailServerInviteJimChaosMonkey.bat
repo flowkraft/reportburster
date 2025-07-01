@@ -1,1 +1,0 @@
-"%~dp0internal/MailHog_windows_386.exe" -invite-jim >startlog.log 2>&1

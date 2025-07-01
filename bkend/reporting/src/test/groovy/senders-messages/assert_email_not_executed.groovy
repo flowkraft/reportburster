@@ -1,1 +1,0 @@
-throw new Exception("assert_email_not_executed - It should not come here!")

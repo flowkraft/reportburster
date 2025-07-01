@@ -1,3 +1,0 @@
-import com.sourcekraft.documentburster.unit.further.other.MultipleTokensTest
-
-MultipleTokensTest.assertEmailMessage(message)
