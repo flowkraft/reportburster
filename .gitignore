@@ -6,13 +6,24 @@ asbl/dist
 asbl/src/uat/resources/__pycache__
 asbl/src/uat/results
 
+# First ignore everything in the playground directory
 asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/*
 
+# Unignore specific files
 !asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/.env
 !asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/docker-compose.yml
 !asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/Dockerfile.cli
+
+# Unignore the wp-plugins directory itself
+!asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/
+
+# IMMEDIATELY re-ignore all content inside wp-plugins
+asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/*
+
+# Now ONLY unignore your specific plugin
 !asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/
 
+# Finally, re-ignore the vendor folder inside your plugin
 asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/vendor/
 
 backend/reporting/backup/*
