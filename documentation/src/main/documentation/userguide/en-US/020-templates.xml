@@ -1,0 +1,332 @@
+<chapter id="chapter.templates">
+	<title>Configuration Templates</title>
+	<para>
+		If required,
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		has support to use a
+		different set of configuration settings
+		for each
+		separate report
+		type.
+		For example, using this capability, it
+		is possible
+		to use a different email subject, text or burst file name
+		for
+		<emphasis>invoices</emphasis>
+		report type and
+		a different email subject, text or burst
+		file name when
+		processing
+		<emphasis>payslips</emphasis>
+		report type.
+	</para>
+	<para>
+		By default, if no custom configuration file is provided,
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		will process all the reports using the default configuration settings
+		which are saved
+		in
+		<filename>./config/burst/settings.xml</filename>
+		configuration file. This should be fine in most of the situations,
+		however there
+		are
+		cases
+		when it is required to process a different
+		report
+		type using
+		its
+		own set of
+		configuration settings.
+	</para>
+	<para>
+		<emphasis role="bold">
+			Use case example
+		</emphasis>
+	</para>
+	<para>
+		The requirement is to burst and email to customers several
+		different
+		types
+		of financial documents, specifically
+	</para>
+	<itemizedlist>
+		<listitem>invoices</listitem>
+		<listitem>statements</listitem>
+		<listitem>dunning letters</listitem>
+	</itemizedlist>
+	<para>
+		Each of the above report types should be delivered to customers
+		using
+		an email subject and text
+		which is specific to the report type
+		which
+		is
+		being distributed (i.e. invoices,
+		statements or dunning
+		letters).
+	</para>
+	<para>
+		The requirement can be achieved by defining
+	</para>
+	<itemizedlist>
+		<listitem>
+			<emphasis>invoices</emphasis>
+			email subject and text
+			in a configuration file such as
+			<filename>./config/burst/invoices.xml</filename>
+		</listitem>
+		<listitem>
+			<emphasis>statements</emphasis>
+			email subject and text in a different
+			<filename>./config/burst/statements.xml</filename>
+		</listitem>
+		<listitem>
+			and
+			<emphasis>dunning letters</emphasis>
+			email subject and text in its own configuration file
+			<filename>./config/burst/dunning-letters.xml.</filename>
+		</listitem>
+	</itemizedlist>
+	<para>
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		will process and email each different report type by
+		using its own
+		distinct
+		set of configuration settings.
+	</para>
+	<section id="chapter.templates.pdf">
+		<title>Process PDF Reports Using a Custom
+			Configuration File
+		</title>
+		<para>
+			While bursting a PDF report,
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			checks the first page of the report for a custom defined
+			configuration file
+			by looking for a pattern like
+		</para>
+		<para>
+			<emphasis>&lt;config&gt;path-to-the-custom-settings-file.xml&lt;/config&gt; </emphasis>
+		</para>
+		<para>
+			For example, in order to process
+			<emphasis>invoices</emphasis>
+			report
+			using a custom configuration file, the first page of the input
+			<filename>invoices.pdf</filename>
+			report should contain
+			something similar with
+		</para>
+		<para>
+			<emphasis>&lt;config&gt;./config/burst/invoices.xml&lt;/config&gt; </emphasis>
+		</para>
+		<note>
+			<title>Note</title>
+			<para>
+				The same result can be achieved by
+				using the shorter (while
+				being
+				less expressive) pattern
+			</para>
+			<para>
+				<emphasis>&lt;c&gt;path-to-the-custom-settings.xml&lt;/c&gt;,
+				</emphasis>
+			</para>
+			<para>
+				for example
+				<emphasis>&lt;c&gt;./config/burst/invoices.xml&lt;/c&gt; </emphasis>
+			</para>
+		</note>
+	</section>
+	<section id="chapter.templates.excel">
+		<title>Process <citetitle>Excel</citetitle> Reports Using a Custom
+			Configuration File
+		</title>
+		<para>
+			While bursting an <citetitle>Excel</citetitle> report,
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			checks for a custom configuration file defined
+			in
+			<emphasis>configFile</emphasis>
+			column from
+			<emphasis>burst</emphasis>
+			metadata sheet. If no custom configuration
+			file is found then
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			will burst the report
+			using the default
+			<filename>./config/burst/settings.xml</filename>
+			configuration file.
+		</para>
+		<para>
+			Following is how an <citetitle>Excel</citetitle> reports should be configured in
+			order
+			to achieve the above (i.e. invoices, statements and dunning letters)
+			requirement.
+		</para>
+		<para>
+			In
+			<emphasis>burst</emphasis>
+			sheet,
+			<filename>invoices.xls</filename>
+			<citetitle>Excel</citetitle> report should have
+			the custom
+			<emphasis>configFile</emphasis>
+			defined like that
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/email-invoices.png" format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			In
+			<emphasis>burst</emphasis>
+			sheet,
+			<filename>statements.xls</filename>
+			<citetitle>Excel</citetitle> report should have
+			the custom
+			<emphasis>configFile</emphasis>
+			defined like that
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/distribute-statements.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			In
+			<emphasis>burst</emphasis>
+			sheet,
+			<filename>dunning-letters.xls</filename>
+			<citetitle>Excel</citetitle> report should have
+			the custom
+			<emphasis>configFile</emphasis>
+			defined like that
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/send-dunning-letters.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+	</section>
+	<section>
+		<title>Add, Edit and Delete Configuration Templates</title>
+		<para>
+			In
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			main window select
+			<guimenu>Actions</guimenu>
+			,
+			<guimenu>Configuration Templates</guimenu>
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/configuration-templates1.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/configuration-templates2.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/configuration-templates3.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+			<itemizedlist>
+				<listitem>
+					<emphasis>Add</emphasis>
+					- Create a new configuration template.
+				</listitem>
+				<listitem>
+					<emphasis>Edit</emphasis>
+					- Modify an existing configuration template.
+				</listitem>
+				<listitem>
+					<emphasis>Remove</emphasis>
+					- Delete an existing configuration template.
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			Each configuration template is saved in a different configuration
+			file.
+			For example,
+			<emphasis>Invoices</emphasis>
+			configuration template might be saved in a
+			<filename>./config/burst/invoices.xml</filename>
+			file
+			while
+			<emphasis>Statements</emphasis>
+			configuration template might be saved in a
+			<filename>./config/burst/statements.xml</filename>
+			file.
+		</para>
+		<section>
+			<title>Create Similar Configuration Templates</title>
+			<para>
+				<emphasis>Copy Initial Values From</emphasis>
+				- When creating a new configuration template it is required to
+				provide the
+				path to an existing and valid configuration file from
+				which the initial configuration values will be
+				copied. Once the new
+				configuration template is created you might modify only
+				the few
+				settings which should be
+				different between configuration
+				templates
+				(e.g. email subject, email
+				message, etc.). Most of the other
+				settings
+				will usually remain the same
+				(e.g. email server connection settings)
+				between
+				different
+				configuration templates.
+			</para>
+			<para>
+				<emphasis>Default Value</emphasis>
+				-
+				<filename>./config/burst/default/defaults.xml</filename>
+			</para>
+		</section>
+		<para>
+			Once the configuration templates are created they will
+			become
+			available to be used throughout the
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			GUI.
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/report-bursting-configuration-templates.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+	</section>
+</chapter>

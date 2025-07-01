@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<documentburster>
+  <settings>
+    <version>8.4</version>
+    <template>FIP Cancellation TT Test</template>
+    <burstfilename>$burst_token$.$input_document_extension$</burstfilename>
+    <mergefilename>merged.pdf</mergefilename>
+    <outputfolder>output/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</outputfolder>
+    <backupfolder>backup/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</backupfolder>
+    <quarantinefiles>true</quarantinefiles>
+    <quarantinefolder>quarantine/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</quarantinefolder>
+    <logsarchivesfolder>logs/archives/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</logsarchivesfolder>
+    <statsfilename>_stats-$num_pages$pages-$num_files_extracted$extracted-$num_files_distributed$distributed.log</statsfilename>
+    <sendfiles>
+      <email>true</email>
+      <upload>false</upload>
+      <web>false</web>
+      <sms>false</sms>
+    </sendfiles>
+    <deletefiles>false</deletefiles>
+    <emailserver>
+      <host>smtp.office365.com</host>
+      <port>587</port>
+      <userid>noreply@corp.company.com</userid>
+      <userpassword>********</userpassword>
+      <usessl>false</usessl>
+      <usetls>true</usetls>
+      <debug>false</debug>
+      <fromaddress>customerservices@company.com</fromaddress>
+      <name>Customer Services</name>
+    </emailserver>
+    <htmlemail>true</htmlemail>
+    <htmlemaileditcode>true</htmlemaileditcode>
+    <emailsettings>
+      <to>customerservices@company.com</to>
+      <cc/>
+      <bcc>$var2$</bcc>
+      <subject>$var1$  Overdue Notice - $var0$</subject>
+      <text>Dear Policy Holder,
+ 
+Please URGENTLY review the listing attached with a view to identifying any FIP certificates that should NOT be cancelled and indicating if you have funds in the members account to forward to us or if you have already sent the appropriate funds according to your records. We may need the payment statement or relevant cheque numbers to support these cases. You also need to forward any outstanding premiums being held immediately.
+
+We are kindly requesting you feedback within five (5) working days of receipt of this email</text>
+      <html>&lt;p&gt;Dear Policy Holder,&lt;/p&gt;
+ 
+&lt;p&gt;Please URGENTLY review the listing attached with a view to identifying any FIP certificates that should NOT be cancelled and indicating if you have funds in the members account to forward to us or if you have already sent the appropriate funds according to your records. We may need the payment statement or relevant cheque numbers to support these cases. You also need to forward any outstanding premiums being held immediately.&lt;/p&gt;
+
+&lt;p&gt;We are kindly requesting you feedback within five (5) working days of receipt of this email&lt;/p&gt;</html>
+    </emailsettings>
+    <attachments>
+      <items>
+        <attachment path="$extracted_file_path$" order="0"/>
+      </items>
+      <archive>
+        <archiveattachments>false</archiveattachments>
+        <archivefilename>reports-$burst_token$.zip</archivefilename>
+      </archive>
+    </attachments>
+    <uploadsettings>
+      <ftpcommand/>
+      <filesharecommand/>
+      <ftpscommand/>
+      <sftpcommand/>
+      <httpcommand/>
+      <cloudcommand/>
+    </uploadsettings>
+    <webuploadsettings>
+      <documentbursterwebcommand/>
+      <mssharepointcommand/>
+      <wordpresscommand/>
+      <drupalcommand/>
+      <joomlacommand/>
+      <otherwebcommand/>
+    </webuploadsettings>
+    <smssettings>
+      <twilio>
+        <accountsid/>
+        <authtoken/>
+      </twilio>
+      <fromtelephonenumber/>
+      <totelephonenumber/>
+      <text/>
+    </smssettings>
+    <qualityassurance>
+      <emailserver>
+        <host>localhost</host>
+        <port>1025</port>
+        <userid/>
+        <userpassword/>
+        <usessl>false</usessl>
+        <usetls>false</usetls>
+        <debug>false</debug>
+        <fromaddress>from@emailaddress.com</fromaddress>
+        <name>From Name</name>
+        <weburl>http://localhost:8025</weburl>
+      </emailserver>
+    </qualityassurance>
+    <bursttokendelimiters>
+      <start>{</start>
+      <end>}</end>
+    </bursttokendelimiters>
+    <numberofuservariables>10</numberofuservariables>
+    <delayeachdistributionby>0</delayeachdistributionby>
+    <reusetokenswhennotfound>false</reusetokenswhennotfound>
+    <failjobifanydistributionfails>true</failjobifanydistributionfails>
+    <enableretrypolicy>false</enableretrypolicy>
+    <retrypolicy>
+      <delay>3</delay>
+      <maxdelay>30</maxdelay>
+      <maxretries>3</maxretries>
+    </retrypolicy>
+    <allowlocalemailaddresses>false</allowlocalemailaddresses>
+    <locale>
+      <language/>
+      <country/>
+    </locale>
+    <encoding/>
+    <sort>false</sort>
+    <ignorebeads>false</ignorebeads>
+    <force>false</force>
+  </settings>
+</documentburster>

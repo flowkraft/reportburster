@@ -1,0 +1,453 @@
+<chapter id="chapter.curl">
+	<title>
+		<citetitle>cURL</citetitle>
+		Integration
+	</title>
+	<para>
+		The current chapter is related with both of the previously
+		presented
+		topics
+	</para>
+	<para>
+		<itemizedlist>
+			<listitem>
+				<xref linkend="chapter.scripting" />
+			</listitem>
+			<listitem>
+				<para>
+					<ulink
+						url="https://www.pdfburst.com/docs/html/userguide/chapter.distributing.html">Chapter 3. Distributing Reports</ulink>
+				</para>
+				<para>
+					from
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						User Guide
+					</emphasis>
+				</para>
+			</listitem>
+		</itemizedlist>
+	</para>
+
+	<para>
+		This chapter is related with the previous two topics in the sense that
+		it shows
+		how to use
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		scripting as a means of achieving very specific
+		(non-standard)
+		report
+		distribution requirements.
+	</para>
+	<para>
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		closely integrates with
+		<citetitle>
+			cURL,
+		</citetitle>
+		a Swiss-army knife for doing data transfer. Through
+		<citetitle>cURL,</citetitle>
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		can distribute
+		reports
+		via HTTP or FTP with or without authentication,
+		it works over
+		SSL, and it
+		works without interaction. Actually
+		<citetitle>cURL</citetitle>
+		(and
+		thus
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		)
+		supports distributing files and data to a various range of common
+		Internet
+		protocols, currently including
+		HTTP, HTTPS, FTP, FTPS, SCP,
+		SFTP, TFTP, LDAP, LDAPS, DICT, TELNET, FILE,
+		IMAP, POP3, SMTP and RTSP.
+	</para>
+	<para>
+		<citetitle>cURL - </citetitle>
+		<ulink url="http://curl.haxx.se/" />
+	</para>
+	<para>
+		<emphasis role="bold">Cross platform</emphasis>
+	</para>
+	<para>
+		<citetitle>cURL</citetitle>
+		is portable and works on many platforms, including
+		Windows, Linux, Mac
+		OS X, MS-DOS and more.
+	</para>
+	<para>
+		On Windows,
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		package distribution is bundling together
+		a recent version of
+		<citetitle>cURL.</citetitle>
+		So,
+		if your organization is running
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		under Windows,
+		there is nothing more to download or install in regards
+		with
+		<citetitle>cURL.</citetitle>
+	</para>
+	<para>
+		For other UNIX like systems, such as Linux and Mac OS X, the
+		appropriate
+		<citetitle>cURL</citetitle>
+		binaries
+		distribution should be properly downloaded
+		and
+		installed.
+		In
+		addition, the
+		<citetitle>cURL</citetitle>
+		groovy scripts which are bundled
+		together with
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		are written for Windows usage and should support small adjustments to
+		be made
+		ready for usage under Linux/UNIX.
+	</para>
+	<para>
+		<emphasis role="bold">
+			Command line
+			<citetitle>cURL</citetitle>
+			examples
+		</emphasis>
+	</para>
+	<para>
+		<citetitle>cURL</citetitle>
+		is a tool for getting or sending files using URL syntax. The
+		URL syntax
+		is protocol-dependent. Along with the URL for
+		the required
+		protocol,
+		<citetitle>cURL</citetitle>
+		can take some additional options in the
+		command line.
+	</para>
+	<para>
+		For complete
+		<citetitle>cURL</citetitle>
+		documentation you can follow
+		<itemizedlist>
+			<listitem>
+				<ulink url="http://curl.haxx.se/docs/manual.html">cURL Manual</ulink>
+			</listitem>
+			<listitem>
+				<ulink url="http://curl.haxx.se/docs/manpage.html">cURL Man Page</ulink>
+			</listitem>
+			<listitem>
+				<ulink url="http://curl.haxx.se/docs/faq.html">cURL Frequently Asked Questions </ulink>
+			</listitem>
+		</itemizedlist>
+	</para>
+	<para>
+		Following are some sample
+		<citetitle>cURL</citetitle>
+		invocations to upload a file to
+		a
+		remote server (from
+		<citetitle>cURL</citetitle>
+		manual)
+	</para>
+	<para>
+		<emphasis role="bold">1. FTP / FTPS / SFTP / SCP</emphasis>
+	</para>
+	<para>Upload data from a specified file, login with user and password
+	</para>
+	<para>
+		<command>curl -T uploadfile -u user:passwd
+			ftp://ftp.upload.com/myfile
+		</command>
+	</para>
+	<para>Upload a local file to the remote site, and use the local file
+		name remote
+		too
+	</para>
+	<para>
+		<command>curl -T uploadfile -u user:passwd ftp://ftp.upload.com/
+		</command>
+	</para>
+	<para>
+		<citetitle>cURL</citetitle>
+		also supports ftp upload through a proxy, but only if the
+		proxy is
+		configured to allow that kind of tunneling. If it does, you
+		can run
+		<citetitle>cURL</citetitle>
+		in
+		a fashion similar to
+	</para>
+	<para>
+		<command>curl --proxytunnel -x proxy:port -T localfile
+			ftp.upload.com
+		</command>
+	</para>
+	<para>
+		<command>--ftp-create-dirs</command>
+	</para>
+	<para>
+		When integrated with
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+			,
+		</emphasis>
+		following
+		<citetitle>cURL</citetitle>
+		option will
+		be of interest
+	</para>
+	<para>
+		<command>--ftp-create-dirs</command>
+		- (FTP/SFTP) When an FTP or SFTP URL/operation uses a path that
+		doesn't currently exist on the server, the standard behavior of
+		<citetitle>cURL</citetitle>
+		is to fail. Using this option,
+		<citetitle>cURL</citetitle>
+		will instead attempt to create
+		missing directories.
+	</para>
+	<para>
+		<emphasis role="bold">2. HTTP</emphasis>
+	</para>
+	<para>Upload data from a specified file</para>
+	<para>
+		<command>curl -T uploadfile http://www.upload.com/myfile
+		</command>
+	</para>
+	<para>Note that the http server must have been configured to accept PUT
+		before
+		this can be done successfully.
+	</para>
+	<para>
+		<emphasis role="bold">
+			Debugging and tracing
+			<citetitle>cURL</citetitle>
+			- VERBOSE / DEBUG
+		</emphasis>
+	</para>
+	<para>
+		If
+		<citetitle>cURL</citetitle>
+		fails where it isn't supposed to, if the servers don't
+		let you in,
+		if
+		you can't understand the responses: use the -v flag to
+		get verbose
+		fetching.
+		<citetitle>cURL</citetitle>
+		will output lots of info and what it sends
+		and receives
+		in
+		order to let
+		the user see all client-server interaction
+		(but it won't show
+		you the
+		actual data).
+	</para>
+	<para>
+		<command>curl -v ftp://ftp.upload.com/
+		</command>
+	</para>
+	<para>
+		To get even more details and information on what
+		<citetitle>cURL</citetitle>
+		does, try
+		using the
+		--trace or --trace-ascii options with a given file
+		name to
+		log to, like
+		this
+	</para>
+	<para>
+		<command>curl --trace trace.txt www.haxx.se
+		</command>
+	</para>
+	<section>
+		<title>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			/
+			<citetitle>cURL</citetitle>
+			sample scripts
+		</title>
+		<para>
+			While it is great to know that so many protocols are supported,
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			is coming with sample scripts to do
+			<citetitle>cURL</citetitle>
+			report distribution through
+			the
+			most
+			commonly used protocols such as
+			FTP,
+			SFTP and FILE. Any
+			other
+			<citetitle>cURL</citetitle>
+			supported protocol should be achievable by doing
+			little changes
+			to
+			the
+			scripts which are provided in the default
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			package distribution.
+		</para>
+		<section id="curl_ftp.groovy">
+			<title>curl_ftp.groovy</title>
+			<para>
+				<filename>curl_ftp.groovy</filename>
+				script is an alternative to the
+				<ulink
+					url="https://www.pdfburst.com/docs/html/userguide/chapter.distributing.html#chapter.distributing.uploading.ftp">FTP Upload</ulink>
+				GUI capability which was introduced in
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+					User Guide.
+				</emphasis>
+				While through the GUI
+				it is possible to achieve common FTP
+				report
+				distribution use cases, using
+				this FTP script is recommended
+				for
+				more
+				advanced FTP scenarios which require the full
+				<citetitle>cURL</citetitle>
+				FTP
+				capabilities. For
+				example, using this script it is possible to
+				instruct
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				to automatically create a custom hierarchy of directories on the FTP
+				server, before uploading
+				the reports.
+			</para>
+			<para>
+				Edit the script
+				<filename>scripts/burst/endExtractDocument.groovy</filename>
+				with
+				the content found in
+				<filename>scripts/burst/samples/curl_ftp.groovy.</filename>
+				By default the script is fetching the values for the FTP connection
+				,
+				such as
+				user, password, host and path from the values of
+				<emphasis>$var0$, $var1$, $var2$ and $var3$</emphasis>
+				user report variables. If the burst reports are configured as such,
+				then there is
+				nothing more
+				to do, and the FTP upload will work
+				without
+				any modification
+				to the script. Otherwise,
+				the FTP script
+				should be
+				modified as per the
+				needs.
+			</para>
+			<para>
+				While the script might look long, there are actually only few
+				simple lines of active code - most of the
+				content of the script are
+				the
+				comments which are appropriately describing the scope of each
+				section
+				of the script.
+			</para>
+
+			<para>
+				<programlisting language="Java" htmllanguage="groovy">
+					<xi:include
+						href="../../../../../../burst/src/main/external-resources/template/scripts/burst/samples/curl_ftp.groovy"
+						parse="text" xmlns:xi="http://www.w3.org/2001/XInclude" />
+				</programlisting>
+			</para>
+
+		</section>
+		<section id="curl_sftp.groovy">
+			<title>curl_sftp.groovy</title>
+			<para>
+				<filename>curl_sftp.groovy</filename>
+				script can be used to upload the burst reports through
+				Secure File
+				Transfer Protocol or Secure FTP.
+			</para>
+			<para>
+				With minimum modifications to
+				<command>$execOptions,</command>
+				the script can be adapted to use
+				other protocols such as FTPs or
+				SCP.
+				You can check
+				<ulink url="http://curl.haxx.se/docs/manual.html">cURL
+					Manual -
+					cURL
+					usage explained
+				</ulink>
+				for more details.
+			</para>
+			<para>
+				Edit the script
+				<filename>scripts/burst/endExtractDocument.groovy</filename>
+				with
+				the content found in
+				<filename>scripts/burst/samples/curl_sftp.groovy.</filename>
+				By default the script is fetching the values for the SFTP connection
+				, such as
+				user, password, host and path from the values of
+				<emphasis>$var0$, $var1$, $var2$ and $var3$</emphasis>
+				user report variables. If the burst reports are configured as such,
+				then there
+				is nothing more to do, and SFTP uploading will work
+				without
+				any
+				additional modification to the script. Otherwise, this
+				script
+				should be modified as per the needs.
+			</para>
+			<para>
+				While the script might look long, there are actually only few
+				simple lines of active code - most of the
+				content of the script are
+				the
+				comments which are appropriately describing the scope of each
+				section
+				of the script.
+			</para>
+
+			<para>
+				<programlisting language="Java" htmllanguage="groovy">
+					<xi:include
+						href="../../../../../../burst/src/main/external-resources/template/scripts/burst/samples/curl_sftp.groovy"
+						parse="text" xmlns:xi="http://www.w3.org/2001/XInclude" />
+				</programlisting>
+			</para>
+
+		</section>
+	</section>
+</chapter>

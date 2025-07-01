@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<license>
+  <key>51b0aa18f2bbc066efdca8b53c2dacc8</key>
+  <product>DocumentBurster</product>
+  <status>invalid</status>
+  <customername>SourceKraft Test License</customername>
+  <customeremail>virgil.trasca@pdfburst.com</customeremail>
+  <expires>2017-11-27T23:59:59+01:00</expires>
+  <latestversion>7.5</latestversion>
+  <changelog># DocumentBurster
+
+All notable changes to this project will be documented in this file.
+
+## 8.8.3 - 2021-03-15
+
+### Added
+
+- Configurations &apos;Bounce To Address&apos; and &apos;Bounce To Name&apos; graduated from the &apos;Incubating Feature&apos; 
+to being &apos;Feature Ready for Production&apos;
+
+### Fixed
+
+- Fix an issue when (auto) updating from v8.4 (issue#64)
+
+## 8.8.2 - 2021-01-25
+
+### Added
+
+- Configurations &apos;Reply To Address&apos; and &apos;Reply To Name&apos; graduated from the &apos;Incubating Feature&apos; to being &apos;Feature Ready for Production&apos;
+
+### Fixed
+
+- sendfiles configurations are now correctly (auto) migrated / updated</changelog>
+</license>

@@ -1,0 +1,296 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+	<head><title>JIP &ndash; profile properties</title></head>
+	<body>
+		<h2>Changing the behavior of JIP using a profile properties file</h2>
+		The default behavior of the Java Interactive Profiler (JIP) can be 
+		changed via the a properties file. This is just a standard Java
+		properties file. You can specify the name of the properties file
+		using the <code>profile.properties</code> VM argument. For example
+		if you want to use <code>my-profile.properties</code> you would
+		invoke the JVM like this:<pre><code>
+java -Dprofile.properties=my-profile.properties .... </code></pre>
+		As of JIP 1.1 the following properties are supported:
+		<ul>
+			<li><a href="#profiler">profiler</a></li>
+			<li><a href="#remote">remote</a></li>
+			<li><a href="#port">port</a></li>
+			<li><a href="#classloader">ClassLoaderFilter.x</a></li>
+			<li><a href="#thread-depth">thread-depth</a></li>
+			<li><a href="#thread-threshold">thread.compact.threshold.ms</a></li>
+			<li><a href="#max-method-count">max-method-count</a></li>
+			<li><a href="#method-threshold">method.compact.threshold.ms</a></li>
+			<li><a href="#file">file</a></li>
+			<li><a href="#exlcude">exclude</a></li>
+			<li><a href="#include">include</a></li>
+			<li><a href="#alloc">track.object.alloc</a></li>
+			<li><a href="#output">output</a></li>
+			<li><a href="#debug">debug</a></li>
+			<li><a href="#profiler-class">profiler-class</a></li>
+			<li><a href="#output-method-signatures">output-method-signatures</a></li>
+			<li><a href="#clock-resolution">clock-resolution</a></li>					
+			<li><a href="#output-summary-only">output-summary-only</li>
+			<li><a href="#accept-class-loaders">accept-class-loaders</li>
+		</ul>
+		
+		<A NAME="profiler"/>
+		<h3>profiler</h3>
+		<blockquote>
+			<b>Values</b>: on, off<br/>
+			<b>Default</b>: on<br/>
+			<b>Description</b>: controls whether or not profiling information
+			is gathered when the VM starts. Usually you'll want this to 
+			be <code>on</code> for command-line apps but <code>off</code> if 
+			you're profiling a webapp.
+		</blockquote>
+		
+		<a name="remote"/>
+		<h3>remote</h3>
+		<blockquote>
+			<b>Values</b>: on, off<br/>
+			<b>Default</b>: off<br/>
+			<b>Description</b>: controls whether of not the remote interface
+			is enabled or not. The remote interface allows you to turn the
+			profiler on and off at runtime. This lets you take multiple 
+			measurements without having to stop and start the application. 
+			Usually you'll want this to be <code>on</code> for webapps
+			but <code>off</code> for command-line apps.
+		</blockquote>
+		
+		<a name="port"/>
+		<h3>port</h3>
+		<blockquote>
+			<b>Values</b>: any valid TCP port number<br/>
+			<b>Default</b>: 15599<br/>
+			<b>Description</b>: this controls which port the remote interface 
+			listens on.
+		</blockquote>
+		
+		<a name="classloader"/>
+		<h3>ClassLoaderFilter.x</h3>
+		<blockquote>
+			<b>Values</b>: any valid implemtation of 
+			<code>com.mentorgen.tools.profile.instrument.clfilter.ClassLoaderFilter</code><br/>
+			<b>Default</b>: If no class loader filters a specificed then
+		<code>net.sourceforge.jiprof.instrument.clfilter.GenericClassLoaderFilter</code>
+			is used (see also: <a href="#accept-class-loaders">accept-class-loaders</a>).<br/>
+			<b>Description</b>: JIP has to know which classloader will be 
+			loading the classes to be profiled. With command-line
+			apps we know what this is. However webapps and other
+			kinds of apps that run in a container use different classloaders.
+			The solution to this was to defined an interface: 
+		<code>ClassLoaderFilter</code> to use in a chain of responsilbility
+			pattern to determine which classloader should be "hooked"
+			for profiling. The way this works is that you can define a number
+			of realizations of this interface, one of each different env.
+			You specify the search order by appending a number to the end
+			of the property. For exmaple, the standard setup is:<pre><code>
+ClassLoaderFilter.1=com.mentorgen.tools.profile.instrument.clfilter.WebAppClassLoaderFilter
+ClassLoaderFilter.2=com.mentorgen.tools.profile.instrument.clfilter.StandardClassLoaderFilter		
+	</code></pre>
+			This indicates that the <code>WebAppClassLoaderFilter</code>
+			should be called to determine if we're running in Tomcat. If that
+			fails, call the <code>StandardClassLoaderFilter</code>. Note
+			that currently only the Java 5(tm) and Tomcat 5.5 environments
+			are supported. People who would like to add support for other
+			environments are encouraged to do so.
+		</blockquote>
+		
+		<a name="thread-depth"/>
+		<h3>thread-depth</h3>
+		<blockquote>
+			<b>Values</b>: any positive integer, -1 or <i>compact</i><br/>
+			<b>Default</b>: -1<br/>
+			<b>Description</b>: Call stacks can get really deep and sometimes
+			you only want to see a certain number of levels. This parameter
+			controls the number of levels you will see. The default is -1 
+			which means that there is no limit. Another option that can
+			be used is <i>compact</i>. This will limit the call stacks
+			to items that have a gross time that is at least 10 ms (this 
+			can be <a href="#hread-threshold">changed</a>). Using
+			<i>compact</i> is nice way to limit what you see while not
+			imposing an arbitrary limit on the thread-depth.
+		</blockquote>
+		
+		<a name="thread-threshold"/>
+		<h3>thread.compact.threshold.ms</h3>
+		<blockquote>
+			<b>Values</b>: any positive integer<br/>
+			<b>Default</b>: 10<br/>
+			<b>Description</b>: Modifies the call stack output to 
+			only show nodes with the given gross time. Only works when
+			<code>thread-depth</code> is set to <i>compact</i>
+		</blockquote>
+		
+		<a name="max-method-count"/>
+		<h3>max-method-count</h3>
+		<blockquote>
+			<b>Values</b>: any positive integer, -1 or <i>compact</i><br/>
+			<b>Default</b>: -1<br/>
+			<b>Description</b>: This property modifieds the section 
+			of the profiler output that shows the most expensive method. 
+			Giving a number greater than -1 will limit the number of methods
+			that are shown. -1 means no limit. <i>compact</i> can be usd to 
+			show only methods with a creatin minimum gross time (the
+			default is 10ms but can be changed by using 
+			<a href="#method-threshold">method.compact.threshold.ms</a>
+		</blockquote>
+		
+		<a name="method-threshold"/>
+		<h3>method.compact.threshold.ms</h3>
+		<blockquote>
+			<b>Values</b>: any positive integer<br/>
+			<b>Default</b>: 10<br/>
+			<b>Description</b>: Modifies the method output to 
+			only show methods with the given gross time. Only works when
+			<code>max-method-count</code> is set to <i>compact</i>.
+		</blockquote>
+		
+		<a name="file"/>
+		<h3>file</h3>
+		<blockquote>
+			<b>Values</b>: the name of any valid file or directory.<br/>
+			<b>Default</b>: ./profile.txt<br/>
+			<b>Description</b>: Names the file that the profile is
+			sent to. If this is a directory, JIP will auto-generate 
+			file names and
+			put the files in that directory. The format for the
+			generated file name is <code>yyyyMMdd-HHmmss</code>.
+		</blockquote>
+
+		<a name="exlcude"/>
+		<h3>exclude</h3>
+		<blockquote>
+			<b>Values</b>: a comman spearated list of package or class
+			names (class names must be fully qualified).<br/>
+			<b>Default</b>: <i>no default</i><br/>
+			<b>Description</b>: the values for this property name
+			packages or classes to be excluded from the profile. This
+			is handy when you have a chatty package or class that you
+			just don't want to see all over the place. Note that only
+			classes that are loaded by the &quot;app&quot; class loader
+			are profiled to start with.
+		</blockquote>
+
+		<a name="include"/>
+		<h3>include</h3>
+		<blockquote>
+			<b>Values</b>: a comman spearated list of package or class
+			names (class names must be fully qualified).<br/>
+			<b>Default</b>: <i>no default</i><br/>
+			<b>Description</b>: the values for this property name
+			packages or classes to be explicitly included in the profile.
+			Normally, you wouldn't use this, you'd let the <code><a href="#classloader">ClassLoaderFilter</a></code>
+			determine which classes to include. If you don't want to see something,
+			use <code><a href="#exlcude">exclude</a></code>. However, there
+			are situations where you want to exclude so much stuff, that it's easier
+			just to say what you want to be included. When using both exclude and include,
+			the include list is applied, then the exclude list is applied.
+		</blockquote>
+
+		<a name="alloc"/>
+		<h3>track.object.alloc</h3>
+		<blockquote>
+			<b>Values</b>: <code>on</code> or <code>off</code><br/>
+			<b>Default</b>: <code>off</code><br/>
+			<b>Description</b>: control whether or not JIP tracks 
+			object allocation. 
+		</blockquote>
+		
+		<a name="output"/>
+		<h3>output</h3>
+		<blockquote>
+			<b>Values</b>: <code>text</code>, <code>xml</code> or <code>both</code><br/>
+			<b>Default</b>: <code>text</code><br/>
+			<b>Description</b>: in addition to the standard human readable
+			profiles, this option allows you to output the profile information
+			in a raw XML format.
+		</blockquote>
+		
+		<a name="debug"/>
+		<h3>debug</h3>
+		<blockquote>
+			<b>Values</b>: <code>on</code> or <code>off</code><br/>
+			<b>Default</b>: <code>off</code><br/>
+			<b>Description</b>: when debug is turned on, text will be sent to 
+			standard out each time a class is classloaded and inspected by
+			the profiler for possbile instrumentation (see <code>
+			com.mentorgen.tools.profile.instrument.Transformer</code>). If the 
+			class is instrumented, <code>INST</code>, plus the class name
+			plus the classloader name will be sent to stddout. If the class
+			is not instrumented, <code>skip</code>, plus the class name
+			plus the classloader name will be sent to stddout. This is a 
+			helpful tool when the profile you're getting (or not getting)
+			doesn't match what you're expecting.<p/>
+			In addition, text will be sent to standard error when an exception is
+			detected and when the profile for a method has not been completed 
+			when the profiler terminates. <br/>
+			Exceptions are usually handled gracefully.
+			However, there are some cases where they skew the timings and therefore
+			the output is incorrect. Knowing that an exception is being thrown is a great
+			help in diagnosing problems like this.<br/>
+			Needing to &quot;fixup&quot; the profile
+			for one or two methods is also not that unusual. However, if the timing
+			for a method seems to be incorrect, knowing if the profiler needed to
+			fixup that method can be useful from a diagnosics perspective.
+		</blockquote>
+		
+		<a name="profiler-class"/>
+		<h3>profiler-class</h3>
+		<blockquote>
+			<b>Values</b>: any class name<br/>
+			<b>Default</b>: <code>com.mentorgen.tools.profile.runtime.Profile</code><br/>
+			<b>Description</b>: allows the another profiling backend to be used. 
+		</blockquote>			
+		
+		<a name="output-method-signatures"/>
+		<h3>output-method-signatures</h3>
+		<blockquote>
+			<b>Values:</b> <code>yes</code> or <code>no</code></br>
+			<b>Default:</b> <code>no</code></br>
+			<b>Description:</b> When set to <code>yes</code>, outputs the signature
+			of methods. By default, the method signature is omitted from the output
+			to save space. However, if you're dealing with methods that have been overloaded
+			you need to be able to see the method signature.</br>
+		</blockquote>	
+		
+		<a name="clock-resolution"/>
+		<h3>clock-resolution</h3>
+		<blockquote>
+			<b>Values:</b> <code>ms</code> or <code>ns</code></br>
+			<b>Default:</b> <code>ns</code></br>
+			<b>Description:</b> Sets the resolution of the TimeLineProfiler's clock to either milliseconds
+			(<code>ms</code>) or nanoseconds (<code>ns</code>). Only valid when using the <code>
+			TimeLineProfiler</code>.</br>
+		</blockquote>
+		
+		<a name="output-summary-only"/>
+		<h3>output-summary-only</h3>
+		<blockquote>
+			<b>Values:</b> <code>yes</code> or <code>no</code></br>
+			<b>Default:</b> <code>no</code></br>
+			<b>Description:</b> When set to <code>yes</code> the top most section of the profiler output
+			(the section that contains thread + call stack information) is omitted. The section can be 
+			quite large so it is sometime desirable to not have to page through it to get to the 
+			summary information. </br>
+		</blockquote>
+		
+		
+		<a name="accept-class-loaders"/>
+		<h3>accept-class-loaders</h3>
+		<blockquote>
+			<b>Values:</b> A comma separated list of classloader names (you can also specify
+			interface names)</br>
+			<b>Default:</b> If no values are given, <code>java.lang.ClassLoader.getSystemClassLoader()</code> 
+			is used.</br>
+			<b>Description:</b> A list of <code>Class Loaders</code> whose classes will be instrumented 
+			when using <code>net.sourceforge.jiprof.instrument.clfilter.GenericClassLoaderFilter</code>
+			as the classloader filter. Note that when looking to determine if profiling should be applied 
+			to a classloader, <code>instanceof</code> is used as the mode of comparison. This means, for 
+			example, that when profiling Tomcat, you can specify <code>org.apache.catalina.loader.Reloader</code>
+			which is an interface rather than a subclass of <code>java.lang.ClassLoader</code>.
+			</br>
+		</blockquote>
+
+	</body>
+</html>

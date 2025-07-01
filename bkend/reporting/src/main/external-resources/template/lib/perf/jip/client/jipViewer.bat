@@ -1,0 +1,1 @@
+java -jar jipViewer.jar %1

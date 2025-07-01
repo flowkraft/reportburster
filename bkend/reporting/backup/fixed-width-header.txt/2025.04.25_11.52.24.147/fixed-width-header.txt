@@ -1,0 +1,4 @@
+Name            ID SSN           Date        Dept      Position               Base   Bonus  Comm   Misc1  Misc2  Misc3  Misc4  Misc5  Total  Tax    Net 
+Clyde Grew      1  123-45-6789   March 2008  IT        Manager - IT           4000   300    500    100    100    100    100    10     4500   710    3790
+Kyle Butford    2  234-56-7890   March 2008  IT        Software Developer     3000   200    300    50     50     50     50     10     3300   410    2890
+Alfreda Waldback3  345-67-8901   March 2008  Pharmacy  Pharmacy Technician    3500   200    500    50     50     50     50     10     4000   410    3590

@@ -1,0 +1,25 @@
+{
+  "name": "reportburster",
+  "productName": "ReportBurster",
+  "license": "SSPL-1.0",
+  "description": "Server Side Public License (SSPL) - Desktop and Server versions. SSPL terms apply upon distribution or service provision.",
+  "version": "10.2.6",
+  "copyright": "2025, FlowKraft Systems & Consulting Ltd.",
+  "homepage": "https://www.pdfburst.com",
+  "author": {
+    "name": "FlowKraft Systems & Consulting Ltd",
+    "email": "support@reportburster.com"
+  },
+  "main": "main.js",
+  "private": true,
+  "dependencies": {
+    "@electron/remote": "2.0.8",
+    "custom-electron-titlebar": "4.1.3",
+    "adm-zip": "0.5.10",
+    "fs-jetpack": "5.1.0",
+    "unique-filename": "3.0.0",
+    "replace-in-file": "6.3.5",
+    "stack-utils": "2.0.5",
+    "electron-log": "4.4.8"
+  }
+}

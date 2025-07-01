@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:element name="root">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="records">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="record" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="name" type="xs:string"/>
+                    <xs:element name="id" type="xs:integer"/>
+                    <xs:element name="ssn" type="xs:string"/>
+                    <xs:element name="pay_period" type="xs:string"/>
+                    <xs:element name="department" type="xs:string"/>
+                    <xs:element name="position" type="xs:string"/>
+                    <xs:element name="gross_pay" type="xs:integer"/>
+                    <xs:element name="allowance1" type="xs:integer"/>
+                    <xs:element name="allowance2" type="xs:integer"/>
+                    <xs:element name="deduction1" type="xs:integer"/>
+                    <xs:element name="deduction2" type="xs:integer"/>
+                    <xs:element name="deduction3" type="xs:integer"/>
+                    <xs:element name="deduction4" type="xs:integer"/>
+                    <xs:element name="tax" type="xs:integer"/>
+                    <xs:element name="total_earnings" type="xs:integer"/>
+                    <xs:element name="total_deductions" type="xs:integer"/>
+                    <xs:element name="net_pay" type="xs:integer"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice ${OrderID}</title>
+  <style>
+    body { font-family: sans-serif; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    .total-row td { font-weight: bold; text-align: right; }
+  </style>
+</head>
+<body>
+  <h1>Invoice ${OrderID}</h1>
+  <p>
+    <strong>Date:</strong> ${OrderDate} <br>
+    <strong>Customer:</strong> ${CustomerID} (${CompanyName!'N/A'})
+  </p>
+  <h2>Details</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Unit Price</th>
+        <th>Discount</th>
+        <th>Line Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <#assign subtotal = 0>
+      <#if details??>
+      <#list details as item>
+        <#-- Handle potential nulls in item map -->
+        <#assign qty = (item.Quantity!0)>
+        <#assign price = (item.UnitPrice!0)>
+        <#assign discount = (item.Discount!0)>
+        <#assign lineTotal = (qty * price * (1 - discount)) >
+        <#assign subtotal = subtotal + lineTotal>
+        <tr>
+          <td>${item.ProductName!'N/A'}</td>
+          <td>${qty}</td>
+          <td>${price?string("0.00")}</td>
+          <td>${discount?string("0%")}</td>
+          <td style="text-align: right;">${lineTotal?string("0.00")}</td>
+        </tr>
+      </#list>
+      </#if>
+    </tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td colspan="4">Subtotal:</td>
+        <td>${subtotal?string("0.00")}</td>
+      </tr>
+      <tr class="total-row">
+        <td colspan="4">Freight:</td>
+        <td>${(Freight!0)?string("0.00")}</td>
+      </tr>
+      <#-- Assuming Tax is calculated or provided -->
+      <#assign freightVal = (Freight!0)>
+      <#assign tax = (subtotal + freightVal) * 0.08 > <#-- Example Tax Calc -->
+      <tr class="total-row">
+        <td colspan="4">Tax (8%):</td>
+        <td>${tax?string("0.00")}</td>
+      </tr>
+      <tr class="total-row">
+        <td colspan="4">Grand Total:</td>
+        <td>${(subtotal + freightVal + tax)?string("0.00")}</td>
+      </tr>
+    </tfoot>
+  </table>
+</body>
+</html>

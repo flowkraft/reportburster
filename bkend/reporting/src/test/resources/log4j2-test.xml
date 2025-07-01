@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <!-- Remove or comment out the general package logger -->
+        <!-- <Logger name="com.sourcekraft.documentburster" level="DEBUG"/> --> 
+        
+        <!-- Add specific loggers for the classes you want to debug -->
+        <Logger name="com.sourcekraft.documentburster.engine.reporting.SqlReporter" level="TRACE"/> 
+        <Logger name="com.sourcekraft.documentburster.unit.documentation.userguide.reporting.SqlReporterTest" level="DEBUG"/> 
+        
+        <!-- Keep Hibernate logs if needed -->
+        <Logger name="org.hibernate.SQL" level="DEBUG"/>
+        <Logger name="org.hibernate.type.descriptor.sql" level="TRACE"/>
+        
+        <!-- Root logger catches everything else at INFO level -->
+        <Root level="INFO"> 
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>

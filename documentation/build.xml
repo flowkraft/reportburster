@@ -1,0 +1,23 @@
+<project name="documentation" basedir=".">
+
+	<description>
+		Assembly project to build DocumentBurster documentation.
+	</description>
+
+	<import file="../src/bild/common-scripts/ant/documentation/docbook.xml" />
+
+	<!-- ***********************************************************************
+	    * target: generate-documentation
+	************************************************************************ -->
+	<target name="generate-documentation" description="Generates DocumentBurster documentation">
+
+		<echo message="Generate documentation-documentburster..." />
+
+		<generate-docs document="quickstart"/>
+		<generate-docs document="userguide"/>
+		<generate-docs document="advanced"/>
+
+	
+	</target>
+
+</project>

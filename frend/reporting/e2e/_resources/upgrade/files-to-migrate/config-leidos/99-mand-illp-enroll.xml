@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<documentburster>
+  <settings>
+    <version>8.8.4</version>
+    <template>99-mand-illp-enroll</template>
+    <burstfilename>${burst_token}.${input_document_extension}</burstfilename>
+    <mergefilename>merged.pdf</mergefilename>
+    <outputfolder>output/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}</outputfolder>
+    <backupfolder>backup/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}</backupfolder>
+    <quarantinefiles>true</quarantinefiles>
+    <quarantinefolder>quarantine/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}</quarantinefolder>
+    <logsarchivesfolder>logs/archives/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}</logsarchivesfolder>
+    <statsfilename>_stats-${stats_info}.log</statsfilename>
+    <sendfiles>
+      <email>true</email>
+      <upload>false</upload>
+      <web>false</web>
+      <sms>false</sms>
+    </sendfiles>
+    <deletefiles>false</deletefiles>
+    <emailserver>
+      <host></host>
+      <port>25</port>
+      <userid/>
+      <userpassword/>
+      <usessl>false</usessl>
+      <usetls>false</usetls>
+      <fromaddress>InclusiveLeaderLearn@leidos.com</fromaddress>
+      <name>Inclusive Leader Learning Program</name>
+    </emailserver>
+    <htmlemail>true</htmlemail>
+    <htmlemaileditcode>true</htmlemaileditcode>
+    <emailsettings>
+      <to>${var0}</to>
+      <cc/>
+      <bcc/>
+      <subject>Required Inclusive Leader Learning Enrollment Report for People Leaders</subject>
+      <text>Leader,
+
+    You are receiving this email because your employee(s) have not enrolled for their assigned session for the required Inclusive Leader Learning Program (ILLP). Flight time slots are filling quickly, and enrollment must be completed by ${var1}.
+
+    The attached report provides the outstanding enrollment status for your direct reports. You will receive reports through the remainder of the enrollment period to assist you with tracking employees who still need to enroll.
+
+    Inclusive Leader Learning Program
+
+    
+    
+        Please encourage all direct reports to complete their enrollment upon receipt of Director of Inclusion and Diversity Tashi Carper's invitation email.
+        Employees can access their assigned trainings in the "Required for You" section in the learning system in Workday.
+        Required for all people leaders levels 10 and below, the ILLP currently is being offered as a Virtual Live Classroom program consisting of TWO consecutive days, FOUR hours each day of learning and networking.
+        Attendance is required and must be completed within the two month session period.
+        Enrollment is restricted; employees are not able to enroll outside of their session.
+        Participants MUST attend both days in order to receive credit for the program. This virtual program will be facilitated via the WebEx video conference platform.
+         If you have questions related to enrollment, please contact the Inclusive Leader Learning Program.
+      
+    
+
+    Exemptions
+    
+    
+        If an employee has business/personal scheduling challenges that conflict with the assigned completion window, Leaders must provide authorization for employees to reschedule their training flight.
+        If an employee listed on your report has left the company please contact the Inclusive Leader Learning Program.
+    
+    
+
+    Questions
+
+    Please see the FAQs and contact the Inclusive Leader Learning Program if you have questions. For more information, visit the M3 Prism Page and the Inclusive Leader Learning Program links found in the right hand column.
+    
+
+    
+            
+            © Leidos | Web Privacy Policy
+            The information contained within these pages may be proprietary to Leidos, and is principally intended for employees of Leidos and its subsidiaries only.</text>
+      <html>&lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8"&gt;&lt;table align="center" style="width: 685px; height: auto; border: 1px solid #b3b3b3;" cellspacing="0" cellpadding="0"&gt;
+    &lt;tbody&gt;
+
+    &lt;tr&gt;
+        &lt;td colspan="2" style="width: 685px; height: 100px;"&gt;&lt;img alt="" src="../config/images/top_header.jpg" width="685" height="100"&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+
+    &lt;tr&gt;
+        &lt;td&gt;&lt;img alt="" src="../config/images/leidos_logo.gif" width="175" height="37"&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+
+    &lt;tr&gt;
+        &lt;td style="text-align: left; padding-left: 20px; padding-right: 30px; width: 685px; font-family: arial, helvetica, sans-serif; color: #000000; vertical-align: middle; padding-top: 20px;" colspan="2"&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;Leader,&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;You are receiving this email because your employee(s) have not enrolled for their assigned session for the required Inclusive Leader Learning Program (ILLP). Flight time slots are filling quickly, &lt;strong&gt;and enrollment must be completed by ${var1}.&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;The attached report provides the outstanding enrollment status for your direct reports. You will receive reports through the remainder of the enrollment period to assist you with tracking employees who still need to enroll.&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;&lt;strong&gt;Inclusive Leader Learning Program&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;
+    &lt;ul&gt;
+        &lt;li&gt;Please encourage all direct reports to complete their enrollment upon receipt of Director of Inclusion and Diversity Tashi Carper's invitation email.&lt;/li&gt;
+        &lt;li&gt;&lt;strong&gt;Employees can access their assigned trainings in the "Required for You" section &lt;a href="https://wd5.myworkday.com/leidos/learning/course/1cf9f443190b10010a772f6195a00000?type=9882927d138b100019b6a2df1a46018b"&gt;the learning system in Workday&lt;/a&gt;.&lt;/strong&gt;&lt;/li&gt;
+        &lt;li&gt;Required for all people leaders levels 10 and below, the ILLP currently is being offered as a Virtual Live Classroom program consisting of a ONE day session (six and one half hours) of learning and networking.&lt;/li&gt;
+        &lt;li&gt;&lt;strong&gt;Attendance is required and must be completed within the three month session period.&lt;/strong&gt;&lt;/li&gt;
+        &lt;li&gt;Enrollment is restricted; employees are not able to enroll outside of their session.&lt;/li&gt;
+        &lt;li&gt;Participants &lt;u&gt;MUST&lt;/u&gt; attend entire session in order to receive credit for the course. This virtual program will be facilitated via the WebEx video conference platform.&lt;/li&gt;
+         &lt;li&gt;If you have questions related to enrollment, please contact the &lt;a href="mailto:inclusivelearning@leidos.com"&gt;Inclusive Leader Learning Program&lt;/a&gt;.&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;&lt;strong&gt;Exemptions&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;
+    &lt;ul&gt;
+        &lt;li&gt;If an employee has business/personal scheduling challenges that conflict with the assigned completion window, Leaders must provide authorization for employees to reschedule their training flight.&lt;/li&gt;
+        &lt;li&gt;If an employee listed on your report has left the company please contact the &lt;a href="mailto:inclusivelearning@leidos.com"&gt;Inclusive Leader Learning Program&lt;/a&gt;.&lt;/li&gt;
+    &lt;/ul&gt;
+    &lt;span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;&lt;strong&gt;Questions&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;Please see the &lt;a href="https://prism.leidos.com/business_development_and_strategy/leidos_communications/frontline_update/monthly_manager_mondays_m3/monthly_manager_mondays_m3_wiki_articles/inclusive_leader_learning_program_frequently_asked_questions"&gt;FAQs&lt;/a&gt; and contact the &lt;a href="mailto:inclusivelearning@leidos.com"&gt;Inclusive Leader Learning Program&lt;/a&gt; if you have questions. For more information, visit the &lt;a href="https://prism.leidos.com/business_development_and_strategy/leidos_communications/frontline_update/monthly_manager_mondays_m3/monthly_manager_mondays_m3_blog/announcing_the_inclusive_leader_learning_program"&gt;M3 Prism Page&lt;/a&gt; and the Inclusive Leader Learning Program links found in the right hand column.&lt;/span&gt;&lt;/p&gt;
+    &lt;/tr&gt;
+
+    &lt;tr&gt;
+            &lt;td colspan="2" style="color: #333333; font-size: 10px; font-family: arial, helvetica, sans-serif; padding: 20px;"&gt;
+            &lt;div style="border-top-width: 1px; border-top-style: solid; border-top-color: #020034; padding-top: 10px;"&gt;© &lt;a href="https://www.leidos.com/"&gt;Leidos&lt;/a&gt; | &lt;a href="https://prism.leidos.com/docs/DOC-16086"&gt;Web Privacy Policy&lt;/a&gt;&lt;br&gt;
+            The information contained within these pages may be proprietary to Leidos, and is principally intended for employees of Leidos and its subsidiaries only.&lt;/div&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/tbody&gt;
+&lt;/table&gt;</html>
+    </emailsettings>
+    <attachments>
+      <items>
+        <attachment path="${extracted_file_path}" order="0"/>
+      </items>
+      <archive>
+        <archiveattachments>false</archiveattachments>
+        <archivefilename>reports-${burst_token}.zip</archivefilename>
+      </archive>
+    </attachments>
+    <emailrfc2822validator>
+      <allowquotedidentifiers>true</allowquotedidentifiers>
+      <allowparensinlocalpart>true</allowparensinlocalpart>
+      <allowdomainliterals/>
+      <allowdotinatext/>
+      <allowsquarebracketsinatext/>
+      <skipvalidationfor/>
+    </emailrfc2822validator>
+    <simplejavamail>
+      <active/>
+      <replytoname/>
+      <replytoaddress/>
+      <bouncetoname/>
+      <bouncetoaddress/>
+      <receipttoname/>
+      <receipttoaddress/>
+      <dispositionnotificationtoname/>
+      <dispositionnotificationtoaddress/>
+      <customemailheaders/>
+      <customsessionproperties/>
+      <javaxmaildebug/>
+      <transportmodeloggingonly/>
+      <proxy>
+        <host/>
+        <port>1080</port>
+        <username/>
+        <password/>
+        <socks5bridgeport>1081</socks5bridgeport>
+      </proxy>
+      <async/>
+      <poolsize/>
+      <poolsizekeepalivetime/>
+      <connectionpool>
+        <clusterkeyuuid/>
+        <coresize/>
+        <maxsize/>
+        <claimtimeoutmillis/>
+        <expireaftermillis/>
+        <loadbalancingstrategy/>
+      </connectionpool>
+      <sessiontimeoutmillis/>
+      <trustallhosts/>
+      <trustedhosts/>
+      <verifyserveridentity/>
+      <opportunistictls/>
+      <dkim>
+        <privatekey/>
+        <signingdomain/>
+        <selector/>
+      </dkim>
+      <smime>
+        <signingkeystore/>
+        <signingkeystorepassword/>
+        <signingkeyalias/>
+        <signingkeypassword/>
+        <encryptioncertificate/>
+      </smime>
+    </simplejavamail>
+    <uploadsettings>
+      <ftpcommand/>
+      <filesharecommand/>
+      <ftpscommand/>
+      <sftpcommand/>
+      <httpcommand/>
+      <cloudcommand/>
+    </uploadsettings>
+    <webuploadsettings>
+      <documentbursterwebcommand/>
+      <mssharepointcommand/>
+      <wordpresscommand/>
+      <drupalcommand/>
+      <joomlacommand/>
+      <otherwebcommand/>
+    </webuploadsettings>
+    <smssettings>
+      <twilio>
+        <accountsid/>
+        <authtoken/>
+      </twilio>
+      <fromtelephonenumber/>
+      <totelephonenumber/>
+      <text/>
+    </smssettings>
+    <qualityassurance>
+      <emailserver>
+        <host>localhost</host>
+        <port>1025</port>
+        <userid/>
+        <userpassword/>
+        <usessl>false</usessl>
+        <usetls>false</usetls>
+        <fromaddress>from@emailaddress.com</fromaddress>
+        <name>From Name</name>
+        <weburl>http://localhost:8025</weburl>
+      </emailserver>
+    </qualityassurance>
+    <split2ndtime>false</split2ndtime>
+    <bursttokendelimiters>
+      <start>{</start>
+      <end>}</end>
+      <start2nd>[</start2nd>
+      <end2nd>]</end2nd>
+    </bursttokendelimiters>
+    <numberofuservariables>10</numberofuservariables>
+    <delayeachdistributionby>0</delayeachdistributionby>
+    <reusetokenswhennotfound>false</reusetokenswhennotfound>
+    <failjobifanydistributionfails>false</failjobifanydistributionfails>
+    <enableretrypolicy>false</enableretrypolicy>
+    <retrypolicy>
+      <delay>3</delay>
+      <maxdelay>30</maxdelay>
+      <maxretries>3</maxretries>
+    </retrypolicy>
+    <locale>
+      <language/>
+      <country/>
+    </locale>
+    <sortbyposition>false</sortbyposition>
+    <suppressduplicateoverlappingtext>false</suppressduplicateoverlappingtext>
+    <shouldseparatebybeads>true</shouldseparatebybeads>
+    <averagechartolerancevalue/>
+    <spacingtolerancevalue/>
+    <enableincubatingfeatures>false</enableincubatingfeatures>
+    <updatesettings>
+      <copylicensinginformation>true</copylicensinginformation>
+      <copyoutputfiles>false</copyoutputfiles>
+      <copylogfiles>true</copylogfiles>
+      <copyquarantinefiles>false</copyquarantinefiles>
+      <copybackupfiles>false</copybackupfiles>
+    </updatesettings>
+  </settings>
+</documentburster>

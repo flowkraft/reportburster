@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<documentburster>
+  <settings>
+    <version>8.4</version>
+    <template>FCIP Cancellations JM Test</template>
+    <burstfilename>$burst_token$.$input_document_extension$</burstfilename>
+    <mergefilename>merged.pdf</mergefilename>
+    <outputfolder>output/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</outputfolder>
+    <backupfolder>backup/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</backupfolder>
+    <quarantinefiles>true</quarantinefiles>
+    <quarantinefolder>quarantine/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</quarantinefolder>
+    <logsarchivesfolder>logs/archives/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</logsarchivesfolder>
+    <statsfilename>_stats-$num_pages$pages-$num_files_extracted$extracted-$num_files_distributed$distributed.log</statsfilename>
+    <sendfiles>
+      <email>true</email>
+      <upload>false</upload>
+      <web>false</web>
+      <sms>false</sms>
+    </sendfiles>
+    <deletefiles>false</deletefiles>
+    <emailserver>
+      <host>192.168.100.30</host>
+      <port>2521</port>
+      <userid/>
+      <userpassword/>
+      <usessl>false</usessl>
+      <usetls>false</usetls>
+      <debug>false</debug>
+      <fromaddress>JAPremiums@company.com</fromaddress>
+      <name>CUNA Caribbean Policy Servicing</name>
+    </emailserver>
+    <htmlemail>true</htmlemail>
+    <htmlemaileditcode>true</htmlemaileditcode>
+    <emailsettings>
+      <to>acroach@company.com;mhowell@company.com;nwatson@company.com</to>
+      <cc/>
+      <bcc>acroach@company.com;mhowell@company.com;nwatson@company.com</bcc>
+      <subject>Test: List of Certificates to be Cancelled - $var1$</subject>
+      <text>Good day,Please find attached a list of all the 120 days delinquent certificates.Kindly submit to us the outstanding premiums before $var2$ to prevent cancellation of these certificates.Feel free to contact us should you have any further queries.
+
+Regards,
+
+
+
+$var3$</text>
+      <html>&lt;font face="calibra"&gt;&lt;p&gt;Good day,&lt;br&gt;&lt;/p&gt;Please find attached a list of all the 120 days delinquent certificates.&lt;/br&gt;&lt;p&gt;Kindly submit to us the outstanding premiums before $var2$ to prevent cancellation of these certificates.&lt;br&gt;&lt;p&gt;Feel free to contact us should you have any further queries.&lt;br&gt;&lt;br&gt;&lt;br&gt;
+
+&lt;p&gt;Regards,&lt;br&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;img src="images/CCIJ_Email_Sig.JPG"&gt;&lt;/font&gt;
+
+$var3$</html>
+    </emailsettings>
+    <attachments>
+      <items>
+        <attachment path="$extracted_file_path$" order="0"/>
+      </items>
+      <archive>
+        <archiveattachments>false</archiveattachments>
+        <archivefilename>reports-$burst_token$.zip</archivefilename>
+      </archive>
+    </attachments>
+    <uploadsettings>
+      <ftpcommand/>
+      <filesharecommand/>
+      <ftpscommand/>
+      <sftpcommand/>
+      <httpcommand/>
+      <cloudcommand/>
+    </uploadsettings>
+    <webuploadsettings>
+      <documentbursterwebcommand/>
+      <mssharepointcommand/>
+      <wordpresscommand/>
+      <drupalcommand/>
+      <joomlacommand/>
+      <otherwebcommand/>
+    </webuploadsettings>
+    <smssettings>
+      <twilio>
+        <accountsid/>
+        <authtoken/>
+      </twilio>
+      <fromtelephonenumber/>
+      <totelephonenumber/>
+      <text/>
+    </smssettings>
+    <qualityassurance>
+      <emailserver>
+        <host>localhost</host>
+        <port>1025</port>
+        <userid/>
+        <userpassword/>
+        <usessl>false</usessl>
+        <usetls>false</usetls>
+        <debug>false</debug>
+        <fromaddress>from@emailaddress.com</fromaddress>
+        <name>From Name</name>
+        <weburl>http://localhost:8025</weburl>
+      </emailserver>
+    </qualityassurance>
+    <bursttokendelimiters>
+      <start>{</start>
+      <end>}</end>
+    </bursttokendelimiters>
+    <numberofuservariables>10</numberofuservariables>
+    <delayeachdistributionby>0</delayeachdistributionby>
+    <reusetokenswhennotfound>false</reusetokenswhennotfound>
+    <failjobifanydistributionfails>true</failjobifanydistributionfails>
+    <enableretrypolicy>false</enableretrypolicy>
+    <retrypolicy>
+      <delay>3</delay>
+      <maxdelay>30</maxdelay>
+      <maxretries>3</maxretries>
+    </retrypolicy>
+    <allowlocalemailaddresses>false</allowlocalemailaddresses>
+    <locale>
+      <language/>
+      <country/>
+    </locale>
+    <encoding/>
+    <sort>false</sort>
+    <ignorebeads>false</ignorebeads>
+    <force>false</force>
+  </settings>
+</documentburster>

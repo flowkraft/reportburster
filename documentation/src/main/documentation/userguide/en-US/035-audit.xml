@@ -1,0 +1,421 @@
+<chapter id="chapter.audit">
+	<title>Quality Assurance</title>
+		<para>
+			When dealing with reports and financial documents it is
+			important to
+			have a good quality assurance mechanism.
+		</para>
+		<para>
+		<emphasis>
+			I'm concerned with sending misdirected mass email.
+		</emphasis>
+		</para>
+		<para>
+			This is a legitimate concern which people might have before deciding
+			to implement an automated report delivery system. <emphasis><trademark>DocumentBurster</trademark></emphasis>'s 
+			quality assurance mechanism is the tool intended to address exactly this concern, thus greatly reducing the 
+			risk and increasing the confidence of doing mass report distribution.
+		</para>
+		<section>
+			<title>Email Tester</title>
+		<para>
+			Before going "live" quality assurance should be used for testing
+			that everything is configured as it should be.
+		</para>
+		<para>
+			<emphasis><trademark>DocumentBurster</trademark></emphasis> integrates a <emphasis>Test Email Server</emphasis> which sits in the system tray and does not deliver the received messages. 
+			The received messages can be quickly viewed and inspected. 
+			Imagine you're just about to email 1000 invoices to your customers. 
+			You'll want to test your messages before emailing? <emphasis>Email Tester</emphasis> will help you do just that.
+		</para>
+		<para>	
+			The emails that are routed to the <emphasis>Email Tester</emphasis> will include the document(s) as a PDF attachment and the
+body of the email messages will be the same which the actual recipients are going to receive.
+Once you are comfortable using <emphasis><trademark>DocumentBurster</trademark></emphasis> you can go "live" and distribute the reports to the actual
+recipients.
+		</para>
+		<section id="qa.configuration">
+		<title>Configuration</title>
+			<para>
+			In
+			<emphasis><trademark>DocumentBurster</trademark></emphasis>
+			main window select
+			<guimenu>Actions</guimenu>
+			,
+			<guimenu>Configure</guimenu>
+			,
+			<guimenu>Quality Assurance</guimenu>
+			,
+			<guimenu>Email Tester</guimenu>
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/quality-assurance-configuration-menu.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/quality-assurance-configuration.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			This is the screen used to configure and start the <emphasis>Test Email Server</emphasis>.
+			Only <emphasis>From Name</emphasis> and <emphasis>From Email Address</emphasis> settings are required to be configured.
+			The rest of the settings should remain with the default values.
+		</para>
+		<para>
+			Once the <emphasis>Test Email Server</emphasis> is configured/started the connection can be tested using the
+			<emphasis>Send Test Email</emphasis> button.
+		</para>
+		</section>
+		<section id="qa.test">
+		<title>Run Test</title>
+			<para>
+			In
+			<emphasis><trademark>DocumentBurster</trademark></emphasis>
+			main window select
+			<guimenu>Actions</guimenu>
+			,
+			<guimenu>Merge, Burst and Trace...</guimenu>
+			,
+			<guimenu>Quality Assurance</guimenu>
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/quality-assurance-run-menu.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/quality-assurance-run.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			One of the following test modes can be selected:
+		</para>
+		<para>
+			<itemizedlist>
+				   <listitem>
+					<emphasis>
+						Test all the burst tokens which are found in the input report (emails and upload commands will only be logged)</emphasis>
+						– <emphasis><trademark>DocumentBurster</trademark></emphasis> will test all the burst tokens which are found in the report. 
+						If <emphasis><trademark>DocumentBurster</trademark></emphasis> is configured to distribute reports then one <emphasis>email (or upload) log</emphasis> file
+						will be generated for each different recipient (burst token). The email/upload log files will contain all the relevant information
+						which is required to validate that the software is configured properly. 
+					</listitem>
+					<listitem>
+					<emphasis>Test the following burst tokens</emphasis>
+						– <emphasis><trademark>DocumentBurster</trademark></emphasis> will test the (comma separated) list of burst tokens which are specified by the user. 
+						If <emphasis><trademark>DocumentBurster</trademark></emphasis> is configured to distribute reports then the corresponding
+						emails will be sent to the test email address and will also be logged to separate log files. 
+						If configured as such then 
+						<emphasis><trademark>DocumentBurster</trademark></emphasis> will execute any relevant upload command(s) and will log the commands in the appropriate files.
+						The email/upload log files will contain all the relevant information
+						which is required to validate that the software is configured properly. 
+					</listitem>
+					<listitem>
+					<emphasis>Test 2(configurable) random burst tokens</emphasis>
+						– <emphasis><trademark>DocumentBurster</trademark></emphasis> will test 2(configurable) random burst tokens. If <emphasis><trademark>DocumentBurster</trademark></emphasis> is configured to distribute reports then the corresponding
+						emails will be sent to the test email address and will also be logged to separate log files. 
+						If configured as such then 
+						<emphasis><trademark>DocumentBurster</trademark></emphasis> will execute any relevant upload command(s) and will log the commands in the appropriate files.
+						The email/upload log files will contain all the relevant information
+						which is required to validate that the software is configured properly.
+					</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			Once the test is finished all the generated emails will be available for inspection
+			in the <emphasis>Test Email Server</emphasis> which is started and waits in the Windows (bottom right) system tray. 
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/email-tester.png" format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+	</section>
+	<note>
+	<title>Note</title>
+	<para>
+		 While email distribution is the most common distribution method, <emphasis><trademark>DocumentBurster</trademark></emphasis>'s 
+		 quality assurance mechanism can be used to validate any upload/distribution configuration which the software
+		 currently supports (e.g. FTP, file share, etc.) 
+	</para>
+	</note>
+	</section>
+	<section id="logging">
+		<title>Logging</title>
+		<para>
+		<emphasis>It is crucial for the software to properly distribute all
+				the documents to the correct
+				destinations.
+			</emphasis>
+			However sometimes, because of various reasons, the distribution of the
+			documents might fail. This
+			might happen because the email server
+			connection details are not correct
+			or because the
+			server itself is down
+			or maybe the SSL settings are not accurate. 
+		</para>
+		<para>
+			<emphasis><trademark>DocumentBurster</trademark></emphasis>
+			has support for logging all activities and for tracing
+			back the
+			reports which fail to be distributed.
+		</para>
+		<para>
+			In
+			<emphasis><trademark>DocumentBurster</trademark></emphasis>
+			main window select
+			<guimenu>Actions</guimenu>
+			,
+			<guimenu>Merge, Burst and Trace...</guimenu>
+			,
+			<guimenu>Logging,
+				Tracing...</guimenu>
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/report-bursting-logging1.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/report-bursting-logging2.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>(1) - View/Clear Log and Quarantine Files</emphasis>
+						- Buttons to view/clear INFO, ERROR or WARN log files. View/Clear Quarantine Files
+						are the buttons to view/clear the reports which are quarantined.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>(2) - Current Running Jobs</emphasis>
+						- List with the jobs which are currently
+						executing
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>(3) - Progress and Status Bars</emphasis>
+						- At the bottom of the
+						screen there are a progress bar which shows the running progress
+						and a status bar which displays possible problems.
+						Green color means
+						that
+						there are no failed
+						reports while the red
+						color means that at
+						least
+						one report failed to be distributed and was quarantined.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			By default, in order to keep the log files simple and clear, the program is logging the errors and the minimum necessary number of informative events.
+		</para>
+		<para>If required,
+			<emphasis><trademark>DocumentBurster</trademark></emphasis>
+			can be configured to generate detailed log files. 
+			To do this please edit the file 
+				<filename>log4j.xml</filename>
+			and make the following change
+		</para>
+		<para>
+			<literallayout>
+				&lt;!-- Log level value="debug" will make DocumentBurster more verbose --&gt;
+				&lt;level value="info" /&gt;
+			</literallayout>
+		</para>
+		<para>
+			Do the bold change
+		</para>
+		<para>
+			<literallayout>
+				&lt;!-- Log level value="debug" will make DocumentBurster more verbose --&gt;
+				&lt;level value=<emphasis role="bold">"debug"</emphasis>/&gt;
+			</literallayout>
+		</para>
+		<para>
+			Save the configuration file and run the program again. Now
+			<emphasis><trademark>DocumentBurster</trademark></emphasis>
+			will
+			generate detailed log files which can be used for tracing of
+			possible problems.
+		</para>
+	</section>
+	<section>
+		<title>Send Processing Errors by Email</title>
+		<para>
+			<emphasis><trademark>DocumentBurster</trademark></emphasis> can be configured to send an email whenever a
+			problem is happening.
+			To do this, please edit the file
+			<filename>log4j.xml</filename>
+			and un-comment
+			the following line
+		</para>
+		<para>
+			<literallayout>
+				&lt;!-- &lt;appender-ref ref="mailAppender" /&gt; --&gt; 
+			</literallayout>
+		</para>
+		<para>
+			In addition, it is required to give all the correct email connection
+			details in the
+			<emphasis>mailAppender</emphasis>
+			section.
+		</para>
+	</section>
+	<section>
+		<title>Quarantine Reports Which Fail To Be Delivered</title>
+		<para>
+			<emphasis><trademark>DocumentBurster</trademark></emphasis> can be configured to quarantine 
+			(save) the documents which fail to be delivered	to a configurable folder.
+			The failed documents
+			should be reviewed at a later point in time in
+			order to take a decision
+			(either to distribute
+			again or to do something else).
+		</para>
+		<para>
+			In
+			<emphasis><trademark>DocumentBurster</trademark></emphasis>
+			main window select
+			<guimenu>Actions</guimenu>
+			,
+			<guimenu>Configure</guimenu>
+			,
+			<guimenu>General</guimenu>
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject>
+					<imagedata
+						fileref="images/burst-settings1.png" format="PNG" />
+				</imageobject>
+			</mediaobject>
+			<mediaobject>
+				<imageobject>
+					<imagedata
+						fileref="images/quarantine-reports.png" format="PNG" />
+				</imageobject>
+			</mediaobject>
+
+		</para>
+		<para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>Quarantine Folder</emphasis>
+						– Used to specify the folder where to quarantine the files
+						which
+						fail to be distributed.
+						It should be a local folder and the default value is
+						<emphasis>quarantine/$input_document_name$/$now;
+							format="yyyy.MM.dd_HH.mm.ss"$
+						</emphasis>
+						.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>Quarantine reports which fail to be
+							distributed
+						</emphasis>
+						- If checked, the
+						reports which fail to be distributed will be saved to
+						the quarantine folder,
+						otherwise no.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>Error Handling</title>
+		<para>
+			By default <emphasis><trademark>DocumentBurster</trademark></emphasis> software is stopping 
+			the report distribution when an error is happening.
+			<emphasis><trademark>DocumentBurster</trademark></emphasis> software will wait for the root cause of the 
+			problem to be fixed before triggering again the same report. 
+			The reason for this default behavior is that usually the problems are happening because of 
+			incorrect (or inconsistent) data and that all of these problems should be promptly fixed 
+			otherwise, when ignoring incorrect data (or misconfiguration), bigger problems will probably happen later.
+		</para>
+		<para>
+			Having said that, there are few legitimate situations in which the continuation of 
+			the report distribution might be the preferred choice.
+			For example, you might be looking at distributing reports to 5000 customers out of which 3 customers have an incorrect
+			email address in the database. Maybe the customer data was collected during a long period of time (and by many people) so
+			few data problems are expected. In such a case
+			you will not be willing to halt all the distribution and instead
+			you will need to distribute the reports to all the correct addresses and, 
+			in the same time, to get a list with the incorrect email
+			addresses which needs to be fixed afterwards.
+		</para>
+		<para>
+			In
+			<emphasis><trademark>DocumentBurster</trademark></emphasis>
+			main window select
+			<guimenu>Actions</guimenu>
+			,
+			<guimenu>Configure</guimenu>
+			,
+			<guimenu>Advanced</guimenu>
+			,
+			<guimenu>Error Handling</guimenu>
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject>
+					<imagedata
+						fileref="images/error-handling1.png" format="PNG" />
+				</imageobject>
+			</mediaobject>
+			<mediaobject>
+				<imageobject>
+					<imagedata
+						fileref="images/error-handling2.png" format="PNG" />
+				</imageobject>
+			</mediaobject>
+
+		</para>
+		<para>
+			<emphasis>If any recipient distribution fails...</emphasis>
+			<itemizedlist>
+					<listitem>
+						<emphasis>Fail job</emphasis>
+						- The report distribution is stopped when an error is happening. The offending error is reported
+						through the log file. This is the default configuration.
+						</listitem>
+						<listitem>
+						<emphasis>Continue report distribution for the remaining recipients</emphasis>
+						- If any recipient distribution fails then the distribution continues for the remaining recipients. The offending errors are reported
+						through the log file. 
+						</listitem>
+			</itemizedlist>	
+				
+		</para>
+	</section>
+</chapter>
