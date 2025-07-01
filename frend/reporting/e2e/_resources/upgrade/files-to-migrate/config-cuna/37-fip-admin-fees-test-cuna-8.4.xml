@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<documentburster>
+  <settings>
+    <version>8.4</version>
+    <template>FIP Admin Fees Test</template>
+    <burstfilename>$burst_token$.$input_document_extension$</burstfilename>
+    <mergefilename>merged.pdf</mergefilename>
+    <outputfolder>output/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</outputfolder>
+    <backupfolder>backup/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</backupfolder>
+    <quarantinefiles>true</quarantinefiles>
+    <quarantinefolder>quarantine/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</quarantinefolder>
+    <logsarchivesfolder>logs/archives/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</logsarchivesfolder>
+    <statsfilename>_stats-$num_pages$pages-$num_files_extracted$extracted-$num_files_distributed$distributed.log</statsfilename>
+    <sendfiles>
+      <email>true</email>
+      <upload>false</upload>
+      <web>false</web>
+      <sms>false</sms>
+    </sendfiles>
+    <deletefiles>false</deletefiles>
+    <emailserver>
+      <host>smtp.office365.com</host>
+      <port>587</port>
+      <userid>noreply@corp.company.com</userid>
+      <userpassword>********</userpassword>
+      <usessl>false</usessl>
+      <usetls>true</usetls>
+      <debug>false</debug>
+      <fromaddress>A3@company.com</fromaddress>
+      <name>AccountsAdmin</name>
+    </emailserver>
+    <htmlemail>true</htmlemail>
+    <htmlemaileditcode>true</htmlemaileditcode>
+    <emailsettings>
+      <to>rgordon@company.com</to>
+      <cc/>
+      <bcc>rgordon@company.com</bcc>
+      <subject>Test $var0$ - FIP Admin Fees - $var1$</subject>
+      <text>$var0$
+
+Dear Sir or Madam,
+
+
+Re: The Family Indemnity Plan (FIP) Statements
+
+
+We are pleased to inform you that your account has been credited with payment for FIP Administration Fees.
+
+
+The attached file provides a breakdown of Administration Fee payments.
+
+
+Please contact Mrs. Natasha Johnson at 628-2862 Ext. 1045 if you require additional information or clarification with the information. At CUNA Mutual Group/CUNA Caribbean Insurance, we remain committed "To be the best at serving credit unions and their members."
+
+
+Regards,
+
+
+
+
+$var3$</text>
+      <html>&lt;p&gt;$var0$&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Dear Sir or Madam,&lt;br&gt;&lt;br&gt;&lt;/p&gt;
+
+
+&lt;p&gt;Re: The Family Indemnity Plan (FIP) Statements&lt;br&gt;&lt;br&gt;&lt;/p&gt;
+
+
+&lt;p&gt;We are pleased to inform you that your account has been credited with payment for FIP Administration Fees.&lt;br&gt;&lt;/p&gt;
+
+
+&lt;p&gt;The attached file provides a breakdown of Administration Fee payments.&lt;br&gt;&lt;/p&gt;
+
+
+&lt;p&gt;Please contact Mrs. Natasha Johnson at 628-2862 Ext. 1045 if you require additional information or clarification with the information. At CUNA Mutual Group/CUNA Caribbean Insurance, we remain committed "To be the best at serving credit unions and their members."&lt;br&gt;&lt;/p&gt;
+
+
+&lt;p&gt;Regards,&lt;br&gt;&lt;/p&gt;
+
+
+&lt;img src="images/CCI_Email_Sig.JPG"&gt;&lt;/font&gt;&lt;br&gt;&lt;/p&gt;
+
+$var3$</html>
+    </emailsettings>
+    <attachments>
+      <items>
+        <attachment path="$extracted_file_path$" order="0"/>
+      </items>
+      <archive>
+        <archiveattachments>false</archiveattachments>
+        <archivefilename>reports-$burst_token$.zip</archivefilename>
+      </archive>
+    </attachments>
+    <uploadsettings>
+      <ftpcommand/>
+      <filesharecommand/>
+      <ftpscommand/>
+      <sftpcommand/>
+      <httpcommand/>
+      <cloudcommand/>
+    </uploadsettings>
+    <webuploadsettings>
+      <documentbursterwebcommand/>
+      <mssharepointcommand/>
+      <wordpresscommand/>
+      <drupalcommand/>
+      <joomlacommand/>
+      <otherwebcommand/>
+    </webuploadsettings>
+    <smssettings>
+      <twilio>
+        <accountsid/>
+        <authtoken/>
+      </twilio>
+      <fromtelephonenumber/>
+      <totelephonenumber/>
+      <text/>
+    </smssettings>
+    <qualityassurance>
+      <emailserver>
+        <host>localhost</host>
+        <port>1025</port>
+        <userid/>
+        <userpassword/>
+        <usessl>false</usessl>
+        <usetls>false</usetls>
+        <debug>false</debug>
+        <fromaddress>from@emailaddress.com</fromaddress>
+        <name>From Name</name>
+        <weburl>http://localhost:8025</weburl>
+      </emailserver>
+    </qualityassurance>
+    <bursttokendelimiters>
+      <start>{</start>
+      <end>}</end>
+    </bursttokendelimiters>
+    <numberofuservariables>10</numberofuservariables>
+    <delayeachdistributionby>0</delayeachdistributionby>
+    <reusetokenswhennotfound>false</reusetokenswhennotfound>
+    <failjobifanydistributionfails>true</failjobifanydistributionfails>
+    <enableretrypolicy>false</enableretrypolicy>
+    <retrypolicy>
+      <delay>3</delay>
+      <maxdelay>30</maxdelay>
+      <maxretries>3</maxretries>
+    </retrypolicy>
+    <allowlocalemailaddresses>false</allowlocalemailaddresses>
+    <locale>
+      <language/>
+      <country/>
+    </locale>
+    <encoding/>
+    <sort>false</sort>
+    <ignorebeads>false</ignorebeads>
+    <force>false</force>
+  </settings>
+</documentburster>

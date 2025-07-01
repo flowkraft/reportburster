@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns:root xmlns:ns="http://example.com/ns">
+    <ns:records>
+        <ns:record>
+            <ns:name>Clyde Grew</ns:name>
+            <ns:id>1</ns:id>
+            <ns:ssn>123-45-6789</ns:ssn>
+            <ns:pay_period>March 2008</ns:pay_period>
+            <ns:department>IT</ns:department>
+            <ns:position>Manager - IT</ns:position>
+            <ns:gross_pay>4000</ns:gross_pay>
+            <ns:allowance1>300</ns:allowance1>
+            <ns:allowance2>500</ns:allowance2>
+            <ns:deduction1>100</ns:deduction1>
+            <ns:deduction2>100</ns:deduction2>
+            <ns:deduction3>100</ns:deduction3>
+            <ns:deduction4>100</ns:deduction4>
+            <ns:tax>10</ns:tax>
+            <ns:total_earnings>4500</ns:total_earnings>
+            <ns:total_deductions>710</ns:total_deductions>
+            <ns:net_pay>3790</ns:net_pay>
+        </ns:record>
+        <ns:record>
+            <ns:name>Kyle Butford</ns:name>
+            <ns:id>2</ns:id>
+            <ns:ssn>234-56-7890</ns:ssn>
+            <ns:pay_period>March 2008</ns:pay_period>
+            <ns:department>IT</ns:department>
+            <ns:position>Software Developer</ns:position>
+            <ns:gross_pay>3000</ns:gross_pay>
+            <ns:allowance1>200</ns:allowance1>
+            <ns:allowance2>300</ns:allowance2>
+            <ns:deduction1>50</ns:deduction1>
+            <ns:deduction2>50</ns:deduction2>
+            <ns:deduction3>50</ns:deduction3>
+            <ns:deduction4>50</ns:deduction4>
+            <ns:tax>10</ns:tax>
+            <ns:total_earnings>3300</ns:total_earnings>
+            <ns:total_deductions>410</ns:total_deductions>
+            <ns:net_pay>2890</ns:net_pay>
+        </ns:record>
+    </ns:records>
+</ns:root>

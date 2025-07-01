@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<documentburster>
+  <settings>
+    <version>8.8.4</version>
+    <template>99-newhire-train-lvl1</template>
+    <burstfilename>${burst_token}.${input_document_extension}</burstfilename>
+    <mergefilename>merged.pdf</mergefilename>
+    <outputfolder>output/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}</outputfolder>
+    <backupfolder>backup/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}</backupfolder>
+    <quarantinefiles>true</quarantinefiles>
+    <quarantinefolder>quarantine/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}</quarantinefolder>
+    <logsarchivesfolder>logs/archives/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}</logsarchivesfolder>
+    <statsfilename>_stats-${stats_info}.log</statsfilename>
+    <sendfiles>
+      <email>true</email>
+      <upload>false</upload>
+      <web>false</web>
+      <sms>false</sms>
+    </sendfiles>
+    <deletefiles>false</deletefiles>
+    <emailserver>
+      <host></host>
+      <port>25</port>
+      <userid/>
+      <userpassword/>
+      <usessl>false</usessl>
+      <usetls>false</usetls>
+      <fromaddress>Leidos-Ethics-and-Compliance@leidos.com</fromaddress>
+      <name>Leidos Ethics and Compliance</name>
+    </emailserver>
+    <htmlemail>true</htmlemail>
+    <htmlemaileditcode>true</htmlemaileditcode>
+    <emailsettings>
+      <to>${var0}</to>
+      <cc/>
+      <bcc/>
+      <subject>Overdue New Hire Compliance Training</subject>
+      <text>You are receiving this notification because employees you manage have not completed all of their required training.
+
+    New employees are required by corporate policy LP-LG-1 to complete all assigned training and the Conflicts of Interest Certification within 30 days of their start date with the company. The attached report lists employees within your management chain for which these requirements are now overdue.
+
+    Numerous reminders have been sent to employees regarding their training status. Please discuss these requirements with your employee(s) and ensure they complete this training as soon as possible. Failure to complete training in accordance with policy places the continued approval of our business systems by DCAA at risk.
+
+    If an employee listed on your report has left the company or if there are other extenuating circumstances, as defined by LP-LG-1, which are preventing their completion of this activity, please complete an exemption request form to remove the employee from future reports. If your employee is on an approved leave of absence, please ensure their status is reflected accurately in Workday. Employees who are exempt or on an approved leave of absence must complete their required training upon their return to work.
+
+    If you have questions, please contact the Ethics and Compliance Office at Leidos-Ethics-and-Compliance@leidos.com.
+
+    
+
+    
+            
+            © Leidos | Web Privacy Policy
+            This email and any attachments to it are intended only for the identified recipients. It may contain proprietary or otherwise legally protected information of Leidos. Any unauthorized use or disclosure of this communication is strictly prohibited. If you have received this communication in error, please notify the sender and delete or otherwise destroy the email and all attachments immediately.</text>
+      <html>&lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8"&gt;&lt;table align="center" style="width: 685px; height: auto; border: 1px solid #b3b3b3;" cellspacing="0" cellpadding="0"&gt;
+    &lt;tbody&gt;
+
+    &lt;tr&gt;
+        &lt;td colspan="2" style="width: 685px; height: 100px;"&gt;&lt;img alt="" src="../config/images/top_header.jpg" width="685" height="100"&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+
+    &lt;tr&gt;
+        &lt;td&gt;&lt;img alt="" src="../config/images/leidos_logo.gif" width="175" height="37"&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+
+    &lt;tr&gt;
+        &lt;td style="text-align: left; padding-left: 20px; padding-right: 30px; width: 685px; font-family: arial, helvetica, sans-serif; color: #000000; vertical-align: middle; padding-top: 20px;" colspan="2"&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;The New Hire Training Notifications email sent out yesterday contained an error. This email has been updated with the correct information.&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;You are receiving this notification because employees you manage have not completed all of their required training.&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;New employees are required by corporate policy &lt;a href="https://prism.leidos.com/command_media/command_media_folders/policy_lp_lg_1_standards_of_business_ethics_and_conductpdf"&gt;LP-LG-1&lt;/a&gt; to complete all assigned training and the Conflicts of Interest Certification within 30 days of their start date with the company. The attached report lists employees within your management chain for which these requirements are now overdue.&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;Numerous reminders have been sent to employees regarding their training status. Please discuss these requirements with your employee(s) and ensure they complete this training as soon as possible. Failure to complete training in accordance with policy places the continued approval of our business systems by DCAA at risk.&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;If an employee listed on your report has left the company or if there are other extenuating circumstances, as defined by LP-LG-1, which are preventing their completion of this activity, please complete an &lt;a href="https://ciocentral.leidos.com/sp_ldos?id=sc_cat_item&amp;sys_id=4a42b636e15ef7806a0f430a53e8403d&amp;sysparm_category=f3036cdff07b4b000f21edabd495033e"&gt;exemption request form&lt;/a&gt; to remove the employee from future reports. If your employee is on an approved leave of absence, please ensure their status is reflected accurately in Workday. Employees who are exempt or on an approved leave of absence must complete their required training upon their return to work.&lt;/span&gt;&lt;/p&gt;
+
+    &lt;p&gt;&lt;span style="font-size: 12px;color: #000000;"&gt;If you have questions, please contact the Ethics and Compliance Office at &lt;a href="mailto:Leidos-Ethics-and-Compliance@leidos.com"&gt;Leidos-Ethics-and-Compliance@leidos.com&lt;/a&gt;.&lt;/span&gt;&lt;/p&gt;
+
+    &lt;/tr&gt;
+
+    &lt;tr&gt;
+            &lt;td colspan="2" style="color: #333333; font-size: 10px; font-family: arial, helvetica, sans-serif; padding: 20px;"&gt;
+            &lt;div style="border-top-width: 1px; border-top-style: solid; border-top-color: #020034; padding-top: 10px;"&gt;© &lt;a href="https://www.leidos.com/"&gt;Leidos&lt;/a&gt; | &lt;a href="https://prism.leidos.com/command_media/command_media_folders/policy_lp_lg_3_privacypdf"&gt;Web Privacy Policy&lt;/a&gt;&lt;br&gt;
+            This email and any attachments to it are intended only for the identified recipients. It may contain proprietary or otherwise legally protected information of Leidos. Any unauthorized use or disclosure of this communication is strictly prohibited. If you have received this communication in error, please notify the sender and delete or otherwise destroy the email and all attachments immediately.&lt;/div&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/tbody&gt;
+&lt;/table&gt;</html>
+    </emailsettings>
+    <attachments>
+      <items>
+        <attachment path="${extracted_file_path}" order="0"/>
+      </items>
+      <archive>
+        <archiveattachments>false</archiveattachments>
+        <archivefilename>reports-${burst_token}.zip</archivefilename>
+      </archive>
+    </attachments>
+    <emailrfc2822validator>
+      <allowquotedidentifiers>true</allowquotedidentifiers>
+      <allowparensinlocalpart>true</allowparensinlocalpart>
+      <allowdomainliterals/>
+      <allowdotinatext/>
+      <allowsquarebracketsinatext/>
+      <skipvalidationfor/>
+    </emailrfc2822validator>
+    <simplejavamail>
+      <active/>
+      <replytoname/>
+      <replytoaddress/>
+      <bouncetoname/>
+      <bouncetoaddress/>
+      <receipttoname/>
+      <receipttoaddress/>
+      <dispositionnotificationtoname/>
+      <dispositionnotificationtoaddress/>
+      <customemailheaders/>
+      <customsessionproperties/>
+      <javaxmaildebug/>
+      <transportmodeloggingonly/>
+      <proxy>
+        <host/>
+        <port>1080</port>
+        <username/>
+        <password/>
+        <socks5bridgeport>1081</socks5bridgeport>
+      </proxy>
+      <async/>
+      <poolsize/>
+      <poolsizekeepalivetime/>
+      <connectionpool>
+        <clusterkeyuuid/>
+        <coresize/>
+        <maxsize/>
+        <claimtimeoutmillis/>
+        <expireaftermillis/>
+        <loadbalancingstrategy/>
+      </connectionpool>
+      <sessiontimeoutmillis/>
+      <trustallhosts/>
+      <trustedhosts/>
+      <verifyserveridentity/>
+      <opportunistictls/>
+      <dkim>
+        <privatekey/>
+        <signingdomain/>
+        <selector/>
+      </dkim>
+      <smime>
+        <signingkeystore/>
+        <signingkeystorepassword/>
+        <signingkeyalias/>
+        <signingkeypassword/>
+        <encryptioncertificate/>
+      </smime>
+    </simplejavamail>
+    <uploadsettings>
+      <ftpcommand/>
+      <filesharecommand/>
+      <ftpscommand/>
+      <sftpcommand/>
+      <httpcommand/>
+      <cloudcommand/>
+    </uploadsettings>
+    <webuploadsettings>
+      <documentbursterwebcommand/>
+      <mssharepointcommand/>
+      <wordpresscommand/>
+      <drupalcommand/>
+      <joomlacommand/>
+      <otherwebcommand/>
+    </webuploadsettings>
+    <smssettings>
+      <twilio>
+        <accountsid/>
+        <authtoken/>
+      </twilio>
+      <fromtelephonenumber/>
+      <totelephonenumber/>
+      <text/>
+    </smssettings>
+    <qualityassurance>
+      <emailserver>
+        <host>localhost</host>
+        <port>1025</port>
+        <userid/>
+        <userpassword/>
+        <usessl>false</usessl>
+        <usetls>false</usetls>
+        <fromaddress>from@emailaddress.com</fromaddress>
+        <name>From Name</name>
+        <weburl>http://localhost:8025</weburl>
+      </emailserver>
+    </qualityassurance>
+    <split2ndtime>false</split2ndtime>
+    <bursttokendelimiters>
+      <start>{</start>
+      <end>}</end>
+      <start2nd>[</start2nd>
+      <end2nd>]</end2nd>
+    </bursttokendelimiters>
+    <numberofuservariables>10</numberofuservariables>
+    <delayeachdistributionby>0</delayeachdistributionby>
+    <reusetokenswhennotfound>false</reusetokenswhennotfound>
+    <failjobifanydistributionfails>false</failjobifanydistributionfails>
+    <enableretrypolicy>false</enableretrypolicy>
+    <retrypolicy>
+      <delay>3</delay>
+      <maxdelay>30</maxdelay>
+      <maxretries>3</maxretries>
+    </retrypolicy>
+    <locale>
+      <language/>
+      <country/>
+    </locale>
+    <sortbyposition>false</sortbyposition>
+    <suppressduplicateoverlappingtext>false</suppressduplicateoverlappingtext>
+    <shouldseparatebybeads>true</shouldseparatebybeads>
+    <averagechartolerancevalue/>
+    <spacingtolerancevalue/>
+    <enableincubatingfeatures>false</enableincubatingfeatures>
+    <updatesettings>
+      <copylicensinginformation>true</copylicensinginformation>
+      <copyoutputfiles>false</copyoutputfiles>
+      <copylogfiles>true</copylogfiles>
+      <copyquarantinefiles>false</copyquarantinefiles>
+      <copybackupfiles>false</copybackupfiles>
+    </updatesettings>
+  </settings>
+</documentburster>

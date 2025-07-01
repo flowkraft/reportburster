@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<documentburster>
+  <settings>
+    <version>8.4</version>
+    <template>FIP Member Overdue Letters Prod</template>
+    <burstfilename>$var0$.$input_document_extension$</burstfilename>
+    <mergefilename>merged.pdf</mergefilename>
+    <outputfolder>output/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss"$</outputfolder>
+    <backupfolder>backup/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</backupfolder>
+    <quarantinefiles>true</quarantinefiles>
+    <quarantinefolder>quarantine/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss"$</quarantinefolder>
+    <logsarchivesfolder>logs/archives/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss.SSS"$</logsarchivesfolder>
+    <statsfilename>_stats-$num_pages$pages-$num_files_extracted$extracted-$num_files_distributed$distributed.log</statsfilename>
+    <sendfiles>
+      <email>true</email>
+      <upload>false</upload>
+      <web>false</web>
+      <sms>false</sms>
+    </sendfiles>
+    <deletefiles>false</deletefiles>
+    <emailserver>
+      <host>smtp.office365.com</host>
+      <port>587</port>
+      <userid>noreply@corp.company.com</userid>
+      <userpassword>********</userpassword>
+      <usessl>false</usessl>
+      <usetls>true</usetls>
+      <debug>false</debug>
+      <fromaddress>premiums@company.com</fromaddress>
+      <name>FIP Bill Admin</name>
+    </emailserver>
+    <htmlemail>true</htmlemail>
+    <htmlemaileditcode>true</htmlemaileditcode>
+    <emailsettings>
+      <to>$var3$</to>
+      <cc/>
+      <bcc>$var2$; lraymond@company.com</bcc>
+      <subject>$var1$ FIP Member Overdue Letters - $var0$</subject>
+      <text>Dear Policy Holder,
+
+ We wish to advise that in keeping with our regulatory requirements which govern insurance companies, CUNA Caribbean Insurance will be issuing a  Sixty (60) day Pre‐Notice of Cancellation  letter directly to your FIP Certificate holders with premiums outstanding for more than 90 days as at  January 1st 2021. 
+
+ Kindly note that letters will be dispatched in  January 2021   for the certificate holders identified in the attached listing. 
+
+Should you have any questions, please feel free to send an email to the following: 
+customerservices@company.com  
+
+premiums@company.com  
+
+Best Regard.
+
+</text>
+      <html>&lt;p&gt;Dear Policy Holder,&lt;br&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt; We wish to advise that in keeping with our regulatory requirements which govern insurance companies, CUNA Caribbean Insurance will be issuing a &lt;b&gt; Sixty (60) day Pre‐Notice of Cancellation &lt;/b&gt; letter directly to your FIP Certificate holders with premiums outstanding for more than 90 days as at &lt;b&gt; January 1st 2021&lt;/b&gt;. &lt;br&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt; Kindly note that letters will be dispatched in &lt;b&gt; January 2021 &lt;/b&gt;  for the certificate holders identified in the attached listing. &lt;br&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Should you have any questions, please feel free to send an email to the following: &lt;br&gt;&lt;/p&gt;
+&lt;u&gt;customerservices@company.com &lt;/u&gt;&lt;/b&gt; &lt;br&gt;&lt;br&gt;
+
+&lt;u&gt;premiums@company.com &lt;/u&gt;&lt;/b&gt; &lt;br&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;p&gt;Best Regard.&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+
+&lt;img src="images/CCI_Email_Sig.JPG"&gt;</html>
+    </emailsettings>
+    <attachments>
+      <items>
+        <attachment path="$extracted_file_path$" order="0"/>
+      </items>
+      <archive>
+        <archiveattachments>false</archiveattachments>
+        <archivefilename>reports-$burst_token$.zip</archivefilename>
+      </archive>
+    </attachments>
+    <uploadsettings>
+      <ftpcommand/>
+      <filesharecommand/>
+      <ftpscommand/>
+      <sftpcommand/>
+      <httpcommand/>
+      <cloudcommand/>
+    </uploadsettings>
+    <webuploadsettings>
+      <documentbursterwebcommand/>
+      <mssharepointcommand/>
+      <wordpresscommand/>
+      <drupalcommand/>
+      <joomlacommand/>
+      <otherwebcommand/>
+    </webuploadsettings>
+    <smssettings>
+      <twilio>
+        <accountsid/>
+        <authtoken/>
+      </twilio>
+      <fromtelephonenumber/>
+      <totelephonenumber/>
+      <text/>
+    </smssettings>
+    <qualityassurance>
+      <emailserver>
+        <host>localhost</host>
+        <port>1025</port>
+        <userid/>
+        <userpassword/>
+        <usessl>false</usessl>
+        <usetls>false</usetls>
+        <debug>false</debug>
+        <fromaddress>from@emailaddress.com</fromaddress>
+        <name>From Name</name>
+        <weburl>http://localhost:8025</weburl>
+      </emailserver>
+    </qualityassurance>
+    <bursttokendelimiters>
+      <start>{</start>
+      <end>}</end>
+    </bursttokendelimiters>
+    <numberofuservariables>10</numberofuservariables>
+    <delayeachdistributionby>0</delayeachdistributionby>
+    <reusetokenswhennotfound>false</reusetokenswhennotfound>
+    <failjobifanydistributionfails>true</failjobifanydistributionfails>
+    <enableretrypolicy>false</enableretrypolicy>
+    <retrypolicy>
+      <delay>3</delay>
+      <maxdelay>30</maxdelay>
+      <maxretries>3</maxretries>
+    </retrypolicy>
+    <allowlocalemailaddresses>false</allowlocalemailaddresses>
+    <locale>
+      <language/>
+      <country/>
+    </locale>
+    <encoding/>
+    <sort>false</sort>
+    <ignorebeads>false</ignorebeads>
+    <force>false</force>
+  </settings>
+</documentburster>

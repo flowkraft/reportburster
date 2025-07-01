@@ -1,0 +1,134 @@
+= _DocumentBurster_(C) in 5 Minutes
+
+This document will help you start using _DocumentBurster_(C) in few minutes.
+
+== Introduction
+
+This quick start document will demonstrate how to use _DocumentBurster_(C) software. +
+
+For details on how to install and use _DocumentBurster Server_(C) please read here +
+
+https://www.pdfburst.com/docs/html/userguide/chapter.server.html[window=_blank]
+
+=== Convention - Path Separator
+
+This document uses the slash character (/) to display directory and file components of a path. +
+
+_Windows(R)_ can accept either the backslash (\) or slash (/) characters to separate directory and 
+file components of a path, while the Microsoft convention is to use a backslash (\). +
+
+_DocumentBurster_(C) is intended to work on multiple operating systems (e.g. _Windows(R)_, Linux) and the 
+convention for this manual is to use the slash character (/) to display the components of a path.
+
+=== We Need Feedback!
+
+If you find a typographical error in this manual, or if you have thought of a way to make this manual better, we would love to hear from you! +
+
+In case you have a suggestion for improving the documentation, try to be as specific as possible and include the section number and some surrounding text, so we can easily find the issue. +
+
+Email address support@pdfburst.com
+
+== Download _DocumentBurster_(C)
+
+First step is to download _documentburster.zip_ and extract the file to a hard disk folder location like _C:/_ +
+
+https://s3.amazonaws.com/documentburster/newest/documentburster.zip[window=_blank] +
+
+== Prerequisite
+
+=== Java Runtime (JRE)
+
+Java runtime (JRE) version 1.8 or higher must be installed on the target computer in order to use _DocumentBurster_(C)
+software.
+
+=== Check Java version
+
+In the _Windows(R)_ command prompt type *_java –version_* and this command will return the version of Java which is installed on the machine. It should be greater or equal to version 1.8
+
+image::java-version-command.png[]
+
+Otherwise, if you need to install Java, the Java JRE can be downloaded from +
+
+http://jdk.java.net/java-se-ri/8 (make sure you download the Java binaries for your operating system, e.g. _Windows(R)_) +
+
+Double-click on the Java downloaded file to start the installation process.
+
+=== #Note on Java#
+
+This is required only if the *_java –version_* command does not return a correct Java version and you know that Java is installed on the computer. +
+
+On _Windows(R)_ sometimes the *_java –version_* command does not return a correct Java version even if Java is installed. This is happening because the _Windows(R)_
+*_PATH_* system environment variable does not reflect the location to Java's
+_bin_ folder path.
+
+*Solution* (for _Windows(R)_ Server / _Windows(R)_ 10 / _Windows(R)_ 7)
+
+. Open _Control Panel_ - > _System properties_ (WinKey + Pause) dialog.
+Select _Advanced_	tab and then _Environment Variables_
+. Make sure that the _Windows(R)_ *_PATH_* system environment variable is
+updated to include the path to Java's _bin_ folder path location, e.g.
+_C:/Program Files/Java/jre8/bin_ or similar should be in the *_PATH_* system environment	variable. Be sure to omit any quotation marks around the path even if it contains	spaces.
+. In the _Windows(R)_ command prompt type again the *_java –version_* command. It should return a Java v1.8+ installation.
+
+== Burst a Sample _Payslips.pdf_ Document
+
+Java is now installed which means that you are ready to run _DocumentBurster.exe_
+
+image::documentburster.png[]
+
+_DocumentBurster_(C) is coming with a three pages _Payslips.pdf_ document which is located in the _samples_ folder. Bursting this report will generate three output PDF documents for the three distinct employees which are found in the  _Payslips.pdf_ input report.
+
+image::three-output-pdf-files.png[]
+
+The software can be configured to email the individual payslips to the
+corresponding employees. Similarly, _DocumentBurster_(C) can be configured to process other report types such as invoices, statements, purchase orders, commissions reports or dunning letters in order to distribute relevant parts to each of your clients, subscribers, partners or vendors.
+
+Please check the _samples/Payslips.pdf_ report to see how the burst tokens are defined using the employees email addresses delimited by the curly brackets { and } characters.
+
+== What's Next?
+
+We hope that this quick overview has piqued your interest with the __DocumentBurster__(C) software. Please mind that this is quite a ´truncated´ quick-start document. Now you are ready to find out more goodies which can be achieved using _DocumentBurster_(C).
+
+=== Common Scenarios for Report Distribution
+
+. Burst and/or Merge PDF Reports +
+* For a quick overview read https://www.pdfburst.com/blog/email-pdf-reports/[Email PDF Reports,window=_blank] blog post
+* For detailed documentation read https://www.pdfburst.com/docs/html/userguide/chapter.pdf.html[Chapter 1. Burst and Merge PDF Reports,window=_blank] from the __DocumentBurster__(C) User Guide
+. Burst Excel Reports +
+* For a quick overview read https://www.pdfburst.com/blog/email-excel-reports/[Email Excel Reports,window=_blank] blog post
+* For detailed documentation read https://www.pdfburst.com/docs/html/userguide/chapter.excel.html[Chapter 2. Burst Excel Reports,window=_blank] from the __DocumentBurster__(C) User Guide
+. Email or FTP Reports +
+* For case studies read https://www.pdfburst.com/blog/report-distribution-software/[Report Distribution Software,window=_blank] blog post
+* For detailed documentation read https://www.pdfburst.com/docs/html/userguide/chapter.distributing.html[Chapter 3. Distribute Reports,window=_blank] from the __DocumentBurster__(C) User Guide
+. Upload Reports Through FTPs or SFTP/SCP 
+* Read https://www.pdfburst.com/docs/html/userguide/chapter.distributing.html#chapter.distributing.uploading.ftps[Chapter 3. Distribute Reports Through FTPs or SFTP/SCP,window=_blank] from the __DocumentBurster__(C) User Guide
+. Upload Reports to Microsoft SharePoint
+* For a quick overview read https://www.pdfburst.com/blog/publish-reports-online-portal/[Publish Reports to Online Portal,window=_blank] blog post
+* For detailed documentation read https://www.pdfburst.com/docs/html/userguide/appendix.sharepoint.html[Appendix B. SharePoint Report Delivery,window=_blank] from the __DocumentBurster__(C) User Guide
+. Send Custom Email Messages to Customers
+* Read https://www.pdfburst.com/docs/html/userguide/chapter.variables.html[Chapter 5. Variables,window=_blank] from the __DocumentBurster__(C) User Guide
+. Configure the Path and Filename for the Output Files
+* Read https://www.pdfburst.com/docs/html/userguide/chapter.variables.html[Chapter 5. Variables,window=_blank] from the __DocumentBurster__(C) User Guide
+. Execute __DocumentBurster__(C) from the Command Line
+* Read https://www.pdfburst.com/docs/html/userguide/chapter.command.html[Chapter 8. Command Line,window=_blank] from the __DocumentBurster__(C) User Guide
+
+=== Advanced Scenarios for Document Distribution
+
+. Copy Reports to a File Share Location
+* For a quick overview read https://www.pdfburst.com/blog/upload-reports-network-file-share/[Upload Reports Over Network Via File Share,window=_blank]
+* For detailed documentation see https://www.pdfburst.com/docs/html/advanced/chapter.scripting.html#copy_shared_folder.groovy[copy_shared_folder.groovy,window=_blank] from the __DocumentBurster__(C) Advanced	Report Delivery	Scenarios guide
+. Encrypt and/or Stamp the Reports
+* For a quick PDF encryption overview read https://www.pdfburst.com/blog/pdf-security/[PDF Security for Reports,window=_blank] blog post
+* For a quick PDF stamping overview read https://www.pdfburst.com/blog/stamp-pdf-reports/[Stamp PDF Reports,window=_blank] blog post
+* For detailed PDF encryption documentation read https://www.pdfburst.com/docs/html/advanced/chapter.scripting.html#encrypt.groovy[encrypt.groovy,window=_blank] from the __DocumentBurster__(C) Advanced	Report Delivery Scenarios guide
+* For detailed PDF stamping documentation read https://www.pdfburst.com/docs/html/advanced/chapter.scripting.html#overlay.groovy[overlay.groovy,window=_blank] from the __DocumentBurster__(C) Advanced	Report Delivery Scenarios guide
+. Execute an External Program During Report Bursting Life-Cycle
+* Read https://www.pdfburst.com/docs/html/advanced/chapter.scripting.html#exec_pdftk_background.groovy[exec_pdftk_background.groovy,window=_blank] from the __DocumentBurster__(C) Advanced	Report Delivery Scenarios guide
+
+== Troubleshooting
+
+If it is needed there is a chapter https://www.pdfburst.com/docs/html/userguide/appendix.troubleshooting.html[Appendix E. Troubleshooting,window=_blank] available at the end of the __DocumentBurster__(C) User Guide
+
+== Quick & Professional Support
+
+If you have any questions which aren't answered here, feel free to contact us at support@pdfburst.com

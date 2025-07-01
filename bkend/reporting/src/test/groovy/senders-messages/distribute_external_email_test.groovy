@@ -1,0 +1,3 @@
+import com.sourcekraft.documentburster.unit.documentation.userguide.distribute.external.DistributeExternalTest
+
+DistributeExternalTest.assertEmailMessage(message)

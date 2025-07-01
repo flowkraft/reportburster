@@ -1,0 +1,774 @@
+<chapter id="chapter.excel">
+	<title>Burst Excel Reports</title>
+	<section id="chapter.excel.overview">
+		<title>Overview</title>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			can burst and split reports which are generated for the following
+			versions of
+			Microsoft Excel
+			spreadsheet application
+			<itemizedlist>
+				<listitem>Excel 2010 (version 14) included in Office 2010</listitem>
+				<listitem>Excel 2007 (version 12) included in Office 2007</listitem>
+				<listitem>Excel 2003 (version 11) included in Office 2003</listitem>
+				<listitem>Excel 2002 (version 10) included with Office XP</listitem>
+				<listitem>Excel 2000 (version 9.0) included with Office 2000
+				</listitem>
+				<listitem>Excel 97 (version 8.0) included with Office 97</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			Although it does complex report processing,
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			doesn't require
+			Microsoft Excel application to be installed on the
+			machine where
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			is deployed. Even more, being a cross platform
+			software,
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			can process Excel reports
+			on a Windows or on any UNIX/Linux
+			machine. A
+			common installation scenario is to have
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			deployed on a
+			separate
+			dedicated server machine
+			which is responsible for
+			doing asynchronous batch report bursting and
+			scheduled report
+			distribution.
+		</para>
+		<para>
+			In order to achieve more business scenarios,
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			supports
+			two different ways of bursting
+			Excel reports
+			<itemizedlist>
+				<listitem>Burst by Distinct Sheets</listitem>
+				<listitem>Burst by Distinct Column Values</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			Depending on each specific business situation, one or the other
+			of the
+			two distinct
+			bursting methods will be
+			more appropriate. Following
+			paragraphs will give details about each of
+			the supported bursting
+			methods.
+		</para>
+	</section>
+	<section id="chapter.excel.bursting.by.distinct.sheets">
+		<title>Burst by Distinct Sheets</title>
+		<para>
+			When bursting Excel reports using this method,
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			will generate a separate output file for
+			each Excel sheet which is
+			found in
+			the input report.
+		</para>
+		<para>
+			The best way to describe this bursting method is by looking at
+			<filename>samples/Payslips-Distinct-Sheets.xls</filename>
+			sample report. This report is provided with
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			and contains monthly income data for three fictional employees. The
+			data
+			for each employee is found on a separate sheet and the name of
+			the sheet is the employee's email
+			address.
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/burst-reports1.png" format="PNG" />
+				</imageobject>
+			</mediaobject>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/split-excel-sheets.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			The input report has the following three distinct sheets
+			<emphasis>cgrew@northridgehealth.org,</emphasis>
+			<emphasis>kbutford@northridgehealth.org</emphasis>
+			and
+			<emphasis>awaldback@northridgehealth.org</emphasis>
+			which, after bursting, will generate the following three distinct
+			files
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/burst-excel-sheets.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			Using email addresses as sheet names for the input
+			report can
+			help when
+			distributing the generated
+			output files by email (if the
+			respective
+			email addresses would
+			actually be
+			valid and existing email
+			addresses).
+			For more details
+			about distributing the generated output
+			reports
+			by
+			email please check
+			<xref linkend="chapter.distributing" />
+			.
+		</para>
+		<para>
+			This bursting method is straightforward and there is not much
+			more to
+			discuss about it. Following paragraph
+			will present a more
+			complex
+			report bursting method which can
+			generate a
+			separate output file
+			for
+			each distinct value
+			found in a specified column from a specified
+			sheet.
+		</para>
+		<note>
+			<title>Note</title>
+			<para>
+				By default,
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				will burst Excel reports by
+				distinct sheets and the names of the
+				sheets will be used as burst tokens.
+			</para>
+		</note>
+		<note>
+			<title>Note</title>
+			<para>
+				Beside payslips,
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				can be configured to break up and distribute any other Excel report
+				types such
+				as
+				invoices, statements,
+				purchase orders, commissions
+				reports or
+				dunning
+				letters.
+			</para>
+		</note>
+	</section>
+	<section id="chapter.excel.bursting.by.distinct.column.values">
+		<title>Burst by Distinct Column Values</title>
+		<para>
+			When bursting Excel reports using this method,
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			will generate a
+			separate output file for
+			each distinct value
+			found in a
+			specified column from a specified sheet.
+		</para>
+		<para>
+			Please check the existing sample report
+			<filename>samples/Customers-Distinct-Column-Values.xls</filename>
+			which can
+			be found in
+			<filename class="directory">samples</filename>
+			folder.
+			<filename>Customers-Distinct-Column-Values.xls</filename>
+			report contains a list of customers from various
+			countries
+			which, after
+			bursting,
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			will generate a
+			separate file with each file containing
+			the customers
+			for
+			the
+			relevant country.
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/burst-reports1.png" format="PNG" />
+				</imageobject>
+			</mediaobject>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/split-excel-report.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+			<para>
+				Each configured
+				<emphasis>burst token</emphasis>
+				will generate a different output file.
+			</para>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/burst-excel.png" format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+		<section>
+			<title>How It Works</title>
+			<para>
+				The
+				<emphasis>last sheet</emphasis>
+				of the input report
+				<filename>samples/Customers-Distinct-Column-Values.xls</filename>
+				is called
+				<emphasis>
+					burst
+				</emphasis>
+				and
+				contains the metadata required for bursting the
+				report.
+			</para>
+			<important>
+				<title>
+					Important -
+					<emphasis>
+						burst
+					</emphasis>
+					Sheet
+				</title>
+				<para>
+					In order to burst by distinct column values
+
+					it is mandatory that
+					the
+					<emphasis>last sheet</emphasis>
+					of the input report
+					will
+					be called
+					<emphasis>
+						burst
+					</emphasis>
+
+					and this sheet should contain the proper (meta)information
+					required
+					for
+					bursting the
+					report.
+				</para>
+				<para>
+					If
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					doesn't find the last sheet
+					to have the name
+					<emphasis>burst</emphasis>
+					then it will fallback to process
+					the report by using the previous
+					alternative
+					bursting method described in
+					<xref linkend="chapter.excel.bursting.by.distinct.sheets" />
+					.
+				</para>
+			</important>
+			<important>
+				<title>Important - Replace All Excel Formulas With the Corresponding
+					Calculated Values
+				</title>
+				<para>
+					In order to burst by distinct column values all
+					the
+					formulas (if the
+					report contains formulas) should be pre-calculated
+					before
+					the report
+					is sent for processing to
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						.
+					</emphasis>
+				</para>
+				<para>
+					<ulink
+						url="http://office.microsoft.com/en-us/excel-help/replace-a-formula-with-its-result-HP010066258.aspx">
+
+						Microsoft Excel documentation - Replace a formula with
+						its
+						result
+
+
+					</ulink>
+				</para>
+			</important>
+			<para>
+				Following screenshot shows how the
+				(meta)information
+				<emphasis>
+					burst
+				</emphasis>
+				sheet should look.
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/excel-burst-metadata.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				<emphasis>(*)burstMethod :
+					(distinct-sheets|distinct-column-values)
+				</emphasis>
+				- Required information which specifies the
+				bursting method to be
+				used.
+				Following two valid values are possible
+				<itemizedlist>
+					<listitem>
+						<emphasis>distinct-column-values</emphasis>
+						– should be used when splitting the report by the distinct values
+						found in a
+						column
+					</listitem>
+					<listitem>
+						<emphasis>distinct-sheets</emphasis>
+						– should be used when splitting the input report by each distinct
+						sheet
+					</listitem>
+				</itemizedlist>
+			</para>
+			<para>
+				Default value is
+				<emphasis>distinct-column-values.</emphasis>
+			</para>
+			<para>
+				<emphasis>(*)burstMethod</emphasis>
+				is an information which is mandatory to be provided.
+			</para>
+			<para>
+				<emphasis>burstSheetIndex</emphasis>
+				- 0 (zero) based index of the sheet which needs to be split. For
+				example, if it is required to split the first sheet then the index
+				should be 0, if second sheet should be split then the index should
+				be
+				1 and so on.
+			</para>
+			<para>
+				-1 is an allowed conventional value which means to
+				split
+				the
+				first
+				sheet
+				of the Excel report.
+			</para>
+			<para>
+				Default value is -1.
+			</para>
+			<para>
+				<emphasis>burstColumnIndex</emphasis>
+				- 0 (zero) based index of the column to be used when splitting the
+				report.
+				If it is required to split using the first column
+				then
+				<emphasis>burstColumnIndex</emphasis>
+				should be defined as 0, if second column is required for splitting
+				then
+				<emphasis>burstColumnIndex</emphasis>
+				should be defined as 1 and so on.
+			</para>
+			<para>
+				Usually the splitting column will be
+				the last column from the
+				splitting sheet.
+				-1 is an allowed conventional value which means to
+				split using the last column from the splitting sheet.
+			</para>
+			<para>
+				Default value is -1.
+			</para>
+			<para>
+				<emphasis>(*)burstTokens</emphasis>
+				- required information which specifies the list of distinct burst
+				tokens for which
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				should generate a separate output file. For example, in the above
+				screenshot the
+				list
+				of burst tokens contains
+				the set of distinct
+				countries for which
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				should generate
+				an output file.
+			</para>
+			<para>
+				<emphasis>(*)burstTokens</emphasis>
+				is
+				an information which is mandatory to be provided.
+			</para>
+			<para>
+				<emphasis>userVariables</emphasis>
+				- information to be provided in case there is a need to specify
+				custom user variables for
+				each distinct burst token. For more details
+				on how to define user
+				variables when bursting Excel reports please
+				read
+				<xref linkend="chapter.variables" />
+				.
+			</para>
+			<para>
+				<emphasis>configFile</emphasis>
+				- information to be provided in case there is a need to process
+				distinct Excel report types by using
+				a different set of program
+				configurations. By default, if no custom
+				<emphasis>configFile</emphasis>
+				is
+				provided,
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				is processing all Excel reports using the default configuration
+				file
+				<filename>./config/burst/settings.xml.</filename>
+				This should be fine in most situations,
+				however there are cases when
+				different reports will require different sets
+				of configurations.
+				For
+				more details
+				about how
+				to process Excel
+				reports
+				using a custom
+				configuration file
+				please
+				read
+				<xref linkend="chapter.templates.excel" />
+				.
+			</para>
+			<para>
+				Next screenshot shows how the report
+				<filename>samples/Customers-Distinct-Column-Values.xls</filename>
+				was configured in order to be processed by
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+					.
+				</emphasis>
+				For reasons of better visualization, the last column
+				which is only
+				used in this sample report for the purpose of report
+				bursting, it is
+				highlighted
+				with the yellow color. It is not mandatory
+				that the
+				bursting
+				column should have a specific color. Usually
+				the burst column
+				will be a hidden Excel
+				column which will not
+				be
+				visible
+				to the normal
+				report users but
+				only defined for the purpose of
+				bursting the report.
+			</para>
+			<para>
+				(1) -
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				will keep the "empty rows"
+				in the output reports. This is useful for
+				keeping in the output files
+				various headers and/or footers which a
+				report might have.
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/break-excel-report.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+				(2) -
+				Last column contains the values from which
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				will decide which Excel row goes to which
+				output file. It can have
+				any color and will usually be a hidden
+				Excel column.
+			</para>
+			<section>
+				<title>
+					<emphasis>Copy Report Header/Footer
+					</emphasis>
+				</title>
+				<para>
+					In real life most Excel reports will have a header and/or
+					a
+					footer
+					(e.g. the company name/logo, the name of
+					the report etc.)
+					which
+					is
+					statically defined
+					and which should be copied
+					<emphasis>ad litteram</emphasis>
+					to each of the output files.
+				</para>
+				<para>
+					<mediaobject>
+						<imageobject>
+							<imagedata fileref="images/excel-report-header.png"
+								format="PNG" />
+						</imageobject>
+					</mediaobject>
+				</para>
+				<para>
+					<emphasis>(1)</emphasis>
+					-
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					keeps the
+					<emphasis>”empty rows”</emphasis>
+					in the output reports. This is used to copy
+					the static report
+					headers or footers (and any other static
+					row) to the output reports.
+				</para>
+			</section>
+		</section>
+		<section id="chapter.excel.bursting.steps">
+			<title>
+				Steps to Follow When Bursting an Excel Report by Distinct
+				Column Values
+			</title>
+			<para>Following general steps should be followed when bursting an
+				Excel
+				report by distinct
+				column values.
+			</para>
+			<procedure>
+				<title>
+					Steps to Follow When Bursting an Excel Report by Distinct
+					Column Values
+				</title>
+				<step>
+					<para>
+						Identify the appropriate
+						<emphasis>burst token</emphasis>
+						for the type of report which is being burst.
+						A
+						<emphasis>burst token</emphasis>
+						can be anything which
+						is uniquely identifying the document to be
+						extracted such as the
+						invoice ID, customer number or the email
+						address where the document should be distributed.
+					</para>
+				</step>
+				<step>
+					<para>
+						Configure and prepare the input Excel report to include the
+						(meta)information (the
+						<emphasis>burst</emphasis>
+						sheet)
+						required for bursting the document.
+					</para>
+				</step>
+				<step>
+					<para>
+						This step is required only if the report contains Excel
+						formulas.
+						Before the report is sent for processing to
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+						</emphasis>
+						all
+						the formulas should be pre-calculated and replaced with the
+						corresponding
+						values.
+					</para>
+					<para>
+						See
+						<ulink
+							url="http://office.microsoft.com/en-us/excel-help/replace-a-formula-with-its-result-HP010066258.aspx">
+							Microsoft Excel documentation - Replace a formula
+							with
+							its
+							result
+						</ulink>
+						for more details.
+					</para>
+				</step>
+				<step>
+					<para>Burst the report and check the output files.
+					</para>
+				</step>
+			</procedure>
+		</section>
+		<section id="chapter.excel.bursting.sample">
+			<title>
+				Sample -
+				<filename>Customers-Distinct-Column-Values.xls</filename>
+			</title>
+			<para>
+				The previous steps will be exemplified when bursting the same
+				<filename>samples/Customers-Distinct-Column-Values.xls.</filename>
+			</para>
+			<procedure>
+				<step>
+					<para>
+						Identify the appropriate
+						<emphasis>burst token.</emphasis>
+					</para>
+					<para>
+						The report to be burst contains a list of customers
+						and
+						each
+						customer has a country of origin. The requirement
+						is to
+						break the
+						report by country and each output file should
+						contain the
+						customers
+						from the relevant country.
+					</para>
+					<para>
+						The
+						<emphasis>burst token</emphasis>
+						is identified as being the
+						<emphasis>Country</emphasis>
+						column.
+					</para>
+				</step>
+				<step>
+					<para>Configure and prepare the input Excel report to include the
+						(meta)information
+						required for bursting the document.
+					</para>
+					<para>
+						In order to burst by distinct column values
+						it is mandatory that
+						the
+						<emphasis>last sheet</emphasis>
+						of the input report
+						will
+						be called
+						<emphasis>
+							burst
+						</emphasis>
+						and this sheet should contain the proper (meta)information
+						required
+						for
+						bursting the
+						report.
+					</para>
+					<para>
+						<mediaobject>
+							<imageobject>
+								<imagedata fileref="images/excel-metadata-explained.png"
+									format="PNG" />
+							</imageobject>
+						</mediaobject>
+					</para>
+					<para>
+						The last column from the splitting sheet is yellow (for
+						better
+						visualization) and is added only for the purpose of bursting
+						the
+						report. The bursting column doesn't need to have a specific
+						color
+						and will usually be an invisible Excel column (so that the
+						normal
+						report user will not see it).
+					</para>
+					<para>
+						<mediaobject>
+							<imageobject>
+								<imagedata fileref="images/split-excel.png" format="PNG" />
+							</imageobject>
+						</mediaobject>
+					</para>
+					<para>
+						(1) - Extra column which is added for the purpose of
+						splitting
+						the report.
+						It can be defined as a hidden Excel column so
+						that it
+						will be invisible to the
+						normal report users.
+					</para>
+				</step>
+				<step>
+					<para>
+						Calculate and replace Excel formulas with the corresponding
+						values
+					</para>
+					<para>
+						<filename>Customers-Distinct-Column-Values.xls</filename>
+						sample report doesn't
+						contain any Excel formula, so there is
+						nothing
+						to do for this report in regards with that.
+					</para>
+				</step>
+				<step>
+					<para>
+						Burst the report and check the output files.
+					</para>
+					<para>
+						Burst
+						<filename>samples/Customers-Distinct-Column-Values.xls</filename>
+						report and
+						check the list of output files, one Excel file for each
+						country
+						with
+						each output file containing the list of customers from
+						the
+						specific country.
+					</para>
+				</step>
+			</procedure>
+		</section>
+	</section>
+</chapter>

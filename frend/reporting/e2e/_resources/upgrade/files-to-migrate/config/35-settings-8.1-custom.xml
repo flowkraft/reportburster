@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<documentburster>
+	<settings>
+
+		<!-- DocumentBurster version -->
+		<version>8.1</version>
+
+		<!-- template name -->
+		<template>custom 8.1</template>
+
+		<!-- file name for the burst files -->
+		<burstfilename>custom-$var0$.$input_document_extension$
+		</burstfilename>
+
+		<!-- file name for the merged files -->
+		<mergefilename>merged.pdf</mergefilename>
+
+		<!-- where to place the burst files -->
+		<outputfolder>custom-output path</outputfolder>
+
+		<!-- where to place the backup files -->
+		<backupfolder>backup/$input_document_name$/$now;format="yyyy.MM.dd_HH.mm.ss"$
+		</backupfolder>
+		
+		<!-- quarantine bursted files which fail to be delivered (true|false) -->
+		<quarantinefiles>true</quarantinefiles>
+		<!-- where to place the quarantined files -->
+		<quarantinefolder>custom-quarantine</quarantinefolder>
+
+		<!-- send the bursted files by Email and/or FTP (true|false) -->
+		<sendfiles>true</sendfiles>
+
+		<!-- delete the bursted files (true|false) -->
+		<deletefiles>false</deletefiles>
+
+		<!-- email server settings -->
+		<emailserver>
+			<host>Email Server Host</host>
+			<!-- email server port. 25 is the default SMTP port -->
+			<port>25</port>
+			<userid>From Email User ID</userid>
+			<userpassword>From Email Password</userpassword>
+			<usessl>false</usessl>
+			<usetls>false</usetls>
+			<debug>false</debug>
+			<fromaddress>from@emailaddress.com</fromaddress>
+			<name>From Name</name>
+		</emailserver>
+
+		<!-- email message settings -->
+		
+		<!-- send rich formatted HTML e-mails (true|false) -->
+		<htmlemail>true</htmlemail>
+
+		<!-- let the user edit the HTML email code directly (true|false) -->
+		<htmlemaileditcode>false</htmlemaileditcode>
+		
+		<emailsettings>
+			<to>$burst_token$</to>
+			<cc></cc>
+			<bcc></bcc>
+			<subject>custom subject $var0$</subject>
+			<text>custom text $var1$</text>
+			<html></html>
+		</emailsettings>
+		
+		<!-- attachments. List with the attachments. Variables can be used (e.g. 
+			$extracted_file_path$) in order to dynamically provide attachment paths during 
+			distribution. order="0", order="1" etc. should be properly configured -->
+		<attachments>
+			<items>
+				<attachment path="$extracted_file_path$" order="0"></attachment>
+			</items>
+			<archive>
+				<archiveattachments>false</archiveattachments>
+				<archivefilename>reports-$burst_token$.zip</archivefilename>
+			</archive>
+		</attachments>
+
+		<!-- upload settings -->
+		<uploadsettings>
+			<ftpcommand />
+			<filesharecommand />
+			<ftpscommand />
+			<sftpcommand />
+			<httpcommand />
+		</uploadsettings>
+
+	    <!-- web upload settings -->
+		<webuploadsettings>
+			<documentbursterwebcommand/>
+			<mssharepointcommand/>
+			<wordpresscommand/>
+			<drupalcommand/>
+			<joomlacommand/>
+			<otherwebcommand/>
+		</webuploadsettings>
+
+		<!-- sms settings -->
+		<smssettings>
+			<twilio>
+				<accountsid></accountsid>
+				<authtoken></authtoken>
+			</twilio>
+			<fromtelephonenumber></fromtelephonenumber>
+			<totelephonenumber></totelephonenumber>
+			<text></text>
+		</smssettings>
+		
+		<!-- quality assurance configuration -->
+		<qualityassurance>
+			<!-- test email server settings -->
+			<emailserver>
+				<host>localhost</host>
+				<!-- email server port. 1025 is the default SMTP port -->
+				<port>1025</port>
+				<userid></userid>
+				<userpassword></userpassword>
+				<usessl>false</usessl>
+				<usetls>false</usetls>
+				<debug>false</debug>
+				<fromaddress>from@emailaddress.com</fromaddress>
+				<name>From Name</name>
+				<weburl>http://localhost:8025</weburl>
+			</emailserver>
+		</qualityassurance>
+		
+		<!-- start/end burst token delimiters/separators -->
+		<bursttokendelimiters>
+			<start>{</start>
+			<end>}</end>
+		</bursttokendelimiters>
+
+		<!-- number of user variables -->
+		<numberofuservariables>10</numberofuservariables>
+
+		<!-- delay each distribution by -->
+		<delayeachdistributionby>0</delayeachdistributionby>
+
+		<!-- what should be done when a page contains no tokens -->
+		<reusetokenswhennotfound>false</reusetokenswhennotfound>
+
+		<!-- fail the job if any report distribution fails -->
+		<failjobifanydistributionfails>true</failjobifanydistributionfails>
+		
+		<!-- allow email addresses with local domain name and no TLD (e.g. documentburster@sharepoint, 
+			admin@mailserver1) (true|false) 1. In production it is advisable to keep 
+			this configuration on false 2. While doing local testing it might be required 
+			to allow email addresses with local domain name and no TLD (e.g. documentburster@sharepoint, 
+			admin@mailserver1) -->
+		<allowlocalemailaddresses>false</allowlocalemailaddresses>
+		
+		<locale>
+			<language></language>
+			<country></country>
+		</locale>
+		
+		<!-- following are text extraction options -->
+		<encoding></encoding>
+		<sort>false</sort>
+		<ignorebeads>false</ignorebeads>
+		<!-- text extraction option to skip corrupt objects -->
+		<force>false</force>
+
+	</settings>
+  	
+</documentburster>

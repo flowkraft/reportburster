@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<documentburster>
+	<settings>
+
+		<!-- DocumentBurster version -->
+		<version>8.4</version>
+
+		<!-- template name -->
+		<template>My Reports</template>
+
+		<!-- file name for the burst files -->
+		<burstfilename>${var0}-${var1}.${input_document_extension}
+		</burstfilename>
+
+		<!-- file name for the merged files -->
+		<mergefilename>merged-custom.pdf</mergefilename>
+
+		<!-- where to place the burst files -->
+		<outputfolder>./target/test-output/output/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}
+		</outputfolder>
+
+		<!-- where to place the backup files -->
+		<backupfolder>./target/test-output/backup/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}
+		</backupfolder>
+
+		<!-- the folder which is polled for incoming reports to burst -->
+		<pollfolder>poll-custom</pollfolder>
+
+		<!-- quarantine bursted files which fail to be delivered (true|false) -->
+		<quarantinefiles>true</quarantinefiles>
+		<!-- where to place the quarantined files -->
+		<quarantinefolder>./target/test-output/quarantine/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}
+		</quarantinefolder>
+
+		<!-- where to place logs archives -->
+		<logsarchivesfolder>./target/test-output/logs/archives/${input_document_name}/${now?string["yyyy.MM.dd_HH.mm.ss.SSS"]}
+		</logsarchivesfolder>
+
+		<!-- job burst stats file name -->
+		<statsfilename>stats${num_pages}pages-${num_files_extracted}extracted-${num_files_distributed}distributed.log
+		</statsfilename>
+
+		<!-- send the bursted files by Email and/or FTP (true|false) -->
+		<sendfiles>false</sendfiles>
+
+		<!-- delete the bursted files (true|false) -->
+		<deletefiles>false</deletefiles>
+
+		<!-- send rich formatted HTML e-mails (true|false) -->
+		<htmlemail>false</htmlemail>
+		<htmlemaileditcode>false</htmlemaileditcode>
+
+		<!-- allow email addresses with local domain name and no TLD (e.g. documentburster@sharepoint, 
+			admin@mailserver1) (true|false) 1. In production it is advisable to keep 
+			this configuration on false 2. While doing local testing it might be required 
+			to allow email addresses with local domain name and no TLD (e.g. documentburster@sharepoint, 
+			admin@mailserver1) -->
+		<allowlocalemailaddresses>false</allowlocalemailaddresses>
+
+		<!-- following are text extraction options -->
+		<encoding></encoding>
+		<sort>false</sort>
+		<ignorebeads>false</ignorebeads>
+		<!-- text extraction option to skip corrupt objects -->
+		<force>false</force>
+
+
+		<!-- email server settings -->
+		<emailserver>
+
+			<host>Email Server Host</host>
+
+			<!-- email server port. 25 is the default SMTP port -->
+			<port>25</port>
+			<userid>From Email User ID</userid>
+			<userpassword>From Email Password</userpassword>
+			<usessl>false</usessl>
+			<usetls>false</usetls>
+			<debug>false</debug>
+			<fromaddress>from@emailaddress.com</fromaddress>
+			<name>From Name</name>
+		</emailserver>
+
+		<!-- email message settings -->
+		<emailsettings>
+			<to>${burst_token}</to>
+			<cc></cc>
+			<bcc></bcc>
+			<subject></subject>
+			<text></text>
+			<html></html>
+		</emailsettings>
+
+		<uploadsettings>
+			<ftpcommand />
+			<filesharecommand />
+			<ftpscommand />
+			<sftpcommand />
+			<httpcommand />
+		</uploadsettings>
+
+		<!-- quality assurance configuration -->
+		<qualityassurance>
+			<!-- test email server settings -->
+			<emailserver>
+				<host>localhost</host>
+				<!-- email server port. 1025 is the default SMTP port -->
+				<port>1025</port>
+				<userid></userid>
+				<userpassword></userpassword>
+				<usessl>false</usessl>
+				<usetls>false</usetls>
+				<debug>false</debug>
+				<fromaddress>from@emailaddress.com</fromaddress>
+				<name>From Name</name>
+				<weburl>http://localhost:8025</weburl>
+			</emailserver>
+		</qualityassurance>
+
+		<attachments>
+			<items>
+				<attachment path="$extracted_file_path$" order="0"></attachment>
+			</items>
+			<archive>
+				<archiveattachments>false</archiveattachments>
+				<archivefilename>reports-${burst_token}.zip</archivefilename>
+			</archive>
+		</attachments>
+
+		<locale>
+			<language></language>
+			<country></country>
+		</locale>
+
+		<!-- number of user variables -->
+		<numberofuservariables>10</numberofuservariables>
+
+		<!-- what should be done when a page contains no tokens -->
+		<reusetokenswhennotfound>false</reusetokenswhennotfound>
+
+		<!-- start/end burst token delimiters/separators -->
+		<bursttokendelimiters>
+			<start>{</start>
+			<end>}</end>
+		</bursttokendelimiters>
+
+		<!-- fail the job if any report distribution fails -->
+		<failjobifanydistributionfails>true</failjobifanydistributionfails>
+
+	</settings>
+</documentburster>

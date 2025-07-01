@@ -1,0 +1,294 @@
+<?xml version="1.0"?>
+<book>
+	<bookinfo>
+		<title>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			User Guide
+		</title>
+		<copyright>
+			<year>2006-2013</year>
+			<holder>
+				<citetitle>SourceKraft Systems &amp; Consulting Ltd.</citetitle>
+				All rights
+				reserved.
+				<para>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					trademark is property of
+					<citetitle>SourceKraft Systems &amp; Consulting Ltd.</citetitle>
+				</para>
+				<para>
+					All other marks and trademarks are properties of their
+					respective owners.
+				</para>
+			</holder>
+		</copyright>
+	</bookinfo>
+	<preface>
+		<title>
+			Convention - Path Separator
+		</title>
+		<para>This document uses slash character (/) to display directory and
+			file components of a path.
+		</para>
+		<para>
+			Microsoft Windows can accept either the backslash (\) or slash (/)
+			characters to
+			separate directory and file components of a path, while
+			the Microsoft
+			convention is to use a backslash (\). Since
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			is intended to work on multiple operating systems (e.g. Windows,
+			Linux), the
+			convention for this manual is to use the
+			slash character
+			(/) to display
+			the components of a path.
+		</para>
+	</preface>
+	<part label="I">
+		<title>Introduction</title>
+
+		<partintro>
+			<section>
+				<title>
+					Welcome to
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					User Guide
+				</title>
+				<para>
+					This document will help the reader to get productive with
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					in order to burst and distribute business reports.
+					We'll also
+					offer
+					tips on sending personalized e-mails,
+					rich formatted HTML
+					e-mails and
+					on getting the maximum performance
+					from your
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					report
+					delivery system.
+				</para>
+				<para>
+					As for the system requirements, in most of the situations,
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					will perform well on any low-end machine which
+					can decently run
+					Windows XP. However, if your enterprise organization
+					is expected to
+					process really huge
+					reports then a more powerful machine will help.
+				</para>
+			</section>
+			<section>
+				<title>
+					What to Expect
+				</title>
+				<para>
+					In this user guide, you'll learn how to
+				</para>
+				<para>
+					<itemizedlist>
+						<listitem>Burst and merge PDF reports</listitem>
+						<listitem>Burst Microsoft Excel reports</listitem>
+						<listitem>Distribute reports (e.g. payslips, invoices, etc.)
+							through personalized email messages
+							or through FTP
+						</listitem>
+						<listitem>
+							Execute and automate
+							<emphasis>
+								<trademark>DocumentBurster</trademark>
+							</emphasis>
+							through command line
+						</listitem>
+						<listitem>
+							Windows Services - install and run
+							<emphasis>
+								<trademark>DocumentBurster</trademark>
+								Server
+							</emphasis>
+							as standard Windows Services in order to achieve unattended
+							document delivery
+						</listitem>
+						<listitem>
+							Schedule reports to be processed and distributed at a
+							specific date and time, to distribute them hourly, daily, weekly,
+							monthly or set up your own frequencies, every other day, third
+							Monday of the month and so on
+						</listitem>
+					</itemizedlist>
+				</para>
+			</section>
+			<section>
+				<title>Quick &amp; Professional Support</title>
+				<para>
+					If you have any questions that aren't answered here, feel free
+					to
+					contact us:
+					<email>support@pdfburst.com</email>
+				</para>
+			</section>
+			<section>
+				<title>We Need Feedback!</title>
+				<para>
+					If you find a typographical error in this manual, or if you
+					have
+					thought of a way to make this manual
+					better, we would love to
+					hear
+					from you!
+				</para>
+				<para>
+					If you have a suggestion for improving the documentation, try
+					to
+					be as
+					specific as possible when
+					describing it. If you have found an
+					error, please include the section number
+					and some of the
+					surrounding
+					text so we can find it easily.
+				</para>
+				<para>
+					Email address:
+					<email>support@pdfburst.com</email>
+				</para>
+			</section>
+			<para>
+				Now let’s get started.
+			</para>
+		</partintro>
+		<xi:include href="000-introduction.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	</part>
+	<part label="II">
+		<title>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+		</title>
+		<partintro>
+			<para>
+				The sections in Part II present how to configure
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				in order to burst and merge reports,
+				distribute reports through
+				personalized messages, automate report processing through report
+				polling
+				and through the command line interface or how to check the
+				status
+				of the processed reports
+				through auditing and tracing.
+			</para>
+			<para>
+				<literallayout>
+					<xref linkend="chapter.pdf" />
+					<xref linkend="chapter.excel" />
+					<xref linkend="chapter.distributing" />
+					<xref linkend="chapter.templates" />
+					<xref linkend="chapter.variables" />
+					<xref linkend="chapter.polling" />
+					<xref linkend="chapter.audit" />
+					<xref linkend="chapter.command" />
+				</literallayout>
+			</para>
+		</partintro>
+
+		<xi:include href="005-burst.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+		<xi:include href="010-excel.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+		<xi:include href="015-distribute.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+		<xi:include href="020-templates.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+		<xi:include href="025-variables.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+		<xi:include href="030-poll.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+		<xi:include href="035-audit.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+		<xi:include href="040-command.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+
+	</part>
+	<part label="III">
+		<title>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+				Server
+			</emphasis>
+		</title>
+		<partintro>
+			<para>
+				Part III presents how to configure and run
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+					Server
+				</emphasis>
+				in order to benefit from additional powerful
+				capabilities like
+				scheduled report distribution, capability to run as windows services
+				and a browser
+				based web interface
+				which can be accessed simultaneously
+				by multiple
+				people.
+			</para>
+		</partintro>
+		<xi:include href="045-server.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	</part>
+	<part label="IV">
+		<title>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+				Portal
+			</emphasis>
+		</title>
+		<partintro>
+			<para>
+				Part IV presents
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+					Portal
+				</emphasis>
+				which is
+				our
+				cloud-based managed services
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				solution.
+			</para>
+		</partintro>
+		<xi:include href="047-portal.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	</part>
+	<part label="V">
+		<title>Appendices</title>
+		<partintro>
+			<para>
+				<literallayout>
+					<xref linkend="appendix.flavors" />
+					<xref linkend="appendix.howto" />
+					<xref linkend="appendix.sharepoint" />
+					<xref linkend="appendix.performance" />
+					<xref linkend="appendix.troubleshooting" />
+				</literallayout>
+			</para>
+		</partintro>
+		<xi:include href="048-appendix_db_flavors.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+		<xi:include href="050-appendix_howto.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+		<xi:include href="055-appendix_sharepoint.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+		<xi:include href="060-appendix_performance.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+		<xi:include href="065-appendix_troubleshoot.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+	</part>
+</book>

@@ -1,0 +1,49 @@
+<html>
+	<head>
+		<title>Java Interactive Profiler &#8212 ClassLoaders</title>
+	</head>
+<body>
+		<table>
+			<tr>
+				<td><img src="images/jip-logo-90.png"></td> 
+				<td width="100%"><center> <h1>ClassLoaders</h1></center></td>
+			</tr>
+		</table>
+		<br/>
+In the standard Java environment there are three classloaders:
+<pre><code>
+Bootstrap
+    |
+Extensions
+    |
+Application
+</code></pre>
+The jar files that are specified for the <code>-javaagent</code> option are loaded
+using the application classloader. In the case of JIP, these jars contain code that
+is used to instrument other classes as they are classloaded.
+This includes classes loaded by extensions classloader
+as well as the application classloader. This can lead to a number of issues
+<ol>
+<li>If you don't exclude it, the profiler itself will be instrumented. As you
+can imagine, this is not so good.</li>
+<li>The profiler is loaded as part of the <code>-javaagent</code> option and therefore
+is loaded by the application classloader. However, classes that are loaded
+by ther Extensions classloader have been instrumented to make calls to the 
+profiler at runtime. This casues problems because classes loaded by the 
+extensions classloader can't see classes that are loaded by the application
+classloader. This results in a <code>ClassNotFound</code> exception.</li>
+<li>The obvious solution is to not instrument classes that are loaded by the
+extensions classloader. While it might not look like there is a way to tell
+which classloader is loading which class definition, there is a static method
+on the <code>ClassLoader</code> class that will tell you which classloader
+is the application classloader (<code>getSystemClassLoader()</code>). This
+is great news, right? Well, it is good news for standalone applications, but
+this scheme breaks down for web applications. A servlet container can have
+a much deeper classloader hierarchy and there is no standard for what that
+hierarchy should look like (BTW, from within a servlet container, calling 
+<code>getSystemClassLoader()</code> returns the classloader used by the
+VM to bootstrap the servlet engine). For Tomcat 5.5, since it's Open
+Source, we know which classloader loads the classes for each webapp.</li>
+</ol>
+</body>
+</html>

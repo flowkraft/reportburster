@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <records>
+        <record>
+            <id>1</id>
+            <name>John Doe</name>
+            <amount>100.00</amount>
+        </record>
+        <record>
+            <id>2</id>
+            <name>Jane Smith</name>
+            <amount>250.50</amount>
+        </record>
+    </records>
+</root>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Category Sales by Region</title>
+  <style>
+    body { font-family: sans-serif; }
+    table { border-collapse: collapse; width: 80%; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+    th { background-color: #f2f2f2; text-align: center; }
+    td:first-child { text-align: left; font-weight: bold; }
+    tfoot td { font-weight: bold; background-color: #f9f9f9; }
+  </style>
+</head>
+<body>
+  <h1>Category Sales by Region</h1>
+
+  <#-- Assume reportData is the list passed from the script -->
+  <#if reportData?? && reportData?has_content>
+    <#-- Dynamically determine region columns (excluding CategoryName and TotalSales) -->
+    <#assign firstRow = reportData[0]>
+    <#assign regions = firstRow?keys?filter(k -> k != 'CategoryName' && k != 'TotalSales')?sort>
+
+    <#-- Initialize column totals -->
+    <#assign regionTotals = {} >
+    <#list regions as region>
+        <#assign regionTotals = regionTotals + {region: 0} >
+    </#list>
+    <#assign grandTotal = 0>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <#list regions as region>
+            <th>${region}</th>
+          </#list>
+          <th>Total Sales</th>
+        </tr>
+      </thead>
+      <tbody>
+        <#list reportData as row>
+          <tr>
+            <td>${row.CategoryName!'N/A'}</td>
+            <#list regions as region>
+              <#assign cellValue = (row[region]!0)>
+              <td>${cellValue?string("0.00")}</td>
+              <#-- Update region total -->
+              <#assign regionTotals = regionTotals + {region: regionTotals[region] + cellValue} >
+            </#list>
+            <#assign rowTotal = (row.TotalSales!0)>
+            <td>${rowTotal?string("0.00")}</td>
+            <#-- Update grand total -->
+            <#assign grandTotal = grandTotal + rowTotal>
+          </tr>
+        </#list>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td><strong>Total</strong></td>
+          <#list regions as region>
+            <td>${(regionTotals[region])?string("0.00")}</td>
+          </#list>
+          <td>${grandTotal?string("0.00")}</td>
+        </tr>
+      </tfoot>
+    </table>
+  <#else>
+    <p>No crosstab data available.</p>
+  </#if>
+</body>
+</html>

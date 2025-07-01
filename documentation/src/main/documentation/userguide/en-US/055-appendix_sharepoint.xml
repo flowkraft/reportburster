@@ -1,0 +1,574 @@
+<appendix id="appendix.sharepoint">
+	<title>SharePoint Report Delivery</title>
+	<para>
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		can be used to deliver reports to Microsoft SharePoint portals.
+	</para>
+	<para>
+		Microsoft
+		SharePoint is a
+		good document management system which
+		has the
+		following
+		document related capabilities:
+		<itemizedlist>
+			<listitem>Store, organize, and locate documents</listitem>
+			<listitem>Ensure the consistency of documents</listitem>
+			<listitem>Manage metadata for documents</listitem>
+			<listitem>Help protect documents from unauthorized access or use
+			</listitem>
+			<listitem>Ensure consistent business processes (workflows) for how
+				documents are handled
+			</listitem>
+		</itemizedlist>
+	</para>
+	<para>
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		is usually used together with SharePoint
+		in order to solve
+		the following
+		business situations:
+	</para>
+	<itemizedlist>
+		<listitem>
+			For connecting two important systems of any
+			organization,
+			the
+			reporting system and the document management
+			system (i.e.
+			SharePoint).
+		</listitem>
+		<listitem>
+			For publishing relevant reports to be accessible by
+			clients,
+			employees, etc.
+			through the web.
+			Think to the situation where
+			you have
+			few hundreds
+			or thousands of
+			customers
+			or dealers and, with a
+			single
+			click, you can
+			make the relevant
+			individual
+			reports to be
+			available to
+			each one of
+			them on the portal.
+		</listitem>
+	</itemizedlist>
+	<para>
+		Following paragraphs will describe how to configure
+		<emphasis>
+			<trademark>DocumentBurster</trademark>
+		</emphasis>
+		in order to burst and
+		deliver reports to Microsoft
+		SharePoint portal.
+	</para>
+	<section id="appendix.sharepoint.email">
+		<title>Distribute Reports to SharePoint
+			by Email
+		</title>
+		<para>
+			The simplest way to upload reports to SharePoint is
+			through
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			's
+			email distribution capability.
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			email configuration
+			is described
+			in
+			<xref linkend="chapter.distributing.email" />
+			.
+		</para>
+		<para>
+			From
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			's point of view,
+			email configuration is exactly the same
+			regardless
+			if
+			the email destinations are normal email addresses or
+			are
+			SharePoint
+			enabled email addresses.
+		</para>
+		<para>
+			Microsoft SharePoint should be properly
+			configured (by a SharePoint
+			administrator) in order to accept
+			<emphasis>inbound emails.</emphasis>
+		</para>
+		<section id="appendix.sharepoint.email.configuration">
+			<title>SharePoint Configuration</title>
+			<para>It is out of the scope of this manual to give full details
+				about SharePoint inbound email configuration. The official
+				Microsoft
+				SharePoint
+				documentation
+				together with the many existing
+				SharePoint
+				books are
+				the places to
+				look for
+				complete documentation.
+			</para>
+			<para>
+				Instead, this manual will give hints and will further refer to
+				the
+				official documentation for the topics which are of interest when it
+				comes
+				to SharePoint and
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				integration.
+			</para>
+			<para>
+				Following are the main configuration points in regards with
+				SharePoint inbound email:
+				<itemizedlist>
+					<listitem>Install and configure the SMTP service</listitem>
+					<listitem>Configure incoming e-mail settings</listitem>
+					<listitem>Configure incoming e-mail on SharePoint sites</listitem>
+				</itemizedlist>
+			</para>
+			<para>
+				The inbound email configuration should be similar for both
+				SharePoint 2007
+				and SharePoint 2010
+				and for detailed configuration the
+				official SharePoint documentation should be consulted.
+			</para>
+			<section>
+				<title>SharePoint 2007 Resources</title>
+				<para>
+					Following are some help resources for SharePoint 2007
+					inbound e-mail
+					configuration:
+					<itemizedlist>
+						<listitem>
+							<ulink
+								url="http://technet.microsoft.com/en-us/library/cc288433%28office.12%29.aspx">Plan incoming e-mail (Windows SharePoint Services)</ulink>
+						</listitem>
+						<listitem>
+							<ulink
+								url="http://technet.microsoft.com/en-us/library/cc287879%28office.12%29.aspx">Configure incoming e-mail settings (Windows SharePoint
+								Services)
+							</ulink>
+						</listitem>
+						<listitem>
+							<ulink
+								url="http://office.microsoft.com/en-us/sharepoint-server-help/enable-and-configure-e-mail-support-for-a-list-or-library-HA010082307.aspx?pid=CH101237651033">Enable and configure e-mail support for a list or
+								library
+							</ulink>
+						</listitem>
+						<listitem>
+							<ulink
+								url="http://office.microsoft.com/en-us/sharepoint-server-help/demo-configure-a-sharepoint-server-2007-site-to-receive-e-mail-HA010204792.aspx">Demo: Configure a SharePoint Server 2007 site to
+								receive
+								e-mail
+							</ulink>
+						</listitem>
+					</itemizedlist>
+				</para>
+			</section>
+			<section>
+				<title>
+					SharePoint 2010 Resources
+				</title>
+				<para>
+					Following are few SharePoint 2010 help resources
+					related with
+					inbound
+					email
+					configuration:
+					<itemizedlist>
+						<listitem>
+							<ulink url="http://technet.microsoft.com/en-us/library/cc288433.aspx">Plan incoming e-mail (SharePoint Foundation
+								2010)
+							</ulink>
+						</listitem>
+						<listitem>
+							<ulink url="http://technet.microsoft.com/en-us/library/cc287879.aspx">Configure incoming e-mail (SharePoint Foundation
+								2010)
+							</ulink>
+						</listitem>
+					</itemizedlist>
+				</para>
+			</section>
+		</section>
+		<section id="appendix.sharepoint.email.sample">
+			<title>
+				Sample - Burst
+				<filename>samples/Payslips.pdf</filename>
+				Report to
+				SharePoint 2007
+			</title>
+			<para>
+				This example shows how to distribute reports to a
+				WSS3.0 -
+				SharePoint 2007 portal which is installed on Windows Server
+				2003.
+			</para>
+			<para>
+				While bursting
+				<filename>samples/Payslips.pdf</filename>
+				report,
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				will generate three output reports
+			</para>
+			<para>
+				<itemizedlist>
+					<listitem>
+						<filename>alfreda.waldback@northridgehealth.org.pdf,</filename>
+					</listitem>
+					<listitem>
+						<filename>clyde.grew@northridgehealth.org.pdf</filename>
+					</listitem>
+					and
+					<listitem>
+						<filename>kyle.butford@northridgehealth.org.pdf</filename>
+					</listitem>
+				</itemizedlist>
+			</para>
+			<para>
+				which will be delivered to SharePoint's 2007 default
+				<filename class='directory'>Shared Documents</filename>
+				document library folder.
+			</para>
+			<para>
+				Following configuration steps are presented with the help
+				of few
+				screenshots
+				<itemizedlist>
+					<listitem>
+						Step 1.
+						<emphasis>Control Panel</emphasis>
+						- Double check that the SMTP
+						service is
+						properly configured and
+						enabled
+					</listitem>
+					<listitem>
+						Step 2.
+						<emphasis>SharePoint Central Administration</emphasis>
+						- Configure
+						incoming
+						e-mail settings
+					</listitem>
+					<listitem>
+						Step 3.
+						<emphasis>SharePoint specific site/library folder</emphasis>
+						-
+						Configure
+						incoming e-mail on SharePoint sites
+					</listitem>
+					<listitem>
+						Step 4. Configure
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+						</emphasis>
+					</listitem>
+					<listitem>
+						Step 5. Burst
+						<filename>samples/Payslips.pdf</filename>
+					</listitem>
+				</itemizedlist>
+			</para>
+			<procedure>
+				<title>
+					Sample - Burst
+					<filename>samples/Payslips.pdf</filename>
+					Report to
+					SharePoint 2007
+				</title>
+				<step>
+					<emphasis>Control Panel</emphasis>
+					- Double check that the SMTP service is properly
+					configured and
+					enabled
+					<para>
+						<mediaobject>
+							<imageobject>
+								<imagedata fileref="images/win2003-smtp-manage-your-server.png"
+									format="PNG" />
+							</imageobject>
+						</mediaobject>
+					</para>
+					<para>
+						It is OK, SMTP service is available under
+						<menuchoice>
+							<guimenu>Start</guimenu>
+							<guisubmenu>Control Panel</guisubmenu>
+							<guisubmenu>Administrative Tools</guisubmenu>
+							<guisubmenu>Manage
+								Your Server
+							</guisubmenu>
+						</menuchoice>
+					</para>
+				</step>
+				<step>
+					<emphasis>SharePoint Central Administration</emphasis>
+					- Configure incoming e-mail
+					settings
+					<para>
+						For this simple demonstration the incoming email is configured in
+						<emphasis>SharePoint Central Administration</emphasis>
+						as
+						being
+						<emphasis>Automatic. </emphasis>
+						This configuration is done in
+						<menuchoice>
+							<guimenu>Start</guimenu>
+							<guisubmenu>Control Panel</guisubmenu>
+							<guisubmenu>Administrative Tools</guisubmenu>
+							<guisubmenu>SharePoint 3.0 Central Administration</guisubmenu>
+						</menuchoice>
+					</para>
+					<para>
+						<mediaobject>
+							<imageobject>
+								<imagedata
+									fileref="images/sharepoint-central-admin-incoming-email-1.png"
+									format="PNG" />
+							</imageobject>
+						</mediaobject>
+					</para>
+					<para>
+						On the bottom of the same screen (SharePoint Central
+						Administration
+						screen)
+						, provide an
+						<guilabel>E-mail server display address</guilabel>
+						and select
+						<guibutton>Accept e-mail from all email servers</guibutton>
+					</para>
+					<para>
+						<mediaobject>
+							<imageobject>
+								<imagedata
+									fileref="images/sharepoint-central-admin-incoming-email-2.png"
+									format="PNG" />
+							</imageobject>
+						</mediaobject>
+					</para>
+				</step>
+				<step>
+					<emphasis>SharePoint specific site/library folder</emphasis>
+					- Configure incoming
+					e-mail on SharePoint sites
+					<para>
+						<mediaobject>
+							<imageobject>
+								<imagedata fileref="images/document-library-settings.png"
+									format="PNG" />
+							</imageobject>
+						</mediaobject>
+					</para>
+					<para>
+						For the specific document library of interest, enable the
+						incoming e-mail
+					</para>
+					<para>
+						<mediaobject>
+							<imageobject>
+								<imagedata fileref="images/incoming-e-mail-settings.png"
+									format="PNG" />
+							</imageobject>
+						</mediaobject>
+					</para>
+				</step>
+				<step>
+					Configure
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					<para>
+						Configuring
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+						</emphasis>
+						email for distributing reports
+						to SharePoint isn't different than
+						the
+						usual
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+						</emphasis>
+						email
+						configuration
+					</para>
+					<para>
+						<mediaobject>
+							<imageobject>
+								<imagedata fileref="images/documentburster-smtp-configuration.png"
+									format="PNG" />
+							</imageobject>
+						</mediaobject>
+					</para>
+					<para>
+						<emphasis>documentburster@sharepoint</emphasis>
+						email address was previously defined in SharePoint as being the
+						email
+						address of
+						<emphasis>Shared Folders</emphasis>
+						document library
+					</para>
+					<para>
+						<mediaobject>
+							<imageobject>
+								<imagedata fileref="images/documentburster-email-sharepoint.png"
+									format="PNG" />
+							</imageobject>
+						</mediaobject>
+					</para>
+				</step>
+				<step>
+					Burst the sample report
+					<para>
+						Double check that the email distribution is enabled
+					</para>
+					<para>
+						<mediaobject>
+							<imageobject>
+								<imagedata fileref="images/distribute-reports.png"
+									format="PNG" />
+							</imageobject>
+						</mediaobject>
+					</para>
+					<para>
+						Select and burst
+						<filename>samples/Payslips.pdf</filename>
+						report
+					</para>
+					<para>
+						<mediaobject>
+							<imageobject>
+								<imagedata fileref="images/burst-reports1.png" format="PNG" />
+							</imageobject>
+						</mediaobject>
+						<mediaobject>
+							<imageobject>
+								<imagedata fileref="images/burst-sample-report.png"
+									format="PNG" />
+							</imageobject>
+						</mediaobject>
+					</para>
+					<para>
+						The output burst reports are uploaded to SharePoint
+					</para>
+					<para>
+						<mediaobject>
+							<imageobject>
+								<imagedata fileref="images/upload-reports-sharepoint.png"
+									format="PNG" />
+							</imageobject>
+						</mediaobject>
+					</para>
+				</step>
+			</procedure>
+			<section>
+				<title>Email Address Validation
+				</title>
+				<para>
+					The last thing to be mentioned is about how
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					is validating email addresses.
+					This is particularly important to
+					be
+					noted here because, if the above
+					steps are followed exactly, then
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					will not distribute any document to SharePoint.
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					will display, in the log file,
+					a message
+					similar with
+				</para>
+				<para>
+					<emphasis>
+						Invalid email address 'documentburster@sharepoint' found!
+						Do you need to use local email addresses like
+						'documentburster@win2003srv'? If so, defining the
+						'allowLocalEmailAddresses' configuration with the value 'true'
+						will allow to send emails to local email addresses!"
+					</emphasis>
+				</para>
+				<para>
+					In the default configuration
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					is validating
+					all the email addresses to be in the format
+					<emphasis>string@otherstring.ext</emphasis>
+					and will throw the above
+					exception for any address which is not in
+					this format (i.e.
+					<emphasis>documentburster@sharepoint).</emphasis>
+				</para>
+				<para>
+					Selecting
+					the
+					<emphasis>Allow email addresses with local domain name and no TLD
+						(e.g. documentburster@sharepoint, admin@mailserver1)</emphasis>
+					configuration
+					will make the
+					test to pass for
+					<emphasis>documentburster@sharepoint</emphasis>
+					email address and thus the output reports will be delivered to this
+					SharePoint address.
+				</para>
+				<para>
+					In
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					main window select
+					<menuchoice>
+						<guimenu>Actions</guimenu>
+						<guisubmenu>Configure</guisubmenu>
+						<guisubmenu>Advanced</guisubmenu>
+					</menuchoice>
+				</para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/strict-email-validation.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</section>
+		</section>
+		<note>
+			<para>
+				If required, your organization's SharePoint administrator
+				should be able to give
+				further help in configuring the
+				system.
+			</para>
+		</note>
+	</section>
+</appendix>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <records>
+        <record>
+            <name>Clyde Grew</name>
+            <id>1</id>
+            <ssn>123-45-6789</ssn>
+            <pay_period>March 2008</pay_period>
+            <department>IT</department>
+            <position>Manager - IT</position>
+            <gross_pay>4000</gross_pay>
+            <allowance1>300</allowance1>
+            <allowance2>500</allowance2>
+            <deduction1>100</deduction1>
+            <deduction2>100</deduction2>
+            <deduction3>100</deduction3>
+            <deduction4>100</deduction4>
+            <tax>10</tax>
+            <total_earnings>4500</total_earnings>
+            <total_deductions>710</total_deductions>
+            <net_pay>3790</net_pay>
+        </record>
+        <record>
+            <name>Kyle Butford</name>
+            <id>2</id>
+            <ssn>234-56-7890</ssn>
+            <pay_period>March 2008</pay_period>
+            <department>IT</department>
+            <position>Software Developer</position>
+            <gross_pay>3000</gross_pay>
+            <allowance1>200</allowance1>
+            <allowance2>300</allowance2>
+            <deduction1>50</deduction1>
+            <deduction2>50</deduction2>
+            <deduction3>50</deduction3>
+            <deduction4>50</deduction4>
+            <tax>10</tax>
+            <total_earnings>3300</total_earnings>
+            <total_deductions>410</total_deductions>
+            <net_pay>2890</net_pay>
+        </record>
+        <record>
+            <name>Alfreda Waldback</name>
+            <id>3</id>
+            <ssn>345-67-8901</ssn>
+            <pay_period>March 2008</pay_period>
+            <department>Pharmacy</department>
+            <position>Pharmacy Technician</position>
+            <gross_pay>3500</gross_pay>
+            <allowance1>200</allowance1>
+            <allowance2>500</allowance2>
+            <deduction1>50</deduction1>
+            <deduction2>50</deduction2>
+            <deduction3>50</deduction3>
+            <deduction4>50</deduction4>
+            <tax>10</tax>
+            <total_earnings>4000</total_earnings>
+            <total_deductions>410</total_deductions>
+            <net_pay>3590</net_pay>
+        </record>
+    </records>
+</root>

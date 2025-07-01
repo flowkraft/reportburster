@@ -1,0 +1,12 @@
+<!DOCTYPE aspectj PUBLIC "-//AspectJ//DTD//EN" "http://www.eclipse.org/aspectj/dtd/aspectj.dtd">
+<aspectj>
+	<aspects>
+		<aspect name="org.perf4j.log4j.aop.TimingAspect" />
+	</aspects>
+	<weaver options="-verbose -showWeaveInfo">
+		<include within="com.sourcekraft.documentburster..*" />
+		<!-- Weave in perf4j aspects for Aspectj 1.6.7+ -->
+		<include within="org.perf4j.log4j.aop.*" />
+		<include within="org.perf4j.aop.*" />
+	</weaver>
+</aspectj>

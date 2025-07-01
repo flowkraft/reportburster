@@ -1,0 +1,29 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+
+		<groupId>com.sourcekraft.documentburster</groupId>
+		<artifactId>rb-product-reportburster</artifactId>
+		<version>${revision}</version>
+		<relativePath>../../pom.xml</relativePath>
+
+	</parent>
+
+	<artifactId>rb-update</artifactId>
+	<name>update module</name>
+
+	<build>
+		<finalName>${project.artifactId}</finalName>
+	</build>
+
+	<dependencies>
+
+		<!-- DON'T IMPORT ANY 3rd party Java library, only standard Java should
+		be used here -->
+
+	</dependencies>
+
+</project>

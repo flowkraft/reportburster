@@ -1,0 +1,31 @@
+{
+  "apps": [
+    {
+      "id": "cms-webportal",
+      "name": "CMS & WebPortal (Production)",
+      "type": "nextjs",
+      "version": "1.0.0",
+      "description": "Production-ready customer portal with admin features, built with Next.js, Prisma, and Next-Admin.",
+      "entrypoint": "./cms-webportal/docker-compose.yml",
+      "tech_stack": ["nextjs", "typescript", "prisma", "next-admin", "docker"],
+      "dev_mode": false
+    },
+    {
+      "id": "cms-webportal-playground",
+      "name": "CMS WebPortal Playground (Dev)",
+      "type": "nextjs",
+      "version": "0.1.0",
+      "description": "Development environment based on the shadcn/taxonomy boilerplate for building the CMS & WebPortal.",
+      "entrypoint": "./cms-webportal-playground/docker-compose.yml",
+      "tech_stack": [
+        "nextjs",
+        "typescript",
+        "prisma",
+        "shadcn/ui",
+        "tailwind",
+        "docker"
+      ],
+      "dev_mode": true
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payslip Template</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+      }
+      .header {
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+      }
+      .company-info {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid black;
+      }
+      th,
+      td {
+        padding: 8px;
+        text-align: left;
+      }
+      td.amount {
+        text-align: right;
+      }
+      .section-header {
+        font-weight: bold;
+        background-color: #f2f2f2;
+      }
+      .totals {
+        background-color: #f2f2f2;
+        font-weight: bold;
+      }
+      .net-pay {
+        background-color: #f2f2f2;
+        text-align: right;
+        font-weight: bold;
+        margin-top: 20px;
+        padding: 8px;
+      }
+      .signature {
+        border-top: 1px solid black;
+        width: 30%;
+        margin-top: 40px;
+        padding-top: 5px;
+        text-align: center;
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="company-info">
+      <p>Northridge Pharmaceuticals</p>
+      <p>7649F Diamond Hts Blvd</p>
+      <p>San Francisco</p>
+      <p>(415) 872-9214</p>
+    </div>
+    <br />
+    <div class="header">STATEMENT OF MONTHLY INCOME</div>
+    <br />
+    <table>
+      <tbody>
+        <tr>
+          <td>Employee Name</td>
+          <td>${col0}</td>
+        </tr>
+        <tr>
+          <td>Employee ID</td>
+          <td>${col1}</td>
+        </tr>
+        <tr>
+          <td>Social Security #</td>
+          <td>${col2}</td>
+        </tr>
+        <tr>
+          <td>Pay Period</td>
+          <td><#if col3?is_date>${col3?string("MM/dd/yy")}<#else>${col3}</#if></td>
+        </tr>
+        <tr>
+          <td>Department</td>
+          <td>${col4}</td>
+        </tr>
+        <tr>
+          <td>Position/Grade</td>
+          <td>${col5}</td>
+        </tr>
+      </tbody>
+    </table>
+    <br /><br />
+    <table>
+      <thead>
+        <tr class="section-header">
+          <td>EARNINGS</td>
+          <td class="amount">AMOUNT</td>
+          <td>TAXES/DEDUCTIONS</td>
+          <td class="amount">AMOUNT</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Basic Salary</td>
+          <td class="amount">${col6}</td>
+          <td>Federal Tax</td>
+          <td class="amount">${col7}</td>
+        </tr>
+        <tr>
+          <td>Bonuses</td>
+          <td class="amount">${col8}</td>
+          <td>Social Security Tax</td>
+          <td class="amount">${col9}</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td>Medicare Tax</td>
+          <td class="amount">${col10}</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td>State Tax</td>
+          <td class="amount">${col11}</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td>Medical</td>
+          <td class="amount">${col12}</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td>Dental</td>
+          <td class="amount">${col13}</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr class="totals">
+          <td>Total Earnings</td>
+          <td class="amount">${col14}</td>
+          <td>Total Deductions</td>
+          <td class="amount">${col15}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="net-pay">Net Pay <span class="amount">${col16}</span></div>
+
+    <div class="signature">Employee signature:</div>
+    <div class="signature">Director:</div>
+  </body>
+</html>

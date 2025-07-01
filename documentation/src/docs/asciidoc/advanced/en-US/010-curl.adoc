@@ -1,0 +1,102 @@
+ifndef::sourcedir[:sourcedir: ../../../../../../backend/reporting/src/main]
+
+== cURL
+
+[[curl.integration, cURL Integration]]
+
+_DocumentBurster_(C) closely integrates with _cURL_, a Swiss-army knife for doing data transfer. Through cURL, _DocumentBurster_(C) can distribute reports via _HTTP_ or _FTP_ with or without authentication, it works over SSL, and it works without interaction. Actually cURL (and thus _DocumentBurster_(C)) supports distributing files and data to a various range of common Internet protocols, currently including _HTTP, HTTPS, FTP, FTPS, SCP, SFTP, TFTP, LDAP, LDAPS, DICT, TELNET, FILE, IMAP, POP3, SMTP and RTSP_.
+
+_cURL_ - http://curl.haxx.se/[http://curl.haxx.se/,window=_blank]
+
+*Cross platform*
+
+_cURL_ is portable and works on many platforms, including _Windows_, _Linux_, _Mac OS X_, _MS-DOS_ and more.
+
+On Windows, _DocumentBurster_(C) package distribution is bundling together a recent version of _cURL_. So, if your organization is running _DocumentBurster_(C) under Windows, there is nothing more to download or install in regards with _cURL_.
+
+For other UNIX like systems, such as _Linux_ and _Mac OS X_, the appropriate _cURL_ binaries distribution should be properly downloaded and installed. In addition, the _cURL_ groovy scripts which are bundled together with _DocumentBurster_(C) are written for _Windows_ usage and should support small adjustments to be made ready for usage under _Linux/UNIX_.
+
+*Command line cURL examples*
+
+_cURL_ is a tool for getting or sending files using URL syntax. The URL syntax is protocol-dependent. Along with the URL for the required protocol, _cURL_ can take some additional options in the command line.
+
+For complete _cURL_ documentation you can follow
+
+* https://curl.haxx.se/docs/manual.html[cURL Manual,window=_blank]
+* https://curl.haxx.se/docs/manpage.html[cURL Man Page,window=_blank]
+* https://curl.haxx.se/docs/faq.html[cURL Frequently Asked Questions,window=_blank]
+
+Following are some sample _cURL_ invocations to upload a file to a remote server (from cURL manual)
+
+*1. FTP / FTPS / SFTP / SCP*
+
+Upload data from a specified file, login with user and password
+
+_curl -T uploadfile -u user:passwd ftp://ftp.upload.com/myfile_
+
+Upload a local file to the remote site, and use the local file name remote too
+
+_curl -T uploadfile -u user:passwd ftp://ftp.upload.com/_
+
+_cURL_ also supports ftp upload through a proxy, but only if the proxy is configured to allow that kind of tunneling. If it does, you can run _cURL_ in a fashion similar to
+
+_curl --proxytunnel -x proxy:port -T localfile ftp.upload.com_
+
+*--ftp-create-dirs*
+
+When integrated with _DocumentBurster_(C), following _cURL_ option will be of interest
+
+_--ftp-create-dirs_ - (FTP/SFTP) When an FTP or SFTP URL/operation uses a path that doesn't currently exist on the server, the standard behavior of _cURL_ is to fail. Using this option, _cURL_ will instead attempt to create missing directories.
+
+*2. HTTP*
+
+Upload data from a specified file
+
+_curl -T uploadfile http://www.upload.com/myfile_
+
+Note that the http server must have been configured to accept PUT before this can be done successfully.
+
+*Debugging and tracing cURL - VERBOSE / DEBUG*
+
+If _cURL_ fails where it isn't supposed to, if the servers don't let you in, if you can't understand the responses: use the _-v_ flag to get verbose fetching. _cURL_ will output lots of info and what it sends and receives in order to let the user see all client-server interaction (but it won't show you the actual data).
+
+_curl -v ftp://ftp.upload.com/_
+
+To get even more details and information on what _cURL_ does, try using the _--trace_ or _--trace-ascii_ options with a given file name to log to, like this
+
+_curl --trace trace.txt www.haxx.se_
+
+=== Sample Scripts
+
+While it is great to know that so many protocols are supported, _DocumentBurster_(C) is coming with sample scripts to do _cURL_ report distribution through the most commonly used protocols such as _FTP_, _SFTP_ and _FILE_. Any other _cURL_ supported protocol should be achievable by doing little changes to the scripts which are provided in the default _DocumentBurster_(C) package distribution.
+
+==== curl_ftp.groovy
+
+_curl_ftp.groovy_ script is an alternative to the FTP Upload GUI capability which was introduced in 
+https://www.pdfburst.com/docs/html/userguide/chapter.distributing.html#chapter.distributing.uploading.ftp[_DocumentBurster_(C) User Guide,window=_blank].
+
+While through the GUI it is possible to achieve common FTP report distribution use cases, using this _FTP_ script is recommended for more advanced FTP scenarios which require the full _cURL_ FTP capabilities. For example, using this script it is possible to instruct _DocumentBurster_(C) to automatically create a custom hierarchy of directories on the _FTP_ server, before uploading the reports.
+
+Edit the script _scripts/burst/endExtractDocument.groovy_ with the content found in _scripts/burst/samples/curl_ftp.groovy_. By default, the script is fetching the values for the _FTP_ connection , such as user, password, host and path from the values of _$var0$_, _$var1$_, _$var2$_ and _$var3$_ user report variables. If the burst reports are configured as such, then there is nothing more to do, and the _FTP_ upload will work without any modification to the script. Otherwise, the _FTP_ script should be modified as per the needs.
+
+While the script might look long, there are actually only few simple lines of active code - most of the content of the script are the comments which are appropriately describing the scope of each section of the script.
+
+[source,groovy]
+----
+include::{sourcedir}/external-resources/template/scripts/burst/samples/curl_ftp.groovy[]
+----
+
+==== curl_sftp.groovy
+
+_curl_sftp.groovy_ script can be used to upload the burst reports through _Secure File Transfer Protocol_ or _Secure FTP_.
+
+With minimum modifications to _$execOptions_, the script can be adapted to use other protocols such as _FTPs_ or _SCP_. You can check the https://curl.haxx.se/docs/manual.html[_cURL Manual_,window=_blank] for more details.
+
+Edit the script _scripts/burst/endExtractDocument.groovy_ with the content found in _scripts/burst/samples/curl_sftp.groovy_. By default, the script is fetching the values for the _SFTP_ connection, such as user, password, host and path from the values of _$var0$_, _$var1$_, _$var2$_ and _$var3$_ user report variables. If the burst reports are configured as such, then there is nothing more to do, and _SFTP_ uploading will work without any additional modification to the script. Otherwise, this script should be modified as per the needs.
+
+While the script might look long, there are actually only few simple lines of active code - most of the content of the script are the comments which are appropriately describing the scope of each section of the script.
+
+[source,groovy]
+----
+include::{sourcedir}/external-resources/template/scripts/burst/samples/curl_sftp.groovy[]
+----

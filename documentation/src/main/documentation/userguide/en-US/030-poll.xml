@@ -1,0 +1,110 @@
+<chapter id="chapter.polling">
+	<title>Automatic Polling for Incoming Reports</title>
+	<section id="chapter.polling.watching">
+		<title>Watch a Folder for Incoming Reports</title>
+		<para>
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			can poll a configurable folder and automatically pick for processing
+			all the reports which are dropped to this folder.
+		</para>
+		<para>
+			This functionality
+			is useful when
+			integrating with an external
+			legacy
+			system
+			which can be
+			configured to generate the reports to the
+			polled
+			folder, thus
+			obtaining an
+			automated system to generate, burst and
+			distribute the
+			reports.
+		</para>
+		<para>
+			In
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			main window select
+			<guimenu>Actions</guimenu>
+			,
+			<guimenu>Merge, Burst and Trace...</guimenu>
+			,
+			<guimenu>Poll Folder -> Burst</guimenu>
+		</para>
+		<para>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/report-polling1.png" format="PNG" />
+				</imageobject>
+			</mediaobject>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/report-polling2.png" format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</para>
+		<para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>Start Polling</emphasis>
+						- Start watching the selected folder for incoming reports. Once
+						the polling is
+						started,
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+						</emphasis>
+						will automatically process all the reports which are dropped to
+						this folder.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>End Polling</emphasis>
+						- Stop watching/polling the folder for incoming reports.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>View Generated Reports</emphasis>
+						- Browse the generated reports.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<note>
+			<title>Note</title>
+			<para>
+				The polling GUI presented in this chapter is not available in
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+					Server.
+				</emphasis>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+					Server
+				</emphasis>
+				will automatically start to check (poll) the
+				<filename class='directory'>server/poll</filename>
+				folder once it is started.
+			</para>
+			<para>
+				For more
+				details about the additional features of
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+					Server
+				</emphasis>
+				software please
+				read
+				<xref linkend="chapter.server" />
+				.
+			</para>
+		</note>
+	</section>
+</chapter>

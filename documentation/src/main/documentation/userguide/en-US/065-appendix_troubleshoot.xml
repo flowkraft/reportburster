@@ -1,0 +1,1053 @@
+<appendix id="appendix.troubleshooting">
+	<title>Troubleshooting</title>
+	<section id="appendix.troubleshooting.overview">
+		<title>Overview</title>
+		<para>
+			This section provides troubleshooting information for common
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			difficulties.
+		</para>
+		<para>
+			If you are experiencing problems using
+			<emphasis>
+				<trademark>DocumentBurster</trademark>
+			</emphasis>
+			make sure that you have read and properly installed the
+			software
+			prerequisites, as described in
+			<ulink url="https://www.pdfburst.com/docs/html/quickstart/index.html">
+				<trademark>DocumentBurster</trademark>
+				in 5 Minutes
+			</ulink>
+			tutorial guide.
+		</para>
+		<section id="appendix.troubleshooting.overview.support">
+			<title>Quick &amp; Professional Support</title>
+			<para>
+				If you need to contact
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				support, you can get help by sending an email to
+				<email>support@pdfburst.com</email>
+			</para>
+		</section>
+	</section>
+	<section id="appendix.troubleshooting.problems">
+		<title>Common Problems</title>
+		<section id="appendix.troubleshooting.problems.25">
+			<title>I Get Only 25 Reports</title>
+			<para>
+				The free version of
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				has a
+				<emphasis>restriction of maximum 25 burst
+					output reports
+				</emphasis>
+				being generated and/or being distributed.
+			</para>
+			<para>
+				For bursting and generating
+				an
+				unlimited number
+				of reports
+				please
+				purchase
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+			</para>
+			<para>
+				<ulink url="https://www.pdfburst.com/purchase.html" />
+			</para>
+		</section>
+		<section id="appendix.troubleshooting.problems.basic">
+			<title>Issues Running Basic Features?</title>
+			<para>
+				If you don’t know from where to start or you have problems running
+				the
+				basic features of the program, read
+				<ulink url="https://www.pdfburst.com/docs/html/quickstart/index.html">
+					<trademark>DocumentBurster</trademark>
+					in 5 Minutes
+				</ulink>
+				tutorial guide.
+			</para>
+		</section>
+		<section id="appendix.troubleshooting.problems.old-java">
+			<title>UnsupportedClassVersionError Exception?</title>
+			<para>
+				If on the console or log file there is an exception similar
+				with
+			</para>
+			<para>
+				<emphasis>
+					"java.lang.UnsupportedClassVersionError:test (unsupported
+					major.minor version 49.0)
+				</emphasis>
+			</para>
+			<para>
+				This is happening when the program runs with an ancient java
+				version
+				(&lt;Java v1.8).
+				Read
+				<ulink
+					url="https://www.pdfburst.com/docs/html/quickstart/index.html#software.prerequisites">
+					<trademark>DocumentBurster</trademark>
+					in 5 Minutes
+				</ulink>
+				document and double
+				check the version of
+				<filename>java</filename>
+				which
+				is installed on your computer.
+			</para>
+			<para>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				requires Java v1.8 (or greater) version in order to run.
+			</para>
+			<para>
+				Sometimes the exception is still coming even after the latest
+				Java
+				is
+				installed. This is happening because the old java is still
+				installed
+				and active on your computer.
+			</para>
+			<para>
+				The solution is to edit
+				<filename>documentburster.bat</filename>
+				and do the following
+				change
+			</para>
+			<para>
+				<emphasis>java</emphasis>
+				-Djava.endorsed.dirs=./lib/endorsed -cp ./lib/burst/ant-launcher.jar
+				org.apache.tools.ant.launch.Launcher -buildfile
+				./config/burst/documentburster.xml -Darg1=%1 -Darg2=%2 -Darg3=%3
+				-Darg4=%4 -Darg5=%5 -Darg6=%6
+			</para>
+			<para>
+				Do the
+				<emphasis role="bold">bold</emphasis>
+				change
+			</para>
+			<para>
+				<emphasis role="bold">
+					"C:/Program Files/Java/jre8/bin/java.exe"
+				</emphasis>
+				-Djava.endorsed.dirs=./lib/endorsed -cp ./lib/burst/ant-launcher.jar
+				org.apache.tools.ant.launch.Launcher -buildfile
+				./config/burst/documentburster.xml -Darg1=%1 -Darg2=%2 -Darg3=%3
+				-Darg4=%4 -Darg5=%5 -Darg6=%6
+			</para>
+			<para>
+				The proper path to the location where the latest java is installed
+				should be provided. This change will force
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				to run with the latest java.
+			</para>
+		</section>
+		<section id="appendix.troubleshooting.problems.multiple-java">
+			<title>Mess With Multiple Java Installations</title>
+			<para>
+				As a general rule, it is advisable to have a single
+				Java
+				installation
+				on the machine where
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				is executed. Even if (theoretically) it is possible
+				to have multiple
+				java
+				versions
+				installed on the same computer, in practice this will
+				only leave room for strange issues and will
+				complicate the
+				installation.
+			</para>
+		</section>
+		<section id="appendix.troubleshooting.problems.burst1">
+			<title>Burst Issue 1</title>
+			<para>
+				If you have bursting problems, check that you have configured
+				the
+				burst
+				tokens in-between brackets. For example
+				<emphasis>{alfreda.waldback@northridgehealth.org}</emphasis>
+				is a valid token.
+			</para>
+		</section>
+		<section id="appendix.troubleshooting.problems.burst2">
+			<title>Burst Issue 2</title>
+			<para>
+				If you configured all the tokens properly and still the program is
+				not
+				working as expected, you can enable detailed
+				logging. By
+				checking
+				the detailed log file
+				you can understand what
+				is
+				going wrong.
+				<para>
+				</para>
+				In order to enable
+				detailed logging, read
+				<xref linkend="chapter.audit" />
+				.
+			</para>
+		</section>
+		<section id="appendix.troubleshooting.problems.variables1">
+			<title>Variable Values Are Not Parsed Correctly?</title>
+			<para>
+				Sometimes variables defined like
+				<emphasis>&lt;0&gt;some value&lt;/0&gt;</emphasis>
+				and up to
+				<emphasis>&lt;9&gt;some other value&lt;/9&gt;</emphasis>
+				might fail
+				in getting parsed the proper values. Following is an
+				example of the
+				issue coming with Microsoft Access, while similar
+				behavior
+				might be observed with
+				other report writers too.
+			</para>
+			<para>
+				<emphasis role="bold">The Problem</emphasis>
+				- Example of the problem coming with Microsoft Access
+			</para>
+			<para>
+				<emphasis>
+					I am using various MS Access reports to grab variable data using
+					<emphasis>&lt;0&gt;</emphasis>
+					text
+					<emphasis>&lt;/0&gt;</emphasis>
+					. If I use a label for the text and key it into the text box as
+					<emphasis>&lt;0&gt;</emphasis>
+					report id 100
+					<emphasis>&lt;/0&gt;</emphasis>
+					it works fine but if I drop a field onto the report and then put
+					the
+					<emphasis>&lt;0&gt;</emphasis>
+					and
+					<emphasis>&lt;/0&gt;</emphasis>
+					in front and back of the field, it does not work.
+				</emphasis>
+			</para>
+			<para>
+				<emphasis role="bold">The Solution</emphasis>
+				- And here is the solution for the previous MS Access behavior
+			</para>
+			<para>
+				<emphasis>
+					When you drop the fields into an MS Access report you need to
+					define
+					any field you use as a variable as a single field
+					by
+					concatenation.
+					For example, let's say
+					I have a field named "date" and
+					place it on
+					the report with a text
+					box of
+					<emphasis>&lt;0&gt;</emphasis>
+					in front and then place a text box of
+					<emphasis>&lt;/0&gt;</emphasis>
+					at the end. This will not work.
+					You need to create one field
+					(object)
+					as follows: ="
+					<emphasis>&lt;0&gt;</emphasis>
+					"text"
+					<emphasis>&lt;/0&gt;</emphasis>
+					". Now it will work.
+				</emphasis>
+			</para>
+			<para>
+				<emphasis role="bold">More Details</emphasis>
+			</para>
+			<para>
+				If the start and end tags (e.g.
+				<emphasis>&lt;0&gt;</emphasis>
+				and
+				<emphasis>&lt;/0&gt;</emphasis>
+				) are statically defined, while
+				the content inside is a dynamic field
+				/report formula (string value which
+				can grow in length),
+				the
+				dynamic
+				content will grow and will start to
+				overlap with the
+				static
+				tags (e.g.
+				<emphasis>&lt;0&gt;</emphasis>
+				and
+				<emphasis>&lt;/0&gt;).</emphasis>
+				This might cause problems when
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				is parsing the
+				variable values. See the following screenshot
+				in
+				which
+				"Tuesday" hidden text was generated by a date
+				field/formula
+				which
+				expanded its length and started to overlap the
+				start
+				<emphasis>&lt;1&gt;</emphasis>
+				tag.
+				In this case the text which is extracted by
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				is a messy
+				<emphasis>Tues&lt;da1&gt;y</emphasis>
+				and as a result the variable value is not properly parsed.
+				The
+				solution to
+				this problem was described in the previous paragraph.
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/variables-issue.png" format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+		</section>
+		<section id="appendix.troubleshooting.problems.server-console-1">
+			<title>
+				Windows -
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+					Server
+				</emphasis>
+				Is Failing to Start?
+			</title>
+			<para>
+				When
+				<filename>server/startServer.bat</filename>
+				script is executed
+				it is flashing up the cmd box and then it
+				disappears.
+			</para>
+			<para>
+				<emphasis role="bold">Solution</emphasis>
+			</para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						Are all the prerequisites in place? Read
+						<ulink
+							url="https://www.pdfburst.com/docs/html/quickstart/index.html#software.prerequisites">
+							<trademark>DocumentBurster</trademark>
+							in 5 Minutes
+						</ulink>
+						tutorial guide and check all the prerequisites required for
+						running
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+							.
+						</emphasis>
+					</para>
+				</listitem>
+				<listitem>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					should run on Java version v1.8 or greater (
+					<command>java -version</command>
+					MS-DOS
+					command should return v1.8 or greater)
+				</listitem>
+				<listitem>
+					If required, start the server again.
+					Did you shut the server
+					properly from previous runs by using
+					<filename>server/shutServer.bat</filename>
+					script?
+				</listitem>
+			</itemizedlist>
+		</section>
+		<section id="appendix.troubleshooting.problems.server-console-2">
+			<title>
+				Windows -
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+					Server
+				</emphasis>
+				Is Not Processing the Web Console Jobs?
+			</title>
+			<para>
+				<emphasis role="bold">Solution</emphasis>
+			</para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						Are all the prerequisites in place? Read the
+						<ulink
+							url="https://www.pdfburst.com/docs/html/quickstart/index.html#software.prerequisites">
+							<trademark>DocumentBurster</trademark>
+							in 5 Minutes
+						</ulink>
+						tutorial guide and check all the required prerequisites.
+					</para>
+				</listitem>
+				<listitem>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					should run on Java version v1.8 or greater (
+					<command>java -version</command>
+					MS-DOS
+					command should return v1.8 or greater)
+				</listitem>
+			</itemizedlist>
+		</section>
+		<section id="appendix.troubleshooting.problems.web-console">
+			<title>
+				Windows -
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				Web Console Is Failing to Start?
+			</title>
+			<para>
+				The link
+				<emphasis>http://localhost:8080/burst</emphasis>
+				is not working on the local machine.
+				When
+				<filename>web-console/startConsole.bat</filename>
+				script is executed
+				it is flashing up the cmd box then it disappears.
+			</para>
+			<para>
+				<emphasis role="bold">Solution</emphasis>
+			</para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						Are all the prerequisites in place? Read
+						<ulink
+							url="https://www.pdfburst.com/docs/html/quickstart/index.html#software.prerequisites">
+							<trademark>DocumentBurster</trademark>
+							in 5 Minutes
+						</ulink>
+						tutorial guide and check all the required prerequisites.
+					</para>
+				</listitem>
+				<listitem>
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+					</emphasis>
+					should run on Java version v1.8 or greater (
+					<command>java -version</command>
+					MS-DOS
+					command should return v1.8 or greater)
+				</listitem>
+				<listitem>
+					Was
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						Server
+					</emphasis>
+					console
+					started before, using
+					<filename>server/startServer.bat</filename>
+					script?
+					<emphasis>
+						<trademark>DocumentBurster</trademark>
+						Server
+					</emphasis>
+					console
+					should be started before the web console is started.
+				</listitem>
+				<listitem>
+					<para>
+						Before starting the web console
+						<emphasis>JRE_HOME</emphasis>
+						environment variable should be properly defined on your system.
+						The
+						<emphasis>echo %JRE_HOME%</emphasis>
+						command executed in the DOS command prompt should return an
+						existing JRE 1.8 (or greater) installation path.
+					</para>
+					<para>
+						If
+						required, on Windows,
+						<emphasis>JRE_HOME</emphasis>
+						environment variable can be manually defined in
+						<menuchoice>
+							<guimenu>Control Panel</guimenu>
+							<guisubmenu>System Properties (WinKey +
+								Pause)
+							</guisubmenu>
+							<guisubmenu>
+								Advanced
+							</guisubmenu>
+							<guisubmenu>Environment
+								Variables
+							</guisubmenu>
+						</menuchoice>
+						i.e.
+						<filename class="directory">C:/Program Files/Java/jre8</filename>
+					</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+		<section id="appendix.troubleshooting.problems.win2003server-service">
+			<title>
+				Windows Service Stops on Windows Server 2003?
+			</title>
+			<para>
+				The following problem is happening only on Windows Server 2003.
+			</para>
+			<para>
+				The system was tested and everything works fine on Windows
+				Server
+				2008 or Windows 7.
+			</para>
+			<para>
+				<emphasis role="bold">The Problem - </emphasis>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+					Server
+				</emphasis>
+				service always stops when the system is
+				logged off.
+			</para>
+			<para>
+				<emphasis role="bold">Solution</emphasis>
+			</para>
+			<para>
+				This is required only for Windows Server 2003.
+			</para>
+			<para>
+				Before doing any change make sure that
+				<itemizedlist>
+					<listitem>
+						Both
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+							Web Console
+						</emphasis>
+						and
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+							Server
+						</emphasis>
+						Windows services are stopped
+					</listitem>
+					<listitem>
+						Both
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+							Web Console
+						</emphasis>
+						and
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+							Server
+						</emphasis>
+						are properly shut down using the corresponding
+						<filename>shutConsole.bat</filename>
+						and
+						<filename>shutServer.bat</filename>
+						scripts
+					</listitem>
+				</itemizedlist>
+			</para>
+			<para>
+				<command>-Xrs</command>
+				switch should be added in two (2) places
+				<itemizedlist>
+					<listitem>
+						<filename>server/startServer.bat</filename>
+					</listitem>
+					<listitem>
+						<filename>server/config/burst/internal/documentburster.properties
+						</filename>
+					</listitem>
+				</itemizedlist>
+			</para>
+			<para>
+				<emphasis role="bold">Change 1</emphasis>
+				<filename>server/startServer.bat</filename>
+			</para>
+			<para>
+				java -DDOCUMENTBURSTER_HOME=%CD%
+				-Djava.endorsed.dirs=lib/endorsed -cp lib/batch/ant-launcher.jar
+				org.apache.tools.ant.launch.Launcher -buildfile
+				config/burst/internal/startServer.xml –emacs
+			</para>
+			<para>
+				Do the
+				<emphasis role="bold">bold</emphasis>
+				change
+			</para>
+			<para>
+				java
+				<emphasis role="bold">-Xrs</emphasis>
+				-DDOCUMENTBURSTER_HOME=%CD%
+				-Djava.endorsed.dirs=lib/endorsed -cp
+				lib/batch/ant-launcher.jar
+				org.apache.tools.ant.launch.Launcher
+				-buildfile
+				config/burst/internal/startServer.xml –emacs
+			</para>
+			<para>Save the file.</para>
+
+			<para>
+				<emphasis role="bold">Change 2</emphasis>
+				<filename>server/config/burst/internal/documentburster.properties
+				</filename>
+			</para>
+			<para>
+				SERVER_JVM_OPTS=-XX:MaxPermSize=256m -Xms512m -Xmx512m
+			</para>
+			<para>
+				Do the
+				<emphasis role="bold">bold</emphasis>
+				change
+			</para>
+			<para>
+				SERVER_JVM_OPTS=
+				<emphasis role="bold">-Xrs</emphasis>
+				-XX:MaxPermSize=256m -Xms512m -Xmx512m
+			</para>
+			<para>Save the file.</para>
+			<para>
+				Restart both
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				Windows services and check that
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				works properly when the machine is logged off.
+			</para>
+		</section>
+		<section id="appendix.troubleshooting.problems.email-issue-1">
+			<title>Email Is Failing?</title>
+			<para>
+				If you have problems in getting the email working
+				<itemizedlist>
+					<listitem>
+						Double check the email server connection details
+					</listitem>
+					<listitem>
+						If your organization is using Microsoft Exchange as email
+						server
+						and Microsoft Outlook as email
+						client, in this situation, you
+						will need to
+						give
+						the same email server connection details
+						which are
+						already configured in
+						your Microsoft Outlook email client software.
+					</listitem>
+				</itemizedlist>
+			</para>
+			<para>
+				<emphasis role="bold">Are you running Anti-Virus software?
+				</emphasis>
+			</para>
+			<para>
+				If your organization has any firewall and/or antivirus software
+				(e.g. Symantec, McAfee, etc.) which is configured in between
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				software and the email server software (e.g. Microsoft Exchange), in
+				this
+				case,
+				the antivirus and/or firewall might need to be
+				properly
+				configured
+				to
+				allow
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				sending emails as a good and trustable citizen.
+			</para>
+			<para>
+				<emphasis role="bold">Ask for Help</emphasis>
+			</para>
+			<para>
+				A network or IT administrator from your organization should be
+				able
+				to assist if you find further
+				difficulties in configuring the
+				email settings.
+			</para>
+		</section>
+		<section id="appendix.troubleshooting.problems.email-issue-2">
+			<title>Email Still Fails?</title>
+			<para>
+				Check the logs on the email server side. If your organization
+				is
+				using Microsoft Exchange as an email server, check the
+				Microsoft
+				Exchange
+				log
+				entries to see
+				if the email server was reached and what
+				problem was
+				encountered.
+			</para>
+		</section>
+		<section id="appendix.troubleshooting.problems.email-issue-4">
+			<title>Email SMTP Error 421</title>
+			<para>
+				If on the console or log file there is an exception similar
+				with
+			</para>
+			<para>
+				<emphasis>
+					Caused by: javax.mail.MessagingException: Could not
+					connect to SMTP host:
+					host-here, port: port-here, response: 421
+				</emphasis>
+			</para>
+			<para>
+				This represents
+				<emphasis>Email SMTP Error 421</emphasis>
+				(see the SMTP error code 421 in the exception) and you will need to
+				work together with your IT Network or
+				Microsoft
+				Exchange
+				administrator
+				which should further read and
+				interpret the
+				email server
+				log entries
+				(e.g. Microsoft Exchange logs).
+			</para>
+			<para>
+				<emphasis role="bold">Possible ISP limitation</emphasis>
+			</para>
+			<para>
+				In addition, you might need to let your ISP know that you have
+				a legitimate reason for sending many emails.
+			</para>
+			<para>
+				<emphasis role="bold">More details about
+					Email SMTP Error 421
+				</emphasis>
+			</para>
+			<para>
+				<emphasis>SMTP Error 421:</emphasis>
+				The Mail transfer service is
+				unavailable
+				because of a transient
+				event.
+				SMTP reply
+				421 can be caused by many
+				things but generally
+				indicates
+				that the mail server which returns
+				this status code is
+				currently
+				unavailable but may be available later.
+				For example, the
+				server
+				administrator may have stopped
+				the mail
+				service to troubleshoot
+				a
+				problem, or the mail
+				server is right in the
+				middle of rebooting, or
+				the mail server
+				is currently processing too
+				many incoming messages or
+				incoming requests, etc.... Note : <emphasis>Mail
+				Server</emphasis> in this
+				case can be
+				any of the mail servers on the message’s
+				route – the sending server
+				(your server), the ISP SMTP
+				server, or the
+				recipient’s mail server.
+				Clearly, if you repeatedly receive an SMTP
+				status 421 then
+				the problem
+				is no longer of a transient nature and
+				you
+				need to investigate or
+				inform the relevant network
+				administrator,
+				ISP tech support, or the
+				recipient.
+			</para>
+			<para>
+				<emphasis>SMTP Response 421</emphasis>
+				can also be received as a result of
+				your message server sending an
+				email where the total
+				number of TO, CC, and BCC users results in a
+				number of simultaneous SMTP connections that is in
+				excess of the
+				number of connections your ISP or
+				SMTP service allows. A typical
+				error message for this
+				situation would be : <emphasis>421 Too many concurrent
+				SMTP
+				connections from this IP address; please try again later</emphasis>.
+				Typically, when this happens your server will have sent
+				some of the
+				messages (note that for all servers, each
+				email sent by a user always
+				gets broken down into
+				individual separate emails to each of the
+				recipients in the
+				TO, CC, and BCC fields), and will automatically
+				retry a little
+				later to send the remaining messages.
+			</para>
+		</section>
+		<section id="appendix.troubleshooting.problems.email-issue-5">
+			<title>Email SMTP Error 550 5.7.1 Unable to relay</title>
+			<para>
+				This is how people will usually describe this issue
+			</para>
+			<para>
+				<emphasis>We are able to burst reports to colleagues
+					with internal
+					email addresses successfully.
+					Our problem is that when we try to
+					send TO or CC to external clients /
+					emails the burst email always
+					fails.
+				</emphasis>
+			</para>
+			<para>
+				If on the console or log file there is an exception similar
+				with
+			</para>
+			<para>
+				<emphasis>
+					com.sun.mail.smtp.SMTPAddressFailedException: 550 5.7.1
+					Unable to relay
+				</emphasis>
+			</para>
+			<para>
+				In
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				main window select
+				<menuchoice>
+					<guimenu>Actions</guimenu>
+					<guisubmenu>Configure</guisubmenu>
+					<guisubmenu>Email</guisubmenu>
+					<guisubmenu>Connection Settings</guisubmenu>
+				</menuchoice>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/smtp550-unable-to-relay.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+			<para>
+				User name field should not be empty. It should be a valid
+				Exchange/NT user name
+				and the user name should be complete, including
+				the network prefix (e.g. EHNET\cjohn).
+			</para>
+			<para>
+				When sending emails to external addresses, for security/spam
+				reasons, Exchange is more strict
+				and requires people to authenticate.
+				This is not the case when sending
+				emails to internal
+				email addresses.
+				This is the meaning of
+				<emphasis role="bold">550 5.7.1 Unable to relay</emphasis>
+				Exchange exception.
+			</para>
+		</section>
+		<section
+			id="appendix.troubleshooting.problems.email.works.and.then.fails">
+			<title>Few Emails Are Going and Then Email Stops Working</title>
+			<para>
+				This is how people will usually describe this issue
+			</para>
+			<para>
+				<emphasis>The first pass ran through fine and files burst into
+					folder – all
+					187. I then chose to email and burst - the file got
+					through to
+					number 45 or so and then started to fail.
+				</emphasis>
+			</para>
+			<para>
+				In the
+				<filename>logs/documentburster.log</filename>
+				file there is an exception similar
+				with
+			</para>
+			<para>
+				<emphasis>
+					java.net.SocketTimeoutException: Read timed out
+				</emphasis>
+			</para>
+			<para>
+				This is usually happening when the email SMTP server
+				(Exchange?) your
+				organization is
+				using needs some tuning/configuration
+				in order to distribute many emails
+				in a short period of time.
+			</para>
+			<para>
+				Following possible approaches can be taken in order to solve the
+				situation
+				<itemizedlist>
+					<listitem>
+						Catch up with your organization's network/Exchange
+						administrator and he
+						(she) should be able to assist with this
+						situation.
+					</listitem>
+					<listitem>
+						Install
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+						</emphasis>
+						on the same machine with your SMTP email server. This should
+						eliminate most of the existing network latency.
+					</listitem>
+					<listitem>
+						Is there any antivirus/firewall kind of software which is sitting
+						in-between
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+						</emphasis>
+						and Exchange Server? If yes, then you might consider to
+						temporarily disable the antivirus/firewall software and see if
+						this makes any difference. If this is the problem then your
+						organization's network admin should find the proper firewall
+						configuration which will allow
+						<emphasis>
+							<trademark>DocumentBurster</trademark>
+						</emphasis>
+						to send emails like a good and trust-able citizen (through the
+						firewall).
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section id="appendix.troubleshooting.problems.email-issue-3">
+			<title>Email Is Still Failing?</title>
+			<para>
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				can be configured to log
+				more details about the SMTP communication.
+			</para>
+			<para>
+				Edit the file
+			</para>
+			<para>
+				<filename>config/burst/settings.xml</filename>
+			</para>
+			<para>
+				and do the
+				<emphasis role="bold">bold</emphasis>
+				change
+			</para>
+			<para>
+				&lt;emailserver&gt;&lt;debug&gt;false&lt;/debug&gt;&lt;/emailserver&gt;
+			</para>
+			<para>
+				change to
+			</para>
+			<para>
+				&lt;emailserver&gt;&lt;debug&gt;
+				<emphasis role="bold">true</emphasis>
+				&lt;/debug&gt;&lt;/emailserver&gt;.
+			</para>
+			<para>
+				Run the program again
+				and check
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				log file
+				to see
+				more details about the
+				email SMTP
+				communication.
+			</para>
+		</section>
+		<section id="appendix.troubleshooting.problems.upload-issue">
+			<title>Upload Issue?</title>
+			<para>
+				If you have problems in getting the upload functionality to work
+				make
+				sure the upload command is configured properly, as described
+				in
+				<xref linkend="chapter.distributing.uploading" />
+				.
+			</para>
+			<para>
+				In addition, you might check the
+				<filename>logs/cURL.log</filename>
+				file for further
+				details about any possible upload error.
+			</para>
+		</section>
+
+		<section id="appendix.troubleshooting.problems.configuration">
+			<title>I messed up with the configuration and now the program is
+				failing. Is it possible
+				to restore the default configuration?
+			</title>
+			<para>
+				In
+				<emphasis>
+					<trademark>DocumentBurster</trademark>
+				</emphasis>
+				main window select
+				<menuchoice>
+					<guimenu>Actions</guimenu>
+					<guisubmenu>Configuration Templates</guisubmenu>
+				</menuchoice>
+			</para>
+			<para>
+				Select edit for the configuration template which needs to be
+				restored and copy the default values
+				from the
+				<filename>config/burst/default/defaults.xml</filename>
+				existing file.
+			</para>
+			<para>
+				<mediaobject>
+					<imageobject>
+						<imagedata fileref="images/restore-default-values.png"
+							format="PNG" />
+					</imageobject>
+				</mediaobject>
+			</para>
+		</section>
+	</section>
+</appendix>

@@ -1,0 +1,744 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Java Interactive Profiler &#8212 readme</title>
+	</head>
+	
+	<body>
+		
+		<table>
+			<tr>
+				<td><img src="images/jip-logo-90.png"></td> 
+				<td width="100%"><center> <h1>Java Interactive Profiler</h1></center></td>
+			</tr>
+		</table>
+		
+		
+		<h2>What is JIP?</h2>
+		JIP is a code profiling tool much like the <code>hprof</code> tool
+		that ships with the JDK. There are, however, a few differences:
+		<ol>
+			<li><b>Interactivity.</b> <code>hprof</code> is not an interactive
+			profiler. It starts when your program starts and ends when the 
+			JVM exits. In many cases this doesn't give you a true 
+			measure of performance since the Just In Time compiler doesn't
+			compile code on the first pass. In addition, this type of profiler
+			is not useable at all in web applications since you end up
+			profiling the web container as well as the web application.
+			JIP, on the other hand, allows you to turn the profiler
+			on and off while the JVM is running.</li>
+			
+			<li><b>No native code.</b> Most profilers have some native 
+			component. This is because most profilers use the 
+			<code>JVMPI</code> (Java Virtual Machine Profiling Interface) 
+			which requires the use of native components. JIP, however, 
+			is pure Java. It takes advantage of the Java5&#153; feature
+			which allows you to hook the classloader. JIP adds <a 
+			href="http://en.wikipedia.org/wiki/Aspect_oriented">
+			aspects</a> to every method of every class that you want
+			to profile. These aspects allow it to capture performance
+			data.</li>
+			
+			<li><b>Very low overhead.</b>
+			Most profilers are very slow. In many cases <code>hprof</code>
+			will cause a program to run 20 times slower. JIP, on the other
+			hand, is lightweight. A VM with profiling turned on is about
+			twice as slow as one without a profiler. When the profiler
+			is turned off, there is almost no overhead associated with
+			using JIP.</li>
+			
+			<li><b>Performance Timings.</b>
+			JIP gathers performance data. You cannot use most profilers
+			to do timings of your application. <code>hprof</code>, for
+			example, will show you the relative amount of time that is 
+			spent in different parts of your code, but <code>hprof</code>
+			has so much overhead, that you cannot use it to get real
+			world timing measurements. JIP, on the other hand, actually
+			tracks the amount of time used to gather performance data
+			and factors that time out of its analysis. This allows you
+			to get close to real world timings for every class in your 
+			code. So there is no need to litter your code with 
+			<code>System.currentTimeMillis()</code>!</li>
+			
+			<li><b>Filters by package/class name.</b> One of the annoying
+			things about hprof is that there is no way to filter out classes
+			by class or package name. JIP allows you to do just that (for more
+			information, look at the profile.properties file). This in not to
+			say that the execution time is not included. It is included
+			but can only be seen in the execution time of the calling 
+			routine.</li>
+		</ol>
+		
+		<a name="use"/>
+		<h2>How to use JIP</h2>
+		<br>
+		Note: JIP requires a Java5&#153 VM.
+		</br>
+		<P>
+			To run the profiler, you need the following:
+			<ul>
+				<li><code>profile.jar</code></li>
+				<li>A <a href="profile-properties.html">profile properties</a> file (optional)</li>
+			</ul>
+		</P>
+		<p> These files are loaded by the application classloader and
+		    should not be in the extentions loader path. The jar files
+			need to be in the same directory. The properties file can
+			be anywhere.
+		</p>
+		<p>
+			To use the profiler, you need to use the following JVM arguments:
+			<pre><code>
+-javaagent:[DIR]\profile.jar -Dprofile.properties=[DIR2]\profile.properties
+			</code></pre>
+			where [DIR] is the directory that contains the profile.jar
+			<br>
+			<blockquote>
+			<I>Note: Due to a bug in the JDK on OS X,</I> [DIR]
+			<i>must be a fully qualifed path.</i>
+			</blockquote>	
+			and [DIR2] is the directory that contains the profile.properties
+		</p>
+		<p>
+			By default (if you don't give a <code>-Dprofile.properties</code>),
+			profiling starts out turned on and the remote 
+			interface (use to profile interactively) is turned off (see
+			the <code>profile.properies</code> for more information). In 
+			this case JIP works just like <code>hprof</code>, although it is
+			much faster.
+		</p>
+		<p>
+			When using with stock Tomcat, set the java agent by using the 
+			env. variable <code>JAVA_OPTS</code>. For example, on Windows&#153
+			use the following:
+<pre><code>SET JAVA_OPTS=-javaagent:[DIR]\profile.jar -Dprofile.properties=[DIR2]\profile.properties</code></pre>			
+			Where [DIR1] and [DIR2] are described as above.
+		</p>
+		<a name="interactive"/>
+		<h3>Interactive profiling</h3>		
+		<p>
+			In some cases, like webapps, you probably want to start out with
+			the profiler turned off. When you get to some case you want to 
+			test, you'd like to turn it on, run the test case, turn the
+			profiler off and dump the results. To do these things, you
+			first of all need to change the profile properties file:
+			<pre><code>
+profiler=off
+remote=on
+port=15599
+			</code></pre>
+			To interact with the profiler you need the <code>client.jar</code> which is
+			in the <code>/client</code> directory of the JIP distribution.
+			<ul>
+				<li>Specify the file to dump to profile data to:
+<pre><code>File.bat localhost 15599 c:\tmp\test-profile.txt</code></pre>
+				</li>
+				<li>To turn the profiler on:
+<pre><code>Start.bat localhost 15599</code></pre>
+				</li>
+				<li>Now you'd run your test case. When you're done,
+					you can dump the profile data with:
+<pre><code>Finish.bat localhost 15599</code></pre>
+				</li>
+                <li>To turn debug on use <pre><code>java -jar client.jar debugon localhost 15599</code></pre>
+                </li>
+                <li>To turn debug off use <pre><code>java -jar client.jar debugoff localhost 15599</code></pre>
+                </li>
+                <li>To print the current exclude list <pre><code>java -jar client.jar getexcludelist localhost 15599</code></pre>The output 
+                will be in stdout of the jvm being profiled.
+                </li>   
+                <li>To print the current include list <pre><code>java -jar client.jar getincludelist localhost 15599</code></pre>The output 
+                will be in stdout of the jvm being profiled.
+                </li>
+                <li>To turn replace the exclude list<pre><code>java -jar client.jar replaceexcludelist localhost 15599 [excludes]</code></pre>Where
+                [excludes] is a new comma seperated list of packages to exclude.
+                </li>
+                <li>To turn replace the include list<pre><code>java -jar client.jar replaceincludelist localhost 15599 [includes]</code></pre>Where
+                [includes] is a new comma seperated list of packages to include.
+                </li>
+                <li>To print the current list used by CustomMultiClassLoaderFilter <pre><code>java -jar client.jar getclassloadersbyname localhost 15599</code></pre>The output 
+                will be in stdout of the jvm being profiled.
+                </li>
+                <li>To replace the current list used by CustomMultiClassLoaderFilter<pre><code>java -jar client.jar replaceclassloadersbyname localhost 15599 [classloader list]</code></pre>Where
+                [classloader list] is a new comma seperated list of class loaders to monitor.
+                </li>
+			</ul>
+			In my personal experience with webapps, you should exercise a
+			test case at least six times before trying to measure performance.
+			Presumably this is because the Just In Time compiler will observe
+			how the code is used a number of times before compiling it into
+			native code.
+            <p>
+            When using the commands for replacing include/exclude lists and the classloader list, keep in mind the profiler works by adding aspects to the classes to be instrumented.
+            You must take action to cause the container or application to reload your classes to make the aspects be removed for a exclude list update or added for a include list update. 
+            The same rules apply for updates to the list used by CustomMultiClassLoaderFilter.  If you are using a container such as JBoss, Tomcat, WebLogic usually you just need to redeploy
+            your application, that will cause the container to reload your classes. 
+            <p>
+            Using debug mode can be really helpfull to find the classloader being used on your application.  The output will tell you the exact name of the classloader, which can then be added 
+            with the replaceclassloadersbyname client command.
+		</p>
+
+		<h3>Examples</h3>
+		There are some examples of how to use JIP: <code>example.bat</code>, 
+		<code>example-ant-1.5.sh</code> and <code>example.sh</code>. All use the
+		example of compiling JIP with ant. <code>example.bat</code> and 
+		<code>example-ant-1.5.sh</code> work only with ant 1.5 and <code>example.sh</code>
+		works only with ant 1.6 (this is because the way that ant gets invoked
+		changed between the two releases).
+		
+		<h3>FAQ</h3>
+		<ul>
+		<li><a href="#1">
+			Most profilers use native code. How does JIP work if it's written entirely in Java.
+		</a></li>
+		<li><a href="#23">
+			Where can I get more information about the mechanism that JIP uses?
+		</a></li>		
+		<li><a href="#2">
+			Wow, JIP is pretty fast. How can it be faster that other profilers?
+			</a></li>
+		<li><a href="#22">
+			Am I supposed to put <code>profile.jar</code> in my classpath, my extensions classpath,
+			my bootstrap classpath, or someother classpath?
+			</a></li>
+		<li><a href="#20">
+			JIP's output is missing all of the classes that are part of the JDK, what gives?
+		</a></li><br/>
+		<li><a href="#3">
+			How can I control which classes and packages JIP profiles?
+			</a></li>
+		<li><a href="#25">
+			How do I specify the output file name?
+			</a></li>
+		<li><a href="#4">
+			I've run JIP several times on my application and each time I get a different set
+			of timings. Shouldn't they always be the same?
+			</a></li>
+		<li><a href="#5">
+			When I exclude more classes/packages, JIP reports that the application is running
+			faster. Why is that?
+			</a></li>
+		<li><a href="#6">
+			How can I profile interactively (after all, it is called the Java <i>Interactive</i> 
+			Profiler)?
+			</a></li><br/>
+		<li><a href="#7">
+			I'm running JIP, but I don't get any output.
+			</a></li>
+		<li><a href="#8">
+			In the output I see something called an Interaction #. What is that?
+			</a></li>
+		<li><a href="#21">
+			I'm trying to profile the Extension class loader, but I'm getting a runtime exception.
+			</a></li>
+		<li><a href="#24">
+			The section of the output that lists the most expensive methods goes on and on. I really
+			only care about the <u>most</u> expensive methods. Is there a way to limit what's output
+			in this section?
+			</a></li>
+		<li><a href="#9">
+			The call trees in JIP's output can get pretty deep. Is there anyway I can 
+			control how deep they are?
+			</a></li><br/>
+		<li><a href="#10">
+			I don't care about the call graphs, I'm only interested in the summary information.
+			Is there a way to turn off the call graph output?
+			</a></li>
+		<li><a href="#11">
+			I'm running one profile after another an it's a real pain to have to
+			rename the output file each time so that the next time I run a test,
+			the old profile isn't overridden. Is there a way to get around this?
+			</a></li>
+		<li><a href="#12">
+			Is there a way to use JIP to do heap analysis?
+			</a></li>
+		<li><a href="#13">
+			I have a class that has two methods with the same name. Is there a way
+			that I can see in method signature in the output?
+			</a></li>
+		<li><a href="#14">
+			Is there an easy to use JIP's output to do my own analysis?
+			</a></li><br/>
+		<li><a href="#15">
+			Does JIP have a GUI front end?
+			</a></li>
+		<li><a href="#16">
+			Can I hook into JIP's instrumentation to collect my own runtime metrics?
+			</a></li>
+		<li><a href="#17">
+			I'm having issues related to concurrency in my application, can I use JIP to
+			give me a timeline of which methods are being called in different threads?
+			</a></li>
+		<li><a href="#18">
+			I think my long running application has a memory leak. Is JIP the right tool
+			to help with this?
+			</a></li>
+		<li><a href="#19">
+			I'm trying to profile an application interactively, but it's hard to start and 
+			stop the profiler at just the right time. Is there a way to explicitly tell JIP 
+			when to start and stop profiling?
+			</a></li>		
+		</ul>
+		
+		<p>
+		</p>
+		
+		<a name="1"/>
+		<h4>Most profilers use native code. How does JIP work if it's written entirely in Java.</h4>
+		<blockquote>
+			Most profilers have some native 
+			component. This is because most profilers use the 
+			<code>JVMPI</code> (Java Virtual Machine Profiling Interface) 
+			which requires the use of native components. JIP, however, 
+			is pure Java. It takes advantage of the Java5&#153; feature
+			which allows you to hook the classloader. JIP adds <a 
+			href="http://en.wikipedia.org/wiki/Aspect_oriented">
+			aspects</a> to every method of every class that you want
+			to profile. These aspects allow it to capture performance
+			data.
+		</blockquote>
+		
+		<a name="2"/>
+		<h4>Wow, JIP is pretty fast. How can it be faster that other profilers?</h4>
+		<blockquote>
+		JIP's speed is mainly due to the fact that it doesn't profile every class. JIP doesn't
+		profile classes that are in the bootstrap classpath (all of the core Java classes) or 
+		classes that are in the extension classpath (i.e., files in <code>-Djava.ext.dirs=</code>).
+		These are classes that you can't change, so it's not every useful to know what their
+		performace is like. It's usually enough to know that a method that is calling one
+		of these classes is slow. You can usually figure out how to optimize things from there.
+		<br/>
+		</blockquote>
+		
+		<a name="23"/>
+		<h4>Where can I get more information about the mechanism that JIP uses?</h4>
+		<blockquote>
+		This IBM DeveloperWorks <a href="http://www-128.ibm.com/developerworks/java/library/j-jip/">article</a>
+		gives an overview of the mechanisms that JIP uses.
+		</blockquote>
+		
+		<a name="22"/>
+		<h4>Am I supposed to put <code>profile.jar</code> in my classpath, my extensions classpath,
+			my bootstrap classpath, or someother classpath?</h4>		
+		<blockquote>
+		It is best not to put <code>profile.jar</code> in any of these places. The classes in this JAR are loaded
+		by the application classloader (the classloader that loads classes that are in the classpath), but
+		they don't needed to be in the classpath itself.
+		</blockquote>
+		
+		<a name="20"/>
+		<h4>JIP's output is missing all of the classes that are part of the JDK, what gives?</h4>
+		<blockquote>
+		JIP doesn't profile classes that are loaded by the bootstrap or extensions classloaders. This
+		is one of the reasons that it is so fast. On a technical level, the classes in JIP are loaded
+		by the javaagent which uses the application classloader. This means that while JIP is capable
+		of instrumenting classes loaded by all classloaders, the instrumentation itself is composed 
+		of calls to classes in the JIP package, which are loaded by the application classloader, which
+		aren't visible to classes loaded by the bootstrap and extensions classloaders. For more on this
+		look <a href="classloader.html">here</a>.
+		</blockquote>
+		
+		<a name="3"/>
+		<h4>How can I control which classes and packages JIP profiles?</h4>
+		<blockquote>
+		There are two mechanisms to control which classes and packages JIP profiles. The main one is
+		by using <code>ClassLoaderFilters</code>. A <code>ClassLoaderFilter</code> tells JIP to profile
+		classes based on which classloader was used to load them. Why is this necessary? To start with,
+		JIP cannot profile classes loaded by the Bootstrap or Extensions classloaders. Also, which 
+		classloader your application uses can vary by environment. For example,
+		standalone applications use the Application classloader. You can see which class this is by 
+		calling <code>ClassLoader.getSystemClassLoader()</code> (usually <code>sun.misc.Launcher$AppClasLoader
+		</code>). But if you're running in a container like Tomcat or JBoss, the application classloder
+		is used to load the container's classes. The container will use another classloader to load
+		application classes. Since you usually don't want to see all of what is going on inside Tomcat
+		or JBoss, you can use a <code>ClassLoaderFilter</code> to tell JIP to instrument just your classes.
+		<p/>
+		There are several prebuild <code>ClassLoaderFilters</code> that can be used:
+		<ul>
+			<li><code>com.mentorgen.tools.profile.instrument.clfilter.StandardClassLoaderFilter</code></li>
+			<li><code>com.mentorgen.tools.profile.instrument.clfilter.WebAppClassLoaderFilter</code></li>
+			<li><code>com.mentorgen.tools.profile.instrument.clfilter.AntTaskClassLoaderFilter</code></li>
+            <li><code>com.mentorgen.tools.profile.instrument.clfilter.CustomMultiClassLoaderFilter</code></li>
+			<li><code>net.sourceforge.jiprof.instrument.clfilter.JBossEJBClassLoaderFilter</code></li>
+			<li><code>net.sourceforge.jiprof.instrument.clfilter.JBossServletClassLoaderFilter</code></li>
+			<li><code>net.sourceforge.jiprof.instrument.clfilter.JBossUniversalClassLoaderFilter</code></li>
+		</ul>
+		You specify which class loader filter you want to use via the profile properties file:
+<pre><code>
+ClassLoaderFilter.1=com.mentorgen.tools.profile.instrument.clfilter.StandardClassLoaderFilter
+</code></pre>		
+		Writing your own is as simple as implementing the <code>com.mentorgen.tools.profile.instrument.clfilter.ClassLoaderFilter
+		</code> interface. To do that, you'll need to find out which classloader is loading your code, which can  
+		be easily accomplished by adding this somewhere in your code:
+<pre><code>
+System.out.println(Thread.currentThread().getContextClassLoader().getClass().getName());
+</code></pre>
+		If you create a <code>ClassLoaderFilter</code> if an enviroment that it's supported, please create a
+		<a href="http://sourceforge.net/tracker/?group_id=148701&atid=772418">feature request</a> 
+		for it and attach your BSD licensed code. It will be greatfully included in the next release!
+		<p/>
+		There is a simpler method for doing this that doesn't involve writting any code. The 
+		<code>GenericClassLoaderFilter</code> allows you to specify when Class Loaders to filter on
+		in the profile properties file. To do this, first change your class loader filter:
+<pre><code>
+ClassLoaderFilter.1=net.sourceforge.jiprof.instrument.clfilter.GenericClassLoaderFilter
+</code></pre>
+		(If you don't specify a class loader filter, JIP defaults to <code>GenericClassLoaderFilter</code>,
+		so you could just as easily remove that property from the file).
+		</br>
+		Once you know which
+		classloader(s) you want to use, put them in the profile properties file:
+<pre><code>
+accept-class-loaders=org.apache.catalina.loader.StandardClassLoader,org.apache.catalina.loader.WebappClassLoader
+</code></pre>
+		If the classloader(s) your interested in implements an interface, you can specify that instead (in other
+		words, the classes you specify don't need to be subclasses of <code>java.lang.ClassLoader</code>). In
+		the example above, both Tomcat classloaders implement a common interface, so you could do this:
+<pre><code>
+accept-class-loaders=org.apache.catalina.loader.Reloader
+</code></pre><p>
+        If you want simple string name comparison to determine which classloaders to instrument use <pre><code>com.mentorgen.tools.profile.instrument.clfilter.CustomMultiClassLoaderFilter</code></pre> 
+        You can add a comma sperated list of classloaders in the propery file, example:<pre><code> accept-class-loaders-byname=org.jboss.web.tomcat.service.WebAppClassLoader</code></pre>
+		<p/><a name="includeexclude"/>
+		There is an additional mechansim that provides a finer level of control over which classes are 
+		profiled and which aren't. 
+		This is done via include and exclude lists. A list is a comma sperated 
+		list of packages or fully qualified class names. For example:
+<pre><code>
+exlude=com.sun.tools.javac,org.apache.xerces.impl.XMLScanner
+</code></pre>
+		This will exclude from the profile all classes and packages in the <code>com.sun.tools.javac</code>
+		package. In addition, the class <code>org.apache.xerces.impl.XMLScanner</code> will be excluded
+		as well.
+		<br/>
+		Include lists work the same way, only they tell the profiler what classes can be included. 
+		Note that the lists are applied to the classes that the <code>ClassLoaderFilter</code>
+		accepts. So it further narrows what is profiled. Note also that if you use both an include and
+		an exclude list, the include list is applied first. Be very careful when using both include and
+		exclude. If a method that you want to see is called from a class that has been excluded, you
+		will not see the call at all! Include lists are very tricky in this regard because they
+		implicitly exclude classes and packages.
+		</blockquote>
+		
+		<a name="25"/>
+		<h4>How do I specify the output file name?</h4>
+		<blockquote>
+		Specify <code>file=[name]</code> in the profile properties file. The default is <code>profile.txt</code>
+		which will be output in the JVM's working directory. You can even specify what type of output you'd 
+		like using the <code>output</code> property. This defaults to <code>text</code> but you can
+		set if to <a href="#14"><code>xml</code></a> or <code>both</code>. If you specify both, JIP will
+		substitute &quot;xml&quot; as the extension for the file name of the xml file. In other words, if you say
+<code><pre>
+file=profile.txt
+output=both
+</pre></code>
+		you'll get two output files, <code>profile.txt</code> and <code>profile.xml</code>.
+		</blockquote>
+		
+		<a name="4"/>
+		<h4>I've run JIP several times on my application and each time I get a different set
+			of timings. Shouldn't they always be the same?</h4>
+		<blockquote>
+		In a multiuser environment, even the performance of staticly compiled languages can vary.
+		Java uses a runtime &quot;<a href="http://en.wikipedia.org/wiki/Just-in-time_compilation">Just 
+		In Time</a>&quot; compiler that observes how the code
+		is being executed in order to use an optimal compilation strategy. This can lead to a variance
+		in the time it takes a short running program to execute. Other factors such and disk and network
+		IO can also contribute to the amount of time it takes a program to execute. These kinds of factors
+		should be easy to spot in JIP's output.
+		</p>
+		You should be aware that there are two things that JIP doesn't measure:
+		<ol>
+			<li>The execution of static initializers. JIP uses an internal call stack to measure
+			the net execution time of methods. Static initializers aren't executed as part of a program's
+			flow of control, but rather are executed when the JVM loads the class, so JIP doesn't measure 
+			them.</li>
+			<li>JMV startup time and time the JVM spends loading classes.</li>
+		</ol>
+		</blockquote>
+		
+		<a name="5"/>
+		<h4>When I exclude more classes/packages, JIP reports that the application is running
+			faster. Why is that?
+		</h4>
+		<blockquote>
+		When you tell JIP to exclude a class or package, no instrumentation is done to those classes.
+		Less profiling means lower overhead which makes everything
+		run faster. While JIP does make an attempt to factor out its own overhead when taking measurements,
+		nothing is perfect.
+		</blockquote>
+		
+		<a name="6"/>
+		<h4>How can I profile interactively (after all, it is called the Java <i>Interactive</i> 
+			Profiler)?
+		</h4>
+		<blockquote>
+		Information on interactive profiling can be found <a href="#interactive">here</a>.
+		</blockquote>
+		
+		<a name="7"/>
+		<h4>I'm running JIP, but I don't get any output.
+		</h4>
+		<blockquote>
+		First, make sure that JIP is actually running. If it is, you should see this output when the
+		JVM starts:
+<pre><code>
+Java Interactive Profiler: starting
+</code></pre>
+		If you don't see this, make sure that the JVM is being <a href="#use">invoked correctly</a>.
+		<p/>
+		If you can see that in the output, make sure that you're using the right 
+		<a href="#3"><code>ClassLoaderFilter</code></a> and/or 
+		<code>accept-class-loaders</code>. Then look at what you're <a href="#includeexclude">including 
+		and excluding</a> and make sure it makes sense. If all of this looks good, add the following to
+		your profile properties file:
+<pre><code>
+debug=on
+</code></pre>
+		Then try to profile again. When the program starts up, you should see a bunch of messages in <code>stdout</code> 
+		that look like this:
+<pre><code>
+INST    org/apache/tools/ant/RuntimeConfigurable        [sun.misc.Launcher$AppClassLoader]
+INST    org/apache/tools/ant/Location   [sun.misc.Launcher$AppClassLoader]
+INST    org/apache/tools/ant/helper/ProjectHelper2$RootHandler  [sun.misc.Launcher$AppClassLoader]
+INST    org/apache/tools/ant/util/JAXPUtils     [sun.misc.Launcher$AppClassLoader]
+skip    org/apache/xerces/jaxp/SAXParserFactoryImpl     [sun.misc.Launcher$AppClassLoader]
+skip    org/apache/xerces/jaxp/SAXParserImpl    [sun.misc.Launcher$AppClassLoader]
+</code></pre>
+		<code>INST</code> indicates that the class in question has been instrumented. <code>skip</code>
+		means that it has not. If you don't see any of this, then you're not pointing to the <a href="#use">profile 
+		properties file</a> that you think you are. If you're using a relative path to this file, you might want to 
+		try making it absolute. If all you see are <code>skips</code>, then something is wrong with
+		the class loader filter you're using or the include/exclude lists.
+		<p/>
+		If you're still having problems and you're using Unix or OS X, make sure you have permissions to
+		the directory where the output file is configured to go.
+		<p/>
+		If you're still having problems, post a message on the 
+		<a href="http://sourceforge.net/forum/forum.php?forum_id=497146">help</a> forum. We're always 
+		happy to help out!
+		</blockquote>
+		
+		<a name="8"/>
+		<h4>In the output I see something called an Interaction #. What is that?</h4>
+		<blockquote>
+		The way that JIP profiles is by tracking call stacks. Each call stack is associated with a thread. 
+		There are circumstances under which you end up with more than one call stack associated with a 
+		given thread. This often happens in web apps where worker threads are pooled and reused 
+		across mutliple client requests. JIP calls these interactions. You also might start a profile
+		in the middle of a thread executing. Once the flow of control makes it back to the place
+		where it started, profiling must stop. Every time this happens, it's called an interaction.
+		</blockquote>
+		
+		<a name="21"/>
+		<h4>I'm trying to profile the Extension class loader, but I'm getting a runtime exception.</h4>
+		<blockquote>
+		You cannot profile classes that are loaded by the Extension classloader. When JIP instruments
+		a class, it inserts a call to the runtime profiler. The runtime profiler class itself is loaded
+		by the javaagent interface using the Application classloader. Extensions loaded classes cannot 
+		&quot;see&quot; classes loaded by the Application classloader. If you're trying to profile a 
+		standalone app and want to profile a class that's being loaded by the extensions classloader
+		(i.e., <code>-Djava.ext.dirs=[some-dir-with-my-jar]</code>), move the jar file
+		to the classpath.
+		</blockquote>
+		
+		<a name="24"/>
+		<h4>The section of the output that lists the most expensive methods goes on and on. I really
+			only care about the <u>most</u> expensive methods. Is there a way to limit what's output
+			in this section?</h4>
+		<blockquote>
+		You can do this with profile properties. Setting <code>max-method-count</code> to any 
+		positive integer will expressly limit the number of entries in this section of the output.
+		-1 is the default, which means no limit. Setting this to <code>compact</code> will only
+		display methods with a gross execution time of 10 (milliseconds) or more. You can control
+		this with the <code>method.compact.threshold.ms</code> property.
+		</blockquote>		
+		
+		<a name="9"/>
+		<h4>The call trees in JIP's output can get pretty deep. Is there anyway I can 
+			control how deep they are?</h4>
+		<blockquote>
+		There are a number of ways to do this, all of which use profile properties. The first is
+		<code>thread-depth</code> which defaults to -1, which means no limit. Setting this to a
+		positive integer will limit how deep the call tree is. If you set this property to <code>
+		compact</code>, JIP will use a node's gross time to determine if it should be displayed.
+		This value default is 10 (milliseconds) but can be changed using <code>thread.compact.threshold.ms.
+		</code>
+		</blockquote>
+		
+		<a name="10"/>
+		<h4>I don't care about the call graphs, I'm only interested in the summary information.
+			Is there a way to turn off the call graph output?</h4>
+		<blockquote>
+		Yup:
+<pre><code>
+output-summary-only=yes
+</code></pre>
+		</blockquote>
+		
+		<a name="11"/>
+		<h4>I'm running one profile after another an it's a real pain to have to
+			rename the output file each time so that the next time I run a test,
+			the old profile isn't overridden. Is there a way to get around this?</h4>
+		<blockquote>
+		If you tell JIP to output to a directory (i.e., <code>file=my-output-dir</code>),
+		JIP will output uniquely named files to that directory every time you run a profile.
+		</blockquote>
+		
+		<a name="12"/>
+		<h4>Is there a way to use JIP to do heap analysis?</h4>
+		<blockquote>
+		Nope. You can see how many objects of each class were created using <code>track.object.alloc=on</code>
+		but that's no substitute for a good heap analysis tool.
+		</blockquote>
+		
+		<a name="13"/>
+		<h4>I have a class that has two methods with the same name. Is there a way
+			that I can see in method signature in the output?</h4>
+		<blockquote>
+		Sure:
+<pre><code>
+output-method-signatures=yes
+</code></pre>
+		</blockquote>
+		
+		<a name="14"/>
+		<h4>Is there an easy to use JIP's output to do my own analysis?</h4>
+		<blockquote>
+		JIP has an output option for outputting an XML document (<code>output=xml</code>).
+		This contains all of the information that you get in a text output, but in a terse, but
+		easy to parse XML format. This makes JIP a great tool to use if you have need to do
+		custom analysis. In fact, someone created a GUI front-end for JIP that uses the XML
+		output. It's <a href="#15">pretty cool</a>.
+		</blockquote>
+		
+		<a name="15"/>
+		<h4>Does JIP have a GUI front end?</h4>
+		<blockquote>
+		Yes! It's called <code>jipViewer</code> and can be found in the <code>profile</code> directory.
+		It requires that when you profile your app, you generate an XML file output (<code>output=xml</code>
+		or <code>output=both</code>). 
+		<img src="images/jipViewer-b1.png"/>
+		</blockquote>
+		
+		<a name="16"/>
+		<h4>Can I hook into JIP's instrumentation to collect my own runtime metrics?</h4>
+		<blockquote>
+		Yes! JIP allows you to plug in your own runtime profiler. Here's how to do it:
+		<ol>
+			<li>Create a class with the following methods (no need to implement an interface,
+			nothing to inherit from -- total fredom!):
+<pre><code>
+public static void initProfiler()
+public static void start(String className, String methodName)
+public static void end(String className, String methodName)
+public static void alloc(String className)
+public static void beginWait(String className, String methodName)
+public static void endWait(String className, String methodName)
+public static void unwind(String className, String methodName, String exception)
+</code></pre>
+			(<code>beginWait</code> and <code>endWait</code> are called when an object is
+			waiting on a semaphore.) You might want to also add a 
+			<a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Runtime.html#addShutdownHook(java.lang.Thread)">shutdownHook</a>
+			so that your class will get notified when the JVM shutsdown.
+			</li>
+			<li>In your profile properties file, change <code>profiler-class</code>
+			to point to your class.</li>
+		</ol>
+			JIP comes with 2 profilers. <code>com.mentorgen.tools.profile.runtime.Profile</code>
+			is the one that's normally used. <code>net.sourceforge.jiprof.timeline.TimeLineProfiler</code>
+			isn't really a profiler at all -- it's a tool to aid in the understanding of concurrency issues.
+		</blockquote>
+		
+		<a name="17"/>
+		<h4>I'm having issues related to concurrency in my application, can I use JIP to
+			give me a timeline of which methods are being called in different threads?</h4>
+		<blockquote>
+		Yes! Change you profile properties to have the following:
+<pre><code>
+profiler-class=net.sourceforge.jiprof.timeline.TimeLineProfiler
+</code></pre>
+		The output looks like this:
+<pre><code>
+	...
+	
+	START	[9]	ProjectComponent:getProject()Lorg/apache/tools/ant/Project;	(org.apache.tools.ant)
+	END	[9]	ProjectComponent:getProject()Lorg/apache/tools/ant/Project;	(org.apache.tools.ant)
+	START	[9]	Project:log(Lorg/apache/tools/ant/Task;Ljava/lang/String;I)V	(org.apache.tools.ant)
+Time: 3260 ms.
+	START	[9]	Project:fireMessageLogged(Lorg/apache/tools/ant/Task;Ljava/lang/String;I)V	(org.apache.tools.ant)
+	ALLOC	[9]	BuildEvent	(org.apache.tools.ant)
+	START	[9]	BuildEvent:<init>(Lorg/apache/tools/ant/Task;)V	(org.apache.tools.ant)
+	START	[9]	ProjectComponent:getProject()Lorg/apache/tools/ant/Project;	(org.apache.tools.ant)
+	END	[9]	ProjectComponent:getProject()Lorg/apache/tools/ant/Project;	(org.apache.tools.ant)
+	START	[9]	Task:getOwningTarget()Lorg/apache/tools/ant/Target;	(org.apache.tools.ant)
+	END	[9]	Task:getOwningTarget()Lorg/apache/tools/ant/Target;	(org.apache.tools.ant)
+	END	[9]	BuildEvent:<init>(Lorg/apache/tools/ant/Task;)V	(org.apache.tools.ant)
+	
+	...
+</code></pre>
+			Ledgend:		
+				<br/><b>Time</b> - This is the time, relative to the start of profiling, when the events listed were captured.
+				<br/><b>START</b> - The given method was entered.
+				<br/><b>END</b> - The given method was exited.
+				<br/><b>W:START</b> - The given method started to wait on a mutex.
+				<br/><b>W:END</b> - The given method ended its wait on a mutex.				
+				<br/><b>ALLOC</b> - An instance of the given class was created.
+				<br/><b>THROWS</b> - An exception was thrown.
+				<br/><b>[<i>x</i>]</b> - This is the id of the thread associated with the event.
+				<p/>
+				Notes on usage:<p/>
+				- <b><code>output-method-signatures</code></b> can be used to display the full method signature.
+				<br/>- <b><code>clock-resolution</b></code> can be used to toggle the unit of time used to generate
+				the timeline. You can use either <code><b>ms</b></code> for milliseconds or <code><b>ns</b></code>  for
+				nanoseconds. (Note that this property is <b>not</b> used by the standard profiler).
+				<br/>- As with the standard JIP profiler, tracking object allocations can be turned on or off by using
+				<code><b>track.object.alloc=on|off</b></code>. 
+				<br/>- Currently, the Timeline profiler only supports one output format, so the <code><b>output</b></code>
+				property is ignored.
+				<br/>- You cannot use both the standard profiler and the timeline profiler at the same time.
+				<br/>- Output from the Timeline profiler can be very, very large.
+				<br/>- Currently, the interactive profiling is not supported.
+				<br/>- The ordering of method calls is correct within the context of a thread. Ordering is not guaranteed
+				between threads.
+		</blockquote>
+		
+		<a name="18"/>
+		<h4>I think my long running application has a memory leak. Is JIP the right tool
+			to help with this?</h4>
+		<blockquote>
+		Nope. JIP has no way to monitor what's happing in the heap.
+		</blockquote>
+		
+		<a name="19"/>
+		<h4>I'm trying to profile an application interactively, but it's hard to start and 
+			stop the profiler at just the right time. Is there a way to explicitly tell JIP 
+			when to start and stop profiling?</h4>
+		<blockquote>
+		If you're using the standard profiler, you can manipulate it programatically at runtime with the
+		following static calls:
+<pre><code>
+Profile.clear(); // initialises the profiler
+Profile.start(); // starts the profiler
+Profile.stop();  // stops the profiler
+Profile.setFileName(String fileName); // changes the output file name
+Profile.shutdown(); // shuts the profiler down.
+</code></pre>
+
+		<code>Profile.shutdown()</code> causes JIP to generate output. It's recommended that you call
+		this right after calling <code>Profile.stop();</code>. You could also add a 
+		<a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Runtime.html#addShutdownHook(java.lang.Thread)">shutdownHook</a>
+		that calls <code>Profile.shutdown()</code>. Note also that when doing explicit profiling, you should
+		probably start the VM with <code>profiler=off</code> in your profile properties.
+		</blockquote>
+		<br/>
+		<br/>
+		<br/>
+		Copyright 2007, Andrew Wilcox.
+<br /> 
+<a rel="license" href="http://creativecommons.org/licenses/by-nc/3.0/">
+<img alt="Creative Commons License" style="border-width:0" src="http://creativecommons.org/images/public/somerights20.png" />
+</a>
+
+	</body>
+</html>
