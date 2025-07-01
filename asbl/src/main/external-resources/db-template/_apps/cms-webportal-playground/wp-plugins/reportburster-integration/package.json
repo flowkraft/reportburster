@@ -1,0 +1,36 @@
+{
+  "name": "@wpbones/wpkirk",
+  "version": "1.8.0",
+  "scripts": {
+    "start:gulp": "gulp watch",
+    "build:gulp": "gulp build",
+    "build:apps": "wp-scripts build resources/assets/apps/app --output-path=public/apps/",
+    "start:apps": "wp-scripts start resources/assets/apps/app --output-path=public/apps/",
+    "build": "run-s build:gulp build:apps",
+    "start": "run-s start:gulp start:apps",
+    "make-pot": "wp i18n make-pot . languages/wp-kirk.pot --slug=wp-kirk --domain=wp-kirk --exclude=node_modules,resources/assets",
+    "make-json": "wp i18n make-json languages/ --no-purge",
+    "packages-update": "wp-scripts packages-update",
+    "check-engines": "wp-scripts check-engines",
+    "check-licenses": "wp-scripts check-licenses",
+    "format": "wp-scripts format"
+  },
+  "license": "GPL-3.0",
+  "author": "Giovambattista Fazioli <wpbones.info@gmail.com>",
+  "devDependencies": {
+    "@babel/core": "^7.24.3",
+    "@babel/preset-env": "^7.24.3",
+    "@babel/preset-react": "^7.24.1",
+    "@wordpress/scripts": "^27.7.0",
+    "gulp": "^4.0.2",
+    "gulp-babel": "^8.0.0",
+    "gulp-clean-css": "^4.3.0",
+    "gulp-less": "^5.0.0",
+    "gulp-sass": "^5.1.0",
+    "gulp-typescript": "^2.12.2",
+    "gulp-uglify": "^3.0.2",
+    "gulp-watch": "^5.0.1",
+    "sass": "^1.72.0",
+    "npm-run-all": "^4.1.5"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "flowkraft/reportburster-integration",
+  "type": "wordpress-plugin",
+  "description": "ReportBurster Integration WordPress plugin",
+  "version": "1.0.0",
+  "keywords": [
+    "wordpress"
+  ],
+  "homepage": "https://reportburster.com/",
+  "license": "GPL-3.0",
+  "authors": [
+    {
+      "name": "FlowKraft",
+      "email": "support@reportburster.com",
+      "homepage": "https://reportburster.com/"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/flowkraft/reportburster/issues",
+    "source": "https://github.com/flowkraft/reportburster"
+  },
+  "require": {
+    "php": ">=7.4",
+    "wpbones/wpbones": "dev-master",
+    "wpbones/wpkirk-helpers": "~2.0",
+    "mkocansey/bladewind": "3.0.8"
+  },
+  "autoload": {
+    "psr-4": {
+      "ReportBurster_Integration\\": "plugin/"
+    },
+    "files": [
+      "functions.php"
+    ]
+  },
+  "scripts": {
+    "post-autoload-dump": [
+      "php -r \"copy('vendor/wpbones/wpbones/src/Console/bin/bones', 'bones');\"",
+      "php bones rename --update"
+    ]
+  }
+}
