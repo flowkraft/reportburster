@@ -1,4 +1,0 @@
-{
-  "spec_dir": "e2e",
-  "spec_files": ["**/*now-db*.[tT]ests.ts"]
-}

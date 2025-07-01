@@ -1,8 +1,0 @@
-{
-  "name": "first job",
-  "spec": "first-spec",
-  "inputs": {
-    "favorite-name": "adam",
-    "football-team": "liverpool"
-  }
-}

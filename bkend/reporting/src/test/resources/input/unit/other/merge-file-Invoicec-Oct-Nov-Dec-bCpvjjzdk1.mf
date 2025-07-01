@@ -1,3 +1,0 @@
-src/main/external-resources/template/samples/burst/Invoices-Oct.pdf
-src/main/external-resources/template/samples/burst/Invoices-Nov.pdf
-src/main/external-resources/template/samples/burst/Invoices-Dec.pdf

@@ -1,4 +1,0 @@
-{
-  "spec_dir": "e2e",
-  "spec_files": ["**/*cuna*[tT]ests.ts"]
-}
