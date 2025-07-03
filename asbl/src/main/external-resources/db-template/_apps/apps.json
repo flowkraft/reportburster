@@ -3,29 +3,109 @@
     {
       "id": "cms-webportal",
       "name": "CMS & WebPortal (Production)",
-      "type": "nextjs",
-      "version": "1.0.0",
-      "description": "Production-ready customer portal with admin features, built with Next.js, Prisma, and Next-Admin.",
+      "category": "Web Portals",
+      "type": "docker",
+      "description": "Production-ready customer portal with admin features.",
       "entrypoint": "./cms-webportal/docker-compose.yml",
-      "tech_stack": ["nextjs", "typescript", "prisma", "next-admin", "docker"],
-      "dev_mode": false
+      "service_name": "cms-webportal",
+      "enabled": true
     },
     {
-      "id": "cms-webportal-playground",
-      "name": "CMS WebPortal Playground (Dev)",
-      "type": "nextjs",
-      "version": "0.1.0",
-      "description": "Development environment based on the shadcn/taxonomy boilerplate for building the CMS & WebPortal.",
-      "entrypoint": "./cms-webportal-playground/docker-compose.yml",
-      "tech_stack": [
-        "nextjs",
-        "typescript",
-        "prisma",
-        "shadcn/ui",
-        "tailwind",
-        "docker"
-      ],
-      "dev_mode": true
+      "id": "cloudbeaver",
+      "name": "CloudBeaver",
+      "category": "Database Management",
+      "type": "docker",
+      "description": "Web-based database manager.",
+      "entrypoint": "./db-utils/docker-compose.yml",
+      "service_name": "cloudbeaver",
+      "enabled": true
+    },
+    {
+      "id": "vanna-ai",
+      "name": "Vanna.ai",
+      "category": "Database Management",
+      "type": "docker",
+      "description": "AI-powered text-to-SQL agent.",
+      "entrypoint": "./db-utils/docker-compose.yml",
+      "service_name": "vanna",
+      "enabled": true
+    },
+    {
+      "id": "redash",
+      "name": "Redash",
+      "category": "BI & Visualization",
+      "type": "docker",
+      "description": "Query builder and dashboard tool.",
+      "entrypoint": "./bi-tools/docker-compose.yml",
+      "service_name": "redash",
+      "enabled": true
+    },
+    {
+      "id": "superset",
+      "name": "Apache Superset",
+      "category": "BI & Visualization",
+      "type": "docker",
+      "description": "Enterprise-ready data visualization platform.",
+      "entrypoint": "./bi-tools/docker-compose.yml",
+      "service_name": "superset",
+      "enabled": false
+    },
+    {
+      "id": "script-server",
+      "name": "Script-Server",
+      "category": "Automation & Job Scheduling",
+      "type": "docker",
+      "description": "Web UI for executing scripts.",
+      "entrypoint": "./automation/docker-compose.yml",
+      "service_name": "script-server",
+      "enabled": true
+    },
+    {
+      "id": "rundeck",
+      "name": "Rundeck",
+      "category": "Automation & Job Scheduling",
+      "type": "docker",
+      "description": "Runbook automation and job scheduling.",
+      "entrypoint": "./automation/docker-compose.yml",
+      "service_name": "rundeck",
+      "enabled": false
+    },
+    {
+      "id": "cronicle",
+      "name": "Cronicle",
+      "category": "Automation & Job Scheduling",
+      "type": "docker",
+      "description": "Distributed task scheduler.",
+      "entrypoint": "./automation/docker-compose.yml",
+      "service_name": "cronicle",
+      "enabled": false
+    },
+    {
+      "id": "vscode",
+      "name": "VSCode (Local)",
+      "category": "Developer Tools",
+      "type": "local",
+      "description": "Launch local installation of Visual Studio Code.",
+      "command": "code .",
+      "enabled": true
+    },
+    {
+      "id": "notepad++",
+      "name": "Notepad++ (Local)",
+      "category": "Developer Tools",
+      "type": "local",
+      "description": "Launch local installation of Notepad++.",
+      "command": "start notepad++",
+      "enabled": false
+    },
+    {
+      "id": "copilot",
+      "name": "GitHub Copilot",
+      "category": "Developer Tools",
+      "type": "url",
+      "description": "Your AI pair programmer. Opens a web link.",
+      "url": "https://github.com/features/copilot",
+      "enabled": true
     }
   ]
 }

@@ -214,7 +214,11 @@ export class ConfigurationTestHelper {
   static changeSaveLoadAssertSavedConfiguration(
     ft: FluentTester,
   ): FluentTester {
+    
     const escapedWhich = PATHS.SETTINGS_CONFIG_FILE; //;.replace('.', '\\.');
+    
+    const wysiwygTestContent = `WYSIWYG content ${Date.now()}`;
+    const codeJarTestContent = `<!-- CodeJar content ${Date.now()} --><h1>Final Content</h1>`;
 
     return (
       ft
@@ -250,6 +254,9 @@ export class ConfigurationTestHelper {
         .setValue('#emailCcAddress', '01')
         .setValue('#emailBccAddress', '02')
         .setValue('#emailSubject', '03')
+        .elementShouldBeVisible('#wysiwygEmailMessage')
+        .elementShouldNotBeVisible('#codeJarHtmlEmailEditorDiv')
+        .setQuillContent('#wysiwygEmailMessage', wysiwygTestContent)
         .click('#attachmentsTab-link') // .setValue('#wysiwygEmailMessage', '04') email attachments settings
         .click('#btnArchiveAttachmentsTogether')
         .setValue('#archiveFileName', '01')
@@ -311,7 +318,7 @@ export class ConfigurationTestHelper {
         .setValue('#burstTokenDelimitersStart', '02')
         .setValue('#burstTokenDelimitersEnd', '03')
         .click('#btnReuseToken')
-        // .click('#btnHTMLEmailEditCode')
+        .click('#btnHTMLEmailEditCode')
         .click('#btnSplit2ndTime')
         .setValue('#burstTokenDelimitersStart2nd', '04')
         .setValue('#burstTokenDelimitersEnd2nd', '05')
@@ -352,6 +359,46 @@ export class ConfigurationTestHelper {
         .setValue('#proxyPort', '12')
         .setValue('#proxyPassword', '13')
         .setValue('#proxySocks5BridgePort', '14')
+        .click('#leftMenuEmailSettings')
+        .click('#emailMessageTab-link')
+        .waitOnElementToBecomeVisible('#codeJarHtmlEmailEditorDiv')
+        .elementShouldNotBeVisible('#wysiwygEmailMessage')
+        // At this point, the code editor should contain the HTML from the WYSIWYG editor
+        .codeJarShouldContainText('#codeJarHtmlEmailEditor', wysiwygTestContent)
+        // Now, set the final content using the code editor
+        .setCodeJarContent('#codeJarHtmlEmailEditor', codeJarTestContent)
+        
+        // Test Splitter and Preview functionality
+        .click('#btnToggleEmailPreviewShow')
+        .waitOnElementToBecomeVisible('as-split')
+        .waitOnElementToBecomeVisible('#emailPreviewPane')
+        // Assert initial 50/50 split
+        .splitAreaShouldHaveSize('as-split-area:nth-child(1)', '50')
+        .splitAreaShouldHaveSize('as-split-area:nth-child(3)', '50')
+        .waitOnElementToBecomeVisible('as-split > .as-split-gutter') // Check that gutter is visible
+        .click('#btnToggleEmailPreviewHide')
+        .waitOnElementToBecomeInvisible('as-split')
+
+        // Test Examples Gallery with assertions for specific email templates
+        .click('button:has-text("Hey, You Smart AI") + .dropdown-toggle')
+        .click('a:text("Examples Gallery")')
+        .waitOnElementToBecomeVisible('#templateGalleryModal')
+        // Assert that only the 2 email templates are visible
+        .elementShouldBeVisible('#template-gallery-item-0')
+        .elementShouldBeVisible('#template-gallery-item-1')
+        .elementShouldNotBeVisible('#template-gallery-item-2')
+        // Assert that invoice/report templates are NOT visible
+        .elementShouldNotBeVisible('div.template-card:has-text("Simple table layout payslip template")')
+        .elementShouldNotBeVisible('div.template-card:has-text("3x clean, modern, responsive html invoice templates")')
+        // Select the first email template
+        .click('#template-gallery-item-0')
+        .elementShouldHaveClass('#template-gallery-item-0', 'selected')
+        .click('#btnUseSelectedTemplate')
+        .waitOnElementToBecomeInvisible('#templateGalleryModal')
+        // Verify the content was replaced by the gallery template
+        .codeJarShouldNotContainText('#codeJarHtmlEmailEditor', codeJarTestContent)
+        .codeJarShouldContainText('#codeJarHtmlEmailEditor', 'background-color:#f6f6f6;') // Unique string from the first email template
+        
         // values are supposed to be saved at this moment ==> go away and click burst top menu
         .click('#topMenuBurst')
         // STEP1 - load and assert the saved values
@@ -400,7 +447,11 @@ export class ConfigurationTestHelper {
         .inputShouldHaveValue('#emailCcAddress', '01')
         .inputShouldHaveValue('#emailBccAddress', '02')
         .inputShouldHaveValue('#emailSubject', '03')
-        .elementShouldHaveText('#wysiwygEmailMessage', '')
+        .elementShouldNotBeVisible('#wysiwygEmailMessage')
+        .waitOnElementToBecomeVisible('#codeJarHtmlEmailEditorDiv')
+        .codeJarShouldContainText('#codeJarHtmlEmailEditor', 'background-color:#f6f6f6;')
+        .codeJarShouldNotContainText('#codeJarHtmlEmailEditor', codeJarTestContent)
+        .codeJarShouldNotContainText('#codeJarHtmlEmailEditor', wysiwygTestContent)
         // email attachments settings
         .click('#attachmentsTab-link')
         .elementShouldHaveText(
