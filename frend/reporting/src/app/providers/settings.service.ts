@@ -115,6 +115,9 @@ export interface CfgTmplFileInfo {
   providedIn: 'root',
 })
 export class SettingsService {
+  getAppById(arg0: string): import("../components/apps-manager/apps-manager.component").ManagedApp {
+    throw new Error('Method not implemented.');
+  }
   xmlInternalSettings = {
     documentburster: {
       settings: {

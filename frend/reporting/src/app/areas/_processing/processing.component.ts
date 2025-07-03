@@ -50,6 +50,7 @@ import {
   ReportingService,
   SqlQueryResult,
 } from '../../providers/reporting.service';
+import { ManagedApp } from '../../components/apps-manager/apps-manager.component';
 
 @Component({
   selector: 'dburst-processing',
@@ -210,6 +211,8 @@ export class ProcessingComponent implements OnInit {
     { id: 'bills.xml', name: 'Bills' },
   ];
 
+  cmsPortalApp: ManagedApp[] = [];
+
   constructor(
     protected processingService: ProcessingService,
     protected apiService: ApiService,
@@ -257,6 +260,8 @@ export class ProcessingComponent implements OnInit {
 
     await this.samplesService.fillSamplesNotes();
 
+    this.cmsPortalApp = [this.settingsService.getAppById('cms-webportal')];
+    
     this.route.params.subscribe(async (params) => {
       let processingMode = 'processing';
       this.processingService.procReportingMailMergeInfo.isSample = false;

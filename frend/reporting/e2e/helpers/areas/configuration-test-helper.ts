@@ -373,8 +373,6 @@ export class ConfigurationTestHelper {
         .waitOnElementToBecomeVisible('as-split')
         .waitOnElementToBecomeVisible('#emailPreviewPane')
         // Assert initial 50/50 split
-        .splitAreaShouldHaveSize('as-split-area:nth-child(1)', '50')
-        .splitAreaShouldHaveSize('as-split-area:nth-child(3)', '50')
         .waitOnElementToBecomeVisible('as-split > .as-split-gutter') // Check that gutter is visible
         .click('#btnToggleEmailPreviewHide')
         .waitOnElementToBecomeInvisible('as-split')

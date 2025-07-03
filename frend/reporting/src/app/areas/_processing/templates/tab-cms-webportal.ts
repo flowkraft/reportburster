@@ -20,35 +20,11 @@ export const tabCmsWebPortalTemplate = `<ng-template
       
       <div class="row" style="margin-top: 10px">
         <div class="col-xs-12">
-          <div class="btn-group">
-            <!-- Main Button (Launch Portal) -->
-            <button type="button" 
-                    [ngClass]="{'btn-primary': storeService.configSys.sysInfo.setup.portal.isPortalRunning, 'btn-default': !storeService.configSys.sysInfo.setup.portal.isPortalRunning}"
-                    class="btn" 
-                    (click)="launchPortal($event)">
-              <i class="fa fa-external-link"></i>&nbsp;Launch Portal
-            </button>
-            
-            <!-- Dropdown Toggle Button -->
-            <button type="button" 
-                    class="btn btn-default dropdown-toggle" 
-                    data-toggle="dropdown" 
-                    aria-haspopup="true" 
-                    aria-expanded="false">
-              <span class="caret"></span>
-              <span class="sr-only">Toggle Dropdown</span>
-            </button>
-            
-            <!-- Dropdown Menu -->
-            <ul class="dropdown-menu dropdown-menu-right">
-              <li>
-                <a href="#" (click)="togglePortal($event)">
-                  <i class="fa" [ngClass]="{'fa-play': !storeService.configSys.sysInfo.setup.portal.isPortalRunning, 'fa-stop': storeService.configSys.sysInfo.setup.portal.isPortalRunning}"></i>&nbsp;
-                  {{storeService.configSys.sysInfo.setup.portal.isPortalRunning ? 'Stop Portal' : 'Start Portal'}}
-                </a>
-              </li>
-            </ul>
-          </div>
+          <dburst-app-manager
+            [displayMode]="'expandedList'"
+            [apps]="cmsPortalApp"
+          >
+          </dburst-app-manager>
         </div>
       </div>
     

@@ -33,6 +33,16 @@ import {
   AiCopilotLaunchConfig,
 } from '../ai-copilot/ai-copilot.component';
 
+interface ManagedApp {
+  id: string;
+  name: string;
+  description: string;
+  type: 'local' | 'docker' | 'url';
+  url?: string;
+  index?: number;
+  value?: string;
+}
+
 @Component({
   selector: 'dburst-connection-details',
   templateUrl: './connection-details.component.html',
@@ -47,6 +57,17 @@ export class ConnectionDetailsComponent implements OnInit {
   isDomainGroupedSchemaTabActive = false;
   isErDiagramTabActive = false;
   isUbiquitousLanguageTabActive = false;
+  isToolsTabActive = false;
+
+  managedApps: ManagedApp[] = [];
+  availableAppsToAdd: ManagedApp[] = [];
+
+  private readonly defaultAppsDetails: ManagedApp[] = [
+    { id: 'vscode', name: 'VSCode (Local)', description: 'Launch local installation of Visual Studio Code.', type: 'local' },
+    { id: 'vanna-ai', name: 'Vanna.ai', description: 'AI-powered text-to-SQL agent.', type: 'docker' },
+    { id: 'cloudbeaver', name: 'CloudBeaver', description: 'Web-based database manager.', type: 'docker' },
+    { id: 'copilot', name: 'GitHub Copilot', description: 'Your AI pair programmer. Opens a web link.', type: 'url', url: 'https://github.com/features/copilot' }
+  ];
 
   constructor(
     protected confirmService: ConfirmService,
@@ -1929,5 +1950,34 @@ export class ConnectionDetailsComponent implements OnInit {
     example +=
       '*   **SLA (Service Level Agreement)**: A commitment between a service provider and a client detailing aspects like quality, availability, responsibilities.\n';
     return example;
+  }
+
+    private updateAvailableAppsToAdd(): void {
+    this.availableAppsToAdd = this.defaultAppsDetails.filter(
+      defaultApp => !this.managedApps.some(managedApp => managedApp.id === defaultApp.id)
+    );
+  }
+
+  public addManagedApp(appToAdd: ManagedApp): void {
+    this.managedApps.push(appToAdd);
+    this.updateAppIndexes();
+  }
+
+  // Modify existing methods to call the update function
+  private initializeAppsConfiguration(): void {
+    // ... existing logic ...
+    this.updateAvailableAppsToAdd();
+  }
+
+  public removeManagedApp(appToRemove: any): void {
+    this.managedApps = this.managedApps.filter(app => app.id !== appToRemove.id);
+    this.updateAppIndexes();
+  }
+
+  private updateAppIndexes(): void {
+    this.managedApps.forEach((app, index) => {
+      app.index = index;
+    });
+    this.updateAvailableAppsToAdd(); // Update the addable list whenever the main list changes
   }
 }

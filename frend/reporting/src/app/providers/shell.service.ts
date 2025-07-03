@@ -14,6 +14,12 @@ interface ProcessOutputResult {
   providedIn: 'root',
 })
 export class ShellService {
+  openExternal(url: string) {
+    throw new Error('Method not implemented.');
+  }
+  runCommand(command: string[], arg1: (result: any) => void) {
+    throw new Error('Method not implemented.');
+  }
   //logFilePath: string;
 
   constructor(
