@@ -38,6 +38,7 @@ import { AppRoutingModule } from '../app-routing.module';
 import { RouterModule } from '@angular/router';
 import { ButtonVariablesComponent } from '../components/button-variables/button-variables.component';
 import { TabulatorColumnsPipe } from './tabulator-columns.pipe';
+import { ActionCenterComponent } from '../components/action-center/action-center.component';
 
 @NgModule({
   imports: [
@@ -58,6 +59,7 @@ import { TabulatorColumnsPipe } from './tabulator-columns.pipe';
     AskForFeatureDialogComponent,
     ReportParametersFormComponent,
     ButtonVariablesComponent,
+    ActionCenterComponent,
     ButtonWellKnownEmailProvidersComponent,
     ButtonHtmlPreviewComponent,
     SafePipe,
@@ -81,6 +83,7 @@ import { TabulatorColumnsPipe } from './tabulator-columns.pipe';
     ReportParametersFormComponent,
     ButtonVariablesComponent,
     ButtonWellKnownEmailProvidersComponent,
+    ActionCenterComponent,
     ButtonHtmlPreviewComponent,
     SafePipe,
     TabulatorColumnsPipe,

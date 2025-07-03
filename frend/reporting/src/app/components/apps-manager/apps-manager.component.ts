@@ -17,7 +17,7 @@ export interface ManagedApp {
 }
 
 @Component({
-  selector: 'dburst-app-manager',
+  selector: 'dburst-apps-manager',
   templateUrl: './apps-manager.component.html',
 })
 export class AppsManager implements OnInit {

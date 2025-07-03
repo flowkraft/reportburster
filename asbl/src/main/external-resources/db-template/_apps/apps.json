@@ -6,10 +6,25 @@
       "category": "Web Portals",
       "type": "docker",
       "description": "Production-ready customer portal with admin features.",
-      "entrypoint": "./cms-webportal/docker-compose.yml",
-      "service_name": "cms-webportal",
       "url": "http://localhost:3000",
-      "enabled": true
+      "enabled": true,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Start",
+          "description": "Starts the CMS & WebPortal service.",
+          "command": "docker-compose -f ./cms-webportal/docker-compose.yml up -d cms-webportal"
+        },
+        {
+          "key": "stop",
+          "name": "Stop",
+          "description": "Stops the CMS & WebPortal service.",
+          "command": "docker-compose -f ./cms-webportal/docker-compose.yml stop cms-webportal"
+        }
+      ],
+      "healthCheck": {
+        "type": "tcp"
+      }
     },
     {
       "id": "cloudbeaver",
@@ -17,10 +32,25 @@
       "category": "Database Management",
       "type": "docker",
       "description": "Web-based database manager.",
-      "entrypoint": "./db-utils/docker-compose.yml",
-      "service_name": "cloudbeaver",
       "url": "http://localhost:8978",
-      "enabled": true
+      "enabled": true,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Start",
+          "description": "Starts the CloudBeaver service.",
+          "command": "docker-compose -f ./db-utils/docker-compose.yml up -d cloudbeaver"
+        },
+        {
+          "key": "stop",
+          "name": "Stop",
+          "description": "Stops the CloudBeaver service.",
+          "command": "docker-compose -f ./db-utils/docker-compose.yml stop cloudbeaver"
+        }
+      ],
+      "healthCheck": {
+        "type": "tcp"
+      }
     },
     {
       "id": "vanna-ai",
@@ -28,10 +58,31 @@
       "category": "Database Management",
       "type": "docker",
       "description": "AI-powered text-to-SQL agent.",
-      "entrypoint": "./db-utils/docker-compose.yml",
-      "service_name": "vanna",
       "url": "http://localhost:8084",
-      "enabled": true
+      "enabled": true,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Start",
+          "description": "Starts the Vanna.ai service.",
+          "command": "docker-compose -f ./db-utils/docker-compose.yml up -d vanna"
+        },
+        {
+          "key": "stop",
+          "name": "Stop",
+          "description": "Stops the Vanna.ai service.",
+          "command": "docker-compose -f ./db-utils/docker-compose.yml stop vanna"
+        },
+        {
+          "key": "train",
+          "name": "Train Model",
+          "description": "Retrains the Vanna AI model on the connected database.",
+          "command": "docker-compose -f ./db-utils/docker-compose.yml exec vanna python -m vanna.train"
+        }
+      ],
+      "healthCheck": {
+        "type": "tcp"
+      }
     },
     {
       "id": "redash",
@@ -39,10 +90,25 @@
       "category": "BI & Visualization",
       "type": "docker",
       "description": "Query builder and dashboard tool.",
-      "entrypoint": "./bi-tools/docker-compose.yml",
-      "service_name": "redash",
       "url": "http://localhost:5000",
-      "enabled": true
+      "enabled": true,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Start",
+          "description": "Starts the Redash service.",
+          "command": "docker-compose -f ./bi-tools/docker-compose.yml up -d redash"
+        },
+        {
+          "key": "stop",
+          "name": "Stop",
+          "description": "Stops the Redash service.",
+          "command": "docker-compose -f ./bi-tools/docker-compose.yml stop redash"
+        }
+      ],
+      "healthCheck": {
+        "type": "tcp"
+      }
     },
     {
       "id": "superset",
@@ -50,10 +116,25 @@
       "category": "BI & Visualization",
       "type": "docker",
       "description": "Enterprise-ready data visualization platform.",
-      "entrypoint": "./bi-tools/docker-compose.yml",
-      "service_name": "superset",
       "url": "http://localhost:8088",
-      "enabled": false
+      "enabled": false,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Start",
+          "description": "Starts the Apache Superset service.",
+          "command": "docker-compose -f ./bi-tools/docker-compose.yml up -d superset"
+        },
+        {
+          "key": "stop",
+          "name": "Stop",
+          "description": "Stops the Apache Superset service.",
+          "command": "docker-compose -f ./bi-tools/docker-compose.yml stop superset"
+        }
+      ],
+      "healthCheck": {
+        "type": "tcp"
+      }
     },
     {
       "id": "rundeck",
@@ -61,31 +142,19 @@
       "category": "Automation & Job Scheduling",
       "type": "local",
       "description": "Runbook automation installed directly on the host.",
-      "command": "C:\\rundeck\\tools\\bin\\rundeckd.bat start",
       "url": "http://localhost:4440",
-      "enabled": true
-    },
-    {
-      "id": "script-server",
-      "name": "Script-Server",
-      "category": "Automation & Job Scheduling",
-      "type": "docker",
-      "description": "Web UI for executing scripts.",
-      "entrypoint": "./automation/docker-compose.yml",
-      "service_name": "script-server",
-      "url": "http://localhost:5001",
-      "enabled": false
-    },
-    {
-      "id": "cronicle",
-      "name": "Cronicle",
-      "category": "Automation & Job Scheduling",
-      "type": "docker",
-      "description": "Distributed task scheduler.",
-      "entrypoint": "./automation/docker-compose.yml",
-      "service_name": "cronicle",
-      "url": "http://localhost:3012",
-      "enabled": false
+      "enabled": true,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Start",
+          "description": "Starts the local Rundeck service.",
+          "command": "C:\\rundeck\\tools\\bin\\rundeckd.bat start"
+        }
+      ],
+      "healthCheck": {
+        "type": "tcp"
+      }
     },
     {
       "id": "vscode",
@@ -93,8 +162,20 @@
       "category": "Developer Tools",
       "type": "local",
       "description": "Launch local installation of Visual Studio Code.",
-      "command": "code .",
-      "enabled": true
+      "enabled": true,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Open Project",
+          "description": "Opens the current project in Visual Studio Code.",
+          "command": "code ."
+        }
+      ],
+      "healthCheck": {
+        "type": "command",
+        "command": "code --version"
+      }
+
     },
     {
       "id": "notepad++",
@@ -102,8 +183,28 @@
       "category": "Developer Tools",
       "type": "local",
       "description": "Launch local installation of Notepad++.",
-      "command": "start notepad++",
-      "enabled": false
+      "enabled": false,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Launch",
+          "description": "Opens Notepad++.",
+          "command": "start notepad++"
+        }
+      ],
+      "healthCheck": {
+        "type": "command",
+        "command": "where notepad++"
+      }
+
     }
-  ]
+  ],
+  "referenceApps": {
+    "cmsApp": "cms-webportal",
+    "automationApp": "rundeck",
+    "chat2DbApp": "vanna-ai",
+    "dbManagementApp": "cloudbeaver",
+    "editorApp": "vscode",
+    "biApp": "redash"
+  }
 }
