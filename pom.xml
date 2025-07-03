@@ -718,6 +718,8 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<modules>
+				<module>xtra-tools/bild/common-scripts/maven</module>
+				
 				<module>bkend/common</module>
 				<module>bkend/update</module>
 				<module>bkend/reporting</module>

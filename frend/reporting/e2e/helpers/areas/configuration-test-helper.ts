@@ -874,6 +874,50 @@ export class ConfigurationTestHelper {
       .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
       .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
 
+      // Test XML Default Settings
+    ft = ft
+      .dropDownSelectOptionHavingValue('#dsTypes', 'ds.xmlfile')
+      .waitOnElementToBecomeVisible('#xmlRepeatingNodeXPath')
+      .inputShouldHaveValue('#xmlRepeatingNodeXPath', '')
+      .elementCheckBoxShouldNotBeSelected('#btnShowMoreXmlOptions')
+      .elementShouldNotBeVisible('#xmlIdColumnSelect')
+      .elementShouldNotBeVisible('#xmlNamespaceMappings')
+      .elementShouldNotBeVisible('#xmlIgnoreLeadingWhitespace');
+
+    // Test XML advanced options
+    ft = ft
+      .click('#lblShowMoreXmlOptions')
+      .waitOnElementToBecomeVisible('#xmlIdColumnSelect')
+      .selectedOptionShouldContainText('#xmlIdColumnSelect', 'Not Used')
+      .elementShouldNotBeVisible('#xmlIdColumnCustom')
+      .inputShouldHaveValue('#xmlNamespaceMappings', '')
+      .elementCheckBoxShouldBeSelected('#xmlIgnoreLeadingWhitespace')
+      .dropDownSelectOptionHavingValue('#xmlIdColumnSelect', 'custom')
+      .waitOnElementToBecomeVisible('#xmlIdColumnCustom')
+      .inputShouldHaveValue('#xmlIdColumnCustom', '')
+      .dropDownSelectOptionHavingValue('#xmlIdColumnSelect', 'notused')
+      .waitOnElementToBecomeInvisible('#xmlIdColumnCustom')
+      .click('#lblShowMoreXmlOptions') // Hide advanced options
+      .waitOnElementToBecomeInvisible('#xmlIdColumnSelect')
+
+    // Test "Additional Data Transformation" for XML
+    ft = ft
+      .elementShouldBeVisible('#lblShowAdditionalTransformation')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#transformationCodeEditor')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI')
+      // Expand "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldBeVisible('#btnHelpWithTransformationAI')
+      .codeJarShouldContainText('#transformationCodeEditor', '') // Check default empty content
+      // Collapse "Additional Data Transformation"
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeInvisible('#transformationCodeEditor')
+      .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
+      .elementShouldNotBeVisible('#btnHelpWithTransformationAI')
+
       // Return to CSV format to reset for other tests
       .dropDownSelectOptionHavingLabel('#dsTypes', 'CSV File');
 
@@ -1201,7 +1245,38 @@ export class ConfigurationTestHelper {
       .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
       .click('#lblShowAdditionalTransformation'); // Collapse
 
-    lastSetTransformationValue = scriptTransformationValue; // This will be the final value
+    // --- XML File (New Input Type) ---
+    const uniqueXmlRepeatingNodeXPath = `/invoices/invoice[${uniqueTimestamp}]`;
+    const uniqueXmlIdColumnCustom = `@invoiceID_${uniqueTimestamp}`;
+    const uniqueXmlNamespaceMappings = `inv=http://my-company.com/invoices/${uniqueTimestamp}`;
+    const xmlIgnoreLeadingWhitespaceState = globalCounter++ % 2 === 0;
+
+    ft = ft
+      .dropDownSelectOptionHavingValue('#dsTypes', 'ds.xmlfile')
+      .waitOnElementToBecomeVisible('#xmlRepeatingNodeXPath')
+      .setValue('#xmlRepeatingNodeXPath', uniqueXmlRepeatingNodeXPath)
+      .click('#lblShowMoreXmlOptions')
+      .waitOnElementToBecomeVisible('#xmlIdColumnSelect')
+      .dropDownSelectOptionHavingValue('#xmlIdColumnSelect', 'custom')
+      .waitOnElementToBecomeVisible('#xmlIdColumnCustom')
+      .setValue('#xmlIdColumnCustom', uniqueXmlIdColumnCustom)
+      .setValue('#xmlNamespaceMappings', uniqueXmlNamespaceMappings)
+      .setCheckboxState(
+        '#xmlIgnoreLeadingWhitespace',
+        xmlIgnoreLeadingWhitespaceState,
+      )
+      .click('#lblShowMoreXmlOptions') // Collapse "Show More"
+      // Set Additional Transformation for XML
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor');
+
+    const xmlTransformationValue = `// XML Transformation ${uniqueTimestamp}-${globalCounter++}`;
+    ft = ft
+      .setCodeJarContent('#transformationCodeEditor', xmlTransformationValue)
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .click('#lblShowAdditionalTransformation'); // Collapse
+
+    lastSetTransformationValue = xmlTransformationValue;
 
     ft = ft
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.csvfile')
@@ -1214,7 +1289,7 @@ export class ConfigurationTestHelper {
     ft = ft.click('#reportingTemplateOutputTab-link');
 
     // Define HTML-based output types (exclude DOCX)
-    const htmlBasedOutputTypes = ['output.pdf', 'output.xlsx', 'output.html'];
+    const htmlBasedOutputTypes = ['output.pdf', 'output.xlsx', 'output.html', 'output.fop2pdf', 'output.any'];
 
     // Log the output type being used (passed from outside)
     ft = ft.consoleLog(
@@ -1308,8 +1383,17 @@ export class ConfigurationTestHelper {
           '#codeJarHtmlTemplateEditor',
           `<html><body><h1>Hello ${outputType}</h1></body></html>`,
         )
+        
+        if (outputType in ['output.any', 'output.fop2pdf']) {
+          ft = ft
+            .waitOnElementToBecomeVisible('#reportPreviewPane')
+            .elementShouldBeVisible('#reportPreviewPane');
+        
+        }
+
         // Wait for preview to update
-        .sleep(Constants.DELAY_ONE_SECOND);
+        ft = ft.sleep(Constants.DELAY_ONE_SECOND);
+
     }
 
     // Now test the DOCX output type specifically
@@ -1522,8 +1606,46 @@ export class ConfigurationTestHelper {
         '#scriptCustomIdColumnIndex',
         scriptIdColumnCustomIndex,
       )
+      
+      
+      
+      
       .click('#lblShowMoreScriptOptions') // Collapse
       // Assert Additional Transformation for Script (should have the last set value)
+      .click('#lblShowAdditionalTransformation')
+      .waitOnElementToBecomeVisible('#transformationCodeEditor')
+      .codeJarShouldContainText(
+        '#transformationCodeEditor',
+        lastSetTransformationValue,
+      )
+      .elementCheckBoxShouldBeSelected('#btnShowAdditionalTransformation')
+      .click('#lblShowAdditionalTransformation');
+
+    // --- Assert XML (New Input Type) ---
+    ft = ft
+      .dropDownSelectOptionHavingValue('#dsTypes', 'ds.xmlfile')
+      .waitOnElementToBecomeVisible('#xmlRepeatingNodeXPath')
+      .inputShouldHaveValue('#xmlRepeatingNodeXPath', uniqueXmlRepeatingNodeXPath)
+      .click('#lblShowMoreXmlOptions')
+      .waitOnElementToBecomeVisible('#xmlIdColumnSelect')
+      .elementCheckBoxShouldBeSelected('#btnShowMoreXmlOptions')
+      .selectedOptionShouldContainText(
+        '#xmlIdColumnSelect',
+        'Custom XPath Expression...',
+      )
+      .waitOnElementToBecomeVisible('#xmlIdColumnCustom')
+      .inputShouldHaveValue('#xmlIdColumnCustom', uniqueXmlIdColumnCustom)
+      .inputShouldHaveValue('#xmlNamespaceMappings', uniqueXmlNamespaceMappings);
+
+    if (xmlIgnoreLeadingWhitespaceState) {
+      ft = ft.elementCheckBoxShouldBeSelected('#xmlIgnoreLeadingWhitespace');
+    } else {
+      ft = ft.elementCheckBoxShouldNotBeSelected('#xmlIgnoreLeadingWhitespace');
+    }
+
+    ft = ft
+      .click('#lblShowMoreXmlOptions') // Collapse
+      // Assert Additional Transformation for XML (should have the last set value)
       .click('#lblShowAdditionalTransformation')
       .waitOnElementToBecomeVisible('#transformationCodeEditor')
       .codeJarShouldContainText(

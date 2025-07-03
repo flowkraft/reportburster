@@ -253,16 +253,13 @@
 		</dependency>
 	</dependencies>
 	<repositories>
-
 		<repository>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-			<id>repo-cuba-platform-work</id>
-			<name>repo</name>
-			<url>https://repo.cuba-platform.com/content/groups/work</url>
+			<id>jboss-public</id>
+			<name>JBoss Public Repository Group</name>
+			<url>https://repository.jboss.org/nexus/content/groups/public/</url>
+			<releases><enabled>true</enabled></releases>
+			<snapshots><enabled>true</enabled></snapshots>
 		</repository>
-
 	</repositories>
 	<distributionManagement>
 		<site>
