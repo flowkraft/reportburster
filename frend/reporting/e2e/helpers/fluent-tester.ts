@@ -1469,6 +1469,32 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+    public setQuillContent(selector: string, content: string): FluentTester {
+    const action = (): Promise<void> => this.doSetQuillContent(selector, content);
+    this.actions.push(action);
+    return this;
+  }
+
+  private async doSetQuillContent(selector: string, content: string): Promise<void> {
+    const editorSelector = `${selector} .ql-editor`;
+    await this.window.locator(editorSelector).click();
+    await this.window.locator(editorSelector).fill(''); // Clear existing content
+    await this.window.locator(editorSelector).press('Control+A');
+    await this.window.locator(editorSelector).press('Delete');
+    await this.window.locator(editorSelector).fill(content);
+  }
+
+  public quillShouldContainText(selector: string, text: string): FluentTester {
+    const action = (): Promise<void> => this.doQuillShouldContainText(selector, text);
+    this.actions.push(action);
+    return this;
+  }
+
+  private async doQuillShouldContainText(selector: string, text: string): Promise<void> {
+    const editorSelector = `${selector} .ql-editor`;
+    await expect(this.window.locator(editorSelector)).toContainText(text);
+  }
+  
   // Add this to your FluentTester class
   public codeJarShouldContainText(
     selector: string,
