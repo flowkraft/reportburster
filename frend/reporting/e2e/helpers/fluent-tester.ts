@@ -1506,6 +1506,16 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  public codeJarShouldNotContainText(
+    selector: string,
+    text: string,
+  ): FluentTester {
+    const action = (): Promise<void> =>
+      this.doCheckCodeJarDoesNotContainText(selector, text);
+    this.actions.push(action);
+    return this;
+  }
+
   private async doCheckCodeJarContainsText(
     selector: string, // This is the main CodeJar container, e.g., '#sqlQueryEditor'
     expectedText: string,
@@ -1554,6 +1564,34 @@ export class FluentTester implements PromiseLike<void> {
       // If an exact match is needed for non-empty strings, change toEqual here too.
       expect(normalizedActualContent).toContain(normalizedExpectedText);
     }
+  }
+
+  private async doCheckCodeJarDoesNotContainText(
+    selector: string,
+    expectedText: string,
+  ): Promise<void> {
+    const editablePreSelector = `${selector} pre[contenteditable=true]`;
+
+    const actualContent = await this.window.evaluate((sel) => {
+      const preElement = document.querySelector(sel) as HTMLPreElement | null;
+      if (!preElement) {
+        return null;
+      }
+      return preElement.innerText || '';
+    }, editablePreSelector);
+
+    if (actualContent === null) {
+      // If the element doesn't exist, it doesn't contain the text, so this passes.
+      return;
+    }
+
+    const normalizeAndTrim = (str: string) =>
+      str.replace(/\r\n|\r/g, '\n').trim();
+
+    const normalizedActualContent = normalizeAndTrim(actualContent);
+    const normalizedExpectedText = normalizeAndTrim(expectedText);
+
+    expect(normalizedActualContent).not.toContain(normalizedExpectedText);
   }
 
   public setCodeJarContent(selector: string, content: string): FluentTester {

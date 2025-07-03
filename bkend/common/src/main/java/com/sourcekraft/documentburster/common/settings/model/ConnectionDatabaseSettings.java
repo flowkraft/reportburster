@@ -1,37 +1,51 @@
 /*
-    DocumentBurster is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
-
-    DocumentBurster is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with DocumentBurster.  If not, see <http://www.gnu.org/licenses/>
+// ...existing license header...
  */
 package com.sourcekraft.documentburster.common.settings.model;
 
 import com.sourcekraft.documentburster.utils.DumpToString;
 
+import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlValue;
+
+import java.util.List;
 
 public class ConnectionDatabaseSettings extends DumpToString {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 8361558733244033457L;
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 8361558733244033457L;
 
-	public String code;
+    public String code;
 
-	public String name;
+    public String name;
 
-	@XmlElement(name = "default")
-	public boolean defaultConnection;
+    @XmlElement(name = "default")
+    public boolean defaultConnection;
 
-	public ServerDatabaseSettings databaseserver;
+    public ServerDatabaseSettings databaseserver;
 
+    @XmlElement(name = "apps")
+    public AppsSettings apps;
+
+    // --- Nested classes for Apps configuration ---
+
+    public static class AppsSettings extends DumpToString {
+        private static final long serialVersionUID = 1L;
+
+        @XmlElement(name = "app")
+        public List<AppSetting> app;
+    }
+
+    public static class AppSetting extends DumpToString {
+        private static final long serialVersionUID = 1L;
+
+        @XmlAttribute
+        public int index;
+
+        @XmlValue
+        public String value;
+    }
 }

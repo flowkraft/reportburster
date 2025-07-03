@@ -1,0 +1,49 @@
+<ng-container [ngSwitch]="displayMode">
+  <!-- DropDown Mode -->
+  <ng-container *ngSwitchCase="'dropDown'">
+    <div class="btn-group" dropdown>
+      <button id="appManagerDropdown" type="button" class="btn btn-default" dropdownToggle>
+        Manage Apps <span class="caret"></span>
+      </button>
+      <ul *dropdownMenu class="dropdown-menu" role="menu" aria-labelledby="appManagerDropdown">
+        <li role="menuitem" *ngFor="let app of apps">
+          <a class="dropdown-item" href="javascript:void(0)" (click)="toggleApp(app)">
+            <i class="fa" [ngClass]="{'fa-play text-success': app.state !== 'running', 'fa-stop text-danger': app.state === 'running'}"></i>
+            {{ app.name }}
+          </a>
+        </li>
+      </ul>
+    </div>
+  </ng-container>
+
+  <!-- DropUp Mode -->
+  <ng-container *ngSwitchCase="'dropUp'">
+    <div class="btn-group dropup" dropdown>
+      <button id="appManagerDropup" type="button" class="btn btn-default" dropdownToggle>
+        Manage Apps <span class="caret"></span>
+      </button>
+      <ul *dropdownMenu class="dropdown-menu" role="menu" aria-labelledby="appManagerDropup">
+        <li role="menuitem" *ngFor="let app of apps">
+          <a class="dropdown-item" href="javascript:void(0)" (click)="toggleApp(app)">
+            <i class="fa" [ngClass]="{'fa-play text-success': app.state !== 'running', 'fa-stop text-danger': app.state === 'running'}"></i>
+            {{ app.name }}
+          </a>
+        </li>
+      </ul>
+    </div>
+  </ng-container>
+
+  <!-- Expanded List Mode -->
+  <ng-container *ngSwitchCase="'expandedList'">
+    <div class="list-group">
+      <div *ngFor="let app of apps" class="list-group-item clearfix">
+        <button class="btn pull-right" [ngClass]="{'btn-success': app.state !== 'running', 'btn-danger': app.state === 'running'}" (click)="toggleApp(app)">
+          <i class="fa" [ngClass]="{'fa-play': app.state !== 'running', 'fa-stop': app.state === 'running'}"></i>
+          {{ app.state === 'running' ? 'Stop' : 'Start' }}
+        </button>
+        <h4 class="list-group-item-heading">{{ app.name }}</h4>
+        <p class="list-group-item-text text-muted">{{ app.description }}</p>
+      </div>
+    </div>
+  </ng-container>
+</ng-container>
