@@ -13,7 +13,9 @@ class TemplateController extends Controller
 
     public function __construct()
     {
-        $this->renderer_path = plugin_path('bootstrap/render-view.php');
+        $plugin_dir = plugin_dir_path(dirname(dirname(dirname(__FILE__))));
+        $this->renderer_path = $plugin_dir . 'bootstrap/render-view.php';
+ 
     }
 
     /**

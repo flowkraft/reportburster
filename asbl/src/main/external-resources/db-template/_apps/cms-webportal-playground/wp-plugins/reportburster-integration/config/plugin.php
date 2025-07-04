@@ -150,6 +150,8 @@ return [
   |
   */
 
-  'providers' => []
+  'providers' => [
+      "ReportBurster_Integration\Providers\AppServiceProvider",
+  ]
 
 ];

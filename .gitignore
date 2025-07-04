@@ -37,14 +37,21 @@ testground
 **/output/**/*.csv
 
 **/test-results/**/*.*
-frontend/reporting/temp
+frend/reporting/temp
 
 #batch-web-lightmin
 #next
-frontend/reporting/test-results/**/trace.zip
+frend/reporting/test-results/**/trace.zip
 
 log.txt
+
 *.log
+# Ignore everything in the logs directory
+frend/reporting/e2e/_resources/logs/*
+
+# Un-ignore specific files (e.g., .log files)
+!frend/reporting/e2e/_resources/logs/*.log
+
 .flattened-pom.xml
 target/
 dist/
