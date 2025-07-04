@@ -1655,7 +1655,7 @@
       </tab>
 
       <!-- Tab 6: Tools -->
-      <tab
+            <tab
         id="toolsTab"
         [active]="isToolsTabActive"
         (selectTab)="
@@ -1669,9 +1669,45 @@
         (deselectTab)="isToolsTabActive = false"
       >
         <ng-template tabHeading>
-          <i class="fa fa-wrench"></i> &nbsp;Chat2DB
+          <i class="fa fa-cogs"></i> &nbsp;Vanna AI
         </ng-template>
-                <div class="row" style="padding: 15px">
+
+        <div class="row" style="padding: 15px 15px 0 15px">
+          <div class="col-xs-6">
+            <button
+              id="btnChatWithDb"
+              type="button"
+              class="btn btn-default btn-block"
+              [disabled]="!isVannaAiStarted"
+            >
+              <i class="fa fa-comments"></i>&nbsp; Chat With Your Database
+            </button>
+          </div>
+          <div class="col-xs-6">
+            <button
+              id="btnToggleVannaAi"
+              type="button"
+              class="btn btn-block"
+              [ngClass]="{
+                'btn-success': !isVannaAiStarted,
+                'btn-danger': isVannaAiStarted
+              }"
+              (click)="toggleVannaAiService()"
+            >
+              <i
+                class="fa"
+                [ngClass]="{
+                  'fa-play': !isVannaAiStarted,
+                  'fa-stop': isVannaAiStarted
+                }"
+              ></i>
+              <span *ngIf="!isVannaAiStarted">&nbsp; Start Vanna AI</span>
+              <span *ngIf="isVannaAiStarted">&nbsp; Stop Vanna AI</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="row" style="padding: 15px">
           <div class="col-xs-12">
             <div class="checkbox">
               <label>
@@ -1687,29 +1723,36 @@
 
                 <!-- Text displayed when specific tables ARE selected -->
                 <span *ngIf="specificTablesSelectedCount > 0">
-                  Include <button
-                    id="btnEditSpecificTables"
-                    type="button"
-                    class="btn btn-info btn-xs"
-                    (click)="openTableSelectionModal()"
-                  >
-                    Selected Tables
-                  </button> from plain DB Schema Information
+                  Include selected tables' plain DB Schema Information
                 </span>
+              </label>
 
-                <!-- Button to choose tables (shown when none are selected) -->
+              <!-- Button to choose tables (shown when none are selected) -->
+              <button
+                *ngIf="specificTablesSelectedCount === 0"
+                id="btnChooseSpecificTables"
+                type="button"
+                class="btn btn-default btn-xs"
+                style="margin-left: 20px"
+                (click)="openTableSelectionModal()"
+              >
+                Choose Specific Tables
+              </button>
+
+              <!-- Button and badge to show/edit selection status -->
+              <span *ngIf="specificTablesSelectedCount > 0" style="margin-left: 20px">
                 <button
-                  *ngIf="specificTablesSelectedCount === 0"
-                  id="btnChooseSpecificTables"
+                  id="btnEditSpecificTables"
                   type="button"
-                  class="btn btn-default btn-xs"
-                  style="margin-left: 10px"
+                  class="btn btn-info btn-xs"
                   (click)="openTableSelectionModal()"
                 >
-                  Choose Specific Tables
+                  Edit Selection
                 </button>
-
-              </label>
+                <span class="label label-primary" style="margin-left: 5px;">
+                  {{ specificTablesSelectedCount }} table(s) selected
+                </span>
+              </span>
             </div>
             <div class="checkbox">
               <label>
@@ -1748,15 +1791,27 @@
               </label>
             </div>
 
-            <div style="margin-top: 20px">
-              <button
-                id="btnGenerateVannaTrainingPlan"
-                type="button"
-                class="btn btn-primary btn-block"
-              >
-                <i class="fa fa-magic"></i>&nbsp; Generate Vanna AI Training
-                Plan (with AI help)
-              </button>
+            <div class="row" style="margin-top: 20px">
+              <div class="col-xs-6">
+                <button
+                  id="btnGenerateVannaTrainingPlan"
+                  type="button"
+                  class="btn btn-default btn-block"
+                >
+                  <i class="fa fa-magic"></i>&nbsp; Generate Vanna AI Training
+                  Plan
+                </button>
+              </div>
+              <div class="col-xs-6">
+                <button
+                  id="btnTrainVannaAi"
+                  type="button"
+                  class="btn btn-primary btn-block"
+                >
+                  <i class="fa fa-cogs"></i>&nbsp; Train Vanna AI on Your
+                  Database
+                </button>
+              </div>
             </div>
           </div>
         </div>
