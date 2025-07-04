@@ -1,0 +1,12 @@
+# This single line installs Vanna and all required extras for the different
+# LLM backends and database connectors used in this project.
+vanna[chromadb,openai,google,anthropic,ollama,mysql,postgres,sqlserver,oracle,ibm_db2]==0.7.9
+
+# Core application and utility libraries
+chainlit==2.6.0
+pandas==2.3.0
+plotly==6.2.0
+lxml==6.0.0
+
+# The pysqlite3-binary is often needed in container environments for full SQLite support
+pysqlite3-binary==0.5.4

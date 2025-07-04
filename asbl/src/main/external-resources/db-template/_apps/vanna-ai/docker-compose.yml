@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Chainlit service for the main Vanna application
+  chainlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vanna-chainlit-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    depends_on:
+      - chromadb
+    
+  # Jupyter Notebooks for training Vanna
+  notebooks:
+    image: ghcr.io/vanna-ai/vanna-notebooks:latest
+    container_name: vanna-notebooks-training
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/app/notebooks
+      - ./data:/app/data
+    env_file:
+      - .env
+    depends_on:
+      - chromadb
+
+  # ChromaDB for vector storage
+  chromadb:
+    image: chromadb/chroma:0.4.22
+    container_name: vanna-chromadb
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - vanna_chroma:/chroma/chroma
+      
+volumes:
+  vanna_chroma:
+    driver: local
+
