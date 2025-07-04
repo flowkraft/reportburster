@@ -3,10 +3,10 @@
     {
       "id": "cms-webportal",
       "name": "CMS & WebPortal (Production)",
-      "category": "Web Portals",
+      "category": "Web Portal",
       "type": "docker",
-      "description": "Production-ready customer portal with admin features.",
-      "url": "http://localhost:3000",
+      "description": "Production-ready CMS & WebPortal with admin features.",
+      "url": "http://localhost:8080",
       "enabled": true,
       "commands": [
         {
@@ -205,6 +205,7 @@
     "chat2DbApp": "vanna-ai",
     "dbManagementApp": "cloudbeaver",
     "editorApp": "vscode",
-    "biApp": "redash"
+    "biApp": "redash",
+    "enterpriseApp": "flowKraft"
   }
 }

@@ -91,9 +91,9 @@ import { FsService } from '../../providers/fs.service';
 import { Position } from 'codejar/.';
 import { ConnectionDetailsComponent } from '../../components/connection-details/connection-details.component';
 import {
-  AiCopilotComponent,
-  AiCopilotLaunchConfig,
-} from '../../components/ai-copilot/ai-copilot.component';
+  AiManagerComponent,
+  AiManagerLaunchConfig,
+} from '../../components/ai-manager/ai-manager.component';
 import {
   ReportingService,
   SqlQueryResult,
@@ -2613,7 +2613,7 @@ export class ConfigurationComponent implements OnInit {
     window.open(url, '_blank');
   }
 
-  @ViewChild(AiCopilotComponent) private aiCopilotInstance!: AiCopilotComponent;
+  @ViewChild(AiManagerComponent) private aiManagerInstance!: AiManagerComponent;
 
   async askAiForHelp(outputTypeCode: string) {
     console.log(`Asking AI for help with output type: ${outputTypeCode}`);
@@ -2638,49 +2638,49 @@ export class ConfigurationComponent implements OnInit {
     }
 
     if (outputTypeCode === 'output.pdf') {
-      const launchConfig: AiCopilotLaunchConfig = {
+      const launchConfig: AiManagerLaunchConfig = {
         initialActiveTabKey: 'PROMPTS',
         initialSelectedCategory: 'PDF Report Generation',
         initialExpandedPromptId: 'PDF_SAMPLE_A4_ORDER_SUMMARY',
       };
 
-      if (this.aiCopilotInstance) {
-        this.aiCopilotInstance.launchWithConfiguration(launchConfig);
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
       }
     }
 
     if (outputTypeCode === 'output.xlsx') {
-      const launchConfig: AiCopilotLaunchConfig = {
+      const launchConfig: AiManagerLaunchConfig = {
         initialActiveTabKey: 'PROMPTS',
         initialSelectedCategory: 'Excel Report Generation',
         initialExpandedPromptId: 'EXCEL_TEMPLATE_GENERATOR',
       };
 
-      if (this.aiCopilotInstance) {
-        this.aiCopilotInstance.launchWithConfiguration(launchConfig);
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
       }
     }
 
     if (outputTypeCode === 'output.html') {
-      const launchConfig: AiCopilotLaunchConfig = {
+      const launchConfig: AiManagerLaunchConfig = {
         initialActiveTabKey: 'PROMPTS',
         initialSelectedCategory: 'Template Creation/Modification',
         initialExpandedPromptId: 'BUILD_TEMPLATE_FROM_SCRATCH',
       };
 
-      if (this.aiCopilotInstance) {
-        this.aiCopilotInstance.launchWithConfiguration(launchConfig);
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
       }
     }
 
     if (outputTypeCode === 'email.message') {
-      const launchConfig: AiCopilotLaunchConfig = {
+      const launchConfig: AiManagerLaunchConfig = {
         initialActiveTabKey: 'PROMPTS',
         initialSelectedCategory: 'Email Templates',
       };
 
-      if (this.aiCopilotInstance) {
-        this.aiCopilotInstance.launchWithConfiguration(launchConfig);
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
       }
     }
   }

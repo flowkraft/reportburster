@@ -1733,16 +1733,16 @@
     "
   >
     <div style="display: flex; align-items: center; gap: 10px">
-      <!--<dburst-ai-copilot [showVanna]="true" dropdownDirection="up">-->
+      <!--<dburst-ai-manager [showVanna]="true" dropdownDirection="up">-->
 
-      <dburst-ai-copilot
-        #aiCopilotInstance
+      <dburst-ai-manager
+        #aiManagerInstance
         [hidden]="true"
         dropdownDirection="up"
         [initialActiveTabKey]="'PROMPTS'"
         [initialSelectedCategory]="'Database Schema'"
       >
-      </dburst-ai-copilot>
+      </dburst-ai-manager>
 
       <dburst-action-center
         [displayMode]="'dropUp'"

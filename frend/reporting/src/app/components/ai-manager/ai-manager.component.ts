@@ -7,7 +7,7 @@ import {
   TemplateRef,
   ViewChild,
 } from '@angular/core';
-import { AiCopilotService, PromptInfo } from './ai-copilot.service';
+import { AiManagerService, PromptInfo } from './ai-manager.service';
 import { InfoService } from '../../components/dialog-info/info.service';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal'; // Add ngx-bootstrap modal service
 
@@ -17,7 +17,7 @@ const PROMPTS_TAB_INDEX = 1;
 const HEY_AI_TAB_INDEX = 2;
 
 // Add launch configuration interface
-export type AiCopilotLaunchConfig = {
+export type AiManagerLaunchConfig = {
   initialActiveTabKey?: 'PROMPTS' | 'VANNA' | 'HEY_AI';
   initialSelectedCategory?: string;
   initialExpandedPromptId?: string;
@@ -30,10 +30,10 @@ interface CategoryWithCount {
 }
 
 @Component({
-  selector: 'dburst-ai-copilot',
-  templateUrl: './ai-copilot.template.html',
+  selector: 'dburst-ai-manager',
+  templateUrl: './ai-manager.template.html',
 })
-export class AiCopilotComponent implements OnInit, AfterViewChecked {
+export class AiManagerComponent implements OnInit, AfterViewChecked {
   @Input() mode: 'standalone' | 'embedded' | 'launchCopilot' = 'standalone';
   @Input() dropdownDirection: 'down' | 'up' = 'down';
   //@Input() showVanna: boolean = true;
@@ -76,14 +76,14 @@ export class AiCopilotComponent implements OnInit, AfterViewChecked {
   @Input() initialExpandedPromptId?: string;
   @Input() promptVariables?: { [key: string]: string };
 
-  @ViewChild('aiCopilotModalTemplate')
-  aiCopilotModalTemplate!: TemplateRef<any>;
+  @ViewChild('aiManagerModalTemplate')
+  aiManagerModalTemplate!: TemplateRef<any>;
 
   // guard to run init logic once per open
   private pendingInit = false;
 
   constructor(
-    private aiCopilotService: AiCopilotService,
+    private aiManagerService: AiManagerService,
     private cdRef: ChangeDetectorRef,
     private infoService: InfoService,
     private modalService: BsModalService, // Add ngx-bootstrap modal service
@@ -191,7 +191,7 @@ export class AiCopilotComponent implements OnInit, AfterViewChecked {
 
   // --- Prompt Loading and Filtering ---
   loadPrompts(): void {
-    this.allPrompts = this.aiCopilotService.getAllPrompts();
+    this.allPrompts = this.aiManagerService.getAllPrompts();
     this.calculateUniqueTags();
     this.calculateCategoriesWithCounts();
     this.applyFilters(); // Apply initial filters (show all)
@@ -394,7 +394,7 @@ export class AiCopilotComponent implements OnInit, AfterViewChecked {
   }
 
   // Public method to launch with configuration
-  public launchWithConfiguration(config?: AiCopilotLaunchConfig): void {
+  public launchWithConfiguration(config?: AiManagerLaunchConfig): void {
     if (config?.initialActiveTabKey)
       this.initialActiveTabKey = config?.initialActiveTabKey;
     if (config?.initialSelectedCategory)
@@ -403,7 +403,7 @@ export class AiCopilotComponent implements OnInit, AfterViewChecked {
       this.initialExpandedPromptId = config.initialExpandedPromptId;
     if (config?.promptVariables) this.promptVariables = config.promptVariables;
     this.pendingInit = true;
-    this.openModal(this.aiCopilotModalTemplate);
+    this.openModal(this.aiManagerModalTemplate);
   }
 
   /**

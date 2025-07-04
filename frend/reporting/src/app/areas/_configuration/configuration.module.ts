@@ -13,7 +13,6 @@ import { CarouselModule } from 'primeng/carousel';
 import { ScaleIframeDirective } from '../../helpers/scale-iframe';
 import { MarkdownModule } from 'ngx-markdown';
 import { ConnectionDetailsModule } from '../../components/connection-details/connection-details.module';
-import { AiCopilotModule } from '../../components/ai-copilot/ai-copilot.module';
 
 @NgModule({
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -25,7 +24,6 @@ import { AiCopilotModule } from '../../components/ai-copilot/ai-copilot.module';
     NgSelectModule,
     AppRoutingModule,
     LicenseModule,
-    AiCopilotModule,
     ConnectionDetailsModule,
     AngularSplitModule,
     CarouselModule,
