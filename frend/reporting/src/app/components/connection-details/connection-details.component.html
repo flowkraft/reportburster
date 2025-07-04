@@ -1673,50 +1673,14 @@
         </ng-template>
         <div class="row" style="padding: 15px">
           <div class="col-xs-12">
-            <p>Manage the companion tools for this connection. Drag and drop to change the display order.</p>
-            
-            <p-orderList
-              [(value)]="managedApps"
-              [listStyle]="{'height':'auto', 'min-height': '250px'}"
-              header="Managed Applications"
-              dragdrop="true"
-              (onReorder)="updateAppIndexes()"
-            >
-              <ng-template let-app pTemplate="item">
-                <div class="ui-helper-clearfix">
-                  <!-- App Name and Description -->
-                  <div style="font-size:14px;float:left;margin:7px 7px 0 0">
-                    <strong>{{app.name}}</strong>
-                    <div class="text-muted" style="font-size:12px;">{{app.description}}</div>
-                  </div>
-                  <!-- Remove Button -->
-                  <button
-                    type="button"
-                    icon="fa fa-times"
-                    pButton
-                    class="btn btn-danger btn-xs pull-right"
-                    (click)="removeManagedApp(app)"
-                    title="Remove this app"
-                    style="margin-top: 8px;"
-                  ></button>
-                </div>
-              </ng-template>
-            </p-orderList>
-
-            <!-- Section to add apps back -->
-            <div *ngIf="availableAppsToAdd.length > 0" style="margin-top: 15px;">
-              <div class="btn-group" dropdown>
-                <button dropdownToggle type="button" class="btn btn-default">
-                  Add Tool <span class="caret"></span>
-                </button>
-                <ul *dropdownMenu class="dropdown-menu" role="menu">
-                  <li role="menuitem" *ngFor="let appToAdd of availableAppsToAdd">
-                    <a class="dropdown-item" href="javascript:void(0)" (click)="addManagedApp(appToAdd)">{{ appToAdd.name }}</a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
+                <p>Manage the companion tools for this connection. Drag and drop to change the display order.</p>
+                
+                <dburst-apps-manager
+                  [displayMode]="'expandedList'"
+                  [apps]="managedApps"
+                  >
+                </dburst-apps-manager>
+                  
           </div>
         </div>
       </tab>
