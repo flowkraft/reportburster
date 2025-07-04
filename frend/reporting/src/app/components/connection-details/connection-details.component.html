@@ -1673,13 +1673,16 @@
         </ng-template>
         <div class="row" style="padding: 15px">
           <div class="col-xs-12">
-                <p>Manage the companion tools for this connection. Drag and drop to change the display order.</p>
-                
-                <dburst-apps-manager
-                  [displayMode]="'expandedList'"
-                  [apps]="managedApps"
-                  >
-                </dburst-apps-manager>
+                <button type="button" class="btn btn-primary">
+                  <i class="fa fa-cogs"></i> Train Vanna AI RAG "model" on my data
+                </button>
+                <div class="checkbox" style="margin-top: 15px">
+                  <label>
+                    <input type="checkbox" />
+                    Auto train Vanna AI RAG "model" whenever an SQL query is
+                    successfully tested
+                  </label>
+                </div>
                   
           </div>
         </div>
