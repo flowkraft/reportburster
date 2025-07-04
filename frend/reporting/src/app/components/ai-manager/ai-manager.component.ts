@@ -93,7 +93,7 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
     try {
       this.loadPrompts();
     } catch (error) {
-      console.error('Error during AiCopilotComponent ngOnInit:', error);
+      console.error('Error during AiManagerComponent ngOnInit:', error);
       // Optionally, handle the error more gracefully, e.g., show a message or disable AI features
     }
     // remove previous setTimeout logic
@@ -440,7 +440,7 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
       }
     } catch (error) {
       console.error(
-        'Error during AiCopilotComponent completeInitialization:',
+        'Error during AiManagerComponent completeInitialization:',
         error,
       );
       // Optionally, handle the error more gracefully
