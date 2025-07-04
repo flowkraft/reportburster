@@ -1,0 +1,122 @@
+/**
+ * Less sample file.
+ *
+ * You can keep a bound between css class and plugin name/namespace.
+ * To do this, you have to use the right naming for the css id and class.
+ *
+ */
+
+.reportburster-integration {
+
+  code {
+    padding: 0;
+  }
+
+  .wpkirk-filename {
+    background-color: #2D2D2D;
+    color: white;
+    padding: 12px 12px;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: -12px;
+    border-bottom: 1px solid #666;
+    z-index: 1;
+    position: relative;
+    font-family: monospace;
+  }
+
+	pre {
+		border-radius: 8px;
+	}
+
+	.wpkirk-filename + div.code-toolbar pre {
+  	 border-radius: 0 0 8px 8px;
+	}
+
+	.line-highlight {
+    position: absolute;
+    left: 0;
+    right: 0;
+    padding: inherit 0;
+    margin-top: 0.6rem !important;
+    background: rgba(255, 255, 255, 0.16);
+    border-top: 1px solid rgba(250, 128, 114, .4);
+    border-bottom: 1px solid rgba(250, 128, 114, .4);
+    pointer-events: none;
+    line-height: inherit;
+    white-space: pre;
+	}
+
+	code.inline {
+    border-radius: 3px;
+    font-size: 0.9em;
+    padding: 2px 6px;
+  }
+
+	&.reportburster-integration-sample {
+		p {
+			font-size: 16px;
+		}
+	}
+}
+
+.clearfix {
+	*zoom: 1 !important;
+
+	&:before,
+	&:after {
+		display: table !important;
+		line-height: 0 !important;
+		content: "" !important;
+	}
+
+	&:after {
+		clear: both !important;
+	}
+}
+
+.reportburster-integration-align {
+	display: block;
+	clear: both;
+}
+
+.reportburster-integration-align-left {
+	text-align: left;
+}
+
+.reportburster-integration-toc {
+	float: left;
+	position: fixed;
+	background-color: #fff;
+	padding:0 8px 8px 12px;
+	border: 1px solid #ddd;
+	border-radius: 6px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+	width: 180px;
+}
+
+.reportburster-integration-toc-content {
+	float: right;
+	width: calc(100% - 220px);
+}
+
+@media (max-width: 1000px) {
+	.reportburster-integration-toc {
+		float: none;
+		position: relative;
+		width: auto;
+
+		li {
+			margin-right: 12px;
+			float: left;
+		}
+	}
+
+	.reportburster-integration-toc-content {
+		float: none;
+		width: auto;
+	}
+}
+
+h1.wpkirk-section {
+  font-weight: bold;
+}

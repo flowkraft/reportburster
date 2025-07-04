@@ -105,9 +105,7 @@ services:
           echo "📦 Installing Composer dependencies and running setup scripts for ReportBurster Integration...";
           # This single command will trigger the rename and other setup tasks
           # defined in the boilerplates composer.json file.
-          # (cd $$PLUGIN_PATH && composer install --no-interaction --prefer-dist);
-          # This command will now update the lock file based on composer.json
-          (cd $$PLUGIN_PATH && composer update --no-interaction --prefer-dist);
+          (cd $$PLUGIN_PATH && composer install --no-interaction --prefer-dist);
           
           echo "✅ Activating ReportBurster Integration plugin...";
           wp plugin activate reportburster-integration;
@@ -117,8 +115,15 @@ services:
           # Create and manage custom content types and fields
           wp plugin install pods --version=3.3.1 --activate;
 
+          # Analytics
+          # Matomo Analytics Ethical Stats. Powerful Insights.
+          wp plugin install matomo --version=5.3.1;
+
+          # Burst Statistics Privacy-Friendly Analytics for WordPress
+          # wp plugin install burst-statistics --version=2.1.0;
+
           # Enable JWT authentication for REST API usage
-          wp plugin install jwt-authentication-for-wp-rest-api --version=1.3.8 --activate;
+          wp plugin install jwt-authentication-for-wp-rest-api --version=1.3.8;
 
           # === User and Access Control ===
           # Members is a roles and capabilities based WordPress membership plugin.
@@ -187,6 +192,20 @@ services:
           # Adds social networking features to WordPress
           wp plugin install buddypress --version=14.3.4;
 
+          # LMS Learning Managemet System & Donation Plugins
+
+          # Accept donations and begin fundraising with GiveWP, 
+          # the highest rated WordPress donation plugin for online giving.
+          # wp plugin install give --version=4.4.0;
+
+          # LMS learning management system hit all the checkpoints for a full-fledged online 
+          # course marketplace
+          # wp plugin install tutor --version=3.6.3;
+
+          # LearnPress is a comprehensive WordPress LMS Plugin for WordPress. This is one of 
+          # the best WordPress LMS Plugins which can be used to easily create & sell courses online.
+          # wp plugin install learnpress --version=4.2.8.7.3;
+          
           echo "🔐 Creating roles...";
 
           # Create the 'employee' role
