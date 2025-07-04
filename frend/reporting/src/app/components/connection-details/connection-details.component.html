@@ -1678,7 +1678,11 @@
                 </button>
                 <div class="checkbox" style="margin-top: 15px">
                   <label>
-                    <input type="checkbox" />
+                    <input type="checkbox" 
+                    [(ngModel)]="
+                        modalConnectionInfo.database.documentburster.connection
+                          .autotrainvanna
+                      " />
                     Auto train Vanna AI RAG "model" whenever an SQL query is
                     successfully tested
                   </label>
@@ -1704,18 +1708,18 @@
 
       <dburst-ai-manager
         #aiManagerInstance
-        [hidden]="true"
         dropdownDirection="up"
+        [showVanna]="true"
         [initialActiveTabKey]="'PROMPTS'"
         [initialSelectedCategory]="'Database Schema'"
       >
       </dburst-ai-manager>
 
-      <dburst-action-center
-        [displayMode]="'dropUp'"
+      <dburst-apps-manager
+        [dropdownDirection]="'up'"
         [apps]="managedApps"
       >
-      </dburst-action-center>
+      </dburst-apps-manager>
 
       <span>
         <!-- Warning Span -->

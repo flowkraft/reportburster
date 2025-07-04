@@ -22,7 +22,7 @@ export interface ManagedApp {
 })
 export class AppsManagerComponent implements OnInit {
   @Input() apps: ManagedApp[] = [];
-  @Input() displayMode: 'dropUp' | 'dropDown' | 'expandedList' = 'dropDown';
+  @Input() dropdownDirection: 'up' | 'down' | 'expandedList' = 'down';
 
   // We can add more specific inputs if needed, e.g., for single-app display
   // @Input() appId: string;

@@ -356,16 +356,6 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  openHeyAiModal(template: TemplateRef<any>): void {
-    if (this.mode === 'standalone') {
-      const targetIndex = this.showVanna ? HEY_AI_TAB_INDEX : PROMPTS_TAB_INDEX;
-      this.setActiveTab(targetIndex);
-      this.pendingInit = true;
-      this.openModal(template);
-      console.log('Placeholder: Opening modal to Hey AI tab');
-    }
-  }
-
   // --- Modal Control ---
   // Open modal using ngx-bootstrap
   openModal(template: TemplateRef<any>, initialState?: object): void {

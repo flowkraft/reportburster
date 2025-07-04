@@ -117,6 +117,7 @@ export class ConnectionDetailsComponent implements OnInit {
         connection: {
           code: '',
           name: '',
+          autotrainvanna: false,
           defaultConnection: false,
           databaseserver: { ...newDatabaseServer },
         },
