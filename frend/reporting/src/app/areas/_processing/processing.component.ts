@@ -50,8 +50,7 @@ import {
   ReportingService,
   SqlQueryResult,
 } from '../../providers/reporting.service';
-import { ManagedApp } from '../../components/apps-manager/apps-manager.component';
-import { AppsManagerService } from '../../components/apps-manager/apps-manager.service';
+import { AppsManagerService, ManagedApp } from '../../components/apps-manager/apps-manager.service';
 
 @Component({
   selector: 'dburst-processing',
