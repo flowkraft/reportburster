@@ -51,6 +51,7 @@ import {
   SqlQueryResult,
 } from '../../providers/reporting.service';
 import { ManagedApp } from '../../components/apps-manager/apps-manager.component';
+import { AppsManagerService } from '../../components/apps-manager/apps-manager.service';
 
 @Component({
   selector: 'dburst-processing',
@@ -212,11 +213,12 @@ export class ProcessingComponent implements OnInit {
   ];
 
   cmsPortalApp: ManagedApp[] = [];
-
+  
   constructor(
     protected processingService: ProcessingService,
     protected apiService: ApiService,
     protected settingsService: SettingsService,
+    protected appsManagerService: AppsManagerService,
     protected confirmService: ConfirmService,
     protected infoService: InfoService,
     protected route: ActivatedRoute,
@@ -260,7 +262,7 @@ export class ProcessingComponent implements OnInit {
 
     await this.samplesService.fillSamplesNotes();
 
-    this.cmsPortalApp = [this.settingsService.getAppById('cms-webportal')];
+    this.cmsPortalApp = [this.appsManagerService.getAppById('cms-webportal')];
     
     this.route.params.subscribe(async (params) => {
       let processingMode = 'processing';

@@ -28,7 +28,7 @@
     },
     {
       "id": "cloudbeaver",
-      "name": "CloudBeaver",
+      "name": "DB Management (Cloudbeaver)",
       "category": "Database Management",
       "type": "docker",
       "description": "Web-based database manager.",
@@ -158,7 +158,7 @@
     },
     {
       "id": "vscode",
-      "name": "VSCode (Local)",
+      "name": "Code",
       "category": "Developer Tools",
       "type": "local",
       "description": "Launch local installation of Visual Studio Code.",

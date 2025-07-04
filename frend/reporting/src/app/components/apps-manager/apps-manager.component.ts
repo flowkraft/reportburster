@@ -1,20 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ShellService } from '../../providers/shell.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
+import { ManagedApp } from './apps-manager.service';
 
 // This interface should be defined in a shared models file
-export interface ManagedApp {
-  id: string;
-  name: string;
-  description: string;
-  type: 'docker' | 'local' | 'url';
-  entrypoint?: string;
-  service_name?: string;
-  command?: string;
-  url?: string;
-  // This state is managed at runtime by the component
-  state: 'running' | 'stopped' | 'unknown';
-}
+
 
 @Component({
   selector: 'dburst-apps-manager',
