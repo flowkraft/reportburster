@@ -1654,7 +1654,7 @@
         </div>
       </tab>
 
-            <!-- Tab 6: Tools -->
+      <!-- Tab 6: Tools -->
       <tab
         id="toolsTab"
         [active]="isToolsTabActive"
@@ -1669,25 +1669,95 @@
         (deselectTab)="isToolsTabActive = false"
       >
         <ng-template tabHeading>
-          <i class="fa fa-wrench"></i> &nbsp;Tools
+          <i class="fa fa-wrench"></i> &nbsp;Chat2DB
         </ng-template>
-        <div class="row" style="padding: 15px">
+                <div class="row" style="padding: 15px">
           <div class="col-xs-12">
-                <button type="button" class="btn btn-primary">
-                  <i class="fa fa-cogs"></i> Train Vanna AI RAG "model" on my data
+            <div class="checkbox">
+              <label>
+                <input
+                  id="vannaTrainingIncludeDbSchema"
+                  type="checkbox"
+                />
+                
+                <!-- Text displayed when NO specific tables are selected -->
+                <span *ngIf="specificTablesSelectedCount === 0">
+                  Include *.tables plain DB Schema Information
+                </span>
+
+                <!-- Text displayed when specific tables ARE selected -->
+                <span *ngIf="specificTablesSelectedCount > 0">
+                  Include <button
+                    id="btnEditSpecificTables"
+                    type="button"
+                    class="btn btn-info btn-xs"
+                    (click)="openTableSelectionModal()"
+                  >
+                    Selected Tables
+                  </button> from plain DB Schema Information
+                </span>
+
+                <!-- Button to choose tables (shown when none are selected) -->
+                <button
+                  *ngIf="specificTablesSelectedCount === 0"
+                  id="btnChooseSpecificTables"
+                  type="button"
+                  class="btn btn-default btn-xs"
+                  style="margin-left: 10px"
+                  (click)="openTableSelectionModal()"
+                >
+                  Choose Specific Tables
                 </button>
-                <div class="checkbox" style="margin-top: 15px">
-                  <label>
-                    <input type="checkbox" 
-                    [(ngModel)]="
-                        modalConnectionInfo.database.documentburster.connection
-                          .autotrainvanna
-                      " />
-                    Auto train Vanna AI RAG "model" whenever an SQL query is
-                    successfully tested
-                  </label>
-                </div>
-                  
+
+              </label>
+            </div>
+            <div class="checkbox">
+              <label>
+                <input
+                  id="vannaTrainingIncludeDomainGroupedSchema"
+                  type="checkbox"
+                />
+                Include Domain-Grouped Schema Information
+              </label>
+            </div>
+            <div class="checkbox">
+              <label>
+                <input
+                  id="vannaTrainingIncludeErDiagram"
+                  type="checkbox"
+                />
+                Include ER Diagram Information
+              </label>
+            </div>
+            <div class="checkbox">
+              <label>
+                <input
+                  id="vannaTrainingIncludeUbiquitousLanguage"
+                  type="checkbox"
+                />
+                Include 'Ubiquitous Language' Information
+              </label>
+            </div>
+            <div class="checkbox">
+              <label>
+                <input
+                  id="vannaTrainingIncludeSqlQueries"
+                  type="checkbox"
+                />
+                Include existing SQL-based Report queries information
+              </label>
+            </div>
+
+            <div style="margin-top: 20px">
+              <button
+                id="btnGenerateVannaTrainingPlan"
+                type="button"
+                class="btn btn-primary btn-block"
+              >
+                <i class="fa fa-magic"></i>&nbsp; Generate Vanna AI Training
+                Plan (with AI help)
+              </button>
+            </div>
           </div>
         </div>
       </tab>
