@@ -29,9 +29,9 @@ import _ from 'lodash';
 import Utilities from '../../helpers/utilities';
 import { EmailProviderSettings } from '../button-well-known/button-well-known.component';
 import {
-  AiCopilotComponent,
-  AiCopilotLaunchConfig,
-} from '../ai-copilot/ai-copilot.component';
+  AiManagerComponent,
+  AiManagerLaunchConfig,
+} from '../ai-manager/ai-manager.component';
 
 interface ManagedApp {
   id: string;
@@ -90,7 +90,7 @@ export class ConnectionDetailsComponent implements OnInit {
     this.initializePlantUmlDiagram();
   }
 
-  @ViewChild(AiCopilotComponent) private aiManagerInstance!: AiCopilotComponent;
+  @ViewChild(AiManagerComponent) private aiManagerInstance!: AiManagerComponent;
 
   modalConnectionInfo = {
     connectionType: 'email-connection',
@@ -658,7 +658,7 @@ export class ConnectionDetailsComponent implements OnInit {
       2,
     );
 
-    const launchConfig: AiCopilotLaunchConfig = {
+    const launchConfig: AiManagerLaunchConfig = {
       initialActiveTabKey: 'PROMPTS',
       initialSelectedCategory: 'Database Schema',
       initialExpandedPromptId: 'DB-SCHEMA-DOMAIN-GROUPED',
@@ -672,7 +672,7 @@ export class ConnectionDetailsComponent implements OnInit {
     } else {
       this.messagesService.showError('AI Copilot component is not available.');
       console.error(
-        'AI Copilot instance is not found. Ensure @ViewChild(AiCopilotComponent) is correctly configured.',
+        'AI Copilot instance is not found. Ensure @ViewChild(AiManagerComponent) is correctly configured.',
       );
     }
   }
@@ -763,7 +763,7 @@ export class ConnectionDetailsComponent implements OnInit {
     const promptPlaceholder =
       '[INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]';
 
-    const launchConfig: AiCopilotLaunchConfig = {
+    const launchConfig: AiManagerLaunchConfig = {
       initialActiveTabKey: 'PROMPTS',
       initialSelectedCategory: targetCategory,
       initialExpandedPromptId: targetPromptId,
@@ -777,7 +777,7 @@ export class ConnectionDetailsComponent implements OnInit {
     } else {
       this.messagesService.showError('AI Copilot component is not available.');
       console.error(
-        'AI Copilot instance is not found. Ensure @ViewChild(AiCopilotComponent) is correctly configured.',
+        'AI Copilot instance is not found. Ensure @ViewChild(AiManagerComponent) is correctly configured.',
       );
     }
   }
@@ -851,7 +851,7 @@ export class ConnectionDetailsComponent implements OnInit {
 
     const flatSchemaJson = JSON.stringify(this.rawSchemaData.tables, null, 2);
 
-    const launchConfig: AiCopilotLaunchConfig = {
+    const launchConfig: AiManagerLaunchConfig = {
       initialActiveTabKey: 'PROMPTS',
       initialSelectedCategory: 'Database Schema', // Or a more specific category if available
       initialExpandedPromptId: 'DB-SCHEMA-ER-DIAGRAM-PLANTUML', // Assuming this ID exists in prompts.json
@@ -1891,7 +1891,7 @@ export class ConnectionDetailsComponent implements OnInit {
   }
 
   public launchWithAiCopilotConfiguration(
-    config?: AiCopilotLaunchConfig,
+    config?: AiManagerLaunchConfig,
   ): void {
     if (config?.initialActiveTabKey)
       this.initialAiCopilotActiveTabKey = config?.initialActiveTabKey;
