@@ -22,6 +22,8 @@ public class ConnectionDatabaseSettings extends DumpToString {
 
     public String name;
 
+    public boolean autotrainvanna;
+
     @XmlElement(name = "default")
     public boolean defaultConnection;
 

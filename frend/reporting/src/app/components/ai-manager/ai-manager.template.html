@@ -2,7 +2,7 @@
 <div
   *ngIf="mode === 'standalone'"
   class="btn-group"
-  [ngClass]="{'dropdown': dropdownDirection === 'down', 'dropup': dropdownDirection === 'up'}"
+  [ngClass]="{'down': dropdownDirection === 'down', 'up': dropdownDirection === 'up'}"
   style="white-space: nowrap; display: inline-flex"
 >
   <button
@@ -71,19 +71,6 @@
           | translate }}</strong
         >
         <!-- Hardcoded text -->
-      </a>
-    </li>
-    <li>
-      <a
-        href="javascript:void(0)"
-        id="btnHeyAiModal"
-        (click)="openHeyAiModal(aiManagerModalTemplate)"
-      >
-        <i class="fa fa-magic"></i
-        ><strong
-          >{{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.HEY-AI' |
-          translate }}</strong
-        >
       </a>
     </li>
   </ul>

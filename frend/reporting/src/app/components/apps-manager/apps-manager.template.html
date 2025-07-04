@@ -1,6 +1,6 @@
-<ng-container [ngSwitch]="displayMode">
+<ng-container [ngSwitch]="dropdownDirection">
   <!-- DropDown Mode -->
-  <ng-container *ngSwitchCase="'dropDown'">
+  <ng-container *ngSwitchCase="'down'">
     <div class="btn-group" dropdown>
       <button id="appManagerDropdown" type="button" class="btn btn-default" dropdownToggle>
         Manage Apps <span class="caret"></span>
@@ -17,7 +17,7 @@
   </ng-container>
 
   <!-- DropUp Mode -->
-  <ng-container *ngSwitchCase="'dropUp'">
+  <ng-container *ngSwitchCase="'up'">
     <div class="btn-group dropup" dropdown>
       <button id="appManagerDropup" type="button" class="btn btn-default" dropdownToggle>
         Manage Apps <span class="caret"></span>

@@ -21,7 +21,7 @@ export const tabCmsWebPortalTemplate = `<ng-template
       <div class="row" style="margin-top: 10px">
         <div class="col-xs-12">
           <dburst-apps-manager
-            [displayMode]="'expandedList'"
+            [dropdownDirection]="'expandedList'"
             [apps]="cmsPortalApp"
           >
           </dburst-apps-manager>

@@ -230,11 +230,4 @@ export const modalGalleryTemplate = `<p-dialog
           </button>
         </div>
     </div>
-  </p-dialog> <dburst-ai-manager
-              #aiManagerInstance
-              [hidden]="true"
-              dropdownDirection="down"
-              [initialActiveTabKey]="'PROMPTS'"
-              [initialSelectedCategory]="'Template Creation/Modification'"
-            >
-          </dburst-ai-manager>  `;
+  </p-dialog>`;
