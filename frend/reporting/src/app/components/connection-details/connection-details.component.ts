@@ -90,7 +90,7 @@ export class ConnectionDetailsComponent implements OnInit {
     this.initializePlantUmlDiagram();
   }
 
-  @ViewChild(AiCopilotComponent) private aiCopilotInstance!: AiCopilotComponent;
+  @ViewChild(AiCopilotComponent) private aiManagerInstance!: AiCopilotComponent;
 
   modalConnectionInfo = {
     connectionType: 'email-connection',
@@ -667,8 +667,8 @@ export class ConnectionDetailsComponent implements OnInit {
       },
     };
 
-    if (this.aiCopilotInstance) {
-      this.aiCopilotInstance.launchWithConfiguration(launchConfig);
+    if (this.aiManagerInstance) {
+      this.aiManagerInstance.launchWithConfiguration(launchConfig);
     } else {
       this.messagesService.showError('AI Copilot component is not available.');
       console.error(
@@ -772,8 +772,8 @@ export class ConnectionDetailsComponent implements OnInit {
       },
     };
 
-    if (this.aiCopilotInstance) {
-      this.aiCopilotInstance.launchWithConfiguration(launchConfig);
+    if (this.aiManagerInstance) {
+      this.aiManagerInstance.launchWithConfiguration(launchConfig);
     } else {
       this.messagesService.showError('AI Copilot component is not available.');
       console.error(
@@ -860,8 +860,8 @@ export class ConnectionDetailsComponent implements OnInit {
       },
     };
 
-    if (this.aiCopilotInstance) {
-      this.aiCopilotInstance.launchWithConfiguration(launchConfig);
+    if (this.aiManagerInstance) {
+      this.aiManagerInstance.launchWithConfiguration(launchConfig);
     } else {
       this.messagesService.showError('AI Copilot component is not available.');
       console.error('AI Copilot instance is not found.');

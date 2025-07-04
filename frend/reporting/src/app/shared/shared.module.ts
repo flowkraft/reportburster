@@ -38,7 +38,9 @@ import { AppRoutingModule } from '../app-routing.module';
 import { RouterModule } from '@angular/router';
 import { ButtonVariablesComponent } from '../components/button-variables/button-variables.component';
 import { TabulatorColumnsPipe } from './tabulator-columns.pipe';
-import { ActionCenterComponent } from '../components/action-center/action-center.component';
+import { AiManagerComponent } from '../components/ai-manager/ai-manager.component';
+
+import { AppsManagerComponent } from '../components/apps-manager/apps-manager.component';
 
 @NgModule({
   imports: [
@@ -59,7 +61,8 @@ import { ActionCenterComponent } from '../components/action-center/action-center
     AskForFeatureDialogComponent,
     ReportParametersFormComponent,
     ButtonVariablesComponent,
-    ActionCenterComponent,
+    AppsManagerComponent,
+    AiManagerComponent,
     ButtonWellKnownEmailProvidersComponent,
     ButtonHtmlPreviewComponent,
     SafePipe,
@@ -83,7 +86,8 @@ import { ActionCenterComponent } from '../components/action-center/action-center
     ReportParametersFormComponent,
     ButtonVariablesComponent,
     ButtonWellKnownEmailProvidersComponent,
-    ActionCenterComponent,
+    AppsManagerComponent,
+    AiManagerComponent,
     ButtonHtmlPreviewComponent,
     SafePipe,
     TabulatorColumnsPipe,

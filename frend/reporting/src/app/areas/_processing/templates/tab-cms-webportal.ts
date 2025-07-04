@@ -20,11 +20,11 @@ export const tabCmsWebPortalTemplate = `<ng-template
       
       <div class="row" style="margin-top: 10px">
         <div class="col-xs-12">
-          <dburst-action-center
+          <dburst-apps-manager
             [displayMode]="'expandedList'"
             [apps]="cmsPortalApp"
           >
-          </dburst-action-center>
+          </dburst-apps-manager>
         </div>
       </div>
     

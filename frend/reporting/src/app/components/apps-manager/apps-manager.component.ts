@@ -20,7 +20,7 @@ export interface ManagedApp {
   selector: 'dburst-apps-manager',
   templateUrl: './apps-manager.component.html',
 })
-export class AppsManager implements OnInit {
+export class AppsManagerComponent implements OnInit {
   @Input() apps: ManagedApp[] = [];
   @Input() displayMode: 'dropUp' | 'dropDown' | 'expandedList' = 'dropDown';
 

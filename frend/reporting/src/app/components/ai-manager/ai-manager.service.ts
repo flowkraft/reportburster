@@ -22,7 +22,7 @@ export interface PromptInfo {
 @Injectable({
   providedIn: 'root',
 })
-export class AiCopilotService {
+export class AiManagerService {
   constructor() {}
 
   // Repository of AI prompts
