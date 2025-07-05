@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   # Chainlit service for the main Vanna application
-  chainlit:
+  reportburster-chat2db:
     build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: vanna-chainlit-app
+      context: src
+      dockerfile: Dockerfile.vanna
+    container_name: reportburster-chat2db
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -15,12 +13,14 @@ services:
     env_file:
       - .env
     depends_on:
-      - chromadb
+     - reportburster-chromadb
     
   # Jupyter Notebooks for training Vanna
-  notebooks:
-    image: ghcr.io/vanna-ai/vanna-notebooks:latest
-    container_name: vanna-notebooks-training
+  reportburster-notebooks:
+    build:
+      context: src
+      dockerfile: Dockerfile.jupyter
+    container_name: reportburster-notebooks
     restart: unless-stopped
     ports:
       - "8888:8888"
@@ -30,19 +30,18 @@ services:
     env_file:
       - .env
     depends_on:
-      - chromadb
-
+     - reportburster-chromadb
+      
   # ChromaDB for vector storage
-  chromadb:
+  reportburster-chromadb:
     image: chromadb/chroma:0.4.22
-    container_name: vanna-chromadb
+    container_name: reportburster-chromadb
     restart: unless-stopped
     ports:
       - "8001:8000"
     volumes:
       - vanna_chroma:/chroma/chroma
-      
+    
 volumes:
   vanna_chroma:
     driver: local
-
