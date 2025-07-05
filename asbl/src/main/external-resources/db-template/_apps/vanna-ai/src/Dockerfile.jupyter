@@ -1,0 +1,30 @@
+FROM python:3.11-slim
+
+# create non-root user
+RUN useradd --create-home jupyter \
+  && mkdir -p /app \
+  && chown -R jupyter /app
+
+USER jupyter
+WORKDIR /app
+
+# Copy and install deps
+COPY --chown=jupyter requirements.txt .
+
+RUN python -m pip install --no-cache-dir \
+      --upgrade pip \
+      notebook==7.4.4 \
+      jupyter-ai==2.31.5 \
+      ipykernel==6.29.5 \
+      -r requirements.txt \
+  && python -m ipykernel install --user --name python3 --display-name "Python 3"
+
+
+# Expose and launch Jupyter
+EXPOSE 8888
+CMD ["jupyter", "notebook", \
+     "--ip=0.0.0.0", \
+     "--port=8888", \
+     "--no-browser", \
+     "--NotebookApp.token=", \
+     "--NotebookApp.password="]

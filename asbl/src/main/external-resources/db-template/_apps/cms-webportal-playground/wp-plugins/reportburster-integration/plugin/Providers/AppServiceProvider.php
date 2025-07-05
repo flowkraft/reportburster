@@ -22,6 +22,29 @@ class AppServiceProvider extends ServiceProvider
         add_filter('single_template', [$templateController, 'overrideSingleTemplate']);
         add_filter('page_template', [$templateController, 'overridePageTemplate']);
         
+        // Add this for ACT-Pods
+        add_filter('pods_page_template', [$templateController, 'overridePodsTemplate'], 10, 4);
+        
+        // Add rewrite rules for ACT-Pods
+        add_action('init', function(){
+            if (function_exists('pods_api')) {
+                $pods = pods_api()->load_pods(['type' => 'pod']);
+                foreach ($pods as $pod) {
+                    add_rewrite_rule(
+                        "^{$pod['name']}/([^/]+)/?$",
+                        "index.php?pods={$pod['name']}&slug=\$matches[1]",
+                        'top'
+                    );
+                }
+
+                // Only flush once after plugin activation/update
+                if (!get_option('reportburster_rewrite_flushed')) {
+                    flush_rewrite_rules();
+                    update_option('reportburster_rewrite_flushed', true);
+                }
+            }
+        });
+        
         // --- Asset Enqueuing ---
         add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
 
