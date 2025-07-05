@@ -37,14 +37,21 @@ class AppServiceProvider extends ServiceProvider
                     );
                 }
 
-                // Only flush once after plugin activation/update
-                if (!get_option('reportburster_rewrite_flushed')) {
-                    flush_rewrite_rules();
-                    update_option('reportburster_rewrite_flushed', true);
+                // Only check and flush if there is at least one Pod
+                if (count($pods) > 0) {
+                    $pod_names = array_map(fn($p) => $p['name'], $pods);
+                    sort($pod_names);
+                    $current_hash = md5(implode(',', $pod_names));
+                    $last_hash = get_option('reportburster_last_pod_hash', '');
+
+                    if ($current_hash !== $last_hash) {
+                        flush_rewrite_rules();
+                        update_option('reportburster_last_pod_hash', $current_hash);
+                    }
                 }
             }
-        });
-        
+        });    
+
         // --- Asset Enqueuing ---
         add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
 
