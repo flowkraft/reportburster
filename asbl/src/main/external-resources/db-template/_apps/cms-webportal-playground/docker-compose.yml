@@ -99,6 +99,12 @@ services:
 
           wp plugin uninstall hello;
           
+          # Create and manage custom content types and fields
+          wp plugin install pods --version=3.3.1 --activate;
+
+          # === ReportBurster Integration Plugin, which uses pods framework APIs, 
+          # must be activated after PODS ===
+          
           # --- START: ReportBurster Integration Plugin Setup ---
           PLUGIN_PATH="/var/www/html/wp-content/plugins/reportburster-integration";
 
@@ -112,9 +118,7 @@ services:
           # --- END: ReportBurster Integration Plugin Setup ---
 
           # === Site and Admin Management ===
-          # Create and manage custom content types and fields
-          wp plugin install pods --version=3.3.1 --activate;
-
+          
           # Analytics
           # Matomo Analytics Ethical Stats. Powerful Insights.
           wp plugin install matomo --version=5.3.1;
