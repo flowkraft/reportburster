@@ -16,13 +16,4 @@ if (is_page()) {
     $view_name = "single-{$post_type}"; // e.g., 'single-invoice'
     echo view($view_name);
     
-} elseif ($pod_name = get_query_var('pods')) { //blade support for WordPress PODs
-    // Handle ACT-Pod templates
-    $slug = get_query_var('slug');
-    $pod = pods($pod_name, $slug);
-    
-    if ($pod) {
-        $view_name = "single-{$pod_name}";
-        echo view($view_name, ['pod' => $pod]);
-    }
 }

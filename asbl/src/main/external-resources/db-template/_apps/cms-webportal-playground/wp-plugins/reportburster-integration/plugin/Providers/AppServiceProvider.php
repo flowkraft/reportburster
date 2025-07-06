@@ -22,35 +22,40 @@ class AppServiceProvider extends ServiceProvider
         add_filter('single_template', [$templateController, 'overrideSingleTemplate']);
         add_filter('page_template', [$templateController, 'overridePageTemplate']);
         
-        // Add this for ACT-Pods
-        add_filter('pods_page_template', [$templateController, 'overridePodsTemplate'], 10, 4);
-        
-        // Add rewrite rules for ACT-Pods
-        add_action('init', function(){
+        add_action('init', function() {
             if (function_exists('pods_api')) {
                 $pods = pods_api()->load_pods(['type' => 'pod']);
                 foreach ($pods as $pod) {
-                    add_rewrite_rule(
-                        "^{$pod['name']}/([^/]+)/?$",
-                        "index.php?pods={$pod['name']}&slug=\$matches[1]",
-                        'top'
-                    );
-                }
-
-                // Only check and flush if there is at least one Pod
-                if (count($pods) > 0) {
-                    $pod_names = array_map(fn($p) => $p['name'], $pods);
-                    sort($pod_names);
-                    $current_hash = md5(implode(',', $pod_names));
-                    $last_hash = get_option('reportburster_last_pod_hash', '');
-
-                    if ($current_hash !== $last_hash) {
-                        flush_rewrite_rules();
-                        update_option('reportburster_last_pod_hash', $current_hash);
+                    $pod_name = $pod['name'];
+                    $uri = "{$pod_name}/*";
+                    // Check if Pod Page already exists
+                    $existing = get_page_by_title($uri, OBJECT, '_pods_page');
+                    if (!$existing) {
+                        $shortcode = "[render_blade_pod name=\"{$pod_name}\" slug=\"{@url.2}\"]";
+                        $pod_page_id = wp_insert_post([
+                            'post_title'   => $uri,
+                            'post_type'    => '_pods_page',
+                            'post_status'  => 'publish',
+                            'post_content' => $shortcode,
+                        ]);
+                        update_post_meta($pod_page_id, 'pod', $pod_name);
+                        update_post_meta($pod_page_id, 'pod_slug', '{@url.2}');
                     }
                 }
             }
-        });    
+        });
+
+        add_shortcode('render_blade_pod', function($atts) {
+            $name = $atts['name'] ?? '';
+            $slug = $atts['slug'] ?? '';
+            if (!$name || !$slug) return '';
+            $pod = pods($name, $slug);
+            if ($pod) {
+                $view_name = "single-{$name}";
+                return view($view_name, ['pod' => $pod])->render();
+            }
+            return '';
+        });
 
         // --- Asset Enqueuing ---
         add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
