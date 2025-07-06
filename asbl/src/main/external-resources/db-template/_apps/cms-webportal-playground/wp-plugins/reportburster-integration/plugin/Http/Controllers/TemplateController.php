@@ -84,14 +84,4 @@ class TemplateController extends Controller
         return $template;
     }
 
-    public function overridePodsTemplate($template, $output, $pod, $slug)
-    {
-        $view_name = "single-{$pod['name']}";
-        
-        if (view()->exists($view_name)) {
-            return $this->renderer_path;
-        }
-        
-        return $template;
-    }
 }
