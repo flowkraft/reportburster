@@ -1674,7 +1674,7 @@
         (deselectTab)="isToolsTabActive = false"
       >
         <ng-template tabHeading>
-          <i class="fa fa-cogs"></i> &nbsp;Vanna AI
+          <i class="fa fa-comments"></i> &nbsp;Chat2DB (AI)
         </ng-template>
 
         <div class="row" style="padding: 15px 15px 0 15px">
@@ -1685,18 +1685,14 @@
               class="btn btn-default btn-block"
               [disabled]="!isVannaAiStarted"
             >
-              <i class="fa fa-comments"></i>&nbsp; Chat With Your Database
+              <i class="fa fa-comments"></i>&nbsp; Chat With Your Database (AI)
             </button>
           </div>
           <div class="col-xs-6">
             <button
               id="btnToggleVannaAi"
               type="button"
-              class="btn btn-block"
-              [ngClass]="{
-                'btn-success': !isVannaAiStarted,
-                'btn-danger': isVannaAiStarted
-              }"
+              class="btn btn-default btn-block"
               (click)="toggleVannaAiService()"
             >
               <i
@@ -1706,8 +1702,8 @@
                   'fa-stop': isVannaAiStarted
                 }"
               ></i>
-              <span *ngIf="!isVannaAiStarted">&nbsp; Start Vanna AI</span>
-              <span *ngIf="isVannaAiStarted">&nbsp; Stop Vanna AI</span>
+              <span *ngIf="!isVannaAiStarted">&nbsp; <strong>Start Vanna.AI</strong></span>
+              <span *ngIf="isVannaAiStarted">&nbsp; Stop Vanna.AI</span>
             </button>
           </div>
         </div>
@@ -1723,7 +1719,7 @@
                 
                 <!-- Text displayed when NO specific tables are selected -->
                 <span *ngIf="targetSchemaObjects.length === 0">
-                  Include *.tables plain DB Schema Information
+                  Include <strong>*.tables</strong> plain DB Schema Information
                 </span>
 
                 <!-- Text displayed when specific tables ARE selected -->
@@ -1803,7 +1799,7 @@
                   type="button"
                   class="btn btn-default btn-block"
                 >
-                  <i class="fa fa-magic"></i>&nbsp; Generate Vanna AI Training
+                  <i class="fa fa-magic"></i>&nbsp; Generate Vanna.AI Training
                   Plan
                 </button>
               </div>
@@ -1811,10 +1807,10 @@
                 <button
                   id="btnTrainVannaAi"
                   type="button"
-                  class="btn btn-primary btn-block"
+                  class="btn btn-default btn-block"
                 >
-                  <i class="fa fa-cogs"></i>&nbsp; Train Vanna AI on Your
-                  Database
+                  <i class="fa fa-graduation-cap"></i>&nbsp; <strong>Train Vanna.AI on This
+                  Database</strong>
                 </button>
               </div>
             </div>

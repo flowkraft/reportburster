@@ -2,7 +2,10 @@
 <div
   *ngIf="mode === 'standalone'"
   class="btn-group"
-  [ngClass]="{'down': dropdownDirection === 'down', 'up': dropdownDirection === 'up'}"
+  [ngClass]="{
+    'dropup': dropdownDirection === 'up',
+    'dropdown': dropdownDirection !== 'up'
+  }"
   style="white-space: nowrap; display: inline-flex"
 >
   <button
@@ -26,21 +29,12 @@
     type="button"
     id="btnAiDropdownToggle"
     class="btn btn-sm btn-default dropdown-toggle"
-    style="
-      border-top-left-radius: 0;
-      border-bottom-left-radius: 0;
-      border-left: 1px solid #ccc;
-      width: 20px;
-      padding-left: 5px;
-      padding-right: 5px;
-    "
     data-toggle="dropdown"
     aria-haspopup="true"
     aria-expanded="false"
     title="Copilot Actions"
   >
     <span class="caret"></span>
-    <span class="sr-only">Toggle Dropdown</span>
   </button>
   <ul class="dropdown-menu dropdown-menu-right">
     <li>
@@ -58,19 +52,32 @@
       </a>
     </li>
     <li *ngIf="showVanna">
-      <!-- Conditionally show Vanna -->
       <a
         href="javascript:void(0)"
         id="btnLaunchVannaModal"
         (click)="openVannaModal(aiManagerModalTemplate)"
+        style="display: flex; align-items: center;"
       >
         <i class="fa fa-comment"></i>
-        <strong>
-          {{
-          'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.CHAT-WITH-DB'
-          | translate }}</strong
-        >
-        <!-- Hardcoded text -->
+        <ng-container *ngIf="vannaApp?.state === 'running'; else vannaStopped">
+          <strong>
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.CHAT-WITH-DB' | translate }}
+          </strong>
+        </ng-container>
+        <ng-template #vannaStopped>
+          <span class="text-muted" style="margin-left: 6px;">
+            {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.CHAT-WITH-DB' | translate }}
+            <strong style="margin-left: 6px;">stopped</strong>
+          </span>
+          <button
+            class="btn btn-xs btn-link"
+            style="padding: 0 4px; vertical-align: middle; margin-left: 6px;"
+            (click)="appsManagerService.toggleApp(vannaApp); $event.stopPropagation();"
+            [title]="'Start ' + vannaApp?.name"
+          >
+            <i class="fa fa-play text-success"></i>
+          </button>
+        </ng-template>
       </a>
     </li>
   </ul>

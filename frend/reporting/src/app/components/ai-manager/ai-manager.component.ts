@@ -10,6 +10,7 @@ import {
 import { AiManagerService, PromptInfo } from './ai-manager.service';
 import { InfoService } from '../../components/dialog-info/info.service';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal'; // Add ngx-bootstrap modal service
+import { AppsManagerService, ManagedApp } from '../apps-manager/apps-manager.service';
 
 // Define constants for tab indices for clarity
 const VANNA_TAB_INDEX = 0;
@@ -39,6 +40,8 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
   //@Input() showVanna: boolean = true;
 
   @Input() showVanna: boolean = false;
+  
+  vannaApp: ManagedApp;
 
   // Internal state
   isModalVisible: boolean = false;
@@ -87,7 +90,10 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
     private cdRef: ChangeDetectorRef,
     private infoService: InfoService,
     private modalService: BsModalService, // Add ngx-bootstrap modal service
-  ) {}
+    protected appsManagerService: AppsManagerService,
+  ) {
+    this.vannaApp = this.appsManagerService.getAppById('vanna-ai');
+  }
 
   ngOnInit(): void {
     try {
