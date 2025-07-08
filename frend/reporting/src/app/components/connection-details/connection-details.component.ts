@@ -38,7 +38,7 @@ import { AiManagerService } from '../ai-manager/ai-manager.service';
 
 @Component({
   selector: 'dburst-connection-details',
-  templateUrl: './connection-details.component.html',
+  templateUrl: './connection-details.template.html',
 })
 export class ConnectionDetailsComponent implements OnInit {
   @Input() mode: 'crud' | 'viewMode' = 'crud';
@@ -51,6 +51,8 @@ export class ConnectionDetailsComponent implements OnInit {
   isErDiagramTabActive = false;
   isUbiquitousLanguageTabActive = false;
   isToolsTabActive = false;
+
+  isVannaAiStarted = false;
 
   constructor(
     protected confirmService: ConfirmService,
@@ -1951,5 +1953,9 @@ export class ConnectionDetailsComponent implements OnInit {
     }
 
     return apps;
+  }
+
+  toggleVannaAiService() {
+    this.isVannaAiStarted = !this.isVannaAiStarted;
   }
 }

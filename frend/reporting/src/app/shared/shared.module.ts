@@ -39,7 +39,6 @@ import { RouterModule } from '@angular/router';
 import { ButtonVariablesComponent } from '../components/button-variables/button-variables.component';
 import { TabulatorColumnsPipe } from './tabulator-columns.pipe';
 import { AiManagerComponent } from '../components/ai-manager/ai-manager.component';
-
 import { AppsManagerComponent } from '../components/apps-manager/apps-manager.component';
 
 @NgModule({
@@ -50,6 +49,7 @@ import { AppsManagerComponent } from '../components/apps-manager/apps-manager.co
     DialogModule,
     CommonModule,
     FormsModule,
+    TabsModule,
     NgxCodeJarComponent,
     ReactiveFormsModule,
     AppRoutingModule,
