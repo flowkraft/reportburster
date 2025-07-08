@@ -377,7 +377,8 @@
           isDatabaseSchemaTabActive = false;
           isDomainGroupedSchemaTabActive = false;
           isErDiagramTabActive = false;
-          isUbiquitousLanguageTabActive = false
+          isUbiquitousLanguageTabActive = false;
+          isToolsTabActive = false;
         "
         (deselectTab)="isConnectionDetailsTabActive = false"
       >
@@ -824,7 +825,8 @@
           isConnectionDetailsTabActive = false;
           isDomainGroupedSchemaTabActive = false;
           isErDiagramTabActive = false;
-          isUbiquitousLanguageTabActive = false
+          isUbiquitousLanguageTabActive = false;
+          isToolsTabActive = false;
         "
         (deselectTab)="isDatabaseSchemaTabActive = false"
       >
@@ -933,7 +935,8 @@
           isConnectionDetailsTabActive = false;
           isDatabaseSchemaTabActive = false;
           isErDiagramTabActive = false;
-          isUbiquitousLanguageTabActive = false
+          isUbiquitousLanguageTabActive = false;
+          isToolsTabActive = false;
         "
         (deselectTab)="isDomainGroupedSchemaTabActive = false"
       >
@@ -1152,7 +1155,8 @@
           isConnectionDetailsTabActive = false;
           isDatabaseSchemaTabActive = false;
           isDomainGroupedSchemaTabActive = false;
-          isUbiquitousLanguageTabActive = false
+          isUbiquitousLanguageTabActive = false;
+          isToolsTabActive = false;
         "
         (deselectTab)="isErDiagramTabActive = false"
       >
@@ -1446,7 +1450,8 @@
           isConnectionDetailsTabActive = false;
           isDatabaseSchemaTabActive = false;
           isDomainGroupedSchemaTabActive = false;
-          isErDiagramTabActive = false
+          isErDiagramTabActive = false;
+          isToolsTabActive = false;
         "
         (deselectTab)="isUbiquitousLanguageTabActive = false"
       >
@@ -1717,40 +1722,40 @@
                 />
                 
                 <!-- Text displayed when NO specific tables are selected -->
-                <span *ngIf="specificTablesSelectedCount === 0">
+                <span *ngIf="targetSchemaObjects.length === 0">
                   Include *.tables plain DB Schema Information
                 </span>
 
                 <!-- Text displayed when specific tables ARE selected -->
-                <span *ngIf="specificTablesSelectedCount > 0">
+                <span *ngIf="targetSchemaObjects.length > 0">
                   Include selected tables' plain DB Schema Information
                 </span>
               </label>
 
               <!-- Button to choose tables (shown when none are selected) -->
               <button
-                *ngIf="specificTablesSelectedCount === 0"
+                *ngIf="targetSchemaObjects.length === 0"
                 id="btnChooseSpecificTables"
                 type="button"
                 class="btn btn-default btn-xs"
                 style="margin-left: 20px"
-                (click)="openTableSelectionModal()"
+                (click)="isDatabaseSchemaTabActive = true; isToolsTabActive = false;"
               >
                 Choose Specific Tables
               </button>
 
               <!-- Button and badge to show/edit selection status -->
-              <span *ngIf="specificTablesSelectedCount > 0" style="margin-left: 20px">
+              <span *ngIf="targetSchemaObjects.length > 0" style="margin-left: 20px">
                 <button
                   id="btnEditSpecificTables"
                   type="button"
                   class="btn btn-info btn-xs"
-                  (click)="openTableSelectionModal()"
+                  (click)="isDatabaseSchemaTabActive = true; isToolsTabActive = false;"
                 >
                   Edit Selection
                 </button>
                 <span class="label label-primary" style="margin-left: 5px;">
-                  {{ specificTablesSelectedCount }} table(s) selected
+                  {{ targetSchemaObjects.length }} table(s) selected
                 </span>
               </span>
             </div>

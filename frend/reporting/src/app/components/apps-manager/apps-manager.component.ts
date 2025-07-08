@@ -8,7 +8,7 @@ import { ManagedApp } from './apps-manager.service';
 
 @Component({
   selector: 'dburst-apps-manager',
-  templateUrl: './apps-manager.component.html',
+  templateUrl: './apps-manager.template.html',
 })
 export class AppsManagerComponent implements OnInit {
   @Input() apps: ManagedApp[] = [];
