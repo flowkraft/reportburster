@@ -1,3 +1,5 @@
+import groovy.ant.AntBuilder
+
 def curlOptions =  message.uploadCommand
 
 def ant = new AntBuilder()

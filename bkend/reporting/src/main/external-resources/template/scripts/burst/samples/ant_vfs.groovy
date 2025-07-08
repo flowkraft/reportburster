@@ -26,6 +26,7 @@
  *    script.
  *
  */
+import groovy.ant.AntBuilder
  
 import com.sourcekraft.documentburster.variables.Variables
 

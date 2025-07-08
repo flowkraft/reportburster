@@ -33,6 +33,7 @@
  *      7.2. http://curl.haxx.se/docs/manpage.html
  *
  */
+import groovy.ant.AntBuilder
 
 import com.sourcekraft.documentburster.variables.Variables
 

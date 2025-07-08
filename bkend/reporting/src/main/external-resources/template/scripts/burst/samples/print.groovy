@@ -14,6 +14,7 @@
  *    http://pdfbox.apache.org/commandline/
  *
  */
+import groovy.ant.AntBuilder
 
 import com.sourcekraft.documentburster.variables.Variables
 

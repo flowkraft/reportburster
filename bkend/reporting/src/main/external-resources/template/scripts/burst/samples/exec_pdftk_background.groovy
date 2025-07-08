@@ -31,6 +31,7 @@
  *    http://www.pdflabs.com/docs/pdftk-man-page/#dest-op-background
  *
  */
+import groovy.ant.AntBuilder
 
 import com.sourcekraft.documentburster.variables.Variables
 

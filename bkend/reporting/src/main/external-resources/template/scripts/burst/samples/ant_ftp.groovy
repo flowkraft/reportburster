@@ -19,7 +19,8 @@
  *    - http://ant.apache.org/manual/Tasks/ftp.html
  *
  */
- 
+import groovy.ant.AntBuilder
+
 import com.sourcekraft.documentburster.variables.Variables
 
 /*

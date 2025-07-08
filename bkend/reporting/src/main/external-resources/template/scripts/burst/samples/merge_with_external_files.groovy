@@ -32,6 +32,7 @@
  *    script.
  *
  */
+import groovy.ant.AntBuilder
 
 import com.sourcekraft.documentburster.engine.pdf.Merger;
 import org.apache.commons.io.FilenameUtils;

@@ -16,6 +16,7 @@
  *    - http://ant.apache.org/manual/Tasks/copy.html
  *
  */
+import groovy.ant.AntBuilder
 
 import com.sourcekraft.documentburster.variables.Variables
 

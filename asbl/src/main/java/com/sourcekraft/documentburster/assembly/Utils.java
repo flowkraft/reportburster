@@ -85,7 +85,7 @@ public class Utils {
 
 		if (!mavenCommand.contains("-Djavac.compiler.path")) {
 			String rootPath = "C:/Program Files";
-			String pattern = ".*Eclipse Adoptium\\\\jdk-11.*-hotspot.*";
+			String pattern = ".*Eclipse Adoptium\\\\jdk-17.*-hotspot.*";
 
 			try (Stream<Path> paths = Files.walk(Paths.get(rootPath))) {
 				String compilerPath = paths.filter(Files::isDirectory).map(Path::toString)
