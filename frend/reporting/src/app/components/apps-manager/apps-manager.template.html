@@ -1,35 +1,13 @@
 <ng-container [ngSwitch]="dropdownDirection">
-  <!-- DropDown Mode -->
+  <!-- DropDown or DropUp Mode -->
   <ng-container *ngSwitchCase="'down'">
-    <div class="btn-group" dropdown>
-      <button id="appManagerDropdown" type="button" class="btn btn-default" dropdownToggle>
-        Manage Apps <span class="caret"></span>
-      </button>
-      <ul *dropdownMenu class="dropdown-menu" role="menu" aria-labelledby="appManagerDropdown">
-        <li role="menuitem" *ngFor="let app of apps">
-          <a class="dropdown-item" href="javascript:void(0)" (click)="toggleApp(app)">
-            <i class="fa" [ngClass]="{'fa-play text-success': app.state !== 'running', 'fa-stop text-danger': app.state === 'running'}"></i>
-            {{ app.name }}
-          </a>
-        </li>
-      </ul>
+    <div class="btn-group dropdown">
+      <ng-container *ngTemplateOutlet="dropdownButton"></ng-container>
     </div>
   </ng-container>
-
-  <!-- DropUp Mode -->
   <ng-container *ngSwitchCase="'up'">
-    <div class="btn-group dropup" dropdown>
-      <button id="appManagerDropup" type="button" class="btn btn-default" dropdownToggle>
-        Manage Apps <span class="caret"></span>
-      </button>
-      <ul *dropdownMenu class="dropdown-menu" role="menu" aria-labelledby="appManagerDropup">
-        <li role="menuitem" *ngFor="let app of apps">
-          <a class="dropdown-item" href="javascript:void(0)" (click)="toggleApp(app)">
-            <i class="fa" [ngClass]="{'fa-play text-success': app.state !== 'running', 'fa-stop text-danger': app.state === 'running'}"></i>
-            {{ app.name }}
-          </a>
-        </li>
-      </ul>
+    <div class="btn-group dropup">
+      <ng-container *ngTemplateOutlet="dropdownButton"></ng-container>
     </div>
   </ng-container>
 
@@ -37,13 +15,124 @@
   <ng-container *ngSwitchCase="'expandedList'">
     <div class="list-group">
       <div *ngFor="let app of apps" class="list-group-item clearfix">
-        <button class="btn pull-right" [ngClass]="{'btn-success': app.state !== 'running', 'btn-danger': app.state === 'running'}" (click)="toggleApp(app)">
-          <i class="fa" [ngClass]="{'fa-play': app.state !== 'running', 'fa-stop': app.state === 'running'}"></i>
-          {{ app.state === 'running' ? 'Stop' : 'Start' }}
+        <button
+          class="btn pull-right"
+          [ngClass]="{
+            'btn-success': app.type !== 'desktop' && app.state !== 'running',
+            'btn-danger': app.type !== 'desktop' && app.state === 'running',
+            'btn-primary': app.type === 'desktop'
+          }"
+          (click)="this.appsManagerService.toggleApp(app)"
+          [title]="
+            app.type === 'desktop'
+              ? 'Launch ' + app.name
+              : (app.state !== 'running' ? 'Start ' + app.name : 'Stop ' + app.name)
+          "
+        >
+          <i
+            *ngIf="app.type === 'desktop'; else normalIcon"
+            class="fa fa-play-circle"
+          ></i>
+          <ng-template #normalIcon>
+            <i class="fa" [ngClass]="{'fa-play': app.state !== 'running', 'fa-stop': app.state === 'running'}"></i>
+          </ng-template>
+          {{
+            app.type === 'desktop'
+              ? 'Launch'
+              : (app.state === 'running' ? 'Stop' : 'Start')
+          }}
         </button>
-        <h4 class="list-group-item-heading">{{ app.name }}</h4>
+        <h4 class="list-group-item-heading">
+          <i *ngIf="app.icon"
+             [class]="app.icon"
+             [ngClass]="{'text-muted': app.type !== 'desktop' && app.state !== 'running'}"
+             style="margin-right: 6px"></i>
+          <span [ngClass]="{'text-muted': app.type !== 'desktop' && app.state !== 'running'}">
+            {{ app.name }}
+            <strong *ngIf="app.type !== 'desktop' && app.state !== 'running'" style="margin-left: 6px;">stopped</strong>
+          </span>
+          <button
+            *ngIf="app.type !== 'desktop' && app.state !== 'running'"
+            class="btn btn-xs btn-link"
+            style="padding: 0 4px; vertical-align: middle;"
+            (click)="this.appsManagerService.toggleApp(app); $event.stopPropagation();"
+            [title]="'Start ' + app.name"
+          >
+            <i class="fa fa-play text-success"></i>
+          </button>
+          <button
+            *ngIf="app.type === 'desktop'"
+            class="btn btn-xs btn-link"
+            style="padding: 0 4px; vertical-align: middle;"
+            (click)="this.appsManagerService.toggleApp(app); $event.stopPropagation();"
+            [title]="'Launch ' + app.name"
+          >
+            <i class="fa fa-play-circle text-primary"></i>
+          </button>
+        </h4>
         <p class="list-group-item-text text-muted">{{ app.description }}</p>
       </div>
     </div>
   </ng-container>
 </ng-container>
+
+<ng-template #dropdownButton>
+  <button
+    type="button"
+    class="btn btn-default dropdown-toggle"
+    data-toggle="dropdown"
+    aria-haspopup="true"
+    aria-expanded="false"
+  >
+    <ng-container *ngIf="apps.length > 0; else manageAppsLabel">
+      <i
+        *ngIf="apps[0].icon"
+        [class]="apps[0].icon"
+        [ngClass]="{'text-muted': apps[0].type !== 'desktop' && apps[0].state !== 'running'}"
+        style="margin-right: 6px"
+      ></i>
+      <span [ngClass]="{'text-muted': apps[0].type !== 'desktop' && apps[0].state !== 'running'}">
+        {{ apps[0].name }}
+        <strong *ngIf="apps[0].type !== 'desktop' && apps[0].state !== 'running'" style="margin-left: 6px;">stopped</strong>
+      </span>
+    </ng-container>
+    <ng-template #manageAppsLabel>
+      Manage Apps
+    </ng-template>
+    <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" role="menu">
+    <li role="menuitem" *ngFor="let app of apps">
+      <a class="dropdown-item" href="javascript:void(0)" (click)="this.appsManagerService.toggleApp(app)">
+        <i
+          *ngIf="app.icon"
+          [class]="app.icon"
+          [ngClass]="{'text-muted': app.type !== 'desktop' && app.state !== 'running'}"
+          style="margin-right: 6px"
+        ></i>
+        <span [ngClass]="{'text-muted': app.type !== 'desktop' && app.state !== 'running'}">
+          {{ app.name }}
+          <strong *ngIf="app.type !== 'desktop' && app.state !== 'running'" style="margin-left: 6px;">stopped</strong>
+        </span>
+        <button
+          *ngIf="app.type !== 'desktop' && app.state !== 'running'"
+          class="btn btn-xs btn-link"
+          style="padding: 0 4px; vertical-align: middle;"
+          (click)="this.appsManagerService.toggleApp(app); $event.stopPropagation();"
+          [title]="'Start ' + app.name"
+        >
+          <i class="fa fa-play text-success"></i>
+        </button>
+        <button
+          *ngIf="app.type === 'desktop'"
+          class="btn btn-xs btn-link"
+          style="padding: 0 4px; vertical-align: middle;"
+          (click)="this.appsManagerService.toggleApp(app); $event.stopPropagation();"
+          [title]="'Launch ' + app.name"
+        >
+          <i class="fa fa-play-circle text-primary"></i>
+        </button>
+      </a>
+    </li>
+  </ul>
+</ng-template>
