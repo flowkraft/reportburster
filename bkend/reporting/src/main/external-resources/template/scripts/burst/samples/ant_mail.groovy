@@ -25,6 +25,7 @@
  *    - http://ant.apache.org/manual/Tasks/mail.html
  *
  */
+import groovy.ant.AntBuilder
 
 //give a valid email address
 def to = "your.address@here.com"

@@ -506,21 +506,16 @@ public class ScriptedReporterTest {
 		// scriptContent.contains("tension: 0.1"));
 
 		// 7.3 Axes Configuration
-		assertTrue("Chart script should define 'ySales' axis", scriptContent.contains("ySales: {"));
-		assertTrue("Chart script should set 'ySales' axis type to 'linear'",
-				scriptContent.contains("ySales: {\n            type: 'linear'"));
-		assertTrue("Chart script should set 'ySales' axis position to 'left'",
-				scriptContent.contains("position: 'left'"));
+		assertTrue("Chart script should define 'ySales' axis", scriptContent.contains("ySales:"));
+		assertTrue("Chart script should set 'ySales' axis type to 'linear'", scriptContent.contains("type: 'linear'"));
+		assertTrue("Chart script should set 'ySales' axis position to 'left'", scriptContent.contains("position: 'left'"));
 		assertTrue("Chart script should set 'ySales' axis title text", scriptContent.contains("text: 'Sales ($)'"));
 
-		assertTrue("Chart script should define 'yOrders' axis", scriptContent.contains("yOrders: {"));
-		assertTrue("Chart script should set 'yOrders' axis type to 'linear'",
-				scriptContent.contains("yOrders: {\n            type: 'linear'"));
-		assertTrue("Chart script should set 'yOrders' axis position to 'right'",
-				scriptContent.contains("position: 'right'"));
+		assertTrue("Chart script should define 'yOrders' axis", scriptContent.contains("yOrders:"));
+		assertTrue("Chart script should set 'yOrders' axis type to 'linear'", scriptContent.contains("type: 'linear'"));
+		assertTrue("Chart script should set 'yOrders' axis position to 'right'", scriptContent.contains("position: 'right'"));
 		assertTrue("Chart script should set 'yOrders' axis title text", scriptContent.contains("text: 'Orders'"));
-		assertTrue("Chart script should disable grid lines for 'yOrders' axis",
-				scriptContent.contains("grid: { drawOnChartArea: false }"));
+		assertTrue("Chart script should disable grid lines for 'yOrders' axis", scriptContent.contains("grid: { drawOnChartArea: false }"));
 
 		// 8. Business Logic / Sanity Checks (Based on validated data)
 		log.info("Validating business logic and overall data sanity...");

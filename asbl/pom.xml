@@ -79,7 +79,7 @@
 				</configuration>
 				<dependencies>
 					<dependency>
-						<groupId>org.codehaus.groovy</groupId>
+						<groupId>org.apache.groovy</groupId>
 						<artifactId>groovy-all</artifactId>
 						<!-- any version of Groovy \>= 1.5.0 should work here -->
 						<version>2.5.8</version>

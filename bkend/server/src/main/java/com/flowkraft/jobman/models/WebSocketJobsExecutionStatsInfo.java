@@ -13,7 +13,7 @@ public class WebSocketJobsExecutionStatsInfo {
 
 	int exitValue;
 
-	String exceptionMessage;
+	private String exceptionMessage;
 
 	public WebSocketJobsExecutionStatsInfo(String eventType) {
 		this.eventType = eventType;

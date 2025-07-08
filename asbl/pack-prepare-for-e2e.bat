@@ -29,7 +29,7 @@ IF %ERRORLEVEL% NEQ 0 (
 echo.
 echo Running AssemblerTest#prepareForE2E...
 REM Now run just the specific test
-call mvn test -pl asbl -Dtest=AssemblerTest#prepareForE2E -X >> asbl\pack-prepare-for-e2e.log 2>&1
+call mvn test -pl asbl -Dtest=AssemblerTest#prepareForE2E >> asbl\pack-prepare-for-e2e.log 2>&1
 IF %ERRORLEVEL% NEQ 0 (
     echo ERROR: AssemblerTest#prepareForE2E failed. Check asbl\pack-prepare-for-e2e.log for details.
     popd
