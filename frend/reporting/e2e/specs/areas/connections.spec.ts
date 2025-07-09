@@ -448,7 +448,7 @@ test.describe('', async () => {
         .clickAndSelectTableRow(`#${dbConnection1FileNameAndId}`)
         .waitOnElementToBecomeEnabled('#btnNewDropdown')
         .waitOnElementToBecomeEnabled('#btnEdit')
-        .waitOnElementToBecomeDisabled('#btnDuplicate')
+        .waitOnElementToBecomeEnabled('#btnDuplicate')
         .waitOnElementToBecomeEnabled('#btnDelete') // Delete should be enabled for non-default & unused
         .elementShouldContainText(
           `#${dbConnection1FileNameAndId} td:first-child`,
@@ -546,6 +546,242 @@ test.describe('', async () => {
       // For now, we'll just assert it cannot be deleted and then manually clean it up
       // (assuming a global afterAll or similar handles full cleanup of test-created files).
       // For this specific test, we will delete it by creating a temp one, making it default, then deleting the original.
+
+      return ft;
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    '(database-connection) should successfully test an (EXISTING) connection for a supported database type',
+    async function ({ beforeAfterEach: firstPage }) {
+      //long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS * 2); // Adjusted timeout for a single vendor test
+
+      let ft = new FluentTester(firstPage);
+
+      const dbVendor = ConnectionsTestHelper.getRandomDbVendor();
+      ft = ft.consoleLog(
+        `Testing database connection for randomly selected vendor: ${dbVendor}`,
+      );
+
+      const connectionName = `ExistingTestConn-${dbVendor}-${Date.now()}`;
+      const kebabConnectionName = _.kebabCase(connectionName);
+      const fileNameAndId = `db-${kebabConnectionName}\\.xml`;
+
+      // 1. Create the database connection using the existing helper
+      // This helper handles filling details, SQLite file creation, and saving.
+      ft = ConnectionsTestHelper.createAndAssertNewDatabaseConnection(
+        ft,
+        connectionName,
+        dbVendor,
+      );
+
+      // 2. Go back to connections, find the created connection, and open it for editing
+      ft = ft.gotoConnections();
+      ft = ft.clickAndSelectTableRow(`#${fileNameAndId}`);
+      ft = ft.waitOnElementToBecomeEnabled('#btnEdit').click('#btnEdit');
+      ft = ft.waitOnElementToBecomeVisible('#modalDbConnection');
+      // Wait for a known field to be enabled to ensure the modal is fully loaded with connection data
+      ft = ft.waitOnElementToBecomeEnabled('#dbConnectionName');
+      ft = ft.waitOnInputToHaveValue('#dbConnectionName', connectionName);
+
+      // 3. Click the "Test Connection" button
+      // Ensure the button is enabled before clicking. It might depend on form state or async operations.
+      ft = ft
+        .waitOnElementToBecomeEnabled('#btnTestDbConnection')
+        .click('#btnTestDbConnection')
+        .confirmDialogShouldBeVisible()
+        .clickYesDoThis();
+
+      //    b. Verify that the schema information section is displayed
+      //       The instruction text should disappear
+      ft = ft
+        .click('#databaseSchemaTab-link')
+        .waitOnElementToBecomeInvisible(
+          'span:has-text("To load the schema, please ensure your connection details are configured")',
+        );
+      //       The picklist for schema objects should become visible
+      ft = ft.waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer');
+      ft = ft.waitOnElementToBecomeVisible('#btnRefreshDatabaseSchema');
+      ft = ft
+        .click('#btnRefreshDatabaseSchema')
+        .waitOnElementToContainText(
+          '#confirmDialog .modal-body', // Specific selector for PrimeNG confirm dialog message
+          'This will refresh the Database Schema. Continue?',
+        )
+        .clickNoDontDoThis()
+        .click('#btnRefreshDatabaseSchema');
+
+      ft = ft
+        .waitOnElementToContainText(
+          '#confirmDialog .modal-body', // Specific selector for PrimeNG confirm dialog message
+          'This will refresh the Database Schema. Continue?',
+        )
+        .clickYesDoThis()
+        .waitOnElementToHaveClass(
+          '#btnRefreshDatabaseSchema .fa-refresh',
+          'fa-spin',
+        )
+        .waitOnElementNotToHaveClass(
+          '#btnRefreshDatabaseSchema .fa-refresh',
+          'fa-spin',
+        );
+
+      // 5. Close the modal
+      ft = ft.click('#btnCloseDbConnectionModal');
+
+      ft = ft.clickAndSelectTableRow(`#${fileNameAndId}`);
+
+      // 6. Clean up: Delete the connection
+      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
+        ft,
+        fileNameAndId,
+        dbVendor,
+      );
+      ft = ft.consoleLog(
+        `Successfully tested and cleaned up for vendor: ${dbVendor}`,
+      );
+
+      return ft;
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    '(database-connection) should successfully test an (NEW) connection for a supported database type',
+    async function ({ beforeAfterEach: firstPage }) {
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS * 3); // Adjusted timeout
+
+      let ft = new FluentTester(firstPage);
+
+      const dbVendor = ConnectionsTestHelper.getRandomDbVendor();
+      ft = ft.consoleLog(
+        `Testing (NEW) database connection for randomly selected vendor: ${dbVendor}`,
+      );
+
+      const connectionName = `NewTestConn-${dbVendor}-${Date.now()}`;
+      const kebabConnectionName = _.kebabCase(connectionName);
+      const fileNameAndId = `db-${kebabConnectionName}\\.xml`; // For deletion after save
+
+      // 1. Navigate and open the "New Database Connection" modal
+      ft = ft.gotoConnections();
+      ft = ft
+        .waitOnElementToBecomeEnabled('#btnNewDropdown')
+        .click('#btnNewDropdown');
+      ft = ft
+        .waitOnElementToBecomeVisible('#btnNewDatabase')
+        .click('#btnNewDatabase');
+      ft = ft.waitOnElementToBecomeVisible('#modalDbConnection');
+      ft = ft.waitOnElementToBecomeEnabled('#dbConnectionName'); // Wait for modal to be ready
+
+      // 2. Fill connection details using the reusable helper
+      //    (modal remains open, connection not yet saved by modal's OK)
+      ft = ConnectionsTestHelper.fillNewDatabaseConnectionDetails(
+        ft,
+        connectionName,
+        dbVendor,
+        kebabConnectionName,
+      );
+
+      // 3. First "Test Connection" attempt: Expect "Save first?" dialog, click "No".
+      ft = ft.consoleLog(
+        'Attempt 1: Click Test. Expect "Save first?" dialog. Click NO.',
+      );
+      ft = ft
+        .waitOnElementToBecomeEnabled('#btnTestDbConnection')
+        .click('#btnTestDbConnection');
+
+      ft = ft.waitOnElementToContainText(
+        '#confirmDialog .modal-body',
+        'The connection must be saved before being able to test it. Save now?',
+      );
+      ft = ft.clickNoDontDoThis(); // Clicks PrimeNG "No"
+      ft = ft.waitOnElementToBecomeInvisible(Constants.BTN_DECLINE_SELECTOR); // PrimeNG No button
+      ft = ft.waitOnElementToBecomeVisible('#modalDbConnection'); // Ensure main modal is still open
+
+      // 4. Second "Test Connection" attempt: Expect "Save first?" dialog, click "Yes".
+      //    This saves the connection and then runs the test.
+      ft = ft.consoleLog(
+        'Attempt 2: Click Test. Expect "Save first?" dialog. Click YES.',
+      );
+      ft = ft
+        .waitOnElementToBecomeEnabled('#btnTestDbConnection')
+        .click('#btnTestDbConnection');
+      ft = ft.confirmDialogShouldBeVisible();
+      ft = ft.waitOnElementToContainText(
+        '#confirmDialog .modal-body',
+        'The connection must be saved before being able to test it. Save now?',
+      );
+      ft = ft.clickYesDoThis(); // Clicks PrimeNG "Yes", triggers save, then test.
+
+      
+      ft = ft.waitOnToastToBecomeVisible(
+        'success',
+        'Successfully connected to the database', Constants.DELAY_HUNDRED_SECONDS
+      );
+
+      // 5. Assertions after "Save first? YES" (connection saved and tested)
+      //    Similar to the (EXISTING) test after a successful test.
+      ft = ft.consoleLog(
+        'Assertions after "Save first? YES": Toast and Schema should appear.',
+      );
+
+      // Verify schema information section is displayed
+      ft = ft
+        .click('#databaseSchemaTab-link') // Ensure the tab is active
+        .waitOnElementToBecomeInvisible(
+          'span:has-text("To load the schema, please ensure your connection details are configured")',
+        );
+      ft = ft.waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer');
+      ft = ft.waitOnElementToBecomeVisible('#btnRefreshDatabaseSchema');
+
+      // 6. Interact with "Refresh Database Schema" button (similar to EXISTING test)
+      ft = ft.consoleLog('Interacting with "Refresh Database Schema" button.');
+      ft = ft
+        .click('#btnRefreshDatabaseSchema')
+        .waitOnElementToContainText(
+          '#confirmDialog .modal-body', // PrimeNG confirm dialog message
+          'This will refresh the Database Schema. Continue?',
+        )
+        .clickNoDontDoThis() // Click "No" on the confirmation
+        .waitOnElementToBecomeInvisible('#confirmDialog');
+
+      ft = ft
+        .click('#btnRefreshDatabaseSchema') // Click "Refresh" again
+        .waitOnElementToContainText(
+          '#confirmDialog .modal-body',
+          'This will refresh the Database Schema. Continue?',
+        )
+        .clickYesDoThis() // Click "Yes" on the confirmation
+        .waitOnElementToHaveClass(
+          // Check for spinner
+          '#btnRefreshDatabaseSchema .fa-refresh', // Selector for the icon within the button
+          'fa-spin',
+        )
+        .waitOnElementNotToHaveClass(
+          // Check spinner disappears
+          '#btnRefreshDatabaseSchema .fa-refresh',
+          'fa-spin',
+        );
+      ft = ft.waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer'); // Ensure picklist is still/again visible
+
+      // 7. Save and Close the modal (using the modal's main OK button as it's a new connection)
+      ft = ft.consoleLog('Finalizing: Clicking modal OK to close.');
+      ft = ft
+        .waitOnElementToBecomeEnabled('#btnOKConfirmationDbConnectionModal')
+        .click('#btnOKConfirmationDbConnectionModal');
+
+      // 8. Clean up: Delete the connection from the connections list
+      ft = ft.consoleLog('Cleaning up: Deleting the created connection.');
+      ft = ft.gotoConnections(); // Ensure on connections page before attempting delete helper
+      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
+        ft,
+        fileNameAndId,
+        dbVendor,
+      );
+
+      ft = ft.consoleLog(
+        `Successfully tested (NEW) connection and cleaned up for vendor: ${dbVendor}`,
+      );
 
       return ft;
     },
