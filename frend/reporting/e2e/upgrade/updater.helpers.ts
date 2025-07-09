@@ -14,6 +14,7 @@ import {
   UpdateInfo,
   Updater,
 } from '../../src/app/areas/electron-nodejs/updater';
+import { constants } from 'buffer';
 //import SemVer from 'keep-a-changelog/types/deps/deno.land/x/semver@v1.4.0/mod';
 
 export default {
@@ -870,14 +871,27 @@ export default {
     //console.log(`STEP30`);
 
     //assert "logs" information is correctly copied if copyLogs is true
+    
+    
     let archivesFolderPath = `${dbDesktopServerDirectoryPath}/logs/archives`;
     let archivesFolderExist = await jetpack.existsAsync(archivesFolderPath);
 
-    if (updateInfo.updateOptions.copylogfiles)
-      expect(archivesFolderExist)
-        .withContext(`${archivesFolderExist} folder should exist`)
-        .toBe('dir');
-    else
+    if (updateInfo.updateOptions.copylogfiles) {
+      
+        const sourceArchivesExists = await jetpack.existsAsync(
+          `${updateInfo.updateSourceDirectoryPath}/logs/archives`
+        );
+
+        if (sourceArchivesExists) {
+          expect(archivesFolderExist)
+            .withContext(`${archivesFolderExist} folder should exist`)
+            .toBe('dir');
+        }
+      } else {
+        expect(archivesFolderExist)
+          .withContext(`${archivesFolderExist} folder should not exist`)
+          .toBe(false);
+      }
       expect(archivesFolderExist)
         .withContext(`${archivesFolderExist} folder should not exist`)
         .toBe(false);

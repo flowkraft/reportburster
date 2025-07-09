@@ -91,7 +91,10 @@ public class Settings extends DumpToString {
 
 	}
 
-	public String getPrimaryDatabaseConnectionCode() {
+	public String getReportingPrimaryDatabaseConnectionCode() {
+
+		if (Objects.isNull(this.reportingSettings))
+			return StringUtils.EMPTY;
 
 		if (!Objects.isNull(this.reportingSettings.report.datasource.sqloptions))
 			return this.reportingSettings.report.datasource.sqloptions.conncode;
@@ -247,6 +250,10 @@ public class Settings extends DumpToString {
 		try (FileInputStream fis = new FileInputStream(new File(connectionFilePath))) {
 			connDatabaseSettings = (DocumentBursterConnectionDatabaseSettings) ur.unmarshal(fis);
 		}
+
+		if (StringUtils.isBlank(connDatabaseSettings.connection.databaseserver.url)
+				&& !StringUtils.isBlank(connDatabaseSettings.connection.databaseserver.connectionstring))
+			connDatabaseSettings.connection.databaseserver.url = connDatabaseSettings.connection.databaseserver.connectionstring;
 
 		return connDatabaseSettings;
 	}

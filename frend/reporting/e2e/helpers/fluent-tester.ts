@@ -955,7 +955,7 @@ export class FluentTester implements PromiseLike<void> {
     //await this.doHover('#topMenuConfigurationManage');
 
     //await this.doFocus('#topMenuConfigurationManage');
-    await this.doClick('#topMenuConfigurationManage');
+    //await this.doClick('#topMenuConfigurationManage');
 
     /*
    
@@ -964,8 +964,8 @@ export class FluentTester implements PromiseLike<void> {
       Constants.DELAY_HUNDRED_SECONDS
     );
       */
-    //await this.doHover('#topMenuConfigurationTemplates');
     //await this.doWaitOnElementToBecomeVisible('#topMenuConfigurationTemplates');
+    await this.doHover('#topMenuConfigurationTemplates');
     await this.doClick('#topMenuConfigurationTemplates');
     /*
    
@@ -2279,7 +2279,7 @@ export class FluentTester implements PromiseLike<void> {
     //await this.doHover('#topMenuConfigurationManage');
 
     //await this.doFocus('#topMenuConfigurationManage');
-    await this.doClick('#topMenuConfigurationManage');
+    //await this.doClick('#topMenuConfigurationManage');
 
     /*
    
