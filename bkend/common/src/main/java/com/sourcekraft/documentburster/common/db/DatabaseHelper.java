@@ -49,7 +49,7 @@ public class DatabaseHelper {
 			ctx.dbManager = new DatabaseConnectionManager(ctx.settings);
 		}
 
-		String dbConnectionCode = ctx.settings.getPrimaryDatabaseConnectionCode();
+		String dbConnectionCode = ctx.settings.getReportingPrimaryDatabaseConnectionCode();
 
 		// Convert query to use JDBI parameters
 		String jdbiQuery = convertToJdbiParameters(sqlQuery);

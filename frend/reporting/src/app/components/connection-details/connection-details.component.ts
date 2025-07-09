@@ -1959,4 +1959,33 @@ export class ConnectionDetailsComponent implements OnInit {
   toggleVannaAiService() {
     this.isVannaAiStarted = !this.isVannaAiStarted;
   }
+
+  getAiTrainingCheckboxDisabledTooltip(checkboxId: string): string {
+  switch (checkboxId) {
+    case 'vannaTrainingIncludeDbSchema':
+      if (this.isSchemaLoading) return 'Database schema is loading...';
+      if (!this.sourceSchemaObjects || this.sourceSchemaObjects.length === 0)
+        return 'No database schema loaded. Please test or refresh the connection first.';
+      return '';
+    case 'vannaTrainingIncludeDomainGroupedSchema':
+      if (!this.domainGroupedSchemaExists)
+        return 'No domain-grouped schema found. Please generate or save one first.';
+      return '';
+    case 'vannaTrainingIncludeErDiagram':
+      if (!this.erDiagramExists)
+        return 'No ER diagram found. Please create and save an ER diagram first.';
+      return '';
+    case 'vannaTrainingIncludeUbiquitousLanguage':
+      if (!this.isStringAndNotEmpty(this.ubiquitousLanguageMarkdown))
+        return 'No Ubiquitous Language content found. Please add and save some content first.';
+      return '';
+    case 'vannaTrainingIncludeSqlReportQueries':
+      if (!(this as any).hasSqlReportQueries)
+        return 'No SQL-based report queries found for this connection.';
+      return '';
+    default:
+      return '';
+  }
+}
+
 }

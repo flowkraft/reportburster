@@ -71,8 +71,16 @@ public class DatabaseConnectionManager {
 		}
 	}
 
-	public Connection getDirectConnection() throws Exception {
-		ConnectionDatabaseSettings settings = getConnectionSettings(this.settings.getPrimaryDatabaseConnectionCode());
+	public Connection getJdbcConnection(String connectionCode) throws Exception {
+
+		String cCode = StringUtils.EMPTY;
+
+		if (!StringUtils.isBlank(connectionCode))
+			cCode = connectionCode;
+		else
+			cCode = this.settings.getReportingPrimaryDatabaseConnectionCode();
+
+		ConnectionDatabaseSettings settings = getConnectionSettings(cCode);
 		String driverClass = getDriverClass(settings.databaseserver.type);
 		Class.forName(driverClass);
 		return DriverManager.getConnection(settings.databaseserver.url, settings.databaseserver.userid,
@@ -82,17 +90,18 @@ public class DatabaseConnectionManager {
 	/**
 	 * Retrieves the connection settings for the given code. Prioritizes pre-loaded
 	 * primary connection settings from ctx.settings. Falls back to loading from
-	 * file for secondary connections or if primary was not pre-loaded.
-	 *
+	 * file for secondary connections or if primary was not pre-loaded. T
+	 * 
 	 * @param connectionCode The unique code identifying the database connection.
 	 * @return The ConnectionDatabaseSettings object.
 	 * @throws Exception If settings cannot be retrieved.
 	 */
 	private synchronized ConnectionDatabaseSettings getConnectionSettings(String connectionCode) throws Exception {
 		// Remove ctx.settings references and use this.settings instead
-		String primaryCode = this.settings.getPrimaryDatabaseConnectionCode();
+		
+		String primaryCode = this.settings.getReportingPrimaryDatabaseConnectionCode();
 
-		if (StringUtils.isNotEmpty(primaryCode) && primaryCode.equals(connectionCode)
+		if (StringUtils.isNotBlank(primaryCode) && primaryCode.equals(connectionCode)
 				&& this.settings.connectionDatabaseSettings != null) {
 			return this.settings.connectionDatabaseSettings.connection;
 		} else {
@@ -134,7 +143,7 @@ public class DatabaseConnectionManager {
 		}
 
 		System.out.println("connSettings: " + connSettings.toString());
-		
+
 		// Create DataSource using HikariCP
 		log.trace("Creating HikariConfig for code: {}", connectionCode);
 		HikariConfig config = new HikariConfig();

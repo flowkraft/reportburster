@@ -168,7 +168,10 @@ _startServerAndDoX = (npm_x_script) => {
   let serverKilled = false;
 
   server.stdout.on("data", (data) => {
-    // console.log(`stdout: ${data}`);
+
+    if (!data.includes("destination=/topic/execution-stats") && !data.includes("SimpleBrokerMessageHandler")) {
+      console.log(`stdout: ${data}`);
+    }
 
     // Only start the test process once, no matter how many times this matches
     if (
