@@ -4,7 +4,7 @@ export const tabCmsWebPortalTemplate = `<ng-template
   <div class="well">
     <div class="row" style="margin-bottom: 3px">
       <div class="col-xs-12">
-        <a href="https://www.reportburster.com/docs/cms-webportal" target="_blank" class="btn btn-default btn-sm">
+        <a href="https://www.reportburster.com/docs/cms-webportal" target="_blank" class="btn btn-primary btn-sm">
             <i class="fa fa-book"></i>&nbsp;ReportBurster Portal
         </a></div>
     </div>

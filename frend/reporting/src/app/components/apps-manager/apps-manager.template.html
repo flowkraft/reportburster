@@ -15,38 +15,68 @@
   <ng-container *ngSwitchCase="'expandedList'">
     <div class="list-group">
       <div *ngFor="let app of apps" class="list-group-item clearfix">
-        <button
-          class="btn pull-right"
-          [ngClass]="{
-            'btn-success': app.type !== 'desktop' && app.state !== 'running',
-            'btn-danger': app.type !== 'desktop' && app.state === 'running',
-            'btn-primary': app.type === 'desktop'
-          }"
-          (click)="this.appsManagerService.toggleApp(app)"
-          [title]="
-            app.type === 'desktop'
-              ? 'Launch ' + app.name
-              : (app.state !== 'running' ? 'Start ' + app.name : 'Stop ' + app.name)
-          "
-        >
-          <i
-            *ngIf="app.type === 'desktop'; else normalIcon"
-            class="fa fa-play-circle"
-          ></i>
-          <ng-template #normalIcon>
-            <i class="fa" [ngClass]="{'fa-play': app.state !== 'running', 'fa-stop': app.state === 'running'}"></i>
-          </ng-template>
-          {{
-            app.type === 'desktop'
-              ? 'Launch'
-              : (app.state === 'running' ? 'Stop' : 'Start')
-          }}
-        </button>
+        <!-- For non-desktop apps with a URL, show Launch button when running -->
+        <ng-container *ngIf="app.type !== 'desktop' && app.url; else normalAppButton">
+          <span
+           class="pull-right" 
+           [title]="
+              app.state === 'running'
+                ? 'Launch ' + app.name
+                : app.name + ' is stopped, please start it'
+            "
+            style="display: inline-block"
+          >
+            <a
+              class="btn pull-right"
+              [ngClass]="{
+                'btn-primary': app.state === 'running',
+                'btn-default': app.state !== 'running'
+              }"
+              [href]="app.state === 'running' ? app.url : null"
+              target="_blank"
+              [attr.aria-disabled]="app.state !== 'running' ? true : null"
+              [style.cursor]="'pointer'"
+              (click)="$event.stopPropagation()"
+            >
+              <i class="fa fa-external-link"></i>
+              Launch
+            </a>
+          </span>
+        </ng-container>
+        <ng-template #normalAppButton>
+          <button
+            class="btn pull-right"
+            [ngClass]="{
+              'btn-default': app.type !== 'desktop' && app.state !== 'running',
+              'btn-danger': app.type !== 'desktop' && app.state === 'running',
+              'btn-primary': app.type === 'desktop'
+            }"
+            (click)="this.appsManagerService.toggleApp(app)"
+            [title]="
+              app.type === 'desktop'
+                ? 'Launch ' + app.name
+                : (app.state !== 'running' ? 'Start ' + app.name : 'Stop ' + app.name)
+            "
+          >
+            <i
+              *ngIf="app.type === 'desktop'; else normalIcon"
+              class="fa fa-play-circle"
+            ></i>
+            <ng-template #normalIcon>
+              <i class="fa" [ngClass]="{'fa-play': app.state !== 'running', 'fa-stop': app.state === 'running'}"></i>
+            </ng-template>
+            {{
+              app.type === 'desktop'
+                ? 'Launch'
+                : (app.state === 'running' ? 'Stop' : 'Start')
+            }}
+          </button>
+        </ng-template>
         <h4 class="list-group-item-heading">
           <i *ngIf="app.icon"
-             [class]="app.icon"
-             [ngClass]="{'text-muted': app.type !== 'desktop' && app.state !== 'running'}"
-             style="margin-right: 6px"></i>
+            [class]="app.icon"
+            [ngClass]="{'text-muted': app.type !== 'desktop' && app.state !== 'running'}"
+            style="margin-right: 6px"></i>
           <span [ngClass]="{'text-muted': app.type !== 'desktop' && app.state !== 'running'}">
             {{ app.name }}
             <strong *ngIf="app.type !== 'desktop' && app.state !== 'running'" style="margin-left: 6px;">stopped</strong>
@@ -74,7 +104,6 @@
       </div>
     </div>
   </ng-container>
-</ng-container>
 
 <ng-template #dropdownButton>
   <button
