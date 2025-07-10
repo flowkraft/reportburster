@@ -1952,7 +1952,7 @@ export class ConnectionDetailsComponent implements OnInit {
       apps.push(vscodeApp);
     }
 
-    console.log(`apps: ${JSON.stringify(apps)}`);
+    // console.log(`apps: ${JSON.stringify(apps)}`);
     return apps;
   }
 

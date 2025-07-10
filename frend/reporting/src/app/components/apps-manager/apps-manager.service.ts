@@ -28,10 +28,10 @@ export class AppsManagerService {
     apps: [
       {
         id: 'cms-webportal',
-        name: 'CMS & WebPortal (Production)',
+        name: 'WebPortal / Content Management CMS',
         category: 'Web Portal',
         type: 'docker',
-        description: 'Production-ready CMS & WebPortal with admin features.',
+        description: 'Production-ready WebPortal / Content Management with admin features.',
         url: 'http://localhost:8080',
         enabled: true,
       },

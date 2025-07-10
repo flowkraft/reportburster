@@ -809,7 +809,7 @@
                     style="font-size: 24px; color: #1f70c1"
                   ></i>
                 </div>
-                <p style="margin-top: 2px">IBM Db2</p>
+                <p id="ibmDb2Label" style="margin-top: 2px">IBM Db2</p>
               </a>
             </div>
           </div>
@@ -1899,9 +1899,9 @@
         type="button"
         (click)="onModalOK()"
         [disabled]="
-          !modalConnectionInfo.database.documentburster.connection.name ||
+          (!modalConnectionInfo.database.documentburster.connection.name ||
           modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file' ||
-          isDatabaseSchemaTabActive == true
+          (isTestingConnection == true || isSchemaLoading == true))
         "
       >
         {{ "BUTTONS.SAVE" | translate }}

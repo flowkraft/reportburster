@@ -1526,7 +1526,7 @@ export class FluentTester implements PromiseLike<void> {
     //});
 
     // Selector for the actual editable <pre> element within the CodeJar component
-    const editablePreSelector = `${selector} pre[contenteditable=true]`;
+    const editablePreSelector = `${selector} pre[contenteditable]`;
 
     const actualContent = await this.window.evaluate((sel) => {
       const preElement = document.querySelector(sel) as HTMLPreElement | null;
@@ -1570,7 +1570,7 @@ export class FluentTester implements PromiseLike<void> {
     selector: string,
     expectedText: string,
   ): Promise<void> {
-    const editablePreSelector = `${selector} pre[contenteditable=true]`;
+    const editablePreSelector = `${selector} pre[contenteditable]`;
 
     const actualContent = await this.window.evaluate((sel) => {
       const preElement = document.querySelector(sel) as HTMLPreElement | null;
@@ -1616,7 +1616,7 @@ export class FluentTester implements PromiseLike<void> {
     content: string,
   ): Promise<void> {
     // First find and focus the editor
-    await this.window.locator(`${selector} [contenteditable=true]`).click();
+    await this.window.locator(`${selector} [contenteditable]`).click();
 
     // Clear existing content using keyboard shortcuts
     await this.window.keyboard.press('Control+a');
@@ -1654,7 +1654,7 @@ export class FluentTester implements PromiseLike<void> {
     await this.window.evaluate(
       ({ selector, content }) => {
         const editor = document.querySelector(
-          `${selector} [contenteditable=true]`,
+          `${selector} [contenteditable]`,
         );
         if (!editor) {
           throw new Error('CodeJar editor element not found');
@@ -1675,7 +1675,7 @@ export class FluentTester implements PromiseLike<void> {
     );
 
     // Continue with the rest of your method...
-    await this.window.locator(`${selector} [contenteditable=true]`).focus();
+    await this.window.locator(`${selector} [contenteditable]`).focus();
     await this.window.keyboard.press('End');
     await this.sleep(Constants.DELAY_HALF_SECOND);
     await this.window.keyboard.press('Control+s');
@@ -1697,7 +1697,7 @@ export class FluentTester implements PromiseLike<void> {
         }
 
         // Find the actual editor div (contenteditable element)
-        const editor = codeJarComponent.querySelector('[contenteditable=true]');
+        const editor = codeJarComponent.querySelector('[contenteditable]');
         if (!editor) {
           throw new Error('CodeJar editor element not found');
         }
@@ -1791,7 +1791,7 @@ export class FluentTester implements PromiseLike<void> {
       // Call the handler if we found it
       if (componentInstance) {
         const editorContent = document.querySelector(
-          `${selector} [contenteditable=true]`,
+          `${selector} [contenteditable]`,
         )?.innerHTML;
         if (editorContent) {
           componentInstance.onTemplateContentChanged(editorContent);
