@@ -56,6 +56,12 @@ export class ConnectionDetailsComponent implements OnInit {
 
   managedApps$ = this.getManagedApps(); // Observable or Promise
 
+  vannaTrainingIncludeDbSchema: boolean = false;
+  vannaTrainingIncludeDomainGroupedSchema: boolean = false;
+  vannaTrainingIncludeErDiagram: boolean = false;
+  vannaTrainingIncludeUbiquitousLanguage: boolean = false;
+  vannaTrainingIncludeSqlQueries: boolean = false;
+
   constructor(
     protected confirmService: ConfirmService,
     protected messagesService: ToastrMessagesService,
@@ -770,6 +776,123 @@ export class ConnectionDetailsComponent implements OnInit {
       );
     }
   }
+
+launchAiCopilotForVannaAITrainingPlanGeneration(): void {
+  // 1. Check if schema is loaded (as before)
+  if (!this.rawSchemaData || !this.rawSchemaData.tables) {
+    this.messagesService.showError(
+      'Raw database schema is not loaded. Please load or refresh the database schema first to generate a Vanna.AI training plan.',
+    );
+    return;
+  }
+
+  // 2. Check if at least one of the 5 checkboxes is selected
+  const includeDbSchema = !!this.vannaTrainingIncludeDbSchema;
+  const includeDomainGroupedSchema = !!this.vannaTrainingIncludeDomainGroupedSchema;
+  const includeErDiagram = !!this.vannaTrainingIncludeErDiagram;
+  const includeUbiquitousLanguage = !!this.vannaTrainingIncludeUbiquitousLanguage;
+  const includeSqlQueries = !!this.vannaTrainingIncludeSqlQueries;
+
+  if (
+    !includeDbSchema &&
+    !includeDomainGroupedSchema &&
+    !includeErDiagram &&
+    !includeUbiquitousLanguage &&
+    !includeSqlQueries
+  ) {
+    this.messagesService.showError(
+      'Please select at least one information source (Database Schema, Domain-Grouped Schema, ER Diagram, Ubiquitous Language, or SQL Queries) to generate a Vanna.AI training plan.',
+    );
+    return;
+  }
+
+  // 3. Prepare variables for the prompt
+  let databaseType = '';
+  let plainDbSchema = '';
+  let domainGroupedSchema = '';
+  let erDiagram = '';
+  let ubiquitousLanguage = '';
+  let sqlQueries = '';
+
+  // Database Type (always included if schema is loaded)
+  if (this.rawSchemaData && this.rawSchemaData.databaseType) {
+    databaseType = this.rawSchemaData.databaseType;
+  } else if (
+    this.modalConnectionInfo &&
+    this.modalConnectionInfo.database &&
+    this.modalConnectionInfo.database.documentburster &&
+    this.modalConnectionInfo.database.documentburster.connection &&
+    this.modalConnectionInfo.database.documentburster.connection.databaseserver &&
+    this.modalConnectionInfo.database.documentburster.connection.databaseserver.type
+  ) {
+    databaseType = this.modalConnectionInfo.database.documentburster.connection.databaseserver.type;
+  }
+
+  // Plain DB Schema (JSON)
+  if (includeDbSchema) {
+    plainDbSchema = JSON.stringify(this.rawSchemaData.tables, null, 2);
+  }
+
+  // Domain-Grouped Schema (Plain Text)
+  if (includeDomainGroupedSchema && this.domainGroupedSchemaJsonTextContent) {
+    domainGroupedSchema = this.domainGroupedSchemaJsonTextContent.trim();
+  }
+
+  // ER Diagram (PlantUML)
+  if (includeErDiagram && this.plantUmlCode) {
+    erDiagram = this.plantUmlCode.trim();
+  }
+
+  // Ubiquitous Language (Markdown)
+  if (includeUbiquitousLanguage && this.ubiquitousLanguageMarkdown) {
+    ubiquitousLanguage = this.ubiquitousLanguageMarkdown.trim();
+  }
+
+  // Existing SQL Queries (Optional)
+  // if (includeSqlQueries && this.sqlQueriesTextContent) {
+  //   sqlQueries = this.sqlQueriesTextContent.trim();
+  // }
+
+  sqlQueries = 'Test SQL Queries'; 
+  
+  // 4. Build the prompt variables object
+  const promptVariables: { [key: string]: string } = {};
+
+  promptVariables['[Specify Database Type, e.g., PostgreSQL, SQL Server, MySQL]'] = databaseType;
+
+  if (includeDbSchema) {
+    promptVariables['[VANNA TRAINING DB SCHEMA]'] = plainDbSchema;
+  }
+  if (includeDomainGroupedSchema) {
+    promptVariables['[VANNA TRAINING DOMAIN GROUPED SCHEMA]'] = domainGroupedSchema;
+  }
+  if (includeErDiagram) {
+    promptVariables['[VANNA TRAINING ER DIAGRAM]'] = erDiagram;
+  }
+  if (includeUbiquitousLanguage) {
+    promptVariables['[VANNA TRAINING UBIQUITOUS LANGUAGE]'] = ubiquitousLanguage;
+  }
+  if (includeSqlQueries) {
+    promptVariables['[VANNA TRAINING EXISTING SQL QUERIES]'] = sqlQueries;
+  }
+
+  // 5. Launch the AI Copilot with the constructed config
+  const launchConfig: AiManagerLaunchConfig = {
+    initialActiveTabKey: 'PROMPTS',
+    initialSelectedCategory: 'Vanna.AI',
+    initialExpandedPromptId: 'VANNA-AI-TRAINING-PLAN',
+    promptVariables,
+  };
+
+  if (this.aiManagerInstance) {
+    this.aiManagerInstance.launchWithConfiguration(launchConfig);
+  } else {
+    this.messagesService.showError('AI Copilot component is not available.');
+    console.error(
+      'AI Copilot instance is not found. Ensure @ViewChild(AiManagerComponent) is correctly configured.',
+    );
+  }
+}
 
   // Method to handle changes in the JSON editor (ngx-codejar)
   onDomainGroupedSchemaJsonTextContentChanged(newCode: string): void {
