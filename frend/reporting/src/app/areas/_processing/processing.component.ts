@@ -242,6 +242,9 @@ export class ProcessingComponent implements OnInit {
   }
 
   async ngOnInit() {
+    
+    this.cmsPortalApp = [await this.appsManagerService.getAppById('cms-webportal')];
+    
     if (this.subscriptionCheckIfTestEmailServerIsStarted) {
       this.subscriptionCheckIfTestEmailServerIsStarted.unsubscribe();
     }
@@ -261,7 +264,6 @@ export class ProcessingComponent implements OnInit {
 
     await this.samplesService.fillSamplesNotes();
 
-    this.cmsPortalApp = [this.appsManagerService.getAppById('cms-webportal')];
     
     this.route.params.subscribe(async (params) => {
       let processingMode = 'processing';

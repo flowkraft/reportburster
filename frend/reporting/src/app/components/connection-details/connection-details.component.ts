@@ -54,6 +54,8 @@ export class ConnectionDetailsComponent implements OnInit {
 
   isVannaAiStarted = false;
 
+  managedApps$ = this.getManagedApps(); // Observable or Promise
+
   constructor(
     protected confirmService: ConfirmService,
     protected messagesService: ToastrMessagesService,
@@ -1939,15 +1941,15 @@ export class ConnectionDetailsComponent implements OnInit {
     return example;
   }
 
-  getManagedApps(): ManagedApp[] {
+  async getManagedApps(): Promise<ManagedApp[]> {
     const apps: ManagedApp[] = [];
 
-    const cloudbeaverApp = this.appsManagerService.getAppById('cloudbeaver');
+    const cloudbeaverApp = await this.appsManagerService.getAppById('cloudbeaver');
     if (cloudbeaverApp) {
       apps.push(cloudbeaverApp);
     }
 
-    const vscodeApp = this.appsManagerService.getAppById('vscode');
+    const vscodeApp = await this.appsManagerService.getAppById('vscode');
     if (vscodeApp) {
       apps.push(vscodeApp);
     }
@@ -1956,8 +1958,18 @@ export class ConnectionDetailsComponent implements OnInit {
     return apps;
   }
 
-  toggleVannaAiService() {
-    this.isVannaAiStarted = !this.isVannaAiStarted;
+  async toggleVannaAiService() {
+    let dialogQuestion = `Start Vanna.AI?`;
+    if (this.isVannaAiStarted) {
+      dialogQuestion = `Stop Vanna.AI?`;
+    }
+
+    this.confirmService.askConfirmation({
+      message: dialogQuestion,
+      confirmAction: async () => {
+        this.isVannaAiStarted = !this.isVannaAiStarted;
+      }
+    });
   }
 
   getAiTrainingCheckboxDisabledTooltip(checkboxId: string): string {

@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ShellService } from '../../providers/shell.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 import { AppsManagerService, ManagedApp } from './apps-manager.service';
+import { ConfirmService } from '../dialog-confirm/confirm.service';
 
 // This interface should be defined in a shared models file
 
@@ -18,14 +19,33 @@ export class AppsManagerComponent implements OnInit {
   // @Input() appId: string;
 
   constructor(
-   protected appsManagerService: AppsManagerService
+   protected appsManagerService: AppsManagerService,
+   protected confirmService: ConfirmService,
+       
   ) {}
 
-  ngOnInit(): void {
-    // Initialize app states, perhaps by checking their status if possible
-    // For now, we'll default them to 'unknown' or 'stopped'
-    this.apps.forEach(app => app.state = 'stopped');
+  async ngOnInit(): Promise<void> {
+    //this.apps = await this.appsManagerService.getAllApps();
   }
 
   
+  async onToggleApp(app: ManagedApp) {
+    let dialogQuestion = `Start ${app.name}?`;
+    if (app.state === 'running') {
+      dialogQuestion = `Stop ${app.name}?`;
+    }
+
+    this.confirmService.askConfirmation({
+      message: dialogQuestion,
+      confirmAction: async () => {
+        await this.appsManagerService.toggleApp(app);
+        // Refresh the app state after toggling
+        if (this.apps && this.apps.length > 0) {
+          const ids = this.apps.map(a => a.id);
+          this.apps = await Promise.all(ids.map(id => this.appsManagerService.getAppById(id)));
+        }
+      }
+    });
+  }
+
 }

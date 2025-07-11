@@ -92,12 +92,13 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
     private modalService: BsModalService, // Add ngx-bootstrap modal service
     protected appsManagerService: AppsManagerService,
   ) {
-    this.vannaApp = this.appsManagerService.getAppById('vanna-ai');
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     try {
       this.loadPrompts();
+      this.vannaApp = await this.appsManagerService.getAppById('vanna-ai');
+  
     } catch (error) {
       console.error('Error during AiManagerComponent ngOnInit:', error);
       // Optionally, handle the error more gracefully, e.g., show a message or disable AI features
