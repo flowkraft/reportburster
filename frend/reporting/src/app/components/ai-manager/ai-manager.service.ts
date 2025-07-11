@@ -17,7 +17,7 @@ export interface PromptInfo {
     | 'PDF Generation (from XSL-FO)'
     | 'SQL Writing Assistance'
     | 'Script Writing Assistance'
-    | 'Vanna AI';
+    | 'Vanna.AI';
 }
 
 @Injectable({
@@ -1685,17 +1685,17 @@ try {
       tags: ['groovy', 'input-source', 'master-details', 'cross-tab', 'kpi'],
       category: 'Script Writing Assistance',
     },
-        // --- Vanna AI ---
+        // --- Vanna.AI ---
     {
       id: 'VANNA-AI-TRAINING-PLAN',
-      title: 'Generate Vanna AI Training Plan',
+      title: 'Generate Vanna.AI Training Plan',
       description:
-        'Generates a comprehensive Python script for a Vanna AI training plan based on provided database context.',
-      promptText: `You are an expert Vanna AI consultant. Your primary goal is to generate a comprehensive, effective, and well-structured Vanna AI Training Plan based on the provided database context. The output must be a single, clean, and ready-to-use Python script that can be easily executed in a Jupyter Notebook.
+        'Generates a comprehensive Python script for a Vanna.AI training plan based on provided database context.',
+      promptText: `You are an expert Vanna.AI consultant. Your primary goal is to generate a comprehensive, effective, and well-structured Vanna.AI Training Plan based on the provided database context. The output must be a single, clean, and ready-to-use Python script that can be easily executed in a Jupyter Notebook.
 
-Adhere strictly to Vanna AI's documented best practices to ensure the highest possible accuracy for the resulting RAG model.
+Adhere strictly to Vanna.AI's documented best practices to ensure the highest possible accuracy for the resulting RAG model.
 
-**Vanna AI Core Principles to Follow:**
+**Vanna.AI Core Principles to Follow:**
 1.  **Primacy of Training Data:** The quality of the training data is the single most important factor for accuracy.
 2.  **Value of Question-SQL Pairs:** Prioritize generating high-quality, descriptive questions for every SQL query. This provides invaluable context.
 3.  **Specificity over Generality:** You MUST NOT use \`SELECT * FROM table\`. All SQL statements, whether from existing reports or AI-generated, must explicitly list the column names (e.g., \`SELECT id, name, email FROM my_table\`). This is non-negotiable.
@@ -1710,28 +1710,28 @@ Generate a Python script that defines a \`TrainingPlan\` object. Populate this p
 *   **Database Type:** \`[Specify Database Type, e.g., PostgreSQL, SQL Server, MySQL]\`
 *   **Plain DB Schema (JSON):**
     \`\`\`json
-    {{vannaTrainingIncludeDbSchema}}
+    [VANNA TRAINING DB SCHEMA]
     \`\`\`
 *   **Domain-Grouped Schema (Plain Text):**
     \`\`\`text
-    {{vannaTrainingIncludeDomainGroupedSchema}}
+    [VANNA TRAINING DOMAIN GROUPED SCHEMA]
     \`\`\`
 *   **ER Diagram (PlantUML):**
     \`\`\`plantuml
-    {{vannaTrainingIncludeErDiagram}}
+    [VANNA TRAINING ER DIAGRAM]
     \`\`\`
 *   **Ubiquitous Language (Markdown):**
     \`\`\`markdown
-    {{vannaTrainingIncludeUbiquitousLanguage}}
+    [VANNA TRAINING UBIQUITOUS LANGUAGE]
     \`\`\`
 *   **Existing SQL Queries (Optional):**
     \`\`\`sql
-    {{vannaTrainingIncludeSqlQueries}}
+    [VANNA TRAINING EXISTING SQL QUERIES]
     \`\`\`
 
 ---
 
-**LLM INSTRUCTION: BEGIN Vanna AI Training Plan Generation**
+**LLM INSTRUCTION: BEGIN Vanna.AI Training Plan Generation**
 
 Based on the context and rules above, generate the Python \`TrainingPlan\` now.
 
@@ -1764,7 +1764,7 @@ Based on the context and rules above, generate the Python \`TrainingPlan\` now.
 
 The final output must be a single Python code block, starting with the necessary imports and following all structuring and methodological rules. Do not include any text or explanation outside of the Python code block.`,
       tags: ['vanna', 'ai', 'training', 'rag', 'python'],
-      category: 'Vanna AI',
+      category: 'Vanna.AI',
     },
   ];
 
