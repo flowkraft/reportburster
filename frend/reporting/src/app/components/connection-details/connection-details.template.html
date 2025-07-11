@@ -1674,7 +1674,7 @@
         (deselectTab)="isToolsTabActive = false"
       >
         <ng-template tabHeading>
-          <i class="fa fa-comments"></i> &nbsp;Chat2DB (AI)
+          <i class="fa fa-comments"  [style.color]="isVannaAiStarted ? 'green' : '#888'"></i> &nbsp;Chat2DB (AI)
         </ng-template>
 
         <!-- Show schema not loaded message if schema is not available -->
@@ -1700,7 +1700,7 @@
                 class="btn btn-default btn-block"
                 [disabled]="!isVannaAiStarted"
               >
-                <i class="fa fa-comments"></i>&nbsp; Chat With Your Database (AI)
+                <i class="fa fa-comments" [style.color]="isVannaAiStarted ? 'green' : '#888'"></i>&nbsp; Chat With Your Database (AI)
               </button>
             </div>
             <div class="col-xs-6">
@@ -1833,8 +1833,9 @@
                     id="btnTrainVannaAi"
                     type="button"
                     class="btn btn-default btn-block"
+                    [disabled]="!isVannaAiStarted"
                   >
-                    <i class="fa fa-graduation-cap"></i>&nbsp; <strong>Train Vanna.AI on This
+                    <i class="fa fa-graduation-cap" [style.color]="isVannaAiStarted ? 'green' : '#888'"></i>&nbsp; <strong>Train Vanna.AI on This
                     Database</strong>
                   </button>
                 </div>
@@ -1869,7 +1870,7 @@
 
       <dburst-apps-manager
         [dropdownDirection]="'up'"
-        [apps]="getManagedApps()"
+        [apps]="managedApps$ | async"
       >
       </dburst-apps-manager>
 
