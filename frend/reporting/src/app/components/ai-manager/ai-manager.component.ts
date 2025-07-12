@@ -180,16 +180,16 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  /**
-   * Expand a prompt with variable substitutions
-   */
   private expandPromptWithVariables(promptDef: PromptInfo): void {
     let text = promptDef.promptText;
 
     if (this.promptVariables) {
       Object.entries(this.promptVariables).forEach(([key, val]) => {
-        const escKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        text = text.replace(new RegExp(escKey, 'g'), val);
+        // Remove brackets and collapse whitespace for the regex
+        const inner = key.replace(/^\[|\]$/g, '').replace(/\s+/g, '\\s+');
+        // Match [ ... ] with any whitespace inside
+        const regex = new RegExp(`\\[\\s*${inner}\\s*\\]`, 'g');
+        text = text.replace(regex, val);
       });
     }
 

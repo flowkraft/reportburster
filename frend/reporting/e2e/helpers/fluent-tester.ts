@@ -607,6 +607,24 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  public elementShouldNotContainText(
+  selector: string,
+  value: string,
+): FluentTester {
+  let action = (): Promise<void> =>
+    this.doCheckElementToNotContainText(selector, value);
+
+  this.actions.push(action);
+  return this;
+}
+
+private async doCheckElementToNotContainText(
+  selector: string,
+  text: string,
+): Promise<void> {
+  return expect(this.window.locator(selector)).not.toContainText(text);
+}
+
   public waitOnElementToContainText(
     selector: string,
     value: string,

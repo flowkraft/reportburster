@@ -19,16 +19,16 @@ export class AppsManagerComponent implements OnInit {
   // @Input() appId: string;
 
   constructor(
-   protected appsManagerService: AppsManagerService,
-   protected confirmService: ConfirmService,
-       
-  ) {}
+    protected appsManagerService: AppsManagerService,
+    protected confirmService: ConfirmService,
+
+  ) { }
 
   async ngOnInit(): Promise<void> {
     //this.apps = await this.appsManagerService.getAllApps();
   }
 
-  
+
   async onToggleApp(app: ManagedApp) {
     let dialogQuestion = `Start ${app.name}?`;
     if (app.state === 'running') {
@@ -46,6 +46,10 @@ export class AppsManagerComponent implements OnInit {
         }
       }
     });
+  }
+
+  sanitizeAppName(name: string): string {
+    return name ? name.replace(/\s/g, '') : '';
   }
 
 }

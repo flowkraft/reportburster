@@ -161,9 +161,10 @@ export class ConnectionDetailsComponent implements OnInit {
   domainGroupedSchemaPath = '';
 
   isDiagramEditMode: boolean = false;
-  plantUmlCode: string = '';
-
+  
   erDiagramFilePath: string = '';
+
+  plantUmlCode: string = '';
 
   encodedPlantUmlDiagram: string = '';
 
@@ -176,7 +177,7 @@ export class ConnectionDetailsComponent implements OnInit {
   sqliteFileBrowserVisible: boolean = false;
 
   get erDiagramExists(): boolean {
-    return !!this.encodedPlantUmlDiagram;
+    return !!this.plantUmlCode;
   }
 
   async updateModelAndForm() {
@@ -854,7 +855,7 @@ launchAiCopilotForVannaAITrainingPlanGeneration(): void {
   // }
 
   sqlQueries = 'Test SQL Queries'; 
-  
+
   // 4. Build the prompt variables object
   const promptVariables: { [key: string]: string } = {};
 

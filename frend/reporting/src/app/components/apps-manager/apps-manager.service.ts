@@ -42,7 +42,7 @@ export class AppsManagerService {
       },
       {
         id: 'cloudbeaver',
-        name: 'DB Management (Cloudbeaver)',
+        name: 'DB Management (CloudBeaver)',
         icon: 'fa fa-database',
         category: 'Database Management',
         type: 'docker',
