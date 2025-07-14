@@ -3009,10 +3009,7 @@ export class ConfigurationComponent implements OnInit {
   //DBCONNECTIONS END
 
   getAiHelpButtonLabel(outputType: string): string {
-    if (outputType === 'output.docx' || outputType === 'output.none') {
-      return 'Hey, You Smart AI, Help Me ...';
-    }
-    return 'Hey, You Smart AI, Help Me With This Template ...';
+    return 'Hey AI, Help Me!';
   }
 
   exampleParamsSpecScript = `

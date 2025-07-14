@@ -378,7 +378,7 @@ export class ConfigurationTestHelper {
         .waitOnElementToBecomeInvisible('as-split')
 
         // Test Examples Gallery with assertions for specific email templates
-        .click('button:has-text("Hey, You Smart AI") + .dropdown-toggle')
+        .click('button:has-text("Hey AI, Help Me") + .dropdown-toggle')
         .click('a:text("Examples Gallery")')
         .waitOnElementToBecomeVisible('#templateGalleryModal')
         // Assert that only the 2 email templates are visible
@@ -1778,7 +1778,7 @@ export class ConfigurationTestHelper {
     if (outputTypeCode === 'output.docx' || outputTypeCode === 'output.none') {
       ft = ft.elementShouldContainText(
         '#btnAskAiForHelpOutput',
-        'Hey, You Smart AI, Help Me',
+        'Hey AI, Help Me',
       );
     }
     // Step 2: Test "Hey AI" workflow

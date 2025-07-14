@@ -83,7 +83,7 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
               <div class="btn-group" *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings?.documentburster.settings.htmlemaileditcode">
                 <!-- Primary button - direct action -->
                 <button type="button" class="btn btn-default" (click)="askAiForHelp('email.message')">
-                  <i class="fa fa-magic"></i> Hey, You Smart AI, Help Me Get a Custom Email (HTML) Template ...
+                  <i class="fa fa-magic"></i> Hey AI, Help Me Get a Custom Email (HTML) Template ...
                 </button>
                 
                 <!-- Dropdown toggle button -->
@@ -95,7 +95,7 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
                 <ul class="dropdown-menu" role="menu">
                   <li>
                       <a href="javascript:void(0)" (click)="askAiForHelp('email.message')">
-                        <i class="fa fa-magic"></i> Hey, You Smart AI, Help Me Get a Custom Email (HTML) Template ...
+                        <i class="fa fa-magic"></i> Hey AI, Help Me Get a Custom Email (HTML) Template ...
                       </a>
                     </li>  
                   <li>

@@ -79,7 +79,7 @@
         "NONE-OUTPUT-HELP": "Note: Output Type 'None' is useful when you only need to send emails without attachments (like newsletters). If you need to generate (and attach to emails) actual documents like PDF, Excel, etc., select a specific Output Type that matches your requirements.",
         "BUTTONS": {
           "EXAMPLES-GALLERY": "Examples (Gallery)",
-          "HEY-AI": "Hey, you smart AI, help me...",
+          "HEY-AI": "Hey AI, Help Me ...",
           "AI-PROMPTS": "AI Prompts",
           "LAUNCH-COPILOT": "Launch Copilot",
           "CHAT-WITH-DB": "Chat with Your SQL Database (AI)",
