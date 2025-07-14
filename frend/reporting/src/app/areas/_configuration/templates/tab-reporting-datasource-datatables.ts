@@ -70,7 +70,8 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
             Select Database
           </small>
            <!-- Message when no database connections exist -->
-          <div id="noDbConnectionsMessageSql" *ngIf="settingsService.getDatabaseConnectionFiles().length === 0" style="padding-top: 6px;">
+          <div id="noDbConnectionsMessageSql" *ngIf="(xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || 
+                xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile') && settingsService.getDatabaseConnectionFiles().length === 0" style="padding-top: 6px;">
             <i class="fa fa-info-circle"></i>&nbsp;No database connections defined&nbsp;
             <a id="createDbConnectionLinkSql" [routerLink]="['/configuration-connections']" skipLocationChange="true" class="btn btn-primary btn-sm">
               <i class="fa fa-database"></i>&nbsp;Create Database Connection
@@ -112,7 +113,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 <div class="col-xs-6">
                   <button id="btnHelpWithSqlQueryAI" type="button" title="Write SQL code to fetch report data from the database" class="btn btn-default btn-block" (click)="showDbConnectionModal()" 
                   [disabled]="settingsService.getDatabaseConnectionFiles().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode">
-                    Hey, You Smart AI, Help Me With This SQL Query ...
+                    <strong>Hey AI, Help Me With This SQL Query ...</strong>
                   </button>
                 </div>
                 <div class="col-xs-3">
@@ -186,7 +187,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                   
                   <div class="col-xs-6">
                     <button id="btnHelpWithScriptAI" type="button" class="btn btn-default btn-block" (click)="showDbConnectionModal()">
-                      Hey, You Smart AI, Help Me With This Script ...
+                      <strong>Hey AI, Help Me With This Script ...</strong>
                     </button>
                   </div>
                   <div class="col-xs-3">
@@ -1004,7 +1005,7 @@ Column 3, 15"
           </div>
           <div class="col-xs-6">
             <button id="btnHelpWithTransformationAI" type="button" class="btn btn-default" (click)="showDbConnectionModal()">
-             <strong>Hey, You Smart AI, Help Me With This Groovy Script ...</strong>
+             <strong>Hey AI, Help Me With This Groovy Script ...</strong>
             </button>
           </div>
         </div>  
