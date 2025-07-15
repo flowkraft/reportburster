@@ -126,7 +126,7 @@
       aria-haspopup="true"
       aria-expanded="false"
     >
-      <ng-container *ngIf="apps.length > 0; else manageAppsLabel">
+      <ng-container *ngIf="(apps?.length || 0) > 0; else manageAppsLabel">
         <i
           *ngIf="apps[0].icon"
           [class]="apps[0].icon"

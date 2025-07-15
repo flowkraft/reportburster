@@ -40,11 +40,13 @@ import { ButtonVariablesComponent } from '../components/button-variables/button-
 import { TabulatorColumnsPipe } from './tabulator-columns.pipe';
 import { AiManagerComponent } from '../components/ai-manager/ai-manager.component';
 import { AppsManagerComponent } from '../components/apps-manager/apps-manager.component';
+import { MarkdownModule } from 'ngx-markdown';
 
 @NgModule({
   imports: [
     TranslateModule,
     ModalModule.forRoot(),
+    MarkdownModule.forRoot(),
     RouterModule,
     DialogModule,
     CommonModule,
@@ -77,6 +79,7 @@ import { AppsManagerComponent } from '../components/apps-manager/apps-manager.co
     ConfirmDialogModule,
     TabsModule,
     DialogModule,
+    MarkdownModule,
     NgxCodeJarComponent,
     LiveChatComponent,
     LogFileViewerModule,

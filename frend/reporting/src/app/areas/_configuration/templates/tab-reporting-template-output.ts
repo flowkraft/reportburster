@@ -75,7 +75,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
           <button type="button" 
                   id="btnOpenTemplateGallery"
                   class="btn btn-sm btn-default" 
-                  (click)="openTemplateGallery()"
+                  (click)="showGalleryModalForCurrentOutputType()"
                   style="margin-top: 6px"
                   >
             <i class="fa fa-list-alt"></i> {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.EXAMPLES-GALLERY' | translate }}
@@ -154,7 +154,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
                 <ngx-codejar
                   id="codeJarHtmlTemplateEditor"  
                   [(code)]="activeReportTemplateContent"
-                  (codeChange)="onTemplateContentChanged($event)"
+                  (update)="onTemplateContentChanged($event)"
                   [highlightMethod]="highlightHtmlCode"
                   [highlighter]="'prism'"
                   [showLineNumbers]="true"
@@ -180,7 +180,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
                     <ngx-codejar
                       id="codeJarHtmlTemplateEditor"
                       [(code)]="activeReportTemplateContent"
-                      (codeChange)="onTemplateContentChanged($event)"
+                      (update)="onTemplateContentChanged($event)"
                       [highlightMethod]="highlightHtmlCode"
                       [highlighter]="'prism'"
                       [showLineNumbers]="true"
@@ -201,7 +201,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
                   <div class="preview-container" style="height: 100%; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;">
                     <iframe 
                             id="reportPreviewPane"
-                            [srcdoc]="sanitizedReportPreview" 
+                            [srcdoc]="this.sanitizedReportPreview"
                             style="width: 100%; flex: 1; border: 1px solid #ddd; border-radius: 4px 4px 0 0; overflow: auto; box-sizing: border-box;" 
                             frameborder="0">
                     </iframe>
@@ -224,7 +224,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
                       id="codeJarXslFoTemplateEditor"
                       *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.fop2pdf'"
                       [(code)]="activeReportTemplateContent"
-                      (codeChange)="onTemplateContentChanged($event)"
+                      (update)="onTemplateContentChanged($event)"
                       [highlightMethod]="highlightXmlCode"
                       [highlighter]="'prism'"
                       [showLineNumbers]="true"
@@ -235,7 +235,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
                       id="codeJarFreeMarkerTemplateEditor"
                       *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.any'"
                       [(code)]="activeReportTemplateContent"
-                      (codeChange)="onTemplateContentChanged($event)"
+                      (update)="onTemplateContentChanged($event)"
                       [highlightMethod]="highlightFreeMarkerCode"
                       [highlighter]="'prism'"
                       [showLineNumbers]="true"
@@ -263,8 +263,4 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
       </div>
     </div>
   </div>
-  
-  <!-- Add this at the bottom of your component template -->
-  <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
-
 </ng-template>`;

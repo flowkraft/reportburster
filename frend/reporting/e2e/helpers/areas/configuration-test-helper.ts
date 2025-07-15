@@ -378,21 +378,23 @@ export class ConfigurationTestHelper {
         .waitOnElementToBecomeInvisible('as-split')
 
         // Test Examples Gallery with assertions for specific email templates
-        .click('button:has-text("Hey AI, Help Me") + .dropdown-toggle')
-        .click('a:text("Examples Gallery")')
-        .waitOnElementToBecomeVisible('#templateGalleryModal')
-        // Assert that only the 2 email templates are visible
-        .elementShouldBeVisible('#template-gallery-item-0')
-        .elementShouldBeVisible('#template-gallery-item-1')
-        .elementShouldNotBeVisible('#template-gallery-item-2')
-        // Assert that invoice/report templates are NOT visible
-        .elementShouldNotBeVisible('div.template-card:has-text("Simple table layout payslip template")')
-        .elementShouldNotBeVisible('div.template-card:has-text("3x clean, modern, responsive html invoice templates")')
-        // Select the first email template
-        .click('#template-gallery-item-0')
-        .elementShouldHaveClass('#template-gallery-item-0', 'selected')
+        .waitOnElementToBecomeVisible('#btnAskAiForHelp')
+        .waitOnElementToBecomeVisible('#btnAskAiForHelpDropdownToggle')
+        .click('#btnAskAiForHelpDropdownToggle')
+        .waitOnElementToBecomeVisible('#btnOpenTemplateGalleryDropdownItem')
+        .click('#btnOpenTemplateGalleryDropdownItem')
+        .waitOnElementToBecomeVisible('.p-carousel-next')
+        .waitOnElementToBecomeEnabled('.p-carousel-next')
+        .sleep(Constants.DELAY_ONE_SECOND)
+        .click('.p-carousel-next').sleep(Constants.DELAY_ONE_SECOND)
+        .click('.p-carousel-next').sleep(Constants.DELAY_ONE_SECOND)
         .click('#btnUseSelectedTemplate')
-        .waitOnElementToBecomeInvisible('#templateGalleryModal')
+        .waitOnElementToBecomeVisible('.p-confirm-dialog-accept')
+        //click "Yes" to confirm using the selected template
+        .click('.p-confirm-dialog-accept')
+        .waitOnElementToBecomeInvisible('.p-confirm-dialog-accept')
+        .waitOnElementToBecomeInvisible('.p-carousel-next')
+        .waitOnElementToBecomeVisible('#codeJarHtmlEmailEditor')
         // Verify the content was replaced by the gallery template
         .codeJarShouldNotContainText('#codeJarHtmlEmailEditor', codeJarTestContent)
         .codeJarShouldContainText('#codeJarHtmlEmailEditor', 'background-color:#f6f6f6;') // Unique string from the first email template
