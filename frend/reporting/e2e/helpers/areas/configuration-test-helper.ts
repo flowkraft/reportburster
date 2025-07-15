@@ -381,6 +381,17 @@ export class ConfigurationTestHelper {
         .waitOnElementToBecomeVisible('#btnAskAiForHelp')
         .waitOnElementToBecomeVisible('#btnAskAiForHelpDropdownToggle')
         .click('#btnAskAiForHelpDropdownToggle')
+        .waitOnElementToBecomeVisible('#btnAskAiForHelpDropdownItem')
+        .click('#btnAskAiForHelpDropdownItem')
+        .waitOnElementToBecomeVisible('#btnCloseAiCopilotModal')
+        .pageShouldContainText('A responsive two-column template with a boxed layout that includes a body image')
+        .click('#btnCloseAiCopilotModal')
+        .waitOnElementToBecomeInvisible('#btnCloseAiCopilotModal')
+        
+        .waitOnElementToBecomeVisible('#btnAskAiForHelp')
+        .waitOnElementToBecomeVisible('#btnAskAiForHelpDropdownToggle')
+        .click('#btnAskAiForHelpDropdownToggle')
+        
         .waitOnElementToBecomeVisible('#btnOpenTemplateGalleryDropdownItem')
         .click('#btnOpenTemplateGalleryDropdownItem')
         .waitOnElementToBecomeVisible('.p-carousel-next')
