@@ -389,15 +389,14 @@ export class ConfigurationTestHelper {
         .click('.p-carousel-next').sleep(Constants.DELAY_ONE_SECOND)
         .click('.p-carousel-next').sleep(Constants.DELAY_ONE_SECOND)
         .click('#btnUseSelectedTemplate')
-        .waitOnElementToBecomeVisible('.p-confirm-dialog-accept')
-        //click "Yes" to confirm using the selected template
-        .click('.p-confirm-dialog-accept')
-        .waitOnElementToBecomeInvisible('.p-confirm-dialog-accept')
-        .waitOnElementToBecomeInvisible('.p-carousel-next')
+        .clickNoDontDoThis()
+        .click('#btnUseSelectedTemplate')
+        .clickYesDoThis()
         .waitOnElementToBecomeVisible('#codeJarHtmlEmailEditor')
+        .waitOnElementToBecomeEnabled('#codeJarHtmlEmailEditor')
         // Verify the content was replaced by the gallery template
         .codeJarShouldNotContainText('#codeJarHtmlEmailEditor', codeJarTestContent)
-        .codeJarShouldContainText('#codeJarHtmlEmailEditor', 'background-color:#f6f6f6;') // Unique string from the first email template
+        .codeJarShouldContainText('#codeJarHtmlEmailEditor', 'border-bottom:1px solid #CCCCCC;') // Unique string from the first email template
         
         // values are supposed to be saved at this moment ==> go away and click burst top menu
         .click('#topMenuBurst')
@@ -449,7 +448,7 @@ export class ConfigurationTestHelper {
         .inputShouldHaveValue('#emailSubject', '03')
         .elementShouldNotBeVisible('#wysiwygEmailMessage')
         .waitOnElementToBecomeVisible('#codeJarHtmlEmailEditorDiv')
-        .codeJarShouldContainText('#codeJarHtmlEmailEditor', 'background-color:#f6f6f6;')
+        .codeJarShouldContainText('#codeJarHtmlEmailEditor', 'border-bottom:1px solid #CCCCCC;')
         .codeJarShouldNotContainText('#codeJarHtmlEmailEditor', codeJarTestContent)
         .codeJarShouldNotContainText('#codeJarHtmlEmailEditor', wysiwygTestContent)
         // email attachments settings
