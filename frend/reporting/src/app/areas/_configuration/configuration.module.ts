@@ -9,25 +9,22 @@ import { EditorModule } from 'primeng/editor';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ConfigurationComponent } from './configuration.component';
 import { AngularSplitModule } from 'angular-split';
-import { CarouselModule } from 'primeng/carousel';
-import { ScaleIframeDirective } from '../../helpers/scale-iframe';
-import { MarkdownModule } from 'ngx-markdown';
 import { ConnectionDetailsModule } from '../../components/connection-details/connection-details.module';
+import { TemplatesGalleryModalModule } from '../../components/templates-gallery-modal/templates-gallery-modal.module';
 
 @NgModule({
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  declarations: [ConfigurationComponent, ScaleIframeDirective],
+  declarations: [ConfigurationComponent],
   exports: [ConfigurationComponent],
   imports: [
     SharedModule,
+    TemplatesGalleryModalModule,
     EditorModule,
     NgSelectModule,
     AppRoutingModule,
     LicenseModule,
     ConnectionDetailsModule,
     AngularSplitModule,
-    CarouselModule,
-    MarkdownModule.forRoot(),
   ],
 })
 export class ConfigurationModule {}

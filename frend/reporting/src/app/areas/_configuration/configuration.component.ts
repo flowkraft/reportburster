@@ -60,7 +60,6 @@ import { tabLogsTemplate } from './templates/tab-logs';
 import { tabLicenseTemplate } from './templates/tab-license';
 
 import { modalAttachmentTemplate } from './templates/modal-attachment';
-import { modalGalleryTemplate } from './templates/modal-gallery';
 
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
 import Utilities from '../../helpers/utilities';
@@ -74,21 +73,20 @@ import { ShellService } from '../../providers/shell.service';
 import { StateStoreService } from '../../providers/state-store.service';
 import { CodeJarContainer } from 'ngx-codejar';
 import Prism from 'prismjs';
+import 'prismjs/plugins/keep-markup/prism-keep-markup';
 import 'prismjs/components/prism-sql';
 import 'prismjs/components/prism-markup';
 import 'prismjs/components/prism-groovy';
-import 'prismjs/components/prism-ftl';
+
+// DO NOT UNCOMMENT uncommenting 'prism-ftl' would break other highlighting;
+// import 'prismjs/components/prism-ftl';
 
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   HtmlDocTemplateDisplay,
-  HtmlDocTemplateInfo,
-  SamplesService,
 } from '../../providers/samples.service';
-import { ConfirmationService } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
 import { FsService } from '../../providers/fs.service';
-import { Position } from 'codejar/.';
 import { ConnectionDetailsComponent } from '../../components/connection-details/connection-details.component';
 import {
   AiManagerComponent,
@@ -98,6 +96,7 @@ import {
   ReportingService,
   SqlQueryResult,
 } from '../../providers/reporting.service';
+import { modalTemplatesGalleryTemplate } from './templates/modal-gallery';
 
 @Component({
   selector: 'dburst-configuration',
@@ -123,8 +122,7 @@ import {
     ${tabSMSTwilioTemplate} ${tabSMSMessageTemplate} ${tabQATemplate}
     ${tabAdvancedTemplate} ${tabAdvancedErrorHandlingTemplate}
     ${tabEmailAddressValidationTemplate} ${tabEmailTuningTemplate}
-    ${tabLogsTemplate} ${tabLicenseTemplate} ${modalAttachmentTemplate}
-    ${modalGalleryTemplate}
+    ${tabLogsTemplate} ${tabLicenseTemplate} ${modalAttachmentTemplate} ${modalTemplatesGalleryTemplate}
   `,
 })
 export class ConfigurationComponent implements OnInit {
@@ -206,7 +204,6 @@ export class ConfigurationComponent implements OnInit {
   @ViewChild('tabLicenseTemplate', { static: true })
   tabLicenseTemplate: TemplateRef<any>;
 
-  @ViewChild('templateCarousel') templateCarousel: any;
   @ViewChildren('templateIframe') templateIframes: QueryList<ElementRef>;
 
   selectedAttachment;
@@ -511,16 +508,14 @@ export class ConfigurationComponent implements OnInit {
     protected reportingService: ReportingService,
     protected stateStore: StateStoreService,
     protected confirmService: ConfirmService,
-    protected primeNgConfirmService: ConfirmationService,
     protected infoService: InfoService,
-    protected samplesService: SamplesService,
     protected messagesService: ToastrMessagesService,
     protected translateService: TranslateService,
     protected askForFeatureService: AskForFeatureService,
     protected route: ActivatedRoute,
     protected changeDetectorRef: ChangeDetectorRef,
     protected sanitizer: DomSanitizer,
-  ) {}
+  ) { }
 
   currentLeftMenu: string;
 
@@ -808,8 +803,6 @@ export class ConfigurationComponent implements OnInit {
   }
 
   async onReportOutputTypeChanged() {
-    // Clear gallery templates but keep allAvailableTemplates
-    this.galleryTemplates = [];
 
     // Check if the current path is a sample path that should be preserved
     const currentPath =
@@ -909,7 +902,7 @@ export class ConfigurationComponent implements OnInit {
       if (
         !isSamplePath &&
         this.xmlReporting.documentburster.report.template.documentpath !==
-          newPath
+        newPath
       ) {
         this.xmlReporting.documentburster.report.template.documentpath =
           newPath;
@@ -965,7 +958,7 @@ export class ConfigurationComponent implements OnInit {
       if (
         !isSamplePath &&
         this.xmlReporting.documentburster.report.template.documentpath !==
-          newPath
+        newPath
       ) {
         this.xmlReporting.documentburster.report.template.documentpath =
           newPath;
@@ -1014,7 +1007,7 @@ export class ConfigurationComponent implements OnInit {
       if (
         !isSamplePath &&
         this.xmlReporting.documentburster.report.template.documentpath !==
-          newPath
+        newPath
       ) {
         this.xmlReporting.documentburster.report.template.documentpath =
           newPath;
@@ -1086,8 +1079,8 @@ export class ConfigurationComponent implements OnInit {
               (connection) =>
                 connection.connectionType == 'email-connection' &&
                 connection.connectionCode ==
-                  this.xmlSettings.documentburster.settings.emailserver
-                    .conncode,
+                this.xmlSettings.documentburster.settings.emailserver
+                  .conncode,
             );
 
           if (this.xmlSettings.documentburster.settings.emailserver.useconn)
@@ -1140,7 +1133,7 @@ export class ConfigurationComponent implements OnInit {
 
       this.messagesService.showInfo(
         'Showing configuration ' +
-          this.settingsService.currentConfigurationTemplateName,
+        this.settingsService.currentConfigurationTemplateName,
       );
 
       // wait 30ms after the last event before emitting last event
@@ -1289,17 +1282,6 @@ export class ConfigurationComponent implements OnInit {
       emailConnection.emailserver.usetls;
   }
 
-  highlightEmailMethod(editor: CodeJarContainer) {
-    if (editor.textContent !== null && editor.textContent !== undefined) {
-      // Set language to HTML markup
-      editor.innerHTML = Prism.highlight(
-        editor.textContent,
-        Prism.languages.markup,
-        'markup',
-      );
-    }
-  }
-
   // Toggle preview visibility
   toggleEmailPreview() {
     this.emailPreviewVisible = !this.emailPreviewVisible;
@@ -1326,17 +1308,6 @@ export class ConfigurationComponent implements OnInit {
       this.sanitizedEmailPreview = this.sanitizer.bypassSecurityTrustHtml(
         this.xmlSettings.documentburster.settings.emailsettings.html,
       );
-    }
-  }
-
-  // Open email in browser window
-  openEmailInBrowser() {
-    if (this.xmlSettings?.documentburster.settings.emailsettings.html) {
-      const htmlContent =
-        this.xmlSettings.documentburster.settings.emailsettings.html;
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
     }
   }
 
@@ -1464,7 +1435,7 @@ export class ConfigurationComponent implements OnInit {
       index <
       this.xmlSettings.documentburster.settings.attachments.items
         .attachmentItems.length -
-        1
+      1
     ) {
       // Increment the 'order' of the selected attachment and decrement the 'order' of the one below it
       this.xmlSettings.documentburster.settings.attachments.items
@@ -1603,7 +1574,7 @@ export class ConfigurationComponent implements OnInit {
     this.messagesService.showInfo('Saved');
   }
 
-  doRunTestScript() {}
+  doRunTestScript() { }
 
   doTestSMTPConnection() {
     if (this.executionStatsService.logStats.foundDirtyLogFiles) {
@@ -1624,10 +1595,10 @@ export class ConfigurationComponent implements OnInit {
             'test-email',
             '-c',
             '"' +
-              Utilities.slash(
-                this.settingsService.currentConfigurationTemplatePath,
-              ).replace('/config/', 'PORTABLE_EXECUTABLE_DIR_PATH/config/') +
-              '"',
+            Utilities.slash(
+              this.settingsService.currentConfigurationTemplatePath,
+            ).replace('/config/', 'PORTABLE_EXECUTABLE_DIR_PATH/config/') +
+            '"',
           ]);
         },
       });
@@ -1662,10 +1633,10 @@ export class ConfigurationComponent implements OnInit {
       this.modalSMSInfo.toNumber,
       '-c',
       '"' +
-        Utilities.slash(
-          this.settingsService.currentConfigurationTemplatePath,
-        ).replace('/config/', 'PORTABLE_EXECUTABLE_DIR_PATH/config/') +
-        '"',
+      Utilities.slash(
+        this.settingsService.currentConfigurationTemplatePath,
+      ).replace('/config/', 'PORTABLE_EXECUTABLE_DIR_PATH/config/') +
+      '"',
     ]);
   }
 
@@ -1680,31 +1651,6 @@ export class ConfigurationComponent implements OnInit {
   activeParamsSpecScriptGroovy: string = '';
   activeTransformScriptGroovy: string = '';
 
-  // With this single state variable:
-  templateGalleryState: string = 'closed'; // Possible values: 'closed', 'examples-gallery', 'hey-ai', 'readme', 'ai-prompt'
-
-  selectedTemplateAiPrompt: string = '';
-  selectedPromptType: 'modify' | 'rebuild' | null = null;
-  galleryDialogTitle = 'Examples (Gallery)';
-
-  galleryTemplates: HtmlDocTemplateDisplay[] = [];
-  allAvailableTemplates: HtmlDocTemplateInfo[] = []; // Store all templates once loaded
-  templatesLoaded = false;
-
-  selectedGalleryTemplateIndex = 0;
-
-  templatePreviewFadeState: string = 'visible';
-
-  selectedTemplateReadme: string = '';
-  previousStateBeforeReadme: any = null;
-  previousStateBeforeAiPrompt: any = null;
-
-  selectedTemplateModifyPrompt: string = '';
-  selectedTemplateScratchPrompt: string = '';
-
-  galleryAiInstructions: string = '';
-
-  absoluteTemplateFolderPath: string = '';
 
   onAskForFeatureModalShow(event: Event | string) {
     let requestedFeature: string;
@@ -1741,7 +1687,7 @@ export class ConfigurationComponent implements OnInit {
         this.activeDatasourceScriptGroovy &&
         this.activeDatasourceScriptGroovy.trim() !== '' &&
         this.activeDatasourceScriptGroovy.trim() !==
-          '// Groovy Datasource Script\n// Ensure this file is saved in the report configuration folder.'.trim()
+        '// Groovy Datasource Script\n// Ensure this file is saved in the report configuration folder.'.trim()
       ) {
         await this.saveExternalReportingScript('datasourceScript');
       }
@@ -1755,7 +1701,7 @@ export class ConfigurationComponent implements OnInit {
         this.activeParamsSpecScriptGroovy &&
         this.activeParamsSpecScriptGroovy.trim() !== '' &&
         this.activeParamsSpecScriptGroovy.trim() !==
-          this.exampleParamsSpecScript.trim()
+        this.exampleParamsSpecScript.trim()
       ) {
         await this.saveExternalReportingScript('paramsSpecScript');
       }
@@ -1765,7 +1711,7 @@ export class ConfigurationComponent implements OnInit {
       this.activeTransformScriptGroovy &&
       this.activeTransformScriptGroovy.trim() !== '' &&
       this.activeTransformScriptGroovy.trim() !==
-        '// Groovy Additional Transformation Script\n// Ensure this file is saved in the report configuration folder.'.trim()
+      '// Groovy Additional Transformation Script\n// Ensure this file is saved in the report configuration folder.'.trim()
     ) {
       await this.saveExternalReportingScript('transformScript');
     }
@@ -1973,425 +1919,18 @@ export class ConfigurationComponent implements OnInit {
   }
 
   refreshHtmlPreview() {
+
     this.sanitizedReportPreview = this.sanitizer.bypassSecurityTrustHtml(
       this.activeReportTemplateContent,
     );
+    console.log(`this.sanitizedReportPreview = ${this.sanitizedReportPreview}`);
+
   }
 
-  async loadGalleryTemplates(filterTag?: string) {
-    this.galleryTemplates = [];
-
-    // Reset display properties
-    this.selectedTemplateReadme = '';
-
-    // Get current output type
-    const currentOutputType =
-      this.xmlReporting?.documentburster?.report?.template?.outputtype;
-
-    //console.log(
-    //  'Current output type when loading examples:',
-    //  currentOutputType,
-    //);
-
-    // Load templates only once
-    if (!this.templatesLoaded) {
-      this.allAvailableTemplates =
-        await this.samplesService.getHtmlDocTemplates();
-      this.templatesLoaded = true;
-    }
-
-    // Filter templates based on current output type
-    const filteredTemplates = this.allAvailableTemplates.filter((template) => {
-      //console.log(
-      //  `Evaluating template: ${template.name}, tags:`,
-      //  template.tags,
-      //);
-      if (filterTag) {
-        // If a specific tag is provided, use it for filtering
-        return template.tags && template.tags.includes(filterTag);
-      } else {
-        // For Excel mode, only keep Excel templates
-        if (currentOutputType?.includes('xlsx')) {
-          if (!template.tags?.includes('excel')) {
-            //console.log(
-            //  `Skipping non-Excel template ${template.name} because we're in Excel mode`,
-            //);
-            return false;
-          }
-          //console.log(`Keeping Excel template: ${template.name}`);
-          return true;
-        }
-        // For non-Excel modes, filter out Excel templates
-        else {
-          if (template.tags?.includes('excel')) {
-            //console.log(
-            //  `Skipping Excel template ${template.name} because we're not in Excel mode`,
-            //);
-            return false;
-          }
-          //console.log(`Keeping non-Excel template: ${template.name}`);
-          return true;
-        }
-      }
-    });
-
-    //console.log(`Filtered templates count: ${filteredTemplates.length}`);
-
-    // Process filtered templates
-    filteredTemplates.forEach((template) => {
-      //console.log(`Adding template to gallery: ${template.name}`);
-
-      if (template.templateFilePaths.length > 1) {
-        // For multi-file templates, create variants
-        template.templateFilePaths.forEach((path, index) => {
-          const variantTemplate: HtmlDocTemplateDisplay = {
-            ...template,
-            templateFilePaths: [path], // Keep only the current path
-            displayName: `${template.name} (${index + 1} of ${template.templateFilePaths.length})`,
-            originalTemplate: template,
-            collectionIndex: index + 1,
-            currentVariantIndex: 0,
-            isLoaded: false,
-            htmlContent: [],
-            category: this.deriveCategoryFromTags(template.tags),
-          };
-          this.galleryTemplates.push(variantTemplate);
-        });
-      } else {
-        // Single template handling
-        this.galleryTemplates.push({
-          ...template,
-          displayName: template.name,
-          isLoaded: false,
-          htmlContent: [],
-          currentVariantIndex: 0,
-          category: this.deriveCategoryFromTags(template.tags),
-        });
-      }
-    });
-
-    // Rest of the method remains the same
-    if (this.galleryTemplates.length > 0) {
-      this.selectedGalleryTemplateIndex = 0;
-      await Promise.all(
-        this.galleryTemplates.map((_, index) =>
-          this.loadGalleryTemplateContent(index),
-        ),
-      );
-      const firstTemplate = this.galleryTemplates[0];
-      if (firstTemplate) {
-        this.selectedTemplateReadme = firstTemplate.readmeContent || '';
-        this.selectedTemplateModifyPrompt =
-          firstTemplate.selectedTemplateModifyPrompt || '';
-        this.selectedTemplateScratchPrompt =
-          firstTemplate.selectedTemplateScratchPrompt || '';
-      }
-    }
-  }
-
-  async openTemplateGallery(filterTag?: string) {
-    // Reset template index
-    this.selectedGalleryTemplateIndex = 0;
-
-    // Set state to examples-gallery with instructions
-    this.templateGalleryState = 'examples-gallery';
-
-    // Set initial dialog header
-    this.galleryDialogTitle = filterTag
-      ? 'Email Templates Gallery'
-      : 'Examples (Gallery)';
-
-    // Clear the HTML cache to ensure fresh rendering
-    this.templateSanitizedHtmlCache.clear();
-
-    // Load general AI instructions content
-    const content = await this.settingsService.loadTemplateFileAsync(
-      'templates/gallery/readme-examples-gallery.md',
-    );
-
-    // Set the content
-    this.galleryAiInstructions = String(content);
-
-    // Reset examples and reload
-    this.galleryTemplates = [];
-    await this.loadGalleryTemplates(filterTag);
-
-    if (this.templateCarousel) {
-      this.templateCarousel.page = 0;
-    }
-  }
-
-  async loadGalleryTemplateContent(index: number) {
-    const template = this.galleryTemplates[index];
-    if (!template) return;
-    if (template.isLoaded) return; // do not reload if already loaded
-
-    // Reset loading state
-    template.isLoaded = false;
-    template.htmlContent = [];
-    template.currentVariantIndex = 0;
-
-    try {
-      // Load each HTML file of the template and pre-cache it
-      for (let i = 0; i < template.templateFilePaths.length; i++) {
-        const path = template.templateFilePaths[i];
-        const content = await this.settingsService.loadTemplateFileAsync(path);
-        if (content) {
-          template.htmlContent.push(content);
-          if (!this.templateSanitizedHtmlCache.has(path)) {
-            const safeHtml = this.sanitizeHtmlForIframe(content, path);
-            this.templateSanitizedHtmlCache.set(path, safeHtml);
-          }
-        }
-      }
-
-      // With the first (main) template file, load associated README and AI prompts
-      if (template.templateFilePaths.length > 0) {
-        const path = template.templateFilePaths[0];
-        const lastSlashIndex = path.lastIndexOf('/');
-        const lastDotIndex = path.lastIndexOf('.');
-        if (lastSlashIndex !== -1 && lastDotIndex !== -1) {
-          const templateName = path.substring(lastSlashIndex + 1, lastDotIndex);
-          const dirPath = path.substring(0, lastSlashIndex);
-
-          // Load README
-          try {
-            const readmePath = `${dirPath}/${templateName}-readme.md`;
-            const readmeContent =
-              await this.settingsService.loadTemplateFileAsync(readmePath);
-            template.readmeContent =
-              readmeContent && readmeContent.length > 0 ? readmeContent : '';
-          } catch (error) {
-            template.readmeContent = '';
-          }
-
-          // Load AI prompt for “modify”
-          try {
-            const promptModifyPath = `${dirPath}/${templateName}-ai_prompt_modify.md`;
-            const promptModifyContent =
-              await this.settingsService.loadTemplateFileAsync(
-                promptModifyPath,
-              );
-            template.selectedTemplateModifyPrompt =
-              promptModifyContent && promptModifyContent.length > 0
-                ? promptModifyContent
-                : '';
-          } catch (error) {
-            template.selectedTemplateModifyPrompt = '';
-          }
-
-          // Load AI prompt for “scratch”
-          try {
-            const promptScratchPath = `${dirPath}/${templateName}-ai_prompt_scratch.md`;
-            const promptScratchContent =
-              await this.settingsService.loadTemplateFileAsync(
-                promptScratchPath,
-              );
-            template.selectedTemplateScratchPrompt =
-              promptScratchContent && promptScratchContent.length > 0
-                ? promptScratchContent
-                : '';
-          } catch (error) {
-            template.selectedTemplateScratchPrompt = '';
-          }
-        }
-      }
-
-      template.isLoaded = true;
-      //this.changeDetectorRef.detectChanges();
-    } catch (error) {
-      console.error('Error loading template content:', error);
-      template.isLoaded = false;
-    }
-  }
-
-  getSelectedGalleryTemplate(): HtmlDocTemplateDisplay {
-    if (!this.galleryTemplates || this.galleryTemplates.length === 0) {
-      return null;
-    }
-
-    const template =
-      this.galleryTemplates[this.selectedGalleryTemplateIndex || 0];
-
-    // Update display name for multi-file templates
-    if (template?.originalTemplate?.templateFilePaths?.length > 1) {
-      const total = template.originalTemplate.templateFilePaths.length;
-      const current = template.collectionIndex || 1;
-      template.displayName = `${template.name} (${current} of ${total})`;
-    }
-
-    return template;
-  }
-
-  async onGalleryTemplateSelected(event: any): Promise<void> {
-    // Update the index and template data
-    this.selectedGalleryTemplateIndex = event.page;
-    const currentTemplate = this.getSelectedGalleryTemplate();
-
-    if (!currentTemplate) return;
-
-    // Update dialog header
-    this.galleryDialogTitle = `Examples (Gallery) - ${currentTemplate.name || currentTemplate.displayName}`;
-
-    if (this.selectedGalleryTemplateIndex === event.page) {
-      return;
-    }
-
-    // First hide the current content
-    this.templatePreviewFadeState = 'hidden';
-
-    // Update display information
-    this.updateGalleryTemplateVariantInfo(currentTemplate);
-    this.selectedTemplateReadme = currentTemplate.readmeContent || '';
-    this.selectedTemplateModifyPrompt =
-      currentTemplate.selectedTemplateModifyPrompt || '';
-    this.selectedTemplateScratchPrompt =
-      currentTemplate.selectedTemplateScratchPrompt || '';
-
-    // After a short delay, show the new content and force rescale
-    setTimeout(() => {
-      this.templatePreviewFadeState = 'visible';
-      setTimeout(() => {
-        // This will ensure scaling is recalculated
-        window.dispatchEvent(new Event('resize'));
-      }, 50);
-    }, 100);
-  }
-
-  closeTemplateReadme() {
-    // Always restore the previous state - will always be 'templates'
-    this.templateGalleryState = this.previousStateBeforeReadme.previousState;
-
-    // Restore the specific template index
-    this.selectedGalleryTemplateIndex =
-      this.previousStateBeforeReadme.templateIndex;
-
-    // Update the carousel position if needed
-    if (this.templateCarousel) {
-      this.templateCarousel.page = this.selectedGalleryTemplateIndex;
-    }
-
-    // Update the dialog header to reflect the template name
-    const currentTemplate = this.getSelectedGalleryTemplate();
-    if (currentTemplate) {
-      this.galleryDialogTitle = `Examples (Gallery) - ${currentTemplate.name || currentTemplate.displayName}`;
-    }
-  }
-
-  private updateGalleryTemplateVariantInfo(
-    template: HtmlDocTemplateDisplay,
-  ): void {
-    if (!template) return;
-    if (template.originalTemplate?.templateFilePaths?.length > 1) {
-      const total = template.originalTemplate.templateFilePaths.length;
-      const current = (template.currentVariantIndex || 0) + 1;
-      template.displayName = `${template.name} (${current} of ${total})`;
-    }
-    //this.changeDetectorRef.detectChanges();
-  }
-
-  useSelectedTemplate(template: HtmlDocTemplateDisplay) {
-    if (
-      !template ||
-      !template.htmlContent ||
-      template.htmlContent.length === 0
-    ) {
-      return;
-    }
-
-    // Check if current output type is DOCX
-    if (
-      this.xmlReporting?.documentburster.report.template.outputtype ===
-      'output.docx'
-    ) {
-      // Show warning toast for DOCX mode
-      this.messagesService.showWarning(
-        this.translateService.instant(
-          'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.DOCX-HTML-WARNING',
-        ),
-        this.translateService.instant(
-          'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.CANNOT-USE-TEMPLATE',
-        ),
-      );
-      return;
-    }
-
-    this.primeNgConfirmService.confirm({
-      message:
-        'Are you sure you want to use this template and override your existing one?',
-      header: 'Confirmation',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Yes',
-      rejectLabel: 'No',
-      acceptButtonStyleClass: 'p-button-primary p-button-text',
-      rejectButtonStyleClass: 'p-button-secondary p-button-text',
-      // This key property reverses the button order:
-      acceptVisible: true,
-      rejectVisible: true,
-      // Remove the styleClass property
-      accept: () => {
-        const variantIndex = template.currentVariantIndex || 0;
-        const htmlContent = template.htmlContent[variantIndex] || '';
-
-        this.activeReportTemplateContent = htmlContent;
-        this.onTemplateContentChanged(htmlContent);
-        this.templateGalleryState = 'closed';
-        this.messagesService.showInfo('Template applied successfully');
-      },
-    });
-  }
-
-  // Component method to add
-  escKeyHandler: any;
-
-  addDialogEscapeHandler() {
-    // Handle ESC key
-    const escHandler = (event) => {
-      if (event.key === 'Escape' && this.templateGalleryState !== 'closed') {
-        this.closeTemplateGallery();
-        // Remove the event listener after closing
-        document.removeEventListener('keydown', escHandler);
-      }
-    };
-
-    // Add event listener
-    document.addEventListener('keydown', escHandler);
-
-    // Store for cleanup if needed
-    this.escKeyHandler = escHandler;
-  }
-
-  closeTemplateGallery() {
-    // Simply set state to closed
-    this.templateGalleryState = 'closed';
-
-    // Clear content caches that might influence next open
-    this.selectedTemplateReadme = '';
-    this.selectedTemplateAiPrompt = '';
-    this.previousStateBeforeReadme = null;
-    this.previousStateBeforeAiPrompt = null;
-
-    // Clear cached HTML
-    this.templateSanitizedHtmlCache.clear();
-  }
-
-  private deriveCategoryFromTags(tags: string[]): string {
-    if (tags.includes('invoice')) return 'Invoice';
-    if (tags.includes('report')) return 'Report';
-    if (tags.includes('letter')) return 'Letter';
-    return 'Other';
-  }
 
   async onTemplateContentChanged(event: any) {
     // Get content from event or active property, ensuring we have something to work with
-    const htmlContent =
-      typeof event === 'string' ? event : this.activeReportTemplateContent;
-
-    // Skip saving if content is empty or not provided - prevents accidental blank templates
-    if (!htmlContent || htmlContent.trim().length === 0) {
-      console.warn('Cannot save empty template content');
-      return;
-    }
+    this.activeReportTemplateContent = typeof event === 'string' ? event : this.activeReportTemplateContent;
 
     // Get current output type and template information
     const outputType =
@@ -2399,6 +1938,15 @@ export class ConfigurationComponent implements OnInit {
         'output.',
         '',
       );
+
+    // Update preview if visible
+    if (
+      this.reportPreviewVisible &&
+      ['html', 'pdf', 'xlsx'].includes(outputType)
+    ) {
+      this.refreshHtmlPreview();
+      this.changeDetectorRef.detectChanges();
+    }
     const configName =
       this.settingsService.currentConfigurationTemplate?.folderName ||
       'template';
@@ -2420,7 +1968,7 @@ export class ConfigurationComponent implements OnInit {
       // Save to disk
       await this.settingsService.saveTemplateFileAsync(
         templatePath,
-        htmlContent,
+        this.activeReportTemplateContent,
       );
 
       // Ensure the path is updated in the configuration
@@ -2436,13 +1984,6 @@ export class ConfigurationComponent implements OnInit {
         );
       }
 
-      // Update preview if visible
-      if (
-        this.reportPreviewVisible &&
-        ['output.html', 'output.pdf', 'output.xlsx'].includes(outputType)
-      ) {
-        this.refreshHtmlPreview();
-      }
 
       // Update absolute path for display
       await this.loadAbsoluteTemplatePath();
@@ -2457,135 +1998,10 @@ export class ConfigurationComponent implements OnInit {
     }
   }
 
-  async loadTemplateContent(outputType: string) {
-    //console.log(`Loading HTML template content for ${outputType}`);
-
-    // Clear all content if output type is not supported
-    if (
-      !['output.html', 'output.pdf', 'output.xlsx', 'output.fop2pdf'].includes(
-        outputType,
-      )
-    ) {
-      this.activeReportTemplateContent = '';
-      this.selectedTemplateReadme = '';
-      this.selectedTemplateModifyPrompt = '';
-      this.selectedTemplateScratchPrompt = '';
-      return;
-    }
-
-    const path = this.xmlReporting.documentburster.report.template.documentpath;
-    if (path) {
-      try {
-        // Load the HTML template content
-        const content = await this.settingsService.loadTemplateFileAsync(path);
-
-        // Only update if we got valid content
-        if (content && content.length > 0) {
-          //console.log(
-          //  `Loaded ${content.length} bytes of HTML content from ${path}`,
-          //);
-          this.activeReportTemplateContent = content;
-        } else {
-          //console.warn(`File exists but is empty or couldn't be read: ${path}`);
-        }
-      } catch (error) {
-        //console.error('Error loading HTML template:', error);
-        // Don't clear existing content on error - keep what we have
-        return;
-      }
-
-      // Get the folder path and base name for the template
-      const lastSlashIndex = path.lastIndexOf('/');
-      const dirPath = path.substring(0, lastSlashIndex);
-      const fileName = path.substring(lastSlashIndex + 1);
-      const baseName = fileName.split('-')[0]; // Get name part before first hyphen
-
-      // Build paths for associated files using the base name
-      const readmePath = `${dirPath}/${baseName}-readme.md`;
-      const promptModifyPath = `${dirPath}/${baseName}-ai_prompt_modify.md`;
-      const promptScratchPath = `${dirPath}/${baseName}-ai_prompt_scratch.md`;
-
-      // Try to read README file
-      try {
-        const readmeContent =
-          await this.settingsService.loadTemplateFileAsync(readmePath);
-        this.selectedTemplateReadme =
-          readmeContent && readmeContent.length > 0 ? readmeContent : '';
-      } catch (error) {
-        //console.log(`No README found at ${readmePath}`);
-        this.selectedTemplateReadme = '';
-      }
-
-      // Try to read modify prompt file
-      try {
-        const promptModifyContent =
-          await this.settingsService.loadTemplateFileAsync(promptModifyPath);
-        this.selectedTemplateModifyPrompt =
-          promptModifyContent && promptModifyContent.length > 0
-            ? promptModifyContent
-            : '';
-      } catch (error) {
-        //console.log(`No AI modify prompt found at ${promptModifyPath}`);
-        this.selectedTemplateModifyPrompt = '';
-      }
-
-      // Try to read scratch prompt file
-      try {
-        const promptScratchContent =
-          await this.settingsService.loadTemplateFileAsync(promptScratchPath);
-        this.selectedTemplateScratchPrompt =
-          promptScratchContent && promptScratchContent.length > 0
-            ? promptScratchContent
-            : '';
-      } catch (error) {
-        //console.log(`No AI scratch prompt found at ${promptScratchPath}`);
-        this.selectedTemplateScratchPrompt = '';
-      }
-
-      // Update preview after loading content
-      this.refreshHtmlPreview();
-    } else {
-      //console.warn(`Template path invalid or doesn't exist: ${path}`);
-
-      // If path exists but doesn't end with .html, or if path doesn't exist
-      if (
-        !this.activeReportTemplateContent ||
-        this.activeReportTemplateContent.length === 0
-      ) {
-        // Create default template only if current content is empty
-        const configName =
-          this.settingsService.currentConfigurationTemplate?.folderName ||
-          'template';
-        const outputTypeClean = outputType.replace('output.', '');
-        this.activeReportTemplateContent = `<html>\n<head>\n<title>${configName} ${outputTypeClean} Template</title>\n</head>\n<body>\n<h1>${configName} ${outputTypeClean} Report</h1>\n</body>\n</html>`;
-
-        // If path exists but content couldn't be loaded, save default content
-        if (path) {
-          try {
-            await this.settingsService.saveTemplateFileAsync(
-              path,
-              this.activeReportTemplateContent,
-            );
-            //console.log(
-            //  `Created new template file with default content at: ${path}`,
-            //);
-          } catch (saveError) {
-            //console.error(
-            //  `Failed to save default template to ${path}:`,
-            //  saveError,
-            //);
-          }
-        }
-      }
-
-      // Clear associated content
-      this.selectedTemplateReadme = '';
-      this.selectedTemplateModifyPrompt = '';
-      this.selectedTemplateScratchPrompt = '';
-    }
-  }
-
   openTemplateInBrowser(template?, templatePath?: string) {
+
+    //alert(templatePath);
+
     // Case 1: Direct path provided (from editor "View in Browser" button)
     if (templatePath) {
       const url = `/api/cfgman/rb/view-template?path=${encodeURIComponent(templatePath)}`;
@@ -2616,26 +2032,9 @@ export class ConfigurationComponent implements OnInit {
   @ViewChild(AiManagerComponent) private aiManagerInstance!: AiManagerComponent;
 
   async askAiForHelp(outputTypeCode: string) {
+
     console.log(`Asking AI for help with output type: ${outputTypeCode}`);
 
-    if (outputTypeCode === 'output.docx' || outputTypeCode === 'output.none') {
-      // Set state to hey-ai
-      this.templateGalleryState = 'hey-ai';
-
-      // Set appropriate header
-      this.galleryDialogTitle = 'Ask Artificial Intelligence To Help You';
-
-      // Clear cache to ensure fresh rendering
-      this.templateSanitizedHtmlCache.clear();
-
-      // Load the AI help content
-      const content = await this.settingsService.loadTemplateFileAsync(
-        'templates/gallery/readme-hey-ai.md',
-      );
-
-      // Set the content
-      this.galleryAiInstructions = String(content);
-    }
 
     if (outputTypeCode === 'output.pdf') {
       const launchConfig: AiManagerLaunchConfig = {
@@ -2676,7 +2075,7 @@ export class ConfigurationComponent implements OnInit {
     if (outputTypeCode === 'email.message') {
       const launchConfig: AiManagerLaunchConfig = {
         initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'Email Templates',
+        initialSelectedCategory: 'Email Templates (Responsive)',
       };
 
       if (this.aiManagerInstance) {
@@ -2685,201 +2084,8 @@ export class ConfigurationComponent implements OnInit {
     }
   }
 
-  openBingAICopilot() {
-    window.open('https://copilot.microsoft.com', '_blank');
-  }
 
-  closeGeneralAiInstructions() {
-    if (this.templateGalleryState === 'examples-gallery') {
-      this.templateGalleryState = 'templates';
-      this.onGalleryTemplateSelected({ page: 0 });
-    }
-  }
-
-  sanitizeHtmlForIframe(html: string, templatePath?: string): SafeHtml {
-    if (!html) {
-      return this.sanitizer.bypassSecurityTrustHtml('');
-    }
-    const cacheKey = templatePath || '';
-    if (this.templateSanitizedHtmlCache.has(cacheKey)) {
-      return this.templateSanitizedHtmlCache.get(cacheKey);
-    }
-    const baseDirUrl = templatePath
-      ? templatePath.substring(0, templatePath.lastIndexOf('/') + 1)
-      : '';
-    const tempDoc = document.implementation.createHTMLDocument('');
-    const tempDiv = tempDoc.createElement('div');
-    tempDiv.innerHTML = html;
-
-    // Process regular images
-    const images = tempDiv.querySelectorAll('img');
-    images.forEach((img) => {
-      const src = img.getAttribute('src');
-      if (src && !src.startsWith('http') && !src.startsWith('data:')) {
-        const assetPath = `${baseDirUrl}${src}`;
-        img.setAttribute(
-          'src',
-          `/api/cfgman/rb/serve-asset?path=${encodeURIComponent(assetPath)}`,
-        );
-      }
-    });
-
-    // Process background images
-    const elementsWithStyle = tempDiv.querySelectorAll(
-      '[style*="background-image"]',
-    );
-    elementsWithStyle.forEach((el) => {
-      const style = el.getAttribute('style');
-      if (style) {
-        const bgMatch = style.match(
-          /background-image:\s*url\(['"]?([^'")]+)['"]?\)/i,
-        );
-        if (
-          bgMatch &&
-          bgMatch[1] &&
-          !bgMatch[1].startsWith('http') &&
-          !bgMatch[1].startsWith('data:')
-        ) {
-          const assetPath = `${baseDirUrl}${bgMatch[1]}`;
-          const newStyle = style.replace(
-            bgMatch[0],
-            `background-image: url('/api/cfgman/rb/serve-asset?path=${encodeURIComponent(assetPath)}')`,
-          );
-          el.setAttribute('style', newStyle);
-        }
-      }
-    });
-
-    const processedHtml = tempDiv.innerHTML;
-    const safeHtml = this.sanitizer.bypassSecurityTrustHtml(processedHtml);
-    this.templateSanitizedHtmlCache.set(cacheKey, safeHtml);
-    return safeHtml;
-  }
-
-  private processImages(element: HTMLElement, baseDirUrl: string): void {
-    // Process regular images
-    const images = element.querySelectorAll('img');
-    images.forEach((img) => {
-      const src = img.getAttribute('src');
-      if (src && !src.startsWith('http') && !src.startsWith('data:')) {
-        const assetPath = `${baseDirUrl}${src}`;
-        img.setAttribute(
-          'src',
-          `/api/cfgman/rb/serve-asset?path=${encodeURIComponent(assetPath)}`,
-        );
-      }
-    });
-
-    // Process background images
-    const elementsWithStyle = element.querySelectorAll(
-      '[style*="background-image"]',
-    );
-    elementsWithStyle.forEach((el) => {
-      const style = el.getAttribute('style');
-      if (style) {
-        const bgMatch = style.match(
-          /background-image:\s*url\(['"]?([^'")]+)['"]?\)/i,
-        );
-        if (
-          bgMatch &&
-          bgMatch[1] &&
-          !bgMatch[1].startsWith('http') &&
-          !bgMatch[1].startsWith('data:')
-        ) {
-          const assetPath = `${baseDirUrl}${bgMatch[1]}`;
-          const newStyle = style.replace(
-            bgMatch[0],
-            `background-image: url('/api/cfgman/rb/serve-asset?path=${encodeURIComponent(assetPath)}')`,
-          );
-          el.setAttribute('style', newStyle);
-        }
-      }
-    });
-  }
-
-  closeTemplateAiPrompt() {
-    // Always restore the previous state - will always be 'templates'
-    this.templateGalleryState = this.previousStateBeforeAiPrompt.previousState;
-
-    // Restore the specific template index
-    this.selectedGalleryTemplateIndex =
-      this.previousStateBeforeAiPrompt.templateIndex;
-
-    // Update the carousel position if needed
-    if (this.templateCarousel) {
-      this.templateCarousel.page = this.selectedGalleryTemplateIndex;
-    }
-
-    // Update the dialog header to reflect the template name
-    const currentTemplate = this.getSelectedGalleryTemplate();
-    if (currentTemplate) {
-      this.galleryDialogTitle = `Examples (Gallery) - ${currentTemplate.name || currentTemplate.displayName}`;
-    }
-
-    // Clear the backup state after using it
-    this.previousStateBeforeAiPrompt = null;
-    this.selectedPromptType = null;
-  }
-
-  showTemplateAiPrompt(
-    template: HtmlDocTemplateDisplay,
-    promptType: 'modify' | 'rebuild',
-  ): void {
-    if (!template) return;
-    this.selectedPromptType = promptType;
-
-    // Set appropriate dialog header based on prompt type
-    if (promptType === 'modify') {
-      this.galleryDialogTitle =
-        'prompt 1: modify this HTML template with some changes, as needed';
-    } else {
-      this.galleryDialogTitle =
-        "prompt 2: build your HTML template from scratch, using this template's (full) prompt as a guide";
-    }
-
-    const content =
-      promptType === 'modify'
-        ? template.selectedTemplateModifyPrompt
-        : template.selectedTemplateScratchPrompt;
-
-    if (!content) {
-      this.messagesService.showInfo(
-        'No AI prompt available for this template.',
-        'Information',
-      );
-      return;
-    }
-
-    this.previousStateBeforeAiPrompt = {
-      previousState: this.templateGalleryState,
-      templateIndex: this.selectedGalleryTemplateIndex, // Also store the current template index
-    };
-
-    this.selectedTemplateAiPrompt = content;
-    this.templateGalleryState = 'ai-prompt';
-  }
-
-  showTemplateReadme(template: HtmlDocTemplateDisplay): void {
-    if (!template || !template.readmeContent) {
-      this.messagesService.showInfo(
-        'No README available for this template.',
-        'Information',
-      );
-      return;
-    }
-
-    // Store the current template index explicitly when opening README
-    if (this.templateGalleryState !== 'readme') {
-      this.previousStateBeforeReadme = {
-        previousState: this.templateGalleryState,
-        templateIndex: this.selectedGalleryTemplateIndex,
-      };
-    }
-
-    this.selectedTemplateReadme = template.readmeContent;
-    this.templateGalleryState = 'readme';
-    this.galleryDialogTitle = 'README';
-  }
+  absoluteTemplateFolderPath: string = '';
 
   getTemplateRelativeFolderPath(): string {
     const relativePath =
@@ -2922,15 +2128,7 @@ export class ConfigurationComponent implements OnInit {
     );
   }
 
-  async copyTemplatePromptToClipboard(): Promise<void> {
-    if (!this.selectedTemplateAiPrompt) {
-      this.messagesService.showInfo('No prompt content to copy', 'Information');
-      return;
-    }
 
-    await navigator.clipboard.writeText(this.selectedTemplateAiPrompt);
-    this.messagesService.showInfo('Prompt copied to clipboard!', 'Success');
-  }
 
   // After the other methods in your component
   highlightHtmlCode = (editor: CodeJarContainer) => {
@@ -2956,12 +2154,20 @@ export class ConfigurationComponent implements OnInit {
   highlightFreeMarkerCode = (editor: CodeJarContainer) => {
     if (!editor) return;
     const code = this.getRawCode(editor);
+    if (!code) return;
+
     editor.style.whiteSpace = 'pre-wrap';
     try {
-      const highlighted = Prism.highlight(code, Prism.languages.ftl, 'ftl');
+      // Use markup (HTML/XML) highlighting for FreeMarker templates
+      const highlighted = Prism.highlight(
+        code,
+        Prism.languages.markup,
+        'markup'
+      );
       editor.innerHTML = highlighted;
     } catch (e) {
       editor.innerHTML = code;
+      console.error('Error during FreeMarker (markup) highlighting:', e);
     }
   };
 
@@ -3117,9 +2323,9 @@ if (reportParametersProvided) {
 }
 `;
 
-  generateParametersSpecUsingAI() {}
+  generateParametersSpecUsingAI() { }
 
-  copyToClipboardParametersSpecExample() {}
+  copyToClipboardParametersSpecExample() { }
 
   async onParametersSpecChanged(event: string) {
     this.activeParamsSpecScriptGroovy = event;
@@ -3435,5 +2641,63 @@ if (reportParametersProvided) {
         };
       })
       .filter(Boolean); // Remove any null values
+  }
+
+  @ViewChild('templatesGalleryModal') templatesGalleryModal: any;
+
+  templatesGalleryTags: string[] | null = null;
+  istemplatesGalleryModalVisible = false;
+
+  getGalleryTagsForOutputType(outputType: string): string[] | null {
+    switch (outputType) {
+      case 'output.xlsx':
+        return ['excel'];
+      case 'output.pdf':
+      case 'output.html':
+        return null; // Show all except 'excel'
+      case 'output.docx':
+        return ['docx']; // If you have docx-tagged templates
+      case 'email.message':
+        return ['mailchimp-email-blueprints', 'email'];
+      default:
+        return null;
+    }
+  }
+
+  showGalleryModalForCurrentOutputType(outputType?: string) {
+    // Use the provided outputType or fall back to the report's outputType
+    const type = outputType || this.xmlReporting?.documentburster?.report?.template?.outputtype;
+    const tags = this.getGalleryTagsForOutputType(type);
+    if (tags !== undefined) {
+      this.showGalleryModal(tags);
+    } else {
+      this.messagesService.showInfo('No gallery available for this output type.');
+    }
+  }
+
+  // Update showGalleryModal to accept tags instead of context
+  showGalleryModal(tags: string[] | null) {
+    this.templatesGalleryTags = tags;
+    this.istemplatesGalleryModalVisible = true;
+    setTimeout(() => {
+      this.templatesGalleryModal.openTemplateGallery();
+    });
+  }
+
+  onGalleryTemplateUsed(template: HtmlDocTemplateDisplay) {
+
+    let outputType = this.xmlReporting?.documentburster?.report?.template?.outputtype;
+    if (!outputType && this.currentLeftMenu === 'emailSettingsMenuSelected') {
+      outputType = 'email.message';
+    }
+
+    if (outputType === 'output.xlsx' || outputType === 'output.pdf' || outputType === 'output.html' || outputType === 'output.docx') {
+      this.activeReportTemplateContent = template.htmlContent[template.currentVariantIndex || 0];
+      this.settingsChangedEventHandler(this.activeReportTemplateContent);
+    } else if (outputType === 'email.message') {
+      this.xmlSettings.documentburster.settings.emailsettings.html = template.htmlContent[template.currentVariantIndex || 0];
+      this.settingsChangedEventHandler(this.xmlSettings.documentburster.settings.emailsettings.html);
+    }
+    this.istemplatesGalleryModalVisible = false;
   }
 }

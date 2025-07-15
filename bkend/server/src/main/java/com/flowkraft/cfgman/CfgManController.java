@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -26,6 +27,7 @@ import com.flowkraft.common.AppPaths;
 import com.flowkraft.common.Utils;
 import com.flowkraft.jobman.services.IOUtilsService;
 import com.flowkraft.jobman.services.SystemService;
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ConfigurationFileInfo;
 import com.sourcekraft.documentburster.common.settings.model.ConnectionFileInfo;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
@@ -281,9 +283,25 @@ public class CfgManController {
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
 				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
 
+		boolean isXml = path.toLowerCase().endsWith(".xml");
+
 		return Mono.fromCallable(() -> {
 			// Read the HTML content
-			String htmlContent = systemService.unixCliCat(fullPath);
+			String htmlContent = StringUtils.EMPTY;
+
+			if (isXml) {
+				// Parse XML using Settings and get EmailSettings.html
+				Settings settings = new Settings(fullPath);
+
+				settings.loadSettings();
+				htmlContent = settings.getEmailSettings().html;
+				if (htmlContent == null) {
+					htmlContent = "<!-- No HTML email content found in XML -->";
+				}
+			} else {
+				// Read the HTML content as before
+				htmlContent = systemService.unixCliCat(fullPath);
+			}
 
 			// Get the base directory from the path
 			String baseDir = path.substring(0, path.lastIndexOf('/') + 1);

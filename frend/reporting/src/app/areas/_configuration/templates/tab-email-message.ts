@@ -82,24 +82,24 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
               <!-- Split Button Dropdown -->
               <div class="btn-group" *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings?.documentburster.settings.htmlemaileditcode">
                 <!-- Primary button - direct action -->
-                <button type="button" class="btn btn-default" (click)="askAiForHelp('email.message')">
+                <button type="button" id="btnAskAiForHelp" class="btn btn-default" (click)="askAiForHelp('email.message')">
                   <i class="fa fa-magic"></i> Hey AI, Help Me Get a Custom Email (HTML) Template ...
                 </button>
                 
                 <!-- Dropdown toggle button -->
-                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                <button type="button" id="btnAskAiForHelpDropdownToggle" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
                   <span class="caret"></span>
                 </button>
                 
                 <!-- Dropdown menu -->
                 <ul class="dropdown-menu" role="menu">
                   <li>
-                      <a href="javascript:void(0)" (click)="askAiForHelp('email.message')">
+                      <a href="javascript:void(0)" id="btnAskAiForHelpDropdownItem" (click)="askAiForHelp('email.message')">
                         <i class="fa fa-magic"></i> Hey AI, Help Me Get a Custom Email (HTML) Template ...
                       </a>
                     </li>  
                   <li>
-                      <a href="javascript:void(0)" (click)="openTemplateGallery('mailchimp-email-blueprints')">
+                      <a href="javascript:void(0)" id="btnOpenTemplateGalleryDropdownItem" (click)="showGalleryModalForCurrentOutputType('email.message')">
                       <i class="fa fa-list-alt"></i> {{ 'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.BUTTONS.EXAMPLES-GALLERY' | translate }}
                     </a>
                   </li>
@@ -150,8 +150,8 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
                   <ngx-codejar
                     id="codeJarHtmlEmailEditor"  
                     [(code)]="xmlSettings.documentburster.settings.emailsettings.html"
-                    (codeChange)="onEmailHtmlContentChanged($event)"
-                    [highlightMethod]="highlightEmailMethod"
+                    (update)="onEmailHtmlContentChanged($event)"
+                    [highlightMethod]="highlightHtmlCode"
                     [highlighter]="'prism'"
                     [showLineNumbers]="true"
                     style="height: 310px; border: 1px solid #ccc; border-radius: 4px 4px 0 0; overflow-y: auto;"
@@ -176,8 +176,8 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
                       <ngx-codejar
                         id="codeJarHtmlEmailEditor"
                         [(code)]="xmlSettings.documentburster.settings.emailsettings.html"
-                        (codeChange)="onEmailHtmlContentChanged($event)"
-                        [highlightMethod]="highlightEmailMethod"
+                        (update)="onEmailHtmlContentChanged($event)"
+                        [highlightMethod]="highlightHtmlCode"
                         [highlighter]="'prism'"
                         [showLineNumbers]="true"
                         style="flex: 1; border: 1px solid #ccc; border-radius: 4px 4px 0 0; overflow-y: auto;"
@@ -203,7 +203,7 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
                       </iframe>
                       <button id="btnViewEmailInBrowser" type="button" class="btn btn-default btn-block" 
                               style="border-top-left-radius: 0; border-top-right-radius: 0; margin: 0; border: 1px solid #ddd; border-top: none; box-sizing: border-box;"
-                              (click)="openEmailInBrowser()">
+                              (click)="openTemplateInBrowser(null, settingsService.currentConfigurationTemplatePath)">
                         <i class="fa fa-external-link"></i> {{ 'AREAS.CONFIGURATION.TAB-EMAIL-MESSAGE.BUTTONS.VIEW-IN-BROWSER' | translate }}
                       </button>
                     </div>
@@ -220,6 +220,8 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
           </div>
 
   </div>
+
+  <dburst-ai-manager #aiManagerInstance hidden></dburst-ai-manager>
 
 </ng-template>
 `;

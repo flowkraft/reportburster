@@ -1099,7 +1099,7 @@
                 <ngx-codejar
                   id="domainGroupedCodeEditor"
                   [(code)]="domainGroupedSchemaJsonTextContent"
-                  (codeChange)="
+                  (update)="
                     onDomainGroupedSchemaJsonTextContentChanged($event)
                   "
                   [highlightMethod]="highlightJsonMethod"
@@ -1356,7 +1356,7 @@
               <ngx-codejar
                 id="plantUmlEditor"
                 [(code)]="plantUmlCode"
-                (codeChange)="onPlantUmlCodeChanged($event)"
+                (update)="onPlantUmlCodeChanged($event)"
                 [highlightMethod]="highlightPlantUmlMethod"
                 [highlighter]="'prism'"
                 [showLineNumbers]="true"
@@ -1502,7 +1502,7 @@
               <ngx-codejar
                 id="ubiquitousLanguageEditor"
                 [(code)]="ubiquitousLanguageMarkdown"
-                (codeChange)="onUbiquitousLanguageChanged($event)"
+                (update)="onUbiquitousLanguageChanged($event)"
                 [highlightMethod]="highlightMarkdownMethod"
                 [highlighter]="'prism'"
                 [showLineNumbers]="true"

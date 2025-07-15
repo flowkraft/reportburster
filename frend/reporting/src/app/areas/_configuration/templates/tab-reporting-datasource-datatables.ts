@@ -100,7 +100,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                   <ngx-codejar
                     id="sqlQueryEditor"
                     [(code)]="xmlReporting.documentburster.report.datasource.sqloptions.query"
-                    (codeChange)="onSqlQueryChanged($event)"
+                    (update)="onSqlQueryChanged($event)"
                     [highlightMethod]="highlightSqlCode"
                     [highlighter]="'prism'"
                     [showLineNumbers]="true"
@@ -137,7 +137,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
               <ngx-codejar
                 id="paramsSpecEditor"
                 [(code)]="activeParamsSpecScriptGroovy"
-                (codeChange)="onParametersSpecChanged($event)"
+                (update)="onParametersSpecChanged($event)"
                 [highlightMethod]="highlightGroovyCode"
                 [highlighter]="'prism'"
                 [showLineNumbers]="true"
@@ -174,7 +174,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                   <ngx-codejar
                     id="groovyScriptEditor"
                     [(code)]="activeDatasourceScriptGroovy"
-                    (codeChange)="onScriptContentChanged($event)"
+                    (update)="onScriptContentChanged($event)"
                     [highlightMethod]="highlightGroovyCode"
                     [highlighter]="'prism'"
                     [showLineNumbers]="true"
@@ -211,7 +211,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
               <ngx-codejar
                 id="paramsSpecEditor"
                 [(code)]="activeParamsSpecScriptGroovy"
-                (codeChange)="onParametersSpecChanged($event)"
+                (update)="onParametersSpecChanged($event)"
                 [highlightMethod]="highlightGroovyCode"
                 [highlighter]="'prism'"
                 [showLineNumbers]="true"
@@ -1016,7 +1016,7 @@ Column 3, 15"
             <ngx-codejar
               id="transformationCodeEditor"
               [(code)]="activeTransformScriptGroovy"
-              (codeChange)="onTransformationCodeChanged($event)"
+              (update)="onTransformationCodeChanged($event)"
               [highlightMethod]="highlightGroovyCode"
               [highlighter]="'prism'"
               [showLineNumbers]="true"
