@@ -191,7 +191,15 @@ export class TemplatesGalleryModalComponent {
     }
 
     // No context/output type logic here—just emit the selected template
-    this.useTemplate.emit(template);
+    this.confirmService.askConfirmation({
+      message: 'Are you sure you want to replace the current template with this one?',
+      confirmAction: () => {
+        this.useTemplate.emit(template);
+      },
+      cancelAction: () => {
+        // Do nothing if No is pressed
+      }
+    });
   }
 
 
