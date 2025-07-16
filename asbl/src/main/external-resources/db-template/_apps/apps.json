@@ -27,6 +27,58 @@
       }
     },
     {
+      "id": "keycloak",
+      "name": "Keycloak (Identity & Access Management)",
+      "category": "Identity & Access Management",
+      "type": "docker",
+      "description": "Production-ready Keycloak with admin features.",
+      "url": "http://localhost:7080",
+      "enabled": true,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Start",
+          "description": "Starts the Keycloak service.",
+          "command": "docker-compose -f ./keycloak/docker-compose.yml up -d keycloak"
+        },
+        {
+          "key": "stop",
+          "name": "Stop",
+          "description": "Stops the Keycloak service.",
+          "command": "docker-compose -f ./keycloak/docker-compose.yml stop keycloak"
+        }
+      ],
+      "healthCheck": {
+        "type": "tcp"
+      }
+    },
+    {
+      "id": "flowKraft",
+      "name": "FlowKraft (Enterprise)",
+      "category": "Enterprise",
+      "type": "docker",
+      "description": "Enterprise-grade workflow and process management.",
+      "url": "http://localhost:8081",
+      "enabled": true,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Start",
+          "description": "Starts the FlowKraft service.",
+          "command": "docker-compose -f ./flowkraft/docker-compose.yml up -d flowkraft"
+        },
+        {
+          "key": "stop",
+          "name": "Stop",
+          "description": "Stops the FlowKraft service.",
+          "command": "docker-compose -f ./flowkraft/docker-compose.yml stop flowkraft"
+        }
+      ],
+      "healthCheck": {
+        "type": "tcp"
+      }
+    },
+    {
       "id": "cloudbeaver",
       "name": "DB Management (Cloudbeaver)",
       "category": "Database Management",

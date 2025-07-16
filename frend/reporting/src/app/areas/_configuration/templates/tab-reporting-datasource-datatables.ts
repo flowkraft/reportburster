@@ -122,6 +122,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                     type="button"
                     class="btn btn-primary btn-block"
                     (click)="doTestSqlQuery()"
+                    [disabled]="settingsService.getDatabaseConnectionFiles().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode || !xmlReporting.documentburster.report.datasource.sqloptions.query"
                   >
                     <i class="fa fa-paper-plane"></i>&nbsp;&nbsp;Test SQL Query
                   </button>
@@ -154,7 +155,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 [readonly]="true"
                 style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; background-color: #f8f8f8; margin-top: 10px;"
               ></ngx-codejar>
-              <button id="btnCopyToClipboardParametersSpecExample" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardParametersSpecExample()">
+              <button id="btnCopyToClipboardParametersSpecExampleSql" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardParametersSpecExample()">
                 Copy Example Params Script To Clipboard
               </button>
             </tab>
@@ -228,7 +229,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 [readonly]="true"
                 style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; background-color: #f8f8f8; margin-top: 10px;"
               ></ngx-codejar>
-              <button id="btnCopyToClipboardParametersSpecExample" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardParametersSpecExample()">
+              <button id="btnCopyToClipboardParametersSpecExampleScript" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardParametersSpecExample()">
                 Copy Example Params Script To Clipboard
               </button>
             </tab>

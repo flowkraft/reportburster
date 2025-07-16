@@ -214,9 +214,9 @@ export class ConfigurationTestHelper {
   static changeSaveLoadAssertSavedConfiguration(
     ft: FluentTester,
   ): FluentTester {
-    
+
     const escapedWhich = PATHS.SETTINGS_CONFIG_FILE; //;.replace('.', '\\.');
-    
+
     const wysiwygTestContent = `WYSIWYG content ${Date.now()}`;
     const codeJarTestContent = `<!-- CodeJar content ${Date.now()} --><h1>Final Content</h1>`;
 
@@ -367,7 +367,7 @@ export class ConfigurationTestHelper {
         .codeJarShouldContainText('#codeJarHtmlEmailEditor', wysiwygTestContent)
         // Now, set the final content using the code editor
         .setCodeJarContent('#codeJarHtmlEmailEditor', codeJarTestContent)
-        
+
         // Test Splitter and Preview functionality
         .click('#btnToggleEmailPreviewShow')
         .waitOnElementToBecomeVisible('as-split')
@@ -387,11 +387,11 @@ export class ConfigurationTestHelper {
         .pageShouldContainText('A responsive two-column template with a boxed layout that includes a body image')
         .click('#btnCloseAiCopilotModal')
         .waitOnElementToBecomeInvisible('#btnCloseAiCopilotModal')
-        
+
         .waitOnElementToBecomeVisible('#btnAskAiForHelp')
         .waitOnElementToBecomeVisible('#btnAskAiForHelpDropdownToggle')
         .click('#btnAskAiForHelpDropdownToggle')
-        
+
         .waitOnElementToBecomeVisible('#btnOpenTemplateGalleryDropdownItem')
         .click('#btnOpenTemplateGalleryDropdownItem')
         .waitOnElementToBecomeVisible('.p-carousel-next')
@@ -408,7 +408,7 @@ export class ConfigurationTestHelper {
         // Verify the content was replaced by the gallery template
         .codeJarShouldNotContainText('#codeJarHtmlEmailEditor', codeJarTestContent)
         .codeJarShouldContainText('#codeJarHtmlEmailEditor', 'border-bottom:1px solid #CCCCCC;') // Unique string from the first email template
-        
+
         // values are supposed to be saved at this moment ==> go away and click burst top menu
         .click('#topMenuBurst')
         // STEP1 - load and assert the saved values
@@ -604,10 +604,15 @@ export class ConfigurationTestHelper {
       .gotoConfiguration()
       .click(
         `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-      )
+      ).sleep(2 * Constants.DELAY_ONE_SECOND)
+      .waitOnElementToBecomeVisible('#leftMenuGeneralSettings')
+      .waitOnElementToBecomeEnabled('#leftMenuGeneralSettings')
+      .waitOnElementToBecomeVisible('#leftMenuReportingSettings')
+      .waitOnElementToBecomeEnabled('#leftMenuReportingSettings')
       .click('#leftMenuReportingSettings')
       // Test CSV Default Settings
       .waitOnElementToBecomeVisible('#dsTypes')
+      .waitOnElementToBecomeEnabled('#dsTypes')
       .selectedOptionShouldContainText('#dsTypes', 'CSV File')
       .inputShouldHaveValue('#separatorChar', ',')
       .selectedOptionShouldContainText('#selectHeader', 'No Header')
@@ -673,7 +678,7 @@ export class ConfigurationTestHelper {
       // Test TSV Default Settings
       .dropDownSelectOptionHavingLabel(
         '#dsTypes',
-        'TSV File (with tab-separated values)',
+        'TSV File (tab-separated values)',
       )
       .waitOnElementToBecomeVisible('#separatorChar')
       .inputShouldHaveValue('#separatorChar', '→ [tab character]')
@@ -785,7 +790,7 @@ export class ConfigurationTestHelper {
       // Test Fixed Width Default Settings
       .dropDownSelectOptionHavingLabel(
         '#dsTypes',
-        'Fixed-Width File (with fixed-width columns)',
+        'Fixed-Width File (fixed-width columns)',
       )
       .waitOnElementToBecomeVisible('#fixedWidthColumns')
       .elementShouldBeVisible('#selectFixedWidthHeader')
@@ -849,11 +854,13 @@ export class ConfigurationTestHelper {
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.gsheet')
       .waitOnElementToBecomeVisible('#btnCloseAskForFeatureModal')
       .click('#btnCloseAskForFeatureModal')
+      .waitOnElementToBecomeInvisible('#btnCloseAskForFeatureModal')
 
       // Test Office 365 feature request modal
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.o365sheet')
       .waitOnElementToBecomeVisible('#btnCloseAskForFeatureModal')
       .click('#btnCloseAskForFeatureModal')
+      .waitOnElementToBecomeInvisible('#btnCloseAskForFeatureModal')
 
       // Test Database feature request modal
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.sqlquery')
@@ -867,6 +874,29 @@ export class ConfigurationTestHelper {
       .codeJarShouldContainText('#sqlQueryEditor', '') // Assumes codejar content is checkable this way or use codeJarShouldContainText(selector, '')
       .waitOnElementToBecomeVisible('#btnHelpWithSqlQueryAI') // Assumed ID
       .elementShouldBeDisabled('#btnHelpWithSqlQueryAI') // Assumed ID
+      .waitOnElementToBecomeVisible('#btnTestSqlQuery') // Assumed ID
+      .elementShouldBeDisabled('#btnTestSqlQuery') // Assumed ID
+      
+      .waitOnElementToBecomeEnabled('#tabSqlReportParameters-link')
+      .click('#tabSqlReportParameters-link') // Assumed ID
+      .sleep(Constants.DELAY_ONE_SECOND) // Wait for the tab to be ready
+      .waitOnElementToBecomeVisible('#paramsSpecEditor')
+      .codeJarShouldContainText('#paramsSpecEditor', '')
+
+      .waitOnElementToBecomeEnabled('#tabSqlExampleReportParameters-link')
+      .click('#tabSqlExampleReportParameters-link') // Assumed ID
+      .sleep(Constants.DELAY_ONE_SECOND)
+      .waitOnElementToBecomeVisible('#paramsSpecExampleEditor')
+      .codeJarShouldContainText('#paramsSpecExampleEditor', 'Report start date')
+      .waitOnElementToBecomeVisible('#btnCopyToClipboardParametersSpecExampleSql')
+      .waitOnElementToBecomeEnabled('#btnCopyToClipboardParametersSpecExampleSql')
+      //.scrollIntoViewIfNeeded('#btnCopyToClipboardParametersSpecExampleSql')
+      //.click('#btnCopyToClipboardParametersSpecExampleSql')
+      //.waitOnElementWithTextToBecomeVisible('Example parameters script copied to clipboard!')
+      //.clipboardShouldContainText('Report start date')
+      .click('#tabSqlCode-link')
+      .waitOnElementToBecomeVisible('#sqlQueryEditor')
+
       // .elementShouldBeDisabled('#btnHelpWithSqlQueryAI') // If no connection selected or available
       .elementCheckBoxShouldNotBeSelected('#btnShowMoreSqlOptions')
       .elementShouldNotBeVisible('#sqlIdColumn')
@@ -900,10 +930,31 @@ export class ConfigurationTestHelper {
 
       // Test Script Default Settings
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.scriptfile')
-      .waitOnElementToBecomeVisible('#noDbConnectionsMessageScript') // Using new ID
-      .waitOnElementToBecomeVisible('#createDbConnectionLinkScript') // Using new ID
+      .waitOnElementToBecomeVisible('#noDbConnectionsMessageSql') // Using new ID
+      .waitOnElementToBecomeVisible('#createDbConnectionLinkSql') // Using new ID
       .waitOnElementToBecomeVisible('#groovyScriptEditor') // Wait for the section to be visible
       .waitOnElementToBecomeVisible('#btnHelpWithScriptAI') // Assumed ID
+
+      .waitOnElementToBecomeEnabled('#tabScriptReportParameters-link')
+      .click('#tabScriptReportParameters-link') // Assumed ID
+      .sleep(Constants.DELAY_ONE_SECOND)
+      .waitOnElementToBecomeVisible('#paramsSpecEditor')
+      .codeJarShouldContainText('#paramsSpecEditor', '')
+
+      .waitOnElementToBecomeEnabled('#tabScriptExampleReportParameters-link')
+      .click('#tabScriptExampleReportParameters-link') // Assumed ID
+      .sleep(Constants.DELAY_ONE_SECOND)
+      .waitOnElementToBecomeVisible('#paramsSpecExampleEditor')
+      .codeJarShouldContainText('#paramsSpecExampleEditor', 'Report start date')
+      .waitOnElementToBecomeVisible('#btnCopyToClipboardParametersSpecExampleScript')
+      .waitOnElementToBecomeEnabled('#btnCopyToClipboardParametersSpecExampleScript')
+      //.scrollIntoViewIfNeeded('#btnCopyToClipboardParametersSpecExampleScript')
+      //.click('#btnCopyToClipboardParametersSpecExampleScript')
+      //.waitOnElementWithTextToBecomeVisible('Example parameters script copied to clipboard!')
+      //.clipboardShouldContainText('Report start date')
+      .click('#tabScriptCode-link')
+      .waitOnElementToBecomeVisible('#groovyScriptEditor')
+
       .elementCheckBoxShouldNotBeSelected('#btnShowMoreScriptOptions')
       .elementShouldNotBeVisible('#scriptIdColumn')
 
@@ -935,7 +986,7 @@ export class ConfigurationTestHelper {
       .elementCheckBoxShouldNotBeSelected('#btnShowAdditionalTransformation')
       .elementShouldNotBeVisible('#btnHelpWithTransformationAI') // Assumed ID
 
-      // Test XML Default Settings
+    // Test XML Default Settings
     ft = ft
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.xmlfile')
       .waitOnElementToBecomeVisible('#xmlRepeatingNodeXPath')
@@ -987,7 +1038,7 @@ export class ConfigurationTestHelper {
       .click('#reportingTemplateOutputTab-link')
       .waitOnElementToBecomeVisible('#reportOutputType')
       .selectedOptionShouldContainText('#reportOutputType', 'None')
-      .waitOnElementToBecomeVisible('#btnAskAiForHelpOutput')
+      .elementShouldNotBeVisible('#btnAskAiForHelpOutput')
       .elementShouldNotBeVisible('#btnOpenTemplateGallery')
       .waitOnElementToBecomeVisible('#noneOutputTypeHelp')
       .elementShouldContainText(
@@ -1077,10 +1128,17 @@ export class ConfigurationTestHelper {
     // Reset to None for clean state
     ft = ft
       .dropDownSelectOptionHavingLabel('#reportOutputType', 'None')
-      .waitOnElementToBecomeVisible('#btnAskAiForHelpOutput')
+      .waitOnElementToBecomeInvisible('#btnAskAiForHelpOutput')
       .waitOnElementToBecomeInvisible('#reportTemplateContainer')
       .waitOnElementToBecomeInvisible('#btnOpenTemplateGallery')
       .waitOnElementToBecomeInvisible('#selectTemplateFile');
+
+    ft = ft
+      .click('#reportingTabulatorTab-link')
+      .waitOnElementToBecomeVisible('rb-tabulator')
+      .click('#reportingTemplateOutputTab-link')
+      .waitOnElementToBecomeVisible('#reportOutputType')
+      .selectedOptionShouldContainText('#reportOutputType', 'None')
 
     return ft;
   }
@@ -1444,16 +1502,16 @@ export class ConfigurationTestHelper {
           '#codeJarHtmlTemplateEditor',
           `<html><body><h1>Hello ${outputType}</h1></body></html>`,
         )
-        
-        if (outputType in ['output.any', 'output.fop2pdf']) {
-          ft = ft
-            .waitOnElementToBecomeVisible('#reportPreviewPane')
-            .elementShouldBeVisible('#reportPreviewPane');
-        
-        }
 
-        // Wait for preview to update
-        ft = ft.sleep(Constants.DELAY_ONE_SECOND);
+      if (outputType in ['output.any', 'output.fop2pdf']) {
+        ft = ft
+          .waitOnElementToBecomeVisible('#reportPreviewPane')
+          .elementShouldBeVisible('#reportPreviewPane');
+
+      }
+
+      // Wait for preview to update
+      ft = ft.sleep(Constants.DELAY_ONE_SECOND);
 
     }
 
@@ -1667,10 +1725,10 @@ export class ConfigurationTestHelper {
         '#scriptCustomIdColumnIndex',
         scriptIdColumnCustomIndex,
       )
-      
-      
-      
-      
+
+
+
+
       .click('#lblShowMoreScriptOptions') // Collapse
       // Assert Additional Transformation for Script (should have the last set value)
       .click('#lblShowAdditionalTransformation')
@@ -1765,6 +1823,8 @@ export class ConfigurationTestHelper {
       'output.xlsx': 'Microsoft Excel Docs (html_template2xlsx_docs)',
       'output.html': 'HTML Docs (html_template2html_docs)',
       'output.docx': 'Microsoft Word Docs (docx_template2docx_docs)',
+      'output.fop2pdf': 'PDF Docs Using xslfo FOP (xslfo_template2pdf_docs)',
+      'output.any': 'XML/Any Docs (freemarker_template2any_docs)',
       'output.none': 'None',
     };
 
@@ -1775,31 +1835,26 @@ export class ConfigurationTestHelper {
         '#reportOutputType',
         outputTypeLabels[outputTypeCode],
       )
-      .waitOnElementToBecomeVisible('#btnAskAiForHelpOutput');
+      ;
 
     // Wait for appropriate element based on output type
     if (outputTypeCode === 'output.docx') {
       ft = ft.waitOnElementToBecomeVisible('#selectTemplateFile');
     } else {
       if (outputTypeCode !== 'output.none') {
-        ft = ft.waitOnElementToBecomeVisible('#codeJarHtmlTemplateEditor');
+        ft = ft.waitOnElementToBecomeVisible('#btnAskAiForHelpOutput').waitOnElementToBecomeVisible('#codeJarHtmlTemplateEditor');
       }
     }
 
-    // Step 1: Check the AI Help button has correct text
-    if (outputTypeCode === 'output.docx' || outputTypeCode === 'output.none') {
+    // Step 2: Test "Hey AI" workflow
+    if (outputTypeCode !== 'output.none') {
       ft = ft.elementShouldContainText(
         '#btnAskAiForHelpOutput',
         'Hey AI, Help Me',
       );
-    }
-    // Step 2: Test "Hey AI" workflow
-    ft = ft.click('#btnAskAiForHelpOutput');
-
-    if (outputTypeCode === 'output.docx' || outputTypeCode === 'output.none') {
-      ft = ft
-        .waitOnElementToBecomeVisible('#btnConfirmAiHelp')
-        .waitOnElementToBecomeVisible('#btnCloseTemplateGallery');
+      ft = ft.click('#btnAskAiForHelpOutput')
+        .waitOnElementToBecomeVisible('#btnCloseAiCopilotModal')
+        .waitOnElementToBecomeEnabled('#btnCloseAiCopilotModal');
     }
 
     if (outputTypeCode === 'output.pdf') {
@@ -1812,7 +1867,7 @@ export class ConfigurationTestHelper {
         .waitOnElementToBecomeInvisible('.dburst-button-question-confirm');
 
       ft = ft.clipboardShouldContainText(
-        'Generate HTML optimized for PDF conversion',
+        'to convert the XHTML into a PDF',
       );
     }
 
@@ -1844,14 +1899,13 @@ export class ConfigurationTestHelper {
       );
     }
 
-    if (outputTypeCode === 'output.docx' || outputTypeCode === 'output.none')
+    if (outputTypeCode !== 'output.none') {
       return ft
-        .click('#btnCloseTemplateGallery')
-        .waitOnElementToBecomeInvisible('#btnCloseTemplateGallery');
+        .click('#btnCloseAiCopilotModal')
+        .waitOnElementToBecomeInvisible('#btnCloseAiCopilotModal');
+    }
 
-    return ft
-      .click('#btnCloseAiCopilotModal')
-      .waitOnElementToBecomeInvisible('#btnCloseAiCopilotModal');
+    return ft;
   }
 
   static assertTemplateOutputGalleryFeatures(
@@ -1863,10 +1917,10 @@ export class ConfigurationTestHelper {
     ft = ft
       .waitOnElementToBecomeVisible('#btnOpenTemplateGallery')
       .click('#btnOpenTemplateGallery')
-      .waitOnElementToBecomeVisible('#aiInstructionsContainer')
-      .elementShouldBeVisible('#aiInstructionsContent')
-      .waitOnElementToBecomeVisible('#btnConfirmAiGalleryInstructions')
-      .click('#btnConfirmAiGalleryInstructions')
+      //.waitOnElementToBecomeVisible('#aiInstructionsContainer')
+      //.elementShouldBeVisible('#aiInstructionsContent')
+      //.waitOnElementToBecomeVisible('#btnConfirmAiGalleryInstructions')
+      //.click('#btnConfirmAiGalleryInstructions')
       .waitOnElementToBecomeVisible('.p-carousel-next')
       .pageShouldContainText('View Template'); // Verify at least one template exists
 

@@ -221,7 +221,5 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
 
   </div>
 
-  <dburst-ai-manager #aiManagerInstance hidden></dburst-ai-manager>
-
 </ng-template>
 `;
