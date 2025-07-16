@@ -39,7 +39,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
         </select>
       </div>
       <div class="col-xs-5">
-        <button id="btnAskAiForHelpOutput" type="button" class="btn btn-default" (click)="askAiForHelp((xmlReporting?.documentburster.report.template.outputtype))">
+        <button id="btnAskAiForHelpOutput" type="button" class="btn btn-default" (click)="askAiForHelp((xmlReporting?.documentburster.report.template.outputtype))" *ngIf="xmlReporting?.documentburster.report.template.outputtype !== 'output.none'">
               <strong>{{ getAiHelpButtonLabel(xmlReporting?.documentburster.report.template.outputtype) }}</strong>
         </button>
       </div>
@@ -147,7 +147,8 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
           <!-- HTML editor for HTML, PDF and XLSX -->
           <div *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.html' || 
                     xmlReporting?.documentburster.report.template.outputtype === 'output.pdf' || 
-                    xmlReporting?.documentburster.report.template.outputtype === 'output.xlsx'">
+                    xmlReporting?.documentburster.report.template.outputtype === 'output.xlsx'
+                   ">
               
               <!-- Code editor only (when preview is hidden) -->
               <div id="codeJarHtmlTemplateEditorDiv" *ngIf="!reportPreviewVisible">
@@ -221,7 +222,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
                     xmlReporting?.documentburster.report.template.outputtype === 'output.any'">
           
                     <ngx-codejar
-                      id="codeJarXslFoTemplateEditor"
+                      id="codeJarHtmlTemplateEditor"
                       *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.fop2pdf'"
                       [(code)]="activeReportTemplateContent"
                       (update)="onTemplateContentChanged($event)"
@@ -232,7 +233,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
                     </ngx-codejar>
           
                     <ngx-codejar
-                      id="codeJarFreeMarkerTemplateEditor"
+                      id="codeJarHtmlTemplateEditor"
                       *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.any'"
                       [(code)]="activeReportTemplateContent"
                       (update)="onTemplateContentChanged($event)"

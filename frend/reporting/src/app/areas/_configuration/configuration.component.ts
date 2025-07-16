@@ -1674,6 +1674,18 @@ export class ConfigurationComponent implements OnInit {
   }
 
   async onDataSourceTypeChange(newValue: any) {
+
+
+    if (newValue === 'ds.tsvfile') {
+      this.xmlReporting.documentburster.report.datasource.csvoptions.separatorchar =
+        '→ [tab character]';
+    }
+
+    if (newValue === 'ds.csvfile') {
+      this.xmlReporting.documentburster.report.datasource.csvoptions.separatorchar =
+        ',';
+    }
+
     this.xmlReporting.documentburster.report.datasource.showmoreoptions = false; // Reset UI state
 
     const previousDsType =
@@ -2039,7 +2051,7 @@ export class ConfigurationComponent implements OnInit {
     if (outputTypeCode === 'output.pdf') {
       const launchConfig: AiManagerLaunchConfig = {
         initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'PDF Report Generation',
+        initialSelectedCategory: 'PDF Generation (from HTML)',
         initialExpandedPromptId: 'PDF_SAMPLE_A4_ORDER_SUMMARY',
       };
 
@@ -2065,6 +2077,29 @@ export class ConfigurationComponent implements OnInit {
         initialActiveTabKey: 'PROMPTS',
         initialSelectedCategory: 'Template Creation/Modification',
         initialExpandedPromptId: 'BUILD_TEMPLATE_FROM_SCRATCH',
+      };
+
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      }
+    }
+
+    if (outputTypeCode === 'output.fop2pdf') {
+      const launchConfig: AiManagerLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'PDF Generation (from XSL-FO)',
+        initialExpandedPromptId: 'PDF_SAMPLE_A4_PAYSLIP_XSLFO',
+      };
+
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      }
+    }
+
+    if (outputTypeCode === 'output.any' || outputTypeCode === 'output.docx') {
+      const launchConfig: AiManagerLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'Template Creation/Modification',
       };
 
       if (this.aiManagerInstance) {
@@ -2215,7 +2250,7 @@ export class ConfigurationComponent implements OnInit {
   //DBCONNECTIONS END
 
   getAiHelpButtonLabel(outputType: string): string {
-    return 'Hey AI, Help Me!';
+    return `Hey AI, Help Me Build This ${outputType.replace('output.', '').toUpperCase()} Report Template!`;
   }
 
   exampleParamsSpecScript = `
@@ -2325,7 +2360,19 @@ if (reportParametersProvided) {
 
   generateParametersSpecUsingAI() { }
 
-  copyToClipboardParametersSpecExample() { }
+  copyToClipboardParametersSpecExample() {
+    if (this.exampleParamsSpecScript) {
+      navigator.clipboard
+        .writeText(this.exampleParamsSpecScript)
+        .then(() => {
+          this.messagesService.showInfo('Example parameters script copied to clipboard!', 'Success');
+        })
+        .catch((err) => {
+          console.error('Failed to copy example parameters script: ', err);
+          this.messagesService.showInfo('Failed to copy example parameters script.', 'Error');
+        });
+    }
+  }
 
   async onParametersSpecChanged(event: string) {
     this.activeParamsSpecScriptGroovy = event;
@@ -2654,9 +2701,8 @@ if (reportParametersProvided) {
         return ['excel'];
       case 'output.pdf':
       case 'output.html':
-        return null; // Show all except 'excel'
       case 'output.docx':
-        return ['docx']; // If you have docx-tagged templates
+        return null; // Show all except 'excel'
       case 'email.message':
         return ['mailchimp-email-blueprints', 'email'];
       default:

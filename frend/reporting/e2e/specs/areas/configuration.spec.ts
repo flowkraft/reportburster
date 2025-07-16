@@ -26,7 +26,7 @@ test.describe('', async () => {
         ft,
         'Payslips',
         'enableMailMergeCapability',
-      );
+      ).sleep(2 * Constants.DELAY_ONE_SECOND);
 
       ft =
         ConfigurationTestHelper.assertDefaultDocumentBursterReportingConfiguration(
@@ -41,6 +41,8 @@ test.describe('', async () => {
         'output.docx',
         'output.xlsx',
         'output.html',
+        'output.any',
+        'output.fop2pdf'
       ];
 
       for (const outputType of outputTypes) {
@@ -88,7 +90,7 @@ test.describe('', async () => {
         .elementShouldNotBeVisible('#payslips_ds\\.csvfile')
         .click('#selectMailMergeClassicReport')
         .waitOnElementToBecomeVisible('#bills_ds\\.csvfile')
-        .elementShouldNotBeVisible('#payslips_ds\\.csvfile')
+        .waitOnElementToBecomeVisible('#payslips_ds\\.csvfile')
         .click('#bills_ds\\.csvfile')
         .waitOnElementToBecomeVisible('#mailMergeClassicReportInputFile')
         .elementShouldBeVisible('#browseMailMergeClassicReportInputFile')
@@ -100,7 +102,7 @@ test.describe('', async () => {
         )
         .click('#selectMailMergeClassicReport')
         .waitOnElementToBecomeVisible('#bills_ds\\.csvfile')
-        .elementShouldNotBeVisible('#payslips_ds\\.csvfile')
+        .waitOnElementToBecomeVisible('#payslips_ds\\.csvfile')
         .click('#bills_ds\\.csvfile')
         .waitOnElementToBecomeVisible('#mailMergeClassicReportInputFile')
         .waitOnElementToBecomeVisible('#browseMailMergeClassicReportInputFile')
@@ -118,7 +120,11 @@ test.describe('', async () => {
       return ft
         .moveFile(tempStoragePath, docxTemplatePath)
         .gotoBurstScreen()
-        .elementShouldBeVisible('#reportGenerationMailMergeTab-link');
+        .waitOnElementToBecomeVisible('#reportGenerationMailMergeTab-link')
+        .waitOnElementToBecomeEnabled('#reportGenerationMailMergeTab-link')
+        .click('#reportGenerationMailMergeTab-link')
+        .waitOnElementToBecomeVisible('#noReportsShowMeHowToConfigureReports')
+        .waitOnElementToBecomeEnabled('#noReportsShowMeHowToConfigureReports');
     },
   );
 

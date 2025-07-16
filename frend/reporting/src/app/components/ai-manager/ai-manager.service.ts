@@ -495,7 +495,7 @@ Generate only the complete HTML code based on the above instructions.`,
 
     // --- PDF Report Generation ---
     {
-      id: 'PDF_SAMPLE_A4_PAYSLIP',
+      id: 'PDF_SAMPLE_A4_PAYSLIP_XSLFO',
       title: 'Sample of an A4 `Payslip` PDF Report (generated from XSL-FO)',
       description:
         'Sample of an A4 `Payslip` PDF Report (generated from XSL-FO)',
