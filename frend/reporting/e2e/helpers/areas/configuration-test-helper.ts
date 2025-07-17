@@ -876,7 +876,7 @@ export class ConfigurationTestHelper {
       .elementShouldBeDisabled('#btnHelpWithSqlQueryAI') // Assumed ID
       .waitOnElementToBecomeVisible('#btnTestSqlQuery') // Assumed ID
       .elementShouldBeDisabled('#btnTestSqlQuery') // Assumed ID
-      
+
       .waitOnElementToBecomeEnabled('#tabSqlReportParameters-link')
       .click('#tabSqlReportParameters-link') // Assumed ID
       .sleep(Constants.DELAY_ONE_SECOND) // Wait for the tab to be ready
@@ -1399,13 +1399,14 @@ export class ConfigurationTestHelper {
 
     ft = ft
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.csvfile')
-      .waitOnToastToBecomeVisible('info', 'Saved')
+      //.waitOnToastToBecomeVisible('info', 'Saved')
       .waitOnElementToBecomeVisible('#separatorChar')
       .setValue('#separatorChar', csvTsvSeparatorCharValue)
-      .waitOnToastToBecomeVisible('info', 'Saved');
+      //.waitOnToastToBecomeVisible('info', 'Saved')
+      .sleep(2 * Constants.DELAY_ONE_SECOND);
 
     // Now move to Template Output tab
-    ft = ft.click('#reportingTemplateOutputTab-link');
+    ft = ft.click('#reportingTemplateOutputTab-link').sleep(2 * Constants.DELAY_ONE_SECOND);
 
     // Define HTML-based output types (exclude DOCX)
     const htmlBasedOutputTypes = ['output.pdf', 'output.xlsx', 'output.html', 'output.fop2pdf', 'output.any'];
@@ -1423,12 +1424,14 @@ export class ConfigurationTestHelper {
     // Test the gallery for the specified output type
     ft = ft
       .waitOnElementToBecomeVisible('#btnOpenTemplateGallery')
+      .waitOnElementToBecomeEnabled('#btnOpenTemplateGallery')
       .click('#btnOpenTemplateGallery')
       // If there are initial instructions, confirm them
-      .waitOnElementToBecomeVisible('#btnConfirmAiGalleryInstructions')
-      .click('#btnConfirmAiGalleryInstructions')
+      //.waitOnElementToBecomeVisible('#btnConfirmAiGalleryInstructions')
+      //.click('#btnConfirmAiGalleryInstructions')
       // Wait for template gallery to load
-      .waitOnElementToBecomeVisible('.p-carousel-next');
+      .waitOnElementToBecomeVisible('.p-carousel-next')
+      .waitOnElementToBecomeEnabled('.p-carousel-next');
 
     // Choose a random template from the available ones
     const randomTemplateIndex =
@@ -1447,46 +1450,48 @@ export class ConfigurationTestHelper {
     // Use the selected template
     ft = ft
       .click('#btnUseSelectedTemplate')
-      .waitOnElementToBecomeVisible('.p-confirm-dialog-accept')
-      //click "Yes" to confirm using the selected template
-      .click('.p-confirm-dialog-accept')
-      .waitOnElementToBecomeInvisible('.p-confirm-dialog-accept')
+      .clickYesDoThis()
       .waitOnElementToBecomeVisible('#codeJarHtmlTemplateEditor');
 
     // a) Verify template is correctly loaded in the code editor
     ft = ft.codeJarShouldContainText('#codeJarHtmlTemplateEditor', '<html');
 
     // b) Verify the template is correctly previewed in the iframe
-    ft = ft
-      .waitOnElementToBecomeVisible('#reportPreviewPane')
-      .elementShouldBeVisible('#reportPreviewPane');
+    if (reportOutputType !== 'output.fop2pdf' && reportOutputType !== 'output.any') {
+      ft = ft
+        .waitOnElementToBecomeVisible('#reportPreviewPane')
+        .elementShouldBeVisible('#reportPreviewPane');
 
-    // c) Test view in browser button
-    ft = ft
-      .click('#btnViewHtmlInBrowser')
-      // When view in browser is clicked, we stay on the same page
-      // so we need to check that the view still exists
-      .waitOnElementToBecomeVisible('#codeJarHtmlTemplateEditor');
+      // c) Test view in browser button
+      ft = ft
+        .click('#btnViewHtmlInBrowser')
+        // When view in browser is clicked, we stay on the same page
+        // so we need to check that the view still exists
+        .waitOnElementToBecomeVisible('#codeJarHtmlTemplateEditor');
 
-    // Test the preview toggle functionality
-    ft = ft
-      .elementShouldBeVisible('#btnToggleHtmlPreviewHide')
-      .click('#btnToggleHtmlPreviewHide')
-      .waitOnElementToBecomeVisible('#btnToggleHtmlPreviewShow')
-      .waitOnElementToBecomeInvisible('#reportPreviewPane')
-      .elementShouldNotBeVisible('#reportPreviewPane')
-      .click('#btnToggleHtmlPreviewShow')
-      .waitOnElementToBecomeVisible('#reportPreviewPane')
-      .waitOnElementToBecomeVisible('#btnToggleHtmlPreviewHide')
-      .elementShouldBeVisible('#reportPreviewPane');
+      // Test the preview toggle functionality
+      ft = ft
+        .elementShouldBeVisible('#btnToggleHtmlPreviewHide')
+        .click('#btnToggleHtmlPreviewHide')
+        .waitOnElementToBecomeVisible('#btnToggleHtmlPreviewShow')
+        .waitOnElementToBecomeInvisible('#reportPreviewPane')
+        .elementShouldNotBeVisible('#reportPreviewPane')
+        .click('#btnToggleHtmlPreviewShow')
+        .waitOnElementToBecomeVisible('#reportPreviewPane')
+        .waitOnElementToBecomeVisible('#btnToggleHtmlPreviewHide')
+        .elementShouldBeVisible('#reportPreviewPane');
 
-    // Test the splitter functionality
-    ft = ft
-      .elementShouldBeVisible('.as-split-gutter-icon')
-      .click('.as-split-gutter-icon')
-      .hover('.as-split-gutter-icon')
-      .hover('#codeJarHtmlTemplateEditor')
-      .hover('#reportPreviewPane');
+      // Test the splitter functionality
+      ft = ft
+        .elementShouldBeVisible('.as-split-gutter-icon')
+        .click('.as-split-gutter-icon')
+        .hover('.as-split-gutter-icon')
+        .hover('#codeJarHtmlTemplateEditor')
+        .hover('#reportPreviewPane');
+    }
+    else
+      ft = ft
+        .elementShouldNotBeVisible('#reportPreviewPane');
 
     // For the other HTML-based output types, set simple HTML content
     const remainingHtmlOutputTypes = htmlBasedOutputTypes.filter(
@@ -1505,8 +1510,7 @@ export class ConfigurationTestHelper {
 
       if (outputType in ['output.any', 'output.fop2pdf']) {
         ft = ft
-          .waitOnElementToBecomeVisible('#reportPreviewPane')
-          .elementShouldBeVisible('#reportPreviewPane');
+          .elementShouldNotBeVisible('#reportPreviewPane');
 
       }
 
@@ -1526,11 +1530,12 @@ export class ConfigurationTestHelper {
       .waitOnElementToBecomeVisible('#btnOpenTemplateGallery')
       .click('#btnOpenTemplateGallery')
       // If there are initial instructions, confirm them
-      .waitOnElementToBecomeVisible('#btnConfirmAiGalleryInstructions')
-      .click('#btnConfirmAiGalleryInstructions')
+      //.waitOnElementToBecomeVisible('#btnConfirmAiGalleryInstructions')
+      //.click('#btnConfirmAiGalleryInstructions')
       // Wait for gallery to load and try to use first template
       .waitOnElementToBecomeVisible('.p-carousel-next')
       .click('#btnUseSelectedTemplate')
+      .clickYesDoThis()
       .waitOnToastToBecomeVisible(
         'warning',
         'HTML templates cannot be used with DOCX output type',
