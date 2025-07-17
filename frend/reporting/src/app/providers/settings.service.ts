@@ -625,6 +625,9 @@ export class SettingsService {
   }
 
   async saveTemplateFileAsync(filePath: string, content: string) {
+    console.log(
+      `saveTemplateFileAsync filePath = ${filePath}, content length = ${content.length}`,
+    );
     const encodedPath = encodeURIComponent(Utilities.slash(filePath));
     return this.apiService.post(
       `/cfgman/rb/save-template?path=${encodedPath}`,

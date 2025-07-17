@@ -466,7 +466,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
             id="xmlNamespaceMappings"
             class="form-control"
             rows="3"
-            [(ngModel)]="xmlReporting?.documentburster.report.datasource.xmloptions.namespaceMappings"
+            [(ngModel)]="xmlReporting?.documentburster.report.datasource.xmloptions.namespacemappings"
             (ngModelChange)="settingsChangedEventHandler($event)"
             placeholder="e.g. ns=http://example.com/ns"
           ></textarea>
