@@ -490,6 +490,8 @@ export class ConfigurationComponent implements OnInit {
     documentburster: null,
   };
 
+  autosaveEnabled = false;
+
   settingsChanged: Subject<any> = new Subject<any>();
   selectedEmailConnectionFile: ExtConnection;
   selectedReportTemplateFile = {
@@ -804,229 +806,244 @@ export class ConfigurationComponent implements OnInit {
 
   async onReportOutputTypeChanged() {
 
-    // Check if the current path is a sample path that should be preserved
-    const currentPath =
-      this.xmlReporting.documentburster.report.template.documentpath;
-    const isSamplePath =
-      currentPath &&
-      (currentPath.includes('/samples/') ||
-        currentPath.startsWith('samples/') ||
-        currentPath.includes('\\samples\\') ||
-        currentPath.startsWith('samples\\'));
+    this.autosaveEnabled = false;
+    try {
+      // Check if the current path is a sample path that should be preserved
+      const currentPath =
+        this.xmlReporting.documentburster.report.template.documentpath;
+      const isSamplePath =
+        currentPath &&
+        (currentPath.includes('/samples/') ||
+          currentPath.startsWith('samples/') ||
+          currentPath.includes('\\samples\\') ||
+          currentPath.startsWith('samples\\'));
 
-    // Get the PREVIOUS output type (before the change)
-    let previousOutputType = '';
-    let previousExtension = '';
-    if (currentPath) {
-      const match = currentPath.match(/-(\w+)\.(html|xsl)$/);
-      if (match) {
-        previousOutputType = match[1];
-        previousExtension = match[2];
+      // Get the PREVIOUS output type (before the change)
+      let previousOutputType = '';
+      let previousExtension = '';
+      if (currentPath) {
+        const match = currentPath.match(/-(\w+)\.(html|xsl)$/);
+        if (match) {
+          previousOutputType = match[1];
+          previousExtension = match[2];
+        }
       }
-    }
 
-    // Get the NEW output type and config name
-    const newOutputType =
-      this.xmlReporting.documentburster.report.template.outputtype.replace(
-        'output.',
-        '',
-      );
-    const configName =
-      this.settingsService.currentConfigurationTemplate?.folderName ||
-      'template';
+      // Get the NEW output type and config name
+      const newOutputType =
+        this.xmlReporting.documentburster.report.template.outputtype.replace(
+          'output.',
+          '',
+        );
+      const configName =
+        this.settingsService.currentConfigurationTemplate?.folderName ||
+        'template';
 
-    // Now handle the new output type
-    if (
-      this.xmlReporting.documentburster.report.template.outputtype ==
-      'output.none'
-    ) {
-      this.xmlReporting.documentburster.report.template.documentpath = '';
-      this.activeReportTemplateContent = '';
-      this.sanitizedReportPreview = this.sanitizer.bypassSecurityTrustHtml('');
-    } else if (
-      ['output.docx', 'output.pdf', 'output.xlsx', 'output.html'].includes(
-        this.xmlReporting.documentburster.report.template.outputtype,
-      )
-    ) {
-      this.reportPreviewVisible = true;
+      // Now handle the new output type
+      if (
+        this.xmlReporting.documentburster.report.template.outputtype ==
+        'output.none'
+      ) {
+        this.xmlReporting.documentburster.report.template.documentpath = '';
+        //this.activeReportTemplateContent = '';
+        //this.sanitizedReportPreview = this.sanitizer.bypassSecurityTrustHtml('');
+      } else if (
+        ['output.docx', 'output.pdf', 'output.xlsx', 'output.html'].includes(
+          this.xmlReporting.documentburster.report.template.outputtype,
+        )
+      ) {
+        this.reportPreviewVisible = true;
 
-      // Generate appropriate path for this output type
-      let newPath = '';
+        // Generate appropriate path for this output type
+        let newPath = '';
 
-      // For sample paths, preserve the original path
-      if (isSamplePath) {
-        newPath = currentPath;
-      }
-      // For non-sample paths, calculate a conventional path
-      else if (newOutputType === 'docx') {
-        if (!currentPath || !currentPath.toLowerCase().endsWith('.docx')) {
-          newPath = `/${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-template.docx`;
-        } else {
+        // For sample paths, preserve the original path
+        if (isSamplePath) {
           newPath = currentPath;
         }
-        this.activeReportTemplateContent = '';
-        this.sanitizedReportPreview =
-          this.sanitizer.bypassSecurityTrustHtml('');
-      } else {
-        newPath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-${newOutputType}.html`;
-
-        // Reset and force change detection to ensure CodeJar updates correctly
-        this.activeReportTemplateContent = '';
-        this.changeDetectorRef.detectChanges();
-        await Utilities.sleep(10);
-
-        // Always load from disk (no cache)
-        try {
-          const fileExists = await this.fsService.existsAsync(newPath);
-          if (fileExists) {
-            const content =
-              await this.settingsService.loadTemplateFileAsync(newPath);
-            if (content) {
-              this.activeReportTemplateContent = content;
-            }
+        // For non-sample paths, calculate a conventional path
+        else if (newOutputType === 'docx') {
+          if (!currentPath || !currentPath.toLowerCase().endsWith('.docx')) {
+            newPath = `/${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-template.docx`;
           } else {
-            // Create with default content for NEW output type
-            const defaultContent = `<html>\n<head>\n<title>${configName} ${newOutputType} Template</title>\n</head>\n<body>\n<h1>${configName} ${newOutputType} Report</h1>\n</body>\n</html>`;
-            await this.settingsService.saveTemplateFileAsync(
-              newPath,
-              defaultContent,
-            );
-            this.activeReportTemplateContent = defaultContent;
+            newPath = currentPath;
           }
-        } catch (error) {
-          console.error(`Error loading template for ${newOutputType}:`, error);
+          //this.activeReportTemplateContent = '';
+          //this.sanitizedReportPreview =
+          //  this.sanitizer.bypassSecurityTrustHtml('');
+        } else {
+          newPath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-${newOutputType}.html`;
+
+          // Reset and force change detection to ensure CodeJar updates correctly
+          // this.activeReportTemplateContent = '';
+          // this.changeDetectorRef.detectChanges();
+          // await Utilities.sleep(10);
+
+          // Always load from disk (no cache)
+          try {
+            const fileExists = await this.fsService.existsAsync(newPath);
+            console.log(`Checking file: ${newPath}, exists: ${fileExists}`);
+            if (fileExists) {
+              const content =
+                await this.settingsService.loadTemplateFileAsync(newPath);
+              console.log(`Loaded content for ${newPath}:`, content);
+              if (content) {
+                this.activeReportTemplateContent = content;
+
+              }
+            } else {
+              // Create with default content for NEW output type
+              const defaultContent = `<html>\n<head>\n<title>${configName} ${newOutputType} Template</title>\n</head>\n<body>\n<h1>${configName} ${newOutputType} Report</h1>\n</body>\n</html>`;
+              await this.settingsService.saveTemplateFileAsync(
+                newPath,
+                defaultContent,
+              );
+              this.activeReportTemplateContent = defaultContent;
+            }
+            this.changeDetectorRef.detectChanges();
+          } catch (error) {
+            console.error(`Error loading template for ${newOutputType}:`, error);
+          }
         }
-      }
 
-      // Update path if needed - but never update for sample paths
-      if (
-        !isSamplePath &&
-        this.xmlReporting.documentburster.report.template.documentpath !==
-        newPath
-      ) {
-        this.xmlReporting.documentburster.report.template.documentpath =
-          newPath;
-        await this.settingsService.saveReportingFileAsync(
-          this.settingsService.currentConfigurationTemplatePath,
-          this.xmlReporting,
-        );
-      }
-
-      if (newOutputType === 'docx') {
-        this.selectedReportTemplateFile =
-          this.settingsService.templateFiles.find(
-            (tplFile) => tplFile.filePath === newPath,
+        // Update path if needed - but never update for sample paths
+        if (
+          !isSamplePath &&
+          this.xmlReporting.documentburster.report.template.documentpath !==
+          newPath
+        ) {
+          this.xmlReporting.documentburster.report.template.documentpath =
+            newPath;
+          await this.settingsService.saveReportingFileAsync(
+            this.settingsService.currentConfigurationTemplatePath,
+            this.xmlReporting,
           );
-      }
-    } else if (
-      this.xmlReporting.documentburster.report.template.outputtype ===
-      'output.fop2pdf'
-    ) {
-      this.reportPreviewVisible = false; // No preview for XSL-FO
-      let newPath = '';
-      if (isSamplePath) {
-        newPath = currentPath;
-      } else {
-        newPath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-fop2pdf.xsl`;
-        this.activeReportTemplateContent = '';
-        this.changeDetectorRef.detectChanges();
-        await Utilities.sleep(10);
+        }
 
-        // Always load from disk (no cache)
-        try {
-          const fileExists = await this.fsService.existsAsync(newPath);
-          if (fileExists) {
-            const content =
-              await this.settingsService.loadTemplateFileAsync(newPath);
-            if (content) {
-              this.activeReportTemplateContent = content;
-            }
-          } else {
-            // Default XSL-FO template
-            const defaultContent = `<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">\n<!-- XSL-FO template for FOP2PDF -->\n</xsl:stylesheet>`;
-            await this.settingsService.saveTemplateFileAsync(
-              newPath,
-              defaultContent,
+        if (newOutputType === 'docx') {
+          this.selectedReportTemplateFile =
+            this.settingsService.templateFiles.find(
+              (tplFile) => tplFile.filePath === newPath,
             );
-            this.activeReportTemplateContent = defaultContent;
+        }
+      } else if (
+        this.xmlReporting.documentburster.report.template.outputtype ===
+        'output.fop2pdf'
+      ) {
+        this.reportPreviewVisible = false; // No preview for XSL-FO
+        let newPath = '';
+        if (isSamplePath) {
+          newPath = currentPath;
+        } else {
+          newPath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-fop2pdf.xsl`;
+          //this.activeReportTemplateContent = '';
+          //this.changeDetectorRef.detectChanges();
+          //await Utilities.sleep(10);
+
+          // Always load from disk (no cache)
+          try {
+            const fileExists = await this.fsService.existsAsync(newPath);
+            if (fileExists) {
+              const content =
+                await this.settingsService.loadTemplateFileAsync(newPath);
+              if (content) {
+                this.activeReportTemplateContent = content;
+              }
+            } else {
+              // Default XSL-FO template
+              const defaultContent = `<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">\n<!-- XSL-FO template for FOP2PDF -->\n</xsl:stylesheet>`;
+              await this.settingsService.saveTemplateFileAsync(
+                newPath,
+                defaultContent,
+              );
+              this.activeReportTemplateContent = defaultContent;
+            }
+            this.changeDetectorRef.detectChanges();
+          } catch (error) {
+            console.error(`Error loading template for fop2pdf:`, error);
           }
-        } catch (error) {
-          console.error(`Error loading template for fop2pdf:`, error);
+        }
+        // Update path if needed
+        if (
+          !isSamplePath &&
+          this.xmlReporting.documentburster.report.template.documentpath !==
+          newPath
+        ) {
+          this.xmlReporting.documentburster.report.template.documentpath =
+            newPath;
+          await this.settingsService.saveReportingFileAsync(
+            this.settingsService.currentConfigurationTemplatePath,
+            this.xmlReporting,
+          );
+        }
+      } else if (
+        this.xmlReporting.documentburster.report.template.outputtype ===
+        'output.any'
+      ) {
+        this.reportPreviewVisible = false; // No preview for FreeMarker
+        let newPath = '';
+        if (isSamplePath) {
+          newPath = currentPath;
+        } else {
+          newPath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-any.ftl`;
+          // this.activeReportTemplateContent = '';
+          //this.changeDetectorRef.detectChanges();
+          // await Utilities.sleep(10);
+
+          // Always load from disk (no cache)
+          try {
+            const fileExists = await this.fsService.existsAsync(newPath);
+            if (fileExists) {
+              const content =
+                await this.settingsService.loadTemplateFileAsync(newPath);
+              if (content) {
+                this.activeReportTemplateContent = content;
+              }
+            } else {
+              // Default FreeMarker template
+              const defaultContent = `<#-- FreeMarker template for arbitrary text output -->\n<#-- Use FreeMarker syntax to generate your output -->`;
+              await this.settingsService.saveTemplateFileAsync(
+                newPath,
+                defaultContent,
+              );
+              this.activeReportTemplateContent = defaultContent;
+            }
+            this.changeDetectorRef.detectChanges();
+          } catch (error) {
+            console.error(`Error loading template for freemarker:`, error);
+          }
+        }
+        // Update path if needed
+        if (
+          !isSamplePath &&
+          this.xmlReporting.documentburster.report.template.documentpath !==
+          newPath
+        ) {
+          this.xmlReporting.documentburster.report.template.documentpath =
+            newPath;
+          await this.settingsService.saveReportingFileAsync(
+            this.settingsService.currentConfigurationTemplatePath,
+            this.xmlReporting,
+          );
         }
       }
-      // Update path if needed
-      if (
-        !isSamplePath &&
-        this.xmlReporting.documentburster.report.template.documentpath !==
-        newPath
-      ) {
-        this.xmlReporting.documentburster.report.template.documentpath =
-          newPath;
-        await this.settingsService.saveReportingFileAsync(
-          this.settingsService.currentConfigurationTemplatePath,
-          this.xmlReporting,
-        );
-      }
-    } else if (
-      this.xmlReporting.documentburster.report.template.outputtype ===
-      'output.any'
-    ) {
-      this.reportPreviewVisible = false; // No preview for FreeMarker
-      let newPath = '';
-      if (isSamplePath) {
-        newPath = currentPath;
-      } else {
-        newPath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-any.ftl`;
-        this.activeReportTemplateContent = '';
-        this.changeDetectorRef.detectChanges();
-        await Utilities.sleep(10);
 
-        // Always load from disk (no cache)
-        try {
-          const fileExists = await this.fsService.existsAsync(newPath);
-          if (fileExists) {
-            const content =
-              await this.settingsService.loadTemplateFileAsync(newPath);
-            if (content) {
-              this.activeReportTemplateContent = content;
-            }
-          } else {
-            // Default FreeMarker template
-            const defaultContent = `<#-- FreeMarker template for arbitrary text output -->\n<#-- Use FreeMarker syntax to generate your output -->`;
-            await this.settingsService.saveTemplateFileAsync(
-              newPath,
-              defaultContent,
-            );
-            this.activeReportTemplateContent = defaultContent;
-          }
-        } catch (error) {
-          console.error(`Error loading template for freemarker:`, error);
-        }
+      await this.loadAbsoluteTemplatePath();
+      if (this.reportPreviewVisible) {
+        this.refreshHtmlPreview();
       }
-      // Update path if needed
-      if (
-        !isSamplePath &&
-        this.xmlReporting.documentburster.report.template.documentpath !==
-        newPath
-      ) {
-        this.xmlReporting.documentburster.report.template.documentpath =
-          newPath;
-        await this.settingsService.saveReportingFileAsync(
-          this.settingsService.currentConfigurationTemplatePath,
-          this.xmlReporting,
-        );
-      }
+      this.changeDetectorRef.detectChanges();
+
+      this.onAskForFeatureModalShow(
+        this.xmlReporting.documentburster.report.template.outputtype,
+      );
+    } finally {
+      console.log(`Autosave enabled after output type change: ${this.autosaveEnabled}`);
+      // Re-enable
+      this.autosaveEnabled = true;
     }
 
-    await this.loadAbsoluteTemplatePath();
-    if (this.reportPreviewVisible) {
-      this.refreshHtmlPreview();
-    }
-    this.changeDetectorRef.detectChanges();
 
-    this.onAskForFeatureModalShow(
-      this.xmlReporting.documentburster.report.template.outputtype,
-    );
   }
 
   async ngOnInit() {
@@ -1941,6 +1958,9 @@ export class ConfigurationComponent implements OnInit {
 
 
   async onTemplateContentChanged(event: any) {
+
+    if (!this.autosaveEnabled) return;
+
     // Get content from event or active property, ensuring we have something to work with
     this.activeReportTemplateContent = typeof event === 'string' ? event : this.activeReportTemplateContent;
 
@@ -2737,9 +2757,19 @@ if (reportParametersProvided) {
       outputType = 'email.message';
     }
 
-    if (outputType === 'output.xlsx' || outputType === 'output.pdf' || outputType === 'output.html' || outputType === 'output.docx') {
+    if (outputType === 'output.xlsx' || outputType === 'output.pdf' || outputType === 'output.html') {
       this.activeReportTemplateContent = template.htmlContent[template.currentVariantIndex || 0];
       this.settingsChangedEventHandler(this.activeReportTemplateContent);
+    } else if (outputType === 'output.docx') {
+      // Show warning toast for DOCX mode
+      this.messagesService.showWarning(
+        this.translateService.instant(
+          'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.DOCX-HTML-WARNING',
+        ),
+        this.translateService.instant(
+          'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.CANNOT-USE-TEMPLATE',
+        ),
+      );
     } else if (outputType === 'email.message') {
       this.xmlSettings.documentburster.settings.emailsettings.html = template.htmlContent[template.currentVariantIndex || 0];
       this.settingsChangedEventHandler(this.xmlSettings.documentburster.settings.emailsettings.html);
