@@ -1726,6 +1726,17 @@ export class ConfigurationComponent implements OnInit {
       previousDsType === 'ds.scriptfile' ||
       previousDsType === 'ds.sqlquery'
     ) {
+
+
+      if (!this.xmlReporting.documentburster.report.datasource.sqloptions.conncode) {
+        const defaultDbConn = this.settingsService.defaultDatabaseConnectionFile;
+        if (defaultDbConn && defaultDbConn.connectionCode) {
+          this.xmlReporting.documentburster.report.datasource.sqloptions.conncode = defaultDbConn.connectionCode;
+        }
+
+        console.log(`Default DB connection code set: ${this.xmlReporting.documentburster.report.datasource.sqloptions.conncode}`);
+      }
+
       if (
         this.activeParamsSpecScriptGroovy &&
         this.activeParamsSpecScriptGroovy.trim() !== '' &&
@@ -2131,6 +2142,18 @@ export class ConfigurationComponent implements OnInit {
       const launchConfig: AiManagerLaunchConfig = {
         initialActiveTabKey: 'PROMPTS',
         initialSelectedCategory: 'Email Templates (Responsive)',
+      };
+
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      }
+    }
+
+    if (outputTypeCode === 'script.additionaltransformation') {
+      const launchConfig: AiManagerLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'Script Writing Assistance',
+        initialExpandedPromptId: 'GROOVY_SCRIPT_ADDITIONAL_TRANSFORMATION',
       };
 
       if (this.aiManagerInstance) {

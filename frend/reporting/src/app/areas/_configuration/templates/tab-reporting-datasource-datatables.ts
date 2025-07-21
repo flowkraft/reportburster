@@ -67,7 +67,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
           <!-- Help text below editor -->
           <small class="text-muted" style="display: block; margin-top: 5px;" *ngIf="settingsService.getDatabaseConnectionFiles().length > 0 && (xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile')"
                 >
-            Select Database
+            Database Connection
           </small>
            <!-- Message when no database connections exist -->
           <div id="noDbConnectionsMessageSql" *ngIf="(xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || 
@@ -1005,7 +1005,7 @@ Column 3, 15"
             </label>
           </div>
           <div class="col-xs-6">
-            <button id="btnHelpWithTransformationAI" type="button" class="btn btn-default" (click)="showDbConnectionModal()">
+            <button id="btnHelpWithTransformationAI" type="button" class="btn btn-default" (click)="askAiForHelp('script.additionaltransformation')">
              <strong>Hey AI, Help Me With This Groovy Script ...</strong>
             </button>
           </div>

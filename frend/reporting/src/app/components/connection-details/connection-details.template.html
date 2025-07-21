@@ -1,31 +1,17 @@
-<p-dialog
-  id="modalExtConnection"
-  [header]="modalConnectionInfo.modalTitle"
-  [(visible)]="isModalEmailConnectionVisible"
-  [modal]="true"
-  width="700"
-  [style]="{ top: '3vw', left: '4vw' }"
-  [autoZIndex]="false"
->
+<p-dialog id="modalExtConnection" [header]="modalConnectionInfo.modalTitle" [(visible)]="isModalEmailConnectionVisible"
+  [modal]="true" width="700" [style]="{ top: '3vw', left: '4vw' }" [autoZIndex]="false">
   <div style="margin: 5px">
     <div class="row">
       <div class="col-xs-2">
         {{
-          "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.CONNECTION-NAME"
-            | translate
+        "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.CONNECTION-NAME"
+        | translate
         }}
       </div>
       <div class="col-xs-10">
-        <input
-          id="connectionName"
-          [(ngModel)]="
+        <input id="connectionName" [(ngModel)]="
             modalConnectionInfo.email.documentburster.connection.name
-          "
-          (ngModelChange)="updateModelAndForm()"
-          class="form-control"
-          autofocus
-          required
-        />
+          " (ngModelChange)="updateModelAndForm()" class="form-control" autofocus required />
       </div>
     </div>
     <p></p>
@@ -33,28 +19,21 @@
     <div class="row">
       <div class="col-xs-2">
         {{
-          "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.FROM-NAME"
-            | translate
+        "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.FROM-NAME"
+        | translate
         }}
       </div>
       <div class="col-xs-7">
-        <input
-          id="fromName"
-          [(ngModel)]="
+        <input id="fromName" [(ngModel)]="
             modalConnectionInfo.email.documentburster.connection.emailserver
               .name
-          "
-          class="form-control"
-        />
+          " class="form-control" />
       </div>
 
       <div class="col-xs-3">
-        <dburst-button-variables
-          id="btnFromNameVariables"
-          (sendSelectedVariable)="
+        <dburst-button-variables id="btnFromNameVariables" (sendSelectedVariable)="
             updateFormControlWithSelectedVariable('fromName', $event)
-          "
-        >
+          ">
         </dburst-button-variables>
       </div>
     </div>
@@ -62,28 +41,21 @@
     <div class="row">
       <div class="col-xs-2">
         {{
-          "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.FROM-ADDRESS"
-            | translate
+        "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.FROM-ADDRESS"
+        | translate
         }}
       </div>
       <div class="col-xs-7">
-        <input
-          id="fromEmailAddress"
-          [(ngModel)]="
+        <input id="fromEmailAddress" [(ngModel)]="
             modalConnectionInfo.email.documentburster.connection.emailserver
               .fromaddress
-          "
-          class="form-control"
-        />
+          " class="form-control" />
       </div>
 
       <div class="col-xs-3">
-        <dburst-button-variables
-          id="btnFromEmailAddressVariables"
-          (sendSelectedVariable)="
+        <dburst-button-variables id="btnFromEmailAddressVariables" (sendSelectedVariable)="
             updateFormControlWithSelectedVariable('fromEmailAddress', $event)
-          "
-        >
+          ">
         </dburst-button-variables>
       </div>
     </div>
@@ -91,27 +63,20 @@
     <div class="row">
       <div class="col-xs-2">
         {{
-          "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.HOST" | translate
+        "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.HOST" | translate
         }}
       </div>
       <div class="col-xs-7">
-        <input
-          id="emailServerHost"
-          [(ngModel)]="
+        <input id="emailServerHost" [(ngModel)]="
             modalConnectionInfo.email.documentburster.connection.emailserver
               .host
-          "
-          class="form-control"
-        />
+          " class="form-control" />
       </div>
 
       <div class="col-xs-3">
-        <dburst-button-variables
-          id="btnEmailServerHostVariables"
-          (sendSelectedVariable)="
+        <dburst-button-variables id="btnEmailServerHostVariables" (sendSelectedVariable)="
             updateFormControlWithSelectedVariable('emailServerHost', $event)
-          "
-        >
+          ">
         </dburst-button-variables>
       </div>
     </div>
@@ -119,28 +84,21 @@
     <div class="row">
       <div class="col-xs-2">
         {{
-          "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.USER-NAME"
-            | translate
+        "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.USER-NAME"
+        | translate
         }}
       </div>
       <div class="col-xs-7">
-        <input
-          id="userName"
-          [(ngModel)]="
+        <input id="userName" [(ngModel)]="
             modalConnectionInfo.email.documentburster.connection.emailserver
               .userid
-          "
-          class="form-control"
-        />
+          " class="form-control" />
       </div>
 
       <div class="col-xs-3">
-        <dburst-button-variables
-          id="btnUserNameVariables"
-          (sendSelectedVariable)="
+        <dburst-button-variables id="btnUserNameVariables" (sendSelectedVariable)="
             updateFormControlWithSelectedVariable('userName', $event)
-          "
-        >
+          ">
         </dburst-button-variables>
       </div>
     </div>
@@ -148,29 +106,21 @@
     <div class="row">
       <div class="col-xs-2">
         {{
-          "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.PASSWORD"
-            | translate
+        "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.PASSWORD"
+        | translate
         }}
       </div>
       <div class="col-xs-7">
-        <input
-          id="smtpPassword"
-          [(ngModel)]="
+        <input id="smtpPassword" [(ngModel)]="
             modalConnectionInfo.email.documentburster.connection.emailserver
               .userpassword
-          "
-          type="password"
-          class="form-control"
-        />
+          " type="password" class="form-control" />
       </div>
 
       <div class="col-xs-3">
-        <dburst-button-variables
-          id="btnSmtpPasswordVariables"
-          (sendSelectedVariable)="
+        <dburst-button-variables id="btnSmtpPasswordVariables" (sendSelectedVariable)="
             updateFormControlWithSelectedVariable('smtpPassword', $event)
-          "
-        >
+          ">
         </dburst-button-variables>
       </div>
     </div>
@@ -178,27 +128,20 @@
     <div class="row">
       <div class="col-xs-2">
         {{
-          "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.PORT" | translate
+        "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.PORT" | translate
         }}
       </div>
       <div class="col-xs-7">
-        <input
-          id="smtpPort"
-          [(ngModel)]="
+        <input id="smtpPort" [(ngModel)]="
             modalConnectionInfo.email.documentburster.connection.emailserver
               .port
-          "
-          class="form-control"
-        />
+          " class="form-control" />
       </div>
 
       <div class="col-xs-3">
-        <dburst-button-variables
-          id="btnSmtpPortVariables"
-          (sendSelectedVariable)="
+        <dburst-button-variables id="btnSmtpPortVariables" (sendSelectedVariable)="
             updateFormControlWithSelectedVariable('smtpPort', $event)
-          "
-        >
+          ">
         </dburst-button-variables>
       </div>
     </div>
@@ -206,57 +149,40 @@
       <div class="col-xs-2"></div>
 
       <div class="col-xs-3">
-        <input
-          type="checkbox"
-          id="btnSSL"
-          [(ngModel)]="
+        <input type="checkbox" id="btnSSL" [(ngModel)]="
             modalConnectionInfo.email.documentburster.connection.emailserver
               .usessl
-          "
-        />
-        <label for="btnSSL" class="checkboxlabel"
-          >&nbsp;{{
-            "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.SSL-ENABLED"
-              | translate
-          }}</label
-        >
+          " />
+        <label for="btnSSL" class="checkboxlabel">&nbsp;{{
+          "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.SSL-ENABLED"
+          | translate
+          }}</label>
       </div>
 
       <div class="col-xs-3">
-        <input
-          type="checkbox"
-          id="btnTLS"
-          [(ngModel)]="
+        <input type="checkbox" id="btnTLS" [(ngModel)]="
             modalConnectionInfo.email.documentburster.connection.emailserver
               .usetls
-          "
-        />
-        <label for="btnTLS" class="checkboxlabel"
-          >&nbsp;{{
-            "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.TLS-ENABLED"
-              | translate
-          }}</label
-        >
+          " />
+        <label for="btnTLS" class="checkboxlabel">&nbsp;{{
+          "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.TLS-ENABLED"
+          | translate
+          }}</label>
       </div>
     </div>
     <div class="row">
       <div class="col-xs-2">
         {{
-          "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.TEST-CONNECTION"
-            | translate
+        "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.TEST-CONNECTION"
+        | translate
         }}
       </div>
 
       <div class="col-xs-7">
-        <button
-          id="btnSendTestEmail"
-          type="button"
-          class="btn btn-primary btn-block"
-          (click)="doTestSMTPConnection()"
-        >
+        <button id="btnSendTestEmail" type="button" class="btn btn-primary btn-block" (click)="doTestSMTPConnection()">
           <i class="fa fa-paper-plane"></i>&nbsp;&nbsp;{{
-            "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.SEND-TEST-EMAIL"
-              | translate
+          "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.SEND-TEST-EMAIL"
+          | translate
           }}
         </button>
       </div>
@@ -269,28 +195,20 @@
     <div class="row">
       <div class="col-xs-2">
         <a href="https://products.office.com/en-us/exchange " target="_blank ">
-          <i
-            class="ms-Icon ms-Icon--ExchangeLogo"
-            style="font-size: 30px; color: orange"
-          ></i>
+          <i class="ms-Icon ms-Icon--ExchangeLogo" style="font-size: 30px; color: orange"></i>
           <br />Microsoft Exchange
         </a>
       </div>
 
       <div class="col-xs-7">
-        <span
-          [innerHTML]="
+        <span [innerHTML]="
             'AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.INNER-HTML.DB-ALL-CLOUD-PROVIDERS'
               | translate
-          "
-        ></span>
+          "></span>
         <br />
         <div class="col-xs-4">
           <a href="https://www.office.com" target="_blank ">
-            <i
-              class="ms-Icon ms-Icon--OfficeLogo"
-              style="font-size: 24px; color: red"
-            ></i>
+            <i class="ms-Icon ms-Icon--OfficeLogo" style="font-size: 24px; color: red"></i>
             <p style="margin-top: 2px">Office 365</p>
           </a>
         </div>
@@ -306,11 +224,9 @@
             <p style="margin-top: 2px">Amazon AWS</p>
           </a>
         </div>
-        <dburst-button-well-known-email-providers
-          (sendSelectedProvider)="
+        <dburst-button-well-known-email-providers (sendSelectedProvider)="
             updateSMTPFormControlsWithSelectedProviderSettings($event)
-          "
-        >
+          ">
         </dburst-button-well-known-email-providers>
       </div>
     </div>
@@ -318,70 +234,43 @@
 
   <p-footer>
     <span>
-      <span
-        id="alreadyExistsWarning"
-        style="font-size: 9px"
-        class="label label-warning"
-        *ngIf="
+      <span id="alreadyExistsWarning" style="font-size: 9px" class="label label-warning" *ngIf="
           modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file'
-        "
-        >{{
-          "AREAS.CONFIGURATION-TEMPLATES.MODAL-CONF-TEMPLATE.FILE-ALREADY-EXISTS"
-            | translate
-        }}</span
-      >
+        ">{{
+        "AREAS.CONFIGURATION-TEMPLATES.MODAL-CONF-TEMPLATE.FILE-ALREADY-EXISTS"
+        | translate
+        }}</span>
       &nbsp;
     </span>
 
-    <button
-      id="btnOKConfirmationConnectionModal"
-      class="btn btn-primary"
-      type="button"
-      (click)="onModalOK()"
+    <button id="btnOKConfirmationConnectionModal" class="btn btn-primary" type="button" (click)="onModalOK()"
       [disabled]="
         !modalConnectionInfo.email.documentburster.connection.name ||
         modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file'
-      "
-    >
+      ">
       {{ "BUTTONS.SAVE" | translate }}
     </button>
 
-    <button
-      id="btnCloseConnectionModal"
-      class="btn btn-flat btn-default dburst-button-question-decline"
-      type="button"
-      (click)="onModalClose()"
-    >
+    <button id="btnCloseConnectionModal" class="btn btn-flat btn-default dburst-button-question-decline" type="button"
+      (click)="onModalClose()">
       {{ "BUTTONS.CANCEL" | translate }}
     </button>
   </p-footer>
 </p-dialog>
-<p-dialog
-  id="modalDbConnection"
-  [header]="modalConnectionInfo.modalTitle"
-  [(visible)]="isModalDbConnectionVisible"
-  [modal]="true"
-  width="800"
-  [style]="{ top: '3vw', left: '4vw' }"
-  [autoZIndex]="false"
->
+<p-dialog id="modalDbConnection" [header]="modalConnectionInfo.modalTitle" [(visible)]="isModalDbConnectionVisible"
+  [modal]="true" width="800" [style]="{ top: '3vw', left: '4vw' }" [autoZIndex]="false">
   <div style="margin: 5px">
     <!-- Tabs Container -->
     <tabset>
       <!-- Tab 1: Connection Details -->
-      <tab
-        id="connectionDetailsTab"
-        [active]="isConnectionDetailsTabActive"
-        (selectTab)="
+      <tab id="connectionDetailsTab" [tabOrder]="1" [active]="isConnectionDetailsTabActive" (selectTab)="
           isConnectionDetailsTabActive = true;
           isDatabaseSchemaTabActive = false;
           isDomainGroupedSchemaTabActive = false;
           isErDiagramTabActive = false;
           isUbiquitousLanguageTabActive = false;
           isToolsTabActive = false;
-        "
-        (deselectTab)="isConnectionDetailsTabActive = false"
-      >
+        " (deselectTab)="isConnectionDetailsTabActive = false">
         <ng-template tabHeading>
           <i class="fa fa-plug"></i> &nbsp;Connection Details
         </ng-template>
@@ -389,22 +278,15 @@
         <div class="row">
           <div class="col-xs-2">
             {{
-              "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.CONNECTION-NAME"
-                | translate
+            "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.CONNECTION-NAME"
+            | translate
             }}
           </div>
           <div class="col-xs-10">
-            <input
-              id="dbConnectionName"
-              [(ngModel)]="
+            <input id="dbConnectionName" [(ngModel)]="
                 modalConnectionInfo.database.documentburster.connection.name
-              "
-              (ngModelChange)="updateModelAndForm()"
-              class="form-control"
-              autofocus
-              required
-              [readonly]="mode === 'viewMode'"
-            />
+              " (ngModelChange)="updateModelAndForm()" class="form-control" autofocus required
+              [readonly]="mode === 'viewMode'" />
           </div>
         </div>
         <!-- Replaced <p> with smaller margin div -->
@@ -413,21 +295,15 @@
         <div class="row">
           <div class="col-xs-2">
             {{
-              "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.DATABASE-TYPE"
-                | translate
+            "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.DATABASE-TYPE"
+            | translate
             }}
           </div>
           <div class="col-xs-7">
-            <select
-              id="dbType"
-              [(ngModel)]="
+            <select id="dbType" [(ngModel)]="
                 modalConnectionInfo.database.documentburster.connection
                   .databaseserver.type
-              "
-              (ngModelChange)="onDbTypeChange($event)"
-              class="form-control"
-              [disabled]="mode === 'viewMode'"
-            >
+              " (ngModelChange)="onDbTypeChange($event)" class="form-control" [disabled]="mode === 'viewMode'">
               <option value="oracle">Oracle</option>
               <option value="sqlserver">SQL Server</option>
               <option value="postgresql">PostgreSQL</option>
@@ -442,160 +318,109 @@
         <!-- Replaced <p> with smaller margin div -->
         <div style="margin-bottom: 0.5rem"></div>
 
-        <div
-          class="row"
-          *ngIf="
+        <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
               .databaseserver.type !== 'sqlite'
-          "
-        >
+          ">
           <div class="col-xs-2">
             {{
-              "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.HOST"
-                | translate
+            "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.HOST"
+            | translate
             }}
           </div>
           <div class="col-xs-7">
-            <input
-              id="dbHost"
-              [(ngModel)]="
+            <input id="dbHost" [(ngModel)]="
                 modalConnectionInfo.database.documentburster.connection
                   .databaseserver.host
-              "
-              class="form-control"
-              [readonly]="mode === 'viewMode'"
-            />
+              " class="form-control" [readonly]="mode === 'viewMode'" />
           </div>
           <div class="col-xs-3">
-            <dburst-button-variables
-              id="btnDbHostVariables"
-              *ngIf="mode !== 'viewMode'"
-              (sendSelectedVariable)="
+            <dburst-button-variables id="btnDbHostVariables" *ngIf="mode !== 'viewMode'" (sendSelectedVariable)="
                 updateFormControlWithSelectedVariable('dbHost', $event)
-              "
-            >
+              ">
             </dburst-button-variables>
           </div>
         </div>
         <!-- Replaced <p> with smaller margin div -->
         <div style="margin-bottom: 0.5rem"></div>
 
-        <div
-          class="row"
-          *ngIf="
+        <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
               .databaseserver.type !== 'sqlite'
-          "
-        >
+          ">
           <div class="col-xs-2">
             {{
-              "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.PORT"
-                | translate
+            "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.PORT"
+            | translate
             }}
           </div>
           <div class="col-xs-7">
-            <input
-              id="dbPort"
-              [(ngModel)]="
+            <input id="dbPort" [(ngModel)]="
                 modalConnectionInfo.database.documentburster.connection
                   .databaseserver.port
-              "
-              class="form-control"
-              [readonly]="mode === 'viewMode'"
-            />
+              " class="form-control" [readonly]="mode === 'viewMode'" />
           </div>
           <div class="col-xs-3">
-            <dburst-button-variables
-              id="btnDbPortVariables"
-              (sendSelectedVariable)="
+            <dburst-button-variables id="btnDbPortVariables" (sendSelectedVariable)="
                 updateFormControlWithSelectedVariable('dbPort', $event)
-              "
-            >
+              ">
             </dburst-button-variables>
           </div>
         </div>
         <!-- Replaced <p> with smaller margin div -->
         <div style="margin-bottom: 0.5rem"></div>
 
-        <div
-          class="row"
-          *ngIf="
+        <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
               .databaseserver.type === 'sqlite'
-          "
-        >
+          ">
           <div class="col-xs-2">
             {{
-              "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.DATABASE-FILE"
-                | translate
+            "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.DATABASE-FILE"
+            | translate
             }}
           </div>
 
           <div class="col-xs-7">
             <div class="input-group">
-              <input
-                id="dbName"
-                [(ngModel)]="
+              <input id="dbName" [(ngModel)]="
                   modalConnectionInfo.database.documentburster.connection
                     .databaseserver.database
-                "
-                class="form-control"
-                placeholder="Select SQLite database file"
-                readonly
-                [title]="
+                " class="form-control" placeholder="Select SQLite database file" readonly [title]="
                   modalConnectionInfo.database.documentburster.connection
                     .databaseserver.database
-                "
-              />
+                " />
               <span class="input-group-btn" *ngIf="mode !== 'viewMode'">
-                <button
-                  id="btnBrowseSqliteFile"
-                  class="btn btn-default"
-                  type="button"
-                  (click)="openSqliteFileBrowser()"
-                >
+                <button id="btnBrowseSqliteFile" class="btn btn-default" type="button"
+                  (click)="openSqliteFileBrowser()">
                   <i class="fa fa-folder-open"></i> Browse
                 </button>
               </span>
             </div>
-            <small class="text-muted"
-              >Select a .db, .sqlite or .sqlite3 file</small
-            >
+            <small class="text-muted">Select a .db, .sqlite or .sqlite3 file</small>
           </div>
         </div>
 
-        <div
-          class="row"
-          *ngIf="
+        <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
               .databaseserver.type !== 'sqlite'
-          "
-        >
+          ">
           <div class="col-xs-2">
             {{
-              "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.DATABASE"
-                | translate
+            "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.DATABASE"
+            | translate
             }}
           </div>
           <div class="col-xs-7">
-            <input
-              id="dbName"
-              [(ngModel)]="
+            <input id="dbName" [(ngModel)]="
                 modalConnectionInfo.database.documentburster.connection
                   .databaseserver.database
-              "
-              class="form-control"
-              [readonly]="mode === 'viewMode'"
-            />
+              " class="form-control" [readonly]="mode === 'viewMode'" />
           </div>
           <div class="col-xs-3">
-            <dburst-button-variables
-              id="btnDbNameVariables"
-              *ngIf="mode !== 'viewMode'"
-              (sendSelectedVariable)="
+            <dburst-button-variables id="btnDbNameVariables" *ngIf="mode !== 'viewMode'" (sendSelectedVariable)="
                 updateFormControlWithSelectedVariable('dbName', $event)
-              "
-            >
+              ">
             </dburst-button-variables>
           </div>
         </div>
@@ -603,108 +428,73 @@
         <!-- Replaced <p> with smaller margin div -->
         <div style="margin-bottom: 0.5rem"></div>
 
-        <div
-          class="row"
-          *ngIf="
+        <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
               .databaseserver.type !== 'sqlite'
-          "
-        >
+          ">
           <div class="col-xs-2">
             {{
-              "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.USERNAME"
-                | translate
+            "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.USERNAME"
+            | translate
             }}
           </div>
           <div class="col-xs-7">
-            <input
-              id="dbUsername"
-              [(ngModel)]="
+            <input id="dbUsername" [(ngModel)]="
                 modalConnectionInfo.database.documentburster.connection
                   .databaseserver.userid
-              "
-              class="form-control"
-              [readonly]="mode === 'viewMode'"
-            />
+              " class="form-control" [readonly]="mode === 'viewMode'" />
           </div>
           <div class="col-xs-3">
-            <dburst-button-variables
-              id="btnDbUsernameVariables"
-              *ngIf="mode !== 'viewMode'"
-              (sendSelectedVariable)="
+            <dburst-button-variables id="btnDbUsernameVariables" *ngIf="mode !== 'viewMode'" (sendSelectedVariable)="
                 updateFormControlWithSelectedVariable('dbUsername', $event)
-              "
-            >
+              ">
             </dburst-button-variables>
           </div>
         </div>
         <!-- Replaced <p> with smaller margin div -->
         <div style="margin-bottom: 0.5rem"></div>
 
-        <div
-          class="row"
-          *ngIf="
+        <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
               .databaseserver.type !== 'sqlite'
-          "
-        >
+          ">
           <div class="col-xs-2">
             {{
-              "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.PASSWORD"
-                | translate
+            "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.PASSWORD"
+            | translate
             }}
           </div>
           <div class="col-xs-7">
-            <input
-              id="dbPassword"
-              [(ngModel)]="
+            <input id="dbPassword" [(ngModel)]="
                 modalConnectionInfo.database.documentburster.connection
                   .databaseserver.userpassword
-              "
-              type="password"
-              class="form-control"
-              [readonly]="mode === 'viewMode'"
-            />
+              " type="password" class="form-control" [readonly]="mode === 'viewMode'" />
           </div>
           <div class="col-xs-3">
-            <dburst-button-variables
-              id="btnDbPasswordVariables"
-              *ngIf="mode !== 'viewMode'"
-              (sendSelectedVariable)="
+            <dburst-button-variables id="btnDbPasswordVariables" *ngIf="mode !== 'viewMode'" (sendSelectedVariable)="
                 updateFormControlWithSelectedVariable('dbPassword', $event)
-              "
-            >
+              ">
             </dburst-button-variables>
           </div>
         </div>
         <!-- Replaced <p> with smaller margin div -->
         <div style="margin-bottom: 0.5rem"></div>
 
-        <div
-          class="row"
-          *ngIf="
+        <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
               .databaseserver.type !== 'sqlite'
-          "
-        >
+          ">
           <div class="col-xs-2"></div>
 
           <div class="col-xs-3">
-            <input
-              type="checkbox"
-              id="btnDbSSL"
-              [(ngModel)]="
+            <input type="checkbox" id="btnDbSSL" [(ngModel)]="
                 modalConnectionInfo.database.documentburster.connection
                   .databaseserver.usessl
-              "
-              [disabled]="mode === 'viewMode'"
-            />
-            <label for="btnDbSSL" class="checkboxlabel"
-              >&nbsp;{{
-                "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.USE-SSL"
-                  | translate
-              }}</label
-            >
+              " [disabled]="mode === 'viewMode'" />
+            <label for="btnDbSSL" class="checkboxlabel">&nbsp;{{
+              "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.USE-SSL"
+              | translate
+              }}</label>
           </div>
           <div class="col-xs-7"></div>
         </div>
@@ -715,36 +505,24 @@
         <div class="row">
           <div class="col-xs-2">
             {{
-              "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.TEST-CONNECTION"
-                | translate
+            "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.TEST-CONNECTION"
+            | translate
             }}
           </div>
           <div class="col-xs-7">
-            <button
-              id="btnTestDbConnection"
-              type="button"
-              class="btn btn-primary btn-block"
-              (click)="doTestDatabaseConnection()"
-              [disabled]="isTestDbConnectionDisabled()"
-            >
-              <i
-                id="btnTestDbConnectionIcon"
-                class="fa"
-                [ngClass]="{
+            <button id="btnTestDbConnection" type="button" class="btn btn-primary btn-block"
+              (click)="doTestDatabaseConnection()" [disabled]="isTestDbConnectionDisabled()">
+              <i id="btnTestDbConnectionIcon" class="fa" [ngClass]="{
                   'fa-refresh fa-spin': isTestingConnection,
                   'fa-database': !isTestingConnection,
-                }"
-              ></i
-              >&nbsp;&nbsp;{{
-                "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.TEST-DB-CONNECTION"
-                  | translate
+                }"></i>&nbsp;&nbsp;{{
+              "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.TEST-DB-CONNECTION"
+              | translate
               }}
             </button>
           </div>
           <div class="col-xs-3">
-            <dburst-button-clear-logs
-              *ngIf="mode !== 'viewMode'"
-            ></dburst-button-clear-logs>
+            <dburst-button-clear-logs *ngIf="mode !== 'viewMode'"></dburst-button-clear-logs>
           </div>
         </div>
 
@@ -753,39 +531,28 @@
         <div class="row">
           <div class="col-xs-2">
             <a href="https://www.oracle.com/database/" target="_blank">
-              <i
-                class="fa fa-database"
-                style="font-size: 30px; color: #f80000"
-              ></i>
+              <i class="fa fa-database" style="font-size: 30px; color: #f80000"></i>
               <br />Oracle
             </a>
           </div>
 
           <div class="col-xs-7">
-            <span
-              [innerHTML]="
+            <span [innerHTML]="
                 'AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.INNER-HTML.DB-ALL-DATABASE-SYSTEMS'
                   | translate
-              "
-            ></span>
+              "></span>
             <!-- Reduced spacing from <br /><br /> to <br /> -->
             <br /><br />
             <div class="col-xs-3">
               <a href="https://www.microsoft.com/sql-server/" target="_blank">
-                <i
-                  class="fa fa-windows"
-                  style="font-size: 24px; color: #0078d4"
-                ></i>
+                <i class="fa fa-windows" style="font-size: 24px; color: #0078d4"></i>
                 <p style="margin-top: 2px">SQL Server</p>
               </a>
             </div>
             <div class="col-xs-3">
               <a href="https://www.postgresql.org/" target="_blank">
                 <div>
-                  <i
-                    class="fa fa-database"
-                    style="font-size: 24px; color: #336791"
-                  ></i>
+                  <i class="fa fa-database" style="font-size: 24px; color: #336791"></i>
                 </div>
                 <p style="margin-top: 3px">PostgreSQL</p>
               </a>
@@ -793,10 +560,7 @@
             <div class="col-xs-3">
               <a href="https://www.mysql.com/" target="_blank">
                 <div>
-                  <i
-                    class="fa fa-database"
-                    style="font-size: 24px; color: #f29111"
-                  ></i>
+                  <i class="fa fa-database" style="font-size: 24px; color: #f29111"></i>
                 </div>
                 <p style="margin-top: 2px">MySQL</p>
               </a>
@@ -804,10 +568,7 @@
             <div class="col-xs-3">
               <a href="https://www.ibm.com/db2/" target="_blank">
                 <div>
-                  <i
-                    class="fa fa-database"
-                    style="font-size: 24px; color: #1f70c1"
-                  ></i>
+                  <i class="fa fa-database" style="font-size: 24px; color: #1f70c1"></i>
                 </div>
                 <p id="ibmDb2Label" style="margin-top: 2px">IBM Db2</p>
               </a>
@@ -817,190 +578,133 @@
       </tab>
 
       <!-- Tab 2: Information Schema -->
-      <tab
-        id="databaseSchemaTab"
-        [active]="isDatabaseSchemaTabActive"
-        (selectTab)="
+      <tab id="databaseSchemaTab" [tabOrder]="2" [active]="isDatabaseSchemaTabActive" (selectTab)="
           isDatabaseSchemaTabActive = true;
           isConnectionDetailsTabActive = false;
           isDomainGroupedSchemaTabActive = false;
           isErDiagramTabActive = false;
           isUbiquitousLanguageTabActive = false;
           isToolsTabActive = false;
-        "
-        (deselectTab)="isDatabaseSchemaTabActive = false"
-      >
+        " (deselectTab)="isDatabaseSchemaTabActive = false">
         >
         <ng-template tabHeading>
           <i class="fa fa-table"></i> &nbsp;Database Schema
         </ng-template>
-        <div class="row" style="padding: 15px">
+        <div class="row" style="padding: 15px" *ngIf="!showSchemaTreeSelect" >
           <div class="col-xs-12">
             <!-- Instruction if schema not loaded -->
-            <div
-              *ngIf="!showSchemaTreeSelect"
-              class="text-center"
-              style="
+            <div class="text-center" style="
                 min-height: 420px;
                 display: flex;
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
-              "
-            >
-              <span id="schemaNotLoadedDatabaseSchema"
-                ><strong
-                  >To load the schema, please ensure your connection details are
+              ">
+              <p>
+              <span id="schemaNotLoadedDatabaseSchema"><strong>To load the schema, please ensure your connection details
+                  are
                   configured and then test the connection or refresh the
-                  schema.</strong
-                ></span
-              >
+                  schema.</strong></span></p>
+                  <button id="btnTestDbConnectionDbSchema" type="button" class="btn btn-primary btn-block"
+              (click)="isConnectionDetailsTabActive = true; isDatabaseSchemaTabActive = false;">
+              <i id="btnTestDbConnectionIcon" class="fa" [ngClass]="{
+                  'fa-refresh fa-spin': isTestingConnection,
+                  'fa-database': !isTestingConnection,
+                }"></i>&nbsp;&nbsp;{{
+              "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.TEST-DB-CONNECTION"
+              | translate
+              }}
+            </button>
             </div>
+            
+        </div></div>
+        <div class="row" style="padding: 15px" *ngIf="showSchemaTreeSelect" >
+          <div class="col-xs-12">
             <!-- PickList and refresh when loaded -->
-            <ng-container *ngIf="showSchemaTreeSelect">
-              <div
-                id="databaseSchemaPicklistContainer"
-                class="schema-picklist-container"
-                style="min-height: 350px; max-height: 350px; padding: 0 5px"
-              >
-                <dburst-picklist
-                  picklistId="databaseSchemaPicklist"
-                  [sourceItems]="sourceSchemaObjects"
-                  [targetItems]="targetSchemaObjects"
-                  (sourceItemsChange)="sourceSchemaObjects = $event"
-                  (targetItemsChange)="targetSchemaObjects = $event"
-                  sourceHeader="All Database Tables & Objects"
-                  targetHeader="Selected Tables & Objects"
-                  optionLabel="label"
-                  itemKey="key"
+              <div id="databaseSchemaPicklistContainer" class="schema-picklist-container"
+                style="min-height: 350px; max-height: 350px; padding: 0 5px">
+                <dburst-picklist picklistId="databaseSchemaPicklist" [sourceItems]="sourceSchemaObjects"
+                  [targetItems]="targetSchemaObjects" (sourceItemsChange)="sourceSchemaObjects = $event"
+                  (targetItemsChange)="targetSchemaObjects = $event" sourceHeader="All Database Tables & Objects"
+                  targetHeader="Selected Tables & Objects" optionLabel="label" itemKey="key"
                   sourceFilterPlaceholder="Search available..."
-                  targetFilterPlaceholder="Search selected..."
-                ></dburst-picklist>
+                  targetFilterPlaceholder="Search selected..."></dburst-picklist>
               </div>
-              <button
-                id="btnRefreshDatabaseSchema"
-                class="btn btn-default btn-xm"
-                (click)="refreshDatabaseSchema()"
-                title="Refresh Database Schema"
-                [disabled]="isSchemaLoading"
-                *ngIf="mode !== 'viewMode'"
-              >
-                <i
-                  class="fa fa-refresh"
-                  [ngClass]="{ 'fa-spin': isSchemaLoading }"
-                ></i>
+              <button id="btnRefreshDatabaseSchema" class="btn btn-default btn-xm" (click)="refreshDatabaseSchema()"
+                title="Refresh Database Schema" [disabled]="isSchemaLoading" *ngIf="mode !== 'viewMode'">
+                <i class="fa fa-refresh" [ngClass]="{ 'fa-spin': isSchemaLoading }"></i>
               </button>
+            </div></div>
               <div class="row" style="margin-top: 10px">
                 <div class="col-xs-12">
                   <div class="text-center">
-                    <span
-                      id="chooseTableLabelDbSchema"
-                      *ngIf="targetSchemaObjects.length === 0"
-                      style="font-size: 11px"
-                      class="label label-default"
-                    >
+                    <span id="chooseTableLabelDbSchema" *ngIf="targetSchemaObjects.length === 0" style="font-size: 11px"
+                      class="label label-default">
                       <strong>Choose Table(s) from the list above</strong>
                     </span>
-                    <button
-                      id="btnGenerateWithAIDbSchema"
-                      style="margin-top: 8px"
-                      [ngClass]="
+                    <button id="btnGenerateWithAIDbSchema" style="margin-top: 8px" [ngClass]="
                         domainGroupedSchemaExists
                           ? 'btn-default'
                           : 'btn-primary'
-                      "
-                      class="btn btn-block"
-                      (click)="launchAiCopilotForSchemaQuery()"
-                      [disabled]="
+                      " class="btn btn-block" (click)="launchAiCopilotForSchemaQuery()" [disabled]="
                         !showSchemaTreeSelect ||
                         targetSchemaObjects.length === 0
-                      "
-                    >
+                      ">
                       <i class="fa fa-magic"></i>&nbsp; Generate SQL Query with
                       Help From AI
                     </button>
                   </div>
                 </div>
               </div>
-            </ng-container>
-          </div>
-        </div>
-      </tab>
+       </tab>
 
       <!-- Tab 3: Domain-Grouped Schema -->
-      <tab
-        id="domainGroupedDatabaseSchemaTab"
-        [active]="isDomainGroupedSchemaTabActive"
-        (selectTab)="
+      <tab id="domainGroupedDatabaseSchemaTab" [tabOrder]="3" [active]="isDomainGroupedSchemaTabActive" (selectTab)="
           isDomainGroupedSchemaTabActive = true;
           isConnectionDetailsTabActive = false;
           isDatabaseSchemaTabActive = false;
           isErDiagramTabActive = false;
           isUbiquitousLanguageTabActive = false;
           isToolsTabActive = false;
-        "
-        (deselectTab)="isDomainGroupedSchemaTabActive = false"
-      >
+        " (deselectTab)="isDomainGroupedSchemaTabActive = false"
+        *ngIf="context !== 'sqlQuery' || domainGroupedSchemaExists">
         <ng-template tabHeading>
           <i class="fa fa-object-group"></i> &nbsp;Domain-Grouped Schema
         </ng-template>
         <div class="row" style="padding: 15px">
           <div class="col-xs-12">
             <!-- Instruction if schema not loaded -->
-            <div
-              *ngIf="!showSchemaTreeSelect"
-              class="text-center"
-              style="
+            <div *ngIf="!showSchemaTreeSelect" class="text-center" style="
                 min-height: 420px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-              "
-            >
-              <span id="schemaNotLoadedDomainGroupedSchema"
-                ><strong
-                  >To load the schema, please ensure your connection details are
+              ">
+              <span id="schemaNotLoadedDomainGroupedSchema"><strong>To load the schema, please ensure your connection
+                  details are
                   configured and then test the connection or refresh the
-                  schema.</strong
-                ></span
-              >
+                  schema.</strong></span>
             </div>
             <!-- Domain schema picklist/code when loaded -->
             <ng-container *ngIf="showSchemaTreeSelect">
               <!-- Picklist View -->
               <div *ngIf="!isDomainGroupedCodeViewActive">
-                <div
-                  id="domainGroupedSchemaPicklistContainer"
-                  class="schema-picklist-container"
-                  style="min-height: 375px; max-height: 375px; padding: 0 5px"
-                >
-                  <dburst-picklist
-                    picklistId="domainGroupedSchemaPicklist"
-                    [sourceItems]="domainSourceSchemaObjects"
-                    [targetItems]="domainTargetSchemaObjects"
-                    (sourceItemsChange)="domainSourceSchemaObjects = $event"
+                <div id="domainGroupedSchemaPicklistContainer" class="schema-picklist-container"
+                  style="min-height: 375px; max-height: 375px; padding: 0 5px">
+                  <dburst-picklist picklistId="domainGroupedSchemaPicklist" [sourceItems]="domainSourceSchemaObjects"
+                    [targetItems]="domainTargetSchemaObjects" (sourceItemsChange)="domainSourceSchemaObjects = $event"
                     (targetItemsChange)="domainTargetSchemaObjects = $event"
-                    sourceHeader="All Database Tables & Objects"
-                    targetHeader="Selected Tables & Objects"
-                    optionLabel="label"
-                    itemKey="key"
-                    sourceFilterPlaceholder="Search available..."
-                    targetFilterPlaceholder="Search selected..."
-                  >
+                    sourceHeader="All Database Tables & Objects" targetHeader="Selected Tables & Objects"
+                    optionLabel="label" itemKey="key" sourceFilterPlaceholder="Search available..."
+                    targetFilterPlaceholder="Search selected...">
                   </dburst-picklist>
                 </div>
-                <div
-                  class="row text-center"
-                  id="chooseTableLabelDomainGroupedSchema"
-                  *ngIf="
+                <div class="row text-center" id="chooseTableLabelDomainGroupedSchema" *ngIf="
                     domainGroupedSchemaExists &&
                     domainTargetSchemaObjects.length === 0
-                  "
-                >
+                  ">
                   <div class="col-xs-12">
-                    <span
-                      style="font-size: 11px; margin-bottom: 4px"
-                      class="label label-default"
-                    >
+                    <span style="font-size: 11px; margin-bottom: 4px" class="label label-default">
                       <strong>Choose Table(s) from the list above</strong>
                     </span>
                   </div>
@@ -1010,28 +714,17 @@
                 <!-- Replace the existing buttons layout in Domain-Grouped Schema tab with this code -->
                 <div class="row" style="margin-top: 10px">
                   <!-- Original layout when domainGroupedSchemaExists is false -->
-                  <ng-container *ngIf="!domainGroupedSchemaExists">
-                    <div class="col-xs-6" *ngIf="context !== 'sqlQuery'">
-                      <button
-                        id="btnToggleDomainGroupedCodeView"
-                        type="button"
-                        class="btn btn-default btn-block"
-                        (click)="toggleDomainGroupedCodeView()"
-                      >
+                  <ng-container *ngIf="context !== 'sqlQuery' && !domainGroupedSchemaExists">
+                    <div class="col-xs-6">
+                      <button id="btnToggleDomainGroupedCodeView" type="button" class="btn btn-default btn-block"
+                        (click)="toggleDomainGroupedCodeView()">
                         <i class="fa fa-code"></i> Show Domain-Grouped Schema
                         Code
                       </button>
                     </div>
-                    <div
-                      [ngClass]="
-                        context !== 'sqlQuery' ? 'col-xs-6' : 'col-xs-12'
-                      "
-                    >
-                      <button
-                        id="btnGenerateWithAIDomainGroupedSchema"
-                        class="btn btn-primary btn-block"
-                        (click)="launchAiCopilotForDomainSchemaGeneration()"
-                      >
+                    <div class="col-xs-6">
+                      <button id="btnGenerateWithAIDomainGroupedSchema" class="btn btn-primary btn-block"
+                        (click)="launchAiCopilotForDomainSchemaGeneration()">
                         <i class="fa fa-magic"></i>&nbsp; Generate Domain Schema
                         with AI Help
                       </button>
@@ -1040,101 +733,74 @@
 
                   <!-- New split button layout when domainGroupedSchemaExists is true -->
                   <div class="col-xs-12" *ngIf="domainGroupedSchemaExists">
-                    <div
-                      class="btn-group btn-block"
-                      style="margin-bottom: 20px"
-                    >
-                      <button
-                        id="btnGenerateSqlQueryWithAIDomainGroupedSchema"
-                        type="button"
-                        class="btn btn-default"
-                        style="width: calc(100% - 34px); text-align: left"
-                        (click)="launchAiCopilotForSchemaQuery()"
+                    <div class="btn-group btn-block" style="margin-bottom: 20px" *ngIf="context !== 'sqlQuery'">
+                      <button id="btnGenerateSqlQueryWithAIDomainGroupedSchema" type="button" class="btn btn-primary"
+                        style="width: calc(100% - 34px); text-align: left" (click)="launchAiCopilotForSchemaQuery()"
                         [disabled]="
                           !showSchemaTreeSelect ||
                           domainTargetSchemaObjects.length === 0
-                        "
-                      >
+                        ">
                         <div class="text-center">
                           <i class="fa fa-magic"></i>&nbsp; Generate SQL Query
                           with Help From AI
                         </div>
                       </button>
-                      <button
-                        type="button"
-                        id="btnToggleDomainGroupedCodeViewDropdown"
-                        class="btn btn-default dropdown-toggle"
-                        data-toggle="dropdown"
-                        style="width: 34px"
-                        [disabled]="context === 'sqlQuery'"
-                      >
+                      <button type="button" id="btnToggleDomainGroupedCodeViewDropdown"
+                        class="btn btn-default dropdown-toggle" data-toggle="dropdown" style="width: 34px">
                         <span class="caret"></span>
                         <span class="sr-only">Toggle Dropdown</span>
                       </button>
-                      <ul
-                        class="dropdown-menu dropdown-menu-right"
-                        *ngIf="context !== 'sqlQuery'"
-                      >
+                      <ul class="dropdown-menu dropdown-menu-right">
                         <li>
-                          <a
-                            id="liAToggleDomainGroupedCodeView"
-                            href="#"
-                            (click)="
+                          <a id="liAToggleDomainGroupedCodeView" href="#" (click)="
                               toggleDomainGroupedCodeView();
                               $event.preventDefault()
-                            "
-                          >
+                            ">
                             <i class="fa fa-code"></i> Show Domain-Grouped
                             Schema Code
                           </a>
                         </li>
                       </ul>
                     </div>
+                    <button id="btnGenerateSqlQueryWithAIDomainGroupedSchema" type="button" class="btn btn-primary"
+                        style="width: calc(100% - 34px); text-align: left" (click)="launchAiCopilotForSchemaQuery()"
+                        [disabled]="
+                          !showSchemaTreeSelect ||
+                          domainTargetSchemaObjects.length === 0
+                        " *ngIf="context === 'sqlQuery'">
+                        <div class="text-center">
+                          <i class="fa fa-magic"></i>&nbsp; Generate SQL Query
+                          with Help From AI
+                        </div>
+                      </button>
                   </div>
                 </div>
               </div>
 
               <!-- Code Editor View -->
               <div *ngIf="isDomainGroupedCodeViewActive">
-                <ngx-codejar
-                  id="domainGroupedCodeEditor"
-                  [(code)]="domainGroupedSchemaJsonTextContent"
-                  (update)="
+                <ngx-codejar id="domainGroupedCodeEditor" [(code)]="domainGroupedSchemaJsonTextContent" (update)="
                     onDomainGroupedSchemaJsonTextContentChanged($event)
-                  "
-                  [highlightMethod]="highlightJsonMethod"
-                  [highlighter]="'prism'"
-                  [showLineNumbers]="true"
-                  style="
+                  " [highlightMethod]="highlightJsonMethod" [highlighter]="'prism'" [showLineNumbers]="true" style="
                     height: 420px;
                     border: 1px solid #ccc;
                     border-radius: 4px;
                     overflow-y: auto;
-                  "
-                ></ngx-codejar>
+                  "></ngx-codejar>
                 <!-- Two buttons side by side, 50% width each -->
                 <div class="row" style="margin-top: 10px">
                   <div class="col-xs-6">
-                    <button
-                      type="button"
-                      id="btnToggleDomainGroupedCodeView"
-                      class="btn btn-default btn-block"
-                      (click)="toggleDomainGroupedCodeView()"
-                    >
+                    <button type="button" id="btnToggleDomainGroupedCodeView" class="btn btn-default btn-block"
+                      (click)="toggleDomainGroupedCodeView()">
                       <i class="fa fa-list"></i> Show Domain-Grouped Schema
                     </button>
                   </div>
                   <div class="col-xs-6">
-                    <button
-                      id="btnGenerateWithAIDomainGroupedSchema"
-                      [ngClass]="
+                    <button id="btnGenerateWithAIDomainGroupedSchema" [ngClass]="
                         domainGroupedSchemaExists
                           ? 'btn-default'
                           : 'btn-primary'
-                      "
-                      class="btn btn-block"
-                      (click)="launchAiCopilotForDomainSchemaGeneration()"
-                    >
+                      " class="btn btn-block" (click)="launchAiCopilotForDomainSchemaGeneration()">
                       <i class="fa fa-magic"></i>&nbsp; Generate Domain Schema
                       with AI Help
                     </button>
@@ -1147,71 +813,48 @@
       </tab>
 
       <!-- Tab 4: Diagram -->
-      <tab
-        id="databaseDiagramTab"
-        [active]="isErDiagramTabActive"
-        (selectTab)="
+      <tab id="databaseDiagramTab" [tabOrder]="4" [active]="isErDiagramTabActive" (selectTab)="
           isErDiagramTabActive = true;
           isConnectionDetailsTabActive = false;
           isDatabaseSchemaTabActive = false;
           isDomainGroupedSchemaTabActive = false;
           isUbiquitousLanguageTabActive = false;
           isToolsTabActive = false;
-        "
-        (deselectTab)="isErDiagramTabActive = false"
-      >
+        " (deselectTab)="isErDiagramTabActive = false" *ngIf="context !== 'sqlQuery' || erDiagramExists">
         <ng-template tabHeading>
           <i class="fa fa-sitemap"></i> &nbsp;ER Diagram
         </ng-template>
         <!-- Instruction if schema not loaded -->
-        <div
-          *ngIf="!showSchemaTreeSelect"
-          class="text-center"
-          style="
+        <div *ngIf="!showSchemaTreeSelect" class="text-center" style="
             min-height: 400px;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 15px;
-          "
-        >
-          <span id="schemaNotLoadedERDiagram"
-            ><strong
-              >To load the schema, please ensure your connection details are
+          ">
+          <span id="schemaNotLoadedERDiagram"><strong>To load the schema, please ensure your connection details are
               configured and then test the connection or refresh the
-              schema.</strong
-            ></span
-          >
+              schema.</strong></span>
         </div>
         <div class="row" style="padding: 15px" *ngIf="showSchemaTreeSelect">
           <div class="col-xs-12">
             <!-- View mode (default) -->
             <div *ngIf="!isDiagramEditMode">
-              <iframe
-                id="plantUmlDiagram"
-                *ngIf="
+              <iframe id="plantUmlDiagram" *ngIf="
                   encodedPlantUmlDiagram && encodedPlantUmlDiagram.length > 0
-                "
-                [src]="
+                " [src]="
                   'https://kroki.io/plantuml/svg/' + encodedPlantUmlDiagram
                     | safe
-                "
-                width="100%"
-                style="
+                " width="100%" style="
                   border: 1px solid #ccc;
                   border-radius: 4px;
                   min-height: 400px;
                   background-color: white;
-                "
-              >
+                ">
               </iframe>
-              <div
-                *ngIf="
+              <div *ngIf="
                   !encodedPlantUmlDiagram || encodedPlantUmlDiagram.length === 0
-                "
-                id="noErDiagramAvailable"
-                class="text-center"
-                style="
+                " id="noErDiagramAvailable" class="text-center" style="
                   border: 1px solid #ccc;
                   border-radius: 4px;
                   padding: 20px;
@@ -1220,27 +863,17 @@
                   flex-direction: column;
                   justify-content: center;
                   align-items: center;
-                "
-              >
+                ">
                 <h4>No ER Diagram Available</h4>
                 <p style="margin-top: 15px; max-width: 80%; font-size: 0.95em">
                   This tab uses PlantUML to render
-                  <a
-                    href="https://en.wikipedia.org/wiki/Entity–relationship_model"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >Entity Relationship Diagrams</a
-                  >. We recommend
-                  <a
-                    href="https://plantuml.com/er-diagram"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >Crow’s Foot notation</a
-                  >
+                  <a href="https://en.wikipedia.org/wiki/Entity–relationship_model" target="_blank"
+                    rel="noopener noreferrer">Entity Relationship Diagrams</a>. We recommend
+                  <a href="https://plantuml.com/er-diagram" target="_blank" rel="noopener noreferrer">Crow’s Foot
+                    notation</a>
                   for clarity.
                 </p>
-                <div
-                  style="
+                <div style="
                     margin-top: 20px;
                     text-align: left;
                     border: 1px solid #e0e0e0;
@@ -1249,165 +882,114 @@
                     background-color: #f9f9f9;
                     max-width: 85%;
                     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-                  "
-                >
-                  <p
-                    style="
+                  ">
+                  <p style="
                       margin-bottom: 10px;
                       font-weight: bold;
                       font-size: 1em;
-                    "
-                  >
+                    ">
                     How to get started:
                   </p>
-                  <ul
-                    style="
+                  <ul style="
                       list-style-type: disc;
                       margin-left: 20px;
                       padding-left: 0;
                       font-size: 0.9em;
                       line-height: 1.6;
-                    "
-                  >
+                    ">
                     <li style="margin-bottom: 8px">
                       Use the "<strong>Generate with AI</strong>" button
                       (located below) to create an initial diagram from your
                       database schema.
                     </li>
                     <li style="margin-bottom: 8px">
-                      After AI generation, or to write your own, click "<strong
-                        >Show Code</strong
-                      >" to view, manually customize, or fine-tune the PlantUML
+                      After AI generation, or to write your own, click "<strong>Show Code</strong>" to view, manually
+                      customize, or fine-tune the PlantUML
                       code.
                     </li>
                     <li>
-                      You can always come back and click "<strong
-                        >Show Code</strong
-                      >" to make further manual adjustments.
+                      You can always come back and click "<strong>Show Code</strong>" to make further manual
+                      adjustments.
                     </li>
                   </ul>
                 </div>
                 <p style="margin-top: 20px; font-size: 0.85em; color: #555">
                   Need help with PlantUML syntax? Visit the official
-                  <a
-                    href="https://plantuml.com/er-diagram"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Opens PlantUML ER Diagram documentation in a new tab"
-                  >
-                    ER Diagram documentation </a
-                  >.
+                  <a href="https://plantuml.com/er-diagram" target="_blank" rel="noopener noreferrer"
+                    title="Opens PlantUML ER Diagram documentation in a new tab">
+                    ER Diagram documentation </a>.
                 </p>
               </div>
               <!-- Three buttons 1/3 width each -->
-              <div class="row" style="margin-top: 10px">
+              <div class="row" style="margin-top: 10px" *ngIf="context !== 'sqlQuery'">
                 <div class="col-xs-4">
-                  <button
-                    id="btnDatabaseDiagramShowCode"
-                    type="button"
-                    class="btn btn-default btn-block"
-                    [disabled]="
+                  <button id="btnDatabaseDiagramShowCode" type="button" class="btn btn-default btn-block" [disabled]="
                       !modalConnectionInfo.database.documentburster.connection
                         .name
-                    "
-                    (click)="toggleDatabaseDiagramCodeView()"
-                  >
+                    " (click)="toggleDatabaseDiagramCodeView()">
                     <i class="fa fa-code"></i> Show Code
                   </button>
                 </div>
                 <div class="col-xs-4">
-                  <a
-                    id="btnDatabaseDiagramViewInBrowserLink"
-                    *ngIf="encodedPlantUmlDiagram"
-                    [href]="
+                  <a id="btnDatabaseDiagramViewInBrowserLink" *ngIf="encodedPlantUmlDiagram" [href]="
                       'https://kroki.io/plantuml/svg/' + encodedPlantUmlDiagram
-                    "
-                    target="_blank"
-                    class="btn btn-default btn-block"
-                  >
+                    " target="_blank" class="btn btn-default btn-block">
                     <i class="fa fa-external-link"></i> View In Browser
                   </a>
-                  <button
-                    id="btnDatabaseDiagramViewInBrowser"
-                    *ngIf="!encodedPlantUmlDiagram"
-                    type="button"
-                    class="btn btn-default btn-block"
-                    disabled
-                  >
+                  <button id="btnDatabaseDiagramViewInBrowser" *ngIf="!encodedPlantUmlDiagram" type="button"
+                    class="btn btn-default btn-block" disabled>
                     <i class="fa fa-external-link"></i> View In Browser
                   </button>
                 </div>
                 <div class="col-xs-4">
-                  <button
-                    id="btnGenerateWithAIErDiagram"
-                    [ngClass]="erDiagramExists ? 'btn-default' : 'btn-primary'"
-                    class="btn btn-block"
-                    (click)="launchAiCopilotForErDiagram()"
-                    [disabled]="!showSchemaTreeSelect"
-                  >
+                  <button id="btnGenerateWithAIErDiagram" [ngClass]="erDiagramExists ? 'btn-default' : 'btn-primary'"
+                    class="btn btn-block" (click)="launchAiCopilotForErDiagram()" [disabled]="!showSchemaTreeSelect">
                     <i class="fa fa-magic"></i>&nbsp; Generate with AI
                   </button>
+                </div>
+              </div>
+              <div class="row" style="margin-top: 10px" *ngIf="context === 'sqlQuery'">
+                <div class="col-xs-12">
+                  <a id="btnDatabaseDiagramViewInBrowserLink" *ngIf="encodedPlantUmlDiagram" [href]="
+                      'https://kroki.io/plantuml/svg/' + encodedPlantUmlDiagram
+                    " target="_blank" class="btn btn-default btn-block">
+                    <i class="fa fa-external-link"></i> View In Browser
+                  </a>
                 </div>
               </div>
             </div>
 
             <!-- Edit mode -->
             <div *ngIf="isDiagramEditMode">
-              <ngx-codejar
-                id="plantUmlEditor"
-                [(code)]="plantUmlCode"
-                (update)="onPlantUmlCodeChanged($event)"
-                [highlightMethod]="highlightPlantUmlMethod"
-                [highlighter]="'prism'"
-                [showLineNumbers]="true"
-                style="
+              <ngx-codejar id="plantUmlEditor" [(code)]="plantUmlCode" (update)="onPlantUmlCodeChanged($event)"
+                [highlightMethod]="highlightPlantUmlMethod" [highlighter]="'prism'" [showLineNumbers]="true" style="
                   height: 400px;
                   border: 1px solid #ccc;
                   border-radius: 4px;
                   overflow-y: auto;
                   width: 100%;
-                "
-              ></ngx-codejar>
+                "></ngx-codejar>
               <!-- Three buttons 1/3 width each -->
               <div class="row" style="margin-top: 10px">
                 <div class="col-xs-4">
-                  <button
-                    id="btnDatabaseDiagramViewDiagram"
-                    type="button"
-                    class="btn btn-default btn-block"
-                    (click)="toggleDatabaseDiagramCodeView()"
-                  >
+                  <button id="btnDatabaseDiagramViewDiagram" type="button" class="btn btn-default btn-block"
+                    (click)="toggleDatabaseDiagramCodeView()">
                     <i class="fa fa-eye"></i> View Diagram
                   </button>
                 </div>
                 <div class="col-xs-4">
-                  <a
-                    *ngIf="encodedPlantUmlDiagram"
-                    [href]="
+                  <a *ngIf="encodedPlantUmlDiagram" [href]="
                       'https://kroki.io/plantuml/svg/' + encodedPlantUmlDiagram
-                    "
-                    target="_blank"
-                    class="btn btn-default btn-block"
-                  >
+                    " target="_blank" class="btn btn-default btn-block">
                     <i class="fa fa-external-link"></i> View In Browser
                   </a>
-                  <button
-                    *ngIf="!encodedPlantUmlDiagram"
-                    type="button"
-                    class="btn btn-default btn-block"
-                    disabled
-                  >
+                  <button *ngIf="!encodedPlantUmlDiagram" type="button" class="btn btn-default btn-block" disabled>
                     <i class="fa fa-external-link"></i> View In Browser
                   </button>
                 </div>
                 <div class="col-xs-4">
-                  <button
-                    id="btnGenerateWithAIErDiagram"
-                    [ngClass]="erDiagramExists ? 'btn-default' : 'btn-primary'"
-                    class="btn btn-block"
-                    (click)="launchAiCopilotForErDiagram()"
-                    [disabled]="!showSchemaTreeSelect"
-                  >
+                  <button id="btnGenerateWithAIErDiagram" [ngClass]="erDiagramExists ? 'btn-default' : 'btn-primary'"
+                    class="btn btn-block" (click)="launchAiCopilotForErDiagram()" [disabled]="!showSchemaTreeSelect">
                     <i class="fa fa-magic"></i>&nbsp; Generate with AI
                   </button>
                 </div>
@@ -1415,12 +997,9 @@
             </div>
 
             <!-- Empty state when no connection is set -->
-            <div
-              *ngIf="
+            <div *ngIf="
                 !modalConnectionInfo.database.documentburster.connection.name
-              "
-              class="text-center"
-              style="
+              " class="text-center" style="
                 position: absolute;
                 top: 0;
                 left: 0;
@@ -1431,8 +1010,7 @@
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
-              "
-            >
+              ">
               <i class="fa fa-project-diagram fa-3x text-primary"></i>
               <h4>Database Schema Diagram</h4>
               <p>Define a connection first to enable diagram generation.</p>
@@ -1442,19 +1020,15 @@
       </tab>
 
       <!-- Tab 5: Ubiquitous Language -->
-      <tab
-        id="databaseUbiquitousLanguageTab"
-        [active]="isUbiquitousLanguageTabActive"
-        (selectTab)="
+      <tab id="databaseUbiquitousLanguageTab" [tabOrder]="5" [active]="isUbiquitousLanguageTabActive" (selectTab)="
           isUbiquitousLanguageTabActive = true;
           isConnectionDetailsTabActive = false;
           isDatabaseSchemaTabActive = false;
           isDomainGroupedSchemaTabActive = false;
           isErDiagramTabActive = false;
           isToolsTabActive = false;
-        "
-        (deselectTab)="isUbiquitousLanguageTabActive = false"
-      >
+        " (deselectTab)="isUbiquitousLanguageTabActive = false"
+        *ngIf="context !== 'sqlQuery' || isStringAndNotEmpty(ubiquitousLanguageMarkdown)">
         <ng-template tabHeading>
           <i class="fa fa-language"></i> &nbsp;Ubiquitous Language
         </ng-template>
@@ -1462,16 +1036,11 @@
         <div class="row" style="padding: 15px">
           <div class="col-xs-12" style="position: relative">
             <!-- Case 1: Content exists AND in View Mode -->
-            <div
-              *ngIf="
+            <div *ngIf="
                 isStringAndNotEmpty(ubiquitousLanguageMarkdown) &&
                 !isUbiquitousLanguageEditMode
-              "
-            >
-              <markdown
-                id="ubiquitousLanguageViewer"
-                [data]="ubiquitousLanguageMarkdown"
-                class="markdown-content"
+              ">
+              <markdown id="ubiquitousLanguageViewer" [data]="ubiquitousLanguageMarkdown" class="markdown-content"
                 style="
                   width: 100%;
                   border: 1px solid #ccc;
@@ -1480,18 +1049,12 @@
                   min-height: 400px;
                   overflow-y: auto;
                   background-color: white;
-                "
-              ></markdown>
-              <button
-                id="btnUbiquitousLanguageEdit"
-                type="button"
-                class="btn btn-default btn-block"
-                style="margin-top: 10px"
-                [disabled]="
+                "></markdown>
+              <button id="btnUbiquitousLanguageEdit" type="button" class="btn btn-default btn-block"
+                style="margin-top: 10px" [disabled]="
                   !modalConnectionInfo.database.documentburster.connection.name
-                "
-                (click)="toggleUbiquitousLanguageEditMode()"
-              >
+                " (click)="toggleUbiquitousLanguageEditMode()" *ngIf="
+                  context !== 'sqlQuery'">
                 <i class="fa fa-edit"></i> Edit 'Ubiquitous Language'
                 Documentation
               </button>
@@ -1499,14 +1062,9 @@
 
             <!-- Case 2: In Edit Mode (whether content existed before or not) -->
             <div *ngIf="isUbiquitousLanguageEditMode">
-              <ngx-codejar
-                id="ubiquitousLanguageEditor"
-                [(code)]="ubiquitousLanguageMarkdown"
-                (update)="onUbiquitousLanguageChanged($event)"
-                [highlightMethod]="highlightMarkdownMethod"
-                [highlighter]="'prism'"
-                [showLineNumbers]="true"
-                style="
+              <ngx-codejar id="ubiquitousLanguageEditor" [(code)]="ubiquitousLanguageMarkdown"
+                (update)="onUbiquitousLanguageChanged($event)" [highlightMethod]="highlightMarkdownMethod"
+                [highlighter]="'prism'" [showLineNumbers]="true" style="
                   height: 400px;
                   border: 1px solid #ccc;
                   border-radius: 4px;
@@ -1514,31 +1072,20 @@
                   width: 100%;
                   box-sizing: border-box;
                   margin: 0 auto;
-                "
-              ></ngx-codejar>
-              <button
-                id="btnUbiquitousLanguageEditDone"
-                type="button"
-                class="btn btn-default btn-block"
-                style="margin-top: 10px"
-                (click)="toggleUbiquitousLanguageEditMode()"
-              >
+                "></ngx-codejar>
+              <button id="btnUbiquitousLanguageEditDone" type="button" class="btn btn-default btn-block"
+                style="margin-top: 10px" (click)="toggleUbiquitousLanguageEditMode()">
                 <i class="fa fa-check"></i> OK, I'm done editing 'Ubiquitous
                 Language' Documentation
               </button>
             </div>
 
             <!-- Case 3: Content does NOT exist AND in View Mode (show informational text) -->
-            <div
-              *ngIf="
+            <div *ngIf="
                 !isStringAndNotEmpty(ubiquitousLanguageMarkdown) &&
                 !isUbiquitousLanguageEditMode
-              "
-            >
-              <div
-                id="noUbiquitousLanguageContentInfo"
-                class="text-center"
-                style="
+              ">
+              <div id="noUbiquitousLanguageContentInfo" class="text-center" style="
                   border: 1px solid #ddd;
                   border-radius: 4px;
                   padding: 10px;
@@ -1548,34 +1095,25 @@
                   justify-content: center;
                   align-items: center;
                   background-color: #f9f9f9;
-                "
-              >
+                ">
                 <span style="margin-bottom: 10px">
-                  <strong
-                    >Understanding Your Data: The Ubiquitous Language</strong
-                  >
+                  <strong>Understanding Your Data: The Ubiquitous Language</strong>
                 </span>
-                <p
-                  style="
+                <p style="
                     max-width: 90%;
                     font-size: 0.95em;
                     line-height: 1.6;
                     color: #333;
-                  "
-                >
-                  <a
-                    href="https://martinfowler.com/bliki/UbiquitousLanguage.html"
-                    target="_blank"
-                    >Ubiquitous Language</a
-                  >, a concept from Domain-Driven Design, is a common, shared
+                  ">
+                  <a href="https://martinfowler.com/bliki/UbiquitousLanguage.html" target="_blank">Ubiquitous
+                    Language</a>, a concept from Domain-Driven Design, is a common, shared
                   vocabulary between developers, business analysts, and domain
                   experts. <br />For this database connection, it's a dedicated
                   space to document key business terms, rules, constraints, and
                   concepts related to your schema. This ensures everyone
                   interprets the data consistently and accurately.
                 </p>
-                <div
-                  style="
+                <div style="
                     margin-top: 10px;
                     margin-bottom: 10px;
                     text-align: left;
@@ -1585,52 +1123,35 @@
                     background-color: #fff;
                     max-width: 90%;
                     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
-                  "
-                >
-                  <p
-                    style="
+                  ">
+                  <p style="
                       margin-bottom: 10px;
                       font-weight: bold;
                       font-size: 1em;
-                    "
-                  >
+                    ">
                     <i class="fa fa-lightbulb-o"></i> Example Snippet:
                   </p>
-                  <markdown
-                    [data]="getUbiquitousLanguageExampleMarkdown()"
-                    class="compact-markdown-example"
-                  ></markdown>
+                  <markdown [data]="getUbiquitousLanguageExampleMarkdown()" class="compact-markdown-example"></markdown>
                 </div>
                 <p style="max-width: 90%; font-size: 0.9em; color: #555">
-                  <strong
-                    >This is a living document. Start with what you know and
+                  <strong>This is a living document. Start with what you know and
                     collaboratively refine it over time as your understanding of
-                    the domain deepens.</strong
-                  >
+                    the domain deepens.</strong>
                 </p>
               </div>
-              <button
-                id="btnUbiquitousLanguageStartEditing"
-                type="button"
-                class="btn btn-primary btn-block"
-                style="margin-top: 20px"
-                [disabled]="
+              <button id="btnUbiquitousLanguageStartEditing" type="button" class="btn btn-primary btn-block"
+                style="margin-top: 20px" [disabled]="
                   !modalConnectionInfo.database.documentburster.connection.name
-                "
-                (click)="toggleUbiquitousLanguageEditMode()"
-              >
+                " (click)="toggleUbiquitousLanguageEditMode()">
                 <i class="fa fa-plus-circle"></i> Start Documenting 'Ubiquitous
                 Language'
               </button>
             </div>
 
             <!-- Overlay for "Define connection first" -->
-            <div
-              *ngIf="
+            <div *ngIf="
                 !modalConnectionInfo.database.documentburster.connection.name
-              "
-              class="text-center"
-              style="
+              " class="text-center" style="
                 position: absolute;
                 top: 0;
                 left: 0;
@@ -1643,12 +1164,8 @@
                 align-items: center;
                 z-index: 10; /* Ensure it's on top */
                 border-radius: 4px;
-              "
-            >
-              <i
-                class="fa fa-language fa-3x text-primary"
-                style="margin-bottom: 10px"
-              ></i>
+              ">
+              <i class="fa fa-language fa-3x text-primary" style="margin-bottom: 10px"></i>
               <h4>Ubiquitous Language</h4>
               <p>
                 Please define and save a connection name first to enable
@@ -1659,279 +1176,197 @@
         </div>
       </tab>
 
-     <!-- Tab 6: Tools -->
-    <tab
-      id="toolsTab"
-      [active]="isToolsTabActive"
-      (selectTab)="
+      <!-- Tab 6: Tools -->
+      <tab id="toolsTab" [active]="isToolsTabActive" (selectTab)="
         isToolsTabActive = true;
         isConnectionDetailsTabActive = false;
         isDatabaseSchemaTabActive = false;
         isDomainGroupedSchemaTabActive = false;
         isErDiagramTabActive = false;
         isUbiquitousLanguageTabActive = false
-      "
-      (deselectTab)="isToolsTabActive = false"
-    >
-      <ng-template tabHeading>
-        <i class="fa fa-comments"  [style.color]="isVannaAiStarted ? 'green' : '#888'"></i> &nbsp;Chat2DB (AI)
-      </ng-template>
+      " (deselectTab)="isToolsTabActive = false" *ngIf="context !== 'sqlQuery' || (showSchemaTreeSelect && domainGroupedSchemaExists && erDiagramExists && isStringAndNotEmpty(ubiquitousLanguageMarkdown))">
+        <ng-template tabHeading>
+          <i class="fa fa-comments" [style.color]="isVannaAiStarted ? 'green' : '#888'"></i> &nbsp;Chat2DB (AI)
+        </ng-template>
 
-      <!-- Show schema not loaded message if schema is not available -->
-      <div
-        *ngIf="!showSchemaTreeSelect"
-        class="text-center"
-        style="min-height: 400px; display: flex; align-items: center; justify-content: center; padding: 15px;"
-      >
-        <span id="schemaNotLoadedChat2DB">
-          <strong>
-            To load the schema, please ensure your connection details are configured and then test the connection or refresh the schema.
-          </strong>
-        </span>
-      </div>
+        <!-- Show schema not loaded message if schema is not available -->
+        <div *ngIf="!showSchemaTreeSelect" class="text-center"
+          style="min-height: 400px; display: flex; align-items: center; justify-content: center; padding: 15px;">
+          <span id="schemaNotLoadedChat2DB">
+            <strong>
+              To load the schema, please ensure your connection details are configured and then test the connection or
+              refresh the schema.
+            </strong>
+          </span>
+        </div>
 
-      <!-- Existing content, shown only if schema is available -->
-      <ng-container *ngIf="showSchemaTreeSelect">
-        <div class="row" style="padding: 15px 15px 0 15px">
-          <div class="col-xs-6">
-            <button
-              id="btnChatWithDb"
-              type="button"
-              class="btn btn-default btn-block"
-              [disabled]="!isVannaAiStarted"
-            >
-              <i class="fa fa-comments" [style.color]="isVannaAiStarted ? 'green' : '#888'"></i>&nbsp; Chat With Your Database (AI)
-            </button>
-          </div>
-          <div class="col-xs-6">
-            <button
-              id="btnToggleVannaAi"
-              type="button"
-              class="btn btn-default btn-block"
-              (click)="toggleVannaAiService()"
-            >
-              <i
-                class="fa"
-                [ngClass]="{
+        <!-- Existing content, shown only if schema is available -->
+        <ng-container *ngIf="showSchemaTreeSelect">
+          <div class="row" style="padding: 15px 15px 0 15px">
+            <div class="col-xs-6">
+              <button id="btnChatWithDb" type="button" class="btn btn-default btn-block" [disabled]="!isVannaAiStarted">
+                <i class="fa fa-comments" [style.color]="isVannaAiStarted ? 'green' : '#888'"></i>&nbsp; Chat With Your
+                Database (AI)
+              </button>
+            </div>
+            <div class="col-xs-6">
+              <button id="btnToggleVannaAi" type="button" class="btn btn-default btn-block"
+                (click)="toggleVannaAiService()">
+                <i class="fa" [ngClass]="{
                   'fa-play': !isVannaAiStarted,
                   'fa-stop': isVannaAiStarted
-                }"
-              ></i>
-              <span *ngIf="!isVannaAiStarted">&nbsp; <strong>Start Vanna.AI</strong></span>
-              <span *ngIf="isVannaAiStarted">&nbsp; Stop Vanna.AI</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="row" style="padding: 15px">
-          <div class="col-xs-12">
-            <div class="checkbox">
-              <label>
-                <input
-                  id="vannaTrainingIncludeDbSchema"
-                  type="checkbox"
-                  [(ngModel)]="vannaTrainingIncludeDbSchema"
-                  [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeDbSchema') !== ''"
-                  [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeDbSchema')"
-                />
-                
-                <!-- Text displayed when NO specific tables are selected -->
-                <span *ngIf="targetSchemaObjects.length === 0">
-                  Include <strong>*.tables</strong> plain DB Schema Information
-                </span>
-
-                <!-- Text displayed when specific tables ARE selected -->
-                <span *ngIf="targetSchemaObjects.length > 0">
-                  Include selected tables' plain DB Schema Information
-                </span>
-              </label>
-
-              <!-- Button to choose tables (shown when none are selected) -->
-              <button
-                *ngIf="targetSchemaObjects.length === 0"
-                id="btnChooseSpecificTables"
-                type="button"
-                class="btn btn-default btn-xs"
-                style="margin-left: 20px"
-                (click)="isDatabaseSchemaTabActive = true; isToolsTabActive = false;"
-              >
-                Choose Specific Tables
+                }"></i>
+                <span *ngIf="!isVannaAiStarted">&nbsp; <strong>Start Vanna.AI</strong></span>
+                <span *ngIf="isVannaAiStarted">&nbsp; Stop Vanna.AI</span>
               </button>
+            </div>
+          </div>
 
-              <!-- Button and badge to show/edit selection status -->
-              <span *ngIf="targetSchemaObjects.length > 0" style="margin-left: 20px">
-                <button
-                  id="btnEditSpecificTables"
-                  type="button"
-                  class="btn btn-info btn-xs"
-                  (click)="isDatabaseSchemaTabActive = true; isToolsTabActive = false;"
-                >
-                  Edit Selection
+          <div class="row" style="padding: 15px" *ngIf="context !== 'sqlQuery'">
+            <div class="col-xs-12">
+              <div class="checkbox">
+                <label>
+                  <input id="vannaTrainingIncludeDbSchema" type="checkbox" [(ngModel)]="vannaTrainingIncludeDbSchema"
+                    [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeDbSchema') !== ''"
+                    [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeDbSchema')" />
+
+                  <!-- Text displayed when NO specific tables are selected -->
+                  <span *ngIf="targetSchemaObjects.length === 0">
+                    Include <strong>*.tables</strong> plain DB Schema Information
+                  </span>
+
+                  <!-- Text displayed when specific tables ARE selected -->
+                  <span *ngIf="targetSchemaObjects.length > 0">
+                    Include selected tables' plain DB Schema Information
+                  </span>
+                </label>
+
+                <!-- Button to choose tables (shown when none are selected) -->
+                <button *ngIf="targetSchemaObjects.length === 0" id="btnChooseSpecificTables" type="button"
+                  class="btn btn-default btn-xs" style="margin-left: 20px"
+                  (click)="isDatabaseSchemaTabActive = true; isToolsTabActive = false;">
+                  Choose Specific Tables
                 </button>
-                <span class="label label-primary" style="margin-left: 5px;">
-                  {{ targetSchemaObjects.length }} table(s) selected
+
+                <!-- Button and badge to show/edit selection status -->
+                <span *ngIf="targetSchemaObjects.length > 0" style="margin-left: 20px">
+                  <button id="btnEditSpecificTables" type="button" class="btn btn-info btn-xs"
+                    (click)="isDatabaseSchemaTabActive = true; isToolsTabActive = false;">
+                    Edit Selection
+                  </button>
+                  <span class="label label-primary" style="margin-left: 5px;">
+                    {{ targetSchemaObjects.length }} table(s) selected
+                  </span>
                 </span>
-              </span>
-            </div>
-            <div class="checkbox">
-              <label>
-                <input
-                  id="vannaTrainingIncludeDomainGroupedSchema"
-                  type="checkbox"
-                  [(ngModel)]="vannaTrainingIncludeDomainGroupedSchema"
-                  [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeDomainGroupedSchema') !== ''"
-                  [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeDomainGroupedSchema')"
-                />
-                Include Domain-Grouped Schema Information
-              </label>
-            </div>
-            <div class="checkbox">
-              <label>
-                <input
-                  id="vannaTrainingIncludeErDiagram"
-                  type="checkbox"
-                  [(ngModel)]="vannaTrainingIncludeErDiagram"
-                  [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeErDiagram') !== ''"
-                  [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeErDiagram')"
-                />
-                Include ER Diagram Information
-              </label>
-            </div>
-            <div class="checkbox">
-              <label>
-                <input
-                  id="vannaTrainingIncludeUbiquitousLanguage"
-                  type="checkbox"
-                  [(ngModel)]="vannaTrainingIncludeUbiquitousLanguage"
-                  [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeUbiquitousLanguage') !== ''"
-                  [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeUbiquitousLanguage')"
-                />
-                Include 'Ubiquitous Language' Information
-              </label>
-            </div>
-            <div class="checkbox">
-              <label>
-                <input
-                  id="vannaTrainingIncludeSqlQueries"
-                  type="checkbox"
-                  [(ngModel)]="vannaTrainingIncludeSqlQueries"
-                  [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeSqlQueries') !== ''"
-                  [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeSqlQueries')"
-                />
-                Include existing SQL-based Report queries information
-              </label>
-            </div>
-
-            <div class="row" style="margin-top: 20px">
-              <div class="col-xs-6">
-                <button
-                  id="btnGenerateVannaTrainingPlan"
-                  type="button"
-                  class="btn btn-default btn-block"
-                  (click)="launchAiCopilotForVannaAITrainingPlanGeneration()"
-                >
-                  <i class="fa fa-magic"></i>&nbsp; Generate Vanna.AI Training
-                  Plan
-                </button>
               </div>
-              <div class="col-xs-6">
-                <button
-                  id="btnTrainVannaAi"
-                  type="button"
-                  class="btn btn-default btn-block"
-                  [disabled]="!isVannaAiStarted"
-                >
-                  <i class="fa fa-graduation-cap" [style.color]="isVannaAiStarted ? 'green' : '#888'"></i>&nbsp; <strong>Train Vanna.AI on This
-                  Database</strong>
-                </button>
+              <div class="checkbox">
+                <label>
+                  <input id="vannaTrainingIncludeDomainGroupedSchema" type="checkbox"
+                    [(ngModel)]="vannaTrainingIncludeDomainGroupedSchema"
+                    [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeDomainGroupedSchema') !== ''"
+                    [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeDomainGroupedSchema')" />
+                  Include Domain-Grouped Schema Information
+                </label>
+              </div>
+              <div class="checkbox">
+                <label>
+                  <input id="vannaTrainingIncludeErDiagram" type="checkbox" [(ngModel)]="vannaTrainingIncludeErDiagram"
+                    [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeErDiagram') !== ''"
+                    [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeErDiagram')" />
+                  Include ER Diagram Information
+                </label>
+              </div>
+              <div class="checkbox">
+                <label>
+                  <input id="vannaTrainingIncludeUbiquitousLanguage" type="checkbox"
+                    [(ngModel)]="vannaTrainingIncludeUbiquitousLanguage"
+                    [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeUbiquitousLanguage') !== ''"
+                    [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeUbiquitousLanguage')" />
+                  Include 'Ubiquitous Language' Information
+                </label>
+              </div>
+              <div class="checkbox">
+                <label>
+                  <input id="vannaTrainingIncludeSqlQueries" type="checkbox"
+                    [(ngModel)]="vannaTrainingIncludeSqlQueries"
+                    [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeSqlQueries') !== ''"
+                    [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeSqlQueries')" />
+                  Include existing SQL-based Report queries information
+                </label>
+              </div>
+
+              <div class="row" style="margin-top: 20px">
+                <div class="col-xs-6">
+                  <button id="btnGenerateVannaTrainingPlan" type="button" class="btn btn-default btn-block"
+                    (click)="launchAiCopilotForVannaAITrainingPlanGeneration()">
+                    <i class="fa fa-magic"></i>&nbsp; Generate Vanna.AI Training
+                    Plan
+                  </button>
+                </div>
+                <div class="col-xs-6">
+                  <button id="btnTrainVannaAi" type="button" class="btn btn-default btn-block"
+                    [disabled]="!isVannaAiStarted">
+                    <i class="fa fa-graduation-cap" [style.color]="isVannaAiStarted ? 'green' : '#888'"></i>&nbsp;
+                    <strong>Train Vanna.AI on This
+                      Database</strong>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </ng-container>
-    </tab> 
+        </ng-container>
+      </tab>
 
     </tabset>
   </div>
 
-  <p-footer
-    style="
+  <p-footer style="
       display: flex;
       justify-content: space-between;
       align-items: center;
       width: 100%;
-    "
-  >
+    ">
     <div style="display: flex; align-items: center; gap: 10px">
       <!--<dburst-ai-manager [showVanna]="true" dropdownDirection="up">-->
 
-      <dburst-ai-manager
-        #aiManagerInstance
-        dropdownDirection="up"
-        [showVanna]="true"
-        [initialActiveTabKey]="'PROMPTS'"
-        [initialSelectedCategory]="'Database Schema'"
-      >
+      <dburst-ai-manager #aiManagerInstance dropdownDirection="up" [showVanna]="true" [initialActiveTabKey]="'PROMPTS'"
+        [initialSelectedCategory]="'Database Schema'">
       </dburst-ai-manager>
 
-      <dburst-apps-manager
-        [dropdownDirection]="'up'"
-        [apps]="managedApps$ | async"
-      >
+      <dburst-apps-manager [dropdownDirection]="'up'" [apps]="managedApps$ | async">
       </dburst-apps-manager>
 
       <span>
         <!-- Warning Span -->
-        <span
-          id="dbAlreadyExistsWarning"
-          style="font-size: 9px"
-          class="label label-warning"
-          *ngIf="
+        <span id="dbAlreadyExistsWarning" style="font-size: 9px" class="label label-warning" *ngIf="
             modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file'
-          "
-          >{{
-            "AREAS.CONFIGURATION-TEMPLATES.MODAL-CONF-TEMPLATE.FILE-ALREADY-EXISTS"
-              | translate
-          }}</span
-        >
+          ">{{
+          "AREAS.CONFIGURATION-TEMPLATES.MODAL-CONF-TEMPLATE.FILE-ALREADY-EXISTS"
+          | translate
+          }}</span>
       </span>
     </div>
 
     <!-- Right Aligned Group -->
     <div>
-      <button
-        id="btnOKConfirmationDbConnectionModal"
-        *ngIf="mode !== 'viewMode'"
-        class="btn btn-primary"
-        type="button"
-        (click)="onModalOK()"
-        [disabled]="
+      <button id="btnOKConfirmationDbConnectionModal" *ngIf="mode !== 'viewMode'" class="btn btn-primary" type="button"
+        (click)="onModalOK()" [disabled]="
           (!modalConnectionInfo.database.documentburster.connection.name ||
           modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file' ||
           (isTestingConnection == true || isSchemaLoading == true))
-        "
-      >
+        ">
         {{ "BUTTONS.SAVE" | translate }}
       </button>
 
-      <button
-        id="btnCloseDbConnectionModal"
-        class="btn btn-flat btn-default"
-        type="button"
-        (click)="onModalClose()"
-        style="margin-left: 5px"
-      >
+      <button id="btnCloseDbConnectionModal" class="btn btn-flat btn-default" type="button" (click)="onModalClose()"
+        style="margin-left: 5px">
         {{ "BUTTONS.CLOSE" | translate }}
       </button>
     </div>
   </p-footer>
   <!-- SQLite File Browser Dialog -->
-  <dburst-file-explorer-dialog
-    #fileExplorerDialog
-    [(visible)]="sqliteFileBrowserVisible"
-    [title]="'Select File (SQLite Database)'"
-    [initialPath]="'/db'"
+  <dburst-file-explorer-dialog #fileExplorerDialog [(visible)]="sqliteFileBrowserVisible"
+    [title]="'Select File (SQLite Database)'" [initialPath]="'/db'"
     [fileFilterExtensions]="['.db', '.sqlite', '.sqlite3']"
-    (fileSelected)="onSqliteFileSelected($event)"
-  ></dburst-file-explorer-dialog>
+    (fileSelected)="onSqliteFileSelected($event)"></dburst-file-explorer-dialog>
 </p-dialog>
