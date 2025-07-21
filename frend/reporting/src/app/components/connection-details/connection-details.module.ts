@@ -6,9 +6,10 @@ import { SharedModule } from '../../shared/shared.module';
 import { PrimeModule } from '../prime/prime.module';
 import { MarkdownModule } from 'ngx-markdown';
 import { FileExplorerModule } from '../file-explorer/file-explorer.module';
+import { TabOrderDirective } from '../../shared/tab-order.directive';
 
 @NgModule({
-  declarations: [ConnectionDetailsComponent],
+  declarations: [ConnectionDetailsComponent, TabOrderDirective],
   exports: [ConnectionDetailsComponent],
   imports: [
     SharedModule,
