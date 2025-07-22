@@ -122,6 +122,7 @@ public abstract class AbstractBurster {
 	}
 
 	protected void executeBurstingLifeCycleScript(String scriptFileName, BurstingContext context) throws Exception {
+		System.out.println("Executing executeBurstingLifeCycleScript: " + scriptFileName);
 		scripting.executeBurstingLifeCycleScript(scriptFileName, ctx);
 	}
 

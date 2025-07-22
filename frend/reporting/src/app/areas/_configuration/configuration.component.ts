@@ -2592,7 +2592,7 @@ if (reportParametersProvided) {
 
   onReportParamsValidChange(isValid: boolean) {
     this.reportParamsValid = isValid;
-    this.changeDetectorRef.detectChanges();
+    //this.changeDetectorRef.detectChanges();
     console.log('Report parameters form validity:', isValid);
   }
 
@@ -2603,27 +2603,8 @@ if (reportParametersProvided) {
   }
 
   async onRunQueryWithParams() {
-    try {
-      this.isModalParametersVisible = false;
-
-      this.isReportDataLoading = true;
-      this.sqlQueryResult = await this.runQueryWithParams(
-        this.reportParameters,
-      );
-      //await this.refreshTabulatorTable();
-      console.log(
-        `this.sqlQueryResult: ${JSON.stringify(this.sqlQueryResult)}`,
-      );
-      this.infoService.showInformation({
-        message: `SQL query executed successfully`,
-      });
-    } catch (error) {
-      this.infoService.showInformation({
-        message: `Error executing SQL query: ${error.message}`,
-      });
-    } finally {
-      this.isReportDataLoading = false;
-    }
+    this.isModalParametersVisible = false;
+    await this.executeTestQuery(this.reportParameters);
   }
 
   async runQueryWithParams(parameters: ReportParameter[]) {
@@ -2642,6 +2623,23 @@ if (reportParametersProvided) {
     return this.reportingService.testFetchData(paramsObject);
   }
 
+  async executeTestQuery(parameters: ReportParameter[]) {
+    try {
+      this.isReportDataLoading = true;
+      this.sqlQueryResult = await this.runQueryWithParams(parameters);
+      console.log(
+        `this.sqlQueryResult: ${JSON.stringify(this.sqlQueryResult)}`,
+      );
+      // Show green toast on success
+      this.messagesService.showSuccess('SQL query executed successfully, go to the Tabulator tab to see results.');
+    } catch (error) {
+      // Show red toast on error
+      this.messagesService.showError(`Error executing SQL query: ${error.message}`);
+    } finally {
+      this.isReportDataLoading = false;
+    }
+  }
+
   async doTestSqlQuery() {
     if (this.executionStatsService.logStats.foundDirtyLogFiles) {
       const dialogMessage =
@@ -2658,34 +2656,43 @@ if (reportParametersProvided) {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: async () => {
+
+        let parameters = [];
+
         // Parse Groovy DSL to get parameters
-        const parameters =
-          await this.reportingService.processGroovyParametersDsl(
-            this.activeParamsSpecScriptGroovy,
-          );
+        if (this.activeParamsSpecScriptGroovy &&
+          this.activeParamsSpecScriptGroovy.trim() !== '') {
+          parameters =
+            await this.reportingService.processGroovyParametersDsl(
+              this.activeParamsSpecScriptGroovy,
+            );
 
-        // Access user-provided values
-        const paramValues = this.reportParamsValues;
+          // Access user-provided values
+          const paramValues = this.reportParamsValues;
 
-        // Convert values to correct types based on parameter definitions
-        const typedParams = parameters.map((param) => {
-          return {
-            ...param,
-            value: this.convertParamValue(param.type, paramValues[param.id]),
-          };
-        });
+          // Convert values to correct types based on parameter definitions
+          const typedParams = parameters.map((param) => {
+            return {
+              ...param,
+              value: this.convertParamValue(param.type, paramValues[param.id]),
+            };
+          });
 
-        console.log(`typedParams = ${JSON.stringify(typedParams)}`);
+          console.log(`typedParams = ${JSON.stringify(typedParams)}`);
 
-        console.log('Parameters before execution:', {
-          parameters,
-          values: this.reportParamsValues,
-        });
-        // Show modal if parameters exist
+          console.log('Parameters before execution:', {
+            parameters,
+            values: this.reportParamsValues,
+          });
+          // Only update if different
+          if (!_.isEqual(this.reportParameters, parameters)) {
+            this.reportParameters = parameters;
+          }
+        }
         if (parameters && parameters.length > 0) {
-          this.reportParameters = parameters;
           this.isModalParametersVisible = true;
         }
+        else return this.executeTestQuery([]);
       },
     });
   }

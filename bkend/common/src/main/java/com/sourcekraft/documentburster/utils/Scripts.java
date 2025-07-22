@@ -1,7 +1,5 @@
 package com.sourcekraft.documentburster.utils;
 
-import com.sourcekraft.documentburster.utils.DumpToString;
-
 public class Scripts extends DumpToString {
 
     private static final long serialVersionUID = -4487763056638168490L;

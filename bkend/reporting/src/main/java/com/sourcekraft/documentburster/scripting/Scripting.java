@@ -20,14 +20,14 @@ public class Scripting {
 
 	private String[] engineRoots = new String[] { "scripts/burst", "scripts/burst/internal" };
 
-	//@Profiled(tag = "executeBurstingLifeCycleScript_{$0}")
+	// @Profiled(tag = "executeBurstingLifeCycleScript_{$0}")
 	public void executeBurstingLifeCycleScript(String scriptFileName, BurstingContext context) throws Exception {
 
 		executeScript(scriptFileName, context, "ctx");
 
 	}
 
-	//@Profiled(tag = "executeSenderScript_{$0}")
+	// @Profiled(tag = "executeSenderScript_{$0}")
 	public void executeSenderScript(String scriptFileName, AbstractMessage message) throws Exception {
 
 		executeScript(scriptFileName, message, "message");
@@ -36,7 +36,7 @@ public class Scripting {
 
 	private void executeScript(String scriptFileName, Object context, String contextObjectName) throws Exception {
 
-		log.debug("scriptFile=" + scriptFileName + ", context=" + context);
+		//log.debug("scriptFile=" + scriptFileName + ", context=" + context);
 
 		String scriptFilePath = engineRoots[0] + "/" + scriptFileName;
 		boolean scriptFound = false;
@@ -62,9 +62,9 @@ public class Scripting {
 	}
 
 	public void setRoots(String[] roots) {
-		
+
 		this.engineRoots = Arrays.copyOf(roots, roots.length);
-	
+
 	}
 
 }

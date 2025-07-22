@@ -121,7 +121,7 @@ public class Settings extends DumpToString {
 				&& docSettings.settings.capabilities.reportgenerationmailmerge))
 			loadSettingsReporting();
 
-		log.debug("loadSettings - settings = [" + docSettings + "], reportingSettings = [" + reportingSettings + "]");
+		// log.debug("loadSettings - settings = [" + docSettings + "], reportingSettings = [" + reportingSettings + "]");
 
 		return docSettings;
 	}

@@ -48,7 +48,9 @@ import org.slf4j.LoggerFactory;
 //import com.haulmont.yarg.structure.impl.ReportTemplateImpl;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sourcekraft.documentburster.common.settings.model.ReportSettings;
+import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.utils.CsvUtils;
+import com.sourcekraft.documentburster.utils.Scripts;
 import com.sourcekraft.documentburster.utils.Utils;
 import com.sourcekraft.documentburster.variables.Variables; // Assuming Variables class exists
 
@@ -65,8 +67,15 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 	private static final Logger log = LoggerFactory.getLogger(AbstractReporter.class); // Added logger
 
+	private Map<String, String> reportParameters;
+	private boolean isPreviewMode = false;
+
 	public AbstractReporter(String configFilePath) {
 		super(configFilePath);
+	}
+
+	public void setReportParameters(Map<String, String> reportParameters) {
+		this.reportParameters = reportParameters;
 	}
 
 	@Override
@@ -119,6 +128,13 @@ public abstract class AbstractReporter extends AbstractBurster {
 			log.warn("Could not reflectively access Variables.OUTPUT_TYPE_EXTENSION, using default key name.", e);
 		}
 		ctx.variables.set(outputTypeExtVar, FilenameUtils.getExtension(ctx.settings.getReportTemplate().outputtype));
+
+		if (reportParameters != null) {
+			reportParameters.forEach((k, v) -> ctx.variables.set(k, v));
+		}
+
+		if (this.isPreviewMode)
+			this._setPreviewMode();
 	}
 
 	@Override
@@ -554,4 +570,66 @@ public abstract class AbstractReporter extends AbstractBurster {
 		}
 	}
 
+	public void _setPreviewMode() {
+
+		ctx.settings.setSendFilesEmail(false);
+		ctx.settings.setSendFilesSms(false);
+		ctx.settings.setSendFilesUpload(false);
+		ctx.settings.setSendFilesWeb(false);
+
+		ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_NONE;
+	}
+
+	public void setPreviewMode(boolean isPreviewMode) {
+		this.isPreviewMode = isPreviewMode;
+	}
+
+	protected void checkLicense() throws Exception {
+		if (!this.isPreviewMode)
+			super.checkLicense();
+	}
+
+	protected void executeBurstingLifeCycleScript(String scriptFileName, BurstingContext context) throws Exception {
+		if (!this.isPreviewMode)
+			super.executeBurstingLifeCycleScript(scriptFileName, context);
+		else {
+			if (scriptFileName.equals(Scripts.CONTROLLER)) {
+				ctx.settings.loadSettings();
+				ctx.variables = new Variables(fileName, ctx.settings.getLanguage(), ctx.settings.getCountry(),
+						ctx.settings.getNumberOfUserVariables());
+			}
+
+			if (scriptFileName.contains("additional-transformation")) {
+				super.executeBurstingLifeCycleScript(scriptFileName, context);
+			}
+		}
+	}
+
+	protected void writeStatsFile() throws Exception {
+		if (!this.isPreviewMode)
+			super.writeStatsFile();
+	}
+
+	protected void setUpScriptingRoots() {
+		// Default roots
+		String[] defaultRoots = new String[] { "scripts/burst", "scripts/burst/internal" };
+
+		// Get config folder and its name (used as base for the script)
+		File configFile = new File(configurationFilePath);
+		File configFolder = configFile.getParentFile();
+		String configFolderPath = configFolder.getAbsolutePath();
+		String folderBaseName = configFolder.getName(); // e.g., "sql-payslips"
+
+		// Compose expected script file name
+		String additionalScriptName = folderBaseName + "-additional-transformation.groovy";
+		File additionalScriptFile = new File(configFolder, additionalScriptName);
+
+		if (additionalScriptFile.exists() && additionalScriptFile.length() > 0) {
+			// Add config folder as first root so GroovyScriptEngine finds the script
+			String[] roots = new String[] { configFolderPath, defaultRoots[0], defaultRoots[1] };
+			scripting.setRoots(roots);
+			ctx.scripts.transformFetchedData = additionalScriptName;
+			log.info("Added config folder to scripting roots: {}", configFolderPath);
+		}
+	}
 }
