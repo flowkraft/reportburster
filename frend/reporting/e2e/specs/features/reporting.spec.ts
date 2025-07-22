@@ -64,9 +64,14 @@ test.describe('', async () => {
         },
         dataSourceConfig: {
           sqlQuery: `
-          SELECT "EmployeeID", "LastName", "FirstName", "HireDate"
-          FROM "Employees"
-          WHERE "HireDate" BETWEEN :startDate AND :endDate
+              SELECT 
+        "EmployeeID", 
+        "FirstName", 
+        "LastName", 
+        date("HireDate" / 1000, 'unixepoch') AS "HireDate"
+    FROM "Employees"
+    WHERE date("HireDate" / 1000, 'unixepoch') BETWEEN :startDate AND :endDate
+    ORDER BY "HireDate"
         `,
           reportParametersScript: `
 import java.time.LocalDate

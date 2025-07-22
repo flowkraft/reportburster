@@ -9,6 +9,8 @@ import com.sourcekraft.documentburster.engine.pdf.PdfBurster;
 import com.sourcekraft.documentburster.engine.reporting.CsvReporter;
 import com.sourcekraft.documentburster.engine.reporting.ExcelReporter;
 import com.sourcekraft.documentburster.engine.reporting.FixedWidthReporter;
+import com.sourcekraft.documentburster.engine.reporting.ScriptedReporter;
+import com.sourcekraft.documentburster.engine.reporting.SqlReporter;
 import com.sourcekraft.documentburster.engine.reporting.XmlReporter;
 
 public class BursterFactory {
@@ -55,19 +57,24 @@ public class BursterFactory {
 				reporter = new ExcelReporter(configurationFilePath);
 				break;
 			case "ds.sqlquery":
-				//System.out.println("Processing database connection");
+				// System.out.println("Processing database connection");
+				reporter = new SqlReporter(configurationFilePath);
+				break;
+			case "ds.scriptfile":
+				// System.out.println("Processing database connection");
+				reporter = new ScriptedReporter(configurationFilePath);
 				break;
 			case "ds.gsheet":
-				//System.out.println("Processing Google Sheet");
+				// System.out.println("Processing Google Sheet");
 				break;
 			case "ds.o365sheet":
-				//System.out.println("Processing Office 365 Sheet");
+				// System.out.println("Processing Office 365 Sheet");
 				break;
 			case "ds.fixedwidthfile":
 				reporter = new FixedWidthReporter(configurationFilePath);
 				break;
 			default:
-				//System.out.println("Unknown data source type");
+				// System.out.println("Unknown data source type");
 				break;
 			}
 

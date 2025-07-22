@@ -24,69 +24,66 @@ public class DatabaseHelper {
 
 	private static final Logger log = LoggerFactory.getLogger(DatabaseHelper.class);
 
-	private String configurationFilePath;
+	// private String configurationFilePath;
 	private BurstingContext ctx;
 
 	public DatabaseHelper(String configFilePath) {
-		this.configurationFilePath = configFilePath;
+		// this.configurationFilePath = configFilePath;
 		log.debug("SqlReporter initialized with config path: {}", configFilePath);
 	}
 
-	public SqlQueryResult doExecSqlQuery(String sqlQuery, Map<String, String> parameters) throws Exception {
-		SqlQueryResult result = new SqlQueryResult();
-		long startTime = System.currentTimeMillis();
-
-		// Validate inputs
-		if (StringUtils.isBlank(sqlQuery)) {
-			throw new IllegalArgumentException("SQL query cannot be blank");
-		}
-
-		if (Objects.isNull(ctx)) {
-			ctx = new BurstingContext();
-			ctx.configurationFilePath = configurationFilePath;
-			ctx.settings = new Settings(configurationFilePath);
-			ctx.settings.loadSettings();
-			ctx.dbManager = new DatabaseConnectionManager(ctx.settings);
-		}
-
-		String dbConnectionCode = ctx.settings.getReportingPrimaryDatabaseConnectionCode();
-
-		// Convert query to use JDBI parameters
-		String jdbiQuery = convertToJdbiParameters(sqlQuery);
-		List<String> paramNames = findQueryParameters(jdbiQuery);
-
-		// Create and execute query through DatabaseConnectionManager
-		try (Handle handle = ctx.dbManager.getJdbi(dbConnectionCode).open()) {
-			Query query = handle.createQuery(jdbiQuery).setQueryTimeout(30) // 30 second timeout
-					.setMaxRows(100); // Limit to 100 rows for preview
-
-			// Bind parameters
-			for (String param : paramNames) {
-				if (parameters.containsKey(param)) {
-					query.bind(param, parameters.get(param));
-				}
-			}
-
-			// Execute query with streaming
-			result.reportData = query.map((rs, ctx) -> {
-				ResultSetMetaData meta = rs.getMetaData();
-				LinkedHashMap<String, Object> row = new LinkedHashMap<>();
-				for (int i = 1; i <= meta.getColumnCount(); i++) {
-					row.put(meta.getColumnLabel(i), rs.getObject(i));
-				}
-				return row;
-			}).stream().collect(Collectors.toList());
-
-			// Set result metadata
-			if (!result.reportData.isEmpty()) {
-				result.reportColumnNames = new ArrayList<>(result.reportData.get(0).keySet());
-			}
-			result.isPreview = true;
-			result.executionTimeMillis = System.currentTimeMillis() - startTime;
-		}
-
-		return result;
+	public void setCtx(BurstingContext ctx) {
+		this.ctx = ctx;
 	}
+
+	/*
+	 * public SqlQueryResult doExecSqlQuery(String sqlQuery, Map<String, String>
+	 * parameters) throws Exception { SqlQueryResult result = new SqlQueryResult();
+	 * long startTime = System.currentTimeMillis();
+	 * 
+	 * // Validate inputs if (StringUtils.isBlank(sqlQuery)) { throw new
+	 * IllegalArgumentException("SQL query cannot be blank"); }
+	 * 
+	 * if (Objects.isNull(ctx)) { ctx = new BurstingContext();
+	 * ctx.configurationFilePath = configurationFilePath; ctx.settings = new
+	 * Settings(configurationFilePath); ctx.settings.loadSettings(); ctx.dbManager =
+	 * new DatabaseConnectionManager(ctx.settings); }
+	 * 
+	 * String dbConnectionCode =
+	 * ctx.settings.getReportingPrimaryDatabaseConnectionCode();
+	 * 
+	 * // Convert query to use JDBI parameters String jdbiQuery =
+	 * convertToJdbiParameters(sqlQuery); List<String> paramNames =
+	 * findQueryParameters(jdbiQuery);
+	 * 
+	 * // Print SQL and parameters System.out.println("Executing SQL: " +
+	 * jdbiQuery); System.out.println("With parameters: " + parameters);
+	 * 
+	 * // Create and execute query through DatabaseConnectionManager try (Handle
+	 * handle = ctx.dbManager.getJdbi(dbConnectionCode).open()) { Query query =
+	 * handle.createQuery(jdbiQuery).setQueryTimeout(30) // 30 second timeout
+	 * .setMaxRows(100); // Limit to 100 rows for preview
+	 * 
+	 * // Bind parameters for (String param : paramNames) { if
+	 * (parameters.containsKey(param)) { query.bind(param, parameters.get(param)); }
+	 * }
+	 * 
+	 * // Execute query with streaming result.reportData = query.map((rs, ctx) -> {
+	 * ResultSetMetaData meta = rs.getMetaData(); LinkedHashMap<String, Object> row
+	 * = new LinkedHashMap<>(); for (int i = 1; i <= meta.getColumnCount(); i++) {
+	 * row.put(meta.getColumnLabel(i), rs.getObject(i)); } return row;
+	 * }).stream().collect(Collectors.toList());
+	 * 
+	 * System.out.println("Rows fetched: " + result.reportData.size());
+	 * 
+	 * // Set result metadata if (!result.reportData.isEmpty()) {
+	 * result.reportColumnNames = new
+	 * ArrayList<>(result.reportData.get(0).keySet()); } result.isPreview = true;
+	 * result.executionTimeMillis = System.currentTimeMillis() - startTime; }
+	 * 
+	 * return result; }
+	 * 
+	 */
 
 	public List<String> findQueryParameters(String sql) {
 		Pattern pattern = Pattern.compile("(?<!')(:(\\w+))(?!')");

@@ -16,7 +16,7 @@
           [id]="p.id"
           [attr.min]="resolveMin(p)"
           [attr.max]="resolveMax(p)"
-          [title]="p.description"
+          [title]="p.description || p.label || p.id"
           class="form-control"
         />
 

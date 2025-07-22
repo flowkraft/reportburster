@@ -14,6 +14,9 @@ import {
   Validators,
   AbstractControl,
 } from '@angular/forms';
+import { debounceTime, distinctUntilChanged, map, Subscription } from 'rxjs';
+
+import * as _ from 'lodash';
 
 interface ParamRef {
   name: string;
@@ -41,7 +44,9 @@ export class ReportParametersFormComponent implements OnInit, OnChanges {
 
   form: FormGroup;
 
-  constructor(private fb: FormBuilder) {}
+  subscriptions: Subscription[] = [];
+
+  constructor(private fb: FormBuilder) { }
 
   ngOnInit() {
     if (this.parameters?.length) {
@@ -52,29 +57,41 @@ export class ReportParametersFormComponent implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy() {
+    this.subscriptions.forEach(s => s.unsubscribe());
+  }
+
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['parameters'] && this.parameters?.length) {
+    if (
+      changes['parameters'] &&
+      this.parameters?.length &&
+      !_.isEqual(changes['parameters'].previousValue, changes['parameters'].currentValue)
+    ) {
       this.buildForm(this.parameters);
     }
   }
 
-  private buildForm(params: ParamMeta[]) {
-    const group: { [key: string]: any[] } = {};
-    for (const p of params) {
-      group[p.id] = [p.defaultValue ?? null, []];
-    }
+  private buildForm(params: ParamMeta[]): void {
+    // 1) Tear down old subscriptions
+    this.subscriptions.forEach(s => s.unsubscribe());
+    this.subscriptions = [];
 
-    this.form = this.fb.group(group);
+    // 2) Build a FormGroup config dictionary
+    const controlsConfig: { [key: string]: any[] } = {};
+    params.forEach(p => {
+      controlsConfig[p.id] = [p.defaultValue ?? null, []];
+    });
+    this.form = this.fb.group(controlsConfig);
 
-    for (const p of params) {
+    // 3) Attach validators (static + cross-field)
+    params.forEach(p => {
       const ctrl = this.form.get(p.id)!;
       const cons = p.constraints || {};
 
+      // a) static validators
       if (cons.required) {
         ctrl.addValidators(Validators.required);
       }
-
-      // literal min/max for numbers
       if (cons.min != null && !this.isRef(cons.min)) {
         ctrl.addValidators(Validators.min(+cons.min));
       }
@@ -82,36 +99,52 @@ export class ReportParametersFormComponent implements OnInit, OnChanges {
         ctrl.addValidators(Validators.max(+cons.max));
       }
 
-      // dynamic min/max (ParamRef)
-      for (const kind of ['min', 'max'] as const) {
+      // b) dynamic (ref-based) validators
+      (['min', 'max'] as const).forEach(kind => {
         const v = (cons as any)[kind];
         if (this.isRef(v)) {
-          const ref = (v as ParamRef).name;
-          const fn =
+          const refName = (v as ParamRef).name;
+          const validatorFn: ValidatorFn =
             kind === 'min'
-              ? this.minRefValidator(ref, p.type)
-              : this.maxRefValidator(ref, p.type);
-          ctrl.addValidators(fn);
-          this.form
-            .get(ref)!
-            .valueChanges.subscribe(() => ctrl.updateValueAndValidity());
+              ? this.minRefValidator(refName, p.type)
+              : this.maxRefValidator(refName, p.type);
+
+          ctrl.addValidators(validatorFn);
+
+          // re-validate silently when the reference field changes
+          const sub = this.form
+            .get(refName)!
+            .valueChanges
+            .subscribe(() =>
+              ctrl.updateValueAndValidity({ onlySelf: true, emitEvent: false })
+            );
+
+          this.subscriptions.push(sub);
         }
-      }
+      });
 
-      ctrl.updateValueAndValidity();
-    }
-
-    // emit valid & value changes
-    this.form.statusChanges.subscribe((s) =>
-      this.validChange.emit(this.form.valid),
-    );
-    this.form.valueChanges.subscribe((v) => this.valueChange.emit(v));
-
-    setTimeout(() => {
-      this.valueChange.emit(this.form.value);
-      this.validChange.emit(this.form.valid);
+      // c) initial silent validity run
+      ctrl.updateValueAndValidity({ onlySelf: true, emitEvent: false });
     });
+
+    // 4) Emit only when validity actually toggles
+    this.subscriptions.push(
+      this.form.statusChanges.pipe(
+        debounceTime(10),
+        map(() => this.form.valid),
+        distinctUntilChanged()
+      ).subscribe(valid => this.validChange.emit(valid))
+    );
+
+    // 5) Emit only distinct value snapshots
+    this.subscriptions.push(
+      this.form.valueChanges.pipe(
+        debounceTime(150),
+        distinctUntilChanged((a, b) => _.isEqual(a, b))
+      ).subscribe(val => this.valueChange.emit(val))
+    );
   }
+
 
   private isRef(x: any): x is ParamRef {
     return x && typeof x === 'object' && 'name' in x;

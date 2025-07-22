@@ -21,14 +21,19 @@ public class SqlReporter extends AbstractReporter {
 	private static final Logger log = LoggerFactory.getLogger(SqlReporter.class);
 
 	protected DatabaseHelper dbHelper;
-	
+
 	public SqlReporter(String configFilePath) {
 		super(configFilePath);
 		dbHelper = new DatabaseHelper(configFilePath);
+
 		log.debug("SqlReporter initialized with config path: {}", configFilePath);
 	}
 
-	
+	protected void initializeResources() throws Exception {
+		super.initializeResources();
+		this.dbHelper.setCtx(ctx);
+	}
+
 	@Override
 	protected void fetchData() throws Exception {
 		log.trace("Entering fetchData...");
@@ -115,11 +120,11 @@ public class SqlReporter extends AbstractReporter {
 	}
 
 	protected Jdbi retrieveJdbiInstance(String connectionCode) throws Exception {
-	
+
 		// For other connections, use the default implementation
 		return this.dbHelper.retrieveJdbiInstance(connectionCode);
 	}
-	
+
 	@Override
 	protected void backupFile() throws Exception {
 		// Override backupFile to do nothing for SqlReporter tests,

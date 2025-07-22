@@ -23,16 +23,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.tools.ant.types.CharSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.GlobalContext;
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionTester;
-import com.sourcekraft.documentburster.common.db.DatabaseHelper;
 import com.sourcekraft.documentburster.common.db.DatabaseSchemaFetcher;
 import com.sourcekraft.documentburster.common.db.SqlQueryResult;
 import com.sourcekraft.documentburster.common.db.schema.SchemaInfo;
@@ -40,6 +36,7 @@ import com.sourcekraft.documentburster.common.settings.EmailConnection;
 import com.sourcekraft.documentburster.common.settings.NewFeatureRequest;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
+import com.sourcekraft.documentburster.engine.AbstractReporter;
 import com.sourcekraft.documentburster.engine.BursterFactory;
 import com.sourcekraft.documentburster.engine.pdf.Merger;
 import com.sourcekraft.documentburster.job.model.JobDetails;
@@ -420,48 +417,66 @@ public class CliJob {
 
 	public SqlQueryResult doTestFetchData(Map<String, String> parameters) throws Exception {
 
-		Settings settings = new Settings(configurationFilePath);
-		settings.loadSettings();
-
-		String configurationFolderPath = (new File(configurationFilePath)).getParent();
-		String reportFolderName = FilenameUtils.getBaseName(configurationFolderPath);
-
-		String dsType = settings.reportingSettings.report.datasource.type;
-		String scriptContent = StringUtils.EMPTY;
-
-		if (dsType.equals("ds.sqlquery"))
-			scriptContent = settings.reportingSettings.report.datasource.sqloptions.query;
-		else if (dsType.equals("ds.scriptfile")) {
-			scriptContent = FileUtils.readFileToString(
-					new File(configurationFolderPath + "/" + reportFolderName + "-script.groovy"), "UTF-8");
-		}
-
-		log.debug("doTestFetchData(Map<String, String> parameters) scriptContent: " + scriptContent);
-
 		File jobFile = null;
 		try {
+			System.out.println("doTestFetchData: configurationFilePath = " + configurationFilePath);
 
-			System.out.println("CliJob doTestSqlQuery reportFolderName = " + reportFolderName);
+			// Create job file
+			jobFile = _createJobFile(configurationFilePath, "test-fetch-data");
+			System.out.println(
+					"doTestFetchData: Created job file: " + (jobFile != null ? jobFile.getAbsolutePath() : "null"));
 
-			jobFile = _createJobFile(reportFolderName, "test-fetch-data");
+			// Load settings and determine job type
+			Settings settings = new Settings(configurationFilePath);
+			settings.loadSettings();
+			String dsType = settings.getReportDataSource().type;
+			System.out.println("doTestFetchData: Data source type (jobType) = " + dsType);
 
-			if (dsType.equals("ds.sqlquery")) {
-				DatabaseHelper dbHelper = new DatabaseHelper(configurationFilePath);
+			this.setJobType(dsType);
 
-				return dbHelper.doExecSqlQuery(scriptContent, parameters);
-			} else if (dsType.equals("ds.scriptfile")) {
-				/*
-				 * run the script new File(configurationFolderPath + "/" + reportFolderName +
-				 * "-script.groovy") (or scriptContent) with the correct Binding and return the
-				 * results as SqlQueryResult
-				 */
+			// Get the correct reporter (SqlReporter, ScriptReporter, etc.)
+			AbstractBurster burster = getBurster(configurationFilePath);
+			System.out.println("doTestFetchData: Got burster of type: "
+					+ (burster != null ? burster.getClass().getName() : "null"));
+
+			// Only AbstractReporter descendants have setPreviewMode
+			if (burster instanceof AbstractReporter) {
+				System.out.println("doTestFetchData: burster is instance of AbstractReporter");
+				((AbstractReporter) burster).setPreviewMode(true);
+				System.out.println("doTestFetchData: setPreviewMode called");
+
+				((AbstractReporter) burster).setReportParameters(parameters);
+				System.out.println("doTestFetchData: setReportParameters called with: "
+						+ (parameters != null ? parameters.toString() : "null"));
+			} else {
+				System.out.println("doTestFetchData: burster is NOT instance of AbstractReporter");
+				throw new IllegalStateException("Test SQL Query only supported for AbstractReporter-based bursters");
 			}
 
-			return new SqlQueryResult();
+			// Run the normal reporting flow (no output/distribution in preview mode)
+			System.out.println("doTestFetchData: Calling burst...");
+			burster.burst(configurationFilePath, false, "", -1);
+			System.out.println("doTestFetchData: burst finished");
+
+			// Prepare and return the result
+			SqlQueryResult result = new SqlQueryResult();
+			result.reportData = burster.getCtx().reportData;
+			result.reportColumnNames = burster.getCtx().reportColumnNames;
+			result.isPreview = true;
+
+			System.out.println("doTestFetchData: reportData size = "
+					+ (result.reportData != null ? result.reportData.size() : "null"));
+			System.out.println("doTestFetchData: reportColumnNames = "
+					+ (result.reportColumnNames != null ? result.reportColumnNames.toString() : "null"));
+
+			// Optionally set executionTimeMillis, etc.
+			return result;
 
 		} finally {
-			if ((jobFile != null) && (jobFile.exists()))
+			if ((jobFile != null) && (jobFile.exists())) {
+				System.out.println("doTestFetchData: Deleting job file: " + jobFile.getAbsolutePath());
 				jobFile.delete();
+			}
 		}
 	}
 
