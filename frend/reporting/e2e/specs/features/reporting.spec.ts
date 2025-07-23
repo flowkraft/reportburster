@@ -120,12 +120,22 @@ if (reportParametersProvided) {
 }
         `,
           testViewData: true,
-          transformationScript: `
-          // Java8 stream transformation example
-          data.stream()
-            .filter(row => row.HireDate >= '1992-01-01' && row.HireDate <= '1995-12-31')
-            .collect(Collectors.toList());
-        `,
+          transformationScript: `import java.util.stream.Collectors
+
+log.info("Starting additional data transformation: filter for HireDate after June 1992...")
+
+def filteredData = ctx.reportData.stream()
+    .filter { row ->
+        def hireDate = row['HireDate']?.toString()
+        hireDate && hireDate > '1992-06-30'
+    }
+    .collect(Collectors.toList())
+
+ctx.reportData = filteredData
+if (!filteredData.isEmpty()) {
+    ctx.reportColumnNames = new ArrayList<>(filteredData.get(0).keySet())
+}
+log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size())`,
         },
         exerciseAiButtons: {
           sql: true,
@@ -415,14 +425,59 @@ if (reportParametersProvided) {
           dataSourceConfig: {
             showFileExplorer: true,
             groovyScript: `
-            def rows = []
-            new File(inputFile).eachLine { line ->
-              def cols = line.split(',')
-              if (cols[2] == params.department && cols[3].toInteger() > params.minSalary && (params.includeInactive || cols[4] == 'active')) {
-                rows << [cols[0], cols[1], cols[2], cols[3], cols[4]]
-              }
-            }
-            return rows
+            import groovy.sql.Sql
+import java.util.LinkedHashMap
+
+def dbSql = ctx.dbSql
+log.info("Starting scriptedReport_employeesByHireDate.groovy...")
+
+// --- 1. Read report parameters using Variables API ---
+def startDate = ctx.variables.getUserVariables(ctx.token).get('startDate')
+def endDate = ctx.variables.getUserVariables(ctx.token).get('endDate')
+
+// --- 2. Define the SQL query ---
+def sql
+def rows
+
+if (startDate && endDate) {
+    sql = """
+    SELECT 
+        "EmployeeID", 
+        "FirstName", 
+        "LastName", 
+        date("HireDate" / 1000, 'unixepoch') AS "HireDate"
+    FROM "Employees"
+    WHERE date("HireDate" / 1000, 'unixepoch') BETWEEN :startDate AND :endDate
+    ORDER BY "HireDate"
+    """
+    rows = dbSql.rows(sql, [startDate: startDate, endDate: endDate])
+} else {
+    sql = """
+    SELECT 
+        "EmployeeID", 
+        "FirstName", 
+        "LastName", 
+        date("HireDate" / 1000, 'unixepoch') AS "HireDate"
+    FROM "Employees"
+    ORDER BY "HireDate"
+    """
+    rows = dbSql.rows(sql)
+}
+
+def result = []
+rows.each { row ->
+    def map = new LinkedHashMap<String, Object>()
+    map.putAll(row)
+    result.add(map)
+}
+
+ctx.reportData = result
+if (!result.isEmpty()) {
+    ctx.reportColumnNames = new ArrayList<>(result[0].keySet())
+} else {
+    ctx.reportColumnNames = []
+}
+log.info("Finished scriptedReport_employeesByHireDate.groovy. Rows: {}", ctx.reportData.size())
           `,
             reportParametersScript: `
   import java.time.LocalDate
@@ -600,14 +655,14 @@ function configureAndRunReportGeneration2(
 
   if (params.dataSourceType === 'ds.sqlquery') {
 
-    ft = ft.waitOnElementToContainText('#sqlDatabaseConnection', '(default)');
+    ft = ft.waitOnElementToContainText('#databaseConnection', '(default)');
 
     if (params.exerciseAiButtons?.sql) {
 
       for (const dbConnection of params.dbConnections || []) {
 
         if (dbConnection.defaultDbConnection) {
-          ft = ft.waitOnElementToContainText('#sqlDatabaseConnection', dbConnection.connectionName);
+          ft = ft.waitOnElementToContainText('#databaseConnection', dbConnection.connectionName);
           ft = ft.waitOnElementToBecomeEnabled('#btnHelpWithSqlQueryAI');
           ft = ft.click('#btnHelpWithSqlQueryAI');
           ft = ft.waitOnElementToBecomeVisible('#btnTestDbConnectionDbSchema');
@@ -654,8 +709,8 @@ function configureAndRunReportGeneration2(
 
         } else {
 
-          ft = ft.dropDownSelectOptionHavingLabel('#sqlDatabaseConnection', dbConnection.connectionName);
-          ft = ft.waitOnElementToContainText('#sqlDatabaseConnection', dbConnection.connectionName);
+          ft = ft.dropDownSelectOptionHavingLabel('#databaseConnection', dbConnection.connectionName);
+          ft = ft.waitOnElementToContainText('#databaseConnection', dbConnection.connectionName);
           ft = ft.waitOnElementToBecomeEnabled('#btnHelpWithSqlQueryAI');
           ft = ft.click('#btnHelpWithSqlQueryAI');
 
@@ -807,7 +862,7 @@ function configureAndRunReportGeneration2(
 
   if (params.exerciseAiButtons?.transformation) {
     ft = ft.waitOnElementToBecomeVisible('#btnHelpWithTransformationAI').click('#btnHelpWithTransformationAI');
-   
+
     ft = ft.waitOnElementToBecomeVisible('#btnCloseAiCopilotModal').waitOnElementToBecomeVisible('#btnCloseAiCopilotModal')
       .pageShouldContainText('Your task is to write a complete Groovy script that performs **additional data transformation**')
       .click('#btnCloseAiCopilotModal')

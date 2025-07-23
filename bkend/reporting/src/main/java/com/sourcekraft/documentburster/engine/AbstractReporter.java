@@ -599,7 +599,8 @@ public abstract class AbstractReporter extends AbstractBurster {
 						ctx.settings.getNumberOfUserVariables());
 			}
 
-			if (scriptFileName.contains("additional-transformation")) {
+			if (scriptFileName.endsWith("-additional-transformation.groovy")
+					|| scriptFileName.endsWith("-script.groovy")) {
 				super.executeBurstingLifeCycleScript(scriptFileName, context);
 			}
 		}
@@ -610,26 +611,35 @@ public abstract class AbstractReporter extends AbstractBurster {
 			super.writeStatsFile();
 	}
 
-	protected void setUpScriptingRoots() {
-		// Default roots
-		String[] defaultRoots = new String[] { "scripts/burst", "scripts/burst/internal" };
+	protected String getReportFolderName() {
 
 		// Get config folder and its name (used as base for the script)
 		File configFile = new File(configurationFilePath);
 		File configFolder = configFile.getParentFile();
+		return configFolder.getName(); // e.g., "sql-payslips"
+
+	}
+
+	protected void setUpScriptingRoots() {
+		// Default roots
+		String[] defaultRoots = new String[] { "scripts/burst", "scripts/burst/internal" };
+
+		File configFile = new File(configurationFilePath);
+		File configFolder = configFile.getParentFile();
 		String configFolderPath = configFolder.getAbsolutePath();
-		String folderBaseName = configFolder.getName(); // e.g., "sql-payslips"
+
+		String[] roots = new String[] { configFolderPath, defaultRoots[0], defaultRoots[1] };
+		scripting.setRoots(roots);
+		log.info("Added config folder to scripting roots: {}", configFolderPath);
 
 		// Compose expected script file name
-		String additionalScriptName = folderBaseName + "-additional-transformation.groovy";
+		String additionalScriptName = this.getReportFolderName() + "-additional-transformation.groovy";
 		File additionalScriptFile = new File(configFolder, additionalScriptName);
 
-		if (additionalScriptFile.exists() && additionalScriptFile.length() > 0) {
+		if ((additionalScriptFile.exists() && additionalScriptFile.length() > 0)) {
 			// Add config folder as first root so GroovyScriptEngine finds the script
-			String[] roots = new String[] { configFolderPath, defaultRoots[0], defaultRoots[1] };
-			scripting.setRoots(roots);
 			ctx.scripts.transformFetchedData = additionalScriptName;
-			log.info("Added config folder to scripting roots: {}", configFolderPath);
+			log.info("Configured ctx.scripts.transformFetchedData to be: {}", additionalScriptName);
 		}
 	}
 }

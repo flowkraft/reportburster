@@ -1591,7 +1591,59 @@ export class ConfigurationComponent implements OnInit {
     this.messagesService.showInfo('Saved');
   }
 
-  doRunTestScript() { }
+  async doRunTestScript() {
+    if (this.executionStatsService.logStats.foundDirtyLogFiles) {
+      const dialogMessage =
+        'Log files are not empty. You need to press the Clear Logs button first.';
+      this.infoService.showInformation({ message: dialogMessage });
+      return;
+    }
+
+    const dialogQuestion = `Test this script?`;
+
+    this.confirmService.askConfirmation({
+      message: dialogQuestion,
+      confirmAction: async () => {
+
+        let parameters = [];
+
+        // Parse Groovy DSL to get parameters
+        if (this.activeParamsSpecScriptGroovy &&
+          this.activeParamsSpecScriptGroovy.trim() !== '') {
+          parameters =
+            await this.reportingService.processGroovyParametersDsl(
+              this.activeParamsSpecScriptGroovy,
+            );
+
+          // Access user-provided values
+          const paramValues = this.reportParamsValues;
+
+          // Convert values to correct types based on parameter definitions
+          const typedParams = parameters.map((param) => {
+            return {
+              ...param,
+              value: this.convertParamValue(param.type, paramValues[param.id]),
+            };
+          });
+
+          console.log(`typedParams = ${JSON.stringify(typedParams)}`);
+
+          console.log('Parameters before execution:', {
+            parameters,
+            values: this.reportParamsValues,
+          });
+          // Only update if different
+          if (!_.isEqual(this.reportParameters, parameters)) {
+            this.reportParameters = parameters;
+          }
+        }
+        if (parameters && parameters.length > 0) {
+          this.isModalParametersVisible = true;
+        }
+        else return this.executeTestQuery([]);
+      },
+    });
+  }
 
   doTestSMTPConnection() {
     if (this.executionStatsService.logStats.foundDirtyLogFiles) {
@@ -1737,6 +1789,15 @@ export class ConfigurationComponent implements OnInit {
         console.log(`Default DB connection code set: ${this.xmlReporting.documentburster.report.datasource.sqloptions.conncode}`);
       }
 
+      if (!this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode) {
+        const defaultDbConn = this.settingsService.defaultDatabaseConnectionFile;
+        if (defaultDbConn && defaultDbConn.connectionCode) {
+          this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode = defaultDbConn.connectionCode;
+        }
+
+        console.log(`Default DB connection code set: ${this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode}`);
+      }
+
       if (
         this.activeParamsSpecScriptGroovy &&
         this.activeParamsSpecScriptGroovy.trim() !== '' &&
@@ -1877,6 +1938,27 @@ export class ConfigurationComponent implements OnInit {
   onDatabaseConnectionChanged(connectionCode: string) {
     // Logic when SQL database connection changes
     this.settingsChangedEventHandler(connectionCode);
+  }
+
+  get selectedDbConnCode(): string {
+    const dsType = this.xmlReporting?.documentburster.report.datasource.type;
+    if (dsType === 'ds.sqlquery') {
+      return this.xmlReporting.documentburster.report.datasource.sqloptions.conncode;
+    }
+    if (dsType === 'ds.scriptfile') {
+      return this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode;
+    }
+    return '';
+  }
+
+  set selectedDbConnCode(value: string) {
+    const dsType = this.xmlReporting?.documentburster.report.datasource.type;
+    if (dsType === 'ds.sqlquery') {
+      this.xmlReporting.documentburster.report.datasource.sqloptions.conncode = value;
+    }
+    if (dsType === 'ds.scriptfile') {
+      this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode = value;
+    }
   }
 
   onSelectCsvHeader() {
@@ -2160,7 +2242,21 @@ export class ConfigurationComponent implements OnInit {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
       }
     }
+
+    if (outputTypeCode === 'script.ds') {
+      const launchConfig: AiManagerLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'Script Writing Assistance',
+        initialExpandedPromptId: 'GROOVY_SCRIPT_INPUT_SOURCE',
+      };
+
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      }
+    }
   }
+
+
 
 
   absoluteTemplateFolderPath: string = '';

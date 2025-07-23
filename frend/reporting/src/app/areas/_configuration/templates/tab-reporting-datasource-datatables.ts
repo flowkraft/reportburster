@@ -53,10 +53,10 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
       <!-- SQL Query Section -->
       <div class="col-xs-5">
           <select
-                id="sqlDatabaseConnection"
+                id="databaseConnection"
                 *ngIf="settingsService.getDatabaseConnectionFiles().length > 0 && (xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile')"
                 class="form-control"
-                [(ngModel)]="xmlReporting.documentburster.report.datasource.sqloptions.conncode"
+                [(ngModel)]="selectedDbConnCode"
                 (ngModelChange)="onDatabaseConnectionChanged($event)"
               >
                 <option *ngFor="let connection of settingsService.getDatabaseConnectionFiles()" [value]="connection.connectionCode">
@@ -187,8 +187,8 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 <div class="row" style="margin-top: 10px;">
                   
                   <div class="col-xs-6">
-                    <button id="btnHelpWithScriptAI" type="button" class="btn btn-default btn-block" (click)="showDbConnectionModal()">
-                      <strong>Hey AI, Help Me With This Script ...</strong>
+                    <button id="btnHelpWithScriptAI" type="button" class="btn btn-default btn-block" (click)="askAiForHelp('script.ds')">
+                      <strong>Hey AI, Help Me With This Groovy Script ...</strong>
                     </button>
                   </div>
                   <div class="col-xs-3">
