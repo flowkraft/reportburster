@@ -869,7 +869,7 @@ export class ConfigurationTestHelper {
       .waitOnElementToBecomeVisible('#createDbConnectionLinkSql') // Using new ID
       // Assuming no connections by default for a clean test, or check for default selection if connections exist
       // If connections can exist, you might need conditional logic or ensure a specific state
-      // .selectedOptionShouldContainText('#sqlDatabaseConnection', 'EXPECTED_DEFAULT_CONNECTION_NAME_OR_NONE') // Or check if it's empty/first option
+      // .selectedOptionShouldContainText('#databaseConnection', 'EXPECTED_DEFAULT_CONNECTION_NAME_OR_NONE') // Or check if it's empty/first option
       .waitOnElementToBecomeVisible('#sqlQueryEditor')
       .codeJarShouldContainText('#sqlQueryEditor', '') // Assumes codejar content is checkable this way or use codeJarShouldContainText(selector, '')
       .waitOnElementToBecomeVisible('#btnHelpWithSqlQueryAI') // Assumed ID
@@ -1326,7 +1326,7 @@ export class ConfigurationTestHelper {
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.sqlquery')
       .waitOnElementToBecomeVisible('#sqlQueryEditor')
       .setCodeJarContent('#sqlQueryEditor', uniqueSqlValue)
-      // .dropDownSelectOptionHavingValue('#sqlDatabaseConnection', 'yourTestConnectionCode') // If testing with a connection
+      // .dropDownSelectOptionHavingValue('#databaseConnection', 'yourTestConnectionCode') // If testing with a connection
       .click('#lblShowMoreSqlOptions')
       .waitOnElementToBecomeVisible('#sqlIdColumn')
       .dropDownSelectOptionHavingValue('#sqlIdColumn', 'custom')
@@ -1703,7 +1703,7 @@ export class ConfigurationTestHelper {
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.sqlquery')
       .waitOnElementToBecomeVisible('#sqlQueryEditor')
       .codeJarShouldContainText('#sqlQueryEditor', uniqueSqlValue)
-      // .selectedOptionShouldContainText('#sqlDatabaseConnection', 'Your Test Connection Name') // If asserting
+      // .selectedOptionShouldContainText('#databaseConnection', 'Your Test Connection Name') // If asserting
       .click('#lblShowMoreSqlOptions')
       .waitOnElementToBecomeVisible('#sqlIdColumn')
       .elementCheckBoxShouldBeSelected('#btnShowMoreSqlOptions')

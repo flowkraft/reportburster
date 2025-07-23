@@ -52,7 +52,7 @@ public class ScriptedReporter extends AbstractReporter {
 		String scriptName = scriptOptions.scriptname;
 
 		if (StringUtils.isBlank(scriptName))
-			scriptName = ctx.settings.getReportFolderNameId() + "-script.groovy";
+			scriptName = this.getReportFolderName() + "-script.groovy";
 
 		String connectionCode = scriptOptions.conncode;
 
@@ -74,12 +74,16 @@ public class ScriptedReporter extends AbstractReporter {
 			if (StringUtils.isNotBlank(connectionCode)) {
 				// Retrieve existing ServerDatabaseSettings and create a groovy Sql instance
 				ServerDatabaseSettings dbs = this.getServerDatabaseSettings(connectionCode);
+				dbs.ensureDriverAndUrl();
+				System.out.println("ServerDatabaseSettings dbs = " + dbs.toString());
+
 				dbSql = Sql.newInstance(dbs.url, dbs.userid, dbs.userpassword, dbs.driver);
 				ctx.dbSql = dbSql;
 				log.debug("Created and provided dbSql for connection code: {}", connectionCode);
 			}
 
-			// Initialize reportData and reportColumnNames in context BEFORE script execution
+			// Initialize reportData and reportColumnNames in context BEFORE script
+			// execution
 			ctx.reportData = new ArrayList<>();
 			ctx.reportColumnNames = new ArrayList<>();
 
