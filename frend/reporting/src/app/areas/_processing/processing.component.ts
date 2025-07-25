@@ -51,6 +51,7 @@ import {
   SqlQueryResult,
 } from '../../providers/reporting.service';
 import { AppsManagerService, ManagedApp } from '../../components/apps-manager/apps-manager.service';
+import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 
 @Component({
   selector: 'dburst-processing',
@@ -212,7 +213,7 @@ export class ProcessingComponent implements OnInit {
   ];
 
   cmsPortalApp: ManagedApp[] = [];
-  
+
   constructor(
     protected processingService: ProcessingService,
     protected apiService: ApiService,
@@ -220,6 +221,7 @@ export class ProcessingComponent implements OnInit {
     protected appsManagerService: AppsManagerService,
     protected confirmService: ConfirmService,
     protected infoService: InfoService,
+    protected messagesService: ToastrMessagesService,
     protected route: ActivatedRoute,
     protected router: Router,
     protected changeDetectorRef: ChangeDetectorRef,
@@ -230,7 +232,7 @@ export class ProcessingComponent implements OnInit {
     protected fsService: FsService,
     protected samplesService: SamplesService,
     protected sanitizer: DomSanitizer,
-  ) {}
+  ) { }
 
   ngOnDestroy() {
     this.sqlQueryResult = null;
@@ -242,9 +244,9 @@ export class ProcessingComponent implements OnInit {
   }
 
   async ngOnInit() {
-    
+
     this.cmsPortalApp = [await this.appsManagerService.getAppById('cms-webportal')];
-    
+
     if (this.subscriptionCheckIfTestEmailServerIsStarted) {
       this.subscriptionCheckIfTestEmailServerIsStarted.unsubscribe();
     }
@@ -264,7 +266,7 @@ export class ProcessingComponent implements OnInit {
 
     await this.samplesService.fillSamplesNotes();
 
-    
+
     this.route.params.subscribe(async (params) => {
       let processingMode = 'processing';
       this.processingService.procReportingMailMergeInfo.isSample = false;
@@ -563,9 +565,9 @@ export class ProcessingComponent implements OnInit {
       'csv-generate-reports';
   }
 
-  disableRunTest() {}
+  disableRunTest() { }
 
-  noActiveJobs() {}
+  noActiveJobs() { }
 
   doBurst() {
     if (this.executionStatsService.logStats.foundDirtyLogFiles) {
@@ -651,10 +653,6 @@ export class ProcessingComponent implements OnInit {
         message: dialogMessage,
       });
     } else {
-      //console.log(
-      //  `doGenerateReports procReportingMailMergeInfo = ${JSON.stringify(this.processingService.procReportingMailMergeInfo)}`,
-      //);
-
       const selectedReport =
         this.processingService.procReportingMailMergeInfo
           .selectedMailMergeClassicReport;
@@ -680,9 +678,13 @@ export class ProcessingComponent implements OnInit {
       this.confirmService.askConfirmation({
         message: dialogQuestion,
         confirmAction: async () => {
-          let configFilePath =
-            this.processingService.procReportingMailMergeInfo
-              .prefilledConfigurationFilePath;
+
+          console.log(`this.processingService.procReportingMailMergeInfo = ${JSON.stringify(this.processingService.procReportingMailMergeInfo)}`);
+          let configFilePath = '';
+          if (selectedReport && selectedReport.filePath) {
+            configFilePath = Utilities.slash(selectedReport.filePath);
+          }
+
           let inputFilePath = '';
 
           if (doesSelectedReportRequiresAnInputFile) {
@@ -711,34 +713,10 @@ export class ProcessingComponent implements OnInit {
 
               inputFilePath = uploadedFilesInfo[0].filePath;
             }
-
-            if (!configFilePath)
-              this.shellService.runBatFile(
-                ['generate', `"${inputFilePath}"`],
-                this.processingService.procReportingMailMergeInfo.inputFileName,
-              );
-            else {
-              if (!configFilePath.includes('PORTABLE_EXECUTABLE_DIR_PATH'))
-                configFilePath = Utilities.slash(configFilePath).replace(
-                  '/config/',
-                  'PORTABLE_EXECUTABLE_DIR_PATH/config/',
-                );
-            }
-          }
-          let parametersString = '';
-          if (doesSelectedReportRequiresParameters) {
-            // Build parameters string if parameters exist
-            if (
-              this.reportParamsValues &&
-              Object.keys(this.reportParamsValues).length > 0
-            ) {
-              parametersString = Object.entries(this.reportParamsValues)
-                .map(([key, value]) => `-p ${key}=${value}`)
-                .join(' ');
-            }
           }
 
-          let command = `generate`;
+          // --- MINIMUM FIX: Build command as array, preserve all logic ---
+          let commandArgs: string[] = ['generate'];
 
           if (configFilePath) {
             if (!configFilePath.includes('PORTABLE_EXECUTABLE_DIR_PATH')) {
@@ -747,23 +725,35 @@ export class ProcessingComponent implements OnInit {
                 'PORTABLE_EXECUTABLE_DIR_PATH/config/',
               );
             }
-            command += ` -c "${configFilePath}"`;
+            commandArgs.push('-c', configFilePath);
           }
 
           if (inputFilePath) {
-            command += ` ${inputFilePath}`;
+            commandArgs.push(inputFilePath);
+          }
+          else {
+            if (selectedReport.dsInputType === 'ds.sqlquery' || selectedReport.dsInputType === 'ds.scriptfile') {
+              commandArgs.push(selectedReport.templateName);;
+            }
           }
 
-          if (parametersString) {
-            command += ` ${parametersString}`;
+          if (
+            doesSelectedReportRequiresParameters &&
+            this.reportParamsValues &&
+            Object.keys(this.reportParamsValues).length > 0
+          ) {
+            for (const [key, value] of Object.entries(this.reportParamsValues)) {
+              commandArgs.push('-p', `"${key}=${value}"`);
+            }
           }
 
           this.shellService.runBatFile(
-            command.split(' '),
+            commandArgs,
             this.processingService.procReportingMailMergeInfo.inputFileName,
           );
+          // --- END FIX ---
 
-          //console.log(`doGenerateReports configFilePath = ${configFilePath}`);
+          console.log(`doGenerateReports configFilePath = ${configFilePath}`);
 
           this.resetProcInfo();
         },
@@ -1065,11 +1055,11 @@ export class ProcessingComponent implements OnInit {
               `"${inputFilePath}"`,
               '-c',
               '"' +
-                Utilities.slash(configFilePath).replace(
-                  '/config/',
-                  'PORTABLE_EXECUTABLE_DIR_PATH/config/',
-                ) +
-                '"',
+              Utilities.slash(configFilePath).replace(
+                '/config/',
+                'PORTABLE_EXECUTABLE_DIR_PATH/config/',
+              ) +
+              '"',
             ];
 
             // Add the QA testing mode
@@ -1083,10 +1073,10 @@ export class ProcessingComponent implements OnInit {
             // Add the list of tokens to test
             commandArgs.push(
               '"' +
-                this.processingService.procQualityAssuranceInfo.listOfTokens
-                  .toString()
-                  .replace(/, +/g, ',') +
-                '"',
+              this.processingService.procQualityAssuranceInfo.listOfTokens
+                .toString()
+                .replace(/, +/g, ',') +
+              '"',
             );
           } else if (
             this.processingService.procQualityAssuranceInfo.mode === 'tr'
@@ -1755,14 +1745,10 @@ export class ProcessingComponent implements OnInit {
           );
 
           console.log(`API response: ${JSON.stringify(this.sqlQueryResult)}`);
-          this.infoService.showInformation({
-            message: `SQL query executed successfully`,
-          });
+          this.messagesService.showSuccess('SQL query executed successfully.');
         } catch (error) {
           console.error('API call failed:', error); // Debug log
-          this.infoService.showInformation({
-            message: `Error executing SQL query: ${error.message}`,
-          });
+          this.messagesService.showError(`Error executing SQL query: ${error.message}`);
         } finally {
           console.log('API call completed'); // Debug log
           this.isReportDataLoading = false;

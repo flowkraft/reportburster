@@ -1,5 +1,6 @@
 package com.flowkraft.jobman.controllers;
 
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -58,17 +59,18 @@ public class ReportingController {
 	}
 
 	@GetMapping("/test-fetch-data")
-	public Mono<SqlQueryResult> testFetchData(
-		    @RequestParam String configurationFilePath,
-		    @RequestParam Map<String, String> parameters) {
+	public Mono<SqlQueryResult> testFetchData(@RequestParam String configurationFilePath,
+			@RequestParam Map<String, String> parameters) {
 
 		System.out.println("/test-fetch-data Received request to test SQL query: " + configurationFilePath);
 		System.out.println("/test-fetch-data Received parameters: " + parameters.toString());
 
 		return Mono.fromCallable(() -> {
-			String cfgFilePath = configurationFilePath;
-			if (configurationFilePath.startsWith("/") || configurationFilePath.startsWith("\\")) {
-				cfgFilePath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + configurationFilePath;
+			String cfgFilePath;
+			if (Paths.get(configurationFilePath).isAbsolute()) {
+				cfgFilePath = configurationFilePath;
+			} else {
+				cfgFilePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, configurationFilePath).toString();
 			}
 			System.out.println("/test-fetch-data cfgFilePath: " + cfgFilePath);
 

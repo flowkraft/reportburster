@@ -203,12 +203,12 @@ public class MainProgram implements Callable<Integer> {
 			boolean isReportGenerationJob = settings.getCapabilities().reportgenerationmailmerge;
 
 			// Validate and process parameters
-			Map<String, String> typedParameters = ParameterParser.parseParameters(parameters);
-
 			CliJob job = getJob(config.configFile);
 			job.setJobType(isReportGenerationJob ? settings.getReportDataSource().type : "burst");
 
-			job.setParameters(typedParameters);
+			System.out.println("[DEBUG] Parsed parameters: " + parameters);
+
+			job.setParameters(parameters);
 
 			job.doBurst(input, qa.isTestAll(), qa.getTestList(), qa.getRandomTestsCount());
 
@@ -457,10 +457,8 @@ public class MainProgram implements Callable<Integer> {
 
 			@Override
 			public Integer call() throws Exception {
-				Map<String, String> typedParameters = ParameterParser.parseParameters(parameters);
-
 				CliJob job = getJob(config.configFile);
-				job.doTestFetchData(typedParameters);
+				job.doTestFetchData(parameters);
 				return 0;
 			}
 		}

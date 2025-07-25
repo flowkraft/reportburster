@@ -11,6 +11,12 @@ import { siEightsleep } from 'simple-icons';
 import _ from 'lodash';
 import { ConnectionsTestHelper } from '../../helpers/areas/connections-test-helper';
 
+const dataSourceTypeDisplayMap: Record<string, string> = {
+  'ds.sqlquery': 'SQL Query',
+  'ds.scriptfile': 'Script File',
+  // add more if needed
+};
+
 //DONE2
 test.describe('', async () => {
 
@@ -60,7 +66,73 @@ test.describe('', async () => {
         outputExtension: 'pdf',
         templateConfig: {
           useHtmlContent: true,
-          templatePath: '/samples/reports/payslips/payslips-template.html',
+          templateContent: `
+<fo:root xmlns:fo="http://www.w3.org/1999/XSL/Format">
+  <fo:layout-master-set>
+    <fo:simple-page-master master-name="A4"
+      page-height="29.7cm"
+      page-width="21cm"
+      margin-top="1cm"
+      margin-bottom="1cm"
+      margin-left="1.5cm"
+      margin-right="1.5cm">
+      <fo:region-body/>
+    </fo:simple-page-master>
+  </fo:layout-master-set>
+  <fo:page-sequence master-reference="A4">
+    <fo:flow flow-name="xsl-region-body">
+
+      <fo:block font-size="16pt" font-weight="bold" text-align="center" space-after="15pt">
+        Employee Details
+      </fo:block>
+
+      <fo:table table-layout="fixed" width="100%" font-size="10pt">
+        <fo:table-column column-width="4cm"/>
+        <fo:table-column column-width="5cm"/>
+        <fo:table-column column-width="5cm"/>
+        <fo:table-column column-width="4cm"/>
+        <fo:table-body>
+          <fo:table-row background-color="#f2f2f2">
+            <fo:table-cell border="1pt solid black" padding="4pt">
+              <fo:block font-weight="bold" text-align="center">Employee ID</fo:block>
+            </fo:table-cell>
+            <fo:table-cell border="1pt solid black" padding="4pt">
+              <fo:block font-weight="bold" text-align="center">First Name</fo:block>
+            </fo:table-cell>
+            <fo:table-cell border="1pt solid black" padding="4pt">
+              <fo:block font-weight="bold" text-align="center">Last Name</fo:block>
+            </fo:table-cell>
+            <fo:table-cell border="1pt solid black" padding="4pt">
+              <fo:block font-weight="bold" text-align="center">Hire Date</fo:block>
+            </fo:table-cell>
+          </fo:table-row>
+          <fo:table-row>
+            <fo:table-cell border="1pt solid black" padding="4pt">
+              <fo:block text-align="center">\${EmployeeID!}</fo:block>
+            </fo:table-cell>
+            <fo:table-cell border="1pt solid black" padding="4pt">
+              <fo:block>\${FirstName!}</fo:block>
+            </fo:table-cell>
+            <fo:table-cell border="1pt solid black" padding="4pt">
+              <fo:block>\${LastName!}</fo:block>
+            </fo:table-cell>
+            <fo:table-cell border="1pt solid black" padding="4pt">
+              <fo:block>
+                <#if HireDate?is_date>
+                  \${HireDate?string("yyyy-MM-dd")}
+                <#else>
+                  \${HireDate!}
+                </#if>
+              </fo:block>
+            </fo:table-cell>
+          </fo:table-row>
+        </fo:table-body>
+      </fo:table>
+
+    </fo:flow>
+  </fo:page-sequence>
+</fo:root>
+`,
         },
         dataSourceConfig: {
           sqlQuery: `
@@ -541,7 +613,7 @@ log.info("Finished scriptedReport_employeesByHireDate.groovy. Rows: {}", ctx.rep
         let ft = new FluentTester(firstPage);
         ft = ConfTemplatesTestHelper.createNewTemplate(ft, 'XMLPayslips', 'enableMailMergeCapability');
   
-        ft = configureAndRunReportGeneration2(ft, {
+        ft = configureAndRunReportGeneration(ft, {
           dataSourceType: 'ds.xmlfile',
           dataSourceFilePath: '/samples/reports/payslips/Payslips.xml',
           outputType: 'output.any',
@@ -552,15 +624,6 @@ log.info("Finished scriptedReport_employeesByHireDate.groovy. Rows: {}", ctx.rep
           },
           dataSourceConfig: {
             xmlRepeatingNodeXPath: '/payslips/payslip',
-            transformationScript: `
-            // Java8 stream transformation example for XML
-            data.stream()
-              .filter(row -> row.status.equals("active"))
-              .collect(Collectors.toList());
-          `,
-          },
-          exerciseAiButtons: {
-            transformation: true,
           },
         });
   
@@ -577,7 +640,7 @@ function configureAndRunReportGeneration2(
   ft: FluentTester,
   testName: string,
   params: {
-    dataSourceType: 'ds.xmlfile' | 'ds.sqlquery' | 'ds.scriptfile';
+    dataSourceType: 'ds.sqlquery' | 'ds.scriptfile';
     dataSourceFilePath?: string;
     dbConnectionType?: 'dbcon-plain-schema-only' | 'dbcon-domaingrouped-schema' | 'dbcon-all-features';
     dbConnections?: { connectionName: string, dbConnectionType: 'dbcon-no-schema' | 'dbcon-plain-schema-only' | 'dbcon-domaingrouped-schema' | 'dbcon-all-features', defaultDbConnection: boolean }[];
@@ -587,11 +650,11 @@ function configureAndRunReportGeneration2(
       useHtmlContent: boolean;
       templatePath?: string;
       templateFileName?: string;
+      templateContent?: string;
     };
     dataSourceConfig?: {
       sqlQuery?: string;
       groovyScript?: string;
-      xmlRepeatingNodeXPath?: string;
       reportParametersScript?: string;
       testViewData?: boolean;
       showFileExplorer?: boolean;
@@ -617,15 +680,6 @@ function configureAndRunReportGeneration2(
 
   // Set data source type based on type parameter
   switch (params.dataSourceType) {
-    case 'ds.xmlfile':
-      ft = ft.dropDownSelectOptionHavingValue('#dsTypes', 'ds.xmlfile');
-      if (params.dataSourceConfig?.xmlRepeatingNodeXPath) {
-        ft = ft.setValue(
-          '#xmlRepeatingNodeXPath',
-          params.dataSourceConfig.xmlRepeatingNodeXPath,
-        );
-      }
-      break;
     case 'ds.sqlquery':
       ft = ft.dropDownSelectOptionHavingValue('#dsTypes', 'ds.sqlquery');
       if (params.dataSourceConfig?.sqlQuery) {
@@ -875,16 +929,32 @@ function configureAndRunReportGeneration2(
     ft = ft
       .waitOnElementToBecomeVisible('#btnTestSqlQuery')
       .click('#btnTestSqlQuery')
-      .waitOnElementToBecomeVisible('#tabReportingTabulator')
-      .waitOnElementToBecomeVisible('div.tabulator-row')
-      .elementShouldContainText('div.tabulator-row', 'John Doe');
+      .confirmDialogShouldBeVisible()
+      .clickYesDoThis()
+      .waitOnElementToBecomeVisible('#formReportParameters')
+      .waitOnElementToBecomeVisible('#btnTestQueryRun')
+      .setValue('#startDate', '1991-01-01')
+      .waitOnElementToBecomeEnabled('#btnTestQueryRun')
+      .click('#btnTestQueryRun')
+      .waitOnToastToBecomeVisible(
+        'success',
+        'SQL query executed successfully, go to the Tabulator', Constants.DELAY_HUNDRED_SECONDS
+      )
+
+      .waitOnElementToBecomeVisible('#reportingTabulatorTab-link')
+      .click('#reportingTabulatorTab-link')
+      .waitOnTabulatorToBecomeVisible()
+      .waitOnTabulatorToHaveRowCount(1)
+      .tabulatorCellShouldHaveText(0, "FirstName", "Andrew")
+      .tabulatorCellShouldHaveText(0, "LastName", "Fuller")
+      .tabulatorCellShouldHaveText(0, "HireDate", "1992-08-14")
   }
 
   if (params.dataSourceType === 'ds.scriptfile') {
     ft = ft
       .waitOnElementToBecomeVisible('#btnTestScript')
       .click('#btnTestScript')
-      .waitOnElementToBecomeVisible('#tabReportingTabulator')
+      .waitOnElementToBecomeVisible('#reportingTabulatorTab-link')
       .waitOnElementToBecomeVisible('div.tabulator-row')
       .elementShouldContainText('div.tabulator-row', 'John Doe');
   }
@@ -900,7 +970,10 @@ function configureAndRunReportGeneration2(
   if (params.templateConfig.useHtmlContent) {
     ft = ft
       .waitOnElementToBecomeVisible('#codeJarHtmlTemplateEditor')
-      .setCodeJarContentFromFile(
+      .sleep(3 *Constants.DELAY_ONE_SECOND);
+
+    if (params.templateConfig.templatePath)
+      ft = ft.setCodeJarContentFromFile(
         '#codeJarHtmlTemplateEditor',
         slash(
           path.resolve(
@@ -909,34 +982,35 @@ function configureAndRunReportGeneration2(
           ),
         ),
       );
+
+    if (params.templateConfig.templateContent)
+      ft = ft.setCodeJarContentSingleShot(
+        '#codeJarHtmlTemplateEditor',
+        params.templateConfig.templateContent,
+      );
   }
+
+  const displayType = dataSourceTypeDisplayMap[params.dataSourceType];
 
   // Run report generation
   ft = ft
-    .click('#btnCloseDbConnectionModal')
-    .waitOnElementToBecomeInvisible('#btnCloseDbConnectionModal')
-    .sleep(Constants.DELAY_ONE_SECOND)
+    .sleep(3 * Constants.DELAY_ONE_SECOND)
     .gotoReportGenerationScreen()
     .click('#selectMailMergeClassicReport')
     .waitOnElementToBecomeVisible(
-      `span.ng-option-label:has-text("Payslips (input ${params.dataSourceType})")`,
+      `span.ng-option-label:has-text("${testName} (input ${displayType})")`,
     )
     .click(
-      `span.ng-option-label:has-text("Payslips (input ${params.dataSourceType})")`,
+      `span.ng-option-label:has-text("${testName} (input ${displayType})")`,
     );
 
-  // Handle input file for XML
-  if (params.dataSourceType === 'ds.xmlfile' && params.dataSourceFilePath) {
+
+  if (params.dataSourceConfig.reportParametersScript && params.dataSourceConfig.reportParametersScript.includes('startDate')) {
     ft = ft
-      .waitOnElementToBecomeVisible('#browseMailMergeClassicReportInputFile')
-      .setInputFiles(
-        '#reportingFileUploadInput',
-        slash(
-          path.resolve(
-            process.env.PORTABLE_EXECUTABLE_DIR + params.dataSourceFilePath,
-          ),
-        ),
-      );
+      .waitOnElementToBecomeEnabled('#startDate')
+      .setValue('#startDate', '1991-01-01')
+      .waitOnElementToBecomeEnabled('#btnViewData')
+      .waitOnElementToBecomeEnabled('#btnGenerateReports');
   }
 
   // Test "View Data" for SQL and Script if requested
@@ -944,8 +1018,17 @@ function configureAndRunReportGeneration2(
     ft = ft
       .waitOnElementToBecomeVisible('#btnViewData')
       .click('#btnViewData')
-      .waitOnElementToBecomeVisible('div.tabulator-row')
-      .elementShouldContainText('div.tabulator-row', 'John Doe');
+      .confirmDialogShouldBeVisible()
+      .clickYesDoThis()
+       .waitOnToastToBecomeVisible(
+        'success',
+        'SQL query executed successfully', Constants.DELAY_HUNDRED_SECONDS
+      )
+      .waitOnTabulatorToBecomeVisible()
+      .waitOnTabulatorToHaveRowCount(1)
+      .tabulatorCellShouldHaveText(0, "FirstName", "Andrew")
+      .tabulatorCellShouldHaveText(0, "LastName", "Fuller")
+      .tabulatorCellShouldHaveText(0, "HireDate", "1992-08-14");
   }
 
   ft = ft
@@ -971,7 +1054,7 @@ function configureAndRunReportGeneration2(
 function configureAndRunReportGeneration(
   ft: FluentTester,
   params: {
-    dataSourceType: 'ds.csvfile' | 'ds.tsvfile' | 'ds.excelfile' | 'ds.fixedwidthfile';
+    dataSourceType: 'ds.csvfile' | 'ds.tsvfile' | 'ds.excelfile' | 'ds.fixedwidthfile' | 'ds.xmlfile';
     dataSourceFilePath: string;
     outputType: string;
     outputExtension: string;
@@ -982,6 +1065,7 @@ function configureAndRunReportGeneration(
     };
     dataSourceConfig?: {
       fixedWidthColumnDefinitions?: string;
+      xmlRepeatingNodeXPath?: string;
     };
   },
 ): FluentTester {
@@ -1011,6 +1095,15 @@ function configureAndRunReportGeneration(
         ft = ft.setValue(
           '#fixedWidthColumns',
           params.dataSourceConfig.fixedWidthColumnDefinitions,
+        );
+      }
+      break;
+    case 'ds.xmlfile':
+      ft = ft.dropDownSelectOptionHavingValue('#dsTypes', 'ds.xmlfile');
+      if (params.dataSourceConfig?.xmlRepeatingNodeXPath) {
+        ft = ft.setValue(
+          '#xmlRepeatingNodeXPath',
+          params.dataSourceConfig.xmlRepeatingNodeXPath,
         );
       }
       break;
