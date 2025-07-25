@@ -970,7 +970,7 @@ function configureAndRunReportGeneration2(
   if (params.templateConfig.useHtmlContent) {
     ft = ft
       .waitOnElementToBecomeVisible('#codeJarHtmlTemplateEditor')
-      .sleep(3 *Constants.DELAY_ONE_SECOND);
+      .sleep(3 * Constants.DELAY_ONE_SECOND);
 
     if (params.templateConfig.templatePath)
       ft = ft.setCodeJarContentFromFile(
@@ -1020,7 +1020,7 @@ function configureAndRunReportGeneration2(
       .click('#btnViewData')
       .confirmDialogShouldBeVisible()
       .clickYesDoThis()
-       .waitOnToastToBecomeVisible(
+      .waitOnToastToBecomeVisible(
         'success',
         'SQL query executed successfully', Constants.DELAY_HUNDRED_SECONDS
       )
@@ -1035,16 +1035,28 @@ function configureAndRunReportGeneration2(
     .click('#btnGenerateReports')
     .clickYesDoThis()
     .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
-    .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
-    .processingShouldHaveGeneratedOutputFiles(
-      [
-        '0.' + params.outputExtension,
-        '1.' + params.outputExtension,
-        '2.' + params.outputExtension,
-      ],
-      params.outputExtension,
-    )
-    .appStatusShouldBeGreatNoErrorsNoWarnings();
+    .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS);
+
+  if (params.outputType === 'output.fop2pdf') {
+    ft = ft
+      .processingShouldHaveGeneratedOutputFiles(
+        [
+          '0.pdf'],
+        '.pdf',
+      )
+  } else {
+    ft = ft
+      .processingShouldHaveGeneratedOutputFiles(
+        [
+          '0.' + params.outputExtension,
+          '1.' + params.outputExtension,
+          '2.' + params.outputExtension,
+        ],
+        params.outputExtension,
+      )
+  }
+
+  ft = ft.appStatusShouldBeGreatNoErrorsNoWarnings();
 
   return ft;
 

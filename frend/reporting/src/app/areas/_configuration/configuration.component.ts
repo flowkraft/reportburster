@@ -835,6 +835,13 @@ export class ConfigurationComponent implements OnInit {
           'output.',
           '',
         );
+
+      if (newOutputType === 'fop2pdf') {
+        const prevValue = this.xmlSettings?.documentburster?.settings?.burstfilename || '';
+        const baseName = prevValue.replace(/\.[^\.]+$/, ''); // removes last extension (e.g. .pdf, .xlsx, .docx, etc.)
+        this.xmlSettings.documentburster.settings.burstfilename = baseName + '.pdf';
+      }
+
       const configName =
         this.settingsService.currentConfigurationTemplate?.folderName ||
         'template';
