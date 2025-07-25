@@ -462,7 +462,7 @@ public class CliJob {
 
 			// Run the normal reporting flow (no output/distribution in preview mode)
 			System.out.println("doTestFetchData: Calling burst...");
-			burster.burst(configurationFilePath, false, "", -1);
+			burster.burst(settings.getTemplateName(), false, "", -1);
 			System.out.println("doTestFetchData: burst finished");
 
 			// Prepare and return the result

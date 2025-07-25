@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -305,12 +306,16 @@ public class SystemController {
 		}
 
 		return Flux.fromArray(directory.listFiles()).map(file -> {
-			FileInfo info = new FileInfo();
-			info.setName(file.getName());
-			info.setPath(file.getAbsolutePath());
-			info.setDirectory(file.isDirectory());
-			info.setSize(file.length());
-			info.setLastModified(file.lastModified());
+			FileInfo info = new FileInfo(file.getName(), StringUtils.EMPTY, false);
+			info.filePath = file.getAbsolutePath();
+			info.fileSize = file.length();
+			info.isDirectory = file.isDirectory();
+			info.lastModified = file.lastModified();
+			//info.setName(file.getName());
+			//	info.setPath(file.getAbsolutePath());
+			//info.setDirectory(file.isDirectory());
+			//info.setSize(file.length());
+			//info.setLastModified(file.lastModified());
 			return info;
 		});
 	}

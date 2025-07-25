@@ -26,7 +26,7 @@ asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-p
 # Finally, re-ignore the vendor folder inside your plugin
 asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/vendor/
 
-bkend/reporting/backup/*
+bkend/reporting/backup/
 
 playground
 testground

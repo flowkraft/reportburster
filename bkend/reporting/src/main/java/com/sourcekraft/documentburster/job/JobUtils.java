@@ -33,8 +33,8 @@ public class JobUtils {
 		m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 
 		File file = new File(jobFilePath);
-		System.out.println("JobUtils.saveJobDetails(JobDetails jobDetails, String jobFilePath) - jobDetails: "
-				+ jobDetails.toString() + ", jobFilePath: " + file.getAbsolutePath());
+		//System.out.println("JobUtils.saveJobDetails(JobDetails jobDetails, String jobFilePath) - jobDetails: "
+		//		+ jobDetails.toString() + ", jobFilePath: " + file.getAbsolutePath());
 
 		m.marshal(jobDetails, new File(jobFilePath));
 

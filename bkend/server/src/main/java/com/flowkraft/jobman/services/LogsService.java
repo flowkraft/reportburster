@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,14 +34,16 @@ public class LogsService {
 		for (String logFileName : allLogFileNames) {
 			File logFile = new File(AppPaths.LOGS_DIR_PATH + "/" + logFileName);
 			if (logFile.exists()) {
-				// System.out.println("logFileName = " + logFileName);
+				//System.out.println("logFileName = " + logFileName);
 
 				FileInfo fileInfo = new FileInfo(logFileName,
-						"dummy", trimFileContent);
+						StringUtils.EMPTY, trimFileContent);
 				fileInfo.fileSize = logFile.length();
 				allLogDetails.add(fileInfo);
 			}
 		}
+
+		//System.out.println("allLogDetails = " + allLogDetails);
 
 		return allLogDetails.stream();
 

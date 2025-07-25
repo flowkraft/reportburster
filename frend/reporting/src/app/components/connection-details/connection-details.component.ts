@@ -407,6 +407,15 @@ export class ConnectionDetailsComponent implements OnInit {
   }
 
   async doTestDatabaseConnection() {
+
+    if (this.executionStatsService.logStats.foundDirtyLogFiles) {
+      this.infoService.showInformation({
+        message:
+          'Log files are not empty. You need to press the Clear Logs button first.',
+      });
+      return;
+    }
+
     const performTestLogic = (filePathToTest: string) => {
       this.isTestingConnection = true; // <<<< SET LOADING STATE TO TRUE
       this.isSchemaLoading = true; // Keep this as testing also loads schema

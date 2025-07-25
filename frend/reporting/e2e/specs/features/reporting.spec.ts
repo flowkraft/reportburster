@@ -36,12 +36,12 @@ test.describe('', async () => {
       // Create 4 different DB connections with clear names
       const dbConnections = [];
 
-      const dbConnNoSchema = createDbConnection(ft, TEST_NAME, 'dbcon-no-schema', dbVendor);
+      const dbConnNoSchema = createDbConnection(ft, TEST_NAME, 'dbcon-no-schema', dbVendor, false);
       ft = dbConnNoSchema.ft;
       const connectionNameNoSchema = dbConnNoSchema.connectionName;
       dbConnections.push({ connectionName: connectionNameNoSchema, dbConnectionType: 'dbcon-no-schema', defaultDbConnection: true });
 
-      const dbConnPlainSchema = createDbConnection(ft, TEST_NAME, 'dbcon-plain-schema-only', dbVendor);
+      const dbConnPlainSchema = createDbConnection(ft, TEST_NAME, 'dbcon-plain-schema-only', dbVendor, false);
       ft = dbConnPlainSchema.ft;
       const connectionNamePlainSchema = dbConnPlainSchema.connectionName;
       dbConnections.push({ connectionName: connectionNamePlainSchema, dbConnectionType: 'dbcon-plain-schema-only', defaultDbConnection: false });
@@ -215,13 +215,13 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
         },
       });
 
-      ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'SQLPayslips');
+      ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'sql-payslips');
 
       // Delete all 4 DB connections
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, connectionNameNoSchema, dbVendor);
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, connectionNamePlainSchema, dbVendor);
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, connectionNameDomainGrouped, dbVendor);
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, connectionNameAllFeatures, dbVendor);
+      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameNoSchema)}\\.xml`, dbVendor);
+      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNamePlainSchema)}\\.xml`, dbVendor);
+      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameDomainGrouped)}\\.xml`, dbVendor);
+      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameAllFeatures)}\\.xml`, dbVendor);
 
       return ft;
     },
@@ -728,12 +728,21 @@ function configureAndRunReportGeneration2(
           ft = ft.waitOnElementToBecomeEnabled('#btnTestDbConnection');
 
           ft = ft.click('#btnTestDbConnection')
-            .confirmDialogShouldBeVisible()
-            .clickYesDoThis()
-            .waitOnToastToBecomeVisible(
-              'success',
-              'Successfully connected to the database', Constants.DELAY_HUNDRED_SECONDS
-            )
+                .infoDialogShouldBeVisible()
+                .clickYesDoThis()
+                .click('#btnClearLogsDbConnection')
+                .confirmDialogShouldBeVisible()
+                .clickYesDoThis()
+                .waitOnElementToBecomeDisabled('#btnClearLogsDbConnection')
+                .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
+                .appStatusShouldBeGreatNoErrorsNoWarnings()
+                .click('#btnTestDbConnection')
+                .confirmDialogShouldBeVisible()
+                .clickYesDoThis()
+                .waitOnToastToBecomeVisible(
+                  'success',
+                  'Successfully connected to the database', Constants.DELAY_HUNDRED_SECONDS
+                )
 
           ft = ft.click('#databaseSchemaTab-link')
             .waitOnElementToBecomeInvisible('#btnTestDbConnectionDbSchema')
@@ -928,6 +937,15 @@ function configureAndRunReportGeneration2(
   if (params.dataSourceType === 'ds.sqlquery') {
     ft = ft
       .waitOnElementToBecomeVisible('#btnTestSqlQuery')
+      .click('#btnTestSqlQuery')
+      .infoDialogShouldBeVisible()
+      .clickYesDoThis()
+      .click('#btnClearLogs')
+      .confirmDialogShouldBeVisible()
+      .clickYesDoThis()
+      .waitOnElementToBecomeDisabled('#btnClearLogs')
+      .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
+      .appStatusShouldBeGreatNoErrorsNoWarnings()
       .click('#btnTestSqlQuery')
       .confirmDialogShouldBeVisible()
       .clickYesDoThis()
@@ -1198,6 +1216,7 @@ function createDbConnection(
   testName: string,
   dbConnectionType: 'dbcon-no-schema' | 'dbcon-plain-schema-only' | 'dbcon-domaingrouped-schema' | 'dbcon-all-features' = 'dbcon-no-schema',
   dbVendor: string = 'sqlite',
+  clearLogs: boolean = true,
 ): { ft: FluentTester, connectionName: string, dbConnectionType: 'dbcon-no-schema' | 'dbcon-plain-schema-only' | 'dbcon-domaingrouped-schema' | 'dbcon-all-features' } {
   const connectionName = `${testName}-${dbVendor}-${dbConnectionType}`;
 
@@ -1217,8 +1236,21 @@ function createDbConnection(
       .waitOnElementToBecomeEnabled('#btnEdit')
       .click('#btnEdit')
       .waitOnElementToBecomeEnabled('#btnTestDbConnection')
-      .click('#btnTestDbConnection')
-      .confirmDialogShouldBeVisible()
+      .click('#btnTestDbConnection');
+
+    if (clearLogs) {
+
+      ft = ft.infoDialogShouldBeVisible()
+        .clickYesDoThis()
+        .click('#btnClearLogsDbConnection')
+        .confirmDialogShouldBeVisible()
+        .clickYesDoThis()
+        .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .click('#btnTestDbConnection')
+    }
+
+    ft = ft.confirmDialogShouldBeVisible()
       .clickYesDoThis()
       .waitOnToastToBecomeVisible(
         'success',
