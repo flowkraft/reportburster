@@ -29,7 +29,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -47,12 +46,12 @@ import org.hazlewood.connor.bottema.emailaddress.EmailAddressValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sourcekraft.documentburster.context.BurstingContext;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.sourcekraft.documentburster.common.settings.model.EmailSettings;
 import com.sourcekraft.documentburster.common.settings.model.SmsSettings;
 import com.sourcekraft.documentburster.common.settings.model.UploadSettings;
 import com.sourcekraft.documentburster.common.settings.model.WebUploadSettings;
+import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.variables.DateRenderer;
 import com.sourcekraft.documentburster.variables.Variables;
 
@@ -105,6 +104,14 @@ public class Utils {
 	}
 
 	public static String getTempFolder() {
+		String portableDir = System.getProperty("PORTABLE_EXECUTABLE_DIR");
+		if (StringUtils.isNotBlank(portableDir)) {
+			return new File(portableDir, "temp").getAbsolutePath() + "/";
+		}
+		String homeDir = System.getProperty("DOCUMENTBURSTER_HOME");
+		if (StringUtils.isNotBlank(homeDir)) {
+			return new File(homeDir, "temp").getAbsolutePath() + "/";
+		}
 		return "./temp/";
 	}
 
@@ -115,7 +122,6 @@ public class Utils {
 		else
 			return getParentFolderPathHavingName(configurationFilePath, "config");
 	}
-
 
 	public static String getRandomJobFileName() {
 

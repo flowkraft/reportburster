@@ -331,7 +331,7 @@ public class Variables {
 			}
 		}
 
-		log.info("Variables map for token '{}' before returning: {}", token, userVars);
+		log.debug("Variables map for token '{}' before returning: {}", token, userVars);
 
 		return userVars;
 

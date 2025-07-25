@@ -28,9 +28,9 @@ export class WebSocketService extends WebSocketEndpoint {
   }
 
   async makeWSConnectionAndHandleMessages() {
-    //console.log(
-    //  `this.BACKEND_URL = ${this.BACKEND_URL}, this.apiService.BACKEND_URL = ${this.apiService.BACKEND_URL}`,
-    //);
+    console.log(
+      `this.BACKEND_URL = ${this.BACKEND_URL}, this.apiService.BACKEND_URL = ${this.apiService.BACKEND_URL}`,
+    );
     if (this.BACKEND_URL == '/api' && this.apiService.BACKEND_URL != '/api') {
       this.BACKEND_URL = this.apiService.BACKEND_URL;
 
@@ -66,14 +66,14 @@ export class WebSocketService extends WebSocketEndpoint {
   subscriptionCheckIfLogFileWasCreatedIsEmptyOrRemoved: Subscription;
 
   handleFileTailerEvent(receivedEvent: string) {
-    //console.log(`handleFileTailerEvent data = ${receivedEvent}`);
+    console.log(`handleFileTailerEvent data = ${receivedEvent}`);
 
     const message = JSON.parse(receivedEvent);
     const payload = message.filesPayload[0];
 
-    //console.log(
-    //  `handleFileTailerEvent payload = ${JSON.stringify(message.filesPayload[0])}`,
-    //);
+    console.log(
+      `handleFileTailerEvent payload = ${JSON.stringify(message.filesPayload[0])}`,
+    );
 
     const fileName = payload.fileName;
     if (this.logsSubjects.has(fileName)) {
@@ -114,7 +114,7 @@ export class WebSocketService extends WebSocketEndpoint {
 
     const subscriptionLogFileContent = this.getLogs$(logFileName).subscribe(
       (logLine: string) => {
-        //console.log(`this.logFileName = ${logFileName}, logLine = ${logLine}`);
+        console.log(`this.logFileName = ${logFileName}, logLine = ${logLine}`);
 
         if (logFileName == 'info.log') {
           if (
@@ -157,6 +157,8 @@ export class WebSocketService extends WebSocketEndpoint {
         }
       },
     );
+
+    console.log(`this.logFileName = ${logFileName}, start`);
 
     this.subscriptionsLogFileContent.set(
       logFileName,
@@ -569,7 +571,7 @@ export class WebSocketService extends WebSocketEndpoint {
       fileSize: number;
     }[],
   ) => {
-    //console.log(`logsEventDetails = ${JSON.stringify(logsEventDetails)}`);
+    //console.log(`logsEventDetails 1 = ${JSON.stringify(logsEventDetails)}`);
     this.executionStatsService.logStats.foundDirtyLogFiles = false;
     const allLogFiles = logsEventDetails;
 
@@ -617,7 +619,7 @@ export class WebSocketService extends WebSocketEndpoint {
     ) {
       this.executionStatsService.logStats.foundDirtyLogFiles = true;
     }
-    // /console.log(this.executionStatsService.logStats.errorsLogFileSize);
+    console.log(`this.executionStatsService.logStats.infoLogFileSize = ${this.executionStatsService.logStats.infoLogFileSize}`);
   };
 
   getNiceListOfFileNames(fileNames: Array<string>) {

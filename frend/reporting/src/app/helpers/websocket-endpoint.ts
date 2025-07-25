@@ -103,7 +103,7 @@ export class WebSocketEndpoint {
   };
 
   _onSocketError = (errorMsg: any) => {
-    //console.log(`WebSocket _onSocketError ${errorMsg}`);
+    console.log(`WebSocket _onSocketError ${errorMsg}`);
 
     let out: any = {};
     out.type = 'ERROR';
