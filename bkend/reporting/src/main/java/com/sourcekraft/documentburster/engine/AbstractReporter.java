@@ -75,6 +75,9 @@ public abstract class AbstractReporter extends AbstractBurster {
 	}
 
 	public void setReportParameters(Map<String, String> reportParameters) {
+
+		System.out.println("[DEBUG] AbstractReporter.setReportParameters called with: " + reportParameters);
+
 		this.reportParameters = reportParameters;
 	}
 
@@ -130,7 +133,10 @@ public abstract class AbstractReporter extends AbstractBurster {
 		ctx.variables.set(outputTypeExtVar, FilenameUtils.getExtension(ctx.settings.getReportTemplate().outputtype));
 
 		if (reportParameters != null) {
-			reportParameters.forEach((k, v) -> ctx.variables.set(k, v));
+			reportParameters.forEach((k, v) -> {
+				System.out.println("[DEBUG] Setting ctx.variables " + k + " = " + v);
+				ctx.variables.set(k, v);
+			});
 		}
 
 		if (this.isPreviewMode)

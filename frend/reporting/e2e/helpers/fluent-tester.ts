@@ -42,8 +42,8 @@ export class FluentTester implements PromiseLike<void> {
   ): Promise<TResult1 | TResult2> {
     // prettier-ignore
     return await this.executeActions()
-        .then(onfulfilled)
-        .catch(onrejected);
+      .then(onfulfilled)
+      .catch(onrejected);
   }
 
   private _lastError?: Error;
@@ -71,7 +71,7 @@ export class FluentTester implements PromiseLike<void> {
     }
   }
 
-  constructor(protected window: Page) {}
+  constructor(protected window: Page) { }
 
   public scrollIntoViewIfNeeded(selector: string): FluentTester {
     const action = (): Promise<void> => this.doScrollIntoViewIfNeeded(selector);
@@ -270,6 +270,68 @@ export class FluentTester implements PromiseLike<void> {
   public pageShouldNotContainText(text: string): FluentTester {
     const action = (): Promise<void> => this.doCheckPageNotToContainText(text);
 
+    this.actions.push(action);
+    return this;
+  }
+
+  /**
+   * Wait for the Tabulator table to become visible (at least one row).
+   */
+  public waitOnTabulatorToBecomeVisible(waitTime?: number): FluentTester {
+    let delay = Constants.DELAY_HUNDRED_SECONDS;
+    if (waitTime) delay = waitTime;
+    const action = (): Promise<void> =>
+      this.doWaitOnElementToHaveCount('div.tabulator-row', 1, delay);
+
+    this.actions.push(action);
+    return this;
+  }
+
+  /**
+   * Wait for the Tabulator table to have exactly expectedCount rows.
+   */
+  public waitOnTabulatorToHaveRowCount(expectedCount: number, waitTime?: number): FluentTester {
+    let delay = Constants.DELAY_HUNDRED_SECONDS;
+    if (waitTime) delay = waitTime;
+    const action = (): Promise<void> =>
+      this.doWaitOnElementToHaveCount('div.tabulator-row', expectedCount, delay);
+
+    this.actions.push(action);
+    return this;
+  }
+
+  /**
+   * Assert the Tabulator cell at (rowIndex, columnField) has the expected text.
+   */
+  public tabulatorCellShouldHaveText(rowIndex: number, columnField: string, expectedText: string): FluentTester {
+    const action = async (): Promise<void> => {
+      const cell = this.window
+        .locator('div.tabulator-row')
+        .nth(rowIndex)
+        .locator(`div[tabulator-field="${columnField}"]`);
+      await expect(cell).toHaveText(expectedText);
+    };
+    this.actions.push(action);
+    return this;
+  }
+
+  /**
+   * Assert at least one Tabulator row has a cell in the given column with the expected text.
+   */
+  public tabulatorShouldContainCellText(columnField: string, expectedText: string): FluentTester {
+    const action = async (): Promise<void> => {
+      const cells = this.window.locator(`div[tabulator-field="${columnField}"]`);
+      const count = await cells.count();
+      let found = false;
+      for (let i = 0; i < count; i++) {
+        const text = await cells.nth(i).textContent();
+        if (text && text.trim() === expectedText) {
+          found = true;
+          break;
+        }
+      }
+      expect(found).toBeTruthy();
+    };
     this.actions.push(action);
     return this;
   }
@@ -608,22 +670,22 @@ export class FluentTester implements PromiseLike<void> {
   }
 
   public elementShouldNotContainText(
-  selector: string,
-  value: string,
-): FluentTester {
-  let action = (): Promise<void> =>
-    this.doCheckElementToNotContainText(selector, value);
+    selector: string,
+    value: string,
+  ): FluentTester {
+    let action = (): Promise<void> =>
+      this.doCheckElementToNotContainText(selector, value);
 
-  this.actions.push(action);
-  return this;
-}
+    this.actions.push(action);
+    return this;
+  }
 
-private async doCheckElementToNotContainText(
-  selector: string,
-  text: string,
-): Promise<void> {
-  return expect(this.window.locator(selector)).not.toContainText(text);
-}
+  private async doCheckElementToNotContainText(
+    selector: string,
+    text: string,
+  ): Promise<void> {
+    return expect(this.window.locator(selector)).not.toContainText(text);
+  }
 
   public waitOnElementToContainText(
     selector: string,
@@ -1487,7 +1549,7 @@ private async doCheckElementToNotContainText(
     return this;
   }
 
-    public setQuillContent(selector: string, content: string): FluentTester {
+  public setQuillContent(selector: string, content: string): FluentTester {
     const action = (): Promise<void> => this.doSetQuillContent(selector, content);
     this.actions.push(action);
     return this;
@@ -1512,7 +1574,7 @@ private async doCheckElementToNotContainText(
     const editorSelector = `${selector} .ql-editor`;
     await expect(this.window.locator(editorSelector)).toContainText(text);
   }
-  
+
   // Add this to your FluentTester class
   public codeJarShouldContainText(
     selector: string,

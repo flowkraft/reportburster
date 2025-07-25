@@ -79,12 +79,13 @@ public class CliJob {
 	}
 
 	public void setParameters(Map<String, String> parameters) {
+		System.out.println("[DEBUG] CliJob.setParameters called with: " + parameters);
 		this.parameters = parameters;
 	}
 
 	public CliJob(String configFilePath) {
 
-		log.debug("configurationFilePath = " + configFilePath);
+		log.debug("public CliJob(String configFilePath) constructor configurationFilePath = " + configFilePath);
 
 		if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(Paths.get(configFilePath)))))
 			this.configurationFilePath = configFilePath;
@@ -238,6 +239,11 @@ public class CliJob {
 
 			if (jobProgressFilePath != null)
 				burster.setJobFilePath(jobProgressFilePath);
+
+			// Pass parameters to AbstractReporter if applicable
+			if (burster instanceof AbstractReporter && parameters != null && !parameters.isEmpty()) {
+				((AbstractReporter) burster).setReportParameters(parameters);
+			}
 
 			burster.burst(filePath, testAll, listOfTestTokens, numberOfRandomTestTokens);
 
@@ -427,8 +433,9 @@ public class CliJob {
 					"doTestFetchData: Created job file: " + (jobFile != null ? jobFile.getAbsolutePath() : "null"));
 
 			// Load settings and determine job type
-			Settings settings = new Settings(configurationFilePath);
+			settings.setConfigurationFilePath(configurationFilePath);
 			settings.loadSettings();
+
 			String dsType = settings.getReportDataSource().type;
 			System.out.println("doTestFetchData: Data source type (jobType) = " + dsType);
 
