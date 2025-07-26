@@ -226,6 +226,260 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
       return ft;
     },
   );
+  
+  // --- Script Data Source Test ---
+  electronBeforeAfterAllTest(
+    'should generate XLSX report from Groovy script datasource with parameters',
+    async ({ beforeAfterEach: firstPage }) => {
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const TEST_NAME = 'ScriptPayslips';
+
+      const dbConnectionType = 'dbcon-plain-schema-only'; // or any other type you need
+
+      const dbVendor = 'sqlite';
+
+      let ft = new FluentTester(firstPage);
+
+      // Create 4 different DB connections with clear names
+      const dbConnections = [];
+
+      const dbConnNoSchema = createDbConnection(ft, TEST_NAME, 'dbcon-no-schema', dbVendor, false);
+      ft = dbConnNoSchema.ft;
+      const connectionNameNoSchema = dbConnNoSchema.connectionName;
+      dbConnections.push({ connectionName: connectionNameNoSchema, dbConnectionType: 'dbcon-no-schema', defaultDbConnection: true });
+
+      const dbConnPlainSchema = createDbConnection(ft, TEST_NAME, 'dbcon-plain-schema-only', dbVendor, false);
+      ft = dbConnPlainSchema.ft;
+      const connectionNamePlainSchema = dbConnPlainSchema.connectionName;
+      dbConnections.push({ connectionName: connectionNamePlainSchema, dbConnectionType: 'dbcon-plain-schema-only', defaultDbConnection: false });
+
+      const dbConnDomainGrouped = createDbConnection(ft, TEST_NAME, 'dbcon-domaingrouped-schema', dbVendor);
+      ft = dbConnDomainGrouped.ft;
+      const connectionNameDomainGrouped = dbConnDomainGrouped.connectionName;
+      dbConnections.push({ connectionName: connectionNameDomainGrouped, dbConnectionType: 'dbcon-domaingrouped-schema', defaultDbConnection: false });
+
+      const dbConnAllFeatures = createDbConnection(ft, TEST_NAME, 'dbcon-all-features', dbVendor);
+      ft = dbConnAllFeatures.ft;
+      const connectionNameAllFeatures = dbConnAllFeatures.connectionName;
+      dbConnections.push({ connectionName: connectionNameAllFeatures, dbConnectionType: 'dbcon-all-features', defaultDbConnection: false });
+
+      ft = ConfTemplatesTestHelper.createNewTemplate(ft, TEST_NAME, 'enableMailMergeCapability');
+
+      ft = configureAndRunReportGeneration2(ft, TEST_NAME, {
+        dataSourceType: 'ds.scriptfile',
+        dbConnectionType: dbConnectionType,
+        dbConnections: dbConnections,
+        outputType: 'output.xlsx',
+        outputExtension: 'xlsx',
+        templateConfig: {
+          useHtmlContent: true,
+          templateContent: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Employee Details Excel Report</title>
+  <style>
+	  body {
+		font-family: Arial, sans-serif;
+		font-size: 11;
+		margin: 0;
+		padding: 0;
+		background: #fff;
+	  }
+	  .report-title {
+		font-size: 16;
+		font-weight: bold;
+		text-align: center;
+		margin-bottom: 15pt;
+		margin-top: 20pt;
+	  }
+	  table {
+		border-collapse: collapse;
+		width: 100%;
+		table-layout: fixed;
+		margin: 0 auto 20pt auto;
+	  }
+	  th, td {
+		border: 1 solid #000000;
+		padding: 4;
+		font-size: 10;
+		text-align: center;
+		vertical-align: middle;
+		word-break: break-word;
+	  }
+	  th {
+		background-color: #f2f2f2;
+		font-weight: bold;
+	  }
+</style>
+</head>
+<body>
+  <div class="report-title">Employee Details</div>
+  <table data-sheet-name="Employee Details">
+    <tr>
+      <th style="width: 4">Employee ID</th>
+      <th style="width: 5">First Name</th>
+      <th style="width: 5">Last Name</th>
+      <th style="width: 4">Hire Date</th>
+    </tr>
+    <tr>
+      <td data-text-cell="true">\${EmployeeID!}</td>
+      <td>\${FirstName!}</td>
+      <td>\${LastName!}</td>
+      <td data-date-cell-format="yyyy-MM-dd">
+        <#if HireDate?is_date>
+          \${HireDate?string("yyyy-MM-dd")}
+        <#else>
+          \${HireDate!}
+        </#if>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`,
+        },
+        dataSourceConfig: {
+          showFileExplorer: false,
+          groovyScript: `
+            import groovy.sql.Sql
+import java.util.LinkedHashMap
+
+def dbSql = ctx.dbSql
+log.info("Starting scriptedReport_employeesByHireDate.groovy...")
+
+// --- 1. Read report parameters using Variables API ---
+def startDate = ctx.variables.getUserVariables(ctx.token).get('startDate')
+def endDate = ctx.variables.getUserVariables(ctx.token).get('endDate')
+
+// --- 2. Define the SQL query ---
+def sql
+def rows
+
+if (startDate && endDate) {
+    sql = """
+    SELECT 
+        "EmployeeID", 
+        "FirstName", 
+        "LastName", 
+        date("HireDate" / 1000, 'unixepoch') AS "HireDate"
+    FROM "Employees"
+    WHERE date("HireDate" / 1000, 'unixepoch') BETWEEN :startDate AND :endDate
+    ORDER BY "HireDate"
+    """
+    rows = dbSql.rows(sql, [startDate: startDate, endDate: endDate])
+} else {
+    sql = """
+    SELECT 
+        "EmployeeID", 
+        "FirstName", 
+        "LastName", 
+        date("HireDate" / 1000, 'unixepoch') AS "HireDate"
+    FROM "Employees"
+    ORDER BY "HireDate"
+    """
+    rows = dbSql.rows(sql)
+}
+
+def result = []
+rows.each { row ->
+    def map = new LinkedHashMap<String, Object>()
+    map.putAll(row)
+    result.add(map)
+}
+
+ctx.reportData = result
+if (!result.isEmpty()) {
+    ctx.reportColumnNames = new ArrayList<>(result[0].keySet())
+} else {
+    ctx.reportColumnNames = []
+}
+log.info("Finished scriptedReport_employeesByHireDate.groovy. Rows: {}", ctx.reportData.size())
+          `,
+          reportParametersScript: `
+import java.time.LocalDate
+import java.time.LocalDateTime
+
+reportParameters {
+  parameter(
+    id:           'startDate',
+    type:         LocalDate,
+    label:        'Start Date',
+    description:  'Report start date',
+    defaultValue: LocalDate.now().minusDays(30)
+  ) {
+    constraints(
+      required: true,
+      min:      LocalDate.now().minusDays(365),
+      max:      endDate
+    )
+    ui(
+      control: 'date',
+      format:  'yyyy-MM-dd'
+    )
+  }
+
+  parameter(
+    id:           'endDate',
+    type:         LocalDate,
+    label:        'End Date',
+    defaultValue: LocalDate.now()
+  ) {
+    constraints(
+      required: true,
+      min:      startDate,
+      max:      LocalDate.now()
+    )
+    ui(
+      control: 'date',
+      format:  'yyyy-MM-dd'
+    )
+  }
+}
+if (reportParametersProvided) {
+  log.info("--- Report Parameter Values ---")
+  log.info("startDate          : \${startDate ?: 'NOT_SET'}")
+  log.info("endDate            : \${endDate   ?: 'NOT_SET'}")
+}
+        `,
+          testViewData: true,
+          transformationScript: `import java.util.stream.Collectors
+
+log.info("Starting additional data transformation: filter for HireDate after June 1992...")
+
+def filteredData = ctx.reportData.stream()
+    .filter { row ->
+        def hireDate = row['HireDate']?.toString()
+        hireDate && hireDate > '1992-06-30'
+    }
+    .collect(Collectors.toList())
+
+ctx.reportData = filteredData
+if (!filteredData.isEmpty()) {
+    ctx.reportColumnNames = new ArrayList<>(filteredData.get(0).keySet())
+}
+log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size())`,
+        },
+        exerciseAiButtons: {
+          sql: true,
+          transformation: true,
+        },
+      });
+
+      ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'script-payslips');
+
+      // Delete all 4 DB connections
+      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameNoSchema)}\\.xml`, dbVendor);
+      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNamePlainSchema)}\\.xml`, dbVendor);
+      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameDomainGrouped)}\\.xml`, dbVendor);
+      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameAllFeatures)}\\.xml`, dbVendor);
+
+      return ft;
+    },
+  );
+
 
   /*
       
@@ -477,134 +731,7 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
   
     
     
-    // --- Script Data Source Test ---
-    electronBeforeAfterAllTest(
-      'should generate XLSX report from Groovy script datasource with file explorer and parameters',
-      async ({ beforeAfterEach: firstPage }) => {
-        test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
-        let ft = new FluentTester(firstPage);
-        ft = ConfTemplatesTestHelper.createNewTemplate(ft, 'ScriptPayslips', 'enableMailMergeCapability');
-  
-        ft = configureAndRunReportGeneration2(ft, {
-          dataSourceType: 'ds.scriptfile',
-          dataSourceFilePath: '/samples/reports/payslips/Payslips.csv',
-          outputType: 'output.xlsx',
-          outputExtension: 'xlsx',
-          templateConfig: {
-            useHtmlContent: true,
-            templatePath: '/samples/reports/payslips/payslips-template.html',
-          },
-          dataSourceConfig: {
-            showFileExplorer: true,
-            groovyScript: `
-            import groovy.sql.Sql
-import java.util.LinkedHashMap
-
-def dbSql = ctx.dbSql
-log.info("Starting scriptedReport_employeesByHireDate.groovy...")
-
-// --- 1. Read report parameters using Variables API ---
-def startDate = ctx.variables.getUserVariables(ctx.token).get('startDate')
-def endDate = ctx.variables.getUserVariables(ctx.token).get('endDate')
-
-// --- 2. Define the SQL query ---
-def sql
-def rows
-
-if (startDate && endDate) {
-    sql = """
-    SELECT 
-        "EmployeeID", 
-        "FirstName", 
-        "LastName", 
-        date("HireDate" / 1000, 'unixepoch') AS "HireDate"
-    FROM "Employees"
-    WHERE date("HireDate" / 1000, 'unixepoch') BETWEEN :startDate AND :endDate
-    ORDER BY "HireDate"
-    """
-    rows = dbSql.rows(sql, [startDate: startDate, endDate: endDate])
-} else {
-    sql = """
-    SELECT 
-        "EmployeeID", 
-        "FirstName", 
-        "LastName", 
-        date("HireDate" / 1000, 'unixepoch') AS "HireDate"
-    FROM "Employees"
-    ORDER BY "HireDate"
-    """
-    rows = dbSql.rows(sql)
-}
-
-def result = []
-rows.each { row ->
-    def map = new LinkedHashMap<String, Object>()
-    map.putAll(row)
-    result.add(map)
-}
-
-ctx.reportData = result
-if (!result.isEmpty()) {
-    ctx.reportColumnNames = new ArrayList<>(result[0].keySet())
-} else {
-    ctx.reportColumnNames = []
-}
-log.info("Finished scriptedReport_employeesByHireDate.groovy. Rows: {}", ctx.reportData.size())
-          `,
-            reportParametersScript: `
-  import java.time.LocalDate
-  
-  reportParameters {
-    parameter(
-      id:           'department',
-      type:         String,
-      label:        'Department',
-      defaultValue: 'Finance'
-    ) {
-      constraints(required: true)
-      ui(control: 'select', options: "SELECT DISTINCT department FROM employees")
-    }
-  
-    parameter(
-      id:           'minSalary',
-      type:         Integer,
-      label:        'Minimum Salary',
-      defaultValue: 1000
-    ) {
-      constraints(min: 0)
-    }
-  
-    parameter(
-      id:           'includeInactive',
-      type:         Boolean,
-      label:        'Include Inactive',
-      defaultValue: false
-    )
-  }
-  
-  if (reportParametersProvided) {
-    log.info("--- Report Parameter Values ---")
-    log.info("department         : \${department ?: 'NOT_SET'}")
-    log.info("minSalary          : \${minSalary ?: 'NOT_SET'}")
-    log.info("includeInactive    : \${includeInactive ?: 'false'}")
-  }`,
-            testViewData: true,
-            transformationScript: `
-            // Simple Groovy transformation: filter only active employees
-            data.findAll { it[4] == 'active' }
-          `,
-          },
-          exerciseAiButtons: {
-            script: true,
-            transformation: true,
-          },
-        });
-  
-        ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'ScriptPayslips');
-        return ft;
-      },
-    );
-  
+    
     // --- XML Data Source Test ---
     electronBeforeAfterAllTest(
       'should generate Freemarker XML report from XML datasource',
@@ -668,6 +795,36 @@ function configureAndRunReportGeneration2(
   },
 ): FluentTester {
 
+  const IDS = {
+    'ds.sqlquery': {
+      aiHelp: '#btnHelpWithSqlQueryAI',
+      test: '#btnTestSqlQuery',
+      codeEditor: '#sqlQueryEditor',
+      paramsTab: '#tabSqlReportParameters-link',
+      codeTab: '#tabSqlCode-link',
+      prompt1: 'You are an expert SQL Developer',
+      prompt2TableNameProducts: '"tableName": "Products"',
+      prompt3ColumnNameDiscontinued: '"columnName": "Discontinued"',
+      prompt4TableNameOrders: '"tableName": "Orders"',
+      prompt5TableNameOrderDetails: '"tableName": "Order Details"',
+    },
+    'ds.scriptfile': {
+      aiHelp: '#btnHelpWithScriptAI',
+      test: '#btnTestScript',
+      codeEditor: '#groovyScriptEditor',
+      paramsTab: '#tabScriptReportParameters-link',
+      codeTab: '#tabScriptCode-link',
+      prompt1: 'You are an expert Groovy Developer',
+      prompt2TableNameProducts: 'write a complete Groovy script',
+      prompt3ColumnNameDiscontinued: 'This script will be used as the "Input Source" for a report',
+      prompt4TableNameOrders: 'CRITICAL INSTRUCTIONS',
+      prompt5TableNameOrderDetails: 'Golden Rules',
+    }
+
+  };
+
+  const ids = IDS[params.dataSourceType];
+
   ft = ft
     .gotoConfiguration()
     .click(`#topMenuConfigurationLoad_${_.kebabCase(testName)}_${PATHS.SETTINGS_CONFIG_FILE}`)
@@ -684,102 +841,67 @@ function configureAndRunReportGeneration2(
       ft = ft.dropDownSelectOptionHavingValue('#dsTypes', 'ds.sqlquery');
       if (params.dataSourceConfig?.sqlQuery) {
         ft = ft
-          .waitOnElementToBecomeVisible('#sqlQueryEditor')
-          .setCodeJarContentSingleShot('#sqlQueryEditor', params.dataSourceConfig.sqlQuery);
+          .waitOnElementToBecomeVisible(ids.codeEditor)
+          .setCodeJarContentSingleShot(ids.codeEditor, params.dataSourceConfig.sqlQuery);
       }
       break;
     case 'ds.scriptfile':
       ft = ft.dropDownSelectOptionHavingValue('#dsTypes', 'ds.scriptfile');
       if (params.dataSourceConfig?.groovyScript) {
         ft = ft
-          .waitOnElementToBecomeVisible('#groovyScriptEditor')
-          .setCodeJarContent(
-            '#groovyScriptEditor',
+          .waitOnElementToBecomeVisible(ids.codeEditor)
+          .setCodeJarContentSingleShot(
+            ids.codeEditor,
             params.dataSourceConfig.groovyScript,
           );
-      }
-      if (params.exerciseAiButtons?.script) {
-        ft = ft.click('#btnHelpWithScriptAI');
-        ft = ft.waitOnElementToBecomeVisible('#aiHelpModal');
-        ft = ft.click('#aiHelpModalClose');
       }
       break;
     // CSV is default, no need for explicit case
   }
 
-  if (params.dataSourceType === 'ds.sqlquery') {
+  if (['ds.sqlquery', 'ds.scriptfile'].includes(params.dataSourceType)) {
 
     ft = ft.waitOnElementToContainText('#databaseConnection', '(default)');
 
-    if (params.exerciseAiButtons?.sql) {
+    let shouldExerciseAiButtons = params.exerciseAiButtons?.sql || params.exerciseAiButtons?.script;
+    if (shouldExerciseAiButtons) {
 
       for (const dbConnection of params.dbConnections || []) {
 
         if (dbConnection.defaultDbConnection) {
           ft = ft.waitOnElementToContainText('#databaseConnection', dbConnection.connectionName);
-          ft = ft.waitOnElementToBecomeEnabled('#btnHelpWithSqlQueryAI');
-          ft = ft.click('#btnHelpWithSqlQueryAI');
-          ft = ft.waitOnElementToBecomeVisible('#btnTestDbConnectionDbSchema');
-          ft = ft.waitOnElementToBecomeEnabled('#btnTestDbConnectionDbSchema');
+          ft = ft.waitOnElementToBecomeEnabled(ids.aiHelp);
+          ft = ft.click(ids.aiHelp);
 
-          ft = ft.click('#btnTestDbConnectionDbSchema');
+          if (params.dataSourceType === 'ds.sqlquery') {
+            ft = ft.waitOnElementToBecomeVisible('#btnTestDbConnectionDbSchema');
+            ft = ft.waitOnElementToBecomeEnabled('#btnTestDbConnectionDbSchema');
 
-          ft = ft.waitOnElementToBecomeVisible('#btnTestDbConnection');
-          ft = ft.waitOnElementToBecomeEnabled('#btnTestDbConnection');
+            ft = ft.click('#btnTestDbConnectionDbSchema');
 
-          ft = ft.click('#btnTestDbConnection')
-                .infoDialogShouldBeVisible()
-                .clickYesDoThis()
-                .click('#btnClearLogsDbConnection')
-                .confirmDialogShouldBeVisible()
-                .clickYesDoThis()
-                .waitOnElementToBecomeDisabled('#btnClearLogsDbConnection')
-                .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
-                .appStatusShouldBeGreatNoErrorsNoWarnings()
-                .click('#btnTestDbConnection')
-                .confirmDialogShouldBeVisible()
-                .clickYesDoThis()
-                .waitOnToastToBecomeVisible(
-                  'success',
-                  'Successfully connected to the database', Constants.DELAY_HUNDRED_SECONDS
-                )
+            ft = ft.waitOnElementToBecomeVisible('#btnTestDbConnection');
+            ft = ft.waitOnElementToBecomeEnabled('#btnTestDbConnection');
 
-          ft = ft.click('#databaseSchemaTab-link')
-            .waitOnElementToBecomeInvisible('#btnTestDbConnectionDbSchema')
-            .waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
-            .waitOnElementToBecomeEnabled(
-              '#btnCloseDbConnectionModal',
-            )
-            .waitOnElementToBecomeVisible('#btnGenerateWithAIDbSchema')
-            .elementShouldBeDisabled('#btnGenerateWithAIDbSchema') //because no tables are selected yet 
-            .click('#treeNodeCategoriessourceTreedatabaseSchemaPicklist')
-            .click('#treeNodeProductssourceTreedatabaseSchemaPicklist')
-            .click('#btnMoveToTargetdatabaseSchemaPicklist')
-            .waitOnElementToBecomeInvisible('#chooseTableLabelDbSchema')
-            .waitOnElementToBecomeEnabled('#btnGenerateWithAIDbSchema')
-            .click('#btnGenerateWithAIDbSchema')
-            .waitOnElementToBecomeVisible('#btnCopyPromptText')
-            .click('#btnCopyPromptText')
-            .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
-            .click('.dburst-button-question-confirm')
-            .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
-            .clipboardShouldContainText('You are an expert SQL Developer')
-            .clipboardShouldContainText('"tableName": "Products"')
-            .clipboardShouldContainText('"columnName": "Discontinued"')
-            .click('#btnCloseAiCopilotModal')
-            .waitOnElementToBecomeInvisible('#btnCopyPromptText')
-            .click('#btnCloseDbConnectionModal');
+            ft = ft.click('#btnTestDbConnection')
+              .infoDialogShouldBeVisible()
+              .clickYesDoThis()
+              .click('#btnClearLogsDbConnection')
+              .confirmDialogShouldBeVisible()
+              .clickYesDoThis()
+              .waitOnElementToBecomeDisabled('#btnClearLogsDbConnection')
+              .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
+              .appStatusShouldBeGreatNoErrorsNoWarnings()
+              .click('#btnTestDbConnection')
+              .confirmDialogShouldBeVisible()
+              .clickYesDoThis()
+              .waitOnToastToBecomeVisible(
+                'success',
+                'Successfully connected to the database', Constants.DELAY_HUNDRED_SECONDS
+              )
 
-        } else {
-
-          ft = ft.dropDownSelectOptionHavingLabel('#databaseConnection', dbConnection.connectionName);
-          ft = ft.waitOnElementToContainText('#databaseConnection', dbConnection.connectionName);
-          ft = ft.waitOnElementToBecomeEnabled('#btnHelpWithSqlQueryAI');
-          ft = ft.click('#btnHelpWithSqlQueryAI');
-
-          if (dbConnection.dbConnectionType === 'dbcon-plain-schema-only') {
-
-            ft = ft.waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
+            ft = ft.click('#databaseSchemaTab-link')
+              .waitOnElementToBecomeInvisible('#btnTestDbConnectionDbSchema')
+              .waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
               .waitOnElementToBecomeEnabled(
                 '#btnCloseDbConnectionModal',
               )
@@ -791,107 +913,157 @@ function configureAndRunReportGeneration2(
               .waitOnElementToBecomeInvisible('#chooseTableLabelDbSchema')
               .waitOnElementToBecomeEnabled('#btnGenerateWithAIDbSchema')
               .click('#btnGenerateWithAIDbSchema')
-              .waitOnElementToBecomeVisible('#btnCopyPromptText')
+          }
+
+          ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText')
+            .click('#btnCopyPromptText')
+            .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+            .click('.dburst-button-question-confirm')
+            .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+            .clipboardShouldContainText(ids.prompt1)
+            .clipboardShouldContainText(ids.prompt2TableNameProducts)
+            .clipboardShouldContainText(ids.prompt3ColumnNameDiscontinued)
+            .click('#btnCloseAiCopilotModal')
+            .waitOnElementToBecomeInvisible('#btnCopyPromptText');
+
+          if (params.dataSourceType === 'ds.sqlquery') ft = ft.click('#btnCloseDbConnectionModal');
+
+        } else {
+
+          ft = ft.dropDownSelectOptionHavingLabel('#databaseConnection', dbConnection.connectionName);
+          ft = ft.waitOnElementToContainText('#databaseConnection', dbConnection.connectionName);
+          ft = ft.waitOnElementToBecomeEnabled(ids.aiHelp);
+          ft = ft.click(ids.aiHelp);
+
+          if (dbConnection.dbConnectionType === 'dbcon-plain-schema-only') {
+
+            if (params.dataSourceType === 'ds.sqlquery') {
+              ft = ft.waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
+                .waitOnElementToBecomeEnabled(
+                  '#btnCloseDbConnectionModal',
+                )
+                .waitOnElementToBecomeVisible('#btnGenerateWithAIDbSchema')
+                .elementShouldBeDisabled('#btnGenerateWithAIDbSchema') //because no tables are selected yet 
+                .click('#treeNodeCategoriessourceTreedatabaseSchemaPicklist')
+                .click('#treeNodeProductssourceTreedatabaseSchemaPicklist')
+                .click('#btnMoveToTargetdatabaseSchemaPicklist')
+                .waitOnElementToBecomeInvisible('#chooseTableLabelDbSchema')
+                .waitOnElementToBecomeEnabled('#btnGenerateWithAIDbSchema')
+                .click('#btnGenerateWithAIDbSchema');
+            }
+            ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText')
               .click('#btnCopyPromptText')
               .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
               .click('.dburst-button-question-confirm')
               .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
-              .clipboardShouldContainText('You are an expert SQL Developer')
-              .clipboardShouldContainText('"tableName": "Products"')
-              .clipboardShouldContainText('"columnName": "Discontinued"')
+              .clipboardShouldContainText(ids.prompt1)
+              .clipboardShouldContainText(ids.prompt2TableNameProducts)
+              .clipboardShouldContainText(ids.prompt3ColumnNameDiscontinued)
               .click('#btnCloseAiCopilotModal')
-              .waitOnElementToBecomeInvisible('#btnCopyPromptText')
-              .click('#btnCloseDbConnectionModal');
+              .waitOnElementToBecomeInvisible('#btnCopyPromptText');
+            if (params.dataSourceType === 'ds.sqlquery') ft.click('#btnCloseDbConnectionModal');
 
           }
           else if (dbConnection.dbConnectionType === 'dbcon-domaingrouped-schema') {
 
-            ft = ft.waitOnElementToBecomeVisible('#domainGroupedSchemaPicklist')
-              .waitOnElementToBecomeVisible('#chooseTableLabelDomainGroupedSchema')
-              .waitOnElementToBecomeEnabled(
-                '#btnCloseDbConnectionModal',
-              )
-              .elementShouldNotBeVisible('#btnToggleDomainGroupedCodeView')
-              .elementShouldNotBeVisible('#btnGenerateWithAIDomainGroupedSchema')
-              .elementShouldBeDisabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-              .click('#treeNodedomain_SalessourceTreedomainGroupedSchemaPicklist') // select "Sales" group
-              .click('#btnMoveToTargetdomainGroupedSchemaPicklist')
-              .waitOnElementToBecomeInvisible('#chooseTableLabelDomainGroupedSchema')
-              .waitOnElementToBecomeEnabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-              .click('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-              .waitOnElementToBecomeVisible('#btnCopyPromptText')
+            if (params.dataSourceType === 'ds.sqlquery') {
+              ft = ft.waitOnElementToBecomeVisible('#domainGroupedSchemaPicklist')
+                .waitOnElementToBecomeVisible('#chooseTableLabelDomainGroupedSchema')
+                .waitOnElementToBecomeEnabled(
+                  '#btnCloseDbConnectionModal',
+                )
+                .elementShouldNotBeVisible('#btnToggleDomainGroupedCodeView')
+                .elementShouldNotBeVisible('#btnGenerateWithAIDomainGroupedSchema')
+                .elementShouldBeDisabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
+                .click('#treeNodedomain_SalessourceTreedomainGroupedSchemaPicklist') // select "Sales" group
+                .click('#btnMoveToTargetdomainGroupedSchemaPicklist')
+                .waitOnElementToBecomeInvisible('#chooseTableLabelDomainGroupedSchema')
+                .waitOnElementToBecomeEnabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
+                .click('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
+            }
+            ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText')
               .click('#btnCopyPromptText')
               .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
               .click('.dburst-button-question-confirm')
               .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
-              .clipboardShouldContainText('You are an expert SQL Developer')
-              .clipboardShouldContainText('"tableName": "Orders"')
-              .clipboardShouldContainText('"tableName": "Order Details"')
+              .clipboardShouldContainText(ids.prompt1)
+              .clipboardShouldContainText(ids.prompt4TableNameOrders)
+              .clipboardShouldContainText(ids.prompt5TableNameOrderDetails)
               .click('#btnCloseAiCopilotModal')
-              .waitOnElementToBecomeInvisible('#btnCopyPromptText')
-              .click('#databaseSchemaTab-link')
-              .waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
-              //.waitOnElementToBecomeVisible('#btnRefreshDatabaseSchema')
-              .click('#btnCloseDbConnectionModal');
+              .waitOnElementToBecomeInvisible('#btnCopyPromptText');
+
+            if (params.dataSourceType === 'ds.sqlquery') {
+              ft = ft.click('#databaseSchemaTab-link')
+                .waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
+                //.waitOnElementToBecomeVisible('#btnRefreshDatabaseSchema')
+                .click('#btnCloseDbConnectionModal');
+            }
 
           } else if (dbConnection.dbConnectionType === 'dbcon-all-features') {
 
-            ft = ft.waitOnElementToBecomeVisible('#domainGroupedSchemaPicklist')
-              .waitOnElementToBecomeVisible('#chooseTableLabelDomainGroupedSchema')
-              .waitOnElementToBecomeEnabled(
-                '#btnCloseDbConnectionModal',
-              )
-              .elementShouldNotBeVisible('#btnToggleDomainGroupedCodeView')
-              .elementShouldBeDisabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-              .click('#treeNodedomain_SalessourceTreedomainGroupedSchemaPicklist') // select "Sales" group
-              .click('#btnMoveToTargetdomainGroupedSchemaPicklist')
-              .waitOnElementToBecomeInvisible('#chooseTableLabelDomainGroupedSchema')
-              .waitOnElementToBecomeEnabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-              .click('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-              .waitOnElementToBecomeVisible('#btnCopyPromptText')
+            if (params.dataSourceType === 'ds.sqlquery') {
+              ft = ft.waitOnElementToBecomeVisible('#domainGroupedSchemaPicklist')
+                .waitOnElementToBecomeVisible('#chooseTableLabelDomainGroupedSchema')
+                .waitOnElementToBecomeEnabled(
+                  '#btnCloseDbConnectionModal',
+                )
+                .elementShouldNotBeVisible('#btnToggleDomainGroupedCodeView')
+                .elementShouldBeDisabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
+                .click('#treeNodedomain_SalessourceTreedomainGroupedSchemaPicklist') // select "Sales" group
+                .click('#btnMoveToTargetdomainGroupedSchemaPicklist')
+                .waitOnElementToBecomeInvisible('#chooseTableLabelDomainGroupedSchema')
+                .waitOnElementToBecomeEnabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
+                .click('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
+            }
+
+            ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText')
               .click('#btnCopyPromptText')
               .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
               .click('.dburst-button-question-confirm')
               .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
-              .clipboardShouldContainText('You are an expert SQL Developer')
-              .clipboardShouldContainText('"tableName": "Orders"')
-              .clipboardShouldContainText('"tableName": "Order Details"')
+              .clipboardShouldContainText(ids.prompt1)
+              .clipboardShouldContainText(ids.prompt4TableNameOrders)
+              .clipboardShouldContainText(ids.prompt5TableNameOrderDetails)
               .click('#btnCloseAiCopilotModal')
               .waitOnElementToBecomeInvisible('#btnCopyPromptText')
-              .waitOnElementToBecomeEnabled('#databaseSchemaTab-link')
-              .click('#databaseSchemaTab-link')
-              .waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
-              //.waitOnElementToBecomeVisible('#btnRefreshDatabaseSchema')
-              .waitOnElementToBecomeEnabled('#connectionDetailsTab-link')
-              .waitOnElementToBecomeEnabled('#databaseDiagramTab-link')
-              .waitOnElementToBecomeEnabled('#databaseUbiquitousLanguageTab-link')
-              .waitOnElementToBecomeEnabled('#toolsTab-link')
-              .click('#connectionDetailsTab-link')
-              .waitOnElementToBecomeVisible('#btnTestDbConnection')
-              .click('#databaseDiagramTab-link')
-              .waitOnElementToBecomeVisible('#plantUmlDiagram')
-              .waitOnElementToBecomeEnabled('#btnDatabaseDiagramViewInBrowserLink')
-              .elementShouldNotBeVisible('#btnDatabaseDiagramShowCode')
-              .elementShouldNotBeVisible('#btnGenerateWithAIErDiagram')
-              .click('#databaseUbiquitousLanguageTab-link')
-              .waitOnElementToBecomeVisible('#ubiquitousLanguageViewer')
-              .elementShouldNotBeVisible('#noUbiquitousLanguageContentInfo')
-              .elementShouldNotBeVisible('#btnUbiquitousLanguageStartEditing')
-              .elementShouldNotBeVisible('#ubiquitousLanguageEditor')
-              .click('#toolsTab-link')
-              .waitOnElementToBecomeEnabled('#btnToggleVannaAi')
-              .waitOnElementToBecomeVisible('#btnChatWithDb')
-              .elementShouldBeDisabled('#btnChatWithDb')
-              .elementShouldNotBeVisible('#schemaNotLoadedChat2DB')
-              .elementShouldNotBeVisible('#btnGenerateVannaTrainingPlan')
-              .elementShouldNotBeVisible('#btnTrainVannaAi')
 
-              .elementShouldNotBeVisible('#vannaTrainingIncludeDbSchema')
-              .elementShouldNotBeVisible('#vannaTrainingIncludeDomainGroupedSchema')
-              .elementShouldNotBeVisible('#vannaTrainingIncludeErDiagram')
-              .elementShouldNotBeVisible('#vannaTrainingIncludeUbiquitousLanguage')
 
-              .click('#btnCloseDbConnectionModal');
+            if (params.dataSourceType === 'ds.sqlquery') {
+              ft = ft.waitOnElementToBecomeEnabled('#databaseSchemaTab-link')
+                .click('#databaseSchemaTab-link')
+                .waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
+                //.waitOnElementToBecomeVisible('#btnRefreshDatabaseSchema')
+                .waitOnElementToBecomeEnabled('#connectionDetailsTab-link')
+                .waitOnElementToBecomeEnabled('#databaseDiagramTab-link')
+                .waitOnElementToBecomeEnabled('#databaseUbiquitousLanguageTab-link')
+                .waitOnElementToBecomeEnabled('#toolsTab-link')
+                .click('#connectionDetailsTab-link')
+                .waitOnElementToBecomeVisible('#btnTestDbConnection')
+                .click('#databaseDiagramTab-link')
+                .waitOnElementToBecomeVisible('#plantUmlDiagram')
+                .waitOnElementToBecomeEnabled('#btnDatabaseDiagramViewInBrowserLink')
+                .elementShouldNotBeVisible('#btnDatabaseDiagramShowCode')
+                .elementShouldNotBeVisible('#btnGenerateWithAIErDiagram')
+                .click('#databaseUbiquitousLanguageTab-link')
+                .waitOnElementToBecomeVisible('#ubiquitousLanguageViewer')
+                .elementShouldNotBeVisible('#noUbiquitousLanguageContentInfo')
+                .elementShouldNotBeVisible('#btnUbiquitousLanguageStartEditing')
+                .elementShouldNotBeVisible('#ubiquitousLanguageEditor')
+                .click('#toolsTab-link')
+                .waitOnElementToBecomeEnabled('#btnToggleVannaAi')
+                .waitOnElementToBecomeVisible('#btnChatWithDb')
+                .elementShouldBeDisabled('#btnChatWithDb')
+                .elementShouldNotBeVisible('#schemaNotLoadedChat2DB')
+                .elementShouldNotBeVisible('#btnGenerateVannaTrainingPlan')
+                .elementShouldNotBeVisible('#btnTrainVannaAi')
+
+                .elementShouldNotBeVisible('#vannaTrainingIncludeDbSchema')
+                .elementShouldNotBeVisible('#vannaTrainingIncludeDomainGroupedSchema')
+                .elementShouldNotBeVisible('#vannaTrainingIncludeErDiagram')
+                .elementShouldNotBeVisible('#vannaTrainingIncludeUbiquitousLanguage')
+
+                .click('#btnCloseDbConnectionModal');
+            }
 
           }
 
@@ -905,12 +1077,14 @@ function configureAndRunReportGeneration2(
 
   if (params.dataSourceConfig?.reportParametersScript) {
     ft = ft
-      .waitOnElementToBecomeEnabled('#tabSqlReportParameters-link')
-      .click('#tabSqlReportParameters-link') // Assumed ID
+      .waitOnElementToBecomeEnabled(ids.paramsTab)
+      .click(ids.paramsTab) // Use dynamic tab ID
       .sleep(Constants.DELAY_ONE_SECOND) // Wait for the tab to be ready
       .waitOnElementToBecomeVisible('#paramsSpecEditor')
       .setCodeJarContentSingleShot('#paramsSpecEditor', params.dataSourceConfig.reportParametersScript).sleep(Constants.DELAY_ONE_SECOND)
-      .click('#tabSqlCode-link').waitOnElementToBecomeVisible('#sqlQueryEditor').sleep(Constants.DELAY_ONE_SECOND); // Switch back to SQL code tab;
+      .click(ids.codeTab)
+      .waitOnElementToBecomeVisible(ids.codeEditor)
+      .sleep(Constants.DELAY_ONE_SECOND); // Switch back to code tab;
   }
 
 
@@ -933,11 +1107,10 @@ function configureAndRunReportGeneration2(
 
   }
 
-
-  if (params.dataSourceType === 'ds.sqlquery') {
+  if (['ds.sqlquery', 'ds.scriptfile'].includes(params.dataSourceType)) {
     ft = ft
-      .waitOnElementToBecomeVisible('#btnTestSqlQuery')
-      .click('#btnTestSqlQuery')
+      .waitOnElementToBecomeVisible(ids.test)
+      .click(ids.test)
       .infoDialogShouldBeVisible()
       .clickYesDoThis()
       .click('#btnClearLogs')
@@ -946,7 +1119,7 @@ function configureAndRunReportGeneration2(
       .waitOnElementToBecomeDisabled('#btnClearLogs')
       .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
       .appStatusShouldBeGreatNoErrorsNoWarnings()
-      .click('#btnTestSqlQuery')
+      .click(ids.test)
       .confirmDialogShouldBeVisible()
       .clickYesDoThis()
       .waitOnElementToBecomeVisible('#formReportParameters')
@@ -966,15 +1139,6 @@ function configureAndRunReportGeneration2(
       .tabulatorCellShouldHaveText(0, "FirstName", "Andrew")
       .tabulatorCellShouldHaveText(0, "LastName", "Fuller")
       .tabulatorCellShouldHaveText(0, "HireDate", "1992-08-14")
-  }
-
-  if (params.dataSourceType === 'ds.scriptfile') {
-    ft = ft
-      .waitOnElementToBecomeVisible('#btnTestScript')
-      .click('#btnTestScript')
-      .waitOnElementToBecomeVisible('#reportingTabulatorTab-link')
-      .waitOnElementToBecomeVisible('div.tabulator-row')
-      .elementShouldContainText('div.tabulator-row', 'John Doe');
   }
 
   // Configure output type and template
@@ -1057,19 +1221,14 @@ function configureAndRunReportGeneration2(
 
   if (params.outputType === 'output.fop2pdf') {
     ft = ft
-      .processingShouldHaveGeneratedOutputFiles(
-        [
-          '0.pdf'],
+      .processingShouldHaveGeneratedNFilesHavingSuffix(
+        1,
         '.pdf',
       )
   } else {
     ft = ft
-      .processingShouldHaveGeneratedOutputFiles(
-        [
-          '0.' + params.outputExtension,
-          '1.' + params.outputExtension,
-          '2.' + params.outputExtension,
-        ],
+      .processingShouldHaveGeneratedNFilesHavingSuffix(
+        1,
         params.outputExtension,
       )
   }

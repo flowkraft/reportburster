@@ -1,7 +1,5 @@
 package com.flowkraft.jobman.models;
 
-import java.time.LocalDateTime;
-
 import org.apache.commons.lang3.StringUtils;
 
 import com.flowkraft.common.Constants;

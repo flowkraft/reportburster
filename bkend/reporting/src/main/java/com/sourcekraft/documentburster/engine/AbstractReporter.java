@@ -584,6 +584,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 		ctx.settings.setSendFilesWeb(false);
 
 		ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_NONE;
+		
 	}
 
 	public void setPreviewMode(boolean isPreviewMode) {
