@@ -1235,9 +1235,11 @@ using only the provided subset of the database schema.
 
 **INPUT:**
 
-Natural Language Request: 
+Natural Language Request:
 
+<BUSINESS_REQUIREMENT>
 [INSERT USER'S NATURAL LANGUAGE QUESTION OR INSTRUCTION FOR THE SQL QUERY HERE]
+</BUSINESS_REQUIREMENT>
 
 Relevant Database Schema Subset:
 
@@ -1344,7 +1346,7 @@ Please provide:
         'Groovy `Input Source` Script (Master-Details, Cross-Tab, KPI, etc.)',
       description:
         'Generates a Groovy script which can be used as `Input Source` in reports (Master-Details, Cross-Tab, KPIs, etc.)',
-      promptText: `You are an expert Groovy developer specializing in creating data processing scripts for a reporting tool called ReportBurster. 
+      promptText: `You are an expert Groovy Developer specializing in creating data processing scripts for a reporting tool called ReportBurster. 
 Your task is to write a complete Groovy script based on the user's business requirements.
 
 **YOUR TASK:**
@@ -1353,7 +1355,7 @@ Based on all the rules and examples below, write a complete Groovy script for th
 Provide **only** the final Groovy script in a single Markdown code block, with no other text or explanation.
 
 <BUSINESS_REQUIREMENT>
-[USER: PASTE YOUR PLAIN ENGLISH BUSINESS REQUIREMENT HERE]
+[INSERT USER'S NATURAL LANGUAGE QUESTION OR INSTRUCTION FOR THE SQL QUERY HERE]
 </BUSINESS_REQUIREMENT>
 
 This script will be used as the "Input Source" for a report. It runs within a Java application and has access to a context object named \`ctx\`. 
@@ -1687,7 +1689,7 @@ try {
       id: 'GROOVY_SCRIPT_ADDITIONAL_TRANSFORMATION',
       title: 'Groovy `Additional Data Transformation` Script (Java 8 Stream API)',
       description: 'Generates a Groovy script for the "Additional Data Transformation" step in ReportBurster, transforming ctx.reportData using Java 8 Stream API.',
-      promptText: `You are an expert Groovy developer specializing in data transformation for the reporting tool ReportBurster.
+      promptText: `You are an expert Groovy Developer specializing in data transformation for the reporting tool ReportBurster.
 
 Your task is to write a complete Groovy script that performs **additional data transformation** on a dataset that has already been fetched and is available as a \`List<Map<String, Object>>\` in the variable \`ctx.reportData\`.
 

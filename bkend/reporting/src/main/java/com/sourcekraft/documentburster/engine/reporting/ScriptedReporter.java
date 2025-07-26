@@ -26,6 +26,7 @@ public class ScriptedReporter extends AbstractReporter {
 		log.debug("ScriptedReporter initialized with config path: {}", configFilePath);
 	}
 
+	/*
 	@Override
 	protected void initializeResources() throws Exception {
 		log.trace("Entering initializeResources...");
@@ -39,6 +40,7 @@ public class ScriptedReporter extends AbstractReporter {
 		}
 		log.trace("Exiting initializeResources.");
 	}
+	*/
 
 	@Override
 	protected void fetchData() throws Exception {

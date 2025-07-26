@@ -1650,6 +1650,10 @@ export class ProcessingComponent implements OnInit {
 
     if (selectedReport.dsInputType == 'ds.sqlquery') return false;
 
+    if (selectedReport.dsInputType == 'ds.scriptfile') {
+      return (selectedReport.scriptOptionsSelectFileExplorer !== 'notused');
+    }
+
     return true;
   }
 
@@ -1658,10 +1662,16 @@ export class ProcessingComponent implements OnInit {
       this.processingService.procReportingMailMergeInfo
         .selectedMailMergeClassicReport;
 
+    //console.log('[btnGenerateReports] selectedReport:', selectedReport);
+
     if (!selectedReport) return true;
 
     const doesSelectedReportRequiresAnInputFile =
       this.doesSelectedReportRequiresAnInputFile();
+    //console.log('[btnGenerateReports] doesSelectedReportRequiresAnInputFile:', doesSelectedReportRequiresAnInputFile);
+    //console.log('[btnGenerateReports] inputFileName:', this.processingService.procReportingMailMergeInfo.inputFileName);
+    //console.log('[btnGenerateReports] prefilledInputFilePath:', this.processingService.procReportingMailMergeInfo.prefilledInputFilePath);
+
     let shouldBeDisabled = true;
 
     if (doesSelectedReportRequiresAnInputFile) {
@@ -1674,13 +1684,18 @@ export class ProcessingComponent implements OnInit {
         selectedReport.reportParameters &&
         selectedReport.reportParameters.length > 0
       ) {
+        //console.log('[btnGenerateReports] reportParamsValid:', this.reportParamsValid);
         shouldBeDisabled = !this.reportParamsValid;
       }
     }
 
+    //console.log('[btnGenerateReports] numberOfActiveJobs:', this.executionStatsService.jobStats.numberOfActiveJobs);
+
     shouldBeDisabled =
       shouldBeDisabled ||
       this.executionStatsService.jobStats.numberOfActiveJobs > 0;
+
+    //console.log('[btnGenerateReports] shouldBeDisabled:', shouldBeDisabled);
 
     return shouldBeDisabled;
   }

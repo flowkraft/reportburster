@@ -137,6 +137,32 @@
       }
     },
     {
+      "id": "metabase", 
+      "name": "Metabase",
+      "category": "BI & Visualization",
+      "type": "docker",
+      "description": "The easy-to-use open source Business Intelligence and Embedded Analytics tool that lets everyone work with data",
+      "url": "http://localhost:3000",
+      "enabled": true,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Start",
+          "description": "Starts the Metabase service.",
+          "command": "docker-compose -f ./bi-tools/docker-compose.yml up -d metabase"
+        },
+        {
+          "key": "stop",
+          "name": "Stop",
+          "description": "Stops the Metabase service.",
+          "command": "docker-compose -f ./bi-tools/docker-compose.yml stop metabase"
+        }
+      ],
+      "healthCheck": {
+        "type": "tcp"
+      }
+    },
+    {
       "id": "redash",
       "name": "Redash",
       "category": "BI & Visualization",

@@ -25,7 +25,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
               >(input SQL Query)</span
             >
             <span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.scriptfile'"
-              >(input Script Execution)</span
+              >(input Script File)</span
             >
             <span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.xmlfile'"
               >(input XML)</span
@@ -205,7 +205,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
     </div>
 
     <div
-      *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport && processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.dsInputType == 'ds.sqlquery'"
+      *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport && (processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.dsInputType == 'ds.sqlquery' || processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.dsInputType == 'ds.scriptfile')"
       class="row" style="margin-top: 10px"
     >
       <div class="col-xs-3">
