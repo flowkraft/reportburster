@@ -1573,13 +1573,16 @@ export class ProcessingComponent implements OnInit {
       // Check for text-based file formats
       if (
         [
-          'ds.xmlfile',
           'ds.csvfile',
           'ds.tsvfile',
           'ds.fixedwidthfile',
         ].includes(dsInputType)
       ) {
         allowedFileTypes = '.csv, .tsv, .tab, .txt, .prn, .dat';
+      }
+
+      if (dsInputType === 'ds.xmlfile') {
+        allowedFileTypes = '.xml';
       }
 
       // Check for Excel formats
