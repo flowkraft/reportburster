@@ -539,7 +539,6 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
   );
 
 
-  /*
       
     electronBeforeAfterAllTest(
       'should correctly generate DOCX output from DOCX template using CSV as datasource (csv2docx_from_docx_template)',
@@ -787,12 +786,6 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
       },
     );
   
-    
-    
-    
-  
-      
-    */
 });
 
 function configureAndRunReportGeneration2(
