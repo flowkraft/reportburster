@@ -836,10 +836,11 @@ export class ConfigurationComponent implements OnInit {
           '',
         );
 
-      if (newOutputType === 'fop2pdf') {
+      if (newOutputType === 'fop2pdf' || newOutputType === 'any') {
         const prevValue = this.xmlSettings?.documentburster?.settings?.burstfilename || '';
         const baseName = prevValue.replace(/\.[^\.]+$/, ''); // removes last extension (e.g. .pdf, .xlsx, .docx, etc.)
-        this.xmlSettings.documentburster.settings.burstfilename = baseName + '.pdf';
+        if (newOutputType === 'fop2pdf') this.xmlSettings.documentburster.settings.burstfilename = baseName + '.pdf';
+        if (newOutputType === 'any') this.xmlSettings.documentburster.settings.burstfilename = baseName + '.xml';
       }
 
       const configName =
