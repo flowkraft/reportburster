@@ -14,471 +14,44 @@ import { ConnectionsTestHelper } from '../../helpers/areas/connections-test-help
 const dataSourceTypeDisplayMap: Record<string, string> = {
   'ds.sqlquery': 'SQL Query',
   'ds.scriptfile': 'Script File',
+  'ds.xmlfile': 'XML',
+  'ds.csvfile': 'CSV',
+  'ds.tsvfile': 'TSV',
+  'ds.fixedwidthfile': 'Fixed-Width',
+  'ds.excelfile': 'Excel',
   // add more if needed
 };
 
 //DONE2
 test.describe('', async () => {
 
+  // --- XML Data Source Test ---
   electronBeforeAfterAllTest(
-    'should generate FOP2PDF report from SQL datasource with parameters and transformation',
+    'should generate Freemarker XML report from XML datasource',
     async ({ beforeAfterEach: firstPage }) => {
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
-
-      const TEST_NAME = 'SQLPayslips';
-
-      const dbConnectionType = 'dbcon-plain-schema-only'; // or any other type you need
-
-      const dbVendor = 'sqlite';
-
       let ft = new FluentTester(firstPage);
+      ft = ConfTemplatesTestHelper.createNewTemplate(ft, 'Payslips', 'enableMailMergeCapability');
 
-      // Create 4 different DB connections with clear names
-      const dbConnections = [];
-
-      const dbConnNoSchema = createDbConnection(ft, TEST_NAME, 'dbcon-no-schema', dbVendor, false);
-      ft = dbConnNoSchema.ft;
-      const connectionNameNoSchema = dbConnNoSchema.connectionName;
-      dbConnections.push({ connectionName: connectionNameNoSchema, dbConnectionType: 'dbcon-no-schema', defaultDbConnection: true });
-
-      const dbConnPlainSchema = createDbConnection(ft, TEST_NAME, 'dbcon-plain-schema-only', dbVendor, false);
-      ft = dbConnPlainSchema.ft;
-      const connectionNamePlainSchema = dbConnPlainSchema.connectionName;
-      dbConnections.push({ connectionName: connectionNamePlainSchema, dbConnectionType: 'dbcon-plain-schema-only', defaultDbConnection: false });
-
-      const dbConnDomainGrouped = createDbConnection(ft, TEST_NAME, 'dbcon-domaingrouped-schema', dbVendor);
-      ft = dbConnDomainGrouped.ft;
-      const connectionNameDomainGrouped = dbConnDomainGrouped.connectionName;
-      dbConnections.push({ connectionName: connectionNameDomainGrouped, dbConnectionType: 'dbcon-domaingrouped-schema', defaultDbConnection: false });
-
-      const dbConnAllFeatures = createDbConnection(ft, TEST_NAME, 'dbcon-all-features', dbVendor);
-      ft = dbConnAllFeatures.ft;
-      const connectionNameAllFeatures = dbConnAllFeatures.connectionName;
-      dbConnections.push({ connectionName: connectionNameAllFeatures, dbConnectionType: 'dbcon-all-features', defaultDbConnection: false });
-
-      ft = ConfTemplatesTestHelper.createNewTemplate(ft, TEST_NAME, 'enableMailMergeCapability');
-
-      ft = configureAndRunReportGeneration2(ft, TEST_NAME, {
-        dataSourceType: 'ds.sqlquery',
-        dbConnectionType: dbConnectionType,
-        dbConnections: dbConnections,
-        outputType: 'output.fop2pdf',
-        outputExtension: 'pdf',
+      ft = configureAndRunReportGeneration(ft, {
+        dataSourceType: 'ds.xmlfile',
+        dataSourceFilePath: '/samples/reports/payslips/Payslips.xml',
+        outputType: 'output.any',
+        outputExtension: 'xml',
         templateConfig: {
           useHtmlContent: true,
-          templateContent: `
-<fo:root xmlns:fo="http://www.w3.org/1999/XSL/Format">
-  <fo:layout-master-set>
-    <fo:simple-page-master master-name="A4"
-      page-height="29.7cm"
-      page-width="21cm"
-      margin-top="1cm"
-      margin-bottom="1cm"
-      margin-left="1.5cm"
-      margin-right="1.5cm">
-      <fo:region-body/>
-    </fo:simple-page-master>
-  </fo:layout-master-set>
-  <fo:page-sequence master-reference="A4">
-    <fo:flow flow-name="xsl-region-body">
-
-      <fo:block font-size="16pt" font-weight="bold" text-align="center" space-after="15pt">
-        Employee Details
-      </fo:block>
-
-      <fo:table table-layout="fixed" width="100%" font-size="10pt">
-        <fo:table-column column-width="4cm"/>
-        <fo:table-column column-width="5cm"/>
-        <fo:table-column column-width="5cm"/>
-        <fo:table-column column-width="4cm"/>
-        <fo:table-body>
-          <fo:table-row background-color="#f2f2f2">
-            <fo:table-cell border="1pt solid black" padding="4pt">
-              <fo:block font-weight="bold" text-align="center">Employee ID</fo:block>
-            </fo:table-cell>
-            <fo:table-cell border="1pt solid black" padding="4pt">
-              <fo:block font-weight="bold" text-align="center">First Name</fo:block>
-            </fo:table-cell>
-            <fo:table-cell border="1pt solid black" padding="4pt">
-              <fo:block font-weight="bold" text-align="center">Last Name</fo:block>
-            </fo:table-cell>
-            <fo:table-cell border="1pt solid black" padding="4pt">
-              <fo:block font-weight="bold" text-align="center">Hire Date</fo:block>
-            </fo:table-cell>
-          </fo:table-row>
-          <fo:table-row>
-            <fo:table-cell border="1pt solid black" padding="4pt">
-              <fo:block text-align="center">\${EmployeeID!}</fo:block>
-            </fo:table-cell>
-            <fo:table-cell border="1pt solid black" padding="4pt">
-              <fo:block>\${FirstName!}</fo:block>
-            </fo:table-cell>
-            <fo:table-cell border="1pt solid black" padding="4pt">
-              <fo:block>\${LastName!}</fo:block>
-            </fo:table-cell>
-            <fo:table-cell border="1pt solid black" padding="4pt">
-              <fo:block>
-                <#if HireDate?is_date>
-                  \${HireDate?string("yyyy-MM-dd")}
-                <#else>
-                  \${HireDate!}
-                </#if>
-              </fo:block>
-            </fo:table-cell>
-          </fo:table-row>
-        </fo:table-body>
-      </fo:table>
-
-    </fo:flow>
-  </fo:page-sequence>
-</fo:root>
-`,
+          templatePath: '/samples/reports/payslips/payslips-template-xml.ftl',
         },
         dataSourceConfig: {
-          sqlQuery: `
-              SELECT 
-        "EmployeeID", 
-        "FirstName", 
-        "LastName", 
-        date("HireDate" / 1000, 'unixepoch') AS "HireDate"
-    FROM "Employees"
-    WHERE date("HireDate" / 1000, 'unixepoch') BETWEEN :startDate AND :endDate
-    ORDER BY "HireDate"
-        `,
-          reportParametersScript: `
-import java.time.LocalDate
-import java.time.LocalDateTime
-
-reportParameters {
-  parameter(
-    id:           'startDate',
-    type:         LocalDate,
-    label:        'Start Date',
-    description:  'Report start date',
-    defaultValue: LocalDate.now().minusDays(30)
-  ) {
-    constraints(
-      required: true,
-      min:      LocalDate.now().minusDays(365),
-      max:      endDate
-    )
-    ui(
-      control: 'date',
-      format:  'yyyy-MM-dd'
-    )
-  }
-
-  parameter(
-    id:           'endDate',
-    type:         LocalDate,
-    label:        'End Date',
-    defaultValue: LocalDate.now()
-  ) {
-    constraints(
-      required: true,
-      min:      startDate,
-      max:      LocalDate.now()
-    )
-    ui(
-      control: 'date',
-      format:  'yyyy-MM-dd'
-    )
-  }
-}
-if (reportParametersProvided) {
-  log.info("--- Report Parameter Values ---")
-  log.info("startDate          : \${startDate ?: 'NOT_SET'}")
-  log.info("endDate            : \${endDate   ?: 'NOT_SET'}")
-}
-        `,
-          testViewData: true,
-          transformationScript: `import java.util.stream.Collectors
-
-log.info("Starting additional data transformation: filter for HireDate after June 1992...")
-
-def filteredData = ctx.reportData.stream()
-    .filter { row ->
-        def hireDate = row['HireDate']?.toString()
-        hireDate && hireDate > '1992-06-30'
-    }
-    .collect(Collectors.toList())
-
-ctx.reportData = filteredData
-if (!filteredData.isEmpty()) {
-    ctx.reportColumnNames = new ArrayList<>(filteredData.get(0).keySet())
-}
-log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size())`,
-        },
-        exerciseAiButtons: {
-          sql: true,
-          transformation: true,
+          xmlRepeatingNodeXPath: '/payslips/payslip',
         },
       });
 
-      ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'sql-payslips');
-
-      // Delete all 4 DB connections
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameNoSchema)}\\.xml`, dbVendor);
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNamePlainSchema)}\\.xml`, dbVendor);
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameDomainGrouped)}\\.xml`, dbVendor);
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameAllFeatures)}\\.xml`, dbVendor);
-
+      ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'payslips');
       return ft;
     },
   );
-  
-  // --- Script Data Source Test ---
-  electronBeforeAfterAllTest(
-    'should generate XLSX report from Groovy script datasource with parameters',
-    async ({ beforeAfterEach: firstPage }) => {
-      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
-      const TEST_NAME = 'ScriptPayslips';
-
-      const dbConnectionType = 'dbcon-plain-schema-only'; // or any other type you need
-
-      const dbVendor = 'sqlite';
-
-      let ft = new FluentTester(firstPage);
-
-      // Create 4 different DB connections with clear names
-      const dbConnections = [];
-
-      const dbConnNoSchema = createDbConnection(ft, TEST_NAME, 'dbcon-no-schema', dbVendor, false);
-      ft = dbConnNoSchema.ft;
-      const connectionNameNoSchema = dbConnNoSchema.connectionName;
-      dbConnections.push({ connectionName: connectionNameNoSchema, dbConnectionType: 'dbcon-no-schema', defaultDbConnection: true });
-
-      const dbConnPlainSchema = createDbConnection(ft, TEST_NAME, 'dbcon-plain-schema-only', dbVendor, false);
-      ft = dbConnPlainSchema.ft;
-      const connectionNamePlainSchema = dbConnPlainSchema.connectionName;
-      dbConnections.push({ connectionName: connectionNamePlainSchema, dbConnectionType: 'dbcon-plain-schema-only', defaultDbConnection: false });
-
-      const dbConnDomainGrouped = createDbConnection(ft, TEST_NAME, 'dbcon-domaingrouped-schema', dbVendor);
-      ft = dbConnDomainGrouped.ft;
-      const connectionNameDomainGrouped = dbConnDomainGrouped.connectionName;
-      dbConnections.push({ connectionName: connectionNameDomainGrouped, dbConnectionType: 'dbcon-domaingrouped-schema', defaultDbConnection: false });
-
-      const dbConnAllFeatures = createDbConnection(ft, TEST_NAME, 'dbcon-all-features', dbVendor);
-      ft = dbConnAllFeatures.ft;
-      const connectionNameAllFeatures = dbConnAllFeatures.connectionName;
-      dbConnections.push({ connectionName: connectionNameAllFeatures, dbConnectionType: 'dbcon-all-features', defaultDbConnection: false });
-
-      ft = ConfTemplatesTestHelper.createNewTemplate(ft, TEST_NAME, 'enableMailMergeCapability');
-
-      ft = configureAndRunReportGeneration2(ft, TEST_NAME, {
-        dataSourceType: 'ds.scriptfile',
-        dbConnectionType: dbConnectionType,
-        dbConnections: dbConnections,
-        outputType: 'output.xlsx',
-        outputExtension: 'xlsx',
-        templateConfig: {
-          useHtmlContent: true,
-          templateContent: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Employee Details Excel Report</title>
-  <style>
-	  body {
-		font-family: Arial, sans-serif;
-		font-size: 11;
-		margin: 0;
-		padding: 0;
-		background: #fff;
-	  }
-	  .report-title {
-		font-size: 16;
-		font-weight: bold;
-		text-align: center;
-		margin-bottom: 15pt;
-		margin-top: 20pt;
-	  }
-	  table {
-		border-collapse: collapse;
-		width: 100%;
-		table-layout: fixed;
-		margin: 0 auto 20pt auto;
-	  }
-	  th, td {
-		border: 1 solid #000000;
-		padding: 4;
-		font-size: 10;
-		text-align: center;
-		vertical-align: middle;
-		word-break: break-word;
-	  }
-	  th {
-		background-color: #f2f2f2;
-		font-weight: bold;
-	  }
-</style>
-</head>
-<body>
-  <div class="report-title">Employee Details</div>
-  <table data-sheet-name="Employee Details">
-    <tr>
-      <th style="width: 4">Employee ID</th>
-      <th style="width: 5">First Name</th>
-      <th style="width: 5">Last Name</th>
-      <th style="width: 4">Hire Date</th>
-    </tr>
-    <tr>
-      <td data-text-cell="true">\${EmployeeID!}</td>
-      <td>\${FirstName!}</td>
-      <td>\${LastName!}</td>
-      <td data-date-cell-format="yyyy-MM-dd">
-        <#if HireDate?is_date>
-          \${HireDate?string("yyyy-MM-dd")}
-        <#else>
-          \${HireDate!}
-        </#if>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-`,
-        },
-        dataSourceConfig: {
-          showFileExplorer: false,
-          groovyScript: `
-            import groovy.sql.Sql
-import java.util.LinkedHashMap
-
-def dbSql = ctx.dbSql
-log.info("Starting scriptedReport_employeesByHireDate.groovy...")
-
-// --- 1. Read report parameters using Variables API ---
-def startDate = ctx.variables.getUserVariables(ctx.token).get('startDate')
-def endDate = ctx.variables.getUserVariables(ctx.token).get('endDate')
-
-// --- 2. Define the SQL query ---
-def sql
-def rows
-
-if (startDate && endDate) {
-    sql = """
-    SELECT 
-        "EmployeeID", 
-        "FirstName", 
-        "LastName", 
-        date("HireDate" / 1000, 'unixepoch') AS "HireDate"
-    FROM "Employees"
-    WHERE date("HireDate" / 1000, 'unixepoch') BETWEEN :startDate AND :endDate
-    ORDER BY "HireDate"
-    """
-    rows = dbSql.rows(sql, [startDate: startDate, endDate: endDate])
-} else {
-    sql = """
-    SELECT 
-        "EmployeeID", 
-        "FirstName", 
-        "LastName", 
-        date("HireDate" / 1000, 'unixepoch') AS "HireDate"
-    FROM "Employees"
-    ORDER BY "HireDate"
-    """
-    rows = dbSql.rows(sql)
-}
-
-def result = []
-rows.each { row ->
-    def map = new LinkedHashMap<String, Object>()
-    map.putAll(row)
-    result.add(map)
-}
-
-ctx.reportData = result
-if (!result.isEmpty()) {
-    ctx.reportColumnNames = new ArrayList<>(result[0].keySet())
-} else {
-    ctx.reportColumnNames = []
-}
-log.info("Finished scriptedReport_employeesByHireDate.groovy. Rows: {}", ctx.reportData.size())
-          `,
-          reportParametersScript: `
-import java.time.LocalDate
-import java.time.LocalDateTime
-
-reportParameters {
-  parameter(
-    id:           'startDate',
-    type:         LocalDate,
-    label:        'Start Date',
-    description:  'Report start date',
-    defaultValue: LocalDate.now().minusDays(30)
-  ) {
-    constraints(
-      required: true,
-      min:      LocalDate.now().minusDays(365),
-      max:      endDate
-    )
-    ui(
-      control: 'date',
-      format:  'yyyy-MM-dd'
-    )
-  }
-
-  parameter(
-    id:           'endDate',
-    type:         LocalDate,
-    label:        'End Date',
-    defaultValue: LocalDate.now()
-  ) {
-    constraints(
-      required: true,
-      min:      startDate,
-      max:      LocalDate.now()
-    )
-    ui(
-      control: 'date',
-      format:  'yyyy-MM-dd'
-    )
-  }
-}
-if (reportParametersProvided) {
-  log.info("--- Report Parameter Values ---")
-  log.info("startDate          : \${startDate ?: 'NOT_SET'}")
-  log.info("endDate            : \${endDate   ?: 'NOT_SET'}")
-}
-        `,
-          testViewData: true,
-          transformationScript: `import java.util.stream.Collectors
-
-log.info("Starting additional data transformation: filter for HireDate after June 1992...")
-
-def filteredData = ctx.reportData.stream()
-    .filter { row ->
-        def hireDate = row['HireDate']?.toString()
-        hireDate && hireDate > '1992-06-30'
-    }
-    .collect(Collectors.toList())
-
-ctx.reportData = filteredData
-if (!filteredData.isEmpty()) {
-    ctx.reportColumnNames = new ArrayList<>(filteredData.get(0).keySet())
-}
-log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size())`,
-        },
-        exerciseAiButtons: {
-          sql: true,
-          transformation: true,
-        },
-      });
-
-      ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'script-payslips');
-
-      // Delete all 4 DB connections
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameNoSchema)}\\.xml`, dbVendor);
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNamePlainSchema)}\\.xml`, dbVendor);
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameDomainGrouped)}\\.xml`, dbVendor);
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameAllFeatures)}\\.xml`, dbVendor);
-
-      return ft;
-    },
-  );
 
 
   /*
@@ -732,32 +305,6 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
     
     
     
-    // --- XML Data Source Test ---
-    electronBeforeAfterAllTest(
-      'should generate Freemarker XML report from XML datasource',
-      async ({ beforeAfterEach: firstPage }) => {
-        test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
-        let ft = new FluentTester(firstPage);
-        ft = ConfTemplatesTestHelper.createNewTemplate(ft, 'XMLPayslips', 'enableMailMergeCapability');
-  
-        ft = configureAndRunReportGeneration(ft, {
-          dataSourceType: 'ds.xmlfile',
-          dataSourceFilePath: '/samples/reports/payslips/Payslips.xml',
-          outputType: 'output.any',
-          outputExtension: 'xml',
-          templateConfig: {
-            useHtmlContent: true,
-            templatePath: '/samples/reports/payslips/payslips-template-freemarker.xml',
-          },
-          dataSourceConfig: {
-            xmlRepeatingNodeXPath: '/payslips/payslip',
-          },
-        });
-  
-        ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'XMLPayslips');
-        return ft;
-      },
-    );
   
       
     */
@@ -1304,7 +851,8 @@ function configureAndRunReportGeneration(
     .sleep(Constants.DELAY_ONE_SECOND)
     .click('#reportingTemplateOutputTab-link')
     .waitOnElementToBecomeVisible('#reportOutputType')
-    .dropDownSelectOptionHavingValue('#reportOutputType', params.outputType);
+    .dropDownSelectOptionHavingValue('#reportOutputType', params.outputType)
+    .sleep(3 * Constants.DELAY_ONE_SECOND);
 
   // Handle template configuration based on type
   if (params.templateConfig.useHtmlContent) {
@@ -1332,19 +880,22 @@ function configureAndRunReportGeneration(
     //);
   }
 
+  const displayType = dataSourceTypeDisplayMap[params.dataSourceType];
+
   // Run report generation
   ft = ft
     //.waitOnElementWithTextToBecomeVisible('Saved')
-    .sleep(Constants.DELAY_ONE_SECOND)
+    .sleep(3 * Constants.DELAY_ONE_SECOND)
     .gotoReportGenerationScreen()
     .click('#selectMailMergeClassicReport')
     .waitOnElementToBecomeVisible(
-      `span.ng-option-label:has-text("Payslips (input ${params.dataSourceType})")`,
+      `span.ng-option-label:has-text("Payslips (input ${displayType})")`,
     )
     .click(
-      `span.ng-option-label:has-text("Payslips (input ${params.dataSourceType})")`,
+      `span.ng-option-label:has-text("Payslips (input ${displayType})")`,
     )
     .waitOnElementToBecomeVisible('#browseMailMergeClassicReportInputFile')
+    .sleep(3 * Constants.DELAY_ONE_SECOND)
     .setInputFiles(
       '#reportingFileUploadInput',
       slash(
@@ -1353,6 +904,7 @@ function configureAndRunReportGeneration(
         ),
       ),
     )
+    .sleep(Constants.DELAY_ONE_SECOND)
     .click('#btnGenerateReports')
     .clickYesDoThis()
     .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
