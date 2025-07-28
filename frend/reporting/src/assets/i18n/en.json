@@ -681,9 +681,9 @@
           "RESTARTING": "Restarting",
           "RESTARTING-REQUIRED": "is required to complete the installation",
           "INNER-HTML": {
-            "TOO-OLD": "Your computer is currently running a version of <em>Java</em> that is older than <em>Java 11</em>.<br><br>To upgrade, you will first need to uninstall this older <em>Java</em> version. Please be aware that if you have any software that relies on your current <em>Java</em> installation, removing it could cause those programs to malfunction.<br><br><strong>Once the older version of <em>Java</em> has been successfully uninstalled, you can utilize <em>ReportBurster</em> to facilitate the installation of <em>Java 11</em></strong>.",
-            "REQUIRED-SHORT": "<em>ReportBurster</em> requires <em>Java</em> 11 (or newer) as a prerequisite.",
-            "REQUIRED-LONG": "In order to use the software <em>Java</em> 11 (or newer) runtime must be installed on your computer.",
+            "TOO-OLD": "Your computer is currently running a version of <em>Java</em> that is older than <em>Java 17</em>.<br><br>To upgrade, you will first need to uninstall this older <em>Java</em> version. Please be aware that if you have any software that relies on your current <em>Java</em> installation, removing it could cause those programs to malfunction.<br><br><strong>Once the older version of <em>Java</em> has been successfully uninstalled, you can utilize <em>ReportBurster</em> to facilitate the installation of <em>Java 17</em></strong>.",
+            "REQUIRED-SHORT": "<em>ReportBurster</em> requires <em>Java 17</em> (or newer) as a prerequisite.",
+            "REQUIRED-LONG": "In order to use the software <em>Java 17</em> (or newer) runtime must be installed on your computer.",
             "EXTRA": "Follow the guided installation steps provided. <strong>As the system processes each step, please wait patiently for its completion. After each step is finished, make sure to restart <em>ReportBurster</em></strong>."
           }
         },
@@ -721,8 +721,8 @@
             "UNINSTALL-CHOCOLATEY": "Uninstall <em>Chocolatey</em>",
             "INSTALL-JAVA": "Install Latest <em>Java</em> (requires <em>Chocolatey</em>)",
             "UNINSTALL-JAVA": "Uninstall <em>Java</em> (requires <em>Chocolatey</em>)",
-            "INSTALL-JAVA11": "Install <em>Java</em> 11 (requires <em>Chocolatey</em>)",
-            "UNINSTALL-JAVA11": "Uninstall <em>Java</em> 11 (requires <em>Chocolatey</em>)"
+            "INSTALL-JAVA17": "Install <em>Java 17</em> (requires <em>Chocolatey</em>)",
+            "UNINSTALL-JAVA17": "Uninstall <em>Java 17</em> (requires <em>Chocolatey</em>)"
           }
         },
         "DIAGNOSTICS": {

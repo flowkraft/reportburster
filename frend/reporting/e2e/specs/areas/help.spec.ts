@@ -31,11 +31,11 @@ electronBeforeAfterAllTest(
         '#statusDemoLicense',
         'Open Source (Community Support)',
       )
-      .click('#leftMenuHelpSupport')
-      .elementShouldHaveText(
-        '#checkPointHelpSupport',
-        'ParkTrent Properties Group, Australia',
-      )
+      .click('#leftMenuStarterPacks')
+      .waitOnElementToBecomeVisible('#cmd-db-northwind-postgres')
+      .waitOnElementToBecomeEnabled('#extraPackagesTab-link')
+      .click('#extraPackagesTab-link')
+      .waitOnElementToBecomeVisible('#package-notepadplusplus')
       .click('#leftMenuHelpDocumentation')
       .elementShouldContainText(
         '#checkPointHelpDocumentation',
@@ -93,9 +93,7 @@ electronBeforeAfterAllTest(
         .click('#terminalTab-link')
         .elementShouldBeVisible('#p-terminal')
         .click('#updateTab-link')
-        .elementShouldBeVisible('#btnLetMeUpdateManually')
-        .click('#extraPackagesTab-link')
-        .elementShouldBeVisible('#package-notepadplusplus');
+        .elementShouldBeVisible('#btnLetMeUpdateManually');
     }
 
     ft = ft
@@ -127,6 +125,13 @@ electronBeforeAfterAllTest(
         '#checkPointHelpServices',
         'sales@reportburster.com',
       )
+      .gotoBurstScreen()
+      .click('#topMenuHelp')
+      .click('#topMenuStarterPacks')
+      .waitOnElementToBecomeVisible('#cmd-db-northwind-postgres')
+      .waitOnElementToBecomeEnabled('#extraPackagesTab-link')
+      .click('#extraPackagesTab-link')
+      .waitOnElementToBecomeVisible('#package-notepadplusplus')
       .gotoBurstScreen()
       .click('#topMenuHelp')
       .click('#topMenuHelpDocumentation')

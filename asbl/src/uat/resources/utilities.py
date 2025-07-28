@@ -102,7 +102,7 @@ def clean_output_folders_and_log_files(product="exe"):
             pass
 
 def ensure_java_prerequisite():
-    ensure_java_is_installed("11")
+    ensure_java_is_installed("17")
 
 def ensure_java_is_not_installed():
     try:
@@ -137,7 +137,7 @@ def ensure_java_is_not_installed():
     except subprocess.CalledProcessError:
         print("An error occurred while uninstalling Java.")
 
-def ensure_java_is_installed(version="11"):
+def ensure_java_is_installed(version="17"):
     output = ""
     try:
         output = subprocess.check_output('java -version', shell=True, stderr=subprocess.STDOUT)
@@ -147,6 +147,9 @@ def ensure_java_is_installed(version="11"):
             print(f"Java is installed but not version {version}. Installing now...")
             ensure_chocolatey_is_installed()
             ensure_java_is_not_installed()
+            if version == '17':
+                subprocess.check_call(f'choco install temurin17 -y', shell=True)
+                subprocess.check_call(f'choco install maven -y', shell=True)
             if version == '11':
                 subprocess.check_call(f'choco install temurin11 -y', shell=True)
                 subprocess.check_call(f'choco install maven -y', shell=True)
@@ -160,7 +163,10 @@ def ensure_java_is_installed(version="11"):
     except subprocess.CalledProcessError:
         print("Java is not installed. Installing now...")
         ensure_chocolatey_is_installed()
-        if version == '11':
+        if version == '17':
+            subprocess.check_call(f'choco install temurin17 -y', shell=True)
+            subprocess.check_call(f'choco install maven -y', shell=True)
+        elif version == '11':
             subprocess.check_call(f'choco install temurin11 -y', shell=True)
             subprocess.check_call(f'choco install maven -y', shell=True)
         elif version == '8':

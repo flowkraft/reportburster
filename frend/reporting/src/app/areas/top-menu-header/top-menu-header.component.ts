@@ -39,7 +39,7 @@ export class TopMenuHeaderComponent implements OnInit {
   onAskForFeatureModalShow() {
     if (!this.storeService.configSys.sysInfo.setup.java.isJavaOk) {
       alert(
-        'To use ReportBurster, Java 11 (or newer) must be installed on your computer.',
+        'To use ReportBurster, Java 17 (or newer) must be installed on your computer.',
       );
       return;
     }

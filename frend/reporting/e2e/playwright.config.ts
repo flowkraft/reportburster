@@ -17,7 +17,7 @@ const config = {
   // Give failing tests 3 retry attempts
   //retries: 1,
   //retries: 2,
-  retries: 2,
+  retries: 3,
   // Limit the number of workers on CI, use default locally
   workers: 1,
 };

@@ -26,7 +26,7 @@ export class JavaComponent {
     });
   }
 
-  //by default DocumentBurster installs Java11
+  //by default DocumentBurster installs Java17
   installJava() {
     this.confirmService.askConfirmation({
       message: 'Are you sure that you want to perform this action?',
@@ -35,7 +35,7 @@ export class JavaComponent {
         //  'choco install jre8 -PackageParameters "/exclude:64" --yes',
         //);
         this.electronService.typeCommandOnTerminalAndThenPressEnter(
-          'choco install temurin11 --yes',
+          'choco install temurin17 --yes',
         );
       },
     });
@@ -46,7 +46,7 @@ export class JavaComponent {
       message: 'Are you sure that you want to perform this action?',
       confirmAction: () => {
         this.electronService.typeCommandOnTerminalAndThenPressEnter(
-          'choco uninstall temurin11 --yes',
+          'choco uninstall temurin17 --yes',
         );
       },
     });
