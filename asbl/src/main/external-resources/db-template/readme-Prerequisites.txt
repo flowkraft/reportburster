@@ -7,14 +7,14 @@ Note 2: Before installing, uninstalling, or changing Java versions, please verif
 
 Check Current Installation
 -------------------------
-1. Check if Java 11 is already installed:
+1. Check if Java 17 is already installed:
    - Open PowerShell
    - Run:
    
    java -version
    
-   If you see "version 11.x.x", Java 11 is already installed - no further action needed.
-   If Java 11 is not installed, Chocolatey (Windows) package manager provides an easy way to install it.
+   If you see "version 11.x.x", Java 17 is already installed - no further action needed.
+   If Java 17 is not installed, Chocolatey (Windows) package manager provides an easy way to install it.
 
 2. Check if Chocolatey is installed:
    - In the same PowerShell window
@@ -22,7 +22,7 @@ Check Current Installation
    
    choco -v
    
-   If you see a version number, Chocolatey is installed - skip to "Install Java 11".
+   If you see a version number, Chocolatey is installed - skip to "Install Java 17".
    If you get an error, continue with "Install Chocolatey" below.
 
 Installation Instructions
@@ -36,16 +36,16 @@ Installation Instructions
    Source: https://chocolatey.org/install
    - Close PowerShell
 
-2. Install Java 11:
+2. Install Java 17:
    - Open a new PowerShell window as Administrator
    - Run:
    
-   choco install temurin11 --yes
+   choco install temurin17 --yes
 
 Uninstallation (if needed)
 -------------------------
-To remove Java 11:
+To remove Java 17:
 - Open PowerShell as Administrator
 - Run:
 
-choco uninstall temurin11 --yes
+choco uninstall temurin17 --yes

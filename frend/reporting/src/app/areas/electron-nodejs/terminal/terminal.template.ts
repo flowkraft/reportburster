@@ -22,13 +22,13 @@ export const terminalTemplate = `
 
     <li>
     <span
-      [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.INSTALL-JAVA11' | translate"
+      [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.INSTALL-JAVA17' | translate"
     ></span
-    >: <code>choco install temurin11 --yes</code>
+    >: <code>choco install temurin17 --yes</code>
   </li>
   <li>
     <span
-      [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.UNINSTALL-JAVA11' | translate"
+      [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.TERMINAL.INNER-HTML.UNINSTALL-JAVA17' | translate"
     ></span
     >: <code>choco uninstall temurin11 --yes</code>
   </li>

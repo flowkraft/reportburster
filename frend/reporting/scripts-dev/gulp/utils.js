@@ -63,14 +63,14 @@ gulp.task("utils:start-java8-chocono-and-ui", () => {
   _startJavaYesAndUI(javaVersion, chocoStatus);
 });
 
-gulp.task("utils:start-java11-chocoyes-and-ui", () => {
-  const javaVersion = "11.2.0_233";
+gulp.task("utils:start-java17-chocoyes-and-ui", () => {
+  const javaVersion = "17.0.16";
   const chocoStatus = "installed";
   _startJavaYesAndUI(javaVersion, chocoStatus);
 });
 
-gulp.task("utils:start-java11-chocono-and-ui", () => {
-  const javaVersion = "11.2.0_233";
+gulp.task("utils:start-java17-chocono-and-ui", () => {
+  const javaVersion = "17.0.16";
   const chocoStatus = "not-installed";
   _startJavaYesAndUI(javaVersion, chocoStatus);
 });

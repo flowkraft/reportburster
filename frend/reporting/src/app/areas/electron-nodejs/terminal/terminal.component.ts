@@ -135,12 +135,12 @@ export class TerminalComponent implements AfterViewInit {
 
             case 'choco install openjdk --yes':
             case 'choco install temurin --yes':
-            case 'choco install temurin11 --yes':
+            case 'choco install temurin17 --yes':
             case 'choco install notepadplusplus --yes':
             case 'choco install winmerge --yes':
             case 'choco uninstall openjdk --yes':
             case 'choco uninstall temurin --yes':
-            case 'choco uninstall temurin11 --yes':
+            case 'choco uninstall temurin17 --yes':
             case 'choco uninstall notepadplusplus --yes':
             case 'choco uninstall winmerge --yes':
               try {
