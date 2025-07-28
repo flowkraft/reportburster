@@ -254,6 +254,12 @@ gulp.task("e2e-prepare-updatenow-for-manual-testing", async () => {
 
   //Step8 - same as above but for the Log files
   await jetpack.copyAsync(
+    `e2e/_resources/logs`,
+    `e2e/_resources/upgrade/files-to-migrate/logs`,
+    { overwrite: true },
+  );
+
+  await jetpack.copyAsync(
     `e2e/_resources/upgrade/files-to-migrate/logs`,
     `${e2eRuntimeDir.path()}/logs`,
     { overwrite: true },

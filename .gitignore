@@ -48,8 +48,8 @@ log.txt
 *.log
 
 # But do NOT ignore any files (including .log) in this specific directory
-!frend/reporting/e2e/_resources/upgrade/files-to-migrate/logs/
-!frend/reporting/e2e/_resources/upgrade/files-to-migrate/logs/**
+!frend/reporting/e2e/_resources/logs/
+!frend/reporting/e2e/_resources/logs/**
 
 .flattened-pom.xml
 target/
