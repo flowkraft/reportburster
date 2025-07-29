@@ -73,22 +73,23 @@ public class Settings extends DumpToString {
 
 	public Settings(String configFilePath) {
 
-		if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(Paths.get(configFilePath)))))
-			this.configurationFilePath = configFilePath;
+		Path initialPath = Paths.get(configFilePath).toAbsolutePath().normalize();
+		if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(initialPath))))
+			this.configurationFilePath = initialPath.toString();
 		else
-			this.configurationFilePath = "./config/burst/settings.xml";
+			this.configurationFilePath = Paths.get("./config/burst/settings.xml").toAbsolutePath().normalize()
+					.toString();
 
 		Path path = Paths.get(this.configurationFilePath);
 		Path parentPath = path.getParent();
-		// Remove the last two directories from the path
 		Path grandParentPath = parentPath.getParent().getParent();
 
-		if (this.configurationFilePath.endsWith("config/burst/settings.xml")) {
+		if (this.configurationFilePath.replace("\\", "/").endsWith("config/burst/settings.xml")
+				|| this.configurationFilePath.replace("\\", "/").endsWith("config/_internal/settings.xml")) {
 			PORTABLE_EXECUTABLE_DIR_PATH = grandParentPath.toAbsolutePath().toString().replace("\\", "/");
 		} else {
 			PORTABLE_EXECUTABLE_DIR_PATH = grandParentPath.getParent().toAbsolutePath().toString().replace("\\", "/");
 		}
-
 	}
 
 	public String getReportingPrimaryDatabaseConnectionCode() {
@@ -121,7 +122,8 @@ public class Settings extends DumpToString {
 				&& docSettings.settings.capabilities.reportgenerationmailmerge))
 			loadSettingsReporting();
 
-		// log.debug("loadSettings - settings = [" + docSettings + "], reportingSettings = [" + reportingSettings + "]");
+		// log.debug("loadSettings - settings = [" + docSettings + "], reportingSettings
+		// = [" + reportingSettings + "]");
 
 		return docSettings;
 	}
