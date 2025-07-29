@@ -887,31 +887,33 @@ export class ConfigurationComponent implements OnInit {
           // this.changeDetectorRef.detectChanges();
           // await Utilities.sleep(10);
 
-          // Always load from disk (no cache)
-          try {
-            const fileExists = await this.fsService.existsAsync(newPath);
-            console.log(`Checking file: ${newPath}, exists: ${fileExists}`);
-            if (fileExists) {
-              const content =
-                await this.settingsService.loadTemplateFileAsync(newPath);
-              console.log(`Loaded content for ${newPath}:`, content);
-              if (content) {
-                this.activeReportTemplateContent = content;
 
-              }
-            } else {
-              // Create with default content for NEW output type
-              const defaultContent = `<html>\n<head>\n<title>${configName} ${newOutputType} Template</title>\n</head>\n<body>\n<h1>${configName} ${newOutputType} Report</h1>\n</body>\n</html>`;
-              await this.settingsService.saveTemplateFileAsync(
-                newPath,
-                defaultContent,
-              );
-              this.activeReportTemplateContent = defaultContent;
+        }
+
+        // Always load from disk (no cache)
+        try {
+          const fileExists = await this.fsService.existsAsync(newPath);
+          console.log(`Checking file: ${newPath}, exists: ${fileExists}`);
+          if (fileExists) {
+            const content =
+              await this.settingsService.loadTemplateFileAsync(newPath);
+            console.log(`Loaded content for ${newPath}:`, content);
+            if (content) {
+              this.activeReportTemplateContent = content;
+
             }
-            this.changeDetectorRef.detectChanges();
-          } catch (error) {
-            console.error(`Error loading template for ${newOutputType}:`, error);
+          } else {
+            // Create with default content for NEW output type
+            const defaultContent = `<html>\n<head>\n<title>${configName} ${newOutputType} Template</title>\n</head>\n<body>\n<h1>${configName} ${newOutputType} Report</h1>\n</body>\n</html>`;
+            await this.settingsService.saveTemplateFileAsync(
+              newPath,
+              defaultContent,
+            );
+            this.activeReportTemplateContent = defaultContent;
           }
+          this.changeDetectorRef.detectChanges();
+        } catch (error) {
+          console.error(`Error loading template for ${newOutputType}:`, error);
         }
 
         // Update path if needed - but never update for sample paths
@@ -1050,7 +1052,6 @@ export class ConfigurationComponent implements OnInit {
       // Re-enable
       this.autosaveEnabled = true;
     }
-
 
   }
 
@@ -2080,6 +2081,18 @@ export class ConfigurationComponent implements OnInit {
       this.refreshHtmlPreview();
       this.changeDetectorRef.detectChanges();
     }
+
+
+    const currentPath = this.xmlReporting.documentburster.report.template.documentpath;
+    const isSamplePath =
+      currentPath &&
+      (currentPath.includes('/samples/') ||
+        currentPath.startsWith('samples/') ||
+        currentPath.includes('\\samples\\') ||
+        currentPath.startsWith('samples\\'));
+
+    if (isSamplePath) return;
+
     const configName =
       this.settingsService.currentConfigurationTemplate?.folderName ||
       'template';
@@ -2087,6 +2100,8 @@ export class ConfigurationComponent implements OnInit {
     //console.log(
     //  `Saving ${outputType} template content (${htmlContent.length} bytes)`,
     //);
+
+
 
     // Template path using structure: reports/{configName}/{configName}-{outputType}.html
     let templatePath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-${outputType}.html`;

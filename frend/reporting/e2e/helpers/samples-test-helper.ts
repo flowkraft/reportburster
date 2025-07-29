@@ -1,3 +1,4 @@
+import { Constants } from '../utils/constants';
 import { FluentTester } from './fluent-tester';
 
 export class SamplesTestHelper {
@@ -105,7 +106,8 @@ export class SamplesTestHelper {
       ft = ft
         .click('#leftMenuReportingSettings')
         .click('#reportingTemplateOutputTab-link')
-        .waitOnElementToBecomeVisible('#reportOutputType');
+        .waitOnElementToBecomeVisible('#reportOutputType')
+        .sleep(3 * Constants.DELAY_ONE_SECOND);
 
       if (expectedOutputFile.endsWith('.docx') && expectedTemplateFile) {
         ft = ft

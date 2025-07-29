@@ -9,6 +9,7 @@ import { SamplesTestHelper } from '../../helpers/samples-test-helper';
 
 //DONE2
 test.describe('', async () => {
+
   electronBeforeAfterAllTest(
     'should work correctly (01_monthly_payslips_split_only)',
     async ({ beforeAfterEach: firstPage }) => {
@@ -554,4 +555,5 @@ test.describe('', async () => {
         .appStatusShouldBeGreatNoErrorsNoWarnings();
     },
   );
+
 });
