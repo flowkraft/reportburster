@@ -1,6 +1,7 @@
 import { FluentTester } from '../fluent-tester';
 import * as PATHS from '../../utils/paths';
 import _ from 'lodash';
+import { Constants } from '../../utils/constants';
 
 export class ConfTemplatesTestHelper {
   static createNewTemplate = (
@@ -267,10 +268,10 @@ export class ConfTemplatesTestHelper {
       .waitOnElementToHaveText(
         '.sidebar-menu .header',
         `CONFIGURATION (${templateName})`,
-      );
+      ).sleep(3 * Constants.DELAY_ONE_SECOND);
 
     if (mailMergeCapability) {
-      ft = ft.elementShouldBeVisible('#leftMenuReportingSettings');
+      ft = ft.waitOnElementToBecomeVisible('#leftMenuReportingSettings').elementShouldBeVisible('#leftMenuReportingSettings');
     } else {
       ft = ft.elementShouldNotBeVisible('#leftMenuReportingSettings');
     }
