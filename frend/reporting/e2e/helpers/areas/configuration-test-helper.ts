@@ -604,9 +604,10 @@ export class ConfigurationTestHelper {
       .gotoConfiguration()
       .click(
         `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-      ).sleep(2 * Constants.DELAY_ONE_SECOND)
+      )
       .waitOnElementToBecomeVisible('#leftMenuGeneralSettings')
       .waitOnElementToBecomeEnabled('#leftMenuGeneralSettings')
+      .sleep(3 * Constants.DELAY_ONE_SECOND)
       .waitOnElementToBecomeVisible('#leftMenuReportingSettings')
       .waitOnElementToBecomeEnabled('#leftMenuReportingSettings')
       .click('#leftMenuReportingSettings')
