@@ -59,7 +59,7 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 				"------------------------------------- DONE_03:ReportBursterServer copy db-server template files and folders ... -------------------------------------");
 
 		// copy "frontent" web app (compiled)
-		String frontEndFolderPath = packageDirPath + "/" + this.topFolderName + "/lib/frontend";
+		String frontEndFolderPath = packageDirPath + "/" + this.topFolderName + "/lib/frend";
 
 		FileUtils.forceMkdir(new File(frontEndFolderPath));
 
