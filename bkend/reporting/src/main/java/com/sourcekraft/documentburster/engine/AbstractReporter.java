@@ -637,7 +637,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 		String[] roots = new String[] { configFolderPath, defaultRoots[0], defaultRoots[1] };
 		scripting.setRoots(roots);
-		log.info("Added config folder to scripting roots: {}", configFolderPath);
+		//log.info("Added config folder to scripting roots: {}", configFolderPath);
 
 		// Compose expected script file name
 		String additionalScriptName = this.getReportFolderName() + "-additional-transformation.groovy";
