@@ -22,6 +22,6 @@ if exist "%POLLING_PATH%\received\*.pdf" del /q "%POLLING_PATH%\received\*.pdf"
 if exist "%POLLING_PATH%\*.xlsx" del /q "%POLLING_PATH%\*.xlsx"
 if exist "%POLLING_PATH%\received\*.xlsx" del /q "%POLLING_PATH%\received\*.xlsx"
 
-set FRONTEND_PATH=%PORTABLE_EXECUTABLE_DIR_PATH%/lib/frontend
+set FRONTEND_PATH=%PORTABLE_EXECUTABLE_DIR_PATH%/lib/frend
 
 call tools/rbsj/startRbsjServer.bat

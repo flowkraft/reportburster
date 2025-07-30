@@ -61,8 +61,8 @@ RUN mvn dependency:copy-dependencies -P docker -X
 # Start a new stage to build the frontend
 FROM build as frontend
 
-# Set the working directory in the container to /app/frontend
-WORKDIR /app/frontend
+# Set the working directory in the container to /app/frend
+WORKDIR /app/frend
 
 # Copy the package.json and package-lock.json
 COPY ./frontend/reporting/package*.json ./
@@ -102,7 +102,7 @@ RUN cp /app/config/burst/settings.xml /app/config/_defaults/settings.xml && \
     cp /app/config/_internal/license.xml /app/config/_defaults/license.xml
 
 # Copy the frontend build output from the frontend stage
-COPY --from=frontend /app/frontend/dist /app/lib/frontend
+COPY --from=frontend /app/frend/dist /app/lib/frend
 
 # Copy the jar file from the build stage
 COPY --from=build /app/backend/reporting/target/dependencies /app/lib/burst
@@ -127,7 +127,7 @@ RUN echo '#!/bin/sh' > ./tools/test-email-server/shutTestEmailServer.sh && \
     chmod +x ./tools/test-email-server/shutTestEmailServer.sh
 
 # RUN ls -la /app
-# RUN ls -la /app/lib/frontend
+# RUN ls -la /app/lib/frend
 # RUN ls -la /app/lib/burst
 # RUN ls -la /app/lib/server
 # Run the jar file
@@ -139,7 +139,7 @@ RUN echo '#!/bin/sh' > /usr/local/bin/docker-entrypoint.sh && \
     echo '    exec ./reportburster.sh "$@"' >> /usr/local/bin/docker-entrypoint.sh && \
     echo 'else' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '    export PORTABLE_EXECUTABLE_DIR_PATH=/app' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '    export FRONTEND_PATH=/app/lib/frontend' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '    export FRONTEND_PATH=/app/lib/frend' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '    export POLLING_PATH=/app/poll' >> /usr/local/bin/docker-entrypoint.sh && \
     echo '    exec java -Dserver.port=9090 -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH -DUID=9090 -Dspring.resources.static-locations=file:///$FRONTEND_PATH -DPOLLING_PATH=$POLLING_PATH -jar /app/lib/server/rb-server.jar -serve' >> /usr/local/bin/docker-entrypoint.sh && \
     echo 'fi' >> /usr/local/bin/docker-entrypoint.sh
