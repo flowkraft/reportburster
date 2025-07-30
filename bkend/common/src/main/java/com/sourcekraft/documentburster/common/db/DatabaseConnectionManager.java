@@ -190,7 +190,7 @@ public class DatabaseConnectionManager {
 
 		// Cache it
 		dataSourcePools.put(connectionCode, dataSource);
-		log.info("Created and cached new DataSource pool for code: {}", connectionCode);
+		// log.info("Created and cached new DataSource pool for code: {}", connectionCode);
 		log.trace("Exiting getDataSource (created) for code: {}", connectionCode);
 		return dataSource;
 	}
@@ -237,7 +237,7 @@ public class DatabaseConnectionManager {
 
 		// Cache it
 		jdbiInstances.put(connectionCode, jdbi);
-		log.info("Created and cached new Jdbi instance for code: {}", connectionCode);
+		//log.info("Created and cached new Jdbi instance for code: {}", connectionCode);
 		log.trace("Exiting getJdbi (created) for code: {}", connectionCode);
 		return jdbi;
 	}
