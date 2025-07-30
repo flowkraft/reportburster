@@ -9,7 +9,6 @@ import { Constants } from '../../utils/constants';
 //DONE2
 test.describe('', async () => {
 
-
   electronBeforeAfterAllTest(
     `(WITHOUT Report Generation) - should work changing/saving configuration values and should work rolling back to default configuration values 
     ("My Reports")`,
@@ -33,7 +32,7 @@ test.describe('', async () => {
       );
     },
   );
-
+  
   electronBeforeAfterAllTest(
     `(WITH Report Generation) - should properly 'Generate Reports' templates, verify datasource defaults, do the 'Read Only' template/Output checks and then cleanup`,
     async function ({ beforeAfterEach: firstPage }) {
@@ -201,31 +200,31 @@ test.describe('', async () => {
       );
 
       //Update #btnCapReportGenerationMailMerge to be "on" again
-      /*
-      ft = ft
-        .gotoConfigurationTemplates()
-        .clickAndSelectTableRow(`#payslips_${PATHS.SETTINGS_CONFIG_FILE}`)
-        .waitOnElementToBecomeEnabled('#btnEdit')
-        .click('#btnEdit')
-        .waitOnElementToBecomeVisible('#btnCapReportGenerationMailMerge')
-        .elementCheckBoxShouldNotBeSelected('#btnCapReportGenerationMailMerge')
-        .click('#btnCapReportGenerationMailMerge')
-        .clickYesDoThis()
-        .waitOnElementToBecomeInvisible('#btnCapReportGenerationMailMerge');
+      
+      //ft = ft
+      //  .gotoConfigurationTemplates()
+      //  .clickAndSelectTableRow(`#payslips_${PATHS.SETTINGS_CONFIG_FILE}`)
+      //  .waitOnElementToBecomeEnabled('#btnEdit')
+      //  .click('#btnEdit')
+      //  .waitOnElementToBecomeVisible('#btnCapReportGenerationMailMerge')
+      //  .elementCheckBoxShouldNotBeSelected('#btnCapReportGenerationMailMerge')
+      //  .click('#btnCapReportGenerationMailMerge')
+      //  .clickYesDoThis()
+      //  .waitOnElementToBecomeInvisible('#btnCapReportGenerationMailMerge');
 
-      const docxTemplatePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/payslips/payslips-template.docx`;
-      const tempStoragePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/temp/payslips-template.docx`;
+      //const docxTemplatePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/templates/reports/payslips/payslips-template.docx`;
+      //const tempStoragePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/temp/payslips-template.docx`;
 
-      ft = ft.moveFile(docxTemplatePath, tempStoragePath);
+      //ft = ft.moveFile(docxTemplatePath, tempStoragePath);
       //assert with the Reporting part
-      ft =
-        ConfigurationTestHelper.assertDefaultDocumentBursterReportingConfiguration(
-          ft,
-          'payslips',
-        ).moveFile(tempStoragePath, docxTemplatePath);
-      */
+      //ft =
+      //  ConfigurationTestHelper.assertDefaultDocumentBursterReportingConfiguration(
+      //    ft,
+      //    'payslips',
+      //  ).moveFile(tempStoragePath, docxTemplatePath);
+      //
       return ConfTemplatesTestHelper.deleteTemplate(ft, 'payslips');
-    },
+    } ,
   );
-
+  
 });

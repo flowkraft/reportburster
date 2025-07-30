@@ -1370,7 +1370,7 @@ export class FluentTester implements PromiseLike<void> {
   }
 
   private async doMoveFile(srcPath: string, destPath: string): Promise<void> {
-    return jetpack.moveAsync(srcPath, destPath);
+    return jetpack.moveAsync(srcPath, destPath, { overwrite: true });
   }
 
   private async doCreateFolder(path: string): Promise<void> {
