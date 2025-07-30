@@ -32,8 +32,8 @@ public class ReportParametersHelper {
 		List<Map<String, Object>> paramsMetadataList = script.getParamsMetadataList();
 		List<ReportParameter> reportParameters = new ArrayList<>();
 
-		System.out.println("groovyParametersDslCode: " + groovyParametersDslCode.substring(0, 100));
-		System.out.println("paramsMetadataList: " + paramsMetadataList.size());
+		//System.out.println("groovyParametersDslCode: " + groovyParametersDslCode.substring(0, 100));
+		//System.out.println("paramsMetadataList: " + paramsMetadataList.size());
 
 		if (paramsMetadataList != null) {
 			for (Map<String, Object> paramMap : paramsMetadataList) {

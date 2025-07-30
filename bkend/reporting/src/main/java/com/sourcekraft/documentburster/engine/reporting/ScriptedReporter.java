@@ -77,7 +77,7 @@ public class ScriptedReporter extends AbstractReporter {
 				// Retrieve existing ServerDatabaseSettings and create a groovy Sql instance
 				ServerDatabaseSettings dbs = this.getServerDatabaseSettings(connectionCode);
 				dbs.ensureDriverAndUrl();
-				System.out.println("ServerDatabaseSettings dbs = " + dbs.toString());
+				//System.out.println("ServerDatabaseSettings dbs = " + dbs.toString());
 
 				dbSql = Sql.newInstance(dbs.url, dbs.userid, dbs.userpassword, dbs.driver);
 				ctx.dbSql = dbSql;

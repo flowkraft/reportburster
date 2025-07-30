@@ -40,9 +40,9 @@ public class LogsController {
 	@PutMapping("/logs/tailer")
 	public Mono<ResponseEntity<Void>> tail(@RequestBody TailCommandInfo tailCommandInfo) throws Exception {
 
-		System.out.println("tailCommandInfo.fileName = " + tailCommandInfo.fileName);
-		System.out.println("tailCommandInfo.command = " + tailCommandInfo.command);
-		
+		//System.out.println("tailCommandInfo.fileName = " + tailCommandInfo.fileName);
+		//System.out.println("tailCommandInfo.command = " + tailCommandInfo.command);
+
 		if (tailCommandInfo.command.equals("start"))
 			try {
 				fsService.startTailer(tailCommandInfo.fileName);

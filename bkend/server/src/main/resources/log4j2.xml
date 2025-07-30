@@ -1,0 +1,32 @@
+<!-- filepath: c:\Projects\all-repos\src\prd\rb\bkend\server\src\main\resources\log4j2.xml -->
+<Configuration status="WARN">
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{dd/MM/yyyy HH:mm:ss} %p - %m%n"/>
+      <Filters>
+        <!-- Only show WARN and above by default -->
+        <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+      </Filters>
+    </Console>
+    <RollingFile name="File" fileName="${env:PORTABLE_EXECUTABLE_DIR}/logs/server.log"
+                 filePattern="${env:PORTABLE_EXECUTABLE_DIR}/logs/server-%d{yyyy-MM-dd}-%i.log.gz">
+      <PatternLayout pattern="%d{dd/MM/yyyy HH:mm:ss} %p - %m%n"/>
+      <Policies>
+        <SizeBasedTriggeringPolicy size="10MB"/>
+      </Policies>
+      <DefaultRolloverStrategy max="10"/>
+    </RollingFile>
+  </Appenders>
+  <Loggers>
+    <!-- Your app logs at INFO to console and file -->
+    <Logger name="com.flowkraft" level="INFO" additivity="false">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="File"/>
+    </Logger>
+    <!-- Root logger: WARN to console, INFO to file -->
+    <Root level="INFO">
+      <AppenderRef ref="File"/>
+      <AppenderRef ref="Console"/>
+    </Root>
+  </Loggers>
+</Configuration>

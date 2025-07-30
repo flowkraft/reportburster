@@ -142,7 +142,7 @@ public class DatabaseConnectionManager {
 			throw new Exception("Failed to retrieve valid database server settings for code: " + connectionCode);
 		}
 
-		System.out.println("connSettings: " + connSettings.toString());
+		//System.out.println("connSettings: " + connSettings.toString());
 
 		// Create DataSource using HikariCP
 		log.trace("Creating HikariConfig for code: {}", connectionCode);
@@ -158,7 +158,7 @@ public class DatabaseConnectionManager {
 			}
 		}
 
-		System.out.println("connSettings.databaseserver.driver: " + connSettings.databaseserver.driver);
+		//System.out.println("connSettings.databaseserver.driver: " + connSettings.databaseserver.driver);
 
 		config.setDriverClassName(connSettings.databaseserver.driver);
 		config.setJdbcUrl(connSettings.databaseserver.connectionstring);

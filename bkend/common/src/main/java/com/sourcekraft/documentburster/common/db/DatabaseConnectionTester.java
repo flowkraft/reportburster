@@ -37,7 +37,7 @@ public class DatabaseConnectionTester {
 
 		DatabaseConnectionManager dbManager = new DatabaseConnectionManager(settings);
 
-		System.out.println("testConnection dbSettings.connection.code = " + dbSettings.connection.code);
+		//System.out.println("testConnection dbSettings.connection.code = " + dbSettings.connection.code);
 
 		try (Connection connection = dbManager.getJdbcConnection(dbSettings.connection.code)) {
 			try (Statement stmt = connection.createStatement()) {

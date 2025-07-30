@@ -152,7 +152,6 @@ def ensure_java_is_installed(version="17"):
                 subprocess.check_call(f'choco install maven -y', shell=True)
             if version == '11':
                 subprocess.check_call(f'choco install temurin11 -y', shell=True)
-                subprocess.check_call(f'choco install maven -y', shell=True)
             elif version == '8':
                 subprocess.check_call(f'choco install temurin8 -y', shell=True)
             elif version == 'latest':
@@ -168,7 +167,6 @@ def ensure_java_is_installed(version="17"):
             subprocess.check_call(f'choco install maven -y', shell=True)
         elif version == '11':
             subprocess.check_call(f'choco install temurin11 -y', shell=True)
-            subprocess.check_call(f'choco install maven -y', shell=True)
         elif version == '8':
                 subprocess.check_call(f'choco install temurin8 -y', shell=True)
         else:

@@ -47,8 +47,8 @@ public class ReportingController {
 				.replace("\\t", "\t") // Unescape tabs
 				.replace("\\\"", "\""); // Unescape double quotes
 
-		System.out.println("/parse-parameters groovyParametersDslCode: " + groovyParametersDslCode.substring(0, 200));
-		System.out.println("/parse-parameters cleanedCode: " + cleanedCode.substring(0, 200));
+		//System.out.println("/parse-parameters groovyParametersDslCode: " + groovyParametersDslCode.substring(0, 200));
+		//System.out.println("/parse-parameters cleanedCode: " + cleanedCode.substring(0, 200));
 
 		return Mono.fromCallable(() -> {
 			List<ReportParameter> reportParameters = ReportParametersHelper.parseGroovyParametersDslCode(cleanedCode);
@@ -62,8 +62,8 @@ public class ReportingController {
 	public Mono<SqlQueryResult> testFetchData(@RequestParam String configurationFilePath,
 			@RequestParam Map<String, String> parameters) {
 
-		System.out.println("/test-fetch-data Received request to test SQL query: " + configurationFilePath);
-		System.out.println("/test-fetch-data Received parameters: " + parameters.toString());
+		//System.out.println("/test-fetch-data Received request to test SQL query: " + configurationFilePath);
+		//System.out.println("/test-fetch-data Received parameters: " + parameters.toString());
 
 		return Mono.fromCallable(() -> {
 			String cfgFilePath;
@@ -72,17 +72,17 @@ public class ReportingController {
 			} else {
 				cfgFilePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, configurationFilePath).toString();
 			}
-			System.out.println("/test-fetch-data cfgFilePath: " + cfgFilePath);
+			//System.out.println("/test-fetch-data cfgFilePath: " + cfgFilePath);
 
 			// Debug print parameter values
-			System.out.println("Parameter values:");
+			//System.out.println("Parameter values:");
 			parameters.forEach((key, value) -> {
-				System.out.println(key + " = " + value);
+				//System.out.println(key + " = " + value);
 			});
 
 			return reportingService.testFetchData(cfgFilePath, parameters);
 		}).doOnError(e -> {
-			System.out.println("Error testing SQL query: " + e.getMessage());
+			//System.out.println("Error testing SQL query: " + e.getMessage());
 			log.error("Error testing SQL query", e);
 		}).onErrorResume(e -> Mono
 				.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to test SQL query", e)));
