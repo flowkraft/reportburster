@@ -28,9 +28,9 @@ export class WebSocketService extends WebSocketEndpoint {
   }
 
   async makeWSConnectionAndHandleMessages() {
-    console.log(
-      `this.BACKEND_URL = ${this.BACKEND_URL}, this.apiService.BACKEND_URL = ${this.apiService.BACKEND_URL}`,
-    );
+    //console.log(
+    //  `this.BACKEND_URL = ${this.BACKEND_URL}, this.apiService.BACKEND_URL = ${this.apiService.BACKEND_URL}`,
+    //);
     if (this.BACKEND_URL == '/api' && this.apiService.BACKEND_URL != '/api') {
       this.BACKEND_URL = this.apiService.BACKEND_URL;
 
@@ -619,7 +619,7 @@ export class WebSocketService extends WebSocketEndpoint {
     ) {
       this.executionStatsService.logStats.foundDirtyLogFiles = true;
     }
-    console.log(`this.executionStatsService.logStats.infoLogFileSize = ${this.executionStatsService.logStats.infoLogFileSize}`);
+    // console.log(`this.executionStatsService.logStats.infoLogFileSize = ${this.executionStatsService.logStats.infoLogFileSize}`);
   };
 
   getNiceListOfFileNames(fileNames: Array<string>) {

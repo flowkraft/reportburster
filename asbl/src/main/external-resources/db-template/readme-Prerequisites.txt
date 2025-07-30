@@ -1,8 +1,8 @@
 Java Requirement
 --------------
-ReportBurster requires Java version 11 specifically to run properly.
+ReportBurster requires Java version 17 specifically to run properly.
 
-Note 1: ReportBurster will not work with Java versions before 11 and is not guaranteed to work with versions after 11.
+Note 1: ReportBurster will not work with Java versions before 17 and is not guaranteed to work with versions after 17 (though it is likely to work).
 Note 2: Before installing, uninstalling, or changing Java versions, please verify that no other business-critical software on your computer depends on Java. Modifying Java installations may affect or break other Java-dependent applications.
 
 Check Current Installation
@@ -13,7 +13,7 @@ Check Current Installation
    
    java -version
    
-   If you see "version 11.x.x", Java 17 is already installed - no further action needed.
+   If you see "version 17.x.x", Java 17 is already installed - no further action needed.
    If Java 17 is not installed, Chocolatey (Windows) package manager provides an easy way to install it.
 
 2. Check if Chocolatey is installed:

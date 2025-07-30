@@ -67,7 +67,7 @@ public class SqlReporter extends AbstractReporter {
 			// Bind parameters from variables
 			Map<String, Object> currentVars = ctx.variables.getUserVariables(ctx.token);
 
-			System.out.println("[DEBUG] ctx.variables.getUserVariables(ctx.token): " + currentVars);
+			//System.out.println("[DEBUG] ctx.variables.getUserVariables(ctx.token): " + currentVars);
 
 			if (currentVars != null) {
 				for (String paramName : queryParams) {

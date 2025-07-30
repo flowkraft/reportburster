@@ -213,7 +213,7 @@ public class SystemService {
 		List<String> newArgs = new ArrayList<>();
 		for (String arg : args) {
 			// Print each original argument
-			System.out.println("[DEBUG] Original arg: " + arg);
+			//System.out.println("[DEBUG] Original arg: " + arg);
 
 			String modifiedArg = arg.replace("PORTABLE_EXECUTABLE_DIR_PATH/",
 					AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/");
@@ -223,14 +223,14 @@ public class SystemService {
 			newArgs.add(modifiedArg);
 		}
 		// Print the final command line that will be executed
-		System.out.println("[DEBUG] Full command to execute:");
+		//System.out.println("[DEBUG] Full command to execute:");
 		for (String part : commandWithShell) {
 			System.out.print(part + " ");
 		}
 		for (String part : newArgs) {
 			System.out.print(part + " ");
 		}
-		System.out.println();
+		//System.out.println();
 
 		commandWithShell.addAll(newArgs);
 
@@ -241,7 +241,7 @@ public class SystemService {
 					+ URLDecoder.decode(cwdPath.get(), StandardCharsets.UTF_8.toString());
 		}
 
-		System.out.println("[DEBUG] Working directory: " + workingDirectoryPath);
+		//System.out.println("[DEBUG] Working directory: " + workingDirectoryPath);
 
 		ProcessBuilder processBuilder = new ProcessBuilder(commandWithShell);
 		processBuilder.directory(new File(workingDirectoryPath));

@@ -75,7 +75,7 @@ export class FsService {
       }),
     );
 
-    console.log('existsAsync', path, result);
+    //console.log('existsAsync', path, result);
     // Convert the literal string "false" to the boolean false
     if (result === 'false') {
       return false;

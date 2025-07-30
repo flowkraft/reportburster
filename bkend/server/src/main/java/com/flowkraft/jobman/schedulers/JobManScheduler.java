@@ -61,8 +61,8 @@ public class JobManScheduler {
 			}
 			if (!isRunning) {
 				// Electron process is not running, stop the Spring Boot application
-				System.out.println("rbsj.JobManScheduler - ReportBurster.exe (Electron) process having PID " + pid
-						+ " was closed => stop its corresponding SpringBoot server application");
+				//System.out.println("rbsj.JobManScheduler - ReportBurster.exe (Electron) process having PID " + pid
+				//		+ " was closed => stop its corresponding SpringBoot server application");
 
 				int exitCode = SpringApplication.exit(this.context, (ExitCodeGenerator) () -> 0);
 				System.exit(exitCode);
