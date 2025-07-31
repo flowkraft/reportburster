@@ -25,11 +25,6 @@ if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log" (
     del /F /Q "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log"
 )
 
-:: Check if the rbsj-server.log file exists and delete it
-if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log" (
-    del /F /Q "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log"
-)
-
 :: Check if the rbsj-exe.log file exists and delete it
 if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log" (
     del /F /Q "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log"
@@ -74,7 +69,7 @@ if errorlevel 1 (
 )
 
 :: Build the JAVA_CMD with all options placed correctly before the -jar
-set "JAVA_CMD=-Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT%"
+set "JAVA_CMD=-Dorg.springframework.boot.logging.LoggingSystem=org.springframework.boot.logging.log4j2.Log4J2LoggingSystem -Dlog4j.configurationFile=%PORTABLE_EXECUTABLE_DIR_PATH%\log4j2-rbsj.xml -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT%"
 
 if not "%FRONTEND_PATH%"=="" (
     set "JAVA_CMD=!JAVA_CMD! -Dspring.resources.add-mappings=true"
@@ -95,8 +90,8 @@ echo [DEBUG] Final JAVA command: %JAVA_CMD%
 
 :: Conditional logic based on RB_SERVER_MODE
 if "%RB_SERVER_MODE%"=="true" (
-    
-    powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') | Tee-Object -FilePath '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log' }"
+
+    powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') }"
 
 ) else (
     :: Update settings.xml with the port
@@ -104,5 +99,5 @@ if "%RB_SERVER_MODE%"=="true" (
     
     java -version > "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log" 2>&1
 
-    powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') | Tee-Object -FilePath '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log' }"
+    powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') }"
 )

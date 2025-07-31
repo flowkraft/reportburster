@@ -25,7 +25,7 @@ public class KillOldExeThenCopyAndStartNewExe {
 
 			Map<String, List<String>> arrgs = _getParams(args);
 
-			//System.out.println(APP_ID + " - arrgs: " + arrgs);
+			// System.out.println(APP_ID + " - arrgs: " + arrgs);
 
 			jobFilePath = arrgs.get("jfp").get(0);
 			newExeFilePath = arrgs.get("nefp").get(0);
@@ -46,12 +46,14 @@ public class KillOldExeThenCopyAndStartNewExe {
 	private static void _doKillOldExeThenCopyAndStartNewExe(String jobFilePath, String newExeFilePath,
 			String upgDbTempFolderPath) throws Exception {
 
-		//System.out.println(String.format("%s - jobFilePath = %s; newExeFilePath = %s; upgDbTempFolderPath = %s", APP_ID,
-				jobFilePath, newExeFilePath, upgDbTempFolderPath));
+		// System.out.println(String.format("%s - jobFilePath = %s; newExeFilePath = %s;
+		// upgDbTempFolderPath = %s", APP_ID,
+		// jobFilePath, newExeFilePath, upgDbTempFolderPath));
 
-		//System.out.println(APP_ID + " - _KILL_COMMAND: " + _KILL_COMMAND);
+		// System.out.println(APP_ID + " - _KILL_COMMAND: " + _KILL_COMMAND);
 
-		//System.out.println(APP_ID + " - STEP 1 - \"Kill -9\" the running ReportBurster.exe process ... ");
+		// System.out.println(APP_ID + " - STEP 1 - \"Kill -9\" the running
+		// ReportBurster.exe process ... ");
 
 		_killProcess();
 
@@ -62,23 +64,25 @@ public class KillOldExeThenCopyAndStartNewExe {
 		if (!oldExe.exists()) {
 			message = APP_ID + " - STEP 2 - Could not delete the old '" + oldExe.getAbsolutePath()
 					+ "' file WAS NOT FOUND !";
-			//System.out.println(message);
+			// System.out.println(message);
 			throw new Exception(message);
 		} else {
 			oldExe.delete();
-			//System.out.println(APP_ID + " - STEP 2 - Deleted the old '" + oldExe.getAbsolutePath() + "' file ... ");
+			// System.out.println(APP_ID + " - STEP 2 - Deleted the old '" +
+			// oldExe.getAbsolutePath() + "' file ... ");
 		}
 
 		File newExe = new File(newExeFilePath);
 		if (!newExe.exists()) {
 			message = APP_ID + " - STEP 3 - Could not copy the new '" + newExe.getAbsolutePath()
 					+ "' file WAS NOT FOUND !";
-			//System.out.println(message);
+			// System.out.println(message);
 			throw new Exception(message);
 		} else {
 			newExe.renameTo(oldExe);
-			//System.out.println(APP_ID + " - STEP 3 - Copied the new '" + newExe.getAbsolutePath() + "' file to '"
-			//		+ oldExe.getAbsolutePath() + "' ... ");
+			// System.out.println(APP_ID + " - STEP 3 - Copied the new '" +
+			// newExe.getAbsolutePath() + "' file to '"
+			// + oldExe.getAbsolutePath() + "' ... ");
 
 		}
 
@@ -86,32 +90,35 @@ public class KillOldExeThenCopyAndStartNewExe {
 		if (!upgDbTempFolder.exists()) {
 			message = APP_ID + " - STEP 4 - Could not delete the temporarily '" + upgDbTempFolder.getAbsolutePath()
 					+ "' folder WAS NOT FOUND !";
-			//System.out.println(message);
+			// System.out.println(message);
 			throw new Exception(message);
 		} else {
 			_forceDeleteDirectory(upgDbTempFolder);
-			//System.out.println(APP_ID + " - STEP 4 - Deleted the temporarily '" + upgDbTempFolder.getAbsolutePath()
-			//		+ "' folder ... ");
+			// System.out.println(APP_ID + " - STEP 4 - Deleted the temporarily '" +
+			// upgDbTempFolder.getAbsolutePath()
+			// + "' folder ... ");
 		}
 
 		File jobFile = new File(jobFilePath);
 		if (!jobFile.exists()) {
 			message = APP_ID + " - STEP 5 - Could not delete the job '" + jobFile.getAbsolutePath()
 					+ "' file WAS NOT FOUND !";
-			//System.out.println(message);
+			// System.out.println(message);
 			// throw new Exception(message);
 		} else {
 			jobFile.delete();
-			//System.out.println(APP_ID + " - STEP 5 - Deleted the job '" + jobFile.getAbsolutePath() + "' file ... ");
+			// System.out.println(APP_ID + " - STEP 5 - Deleted the job '" +
+			// jobFile.getAbsolutePath() + "' file ... ");
 		}
 
 		if (!oldExe.exists()) {
 			message = APP_ID + " - STEP 6 - Could not start the new / updated ReportBurster.exe... '"
 					+ oldExe.getAbsolutePath() + "' file WAS NOT FOUND !";
-			//System.out.println(message);
+			// System.out.println(message);
 			throw new Exception(message);
 		} else {
-			//System.out.println(APP_ID + " - STEP 6 - Starting the new / updated ReportBurster.exe ... ");
+			// System.out.println(APP_ID + " - STEP 6 - Starting the new / updated
+			// ReportBurster.exe ... ");
 			Runtime.getRuntime().exec(oldExe.getAbsolutePath());
 		}
 	}

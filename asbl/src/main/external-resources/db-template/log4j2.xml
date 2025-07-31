@@ -94,7 +94,7 @@
 
 		</Logger>
 
-		<Root level="debug">
+		<Root level="warn">
 
 			<!-- <AppenderRef ref="documentburster" /> -->
 

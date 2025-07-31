@@ -79,7 +79,8 @@ public class CliJob {
 	}
 
 	public void setParameters(Map<String, String> parameters) {
-		//System.out.println("[DEBUG] CliJob.setParameters called with: " + parameters);
+		// System.out.println("[DEBUG] CliJob.setParameters called with: " +
+		// parameters);
 		this.parameters = parameters;
 	}
 
@@ -425,45 +426,50 @@ public class CliJob {
 
 		File jobFile = null;
 		try {
-			//System.out.println("doTestFetchData: configurationFilePath = " + configurationFilePath);
+			// System.out.println("doTestFetchData: configurationFilePath = " +
+			// configurationFilePath);
 
 			// Create job file
 			jobFile = _createJobFile(configurationFilePath, "test-fetch-data");
-			//System.out.println(
-			//		"doTestFetchData: Created job file: " + (jobFile != null ? jobFile.getAbsolutePath() : "null"));
+			// System.out.println(
+			// "doTestFetchData: Created job file: " + (jobFile != null ?
+			// jobFile.getAbsolutePath() : "null"));
 
 			// Load settings and determine job type
 			settings.setConfigurationFilePath(configurationFilePath);
 			settings.loadSettings();
 
 			String dsType = settings.getReportDataSource().type;
-			//System.out.println("doTestFetchData: Data source type (jobType) = " + dsType);
+			// System.out.println("doTestFetchData: Data source type (jobType) = " +
+			// dsType);
 
 			this.setJobType(dsType);
 
 			// Get the correct reporter (SqlReporter, ScriptReporter, etc.)
 			AbstractBurster burster = getBurster(configurationFilePath);
-			//System.out.println("doTestFetchData: Got burster of type: "
-					+ (burster != null ? burster.getClass().getName() : "null"));
+			// System.out.println("doTestFetchData: Got burster of type: "
+			// + (burster != null ? burster.getClass().getName() : "null"));
 
 			// Only AbstractReporter descendants have setPreviewMode
 			if (burster instanceof AbstractReporter) {
-				//System.out.println("doTestFetchData: burster is instance of AbstractReporter");
+				// System.out.println("doTestFetchData: burster is instance of
+				// AbstractReporter");
 				((AbstractReporter) burster).setPreviewMode(true);
-				//System.out.println("doTestFetchData: setPreviewMode called");
+				// System.out.println("doTestFetchData: setPreviewMode called");
 
 				((AbstractReporter) burster).setReportParameters(parameters);
-				//System.out.println("doTestFetchData: setReportParameters called with: "
-				//		+ (parameters != null ? parameters.toString() : "null"));
+				// System.out.println("doTestFetchData: setReportParameters called with: "
+				// + (parameters != null ? parameters.toString() : "null"));
 			} else {
-				//System.out.println("doTestFetchData: burster is NOT instance of AbstractReporter");
+				// System.out.println("doTestFetchData: burster is NOT instance of
+				// AbstractReporter");
 				throw new IllegalStateException("Test SQL Query only supported for AbstractReporter-based bursters");
 			}
 
 			// Run the normal reporting flow (no output/distribution in preview mode)
-			//System.out.println("doTestFetchData: Calling burst...");
+			// System.out.println("doTestFetchData: Calling burst...");
 			burster.burst(settings.getTemplateName(), false, "", -1);
-			//System.out.println("doTestFetchData: burst finished");
+			// System.out.println("doTestFetchData: burst finished");
 
 			// Prepare and return the result
 			SqlQueryResult result = new SqlQueryResult();
@@ -471,17 +477,19 @@ public class CliJob {
 			result.reportColumnNames = burster.getCtx().reportColumnNames;
 			result.isPreview = true;
 
-			//System.out.println("doTestFetchData: reportData size = "
-			//		+ (result.reportData != null ? result.reportData.size() : "null"));
-			//System.out.println("doTestFetchData: reportColumnNames = "
-			//		+ (result.reportColumnNames != null ? result.reportColumnNames.toString() : "null"));
+			// System.out.println("doTestFetchData: reportData size = "
+			// + (result.reportData != null ? result.reportData.size() : "null"));
+			// System.out.println("doTestFetchData: reportColumnNames = "
+			// + (result.reportColumnNames != null ? result.reportColumnNames.toString() :
+			// "null"));
 
 			// Optionally set executionTimeMillis, etc.
 			return result;
 
 		} finally {
 			if ((jobFile != null) && (jobFile.exists())) {
-				//System.out.println("doTestFetchData: Deleting job file: " + jobFile.getAbsolutePath());
+				// System.out.println("doTestFetchData: Deleting job file: " +
+				// jobFile.getAbsolutePath());
 				jobFile.delete();
 			}
 		}
