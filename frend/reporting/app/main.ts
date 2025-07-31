@@ -141,38 +141,9 @@ try {
         cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
         env: { ...process.env, ELECTRON_PID: process.pid.toString() },
       });
-      let windowCreated = false;
 
-      serverProcess.stdout.on('data', (data) => {
-        //console.log(`stdout: ${data}`);
-        const dataStr = data.toString();
-
-        //if (
-        //  dataStr.includes('choco') ||
-        //  dataStr.includes('embedded.tomcat.') ||
-        //  dataStr.includes('flowkraft.ServerApplication')
-        //)
-        log.info(dataStr);
-
-        //createWindow() main application window in both situations
-        //if java is installed 'Starting ProtocolHandler' or java is not installed 'process exited with code 1'
-        if (
-          !windowCreated &&
-          dataStr.includes('Starting ProtocolHandler')
-        ) {
-          windowCreated = true;
-          createWindow();
-        }
-      });
-
-      serverProcess.stderr.on('data', (data) => {
-        const dataStr = data.toString();
-        log.error(dataStr);
-        if (!windowCreated && dataStr.includes("'java' is not recognized")) {
-          windowCreated = true;
-          createWindow();
-        }
-      });
+      serverProcess.stdout.on('data', (data) => handleServerOutput(data, false));
+      serverProcess.stderr.on('data', (data) => handleServerOutput(data, true));
 
       serverProcess.on('close', (code) => {
         //log.info(`Server process exited with code ${code}`);
@@ -231,6 +202,33 @@ try {
 } catch (e) {
   // Catch Error
   // throw e;
+}
+
+let windowCreated = false;
+let unifiedBuffer = '';
+
+function handleServerOutput(data: Buffer | string, isError = false) {
+  unifiedBuffer += data.toString();
+  let lines = unifiedBuffer.split(/\r?\n/);
+  unifiedBuffer = lines.pop() || '';
+  for (const line of lines) {
+
+    log.info(line);
+
+    if (
+      !windowCreated &&
+      (
+        /started\s+serverapplication/i.test(line) ||
+        /starting\s+protocolhandler/i.test(line) ||
+        /initializing\s+spring\s+dispatcherservlet/i.test(line) ||
+        (isError && line.includes("'java' is not recognized"))
+      )
+    ) {
+      log.info(`main:createWindow() because of: ${line}`);
+      windowCreated = true;
+      createWindow();
+    }
+  }
 }
 
 ipcMain.handle('dialog.show-save', async (event, options) => {
@@ -381,8 +379,8 @@ ipcMain.handle(
     to,
     options: {
       overwrite?:
-        | boolean
-        | ((source: any, destination: any) => boolean | Promise<boolean>);
+      | boolean
+      | ((source: any, destination: any) => boolean | Promise<boolean>);
       matching?: string;
       ignoreCase?: boolean;
     },
@@ -455,7 +453,6 @@ async function _getSystemInfo(): Promise<{
     JRE_HOME: string;
   };
 }> {
-  let javaIsInstalled = true;
   let dockerIsInstalled = true;
   let chocoIsInstalled = true;
 
@@ -464,17 +461,7 @@ async function _getSystemInfo(): Promise<{
     'utf8',
   );
 
-  let rbsjExeLogFileContent = await fs.promises.readFile(
-    rbsjExeLogFilePath,
-    'utf8',
-  );
-
-  if (!rbsjExeLogFileContent.toLowerCase().includes('java')) {
-    rbsjExeLogFileContent = await fs.promises.readFile(
-      rbsjExeLogFilePath,
-      'utf16le',
-    );
-  }
+  let rbsjExeLogFileContent = await readLogFileSmart(rbsjExeLogFilePath);
 
   if (electronLogFileContent.includes("'choco' is not recognized")) {
     chocoIsInstalled = false;
@@ -482,10 +469,6 @@ async function _getSystemInfo(): Promise<{
 
   if (electronLogFileContent.includes("'docker' is not recognized")) {
     dockerIsInstalled = false;
-  }
-
-  if (rbsjExeLogFileContent.includes("'java' is not recognized")) {
-    javaIsInstalled = false;
   }
 
   // Extract Chocolatey version
@@ -507,8 +490,8 @@ async function _getSystemInfo(): Promise<{
   }
 
   // Extract Java version
-  let javaVersionMatch = rbsjExeLogFileContent.match(/using Java ([\w\.]+)/);
-  let javaVersion = javaVersionMatch ? javaVersionMatch[1] : '';
+  const javaVersion = detectJavaVersion(rbsjExeLogFileContent);
+  const isJavaOk = parseInt(javaVersion.split('.')[0]) >= 17;
 
   const sysInfo = {
     chocolatey: {
@@ -516,7 +499,7 @@ async function _getSystemInfo(): Promise<{
       version: chocoVersion,
     },
     java: {
-      isJavaOk: javaIsInstalled && parseInt(javaVersion.split('.')[0]) >= 11,
+      isJavaOk: isJavaOk,
       version: javaVersion,
     },
     docker: {
@@ -533,4 +516,43 @@ async function _getSystemInfo(): Promise<{
   //console.log(`_getSystemInfo: ${JSON.stringify(sysInfo)}`);
 
   return sysInfo;
+}
+
+function detectJavaVersion(logContent: string): string {
+  let match = logContent.match(/using Java ([\w\.]+)/i);
+  if (match) return match[1].trim();
+
+  match = logContent.match(/(?:openjdk|java|adoptopenjdk|temurin)[^\n]*version\s+"([\d._]+)"/i);
+  if (match) return match[1].trim();
+
+  match = logContent.match(/java version\s+"([\d._]+)"/i);
+  if (match) return match[1].trim();
+
+  match = logContent.match(/version\s+"([\d._]+)"/i);
+  if (match) return match[1].trim();
+
+  match = logContent.match(/openjdk\s+([\d._]+)/i);
+  if (match) return match[1].trim();
+
+  match = logContent.match(/temurin-([\d._]+)/i);
+  if (match) return match[1].trim();
+
+  return '';
+}
+
+async function readLogFileSmart(filePath: string): Promise<string> {
+  const encodings = ['utf8', 'utf16le', 'latin1'];
+  for (const encoding of encodings) {
+    try {
+      const content = await fs.promises.readFile(filePath, encoding);
+      // If content is not empty and does not contain too many replacement chars, return it
+      const replacementCharCount = (content.match(/\uFFFD/g) || []).length;
+      if (content.trim().length > 0 && replacementCharCount < 3) {
+        return content;
+      }
+    } catch (err) {
+      // Try next encoding
+    }
+  }
+  return '';
 }

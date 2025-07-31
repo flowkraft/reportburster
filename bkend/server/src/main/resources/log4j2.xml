@@ -1,21 +1,24 @@
-<Configuration status="WARN">
-  <Appenders>
-    <Console name="Console" target="SYSTEM_OUT">
-      <PatternLayout pattern="%d{dd/MM/yyyy HH:mm:ss} %p - %m%n"/>
-      <Filters>
-        <!-- Only show WARN and above by default -->
-        <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
-      </Filters>
-    </Console>
-  </Appenders>
-  <Loggers>
-    <!-- Your app logs at WARN to console only -->
-    <Logger name="com.flowkraft" level="WARN" additivity="false">
-      <AppenderRef ref="Console"/>
-    </Logger>
-    <!-- Root logger: WARN to console only -->
-    <Root level="WARN">
-      <AppenderRef ref="Console"/>
-    </Root>
-  </Loggers>
-</Configuration>
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+    <Properties>
+        <Property name="LOG_PATTERN">%d{dd/MM/yyyy HH:mm:ss} %p - %m%n</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <!-- Only log com.flowkraft.jobman to console at INFO and above -->
+        <Logger name="com.flowkraft" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- Inhibit all other logs (including Spring Boot internals) below WARN -->
+        <Root level="warn">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</configuration>
