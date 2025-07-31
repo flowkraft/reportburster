@@ -151,7 +151,7 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 		content = FileUtils.readFileToString(new File(verifyDirPath + "/" + this.topFolderName + "/log4j2.xml"),
 				"UTF-8");
 
-		assertThat(content.contains("rbsj-server.log")).isTrue();
+		assertThat(content).as("log4j2.xml should NOT contain 'rbsj-server.log'").doesNotContain("rbsj-server.log");
 
 	}
 

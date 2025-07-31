@@ -76,7 +76,7 @@
     "_custom:ng:serve-open": "ng serve -c web --port 4201 -o --proxy-config proxy.conf.js",
     "_custom:ng:serve:electron": "cross-env TARGET=electron NODE_ENV=development NG_DEBUG=verbose ng serve --verbose",
     "_custom:debug:electron": "cross-env TARGET=electron NG_VERBOSE=true DEBUG=* ng serve --verbose",
-    "_custom:start-server": "npx gulp e2e-package-javastuff-if-needed && npm run custom:compile-and-stage-backend-jars && npm run _custom:compile-server && cd ../../bkend/server && mvn spring-boot:run -Dspring-boot.run.arguments='-serve' -Dspring-boot.run.jvmArguments=\"-DPORTABLE_EXECUTABLE_DIR=../../frend/reporting/testground/e2e -Dserver.port=9090\"",
+    "_custom:start-server": "npx gulp e2e-package-javastuff-if-needed && npm run custom:compile-and-stage-backend-jars && npm run _custom:compile-server && cd ../../bkend/server && mvn spring-boot:run -Dspring-boot.run.arguments='-serve' -Dspring-boot.run.jvmArguments=\"-Dorg.springframework.boot.logging.LoggingSystem=org.springframework.boot.logging.log4j2.Log4J2LoggingSystem -DPORTABLE_EXECUTABLE_DIR=../../frend/reporting/testground/e2e -Dserver.port=9090\"",
     "_custom:start-ui-web": "npm run _custom:ng:serve-open",
     "_custom:start-ui-electron": "cross-env NG_DEBUG=true ENABLE_DEVELOPMENT_FEATURES=true PORTABLE_EXECUTABLE_DIR=testground/e2e npm-run-all -p _custom:ng:serve:electron electron:serve",
     "_custom:start-ui-both": "npm-run-all -p _custom:start-ui-web _custom:start-ui-electron",

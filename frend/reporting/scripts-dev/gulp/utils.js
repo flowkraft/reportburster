@@ -177,7 +177,7 @@ _startServerAndDoX = (npm_x_script) => {
     if (
       !testProcessStarted &&
       //data.includes("org.apache.coyote.AbstractProtocol start")
-      data.includes("destination=/topic/execution-stats")
+      data.toString().toLowerCase().includes("started serverapplication")
     ) {
       testProcessStarted = true; // Set the flag immediately
       console.log(
