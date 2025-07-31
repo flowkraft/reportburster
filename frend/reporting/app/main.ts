@@ -155,10 +155,10 @@ try {
         log.info(dataStr);
 
         //createWindow() main application window in both situations
-        //if java is installed 'Started ServerApplication in' or java is not installed 'process exited with code 1'
+        //if java is installed 'Starting ProtocolHandler' or java is not installed 'process exited with code 1'
         if (
           !windowCreated &&
-          dataStr.includes('Started ServerApplication in')
+          dataStr.includes('Starting ProtocolHandler')
         ) {
           windowCreated = true;
           createWindow();
