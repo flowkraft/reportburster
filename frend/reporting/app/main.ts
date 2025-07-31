@@ -541,10 +541,10 @@ function detectJavaVersion(logContent: string): string {
 }
 
 async function readLogFileSmart(filePath: string): Promise<string> {
-  const encodings = ['utf8', 'utf16le', 'latin1'];
+  const encodings: BufferEncoding[] = ['utf8', 'utf16le', 'latin1'];
   for (const encoding of encodings) {
     try {
-      const content = await fs.promises.readFile(filePath, encoding);
+      const content = await fs.promises.readFile(filePath, { encoding });
       // If content is not empty and does not contain too many replacement chars, return it
       const replacementCharCount = (content.match(/\uFFFD/g) || []).length;
       if (content.trim().length > 0 && replacementCharCount < 3) {
