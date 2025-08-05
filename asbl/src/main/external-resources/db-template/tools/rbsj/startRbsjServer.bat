@@ -90,8 +90,8 @@ echo [DEBUG] Final JAVA command: %JAVA_CMD%
 
 :: Conditional logic based on RB_SERVER_MODE
 if "%RB_SERVER_MODE%"=="true" (
-
-    powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') }"
+    
+    powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') | Tee-Object -FilePath '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log' }"
 
 ) else (
     :: Update settings.xml with the port
@@ -99,5 +99,5 @@ if "%RB_SERVER_MODE%"=="true" (
     
     java -version > "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log" 2>&1
 
-    powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') }"
+    powershell -Command "& { & 'java' '%JAVA_CMD%'.Split(' ') | Tee-Object -FilePath '%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log' }"
 )
