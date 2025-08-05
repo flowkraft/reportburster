@@ -84,6 +84,8 @@ if not "%ELECTRON_PID%"=="" (
     set "JAVA_CMD=%JAVA_CMD% -DELECTRON_PID=%ELECTRON_PID%"
 )
 
+set "JAVA_CMD=%JAVA_CMD% -Djava.io.tmpdir=%PORTABLE_EXECUTABLE_DIR_PATH%\temp"
+
 set "JAVA_CMD=%JAVA_CMD% -jar %JAR_FILE% -serve"
 
 echo [DEBUG] Final JAVA command: %JAVA_CMD%
