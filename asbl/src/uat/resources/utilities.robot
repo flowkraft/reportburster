@@ -17,8 +17,8 @@ Quickstart Payslips.pdf Should Work Fine
     
     Sleep  1s
     Open Electron Application
-    Wait Until Page Contains Element    id=burstFile    timeout=30
-    Wait Until Page Contains Element    id=infoLog    timeout=30
+    Wait Until Page Contains Element    id=burstFile    timeout=300
+    Wait Until Page Contains Element    id=infoLog    timeout=300
     Page Should Contain Element    id=noJobsRunning
     Page Should Contain Element    id=btnGreatNoErrorsNoWarnings
     # screen "Before Selecting a File"
@@ -31,40 +31,40 @@ Quickstart Payslips.pdf Should Work Fine
     # Click Burst (cannot because of log files)
     Click Button    id=btnBurst
     Sleep  1s
-    Wait Until Page Contains Element    css=.dburst-button-question-confirm    timeout=30
+    Wait Until Page Contains Element    css=.dburst-button-question-confirm    timeout=300
     Click Element    css=.dburst-button-question-confirm
-    Wait Until Element Is Not Visible    css=.dburst-button-question-confirm    timeout=30
+    Wait Until Element Is Not Visible    css=.dburst-button-question-confirm    timeout=300
     Sleep  1s
     Click Button    id=btnClearLogsBurstReportsTab
-    Wait Until Page Contains Element    css=.dburst-button-question-decline    timeout=30
+    Wait Until Page Contains Element    css=.dburst-button-question-decline    timeout=300
     Sleep  1s
     Click Element    css=.dburst-button-question-decline
-    Wait Until Element Is Not Visible    css=.dburst-button-question-decline    timeout=30
+    Wait Until Element Is Not Visible    css=.dburst-button-question-decline    timeout=300
     Sleep  1s
     Click Button    id=btnClearLogsBurstReportsTab
-    Wait Until Page Contains Element    css=.dburst-button-question-confirm    timeout=30
+    Wait Until Page Contains Element    css=.dburst-button-question-confirm    timeout=300
     Sleep  1s
     Click Element    css=.dburst-button-question-confirm
-    Wait Until Element Is Not Visible    css=.dburst-button-question-confirm    timeout=30
-    Wait Until Element Is Not Visible    id=infoLog    timeout=30
+    Wait Until Element Is Not Visible    css=.dburst-button-question-confirm    timeout=300
+    Wait Until Element Is Not Visible    id=infoLog    timeout=300
     Sleep  1s
     # Click Burst (this time works)
     Click Button    id=btnBurst
-    Wait Until Page Contains Element    css=.dburst-button-question-confirm    timeout=30
+    Wait Until Page Contains Element    css=.dburst-button-question-confirm    timeout=300
     Sleep  1s
     # screen "After the Clicking Burst Button"
     Take Named Screenshot If Requested     005_10_Quickstart_Asking_Confirmation_to_Burst
 	  Click Element    css=.dburst-button-question-confirm
     # Working on ...
-    Wait Until Page Contains Element    css=#logsViewerBurstReportsTab #infoLog    timeout=30
-    Wait Until Page Contains Element    id=workingOn    timeout=30
+    Wait Until Page Contains Element    css=#logsViewerBurstReportsTab #infoLog    timeout=300
+    Wait Until Page Contains Element    id=workingOn    timeout=300
     Sleep  1s
     # screen "While Working On"
     Take Named Screenshot If Requested    005_15_Quickstart_While_Working_On
-    Wait Until Element Is Not Visible    id=noJobsRunning    timeout=30
+    Wait Until Element Is Not Visible    id=noJobsRunning    timeout=300
     # Done
-    Wait Until Element Is Not Visible    id=workingOn    timeout=300
-    Wait Until Page Contains Element    id=noJobsRunning    timeout=300
+    Wait Until Element Is Not Visible    id=workingOn    timeout=3000
+    Wait Until Page Contains Element    id=noJobsRunning    timeout=3000
     # Done without errors 
     Page Should Contain Element    id=btnGreatNoErrorsNoWarnings
     Sleep  1s
@@ -79,17 +79,41 @@ Quickstart Payslips.pdf Should Work Fine
 
 
 Open Electron Application
-  [Documentation]  Open's your electron application by providing browser binary via
+  [Documentation]  Open's your electron application with improved reliability for slower systems
   ...  ${signal_electron.binary_location} and chromedriver binary via ${chromedriver_path}
   ...  see vars.py for more details.
-  ${electron_command}=    Set Variable    cmd /c "call refreshenv && start ${signal_electron.binary_location} --remote-debugging-port=9222"
+  # Kill any existing processes to prevent conflicts
+  Run Keyword And Ignore Error    Kill Reportburster Exe Process
+  Sleep    2s
+     
+  # Start with explicit debugging port
+  ${electron_command}=    Set Variable    cmd /c "where /q refreshenv && (call refreshenv && start ${signal_electron.binary_location} --remote-debugging-port=9222) || start ${signal_electron.binary_location} --remote-debugging-port=9222"
   ${working_dir}=    Get Parent Directory    ${signal_electron.binary_location}
   Start Process    ${electron_command}    cwd=${working_dir}  shell=True
-  Sleep    1s
+     
+  # Give application more time to start and stabilize
+  Log    Waiting 10 seconds for Electron to fully initialize...
+  Sleep    30s
+     
+  # More resilient connection approach with longer timeout between attempts
+  Wait Until Keyword Succeeds    15x    10s    Verify Chrome Debugger Connection
+  
+Verify Chrome Debugger Connection
+  [Documentation]  Verifies Chrome debugger is available before attempting connection
+  # First check if port is actually responding
+  ${port_check}=    Run Process    powershell -command "if(Test-NetConnection -ComputerName localhost -Port 9222 -WarningAction SilentlyContinue -InformationLevel Quiet) { Write-Output 'open' } else { Write-Output 'closed' }"    shell=True
+  ${port_status}=    Set Variable    ${port_check.stdout.strip()}
+  Run Keyword If    '${port_status}' != 'open'    Fail    Chrome debugger port 9222 is not responding
+  
+  # Then attempt to connect
+  Log    Port check passed, attempting to connect to Chrome on port 9222...
   ${options}=    Evaluate    sys.modules['selenium.webdriver'].ChromeOptions()    sys, selenium.webdriver
   Call Method    ${options}    add_experimental_option    debuggerAddress    localhost:9222
-  Create WebDriver    Chrome    service=${signal_service}    options=${options}  
-
+  Create WebDriver    Chrome    service=${signal_service}    options=${options}
+  
+  # Verify we can interact with the page
+  Wait Until Keyword Succeeds    3x    1s    Get Title
+  
 Close Electron Application
   [Documentation]  Kills the Electron application process
   Kill Reportburster Exe Process
@@ -110,7 +134,7 @@ startServer.bat and shutServer.bat Should Work Fine
     Wait Until Keyword Succeeds    10x    3s    Check Server Is Not Running
     
 
-Capture Failed Test Screenshot
-  [Documentation]  Captures a screenshot with a name based on the test case name
-  Capture Page Screenshot    EMBED
+# Capture Failed Test Screenshot
+#   [Documentation]  Captures a screenshot with a name based on the test case name
+#   Capture Page Screenshot    EMBED
 

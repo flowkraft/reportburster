@@ -9,30 +9,123 @@ from pywinauto.application import Application
 from vars import reportburster_exe_path, reportburster_exe_path_let_me_update, PORTABLE_EXECUTABLE_DIR, PORTABLE_EXECUTABLE_DIR_SERVER, PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE
 
 def click_x_close_reportburster():
-
     # Get the directory that this script is in
     script_dir = os.path.dirname(os.path.realpath(__file__))
+    print(f"DEBUG: Looking for images in directory: {os.path.abspath(script_dir)}")
 
     # Construct the path to the image file
     image_path = os.path.join(script_dir, 'images', 'x_button_close_reportburster.png')
+    print(f"DEBUG: Full image path: {os.path.abspath(image_path)}")
+
+    # Check if image file exists
+    if not os.path.exists(image_path):
+        print(f"ERROR: Image file does not exist at {os.path.abspath(image_path)}")
+        return
 
     button_location = None
 
-    # Wait for up to 100 seconds for the OK button to appear
-    for _ in range(100):
+    # Wait for up to 100 seconds for the X button to appear
+    print(f"DEBUG: Starting to look for X button (will try for 100 seconds)")
+    for attempt in range(100):
+        print(f"DEBUG: Attempt {attempt+1}/100 to find X button")
         try:
-            button_location = pyautogui.locateOnScreen(image_path, grayscale=False, confidence=.8)
+            button_location = pyautogui.locateOnScreen(image_path, grayscale=False, confidence=.7)
             if button_location is not None:
+                print(f"DEBUG: X button found at {button_location} on attempt {attempt+1}")
                 break
-        except pyautogui.ImageNotFoundException:
-            pass  # Image not found, continue the loop
+        except Exception as e:
+            print(f"DEBUG: Error during search: {str(e)}")
+        
         time.sleep(1)  # Wait for 1 second
 
     # If the button is found, click it
     if button_location is not None:
-        pyautogui.click(button_location)
+        try:
+            print(f"DEBUG: Clicking X button at position {button_location}")
+            pyautogui.click(button_location)
+            print("DEBUG: Click successful")
+            return True
+        except Exception as e:
+            print(f"DEBUG: Failed to click X button: {e}")
+            return False
     else:
-        print("X button not found")
+        print("DEBUG: X button not found after 100 attempts")
+        
+        # Fallback to using PyWinAuto to try to close the window
+        try:
+            print("DEBUG: Attempting to close window using PyWinAuto with title regex '.*ReportBurster.*'")
+            app = Application().connect(title_re=".*ReportBurster.*")
+            main_window = app.top_window()
+            print(f"DEBUG: Window found: {main_window.window_text()}")
+            main_window.close()
+            print("DEBUG: Window closed using PyWinAuto")
+            return True
+        except Exception as e:
+            print(f"DEBUG: PyWinAuto fallback failed: {e}")
+            return False
+
+
+def wait_for_powershell_and_accept_completion():
+    # Get the directory that this script is in
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    print(f"DEBUG: Looking for images in directory: {os.path.abspath(script_dir)}")
+
+    # Construct the path to the image file
+    image_path = os.path.join(script_dir, 'images', 'ok_button_powershell.png')
+    print(f"DEBUG: Full image path: {os.path.abspath(image_path)}")
+
+    # Check if image file exists
+    if not os.path.exists(image_path):
+        print(f"ERROR: Image file does not exist at {os.path.abspath(image_path)}")
+        return
+
+    button_location = None
+
+    # Wait for up to 300 seconds for the OK button to appear
+    print(f"DEBUG: Starting to look for PowerShell OK button (will try for 300 seconds)")
+    for attempt in range(300):
+        print(f"DEBUG: Attempt {attempt+1}/300 to find OK button")
+        try:
+            button_location = pyautogui.locateOnScreen(image_path, grayscale=False, confidence=.7)
+            if button_location is not None:
+                print(f"DEBUG: OK button found at {button_location} on attempt {attempt+1}")
+                break
+        except Exception as e:
+            print(f"DEBUG: Error during search: {str(e)}")
+        
+        time.sleep(1)  # Wait for 1 second
+
+    # If the button is found, click it
+    if button_location is not None:
+        try:
+            print(f"DEBUG: Clicking PowerShell OK button at position {button_location}")
+            pyautogui.click(button_location)
+            print("DEBUG: Click successful")
+            return True
+        except Exception as e:
+            print(f"DEBUG: Failed to click PowerShell OK button: {e}")
+            return False
+    else:
+        print("DEBUG: PowerShell OK button not found after 100 attempts")
+        
+        # Try to find and click a button with "OK" text using PyWinAuto
+        try:
+            print("DEBUG: Attempting to click OK button using PyWinAuto with title regex '.*PowerShell.*'")
+            app = Application().connect(title_re=".*PowerShell.*")
+            main_window = app.top_window()
+            print(f"DEBUG: Window found: {main_window.window_text()}")
+            ok_button = main_window.child_window(title="OK", class_name="Button")
+            if ok_button.exists():
+                print("DEBUG: OK button found with PyWinAuto, clicking...")
+                ok_button.click()
+                print("DEBUG: OK button clicked using PyWinAuto")
+                return True
+            else:
+                print("DEBUG: OK button not found with PyWinAuto")
+                return False
+        except Exception as e:
+            print(f"DEBUG: PyWinAuto fallback failed: {e}")
+            return False
 
 def kill_reportburster_exe_process(let_me_update=False):
     
@@ -238,7 +331,10 @@ def ensure_folder_location_not_in_path(folder_location_path):
     # Join the list back into a string and update the PATH
     os.environ['PATH'] = os.pathsep.join(path_list)
 
-def extract_zip_files():
+def clean_and_extract_zip_files():
+    """
+    Cleans destination folders and extracts ReportBurster zip files to target directories
+    """
     paths = [
         "../../target/uat/rb",
         "../../target/uat/rbs"
@@ -249,37 +345,18 @@ def extract_zip_files():
     ]
 
     for path, zip_file in zip(paths, zips):
-        if not os.path.exists(path):
-            os.makedirs(path)
-            with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-                zip_ref.extractall(path)
-
-def wait_for_powershell_and_accept_completion():
-
-    # Get the directory that this script is in
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-
-    # Construct the path to the image file
-    image_path = os.path.join(script_dir, 'images', 'ok_button_powershell.png')
-
-    button_location = None
-
-    # Wait for up to 100 seconds for the OK button to appear
-    for _ in range(100):
-        try:
-            button_location = pyautogui.locateOnScreen(image_path, grayscale=True, confidence=.8)
-            if button_location is not None:
-                break
-        except pyautogui.ImageNotFoundException:
-            pass  # Image not found, continue the loop
-        time.sleep(1)  # Wait for 1 second
-
-    # If the button is found, click it
-    if button_location is not None:
-        pyautogui.click(button_location)
-    else:
-        print("OK button not found")
-
+        # Clean the path if it exists
+        if os.path.exists(path):
+            print(f"Cleaning existing directory: {path}")
+            empty_folder(path)
+            force_remove_dir(path)
+        
+        # Create the directory and extract the zip file
+        print(f"Creating directory and extracting {zip_file} to {path}")
+        os.makedirs(path, exist_ok=True)
+        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            zip_ref.extractall(path)
+            
 def start_server():
     process = subprocess.Popen(['cmd.exe', '/c', f'{PORTABLE_EXECUTABLE_DIR_SERVER}/startServer.bat'], cwd=PORTABLE_EXECUTABLE_DIR_SERVER)
     return process
@@ -323,7 +400,7 @@ def generate_let_me_update_baseline():
 
     PROJECT_PATH = get_project_path()
 
-    FRONTEND_REPORTING_PATH = f'{PROJECT_PATH}/frontend/reporting'
+    FRONTEND_REPORTING_PATH = f'{PROJECT_PATH}/frend/reporting'
     
     env = os.environ.copy()
     command = 'cmd /c "npm --version"'

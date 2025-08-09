@@ -2,11 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## 11.1.0 - 2025-07-31
+## 11.1.0 - 2025-08-11
 
 ### Added
 
-- New AI based report generation flows
+- New "AI powered" report generation flows
 - SQL Queries and Scrips can now be used as input data source for report generation
 - XML documents can now be used as input data source for report generation
 - ReportBurster can now generate XML, JSON and “pixel perfect” PDF documents (using XSL-FO)

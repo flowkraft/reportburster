@@ -30,6 +30,7 @@ if (-Not (Test-Path $logFilePath)) {
     exit
 }
 
+
 # Try to find the line with the PID and parse it using a regular expression
 $pidLine = Select-String -Path $logFilePath -Pattern "with PID (\d+)" -AllMatches
 if ($pidLine) {

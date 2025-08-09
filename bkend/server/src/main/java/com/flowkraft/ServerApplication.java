@@ -22,22 +22,32 @@ public class ServerApplication implements ExitCodeGenerator {
         SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(ServerApplication.class);
 
         // Print PID in classic Spring Boot format (no timings)
-        long pid = -1;
-        try {
-            pid = ProcessHandle.current().pid();
-        } catch (Throwable t) {
-            // Java 8 fallback: leave pid as -1
-        }
-        System.out.println("Started ServerApplication with PID " + pid);
-
+        final long pid = getPid();
+        
         if (!serveWeb) {
+            // Non-web mode - print PID and exit immediately
+            System.out.println("Started ServerApplication with PID " + pid);
             appBuilder.web(WebApplicationType.NONE);
             exitCode = SpringApplication.exit(appBuilder.run(args));
         } else {
+            // Web mode - register event listener to print PID AFTER server is ready
+            appBuilder.listeners(event -> {
+                if (event instanceof org.springframework.boot.context.event.ApplicationReadyEvent) {
+                    System.out.println("Started ServerApplication with PID " + pid);
+                }
+            });
             appBuilder.run(args);
         }
 
         System.setProperty("spring.devtools.restart.enabled", "false");
+    }
+
+    private static long getPid() {
+        try {
+            return ProcessHandle.current().pid();
+        } catch (Throwable t) {
+            return -1;
+        }
     }
 
     private static boolean _getShouldServeWeb(String... args) {

@@ -92,8 +92,10 @@ gulp.task("utils:check-broken-links", () => {
 _startJavaYesAndUI = async (javaVersion, chocoStatus) => {
   const rbsjExeLogPath = "testground/e2e/logs/rbsj-exe.log";
   await jetpack.writeAsync(rbsjExeLogPath, "");
-  const javaLogMessage = `bla bla\nv10.2.0 using Java ${javaVersion} on`;
-  await jetpack.writeAsync(rbsjExeLogPath, javaLogMessage);
+  await jetpack.writeAsync(rbsjExeLogPath, `openjdk version "17.0.14" 2025-01-21
+OpenJDK Runtime Environment Temurin-17.0.14+7 (build 17.0.14+7)
+OpenJDK 64-Bit Server VM Temurin-17.0.14+7 (build 17.0.14+7, mixed mode, sharing)
+Started ServerApplication with PID 13404`);
 
   const electronLogPath = "testground/e2e/logs/electron.log";
   await jetpack.writeAsync(electronLogPath, "");
