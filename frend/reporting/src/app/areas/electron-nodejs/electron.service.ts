@@ -235,7 +235,7 @@ export class RbElectronService {
             //https://www.electronjs.org/docs/api/app#apprelaunchoptions
             //https://stackoverflow.com/questions/41819632/how-to-call-a-function-module-in-electron-from-my-webpage
           }
-        } catch (err) {}
+        } catch (err) { }
 
         if (throwError) throw error;
       }
@@ -397,12 +397,15 @@ del /f /s install.ps1
     return UtilitiesElectron.childProcessSpawn(
       'powershell.exe',
       [
+        '-NoProfile',
+        '-ExecutionPolicy', 'Bypass',
         '-Command',
-        `Start-Process -FilePath powershell.exe -ArgumentList '-Command', '& { . \"${elevatedScriptFilePath}\" }' -Wait -Verb RunAs`,
+        `Start-Process powershell.exe -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File "${elevatedScriptFilePath}"' -Wait -Verb RunAs`
       ],
       {
-        cwd: Utilities.slash(this.PORTABLE_EXECUTABLE_DIR + '/temp/'),
-      },
+        cwd: Utilities.slash(this.PORTABLE_EXECUTABLE_DIR.replace(/[\\/]+$/, '') + '/temp'),
+        windowsHide: false,
+      }
     );
   }
 
@@ -421,56 +424,51 @@ del /f /s install.ps1
 
     const now = dayjs().format('DD/MM/YYYY HH:mm:ss');
 
-    const scriptContent = `if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-      
-      # If not already admin
-      
-      Write-Host "${now} - Executing '${commandToElevate}' as Administrator";
-      Start-Process PowerShell -Verb RunAs "-NoProfile -ExecutionPolicy Bypass -Command \`"cd '$pwd'; & '$PSCommandPath';\`"";
-      
-      # Exit the non-elevated script
-      exit 0;
-    
-    }
-  
-    # Your script here
-    # Below code is executed RunAs admin
+    const scriptContent = `
+trap {
+  Add-Content ${this.logFilePath} "${now} POWERSHELL ERROR: $($_.Exception.Message)"
+  Write-Host "POWERSHELL ERROR: $($_.Exception.Message)"
+  Read-Host -Prompt "Press Enter to exit"
+  exit 1
+}
 
-    function timestamp {
-      
-      # append timestamp to each line of the input (output of the previous command in the pipeline)
-      foreach ($i in $input){
-          "${now} - $i"
-      }
-    }  
+if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+  Write-Host "${now} - Executing '${commandToElevate}' as Administrator";
+  Start-Process PowerShell -Verb RunAs "-NoProfile -ExecutionPolicy Bypass -Command \`"cd '$pwd'; & '$PSCommandPath';\`"";
+  exit 0;
+}
 
-    if (!(Test-Path -Path "${this.logFilePath}")) {
-      New-Item -ItemType File -Path "${this.logFilePath}" -Force
-    } else {
-      Clear-Content -Path "${this.logFilePath}"
-    }
-      
-    ${testCommand}
-    
-    # if ${testCommand} was succesfull
-    if($?)
-    {
-      Write-Host "Please wait while executing '${commandToElevate}' as Administrator...";
-      ${commandToElevate} 2>&1 | timestamp | Out-File -Append -Encoding ascii ${this.logFilePath};
-    }
-    else {
-      Add-Content ${this.logFilePath} "${now} ERRROR - Could not execute '${commandToElevate}' because '${testCommand}' failed!"
-    }
-    
-    # Add this line at the end of your script
-    Write-Host "Script execution completed successfully"
+function timestamp {
+  foreach ($i in $input){
+      "${now} - $i"
+  }
+}
 
-    Remove-Item $PSCommandPath;
+if (!(Test-Path -Path "${this.logFilePath}")) {
+  New-Item -ItemType File -Path "${this.logFilePath}" -Force
+} else {
+  Clear-Content -Path "${this.logFilePath}"
+}
 
-    Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show('Command execution completed, you may want to close and start again ReportBurster.', 'Info', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+${testCommand}
 
-    `;
+if($?) {
+  Write-Host "Please wait while executing '${commandToElevate}' as Administrator...";
+  ${commandToElevate} 2>&1 | timestamp | Out-File -Append -Encoding ascii ${this.logFilePath};
+} else {
+  Add-Content ${this.logFilePath} "${now} ERRROR - Could not execute '${commandToElevate}' because '${testCommand}' failed!"
+  Write-Host "${now} ERRROR - Could not execute '${commandToElevate}' because '${testCommand}' failed!"
+  Read-Host -Prompt "Press Enter to exit"
+  exit 1
+}
+
+Write-Host "Script execution completed successfully"
+
+Remove-Item $PSCommandPath;
+
+Add-Type -AssemblyName System.Windows.Forms
+[System.Windows.Forms.MessageBox]::Show('Command execution completed, you may want to close and start again ReportBurster.', 'Info', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+`;
 
     await UtilitiesNodeJs.writeAsync(elevatedScriptFilePath, scriptContent);
 

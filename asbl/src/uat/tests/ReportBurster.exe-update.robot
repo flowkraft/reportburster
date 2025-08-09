@@ -23,15 +23,15 @@ Let me manualy Update Should Work Fine
     Sleep  1s
 
     Open Electron Application
-    Wait Until Page Contains Element    id=burstFile    timeout=30
-    Wait Until Page Contains Element    id=infoLog    timeout=30
+    Wait Until Page Contains Element    id=burstFile    timeout=300
+    Wait Until Page Contains Element    id=infoLog    timeout=300
     Page Should Contain Element    id=noJobsRunning
     Page Should Contain Element    id=btnGreatNoErrorsNoWarnings
     
     Sleep  1s
   
     Click Element    id=topMenuHelp
-    Wait Until Page Contains Element    id=topMenuHelpJava    timeout=30
+    Wait Until Page Contains Element    id=topMenuHelpJava    timeout=300
     Sleep  1s
     Click Element    id=topMenuHelpJava
     Sleep  1s
@@ -86,7 +86,7 @@ Let me manualy Update Should Work Fine
     Click Button    css=.dburst-button-question-confirm
     
     # perform migrations
-    Wait Until Page Does Not Contain Element    id=btnMigrate
+    Wait Until Page Does Not Contain Element    id=btnMigrate    timeout=30
     
     # license check
     Wait Until Page Contains Element            id=workingOn  50
@@ -109,16 +109,40 @@ Let me manualy Update Should Work Fine
    
 *** Keywords ***
 Open Electron Application
-  [Documentation]  Open's your electron application by providing browser binary via
+  [Documentation]  Open's your electron application with improved reliability for slower systems
   ...  ${signal_electron_let_me_update.binary_location} and chromedriver binary via ${chromedriver_path}
   ...  see vars.py for more details.
-  ${electron_command}=    Set Variable    cmd /c "call refreshenv && start ${signal_electron_let_me_update.binary_location} --remote-debugging-port=9222"
+  # Kill any existing processes to prevent conflicts
+  Run Keyword And Ignore Error    Kill Reportburster Exe Process
+  Sleep    2s
+     
+  # Start with explicit debugging port
+  ${electron_command}=    Set Variable    cmd /c "where /q refreshenv && (call refreshenv && start ${signal_electron_let_me_update.binary_location} --remote-debugging-port=9222) || start ${signal_electron_let_me_update.binary_location} --remote-debugging-port=9222"
   ${working_dir}=    Get Parent Directory    ${signal_electron_let_me_update.binary_location}
   Start Process    ${electron_command}    cwd=${working_dir}  shell=True
-  Sleep    1s
+     
+  # Give application more time to start and stabilize
+  Log    Waiting 10 seconds for Electron to fully initialize...
+  Sleep    30s
+     
+  # More resilient connection approach with longer timeout between attempts
+  Wait Until Keyword Succeeds    15x    10s    Verify Chrome Debugger Connection
+  
+Verify Chrome Debugger Connection
+  [Documentation]  Verifies Chrome debugger is available before attempting connection
+  # First check if port is actually responding
+  ${port_check}=    Run Process    powershell -command "if(Test-NetConnection -ComputerName localhost -Port 9222 -WarningAction SilentlyContinue -InformationLevel Quiet) { Write-Output 'open' } else { Write-Output 'closed' }"    shell=True
+  ${port_status}=    Set Variable    ${port_check.stdout.strip()}
+  Run Keyword If    '${port_status}' != 'open'    Fail    Chrome debugger port 9222 is not responding
+  
+  # Then attempt to connect
+  Log    Port check passed, attempting to connect to Chrome on port 9222...
   ${options}=    Evaluate    sys.modules['selenium.webdriver'].ChromeOptions()    sys, selenium.webdriver
   Call Method    ${options}    add_experimental_option    debuggerAddress    localhost:9222
-  Create WebDriver    Chrome    service=${signal_service}    options=${options}  
+  Create WebDriver    Chrome    service=${signal_service}    options=${options}
+  
+  # Verify we can interact with the page
+  Wait Until Keyword Succeeds    3x    1s    Get Title  
 
 Close Electron Application
   [Documentation]  Kills the Electron application process

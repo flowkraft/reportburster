@@ -118,6 +118,8 @@ function createWindow(): BrowserWindow {
   return win;
 }
 
+let serverProcess: ChildProcessWithoutNullStreams;
+
 try {
   app.commandLine.appendSwitch(
     'disable-features',
@@ -128,7 +130,6 @@ try {
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.
   // Added 400 ms to fix the black background issue while using transparent window. More detais at https://github.com/electron/electron/issues/15947
-  let serverProcess: ChildProcessWithoutNullStreams;
 
   app.on('ready', () => {
     //if "production"
@@ -163,22 +164,26 @@ try {
   });
 
   app.on('before-quit', async () => {
+    log.info(`before-quit: serverProcess exists? ${!!serverProcess}`);
+
     //stop the java server
     if (app.isPackaged) {
       if (serverProcess) {
         //log.info(
         //  `executing ${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj/shutRbsjServer.bat`,
         //);
-        //await _shutServer();
+        await _shutServer();
       }
     }
   });
 
   app.on('will-quit', async () => {
+    log.info(`will-quit: serverProcess exists? ${!!serverProcess}`);
+
     if (app.isPackaged) {
-      if (serverProcess && !serverProcess.killed) {
+      if (serverProcess) {
         //stop the java server
-        //await _shutServer();
+        await _shutServer();
       }
     }
   });
@@ -212,21 +217,50 @@ function handleServerOutput(data: Buffer | string, isError = false) {
   let lines = unifiedBuffer.split(/\r?\n/);
   unifiedBuffer = lines.pop() || '';
   for (const line of lines) {
-
     log.info(line);
 
-    if (
-      !windowCreated &&
-      (
+    if (!windowCreated) {
+      // Success patterns - server started successfully
+      if (
         /started\s+serverapplication/i.test(line) ||
         /starting\s+protocolhandler/i.test(line) ||
-        /initializing\s+spring\s+dispatcherservlet/i.test(line) ||
-        (isError && line.includes("'java' is not recognized"))
-      )
-    ) {
-      log.info(`main:createWindow() because of: ${line}`);
-      windowCreated = true;
-      createWindow();
+        /initializing\s+spring\s+dispatcherservlet/i.test(line)
+      ) {
+        log.info(`main:createWindow() because of successful server start: ${line}`);
+        windowCreated = true;
+        createWindow();
+      }
+
+      // Java error patterns - comprehensive check across platforms
+      else if (
+        // Windows errors
+        line.includes("'java' is not recognized") ||
+        line.includes("java is not recognized") ||
+        line.includes("The system cannot find the path specified") ||
+
+        // Unix/Linux errors
+        line.includes("java: command not found") ||
+        line.includes("bash: java:") ||
+        line.includes("/bin/sh: java: not found") ||
+
+        // General Java errors
+        line.includes("Error: JAVA_HOME is not defined") ||
+        line.includes("No Java runtime present") ||
+        /could not find (.*) java/i.test(line) ||
+
+        // Other variations
+        line.includes("Unable to locate a Java Runtime") ||
+        line.includes("no java installation found") ||
+        line.includes("Error: Could not find java.exe") ||
+
+        // File errors that might indicate Java issues
+        (line.includes("Could not find or load main class") &&
+          line.includes("LoggingSystem"))
+      ) {
+        log.info(`main:createWindow() because of Java error: ${line}`);
+        windowCreated = true;
+        createWindow();
+      }
     }
   }
 }
@@ -424,6 +458,7 @@ ipcMain.handle('jetpack.findAsync', async (event, directory, options) => {
 });
 
 async function _shutServer() {
+  serverProcess = null;
   spawn('shutRbsjServer.bat', {
     cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
   });
@@ -513,7 +548,7 @@ async function _getSystemInfo(): Promise<{
     },
   };
 
-  //console.log(`_getSystemInfo: ${JSON.stringify(sysInfo)}`);
+  console.log(`_getSystemInfo: ${JSON.stringify(sysInfo)}`);
 
   return sysInfo;
 }

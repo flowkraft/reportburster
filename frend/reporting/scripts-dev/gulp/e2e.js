@@ -81,7 +81,10 @@ gulp.task("e2e-package-javastuff-if-needed", async () => {
 
     fse.writeFileSync(
       `${e2eRuntimeDir.path()}/logs/rbsj-exe.log`,
-      "Starting ServerApplication v10.2.0 using Java 11.0.23 on",
+      `openjdk version "17.0.14" 2025-01-21
+OpenJDK Runtime Environment Temurin-17.0.14+7 (build 17.0.14+7)
+OpenJDK 64-Bit Server VM Temurin-17.0.14+7 (build 17.0.14+7, mixed mode, sharing)
+Started ServerApplication with PID 13404`,
     );
 
     console.log(
