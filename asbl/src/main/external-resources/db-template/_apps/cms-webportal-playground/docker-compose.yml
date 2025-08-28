@@ -17,13 +17,16 @@ services:
     restart: unless-stopped
 
   cms-webportal-playground-db:
-    image: mariadb:11.5.2
+    image: mysql:8.0
     container_name: cms-webportal-playground-db
     volumes:
       - ./data-db:/var/lib/mysql
       - ./logs-db:/var/log/mysql
-    env_file:
-      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE:      ${MYSQL_DATABASE}
+      MYSQL_USER:          ${MYSQL_USER}
+      MYSQL_PASSWORD:      ${MYSQL_PASSWORD}
     restart: unless-stopped
 
   cms-webportal-playground-cli:
@@ -57,15 +60,17 @@ services:
         chown -R www-data:www-data /var/www/html/wp-content
         chmod -R u+rwX            /var/www/html/wp-content
 
-        echo "🕓 Waiting for the database to be responsive...";
-
-        # inside cms-webportal-playground-cli -> command: >
-        until wp db check --path=/var/www/html > /dev/null 2>&1; do
+        echo "🕓 Waiting for the database to be responsive…";
+        until mysqladmin ping \
+          --host="${WORDPRESS_DB_HOST}" \
+          --user="${WORDPRESS_DB_USER}" \
+          --password="${WORDPRESS_DB_PASSWORD}" \
+          --protocol=TCP --skip-ssl --silent > /dev/null 2>&1; do
           sleep 2;
         done
 
         sleep 2;
-        
+
         echo "🚀 Checking WordPress install...";
 
         if ! wp core is-installed; then
@@ -77,173 +82,113 @@ services:
             --admin_password="${WP_ADMIN_PASSWORD}" \
             --admin_email="${WP_ADMIN_EMAIL}";
 
-          echo "🎯 Installing themes...";
-          
+          echo "🎯 Installing theme (first run only)…";
           THEME_DIR="/var/www/html/wp-content/themes/reportburster-sage"
-          
-          # Check if the theme has already been installed by looking for a key file.
           if [ ! -f "$$THEME_DIR/composer.json" ]; then
-            echo "Sage theme not found, installing via Composer...";
-            # Create the project directly. This requires the target directory to not exist.
-            # We remove it first to ensure a clean state.
             rm -rf "$$THEME_DIR"
             composer create-project roots/sage "$$THEME_DIR" --no-interaction
             chown -R www-data:www-data "$$THEME_DIR"
-          else
-            echo "Sage theme already installed, skipping installation.";
           fi
-
-          echo "🎯 Installing plugins...";
-
-          wp plugin uninstall akismet;
-
-          wp plugin uninstall hello;
-          
-          # Create and manage custom content types and fields
-          wp plugin install pods --version=3.3.1 --activate;
-
-          # === ReportBurster Integration Plugin, which uses pods framework APIs, 
-          # must be activated after PODS ===
-          
-          # --- START: ReportBurster Integration Plugin Setup ---
-          PLUGIN_PATH="/var/www/html/wp-content/plugins/reportburster-integration";
-
-          echo "📦 Installing Composer dependencies and running setup scripts for ReportBurster Integration...";
-          # This single command will trigger the rename and other setup tasks
-          # defined in the boilerplates composer.json file.
-          (cd $$PLUGIN_PATH && composer install --no-interaction --prefer-dist);
-          
-          echo "✅ Activating ReportBurster Integration plugin...";
-          wp plugin activate reportburster-integration;
-          # --- END: ReportBurster Integration Plugin Setup ---
-
-          # === Site and Admin Management ===
-          
-          # Analytics
-          # Matomo Analytics Ethical Stats. Powerful Insights.
-          wp plugin install matomo --version=5.3.1;
-
-          # Burst Statistics Privacy-Friendly Analytics for WordPress
-          # wp plugin install burst-statistics --version=2.1.0;
-
-          # Enable JWT authentication for REST API usage
-          wp plugin install jwt-authentication-for-wp-rest-api --version=1.3.8;
-
-          # === User and Access Control ===
-          # Members is a roles and capabilities based WordPress membership plugin.
-          # wp plugin install members --version=3.2.18;
-          
-          # Say Goodbye to comment spam on your WordPress blog or website
-          wp plugin install antispam-bee --version=2.11.7;
-
-          # Simplify the WordPress admin interface
-          wp plugin install adminimize --version=1.11.11;
-
-          # Provide quick database access through phpMyAdmin
-          wp plugin install wp-phpmyadmin-extension --version=5.2.2.01;
-
-          # Backup and restore your site
-          wp plugin install updraftplus --version=1.25.6;
-
-          # Customize the login page easily
-          wp plugin install loginpress --version=4.0.1;
-
-          # Enable OAuth2 authentication provider for REST API
-          wp plugin install oauth2-provider --version=4.4.0;
-
-          # === Contact Forms and Enhancements ===
-          
-          # Create any form – contact form, order form, payment form, email form, feedback widgets, 
-          # interactive polls with real-time results, buzzfeed-style “no wrong answer” quizzes, 
-          # service estimators, and registration forms with payment options 
-          # including PayPal and Stripe.
-          wp plugin install forminator --version=1.44.3;
-          
-          # Contact Form 7 - Core contact form plugin
-          # wp plugin install contact-form-7 --version=6.1;
-
-          # Contact Form 7 – PayPal & Stripe Add-on
-          # wp plugin install contact-form-7-paypal-add-on --version=2.4.3;
-
-          # Saves Contact Form 7 submissions to the database
-          # wp plugin install contact-form-cfdb7 --version=1.3.1;
-
-          # Adds simple reCAPTCHA protection to Contact Form 7
-          # wp plugin install contact-form-7-simple-recaptcha --version=0.1.6;
-
-          # Allows grid-based layouts for Contact Form 7
-          # wp plugin install cf7-grid-layout --version=4.15.8;
-
-          # === Email Management ===
-          # Reliable email delivery configuration
-          wp plugin install fluent-smtp --version=2.2.90;
-
-          # === Developer Tools and Utilities ===
-          # Debug and monitor performance
-          wp plugin install query-monitor --version=3.18.0;
-
-          # Framework for building theme options and settings
-          # wp plugin install redux-framework --version=4.5.7;
-
-          # === Optional / Non-Core Plugins ===
-
-          # Add scalable vector icons (used mostly for styling)
-          wp plugin install font-awesome --version=5.0.2;
-          
-          # UI tool for managing custom columns in WP admin
-          # wp plugin install codepress-admin-columns --version=4.7.7;
-
-          # Adds social networking features to WordPress
-          wp plugin install buddypress --version=14.3.4;
-
-          # LMS Learning Managemet System & Donation Plugins
-
-          # Accept donations and begin fundraising with GiveWP, 
-          # the highest rated WordPress donation plugin for online giving.
-          # wp plugin install give --version=4.4.0;
-
-          # LMS learning management system hit all the checkpoints for a full-fledged online 
-          # course marketplace
-          # wp plugin install tutor --version=3.6.3;
-
-          # LearnPress is a comprehensive WordPress LMS Plugin for WordPress. This is one of 
-          # the best WordPress LMS Plugins which can be used to easily create & sell courses online.
-          # wp plugin install learnpress --version=4.2.8.7.3;
-          
-          echo "🔐 Creating roles...";
-
-          # Create the 'employee' role
-          wp role create employee 'Employee' --clone=subscriber
-
-          # Create the 'customer' role
-          wp role create customer 'Customer' --clone=subscriber
-
-          # Form Plugins
-          # https://www.gravityforms.com
-          # https://wordpress.org/plugins/pods-gravity-forms/
-
-          # https://gravityflow.io
-          # Build custom workflows to automate your form-based business processes
-
-          # https://wordpress.org/plugins/gravity-forms-pdf-extended/
-
-          # Search plugins
-          # https://facetwp.com
-
-          # https://wordpress.org/plugins/relevanssi/
-          # https://wordpress.org/plugins/add-search-to-menu/
-          
-          # https://wordpress.org/plugins/search-filter/
-          # https://wordpress.org/plugins/elasticpress/
-
-          # Maybe useful "plugins"
-          # https://wordpress.org/plugins/custom-post-type-permalinks/
-
         fi
 
-        wp option update home "${WP_SITE_URL}";
-        wp option update siteurl "${WP_SITE_URL}";
+        echo "🧹 Removing default bundled plugins…";
+        wp plugin is-installed akismet && wp plugin delete akismet || true
+        wp plugin is-installed hello   && wp plugin delete hello   || true
+
+        echo "📦 Ensuring Composer deps for custom plugin…";
+        PLUGIN_PATH="/var/www/html/wp-content/plugins/reportburster-integration"
+        if [ -d "$$PLUGIN_PATH" ]; then
+          if [ ! -f "$$PLUGIN_PATH/vendor/autoload.php" ]; then
+            (cd "$$PLUGIN_PATH" && composer install --no-interaction --prefer-dist)
+          fi
+          wp plugin is-active reportburster-integration || wp plugin activate reportburster-integration
+        fi
+
+        ensure() {
+          SLUG="$$1"; VER="$$2"; ACTIVATE="$$3";
+          if ! wp plugin is-installed "$$SLUG"; then
+            if [ -n "$$VER" ]; then
+              wp plugin install "$$SLUG" --version="$$VER" $${ACTIVATE:+--activate}
+            else
+              wp plugin install "$$SLUG" $${ACTIVATE:+--activate}
+            fi
+          else
+            if [ "$$ACTIVATE" = "yes" ]; then
+              wp plugin is-active "$$SLUG" || wp plugin activate "$$SLUG" || true
+            fi
+          fi
+        }
+
+        echo "🎯 Installing / Ensuring plugins (grouped & idempotent)…";
+
+        echo "== Installing Content Types & Fields Plugins ==";
+        ensure pods 3.3.1 yes
+        # ensure gravityforms 2.9.0
+        # ensure pods-gravity-forms 1.4.4
+
+        echo "== Installing ReportBurster Integration (Depends on Pods) Plugins ==";
+        # already handled above
+
+        echo "== Installing Site and Admin Management Plugins ==";
+        # ensure matomo 5.3.1
+        # ensure burst-statistics 2.1.0
+        # ensure jwt-authentication-for-wp-rest-api 1.3.8
+        # ensure members 3.2.18
+        # ensure adminimize 1.11.11
+        # ensure wp-phpmyadmin-extension 5.2.2.01
+        # ensure updraftplus 1.25.6
+        # ensure loginpress 4.0.1
+        # ensure oauth2-provider 4.4.0
+        # ensure redux-framework 4.5.7
+
+        echo "== Installing Spam / Security Plugins ==";
+        # ensure antispam-bee 2.11.7
+
+        echo "== Installing Contact Forms and Enhancements Plugins ==";
+        # ensure forminator 1.44.3
+        # ensure contact-form-7 6.1
+        # ensure contact-form-7-paypal-add-on 2.4.3
+        # ensure contact-form-cfdb7 1.3.1
+        # ensure contact-form-7-simple-recaptcha 0.1.6
+        # ensure cf7-grid-layout 4.15.8
+
+        echo "== Installing Email Management Plugins ==";
+        # ensure fluent-smtp 2.2.90
+
+        echo "== Installing Developer Tools and Utilities Plugins ==";
+        ensure query-monitor 3.18.0
+        # ensure font-awesome 5.0.2
+        # ensure codepress-admin-columns 4.7.7
+
+        echo "== Installing Social / Community (Optional) Plugins ==";
+        # ensure buddypress 14.3.4
+
+        echo "== Installing LMS / Donation (Optional) Plugins ==";
+        # ensure give 4.4.0
+        # ensure tutor 3.6.3
+        # ensure learnpress 4.2.8.7.3
+
+        echo "== Installing Search & Indexing (Optional) Plugins ==";
+        # ensure facetwp 4.3.2
+        # ensure relevanssi 4.22.1
+        # ensure add-search-to-menu 1.3.1
+        # ensure search-filter 1.2.16
+        # ensure elasticpress 5.0.3
+
+        echo "== Installing Permalinks / Structure (Optional) Plugins ==";
+        # ensure custom-post-type-permalinks 3.5.1
+
+        echo \"🔐 Ensuring custom roles…\";
+        wp role exists employee || wp role create employee \"Employee\" --clone=subscriber
+        wp role exists customer || wp role create customer \"Customer\" --clone=subscriber
+
+        echo \"🔧 Updating site URLs…\";
+        wp option update home    \"${WP_SITE_URL}\";
+        wp option update siteurl \"${WP_SITE_URL}\";
+
+        echo \"✅ Provisioning complete.\";
       '
+
   sage-theme-builder:
     image: node:20-bullseye
     container_name: sage-theme-builder
