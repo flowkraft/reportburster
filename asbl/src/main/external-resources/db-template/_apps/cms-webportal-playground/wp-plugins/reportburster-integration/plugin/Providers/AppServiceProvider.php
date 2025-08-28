@@ -22,6 +22,36 @@ class AppServiceProvider extends ServiceProvider
         add_filter('single_template', [$templateController, 'overrideSingleTemplate']);
         add_filter('page_template', [$templateController, 'overridePageTemplate']);
         
+        add_action('init', function () {
+            $slug       = 'my-documents';
+            $title      = 'My Documents';
+            $option_key = 'reportburster_account_page_id';
+
+            $page = get_page_by_path($slug);
+
+            if ( $page ) {
+                // If it was trashed, restore
+                if ( $page->post_status === 'trash' ) {
+                    wp_untrash_post( $page->ID );
+                }
+                update_option( $option_key, $page->ID );
+                return;
+            }
+
+            // Create only if it does not exist
+            $new_id = wp_insert_post([
+                'post_type'    => 'page',
+                'post_name'    => $slug,
+                'post_title'   => $title,
+                'post_status'  => 'publish',
+                'post_content' => '<!-- Auto-generated account portal. Content rendered by plugin template. -->',
+            ]);
+
+            if ( $new_id && ! is_wp_error( $new_id ) ) {
+                update_option( $option_key, $new_id );
+            }
+        }, 12);
+        
         add_action('init', function() {
             if (function_exists('pods_api')) {
                 $pods = pods_api()->load_pods(['type' => 'pod']);

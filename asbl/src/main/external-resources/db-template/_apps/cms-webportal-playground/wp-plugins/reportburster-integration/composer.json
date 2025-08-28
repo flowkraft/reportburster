@@ -33,10 +33,13 @@
       "functions.php"
     ]
   },
+  "config": {
+    "process-timeout": 900
+  },
   "scripts": {
     "post-autoload-dump": [
-      "php -r \"copy('vendor/wpbones/wpbones/src/Console/bin/bones', 'bones');\"",
-      "php bones rename --update"
+      "php -r \"if(!file_exists('bones')) copy('vendor/wpbones/wpbones/src/Console/bin/bones','bones');\"",
+      "php -r \"if(!file_exists('.bones_renamed')) { system('php bones rename --update'); file_put_contents('.bones_renamed','1'); }\""
     ]
-  }
+  }  
 }

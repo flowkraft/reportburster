@@ -1,16 +1,37 @@
 <?php
-
 /**
- * This file is loaded by template filters to render Blade views.
+ * Minimal template router: include plugin-scoped PHP template if present.
+ * Looks for single-{post_type}.php or page-{slug}.php inside resources/views.
  */
+if ( ! defined('ABSPATH') ) { exit; }
 
-//blade support for WordPress pages
-if (is_page()) {
-    $page_slug = get_post_field('post_name', get_queried_object_id());
-    $view_name = "page-{$page_slug}"; // e.g., 'page-portal-dashboard'
-    echo view($view_name);
-} elseif (is_singular()) { //blade support for WordPress CPTs
-    $post_type = get_post_type();
-    $view_name = "single-{$post_type}"; // e.g., 'single-invoice'
-    echo view($view_name);
+$plugin_root = dirname(__DIR__);
+$views_dir   = $plugin_root . '/resources/views';
+
+$include_view = function(string $name) use ($views_dir): bool {
+    // Prefer plain PHP
+    $php = $views_dir . '/' . $name . '.php';
+    if ( file_exists($php) ) {
+        include $php;
+        return true;
+    }
+    // Optional legacy support if a .blade.php still exists but contains plain PHP
+    $blade = $views_dir . '/' . $name . '.blade.php';
+    if ( file_exists($blade) ) {
+        include $blade;
+        return true;
+    }
+    return false;
+};
+
+if ( is_page() ) {
+    $slug = get_post_field('post_name', get_queried_object_id());
+    if ( $include_view("page-{$slug}") ) {
+        return;
+    }
+} elseif ( is_singular() ) {
+    $pt = get_post_type();
+    if ( $include_view("single-{$pt}") ) {
+        return;
+    }
 }
