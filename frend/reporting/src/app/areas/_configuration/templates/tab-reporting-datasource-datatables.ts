@@ -185,11 +185,41 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 </div>
                   
                 <div class="row" style="margin-top: 10px;">
-                  
-                  <div class="col-xs-6">
+
+                  <div class="col-xs-6" *ngIf="settingsService.getDatabaseConnectionFiles().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode">
                     <button id="btnHelpWithScriptAI" type="button" class="btn btn-default btn-block" (click)="askAiForHelp('script.ds')">
                       <strong>Hey AI, Help Me With This Groovy Script ...</strong>
                     </button>
+                  </div>
+                  <div class="col-xs-6" style="display: flex; align-items: center;" *ngIf="settingsService.getDatabaseConnectionFiles().length > 0 && xmlReporting.documentburster.report.datasource.sqloptions.conncode">
+                    <div class="btn-group" style="width: 100%; display: flex;">
+                      <button id="btnHelpWithScriptAI" type="button" class="btn btn-default" style="flex: 1; text-align: left;" (click)="askAiForHelp('script.ds')">
+                        <strong>Hey AI, Help Me With This Groovy Script ...</strong>
+                      </button>
+                      <button
+                        id="btnHelpWithScriptAIDropdownToggle"
+                        type="button"
+                        class="btn btn-default dropdown-toggle"
+                        data-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        style="flex: 0; margin-left: 6px; display: flex; align-items: center; justify-content: center; padding: 6px 10px;"
+                      >
+                        <span class="caret"></span>
+                      </button>
+                      <ul class="dropdown-menu" style="min-width: 220px;">
+                        <li>
+                          <a id="btnHelpWithScriptAIDropdownItem" href="#" (click)="askAiForHelp('script.ds'); $event.preventDefault();">
+                            Hey AI, Help Me With This Groovy Script ...
+                          </a>
+                        </li>
+                        <li>
+                          <a id="btnHelpWithSqlQueryAIDropdownItem" href="#" (click)="showDbConnectionModal(); $event.preventDefault();">
+                            Hey AI, Help Me With This SQL Query ...
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                   <div class="col-xs-3">
                     <button
