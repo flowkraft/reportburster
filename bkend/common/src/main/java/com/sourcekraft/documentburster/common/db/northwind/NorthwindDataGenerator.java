@@ -3,11 +3,16 @@ package com.sourcekraft.documentburster.common.db.northwind;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
 
-import com.sourcekraft.documentburster.common.db.northwind.entities.*;
+import com.sourcekraft.documentburster.common.db.northwind.entities.Category;
+import com.sourcekraft.documentburster.common.db.northwind.entities.Customer;
+import com.sourcekraft.documentburster.common.db.northwind.entities.Employee;
+import com.sourcekraft.documentburster.common.db.northwind.entities.Order;
+import com.sourcekraft.documentburster.common.db.northwind.entities.OrderDetail;
+import com.sourcekraft.documentburster.common.db.northwind.entities.Product;
+import com.sourcekraft.documentburster.common.db.northwind.entities.Shipper;
+import com.sourcekraft.documentburster.common.db.northwind.entities.Supplier;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
@@ -31,7 +36,7 @@ public class NorthwindDataGenerator {
 	/**
 	 * Generates all sample data within a single transaction.
 	 */
-	public void generateAll() {
+	public void generateAll() throws Exception {
 		EntityTransaction tx = null;
 		try {
 			tx = em.getTransaction();
@@ -50,8 +55,7 @@ public class NorthwindDataGenerator {
 			if (tx != null && tx.isActive()) {
 				tx.rollback();
 			}
-			// Consider re-throwing or logging more details
-			throw new RuntimeException("Failed to generate Northwind data", e);
+			throw e;
 		}
 	}
 
@@ -561,8 +565,14 @@ public class NorthwindDataGenerator {
 		order3.setEmployee(nancy); // Use Nancy
 		// Make RequiredDate slightly earlier to potentially make it late
 		order3.setOrderDate(REFERENCE_INSTANT.minusSeconds(86400 * 8).atZone(DEFAULT_ZONE_ID).toLocalDateTime());
-		order3.setRequiredDate(REFERENCE_INSTANT.minusSeconds(86400 * 3).atZone(DEFAULT_ZONE_ID).toLocalDateTime()); // Required 3 days ago
-		order3.setShippedDate(REFERENCE_INSTANT.minusSeconds(86400 * 2).atZone(DEFAULT_ZONE_ID).toLocalDateTime()); // Shipped 2 days ago
+		order3.setRequiredDate(REFERENCE_INSTANT.minusSeconds(86400 * 3).atZone(DEFAULT_ZONE_ID).toLocalDateTime()); // Required
+																														// 3
+																														// days
+																														// ago
+		order3.setShippedDate(REFERENCE_INSTANT.minusSeconds(86400 * 2).atZone(DEFAULT_ZONE_ID).toLocalDateTime()); // Shipped
+																													// 2
+																													// days
+																													// ago
 		order3.setShipper(federal); // Use Federal Shipping
 		order3.setFreight(new BigDecimal("45.50"));
 		order3.setShipName("Around the Horn");

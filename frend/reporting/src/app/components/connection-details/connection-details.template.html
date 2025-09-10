@@ -179,16 +179,29 @@
       </div>
 
       <div class="col-xs-7">
-        <button id="btnSendTestEmail" type="button" class="btn btn-primary btn-block" (click)="doTestSMTPConnection()">
-          <i class="fa fa-paper-plane"></i>&nbsp;&nbsp;{{
-          "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.SEND-TEST-EMAIL"
-          | translate
+        <button
+          id="btnSendTestEmail"
+          type="button"
+          class="btn btn-primary btn-block"
+          (click)="doTestSMTPConnection()"
+          [disabled]="isTestingConnection"
+        >
+          <i
+            id="btnSendTestEmailIcon"
+            class="fa"
+            [ngClass]="{
+              'fa-refresh fa-spin': isTestingConnection,
+              'fa-paper-plane': !isTestingConnection
+            }"
+          ></i>&nbsp;&nbsp;{{
+            "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.SEND-TEST-EMAIL"
+              | translate
           }}
         </button>
       </div>
 
       <div class="col-xs-3">
-        <dburst-button-clear-logs></dburst-button-clear-logs>
+        <dburst-button-clear-logs btnId="btnClearLogsConnection"></dburst-button-clear-logs>
       </div>
     </div>
     <p></p>
@@ -246,12 +259,11 @@
     <button id="btnOKConfirmationConnectionModal" class="btn btn-primary" type="button" (click)="onModalOK()"
       [disabled]="
         !modalConnectionInfo.email.documentburster.connection.name ||
-        modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file'
-      ">
+        modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file' || isTestingConnection">
       {{ "BUTTONS.SAVE" | translate }}
     </button>
 
-    <button id="btnCloseConnectionModal" class="btn btn-flat btn-default dburst-button-question-decline" type="button"
+    <button id="btnCloseConnectionModal" class="btn btn-flat btn-default" type="button"
       (click)="onModalClose()">
       {{ "BUTTONS.CANCEL" | translate }}
     </button>

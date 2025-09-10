@@ -951,14 +951,32 @@ export class FluentTester implements PromiseLike<void> {
     qaMode: string,
     n: number,
     attachmentsCommand: string,
-    attachmentType: string = 'pdf',
+    attachmentType?: string
+  ): FluentTester;
+
+  public shouldHaveSentNCorrectEmails(n: number): FluentTester;
+
+  // Then implement a single method that handles both cases
+  public shouldHaveSentNCorrectEmails(
+    qaModeOrN: string | number,
+    n?: number,
+    attachmentsCommand?: string,
+    attachmentType: string = 'pdf'
   ): FluentTester {
-    const action = (): Promise<void> =>
-      this.doVerifyEmails(qaMode, n, attachmentsCommand, attachmentType);
+    const action = (): Promise<void> => {
+      if (typeof qaModeOrN === 'number') {
+        // Called with just a number - do the COUNT_ONLY check
+        return this.doVerifyEmails('COUNT_ONLY', qaModeOrN, Constants.ATTACHMENTS_DEFAULT);
+      } else {
+        // Called with full parameter list
+        return this.doVerifyEmails(qaModeOrN, n!, attachmentsCommand!, attachmentType);
+      }
+    };
 
     this.actions.push(action);
     return this;
   }
+
 
   public gotoBurstScreen(): FluentTester {
     const action = (): Promise<void> => this.doGoToBurstScreen();
@@ -1130,6 +1148,9 @@ export class FluentTester implements PromiseLike<void> {
     attachmentsCommand: string,
     attachmentType: string = 'pdf',
   ): Promise<void> {
+    // New mode: If COUNT_ONLY is specified, only verify the email count
+    const isCountOnlyMode = qaMode === 'COUNT_ONLY';
+
     let emailMessages: any;
 
     if (qaMode != Constants.QA_TA) {
@@ -1138,15 +1159,20 @@ export class FluentTester implements PromiseLike<void> {
         .get('/api/v2/messages');
 
       should.exist(emailMessagesResponse);
-
       emailMessagesResponse.should.have.status(200);
       emailMessagesResponse.should.be.a('object');
       emailMessages = JSON.parse(emailMessagesResponse.text);
 
-      // assert 2 email messages were sent / received
+      // Check email count in MailHog
       emailMessages.total.should.equal(howManyEmails);
       emailMessages.count.should.equal(howManyEmails);
+
+      // If COUNT_ONLY mode, stop here - we've verified the count
+      if (isCountOnlyMode) {
+        return;
+      }
     }
+
     let recipientEmailAddresses = [];
 
     for (let i = 0; i < howManyEmails; i++) {

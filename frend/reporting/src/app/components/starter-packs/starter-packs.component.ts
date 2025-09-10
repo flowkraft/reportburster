@@ -23,11 +23,12 @@ import {
   StarterPacksService,
   StarterPackDefinition,
 } from './starter-packs.service';
+import { ShellService } from '../../providers/shell.service';
 
 // Interface for dynamic status data from API
 interface StarterPackStatusData {
   id: string; // ID must match the one in StarterPackDefinition
-  status: 'running' | 'stopped' | 'pending' | 'error' | 'unknown';
+  status: 'running' | 'stopped' | 'starting' | 'stopping' | 'error' | 'unknown';
   info?: any; // Or a more specific type if known (e.g., string for logs)
   lastOutput?: string; // Last output message from the backend process
 }
@@ -36,7 +37,7 @@ interface StarterPackStatusData {
 // Inherits static props from StarterPackDefinition
 interface StarterPackUIData extends StarterPackDefinition {
   // Dynamic props from API (overwrites definition if names clash, e.g., id)
-  status: 'running' | 'stopped' | 'pending' | 'error' | 'unknown';
+  status: 'running' | 'stopped' | 'starting' | 'stopping' | 'error' | 'unknown';
   info?: any;
   lastOutput?: string;
 
@@ -46,7 +47,7 @@ interface StarterPackUIData extends StarterPackDefinition {
 
 // Define expected response types for clarity
 // API now returns only the dynamic status part
-interface PackStatusResponse extends Array<StarterPackStatusData> {}
+interface PackStatusResponse extends Array<StarterPackStatusData> { }
 interface ExecuteResponse {
   output: string;
   newStatus: StarterPackUIData['status'];
@@ -97,10 +98,11 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
 
   // Inject DomSanitizer along with other services
   constructor(
-    private apiService: ApiService,
-    private starterPacksService: StarterPacksService,
-    private sanitizer: DomSanitizer, // Inject DomSanitizer
-  ) {}
+    protected shellService: ShellService,
+    protected apiService: ApiService,
+    protected starterPacksService: StarterPacksService,
+    protected sanitizer: DomSanitizer, // Inject DomSanitizer
+  ) { }
 
   ngOnInit(): void {
     this.loadInitialData(); // Fetch data when component initializes
@@ -150,212 +152,109 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
    * Fetches static definitions and dynamic statuses, then merges them.
    */
   async fetchStarterPacksStatus(): Promise<void> {
-    const wasInitialLoad = this.isLoading;
-    // Ensure refresh indicator is on if it's not the initial load
-    if (!wasInitialLoad) {
-      this.isRefreshing = true;
-    }
-
-    console.log(
-      `Fetching status (Initial: ${wasInitialLoad}, Refreshing: ${this.isRefreshing})`,
-    );
-
     try {
-      // 1. Get static definitions from the service
+      // 1. Get static definitions from the service (this is local, no API call)
       const definitions = this.starterPacksService.getStarterPackDefinitions();
 
-      // 2. Fetch dynamic status data from the backend API
-      const statusDataArray: PackStatusResponse = await this.apiService.get(
-        '/jobman/starter-packs/status',
-      );
-
-      console.log('Received packs status data:', statusDataArray);
-
-      // 3. Merge static definitions with dynamic status data
-      this.starterPacks = definitions
-        .map((definition) => {
-          // Find corresponding status data from API response using the unique ID
-          const statusData = statusDataArray.find(
-            (status) => status.id === definition.id,
-          );
-
-          // Find existing UI state from the current component state (to preserve command value if pending)
-          const existingPack = this.starterPacks.find(
-            (p) => p.id === definition.id,
-          );
-
-          // Determine status and default command based on API or initial state
-          let currentStatus: StarterPackUIData['status'] = 'unknown';
-          let apiLastOutput: string | undefined;
-
-          if (statusData) {
-            currentStatus = statusData.status;
-            apiLastOutput = statusData.lastOutput;
-          } else {
-            console.warn(
-              `No status data received from API for starter pack ID: ${definition.id}. Setting status to 'unknown'.`,
-            );
-          }
-
-          // Respect optimistic 'pending' state
-          if (
-            existingPack?.status === 'pending' &&
-            currentStatus !== 'running' &&
-            currentStatus !== 'stopped' &&
-            currentStatus !== 'error'
-          ) {
-            currentStatus = 'pending'; // Keep it pending
-          }
-
-          // Determine the command to display based on the current status
-          let displayCommand = '';
-          if (currentStatus === 'running') {
-            displayCommand = getDefaultCommand(definition, 'stop'); // Show stop command if running
-          } else {
-            displayCommand = getDefaultCommand(definition, 'start'); // Show start command otherwise
-          }
-
-          // If the pack existed before and is now pending, keep the command value it had
-          if (existingPack && currentStatus === 'pending') {
-            displayCommand = existingPack.currentCommandValue;
-          }
-
-          // Determine lastOutput
-          let lastOutput = apiLastOutput;
-          if (
-            currentStatus === 'pending' &&
-            existingPack?.status === 'pending'
-          ) {
-            lastOutput = existingPack?.lastOutput; // Keep the "Executing..." message
-          }
-
-          // Create the merged StarterPackUIData object
-          const mergedPack: StarterPackUIData = {
-            ...definition, // Static definition properties
-            // Dynamic properties (use defaults if statusData is missing)
-            status: currentStatus,
-            info: statusData?.info,
-            lastOutput: lastOutput,
-            // UI State
-            currentCommandValue: displayCommand, // Set the command to display/edit
-          };
-          return mergedPack;
-        })
-        .filter((pack): pack is StarterPackUIData => !!pack); // Ensure no null/undefined entries
-
-      this.extractAllTags(); // Update the list of available tags
-      this.applyFilters(); // Apply current search/filter to the new data
-      this.error = null; // Clear global error on successful fetch
-    } catch (err: any) {
-      console.error('Error fetching starter packs status:', err);
-      // --- MOCK DATA IMPLEMENTATION START ---
-      console.warn('API call failed. Using mock data for UI development.');
-      const definitions = this.starterPacksService.getStarterPackDefinitions();
-      this.starterPacks = definitions.map((definition, index) => {
-        const mockStatus = index % 2 === 0 ? 'stopped' : ('running' as const);
-        const mockCommand =
-          mockStatus === 'running'
-            ? getDefaultCommand(definition, 'stop')
-            : getDefaultCommand(definition, 'start');
+      // 2. Create UI data with all packs initially in "stopped" state
+      this.starterPacks = definitions.map(definition => {
         return {
           ...definition,
-          status: mockStatus,
-          info: `Mock info for ${definition.displayName}`,
-          lastOutput: `Mock last output for ${definition.id}`,
-          currentCommandValue: mockCommand,
+          status: 'stopped',
+          lastOutput: null,
+          currentCommandValue: definition.startCmd
         };
       });
+
+      // 2. Fetch real statuses from the backend
+      await this.refreshAllStatuses(); // This sets statuses for all packs
+
+      // 3. Merge definitions with statuses (assuming statuses are already set on packs)
+      this.starterPacks = definitions.map(definition => {
+        const existingPack = this.starterPacks.find(p => p.id === definition.id);
+        const currentStatus = existingPack?.status || 'unknown';
+        return {
+          ...definition,
+          status: currentStatus,
+          lastOutput: existingPack?.lastOutput || (currentStatus === 'running' ? `Running ${definition.displayName}` : `Ready to start ${definition.displayName}`),
+          currentCommandValue: currentStatus === 'running' ? definition.stopCmd : definition.startCmd
+
+        };
+      });
+
+      // 3. Setup UI elements
       this.extractAllTags();
       this.applyFilters();
-      this.error = null;
-      // --- MOCK DATA IMPLEMENTATION END ---
+
+    } catch (err) {
+      console.error('Error setting up starter packs:', err);
+      this.error = 'Failed to initialize starter packs';
     } finally {
-      console.log(`Finalizing fetch status (WasInitial: ${wasInitialLoad})`);
-      if (wasInitialLoad) {
-        this.isLoading = false;
-      }
+      // CRITICAL: This line was missing, causing the spinner to run forever
+      this.isLoading = false;
       this.isRefreshing = false;
     }
   }
 
+
+  private async refreshAllStatuses(): Promise<void> {
+    try {
+      const response = await this.apiService.get('/jobman/system/services/status');
+
+      const statuses: any[] = response; // Array of {name, status, ports}
+
+      console.log('Fetched statuses from backend:', statuses); // Add this line to log the statuses array
+
+      // Update each pack's status based on the response
+      for (const pack of this.starterPacks) {
+        // Flexible name matching: exact match or if service name includes pack.target
+        // This handles cases like "rb-northwind-mariadb" vs. "mariadb"
+        const service = statuses.find(s => s.name === pack.target || s.name.includes(pack.target));
+        if (service) {
+          pack.status = service.status === 'running' ? 'running' : 'stopped';
+        } else {
+          pack.status = 'unknown'; // Service not found
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing statuses:', error);
+      // Optionally, set all to 'error' or leave as-is
+    }
+  }
   // --- Action Trigger ---
 
-  /**
-   * Toggles the state (start/stop) of a starter pack by calling the backend API
-   * using the command currently present in the input field.
-   * @param pack The starter pack to toggle.
-   */
+  // In starter-packs.component.ts
   async togglePackState(pack: StarterPackUIData): Promise<void> {
-    // Prevent action if already in a pending state
-    if (pack.status === 'pending') {
-      console.log(`Action skipped for ${pack.id} (already pending)`);
-      return;
-    }
+    if (pack.status === 'starting' || pack.status === 'stopping') return;
 
     const action = pack.status === 'running' ? 'stop' : 'start';
-    // Read the command directly from the ngModel-bound property
-    const command = pack.currentCommandValue?.trim(); // Trim whitespace
 
-    // Ensure command is not empty/null before proceeding
-    if (!command) {
-      console.error(`Command is empty for pack ${pack.id}. Aborting action.`);
-      pack.lastOutput = 'Error: Command cannot be empty.';
-      pack.status = 'error'; // Set to error state
-      // Update the command input to reflect the default for the error state (start)
-      pack.currentCommandValue = getDefaultCommand(pack, 'start');
-      return;
-    }
+    // Set pending state immediately
+    pack.status = action === 'start' ? 'starting' : 'stopping';
+    pack.lastOutput = `Executing ${action}...`;
 
-    console.log(
-      `Executing ${action} for ${pack.displayName} with command: ${command}`, // Use the current value
-    );
+    // Split the command into args
+    const args = pack.currentCommandValue.split(/\s+/);
 
-    // Optimistic UI update: set status to 'pending' immediately
-    pack.status = 'pending';
-    pack.lastOutput = `Executing ${action}...`; // Provide immediate feedback
-    this.error = null; // Clear global error when initiating an action
+    this.shellService.runBatFile(
+      args,
+      `${action}ing ${pack.displayName}`,
+      async (result: any) => {
+        if (result.success) {
+          pack.status = action === 'start' ? 'running' : 'stopped';
+          pack.currentCommandValue = pack.status === 'running' ? pack.stopCmd : pack.startCmd; 
+          pack.lastOutput = result.output || `${pack.displayName} ${action}ed successfully`;
+        } else {
+          pack.status = 'error';
+          pack.currentCommandValue = pack.startCmd;
+          pack.lastOutput = result.error || `Failed to ${action} ${pack.displayName}`;
+        }
 
-    try {
-      // Call the backend API to execute the command
-      const response: ExecuteResponse = await this.apiService.post(
-        '/jobman/starter-packs/execute',
-        { command: command }, // Send the current command string
-      );
-
-      // Handle the direct response from the execute call
-      if (response) {
-        console.log(
-          `Action ${action} direct response for ${pack.id}:`,
-          response,
-        );
-        // Update pack status and output based on immediate response
-        // This might be overwritten shortly by the refreshData call
-        pack.status = response.newStatus;
-        pack.lastOutput = response.output;
-        // Update the command input field based on the new status
-        pack.currentCommandValue =
-          response.newStatus === 'running'
-            ? getDefaultCommand(pack, 'stop')
-            : getDefaultCommand(pack, 'start');
+        await this.refreshAllStatuses();
       }
-    } catch (err: any) {
-      console.error(`Error executing ${action} for ${pack.id}:`, err);
-      const errorMsg = `Error executing ${action}: ${err?.error?.message || err?.message || 'Unknown error'}`;
-      // Update UI to show error state for this specific pack
-      pack.status = 'error';
-      pack.lastOutput = errorMsg;
-      // Update the command input field based on the error status (show start command)
-      pack.currentCommandValue = getDefaultCommand(pack, 'start');
-    } finally {
-      // Trigger a refresh after the action completes (success or error)
-      // to get the definitive status from the backend.
-      console.log(
-        `Action ${action} finalized for ${pack.id}. Triggering refresh.`,
-      );
-      // Use setTimeout to ensure it runs after the current execution context
-      // and potential immediate UI updates from the direct response.
-      setTimeout(() => this.refreshData(), 50); // Small delay might help UI consistency
-    }
+
+
+    );
   }
 
   // --- UI Interaction Methods ---

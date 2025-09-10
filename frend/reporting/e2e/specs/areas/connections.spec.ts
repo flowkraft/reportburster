@@ -6,11 +6,25 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import * as PATHS from '../../utils/paths';
 import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test-helper';
-import { ConnectionsTestHelper } from '../../helpers/areas/connections-test-helper';
+import { ConnectionsTestHelper, DB_VENDORS_DEFAULT, DB_VENDORS_SUPPORTED } from '../../helpers/areas/connections-test-helper';
+
+const DB_VENDORS_SELECTED: string[] = (() => {
+  const required = 'sqlite';
+  const pool = DB_VENDORS_SUPPORTED.filter(v => v !== required);
+  // shuffle pool (Fisher–Yates)
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const pickedOthers = pool.slice(0, 2); // pick up to 2
+  const list = [required, ...pickedOthers];
+  return list;
+})();
 
 //DONE2
 test.describe('', async () => {
 
+  
   electronBeforeAfterAllTest(
     '(email-connection) should correctly CRUD create, read, update, duplicate and delete',
     async function ({ beforeAfterEach: firstPage }) {
@@ -361,196 +375,425 @@ test.describe('', async () => {
     },
   );
 
+
+
   electronBeforeAfterAllTest(
-    '(database-connection) should correctly CRUD create, read, update, duplicate and delete',
+    '(email-connection) should exercise Send Test Email: unsaved modal, list, config reuse, inline valid and inline invalid (bundled SMTP)',
     async function ({ beforeAfterEach: firstPage }) {
-      //long running test
+      // generous timeout for network & SMTP operations
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
       let ft = new FluentTester(firstPage);
 
-      // Determine which database vendor to test with
-      let dbVendor: string;
-      if (ConnectionsTestHelper.DB_VENDORS_TEST_RANDOM) {
-        dbVendor = ConnectionsTestHelper.getRandomDbVendor();
-        console.log(`Testing with random database vendor: ${dbVendor}`);
-      } else {
-        dbVendor = ConnectionsTestHelper.DB_VENDORS_DEFAULT;
-        console.log(`Testing with default database vendor: ${dbVendor}`);
-      }
+      // Test connection name + derived selectors
+      const connectionName = 'E2E Combined Email Conn';
+      const connectionCode = `eml-${_.kebabCase(connectionName)}`;
+      const connectionFileId = `${connectionCode}\\.xml`;
+      const escapedWhich = PATHS.SETTINGS_CONFIG_FILE;
 
-      // Create a new database connection
-      ft = ConnectionsTestHelper.createAndAssertNewDatabaseConnection(
-        ft,
-        'Test Database Connection',
-        dbVendor,
-      );
+      // --------------------------------------------------------------------
+      // STEP 1 — Start bundled SMTP test server so we can verify deliveries
+      // --------------------------------------------------------------------
+      ft = ft.gotoBurstScreen()
+        .click('#leftMenuQualityAssurance')
+        .click('#testTokensRandom')
+        .waitOnElementToBecomeVisible('#startTestEmailServer')
+        .waitOnElementToBecomeEnabled('#startTestEmailServer')
+        .click('#startTestEmailServer')
+        .clickYesDoThis()
+        .waitOnElementToBecomeEnabled('#stopTestEmailServer', Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
-      // Read and update the connection
-      ft = ConnectionsTestHelper.readUpdateAndAssertDatabaseConnection(
-        ft,
-        'Test Database Connection',
-        dbVendor,
-      );
+      // ensure inbox starts empty
+      ft = ft.shouldHaveSentNCorrectEmails(0);
 
-      // Duplicate the connection
-      ft = ConnectionsTestHelper.duplicateAndAssertDatabaseConnection(
-        ft,
-        'Test Database Connection',
-        dbVendor,
-      );
-
-      // Delete both connections and verify associated files are also deleted
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
-        ft,
-        'db-test-database-connection\\.xml',
-        dbVendor,
-      );
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
-        ft,
-        'db-test-database-connection-duplicated\\.xml',
-        dbVendor,
-      );
-
-      return ft;
-    },
-  );
-
-  electronBeforeAfterAllTest(
-    '(database-connection) should correctly handle all the "Default" related actions',
-    async function ({ beforeAfterEach: firstPage }) {
-      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
-
-      let ft = new FluentTester(firstPage);
-
-      const dbConnection1Name = 'First Test DB for Default';
-      const dbConnection1FileNameAndId = `db-${_.kebabCase(dbConnection1Name)}\\.xml`; // For UI element IDs
-      const dbConnection1Vendor = ConnectionsTestHelper.getRandomDbVendor();
-
-      const dbConnection2Name = 'Second Test DB for Default';
-      const dbConnection2FileNameAndId = `db-${_.kebabCase(dbConnection2Name)}\\.xml`;
-      const dbConnection2Vendor = ConnectionsTestHelper.getRandomDbVendor();
-
-      // --- Test Steps ---
-
-      // 1. Go to connections.
-      ft.gotoConnections();
-
-      // 2. Create the first database connection.
-      ft = ConnectionsTestHelper.createAndAssertNewDatabaseConnection(
-        ft,
-        dbConnection1Name,
-        dbConnection1Vendor,
-      );
-
-      // 3. Assert the first DB connection is present and NOT default initially.
-      // "Make Default" should be available. Delete button should be enabled.
-      ft.gotoConnections()
-        .clickAndSelectTableRow(`#${dbConnection1FileNameAndId}`)
+      // --------------------------------------------------------------------
+      // STEP 2 — UNSAVED flow: open New Email modal, fill fields but DO NOT save,
+      //           click Send Test Email -> expect "Save first?" dialog -> choose NO -> assert no email sent
+      // --------------------------------------------------------------------
+      ft = ft.gotoConnections()
         .waitOnElementToBecomeEnabled('#btnNewDropdown')
-        .waitOnElementToBecomeEnabled('#btnEdit')
-        .waitOnElementToBecomeEnabled('#btnDuplicate')
-        .waitOnElementToBecomeEnabled('#btnDelete') // Delete should be enabled for non-default & unused
-        .elementShouldContainText(
-          `#${dbConnection1FileNameAndId} td:first-child`,
-          dbConnection1Name,
+        .click('#btnNewDropdown')
+        .waitOnElementToBecomeVisible('#btnNewEmail')
+        .click('#btnNewEmail')
+        .waitOnElementToBecomeVisible('#modalExtConnection')
+        .waitOnElementToBecomeEnabled('#connectionName')
+        .click('#connectionName').typeText(connectionName)
+        .waitOnElementToBecomeEnabled('#fromName')
+        .click('#fromName').typeText('Test User')
+        .waitOnElementToBecomeEnabled('#fromEmailAddress')
+        .click('#fromEmailAddress').typeText('test@example.com')
+        .waitOnElementToBecomeEnabled('#emailServerHost')
+        .click('#emailServerHost').typeText('127.0.0.1')
+        .waitOnElementToBecomeEnabled('#smtpPort')
+        .click('#smtpPort').typeText('1025');
+
+      // Click Send Test Email (unsaved): expect "Save first?" -> click NO -> verify no email sent
+      ft = ft.waitOnElementToBecomeVisible('#btnSendTestEmail')
+        .waitOnElementToBecomeEnabled('#btnSendTestEmail')
+        .click('#btnSendTestEmail')
+        .waitOnElementToContainText(
+          '#confirmDialog .modal-body',
+          'The connection must be saved before being able to test it. Save now?',
         )
-        .elementShouldContainText(
-          `#${dbConnection1FileNameAndId} td:nth-child(2)`,
-          'database-connection',
+        .clickNoDontDoThis()
+        .waitOnElementToBecomeInvisible('#confirmDialog');
+
+      // assert still zero emails delivered
+      ft = ft.shouldHaveSentNCorrectEmails(0);
+
+      // --------------------------------------------------------------------
+      // STEP 3 — UNSAVED flow continued: click Send Test Email again, choose YES to save+test,
+      //           assert success toast and that 1 email was delivered
+      // --------------------------------------------------------------------
+      ft = ft.waitOnElementToBecomeEnabled('#btnSendTestEmail')
+        .click('#btnSendTestEmail')
+        .waitOnElementToContainText(
+          '#confirmDialog .modal-body',
+          'The connection must be saved before being able to test it. Save now?',
         )
-        .elementShouldHaveText(
-          `#${dbConnection1FileNameAndId} td:nth-child(3)`,
-          '--not used--',
-        ).waitOnElementToBecomeVisible(
-          `#btnDefault_${dbConnection1FileNameAndId}`,
+        .clickYesDoThis()
+        .waitOnElementToContainText(
+          '#confirmDialog .modal-body',
+          'Send test email?',
         )
-        .elementShouldNotBeVisible(`#btnActions_${dbConnection1FileNameAndId}`)
-        .clickAndSelectTableRow(`#${dbConnection1FileNameAndId}`);
+         .clickYesDoThis()
+         .waitOnElementToBecomeDisabled('#btnSendTestEmail', Constants.DELAY_HUNDRED_SECONDS)
+         .waitOnElementToBecomeEnabled('#btnSendTestEmail', Constants.DELAY_HUNDRED_SECONDS)
+         .appStatusShouldBeGreatNoErrorsNoWarnings();
+       
+      // verify SMTP received 1 email (the saved+tested connection)
+      ft = ft.shouldHaveSentNCorrectEmails(1)
+        .click('#btnOKConfirmationConnectionModal')
+        .waitOnToastToBecomeVisible(
+          'info',
+          `Connection '${connectionName}' saved successfully.`,
+        )
+        .clickAndSelectTableRow(`#${connectionCode}\\.xml`)
+        .gotoBurstScreen();
 
-      // 5. Create the second database connection.
-      ft = ConnectionsTestHelper.createAndAssertNewDatabaseConnection(
-        ft,
-        dbConnection2Name,
-        dbConnection2Vendor,
-      );
+      // --------------------------------------------------------------------
+      // STEP 4 — From Connections list: press Send Test Email next to saved row
+      // --------------------------------------------------------------------
+      ft = ft.gotoConnections()
+        .waitOnElementToHaveText(`#${connectionFileId} td:first-child`, connectionName)
+        .clickAndSelectTableRow(`#${connectionFileId}`)
+        .waitOnElementToBecomeVisible(`#btnActions_${connectionFileId}`) 
+        .click(`#btnActions_${connectionFileId}`)
+        .waitOnElementToBecomeVisible(`#btnSendTestEmail_${connectionFileId}`)
+        .waitOnElementToBecomeEnabled(`#btnSendTestEmail_${connectionFileId}`)
+        .click(`#btnSendTestEmail_${connectionFileId}`)
+        .waitOnElementToBecomeVisible('#btnClearLogsConnection')
+        .waitOnElementToBecomeEnabled('#btnClearLogsConnection')
+        .infoDialogShouldBeVisible()
+        .clickYesDoThis()
+        .click('#btnClearLogsConnection')
+        .clickYesDoThis()
+        .waitOnElementToBecomeDisabled('#btnClearLogsConnection')
+        .waitOnElementToBecomeEnabled('#btnSendTestEmail')
+        .click('#btnSendTestEmail')
+        .clickYesDoThis()
+        .waitOnElementToBecomeDisabled('#btnSendTestEmail', Constants.DELAY_HUNDRED_SECONDS)
+        .waitOnElementToBecomeEnabled('#btnSendTestEmail', Constants.DELAY_HUNDRED_SECONDS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
 
-      // 6. Assert the second DB connection is present and NOT default.
-      // The first DB connection should still be default.
-      // Delete button for second connection should be enabled.
-      ft.gotoConnections()
-        .clickAndSelectTableRow(`#${dbConnection2FileNameAndId}`)
-        .elementShouldBeVisible(`#btnActions_${dbConnection2FileNameAndId}`)
-        .elementShouldNotBeVisible(`#btnDefault_${dbConnection2FileNameAndId}`)
-        .waitOnElementToBecomeEnabled('#btnDelete') // Delete enabled for this non-default
-        // Verify first one is still default and its delete button is disabled
-        .clickAndSelectTableRow(`#${dbConnection1FileNameAndId}`)
-        .elementShouldBeVisible(`#btnDefault_${dbConnection1FileNameAndId}`)
-        .elementShouldNotBeVisible(`#btnActions_${dbConnection1FileNameAndId}`)
-        .elementShouldHaveClass('#btnDelete', 'disabled');
+      // verify SMTP received 2 emails total now
+      ft = ft.shouldHaveSentNCorrectEmails(2)
+        .click('#btnCloseConnectionModal')
+        .waitOnElementToBecomeInvisible('#btnCloseConnectionModal')
+        .clickAndSelectTableRow(`#${connectionCode}\\.xml`);
 
-      // 7. Make the second DB connection default.
-      // First connection becomes non-default, its delete button should become enabled.
-      // Second connection becomes default, its delete button should become disabled.
-      ft = ConnectionsTestHelper.makeConnectionAsDefault(
-        ft,
-        dbConnection2FileNameAndId,
-      ); // Make temp default
+      // --------------------------------------------------------------------
+      // STEP 5 — Configuration tab: Re-use existing email connection -> select saved connection -> Send Test Email
+      // --------------------------------------------------------------------
+      ft = ft.gotoBurstScreen()
+        .click('#topMenuConfiguration')
+        .click('#topMenuConfigurationLoad_burst_' + escapedWhich)
+        .click('#leftMenuEmailSettings');
 
-      ft = ft
-        .clickAndSelectTableRow(`#${dbConnection2FileNameAndId}`) // Reselect second
-        .elementShouldHaveClass('#btnDelete', 'disabled') // Delete disabled for new default
-        .waitOnElementToBecomeVisible(
-          `#btnActions_${dbConnection1FileNameAndId}`,
-        ) // First is no longer default
-        .clickAndSelectTableRow(`#${dbConnection1FileNameAndId}`) // Select first
-        .waitOnElementToBecomeEnabled('#btnDelete'); // Delete enabled for now non-default first
+      ft = ft.waitOnElementToBecomeVisible('#btnUseExistingEmailConnection')
+        .click('#btnUseExistingEmailConnection')
+        .waitOnElementToBecomeVisible('#btnSelectAnotherEmailConnection')
+        .click('#btnSelectAnotherEmailConnection')
+        .waitOnElementToBecomeVisible(`#${connectionCode}`)
+        .click(`#${connectionCode}`)
+        .clickYesDoThis()
+        .waitOnElementToBecomeInvisible('#selectedEmailConnectionDefault', Constants.DELAY_TEN_SECONDS)
+        .waitOnElementToBecomeVisible('#btnClearLogs')
+        .waitOnElementToBecomeEnabled('#btnClearLogs')
+        .click('#btnClearLogs')
+        .clickYesDoThis()
+        .waitOnElementToBecomeDisabled('#btnClearLogs')
+        .waitOnElementToBecomeVisible('#btnSendTestEmail')
+        .waitOnElementToBecomeEnabled('#btnSendTestEmail')
+        .click('#btnSendTestEmail')
+        .clickYesDoThis()
+        .waitOnElementToBecomeDisabled('#btnSendTestEmail', Constants.DELAY_HUNDRED_SECONDS)
+        .waitOnElementToBecomeEnabled('#btnSendTestEmail', Constants.DELAY_HUNDRED_SECONDS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
 
-      // 8. Make the first DB connection default again.
-      // Second connection becomes non-default, its delete button should become enabled.
-      // First connection becomes default, its delete button should become disabled.
-      ft = ConnectionsTestHelper.makeConnectionAsDefault(
-        ft,
-        dbConnection1FileNameAndId,
-      ); // Make temp default
+      // verify SMTP received 3 emails total now
+      ft = ft.shouldHaveSentNCorrectEmails(3);
 
-      ft = ft
-        .waitOnElementToBecomeVisible(
-          `#btnActions_${dbConnection2FileNameAndId}`,
-        ) // Second is no longer default
-        .elementShouldHaveClass('#btnDelete', 'disabled') // Delete disabled for new default
-        .clickAndSelectTableRow(`#${dbConnection2FileNameAndId}`) // Select second
-        .waitOnElementToBecomeEnabled('#btnDelete'); // Delete enabled for now non-default second
+      // --------------------------------------------------------------------
+      // STEP 6 — Configuration tab: uncheck "Re-use" and use inline SMTP details (valid) -> Send Test Email
+      // --------------------------------------------------------------------
+      ft = ft.waitOnElementToBecomeVisible('#btnUseExistingEmailConnection')
+        .click('#btnUseExistingEmailConnection') // uncheck -> inline enabled
+        .waitOnElementToBecomeEnabled('#emailServerHost')
+        .click('#emailServerHost').typeText('') // clear then set
+        .typeText('127.0.0.1')
+        .waitOnElementToBecomeEnabled('#smtpPort')
+        .click('#smtpPort').typeText('') // clear then set
+        .typeText('1025')
+        .waitOnElementToBecomeEnabled('#fromName')
+        .click('#fromName').typeText('Test User')
+        .waitOnElementToBecomeEnabled('#fromEmailAddress')
+        .click('#fromEmailAddress').typeText('test@example.com');
 
-      // 9. Delete the second (now non-default) database connection.
-      // dbConnection1Name should remain default, and its delete button should remain disabled.
-      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
-        ft,
-        dbConnection2FileNameAndId,
-        dbConnection2Vendor,
-      );
+      ft = ft.waitOnElementToBecomeEnabled('#btnClearLogs')
+        .click('#btnClearLogs')
+        .clickYesDoThis()
+        .waitOnElementToBecomeDisabled('#btnClearLogs')
+        .waitOnElementToBecomeEnabled('#btnSendTestEmail')
+        .click('#btnSendTestEmail')
+        .clickYesDoThis()
+        .waitOnElementToBecomeDisabled('#btnSendTestEmail', Constants.DELAY_HUNDRED_SECONDS)
+        .waitOnElementToBecomeEnabled('#btnSendTestEmail', Constants.DELAY_HUNDRED_SECONDS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
 
-      // 10. Attempt to delete the first (and now only, and default) database connection.
-      // Assert Delete button is disabled.
-      ft.gotoConnections();
-      ft.clickAndSelectTableRow(
-        `#${dbConnection1FileNameAndId}`,
-      ).elementShouldHaveClass('#btnDelete', 'disabled');
+      // verify SMTP received 4 emails total now
+      ft = ft.shouldHaveSentNCorrectEmails(4);
 
-      ft = ft.deleteFolder(
-        `${process.env.PORTABLE_EXECUTABLE_DIR}/db/${dbConnection1FileNameAndId.replace('\\.xml', '')}`,
-      );
-      // 11. To clean up, we must create another connection, make IT default, then delete the original.
-      // For this test's scope, we'll just delete dbConnection1Name after making it non-default
-      // by creating a temporary one.
-      // However, a full cleanup would involve another helper or direct deletion if the test was ending.
-      // For now, we'll just assert it cannot be deleted and then manually clean it up
-      // (assuming a global afterAll or similar handles full cleanup of test-created files).
-      // For this specific test, we will delete it by creating a temp one, making it default, then deleting the original.
+      // --------------------------------------------------------------------
+      // STEP 7 — Configuration tab: inline invalid SMTP detail (wrong port) -> Send Test Email -> expect NO new email delivered
+      // --------------------------------------------------------------------
+      ft = ft.waitOnElementToBecomeEnabled('#smtpPort')
+        .click('#smtpPort')
+        .typeText('') // clear
+        .typeText('9999') // invalid port
+        .waitOnElementToBecomeEnabled('#btnClearLogs')
+        .click('#btnClearLogs')
+        .clickYesDoThis()
+        .waitOnElementToBecomeDisabled('#btnClearLogs')
+        .waitOnElementToBecomeEnabled('#btnSendTestEmail')
+        .click('#btnSendTestEmail')
+        .clickYesDoThis()
+        .waitOnElementToBecomeDisabled('#btnSendTestEmail', Constants.DELAY_HUNDRED_SECONDS)
+        .waitOnElementToBecomeEnabled('#btnSendTestEmail', Constants.DELAY_HUNDRED_SECONDS)
+        .appStatusShouldShowErrors();
+
+      // mailbox should remain unchanged (still 4)
+      ft = ft.shouldHaveSentNCorrectEmails(4);
+
+      // --------------------------------------------------------------------
+      // STEP 8 — Stop bundled SMTP server
+      // --------------------------------------------------------------------
+      ft = ft.gotoBurstScreen()
+       .click('#leftMenuQualityAssurance')
+        .click('#testTokensRandom')
+        .waitOnElementToBecomeVisible('#stopTestEmailServer')
+        .waitOnElementToBecomeEnabled('#stopTestEmailServer')
+        .click('#stopTestEmailServer')
+        .clickYesDoThis()
+        .waitOnElementToBecomeVisible('#startTestEmailServer', Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      // --------------------------------------------------------------------
+      // STEP 9 — Cleanup: delete created email connection
+      // --------------------------------------------------------------------
+      ft = ft.gotoConnections();
+      ft = ConnectionsTestHelper.deleteAndAssertEmailConnection(ft, connectionFileId);
 
       return ft;
     },
   );
+
+
+  
+  for (const dbVendor of DB_VENDORS_SELECTED) {
+    electronBeforeAfterAllTest(
+      `(database-connection) [${dbVendor}] should correctly CRUD create, read, update, duplicate and delete`,
+      async function ({ beforeAfterEach: firstPage }) {
+        //long running test
+        test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+        let ft = new FluentTester(firstPage);
+
+        // Create a new database connection
+        ft = ConnectionsTestHelper.createAndAssertNewDatabaseConnection(
+          ft,
+          'Test Database Connection',
+          dbVendor,
+        );
+
+        // Read and update the connection
+        ft = ConnectionsTestHelper.readUpdateAndAssertDatabaseConnection(
+          ft,
+          'Test Database Connection',
+          dbVendor,
+        );
+
+        // Duplicate the connection
+        ft = ConnectionsTestHelper.duplicateAndAssertDatabaseConnection(
+          ft,
+          'Test Database Connection',
+          dbVendor,
+        );
+
+        // Delete both connections and verify associated files are also deleted
+        ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
+          ft,
+          'db-test-database-connection\\.xml',
+          dbVendor,
+        );
+        ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
+          ft,
+          'db-test-database-connection-duplicated\\.xml',
+          dbVendor,
+        );
+
+        return ft;
+      },
+    );
+
+   
+    electronBeforeAfterAllTest(
+      `(database-connection) [${dbVendor}] should correctly handle all the "Default" related actions`,
+      async function ({ beforeAfterEach: firstPage }) {
+        test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+        let ft = new FluentTester(firstPage);
+
+        const dbConnection1Name = 'First Test DB for Default';
+        const dbConnection1FileNameAndId = `db-${_.kebabCase(dbConnection1Name)}\\.xml`; // For UI element IDs
+        const dbConnection1Vendor = dbVendor;
+
+        const dbConnection2Name = 'Second Test DB for Default';
+        const dbConnection2FileNameAndId = `db-${_.kebabCase(dbConnection2Name)}\\.xml`;
+        const dbConnection2Vendor = dbVendor;
+
+        // --- Test Steps ---
+
+        // 1. Go to connections.
+        ft.gotoConnections();
+
+        // 2. Create the first database connection.
+        ft = ConnectionsTestHelper.createAndAssertNewDatabaseConnection(
+          ft,
+          dbConnection1Name,
+          dbConnection1Vendor,
+        );
+
+        // 3. Assert the first DB connection is present and NOT default initially.
+        // "Make Default" should be available. Delete button should be enabled.
+        ft.gotoConnections()
+          .clickAndSelectTableRow(`#${dbConnection1FileNameAndId}`)
+          .waitOnElementToBecomeEnabled('#btnNewDropdown')
+          .waitOnElementToBecomeEnabled('#btnEdit')
+          .waitOnElementToBecomeEnabled('#btnDuplicate')
+          .waitOnElementToBecomeEnabled('#btnDelete') // Delete should be enabled for non-default & unused
+          .elementShouldContainText(
+            `#${dbConnection1FileNameAndId} td:first-child`,
+            dbConnection1Name,
+          )
+          .elementShouldContainText(
+            `#${dbConnection1FileNameAndId} td:nth-child(2)`,
+            'database-connection',
+          )
+          .elementShouldHaveText(
+            `#${dbConnection1FileNameAndId} td:nth-child(3)`,
+            '--not used--',
+          ).waitOnElementToBecomeVisible(
+            `#btnDefault_${dbConnection1FileNameAndId}`,
+          )
+          .elementShouldNotBeVisible(`#btnActions_${dbConnection1FileNameAndId}`)
+          .clickAndSelectTableRow(`#${dbConnection1FileNameAndId}`);
+
+        // 5. Create the second database connection.
+        ft = ConnectionsTestHelper.createAndAssertNewDatabaseConnection(
+          ft,
+          dbConnection2Name,
+          dbConnection2Vendor,
+        );
+
+        // 6. Assert the second DB connection is present and NOT default.
+        // The first DB connection should still be default.
+        // Delete button for second connection should be enabled.
+        ft.gotoConnections()
+          .clickAndSelectTableRow(`#${dbConnection2FileNameAndId}`)
+          .elementShouldBeVisible(`#btnActions_${dbConnection2FileNameAndId}`)
+          .elementShouldNotBeVisible(`#btnDefault_${dbConnection2FileNameAndId}`)
+          .waitOnElementToBecomeEnabled('#btnDelete') // Delete enabled for this non-default
+          // Verify first one is still default and its delete button is disabled
+          .clickAndSelectTableRow(`#${dbConnection1FileNameAndId}`)
+          .elementShouldBeVisible(`#btnDefault_${dbConnection1FileNameAndId}`)
+          .elementShouldNotBeVisible(`#btnActions_${dbConnection1FileNameAndId}`)
+          .elementShouldHaveClass('#btnDelete', 'disabled');
+
+        // 7. Make the second DB connection default.
+        // First connection becomes non-default, its delete button should become enabled.
+        // Second connection becomes default, its delete button should become disabled.
+        ft = ConnectionsTestHelper.makeConnectionAsDefault(
+          ft,
+          dbConnection2FileNameAndId,
+        ); // Make temp default
+
+        ft = ft
+          .clickAndSelectTableRow(`#${dbConnection2FileNameAndId}`) // Reselect second
+          .elementShouldHaveClass('#btnDelete', 'disabled') // Delete disabled for new default
+          .waitOnElementToBecomeVisible(
+            `#btnActions_${dbConnection1FileNameAndId}`,
+          ) // First is no longer default
+          .clickAndSelectTableRow(`#${dbConnection1FileNameAndId}`) // Select first
+          .waitOnElementToBecomeEnabled('#btnDelete'); // Delete enabled for now non-default first
+
+        // 8. Make the first DB connection default again.
+        // Second connection becomes non-default, its delete button should become enabled.
+        // First connection becomes default, its delete button should become disabled.
+        ft = ConnectionsTestHelper.makeConnectionAsDefault(
+          ft,
+          dbConnection1FileNameAndId,
+        ); // Make temp default
+
+        ft = ft
+          .waitOnElementToBecomeVisible(
+            `#btnActions_${dbConnection2FileNameAndId}`,
+          ) // Second is no longer default
+          .elementShouldHaveClass('#btnDelete', 'disabled') // Delete disabled for new default
+          .clickAndSelectTableRow(`#${dbConnection2FileNameAndId}`) // Select second
+          .waitOnElementToBecomeEnabled('#btnDelete'); // Delete enabled for now non-default second
+
+        // 9. Delete the second (now non-default) database connection.
+        // dbConnection1Name should remain default, and its delete button should remain disabled.
+        ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
+          ft,
+          dbConnection2FileNameAndId,
+          dbConnection2Vendor,
+        );
+
+        // 10. Attempt to delete the first (and now only, and default) database connection.
+        // Assert Delete button is disabled.
+        ft.gotoConnections();
+        ft.clickAndSelectTableRow(
+          `#${dbConnection1FileNameAndId}`,
+        ).elementShouldHaveClass('#btnDelete', 'disabled');
+
+        ft = ft.deleteFolder(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/db/${dbConnection1FileNameAndId.replace('\\.xml', '')}`,
+        );
+        // 11. To clean up, we must create another connection, make IT default, then delete the original.
+        // For this test's scope, we'll just delete dbConnection1Name after making it non-default
+        // by creating a temporary one.
+        // However, a full cleanup would involve another helper or direct deletion if the test was ending.
+        // For now, we'll just assert it cannot be deleted and then manually clean it up
+        // (assuming a global afterAll or similar handles full cleanup of test-created files).
+        // For this specific test, we will delete it by creating a temp one, making it default, then deleting the original.
+
+        return ft;
+      },
+    );
+  }
+
+
 
   electronBeforeAfterAllTest(
     '(database-connection) should successfully test an (EXISTING) connection for a supported database type',
@@ -763,8 +1006,8 @@ test.describe('', async () => {
           '#btnRefreshDatabaseSchema .fa-refresh',
           'fa-spin',
         );
-      
-        ft = ft.waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
+
+      ft = ft.waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
         .sleep(Constants.DELAY_ONE_SECOND)
         .click('#toolsTab-link')
         .sleep(Constants.DELAY_ONE_SECOND)
@@ -2262,5 +2505,7 @@ CustomerCustomerDemo }|--|| CustomerDemographics : "CustomerTypeID"
 
       return ft;
     });
+
+  
 
 });

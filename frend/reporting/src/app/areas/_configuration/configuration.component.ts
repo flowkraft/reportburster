@@ -208,6 +208,8 @@ export class ConfigurationComponent implements OnInit {
 
   selectedAttachment;
 
+  isTestingEmailConnection: boolean = false;
+
   visibleTabs: {
     id: string;
     heading: string;
@@ -1656,31 +1658,48 @@ export class ConfigurationComponent implements OnInit {
 
   doTestSMTPConnection() {
     if (this.executionStatsService.logStats.foundDirtyLogFiles) {
-      const dialogMessage =
-        'Log files are not empty. You need to press the Clear Logs button first.';
-
-      this.infoService.showInformation({
-        message: dialogMessage,
-      });
-    } else {
-      const dialogQuestion = 'Send test email?';
-
-      this.confirmService.askConfirmation({
-        message: dialogQuestion,
-        confirmAction: async () => {
-          this.shellService.runBatFile([
-            'system',
-            'test-email',
-            '-c',
-            '"' +
-            Utilities.slash(
-              this.settingsService.currentConfigurationTemplatePath,
-            ).replace('/config/', 'PORTABLE_EXECUTABLE_DIR_PATH/config/') +
-            '"',
-          ]);
-        },
-      });
+      const dialogMessage = 'Log files are not empty. You need to press the Clear Logs button first.';
+      this.infoService.showInformation({ message: dialogMessage });
+      return;
     }
+
+    const dialogQuestion = 'Send test email?';
+    this.confirmService.askConfirmation({
+      message: dialogQuestion,
+      confirmAction: async () => {
+        this.isTestingEmailConnection = true;
+
+        // 1) Determine which file to test:
+        let fileToTest: string;
+        if (this.xmlSettings.documentburster.settings.emailserver.useconn) {
+          // reuse existing email connection
+          fileToTest = this.selectedEmailConnectionFile.filePath;
+        } else {
+          // inline SMTP details in the config template
+          fileToTest = this.settingsService.currentConfigurationTemplatePath;
+        }
+
+        // 2) Build the CLI argument and run
+        const execPath = `"${Utilities.slash(fileToTest)
+          .replace('/config/', 'PORTABLE_EXECUTABLE_DIR_PATH/config/')}"`;
+
+        this.shellService.runBatFile(
+          ['system', 'test-email', '--email-connection-file', execPath],
+          'testing SMTP connection',
+          (result) => {
+            // Reset flag when done - this will enable the button
+            this.isTestingEmailConnection = false;
+
+            if (result.success) {
+              this.messagesService.showSuccess('Test email sent successfully');
+            } else {
+              this.messagesService.showError('Test email failed');
+              console.error(result.error);
+            }
+          }
+        );
+      },
+    });
   }
 
   onShowSendTestSMSModal() {

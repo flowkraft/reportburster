@@ -3,18 +3,30 @@ import _ from 'lodash';
 import { FluentTester } from '../fluent-tester';
 import * as PATHS from '../../utils/paths';
 
+// Database vendor constants
+export const DB_VENDORS_SUPPORTED = [
+  'oracle',
+  'sqlserver',
+  'postgresql',
+  'mysql',
+  'mariadb',
+  'ibmdb2',
+  'sqlite',
+];
+
+export const DB_VENDORS_IMPLEMENTED = [
+  // 'oracle',
+  // 'sqlserver',
+  // 'postgresql',
+  // 'mysql',
+  // 'mariadb',
+  // 'ibmdb2',
+  'sqlite',
+];
+
+export const DB_VENDORS_DEFAULT = 'sqlite';
+
 export class ConnectionsTestHelper {
-  // Database vendor constants
-  static DB_VENDORS_SUPPORTED = [
-    // 'oracle',
-    // 'sqlserver',
-    // 'postgresql',
-    // 'mysql',
-    // 'mariadb',
-    // 'ibmdb2',
-    'sqlite',
-  ];
-  static DB_VENDORS_DEFAULT = 'sqlite';
   static DB_VENDORS_TEST_RANDOM = true;
 
   static deleteAndAssertEmailConnection(
@@ -667,7 +679,7 @@ export class ConnectionsTestHelper {
    * Get a random database vendor from Constants.DB_VENDORS_SUPPORTED
    */
   static getRandomDbVendor(): string {
-    const vendors = ConnectionsTestHelper.DB_VENDORS_SUPPORTED;
+    const vendors = DB_VENDORS_IMPLEMENTED;
     const randomIndex = Math.floor(Math.random() * vendors.length);
     return vendors[randomIndex];
   }

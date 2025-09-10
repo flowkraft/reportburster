@@ -41,7 +41,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.unix4j.Unix4j;
+import org.zeroturnaround.exec.ProcessExecutor;
+import org.zeroturnaround.exec.ProcessResult;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowkraft.common.AppPaths;
 import com.flowkraft.common.Utils;
@@ -213,7 +216,7 @@ public class SystemService {
 		List<String> newArgs = new ArrayList<>();
 		for (String arg : args) {
 			// Print each original argument
-			//System.out.println("[DEBUG] Original arg: " + arg);
+			// System.out.println("[DEBUG] Original arg: " + arg);
 
 			String modifiedArg = arg.replace("PORTABLE_EXECUTABLE_DIR_PATH/",
 					AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/");
@@ -223,14 +226,14 @@ public class SystemService {
 			newArgs.add(modifiedArg);
 		}
 		// Print the final command line that will be executed
-		//System.out.println("[DEBUG] Full command to execute:");
+		// System.out.println("[DEBUG] Full command to execute:");
 		for (String part : commandWithShell) {
 			System.out.print(part + " ");
 		}
 		for (String part : newArgs) {
 			System.out.print(part + " ");
 		}
-		//System.out.println();
+		// System.out.println();
 
 		commandWithShell.addAll(newArgs);
 
@@ -241,7 +244,7 @@ public class SystemService {
 					+ URLDecoder.decode(cwdPath.get(), StandardCharsets.UTF_8.toString());
 		}
 
-		//System.out.println("[DEBUG] Working directory: " + workingDirectoryPath);
+		// System.out.println("[DEBUG] Working directory: " + workingDirectoryPath);
 
 		ProcessBuilder processBuilder = new ProcessBuilder(commandWithShell);
 		processBuilder.directory(new File(workingDirectoryPath));
@@ -530,6 +533,85 @@ public class SystemService {
 		List<String> commands = Arrays.asList("cmd.exe", "/c", elevatedScriptFilePath);
 		return spawn(commands, Optional.empty());
 
+	}
+
+	// Inner public class for service status info
+	public static class ServiceStatusInfo {
+		public String name; // e.g., "mariadb"
+		public String status; // e.g., "running", "stopped", "error"
+		public String ports; // e.g., "3307/tcp" or "N/A"
+	}
+
+	public List<ServiceStatusInfo> getAllServicesStatus() throws Exception {
+		Path workingDir = Paths.get(com.sourcekraft.documentburster.utils.Utils.getDbFolderPath()); // Working directory
+																									// for the command
+
+		// Build the Docker Compose command
+		List<String> command = new ArrayList<>();
+		command.add("docker");
+		command.add("compose");
+		command.add("-f");
+		command.add("docker-compose.yml");
+		command.add("ps");
+		command.add("--format");
+		command.add("json"); // Get output as JSON for easy parsing
+
+		// Execute the command
+		ProcessResult result = new ProcessExecutor().command(command).directory(workingDir.toFile()).readOutput(true)
+				.redirectErrorStream(true).execute();
+		String output = result.getOutput().getString();
+
+		// Check if the command succeeded (exit code 0)
+		if (result.getExitValue() != 0) {
+			System.err.println("Docker command failed with exit code: " + result.getExitValue());
+			System.err.println("Combined output (stdout + stderr): " + output); // Now includes errors
+			return new ArrayList<>(); // Return empty list on failure
+		}
+
+		// Trim and check the output format
+		output = output.trim();
+		if (output.isEmpty()) {
+			System.out.println("Docker command returned empty output.");
+			return new ArrayList<>();
+		}
+
+		ObjectMapper mapper = new ObjectMapper();
+		List<ServiceStatusInfo> statuses = new ArrayList<>();
+
+		if (output.startsWith("[")) {
+			// Parse as JSON array
+			List<Map<String, Object>> services = mapper.readValue(output,
+					new TypeReference<List<Map<String, Object>>>() {
+					});
+			for (Map<String, Object> service : services) {
+				ServiceStatusInfo info = new ServiceStatusInfo();
+				info.name = (String) service.get("Name");
+				info.status = (String) service.get("State");
+				info.ports = service.get("Ports") != null ? service.get("Ports").toString() : "N/A";
+				statuses.add(info);
+			}
+		} else if (output.startsWith("{")) {
+			// Handle as JSON object (likely an error or single item)
+			System.out.println("Docker output is an object (possibly an error): " + output);
+			// Optionally parse as Map and extract if it's a single service
+			Map<String, Object> singleService = mapper.readValue(output, new TypeReference<Map<String, Object>>() {
+			});
+			if (singleService.containsKey("Name")) {
+				ServiceStatusInfo info = new ServiceStatusInfo();
+				info.name = (String) singleService.get("Name");
+				info.status = (String) singleService.get("State");
+				info.ports = singleService.get("Ports") != null ? singleService.get("Ports").toString() : "N/A";
+				statuses.add(info);
+			} else {
+				// Treat as error and return empty
+				System.err.println("Unexpected object format: " + output);
+			}
+		} else {
+			// Non-JSON output (e.g., plain text error)
+			System.err.println("Non-JSON output from Docker: " + output);
+		}
+
+		return statuses;
 	}
 
 	private String getCommandReadyToBeRunAsAdministratorUsingBatchCmd(String commandToElevate) throws Exception {

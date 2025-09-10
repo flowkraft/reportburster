@@ -103,10 +103,10 @@
       <div
         class="panel"
         [ngClass]="{
-          'panel-success': pack.status === 'running',
+          'panel-info': pack.status === 'running',
+          'panel-primary': pack.status === 'starting' || pack.status === 'stopping',
           'panel-danger': pack.status === 'error',
-          'panel-warning': pack.status === 'pending',
-          'panel-default': pack.status === 'stopped' || pack.status === 'unknown'
+          'panel-default': pack.status === 'stopped' || pack.status === 'unknown' || pack.status === 'starting' || pack.status === 'stopping'
         }"
       >
         <div class="panel-heading">
@@ -125,7 +125,7 @@
           >
             <span
               *ngFor="let tag of pack.tags"
-              class="label label-info"
+              class="label label-default"
               style="margin-right: 3px"
               >{{ tag }}</span
             >
@@ -140,7 +140,7 @@
               style="font-family: monospace; font-size: 0.9em"
               [id]="'cmd-' + pack.id"
               [(ngModel)]="pack.currentCommandValue"
-              [disabled]="pack.status === 'pending'"
+              [disabled]="pack.status === 'starting' || pack.status === 'stopping'"
               placeholder="Command to execute"
               title="Command to execute. Edit here for this action."
             />
@@ -152,7 +152,7 @@
             <button
               type="button"
               class="btn btn-sm"
-              [disabled]="pack.status === 'pending'"
+              [disabled]="pack.status === 'starting' || pack.status === 'stopping'"
               [ngClass]="{
                       'btn-default': pack.status === 'stopped' || pack.status === 'unknown' || pack.status === 'error',
                       'btn-primary': pack.status === 'running'
@@ -161,7 +161,7 @@
               [title]="pack.status === 'running' ? 'Stop using the command above' : 'Start using the command above'"
             >
               <i
-                *ngIf="pack.status !== 'pending'"
+                *ngIf="pack.status !== 'starting' && pack.status !== 'stopping'"
                 class="fa"
                 [ngClass]="{
                   'fa-play': pack.status === 'stopped' || pack.status === 'unknown' || pack.status === 'error',
@@ -169,10 +169,10 @@
                 }"
               ></i>
               <i
-                *ngIf="pack.status === 'pending'"
+                *ngIf="pack.status === 'starting' || pack.status === 'stopping'"
                 class="fa fa-spinner fa-spin"
               ></i>
-              {{ pack.status === 'running' ? 'Stop' : 'Start' }}
+              {{ pack.status === 'running' ? 'Stop' : pack.status === 'starting' ? 'Starting' : pack.status === 'stopping' ? 'Stopping' : 'Start' }}
             </button>
           </div>
 

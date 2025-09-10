@@ -18,6 +18,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -113,6 +115,18 @@ public class Utils {
 			return new File(homeDir, "temp").getAbsolutePath() + "/";
 		}
 		return "./temp/";
+	}
+
+	public static String getDbFolderPath() {
+		String portableDir = System.getProperty("PORTABLE_EXECUTABLE_DIR");
+		if (StringUtils.isNotBlank(portableDir)) {
+			return new File(portableDir, "db").getAbsolutePath() + "/";
+		}
+		String homeDir = System.getProperty("DOCUMENTBURSTER_HOME");
+		if (StringUtils.isNotBlank(homeDir)) {
+			return new File(homeDir, "db").getAbsolutePath() + "/";
+		}
+		return "./db/";
 	}
 
 	public static String getConfigurationFolderPath(String configurationFilePath) {
@@ -759,6 +773,16 @@ public class Utils {
 	// Overloaded method for backward compatibility
 	public static String ibContent(String htmlContent, String bType) {
 		return ibContent(htmlContent, bType, null);
+	}
+
+	public static boolean isPortOpen(String host, int port, int timeoutMs) {
+		try (Socket socket = new Socket()) {
+			// Set socket connection timeout
+			socket.connect(new InetSocketAddress(host, port), timeoutMs);
+			return true;
+		} catch (Exception e) {
+			return false; // Connection failed - port closed or unreachable
+		}
 	}
 
 }

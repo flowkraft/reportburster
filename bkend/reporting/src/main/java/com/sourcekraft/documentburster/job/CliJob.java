@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.GlobalContext;
+import com.sourcekraft.documentburster.common.ServicesManager;
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionTester;
 import com.sourcekraft.documentburster.common.db.DatabaseSchemaFetcher;
 import com.sourcekraft.documentburster.common.db.SqlQueryResult;
@@ -564,6 +565,19 @@ public class CliJob {
 			}
 		}
 
+	}
+
+	public void doService(String serviceName, String commandLine) throws Exception {
+		File jobFile = null;
+		try {
+			jobFile = _createJobFile(serviceName, commandLine);
+			ServicesManager.execute(commandLine);
+		} finally {
+			// always clean up the temp job file
+			if (jobFile != null && jobFile.exists()) {
+				jobFile.delete();
+			}
+		}
 	}
 
 }
