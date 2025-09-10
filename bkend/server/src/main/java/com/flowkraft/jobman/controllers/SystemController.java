@@ -311,11 +311,11 @@ public class SystemController {
 			info.fileSize = file.length();
 			info.isDirectory = file.isDirectory();
 			info.lastModified = file.lastModified();
-			//info.setName(file.getName());
-			//	info.setPath(file.getAbsolutePath());
-			//info.setDirectory(file.isDirectory());
-			//info.setSize(file.length());
-			//info.setLastModified(file.lastModified());
+			// info.setName(file.getName());
+			// info.setPath(file.getAbsolutePath());
+			// info.setDirectory(file.isDirectory());
+			// info.setSize(file.length());
+			// info.setLastModified(file.lastModified());
 			return info;
 		});
 	}
@@ -344,5 +344,11 @@ public class SystemController {
 
 		return systemService.unInstallChocolatey();
 
+	}
+
+	@GetMapping("/services/status")
+	public Mono<List<SystemService.ServiceStatusInfo>> getAllServicesStatus() throws Exception {
+		List<SystemService.ServiceStatusInfo> statuses = systemService.getAllServicesStatus();
+		return Mono.just(statuses);
 	}
 }

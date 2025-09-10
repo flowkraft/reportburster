@@ -1,10 +1,12 @@
 package com.sourcekraft.documentburster.assembly;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,9 +30,11 @@ public class Utils {
 	private static String PRODUCT_NAME = "ReportBurster";
 
 	public static boolean dir1ContainsAllDir2Files(File dir1, File dir2) throws Exception {
+		return dir1ContainsAllDir2Files(dir1, dir2, null);
+	}
 
+	public static boolean dir1ContainsAllDir2Files(File dir1, File dir2, FileFilter filter) throws Exception {
 		Set<String> ignores = new HashSet<String>();
-
 		ignores.add(Utils.getInstallationTopFolderName());
 		ignores.add("dependencies");
 		ignores.add("db-template");
@@ -38,28 +42,28 @@ public class Utils {
 		ignores.add("template");
 
 		Set<String> dir1FileNames = new HashSet<String>();
-
 		Collection<File> dir1Files = FileUtils.listFilesAndDirs(dir1, TrueFileFilter.TRUE, TrueFileFilter.TRUE);
-
 		for (File dir1File : dir1Files) {
-
 			dir1FileNames.add(FilenameUtils.getName(dir1File.getCanonicalPath()));
-
 		}
 
 		Set<String> dir2FileNames = new HashSet<String>();
-
-		Collection<File> dir2Files = FileUtils.listFilesAndDirs(dir2, TrueFileFilter.TRUE, TrueFileFilter.TRUE);
+		// Gather files from dir2, applying the filter if provided
+		Collection<File> dir2Files;
+		if (filter != null) {
+			dir2Files = new ArrayList<>();
+			collectFilesWithFilter(dir2, filter, dir2Files);
+		} else {
+			dir2Files = FileUtils.listFilesAndDirs(dir2, TrueFileFilter.TRUE, TrueFileFilter.TRUE);
+		}
 
 		for (File dir2File : dir2Files) {
-
 			String fileName = FilenameUtils.getName(dir2File.getCanonicalPath());
 
-			// these files should be ignored because they are renamed afterwards (for
-			// various reasons)
-			if (!fileName.startsWith("ant-launcher") && !fileName.startsWith("schedules.groovy"))
+			// Skip these files as they are renamed afterwards
+			if (!fileName.startsWith("ant-launcher") && !fileName.startsWith("schedules.groovy")) {
 				dir2FileNames.add(fileName);
-
+			}
 		}
 
 		dir2FileNames.removeAll(dir1FileNames);
@@ -70,7 +74,24 @@ public class Utils {
 					+ dir1.getAbsolutePath() + "' : " + dir2FileNames.toString());
 
 		return true;
+	}
 
+	// Helper method to recursively collect files applying the filter
+	private static void collectFilesWithFilter(File directory, FileFilter filter, Collection<File> results) {
+		File[] files = directory.listFiles();
+		if (files != null) {
+			for (File file : files) {
+				// Only include files that match the filter
+				if (filter.accept(file)) {
+					results.add(file);
+
+					// Recurse into directories
+					if (file.isDirectory()) {
+						collectFilesWithFilter(file, filter, results);
+					}
+				}
+			}
+		}
 	}
 
 	public static String getTopProjectFolderPath() throws Exception {

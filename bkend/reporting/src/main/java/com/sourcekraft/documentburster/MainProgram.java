@@ -29,7 +29,7 @@ import picocli.CommandLine.Spec;
 
 @Command(name = "reportburster", mixinStandardHelpOptions = true, version = "ReportBurster 10.3.0", description = "Report bursting and report generation software", subcommands = {
 		MainProgram.BurstCommand.class, MainProgram.GenerateCommand.class, MainProgram.ResumeCommand.class,
-		MainProgram.DocumentCommand.class, MainProgram.SystemCommand.class })
+		MainProgram.DocumentCommand.class, MainProgram.SystemCommand.class, MainProgram.ServiceCommand.class })
 public class MainProgram implements Callable<Integer> {
 
 	private static Logger log = LoggerFactory.getLogger(MainProgram.class);
@@ -206,7 +206,7 @@ public class MainProgram implements Callable<Integer> {
 			CliJob job = getJob(config.configFile);
 			job.setJobType(isReportGenerationJob ? settings.getReportDataSource().type : "burst");
 
-			//System.out.println("[DEBUG] Parsed parameters: " + parameters);
+			// System.out.println("[DEBUG] Parsed parameters: " + parameters);
 
 			job.setParameters(parameters);
 
@@ -544,6 +544,41 @@ public class MainProgram implements Callable<Integer> {
 				job.doSendFeatureRequestEmail(featureRequestFile.getAbsolutePath());
 				return 0;
 			}
+		}
+	}
+
+	@Command(name = "service", description = "Manage services (e.g., databases, queues) via Docker.", mixinStandardHelpOptions = true, customSynopsis = "service <category> <command> [service-name] [args...]")
+	public static class ServiceCommand extends BaseCommand implements Callable<Integer> {
+
+		@ParentCommand
+		MainProgram parent;
+
+		@Override
+		protected MainProgram getMainProgram() {
+			return parent;
+		}
+
+		@Parameters(description = "The full service command string (e.g., 'database start northwind postgresql').")
+		private List<String> commandAndArgs;
+
+		@Override
+		public Integer call() throws Exception {
+			
+			// Enable TestContainers reuse mode for persistent database containers
+	        System.setProperty("testcontainers.reuse.enable", "true");
+	        
+			if (commandAndArgs == null || commandAndArgs.isEmpty()) {
+				System.err.println("Error: No service command provided.");
+				return 1;
+			}
+
+			String serviceName = commandAndArgs.get(2);
+			String commandLine = String.join(" ", commandAndArgs);
+
+			CliJob job = getJob(null);
+			job.doService(serviceName, commandLine);
+
+			return 0;
 		}
 	}
 

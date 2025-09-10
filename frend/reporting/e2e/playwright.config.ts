@@ -18,6 +18,7 @@ const config = {
   //retries: 1,
   //retries: 2,
   retries: 3,
+  //retries: 0,
   // Limit the number of workers on CI, use default locally
   workers: 1,
 };

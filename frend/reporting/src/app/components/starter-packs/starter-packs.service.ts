@@ -37,8 +37,8 @@ export class StarterPacksService {
       displayName: 'Northwind DB (Oracle)',
       description: 'Sample Oracle database.',
       icon: 'oracle', // Use simple key matching iconMap
-      startCmd: 'database start northwind oracle 1521', // Start command with port
-      stopCmd: 'database stop northwind oracle', // Stop command
+      startCmd: 'service database start northwind oracle 1521', // Start command with port
+      stopCmd: 'service database stop northwind oracle', // Stop command
       tags: ['database', 'northwind', 'oracle'],
     },
     {
@@ -49,8 +49,8 @@ export class StarterPacksService {
       displayName: 'Northwind DB (SQL Server)',
       description: 'Sample SQL Server database.',
       icon: 'sqlserver', // Use simple key matching iconMap
-      startCmd: 'database start northwind sqlserver 1433', // Start command with port
-      stopCmd: 'database stop northwind sqlserver', // Stop command
+      startCmd: 'service database start northwind sqlserver 1433', // Start command with port
+      stopCmd: 'service database stop northwind sqlserver', // Stop command
       tags: ['database', 'northwind', 'sqlserver'],
     },
     {
@@ -61,8 +61,8 @@ export class StarterPacksService {
       displayName: 'Northwind DB (IBM Db2)',
       description: 'Sample IBM Db2 database.',
       icon: 'ibmdb2', // Use simple key matching iconMap
-      startCmd: 'database start northwind ibmdb2 50000', // Start command with port
-      stopCmd: 'database stop northwind ibmdb2', // Stop command
+      startCmd: 'service database start northwind db2 50000', // Start command with port
+      stopCmd: 'service database stop northwind db2', // Stop command
       tags: ['database', 'northwind', 'ibm-db2'],
     },
     {
@@ -73,8 +73,8 @@ export class StarterPacksService {
       displayName: 'Northwind DB (PostgreSQL)',
       description: 'Sample PostgreSQL database.',
       icon: 'postgresql', // Use simple key matching iconMap
-      startCmd: 'database start northwind postgresql 5432', // Start command with port
-      stopCmd: 'database stop northwind postgresql', // Stop command
+      startCmd: 'service database start northwind postgres 5432', // Start command with port
+      stopCmd: 'service database stop northwind postgres', // Stop command
       tags: ['database', 'northwind', 'postgres'],
     },
     {
@@ -85,8 +85,8 @@ export class StarterPacksService {
       displayName: 'Northwind DB (MySQL)',
       description: 'Sample MySQL database.',
       icon: 'mysql', // Use simple key matching iconMap
-      startCmd: 'database start northwind mysql 3306', // Start command with port
-      stopCmd: 'database stop northwind mysql', // Stop command
+      startCmd: 'service database start northwind mysql 3306', // Start command with port
+      stopCmd: 'service database stop northwind mysql', // Stop command
       tags: ['database', 'northwind', 'mysql'],
     },
     {
@@ -97,8 +97,8 @@ export class StarterPacksService {
       displayName: 'Northwind DB (MariaDB)',
       description: 'Sample MariaDB database.',
       icon: 'mariadb', // Use simple key matching iconMap
-      startCmd: 'database start northwind mariadb 3306', // Start command with port
-      stopCmd: 'database stop northwind mariadb', // Stop command
+      startCmd: 'service database start northwind mariadb 3307', // Start command with port
+      stopCmd: 'service database stop northwind mariadb', // Stop command
       tags: ['database', 'northwind', 'mariadb'],
     },
     // --- Add other families/packs here as needed ---

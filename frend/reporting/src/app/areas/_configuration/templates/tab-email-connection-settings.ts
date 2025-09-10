@@ -279,8 +279,13 @@ export const tabEmailConnectionSettingsTemplate = `<ng-template
           type="button"
           class="btn btn-primary btn-block"
           (click)="doTestSMTPConnection()"
+          [disabled]="isTestingEmailConnection"
         >
-          <i class="fa fa-paper-plane"></i>&nbsp;&nbsp;{{
+          <i class="fa" 
+            [ngClass]="{
+              'fa-paper-plane': !isTestingEmailConnection,
+              'fa-refresh fa-spin': isTestingEmailConnection
+            }"></i>&nbsp;&nbsp;{{
           'AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.SEND-TEST-EMAIL' |
           translate }}
         </button>

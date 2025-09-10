@@ -169,6 +169,7 @@ export class Updater {
             `!burst/internal/**/*`,
             `!burst/default/**/*`,
             `!samples/**/*`,
+            `!batch/**/*`
           ],
         },
       );

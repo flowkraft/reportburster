@@ -3,6 +3,7 @@ package com.sourcekraft.documentburster.assembly;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
+import java.io.FileFilter;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -60,7 +61,7 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// copy db template files and folders
 		FileUtils.copyDirectory(new File("src/main/external-resources/db-template"),
-				new File(packageDirPath + "/" + topFolderName));
+				new File(packageDirPath + "/" + topFolderName), createDotAppslSelectiveFilter());
 
 		System.out.println(
 				"------------------------------------- DONE_03:NoExeAssembler copy db template files and folders ... -------------------------------------");
@@ -339,49 +340,14 @@ public class NoExeAssembler extends AbstractAssembler {
 	}
 
 	private void _generateSampleNorthwindDatabase() throws Exception {
-		// Define the target directory for the SQLite DB within the package structure
-		// NorthwindManager will create 'sample-northwind-sqlite/northwind.db' inside
-		// this base path
-		String sampleDbBasePath = packageDirPath + "/" + topFolderName + "/db/sample-northwind-sqlite"; // Changed base
-																										// to /data/db
-		File sampleDbDir = new File(sampleDbBasePath);
-		if (!sampleDbDir.exists()) {
-			System.out.println("Creating directory for sample database base: " + sampleDbBasePath);
-			FileUtils.forceMkdir(sampleDbDir); // Use FileUtils to ensure creation
-		}
 
-		System.out.println("Attempting to generate Northwind SQLite database in base directory: " + sampleDbBasePath);
-
-		// Use try-with-resources for NorthwindManager as it implements AutoCloseable
 		try (NorthwindManager northwindManager = new NorthwindManager()) {
+			System.out.println("Generating sample Northwind database for SQLite...");
+			northwindManager.startDatabase(NorthwindManager.DatabaseVendor.SQLITE,
+					packageDirPath + "/" + topFolderName + "/db/sample-northwind-sqlite");
+			System.out.println("Successfully generated sample Northwind database for SQLite.");
 
-			// Pass the base path where the 'sample-northwind-sqlite' folder will be created
-			boolean success = northwindManager.startDatabase(NorthwindManager.DatabaseVendor.SQLITE, sampleDbBasePath);
-
-			if (success) {
-				// Construct the expected path for logging/checking if needed here
-				String expectedDbPath = sampleDbBasePath + File.separator + File.separator + "northwind.db";
-				File dbFile = new File(expectedDbPath);
-
-				// Check if the file actually exists after reported success
-				if (dbFile.exists() && dbFile.length() > 0) {
-					System.out.println("Successfully generated/verified Northwind SQLite database: " + expectedDbPath);
-				} else {
-					throw new RuntimeException(
-							"NorthwindManager reported success, but database file is missing or empty: "
-									+ expectedDbPath);
-				}
-			} else {
-				// Decide how to handle failure: log, throw exception to fail build?
-				throw new RuntimeException("Failed to generate Northwind SQLite database using NorthwindManager.");
-			}
-		} catch (Exception e) {
-			System.err.println("Error during Northwind SQLite database generation: " + e.getMessage());
-			e.printStackTrace(); // Print stack trace for debugging
-			throw e; // Re-throw to potentially fail the build
 		}
-		System.out.println(
-				"------------------------------------- DONE_07:NoExeAssembler Generate Northwind SQLite DB ... -------------------------------------");
 	}
 
 	@Override
@@ -391,7 +357,7 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// verify db general template files and folders
 		assertThat(Utils.dir1ContainsAllDir2Files(new File(verifyDirPath + "/" + topFolderName),
-				new File("src/main/external-resources/db-template"))).isTrue();
+				new File("src/main/external-resources/db-template"), createDotAppslSelectiveFilter())).isTrue();
 
 		System.out.println(
 				"------------------------------------- VERIFIED_01:NoExeAssembler db general template files and folders ... -------------------------------------");
@@ -458,6 +424,43 @@ public class NoExeAssembler extends AbstractAssembler {
 		System.out.println(
 				"------------------------------------- VERIFIED_DONE:NoExeAssembler ... -------------------------------------");
 
+	}
+
+	private FileFilter createDotAppslSelectiveFilter() {
+		return file -> {
+			// Normalize path for consistent comparisons
+			String path = file.getPath().replace('\\', '/');
+
+			// Keep EVERYTHING that is not under cms-webportal-playground
+			if (!path.contains("/cms-webportal-playground/")) {
+				return true;
+			}
+
+			// SPECIAL CASE: Always keep these three critical files
+			if (path.endsWith("/cms-webportal-playground/.env")
+					|| path.endsWith("/cms-webportal-playground/docker-compose.yml")
+					|| path.endsWith("/cms-webportal-playground/Dockerfile.cli")) {
+				return true;
+			}
+
+			// CRITICAL: Include parent directories needed for structure
+			if (path.endsWith("/cms-webportal-playground") || path.endsWith("/cms-webportal-playground/wp-plugins")
+					|| path.endsWith("/cms-webportal-playground/wp-plugins/reportburster-integration")) {
+				return true;
+			}
+
+			// SPECIAL CASE: Include files within reportburster-integration plugin folder
+			if (path.contains("/cms-webportal-playground/wp-plugins/reportburster-integration/")) {
+				// But still exclude git-ignored paths inside the plugin
+				return !path.contains("/.vscode/") && !path.contains("/.cache/") && !path.contains("/node_modules/")
+						&& !path.contains("/vendor/") && !path.contains("/.git/") && !path.contains("/.github/")
+						&& !file.getName().equals(".git") && !file.getName().equals("node_modules")
+						&& !file.getName().equals("vendor");
+			}
+
+			// EXCLUDE everything else under cms-webportal-playground
+			return false;
+		};
 	}
 
 }

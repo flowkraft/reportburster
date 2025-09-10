@@ -237,54 +237,54 @@ export class ConnectionDetailsComponent implements OnInit {
   }
 
   async doTestSMTPConnection() {
-    const proceedWithTest = async () => {
+    // the actual “Send test email?” flow
+    const runTest = async () => {
       if (this.executionStatsService.logStats.foundDirtyLogFiles) {
         this.infoService.showInformation({
-          message:
-            'Log files are not empty. You need to press the Clear Logs button first.',
+          message: 'Log files are not empty. You need to press the Clear Logs button first.',
         });
         return;
       }
       this.confirmService.askConfirmation({
         message: 'Send test email?',
         confirmAction: () => {
-          const filePath = this.modalConnectionInfo.filePath;
-          if (!filePath) {
-            this.messagesService.showError(
-              'Connection file path is missing. Cannot test.',
-            );
-            return;
-          }
-          this.shellService.runBatFile([
-            'system',
-            'test-email',
-            '--email-connection-file',
-            '"' +
-            Utilities.slash(filePath).replace(
-              'config/',
-              'PORTABLE_EXECUTABLE_DIR_PATH/config/',
-            ) +
-            '"',
-          ]);
+          this.isTestingConnection = true;
+
+          const execPath = `"${Utilities.slash(this.modalConnectionInfo.filePath).replace('config/', 'PORTABLE_EXECUTABLE_DIR_PATH/config/')}"`;
+          this.shellService.runBatFile(
+            ['system', 'test-email', '--email-connection-file', execPath],
+            `testing SMTP connection for '${this.modalConnectionInfo.email.documentburster.connection.name}'`,
+            result => {
+              this.isTestingConnection = false;
+              
+              if (result.success) this.messagesService.showSuccess('Test email sent successfully');
+              else {
+                this.messagesService.showError('Test email failed');
+                console.error(result.error);
+              }
+            }
+          );
         },
       });
     };
+
     if (this.modalConnectionInfo.crudMode === 'create') {
+      // first‐save prompt for brand‐new connections
       this.confirmService.askConfirmation({
-        message:
-          'The connection must be saved before being able to test it. Save now?',
+        message: 'The connection must be saved before being able to test it. Save now?',
         confirmAction: async () => {
-          const saved = await this.saveCurrentConnection(false);
-          if (saved) {
-            this.messagesService.showInfo(
-              'Saved. You can now test the connection.',
-            );
-          }
+          await this.saveCurrentConnection(this.isModalDbConnectionVisible);
+          // flip to update mode so future tests don’t re-prompt “Save now?”
+          this.modalConnectionInfo.crudMode = 'update';
+          // now run the usual test flow
+          await runTest();
         },
         cancelAction: () => { },
       });
     } else {
-      await proceedWithTest();
+      // existing connection: always save latest field values, then test
+      await this.saveCurrentConnection(this.isModalDbConnectionVisible);
+      await runTest();
     }
   }
 

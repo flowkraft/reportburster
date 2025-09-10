@@ -186,11 +186,39 @@ export class ConnectionListComponent implements OnInit {
   }
 
   async doTestSMTPConnection() {
-    console.log('ConfigurationConnectionsComponet: doTestSMTPConnection()');
+    // Delegate to the modal component, passing the selected connection
+    const selectedConnection = this.getSelectedConnection();
+    if (!selectedConnection) {
+      this.messagesService.showWarning('No connection selected.');
+      return;
+    }
+    // Show the modal in update mode for the selected connection
+    await this.connectionDetailsModalInstance.showCrudModal(
+      'update',
+      'email-connection',
+      false,
+      selectedConnection
+    );
+    // Call the test method on the modal instance
+    await this.connectionDetailsModalInstance.doTestSMTPConnection();
   }
 
   async doTestDatabaseConnection() {
-    console.log('ConfigurationConnectionsComponet: doTestDatabaseConnection()');
+    // Delegate to the modal component, passing the selected connection
+    const selectedConnection = this.getSelectedConnection();
+    if (!selectedConnection) {
+      this.messagesService.showWarning('No connection selected.');
+      return;
+    }
+    // Show the modal in update mode for the selected connection
+    await this.connectionDetailsModalInstance.showCrudModal(
+      'update',
+      'database-connection',
+      false,
+      selectedConnection
+    );
+    // Call the test method on the modal instance
+    await this.connectionDetailsModalInstance.doTestDatabaseConnection();
   }
 
   async showCrudModal(

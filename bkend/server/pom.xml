@@ -11,7 +11,7 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
-	<version>11.1.0</version>
+	<version>11.1.1</version>
 
 	<groupId>com.flowkraft</groupId>
 	<artifactId>rb-server</artifactId>
@@ -22,13 +22,13 @@
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
 			<artifactId>rb-common</artifactId>
-			<version>11.1.0</version>
+			<version>11.1.1</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
 			<artifactId>rb-reporting</artifactId>
-			<version>11.1.0</version>
+			<version>11.1.1</version>
 		</dependency>
 
 		<!--
@@ -75,7 +75,7 @@
 			<artifactId>fop</artifactId>
 			<version>2.11</version>
 		</dependency>
-		-->	
+		-->
 
 		<dependency>
 			<groupId>com.zaxxer</groupId>
@@ -86,19 +86,19 @@
 			<groupId>org.xerial</groupId>
 			<artifactId>sqlite-jdbc</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.antlr</groupId>
 			<artifactId>stringtemplate</artifactId>
 			<version>3.2.1</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.freemarker</groupId>
 			<artifactId>freemarker</artifactId>
 			<version>2.3.30</version>
 		</dependency>
-				
+
 		<dependency>
 			<groupId>org.jdbi</groupId>
 			<artifactId>jdbi3-core</artifactId>
@@ -109,7 +109,7 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
-			 <exclusions>
+			<exclusions>
 				<exclusion>
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-starter-logging</artifactId>
@@ -141,7 +141,7 @@
 			<groupId>jakarta.ws.rs</groupId>
 			<artifactId>jakarta.ws.rs-api</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
@@ -167,7 +167,7 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.unix4j</groupId>
 			<artifactId>unix4j-command</artifactId>
@@ -178,6 +178,12 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-exec</artifactId>
 			<version>1.5.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.zeroturnaround</groupId>
+			<artifactId>zt-exec</artifactId>
+			<version>1.12</version>
 		</dependency>
 
 		<dependency>
@@ -206,6 +212,7 @@
 			<artifactId>ant</artifactId>
 			<version>1.10.12</version>
 		</dependency>
+
 
 		<!--groovy deps-->
 		<dependency>

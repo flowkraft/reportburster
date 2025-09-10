@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 11.1.1 - 2024-09-15
+
+### Added
+
+- MariaDB starter pack Start/Stop
+
+### Fixed
+
+- Fix for 'Send Test Email'
+
 ## 11.1.0 - 2025-08-11
 
 ### Added
