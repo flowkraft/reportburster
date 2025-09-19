@@ -116,6 +116,9 @@ export class RbElectronService {
       isDockerOk: boolean;
       version: string;
     };
+    portal: {
+    isProvisioned: boolean;
+  };
     env: {
       PATH: string;
       JAVA_HOME: string;

@@ -5,13 +5,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.net.ssl.SSLHandshakeException;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -21,9 +19,9 @@ import org.junit.Test;
 import com.sourcekraft.documentburster._helpers.PdfTestUtils;
 import com.sourcekraft.documentburster._helpers.TestBursterFactory;
 import com.sourcekraft.documentburster._helpers.TestsUtils;
+import com.sourcekraft.documentburster.common.settings.model.Attachment;
 import com.sourcekraft.documentburster.engine.AbstractBurster;
 import com.sourcekraft.documentburster.sender.model.EmailMessage;
-import com.sourcekraft.documentburster.common.settings.model.Attachment;
 import com.sourcekraft.documentburster.unit.documentation.userguide.qualityassurance.Split2TimesTest;
 import com.sourcekraft.documentburster.unit.further.other.MultipleTokensTest;
 import com.sourcekraft.documentburster.utils.LicenseUtils;
@@ -354,11 +352,12 @@ public class EmailTest {
 		burster.burst(PAYSLIPS_REPORT_PATH, false, StringUtils.EMPTY, -1);
 
 	}
-	
+
 	@Test
 	public final void emailsAreSentEvenIfCheckLicenseThrowsSSLHandShakeException() throws Exception {
-		
-		AbstractBurster burster = new TestBursterFactory.PdfBurster(StringUtils.EMPTY, "EmailTest-emailsAreSentEvenIfCheckLicenseThrowsSSLException-issue61") {
+
+		AbstractBurster burster = new TestBursterFactory.PdfBurster(StringUtils.EMPTY,
+				"EmailTest-emailsAreSentEvenIfCheckLicenseThrowsSSLException-issue61") {
 			protected void executeController() throws Exception {
 
 				super.executeController();
@@ -367,10 +366,10 @@ public class EmailTest {
 
 			};
 		};
-		
+
 		class LicenseUtilsSSLExceptionMock extends LicenseUtils {
 
-			protected Response makeRequest(Client client, String url) throws IOException {
+			protected Object makeRequest(Client client, String url, String action) throws Exception {
 
 				throw new SSLHandshakeException(
 						"PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target\r\n"
@@ -385,7 +384,7 @@ public class EmailTest {
 		licenseUtilsSSLExceptionMock.setLicenseFilePath("src/test/resources/config/issues/license-issue61.xml");
 
 		burster.setLicenseUtils(licenseUtilsSSLExceptionMock);
-		
+
 		burster.burst(PAYSLIPS_REPORT_PATH, false, StringUtils.EMPTY, -1);
 
 		PdfTestUtils.assertDefaultResults(burster, PAYSLIPS_TOKENS);
@@ -393,12 +392,12 @@ public class EmailTest {
 		assertTrue(burster.getCtx().numberOfPages == PAYSLIPS_TOKENS.size());
 		assertTrue(burster.getCtx().numberOfExtractedFiles == PAYSLIPS_TOKENS.size());
 		assertTrue(burster.getCtx().numberOfDistributedFiles == PAYSLIPS_TOKENS.size());
-		
+
 		assertTrue(burster.getCtx().numberOfQuarantinedFiles == 0);
 		assertTrue(burster.getCtx().numberOfSkippedFiles == 0);
-		
+
 		assertTrue(burster.getLicenseLimit() == Integer.MAX_VALUE);
-		
+
 		licenseUtilsSSLExceptionMock.getLicense().loadLicense();
 
 		assertTrue(licenseUtilsSSLExceptionMock.getLicense().isValid());
@@ -771,11 +770,11 @@ public class EmailTest {
 			assertTrue(0 == emailMessage.bccs.size());
 		} else if (emailMessage.ctx.testName.contains("ThrowsSSLException-issue61")) {
 
-				assertTrue(1 == emailMessage.tos.size());
-				assertEquals(emailMessage.token, emailMessage.tos.get(0));
+			assertTrue(1 == emailMessage.tos.size());
+			assertEquals(emailMessage.token, emailMessage.tos.get(0));
 
-				assertTrue(0 == emailMessage.ccs.size());
-				assertTrue(0 == emailMessage.bccs.size());
+			assertTrue(0 == emailMessage.ccs.size());
+			assertTrue(0 == emailMessage.bccs.size());
 
 		} else
 			throw new IllegalArgumentException("Unknown testName: " + emailMessage.ctx.testName);

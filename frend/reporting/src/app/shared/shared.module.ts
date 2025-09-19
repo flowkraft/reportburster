@@ -41,6 +41,7 @@ import { TabulatorColumnsPipe } from './tabulator-columns.pipe';
 import { AiManagerComponent } from '../components/ai-manager/ai-manager.component';
 import { AppsManagerComponent } from '../components/apps-manager/apps-manager.component';
 import { MarkdownModule } from 'ngx-markdown';
+import { DockerComponent } from '../components/docker/docker.component';
 
 @NgModule({
   imports: [
@@ -57,6 +58,7 @@ import { MarkdownModule } from 'ngx-markdown';
     AppRoutingModule,
   ],
   declarations: [
+    DockerComponent,
     LiveChatComponent,
     ConfirmDialogComponent,
     InfoDialogComponent,
@@ -81,6 +83,7 @@ import { MarkdownModule } from 'ngx-markdown';
     DialogModule,
     MarkdownModule,
     NgxCodeJarComponent,
+    DockerComponent,
     LiveChatComponent,
     LogFileViewerModule,
     LogFilesViewerAllTogetherModule,

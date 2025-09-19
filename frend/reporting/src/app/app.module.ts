@@ -17,6 +17,7 @@ import { AppComponent } from './app.component';
 import { ToastrModule } from 'ngx-toastr';
 import { AreasModule } from './areas/areas.module';
 import { InitService } from './providers/init.service';
+import { CommonModule } from '@angular/common';
 const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>
   new TranslateHttpLoader(http, './assets/i18n/', '.json');
 
@@ -32,6 +33,7 @@ const httpLoaderFactory = (http: HttpClient): TranslateHttpLoader =>
     }),
     SharedModule,
     AreasModule,
+    CommonModule,
     BrowserModule,
     FormsModule,
     HttpClientModule,

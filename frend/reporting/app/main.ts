@@ -29,6 +29,7 @@ process.env.PORTABLE_EXECUTABLE_DIR = path
 
 const electronLogFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/logs/electron.log`;
 const rbsjExeLogFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/logs/rbsj-exe.log`;
+const portalSageComposerLockFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/_apps/cms-webportal-playground/wp-themes/reportburster-sage/composer.lock`;
 
 log.transports.file.resolvePath = () => {
   return electronLogFilePath;
@@ -482,6 +483,9 @@ async function _getSystemInfo(): Promise<{
     isDockerOk: boolean;
     version: string;
   };
+  portal: {
+    isProvisioned: boolean;
+  };
   env: {
     PATH: string;
     JAVA_HOME: string;
@@ -528,6 +532,15 @@ async function _getSystemInfo(): Promise<{
   const javaVersion = detectJavaVersion(rbsjExeLogFileContent);
   const isJavaOk = parseInt(javaVersion.split('.')[0]) >= 17;
 
+  let isPortalProvisioned = false;
+  try {
+    await fs.promises.access(portalSageComposerLockFilePath);
+    isPortalProvisioned = true;
+  } catch {
+    // File does not exist or is inaccessible
+    isPortalProvisioned = false;
+  }
+
   const sysInfo = {
     chocolatey: {
       isChocoOk: chocoIsInstalled,
@@ -539,7 +552,11 @@ async function _getSystemInfo(): Promise<{
     },
     docker: {
       isDockerOk: dockerIsInstalled,
+      //isDockerOk: false,
       version: dockerVersion,
+    },
+    portal: {
+      isProvisioned: isPortalProvisioned,
     },
     env: {
       PATH: process.env.PATH || '',

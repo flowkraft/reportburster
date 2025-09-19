@@ -2,12 +2,25 @@ package com.sourcekraft.documentburster.common;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.zeroturnaround.exec.ProcessExecutor;
+import org.zeroturnaround.exec.ProcessResult;
+import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
+
+import com.sourcekraft.documentburster.utils.Utils;
 
 import com.sourcekraft.documentburster.common.db.northwind.NorthwindManager;
 import com.sourcekraft.documentburster.common.db.northwind.NorthwindManager.DatabaseVendor;
@@ -17,6 +30,8 @@ import com.sourcekraft.documentburster.common.db.northwind.NorthwindManager.Data
  * Currently supports the 'database' family using NorthwindManager.
  */
 public class ServicesManager {
+
+	private static final Logger log = LoggerFactory.getLogger(ServicesManager.class);
 
 	// Keep direct manager for now, assuming 'database' family uses NorthwindManager
 	private static final NorthwindManager dbManager;
@@ -30,6 +45,7 @@ public class ServicesManager {
 
 	// Define the family name this CLI currently handles primarily
 	private static final String DB_FAMILY = "database";
+	private static final String APP_FAMILY = "app";
 	private static final String NORTHWIND_PACK = "northwind"; // Specific pack name within the database family
 
 	// Command constants
@@ -98,6 +114,30 @@ public class ServicesManager {
 			}
 			default:
 				return new Result("error", "Unknown database command: " + subCmd);
+			}
+		}
+
+		// Family: app
+		else if (tokens[0].equalsIgnoreCase(APP_FAMILY)) {
+			String subCmd = tokens[1].toLowerCase();
+
+			String serviceName = tokens[2];
+			String args = tokens.length > 3
+					? String.join(" ", java.util.Arrays.copyOfRange(tokens, 3, tokens.length))
+					: "";
+
+			switch (subCmd) {
+			case CMD_START: {
+				String out = captureOutput(() -> handleAppStart(serviceName, args));
+				String status = out.contains("✓") ? "running" : (out.contains("✗") ? "error" : "running");
+				return new Result(status, out);
+			}
+			case CMD_STOP: {
+				String out = captureOutput(() -> handleAppStop(serviceName, args));
+				return new Result("stopped", out);
+			}
+			default:
+				return new Result("error", "Unknown app command: " + subCmd);
 			}
 		}
 
@@ -323,6 +363,111 @@ public class ServicesManager {
 						value = value.substring(0, columnWidths[i] - 3) + "...";
 				}
 			}
+		}
+	}
+
+	/** Check if provisioning is complete by looking for provisioned indicator */
+	private static boolean checkProvisioned(Path workingDir, String serviceName) {
+		if (serviceName.equals("cms-webportal-playground")) {
+			// Check for composer.lock or composer.json in wp-themes/reportburster-sage
+			Path composerLock = workingDir.resolve("wp-themes").resolve("reportburster-sage").resolve("composer.lock");
+			Path composerJson = workingDir.resolve("wp-themes").resolve("reportburster-sage").resolve("composer.json");
+			return Files.exists(composerLock) && Files.exists(composerJson);
+		}
+		// For other services, assume not provisioned (run full compose)
+		return false;
+	}
+
+	/** Handle 'app start <serviceName> [args]' */
+	private static void handleAppStart(String serviceName, String args) throws Exception {
+		//System.out.println("Starting app '" + serviceName + "'...");
+
+		String composePath = getComposePath(serviceName);
+
+		// Log the compose file path and JVM working directory for diagnostics
+		log.info("handleAppStart: composePath='{}' | jvm.cwd='{}'", composePath, System.getProperty("user.dir"));
+
+		// Set working directory to the compose file's parent (like NorthwindManager)
+		Path composeFilePath = Paths.get(composePath);
+		Path workingDir = composeFilePath.getParent();
+		String composeFileName = composeFilePath.getFileName().toString();
+
+		List<String> command = new ArrayList<>();
+		command.add("docker");
+		command.add("compose");
+		command.add("-f");
+		command.add(composeFileName);  // Relative to workingDir
+		command.add("up");
+		command.add("-d");
+		command.add("--remove-orphans");
+
+		// For cms-webportal-playground, conditionally run only main service if provisioned
+		if (serviceName.equals("cms-webportal-playground")) {
+			boolean provisioned = checkProvisioned(workingDir, serviceName);
+			if (provisioned) {
+				command.add(serviceName);
+			}
+		}
+
+		log.info("Executing command: {} in directory: {}", command, workingDir);
+
+		// Use ProcessExecutor like NorthwindManager for better output handling
+		ProcessExecutor executor = new ProcessExecutor().command(command).directory(workingDir.toFile())
+			.redirectOutput(Slf4jStream.of(log).asInfo())  // Capture stdout to log
+			.redirectError(Slf4jStream.of(log).asInfo())  // Capture stderr to log
+			.timeout(7200, TimeUnit.SECONDS);  // Add timeout to prevent hanging
+
+		ProcessResult result = executor.execute();
+
+		log.info("Command exit code: {}", result.getExitValue());
+		if (result.getExitValue() == 0) {
+			System.out.println("✓ App '" + serviceName + "' started successfully.");
+		} else {
+			System.out.println("✗ Failed to start app '" + serviceName + "'. Exit code: " + result.getExitValue());
+		}
+	}
+
+	/** Handle 'app stop <serviceName> [args]' */
+	private static void handleAppStop(String serviceName, String args) throws Exception {
+		//System.out.println("Stopping app '" + serviceName + "'...");
+
+		String composePath = getComposePath(serviceName);
+
+		// Log the compose file path and JVM working directory for diagnostics
+		log.info("handleAppStop: composePath='{}' | jvm.cwd='{}'", composePath, System.getProperty("user.dir"));
+
+		// Set working directory to the compose file's parent (like NorthwindManager)
+		Path composeFilePath = Paths.get(composePath);
+		Path workingDir = composeFilePath.getParent();
+		String composeFileName = composeFilePath.getFileName().toString();
+
+		List<String> command = new ArrayList<>();
+		command.add("docker");
+		command.add("compose");
+		command.add("-f");
+		command.add(composeFileName);
+		command.add("down");
+		//command.add(serviceName);
+
+		ProcessExecutor executor = new ProcessExecutor().command(command).directory(workingDir.toFile()).redirectOutput(Slf4jStream.of(log).asInfo()).redirectError(Slf4jStream.of(log).asInfo()).timeout(300, TimeUnit.SECONDS);
+
+		ProcessResult result = executor.execute();
+
+		log.info("Command exit code: {}", result.getExitValue());
+		if (result.getExitValue() == 0) {
+			System.out.println("✓ App '" + serviceName + "' stopped successfully.");
+		} else {
+			System.out.println("✗ Failed to stop app '" + serviceName + "'. Exit code: " + result.getExitValue());
+		}
+	}
+
+	/** Get the docker-compose.yml path for the service */
+	private static String getComposePath(String serviceName) {
+		String appsFolderPath = Utils.getAppsFolderPath();  // Use dynamic path
+		if (serviceName.equals("cms-webportal-playground")) {
+			return appsFolderPath + "cms-webportal-playground/docker-compose.yml";  // Relative to appsFolderPath
+		} else {
+			return appsFolderPath + "docker-compose.yml";  // Fallback for other services
 		}
 	}
 

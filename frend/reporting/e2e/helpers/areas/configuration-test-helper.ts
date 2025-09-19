@@ -1841,7 +1841,7 @@ export class ConfigurationTestHelper {
       'output.xlsx': 'Microsoft Excel Docs (html_template2xlsx_docs)',
       'output.html': 'HTML Docs (html_template2html_docs)',
       'output.docx': 'Microsoft Word Docs (docx_template2docx_docs)',
-      'output.fop2pdf': 'PDF Docs Using xslfo FOP (xslfo_template2pdf_docs)',
+      'output.fop2pdf': 'PDF FOP Docs (fop_template2pdf_docs)',
       'output.any': 'XML/Any Docs (freemarker_template2any_docs)',
       'output.none': 'None',
     };

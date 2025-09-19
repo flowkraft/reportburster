@@ -35,13 +35,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.net.ssl.SSLHandshakeException;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hazlewood.connor.bottema.emailaddress.EmailAddressValidator;
@@ -99,7 +97,7 @@ public class IssuesTest {
 
 		class LicenseUtilsSSLExceptionMock extends LicenseUtils {
 
-			protected Response makeRequest(Client client, String url) throws IOException {
+			protected Object makeRequest(Client client, String url, String action) throws Exception {
 
 				throw new SSLHandshakeException(
 						"PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target\r\n"
@@ -145,7 +143,7 @@ public class IssuesTest {
 		PdfTestUtils.assertDefaultResults(burster, tokens);
 
 		assertTrue(burster.getLicenseLimit() == Integer.MAX_VALUE);
-		
+
 		licenseUtilsSSLExceptionMock.getLicense().loadLicense();
 
 		assertTrue(licenseUtilsSSLExceptionMock.getLicense().isValid());

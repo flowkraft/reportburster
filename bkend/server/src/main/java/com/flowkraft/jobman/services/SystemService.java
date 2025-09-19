@@ -228,10 +228,10 @@ public class SystemService {
 		// Print the final command line that will be executed
 		// System.out.println("[DEBUG] Full command to execute:");
 		for (String part : commandWithShell) {
-			System.out.print(part + " ");
+			//System.out.print(part + " ");
 		}
 		for (String part : newArgs) {
-			System.out.print(part + " ");
+			//System.out.print(part + " ");
 		}
 		// System.out.println();
 
@@ -543,22 +543,16 @@ public class SystemService {
 	}
 
 	public List<ServiceStatusInfo> getAllServicesStatus() throws Exception {
-		Path workingDir = Paths.get(com.sourcekraft.documentburster.utils.Utils.getDbFolderPath()); // Working directory
-																									// for the command
-
-		// Build the Docker Compose command
+		// Build the Docker command to get all running containers
 		List<String> command = new ArrayList<>();
 		command.add("docker");
-		command.add("compose");
-		command.add("-f");
-		command.add("docker-compose.yml");
 		command.add("ps");
 		command.add("--format");
 		command.add("json"); // Get output as JSON for easy parsing
 
-		// Execute the command
-		ProcessResult result = new ProcessExecutor().command(command).directory(workingDir.toFile()).readOutput(true)
-				.redirectErrorStream(true).execute();
+		// Execute the command (no working directory needed for global query)
+		ProcessResult result = new ProcessExecutor().command(command).readOutput(true).redirectErrorStream(true)
+				.execute();
 		String output = result.getOutput().getString();
 
 		// Check if the command succeeded (exit code 0)
@@ -571,7 +565,7 @@ public class SystemService {
 		// Trim and check the output format
 		output = output.trim();
 		if (output.isEmpty()) {
-			System.out.println("Docker command returned empty output.");
+			//System.out.println("Docker command returned empty output.");
 			return new ArrayList<>();
 		}
 
@@ -585,20 +579,20 @@ public class SystemService {
 					});
 			for (Map<String, Object> service : services) {
 				ServiceStatusInfo info = new ServiceStatusInfo();
-				info.name = (String) service.get("Name");
+				info.name = (String) service.get("Names"); // Changed from "Name" to "Names" for docker ps
 				info.status = (String) service.get("State");
 				info.ports = service.get("Ports") != null ? service.get("Ports").toString() : "N/A";
 				statuses.add(info);
 			}
 		} else if (output.startsWith("{")) {
 			// Handle as JSON object (likely an error or single item)
-			System.out.println("Docker output is an object (possibly an error): " + output);
+			//System.out.println("Docker output is an object (possibly an error): " + output);
 			// Optionally parse as Map and extract if it's a single service
 			Map<String, Object> singleService = mapper.readValue(output, new TypeReference<Map<String, Object>>() {
 			});
-			if (singleService.containsKey("Name")) {
+			if (singleService.containsKey("Names")) { // Changed from "Name" to "Names"
 				ServiceStatusInfo info = new ServiceStatusInfo();
-				info.name = (String) singleService.get("Name");
+				info.name = (String) singleService.get("Names");
 				info.status = (String) singleService.get("State");
 				info.ports = singleService.get("Ports") != null ? singleService.get("Ports").toString() : "N/A";
 				statuses.add(info);

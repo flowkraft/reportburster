@@ -1,0 +1,2057 @@
+commit 3f0e9f5fca8080f87094341f8ac5027091cc7601
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Aug 22 16:03:16 2025 +0100
+
+    Version v1.71.0
+
+commit cfd0d2874220b24410af38148f4790e4e003a55e
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Aug 20 16:27:42 2025 +0100
+
+    fs: tls: add --client-pass support for encrypted --client-key files
+    
+    This also widens the supported types
+    
+    - Unencrypted PKCS#1 ("BEGIN RSA PRIVATE KEY")
+    - Unencrypted PKCS#8 ("BEGIN PRIVATE KEY")
+    - Encrypted PKCS#8 ("BEGIN ENCRYPTED PRIVATE KEY")
+    - Legacy PEM encryption (e.g., DEK-Info headers), which are automatically detected.
+
+commit e7a2b322ecc3356da3f82bc8e665765f373b7d28
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Tue Aug 19 17:25:07 2025 +0100
+
+    ftp: make TLS config default to global TLS config - Fixes #6671
+    
+    This allows --ca-cert, --client-cert, --no-check-certificate etc to be
+    used.
+    
+    This also allows `override.ca_cert = XXX` to be used in the config
+    file.
+
+commit d3a0805a2b422f74f5899908a6f644803429d7a1
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Tue Aug 19 17:13:48 2025 +0100
+
+    fshttp: return *Transport rather than http.RoundTripper from NewTransport
+    
+    This allows further customization, reading the existing config and is
+    the Go recommended way "accept interfaces, return structs".
+
+commit d4edf8ac18e0469d0308dcfb48e4d991dd8f7889
+Author: nielash <nielronash@gmail.com>
+Date:   Thu Aug 21 17:54:23 2025 -0400
+
+    bisync: release from beta
+    
+    As of v1.71, bisync is officially out of beta.
+    
+    Some history:
+    
+    - bisync was born in 2018 as https://github.com/cjnaz/rclonesync-V2
+    by @cjnaz, written in python.
+    - In 2021, @ivandeex ported it to go with @cjnaz's support.
+    https://github.com/rclone/rclone/pull/5164
+    - It was introduced as an "experimental" feature in v1.58.
+    https://github.com/rclone/rclone/commit/6210e22ab585eccdf27c12642d342056459e2e6e
+    - In 2023, bisync needed a new maintainer, and @nielash volunteered.
+    https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636
+    - Later in 2023, bisync received a major overhaul and was relabeled "beta"
+    (from "experimental"). https://github.com/rclone/rclone/pull/7410
+    - In 2024, integration tests were introduced for bisync (which previously had
+    only unit tests). https://github.com/rclone/rclone/pull/7693
+    - As of August 2025, bisync is stable and integration tests are passing on all
+    of the "flagship" backends.
+    
+    Development doesn't stop here, of course. But bisync has come a long way since
+    its "experimental" days, and the "beta" tag is no longer needed.
+
+commit 87d14b000a2ca6b3a8f6077931898173da558d4b
+Author: nielash <nielronash@gmail.com>
+Date:   Thu Aug 21 11:06:15 2025 -0400
+
+    bisync: fix markdown formatting issues flagged by linter in docs
+
+commit 12bded980b241db809f2cb3badc61e12a8216fe5
+Author: nielash <nielronash@gmail.com>
+Date:   Thu Aug 21 10:10:04 2025 -0400
+
+    bisync: fix --no-slow-hash settings on path2
+    
+    Before this change, if path2 had slow hashes, and --no-slow-hash or --slow-hash-sync-only
+    was in use, bisync was erroneously setting path1's hashtype to 'none' instead of
+    path2's. This change fixes the issue.
+    
+    See https://forum.rclone.org/t/hashtype-mismatch-with-slow-hash-sync-only-in-onedrive-local-bisync/52138/2?u=nielash
+
+commit 6e0e76af9dc4807a61c633e30aa1ed464d5a3007
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Aug 22 12:13:47 2025 +0100
+
+    Add cui to contributors
+
+commit 6f9b2f7b9bcb6be47f5b2de7c27e9a8be5752faf
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Jul 31 11:18:47 2025 +0100
+
+    docs: add code of conduct
+
+commit f61d79396df6775057c1ee3afc324e27b5313733
+Author: cui <523516579@qq.com>
+Date:   Fri Aug 22 07:35:50 2025 +0800
+
+    lib/mmap: convert to using unsafe.Slice to avoid deprecated reflect.SliceHeader
+
+commit 9b22e38450e0679351dbaf1d2731a94a6be4c1b7
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Mon May 5 23:05:18 2025 +0000
+
+    build: bump golangci/golangci-lint-action from 6 to 8
+    
+    Bumps [golangci/golangci-lint-action](https://github.com/golangci/golangci-lint-action) from 6 to 8.
+    - [Release notes](https://github.com/golangci/golangci-lint-action/releases)
+    - [Commits](https://github.com/golangci/golangci-lint-action/compare/v6...v8)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: golangci/golangci-lint-action
+      dependency-version: '8'
+      dependency-type: direct:production
+      update-type: version-update:semver-major
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+commit 9e4fe18830463869ffcf9edca46b0c0cf2ba0cf8
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Tue Aug 19 15:03:56 2025 +0200
+
+    build: update golangci-lint configuration
+
+commit ae5cc1ab37bc4c698b027252140dd77808d5360f
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Tue Aug 19 15:03:11 2025 +0200
+
+    build: ignore revive lint issue var-naming: avoid meaningless package names
+
+commit d4be38ec0214c96fb9af94b4e729948bc4603f34
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Tue Aug 19 14:57:29 2025 +0200
+
+    build: fix lint issue: should omit type error from declaration
+
+commit 115cff3007fb563f49a1555b9fe33103926167da
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Tue Aug 19 14:39:18 2025 +0200
+
+    Revert "build: downgrade linter to use go1.24 until it is fixed for go1.25"
+    
+    This reverts commit 8f84f91666b33a34c81d9973989afb5771a36e40.
+
+commit 70b862f026e36f8f22212f7b3066a771e6a4acb1
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Tue Aug 19 14:37:57 2025 +0200
+
+    build: migrate golangci-lint configuration to v2 format
+
+commit 321cf23e9c9cb8c781ddfd0d1454d530dc3506fd
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 16 15:48:41 2025 +0100
+
+    s3: add --s3-use-arn-region flag - fixes #8686
+
+commit 7e8d4bd915cd77e6e3a75a095e97729a740a972e
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Aug 22 00:02:23 2025 +0100
+
+    Add Binbin Qian to contributors
+
+commit 06f45e0ac03f1abdc7fdf59112550760b183af7c
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Aug 22 00:02:23 2025 +0100
+
+    Add Lucas Bremgartner to contributors
+
+commit 4af2f01abc97ed0fc499b5fbc415a2ac7328e5fb
+Author: Binbin Qian <qianbinbin@hotmail.com>
+Date:   Thu Aug 21 01:50:33 2025 +0800
+
+    docs: add tips about outdated certificates
+
+commit dd3fff6eaeb280e81eac9dc3a03e5c890554feb2
+Author: Lucas Bremgartner <breml@users.noreply.github.com>
+Date:   Tue Aug 19 21:44:02 2025 +0200
+
+    FAQ: specify the availability of SSL_CERT_* env vars
+    
+    SSL_CERT_FILE and SSL_CERT_DIR env vars are only available on Unix systems other than macOS.
+    
+    Addressing comment https://github.com/rclone/rclone/pull/1977#issuecomment-3201961570
+
+commit ca6631746a7a8c113eb00ed0bd8efde313fa815c
+Author: wiserain <mail275@gmail.com>
+Date:   Tue Aug 19 22:00:23 2025 +0900
+
+    pikpak: add file name integrity check during upload
+    
+    This commit introduces a new validation step to ensure data integrity
+    during file uploads.
+    
+    - The API's returned file name (new.File.Name) is now verified
+      against the requested file name (leaf) immediately after
+      the initial upload ticket is created.
+    - If a mismatch is detected, the upload process is aborted with an error,
+      and the defer cleanup logic is triggered to delete any partially created file.
+    - This addresses an unexpected API behavior where numbered suffixes
+      might be appended to filenames even without conflicts.
+    - This change prevents corrupted or misnamed files from being uploaded
+      without client-side awareness.
+
+commit e5fe0b1476cfb2f28e6b0a59fd3e7c6e87ee7d4f
+Author: nielash <nielronash@gmail.com>
+Date:   Sun Aug 17 03:15:37 2025 -0400
+
+    bisync: skip TestBisyncConcurrent on non-local
+    
+    See discussion on
+    https://github.com/rclone/rclone/pull/8708#discussion_r2280308808
+
+commit 4c5764204d7df2da9e6e439cf7e9fda25ea1e277
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Mon Aug 18 17:26:25 2025 +0100
+
+    internetarchive: fix server side copy files with &
+    
+    Before this change, server side copy of files with & gave the error:
+    
+        Invalid Argument</Message><Resource>x-(amz|archive)-copy-source
+        header has bad character
+    
+    This fix switches to using url.QueryEscape which escapes everything
+    from url.PathEscape which doesn't escape &.
+    
+    Fixes #8754
+
+commit d70f40229eb50974b83a05a7c840dcd9bc3ae81b
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Mon Aug 18 14:50:14 2025 +0100
+
+    Revert "s3: set useAlreadyExists to false for Alibaba OSS"
+    
+    This reverts commit 64ed9b175f3f34a99264aab51808ef77f905d4a1.
+    
+    This fails the integration tests with
+    
+    s3_internal_test.go:434: Creating a bucket we already have created returned code: No Error
+    s3_internal_test.go:439:
+            Error Trace:    backend/s3/s3_internal_test.go:439
+            Error:          Should be true
+            Test:           TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/Mkdir
+            Messages:       Need to set UseAlreadyExists quirk
+
+commit 05b13b47b5dc01cb1c865172f88eeff5a00d33f0
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Mon Aug 18 19:37:08 2025 +0100
+
+    Add huangnauh to contributors
+
+commit ecd52aa809775e68c6745bcbf8987d93fdafb7d8
+Author: Sudipto Baral <sudiptobaral.me@gmail.com>
+Date:   Mon Aug 18 11:29:18 2025 -0400
+
+    smb: improve multithreaded upload performance using multiple connections
+    
+    In the current design, OpenWriterAt provides the interface for random-access
+    writes, and openChunkWriterFromOpenWriterAt wraps this interface to enable
+    parallel chunk uploads using multiple goroutines. A global connection pool is
+    already in place to manage SMB connections across files.
+    
+    However, currently only one connection is used per file, which makes multiple
+    goroutines compete for the connection during multithreaded writes.
+    
+    This changes create separate connections for each goroutine, which allows true
+    parallelism by giving each goroutine its own SMB connection
+    
+    Signed-off-by: sudipto baral <sudiptobaral.me@gmail.com>
+
+commit 269abb1aeebce4d5779b343b169b11afabbd0bf5
+Author: nielash <nielronash@gmail.com>
+Date:   Mon Aug 11 01:50:17 2025 -0400
+
+    bisync: fix data races on tests
+
+commit d91cbb2626bf0c6cbec52c998a146d46d4b4ed0e
+Author: nielash <nielronash@gmail.com>
+Date:   Fri Jul 11 13:04:16 2025 -0400
+
+    bisync: remove unused parameters
+
+commit 9073d173134fe127ecc7da55869eb29bf34e8b30
+Author: nielash <nielronash@gmail.com>
+Date:   Fri Jul 11 12:11:16 2025 -0400
+
+    bisync: deglobalize to fix concurrent runs via rc - fixes #8675
+    
+    Before this change, bisync used some global variables, which could cause errors
+    if running multiple concurrent bisync runs through the rc. (Running normally
+    from the command line was not affected.)
+    
+    This change deglobalizes those variables so that multiple bisync runs can be
+    safely run at once, from the same rclone instance.
+
+commit cc20d93f472bae1c6f935064b58a2888c28190c4
+Author: huangnauh <huanglibo2010@gmail.com>
+Date:   Sun Aug 17 19:57:35 2025 +0800
+
+    mount: fix identification of symlinks in directory listings
+
+commit cb1507fa96a39d03f80e1da934e72464e49edf61
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Sat Aug 16 10:36:50 2025 +0100
+
+    s3: fix Content-Type: aws-chunked causing upload errors with --metadata
+    
+    `Content-Type: aws-chunked` is used on S3 PUT requests to signal SigV4
+    streaming uploads: the body is sent in AWS-formatted chunks, each
+    chunk framed and HMAC-signed.
+    
+    When copying from a non S3 compatible object store (like Digital
+    Ocean) the objects can have `Content-Type: aws-chunked` (which you
+    won't see on AWS S3). Attempting to copy these objects to S3 with
+    `--metadata` this produces this error.
+    
+        aws-chunked encoding is not supported when x-amz-content-sha256 UNSIGNED-PAYLOAD is supplied
+    
+    This patch makes sure `aws-chunked` is removed from the `Content-Type`
+    metadata both on the way in and the way out.
+    
+    Fixes #8724
+
+commit b0b3b04b3b5041764c55c8bfc17f80785045368e
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Aug 13 15:26:48 2025 +0100
+
+    config: fix problem reading pasted tokens over 4095 bytes
+    
+    Before this change we were reading input from stdin using the terminal
+    in the default line mode which has a limit of 4095 characters.
+    
+    The typical culprit was onedrive tokens (which are very long) giving the error
+    
+        Couldn't decode response: invalid character 'e' looking for beginning of value
+    
+    This change swaps over to use the github.com/peterh/liner read line
+    library which does not have that limitation and also enables more
+    sensible cursor editing.
+    
+    Fixes #8688 #8323 #5835
+
+commit 8d878d0a5fe1267dcfb55cd9589b450fdfcc193c
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Aug 13 15:26:07 2025 +0100
+
+    config: fix test failure on local machine with a config file
+    
+    This uses a temporary config file instead.
+
+commit 8d353039a694fb277f505cb189424fe9a6b00320
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Apr 11 17:52:50 2025 +0100
+
+    log: add log rotation to --log-file - fixes #2259
+
+commit 4b777db20be4d9bf1f622194ef2a2f997376b0c1
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Aug 14 18:26:53 2025 +0100
+
+    accounting: Fix stats (speed=0 and eta=nil) when starting jobs via rc
+    
+    Before this change we used the current context to start the average
+    loop. This means that if the context came from the rc the average loop
+    would be cancelled at the end of the rc request leading the speed not
+    being measured.
+    
+    This uses the background context for the accounting loop so it doesn't
+    get cancelled when its parent gets cancelled.
+
+commit 16ad0c2aef825959b9d9dfc8756a28a355723fe8
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Sat Aug 16 15:59:50 2025 +0100
+
+    docs: update overview table for oracle object storage
+
+commit e46dec2a946993c587457ea4ff8597f85220082d
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Sat Aug 16 15:59:56 2025 +0100
+
+    Add praveen-solanki-oracle to contributors
+
+commit 2b54b63cb3f82a4a8bc6f568f80bc25af29c4486
+Author: praveen-solanki-oracle <praveen.solanki@oracle.com>
+Date:   Sat Aug 16 10:55:53 2025 -0400
+
+    oracleobjectstorage: add read only metadata support - Fixes #8705
+
+commit f2eb5f35f63dc980356917241402b6522d4936d7
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Sat Aug 16 09:22:31 2025 +0100
+
+    doc: sync doesn't symlinks in dest without --link - Fixes #8749
+
+commit d9a36ef45cbdb80bfd870d0ad1cbca2bea2cf021
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Aug 14 14:18:15 2025 +0100
+
+    s3: sort providers in docs
+
+commit eade7710e70480c47857948da10d942c38344b71
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Aug 14 13:57:17 2025 +0100
+
+    s3: add docs for Exaba Object Storage
+
+commit e6470d998cf0a63fce49f1bd0d167887be84166f
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Aug 1 15:25:22 2025 +0100
+
+    azureblob: fix double accounting for multipart uploads - fixes #8718
+    
+    Before this change multipart uploads using OpenChunkWriter would
+    account for twice the space used.
+    
+    This fixes the problem by adjusting the accounting delay.
+
+commit 0c0fb931113d7c66ab0ad944ad9ff5bcb03afd05
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Tue Aug 12 12:45:10 2025 +0100
+
+    pool: fix deadlock with --max-buffer-memory
+    
+    Before this change we used an overcomplicated method of memory
+    reservations in the pool.RW which caused deadlocks.
+    
+    This changes it to use a much simpler reservation system where we
+    actually reserve the memory and store it in the pool.RW. This allows
+    us to use the semaphore.Weighted to count the actually memory in use
+    (rather than the memory in use and in the cache). This in turn allows
+    accurate use of the semaphore by users wanting memory.
+
+commit 3f60764bd4abd92bfc34a90d4929e67db8497d80
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Sun Aug 10 17:39:23 2025 +0100
+
+    azureblob: fix deadlock with --max-connections with InvalidBlockOrBlob errors
+    
+    Before this change the azureblob backend could deadlock when using
+    --max-connections. This is because when it receives InvalidBlockOrBlob
+    error it attempts to clear the condition before retrying. This in turn
+    involved recursively calling the pacer. At this point the pacer can
+    easily have no connections left which causes a deadlock as all the
+    other pacer connections are waiting for the InvalidBlockOrBlob to be
+    resolved.
+    
+    This fixes the problem by using a temporary pacer when resolving the
+    InvalidBlockOrBlob errors.
+
+commit 8f84f91666b33a34c81d9973989afb5771a36e40
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Aug 13 15:48:09 2025 +0100
+
+    build: downgrade linter to use go1.24 until it is fixed for go1.25
+
+commit 2c91772bf1ca4373dba71e4af3aad08eeb1113c9
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Aug 13 13:31:40 2025 +0100
+
+    build: update all dependencies
+
+commit c3f721755d41c000091bf43307223cee3458cec1
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Aug 13 13:05:27 2025 +0100
+
+    build: update to go1.25 and make go1.24 the minimum required version
+
+commit 8a952583a52e74dc39be4385d53f894f3cabad90
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Aug 13 17:54:40 2025 +0100
+
+    Add Timothy Jacobs to contributors
+
+commit fc5bd21e28fe8beee3e0f544a30f9d9552250901
+Author: nielash <nielronash@gmail.com>
+Date:   Sun Aug 10 21:09:45 2025 -0400
+
+    bisync: fix time.Local data race on tests - fixes #8272
+    
+    Before this change, the bisync tests were directly setting the time.Local
+    variable to UTC.
+    
+    The reason for overriding the time zone on the tests is to make them
+    deterministic regardless of where in the world the user happens to be. There are
+    some goldenized strings which have the time zone hard-coded and would result in a
+    miscompare failure outside of that time zone.
+    
+    However, mutating the time.Local variable is not the right way to do this, as OP
+    correctly pointed out on #8272.
+    
+    Setting the TZ environment variable from within the code was also not an ideal
+    solution because, while it worked on unix, it did not work on Windows. See
+    https://github.com/golang/go/blob/fbac94a79998d4730a58592f0634fa8a39d8b9fb/src/time/zoneinfo.go#L79-L80
+    
+    This change fixes the issue by defining a new bisync.LogTZ setting for use when
+    printing timestamps in /cmd/bisync/resolve.go. We override this on the tests
+    instead of time.Local.
+
+commit be73a10a97ba75cfd66fc7bf0b8a09fe73d69d7c
+Author: nielash <nielronash@gmail.com>
+Date:   Sun Aug 10 17:57:21 2025 -0400
+
+    googlecloudstorage: fix rateLimitExceeded error on bisync tests
+    
+    Additional to googlecloudstorage's general rate limiting, it apparently has a
+    separate limit for updating the same object more than once per second:
+    
+    googleapi: Error 429: The object rclone-test-
+    demilaf1fexu/015108so/check_access/path2/modtime_write_test exceeded the rate
+    limit for object mutation operations (create, update, and delete). Please reduce
+    your request rate. See https://cloud.google.com/storage/docs/gcs429.,
+    rateLimitExceeded
+    
+    We were encountering this in the part of the bisync tests where we create an
+    object, verify that we can edit its modtime, then remove it. We were not
+    encountering it elsewhere because it only concerns manipulations of the same
+    object -- not the rate of API calls in general. For the same reason, the standard
+    pacer is not an effective solution for enforcing this (unless, of course, we
+    want to slow the entire test down by setting a 1s MinSleep across the board.)
+    
+    While ideally this would be handled in the backend, this gets around it by
+    sleeping for 1s in the relevant part of the bisync tests.
+
+commit 7edf8eb233537effbfc6094fea556c5976144964
+Author: Timothy Jacobs <timothy@ironbounddesigns.com>
+Date:   Wed Aug 13 11:25:38 2025 -0400
+
+    accounting: populate transfer snapshot with "what" value
+
+commit 99144dcbba2dbdd2d83cb60e7c81b7b64e447084
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Tue Aug 12 08:49:12 2025 +0000
+
+    build(deps): bump actions/checkout from 4 to 5
+    
+    Bumps [actions/checkout](https://github.com/actions/checkout) from 4 to 5.
+    - [Release notes](https://github.com/actions/checkout/releases)
+    - [Changelog](https://github.com/actions/checkout/blob/main/CHANGELOG.md)
+    - [Commits](https://github.com/actions/checkout/compare/v4...v5)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: actions/checkout
+      dependency-version: '5'
+      dependency-type: direct:production
+      update-type: version-update:semver-major
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+commit 8f90f830bdbb84e1d6508cfa3ee0064606e9de63
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Tue Aug 5 22:29:47 2025 +0000
+
+    build(deps): bump actions/download-artifact from 4 to 5
+    
+    Bumps [actions/download-artifact](https://github.com/actions/download-artifact) from 4 to 5.
+    - [Release notes](https://github.com/actions/download-artifact/releases)
+    - [Commits](https://github.com/actions/download-artifact/compare/v4...v5)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: actions/download-artifact
+      dependency-version: '5'
+      dependency-type: direct:production
+      update-type: version-update:semver-major
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+
+commit 456108f29eb380352778f9bfa3bc9e65b8418273
+Author: nielash <nielronash@gmail.com>
+Date:   Sat Aug 9 01:51:29 2025 -0400
+
+    googlecloudstorage: enable bisync integration tests
+    
+    These were habitually failing at some point and ignored for that reason, but
+    seem to be passing now. It is possible that in the interim, the underlying issue
+    was resolved by another commit. If there is still an issue lurking, the nightly
+    tests will surely reveal it (and give us a log to look at.)
+
+commit f7968aad1cd56ca7f0119f159f5be2462a9bbf6d
+Author: nielash <nielronash@gmail.com>
+Date:   Sat Aug 9 00:21:19 2025 -0400
+
+    fstest: fix parsing of commas in -remotes
+    
+    Connection string remotes like "TestGoogleCloudStorage,directory_markers:" use
+    commas. Before this change, these could not be passed with the -remotes flag,
+    which expected commas to be used only as separators.
+    
+    After this change, CSV parsing is used so that commas will be properly
+    recognized inside a terminal-escaped and quoted value, like:
+    
+    -remotes local,\"TestGoogleCloudStorage,directory_markers:\"
+
+commit 2a587d21c480abcb7c14928fa8ee09524190b43b
+Author: nielash <nielronash@gmail.com>
+Date:   Fri Aug 8 23:38:05 2025 -0400
+
+    azurefiles: fix hash getting erased when modtime is set
+    
+    Before this change, setting an object's modtime with o.SetModTime() (without
+    updating the file's content) would inadvertently erase its md5 hash.
+    
+    The documentation notes: "If this property isn't specified on the request, the
+    property is cleared for the file. Subsequent calls to Get File Properties won't
+    return this property, unless it's explicitly set on the file again."
+    https://learn.microsoft.com/en-us/rest/api/storageservices/set-file-properties#common-request-headers
+    
+    This change fixes the issue by setting ContentMD5 (and ContentType), to the
+    extent we have it, during SetModTime.
+    
+    Discovered on bisync integration tests such as TestBisyncRemoteRemote/resolve
+
+commit 4b0df05907596a2e1f451549165c49b7bc62b61b
+Author: nielash <nielronash@gmail.com>
+Date:   Fri Aug 8 21:48:17 2025 -0400
+
+    bisync: disable --sftp-copy-is-hardlink on sftp tests
+    
+    Before this change, TestSFTPOpenssh integration tests would fail due to setting
+    copy_is_hardlink=true in /fstest/testserver/init.d/TestSFTPOpenssh.
+    
+    For example, if a file was server-side copied from path1 to path2 and then the
+    bisync tests set the path2 modtime, the path1 modtime would also unexpectedly
+    mutate.
+    
+    Hardlinks are not the same as copies. The bisync tests assume that they can
+    modify a file on one side without affecting a file on the other. This change
+    essentially sets --sftp-copy-is-hardlink to the default of false for the bisync
+    tests.
+
+commit a92af348254e14f4400713d5e7d58db3bd5c1d6f
+Author: Anagh Kumar Baranwal <6824881+darthShadow@users.noreply.github.com>
+Date:   Sun Aug 10 00:33:34 2025 +0530
+
+    local: fix --copy-links on Windows when listing Junction points
+
+commit 8ffde402f624690cd367d48ba43b61b90dfdaeb5
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Apr 24 19:36:59 2025 +0100
+
+    operations: fix too many connections open when using --max-memory
+    
+    Before this change we opened the connection before allocating memory.
+    This meant a long wait sometimes for memory and too many connections
+    open.
+    
+    Now we allocate the memory first before opening the connection.
+
+commit 117d8d9fdbf3d92b301f3e7adb4513ab2bade49b
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Tue Apr 22 17:20:03 2025 +0100
+
+    pool: fix deadlock with --max-memory and multipart transfers
+    
+    Because multipart transfers can need more than one buffer to complete,
+    if transfers was set very high, it was possible for lots of multipart
+    transfers to start, grab fewer buffers than chunk size, then deadlock
+    because no more memory was available.
+    
+    This fixes the problem by introducing a reservation system which the
+    multipart transfer uses to ensure it can reserve all the memory for
+    one chunk before starting.
+
+commit 5050f42b8b8f15b459b02033b3dfe2cf0db97ef6
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Apr 24 16:50:03 2025 +0100
+
+    pool: unify memory between multipart and asyncreader to use one pool
+    
+    Before this the multipart code and asyncreader used separate pools
+    which is inefficient on memory use.
+
+commit fcbcdea06721fa9257a981d1f4676ce080a32555
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Tue Aug 5 16:25:58 2025 +0100
+
+    docs: update links to rcloneui
+
+commit d4e68bf66b0b98bd35bf3eb1aab4fed6db317e75
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Aug 1 11:58:09 2025 +0100
+
+    docs: add MEGA S4 as a gold sponsor
+    
+    This also tidies the menu cards.
+
+commit 743d160fdd12d2e30ff8a0cead90346b9d226b97
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 30 18:40:25 2025 +0100
+
+    about: fix potential overflow of about in various backends
+    
+    Before this fix it was possible for an about call in various backends
+    to exceed an int64 and wrap.
+    
+    This patch causes it to clip to the max int64 value instead.
+
+commit dc95f36bc1057d7852bcb62b87808f1c68cf54c3
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 30 18:02:39 2025 +0100
+
+    box: fix about: cannot unmarshal number 1.0e+18 into Go struct field
+    
+    Before this change rclone about was failing with
+    
+        cannot unmarshal number 1.0e+18 into Go struct field User.space_amount of type int64
+    
+    As Box increased Enterprise accounts user.space_amount from 30PB to
+    1e+18 or 888.178PB returning it as a floating point number, not an integer.
+    
+    This fix reads it as a float64 and clips it to the maximum value of an
+    int64 if necessary.
+
+commit d3e3af377a669e1ac960468213080a6375a85f2d
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 30 17:40:17 2025 +0100
+
+    oauthutil: fix nil pointer crash when started with expired token
+
+commit db4812fbfa5e4689fac790333cbbee115d1f9de2
+Author: n4n5 <56606507+Its-Just-Nans@users.noreply.github.com>
+Date:   Fri Jul 25 16:37:25 2025 +0200
+
+    rc: listremotes should send an empty array instead of nil
+
+commit ff9cbab5fa36fef07f9237dcef073e16b0c72de8
+Author: n4n5 <56606507+Its-Just-Nans@users.noreply.github.com>
+Date:   Fri Jul 25 12:24:18 2025 +0200
+
+    config: add error if RCLONE_CONFIG_PASS was supplied but didn't decrypt config
+
+commit 30d8ab5f2fffa273f98ef05d97c44916bfeb35aa
+Author: n4n5 <56606507+Its-Just-Nans@users.noreply.github.com>
+Date:   Fri Jul 25 12:19:07 2025 +0200
+
+    rc: add config/unlock to unlock the config file
+
+commit d71a4195d68f2a3b0b5359240036e9770962c8d6
+Author: Anagh Kumar Baranwal <6824881+darthShadow@users.noreply.github.com>
+Date:   Wed Jul 23 20:20:31 2025 +0530
+
+    ftp: allow insecure TLS ciphers - fixes #8701
+    
+    Signed-off-by: Anagh Kumar Baranwal <6824881+darthShadow@users.noreply.github.com>
+
+commit 64ed9b175f3f34a99264aab51808ef77f905d4a1
+Author: zjx20 <zhoujianxiong2@gmail.com>
+Date:   Tue Jul 22 15:04:19 2025 +0800
+
+    s3: set useAlreadyExists to false for Alibaba OSS
+
+commit 2b10340e4ecf31fac47d14ae8526d9cb78df45d0
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Jul 24 15:19:15 2025 +0100
+
+    docs: update sponsors page
+
+commit 3c596f8d111f6c38656e0fb26d30a40da6b0ab80
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 2 15:26:34 2025 +0100
+
+    fs: allow global variables to be overriden or set on backend creation
+    
+    This allows backend config to contain
+    
+    - `override.var` - set var during remote creation only
+    - `global.var` - set var in the global config permanently
+    
+    Fixes #8563
+
+commit 6a9c221841552ce624a423be27d5b065bd04f6a8
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 2 17:20:58 2025 +0100
+
+    fs: allow setting of --http_proxy from command line
+    
+    This in turn allows `override.http_proxy` to be set in backend configs
+    to set an http proxy for a single backend.
+
+commit c49b24ff90798224a0fea8c084b1957c15c35bb2
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 23 13:05:28 2025 +0100
+
+    tests: cloudinary: remove test ignore after merging fix from #8707
+
+commit edbbfd1e86bec9f6058a039280052fbe7df98f90
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 23 13:12:39 2025 +0100
+
+    Add Antonin Goude to contributors
+
+commit 0e0af7499ce203cde3c498555087f4fc36e110e6
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 23 13:12:39 2025 +0100
+
+    Add Yu Xin to contributors
+
+commit eb4fe3ef4c0fdc5d2818debb67d2dac7bf383a79
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 23 13:12:39 2025 +0100
+
+    Add houance to contributors
+
+commit 70eb0f21d905da9283b89a1f710e218311b640af
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 23 13:12:39 2025 +0100
+
+    Add Florent Vennetier to contributors
+
+commit 12378bae27d452cb1bc40caa6212fa402064c44d
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 23 13:12:39 2025 +0100
+
+    Add n4n5 to contributors
+
+commit 3c08c4df3ae61af3007349a17be57338b7483cd5
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 23 13:12:39 2025 +0100
+
+    Add Albin Parou to contributors
+
+commit 897509ae1090efc691017354501ace29eb62485a
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 23 13:12:39 2025 +0100
+
+    Add liubingrun to contributors
+
+commit 0eb7ee2e168a26621a592ac350099a7806ab9a13
+Author: nielash <nielronash@gmail.com>
+Date:   Tue Jul 22 20:23:59 2025 -0400
+
+    sync: fix testLoggerVsLsf when backend only reads modtime
+    
+    There are some backends (like PikPak) that advertise a precision of
+    fs.ModTimeNotSupported but do actually return a modtime when asked. In the case
+    of PikPak, it is because the modtime can be read but not written, and is not
+    considered reliable enough to use for syncing.
+    
+    Before this change, testLoggerVsLsf got confused in this scenario (expected a
+    blank modtime but got non-blank). Adding to the confusion, it only reaches this
+    code if the backend happens to support md5 hashes, and the fsrc and fdst have
+    the same precision.
+    
+    This change fixes the issue by setting the modtime string on both sides to
+    "none" in this scenario. Note that we can't use "" (blank) because
+    (operations.ListFormat).AddModTime would replace that with "2006-01-02 15:04:05".
+
+commit c1ebfb7e0440648428ea8304c4aedf87bb24db20
+Author: nielash <nielronash@gmail.com>
+Date:   Tue Jul 22 20:13:30 2025 -0400
+
+    sync: fix testLoggerVsLsf checking wrong fs
+    
+    Before this change, two tests (TestServerSideCopyOverSelf and
+    TestServerSideMoveOverSelf) were checking the wrong Fs in the call to
+    testLoggerVsLsf. This fixes it by making sure we are testing the same two Fs's
+    we synced.
+
+commit 3d62058693964abb0b4942aeb47526a7e099ac16
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Tue Jul 22 17:56:43 2025 +0100
+
+    docs: fix make opengraph tags absolute as not all sites understand relative
+
+commit 122890799fb9e2ff0bc74e858d7e863b22c7359f
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Sun Jul 13 23:13:07 2025 +0200
+
+    docs: update contributing guide regarding markdown documentation
+
+commit 65078d58469befe6fda4d07d8f0fb5dbcc1abcaf
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 21:16:55 2025 +0200
+
+    build: add markdown linting to workflow
+
+commit 92f304902ded51734aacbd341683b71470b6b158
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 21:04:58 2025 +0200
+
+    build: add markdownlint configuration
+
+commit 45477a6c7d5a0a75b25b209812d99180e3447c59
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jul 11 00:05:57 2025 +0200
+
+    docs: minor format cleanup install.md
+
+commit 79b549b5a4e71e06792945f071956aa68cddf9c0
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 22:04:43 2025 +0200
+
+    docs: fix markdownlint issue md049/emphasis-style
+
+commit 318880b4adad59d792cbe03870000af9f794c163
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 21:57:53 2025 +0200
+
+    docs: fix markdownlint issue md036/no-emphasis-as-heading
+
+commit 75521dcf6e1a48186c871298787046051c462664
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 21:55:47 2025 +0200
+
+    docs: fix markdownlint issue md033/no-inline-html
+
+commit 8bf20dd54590b1676d8a8de12c9dcfe079b727cb
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 21:55:04 2025 +0200
+
+    docs: fix markdownlint issue md025/single-title
+
+commit 744bce1246bf32e5afae6d8c5c852301896ec4a3
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 21:46:58 2025 +0200
+
+    docs: fix markdownlint issue md041/first-line-heading
+
+commit c817fc5c57e2527998acd52531eb5e9b957b771b
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 18:36:44 2025 +0200
+
+    docs: fix markdownlint issue md001/heading-increment
+
+commit 0bb4d0a9852e79d64b1b89d51d0b5c01e6f985ee
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 15:20:41 2025 +0200
+
+    docs: fix markdownlint issue md003/heading-style
+
+commit a8605abd34c9586bacba5e3cb2d21af8fb795d3c
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 14:46:12 2025 +0200
+
+    docs: fix markdownlint issue md034/no-bare-urls
+
+commit 953fb4490bfc16f6d6dbad375bd08b546e856eb1
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 15:09:56 2025 +0200
+
+    docs: fix markdownlint issue md010/no-hard-tabs
+
+commit b17c3d18afa69a53c4470288aad1b2a052db6cf5
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 13:53:45 2025 +0200
+
+    docs: fix markdownlint issue md013/line-length
+
+commit b45580fa19ff0c7ba81cbb7c903e97f834917e16
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 14:19:57 2025 +0200
+
+    docs: fix markdownlint issue md038/no-space-in-code
+
+commit 1c26f40078e6a31afae7936c41db7617e090db57
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 14:17:42 2025 +0200
+
+    docs: fix markdownlint issue md040/fenced-code-language
+
+commit 667ad093eb3e1f9cdd8cbe75eff071fc21af2898
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 14:09:07 2025 +0200
+
+    docs: fix markdownlint issue md046/code-block-style
+
+commit 2c369aedf52fdcde8b0c1b30bea1e78dc3623d70
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 14:03:30 2025 +0200
+
+    docs: fix markdownlint issue md037/no-space-in-emphasis
+
+commit 7a0d5ab0b4ceb58f705403f6eef29727cc5e0dcd
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 14:00:54 2025 +0200
+
+    docs: fix markdownlint issue md059/descriptive-link-text
+
+commit 75582b804be1d0a2a38d506639b461a0c0c8320c
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 13:58:29 2025 +0200
+
+    docs: fix markdownlint issues md007/ul-indent md004/ul-style
+
+commit 73452551c6bb784725b68576011f06f02c261214
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 13:57:24 2025 +0200
+
+    docs: fix markdownlint issue md012/no-multiple-blanks
+
+commit cb3cf5068bd3f0ae339b93703dbe056fd631fc02
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 15:14:14 2025 +0200
+
+    docs: fix markdownlint issue md058/blanks-around-tables
+
+commit 428f5187712ebaa3f20a93254e860dccbbafcbb0
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 14:18:07 2025 +0200
+
+    docs: fix markdownlint issue md022/blanks-around-headings
+
+commit 0411a41e1138dda3d8ffee33e434b87d958b7238
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 13:56:54 2025 +0200
+
+    docs: fix markdownlint issue md031/blanks-around-fences
+
+commit 07b37bcd12bce955865445d8a953661cadea023d
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 13:56:09 2025 +0200
+
+    docs: fix markdownlint issue md032/blanks-around-lists
+
+commit 0506826ff52b7ee51285b0ecc39add33e9e015c1
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 13:55:22 2025 +0200
+
+    docs: fix markdownlint issue md009/no-trailing-spaces
+
+commit 4fcd36a5ab771e4cfe74d31ac74f7ac44b0499e0
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 14:46:57 2025 +0200
+
+    docs: fix markdownlint issue md014/commands-show-output
+
+commit b2f43f39ba4c154c7814bb3f077c7a8d19e87784
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jul 11 07:46:52 2025 +0200
+
+    docs: fix markdownlint issues md007/ul-indent md004/ul-style (bin/update-authors.py)
+
+commit 074d73d12b4c19ebb0fec5e63640d9e93262a65b
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jul 11 07:46:35 2025 +0200
+
+    docs: fix markdownlint issues md007/ul-indent md004/ul-style (authors.md)
+
+commit 6457bcf51e68adc37cb2083646d3c0ea7833c8ab
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Mon Jul 21 12:00:05 2025 +0100
+
+    docs: add opengraph tags for website social media previews
+
+commit 8d12519f3d98d280877e9988c3cd2b2b0007191b
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Mon Jul 21 10:48:26 2025 +0100
+
+    mount: note that bucket based remotes can use directory markers
+
+commit 8a7c401366c69e78183bcf7bd94531e31cf07bad
+Author: wiserain <mail275@gmail.com>
+Date:   Tue Jul 15 17:38:22 2025 +0900
+
+    pikpak: add docs for methods to clarify name collision handling and restrictions
+
+commit 0aae8f346fadf438a01084024eda3958d015334c
+Author: wiserain <mail275@gmail.com>
+Date:   Sat Jul 12 12:55:44 2025 +0900
+
+    pikpak: enhance Copy method to handle name collisions and improve error management
+
+commit e991328967c24c356670ed9f5f8eb92862092e06
+Author: wiserain <mail275@gmail.com>
+Date:   Fri Jul 11 18:01:43 2025 +0900
+
+    pikpak: enhance Move for better handling of error and name collision
+
+commit 614d02a67345bfea85c815c0d142d329c575e387
+Author: Yu Xin <3188+is@users.noreply.github.com>
+Date:   Mon Jul 21 23:54:19 2025 +0800
+
+    accounting: fix incorrect stats with --transfers=1 - fixes #8670
+
+commit 018ebdded5e37e067e0f8830bbf17c4e82bfa2d7
+Author: houance <45840516+houance@users.noreply.github.com>
+Date:   Mon Jul 21 23:41:08 2025 +0800
+
+    rc: fix `operations/check` ignoring `oneWay` parameter
+    
+    Change param from parsing "oneway" to "oneWay" as bool value, as the docs
+    say "oneWay -  check one way only, source files must exist on remote"
+
+commit fc08983d711ad2160a2bd7655c1622f59c636230
+Author: Florent Vennetier <florent.vennetier@ovhcloud.com>
+Date:   Thu Mar 13 18:01:37 2025 +0100
+
+    s3: add OVHcloud Object Storage provider
+    
+    Co-Authored-By: Antonin Goude <antonin.goude@ovhcloud.com>
+
+commit 7b610848916bdad1a1bc0b10d456ceee3347c699
+Author: n4n5 <56606507+Its-Just-Nans@users.noreply.github.com>
+Date:   Mon Jul 21 16:42:37 2025 +0200
+
+    docs: rc: fix description of how to read local config
+
+commit d1ac6c2fe13de499e7e24a9fc8048c30a226e23f
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Mon Jul 14 15:06:38 2025 +0200
+
+    build: limit check for edits of autogenerated files to only commits in a pull request
+
+commit da9c99272ce486ffbed01b1fedbcf13e92710382
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Sat Jul 12 18:16:19 2025 +0200
+
+    build: extend check for edits of autogenerated files to all commits in a pull request
+
+commit 9c7594d78f5983be87ff87aa09f47036eb5c6730
+Author: Sudipto Baral <sudiptobaral.me@gmail.com>
+Date:   Thu Jul 17 09:34:44 2025 -0400
+
+    smb: refresh Kerberos credentials when ccache file changes
+    
+    This change enhances the SMB backend in Rclone to automatically refresh
+    Kerberos credentials when the associated ccache file is updated.
+    
+    Previously, credentials were only loaded once per path and cached
+    indefinitely, which caused issues when service tickets expired or the
+    cache was renewed on the server.
+
+commit 70226cc65370d34b6f4b7cb58a96b3143e091880
+Author: Albin Parou <fumesover@gmail.com>
+Date:   Thu Jul 17 15:29:31 2025 +0200
+
+    s3: fix multipart upload and server side copy when using bucket policy SSE-C
+    
+    When uploading or moving data within an s3-compatible bucket, the
+    `SSECustomer*` headers should always be forwarded: on
+    `CreateMultipartUpload`, `UploadPart`, `UploadCopyPart` and
+    `CompleteMultipartUpload`. But currently rclone doesn't forward those
+    headers to `CompleteMultipartUpload`.
+    
+    This is a requirement if you want to enforce `SSE-C` at the bucket level
+    via a bucket policy. Cf: `This parameter is required only when the
+    object was created using a checksum algorithm or if your bucket policy
+    requires the use of SSE-C.` in
+    https://docs.aws.amazon.com/AmazonS3/latest/API/API_CompleteMultipartUpload.html
+
+commit c20e4bd99c09b3a94ab6a57f4e6aad99a38df354
+Author: liubingrun <liubr1@chinatelecom.cn>
+Date:   Mon Jul 14 12:25:10 2025 -0400
+
+    backend/s3: Fix memory leak by cloning strings #8683
+    
+    This commit addresses a potential memory leak in the S3 backend where
+    strings extracted from large API responses were keeping the entire
+    response in memory. The issue occurs because Go strings share underlying
+    memory with their source, preventing garbage collection of large XML
+    responses even when only small substrings are needed.
+    
+    Signed-off-by: liubingrun <liubr1@chinatelecom.cn>
+
+commit ccfe153e9bac89be18a5da6bcda06aa5458c9540
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Tue Apr 8 21:12:36 2025 +0100
+
+    purge: exit with a fatal error if filters are set on `rclone purge`
+    
+    Fixes #8491
+
+commit c9730bcaafd07e1c29019043599f9fe94e3052b7
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 16 16:41:26 2025 +0100
+
+    docs: Add Backblaze as a Platinum sponsor
+
+commit 03dd7486c1eeaac824461b55db309074151be717
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Jul 17 11:15:37 2025 +0100
+
+    Add Sam Pegg to contributors
+
+commit 6249009fdf6ba2be0c221996e88a2bfb1cb4a50f
+Author: raider13209 <samrpegg@gmail.com>
+Date:   Thu Jul 17 10:06:49 2025 +0100
+
+    googlephotos: added warning for Google Photos compatability-fixes #8672
+
+commit 8e2d76459fb3ceaf1fdc9f4c88639747d336da2c
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Jul 11 14:18:40 2025 +0100
+
+    test: remove flakey TestChunkerChunk50bYandex: test
+
+commit 5e539c6a7209c2e797966b6478d382bc3d495386
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Sun Jul 13 14:05:45 2025 +0200
+
+    docs: Consolidate entries for Josh Soref in contributors
+
+commit 886611240057eab798738141e99e44087dfdfae8
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Sun Jul 13 13:50:40 2025 +0200
+
+    docs: remove dead link to example of writing a plugin
+
+commit bfdd5e2c226331e8b3c4379fc51149cf9067c91f
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Jul 11 14:14:18 2025 +0100
+
+    filescom: document that hashes need to be enabled - fixes #8674
+
+commit f3f16cd2b91a6c7d2d7a3dc8a7cdd839c9fe32b8
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Jul 11 14:15:50 2025 +0100
+
+    Add Sudipto Baral to contributors
+
+commit d84ea2ec523be08f118059cc3926a6c033e08719
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 22:08:25 2025 +0200
+
+    docs: fix incorrect json syntax in sample output
+
+commit b259241c073d8248796602e653ffb687ed661a26
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Thu Jul 10 18:12:36 2025 +0200
+
+    docs: ignore author email piyushgarg80
+    
+    This should merge the two duplicates:
+    - piyushgarg <piyushgarg80@gmail.com>
+    - Piyush <piyushgarg80>
+
+commit a8ab0730a73c54e1ea476a80a8cf6f6d10318cd1
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Wed Jul 9 14:01:13 2025 +0200
+
+    docs: fix header level for --dump option section
+
+commit cef207cf94b39f7dd144e0cd4f9ee1d666ee2acc
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Wed Jul 9 13:53:55 2025 +0200
+
+    docs: use stringArray as parameter type
+
+commit e728ea32d1857fa648dd587fbf86129a4c906a13
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Tue Jul 8 21:51:11 2025 +0200
+
+    docs: use consistent markdown heading syntax
+
+commit ccdee0420f74d1a500aefae60e71dddbbeff5f85
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Jul 10 10:45:46 2025 +0100
+
+    imagekit: remove server side Copy method as it was downloading and uploading
+    
+    The Copy method was downloading the file and uploading it again rather
+    than server side copying it.
+    
+    It looks from the docs that the upload process can read a URL so this
+    might be possible, but the removed code is incorrect.
+
+commit 8a51e11d23810de1de838394196be29e8f6ea26c
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Jul 10 10:44:41 2025 +0100
+
+    imagekit: don't low level retry uploads
+    
+    Low level retrying uploads can lead to partial or empty files being
+    uploaded as the io.Reader has been read in the first attempt.
+
+commit 9083f1ff157ae0cb067bebd0645832eeaa97890e
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Jul 10 10:43:49 2025 +0100
+
+    imagekit: return correct error when attempting to upload zero length files
+    
+    Imagekit doesn't support empty files so return correct error for
+    integration tests to process properly.
+
+commit 2964b1a16929122bdb7ccb4b96e44f6c561073c1
+Author: Sudipto Baral <sudiptobaral.me@gmail.com>
+Date:   Thu Jul 10 05:17:42 2025 -0400
+
+    smb: add --smb-kerberos-ccache option to set kerberos ccache per smb backend
+
+commit b6767820ded8a05fc91c735ed2999ca0b322cb21
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 9 18:05:29 2025 +0100
+
+    test: fix smb kerberos integration tests
+    
+    Thanks @sudiptob2 for the tip!
+
+commit 821e7fce456663232f9da0c65d8366ee7b77d5a1
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 9 16:26:45 2025 +0100
+
+    Changelog updates from Version v1.70.3
+
+commit b7c6268d3e3f33ab3c6ca2bc0d2f98a60ed72105
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Tue Jul 8 12:08:14 2025 +0200
+
+    config: make parsing of duration options consistent
+    
+    All user visible Durations should be fs.Duration rather than time.Duration. Suffix is then optional and defaults to s. Additional suffices d, w, M and y are supported, in addition to ms, s, m and h - which are the only ones supported by time.Duration. Absolute times can also be specified, and will be interpreted as duration relative to now.
+
+commit 521d6b88d48e71467b0a519c424c66003e8dfd01
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 22:02:17 2025 +0100
+
+    docs: cleanup usage
+
+commit cf767b085662127c381ee48d6ee2029562c09c12
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 21:17:38 2025 +0100
+
+    docs: break long lines
+
+commit 25f7809822da02a116ad438e5625b8e4154f3376
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 21:14:17 2025 +0100
+
+    docs: add option value type to header where missing
+
+commit 74c0b1ea3baeef37b58111b7c232df91704b32b6
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 20:44:44 2025 +0100
+
+    docs: mention that identifiers in option values are case insensitive
+
+commit f4dcb1e9cf2efe2e33a025b1285ae59203075820
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 20:31:24 2025 +0100
+
+    docs: rewrite dump option examples
+
+commit 90f1d023ff5de3adef23aa170914d6b9b382589d
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 13:53:57 2025 +0100
+
+    docs: use markdown inline code format for dump option headers that are real examples
+
+commit e9c5f2d4e8f70e134105b1e311862b2ef234d106
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 15:48:32 2025 +0100
+
+    docs: change spelling from server side to server-side
+
+commit 1249e9b5acfe7ea602b98909771c38bf56df49b9
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 15:47:11 2025 +0100
+
+    docs: cleanup header casing
+
+commit d47bc5f6c4100a76afe7afa2303e8344459778b1
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 15:42:38 2025 +0100
+
+    docs: rename OSX to macOS
+
+commit efb17941352cbc1087a053ec51225ec0fd6ecddf
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 15:41:44 2025 +0100
+
+    docs: fix list and code block issue
+
+commit 71b98a03a99611bdfec1d6e2279e530a31236369
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 15:36:10 2025 +0100
+
+    docs: consistent markdown list format
+
+commit 8e625c659347add1a1f1728beaf536574dca2ba4
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 14:39:27 2025 +0100
+
+    docs: split section with general description of options with that documenting actual main options
+
+commit 6b2cd7c63140b4537d3e4d1916a6eb3eab761998
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 14:20:57 2025 +0100
+
+    docs: improve description of option types
+
+commit aa4aead63c5dee06e6aeb4162c97eb5597bf4a4b
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 13:49:43 2025 +0100
+
+    docs: use space instead of equal sign to separate option and value in headers
+
+commit c491d12cd03719783ae24cab4398b5ba749efbd8
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 13:15:49 2025 +0100
+
+    docs: use comma to separate short and long option format in headers
+
+commit 9e4d703a569983370ff7398047482e6e738f2006
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 13:10:00 2025 +0100
+
+    docs: remove use of uncommon parameter types
+
+commit fc0c0a777116aa8709491092a22f838eabf00e95
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 13:03:42 2025 +0100
+
+    docs: remove use of parameter type FILE
+
+commit d5cc0d83b06d18d4b2f5d8978434d577e51816f4
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 13:02:20 2025 +0100
+
+    docs: remove use of parameter type DIR
+
+commit 52762dc866e92826bb85058e44337c0ee8ac6dcc
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 12:59:55 2025 +0100
+
+    docs: remove use of parameter type CONFIG_FILE
+
+commit 3c092cfc170465bf600c99b08304d9afe695f0fd
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 12:57:00 2025 +0100
+
+    docs: change use of parameter type N and NUMBER to int consistent with flags and cli help
+
+commit 7f3f1af54103438aaa5f6d7c0523e47602f01b48
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 12:52:39 2025 +0100
+
+    docs: change use of parameter type TIME to Duration consistent with flags and cli help
+
+commit f885c481f037d42541247173cb63ec8d2c082f53
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 12:49:09 2025 +0100
+
+    docs: change use of parameter type BANDWIDTH_SPEC to BwTimetable consistent with flags and cli help
+
+commit 865d4b2bda5728499ee78a2fe74941e3ec3af6d2
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 12:47:27 2025 +0100
+
+    docs: change use of parameter type SIZE to SizeSuffix consistent with flags and cli help
+
+commit 3cb1e65eb61144de503bfdee6f2011602f023d0a
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 12:42:17 2025 +0100
+
+    docs: cleanup markdown header format
+
+commit f667346718eb9b572085cb590d23efa02acd5891
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Jan 17 12:37:06 2025 +0100
+
+    docs: explain separated list parameters
+
+commit c6e1f5941542d1f4c2643f14e1715e9796cd3f62
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Jul 4 14:32:50 2025 +0100
+
+    azureblob: fix server side copy error "requires exactly one scope"
+    
+    Before this change, if not using shared key or SAS URL authentication
+    for the source, rclone gave this error
+    
+        ManagedIdentityCredential.GetToken() requires exactly one scope
+    
+    when doing server side copies.
+    
+    This was introduced in:
+    
+    3a5ddfcd3c1fd686 azureblob: implement multipart server side copy
+    
+    This fixes the problem by creating a temporary SAS URL using user
+    delegation to read the source blob when copying.
+    
+    Fixes #8662
+
+commit f353c92852b7607669f82eac86243f48b26eadc9
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Tue Jul 8 07:48:54 2025 +0100
+
+    test: remove and ignore failing integration tests
+    
+    - remove non docker based Swift tests as they are too slow
+    - ignore TestChunkerChunk50b test which always fails
+
+commit 1e88c6a18bfe376fa343ccdf84b580f31bab1e46
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Tue Nov 26 20:32:06 2024 +0100
+
+    docs: explain the json log format in more detail
+
+commit 7242aed1c3e37db98403ff8643557f48351ef884
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Mon Jul 7 09:16:55 2025 +0200
+
+    check: fix difference report (was reporting error counts)
+
+commit 81e63785fe660c3cb64b8f107b3b8c42912f0f6c
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Mon Dec 2 18:55:24 2024 +0100
+
+    serve sftp: add support for more hashes (crc32, sha256, blake3, xxh3, xxh128)
+
+commit c7937f53d4a8af9c46e4338c6f701ababd58bff2
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Mon Dec 2 18:51:48 2024 +0100
+
+    serve sftp: extract function refactoring for handling hashsum commands
+
+commit 58fa1c975f7c56a05f03795d3bb36723f2c55c04
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Mon Apr 15 11:35:37 2024 +0200
+
+    sftp: add support for more hashes (crc32, sha256, blake3, xxh3, xxh128)
+
+commit da49fc1b6d9611950fa958d4767eae50693d4b79
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Nov 17 11:05:20 2023 +0100
+
+    local: configurable supported hashes
+
+commit df9c921dd5b4a3aa198c6da7cb7fab293908ef1b
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Fri Nov 17 11:03:07 2023 +0100
+
+    hash: add support for BLAKE3, XXH3, XXH128
+
+commit d9c227eff6080cff326d1b8f50d6ca928c38dd8d
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Sun Jul 6 14:33:54 2025 +0100
+
+    vfs: make integration TestDirEntryModTimeInvalidation test more reliable
+    
+    Before this change it was not taking the Precision of the remote into account.
+
+commit 524c285d88443e143b1938ee6cd3dde26d7deef0
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Sun Jul 6 13:39:54 2025 +0100
+
+    smb: skip non integration tests when doing integration tests
+
+commit 41072463358c36002bffa948365740ec372ea7a3
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Sat Jul 5 21:27:10 2025 +0100
+
+    seafile: fix integration test errors by adding dot to encoding
+    
+    The seafile backend used to be able to cope with files called "." and
+    ".." but at some point became unable to do so, causing integration
+    test failurs.
+    
+    This adds EncodeDot to the encoding which encodes "." and ".." names.
+
+commit 87a65ec6a5a504d06c444470def014755d8f3171
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Jul 4 16:28:46 2025 +0100
+
+    linkbox: fix upload error "user upload file not exist"
+    
+    Linkbox have started issuing 302 redirects on some of their PUT
+    requests when rclone uploads a file.
+    
+    This is problematic for several reasons:
+    
+    1. This is the wrong redirect code - it should be 307 to preserve the method
+    2. Since Expect/100-Continue isn't supported the whole body gets uploaded
+    
+    This fixes the problem by first doing a HEAD request on the URL. This
+    will allow us to read the redirect Location and not upload the body to
+    the wrong place.
+    
+    It should still work (albeit a little more inefficiently) if Linkbox
+    stop redirecting the PUT requests.
+    
+    See: https://forum.rclone.org/t/linkbox-upload-error/51795
+    Fixes: #8606
+
+commit c6d0b619823b197a56aed8ff2d62b0fde9a33021
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Sat Jul 5 09:20:05 2025 +0100
+
+    build: remove integration tests which are too slow
+    
+    This removes
+    
+    - TestCompressSwift: - never finishes - too slow - we have TestCompressS3 instead
+    - TestCryptSwift: - never finishes - too slow - we have TestCryptS3 instead
+    - TestChunkerChunk50bBox: - often times out - covered by other tests
+
+commit 88e30eecbf49a41c5a4ec35fabbbe6c8edd44090
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 2 10:26:42 2025 +0100
+
+    march: fix deadlock when using --no-traverse - fixes #8656
+    
+    This ocurred whenever there were more than 100 files in the source due
+    to the output channel filling up.
+    
+    The fix is not to use list.NewSorter but take more care to output the
+    dst objects in the same order the src objects are delivered. As the
+    src objects are delivered sorted, no sorting is needed.
+    
+    In order not to cause another deadlock, we need to send nil dst
+    objects which is safe since this adjusts the termination conditions
+    for the channels.
+    
+    Thanks to @jeremy for the test script the Go tests are based on.
+
+commit f904378c4db07d81e5600eb069cba9fd6ae6f234
+Author: wiserain <mail275@gmail.com>
+Date:   Fri Jul 4 15:27:29 2025 +0900
+
+    pikpak: improve error handling for missing links and unrecoverable 500s
+    
+    This commit improves error handling in two specific scenarios:
+    
+    * Missing Download Links: A 5-second delay is introduced when a download
+      link is missing, as low-level retries aren't enough. Empirically, it
+      takes about 30s-1m for the link to become available. This resolves
+      failed integration tests: backend: TestIntegration/FsMkdir/FsPutFiles/
+      ObjectUpdate, vfs: TestFileReadAtNonZeroLength
+    
+    * Unrecoverable 500 Errors: The shouldRetry method is updated to skip
+      retries for 500 errors from "idx.shub.mypikpak.com" indicating "no
+      record for gcid." These errors are non-recoverable, so retrying is futile.
+
+commit 24eb8dcde010d249c191ac3cbae01d98f7218961
+Author: wiserain <mail275@gmail.com>
+Date:   Fri Jul 4 11:25:12 2025 +0900
+
+    pikpak: rewrite upload to bypass AWS S3 manager - fixes #8629
+    
+    This commit introduces a significant rewrite of PikPak's upload, specifically
+    targeting direct handling of file uploads rather than relying on the generic
+    S3 manager. The primary motivation is to address critical upload failures
+    reported in #8629.
+    
+    * Added new `multipart.go` file for multipart uploads using AWS S3 SDK.
+    * Removed dependency on AWS S3 manager; replaced with custom handling.
+    * Updated PikPak test package with new multipart upload tests,
+      including configurable chunk size and upload cutoff.
+    * Added new configuration option `upload_cutoff` to control chunked uploads.
+    * Defined constraints for `chunk_size` and `upload_cutoff` (min/max values,
+      validation).
+    * Adjusted default `upload_concurrency` from 5 to 4.
+
+commit a97425d9cbee1da6507f404403fe441236e2e024
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Jul 3 19:30:26 2025 +0100
+
+    test: fix TestSMBKerberos password expiring errors
+    
+    ERROR(runtime): uncaught exception - kinit for rclone@RCLONE.LOCAL failed (Password has expired)
+
+commit c51878f9a90507fda4463e37337f633ee3aefd7e
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Jul 3 19:31:33 2025 +0100
+
+    Add Vikas Bhansali to contributors
+
+commit 92f0a73ac6c1a507249675ffc375646dee5b9377
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Jul 3 19:31:33 2025 +0100
+
+    Add Ross Smith II to contributors
+
+commit 163c149f3f6ee6740ddc41532e109c7da9be99d7
+Author: Vikas Bhansali <64532198+vibhansa-msft@users.noreply.github.com>
+Date:   Thu Jul 3 14:27:07 2025 +0530
+
+    azureblob,azurefiles: add support for client assertion based authentication
+
+commit 224ca0ae8efd29cfbb1ddd057d16cf32505bb841
+Author: WeidiDeng <weidi_deng@icloud.com>
+Date:   Thu Jul 3 16:42:15 2025 +0800
+
+    webdav: fix setting modtime to that of local object instead of remote
+    
+    In this commit the source of the modtime got changed to the wrong object by accident
+    
+    0b9671313b14ffe8 webdav: add an ownCloud Infinite Scale vendor that enables tus chunked upload support
+    
+    This reverts that change and fixes the integration tests.
+
+commit 5bf6cd1f4f10ca8dfc4dcfdcf07689798f75ca8c
+Author: Ross Smith II <ross@smithii.com>
+Date:   Mon Jun 30 07:37:52 2025 -0700
+
+    build: set default shell to bash in build.yml
+    
+    Per https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#defaultsrunshell
+
+commit 555739eec5aea5edbf1b81894685ba717d4ba14c
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 2 15:32:17 2025 +0100
+
+    docs: fix filescom/filelu link mixup
+    
+    See: https://forum.rclone.org/t/a-small-bug-in-rclone-documentation/51774
+
+commit c036ce90fe1fb2a0eca163db54af2ff85d396dc4
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 2 15:37:15 2025 +0100
+
+    Add Davide Bizzarri to contributors
+
+commit 6163ae7cc79f9296d3f0caff16401ada6cafd750
+Author: Davide Bizzarri <davide.bizzarri@willhaben.at>
+Date:   Tue May 13 18:35:57 2025 +0200
+
+    fix: b2 versionAt read metadata
+
+commit cd950e30cbdb9aeb41b3696205337d0895a8cc7d
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Tue Jul 1 17:13:41 2025 +0100
+
+    test: make TestWebdavInfiniteScale startup more reliable
+    
+    This adds a _connect_delay=5s which allows the server to startup
+    properly. It also makes sure it stores its config in /tmp rather than
+    the current working directory.
+
+commit 89dfae96ade361f5843e37bd967bd71603b16f5b
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Tue Jul 1 16:50:30 2025 +0100
+
+    test_all: add _connect_delay for slow starting servers
+
+commit c0a2d730a6d44955dfa956e89459826581171a3a
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Mon Jun 30 11:09:37 2025 +0100
+
+    docs: update link for filescom
+
+commit 592407230b67f05cf3168c11a0e45925228095f0
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Sat Jun 28 10:57:27 2025 +0100
+
+    test_all: make TestWebdav InfiniteScale integration tests run
+
+commit a7c3ddb482f3adbe11897f022ee5be18c848d5d3
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Sat Jun 28 10:56:41 2025 +0100
+
+    test_all: make SMB with Kerberos integration tests run properly
+
+commit 7a1813c5310b7b3d344675dce3727407ce21785f
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Sat Jun 28 10:55:48 2025 +0100
+
+    test_all: allow an env parameter to set environment variables
+
+commit 16e3d1becd9f253b9689388af7873ec29851cca9
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Jun 27 14:35:06 2025 +0100
+
+    Changelog updates from Version v1.70.2
+
+commit c0f6b910aefa665b8c17485d8ea0da002249b48b
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Jun 27 14:35:19 2025 +0100
+
+    Add Ali Zein Yousuf to contributors
+
+commit e3bf8dc122531de3597b89638347fa84a1cf53da
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Jun 27 14:35:19 2025 +0100
+
+    Add $@M@RTH_ to contributors
+
+commit 086a8351312e882041be0722563c911cbc76a2a4
+Author: Ali Zein Yousuf <azy5030@gmail.com>
+Date:   Thu Jun 26 20:42:42 2025 -0500
+
+    docs: update client ID instructions to current Azure AD portal - fixes #8027
+
+commit d0668de19294ea96bf75405afab3382ad3fe7072
+Author: $@M@RTH_ <165886349+Samarth1015@users.noreply.github.com>
+Date:   Thu Jun 26 21:43:19 2025 +0530
+
+    s3: add Zata provider
+
+commit 4df974ccc4c3b733a95b22dc15f92245ed3c9e4c
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jun 25 21:10:16 2025 +0100
+
+    pacer: fix nil pointer deref in RetryError - fixes #8077
+    
+    Before this change, if RetryAfterError was called with a nil err, then
+    it's Error method would return this when wrapped in a fmt.Errorf
+    statement
+    
+        error %!v(PANIC=Error method: runtime error: invalid memory address or nil pointer dereference))
+    
+    Looking at the code, it looks like RetryAfterError will usually be
+    called with a nil pointer, so this patch makes sure it has a sensible
+    error.
+
+commit a50c903a82b5a44e76ec383a5551b9e377e6e93e
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jun 25 15:50:46 2025 +0100
+
+    docs: Remove Warp as a sponsor
+
+commit 97a8092c14320aa81e363900f15a2c7e64965881
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jun 25 15:46:17 2025 +0100
+
+    docs: add files.com as a Gold sponsor
+
+commit 526565b8100c849040188f2725b41862fd204278
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jun 25 15:30:59 2025 +0100
+
+    docs: add links to SecureBuild docker image
+
+commit 64804b81bd6fe41836e77f377d770a35488bdd7f
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jun 25 16:36:59 2025 +0100
+
+    Add curlwget to contributors
+
+commit e10f516a5e2f748eed4a479548a18f2215b3350b
+Author: nielash <nielronash@gmail.com>
+Date:   Tue Jun 24 22:57:23 2025 -0400
+
+    convmv: fix moving to unicode-equivalent name - fixes #8634
+    
+    Before this change, using convmv to convert filenames between NFD and NFC could
+    fail on certain backends (such as onedrive) that were insensitive to the
+    difference. This change fixes the issue by extending the existing
+    needsMoveCaseInsensitive logic for use in this scenario.
+
+commit fe62a2bb4ea8f62a1567c7883c0bba81827656eb
+Author: nielash <nielronash@gmail.com>
+Date:   Tue Jun 24 22:49:52 2025 -0400
+
+    transform: add truncate_keep_extension and truncate_bytes
+    
+    This change adds a truncate_bytes mode which counts the number of bytes, as
+    opposed to the number of UTF-8 characters. This can be useful for ensuring that a
+    crypt-encoded filename will not exceed the underlying backend's length limits
+    (see https://forum.rclone.org/t/any-clear-file-name-length-when-using-crypt/36930 ).
+    
+    This change also adds support for _keep_extension when using truncate and
+    truncate_bytes.
+
+commit d6ecb949cac691a10562d4bf513462ffbabd15d9
+Author: nielash <nielronash@gmail.com>
+Date:   Tue Jun 24 21:56:25 2025 -0400
+
+    convmv: make --dry-run logs less noisy
+    
+    Before this change, convmv dry runs would log a SkipDestructive message for
+    every single object, even objects that would not really be moved during a real
+    run. This made it quite difficult to tell what would actually happen during the
+    real run. This change fixes that by returning silently in such cases (as would
+    happen during a real run.)
+
+commit a845a965381fdf4781e0cd454e492e450b7500e1
+Author: nielash <nielronash@gmail.com>
+Date:   Tue Jun 24 21:48:53 2025 -0400
+
+    sync: avoid copying dir metadata to itself
+    
+    In convmv, src and dst can point to the same directory. Unless a dir's name is
+    changing, we should leave it alone and not attempt to copy its metadata to
+    itself.
+
+commit 92f30fda8d3430a453afa2170ebbb2c1e1013dbd
+Author: curlwget <curlwget@icloud.com>
+Date:   Tue Jun 24 22:04:45 2025 +0800
+
+    docs: fix some function names in comments
+    
+    Signed-off-by: curlwget <curlwget@icloud.com>
+
+commit 559ef2eba880ccf4975648375b2f119284fcb349
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Mon Jun 23 17:43:52 2025 +0100
+
+    combine: fix directory not found errors with ListP interface - Fixes #8627
+    
+    In
+    
+    b1d774c2e3caab23 combine: implement ListP interface
+    
+    We introduced the ListP interface to the combine backend. This was
+    passing the wrong remote to the upstreams. This was picked up by the
+    integration tests but was ignored by accident.
+
+commit 17b25d7ce2426c93aff54ef251b8087fa0d35140
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu May 22 16:58:06 2025 +0100
+
+    local: fix --skip-links on Windows when skipping Junction points
+    
+    Due to a change in Go which was enabled by the `go 1.22` in `go.mod`
+    rclone has stopped skipping junction points ("My Documents" in
+    particular) if `--skip-links` is set on Windows.
+    
+    This is because the output from os.Lstat has changed and junction
+    points are no longer marked with os.ModeSymlink but with
+    os.ModeIrregular instead.
+    
+    This fix now skips os.ModeIrregular objects if --skip-links is set on
+    Windows only.
+    
+    Fixes #8561
+    See: https://github.com/golang/go/issues/73827
+
+commit fe3253eefd6d538cb835c1827de7ee4ef291e9dd
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Mon Jun 23 16:39:04 2025 +0100
+
+    Add Marvin Rösch to contributors
+
+commit c38ca6b2d1a2b6c8012fbf4bc581336a1afe3a06
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Fri Jun 20 18:27:36 2025 +0100
+
+    build: bump github.com/go-chi/chi/v5 from 5.2.1 to 5.2.2 to fix GHSA-vrw8-fxc6-2r93
+    
+    See: https://github.com/go-chi/chi/security/advisories/GHSA-vrw8-fxc6-2r93
+    Signed-off-by: dependabot[bot] <support@github.com>
+    Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+
+commit 5aa98110845d436a85d7c6db81b6dde40f0edac9
+Author: Marvin Rösch <marvinroesch99@gmail.com>
+Date:   Fri Jun 20 17:55:00 2025 +0200
+
+    copy,copyto,move,moveto: implement logger flags to store result of sync
+    
+    This enables the logger flags (`--combined`, `--missing-on-src`
+    etc.) for the `rclone copy` and `move` commands (as well as their
+    `copyto` and `moveto` variants) akin to `rclone sync`. Warnings for
+    unsupported/wonky flag combinations are also printed, e.g. when the
+    destination is not traversed but `--dest-after` is specified.
+    
+    - fs/operations: add reusable methods for operation logging
+    - cmd/sync: use reusable methods for implementing logging in sync command
+    - cmd: implement logging for copy/copyto/move/moveto commands
+    - fs/operations/operationsflags: warn about logs in conjunction with --no-traverse
+    - cmd: add logger docs to copy and move commands
+    
+    Fixes #8115
+
+commit 3cae37306455d11dcbc70651904049198a94b78d
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Jun 20 12:00:40 2025 +0100
+
+    log: fix deadlock when using systemd logging - fixes #8621
+    
+    In this commit the logging system was re-worked
+    
+    dfa4d948279f3e36 fs: Remove github.com/sirupsen/logrus and replace with log/slog
+    
+    Unfortunately the systemd logging was still using the plain log
+    package and this caused a deadlock as it was recursively calling the
+    logging package.
+    
+    The fix was to use the dedicated systemd journal logging routines in
+    the process removing a TODO!
+
+commit b6b8526fb47e0193de797dcf3aa0a290ca841d9c
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Jun 20 12:12:50 2025 +0100
+
+    docs: googlephotos: detail how to make your own client_id - fixes #8622
+
+commit 6f861431761fe6f67cfecb9afa8d0af8e34ae2fe
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Jun 20 12:14:36 2025 +0100
+
+    Add necaran to contributors
+
+commit beffef2882c30a47eb3b56dd4d543cec687890b0
+Author: necaran <55765083+necaran@users.noreply.github.com>
+Date:   Fri Jun 20 01:05:00 2025 +0800
+
+    mega: fix tls handshake failure - fixes #8565
+    
+    The cipher suites used by Mega's storage endpoints: https://github.com/meganz/webclient/issues/103
+    are no longer supported by default since Go 1.22: https://tip.golang.org/doc/go1.22#minor_library_changes
+    This therefore assigns the cipher suites explicitly to include the one Mega needs.
+
+commit 96f5bbcdd73ef0f7b27a6e20167853ff001f5d6b
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Jun 19 14:25:06 2025 +0100
+
+    Changelog updates from Version v1.70.1
+
+commit 27ce78bee45542f895e89cf59f4aa7a934dab5ab
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Thu Jun 19 14:25:15 2025 +0100
+
+    Add jinjingroad to contributors
+
+commit 898a59062bf8b23b6232718db74b5a08a2256cdc
+Author: Ed Craig-Wood <138211970+edc-w@users.noreply.github.com>
+Date:   Wed Jun 18 14:20:43 2025 +0100
+
+    docs: DOI grammar error
+
+commit c5f55243e151853ece55601bfe33277e98191d94
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Wed Jun 18 18:25:18 2025 +0200
+
+    docs: lib/transform: cleanup formatting
+
+commit 62a9727ab52e196c1ab1f62d323554e75f4f1108
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Wed Jun 18 09:49:04 2025 +0200
+
+    lib/transform: avoid empty charmap entry
+
+commit 16f1e08b73f6a34cebd47ded9a113c62d9b60b8e
+Author: jinjingroad <jinjingroad@sina.com>
+Date:   Thu Jun 19 12:32:44 2025 +0800
+
+    chore: fix function name
+    
+    Signed-off-by: jinjingroad <jinjingroad@sina.com>
+
+commit 4280ec75ccfd27fbc4f646d5323b8ed060062be5
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jun 18 13:51:44 2025 +0100
+
+    convmv: fix spurious "error running command echo" on Windows
+    
+    Before this change the help for convmv was generated by running the
+    examples each time rclone started up. Unfortunately this involved
+    running the echo command which did not work on Windows.
+    
+    This pre-generates the help into `transform.md` and embeds it. It can
+    be re-generated with `go generate` which is a better solution.
+    
+    See: https://forum.rclone.org/t/invoke-of-1-70-0-complains-of-echo-not-found/51618
+
+commit b064cc2116fcf07806a816c7470af8eb74935f1a
+Author: Ed Craig-Wood <138211970+edc-w@users.noreply.github.com>
+Date:   Wed Jun 18 14:06:57 2025 +0100
+
+    docs: client-credentials is not support by all backends
+
+commit f8b50f8d8fe7f48fac9781b1379d8570e655906a
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jun 18 11:31:52 2025 +0100
+
+    Start v1.71.0-DEV development

@@ -24,6 +24,9 @@ import {
   StarterPackDefinition,
 } from './starter-packs.service';
 import { ShellService } from '../../providers/shell.service';
+import { ConfirmService } from '../dialog-confirm/confirm.service';
+import { StateStoreService } from '../../providers/state-store.service';
+import { Router } from '@angular/router';
 
 // Interface for dynamic status data from API
 interface StarterPackStatusData {
@@ -101,6 +104,9 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     protected shellService: ShellService,
     protected apiService: ApiService,
     protected starterPacksService: StarterPacksService,
+    protected confirmService: ConfirmService,
+    protected stateStore: StateStoreService,
+    protected router: Router,
     protected sanitizer: DomSanitizer, // Inject DomSanitizer
   ) { }
 
@@ -203,7 +209,7 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
 
       const statuses: any[] = response; // Array of {name, status, ports}
 
-      console.log('Fetched statuses from backend:', statuses); // Add this line to log the statuses array
+      //console.log('Fetched statuses from backend:', statuses); // Add this line to log the statuses array
 
       // Update each pack's status based on the response
       for (const pack of this.starterPacks) {
@@ -229,6 +235,23 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
 
     const action = pack.status === 'running' ? 'stop' : 'start';
 
+    // Check if Docker is required and not installed, and only for starting (not stopping)
+    if (action === 'start' && !this.stateStore?.configSys?.sysInfo?.setup?.docker?.isDockerOk) {
+      const message = `Docker is not installed and it is required for executing <strong>${pack.displayName}</strong>.<br><br>Would you like to check the nearby <strong>Docker / Extra Utilities</strong> (tab) to see how to install it?`;
+
+      this.confirmService.askConfirmation({
+        message: message,
+        confirmAction: () => {
+          // Navigate to help section with active tab
+          this.router.navigate(['/help', 'starterPacksMenuSelected'], { queryParams: { activeTab: 'extraPackagesTab' } });
+        },
+        cancelAction: () => {
+          // Do nothing on No - don't proceed with toggle
+        }
+      });
+      return;  // Exit without proceeding to normal toggle
+    }
+
     // Set pending state immediately
     pack.status = action === 'start' ? 'starting' : 'stopping';
     pack.lastOutput = `Executing ${action}...`;
@@ -242,7 +265,7 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
       async (result: any) => {
         if (result.success) {
           pack.status = action === 'start' ? 'running' : 'stopped';
-          pack.currentCommandValue = pack.status === 'running' ? pack.stopCmd : pack.startCmd; 
+          pack.currentCommandValue = pack.status === 'running' ? pack.stopCmd : pack.startCmd;
           pack.lastOutput = result.output || `${pack.displayName} ${action}ed successfully`;
         } else {
           pack.status = 'error';

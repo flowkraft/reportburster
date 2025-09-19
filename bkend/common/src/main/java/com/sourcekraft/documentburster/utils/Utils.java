@@ -129,6 +129,18 @@ public class Utils {
 		return "./db/";
 	}
 
+	public static String getAppsFolderPath() {
+		String portableDir = System.getProperty("PORTABLE_EXECUTABLE_DIR");
+		if (StringUtils.isNotBlank(portableDir)) {
+			return new File(portableDir, "_apps").getAbsolutePath() + "/";
+		}
+		String homeDir = System.getProperty("DOCUMENTBURSTER_HOME");
+		if (StringUtils.isNotBlank(homeDir)) {
+			return new File(homeDir, "_apps").getAbsolutePath() + "/";
+		}
+		return "./_apps/";
+	}
+
 	public static String getConfigurationFolderPath(String configurationFilePath) {
 
 		if (StringUtils.isBlank(configurationFilePath))

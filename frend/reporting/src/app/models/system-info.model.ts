@@ -12,11 +12,12 @@ export const SystemInfo = {
       version: '',
     },
     docker: {
+      //isDockerOk: false,
       isDockerOk: true,
       version: '',
     },
     portal: {
-      isPortalRunning: true,
+      isProvisioned: true,
     },
     env: {
       PATH: '',

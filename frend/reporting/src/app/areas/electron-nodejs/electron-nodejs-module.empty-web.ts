@@ -9,6 +9,12 @@ import { RbElectronService } from './electron.service.empty-web';
 export class JavaComponent {}
 
 @Component({
+  selector: 'dburst-chocolatey',
+  template: '',
+})
+export class ChocolateyComponent {}
+
+@Component({
   selector: 'dburst-extra-packages',
   template: '',
 })
