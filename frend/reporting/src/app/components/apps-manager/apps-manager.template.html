@@ -14,105 +14,72 @@
   <!-- Expanded List Mode -->
   <ng-container *ngSwitchCase="'expandedList'">
     <div class="list-group">
-      <div *ngFor="let app of apps" class="list-group-item clearfix">
-        <!-- Stop icon to the left of app name when running (expanded mode) -->
-        <span *ngIf="app.state === 'running' && app.type !== 'desktop'"
-              style="margin-right: 10px; vertical-align: middle; cursor: pointer;"
-              (click)="onToggleApp(app); $event.stopPropagation();"
-              title="Stop">
-          <i class="fa fa-stop" style="color: #888; font-size: 16px;"></i>
-        </span>
-        <!-- For non-desktop apps with a URL, show Launch button when running -->
-        <ng-container *ngIf="app.type !== 'desktop' && app.url; else normalAppButton">
-          <span
-            class="pull-right"
-            [title]="
-              app.state === 'running'
-                ? 'Launch ' + app.name
-                : app.name + ' is stopped, please start it'
-            "
-            style="display: inline-block"
-          >
-            <a
-              class="btn pull-right"
-              [ngClass]="{
-                'btn-primary': app.state === 'running',
-                'btn-default': app.state !== 'running'
-              }"
-              [href]="app.state === 'running' ? app.url : null"
-              target="_blank"
-              [attr.aria-disabled]="app.state !== 'running' ? true : null"
-              [style.cursor]="'pointer'"
-              (click)="$event.stopPropagation()"
-            >
-              <i class="fa fa-external-link"></i>
-              Launch
-            </a>
-          </span>
-        </ng-container>
-        <ng-template #normalAppButton>
+      <div *ngFor="let app of apps" class="panel" [ngClass]="{
+  'panel-info': app.state === 'running',
+  'panel-primary': app.state === 'starting' || app.state === 'stopping',
+  'panel-danger': app.state === 'error',
+  'panel-default': app.state === 'stopped' || app.state === 'unknown'
+}" style="margin-bottom: 10px;">
+
+
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <i *ngIf="app.icon" [class]="app.icon" [style.color]="app.state === 'running' ? '#31708f' : (app.state === 'starting' || app.state === 'stopping') ? 'white' : '#888'" style="margin-right: 6px"></i>
+            <span [style.color]="app.state === 'running' ? '#31708f' : (app.state === 'starting' || app.state === 'stopping') ? 'white' : '#888'">{{ app.name }}</span>
+            <strong [style.color]="app.state === 'running' ? '#31708f' : (app.state === 'starting' || app.state === 'stopping') ? 'white' : '#888'" style="margin-left: 6px;">
+              <i *ngIf="app.state === 'starting' || app.state === 'stopping'" class="fa fa-spinner fa-spin" style="margin-right: 5px;"></i>
+              {{ app.state === 'running' ? 'running' : app.state === 'starting' ? 'starting' : app.state === 'stopping' ? 'stopping' : 'stopped' }}
+            </strong>
+          </h4>
+        </div>
+        <div class="panel-body">
+          <p class="text-muted">{{ app.description }}</p>
+          
+          <!-- Editable Command Input (only for Docker apps) -->
+          <div *ngIf="app.type === 'docker'" class="form-group" style="margin-top: 10px; margin-bottom: 10px;">
+            <label class="sr-only" [for]="'cmd-' + app.id">Command</label>
+            <input
+              type="text"
+              class="form-control input-sm"
+              style="font-family: monospace; font-size: 0.9em;"
+              [id]="'cmd-' + app.id"
+              [(ngModel)]="app.currentCommandValue"
+              [disabled]="app.state === 'starting' || app.state === 'stopping'"
+              placeholder="Command to execute (edit port if needed)"
+              title="Edit the command (e.g., change port) before starting/stopping."
+            />
+          </div>
+          <!-- Action Button with Spinner and Dynamic Text -->
           <button
-            class="btn pull-right"
+            class="btn"
             [ngClass]="{
-              'btn-default': app.type !== 'desktop' && app.state !== 'running',
-              'btn-primary': app.type === 'desktop'
+              'btn-primary': app.state === 'running' || app.state === 'starting' || app.state === 'stopping',
+              'btn-default': app.state === 'stopped' || app.state === 'unknown' || app.state === 'error'
             }"
+            [disabled]="app.state === 'starting' || app.state === 'stopping'"
             (click)="onToggleApp(app)"
-            [title]="
-              app.type === 'desktop'
-                ? 'Launch ' + app.name
-                : (app.state !== 'running' ? 'Start ' + app.name : 'Stop ' + app.name)
-            "
-            [disabled]="app.state === 'running' && app.type !== 'desktop'"
           >
-            <i
-              *ngIf="app.type === 'desktop'; else normalIcon"
-              class="fa fa-play-circle"
-              [style.color]="app.state === 'running' ? 'green' : '#888'"
-            ></i>
-            <ng-template #normalIcon>
-              <i class="fa"
-                [ngClass]="{'fa-play': app.state !== 'running', 'fa-stop': app.state === 'running'}"
-                [style.color]="app.state === 'running' ? 'green' : '#888'"
-              ></i>
-            </ng-template>
-            {{
-              app.type === 'desktop'
-                ? 'Launch'
-                : (app.state === 'running' ? 'Stop' : 'Start')
-            }}
+            <i *ngIf="app.state === 'starting' || app.state === 'stopping'" class="fa fa-spinner fa-spin"></i>
+            <i *ngIf="app.state !== 'starting' && app.state !== 'stopping'" class="fa"
+               [ngClass]="{'fa-play': app.state !== 'running', 'fa-stop': app.state === 'running'}"></i>
+            {{ app.state === 'running' ? 'Stop' : 'Start' }}
           </button>
-        </ng-template>
-        <h4 class="list-group-item-heading" style="display: inline;">
-          <i *ngIf="app.icon"
-            [class]="app.icon"
-            [style.color]="app.state === 'running' ? 'green' : '#888'"
-            style="margin-right: 6px"></i>
-          <span [style.color]="app.state === 'running' ? 'green' : '#888'">
-            {{ app.name }}
-            <strong *ngIf="app.type !== 'desktop' && app.state !== 'running'" style="margin-left: 6px;">stopped</strong>
-            <strong *ngIf="app.type !== 'desktop' && app.state === 'running'" style="margin-left: 6px;">running</strong>
-          </span>
-          <button
-            *ngIf="app.type !== 'desktop' && app.state !== 'running'"
-            class="btn btn-xs btn-link"
-            style="padding: 0 4px; vertical-align: middle;"
-            (click)="onToggleApp(app); $event.stopPropagation();"
-            [title]="'Start ' + app.name"
-          >
-            <i class="fa fa-play" style="color: green"></i>
-          </button>
-          <button
-            *ngIf="app.type === 'desktop'"
-            class="btn btn-xs btn-link"
-            style="padding: 0 4px; vertical-align: middle;"
-            (click)="onToggleApp(app); $event.stopPropagation();"
-            [title]="'Launch ' + app.name"
-          >
-            <i class="fa fa-play-circle" [style.color]="app.state === 'running' ? 'green' : '#888'"></i>
-          </button>
-        </h4>
-        <p class="list-group-item-text text-muted">{{ app.description }}</p>
+          <a *ngIf="app.url && app.type !== 'desktop'" 
+             [href]="app.state === 'running' ? app.url : null" 
+             target="_blank" 
+             class="btn btn-default pull-right" 
+             [class.disabled]="app.state !== 'running'" 
+             style="margin-left: 10px;">
+            <i class="fa fa-external-link"></i> Launch
+          </a>
+          <!-- Last Output with Copy Button -->
+          <pre *ngIf="app.lastOutput" style="margin-top: 10px; max-height: 35px; min-height: 35px; overflow-y: auto; background: #f8f9fa; padding: 5px; position: relative;">
+            {{ app.lastOutput }}
+            <button class="btn btn-default btn-xs" style="position: absolute; top: 5px; right: 5px;" (click)="copyToClipboard(app.lastOutput)">
+              <i class="fa fa-copy"></i>
+            </button>
+          </pre>
+        </div>
       </div>
     </div>
   </ng-container>
@@ -170,20 +137,36 @@
           </span>
           <!-- Launch label when running and has URL -->
           <span
-            *ngIf="app.state === 'running' && app.url && app.type !== 'desktop'"
+            *ngIf="app.url && app.type !== 'desktop'"
             class="btn btn-link btn-xs"
             style="padding: 0 4px; margin-left: 12px; vertical-align: middle;"
-            [title]="'Launch ' + app.name"
+            [title]="
+              app.state === 'running'
+                ? 'Launch ' + app.name
+                : app.name + ' is stopped, please start it'
+            "
           >
-            <a
-              [href]="app.url"
-              target="_blank"
-              (click)="$event.stopPropagation()"
-              style="color: inherit; text-decoration: none;"
-            >
-              <i class="fa fa-external-link"></i>
-              Launch
-            </a>
+            <ng-container *ngIf="app.state === 'running'; else disabledLaunchDropdown">
+              <a
+                [href]="app.url"
+                target="_blank"
+                (click)="$event.stopPropagation()"
+                style="color: inherit; text-decoration: none;"
+              >
+                <i class="fa fa-external-link"></i>
+                Launch
+              </a>
+            </ng-container>
+            <ng-template #disabledLaunchDropdown>
+              <button
+                disabled
+                style="background: none; border: none; color: #bbb; cursor: not-allowed; opacity: 0.6; padding: 0;"
+                (click)="$event.stopPropagation()"
+              >
+                <i class="fa fa-external-link"></i>
+                Launch
+              </button>
+            </ng-template>
           </span>
           <!-- Start button when stopped -->
           <button

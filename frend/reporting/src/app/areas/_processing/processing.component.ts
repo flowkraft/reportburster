@@ -1611,7 +1611,7 @@ export class ProcessingComponent implements OnInit {
   togglePortal(event: Event) {
     event.preventDefault();
 
-    if (this.storeService.configSys.sysInfo.setup.portal.isPortalRunning) {
+    if (this.storeService.configSys.sysInfo.setup.portal.isProvisioned) {
       // Portal is running, so stop it
       this.confirmService.askConfirmation({
         message: 'Are you sure you want to stop the ReportBurster Portal?',

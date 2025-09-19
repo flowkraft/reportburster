@@ -1,8 +1,8 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { ShellService } from '../../providers/shell.service';
-import { ToastrMessagesService } from '../../providers/toastr-messages.service';
+import { Component, Input, OnInit, ChangeDetectorRef } from '@angular/core';
 import { AppsManagerService, ManagedApp } from './apps-manager.service';
 import { ConfirmService } from '../dialog-confirm/confirm.service';
+import { StateStoreService } from '../../providers/state-store.service';
+import { Router } from '@angular/router';
 
 // This interface should be defined in a shared models file
 
@@ -21,15 +21,47 @@ export class AppsManagerComponent implements OnInit {
   constructor(
     protected appsManagerService: AppsManagerService,
     protected confirmService: ConfirmService,
+    protected stateStore: StateStoreService, 
+    protected router: Router,
+    //protected changeDetectorRef: ChangeDetectorRef
 
   ) { }
 
   async ngOnInit(): Promise<void> {
-    //this.apps = await this.appsManagerService.getAllApps();
+    // Respect the input [apps] if provided; otherwise, fetch all
+    if (!this.apps || this.apps.length === 0) {
+      this.apps = await this.appsManagerService.getAllApps();
+    }
+    // Refresh statuses from API
+    await this.appsManagerService.refreshAllStatuses();
+    // Update the provided/input apps with refreshed states
+    if (this.apps && this.apps.length > 0) {
+      this.apps = await Promise.all(
+        this.apps.map(app => this.appsManagerService.getAppById(app.id).then(updated => updated || app))
+      );
+    }
   }
 
 
   async onToggleApp(app: ManagedApp) {
+    
+    // Check if Docker is required and not installed, and only for starting (not stopping)
+    if (app.state !== 'running' && !this.stateStore?.configSys?.sysInfo?.setup?.docker?.isDockerOk) {
+      const message = `Docker is not installed and it is required for executing <strong>ReportBurster Portal</strong>.<br><br>Would you like to see how to install it?`;
+
+      this.confirmService.askConfirmation({
+        message: message,
+        confirmAction: () => {
+          // Navigate to help section with active tab
+          this.router.navigate(['/help', 'starterPacksMenuSelected'], { queryParams: { activeTab: 'extraPackagesTab' } });
+        },
+        cancelAction: () => {
+          // Do nothing on No - don't proceed with toggle
+        }
+      });
+      return;  // Exit without proceeding to normal toggle
+    }
+    
     let dialogQuestion = `Start ${app.name}?`;
     if (app.state === 'running') {
       dialogQuestion = `Stop ${app.name}?`;
@@ -38,18 +70,31 @@ export class AppsManagerComponent implements OnInit {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: async () => {
+        // Set immediate UI feedback
+        app.state = app.state === 'running' ? 'stopping' : 'starting';
+        //this.changeDetectorRef.detectChanges();  // Force UI update
+
         await this.appsManagerService.toggleApp(app);
-        // Refresh the app state after toggling
-        if (this.apps && this.apps.length > 0) {
-          const ids = this.apps.map(a => a.id);
-          this.apps = await Promise.all(ids.map(id => this.appsManagerService.getAppById(id)));
-        }
+        // No need to re-fetch; the service callback updates the app object
+        //this.changeDetectorRef.detectChanges();  // Ensure final state is reflected
       }
     });
   }
 
   sanitizeAppName(name: string): string {
     return name ? name.replace(/\s/g, '') : '';
+  }
+
+  onLaunch(app: ManagedApp, event: MouseEvent) {
+    event.stopPropagation();
+    event.preventDefault();
+    if (!app || !app.url) return;
+    if (app.state !== 'running') return;
+    window.open(app.url, '_blank', 'noopener');
+  }
+
+  copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
   }
 
 }

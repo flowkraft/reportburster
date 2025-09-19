@@ -5,6 +5,7 @@ import {
   ViewChild,
   TemplateRef,
   AfterViewChecked,
+  AfterViewInit,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
@@ -51,7 +52,7 @@ import { StateStoreService } from '../../providers/state-store.service';
     ${tabLogsTemplate} ${tabLicenseTemplate}
   `,
 })
-export class HelpComponent implements OnInit, AfterViewChecked {
+export class HelpComponent implements OnInit, AfterViewChecked, AfterViewInit {
   @ViewChild('tabSupportTemplate', { static: true })
   tabSupportTemplate: TemplateRef<any>;
   @ViewChild('tabDocumentationTemplate', { static: true })
@@ -247,6 +248,7 @@ export class HelpComponent implements OnInit, AfterViewChecked {
   //rssParser: typeof RSS;
 
   currentLeftMenu: string;
+  activeTabId: string = '';
 
   constructor(
     protected route: ActivatedRoute,
@@ -269,6 +271,27 @@ export class HelpComponent implements OnInit, AfterViewChecked {
 
       this.refreshTabs();
     });
+
+    this.route.queryParams.subscribe(queryParams => {
+      const activeTabParam = queryParams['activeTab'];
+      if (activeTabParam && this.visibleTabs.some(tab => tab.id === activeTabParam)) {
+        this.activeTabId = activeTabParam;
+      } else {
+        this.activeTabId = this.visibleTabs.length > 0 ? this.visibleTabs[0].id : '';
+      }
+    });
+  }
+
+  ngAfterViewInit() {
+    if (this.activeTabId) {
+      setTimeout(() => {
+        this.changeDetectorRef.detectChanges();
+        const tabHeader = document.querySelector(`.nav-link[href="#${this.activeTabId}"]`) as HTMLElement;
+        if (tabHeader) {
+          tabHeader.click();
+        }
+      }, 100);
+    }
   }
 
   ngAfterViewChecked() {

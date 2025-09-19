@@ -2431,7 +2431,7 @@ export class ConfigurationComponent implements OnInit {
   //DBCONNECTIONS END
 
   getAiHelpButtonLabel(outputType: string): string {
-    return `Hey AI, Help Me Build This ${outputType.replace('output.', '').toUpperCase()} Report Template!`;
+    return `Hey AI, Help Me Build This ${outputType.replace('output.', '').toUpperCase()} Template!`;
   }
 
   exampleParamsSpecScript = `

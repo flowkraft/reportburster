@@ -1,9 +1,9 @@
 export const extraPackagesTemplate = `<!-- <ng-template #extraPackagesTemplate> -->
 
-  <div *ngIf="this.stateStore.configSys.sysInfo.setup.chocolatey.isChocoOk">
+  <div *ngIf="stateStore.configSys.sysInfo.setup.chocolatey.isChocoOk">
     <span [innerHTML]="'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.EXTRA-PACKAGES.INNER-HTML.ABOUT' | translate"></span>
     <div
-      *ngFor="let extraPackage of this.extraPackages"
+      *ngFor="let extraPackage of extraPackages"
       [ngClass]="{'panel panel-primary': extraPackage.status != 'not-installed', 'panel panel-default' : extraPackage.status == 'not-installed' }"
     >
       <div class="panel-heading">

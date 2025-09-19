@@ -69,7 +69,7 @@
         "TYPE-XLSX": "Microsoft Excel Docs (html_template2xlsx_docs)",
         "TYPE-HTML": "HTML Docs (html_template2html_docs)",
         "TYPE-DOCX": "Microsoft Word Docs (docx_template2docx_docs)",
-        "TYPE-PDF-USING-FOP": "PDF Docs Using xslfo FOP (xslfo_template2pdf_docs)",
+        "TYPE-PDF-USING-FOP": "PDF FOP Docs (fop_template2pdf_docs)",
         "TYPE-ANY": "XML/Any Docs (freemarker_template2any_docs)",
         "NO-TEMPLATES-FOUND": "No DOCX templates found! Please add a .docx file to:",
         "TEMPLATE-LOCATION": "Template Location:",
@@ -541,7 +541,7 @@
         "JAVA": "Java",
         "TERMINAL": "Terminal",
         "STARTER-PACKS": "Starter Packs",
-        "EXTRA-PACKAGES": "Extra Utilities",
+        "EXTRA-PACKAGES": "Docker / Extra Utilities",
         "SYSTEM-DIAGNOSTICS": "System Diagnostics",
         "UPDATE": "Update",
         "COMPARISON": "ReportBurster vs. ReportBurster Server",
@@ -783,11 +783,11 @@
         },
         "EXTRA-PACKAGES": {
           "INNER-HTML": {
-            "ABOUT": "<h5><strong>A list of external tools which bring additional value when used together with <em>ReportBurster</em></strong></h5><p><br/>A good chunk of the below tools can be easily installed and/or uninstalled using <strong>Chocolatey</strong>, a very good <strong>package manager</strong> for <strong>Windows</strong>. All the below commands should be executed by first starting a DOS/Windows Powershell command prompt and then by typing the respective commands inside the DOS/Windows Powershell command prompt.<br/></p><p>It is recommended to start the <strong>DOS/Powershell command prompt</strong> using Windows Start button -> Search for DOS/Powershell -> Right mouse click and then select &quot;<strong>Run as administrator</strong>&quot;<br /><br /></p>",
+            "ABOUT": "<h5><strong>A list of external tools which bring additional value when used together with <em>ReportBurster</em></strong></h5><p><br/>A good chunk of the below tools can be easily installed and/or uninstalled using <strong>Chocolatey</strong>, a very good <strong>package manager</strong> for <strong>Windows</strong>. All the below commands should be executed by first starting a <strong>DOS/Powershell command prompt</strong> and then by typing the respective commands inside the DOS/Windows Powershell command prompt.<br/></p><p>It is recommended to start the <strong>DOS/Powershell command prompt</strong> using Windows Start button -> Search for DOS/Powershell -> <strong>Right mouse click</strong> and then select &quot;<strong>Run as administrator</strong>&quot;<br /><br /></p>",
             "NOTEPADPLUSPLUS": " is a free (as in “free speech” and also as in “free beer”) source code editor and Notepad replacement. Notepad++ is useful when editing ReportBurster configuration files and scripts.",
             "VSCODE": "  is a code editor redefined and optimized for building and debugging modern applications.",
             "WINMERGE": " is an Open Source differencing and merging tool for Windows. WinMerge can compare both folders and files, presenting differences in a visual text format that is easy to understand and handle. WinMerge can be used for comparing ReportBurster configuration files and scripts.",
-            "DOCKER-DESKTOP": " a very good containerization software. Docker is required for running other ReportBurster modules.",
+            "DOCKER-DESKTOP": " a very good containerization software. Docker is required for running (some) ReportBurster extra packages.",
             "TOOLS-VANNA-AI": "🤖 Chat with your SQL database is the fastest way to get actionable insights from your database just by asking questions."
           },
           "INSTALLED": {

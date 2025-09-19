@@ -193,7 +193,8 @@ export class ConnectionsTestHelper {
       .click('#btnNewEmail')
       .waitOnElementToBecomeVisible('#connectionName')
       .elementShouldBeDisabled('#btnOKConfirmationConnectionModal')
-      .clickNoDontDoThis()
+      .click('#btnCloseConnectionModal')
+      .waitOnElementToBecomeInvisible('#btnCloseConnectionModal')
       .click('#btnNewDropdown') // Click the dropdown button
       .waitOnElementToBecomeVisible('#btnNewEmail') // Wait for the email option to appear
       .click('#btnNewEmail')

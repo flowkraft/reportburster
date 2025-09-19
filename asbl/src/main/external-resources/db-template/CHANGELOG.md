@@ -2,11 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## 11.1.1 - 2024-09-15
+## 11.1.1 - 2024-09-29
 
 ### Added
 
 - MariaDB starter pack Start/Stop
+- ReportBurster Portal
 
 ### Fixed
 
