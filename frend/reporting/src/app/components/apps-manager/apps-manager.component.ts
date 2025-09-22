@@ -47,7 +47,7 @@ export class AppsManagerComponent implements OnInit {
     
     // Check if Docker is required and not installed, and only for starting (not stopping)
     if (app.state !== 'running' && !this.stateStore?.configSys?.sysInfo?.setup?.docker?.isDockerOk) {
-      const message = `Docker is not installed and it is required for executing <strong>ReportBurster Portal</strong>.<br><br>Would you like to see how to install it?`;
+      const message = `Docker is not installed and it is required for starting the <strong>${app.name}</strong> application.<br><br>Would you like to see how to install it?`;
 
       this.confirmService.askConfirmation({
         message: message,
@@ -62,9 +62,15 @@ export class AppsManagerComponent implements OnInit {
       return;  // Exit without proceeding to normal toggle
     }
     
-    let dialogQuestion = `Start ${app.name}?`;
-    if (app.state === 'running') {
-      dialogQuestion = `Stop ${app.name}?`;
+    let dialogQuestion = `Stop ${app.name}?`;
+    if (app.state !== 'running') {
+      // Default start message with patience note
+      dialogQuestion = `Start ${app.name}? This may take a few minutes, please be patient.`;
+      
+      // Special message for cms-webportal if not provisioned
+      if (app.id === 'cms-webportal' && !this.stateStore?.configSys?.sysInfo?.setup?.portal?.isProvisioned) {
+        dialogQuestion = `Start ${app.name}? Since the portal is not yet provisioned, the first launch may take considerably more time (please be patient). Subsequent start/stop cycles will be considerably faster.`;
+      }
     }
 
     this.confirmService.askConfirmation({
