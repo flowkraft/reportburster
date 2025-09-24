@@ -17,6 +17,7 @@ export interface PromptInfo {
   | 'PDF Generation (from XSL-FO)'
   | 'SQL Writing Assistance'
   | 'Script Writing Assistance'
+  | 'Web Portal / CMS'
   | 'Vanna.AI';
 }
 
@@ -1950,6 +1951,55 @@ The final output must be a single Python code block, starting with the necessary
       tags: ['vanna', 'ai', 'training', 'rag', 'python'],
       category: 'Vanna.AI',
     },
+    {
+      id: 'PODS-CONTENT-TYPE-FROM-DESCRIPTION',
+      title: 'Generate Pods Content Type from Description',
+      description: 'Create a Pods custom content type (with fields and types) from a plain English description.',
+      promptText: `You are an expert in WordPress Pods. Given this description, generate the PHP array or Pods UI steps to define a new Pods content type with all necessary fields and types. 
+Description: {PASTE_USER_DESCRIPTION_HERE}`,
+      tags: ['pods', 'content type', 'cms', 'wordpress', 'fields', 'structure'],
+      category: 'Web Portal / CMS',
+    }, {
+      id: 'SINGLE-MODEL-TEMPLATE-FROM-FIELDS',
+      title: 'Generate Single Document Template (single-[model].php)',
+      description: 'Generate a secure, user-restricted PHP template for displaying a single document of a custom Pods type. Use the provided model fields and optionally an example template.',
+      promptText: `Given the following Pods content type definition and (optionally) an example template, generate a WordPress PHP template (single-{MODEL}.php) that securely displays all fields for a single document. 
+Content type fields: {PASTE_FIELDS_AND_TYPES_HERE}
+Example template: {PASTE_EXISTING_SINGLE_PHP_HERE_IF_AVAILABLE}
+The template must enforce access control (only the associated user or admin can view).`,
+      tags: ['pods', 'template', 'php', 'single', 'cms', 'wordpress'],
+      category: 'Web Portal / CMS',
+    }, {
+      id: 'MY-DOCUMENTS-LIST-TEMPLATE-FROM-FIELDS',
+      title: 'Generate My Documents List Template (page-my-documents.php)',
+      description: 'Generate a PHP template for listing all documents of a custom Pods type for the logged-in user, with search and pagination. Use the provided model fields and optionally an example template.',
+      promptText: `Given the following Pods content type definition and (optionally) an example list template, generate a WordPress PHP template (page-my-documents.php) that lists all documents for the logged-in user. 
+Content type fields: {PASTE_FIELDS_AND_TYPES_HERE}
+Example template: {PASTE_EXISTING_LIST_PHP_HERE_IF_AVAILABLE}
+The template should support search, pagination, and enforce access control.`,
+      tags: ['pods', 'template', 'php', 'list', 'cms', 'wordpress'],
+      category: 'Web Portal / CMS',
+    }, {
+      id: 'GROOVY-REST-PUBLISH-TO-PORTAL',
+      title: 'Groovy Script: Publish Documents to Portal via REST API',
+      description: 'Generate a Groovy script for ReportBurster that publishes documents to the web portal using the WordPress/Pods REST API, including authentication. The script must also check for the existence of the target WordPress user and create the user if not already present.',
+      promptText: `Given the following API endpoint and authentication method, generate a well-structured Groovy script for ReportBurster that uploads a document to the portal as a new Pods content type entry.
+
+**Requirements:**
+- The script must include a section that checks if the target WordPress user exists (by username or email) and creates the user if not already present, handling authentication as needed.
+- Clearly structure the script in logical steps (e.g., Step 1: Check/Create User, Step 2: Prepare Document Data, Step 3: Publish Document via REST API, etc.), so the user can easily understand and comment out any steps not needed.
+- Use HTTP POST for publishing, handle authentication, and log the result.
+
+**Inputs:**
+API endpoint: {PASTE_API_ENDPOINT_HERE}
+Authentication: {API_KEY_OR_METHOD}
+Document fields: {PASTE_FIELDS_AND_TYPES_HERE}
+If helpful, here is a sample cURL SFTP script: {PASTE_EXISTING_CURL_SCRIPT_HERE}
+
+The script should be robust, modular, and easy to adapt for different scenarios.`,
+      tags: ['groovy', 'reportburster', 'rest', 'api', 'pods', 'cms', 'wordpress', 'user-management'],
+      category: 'Web Portal / CMS',
+    }
   ];
 
   // Method to retrieve all prompts

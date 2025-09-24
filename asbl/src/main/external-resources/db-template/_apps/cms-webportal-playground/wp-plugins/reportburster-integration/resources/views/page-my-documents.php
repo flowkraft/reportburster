@@ -1,10 +1,10 @@
 <?php
 /**
- * My Documents (Payslips list)
+ * My Documents (Paystubs list)
  * Plain PHP.
  * Features:
  *  - Requires login.
- *  - Lists payslips user may view.
+ *  - Lists paystubs user may view.
  *  - Ownership via Pods User Relationship field: associated_user (if present).
  *  - Pagination (?page=N) & search (?q=term) on title or period.
  *  - Graceful when ownership field not yet defined.
@@ -19,7 +19,7 @@ $user_roles       = (array) $current_user->roles;
 $is_admin         = current_user_can('administrator');
 $is_employee      = in_array('employee', $user_roles, true);
 
-$post_type        = 'payslip';
+$post_type        = 'paystub';
 $ownership_field  = 'associated_user'; // Pods User Relationship field name
 $per_page         = 15;
 $page_param       = 'page';
@@ -29,8 +29,8 @@ $paged        = max( 1, (int) ( $_GET[$page_param] ?? 1 ) );
 $search_term  = isset($_GET[$search_param]) ? sanitize_text_field( wp_unslash( $_GET[$search_param] ) ) : '';
 $offset       = ( $paged - 1 ) * $per_page;
 
-$payslips_rows   = [];
-$payslips_found  = false;
+$paystubs_rows   = [];
+$paystubs_found  = false;
 $total_found     = 0;
 $total_pages     = 1;
 $filtered_notice = '';
@@ -88,10 +88,10 @@ if ( function_exists('pods') && ( $is_employee || $is_admin ) ) {
 
     if ( $pod ) {
         $total_found    = (int) $pod->total();
-        $payslips_found = $total_found > 0;
+        $paystubs_found = $total_found > 0;
         $total_pages    = max( 1, (int) ceil( $total_found / $per_page ) );
 
-        if ( $payslips_found ) {
+        if ( $paystubs_found ) {
             while ( $pod->fetch() ) {
                 $pid    = (int) $pod->id();
                 $title  = get_the_title( $pid );
@@ -99,7 +99,7 @@ if ( function_exists('pods') && ( $is_employee || $is_admin ) ) {
                 $grossV = (float) $pod->field( 'gross_amount' );
                 $netV   = (float) $pod->field( 'net_amount' );
 
-                $payslips_rows[] = [
+                $paystubs_rows[] = [
                     'title'  => esc_html( $title ),
                     'period' => esc_html( $period ),
                     'gross'  => $grossV ? '$' . number_format( $grossV, 2 ) : '',
@@ -166,7 +166,7 @@ function my_docs_paginate( int $current, int $total, string $param = 'page' ): v
 
   <h1>My Documents</h1>
   <p class="meta-note">
-    Payslips you are authorized to view.
+    Paystubs you are authorized to view.
     <?php if ( $filtered_notice ) : ?>
       <span class="badge"><?php echo esc_html( $filtered_notice ); ?></span>
     <?php endif; ?>
@@ -176,8 +176,8 @@ function my_docs_paginate( int $current, int $total, string $param = 'page' ): v
   </p>
 
   <div class="card">
-    <h2 style="margin-top:0;">Payslips
-      <?php if ( $payslips_found ): ?>
+    <h2 style="margin-top:0;">Paystubs
+      <?php if ( $paystubs_found ): ?>
         <span class="count"><?php echo (int) $total_found; ?> total</span>
       <?php endif; ?>
     </h2>
@@ -193,7 +193,7 @@ function my_docs_paginate( int $current, int $total, string $param = 'page' ): v
       <?php endif; ?>
     </form>
 
-    <?php if ( $payslips_found ): ?>
+    <?php if ( $paystubs_found ): ?>
       <table>
         <thead>
           <tr>
@@ -206,7 +206,7 @@ function my_docs_paginate( int $current, int $total, string $param = 'page' ): v
           </tr>
         </thead>
         <tbody>
-        <?php foreach ( $payslips_rows as $row ): ?>
+        <?php foreach ( $paystubs_rows as $row ): ?>
           <tr>
             <td><?php echo $row['title']; ?></td>
             <td><?php echo $row['period']; ?></td>
@@ -222,11 +222,11 @@ function my_docs_paginate( int $current, int $total, string $param = 'page' ): v
     <?php else: ?>
       <div class="empty">
         <?php if ( $search_term !== '' ): ?>
-          No payslips match “<?php echo esc_html( $search_term ); ?>”.
+          No paystubs match “<?php echo esc_html( $search_term ); ?>”.
         <?php elseif ( ! $is_employee && ! $is_admin ): ?>
-          No payslips available for your role.
+          No paystubs available for your role.
         <?php else: ?>
-          No payslips found.
+          No paystubs found.
         <?php endif; ?>
       </div>
     <?php endif; ?>
