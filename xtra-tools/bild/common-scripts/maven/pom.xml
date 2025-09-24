@@ -60,10 +60,9 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>${maven.surefire.plugin.version}</version>
 				<configuration>
-					<argLine>--add-opens java.base/java.util=ALL-UNNAMED
-						--add-opens
-						java.base/java.text=ALL-UNNAMED --add-opens
-						java.desktop/java.awt.font=ALL-UNNAMED</argLine>
+					<argLine>-Duser.language=en -Duser.country=US
+					    --add-opens java.base/java.util=ALL-UNNAMED
+						--add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED</argLine>
 				</configuration>
 			</plugin>
 			<plugin>
