@@ -42,6 +42,7 @@ services:
     volumes:
       - ./wp-plugins:/var/www/html/wp-content/plugins
       - ./wp-themes/reportburster-sage:/var/www/html/wp-content/themes/reportburster-sage
+      - ./scripts:/var/www/html/scripts
       - wp_html:/var/www/html
     env_file:
       - .env
@@ -190,9 +191,12 @@ services:
           echo "== Installing Permalinks / Structure (Optional) Plugins ==";
           # ensure custom-post-type-permalinks 3.5.1
 
-          echo \"🔐 Ensuring custom roles…\";
-          wp role exists employee || wp role create employee \"Employee\" --clone=subscriber
-          wp role exists customer || wp role create customer \"Customer\" --clone=subscriber
+          echo "🔐 Ensuring custom roles…";
+          wp role exists employee || wp role create employee 'Employee' --clone=subscriber
+          wp role exists customer || wp role create customer 'Customer' --clone=subscriber
+
+          echo "📝 Provisioning demo content types and sample data…"
+          wp eval-file /var/www/html/scripts/provision-content-types-and-sample-data.php
 
           echo \"🔧 Updating site URLs…\";
           wp option update home    \"${WP_SITE_URL}\";
