@@ -105,185 +105,211 @@
       }
     },
     {
+      "id": "supabase",
+      "name": "Supabase",
+      "category": "Database Management",
+      "type": "docker",
+      "description": "Open source Firebase alternative. Backend as a Service Platform. Instant APIs, realtime, and authentication.",
+      "url": "http://localhost:54323",
+      "enabled": false,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Start",
+          "description": "Starts the Supabase service.",
+          "command": "docker-compose -f ./db-utils/docker-compose.yml up -d supabase"
+        },
+        {
+          "key": "stop",
+          "name": "Stop",
+          "description": "Stops the Supabase service.",
+          "command": "docker-compose -f ./db-utils/docker-compose.yml stop supabase"
+        }
+      ],
+      "healthCheck": {
+        "type": "tcp"
+      }
+    },
+    {
       "id": "vanna-ai",
       "name": "Vanna.ai",
       "category": "Database Management",
       "type": "docker",
-      "description": "AI-powered text-to-SQL agent.",
-      "url": "http://localhost:8084",
-      "enabled": true,
-      "commands": [
-        {
-          "key": "start",
-          "name": "Start",
-          "description": "Starts the Vanna.ai service.",
-          "command": "docker-compose -f ./db-utils/docker-compose.yml up -d vanna"
-        },
-        {
-          "key": "stop",
-          "name": "Stop",
-          "description": "Stops the Vanna.ai service.",
-          "command": "docker-compose -f ./db-utils/docker-compose.yml stop vanna"
-        },
-        {
-          "key": "train",
-          "name": "Train Model",
-          "description": "Retrains the Vanna AI model on the connected database.",
-          "command": "docker-compose -f ./db-utils/docker-compose.yml exec vanna python -m vanna.train"
+        "description": "AI-powered text-to-SQL agent.",
+        "url": "http://localhost:8084",
+        "enabled": true,
+        "commands": [
+          {
+            "key": "start",
+            "name": "Start",
+            "description": "Starts the Vanna.ai service.",
+            "command": "docker-compose -f ./db-utils/docker-compose.yml up -d vanna"
+          },
+          {
+            "key": "stop",
+            "name": "Stop",
+            "description": "Stops the Vanna.ai service.",
+            "command": "docker-compose -f ./db-utils/docker-compose.yml stop vanna"
+          },
+          {
+            "key": "train",
+            "name": "Train Model",
+            "description": "Retrains the Vanna AI model on the connected database.",
+            "command": "docker-compose -f ./db-utils/docker-compose.yml exec vanna python -m vanna.train"
+          }
+        ],
+        "healthCheck": {
+          "type": "tcp"
         }
-      ],
-      "healthCheck": {
-        "type": "tcp"
-      }
-    },
-    {
-      "id": "metabase", 
-      "name": "Metabase",
-      "category": "BI & Visualization",
-      "type": "docker",
-      "description": "The easy-to-use open source Business Intelligence and Embedded Analytics tool that lets everyone work with data",
-      "url": "http://localhost:3000",
-      "enabled": true,
-      "commands": [
-        {
-          "key": "start",
-          "name": "Start",
-          "description": "Starts the Metabase service.",
-          "command": "docker-compose -f ./bi-tools/docker-compose.yml up -d metabase"
-        },
-        {
-          "key": "stop",
-          "name": "Stop",
-          "description": "Stops the Metabase service.",
-          "command": "docker-compose -f ./bi-tools/docker-compose.yml stop metabase"
+      },
+      {
+        "id": "metabase",
+        "name": "Metabase",
+        "category": "BI & Visualization",
+        "type": "docker",
+        "description": "The easy-to-use open source Business Intelligence and Embedded Analytics tool that lets everyone work with data",
+        "url": "http://localhost:3000",
+        "enabled": true,
+        "commands": [
+          {
+            "key": "start",
+            "name": "Start",
+            "description": "Starts the Metabase service.",
+            "command": "docker-compose -f ./bi-tools/docker-compose.yml up -d metabase"
+          },
+          {
+            "key": "stop",
+            "name": "Stop",
+            "description": "Stops the Metabase service.",
+            "command": "docker-compose -f ./bi-tools/docker-compose.yml stop metabase"
+          }
+        ],
+        "healthCheck": {
+          "type": "tcp"
         }
-      ],
-      "healthCheck": {
-        "type": "tcp"
-      }
-    },
-    {
-      "id": "redash",
-      "name": "Redash",
-      "category": "BI & Visualization",
-      "type": "docker",
-      "description": "Query builder and dashboard tool.",
-      "url": "http://localhost:5000",
-      "enabled": true,
-      "commands": [
-        {
-          "key": "start",
-          "name": "Start",
-          "description": "Starts the Redash service.",
-          "command": "docker-compose -f ./bi-tools/docker-compose.yml up -d redash"
-        },
-        {
-          "key": "stop",
-          "name": "Stop",
-          "description": "Stops the Redash service.",
-          "command": "docker-compose -f ./bi-tools/docker-compose.yml stop redash"
+      },
+      {
+        "id": "redash",
+        "name": "Redash",
+        "category": "BI & Visualization",
+        "type": "docker",
+        "description": "Query builder and dashboard tool.",
+        "url": "http://localhost:5000",
+        "enabled": true,
+        "commands": [
+          {
+            "key": "start",
+            "name": "Start",
+            "description": "Starts the Redash service.",
+            "command": "docker-compose -f ./bi-tools/docker-compose.yml up -d redash"
+          },
+          {
+            "key": "stop",
+            "name": "Stop",
+            "description": "Stops the Redash service.",
+            "command": "docker-compose -f ./bi-tools/docker-compose.yml stop redash"
+          }
+        ],
+        "healthCheck": {
+          "type": "tcp"
         }
-      ],
-      "healthCheck": {
-        "type": "tcp"
-      }
-    },
-    {
-      "id": "superset",
-      "name": "Apache Superset",
-      "category": "BI & Visualization",
-      "type": "docker",
-      "description": "Enterprise-ready data visualization platform.",
-      "url": "http://localhost:8088",
-      "enabled": false,
-      "commands": [
-        {
-          "key": "start",
-          "name": "Start",
-          "description": "Starts the Apache Superset service.",
-          "command": "docker-compose -f ./bi-tools/docker-compose.yml up -d superset"
-        },
-        {
-          "key": "stop",
-          "name": "Stop",
-          "description": "Stops the Apache Superset service.",
-          "command": "docker-compose -f ./bi-tools/docker-compose.yml stop superset"
+      },
+      {
+        "id": "superset",
+        "name": "Apache Superset",
+        "category": "BI & Visualization",
+        "type": "docker",
+        "description": "Enterprise-ready data visualization platform.",
+        "url": "http://localhost:8088",
+        "enabled": false,
+        "commands": [
+          {
+            "key": "start",
+            "name": "Start",
+            "description": "Starts the Apache Superset service.",
+            "command": "docker-compose -f ./bi-tools/docker-compose.yml up -d superset"
+          },
+          {
+            "key": "stop",
+            "name": "Stop",
+            "description": "Stops the Apache Superset service.",
+            "command": "docker-compose -f ./bi-tools/docker-compose.yml stop superset"
+          }
+        ],
+        "healthCheck": {
+          "type": "tcp"
         }
-      ],
-      "healthCheck": {
-        "type": "tcp"
-      }
-    },
-    {
-      "id": "rundeck",
-      "name": "Rundeck (Local)",
-      "category": "Automation & Job Scheduling",
-      "type": "local",
-      "description": "Runbook automation installed directly on the host.",
-      "url": "http://localhost:4440",
-      "enabled": true,
-      "commands": [
-        {
-          "key": "start",
-          "name": "Start",
-          "description": "Starts the local Rundeck service.",
-          "command": "C:\\rundeck\\tools\\bin\\rundeckd.bat start"
+      },
+      {
+        "id": "rundeck",
+        "name": "Rundeck (Local)",
+        "category": "Automation & Job Scheduling",
+        "type": "local",
+        "description": "Runbook automation installed directly on the host.",
+        "url": "http://localhost:4440",
+        "enabled": true,
+        "commands": [
+          {
+            "key": "start",
+            "name": "Start",
+            "description": "Starts the local Rundeck service.",
+            "command": "C:\\rundeck\\tools\\bin\\rundeckd.bat start"
+          }
+        ],
+        "healthCheck": {
+          "type": "tcp"
         }
-      ],
-      "healthCheck": {
-        "type": "tcp"
-      }
-    },
-    {
-      "id": "vscode",
-      "name": "Code",
-      "category": "Developer Tools",
-      "type": "local",
-      "description": "Launch local installation of Visual Studio Code.",
-      "enabled": true,
-      "commands": [
-        {
-          "key": "start",
-          "name": "Open Project",
-          "description": "Opens the current project in Visual Studio Code.",
-          "command": "code ."
+      },
+      {
+        "id": "vscode",
+        "name": "Code",
+        "category": "Developer Tools",
+        "type": "local",
+        "description": "Launch local installation of Visual Studio Code.",
+        "enabled": true,
+        "commands": [
+          {
+            "key": "start",
+            "name": "Open Project",
+            "description": "Opens the current project in Visual Studio Code.",
+            "command": "code ."
+          }
+        ],
+        "healthCheck": {
+          "type": "command",
+          "command": "code --version"
         }
-      ],
-      "healthCheck": {
-        "type": "command",
-        "command": "code --version"
-      }
-
-    },
-    {
-      "id": "notepad++",
-      "name": "Notepad++ (Local)",
-      "category": "Developer Tools",
-      "type": "local",
-      "description": "Launch local installation of Notepad++.",
-      "enabled": false,
-      "commands": [
-        {
-          "key": "start",
-          "name": "Launch",
-          "description": "Opens Notepad++.",
-          "command": "start notepad++"
+      },
+      {
+        "id": "notepad++",
+        "name": "Notepad++ (Local)",
+        "category": "Developer Tools",
+        "type": "local",
+        "description": "Launch local installation of Notepad++.",
+        "enabled": false,
+        "commands": [
+          {
+            "key": "start",
+            "name": "Launch",
+            "description": "Opens Notepad++.",
+            "command": "start notepad++"
+          }
+        ],
+        "healthCheck": {
+          "type": "command",
+          "command": "where notepad++"
         }
-      ],
-      "healthCheck": {
-        "type": "command",
-        "command": "where notepad++"
       }
-
+    ],
+    "referenceApps": {
+      "cmsApp": "cms-webportal",
+      "automationApp": "rundeck",
+      "chat2DbApp": "vanna-ai",
+      "dbManagementApp": "cloudbeaver",
+      "editorApp": "vscode",
+      "biApp": "redash",
+      "enterpriseApp": "flowKraft",
+      "bkendAsAService": "supabase",
+      "identityApp": "keycloak"
     }
-  ],
-  "referenceApps": {
-    "cmsApp": "cms-webportal",
-    "automationApp": "rundeck",
-    "chat2DbApp": "vanna-ai",
-    "dbManagementApp": "cloudbeaver",
-    "editorApp": "vscode",
-    "biApp": "redash",
-    "enterpriseApp": "flowKraft"
   }
-}
