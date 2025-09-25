@@ -117,110 +117,95 @@ if ( function_exists('pods') && ( $is_employee || $is_admin ) ) {
  */
 function my_docs_paginate( int $current, int $total, string $param = 'page' ): void {
     if ( $total < 2 ) return;
-    echo '<nav class="md-pagination">';
+    echo '<nav class="flex justify-center mt-4 space-x-2 text-sm">';
     for ( $i = 1; $i <= $total; $i++ ) {
         $url = esc_url( add_query_arg( $param, $i ) );
         if ( $i === $current ) {
-            echo '<span class="current">'.$i.'</span>';
+            echo '<span class="px-3 py-1 rounded bg-blue-600 text-white font-semibold">'.$i.'</span>';
         } else {
-            echo '<a href="'.$url.'">'.$i.'</a>';
+            echo '<a href="'.$url.'" class="px-3 py-1 rounded bg-gray-100 hover:bg-blue-100 text-blue-700">'.$i.'</a>';
         }
     }
     echo '</nav>';
 }
-?><!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <title><?php echo esc_html( get_bloginfo('name') ); ?> – My Documents</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body { font-family: Arial, sans-serif; margin:0; background:#f6f7f9; padding:24px;}
-    h1 { margin-top:0; }
-    .card { background:#fff; border:1px solid #ddd; border-radius:6px; padding:18px; margin-bottom:28px;}
-    table { width:100%; border-collapse:collapse; }
-    th,td { padding:8px 6px; border-bottom:1px solid #eee; font-size:14px; text-align:left;}
-    th { background:#fafafa; font-weight:600; }
-    tr:last-child td { border-bottom:none; }
-    .empty { padding:10px; font-style:italic; color:#555; }
-    .meta-note { font-size:12px; color:#666; margin:8px 0 8px; }
-    a { color:#0366d6; text-decoration:none; }
-    a:hover { text-decoration:underline; }
-    .top-bar { margin-bottom:22px; }
-    .top-bar a.logout { color:#b91c1c; margin-left:12px; }
-    form.search { margin:0 0 14px; }
-    form.search input[type=text]{ padding:6px 8px; border:1px solid #ccc; border-radius:4px; width:220px;}
-    form.search button { padding:6px 10px; border:1px solid #0366d6; background:#0366d6; color:#fff; border-radius:4px; cursor:pointer;}
-    nav.md-pagination { margin-top:14px; font-size:13px;}
-    nav.md-pagination a, nav.md-pagination span { margin:0 4px; text-decoration:none; }
-    nav.md-pagination span.current { font-weight:bold; }
-    .badge { display:inline-block; background:#eef; color:#224; padding:2px 6px; border-radius:4px; font-size:11px; margin-left:6px; }
-    .count { font-size:11px; color:#444; margin-left:6px; }
-  </style>
-</head>
-<body>
-  <div class="top-bar">
-    Logged in as <strong><?php echo esc_html( $current_user->display_name ); ?></strong>
-    <a class="logout" href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>">Logout</a>
+
+// Load theme header (includes Tailwind and other assets)
+get_header();
+?>
+
+<div class="max-w-3xl mx-auto py-8">
+  <div class="flex justify-between items-center mb-6">
+    <div class="text-sm text-gray-700">
+      Logged in as <strong><?php echo esc_html( $current_user->display_name ); ?></strong>
+    </div>
+    <a class="text-red-600 hover:underline text-sm" href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>">Logout</a>
   </div>
 
-  <h1>My Documents</h1>
-  <p class="meta-note">
+  <h1 class="text-2xl font-bold mb-2">My Documents</h1>
+  <p class="text-sm text-gray-600 mb-4">
     Paystubs you are authorized to view.
     <?php if ( $filtered_notice ) : ?>
-      <span class="badge"><?php echo esc_html( $filtered_notice ); ?></span>
+      <span class="inline-block bg-blue-100 text-blue-800 px-2 py-0.5 rounded ml-2 text-xs"><?php echo esc_html( $filtered_notice ); ?></span>
     <?php endif; ?>
     <?php if ( $search_term !== '' ) : ?>
-      <span class="badge">Search: “<?php echo esc_html( $search_term ); ?>”</span>
+      <span class="inline-block bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded ml-2 text-xs">Search: “<?php echo esc_html( $search_term ); ?>”</span>
     <?php endif; ?>
   </p>
 
-  <div class="card">
-    <h2 style="margin-top:0;">Paystubs
-      <?php if ( $paystubs_found ): ?>
-        <span class="count"><?php echo (int) $total_found; ?> total</span>
-      <?php endif; ?>
-    </h2>
-
-    <form method="get" class="search">
-      <input type="text"
-             name="<?php echo esc_attr( $search_param ); ?>"
-             value="<?php echo esc_attr( $search_term ); ?>"
-             placeholder="Search title or period..." />
-      <button type="submit">Search</button>
-      <?php if ( $search_term !== '' ): ?>
-        <a href="<?php echo esc_url( remove_query_arg( $search_param ) ); ?>" style="margin-left:6px;">Reset</a>
-      <?php endif; ?>
-    </form>
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold mb-0">Paystubs
+        <?php if ( $paystubs_found ): ?>
+          <span class="ml-2 text-xs text-gray-500">(<?php echo (int) $total_found; ?> total)</span>
+        <?php endif; ?>
+      </h2>
+      <form method="get" class="flex gap-2 items-center">
+        <input
+          type="text"
+          name="<?php echo esc_attr( $search_param ); ?>"
+          value="<?php echo esc_attr( $search_term ); ?>"
+          placeholder="Search title or period..."
+          class="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+        />
+        <button type="submit" class="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">Search</button>
+        <?php if ( $search_term !== '' ): ?>
+          <a href="<?php echo esc_url( remove_query_arg( $search_param ) ); ?>" class="ml-2 text-blue-600 hover:underline text-xs">Reset</a>
+        <?php endif; ?>
+      </form>
+    </div>
 
     <?php if ( $paystubs_found ): ?>
-      <table>
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Period</th>
-            <th>Gross</th>
-            <th>Net</th>
-            <th>Date</th>
-            <th style="width:60px;">View</th>
-          </tr>
-        </thead>
-        <tbody>
-        <?php foreach ( $paystubs_rows as $row ): ?>
-          <tr>
-            <td><?php echo $row['title']; ?></td>
-            <td><?php echo $row['period']; ?></td>
-            <td><?php echo $row['gross']; ?></td>
-            <td><?php echo $row['net']; ?></td>
-            <td><?php echo $row['date']; ?></td>
-            <td><a href="<?php echo $row['link']; ?>">View</a></td>
-          </tr>
-        <?php endforeach; ?>
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="min-w-full border border-gray-200 rounded-lg">
+          <thead>
+            <tr class="bg-gray-50">
+              <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Title</th>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Period</th>
+              <th class="px-4 py-2 text-right text-xs font-semibold text-gray-700">Gross</th>
+              <th class="px-4 py-2 text-right text-xs font-semibold text-gray-700">Net</th>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Date</th>
+              <th class="px-4 py-2 text-center text-xs font-semibold text-gray-700" style="width:60px;">View</th>
+            </tr>
+          </thead>
+          <tbody>
+          <?php foreach ( $paystubs_rows as $row ): ?>
+            <tr class="border-b last:border-b-0 hover:bg-gray-50">
+              <td class="px-4 py-2"><?php echo $row['title']; ?></td>
+              <td class="px-4 py-2"><?php echo $row['period']; ?></td>
+              <td class="px-4 py-2 text-right"><?php echo $row['gross']; ?></td>
+              <td class="px-4 py-2 text-right"><?php echo $row['net']; ?></td>
+              <td class="px-4 py-2"><?php echo $row['date']; ?></td>
+              <td class="px-4 py-2 text-center">
+                <a href="<?php echo $row['link']; ?>" class="text-blue-600 hover:underline">View</a>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
       <?php my_docs_paginate( $paged, $total_pages, $page_param ); ?>
     <?php else: ?>
-      <div class="empty">
+      <div class="py-6 text-center text-gray-500 italic">
         <?php if ( $search_term !== '' ): ?>
           No paystubs match “<?php echo esc_html( $search_term ); ?>”.
         <?php elseif ( ! $is_employee && ! $is_admin ): ?>
@@ -231,5 +216,9 @@ function my_docs_paginate( int $current, int $total, string $param = 'page' ): v
       </div>
     <?php endif; ?>
   </div>
-</body>
-</html>
+</div>
+
+<?php
+// Load theme footer (includes scripts and closes HTML)
+get_footer();
+?>

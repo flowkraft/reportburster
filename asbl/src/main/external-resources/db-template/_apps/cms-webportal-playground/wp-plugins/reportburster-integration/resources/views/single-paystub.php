@@ -91,52 +91,60 @@ $employee    = esc_html( (string) $pod->display('employee') );
 $period      = esc_html( (string) $pod->display('period') );
 $grossAmount = number_format( (float) $pod->field('gross_amount'), 2 );
 $netAmount   = number_format( (float) $pod->field('net_amount'), 2 );
-?><!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title><?php echo esc_html( get_the_title() ); ?> | <?php echo esc_html( get_bloginfo('name') ); ?></title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:20px;}
-    h1 { margin:0 0 10px; }
-    table { width:100%; border-collapse:collapse; margin-top:20px;}
-    th,td { border:1px solid #000; padding:8px; text-align:left;}
-    td.amount { text-align:right; }
-    .net-pay { margin-top:25px; font-weight:bold; text-align:right; background:#f2f2f2; padding:10px;}
-    .meta { font-size:12px; color:#666; margin-bottom:10px;}
-    .actions { margin-top:30px; text-align:center;}
-    .actions a { display:inline-block; padding:10px 15px; background:#4CAF50; color:#fff; text-decoration:none; border-radius:4px; }
-    .actions a.print { background:#2196F3; margin-left:10px;}
-    .actions a:hover { opacity:.9; }
-    @media print { .actions { display:none; } }
-  </style>
-</head>
-<body>
-  <h1><?php echo esc_html( get_the_title() ); ?></h1>
+
+// Load theme header (includes Tailwind and other assets)
+get_header();
+?>
+
+<div class="max-w-xl mx-auto bg-white font-sans text-gray-900 p-6">
+  <h1 class="text-2xl font-bold mb-2"><?php echo esc_html( get_the_title() ); ?></h1>
   <?php if ( $allow_public_view ): ?>
-    <div class="meta">Public document (no login required).</div>
+    <div class="text-xs text-gray-500 mb-4">Public document (no login required).</div>
   <?php endif; ?>
-  <table>
+  <table class="w-full border border-gray-300 rounded-lg mt-6">
     <tbody>
-      <tr><td>Employee</td><td><?php echo $employee; ?></td></tr>
-      <tr><td>Period</td><td><?php echo $period; ?></td></tr>
-      <tr><td>Gross Amount</td><td class="amount">$<?php echo $grossAmount; ?></td></tr>
-      <tr><td>Net Amount</td><td class="amount">$<?php echo $netAmount; ?></td></tr>
+      <tr class="border-b border-gray-200">
+        <td class="py-2 px-4 font-medium">Employee</td>
+        <td class="py-2 px-4"><?php echo $employee; ?></td>
+      </tr>
+      <tr class="border-b border-gray-200">
+        <td class="py-2 px-4 font-medium">Period</td>
+        <td class="py-2 px-4"><?php echo $period; ?></td>
+      </tr>
+      <tr class="border-b border-gray-200">
+        <td class="py-2 px-4 font-medium">Gross Amount</td>
+        <td class="py-2 px-4 text-right">$<?php echo $grossAmount; ?></td>
+      </tr>
+      <tr>
+        <td class="py-2 px-4 font-medium">Net Amount</td>
+        <td class="py-2 px-4 text-right">$<?php echo $netAmount; ?></td>
+      </tr>
     </tbody>
   </table>
 
-  <div class="net-pay">Net Pay: $<?php echo $netAmount; ?></div>
+  <div class="mt-8 font-bold text-right bg-gray-100 p-4 rounded-lg text-lg">
+    Net Pay: $<?php echo $netAmount; ?>
+  </div>
 
-  <div class="actions">
+  <div class="mt-10 flex justify-center gap-4 print:hidden">
     <?php
       $account_page_id = (int) get_option('reportburster_account_page_id');
       $back_url = $account_page_id
         ? get_permalink($account_page_id)
         : ( get_permalink( get_page_by_path('my-documents') ) ?: home_url() );
     ?>
-    <a href="<?php echo esc_url( $back_url ); ?>">Back to Documents</a>
-    <a class="print" href="javascript:window.print();">Print</a>
+    <a href="<?php echo esc_url( $back_url ); ?>"
+       class="inline-block px-5 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition">
+      Back to Documents
+    </a>
+    <a class="inline-block px-5 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+       href="javascript:window.print();">
+      Print
+    </a>
   </div>
-</body>
-</html>
+</div>
+
+<?php
+// Load theme footer (includes scripts and closes HTML)
+get_footer();
+?>
