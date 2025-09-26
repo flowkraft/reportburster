@@ -319,9 +319,21 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// EXCEL END
 
+		// WebPortal samples
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/samples/webportal/content-type-paystub.png"),
+				new File(packageDirPath + "/" + topFolderName + "/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/resources/views/content-type-paystub.png"));
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/samples/webportal/page-my-documents-paystubs.php"),
+				new File(packageDirPath + "/" + topFolderName + "/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/resources/views/page-my-documents.php"));
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/samples/webportal/single-paystub.php"),
+				new File(packageDirPath + "/" + topFolderName + "/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/resources/views/single-paystub"));
+
+		// license.xml
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_internal/license.xml"),
 				new File(packageDirPath + "/" + topFolderName + "/config/_defaults/license.xml"));
 
+		
 		System.out.println(
 				"------------------------------------- DONE_09:NoExeAssembler _copyDefaultConfigurationAndLicenseFiles ... -------------------------------------");
 
