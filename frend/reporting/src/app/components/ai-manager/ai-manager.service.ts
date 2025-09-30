@@ -1951,53 +1951,70 @@ The final output must be a single Python code block, starting with the necessary
       tags: ['vanna', 'ai', 'training', 'rag', 'python'],
       category: 'Vanna.AI',
     },
-    {
-      id: 'PODS-CONTENT-TYPE-FROM-DESCRIPTION',
-      title: 'Generate Pods Content Type from Description',
-      description: 'Create a Pods custom content type (with fields and types) from a plain English description.',
-      promptText: `You are an expert in WordPress Pods. Given this description, generate the PHP array or Pods UI steps to define a new Pods content type with all necessary fields and types. 
-Description: {PASTE_USER_DESCRIPTION_HERE}`,
-      tags: ['pods', 'content type', 'cms', 'wordpress', 'fields', 'structure'],
-      category: 'Web Portal / CMS',
-    }, {
+     {
       id: 'SINGLE-MODEL-TEMPLATE-FROM-FIELDS',
       title: 'Generate Single Document Template (single-[model].php)',
       description: 'Generate a secure, user-restricted PHP template for displaying a single document of a custom Pods type. Use the provided model fields and optionally an example template.',
-      promptText: `Given the following Pods content type definition and (optionally) an example template, generate a WordPress PHP template (single-{MODEL}.php) that securely displays all fields for a single document. 
-Content type fields: {PASTE_FIELDS_AND_TYPES_HERE}
-Example template: {PASTE_EXISTING_SINGLE_PHP_HERE_IF_AVAILABLE}
-The template must enforce access control (only the associated user or admin can view).`,
-      tags: ['pods', 'template', 'php', 'single', 'cms', 'wordpress'],
+      promptText: `You are an experienced WordPress developer with deep knowledge of the Pods Framework API and Tailwind CSS. Your task is to generate a complete, secure PHP single template for a new custom Pods content type, adapting an existing example template.
+
+**New Pods Content Type Definition (in Plain English or PHP Code):**  
+[Describe or paste the new content type here, e.g., fields like employee, period, gross_amount, net_amount, associated_user. Include any optional access fields like allow_public_view, associated_groups, associated_roles.]
+
+**Example Template to Adapt:**  
+[Paste the full code of an existing sample template here—choose the one most similar to your new content type (e.g., single-paystub.php for pay-related documents, single-payslip.php for similar employee documents, or single-invoice.php for billing documents).]
+
+**Instructions:**  
+- Adapt the example template for the new content type.  
+- Update all field names, labels, and data display to match the new type.  
+- Keep the same access control logic, layout, and Tailwind CSS styling.  
+- If the new type has different fields or requirements, adjust accordingly (e.g., add/remove table rows, change calculations).  
+- Output the full, ready-to-use PHP code for \`single-{new-type}.php\`.  
+- Ensure security, proper escaping, and WordPress/Pods best practices.`,
+      tags: ['single-(content-type).php', 'webportal'],
       category: 'Web Portal / CMS',
     }, {
       id: 'MY-DOCUMENTS-LIST-TEMPLATE-FROM-FIELDS',
       title: 'Generate My Documents List Template (page-my-documents.php)',
       description: 'Generate a PHP template for listing all documents of a custom Pods type for the logged-in user, with search and pagination. Use the provided model fields and optionally an example template.',
-      promptText: `Given the following Pods content type definition and (optionally) an example list template, generate a WordPress PHP template (page-my-documents.php) that lists all documents for the logged-in user. 
-Content type fields: {PASTE_FIELDS_AND_TYPES_HERE}
-Example template: {PASTE_EXISTING_LIST_PHP_HERE_IF_AVAILABLE}
-The template should support search, pagination, and enforce access control.`,
-      tags: ['pods', 'template', 'php', 'list', 'cms', 'wordpress'],
+      promptText: `You are an experienced WordPress developer with deep knowledge of the Pods Framework API and Tailwind CSS. Your task is to generate a complete, secure PHP single template for a new custom Pods content type, adapting an existing example template.
+
+**New Pods Content Type Definition (in Plain English or PHP Code):**  
+[Describe or paste the new content type here, e.g., fields like employee, period, gross_amount, net_amount, associated_user. Include any optional access fields like allow_public_view, associated_groups, associated_roles.]
+
+**Example Template to Adapt:**  
+[Paste the full code of an existing sample template here—choose the one most similar to your new content type (e.g., page-my-documents-paystubs.php for simple pay-related lists, page-my-documents-payslips.php for employee document lists with additional fields like department/job_title, or page-my-documents-invoices.php for billing lists with status and payment actions).]
+
+**Instructions:**  
+- Adapt the example template for the new content type.  
+- Update all field names, labels, and data display to match the new type.  
+- Keep the same access control logic, layout, and Tailwind CSS styling.  
+- If the new type has different fields or requirements, adjust accordingly (e.g., add/remove table columns, change search fields, modify status logic).  
+- Output the full, ready-to-use PHP code for \`page-my-documents.php\` 
+- Ensure security, proper escaping, and WordPress/Pods best practices.`,
+      tags: ['page-my-documents.php', 'webportal'],
       category: 'Web Portal / CMS',
     }, {
       id: 'GROOVY-REST-PUBLISH-TO-PORTAL',
-      title: 'Groovy Script: Publish Documents to Portal via REST API',
+      title: 'Generate Groovy Script to Publish Documents to ReportBurster Portal via REST API',
       description: 'Generate a Groovy script for ReportBurster that publishes documents to the web portal using the WordPress/Pods REST API, including authentication. The script must also check for the existence of the target WordPress user and create the user if not already present.',
-      promptText: `Given the following API endpoint and authentication method, generate a well-structured Groovy script for ReportBurster that uploads a document to the portal as a new Pods content type entry.
+      promptText: `You are an experienced Groovy developer with deep knowledge of ReportBurster, WordPress REST API, and Pods Framework integration. Your task is to generate a complete, robust Groovy script that publishes documents to the 
+ReportBurster Portal via WordPress / Pods REST API, adapting an existing example script.
 
-**Requirements:**
-- The script must include a section that checks if the target WordPress user exists (by username or email) and creates the user if not already present, handling authentication as needed.
-- Clearly structure the script in logical steps (e.g., Step 1: Check/Create User, Step 2: Prepare Document Data, Step 3: Publish Document via REST API, etc.), so the user can easily understand and comment out any steps not needed.
-- Use HTTP POST for publishing, handle authentication, and log the result.
+**New Pods Content Type Definition (in Plain English or PHP Code):**  
+[Describe or paste the new content type here, e.g., fields like order_id, order_date, customer_id, customer_name, freight, line_items_json, subtotal, tax, grand_total, associated_user, document_status, was_viewed_by.]
 
-**Inputs:**
-API endpoint: {PASTE_API_ENDPOINT_HERE}
-Authentication: {API_KEY_OR_METHOD}
-Document fields: {PASTE_FIELDS_AND_TYPES_HERE}
-If helpful, here is a sample cURL SFTP script: {PASTE_EXISTING_CURL_SCRIPT_HERE}
+**Example Groovy Script to Adapt:**  
+[Paste the full code of an existing sample Groovy script here—choose the one most similar to your new content type (e.g., curl_paystub2portal.groovy for paystub, curl_payslip2portal.groovy for payslip, or curl_invoice2portal.groovy for invoice).]
 
-The script should be robust, modular, and easy to adapt for different scenarios.`,
-      tags: ['groovy', 'reportburster', 'rest', 'api', 'pods', 'cms', 'wordpress', 'user-management'],
+**Instructions:**  
+- Adapt the example script for the new content type and its fields.  
+- Structure the script in clear, logical steps (e.g., Step 1: Check/Create User, Step 2: Prepare Document Data, Step 3: Publish Document via REST API).  
+- Update all field names, labels, and data mapping to match the new type.  
+- Ensure the script checks if the target WordPress user exists (by username or email) and creates the user if not already present, handling authentication as needed.  
+- Use HTTP POST for publishing, handle authentication, and log the result.  
+- Output the full, ready-to-use Groovy script for publishing documents to the portal.  
+- Ensure the script is modular, robust, and easy to adapt for different scenarios.`,
+      tags: ['curl_(content-type)2portal.groovy', 'webportal'],
       category: 'Web Portal / CMS',
     }
   ];

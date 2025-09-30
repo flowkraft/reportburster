@@ -2200,8 +2200,7 @@ export class ConfigurationComponent implements OnInit {
 
   async askAiForHelp(outputTypeCode: string) {
 
-    console.log(`Asking AI for help with output type: ${outputTypeCode}`);
-
+    //console.log(`Asking AI for help with output type: ${outputTypeCode}`);
 
     if (outputTypeCode === 'output.pdf') {
       const launchConfig: AiManagerLaunchConfig = {
@@ -2296,10 +2295,19 @@ export class ConfigurationComponent implements OnInit {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
       }
     }
+
+    if (outputTypeCode === 'cms.webportal') {
+      const launchConfig: AiManagerLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'Web Portal / CMS',
+      };
+
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      }
+    }
+
   }
-
-
-
 
   absoluteTemplateFolderPath: string = '';
 
