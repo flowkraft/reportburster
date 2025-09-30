@@ -12,7 +12,7 @@ export const tabCmsWebPortalTemplate = `<ng-template
     <br/>
     <div class="row">
       <div class="col-xs-12">
-        <p>Set up ReportBurster Portal in no time — just like your very own (simple) web CMS — and start effortlessly distributing payroll, invoices, and reports through the internet. Take control of your reporting workflow and share documents securely and efficiently!</p>
+        <p>Set up ReportBurster Portal in no time — just like your very own (simple) web CMS — and start effortlessly distributing payroll, invoices, and reports through Internet. Take control of your reporting workflow and share documents securely and efficiently!</p>
       </div>
     </div>
     
