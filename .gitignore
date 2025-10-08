@@ -34,6 +34,11 @@ bkend/reporting/backup/
 playground
 testground
 
+.roo
+.roomodes
+!.roo-config/**
+memory-bank
+
 .venv
 
 **/backup/**/*.csv

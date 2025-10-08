@@ -1,0 +1,38 @@
+{
+  "White Hat Thinking (Facts & Data)": {
+    "prefix": "hatwhite",
+    "body": [
+      "Rethink this from the White Hat perspective: focus only on facts, data, and objective information. What do we know, what is missing, and what can be verified?"
+    ]
+  },
+  "Red Hat Thinking (Feelings & Intuition)": {
+    "prefix": "hatred",
+    "body": [
+      "Rethink this from the Red Hat perspective: focus on feelings, intuition, and gut reactions. What emotions or instincts might be influencing this situation?"
+    ]
+  },
+  "Black Hat Thinking (Risks & Caution)": {
+    "prefix": "hatblack",
+    "body": [
+      "Rethink this from the Black Hat perspective: focus on risks, weaknesses, and potential problems. What could go wrong, and what should we be cautious about?"
+    ]
+  },
+  "Yellow Hat Thinking (Benefits & Optimism)": {
+    "prefix": "hatyellow",
+    "body": [
+      "Rethink this from the Yellow Hat perspective: focus on benefits, opportunities, and positive outcomes. What are the advantages and potential value here?"
+    ]
+  },
+  "Green Hat Thinking (Creativity & Alternatives)": {
+    "prefix": "hatgreen",
+    "body": [
+      "Rethink this from the Green Hat perspective: focus on creativity, alternatives, and new ideas. What fresh approaches or possibilities can we explore?"
+    ]
+  },
+  "Blue Hat Thinking (Process & Big Picture)": {
+    "prefix": "hatblue",
+    "body": [
+      "Rethink this from the Blue Hat perspective: focus on process, structure, and control. How should we organize thinking, set priorities, and manage the next steps?"
+    ]
+  }
+}

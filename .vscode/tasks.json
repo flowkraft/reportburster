@@ -1,0 +1,11 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Sync Roo Config",
+      "type": "shell",
+      "command": "node .vscode/sync-roo.js",
+      "problemMatcher": []
+    }
+  ]
+}
