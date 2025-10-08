@@ -52,6 +52,7 @@ import {
 } from '../../providers/reporting.service';
 import { AppsManagerService, ManagedApp } from '../../components/apps-manager/apps-manager.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
+import { AiManagerComponent, AiManagerLaunchConfig } from '../../components/ai-manager/ai-manager.component';
 
 @Component({
   selector: 'dburst-processing',
@@ -1773,5 +1774,21 @@ export class ProcessingComponent implements OnInit {
         }
       },
     });
+  }
+
+  @ViewChild(AiManagerComponent) private aiManagerInstance!: AiManagerComponent;
+
+  async askAiForHelp(outputTypeCode: string) {
+
+    if (outputTypeCode === 'cms.webportal') {
+      const launchConfig: AiManagerLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'Web Portal / CMS',
+      };
+
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      }
+    }
   }
 }
