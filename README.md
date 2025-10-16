@@ -81,8 +81,12 @@ Each user can log in, access their documents, manage their account, and even pay
 
 ## 📸 Screenshots
 
+<br>
+<br>
+
 **Configure your database connection**  
 
+<br>
 <br>
 
 <a href="https://www.reportburster.com" target="_blank">
@@ -90,9 +94,11 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **Test and fetch your database schema instantly**  
 
+<br>
 <br>
 
 <a href="https://www.reportburster.com" target="_blank">
@@ -100,9 +106,11 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **Use AI to quickly generate Domain-Grouped database schema or an SQL query for fetching the data of the report**  
 
+<br>
 <br>
 
 <a href="https://www.reportburster.com" target="_blank">
@@ -110,9 +118,11 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **AI-powered database diagrams let you easily visualize data relationships**  
 
+<br>
 <br>
 
 <a href="https://www.reportburster.com" target="_blank">
@@ -120,9 +130,11 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **Run reports**  
 
+<br>
 <br>
 
 <a href="https://www.reportburster.com" target="_blank">
@@ -130,9 +142,11 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **Effortlessly generate and distribute output files**  
 
+<br>
 <br>
 
 <a href="https://www.reportburster.com" target="_blank">
@@ -140,9 +154,11 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **Customize your self-service portal for document delivery**  
 
+<br>
 <br>
 
 <a href="https://www.reportburster.com" target="_blank">
@@ -150,9 +166,11 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **Secure user login for accessing documents (e.g. payslips)**  
 
+<br>
 <br>
 
 <a href="https://www.reportburster.com" target="_blank">
@@ -160,9 +178,11 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **Users can view all their documents in one place** 
 
+<br>
 <br>
 
 <a href="https://www.reportburster.com" target="_blank">
@@ -170,14 +190,19 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **Easily access and review individual documents (e.g. payslips)**
 
+<br>
 <br>
 
 <a href="https://www.reportburster.com" target="_blank">
   <img src="https://www.reportburster.com/images/docs/webportal/002-overview-payslips2portal-user-single-payslip.png" alt="User Single Payslip">
 </a>
+
+<br>
+<br>
 
 ---
 
