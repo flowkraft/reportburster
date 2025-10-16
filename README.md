@@ -104,6 +104,7 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **Test and fetch your database schema instantly**  
 
@@ -113,6 +114,7 @@ Each user can log in, access their documents, manage their account, and even pay
   <img src="https://www.reportburster.com/images/docs/042_00_ai-driven-db-conn-test-fetch-db-schema.png" alt="AI-Driven DB Connection - Test Fetch DB Schema">
 </a>
 
+<br>
 <br>
 
 **Use AI to quickly generate Domain-Grouped database schema or an SQL query for fetching the data of the report**  
@@ -124,6 +126,7 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **AI-powered database diagrams let you easily visualize data relationships**  
 
@@ -133,6 +136,7 @@ Each user can log in, access their documents, manage their account, and even pay
   <img src="https://www.reportburster.com/images/docs/042_30_ai-driven-db-conn-er-diagram-view-in-browser.png" alt="AI-Driven DB Connection - ER Diagram View">
 </a>
 
+<br>
 <br>
 
 **Run reports**  
@@ -144,6 +148,7 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **Effortlessly generate and distribute output files**  
 
@@ -153,6 +158,7 @@ Each user can log in, access their documents, manage their account, and even pay
   <img src="https://www.reportburster.com/images/docs/044_15_ai-driven-report-execution-output-files.png" alt="AI-Driven Report Execution Output Files">
 </a>
 
+<br>
 <br>
 
 **Customize your self-service portal for document delivery**  
@@ -164,6 +170,7 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **Secure user login for accessing documents (e.g. payslips)**  
 
@@ -173,6 +180,7 @@ Each user can log in, access their documents, manage their account, and even pay
   <img src="https://www.reportburster.com/images/docs/webportal/110-reportburster-payslips2portal-user-login.png" alt="Portal User Login">
 </a>
 
+<br>
 <br>
 
 **Users can view all their documents in one place** 
@@ -184,6 +192,7 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 **Easily access and review individual documents (e.g. payslips)**
 
@@ -194,6 +203,7 @@ Each user can log in, access their documents, manage their account, and even pay
 </a>
 
 <br>
+<br>
 
 ## Join Our Community
 
@@ -201,11 +211,12 @@ Each user can log in, access their documents, manage their account, and even pay
 
 <div align="center">
   <a href="https://chat.reportburster.com/" target="_blank">
-    <img src="https://img.shields.io/badge/Join_Our-RocketChat-red?style=for-the-badge&logo=rocket.chat" alt="Join our Chat" />
+    <img src="https://img.shields.io/badge/Join_Our-Chat-red?style=for-the-badge&logo=rocket.chat" alt="Join our Chat" />
   </a>
   <p>Connect with us and other users in our free community channel!</p>
 </div>
 
+<br>
 <br>
 
 ## Star Us! ⭐
