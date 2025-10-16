@@ -3,7 +3,7 @@
 ![License](https://img.shields.io/badge/License-SSPL_1.0-D34245?style=flat-square&logo=open-source-initiative)
 
 <!-- 🎬 Demo Video: Make your README instantly engaging! -->
-[![Watch the demo](https://www.reportburster.com/assets/reportburster-demo-thumbnail.jpg)](https://www.reportburster.com/assets/reportburster-demo.mp4)
+[![Watch the demo](https://www.reportburster.com/videos/0000-reportburster-introduction/0000-reportburster-introduction-Sadaltager-thumbnail.png)](https://www.reportburster.com/assets/reportburster-demo.mp4)
 
 # 🚀 ReportBurster: Reporting & Document Distribution in the Age of AI
 
@@ -29,9 +29,8 @@ Automate, customize, and scale your document workflows with a top-notch solution
 
 ## ⚡ Get Started in 5 Minutes
 
-1. **[Download](https://www.reportburster.com) ReportBurster**
-2. Define your reports with AI—just describe what you need!
-3. Generate, burst, and distribute documents automatically.
+1. <a href="https://www.reportburster.com" target="_blank"><strong>Download ReportBurster</strong></a>
+2. <a href="https://www.reportburster.com/docs/quickstart" target="_blank"><strong>ReportBurster in 5 Minutes</strong></a>
 
 ---
 
@@ -45,7 +44,7 @@ Automate, customize, and scale your document workflows with a top-notch solution
 ## 📈 Report Generation
 
 **Data Sources:**  
-Connect to CSV, TSV, Excel, Google Sheets (coming soon), Office 365 (coming soon), and databases (coming soon).
+Connect to databases, CSV, TSV, Excel, Google Sheets (coming soon) and Office 365 (coming soon).
 
 **Output Formats:**  
 Generate reports as PDF, Excel (XLSX), HTML, Word (DOCX), or use raw data for further processing.
@@ -79,22 +78,31 @@ Each user can log in, access their documents, manage their account, and even pay
 ## 📸 Screenshots
 
 <a href="https://www.reportburster.com" target="_blank">
-  <img src="https://github.com/user-attachments/assets/5ab0e755-92a2-4efe-9c53-83562c658a86" alt="ReportBurster Screenshot">
+  <img src="https://www.reportburster.com/images/docs/042_15_ai-driven-db-conn-domain-grouped-schema.png" alt="AI-Driven DB Connection - Domain Grouped Schema">
 </a>
 <a href="https://www.reportburster.com" target="_blank">
-  <img src="https://github.com/user-attachments/assets/200535cd-c6bb-496b-8c47-ec330b79dd09" alt="ReportBurster Screenshot">
+  <img src="https://www.reportburster.com/images/docs/042_00_ai-driven-db-conn-new.png" alt="AI-Driven DB Connection - New">
 </a>
 <a href="https://www.reportburster.com" target="_blank">
-  <img src="https://github.com/user-attachments/assets/52c395d7-472d-47d8-807e-1f47cd8dd45f" alt="ReportBurster Screenshot">
+  <img src="https://www.reportburster.com/images/docs/042_30_ai-driven-db-conn-er-diagram-view-in-browser.png" alt="AI-Driven DB Connection - ER Diagram View">
 </a>
 <a href="https://www.reportburster.com" target="_blank">
-  <img src="https://github.com/user-attachments/assets/dc09c6bc-0ef5-4185-85f4-4381674d4f14" alt="ReportBurster Screenshot">
+  <img src="https://www.reportburster.com/images/docs/044_10_ai-driven-report-execution.png" alt="AI-Driven Report Execution">
 </a>
 <a href="https://www.reportburster.com" target="_blank">
-  <img src="https://github.com/user-attachments/assets/2b302556-b445-4657-ac0e-5675f8d6fa26" alt="ReportBurster Screenshot">
+  <img src="https://www.reportburster.com/images/docs/044_15_ai-driven-report-execution-output-files.png" alt="AI-Driven Report Execution Output Files">
 </a>
 <a href="https://www.reportburster.com" target="_blank">
-  <img src="https://github.com/user-attachments/assets/801b08af-ca44-4439-aa72-f709e38ee13a" alt="ReportBurster Screenshot">
+  <img src="https://www.reportburster.com/images/docs/webportal/105-ai-driven-portal-setup-customizations-payslips2portal.png" alt="Portal Setup Customizations">
+</a>
+<a href="https://www.reportburster.com" target="_blank">
+  <img src="https://www.reportburster.com/images/docs/webportal/110-reportburster-payslips2portal-user-login.png" alt="Portal User Login">
+</a>
+<a href="https://www.reportburster.com" target="_blank">
+  <img src="https://www.reportburster.com/images/docs/webportal/000-overview-payslips2portal-user-my-documents-payslips.png" alt="User My Documents Payslips">
+</a>
+<a href="https://www.reportburster.com" target="_blank">
+  <img src="https://www.reportburster.com/images/docs/webportal/002-overview-payslips2portal-user-single-payslip.png" alt="User Single Payslip">
 </a>
 
 ---
