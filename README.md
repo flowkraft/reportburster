@@ -1,8 +1,10 @@
 # 🚀 ReportBurster: Reporting & Document Distribution in the Age of AI
 
+<br>
+
 Automate, customize, and scale your document workflows with a top-notch solution for report generation and distribution.
 
-**Define your reports with the help of AI — just describe what you need, and AI will generate the report definition for you. No coding, no SQL, no template design required (unless you want to!).**
+Define your reports with the help of AI — just describe what you need, and AI will generate the report definition for you. No coding, no SQL, no template design required (unless you want to!).
 
 <br>
 
