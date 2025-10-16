@@ -4,6 +4,9 @@ Automate, customize, and scale your document workflows with a top-notch solution
 
 **Define your reports with the help of AI — just describe what you need, and AI will generate the report definition for you. No coding, no SQL, no template design required (unless you want to!).**
 
+<br>
+<br>
+
 ## ▶️ Watch the demo
 
 <br>
@@ -11,6 +14,9 @@ Automate, customize, and scale your document workflows with a top-notch solution
 
 <!-- 🎬 Demo Video: Make your README instantly engaging! -->
 [![Watch the demo](https://www.reportburster.com/videos/0000-reportburster-introduction/0000-reportburster-introduction-Sadaltager-thumbnail.png)](https://www.reportburster.com)
+
+<br>
+<br>
 
 ## ✨ Why ReportBurster?
 
@@ -24,6 +30,9 @@ Automate, customize, and scale your document workflows with a top-notch solution
 - **Enterprise-Grade Reliability:** Trusted by businesses of all sizes, including Fortune 500 companies.
 - **Professional Support:** Friendly, expert support you can always rely on.
 
+<br>
+<br>
+
 ## ⚡ Get Started in 5 Minutes
 
 1. <a href="https://www.reportburster.com" target="_blank"><strong>Download ReportBurster</strong></a>
@@ -34,6 +43,9 @@ Automate, customize, and scale your document workflows with a top-notch solution
 - Natural language report templates design/creation
 - SQL query generation from text descriptions
 
+<br>
+<br>
+
 ## 📈 Report Generation
 
 **Data Sources:**  
@@ -42,11 +54,17 @@ Connect to databases, CSV, TSV, Excel, Google Sheets (coming soon) and Office 36
 **Output Formats:**  
 Generate reports as PDF, Excel (XLSX), HTML, Word (DOCX), or use raw data for further processing.
 
+<br>
+<br>
+
 ## 📄 Document Processing
 
 - PDF and Excel report bursting
 - Document merging and splitting
 - Batch processing of large document sets
+
+<br>
+<br>
 
 ## 🔄 Automation
 
@@ -54,11 +72,17 @@ Generate reports as PDF, Excel (XLSX), HTML, Word (DOCX), or use raw data for fu
 - Scheduled report generation
 - Integration with existing systems
 
+<br>
+<br>
+
 ## 🌐 Self-Service Web Portal
 
 Deploy your own secure, full-featured CMS portal—powered by ReportBurster. Seamlessly distribute payslips, invoices, and other documents to employees, students, customers, partners, and parents.
 
 Each user can log in, access their documents, manage their account, and even pay bills—all in one place.
+
+<br>
+<br>
 
 ## 📸 Screenshots
 
@@ -192,7 +216,6 @@ Each user can log in, access their documents, manage their account, and even pay
 
 <br>
 <br>
-<br>
 
 ## Join Our Community
 
@@ -203,6 +226,9 @@ Each user can log in, access their documents, manage their account, and even pay
   <p>Connect with us and other users in our free community channel!</p>
 </div>
 
+<br>
+<br>
+
 ## Star Us! ⭐
 
 <div align="center">
@@ -210,5 +236,8 @@ Each user can log in, access their documents, manage their account, and even pay
   <p>⭐ Click the star button at the top-right to stay tuned for upcoming features and updates! ⭐</p>
   <img src="https://img.shields.io/github/stars/flowkraft/reportburster?style=social" alt="GitHub stars">
 </div>
+
+<br>
+<br>
 
 > **ReportBurster is open source—start using it today with no limits. Professional support is available for peace of mind and your business needs.**
