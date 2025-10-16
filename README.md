@@ -1,15 +1,19 @@
-![Version](https://img.shields.io/badge/Version-10.3.0-2A8FBD?style=flat-square&logo=azure-pipelines)
+![Version](https://img.shields.io/badge/Version-11.1.1-2A8FBD?style=flat-square&logo=azure-pipelines)
 ![Open Source](https://img.shields.io/badge/Open%20Source-❤%EF%B8%8F-FF8C00?style=flat-square)
 ![License](https://img.shields.io/badge/License-SSPL_1.0-D34245?style=flat-square&logo=open-source-initiative)
-
-<!-- 🎬 Demo Video: Make your README instantly engaging! -->
-[![Watch the demo](https://www.reportburster.com/videos/0000-reportburster-introduction/0000-reportburster-introduction-Sadaltager-thumbnail.png)](https://www.reportburster.com/assets/reportburster-demo.mp4)
 
 # 🚀 ReportBurster: Reporting & Document Distribution in the Age of AI
 
 Automate, customize, and scale your document workflows with a top-notch solution for report generation and distribution.
 
 **Define your reports with the help of AI — just describe what you need, and AI will generate the report definition for you. No coding, no SQL, no template design required (unless you want to!).**
+
+---
+
+## ▶️ Watch the demo
+
+<!-- 🎬 Demo Video: Make your README instantly engaging! -->
+[![Watch the demo](https://www.reportburster.com/videos/0000-reportburster-introduction/0000-reportburster-introduction-Sadaltager-thumbnail.png)](https://www.reportburster.com)
 
 ---
 
@@ -37,7 +41,7 @@ Automate, customize, and scale your document workflows with a top-notch solution
 ## 🧠 AI Capabilities
 
 - Natural language report templates design/creation
-- SQL query generation from text descriptions (coming soon)
+- SQL query generation from text descriptions
 
 ---
 
@@ -77,30 +81,60 @@ Each user can log in, access their documents, manage their account, and even pay
 
 ## 📸 Screenshots
 
-<a href="https://www.reportburster.com" target="_blank">
-  <img src="https://www.reportburster.com/images/docs/042_15_ai-driven-db-conn-domain-grouped-schema.png" alt="AI-Driven DB Connection - Domain Grouped Schema">
-</a>
+**Configure your database connection**  
+
 <a href="https://www.reportburster.com" target="_blank">
   <img src="https://www.reportburster.com/images/docs/042_00_ai-driven-db-conn-new.png" alt="AI-Driven DB Connection - New">
 </a>
+
+**Test and fetch your database schema instantly**  
+
+<a href="https://www.reportburster.com" target="_blank">
+  <img src="https://www.reportburster.com/images/docs/042_00_ai-driven-db-conn-test-fetch-db-schema.png" alt="AI-Driven DB Connection - Test Fetch DB Schema">
+</a>
+
+**Use AI to quicly generate Domaing-Grouped database schema**  
+
+<a href="https://www.reportburster.com" target="_blank">
+  <img src="https://www.reportburster.com/images/docs/042_15_ai-driven-db-conn-domain-grouped-schema.png" alt="AI-Driven DB Connection - Domain Grouped Schema">
+</a>
+
+**AI-powered database diagrams let you easily visualize data relationships**  
+
 <a href="https://www.reportburster.com" target="_blank">
   <img src="https://www.reportburster.com/images/docs/042_30_ai-driven-db-conn-er-diagram-view-in-browser.png" alt="AI-Driven DB Connection - ER Diagram View">
 </a>
+
+**Run reports**  
+
 <a href="https://www.reportburster.com" target="_blank">
   <img src="https://www.reportburster.com/images/docs/044_10_ai-driven-report-execution.png" alt="AI-Driven Report Execution">
 </a>
+
+**Effortlessly generate and distribute output files**  
+
 <a href="https://www.reportburster.com" target="_blank">
   <img src="https://www.reportburster.com/images/docs/044_15_ai-driven-report-execution-output-files.png" alt="AI-Driven Report Execution Output Files">
 </a>
+
+**Customize your self-service portal for document delivery**  
+
 <a href="https://www.reportburster.com" target="_blank">
   <img src="https://www.reportburster.com/images/docs/webportal/105-ai-driven-portal-setup-customizations-payslips2portal.png" alt="Portal Setup Customizations">
 </a>
+
+**Secure user login for accessing documents (e.g. payslips)**  
+
 <a href="https://www.reportburster.com" target="_blank">
   <img src="https://www.reportburster.com/images/docs/webportal/110-reportburster-payslips2portal-user-login.png" alt="Portal User Login">
 </a>
+
+**Users can view all their documents in one place**  
 <a href="https://www.reportburster.com" target="_blank">
   <img src="https://www.reportburster.com/images/docs/webportal/000-overview-payslips2portal-user-my-documents-payslips.png" alt="User My Documents Payslips">
 </a>
+
+**Easily access and review individual documents (e.g. payslips)**  
 <a href="https://www.reportburster.com" target="_blank">
   <img src="https://www.reportburster.com/images/docs/webportal/002-overview-payslips2portal-user-single-payslip.png" alt="User Single Payslip">
 </a>
@@ -128,4 +162,4 @@ Each user can log in, access their documents, manage their account, and even pay
 
 ---
 
-> **ReportBurster is open source—start using it today with no limits. Upgrade for professional support and peace of mind for your business.**
+> **ReportBurster is open source—start using it today with no limits. Purchase a commercial license for professional support and peace of mind for your business.**
