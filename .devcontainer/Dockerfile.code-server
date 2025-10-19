@@ -1,5 +1,8 @@
 # Start from a base image with Node.js
-FROM node:14
+FROM node:18
+
+# Set the working directory
+WORKDIR /workspace
 
 # Install utilities
 RUN apt-get update && apt-get install -y curl
@@ -14,15 +17,16 @@ RUN curl -fsSL https://code-server.dev/install.sh | sh
 RUN code-server --install-extension dbaeumer.vscode-eslint
 RUN code-server --install-extension esbenp.prettier-vscode
 
-RUN code-server --install-extension Gruntfuggly.todo-tree
-RUN code-server --install-extension vscode-org-mode.org-mode
+# RUN code-server --install-extension Gruntfuggly.todo-tree
+
+RUN code-server --install-extension RooVeterinaryInc.roo-cline
+
+# stopped working?
+# RUN code-server --install-extension tootone.org-mode
 
 RUN code-server --install-extension humao.rest-client
 
 RUN code-server --install-extension emmanuelbeziat.vscode-great-icons
-
-# Set the working directory
-WORKDIR /workspace
 
 # Expose port for code-server
 EXPOSE 8080
