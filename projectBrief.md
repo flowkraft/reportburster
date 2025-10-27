@@ -57,3 +57,5 @@ Release verification flow (minimal)
 - For release: run the full 100+ Playwright E2E suite (Electron or Web) and the Robot Framework UATs.
 - After all tests pass, run asbl/pack-reportburster.bat to create reportburster.zip and reportburster-server.zip.
 - Execute asbl/src/uat/run-tests.bat against the generated ZIPs to validate final packages before uploading/releasing.
+
+- IMPORTANT: Above all, simplicity and pragmatism trump everything: whether proposing design options or writing code, aim for the most straightforward, to‑the‑point solution that gets the job done. Change only what is strictly required for the task, avoid touching unrelated lines or files, and always ask one more time "could this be done even simpler?"
