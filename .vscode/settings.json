@@ -4,7 +4,7 @@
     "activityBar.foreground": "#ffffff",
     "activityBar.inactiveForeground": "#000000"
   },
-  "window.title": "${dirty}all-repos >> src >> products >> documentburster${separator}${activeEditorShort}",
+  "window.title": "${dirty} ReportBurster (Kate) > ${activeEditorShort}",
   "files.watcherExclude": {
     "**/node_modules/*/**": true,
     "**/.venv/*/**": true
