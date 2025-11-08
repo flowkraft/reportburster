@@ -206,25 +206,28 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
   private async refreshAllStatuses(): Promise<void> {
     try {
       const response = await this.apiService.get('/jobman/system/services/status');
+      const statuses: any[] = response;
 
-      const statuses: any[] = response; // Array of {name, status, ports}
+      const TARGET_ALIASES: Record<string, string[]> = {
+        ibmdb2: ['db2', 'ibm-db2'],
+        postgres: ['postgresql'],
+        postgresql: ['postgres'],
+        sqlserver: ['mssql'],
+      };
 
-      //console.log('Fetched statuses from backend:', statuses); // Add this line to log the statuses array
-
-      // Update each pack's status based on the response
       for (const pack of this.starterPacks) {
-        // Flexible name matching: exact match or if service name includes pack.target
-        // This handles cases like "rb-northwind-mariadb" vs. "mariadb"
-        const service = statuses.find(s => s.name === pack.target || s.name.includes(pack.target));
-        if (service) {
-          pack.status = service.status === 'running' ? 'running' : 'stopped';
-        } else {
-          pack.status = 'unknown'; // Service not found
-        }
+        const base = (pack.target || '').toLowerCase();
+        const candidates = [base, ...(TARGET_ALIASES[base] || [])];
+
+        const service = statuses.find(s => {
+          const name = (s.name || '').toLowerCase();
+          return candidates.some(c => name === c || name.includes(c));
+        });
+
+        pack.status = service ? (service.status === 'running' ? 'running' : 'stopped') : 'unknown';
       }
     } catch (error) {
       console.error('Error refreshing statuses:', error);
-      // Optionally, set all to 'error' or leave as-is
     }
   }
   // --- Action Trigger ---
@@ -233,30 +236,34 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
   async togglePackState(pack: StarterPackUIData): Promise<void> {
     if (pack.status === 'starting' || pack.status === 'stopping') return;
 
-    const action = pack.status === 'running' ? 'stop' : 'start';
+    const action: 'start' | 'stop' = pack.status === 'running' ? 'stop' : 'start';
 
-    // Check if Docker is required and not installed, and only for starting (not stopping)
+    // Keep existing Docker guidance when starting and Docker is not OK
     if (action === 'start' && !this.stateStore?.configSys?.sysInfo?.setup?.docker?.isDockerOk) {
-      const message = `Docker is not installed and it is required for executing <strong>${pack.displayName}</strong>.<br><br>Would you like to check the nearby <strong>Docker / Extra Utilities</strong> (tab) to see how to install it?`;
+      const message = `Docker is not installed and it is required for executing <strong>${pack.displayName}</strong>.<br><br>Would you like to check the nearby <strong>Docker / Extra Utilities</strong> (tab) to see how to install it?)`;
 
       this.confirmService.askConfirmation({
-        message: message,
+        message,
         confirmAction: () => {
-          // Navigate to help section with active tab
           this.router.navigate(['/help', 'starterPacksMenuSelected'], { queryParams: { activeTab: 'extraPackagesTab' } });
-        },
-        cancelAction: () => {
-          // Do nothing on No - don't proceed with toggle
         }
       });
-      return;  // Exit without proceeding to normal toggle
+      return;
     }
 
-    // Set pending state immediately
+    const dialogQuestion = `${action === 'start' ? 'Start' : 'Stop'} ${pack.displayName}?`;
+
+    this.confirmService.askConfirmation({
+      message: dialogQuestion,
+      confirmAction: () => this.executePackAction(pack, action),
+    });
+  }
+
+  private executePackAction(pack: StarterPackUIData, action: 'start' | 'stop'): void {
+    // pending state
     pack.status = action === 'start' ? 'starting' : 'stopping';
     pack.lastOutput = `Executing ${action}...`;
 
-    // Split the command into args
     const args = pack.currentCommandValue.split(/\s+/);
 
     this.shellService.runBatFile(
@@ -272,11 +279,8 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
           pack.currentCommandValue = pack.startCmd;
           pack.lastOutput = result.error || `Failed to ${action} ${pack.displayName}`;
         }
-
         await this.refreshAllStatuses();
       }
-
-
     );
   }
 

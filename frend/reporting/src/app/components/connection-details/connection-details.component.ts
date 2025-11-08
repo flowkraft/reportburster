@@ -33,8 +33,16 @@ import {
   AiManagerLaunchConfig,
 } from '../ai-manager/ai-manager.component';
 import { AppsManagerService, ManagedApp } from '../apps-manager/apps-manager.service';
-import { AiManagerService } from '../ai-manager/ai-manager.service';
 
+const PACK_DEFAULTS: Record<string, { host: string; port: string; database: string; userid: string; userpassword: string; usessl?: boolean }> = {
+  postgresql: { host: 'localhost', port: '5432', database: 'Northwind', userid: 'postgres', userpassword: 'postgres', usessl: false },
+  postgres:   { host: 'localhost', port: '5432', database: 'Northwind', userid: 'postgres', userpassword: 'postgres', usessl: false }, 
+  mysql: { host: 'localhost', port: '3306', database: 'Northwind', userid: 'root', userpassword: 'password', usessl: false },
+  mariadb: { host: 'localhost', port: '3307', database: 'Northwind', userid: 'root', userpassword: 'password', usessl: false }, // pack uses 3307
+  sqlserver: { host: 'localhost', port: '1433', database: 'Northwind', userid: 'sa', userpassword: 'Password123!', usessl: false },
+  oracle: { host: 'localhost', port: '1521', database: 'XEPDB1', userid: 'oracle', userpassword: 'oracle', usessl: false },
+  ibmdb2: { host: 'localhost', port: '50000', database: 'NORTHWND', userid: 'db2inst1', userpassword: 'password', usessl: false },
+};
 
 @Component({
   selector: 'dburst-connection-details',
@@ -256,7 +264,7 @@ export class ConnectionDetailsComponent implements OnInit {
             `testing SMTP connection for '${this.modalConnectionInfo.email.documentburster.connection.name}'`,
             result => {
               this.isTestingConnection = false;
-              
+
               if (result.success) this.messagesService.showSuccess('Test email sent successfully');
               else {
                 this.messagesService.showError('Test email failed');
@@ -339,66 +347,27 @@ export class ConnectionDetailsComponent implements OnInit {
 
   onDbTypeChange(newType: string): void {
     const dbServer =
-      this.modalConnectionInfo.database.documentburster.connection
-        .databaseserver;
+      this.modalConnectionInfo.database.documentburster.connection.databaseserver;
 
-    // Clear the database field when type changes,
-    // forcing selection for SQLite or input for others.
-    dbServer.database = 'Database Name';
-
-    dbServer.connectionstring = ''; // Also clear connection string
-
-    // Set default port based on type
-    switch (newType) {
-      case 'oracle':
-        dbServer.port = '1521';
-        break;
-      case 'sqlserver':
-        dbServer.port = '1433';
-        break;
-      case 'postgresql':
-        dbServer.port = '5432';
-        break;
-      case 'mysql':
-      case 'mariadb': // Often uses the same port as MySQL
-        dbServer.port = '3306';
-        break;
-      case 'ibmdb2':
-        dbServer.port = '50000'; // Common default, might vary
-        break;
-      case 'sqlite':
-        dbServer.database = '';
-        dbServer.port = ''; // Port not applicable for SQLite
-        dbServer.host = ''; // Host not applicable for SQLite
-        dbServer.userid = ''; // Userid not applicable for SQLite
-        dbServer.userpassword = ''; // Password not applicable for SQLite
-        dbServer.usessl = false; // SSL not applicable for SQLite
-        break;
-      default:
-        // Keep existing port or set a generic default if needed
-        // dbServer.port = newDatabaseServer.port; // Or keep current
-        break;
-    }
-
-    // If switching to SQLite, ensure other non-applicable fields are cleared
     if (newType === 'sqlite') {
+      dbServer.database = '';
       dbServer.host = '';
       dbServer.port = '';
       dbServer.userid = '';
       dbServer.userpassword = '';
       dbServer.usessl = false;
-    } else {
-      // If switching *away* from SQLite, ensure host/port have defaults if empty
-      if (!dbServer.host) {
-        dbServer.host = newDatabaseServer.host;
-      }
-      // Port is handled by the switch statement above
-      if (!dbServer.userid) {
-        dbServer.userid = newDatabaseServer.userid;
-      }
-      if (!dbServer.userpassword) {
-        dbServer.userpassword = newDatabaseServer.userpassword;
-      }
+      return;
+    }
+
+    const key = (newType || '').toLowerCase();
+    const d = PACK_DEFAULTS[key];
+    if (d) {
+      dbServer.host = d.host;
+      dbServer.port = d.port;
+      dbServer.database = d.database;
+      dbServer.userid = d.userid;
+      dbServer.userpassword = d.userpassword;
+      dbServer.usessl = !!d.usessl;
     }
   }
 
@@ -1020,8 +989,6 @@ export class ConnectionDetailsComponent implements OnInit {
         .databaseserver;
     if (dbServer.type === 'sqlite') {
       dbServer.database = filePath;
-      // Update connection string as well
-      dbServer.connectionstring = `jdbc:sqlite:${filePath}`;
     }
   }
 

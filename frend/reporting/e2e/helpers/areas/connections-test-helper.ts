@@ -2,32 +2,76 @@ import _ from 'lodash';
 
 import { FluentTester } from '../fluent-tester';
 import * as PATHS from '../../utils/paths';
+import { Constants } from '../../utils/constants';
+
+import { spawnSync } from 'child_process';
+import * as path from 'path';
 
 // Database vendor constants
 export const DB_VENDORS_SUPPORTED = [
   'oracle',
   'sqlserver',
-  'postgresql',
+  'postgres',
   'mysql',
   'mariadb',
   'ibmdb2',
   'sqlite',
 ];
 
-export const DB_VENDORS_IMPLEMENTED = [
-  // 'oracle',
-  // 'sqlserver',
-  // 'postgresql',
-  // 'mysql',
-  // 'mariadb',
-  // 'ibmdb2',
-  'sqlite',
-];
-
 export const DB_VENDORS_DEFAULT = 'sqlite';
+
+type StarterPackState = 'running' | 'stopped' | 'starting' | 'stopping' | 'error' | 'unknown';
+
+function vendorToPackId(vendor: string): string {
+  const v = (vendor || '').toLowerCase().trim();
+  switch (v) {
+    case 'postgres':
+    case 'postgresql':
+      return 'db-northwind-postgres';
+    case 'ibm-db2':
+    case 'ibmdb2':
+    case 'db2':
+      return 'db-northwind-ibmdb2';
+    case 'sqlserver':
+      return 'db-northwind-sqlserver';
+    case 'oracle':
+      return 'db-northwind-oracle';
+    case 'mariadb':
+      return 'db-northwind-mariadb';
+    case 'mysql':
+      return 'db-northwind-mysql';
+    case 'sqlite':
+      return 'db-northwind-sqlite';
+    default:
+      return `db-northwind-${v}`;
+  }
+}
 
 export class ConnectionsTestHelper {
   static DB_VENDORS_TEST_RANDOM = true;
+
+  // Map starter-pack defaults (mirrors .env)
+  static dbServerConnDefaults(vendor: string) {
+    const v = (vendor || '').toLowerCase();
+    switch (v) {
+      case 'postgres':
+      case 'postgresql':
+        return { host: 'localhost', port: '5432', db: 'Northwind', user: 'postgres', pass: 'postgres' };
+      case 'mysql':
+        return { host: 'localhost', port: '3306', db: 'Northwind', user: 'root', pass: 'password' };
+      case 'mariadb':
+        return { host: 'localhost', port: '3307', db: 'Northwind', user: 'root', pass: 'password' };
+      case 'sqlserver':
+        return { host: 'localhost', port: '1433', db: 'Northwind', user: 'sa', pass: 'Password123!' };
+      case 'oracle':
+        return { host: 'localhost', port: '1521', db: 'XEPDB1', user: 'oracle', pass: 'oracle' };
+      case 'ibmdb2':
+        return { host: 'localhost', port: '50000', db: 'NORTHWND', user: 'db2inst1', pass: 'password' };
+      default:
+        return { host: 'localhost', port: '5432', db: 'Northwind', user: 'postgres', pass: 'postgres' };
+    }
+  }
+
 
   static deleteAndAssertEmailConnection(
     ft: FluentTester,
@@ -38,9 +82,16 @@ export class ConnectionsTestHelper {
       .waitOnElementToBecomeVisible(`#${connectionFileName}`)
       .clickAndSelectTableRow(`#${connectionFileName}`)
       .waitOnElementToBecomeEnabled('#btnDelete')
+      .elementShouldBeEnabled('#btnDelete')
       .click('#btnDelete')
+      .waitOnElementToBecomeVisible('#confirmDialog')
       .clickNoDontDoThis()
+      .waitOnElementToBecomeInvisible('#confirmDialog')
+      // re-select row because some UIs clear selection after dialog dismissal
+      .clickAndSelectTableRow(`#${connectionFileName}`)
+      .waitOnElementToBecomeEnabled('#btnDelete')
       .click('#btnDelete')
+      .waitOnElementToBecomeVisible('#confirmDialog')
       .clickYesDoThis()
       .waitOnElementToBecomeInvisible(`#${connectionFileName}`)
       .gotoConnections()
@@ -252,13 +303,17 @@ export class ConnectionsTestHelper {
     ft: FluentTester,
     connectionFileName: string,
   ): FluentTester {
+
+    // not default -> perform the normal fluent UI flow to make it default
     return ft
       .clickAndSelectTableRow(`#${connectionFileName}`)
       .waitOnElementToBecomeVisible(`#btnActions_${connectionFileName}`)
       .click(`#btnActions_${connectionFileName}`)
       .waitOnElementToBecomeVisible(`#btnToggleDefault_${connectionFileName}`)
+      // first click (cancel) to ensure dialog flow works
       .click(`#btnToggleDefault_${connectionFileName}`)
       .clickNoDontDoThis()
+      // repeat and confirm
       .click(`#btnActions_${connectionFileName}`)
       .waitOnElementToBecomeVisible(`#btnToggleDefault_${connectionFileName}`)
       .click(`#btnToggleDefault_${connectionFileName}`)
@@ -352,7 +407,7 @@ export class ConnectionsTestHelper {
     dbVendor: string,
   ): FluentTester {
     const connectionCode = `db-${_.kebabCase(connectionName)}`;
-    const kebabConnectionName = _.kebabCase(connectionName); // Needed for fillNewDatabaseConnectionDetails
+    //const kebabConnectionName = _.kebabCase(connectionName); // Needed for fillNewDatabaseConnectionDetails
 
     // Navigate and open the modal
     ft = ft
@@ -371,17 +426,14 @@ export class ConnectionsTestHelper {
       ft,
       connectionName,
       dbVendor,
-      kebabConnectionName,
+      //kebabConnectionName,
     );
 
     // Save the connection and perform assertions (this part remains the same as your original)
     return ft
       .waitOnElementToBecomeEnabled('#btnOKConfirmationDbConnectionModal')
       .click('#btnOKConfirmationDbConnectionModal')
-      .waitOnToastToBecomeVisible(
-        'info',
-        `Connection '${connectionName}' saved successfully.`,
-      )
+      .waitOnElementToBecomeInvisible('#btnOKConfirmationDbConnectionModal')
       .waitOnElementToBecomeVisible(`#${connectionCode}\\.xml`)
       .clickAndSelectTableRow(`#${connectionCode}\\.xml`)
       .elementShouldContainText(
@@ -465,10 +517,7 @@ export class ConnectionsTestHelper {
     return sequence
       .waitOnElementToBecomeEnabled('#btnOKConfirmationDbConnectionModal')
       .click('#btnOKConfirmationDbConnectionModal')
-      .waitOnToastToBecomeVisible(
-        'info',
-        `Connection '${updatedConnectionName}' saved successfully.`,
-      )
+      .waitOnElementToBecomeInvisible('#btnOKConfirmationDbConnectionModal')
       .waitOnElementToBecomeVisible(`#${connectionCode}\\.xml`)
       .clickAndSelectTableRow(`#${connectionCode}\\.xml`)
       .elementShouldContainText(
@@ -519,10 +568,7 @@ export class ConnectionsTestHelper {
 
         .pageShouldContainText('Create Database Connection') // Verify modal title for duplicate is "Create..."
         .click('#btnOKConfirmationDbConnectionModal') // Click Save
-        .waitOnToastToBecomeVisible(
-          'info',
-          `Connection '${newNameForDuplicate}' saved successfully.`, // Toast should use the new unique name
-        )
+        .waitOnElementToBecomeInvisible('#btnOKConfirmationDbConnectionModal')
         .waitOnElementToBecomeVisible(`#${newDuplicateConnectionCode}\\.xml`) // Wait for the new duplicated entry in the list
         .clickAndSelectTableRow(`#${newDuplicateConnectionCode}\\.xml`) // Select the new duplicated entry
         .elementShouldContainText(
@@ -615,7 +661,7 @@ export class ConnectionsTestHelper {
   static getDefaultDatabaseNameForVendor(dbVendor: string): string {
     switch (dbVendor) {
       case 'oracle':
-        return 'ORCL';
+        return 'XEPDB1';
       case 'sqlserver':
         return 'master';
       case 'postgresql':
@@ -647,7 +693,7 @@ export class ConnectionsTestHelper {
       case 'mariadb':
         return 'root';
       case 'ibmdb2':
-        return 'db2admin';
+        return 'db2inst1';
       default:
         return 'admin';
     }
@@ -670,19 +716,10 @@ export class ConnectionsTestHelper {
       case 'mariadb':
         return 'password';
       case 'ibmdb2':
-        return 'db2admin';
+        return 'password';
       default:
         return 'password';
     }
-  }
-
-  /**
-   * Get a random database vendor from Constants.DB_VENDORS_SUPPORTED
-   */
-  static getRandomDbVendor(): string {
-    const vendors = DB_VENDORS_IMPLEMENTED;
-    const randomIndex = Math.floor(Math.random() * vendors.length);
-    return vendors[randomIndex];
   }
 
   /**
@@ -694,7 +731,7 @@ export class ConnectionsTestHelper {
     ft: FluentTester,
     connectionName: string,
     dbVendor: string,
-    kebabConnectionName: string, // Used for generating default DB names and SQLite filename
+    //kebabConnectionName: string, // Used for generating default DB names and SQLite filename
   ): FluentTester {
     ft = ft.consoleLog(
       `Filling database connection details for: ${connectionName}, Vendor: ${dbVendor}`,
@@ -711,32 +748,15 @@ export class ConnectionsTestHelper {
     ft = ft.dropDownSelectOptionHavingValue('#dbType', dbVendorSelectValue);
 
     // 3. Fill vendor-specific details
-    const defaultHost = 'localhost';
-    const defaultDbNameNonSqlite = `testdb_${kebabConnectionName}`;
-    const defaultUser = 'testuser';
-    const defaultPass = 'testpassword';
-
     if (dbVendorSelectValue !== 'sqlite') {
-      ft = ft
-        .waitOnElementToBecomeEnabled('#dbHost')
-        .click('#dbHost')
-        .typeText(defaultHost);
-
-      // Port is often auto-filled. We'll rely on that for now.
-      // Verification or explicit typing can be added if needed.
+      const d = ConnectionsTestHelper.dbServerConnDefaults(dbVendorSelectValue);
 
       ft = ft
-        .waitOnElementToBecomeEnabled('#dbName')
-        .click('#dbName')
-        .typeText(defaultDbNameNonSqlite);
-      ft = ft
-        .waitOnElementToBecomeEnabled('#dbUsername')
-        .click('#dbUsername')
-        .typeText(defaultUser);
-      ft = ft
-        .waitOnElementToBecomeEnabled('#dbPassword')
-        .click('#dbPassword')
-        .typeText(defaultPass);
+        .waitOnElementToBecomeEnabled('#dbHost').click('#dbHost').typeText(d.host)
+        .waitOnElementToBecomeEnabled('#dbPort').click('#dbPort').typeText(d.port)
+        .waitOnElementToBecomeEnabled('#dbName').click('#dbName').typeText(d.db)
+        .waitOnElementToBecomeEnabled('#dbUsername').click('#dbUsername').typeText(d.user)
+        .waitOnElementToBecomeEnabled('#dbPassword').click('#dbPassword').typeText(d.pass);
     } else {
       // SQLite requires a file path
       // For testing, we'll use a placeholder path that would be selected in the UI
@@ -767,4 +787,160 @@ export class ConnectionsTestHelper {
     );
     return ft;
   }
+
+  static _waitForStarterPackToBeInState(
+    ft: FluentTester,
+    packId: string,
+    state: StarterPackState,
+    timeout: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS,
+  ): FluentTester {
+    if (!packId) return ft.consoleLog(`Invalid starter pack id '${packId}'`);
+
+    const btnSel = `#btnStartStop_${packId}`;
+    const iconSel = `#btnStartStop_${packId} #starterPackIcon_${packId}`;
+    const spinnerSel = `#btnStartStop_${packId} #starterPackSpinner_${packId}`;
+
+    let seq = ft;
+
+    switch (state) {
+      case 'starting':
+        return seq
+          .waitOnElementToBecomeDisabled(btnSel, timeout)
+          .waitOnElementToBecomeVisible(spinnerSel, timeout)
+          .waitOnElementToHaveText(btnSel, 'Starting', timeout)
+          .consoleLog(`Starter pack '${packId}' entered 'starting' state.`);
+      case 'stopping':
+        return seq
+          .waitOnElementToBecomeDisabled(btnSel, timeout)
+          .waitOnElementToBecomeVisible(spinnerSel, timeout)
+          .waitOnElementToHaveText(btnSel, 'Stopping', timeout)
+          .consoleLog(`Starter pack '${packId}' entered 'stopping' state.`);
+      case 'running':
+        return seq
+          .waitOnElementToBecomeEnabled(btnSel, timeout)
+          .waitOnElementToHaveText(btnSel, 'Stop', timeout)
+          .waitOnElementToBecomeVisible(iconSel, timeout)
+          .waitOnElementToHaveClass(iconSel, 'fa-stop', timeout)
+          .consoleLog(`Starter pack '${packId}' is 'running'.`);
+      case 'stopped':
+        return seq
+          .waitOnElementToBecomeEnabled(btnSel, timeout)
+          .waitOnElementToHaveText(btnSel, 'Start', timeout)
+          .waitOnElementToBecomeVisible(iconSel, timeout)
+          .waitOnElementToHaveClass(iconSel, 'fa-play', timeout)
+          .consoleLog(`Starter pack '${packId}' is 'stopped'.`);
+      case 'error':
+        return seq
+          .waitOnElementToBecomeEnabled(btnSel, timeout)
+          .waitOnElementToHaveText(btnSel, 'Start', timeout)
+          .consoleLog(`Starter pack '${packId}' reported 'error' / not running.`);
+      case 'unknown':
+      default:
+        return seq.consoleLog(
+          `Starter pack '${packId}' is in 'unknown' / control visible state.`,
+        );
+    }
+  }
+
+  static setStarterPackStateForVendor(
+    ft: FluentTester,
+    dbVendor: string,
+    action: 'start' | 'stop',
+    fullTimeout: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS,
+  ): FluentTester {
+
+    const packId = vendorToPackId(dbVendor);
+    const btnSel = `#btnStartStop_${packId}`;
+
+    // Navigate, then operate only on the Start/Stop button (container ID is not reliable)
+    let seq = ft
+      .gotoStarterPacks()
+      .setValue('#packSearch', dbVendor)
+      // debounce in component is 300ms; add small buffer
+      .sleep(400)
+      .waitOnElementToBecomeVisible(btnSel);
+
+    // --- MINIMAL PRE-VALIDATION: ensure button text matches intended action ---
+    if (action === 'start') {
+      // assert UI shows "Start" before attempting to start
+      seq = seq.elementShouldHaveText(btnSel, 'Start');
+    } else {
+      // assert UI shows "Stop" before attempting to stop
+      seq = seq.elementShouldHaveText(btnSel, 'Stop');
+    }
+    // --- end pre-validation ---
+
+    seq = seq
+      .waitOnElementToBecomeEnabled(btnSel)
+      .click(btnSel)
+      .confirmDialogShouldBeVisible()
+      .clickYesDoThis()
+      .consoleLog(`Requested ${action} for starter pack '${packId}'.`);
+
+    if (action === 'start') {
+      seq = this._waitForStarterPackToBeInState(
+        seq,
+        packId,
+        'starting',
+        fullTimeout,
+      );
+      seq = this._waitForStarterPackToBeInState(seq, packId, 'running', fullTimeout);
+      return seq;
+    }
+
+    // action === 'stop'
+    seq = this._waitForStarterPackToBeInState(
+      seq,
+      packId,
+      'stopping',
+      fullTimeout,
+    );
+    seq = this._waitForStarterPackToBeInState(seq, packId, 'stopped', fullTimeout);
+    return seq;
+  }
+
+  static dockerComposeDownInDbFolder(timeoutMs: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS): void {
+    const baseDir = String(process.env.PORTABLE_EXECUTABLE_DIR || '.');
+    const dbDir = path.resolve(baseDir, 'db');
+    const isWin = process.platform === 'win32';
+
+    let cmd: string;
+    let args: string[];
+
+    if (isWin) {
+      cmd = 'powershell.exe';
+      // run the compose command inside PowerShell so PATH/resolution works on Windows
+      args = ['-NoProfile', '-NonInteractive', '-Command', 'docker compose down -v'];
+    } else {
+      cmd = 'docker';
+      args = ['compose', 'down', '-v'];
+    }
+
+    console.log(`[ConnectionsTestHelper] (blocking) running: ${cmd} ${args.join(' ')} (cwd=${dbDir})`);
+
+    const res = spawnSync(cmd, args, {
+      cwd: dbDir,
+      encoding: 'utf8',
+      timeout: timeoutMs,
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    if (res.error) {
+      console.error('[ConnectionsTestHelper] spawnSync error:', res.error);
+      throw res.error;
+    }
+
+    if (res.status !== 0) {
+      const out = (res.stdout || '').toString();
+      const err = (res.stderr || '').toString();
+      console.error(`[ConnectionsTestHelper] docker compose down failed (status=${res.status})\nSTDOUT:\n${out}\nSTDERR:\n${err}`);
+      throw new Error(`docker compose down failed (status=${res.status}): ${err || out}`);
+    }
+
+    if (res.stdout) console.log(res.stdout.toString());
+    if (res.stderr) console.error(res.stderr.toString());
+    console.log('[ConnectionsTestHelper] docker compose down completed (blocking).');
+  }
+
 }

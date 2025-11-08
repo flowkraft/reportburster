@@ -253,9 +253,11 @@ public class Settings extends DumpToString {
 			connDatabaseSettings = (DocumentBursterConnectionDatabaseSettings) ur.unmarshal(fis);
 		}
 
-		if (StringUtils.isBlank(connDatabaseSettings.connection.databaseserver.url)
-				&& !StringUtils.isBlank(connDatabaseSettings.connection.databaseserver.connectionstring))
-			connDatabaseSettings.connection.databaseserver.url = connDatabaseSettings.connection.databaseserver.connectionstring;
+		if (connDatabaseSettings != null
+				&& connDatabaseSettings.connection != null
+				&& connDatabaseSettings.connection.databaseserver != null) {
+			connDatabaseSettings.connection.databaseserver.ensureDriverAndUrl();
+		}
 
 		return connDatabaseSettings;
 	}

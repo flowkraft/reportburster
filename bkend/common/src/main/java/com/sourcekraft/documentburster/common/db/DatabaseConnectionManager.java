@@ -57,6 +57,7 @@ public class DatabaseConnectionManager {
 			return "oracle.jdbc.driver.OracleDriver";
 		case "sqlserver":
 			return "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+		case "postgres":
 		case "postgresql":
 			return "org.postgresql.Driver";
 		case "mysql":
@@ -81,6 +82,9 @@ public class DatabaseConnectionManager {
 			cCode = this.settings.getReportingPrimaryDatabaseConnectionCode();
 
 		ConnectionDatabaseSettings settings = getConnectionSettings(cCode);
+
+		settings.databaseserver.ensureDriverAndUrl();
+
 		String driverClass = getDriverClass(settings.databaseserver.type);
 		Class.forName(driverClass);
 		return DriverManager.getConnection(settings.databaseserver.url, settings.databaseserver.userid,
@@ -97,16 +101,19 @@ public class DatabaseConnectionManager {
 	 * @throws Exception If settings cannot be retrieved.
 	 */
 	private synchronized ConnectionDatabaseSettings getConnectionSettings(String connectionCode) throws Exception {
-		// Remove ctx.settings references and use this.settings instead
-		
 		String primaryCode = this.settings.getReportingPrimaryDatabaseConnectionCode();
 
 		if (StringUtils.isNotBlank(primaryCode) && primaryCode.equals(connectionCode)
 				&& this.settings.connectionDatabaseSettings != null) {
-			return this.settings.connectionDatabaseSettings.connection;
+			ConnectionDatabaseSettings c = this.settings.connectionDatabaseSettings.connection;
+			if (c != null && c.databaseserver != null) c.databaseserver.ensureDriverAndUrl();
+			return c;
 		} else {
-			DocumentBursterConnectionDatabaseSettings dbSettings = this.settings
-					.loadSettingsConnectionDatabase(connectionCode);
+			DocumentBursterConnectionDatabaseSettings dbSettings =
+					this.settings.loadSettingsConnectionDatabase(connectionCode);
+			if (dbSettings != null && dbSettings.connection != null && dbSettings.connection.databaseserver != null) {
+				dbSettings.connection.databaseserver.ensureDriverAndUrl();
+			}
 			return dbSettings.connection;
 		}
 	}
@@ -142,6 +149,8 @@ public class DatabaseConnectionManager {
 			throw new Exception("Failed to retrieve valid database server settings for code: " + connectionCode);
 		}
 
+		connSettings.databaseserver.ensureDriverAndUrl();
+
 		//System.out.println("connSettings: " + connSettings.toString());
 
 		// Create DataSource using HikariCP
@@ -161,12 +170,12 @@ public class DatabaseConnectionManager {
 		//System.out.println("connSettings.databaseserver.driver: " + connSettings.databaseserver.driver);
 
 		config.setDriverClassName(connSettings.databaseserver.driver);
-		config.setJdbcUrl(connSettings.databaseserver.connectionstring);
+		config.setJdbcUrl(connSettings.databaseserver.url);
 		config.setUsername(connSettings.databaseserver.userid);
 		// Log password presence/absence, not the value itself
 		config.setPassword(connSettings.databaseserver.userpassword);
 		log.trace("HikariConfig: Driver={}, URL={}, User={}, Password provided={}", connSettings.databaseserver.driver,
-				connSettings.databaseserver.connectionstring, connSettings.databaseserver.userid,
+				connSettings.databaseserver.url, connSettings.databaseserver.userid,
 				StringUtils.isNotEmpty(connSettings.databaseserver.userpassword));
 
 		// Add common pool properties (can be customized further)

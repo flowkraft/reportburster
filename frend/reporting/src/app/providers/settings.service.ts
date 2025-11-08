@@ -31,7 +31,6 @@ export interface ExtConnection {
     userid: string;
     userpassword: string;
     usessl: boolean;
-    connectionstring: string;
     defaultquery: string;
   };
 }
@@ -55,7 +54,6 @@ export const newDatabaseServer = {
   userid: 'Database Username',
   userpassword: 'Database Password',
   usessl: false,
-  connectionstring: '',
   defaultquery: 'SELECT 1 AS connection_test',
 };
 

@@ -6,7 +6,8 @@ export class Constants {
   static DELAY_HUNDRED_MILISECONDS = 100;
   static DELAY_HUNDRED_SECONDS = 100 * Constants.DELAY_ONE_SECOND;
 
-  static DELAY_FIVE_THOUSANDS_SECONDS = 5000000;
+  static DELAY_FIVE_THOUSANDS_SECONDS = 5000 * Constants.DELAY_ONE_SECOND;
+  static DELAY_FIVE_HUNDRED_SECONDS = 500 * Constants.DELAY_ONE_SECOND;
 
   static STATUS_GREAT_NO_ERRORS_NO_WARNINGS = 'great-no-errors-no-warning';
   static STATUS_WARNINGS = 'warnings';

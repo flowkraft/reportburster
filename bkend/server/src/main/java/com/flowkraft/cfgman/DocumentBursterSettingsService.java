@@ -413,7 +413,6 @@ public class DocumentBursterSettingsService {
 					connectionInfo.dbserver.userid = connectionSettings.connection.databaseserver.userid;
 					connectionInfo.dbserver.userpassword = connectionSettings.connection.databaseserver.userpassword;
 					connectionInfo.dbserver.usessl = connectionSettings.connection.databaseserver.usessl;
-					connectionInfo.dbserver.connectionstring = connectionSettings.connection.databaseserver.connectionstring;
 					connectionInfo.dbserver.defaultquery = connectionSettings.connection.databaseserver.defaultquery;
 					connectionInfo.dbserver.driver = connectionSettings.connection.databaseserver.driver;
 					connectionInfo.dbserver.url = connectionSettings.connection.databaseserver.url;

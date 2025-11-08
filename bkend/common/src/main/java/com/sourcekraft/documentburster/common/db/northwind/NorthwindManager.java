@@ -54,13 +54,13 @@ public class NorthwindManager implements AutoCloseable {
 	 * properties.
 	 */
 	public enum DatabaseVendor {
-		POSTGRES(5432, "postgres", "postgres", "Northwind", Duration.ofMinutes(5)),
-		MYSQL(3306, "root", "password", "Northwind", Duration.ofMinutes(5)),
-		MARIADB(3307, "root", "password", "Northwind", Duration.ofMinutes(5)), // Use 3307 to avoid conflict
-		SQLITE(0, null, null, "Northwind", Duration.ofMinutes(1)),
-		SQLSERVER(1433, "sa", "Password123!", "Northwind", Duration.ofMinutes(5)),
-		ORACLE(1521, "oracle", "oracle", "XE", Duration.ofMinutes(15)), // DB name is XE for Oracle XE
-		DB2(50000, "db2inst1", "password", "Northwind", Duration.ofMinutes(10));
+		POSTGRES(5432, "postgres", "postgres", "Northwind", Duration.ofMinutes(30)),
+		MYSQL(3306, "root", "password", "Northwind", Duration.ofMinutes(30)),
+		MARIADB(3307, "root", "password", "Northwind", Duration.ofMinutes(30)), // Use 3307 to avoid conflict
+		SQLITE(0, null, null, "Northwind", Duration.ofMinutes(10)),
+		SQLSERVER(1433, "sa", "Password123!", "Northwind", Duration.ofMinutes(60)),
+		ORACLE(1521, "oracle", "oracle", "XEPDB1", Duration.ofMinutes(60)), // DB name is XE for Oracle XE
+		DB2(50000, "db2inst1", "password", "NORTHWND", Duration.ofMinutes(60));
 
 		private final int containerPort;
 		private final String defaultUser;
@@ -131,6 +131,9 @@ public class NorthwindManager implements AutoCloseable {
 
 		Integer hostPortToUse = (customHostPort != null) ? customHostPort : getDefaultHostPort(vendor);
 
+		log.info("[SQL_SERVER_DEBUG] Starting database: vendor={}, hostPort={}, hostDataPath={}",
+				vendor, hostPortToUse, hostDataPath);
+
 		// --- Initialization Check ---
 		boolean needsInitialization;
 		if (vendor == DatabaseVendor.SQLITE) {
@@ -145,7 +148,7 @@ public class NorthwindManager implements AutoCloseable {
 		if (hostPortToUse != null) {
 			activeHostPorts.put(vendor, hostPortToUse);
 		}
-		
+
 		// --- Start Service ---
 		if (vendor != DatabaseVendor.SQLITE) {
 			startDatabaseWithDockerCompose(vendor, hostPortToUse);
@@ -155,7 +158,6 @@ public class NorthwindManager implements AutoCloseable {
 
 		// --- Update State ---
 		runningDatabases.put(vendor, true);
-		
 
 		// --- Initialize Data (if needed) ---
 		if (needsInitialization) {
@@ -193,6 +195,7 @@ public class NorthwindManager implements AutoCloseable {
 		ProcessExecutor executor = new ProcessExecutor().command(command).directory(workingDir.toFile())
 				// .redirectOutput(Slf4jStream.of(getClass()).asInfo())
 				// .redirectError(Slf4jStream.of(getClass()).asError())
+				.readOutput(true)
 				.timeout(vendor.getDefaultTimeout().toSeconds(), TimeUnit.SECONDS);
 
 		// If a custom port is provided, set it as an environment variable for the
@@ -206,11 +209,27 @@ public class NorthwindManager implements AutoCloseable {
 		}
 
 		log.debug("Executing: {}", String.join(" ", command));
+
+		log.info("[SQL_SERVER_DEBUG] Executing docker-compose command: {}", String.join(" ", command));
+		log.info("[SQL_SERVER_DEBUG] Working directory: {}", workingDir);
+		if (hostPort != null) {
+			log.info("[SQL_SERVER_DEBUG] Environment variable {}={}", vendor.name() + "_PORT", hostPort);
+		}
+
 		ProcessResult result = executor.execute();
+
+		log.info("[SQL_SERVER_DEBUG] Docker compose exit code: {}, output: {}",
+				result.getExitValue(), result.outputUTF8());
 
 		if (result.getExitValue() != 0) {
 			throw new IOException("Docker Compose command failed with exit code " + result.getExitValue()
 					+ " for service " + serviceName);
+		}
+
+		// ✅ ADD THIS: For SQL Server, create database before normal wait
+		if (vendor == DatabaseVendor.SQLSERVER) {
+			log.info("[SQL_SERVER_DEBUG] SQL Server started, creating Northwind database...");
+			ensureSqlServerDatabaseExists(vendor, hostPort);
 		}
 
 		waitForDatabaseToBeReady(vendor, hostPort);
@@ -257,6 +276,8 @@ public class NorthwindManager implements AutoCloseable {
 		final int port = (hostPort != null) ? hostPort : getDefaultHostPort(vendor);
 		final String host = "localhost";
 
+		log.info("[SQL_SERVER_DEBUG] waitForDatabaseToBeReady: vendor={}, port={}", vendor, port);
+
 		// Failsafe retry policy for the connection attempt
 		RetryPolicy<Object> retryPolicy = new RetryPolicy<>().handle(Throwable.class) // Handle any exception
 				.withDelay(Duration.ofSeconds(5)).withMaxDuration(vendor.getDefaultTimeout()).withMaxRetries(-1)
@@ -265,10 +286,14 @@ public class NorthwindManager implements AutoCloseable {
 
 		Failsafe.with(retryPolicy).run(() -> {
 
+			log.info("[SQL_SERVER_DEBUG] Retry attempt starting for {}:{}", vendor, port);
+
 			// First, check if the port is open to avoid immediate JDBC timeout
 			if (!Utils.isPortOpen(host, port, 2000)) {
 				throw new IOException("Port " + port + " is not open.");
 			}
+
+			log.info("[SQL_SERVER_DEBUG] Port {} is open, attempting JDBC connection", port);
 
 			// Print classpath for debugging
 			// String classpath = System.getProperty("java.class.path");
@@ -278,16 +303,92 @@ public class NorthwindManager implements AutoCloseable {
 			String jdbcUrl = getJdbcUrl(vendor);
 			log.info("Attempting JDBC connection with URL: {}", jdbcUrl);
 
+			log.info("[SQL_SERVER_DEBUG] DriverManager.getConnection(url={}, user={}, pass=***)",
+					jdbcUrl, getUsername(vendor));
+
 			DriverManager.setLoginTimeout(5);
 
 			// Attempt a full JDBC connection
 			try (Connection connection = DriverManager.getConnection(jdbcUrl, getUsername(vendor),
 					getPassword(vendor))) {
+
+				log.info("[SQL_SERVER_DEBUG] Connection established, checking validity");
+
 				if (!connection.isValid(5)) {
+					log.info("[SQL_SERVER_DEBUG] Connection is NOT valid");
 					throw new IOException("JDBC connection is not valid.");
+				}
+
+				log.info("[SQL_SERVER_DEBUG] Connection is valid, database is ready");
+
+			}
+		});
+
+		log.info("[SQL_SERVER_DEBUG] waitForDatabaseToBeReady completed successfully");
+	}
+
+	/**
+	 * SQL Server-specific: Create Northwind database if it doesn't exist.
+	 * Must connect to 'master' first since Northwind doesn't exist yet.
+	 */
+	private void ensureSqlServerDatabaseExists(DatabaseVendor vendor, Integer hostPort) throws Exception {
+		final int port = (hostPort != null) ? hostPort : getDefaultHostPort(vendor);
+		final String masterUrl = "jdbc:sqlserver://localhost:" + port
+				+ ";databaseName=master;encrypt=false;trustServerCertificate=true";
+		final String dbName = vendor.getDefaultDbName();
+
+		log.info("[SQL_SERVER_DEBUG] Waiting for SQL Server to accept connections on master DB...");
+
+		// Wait for SQL Server to be ready (connect to master)
+		RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
+				.handle(Throwable.class)
+				.withDelay(Duration.ofSeconds(5))
+				.withMaxDuration(Duration.ofMinutes(5))
+				.withMaxRetries(-1)
+				.onRetry(e -> {
+					Throwable cause = e.getLastFailure();
+					log.debug("[SQL_SERVER_DEBUG] Waiting for SQL Server (attempt #{}): {}",
+							e.getAttemptCount(),
+							cause != null ? cause.getMessage() : "unknown");
+				})
+				.onFailure(e -> log.error("[SQL_SERVER_DEBUG] Failed to connect to SQL Server master", e.getFailure()));
+
+		Failsafe.with(retryPolicy).run(() -> {
+			if (!Utils.isPortOpen("localhost", port, 2000)) {
+				throw new IOException("Port " + port + " not open");
+			}
+
+			log.debug("[SQL_SERVER_DEBUG] Port {} open, attempting connection to master", port);
+			DriverManager.setLoginTimeout(5);
+
+			try (Connection conn = DriverManager.getConnection(masterUrl, getUsername(vendor), getPassword(vendor))) {
+				if (!conn.isValid(5)) {
+					throw new IOException("Connection to master not valid");
+				}
+
+				log.info("[SQL_SERVER_DEBUG] Connected to master DB, checking if {} exists", dbName);
+
+				try (Statement stmt = conn.createStatement()) {
+					// Check if database exists
+					ResultSet rs = stmt.executeQuery(
+							"SELECT database_id FROM sys.databases WHERE name = '" + dbName + "'");
+
+					if (!rs.next()) {
+						log.info("[SQL_SERVER_DEBUG] Database {} does not exist, creating it...", dbName);
+						stmt.execute("CREATE DATABASE [" + dbName + "]");
+
+						// Wait a moment for creation to complete
+						Thread.sleep(2000);
+
+						log.info("[SQL_SERVER_DEBUG] Database {} created successfully", dbName);
+					} else {
+						log.info("[SQL_SERVER_DEBUG] Database {} already exists", dbName);
+					}
 				}
 			}
 		});
+
+		log.info("[SQL_SERVER_DEBUG] ensureSqlServerDatabaseExists() completed");
 	}
 
 	/**
@@ -307,22 +408,24 @@ public class NorthwindManager implements AutoCloseable {
 		String dbName = vendor.getDefaultDbName();
 
 		switch (vendor) {
-		case POSTGRES:
-			return "jdbc:postgresql://localhost:" + port + "/" + dbName;
-		case MYSQL:
-			return "jdbc:mysql://localhost:" + port + "/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true";
-		case MARIADB:
-			return "jdbc:mariadb://localhost:" + port + "/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true";
-		case SQLITE:
-			return "jdbc:sqlite:" + getActualDataPath(vendor).resolve("northwind.db").toString();
-		case SQLSERVER:
-			return "jdbc:sqlserver://localhost:" + port + ";databaseName=" + dbName + ";encrypt=false";
-		case ORACLE:
-			return "jdbc:oracle:thin:@//localhost:" + port + "/" + dbName;
-		case DB2:
-			return "jdbc:db2://localhost:" + port + "/" + dbName;
-		default:
-			throw new IllegalArgumentException("Unsupported database vendor: " + vendor);
+			case POSTGRES:
+				return "jdbc:postgresql://localhost:" + port + "/" + dbName;
+			case MYSQL:
+				return "jdbc:mysql://localhost:" + port + "/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true";
+			case MARIADB:
+				return "jdbc:mariadb://localhost:" + port + "/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true";
+			case SQLITE:
+				return "jdbc:sqlite:" + getActualDataPath(vendor).resolve("northwind.db").toString();
+			case SQLSERVER:
+				String url = "jdbc:sqlserver://localhost:" + port + ";databaseName=" + dbName + ";encrypt=false";
+				log.info("[SQL_SERVER_DEBUG] Constructed SQL Server URL: {}", url);
+				return url;
+			case ORACLE:
+				return "jdbc:oracle:thin:@//localhost:" + port + "/" + dbName;
+			case DB2:
+				return "jdbc:db2://localhost:" + port + "/" + dbName;
+			default:
+				throw new IllegalArgumentException("Unsupported database vendor: " + vendor);
 		}
 	}
 
@@ -333,32 +436,72 @@ public class NorthwindManager implements AutoCloseable {
 		Files.createDirectories(this.sqliteDbFile.getParentFile().toPath());
 	}
 
-	private void initializeDatabaseWithGenerator(DatabaseVendor vendor, Path hostDataPath) throws Exception {
-		EntityManagerFactory emf = null;
-		EntityManager em = null;
-		String persistenceUnitName = "northwind-" + vendor.name().toLowerCase();
+	public void initializeDatabaseWithGenerator(DatabaseVendor vendor, Path hostDataPath) throws Exception {
 
-		try {
-			Map<String, String> props = getJpaProperties(vendor, true);
-			emf = Persistence.createEntityManagerFactory(persistenceUnitName, props);
-			em = emf.createEntityManager();
+        log.info("[SQL_SERVER_DEBUG] Starting JPA initialization for {}", vendor);
+        log.info("[SQL_SERVER_DEBUG] Persistence unit: northwind-{}", vendor.name().toLowerCase());
 
-			NorthwindDataGenerator generator = new NorthwindDataGenerator(em);
-			generator.generateAll();
+        EntityManagerFactory emf = null;
+        EntityManager em = null;
+        String persistenceUnitName = "northwind-" + vendor.name().toLowerCase();
 
-			if (vendor != DatabaseVendor.SQLITE) {
-				Files.createFile(hostDataPath.resolve(MARKER_FILENAME));
-			}
-		} finally {
-			if (em != null && em.isOpen()) {
-				em.close();
-			}
-			if (emf != null && emf.isOpen()) {
-				emf.close();
-			}
-		}
-	}
+        try {
+            Map<String, String> props = getJpaProperties(vendor, true);
 
+            // For DB2, set default schema explicitly (optional but safer)
+            if (vendor == DatabaseVendor.DB2) {
+                props.putIfAbsent("hibernate.default_schema", "DB2INST1");
+                // You can also add currentSchema via URL if desired:
+                // props.put("jakarta.persistence.jdbc.url", getJdbcUrl(vendor) + ":currentSchema=DB2INST1;");
+            }
+
+            log.info("[SQL_SERVER_DEBUG] JPA properties: url={}, user={}",
+                    props.get("jakarta.persistence.jdbc.url"),
+                    props.get("jakarta.persistence.jdbc.user"));
+
+            log.info("[SQL_SERVER_DEBUG] Creating EntityManagerFactory");
+
+            // Retry EMF creation to ride over transient DB2 readiness (-4499) issues
+            RetryPolicy<EntityManagerFactory> emfRetry = new RetryPolicy<EntityManagerFactory>()
+                    .handle(Throwable.class)
+                    .withDelay(Duration.ofSeconds(5))
+                    .withMaxRetries(5)
+                    .onFailedAttempt(ev -> {
+                        Throwable t = ev.getLastFailure();
+                        log.warn("EMF creation failed (attempt {} of {}): {}",
+                                ev.getAttemptCount(), 5, t != null ? t.getMessage() : "unknown");
+                    });
+
+            emf = Failsafe.with(emfRetry).get(() ->
+                    Persistence.createEntityManagerFactory(persistenceUnitName, props)
+            );
+
+            log.info("[SQL_SERVER_DEBUG] Creating EntityManager");
+            em = emf.createEntityManager();
+
+            log.info("[SQL_SERVER_DEBUG] Running NorthwindDataGenerator");
+
+            NorthwindDataGenerator generator = new NorthwindDataGenerator(em);
+            generator.generateAll();
+
+            log.info("[SQL_SERVER_DEBUG] Data generation complete, creating marker file");
+
+            if (vendor != DatabaseVendor.SQLITE) {
+                Path markerFilePath = hostDataPath.resolve(MARKER_FILENAME);
+                Files.createDirectories(hostDataPath);
+                Files.createFile(markerFilePath);
+                log.info("[SQL_SERVER_DEBUG] Marker file created: {}", markerFilePath);
+            }
+        } finally {
+            if (em != null && em.isOpen()) {
+                em.close();
+            }
+            if (emf != null && emf.isOpen()) {
+                emf.close();
+            }
+        }
+    }
+	
 	public Map<String, String> getJpaProperties(DatabaseVendor vendor, boolean forDdl) {
 		Map<String, String> properties = new HashMap<>();
 		properties.put("jakarta.persistence.jdbc.url", getJdbcUrl(vendor));

@@ -1081,6 +1081,7 @@ Column 3, 15"
     [modal]="true"
     [style]="{width: '50vw'}">
     <dburst-report-parameters-form
+        *ngIf="reportParameters && reportParameters.length > 0"
         [parameters]="reportParameters"
         (validChange)="onReportParamsValidChange($event)"
         (valueChange)="onReportParamsValuesChange($event)">

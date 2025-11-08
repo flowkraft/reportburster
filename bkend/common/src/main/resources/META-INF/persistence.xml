@@ -6,7 +6,7 @@
              version="3.0">
 
 	<!-- ==================== PostgreSQL ==================== -->
-	<persistence-unit name="northwind-postgresql"
+	<persistence-unit name="northwind-postgres"
 		transaction-type="RESOURCE_LOCAL">
 		<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 		<!-- List all entity classes -->
@@ -125,7 +125,7 @@
 			<property name="jakarta.persistence.jdbc.driver"
 				value="org.mariadb.jdbc.Driver" />
 			<property name="jakarta.persistence.jdbc.url"
-				value="jdbc:mariadb://localhost:3306/northwind" />
+				value="jdbc:mariadb://localhost:3307/northwind" />
 			<property name="jakarta.persistence.jdbc.user" value="root" />
 			<property name="jakarta.persistence.jdbc.password" value="password" />
 			<property name="hibernate.dialect"
@@ -302,13 +302,14 @@
 			<property name="jakarta.persistence.jdbc.driver"
 				value="com.ibm.db2.jcc.DB2Driver" />
 			<property name="jakarta.persistence.jdbc.url"
-				value="jdbc:db2://localhost:50000/NORTHWIND" /> <!-- DB name
+				value="jdbc:db2://localhost:50000/NORTHWND;currentSchema=DB2INST1" /> <!-- DB name
 			often uppercase -->
 			<property name="jakarta.persistence.jdbc.user" value="db2inst1" /> <!--
 			Default instance user -->
 			<property name="jakarta.persistence.jdbc.password" value="password" />
 			<property name="hibernate.dialect"
-				value="org.hibernate.dialect.Db2Dialect" />
+				value="org.hibernate.dialect.DB2Dialect" />
+			<property name="hibernate.default_schema" value="DB2INST1"/>	
 			<property name="hibernate.hbm2ddl.auto" value="none" />
 			<property name="hibernate.show_sql" value="false" />
 			<property name="hibernate.format_sql" value="false" />

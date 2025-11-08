@@ -57,7 +57,7 @@ export class ConnectionListComponent implements OnInit {
     protected shellService: ShellService,
     protected route: ActivatedRoute,
     protected router: Router,
-  ) {}
+  ) { }
 
   async ngOnInit() {
     this.settingsService.numberOfUserVariables = 20;
@@ -166,6 +166,29 @@ export class ConnectionListComponent implements OnInit {
             this.settingsService.connectionFiles,
             (o) => o.filePath === originalFilePath,
           );
+
+          // If the deleted connection was marked default, clear the app-level default pointer(s)
+          if (selectedConnection.defaultConnection) {
+            // clear database default if it pointed to this file
+            if ((this.settingsService as any).defaultDatabaseConnectionFile &&
+              (this.settingsService as any).defaultDatabaseConnectionFile.filePath === originalFilePath) {
+              (this.settingsService as any).defaultDatabaseConnectionFile = null;
+            }
+            // clear email default if it pointed to this file
+            if (this.settingsService.defaultEmailConnectionFile &&
+              this.settingsService.defaultEmailConnectionFile.filePath === originalFilePath) {
+              this.settingsService.defaultEmailConnectionFile = null;
+            }
+          }
+
+          // Ensure the in-memory array reference is updated so bindings re-evaluate
+          this.settingsService.connectionFiles = [...(this.settingsService.connectionFiles || [])];
+
+          // If there are no connections left, ensure no default remains
+          if (!this.settingsService.connectionFiles || this.settingsService.connectionFiles.length === 0) {
+            (this.settingsService as any).defaultDatabaseConnectionFile = null;
+            this.settingsService.defaultEmailConnectionFile = null;
+          }
 
           this.messagesService.showInfo(
             `Connection '${selectedConnection.connectionName}' deleted successfully.`,

@@ -45,6 +45,12 @@ public class SqlReporter extends AbstractReporter {
 
 		String connectionCode = sqlOptions.conncode;
 		String sqlQuery = sqlOptions.query;
+		
+		//System.out.println("========================================");
+		//System.out.println("[DEBUG] Original SQL Query:");
+		//System.out.println(sqlQuery);
+		//System.out.println("========================================");
+		
 		log.debug("SQL Options: conncode={}, query={}", connectionCode, sqlQuery);
 
 		if (StringUtils.isBlank(connectionCode)) {
@@ -59,6 +65,12 @@ public class SqlReporter extends AbstractReporter {
 		Jdbi jdbiInstance = this.retrieveJdbiInstance(connectionCode);
 		String jdbiQuery = this.dbHelper.convertToJdbiParameters(sqlQuery);
 		List<String> queryParams = this.dbHelper.findQueryParameters(jdbiQuery);
+		
+		//System.out.println("[DEBUG] Converted JDBI Query:");
+		//System.out.println(jdbiQuery);
+		//System.out.println("[DEBUG] Query Parameters: " + queryParams);
+		//System.out.println("========================================");
+		
 		log.debug("Converted JDBI query: '{}' with params: {}", jdbiQuery, queryParams);
 
 		try (Handle handle = jdbiInstance.open()) {
@@ -67,7 +79,10 @@ public class SqlReporter extends AbstractReporter {
 			// Bind parameters from variables
 			Map<String, Object> currentVars = ctx.variables.getUserVariables(ctx.token);
 
-			//System.out.println("[DEBUG] ctx.variables.getUserVariables(ctx.token): " + currentVars);
+			// DEBUG: User variables
+			//System.out.println("[DEBUG] User Variables (ctx.variables.getUserVariables):");
+			//System.out.println(currentVars);
+			//System.out.println("========================================");
 
 			if (currentVars != null) {
 				for (String paramName : queryParams) {
@@ -95,6 +110,10 @@ public class SqlReporter extends AbstractReporter {
 				}
 				return row;
 			}).list();
+
+			//System.out.println("========================================");
+			//System.out.println("[DEBUG] Query Results:");
+			//System.out.println("  Number of rows fetched: " + dataRows.size());
 
 			// Build header row
 			LinkedHashMap<String, Object> headerMap = new LinkedHashMap<>();

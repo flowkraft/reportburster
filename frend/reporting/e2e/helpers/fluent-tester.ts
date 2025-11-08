@@ -55,15 +55,31 @@ export class FluentTester implements PromiseLike<void> {
     try {
       this._lastError = undefined;
       // eslint-disable-next-line no-constant-condition
+      let actionIndex = 0;
       while (true) {
         if (this.actions.length === 0) {
           break;
         }
         const action = this.actions.shift();
-        action && (await action());
+        if (!action) break;
+
+        // Log before executing the queued action (gives ordering & where it fails)
+        try {
+          const fnPreview = action.toString().split('\n')[0].slice(0, 160);
+          //console.log(`[FluentTester] Executing action #${actionIndex} - preview: ${fnPreview}`);
+        } catch (e) {
+          //console.log(`[FluentTester] Executing action #${actionIndex}`);
+        }
+
+        await action();
+
+        //console.log(`[FluentTester] Action #${actionIndex} completed`);
+        actionIndex++;
       }
     } catch (error) {
       this._lastError = error as Error;
+      //console.error(`[FluentTester] ERROR in queued action: ${error && (error as Error).message}`);
+      // keep remaining actions cleared for deterministic state
       this.actions = [];
       throw error;
     } finally {
@@ -71,11 +87,23 @@ export class FluentTester implements PromiseLike<void> {
     }
   }
 
-  constructor(protected window: Page) { }
+  constructor(public window: Page) { }
 
   public scrollIntoViewIfNeeded(selector: string): FluentTester {
     const action = (): Promise<void> => this.doScrollIntoViewIfNeeded(selector);
 
+    this.actions.push(action);
+    return this;
+  }
+
+  public scrollContainerUntilElementVisible(
+    containerSelector: string,
+    targetSelector: string,
+    maxScrolls: number = 40,
+    stepPx: number = 900,
+  ): FluentTester {
+    const action = (): Promise<void> =>
+      this.doScrollContainerUntilElementVisible(containerSelector, targetSelector, maxScrolls, stepPx);
     this.actions.push(action);
     return this;
   }
@@ -280,8 +308,9 @@ export class FluentTester implements PromiseLike<void> {
   public waitOnTabulatorToBecomeVisible(waitTime?: number): FluentTester {
     let delay = Constants.DELAY_HUNDRED_SECONDS;
     if (waitTime) delay = waitTime;
+    // Wait for the rb-tabulator host (parent) to be visible instead of exact row count
     const action = (): Promise<void> =>
-      this.doWaitOnElementToHaveCount('div.tabulator-row', 1, delay);
+      this.doWaitOnElementToBecomeVisible('rb-tabulator', delay);
 
     this.actions.push(action);
     return this;
@@ -291,10 +320,30 @@ export class FluentTester implements PromiseLike<void> {
    * Wait for the Tabulator table to have exactly expectedCount rows.
    */
   public waitOnTabulatorToHaveRowCount(expectedCount: number, waitTime?: number): FluentTester {
+    // don't log immediately here — log when the action runs
     let delay = Constants.DELAY_HUNDRED_SECONDS;
     if (waitTime) delay = waitTime;
-    const action = (): Promise<void> =>
-      this.doWaitOnElementToHaveCount('div.tabulator-row', expectedCount, delay);
+    const action = async (): Promise<void> => {
+      //console.log(`[waitOnTabulatorToHaveRowCount] Executing expect count: ${expectedCount}`);
+      try {
+        // reuse existing helper which already implements waiting semantics
+        await this.doWaitOnElementToHaveCount('div.tabulator-row', expectedCount, delay);
+        const actual = await this.window.locator('div.tabulator-row').count();
+        //console.log(`[waitOnTabulatorToHaveRowCount] Success: expected=${expectedCount}, actual=${actual}`);
+      } catch (err) {
+        // extra diagnostics when wait fails
+        let actual = -1;
+        try {
+          actual = await this.window.locator('div.tabulator-row').count();
+        } catch (e) {
+          //console.log('[waitOnTabulatorToHaveRowCount] Failed to read actual count:', e);
+        }
+        //console.log(`[waitOnTabulatorToHaveRowCount] Timeout: expected=${expectedCount}, actual=${actual}`);
+        // optionally dump the server-side last response or take a screenshot here
+        // await this.window.screenshot({ path: `debug-tabulator-${Date.now()}.png` });
+        throw err;
+      }
+    };
 
     this.actions.push(action);
     return this;
@@ -642,7 +691,7 @@ export class FluentTester implements PromiseLike<void> {
         })
         .catch(() => {
           // Some dropdowns may have different selection indicators
-          console.log('Warning: .ng-value not found after option selection');
+          //console.log('Warning: .ng-value not found after option selection');
         });
     }
   }
@@ -789,6 +838,18 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  public async elementExistsNow(selector: string, timeout: number = Constants.DELAY_ONE_SECOND): Promise<boolean> {
+    try {
+      if (timeout > 0) {
+        await this.window.waitForSelector(selector, { state: 'attached', timeout });
+      }
+      const count = await this.window.locator(selector).count();
+      return count > 0;
+    } catch (err) {
+      return false;
+    }
+  }
+  
   public elementShouldHaveClass(
     selector: string,
     className: string,
@@ -1014,6 +1075,30 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  public gotoStarterPacks(): FluentTester {
+    const action = (): Promise<void> => this.doGotoStarterPacks();
+    this.actions.push(action);
+    return this;
+  }
+
+  private async doGotoStarterPacks(): Promise<void> {
+    // Open the Help dropdown, then click "Starter Packs / Extra Utils"
+    await this.doHover('#topMenuHelp');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doClick('#topMenuHelp');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
+    await this.doWaitOnElementToBecomeVisible('#topMenuStarterPacks');
+    await this.doClick('#topMenuStarterPacks');
+
+    //await this.doWaitOnElementToBecomeVisible('#starterPacksLoadingIndicator');
+    //await this.waitOnElementToBecomeInvisible('#starterPacksLoadingIndicator');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doWaitOnElementToBecomeVisible('#packSearch');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
+  }
+
   gotoConfigurationTemplates = (): FluentTester => {
     const action = (): Promise<void> => this.doGotoConfigurationTemplates();
 
@@ -1064,7 +1149,11 @@ export class FluentTester implements PromiseLike<void> {
       */
     //await this.doWaitOnElementToBecomeVisible('#topMenuConfigurationTemplates');
     await this.doHover('#topMenuConfigurationTemplates');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
     await this.doClick('#topMenuConfigurationTemplates');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
     /*
    
     await this.doWaitOnElementToBecomeVisible(
@@ -1075,6 +1164,8 @@ export class FluentTester implements PromiseLike<void> {
     await this.doClickAndSelectTableRow(
       `#confTemplatesTable tbody tr:first-child`,
     );
+
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
     await this.doWaitOnElementToBecomeEnabledDisabled(
       '#btnEdit',
@@ -1091,6 +1182,8 @@ export class FluentTester implements PromiseLike<void> {
       true,
       Constants.DELAY_TEN_SECONDS,
     );
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
   }
 
   public gotoConfigurationGeneralSettings(): FluentTester {
@@ -1451,10 +1544,63 @@ export class FluentTester implements PromiseLike<void> {
     try {
       await this.doHover(selector);
       await this.doClick(selector);
+      await this.doWaitOnElementClass(
+        selector,
+        'info',
+        true);
     } catch {
       await this.doHover(selector);
       await this.doDblClick(selector);
+      await this.doWaitOnElementClass(
+        selector,
+        'info',
+        true);
     }
+  }
+
+  private async doScrollContainerUntilElementVisible(
+    containerSelector: string,
+    targetSelector: string,
+    maxScrolls: number,
+    stepPx: number,
+  ): Promise<void> {
+    for (let i = 0; i < maxScrolls; i++) {
+      // Check if element is visible within its scrollable container (not window viewport)
+      const isVisible = await this.window.evaluate(
+        ({ container, target }) => {
+          const containerEl = document.querySelector(container);
+          const targetEl = document.querySelector(target);
+
+          if (!containerEl || !targetEl) return false;
+
+          const containerRect = containerEl.getBoundingClientRect();
+          const targetRect = targetEl.getBoundingClientRect();
+
+          // Check if target is within the container's visible bounds
+          return (
+            targetRect.top >= containerRect.top &&
+            targetRect.bottom <= containerRect.bottom &&
+            targetRect.left >= containerRect.left &&
+            targetRect.right <= containerRect.right
+          );
+        },
+        { container: containerSelector, target: targetSelector },
+      );
+
+      if (isVisible) return;
+
+      // Scroll the container (not the window)
+      await this.window.evaluate(
+        ({ container, step }) => {
+          const el = document.querySelector(container);
+          if (el) el.scrollBy(0, step);
+        },
+        { container: containerSelector, step: stepPx },
+      );
+
+      await Helpers.delay(150);
+    }
+    throw new Error(`scrollContainerUntilElementVisible: '${targetSelector}' not visible in viewport after ${maxScrolls} scrolls`);
   }
 
   private async doTypeText(text: string): Promise<void> {
@@ -2362,7 +2508,11 @@ export class FluentTester implements PromiseLike<void> {
     //await this.doClick('#supportEmail');
 
     await this.doHover('#topMenuBurst');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
+    
     await this.doClick('#topMenuBurst');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
     //await this.doHover('#supportEmail');
     //await this.doClick('#supportEmail');
@@ -2370,9 +2520,12 @@ export class FluentTester implements PromiseLike<void> {
     //await this.doClick('#topMenuBurst');
 
     await this.doHover('#topMenuConfiguration');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
     //await this.doFocus('#topMenuConfiguration');
 
     await this.doClick('#topMenuConfiguration');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
     /*
     await this.doWaitOnElementToBecomeVisible(
@@ -2395,8 +2548,12 @@ export class FluentTester implements PromiseLike<void> {
     );
       */
     await this.doHover('#topMenuConfigurationExternalConnections');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    
     //await this.doFocus('#topMenuConfigurationTemplates');
     await this.doClick('#topMenuConfigurationExternalConnections');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
     /*
    
     await this.doWaitOnElementToBecomeVisible(
@@ -2411,6 +2568,8 @@ export class FluentTester implements PromiseLike<void> {
       `#extConnectionsTable tbody tr:first-child`,
     );
 
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
     await this.doWaitOnElementToBecomeEnabledDisabled(
       '#btnEdit',
       true,
@@ -2422,6 +2581,8 @@ export class FluentTester implements PromiseLike<void> {
       true,
       Constants.DELAY_TEN_SECONDS,
     );
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    
   }
 
   private async doGotoConfiguration(): Promise<void> {
