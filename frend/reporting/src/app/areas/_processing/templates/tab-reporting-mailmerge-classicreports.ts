@@ -191,11 +191,11 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
     </div>
 
     <div
-      *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport && processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.reportParameters.length > 0"
+      *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport && processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.reportParameters &&processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.reportParameters.length > 0"
       class="row" style="margin-top: 10px"
     >
       <div class="col-xs-3">
-        <dburst-report-parameters-form #reportParamsForm)
+        <dburst-report-parameters-form #reportParamsForm
           [parameters]="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.reportParameters"
           (validChange)="onReportParamsValidChange($event)"
           (valueChange)="onReportParamsValuesChange($event)"

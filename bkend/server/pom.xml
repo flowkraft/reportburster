@@ -11,7 +11,7 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
-	<version>11.1.1</version>
+	<version>11.2.0</version>
 
 	<groupId>com.flowkraft</groupId>
 	<artifactId>rb-server</artifactId>
@@ -22,13 +22,13 @@
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
 			<artifactId>rb-common</artifactId>
-			<version>11.1.1</version>
+			<version>11.2.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
 			<artifactId>rb-reporting</artifactId>
-			<version>11.1.1</version>
+			<version>11.2.0</version>
 		</dependency>
 
 		<!--

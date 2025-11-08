@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 11.2.0 - 2024-11-10
+
+### Added
+
+- Improved support for reporting across multiple database vendors
+
 ## 11.1.1 - 2024-09-29
 
 ### Added

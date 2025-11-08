@@ -69,7 +69,7 @@ export class StarterPacksService {
       id: 'db-northwind-postgres', // Unique ID for this specific instance
       family: 'database', // Matches CLI family
       packName: 'northwind', // Matches CLI pack_name
-      target: 'postgresql', // Specific vendor/target
+      target: 'postgres', // Specific vendor/target
       displayName: 'Northwind DB (PostgreSQL)',
       description: 'Sample PostgreSQL database.',
       icon: 'postgresql', // Use simple key matching iconMap

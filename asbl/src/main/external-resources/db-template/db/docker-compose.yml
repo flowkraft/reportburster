@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16.2
-    container_name: rb-northwind-postgresql
+    container_name: rb-northwind-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -9,8 +9,7 @@ services:
     ports:
       - "${POSTGRES_PORT}:5432"
     volumes:
-      - ${DATA_ROOT_DIR}/sample-northwind-postgresql:/var/lib/postgresql/data
-      - ${LOG_ROOT_DIR}-postgresql:/var/log/postgresql
+      - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
   mysql:
@@ -23,8 +22,7 @@ services:
     ports:
       - "${MYSQL_PORT}:3306"
     volumes:
-      - ${DATA_ROOT_DIR}/sample-northwind-mysql:/var/lib/mysql
-      - ${LOG_ROOT_DIR}-mysql:/var/log/mysql
+      - mysql_data:/var/lib/mysql
     command: --general-log=1 --general-log-file=/var/log/mysql/mysql-general.log
     restart: unless-stopped
 
@@ -36,15 +34,14 @@ services:
       MARIADB_DATABASE: ${MARIADB_DB}
       MARIADB_ROOT_HOST: '%'
     ports:
-      - "${MARIADB_PORT}:3306"  # Using 3307 to avoid conflict with MySQL
+      - "${MARIADB_PORT}:3306"  # set MARIADB_PORT (e.g. 3307) if you need to avoid conflicts
     volumes:
-      - ${DATA_ROOT_DIR}/sample-northwind-mariadb:/var/lib/mysql
-      - ${LOG_ROOT_DIR}-mariadb:/var/log/mysql
+      - mariadb_data:/var/lib/mysql
     command: --general-log=1 --general-log-file=/var/log/mysql/mariadb-general.log
     restart: unless-stopped
 
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/mssql/server:2019-latest
     container_name: rb-northwind-sqlserver
     environment:
       ACCEPT_EULA: Y
@@ -53,38 +50,55 @@ services:
     ports:
       - "${SQLSERVER_PORT}:1433"
     volumes:
-      - ${DATA_ROOT_DIR}/sample-northwind-sqlserver:/var/opt/mssql
-      - ${LOG_ROOT_DIR}-sqlserver:/var/opt/mssql/log
+      - sqlserver_data:/var/opt/mssql
     restart: unless-stopped
 
   oracle:
     image: gvenzl/oracle-xe:21-slim-faststart
     container_name: rb-northwind-oracle
     environment:
-      ORACLE_PASSWORD: ${ORACLE_PASSWORD}
-      ORACLE_DATABASE: XE
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:-oracle}
+      APP_USER: ${ORACLE_USER:-oracle}
+      APP_USER_PASSWORD: ${ORACLE_PASSWORD:-oracle}
       ORACLE_CHARACTERSET: AL32UTF8
     ports:
-      - "${ORACLE_PORT}:1521"
+      - "${ORACLE_PORT:-1521}:1521"
     volumes:
-      - ${DATA_ROOT_DIR}/sample-northwind-oracle:/opt/oracle/oradata
-      - ${LOG_ROOT_DIR}-oracle:/opt/oracle/diag/rdbms
+      - oracle_data:/opt/oracle/oradata
     restart: unless-stopped
     command: --databaseConfigurationType=SMALL
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   db2:
-    image: icr.io/db2_community/db2:12.1.0
+    image: icr.io/db2_community/db2:11.5.9.0
     container_name: rb-northwind-db2
     privileged: true
     environment:
       LICENSE: accept
       DB2INST1_PASSWORD: ${DB2_PASSWORD}
       DBNAME: ${DB2_DB}
-      PERSISTENT_HOME: "true"
-      ARCHIVE_LOGS: "true"
+      PERSISTENT_HOME: "false"
+      ARCHIVE_LOGS: "false"
+      BLU: "false"
     ports:
       - "${DB2_PORT}:50000"
     volumes:
-      - ${DATA_ROOT_DIR}/sample-northwind-db2:/database
-      - ${LOG_ROOT_DIR}-db2:/database/db2dump
-    restart: unless-stopped  
+      - db2_data:/database
+    healthcheck:
+      test: ["CMD-SHELL", "su - db2inst1 -c 'db2 connect to ${DB2_DB} >/dev/null 2>&1 && db2 terminate'"]
+      interval: 30s
+      timeout: 10s
+      retries: 30
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  mysql_data:
+  mariadb_data:
+  sqlserver_data:
+  oracle_data:
+  db2_data:

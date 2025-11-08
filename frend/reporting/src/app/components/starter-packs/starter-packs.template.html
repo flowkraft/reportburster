@@ -79,7 +79,7 @@
   </div>
 
   <!-- Loading/Error/No Results Messages -->
-  <div *ngIf="isLoading" class="text-center">
+  <div *ngIf="isLoading" id="starterPacksLoadingIndicator" class="text-center">
     Loading starter packs... <i class="fa fa-spinner fa-spin"></i>
   </div>
   <div *ngIf="!isLoading && error" class="alert alert-danger">{{ error }}</div>
@@ -106,6 +106,7 @@
     >
       <div
         class="panel"
+        [id]="'starterPack_' + pack.id"
         [ngClass]="{
           'panel-info': pack.status === 'running',
           'panel-primary': pack.status === 'starting' || pack.status === 'stopping',
@@ -161,12 +162,14 @@
                       'btn-default': pack.status === 'stopped' || pack.status === 'unknown' || pack.status === 'error',
                       'btn-primary': pack.status === 'running'
                     }"
+              [id]="'btnStartStop_' + pack.id"
               (click)="togglePackState(pack)"
               [title]="pack.status === 'running' ? 'Stop using the command above' : 'Start using the command above'"
             >
               <i
                 *ngIf="pack.status !== 'starting' && pack.status !== 'stopping'"
                 class="fa"
+                [id]="'starterPackIcon_' + pack.id"
                 [ngClass]="{
                   'fa-play': pack.status === 'stopped' || pack.status === 'unknown' || pack.status === 'error',
                   'fa-stop': pack.status === 'running'
@@ -174,6 +177,7 @@
               ></i>
               <i
                 *ngIf="pack.status === 'starting' || pack.status === 'stopping'"
+                [id]="'starterPackSpinner_' + pack.id"
                 class="fa fa-spinner fa-spin"
               ></i>
               {{ pack.status === 'running' ? 'Stop' : pack.status === 'starting' ? 'Starting' : pack.status === 'stopping' ? 'Stopping' : 'Start' }}

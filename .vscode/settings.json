@@ -17,5 +17,15 @@
     "**/Thumbs.db": true,
     "**/CVS": true
   },
-  "hide-files.files": []
+  "hide-files.files": [],
+  "java.compile.nullAnalysis.mode": "disabled",
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "driver": "SQLite",
+      "database": "${workspaceFolder:reportburster}/frend/reporting/testground/e2e/db/sample-northwind-sqlite/northwind.db",
+      "name": "Northwind"
+    }
+  ],
+  "sqltools.useNodeRuntime": true
 }

@@ -1,94 +1,81 @@
-**ReportBurster Development Principles**
+## **ReportBurster Development Principles**
 
-1.  **Above all, simplicity and pragmatism trump everything.**  
-    *  Prefer the most straightforward, to‑the‑point solution that gets the job done.  
-    *  Change only what is strictly required for the task; avoid touching unrelated lines or files.  
-    *  Before finishing, ask: "could this be done even simpler?"
+1. **Solve the real request — prioritize delivering the intended outcome.**  
+    * Ensure the offered solution (often code) truly solves the user's original need, not just the surface symptom.  
+    * Ask: "Does this genuinely fulfill the request in the spirit it was asked?"  
+    * Prefer pragmatic completeness: choose a clear, correct fix over a tiny patch that leaves follow-up work.
 
-2.  **Everyday Development Practices:**
-    *  **Code hygiene:** Keep PRs small and focused; include tests and clear change descriptions
-    *  **Static analysis:** Use SpotBugs/ErrorProne, ESLint/Prettier, PHPStan to catch issues early
-    *  **Dead code elimination:** Regularly identify and remove unused folders, files, and code chunks
-    *  **SOLID adherence:** Continuously improve code to follow Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion principles (Clean Code by Robert C. Martin 'Uncle Bob')
-    *  **Incremental refactoring:** Make small, targeted changes that minimize collateral impact
+2. **Above all, simplicity and pragmatism trump everything.**  
+    * Prefer the most straightforward, to‑the‑point solution that gets the job done.  
+    * Follow the KISS principle — *Keep It Simple, Stupid*. Simplicity improves readability, changeability and long‑term safety.  
+    * Favor clarity over cleverness — readable code is maintainable code.  
+    * Change only what is strictly required; avoid touching unrelated lines or files.  
+    * Decision rule: prefer the simplest change that fully solves the request; if simplicity cannot deliver the intended outcome, expand scope pragmatically and document the rationale and tests showing completeness.  
+    * Before finishing, ask: "could this be done even simpler?"
 
-3.  **Code Complexity and Structure:**  
-    *  Keep code complexity appropriate and intent-revealing.  
-    *  Organize code into meaningful packages, modules and classes.  
-    *  Ensure functions and components have a well-defined purpose and are not overly granular or tangled.
+3. **Everyday Development Practices:**  
+    * **Code hygiene:** Keep PRs small and focused; include tests and clear change descriptions.  
+    * **Static analysis:** Use SpotBugs/ErrorProne, ESLint/Prettier, PHPStan to catch issues early.  
+    * **Dead code elimination:** Remove unused folders, files and code regularly.  
+    * **SOLID:** Aim for Single Responsibility, Open/Closed, Liskov, Interface Segregation and Dependency Inversion where they make designs clearer.  
+    * **Incremental refactoring:** Make small, targeted changes to minimize collateral impact.  
+    * **Balance DRY and YAGNI:** Extract clear, well‑named abstractions when they reduce maintenance cost; otherwise prefer readable duplication to premature or confusing generalisation.  
+    * **Understandability as a habit:** Write code others can easily read and reason about.
 
-4.  **Domain-Driven Design (DDD by Eric Evans) — Naming, Packages & API design:**  
-    *  Naming: use clear, semantic, functionally meaningful names across Java, APIs and frontend artifacts.  
-    *  Package/module structure: organize packages and Angular modules to reflect domain boundaries and responsibilities.  
-    *  API design: prefer balanced granularity — avoid tiny trivial endpoints and avoid monolith/god-like APIs. Design clear contracts and version breaking changes.
+4. **Code Complexity and Structure:**  
+    * Keep complexity appropriate and intent‑revealing; organize code into meaningful packages, modules and classes.  
+    * Ensure functions and components have a clear purpose and are not overly tangled.  
+    * Favor understandable, expressive and modular code. Use the C4 model to communicate structure across levels.
 
-5.  **Dependency Management:**  
-    *  Minimize unnecessary dependencies.  
-    *  Avoid redundant libraries that duplicate functionality.  
-    *  Regularly review all `pom.xml` files and `package.json` to remove duplicates and reduce attack surface and maintenance cost.
+5. **Domain-Driven Design (DDD) — Naming, Packages & API design:**  
+    * Use clear, semantic names and package/module boundaries that reflect domain responsibilities.  
+    * Design APIs with balanced granularity; avoid trivial endpoints and monolithic god‑APIs. Version breaking changes clearly.  
+    * Naming and structure are essential to clarity — choose names that reveal intent.
 
-6.  **Component-based webapp (lego-like):**  
-    *  Build the UI as meaningful, independent components that are easy to start, test and validate in isolation.  
-    *  Provide small fixtures/stubs and clear inputs/outputs; keep UI behavior self-contained and expose simple integration points.  
-    *  Prefer component-local state or well-scoped stores per functional area; if a global state is used, partition it per area.
-    *  If done well, this reduces coupling, improves maintainability, and enables easy isolated testing of components using tools like Storybook (or similar).
+6. **Dependency Management:**  
+    * Minimize and review dependencies regularly; remove redundant libraries.  
+    * Keep major frameworks reasonably current (~2 years preferred); plan upgrades for large framework deps to avoid downstream drift.  
+    * Regularly review pom.xml and package.json files to reduce attack surface and maintenance cost.
 
-7.  **Frontend - Bootstrap & AdminLTE Code Isolation:**  
-    *  Isolate Bootstrap- and AdminLTE-related code so upgrades or replacements are low friction.  
-    *  When full isolation isn't feasible, structure code to simplify searching, replacing and grepping.
-    *  If done well, this reduces coupling, improves maintainability, and enables near‑effortless upgrades (e.g. Bootstrap 3 → Bootstrap 5) or migration to alternative CSS frameworks such as Tailwind CSS (with DaisyUI) or ShadCN UI.
+7. **Component-based webapp (lego-like):**  
+    * Build the UI as independent components with clear inputs/outputs and small fixtures/stubs for testing.  
+    * Prefer component-local state or well-scoped stores; partition global state by area when necessary.  
+    * Well-scoped components reduce coupling and enable isolated testing (e.g., Storybook).
 
-8.  **Electron Code Minimization:**  
-    *  Keep Electron-specific code to an absolute minimum.  
-    *  (Re)question the necessity of each Electron-only features and prefer server-side or web implementations (Spring Boot, APIs) where practical.
-    *  If done well, this reduces complexity and improves maintainability — and enables near‑effortless migration to alternative desktop frameworks (for example, Tauri) or pure web deployments when a different approach is preferable.
+8. **Frontend — Bootstrap & AdminLTE Code Isolation:**  
+    * Isolate framework-specific code so upgrades or replacements are low friction.  
+    * When full isolation isn't feasible, structure code to simplify searching and replacing.
 
-9.  **Continuous Delivery (Dave Farley) — key practical principles**  
-    *  Small, releasable changes: make changes minimal and independently deployable so releases become routine.  
-       - What to do: break work into tiny increments, keep PRs small.  
-       - Why: reduces risk, simplifies rollback and speeds feedback.  
-    *  Fast, automated feedback (build, test, deploy): automate the pipeline end-to-end so every change gets immediate verification.  
-       - What to do: run unit, integration, and fast E2E checks in CI; gate merges on green pipelines; deploy to staging automatically.  
-       - Why: catches regressions early and keeps confidence high for frequent releases.  
-    *  Keep the mainline healthy; use feature toggles not long-lived branches: prefer trunk-based development with toggles to decouple deployment from feature release.  
-       - What to do: merge frequently to main/trunk, use short-lived branches only when unavoidable, protect main with fast CI gates, and use feature flags for incomplete work.  
-       - Why: reduces merge pain, prevents drift, and enables safe incremental rollout.
+9. **Electron Code Minimization:**  
+    * Keep Electron-specific code minimal. Reevaluate Electron-only features and prefer web/server solutions where practical.  
+    * Minimizing Electron code reduces complexity and eases migration (e.g., to Tauri or pure web).
 
-10. **Embrace the Twelve-Factor App Methodology:**
-    *  Follow Twelve-Factor principles to ensure apps are portable, configurable, and scalable.
-    *  This supports repeatable deploys, clear config separation, and simpler operational practices.
-    *  **The 12 factors:**
-       - I. Codebase: One codebase tracked in revision control, many deployments
-       - II. Dependencies: Explicitly declare and isolate dependencies
-       - III. Config: Store config in the environment, not in code
-       - IV. Backing services: Treat attached resources (databases, queues) as attached services
-       - V. Build/release/run: Strictly separate build and run stages
-       - VI. Processes: Execute the app as one or more stateless processes
-       - VII. Port binding: Export services via port binding
-       - VIII. Concurrency: Scale out via the process model
-       - IX. Disposability: Maximize robustness with fast startup and graceful shutdown
-       - X. Dev/prod parity: Keep development, staging, and production as similar as possible
-       - XI. Logs: Treat logs as event streams
-       - XII. Admin processes: Run admin/management tasks as one-off processes
+10. **Continuous Delivery (Dave Farley) — key practical principles**  
+    * Small, releasable changes: break work into tiny increments and keep PRs small.  
+    * Fast, automated feedback: run unit, integration and fast E2E in CI and gate merges on green.  
+    * Keep mainline healthy: prefer trunk-based development and feature toggles over long-lived branches.
 
-11. **Testing & Quality Gates (operational guidance):**  
-    *  Gate merges with unit tests, static analysis and fast integration checks.  
-    *  Use Playwright for critical cross-browser E2E flows and Robot Framework for business UAT scenarios.  
-    *  Keep test data deterministic with fixtures/factories and isolated test databases.
+11. **Embrace the Twelve-Factor App Methodology:**  
+    * Apply the Twelve-Factor principles for portability, clear config separation and repeatable deploys (codebase, dependencies, config, backing services, build/release/run, processes, port binding, concurrency, disposability, dev/prod parity, logs, admin processes).
 
-12. **E2E / UAT runtime and optimisation:**  
-    *  The full E2E suite (100+ Playwright tests) and Robot Framework UATs can take many hours; aim to reduce unnecessary duplication while keeping coverage.  
-    *  Practical guidance: identify duplicated flows and consolidate, tag/group tests for focused runs, evaluate parallel execution/headless runners, stub expensive external calls, and optimize waits/timeouts and shared setup.  
-    *  Keep long, comprehensive suites for pre-release/nightly pipelines and provide fast focused subsets for development.
+12. **Testing & Quality Gates (operational guidance):**  
+    * Gate merges with unit tests, static analysis and fast integration checks.  
+    * Use Playwright for primary business E2E flows; reserve Robot Framework for a minimal UAT smoke set that verifies packaged app runtime.  
+    * Keep test data deterministic with fixtures/factories and isolated test databases.
 
-13. **Release readiness:**
-    * Include DB migrations with rollback steps and performance impact notes for each release
-    * Add basic monitoring for new services to track health and performance
-    * Document any feature flags needed for the release
+13. **E2E / UAT runtime and optimisation:**  
+    * Reduce duplication, tag/group tests for focused runs, parallelize where safe, and stub expensive external calls.  
+    * Keep long suites for nightly/pre-release and fast subsets for development. Quarantine known flakies and capture traces/screenshots/videos on failure.  
+    * Prefer stable selectors and explicit synchronization; avoid pervasive arbitrary sleeps.
 
-14. **Security essentials:**
-    * Validate all inputs at system boundaries following OWASP guidelines
-    * Encrypt sensitive data at rest, limit PII logging, enforce least-privilege access
-    * Mask or scrub all test data to remove production PII
+14. **Release readiness:**  
+    * Include DB migrations with rollback steps and performance notes.  
+    * Add basic monitoring for new services and document any feature flags required for the release.  
+    * Provide a short release checklist with acceptance tests and rollback criteria.
 
-IMPORTANT: These principles are ordered to reflect how good development actually works: start with core philosophy and daily coding fundamentals, progress through structural principles and domain-specific applications, then address methodologies as natural outcomes, finishing with quality, release, and security practices.
+15. **Security essentials:**  
+    * Validate inputs at system boundaries (OWASP), encrypt sensitive data at rest, limit PII logging and enforce least privilege.  
+    * Mask or scrub test data to remove production PII.  
+    * Review third‑party deps for vulnerabilities and apply security fixes promptly.
+
+IMPORTANT: These principles are ordered to reflect practical development flow: start with core philosophy and daily coding fundamentals, progress through structure and domain concerns, then address methodologies, quality, release and security practices.

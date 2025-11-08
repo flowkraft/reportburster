@@ -12,46 +12,59 @@ public class ServerDatabaseSettings extends DumpToString {
 	public String userid;
 	public String userpassword;
 	public boolean usessl;
-	public String connectionstring;
 	public String defaultquery;
 
-	// Keep these if you need them
 	public String driver; // JDBC driver class
-	public String url; // Complete JDBC URL
+	public String url;    // Complete JDBC URL
 
 	public void ensureDriverAndUrl() {
-		if (this.type == null)
-			return;
-		switch (this.type.toLowerCase()) {
-		case "sqlite":
-			if (this.driver == null || this.driver.isEmpty())
-				this.driver = "org.sqlite.JDBC";
-			if (this.url == null || this.url.isEmpty())
-				this.url = this.connectionstring != null ? this.connectionstring : "jdbc:sqlite:" + this.database;
-			break;
-		case "mysql":
-			if (this.driver == null || this.driver.isEmpty())
-				this.driver = "com.mysql.cj.jdbc.Driver";
-			if (this.url == null || this.url.isEmpty())
-				this.url = this.connectionstring != null ? this.connectionstring
-						: "jdbc:mysql://" + this.host + ":" + this.port + "/" + this.database;
-			break;
-		case "postgresql":
-			if (this.driver == null || this.driver.isEmpty())
-				this.driver = "org.postgresql.Driver";
-			if (this.url == null || this.url.isEmpty())
-				this.url = this.connectionstring != null ? this.connectionstring
-						: "jdbc:postgresql://" + this.host + ":" + this.port + "/" + this.database;
-			break;
-		case "sqlserver":
-			if (this.driver == null || this.driver.isEmpty())
-				this.driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
-			if (this.url == null || this.url.isEmpty())
-				this.url = this.connectionstring != null ? this.connectionstring
-						: "jdbc:sqlserver://" + this.host + ":" + this.port + ";databaseName=" + this.database;
-			break;
-		// Add more DB types as needed
+		if (this.type == null) return;
+		String t = this.type.toLowerCase();
+
+		switch (t) {
+			case "sqlite":
+				if (isBlank(this.driver)) this.driver = "org.sqlite.JDBC";
+				// database holds the file path for sqlite
+				if (isBlank(this.url))    this.url    = "jdbc:sqlite:" + this.database;
+				break;
+
+			case "mysql":
+				if (isBlank(this.driver)) this.driver = "com.mysql.cj.jdbc.Driver";
+				if (isBlank(this.url)) {
+					String ssl = this.usessl ? "true" : "false";
+					this.url = "jdbc:mysql://" + host + ":" + port + "/" + database
+					        + "?useSSL=" + ssl + "&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+				}
+				break;
+
+			case "mariadb":
+				if (isBlank(this.driver)) this.driver = "org.mariadb.jdbc.Driver";
+				if (isBlank(this.url))    this.url    = "jdbc:mariadb://" + host + ":" + port + "/" + database;
+				break;
+
+			case "postgresql":
+			case "postgres":
+				if (isBlank(this.driver)) this.driver = "org.postgresql.Driver";
+				if (isBlank(this.url))    this.url    = "jdbc:postgresql://" + host + ":" + port + "/" + database;
+				break;
+
+			case "sqlserver":
+				if (isBlank(this.driver)) this.driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+				if (isBlank(this.url))    this.url    = "jdbc:sqlserver://" + host + ":" + port + ";databaseName=" + database + ";encrypt=false";
+				break;
+
+			case "oracle":
+				if (isBlank(this.driver)) this.driver = "oracle.jdbc.driver.OracleDriver";
+				if (isBlank(this.url))    this.url    = "jdbc:oracle:thin:@" + host + ":" + port + "/" + database;
+				break;
+
+			case "ibmdb2":
+			case "db2":
+				if (isBlank(this.driver)) this.driver = "com.ibm.db2.jcc.DB2Driver";
+				if (isBlank(this.url))    this.url    = "jdbc:db2://" + host + ":" + port + "/" + database;
+				break;
 		}
 	}
 
+	private static boolean isBlank(String s) { return s == null || s.isEmpty(); }
 }

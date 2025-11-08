@@ -1666,46 +1666,51 @@ export class ProcessingComponent implements OnInit {
       this.processingService.procReportingMailMergeInfo
         .selectedMailMergeClassicReport;
 
-    //console.log('[btnGenerateReports] selectedReport:', selectedReport);
-
     if (!selectedReport) return true;
 
-    const doesSelectedReportRequiresAnInputFile =
-      this.doesSelectedReportRequiresAnInputFile();
-    //console.log('[btnGenerateReports] doesSelectedReportRequiresAnInputFile:', doesSelectedReportRequiresAnInputFile);
-    //console.log('[btnGenerateReports] inputFileName:', this.processingService.procReportingMailMergeInfo.inputFileName);
-    //console.log('[btnGenerateReports] prefilledInputFilePath:', this.processingService.procReportingMailMergeInfo.prefilledInputFilePath);
+    const requiresInput = this.doesSelectedReportRequiresAnInputFile();
 
     let shouldBeDisabled = true;
 
-    if (doesSelectedReportRequiresAnInputFile) {
+    if (requiresInput) {
       shouldBeDisabled =
         !this.processingService.procReportingMailMergeInfo.inputFileName &&
-        !this.processingService.procReportingMailMergeInfo
-          .prefilledInputFilePath;
+        !this.processingService.procReportingMailMergeInfo.prefilledInputFilePath;
     } else {
+      // no input file required
       if (
         selectedReport.reportParameters &&
         selectedReport.reportParameters.length > 0
       ) {
-        //console.log('[btnGenerateReports] reportParamsValid:', this.reportParamsValid);
+        // requires parameters -> disable if params invalid
         shouldBeDisabled = !this.reportParamsValid;
+      } else {
+        // no input required and no parameters -> enable button
+        shouldBeDisabled = false;
       }
     }
-
-    //console.log('[btnGenerateReports] numberOfActiveJobs:', this.executionStatsService.jobStats.numberOfActiveJobs);
 
     shouldBeDisabled =
       shouldBeDisabled ||
       this.executionStatsService.jobStats.numberOfActiveJobs > 0;
 
-    //console.log('[btnGenerateReports] shouldBeDisabled:', shouldBeDisabled);
-
     return shouldBeDisabled;
   }
 
   shouldBeDisabledViewDataButton(): boolean {
-    return !this.reportParamsValid;
+    const selectedReport =
+      this.processingService.procReportingMailMergeInfo
+        .selectedMailMergeClassicReport;
+    // disable until a report is selected
+    if (!selectedReport) return true;
+
+    // if the selected report requires parameters, disable when params are invalid
+    if (this.doesSelectedReportRequiresParameters()) {
+      return !this.reportParamsValid;
+    }
+
+    // selected report has no parameters -> enable View Data
+    return false;
   }
 
   private convertParamValue(type: string, value: any): any {
