@@ -11,7 +11,12 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
-	<version>11.2.0</version>
+	<version>${revision}</version>
+
+	<properties>
+        <!-- Define revision here since this module doesn't inherit from your parent -->
+        <revision>11.2.0</revision>
+    </properties>
 
 	<groupId>com.flowkraft</groupId>
 	<artifactId>rb-server</artifactId>
@@ -22,13 +27,13 @@
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
 			<artifactId>rb-common</artifactId>
-			<version>11.2.0</version>
+			<version>${revision}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.sourcekraft.documentburster</groupId>
 			<artifactId>rb-reporting</artifactId>
-			<version>11.2.0</version>
+			<version>${revision}</version>
 		</dependency>
 
 		<!--

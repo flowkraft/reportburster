@@ -12,8 +12,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -50,8 +48,8 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sourcekraft.documentburster.common.settings.model.ReportSettings;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.utils.CsvUtils;
+import com.sourcekraft.documentburster.utils.DocumentBursterFreemarkerInitializer;
 import com.sourcekraft.documentburster.utils.Scripts;
-import com.sourcekraft.documentburster.utils.Utils;
 import com.sourcekraft.documentburster.variables.Variables; // Assuming Variables class exists
 
 import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
@@ -76,7 +74,8 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 	public void setReportParameters(Map<String, String> reportParameters) {
 
-		//System.out.println("[DEBUG] AbstractReporter.setReportParameters called with: " + reportParameters);
+		// System.out.println("[DEBUG] AbstractReporter.setReportParameters called with:
+		// " + reportParameters);
 
 		this.reportParameters = reportParameters;
 	}
@@ -134,10 +133,14 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 		if (reportParameters != null) {
 			reportParameters.forEach((k, v) -> {
-				//System.out.println("[DEBUG] Setting ctx.variables " + k + " = " + v);
+				// System.out.println("[DEBUG] Setting ctx.variables " + k + " = " + v);
 				ctx.variables.set(k, v);
 			});
 		}
+
+		DocumentBursterFreemarkerInitializer.configureFreeMarker(ctx.settings.docSettings.settings.locale, // Existing <locale> section
+				ctx.settings.docSettings.settings.freemarker // Optional <freemarker> section (can be null)
+		);
 
 		if (this.isPreviewMode)
 			this._setPreviewMode();
@@ -221,7 +224,8 @@ public abstract class AbstractReporter extends AbstractBurster {
 					for (Map.Entry<String, Object> entry : row.entrySet()) {
 						String currentKey = entry.getKey();
 						if (currentKey != null && currentKey.toLowerCase().equals(lowerIdColumnSetting)) {
-							token = Objects.toString(entry.getValue(), String.valueOf(index + 1)); // Fallback to index
+							token = Objects.toString(entry.getValue(), String.valueOf(index + 1)); // Fallback to
+																									// index
 							log.trace("Found token using case-insensitive idcolumn '{}' (original key '{}'): {}",
 									idColumnSetting, currentKey, token);
 							found = true;
@@ -372,19 +376,18 @@ public abstract class AbstractReporter extends AbstractBurster {
 				// fallback below
 			}
 		}
-		// 3) Try to parse as a date
-		List<SimpleDateFormat> dateFormats = new ArrayList<>();
-		dateFormats.add(new SimpleDateFormat("MMMM yyyy"));
-		dateFormats.add(new SimpleDateFormat("yyyy-MM-dd"));
-		dateFormats.add(new SimpleDateFormat("MM/dd/yyyy"));
-		dateFormats.add(new SimpleDateFormat("dd-MMM-yyyy"));
-		for (SimpleDateFormat fmt : dateFormats) {
-			try {
-				fmt.setLenient(false);
-				return fmt.parse(trimmed);
-			} catch (ParseException ignored) {
-			}
-		}
+
+		// COMMENTED OUT: Date parsing causes locale-dependent issues
+		/*
+		 * // 3) Try to parse as a date List<SimpleDateFormat> dateFormats = new
+		 * ArrayList<>(); dateFormats.add(new SimpleDateFormat("MMMM yyyy"));
+		 * dateFormats.add(new SimpleDateFormat("yyyy-MM-dd")); dateFormats.add(new
+		 * SimpleDateFormat("MM/dd/yyyy")); dateFormats.add(new
+		 * SimpleDateFormat("dd-MMM-yyyy")); for (SimpleDateFormat fmt : dateFormats) {
+		 * try { fmt.setLenient(false); return fmt.parse(trimmed); } catch
+		 * (ParseException ignored) { } }
+		 */
+
 		// 4) Fallback to the original string
 		return value;
 	}
@@ -392,7 +395,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 	private void generateFileFromFreemarkerTemplate(String extractedFilePath, String templatePath,
 			Map<String, Object> userVariables, String bType) throws Exception {
 		String template = FileUtils.readFileToString(new File(templatePath), "UTF-8");
-		Template engine = new Template("template", template, Utils.freeMarkerCfg);
+		Template engine = new Template("template", template, DocumentBursterFreemarkerInitializer.FREE_MARKER_CFG);
 		StringWriter stringWriter = new StringWriter();
 		engine.process(userVariables, stringWriter);
 		stringWriter.flush();
@@ -414,7 +417,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 	private String generateFileContentFromFreemarkerTemplate(String templatePath, Map<String, Object> userVariables)
 			throws Exception {
 		String template = FileUtils.readFileToString(new File(templatePath), "UTF-8");
-		Template engine = new Template("template", template, Utils.freeMarkerCfg);
+		Template engine = new Template("template", template, DocumentBursterFreemarkerInitializer.FREE_MARKER_CFG);
 		StringWriter stringWriter = new StringWriter();
 		engine.process(userVariables, stringWriter);
 		stringWriter.flush();
@@ -427,6 +430,9 @@ public abstract class AbstractReporter extends AbstractBurster {
 			Map<String, Object> variablesData) throws Exception {
 		InputStream is = Files.newInputStream(Paths.get(templatePath));
 		IXDocReport report = XDocReportRegistry.getRegistry().loadReport(is, TemplateEngineKind.Freemarker);
+
+		DocumentBursterFreemarkerInitializer.applySettingsTo(report.getTemplateEngine());
+		
 		IContext context = report.createContext();
 		context.putMap(variablesData);
 		OutputStream out = new FileOutputStream(new File(documentPath));
@@ -584,7 +590,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 		ctx.settings.setSendFilesWeb(false);
 
 		ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_NONE;
-		
+
 	}
 
 	public void setPreviewMode(boolean isPreviewMode) {
@@ -637,7 +643,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 		String[] roots = new String[] { configFolderPath, defaultRoots[0], defaultRoots[1] };
 		scripting.setRoots(roots);
-		//log.info("Added config folder to scripting roots: {}", configFolderPath);
+		// log.info("Added config folder to scripting roots: {}", configFolderPath);
 
 		// Compose expected script file name
 		String additionalScriptName = this.getReportFolderName() + "-additional-transformation.groovy";

@@ -86,6 +86,7 @@ public class BursterSettings extends DumpToString {
 	public SimpleJavaMail simplejavamail;
 
 	public Locale locale;
+	public FreeMarkerSettings freemarker;
 
 	public int numberofuservariables;
 	public double delayeachdistributionby;

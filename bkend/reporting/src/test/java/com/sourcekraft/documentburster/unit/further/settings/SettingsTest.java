@@ -148,8 +148,15 @@ public class SettingsTest {
 		assertTrue(StringUtils.isBlank(settings.getSimpleJavaMail().proxy.password));
 		assertEquals(1081, settings.getSimpleJavaMail().proxy.socks5bridgeport);
 
-		assertTrue(StringUtils.isBlank(settings.getLanguage()));
-		assertTrue(StringUtils.isBlank(settings.getCountry()));
+		assertEquals("en", settings.getLanguage());
+        assertEquals("US", settings.getCountry());
+
+        // FreeMarker settings from settings.xml
+        assertNotNull("FreeMarker settings must be present", settings.getFreeMarkerSettings());
+        assertEquals("MM/dd/yyyy", settings.getFreeMarkerSettings().dateformat);
+        assertEquals("HH:mm:ss", settings.getFreeMarkerSettings().timeformat);
+        assertEquals("MM/dd/yyyy HH:mm:ss", settings.getFreeMarkerSettings().datetimeformat);
+        assertEquals("0.######", settings.getFreeMarkerSettings().numberformat);
 
 		assertEquals(20, settings.getNumberOfUserVariables());
 

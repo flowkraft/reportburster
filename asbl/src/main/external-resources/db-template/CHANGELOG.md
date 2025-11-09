@@ -2,13 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## 11.2.0 - 2024-11-10
+## 11.2.0 - 2025-11-10
 
 ### Added
 
 - Improved support for reporting across multiple database vendors
 
-## 11.1.1 - 2024-09-29
+## 11.1.1 - 2025-09-29
 
 ### Added
 
@@ -55,7 +55,7 @@ All notable changes to this project will be documented in this file.
 - "Samples/7. Generate (HTML) Monthly Payslips" for users to quickly "Try It"
 - "Samples/8. Generate (PDF) Monthly Payslips" for users to quickly "Try It"
 
-## 10.2.4 - 2024-02-25
+## 10.2.4 - 2025-02-25
 
 ### Fixed
 

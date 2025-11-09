@@ -25,7 +25,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		System.out.println("Maven parent POM path: " + mavenParentPomXmlPath);
 
 		// First install the actual parent POM from its correct location
-		Utils.runMaven(mavenParentPomXmlPath, "mvn install");
+		Utils.runMaven(mavenParentPomXmlPath, "mvn install -U");
 
 		System.out.println(
 				"------------------------------------- DONE_00:NoExeAssembler Utils.runMaven('../xtra-tools/bild/common-scripts/maven', mvn install) ... -------------------------------------");
@@ -35,7 +35,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		// assembly is not required to be compiled and should be excluded otherwise
 		// 'mvn -pl -assembly clean install' command will be executed recursively in an
 		// INFINITE loop
-		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl -asbl clean install");
+		Utils.runMaven(Utils.getTopProjectFolderPath(), "mvn -pl -asbl clean install -am -U");
 
 		System.out.println(
 				"------------------------------------- DONE_01:NoExeAssembler Utils.runMaven(Utils.getTopProjectFolderPath(), mvn clean install) ... -------------------------------------");

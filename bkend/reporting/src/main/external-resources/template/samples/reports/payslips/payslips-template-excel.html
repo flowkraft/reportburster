@@ -68,7 +68,7 @@
       .white-on-white {
         color: #ffffff;
         background-color: #ffffff;
-        border: none"
+        border: none
       }
     </style>
   </head>
@@ -170,7 +170,11 @@
       </tr>
       <tr>
         <td class="employee-header">Pay Period</td>
+        <#if col3?is_date>
+        <td>${col3?date}</td>
+        <#else>
         <td>${col3}</td>
+        </#if>
         <td colspan="2"></td>
       </tr>
 

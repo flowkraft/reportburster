@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.common.settings.model.Attachment;
+import com.sourcekraft.documentburster.common.settings.model.BursterSettings;
 import com.sourcekraft.documentburster.common.settings.model.Capabilities;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionEmailSettings;
@@ -42,6 +43,7 @@ import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSett
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSettingsInternal;
 import com.sourcekraft.documentburster.common.settings.model.EmailRfc2822Validator;
 import com.sourcekraft.documentburster.common.settings.model.EmailSettings;
+import com.sourcekraft.documentburster.common.settings.model.FreeMarkerSettings;
 import com.sourcekraft.documentburster.common.settings.model.ReportSettings;
 import com.sourcekraft.documentburster.common.settings.model.ReportingSettings;
 import com.sourcekraft.documentburster.common.settings.model.RetryPolicy;
@@ -280,6 +282,14 @@ public class Settings extends DumpToString {
 
 	}
 
+	public BursterSettings getSettings() {
+		return docSettings.settings;
+	}
+	
+	public FreeMarkerSettings getFreeMarkerSettings() {
+		return docSettings.settings.freemarker;
+	}
+	
 	public ReportSettings.DataSource getReportDataSource() {
 		return reportingSettings.report.datasource;
 	}
