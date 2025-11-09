@@ -66,7 +66,7 @@ public class ReportBursterSourceAssembler extends AbstractAssembler {
 		ZipUtil.unpack(new File(targetPathZipFile), new File(verifyDirPath));
 
 		// Verify key source directories/files exist
-		String[] requiredPaths = { "/frontend", "/backend", "/documentation", "/pom.xml", "/README.md" };
+		String[] requiredPaths = { "/frend", "/bkend", "/documentation", "/pom.xml", "/README.md" };
 
 		for (String path : requiredPaths) {
 			String verifyFilePath = verifyDirPath + "/" + topFolderName + path;

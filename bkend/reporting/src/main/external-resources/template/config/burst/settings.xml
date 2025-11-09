@@ -255,10 +255,23 @@
 
 		<!-- start date and time locale options -->
 		<locale>
-			<language></language>
-			<country></country>
+			<language>en</language>
+			<country>US</country>
 		</locale>
 		<!-- end date and time locale options -->
+
+		<!-- start FreeMarker template engine settings -->
+		<freemarker>
+			<!-- Date format: MM/dd/yyyy (e.g., 03/01/2008) -->
+			<dateformat>MM/dd/yyyy</dateformat>
+			<!-- Time format: HH:mm:ss (e.g., 14:30:00) -->
+			<timeformat>HH:mm:ss</timeformat>
+			<!-- DateTime format: MM/dd/yyyy HH:mm:ss (e.g., 03/01/2008 14:30:00) -->
+			<datetimeformat>MM/dd/yyyy HH:mm:ss</datetimeformat>
+			<!-- Number format: 0.###### (e.g., 4000 or 4000.5, no thousand separator by default) -->
+			<numberformat>0.######</numberformat>
+		</freemarker>
+		<!-- end FreeMarker template engine settings -->
 
 		<!-- start text extraction options -->
 

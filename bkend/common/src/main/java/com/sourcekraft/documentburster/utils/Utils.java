@@ -57,7 +57,6 @@ import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.variables.DateRenderer;
 import com.sourcekraft.documentburster.variables.Variables;
 
-import freemarker.template.Configuration;
 import freemarker.template.Template;
 
 public class Utils {
@@ -68,9 +67,7 @@ public class Utils {
 
 	public static final String PDFBURST_WEBSITE = "https://www.pdfburst.com";
 	public static final String NULL_STRING_VALUE = "null";
-
-	public static final Configuration freeMarkerCfg = new Configuration(Configuration.VERSION_2_3_29);
-
+	
 	public enum FileSizeUnit {
 		BYTE, KILOBYTE, MEGABYTE, GIGABYTE, TERABYTE, PETABYTE, EXABYTE, ZETTABYTE, YOTTABYTE
 	};
@@ -245,7 +242,7 @@ public class Utils {
 			return engine.toString();
 		} else { // if (!freeMarkerTest.isEmpty() && stringTemplateTest.isEmpty())
 
-			Template engine = new Template("template", template, freeMarkerCfg);
+			Template engine = new Template("template", template, DocumentBursterFreemarkerInitializer.FREE_MARKER_CFG);
 
 			StringWriter stringWriter = new StringWriter();
 			engine.process(variables.getUserVariables(token), stringWriter);

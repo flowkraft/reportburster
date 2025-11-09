@@ -771,59 +771,66 @@ export class Updater {
             currentConfigurationItemKeys,
           );
 
-        //let migratedValue = value;
         let migratedValue = String(value);
 
         if (configurationStructureDidNotChange) {
-          //initialize the "migratedValue" configuration value with the previous configuration value
-          migratedValue = Utilities.getDeeplyNestedLastProp(
+          const prevRaw = Utilities.getDeeplyNestedLastProp(
             previousSettings,
             currentConfigurationItemKeys,
           );
 
-          //if neeeded, migrate STRINGTEMPLATE_SYNTAX_TO_FREEMARKER_SYNTAX
-          if (migratedValue) {
-            // remove the line breaks characters which sometimes appear in the configuration values
-            // (but don't remove this from the email message configurations)
+          // If previous value is blank (old config) but default 'value' is non-empty,
+          // keep the default. Exception: emailserver userid/userpassword should
+          // always be copied from the previous config if present (even if blank),
+          // because empty can be an intentional value for some setups.
+          // detect any ancestor named 'emailserver' and treat certain subkeys
+          // as intentional values that must be copied from previous settings
+          // even if they're blank (covers both settings.emailserver and
+          // qualityassurance.emailserver).
+          const emailServerIndex = currentConfigurationItemKeys.indexOf('emailserver');
+          const alwaysCopyEmailServerKeys = new Set([
+            'userid',
+            'userpassword',
+            'host',
+            'port',
+            'fromaddress',
+          ]);
+          let isEmailServerCredential = false;
+          if (
+            emailServerIndex >= 0 &&
+            emailServerIndex < currentConfigurationItemKeys.length - 1
+          ) {
+            const subKey = currentConfigurationItemKeys[emailServerIndex + 1];
+            isEmailServerCredential = alwaysCopyEmailServerKeys.has(subKey);
+          }
 
-            if (!['text', 'html', 'subject'].includes(key)) {
-              /*
-              if (typeof migratedValue !== 'string')
-                console.log(
-                  'migratedValue is not a string. Its value is:',
-                  migratedValue,
-                );
-              else
-                console.log(
-                  'migratedValue is a string. Its value is:',
-                  migratedValue,
-                );
-              */
-
-              // remove the line breaks
-              migratedValue = migratedValue.replace(/(\r\n|\n|\r)/gm, '');
-
-              // remove the spaces but only if in between $ and $ (i.e only for vars, not for folder paths with spaces)
-              if (migratedValue)
+          if (
+            typeof prevRaw === 'string' &&
+            prevRaw.trim() === '' &&
+            String(value).trim() !== '' &&
+            !isEmailServerCredential
+          ) {
+            migratedValue = String(value);
+          } else {
+            migratedValue = prevRaw;
+            if (migratedValue) {
+              if (!['text', 'html', 'subject'].includes(key)) {
+                // remove the line breaks
+                migratedValue = migratedValue.replace(/(\r\n|\n|\r)/gm, '');
+                // remove the spaces inside $...$ for legacy templates
                 migratedValue = migratedValue.replace(/\s+(?=[^$\$]*\$)/g, '');
-            }
+              }
 
-            if (migratedValue)
               for (const [keyST, valueFM] of Array.from(
-                this
-                  .BUILTIN_VARS_LEGACY_STRINGTEMPLATE_SYNTAX_TO_FREEMARKER_SYNTAX_MAP,
+                this.BUILTIN_VARS_LEGACY_STRINGTEMPLATE_SYNTAX_TO_FREEMARKER_SYNTAX_MAP,
               )) {
-                //migrate STRINGTEMPLATE_SYNTAX_TO_FREEMARKER_SYNTAX
                 migratedValue = migratedValue.split(keyST).join(valueFM);
               }
 
-            if (migratedValue)
               for (let i = 0; i < numberOfUserVariables; i++) {
-                //migrate STRINGTEMPLATE_SYNTAX_TO_FREEMARKER_SYNTAX
-                migratedValue = migratedValue
-                  .split(`$var${i}$`)
-                  .join(`$\{var${i}\}`);
+                migratedValue = migratedValue.split(`$var${i}$`).join(`$\{var${i}\}`);
               }
+            }
           }
         } else {
           if (key == 'template' && previousConfigFileName != 'settings.xml')
