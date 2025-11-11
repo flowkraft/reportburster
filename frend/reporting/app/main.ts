@@ -1,13 +1,12 @@
-//Bookkeeping January - March 2024
-
 import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import log from 'electron-log';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 
-import { ChildProcessWithoutNullStreams, exec, spawn } from 'child_process';
+import { ChildProcessWithoutNullStreams, exec as _execSync, spawn as _spawnSync } from 'child_process';
 import { promisify } from 'util';
+const execAsync = promisify(_execSync);
 
 import * as jetpack from 'fs-jetpack';
 
@@ -139,7 +138,7 @@ try {
         `executing ${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj/startRbsjServer.bat`,
       );
 
-      serverProcess = spawn('startRbsjServer.bat', [], {
+      serverProcess = _spawnSync('startRbsjServer.bat', [], {
         cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
         env: { ...process.env, ELECTRON_PID: process.pid.toString() },
       });
@@ -277,14 +276,14 @@ ipcMain.handle('dialog.show-open', async (event, options) => {
 });
 
 ipcMain.handle('child_process.exec', async (event, command) => {
-  const execPromise = promisify(exec);
+  const execPromise = promisify(_execSync);
   return execPromise(command);
 });
 
 ipcMain.handle(
   'child_process.spawn',
   async (event, command, args?, options?) => {
-    const spawnPromise = promisify(spawn);
+    const spawnPromise = promisify(_spawnSync);
     return spawnPromise(command, args, options);
   },
 );
@@ -460,7 +459,7 @@ ipcMain.handle('jetpack.findAsync', async (event, directory, options) => {
 
 async function _shutServer() {
   serverProcess = null;
-  spawn('shutRbsjServer.bat', {
+  _spawnSync('shutRbsjServer.bat', {
     cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
   });
   await sleep(1000);
@@ -502,58 +501,100 @@ async function _getSystemInfo(): Promise<{
 
   let rbsjExeLogFileContent = await readLogFileSmart(rbsjExeLogFilePath);
 
+  // keep existing English-based quick checks (harmless on English systems)
   if (electronLogFileContent.includes("'choco' is not recognized")) {
     chocoIsInstalled = false;
   }
+
+  // robust presence probe (Windows: where, Unix: which)
+  if (chocoIsInstalled)
+    chocoIsInstalled =
+      process.platform === 'win32'
+        ? await commandExistsWindows('choco')
+        : await execAsync('which choco')
+            .then(() => true)
+            .catch(() => false);
 
   if (electronLogFileContent.includes("'docker' is not recognized")) {
     dockerIsInstalled = false;
   }
 
-  // Extract Chocolatey version
+  if (dockerIsInstalled)
+    dockerIsInstalled =
+      process.platform === 'win32'
+        ? await commandExistsWindows('docker')
+        : await execAsync('which docker')
+            .then(() => true)
+            .catch(() => false);
+
+  // Prepare log lines once (safer splitting for CRLF)
+  const logLines = electronLogFileContent.split(/\r?\n/).map((l) => l.trim());
+  const firstNonEmptyLine = logLines.find((l) => l.length > 0) || '';
+
+  // Extract Chocolatey version (probe first, fallback to log search)
   let chocoVersion = '';
-  let dockerVersion = '';
-
-  let firstLineElectronLogFileContent = electronLogFileContent.split('\n')[0];
-  let secondLineElectronLogFileContent = electronLogFileContent.split('\n')[1];
-
   if (chocoIsInstalled) {
-    chocoVersion = firstLineElectronLogFileContent.trim();
-  }
-
-  if (dockerIsInstalled) {
-    const dockerVersionMatch = secondLineElectronLogFileContent.match(
-      /Docker version ([\d\.]+)/,
+    const v = await getVersionFromCommand(
+      'choco',
+      process.platform === 'win32' ? '-v' : '--version',
     );
-    dockerVersion = dockerVersionMatch ? dockerVersionMatch[1] : '';
+    if (v) {
+      chocoVersion = v;
+    } else {
+      // search the whole log for a numeric token on a line referencing choco/chocolatey
+      const chocoLine =
+        logLines.find((l) => /choco|chocolatey/i.test(l)) || firstNonEmptyLine;
+      const m = chocoLine.match(/(\d+(?:\.\d+){0,})/);
+      chocoVersion = m ? m[1] : '';
+    }
+  } else {
+    chocoVersion = '';
   }
 
-  // Extract Java version
-  const javaVersion = detectJavaVersion(rbsjExeLogFileContent);
-  const isJavaOk = parseInt(javaVersion.split('.')[0]) >= 17;
+  // Extract Docker version (probe first, fallback to log search across all lines)
+  let dockerVersion = '';
+  if (dockerIsInstalled) {
+    const v = await getVersionFromCommand('docker', '--version');
+    if (v) {
+      dockerVersion = v;
+    } else {
+      // look for common Docker patterns anywhere in the log
+      const dockerFullMatch =
+        electronLogFileContent.match(/Docker version\s*([\d\.]+)/i) ||
+        electronLogFileContent.match(/docker[^\d\n]*?(\d+(?:\.\d+){0,})/i);
+      dockerVersion = dockerFullMatch ? dockerFullMatch[1] : '';
+    }
+  } else {
+    dockerVersion = '';
+  }
+
+  // Extract Java version and decide compliance
+  // prefer probing 'java -version' (captures stdout+stderr), fallback to rbsj-exe.log
+  const javaVersionFromCmd = await getJavaVersionFromCommand();
+  const javaVersion = javaVersionFromCmd || detectJavaVersion(rbsjExeLogFileContent);
+  const javaMajor = parseJavaMajor(javaVersion);
+  const isJavaOk = !Number.isNaN(javaMajor) && javaMajor >= 17;
 
   let isPortalProvisioned = false;
   try {
     await fs.promises.access(portalSageComposerLockFilePath);
     isPortalProvisioned = true;
   } catch {
-    // File does not exist or is inaccessible
     isPortalProvisioned = false;
   }
 
   const sysInfo = {
     chocolatey: {
       isChocoOk: chocoIsInstalled,
-      version: chocoVersion,
+      version: chocoIsInstalled ? chocoVersion : '',
     },
     java: {
       isJavaOk: isJavaOk,
-      version: javaVersion,
+      version: isJavaOk ? javaVersion : '',
     },
     docker: {
       isDockerOk: dockerIsInstalled,
-      //isDockerOk: false,
-      version: dockerVersion,
+      version: dockerIsInstalled ? dockerVersion : '',
     },
     portal: {
       isProvisioned: isPortalProvisioned,
@@ -570,26 +611,79 @@ async function _getSystemInfo(): Promise<{
   return sysInfo;
 }
 
-function detectJavaVersion(logContent: string): string {
-  let match = logContent.match(/using Java ([\w\.]+)/i);
+function parseJavaMajor(version: string): number {
+  if (!version) return NaN;
+  // examples handled:
+  // "17.0.8" -> 17
+  // "11.0.12" -> 11
+  // "1.8.0_261" -> 8 (legacy format)
+  const cleaned = version.trim();
+  if (cleaned.startsWith('1.')) {
+    // legacy "1.x.y" => major = second token
+    const parts = cleaned.split(/[._-]/);
+    return parseInt(parts[1], 10);
+  } else {
+    const parts = cleaned.split(/[._-]/);
+    return parseInt(parts[0], 10);
+  }
+}
+
+// add near other helpers in the same file
+async function getJavaVersionFromCommand(): Promise<string> {
+  try {
+    const { stdout, stderr } = await execAsync('java -version');
+    const out = `${stdout || ''}\n${stderr || ''}`;
+    // try the robust detector first (handles full phrases), then fallback to numeric token
+    const v = detectJavaVersion(out);
+    if (v) return v;
+    const m = out.match(/(\d+(?:\.\d+){0,})/);
+    return m ? m[1] : '';
+  } catch {
+    return '';
+  }
+}
+
+// rename parameter for clarity (update any call sites above accordingly)
+function detectJavaVersion(outputContent: string): string {
+  let match = outputContent.match(/using Java ([\w\.]+)/i);
   if (match) return match[1].trim();
 
-  match = logContent.match(/(?:openjdk|java|adoptopenjdk|temurin)[^\n]*version\s+"([\d._]+)"/i);
+  match = outputContent.match(/(?:openjdk|java|adoptopenjdk|temurin)[^\n]*version\s+"([\d._]+)"/i);
   if (match) return match[1].trim();
 
-  match = logContent.match(/java version\s+"([\d._]+)"/i);
+  match = outputContent.match(/java version\s+"([\d._]+)"/i);
   if (match) return match[1].trim();
 
-  match = logContent.match(/version\s+"([\d._]+)"/i);
+  match = outputContent.match(/version\s+"([\d._]+)"/i);
   if (match) return match[1].trim();
 
-  match = logContent.match(/openjdk\s+([\d._]+)/i);
+  match = outputContent.match(/openjdk\s+([\d._]+)/i);
   if (match) return match[1].trim();
 
-  match = logContent.match(/temurin-([\d._]+)/i);
+  match = outputContent.match(/temurin-([\d._]+)/i);
   if (match) return match[1].trim();
 
   return '';
+}
+
+async function commandExistsWindows(cmd: string): Promise<boolean> {
+  try {
+    await execAsync(`where ${cmd}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function getVersionFromCommand(cmd: string, args = '--version'): Promise<string> {
+  try {
+    const { stdout, stderr } = await execAsync(`${cmd} ${args}`);
+    const out = `${stdout || ''}\n${stderr || ''}`;
+    const m = out.match(/(\d+(?:\.\d+){0,})/); // first numeric token
+    return m ? m[1] : out.split(/\r?\n/)[0].trim();
+  } catch {
+    return '';
+  }
 }
 
 async function readLogFileSmart(filePath: string): Promise<string> {

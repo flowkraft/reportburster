@@ -101,6 +101,53 @@ public class DatabaseConnectionManager {
 	 * @throws Exception If settings cannot be retrieved.
 	 */
 	private synchronized ConnectionDatabaseSettings getConnectionSettings(String connectionCode) throws Exception {
+		// Special convention for packaged sample Northwind SQLite DB.
+        // If reporting.xml references conncode "sample-northwind-sqlite" (or variants),
+        // return a synthesized ConnectionDatabaseSettings that points to the shipped DB file.
+        if (StringUtils.isNotBlank(connectionCode)) {
+            String code = connectionCode.trim().toLowerCase();
+            if ("sample-northwind-sqlite".equals(code) || "northwind-sqlite".equals(code)
+                    || "northwind-sqlite-sample".equals(code)) {
+
+                // Resolve DB file path: prefer PORTABLE_EXECUTABLE_DIR, then Utils.getDbFolderPath(), then relative path.
+                String dbFilePath = null;
+                String portable = System.getenv("PORTABLE_EXECUTABLE_DIR");
+                if (portable != null && !portable.trim().isEmpty()) {
+                    dbFilePath = portable + java.io.File.separator + "db" + java.io.File.separator
+                            + "sample-northwind-sqlite" + java.io.File.separator + "northwind.db";
+                } else {
+                    try {
+                        dbFilePath = com.sourcekraft.documentburster.utils.Utils.getDbFolderPath() + java.io.File.separator
+                                + "sample-northwind-sqlite" + java.io.File.separator + "northwind.db";
+                    } catch (Throwable t) {
+                        dbFilePath = "db" + java.io.File.separator + "sample-northwind-sqlite" + java.io.File.separator
+                                + "northwind.db";
+                    }
+                }
+
+                java.io.File dbFile = new java.io.File(dbFilePath);
+                String resolvedPath = dbFile.getAbsolutePath();
+                String jdbcUrl = "jdbc:sqlite:" + resolvedPath;
+
+                // Build ConnectionDatabaseSettings object inline
+                ConnectionDatabaseSettings conn = new ConnectionDatabaseSettings();
+                ServerDatabaseSettings server = new ServerDatabaseSettings();
+                server.type = "sqlite";
+                server.driver = "org.sqlite.JDBC";
+                server.url = jdbcUrl;
+                server.userid = "";
+                server.userpassword = "";
+
+                conn.databaseserver = server;
+
+                // ensure driver/url are normalized if method exists
+                if (conn.databaseserver != null) conn.databaseserver.ensureDriverAndUrl();
+                
+                //log.info("Using convention connection for sample DB '{}': {}", connectionCode, jdbcUrl);
+                return conn;
+            }
+        }
+		
 		String primaryCode = this.settings.getReportingPrimaryDatabaseConnectionCode();
 
 		if (StringUtils.isNotBlank(primaryCode) && primaryCode.equals(connectionCode)

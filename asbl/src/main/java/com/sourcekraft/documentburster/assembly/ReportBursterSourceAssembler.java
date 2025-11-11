@@ -23,8 +23,8 @@ public class ReportBursterSourceAssembler extends AbstractAssembler {
 		File targetDir = new File(packageDirPath + "/" + topFolderName);
 
 		String[] excludePatterns = new String[] { "node_modules", ".venv", "__pycache__", "dependencies", "target",
-				"results", "test-results", "dist", "release", ".git", ".angular", ".settings", "build", ".aider",
-				".docs", ".workspace", ".log", "_ai_crew", ".flattened-pom" };
+				"results", "test-results", "dist", "release", ".git", ".angular", ".settings", "build", ".aider", 
+				".roo", ".rooignore", ".roomodes", ".docs", ".workspace", ".log", "_ai_crew", ".flattened-pom" };
 
 		FileUtils.copyDirectory(sourceDir, targetDir, file -> {
 			String relativePath = sourceDir.toURI().relativize(file.toURI()).getPath();
@@ -66,7 +66,7 @@ public class ReportBursterSourceAssembler extends AbstractAssembler {
 		ZipUtil.unpack(new File(targetPathZipFile), new File(verifyDirPath));
 
 		// Verify key source directories/files exist
-		String[] requiredPaths = { "/frend", "/bkend", "/documentation", "/pom.xml", "/README.md" };
+		String[] requiredPaths = { "/frend", "/bkend", "/pom.xml", "/README.md" };
 
 		for (String path : requiredPaths) {
 			String verifyFilePath = verifyDirPath + "/" + topFolderName + path;

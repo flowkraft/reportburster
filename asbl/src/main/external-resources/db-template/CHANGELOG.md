@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 11.3.0 - 2025-11-17
+
+### Added
+
+- A new sample named "11. Customer Sales Summary (Excel, single file) - Top customers by sales (SQL query datasource)"
+- 'Oracle Database Server' is now a certified datasource for building reports
+
 ## 11.2.0 - 2025-11-10
 
 ### Added

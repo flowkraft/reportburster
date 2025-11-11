@@ -69,7 +69,7 @@ export class SamplesService {
   constructor(
     protected translateService: TranslateService,
     protected settingsService: SettingsService,
-  ) {}
+  ) { }
 
   countVisibleSamples = -1;
 
@@ -475,6 +475,35 @@ export class SamplesService {
       capReportSplitting: false,
       capReportDistribution: false,
       capReportGenerationMailMerge: true,
+      activeClicked: false,
+    },
+    {
+      id: 'GENERATE-CUSTOMER-SALES-SUMMARY-EXCEL-SQL-QUERY-DS',
+      name: '11. Customer Sales Summary (Excel, single file) - Top customers by sales (SQL query datasource)',
+      visibility: 'visible',
+      jobType: 'generate',
+      input: {
+        data: ['file:db/sample-northwind-sqlite/northwind.db'],
+        dataUrl: [],
+        numberOfPages: -1,
+        tokens: [],
+      },
+      step1: 'generate',
+      step2: '',
+      step3: '',
+      output: {
+        data: ['file:CustomerSalesSummary.xlsx'],
+        folder: "output/CustomerSalesSummary/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
+      },
+      outputHtmlHardcoded: '',
+      configurationFilePath: `config/samples/generate-customer-sales-excel-sql-ds/settings.xml`,
+      configurationFileName: 'generate-customer-sales-excel-sql-ds',
+      notes: ``,
+      recipientType: 'analyst',
+      documentType: 'customer-summary',
+      capReportSplitting: false,
+      capReportDistribution: false,
+      capReportGenerationMailMerge: false,
       activeClicked: false,
     },
   ];
