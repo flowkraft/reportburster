@@ -48,12 +48,12 @@
         <useformularesults>true</useformularesults>
       </exceloptions>
       <sqloptions>
-        <conncode></conncode>
-        <query></query>
+        <conncode/>
+        <query/>
       </sqloptions>
       <scriptoptions>
-        <conncode></conncode>
-        <scriptpath></scriptpath>
+        <conncode/>
+        <scriptpath/>
       </scriptoptions>
       <transformationoptions>
         <transformationcode></transformationcode>

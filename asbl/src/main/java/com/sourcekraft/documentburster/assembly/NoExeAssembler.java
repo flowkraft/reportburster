@@ -104,6 +104,8 @@ public class NoExeAssembler extends AbstractAssembler {
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
 				new File(packageDirPath + "/" + topFolderName + "/config/_defaults/settings.xml"));
 
+		// SAMPLES START
+		
 		// 1. config/samples/split-only
 		String splitOnlyXmlConfigFilePath = packageDirPath + "/" + topFolderName
 				+ "/config/samples/split-only/settings.xml";
@@ -140,7 +142,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		// <reportdistribution>false</reportdistribution>
 		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyDocxXmlConfigFilePath), "UTF-8");
 
-		content = content.replace("<template>My Reports</template>", "<template>Payslips Generate DOCX</template>");
+		content = content.replace("<template>My Reports</template>", "<template>Payslips Gen DOCX</template>");
 
 		content = content.replace("<reportdistribution>true</reportdistribution>",
 				"<reportdistribution>false</reportdistribution>");
@@ -176,7 +178,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		// <reportdistribution>false</reportdistribution>
 		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyHtmlXmlConfigFilePath), "UTF-8");
 
-		content = content.replace("<template>My Reports</template>", "<template>Payslips Generate HTML</template>");
+		content = content.replace("<template>My Reports</template>", "<template>Payslips Gen HTML</template>");
 
 		content = content.replace("<reportdistribution>true</reportdistribution>",
 				"<reportdistribution>false</reportdistribution>");
@@ -213,7 +215,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		// <reportdistribution>false</reportdistribution>
 		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyPdfXmlConfigFilePath), "UTF-8");
 
-		content = content.replace("<template>My Reports</template>", "<template>Payslips Generate PDF</template>");
+		content = content.replace("<template>My Reports</template>", "<template>Payslips Gen PDF</template>");
 
 		content = content.replace("<reportdistribution>true</reportdistribution>",
 				"<reportdistribution>false</reportdistribution>");
@@ -252,7 +254,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		// <reportdistribution>false</reportdistribution>
 		content = FileUtils.readFileToString(new File(payslipsGenerateOnlyExcelXmlConfigFilePath), "UTF-8");
 
-		content = content.replace("<template>My Reports</template>", "<template>Payslips Generate Excel</template>");
+		content = content.replace("<template>My Reports</template>", "<template>Payslips Gen Excel</template>");
 
 		content = content.replace("<reportdistribution>true</reportdistribution>",
 				"<reportdistribution>false</reportdistribution>");
@@ -289,7 +291,7 @@ public class NoExeAssembler extends AbstractAssembler {
 				"UTF-8");
 
 		content = content.replace("<template>My Reports</template>",
-				"<template>Payslips XlsxDatasource2XlsxReports</template>");
+				"<template>Payslips Xlsx2XlsxReports</template>");
 
 		content = content.replace("<reportdistribution>true</reportdistribution>",
 				"<reportdistribution>false</reportdistribution>");
@@ -318,7 +320,67 @@ public class NoExeAssembler extends AbstractAssembler {
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
 
 		// EXCEL END
+		
+		// =========================
+        // 8. Customer Sales Summary - SQL -> single Excel file
+        // =========================
+        String customerSalesSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/generate-customer-sales-excel-sql-ds";
+        String customerSalesSettingsFilePath = customerSalesSampleDir + "/settings.xml";
+        String customerSalesReportingFilePath = customerSalesSampleDir + "/reporting.xml";
 
+        // copy base settings and tweak for this sample
+        FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+                new File(customerSalesSettingsFilePath));
+        content = FileUtils.readFileToString(new File(customerSalesSettingsFilePath), "UTF-8");
+
+		// set a friendly template name and disable distribution/mailmerge for a single-file Excel sample
+        // handle both self-closing and empty/whitespace variants robustly
+        content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+                "<template>Cust Sales Excel</template>");
+        content = content.replaceAll("(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
+                "<reportdistribution>false</reportdistribution>");
+        content = content.replaceAll("(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+                "<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+ 
+		newFile = new File(customerSalesSettingsFilePath);
+		FileUtils.writeStringToFile(newFile, content, "UTF-8");
+
+		// prepare reporting.xml for this sample (use defaults and switch to xlsx output and our template)
+        FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+                new File(customerSalesReportingFilePath));
+        
+		content = FileUtils.readFileToString(new File(customerSalesReportingFilePath), "UTF-8");
+        content = content.replaceAll("(?s)output\\.none", "output.xlsx");
+        // handle both self-closing and empty/whitespace variants for <documentpath>
+        content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
+                "<documentpath>/samples/reports/other/customer-sales-template-excel.html</documentpath>");
+
+		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>", "<conncode>sample-northwind-sqlite</conncode>");
+
+content = content.replaceAll("(?s)<query\\s*/>|<query>\\s*</query>", 
+  "<query><![CDATA[\n" +
+  "SELECT\n" +
+  "  C.\"CustomerID\",\n" +
+  "  C.\"CompanyName\",\n" +
+  "  COUNT(DISTINCT O.\"OrderID\")                        AS OrdersCount,\n" +
+  "  SUM(OD.\"UnitPrice\" * OD.\"Quantity\" * (1 - COALESCE(OD.\"Discount\",0))) AS TotalSales,\n" +
+  "  ROUND(\n" +
+  "    CASE WHEN COUNT(DISTINCT O.\"OrderID\") = 0 THEN 0\n" +
+  "         ELSE SUM(OD.\"UnitPrice\" * OD.\"Quantity\" * (1 - COALESCE(OD.\"Discount\",0))) / COUNT(DISTINCT O.\"OrderID\")\n" +
+  "    END, 2)                                         AS AvgOrderValue\n" +
+  "FROM \"Customers\" C\n" +
+  "JOIN \"Orders\" O            ON C.\"CustomerID\" = O.\"CustomerID\"\n" +
+  "JOIN \"Order Details\" OD    ON O.\"OrderID\"    = OD.\"OrderID\"\n" +
+  "WHERE O.\"OrderDate\" >= DATE('now','-12 months')\n" +
+  "GROUP BY C.\"CustomerID\", C.\"CompanyName\"\n" +
+  "ORDER BY TotalSales DESC\n" +
+  "LIMIT 20;\n" +
+  "]]></query>");
+
+		FileUtils.writeStringToFile(new File(customerSalesReportingFilePath), content, "UTF-8");
+
+        // SAMPLES END
+		
 		// WebPortal samples
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/samples/webportal/content-type-paystub.png"),
 				new File(packageDirPath + "/" + topFolderName + "/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/resources/views/content-type-paystub.png"));
