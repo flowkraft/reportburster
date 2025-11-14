@@ -22,7 +22,7 @@ export const tabWebUploadDocumentBursterWebTemplate = `<ng-template #tabWebUploa
       <div class="col-xs-2">{{'AREAS.CONFIGURATION.TAB-WEB-UPLOAD-DOCUMENTBURSTER.EXAMPLES' | translate }}</div>
       <div class="col-xs-7">
         <a href="https://www.reportburster.com/docs/web-portal-cms/document-distribution-payments" target="_blank">
-          <span>https://www.reportburster.com/docs/web-portal-cms/document-distribution-payments </span>
+          <span>https://www.reportburster.com/docs/web-portal-cms/document-distribution-payments</span>
         </a>
         <br>
         <br>

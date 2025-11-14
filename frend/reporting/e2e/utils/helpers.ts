@@ -85,13 +85,17 @@ export class Helpers {
 
   static deActivateLicenseKey = async () => {
     // de-activate the test license so that all tests will start from a 'demo' license
-    await jetpack.copyAsync(
-      PATHS.E2E_RESOURCES_PATH + '/license/license-active.xml',
-      process.env.PORTABLE_EXECUTABLE_DIR +
-        PATHS.CONFIG_PATH +
-        '/_internal/license.xml',
-      { overwrite: true },
-    );
+    // build src/dest reliably regardless of trailing slashes or leading slashes in PATHS constants
+    const portableDir = process.env.PORTABLE_EXECUTABLE_DIR;
+    if (!portableDir) throw new Error('PORTABLE_EXECUTABLE_DIR is not set');
+
+    const src = path.join(PATHS.E2E_RESOURCES_PATH, 'license', 'license-active.xml');
+    // remove any leading slashes from PATHS.CONFIG_PATH so path.join keeps portableDir
+    const configPathPart = PATHS.CONFIG_PATH.replace(/^[/\\]+/, '');
+    const dest = path.join(portableDir, configPathPart, '_internal', 'license.xml');
+
+    console.log(`Copying license file from ${src} to ${dest}`);
+    await jetpack.copyAsync(src, dest, { overwrite: true });
 
     spawnSync('reportburster.bat', ['system', 'license', 'deactivate'], {
       cwd: path.join(process.env.PORTABLE_EXECUTABLE_DIR),
@@ -252,7 +256,7 @@ export class Helpers {
     //copy back the default reportburster.bat file
     await jetpack.copyAsync(
       PATHS.E2E_RESOURCES_PATH +
-        '/java-versions/documentburster-java-default.bat',
+      '/java-versions/documentburster-java-default.bat',
       process.env.PORTABLE_EXECUTABLE_DIR + '/reportburster.bat',
       { overwrite: true },
     );
@@ -398,8 +402,7 @@ Started ServerApplication with PID 13404`,
 
         allCleared = true;
         console.log(
-          `restoreDocumentBursterCleanState /config is now emptied, waiting ${
-            Constants.DELAY_ONE_SECOND / 1000
+          `restoreDocumentBursterCleanState /config is now emptied, waiting ${Constants.DELAY_ONE_SECOND / 1000
           }  seconds ...`,
         );
 

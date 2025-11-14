@@ -30,6 +30,22 @@ export class FluentTester implements PromiseLike<void> {
   actions: (() => Promise<void>)[] = [];
   //waitOnElementToExists: any;
 
+  /** Global default wait (ms) applied after every click when > 0. Can be set per-file/suite. */
+  public static globalClickWaitMs: number = 0;
+
+  /** Optional per-instance override (if undefined, global is used). */
+  private clickWaitMs?: number;
+  /** Set global click wait (affects future FluentTester instances and calls). */
+  public static setGlobalClickWaitMs(ms: number): void {
+    FluentTester.globalClickWaitMs = Math.max(0, Math.floor(ms || 0));
+  }
+
+  /** Set click wait for this FluentTester instance only. */
+  public setClickWaitMs(ms: number): FluentTester {
+    this.clickWaitMs = Math.max(0, Math.floor(ms || 0));
+    return this;
+  }
+
   public async then<TResult1 = void, TResult2 = never>(
     onfulfilled?:
       | ((value: void) => TResult1 | PromiseLike<TResult1>)
@@ -109,7 +125,14 @@ export class FluentTester implements PromiseLike<void> {
   }
 
   public click(selector: string): FluentTester {
-    const action = (): Promise<void> => this.doClick(selector);
+    const action = async (): Promise<void> => {
+      await this.doClick(selector);
+      const ms = (this.clickWaitMs !== undefined) ? this.clickWaitMs : FluentTester.globalClickWaitMs;
+      if (ms && ms > 0) {
+        // short explicit wait after click to reduce flakiness when enabled
+        await this.window.waitForTimeout(ms);
+      }
+    };
 
     this.actions.push(action);
     return this;
@@ -838,18 +861,57 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
-  public async elementExistsNow(selector: string, timeout: number = Constants.DELAY_ONE_SECOND): Promise<boolean> {
+  public async elementExistsNow(
+    selector: string,
+    timeout: number = Constants.DELAY_ONE_SECOND,
+    stabilityMs: number = 120,
+    pollIntervalMs: number = 80,
+  ): Promise<boolean> {
+    // Fast, non-throwing probe that requires the element to be visible and stable
+    const start = Date.now();
     try {
-      if (timeout > 0) {
-        await this.window.waitForSelector(selector, { state: 'attached', timeout });
+      while (Date.now() - start < timeout) {
+        const loc = this.window.locator(selector).first();
+
+        // check count quickly (no long implicit wait)
+        const count = await loc.count().catch(() => 0);
+        if (count > 0) {
+          // FAST PATH: if it's visible right now, return immediately
+          const visibleNow = await loc.isVisible().catch(() => false);
+          if (visibleNow) return true;
+
+          // Otherwise attempt a short stability window to avoid transient attach/remove races
+          const stableStart = Date.now();
+          let becameVisible = false;
+          while (Date.now() - stableStart < stabilityMs) {
+            if (await loc.isVisible().catch(() => false)) {
+              becameVisible = true;
+              break;
+            }
+            await this.window.waitForTimeout(pollIntervalMs);
+          }
+          if (becameVisible) {
+            // tiny additional pause to reduce chance of immediate removal
+            await this.window.waitForTimeout(Math.min(40, stabilityMs));
+            if (await loc.isVisible().catch(() => false)) return true;
+          }
+
+          // not visible/stable yet — retry soon
+          await this.window.waitForTimeout(pollIntervalMs);
+          continue;
+        }
+
+        // not present yet — quick sleep and retry
+        await this.window.waitForTimeout(pollIntervalMs);
       }
-      const count = await this.window.locator(selector).count();
-      return count > 0;
+
+      return false;
     } catch (err) {
+      // keep helper non-throwing; caller decides what to do on false
       return false;
     }
   }
-  
+
   public elementShouldHaveClass(
     selector: string,
     className: string,
@@ -2510,7 +2572,7 @@ export class FluentTester implements PromiseLike<void> {
     await this.doHover('#topMenuBurst');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
-    
+
     await this.doClick('#topMenuBurst');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
@@ -2549,7 +2611,7 @@ export class FluentTester implements PromiseLike<void> {
       */
     await this.doHover('#topMenuConfigurationExternalConnections');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
-    
+
     //await this.doFocus('#topMenuConfigurationTemplates');
     await this.doClick('#topMenuConfigurationExternalConnections');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
@@ -2582,7 +2644,7 @@ export class FluentTester implements PromiseLike<void> {
       Constants.DELAY_TEN_SECONDS,
     );
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
-    
+
   }
 
   private async doGotoConfiguration(): Promise<void> {

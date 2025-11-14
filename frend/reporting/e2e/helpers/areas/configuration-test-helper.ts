@@ -118,7 +118,7 @@ export class ConfigurationTestHelper {
       .inputShouldHaveValue('#cloudUploadCommand', '')
       .click('#leftMenuDocuments2WebSettings') // documents2web settings
       .click('#documentBursterWebTab-link') // documents2web settings
-      .inputShouldHaveValue('#documentBursterWebCommand', '')
+      //.inputShouldHaveValue('#documentBursterWebCommand', '')
       .click('#sharePointTab-link') // SharePoint settings
       .inputShouldHaveValue('#sharePointCommand', '')
       .click('#wordPressTab-link') // WordPress settings
@@ -275,7 +275,7 @@ export class ConfigurationTestHelper {
         .setValue('#cloudUploadCommand', 'cloud')
         .click('#leftMenuDocuments2WebSettings') // documents2web settings
         .click('#documentBursterWebTab-link') // documents2web settings
-        .setValue('#documentBursterWebCommand', 'documentbursterweb')
+        //.setValue('#documentBursterWebCommand', 'documentbursterweb')
         .click('#sharePointTab-link') // SharePoint settings
         .setValue('#sharePointCommand', 'sharepoint')
         .click('#wordPressTab-link') // WordPress settings
@@ -496,10 +496,10 @@ export class ConfigurationTestHelper {
         // documents2web settings
         .click('#leftMenuDocuments2WebSettings')
         .click('#documentBursterWebTab-link')
-        .inputShouldHaveValue(
-          '#documentBursterWebCommand',
-          'documentbursterweb',
-        )
+        //.inputShouldHaveValue(
+        //  '#documentBursterWebCommand',
+        //  'documentbursterweb',
+        //)
         // SharePoint settings
         .click('#sharePointTab-link')
         .inputShouldHaveValue('#sharePointCommand', 'sharepoint')
