@@ -1,3 +1,4 @@
+import { sample } from 'lodash';
 import { Constants } from '../utils/constants';
 import { FluentTester } from './fluent-tester';
 
@@ -83,11 +84,35 @@ export class SamplesTestHelper {
     // 6. Verify configuration
     ft = ft
       .click(`#btnViewConfigurationFile${sampleId}`)
-      .waitOnElementToBecomeVisible('#burstFileName')
-      .waitOnInputToHaveValue(
-        '#burstFileName',
-        '${burst_token}.${output_type_extension}',
-      );
+      .waitOnElementToBecomeVisible('#burstFileName');
+
+    let expectedBurstFileName = '${burst_token}.${output_type_extension}';
+
+    if (sampleId.includes("STUDENT-PROFILES"))
+      expectedBurstFileName = '${FirstName}-${LastName}.pdf';
+
+    if (sampleId.includes("CUSTOMER-STATEMENTS"))
+      expectedBurstFileName = '${CustomerID}.html';
+
+    if (sampleId.includes("CUSTOMER-SALES"))
+      expectedBurstFileName = 'CustomerSalesSummary.xlsx';
+
+    if (sampleId.includes("CUSTOMER-INVOICES"))
+      expectedBurstFileName = 'invoice_${OrderID}.html';
+    
+    if (sampleId.includes("CROSSTAB"))
+      expectedBurstFileName = 'CategoryRegionCrosstab.html';
+
+    if (sampleId.includes("MONTHLY-SALES-TREND"))
+      expectedBurstFileName = 'MonthlySalesTrend.html';
+    
+    if (sampleId.includes("SUPPLIER-SCORECARDS"))
+      expectedBurstFileName = 'supplier_${burst_token}_scorecard.html';
+
+    ft = ft.waitOnInputToHaveValue(
+      '#burstFileName',
+      expectedBurstFileName,
+    );
 
     // 7. Check Split2Times configuration if applicable
     if (expectedInputFile && expectedInputFile.includes('2Times.pdf')) {
@@ -130,13 +155,26 @@ export class SamplesTestHelper {
       }
 
       if (expectedOutputFile.endsWith('.pdf') && expectedTemplateContent) {
-        ft = ft
-          .dropDownShouldHaveSelectedOption('#reportOutputType', 'output.pdf')
-          .elementShouldNotBeVisible('#selectTemplateFile')
-          .elementShouldContainText(
-            '#codeJarHtmlTemplateEditor',
-            expectedTemplateContent,
-          );
+
+        if (!expectedTemplateContent.includes('fo:layout-master-set'))
+          ft = ft
+            .dropDownShouldHaveSelectedOption('#reportOutputType', 'output.pdf')
+            .elementShouldNotBeVisible('#selectTemplateFile')
+            .elementShouldContainText(
+              '#codeJarHtmlTemplateEditor',
+              expectedTemplateContent,
+            );
+      }
+
+      if (expectedOutputFile.endsWith('.pdf') && expectedTemplateContent) {
+        if (expectedTemplateContent.includes('fo:layout-master-set'))
+          ft = ft
+            .dropDownShouldHaveSelectedOption('#reportOutputType', 'output.fop2pdf')
+            .elementShouldNotBeVisible('#selectTemplateFile')
+            .elementShouldContainText(
+              '#codeJarHtmlTemplateEditor',
+              expectedTemplateContent,
+            );
       }
 
       if (expectedOutputFile.endsWith('.xlsx') && expectedTemplateContent) {

@@ -29,7 +29,7 @@ test.describe('', async () => {
         .click('#leftMenuSamples')
         .waitOnElementToContainText(
           '#tdMONTHLY-PAYSLIPS-SPLIT-ONLY',
-          '(split only)',
+          'Monthly Payslips',
         );
 
       // Now verify the Learn More modal
@@ -75,7 +75,7 @@ test.describe('', async () => {
         .click('#leftMenuSamples')
         .waitOnElementToContainText(
           '#tdEXCEL-DISTINCT-SHEETS-SPLIT-ONLY',
-          '(split only)',
+          'Monthly Payslips Excel',
         );
 
       // Now verify the Learn More modal
@@ -144,7 +144,7 @@ test.describe('', async () => {
         .click('#leftMenuSamples')
         .waitOnElementToContainText(
           '#tdEXCEL-DISTINCT-COLUMN-VALUES-SPLIT-ONLY',
-          '(split only)',
+          'Customer List/Country Excel',
         );
 
       // Now verify the Learn More modal
@@ -206,7 +206,7 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
         .waitOnElementToContainText(
           '#tdINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY',
-          '(split only)',
+          'Customers with Multiple Invoices',
         )
         .click('#trINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY');
 
@@ -224,7 +224,7 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
         .waitOnElementToContainText(
           '#tdINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY',
-          '(split only)',
+          'Customers with Multiple Invoices',
         )
         .click('#trINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
         .click('#btnSampleTryItINVOICES-SPLIT-ONCE-MORE-SPLIT-ONLY')
@@ -307,7 +307,7 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-DOCX')
         .waitOnElementToContainText(
           '#tdGENERATE-PAYSLIPS-DOCX',
-          'Generate (DOCX) Monthly',
+          'Generate Monthly Payslips (csv2docx)',
         )
         .click('#trGENERATE-PAYSLIPS-DOCX');
 
@@ -324,7 +324,7 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-DOCX')
         .waitOnElementToContainText(
           '#tdGENERATE-PAYSLIPS-DOCX',
-          'Generate (DOCX) Monthly',
+          'Generate Monthly Payslips (csv2docx)',
         )
         .click('#trGENERATE-PAYSLIPS-DOCX')
         .click('#btnSampleTryItGENERATE-PAYSLIPS-DOCX')
@@ -359,7 +359,7 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-HTML')
         .waitOnElementToContainText(
           '#tdGENERATE-PAYSLIPS-HTML',
-          'Generate (HTML) Monthly',
+          'Generate Monthly Payslips (csv2html)',
         )
         .click('#trGENERATE-PAYSLIPS-HTML');
 
@@ -377,7 +377,7 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-HTML')
         .waitOnElementToContainText(
           '#tdGENERATE-PAYSLIPS-HTML',
-          'Generate (HTML) Monthly',
+          'Generate Monthly Payslips (csv2html)',
         )
         .click('#trGENERATE-PAYSLIPS-HTML')
         .click('#btnSampleTryItGENERATE-PAYSLIPS-HTML')
@@ -412,7 +412,7 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-PDF')
         .waitOnElementToContainText(
           '#tdGENERATE-PAYSLIPS-PDF',
-          'Generate (PDF) Monthly',
+          'Generate Monthly Payslips (csv2pdf)',
         );
 
       ft = SamplesTestHelper.verifyLearnMoreModal(
@@ -429,7 +429,7 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-PDF')
         .waitOnElementToContainText(
           '#tdGENERATE-PAYSLIPS-PDF',
-          'Generate (PDF) Monthly',
+          'Generate Monthly Payslips (csv2pdf)',
         )
         .click('#btnSampleTryItGENERATE-PAYSLIPS-PDF')
         .clickNoDontDoThis()
@@ -463,7 +463,7 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-EXCEL')
         .waitOnElementToContainText(
           '#tdGENERATE-PAYSLIPS-EXCEL',
-          'Generate (Excel) Monthly',
+          'Generate Monthly Payslips (csv2xlsx)',
         )
         .click('#trGENERATE-PAYSLIPS-EXCEL');
 
@@ -481,7 +481,7 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-EXCEL')
         .waitOnElementToContainText(
           '#tdGENERATE-PAYSLIPS-EXCEL',
-          'Generate (Excel) Monthly',
+          'Generate Monthly Payslips (csv2xlsx)',
         )
         .click('#trGENERATE-PAYSLIPS-EXCEL')
         .click('#btnSampleTryItGENERATE-PAYSLIPS-EXCEL')
@@ -516,7 +516,7 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-EXCEL-XLSX-DS')
         .waitOnElementToContainText(
           '#tdGENERATE-PAYSLIPS-EXCEL-XLSX-DS',
-          'Generate Reports From Excel Data Source',
+          'Generate Monthly Payslips (xlsx2xlsx)',
         )
         .click('#trGENERATE-PAYSLIPS-EXCEL-XLSX-DS');
 
@@ -534,7 +534,7 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trGENERATE-PAYSLIPS-EXCEL-XLSX-DS')
         .waitOnElementToContainText(
           '#tdGENERATE-PAYSLIPS-EXCEL-XLSX-DS',
-          'Generate Reports From Excel',
+          'Generate Monthly Payslips (xlsx2xlsx)',
         )
         .click('#trGENERATE-PAYSLIPS-EXCEL-XLSX-DS')
         .click('#btnSampleTryItGENERATE-PAYSLIPS-EXCEL-XLSX-DS')
@@ -555,7 +555,7 @@ test.describe('', async () => {
         .appStatusShouldBeGreatNoErrorsNoWarnings();
     },
   );
-
+  
   electronBeforeAfterAllTest(
     'should work correctly (11_generate_student_profiles_sql2foppdf)',
     async ({ beforeAfterEach: firstPage }) => {
@@ -576,8 +576,10 @@ test.describe('', async () => {
       ft = SamplesTestHelper.verifyLearnMoreModal(
         ft,
         'GENERATE-STUDENT-PROFILES-SQL2PDF',
-        'StudentProfiles.pdf',
-        'Student Details',
+        'northwind.db',
+        'Andrew-Fuller.pdf',
+        '',
+        'fo:layout-master-set',
       );
 
       await ft
@@ -630,15 +632,17 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trGENERATE-CUSTOMER-STATEMENTS-SQL2HTML')
         .waitOnElementToContainText(
           '#tdGENERATE-CUSTOMER-STATEMENTS-SQL2HTML',
-          'Customer Statement',
+          'Customer Statements',
         );
 
       // Verify Learn More modal content briefly (title + example file)
       ft = SamplesTestHelper.verifyLearnMoreModal(
         ft,
         'GENERATE-CUSTOMER-STATEMENTS-SQL2HTML',
-        'CustomerStatement.html',
-        'ALFKI.html customer statement',
+        'northwind.db',
+        'ALFKI.html',
+        '',
+        'Total Freight',
       );
 
       // Run the sample "Try It" -> Generate
@@ -681,8 +685,10 @@ test.describe('', async () => {
       ft = SamplesTestHelper.verifyLearnMoreModal(
         ft,
         'GENERATE-CUSTOMER-SALES-SUMMARY-SQL2XLSX',
+        'northwind.db',
         'CustomerSalesSummary.xlsx',
-        'Customer Sales Summary',
+        '',
+        'Top customers by sales'
       );
 
       await ft
@@ -712,7 +718,8 @@ test.describe('', async () => {
       const expectedOutputFiles = [
         'invoice_1.html',
         'invoice_2.html',
-        'invoice_3.html',
+        'invoice_4.html',
+        'invoice_5.html',
       ];
 
       let ft = new FluentTester(firstPage);
@@ -722,14 +729,16 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trGENERATE-CUSTOMER-INVOICES-MASTER-DETAILS-SCRIPT2HTML')
         .waitOnElementToContainText(
           '#tdGENERATE-CUSTOMER-INVOICES-MASTER-DETAILS-SCRIPT2HTML',
-          'Invoice Master-Detail',
+          'Customer Invoices',
         );
 
       ft = SamplesTestHelper.verifyLearnMoreModal(
         ft,
         'GENERATE-CUSTOMER-INVOICES-MASTER-DETAILS-SCRIPT2HTML',
-        'scripted-invoice-sample.html',
-        'invoice_1.html example invoice',
+        'northwind.db',
+        'invoice_4.html',
+        '',
+        'Line Total',
       );
 
       await ft
@@ -749,6 +758,7 @@ test.describe('', async () => {
         .appStatusShouldBeGreatNoErrorsNoWarnings();
     },
   );
+
 
   electronBeforeAfterAllTest(
     'should work correctly (15_generate_category_region_crosstab_script2html)',
@@ -770,8 +780,10 @@ test.describe('', async () => {
       ft = SamplesTestHelper.verifyLearnMoreModal(
         ft,
         'GENERATE-CATEGORY-REGION-CROSSTAB-SCRIPT2HTML',
+        'northwind.db',
         'CategoryRegionCrosstab.html',
-        'Category-Region Crosstab',
+        '',
+        'Category Sales by Region'
       );
 
       await ft
@@ -812,7 +824,9 @@ test.describe('', async () => {
       ft = SamplesTestHelper.verifyLearnMoreModal(
         ft,
         'GENERATE-MONTHLY-SALES-TREND-SCRIPT2HTML',
+        'northwind.db',
         'MonthlySalesTrend.html',
+        '',
         'Monthly Sales Trend',
       );
 
@@ -834,7 +848,7 @@ test.describe('', async () => {
     },
   );
 
-  electronBeforeAfterAllTest(
+electronBeforeAfterAllTest(
     'should work correctly (17_generate_supplier_scorecards_script2html)',
     async ({ beforeAfterEach: firstPage }) => {
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
@@ -852,14 +866,16 @@ test.describe('', async () => {
         .scrollIntoViewIfNeeded('#trGENERATE-SUPPLIER-SCORECARDS-SCRIPT2HTML')
         .waitOnElementToContainText(
           '#tdGENERATE-SUPPLIER-SCORECARDS-SCRIPT2HTML',
-          'Supplier Scorecard',
+          'Supplier Scorecards',
         );
 
       ft = SamplesTestHelper.verifyLearnMoreModal(
         ft,
         'GENERATE-SUPPLIER-SCORECARDS-SCRIPT2HTML',
+        'northwind.db',
         'supplier_1_scorecard.html',
-        'supplier_1_scorecard.html example scorecard',
+        '',
+        'Supplier Scorecard',
       );
 
       await ft
@@ -879,4 +895,5 @@ test.describe('', async () => {
         .appStatusShouldBeGreatNoErrorsNoWarnings();
     },
   );
+
 });

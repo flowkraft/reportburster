@@ -600,8 +600,8 @@ export class SamplesService {
         data: [
           'file:invoice_1.html',
           'file:invoice_2.html',
-          'file:invoice_3.html',
           'file:invoice_4.html',
+          'file:invoice_5.html',
         ],
         folder: "output/CustomerInvoices/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
       },
