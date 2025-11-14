@@ -39,7 +39,7 @@ try {
 
     // --- 3. Set Context Variable for Template ---
 
-    ctx.reportData = aggregatedData
+    ctx.reportData = aggregatedData.collect { new java.util.LinkedHashMap(it) }
     
     if (aggregatedData.isEmpty()) {
         log.warn("No monthly sales data was found or generated.")

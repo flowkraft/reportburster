@@ -955,37 +955,37 @@
     },
     "GENERATE-STUDENT-PROFILES-SQL2PDF": {
       "NOTES": {
-        "INNER-HTML": "This sample shows how to generate individualized <strong>Student Profile</strong> PDFs using an SQL datasource (the <strong>Sample Northwind SQLite</strong>). <br/><br/>It also demonstrates how to use (Apache) FOP to produce \"pixel perfect\" PDF reports suitable for high-quality printing and precise layout control."
+        "INNER-HTML": "This sample shows how to generate individualized <strong>Student Profile</strong> PDF files using an <strong>SQL datasource</strong> (the <em>Sample Northwind SQLite</em> database). <br/><br/>It also demonstrates how to use (Apache) FOP to produce \"pixel perfect\" PDF reports suitable for high-quality printing and precise layout control."
       }
     },
     "GENERATE-CUSTOMER-STATEMENTS-SQL2HTML": {
       "NOTES": {
-        "INNER-HTML": "This sample demonstrates how to generate individualized <strong>Customer Statement</strong> HTML documents from a SQL data source (the <strong>Sample Northwind SQLite</strong> database). The report runs a SQL query that returns one row per customer and the engine performs a mail-merge to create one HTML file per customer (file name uses the burst token, e.g. <code>ALFKI.html</code>). <br/><br/>Use this example to learn how to configure the SQL datasource (connection code, id column and query), choose an HTML template for rendering statements, and enable per-customer output. Ideal for producing customer-facing statements, archival HTML exports or per-customer delivery via email or cloud upload."
+        "INNER-HTML": "This sample demonstrates how to generate individualized <strong>Customer Statement</strong> HTML documents from a <strong>SQL datasource</strong> (the <em>Sample Northwind SQLite</em> database). The report runs a SQL query that returns one row per customer and the engine performs a mail-merge to create one HTML file per customer (file name uses the burst token, e.g. <code>ALFKI.html</code>). <br/><br/>Use this example to learn how to configure the SQL datasource (database connection code and query), configure an HTML template for rendering statements, and enable per-customer output. Ideal for producing customer-facing statements, archival HTML exports or per-customer delivery via email or cloud upload."
       }
     },
     "GENERATE-CUSTOMER-SALES-SUMMARY-SQL2XLSX": {
       "NOTES": {
-        "INNER-HTML": "This sample shows how to generate a <strong>single consolidated Customer Sales Summary</strong> workbook (.xlsx) from a SQL data source (<strong>Sample Northwind SQLite</strong>). <br/><br/>The report runs an <strong>SQL query to aggregate sales by customer</strong> and writes the result to one output Excel file. Use this example to learn how to configure the SQL datasource, and map query columns to the Excel output. <br/><br/>Ideal when you need <strong>one combined report for analysis</strong>, archiving or distribution (email or cloud upload)."
+        "INNER-HTML": "This sample shows how to generate a <strong>single consolidated Customer Sales Summary</strong> workbook (.xlsx) from a <strong>SQL datasource</strong> (the <em>Sample Northwind SQLite</em> database). <br/><br/>The report runs an <strong>SQL query to aggregate sales by customer</strong> and writes the result to one output Excel file. Use this example to learn how to configure the SQL datasource, and map query columns to the Excel output. <br/><br/>Ideal when you need <strong>one combined report for analysis</strong>, archiving or distribution (email or cloud upload)."
       }
     },
     "GENERATE-CUSTOMER-INVOICES-MASTER-DETAILS-SCRIPT2HTML": {
       "NOTES": {
-        "INNER-HTML": "This sample shows how to generate individualized <strong>Invoice</strong> HTML files using a scripted datasource. The sample runs a script that builds master/detail invoice data and generates one HTML file per OrderID (naming convention <code>invoice_${OrderID}.html</code>). Use this to learn scripted data preparation, master/detail rendering and per-order generation."
+        "INNER-HTML": "This sample shows how to generate individualized <strong>Invoice</strong> HTML files using a <strong>scripted datasource</strong>. The sample runs a script that builds <strong>master-details</strong> invoice <strong>data</strong> and generates one HTML file per OrderID (naming convention <code>invoice_${OrderID}.html</code>). Use this to learn scripted data preparation, master/detail rendering and per-order generation."
       }
     },
     "GENERATE-CATEGORY-REGION-CROSSTAB-SCRIPT2HTML": {
       "NOTES": {
-        "INNER-HTML": "This sample demonstrates how to produce a single HTML <strong>Category &amp; Region crosstab</strong> using a scripted datasource and the <strong>Sample Northwind SQLite</strong> database. The supplied script builds a crosstab data structure (categories vs. regions) and the engine renders it to one consolidated file (<code>CategoryRegionCrosstab.html</code>). <br/><br/>Use this example to learn how to: prepare data in a script, and produce a single HTML output suitable for dashboards, exports or web publishing."
+        "INNER-HTML": "This sample demonstrates how to produce a single HTML <strong>Category &amp; Region crosstab</strong> using a <strong>scripted datasource</strong> and the <em>Sample Northwind SQLite</em> database. The supplied <strong>script builds a crosstab data structure</strong> (categories vs. regions) and the engine renders it to one consolidated file (<code>CategoryRegionCrosstab.html</code>). <br/><br/>Use this example to learn how to: prepare data in a script, and produce a single HTML output suitable for dashboards, exports or web publishing."
       }
     },
     "GENERATE-MONTHLY-SALES-TREND-SCRIPT2HTML": {
       "NOTES": {
-        "INNER-HTML": "This sample shows how to generate a single HTML <strong>Monthly Sales Trend</strong> report from the <strong>Sample Northwind SQLite</strong> database using a scripted datasource. The script aggregates monthly sales into a time series and the packaged HTML template renders the trend (MonthlySalesTrend.html). <br/><br/>Use this example to learn scripted data aggregation for time-series reports, and ensure HTML output for lightweight executive summaries or embedded charts."
+        "INNER-HTML": "This sample shows how to generate a single HTML <strong>Monthly Sales Trend</strong> report from the <em>Sample Northwind SQLite</em> database using a <strong>scripted datasource</strong>. The script <strong>aggregates monthly</strong> sales into a <strong>time series</strong> and the packaged HTML template renders the trend (MonthlySalesTrend.html). <br/><br/>Use this example to learn scripted data aggregation for time-series reports, and ensure HTML output for lightweight executive summaries or <strong>embedded charts</strong>."
       }
     },
     "GENERATE-SUPPLIER-SCORECARDS-SCRIPT2HTML": {
       "NOTES": {
-        "INNER-HTML": "This sample demonstrates per-supplier HTML <strong>Scorecards</strong> built with a scripted datasource against the <strong>Sample Northwind SQLite</strong> DB. The script computes KPIs (product counts, pricing, delivery metrics) and the engine generates one file per supplier using the burst token naming pattern (<code>supplier_${burst_token}_scorecard.html</code>). <br/><br/>Use this example to learn per-entity generation, and how to produce mail-merge style outputs suitable for supplier reporting or distribution."
+        "INNER-HTML": "This sample demonstrates <strong>per-supplier</strong> HTML <strong>Scorecards</strong> built with a <strong>scripted datasource</strong> against the <em>Sample Northwind SQLite</em> database. The script computes <strong>KPIs</strong> (product counts, pricing, delivery metrics) and the engine generates one file per supplier using the burst token naming pattern (<code>supplier_${burst_token}_scorecard.html</code>). <br/><br/>Use this example to learn per-entity generation, and how to produce mail-merge style outputs suitable for supplier reporting or distribution."
       }
     }
   }
