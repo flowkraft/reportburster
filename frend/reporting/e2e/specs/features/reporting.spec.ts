@@ -37,6 +37,8 @@ const DB_VENDORS_SELECTED: string[] = (() => {
 //DONE2
 test.describe('', async () => {
 
+  FluentTester.setGlobalClickWaitMs(Constants.DELAY_ONE_SECOND);
+
   for (const dbVendor of DB_VENDORS_SELECTED) {
     electronBeforeAfterAllTest(
       `(${dbVendor}) should generate FOP2PDF report from SQL datasource and transformation (WITH parameters)`,
@@ -382,7 +384,11 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           if (!alreadyDefault)
             ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnNoSchema.connectionName)}\\.xml`);
 
-          const dbConnPlainSchema = createDbConnection(ft, TEST_NAME, 'dbcon-plain-schema-only', dbVendor, false);
+          let clearLogs = false;
+          if (dbVendor !== 'sqlite')
+            clearLogs = true;
+
+          const dbConnPlainSchema = createDbConnection(ft, TEST_NAME, 'dbcon-plain-schema-only', dbVendor, clearLogs);
           ft = dbConnPlainSchema.ft;
           const connectionNamePlainSchema = dbConnPlainSchema.connectionName;
           dbConnections.push({ connectionName: connectionNamePlainSchema, dbConnectionType: 'dbcon-plain-schema-only', defaultDbConnection: false });

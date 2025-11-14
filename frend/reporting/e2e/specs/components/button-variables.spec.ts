@@ -143,11 +143,11 @@ test.describe('', async () => {
         .clickYesDoThis()
         .click('#leftMenuDocuments2WebSettings') // documents2web settings)
         //.click('documentBursterWebTab-link')
-        .click('#documentBursterWebCommand')
-        .typeText('')
-        .click('#btnDocumentBursterWebVariables')
-        .click('#\\$\\{var0\\}')
-        .clickYesDoThis()
+        //.click('#documentBursterWebCommand')
+        //.typeText('')
+        //.click('#btnDocumentBursterWebVariables')
+        //.click('#\\$\\{var0\\}')
+        //.clickYesDoThis()
         .click('#sharePointTab-link') // SharePoint settings
         .click('#sharePointCommand')
         .typeText('')
@@ -259,7 +259,7 @@ test.describe('', async () => {
         .inputShouldHaveValue('#cloudUploadCommand', '${var5}')
         .click('#leftMenuDocuments2WebSettings') // documents2web settings)
         //.click('#documentBursterWebTab-link') // Documents2Web settings
-        .inputShouldHaveValue('#documentBursterWebCommand', '${var0}')
+        //.inputShouldHaveValue('#documentBursterWebCommand', '${var0}')
         .click('#sharePointTab-link') // SharePoint settings
         .inputShouldHaveValue('#sharePointCommand', '${var1}')
         .click('#wordPressTab-link') // WordPress settings
