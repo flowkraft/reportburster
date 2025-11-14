@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import com.sourcekraft.documentburster.common.settings.model.Attachment;
 import com.sourcekraft.documentburster.common.settings.model.BursterSettings;
 import com.sourcekraft.documentburster.common.settings.model.Capabilities;
+import com.sourcekraft.documentburster.common.settings.model.ConnectionDatabaseSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionEmailSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSettings;
@@ -48,6 +49,7 @@ import com.sourcekraft.documentburster.common.settings.model.ReportSettings;
 import com.sourcekraft.documentburster.common.settings.model.ReportingSettings;
 import com.sourcekraft.documentburster.common.settings.model.RetryPolicy;
 import com.sourcekraft.documentburster.common.settings.model.SendFiles;
+import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 import com.sourcekraft.documentburster.common.settings.model.SimpleJavaMail;
 import com.sourcekraft.documentburster.common.settings.model.SmsSettings;
 import com.sourcekraft.documentburster.common.settings.model.UploadSettings;
@@ -177,12 +179,51 @@ public class Settings extends DumpToString {
 
 				String dbConfigFilePath = configFolderPath + "/connections/" + connCode + "/" + connCode + ".xml";
 
-				jcr = JAXBContext.newInstance(DocumentBursterConnectionDatabaseSettings.class);
+				// Special-case: synthesize settings for packaged sample Northwind SQLite
+				String codeLower = connCode == null ? "" : connCode.trim().toLowerCase();
+				if (codeLower.contains("rbt-sample-northwind-sqlite-4f2")) {
+					String dbFilePath = null;
+					String portable = System.getenv("PORTABLE_EXECUTABLE_DIR");
+					if (portable != null && !portable.trim().isEmpty()) {
+						dbFilePath = portable + java.io.File.separator + "db" + java.io.File.separator
+								+ "sample-northwind-sqlite" + java.io.File.separator + "northwind.db";
+					} else {
+						try {
+							dbFilePath = com.sourcekraft.documentburster.utils.Utils.getDbFolderPath()
+									+ java.io.File.separator + "sample-northwind-sqlite" + java.io.File.separator
+									+ "northwind.db";
+						} catch (Throwable t) {
+							dbFilePath = "db" + java.io.File.separator + "sample-northwind-sqlite"
+									+ java.io.File.separator + "northwind.db";
+						}
+					}
 
-				ur = jcr.createUnmarshaller();
-				try (FileInputStream fis = new FileInputStream(new File(dbConfigFilePath))) {
-					connectionDatabaseSettings = (DocumentBursterConnectionDatabaseSettings) ur.unmarshal(fis);
+					java.io.File dbFile = new java.io.File(dbFilePath);
+					String resolvedPath = dbFile.getAbsolutePath();
+					String jdbcUrl = "jdbc:sqlite:" + resolvedPath;
+
+					connectionDatabaseSettings = new DocumentBursterConnectionDatabaseSettings();
+					com.sourcekraft.documentburster.common.settings.model.ConnectionDatabaseSettings conn = new com.sourcekraft.documentburster.common.settings.model.ConnectionDatabaseSettings();
+					com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings server = new com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings();
+					server.type = "sqlite";
+					server.driver = "org.sqlite.JDBC";
+					server.url = jdbcUrl;
+					server.userid = "";
+					server.userpassword = "";
+					conn.databaseserver = server;
+					connectionDatabaseSettings.connection = conn;
+
+				} else {
+					jcr = JAXBContext.newInstance(DocumentBursterConnectionDatabaseSettings.class);
+					ur = jcr.createUnmarshaller();
+					try (FileInputStream fis = new FileInputStream(new File(dbConfigFilePath))) {
+						connectionDatabaseSettings = (DocumentBursterConnectionDatabaseSettings) ur.unmarshal(fis);
+					}
 				}
+
+				if (connectionDatabaseSettings.connection != null
+						&& connectionDatabaseSettings.connection.databaseserver != null)
+					connectionDatabaseSettings.connection.databaseserver.ensureDriverAndUrl();
 
 			}
 
@@ -247,21 +288,62 @@ public class Settings extends DumpToString {
 		// System.out.println("loadSettingsConnection connectionConfigFilePath = " +
 		// connectionConfigFilePath);
 
-		JAXBContext jcr = JAXBContext.newInstance(DocumentBursterConnectionDatabaseSettings.class);
+		// If path references our packaged sample DB, synthesize settings instead of
+		// reading XML
+		String pathLower = connectionFilePath == null ? "" : connectionFilePath.toLowerCase();
+		if (pathLower.contains("sample-northwind-sqlite") || pathLower.contains("northwind-sqlite")
+				|| pathLower.contains("northwind-sqlite-sample")) {
+			String dbFilePath = null;
+			String portable = System.getenv("PORTABLE_EXECUTABLE_DIR");
+			if (portable != null && !portable.trim().isEmpty()) {
+				dbFilePath = portable + java.io.File.separator + "db" + java.io.File.separator
+						+ "sample-northwind-sqlite" + java.io.File.separator + "northwind.db";
+			} else {
+				try {
+					dbFilePath = com.sourcekraft.documentburster.utils.Utils.getDbFolderPath()
+							+ java.io.File.separator + "sample-northwind-sqlite" + java.io.File.separator
+							+ "northwind.db";
+				} catch (Throwable t) {
+					dbFilePath = "db" + java.io.File.separator + "sample-northwind-sqlite"
+							+ java.io.File.separator + "northwind.db";
+				}
+			}
 
+			java.io.File dbFile = new java.io.File(dbFilePath);
+			String resolvedPath = dbFile.getAbsolutePath();
+			String jdbcUrl = "jdbc:sqlite:" + resolvedPath;
+
+			DocumentBursterConnectionDatabaseSettings connDatabaseSettings = new DocumentBursterConnectionDatabaseSettings();
+			ConnectionDatabaseSettings conn = new ConnectionDatabaseSettings();
+			ServerDatabaseSettings server = new ServerDatabaseSettings();
+			server.type = "sqlite";
+			server.driver = "org.sqlite.JDBC";
+			server.url = jdbcUrl;
+			server.userid = "";
+			server.userpassword = "";
+			conn.databaseserver = server;
+			connDatabaseSettings.connection = conn;
+
+			if (connDatabaseSettings.connection != null && connDatabaseSettings.connection.databaseserver != null)
+				connDatabaseSettings.connection.databaseserver.ensureDriverAndUrl();
+
+			return connDatabaseSettings;
+		}
+
+		JAXBContext jcr = JAXBContext.newInstance(DocumentBursterConnectionDatabaseSettings.class);
 		Unmarshaller ur = jcr.createUnmarshaller();
 		DocumentBursterConnectionDatabaseSettings connDatabaseSettings;
 		try (FileInputStream fis = new FileInputStream(new File(connectionFilePath))) {
 			connDatabaseSettings = (DocumentBursterConnectionDatabaseSettings) ur.unmarshal(fis);
 		}
 
-		if (connDatabaseSettings != null
-				&& connDatabaseSettings.connection != null
+		if (connDatabaseSettings != null && connDatabaseSettings.connection != null
 				&& connDatabaseSettings.connection.databaseserver != null) {
 			connDatabaseSettings.connection.databaseserver.ensureDriverAndUrl();
 		}
 
 		return connDatabaseSettings;
+
 	}
 
 	private void _sortAttachments() {
@@ -285,11 +367,11 @@ public class Settings extends DumpToString {
 	public BursterSettings getSettings() {
 		return docSettings.settings;
 	}
-	
+
 	public FreeMarkerSettings getFreeMarkerSettings() {
 		return docSettings.settings.freemarker;
 	}
-	
+
 	public ReportSettings.DataSource getReportDataSource() {
 		return reportingSettings.report.datasource;
 	}

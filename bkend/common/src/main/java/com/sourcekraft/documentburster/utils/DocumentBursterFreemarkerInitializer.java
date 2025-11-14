@@ -13,6 +13,7 @@ import freemarker.template.TemplateExceptionHandler;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Single place that:
@@ -34,6 +35,7 @@ public class DocumentBursterFreemarkerInitializer implements ITemplateEngineInit
     private static final String DEFAULT_DATE_FORMAT = "MM/dd/yyyy";
     private static final String DEFAULT_TIME_FORMAT = "HH:mm:ss";
     private static final String DEFAULT_DATETIME_FORMAT = "MM/dd/yyyy HH:mm:ss";
+    private static final String DEFAULT_TIMEZONE = "UTC";
 
     // ========== Utility to configure the shared FREE_MARKER_CFG ==========
 
@@ -58,6 +60,9 @@ public class DocumentBursterFreemarkerInitializer implements ITemplateEngineInit
             }
         }
         FREE_MARKER_CFG.setLocale(javaLocale);
+        
+        FREE_MARKER_CFG.setDefaultEncoding("UTF-8");
+        FREE_MARKER_CFG.setOutputEncoding("UTF-8");
 
         // apply formats if present, otherwise keep existing/free defaults
         if (fmSettings != null) {
@@ -81,16 +86,23 @@ public class DocumentBursterFreemarkerInitializer implements ITemplateEngineInit
             } else {
                 FREE_MARKER_CFG.setNumberFormat(DEFAULT_NUMBER_FORMAT);
             }
+            if (StringUtils.isNotBlank(fmSettings.timezone)) {
+                FREE_MARKER_CFG.setTimeZone(TimeZone.getTimeZone(fmSettings.timezone));
+            } else {
+                FREE_MARKER_CFG.setTimeZone(TimeZone.getTimeZone(DEFAULT_TIMEZONE));
+            }
         } else {
             // set conservative defaults if no fmSettings provided
             FREE_MARKER_CFG.setDateFormat(DEFAULT_DATE_FORMAT);
             FREE_MARKER_CFG.setTimeFormat(DEFAULT_TIME_FORMAT);
             FREE_MARKER_CFG.setDateTimeFormat(DEFAULT_DATETIME_FORMAT);
             FREE_MARKER_CFG.setNumberFormat(DEFAULT_NUMBER_FORMAT);
+            FREE_MARKER_CFG.setTimeZone(TimeZone.getTimeZone(DEFAULT_TIMEZONE));
         }
 
-        log.debug("Configured FREE_MARKER_CFG: locale={}, date={}, time={}, datetime={}, number={}",
+        log.debug("Configured FREE_MARKER_CFG: locale={}, timezone={}, date={}, time={}, datetime={}, number={}",
                 FREE_MARKER_CFG.getLocale(),
+                FREE_MARKER_CFG.getTimeZone(),
                 FREE_MARKER_CFG.getDateFormat(),
                 FREE_MARKER_CFG.getTimeFormat(),
                 FREE_MARKER_CFG.getDateTimeFormat(),
@@ -124,11 +136,15 @@ public class DocumentBursterFreemarkerInitializer implements ITemplateEngineInit
             Configuration cfg = fmEngine.getFreemarkerConfiguration();
 
             // apply conservative defaults so XDocReport behaves reasonably if it initializes early
+            cfg.setDefaultEncoding("UTF-8");
+            cfg.setOutputEncoding("UTF-8"); 
+
             cfg.setLocale(DEFAULT_LOCALE);
             cfg.setNumberFormat(DEFAULT_NUMBER_FORMAT);
             cfg.setDateFormat(DEFAULT_DATE_FORMAT);
             cfg.setTimeFormat(DEFAULT_TIME_FORMAT);
             cfg.setDateTimeFormat(DEFAULT_DATETIME_FORMAT);
+            cfg.setTimeZone(TimeZone.getTimeZone(DEFAULT_TIMEZONE));
 
             log.debug("XDocReport FreeMarker initialized with conservative defaults (SPI).");
         } catch (Throwable t) {

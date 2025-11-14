@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Customer Sales Summary</title>
+  <style type="text/css">
+    body { font-family: Arial, Helvetica, sans-serif; font-size:11px; color:#111111; }
+    h1 { font-size:14px; margin:6px 0 12px 0; color:#0b57a4; }
+    .company { font-weight:bold; font-size:12px; color:#0b57a4; }
+    .meta { font-size:10px; color:#333333; margin-bottom:8px; }
+    table { border-collapse:collapse; width:100%; }
+    thead th {
+      background-color:#0b57a4;
+      color:#ffffff;
+      font-weight:bold;
+      padding:6px 8px;
+      text-align:left;
+      border:1px solid #cccccc;
+    }
+    tbody td {
+      padding:6px 8px;
+      border:1px solid #e0e0e0;
+      vertical-align:middle;
+    }
+    tfoot td {
+      padding:8px;
+      border-top:2px solid #0b57a4;
+      font-weight:bold;
+      background-color:#f2f9ff;
+    }
+    .numeric { text-align:right; }
+    .small { font-size:9px; color:#666666; }
+    .note { margin-top:10px; font-size:9px; color:#666666; }
+    td, th { white-space:normal; word-wrap:break-word; }
+  </style>
+</head>
+<body>
+
+  <div class="company">Northridge Pharmaceuticals</div>
+  <div class="meta">Customer Sales Summary — Top customers by sales</div>
+  <div class="meta small">Report generated: ${now?string("yyyy-MM-dd HH:mm:ss")}</div>
+
+  <#-- compute totals first (numeric summation) -->
+  <#assign total_sales = 0.0>
+  <#assign total_rows = 0>
+  <#if reportData?exists>
+    <#list reportData as r>
+      <#assign total_sales = total_sales + (r.TotalSales?number?default(0)) />
+      <#assign total_rows = total_rows + 1 />
+    </#list>
+  </#if>
+
+  <table data-sheet-name="Customer Sales Summary" role="presentation">
+    <thead>
+      <tr>
+        <th data-freeze-pane-cell="true">Customer ID</th>
+        <th>Company Name</th>
+        <th class="numeric">Orders</th>
+        <th class="numeric">Total Sales (USD)</th>
+        <th class="numeric">Avg Order Value (USD)</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <#if reportData?exists && reportData?size == 0>
+        <tr>
+          <td data-text-cell="true" colspan="5">No data available for the selected period.</td>
+        </tr>
+      <#elseif reportData?exists>
+        <#list reportData as row>
+          <tr>
+            <td data-text-cell="true">${row.CustomerID?html}</td>
+            <td data-text-cell="true">${row.CompanyName?html}</td>
+
+            <!-- Force text output so exporter shows exactly the string we format -->
+            <td class="numeric" data-text-cell="true">${(row.OrdersCount?number?default(0))?string["0"]}</td>
+
+            <td class="numeric" data-text-cell="true">
+              ${(row.TotalSales?number?default(0))?string["#,##0.00"]}
+            </td>
+
+            <td class="numeric" data-text-cell="true">
+              ${(row.AvgOrderValue?number?default(0))?string["#,##0.00"]}
+            </td>
+          </tr>
+        </#list>
+      <#else>
+        <tr><td data-text-cell="true" colspan="5">No data available (reportData missing).</td></tr>
+      </#if>
+    </tbody>
+
+    <tfoot>
+      <tr>
+        <td colspan="2">Top customers shown: ${ total_rows?string["0"] }</td>
+        <td class="numeric"> </td>
+        <td class="numeric" data-text-cell="true">
+          ${ (total_sales)?string["#,##0.00"] }
+        </td>
+        <td class="numeric"> </td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="note">
+    Notes:
+    <ul>
+      <li>Numbers are formatted with pattern "#,##0.00" and emitted as text cells so the exporter will display them exactly.</li>
+      <li>If you want true numeric Excel cells, remove data-text-cell="true" and emit raw numbers (e.g. row.TotalSales?number) while keeping data-numeric-cell-format for display.</li>
+    </ul>
+  </div>
+
+</body>
+</html>

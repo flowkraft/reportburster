@@ -54,24 +54,24 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
       <div class="col-xs-5">
           <select
                 id="databaseConnection"
-                *ngIf="settingsService.getDatabaseConnectionFiles().length > 0 && (xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile')"
+                *ngIf="getDatabaseConnectionFilesForUI().length > 0 && (xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile')"
                 class="form-control"
                 [(ngModel)]="selectedDbConnCode"
                 (ngModelChange)="onDatabaseConnectionChanged($event)"
               >
-                <option *ngFor="let connection of settingsService.getDatabaseConnectionFiles()" [value]="connection.connectionCode">
+                <option *ngFor="let connection of getDatabaseConnectionFilesForUI()" [value]="connection.connectionCode">
                   {{connection.connectionName}} 
                   <span *ngIf="connection.defaultConnection">(default)</span>
                 </option>
               </select>
           <!-- Help text below editor -->
-          <small class="text-muted" style="display: block; margin-top: 5px;" *ngIf="settingsService.getDatabaseConnectionFiles().length > 0 && (xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile')"
+          <small class="text-muted" style="display: block; margin-top: 5px;" *ngIf="getDatabaseConnectionFilesForUI().length > 0 && (xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile')"
                 >
             Database Connection
           </small>
            <!-- Message when no database connections exist -->
           <div id="noDbConnectionsMessageSql" *ngIf="(xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || 
-                xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile') && settingsService.getDatabaseConnectionFiles().length === 0" style="padding-top: 6px;">
+                xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile') && getDatabaseConnectionFilesForUI().length === 0" style="padding-top: 6px;">
             <i class="fa fa-info-circle"></i>&nbsp;No database connections defined&nbsp;
             <a id="createDbConnectionLinkSql" [routerLink]="['/configuration-connections']" skipLocationChange="true" class="btn btn-primary btn-sm">
               <i class="fa fa-database"></i>&nbsp;Create Database Connection
@@ -112,7 +112,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
               <div class="row" style="margin-top: 10px;">
                 <div class="col-xs-6">
                   <button id="btnHelpWithSqlQueryAI" type="button" title="Write SQL code to fetch report data from the database" class="btn btn-default btn-block" (click)="showDbConnectionModal()" 
-                  [disabled]="settingsService.getDatabaseConnectionFiles().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode">
+                  [disabled]="getDatabaseConnectionFilesForUI().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode || isSampleReport">
                     <strong>Hey AI, Help Me With This SQL Query ...</strong>
                   </button>
                 </div>
@@ -122,7 +122,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                     type="button"
                     class="btn btn-primary btn-block"
                     (click)="doTestSqlQuery()"
-                    [disabled]="settingsService.getDatabaseConnectionFiles().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode || !xmlReporting.documentburster.report.datasource.sqloptions.query"
+                    [disabled]="getDatabaseConnectionFilesForUI().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode || !xmlReporting.documentburster.report.datasource.sqloptions.query"
                   >
                     <i class="fa fa-paper-plane"></i>&nbsp;&nbsp;Test SQL Query
                   </button>
@@ -186,19 +186,20 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                   
                 <div class="row" style="margin-top: 10px;">
 
-                  <div class="col-xs-6" *ngIf="settingsService.getDatabaseConnectionFiles().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode">
-                    <button id="btnHelpWithScriptAI" type="button" class="btn btn-default btn-block" (click)="askAiForHelp('script.ds')">
+                  <div class="col-xs-6" *ngIf="getDatabaseConnectionFilesForUI().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode">
+                    <button id="btnHelpWithScriptAI" type="button" class="btn btn-default btn-block" (click)="askAiForHelp('script.ds')" [disabled]="isSampleReport">
                       <strong>Hey AI, Help Me With This Groovy Script ...</strong>
                     </button>
                   </div>
-                  <div class="col-xs-6" style="display: flex; align-items: center;" *ngIf="settingsService.getDatabaseConnectionFiles().length > 0 && xmlReporting.documentburster.report.datasource.sqloptions.conncode">
+                  <div class="col-xs-6" style="display: flex; align-items: center;" *ngIf="getDatabaseConnectionFilesForUI().length > 0 && xmlReporting.documentburster.report.datasource.sqloptions.conncode">
                     <div class="btn-group" style="width: 100%; display: flex;">
-                      <button id="btnHelpWithScriptAI" type="button" class="btn btn-default" style="flex: 1; text-align: left;" (click)="askAiForHelp('script.ds')">
+                      <button id="btnHelpWithScriptAI" type="button" class="btn btn-default" style="flex: 1; text-align: left;" (click)="askAiForHelp('script.ds')" [disabled]="isSampleReport">
                         <strong>Hey AI, Help Me With This Groovy Script ...</strong>
                       </button>
                       <button
                         id="btnHelpWithScriptAIDropdownToggle"
                         type="button"
+                        [disabled]="isSampleReport"
                         class="btn btn-default dropdown-toggle"
                         data-toggle="dropdown"
                         aria-haspopup="true"
@@ -207,7 +208,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                       >
                         <span class="caret"></span>
                       </button>
-                      <ul class="dropdown-menu" style="min-width: 220px;">
+                      <ul class="dropdown-menu" style="min-width: 220px;" *ngIf="!isSampleReport">
                         <li>
                           <a id="btnHelpWithScriptAIDropdownItem" href="#" (click)="askAiForHelp('script.ds'); $event.preventDefault();">
                             Hey AI, Help Me With This Groovy Script ...
@@ -1035,7 +1036,7 @@ Column 3, 15"
             </label>
           </div>
           <div class="col-xs-6">
-            <button id="btnHelpWithTransformationAI" type="button" class="btn btn-default" (click)="askAiForHelp('script.additionaltransformation')">
+            <button id="btnHelpWithTransformationAI" type="button" class="btn btn-default" (click)="askAiForHelp('script.additionaltransformation')" [disabled]="isSampleReport">
              <strong>Hey AI, Help Me With This Groovy Script ...</strong>
             </button>
           </div>

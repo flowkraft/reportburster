@@ -6,9 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- A new sample named "11. Customer Sales Summary (Excel, single file) - Top customers by sales (SQL query datasource)"
 - 'Oracle Database Server' is now a certified datasource for building reports
-
+- New samples added (IDs and short descriptions):
+  - GENERATE-STUDENT-PROFILES-SQL2PDF — 11. Generate Student Profiles (sql2pdf): individualized Student Profile PDFs (Sample Northwind SQLite). Demonstrates Apache FOP for pixel‑perfect PDF output.
+  - GENERATE-CUSTOMER-STATEMENTS-SQL2HTML — 12. Generate Customer Statements (sql2html): mail‑merge one HTML file per customer from SQL datasource (example filenames: ALFKI.html, ...).
+  - GENERATE-CUSTOMER-SALES-SUMMARY-SQL2XLSX — 13. Customer Sales Summary (sql2xlsx): single consolidated XLSX workbook with sales aggregated by customer.
+  - GENERATE-CUSTOMER-INVOICES-MASTER-DETAILS-SCRIPT2HTML — 14. Generate Customer Invoices (script2html): scripted master/detail invoices, one HTML per OrderID (invoice_${OrderID}.html).
+  - GENERATE-CATEGORY-REGION-CROSSTAB-SCRIPT2HTML — 15. Category-Region Crosstab (script2html): single consolidated crosstab HTML (CategoryRegionCrosstab.html).
+  - GENERATE-MONTHLY-SALES-TREND-SCRIPT2HTML — 16. Monthly Sales Trend (script2html): single HTML time‑series sales trend (MonthlySalesTrend.html).
+  - GENERATE-SUPPLIER-SCORECARDS-SCRIPT2HTML — 17. Supplier Scorecards (script2html): per‑supplier HTML scorecards (supplier_${burst_token}_scorecard.html).
+  
 ## 11.2.0 - 2025-11-10
 
 ### Added

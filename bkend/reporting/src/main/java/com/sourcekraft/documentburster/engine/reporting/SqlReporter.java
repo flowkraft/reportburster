@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import com.sourcekraft.documentburster.common.db.DatabaseHelper;
 import com.sourcekraft.documentburster.common.settings.model.ReportSettings.DataSource.SQLOptions;
 import com.sourcekraft.documentburster.engine.AbstractReporter;
+import com.sourcekraft.documentburster.variables.Variables;
+import com.sourcekraft.documentburster.utils.Utils;
 
 public class SqlReporter extends AbstractReporter {
 
@@ -32,10 +34,12 @@ public class SqlReporter extends AbstractReporter {
 	protected void initializeResources() throws Exception {
 		super.initializeResources();
 		this.dbHelper.setCtx(ctx);
+		ctx.variables.set(Variables.INPUT_DOCUMENT_NAME, Utils.sanitizeFileName(ctx.settings.getTemplateName()));
 	}
 
 	@Override
 	protected void fetchData() throws Exception {
+		     
 		log.trace("Entering fetchData...");
 		SQLOptions sqlOptions = ctx.settings.getReportDataSource().sqloptions;
 		if (sqlOptions == null) {

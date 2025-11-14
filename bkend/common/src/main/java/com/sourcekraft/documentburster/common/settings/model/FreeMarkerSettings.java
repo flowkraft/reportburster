@@ -19,4 +19,8 @@ public class FreeMarkerSettings extends DumpToString {
     
     // Number format (optional)
     public String numberformat;
+    
+    // Timezone
+    public String timezone;
+    
 }

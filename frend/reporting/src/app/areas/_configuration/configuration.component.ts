@@ -895,11 +895,11 @@ export class ConfigurationComponent implements OnInit {
         // Always load from disk (no cache)
         try {
           const fileExists = await this.fsService.existsAsync(newPath);
-          console.log(`Checking file: ${newPath}, exists: ${fileExists}`);
+          //console.log(`Checking file: ${newPath}, exists: ${fileExists}`);
           if (fileExists) {
             const content =
               await this.settingsService.loadTemplateFileAsync(newPath);
-            console.log(`Loaded content for ${newPath}:`, content);
+            //console.log(`Loaded content for ${newPath}:`, content);
             if (content) {
               this.activeReportTemplateContent = content;
 
@@ -951,30 +951,30 @@ export class ConfigurationComponent implements OnInit {
           //this.activeReportTemplateContent = '';
           //this.changeDetectorRef.detectChanges();
           //await Utilities.sleep(10);
-
-          // Always load from disk (no cache)
-          try {
-            const fileExists = await this.fsService.existsAsync(newPath);
-            if (fileExists) {
-              const content =
-                await this.settingsService.loadTemplateFileAsync(newPath);
-              if (content) {
-                this.activeReportTemplateContent = content;
-              }
-            } else {
-              // Default XSL-FO template
-              const defaultContent = `<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">\n<!-- XSL-FO template for FOP2PDF -->\n</xsl:stylesheet>`;
-              await this.settingsService.saveTemplateFileAsync(
-                newPath,
-                defaultContent,
-              );
-              this.activeReportTemplateContent = defaultContent;
-            }
-            this.changeDetectorRef.detectChanges();
-          } catch (error) {
-            console.error(`Error loading template for fop2pdf:`, error);
-          }
         }
+        // Always load from disk (no cache)
+        try {
+          const fileExists = await this.fsService.existsAsync(newPath);
+          if (fileExists) {
+            const content =
+              await this.settingsService.loadTemplateFileAsync(newPath);
+            if (content) {
+              this.activeReportTemplateContent = content;
+            }
+          } else {
+            // Default XSL-FO template
+            const defaultContent = `<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">\n<!-- XSL-FO template for FOP2PDF -->\n</xsl:stylesheet>`;
+            await this.settingsService.saveTemplateFileAsync(
+              newPath,
+              defaultContent,
+            );
+            this.activeReportTemplateContent = defaultContent;
+          }
+          this.changeDetectorRef.detectChanges();
+        } catch (error) {
+          console.error(`Error loading template for fop2pdf:`, error);
+        }
+
         // Update path if needed
         if (
           !isSamplePath &&
@@ -1001,30 +1001,30 @@ export class ConfigurationComponent implements OnInit {
           // this.activeReportTemplateContent = '';
           //this.changeDetectorRef.detectChanges();
           // await Utilities.sleep(10);
-
-          // Always load from disk (no cache)
-          try {
-            const fileExists = await this.fsService.existsAsync(newPath);
-            if (fileExists) {
-              const content =
-                await this.settingsService.loadTemplateFileAsync(newPath);
-              if (content) {
-                this.activeReportTemplateContent = content;
-              }
-            } else {
-              // Default FreeMarker template
-              const defaultContent = `<#-- FreeMarker template for arbitrary text output -->\n<#-- Use FreeMarker syntax to generate your output -->`;
-              await this.settingsService.saveTemplateFileAsync(
-                newPath,
-                defaultContent,
-              );
-              this.activeReportTemplateContent = defaultContent;
-            }
-            this.changeDetectorRef.detectChanges();
-          } catch (error) {
-            console.error(`Error loading template for freemarker:`, error);
-          }
         }
+        // Always load from disk (no cache)
+        try {
+          const fileExists = await this.fsService.existsAsync(newPath);
+          if (fileExists) {
+            const content =
+              await this.settingsService.loadTemplateFileAsync(newPath);
+            if (content) {
+              this.activeReportTemplateContent = content;
+            }
+          } else {
+            // Default FreeMarker template
+            const defaultContent = `<#-- FreeMarker template for arbitrary text output -->\n<#-- Use FreeMarker syntax to generate your output -->`;
+            await this.settingsService.saveTemplateFileAsync(
+              newPath,
+              defaultContent,
+            );
+            this.activeReportTemplateContent = defaultContent;
+          }
+          this.changeDetectorRef.detectChanges();
+        } catch (error) {
+          console.error(`Error loading template for freemarker:`, error);
+        }
+
         // Update path if needed
         if (
           !isSamplePath &&
@@ -1050,7 +1050,7 @@ export class ConfigurationComponent implements OnInit {
         this.xmlReporting.documentburster.report.template.outputtype,
       );
     } finally {
-      console.log(`Autosave enabled after output type change: ${this.autosaveEnabled}`);
+      //console.log(`Autosave enabled after output type change: ${this.autosaveEnabled}`);
       // Re-enable
       this.autosaveEnabled = true;
     }
@@ -1148,6 +1148,8 @@ export class ConfigurationComponent implements OnInit {
           const configName =
             this.settingsService.currentConfigurationTemplate?.folderName ||
             'template';
+
+          //console.log(`ngOnInit before this.onReportOutputTypeChanged() - reporting output type: ${outputType}`);
 
           // Check if the template path is properly set for the current output type
           await this.onReportOutputTypeChanged();
@@ -1637,12 +1639,12 @@ export class ConfigurationComponent implements OnInit {
             };
           });
 
-          console.log(`typedParams = ${JSON.stringify(typedParams)}`);
+          //console.log(`typedParams = ${JSON.stringify(typedParams)}`);
 
-          console.log('Parameters before execution:', {
-            parameters,
-            values: this.reportParamsValues,
-          });
+          //console.log('Parameters before execution:', {
+          //  parameters,
+          //  values: this.reportParamsValues,
+          //});
           // Only update if different
           if (!_.isEqual(this.reportParameters, parameters)) {
             this.reportParameters = parameters;
@@ -1814,7 +1816,7 @@ export class ConfigurationComponent implements OnInit {
           this.xmlReporting.documentburster.report.datasource.sqloptions.conncode = defaultDbConn.connectionCode;
         }
 
-        console.log(`Default DB connection code set: ${this.xmlReporting.documentburster.report.datasource.sqloptions.conncode}`);
+        //console.log(`Default DB connection code set: ${this.xmlReporting.documentburster.report.datasource.sqloptions.conncode}`);
       }
 
       if (!this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode) {
@@ -1823,7 +1825,7 @@ export class ConfigurationComponent implements OnInit {
           this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode = defaultDbConn.connectionCode;
         }
 
-        console.log(`Default DB connection code set: ${this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode}`);
+        //console.log(`Default DB connection code set: ${this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode}`);
       }
 
       if (
@@ -2428,7 +2430,7 @@ export class ConfigurationComponent implements OnInit {
   }
 
   async showDbConnectionModal() {
-    console.log('ConfigurationConnectionsComponet: showCrudModal()');
+    //console.log('ConfigurationConnectionsComponet: showCrudModal()');
     this.connectionDetailsModalInstance.showCrudModal(
       'update',
       'database-connection',
@@ -2571,30 +2573,54 @@ if (reportParametersProvided) {
   //REPORT PARAMETERS END
 
   private getCurrentConfigName(): string {
-    return (
-      this.settingsService.currentConfigurationTemplate?.folderName ||
-      'unknown_config'
-    );
+    // Prefer explicit metadata, otherwise try to derive from the configured path
+    const explicit = this.settingsService.currentConfigurationTemplate?.folderName;
+    if (explicit && explicit.trim() !== '') return explicit;
+    const derived = this.deriveConfigFolderFromPath();
+    return derived || 'unknown_config';
   }
 
   private getCurrentConfigReportsPath(): string {
-    const configName = this.getCurrentConfigName();
-    if (
-      configName === 'unknown_config' &&
-      !this.settingsService.currentConfigurationTemplatePath?.includes(
-        'samples',
-      )
-    ) {
-      // Only log error if not a sample and config name is unknown.
-      // Samples might not have a folderName in the same way initially.
-      console.error(
-        'Configuration folder name is not available to determine base path.',
-      );
+    // determine folder name (explicit metadata or derived from path)
+    const folderName = this.getCurrentConfigName();
+    const folderFromPath = this.deriveConfigFolderFromPath();
+
+    // Decide whether this is a samples path (prefer explicit path checks)
+    const samplePathIndicator =
+      (this.settingsService.currentConfigurationTemplatePath || '')
+        .toString()
+        .toLowerCase()
+        .includes('/samples/') ||
+      (this.xmlReporting?.documentburster?.report?.template?.documentpath || '')
+        .toString()
+        .toLowerCase()
+        .includes('/samples/');
+
+    const basePath = samplePathIndicator
+      ? this.settingsService.CONFIGURATION_SAMPLES_FOLDER_PATH
+      : this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH;
+
+    // pick folder name preferring explicit metadata then derived folder
+    const finalFolder = folderName && folderName !== 'unknown_config' ? folderName : folderFromPath;
+    if (!finalFolder) {
+      console.error('Configuration folder name is not available to determine base path.');
       return '';
     }
-    // For samples, the path might be directly to the samples folder, adjust if necessary
-    // This logic assumes 'currentConfigurationTemplate.folderName' is reliable for non-samples
-    return `${this.settingsService.CONFIGURATION_REPORTS_FOLDER_PATH}/${configName}`;
+    return `${basePath}/${finalFolder}`;
+  }
+
+  // Derive the config folder name from the configured path (works for normal + samples)
+  private deriveConfigFolderFromPath(): string {
+    const p =
+      this.settingsService.currentConfigurationTemplatePath ||
+      this.xmlReporting?.documentburster?.report?.template?.documentpath ||
+      '';
+    if (!p) return '';
+    const normalized = p.replace(/\\/g, '/').replace(/\/+$/, '');
+    const parts = normalized.split('/');
+    if (parts.length < 2) return '';
+    // Usually the parent folder of the file is the config folder
+    return parts[parts.length - 2] || '';
   }
 
   private getDatasourceScriptPath(): string {
@@ -2739,12 +2765,12 @@ if (reportParametersProvided) {
   onReportParamsValidChange(isValid: boolean) {
     this.reportParamsValid = isValid;
     //this.changeDetectorRef.detectChanges();
-    console.log('Report parameters form validity:', isValid);
+    //console.log('Report parameters form validity:', isValid);
   }
 
   // Add handler for the form's value
   onReportParamsValuesChange(values: { [key: string]: any }) {
-    console.log('Form parameter values:', values);
+    //console.log('Form parameter values:', values);
     this.reportParamsValues = values;
   }
 
@@ -2773,9 +2799,9 @@ if (reportParametersProvided) {
     try {
       this.isReportDataLoading = true;
       this.sqlQueryResult = await this.runQueryWithParams(parameters);
-      console.log(
-        `this.sqlQueryResult: ${JSON.stringify(this.sqlQueryResult)}`,
-      );
+      //console.log(
+      //  `this.sqlQueryResult: ${JSON.stringify(this.sqlQueryResult)}`,
+      //);
       // Show green toast on success
       this.messagesService.showSuccess('SQL query executed successfully, go to the Tabulator tab to see results.');
     } catch (error) {
@@ -2824,12 +2850,12 @@ if (reportParametersProvided) {
             };
           });
 
-          console.log(`typedParams = ${JSON.stringify(typedParams)}`);
+          //console.log(`typedParams = ${JSON.stringify(typedParams)}`);
 
-          console.log('Parameters before execution:', {
-            parameters,
-            values: this.reportParamsValues,
-          });
+          //console.log('Parameters before execution:', {
+          //  parameters,
+          //  values: this.reportParamsValues,
+          //});
           // Only update if different
           if (!_.isEqual(this.reportParameters, parameters)) {
             this.reportParameters = parameters;
@@ -2858,11 +2884,11 @@ if (reportParametersProvided) {
   }
 
   onTabReady() {
-    console.log('📊 Tabulator ready');
+    //console.log('📊 Tabulator ready');
   }
 
   onTabError(msg: string) {
-    console.error('❌ Tabulator error:', msg);
+    //console.error('❌ Tabulator error:', msg);
   }
 
   getTabulatorColumns(
@@ -2951,5 +2977,42 @@ if (reportParametersProvided) {
       this.settingsChangedEventHandler(this.xmlSettings.documentburster.settings.emailsettings.html);
     }
     this.istemplatesGalleryModalVisible = false;
+  }
+
+  public get isSampleReport(): boolean {
+    const dsType = this.xmlReporting?.documentburster?.report?.datasource?.type;
+    const sqlConn = this.xmlReporting?.documentburster?.report?.datasource?.sqloptions?.conncode || '';
+    const scriptConn = this.xmlReporting?.documentburster?.report?.datasource?.scriptoptions?.conncode || '';
+    const codeLower = (sqlConn || scriptConn).toString().toLowerCase();
+    return (
+      (dsType === 'ds.sqlquery' || dsType === 'ds.scriptfile') &&
+      (codeLower.includes('rbt-sample-northwind-sqlite-4f2'))
+    );
+  }
+
+  public getDatabaseConnectionFilesForUI(): ExtConnection[] {
+
+    const dsType = this.xmlReporting?.documentburster?.report?.datasource?.type;
+
+    // get conncode from sqloptions OR scriptoptions
+    const sqlConn = this.xmlReporting?.documentburster?.report?.datasource?.sqloptions?.conncode;
+    const scriptConn = this.xmlReporting?.documentburster?.report?.datasource?.scriptoptions?.conncode;
+    const connCode = (sqlConn || scriptConn || '').toString();
+
+    const isSample = this.isSampleReport
+
+    if (isSample)
+      return [{
+        connectionCode: connCode,
+        connectionName: 'Sample Northwind (SQLite)',
+        connectionType: 'database-connection',
+        fileName: 'northwind.db',
+        filePath: 'db/sample-northwind-sqlite/northwind.db',
+        activeClicked: false,
+        defaultConnection: true,
+        usedBy: '',
+      }];
+
+    return this.settingsService.getDatabaseConnectionFiles();
   }
 }
