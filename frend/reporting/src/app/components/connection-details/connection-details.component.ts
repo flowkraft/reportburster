@@ -86,9 +86,9 @@ export class ConnectionDetailsComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    console.log(
-      `ConfigurationConnectionsComponet: ngOnInit() mode: ${this.mode}`,
-    );
+    //console.log(
+    //  `ConfigurationConnectionsComponet: ngOnInit() mode: ${this.mode}`,
+    //);
 
     this.initializePlantUmlDiagram();
   }
@@ -1974,13 +1974,13 @@ export class ConnectionDetailsComponent implements OnInit {
   }
 
   initializePlantUmlDiagram(): void {
-    console.log(
-      `initializePlantUmlDiagram: plantUmlCode length: ${this.plantUmlCode?.length}`,
-    ); // Log code length before encoding
+    //console.log(
+    //  `initializePlantUmlDiagram: plantUmlCode length: ${this.plantUmlCode?.length}`,
+    //); // Log code length before encoding
     if (this.plantUmlCode) {
       this.encodePlantUmlDiagram();
     } else {
-      console.warn('initializePlantUmlDiagram: No plantUmlCode to initialize.');
+      //console.warn('initializePlantUmlDiagram: No plantUmlCode to initialize.');
     }
   }
 

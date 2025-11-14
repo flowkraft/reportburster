@@ -2,49 +2,17 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Customer Statement - ${CustomerID}</title>
-  <style>
-    body { font-family: 'Arial', sans-serif; margin: 20px; }
-    .statement { border: 1px solid #eee; padding: 20px; max-width: 800px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h1, h2 { color: #333; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: #f2f2f2; }
-    .total { font-weight: bold; text-align: right; }
-  </style>
+  <title>Customer Statement - ${CustomerID?if_exists}</title>
 </head>
 <body>
-  <div class="statement">
-    <h1>Customer Statement</h1>
-    <h2>${CompanyName} (${CustomerID})</h2>
-    <p>Statement Date: ${StatementDate!.now?string('yyyy-MM-dd')}</p>
-    <hr>
-    <h3>Account Summary</h3>
-    <p>Previous Balance: ${PreviousBalance!'0.00'}</p>
-    <p>Total Payments: ${TotalPayments!'0.00'}</p>
-    <p>Total New Charges: ${TotalNewCharges!'0.00'}</p>
-    <p><strong>Current Balance Due: ${CurrentBalance!'0.00'}</strong></p>
-    <hr>
-    <h3>Transaction Details</h3>
-    <table>
-      <thead>
-        <tr><th>Date</th><th>Description</th><th>Amount</th></tr>
-      </thead>
-      <tbody>
-        <!-- Freemarker list iteration example -->
-        <#if transactions??>
-          <#list transactions as tx>
-            <tr>
-              <td>${tx.Date?string('yyyy-MM-dd')}</td>
-              <td>${tx.Description}</td>
-              <td>${tx.Amount?string(',##0.00')}</td>
-            </tr>
-          </#list>
-        <#else>
-          <tr><td colspan="3">No transactions for this period.</td></tr>
-        </#if>
-      </tbody>
-    </table>
-  </div>
+  <h1>Customer Statement</h1>
+  <h2>${CompanyName?if_exists} (${CustomerID?if_exists})</h2>
+
+  <h3>Summary</h3>
+  <ul>
+    <li>Total Orders: ${TotalOrders!"0"}</li>
+    <li>Total Freight: ${TotalFreight!"0.00"}</li>
+    <li>Outstanding Balance: ${OutstandingBalance!"0.00"}</li>
+  </ul>
 </body>
 </html>

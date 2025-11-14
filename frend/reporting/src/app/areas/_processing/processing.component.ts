@@ -1655,7 +1655,9 @@ export class ProcessingComponent implements OnInit {
     if (selectedReport.dsInputType == 'ds.sqlquery') return false;
 
     if (selectedReport.dsInputType == 'ds.scriptfile') {
-      return (selectedReport.scriptOptionsSelectFileExplorer !== 'notused');
+      // defensive: treat undefined/null as 'notused'
+      const sel = (selectedReport.scriptOptionsSelectFileExplorer ?? 'notused');
+      return (sel !== 'notused');
     }
 
     return true;

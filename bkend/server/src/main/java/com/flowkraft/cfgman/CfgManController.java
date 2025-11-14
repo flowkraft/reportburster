@@ -236,6 +236,9 @@ public class CfgManController {
 			fullPath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, decodedPath).toString();
 		}
 
+		
+		//System.out.println("/rb/load-template Full path: " + fullPath);
+
 		// Ensure systemService.unixCliCat can handle the corrected fullPath
 		String fileContent = systemService.unixCliCat(fullPath);
 		// Return empty string if content is null to avoid potential NPEs downstream

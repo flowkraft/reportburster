@@ -51,24 +51,24 @@ public class DatabaseConnectionManager {
 	// Add driver class mapping
 	private String getDriverClass(String dbType) {
 		switch (dbType.toLowerCase()) {
-		case "sqlite":
-			return "org.sqlite.JDBC";
-		case "oracle":
-			return "oracle.jdbc.driver.OracleDriver";
-		case "sqlserver":
-			return "com.microsoft.sqlserver.jdbc.SQLServerDriver";
-		case "postgres":
-		case "postgresql":
-			return "org.postgresql.Driver";
-		case "mysql":
-			return "com.mysql.cj.jdbc.Driver";
-		case "mariadb":
-			return "org.mariadb.jdbc.Driver";
-		case "ibmdb2":
-			return "com.ibm.db2.jcc.DB2Driver";
-		default:
-			log.warn("No JDBC driver class configured for database type: {}", dbType);
-			return null;
+			case "sqlite":
+				return "org.sqlite.JDBC";
+			case "oracle":
+				return "oracle.jdbc.driver.OracleDriver";
+			case "sqlserver":
+				return "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+			case "postgres":
+			case "postgresql":
+				return "org.postgresql.Driver";
+			case "mysql":
+				return "com.mysql.cj.jdbc.Driver";
+			case "mariadb":
+				return "org.mariadb.jdbc.Driver";
+			case "ibmdb2":
+				return "com.ibm.db2.jcc.DB2Driver";
+			default:
+				log.warn("No JDBC driver class configured for database type: {}", dbType);
+				return null;
 		}
 	}
 
@@ -101,63 +101,17 @@ public class DatabaseConnectionManager {
 	 * @throws Exception If settings cannot be retrieved.
 	 */
 	private synchronized ConnectionDatabaseSettings getConnectionSettings(String connectionCode) throws Exception {
-		// Special convention for packaged sample Northwind SQLite DB.
-        // If reporting.xml references conncode "sample-northwind-sqlite" (or variants),
-        // return a synthesized ConnectionDatabaseSettings that points to the shipped DB file.
-        if (StringUtils.isNotBlank(connectionCode)) {
-            String code = connectionCode.trim().toLowerCase();
-            if ("sample-northwind-sqlite".equals(code) || "northwind-sqlite".equals(code)
-                    || "northwind-sqlite-sample".equals(code)) {
-
-                // Resolve DB file path: prefer PORTABLE_EXECUTABLE_DIR, then Utils.getDbFolderPath(), then relative path.
-                String dbFilePath = null;
-                String portable = System.getenv("PORTABLE_EXECUTABLE_DIR");
-                if (portable != null && !portable.trim().isEmpty()) {
-                    dbFilePath = portable + java.io.File.separator + "db" + java.io.File.separator
-                            + "sample-northwind-sqlite" + java.io.File.separator + "northwind.db";
-                } else {
-                    try {
-                        dbFilePath = com.sourcekraft.documentburster.utils.Utils.getDbFolderPath() + java.io.File.separator
-                                + "sample-northwind-sqlite" + java.io.File.separator + "northwind.db";
-                    } catch (Throwable t) {
-                        dbFilePath = "db" + java.io.File.separator + "sample-northwind-sqlite" + java.io.File.separator
-                                + "northwind.db";
-                    }
-                }
-
-                java.io.File dbFile = new java.io.File(dbFilePath);
-                String resolvedPath = dbFile.getAbsolutePath();
-                String jdbcUrl = "jdbc:sqlite:" + resolvedPath;
-
-                // Build ConnectionDatabaseSettings object inline
-                ConnectionDatabaseSettings conn = new ConnectionDatabaseSettings();
-                ServerDatabaseSettings server = new ServerDatabaseSettings();
-                server.type = "sqlite";
-                server.driver = "org.sqlite.JDBC";
-                server.url = jdbcUrl;
-                server.userid = "";
-                server.userpassword = "";
-
-                conn.databaseserver = server;
-
-                // ensure driver/url are normalized if method exists
-                if (conn.databaseserver != null) conn.databaseserver.ensureDriverAndUrl();
-                
-                //log.info("Using convention connection for sample DB '{}': {}", connectionCode, jdbcUrl);
-                return conn;
-            }
-        }
-		
 		String primaryCode = this.settings.getReportingPrimaryDatabaseConnectionCode();
 
 		if (StringUtils.isNotBlank(primaryCode) && primaryCode.equals(connectionCode)
 				&& this.settings.connectionDatabaseSettings != null) {
 			ConnectionDatabaseSettings c = this.settings.connectionDatabaseSettings.connection;
-			if (c != null && c.databaseserver != null) c.databaseserver.ensureDriverAndUrl();
+			if (c != null && c.databaseserver != null)
+				c.databaseserver.ensureDriverAndUrl();
 			return c;
 		} else {
-			DocumentBursterConnectionDatabaseSettings dbSettings =
-					this.settings.loadSettingsConnectionDatabase(connectionCode);
+			DocumentBursterConnectionDatabaseSettings dbSettings = this.settings
+					.loadSettingsConnectionDatabase(connectionCode);
 			if (dbSettings != null && dbSettings.connection != null && dbSettings.connection.databaseserver != null) {
 				dbSettings.connection.databaseserver.ensureDriverAndUrl();
 			}
@@ -198,7 +152,7 @@ public class DatabaseConnectionManager {
 
 		connSettings.databaseserver.ensureDriverAndUrl();
 
-		//System.out.println("connSettings: " + connSettings.toString());
+		// System.out.println("connSettings: " + connSettings.toString());
 
 		// Create DataSource using HikariCP
 		log.trace("Creating HikariConfig for code: {}", connectionCode);
@@ -214,7 +168,8 @@ public class DatabaseConnectionManager {
 			}
 		}
 
-		//System.out.println("connSettings.databaseserver.driver: " + connSettings.databaseserver.driver);
+		// System.out.println("connSettings.databaseserver.driver: " +
+		// connSettings.databaseserver.driver);
 
 		config.setDriverClassName(connSettings.databaseserver.driver);
 		config.setJdbcUrl(connSettings.databaseserver.url);
@@ -246,7 +201,8 @@ public class DatabaseConnectionManager {
 
 		// Cache it
 		dataSourcePools.put(connectionCode, dataSource);
-		// log.info("Created and cached new DataSource pool for code: {}", connectionCode);
+		// log.info("Created and cached new DataSource pool for code: {}",
+		// connectionCode);
 		log.trace("Exiting getDataSource (created) for code: {}", connectionCode);
 		return dataSource;
 	}
@@ -293,7 +249,8 @@ public class DatabaseConnectionManager {
 
 		// Cache it
 		jdbiInstances.put(connectionCode, jdbi);
-		//log.info("Created and cached new Jdbi instance for code: {}", connectionCode);
+		// log.info("Created and cached new Jdbi instance for code: {}",
+		// connectionCode);
 		log.trace("Exiting getJdbi (created) for code: {}", connectionCode);
 		return jdbi;
 	}

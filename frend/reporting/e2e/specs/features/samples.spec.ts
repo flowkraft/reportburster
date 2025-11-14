@@ -556,4 +556,327 @@ test.describe('', async () => {
     },
   );
 
+  electronBeforeAfterAllTest(
+    'should work correctly (11_generate_student_profiles_sql2foppdf)',
+    async ({ beforeAfterEach: firstPage }) => {
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const expectedOutputFiles = ['Andrew-Fuller.pdf', 'Janet-Leverling.pdf', 'Nancy-Davolio.pdf'];
+
+      let ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trGENERATE-STUDENT-PROFILES-SQL2PDF')
+        .waitOnElementToContainText(
+          '#tdGENERATE-STUDENT-PROFILES-SQL2PDF',
+          'Student Profiles',
+        );
+
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'GENERATE-STUDENT-PROFILES-SQL2PDF',
+        'StudentProfiles.pdf',
+        'Student Details',
+      );
+
+      await ft
+        .click('#trGENERATE-STUDENT-PROFILES-SQL2PDF')
+        .click('#btnSampleTryItGENERATE-STUDENT-PROFILES-SQL2PDF')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItGENERATE-STUDENT-PROFILES-SQL2PDF')
+        .clickYesDoThis()
+        .waitOnElementToBecomeVisible('#qaReminderLink')
+        .waitOnElementToBecomeEnabled('#btnGenerateReports')
+        .click('#btnGenerateReports')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'pdf')
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (12_generate_customer_statements_sql2html)',
+    async ({ beforeAfterEach: firstPage }) => {
+      // long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const expectedOutputFiles = [
+        'ALFKI.html',
+        'ANATR.html',
+        'ANTON.html',
+        'AROUT.html',
+        'BERGS.html',
+        'BLAUS.html',
+        'DRACD.html',
+        'FRANK.html',
+        'KOENE.html',
+        'LEHMS.html',
+        'MORGK.html',
+        'OTTIK.html',
+        'QUICK.html',
+        'TOMSP.html',
+        'WANDK.html',
+      ];
+
+      let ft = new FluentTester(firstPage);
+
+      // Navigate to samples and locate the new sample
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trGENERATE-CUSTOMER-STATEMENTS-SQL2HTML')
+        .waitOnElementToContainText(
+          '#tdGENERATE-CUSTOMER-STATEMENTS-SQL2HTML',
+          'Customer Statement',
+        );
+
+      // Verify Learn More modal content briefly (title + example file)
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'GENERATE-CUSTOMER-STATEMENTS-SQL2HTML',
+        'CustomerStatement.html',
+        'ALFKI.html customer statement',
+      );
+
+      // Run the sample "Try It" -> Generate
+      await ft
+        .click('#trGENERATE-CUSTOMER-STATEMENTS-SQL2HTML')
+        .click('#btnSampleTryItGENERATE-CUSTOMER-STATEMENTS-SQL2HTML')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItGENERATE-CUSTOMER-STATEMENTS-SQL2HTML')
+        .clickYesDoThis()
+        .waitOnElementToBecomeVisible('#qaReminderLink')
+        .waitOnElementToBecomeEnabled('#btnGenerateReports')
+        .click('#btnGenerateReports')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'html')
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (13_generate_customer_sales_summary_sql2xlsx)',
+    async ({ beforeAfterEach: firstPage }) => {
+      // long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const expectedOutputFiles = ['CustomerSalesSummary.xlsx'];
+
+      let ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trGENERATE-CUSTOMER-SALES-SUMMARY-SQL2XLSX')
+        .waitOnElementToContainText(
+          '#tdGENERATE-CUSTOMER-SALES-SUMMARY-SQL2XLSX',
+          'Customer Sales Summary',
+        );
+
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'GENERATE-CUSTOMER-SALES-SUMMARY-SQL2XLSX',
+        'CustomerSalesSummary.xlsx',
+        'Customer Sales Summary',
+      );
+
+      await ft
+        .click('#trGENERATE-CUSTOMER-SALES-SUMMARY-SQL2XLSX')
+        .click('#btnSampleTryItGENERATE-CUSTOMER-SALES-SUMMARY-SQL2XLSX')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItGENERATE-CUSTOMER-SALES-SUMMARY-SQL2XLSX')
+        .clickYesDoThis()
+        .waitOnElementToBecomeVisible('#qaReminderLink')
+        .waitOnElementToBecomeEnabled('#btnGenerateReports')
+        .click('#btnGenerateReports')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'xlsx')
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (14_generate_customer_invoices_master_detail_sql2html)',
+    async ({ beforeAfterEach: firstPage }) => {
+      // long running test
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const expectedOutputFiles = [
+        'invoice_1.html',
+        'invoice_2.html',
+        'invoice_3.html',
+      ];
+
+      let ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trGENERATE-CUSTOMER-INVOICES-MASTER-DETAILS-SCRIPT2HTML')
+        .waitOnElementToContainText(
+          '#tdGENERATE-CUSTOMER-INVOICES-MASTER-DETAILS-SCRIPT2HTML',
+          'Invoice Master-Detail',
+        );
+
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'GENERATE-CUSTOMER-INVOICES-MASTER-DETAILS-SCRIPT2HTML',
+        'scripted-invoice-sample.html',
+        'invoice_1.html example invoice',
+      );
+
+      await ft
+        .click('#trGENERATE-CUSTOMER-INVOICES-MASTER-DETAILS-SCRIPT2HTML')
+        .click('#btnSampleTryItGENERATE-CUSTOMER-INVOICES-MASTER-DETAILS-SCRIPT2HTML')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItGENERATE-CUSTOMER-INVOICES-MASTER-DETAILS-SCRIPT2HTML')
+        .clickYesDoThis()
+        .waitOnElementToBecomeVisible('#qaReminderLink')
+        .waitOnElementToBecomeEnabled('#btnGenerateReports')
+        .click('#btnGenerateReports')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'html')
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (15_generate_category_region_crosstab_script2html)',
+    async ({ beforeAfterEach: firstPage }) => {
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const expectedOutputFiles = ['CategoryRegionCrosstab.html'];
+
+      let ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trGENERATE-CATEGORY-REGION-CROSSTAB-SCRIPT2HTML')
+        .waitOnElementToContainText(
+          '#tdGENERATE-CATEGORY-REGION-CROSSTAB-SCRIPT2HTML',
+          'Category-Region Crosstab',
+        );
+
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'GENERATE-CATEGORY-REGION-CROSSTAB-SCRIPT2HTML',
+        'CategoryRegionCrosstab.html',
+        'Category-Region Crosstab',
+      );
+
+      await ft
+        .click('#trGENERATE-CATEGORY-REGION-CROSSTAB-SCRIPT2HTML')
+        .click('#btnSampleTryItGENERATE-CATEGORY-REGION-CROSSTAB-SCRIPT2HTML')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItGENERATE-CATEGORY-REGION-CROSSTAB-SCRIPT2HTML')
+        .clickYesDoThis()
+        .waitOnElementToBecomeVisible('#qaReminderLink')
+        .waitOnElementToBecomeEnabled('#btnGenerateReports')
+        .click('#btnGenerateReports')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'html')
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (16_generate_monthly_sales_trend_script2html)',
+    async ({ beforeAfterEach: firstPage }) => {
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const expectedOutputFiles = ['MonthlySalesTrend.html'];
+
+      let ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trGENERATE-MONTHLY-SALES-TREND-SCRIPT2HTML')
+        .waitOnElementToContainText(
+          '#tdGENERATE-MONTHLY-SALES-TREND-SCRIPT2HTML',
+          'Monthly Sales Trend',
+        );
+
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'GENERATE-MONTHLY-SALES-TREND-SCRIPT2HTML',
+        'MonthlySalesTrend.html',
+        'Monthly Sales Trend',
+      );
+
+      await ft
+        .click('#trGENERATE-MONTHLY-SALES-TREND-SCRIPT2HTML')
+        .click('#btnSampleTryItGENERATE-MONTHLY-SALES-TREND-SCRIPT2HTML')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItGENERATE-MONTHLY-SALES-TREND-SCRIPT2HTML')
+        .clickYesDoThis()
+        .waitOnElementToBecomeVisible('#qaReminderLink')
+        .waitOnElementToBecomeEnabled('#btnGenerateReports')
+        .click('#btnGenerateReports')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'html')
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (17_generate_supplier_scorecards_script2html)',
+    async ({ beforeAfterEach: firstPage }) => {
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const expectedOutputFiles = [
+        'supplier_1_scorecard.html',
+        'supplier_2_scorecard.html',
+        'supplier_3_scorecard.html',
+      ];
+
+      let ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trGENERATE-SUPPLIER-SCORECARDS-SCRIPT2HTML')
+        .waitOnElementToContainText(
+          '#tdGENERATE-SUPPLIER-SCORECARDS-SCRIPT2HTML',
+          'Supplier Scorecard',
+        );
+
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'GENERATE-SUPPLIER-SCORECARDS-SCRIPT2HTML',
+        'supplier_1_scorecard.html',
+        'supplier_1_scorecard.html example scorecard',
+      );
+
+      await ft
+        .click('#trGENERATE-SUPPLIER-SCORECARDS-SCRIPT2HTML')
+        .click('#btnSampleTryItGENERATE-SUPPLIER-SCORECARDS-SCRIPT2HTML')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItGENERATE-SUPPLIER-SCORECARDS-SCRIPT2HTML')
+        .clickYesDoThis()
+        .waitOnElementToBecomeVisible('#qaReminderLink')
+        .waitOnElementToBecomeEnabled('#btnGenerateReports')
+        .click('#btnGenerateReports')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'html')
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    },
+  );
 });

@@ -249,7 +249,7 @@ export class ConnectionListComponent implements OnInit {
     connectionType: string = 'email-connection',
     duplicate?: boolean,
   ) {
-    console.log('ConfigurationConnectionsComponet: showCrudModal()');
+    //console.log('ConfigurationConnectionsComponet: showCrudModal()');
     this.connectionDetailsModalInstance.showCrudModal(
       crudMode,
       connectionType,

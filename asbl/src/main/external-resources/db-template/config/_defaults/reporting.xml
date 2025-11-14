@@ -50,10 +50,14 @@
       <sqloptions>
         <conncode/>
         <query/>
+        <scriptname/>
+        <idcolumn>notused</idcolumn>
       </sqloptions>
       <scriptoptions>
         <conncode/>
-        <scriptpath/>
+        <scriptname/>
+        <idcolumn>notused</idcolumn>
+        <selectfileexplorer>notused</selectfileexplorer>
       </scriptoptions>
       <transformationoptions>
         <transformationcode></transformationcode>

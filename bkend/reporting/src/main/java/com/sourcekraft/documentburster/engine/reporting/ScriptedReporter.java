@@ -1,9 +1,11 @@
 package com.sourcekraft.documentburster.engine.reporting;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +14,8 @@ import com.sourcekraft.documentburster.common.settings.model.ReportSettings.Data
 import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 import com.sourcekraft.documentburster.engine.AbstractReporter;
 import com.sourcekraft.documentburster.utils.CsvUtils;
+import com.sourcekraft.documentburster.utils.Utils;
+import com.sourcekraft.documentburster.variables.Variables;
 
 import groovy.sql.Sql;
 
@@ -26,21 +30,16 @@ public class ScriptedReporter extends AbstractReporter {
 		log.debug("ScriptedReporter initialized with config path: {}", configFilePath);
 	}
 
-	/*
 	@Override
 	protected void initializeResources() throws Exception {
-		log.trace("Entering initializeResources...");
-		ctx.burstTokens = new ArrayList<>();
-		// Set default variable aliases if needed, similar to SqlReporter
-		ctx.variables.setVarAliases(Arrays.asList("col"));
-		// Ensure scripting engine is available (should be initialized in
-		// AbstractBurster)
-		if (scripting == null) {
-			throw new IllegalStateException("Scripting engine is not initialized in AbstractBurster.");
-		}
-		log.trace("Exiting initializeResources.");
+	    super.initializeResources();
+	    if (!hasRealInputFile()) {
+	        String templateName = (ctx.settings != null) ? ctx.settings.getTemplateName() : null;
+	        if (StringUtils.isNotBlank(templateName)) {
+	            ctx.variables.set(Variables.INPUT_DOCUMENT_NAME, Utils.sanitizeFileName(templateName));
+	        }
+	    }
 	}
-	*/
 
 	@Override
 	protected void fetchData() throws Exception {
@@ -236,5 +235,24 @@ public class ScriptedReporter extends AbstractReporter {
 	// as long as ctx.variables are populated correctly by parseBurstingMetaData
 	// and the template processing methods in AbstractReporter handle Map<String,
 	// Object>.
+	
+	private boolean hasRealInputFile() {
+	    if (ctx == null) return false;
+	    String p = ctx.inputDocumentFilePath;
+	    if (StringUtils.isBlank(p)) return false;
+	    if (p.startsWith("file:")) p = p.substring("file:".length());
+	    // get filename extension and treat known sqlite DB extensions as NOT a real input document
+	    try {
+	        String name = Paths.get(p).getFileName().toString();
+	        String ext = FilenameUtils.getExtension(name).toLowerCase();
+	        java.util.Set<String> sqliteExts = new java.util.HashSet<>(java.util.Arrays.asList("db", "sqlite", "sqlite3", "db3"));
+	        if (sqliteExts.contains(ext)) {
+	            return false;
+	        }
+	        return Files.exists(Paths.get(p));
+	    } catch (Exception e) {
+	        return false;
+	    }
+	}
 
 }

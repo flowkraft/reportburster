@@ -493,7 +493,11 @@ public class DocumentBursterSettingsService {
 
 		matching.add("*.docx");
 		matching.add("*.html");
-
+		
+		matching.add("*.fo");
+		matching.add("*.xsl");
+		matching.add("*.xslt");
+		
 		Optional<Boolean> files = Optional.of(true);
 		Optional<Boolean> directories = Optional.of(false);
 		Optional<Boolean> recursive = Optional.of(true);

@@ -94,9 +94,9 @@ COPY ./backend/reporting/src/main/external-resources/template/ ./
 
 RUN cp /app/config/burst/settings.xml /app/config/_defaults/settings.xml && \
     cp /app/config/burst/settings.xml /app/config/samples/split-only/settings.xml && \
-    cp /app/config/burst/settings.xml /app/config/samples/split-two-times-split-only/settings.xml && \
-    sed -i 's|<reportdistribution>true</reportdistribution>|<reportdistribution>false</reportdistribution>|g' /app/config/samples/split-two-times-split-only/settings.xml && \
-    sed -i 's|<split2ndtime>false</split2ndtime>|<split2ndtime>true</split2ndtime>|g' /app/config/samples/split-two-times-split-only/settings.xml && \
+    cp /app/config/burst/settings.xml /app/config/samples/split-two-times/settings.xml && \
+    sed -i 's|<reportdistribution>true</reportdistribution>|<reportdistribution>false</reportdistribution>|g' /app/config/samples/split-two-times/settings.xml && \
+    sed -i 's|<split2ndtime>false</split2ndtime>|<split2ndtime>true</split2ndtime>|g' /app/config/samples/split-two-times/settings.xml && \
     sed -i 's|<host>localhost</host>|<host>mailhog</host>|g' /app/config/burst/settings.xml && \
     sed -i 's|<weburl>http://localhost:8025</weburl>|<weburl>http://mailhog:8025</weburl>|g' /app/config/burst/settings.xml && \
     cp /app/config/_internal/license.xml /app/config/_defaults/license.xml

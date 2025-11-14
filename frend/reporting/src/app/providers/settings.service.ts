@@ -695,6 +695,13 @@ export class SettingsService {
         tplFile.fileName.endsWith('.html')
       )
         return true;
+      
+      if (
+        outputType === 'output.fop2pdf' &&
+        (tplFile.fileName.endsWith('.fo') || tplFile.fileName.endsWith('.xsl') || tplFile.fileName.endsWith('.xslt'))
+      )
+        return true;
+
       return false;
     });
 

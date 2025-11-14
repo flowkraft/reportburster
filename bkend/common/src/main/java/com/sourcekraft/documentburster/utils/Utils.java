@@ -25,16 +25,19 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -793,5 +796,26 @@ public class Utils {
 			return false; // Connection failed - port closed or unreachable
 		}
 	}
+	
+	// sanitize a string so it is safe to use as a folder/file name on Windows/Linux
+	public static String sanitizeFileName(String input) {
+        if (input == null) return "report";
+        String s = Normalizer.normalize(input, Normalizer.Form.NFKD).replaceAll("\\p{M}", "");
+        s = FilenameUtils.getName(s); // strip any path components
+        s = s.replaceAll("[\\\\/:*?\"<>|\\p{Cntrl}]+", "_");
+        s = s.replaceAll("[^A-Za-z0-9._\\- ]+", "_");
+        s = s.replaceAll("[ _]{2,}", "_");
+        s = s.trim();
+        s = s.replaceAll("^\\.+|\\.+$", ""); // remove leading/trailing dots
+        if (s.isEmpty()) s = "report";
+        String upper = s.toUpperCase();
+        Set<String> reserved = new HashSet<>();
+        reserved.add("CON"); reserved.add("PRN"); reserved.add("AUX"); reserved.add("NUL");
+        for (int i = 1; i <= 9; i++) { reserved.add("COM" + i); reserved.add("LPT" + i); }
+        if (reserved.contains(upper)) s = "_" + s;
+        int max = 200;
+        if (s.length() > max) s = s.substring(0, max);
+        return s;
+    }
 
 }

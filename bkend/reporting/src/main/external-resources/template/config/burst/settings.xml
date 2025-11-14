@@ -268,8 +268,13 @@
 			<timeformat>HH:mm:ss</timeformat>
 			<!-- DateTime format: MM/dd/yyyy HH:mm:ss (e.g., 03/01/2008 14:30:00) -->
 			<datetimeformat>MM/dd/yyyy HH:mm:ss</datetimeformat>
-			<!-- Number format: 0.###### (e.g., 4000 or 4000.5, no thousand separator by default) -->
+			<!-- Use a locale-independent format that emits dot as decimal separator.
+				"computer" = no grouping, dot decimal. 
+				Alternatively use pattern
+				0.###### (e.g., 4000 or 4000.5, no thousand separator by default)-->
 			<numberformat>0.######</numberformat>
+			<!-- Ensure template rendering uses a stable timezone -->
+  			<timezone>UTC</timezone>
 		</freemarker>
 		<!-- end FreeMarker template engine settings -->
 
