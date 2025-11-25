@@ -223,15 +223,15 @@ export class FileExplorerDialogComponent implements OnInit {
   }
 
   confirmSelection() {
-    console.log('Confirm selection called, selectedFile:', this.selectedFile);
+    //console.log('Confirm selection called, selectedFile:', this.selectedFile);
     // Ensure selectedFile has a value before proceeding
     if (this.selectedFile) {
-      console.log('Emitting selected file:', this.selectedFile);
+      //console.log('Emitting selected file:', this.selectedFile);
       this.fileSelected.emit(this.selectedFile);
       this.visible = false;
       this.visibleChange.emit(false);
     } else {
-      console.warn('Confirm selection called but no file is selected.');
+      //console.warn('Confirm selection called but no file is selected.');
     }
   }
 

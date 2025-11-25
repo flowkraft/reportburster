@@ -151,7 +151,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 		// Unified bursting metadata parsing for all reporters
 		if (ctx.reportData == null || ctx.reportData.isEmpty()) {
 			ctx.burstTokens = new ArrayList<>();
-			log.warn("Source data is null or empty. No burst tokens generated.");
+			// log.warn("Source data is null or empty. No burst tokens generated.");
 			return;
 		}
 

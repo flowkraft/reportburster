@@ -158,7 +158,7 @@ export class ConnectionListComponent implements OnInit {
 
         try {
           // The fsService.removeAsync should be capable of removing a directory recursively
-          console.log(`Removing path: ${pathToRemoveOnBackend}`);
+          //console.log(`Removing path: ${pathToRemoveOnBackend}`);
           await this.fsService.removeAsync(pathToRemoveOnBackend);
 
           // Remove the connection from the frontend list using its original unique filePath

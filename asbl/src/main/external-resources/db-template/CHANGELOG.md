@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 11.4.0 - 2025-11-25
+
+### Added
+
+- UI configuration for AI Assistant URL — administrators can now set the AI Assistant endpoint in the Settings / Skins area (copilot URL).
+
+### Fixed
+
+- Improved splash screen feedback when launching ReportBurster.exe — clearer progress and better status messages during startup.
+- Improved Test SQL Query / Test Script / View Data preview feedback:
+  - The UI now detects preview error payloads (ERROR_MESSAGE) and shows an error toast rather than a success message.
+  - When errors occur, the Tabulator preview displays an inline ERROR_MESSAGE and the Errors Log Viewer is shown to make debugging easier.
+  - “No data” (no burst tokens) is treated as an informational condition (logged at INFO/WARN and shown as a warning in the UI) instead of an application error, reducing noise in errors.log.
+  
 ## 11.3.0 - 2025-11-17
 
 ### Added

@@ -20,7 +20,7 @@
     "target": ["portable"]
   },
   "portable": {
-    "splashImage": "dist/assets/images/splash-documentburster.bmp"
+    "splashImage": "dist/assets/images/splash-dark.bmp"
   },
   "mac": {
     "icon": "dist/assets/icons",

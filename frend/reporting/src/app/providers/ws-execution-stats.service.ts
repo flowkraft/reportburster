@@ -297,7 +297,7 @@ export class WebSocketExecutionStatsService extends WebSocketEndpoint {
       fileSize: number;
     }[],
   ) => {
-    console.log(`logsEventDetails 2 = ${JSON.stringify(logsEventDetails)}`);
+    //console.log(`logsEventDetails 2 = ${JSON.stringify(logsEventDetails)}`);
     this.executionStatsService.logStats.foundDirtyLogFiles = false;
     const allLogFiles = logsEventDetails;
 

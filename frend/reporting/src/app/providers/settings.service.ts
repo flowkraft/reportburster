@@ -119,6 +119,7 @@ export class SettingsService {
       settings: {
         skin: 'skin-black',
         backendurl: 'http://localhost:9090',
+        copiloturl: 'https://chatgpt.com/',
       },
     },
   };
@@ -495,6 +496,13 @@ export class SettingsService {
     });
   }
 
+  getCopilotUrl(): string {
+    return (
+      this.xmlInternalSettings?.documentburster?.settings?.copiloturl ||
+      'https://copilot.microsoft.com'
+    );
+  }
+
   getEmailConnectionFiles(): ExtConnection[] {
     if (!this._emailConnectionsFiles) {
       this._emailConnectionsFiles = this.connectionFiles.filter(
@@ -623,9 +631,9 @@ export class SettingsService {
   }
 
   async saveTemplateFileAsync(filePath: string, content: string) {
-    console.log(
-      `saveTemplateFileAsync filePath = ${filePath}, content length = ${content.length}`,
-    );
+    //console.log(
+    //  `saveTemplateFileAsync filePath = ${filePath}, content length = ${content.length}`,
+    //);
     const encodedPath = encodeURIComponent(Utilities.slash(filePath));
     return this.apiService.post(
       `/cfgman/rb/save-template?path=${encodedPath}`,

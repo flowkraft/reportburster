@@ -473,7 +473,7 @@ export class FileExplorerComponent implements OnInit {
       if (this.onFileClicked) {
         this.onFileClicked(file);
       }
-      console.log('File selected:', file.fullName);
+      //console.log('File selected:', file.fullName);
       return;
     }
 
@@ -488,7 +488,7 @@ export class FileExplorerComponent implements OnInit {
     if (fileObj && this.onFileClicked) {
       this.selectedFile = path; // Update the selectedFile property
       this.onFileClicked(fileObj);
-      console.log('File selected by path:', path);
+      //console.log('File selected by path:', path);
     }
   }
 
@@ -502,7 +502,7 @@ export class FileExplorerComponent implements OnInit {
     // Then, trigger the double-click callback if it exists
     if (this.onFileDoubleClicked) {
       this.onFileDoubleClicked(file);
-      console.log('File double-clicked and confirmed:', file.fullName);
+      //console.log('File double-clicked and confirmed:', file.fullName);
     }
   }
 

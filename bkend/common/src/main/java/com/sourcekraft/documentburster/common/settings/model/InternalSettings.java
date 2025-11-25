@@ -20,5 +20,6 @@ public class InternalSettings extends DumpToString {
 
 	public String skin;
 	public String backendurl;
+    public String copiloturl;
 
 }

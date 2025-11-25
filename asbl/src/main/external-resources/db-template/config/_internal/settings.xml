@@ -5,6 +5,7 @@
 
 		<skin>skin-black</skin>
 		<backendurl>http://localhost:9090/api</backendurl>
+		<copiloturl>https://chatgpt.com/</copiloturl>
 
 	</settings>
 

@@ -26,7 +26,7 @@ test.describe('', async () => {
       await jetpack.dirAsync(UPGRADE_DIR, { empty: true });
 
       const baselineVersionFilePath = `${PATHS.E2E_RESOURCES_PATH}/upgrade/_baseline/db-baseline-8.7.2.zip`;
-      console.log(`baselineVersionFilePath = ${baselineVersionFilePath}`);
+      //console.log(`baselineVersionFilePath = ${baselineVersionFilePath}`);
       await helpers.extractBaseLineAndCopyCustomConfigAndScriptFiles(
         UPGRADE_DIR,
         baselineVersionFilePath,

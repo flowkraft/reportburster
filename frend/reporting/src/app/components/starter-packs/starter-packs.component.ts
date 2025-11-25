@@ -145,10 +145,10 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
   async refreshData(): Promise<void> {
     // Prevent concurrent refreshes
     if (this.isRefreshing || this.isLoading) {
-      console.log('Refresh skipped (already in progress or loading)');
+      //console.log('Refresh skipped (already in progress or loading)');
       return;
     }
-    console.log('Starting manual refresh...');
+    //console.log('Starting manual refresh...');
     this.isRefreshing = true;
     this.error = null; // Clear previous errors on refresh
     await this.fetchStarterPacksStatus();
@@ -388,12 +388,12 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     }
     try {
       await navigator.clipboard.writeText(text);
-      console.log('Text copied to clipboard:', text);
+      //console.log('Text copied to clipboard:', text);
       // Optional: Add visual feedback to the user (e.g., change button icon/text briefly, show a toast)
       // Example: Temporarily change button text (requires adding state to the pack or component)
       // alert('Copied!'); // Simple feedback
     } catch (err) {
-      console.error('Failed to copy text to clipboard:', err);
+      //console.error('Failed to copy text to clipboard:', err);
       alert('Failed to copy text.');
     }
   }

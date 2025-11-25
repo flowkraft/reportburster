@@ -22,6 +22,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
+import java.util.LinkedHashMap; 
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -426,6 +428,8 @@ public class CliJob {
 	public SqlQueryResult doTestFetchData(Map<String, String> parameters) throws Exception {
 
 		File jobFile = null;
+		SqlQueryResult result = new SqlQueryResult();
+
 		try {
 			// System.out.println("doTestFetchData: configurationFilePath = " +
 			// configurationFilePath);
@@ -473,7 +477,7 @@ public class CliJob {
 			// System.out.println("doTestFetchData: burst finished");
 
 			// Prepare and return the result
-			SqlQueryResult result = new SqlQueryResult();
+			
 			result.reportData = burster.getCtx().reportData;
 			result.reportColumnNames = burster.getCtx().reportColumnNames;
 			result.isPreview = true;
@@ -483,11 +487,36 @@ public class CliJob {
 			// System.out.println("doTestFetchData: reportColumnNames = "
 			// + (result.reportColumnNames != null ? result.reportColumnNames.toString() :
 			// "null"));
+			return result;
+			
+		} catch (Throwable t) {
+            String msg = (t.getMessage() == null || t.getMessage().isEmpty()) ? t.toString() : t.getMessage();
+            
+			// Log everything (goes through SLF4J/logback appenders)
+            if (!msg.toLowerCase().contains("no burst tokens were provided or fetched for the document")) {
+				log.error("Exception: ", t);
+			}
+			else {
+				log.info(msg);
+			}
+            
+			// Otherwise, we are invoked from the server (REST preview) — return a safe error payload
+            LinkedHashMap<String, Object> row = new LinkedHashMap<>();
+            row.put("ERROR_MESSAGE", msg);
+            result.reportData = Arrays.asList(row);                    
+            result.reportColumnNames = Arrays.asList("ERROR_MESSAGE");
+            result.isPreview = true;
+            result.executionTimeMillis = 0L;
+            result.totalRows = 0;
 
-			// Optionally set executionTimeMillis, etc.
+            // If we were invoked from CLI (DocumentBurster/MainProgram set global)
+            // rethrow to keep existing behavior (so top-level wrapper records exit and archiving)
+            if (this.global != null) {
+            	throw t;
+            }
 			return result;
 
-		} finally {
+        } finally {
 			if ((jobFile != null) && (jobFile.exists())) {
 				// System.out.println("doTestFetchData: Deleting job file: " +
 				// jobFile.getAbsolutePath());

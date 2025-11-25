@@ -11,6 +11,7 @@ import { AiManagerService, PromptInfo } from './ai-manager.service';
 import { InfoService } from '../../components/dialog-info/info.service';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal'; // Add ngx-bootstrap modal service
 import { AppsManagerService, ManagedApp } from '../apps-manager/apps-manager.service';
+import { SettingsService } from '../../providers/settings.service';
 
 // Define constants for tab indices for clarity
 const VANNA_TAB_INDEX = 0;
@@ -91,6 +92,7 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
     private infoService: InfoService,
     private modalService: BsModalService, // Add ngx-bootstrap modal service
     protected appsManagerService: AppsManagerService,
+    private settingsService: SettingsService,
   ) {
   }
 
@@ -340,8 +342,8 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
   // --- Standalone Mode: Dropdown Button Actions ---
 
   triggerOpenCopilotBrowser(): void {
-    console.log('Placeholder: Open external Copilot browser window');
-    // window.open('your-external-copilot-url', '_blank'); // Example
+    const url = this.settingsService.getCopilotUrl();
+    window.open(url, '_blank');
   }
 
   openVannaModal(template: TemplateRef<any>): void {
@@ -349,7 +351,7 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
       this.setActiveTab(VANNA_TAB_INDEX);
       this.pendingInit = true;
       this.openModal(template);
-      console.log('Placeholder: Opening modal to Vanna tab');
+      //console.log('Placeholder: Opening modal to Vanna tab');
     }
   }
 
@@ -407,7 +409,8 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
    * Launch Microsoft Copilot in a new browser tab
    */
   launchExternalCopilot(): void {
-    window.open('https://copilot.microsoft.com', '_blank');
+    const url = this.settingsService.getCopilotUrl();
+    window.open(url, '_blank');
   }
 
   private completeInitialization(): void {

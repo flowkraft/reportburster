@@ -703,7 +703,7 @@ export class ConnectionDetailsComponent implements OnInit {
         .filter((name: string) => !!name);
     }
 
-    console.log(`selectedTableNames: ${selectedTableNames}`);
+    //console.log(`selectedTableNames: ${selectedTableNames}`);
 
     if (selectedTableNames.length === 0) {
       this.messagesService.showInfo(
@@ -712,7 +712,7 @@ export class ConnectionDetailsComponent implements OnInit {
       return;
     }
 
-    console.log('selectedTableNames:', selectedTableNames);
+    //console.log('selectedTableNames:', selectedTableNames);
 
     // Filter the rawSchemaData.tables to get the full objects for selected tables
     let relevantTableData: any[] = [];
@@ -874,10 +874,10 @@ export class ConnectionDetailsComponent implements OnInit {
   // Method to handle changes in the JSON editor (ngx-codejar)
   onDomainGroupedSchemaJsonTextContentChanged(newCode: string): void {
     this.domainGroupedSchemaJsonTextContent = newCode;
-    console.log(
-      '[onDomainGroupedSchemaJsonTextContentChanged] newCode:',
-      newCode,
-    );
+    //console.log(
+    //  '[onDomainGroupedSchemaJsonTextContentChanged] newCode:',
+    //  newCode,
+    //);
     try {
       // Parse the new text content from the editor
       const parsed = JSON.parse(newCode.trim() === '' ? '{}' : newCode);
@@ -891,10 +891,10 @@ export class ConnectionDetailsComponent implements OnInit {
       this.domainGroupedSchemaExists =
         this.rawDomainGroupedSchema.domainGroups.length > 0;
 
-      console.log(
-        '[onDomainGroupedSchemaJsonTextContentChanged] updated domainSource count:',
-        this.domainSourceSchemaObjects.length,
-      );
+      //console.log(
+      //  '[onDomainGroupedSchemaJsonTextContentChanged] updated domainSource count:',
+      //  this.domainSourceSchemaObjects.length,
+      //);
     } catch (err) {
       console.warn(
         'Invalid JSON in editor, cannot update domain picklist source:',
@@ -905,10 +905,10 @@ export class ConnectionDetailsComponent implements OnInit {
       // this.rawDomainGroupedSchema = { domainGroups: [] };
       // this.processDomainGroupedSchema(this.rawDomainGroupedSchema);
     }
-    console.log(
-      '[onDomainGroupedSchemaJsonTextContentChanged] rawDomainGroupedSchema:',
-      this.rawDomainGroupedSchema,
-    );
+    //console.log(
+    //  '[onDomainGroupedSchemaJsonTextContentChanged] rawDomainGroupedSchema:',
+    //  this.rawDomainGroupedSchema,
+    //);
   }
 
   // Method for JSON syntax highlighting
@@ -920,9 +920,9 @@ export class ConnectionDetailsComponent implements OnInit {
   toggleDatabaseDiagramCodeView(): void {
     this.isDiagramEditMode = !this.isDiagramEditMode;
     if (!this.isDiagramEditMode && this.plantUmlCode) {
-      console.log(
-        'toggleDatabaseDiagramCodeView: Switched to view mode, re-encoding...',
-      ); // Log toggle
+      //console.log(
+      //  'toggleDatabaseDiagramCodeView: Switched to view mode, re-encoding...',
+      //); // Log toggle
       setTimeout(() => {
         this.encodePlantUmlDiagram();
       }, 100);
@@ -996,9 +996,9 @@ export class ConnectionDetailsComponent implements OnInit {
   private async saveCurrentConnection(
     isDbConnection: boolean,
   ): Promise<boolean> {
-    console.log(
-      `[saveCurrentConnection] isDbConnection=${isDbConnection}, filePath=${this.modalConnectionInfo.filePath}`,
-    );
+    //console.log(
+    //  `[saveCurrentConnection] isDbConnection=${isDbConnection}, filePath=${this.modalConnectionInfo.filePath}`,
+    //);
     try {
       const connectionName = isDbConnection
         ? this.modalConnectionInfo.database.documentburster.connection.name
@@ -1011,10 +1011,10 @@ export class ConnectionDetailsComponent implements OnInit {
       const rawPath = this.modalConnectionInfo.filePath;
       const idx = rawPath.indexOf('config/connections/');
       const savePath = idx >= 0 ? rawPath.substring(idx) : rawPath;
-      console.log(
-        '[saveCurrentConnection] sending to backend, relative savePath=',
-        savePath,
-      );
+      //console.log(
+      //  '[saveCurrentConnection] sending to backend, relative savePath=',
+      //  savePath,
+      //);
 
       if (!connectionName) {
         this.messagesService.showError('Connection Name cannot be empty.');
@@ -1228,9 +1228,9 @@ export class ConnectionDetailsComponent implements OnInit {
           );
         } else {
           // If file doesn't exist and content is not meaningful, no action needed, but can log.
-          console.log(
-            'Domain-grouped schema is empty or invalid; no file to save or remove.',
-          );
+          //console.log(
+          //  'Domain-grouped schema is empty or invalid; no file to save or remove.',
+          //);
         }
         this.domainGroupedSchemaExists = false; // Reflect that no meaningful schema is persisted
       }
@@ -1355,18 +1355,18 @@ export class ConnectionDetailsComponent implements OnInit {
         this.domainGroupedSchemaPath,
       );
 
-      console.log(
-        `Checking for domain-grouped schema file: ${this.domainGroupedSchemaPath}, exists: ${exists}`,
-      );
+      //console.log(
+      //  `Checking for domain-grouped schema file: ${this.domainGroupedSchemaPath}, exists: ${exists}`,
+      //);
 
       if (exists) {
         const fileContent = await this.fsService.readAsync(
           this.domainGroupedSchemaPath,
         );
 
-        console.log(
-          `Attempting to load domain-grouped schema from: ${this.domainGroupedSchemaPath}, fileContent: ${fileContent}`,
-        );
+        //console.log(
+        //  `Attempting to load domain-grouped schema from: ${this.domainGroupedSchemaPath}, fileContent: ${fileContent}`,
+        //);
 
         if (typeof fileContent === 'string' && fileContent.trim() !== '') {
           this.domainGroupedSchemaJsonTextContent = fileContent; // Store raw text
@@ -1392,17 +1392,17 @@ export class ConnectionDetailsComponent implements OnInit {
           }
         } else {
           // File exists but is empty or not a string
-          console.log(
-            `Domain-grouped schema file ${this.domainGroupedSchemaPath} is empty or content is not a string.`,
-          );
+          //console.log(
+          //  `Domain-grouped schema file ${this.domainGroupedSchemaPath} is empty or content is not a string.`,
+          //);
           this.domainGroupedSchemaJsonTextContent = ''; // Ensure text content is also reset
           this.rawDomainGroupedSchema = { domainGroups: [] };
           this.domainGroupedSchemaExists = false;
         }
       } else {
-        console.log(
-          `Domain-grouped schema file does not exist: ${this.domainGroupedSchemaPath}.`,
-        );
+        //console.log(
+        //  `Domain-grouped schema file does not exist: ${this.domainGroupedSchemaPath}.`,
+        //);
         // Ensure text content is reset if file doesn't exist
         this.domainGroupedSchemaJsonTextContent = '';
         this.rawDomainGroupedSchema = { domainGroups: [] };
@@ -1449,21 +1449,21 @@ export class ConnectionDetailsComponent implements OnInit {
 
     try {
       const fileExists = await this.fsService.existsAsync(relativeSchemaPath);
-      console.log('fileExists:', fileExists, typeof fileExists);
+      //console.log('fileExists:', fileExists, typeof fileExists);
 
       if (!fileExists) {
-        console.log(
-          `Database schema file not found: ${relativeSchemaPath}. Please test the connection or refresh the schema to generate it.`,
-        );
+        //console.log(
+        //  `Database schema file not found: ${relativeSchemaPath}. Please test the connection or refresh the schema to generate it.`,
+        //);
         this.rawSchemaData = null;
         this.sourceSchemaObjects = [];
         this.showSchemaTreeSelect = false;
       } else {
         content = await this.fsService.readAsync(relativeSchemaPath);
         if (!content || content.trim() === '') {
-          console.log(
-            `Schema file ${relativeSchemaPath} is empty. No schema loaded.`,
-          );
+          //console.log(
+          //  `Schema file ${relativeSchemaPath} is empty. No schema loaded.`,
+          //);
           this.rawSchemaData = null;
           this.sourceSchemaObjects = [];
           this.showSchemaTreeSelect = false;
@@ -1562,10 +1562,10 @@ export class ConnectionDetailsComponent implements OnInit {
   processDomainGroupedSchema(schemaDataToProcess: {
     domainGroups: any[];
   }): void {
-    console.log(
-      '[processDomainGroupedSchema] Processing schema data:',
-      schemaDataToProcess,
-    );
+    //console.log(
+    //  '[processDomainGroupedSchema] Processing schema data:',
+    //  schemaDataToProcess,
+    //);
 
     // Ensure schemaDataToProcess and its domainGroups property are valid
     let domainGroupsArray: any[] = [];
@@ -1596,9 +1596,9 @@ export class ConnectionDetailsComponent implements OnInit {
     try {
       if (!this.plantUmlCode || this.plantUmlCode.trim() === '') {
         this.encodedPlantUmlDiagram = ''; // Set to empty if no actual code
-        console.log(
-          'PlantUML code is empty, encodedPlantUmlDiagram set to empty.',
-        );
+        //console.log(
+        //  'PlantUML code is empty, encodedPlantUmlDiagram set to empty.',
+        //);
         return;
       }
 
@@ -1623,10 +1623,10 @@ export class ConnectionDetailsComponent implements OnInit {
         .replace(/\//g, '_')
         .replace(/=/g, '');
 
-      console.log(
-        'Encoded successfully, length:',
-        this.encodedPlantUmlDiagram.length,
-      );
+      //console.log(
+      //  'Encoded successfully, length:',
+      //  this.encodedPlantUmlDiagram.length,
+      //);
     } catch (error) {
       console.error('Encoding error:', error);
       this.encodedPlantUmlDiagram = '';
@@ -1666,9 +1666,9 @@ export class ConnectionDetailsComponent implements OnInit {
         // File exists, attempt to load it
         await this.loadDomainGroupedSchema();
       } else {
-        console.log(
-          `Domain-grouped schema file does not exist yet: ${domainGroupedSchemaPath}`,
-        );
+        //console.log(
+        //  `Domain-grouped schema file does not exist yet: ${domainGroupedSchemaPath}`,
+        //);
         // Set default empty schema since the file doesn't exist
         this.domainGroupedSchemaJsonTextContent = ''; // Default to empty object for the editor
         this.rawDomainGroupedSchema = { domainGroups: [] }; // Set empty raw data
@@ -1860,9 +1860,9 @@ export class ConnectionDetailsComponent implements OnInit {
           await this.loadUbiquitousLanguage(selectedConnection.filePath);
 
           if (this.context === 'sqlQuery') {
-            console.log(
-              `this.domainGroupedSchemaExists = ${this.domainGroupedSchemaExists}`,
-            );
+            //console.log(
+            //  `this.domainGroupedSchemaExists = ${this.domainGroupedSchemaExists}`,
+            //);
             if (this.domainGroupedSchemaExists) {
               this.isConnectionDetailsTabActive = false;
               this.isDomainGroupedSchemaTabActive = true;
@@ -1953,7 +1953,7 @@ export class ConnectionDetailsComponent implements OnInit {
       this.ubiquitousLanguageFilePath = ulPath;
 
       const exists = await this.fsService.existsAsync(ulPath);
-      console.log(`Ubiquitous Language file exists: ${exists}`);
+      //console.log(`Ubiquitous Language file exists: ${exists}`);
 
       if (exists) {
         const content = await this.fsService.readAsync(ulPath);

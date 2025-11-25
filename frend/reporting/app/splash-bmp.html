@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ReportBurster</title>
+  <style>
+    :root{
+      --bg-dark: #111213;
+      --rb-r: #f4f4f4;
+      --rb-b: #2b7fe5;
+      --text-light: #ddd;
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      padding:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      -webkit-font-smoothing:antialiased;
+      background: var(--bg-dark);
+      color: var(--text-light);
+      overflow:hidden;
+    }
+
+    .viewport {
+      width: 560px;
+      height: 320px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-sizing:border-box;
+      margin:0;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    .mini {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      text-align:center;
+    }
+
+    svg.rb {
+      width: 84px;    /* logical width, small and discreet */
+      height: auto;
+      display:block;
+    }
+
+    .label {
+      font-size:13px;
+      color: var(--text-light);
+      opacity:0.95;
+      letter-spacing:0.2px;
+      margin-top:2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="viewport" role="status" aria-live="polite">
+    <div class="mini" aria-hidden="false">
+      <!-- Variation 5: Larger B -->
+      <svg class="rb" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RB">
+        <g text-anchor="middle" dominant-baseline="middle">
+          <text x="50%" y="50%" font-family="Montserrat, Poppins, 'Segoe UI', sans-serif" font-weight="700">
+  <tspan font-size="72" fill="var(--rb-r)">R</tspan>
+  <tspan dx="-6" font-size="80" fill="var(--rb-b)">B</tspan>
+</text>
+
+        </g>
+      </svg>
+
+      <div class="label" id="msg">Starting…</div>
+    </div>
+  </div>
+</body>
+</html>

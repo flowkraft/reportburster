@@ -54,12 +54,13 @@ export const tabReportingTabulatorTemplate = `<ng-template
     <div class="row" style="margin-top: 20px;">
       <div class="col-xs-12">
         <div class="panel panel-default">
-          <div class="panel-heading">
+          <div class="panel-heading" *ngIf="!sqlQueryResultIsError">
             <h3 class="panel-title">{{ 'AREAS.CONFIGURATION.TAB-REPORTING-TABULATOR.TABLE-PREVIEW' | translate }}</h3>
           </div>
-          <div class="panel-body">
+          <div class="panel-body" *ngIf="sqlQueryResult">
             <!-- in your Angular template -->
             <rb-tabulator #tabulator
+              *ngIf="!sqlQueryResultIsError"
               [data]="sqlQueryResult?.reportData"
               [columns]="sqlQueryResult?.reportColumnNames | tabulatorColumns"
               [loading]="isReportDataLoading"
@@ -68,7 +69,32 @@ export const tabReportingTabulatorTemplate = `<ng-template
               (tableError)="onTabError($any($event).detail.message)"
             ></rb-tabulator>
 
-            <div *ngIf="sqlQueryResult">
+             <div *ngIf="sqlQueryResultIsError">
+              <div class="alert alert-danger">
+                <strong>Error:</strong> Query failed. Check Logs below.
+              </div>
+              <pre style="white-space:pre-wrap;max-height:300px;overflow:auto;">
+                {{ sqlQueryResult.reportData?.[0]?.ERROR_MESSAGE }}
+              </pre>
+             <div
+                id="errorsLogTabulator"
+                class="panel-body"
+                style="
+                  color: red;
+                  height: 421px;
+                  overflow-y: scroll;
+                  overflow-x: auto;
+                  -webkit-user-select: all;
+                  user-select: all;
+                "
+              >
+                <dburst-log-file-viewer
+                  logFileName="errors.log"
+                ></dburst-log-file-viewer>
+              </div>
+            </div>
+
+            <div>
               <br/>
               <p>Execution Time: {{ sqlQueryResult.executionTimeMillis }}ms</p>
               <p>Total Rows: {{ sqlQueryResult.reportData?.length || 0 }}</p>
