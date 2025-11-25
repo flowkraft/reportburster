@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ReportBurster</title>
+  <!-- prevent transient scrollbars / flicker during initial paint -->
+  <style>
+    html,
+    body {
+      overflow: hidden;
+      height: 100%;
+    }
+
+    ::-webkit-scrollbar {
+      display: none
+    }
+  </style>
+  <!-- Theme selection: query param override (applied before first paint)
+       packaged (file://) -> default dark
+       dev -> random light/dark unless ?theme is specified. -->
+  <script>
+    (function () {
+      try {
+        const params = new URLSearchParams(location.search || '');
+        const q = params.get('theme');
+        if (q === 'light' || q === 'dark') {
+          if (q === 'light') document.documentElement.classList.add('theme-light');
+          return;
+        }
+        if (location.protocol === 'file:') return;
+        if (Math.random() < 0.5) document.documentElement.classList.add('theme-light');
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
+
+  <style>
+    :root {
+      --bg-dark: #1f1f1f;
+      --bg-light: #ffffff;
+      --accent: #2f6fc6;
+      --accent-2: #2bb5ff;
+      --text-white: #fff;
+      --card-bg: rgba(28, 28, 28, 0.88);
+      --card-bg-light: rgba(255, 255, 255, 0.98);
+      --card-border-dark: rgba(255, 255, 255, 0.06);
+      --card-border-light: rgba(0, 0, 0, 0.06);
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: var(--bg-dark);
+      color: var(--text-white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Light theme */
+    html.theme-light,
+    body.theme-light {
+      background: var(--bg-light);
+      color: #111;
+    }
+
+    /* Card with fixed size to match BrowserWindow { width:560, height:320 }.
+       Reduced top padding and slightly larger bottom padding + a content wrapper
+       so the 4 items (logo/text/spinner/label) are grouped and nudged visually centered
+       between the top accent stripe and the bottom progress bar. */
+    .card {
+      box-sizing: border-box;
+      width: 560px;
+      height: 320px;
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      /* use content wrapper to center group */
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      padding: 20px 28px 22px;
+      /* pull content slightly down by lowering top padding */
+      border-radius: 14px;
+      background: var(--card-bg);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.32);
+      border: 1px solid var(--card-border-dark);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 220ms ease, transform 220ms ease;
+    }
+
+    .card.ready {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-top-left-radius: 14px;
+      border-top-right-radius: 14px;
+    }
+
+    html.theme-light .card {
+      background: var(--card-bg-light);
+      box-shadow: 0 8px 26px rgba(30, 30, 30, 0.08);
+      border: 1px solid var(--card-border-light);
+    }
+
+    /* Centered content wrapper: occupies remaining vertical space and centers items.
+       Add a small downward nudge so the four elements feel visually centered between the
+       top accent stripe and the bottom progress bar. */
+    .content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex: 1 1 auto;
+      transform: translateY(6px);
+      /* visual nudge to center group relative to decoration */
+    }
+
+    .logo {
+      width: 100%;
+      max-height: 92px;
+      padding: 4px 6px;
+      display: block;
+      flex: 0 0 auto;
+    }
+
+    .logo svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.84);
+      font-size: 12px;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      margin-top: -6px;
+    }
+
+    html.theme-light .subtitle {
+      color: #6a6a6a;
+    }
+
+    /* Spinner—the pleasant circular loader */
+    .spinner {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 255, 255, 0.12);
+      border-top-color: var(--accent);
+      animation: spin 900ms linear infinite;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+      margin-top: 6px;
+    }
+
+    html.theme-light .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.10);
+      border-top-color: var(--accent);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .progress {
+      width: 100%;
+      max-width: 560px;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 6px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+      flex: 0 0 auto;
+      /* keep bar at bottom (outside the content stack) */
+    }
+
+    html.theme-light .progress {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    #bar {
+      height: 100%;
+      width: 6%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 220ms ease;
+    }
+
+    #msg {
+      min-height: 20px;
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 14px;
+      text-align: center;
+      padding: 0 8px;
+      flex: 0 0 auto;
+    }
+
+    html.theme-light #msg {
+      color: #222;
+    }
+
+    svg text {
+      font-weight: 700;
+      font-style: italic;
+      fill: var(--text-white);
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html.theme-light svg text {
+      fill: #222;
+    }
+
+    .logo .t-light {
+      opacity: 0.96;
+      font-weight: 700;
+    }
+
+    .logo .t-bold {
+      opacity: 0.98;
+      font-weight: 800;
+      fill: var(--accent);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card" role="status" aria-live="polite">
+    <!-- content wrapper: group the 4 visual items and position them together -->
+    <div class="content" aria-hidden="false">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 1200 160" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img"
+          aria-label="ReportBurster">
+          <title>ReportBurster</title>
+          <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-size="94"
+            font-family="Roboto, Arial, sans-serif" class="t-light">
+            Report<tspan class="t-bold">Burster</tspan>
+          </text>
+        </svg>
+      </div>
+
+      <div class="subtitle">LOADING …</div>
+
+      <!-- spinner restored and visible under the subtitle -->
+      <div class="spinner" role="img" aria-label="Loading spinner" aria-hidden="false"></div>
+
+      <div id="msg">Wait — initializing backend</div>
+    </div>
+
+    <!-- progress bar is outside .content and anchored near bottom of the card -->
+    <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="6">
+      <div id="bar" style="width:6%"></div>
+    </div>
+  </div>
+
+  <script>
+    // Fade-in
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => document.querySelector('.card')?.classList.add('ready'), 12);
+    });
+
+    // static monotonic progress loop
+    const msgEl = document.getElementById('msg');
+    const barEl = document.getElementById('bar');
+
+    function setMsg(text = null, progress = null) {
+      if (text !== null) msgEl.textContent = text;
+      if (progress !== null) {
+        const p = Math.round(Math.max(0, Math.min(100, progress)));
+        barEl.style.width = p + '%';
+        barEl.parentElement.setAttribute('aria-valuenow', String(p));
+      }
+    }
+
+    setMsg('Wait — initializing backend', 6);
+
+    let progress = 6;
+    let running = true;
+
+    function tick() {
+      if (!running) return;
+      const step = progress < 80 ? (1 + Math.random() * 2.5) : (0.5 + Math.random() * 0.6);
+      progress = Math.min(100, Math.round((progress + step) * 10) / 10);
+
+      barEl.style.width = Math.round(progress) + '%';
+      barEl.parentElement.setAttribute('aria-valuenow', String(Math.round(progress)));
+
+      if (progress >= 100) {
+        running = false;
+        setTimeout(() => {
+          progress = 0;
+          barEl.style.width = '0%';
+          barEl.parentElement.setAttribute('aria-valuenow', '0');
+          running = true;
+        }, 700);
+      }
+    }
+
+    const loopInterval = 700;
+    const intervalId = setInterval(tick, loopInterval);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) clearInterval(intervalId); });
+    window.addEventListener('beforeunload', () => clearInterval(intervalId));
+  </script>
+</body>
+
+</html>

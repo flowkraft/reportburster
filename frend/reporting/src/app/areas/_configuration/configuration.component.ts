@@ -2075,7 +2075,7 @@ export class ConfigurationComponent implements OnInit {
     this.sanitizedReportPreview = this.sanitizer.bypassSecurityTrustHtml(
       this.activeReportTemplateContent,
     );
-    console.log(`this.sanitizedReportPreview = ${this.sanitizedReportPreview}`);
+    //console.log(`this.sanitizedReportPreview = ${this.sanitizedReportPreview}`);
 
   }
 
@@ -2747,6 +2747,7 @@ if (reportParametersProvided) {
 
   sqlQueryResult: SqlQueryResult | null = null;
   isReportDataLoading = false;
+  sqlQueryResultIsError = false;
 
   /*
   reportColumns: any[] = [];
@@ -2799,14 +2800,54 @@ if (reportParametersProvided) {
     try {
       this.isReportDataLoading = true;
       this.sqlQueryResult = await this.runQueryWithParams(parameters);
-      //console.log(
-      //  `this.sqlQueryResult: ${JSON.stringify(this.sqlQueryResult)}`,
-      //);
-      // Show green toast on success
-      this.messagesService.showSuccess('SQL query executed successfully, go to the Tabulator tab to see results.');
+
+      // detect error payload (single column named ERROR_MESSAGE)
+      const isErrorPayload =
+        this.sqlQueryResult &&
+        Array.isArray(this.sqlQueryResult.reportColumnNames) &&
+        this.sqlQueryResult.reportColumnNames.length === 1 &&
+        (this.sqlQueryResult.reportColumnNames[0] === 'ERROR_MESSAGE' ||
+          this.sqlQueryResult.reportColumnNames[0].toUpperCase() ===
+            'ERROR_MESSAGE');
+
+      // Extract the error message if present and perform special-case checks
+      let errorMsg = '';
+      if (isErrorPayload && Array.isArray(this.sqlQueryResult.reportData) && this.sqlQueryResult.reportData.length > 0) {
+        errorMsg = (this.sqlQueryResult.reportData[0]['ERROR_MESSAGE'] || '').toString();
+      }
+      const lowerMsg = (errorMsg || '').toLowerCase();
+
+      // Treat "no burst tokens were provided or fetched for the document" as NOT an error (no rows)
+      const isNoBurstTokensMsg = lowerMsg.includes('no burst tokens were provided or fetched for the document');
+
+      // Final flag - it's an error payload only if it is the ERROR_MESSAGE column and not the "no burst tokens" informational message
+      const finalIsError = isErrorPayload && !isNoBurstTokensMsg;
+      this.sqlQueryResultIsError = !!finalIsError;
+
+      if (isNoBurstTokensMsg) {
+        // Show a milder warning - it's not an SQL syntax error, it just returned no rows
+        this.messagesService.showWarning('Query executed successfully but returned no rows.');
+        // Optional: replace ERROR_MESSAGE payload with empty data so Tabulator shows "no rows"
+        this.sqlQueryResult.reportData = [];
+        this.sqlQueryResult.reportColumnNames = [];
+        this.sqlQueryResult.totalRows = 0;
+      } else if (finalIsError) {
+        // Show red toast for real errors
+        this.messagesService.showError(
+          'Error executing SQL query. View details in the Errors Log / Tabulator preview.',
+        );
+      } else {
+        // Show green toast on success
+        this.messagesService.showSuccess(
+          'SQL query executed successfully, go to the Tabulator tab to see results.',
+        );
+      }
     } catch (error) {
       // Show red toast on error
-      this.messagesService.showError(`Error executing SQL query: ${error.message}`);
+      this.sqlQueryResultIsError = true;
+      this.messagesService.showError(
+        `Error executing SQL query: ${error.message}, check the Errors Log/Tabulator to view the exact error.`,
+      );
     } finally {
       this.isReportDataLoading = false;
     }

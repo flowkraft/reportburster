@@ -189,6 +189,58 @@
       }
     },
     {
+      "id": "poli",
+      "name": "Poli",
+      "category": "BI & Visualization",
+      "type": "docker",
+      "description": "An easy-to-use BI server built for SQL lovers. Power data analysis in SQL and gain faster business insights.",
+      "url": "http://localhost:8080",
+      "enabled": true,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Start",
+          "description": "Starts the Poli service.",
+          "command": "docker-compose -f ./bi-tools/docker-compose.yml up -d poli"
+        },
+        {
+          "key": "stop",
+          "name": "Stop",
+          "description": "Stops the Poli service.",
+          "command": "docker-compose -f ./bi-tools/docker-compose.yml stop poli"
+        }
+      ],
+      "healthCheck": {
+        "type": "tcp"
+      }
+    },
+    {
+      "id": "sql-explorer",
+      "name": "SQL Explorer",
+      "category": "BI & Visualization",
+      "type": "docker",
+      "description": "An easy-to-use SQL query and visualization tool. Explore data, build dashboards, and gain insights quickly.",
+      "url": "http://localhost:8081",
+      "enabled": true,
+      "commands": [
+        {
+          "key": "start",
+          "name": "Start",
+          "description": "Starts the SQL Explorer service.",
+          "command": "docker-compose -f ./bi-tools/docker-compose.yml up -d sql-explorer"
+        },
+        {
+          "key": "stop",
+          "name": "Stop",
+          "description": "Stops the SQL Explorer service.",
+          "command": "docker-compose -f ./bi-tools/docker-compose.yml stop sql-explorer"
+        }
+      ],
+      "healthCheck": {
+        "type": "tcp"
+      }
+    },
+    {
       "id": "redash",
       "name": "Redash",
       "category": "BI & Visualization",

@@ -1,6 +1,10 @@
 import { OnInit, Component } from '@angular/core';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+
 import { SettingsService } from '../../providers/settings.service';
 import { StateStoreService } from '../../providers/state-store.service';
+import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 
 @Component({
   selector: 'dburst-skins',
@@ -24,9 +28,13 @@ export class SkinsComponent implements OnInit {
 
   bodyElement = document.getElementsByTagName('body')[0];
 
+  private internalSettingsChangedSub?: Subscription;
+  protected onInternalSettingsChanged = new Subject<string>();
+  
   constructor(
     protected settingsService: SettingsService,
     protected storeService: StateStoreService,
+    protected messagesService: ToastrMessagesService
   ) {}
 
   async ngOnInit() {
@@ -34,6 +42,16 @@ export class SkinsComponent implements OnInit {
       await this.settingsService.loadPreferencesFileAsync(
         this.settingsService.INTERNAL_SETTINGS_FILE_PATH,
       );
+
+   // Debounced save for Copilot URL
+    this.internalSettingsChangedSub = this.onInternalSettingsChanged.pipe(debounceTime(400)).subscribe(async (newUrl) => {
+      this.settingsService.xmlInternalSettings.documentburster.settings.copiloturl = newUrl;
+      await this.settingsService.savePreferencesFileAsync(
+        this.settingsService.INTERNAL_SETTINGS_FILE_PATH,
+        this.settingsService.xmlInternalSettings,
+      );
+      this.messagesService.showInfo('Copilot/LLM URL saved');
+    });   
 
     //console.log(
     //  `this.settingsService.xmlInternalSettings = ${JSON.stringify(
@@ -48,6 +66,10 @@ export class SkinsComponent implements OnInit {
     if (!skin) skin = 'skin-black';
 
     this.applySkin(skin);
+  }
+
+  ngOnDestroy() {
+    this.internalSettingsChangedSub?.unsubscribe();
   }
 
   async changeSkin(skin: string) {
@@ -90,5 +112,10 @@ export class SkinsComponent implements OnInit {
       this.settingsService.INTERNAL_SETTINGS_FILE_PATH,
       this.settingsService.xmlInternalSettings,
     );
+  }
+
+  copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
+    this.messagesService.showInfo('URL copied to clipboard!');
   }
 }

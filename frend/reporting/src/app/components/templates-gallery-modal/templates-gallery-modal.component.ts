@@ -342,9 +342,9 @@ export class TemplatesGalleryModalComponent {
     this.messagesService.showInfo('Prompt copied to clipboard!', 'Success');
   }
 
-
   openBingAICopilot() {
-    window.open('https://copilot.microsoft.com', '_blank');
+    const url = this.settingsService.getCopilotUrl();
+    window.open(url, '_blank');
   }
 
   sanitizeHtmlForIframe(html: string, templatePath?: string): SafeHtml {

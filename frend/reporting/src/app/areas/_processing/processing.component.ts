@@ -680,7 +680,7 @@ export class ProcessingComponent implements OnInit {
         message: dialogQuestion,
         confirmAction: async () => {
 
-          console.log(`this.processingService.procReportingMailMergeInfo = ${JSON.stringify(this.processingService.procReportingMailMergeInfo)}`);
+          //console.log(`this.processingService.procReportingMailMergeInfo = ${JSON.stringify(this.processingService.procReportingMailMergeInfo)}`);
           let configFilePath = '';
           if (selectedReport && selectedReport.filePath) {
             configFilePath = Utilities.slash(selectedReport.filePath);
@@ -754,7 +754,7 @@ export class ProcessingComponent implements OnInit {
           );
           // --- END FIX ---
 
-          console.log(`doGenerateReports configFilePath = ${configFilePath}`);
+          //console.log(`doGenerateReports configFilePath = ${configFilePath}`);
 
           this.resetProcInfo();
         },
@@ -1292,12 +1292,12 @@ export class ProcessingComponent implements OnInit {
   onReportParamsValidChange(isValid: boolean) {
     this.reportParamsValid = isValid;
     this.changeDetectorRef.detectChanges();
-    console.log('Report parameters form validity:', isValid);
+    //console.log('Report parameters form validity:', isValid);
   }
 
   // Add handler for the form's value
   onReportParamsValuesChange(values: { [key: string]: any }) {
-    console.log('Form parameter values:', values);
+    //console.log('Form parameter values:', values);
     this.reportParamsValues = values;
   }
 
@@ -1307,11 +1307,11 @@ export class ProcessingComponent implements OnInit {
   }
 
   onTabReady() {
-    console.log('📊 Tabulator ready');
+    //console.log('📊 Tabulator ready');
   }
 
   onTabError(msg: string) {
-    console.error('❌ Tabulator error:', msg);
+    //console.error('❌ Tabulator error:', msg);
   }
 
   getTabulatorColumns(
@@ -1543,7 +1543,7 @@ export class ProcessingComponent implements OnInit {
   //end samples
 
   onReportSelectionChange($event: any) {
-    console.log(`onReportSelectionChange: ${JSON.stringify($event)}`);
+    //console.log(`onReportSelectionChange: ${JSON.stringify($event)}`);
     // Update the selected report in the processing service
   }
 
@@ -1743,7 +1743,7 @@ export class ProcessingComponent implements OnInit {
       message: dialogQuestion,
       confirmAction: async () => {
         try {
-          console.log('Confirmation received, starting API call');
+          //console.log('Confirmation received, starting API call');
 
           this.isReportDataLoading = true;
 
@@ -1755,13 +1755,13 @@ export class ProcessingComponent implements OnInit {
                   param.type,
                   this.reportParamsValues[param.id],
                 );
-                console.log(`Parameter ${param.id}: ${value}`); // Debug log
+                //console.log(`Parameter ${param.id}: ${value}`); // Debug log
                 acc[param.id] = value;
                 return acc;
               },
               {} as { [key: string]: any },
             );
-          console.log('Calling API with params:', paramsObject); // Debug log
+          //console.log('Calling API with params:', paramsObject); // Debug log
 
           // Call the API
           this.sqlQueryResult = await this.reportingService.testFetchData(
@@ -1770,13 +1770,13 @@ export class ProcessingComponent implements OnInit {
               .selectedMailMergeClassicReport.filePath,
           );
 
-          console.log(`API response: ${JSON.stringify(this.sqlQueryResult)}`);
+          //console.log(`API response: ${JSON.stringify(this.sqlQueryResult)}`);
           this.messagesService.showSuccess('SQL query executed successfully.');
         } catch (error) {
-          console.error('API call failed:', error); // Debug log
+          //console.error('API call failed:', error); // Debug log
           this.messagesService.showError(`Error executing SQL query: ${error.message}`);
         } finally {
-          console.log('API call completed'); // Debug log
+          //console.log('API call completed'); // Debug log
           this.isReportDataLoading = false;
         }
       },

@@ -24,9 +24,9 @@ export class ReportingService {
     configurationFilePath: string = this.settingsService
       .currentConfigurationTemplatePath,
   ) {
-    console.log(
-      `testFetchData parameters: ${JSON.stringify(parameters)}, configurationFilePath: ${configurationFilePath}`,
-    );
+    //console.log(
+    //  `testFetchData parameters: ${JSON.stringify(parameters)}, configurationFilePath: ${configurationFilePath}`,
+    //);
 
     // Create URLSearchParams object
     const params = new URLSearchParams();
@@ -47,7 +47,7 @@ export class ReportingService {
       paramsObj[key] = value;
     });
 
-    console.log('Sending parameters:', JSON.stringify(paramsObj));
+    //console.log('Sending parameters:', JSON.stringify(paramsObj));
 
     // Make GET request with query parameters
     return this.apiService.get('/jobman/reporting/test-fetch-data', paramsObj);
@@ -56,10 +56,10 @@ export class ReportingService {
   async processGroovyParametersDsl(
     groovyDslCode: string,
   ): Promise<ReportParameter[]> {
-    console.log('Processing Groovy DSL parameters:', {
-      code: groovyDslCode,
-      configPath: this.settingsService.currentConfigurationTemplatePath,
-    });
+    //console.log('Processing Groovy DSL parameters:', {
+    //  code: groovyDslCode,
+    //  configPath: this.settingsService.currentConfigurationTemplatePath,
+    //});
 
     try {
       const result = await this.apiService.post(
@@ -67,10 +67,10 @@ export class ReportingService {
         groovyDslCode,
       );
 
-      console.log('Received parameters from backend:', result);
+      //console.log('Received parameters from backend:', result);
       return result;
     } catch (error) {
-      console.error('Error processing Groovy DSL:', error);
+      //console.error('Error processing Groovy DSL:', error);
       throw error;
     }
   }

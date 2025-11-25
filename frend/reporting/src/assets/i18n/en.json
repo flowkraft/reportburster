@@ -81,7 +81,7 @@
           "EXAMPLES-GALLERY": "Examples (Gallery)",
           "HEY-AI": "Hey AI, Help Me ...",
           "AI-PROMPTS": "AI Prompts",
-          "LAUNCH-COPILOT": "Launch Copilot",
+          "LAUNCH-COPILOT": "Launch ChatGPT",
           "CHAT-WITH-DB": "Chat with Your SQL Database (AI)",
           "SHOW-PREVIEW": "Show Template Preview",
           "EXPAND-EDITOR": "Expand Code Editor",
@@ -108,7 +108,7 @@
           "STEP1": "1. Click <strong>Copy to Clipboard</strong> below to copy the entire prompt",
           "STEP2-GENERAL": "2. Carefully read (yes, do read it) and <strong>tailor the prompt</strong> to meet your specific requirements",
           "STEP2-CUSTOM": "2. Tailor <strong>Customization Instructions</strong> to meet your specific requirements",
-          "STEP3": "3. Paste the entire (modified) prompt into <strong><a href=\"https://copilot.microsoft.com\" target=\"_blank\">Microsoft Copilot</a></strong> or your preferred AI assistant",
+          "STEP3": "3. Paste the entire (modified) prompt into your preferred artificial intelligence chat (<a href=\"https://copilot.microsoft.com\" target=\"_blank\">Microsoft Copilot</a> is a good free one!) or any similar AI assistant.",
           "STEP4": "4. Copy the complete HTML code the AI generates and paste it into the ReportBurster editor",
           "COLOR-TIP": "Go to <a href=\"https://color.adobe.com/explore\" target=\"_blank\">Adobe Color Explore</a> for choosing a beautiful color theme (based on color theory)"
         }
@@ -955,7 +955,7 @@
     },
     "GENERATE-STUDENT-PROFILES-SQL2PDF": {
       "NOTES": {
-        "INNER-HTML": "This sample shows how to generate individualized <strong>Student Profile</strong> PDF files using an <strong>SQL datasource</strong> (the <em>Sample Northwind SQLite</em> database). <br/><br/>It also demonstrates how to use (Apache) FOP to produce \"pixel perfect\" PDF reports suitable for high-quality printing and precise layout control."
+        "INNER-HTML": "This sample shows how to generate individualized <strong>Student Profile</strong> PDF files using an <strong>SQL datasource</strong> (the <em>Sample Northwind SQLite</em> database). <br/><br/>It also demonstrates how to <strong>use</strong> (Apache) <strong>FOP to produce \"pixel perfect\" PDF reports</strong> suitable for high-quality printing and precise layout control."
       }
     },
     "GENERATE-CUSTOMER-STATEMENTS-SQL2HTML": {

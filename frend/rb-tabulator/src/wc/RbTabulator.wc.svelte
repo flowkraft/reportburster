@@ -27,18 +27,51 @@
   // workaround ResizeObserver in shadow DOM
   function patchResizeObserver() {
     if (typeof ResizeObserver === 'undefined') return;
-    
+
     try {
       const proto = ResizeObserver.prototype as any;
-      const orig = proto.observe;
+      // guard to avoid patching multiple times
+      if (proto.__rbPatched__) return;
+      proto.__rbPatched__ = true;
+
+      const origObserve = proto.observe;
+      const origUnobserve = proto.unobserve;
+      const origDisconnect = proto.disconnect;
+
       proto.observe = function (target: any) {
-        if (target instanceof Element) {
-          return orig.call(this, target);
+        try {
+          if (target instanceof Element) {
+            return origObserve.call(this, target);
+          }
+        } catch (err) {
+          // swallow to avoid breaking the app; optionally log in dev
+          // console.warn('ResizeObserver.observe skipped non-element target', err);
         }
-        console.warn('ResizeObserver: Skipping non-element target');
+        // no-op for non-Element
+      };
+
+      proto.unobserve = function (target: any) {
+        try {
+          if (target instanceof Element) {
+            return origUnobserve.call(this, target);
+          }
+        } catch (err) {
+          // swallow to avoid throwing on cleanup
+          // console.warn('ResizeObserver.unobserve skipped non-element target', err);
+        }
+        // no-op for non-Element
+      };
+
+      proto.disconnect = function () {
+        try {
+          return origDisconnect.call(this);
+        } catch (err) {
+          // swallow - do not crash on disconnect
+        }
       };
     } catch (err) {
-      console.error('Error patching ResizeObserver:', err);
+      // No-op - patch failed silently
+      // console.error('Error patching ResizeObserver:', err);
     }
   }
 
@@ -51,7 +84,7 @@
         table.setColumns(columns);
       }
       
-      console.log(`updateTable table.replaceData: ${JSON.stringify(data)}`);
+      //console.log(`updateTable table.replaceData: ${JSON.stringify(data)}`);
       // replace entire dataset
       table.replaceData(data);
       // table.redraw();

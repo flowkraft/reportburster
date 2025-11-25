@@ -3,6 +3,8 @@ import log from 'electron-log';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import * as net from 'net';
+import { screen } from 'electron';
 
 import { ChildProcessWithoutNullStreams, exec as _execSync, spawn as _spawnSync } from 'child_process';
 import { promisify } from 'util';
@@ -15,8 +17,31 @@ import {
   attachTitlebarToWindow,
 } from 'custom-electron-titlebar/main';
 
-// setup the titlebar main process
-setupTitlebar();
+// ensure this stays early in the file
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', (_event, argv, cwd) => {
+    // If the window already exists, bring it forward
+    if (win) {
+      try {
+        if (win.isMinimized()) win.restore();
+        win.show();   // ensure visible if hidden
+        win.focus();
+        // clear any queued focus request, it's been handled directly
+        focusRequestedBySecondInstance = false;
+      } catch { }
+    } else {
+      // If the window has not been created yet, store a flag so we can
+      // show/focus the window after createWindow() runs.
+      focusRequestedBySecondInstance = true;
+    }
+
+    // Optionally, process argv to open files/URLs in the existing instance:
+    // const fileToOpen = parseArgvForFile(argv);
+    // if (fileToOpen) mainWindow.webContents.send('open-file', fileToOpen);
+  });
+}
 
 let win: BrowserWindow = null;
 const args = process.argv.slice(1),
@@ -40,20 +65,144 @@ log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] - {text}';
 //  `process.env.PORTABLE_EXECUTABLE_DIR: ${process.env.PORTABLE_EXECUTABLE_DIR}`,
 //);
 
-function createWindow(): BrowserWindow {
-  /*
-  const preloadPath = APP_CONFIG.production
-    ? path.join(process.resourcesPath, '/app/preload.js') // <---- add your path
-    : path.join(__dirname, '../preload.ts'); // <---- add your path
-  */
+let splashWindow: BrowserWindow | null = null;
+let uiLoaded = false;
+let backendReady = false;
+let rendererReady = false; // set by renderer via ipc
+let focusRequestedBySecondInstance = false; // flag set when second-instance occurs before window is created
 
-  // Create the browser window.
+// choose theme centrally (packaged: prefer OS choice or fallback to dark; dev: random)
+function chooseTheme(): 'light' | 'dark' {
+  if (process.env.REPORTBURSTER_FORCE_THEME === 'light') return 'light';
+  if (process.env.REPORTBURSTER_FORCE_THEME === 'dark') return 'dark';
+  // if (app.isPackaged) {
+    // deterministic default for packaged builds to match BMP & avoid mismatch
+    // return 'dark';
+  // }
+  // still random in dev
+  return Math.random() < 0.5 ? 'light' : 'dark';
+}
+
+// create a minimal splash BrowserWindow and show it immediately
+// ...existing code...
+function createSplashWindow(theme: 'light' | 'dark'): BrowserWindow {
+  const bg = theme === 'light' ? '#ffffff' : '#1f1f1f';
+  const splash = new BrowserWindow({
+    width: 560,
+    height: 320,
+    useContentSize: true,
+    frame: false,
+    resizable: false,
+    center: true,
+    alwaysOnTop: true,
+    show: true,
+    skipTaskbar: true,
+    backgroundColor: bg, // sets native window bg
+    // ensure it's not transparent so browser background color is used
+    transparent: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+  });
+
+  // be defensive: make sure the native background is applied immediately
+  try { splash.setBackgroundColor(bg); } catch (e) { log.warn('splash.setBackgroundColor failed', e); }
+
+  // theme param + load the html (unchanged)
+  const splashPath = path.join(__dirname, 'splash.html');
+  if (fs.existsSync(splashPath)) {
+    const splashUrl = new URL(path.join('file:', __dirname, 'splash.html'));
+    splashUrl.searchParams.set('theme', theme);
+    splash.loadURL(splashUrl.href).catch(() => { });
+  } else {
+    splash.loadURL(`data:text/html,<body><h3>ReportBurster</h3><p>Starting...</p></body>`);
+  }
+
+  return splash;
+}
+
+// send progress or text to the splash window (no-op if missing)
+function sendSplashProgress(payload: { text?: string; progress?: number }) {
+  if (!splashWindow || splashWindow.isDestroyed()) return;
+  try {
+    splashWindow.webContents.send('splash-progress', payload);
+  } catch { }
+}
+
+// wait for a TCP connection to a port (returns true if connected within timeout)
+async function waitForServerPort(port = 9090, timeoutMs = 120000): Promise<boolean> {
+  const start = Date.now();
+  let tries = 0;
+  while (Date.now() - start < timeoutMs) {
+    tries++;
+    const ok = await new Promise<boolean>((resolve) => {
+      const s = new net.Socket();
+      let done = false;
+      s.setTimeout(1200);
+      s.on('connect', () => {
+        done = true;
+        s.destroy();
+        resolve(true);
+      });
+      s.on('error', () => {
+        if (!done) {
+          done = true;
+          resolve(false);
+        }
+      });
+      s.on('timeout', () => {
+        if (!done) {
+          done = true;
+          s.destroy();
+          resolve(false);
+        }
+      });
+      s.connect(port, '127.0.0.1');
+    });
+
+    if (ok) return true;
+
+    sendSplashProgress({
+      text: `Waiting for backend on port ${port} (attempt ${tries})…`,
+      progress: Math.min(70, 10 + tries * 6),
+    });
+    await sleep(800 + Math.min(tries * 200, 1500));
+  }
+  return false;
+}
+
+// Prevent concurrent createWindow calls
+let windowCreating = false;
+
+function createWindow(): BrowserWindow {
+  // If a usable window already exists, focus and return it
+  if (win && !win.isDestroyed()) {
+    try {
+      // If the window was hidden, show it
+      if (!win.isVisible()) win.show();
+      win.focus();
+    } catch (err) {
+      log.warn('createWindow: focus/show failed', err);
+    }
+    return win;
+  }
+
+  // If creation is already underway, return early (caller can rely on the existing 'win' afterwards)
+  if (windowCreating) {
+    return win;
+  }
+
+  windowCreating = true;
+
+  // Create the browser window (unchanged)
   win = new BrowserWindow({
     width: 1200,
     height: 800,
     useContentSize: true,
     center: true,
     resizable: false,
+    show: false, // <-- hide at startup
     titleBarStyle: process.env.PORTABLE_EXECUTABLE_DIR.includes('testground')
       ? 'default'
       : 'hidden',
@@ -63,57 +212,67 @@ function createWindow(): BrowserWindow {
       webSecurity: false,
       allowRunningInsecureContent: serve,
       contextIsolation: false,
-      //preload: path.join(__dirname, '../app/preload.ts'),
     },
     //icon: path.join(__dirname, 'src/assets/icons/icon.ico'),
   });
 
-  /*
-  process.chdir(
-    path.resolve(Utilities.slash(process.env.PORTABLE_EXECUTABLE_DIR))
-  );
-  */
-
-  if (serve) {
-    const debug = require('electron-debug');
-    debug();
-
-    require('electron-reloader')(module);
-    win.loadURL('http://localhost:4200');
-  } else {
-    // Path when running electron executable
-    let pathIndex = './index.html';
-
-    if (fs.existsSync(path.join(__dirname, '../dist/index.html'))) {
-      // Path when running electron in local folder
-      pathIndex = '../dist/index.html';
-    }
-
-    const url = new URL(path.join('file:', __dirname, pathIndex));
-    win.loadURL(url.href);
-
-    // attach fullscreen(f11 and not 'maximized') && focus listeners
-    attachTitlebarToWindow(win);
-  }
-
-  // Emitted when the window is closed.
+  // Hook the main window life-cycle and behavior
   win.on('closed', () => {
-    // Dereference the window object, usually you would store window
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
     win = null;
+    windowCreated = false;
+    windowCreating = false;
+    // Reset focus request: no window exists
+    focusRequestedBySecondInstance = false;
   });
 
   win.webContents.setWindowOpenHandler(({ url }) => {
-    // open url in a browser and prevent default
     shell.openExternal(url);
     return { action: 'deny' };
   });
 
   const electronRemote = require('@electron/remote/main');
-
   electronRemote.initialize();
   electronRemote.enable(win.webContents);
+
+  // load URL / dev mode behavior remains identical
+  if (serve) {
+    const debug = require('electron-debug');
+    debug();
+    require('electron-reloader')(module);
+    win.loadURL('http://localhost:4200');
+  } else {
+    let pathIndex = './index.html';
+    if (fs.existsSync(path.join(__dirname, '../dist/index.html'))) {
+      pathIndex = '../dist/index.html';
+    }
+    const url = new URL(path.join('file:', __dirname, pathIndex));
+    win.loadURL(url.href);
+
+    // Attach titlebar to window - safe attempt
+    try {
+      attachTitlebarToWindow(win);
+    } catch (err) {
+      log.warn('attachTitlebarToWindow failed', err);
+    }
+  }
+
+  // When the UI finishes loading, mark it and optionally take action
+  win.webContents.once('did-finish-load', () => {
+    uiLoaded = true;
+    windowCreated = true;
+    windowCreating = false;
+    sendSplashProgress({ text: 'UI loaded', progress: 75 });
+
+    // Try showing the main window if both the UI and backend are ready
+    showMainWindowIfBackendAndUIReady('did-finish-load');
+
+    // If the app was requested to focus via second-instance while the window
+    // wasn't yet created, honor that now and focus the window.
+    if (focusRequestedBySecondInstance) {
+      try { win.show(); win.focus(); } catch { }
+      focusRequestedBySecondInstance = false;
+    }
+  });
 
   return win;
 }
@@ -131,35 +290,92 @@ try {
   // Some APIs can only be used after this event occurs.
   // Added 400 ms to fix the black background issue while using transparent window. More detais at https://github.com/electron/electron/issues/15947
 
-  app.on('ready', () => {
-    //if "production"
-    if (app.isPackaged) {
-      log.info(
-        `executing ${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj/startRbsjServer.bat`,
-      );
+  app.on('ready', async () => {
 
-      serverProcess = _spawnSync('startRbsjServer.bat', [], {
-        cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
-        env: { ...process.env, ELECTRON_PID: process.pid.toString() },
-      });
+    try {
+      // show splash early
+      // pick a theme for the splash only (packaged: deterministic dark / dev: random)
+      const theme = chooseTheme();
+      // show splash early with matching native background color (no change to main window)
+      splashWindow = createSplashWindow(theme);
+      sendSplashProgress({ text: 'Starting application...', progress: 6 });
 
-      serverProcess.stdout.on('data', (data) => handleServerOutput(data, false));
-      serverProcess.stderr.on('data', (data) => handleServerOutput(data, true));
+      // defer heavy module actions after splash painted
+      // safe setup for custom titlebar (defer to ready)
+      try {
+        setupTitlebar();
+      } catch (err) {
+        log.warn('setupTitlebar failed', err);
+      }
 
-      serverProcess.on('close', (code) => {
-        //log.info(`Server process exited with code ${code}`);
-      });
-    } else {
-      //if non-"production"
-      log.info(`starting Electron App (Development)`);
+      // In packaged runs, we wait for the server stdout to create the main window to
+      // avoid early empty frames. In development mode, create the main window after a
+      // short delay to enable faster developer feedback loop.
+      if (!app.isPackaged) {
+        // In dev, create window early so hot-reload and dev tools continue to work.
+        setTimeout(() => {
+          if (!win) win = createWindow();
+        }, 400);
+      }
 
+      // Start/monitor server as before, but forward log lines to splash with sendSplashProgress()
+      if (app.isPackaged) {
+        serverProcess = _spawnSync('startRbsjServer.bat', [], {
+          cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
+          env: { ...process.env, ELECTRON_PID: process.pid.toString() },
+        });
+        serverProcess.stdout.on('data', (data) => {
+          sendSplashProgress({ text: String(data).trim(), progress: 20 });
+          handleServerOutput(data, false);
+        });
+        serverProcess.stderr.on('data', (data) => {
+          sendSplashProgress({ text: String(data).trim(), progress: 15 });
+          handleServerOutput(data, true);
+        });
+      } else {
+        sendSplashProgress({ text: 'Development mode — initializing UI', progress: 20 });
+        await generateSplashIfMissing();
+      }
+
+      // Rely primarily on the server's stdout to decide when to create the main window.
+      // The handleServerOutput() callback will call createWindow() when it detects
+      // a successful server start or a Java error. To avoid the UI hanging forever
+      // if logs are silent or server is slow, use a fallback to show the UI for
+      // diagnostics after a reasonable timeout.
+      const fallbackMs = app.isPackaged ? 120000 : 30000; // packaged: longer wait
       setTimeout(() => {
-        createWindow();
+        if (!windowCreated) {
+          sendSplashProgress({ text: 'Backend not responding; showing UI for diagnostics', progress: 90 });
+          try { if (!win) createWindow(); win?.show(); win?.focus(); } catch { }
+          try {
+            if (!rendererReady) {
+              BrowserWindow.getAllWindows().forEach((w) => { try { w.webContents.send('renderer.init.retry'); } catch { } });
+              log.info('main: sent renderer.init.retry to renderers (fallback)');
+            }
+          } catch { }
+          setTimeout(() => { try { splashWindow?.close(); } catch { } }, 800);
+        }
+      }, fallbackMs);
 
-        //console.log(
-        //  `electron.main.ts.process.env.PORTABLE_EXECUTABLE_DIR = ${process.env.PORTABLE_EXECUTABLE_DIR}`,
-        //);
-      }, 400);
+      // Background probe: attempt to contact the backend port. This runs in both
+      // dev and packaged runs and restores previous behavior where main can know
+      // when Spring Boot is reachable even if it's started externally.
+      (async () => {
+        const probeTimeoutMs = app.isPackaged ? 120000 : 120000;
+        try {
+          const ok = await waitForServerPort(9090, probeTimeoutMs);
+          setBackendReady(ok, 'port-probe');
+          if (!ok) log.info('main: port probe timed out (no backend reachable)');
+        } catch (err) {
+          log.warn('main: error during backend port probe', err);
+        }
+      })();
+
+    } catch (err) {
+      log.error('Error in app.ready handler', err);
+      // Ensure we close the splash and show the main window so the user can see the error or UI
+      try { splashWindow?.close(); } catch { }
+      try { if (!win) createWindow(); win?.show(); win?.focus(); } catch { }
     }
   });
 
@@ -219,6 +435,10 @@ function handleServerOutput(data: Buffer | string, isError = false) {
   for (const line of lines) {
     log.info(line);
 
+    // forward to splash for visibility
+    sendSplashProgress({ text: line.trim(), progress: undefined });
+
+    // If we haven't already created a window, only then attempt to create
     if (!windowCreated) {
       // Success patterns - server started successfully
       if (
@@ -228,39 +448,47 @@ function handleServerOutput(data: Buffer | string, isError = false) {
       ) {
         log.info(`main:createWindow() because of successful server start: ${line}`);
         windowCreated = true;
-        createWindow();
+  setBackendReady(true, 'handleServerOutput');
+        // broadcast to renderers
+        try { BrowserWindow.getAllWindows().forEach((w) => { try { w.webContents.send('backend-ready'); } catch { } }); } catch (e) { }
+        // If renderer already confirmed init and UI loaded, show the main window
+  if (uiLoaded && backendReady) {
+    try { win?.show(); win?.focus(); } catch { }
+    try { splashWindow?.close(); } catch { }
+    // honor focus from second-instance if it was requested
+    if (focusRequestedBySecondInstance) {
+      try { win?.show(); win?.focus(); } catch { }
+      focusRequestedBySecondInstance = false;
+    }
+    try { if (!rendererReady) { BrowserWindow.getAllWindows().forEach((w) => { try { w.webContents.send('renderer.init.retry'); } catch {} }); log.info('main: sent renderer.init.retry to renderers (startup log)'); } } catch { }
+  }
+        try {
+          BrowserWindow.getAllWindows().forEach((w) => {
+            try { w.webContents.send('backend-ready'); } catch { }
+          });
+        } catch (e) { }
+        if (!win) createWindow();
       }
 
-      // Java error patterns - comprehensive check across platforms
-      else if (
-        // Windows errors
+      // Java error patterns -> open UI for diagnostics
+  else if (
         line.includes("'java' is not recognized") ||
-        line.includes("java is not recognized") ||
-        line.includes("The system cannot find the path specified") ||
-
-        // Unix/Linux errors
         line.includes("java: command not found") ||
-        line.includes("bash: java:") ||
-        line.includes("/bin/sh: java: not found") ||
-
-        // General Java errors
         line.includes("Error: JAVA_HOME is not defined") ||
-        line.includes("No Java runtime present") ||
-        /could not find (.*) java/i.test(line) ||
-
-        // Other variations
-        line.includes("Unable to locate a Java Runtime") ||
-        line.includes("no java installation found") ||
-        line.includes("Error: Could not find java.exe") ||
-
-        // File errors that might indicate Java issues
-        (line.includes("Could not find or load main class") &&
-          line.includes("LoggingSystem"))
+        /could not find (.*) java/i.test(line)
       ) {
         log.info(`main:createWindow() because of Java error: ${line}`);
         windowCreated = true;
-        createWindow();
+        if (!win) createWindow();
+        // Bring UI forward and close splash so user sees diagnostics immediately
+        try { win?.show(); win?.focus(); } catch { }
+        try { splashWindow?.close(); } catch { }
       }
+    }
+
+    // If an error line occurs and window isn't visible -> show UI for diagnostics
+    if (isError && win && !win.isVisible()) {
+      try { win.show(); win.focus(); } catch { }
     }
   }
 }
@@ -328,6 +556,39 @@ ipcMain.handle('app.shutserver', async (event) => {
 ipcMain.on('restart_app', () => {
   app.relaunch();
   app.exit(0);
+});
+
+// Renderer handshake: renderer notifies main that its init is complete (or failed)
+ipcMain.on('renderer.init.complete', (event) => {
+  rendererReady = true;
+  log.info('renderer.init.complete received');
+  // In dev, the renderer often starts before main's probe sees the backend.
+  // Do a quick probe to confirm backend reachability and set backendReady.
+  if (!app.isPackaged && !backendReady) {
+    (async () => {
+      const ok = await waitForServerPort(9090, 10000); // 10s quick probe
+      setBackendReady(ok, 'renderer.init.complete (dev-probe)');
+    })();
+  }
+
+  // If backend already ready and UI loaded -> show app and close splash
+  if (backendReady && uiLoaded) {
+    try { win?.show(); win?.focus(); } catch { }
+    try { splashWindow?.close(); } catch { }
+  } else {
+    sendSplashProgress({ text: 'Renderer initialized; still waiting for backend', progress: 84 });
+  }
+  // If a second-instance requested focus while the window was not created,
+  // honor that now and focus the window.
+  if (focusRequestedBySecondInstance) {
+    try { win?.show(); win?.focus(); } catch { }
+    focusRequestedBySecondInstance = false;
+  }
+});
+
+ipcMain.on('renderer.init.failed', (event, reason) => {
+  log.warn('renderer.init.failed', reason);
+  sendSplashProgress({ text: 'Renderer init failed - will retry when backend is ready', progress: 80 });
 });
 
 // Handle opening HTML in browser
@@ -512,8 +773,8 @@ async function _getSystemInfo(): Promise<{
       process.platform === 'win32'
         ? await commandExistsWindows('choco')
         : await execAsync('which choco')
-            .then(() => true)
-            .catch(() => false);
+          .then(() => true)
+          .catch(() => false);
 
   if (electronLogFileContent.includes("'docker' is not recognized")) {
     dockerIsInstalled = false;
@@ -524,8 +785,8 @@ async function _getSystemInfo(): Promise<{
       process.platform === 'win32'
         ? await commandExistsWindows('docker')
         : await execAsync('which docker')
-            .then(() => true)
-            .catch(() => false);
+          .then(() => true)
+          .catch(() => false);
 
   // Prepare log lines once (safer splitting for CRLF)
   const logLines = electronLogFileContent.split(/\r?\n/).map((l) => l.trim());
@@ -606,7 +867,7 @@ async function _getSystemInfo(): Promise<{
     },
   };
 
-  console.log(`_getSystemInfo: ${JSON.stringify(sysInfo)}`);
+  //console.log(`_getSystemInfo: ${JSON.stringify(sysInfo)}`);
 
   return sysInfo;
 }
@@ -701,4 +962,203 @@ async function readLogFileSmart(filePath: string): Promise<string> {
     }
   }
   return '';
+}
+
+function writeBmpFromNativeImage(img: Electron.NativeImage, outPath: string): void {
+  const { width, height } = img.getSize();
+
+  // img.toBitmap() returns a Buffer (BGRA, row-major, top-down)
+  const rawBuf: any = img.toBitmap();
+
+  const rowBytes = width * 4;
+  const pixelData: any = Buffer.alloc(rawBuf.length);
+
+  // BMP requires rows bottom-up -> invert row order
+  for (let y = 0; y < height; y++) {
+    const srcStart = y * rowBytes;
+    const dstStart = (height - 1 - y) * rowBytes;
+    rawBuf.copy(pixelData, dstStart, srcStart, srcStart + rowBytes);
+  }
+
+  const fileHeaderSize = 14;
+  const infoHeaderSize = 40;
+  const pixelDataOffset = fileHeaderSize + infoHeaderSize;
+  const fileSize = pixelDataOffset + pixelData.length;
+
+  const header = Buffer.alloc(fileHeaderSize + infoHeaderSize);
+
+  // BITMAPFILEHEADER
+  header.writeUInt16LE(0x4d42, 0); // 'BM'
+  header.writeUInt32LE(fileSize, 2);
+  header.writeUInt16LE(0, 6);
+  header.writeUInt16LE(0, 8);
+  header.writeUInt32LE(pixelDataOffset, 10);
+
+  // BITMAPINFOHEADER
+  header.writeUInt32LE(infoHeaderSize, 14); // biSize
+  header.writeInt32LE(width, 18); // biWidth
+  header.writeInt32LE(height, 22); // biHeight (positive = bottom-up)
+  header.writeUInt16LE(1, 26); // biPlanes
+  header.writeUInt16LE(32, 28); // biBitCount (32 bits)
+  header.writeUInt32LE(0, 30); // biCompression = BI_RGB
+  header.writeUInt32LE(pixelData.length, 34); // biSizeImage
+  header.writeInt32LE(0, 38); // biXPelsPerMeter
+  header.writeInt32LE(0, 42); // biYPelsPerMeter
+  header.writeUInt32LE(0, 46); // biClrUsed
+  header.writeUInt32LE(0, 50); // biClrImportant
+
+  const outBuf = Buffer.concat([header, pixelData]);
+  fs.writeFileSync(outPath, outBuf as any);
+}
+
+async function generateSplashIfMissing(): Promise<void> {
+  try {
+    const outDir = path.resolve(__dirname, '../src/assets/images');
+    const light = path.join(outDir, 'splash-light.bmp');
+    const dark = path.join(outDir, 'splash-dark.bmp');
+
+    // If you only want one neutral BMP (no light/dark), change these filenames
+    if (fs.existsSync(light) && fs.existsSync(dark)) return;
+
+    sendSplashProgress({ text: 'Generating splash images (light/dark)…', progress: 16 });
+    fs.mkdirSync(outDir, { recursive: true });
+
+    // Capture scale: choose 2 or 3 depending how large/high-DPI you want the embedded BMP.
+    const EMBED_SCALE = Number(process.env.SPLASH_EMBED_SCALE || 2);
+
+    async function captureTheme(theme: 'light' | 'dark', outFileFull: string, outFileSmall?: string, embedScale = 2) {
+      const logicalW = 180;
+      const logicalH = 150;
+      const splashHtml = path.join(__dirname, 'splash-bmp.html'); // static small-mark page
+      const pxW = Math.round(logicalW * embedScale);
+      const pxH = Math.round(logicalH * embedScale);
+      const bg = theme === 'light' ? '#ffffff' : '#1f1f1f';
+
+      const w = new BrowserWindow({
+        width: logicalW,
+        height: logicalH,
+        useContentSize: true,
+        show: false,
+        frame: false,
+        resizable: false,
+        backgroundColor: bg,
+        webPreferences: { nodeIntegration: false, contextIsolation: true },
+      });
+
+      try {
+        if (!fs.existsSync(splashHtml)) throw new Error('splash-bmp.html not found');
+        const url = `file://${splashHtml.replace(/\\/g, '/')}?theme=${encodeURIComponent(theme)}`;
+        await w.loadURL(url);
+
+        // Force rasterization scale we want (embedded scale)
+        try { w.webContents.setZoomFactor(embedScale); } catch { /* ignore */ }
+        // Ensure CSS viewport matches logical size (no layout overflow)
+        try { w.setContentSize(logicalW, logicalH); } catch { /* ignore */ }
+
+        // Hide scrollbars/margins if any
+        try {
+          await w.webContents.executeJavaScript(
+            `(() => {
+           const s = document.createElement('style'); s.id='splash-capture-fix';
+           s.textContent = 'html,body{overflow:hidden !important;margin:0 !important;padding:0 !important;height:100% !important} .viewport{width:${logicalW}px;height:${logicalH}px}';
+           (document.head||document.documentElement).appendChild(s); return true;
+         })();`,
+            true,
+          );
+        } catch { /* ignore */ }
+
+        // Short settle
+        await new Promise(r => setTimeout(r, 120));
+
+        // 1) Full canvas capture (device pixels: pxW x pxH)
+        try {
+          const fullImg = await w.webContents.capturePage({ x: 0, y: 0, width: pxW, height: pxH });
+          writeBmpFromNativeImage(fullImg, outFileFull);
+        } catch (e) {
+          log.warn('Full splash capture failed', e);
+        }
+
+        // 2) Small crop around the "mark" (svg.rb or .mini), converted to device pixels
+        if (outFileSmall) {
+          try {
+            // Get boundingClientRect and devicePixelRatio from the page
+            const rect = await w.webContents.executeJavaScript(
+              `(() => {
+             const el = document.querySelector('svg.rb') || document.querySelector('.mini');
+             if (!el) return null;
+             const r = el.getBoundingClientRect();
+             const dpr = window.devicePixelRatio || 1;
+             return { x: r.x, y: r.y, w: r.width, h: r.height, dpr: dpr };
+           })();`,
+              true,
+            );
+
+            if (rect && rect.w > 0 && rect.h > 0) {
+              const marginLogical = 6; // logical px margin around mark
+              const deviceDpr = rect.dpr || 1;
+
+              // Convert CSS rect to device pixels using page dpr (accounts for OS scale and page zoomFactor)
+              let x = Math.floor((rect.x - marginLogical) * deviceDpr);
+              let y = Math.floor((rect.y - marginLogical) * deviceDpr);
+              let wPx = Math.ceil((rect.w + marginLogical * 2) * deviceDpr);
+              let hPx = Math.ceil((rect.h + marginLogical * 2) * deviceDpr);
+
+              // clamp to canvas bounds
+              x = Math.max(0, Math.min(pxW - 1, x));
+              y = Math.max(0, Math.min(pxH - 1, y));
+              wPx = Math.max(1, Math.min(pxW - x, wPx));
+              hPx = Math.max(1, Math.min(pxH - y, hPx));
+
+              // Capture only the small box (this should be small)
+              const cropped = await w.webContents.capturePage({ x, y, width: wPx, height: hPx });
+
+              // Optional: resize small crop to a predictable small size (e.g., logical 84 × embedScale)
+              const targetLogical = 84;
+              const targetW = Math.round(targetLogical * embedScale);
+              const aspect = wPx / hPx || 1;
+              const targetH = Math.round(targetW / aspect);
+
+              const resized = cropped.resize({ width: Math.max(1, targetW), height: Math.max(1, targetH) });
+              writeBmpFromNativeImage(resized, outFileSmall);
+              sendSplashProgress({ text: `Saved small splash ${theme}`, progress: undefined });
+            } else {
+              sendSplashProgress({ text: 'No small element found; skipped small BMP', progress: undefined });
+            }
+          } catch (err) {
+            log.warn('Small splash capture failed', err);
+          }
+        }
+
+        sendSplashProgress({ text: `Saved splash ${theme}`, progress: undefined });
+      } finally {
+        try { w.destroy(); } catch { }
+      }
+    }
+    // If splash-bmp.html has no theme, call with 'neutral' once; else generate both
+    // Use whichever you prefer; below I keep both to preserve your previous behavior:
+    // await captureTheme('light', light);
+    await captureTheme('dark', dark);
+
+    sendSplashProgress({ text: 'Splash images generated.', progress: 20 });
+  } catch (err) {
+    log.warn('generateSplashIfMissing failed', err);
+    sendSplashProgress({ text: 'Failed to generate splash images', progress: undefined });
+  }
+}
+
+// Central helper to show the main window when both UI and backend are ready
+function showMainWindowIfBackendAndUIReady(source?: string) {
+  if (!uiLoaded || !backendReady) return;
+  log.info(`main: showMainWindowIfBackendAndUIReady (source=${source || 'unknown'})`);
+  try { win?.show(); win?.focus(); } catch { }
+  try { splashWindow?.close(); } catch { }
+}
+
+// Central helper when backend readiness changes
+function setBackendReady(isReady: boolean, source?: string) {
+  backendReady = !!isReady;
+  log.info(`main: backendReady=${backendReady} (source=${source || 'unknown'})`);
+  // broadcast to renderers like before
+  try { BrowserWindow.getAllWindows().forEach((w) => { try { w.webContents.send('backend-ready'); } catch { } }); } catch (e) { }
+  showMainWindowIfBackendAndUIReady(source);
 }

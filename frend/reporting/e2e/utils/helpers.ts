@@ -94,7 +94,7 @@ export class Helpers {
     const configPathPart = PATHS.CONFIG_PATH.replace(/^[/\\]+/, '');
     const dest = path.join(portableDir, configPathPart, '_internal', 'license.xml');
 
-    console.log(`Copying license file from ${src} to ${dest}`);
+    //console.log(`Copying license file from ${src} to ${dest}`);
     await jetpack.copyAsync(src, dest, { overwrite: true });
 
     spawnSync('reportburster.bat', ['system', 'license', 'deactivate'], {
@@ -401,10 +401,10 @@ Started ServerApplication with PID 13404`,
         //}
 
         allCleared = true;
-        console.log(
-          `restoreDocumentBursterCleanState /config is now emptied, waiting ${Constants.DELAY_ONE_SECOND / 1000
-          }  seconds ...`,
-        );
+        //console.log(
+        //  `restoreDocumentBursterCleanState /config is now emptied, waiting ${Constants.DELAY_ONE_SECOND / 1000
+        //  }  seconds ...`,
+        //);
 
         await this.delay(Constants.DELAY_ONE_SECOND);
       } catch (err) {
