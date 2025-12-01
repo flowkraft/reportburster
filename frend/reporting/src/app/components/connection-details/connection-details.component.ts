@@ -63,8 +63,6 @@ export class ConnectionDetailsComponent implements OnInit {
 
   isVannaAiStarted = false;
 
-  managedApps$ = this.getManagedApps(); // Observable or Promise
-
   vannaTrainingIncludeDbSchema: boolean = false;
   vannaTrainingIncludeDomainGroupedSchema: boolean = false;
   vannaTrainingIncludeErDiagram: boolean = false;
@@ -2044,23 +2042,6 @@ export class ConnectionDetailsComponent implements OnInit {
     example +=
       '*   **SLA (Service Level Agreement)**: A commitment between a service provider and a client detailing aspects like quality, availability, responsibilities.\n';
     return example;
-  }
-
-  async getManagedApps(): Promise<ManagedApp[]> {
-    const apps: ManagedApp[] = [];
-
-    const cloudbeaverApp = await this.appsManagerService.getAppById('cloudbeaver');
-    if (cloudbeaverApp) {
-      apps.push(cloudbeaverApp);
-    }
-
-    const vscodeApp = await this.appsManagerService.getAppById('vscode');
-    if (vscodeApp) {
-      apps.push(vscodeApp);
-    }
-
-    // console.log(`apps: ${JSON.stringify(apps)}`);
-    return apps;
   }
 
   async toggleVannaAiService() {

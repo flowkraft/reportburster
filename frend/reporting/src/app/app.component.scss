@@ -1,3 +1,42 @@
 :host {
   
 }
+
+:host {
+  /* keep other styles */
+}
+
+/* Titlebar controls: pointer + hover/active feedback */
+/* ::ng-deep required if ViewEncapsulation is enabled for this component */
+::ng-deep .cet-window-minimize,
+::ng-deep .cet-max-restore,
+::ng-deep .cet-window-close {
+  cursor: pointer !important;
+  padding: 2px;
+  border-radius: 3px;
+  transition: background-color 120ms ease, transform 80ms ease;
+}
+
+/* subtle hover */
+::ng-deep .cet-window-minimize:hover,
+::ng-deep .cet-max-restore:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+/* red-ish hover for close button */
+::ng-deep .cet-window-close:hover {
+  background-color: rgba(232, 17, 35, 0.12);
+}
+
+/* subtle click/tap feedback */
+::ng-deep .cet-window-minimize:active,
+::ng-deep .cet-max-restore:active,
+::ng-deep .cet-window-close:active {
+  transform: translateY(1px);
+  opacity: 0.95;
+}
+
+/* keep drag region using default cursor so window can be dragged */
+::ng-deep .cet-drag-region {
+  cursor: default;
+}

@@ -1,0 +1,9 @@
+# SQLite datasource configuration
+dataSource:
+	driverClassName: org.sqlite.JDBC
+	dbCreate: update
+	url: jdbc:sqlite:/db/northwind.db
+	username:
+	password:
+hibernate:
+	dialect: org.hibernate.dialect.SQLiteDialect

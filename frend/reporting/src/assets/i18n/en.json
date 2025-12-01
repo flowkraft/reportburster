@@ -120,6 +120,9 @@
         "PAGINATION": "Pagination",
         "TABLE-PREVIEW": "Table Preview"
       },
+      "TAB-REPORTING-CHART": {
+        "CHART-PREVIEW": "Chart Preview"
+      },
       "TAB-ADVANCED": {
         "DELAY-EACH-BY": "Delay Each Distribution By",
         "EDIT-EMAIL-MESSAGE": "Edit email message HTML code",
@@ -408,6 +411,7 @@
         "REPORTING-DATASOURCE-DATATABLES": "DataSource",
         "REPORTING-TEMPLATE-OUTPUT": "Output / Template",
         "REPORTING-TABULATOR": "Tabulator",
+        "REPORTING-CHART": "Chart",
         "QA": "Test Email Server",
         "SMS": {
           "MESSAGE": "Message",
@@ -540,6 +544,7 @@
         "BLOG": "ReportBurster Blog",
         "JAVA": "Java",
         "TERMINAL": "Terminal",
+        "APPS": "Apps",
         "STARTER-PACKS": "Starter Packs",
         "EXTRA-PACKAGES": "Docker / Extra Utilities",
         "SYSTEM-DIAGNOSTICS": "System Diagnostics",

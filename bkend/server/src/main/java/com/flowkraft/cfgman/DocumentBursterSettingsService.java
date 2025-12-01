@@ -8,7 +8,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import com.flowkraft.common.AppPaths;
 import com.flowkraft.jobman.dtos.FindCriteriaDto;
 import com.flowkraft.jobman.services.SystemService;
+import com.sourcekraft.documentburster.common.chart.ChartOptionsParser;
 import com.sourcekraft.documentburster.common.reportparameters.ReportParametersHelper;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ConfigurationFileInfo;
@@ -28,6 +31,7 @@ import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConn
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSettingsInternal;
 import com.sourcekraft.documentburster.common.settings.model.ReportingSettings;
+import com.sourcekraft.documentburster.common.tabulator.TabulatorOptionsParser;
 
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.Marshaller;
@@ -219,12 +223,71 @@ public class DocumentBursterSettingsService {
 						baseConfigDir = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples");
 					}
 					Path itemDir = baseConfigDir.resolve(configFile.folderName);
+					
+					// Load Report Parameters DSL
 					String paramsSpecFileName = configFile.folderName + "-report-parameters-spec.groovy";
 					Path paramsSpecPath = itemDir.resolve(paramsSpecFileName);
 
 					if (Files.exists(paramsSpecPath)) {
 						configFile.reportParameters = ReportParametersHelper
 								.parseGroovyParametersDslCode(Files.readString(paramsSpecPath));
+					}
+					
+					// Load Tabulator DSL
+					String tabulatorConfigFileName = configFile.folderName + "-tabulator-config.groovy";
+					Path tabulatorConfigPath = itemDir.resolve(tabulatorConfigFileName);
+
+					if (Files.exists(tabulatorConfigPath)) {
+						try {
+							var tabulatorOptions = TabulatorOptionsParser.parseGroovyTabulatorDslCode(Files.readString(tabulatorConfigPath));
+							if (tabulatorOptions != null) {
+								configFile.tabulatorOptions = new HashMap<>();
+								if (tabulatorOptions.getLayoutOptions() != null) {
+									configFile.tabulatorOptions.put("layoutOptions", tabulatorOptions.getLayoutOptions());
+								}
+								if (tabulatorOptions.getColumns() != null) {
+									configFile.tabulatorOptions.put("columns", tabulatorOptions.getColumns());
+								}
+								if (tabulatorOptions.getData() != null) {
+									configFile.tabulatorOptions.put("data", tabulatorOptions.getData());
+								}
+							}
+						} catch (Exception e) {
+							System.err.println("Failed to parse Tabulator DSL for " + configFile.folderName + ": " + e.getMessage());
+						}
+					}
+					
+					// Load Chart DSL
+					String chartConfigFileName = configFile.folderName + "-chart-config.groovy";
+					Path chartConfigPath = itemDir.resolve(chartConfigFileName);
+
+					if (Files.exists(chartConfigPath)) {
+						try {
+							var chartOptions = ChartOptionsParser.parseGroovyChartDslCode(Files.readString(chartConfigPath));
+							if (chartOptions != null) {
+								configFile.chartOptions = new HashMap<>();
+								if (chartOptions.getType() != null) {
+									configFile.chartOptions.put("type", chartOptions.getType());
+								}
+								if (chartOptions.getLabelField() != null) {
+									configFile.chartOptions.put("labelField", chartOptions.getLabelField());
+								}
+								if (chartOptions.getOptions() != null && !chartOptions.getOptions().isEmpty()) {
+									configFile.chartOptions.put("options", chartOptions.getOptions());
+								}
+								if (chartOptions.getLabels() != null && !chartOptions.getLabels().isEmpty()) {
+									configFile.chartOptions.put("labels", chartOptions.getLabels());
+								}
+								if (chartOptions.getDatasets() != null && !chartOptions.getDatasets().isEmpty()) {
+									configFile.chartOptions.put("datasets", chartOptions.getDatasets());
+								}
+								if (chartOptions.getData() != null && !chartOptions.getData().isEmpty()) {
+									configFile.chartOptions.put("data", chartOptions.getData());
+								}
+							}
+						} catch (Exception e) {
+							System.err.println("Failed to parse Chart DSL for " + configFile.folderName + ": " + e.getMessage());
+						}
 					}
 
 				}

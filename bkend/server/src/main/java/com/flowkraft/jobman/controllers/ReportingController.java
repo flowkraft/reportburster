@@ -19,9 +19,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.flowkraft.common.AppPaths;
 import com.flowkraft.jobman.services.ReportingService;
-import com.sourcekraft.documentburster.common.db.SqlQueryResult;
+import com.sourcekraft.documentburster.common.db.ReportDataResult;
 import com.sourcekraft.documentburster.common.reportparameters.ReportParameter;
 import com.sourcekraft.documentburster.common.reportparameters.ReportParametersHelper;
+import com.sourcekraft.documentburster.common.tabulator.TabulatorOptions;
+import com.sourcekraft.documentburster.common.tabulator.TabulatorOptionsParser;
+import com.sourcekraft.documentburster.common.chart.ChartOptions;
+import com.sourcekraft.documentburster.common.chart.ChartOptionsParser;
 
 import reactor.core.publisher.Mono;
 
@@ -58,12 +62,51 @@ public class ReportingController {
 				new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to parse report parameters", e)));
 	}
 
+	@PostMapping("/parse-tabulator")
+	public Mono<TabulatorOptions> processGroovyTabulator(@RequestBody String groovyTabulatorDslCode) {
+		// System.out.println("[DEBUG] /parse-tabulator: received code length=" + (groovyTabulatorDslCode != null ? groovyTabulatorDslCode.length() : "null"));
+
+		String cleanedCode = groovyTabulatorDslCode.replaceAll("^\"|\"$", "") // Remove surrounding quotes
+				.replace("\\n", "\n") // Unescape newlines
+				.replace("\\t", "\t") // Unescape tabs
+				.replace("\\\"", "\""); // Unescape double quotes
+		// System.out.println("[DEBUG] /parse-tabulator: cleanedCode length=" + cleanedCode.length() + ", isEmpty=" + cleanedCode.trim().isEmpty());
+
+		return Mono.fromCallable(() -> {
+			// System.out.println("[DEBUG] /parse-tabulator: calling parser...");
+			TabulatorOptions opts = TabulatorOptionsParser.parseGroovyTabulatorDslCode(cleanedCode);
+			// System.out.println("[DEBUG] /parse-tabulator: parser returned, opts=" + (opts != null ? "not null" : "null"));
+			return opts;
+		}).doOnError(e -> log.error("Error parsing tabulator options", e))
+				.onErrorResume(e -> Mono.error(
+						new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to parse tabulator options", e)));
+	}
+
+	@PostMapping("/parse-chart")
+	public Mono<ChartOptions> processGroovyChart(@RequestBody String groovyChartDslCode) {
+		// System.out.println("[DEBUG] /parse-chart: received code length=" + (groovyChartDslCode != null ? groovyChartDslCode.length() : "null"));
+
+		String cleanedCode = groovyChartDslCode.replaceAll("^\"|\"$", "") // Remove surrounding quotes
+				.replace("\\n", "\n") // Unescape newlines
+				.replace("\\t", "\t") // Unescape tabs
+				.replace("\\\"", "\""); // Unescape double quotes
+		// System.out.println("[DEBUG] /parse-chart: cleanedCode length=" + cleanedCode.length() + ", isEmpty=" + cleanedCode.trim().isEmpty());
+
+		return Mono.fromCallable(() -> {
+			// System.out.println("[DEBUG] /parse-chart: calling parser...");
+			ChartOptions opts = ChartOptionsParser.parseGroovyChartDslCode(cleanedCode);
+			// System.out.println("[DEBUG] /parse-chart: parser returned, opts=" + (opts != null ? "not null" : "null"));
+			return opts;
+		}).doOnError(e -> log.error("Error parsing chart options", e)).onErrorResume(e -> Mono.error(
+				new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to parse chart options", e)));
+	}
+
 	@GetMapping("/test-fetch-data")
-	public Mono<SqlQueryResult> testFetchData(@RequestParam String configurationFilePath,
+	public Mono<ReportDataResult> testFetchData(@RequestParam String configurationFilePath,
 			@RequestParam Map<String, String> parameters) {
 
-		//System.out.println("/test-fetch-data Received request to test SQL query: " + configurationFilePath);
-		//System.out.println("/test-fetch-data Received parameters: " + parameters.toString());
+		// System.out.println("[DEBUG] /test-fetch-data: received request, configurationFilePath=" + configurationFilePath);
+		// System.out.println("[DEBUG] /test-fetch-data: parameters=" + parameters.toString());
 
 		return Mono.fromCallable(() -> {
 			String cfgFilePath;
@@ -72,7 +115,7 @@ public class ReportingController {
 			} else {
 				cfgFilePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, configurationFilePath).toString();
 			}
-			//System.out.println("/test-fetch-data cfgFilePath: " + cfgFilePath);
+			// System.out.println("[DEBUG] /test-fetch-data: cfgFilePath=" + cfgFilePath);
 
 			// Debug print parameter values
 			//System.out.println("Parameter values:");
@@ -80,7 +123,15 @@ public class ReportingController {
 				//System.out.println(key + " = " + value);
 			});
 
-			return reportingService.testFetchData(cfgFilePath, parameters);
+			// System.out.println("[DEBUG] /test-fetch-data: calling reportingService.testFetchData...");
+			ReportDataResult result = reportingService.testFetchData(cfgFilePath, parameters);
+			// System.out.println("[DEBUG] /test-fetch-data: service returned, reportData size=" + 
+			//	(result.reportData != null ? result.reportData.size() : "null") + 
+			//	", columns=" + (result.reportColumnNames != null ? result.reportColumnNames.size() : "null"));
+			// System.out.println("[DEBUG] /test-fetch-data: about to return result to HTTP response...");
+			return result;
+		}).doOnSuccess(result -> {
+			// System.out.println("[DEBUG] /test-fetch-data: Mono completed successfully, sending HTTP response");
 		}).doOnError(e -> {
 			//System.out.println("Error testing SQL query: " + e.getMessage());
 			log.error("Error testing SQL query", e);

@@ -48,7 +48,7 @@ import { StateStoreService } from '../../providers/state-store.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   ReportingService,
-  SqlQueryResult,
+  ReportDataResult,
 } from '../../providers/reporting.service';
 import { AppsManagerService, ManagedApp } from '../../components/apps-manager/apps-manager.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
@@ -236,7 +236,7 @@ export class ProcessingComponent implements OnInit {
   ) { }
 
   ngOnDestroy() {
-    this.sqlQueryResult = null;
+    this.reportDataResult = null;
     this.isReportDataLoading = false;
 
     if (this.subscriptionCheckIfTestEmailServerIsStarted) {
@@ -1286,7 +1286,7 @@ export class ProcessingComponent implements OnInit {
   reportParamsValid = false;
   reportParamsValues: { [key: string]: any } = {};
 
-  sqlQueryResult: SqlQueryResult | null = null;
+  reportDataResult: ReportDataResult | null = null;
   isReportDataLoading = false;
 
   onReportParamsValidChange(isValid: boolean) {
@@ -1764,13 +1764,13 @@ export class ProcessingComponent implements OnInit {
           //console.log('Calling API with params:', paramsObject); // Debug log
 
           // Call the API
-          this.sqlQueryResult = await this.reportingService.testFetchData(
+          this.reportDataResult = await this.reportingService.testFetchData(
             paramsObject,
             this.processingService.procReportingMailMergeInfo
               .selectedMailMergeClassicReport.filePath,
           );
 
-          //console.log(`API response: ${JSON.stringify(this.sqlQueryResult)}`);
+          //console.log(`API response: ${JSON.stringify(this.reportDataResult)}`);
           this.messagesService.showSuccess('SQL query executed successfully.');
         } catch (error) {
           //console.error('API call failed:', error); // Debug log

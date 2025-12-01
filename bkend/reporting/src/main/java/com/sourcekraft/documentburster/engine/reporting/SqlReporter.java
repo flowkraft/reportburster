@@ -51,7 +51,7 @@ public class SqlReporter extends AbstractReporter {
 		String sqlQuery = sqlOptions.query;
 		
 		//System.out.println("========================================");
-		//System.out.println("[DEBUG] Original SQL Query:");
+		//// System.out.println("[DEBUG] Original SQL Query:");
 		//System.out.println(sqlQuery);
 		//System.out.println("========================================");
 		
@@ -70,9 +70,9 @@ public class SqlReporter extends AbstractReporter {
 		String jdbiQuery = this.dbHelper.convertToJdbiParameters(sqlQuery);
 		List<String> queryParams = this.dbHelper.findQueryParameters(jdbiQuery);
 		
-		//System.out.println("[DEBUG] Converted JDBI Query:");
+		//// System.out.println("[DEBUG] Converted JDBI Query:");
 		//System.out.println(jdbiQuery);
-		//System.out.println("[DEBUG] Query Parameters: " + queryParams);
+		//// System.out.println("[DEBUG] Query Parameters: " + queryParams);
 		//System.out.println("========================================");
 		
 		log.debug("Converted JDBI query: '{}' with params: {}", jdbiQuery, queryParams);
@@ -84,7 +84,7 @@ public class SqlReporter extends AbstractReporter {
 			Map<String, Object> currentVars = ctx.variables.getUserVariables(ctx.token);
 
 			// DEBUG: User variables
-			//System.out.println("[DEBUG] User Variables (ctx.variables.getUserVariables):");
+			//// System.out.println("[DEBUG] User Variables (ctx.variables.getUserVariables):");
 			//System.out.println(currentVars);
 			//System.out.println("========================================");
 
@@ -116,7 +116,7 @@ public class SqlReporter extends AbstractReporter {
 			}).list();
 
 			//System.out.println("========================================");
-			//System.out.println("[DEBUG] Query Results:");
+			//// System.out.println("[DEBUG] Query Results:");
 			//System.out.println("  Number of rows fetched: " + dataRows.size());
 
 			// Build header row

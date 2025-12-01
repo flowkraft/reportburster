@@ -245,7 +245,7 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
       this.confirmService.askConfirmation({
         message,
         confirmAction: () => {
-          this.router.navigate(['/help', 'starterPacksMenuSelected'], { queryParams: { activeTab: 'extraPackagesTab' } });
+          this.router.navigate(['/help', 'appsMenuSelected'], { queryParams: { activeTab: 'extraPackagesTab' } });
         }
       });
       return;

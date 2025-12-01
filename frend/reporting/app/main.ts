@@ -12,10 +12,30 @@ const execAsync = promisify(_execSync);
 
 import * as jetpack from 'fs-jetpack';
 
-import {
-  setupTitlebar,
-  attachTitlebarToWindow,
-} from 'custom-electron-titlebar/main';
+ipcMain.on('window-minimize', () => {
+  try { if (win) win.minimize(); } catch {}
+});
+ipcMain.on('window-toggle-maximize', () => {
+  try {
+    if (!win) return;
+    if (win.isMaximized()) win.unmaximize();
+    else win.maximize();
+  } catch {}
+});
+ipcMain.on('window-close', () => {
+  try { if (win) win.close(); } catch {}
+});
+
+// forward native maximize/unmaximize to renderer(s) so UI can update
+function forwardMaxState() {
+  if (!win) return;
+  win.on('maximize', () => {
+    try { BrowserWindow.getAllWindows().forEach(w => w.webContents.send('window-maximized')); } catch {}
+  });
+  win.on('unmaximize', () => {
+    try { BrowserWindow.getAllWindows().forEach(w => w.webContents.send('window-unmaximized')); } catch {}
+  });
+}
 
 // ensure this stays early in the file
 if (!app.requestSingleInstanceLock()) {
@@ -201,7 +221,10 @@ function createWindow(): BrowserWindow {
     height: 800,
     useContentSize: true,
     center: true,
-    resizable: false,
+    resizable: true,
+    maximizable: true,
+    //titleBarOverlay: true,
+    frame: false,
     show: false, // <-- hide at startup
     titleBarStyle: process.env.PORTABLE_EXECUTABLE_DIR.includes('testground')
       ? 'default'
@@ -215,6 +238,10 @@ function createWindow(): BrowserWindow {
     },
     //icon: path.join(__dirname, 'src/assets/icons/icon.ico'),
   });
+  
+  win.setResizable(true);
+  win.setMaximizable(true);
+  forwardMaxState();
 
   // Hook the main window life-cycle and behavior
   win.on('closed', () => {
@@ -249,11 +276,12 @@ function createWindow(): BrowserWindow {
     win.loadURL(url.href);
 
     // Attach titlebar to window - safe attempt
-    try {
-      attachTitlebarToWindow(win);
-    } catch (err) {
-      log.warn('attachTitlebarToWindow failed', err);
-    }
+    //try {
+    //  attachTitlebarToWindow(win);
+    //  mainTitlebarAttached = true;
+    //} catch (err) {
+    //  log.warn('attachTitlebarToWindow failed', err);
+    //}
   }
 
   // When the UI finishes loading, mark it and optionally take action
@@ -302,11 +330,11 @@ try {
 
       // defer heavy module actions after splash painted
       // safe setup for custom titlebar (defer to ready)
-      try {
-        setupTitlebar();
-      } catch (err) {
-        log.warn('setupTitlebar failed', err);
-      }
+      //try {
+      //  setupTitlebar();
+      //} catch (err) {
+      //  log.warn('setupTitlebar failed', err);
+      //}
 
       // In packaged runs, we wait for the server stdout to create the main window to
       // avoid early empty frames. In development mode, create the main window after a

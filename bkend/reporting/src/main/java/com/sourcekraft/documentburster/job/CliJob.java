@@ -33,7 +33,7 @@ import com.sourcekraft.documentburster.GlobalContext;
 import com.sourcekraft.documentburster.common.ServicesManager;
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionTester;
 import com.sourcekraft.documentburster.common.db.DatabaseSchemaFetcher;
-import com.sourcekraft.documentburster.common.db.SqlQueryResult;
+import com.sourcekraft.documentburster.common.db.ReportDataResult;
 import com.sourcekraft.documentburster.common.db.schema.SchemaInfo;
 import com.sourcekraft.documentburster.common.settings.EmailConnection;
 import com.sourcekraft.documentburster.common.settings.NewFeatureRequest;
@@ -82,7 +82,7 @@ public class CliJob {
 	}
 
 	public void setParameters(Map<String, String> parameters) {
-		// System.out.println("[DEBUG] CliJob.setParameters called with: " +
+		// // System.out.println("[DEBUG] CliJob.setParameters called with: " +
 		// parameters);
 		this.parameters = parameters;
 	}
@@ -425,10 +425,10 @@ public class CliJob {
 
 	}
 
-	public SqlQueryResult doTestFetchData(Map<String, String> parameters) throws Exception {
+	public ReportDataResult doTestFetchData(Map<String, String> parameters) throws Exception {
 
 		File jobFile = null;
-		SqlQueryResult result = new SqlQueryResult();
+		ReportDataResult result = new ReportDataResult();
 
 		try {
 			// System.out.println("doTestFetchData: configurationFilePath = " +
@@ -473,7 +473,9 @@ public class CliJob {
 
 			// Run the normal reporting flow (no output/distribution in preview mode)
 			// System.out.println("doTestFetchData: Calling burst...");
+			long startTime = System.currentTimeMillis();
 			burster.burst(settings.getTemplateName(), false, "", -1);
+			long endTime = System.currentTimeMillis();
 			// System.out.println("doTestFetchData: burst finished");
 
 			// Prepare and return the result
@@ -481,6 +483,8 @@ public class CliJob {
 			result.reportData = burster.getCtx().reportData;
 			result.reportColumnNames = burster.getCtx().reportColumnNames;
 			result.isPreview = true;
+			result.executionTimeMillis = endTime - startTime;
+			result.totalRows = (result.reportData != null) ? result.reportData.size() : 0;
 
 			// System.out.println("doTestFetchData: reportData size = "
 			// + (result.reportData != null ? result.reportData.size() : "null"));

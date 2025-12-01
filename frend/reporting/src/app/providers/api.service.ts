@@ -116,7 +116,9 @@ export class ApiService {
 
     if (!this.stateStore.configSys.sysInfo.setup.java.isJavaOk) return;
 
+    // console.log('[DEBUG] api.service: calling fetch for', url);
     const response = await fetch(url, options);
+    // console.log('[DEBUG] api.service: fetch returned, status=', response.status);
 
     if (!response.ok) {
       //this.stateStore.configSys.sysInfo.setup.java.isJavaOk = false;
@@ -140,19 +142,19 @@ export class ApiService {
 
     let data = {};
     if (response.headers.get('Content-Length') === '0') {
-      //console.log(
-      //  `No data returned from API call: ${url}, body: ${JSON.stringify(body)}`,
-      //);
+      // console.log('[DEBUG] api.service: Content-Length is 0, returning empty object');
     } else {
-      //console.log(`apiService.request.response: ${JSON.stringify(response)}`);
-
       const contentType = response.headers.get('content-type');
+      // console.log('[DEBUG] api.service: Content-Type=', contentType);
       if (contentType && contentType.includes('application/json')) {
+        // console.log('[DEBUG] api.service: parsing JSON response...');
         data = await response.json();
+        // console.log('[DEBUG] api.service: JSON parsed successfully');
       } else if (contentType && contentType.includes('text/plain')) {
         data = await response.text();
       }
     }
+    // console.log('[DEBUG] api.service: returning data');
     return data;
   }
 

@@ -13,8 +13,36 @@
 
   <!-- Expanded List Mode -->
   <ng-container *ngSwitchCase="'expandedList'">
+    <!-- Search/Tag/Refresh Row (adapted from starter-packs.template.html) -->
+    <div *ngIf="!inputAppsToShow" class="row" style="margin-bottom: 10px; display:flex; align-items:center;">
+      <div class="col-md-6">
+        <div class="form-group" style="margin-bottom:0">
+          <label for="appSearch" class="sr-only">Search Apps</label>
+          <div class="input-group input-group-sm">
+            <input type="text" id="appSearch" class="form-control" placeholder="Search ..." [ngModel]="searchTerm" (ngModelChange)="searchSubject.next($event)" />
+            <span class="input-group-btn" *ngIf="searchTerm">
+              <button class="btn btn-default" type="button" title="Clear Search" (click)="searchSubject.next(''); searchTerm=''">
+                <i class="fa fa-times"></i>
+              </button>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <span *ngIf="allTags.length === 0 && !isLoading && !isRefreshing" class="text-muted small">No tags defined.</span>
+        <span *ngFor="let tag of allTags" style="margin-right:5px">
+          <button class="btn btn-xs" [class.btn-primary]="selectedTag === tag" [class.btn-default]="selectedTag !== tag" (click)="filterByTag(tag)" title="Filter by tag: {{ tag }}">{{ tag }}</button>
+        </span>
+        <button *ngIf="selectedTag" class="btn btn-xs btn-warning" style="margin-left:5px" (click)="clearTagFilter()" title="Clear tag filter"><i class="fa fa-times"></i> {{ selectedTag }}</button>
+      </div>
+      <div class="col-md-1 text-right">
+        <button class="btn btn-default btn-sm" type="button" (click)="refreshData()" [disabled]="isLoading || isRefreshing" title="Refresh List">
+          <i class="fa fa-refresh" [class.fa-spin]="isRefreshing"></i>
+        </button>
+      </div>
+    </div>
     <div class="list-group">
-      <div *ngFor="let app of apps" class="panel" [ngClass]="{
+      <div *ngFor="let app of visibleApps" class="panel" [ngClass]="{
   'panel-info': app.state === 'running',
   'panel-primary': app.state === 'starting' || app.state === 'stopping',
   'panel-danger': app.state === 'error',
@@ -93,19 +121,19 @@
       aria-haspopup="true"
       aria-expanded="false"
     >
-      <ng-container *ngIf="(apps?.length || 0) > 0; else manageAppsLabel">
+      <ng-container *ngIf="(visibleApps?.length || 0) > 0; else manageAppsLabel">
         <i
-          *ngIf="apps[0].icon"
-          [class]="apps[0].icon"
-          [style.color]="apps[0].state === 'running' ? 'green' : '#888'"
+          *ngIf="visibleApps[0]?.icon"
+          [class]="visibleApps[0]?.icon"
+          [style.color]="visibleApps[0]?.state === 'running' ? 'green' : '#888'"
           style="margin-right: 6px"
         ></i>
         <span
-          id="appsManagerAppName{{sanitizeAppName(apps[0].name)}}"
-          [style.color]="apps[0].state === 'running' ? 'green' : '#888'">
-          {{ apps[0].name }}
-          <strong *ngIf="apps[0].type !== 'desktop' && apps[0].state !== 'running'" id="appsManagerAppState{{sanitizeAppName(apps[0].name)}}" style="margin-left: 6px;">stopped</strong>
-          <strong *ngIf="apps[0].type !== 'desktop' && apps[0].state === 'running'" id="appsManagerAppState{{sanitizeAppName(apps[0].name)}}" style="margin-left: 6px;">running</strong>
+          id="appsManagerAppName{{sanitizeAppName(visibleApps[0]?.name)}}"
+          [style.color]="visibleApps[0]?.state === 'running' ? 'green' : '#888'">
+          {{ visibleApps[0]?.name }}
+          <strong *ngIf="visibleApps[0]?.type !== 'desktop' && visibleApps[0]?.state !== 'running'" id="appsManagerAppState{{sanitizeAppName(visibleApps[0]?.name)}}" style="margin-left: 6px;">stopped</strong>
+          <strong *ngIf="visibleApps[0]?.type !== 'desktop' && visibleApps[0]?.state === 'running'" id="appsManagerAppState{{sanitizeAppName(visibleApps[0]?.name)}}" style="margin-left: 6px;">running</strong>
         </span>
       </ng-container>
       <ng-template #manageAppsLabel>
@@ -114,7 +142,7 @@
       <span class="caret"></span>
     </button>
     <ul class="dropdown-menu" role="menu">
-      <li role="menuitem" *ngFor="let app of apps" [id]="'appsManagerApp' + sanitizeAppName(app.id)">
+      <li role="menuitem" *ngFor="let app of visibleApps" [id]="'appsManagerApp' + sanitizeAppName(app.id)">
         <a class="dropdown-item" href="javascript:void(0)">
           <!-- Stop icon to the left of app name when running (dropdown mode) -->
           <span *ngIf="app.state === 'running' && app.type !== 'desktop'"

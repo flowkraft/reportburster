@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.sourcekraft.documentburster.utils.DumpToString;
 
-public class SqlQueryResult extends DumpToString {
+public class ReportDataResult extends DumpToString {
 	public List<LinkedHashMap<String, Object>> reportData;
 	public List<String> reportColumnNames;
 	public long executionTimeMillis;

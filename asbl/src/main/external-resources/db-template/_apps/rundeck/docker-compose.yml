@@ -1,0 +1,14 @@
+services:
+  rundeck:
+    image: rundeck/rundeck:5.17.0
+    container_name: rb-rundeck
+    tty: true
+    volumes:
+      - data:/home/rundeck/server/data
+      # - ${RUNDECK_LICENSE_FILE:-/dev/null}:/home/rundeck/etc/rundeckpro-license.key
+    ports:
+      - "4440:4440"
+    restart: unless-stopped  
+
+volumes:
+  data:

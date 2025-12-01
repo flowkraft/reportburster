@@ -1,0 +1,63 @@
+services:
+  clickhouse:
+    image: clickhouse:lts-jammy
+    container_name: rb-clickhouse
+    restart: unless-stopped
+
+    ports:
+      - "8123:8123"   # HTTP interface (queries via curl, BI tools, etc.)
+      - "9000:9000"   # Native TCP interface (clients, drivers)
+      - "9009:9009"   # Inter-server communication (replication/sharding)
+
+    volumes:
+      # Core data storage
+      - ./data:/var/lib/clickhouse
+      # Logs (optional, useful for debugging)
+      - ./logs:/var/log/clickhouse-server
+      # Configs (optional, override defaults if needed)
+      - ./config:/etc/clickhouse-server
+
+    environment:
+      # Default user/password (good for local dev; change in production!)
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: mysecret
+      CLICKHOUSE_DB: default
+
+    # Uncomment if you want to set resource limits
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "2"
+    #       memory: "4g"
+
+# -------------------------------
+# Notes / Common Config Options:
+# -------------------------------
+# 1. Volumes:
+#    - ./clickhouse_data:/var/lib/clickhouse
+#      -> Persistent database storage
+#    - ./clickhouse_logs:/var/log/clickhouse-server
+#      -> Access server logs outside container
+#    - ./clickhouse_config:/etc/clickhouse-server
+#      -> Override configs (users.xml, config.xml, etc.)
+#
+# 2. Ports:
+#    - 8123: HTTP interface (REST, curl, BI tools)
+#    - 9000: Native TCP (fastest, used by official clients)
+#    - 9009: Internal replication/sharding
+#
+# 3. Environment variables:
+#    CLICKHOUSE_USER / CLICKHOUSE_PASSWORD
+#      -> Set default credentials
+#    CLICKHOUSE_DB
+#      -> Auto-create a default database
+#
+# 4. Common configs people often add:
+#    - users.xml: define multiple users/roles
+#    - config.xml: tune memory, max concurrent queries
+#    - remote_servers.xml: define clusters for sharding/replication
+#
+# 5. Production tips:
+#    - Mount volumes to persistent storage (not tmpfs)
+#    - Use resource limits (CPU/mem) to avoid runaway queries
+#    - Consider separating logs and configs into their own dirs

@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## 12.1.0 - 2025-12-08
+
+### Added
+
+- **New Apps Tab** accessible via **Help → Apps / Starter Packs / Extra Utils → Apps**  
+  (-)  Provides 8 integrated applications  
+    (A) ReportBurster Portal  
+    (B) Rundeck  
+    (C) CloudBeaver  
+    (D) 3x FlowKraft apps  
+    (E) Metabase  
+    (F) Clickhouse  
+  (-) These applications complement ReportBurster and work well together.  
+  (-) *Docker must be installed to start, stop, or use these apps.*
+- Tabulator is now configurable via a simple and effective **Tabulator Options DSL**  
+- ReportBurster can now create charts (powered by **Chart.js**)
+
 ## 11.4.0 - 2025-11-25
 
 ### Added

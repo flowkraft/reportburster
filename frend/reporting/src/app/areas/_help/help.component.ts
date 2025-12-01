@@ -23,6 +23,7 @@ import { tabBlogTemplate } from './templates/tab-blog';
 import { tabAboutTemplate } from './templates/tab-about';
 import { tabJavaTemplate } from './templates/tab-java';
 import { tabTerminalTemplate } from './templates/tab-terminal';
+import { tabAppsTemplate } from './templates/tab-apps';
 import { tabStarterPacksTemplate } from './templates/tab-starter-packs';
 import { tabExtraPackagesTemplate } from './templates/tab-extra-packages';
 import { tabSystemDiagnosticsTemplate } from './templates/tab-system-diagnostics';
@@ -46,7 +47,7 @@ import { StateStoreService } from '../../providers/state-store.service';
     </div>
     ${tabSupportTemplate} ${tabDocumentationTemplate} ${tabServicesTemplate}
     ${tabExamplesTemplate} ${tabReviewsTemplate} ${tabBlogTemplate}
-    ${tabJavaTemplate} ${tabTerminalTemplate} ${tabStarterPacksTemplate}
+    ${tabJavaTemplate} ${tabTerminalTemplate} ${tabAppsTemplate} ${tabStarterPacksTemplate}
     ${tabExtraPackagesTemplate} ${tabSystemDiagnosticsTemplate}
     ${tabUpdateTemplate} ${tabAboutTemplate} ${tabComparisonTemplate}
     ${tabLogsTemplate} ${tabLicenseTemplate}
@@ -75,6 +76,9 @@ export class HelpComponent implements OnInit, AfterViewChecked, AfterViewInit {
 
   @ViewChild('tabTerminalTemplate', { static: true })
   tabTerminalTemplate: TemplateRef<any>;
+
+  @ViewChild('tabAppsTemplate', { static: true })
+  tabAppsTemplate: TemplateRef<any>;
 
   @ViewChild('tabStarterPacksTemplate', { static: true })
   tabStarterPacksTemplate: TemplateRef<any>;
@@ -161,6 +165,11 @@ export class HelpComponent implements OnInit, AfterViewChecked, AfterViewInit {
       ngTemplateOutlet: 'tabUpdateTemplate',
     },
     {
+      id: 'appsTab',
+      heading: 'AREAS.HELP.TABS.APPS',
+      ngTemplateOutlet: 'tabAppsTemplate',
+    },
+    {
       id: 'starterPacksTab',
       heading: 'AREAS.HELP.TABS.STARTER-PACKS',
       ngTemplateOutlet: 'tabStarterPacksTemplate',
@@ -198,8 +207,8 @@ export class HelpComponent implements OnInit, AfterViewChecked, AfterViewInit {
       visibleTabs: ['supportTab', 'licenseTab', 'logsTab'],
     },
     {
-      selectedMenu: 'starterPacksMenuSelected',
-      visibleTabs: ['starterPacksTab', 'extraPackagesTab', 'licenseTab'],
+      selectedMenu: 'appsMenuSelected',
+      visibleTabs: ['appsTab', 'starterPacksTab', 'extraPackagesTab', 'licenseTab'],
     },
     {
       selectedMenu: 'servicesMenuSelected',

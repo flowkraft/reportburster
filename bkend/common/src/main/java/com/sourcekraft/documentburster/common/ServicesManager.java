@@ -43,6 +43,12 @@ public class ServicesManager {
 		}
 	}
 
+	private static final List<String> FLOWKRAFT_APPS = List.of(
+		"admin-grails-playground",
+		"bkend-boot-groovy-playground",
+		"frend-grails-playground"
+	);
+
 	// Define the family name this CLI currently handles primarily
 	private static final String DB_FAMILY = "database";
 	private static final String APP_FAMILY = "app";
@@ -407,8 +413,9 @@ public class ServicesManager {
 			if (provisioned) {
 				command.add(serviceName);
 			}
-		}
-
+		}else
+			command.add(serviceName);
+	
 		log.info("Executing command: {} in directory: {}", command, workingDir);
 
 		// Use ProcessExecutor like NorthwindManager for better output handling
@@ -446,8 +453,8 @@ public class ServicesManager {
 		command.add("compose");
 		command.add("-f");
 		command.add(composeFileName);
-		command.add("down");
-		//command.add(serviceName);
+		command.add("stop");
+		command.add(serviceName);
 
 		ProcessExecutor executor = new ProcessExecutor().command(command).directory(workingDir.toFile()).redirectOutput(Slf4jStream.of(log).asInfo()).redirectError(Slf4jStream.of(log).asInfo()).timeout(300, TimeUnit.SECONDS);
 
@@ -463,12 +470,11 @@ public class ServicesManager {
 
 	/** Get the docker-compose.yml path for the service */
 	private static String getComposePath(String serviceName) {
-		String appsFolderPath = Utils.getAppsFolderPath();  // Use dynamic path
-		if (serviceName.equals("cms-webportal-playground")) {
-			return appsFolderPath + "cms-webportal-playground/docker-compose.yml";  // Relative to appsFolderPath
-		} else {
-			return appsFolderPath + "docker-compose.yml";  // Fallback for other services
+		String appsFolderPath = Utils.getAppsFolderPath();
+		if (FLOWKRAFT_APPS.contains(serviceName)) {
+			return appsFolderPath + "flowkraft/docker-compose.yml";
 		}
+		return appsFolderPath + serviceName + "/docker-compose.yml";
 	}
 
 }
