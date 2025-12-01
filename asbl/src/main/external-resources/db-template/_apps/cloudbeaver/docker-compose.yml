@@ -1,0 +1,12 @@
+services:
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:25.2.5
+    container_name: rb-cloudbeaver
+    volumes:
+      - ./workspace:/opt/cloudbeaver/workspace
+    environment:
+      - CLOUDBEAVER_WORKSPACE=/opt/cloudbeaver/workspace
+      - CLOUDBEAVER_EXPIRE_SESSION_AFTER_PERIOD=10800000
+    ports:
+      - "8978:8978"
+    restart: unless-stopped

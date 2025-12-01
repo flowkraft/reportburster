@@ -1,5 +1,15 @@
 import { Injectable } from '@angular/core';
 
+import type {
+  SaveDialogOptions,
+  SaveDialogReturnValue,
+  OpenDialogOptions,
+  OpenDialogReturnValue,
+  IpcRenderer,
+} from 'electron';
+
+import * as CustomElectronTitlebar from 'custom-electron-titlebar/dist';
+
 //import * as process from 'process';
 import { ChildProcess } from 'child_process';
 
@@ -8,7 +18,6 @@ import { SemVer } from 'semver';
 import dayjs from 'dayjs';
 
 import { Subscription } from 'rxjs';
-import * as CustomElectronTitlebar from 'custom-electron-titlebar/dist';
 
 import { ApiService } from '../../providers/api.service';
 import Utilities from '../../helpers/utilities';
@@ -38,9 +47,6 @@ export class RbElectronService {
   //spawn: typeof childProcess.spawn;
 
   //log: typeof ElectronLog;
-  cet: typeof CustomElectronTitlebar = window.require(
-    'custom-electron-titlebar',
-  );
 
   PORTABLE_EXECUTABLE_DIR: string =
     window.require('process').env.PORTABLE_EXECUTABLE_DIR;
@@ -78,6 +84,10 @@ export class RbElectronService {
 
   pTerminalInput: HTMLInputElement;
 
+  cet: typeof CustomElectronTitlebar = window.require(
+    'custom-electron-titlebar',
+  );
+
   constructor(protected apiService: ApiService) {
     //this.process = window.require('process');
 
@@ -87,7 +97,6 @@ export class RbElectronService {
     //this.spawn = this.childProcess.spawn;
 
     //this.log = window.require('electron-log');
-    //this.cet = window.require('custom-electron-titlebar');
 
     this.logFilePath = Utilities.slash(
       `${this.PORTABLE_EXECUTABLE_DIR}/logs/bash.service.log`,
@@ -117,8 +126,8 @@ export class RbElectronService {
       version: string;
     };
     portal: {
-    isProvisioned: boolean;
-  };
+      isProvisioned: boolean;
+    };
     env: {
       PATH: string;
       JAVA_HOME: string;

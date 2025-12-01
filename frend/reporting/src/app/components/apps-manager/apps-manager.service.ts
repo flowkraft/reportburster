@@ -8,6 +8,7 @@ export interface ManagedApp {
   id: string;
   name: string;
   description: string;
+  category?: string;
   type: 'docker' | 'local' | 'desktop' | 'url';
   icon?: string;
   entrypoint?: string;
@@ -17,11 +18,12 @@ export interface ManagedApp {
   state?: 'running' | 'stopped' | 'unknown' | 'starting' | 'stopping' | 'error';
   index?: number;
   value?: string;
-  enabled?: boolean;
   startCmd?: string;
   stopCmd?: string;
   lastOutput?: string;
   currentCommandValue?: string;
+  tags?: string[];
+  visible?: boolean;
 }
 
 @Injectable({
@@ -40,28 +42,122 @@ export class AppsManagerService {
       {
         id: 'cms-webportal',
         name: 'WebPortal / Content Management CMS',
-        icon: 'fa fa-wordpress',
+        icon: 'fa fa-users',
         category: 'Web Portal',
         type: 'docker',
         description: 'Production-ready WebPortal / Content Management with admin features.',
         url: 'http://localhost:8080/wp-admin',
-        enabled: true,
         entrypoint: 'cms-webportal-playground/docker-compose.yml',
         service_name: 'cms-webportal-playground',
         startCmd: 'service app start cms-webportal-playground 8080',
         stopCmd: 'service app stop cms-webportal-playground',
+        tags: ['cms', 'webportal', 'admin-panel'],
+        visible: true,
+      },
+      {
+        id: 'rundeck',
+        name: 'Rundeck (Automation & Job Scheduling)',
+        icon: 'fa fa-cogs',
+        category: 'Automation & Job Scheduling',
+        type: 'docker',
+        description: 'Runbook automation service with a web console, command line tools and a WebAPI. It lets you easily standardize tasks to improve operational quality by deploying automation across your organization.',
+        url: 'http://localhost:4440',
+        entrypoint: 'rundeck/docker-compose.yml',
+        service_name: 'rundeck',
+        startCmd: 'service app start rundeck 4440',
+        stopCmd: 'service app stop rundeck',
+        tags: ['automation', 'job-scheduling'],
+        visible: true,
       },
       {
         id: 'cloudbeaver',
-        name: 'DB Management (CloudBeaver)',
+        name: 'CloudBeaver (Database Manager)',
         icon: 'fa fa-database',
         category: 'Database Management',
         type: 'docker',
-        description: 'Web-based database manager.',
+        description: 'The professional data management software trusted by experts.',
         url: 'http://localhost:8978',
-        enabled: false,
-        entrypoint: 'docker-compose.yml',
+        entrypoint: 'cloudbeaver/docker-compose.yml',
         service_name: 'cloudbeaver',
+        startCmd: 'service app start cloudbeaver 8978',
+        stopCmd: 'service app stop cloudbeaver',
+        tags: ['database management', 'sql-client'],
+        visible: true,
+      },
+      {
+        id: 'flowkraft-admin-grails',
+        name: 'Flowkraft\'s Admin Panel App (Playground)',
+        icon: 'fa fa-cube',
+        category: 'Admin Tools',
+        type: 'docker',
+        description: 'Flowkraft\'s Admin Panel App implemented as a Grails 7 application.',
+        url: 'http://localhost:8481',
+        entrypoint: 'flowkraft/docker-compose.yml',
+        service_name: 'admin-grails-playground',
+        startCmd: 'service app start admin-grails-playground 8481',
+        stopCmd: 'service app stop admin-grails-playground',
+        tags: ['flowkraft', 'admin-panel', 'cms'],
+        visible: true,
+      },
+      {
+        id: 'flowkraft-bkend-boot-groovy',
+        name: 'Flowkraft\'s Backend App (Playground)',
+        icon: 'fa fa-cogs',
+        category: 'Backend Services',
+        type: 'docker',
+        description: 'Flowkraft\'s Backend App implemented as a Spring Boot 4 application.',
+        url: 'http://localhost:8482',
+        entrypoint: 'flowkraft/docker-compose.yml',
+        service_name: 'bkend-boot-groovy-playground',
+        startCmd: 'service app start bkend-boot-groovy-playground 8482',
+        stopCmd: 'service app stop bkend-boot-groovy-playground',
+        tags: ['flowkraft', 'backend', 'automation', 'job-scheduling'],
+        visible: true,
+      },
+      {
+        id: 'flowkraft-frend-grails',
+        name: 'Flowkraft\'s Frontend App (Playground)',
+        icon: 'fa fa-cube',
+        category: 'Frontend Tools',
+        type: 'docker',
+        description: 'Flowkraft\'s Frontend App implemented as a Grails 7 application.',
+        url: 'http://localhost:8483',
+        entrypoint: 'flowkraft/docker-compose.yml',
+        service_name: 'frend-grails-playground',
+        startCmd: 'service app start frend-grails-playground 8483',
+        stopCmd: 'service app stop frend-grails-playground',
+        tags: ['flowkraft', 'frontend', 'webportal'],
+        visible: true,
+      },
+      {
+        id: 'metabase',
+        name: 'Metabase',
+        icon: 'fa fa-line-chart',
+        category: 'BI & Visualization',
+        type: 'docker',
+        description: 'Open Source business intelligence and analytics platform.',
+        url: 'http://localhost:3000',
+        entrypoint: 'metabase/docker-compose.yml',
+        service_name: 'metabase',
+        startCmd: 'service app start metabase 3000',
+        stopCmd: 'service app stop metabase',
+        tags: ['bi', 'analytics', 'visualization'],
+        visible: true,
+      },
+      {
+        id: 'clickhouse',
+        name: 'ClickHouse (OLAP Database)',
+        icon: 'fa fa-database',
+        category: 'Databases & Analytics',
+        type: 'docker',
+        description: 'High-performance columnar OLAP (real-time) database for analytics and reporting workloads.',
+        url: 'http://localhost:8123',
+        entrypoint: 'clickhouse/docker-compose.yml',
+        service_name: 'clickhouse',
+        startCmd: 'service app start clickhouse 8123',
+        stopCmd: 'service app stop clickhouse',
+        tags: ['database', 'olap', 'analytics'],
+        visible: true,
       },
       {
         id: 'vanna-ai',
@@ -70,7 +166,7 @@ export class AppsManagerService {
         type: 'docker',
         description: 'AI-powered text-to-SQL agent.',
         url: 'http://localhost:8084',
-        enabled: false,
+
         entrypoint: 'docker-compose.yml',
         service_name: 'vanna-ai',
       },
@@ -81,7 +177,7 @@ export class AppsManagerService {
         type: 'docker',
         description: 'Query builder and dashboard tool.',
         url: 'http://localhost:5000',
-        enabled: false,
+
         entrypoint: 'docker-compose.yml',
         service_name: 'redash',
       },
@@ -92,19 +188,9 @@ export class AppsManagerService {
         type: 'docker',
         description: 'Enterprise-ready data visualization platform.',
         url: 'http://localhost:8088',
-        enabled: false,
+
         entrypoint: 'docker-compose.yml',
         service_name: 'superset',
-      },
-      {
-        id: 'rundeck',
-        name: 'Rundeck (Local)',
-        category: 'Automation & Job Scheduling',
-        type: 'local',
-        description: 'Runbook automation installed directly on the host.',
-        url: 'http://localhost:4440',
-        enabled: false,
-        command: 'rundeckd start',
       },
       {
         id: 'vscode',
@@ -113,8 +199,9 @@ export class AppsManagerService {
         category: 'Developer Tools',
         type: 'desktop',
         description: 'Launch local installation of Visual Studio Code.',
-        enabled: false,
+
         command: 'code',
+        visible: false,
       },
       {
         id: 'notepad++',
@@ -122,7 +209,7 @@ export class AppsManagerService {
         category: 'Developer Tools',
         type: 'desktop',
         description: 'Launch local installation of Notepad++.',
-        enabled: false,
+
         command: 'notepad++',
       },
     ],
@@ -132,15 +219,15 @@ export class AppsManagerService {
     private shellService: ShellService,
     private messagesService: ToastrMessagesService,
     private apiService: ApiService,
-    private stateStore: StateStoreService, 
-  ) {}
+    private stateStore: StateStoreService,
+  ) { }
 
   // Add method to fetch statuses from API
   public async refreshAllStatuses(): Promise<void> {
     try {
       const response = await this.apiService.get('/jobman/system/services/status');
       const statuses: any[] = response;  // Array of {name, status, ports}
-      
+
       // Update app states based on API response
       for (const app of this.allAppsData.apps) {
         const service = statuses.find(s => s.name === app.service_name || s.name.includes(app.id));
@@ -150,7 +237,7 @@ export class AppsManagerService {
           if (app.id === 'cms-webportal' && this.appStates[app.id] === 'running') {
             this.stateStore.configSys.sysInfo.setup.portal.isProvisioned = true;
           }
-       
+
         } else {
           this.appStates[app.id] = 'unknown';
         }
@@ -162,7 +249,8 @@ export class AppsManagerService {
   }
 
   public async getAllApps(): Promise<ManagedApp[]> {
-    return this.allAppsData.apps.map(app => ({
+    const appsToReturn = this.allAppsData.apps.filter(app => app.visible === true);
+    return appsToReturn.map(app => ({
       ...app,
       type: app.type as 'docker' | 'local' | 'desktop' | 'url',
       state: this.appStates[app.id] ?? 'stopped',
@@ -293,20 +381,20 @@ export class AppsManagerService {
         if (result && result.success) {
           this.appStates[app.id] = 'stopped';
           this.appLastOutputs[app.id] = result.output || `✓ ${app.name} stopped successfully.`;
-          try { app.state = 'stopped'; } catch (e) {}
-          try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e) {}
-          try { app.currentCommandValue = app.startCmd; } catch (e) {}
+          try { app.state = 'stopped'; } catch (e) { }
+          try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e) { }
+          try { app.currentCommandValue = app.startCmd; } catch (e) { }
         } else {
           this.appStates[app.id] = 'error';
           this.appLastOutputs[app.id] = (result && result.output) || `✗ Failed to stop ${app.name}.`;
-          try { app.state = 'error'; } catch (e) {}
-          try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e) {}
+          try { app.state = 'error'; } catch (e) { }
+          try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e) { }
         }
         // Automatic refresh after action to get authoritative state from API
         try {
           await this.refreshAllStatuses();
           const apiState = this.appStates[app.id] ?? app.state;
-          try { app.state = apiState; } catch (e) {}
+          try { app.state = apiState; } catch (e) { }
         } catch (e) {
           console.error('refreshAllStatuses failed after stop:', e);
         }

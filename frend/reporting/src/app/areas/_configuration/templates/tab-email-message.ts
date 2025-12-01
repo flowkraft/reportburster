@@ -119,10 +119,10 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
           </div>
           
           <!-- Editor row (full width) -->
-          <div class="row" style="margin-top: 5px;">
-            <div class="col-xs-12">
+          <div class="row" style="margin-top: 5px; resize: vertical; overflow: auto; min-height: 150px; max-height: 75vh;">
+            <div class="col-xs-12" style="display:flex; flex-direction:column; height:100%;">
               <!-- WYSIWYG editor -->
-              <p-editor [style]="{'height':'300px'}"
+              <p-editor style="height:100%; flex:1 1 auto; min-height:0;"
                 id="wysiwygEmailMessage"
                 *ngIf="xmlSettings?.documentburster.settings.htmlemail && 
                 !xmlSettings?.documentburster.settings.htmlemaileditcode"

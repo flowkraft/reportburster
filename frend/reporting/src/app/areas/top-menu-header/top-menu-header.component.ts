@@ -50,4 +50,5 @@ export class TopMenuHeaderComponent implements OnInit {
   isRunningInsideElectron(): boolean {
     return Utilities.isRunningInsideElectron();
   }
+
 }

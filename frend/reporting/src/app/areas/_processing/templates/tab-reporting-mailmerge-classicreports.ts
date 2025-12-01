@@ -225,26 +225,27 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
     </div>
 
     <div
-      *ngIf="sqlQueryResult"
+      *ngIf="reportDataResult"
       class="row" style="margin-top: 10px"
     >
        <div class="col-xs-12">
 
             <!-- in your Angular template -->
             <rb-tabulator #tabulator
-              [data]="sqlQueryResult?.reportData"
-              [columns]="sqlQueryResult?.reportColumnNames | tabulatorColumns"
+              [data]="reportDataResult?.reportData"
+              [columns]="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport?.tabulatorOptions?.columns || (reportDataResult?.reportColumnNames | tabulatorColumns)"
+              [options]="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport?.tabulatorOptions?.layoutOptions || {}"
               [loading]="isReportDataLoading"
               (ready)="onTabReady()"
               (initError)="onTabError($any($event).detail.message)"
               (tableError)="onTabError($any($event).detail.message)"
             ></rb-tabulator>
 
-            <div *ngIf="sqlQueryResult">
+            <div *ngIf="reportDataResult">
               <br/>
-              <p>Execution Time: {{ sqlQueryResult.executionTimeMillis }}ms</p>
-              <p>Total Rows: {{ sqlQueryResult.reportData?.length || 0 }}</p>
-              <p>Preview Mode: {{ sqlQueryResult.isPreview ? 'Yes' : 'No' }}</p>
+              <p>Execution Time: {{ reportDataResult.executionTimeMillis }}ms</p>
+              <p>Total Rows: {{ reportDataResult.reportData?.length || 0 }}</p>
+              <p>Preview Mode: {{ reportDataResult.isPreview ? 'Yes' : 'No' }}</p>
             </div>
 
           </div> 

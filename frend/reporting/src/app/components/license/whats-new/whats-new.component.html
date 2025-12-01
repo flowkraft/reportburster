@@ -1,59 +1,5 @@
 <tabset *ngIf="mode != 'changelog'">
-  <tab>
-    <ng-template tabHeading>
-      <i class="fa fa-podcast" aria-hidden="true"></i>&nbsp;&nbsp;{{
-        "AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.WHATS-NEW.NEWS" | translate
-      }}
-    </ng-template>
-    <div style="height: 340px; overflow-y: scroll; overflow-x: auto">
-      <br />
-      <a
-        href="{{ visibleBlogPost?.link }}"
-        class="btn btn-default"
-        target="_blank"
-        >{{
-          "AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.WHATS-NEW.READ-FULL"
-            | translate
-        }}</a
-      >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <i
-        *ngIf="visibleBlogPostIndex > 0"
-        class="fa fa-arrow-circle-left fa-2x"
-        aria-hidden="true"
-        title="{{
-          'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.WHATS-NEW.PREV-ARTICLE'
-            | translate
-        }}"
-        style="cursor: pointer"
-        (click)="handleVisibleAnnouncement('previous')"
-      ></i
-      >&nbsp;&nbsp;&nbsp;<i
-        *ngIf="visibleBlogPostIndex < blogPosts?.length - 1"
-        class="fa fa-arrow-circle-right fa-2x"
-        aria-hidden="true"
-        title="{{
-          'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.WHATS-NEW.NEXT-ARTICLE'
-            | translate
-        }}"
-        style="cursor: pointer"
-        (click)="handleVisibleAnnouncement('next')"
-      ></i>
-      <br /><br />
-      <h4>
-        <u
-          ><a href="{{ visibleBlogPost?.link }}" target="_blank">{{
-            visibleBlogPost?.title
-          }}</a></u
-        >
-      </h4>
-      <iframe
-        srcdoc="{{ visibleBlogPost?.summary }}"
-        frameborder="0"
-        style="width: 100%; height: 62%; overflow-y: visible; overflow-x: auto"
-      ></iframe>
-    </div>
-  </tab>
-
+  
   <tab heading="Releases">
     <div style="height: 340px; overflow-y: scroll; overflow-x: auto">
       <br />
@@ -152,6 +98,61 @@
       </div>
     </div>
   </tab>
+  <tab>
+    <ng-template tabHeading>
+      <i class="fa fa-podcast" aria-hidden="true"></i>&nbsp;&nbsp;{{
+        "AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.WHATS-NEW.NEWS" | translate
+      }}
+    </ng-template>
+    <div style="height: 340px; overflow-y: scroll; overflow-x: auto">
+      <br />
+      <a
+        href="{{ visibleBlogPost?.link }}"
+        class="btn btn-default"
+        target="_blank"
+        >{{
+          "AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.WHATS-NEW.READ-FULL"
+            | translate
+        }}</a
+      >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <i
+        *ngIf="visibleBlogPostIndex > 0"
+        class="fa fa-arrow-circle-left fa-2x"
+        aria-hidden="true"
+        title="{{
+          'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.WHATS-NEW.PREV-ARTICLE'
+            | translate
+        }}"
+        style="cursor: pointer"
+        (click)="handleVisibleAnnouncement('previous')"
+      ></i
+      >&nbsp;&nbsp;&nbsp;<i
+        *ngIf="visibleBlogPostIndex < blogPosts?.length - 1"
+        class="fa fa-arrow-circle-right fa-2x"
+        aria-hidden="true"
+        title="{{
+          'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.WHATS-NEW.NEXT-ARTICLE'
+            | translate
+        }}"
+        style="cursor: pointer"
+        (click)="handleVisibleAnnouncement('next')"
+      ></i>
+      <br /><br />
+      <h4>
+        <u
+          ><a href="{{ visibleBlogPost?.link }}" target="_blank">{{
+            visibleBlogPost?.title
+          }}</a></u
+        >
+      </h4>
+      <iframe
+        srcdoc="{{ visibleBlogPost?.summary }}"
+        frameborder="0"
+        style="width: 100%; height: 62%; overflow-y: visible; overflow-x: auto"
+      ></iframe>
+    </div>
+  </tab>
+
 </tabset>
 <div
   *ngIf="mode == 'changelog'"

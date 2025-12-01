@@ -20,6 +20,7 @@
     "vite": "^6.3.3"
   },
   "dependencies": {
-    "tabulator-tables": "^6.3.1"
+    "tabulator-tables": "^6.3.1",
+    "chart.js": "^4.5.1"
   }
 }

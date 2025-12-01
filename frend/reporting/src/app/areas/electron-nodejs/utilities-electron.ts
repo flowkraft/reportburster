@@ -1,5 +1,12 @@
 import { ChildProcess } from 'child_process';
 
+import type {
+  OpenDialogOptions,
+  OpenDialogReturnValue,
+  SaveDialogOptions,
+  SaveDialogReturnValue,
+} from 'electron';
+
 let ipcRenderer;
 if (window.require) {
   ipcRenderer = window.require('electron').ipcRenderer;

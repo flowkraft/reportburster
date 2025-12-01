@@ -1,0 +1,29 @@
+services:
+  metabase:
+    image: metabase/metabase:v0.57.4.3
+    container_name: rb-metabase
+    ports:
+      - "3000:3000"
+    environment:
+      - MB_DB_FILE=/data/metabase.db        # Use file-based DB (persisted to host)
+      - JAVA_TIMEZONE=UTC                            # Optional: set Java timezone
+
+      # --- Example: Postgres connection (commented out) ---
+      # - MB_DB_TYPE=postgres                         # DB engine (postgres)
+      # - MB_DB_DBNAME=Northwind                      # Database name (example)
+      # - MB_DB_HOST=postgres                         # Host reachable from container (use service name if using compose)
+      # - MB_DB_PORT=5432                             # Port
+      # - MB_DB_USER=postgres                         # Username
+      # - MB_DB_PASS=postgres                         # Password
+      # - MB_DB_SSL=false                             # Optional: enable SSL if required
+      # -----------------------------------------------
+
+    volumes:
+      - ./data:/metabase-data
+      - ../../db/sample-northwind-sqlite:/db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5

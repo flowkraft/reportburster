@@ -31,6 +31,7 @@ import { tabGeneralSettingsTemplate } from './templates/tab-general-settings';
 import { tabReportingDataSourceDataTablesTemplate } from './templates/tab-reporting-datasource-datatables';
 import { tabReportingTemplateOutputTemplate } from './templates/tab-reporting-template-output';
 import { tabReportingTabulatorTemplate } from './templates/tab-reporting-tabulator';
+import { tabReportingChartTemplate } from './templates/tab-reporting-chart';
 import { tabEnableDisableDeliveryTemplate } from './templates/tab-enable-disable-delivery';
 import { tabEmailConnectionSettingsTemplate } from './templates/tab-email-connection-settings';
 import { tabEmailMessageTemplate } from './templates/tab-email-message';
@@ -94,7 +95,7 @@ import {
 } from '../../components/ai-manager/ai-manager.component';
 import {
   ReportingService,
-  SqlQueryResult,
+  ReportDataResult,
 } from '../../providers/reporting.service';
 import { modalTemplatesGalleryTemplate } from './templates/modal-gallery';
 
@@ -110,10 +111,10 @@ import { modalTemplatesGalleryTemplate } from './templates/modal-gallery';
       </section>
     </div>
     ${tabGeneralSettingsTemplate} ${tabReportingDataSourceDataTablesTemplate}
-    ${tabReportingTemplateOutputTemplate} ${tabReportingTabulatorTemplate}
-    ${tabEnableDisableDeliveryTemplate} ${tabEmailCloudProvidersTemplate}
-    ${tabEmailConnectionSettingsTemplate} ${tabEmailMessageTemplate}
-    ${tabAttachmentsTemplate} ${tabUploadFTPTemplate}
+    ${tabReportingTemplateOutputTemplate} ${tabReportingTabulatorTemplate} 
+    ${tabReportingChartTemplate} ${tabEnableDisableDeliveryTemplate} 
+    ${tabEmailCloudProvidersTemplate} ${tabEmailConnectionSettingsTemplate} 
+    ${tabEmailMessageTemplate} ${tabAttachmentsTemplate} ${tabUploadFTPTemplate}
     ${tabUploadFileShareTemplate} ${tabUploadFTPSTemplate}
     ${tabUploadSFTPTemplate} ${tabUploadHTTPTemplate} ${tabUploadCloudTemplate}
     ${tabWebUploadDocumentBursterWebTemplate} ${tabWebUploadSharePointTemplate}
@@ -136,9 +137,12 @@ export class ConfigurationComponent implements OnInit {
 
   @ViewChild('tabReportingTemplateOutputTemplate', { static: true })
   tabReportingTemplateOutputTemplate: TemplateRef<any>;
-
+  
   @ViewChild('tabReportingTabulatorTemplate', { static: true })
   tabReportingTabulatorTemplate: TemplateRef<any>;
+
+  @ViewChild('tabReportingChartTemplate', { static: true })
+  tabReportingChartTemplate: TemplateRef<any>;
 
   @ViewChild('tabEnableDisableDeliveryTemplate', { static: true })
   tabEnableDisableDeliveryTemplate: TemplateRef<any>;
@@ -236,6 +240,11 @@ export class ConfigurationComponent implements OnInit {
       id: 'reportingTabulatorTab',
       heading: 'AREAS.CONFIGURATION.TABS.REPORTING-TABULATOR',
       ngTemplateOutlet: 'tabReportingTabulatorTemplate',
+    },
+    {
+      id: 'reportingChartTab',
+      heading: 'AREAS.CONFIGURATION.TABS.REPORTING-CHART',
+      ngTemplateOutlet: 'tabReportingChartTemplate',
     },
     {
       id: 'enableDisableDistributionTab',
@@ -395,6 +404,7 @@ export class ConfigurationComponent implements OnInit {
         'reportingDataSourceDataTablesTab',
         'reportingTemplateOutputTab',
         'reportingTabulatorTab',
+        'reportingChartTab',
         'licenseTab',
       ],
     },
@@ -1131,12 +1141,28 @@ export class ConfigurationComponent implements OnInit {
           if (dsType === 'ds.scriptfile') {
             await this.loadExternalReportingScript('datasourceScript');
           }
-          // Parameters spec can be relevant for SQL and Script
+          // Parameters spec is only relevant for SQL and Script (you need a query/script to apply parameters to)
           if (dsType === 'ds.scriptfile' || dsType === 'ds.sqlquery') {
+            // Load params spec script - do NOT auto-populate with example
             await this.loadExternalReportingScript('paramsSpecScript');
           }
+          // Tabulator and Chart config are relevant for ALL data sources
+          // since they all produce reportData (List<LinkedHashMap<String, Object>>)
+          // that can be displayed in a table or chart - CSV, XML, SQL, Script, Excel, etc.
+          await this.loadExternalReportingScript('tabulatorConfigScript');
+          await this.loadExternalReportingScript('chartConfigScript');
           // Transformation script is always potentially relevant
           await this.loadExternalReportingScript('transformScript');
+          
+          // Initialize parsed options from the pre-loaded configuration template
+          // (backend already parsed DSLs when loading all configs)
+          const configTemplate = this.settingsService.currentConfigurationTemplate;
+          if (configTemplate?.tabulatorOptions) {
+            this.activeTabulatorConfigOptions = configTemplate.tabulatorOptions;
+          }
+          if (configTemplate?.chartOptions) {
+            this.activeChartConfigOptions = configTemplate.chartOptions;
+          }
         }
 
         this.initIdColumnSelections();
@@ -1617,16 +1643,18 @@ export class ConfigurationComponent implements OnInit {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: async () => {
-
+        // console.log('[DEBUG] doRunTestScript: confirmAction started');
         let parameters = [];
 
         // Parse Groovy DSL to get parameters
         if (this.activeParamsSpecScriptGroovy &&
           this.activeParamsSpecScriptGroovy.trim() !== '') {
+          // console.log('[DEBUG] doRunTestScript: parsing parameters DSL');
           parameters =
             await this.reportingService.processGroovyParametersDsl(
               this.activeParamsSpecScriptGroovy,
             );
+          // console.log('[DEBUG] doRunTestScript: parsed parameters:', parameters);
 
           // Access user-provided values
           const paramValues = this.reportParamsValues;
@@ -1650,10 +1678,15 @@ export class ConfigurationComponent implements OnInit {
             this.reportParameters = parameters;
           }
         }
+        // console.log('[DEBUG] doRunTestScript: checking parameters count:', parameters?.length);
         if (parameters && parameters.length > 0) {
+          // console.log('[DEBUG] doRunTestScript: showing parameters modal');
           this.isModalParametersVisible = true;
         }
-        else return this.executeTestQuery([]);
+        else {
+          // console.log('[DEBUG] doRunTestScript: no parameters, calling executeTestQuery');
+          return this.executeTestQuery([]);
+        }
       },
     });
   }
@@ -1749,6 +1782,34 @@ export class ConfigurationComponent implements OnInit {
   activeDatasourceScriptGroovy: string = '';
   activeParamsSpecScriptGroovy: string = '';
   activeTransformScriptGroovy: string = '';
+  // Tabulator configuration script (Groovy DSL)
+  activeTabulatorConfigScriptGroovy: string = '';
+  activeTabulatorConfigOptions: any = null; // { layoutOptions, columns, data }
+  private tabulatorTableInstance: any = null;
+
+  // Chart configuration script (Groovy DSL)
+  activeChartConfigScriptGroovy: string = '';
+  activeChartConfigOptions: any = null; // { type, labelField, options, labels, datasets }
+  private chartInstance: any = null;
+
+  // Minimal runtime handler registry - keys referenced from the DSL
+  private tabulatorHandlerRegistry: { [name: string]: (payload: any, params?: any, table?: any) => void } = {
+    HIGHLIGHT_URGENT: (payload, params, table) => {
+      try {
+        const row = payload?.row;
+        if (row && typeof row.getElement === 'function') {
+          const el = row.getElement();
+          el.style.backgroundColor = params?.color || '#ffdddd';
+        }
+      } catch (e) {
+        console.warn('HIGHLIGHT_URGENT handler error', e);
+      }
+    },
+    LOG_DATA: (payload, params, table) => {
+      const level = params?.level || 'info';
+      console[level](payload?.data || payload?.rowData || payload);
+    }
+  };
 
 
   onAskForFeatureModalShow(event: Event | string) {
@@ -1934,7 +1995,15 @@ export class ConfigurationComponent implements OnInit {
   };
 
   private getRawCode(editor: CodeJarContainer): string {
-    // Fallback to innerText (preserves newlines)
+    // Prefer textContent (raw text including newlines) to preserve multiple blank lines
+    // Fallback to innerText if textContent not available.
+    try {
+      if ((editor as any).textContent !== undefined && (editor as any).textContent !== null) {
+        return (editor as any).textContent as string;
+      }
+    } catch (err) {
+      // ignore and use innerText
+    }
     return editor.innerText || '';
   }
 
@@ -1954,6 +2023,8 @@ export class ConfigurationComponent implements OnInit {
 
   // Add ViewChild for the SQL editor
   @ViewChild('sqlEditor') sqlEditorRef: ElementRef;
+  @ViewChild('tabulatorConfigEditor') tabulatorConfigEditorRef: ElementRef;
+  @ViewChild('chartConfigEditor') chartConfigEditorRef: ElementRef;
 
   // Method to focus the editor when placeholder is clicked
   focusSqlEditor() {
@@ -2549,6 +2620,210 @@ if (reportParametersProvided) {
 }
 `;
 
+  exampleTabulatorConfigScript = `/*
+ Tabulator Groovy DSL - aligned with tabulator.info API
+ Docs: https://tabulator.info/docs/6.3/columns
+ Data comes from ctx.reportData by default - no need to specify it
+*/
+
+tabulator {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // TABLE-LEVEL OPTIONS (layoutOptions block)
+  // ─────────────────────────────────────────────────────────────────────────────
+  layoutOptions {
+    layout "fitColumns"       // fitData|fitDataFill|fitDataStretch|fitDataTable|fitColumns
+    height "400px"            // table height (px, %, or number)
+    width "100%"              // table width
+    autoColumns false         // true = auto-generate columns from data
+    renderVertical "virtual"  // virtual|basic - virtual DOM rendering
+    renderHorizontal "basic"  // virtual|basic - horizontal rendering
+    layoutColumnsOnNewData true  // recalc column widths on new data
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // COLUMN DEFINITIONS - mirrors tabulator.info column API
+  // ─────────────────────────────────────────────────────────────────────────────
+  columns {
+    // Full-featured column example
+    column { 
+      // Required
+      title "Name"
+      field "name"
+      
+      // Alignment: hozAlign (left|center|right), vertAlign (top|middle|bottom)
+      hozAlign "left"
+      vertAlign "middle"
+      headerHozAlign "center"  // header text alignment
+      
+      // Width: width, minWidth, maxWidth (px or number)
+      width 200
+      minWidth 100
+      maxWidth 400
+      widthGrow 1              // flex grow factor
+      widthShrink 1            // flex shrink factor
+      
+      // Visibility & Layout
+      visible true             // false to hide column
+      frozen false             // true to freeze column (left/right)
+      responsive 0             // responsive priority (lower = hidden first)
+      resizable true           // user can resize column
+      
+      // Sorting: sorter (string|number|alphanum|boolean|exists|date|time|datetime|array)
+      sorter "string"
+      sorterParams([])         // sorter-specific params
+      headerSort true          // enable header click sorting
+      
+      // Filtering
+      headerFilter "input"     // input|number|list|textarea|tick|star|select|autocomplete
+      headerFilterParams([values: ["A", "B", "C"]])  // filter-specific params
+      headerFilterPlaceholder "Search..."
+      
+      // Formatting: formatter (plaintext|textarea|html|money|image|link|datetime|tickCross|star|progress|etc)
+      formatter "plaintext"
+      formatterParams([:])     // formatter-specific params
+      cssClass "my-class"      // custom CSS class
+      tooltip true             // show cell tooltip
+      
+      // Editing: editor (input|textarea|number|range|tick|star|select|autocomplete|date|time|datetime)
+      editor "input"
+      editorParams([:])        // editor-specific params
+      editable true            // cell is editable
+      validator "required"     // required|unique|integer|float|numeric|string|min|max|etc
+      
+      // Header customization
+      headerTooltip "Column description"
+      headerVertical false     // rotate header text
+    }
+    
+    // Compact shorthand examples
+    column { title "Age"; field "age"; hozAlign "right"; sorter "number"; formatter "number" }
+    column { title "Status"; field "status"; headerFilter "list"; headerFilterParams([values: ["Active", "Pending"]]) }
+    column { title "Amount"; field "amount"; formatter "money"; width 120 }
+  }
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // OPTIONAL: Data override (90% of the time you don't need this)
+  // By default, data comes from ctx.reportData. Uncomment to use custom data:
+  // ─────────────────────────────────────────────────────────────────────────────
+  // data ctx.reportData                                    // explicit default
+  // data ctx.reportData.findAll { it.status == 'Active' }  // filtered
+  // data ctx.reportData.take(100)                          // first 100 rows
+  // data ctx.reportData.collect { it + [computed: it.a + it.b] }  // with computed column
+}
+`;
+  // Example Chart configuration Groovy DSL
+  exampleChartConfigScript = `/*
+ Chart Groovy DSL - aligned with Chart.js
+ Docs: https://www.chartjs.org/docs/latest/configuration/
+ Data comes from ctx.reportData by default - no need to specify it
+*/
+
+chart {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CHART TYPE
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Types: line, bar, pie, doughnut, radar, polarArea, scatter, bubble
+  type 'bar'
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LABEL FIELD - Which column to use for X-axis labels
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Optional - auto-detected from first column if not specified
+  labelField 'region'
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SERIES CONFIGURATION - which data columns to chart
+  // ─────────────────────────────────────────────────────────────────────────────
+  series {
+    // Full-featured series example
+    series {
+      // Core properties
+      field 'revenue'                 // data column name (required)
+      label 'Revenue'                 // legend label
+      color '#4e79a7'                 // shorthand for backgroundColor + borderColor
+      backgroundColor 'rgba(78, 121, 167, 0.5)'  // fill color (can use rgba)
+      borderColor '#4e79a7'           // line/border color
+      type 'bar'                      // override chart type for this series (mixed charts)
+      
+      // Axis assignment (for multiple axes)
+      yAxisID 'y'                     // which Y axis to use
+      xAxisID 'x'                     // which X axis to use
+      
+      // Line/Area chart options
+      borderWidth 2                   // line thickness
+      fill false                      // fill area under line (true|false|'origin'|'start'|'end')
+      tension 0.4                     // line curve tension (0 = straight, 1 = very curved)
+      pointRadius 4                   // data point size
+      pointStyle 'circle'             // circle|cross|crossRot|dash|line|rect|rectRounded|rectRot|star|triangle
+      
+      // Display options
+      hidden false                    // hide series initially
+      order 0                         // drawing order (lower = drawn first)
+    }
+    
+    // Compact shorthand examples
+    series field: 'sales', label: 'Sales', color: '#4e79a7'
+    series field: 'profit', label: 'Profit', color: '#e15759', type: 'line'
+    series field: 'cost', label: 'Cost', color: '#59a14f', fill: true, tension: 0.3
+  }
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CHART.JS OPTIONS - full passthrough to Chart.js configuration
+  // ─────────────────────────────────────────────────────────────────────────────
+  options {
+    responsive true
+    maintainAspectRatio true
+    
+    plugins {
+      title { display true; text 'Sales by Region' }
+      legend { position 'bottom' }    // top|bottom|left|right
+      tooltip { enabled true }
+      datalabels { display false }    // requires chartjs-plugin-datalabels
+    }
+    
+    scales {
+      y { 
+        beginAtZero true
+        title { display true; text 'Value' }
+        // For secondary axis: y2 { position 'right'; beginAtZero true }
+      }
+      x { 
+        title { display true; text 'Region' }
+      }
+    }
+    
+    // Animation
+    animation { duration 1000 }
+  }
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // OPTIONAL: Data override (90% of the time you don't need this)
+  // By default, data comes from ctx.reportData. Uncomment to use custom data:
+  // ─────────────────────────────────────────────────────────────────────────────
+  // data ctx.reportData                                    // explicit default
+  // data ctx.reportData.findAll { it.status == 'Active' }  // filtered
+  // data ctx.reportData.take(10)                           // top 10 only
+  // data ctx.reportData.groupBy { it.category }.collect { k, v -> [category: k, total: v.sum { it.amount }] }
+}
+`;
+  private getTransformScriptPath(): string {
+    const basePath = this.getCurrentConfigReportsPath();
+    const configName = this.getCurrentConfigName();
+    return basePath ? `${basePath}/${configName}-additional-transformation.groovy` : '';
+  }
+
+  private getTabulatorScriptPath(): string {
+    const basePath = this.getCurrentConfigReportsPath();
+    const configName = this.getCurrentConfigName();
+    return basePath ? `${basePath}/${configName}-tabulator-config.groovy` : '';
+  }
+
+  private getChartScriptPath(): string {
+    const basePath = this.getCurrentConfigReportsPath();
+    const configName = this.getCurrentConfigName();
+    return basePath ? `${basePath}/${configName}-chart-config.groovy` : '';
+  }
+
   generateParametersSpecUsingAI() { }
 
   copyToClipboardParametersSpecExample() {
@@ -2565,10 +2840,152 @@ if (reportParametersProvided) {
     }
   }
 
+  copyToClipboardTabulatorConfigExample() {
+    if (this.exampleTabulatorConfigScript) {
+      navigator.clipboard
+        .writeText(this.exampleTabulatorConfigScript)
+        .then(() => {
+          this.messagesService.showInfo('Example Tabulator config script copied to clipboard!', 'Success');
+        })
+        .catch((err) => {
+          console.error('Failed to copy example Tabulator config script: ', err);
+          this.messagesService.showInfo('Failed to copy example Tabulator config script.', 'Error');
+        });
+    }
+  }
+
+  copyToClipboardChartConfigExample() {
+    if (this.exampleChartConfigScript) {
+      navigator.clipboard
+        .writeText(this.exampleChartConfigScript)
+        .then(() => {
+          this.messagesService.showInfo('Example Chart config script copied to clipboard!', 'Success');
+        })
+        .catch((err) => {
+          console.error('Failed to copy example Chart config script: ', err);
+          this.messagesService.showInfo('Failed to copy example Chart config script.', 'Error');
+        });
+    }
+  }
+
   async onParametersSpecChanged(event: string) {
     this.activeParamsSpecScriptGroovy = event;
     await this.saveExternalReportingScript('paramsSpecScript');
     this.settingsChangedEventHandler(event);
+  }
+  async onTabulatorConfigChanged(event: string) {
+    // Try to read the raw textContent from the underlying CodeJar contenteditable element
+    let content = event;
+    try {
+      if (this.tabulatorConfigEditorRef && this.tabulatorConfigEditorRef.nativeElement) {
+        const root = this.tabulatorConfigEditorRef.nativeElement as HTMLElement;
+        const contentEditable = root.querySelector('[contenteditable]');
+        const text = contentEditable?.textContent;
+        if (typeof text === 'string' && text.length > 0) {
+          content = text;
+        }
+      }
+    } catch (err) {
+      // ignore and fallback to provided event string
+    }
+    this.activeTabulatorConfigScriptGroovy = content;
+    // Debug info (keeps logs concise)
+    try {
+      console.debug('Tabulator content saved length:', content.length, 'lines:', (content || '').split(/\r?\n/).length);
+    } catch (e) {}
+    await this.saveExternalReportingScript('tabulatorConfigScript');
+    this.settingsChangedEventHandler(event);
+    // Only parse if content is non-empty (skip parsing empty/whitespace-only scripts)
+    if (content && content.trim().length > 0) {
+      try {
+        const parsed = await this.reportingService.processGroovyTabulatorDsl(content);
+        this.activeTabulatorConfigOptions = parsed;
+        this.changeDetectorRef.detectChanges();
+      } catch (err) {
+        console.warn('Tabulator DSL parse error', err);
+        this.activeTabulatorConfigOptions = null;
+      }
+    } else {
+      // Clear parsed options when content is empty
+      this.activeTabulatorConfigOptions = null;
+    }
+  }
+
+  async onChartConfigChanged(event: string) {
+    let content = event;
+    try {
+      if (this.chartConfigEditorRef && this.chartConfigEditorRef.nativeElement) {
+        const root = this.chartConfigEditorRef.nativeElement as HTMLElement;
+        const contentEditable = root.querySelector('[contenteditable]');
+        const text = contentEditable?.textContent;
+        if (typeof text === 'string' && text.length > 0) {
+          content = text;
+        }
+      }
+    } catch (err) {
+      // ignore and fallback to provided event string
+    }
+    this.activeChartConfigScriptGroovy = content;
+    try {
+      console.debug('Chart content saved length:', content.length, 'lines:', (content || '').split(/\r?\n/).length);
+    } catch (e) {}
+    await this.saveExternalReportingScript('chartConfigScript');
+    this.settingsChangedEventHandler(event);
+    // Only parse if content is non-empty (skip parsing empty/whitespace-only scripts)
+    if (content && content.trim().length > 0) {
+      try {
+        // Try to parse chart DSL using backend service
+        const parsed = await this.reportingService.processGroovyChartDsl(content);
+        this.activeChartConfigOptions = parsed;
+        this.changeDetectorRef.detectChanges();
+      } catch (err) {
+        console.warn('Chart DSL parse error', err);
+        this.activeChartConfigOptions = null;
+      }
+    } else {
+      // Clear parsed options when content is empty
+      this.activeChartConfigOptions = null;
+    }
+  }
+
+  onChartReady(ev: any) {
+    try {
+      this.chartInstance = ev?.detail?.chart || ev?.detail || ev;
+    } catch (e) {
+      console.warn('chart ready handler: cannot determine chart instance', e);
+    }
+  }
+
+  onChartError(err: any) {
+    console.warn('Chart component reported an error', err);
+  }
+
+  // Tabulator ready handler - optional event argument
+
+  onRbRowClick(ev: any) {
+    try {
+      const cb = this.activeTabulatorConfigOptions?.callbacks?.rowClick;
+      const handlerName = typeof cb === 'string' ? cb : (cb?.handler || cb);
+      const params = typeof cb === 'object' ? cb?.params : undefined;
+      if (handlerName && this.tabulatorHandlerRegistry[handlerName]) {
+        this.tabulatorHandlerRegistry[handlerName](ev.detail, params, this.tabulatorTableInstance);
+      }
+    } catch (e) {
+      console.warn('Error executing row click handler', e);
+    }
+  }
+
+  onRbDataLoaded(ev: any) {
+    try {
+      const cb = this.activeTabulatorConfigOptions?.callbacks?.dataLoaded;
+      const handlerName = typeof cb === 'string' ? cb : (cb?.handler || cb);
+      const params = typeof cb === 'object' ? cb?.params : undefined;
+      if (handlerName && this.tabulatorHandlerRegistry[handlerName]) {
+        this.tabulatorHandlerRegistry[handlerName](ev.detail, params, this.tabulatorTableInstance);
+      }
+    } catch (e) {
+      console.warn('Error executing dataLoaded handler', e);
+    }
   }
   //REPORT PARAMETERS END
 
@@ -2639,16 +3056,10 @@ if (reportParametersProvided) {
       : '';
   }
 
-  private getTransformScriptPath(): string {
-    const basePath = this.getCurrentConfigReportsPath();
-    const configName = this.getCurrentConfigName();
-    return basePath
-      ? `${basePath}/${configName}-additional-transformation.groovy`
-      : '';
-  }
+  // (single getTransformScriptPath is declared earlier)
 
   private async loadExternalReportingScript(
-    scriptType: 'datasourceScript' | 'paramsSpecScript' | 'transformScript',
+    scriptType: 'datasourceScript' | 'paramsSpecScript' | 'transformScript' | 'tabulatorConfigScript' | 'chartConfigScript',
     options?: { defaultContent?: string },
   ): Promise<void> {
     const configName = this.getCurrentConfigName();
@@ -2671,8 +3082,8 @@ if (reportParametersProvided) {
         path = this.getParamsSpecScriptPath();
         cacheKeySuffix = 'paramsSpecScript';
         targetProperty = 'activeParamsSpecScriptGroovy';
-        if (!defaultFileContent)
-          defaultFileContent = this.exampleParamsSpecScript; // Use existing example
+        // Intentionally do not substitute the example script as a default.
+        // If the user did not save a params spec, the editor should remain empty.
         break;
       case 'transformScript':
         path = this.getTransformScriptPath();
@@ -2682,19 +3093,39 @@ if (reportParametersProvided) {
           defaultFileContent =
             '// Groovy Additional Transformation Script\n// Ensure this file is saved in the report configuration folder.';
         break;
+      case 'tabulatorConfigScript':
+        path = this.getTabulatorScriptPath();
+        cacheKeySuffix = 'tabulatorConfigScript';
+        targetProperty = 'activeTabulatorConfigScriptGroovy';
+        // Intentionally do not substitute the example script as a default.
+        // If the user did not save a Tabulator config, the editor should remain empty.
+        break;
+      case 'chartConfigScript':
+        path = this.getChartScriptPath();
+        cacheKeySuffix = 'chartConfigScript';
+        targetProperty = 'activeChartConfigScriptGroovy';
+        // Intentionally do not substitute an example here; the editor should be empty if the user hasn't configured a chart.
+        break;
       default:
         console.error('Unknown script type for loading:', scriptType);
         return;
     }
 
     let content = await this.settingsService.loadTemplateFileAsync(path);
+    // If there is no content on disk, prefer the default example provided
+    if (!content || content.trim().length === 0) {
+      content = defaultFileContent || '';
+    }
     (this as any)[targetProperty] = content;
+    try {
+      console.debug(`Loaded ${scriptType} from ${path}, length:`, content.length, 'lines:', (content || '').split(/\r?\n/).length);
+    } catch (e) {}
 
     this.changeDetectorRef.detectChanges();
   }
 
   private async saveExternalReportingScript(
-    scriptType: 'datasourceScript' | 'paramsSpecScript' | 'transformScript',
+    scriptType: 'datasourceScript' | 'paramsSpecScript' | 'transformScript' | 'tabulatorConfigScript' | 'chartConfigScript',
   ): Promise<void> {
     const configName = this.getCurrentConfigName();
 
@@ -2719,6 +3150,16 @@ if (reportParametersProvided) {
         cacheKeySuffix = 'transformScript';
         sourceProperty = 'activeTransformScriptGroovy';
         break;
+      case 'tabulatorConfigScript':
+        path = this.getTabulatorScriptPath();
+        cacheKeySuffix = 'tabulatorConfigScript';
+        sourceProperty = 'activeTabulatorConfigScriptGroovy';
+        break;
+      case 'chartConfigScript':
+        path = this.getChartScriptPath();
+        cacheKeySuffix = 'chartConfigScript';
+        sourceProperty = 'activeChartConfigScriptGroovy';
+        break;
       default:
         console.error('Unknown script type for saving:', scriptType);
         return;
@@ -2728,7 +3169,11 @@ if (reportParametersProvided) {
 
     let isEmptyContent = !contentToSave || contentToSave.trim() === '';
 
-    if (isEmptyContent) return;
+    // For safety we normally skip saving empty content (avoid accidental deletions).
+    // However, for Tabulator config we want to persist emptiness (clear file) when the
+    // editor was intentionally cleared by the user; therefore allow saving empty
+    // content only for tabulatorConfigScript.
+    // if (isEmptyContent && scriptType !== 'tabulatorConfigScript') return;
 
     // Skip saving if content is essentially empty (e.g., just comments or whitespace)
     // You might want to refine this check based on what you consider "empty" for a script.
@@ -2745,9 +3190,9 @@ if (reportParametersProvided) {
   reportParamsValid = false;
   reportParamsValues: { [key: string]: any } = {};
 
-  sqlQueryResult: SqlQueryResult | null = null;
+  reportDataResult: ReportDataResult | null = null;
   isReportDataLoading = false;
-  sqlQueryResultIsError = false;
+  reportDataResultIsError = false;
 
   /*
   reportColumns: any[] = [];
@@ -2776,11 +3221,14 @@ if (reportParametersProvided) {
   }
 
   async onRunQueryWithParams() {
+    // console.log('[DEBUG] onRunQueryWithParams: modal confirm clicked');
     this.isModalParametersVisible = false;
+    // console.log('[DEBUG] onRunQueryWithParams: calling executeTestQuery with params:', this.reportParameters);
     await this.executeTestQuery(this.reportParameters);
   }
 
   async runQueryWithParams(parameters: ReportParameter[]) {
+    // console.log('[DEBUG] runQueryWithParams: entering with parameters:', parameters);
     // Convert parameters to key-value pairs with proper types
     const paramsObject = parameters.reduce(
       (acc, param) => {
@@ -2792,28 +3240,34 @@ if (reportParametersProvided) {
       },
       {} as { [key: string]: any },
     );
-
-    return this.reportingService.testFetchData(paramsObject);
+    // console.log('[DEBUG] runQueryWithParams: paramsObject=', paramsObject);
+    // console.log('[DEBUG] runQueryWithParams: calling testFetchData...');
+    const result = await this.reportingService.testFetchData(paramsObject);
+    // console.log('[DEBUG] runQueryWithParams: testFetchData returned:', result);
+    return result;
   }
 
   async executeTestQuery(parameters: ReportParameter[]) {
     try {
+      // console.log('[DEBUG] executeTestQuery: starting, parameters:', parameters);
       this.isReportDataLoading = true;
-      this.sqlQueryResult = await this.runQueryWithParams(parameters);
+      // console.log('[DEBUG] executeTestQuery: calling runQueryWithParams...');
+      this.reportDataResult = await this.runQueryWithParams(parameters);
+      // console.log('[DEBUG] executeTestQuery: received result:', this.reportDataResult);
 
       // detect error payload (single column named ERROR_MESSAGE)
       const isErrorPayload =
-        this.sqlQueryResult &&
-        Array.isArray(this.sqlQueryResult.reportColumnNames) &&
-        this.sqlQueryResult.reportColumnNames.length === 1 &&
-        (this.sqlQueryResult.reportColumnNames[0] === 'ERROR_MESSAGE' ||
-          this.sqlQueryResult.reportColumnNames[0].toUpperCase() ===
+        this.reportDataResult &&
+        Array.isArray(this.reportDataResult.reportColumnNames) &&
+        this.reportDataResult.reportColumnNames.length === 1 &&
+        (this.reportDataResult.reportColumnNames[0] === 'ERROR_MESSAGE' ||
+          this.reportDataResult.reportColumnNames[0].toUpperCase() ===
             'ERROR_MESSAGE');
 
       // Extract the error message if present and perform special-case checks
       let errorMsg = '';
-      if (isErrorPayload && Array.isArray(this.sqlQueryResult.reportData) && this.sqlQueryResult.reportData.length > 0) {
-        errorMsg = (this.sqlQueryResult.reportData[0]['ERROR_MESSAGE'] || '').toString();
+      if (isErrorPayload && Array.isArray(this.reportDataResult.reportData) && this.reportDataResult.reportData.length > 0) {
+        errorMsg = (this.reportDataResult.reportData[0]['ERROR_MESSAGE'] || '').toString();
       }
       const lowerMsg = (errorMsg || '').toLowerCase();
 
@@ -2822,15 +3276,15 @@ if (reportParametersProvided) {
 
       // Final flag - it's an error payload only if it is the ERROR_MESSAGE column and not the "no burst tokens" informational message
       const finalIsError = isErrorPayload && !isNoBurstTokensMsg;
-      this.sqlQueryResultIsError = !!finalIsError;
+      this.reportDataResultIsError = !!finalIsError;
 
       if (isNoBurstTokensMsg) {
         // Show a milder warning - it's not an SQL syntax error, it just returned no rows
         this.messagesService.showWarning('Query executed successfully but returned no rows.');
         // Optional: replace ERROR_MESSAGE payload with empty data so Tabulator shows "no rows"
-        this.sqlQueryResult.reportData = [];
-        this.sqlQueryResult.reportColumnNames = [];
-        this.sqlQueryResult.totalRows = 0;
+        this.reportDataResult.reportData = [];
+        this.reportDataResult.reportColumnNames = [];
+        this.reportDataResult.totalRows = 0;
       } else if (finalIsError) {
         // Show red toast for real errors
         this.messagesService.showError(
@@ -2843,18 +3297,22 @@ if (reportParametersProvided) {
         );
       }
     } catch (error) {
+      // console.log('[DEBUG] executeTestQuery: caught error:', error);
       // Show red toast on error
-      this.sqlQueryResultIsError = true;
+      this.reportDataResultIsError = true;
       this.messagesService.showError(
         `Error executing SQL query: ${error.message}, check the Errors Log/Tabulator to view the exact error.`,
       );
     } finally {
+      // console.log('[DEBUG] executeTestQuery: finally block, setting isReportDataLoading = false');
       this.isReportDataLoading = false;
     }
   }
 
   async doTestSqlQuery() {
+    // console.log('[DEBUG] doTestSqlQuery: BUTTON CLICKED - method entered');
     if (this.executionStatsService.logStats.foundDirtyLogFiles) {
+      // console.log('[DEBUG] doTestSqlQuery: dirty log files found, showing info');
       const dialogMessage =
         'Log files are not empty. You need to press the Clear Logs button first.';
       this.infoService.showInformation({ message: dialogMessage });
@@ -2863,12 +3321,14 @@ if (reportParametersProvided) {
 
     const dbConnectionCode =
       this.xmlReporting.documentburster.report.datasource.sqloptions.conncode;
+    // console.log('[DEBUG] doTestSqlQuery: dbConnectionCode=', dbConnectionCode);
 
     const dialogQuestion = `Test SQL query with connection ${dbConnectionCode}?`;
 
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: async () => {
+        // console.log('[DEBUG] doTestSqlQuery: confirmAction callback started');
 
         let parameters = [];
 
@@ -2903,9 +3363,13 @@ if (reportParametersProvided) {
           }
         }
         if (parameters && parameters.length > 0) {
+          // console.log('[DEBUG] doTestSqlQuery: parameters.length > 0, showing modal');
           this.isModalParametersVisible = true;
         }
-        else return this.executeTestQuery([]);
+        else {
+          // console.log('[DEBUG] doTestSqlQuery: no parameters, calling executeTestQuery directly');
+          return this.executeTestQuery([]);
+        }
       },
     });
   }
@@ -2924,8 +3388,10 @@ if (reportParametersProvided) {
     }
   }
 
-  onTabReady() {
-    //console.log('📊 Tabulator ready');
+  onTabReady(event?: any) {
+    // optional argument with table instance
+    if (event && event?.detail?.table) this.tabulatorTableInstance = event.detail.table;
+    //console.log('📊 Tabulator ready', !!this.tabulatorTableInstance);
   }
 
   onTabError(msg: string) {

@@ -206,7 +206,7 @@ public class MainProgram implements Callable<Integer> {
 			CliJob job = getJob(config.configFile);
 			job.setJobType(isReportGenerationJob ? settings.getReportDataSource().type : "burst");
 
-			// System.out.println("[DEBUG] Parsed parameters: " + parameters);
+			// // System.out.println("[DEBUG] Parsed parameters: " + parameters);
 
 			job.setParameters(parameters);
 

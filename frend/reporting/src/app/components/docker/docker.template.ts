@@ -25,7 +25,7 @@ export const dockerTemplate = `
 
     <br /><br />
 
-    <a href="#" [routerLink]="['/help', 'starterPacksMenuSelected']" [queryParams]="{activeTab: 'extraPackagesTab'}"
+    <a href="#" [routerLink]="['/help', 'appsMenuSelected']" [queryParams]="{activeTab: 'extraPackagesTab'}"
     skipLocationChange="true">
       <button id="btnInstallDockerTabPortal" type="button" class="btn btn-primary">
         {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.DOCKER.INSTALL' | translate}}
@@ -60,7 +60,7 @@ export const dockerTemplate = `
 
     <br /><br />
 
-    <a href="#" [routerLink]="['/help', 'starterPacksMenuSelected']" [queryParams]="{activeTab: 'extraPackagesTab'}"
+    <a href="#" [routerLink]="['/help', 'appsMenuSelected']" [queryParams]="{activeTab: 'extraPackagesTab'}"
     skipLocationChange="true">
       <button id="btnUpdateDockerTabPortal" type="button" class="btn btn-primary">
         {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.DOCKER.UPDATE' | translate}}

@@ -107,6 +107,23 @@ export interface CfgTmplFileInfo {
   emlConnCode?: string;
 
   reportParameters: ReportParameter[];
+  
+  // Parsed Tabulator DSL options (layoutOptions, columns, data)
+  tabulatorOptions?: {
+    layoutOptions?: any;
+    columns?: Array<{ title?: string; field?: string; [k: string]: any }>;
+    data?: Array<Record<string, any>>;
+  };
+  
+  // Parsed Chart DSL options (type, labelField, options, labels, datasets, data)
+  chartOptions?: {
+    type?: string;
+    labelField?: string;
+    options?: any;
+    labels?: string[];
+    datasets?: Array<{ field?: string; label?: string; color?: string; type?: string; [k: string]: any }>;
+    data?: Array<Record<string, any>>;
+  };
 }
 
 @Injectable({
@@ -154,7 +171,7 @@ export class SettingsService {
   currentConfigurationTemplatePath: string;
   currentConfigurationTemplateName: string;
 
-  currentConfigurationTemplate: TmplFileInfo;
+  currentConfigurationTemplate: CfgTmplFileInfo;
 
   configurationFiles: Array<CfgTmplFileInfo> = [];
   templateFiles: Array<TmplFileInfo> = [];

@@ -16,6 +16,7 @@ package com.sourcekraft.documentburster.common.settings.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.sourcekraft.documentburster.common.reportparameters.ReportParameter;
 import com.sourcekraft.documentburster.utils.DumpToString;
@@ -41,5 +42,11 @@ public class ConfigurationFileInfo extends DumpToString {
 	public String scriptOptionsSelectFileExplorer;
 
 	public List<ReportParameter> reportParameters = new ArrayList<>();
+	
+	// Parsed Tabulator DSL options (layoutOptions, columns, data)
+	public Map<String, Object> tabulatorOptions;
+	
+	// Parsed Chart DSL options (type, labelField, options, labels, datasets, data)
+	public Map<String, Object> chartOptions;
 
 }

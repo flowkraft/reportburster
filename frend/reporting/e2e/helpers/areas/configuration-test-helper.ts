@@ -1136,7 +1136,7 @@ export class ConfigurationTestHelper {
 
     ft = ft
       .click('#reportingTabulatorTab-link')
-      .waitOnElementToBecomeVisible('rb-tabulator')
+      .waitOnElementToBecomeVisible('#tabulatorTablePreviewTitle')
       .click('#reportingTemplateOutputTab-link')
       .waitOnElementToBecomeVisible('#reportOutputType')
       .selectedOptionShouldContainText('#reportOutputType', 'None')

@@ -2,12 +2,27 @@ import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { ReportParameter, SettingsService } from './settings.service';
 
-export interface SqlQueryResult {
+export interface ReportDataResult {
   reportData: Array<Record<string, any>>;
   reportColumnNames: string[];
   executionTimeMillis: number;
   isPreview: boolean;
   totalRows: number;
+}
+
+export interface TabulatorOptionsDto {
+  layoutOptions?: any;
+  columns?: Array<{ title?: string; field?: string; [k: string]: any }>;
+  data?: Array<Record<string, any>>;
+}
+
+export interface ChartOptionsDto {
+  type?: string;
+  labelField?: string; // Which column from reportData to use for X-axis labels
+  options?: any; // Chart.js options passthrough
+  labels?: string[]; // Explicit labels override
+  datasets?: Array<{ field?: string; label?: string; color?: string; type?: string; [k: string]: any }>; // Series/dataset configurations
+  data?: Array<Record<string, any>>; // Optional data override (defaults to reportData)
 }
 
 @Injectable({
@@ -50,7 +65,10 @@ export class ReportingService {
     //console.log('Sending parameters:', JSON.stringify(paramsObj));
 
     // Make GET request with query parameters
-    return this.apiService.get('/jobman/reporting/test-fetch-data', paramsObj);
+    // console.log('[DEBUG] testFetchData: calling API with params:', paramsObj);
+    const result = await this.apiService.get('/jobman/reporting/test-fetch-data', paramsObj);
+    // console.log('[DEBUG] testFetchData: received response:', result);
+    return result;
   }
 
   async processGroovyParametersDsl(
@@ -71,6 +89,34 @@ export class ReportingService {
       return result;
     } catch (error) {
       //console.error('Error processing Groovy DSL:', error);
+      throw error;
+    }
+  }
+
+  async processGroovyTabulatorDsl(
+    groovyDslCode: string,
+  ): Promise<TabulatorOptionsDto> {
+    try {
+      const result = await this.apiService.post(
+        '/jobman/reporting/parse-tabulator',
+        groovyDslCode,
+      );
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async processGroovyChartDsl(
+    groovyDslCode: string,
+  ): Promise<ChartOptionsDto> {
+    try {
+      const result = await this.apiService.post(
+        '/jobman/reporting/parse-chart',
+        groovyDslCode,
+      );
+      return result;
+    } catch (error) {
       throw error;
     }
   }
