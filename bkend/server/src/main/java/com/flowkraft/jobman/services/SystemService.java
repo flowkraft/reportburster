@@ -228,10 +228,10 @@ public class SystemService {
 		// Print the final command line that will be executed
 		// // System.out.println("[DEBUG] Full command to execute:");
 		for (String part : commandWithShell) {
-			//System.out.print(part + " ");
+			// System.out.print(part + " ");
 		}
 		for (String part : newArgs) {
-			//System.out.print(part + " ");
+			// System.out.print(part + " ");
 		}
 		// System.out.println();
 
@@ -558,14 +558,13 @@ public class SystemService {
 		// Check if the command succeeded (exit code 0)
 		if (result.getExitValue() != 0) {
 			System.err.println("Docker command failed with exit code: " + result.getExitValue());
-			System.err.println("Combined output (stdout + stderr): " + output); // Now includes errors
-			return new ArrayList<>(); // Return empty list on failure
+			System.err.println("Combined output (stdout + stderr): " + output);
+			return new ArrayList<>();
 		}
 
 		// Trim and check the output format
 		output = output.trim();
 		if (output.isEmpty()) {
-			//System.out.println("Docker command returned empty output.");
 			return new ArrayList<>();
 		}
 
@@ -579,26 +578,32 @@ public class SystemService {
 					});
 			for (Map<String, Object> service : services) {
 				ServiceStatusInfo info = new ServiceStatusInfo();
-				info.name = (String) service.get("Names"); // Changed from "Name" to "Names" for docker ps
+				info.name = (String) service.get("Names");
 				info.status = (String) service.get("State");
 				info.ports = service.get("Ports") != null ? service.get("Ports").toString() : "N/A";
 				statuses.add(info);
 			}
 		} else if (output.startsWith("{")) {
-			// Handle as JSON object (likely an error or single item)
-			//System.out.println("Docker output is an object (possibly an error): " + output);
-			// Optionally parse as Map and extract if it's a single service
-			Map<String, Object> singleService = mapper.readValue(output, new TypeReference<Map<String, Object>>() {
-			});
-			if (singleService.containsKey("Names")) { // Changed from "Name" to "Names"
-				ServiceStatusInfo info = new ServiceStatusInfo();
-				info.name = (String) singleService.get("Names");
-				info.status = (String) singleService.get("State");
-				info.ports = singleService.get("Ports") != null ? singleService.get("Ports").toString() : "N/A";
-				statuses.add(info);
-			} else {
-				// Treat as error and return empty
-				System.err.println("Unexpected object format: " + output);
+			// Handle newline-delimited JSON objects (docker ps outputs one JSON per line)
+			String[] lines = output.split("\\R"); // Split by any line separator
+			for (String line : lines) {
+				line = line.trim();
+				if (line.isEmpty() || !line.startsWith("{")) {
+					continue;
+				}
+				try {
+					Map<String, Object> service = mapper.readValue(line, new TypeReference<Map<String, Object>>() {
+					});
+					if (service.containsKey("Names")) {
+						ServiceStatusInfo info = new ServiceStatusInfo();
+						info.name = (String) service.get("Names");
+						info.status = (String) service.get("State");
+						info.ports = service.get("Ports") != null ? service.get("Ports").toString() : "N/A";
+						statuses.add(info);
+					}
+				} catch (Exception e) {
+					System.err.println("Failed to parse JSON line: " + line);
+				}
 			}
 		} else {
 			// Non-JSON output (e.g., plain text error)

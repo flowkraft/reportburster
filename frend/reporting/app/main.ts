@@ -13,27 +13,27 @@ const execAsync = promisify(_execSync);
 import * as jetpack from 'fs-jetpack';
 
 ipcMain.on('window-minimize', () => {
-  try { if (win) win.minimize(); } catch {}
+  try { if (win) win.minimize(); } catch { }
 });
 ipcMain.on('window-toggle-maximize', () => {
   try {
     if (!win) return;
     if (win.isMaximized()) win.unmaximize();
     else win.maximize();
-  } catch {}
+  } catch { }
 });
 ipcMain.on('window-close', () => {
-  try { if (win) win.close(); } catch {}
+  try { if (win) win.close(); } catch { }
 });
 
 // forward native maximize/unmaximize to renderer(s) so UI can update
 function forwardMaxState() {
   if (!win) return;
   win.on('maximize', () => {
-    try { BrowserWindow.getAllWindows().forEach(w => w.webContents.send('window-maximized')); } catch {}
+    try { BrowserWindow.getAllWindows().forEach(w => w.webContents.send('window-maximized')); } catch { }
   });
   win.on('unmaximize', () => {
-    try { BrowserWindow.getAllWindows().forEach(w => w.webContents.send('window-unmaximized')); } catch {}
+    try { BrowserWindow.getAllWindows().forEach(w => w.webContents.send('window-unmaximized')); } catch { }
   });
 }
 
@@ -96,8 +96,8 @@ function chooseTheme(): 'light' | 'dark' {
   if (process.env.REPORTBURSTER_FORCE_THEME === 'light') return 'light';
   if (process.env.REPORTBURSTER_FORCE_THEME === 'dark') return 'dark';
   // if (app.isPackaged) {
-    // deterministic default for packaged builds to match BMP & avoid mismatch
-    // return 'dark';
+  // deterministic default for packaged builds to match BMP & avoid mismatch
+  // return 'dark';
   // }
   // still random in dev
   return Math.random() < 0.5 ? 'light' : 'dark';
@@ -238,7 +238,7 @@ function createWindow(): BrowserWindow {
     },
     //icon: path.join(__dirname, 'src/assets/icons/icon.ico'),
   });
-  
+
   win.setResizable(true);
   win.setMaximizable(true);
   forwardMaxState();
@@ -319,14 +319,30 @@ try {
   // Added 400 ms to fix the black background issue while using transparent window. More detais at https://github.com/electron/electron/issues/15947
 
   app.on('ready', async () => {
+    // E2E mode: Java server is started externally by test scripts.
+    // Skip splash and backend-wait logic; create window immediately.
+    const isE2E = process.env.RUNNING_IN_E2E === 'true';
+    if (isE2E) {
+      log.info('main: E2E mode detected — creating window immediately (no splash, no backend wait)');
+      setTimeout(() => {
+        if (!win) {
+          win = createWindow();
+          win.show();
+        }
+      }, 400);
+      return; // skip the rest of the ready handler
+    }
 
     try {
-      // show splash early
-      // pick a theme for the splash only (packaged: deterministic dark / dev: random)
-      const theme = chooseTheme();
-      // show splash early with matching native background color (no change to main window)
-      splashWindow = createSplashWindow(theme);
-      sendSplashProgress({ text: 'Starting application...', progress: 6 });
+      // show splash early ONLY in packaged builds
+      if (app.isPackaged) {
+        // show splash early
+        // pick a theme for the splash only (packaged: deterministic dark / dev: random)
+        const theme = chooseTheme();
+        // show splash early with matching native background color (no change to main window)
+        splashWindow = createSplashWindow(theme);
+        sendSplashProgress({ text: 'Starting application...', progress: 6 });
+      }
 
       // defer heavy module actions after splash painted
       // safe setup for custom titlebar (defer to ready)
@@ -337,13 +353,17 @@ try {
       //}
 
       // In packaged runs, we wait for the server stdout to create the main window to
-      // avoid early empty frames. In development mode, create the main window after a
-      // short delay to enable faster developer feedback loop.
+      // avoid early empty frames. In development mode, create and show window immediately
+      // (like the old behavior) — gulp already waited for server, no coordination needed.
       if (!app.isPackaged) {
-        // In dev, create window early so hot-reload and dev tools continue to work.
+        log.info('main: Development mode — creating window immediately');
         setTimeout(() => {
-          if (!win) win = createWindow();
+          if (!win) {
+            win = createWindow();
+            win.show(); // Show immediately in dev mode (matches old behavior)
+          }
         }, 400);
+        return; // Skip the rest of the ready handler - no server monitoring or probes needed
       }
 
       // Start/monitor server as before, but forward log lines to splash with sendSplashProgress()
@@ -370,30 +390,39 @@ try {
       // a successful server start or a Java error. To avoid the UI hanging forever
       // if logs are silent or server is slow, use a fallback to show the UI for
       // diagnostics after a reasonable timeout.
-      const fallbackMs = app.isPackaged ? 120000 : 30000; // packaged: longer wait
-      setTimeout(() => {
-        if (!windowCreated) {
-          sendSplashProgress({ text: 'Backend not responding; showing UI for diagnostics', progress: 90 });
-          try { if (!win) createWindow(); win?.show(); win?.focus(); } catch { }
-          try {
-            if (!rendererReady) {
-              BrowserWindow.getAllWindows().forEach((w) => { try { w.webContents.send('renderer.init.retry'); } catch { } });
-              log.info('main: sent renderer.init.retry to renderers (fallback)');
-            }
-          } catch { }
-          setTimeout(() => { try { splashWindow?.close(); } catch { } }, 800);
-        }
-      }, fallbackMs);
+      if (app.isPackaged) {
+        const fallbackMs = 120000;
+        setTimeout(() => {
+          if (!windowCreated) {
+            sendSplashProgress({ text: 'Backend not responding; showing UI for diagnostics', progress: 90 });
+            try { if (!win) createWindow(); win?.show(); win?.focus(); } catch { }
+            try {
+              if (!rendererReady) {
+                BrowserWindow.getAllWindows().forEach((w) => { try { w.webContents.send('renderer.init.retry'); } catch { } });
+                log.info('main: sent renderer.init.retry to renderers (fallback)');
+              }
+            } catch { }
+            setTimeout(() => { try { splashWindow?.close(); } catch { } }, 800);
+          }
+        }, fallbackMs);
+      }
 
-      // Background probe: attempt to contact the backend port. This runs in both
-      // dev and packaged runs and restores previous behavior where main can know
-      // when Spring Boot is reachable even if it's started externally.
+      // Dev mode: server is started externally, use port probe as the ONLY coordination mechanism.
+      // Production mode: log parsing is primary, port probe is backup (in case logs are silent).
       (async () => {
-        const probeTimeoutMs = app.isPackaged ? 120000 : 120000;
+        const probeTimeoutMs = 120000;
         try {
           const ok = await waitForServerPort(9090, probeTimeoutMs);
-          setBackendReady(ok, 'port-probe');
-          if (!ok) log.info('main: port probe timed out (no backend reachable)');
+          if (ok) {
+            setBackendReady(true, 'port-probe');
+          } else {
+            log.info('main: port probe timed out (no backend reachable)');
+            // In dev mode, show UI for diagnostics if backend never responded
+            if (!app.isPackaged && !windowCreated) {
+              log.info('main: dev mode fallback — showing UI for diagnostics');
+              try { if (!win) createWindow(); win?.show(); win?.focus(); } catch { }
+            }
+          }
         } catch (err) {
           log.warn('main: error during backend port probe', err);
         }
@@ -476,30 +505,12 @@ function handleServerOutput(data: Buffer | string, isError = false) {
       ) {
         log.info(`main:createWindow() because of successful server start: ${line}`);
         windowCreated = true;
-  setBackendReady(true, 'handleServerOutput');
-        // broadcast to renderers
-        try { BrowserWindow.getAllWindows().forEach((w) => { try { w.webContents.send('backend-ready'); } catch { } }); } catch (e) { }
-        // If renderer already confirmed init and UI loaded, show the main window
-  if (uiLoaded && backendReady) {
-    try { win?.show(); win?.focus(); } catch { }
-    try { splashWindow?.close(); } catch { }
-    // honor focus from second-instance if it was requested
-    if (focusRequestedBySecondInstance) {
-      try { win?.show(); win?.focus(); } catch { }
-      focusRequestedBySecondInstance = false;
-    }
-    try { if (!rendererReady) { BrowserWindow.getAllWindows().forEach((w) => { try { w.webContents.send('renderer.init.retry'); } catch {} }); log.info('main: sent renderer.init.retry to renderers (startup log)'); } } catch { }
-  }
-        try {
-          BrowserWindow.getAllWindows().forEach((w) => {
-            try { w.webContents.send('backend-ready'); } catch { }
-          });
-        } catch (e) { }
         if (!win) createWindow();
+        setBackendReady(true, 'handleServerOutput'); // This will show window if UI is loaded
       }
 
       // Java error patterns -> open UI for diagnostics
-  else if (
+      else if (
         line.includes("'java' is not recognized") ||
         line.includes("java: command not found") ||
         line.includes("Error: JAVA_HOME is not defined") ||
@@ -590,14 +601,6 @@ ipcMain.on('restart_app', () => {
 ipcMain.on('renderer.init.complete', (event) => {
   rendererReady = true;
   log.info('renderer.init.complete received');
-  // In dev, the renderer often starts before main's probe sees the backend.
-  // Do a quick probe to confirm backend reachability and set backendReady.
-  if (!app.isPackaged && !backendReady) {
-    (async () => {
-      const ok = await waitForServerPort(9090, 10000); // 10s quick probe
-      setBackendReady(ok, 'renderer.init.complete (dev-probe)');
-    })();
-  }
 
   // If backend already ready and UI loaded -> show app and close splash
   if (backendReady && uiLoaded) {

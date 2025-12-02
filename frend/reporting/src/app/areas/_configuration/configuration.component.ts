@@ -1859,7 +1859,7 @@ export class ConfigurationComponent implements OnInit {
         this.activeDatasourceScriptGroovy &&
         this.activeDatasourceScriptGroovy.trim() !== '' &&
         this.activeDatasourceScriptGroovy.trim() !==
-        '// Groovy Datasource Script\n// Ensure this file is saved in the report configuration folder.'.trim()
+        '// Groovy Datasource Script\n'.trim()
       ) {
         await this.saveExternalReportingScript('datasourceScript');
       }
@@ -1915,16 +1915,12 @@ export class ConfigurationComponent implements OnInit {
     if (newValue === 'ds.scriptfile') {
       await this.loadExternalReportingScript('datasourceScript');
       // Parameters spec is also relevant for scriptfile
-      await this.loadExternalReportingScript('paramsSpecScript', {
-        defaultContent: this.exampleParamsSpecScript,
-      });
+      await this.loadExternalReportingScript('paramsSpecScript');
     } else if (newValue === 'ds.sqlquery') {
       // SQL Query type does not use the main datasource script editor
       this.activeDatasourceScriptGroovy = ''; // Clear the UI model
       // Parameters spec is relevant for sqlquery
-      await this.loadExternalReportingScript('paramsSpecScript', {
-        defaultContent: this.exampleParamsSpecScript,
-      });
+      await this.loadExternalReportingScript('paramsSpecScript');
     } else {
       // For other types (CSV, Excel, etc.), clear both script UI models
       this.activeDatasourceScriptGroovy = '';
@@ -3059,24 +3055,22 @@ chart {
   // (single getTransformScriptPath is declared earlier)
 
   private async loadExternalReportingScript(
-    scriptType: 'datasourceScript' | 'paramsSpecScript' | 'transformScript' | 'tabulatorConfigScript' | 'chartConfigScript',
-    options?: { defaultContent?: string },
+    scriptType: 'datasourceScript' | 'paramsSpecScript' | 'transformScript' | 'tabulatorConfigScript' | 'chartConfigScript'
   ): Promise<void> {
     const configName = this.getCurrentConfigName();
 
     let path: string;
     let cacheKeySuffix: string;
     let targetProperty: keyof ConfigurationComponent;
-    let defaultFileContent = options?.defaultContent || '';
+    let defaultFileContent = '';
 
     switch (scriptType) {
       case 'datasourceScript':
         path = this.getDatasourceScriptPath();
         cacheKeySuffix = 'datasourceScript';
         targetProperty = 'activeDatasourceScriptGroovy';
-        if (!defaultFileContent)
-          defaultFileContent =
-            '// Groovy Datasource Script\n// Ensure this file is saved in the report configuration folder.';
+        defaultFileContent =
+            '// Groovy Datasource Script';
         break;
       case 'paramsSpecScript':
         path = this.getParamsSpecScriptPath();
@@ -3089,9 +3083,7 @@ chart {
         path = this.getTransformScriptPath();
         cacheKeySuffix = 'transformScript';
         targetProperty = 'activeTransformScriptGroovy';
-        if (!defaultFileContent)
-          defaultFileContent =
-            '// Groovy Additional Transformation Script\n// Ensure this file is saved in the report configuration folder.';
+        defaultFileContent = '';
         break;
       case 'tabulatorConfigScript':
         path = this.getTabulatorScriptPath();

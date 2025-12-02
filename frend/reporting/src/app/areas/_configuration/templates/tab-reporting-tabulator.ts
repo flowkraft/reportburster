@@ -71,7 +71,7 @@ export const tabReportingTabulatorTemplate = `<ng-template
             ></rb-tabulator>
 
             <!-- Show 'No Data' when no query run or query returned empty -->
-            <div *ngIf="!reportDataResult || (!reportDataResultIsError && (!reportDataResult?.reportData || reportDataResult?.reportData?.length === 0))" class="text-center" style="padding: 20px;">
+            <div id="noDataTabulator" *ngIf="!reportDataResult || (!reportDataResultIsError && (!reportDataResult?.reportData || reportDataResult?.reportData?.length === 0))" class="text-center" style="padding: 20px;">
               <strong>No Data</strong>
             </div>
 

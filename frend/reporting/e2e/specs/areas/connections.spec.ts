@@ -11,12 +11,20 @@ import { ConnectionsTestHelper, DB_VENDORS_DEFAULT, DB_VENDORS_SUPPORTED } from 
 const DB_VENDORS_SELECTED: string[] = (() => {
   const required = 'sqlite';
   const pool = DB_VENDORS_SUPPORTED.filter(v => v !== required);
-  // shuffle pool (Fisher–Yates)
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  const pickedOthers = pool.slice(0, 2); // pick up to 2
+
+  // Use date-based seed for daily variation but consistent within a run
+  const today = new Date().toISOString().split('T')[0]; // e.g., "2025-12-02"
+  const seed = today.split('-').reduce((acc, n) => acc + parseInt(n), 0);
+
+  // Simple seeded shuffle
+  const seededRandom = (i: number) => {
+    const x = Math.sin(seed + i) * 10000;
+    return x - Math.floor(x);
+  };
+
+  const shuffled = [...pool].sort((a, b) => seededRandom(pool.indexOf(a)) - seededRandom(pool.indexOf(b)));
+  const pickedOthers = shuffled.slice(0, 2);
+
   const list = [required, ...pickedOthers];
   return list;
 })();
@@ -2599,30 +2607,39 @@ CustomerCustomerDemo }|--|| CustomerDemographics : "CustomerTypeID"
         // --- STEP 12: Apps Manager assertions ---
         ft = ft.consoleLog('STEP 9: Apps Manager assertions');
 
-        // 1. Assert CloudBeaver is the default selected app and shows stopped in the dropdown button
-        ft = ft.elementShouldContainText('#appsManagerDropdownToggle', 'CloudBeaver');
-        ft = ft.elementShouldContainText('#appsManagerDropdownToggle', 'stopped');
-        ft = ft.elementAttributeShouldHaveValue('#appsManagerDropdownToggle', 'aria-expanded', 'false');
-
-        // 2. Expand the dropdown to view all options
+        // 1. Open dropdown to access CloudBeaver (works regardless of position)
         ft = ft.click('#appsManagerDropdownToggle');
+        ft = ft.waitOnElementToBecomeVisible('#appsManagerAppcloudbeaver');
 
-        // Assert both CloudBeaver (stopped) and VS Code are present in the dropdown
+        // 2. Assert CloudBeaver is present and shows stopped
         ft = ft.elementShouldContainText('#appsManagerAppNamecloudbeaver', 'CloudBeaver');
         ft = ft.elementShouldContainText('#appsManagerAppStatecloudbeaver', 'stopped');
-        ft = ft.elementShouldContainText('#appsManagerAppNamevscode', 'VS Code');
 
-        // 3. Attempt to Start CloudBeaver -> expected: no command defined -> error toast,
-        //    and app remains stopped (CloudBeaver is a placeholder in this build)
+        // 3. Click Start button for CloudBeaver
+        ft = ft.waitOnElementToBecomeVisible('#appsManagerAppStartBtncloudbeaver');
         ft = ft.click('#appsManagerAppStartBtncloudbeaver');
-        ft = ft.waitOnElementToContainText('#confirmDialog .modal-body', 'Start DB Management (CloudBeaver)?');
+        ft = ft.waitOnElementToContainText('#confirmDialog .modal-body', 'Start CloudBeaver');
         ft = ft.clickYesDoThis();
-        // Expect the "No command defined..." error toast (exact message from service)
-        ft = ft.waitOnToastToBecomeVisible('error', `No command defined for 'DB Management (CloudBeaver)'.`);
-        // Ensure UI still shows CloudBeaver as stopped and start button is still present
-        ft = ft.elementShouldContainText('#appsManagerAppNamecloudbeaver', 'CloudBeaver');
-        ft = ft.elementShouldContainText('#appsManagerAppStatecloudbeaver', 'stopped');
-        ft = ft.elementShouldBeVisible('#appsManagerAppStartBtncloudbeaver');
+
+        // 4. Dropdown closes after confirm - reopen to check status
+        ft = ft.click('#appsManagerDropdownToggle');
+        ft = ft.waitOnElementToBecomeVisible('#appsManagerAppcloudbeaver');
+        ft = ft.waitOnElementToContainText('#appsManagerAppStatecloudbeaver', 'running');
+
+        // 5. Stop button should now be visible, start button hidden
+        ft = ft.waitOnElementToBecomeVisible('#appsManagerAppStopBtncloudbeaver');
+        ft = ft.click('#appsManagerAppStopBtncloudbeaver');
+        ft = ft.waitOnElementToContainText('#confirmDialog .modal-body', 'Stop CloudBeaver');
+        ft = ft.clickYesDoThis();
+        ft = ft.waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR);
+        ft = ft.waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR);
+        ft = ft.appShouldBeReadyToRunNewJobs();
+        ft = ft.appStatusShouldBeGreatNoErrorsNoWarnings();
+          
+        // 6. Dropdown closes after confirm - reopen to verify stopped
+        ft = ft.click('#appsManagerDropdownToggle');
+        ft = ft.waitOnElementToBecomeVisible('#appsManagerAppcloudbeaver');
+        ft = ft.waitOnElementToContainText('#appsManagerAppStatecloudbeaver', 'stopped');
 
         // --- STEP 10: Save and close modal, cleanup ---
         ft = ft.consoleLog('STEP 10: Save and cleanup');

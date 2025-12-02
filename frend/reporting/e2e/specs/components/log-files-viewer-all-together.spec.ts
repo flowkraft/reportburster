@@ -514,12 +514,7 @@ test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should handle correctly pressing the Clear Errors button',
     async function ({ beforeAfterEach: firstPage }) {
-      await jetpack.dirAsync(
-        path.resolve(
-          slash(`${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}`),
-        ),
-        { empty: true },
-      );
+      await Helpers.clearLogFiles();
 
       await jetpack.copyAsync(
         `${PATHS.E2E_RESOURCES_PATH}/logs/errors-with-123data.log`,
@@ -579,12 +574,7 @@ test.describe('', async () => {
   electronBeforeAfterAllTest(
     'should handle correctly pressing the Clear Quarantined Files button',
     async function ({ beforeAfterEach: firstPage }) {
-      await jetpack.dirAsync(
-        path.resolve(
-          slash(`${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}`),
-        ),
-        { empty: true },
-      );
+      await Helpers.clearLogFiles();
 
       await jetpack.copyAsync(
         `${PATHS.E2E_RESOURCES_PATH}/quarantine`,

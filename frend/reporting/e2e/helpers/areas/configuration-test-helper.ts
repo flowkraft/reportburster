@@ -1136,7 +1136,7 @@ export class ConfigurationTestHelper {
 
     ft = ft
       .click('#reportingTabulatorTab-link')
-      .waitOnElementToBecomeVisible('#tabulatorTablePreviewTitle')
+      .waitOnElementToBecomeVisible('#noDataTabulator')
       .click('#reportingTemplateOutputTab-link')
       .waitOnElementToBecomeVisible('#reportOutputType')
       .selectedOptionShouldContainText('#reportOutputType', 'None')
@@ -1728,7 +1728,7 @@ export class ConfigurationTestHelper {
       .sleep(3 * Constants.DELAY_ONE_SECOND) 
       .waitOnElementToBecomeVisible('#groovyScriptEditor')
       //.codeJarShouldContainText('#groovyScriptEditor', uniqueScriptValue)
-      .codeJarShouldContainText('#groovyScriptEditor', 'Groovy Script Content')
+      .codeJarShouldContainText('#groovyScriptEditor', 'Groovy Datasource Script')
       // .selectedOptionShouldContainText('#scriptDatabaseConnection', 'Your Test Connection Name') // If asserting
       .click('#lblShowMoreScriptOptions')
       .waitOnElementToBecomeVisible('#scriptIdColumn')
