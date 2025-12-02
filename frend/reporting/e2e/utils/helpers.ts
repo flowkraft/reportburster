@@ -378,18 +378,7 @@ export class Helpers {
         //} catch (err) {
         //console.error('jetpack.dirAsync empty logs:', err);
 
-        await jetpack.writeAsync(
-          `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/info.log`,
-          '',
-        );
-        await jetpack.writeAsync(
-          `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/errors.log`,
-          '',
-        );
-        await jetpack.writeAsync(
-          `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/warnings.log`,
-          '',
-        );
+        await Helpers.clearLogFiles();
 
         await jetpack.writeAsync(
           `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}/rbsj-exe.log`,
@@ -551,5 +540,14 @@ Started ServerApplication with PID 13404`,
     });
 
     return randomLogFiles;
+  };
+
+  static clearLogFiles = async () => {
+    const logFiles = ['info.log', 'errors.log', 'warnings.log'];
+    const logsPath = `${process.env.PORTABLE_EXECUTABLE_DIR}/${PATHS.LOGS_PATH}`;
+
+    await Promise.all(
+      logFiles.map(file => jetpack.writeAsync(`${logsPath}/${file}`, ''))
+    );
   };
 }

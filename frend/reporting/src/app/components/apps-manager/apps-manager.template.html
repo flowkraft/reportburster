@@ -129,11 +129,11 @@
           style="margin-right: 6px"
         ></i>
         <span
-          id="appsManagerAppName{{sanitizeAppName(visibleApps[0]?.name)}}"
+          id="appsManagerToggleAppName{{sanitizeAppId(visibleApps[0]?.id)}}"
           [style.color]="visibleApps[0]?.state === 'running' ? 'green' : '#888'">
           {{ visibleApps[0]?.name }}
-          <strong *ngIf="visibleApps[0]?.type !== 'desktop' && visibleApps[0]?.state !== 'running'" id="appsManagerAppState{{sanitizeAppName(visibleApps[0]?.name)}}" style="margin-left: 6px;">stopped</strong>
-          <strong *ngIf="visibleApps[0]?.type !== 'desktop' && visibleApps[0]?.state === 'running'" id="appsManagerAppState{{sanitizeAppName(visibleApps[0]?.name)}}" style="margin-left: 6px;">running</strong>
+          <strong *ngIf="visibleApps[0]?.type !== 'desktop' && visibleApps[0]?.state !== 'running'" id="appsManagerToggleAppState{{sanitizeAppId(visibleApps[0]?.id)}}" style="margin-left: 6px;">stopped</strong>
+          <strong *ngIf="visibleApps[0]?.type !== 'desktop' && visibleApps[0]?.state === 'running'" id="appsManagerToggleAppState{{sanitizeAppId(visibleApps[0]?.id)}}" style="margin-left: 6px;">running</strong>
         </span>
       </ng-container>
       <ng-template #manageAppsLabel>
@@ -142,11 +142,11 @@
       <span class="caret"></span>
     </button>
     <ul class="dropdown-menu" role="menu">
-      <li role="menuitem" *ngFor="let app of visibleApps" [id]="'appsManagerApp' + sanitizeAppName(app.id)">
+      <li role="menuitem" *ngFor="let app of visibleApps" [id]="'appsManagerApp' + sanitizeAppId(app.id)">
         <a class="dropdown-item" href="javascript:void(0)">
           <!-- Stop icon to the left of app name when running (dropdown mode) -->
           <span *ngIf="app.state === 'running' && app.type !== 'desktop'"
-                [id]="'appsManagerAppStopBtn' + sanitizeAppName(app.id)"
+                [id]="'appsManagerAppStopBtn' + sanitizeAppId(app.id)"
                 style="margin-right: 10px; vertical-align: middle; cursor: pointer;"
                 (click)="onToggleApp(app); $event.stopPropagation();"
                 title="Stop">
@@ -158,10 +158,10 @@
             [style.color]="app.state === 'running' ? 'green' : '#888'"
             style="margin-right: 6px"
           ></i>
-          <span [id]="'appsManagerAppName' + sanitizeAppName(app.id)" [style.color]="app.state === 'running' ? 'green' : '#888'">
+          <span [id]="'appsManagerAppName' + sanitizeAppId(app.id)" [style.color]="app.state === 'running' ? 'green' : '#888'">
             {{ app.name }}
-            <strong *ngIf="app.type !== 'desktop' && app.state !== 'running'" [id]="'appsManagerAppState' + sanitizeAppName(app.id)" style="margin-left: 6px;">stopped</strong>
-            <strong *ngIf="app.type !== 'desktop' && app.state === 'running'" [id]="'appsManagerAppState' + sanitizeAppName(app.id)"style="margin-left: 6px;">running</strong>
+            <strong *ngIf="app.type !== 'desktop' && app.state !== 'running'" [id]="'appsManagerAppState' + sanitizeAppId(app.id)" style="margin-left: 6px;">stopped</strong>
+            <strong *ngIf="app.type !== 'desktop' && app.state === 'running'" [id]="'appsManagerAppState' + sanitizeAppId(app.id)"style="margin-left: 6px;">running</strong>
           </span>
           <!-- Launch label when running and has URL -->
           <span
@@ -203,7 +203,7 @@
             style="padding: 0 4px; vertical-align: middle;"
             (click)="onToggleApp(app); $event.stopPropagation();"
             [title]="'Start ' + app.name"
-            [id]="'appsManagerAppStartBtn' + sanitizeAppName(app.id)"
+            [id]="'appsManagerAppStartBtn' + sanitizeAppId(app.id)"
           >
             <i class="fa fa-play" style="color: green"></i>
           </button>

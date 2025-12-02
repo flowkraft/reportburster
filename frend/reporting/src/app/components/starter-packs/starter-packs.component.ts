@@ -208,6 +208,9 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
       const response = await this.apiService.get('/jobman/system/services/status');
       const statuses: any[] = response;
 
+      // DEBUG: Log what the API returns
+      console.log('API returned statuses:', JSON.stringify(statuses, null, 2));
+
       const TARGET_ALIASES: Record<string, string[]> = {
         ibmdb2: ['db2', 'ibm-db2'],
         postgres: ['postgresql'],
@@ -219,12 +222,21 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
         const base = (pack.target || '').toLowerCase();
         const candidates = [base, ...(TARGET_ALIASES[base] || [])];
 
+        // DEBUG: Log matching attempt
+        console.log(`Pack ${pack.id} (target: ${pack.target}) checking candidates:`, candidates);
+
         const service = statuses.find(s => {
           const name = (s.name || '').toLowerCase();
-          return candidates.some(c => name === c || name.includes(c));
+          const matches = candidates.some(c => name.endsWith(`-${c}`) || name === c);
+          // DEBUG: Log each comparison
+          console.log(`  Comparing "${name}" with candidates ${JSON.stringify(candidates)}: ${matches}`);
+          return matches;
         });
 
+        const oldStatus = pack.status;
         pack.status = service ? (service.status === 'running' ? 'running' : 'stopped') : 'unknown';
+        // DEBUG: Log result
+        console.log(`  Result for ${pack.id}: service found=${!!service}, status changed ${oldStatus} -> ${pack.status}`);
       }
     } catch (error) {
       console.error('Error refreshing statuses:', error);

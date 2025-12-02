@@ -24,12 +24,20 @@ const dataSourceTypeDisplayMap: Record<string, string> = {
 const DB_VENDORS_SELECTED: string[] = (() => {
   const required = 'sqlite';
   const pool = DB_VENDORS_SUPPORTED.filter(v => v !== required);
-  // shuffle pool (Fisher–Yates)
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  const pickedOthers = pool.slice(0, 2); // pick up to 2
+  
+  // Use date-based seed for daily variation but consistent within a run
+  const today = new Date().toISOString().split('T')[0]; // e.g., "2025-12-02"
+  const seed = today.split('-').reduce((acc, n) => acc + parseInt(n), 0);
+  
+  // Simple seeded shuffle
+  const seededRandom = (i: number) => {
+    const x = Math.sin(seed + i) * 10000;
+    return x - Math.floor(x);
+  };
+  
+  const shuffled = [...pool].sort((a, b) => seededRandom(pool.indexOf(a)) - seededRandom(pool.indexOf(b)));
+  const pickedOthers = shuffled.slice(0, 2);
+  
   const list = [required, ...pickedOthers];
   return list;
 })();
@@ -1849,7 +1857,11 @@ function configureAndRunReportGeneration2(
     ft = ft
       .waitOnElementToBecomeVisible('#btnViewData')
       .click('#btnViewData')
-      .confirmDialogShouldBeVisible()
+      .clickYesDoThis()
+      .click('#btnClearLogs')
+      .clickYesDoThis()
+      .waitOnElementToBecomeDisabled('#btnClearLogs')
+      .click('#btnViewData')
       .clickYesDoThis()
       .waitOnToastToBecomeVisible(
         'success',
@@ -1883,6 +1895,11 @@ function configureAndRunReportGeneration2(
   }
 
   ft = ft
+    .click('#btnGenerateReports')
+    .clickYesDoThis()
+    .click('#btnClearLogs')
+    .clickYesDoThis()
+    .waitOnElementToBecomeDisabled('#btnClearLogs')
     .click('#btnGenerateReports')
     .clickYesDoThis()
     .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)

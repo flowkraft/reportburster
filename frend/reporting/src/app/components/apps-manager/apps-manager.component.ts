@@ -168,8 +168,8 @@ export class AppsManagerComponent implements OnInit, OnChanges {
     }
   }
 
-  sanitizeAppName(name: string): string {
-    return name ? name.replace(/\s/g, '') : '';
+  sanitizeAppId(id: string): string {
+    return id ? id.replace(/\s/g, '') : '';
   }
 
   onLaunch(app: ManagedApp, event: MouseEvent) {

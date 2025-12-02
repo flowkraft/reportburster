@@ -1156,6 +1156,11 @@ export class FluentTester implements PromiseLike<void> {
     //await this.doWaitOnElementToBecomeVisible('#starterPacksLoadingIndicator');
     //await this.waitOnElementToBecomeInvisible('#starterPacksLoadingIndicator');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doWaitOnElementToBecomeVisible('#appSearch');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    
+    await this.doClick('#starterPacksTab-link');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
     await this.doWaitOnElementToBecomeVisible('#packSearch');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
