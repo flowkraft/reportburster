@@ -10,6 +10,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:-false}
       - DB_CREATE=${DB_CREATE:-update}
+      - DB_PATH=/db/northwind.db
     volumes:
       - ../../db/sample-northwind-sqlite:/db
     restart: unless-stopped

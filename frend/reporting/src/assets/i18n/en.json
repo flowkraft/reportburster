@@ -412,6 +412,7 @@
         "REPORTING-TEMPLATE-OUTPUT": "Output / Template",
         "REPORTING-TABULATOR": "Tabulator",
         "REPORTING-CHART": "Chart",
+        "REPORTING-PIVOT-TABLE": "Pivot Table",
         "QA": "Test Email Server",
         "SMS": {
           "MESSAGE": "Message",

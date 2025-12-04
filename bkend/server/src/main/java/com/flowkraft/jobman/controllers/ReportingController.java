@@ -26,6 +26,8 @@ import com.sourcekraft.documentburster.common.tabulator.TabulatorOptions;
 import com.sourcekraft.documentburster.common.tabulator.TabulatorOptionsParser;
 import com.sourcekraft.documentburster.common.chart.ChartOptions;
 import com.sourcekraft.documentburster.common.chart.ChartOptionsParser;
+import com.sourcekraft.documentburster.common.pivottable.PivotTableOptions;
+import com.sourcekraft.documentburster.common.pivottable.PivotTableOptionsParser;
 
 import reactor.core.publisher.Mono;
 
@@ -99,6 +101,20 @@ public class ReportingController {
 			return opts;
 		}).doOnError(e -> log.error("Error parsing chart options", e)).onErrorResume(e -> Mono.error(
 				new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to parse chart options", e)));
+	}
+
+	@PostMapping("/parse-pivot")
+	public Mono<PivotTableOptions> processGroovyPivotTable(@RequestBody String groovyPivotDslCode) {
+		String cleanedCode = groovyPivotDslCode.replaceAll("^\"|\"$", "") // Remove surrounding quotes
+				.replace("\\n", "\n") // Unescape newlines
+				.replace("\\t", "\t") // Unescape tabs
+				.replace("\\\"", "\""); // Unescape double quotes
+
+		return Mono.fromCallable(() -> {
+			PivotTableOptions opts = PivotTableOptionsParser.parseGroovyPivotTableDslCode(cleanedCode);
+			return opts;
+		}).doOnError(e -> log.error("Error parsing pivot table options", e)).onErrorResume(e -> Mono.error(
+				new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to parse pivot table options", e)));
 	}
 
 	@GetMapping("/test-fetch-data")

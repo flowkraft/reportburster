@@ -32,6 +32,7 @@ import { tabReportingDataSourceDataTablesTemplate } from './templates/tab-report
 import { tabReportingTemplateOutputTemplate } from './templates/tab-reporting-template-output';
 import { tabReportingTabulatorTemplate } from './templates/tab-reporting-tabulator';
 import { tabReportingChartTemplate } from './templates/tab-reporting-chart';
+import { tabReportingPivotTableTemplate } from './templates/tab-reporting-pivot-table';
 import { tabEnableDisableDeliveryTemplate } from './templates/tab-enable-disable-delivery';
 import { tabEmailConnectionSettingsTemplate } from './templates/tab-email-connection-settings';
 import { tabEmailMessageTemplate } from './templates/tab-email-message';
@@ -112,7 +113,7 @@ import { modalTemplatesGalleryTemplate } from './templates/modal-gallery';
     </div>
     ${tabGeneralSettingsTemplate} ${tabReportingDataSourceDataTablesTemplate}
     ${tabReportingTemplateOutputTemplate} ${tabReportingTabulatorTemplate} 
-    ${tabReportingChartTemplate} ${tabEnableDisableDeliveryTemplate} 
+    ${tabReportingChartTemplate} ${tabReportingPivotTableTemplate} ${tabEnableDisableDeliveryTemplate} 
     ${tabEmailCloudProvidersTemplate} ${tabEmailConnectionSettingsTemplate} 
     ${tabEmailMessageTemplate} ${tabAttachmentsTemplate} ${tabUploadFTPTemplate}
     ${tabUploadFileShareTemplate} ${tabUploadFTPSTemplate}
@@ -143,6 +144,9 @@ export class ConfigurationComponent implements OnInit {
 
   @ViewChild('tabReportingChartTemplate', { static: true })
   tabReportingChartTemplate: TemplateRef<any>;
+
+  @ViewChild('tabReportingPivotTableTemplate', { static: true })
+  tabReportingPivotTableTemplate: TemplateRef<any>;
 
   @ViewChild('tabEnableDisableDeliveryTemplate', { static: true })
   tabEnableDisableDeliveryTemplate: TemplateRef<any>;
@@ -245,6 +249,11 @@ export class ConfigurationComponent implements OnInit {
       id: 'reportingChartTab',
       heading: 'AREAS.CONFIGURATION.TABS.REPORTING-CHART',
       ngTemplateOutlet: 'tabReportingChartTemplate',
+    },
+    {
+      id: 'reportingPivotTableTab',
+      heading: 'AREAS.CONFIGURATION.TABS.REPORTING-PIVOT-TABLE',
+      ngTemplateOutlet: 'tabReportingPivotTableTemplate',
     },
     {
       id: 'enableDisableDistributionTab',
@@ -405,6 +414,7 @@ export class ConfigurationComponent implements OnInit {
         'reportingTemplateOutputTab',
         'reportingTabulatorTab',
         'reportingChartTab',
+        'reportingPivotTableTab',
         'licenseTab',
       ],
     },
@@ -1151,6 +1161,7 @@ export class ConfigurationComponent implements OnInit {
           // that can be displayed in a table or chart - CSV, XML, SQL, Script, Excel, etc.
           await this.loadExternalReportingScript('tabulatorConfigScript');
           await this.loadExternalReportingScript('chartConfigScript');
+          await this.loadExternalReportingScript('pivotTableConfigScript');
           // Transformation script is always potentially relevant
           await this.loadExternalReportingScript('transformScript');
           
@@ -1162,6 +1173,9 @@ export class ConfigurationComponent implements OnInit {
           }
           if (configTemplate?.chartOptions) {
             this.activeChartConfigOptions = configTemplate.chartOptions;
+          }
+          if (configTemplate?.pivotTableOptions) {
+            this.activePivotTableConfigOptions = configTemplate.pivotTableOptions;
           }
         }
 
@@ -1792,6 +1806,10 @@ export class ConfigurationComponent implements OnInit {
   activeChartConfigOptions: any = null; // { type, labelField, options, labels, datasets }
   private chartInstance: any = null;
 
+  // Pivot Table configuration script (Groovy DSL)
+  activePivotTableConfigScriptGroovy: string = '';
+  activePivotTableConfigOptions: any = null; // { rows, cols, vals, aggregatorName, rendererName, etc. }
+
   // Minimal runtime handler registry - keys referenced from the DSL
   private tabulatorHandlerRegistry: { [name: string]: (payload: any, params?: any, table?: any) => void } = {
     HIGHLIGHT_URGENT: (payload, params, table) => {
@@ -2021,6 +2039,7 @@ export class ConfigurationComponent implements OnInit {
   @ViewChild('sqlEditor') sqlEditorRef: ElementRef;
   @ViewChild('tabulatorConfigEditor') tabulatorConfigEditorRef: ElementRef;
   @ViewChild('chartConfigEditor') chartConfigEditorRef: ElementRef;
+  @ViewChild('pivotTableConfigEditor') pivotTableConfigEditorRef: ElementRef;
 
   // Method to focus the editor when placeholder is clicked
   focusSqlEditor() {
@@ -2802,6 +2821,81 @@ chart {
   // data ctx.reportData.groupBy { it.category }.collect { k, v -> [category: k, total: v.sum { it.amount }] }
 }
 `;
+
+  // Example Pivot Table configuration Groovy DSL
+  examplePivotTableConfigScript = `/*
+ Pivot Table Groovy DSL - aligned with react-pivottable API
+ Docs: https://github.com/plotly/react-pivottable
+ Data comes from ctx.reportData by default - no need to specify it
+*/
+
+pivotTable {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // ROW FIELDS - which columns to use as row headers (group by)
+  // ─────────────────────────────────────────────────────────────────────────────
+  rows 'region', 'country'
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // COLUMN FIELDS - which columns to pivot across horizontally
+  // ─────────────────────────────────────────────────────────────────────────────
+  cols 'year', 'quarter'
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // VALUE FIELDS - which columns to aggregate
+  // ─────────────────────────────────────────────────────────────────────────────
+  vals 'revenue'
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // AGGREGATOR - how to combine values
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Available aggregators:
+  // Count, Count Unique Values, List Unique Values, Sum, Integer Sum, Average, Median,
+  // Sample Variance, Sample Standard Deviation, Minimum, Maximum, First, Last,
+  // Sum over Sum, Sum as Fraction of Total, Sum as Fraction of Rows, Sum as Fraction of Columns,
+  // Count as Fraction of Total, Count as Fraction of Rows, Count as Fraction of Columns
+  aggregatorName 'Sum'
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDERER - how to display the pivot table
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Available renderers:
+  // Table, Table Heatmap, Table Col Heatmap, Table Row Heatmap, Exportable TSV
+  // (Plotly renderers if available: Grouped Column Chart, Stacked Column Chart, etc.)
+  rendererName 'Table'
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SORTING - row and column sort order
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Options: key_a_to_z (alphabetical), value_a_to_z (by value ascending), value_z_to_a (by value descending)
+  rowOrder 'key_a_to_z'
+  colOrder 'key_a_to_z'
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // VALUE FILTER - exclude specific values from the pivot
+  // ─────────────────────────────────────────────────────────────────────────────
+  valueFilter {
+    // Exclude specific values from a column
+    // filter 'status', exclude: ['Inactive', 'Pending']
+    // filter 'region', exclude: ['Unknown']
+  }
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // OPTIONS - additional pivot table options
+  // ─────────────────────────────────────────────────────────────────────────────
+  options {
+    menuLimit 500  // max values to show in filter dropdowns
+  }
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // OPTIONAL: Data override (90% of the time you don't need this)
+  // By default, data comes from ctx.reportData. Uncomment to use custom data:
+  // ─────────────────────────────────────────────────────────────────────────────
+  // data ctx.reportData                                    // explicit default
+  // data ctx.reportData.findAll { it.status == 'Active' }  // filtered
+  // data ctx.reportData.take(100)                          // first 100 rows
+}
+`;
+
   private getTransformScriptPath(): string {
     const basePath = this.getCurrentConfigReportsPath();
     const configName = this.getCurrentConfigName();
@@ -2818,6 +2912,12 @@ chart {
     const basePath = this.getCurrentConfigReportsPath();
     const configName = this.getCurrentConfigName();
     return basePath ? `${basePath}/${configName}-chart-config.groovy` : '';
+  }
+
+  private getPivotTableScriptPath(): string {
+    const basePath = this.getCurrentConfigReportsPath();
+    const configName = this.getCurrentConfigName();
+    return basePath ? `${basePath}/${configName}-pivot-config.groovy` : '';
   }
 
   generateParametersSpecUsingAI() { }
@@ -2860,6 +2960,20 @@ chart {
         .catch((err) => {
           console.error('Failed to copy example Chart config script: ', err);
           this.messagesService.showInfo('Failed to copy example Chart config script.', 'Error');
+        });
+    }
+  }
+
+  copyToClipboardPivotTableConfigExample() {
+    if (this.examplePivotTableConfigScript) {
+      navigator.clipboard
+        .writeText(this.examplePivotTableConfigScript)
+        .then(() => {
+          this.messagesService.showInfo('Example Pivot Table config script copied to clipboard!', 'Success');
+        })
+        .catch((err) => {
+          console.error('Failed to copy example Pivot Table config script: ', err);
+          this.messagesService.showInfo('Failed to copy example Pivot Table config script.', 'Error');
         });
     }
   }
@@ -2954,6 +3068,42 @@ chart {
 
   onChartError(err: any) {
     console.warn('Chart component reported an error', err);
+  }
+
+  async onPivotTableConfigChanged(event: string) {
+    let content = event;
+    try {
+      if (this.pivotTableConfigEditorRef && this.pivotTableConfigEditorRef.nativeElement) {
+        const root = this.pivotTableConfigEditorRef.nativeElement as HTMLElement;
+        const contentEditable = root.querySelector('[contenteditable]');
+        const text = contentEditable?.textContent;
+        if (typeof text === 'string' && text.length > 0) {
+          content = text;
+        }
+      }
+    } catch (err) {
+      // ignore and fallback to provided event string
+    }
+    this.activePivotTableConfigScriptGroovy = content;
+    try {
+      console.debug('Pivot Table content saved length:', content.length, 'lines:', (content || '').split(/\r?\n/).length);
+    } catch (e) {}
+    await this.saveExternalReportingScript('pivotTableConfigScript');
+    this.settingsChangedEventHandler(event);
+    // Only parse if content is non-empty (skip parsing empty/whitespace-only scripts)
+    if (content && content.trim().length > 0) {
+      try {
+        const parsed = await this.reportingService.processGroovyPivotTableDsl(content);
+        this.activePivotTableConfigOptions = parsed;
+        this.changeDetectorRef.detectChanges();
+      } catch (err) {
+        console.warn('Pivot Table DSL parse error', err);
+        this.activePivotTableConfigOptions = null;
+      }
+    } else {
+      // Clear parsed options when content is empty
+      this.activePivotTableConfigOptions = null;
+    }
   }
 
   // Tabulator ready handler - optional event argument
@@ -3055,7 +3205,7 @@ chart {
   // (single getTransformScriptPath is declared earlier)
 
   private async loadExternalReportingScript(
-    scriptType: 'datasourceScript' | 'paramsSpecScript' | 'transformScript' | 'tabulatorConfigScript' | 'chartConfigScript'
+    scriptType: 'datasourceScript' | 'paramsSpecScript' | 'transformScript' | 'tabulatorConfigScript' | 'chartConfigScript' | 'pivotTableConfigScript'
   ): Promise<void> {
     const configName = this.getCurrentConfigName();
 
@@ -3098,6 +3248,12 @@ chart {
         targetProperty = 'activeChartConfigScriptGroovy';
         // Intentionally do not substitute an example here; the editor should be empty if the user hasn't configured a chart.
         break;
+      case 'pivotTableConfigScript':
+        path = this.getPivotTableScriptPath();
+        cacheKeySuffix = 'pivotTableConfigScript';
+        targetProperty = 'activePivotTableConfigScriptGroovy';
+        // Intentionally do not substitute an example here; the editor should be empty if the user hasn't configured a pivot table.
+        break;
       default:
         console.error('Unknown script type for loading:', scriptType);
         return;
@@ -3117,7 +3273,7 @@ chart {
   }
 
   private async saveExternalReportingScript(
-    scriptType: 'datasourceScript' | 'paramsSpecScript' | 'transformScript' | 'tabulatorConfigScript' | 'chartConfigScript',
+    scriptType: 'datasourceScript' | 'paramsSpecScript' | 'transformScript' | 'tabulatorConfigScript' | 'chartConfigScript' | 'pivotTableConfigScript',
   ): Promise<void> {
     const configName = this.getCurrentConfigName();
 
@@ -3151,6 +3307,11 @@ chart {
         path = this.getChartScriptPath();
         cacheKeySuffix = 'chartConfigScript';
         sourceProperty = 'activeChartConfigScriptGroovy';
+        break;
+      case 'pivotTableConfigScript':
+        path = this.getPivotTableScriptPath();
+        cacheKeySuffix = 'pivotTableConfigScript';
+        sourceProperty = 'activePivotTableConfigScriptGroovy';
         break;
       default:
         console.error('Unknown script type for saving:', scriptType);

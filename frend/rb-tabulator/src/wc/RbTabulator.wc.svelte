@@ -21,7 +21,6 @@
   // public props
   export let data: any[] = [];
   export let columns: ColumnDefinition[] = [];
-  export let loading: boolean = false;
   export let options: any = {};
 
   let container: HTMLDivElement;
@@ -85,7 +84,7 @@
     }
   }
 
-  // only once tableBuilt has fired do we sync data/loading/columns
+  // only once tableBuilt has fired do we sync data/columns
   function updateTable() {
     if (!isReady || !table) return;
 
@@ -107,9 +106,6 @@
         try { console.warn('rb-tabulator: replaceData skipped because `data` is not an array', data); } catch (e) {}
       }
       // table.redraw();
-
-      // ✏️ Updated for v6 loader methods:
-      //table.setLoader(loading);
     } catch (err) {
       console.error('rb-tabulator update error', err);
       dispatch('tableError', { message: String(err) });

@@ -48,5 +48,8 @@ public class ConfigurationFileInfo extends DumpToString {
 	
 	// Parsed Chart DSL options (type, labelField, options, labels, datasets, data)
 	public Map<String, Object> chartOptions;
+	
+	// Parsed Pivot Table DSL options (rows, cols, vals, aggregatorName, rendererName, etc.)
+	public Map<String, Object> pivotTableOptions;
 
 }
