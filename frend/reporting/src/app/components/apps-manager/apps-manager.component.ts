@@ -184,6 +184,31 @@ export class AppsManagerComponent implements OnInit, OnChanges {
     navigator.clipboard.writeText(text);
   }
 
+  toggleCommandFlag(app: ManagedApp, flag: string, event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    const isChecked = checkbox.checked;
+    
+    if (!app.currentCommandValue) return;
+    
+    // Remove flag if unchecked
+    if (!isChecked) {
+      app.currentCommandValue = app.currentCommandValue
+        .replace(new RegExp(`\\s*${flag}`, 'g'), '')
+        .trim();
+    } else {
+      // Add flag if checked (and not already present)
+      if (!app.currentCommandValue.includes(flag)) {
+        app.currentCommandValue = app.currentCommandValue.trim() + ' ' + flag;
+      }
+      // If --no-cache is checked, remove --build (--no-cache implies rebuild)
+      if (flag === '--no-cache' && app.currentCommandValue.includes('--build')) {
+        app.currentCommandValue = app.currentCommandValue
+          .replace(/\s*--build/g, '')
+          .trim();
+      }
+    }
+  }
+
 async onToggleApp(app: ManagedApp) {
     
     // Check if Docker is required and not installed, and only for starting (not stopping)

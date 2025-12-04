@@ -398,12 +398,57 @@ public class ServicesManager {
 		Path workingDir = composeFilePath.getParent();
 		String composeFileName = composeFilePath.getFileName().toString();
 
+		// Parse flags and port from args
+		String customPort = null;
+		boolean shouldBuild = false;
+		boolean noCache = false;
+		boolean enableLiquibase = false;
+		
+		if (args != null && !args.trim().isEmpty()) {
+			String[] argParts = args.trim().split("\\s+");
+			for (String part : argParts) {
+				if (part.matches("\\d+")) {
+					customPort = part;
+				} else if (part.equalsIgnoreCase("--build")) {
+					shouldBuild = true;
+				} else if (part.equalsIgnoreCase("--no-cache")) {
+					noCache = true;
+				} else if (part.equalsIgnoreCase("--liquibase")) {
+					enableLiquibase = true;
+				}
+			}
+		}
+		
+		// Prepare environment variables map (shared between build and up commands)
+		java.util.Map<String, String> env = new java.util.HashMap<>(System.getenv());
+		if (customPort != null) {
+			env.put("HOST_PORT", customPort);
+			log.info("Using custom HOST_PORT={}", customPort);
+		}
+		if (enableLiquibase) {
+			env.put("ENABLE_LIQUIBASE_GROOVY_MIGRATIONS", "true");
+			env.put("DB_CREATE", "none");  // Disable GORM auto-schema when Liquibase manages migrations (Grails)
+			env.put("DDL_AUTO", "none");   // Disable Hibernate ddl-auto when Liquibase manages migrations (Spring Boot)
+			log.info("Enabling Liquibase Groovy migrations: ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=true, DB_CREATE=none, DDL_AUTO=none");
+		}
+
 		List<String> command = new ArrayList<>();
 		command.add("docker");
 		command.add("compose");
 		command.add("-f");
 		command.add(composeFileName);  // Relative to workingDir
 		command.add("up");
+		
+		// Add --build flag if requested (rebuilds image from Dockerfile)
+		if (shouldBuild) {
+			command.add("--build");
+			log.info("Using --build flag to rebuild image");
+		}
+		
+		// Add --no-cache flag if requested (requires --build, forces fresh build without cache)
+		// Note: --no-cache is a docker build flag, for compose we need to use docker compose build --no-cache first
+		// Actually for docker compose up, we can pass --build, but --no-cache needs docker compose build
+		
 		command.add("-d");
 		command.add("--remove-orphans");
 
@@ -416,13 +461,40 @@ public class ServicesManager {
 		}else
 			command.add(serviceName);
 	
+		// If --no-cache is requested, run docker compose build --no-cache first
+		if (noCache) {
+			log.info("Running docker compose build --no-cache first");
+			List<String> buildCommand = new ArrayList<>();
+			buildCommand.add("docker");
+			buildCommand.add("compose");
+			buildCommand.add("-f");
+			buildCommand.add(composeFileName);
+			buildCommand.add("build");
+			buildCommand.add("--no-cache");
+			buildCommand.add(serviceName);
+			
+			ProcessExecutor buildExecutor = new ProcessExecutor().command(buildCommand).directory(workingDir.toFile())
+				.redirectOutput(Slf4jStream.of(log).asInfo())
+				.redirectError(Slf4jStream.of(log).asInfo())
+				.timeout(7200, TimeUnit.SECONDS)
+				.environment(env);
+			
+			log.info("Executing build command: {} in directory: {}", buildCommand, workingDir);
+			ProcessResult buildResult = buildExecutor.execute();
+			if (buildResult.getExitValue() != 0) {
+				System.out.println("✗ Failed to build app '" + serviceName + "' with --no-cache. Exit code: " + buildResult.getExitValue());
+				return;
+			}
+		}
+
 		log.info("Executing command: {} in directory: {}", command, workingDir);
 
 		// Use ProcessExecutor like NorthwindManager for better output handling
 		ProcessExecutor executor = new ProcessExecutor().command(command).directory(workingDir.toFile())
 			.redirectOutput(Slf4jStream.of(log).asInfo())  // Capture stdout to log
 			.redirectError(Slf4jStream.of(log).asInfo())  // Capture stderr to log
-			.timeout(7200, TimeUnit.SECONDS);  // Add timeout to prevent hanging
+			.timeout(7200, TimeUnit.SECONDS)  // Add timeout to prevent hanging
+			.environment(env);  // Pass environment variables including HOST_PORT and ENABLE_LIQUIBASE_GROOVY_MIGRATIONS
 
 		ProcessResult result = executor.execute();
 
@@ -448,13 +520,17 @@ public class ServicesManager {
 		Path workingDir = composeFilePath.getParent();
 		String composeFileName = composeFilePath.getFileName().toString();
 
+		// Use 'docker compose down' to stop ALL containers in the compose file
+		// This prevents orphaned containers (e.g., matomo-fpm, matomo-db when stopping matomo)
 		List<String> command = new ArrayList<>();
 		command.add("docker");
 		command.add("compose");
 		command.add("-f");
 		command.add(composeFileName);
-		command.add("stop");
-		command.add(serviceName);
+		command.add("down");
+		command.add("--remove-orphans");
+		// Note: Not using -v to preserve volumes/data between restarts
+		// Add --volumes flag in args if user wants to purge data
 
 		ProcessExecutor executor = new ProcessExecutor().command(command).directory(workingDir.toFile()).redirectOutput(Slf4jStream.of(log).asInfo()).redirectError(Slf4jStream.of(log).asInfo()).timeout(300, TimeUnit.SECONDS);
 

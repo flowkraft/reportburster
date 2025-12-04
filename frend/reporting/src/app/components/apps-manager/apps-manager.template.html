@@ -42,7 +42,38 @@
       </div>
     </div>
     <div class="list-group">
-      <div *ngFor="let app of visibleApps" class="panel" [ngClass]="{
+      <!-- Scoped styles for app cards in expandedList mode -->
+      <style>
+        .app-card-expanded {
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          transition: all 0.2s ease-in-out;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .app-card-expanded:hover {
+          border-color: #bbb;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          transform: translateY(-2px);
+        }
+        .app-card-expanded.panel-info {
+          border-color: #bce8f1;
+        }
+        .app-card-expanded.panel-info:hover {
+          border-color: #31708f;
+        }
+        .app-card-expanded.panel-primary {
+          border-color: #337ab7;
+        }
+        .app-card-expanded.panel-danger {
+          border-color: #ebccd1;
+        }
+        .app-card-expanded.panel-danger:hover {
+          border-color: #a94442;
+        }
+      </style>
+      <div *ngFor="let app of visibleApps" class="panel app-card-expanded" 
+           [id]="'appPanel_' + sanitizeAppId(app.id)"
+           [ngClass]="{
   'panel-info': app.state === 'running',
   'panel-primary': app.state === 'starting' || app.state === 'stopping',
   'panel-danger': app.state === 'error',
@@ -52,16 +83,16 @@
 
         <div class="panel-heading">
           <h4 class="panel-title">
-            <i *ngIf="app.icon" [class]="app.icon" [style.color]="app.state === 'running' ? '#31708f' : (app.state === 'starting' || app.state === 'stopping') ? 'white' : '#888'" style="margin-right: 6px"></i>
-            <span [style.color]="app.state === 'running' ? '#31708f' : (app.state === 'starting' || app.state === 'stopping') ? 'white' : '#888'">{{ app.name }}</span>
-            <strong [style.color]="app.state === 'running' ? '#31708f' : (app.state === 'starting' || app.state === 'stopping') ? 'white' : '#888'" style="margin-left: 6px;">
+            <i *ngIf="app.icon" [class]="app.icon" [style.color]="(app.state === 'starting' || app.state === 'stopping') ? 'white' : '#333'" style="margin-right: 6px"></i>
+            <span [id]="'appName_' + sanitizeAppId(app.id)" [style.color]="(app.state === 'starting' || app.state === 'stopping') ? 'white' : '#333'">{{ app.name }}</span>
+            <strong [id]="'appState_' + sanitizeAppId(app.id)" [style.color]="app.state === 'running' ? '#31708f' : (app.state === 'starting' || app.state === 'stopping') ? 'white' : '#888'" style="margin-left: 6px;">
               <i *ngIf="app.state === 'starting' || app.state === 'stopping'" class="fa fa-spinner fa-spin" style="margin-right: 5px;"></i>
               {{ app.state === 'running' ? 'running' : app.state === 'starting' ? 'starting' : app.state === 'stopping' ? 'stopping' : 'stopped' }}
             </strong>
           </h4>
         </div>
         <div class="panel-body">
-          <p class="text-muted">{{ app.description }}</p>
+          <p class="text-muted" [innerHTML]="app.description"></p>
           
           <!-- Editable Command Input (only for Docker apps) -->
           <div *ngIf="app.type === 'docker'" class="form-group" style="margin-top: 10px; margin-bottom: 10px;">
@@ -77,8 +108,42 @@
               title="Edit the command (e.g., change port) before starting/stopping."
             />
           </div>
+
+          <!-- Flowkraft Apps: Build Options (checkboxes, only when stopped) -->
+          <div *ngIf="(app.id === 'flowkraft-admin-grails' || app.id === 'flowkraft-frend-grails' || app.id === 'flowkraft-bkend-boot-groovy') && app.state !== 'running'" 
+               style="margin-top: 5px; margin-bottom: 10px;">
+            <label class="checkbox-inline" style="font-size: 0.85em; cursor: pointer;"
+                   title="Rebuild image using cache. Use when source code changed (*.groovy, *.java, *.gsp, views, assets)">
+              <input type="checkbox" 
+                     [checked]="app.currentCommandValue?.includes('--build')"
+                     (change)="toggleCommandFlag(app, '--build', $event)"
+                     [disabled]="app.state === 'starting' || app.state === 'stopping' || app.currentCommandValue?.includes('--no-cache')" />
+              <code>--build</code>
+              <i class="fa fa-info-circle text-muted" style="margin-left: 3px;"></i>
+            </label>
+            <label class="checkbox-inline" style="font-size: 0.85em; margin-left: 15px; cursor: pointer;"
+                   title="Full rebuild without cache. Use when Dockerfile or dependencies changed (build.gradle, pom.xml) — slower">
+              <input type="checkbox" 
+                     [checked]="app.currentCommandValue?.includes('--no-cache')"
+                     (change)="toggleCommandFlag(app, '--no-cache', $event)"
+                     [disabled]="app.state === 'starting' || app.state === 'stopping'" />
+              <code>--no-cache</code>
+              <i class="fa fa-info-circle text-muted" style="margin-left: 3px;"></i>
+            </label>
+            <label class="checkbox-inline" style="font-size: 0.85em; margin-left: 15px; cursor: pointer;"
+                   title="Enable Liquibase Groovy DSL database migrations. Runs changesets from db/migration/changelog.groovy on startup.">
+              <input type="checkbox" 
+                     [checked]="app.currentCommandValue?.includes('--liquibase')"
+                     (change)="toggleCommandFlag(app, '--liquibase', $event)"
+                     [disabled]="app.state === 'starting' || app.state === 'stopping'" />
+              <code>--liquibase</code>
+              <i class="fa fa-info-circle text-muted" style="margin-left: 3px;"></i>
+            </label>
+          </div>
+
           <!-- Action Button with Spinner and Dynamic Text -->
           <button
+            [id]="'btnStartStop_' + sanitizeAppId(app.id)"
             class="btn"
             [ngClass]="{
               'btn-primary': app.state === 'running' || app.state === 'starting' || app.state === 'stopping',
@@ -87,12 +152,13 @@
             [disabled]="app.state === 'starting' || app.state === 'stopping'"
             (click)="onToggleApp(app)"
           >
-            <i *ngIf="app.state === 'starting' || app.state === 'stopping'" class="fa fa-spinner fa-spin"></i>
-            <i *ngIf="app.state !== 'starting' && app.state !== 'stopping'" class="fa"
+            <i *ngIf="app.state === 'starting' || app.state === 'stopping'" [id]="'appSpinner_' + sanitizeAppId(app.id)" class="fa fa-spinner fa-spin"></i>
+            <i *ngIf="app.state !== 'starting' && app.state !== 'stopping'" [id]="'appIcon_' + sanitizeAppId(app.id)" class="fa"
                [ngClass]="{'fa-play': app.state !== 'running', 'fa-stop': app.state === 'running'}"></i>
             {{ app.state === 'running' ? 'Stop' : 'Start' }}
           </button>
-          <a *ngIf="app.url && app.type !== 'desktop'" 
+          <a *ngIf="app.url && app.type !== 'desktop' && app.launch !== false" 
+             [id]="'btnLaunch_' + sanitizeAppId(app.id)"
              [href]="app.state === 'running' ? app.url : null" 
              target="_blank" 
              class="btn btn-default pull-right" 

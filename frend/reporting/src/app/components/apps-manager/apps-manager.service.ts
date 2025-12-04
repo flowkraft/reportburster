@@ -24,6 +24,10 @@ export interface ManagedApp {
   currentCommandValue?: string;
   tags?: string[];
   visible?: boolean;
+  launch?: boolean; // Set to false to hide Launch button (e.g., for headless/API-only apps)
+  // Build flags for Flowkraft apps
+  buildOnStart?: boolean;
+  noCacheOnStart?: boolean;
 }
 
 @Injectable({
@@ -41,20 +45,66 @@ export class AppsManagerService {
     apps: [
       {
         id: 'cms-webportal',
-        name: 'WebPortal / Content Management CMS',
+        name: 'WebPortal / Customer Portal',
         icon: 'fa fa-users',
         category: 'Web Portal',
         type: 'docker',
-        description: 'Production-ready WebPortal / Content Management with admin features.',
+        description: 'Launch your customer portal in minutes <a href="https://www.reportburster.com/docs/web-portal-cms" target="_blank"><i class="fa fa-book"></i>&nbsp;see how</a>',
         url: 'http://localhost:8080/wp-admin',
         entrypoint: 'cms-webportal-playground/docker-compose.yml',
         service_name: 'cms-webportal-playground',
         startCmd: 'service app start cms-webportal-playground 8080',
         stopCmd: 'service app stop cms-webportal-playground',
-        tags: ['cms', 'webportal', 'admin-panel'],
+        tags: ['cms', 'webportal', 'admin-panel', 'customer-portal', 'cms', 'wordpress'],
         visible: true,
       },
       {
+        id: 'flowkraft-frend-grails',
+        name: 'Flowkraft\'s Frontend App (Dashboards & Portals)',
+        icon: 'fa fa-cube',
+        category: 'Frontend Tools',
+        type: 'docker',
+        description: 'Build reporting dashboards and customer portals quickly',
+        url: 'http://localhost:8481',
+        entrypoint: 'flowkraft/docker-compose.yml',
+        service_name: 'frend-grails-playground',
+        startCmd: 'service app start frend-grails-playground 8481',
+        stopCmd: 'service app stop frend-grails-playground',
+        tags: ['flowkraft', 'dashboards', 'customer-portal'],
+        visible: true,
+      },
+      {
+        id: 'flowkraft-admin-grails',
+        name: 'Flowkraft\'s Admin Panel App',
+        icon: 'fa fa-cube',
+        category: 'Admin Tools',
+        type: 'docker',
+        description: 'Build admin user interfaces on top of your business data',
+        url: 'http://localhost:8482',
+        entrypoint: 'flowkraft/docker-compose.yml',
+        service_name: 'admin-grails-playground',
+        startCmd: 'service app start admin-grails-playground 8482',
+        stopCmd: 'service app stop admin-grails-playground',
+        tags: ['flowkraft', 'admin-panel', 'cms'],
+        visible: true,
+      },
+      {
+        id: 'flowkraft-bkend-boot-groovy',
+        name: 'Flowkraft\'s Backend App (Automation & Job Scheduling)',
+        icon: 'fa fa-cogs',
+        category: 'Backend Services',
+        type: 'docker',
+        description: 'Quickly deploy / run automation flows across your business systems',
+        url: 'http://localhost:8483',
+        entrypoint: 'flowkraft/docker-compose.yml',
+        service_name: 'bkend-boot-groovy-playground',
+        startCmd: 'service app start bkend-boot-groovy-playground 8483',
+        stopCmd: 'service app stop bkend-boot-groovy-playground',
+        tags: ['flowkraft', 'backend', 'automation', 'job-scheduling'],
+        visible: true,
+        launch: false, // No UI - API/automation only
+      },
+       {
         id: 'rundeck',
         name: 'Rundeck (Automation & Job Scheduling)',
         icon: 'fa fa-cogs',
@@ -81,52 +131,37 @@ export class AppsManagerService {
         service_name: 'cloudbeaver',
         startCmd: 'service app start cloudbeaver 8978',
         stopCmd: 'service app stop cloudbeaver',
-        tags: ['database management', 'sql-client'],
+        tags: ['database-management'],
         visible: true,
       },
       {
-        id: 'flowkraft-admin-grails',
-        name: 'Flowkraft\'s Admin Panel App (Playground)',
-        icon: 'fa fa-cube',
-        category: 'Admin Tools',
+        id: 'matomo',
+        name: 'Matomo (Web Analytics)',
+        icon: 'fa fa-bar-chart',
+        category: 'Analytics & Tracking',
         type: 'docker',
-        description: 'Flowkraft\'s Admin Panel App implemented as a Grails 7 application.',
-        url: 'http://localhost:8481',
-        entrypoint: 'flowkraft/docker-compose.yml',
-        service_name: 'admin-grails-playground',
-        startCmd: 'service app start admin-grails-playground 8481',
-        stopCmd: 'service app stop admin-grails-playground',
-        tags: ['flowkraft', 'admin-panel', 'cms'],
+        description: 'Open-source web analytics platform, a privacy-friendly alternative to Google Analytics.',
+        url: 'http://localhost:8081',
+        entrypoint: 'matomo/docker-compose.yml',
+        service_name: 'matomo',
+        startCmd: 'service app start matomo 8081',
+        stopCmd: 'service app stop matomo',
+        tags: ['analytics', 'web-analytics'],
         visible: true,
       },
       {
-        id: 'flowkraft-bkend-boot-groovy',
-        name: 'Flowkraft\'s Backend App (Playground)',
-        icon: 'fa fa-cogs',
-        category: 'Backend Services',
+        id: 'docuseal',
+        name: 'Docuseal (Document Signing)',
+        icon: 'fa fa-file-signature',
+        category: 'Document Management',
         type: 'docker',
-        description: 'Flowkraft\'s Backend App implemented as a Spring Boot 4 application.',
-        url: 'http://localhost:8482',
-        entrypoint: 'flowkraft/docker-compose.yml',
-        service_name: 'bkend-boot-groovy-playground',
-        startCmd: 'service app start bkend-boot-groovy-playground 8482',
-        stopCmd: 'service app stop bkend-boot-groovy-playground',
-        tags: ['flowkraft', 'backend', 'automation', 'job-scheduling'],
-        visible: true,
-      },
-      {
-        id: 'flowkraft-frend-grails',
-        name: 'Flowkraft\'s Frontend App (Playground)',
-        icon: 'fa fa-cube',
-        category: 'Frontend Tools',
-        type: 'docker',
-        description: 'Flowkraft\'s Frontend App implemented as a Grails 7 application.',
-        url: 'http://localhost:8483',
-        entrypoint: 'flowkraft/docker-compose.yml',
-        service_name: 'frend-grails-playground',
-        startCmd: 'service app start frend-grails-playground 8483',
-        stopCmd: 'service app stop frend-grails-playground',
-        tags: ['flowkraft', 'frontend', 'webportal'],
+        description: 'Self-hosted document signing platform with secure workflows and audit trails.',
+        url: 'http://localhost:3001',
+        entrypoint: 'docuseal/docker-compose.yml',
+        service_name: 'docuseal',
+        startCmd: 'service app start docuseal 3001',
+        stopCmd: 'service app stop docuseal',
+        tags: ['document-signing', 'security'],
         visible: true,
       },
       {
@@ -158,6 +193,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop clickhouse',
         tags: ['database', 'olap', 'analytics'],
         visible: true,
+        launch: false, // No UI - API/database server only
       },
       {
         id: 'vanna-ai',
@@ -230,7 +266,13 @@ export class AppsManagerService {
 
       // Update app states based on API response
       for (const app of this.allAppsData.apps) {
-        const service = statuses.find(s => s.name === app.service_name || s.name.includes(app.id));
+        // Match by: exact service_name, container name contains service_name, or container name contains app.id
+        const service = statuses.find(s => 
+          s.name === app.service_name || 
+          s.name.includes(app.service_name) ||
+          s.name.includes(app.id) ||
+          (app.service_name && s.name.includes(app.service_name.replace(/-playground$/, '')))
+        );
         if (service) {
           this.appStates[app.id] = service.status === 'running' ? 'running' : 'stopped';
 

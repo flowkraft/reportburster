@@ -48,8 +48,8 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
       </div>
       
       <div class="col-xs-7" *ngIf="!numberOfGenerateReportsConfigured" style="padding-top: 6px;">
-        <i class="fa fa-info-circle"></i>&nbsp;No report generation templates configured&nbsp;
-        <a id="noReportsShowMeHowToConfigureReports" href="https://www.reportburster.com/docs/artificial-intelligence" target="_blank" class="btn btn-primary btn-sm">
+        no reports configured&nbsp;
+        <a id="noReportsShowMeHowToConfigureReports" href="https://www.reportburster.com/docs/artificial-intelligence" target="_blank">
             <i class="fa fa-book"></i>&nbsp;{{'AREAS.PROCESSING.TAB-REPORTING-MAILMERGE-CLASSICREPORTS.SHOW-ME-HOW-TO' | translate
           }}
         </a>

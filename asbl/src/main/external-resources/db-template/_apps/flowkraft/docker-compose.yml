@@ -1,12 +1,29 @@
 services:
+  
+  frend-grails-playground:
+    build: ./frend-grails-playground
+    image: frend-grails-playground:latest
+    container_name: fkraft-frend-grails-playground
+    ports:
+      - "${HOST_PORT:-8481}:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:-false}
+      - DB_CREATE=${DB_CREATE:-update}
+    volumes:
+      - ../../db/sample-northwind-sqlite:/db
+    restart: unless-stopped
+
   admin-grails-playground:
     build: ./admin-grails-playground
     image: admin-grails-playground:latest
-    container_name: rb-admin-grails-playground
+    container_name: fkraft-admin-grails-playground
     ports:
-      - "8481:8080"
+      - "${HOST_PORT:-8482}:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:-false}
+      - DB_CREATE=${DB_CREATE:-update}
     volumes:
       - ../../db/sample-northwind-sqlite:/db
     restart: unless-stopped
@@ -14,23 +31,13 @@ services:
   bkend-boot-groovy-playground:
     build: ./bkend-boot-groovy-playground
     image: bkend-boot-groovy-playground:latest
-    container_name: rb-bkend-boot-groovy-playground
+    container_name: fkraft-bkend-boot-groovy-playground
     ports:
-      - "8482:8080"
+      - "${HOST_PORT:-8483}:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-    volumes:
-      - ../../db/sample-northwind-sqlite:/db
-    restart: unless-stopped
-
-  frend-grails-playground:
-    build: ./frend-grails-playground
-    image: frend-grails-playground:latest
-    container_name: rb-frend-grails-playground
-    ports:
-      - "8483:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
+      - ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:-false}
+      - DDL_AUTO=${DDL_AUTO:-update}
     volumes:
       - ../../db/sample-northwind-sqlite:/db
     restart: unless-stopped

@@ -1,11 +1,18 @@
-ENABLE_LIQUIDBASE_GROOVY_MIGRATIONS: false
+ENABLE_LIQUIBASE_GROOVY_MIGRATIONS: false
+
+# Spring Liquibase configuration (enabled when ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=true)
+spring:
+    liquibase:
+        enabled: ${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:false}
+        change-log: classpath:db/migration/changelog.groovy
 
 # SQLite datasource configuration
+# DB_CREATE: 'none' when Liquibase handles migrations, 'update' for GORM auto-schema
 dataSource:
-	driverClassName: org.sqlite.JDBC
-	dbCreate: update
-	url: jdbc:sqlite:/db/northwind.db
-	username:
-	password:
+    driverClassName: org.sqlite.JDBC
+    dbCreate: ${DB_CREATE:update}
+    url: jdbc:sqlite:/db/northwind.db
+    username:
+    password:
 hibernate:
-	dialect: org.hibernate.dialect.SQLiteDialect
+    dialect: org.sqlite.hibernate.dialect.SQLiteDialect

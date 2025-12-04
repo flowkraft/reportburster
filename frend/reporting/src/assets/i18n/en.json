@@ -588,7 +588,7 @@
       },
       "TAB-REPORTING-MAILMERGE-CLASSICREPORTS": {
         "CHOOSE-REPORT": "Report",
-        "SHOW-ME-HOW-TO": "Show me how to build reports with AI"
+        "SHOW-ME-HOW-TO": "see how to build reports using AI help"
       },
       "TAB-MERGE-BURST": {
         "BURST-MERGED-FILE": "Burst Merged File",
@@ -624,7 +624,7 @@
       "TABS": {
         "BURST": "Burst Reports",
         "MAILMERGE-CLASSICREPORTS": "Generate Reports",
-        "CMS-WEBPORTAL": "Web Portal / Customer Portal",
+        "CMS-WEBPORTAL": "Dashboards / Customer Portal",
         "LOGGING-TRACING": "Logging and Tracing",
         "MERGE-BURST": "Merge -> Burst",
         "QUALITY-ASSURANCE": "Quality Assurance",

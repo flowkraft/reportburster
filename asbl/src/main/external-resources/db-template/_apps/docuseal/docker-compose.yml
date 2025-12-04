@@ -1,0 +1,32 @@
+services:
+  docuseal:
+    image: docuseal/docuseal:2.2.4
+    container_name: rb-docuseal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${HOST_PORT:-3001}:3000"
+    volumes:
+      - ./docuseal:/data/docuseal
+    environment:
+      - FORCE_SSL=${HOST}
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/docuseal
+
+  postgres:
+    image: postgres:15
+    container_name: rb-docuseal-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: docuseal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+        - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

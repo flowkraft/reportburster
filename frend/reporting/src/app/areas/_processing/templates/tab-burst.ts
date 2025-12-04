@@ -49,6 +49,9 @@ export const tabBurstTemplate = `<ng-template #tabBurstTemplate>
       </div>
 
       <div class="col-xs-3" style="margin-left: -20px">
+        <a id="seeHowToBurst" href="https://www.reportburster.com/docs/report-bursting" target="_blank">
+            &nbsp;&nbsp;<i class="fa fa-book">&nbsp;&nbsp;see how</i>
+        </a>
         <!--
         <dburst-button-native-system-dialog style="display: none;"
           value="{{
