@@ -1,11 +1,11 @@
 services:
   cms-webportal-playground:
     image: wordpress:6.8.2-php8.4-apache
-    container_name: cms-webportal-playground
+    container_name: rb-cms-webportal-playground
     depends_on:
       - cms-webportal-playground-db
     ports:
-      - "8080:80"
+      - "${HOST_PORT:-8080}:80"
     volumes:
       - ./config/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
       - ./logs-wp/apache2:/var/log/apache2
@@ -18,9 +18,9 @@ services:
 
   cms-webportal-playground-db:
     image: mysql:8.0
-    container_name: cms-webportal-playground-db
+    container_name: rb-cms-webportal-playground-db
     volumes:
-      - ./data-db:/var/lib/mysql
+      - wp_db_data:/var/lib/mysql
       - ./logs-db:/var/log/mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -33,7 +33,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.cli
-    container_name: cms-webportal-playground-cli
+    container_name: rb-cms-webportal-playground-cli
     user: root
     environment:
       - WP_CLI_ALLOW_ROOT=1
@@ -209,7 +209,7 @@ services:
 
   sage-theme-builder:
     image: node:20-bullseye
-    container_name: sage-theme-builder
+    container_name: rb-sage-theme-builder
     depends_on:
       cms-webportal-playground-cli:
         condition: service_completed_successfully
@@ -235,3 +235,4 @@ services:
 
 volumes:
   wp_html:
+  wp_db_data:

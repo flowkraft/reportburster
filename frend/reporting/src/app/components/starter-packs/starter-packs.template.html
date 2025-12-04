@@ -99,19 +99,55 @@
   
   <!-- Starter Pack List -->
   <div class="row" *ngIf="!isLoading && filteredStarterPacks.length > 0">
+    <!-- Scoped styles for starter pack cards - consistent with apps-manager -->
+    <style>
+      .starter-pack-card {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      }
+      .starter-pack-card:hover {
+        border-color: #bbb;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+      }
+      .starter-pack-card.panel-info {
+        border-color: #bce8f1;
+      }
+      .starter-pack-card.panel-info:hover {
+        border-color: #31708f;
+      }
+      .starter-pack-card.panel-primary {
+        border-color: #337ab7;
+      }
+      .starter-pack-card.panel-danger {
+        border-color: #ebccd1;
+      }
+      .starter-pack-card.panel-danger:hover {
+        border-color: #a94442;
+      }
+      .starter-pack-card .panel-title {
+        color: #333;
+      }
+      .starter-pack-card.panel-primary .panel-title,
+      .starter-pack-card.panel-primary .panel-heading {
+        color: white;
+      }
+    </style>
     <!-- Changed col-lg-4 to col-lg-6 to show 2 packs per row on large screens -->
     <div
       class="col-md-6 col-lg-6"
       *ngFor="let pack of filteredStarterPacks; trackBy: trackPackById"
     >
       <div
-        class="panel"
+        class="panel starter-pack-card"
         [id]="'starterPack_' + pack.id"
         [ngClass]="{
           'panel-info': pack.status === 'running',
           'panel-primary': pack.status === 'starting' || pack.status === 'stopping',
           'panel-danger': pack.status === 'error',
-          'panel-default': pack.status === 'stopped' || pack.status === 'unknown' || pack.status === 'starting' || pack.status === 'stopping'
+          'panel-default': pack.status === 'stopped' || pack.status === 'unknown'
         }"
       >
         <div class="panel-heading">

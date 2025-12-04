@@ -81,6 +81,11 @@ dependencies {
 
     //my own
     implementation "org.xerial:sqlite-jdbc:3.51.0.0"
+    implementation "com.github.gwenn:sqlite-dialect:0.1.4"
+    implementation "org.liquibase:liquibase-core:5.0.1"
+    implementation("org.liquibase:liquibase-groovy-dsl:4.0.1") {
+        exclude group: 'org.codehaus.groovy'
+    }
 }
 
 compileJava.options.release = 17

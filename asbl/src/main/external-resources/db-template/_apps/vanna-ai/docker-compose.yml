@@ -7,7 +7,7 @@ services:
     container_name: reportburster-chat2db
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "${HOST_PORT:-8000}:8000"
     volumes:
       - ./data:/app/data
     env_file:

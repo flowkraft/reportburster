@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -547,7 +548,7 @@ public class MainProgram implements Callable<Integer> {
 		}
 	}
 
-	@Command(name = "service", description = "Manage services (e.g., databases, queues) via Docker.", mixinStandardHelpOptions = true, customSynopsis = "service <category> <command> [service-name] [args...]")
+	@Command(name = "service", description = "Manage services (e.g., databases, queues) via Docker.", mixinStandardHelpOptions = false, customSynopsis = "service <category> <command> [service-name] [args...]")
 	public static class ServiceCommand extends BaseCommand implements Callable<Integer> {
 
 		@ParentCommand
@@ -558,8 +559,13 @@ public class MainProgram implements Callable<Integer> {
 			return parent;
 		}
 
-		@Parameters(description = "The full service command string (e.g., 'database start northwind postgresql').")
+		// Use arity = "1..*" to capture all remaining args
+		@Parameters(description = "The full service command string (e.g., 'database start northwind postgresql').", arity = "1..*")
 		private List<String> commandAndArgs;
+		
+		// Capture unmatched options like --no-cache, --build, --liquibase
+		@CommandLine.Unmatched
+		private List<String> unmatchedArgs;
 
 		@Override
 		public Integer call() throws Exception {
@@ -572,8 +578,14 @@ public class MainProgram implements Callable<Integer> {
 				return 1;
 			}
 
-			String serviceName = commandAndArgs.get(2);
-			String commandLine = String.join(" ", commandAndArgs);
+			// Combine commandAndArgs with any unmatched args (flags like --no-cache)
+			List<String> allArgs = new ArrayList<>(commandAndArgs);
+			if (unmatchedArgs != null) {
+				allArgs.addAll(unmatchedArgs);
+			}
+
+			String serviceName = allArgs.get(2);
+			String commandLine = String.join(" ", allArgs);
 
 			CliJob job = getJob(null);
 			job.doService(serviceName, commandLine);

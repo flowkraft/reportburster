@@ -66,7 +66,7 @@
         <br />
         <ul>
           <li *ngFor="let change of visibleRelease?.changes.get('added')">
-            {{ change.title }}
+            <markdown [data]="change.title"></markdown>
           </li>
         </ul>
       </div>
@@ -79,7 +79,7 @@
         <br />
         <ul>
           <li *ngFor="let change of visibleRelease?.changes.get('changed')">
-            {{ change.title }}
+            <markdown [data]="change.title"></markdown>
           </li>
         </ul>
       </div>
@@ -92,7 +92,7 @@
         <br />
         <ul>
           <li *ngFor="let change of visibleRelease?.changes.get('fixed')">
-            {{ change.title }}
+            <markdown [data]="change.title"></markdown>
           </li>
         </ul>
       </div>

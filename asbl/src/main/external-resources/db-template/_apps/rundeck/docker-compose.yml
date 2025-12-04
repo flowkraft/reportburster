@@ -7,7 +7,7 @@ services:
       - data:/home/rundeck/server/data
       # - ${RUNDECK_LICENSE_FILE:-/dev/null}:/home/rundeck/etc/rundeckpro-license.key
     ports:
-      - "4440:4440"
+      - "${HOST_PORT:-4440}:4440"
     restart: unless-stopped  
 
 volumes:

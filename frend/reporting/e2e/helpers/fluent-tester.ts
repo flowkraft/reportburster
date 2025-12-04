@@ -1166,6 +1166,50 @@ export class FluentTester implements PromiseLike<void> {
 
   }
 
+  public gotoApps(): FluentTester {
+    const action = (): Promise<void> => this.doGotoApps();
+    this.actions.push(action);
+    return this;
+  }
+
+  private async doGotoApps(): Promise<void> {
+    // Navigate to Help → Apps / Starter Packs / Extra Utils → Apps tab
+    await this.doHover('#topMenuHelp');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doClick('#topMenuHelp');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
+    await this.doWaitOnElementToBecomeVisible('#topMenuStarterPacks');
+    await this.doClick('#topMenuStarterPacks');
+
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doWaitOnElementToBecomeVisible('#appSearch');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+  }
+
+  public gotoCmsWebPortal(): FluentTester {
+    const action = (): Promise<void> => this.doGotoCmsWebPortal();
+    this.actions.push(action);
+    return this;
+  }
+
+  private async doGotoCmsWebPortal(): Promise<void> {
+    // Navigate to Burst screen which contains the CMS Web Portal tab
+    await this.doHover('#topMenuBurst');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doClick('#topMenuBurst');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
+    // Click on the CMS Web Portal tab
+    await this.doWaitOnElementToBecomeVisible('#cmsWebPortalTab-link');
+    await this.doClick('#cmsWebPortalTab-link');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
+    // Wait for the apps-manager component to load
+    await this.doWaitOnElementToBecomeVisible('#appPanel_cms-webportal');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+  }
+
   gotoConfigurationTemplates = (): FluentTester => {
     const action = (): Promise<void> => this.doGotoConfigurationTemplates();
 

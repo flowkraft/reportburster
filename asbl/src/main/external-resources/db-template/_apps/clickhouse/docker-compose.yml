@@ -3,20 +3,17 @@ services:
     image: clickhouse:lts-jammy
     container_name: rb-clickhouse
     restart: unless-stopped
-
     ports:
-      - "8123:8123"   # HTTP interface (queries via curl, BI tools, etc.)
+      - "${HOST_PORT:-8123}:8123"   # HTTP interface (queries via curl, BI tools, etc.)
       - "9000:9000"   # Native TCP interface (clients, drivers)
       - "9009:9009"   # Inter-server communication (replication/sharding)
-
     volumes:
-      # Core data storage
-      - ./data:/var/lib/clickhouse
+      # Core data storage managed by Docker
+      - clickhouse_data:/var/lib/clickhouse
       # Logs (optional, useful for debugging)
       - ./logs:/var/log/clickhouse-server
       # Configs (optional, override defaults if needed)
-      - ./config:/etc/clickhouse-server
-
+      # - ./config:/etc/clickhouse-server
     environment:
       # Default user/password (good for local dev; change in production!)
       CLICKHOUSE_USER: default
@@ -30,6 +27,9 @@ services:
     #       cpus: "2"
     #       memory: "4g"
 
+volumes:
+  clickhouse_data:
+  
 # -------------------------------
 # Notes / Common Config Options:
 # -------------------------------
@@ -61,3 +61,5 @@ services:
 #    - Mount volumes to persistent storage (not tmpfs)
 #    - Use resource limits (CPU/mem) to avoid runaway queries
 #    - Consider separating logs and configs into their own dirs
+
+

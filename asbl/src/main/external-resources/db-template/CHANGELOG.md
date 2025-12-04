@@ -6,18 +6,21 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- **New Apps Tab** accessible via **Help → Apps / Starter Packs / Extra Utils → Apps**  
-  (-)  Provides 8 integrated applications  
-    (A) ReportBurster Portal  
-    (B) Rundeck  
-    (C) CloudBeaver  
-    (D) 3x FlowKraft apps  
-    (E) Metabase  
-    (F) Clickhouse  
-  (-) These applications complement ReportBurster and work well together.  
-  (-) *Docker must be installed to start, stop, or use these apps.*
+- New **Apps** Tab accessible via *Help* → **Apps / Starter Packs / Extra Utils** → *Apps* — 10 applications that complement ReportBurster. **Docker must be installed & running for starting, stopping, or using these apps.**
+  - ReportBurster Portal
+  - 3x FlowKraft apps (backend automation, admin-panel and frontend dashboards)
+  - Rundeck - Runbook automation and job scheduling
+  - CloudBeaver - Database management tool
+  - Matomo - Web Analytics
+  - Docuseal - Document Signing
+  - Metabase - BI and visualization tool
+  - Clickhouse - High-performance OLAP database
 - Tabulator is now configurable via a simple and effective **Tabulator Options DSL**  
 - ReportBurster can now create charts (powered by **Chart.js**)
+- User experience improvements
+  - Added option to toggle (show/hide) the left navigation menu to increase usable screen space.
+  - Main application window can now be maximized to use the full display area.
+  - Email message editor supports manual resizing to provide a larger editing area.
 
 ## 11.4.0 - 2025-11-25
 
