@@ -22,6 +22,7 @@ import com.flowkraft.common.AppPaths;
 import com.flowkraft.jobman.dtos.FindCriteriaDto;
 import com.flowkraft.jobman.services.SystemService;
 import com.sourcekraft.documentburster.common.chart.ChartOptionsParser;
+import com.sourcekraft.documentburster.common.pivottable.PivotTableOptionsParser;
 import com.sourcekraft.documentburster.common.reportparameters.ReportParametersHelper;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ConfigurationFileInfo;
@@ -287,6 +288,51 @@ public class DocumentBursterSettingsService {
 							}
 						} catch (Exception e) {
 							System.err.println("Failed to parse Chart DSL for " + configFile.folderName + ": " + e.getMessage());
+						}
+					}
+
+					// Load Pivot Table DSL
+					String pivotConfigFileName = configFile.folderName + "-pivot-config.groovy";
+					Path pivotConfigPath = itemDir.resolve(pivotConfigFileName);
+
+					if (Files.exists(pivotConfigPath)) {
+						try {
+							var pivotOptions = PivotTableOptionsParser.parseGroovyPivotTableDslCode(Files.readString(pivotConfigPath));
+							if (pivotOptions != null) {
+								configFile.pivotTableOptions = new HashMap<>();
+								if (pivotOptions.getRows() != null && !pivotOptions.getRows().isEmpty()) {
+									configFile.pivotTableOptions.put("rows", pivotOptions.getRows());
+								}
+								if (pivotOptions.getCols() != null && !pivotOptions.getCols().isEmpty()) {
+									configFile.pivotTableOptions.put("cols", pivotOptions.getCols());
+								}
+								if (pivotOptions.getVals() != null && !pivotOptions.getVals().isEmpty()) {
+									configFile.pivotTableOptions.put("vals", pivotOptions.getVals());
+								}
+								if (pivotOptions.getAggregatorName() != null) {
+									configFile.pivotTableOptions.put("aggregatorName", pivotOptions.getAggregatorName());
+								}
+								if (pivotOptions.getRendererName() != null) {
+									configFile.pivotTableOptions.put("rendererName", pivotOptions.getRendererName());
+								}
+								if (pivotOptions.getRowOrder() != null) {
+									configFile.pivotTableOptions.put("rowOrder", pivotOptions.getRowOrder());
+								}
+								if (pivotOptions.getColOrder() != null) {
+									configFile.pivotTableOptions.put("colOrder", pivotOptions.getColOrder());
+								}
+								if (pivotOptions.getValueFilter() != null && !pivotOptions.getValueFilter().isEmpty()) {
+									configFile.pivotTableOptions.put("valueFilter", pivotOptions.getValueFilter());
+								}
+								if (pivotOptions.getOptions() != null && !pivotOptions.getOptions().isEmpty()) {
+									configFile.pivotTableOptions.put("options", pivotOptions.getOptions());
+								}
+								if (pivotOptions.getData() != null && !pivotOptions.getData().isEmpty()) {
+									configFile.pivotTableOptions.put("data", pivotOptions.getData());
+								}
+							}
+						} catch (Exception e) {
+							System.err.println("Failed to parse Pivot Table DSL for " + configFile.folderName + ": " + e.getMessage());
 						}
 					}
 

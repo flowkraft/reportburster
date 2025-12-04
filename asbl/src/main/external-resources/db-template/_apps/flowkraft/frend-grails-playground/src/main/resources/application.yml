@@ -8,10 +8,12 @@ spring:
 
 # SQLite datasource configuration
 # DB_CREATE: 'none' when Liquibase handles migrations, 'update' for GORM auto-schema
+# DB_PATH: Relative path from frend-grails-playground folder to the database
+#          In Docker, the volume mounts to /db so use /db/northwind.db via env var
 dataSource:
     driverClassName: org.sqlite.JDBC
     dbCreate: ${DB_CREATE:update}
-    url: jdbc:sqlite:/db/northwind.db
+    url: jdbc:sqlite:${DB_PATH:../../../db/sample-northwind-sqlite/northwind.db}
     username:
     password:
 hibernate:

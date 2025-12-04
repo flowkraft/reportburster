@@ -124,6 +124,27 @@ export interface CfgTmplFileInfo {
     datasets?: Array<{ field?: string; label?: string; color?: string; type?: string; [k: string]: any }>;
     data?: Array<Record<string, any>>;
   };
+
+  // Parsed Pivot Table DSL options
+  pivotTableOptions?: {
+    rows?: string[];
+    cols?: string[];
+    vals?: string[];
+    aggregatorName?: string;
+    rendererName?: string;
+    rowOrder?: string;
+    colOrder?: string;
+    valueFilter?: Record<string, any>;
+    options?: any;
+    data?: Array<Record<string, any>>;
+    hiddenAttributes?: string[];
+    hiddenFromAggregators?: string[];
+    hiddenFromDragDrop?: string[];
+    unusedOrientationCutoff?: number;
+    menuLimit?: number;
+    sorters?: Record<string, any>;
+    derivedAttributes?: Record<string, string>;
+  };
 }
 
 @Injectable({

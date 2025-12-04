@@ -1,81 +1,269 @@
-<!doctype html>
-<html lang="en" class="no-js">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta charset="UTF-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <title>
-    <g:layoutTitle default="Grails"/>
-    </title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <asset:link rel="icon" href="favicon.ico" type="image/x-ico"/>
-    <asset:stylesheet src="application.css"/>
+    <title><g:layoutTitle default="ReportBurster Dashboard"/></title>
+    
+    <!-- Apply theme immediately to prevent flash -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('rb-theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        })();
+    </script>
+    
+    <!-- Google Fonts - Inter for clean professional look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- AdminLTE v4 CSS (Bootstrap 5 included) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/dist/css/adminlte.min.css"/>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    
+    <style>
+        /* ReportBurster brand - clean, professional */
+        :root {
+            --rb-cyan: #22a7c8;
+            --rb-dark: #1a2332;
+            --rb-gray: #6b7280;
+            --rb-light-gray: #f8fafc;
+        }
+        
+        /* Dark theme overrides */
+        [data-bs-theme="dark"] {
+            --bs-body-bg: #0f172a;
+            --bs-body-color: #e2e8f0;
+            --bs-tertiary-bg: #1e293b;
+            --bs-border-color: #334155;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        /* Top-nav layout */
+        .app-wrapper {
+            margin-left: 0 !important;
+            padding-top: 64px;
+        }
+        .app-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            background: #fff !important;
+            border-bottom: 1px solid #e5e7eb;
+            height: 64px;
+        }
+        [data-bs-theme="dark"] .app-header {
+            background: #0f172a !important;
+            border-bottom-color: #334155;
+        }
+        
+        /* Brand */
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--rb-dark);
+        }
+        .navbar-brand .brand-icon {
+            color: #29a0d6;
+            width: 22px;
+            height: 22px;
+        }
+        [data-bs-theme="dark"] .navbar-brand {
+            color: #fff;
+        }
+        
+        /* Nav links - subtle, professional */
+        .navbar-nav .nav-link {
+            color: var(--rb-gray);
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem !important;
+        }
+        .navbar-nav .nav-link:hover {
+            color: var(--rb-dark);
+        }
+        .navbar-nav .nav-link.active {
+            color: var(--rb-cyan);
+        }
+        [data-bs-theme="dark"] .navbar-nav .nav-link {
+            color: #9ca3af;
+        }
+        [data-bs-theme="dark"] .navbar-nav .nav-link:hover {
+            color: #fff;
+        }
+        [data-bs-theme="dark"] .navbar-nav .nav-link.active {
+            color: var(--rb-cyan);
+        }
+        
+        /* Content area */
+        .app-content {
+            padding: 2rem 0;
+        }
+        
+        /* Cards - clean, minimal */
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+        }
+        [data-bs-theme="dark"] .card {
+            border-color: #334155;
+            background: #1e293b;
+        }
+        [data-bs-theme="dark"] .card-header {
+            border-bottom-color: #334155;
+        }
+        
+        /* Footer */
+        .app-footer {
+            background: var(--rb-light-gray);
+            border-top: 1px solid #e5e7eb;
+            color: var(--rb-gray);
+            font-size: 0.875rem;
+        }
+        [data-bs-theme="dark"] .app-footer {
+            background: #0f172a;
+            border-top-color: #334155;
+            color: #94a3b8;
+        }
+        
+        /* Placeholder containers */
+        .placeholder-container {
+            background: var(--rb-light-gray);
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 3rem;
+            text-align: center;
+            color: var(--rb-gray);
+        }
+        [data-bs-theme="dark"] .placeholder-container {
+            background: #1e293b;
+            border-color: #374151;
+        }
+    </style>
+    
     <g:layoutHead/>
 </head>
-
-<body>
-
-<nav class="navbar navbar-expand-lg bg-body-tertiary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/#"><asset:image class="w-75" src="grails.svg" alt="Grails Logo"/></a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" aria-expanded="false" id="navbarContent">
-            <ul class="navbar-nav">
-                <g:pageProperty name="page.nav"/>
-            </ul>
-        </div>
-    </div>
-</nav>
-
-<g:layoutBody/>
-
-<div class="footer" role="contentinfo">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="card border-0 col-12 col-md">
-                <div class="card-body">
-                    <h6 class="card-title">
-                        <a class="link-underline link-underline-opacity-0" href="https://guides.grails.org" target="_blank">
-                            <asset:image src="advancedgrails.svg" alt="Grails Guides" class="me-2" width="34" />Grails Guides
-                        </a>
-                    </h6>
-                    <p class="card-text">Building your first Grails app? Looking to add security, or create a Single-Page-App? Check out the <a href="https://guides.grails.org" target="_blank">Grails Guides</a> for step-by-step tutorials.</p>
+<body class="layout-top-nav">
+    <div class="app-wrapper">
+        
+        <!-- Header / Top Navbar -->
+        <nav class="app-header navbar navbar-expand-lg navbar-light">
+            <div class="container-fluid">
+                <!-- Brand -->
+                <a class="navbar-brand" href="${createLink(uri: '/')}">
+                    <svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m22 2-7 20-4-9-9-4Z"/>
+                        <path d="M22 2 11 13"/>
+                    </svg>
+                    ReportBurster
+                </a>
+                
+                <!-- Navbar toggler -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <!-- Navigation -->
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <g:link uri="/" class="nav-link ${controllerName == 'home' || !controllerName ? 'active' : ''}">
+                                Home
+                            </g:link>
+                        </li>
+                        <li class="nav-item">
+                            <g:link controller="tabulator" class="nav-link ${controllerName == 'tabulator' ? 'active' : ''}">
+                                Tabulator
+                            </g:link>
+                        </li>
+                        <li class="nav-item">
+                            <g:link controller="charts" class="nav-link ${controllerName == 'charts' ? 'active' : ''}">
+                                Charts
+                            </g:link>
+                        </li>
+                        <li class="nav-item">
+                            <g:link uri="/pivottables" class="nav-link ${controllerName == 'pivotTables' ? 'active' : ''}">
+                                Pivot Tables
+                            </g:link>
+                        </li>
+                        <li class="nav-item">
+                            <g:link uri="/report-parameters" class="nav-link ${controllerName == 'reportParameters' ? 'active' : ''}">
+                                Parameters
+                            </g:link>
+                        </li>
+                        <li class="nav-item">
+                            <g:link controller="reports" class="nav-link ${controllerName == 'reports' ? 'active' : ''}">
+                                Reports
+                            </g:link>
+                        </li>
+                    </ul>
+                    
+                    <!-- Theme Toggle -->
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                <i class="bi bi-circle-half"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#" onclick="setTheme('light')"><i class="bi bi-sun me-2"></i>Light</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="setTheme('dark')"><i class="bi bi-moon me-2"></i>Dark</a></li>
+                            </ul>
+                        </li>
+                    </ul>
                 </div>
             </div>
-            <div class="card border-0 col-12 col-md">
-                <div class="card-body">
-                    <h6 class="card-title">
-                        <a class="link-underline link-underline-opacity-0" href="https://grails.apache.org/docs/" target="_blank">
-                            <asset:image src="documentation.svg" alt="Grails Documentation" class="me-2" width="34" />Documentation
-                        </a>
-                    </h6>
-                    <p class="card-text">Ready to dig in? You can find in-depth documentation for all the features of Grails in the <a href="https://grails.apache.org/docs/" target="_blank">User Guide</a>.</p>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="app-main">
+            <div class="app-content">
+                <div class="container-fluid">
+                    <g:layoutBody/>
                 </div>
             </div>
-            <div class="card border-0 col-12 col-md">
-                <div class="card-body">
-                    <h6 class="card-title">
-                        <a class="link-underline link-underline-opacity-0" href="https://slack.grails.org" target="_blank">
-                            <asset:image src="slack.svg" alt="Grails Slack" class="me-2" width="34" />Join the Community
-                        </a>
-                    </h6>
-                    <p class="card-text">Get feedback and share your experience with other Grails developers in the community <a href="https://slack.grails.org" target="_blank">Slack channel</a>.</p>
-                </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="float-end d-none d-sm-inline">
+                <a href="https://www.reportburster.com" target="_blank" class="text-decoration-none text-muted">reportburster.com</a>
             </div>
-        </div>
+            <span>&copy; 2025 FlowKraft Systems</span>
+        </footer>
     </div>
-</div>
 
-<div id="spinner" class="position-absolute top-0 end-0 p-1" style="display:none;">
-    <div class="spinner-border spinner-border-sm" role="status">
-        <span class="visually-hidden">Loading...</span>
-    </div>
-</div>
-
-
-<asset:javascript src="application.js"/>
-
+    <!-- Bootstrap 5 JS (required for dropdowns, etc.) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE v4 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/dist/js/adminlte.min.js"></script>
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    
+    <script>
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            localStorage.setItem('rb-theme', theme);
+        }
+    </script>
+    
+    <asset:javascript src="web-components/rb-tabulator.umd.js"/>
+    <g:pageProperty name="page.scripts"/>
 </body>
 </html>

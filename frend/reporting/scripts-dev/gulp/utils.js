@@ -33,6 +33,10 @@ gulp.task("utils:start-server-and-ui-electron", () => {
   _startServerAndDoX("_custom:start-ui-electron");
 });
 
+gulp.task("utils:start-server-and-ui-frend-grails", () => {
+  _startServerAndDoX("_custom:start-ui-frend-grails");
+});
+
 gulp.task("utils:start-server-and-e2e-electron", () => {
   _startServerAndDoX("_custom:playwright-scripts-electron");
 });
