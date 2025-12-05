@@ -263,7 +263,7 @@
         }
     </script>
     
-    <asset:javascript src="web-components/rb-tabulator.umd.js"/>
+    <asset:javascript src="web-components/rb-webcomponents.umd.js"/>
     <g:pageProperty name="page.scripts"/>
 </body>
 </html>

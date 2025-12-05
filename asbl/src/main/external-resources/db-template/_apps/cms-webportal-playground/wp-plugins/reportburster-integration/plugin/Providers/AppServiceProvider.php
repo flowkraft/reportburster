@@ -283,10 +283,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function enqueueAssets()
     {
-        //$plugin_url = plugin_dir_url(dirname(dirname(__FILE__))); // Go up two levels from Providers directory
+        $plugin_url = plugin_dir_url(dirname(dirname(__FILE__))); // Go up two levels from Providers directory
         
-        //wp_enqueue_script('tailwindcss-cdn', 'https://cdn.tailwindcss.com', [], null, false);
-        //wp_enqueue_style('bladewind-css', $plugin_url . 'vendor/mkocansey/bladewind/public/bladewind.min.css', [], '3.0.8');
-        //wp_enqueue_script('bladewind-js', $plugin_url . 'vendor/mkocansey/bladewind/public/bladewind.min.js', [], '3.0.8', true);
+        // Enqueue ReportBurster web components (Svelte-based custom elements)
+        wp_enqueue_script(
+            'rb-webcomponents',
+            $plugin_url . 'assets/js/rb-webcomponents.umd.js',
+            [], // no dependencies
+            '1.0.0',
+            true // load in footer
+        );
     }
 }

@@ -20,6 +20,12 @@ export class InitService {
       // Set API service URL after initialization
       this.apiService.BACKEND_URL = backendUrl;
 
+      // Read API key from file system (secure - no HTTP endpoint exposed)
+      const apiKey = await this.electronService.getApiKey();
+      if (apiKey) {
+        this.apiService.setApiKey(apiKey);
+      }
+
       const systemInfo = await this.electronService.getSystemInfo();
       this.stateStore.configSys.sysInfo.setup.chocolatey = {
         ...systemInfo.chocolatey,

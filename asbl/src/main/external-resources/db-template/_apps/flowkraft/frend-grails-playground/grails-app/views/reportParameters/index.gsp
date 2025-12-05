@@ -10,26 +10,58 @@
             <h4 class="mb-3">Report Parameters</h4>
             <p class="text-muted mb-4">Define how users filter and customize reports at runtime.</p>
             
-            <div class="placeholder-container mb-4">
-                <i class="bi bi-sliders" style="font-size: 3rem; opacity: 0.3;"></i>
-                <p class="mt-3 mb-0">Here will come parameter configuration examples</p>
-                <small class="text-muted">From simple inputs to cascading dropdowns and grouped parameters</small>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="bi bi-sliders"></i> Parameter Form
+                        </div>
+                        <div class="card-body">
+                            <rb-parameters 
+                                id="demoParams"
+                                report-code="sample-employees"
+                                api-base-url="http://localhost:9090/api/jobman/reporting"
+                                api-key="your-api-key"
+                            ></rb-parameters>
+                            <hr>
+                            <button id="submitBtn" class="btn btn-primary">Run Report</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">Current Values</div>
+                        <div class="card-body">
+                            <pre id="paramValues" style="background: var(--bs-tertiary-bg); padding: 1rem; border-radius: 4px; margin: 0;">{ }</pre>
+                        </div>
+                    </div>
+                </div>
             </div>
             
-            <!-- Quick reference list -->
             <div class="card">
-                <div class="card-header">Parameter Types (Examples Coming)</div>
+                <div class="card-header">Usage</div>
                 <div class="card-body">
-                    <ul class="mb-0" style="color: var(--rb-gray);">
-                        <li><strong>Simple:</strong> Text, date, number inputs</li>
-                        <li><strong>Select:</strong> Dropdown with static or API-driven options</li>
-                        <li><strong>Multi-select:</strong> Choose multiple values</li>
-                        <li><strong>Cascading:</strong> Dependent dropdowns (Country → City)</li>
-                        <li><strong>Grouped:</strong> Related parameters with validation</li>
-                    </ul>
+                    <pre class="bg-light p-3 border rounded mb-0"><code>&lt;rb-parameters 
+    report-code="sample-employees"
+    api-base-url="http://localhost:9090/api/jobman/reporting"
+    api-key="your-api-key"
+&gt;&lt;/rb-parameters&gt;</code></pre>
                 </div>
             </div>
         </div>
     </div>
+    
+    <content tag="scripts">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = document.getElementById('demoParams');
+            const valuesDisplay = document.getElementById('paramValues');
+            
+            params.addEventListener('valueChange', function(e) {
+                valuesDisplay.textContent = JSON.stringify(e.detail, null, 2);
+            });
+        });
+    </script>
+    </content>
 </body>
 </html>

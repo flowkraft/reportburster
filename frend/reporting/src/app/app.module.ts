@@ -1,5 +1,5 @@
-// rb-tabulator web component
-import '../assets/web-components/rb-tabulator.es';
+// rb web components (tabulator, chart, pivot table, parameters)
+import '../assets/web-components/rb-webcomponents.es';
 
 import { BrowserModule } from '@angular/platform-browser';
 import { APP_INITIALIZER, NgModule } from '@angular/core';

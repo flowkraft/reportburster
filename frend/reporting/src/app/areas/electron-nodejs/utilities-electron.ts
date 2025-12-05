@@ -68,6 +68,14 @@ export default class UtilitiesElectron {
     }
   }
 
+  static async getApiKey(): Promise<string | null> {
+    if (UtilitiesElectron.isIpcRendererAvailable()) {
+      return ipcRenderer.invoke('getApiKey');
+    } else {
+      return null;
+    }
+  }
+
   static async logAsync(message: string, level: string): Promise<void> {
     if (UtilitiesElectron.isIpcRendererAvailable()) {
       return ipcRenderer.invoke('log', level, message);

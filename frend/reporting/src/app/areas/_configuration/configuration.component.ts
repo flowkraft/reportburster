@@ -3361,14 +3361,18 @@ pivotTable {
 
   */
 
-  onReportParamsValidChange(isValid: boolean) {
+  onReportParamsValidChange(event: Event) {
+    // Web component emits CustomEvent with data in .detail
+    const isValid = (event as CustomEvent<boolean>).detail;
     this.reportParamsValid = isValid;
     //this.changeDetectorRef.detectChanges();
     //console.log('Report parameters form validity:', isValid);
   }
 
   // Add handler for the form's value
-  onReportParamsValuesChange(values: { [key: string]: any }) {
+  onReportParamsValuesChange(event: Event) {
+    // Web component emits CustomEvent with data in .detail
+    const values = (event as CustomEvent<{ [key: string]: any }>).detail;
     //console.log('Form parameter values:', values);
     this.reportParamsValues = values;
   }
@@ -3394,9 +3398,9 @@ pivotTable {
       {} as { [key: string]: any },
     );
     // console.log('[DEBUG] runQueryWithParams: paramsObject=', paramsObject);
-    // console.log('[DEBUG] runQueryWithParams: calling testFetchData...');
-    const result = await this.reportingService.testFetchData(paramsObject);
-    // console.log('[DEBUG] runQueryWithParams: testFetchData returned:', result);
+    // console.log('[DEBUG] runQueryWithParams: calling fetchData...');
+    const result = await this.reportingService.fetchData(paramsObject);
+    // console.log('[DEBUG] runQueryWithParams: fetchData returned:', result);
     return result;
   }
 

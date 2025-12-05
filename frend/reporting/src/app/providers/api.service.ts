@@ -22,6 +22,7 @@ export class ApiService {
 
   private headers: Headers;
   private jwtToken: string;
+  private apiKey: string = '';
 
   constructor(protected stateStore: StateStoreService) {
     this.headers = new Headers({
@@ -31,9 +32,39 @@ export class ApiService {
 
     this.jwtToken = '';
 
+    // Authentication modes:
+    // 1. Electron: Uses API key from file system (set via setApiKey())
+    // 2. Web mode: Uses session + CSRF (Spring Security standard pattern)
+    //    - Session cookie (JSESSIONID) sent automatically by browser
+    //    - CSRF token (XSRF-TOKEN) read from cookie and sent as header
+
     //console.log(
     //  `apiService.constructor - stateStore.configSys.sysInfo.setup = ${JSON.stringify(stateStore.configSys.sysInfo.setup)}`,
     //);
+  }
+
+  /**
+   * Set the API key (read from file system via Electron IPC).
+   * This is called during app initialization for Electron mode only.
+   */
+  setApiKey(key: string): void {
+    this.apiKey = key;
+  }
+
+  /**
+   * Read XSRF token from cookie (for web mode).
+   * Spring Security sets XSRF-TOKEN cookie, Angular reads it and sends as X-XSRF-TOKEN header.
+   * This is the standard Spring Security + Angular pattern.
+   */
+  private getXsrfToken(): string | null {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'XSRF-TOKEN') {
+        return decodeURIComponent(value);
+      }
+    }
+    return null;
   }
 
   private serialize(obj: any): HttpParams {
@@ -64,6 +95,14 @@ export class ApiService {
     return this.jwtToken;
   }
 
+  /**
+   * Get the API key for WebSocket authentication (Electron mode).
+   * Returns the API key if set, otherwise null.
+   */
+  public getApiKey(): string | null {
+    return this.apiKey || null;
+  }
+
   private async request(
     path: string,
     method: RequestMethod,
@@ -90,10 +129,24 @@ export class ApiService {
     //console.log(`apiService.request.url: ${JSON.stringify(url)}`);
 
     const headers = new Headers(customHeaders || this.headers);
+    
+    // Authentication: Add appropriate header based on mode
+    if (this.apiKey) {
+      // Electron/Grails/WordPress: Use API key from file system
+      headers.set('X-API-Key', this.apiKey);
+    } else {
+      // Web mode: Use CSRF token (Spring Security standard pattern)
+      // Spring sets XSRF-TOKEN cookie, we send it as X-XSRF-TOKEN header
+      const xsrfToken = this.getXsrfToken();
+      if (xsrfToken) {
+        headers.set('X-XSRF-TOKEN', xsrfToken);
+      }
+    }
+    
     const options: RequestInit = {
       method,
-      headers: customHeaders || this.headers,
-      credentials: 'include',
+      headers,
+      credentials: 'include',  // Important: sends cookies (JSESSIONID, XSRF-TOKEN)
     };
 
     if (

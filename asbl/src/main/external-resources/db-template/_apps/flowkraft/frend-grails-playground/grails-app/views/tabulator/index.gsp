@@ -10,12 +10,49 @@
             <h4 class="mb-3">Tabulator</h4>
             <p class="text-muted mb-4">Interactive data tables with sorting, filtering, and pagination.</p>
             
-            <div class="placeholder-container">
-                <i class="bi bi-table" style="font-size: 3rem; opacity: 0.3;"></i>
-                <p class="mt-3 mb-0">Here will come the <code>&lt;rb-tabulator&gt;</code> component</p>
-                <small class="text-muted">Connects to the API and renders data in a rich, interactive table</small>
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-table"></i> Data Table
+                </div>
+                <div class="card-body">
+                    <rb-tabulator 
+                        id="demoTable"
+                        report-code="sample-employees"
+                        api-base-url="http://localhost:9090/api/jobman/reporting"
+                        api-key="your-api-key"
+                    ></rb-tabulator>
+                    
+                    <div class="mt-3">
+                        <button id="refreshBtn" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">Usage</div>
+                <div class="card-body">
+                    <pre class="bg-light p-3 border rounded mb-0"><code>&lt;rb-tabulator 
+    report-code="sample-employees"
+    api-base-url="http://localhost:9090/api/jobman/reporting"
+    api-key="your-api-key"
+&gt;&lt;/rb-tabulator&gt;</code></pre>
+                </div>
             </div>
         </div>
     </div>
+    
+    <content tag="scripts">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.getElementById('demoTable');
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                table.fetchData({});
+            });
+        });
+    </script>
+    </content>
 </body>
 </html>
+

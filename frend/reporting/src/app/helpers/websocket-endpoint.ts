@@ -134,10 +134,22 @@ export class WebSocketEndpoint {
   };
 
   connect = async () => {
-    const headers = {};
+    // Build connection headers for STOMP
+    // For Electron: include API key in headers
+    // For Web: session cookie is sent automatically by SockJS
+    const headers: { [key: string]: string } = {};
 
     let socketUrl = this.BACKEND_URL + this.socketUrl;
-    if (this.accessToken) socketUrl += `?access_token=${this.accessToken}`;
+    
+    // For Electron/Grails/WordPress: Pass API key as query parameter
+    // This is validated by WebSocketHandshakeInterceptor on the server
+    if (this.accessToken) {
+      socketUrl += `?access_token=${encodeURIComponent(this.accessToken)}`;
+      // Also set in STOMP headers for the ChannelInterceptor
+      headers['X-API-Key'] = this.accessToken;
+    }
+    // For Web mode: SockJS automatically includes cookies (JSESSIONID)
+    // No additional headers needed - session authentication is automatic
 
     this._socket.client = new SockJS(socketUrl);
 

@@ -4,10 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.security.SecureRandom;
+import java.util.Base64;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import java.util.regex.Matcher;
+
+import org.zeroturnaround.exec.ProcessExecutor;
+import org.zeroturnaround.exec.stream.LogOutputStream;
 
 import com.sourcekraft.documentburster.common.db.northwind.NorthwindManager;
 
@@ -67,6 +72,9 @@ public class NoExeAssembler extends AbstractAssembler {
 		System.out.println(
 				"------------------------------------- DONE_03:NoExeAssembler copy db template files and folders ... -------------------------------------");
 
+		// Build and copy rb-webcomponents to Grails and WordPress in target
+		_buildAndCopyWebComponents();
+
 		// START MODULE_REPORTING work
 
 		// copy MODULE_REPORTING's template files and folders
@@ -98,6 +106,42 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// END MODULE_REPORTING work
 
+	}
+
+	private void _buildAndCopyWebComponents() throws Exception {
+		// Build rb-webcomponents using npm
+		String webComponentsPath = Utils.getTopProjectFolderPath() + "/frend/rb-webcomponents";
+		
+		new ProcessExecutor().directory(new File(webComponentsPath))
+				.command("cmd", "/c", "npm run build").redirectOutput(new LogOutputStream() {
+					@Override
+					protected void processLine(String line) {
+						System.out.println(line);
+					}
+				}).execute();
+
+		System.out.println(
+				"------------------------------------- DONE_03a:NoExeAssembler npm run build (rb-webcomponents) ... -------------------------------------");
+
+		// Copy to Grails web-components folder
+		String grailsWebComponentsPath = packageDirPath + "/" + topFolderName 
+				+ "/_apps/flowkraft/frend-grails-playground/grails-app/assets/web-components";
+		FileUtils.forceMkdir(new File(grailsWebComponentsPath));
+		FileUtils.copyDirectory(new File(webComponentsPath + "/dist"), new File(grailsWebComponentsPath));
+
+		System.out.println(
+				"------------------------------------- DONE_03b:NoExeAssembler copy rb-webcomponents to Grails ... -------------------------------------");
+
+		// Copy to WordPress plugin assets/js folder
+		String wordpressJsPath = packageDirPath + "/" + topFolderName 
+				+ "/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/assets/js";
+		FileUtils.forceMkdir(new File(wordpressJsPath));
+		FileUtils.copyFile(
+				new File(webComponentsPath + "/dist/rb-webcomponents.umd.js"),
+				new File(wordpressJsPath + "/rb-webcomponents.umd.js"));
+
+		System.out.println(
+				"------------------------------------- DONE_03c:NoExeAssembler copy rb-webcomponents to WordPress ... -------------------------------------");
 	}
 
 	private void _performAdditionalRefinementsAndCopyAdditionalFiles() throws Exception {
@@ -937,6 +981,18 @@ public class NoExeAssembler extends AbstractAssembler {
 		System.out.println(
 				"------------------------------------- DONE_10:NoExeAssembler _copyDistributedByGroovyFile ... -------------------------------------");
 
+		// Generate API key for file-based security discovery
+		// The API key is stored on the file system - only local apps can read it
+		// This is secure because:
+		// - Electron apps read it via IPC from the file system
+		// - Grails/WordPress read it from the same server's file system
+		// - Angular web mode uses same-origin session authentication
+		// - External attackers cannot access the file system
+		_generateApiKey();
+
+		System.out.println(
+				"------------------------------------- DONE_10b:NoExeAssembler _generateApiKey ... -------------------------------------");
+
 		_generateSampleNorthwindDatabase();
 
 		System.out.println(
@@ -951,8 +1007,23 @@ public class NoExeAssembler extends AbstractAssembler {
 			northwindManager.startDatabase(NorthwindManager.DatabaseVendor.SQLITE,
 					packageDirPath + "/" + topFolderName + "/db/sample-northwind-sqlite");
 			System.out.println("Successfully generated sample Northwind database for SQLite.");
-
 		}
+	}
+
+	/**
+	 * Generate a cryptographically secure random API key and save it to the config folder.
+	 * This key is used for authenticating API requests from Electron, Grails, and WordPress.
+	 * The key is stored on the file system so only local processes can read it.
+	 */
+	private void _generateApiKey() throws Exception {
+		SecureRandom random = new SecureRandom();
+		byte[] bytes = new byte[32]; // 256 bits of entropy
+		random.nextBytes(bytes);
+		String apiKey = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+		
+		// Save API key to config/_internal/api-key.txt
+		String apiKeyFilePath = packageDirPath + "/" + topFolderName + "/config/_internal/api-key.txt";
+		FileUtils.writeStringToFile(new File(apiKeyFilePath), apiKey, "UTF-8");
 	}
 
 	@Override
@@ -1025,6 +1096,12 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		System.out.println(
 				"------------------------------------- VERIFIED_07:NoExeAssembler _copyDistributedByGroovyFile... -------------------------------------");
+
+		// verify _generateApiKey();
+		assertThat(new File(verifyDirPath + "/" + topFolderName + "/config/_internal/api-key.txt").exists()).isTrue();
+
+		System.out.println(
+				"------------------------------------- VERIFIED_08:NoExeAssembler _generateApiKey... -------------------------------------");
 
 		System.out.println(
 				"------------------------------------- VERIFIED_DONE:NoExeAssembler ... -------------------------------------");

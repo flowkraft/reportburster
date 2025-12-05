@@ -141,6 +141,10 @@ export class RbElectronService {
     return UtilitiesElectron.getBackendUrl();
   }
 
+  async getApiKey(): Promise<string | null> {
+    return UtilitiesElectron.getApiKey();
+  }
+
   clock(start?: [number, number]): [number, number] {
     return [0, 0];
   }

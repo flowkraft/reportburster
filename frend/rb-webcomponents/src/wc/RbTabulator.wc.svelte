@@ -18,10 +18,25 @@
   let _afterUpdateCount = 0;
   let _lastAfterUpdateLogTime = 0;
 
-  // public props
+  // ============================================================================
+  // Hybrid Mode Props - when reportCode is provided, component self-fetches
+  // ============================================================================
+  export let reportCode: string = '';
+  export let apiBaseUrl: string = '';
+  export let apiKey: string = '';
+
+  // ============================================================================
+  // Props Mode - traditional props-based usage (e.g., from Angular)
+  // ============================================================================
   export let data: any[] = [];
   export let columns: ColumnDefinition[] = [];
   export let options: any = {};
+
+  // ============================================================================
+  // Internal state for self-fetch mode
+  // ============================================================================
+  let loading = false;
+  let error: string | null = null;
 
   let container: HTMLDivElement;
   let table: Tabulator;
@@ -121,6 +136,46 @@
       return;
     }
 
+    // ========================================================================
+    // Hybrid Mode: if reportCode provided, self-fetch config + data
+    // ========================================================================
+    if (reportCode && apiBaseUrl) {
+      loading = true;
+      error = null;
+      
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (apiKey) headers['X-API-Key'] = apiKey;
+      
+      try {
+        // Fetch config
+        const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
+        if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
+        const config = await configRes.json();
+        
+        // Apply tabulator options from config
+        if (config.tabulatorOptions) {
+          options = config.tabulatorOptions;
+        }
+        
+        // Fetch data (empty params for initial load)
+        const dataRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({})
+        });
+        if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
+        data = await dataRes.json();
+        
+      } catch (err: any) {
+        error = err.message || 'Failed to load report';
+        console.error('rb-tabulator self-fetch error:', err);
+        dispatch('fetchError', { message: error });
+        loading = false;
+        return;
+      }
+      loading = false;
+    }
+
     // inject Tabulator CSS into shadow root
     const root = container.getRootNode();
     if (root instanceof ShadowRoot) {
@@ -205,6 +260,55 @@
   });
 
   export { updateTable as updateTable };
+  
+  // Public method to fetch data with parameters (for use after initial load)
+  export async function fetchData(params: Record<string, any> = {}) {
+    if (!reportCode || !apiBaseUrl) {
+      console.warn('rb-tabulator: fetchData requires reportCode and apiBaseUrl');
+      return;
+    }
+    
+    loading = true;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (apiKey) headers['X-API-Key'] = apiKey;
+    
+    try {
+      const res = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(params)
+      });
+      if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
+      data = await res.json();
+      dispatch('dataFetched', { data });
+    } catch (err: any) {
+      error = err.message || 'Failed to fetch data';
+      dispatch('fetchError', { message: error });
+    }
+    loading = false;
+  }
 </script>
 
-<div bind:this={container}></div>
+{#if loading}
+  <div class="rb-loading">Loading...</div>
+{:else if error}
+  <div class="rb-error">{error}</div>
+{:else}
+  <div bind:this={container}></div>
+{/if}
+
+<style>
+  .rb-loading {
+    padding: 1rem;
+    text-align: center;
+    color: #666;
+  }
+  .rb-error {
+    padding: 1rem;
+    text-align: center;
+    color: #dc3545;
+    background: #fff5f5;
+    border: 1px solid #dc3545;
+    border-radius: 4px;
+  }
+</style>

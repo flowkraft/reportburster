@@ -1081,12 +1081,12 @@ Column 3, 15"
     [(visible)]="isModalParametersVisible"
     [modal]="true"
     [style]="{width: '50vw'}">
-    <dburst-report-parameters-form
+    <rb-parameters
         *ngIf="reportParameters && reportParameters.length > 0"
         [parameters]="reportParameters"
         (validChange)="onReportParamsValidChange($event)"
         (valueChange)="onReportParamsValuesChange($event)">
-    </dburst-report-parameters-form>
+    </rb-parameters>
     <p-footer>
         <button pButton 
             type="button" 
