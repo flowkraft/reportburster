@@ -3,6 +3,14 @@ info:
     name: '@info.app.name@'
     version: '@info.app.version@'
     grailsVersion: '@info.app.grailsVersion@'
+
+# ReportBurster backend configuration
+reportburster:
+  backend:
+    baseUrl: 'http://localhost:9090'
+    # Default configuration file path (relative to PORTABLE_EXECUTABLE_DIR)
+    defaultConfigPath: 'config/burst/settings.xml'
+
 grails:
   codegen:
     defaultPackage: com.flowkraft

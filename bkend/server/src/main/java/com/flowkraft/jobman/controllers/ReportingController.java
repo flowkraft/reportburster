@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.flowkraft.common.AppPaths;
+import com.flowkraft.jobman.dtos.ReportFullConfigDto;
 import com.flowkraft.jobman.services.ReportingService;
 import com.sourcekraft.documentburster.common.db.ReportDataResult;
 import com.sourcekraft.documentburster.common.reportparameters.ReportParameter;
@@ -117,12 +119,12 @@ public class ReportingController {
 				new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to parse pivot table options", e)));
 	}
 
-	@GetMapping("/test-fetch-data")
-	public Mono<ReportDataResult> testFetchData(@RequestParam String configurationFilePath,
+	@GetMapping("/fetch-data")
+	public Mono<ReportDataResult> fetchData(@RequestParam String configurationFilePath,
 			@RequestParam Map<String, String> parameters) {
 
-		// System.out.println("[DEBUG] /test-fetch-data: received request, configurationFilePath=" + configurationFilePath);
-		// System.out.println("[DEBUG] /test-fetch-data: parameters=" + parameters.toString());
+		// System.out.println("[DEBUG] /fetch-data: received request, configurationFilePath=" + configurationFilePath);
+		// System.out.println("[DEBUG] /fetch-data: parameters=" + parameters.toString());
 
 		return Mono.fromCallable(() -> {
 			String cfgFilePath;
@@ -131,7 +133,7 @@ public class ReportingController {
 			} else {
 				cfgFilePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, configurationFilePath).toString();
 			}
-			// System.out.println("[DEBUG] /test-fetch-data: cfgFilePath=" + cfgFilePath);
+			// System.out.println("[DEBUG] /fetch-data: cfgFilePath=" + cfgFilePath);
 
 			// Debug print parameter values
 			//System.out.println("Parameter values:");
@@ -139,20 +141,55 @@ public class ReportingController {
 				//System.out.println(key + " = " + value);
 			});
 
-			// System.out.println("[DEBUG] /test-fetch-data: calling reportingService.testFetchData...");
-			ReportDataResult result = reportingService.testFetchData(cfgFilePath, parameters);
-			// System.out.println("[DEBUG] /test-fetch-data: service returned, reportData size=" + 
+			// System.out.println("[DEBUG] /fetch-data: calling reportingService.fetchData...");
+			ReportDataResult result = reportingService.fetchData(cfgFilePath, parameters);
+			// System.out.println("[DEBUG] /fetch-data: service returned, reportData size=" + 
 			//	(result.reportData != null ? result.reportData.size() : "null") + 
 			//	", columns=" + (result.reportColumnNames != null ? result.reportColumnNames.size() : "null"));
-			// System.out.println("[DEBUG] /test-fetch-data: about to return result to HTTP response...");
+			// System.out.println("[DEBUG] /fetch-data: about to return result to HTTP response...");
 			return result;
 		}).doOnSuccess(result -> {
-			// System.out.println("[DEBUG] /test-fetch-data: Mono completed successfully, sending HTTP response");
+			// System.out.println("[DEBUG] /fetch-data: Mono completed successfully, sending HTTP response");
 		}).doOnError(e -> {
-			//System.out.println("Error testing SQL query: " + e.getMessage());
-			log.error("Error testing SQL query", e);
+			//System.out.println("Error fetching data: " + e.getMessage());
+			log.error("Error fetching data", e);
 		}).onErrorResume(e -> Mono
-				.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to test SQL query", e)));
+				.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to fetch data", e)));
+	}
+
+	/**
+	 * Get full configuration for a report by its code.
+	 * This is the single endpoint web components need to bootstrap themselves.
+	 * 
+	 * @param reportCode The report folder name (e.g., "sales-summary")
+	 * @return Complete configuration including parameters, tabulator, chart, pivot options
+	 */
+	@GetMapping("/reports/{reportCode}/config")
+	public Mono<ReportFullConfigDto> getReportConfig(@PathVariable String reportCode) {
+		return Mono.fromCallable(() -> {
+			return reportingService.loadReportConfig(reportCode);
+		}).doOnError(e -> log.error("Error loading report config for: " + reportCode, e))
+		.onErrorResume(e -> Mono.error(
+				new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to load report config", e)));
+	}
+
+	/**
+	 * Fetch report data using the report code and parameter values.
+	 * Web components call this after user submits parameters.
+	 * 
+	 * @param reportCode The report folder name
+	 * @param parameters User-provided parameter values as query params
+	 * @return Report data result
+	 */
+	@GetMapping("/reports/{reportCode}/data")
+	public Mono<ReportDataResult> fetchReportData(
+			@PathVariable String reportCode,
+			@RequestParam Map<String, String> parameters) {
+		return Mono.fromCallable(() -> {
+			return reportingService.fetchReportData(reportCode, parameters);
+		}).doOnError(e -> log.error("Error fetching report data for: " + reportCode, e))
+		.onErrorResume(e -> Mono.error(
+				new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to fetch report data", e)));
 	}
 
 }

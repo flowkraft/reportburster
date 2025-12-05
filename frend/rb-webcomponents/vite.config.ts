@@ -58,8 +58,8 @@ export default defineConfig(({ command }) => {
         lib: {
           // Use the web component registration file as the library entry point
           entry: resolve(__dirname, "src/wc/web-components.ts"),
-          name: "RbTabulator",
-          fileName: (format) => `rb-tabulator.${format}.js`,
+          name: "RbWebComponents",
+          fileName: (format) => `rb-webcomponents.${format}.js`,
           // Build both ES and UMD formats
           formats: ["es", "umd"],
         },

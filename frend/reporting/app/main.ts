@@ -661,6 +661,23 @@ ipcMain.handle('getBackendUrl', async (event) => {
   return backendUrl;
 });
 
+ipcMain.handle('getApiKey', async (event) => {
+  try {
+    // In development mode, use default path
+    const baseDir = app.isPackaged 
+      ? process.env.PORTABLE_EXECUTABLE_DIR 
+      : process.cwd();
+    
+    const apiKeyFilePath = `${baseDir}/config/_internal/api-key.txt`;
+    const apiKey = await fs.promises.readFile(apiKeyFilePath, 'utf-8');
+    return apiKey.trim();
+  } catch (error) {
+    // API key file may not exist yet (first startup)
+    log.warn('Could not read API key file:', error.message);
+    return null;
+  }
+});
+
 ipcMain.handle(
   'jetpack.dirAsync',
   async (event, pathFolder, criteria = { empty: false, mode: undefined }) => {

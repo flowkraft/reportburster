@@ -425,19 +425,19 @@ public class CliJob {
 
 	}
 
-	public ReportDataResult doTestFetchData(Map<String, String> parameters) throws Exception {
+	public ReportDataResult doFetchData(Map<String, String> parameters) throws Exception {
 
 		File jobFile = null;
 		ReportDataResult result = new ReportDataResult();
 
 		try {
-			// System.out.println("doTestFetchData: configurationFilePath = " +
+			// System.out.println("doFetchData: configurationFilePath = " +
 			// configurationFilePath);
 
 			// Create job file
-			jobFile = _createJobFile(configurationFilePath, "test-fetch-data");
+			jobFile = _createJobFile(configurationFilePath, "fetch-data");
 			// System.out.println(
-			// "doTestFetchData: Created job file: " + (jobFile != null ?
+			// "doFetchData: Created job file: " + (jobFile != null ?
 			// jobFile.getAbsolutePath() : "null"));
 
 			// Load settings and determine job type
@@ -445,38 +445,38 @@ public class CliJob {
 			settings.loadSettings();
 
 			String dsType = settings.getReportDataSource().type;
-			// System.out.println("doTestFetchData: Data source type (jobType) = " +
+			// System.out.println("doFetchData: Data source type (jobType) = " +
 			// dsType);
 
 			this.setJobType(dsType);
 
 			// Get the correct reporter (SqlReporter, ScriptReporter, etc.)
 			AbstractBurster burster = getBurster(configurationFilePath);
-			// System.out.println("doTestFetchData: Got burster of type: "
+			// System.out.println("doFetchData: Got burster of type: "
 			// + (burster != null ? burster.getClass().getName() : "null"));
 
 			// Only AbstractReporter descendants have setPreviewMode
 			if (burster instanceof AbstractReporter) {
-				// System.out.println("doTestFetchData: burster is instance of
+				// System.out.println("doFetchData: burster is instance of
 				// AbstractReporter");
 				((AbstractReporter) burster).setPreviewMode(true);
-				// System.out.println("doTestFetchData: setPreviewMode called");
+				// System.out.println("doFetchData: setPreviewMode called");
 
 				((AbstractReporter) burster).setReportParameters(parameters);
-				// System.out.println("doTestFetchData: setReportParameters called with: "
+				// System.out.println("doFetchData: setReportParameters called with: "
 				// + (parameters != null ? parameters.toString() : "null"));
 			} else {
-				// System.out.println("doTestFetchData: burster is NOT instance of
+				// System.out.println("doFetchData: burster is NOT instance of
 				// AbstractReporter");
-				throw new IllegalStateException("Test SQL Query only supported for AbstractReporter-based bursters");
+				throw new IllegalStateException("Fetch data only supported for AbstractReporter-based bursters");
 			}
 
 			// Run the normal reporting flow (no output/distribution in preview mode)
-			// System.out.println("doTestFetchData: Calling burst...");
+			// System.out.println("doFetchData: Calling burst...");
 			long startTime = System.currentTimeMillis();
 			burster.burst(settings.getTemplateName(), false, "", -1);
 			long endTime = System.currentTimeMillis();
-			// System.out.println("doTestFetchData: burst finished");
+			// System.out.println("doFetchData: burst finished");
 
 			// Prepare and return the result
 			
@@ -486,9 +486,9 @@ public class CliJob {
 			result.executionTimeMillis = endTime - startTime;
 			result.totalRows = (result.reportData != null) ? result.reportData.size() : 0;
 
-			// System.out.println("doTestFetchData: reportData size = "
+			// System.out.println("doFetchData: reportData size = "
 			// + (result.reportData != null ? result.reportData.size() : "null"));
-			// System.out.println("doTestFetchData: reportColumnNames = "
+			// System.out.println("doFetchData: reportColumnNames = "
 			// + (result.reportColumnNames != null ? result.reportColumnNames.toString() :
 			// "null"));
 			return result;

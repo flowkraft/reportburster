@@ -23,6 +23,13 @@
   } from './services/pivot-types';
 
   // ============================================================================
+  // Hybrid Mode Props - when reportCode is provided, component self-fetches
+  // ============================================================================
+  export let reportCode: string = '';
+  export let apiBaseUrl: string = '';
+  export let apiKey: string = '';
+
+  // ============================================================================
   // Props - matching react-pivottable API
   // ============================================================================
   
@@ -45,6 +52,12 @@
   // New props for extensibility
   export let aggregators: Record<string, AggregatorFactory> = {};
   export let tableClickCallback: TableClickCallback | null = null;
+
+  // ============================================================================
+  // Internal state for self-fetch mode
+  // ============================================================================
+  let loading = false;
+  let error: string | null = null;
 
   // ============================================================================
   // Internal State
@@ -136,6 +149,55 @@
   onMount(async () => {
     await tick();
     injectStyles();
+    
+    // ========================================================================
+    // Hybrid Mode: if reportCode provided, self-fetch config + data
+    // ========================================================================
+    if (reportCode && apiBaseUrl) {
+      loading = true;
+      error = null;
+      
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (apiKey) headers['X-API-Key'] = apiKey;
+      
+      try {
+        // Fetch config
+        const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
+        if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
+        const config = await configRes.json();
+        
+        // Apply pivot table options from config
+        if (config.pivotTableOptions) {
+          const opts = config.pivotTableOptions;
+          if (opts.rows) rows = opts.rows;
+          if (opts.cols) cols = opts.cols;
+          if (opts.vals) vals = opts.vals;
+          if (opts.aggregatorName) aggregatorName = opts.aggregatorName;
+          if (opts.rendererName) rendererName = opts.rendererName;
+          if (opts.valueFilter) valueFilter = opts.valueFilter;
+          if (opts.rowOrder) rowOrder = opts.rowOrder;
+          if (opts.colOrder) colOrder = opts.colOrder;
+        }
+        
+        // Fetch data (empty params for initial load)
+        const dataRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({})
+        });
+        if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
+        data = await dataRes.json();
+        
+      } catch (err: any) {
+        error = err.message || 'Failed to load report';
+        console.error('rb-pivot-table self-fetch error:', err);
+        dispatch('fetchError', { message: error });
+        loading = false;
+        return;
+      }
+      loading = false;
+    }
+    
     materializeInput(data);
   });
 
@@ -502,12 +564,45 @@
   export function getState(): PivotTableState {
     return { rows, cols, vals, aggregatorName, rendererName, valueFilter, rowOrder, colOrder };
   }
+
+  // Public method to fetch data with parameters (for use after initial load)
+  export async function fetchData(params: Record<string, any> = {}) {
+    if (!reportCode || !apiBaseUrl) {
+      console.warn('rb-pivot-table: fetchData requires reportCode and apiBaseUrl');
+      return;
+    }
+    
+    loading = true;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (apiKey) headers['X-API-Key'] = apiKey;
+    
+    try {
+      const res = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(params)
+      });
+      if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
+      data = await res.json();
+      materializeInput(data);
+      dispatch('dataFetched', { data });
+    } catch (err: any) {
+      error = err.message || 'Failed to fetch data';
+      dispatch('fetchError', { message: error });
+    }
+    loading = false;
+  }
 </script>
 
 <!-- ============================================================================ -->
 <!-- Template -->
 <!-- ============================================================================ -->
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+{#if loading}
+  <div class="rb-loading">Loading...</div>
+{:else if error}
+  <div class="rb-error">{error}</div>
+{:else}
 <div bind:this={container} class="pvtUi-container" on:click={() => openDropdown = false}>
   <table class="pvtUi">
     <tbody>
@@ -813,6 +908,7 @@
     </tbody>
   </table>
 </div>
+{/if}
 
 <script context="module" lang="ts">
   // CSS embedded for shadow DOM
@@ -1103,5 +1199,18 @@ button.pvtButton:hover {
 <style>
   :host {
     display: block;
+  }
+  .rb-loading {
+    padding: 1rem;
+    text-align: center;
+    color: #666;
+  }
+  .rb-error {
+    padding: 1rem;
+    text-align: center;
+    color: #dc3545;
+    background: #fff5f5;
+    border: 1px solid #dc3545;
+    border-radius: 4px;
   }
 </style>

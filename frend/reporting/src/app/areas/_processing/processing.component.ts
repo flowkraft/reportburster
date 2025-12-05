@@ -1289,14 +1289,18 @@ export class ProcessingComponent implements OnInit {
   reportDataResult: ReportDataResult | null = null;
   isReportDataLoading = false;
 
-  onReportParamsValidChange(isValid: boolean) {
+  onReportParamsValidChange(event: Event) {
+    // Web component emits CustomEvent with data in .detail
+    const isValid = (event as CustomEvent<boolean>).detail;
     this.reportParamsValid = isValid;
     this.changeDetectorRef.detectChanges();
     //console.log('Report parameters form validity:', isValid);
   }
 
   // Add handler for the form's value
-  onReportParamsValuesChange(values: { [key: string]: any }) {
+  onReportParamsValuesChange(event: Event) {
+    // Web component emits CustomEvent with data in .detail
+    const values = (event as CustomEvent<{ [key: string]: any }>).detail;
     //console.log('Form parameter values:', values);
     this.reportParamsValues = values;
   }
@@ -1764,7 +1768,7 @@ export class ProcessingComponent implements OnInit {
           //console.log('Calling API with params:', paramsObject); // Debug log
 
           // Call the API
-          this.reportDataResult = await this.reportingService.testFetchData(
+          this.reportDataResult = await this.reportingService.fetchData(
             paramsObject,
             this.processingService.procReportingMailMergeInfo
               .selectedMailMergeClassicReport.filePath,

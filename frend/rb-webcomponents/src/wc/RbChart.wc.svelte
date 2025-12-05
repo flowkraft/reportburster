@@ -7,7 +7,16 @@
   let _afterUpdateCount = 0;
   let _lastAfterUpdateLogTime = 0;
 
-  // public props
+  // ============================================================================
+  // Hybrid Mode Props - when reportCode is provided, component self-fetches
+  // ============================================================================
+  export let reportCode: string = '';
+  export let apiBaseUrl: string = '';
+  export let apiKey: string = '';
+
+  // ============================================================================
+  // Props Mode - traditional props-based usage (e.g., from Angular)
+  // ============================================================================
   export let data: any = { labels: [], datasets: [] };
   export let options: any = {};
   export let type: string | undefined = undefined; // if undefined, datasets may specify own types
@@ -16,6 +25,12 @@
   export let responsive: boolean = true;
   export let width: string | number | undefined = undefined;
   export let height: string | number | undefined = undefined;
+
+  // ============================================================================
+  // Internal state for self-fetch mode
+  // ============================================================================
+  let selfFetchLoading = false;
+  let error: string | null = null;
 
   let container: HTMLDivElement;
   let canvas: HTMLCanvasElement;
@@ -239,6 +254,52 @@
       return;
     }
 
+    // ========================================================================
+    // Hybrid Mode: if reportCode provided, self-fetch config + data
+    // ========================================================================
+    if (reportCode && apiBaseUrl) {
+      selfFetchLoading = true;
+      error = null;
+      
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (apiKey) headers['X-API-Key'] = apiKey;
+      
+      try {
+        // Fetch config
+        const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
+        if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
+        const config = await configRes.json();
+        
+        // Apply chart options from config
+        if (config.chartOptions) {
+          options = config.chartOptions;
+          if (config.chartOptions.type) type = config.chartOptions.type;
+        }
+        
+        // Fetch data (empty params for initial load)
+        const dataRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({})
+        });
+        if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
+        const reportData = await dataRes.json();
+        
+        // Transform data using chartConfig from options
+        if (options && reportData) {
+          data = transformChartConfigToChartJS(options, reportData);
+        }
+        
+      } catch (err: any) {
+        error = err.message || 'Failed to load report';
+        console.error('rb-chart self-fetch error:', err);
+        dispatch('fetchError', { message: error });
+        selfFetchLoading = false;
+        return;
+      }
+      selfFetchLoading = false;
+    }
+
     // apply width/height if provided
     if (width) container.style.width = String(width);
     if (height) container.style.height = String(height);
@@ -292,6 +353,38 @@
   onDestroy(() => {
     destroyChart();
   });
+
+  // Public method to fetch data with parameters (for use after initial load)
+  export async function fetchData(params: Record<string, any> = {}) {
+    if (!reportCode || !apiBaseUrl) {
+      console.warn('rb-chart: fetchData requires reportCode and apiBaseUrl');
+      return;
+    }
+    
+    selfFetchLoading = true;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (apiKey) headers['X-API-Key'] = apiKey;
+    
+    try {
+      const res = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(params)
+      });
+      if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
+      const reportData = await res.json();
+      
+      // Transform data using existing options
+      if (options && reportData) {
+        data = transformChartConfigToChartJS(options, reportData);
+      }
+      dispatch('dataFetched', { data });
+    } catch (err: any) {
+      error = err.message || 'Failed to fetch data';
+      dispatch('fetchError', { message: error });
+    }
+    selfFetchLoading = false;
+  }
 </script>
 
 <style>
@@ -308,11 +401,30 @@
     width: 32px; height: 32px; border: 4px solid #ddd; border-top-color: #007bff; border-radius: 50%; animation: spin 1s linear infinite;
   }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .rb-loading {
+    padding: 1rem;
+    text-align: center;
+    color: #666;
+  }
+  .rb-error {
+    padding: 1rem;
+    text-align: center;
+    color: #dc3545;
+    background: #fff5f5;
+    border: 1px solid #dc3545;
+    border-radius: 4px;
+  }
 </style>
 
-<div class="rb-chart-root" bind:this={container}>
-  {#if loading}
-    <div class="rb-chart-overlay"><div class="rb-chart-spinner"></div></div>
-  {/if}
-  <canvas bind:this={canvas}></canvas>
-</div>
+{#if selfFetchLoading}
+  <div class="rb-loading">Loading...</div>
+{:else if error}
+  <div class="rb-error">{error}</div>
+{:else}
+  <div class="rb-chart-root" bind:this={container}>
+    {#if loading}
+      <div class="rb-chart-overlay"><div class="rb-chart-spinner"></div></div>
+    {/if}
+    <canvas bind:this={canvas}></canvas>
+  </div>
+{/if}

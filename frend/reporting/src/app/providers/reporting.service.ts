@@ -56,13 +56,13 @@ export class ReportingService {
     protected settingsService: SettingsService,
   ) {}
 
-  async testFetchData(
+  async fetchData(
     parameters: { [key: string]: any },
     configurationFilePath: string = this.settingsService
       .currentConfigurationTemplatePath,
   ) {
     //console.log(
-    //  `testFetchData parameters: ${JSON.stringify(parameters)}, configurationFilePath: ${configurationFilePath}`,
+    //  `fetchData parameters: ${JSON.stringify(parameters)}, configurationFilePath: ${configurationFilePath}`,
     //);
 
     // Create URLSearchParams object
@@ -87,9 +87,9 @@ export class ReportingService {
     //console.log('Sending parameters:', JSON.stringify(paramsObj));
 
     // Make GET request with query parameters
-    // console.log('[DEBUG] testFetchData: calling API with params:', paramsObj);
-    const result = await this.apiService.get('/jobman/reporting/test-fetch-data', paramsObj);
-    // console.log('[DEBUG] testFetchData: received response:', result);
+    // console.log('[DEBUG] fetchData: calling API with params:', paramsObj);
+    const result = await this.apiService.get('/jobman/reporting/fetch-data', paramsObj);
+    // console.log('[DEBUG] fetchData: received response:', result);
     return result;
   }
 
