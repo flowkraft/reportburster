@@ -17,10 +17,10 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-      start_period: 30s
+      interval: 5s    
+      timeout: 5s     
+      retries: 30       
+      start_period: 10s
 
   admin-grails-playground:
     build: ./admin-grails-playground
@@ -38,10 +38,10 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-      start_period: 30s
+      interval: 5s    
+      timeout: 5s     
+      retries: 30       
+      start_period: 10s
 
   bkend-boot-groovy-playground:
     build: ./bkend-boot-groovy-playground
@@ -58,8 +58,8 @@ services:
       - ../../config/_internal:/config:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-      start_period: 30s
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 5s    
+      timeout: 5s     
+      retries: 30       
+      start_period: 10s

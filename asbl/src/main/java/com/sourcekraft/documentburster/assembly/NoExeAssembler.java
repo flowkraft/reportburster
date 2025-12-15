@@ -1110,9 +1110,10 @@ public class NoExeAssembler extends AbstractAssembler {
 			}
 			
 			// Maven build artifacts (Spring Boot projects)
-			if (fileName.equals(".mvn") || path.contains("/.mvn/")) {
-				return false;
-			}
+			// if (fileName.equals(".mvn") || path.contains("/.mvn/")) {
+			// 	return false;
+			// }
+			
 			if (fileName.equals("target") && file.isDirectory() && path.contains("-boot-")) {
 				return false;
 			}
