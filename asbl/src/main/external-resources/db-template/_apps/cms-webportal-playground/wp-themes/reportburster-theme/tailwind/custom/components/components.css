@@ -1,0 +1,527 @@
+/**
+ * Custom component classes using Tailwind's @apply
+ * This provides Sage-like styling through CSS rather than inline classes
+ */
+
+/* ==========================================================================
+   Layout & Container
+   ========================================================================== */
+
+.site {
+	@apply bg-gray-50 min-h-screen flex flex-col;
+}
+
+.site-content {
+	@apply flex-grow;
+}
+
+.content-area {
+	@apply max-w-4xl mx-auto px-4 py-8;
+}
+
+/* ==========================================================================
+   Header / Banner
+   ========================================================================== */
+
+#masthead,
+.banner {
+	@apply bg-white shadow-sm border-b border-gray-200;
+}
+
+.site-branding {
+	@apply py-4;
+}
+
+.site-title {
+	@apply text-2xl font-bold text-gray-900 m-0;
+}
+
+.site-title a {
+	@apply text-gray-900 no-underline hover:text-blue-600 transition-colors;
+}
+
+.site-description {
+	@apply text-sm text-gray-500 mt-1 m-0;
+}
+
+/* ==========================================================================
+   Navigation
+   ========================================================================== */
+
+#site-navigation,
+.main-navigation,
+.nav-primary {
+	@apply bg-white;
+}
+
+.nav-menu,
+.menu {
+	@apply flex items-center gap-6 list-none m-0 p-0;
+}
+
+.menu-item {
+	@apply relative;
+}
+
+.menu-item a {
+	@apply text-gray-700 no-underline hover:text-blue-600 transition-colors font-medium py-2 block;
+}
+
+.menu-item.current-menu-item a,
+.menu-item.current_page_item a {
+	@apply text-blue-600;
+}
+
+/* Dropdown/submenu */
+.sub-menu {
+	@apply absolute top-full left-0 bg-white shadow-lg rounded-lg py-2 min-w-48 hidden;
+}
+
+.menu-item:hover .sub-menu {
+	@apply block;
+}
+
+.sub-menu .menu-item a {
+	@apply px-4 py-2 hover:bg-gray-50;
+}
+
+/* ==========================================================================
+   Posts & Articles
+   ========================================================================== */
+
+article,
+.post,
+.hentry {
+	@apply bg-white rounded-lg shadow-md p-6 mb-8 hover:shadow-lg transition-shadow;
+}
+
+.sticky {
+	@apply border-l-4 border-blue-500;
+}
+
+.entry-header {
+	@apply mb-4;
+}
+
+.page-title,
+.entry-title {
+	@apply text-2xl md:text-3xl font-bold text-gray-900 mb-2 leading-tight;
+}
+
+.entry-title a {
+	@apply text-gray-900 no-underline hover:text-blue-600 transition-colors;
+}
+
+.entry-meta {
+	@apply text-sm text-gray-500 mb-4;
+}
+
+.entry-meta a {
+	@apply text-gray-600 hover:text-blue-600 no-underline;
+}
+
+.byline,
+.posted-on,
+.cat-links,
+.tags-links {
+	@apply mr-4;
+}
+
+.entry-content {
+	@apply text-gray-700 leading-relaxed;
+}
+
+.entry-content > * {
+	@apply mb-4;
+}
+
+.entry-content h2 {
+	@apply text-xl font-bold text-gray-900 mt-8 mb-4;
+}
+
+.entry-content h3 {
+	@apply text-lg font-semibold text-gray-900 mt-6 mb-3;
+}
+
+.entry-content p {
+	@apply text-gray-700 leading-relaxed;
+}
+
+.entry-content a {
+	@apply text-blue-600 hover:text-blue-800 underline;
+}
+
+.entry-content ul,
+.entry-content ol {
+	@apply ml-6 mb-4;
+}
+
+.entry-content li {
+	@apply mb-2;
+}
+
+.entry-content blockquote {
+	@apply border-l-4 border-gray-300 pl-4 italic text-gray-600 my-6;
+}
+
+.entry-content pre {
+	@apply bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto my-6;
+}
+
+.entry-content code {
+	@apply bg-gray-100 text-pink-600 px-1 py-0.5 rounded text-sm;
+}
+
+.entry-content pre code {
+	@apply bg-transparent text-gray-100 p-0;
+}
+
+.entry-content img {
+	@apply rounded-lg shadow-md max-w-full h-auto;
+}
+
+.entry-footer {
+	@apply mt-6 pt-4 border-t border-gray-200 text-sm text-gray-500;
+}
+
+.entry-footer a {
+	@apply text-gray-600 hover:text-blue-600 no-underline;
+}
+
+/* Read more link */
+.more-link,
+.read-more {
+	@apply inline-block mt-4 text-blue-600 hover:text-blue-800 font-medium no-underline;
+}
+
+/* ==========================================================================
+   Page Content
+   ========================================================================== */
+
+.page-content > * {
+	@apply mb-4;
+}
+
+.page-header {
+	@apply mb-8;
+}
+
+.page-header .page-title {
+	@apply text-3xl font-bold text-gray-900;
+}
+
+.archive-description,
+.taxonomy-description {
+	@apply text-gray-600 mt-2;
+}
+
+/* ==========================================================================
+   Post Navigation
+   ========================================================================== */
+
+.post-navigation,
+.posts-navigation,
+.pagination {
+	@apply my-8;
+}
+
+.nav-links {
+	@apply flex justify-between items-center gap-4;
+}
+
+.nav-previous a,
+.nav-next a {
+	@apply inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 no-underline hover:bg-gray-50 hover:border-gray-400 transition-colors;
+}
+
+.page-numbers {
+	@apply inline-flex items-center justify-center w-10 h-10 border border-gray-300 rounded-lg text-gray-700 no-underline hover:bg-gray-50 transition-colors;
+}
+
+.page-numbers.current {
+	@apply bg-blue-600 text-white border-blue-600;
+}
+
+/* ==========================================================================
+   Sidebar & Widgets
+   ========================================================================== */
+
+.widget-area,
+#secondary {
+	@apply space-y-6;
+}
+
+.widget {
+	@apply bg-white rounded-lg shadow-md p-6;
+}
+
+.widget-title {
+	@apply text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200;
+}
+
+.widget ul {
+	@apply list-none m-0 p-0 space-y-2;
+}
+
+.widget li a {
+	@apply text-gray-700 no-underline hover:text-blue-600 transition-colors;
+}
+
+/* ==========================================================================
+   Comments
+   ========================================================================== */
+
+#comments,
+.comments-area {
+	@apply bg-white rounded-lg shadow-md p-6 mt-8;
+}
+
+.comments-title {
+	@apply text-xl font-bold text-gray-900 mb-6;
+}
+
+.comment-list {
+	@apply list-none m-0 p-0 space-y-6;
+}
+
+.comment {
+	@apply border-b border-gray-100 pb-6;
+}
+
+.comment:last-child {
+	@apply border-b-0 pb-0;
+}
+
+.comment-author {
+	@apply font-semibold text-gray-900;
+}
+
+.comment-author .avatar {
+	@apply rounded-full mr-3;
+}
+
+.comment-metadata {
+	@apply text-sm text-gray-500 mb-2;
+}
+
+.comment-metadata a {
+	@apply text-gray-500 no-underline hover:text-blue-600;
+}
+
+.comment-content {
+	@apply text-gray-700 leading-relaxed;
+}
+
+.reply a {
+	@apply text-sm text-blue-600 hover:text-blue-800 no-underline font-medium;
+}
+
+/* Comment form */
+.comment-respond {
+	@apply mt-8;
+}
+
+.comment-reply-title {
+	@apply text-xl font-bold text-gray-900 mb-4;
+}
+
+.comment-form label {
+	@apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+.comment-form input[type="text"],
+.comment-form input[type="email"],
+.comment-form input[type="url"],
+.comment-form textarea {
+	@apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors mb-4;
+}
+
+.comment-form textarea {
+	@apply min-h-32;
+}
+
+.form-submit input[type="submit"] {
+	@apply px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors cursor-pointer;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+#colophon,
+.site-footer {
+	@apply bg-gray-100 border-t border-gray-200 py-8 mt-auto;
+}
+
+.site-info {
+	@apply max-w-4xl mx-auto px-4 text-center text-gray-600;
+}
+
+.site-info a {
+	@apply text-gray-700 hover:text-blue-600 no-underline;
+}
+
+.footer-widgets {
+	@apply max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 mb-8;
+}
+
+/* ==========================================================================
+   Forms & Buttons
+   ========================================================================== */
+
+button,
+input[type="button"],
+input[type="submit"],
+.button,
+.btn {
+	@apply inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors cursor-pointer;
+}
+
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+.button:disabled,
+.btn:disabled {
+	@apply opacity-50 cursor-not-allowed;
+}
+
+.button-secondary,
+.btn-secondary {
+	@apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="url"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+textarea,
+select {
+	@apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors;
+}
+
+/* Search form */
+.search-form {
+	@apply flex gap-2;
+}
+
+.search-form .search-field {
+	@apply flex-grow;
+}
+
+.search-form .search-submit {
+	@apply px-4;
+}
+
+/* ==========================================================================
+   WordPress Specific
+   ========================================================================== */
+
+/* Alignments */
+.alignleft {
+	@apply float-left mr-6 mb-4;
+}
+
+.alignright {
+	@apply float-right ml-6 mb-4;
+}
+
+.aligncenter {
+	@apply mx-auto block;
+}
+
+.alignwide {
+	@apply max-w-5xl -mx-4 md:-mx-8;
+}
+
+.alignfull {
+	@apply max-w-none -mx-4 md:-mx-8 lg:-mx-16;
+}
+
+/* Captions */
+.wp-caption {
+	@apply max-w-full mb-4;
+}
+
+.wp-caption-text {
+	@apply text-sm text-gray-500 text-center mt-2;
+}
+
+/* Galleries */
+.gallery {
+	@apply grid grid-cols-2 md:grid-cols-3 gap-4 my-6;
+}
+
+.gallery-item {
+	@apply m-0;
+}
+
+.gallery-icon img {
+	@apply rounded-lg;
+}
+
+.gallery-caption {
+	@apply text-sm text-gray-500 text-center mt-1;
+}
+
+/* Screen reader text */
+.screen-reader-text {
+	@apply sr-only;
+}
+
+/* Skip link */
+.skip-link {
+	@apply fixed top-0 left-0 bg-blue-600 text-white px-4 py-2 z-50 transform -translate-y-full focus:translate-y-0 transition-transform;
+}
+
+/* Post thumbnails */
+.post-thumbnail {
+	@apply mb-4;
+}
+
+.post-thumbnail img {
+	@apply rounded-lg shadow-md w-full h-auto;
+}
+
+/* ==========================================================================
+   Utility Classes
+   ========================================================================== */
+
+.has-drop-cap:first-letter {
+	@apply float-left text-6xl font-bold mr-2 leading-none;
+}
+
+.wp-block-separator {
+	@apply border-t border-gray-200 my-8;
+}
+
+/* ==========================================================================
+   Responsive Navigation Toggle (Mobile)
+   ========================================================================== */
+
+.menu-toggle {
+	@apply block md:hidden px-4 py-2 bg-transparent border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50;
+}
+
+@media (max-width: 768px) {
+	.nav-menu,
+	.menu {
+		@apply hidden flex-col w-full absolute top-full left-0 bg-white shadow-lg;
+	}
+	
+	.nav-menu.toggled,
+	.menu.toggled {
+		@apply flex;
+	}
+	
+	.menu-item a {
+		@apply px-4 py-3 border-b border-gray-100;
+	}
+	
+	.sub-menu {
+		@apply static shadow-none;
+	}
+}

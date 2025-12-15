@@ -1,4 +1,57 @@
-node_modules
+# =============================================================================
+# Docker Build Ignore File
+# Speeds up builds by excluding unnecessary files from the build context
+# =============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Build outputs (will be created inside container)
+**/target/
+**/node_modules/
+**/dist/
+**/build/
+**/.angular/
+
+# Test results
+**/test-results/
+**/testground/
+**/e2e/
+**/*.log
+
+# Local development files
+**/.env.local
+**/logs/
+**/temp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+**/*.bak
+**/*.backup
+
+# Release artifacts
+**/release/
+asbl/target/
+
+# Docker files in subdirectories (we only need root Dockerfile)
+asbl/docker/
+
+# UAT tests
+asbl/src/uat/
+
+# Windows-specific tools not needed in Docker
 tools/chocolatey
 tools/curl
 tools/rbsj

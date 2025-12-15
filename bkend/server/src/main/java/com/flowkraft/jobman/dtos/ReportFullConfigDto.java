@@ -35,6 +35,12 @@ public class ReportFullConfigDto {
     /** Pivot table options parsed from {reportCode}-pivot-config.groovy */
     public Map<String, Object> pivotTableOptions;
     
+    /** Raw DSL source code for display/copy */
+    public String tabulatorDsl;
+    public String chartDsl;
+    public String pivotTableDsl;
+    public String parametersDsl;
+    
     /** Which visualizations are configured */
     public boolean hasTabulator;
     public boolean hasChart;

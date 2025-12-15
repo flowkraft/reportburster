@@ -33,6 +33,7 @@ import { tabReportingTemplateOutputTemplate } from './templates/tab-reporting-te
 import { tabReportingTabulatorTemplate } from './templates/tab-reporting-tabulator';
 import { tabReportingChartTemplate } from './templates/tab-reporting-chart';
 import { tabReportingPivotTableTemplate } from './templates/tab-reporting-pivot-table';
+import { tabReportingUsageTemplate } from './templates/tab-reporting-usage';
 import { tabEnableDisableDeliveryTemplate } from './templates/tab-enable-disable-delivery';
 import { tabEmailConnectionSettingsTemplate } from './templates/tab-email-connection-settings';
 import { tabEmailMessageTemplate } from './templates/tab-email-message';
@@ -98,6 +99,7 @@ import {
   ReportingService,
   ReportDataResult,
 } from '../../providers/reporting.service';
+import { ApiService } from '../../providers/api.service';
 import { modalTemplatesGalleryTemplate } from './templates/modal-gallery';
 
 @Component({
@@ -113,7 +115,7 @@ import { modalTemplatesGalleryTemplate } from './templates/modal-gallery';
     </div>
     ${tabGeneralSettingsTemplate} ${tabReportingDataSourceDataTablesTemplate}
     ${tabReportingTemplateOutputTemplate} ${tabReportingTabulatorTemplate} 
-    ${tabReportingChartTemplate} ${tabReportingPivotTableTemplate} ${tabEnableDisableDeliveryTemplate} 
+    ${tabReportingChartTemplate} ${tabReportingPivotTableTemplate} ${tabReportingUsageTemplate} ${tabEnableDisableDeliveryTemplate} 
     ${tabEmailCloudProvidersTemplate} ${tabEmailConnectionSettingsTemplate} 
     ${tabEmailMessageTemplate} ${tabAttachmentsTemplate} ${tabUploadFTPTemplate}
     ${tabUploadFileShareTemplate} ${tabUploadFTPSTemplate}
@@ -147,6 +149,9 @@ export class ConfigurationComponent implements OnInit {
 
   @ViewChild('tabReportingPivotTableTemplate', { static: true })
   tabReportingPivotTableTemplate: TemplateRef<any>;
+
+  @ViewChild('tabReportingUsageTemplate', { static: true })
+  tabReportingUsageTemplate: TemplateRef<any>;
 
   @ViewChild('tabEnableDisableDeliveryTemplate', { static: true })
   tabEnableDisableDeliveryTemplate: TemplateRef<any>;
@@ -396,6 +401,11 @@ export class ConfigurationComponent implements OnInit {
       ngTemplateOutlet: 'tabLogsTemplate',
     },
     {
+      id: 'reportingUsageTab',
+      heading: 'AREAS.CONFIGURATION.TABS.REPORTING.USAGE',
+      ngTemplateOutlet: 'tabReportingUsageTemplate',
+    },
+    {
       id: 'licenseTab',
       heading: 'SHARED-TABS.LICENSE',
       ngTemplateOutlet: 'tabLicenseTemplate',
@@ -415,6 +425,7 @@ export class ConfigurationComponent implements OnInit {
         'reportingTabulatorTab',
         'reportingChartTab',
         'reportingPivotTableTab',
+        'reportingUsageTab',
         'licenseTab',
       ],
     },
@@ -531,6 +542,7 @@ export class ConfigurationComponent implements OnInit {
     protected shellService: ShellService,
     protected reportingService: ReportingService,
     protected stateStore: StateStoreService,
+    protected apiService: ApiService,
     protected confirmService: ConfirmService,
     protected infoService: InfoService,
     protected messagesService: ToastrMessagesService,
@@ -1112,6 +1124,13 @@ export class ConfigurationComponent implements OnInit {
               confTemplate.filePath ==
               this.settingsService.currentConfigurationTemplatePath,
           );
+
+        // Lazy load DSL details for this specific configuration
+        if (this.settingsService.currentConfigurationTemplate) {
+          await this.settingsService.loadConfigurationDetailsAsync(
+            this.settingsService.currentConfigurationTemplate
+          );
+        }
       }
 
       if (this.currentLeftMenu === 'emailSettingsMenuSelected') {
@@ -2978,6 +2997,244 @@ pivotTable {
     }
   }
 
+  // ========== Usage Tab Helper Methods ==========
+
+  getCurrentReportCode(): string {
+    return this.settingsService.currentConfigurationTemplate?.folderName || 'unknown_config';
+  }
+
+  getApiBaseUrl(): string {
+    return this.stateStore.configSys.sysInfo.setup.BACKEND_URL || '/api';
+  }
+
+  getWebComponentsBaseUrl(): string {
+    // Web components are served as static resources (not via /api)
+    // URL is: http://server:port/rb-webcomponents/
+    const backendUrl = this.stateStore.configSys.sysInfo.setup.BACKEND_URL || '/api';
+    // Remove /api suffix if present to get the server base URL
+    const serverBaseUrl = backendUrl.replace(/\/api$/, '');
+    return serverBaseUrl + '/rb-webcomponents';
+  }
+
+  getApiKeyForUsage(): string {
+    return this.apiService.getApiKey() || '';
+  }
+
+  getUsagePivotTableNumber(): number {
+    let num = 2;
+    if (this.activeParamsSpecScriptGroovy?.trim()) num++;
+    if (this.activeChartConfigScriptGroovy?.trim()) num++;
+    return num;
+  }
+
+  getUsageRbReportNumber(): number {
+    let num = 2;
+    if (this.activeParamsSpecScriptGroovy?.trim()) num++;
+    if (this.activeChartConfigScriptGroovy?.trim()) num++;
+    if (this.activePivotTableConfigScriptGroovy?.trim()) num++;
+    return num;
+  }
+
+  getUsageScriptNumber(): number {
+    return this.getUsageRbReportNumber() + 1;
+  }
+
+  /**
+   * Check if the current report's SQL query or Groovy script uses entityCode parameter.
+   * This indicates the report is designed for single-entity HTML document rendering.
+   */
+  hasEntityCodeParameter(): boolean {
+    const dsType = this.xmlReporting?.documentburster?.report?.datasource?.type;
+    
+    if (dsType === 'ds.sqlquery') {
+      const sqlQuery = this.xmlReporting?.documentburster?.report?.datasource?.sqloptions?.query || '';
+      return sqlQuery.includes('entityCode') || sqlQuery.includes(':entityCode');
+    }
+    
+    if (dsType === 'ds.scriptfile') {
+      const scriptContent = this.activeDatasourceScriptGroovy || '';
+      return scriptContent.includes('entityCode');
+    }
+    
+    return false;
+  }
+
+  /**
+   * Get the entity-code attribute string for usage examples.
+   * Returns empty string if entityCode is not used, otherwise returns the attribute with a placeholder.
+   */
+  getEntityCodeAttribute(): string {
+    if (this.hasEntityCodeParameter()) {
+      return ' entity-code="YOUR_ENTITY_CODE"';
+    }
+    return '';
+  }
+
+  getCompleteUsageExample(): string {
+    const reportCode = this.getCurrentReportCode();
+    const apiBaseUrl = this.getApiBaseUrl();
+    const apiKey = this.getApiKeyForUsage();
+    const webComponentsBaseUrl = this.getWebComponentsBaseUrl();
+    const entityCodeAttr = this.getEntityCodeAttribute();
+
+    let html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report: ${reportCode}</title>
+  <script src="${webComponentsBaseUrl}/rb-webcomponents.umd.js"><\/script>
+</head>
+<body>
+  <h1>Report: ${reportCode}</h1>
+
+  <!-- Full Report -->
+  <rb-report
+    report-code="${reportCode}"${entityCodeAttr}
+    api-base-url="${apiBaseUrl}"
+    api-key="${apiKey}">
+  </rb-report>
+
+  <!-- Data Table -->
+  <rb-tabulator
+    report-code="${reportCode}"
+    api-base-url="${apiBaseUrl}"
+    api-key="${apiKey}">
+  </rb-tabulator>`;
+
+    if (this.activeParamsSpecScriptGroovy?.trim()) {
+      html += `
+
+  <!-- Report Parameters -->
+  <rb-parameters
+    report-code="${reportCode}"
+    api-base-url="${apiBaseUrl}"
+    api-key="${apiKey}">
+  </rb-parameters>`;
+    }
+
+    if (this.activeChartConfigScriptGroovy?.trim()) {
+      html += `
+
+  <!-- Chart -->
+  <rb-chart
+    report-code="${reportCode}"
+    api-base-url="${apiBaseUrl}"
+    api-key="${apiKey}">
+  </rb-chart>`;
+    }
+
+    if (this.activePivotTableConfigScriptGroovy?.trim()) {
+      html += `
+
+  <!-- Pivot Table -->
+  <rb-pivottable
+    report-code="${reportCode}"
+    api-base-url="${apiBaseUrl}"
+    api-key="${apiKey}">
+  </rb-pivottable>`;
+    }
+
+    html += `
+
+</body>
+</html>`;
+
+    return html;
+  }
+
+  copyUsageScriptTag() {
+    const scriptTag = `<script src="${this.getWebComponentsBaseUrl()}/rb-webcomponents.umd.js"><\/script>`;
+    navigator.clipboard.writeText(scriptTag).then(() => {
+      this.messagesService.showInfo('Script tag copied to clipboard!', 'Success');
+    }).catch((err) => {
+      console.error('Failed to copy script tag: ', err);
+      this.messagesService.showInfo('Failed to copy script tag.', 'Error');
+    });
+  }
+
+  copyUsageRbReport() {
+    const entityCodeAttr = this.getEntityCodeAttribute();
+    const html = `<rb-report
+  report-code="${this.getCurrentReportCode()}"${entityCodeAttr}
+  api-base-url="${this.getApiBaseUrl()}"
+  api-key="${this.getApiKeyForUsage()}">
+</rb-report>`;
+    navigator.clipboard.writeText(html).then(() => {
+      this.messagesService.showInfo('rb-report snippet copied to clipboard!', 'Success');
+    }).catch((err) => {
+      console.error('Failed to copy rb-report snippet: ', err);
+      this.messagesService.showInfo('Failed to copy rb-report snippet.', 'Error');
+    });
+  }
+
+  copyUsageRbTabulator() {
+    const html = `<rb-tabulator
+  report-code="${this.getCurrentReportCode()}"
+  api-base-url="${this.getApiBaseUrl()}"
+  api-key="${this.getApiKeyForUsage()}">
+</rb-tabulator>`;
+    navigator.clipboard.writeText(html).then(() => {
+      this.messagesService.showInfo('rb-tabulator snippet copied to clipboard!', 'Success');
+    }).catch((err) => {
+      console.error('Failed to copy rb-tabulator snippet: ', err);
+      this.messagesService.showInfo('Failed to copy rb-tabulator snippet.', 'Error');
+    });
+  }
+
+  copyUsageRbParameters() {
+    const html = `<rb-parameters
+  report-code="${this.getCurrentReportCode()}"
+  api-base-url="${this.getApiBaseUrl()}"
+  api-key="${this.getApiKeyForUsage()}">
+</rb-parameters>`;
+    navigator.clipboard.writeText(html).then(() => {
+      this.messagesService.showInfo('rb-parameters snippet copied to clipboard!', 'Success');
+    }).catch((err) => {
+      console.error('Failed to copy rb-parameters snippet: ', err);
+      this.messagesService.showInfo('Failed to copy rb-parameters snippet.', 'Error');
+    });
+  }
+
+  copyUsageRbChart() {
+    const html = `<rb-chart
+  report-code="${this.getCurrentReportCode()}"
+  api-base-url="${this.getApiBaseUrl()}"
+  api-key="${this.getApiKeyForUsage()}">
+</rb-chart>`;
+    navigator.clipboard.writeText(html).then(() => {
+      this.messagesService.showInfo('rb-chart snippet copied to clipboard!', 'Success');
+    }).catch((err) => {
+      console.error('Failed to copy rb-chart snippet: ', err);
+      this.messagesService.showInfo('Failed to copy rb-chart snippet.', 'Error');
+    });
+  }
+
+  copyUsageRbPivotTable() {
+    const html = `<rb-pivottable
+  report-code="${this.getCurrentReportCode()}"
+  api-base-url="${this.getApiBaseUrl()}"
+  api-key="${this.getApiKeyForUsage()}">
+</rb-pivottable>`;
+    navigator.clipboard.writeText(html).then(() => {
+      this.messagesService.showInfo('rb-pivottable snippet copied to clipboard!', 'Success');
+    }).catch((err) => {
+      console.error('Failed to copy rb-pivottable snippet: ', err);
+      this.messagesService.showInfo('Failed to copy rb-pivottable snippet.', 'Error');
+    });
+  }
+
+  copyUsageCompleteExample() {
+    navigator.clipboard.writeText(this.getCompleteUsageExample()).then(() => {
+      this.messagesService.showInfo('Complete example copied to clipboard!', 'Success');
+    }).catch((err) => {
+      console.error('Failed to copy complete example: ', err);
+      this.messagesService.showInfo('Failed to copy complete example.', 'Error');
+    });
+  }
+
+  // ========== End Usage Tab Helper Methods ==========
+
   async onParametersSpecChanged(event: string) {
     this.activeParamsSpecScriptGroovy = event;
     await this.saveExternalReportingScript('paramsSpecScript');
@@ -3336,6 +3593,15 @@ pivotTable {
     //     return;
     // }
     await this.settingsService.saveTemplateFileAsync(path, contentToSave);
+
+    // Invalidate DSL cache for this config when DSL scripts are modified
+    // This ensures fresh parsing when the config is loaded again (e.g., in processing)
+    if (['paramsSpecScript', 'tabulatorConfigScript', 'chartConfigScript', 'pivotTableConfigScript'].includes(scriptType)) {
+      const currentConfig = this.settingsService.currentConfigurationTemplate;
+      if (currentConfig) {
+        this.settingsService.invalidateConfigDetailsCache(currentConfig.filePath);
+      }
+    }
   }
 
   reportParameters: ReportParameter[];
@@ -3364,16 +3630,16 @@ pivotTable {
   onReportParamsValidChange(event: Event) {
     // Web component emits CustomEvent with data in .detail
     const isValid = (event as CustomEvent<boolean>).detail;
+    // console.log('[Angular] onReportParamsValidChange received! isValid:', isValid, 'event:', event);
     this.reportParamsValid = isValid;
     //this.changeDetectorRef.detectChanges();
-    //console.log('Report parameters form validity:', isValid);
   }
 
   // Add handler for the form's value
   onReportParamsValuesChange(event: Event) {
     // Web component emits CustomEvent with data in .detail
     const values = (event as CustomEvent<{ [key: string]: any }>).detail;
-    //console.log('Form parameter values:', values);
+    // console.log('[Angular] onReportParamsValuesChange received! values:', values);
     this.reportParamsValues = values;
   }
 

@@ -44,6 +44,300 @@ public class DocumentBursterSettingsService {
 	@Autowired
 	SystemService systemService;
 
+	/**
+	 * Helper method to safely extract XML tag content.
+	 * Returns defaultValue if tag is not found.
+	 */
+	private String extractXmlTagValue(String xmlContent, String tagName, String defaultValue) {
+		String openTag = "<" + tagName + ">";
+		String closeTag = "</" + tagName + ">";
+		int startPos = xmlContent.indexOf(openTag);
+		int endPos = xmlContent.indexOf(closeTag);
+		if (startPos >= 0 && endPos > startPos) {
+			return xmlContent.substring(startPos + openTag.length(), endPos).trim();
+		}
+		return defaultValue;
+	}
+
+	/**
+	 * MINIMAL LOADING - Fast startup, no DSL parsing.
+	 * Returns only basic metadata needed for UI menus.
+	 * DSL options (reportParameters, tabulatorOptions, chartOptions, pivotTableOptions) are NOT loaded.
+	 */
+	public Stream<ConfigurationFileInfo> loadSettingsAllMinimal() throws Exception {
+
+		List<ConfigurationFileInfo> configurationFiles = new ArrayList<ConfigurationFileInfo>();
+
+		List<String> matching = new ArrayList<String>();
+		matching.add("*.xml");
+		Optional<Boolean> files = Optional.of(true);
+		Optional<Boolean> directories = Optional.of(false);
+		Optional<Boolean> recursive = Optional.of(false);
+		Optional<Boolean> ignoreCase = Optional.of(true);
+
+		FindCriteriaDto criteriaDto = new FindCriteriaDto(matching, files.orElse(null), directories.orElse(null),
+				recursive.orElse(null), ignoreCase.orElse(null));
+
+		List<String> burstConfigFilePaths = systemService.unixCliFind(AppPaths.CONFIG_DIR_PATH + "/burst", criteriaDto);
+
+		matching = new ArrayList<String>();
+		matching.add("settings.xml");
+		files = Optional.of(true);
+		directories = Optional.of(false);
+		recursive = Optional.of(true);
+		ignoreCase = Optional.of(true);
+
+		criteriaDto = new FindCriteriaDto(matching, files.orElse(null), directories.orElse(null),
+				recursive.orElse(null), ignoreCase.orElse(null));
+
+		List<String> reportsConfigFilePaths = systemService.unixCliFind(AppPaths.CONFIG_DIR_PATH + "/reports",
+				criteriaDto);
+
+		List<String> samplesConfigFilePaths = systemService.unixCliFind(AppPaths.CONFIG_DIR_PATH + "/samples",
+				criteriaDto);
+
+		List<String> configFilePaths = new ArrayList<>();
+		configFilePaths.addAll(burstConfigFilePaths);
+		configFilePaths.addAll(reportsConfigFilePaths);
+		configFilePaths.addAll(samplesConfigFilePaths);
+
+		for (String filePath : configFilePaths) {
+			String configurationFileName = Paths.get(filePath).getFileName().toString();
+
+			boolean isFallbackSettings = filePath.endsWith("burst/settings.xml");
+
+			// Exclude: _defaults, preferences, and _frend samples (frontend-only showcases)
+			boolean isRealSettingsXmlFile = !filePath.endsWith("_defaults/settings.xml")
+					&& !filePath.endsWith("preferences/settings.xml")
+					&& !filePath.contains("/_frend/");
+
+			if (isRealSettingsXmlFile) {
+
+				String fullFilePath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + filePath;
+				String settingsFileContent = systemService.unixCliCat(fullFilePath);
+
+				// Parse basic fields using safe helper method
+				String configurationName = extractXmlTagValue(settingsFileContent, "template", "Unknown");
+				boolean boolReportDistribution = Boolean.parseBoolean(
+						extractXmlTagValue(settingsFileContent, "reportdistribution", "false"));
+				boolean boolReportGenerationMailMerge = Boolean.parseBoolean(
+						extractXmlTagValue(settingsFileContent, "reportgenerationmailmerge", "false"));
+				String strVisibility = extractXmlTagValue(settingsFileContent, "visibility", "visible");
+				boolean boolUseEmailConnection = Boolean.parseBoolean(
+						extractXmlTagValue(settingsFileContent, "useconn", "false"));
+				String strEmailConnectionCode = extractXmlTagValue(settingsFileContent, "conncode", StringUtils.EMPTY);
+
+				String templateRelativeFilePath = "./config/burst/" + configurationFileName;
+				String typeOfConfiguration = "config-burst-legacy";
+
+				String folderName = Paths.get(filePath).getParent().getFileName().toString();
+
+				String dsInputType = StringUtils.EMPTY;
+				String scriptOptionsSelectFileExplorer = "globpattern";
+
+				if (filePath.contains("config/reports/" + folderName)) {
+					typeOfConfiguration = "config-reports";
+					templateRelativeFilePath = "./config/reports/" + folderName + "/settings.xml";
+
+				} else if (filePath.contains("config/samples/" + folderName)) {
+					typeOfConfiguration = "config-samples";
+					templateRelativeFilePath = "./config/samples/" + folderName + "/settings.xml";
+				}
+
+				if (boolReportGenerationMailMerge) {
+					String reportingXmlFilePath = Paths.get(fullFilePath).getParent().toString() + "/reporting.xml";
+					String reportingXmlFileContent = systemService.unixCliCat(reportingXmlFilePath);
+
+					dsInputType = extractXmlTagValue(reportingXmlFileContent, "type", StringUtils.EMPTY);
+					scriptOptionsSelectFileExplorer = extractXmlTagValue(reportingXmlFileContent, "selectfileexplorer", "globpattern");
+				}
+
+				ConfigurationFileInfo configFile = new ConfigurationFileInfo();
+				configFile.fileName = configurationFileName;
+				configFile.filePath = filePath.replace("\\", "/");
+				configFile.relativeFilePath = templateRelativeFilePath;
+				configFile.templateName = configurationName;
+				configFile.isFallback = isFallbackSettings;
+				configFile.capReportDistribution = boolReportDistribution;
+				configFile.capReportGenerationMailMerge = boolReportGenerationMailMerge;
+				configFile.dsInputType = dsInputType;
+				configFile.scriptOptionsSelectFileExplorer = scriptOptionsSelectFileExplorer;
+				configFile.visibility = strVisibility;
+				configFile.notes = StringUtils.EMPTY;
+				configFile.folderName = folderName;
+				configFile.type = typeOfConfiguration;
+				configFile.activeClicked = false;
+				configFile.useEmlConn = boolUseEmailConnection;
+				configFile.emlConnCode = strEmailConnectionCode;
+
+				// NOTE: DSL options are NOT loaded here for performance
+				// They will be loaded on-demand via loadConfigDetails()
+
+				configurationFiles.add(configFile);
+			}
+		}
+
+		return configurationFiles.stream();
+	}
+
+	/**
+	 * FULL DETAILS LOADING - Load DSL options for a specific configuration.
+	 * Called on-demand when user selects a specific report to view/edit.
+	 * Parses reportParameters, tabulatorOptions, chartOptions, pivotTableOptions.
+	 * 
+	 * @param settingsFilePath The relative file path to settings.xml (e.g., "/config/samples/_frend/sales-region-prod-qtr/settings.xml")
+	 * @return ConfigurationFileInfo with all DSL options populated
+	 */
+	public ConfigurationFileInfo loadConfigDetails(String settingsFilePath) throws Exception {
+		
+		// Convert relative path to absolute
+		String fullFilePath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + settingsFilePath;
+		Path settingsPath = Paths.get(fullFilePath);
+		
+		if (!Files.exists(settingsPath)) {
+			return null;
+		}
+		
+		// Get the folder containing settings.xml
+		Path itemDir = settingsPath.getParent();
+		String folderName = itemDir.getFileName().toString();
+		
+		ConfigurationFileInfo configDetails = new ConfigurationFileInfo();
+		configDetails.folderName = folderName;
+		configDetails.filePath = settingsFilePath.replace("\\", "/");
+		
+		// Determine type based on path
+		if (settingsFilePath.contains("/config/reports/")) {
+			configDetails.type = "config-reports";
+		} else if (settingsFilePath.contains("/config/samples/")) {
+			configDetails.type = "config-samples";
+		} else {
+			// For burst configs, no DSL files to parse
+			return configDetails;
+		}
+		
+		// Load Report Parameters DSL
+		String paramsSpecFileName = folderName + "-report-parameters-spec.groovy";
+		Path paramsSpecPath = itemDir.resolve(paramsSpecFileName);
+
+		if (Files.exists(paramsSpecPath)) {
+			try {
+				configDetails.reportParameters = ReportParametersHelper
+						.parseGroovyParametersDslCode(Files.readString(paramsSpecPath));
+			} catch (Exception e) {
+				System.err.println("Failed to parse Report Parameters DSL for " + folderName + ": " + e.getMessage());
+			}
+		}
+		
+		// Load Tabulator DSL
+		String tabulatorConfigFileName = folderName + "-tabulator-config.groovy";
+		Path tabulatorConfigPath = itemDir.resolve(tabulatorConfigFileName);
+
+		if (Files.exists(tabulatorConfigPath)) {
+			try {
+				var tabulatorOptions = TabulatorOptionsParser.parseGroovyTabulatorDslCode(Files.readString(tabulatorConfigPath));
+				if (tabulatorOptions != null) {
+					configDetails.tabulatorOptions = new HashMap<>();
+					if (tabulatorOptions.getLayoutOptions() != null) {
+						configDetails.tabulatorOptions.put("layoutOptions", tabulatorOptions.getLayoutOptions());
+					}
+					if (tabulatorOptions.getColumns() != null) {
+						configDetails.tabulatorOptions.put("columns", tabulatorOptions.getColumns());
+					}
+					if (tabulatorOptions.getData() != null) {
+						configDetails.tabulatorOptions.put("data", tabulatorOptions.getData());
+					}
+				}
+			} catch (Exception e) {
+				System.err.println("Failed to parse Tabulator DSL for " + folderName + ": " + e.getMessage());
+			}
+		}
+		
+		// Load Chart DSL
+		String chartConfigFileName = folderName + "-chart-config.groovy";
+		Path chartConfigPath = itemDir.resolve(chartConfigFileName);
+
+		if (Files.exists(chartConfigPath)) {
+			try {
+				var chartOptions = ChartOptionsParser.parseGroovyChartDslCode(Files.readString(chartConfigPath));
+				if (chartOptions != null) {
+					configDetails.chartOptions = new HashMap<>();
+					if (chartOptions.getType() != null) {
+						configDetails.chartOptions.put("type", chartOptions.getType());
+					}
+					if (chartOptions.getLabelField() != null) {
+						configDetails.chartOptions.put("labelField", chartOptions.getLabelField());
+					}
+					if (chartOptions.getOptions() != null && !chartOptions.getOptions().isEmpty()) {
+						configDetails.chartOptions.put("options", chartOptions.getOptions());
+					}
+					if (chartOptions.getLabels() != null && !chartOptions.getLabels().isEmpty()) {
+						configDetails.chartOptions.put("labels", chartOptions.getLabels());
+					}
+					if (chartOptions.getDatasets() != null && !chartOptions.getDatasets().isEmpty()) {
+						configDetails.chartOptions.put("datasets", chartOptions.getDatasets());
+					}
+					if (chartOptions.getData() != null && !chartOptions.getData().isEmpty()) {
+						configDetails.chartOptions.put("data", chartOptions.getData());
+					}
+				}
+			} catch (Exception e) {
+				System.err.println("Failed to parse Chart DSL for " + folderName + ": " + e.getMessage());
+			}
+		}
+
+		// Load Pivot Table DSL
+		String pivotConfigFileName = folderName + "-pivot-config.groovy";
+		Path pivotConfigPath = itemDir.resolve(pivotConfigFileName);
+
+		if (Files.exists(pivotConfigPath)) {
+			try {
+				var pivotOptions = PivotTableOptionsParser.parseGroovyPivotTableDslCode(Files.readString(pivotConfigPath));
+				if (pivotOptions != null) {
+					configDetails.pivotTableOptions = new HashMap<>();
+					if (pivotOptions.getRows() != null && !pivotOptions.getRows().isEmpty()) {
+						configDetails.pivotTableOptions.put("rows", pivotOptions.getRows());
+					}
+					if (pivotOptions.getCols() != null && !pivotOptions.getCols().isEmpty()) {
+						configDetails.pivotTableOptions.put("cols", pivotOptions.getCols());
+					}
+					if (pivotOptions.getVals() != null && !pivotOptions.getVals().isEmpty()) {
+						configDetails.pivotTableOptions.put("vals", pivotOptions.getVals());
+					}
+					if (pivotOptions.getAggregatorName() != null) {
+						configDetails.pivotTableOptions.put("aggregatorName", pivotOptions.getAggregatorName());
+					}
+					if (pivotOptions.getRendererName() != null) {
+						configDetails.pivotTableOptions.put("rendererName", pivotOptions.getRendererName());
+					}
+					if (pivotOptions.getRowOrder() != null) {
+						configDetails.pivotTableOptions.put("rowOrder", pivotOptions.getRowOrder());
+					}
+					if (pivotOptions.getColOrder() != null) {
+						configDetails.pivotTableOptions.put("colOrder", pivotOptions.getColOrder());
+					}
+					if (pivotOptions.getValueFilter() != null && !pivotOptions.getValueFilter().isEmpty()) {
+						configDetails.pivotTableOptions.put("valueFilter", pivotOptions.getValueFilter());
+					}
+					if (pivotOptions.getOptions() != null && !pivotOptions.getOptions().isEmpty()) {
+						configDetails.pivotTableOptions.put("options", pivotOptions.getOptions());
+					}
+					if (pivotOptions.getData() != null && !pivotOptions.getData().isEmpty()) {
+						configDetails.pivotTableOptions.put("data", pivotOptions.getData());
+					}
+				}
+			} catch (Exception e) {
+				System.err.println("Failed to parse Pivot Table DSL for " + folderName + ": " + e.getMessage());
+			}
+		}
+
+		return configDetails;
+	}
+
+	/**
+	 * FULL LOADING - Original method kept for backward compatibility.
+	 * Still used when all details are needed upfront (e.g., during processing).
+	 */
 	public Stream<ConfigurationFileInfo> loadSettingsAll() throws Exception {
 
 		List<ConfigurationFileInfo> configurationFiles = new ArrayList<ConfigurationFileInfo>();
@@ -115,8 +409,10 @@ public class DocumentBursterSettingsService {
 
 			boolean isFallbackSettings = filePath.endsWith("burst/settings.xml");
 
+			// Exclude: _defaults, preferences, and _frend samples (frontend-only showcases)
 			boolean isRealSettingsXmlFile = !filePath.endsWith("_defaults/settings.xml")
-					&& !filePath.endsWith("preferences/settings.xml");
+					&& !filePath.endsWith("preferences/settings.xml")
+					&& !filePath.contains("/_frend/");
 
 			if (isRealSettingsXmlFile) {
 

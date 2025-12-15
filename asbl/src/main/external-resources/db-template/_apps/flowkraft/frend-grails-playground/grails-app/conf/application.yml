@@ -5,9 +5,12 @@ info:
     grailsVersion: '@info.app.grailsVersion@'
 
 # ReportBurster backend configuration
+# Environment variable can override the base URL:
+#   - REPORTBURSTER_BACKEND_URL: Backend API URL (use host.docker.internal for Docker)
+# API key is auto-discovered from config/_internal/api-key.txt (see ReportBursterTagLib)
 reportburster:
   backend:
-    baseUrl: 'http://localhost:9090'
+    baseUrl: ${REPORTBURSTER_BACKEND_URL:http://host.docker.internal:9090}
     # Default configuration file path (relative to PORTABLE_EXECUTABLE_DIR)
     defaultConfigPath: 'config/burst/settings.xml'
 

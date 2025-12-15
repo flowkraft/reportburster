@@ -193,7 +193,7 @@
             <button
               type="button"
               class="btn btn-sm"
-              [disabled]="pack.status === 'starting' || pack.status === 'stopping'"
+              [disabled]="pack.status === 'starting' || pack.status === 'stopping' || (pack.status !== 'running' && !isDockerAvailable)"
               [ngClass]="{
                       'btn-default': pack.status === 'stopped' || pack.status === 'unknown' || pack.status === 'error',
                       'btn-primary': pack.status === 'running'
@@ -218,6 +218,17 @@
               ></i>
               {{ pack.status === 'running' ? 'Stop' : pack.status === 'starting' ? 'Starting' : pack.status === 'stopping' ? 'Stopping' : 'Start' }}
             </button>
+            
+            <!-- Docker Required Notice (shown when Docker is missing and pack is not running) -->
+            <div *ngIf="pack.status !== 'running' && !isDockerAvailable" 
+                 class="alert alert-warning" 
+                 style="margin-top: 10px; margin-bottom: 0; padding: 8px 12px; font-size: 0.9em;">
+              <i class="fa fa-exclamation-triangle" style="margin-right: 6px;"></i>
+              <strong>Docker must be installed &amp; started</strong> to run this starter pack.
+              <a href="https://www.reportburster.com/docs/troubleshooting" target="_blank" style="margin-left: 5px;">
+                <i class="fa fa-book" style="margin-right: 3px;"></i>See how to install Docker
+              </a>
+            </div>
           </div>
 
           <!-- Last Output Display (Separate from Command) -->

@@ -1,15 +1,41 @@
-version: "3.8"
+# =============================================================================
+# ReportBurster Server Docker Compose
+# =============================================================================
+#
+# USAGE:
+#   Start:  docker-compose up -d
+#   Stop:   docker-compose down
+#   Logs:   docker-compose logs -f reportburster-server
+#   Shell:  docker-compose exec reportburster-server bash
+#
+# FIRST RUN:
+#   The startServer.sh script will extract default config files from the image
+#   before starting the services.
+#
+# API KEY:
+#   - Auto-generated on first start, persisted in ./config/_internal/api-key.txt
+#   - Or set API_KEY environment variable to use a specific key
+#
+# =============================================================================
 
 services:
-  reportburster_server:
-    image: flowkraft/reportburster_server:10.1.1
-    container_name: reportburster_server
+  reportburster-server:
+    image: flowkraft/reportburster-server:10.2.0
+    container_name: reportburster-server
     ports:
-      - "9090:9090"
-    # environment:
-    # - POLLING_PATH=/app/poll
+      - "${SERVER_PORT:-9090}:9090"
+    environment:
+      - SERVER_PORT=9090
+      # Optional: Set a specific API key (otherwise auto-generated)
+      # - API_KEY=your-secret-api-key-here
+    # Enable host.docker.internal on Linux (already available on Docker Desktop for Windows/Mac)
+    # This allows the container to reach host-mapped ports for StarterPacks and Apps
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock # Mount the Docker socket
+      # Docker-in-Docker: Required for StarterPacks and Docker Apps
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Data volumes (persisted on host)
       - ./backup:/app/backup
       - ./config:/app/config
       - ./input-files:/app/input-files
@@ -19,16 +45,28 @@ services:
       - ./poll:/app/poll
       - ./samples:/app/samples
       - ./scripts:/app/scripts
+      - ./_apps:/app/_apps
+      - ./db:/app/db
     networks:
-      - reportburster_server_network
+      - reportburster_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/api/jobman/system/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   mailhog:
     image: mailhog/mailhog
     container_name: mailhog
     ports:
-      - "8025:8025"
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
     networks:
-      - reportburster_server_network
+      - reportburster_network
+    restart: unless-stopped
 
 networks:
-  reportburster_server_network:
+  reportburster_network:
+    name: reportburster_network

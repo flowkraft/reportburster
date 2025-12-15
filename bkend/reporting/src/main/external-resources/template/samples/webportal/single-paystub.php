@@ -102,34 +102,34 @@ $netAmount   = number_format( (float) $pod->field('net_amount'), 2 );
 get_header();
 ?>
 
-<div class="max-w-xl mx-auto bg-white font-sans text-gray-900 p-6">
-  <h1 class="text-2xl font-bold mb-2"><?php echo esc_html( get_the_title() ); ?></h1>
+<div id="single-paystub-page" class="max-w-xl mx-auto bg-white font-sans text-gray-900 p-6">
+  <h1 id="paystub-title" class="text-2xl font-bold mb-2"><?php echo esc_html( get_the_title() ); ?></h1>
   <?php if ( $allow_public_view ): ?>
     <div class="text-xs text-gray-500 mb-4">Public document (no login required).</div>
   <?php endif; ?>
-  <table class="w-full border border-gray-300 rounded-lg mt-6">
+  <table id="paystub-details-table" class="w-full border border-gray-300 rounded-lg mt-6">
     <tbody>
       <tr class="border-b border-gray-200">
         <td class="py-2 px-4 font-medium">Employee</td>
-        <td class="py-2 px-4"><?php echo $employee; ?></td>
+        <td id="paystub-employee" class="py-2 px-4"><?php echo $employee; ?></td>
       </tr>
       <tr class="border-b border-gray-200">
         <td class="py-2 px-4 font-medium">Period</td>
-        <td class="py-2 px-4"><?php echo $period; ?></td>
+        <td id="paystub-period" class="py-2 px-4"><?php echo $period; ?></td>
       </tr>
       <tr class="border-b border-gray-200">
         <td class="py-2 px-4 font-medium">Gross Amount</td>
-        <td class="py-2 px-4 text-right">$<?php echo $grossAmount; ?></td>
+        <td id="paystub-gross" class="py-2 px-4 text-right">$<?php echo $grossAmount; ?></td>
       </tr>
       <tr>
         <td class="py-2 px-4 font-medium">Net Amount</td>
-        <td class="py-2 px-4 text-right">$<?php echo $netAmount; ?></td>
+        <td id="paystub-net" class="py-2 px-4 text-right">$<?php echo $netAmount; ?></td>
       </tr>
     </tbody>
   </table>
 
-  <div class="mt-8 font-bold text-right bg-gray-100 p-4 rounded-lg text-lg">
-    Net Pay: $<?php echo $netAmount; ?>
+  <div id="paystub-net-pay-summary" class="mt-8 font-bold text-right bg-gray-100 p-4 rounded-lg text-lg">
+    Net Pay: $<span id="paystub-net-pay-amount"><?php echo $netAmount; ?></span>
   </div>
 
   <div class="mt-10 flex justify-center gap-4 print:hidden">
@@ -139,11 +139,11 @@ get_header();
         ? get_permalink($account_page_id)
         : ( get_permalink( get_page_by_path('my-documents') ) ?: home_url() );
     ?>
-    <a href="<?php echo esc_url( $back_url ); ?>"
+    <a id="btn-back-to-documents" href="<?php echo esc_url( $back_url ); ?>"
        class="inline-block px-5 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition">
       Back to Documents
     </a>
-    <a class="inline-block px-5 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+    <a id="btn-print" class="inline-block px-5 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
        href="javascript:window.print();">
       Print
     </a>

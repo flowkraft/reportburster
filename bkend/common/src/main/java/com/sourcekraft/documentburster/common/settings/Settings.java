@@ -50,6 +50,13 @@ import com.sourcekraft.documentburster.common.settings.model.ReportingSettings;
 import com.sourcekraft.documentburster.common.settings.model.RetryPolicy;
 import com.sourcekraft.documentburster.common.settings.model.SendFiles;
 import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
+import com.sourcekraft.documentburster.common.settings.model.ServerEmailSettings;
+import com.sourcekraft.documentburster.common.settings.model.Attachments;
+import com.sourcekraft.documentburster.common.settings.model.Items;
+import com.sourcekraft.documentburster.common.settings.model.Archive;
+import com.sourcekraft.documentburster.common.settings.model.BurstTokenDelimiters;
+import com.sourcekraft.documentburster.common.settings.model.QualityAssurance;
+import com.sourcekraft.documentburster.common.settings.model.Locale;
 import com.sourcekraft.documentburster.common.settings.model.SimpleJavaMail;
 import com.sourcekraft.documentburster.common.settings.model.SmsSettings;
 import com.sourcekraft.documentburster.common.settings.model.UploadSettings;
@@ -96,6 +103,80 @@ public class Settings extends DumpToString {
 		}
 	}
 
+	/**
+	 * Ensure that after unmarshalling from XML we have sensible, non-null
+	 * values for fields that previously were primitive types and for nested
+	 * complex objects that calling code expects to exist. This method is
+	 * intentionally explicit and centralised so behaviour is easy to reason
+	 * about and maintain.
+	 */
+	private void normalizeDocSettings() {
+		if (docSettings == null || docSettings.settings == null) return;
+
+		BursterSettings s = docSettings.settings;
+
+		// Ensure nested complex objects exist (avoid NPEs later).
+		if (s.attachments == null) s.attachments = new Attachments();
+		if (s.attachments.items == null) s.attachments.items = new Items();
+		if (s.attachments.items.attachmentItems == null) s.attachments.items.attachmentItems = new ArrayList<Attachment>();
+		if (s.attachments.archive == null) s.attachments.archive = new Archive();
+
+		if (s.freemarker == null) s.freemarker = new FreeMarkerSettings();
+		if (s.bursttokendelimiters == null) s.bursttokendelimiters = new BurstTokenDelimiters();
+		if (s.retrypolicy == null) s.retrypolicy = new RetryPolicy();
+		if (s.emailserver == null) s.emailserver = new ServerEmailSettings();
+		if (s.simplejavamail == null) s.simplejavamail = new SimpleJavaMail();
+		if (s.uploadsettings == null) s.uploadsettings = new UploadSettings();
+		if (s.webuploadsettings == null) s.webuploadsettings = new WebUploadSettings();
+		if (s.smssettings == null) s.smssettings = new SmsSettings();
+		if (s.qualityassurance == null) s.qualityassurance = new QualityAssurance();
+		if (s.qualityassurance.emailserver == null) s.qualityassurance.emailserver = new ServerEmailSettings();
+		if (s.locale == null) s.locale = new Locale();
+
+		// Booleans: set explicit false when missing
+		if (s.deletefiles == null) s.deletefiles = Boolean.FALSE;
+		if (s.quarantinefiles == null) s.quarantinefiles = Boolean.FALSE;
+		if (s.sortbyposition == null) s.sortbyposition = Boolean.FALSE;
+		if (s.shouldseparatebybeads == null) s.shouldseparatebybeads = Boolean.FALSE;
+		if (s.suppressduplicateoverlappingtext == null) s.suppressduplicateoverlappingtext = Boolean.FALSE;
+		if (s.htmlemail == null) s.htmlemail = Boolean.FALSE;
+		if (s.htmlemaileditcode == null) s.htmlemaileditcode = Boolean.FALSE;
+		if (s.reusetokenswhennotfound == null) s.reusetokenswhennotfound = Boolean.FALSE;
+		if (s.failjobifanydistributionfails == null) s.failjobifanydistributionfails = Boolean.FALSE;
+		if (s.enableretrypolicy == null) s.enableretrypolicy = Boolean.FALSE;
+		if (s.split2ndtime == null) s.split2ndtime = Boolean.FALSE;
+		if (s.dumprecorddataasxml == null) s.dumprecorddataasxml = Boolean.FALSE;
+		if (s.enableincubatingfeatures == null) s.enableincubatingfeatures = Boolean.FALSE;
+
+		// Numeric defaults
+		if (s.averagechartolerancevalue == null) s.averagechartolerancevalue = Float.valueOf(0.0f);
+		if (s.spacingtolerancevalue == null) s.spacingtolerancevalue = Float.valueOf(0.0f);
+		if (s.numberofuservariables == null) s.numberofuservariables = Integer.valueOf(0);
+		if (s.delayeachdistributionby == null) s.delayeachdistributionby = Double.valueOf(0.0);
+
+		// SimpleJavaMail defaults
+		SimpleJavaMail sjm = s.simplejavamail;
+		if (sjm.active == null) sjm.active = Boolean.FALSE;
+		if (sjm.javaxmaildebug == null) sjm.javaxmaildebug = Boolean.FALSE;
+		if (sjm.transportmodeloggingonly == null) sjm.transportmodeloggingonly = Boolean.FALSE;
+		if (sjm.async == null) sjm.async = Boolean.FALSE;
+
+		if (sjm.poolsize == null) sjm.poolsize = Integer.valueOf(0);
+		if (sjm.poolsizekeepalivetime == null) sjm.poolsizekeepalivetime = Integer.valueOf(0);
+		if (sjm.sessiontimeoutmillis == null) sjm.sessiontimeoutmillis = Integer.valueOf(0);
+		if (sjm.trustallhosts == null) sjm.trustallhosts = Boolean.FALSE;
+		if (sjm.verifyserveridentity == null) sjm.verifyserveridentity = Boolean.FALSE;
+		if (sjm.opportunistictls == null) sjm.opportunistictls = Boolean.FALSE;
+
+		// Ensure attachment order values exist and are non-null
+		if (s.attachments != null && s.attachments.items != null && s.attachments.items.attachmentItems != null) {
+			for (Attachment a : s.attachments.items.attachmentItems) {
+				if (a.order == null) a.order = Integer.valueOf(0);
+			}
+		}
+
+	}
+
 	public String getReportingPrimaryDatabaseConnectionCode() {
 
 		if (Objects.isNull(this.reportingSettings))
@@ -118,6 +199,18 @@ public class Settings extends DumpToString {
 
 		try (FileInputStream fis = new FileInputStream(new File(this.configurationFilePath))) {
 			docSettings = (DocumentBursterSettings) u.unmarshal(fis);
+
+			// Normalize settings after successful unmarshal.
+			// Rationale: many XML templates (especially older ones) contain empty
+			// or missing elements for fields that used to be primitive types.
+			// Converting those fields to wrapper types allows JAXB to set null
+			// when elements are absent/empty. We must then explicitly populate
+			// sensible defaults and instantiate missing nested objects so the
+			// rest of the codebase can rely on non-null values and avoid NPEs
+			// or primitive conversion errors. We do this intentionally and
+			// explicitly here (rather than via XML producers) to keep behaviour
+			// controlled server-side.
+			normalizeDocSettings();
 		}
 
 		_sortAttachments();
@@ -203,8 +296,8 @@ public class Settings extends DumpToString {
 					String jdbcUrl = "jdbc:sqlite:" + resolvedPath;
 
 					connectionDatabaseSettings = new DocumentBursterConnectionDatabaseSettings();
-					com.sourcekraft.documentburster.common.settings.model.ConnectionDatabaseSettings conn = new com.sourcekraft.documentburster.common.settings.model.ConnectionDatabaseSettings();
-					com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings server = new com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings();
+					ConnectionDatabaseSettings conn = new ConnectionDatabaseSettings();
+					ServerDatabaseSettings server = new ServerDatabaseSettings();
 					server.type = "sqlite";
 					server.driver = "org.sqlite.JDBC";
 					server.url = jdbcUrl;

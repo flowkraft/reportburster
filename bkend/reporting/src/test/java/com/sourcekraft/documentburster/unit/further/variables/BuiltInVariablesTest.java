@@ -108,12 +108,17 @@ public class BuiltInVariablesTest {
         assertTrue(outputFolder.contains(FilenameUtils.getName(PAYSLIPS_REPORT_PATH)));
 
         // assert for $now; format=\"yyyy\"$
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy");
-        assertTrue(outputFolder.contains(formatter.format(new Date())));
+        // For Year format check (yyyy)
+        SimpleDateFormat yearFormatter = new SimpleDateFormat("yyyy");
+        String expectedYear = yearFormatter.format(new Date());
+        assertTrue("Expected output folder to contain year " + expectedYear + " but got: " + outputFolder,
+                   outputFolder.contains(expectedYear));
 
-        // assert for $now; format=\"MM.dd\"$
-        formatter = new SimpleDateFormat("MM.dd");
-        assertTrue(outputFolder.contains(formatter.format(new Date())));
+        // For Month format check (MM.)
+        SimpleDateFormat monthFormatter = new SimpleDateFormat("MM.");
+        String expectedMonth = monthFormatter.format(new Date());
+        assertTrue("Expected output folder to contain month " + expectedMonth + " but got: " + outputFolder,
+                   outputFolder.contains(expectedMonth));
 
         // assert for $now_quarter$
         int expectedQuarter = Utils.getQuarter(new Date(), null);

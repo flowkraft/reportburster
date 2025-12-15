@@ -538,8 +538,9 @@ public class SystemService {
 	// Inner public class for service status info
 	public static class ServiceStatusInfo {
 		public String name; // e.g., "mariadb"
-		public String status; // e.g., "running", "stopped", "error"
+		public String status; // e.g., "running", "stopped", "error", "starting" (when unhealthy)
 		public String ports; // e.g., "3307/tcp" or "N/A"
+		public String health; // e.g., "healthy", "unhealthy", "starting", or null if no healthcheck
 	}
 
 	public List<ServiceStatusInfo> getAllServicesStatus() throws Exception {
@@ -579,7 +580,16 @@ public class SystemService {
 			for (Map<String, Object> service : services) {
 				ServiceStatusInfo info = new ServiceStatusInfo();
 				info.name = (String) service.get("Names");
-				info.status = (String) service.get("State");
+				// Check health status: if container has healthcheck and is not healthy, report as "starting"
+				String state = (String) service.get("State");
+				String statusText = (String) service.get("Status"); // e.g., "Up 30 seconds (healthy)" or "Up 10 seconds (health: starting)"
+				info.health = extractHealthStatus(statusText);
+				// If container is running but health is not "healthy", report as "starting" so UI waits
+				if ("running".equals(state) && info.health != null && !"healthy".equals(info.health)) {
+					info.status = "starting";
+				} else {
+					info.status = state;
+				}
 				info.ports = service.get("Ports") != null ? service.get("Ports").toString() : "N/A";
 				statuses.add(info);
 			}
@@ -597,7 +607,16 @@ public class SystemService {
 					if (service.containsKey("Names")) {
 						ServiceStatusInfo info = new ServiceStatusInfo();
 						info.name = (String) service.get("Names");
-						info.status = (String) service.get("State");
+						// Check health status: if container has healthcheck and is not healthy, report as "starting"
+						String state = (String) service.get("State");
+						String statusText = (String) service.get("Status");
+						info.health = extractHealthStatus(statusText);
+						// If container is running but health is not "healthy", report as "starting" so UI waits
+						if ("running".equals(state) && info.health != null && !"healthy".equals(info.health)) {
+							info.status = "starting";
+						} else {
+							info.status = state;
+						}
 						info.ports = service.get("Ports") != null ? service.get("Ports").toString() : "N/A";
 						statuses.add(info);
 					}
@@ -611,6 +630,20 @@ public class SystemService {
 		}
 
 		return statuses;
+	}
+
+	/**
+	 * Extract health status from Docker's Status string.
+	 * Examples: "Up 30 seconds (healthy)", "Up 10 seconds (health: starting)", "Up 5 seconds (unhealthy)"
+	 * Returns: "healthy", "starting", "unhealthy", or null if no healthcheck
+	 */
+	private String extractHealthStatus(String statusText) {
+		if (statusText == null) return null;
+		if (statusText.contains("(healthy)")) return "healthy";
+		if (statusText.contains("(health: starting)")) return "starting";
+		if (statusText.contains("(unhealthy)")) return "unhealthy";
+		// No health info in status = no healthcheck configured
+		return null;
 	}
 
 	private String getCommandReadyToBeRunAsAdministratorUsingBatchCmd(String commandToElevate) throws Exception {

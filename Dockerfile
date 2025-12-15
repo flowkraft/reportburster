@@ -1,97 +1,116 @@
-# Start with a base image containing Java runtime and Maven
-FROM maven:3.9.6-eclipse-temurin-11-alpine as build
+# =============================================================================
+# ReportBurster Server Dockerfile
+# Multi-stage build optimized for caching and clean builds
+# =============================================================================
+# 
+# BUILD MODES:
+# 
+# 1. DEVELOPMENT BUILD (uses cache, fast rebuilds):
+#    docker build -t flowkraft/reportburster-server:dev .
+#
+# 2. RELEASE BUILD (100% clean, no cache):
+#    docker build --no-cache --build-arg BUILD_DATE=$(date -u +%Y%m%d%H%M%S) \
+#                 -t flowkraft/reportburster-server:X.Y.Z .
+#
+# =============================================================================
 
-# Install Node.js
-RUN apk add --update nodejs npm
+# -----------------------------------------------------------------------------
+# STAGE 1: Maven Dependencies (cached unless pom.xml changes)
+# -----------------------------------------------------------------------------
+FROM maven:3.9.9-eclipse-temurin-17-alpine AS maven-deps
 
-# Set the working directory in the container to /app
+# Build date arg - change this to bust cache for release builds
+ARG BUILD_DATE=dev
+
 WORKDIR /app
 
-# Copy the pom.xml files and source code of the modules that are dependencies for other modules
-COPY ./xtra-tools/build/common-scripts/maven/pom.xml ./xtra-tools/build/common-scripts/maven/pom.xml
-
-COPY ./pom.xml ./pom.xml
-
-COPY ./backend/common/pom.xml ./backend/common/pom.xml
-COPY ./backend/common/src ./backend/common/src
-
-# Copy the pom.xml files and source code of the modules that are dependencies for other modules
-COPY ./backend/update/pom.xml ./backend/update/pom.xml
-COPY ./backend/update/src ./backend/update/src
-
-# Copy the pom.xml files of the dependent modules
-COPY ./backend/reporting/pom.xml ./backend/reporting/pom.xml
-COPY ./backend/reporting/src ./backend/reporting/src
-
-# Copy the source code of the dependent modules
-COPY ./backend/server/pom.xml ./backend/server/pom.xml
-COPY ./backend/server/src ./backend/server/src
-
-COPY ./backend/server/src ./backend/server/src
-
-# Install on the local maven repository either
-# 1. jars which are not available on public maven repositories or
-# 2. jars which are old on the public maven repositories
-COPY ./xtra-tools/build/common-scripts/maven/lib-repository/burst/pherialize-1.2.1.jar /tmp/
-
-RUN mvn install:install-file -Dfile=/tmp/pherialize-1.2.1.jar -DgroupId=de.ailis.pherialize -DartifactId=pherialize -Dversion=1.2.1 -Dpackaging=jar -P docker && \
+# Install custom jar that's not in Maven Central (rarely changes, cache it)
+COPY ./xtra-tools/bild/common-scripts/maven/lib-repository/burst/pherialize-1.2.1.jar /tmp/
+RUN mvn install:install-file \
+    -Dfile=/tmp/pherialize-1.2.1.jar \
+    -DgroupId=de.ailis.pherialize \
+    -DartifactId=pherialize \
+    -Dversion=1.2.1 \
+    -Dpackaging=jar \
+    -P docker && \
     rm /tmp/pherialize-1.2.1.jar
 
-# Build and install the modules that are dependencies for other modules
+# Copy ONLY pom.xml files first (for dependency caching)
+COPY ./pom.xml ./pom.xml
+COPY ./xtra-tools/bild/common-scripts/maven/pom.xml ./xtra-tools/bild/common-scripts/maven/pom.xml
+COPY ./bkend/common/pom.xml ./bkend/common/pom.xml
+COPY ./bkend/update/pom.xml ./bkend/update/pom.xml
+COPY ./bkend/reporting/pom.xml ./bkend/reporting/pom.xml
+COPY ./bkend/server/pom.xml ./bkend/server/pom.xml
 
+# Download all dependencies (this layer is cached until pom.xml changes)
+RUN mvn dependency:go-offline -B -P docker || true
+
+# -----------------------------------------------------------------------------
+# STAGE 2: Build Java Backend
+# -----------------------------------------------------------------------------
+FROM maven-deps AS backend-build
+
+# Now copy source code (changes frequently, not cached)
+COPY ./bkend/common/src ./bkend/common/src
+COPY ./bkend/update/src ./bkend/update/src
+COPY ./bkend/reporting/src ./bkend/reporting/src
+COPY ./bkend/server/src ./bkend/server/src
+
+# Build all modules
 RUN mvn clean install -DskipTests -P docker
-# RUN mvn clean install -DskipTests -P docker -pl backend/common -am
-# RUN mvn clean install -DskipTests -P docker -pl backend/update -am
 
-# List the contents of the directory where the rb-common-maven-configuration:pom:1 artifact should be stored
-# RUN ls -la /root/.m2/repository/com/sourcekraft/documentburster
+# Copy dependencies for burst library
+RUN mvn dependency:copy-dependencies -P docker
 
-# Download dependencies of the dependent modules
-# RUN mvn dependency:go-offline -B -P docker -pl backend/reporting,backend/server -X
+# -----------------------------------------------------------------------------
+# STAGE 3: Build Angular Frontend (parallel with backend in BuildKit)
+# -----------------------------------------------------------------------------
+FROM node:20-alpine AS frontend-build
 
-# Build the dependent modules
-# RUN mvn clean install -DskipTests -P docker -pl backend/reporting,backend/server
+# Build date arg for cache busting
+ARG BUILD_DATE=dev
 
-#RUN mvn -pl backend/reporting dependency:copy-dependencies -P docker -X
-RUN mvn dependency:copy-dependencies -P docker -X
-
-# List the contents of the target/dependencies directory
-# RUN ls -la /app/backend/reporting/target/dependencies/
-
-# Start a new stage to build the frontend
-FROM build as frontend
-
-# Set the working directory in the container to /app/frend
 WORKDIR /app/frend
 
-# Copy the package.json and package-lock.json
-COPY ./frontend/reporting/package*.json ./
+# Copy package files first (for npm cache)
+COPY ./frend/reporting/package*.json ./
 
-# Install Angular CLI and the application's dependencies
+# Install dependencies (cached unless package.json changes)
 RUN npm install -g @angular/cli && npm install --force
 
-# Copy the rest of your application to the working directory
-COPY ./frontend/reporting .
+# Copy source code and build
+COPY ./frend/reporting .
 
-# Build the application using the custom:release-web script
+# Build Angular for web deployment
 RUN npm run custom:release-web && npm prune --production --force
 
-# Start a new stage for the final image
-FROM eclipse-temurin:11-jre-alpine
+# -----------------------------------------------------------------------------
+# STAGE 4: Runtime Image
+# -----------------------------------------------------------------------------
+FROM eclipse-temurin:17-jre-alpine
 
-# Install curl and Docker CLI
+# Metadata
+LABEL maintainer="FlowKraft" \
+      version="10.2.0" \
+      description="ReportBurster Server - Document Processing & Distribution"
+
+# Install runtime dependencies
 RUN apk --no-cache add \
     curl \
-    docker-cli
+    docker-cli \
+    docker-cli-compose \
+    bash
 
-# Set the working directory
+# Set working directory
 WORKDIR /app
 
-# Copy the "templated" folder structure
+# Copy template folder structure (rarely changes)
 COPY ./asbl/src/main/external-resources/db-template/ ./
 COPY ./asbl/src/main/external-resources/db-server-template/ ./
-COPY ./backend/reporting/src/main/external-resources/template/ ./
+COPY ./bkend/reporting/src/main/external-resources/template/ ./
 
+# Configure default settings for Docker environment
 RUN cp /app/config/burst/settings.xml /app/config/_defaults/settings.xml && \
     cp /app/config/burst/settings.xml /app/config/samples/split-only/settings.xml && \
     cp /app/config/burst/settings.xml /app/config/samples/split-two-times/settings.xml && \
@@ -101,54 +120,151 @@ RUN cp /app/config/burst/settings.xml /app/config/_defaults/settings.xml && \
     sed -i 's|<weburl>http://localhost:8025</weburl>|<weburl>http://mailhog:8025</weburl>|g' /app/config/burst/settings.xml && \
     cp /app/config/_internal/license.xml /app/config/_defaults/license.xml
 
-# Copy the frontend build output from the frontend stage
-COPY --from=frontend /app/frend/dist /app/lib/frend
+# Copy built artifacts from build stages
+COPY --from=frontend-build /app/frend/dist /app/lib/frend
+COPY --from=backend-build /app/bkend/reporting/target/dependencies /app/lib/burst
+COPY --from=backend-build /app/bkend/reporting/target/rb-reporting.jar /app/lib/burst/rb-reporting.jar
+COPY --from=backend-build /app/bkend/server/target/rb-server.jar /app/lib/server/rb-server.jar
 
-# Copy the jar file from the build stage
-COPY --from=build /app/backend/reporting/target/dependencies /app/lib/burst
+# Generate reportburster.sh script (matches .bat functionality with dynamic args)
+RUN cat > ./reportburster.sh << 'EOF'
+#!/bin/sh
+# ReportBurster CLI - matches Windows .bat behavior
+# Passes all arguments dynamically to the Java process
 
-COPY --from=build /app/backend/reporting/target/rb-reporting.jar /app/lib/burst/rb-reporting.jar
+# Build argument string for Ant
+ARGS=""
+COUNT=1
+for ARG in "$@"; do
+    ARGS="$ARGS -Darg$COUNT=\"$ARG\""
+    COUNT=$((COUNT + 1))
+done
 
-COPY --from=build /app/backend/server/target/rb-server.jar /app/lib/server/rb-server.jar
+# Execute with all arguments
+eval java -DDOCUMENTBURSTER_HOME="$(pwd)" \
+    -cp "lib/burst/ant-launcher*.jar" \
+    org.apache.tools.ant.launch.Launcher \
+    -buildfile config/_internal/documentburster.xml \
+    $ARGS \
+    -emacs >> logs/reportburster.sh.log 2>&1
+EOF
+RUN chmod +x ./reportburster.sh
 
-# Generate the reportburster.sh script
-RUN echo '#!/bin/sh' > ./reportburster.sh && \
-    echo 'java -DDOCUMENTBURSTER_HOME="$(pwd)" -cp lib/burst/ant-launcher*.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml -Darg1="$1" -Darg2="$2" -Darg3="$3" -Darg4="$4" -Darg5="$5" -Darg6="$6" -Darg7="$7" -emacs > logs/documentburster.bat.log' >> ./reportburster.sh && \
-    chmod +x ./reportburster.sh
-
-# Generate the startTestEmailServer.bat script
+# Generate test email server scripts
 RUN echo '#!/bin/sh' > ./tools/test-email-server/startTestEmailServer.sh && \
     echo 'docker start mailhog' >> ./tools/test-email-server/startTestEmailServer.sh && \
     chmod +x ./tools/test-email-server/startTestEmailServer.sh
 
-# Generate the shutTestEmailServer.sh script
 RUN echo '#!/bin/sh' > ./tools/test-email-server/shutTestEmailServer.sh && \
     echo 'docker stop mailhog' >> ./tools/test-email-server/shutTestEmailServer.sh && \
     chmod +x ./tools/test-email-server/shutTestEmailServer.sh
 
-# RUN ls -la /app
-# RUN ls -la /app/lib/frend
-# RUN ls -la /app/lib/burst
-# RUN ls -la /app/lib/server
-# Run the jar file
+# Create the docker-entrypoint.sh script
+RUN cat > /usr/local/bin/docker-entrypoint.sh << 'ENTRYPOINT_EOF'
+#!/bin/bash
+set -e
 
-# Generate the docker-entrypoint.sh script
-RUN echo '#!/bin/sh' > /usr/local/bin/docker-entrypoint.sh && \
-    echo 'if [ "$1" = "reportburster.sh" ]; then' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '    shift' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '    exec ./reportburster.sh "$@"' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo 'else' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '    export PORTABLE_EXECUTABLE_DIR_PATH=/app' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '    export FRONTEND_PATH=/app/lib/frend' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '    export POLLING_PATH=/app/poll' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo '    exec java -Dserver.port=9090 -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH -DUID=9090 -Dspring.resources.static-locations=file:///$FRONTEND_PATH -DPOLLING_PATH=$POLLING_PATH -jar /app/lib/server/rb-server.jar -serve' >> /usr/local/bin/docker-entrypoint.sh && \
-    echo 'fi' >> /usr/local/bin/docker-entrypoint.sh
+# =============================================================================
+# ReportBurster Docker Entrypoint
+# Handles API key generation and server startup
+# =============================================================================
 
-# Print the contents of the file to check if it's created correctly
-RUN cat /usr/local/bin/docker-entrypoint.sh
+PORTABLE_EXECUTABLE_DIR_PATH=/app
+FRONTEND_PATH=/app/lib/frend
+POLLING_PATH=/app/poll
+API_KEY_FILE=/app/config/_internal/api-key.txt
+CONFIG_JSON_FILE=/app/lib/frend/assets/config.json
+SERVER_PORT=${SERVER_PORT:-9090}
 
-# Make the script executable
+# -----------------------------------------------------------------------------
+# Function: Generate or load API key
+# Mirrors the behavior of startRbsjServer.bat on Windows
+# -----------------------------------------------------------------------------
+setup_api_key() {
+    # Check if API_KEY is provided via environment variable
+    if [ -n "$API_KEY" ]; then
+        echo "Using API key from environment variable"
+        CURRENT_API_KEY="$API_KEY"
+    elif [ -f "$API_KEY_FILE" ]; then
+        # Read existing API key from file (persisted via volume)
+        CURRENT_API_KEY=$(cat "$API_KEY_FILE" | tr -d '[:space:]')
+        echo "Loaded existing API key from $API_KEY_FILE"
+    else
+        # Generate new API key (32 bytes = 256 bits, base64 encoded)
+        CURRENT_API_KEY=$(head -c 32 /dev/urandom | base64 | tr -d '=+/' | head -c 43)
+        echo "Generated new API key"
+    fi
+    
+    # Ensure config directory exists
+    mkdir -p "$(dirname "$API_KEY_FILE")"
+    mkdir -p "$(dirname "$CONFIG_JSON_FILE")"
+    
+    # Write API key to file for backend to read
+    echo -n "$CURRENT_API_KEY" > "$API_KEY_FILE"
+    
+    # Write config.json for Angular frontend (matches startRbsjServer.bat behavior)
+    cat > "$CONFIG_JSON_FILE" << EOF
+{
+  "apiKey": "$CURRENT_API_KEY"
+}
+EOF
+    
+    echo "API key configured for both backend and frontend"
+}
+
+# -----------------------------------------------------------------------------
+# Main: Route based on first argument
+# -----------------------------------------------------------------------------
+if [ "$1" = "reportburster.sh" ]; then
+    # CLI mode: run reportburster.sh with remaining arguments
+    shift
+    exec ./reportburster.sh "$@"
+else
+    # Server mode: start the Spring Boot server
+    echo "Starting ReportBurster Server..."
+    
+    # Setup API key authentication
+    setup_api_key
+    
+    # Export environment variables
+    export PORTABLE_EXECUTABLE_DIR_PATH
+    export FRONTEND_PATH
+    export POLLING_PATH
+    export SERVE_WEB=true
+    
+    # Mark that we're running inside Docker - used by Java code to adjust hostnames
+    # for connecting to sibling containers via host.docker.internal
+    export RUNNING_IN_DOCKER=true
+    
+    # Clean up temp files (like Windows bat does)
+    find /app/temp -type f ! -name "*progress*" -delete 2>/dev/null || true
+    
+    # Start the Spring Boot server
+    exec java \
+        -Dserver.port=$SERVER_PORT \
+        -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH \
+        -DUID=$SERVER_PORT \
+        -DAPI_KEY="$CURRENT_API_KEY" \
+        -Dspring.resources.add-mappings=true \
+        -Dspring.web.resources.static-locations=file:///$FRONTEND_PATH \
+        -Dspring.mvc.static-path-pattern="/**" \
+        -DPOLLING_PATH=$POLLING_PATH \
+        -jar /app/lib/server/rb-server.jar
+fi
+ENTRYPOINT_EOF
+
+# Make entrypoint executable
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Set the ENTRYPOINT
+# Create required directories
+RUN mkdir -p /app/temp /app/logs /app/poll /app/output /app/quarantine /app/backup
+
+# Expose port
+EXPOSE 9090
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:9090/api/jobman/system/version || exit 1
+
+# Set entrypoint
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

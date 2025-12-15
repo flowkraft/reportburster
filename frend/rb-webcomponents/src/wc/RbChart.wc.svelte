@@ -31,6 +31,12 @@
   // ============================================================================
   let selfFetchLoading = false;
   let error: string | null = null;
+  
+  // Raw DSL source code (exposed for Configuration tab)
+  export let configDsl: string = '';
+  
+  // Full chart configuration from DSL (type, labelField, datasets, options)
+  let chartConfig: any = null;
 
   let container: HTMLDivElement;
   let canvas: HTMLCanvasElement;
@@ -129,14 +135,21 @@
 
   function buildConfig() {
     const normalizedData = normalizeDataForChart(data);
-    // Extract options from chartConfig if available (DSL mode)
-    let mergedOptions = Object.assign({}, options || {}, { responsive });
-    if (data?.chartConfig?.options) {
-      mergedOptions = Object.assign({}, data.chartConfig.options, mergedOptions);
+    // Extract Chart.js options from chartConfig.options (DSL mode) or use props
+    // chartConfig has structure: { type, labelField, datasets, options (Chart.js options) }
+    let mergedOptions: any = { responsive };
+    
+    // First apply Chart.js options from chartConfig (DSL mode)
+    if (chartConfig?.options) {
+      mergedOptions = Object.assign({}, chartConfig.options, mergedOptions);
+    }
+    // Then apply any prop-based options (Angular mode)
+    if (options && !chartConfig) {
+      mergedOptions = Object.assign({}, options, mergedOptions);
     }
     
     return {
-      type: type || data?.chartConfig?.type || (normalizedData?.datasets?.[0]?.type || 'line'),
+      type: type || chartConfig?.type || (normalizedData?.datasets?.[0]?.type || 'line'),
       data: normalizedData || { labels: [], datasets: [] },
       options: mergedOptions,
       plugins: plugins || [],
@@ -249,6 +262,16 @@
     patchResizeObserver();
     await tick();
 
+    // Read attributes directly from host element (Svelte props may not be populated yet)
+    // Navigate from container up through shadow DOM to host element
+    const shadowRoot = container?.getRootNode();
+    const hostEl = (shadowRoot as ShadowRoot)?.host;
+    if (hostEl) {
+      if (!reportCode) reportCode = hostEl.getAttribute('report-code') || '';
+      if (!apiBaseUrl) apiBaseUrl = hostEl.getAttribute('api-base-url') || '';
+      if (!apiKey) apiKey = hostEl.getAttribute('api-key') || '';
+    }
+
     if (!container) {
       dispatch('initError', { message: 'Missing container element' });
       return;
@@ -261,7 +284,7 @@
       selfFetchLoading = true;
       error = null;
       
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const headers: Record<string, string> = {};
       if (apiKey) headers['X-API-Key'] = apiKey;
       
       try {
@@ -270,25 +293,33 @@
         if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
         const config = await configRes.json();
         
-        // Apply chart options from config
+        // Store full chart configuration from DSL
+        // chartConfig has structure: { type, labelField, datasets, options (Chart.js options) }
         if (config.chartOptions) {
-          options = config.chartOptions;
-          if (config.chartOptions.type) type = config.chartOptions.type;
+          chartConfig = config.chartOptions;
+          if (chartConfig.type) type = chartConfig.type;
         }
         
-        // Fetch data (empty params for initial load)
-        const dataRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({})
-        });
+        // Store raw DSL for Configuration tab display
+        if (config.chartDsl) {
+          configDsl = config.chartDsl;
+        }
+        
+        // Fetch data (GET with empty query params for initial load)
+        const dataRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, { headers });
         if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
-        const reportData = await dataRes.json();
+        const dataResult = await dataRes.json();
+        // Backend returns { reportData: [...] }, extract the array
+        const reportData = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
         
-        // Transform data using chartConfig from options
-        if (options && reportData) {
-          data = transformChartConfigToChartJS(options, reportData);
+        // Transform data using chartConfig (which contains datasets with field mappings)
+        if (chartConfig && reportData) {
+          data = transformChartConfigToChartJS(chartConfig, reportData);
         }
+        
+        // Dispatch events for config and data loaded
+        dispatch('configLoaded', { configDsl, config });
+        dispatch('dataFetched', { data: reportData });
         
       } catch (err: any) {
         error = err.message || 'Failed to load report';
@@ -322,7 +353,7 @@
     
     // naive update logic: if chart type changed, rebuild chart; otherwise update data/options
     try {
-      const newType = type || data?.chartConfig?.type || (data?.datasets?.[0]?.type);
+      const newType = type || chartConfig?.type || (data?.datasets?.[0]?.type);
       if (chart && lastChartType !== newType) {
         // rebuild chart
         destroyChart();
@@ -335,10 +366,14 @@
         const normalizedData = normalizeDataForChart(data);
         chart.config.data = normalizedData || chart.config.data;
         
-        // Merge options from chartConfig if available
-        let mergedOptions = Object.assign({}, chart.config.options || {}, options || {});
-        if (data?.chartConfig?.options) {
-          mergedOptions = Object.assign({}, data.chartConfig.options, mergedOptions);
+        // Merge Chart.js options - preserve existing, apply chartConfig (DSL) or options (Angular)
+        let mergedOptions: any = Object.assign({}, chart.config.options || {});
+        if (chartConfig?.options) {
+          // DSL mode: use chartConfig.options
+          mergedOptions = Object.assign({}, chartConfig.options, mergedOptions);
+        } else if (options) {
+          // Angular mode: use options prop
+          mergedOptions = Object.assign({}, options, mergedOptions);
         }
         chart.config.options = mergedOptions;
         
@@ -362,22 +397,47 @@
     }
     
     selfFetchLoading = true;
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const headers: Record<string, string> = {};
     if (apiKey) headers['X-API-Key'] = apiKey;
     
     try {
-      const res = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(params)
-      });
-      if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
-      const reportData = await res.json();
+      // Re-fetch config to get any DSL changes
+      const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
+      if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
+      const config = await configRes.json();
       
-      // Transform data using existing options
-      if (options && reportData) {
-        data = transformChartConfigToChartJS(options, reportData);
+      // Update chartConfig from fresh config
+      if (config.chartOptions) {
+        chartConfig = config.chartOptions;
+        if (chartConfig.type) type = chartConfig.type;
       }
+      
+      // Update raw DSL for Configuration tab
+      if (config.chartDsl) {
+        configDsl = config.chartDsl;
+      }
+      
+      // Build query string from params
+      const queryString = new URLSearchParams(params as Record<string, string>).toString();
+      const url = queryString 
+        ? `${apiBaseUrl}/reports/${reportCode}/data?${queryString}`
+        : `${apiBaseUrl}/reports/${reportCode}/data`;
+      
+      const res = await fetch(url, { headers });
+      if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
+      const dataResult = await res.json();
+      // Backend returns { reportData: [...] }, extract the array
+      const reportData = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
+      
+      // Transform data using updated chartConfig
+      if (chartConfig && reportData) {
+        data = transformChartConfigToChartJS(chartConfig, reportData);
+      }
+      
+      // Rebuild chart to apply new config (options like title, scales, etc.)
+      destroyChart();
+      await createChart();
+      
       dispatch('dataFetched', { data });
     } catch (err: any) {
       error = err.message || 'Failed to fetch data';
@@ -391,9 +451,16 @@
   :host {
     display: block;
     position: relative;
+    width: 100%;
   }
-  .rb-chart-root { width: 100%; height: 100%; position: relative; }
-  canvas { width: 100% !important; height: 100% !important; display: block; }
+  .rb-chart-root { 
+    width: 100%; 
+    position: relative; 
+  }
+  /* Let Chart.js control canvas sizing when responsive/maintainAspectRatio are set */
+  canvas { 
+    display: block; 
+  }
   .rb-chart-overlay {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2; background: rgba(255,255,255,0.6);
   }
@@ -418,13 +485,13 @@
 
 {#if selfFetchLoading}
   <div class="rb-loading">Loading...</div>
-{:else if error}
-  <div class="rb-error">{error}</div>
-{:else}
-  <div class="rb-chart-root" bind:this={container}>
-    {#if loading}
-      <div class="rb-chart-overlay"><div class="rb-chart-spinner"></div></div>
-    {/if}
-    <canvas bind:this={canvas}></canvas>
-  </div>
 {/if}
+{#if error}
+  <div class="rb-error">{error}</div>
+{/if}
+<div class="rb-chart-root" bind:this={container} style:display={selfFetchLoading || error ? 'none' : 'block'}>
+  {#if loading}
+    <div class="rb-chart-overlay"><div class="rb-chart-spinner"></div></div>
+  {/if}
+  <canvas bind:this={canvas}></canvas>
+</div>

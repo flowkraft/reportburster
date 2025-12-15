@@ -18,12 +18,17 @@ import { Subject } from 'rxjs';
         </button>
       </div>
       <div class="modal-body" [innerHTML]="message"></div>
+      <div *ngIf="confirmationText" style="margin-top:10px;">
+        <label style="font-size: 0.9em; color: #777;">Type <strong>{{confirmationText}}</strong> to confirm</label>
+        <input type="text" [(ngModel)]="confirmInput" class="form-control input-sm" style="margin-top:6px;" />
+      </div>
       <div class="modal-footer">
         <button
           type="button"
           class="btn btn-primary dburst-button-question-confirm"
           (click)="confirm()"
           [innerHTML]="confirmLabel"
+          [disabled]="confirmationText && confirmInput !== confirmationText"
         ></button>
         <button
           type="button"
@@ -42,14 +47,21 @@ export class ConfirmDialogComponent implements OnInit {
   confirmLabel: string;
   declineLabel: string;
   confirmAction: Function;
+  confirmationText: string; // optional: when set, user must type this text to enable confirm
+  confirmInput: string;
 
   constructor(protected bsModalRef: BsModalRef) {}
 
   ngOnInit(): void {
     this.onClose = new Subject();
+    this.confirmInput = '';
   }
 
   confirm() {
+    // If confirmationText is provided, check equality before allowing confirm
+    if (this.confirmationText && this.confirmInput !== this.confirmationText) {
+      return; // do nothing
+    }
     this.bsModalRef.hide();
     this.onClose?.next(true);
     return this.confirmAction();

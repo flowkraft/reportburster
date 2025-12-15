@@ -1,6 +1,8 @@
 <svelte:options customElement="rb-parameters" accessors={true} />
 
 <script lang="ts">
+  console.log('[rb-parameters] ====== COMPONENT SCRIPT LOADED ======');
+  
   import { onMount, createEventDispatcher, tick } from 'svelte';
 
   // ParamRef type for cross-field references
@@ -39,6 +41,9 @@
   let loading = false;
   let error: string | null = null;
   
+  // Raw DSL source code (exposed for Configuration tab)
+  export let configDsl: string = '';
+  
   // Internal state
   let formValues: { [id: string]: any } = {};
   let touched: { [id: string]: boolean } = {};
@@ -46,53 +51,115 @@
   let isValid = true;
   let hostElement: HTMLElement | null = null;
   let container: HTMLDivElement;
+  let isMounted = false;
+  let pendingValidEmit: boolean | null = null;
+  let pendingValuesEmit: { [id: string]: any } | null = null;
 
   const dispatch = createEventDispatcher();
 
   // Get host element reference on mount
   onMount(async () => {
+    console.log('[rb-parameters] onMount START, reportCode:', reportCode, 'apiBaseUrl:', apiBaseUrl);
     await tick();
     // Get the host element (the custom element itself)
     hostElement = container?.getRootNode() instanceof ShadowRoot 
       ? (container.getRootNode() as ShadowRoot).host as HTMLElement
       : container?.closest('rb-parameters');
     
+    console.log('[rb-parameters] onMount after tick, hostElement:', hostElement ? 'found' : 'null');
+    
+    // Read attributes directly from host element (Svelte props may not be populated yet for kebab-case attributes)
+    if (hostElement) {
+      if (!reportCode) reportCode = hostElement.getAttribute('report-code') || '';
+      if (!apiBaseUrl) apiBaseUrl = hostElement.getAttribute('api-base-url') || '';
+      if (!apiKey) apiKey = hostElement.getAttribute('api-key') || '';
+      console.log('[rb-parameters] After reading host attributes - reportCode:', reportCode, 'apiBaseUrl:', apiBaseUrl);
+    }
+    
+    isMounted = true;
+    
+    // Emit any pending events that were queued before mount
+    if (pendingValidEmit !== null) {
+      console.log('[rb-parameters] onMount: emitting PENDING validChange:', pendingValidEmit);
+      emitHostEvent('validChange', pendingValidEmit);
+      pendingValidEmit = null;
+    }
+    if (pendingValuesEmit !== null) {
+      console.log('[rb-parameters] onMount: emitting PENDING valueChange');
+      emitHostEvent('valueChange', pendingValuesEmit);
+      pendingValuesEmit = null;
+    }
+    
     // ========================================================================
     // Hybrid Mode: if reportCode provided, self-fetch config
     // ========================================================================
     if (reportCode && apiBaseUrl) {
+      console.log('[rb-parameters] Self-fetch mode: fetching config for', reportCode);
       loading = true;
       error = null;
       
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (apiKey) headers['X-API-Key'] = apiKey;
       
+      const configUrl = `${apiBaseUrl}/reports/${reportCode}/config`;
+      console.log('[rb-parameters] Fetching config from:', configUrl);
+      
       try {
         // Fetch config
-        const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
+        const configRes = await fetch(configUrl, { headers });
+        console.log('[rb-parameters] Config response status:', configRes.status);
         if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
         const config = await configRes.json();
+        
+        console.log('[rb-parameters] Config received:', {
+          hasParameters: config.hasParameters,
+          parametersCount: config.parameters?.length || 0,
+          parametersDsl: config.parametersDsl ? `${config.parametersDsl.length} chars` : 'MISSING',
+          parameters: config.parameters
+        });
         
         // Apply parameters from config
         if (config.parameters && Array.isArray(config.parameters)) {
           parameters = config.parameters;
+          console.log('[rb-parameters] Parameters applied:', parameters.length, 'params');
+        } else {
+          console.warn('[rb-parameters] No parameters array in config!');
         }
+        
+        // Store raw DSL for Configuration tab display
+        if (config.parametersDsl) {
+          configDsl = config.parametersDsl;
+          console.log('[rb-parameters] configDsl set, length:', configDsl.length);
+        } else {
+          console.warn('[rb-parameters] No parametersDsl in config!');
+        }
+        
+        // Dispatch events for config loaded (both names for compatibility)
+        console.log('[rb-parameters] Dispatching configLoaded and configFetched events');
+        dispatch('configLoaded', { configDsl, config });
+        dispatch('configFetched', { parameters }); // Legacy event name
         
       } catch (err: any) {
         error = err.message || 'Failed to load parameters';
-        console.error('rb-parameters self-fetch error:', err);
+        console.error('[rb-parameters] self-fetch error:', err);
         dispatch('fetchError', { message: error });
       }
       loading = false;
+      console.log('[rb-parameters] Self-fetch complete, loading:', loading, 'error:', error);
+    } else {
+      console.log('[rb-parameters] Props mode (no self-fetch), parameters:', parameters?.length || 0);
     }
   });
 
   // Initialize form values from parameters
   $: if (parameters && parameters.length) {
+    console.log('[rb-parameters] reactive $: parameters changed, count:', parameters.length, 'isMounted:', isMounted);
+    console.log('[rb-parameters] parameters details:', JSON.stringify(parameters, null, 2));
     initForm();
   }
 
   function initForm() {
+    console.log('[rb-parameters] initForm START, params count:', parameters?.length);
     formValues = {};
     touched = {};
     errors = {};
@@ -103,7 +170,7 @@
       errors[p.id] = [];
     });
     
-    validateAll();
+    validateAll(true); // Force emit on init
     emitValues();
   }
 
@@ -219,7 +286,8 @@
   }
 
   // Validate all parameters
-  function validateAll() {
+  function validateAll(forceEmit: boolean = false) {
+    // console.log('[RbParameters] validateAll START, forceEmit:', forceEmit, 'isMounted:', isMounted);
     let allValid = true;
     parameters.forEach(p => {
       errors[p.id] = validateParam(p);
@@ -228,7 +296,9 @@
       }
     });
     
-    if (isValid !== allValid) {
+    // console.log('[RbParameters] validateAll: allValid:', allValid, 'isValid:', isValid, 'will emit:', forceEmit || isValid !== allValid);
+    
+    if (forceEmit || isValid !== allValid) {
       isValid = allValid;
       dispatch('validChange', isValid);
       // Emit as CustomEvent for Angular/vanilla JS consumers
@@ -275,11 +345,25 @@
 
   // Dispatch custom event on the host element (for Angular, vanilla JS, etc.)
   function emitHostEvent(name: string, detail: any) {
+    // console.log('[RbParameters] emitHostEvent called:', name, 'detail:', detail, 'isMounted:', isMounted, 'hostElement:', hostElement);
+    
+    // If not mounted yet, queue the event for later
+    if (!isMounted) {
+      // console.log('[RbParameters] emitHostEvent: NOT MOUNTED, queuing event:', name);
+      if (name === 'validChange') {
+        pendingValidEmit = detail;
+      } else if (name === 'valueChange') {
+        pendingValuesEmit = detail;
+      }
+      return;
+    }
+    
     if (!hostElement) {
       // Fallback: try to find host via container
       hostElement = container?.getRootNode() instanceof ShadowRoot 
         ? (container.getRootNode() as ShadowRoot).host as HTMLElement
         : container?.closest('rb-parameters');
+      // console.log('[RbParameters] emitHostEvent: fallback hostElement lookup:', hostElement);
     }
     
     if (hostElement) {
@@ -288,7 +372,10 @@
         bubbles: true,
         composed: true
       });
+      // console.log('[RbParameters] emitHostEvent: DISPATCHING CustomEvent:', name, 'on host:', hostElement.tagName);
       hostElement.dispatchEvent(event);
+    } else {
+      console.warn('[RbParameters] emitHostEvent: NO HOST ELEMENT, event lost:', name);
     }
   }
 
@@ -306,6 +393,44 @@
   export function reset() {
     initForm();
   }
+
+  // Public method to re-fetch config (for Refresh button)
+  export async function fetchConfig() {
+    if (!reportCode || !apiBaseUrl) {
+      console.warn('rb-parameters: fetchConfig requires reportCode and apiBaseUrl');
+      return;
+    }
+    
+    loading = true;
+    error = null;
+    
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (apiKey) headers['X-API-Key'] = apiKey;
+    
+    try {
+      // Fetch config
+      const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
+      if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
+      const config = await configRes.json();
+      
+      // Apply parameters from config
+      if (config.parameters && Array.isArray(config.parameters)) {
+        parameters = config.parameters;
+      }
+      
+      // Update raw DSL for Configuration tab
+      if (config.parametersDsl) {
+        configDsl = config.parametersDsl;
+      }
+      
+      dispatch('configFetched', { parameters });
+    } catch (err: any) {
+      error = err.message || 'Failed to load parameters';
+      console.error('rb-parameters fetchConfig error:', err);
+      dispatch('fetchError', { message: error });
+    }
+    loading = false;
+  }
 </script>
 
 {#if loading}
@@ -315,6 +440,7 @@
 {:else}
   <div bind:this={container} id="formReportParameters" class="rb-parameters-form">
     {#if parameters && parameters.length}
+      <!-- Debug: rendering {parameters.length} parameters -->
       <form class="report-parameters-form" style="display: flex; flex-direction: column; gap: 1rem;">
         {#each parameters as p (p.id)}
           <div class="form-group">
@@ -413,6 +539,10 @@
         </div>
       {/each}
     </form>
+  {:else}
+    <div class="rb-no-params" style="padding: 1rem; color: #666; text-align: center;">
+      No parameters defined. Check console for debug info.
+    </div>
   {/if}
   </div>
 {/if}

@@ -6,12 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title><g:layoutTitle default="ReportBurster Dashboard"/></title>
     
+    <!-- Favicon - ReportBurster paper plane icon -->
+    <link rel="icon" type="image/svg+xml" href="${assetPath(src: 'favicon.svg')}"/>
+    <link rel="shortcut icon" type="image/svg+xml" href="${assetPath(src: 'favicon.svg')}"/>
+    
     <!-- Apply theme immediately to prevent flash -->
     <script>
         (function() {
             const savedTheme = localStorage.getItem('rb-theme') || 'light';
             document.documentElement.setAttribute('data-bs-theme', savedTheme);
         })();
+    </script>
+    
+    <!-- ReportBurster configuration (api-key.txt auto-discovery with '123' fallback for dev) -->
+    <script>
+        <rb:configScript/>
     </script>
     
     <!-- Google Fonts - Inter for clean professional look -->
@@ -213,6 +222,11 @@
                                 Reports
                             </g:link>
                         </li>
+                        <li class="nav-item">
+                            <g:link uri="/your-canvas" class="nav-link ${controllerName == 'yourCanvas' ? 'active' : ''}">
+                                Your Canvas
+                            </g:link>
+                        </li>
                     </ul>
                     
                     <!-- Theme Toggle -->
@@ -263,7 +277,7 @@
         }
     </script>
     
-    <asset:javascript src="web-components/rb-webcomponents.umd.js"/>
+    <script src="http://localhost:9090/rb-webcomponents/rb-webcomponents.umd.js"></script>
     <g:pageProperty name="page.scripts"/>
 </body>
 </html>

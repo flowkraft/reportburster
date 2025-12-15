@@ -70,11 +70,8 @@ public class SqlReporter extends AbstractReporter {
 		String jdbiQuery = this.dbHelper.convertToJdbiParameters(sqlQuery);
 		List<String> queryParams = this.dbHelper.findQueryParameters(jdbiQuery);
 		
-		//// System.out.println("[DEBUG] Converted JDBI Query:");
-		//System.out.println(jdbiQuery);
-		//// System.out.println("[DEBUG] Query Parameters: " + queryParams);
-		//System.out.println("========================================");
-		
+		// Log the SQL query being executed
+		log.info("Executing SQL: {}", sqlQuery);
 		log.debug("Converted JDBI query: '{}' with params: {}", jdbiQuery, queryParams);
 
 		try (Handle handle = jdbiInstance.open()) {
@@ -83,16 +80,24 @@ public class SqlReporter extends AbstractReporter {
 			// Bind parameters from variables
 			Map<String, Object> currentVars = ctx.variables.getUserVariables(ctx.token);
 
-			// DEBUG: User variables
-			//// System.out.println("[DEBUG] User Variables (ctx.variables.getUserVariables):");
-			//System.out.println(currentVars);
-			//System.out.println("========================================");
+			// Log parameters being used
+			if (currentVars != null && !queryParams.isEmpty()) {
+				StringBuilder paramLog = new StringBuilder("Parameters: ");
+				boolean first = true;
+				for (String paramName : queryParams) {
+					if (currentVars.containsKey(paramName)) {
+						if (!first) paramLog.append(", ");
+						paramLog.append(paramName).append("='").append(currentVars.get(paramName)).append("'");
+						first = false;
+					}
+				}
+				log.info("{}", paramLog.toString());
+			}
 
 			if (currentVars != null) {
 				for (String paramName : queryParams) {
 					if (currentVars.containsKey(paramName)) {
 						query.bind(paramName, currentVars.get(paramName));
-						log.debug("Bound parameter :{} = '{}'", paramName, currentVars.get(paramName));
 					} else {
 						log.warn("SQL parameter :{} not found in variables.", paramName);
 					}

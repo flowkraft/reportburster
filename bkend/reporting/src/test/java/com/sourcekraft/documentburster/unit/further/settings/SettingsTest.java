@@ -104,10 +104,10 @@ public class SettingsTest {
 		assertTrue(StringUtils.isBlank(settings.getWebUploadSettings().joomlacommand));
 		assertTrue(StringUtils.isBlank(settings.getWebUploadSettings().otherwebcommand));
 
-		assertEquals(1, settings.getAttachments().size());
+		assertEquals(Integer.valueOf(1), Integer.valueOf(settings.getAttachments().size()));
 
 		assertEquals("${extracted_file_path}", settings.getAttachments().get(0).path);
-		assertEquals(0, settings.getAttachments().get(0).order);
+		assertEquals(Integer.valueOf(0), settings.getAttachments().get(0).order);
 
 		assertFalse(settings.isArchiveAttachments());
 		assertEquals("reports-${burst_token}.zip", settings.getArchiveFileName());
@@ -143,10 +143,10 @@ public class SettingsTest {
 		assertFalse(settings.getSimpleJavaMail().transportmodeloggingonly);
 
 		assertTrue(StringUtils.isBlank(settings.getSimpleJavaMail().proxy.host));
-		assertEquals(1080, settings.getSimpleJavaMail().proxy.port);
+		assertEquals(Integer.valueOf(1080), Integer.valueOf(settings.getSimpleJavaMail().proxy.port));
 		assertTrue(StringUtils.isBlank(settings.getSimpleJavaMail().proxy.username));
 		assertTrue(StringUtils.isBlank(settings.getSimpleJavaMail().proxy.password));
-		assertEquals(1081, settings.getSimpleJavaMail().proxy.socks5bridgeport);
+		assertEquals(Integer.valueOf(1081), Integer.valueOf(settings.getSimpleJavaMail().proxy.socks5bridgeport));
 
 		assertEquals("en", settings.getLanguage());
         assertEquals("US", settings.getCountry());
@@ -158,16 +158,16 @@ public class SettingsTest {
         assertEquals("MM/dd/yyyy HH:mm:ss", settings.getFreeMarkerSettings().datetimeformat);
         assertEquals("0.######", settings.getFreeMarkerSettings().numberformat);
 
-		assertEquals(20, settings.getNumberOfUserVariables());
+		assertEquals(Integer.valueOf(20), Integer.valueOf(settings.getNumberOfUserVariables()));
 
-		assertEquals(0, settings.getDelayEachDistributionBy(), 0);
+		assertEquals(0.0, settings.getDelayEachDistributionBy(), 0.0);
 
 		assertFalse(settings.isReuseTokensWhenNotFound());
 		assertTrue(settings.isFailJobIfAnyDistributionFails());
 
-		assertEquals(3, settings.getRetryPolicy().delay);
-		assertEquals(30, settings.getRetryPolicy().maxdelay);
-		assertEquals(3, settings.getRetryPolicy().maxretries);
+		assertEquals(Integer.valueOf(3), Integer.valueOf(settings.getRetryPolicy().delay));
+		assertEquals(Integer.valueOf(30), Integer.valueOf(settings.getRetryPolicy().maxdelay));
+		assertEquals(Integer.valueOf(3), Integer.valueOf(settings.getRetryPolicy().maxretries));
 
 		assertEquals("{", settings.getStartBurstTokenDelimiter());
 		assertEquals("}", settings.getEndBurstTokenDelimiter());
@@ -185,7 +185,7 @@ public class SettingsTest {
 
 		settings.loadSettings();
 
-		assertEquals(0, settings.getAttachments().size());
+		assertEquals(Integer.valueOf(0), Integer.valueOf(settings.getAttachments().size()));
 
 		assertFalse(settings.isArchiveAttachments());
 		assertEquals("reports-${burst_token}.zip", settings.getArchiveFileName());
@@ -199,14 +199,14 @@ public class SettingsTest {
 
 		settings.loadSettings();
 
-		assertEquals(2, settings.getAttachments().size());
+		assertEquals(Integer.valueOf(2), Integer.valueOf(settings.getAttachments().size()));
 
 		assertEquals("src/main/external-resources/template/samples/burst/Payslips-Distinct-Sheets.xls",
 				settings.getAttachments().get(0).path);
-		assertEquals(0, settings.getAttachments().get(0).order);
+		assertEquals(Integer.valueOf(0), settings.getAttachments().get(0).order);
 
 		assertEquals("$extracted_file_path$", settings.getAttachments().get(1).path);
-		assertEquals(1, settings.getAttachments().get(1).order);
+		assertEquals(Integer.valueOf(1), settings.getAttachments().get(1).order);
 
 		assertFalse(settings.isArchiveAttachments());
 		assertEquals("reports-${burst_token}.zip", settings.getArchiveFileName());

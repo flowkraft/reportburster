@@ -29,19 +29,19 @@ git pull origin main
 version=$(grep -oPm1 "(?<=<version>)[^<]+" ../backend/reporting/src/main/external-resources/template/config/burst/settings.xml)
 
 # Step 3: Build the Docker image and upload it to Docker Hub
-docker build --no-cache --progress=plain -t $DOCKER_HUB_USERNAME/reportburster_server:$version -f ../Dockerfile ..
+docker build --no-cache --progress=plain -t $DOCKER_HUB_USERNAME/reportburster-server:$version -f ../Dockerfile ..
 
 # Use the credentials
 # For example, to login to Docker:
 echo $DOCKER_HUB_PASSWORD | docker login --username $DOCKER_HUB_USERNAME --password-stdin
-docker push $DOCKER_HUB_USERNAME/reportburster_server:$version
+docker push $DOCKER_HUB_USERNAME/reportburster-server:$version
 
 # Step 4: Update docker-compose.yml with the version parsed previously
-sed -i "s|${DOCKER_HUB_USERNAME}/reportburster_server:.*|${DOCKER_HUB_USERNAME}/reportburster_server:${version}|" ./docker/docker-compose.yml
+sed -i "s|${DOCKER_HUB_USERNAME}/reportburster-server:.*|${DOCKER_HUB_USERNAME}/reportburster-server:${version}|" ./docker/docker-compose.yml
 
 # Update the reportburster.sh, startServer.sh with the latest version
-sed -i "s|\(image=\"${DOCKER_HUB_USERNAME}/reportburster_server:\).*\"|\1${version}\"|" ./docker/reportburster.sh
-sed -i "s|\(image=\"${DOCKER_HUB_USERNAME}/reportburster_server:\).*\"|\1${version}\"|" ./docker/startServer.sh
+sed -i "s|\(image=\"${DOCKER_HUB_USERNAME}/reportburster-server:\).*\"|\1${version}\"|" ./docker/reportburster.sh
+sed -i "s|\(image=\"${DOCKER_HUB_USERNAME}/reportburster-server:\).*\"|\1${version}\"|" ./docker/startServer.sh
 
 chmod +x ./docker/reportburster.sh
 chmod +x ./docker/startServer.sh

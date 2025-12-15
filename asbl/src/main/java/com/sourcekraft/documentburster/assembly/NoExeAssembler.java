@@ -111,9 +111,23 @@ public class NoExeAssembler extends AbstractAssembler {
 	private void _buildAndCopyWebComponents() throws Exception {
 		// Build rb-webcomponents using npm
 		String webComponentsPath = Utils.getTopProjectFolderPath() + "/frend/rb-webcomponents";
-		
-		new ProcessExecutor().directory(new File(webComponentsPath))
-				.command("cmd", "/c", "npm run build").redirectOutput(new LogOutputStream() {
+
+		// Ensure previous build artifacts are cleaned to avoid stale files
+		File distDir = new File(webComponentsPath + "/dist");
+		try {
+			if (distDir.exists()) {
+				System.out.println("Cleaning existing web-components dist: " + distDir.getAbsolutePath());
+				FileUtils.deleteDirectory(distDir);
+			}
+		} catch (Exception ex) {
+			System.out.println("Warning: failed to delete existing dist folder: " + ex.getMessage());
+		}
+
+		// Run top-level staging script to ensure consistent build + staging behavior
+		// Execute from frend/reporting so the npm script `custom:compile-and-stage-web-components` runs
+		String reportingDir = Utils.getTopProjectFolderPath() + "/frend/reporting";
+		new ProcessExecutor().directory(new File(reportingDir))
+				.command("cmd", "/c", "npm run custom:compile-and-stage-web-components").redirectOutput(new LogOutputStream() {
 					@Override
 					protected void processLine(String line) {
 						System.out.println(line);
@@ -121,27 +135,17 @@ public class NoExeAssembler extends AbstractAssembler {
 				}).execute();
 
 		System.out.println(
-				"------------------------------------- DONE_03a:NoExeAssembler npm run build (rb-webcomponents) ... -------------------------------------");
+				"------------------------------------- DONE_03a:NoExeAssembler npm run custom:compile-and-stage-web-components ... -------------------------------------");
 
-		// Copy to Grails web-components folder
-		String grailsWebComponentsPath = packageDirPath + "/" + topFolderName 
-				+ "/_apps/flowkraft/frend-grails-playground/grails-app/assets/web-components";
-		FileUtils.forceMkdir(new File(grailsWebComponentsPath));
-		FileUtils.copyDirectory(new File(webComponentsPath + "/dist"), new File(grailsWebComponentsPath));
-
-		System.out.println(
-				"------------------------------------- DONE_03b:NoExeAssembler copy rb-webcomponents to Grails ... -------------------------------------");
-
-		// Copy to WordPress plugin assets/js folder
-		String wordpressJsPath = packageDirPath + "/" + topFolderName 
-				+ "/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/assets/js";
-		FileUtils.forceMkdir(new File(wordpressJsPath));
-		FileUtils.copyFile(
-				new File(webComponentsPath + "/dist/rb-webcomponents.umd.js"),
-				new File(wordpressJsPath + "/rb-webcomponents.umd.js"));
+		// Copy to tools/rb-webcomponents for serving via static resource handler
+		// This allows external apps (Grails, WordPress, etc.) to include: 
+		// <script src="http://server:9090/rb-webcomponents/rb-webcomponents.umd.js"></script>
+		String toolsWebComponentsPath = packageDirPath + "/" + topFolderName + "/tools/rb-webcomponents";
+		FileUtils.forceMkdir(new File(toolsWebComponentsPath));
+		FileUtils.copyDirectory(new File(webComponentsPath + "/dist"), new File(toolsWebComponentsPath));
 
 		System.out.println(
-				"------------------------------------- DONE_03c:NoExeAssembler copy rb-webcomponents to WordPress ... -------------------------------------");
+			"------------------------------------- DONE_03b:NoExeAssembler copy rb-webcomponents to tools/rb-webcomponents ... -------------------------------------");
 	}
 
 	private void _performAdditionalRefinementsAndCopyAdditionalFiles() throws Exception {
@@ -952,20 +956,23 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// SAMPLES END
 
-		// WebPortal samples
-		FileUtils.copyFile(
-				new File(packageDirPath + "/" + topFolderName + "/samples/webportal/content-type-paystub.png"),
-				new File(packageDirPath + "/" + topFolderName
-						+ "/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/resources/views/content-type-paystub.png"));
+		// WebPortal samples - copy paystub templates to plugin views folder
+		String webportalSamplesPath = Utils.getTopProjectFolderPath()
+				+ "/bkend/reporting/src/main/external-resources/template/samples/webportal";
+		String pluginViewsPath = packageDirPath + "/" + topFolderName
+				+ "/_apps/cms-webportal-playground/wp-plugins/reportburster-portal/resources/views";
 
-		FileUtils.copyFile(
-				new File(packageDirPath + "/" + topFolderName + "/samples/webportal/page-my-documents-paystubs.php"),
-				new File(packageDirPath + "/" + topFolderName
-						+ "/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/resources/views/page-my-documents.php"));
+		// Copy and rename page template (page-my-documents-paystubs.php -> page-my-documents.php)
+		FileUtils.copyFile(new File(webportalSamplesPath + "/page-my-documents-paystubs.php"),
+				new File(pluginViewsPath + "/page-my-documents.php"));
 
-		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/samples/webportal/single-paystub.php"),
-				new File(packageDirPath + "/" + topFolderName
-						+ "/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/resources/views/single-paystub"));
+		// Copy and rename single template (single-paystub.php stays the same name)
+		FileUtils.copyFile(new File(webportalSamplesPath + "/single-paystub.php"),
+				new File(pluginViewsPath + "/single-paystub.php"));
+
+		// Copy content type image
+		FileUtils.copyFile(new File(webportalSamplesPath + "/content-type-paystub.png"),
+				new File(pluginViewsPath + "/content-type-paystub.png"));
 
 		// license.xml
 		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_internal/license.xml"),
@@ -980,18 +987,6 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		System.out.println(
 				"------------------------------------- DONE_10:NoExeAssembler _copyDistributedByGroovyFile ... -------------------------------------");
-
-		// Generate API key for file-based security discovery
-		// The API key is stored on the file system - only local apps can read it
-		// This is secure because:
-		// - Electron apps read it via IPC from the file system
-		// - Grails/WordPress read it from the same server's file system
-		// - Angular web mode uses same-origin session authentication
-		// - External attackers cannot access the file system
-		_generateApiKey();
-
-		System.out.println(
-				"------------------------------------- DONE_10b:NoExeAssembler _generateApiKey ... -------------------------------------");
 
 		_generateSampleNorthwindDatabase();
 
@@ -1008,22 +1003,6 @@ public class NoExeAssembler extends AbstractAssembler {
 					packageDirPath + "/" + topFolderName + "/db/sample-northwind-sqlite");
 			System.out.println("Successfully generated sample Northwind database for SQLite.");
 		}
-	}
-
-	/**
-	 * Generate a cryptographically secure random API key and save it to the config folder.
-	 * This key is used for authenticating API requests from Electron, Grails, and WordPress.
-	 * The key is stored on the file system so only local processes can read it.
-	 */
-	private void _generateApiKey() throws Exception {
-		SecureRandom random = new SecureRandom();
-		byte[] bytes = new byte[32]; // 256 bits of entropy
-		random.nextBytes(bytes);
-		String apiKey = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-		
-		// Save API key to config/_internal/api-key.txt
-		String apiKeyFilePath = packageDirPath + "/" + topFolderName + "/config/_internal/api-key.txt";
-		FileUtils.writeStringToFile(new File(apiKeyFilePath), apiKey, "UTF-8");
 	}
 
 	@Override
@@ -1097,12 +1076,6 @@ public class NoExeAssembler extends AbstractAssembler {
 		System.out.println(
 				"------------------------------------- VERIFIED_07:NoExeAssembler _copyDistributedByGroovyFile... -------------------------------------");
 
-		// verify _generateApiKey();
-		assertThat(new File(verifyDirPath + "/" + topFolderName + "/config/_internal/api-key.txt").exists()).isTrue();
-
-		System.out.println(
-				"------------------------------------- VERIFIED_08:NoExeAssembler _generateApiKey... -------------------------------------");
-
 		System.out.println(
 				"------------------------------------- VERIFIED_DONE:NoExeAssembler ... -------------------------------------");
 
@@ -1148,38 +1121,19 @@ public class NoExeAssembler extends AbstractAssembler {
 			}
 
 			// ===========================================
-			// CMS-WEBPORTAL-PLAYGROUND specific filtering
+			// CMS-WEBPORTAL-PLAYGROUND: Include everything from source
+			// (no special filtering - whatever is in asbl gets packaged)
 			// ===========================================
-			
-			// Keep EVERYTHING that is not under cms-webportal-playground
-			if (!path.contains("/cms-webportal-playground/")) {
-				return true;
+			if (path.contains("/cms-webportal-playground/")) {
+				// Only exclude standard build artifacts
+				return !path.contains("/node_modules/") && !path.contains("/vendor/")
+						&& !path.contains("/public/build/") && !path.contains("/.git/")
+						&& !path.contains("/.vscode/") && !path.contains("/.cache/")
+						&& !file.getName().equals("node_modules") && !file.getName().equals("vendor")
+						&& !file.getName().equals(".git");
 			}
 
-			// SPECIAL CASE: Always keep these three critical files
-			if (path.endsWith("/cms-webportal-playground/.env")
-					|| path.endsWith("/cms-webportal-playground/docker-compose.yml")
-					|| path.endsWith("/cms-webportal-playground/Dockerfile.cli")) {
-				return true;
-			}
-
-			// CRITICAL: Include parent directories needed for structure
-			if (path.endsWith("/cms-webportal-playground") || path.endsWith("/cms-webportal-playground/wp-plugins")
-					|| path.endsWith("/cms-webportal-playground/wp-plugins/reportburster-integration")) {
-				return true;
-			}
-
-			// SPECIAL CASE: Include files within reportburster-integration plugin folder
-			if (path.contains("/cms-webportal-playground/wp-plugins/reportburster-integration/")) {
-				// But still exclude git-ignored paths inside the plugin
-				return !path.contains("/.vscode/") && !path.contains("/.cache/") && !path.contains("/node_modules/")
-						&& !path.contains("/vendor/") && !path.contains("/.git/") && !path.contains("/.github/")
-						&& !file.getName().equals(".git") && !file.getName().equals("node_modules")
-						&& !file.getName().equals("vendor");
-			}
-
-			// EXCLUDE everything else under cms-webportal-playground
-			return false;
+			return true;
 		};
 	}
 

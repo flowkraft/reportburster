@@ -8,6 +8,11 @@
 	</Properties>
 
 	<Appenders>
+		
+		<Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
 		<RollingFile name="info-out"
 			fileName="${LOG_DIR}/info.log"
 			filePattern="${LOG_DIR}/info-%d{MM-dd-yyyy}.log.zip">

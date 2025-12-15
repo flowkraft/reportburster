@@ -6,13 +6,56 @@ asbl/dist
 asbl/src/uat/resources/__pycache__
 asbl/src/uat/results
 
+#################
+## Global build artifact patterns for asbl (source-only folder)
+#################
+# Build output directories (anywhere in asbl)
+asbl/**/build/
+asbl/**/target/
+asbl/**/out/
+asbl/**/dist/
+
+# Dependency/package manager directories
+asbl/**/vendor/
+asbl/**/node_modules/
+
+# Cache directories
+asbl/**/.cache/
+asbl/**/.gradle/
+asbl/**/.parcel-cache/
+asbl/**/.turbo/
+asbl/**/__pycache__/
+
+# Lock files (generated, not source)
+asbl/**/composer.lock
+asbl/**/package-lock.json
+asbl/**/yarn.lock
+asbl/**/pnpm-lock.yaml
+
+# IDE/tool cache files
+asbl/**/.php-cs-fixer.cache
+asbl/**/.eslintcache
+asbl/**/*.bladec
+
+# OS artifacts
+asbl/**/.DS_Store
+asbl/**/Thumbs.db
+
+# WP-Bones generated files
+asbl/**/bones
+asbl/**/.bones_renamed
+
+#################
+## CMS Webportal Playground - selective inclusion
+#################
 # First ignore everything in the playground directory
 asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/*
 
 # Unignore specific files
 !asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/.env
 !asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/docker-compose.yml
-!asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/Dockerfile.cli
+!asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/Dockerfile.deps
+!asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/README.md
 
 # Unignore the wp-plugins directory itself
 !asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/
@@ -21,13 +64,23 @@ asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/*
 asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/*
 
 # Now ONLY unignore your specific plugin
-!asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/
+!asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/reportburster-portal/
 
-# Finally, re-ignore the vendor folder inside your plugin
-asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/vendor/
-asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/.cache/
-asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/bones/
-asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/reportburster-integration/.bones_renamed
+# Unignore theme source but ignore build artifacts
+!asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-themes/reportburster-theme/
+!asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-themes/reportburster-theme/**
+# Also ensure parent wp-themes directories are unignored so the theme can be tracked
+!asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-themes/
+!asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-themes/**
+# Ignore build artifacts in theme
+asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-themes/reportburster-theme/**/dist/
+asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-themes/reportburster-theme/**/build/
+asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-themes/reportburster-theme/**/public/
+asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-themes/reportburster-theme/**/node_modules/
+# Ignore built CSS files produced by Tailwind/esbuild
+asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-themes/reportburster-theme/**/style*.css
+asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-themes/reportburster-theme/**/style*.css.map
+
 
 bkend/reporting/backup/
 

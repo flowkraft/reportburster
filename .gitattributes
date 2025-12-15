@@ -1,3 +1,11 @@
 # Handle Excel files as binary
 *.xlsx binary
 *.xls binary
+
+# Force LF line endings for shell scripts and docker files
+# to prevent Windows CRLF from breaking shell commands in containers
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+Dockerfile* text eol=lf
+docker-compose* text eol=lf

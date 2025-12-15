@@ -11,6 +11,7 @@ set "PORTABLE_EXECUTABLE_DIR_PATH=%cd%"
 
 set "SETTINGS_FILE=%PORTABLE_EXECUTABLE_DIR_PATH%\config\_internal\settings.xml"
 set "JAR_FILE=%PORTABLE_EXECUTABLE_DIR_PATH%\lib\server\rb-server.jar"
+set "API_KEY_FILE=%PORTABLE_EXECUTABLE_DIR_PATH%\config\_internal\api-key.txt"
 
 if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\temp\*.*" (
   for %%F in ("%PORTABLE_EXECUTABLE_DIR_PATH%\temp\*.*") do (
@@ -44,7 +45,20 @@ set /a PORT=9090
     echo INFO: Port %PORT% is available.
   )
 
-set "JAVA_CMD=-Dorg.springframework.boot.logging.LoggingSystem=org.springframework.boot.logging.log4j2.Log4J2LoggingSystem -Dlog4j.configurationFile=%PORTABLE_EXECUTABLE_DIR_PATH%\log4j2-rbsj.xml -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT%"
+REM Update settings.xml with the current port
+powershell -Command "(Get-Content '%SETTINGS_FILE%') -replace 'http://localhost:\d+/api', 'http://localhost:%PORT%/api' | Out-File -Encoding ASCII '%SETTINGS_FILE%'"
+
+REM ========================================================================
+REM Generate new API key and write to api-key.txt
+REM ========================================================================
+powershell -Command ^
+  "$bytes = New-Object byte[] 32; ^
+    [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes); ^
+    $apiKey = [System.Convert]::ToBase64String($bytes).TrimEnd('='); ^
+    Set-Content -Path '%API_KEY_FILE%' -Value $apiKey -Encoding ASCII"
+
+
+set "JAVA_CMD=-Dorg.springframework.boot.logging.LoggingSystem=org.springframework.boot.logging.log4j2.Log4J2LoggingSystem -Dlog4j.configurationFile=%PORTABLE_EXECUTABLE_DIR_PATH%\log4j2.xml -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT%"
 
 if not "%FRONTEND_PATH%"=="" (
   set "JAVA_CMD=!JAVA_CMD! -Dspring.resources.add-mappings=true"
@@ -56,7 +70,10 @@ if not "%POLLING_PATH%"==""  set "JAVA_CMD=!JAVA_CMD! -DPOLLING_PATH=%POLLING_PA
 if not "%ELECTRON_PID%"==""  set "JAVA_CMD=!JAVA_CMD! -DELECTRON_PID=%ELECTRON_PID%"
 
 set "JAVA_CMD=!JAVA_CMD! -Djava.io.tmpdir=%PORTABLE_EXECUTABLE_DIR_PATH%\temp"
-set "JAVA_CMD=!JAVA_CMD! -jar %JAR_FILE% -serve"
+set "JAVA_CMD=!JAVA_CMD! -jar %JAR_FILE%"
+
+REM SERVE_WEB=true is the SINGLE source of truth for web server mode
+set "SERVE_WEB=true"
 
 echo [DEBUG] Final JAVA command: %JAVA_CMD%
 echo.
@@ -79,16 +96,24 @@ echo   $_ ^| Out-File -FilePath $LogFile -Append -Encoding OEM >> "%TEE_PS1%"
 echo } >> "%TEE_PS1%"
 
 if "%RB_SERVER_MODE%"=="true" (
+  
   echo Starting Java in server mode...
   
+  REM ========================================================================
+  REM Read API key from api-key.txt and write it to FRONTEND_PATH/assets/config.json
+  REM ========================================================================
+  powershell -Command ^
+    "$apiKey = Get-Content '%API_KEY_FILE%' -Raw; ^
+     $config = @{ apiKey = $apiKey } | ConvertTo-Json; ^
+     $assetsPath = '%FRONTEND_PATH%\assets'; ^
+     if (-not (Test-Path $assetsPath)) { New-Item -ItemType Directory -Path $assetsPath -Force | Out-Null }; ^
+     Set-Content -Path (Join-Path $assetsPath 'config.json') -Value $config -Encoding ASCII"
+
   REM Run Java with our PowerShell tee script
   java %JAVA_CMD% 2>&1 | powershell -NoProfile -ExecutionPolicy Bypass -File "%TEE_PS1%" "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log"
   
 ) else (
   echo Starting Java in exe mode...
-  
-  REM Update settings.xml with the current port
-  powershell -Command "(Get-Content '%SETTINGS_FILE%') -replace 'http://localhost:\d+/api', 'http://localhost:%PORT%/api' | Out-File -Encoding ASCII '%SETTINGS_FILE%'"
   
   REM Write java version to log file
   java -version > "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log" 2>&1

@@ -1,244 +1,222 @@
+<%@ page import="flowkraft.frend.RbUtils" %>
 <!DOCTYPE html>
 <html>
 <head>
     <meta name="layout" content="main"/>
     <title>Reports - ReportBurster</title>
+    <style>
+        .employee-cards { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .employee-card {
+            padding: 1rem 1.5rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+            min-width: 180px;
+        }
+        .employee-card:hover { border-color: #3b82f6; background: #f0f9ff; }
+        .employee-card.active { border-color: #2563eb; background: #dbeafe; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        .employee-name { font-weight: 600; color: #1e40af; }
+        .employee-id { font-size: 0.85rem; color: #64748b; }
+        .payslip-container { min-height: 400px; }
+        .code-block {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.5;
+            border: 1px solid #3d3d3d;
+        }
+    </style>
 </head>
 <body>
     <div class="row mt-4">
         <div class="col-12">
             <h4 class="mb-3">Reports</h4>
-            <p class="text-muted mb-4">Complete reports combining parameters, data tables, and visualizations.</p>
+            <p class="text-muted mb-4">
+                Embed full reports using the <code>&lt;rb-report&gt;</code> component in <code>entity-code</code> mode.
+                Click a person's name to view their document.
+            </p>
+
             
-            <!-- Parameters Section -->
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>Report Parameters</span>
-                    <button id="runReportBtn" class="btn btn-primary btn-sm" disabled>
-                        <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
-                        <i id="btnIcon" class="bi bi-play-fill"></i> Run Report
+            <!-- Bootstrap 5 Tabs -->
+            <ul class="nav nav-tabs" id="reportsTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="component-tab" data-bs-toggle="tab" data-bs-target="#component-pane" type="button" role="tab" aria-controls="component-pane" aria-selected="true">
+                        <i class="bi bi-file-earmark-text"></i> Report
                     </button>
-                </div>
-                <div class="card-body">
-                    <rb-parameters id="reportParams"></rb-parameters>
-                </div>
-            </div>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="usage-tab" data-bs-toggle="tab" data-bs-target="#usage-pane" type="button" role="tab" aria-controls="usage-pane" aria-selected="false">
+                        <i class="bi bi-code-slash"></i> Usage
+                    </button>
+                </li>
+            </ul>
             
-            <!-- Error Alert (hidden by default) -->
-            <div id="errorAlert" class="alert alert-danger d-none" role="alert">
-                <strong>Error:</strong> <span id="errorMessage"></span>
-            </div>
-            
-            <!-- Results Section (hidden until report runs) -->
-            <div id="resultsSection" style="display: none;">
-                <div class="row">
-                    <div class="col-md-8 mb-4">
-                        <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <span>Data</span>
-                                <small id="queryStats" class="text-muted"></small>
+            <div class="tab-content border border-top-0 rounded-bottom p-3" id="reportsTabContent">
+                <!-- Component Tab -->
+                <div class="tab-pane fade show active" id="component-pane" role="tabpanel" aria-labelledby="component-tab">
+                    <!-- Employee Selection -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Select Employee:</label>
+                        <div class="employee-cards" id="employeeCards">
+                            <div class="employee-card" data-code="EMP001">
+                                <div class="employee-name">Alice Johnson</div>
+                                <div class="employee-id">EMP001 • Engineering</div>
                             </div>
-                            <div class="card-body">
-                                <rb-tabulator id="reportTable"></rb-tabulator>
+                            <div class="employee-card" data-code="EMP002">
+                                <div class="employee-name">Bob Smith</div>
+                                <div class="employee-id">EMP002 • Sales</div>
+                            </div>
+                            <div class="employee-card" data-code="EMP003">
+                                <div class="employee-name">Carol Williams</div>
+                                <div class="employee-id">EMP003 • Marketing</div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4 mb-4">
-                        <div class="card">
-                            <div class="card-header">Summary Chart</div>
-                            <div class="card-body">
-                                <rb-chart id="reportChart" type="bar" style="height: 250px;"></rb-chart>
+                    
+                    <!-- Payslip Display -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>Employee Payslip</span>
+                            <button id="refreshBtn" class="btn btn-outline-secondary btn-sm" title="Refresh">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
+                        <div class="card-body payslip-container">
+                            <div id="placeholder" class="text-center text-muted py-5">
+                                <i class="bi bi-file-earmark-text" style="font-size: 3rem; opacity: 0.3;"></i>
+                                <p class="mt-3">Select an employee above to view their payslip</p>
                             </div>
+                            <rb-report 
+                                id="demoReport"
+                                report-code="rep-employee-payslip"
+                                api-base-url="${RbUtils.apiBaseUrl}"
+                                api-key="${RbUtils.apiKey}"
+                                style="display: none;"
+                                show-print-button
+                                print-button-label="Print / Save PDF"
+                            ></rb-report>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Usage Tab -->
+                <div class="tab-pane fade" id="usage-pane" role="tabpanel" aria-labelledby="usage-tab">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="text-muted small">HTML Usage with Entity Code</span>
+                        <button id="copyUsageBtn" class="btn btn-outline-secondary btn-sm" title="Copy to clipboard">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <pre id="usageCode" class="code-block"><code>&lt;rb-report 
+    report-code="rep-employee-payslip"
+    entity-code="EMP001"
+    api-base-url="&#36;{RbUtils.apiBaseUrl}"
+    api-key="&#36;{RbUtils.apiKey}"
+&gt;&lt;/rb-report&gt;
+
+&lt;!-- The entity-code attribute specifies which 
+     employee's payslip to render. The component 
+     fetches data and renders the HTML template 
+     server-side for that specific entity. --&gt;</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="copyToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-check-circle me-1"></i> Copied to clipboard!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         </div>
     </div>
     
     <content tag="scripts">
     <script>
-        /**
-         * Reports Page Controller
-         * 
-         * Data Fetching Pattern:
-         * 1. User fills in parameters via <rb-parameters>
-         * 2. User clicks "Run Report" button
-         * 3. This page fetches data from /reports/fetchData (Grails endpoint)
-         * 4. Grails proxies the request to ReportBurster backend (/jobman/reporting/fetch-data)
-         * 5. Response data is passed to <rb-tabulator> and <rb-chart> components
-         * 
-         * The web components (<rb-parameters>, <rb-tabulator>, <rb-chart>) 
-         * are PURE PRESENTATION - they don't fetch data themselves.
-         * The HOST PAGE is responsible for data fetching.
-         */
         document.addEventListener('DOMContentLoaded', function() {
-            const params = document.getElementById('reportParams');
-            const runBtn = document.getElementById('runReportBtn');
-            const btnSpinner = document.getElementById('btnSpinner');
-            const btnIcon = document.getElementById('btnIcon');
-            const resultsSection = document.getElementById('resultsSection');
-            const errorAlert = document.getElementById('errorAlert');
-            const errorMessage = document.getElementById('errorMessage');
-            const queryStats = document.getElementById('queryStats');
-            const table = document.getElementById('reportTable');
-            const chart = document.getElementById('reportChart');
+            const copyToast = new bootstrap.Toast(document.getElementById('copyToast'), { delay: 2000 });
+            const report = document.getElementById('demoReport');
+            const placeholder = document.getElementById('placeholder');
+            const cards = document.querySelectorAll('.employee-card');
+            let currentEntityCode = null;
             
-            // Current parameter values
-            let currentParams = {};
-            
-            // Define report parameters
-            params.parameters = [
-                { 
-                    id: 'year', 
-                    type: 'select', 
-                    label: 'Year', 
-                    uiHints: { 
-                        control: 'select', 
-                        options: [
-                            { value: '2024', label: '2024' },
-                            { value: '2025', label: '2025' }
-                        ]
-                    }, 
-                    defaultValue: '2025' 
-                },
-                { 
-                    id: 'region', 
-                    type: 'select', 
-                    label: 'Region',
-                    uiHints: { 
-                        control: 'select', 
-                        options: [
-                            { value: 'all', label: 'All Regions' },
-                            { value: 'north', label: 'North' },
-                            { value: 'south', label: 'South' }
-                        ]
-                    }, 
-                    defaultValue: 'all' 
-                }
-            ];
-            
-            // Listen for parameter validity changes
-            params.addEventListener('validChange', e => {
-                runBtn.disabled = !e.detail;
-            });
-            
-            // Listen for parameter value changes
-            params.addEventListener('valueChange', e => {
-                currentParams = e.detail;
-            });
-            
-            // Helper: Show loading state
-            function setLoading(loading) {
-                runBtn.disabled = loading;
-                btnSpinner.classList.toggle('d-none', !loading);
-                btnIcon.classList.toggle('d-none', loading);
+            function selectEmployee(code) {
+                console.log('[reports GSP] selectEmployee called with code:', code);
+                
+                // Update active state
+                cards.forEach(c => c.classList.remove('active'));
+                document.querySelector('[data-code="' + code + '"]')?.classList.add('active');
+                
+                // Show report, hide placeholder
+                placeholder.style.display = 'none';
+                report.style.display = 'block';
+                
+                // Set entity code - component will fetch automatically
+                currentEntityCode = code;
+                console.log('[reports GSP] Setting report.entity-code attribute to:', code);
+                report.setAttribute('entity-code', code);
+                
+                // Log current component state
+                console.log('[reports GSP] report element:', report);
+                console.log('[reports GSP] report.entityCode (before toggle):', report.entityCode);
+                console.log('[reports GSP] report.reportCode:', report.reportCode);
+                console.log('[reports GSP] report.apiBaseUrl:', report.apiBaseUrl);
+                
+                // Force re-fetch by toggling entityCode
+                console.log('[reports GSP] Toggling entityCode to trigger re-fetch...');
+                report.entityCode = '';
+                setTimeout(() => {
+                    console.log('[reports GSP] Setting report.entityCode to:', code);
+                    report.entityCode = code;
+                    console.log('[reports GSP] report.entityCode (after set):', report.entityCode);
+                }, 10);
             }
             
-            // Helper: Show error
-            function showError(message) {
-                errorMessage.textContent = message;
-                errorAlert.classList.remove('d-none');
-                resultsSection.style.display = 'none';
-            }
-            
-            // Helper: Hide error
-            function hideError() {
-                errorAlert.classList.add('d-none');
-            }
-            
-            /**
-             * Fetch report data from Grails backend.
-             * 
-             * @param {Object} params - Query parameters
-             * @returns {Promise<Object>} - { reportData, reportColumnNames, executionTimeMillis, ... }
-             */
-            async function fetchReportData(params) {
-                const queryString = new URLSearchParams(params).toString();
-                const response = await fetch('/reports/fetchData?' + queryString, {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
+            // Employee card click handlers
+            cards.forEach(card => {
+                card.addEventListener('click', function() {
+                    selectEmployee(this.dataset.code);
                 });
-                
-                if (!response.ok) {
-                    const error = await response.json().catch(() => ({}));
-                    throw new Error(error.message || 'Failed to fetch report data');
-                }
-                
-                return response.json();
-            }
+            });
             
-            /**
-             * Fallback: Get sample data for demo.
-             */
-            async function fetchSampleData() {
-                const response = await fetch('/reports/sampleData');
-                return response.json();
-            }
-            
-            // Run Report button click handler
-            runBtn.addEventListener('click', async function() {
-                hideError();
-                setLoading(true);
-                
-                try {
-                    // Try to fetch from backend; fallback to sample data if unavailable
-                    let result;
-                    try {
-                        result = await fetchReportData(currentParams);
-                    } catch (backendError) {
-                        console.warn('Backend unavailable, using sample data:', backendError);
-                        result = await fetchSampleData();
-                    }
-                    
-                    // Show results section
-                    resultsSection.style.display = 'block';
-                    
-                    // Update stats
-                    queryStats.textContent = result.totalRows + ' rows in ' + result.executionTimeMillis + 'ms';
-                    
-                    // Generate columns from column names if not provided
-                    const columns = result.reportColumnNames.map(name => ({
-                        title: name.charAt(0).toUpperCase() + name.slice(1),
-                        field: name,
-                        formatter: ['revenue', 'expenses', 'profit', 'salary', 'amount'].includes(name.toLowerCase()) 
-                            ? 'money' : undefined
-                    }));
-                    
-                    // Populate table
-                    table.columns = columns;
-                    table.data = result.reportData;
-                    
-                    // Populate chart (assuming first column is labels, rest are numeric)
-                    if (result.reportData.length > 0) {
-                        const labelField = result.reportColumnNames[0];
-                        const numericFields = result.reportColumnNames.slice(1).filter(name => 
-                            typeof result.reportData[0][name] === 'number'
-                        );
-                        
-                        const colors = [
-                            'rgba(34, 167, 200, 0.7)',
-                            'rgba(52, 211, 153, 0.7)',
-                            'rgba(251, 146, 60, 0.7)',
-                            'rgba(168, 85, 247, 0.7)'
-                        ];
-                        
-                        chart.data = {
-                            labels: result.reportData.map(d => d[labelField]),
-                            datasets: numericFields.slice(0, 4).map((field, i) => ({
-                                label: field.charAt(0).toUpperCase() + field.slice(1),
-                                data: result.reportData.map(d => d[field]),
-                                backgroundColor: colors[i % colors.length]
-                            }))
-                        };
-                    }
-                    
-                } catch (error) {
-                    showError(error.message);
-                } finally {
-                    setLoading(false);
+            // Refresh button
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                if (currentEntityCode) {
+                    report.entityCode = '';
+                    setTimeout(() => { report.entityCode = currentEntityCode; }, 10);
                 }
             });
+            
+            // Copy usage button
+            document.getElementById('copyUsageBtn').addEventListener('click', function() {
+                const text = document.getElementById('usageCode').innerText;
+                navigator.clipboard.writeText(text).then(() => {
+                    const icon = this.querySelector('i');
+                    icon.classList.remove('bi-clipboard');
+                    icon.classList.add('bi-check');
+                    copyToast.show();
+                    setTimeout(() => {
+                        icon.classList.remove('bi-check');
+                        icon.classList.add('bi-clipboard');
+                    }, 2000);
+                });
+            });
+            
+            // Auto-select first employee on load (random for variety)
+            const codes = ['EMP001', 'EMP002', 'EMP003'];
+            const randomCode = codes[Math.floor(Math.random() * codes.length)];
+            selectEmployee(randomCode);
         });
     </script>
     </content>

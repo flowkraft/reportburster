@@ -2,7 +2,7 @@
 <documentburster>
 	<settings>
 		<!-- DocumentBurster version -->
-		<version>12.1.0</version>
+		<version>12.2.0</version>
 		<!-- template name -->
 		<template>My Reports</template>
 		<!-- file name for the burst files -->
@@ -103,7 +103,7 @@
 
 			<!-- start used -->
 
-			<active></active>
+			<active>false</active>
 
 			<replytoname></replytoname>
 			<replytoaddress></replytoaddress>
@@ -120,8 +120,8 @@
 			<customemailheaders></customemailheaders>
 			<customsessionproperties></customsessionproperties>
 
-			<javaxmaildebug></javaxmaildebug>
-			<transportmodeloggingonly></transportmodeloggingonly>
+			<javaxmaildebug>false</javaxmaildebug>
+			<transportmodeloggingonly>false</transportmodeloggingonly>
 
 			<proxy>
 				<host></host>
@@ -135,9 +135,9 @@
 
 			<!-- start not yet used -->
 
-			<async></async>
-			<poolsize></poolsize>
-			<poolsizekeepalivetime></poolsizekeepalivetime>
+			<async>false</async>
+			<poolsize>0</poolsize>
+			<poolsizekeepalivetime>0</poolsizekeepalivetime>
 
 			<connectionpool>
 				<clusterkeyuuid></clusterkeyuuid>
@@ -148,13 +148,13 @@
 				<loadbalancingstrategy></loadbalancingstrategy>
 			</connectionpool>
 
-			<sessiontimeoutmillis></sessiontimeoutmillis>
+			<sessiontimeoutmillis>0</sessiontimeoutmillis>
 
-			<trustallhosts></trustallhosts>
+			<trustallhosts>false</trustallhosts>
 			<trustedhosts></trustedhosts>
-			<verifyserveridentity></verifyserveridentity>
+			<verifyserveridentity>false</verifyserveridentity>
 
-			<opportunistictls></opportunistictls>
+			<opportunistictls>false</opportunistictls>
 
 			<dkim>
 				<privatekey></privatekey>

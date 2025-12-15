@@ -164,12 +164,19 @@ public class ReportingController {
 	 * @param reportCode The report folder name (e.g., "sales-summary")
 	 * @return Complete configuration including parameters, tabulator, chart, pivot options
 	 */
-	@GetMapping("/reports/{reportCode}/config")
+	@GetMapping(value = "/reports/{reportCode}/config", consumes = MediaType.ALL_VALUE)
 	public Mono<ReportFullConfigDto> getReportConfig(@PathVariable String reportCode) {
+		System.out.println("[DEBUG] GET /reports/" + reportCode + "/config - ENTERING");
 		return Mono.fromCallable(() -> {
-			return reportingService.loadReportConfig(reportCode);
-		}).doOnError(e -> log.error("Error loading report config for: " + reportCode, e))
-		.onErrorResume(e -> Mono.error(
+			System.out.println("[DEBUG] GET /reports/" + reportCode + "/config - calling reportingService.loadReportConfig");
+			ReportFullConfigDto result = reportingService.loadReportConfig(reportCode);
+			System.out.println("[DEBUG] GET /reports/" + reportCode + "/config - SUCCESS, hasTabulator=" + result.hasTabulator);
+			return result;
+		}).doOnError(e -> {
+			System.out.println("[DEBUG] GET /reports/" + reportCode + "/config - ERROR: " + e.getMessage());
+			e.printStackTrace();
+			log.error("Error loading report config for: " + reportCode, e);
+		}).onErrorResume(e -> Mono.error(
 				new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to load report config", e)));
 	}
 
@@ -181,14 +188,21 @@ public class ReportingController {
 	 * @param parameters User-provided parameter values as query params
 	 * @return Report data result
 	 */
-	@GetMapping("/reports/{reportCode}/data")
+	@GetMapping(value = "/reports/{reportCode}/data", consumes = MediaType.ALL_VALUE)
 	public Mono<ReportDataResult> fetchReportData(
 			@PathVariable String reportCode,
 			@RequestParam Map<String, String> parameters) {
+		System.out.println("[DEBUG] GET /reports/" + reportCode + "/data - ENTERING, params=" + parameters);
 		return Mono.fromCallable(() -> {
-			return reportingService.fetchReportData(reportCode, parameters);
-		}).doOnError(e -> log.error("Error fetching report data for: " + reportCode, e))
-		.onErrorResume(e -> Mono.error(
+			System.out.println("[DEBUG] GET /reports/" + reportCode + "/data - calling reportingService.fetchReportData");
+			ReportDataResult result = reportingService.fetchReportData(reportCode, parameters);
+			System.out.println("[DEBUG] GET /reports/" + reportCode + "/data - SUCCESS, rows=" + (result.reportData != null ? result.reportData.size() : "null"));
+			return result;
+		}).doOnError(e -> {
+			System.out.println("[DEBUG] GET /reports/" + reportCode + "/data - ERROR: " + e.getMessage());
+			e.printStackTrace();
+			log.error("Error fetching report data for: " + reportCode, e);
+		}).onErrorResume(e -> Mono.error(
 				new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to fetch report data", e)));
 	}
 

@@ -3,6 +3,7 @@
 namespace ReportBurster_Portal\Providers;
 
 use ReportBurster_Portal\Http\Controllers\TemplateController;
+use ReportBurster_Portal\Provisioner;
 use ReportBurster_Portal\WPBones\Support\ServiceProvider; 
 
 // Log that this file was loaded
@@ -17,6 +18,62 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        // --- Run Demo Data Provisioning (idempotent) ---
+        // Runs on 'init' hook with priority 20 to ensure Pods is loaded first
+        add_action('init', [Provisioner::class, 'run'], 20);
+        
+        // --- Action to associate user with paystub after paystub is saved ---
+        add_action('pods_api_post_save_pod_item_paystub', function($pieces, $is_new_item, $id) {
+            // Log the action when the hook is triggered
+            Provisioner::log("pods_api_post_save_pod_item_paystub fired for Paystub ID: {$id}", 'INFO');
+
+            // Get the paystub pod
+            $pod = pods('paystub', $id);
+
+            // Retrieve the current associated user (if any)
+            $current_user = $pod->field('associated_user');
+            
+            // Log the initial state of the associated user field
+            if (empty($current_user)) {
+                Provisioner::log("No user currently associated with paystub ID: {$id}", 'INFO');
+            } else {
+                Provisioner::log("Existing associated user found for paystub ID: {$id}, User ID: {$current_user[0]}", 'INFO');
+            }
+
+            // If there's no associated user, we need to associate one
+            if (empty($current_user)) {
+                // Get the post title and associated user login for context
+                $title = $pod->field('post_title');
+                $associated_user_login = $pod->field('associated_user_login');
+                
+                // Log the details we're working with
+                Provisioner::log("Attempting to associate user with paystub '{$title}' (Post ID: {$id}). Associated user login: {$associated_user_login}", 'INFO');
+                
+                // Fetch the user by login
+                $user = get_user_by('login', $associated_user_login);
+                
+                // If user exists, associate them with the paystub
+                if ($user) {
+                    // Log the successful user retrieval
+                    Provisioner::log("User '{$associated_user_login}' found. Associating with paystub ID: {$id}, User ID: {$user->ID}", 'INFO');
+
+                    // Save the association
+                    $pod->save([
+                        'associated_user' => [(int) $user->ID],
+                    ]);
+                    
+                    // Log success
+                    Provisioner::log("Successfully associated user '{$associated_user_login}' with paystub ID: {$id}", 'SUCCESS');
+                } else {
+                    // Log the failure to find the user
+                    Provisioner::log("User '{$associated_user_login}' not found in WordPress. Could not associate with paystub ID: {$id}", 'ERROR');
+                }
+            } else {
+                // Log that we didn't need to associate the user because one already exists
+                Provisioner::log("No action needed. Paystub ID: {$id} already has an associated user.", 'INFO');
+            }
+        }, 10, 3);
+
         // --- Template Controller Hooks ---
         $templateController = new TemplateController();
         add_filter('single_template', [$templateController, 'overrideSingleTemplate']);

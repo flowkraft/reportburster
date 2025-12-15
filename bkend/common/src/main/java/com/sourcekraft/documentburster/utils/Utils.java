@@ -796,6 +796,48 @@ public class Utils {
 			return false; // Connection failed - port closed or unreachable
 		}
 	}
+
+	/**
+	 * Checks if the application is running inside a Docker container.
+	 * Detection is based on the RUNNING_IN_DOCKER environment variable set by the entrypoint.
+	 * 
+	 * @return true if running inside Docker, false otherwise
+	 */
+	public static boolean isRunningInDocker() {
+		String dockerEnv = System.getenv("RUNNING_IN_DOCKER");
+		return "true".equalsIgnoreCase(dockerEnv);
+	}
+
+	/**
+	 * Returns the effective hostname for network connections.
+	 * When running inside Docker, converts localhost/127.0.0.1 to host.docker.internal
+	 * to enable communication with sibling containers via host port mapping.
+	 * 
+	 * This provides cross-platform support for Docker Desktop (Windows/Mac) and Linux
+	 * when extra_hosts is configured in docker-compose.yml.
+	 * 
+	 * @param configuredHost The hostname from configuration (e.g., "localhost")
+	 * @return The effective hostname to use for connections
+	 */
+	public static String getEffectiveHost(String configuredHost) {
+		if (isRunningInDocker() && isLocalhostHost(configuredHost)) {
+			log.debug("Docker environment detected - converting {} to host.docker.internal", configuredHost);
+			return "host.docker.internal";
+		}
+		return configuredHost;
+	}
+
+	/**
+	 * Checks if the given hostname refers to localhost.
+	 * 
+	 * @param host The hostname to check
+	 * @return true if the host is localhost or 127.0.0.1
+	 */
+	private static boolean isLocalhostHost(String host) {
+		if (host == null) return false;
+		String h = host.trim().toLowerCase();
+		return "localhost".equals(h) || "127.0.0.1".equals(h);
+	}
 	
 	// sanitize a string so it is safe to use as a folder/file name on Windows/Linux
 	public static String sanitizeFileName(String input) {

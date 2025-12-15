@@ -13,7 +13,14 @@ services:
       - DB_PATH=/db/northwind.db
     volumes:
       - ../../db/sample-northwind-sqlite:/db
+      - ../../config/_internal:/config:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   admin-grails-playground:
     build: ./admin-grails-playground
@@ -27,7 +34,14 @@ services:
       - DB_CREATE=${DB_CREATE:-update}
     volumes:
       - ../../db/sample-northwind-sqlite:/db
+      - ../../config/_internal:/config:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   bkend-boot-groovy-playground:
     build: ./bkend-boot-groovy-playground
@@ -41,4 +55,11 @@ services:
       - DDL_AUTO=${DDL_AUTO:-update}
     volumes:
       - ../../db/sample-northwind-sqlite:/db
+      - ../../config/_internal:/config:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s

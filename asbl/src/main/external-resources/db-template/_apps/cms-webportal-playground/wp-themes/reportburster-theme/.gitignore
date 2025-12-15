@@ -1,0 +1,18 @@
+# Ignore dependencies from npm and Composer:
+/node_modules
+/vendor
+
+# Ignore generated JavaScript files:
+*.min.js
+
+# Ignore generated CSS files:
+style.css
+style-editor.css
+style-editor-extra.css
+tailwind-intellisense.css
+
+# Ignore the generated zip file:
+reportburster-theme.zip
+
+# Ignore .DS_Store files from macOS:
+.DS_Store

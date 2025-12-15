@@ -2,10 +2,16 @@ package com.flowkraft.jobman.config;
 
 import jakarta.servlet.MultipartConfigElement;
 
+import java.util.Arrays;
+
 import org.springframework.boot.web.servlet.MultipartConfigFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.unit.DataSize;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
+import com.flowkraft.common.Constants;
 
 @Configuration
 public class JobManConfiguration {
@@ -32,31 +38,27 @@ public class JobManConfiguration {
 	}
 
 	/*
+	Provide CORS configuration as a bean so Spring Security and the servlet filter pick it up.
+	*/
 	@Bean
-	public CorsWebFilter corsFilter() {
-		return new CorsWebFilter(corsConfigurationSource());
-	}
-
-	@Bean
-	CorsConfigurationSource corsConfigurationSource() {
-
-		// System.out.println("cors");
-
-		final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+	public UrlBasedCorsConfigurationSource corsConfigurationSource() {
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
 		CorsConfiguration config = new CorsConfiguration().applyPermitDefaultValues();
 		config.setAllowCredentials(true);
-		
-		config.setAllowedOrigins(Arrays.asList(Constants.FRONTEND_URL));
-		//config.setAllowedOrigins(Arrays.asList("*", "file://"));
-
-		config.addAllowedMethod(HttpMethod.PUT);
-		config.addAllowedMethod(HttpMethod.DELETE);
-		config.addAllowedMethod(HttpMethod.GET);
-		config.addAllowedMethod(HttpMethod.POST);
-
+		// Allow the packaged frontend via file:// and allow localhost dev ports (4200, 4201)
+		// setAllowedOriginPatterns permits host:port wildcard patterns which is helpful for dev
+		config.setAllowedOriginPatterns(Arrays.asList("http://localhost:*", "file://"));
+		config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+		// Allow all headers during local development so XSRF and X-API-Key are accepted.
+		// For production tighten this to explicit headers.
+		config.setAllowedHeaders(Arrays.asList("*"));
 		source.registerCorsConfiguration("/**", config);
 		return source;
 	}
-	*/
+
+	@Bean
+	public CorsFilter corsFilter(UrlBasedCorsConfigurationSource corsConfigurationSource) {
+		return new CorsFilter(corsConfigurationSource);
+	}
 }

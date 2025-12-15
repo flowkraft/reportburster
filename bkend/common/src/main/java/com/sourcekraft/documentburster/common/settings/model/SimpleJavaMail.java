@@ -23,7 +23,7 @@ public class SimpleJavaMail extends DumpToString {
 	 */
 	private static final long serialVersionUID = 6448148827920935702L;
 
-	public boolean active = false;
+	public Boolean active = false;
 
 	public String replytoaddress;
 	public String replytoname;
@@ -40,27 +40,27 @@ public class SimpleJavaMail extends DumpToString {
 	public String customemailheaders;
 	public String customsessionproperties;
 
-	public boolean javaxmaildebug = false;
-	public boolean transportmodeloggingonly = false;
+	public Boolean javaxmaildebug = false;
+	public Boolean transportmodeloggingonly = false;
 
 	public Proxy proxy;
 
 	// start not yet used
 
-	public boolean async = false;
+	public Boolean async = false;
 
-	public int poolsize = -1;
-	public int poolsizekeepalivetime = -1;
+	public Integer poolsize = -1;
+	public Integer poolsizekeepalivetime = -1;
 
 	public ConnectionPool connectionpool;
 
-	public int sessiontimeoutmillis = -1;
+	public Integer sessiontimeoutmillis = -1;
 
-	public boolean trustallhosts;
+	public Boolean trustallhosts;
 	public String trustedhosts;
-	public boolean verifyserveridentity;
+	public Boolean verifyserveridentity;
 
-	public boolean opportunistictls;
+	public Boolean opportunistictls;
 
 	public DKIM dkim;
 
