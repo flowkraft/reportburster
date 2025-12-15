@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>Welcome to Grails</title>
+    <title>FlowKraft Admin Panel</title>
 </head>
 <body>
 <content tag="nav">
@@ -13,18 +13,8 @@
             <li><a class="dropdown-item" href="#">Server: ${request.getServletContext().getServerInfo()}</a></li>
             <li><a class="dropdown-item" href="#">Host: ${InetAddress.getLocalHost()}</a></li>
             <li><a class="dropdown-item" href="#">Environment: ${Environment.current.name}</a></li>
-            <li><a class="dropdown-item" href="#">App version:
-                <g:meta name="info.app.version"/></a>
-            </li>
+            <li><a class="dropdown-item" href="#">App version: <g:meta name="info.app.version"/></a></li>
             <li><a class="dropdown-item" href="#">App profile: ${grailsApplication.config.getProperty('grails.profile')}</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#">Grails version:
-                <g:meta name="info.app.grailsVersion"/></a>
-            </li>
-            <li><a class="dropdown-item" href="#">Groovy version: ${GroovySystem.getVersion()}</a></li>
-            <li><a class="dropdown-item" href="#">JVM version: ${System.getProperty('java.version')}</a></li>
-            <li><a class="dropdown-item" href="#">Spring Boot version: ${SpringBootVersion.getVersion()}</a></li>
-            <li><a class="dropdown-item" href="#">Spring version: ${SpringVersion.getVersion()}</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="#">Reloading active: ${Environment.reloadingAgentEnabled}</a></li>
         </ul>
@@ -50,33 +40,56 @@
 
 <div class="svg" role="presentation">
     <div class="bg-dark-subtle text-center">
-        <asset:image src="grails-cupsonly-logo-white.svg" class="w-50"/>
+        <asset:image src="favicon.svg" class="w-50"/>
     </div>
 </div>
 
 <div id="content" role="main">
     <div class="container">
-        <section class="row colset-2-its">
-            <h1>Welcome to Grails</h1>
+        <div class="hero-section">
+            <h1 class="hero-tagline">FlowKraft Admin Panel</h1>
+            <br><br>
+            <p class="hero-description">Easily build admin user interfaces on top of your business data: rapidly assemble
+                searchable, filterable lists and configurable forms for CRUD workflows, expose role-aware views and
+                actions for administrators, and surface dashboards, exports and activity logs so teams can operate with
+                confidence and context.</p>
+        </div>
 
-            <p>
-                Congratulations, you have successfully started your first Grails application! At the moment
-                this is the default page, feel free to modify it to either redirect to a controller or display
-                whatever content you may choose. Below is a list of controllers that are currently deployed in
-                this application, click on each to execute its default action:
-            </p>
-
-            <div id="controllers" role="navigation">
-                <h2>Available Controllers:</h2>
-                <ul>
-                    <g:each var="c" in="${grailsApplication.controllerClasses.sort { it.fullName } }">
-                        <li class="controller">
-                            <g:link controller="${c.logicalPropertyName}">${c.fullName}</g:link>
-                        </li>
-                    </g:each>
-                </ul>
+        <div class="container">
+            <h5 class="text-center text-muted mb-3">Admin Tools</h5>
+            <div class="component-grid">
+                <g:link uri="/users" class="component-card text-decoration-none">
+                    <i class="bi bi-people icon"></i>
+                    <h6>Users</h6>
+                    <p>Manage accounts and access</p>
+                </g:link>
+                <g:link uri="/roles" class="component-card text-decoration-none">
+                    <i class="bi bi-shield-lock icon"></i>
+                    <h6>Roles</h6>
+                    <p>Permission and policy control</p>
+                </g:link>
+                <g:link uri="/workflows" class="component-card text-decoration-none">
+                    <i class="bi bi-flow-chart icon"></i>
+                    <h6>Workflows</h6>
+                    <p>Approval rules and automations</p>
+                </g:link>
+                <g:link uri="/exports" class="component-card text-decoration-none">
+                    <i class="bi bi-cloud-arrow-up icon"></i>
+                    <h6>Exports</h6>
+                    <p>Scheduled and on-demand exports</p>
+                </g:link>
+                <g:link uri="/dashboards" class="component-card text-decoration-none">
+                    <i class="bi bi-bar-chart icon"></i>
+                    <h6>Dashboards</h6>
+                    <p>Operational insights & KPIs</p>
+                </g:link>
+                <g:link uri="/logs" class="component-card text-decoration-none">
+                    <i class="bi bi-journal-text icon"></i>
+                    <h6>Audit Logs</h6>
+                    <p>Activity and change history</p>
+                </g:link>
             </div>
-        </section>
+        </div>
     </div>
 </div>
 

@@ -11,6 +11,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   mysql:
     image: mysql:8.3.0
@@ -25,7 +30,12 @@ services:
       - mysql_data:/var/lib/mysql
     command: --general-log=1 --general-log-file=/var/log/mysql/mysql-general.log
     restart: unless-stopped
-
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MYSQL_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
   mariadb:
     image: mariadb:11.3.2
     container_name: rb-northwind-mariadb
@@ -39,6 +49,11 @@ services:
       - mariadb_data:/var/lib/mysql
     command: --general-log=1 --general-log-file=/var/log/mysql/mariadb-general.log
     restart: unless-stopped
+    #healthcheck:
+    #  test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MARIADB_PASSWORD"]
+    #  interval: 10s
+    #  timeout: 5s
+    #  retries: 5
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2019-latest
@@ -52,6 +67,11 @@ services:
     volumes:
       - sqlserver_data:/var/opt/mssql
     restart: unless-stopped
+    #healthcheck:
+    #  test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $SQLSERVER_PASSWORD -Q \"SELECT 1;\""]
+    #  interval: 30s
+    #  timeout: 10s
+    #  retries: 10
 
   oracle:
     image: gvenzl/oracle-xe:21-slim-faststart
@@ -89,7 +109,7 @@ services:
     volumes:
       - db2_data:/database
     healthcheck:
-      test: ["CMD-SHELL", "su - db2inst1 -c 'db2 connect to ${DB2_DB} >/dev/null 2>&1 && db2 terminate'"]
+      test: ["CMD-SHELL", "su - db2inst1 -c 'db2 connect to $DB2_DB >/dev/null 2>&1 && db2 terminate'"]
       interval: 30s
       timeout: 10s
       retries: 30

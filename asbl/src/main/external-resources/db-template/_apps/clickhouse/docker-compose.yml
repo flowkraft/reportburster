@@ -26,6 +26,15 @@ services:
     #     limits:
     #       cpus: "2"
     #       memory: "4g"
+    
+    healthcheck:
+      # Uses curl to check the API system info endpoint.
+      # The '-f' flag makes curl return a non-zero exit code on HTTP errors (4xx or 5xx), which Docker interprets as "unhealthy".
+      test: ["CMD-SHELL", "wget http://localhost:8123|| exit 1"]
+      interval: 5s    
+      timeout: 5s    
+      retries: 30      
+      start_period: 10s
 
 volumes:
   clickhouse_data:

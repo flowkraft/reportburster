@@ -861,6 +861,15 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  public async elementExistsNowFast(selector: string, timeout = 1000): Promise<boolean> {
+    try {
+      await this.window.waitForSelector(selector, { state: 'visible', timeout });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   public async elementExistsNow(
     selector: string,
     timeout: number = Constants.DELAY_ONE_SECOND,
@@ -912,6 +921,230 @@ export class FluentTester implements PromiseLike<void> {
     }
   }
 
+  public async elementExistsNow2(
+    selector: string,
+    timeout: number = Constants.DELAY_ONE_SECOND,
+    stabilityMs: number = 120,
+    pollIntervalMs: number = 80,
+  ): Promise<boolean> {
+    // Fast, non-throwing probe that requires the element to be visible and stable.
+    // This implementation adds a bounding-box stability check (when available)
+    // and uses short polling to avoid Playwright's long implicit waits.
+    const start = Date.now();
+    try {
+      const loc = (selector && typeof selector === 'string') ? this.window.locator(selector).first() : null;
+      while (Date.now() - start < timeout) {
+        if (!loc) return false;
+
+        // quick presence check (no long wait)
+        const count = await loc.count().catch(() => 0);
+        if (count === 0) {
+          await this.window.waitForTimeout(pollIntervalMs);
+          continue;
+        }
+
+        // quick visible check
+        const visibleNow = await loc.isVisible().catch(() => false);
+        if (!visibleNow) {
+          // not visible yet — short sleep and retry
+          await this.window.waitForTimeout(pollIntervalMs);
+          continue;
+        }
+
+        // Try to obtain a bounding box; if available, require it to be stable
+        let box = await loc.boundingBox().catch(() => null);
+        if (box) {
+          const stableStart = Date.now();
+          let stable = true;
+          // check that bounding box remains essentially identical for stabilityMs
+          while (Date.now() - stableStart < stabilityMs) {
+            await this.window.waitForTimeout(Math.min(pollIntervalMs, 40));
+            const box2 = await loc.boundingBox().catch(() => null);
+            if (!box2) {
+              stable = false;
+              break;
+            }
+            // small tolerance to allow sub-pixel/animation moves
+            const dx = Math.abs((box2.x || 0) - (box.x || 0));
+            const dy = Math.abs((box2.y || 0) - (box.y || 0));
+            const dw = Math.abs((box2.width || 0) - (box.width || 0));
+            const dh = Math.abs((box2.height || 0) - (box.height || 0));
+            if (dx > 2 || dy > 2 || dw > 2 || dh > 2) {
+              stable = false;
+              box = box2;
+              break;
+            }
+          }
+          if (stable) return true;
+          // otherwise retry quickly
+          await this.window.waitForTimeout(pollIntervalMs);
+          continue;
+        }
+
+        // If boundingBox not available, fall back to a short visible-stability window
+        const stableStart2 = Date.now();
+        let becameVisible = false;
+        while (Date.now() - stableStart2 < stabilityMs) {
+          if (await loc.isVisible().catch(() => false)) {
+            becameVisible = true;
+            break;
+          }
+          await this.window.waitForTimeout(pollIntervalMs);
+        }
+        if (becameVisible) {
+          // brief pause to reduce race conditions
+          await this.window.waitForTimeout(Math.min(40, stabilityMs));
+          if (await loc.isVisible().catch(() => false)) return true;
+        }
+
+        // not stable/visible yet — retry
+        await this.window.waitForTimeout(pollIntervalMs);
+      }
+
+      return false;
+    } catch (err) {
+      // keep helper non-throwing; caller decides what to do on false
+      return false;
+    }
+  }
+
+  private async getElementDebugInfo(selector: string): Promise<any> {
+    try {
+      return await this.window.evaluate((sel) => {
+        let el: HTMLElement | null = null;
+        if (sel.startsWith('xpath=')) {
+          const xp = sel.slice(6);
+          const node = document.evaluate(xp, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+          el = node instanceof HTMLElement ? node : null;
+        } else {
+          el = document.querySelector(sel) as HTMLElement | null;
+        }
+        if (!el) return { found: false };
+        const s = window.getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        return {
+          found: true,
+          id: el.id,
+          text: (el.textContent || '').trim(),
+          display: s.display,
+          visibility: s.visibility,
+          opacity: s.opacity,
+          width: rect.width,
+          height: rect.height,
+          inDocument: document.contains(el),
+          outerHTML: el.outerHTML.slice(0, 200),
+        };
+      }, selector);
+    } catch {
+      return { found: false };
+    }
+  }
+
+  public debugElement(selector: string): FluentTester {
+    const action = async (): Promise<void> => {
+      const info = await this.getElementDebugInfo(selector);
+      console.log('DEBUG element:', selector, info);
+    };
+    this.actions.push(action);
+    return this;
+  }
+
+
+  public async fullProbe(connectionName: string): Promise<any> {
+    const page = this.window;
+    const kebab = (connectionName || '').replace(/\s+/g, '-').toLowerCase();
+    const idBase = `btnDefault_db-${kebab}`;
+    const selectors: Record<string, string> = {
+      rawCss: `#${idBase}\\.xml`,
+      attrExact: `[id="${idBase}.xml"]`,
+      prefixCss: `[id^="${idBase}"]`,
+      xpathExact: `xpath=//button[@id="${idBase}.xml"]`,
+      xpathPrefix: `xpath=//button[starts-with(@id, "${idBase}")]`,
+      textButton: `button:has-text("Default")`,
+    };
+
+    const evalAncestors = async (sel: string) =>
+      page.evaluate((s) => {
+        const resolve = (str: string) =>
+          str.startsWith('xpath=') ? document.evaluate(str.slice(6), document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue : document.querySelector(str);
+        const el = resolve(s) as HTMLElement | null;
+        if (!el) return { found: false };
+        const rect = el.getBoundingClientRect();
+        const ancestors: any[] = [];
+        let cur: HTMLElement | null = el;
+        while (cur) {
+          const st = window.getComputedStyle(cur);
+          ancestors.push({ tag: cur.tagName, id: cur.id, display: st.display, visibility: st.visibility, opacity: st.opacity, w: cur.offsetWidth, h: cur.offsetHeight });
+          cur = cur.parentElement;
+        }
+        return { found: true, rect, clientRects: el.getClientRects().length, offsetParent: !!el.offsetParent, ancestors };
+      }, sel).catch(() => ({ found: false }));
+
+    const evalFrames = async (id: string) =>
+      page.evaluate((idStr) => {
+        const matches: number[] = [];
+        Array.from(document.querySelectorAll('iframe')).forEach((f, i) => {
+          try {
+            const d = (f as HTMLIFrameElement).contentDocument;
+            if (!d) return;
+            if (d.getElementById(idStr) || d.querySelector(`[id="${idStr}"]`)) matches.push(i);
+          } catch (e) { }
+        });
+        return matches;
+      }, `${idBase}.xml`).catch(() => []);
+
+    const results: Record<string, any> = {};
+    for (const [name, sel] of Object.entries(selectors)) {
+      const domInfo = await this.getElementDebugInfo(sel).catch(() => ({ found: false }));
+      const loc = page.locator(sel).first();
+      const count = await loc.count().catch(() => 0);
+      const visible = await loc.isVisible().catch(() => false);
+      const box = await loc.boundingBox().catch(() => null);
+      const fast = await this.elementExistsNowFast(sel).catch(() => false);
+      const now = await this.elementExistsNow(sel).catch(() => false);
+      const now2 = await this.elementExistsNow2(sel).catch(() => false);
+      let screenshot: string | null = null;
+      if (count > 0) {
+        try {
+          screenshot = `e2e-debug-${name}-${Date.now()}.png`;
+          // swallow errors — may not be allowed in all runners
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          await loc.screenshot({ path: screenshot }).catch(() => { screenshot = null; });
+        } catch { screenshot = null; }
+      }
+      const ancestors = await evalAncestors(sel);
+      const frames = await evalFrames(`${idBase}.xml`);
+      results[name] = { selector: sel, domInfo, playwright: { count, visible, box }, helpers: { fast, now, now2 }, screenshot, ancestors, frames };
+    }
+
+    // role-based probe
+    try {
+      const roleLoc = page.getByRole('button', { name: 'Default' });
+      const rc = await roleLoc.count().catch(() => 0);
+      const rv = await roleLoc.isVisible().catch(() => false);
+      const rbox = await roleLoc.boundingBox().catch(() => null);
+      results.role = { count: rc, visible: rv, box: rbox };
+      if (rc > 0) {
+        const p = `e2e-debug-role-${Date.now()}.png`;
+        await roleLoc.screenshot({ path: p }).catch(() => null);
+        results.role.screenshot = p;
+      }
+    } catch (e) {
+      results.role = { error: e && e.message };
+    }
+
+    return { idBase, results };
+  }
+
+  public debugFullProbe(connectionName: string): FluentTester {
+    const action = async (): Promise<void> => {
+      const info = await this.fullProbe(connectionName).catch((e) => ({ error: e && e.message }));
+      console.log('FULL PROBE:', connectionName, JSON.stringify(info, null, 2));
+    };
+    this.actions.push(action);
+    return this;
+  }
+  
   public elementShouldHaveClass(
     selector: string,
     className: string,
@@ -1158,7 +1391,7 @@ export class FluentTester implements PromiseLike<void> {
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
     await this.doWaitOnElementToBecomeVisible('#appSearch');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
-    
+
     await this.doClick('#starterPacksTab-link');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
     await this.doWaitOnElementToBecomeVisible('#packSearch');

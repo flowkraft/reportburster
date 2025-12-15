@@ -58,10 +58,10 @@
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "test -f /var/www/html/.provisioned && curl -f http://localhost/ -o /dev/null -s || exit 1"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 300
-      start_period: 30s
+      start_period: 10s
 
   cms-webportal-playground-db:
     image: mysql:8.0
@@ -77,10 +77,10 @@
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 12
-      start_period: 30s
+      retries: 30
+      start_period: 5s
 
   cms-webportal-playground-cli:
     image: wordpress:cli-2.12.0-php8.4

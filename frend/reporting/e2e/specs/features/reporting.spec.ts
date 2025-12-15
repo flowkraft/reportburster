@@ -24,20 +24,20 @@ const dataSourceTypeDisplayMap: Record<string, string> = {
 const DB_VENDORS_SELECTED: string[] = (() => {
   const required = 'sqlite';
   const pool = DB_VENDORS_SUPPORTED.filter(v => v !== required);
-  
+
   // Use date-based seed for daily variation but consistent within a run
   const today = new Date().toISOString().split('T')[0]; // e.g., "2025-12-02"
   const seed = today.split('-').reduce((acc, n) => acc + parseInt(n), 0);
-  
+
   // Simple seeded shuffle
   const seededRandom = (i: number) => {
     const x = Math.sin(seed + i) * 10000;
     return x - Math.floor(x);
   };
-  
+
   const shuffled = [...pool].sort((a, b) => seededRandom(pool.indexOf(a)) - seededRandom(pool.indexOf(b)));
   const pickedOthers = shuffled.slice(0, 2);
-  
+
   const list = [required, ...pickedOthers];
   return list;
 })();
@@ -79,15 +79,10 @@ test.describe('', async () => {
           dbConnections.push({ connectionName: connectionNameNoSchema, dbConnectionType: 'dbcon-no-schema', defaultDbConnection: true });
           await ft.gotoConnections();
 
-          // use attribute selector (no escaping) to match the real id in DOM
-          const rawId = `btnDefault_db-${_.kebabCase(dbConnNoSchema.connectionName)}.xml`; // e.g. btnDefault_eml-contact.xml
-          const attrSel = `[id="${rawId}"]`;
-
-          // now a short timed existence check (will wait up to 1s)
-          const alreadyDefault = await ft.elementExistsNow(attrSel);
-
-          if (!alreadyDefault)
-            ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnNoSchema.connectionName)}\\.xml`);
+          const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConnNoSchema.connectionName)}"]`;
+          const alreadyDefault = await ft.elementExistsNow2(prefixSel);
+          ft = ft.consoleLog(`alreadyDefault value: ${alreadyDefault}`);
+          if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnNoSchema.connectionName)}\\.xml`);
 
           let clearLogs = false;
           if (dbVendor !== 'sqlite')
@@ -261,7 +256,7 @@ reportParameters {
   ) {
     constraints(
       required: true,
-      min:      LocalDate.now().minusDays(365),
+      min:      LocalDate.now().minusDays(36500),
       max:      endDate
     )
     ui(
@@ -382,15 +377,10 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           ft = ft
             .gotoConnections();
 
-          const rawId = `#btnDefault_db-${_.kebabCase(dbConnNoSchema.connectionName)}.xml`;
-          const attrSel = `[id="${rawId}"]`;
-
-          // fast immediate existence check (no throw)
-          const alreadyDefault = await ft.elementExistsNow(
-            attrSel
-          );
-          if (!alreadyDefault)
-            ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnNoSchema.connectionName)}\\.xml`);
+          const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConnNoSchema.connectionName)}"]`;
+          const alreadyDefault = await ft.elementExistsNow2(prefixSel);
+          ft = ft.consoleLog(`alreadyDefault value: ${alreadyDefault}`);
+          if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnNoSchema.connectionName)}\\.xml`);
 
           let clearLogs = false;
           if (dbVendor !== 'sqlite')
@@ -653,7 +643,7 @@ reportParameters {
   ) {
     constraints(
       required: true,
-      min:      LocalDate.now().minusDays(365),
+      min:      LocalDate.now().minusDays(36500),
       max:      endDate
     )
     ui(
@@ -764,15 +754,10 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
       ft = ft
         .gotoConnections();
 
-      const rawId = `#btnDefault_db-${_.kebabCase(dbConnPlainSchema.connectionName)}.xml`;
-      const attrSel = `[id="${rawId}"]`;
-
-      // fast immediate existence check (no throw)
-      const alreadyDefault = await ft.elementExistsNow(
-        attrSel
-      );
-      if (!alreadyDefault)
-        ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnPlainSchema.connectionName)}\\.xml`);
+      const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConnPlainSchema.connectionName)}"]`;
+      const alreadyDefault = await ft.elementExistsNow2(prefixSel);
+      ft = ft.consoleLog(`alreadyDefault value: ${alreadyDefault}`);
+      if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnPlainSchema.connectionName)}\\.xml`);
 
       dbConnections.push({
         connectionName: dbConnPlainSchema.connectionName,
@@ -931,15 +916,10 @@ log.info("Finished scriptedReport_employeesByHireDate_noParams.groovy. Rows: {}"
       ft = ft
         .gotoConnections();
 
-      const rawId = `#btnDefault_db-${_.kebabCase(dbConn.connectionName)}.xml`;
-      const attrSel = `[id="${rawId}"]`;
-
-      // fast immediate existence check (no throw)
-      const alreadyDefault = await ft.elementExistsNow(
-        attrSel
-      );
-      if (!alreadyDefault)
-        ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConn.connectionName)}\\.xml`);
+      const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConn.connectionName)}"]`;
+      const alreadyDefault = await ft.elementExistsNow2(prefixSel);
+      ft = ft.consoleLog(`alreadyDefault value: ${alreadyDefault}`);
+      if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConn.connectionName)}\\.xml`);
 
       dbConnections.push({
         connectionName: dbConn.connectionName,

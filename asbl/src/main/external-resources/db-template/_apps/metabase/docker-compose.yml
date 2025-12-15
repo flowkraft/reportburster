@@ -25,9 +25,10 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
+      interval: 5s    
+      timeout: 5s     
+      retries: 30       
+      start_period: 10s
 
 volumes:
   metabase_data:
