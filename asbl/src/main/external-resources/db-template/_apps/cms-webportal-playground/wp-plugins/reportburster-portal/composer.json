@@ -1,7 +1,7 @@
 {
-  "name": "flowkraft/reportburster-integration",
+  "name": "flowkraft/reportburster-portal",
   "type": "wordpress-plugin",
-  "description": "ReportBurster Integration WordPress plugin",
+  "description": "ReportBurster Portal WordPress plugin",
   "version": "1.0.0",
   "keywords": [
     "wordpress"
@@ -22,12 +22,11 @@
   "require": {
     "php": ">=7.4",
     "wpbones/wpbones": "dev-master",
-    "wpbones/wpkirk-helpers": "~2.0",
-    "mkocansey/bladewind": "3.0.8"
+    "wpbones/wpkirk-helpers": "~2.0"
   },
   "autoload": {
     "psr-4": {
-      "ReportBurster_Integration\\": "plugin/"
+      "ReportBurster_Portal\\": "plugin/"
     },
     "files": [
       "functions.php"

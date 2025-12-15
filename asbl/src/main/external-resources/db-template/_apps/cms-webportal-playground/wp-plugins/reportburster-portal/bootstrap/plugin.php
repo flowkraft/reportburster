@@ -1,6 +1,6 @@
 <?php
 
-use ReportBurster_Integration\WPBones\Foundation\Plugin;
+use ReportBurster_Portal\WPBones\Foundation\Plugin;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 | which serves as the "glue" for all the components.
 |
 */
-if (class_exists('\ReportBurster_Integration\WPBones\Foundation\Plugin')) {
+if (class_exists('\ReportBurster_Portal\WPBones\Foundation\Plugin')) {
     $plugin = new Plugin(
         realpath(__DIR__ . '/../')
     );
@@ -34,7 +34,7 @@ if (class_exists('\ReportBurster_Integration\WPBones\Foundation\Plugin')) {
     /**
      * Fire when the plugin is loaded
      */
-    do_action('reportburster-integration_loaded');
+    do_action('reportburster-portal_loaded');
 
     return $plugin;
 }

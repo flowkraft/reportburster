@@ -1,18 +1,18 @@
-=== ReportBurster Integration Blade Boilerplate ===
-Contributors: gfazioli
-Donate link: https://wpbones.com/
-Tags: template, wpbones
+=== ReportBurster Portal ===
+Contributors: flowkraft
+Donate link: https://reportburster.com/
+Tags: documents, portal, reportburster
 Requires at least: 6.2
 Tested up to: 6.7
-Stable tag: 1.9.6
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-WP Bones Blade Boilerplate WordPress plugin.
+ReportBurster Portal WordPress plugin for document distribution.
 
 == Description ==
 
-WP Bones Blade Boilerplate plugin
+ReportBurster Portal plugin for creating document portals with WordPress.
 
 == Installation ==
 

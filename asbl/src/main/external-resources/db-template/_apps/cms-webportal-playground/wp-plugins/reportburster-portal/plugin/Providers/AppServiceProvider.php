@@ -1,9 +1,9 @@
 <?php
 
-namespace ReportBurster_Integration\Providers;
+namespace ReportBurster_Portal\Providers;
 
-use ReportBurster_Integration\Http\Controllers\TemplateController;
-use ReportBurster_Integration\WPBones\Support\ServiceProvider; 
+use ReportBurster_Portal\Http\Controllers\TemplateController;
+use ReportBurster_Portal\WPBones\Support\ServiceProvider; 
 
 // Log that this file was loaded
 error_log('AppServiceProvider.php was loaded at: ' . date('Y-m-d H:i:s'));
@@ -283,12 +283,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function enqueueAssets()
     {
-        $plugin_url = plugin_dir_url(dirname(dirname(__FILE__))); // Go up two levels from Providers directory
-        
-        // Enqueue ReportBurster web components (Svelte-based custom elements)
+        // Enqueue ReportBurster web components from server (Svelte-based custom elements)
         wp_enqueue_script(
             'rb-webcomponents',
-            $plugin_url . 'assets/js/rb-webcomponents.umd.js',
+            'http://localhost:9090/rb-webcomponents/rb-webcomponents.umd.js',
             [], // no dependencies
             '1.0.0',
             true // load in footer

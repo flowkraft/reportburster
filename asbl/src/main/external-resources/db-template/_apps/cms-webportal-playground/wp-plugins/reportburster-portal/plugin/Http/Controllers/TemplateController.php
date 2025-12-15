@@ -1,6 +1,6 @@
 <?php
 
-namespace ReportBurster_Integration\Http\Controllers;
+namespace ReportBurster_Portal\Http\Controllers;
 
 class TemplateController extends Controller
 {

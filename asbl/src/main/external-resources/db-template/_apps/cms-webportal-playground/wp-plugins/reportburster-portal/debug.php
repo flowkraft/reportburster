@@ -23,11 +23,11 @@ if (!function_exists('rb_debug_log')) {
 rb_debug_log('Debug file loaded: ' . date('Y-m-d H:i:s'));
 
 // Test if ServiceProvider class exists
-$service_provider_exists = class_exists('ReportBurster_Integration\WPBones\Support\ServiceProvider');
+$service_provider_exists = class_exists('ReportBurster_Portal\WPBones\Support\ServiceProvider');
 rb_debug_log('ServiceProvider class exists: ' . ($service_provider_exists ? 'YES' : 'NO'));
 
 // Test if AppServiceProvider class exists
-$app_provider_exists = class_exists('ReportBurster_Integration\Providers\AppServiceProvider');
+$app_provider_exists = class_exists('ReportBurster_Portal\Providers\AppServiceProvider');
 rb_debug_log('AppServiceProvider class exists: ' . ($app_provider_exists ? 'YES' : 'NO'));
 
 // Test if the provider was registered

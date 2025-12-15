@@ -1,8 +1,8 @@
 <?php
 
-namespace ReportBurster_Integration\Http\Controllers\Dashboard;
+namespace ReportBurster_Portal\Http\Controllers\Dashboard;
 
-use ReportBurster_Integration\Http\Controllers\Controller;
+use ReportBurster_Portal\Http\Controllers\Controller;
 
 if (!defined('ABSPATH')) {
   exit();
@@ -41,10 +41,10 @@ class DashboardController extends Controller
       ],
     ];
 
-    return ReportBurster_Integration()
+    return ReportBurster_Portal()
       ->view('dashboard.index', ['books' => $books])
       ->withAdminStyle('prism')
       ->withAdminScript('prism')
-      ->withAdminStyle('reportburster-integration-common');
+      ->withAdminStyle('reportburster-portal-common');
   }
 }
