@@ -62,59 +62,31 @@ public class SecurityConfig {
         requestHandler.setCsrfRequestAttributeName(null);
         
         http
+            .cors().and()
             // === CSRF CONFIGURATION (Standard Spring Security + Angular pattern) ===
             // CookieCsrfTokenRepository: Puts CSRF token in XSRF-TOKEN cookie
             // Angular's HttpClient reads this cookie and sends as X-XSRF-TOKEN header
-            // This is the STANDARD pattern documented by Spring Security for SPAs
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .csrfTokenRequestHandler(requestHandler)
                 // Ignore CSRF for API key authenticated requests (Electron, Grails, WordPress)
-                .ignoringRequestMatchers(request -> 
-                    request.getHeader("X-API-Key") != null)
+                .ignoringRequestMatchers(request -> request.getHeader("X-API-Key") != null)
             )
-            
+
             // === SESSION MANAGEMENT ===
             // IF_REQUIRED: Create session when needed (for Angular web mode)
             // API key requests remain stateless
-            .sessionManagement(session -> 
-                session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-            
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+
             // === API KEY FILTER ===
             // For Electron/Grails/WordPress that send X-API-Key header
-            .addFilterBefore(
-                new ApiKeyAuthenticationFilter(apiKeyManager), 
-                BasicAuthenticationFilter.class)
-            
+            .addFilterBefore(new ApiKeyAuthenticationFilter(apiKeyManager), BasicAuthenticationFilter.class)
+
             // === AUTHORIZATION RULES ===
+            // Allow unauthenticated access to web components (static resources for external embedding)
+            // All other requests require authentication
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints - no authentication required
-                .requestMatchers(
-                    "/api/health/**",
-                    "/api/info/**",
-                    // WebSocket endpoint - authentication handled by WebSocketSecurityConfig
-                    // SockJS needs initial handshake to be accessible, then STOMP CONNECT is validated
-                    "/api/jobman/ws/**",
-                    "/webjars/**",
-                    "/",
-                    "/favicon.ico",
-                    "/error",
-                    // Static frontend files (Angular app served by Spring Boot)
-                    "/*.html",
-                    "/*.js", 
-                    "/*.css",
-                    "/*.ico",
-                    "/*.png",
-                    "/*.svg",
-                    "/*.woff",
-                    "/*.woff2",
-                    "/*.ttf",
-                    "/*.map",
-                    "/assets/**"
-                ).permitAll()
-                
-                // All API endpoints require authentication
-                // Either: valid session (Angular) OR valid API key (Electron/Grails/WordPress)
+                .requestMatchers("/rb-webcomponents/**").permitAll()
                 .anyRequest().authenticated()
             );
         

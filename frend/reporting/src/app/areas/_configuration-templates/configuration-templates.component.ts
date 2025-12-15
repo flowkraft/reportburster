@@ -120,6 +120,9 @@ export class ConfigurationTemplatesComponent implements OnInit {
           );
         }
 
+        // Invalidate cache for the deleted configuration
+        this.settingsService.invalidateConfigDetailsCache(selectedConfiguration.filePath);
+
         _.remove(
           this.settingsService.configurationFiles,
           (o) => o.filePath === selectedConfiguration.filePath,

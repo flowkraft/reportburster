@@ -3,6 +3,7 @@ import { ShellService } from '../../providers/shell.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 import { ApiService } from '../../providers/api.service';
 import { StateStoreService } from '../../providers/state-store.service';
+import { PollingHelper } from '../../providers/polling.helper';
 
 export interface ManagedApp {
   id: string;
@@ -28,6 +29,8 @@ export interface ManagedApp {
   // Build flags for Flowkraft apps
   buildOnStart?: boolean;
   noCacheOnStart?: boolean;
+  // Demo login info HTML (shown when app is running)
+  demoInfo?: string;
 }
 
 @Injectable({
@@ -41,7 +44,7 @@ export class AppsManagerService {
   private appLastOutputs: { [id: string]: string } = {};
 
   // Simulated "backend" data (replace with REST call in future)
-  private allAppsData = {
+  private allAppsData: { apps: ManagedApp[] } = {
     apps: [
       {
         id: 'cms-webportal',
@@ -49,13 +52,43 @@ export class AppsManagerService {
         icon: 'fa fa-users',
         category: 'Web Portal',
         type: 'docker',
-        description: 'The fastest way to build your customer portal <a href="https://www.reportburster.com/docs/web-portal-cms" target="_blank"><i class="fa fa-book"></i>&nbsp;see how</a>',
+        description: 'The fastest way to build your <em>You Name It</em> <strong>Web Portal</strong> - could be Employee Portal, Customer Portal, Partner Portal, Student Portal or any other Self-Service Portal <a href="https://www.reportburster.com/docs/web-portal-cms" target="_blank"><i class="fa fa-book"></i>&nbsp;see how</a>',
         url: 'http://localhost:8080/wp-admin',
+        demoInfo: `
+          <div style="margin-top: 18px; padding: 14px 16px; background: #f0f7fa; border: 1px solid #d0e4ed; border-radius: 6px; font-size: 0.88em; color: #333;">
+            <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #d0e4ed; color: #555;">
+              <i class="fa fa-key" style="color: #5a9bb8; margin-right: 6px;"></i>Try the demo logins
+            </div>
+            <div style="line-height: 1.85;">
+              <div style="margin-bottom: 8px;">
+                <span style="color: #666;">Admin:</span>
+                <span style="font-weight: 600; color: #2c5282; margin-left: 8px; background: #fff; padding: 2px 8px; border-radius: 3px; border: 1px solid #d0e4ed;">u2changeme</span>
+                <span style="color: #bbb; margin: 0 6px;">/</span>
+                <span style="font-weight: 600; color: #2c5282; background: #fff; padding: 2px 8px; border-radius: 3px; border: 1px solid #d0e4ed;">p2changeme123!</span>
+                <a href="http://localhost:8080/wp-admin" target="_blank" style="color: #5a9bb8;">admin area</a>
+                <span style="color: #ddd; margin: 0 6px;">•</span>
+                <a href="http://localhost:8080/my-documents" target="_blank" style="color: #5a9bb8;">frontend</a>
+              </div>
+              <div>
+                <span style="color: #666;">Employee:</span>
+                <span style="font-weight: 600; color: #2c5282; margin-left: 8px; background: #fff; padding: 2px 8px; border-radius: 3px; border: 1px solid #d0e4ed;">clyde.grew</span>
+                <span style="color: #bbb; margin: 0 6px;">/</span>
+                <span style="font-weight: 600; color: #2c5282; background: #fff; padding: 2px 8px; border-radius: 3px; border: 1px solid #d0e4ed;">demo1234</span>
+                <a href="http://localhost:8080/my-documents" target="_blank" style="color: #5a9bb8;">frontend</a>
+                <span style="color: #888; margin-left: 12px;">— sees only own docs</span>
+              </div>
+            </div>
+            <div style="margin-top: 12px; font-size: 0.85em; color: #999;">
+              Other employees: kyle.butford, alfreda.waldback (password: demo1234)
+            </div>
+          </div>
+        `,
+        
         entrypoint: 'cms-webportal-playground/docker-compose.yml',
         service_name: 'cms-webportal-playground',
         startCmd: 'service app start cms-webportal-playground 8080',
         stopCmd: 'service app stop cms-webportal-playground',
-        tags: ['cms', 'webportal', 'admin-panel', 'customer-portal', 'cms', 'wordpress'],
+        tags: ['cms', 'webportal', 'admin-panel', 'customer-portal', 'cms', 'wordpress', 'ReportBurster\'s App'],
         visible: true,
       },
       {
@@ -64,13 +97,13 @@ export class AppsManagerService {
         icon: 'fa fa-cube',
         category: 'Frontend Tools',
         type: 'docker',
-        description: 'Build reporting dashboards and customer portals quickly',
+        description: 'Bring your reports to the <strong>frontend</strong>: dashboards, portals, anywhere your users need them. Use our \'quick to get things done\' (highly capable and fully customizable) portal, or <strong>embed ReportBurster reports</strong> directly into your existing web applications and portals — responsive, secure, and themeable to match your look and feel. <br/><br/>Wondering if it’s hard? Not at all!&nbsp;<a href="https://www.reportburster.com/docs/dashboards-self-service-portal" target="_blank"><i class="fa fa-book"></i>&nbsp;learn more</a>',
         url: 'http://localhost:8481',
         entrypoint: 'flowkraft/docker-compose.yml',
         service_name: 'frend-grails-playground',
         startCmd: 'service app start frend-grails-playground 8481',
         stopCmd: 'service app stop frend-grails-playground',
-        tags: ['flowkraft', 'dashboards', 'customer-portal'],
+        tags: ['flowkraft', 'dashboards', 'customer-portal', 'ReportBurster\'s App'],
         visible: true,
       },
       {
@@ -85,7 +118,7 @@ export class AppsManagerService {
         service_name: 'admin-grails-playground',
         startCmd: 'service app start admin-grails-playground 8482',
         stopCmd: 'service app stop admin-grails-playground',
-        tags: ['flowkraft', 'admin-panel', 'cms'],
+        tags: ['flowkraft', 'admin-panel', 'cms', 'ReportBurster\'s App'],
         visible: true,
       },
       {
@@ -100,7 +133,7 @@ export class AppsManagerService {
         service_name: 'bkend-boot-groovy-playground',
         startCmd: 'service app start bkend-boot-groovy-playground 8483',
         stopCmd: 'service app stop bkend-boot-groovy-playground',
-        tags: ['flowkraft', 'backend', 'automation', 'job-scheduling'],
+        tags: ['flowkraft', 'backend', 'automation', 'job-scheduling', 'ReportBurster\'s App'],
         visible: true,
         launch: false, // No UI - API/automation only
       },
@@ -193,6 +226,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop clickhouse',
         tags: ['database', 'olap', 'analytics'],
         visible: true,
+        state: 'stopped' as ManagedApp['state'],
         launch: false, // No UI - API/database server only
       },
       {
@@ -205,6 +239,7 @@ export class AppsManagerService {
 
         entrypoint: 'docker-compose.yml',
         service_name: 'vanna-ai',
+        state: 'stopped' as ManagedApp['state'],
       },
       {
         id: 'redash',
@@ -216,6 +251,7 @@ export class AppsManagerService {
 
         entrypoint: 'docker-compose.yml',
         service_name: 'redash',
+        state: 'stopped' as ManagedApp['state'],
       },
       {
         id: 'superset',
@@ -227,6 +263,7 @@ export class AppsManagerService {
 
         entrypoint: 'docker-compose.yml',
         service_name: 'superset',
+        state: 'stopped' as ManagedApp['state'],
       },
       {
         id: 'vscode',
@@ -238,6 +275,7 @@ export class AppsManagerService {
 
         command: 'code',
         visible: false,
+        state: 'stopped' as ManagedApp['state'],
       },
       {
         id: 'notepad++',
@@ -247,6 +285,7 @@ export class AppsManagerService {
         description: 'Launch local installation of Notepad++.',
 
         command: 'notepad++',
+        state: 'stopped' as ManagedApp['state'],
       },
     ],
   };
@@ -262,24 +301,48 @@ export class AppsManagerService {
   public async refreshAllStatuses(): Promise<void> {
     try {
       const response = await this.apiService.get('/jobman/system/services/status');
-      const statuses: any[] = response;  // Array of {name, status, ports}
+      const statuses: any[] = response;  // Array of {name, status, ports, health}
+
+      console.log('API response statuses:', statuses);
 
       // Update app states based on API response
       for (const app of this.allAppsData.apps) {
         // Match by: exact service_name, container name contains service_name, or container name contains app.id
-        const service = statuses.find(s => 
-          s.name === app.service_name || 
-          s.name.includes(app.service_name) ||
-          s.name.includes(app.id) ||
-          (app.service_name && s.name.includes(app.service_name.replace(/-playground$/, '')))
-        );
+        // Prefer exact/endsWith matches to avoid matching sibling containers like -db or -cli
+        const service = statuses.find(s => {
+          const name = (s.name || '').toLowerCase();
+          const svc = (app.service_name || '').toLowerCase();
+          const id = (app.id || '').toLowerCase();
+          if (!svc && !id) return false;
+          if (svc && (name === svc || name === `rb-${svc}` || name.endsWith(`-${svc}`) || name.endsWith(`/${svc}`))) return true;
+          if (id && (name === id || name === `rb-${id}` || name.endsWith(`-${id}`) || name.endsWith(`/${id}`))) return true;
+          return false;
+        });
+        
+        console.log(`App ${app.id}: service_name=${app.service_name}, matched service=`, service);
+        
         if (service) {
-          this.appStates[app.id] = service.status === 'running' ? 'running' : 'stopped';
+          // Use shared helper to map backend status to UI state (handles healthcheck states)
+          this.appStates[app.id] = PollingHelper.mapBackendStatusToUiState(service.status);
 
+          // If app has no `url`, derive one from the container's exposed ports (use first host-mapped port)
+          try {
+            if (!app.url && service.ports) {
+              // Example of service.ports: "0.0.0.0:8080->80/tcp, [::]:8080->80/tcp"
+              const portMatch = (service.ports || '').match(/:(\d+)->/);
+              if (portMatch && portMatch[1]) {
+                app.url = `http://localhost:${portMatch[1]}`;
+                console.log(`[AppsManager] Derived URL for app ${app.id}: ${app.url}`);
+              }
+            }
+          } catch (e) {
+            console.warn('[AppsManager] Failed to derive app.url from service.ports', e);
+          }
+
+          // Track provisioned state for cms-webportal
           if (app.id === 'cms-webportal' && this.appStates[app.id] === 'running') {
             this.stateStore.configSys.sysInfo.setup.portal.isProvisioned = true;
           }
-
         } else {
           this.appStates[app.id] = 'unknown';
         }
@@ -362,11 +425,12 @@ export class AppsManagerService {
       this.shellService.runBatFile(command, `Starting ${app.name}`, async (result) => {
         //console.log('Callback fired for', app.name, 'result:', JSON.stringify(result));
         if (result && result.success) {
-          this.appStates[app.id] = 'running';
-          this.appLastOutputs[app.id] = result.output || `✓ ${app.name} started successfully.`;
-          app.state = 'running';
+          // Don't immediately set to 'running' - keep as 'starting' until healthcheck passes
+          // The refreshAllStatuses() will set the correct state based on Docker's health status
+          this.appStates[app.id] = 'starting';
+          this.appLastOutputs[app.id] = result.output || `✓ ${app.name} container started, waiting for health check...`;
+          app.state = 'starting';
           app.lastOutput = this.appLastOutputs[app.id];
-          app.currentCommandValue = app.stopCmd;
         } else {
           this.appStates[app.id] = 'error';
           this.appLastOutputs[app.id] = (result && result.output) || `✗ Failed to start ${app.name}.`;
@@ -377,7 +441,48 @@ export class AppsManagerService {
         await this.refreshAllStatuses();
         const apiState = this.appStates[app.id] ?? app.state;
         app.state = apiState;
+        // Always sync currentCommandValue with actual state after refresh
+        app.currentCommandValue = (apiState === 'running' || apiState === 'starting') ? app.stopCmd : app.startCmd;
         //console.log('After refresh, appStates:', JSON.stringify(this.appStates[app.id]));
+        resolve();
+      });
+    });
+  }
+
+  // Reprovision action for WordPress CMS. Executes startCmd with --reprovision (alias to rebuild-theme)
+  public async reprovision(app: ManagedApp): Promise<void> {
+    if (app.type !== 'docker') {
+      this.messagesService.showError(`Reprovision is only supported for Docker apps`);
+      return;
+    }
+    if (!app.startCmd) {
+      this.messagesService.showError(`No start command defined for '${app.name}'.`);
+      return;
+    }
+
+    const cmdParts = app.startCmd.split(' ');
+    if (!cmdParts.includes('--reprovision')) cmdParts.push('--reprovision');
+
+    this.appStates[app.id] = 'starting';
+    this.appLastOutputs[app.id] = 'Starting theme rebuild...';
+
+    return new Promise<void>((resolve) => {
+      this.shellService.runBatFile(cmdParts, `Rebuilding theme for ${app.name}`, async (result) => {
+        if (result && result.success) {
+          this.appStates[app.id] = 'starting';
+          this.appLastOutputs[app.id] = result.output || `✓ Reprovision started for ${app.name}`;
+          app.state = 'starting';
+          app.lastOutput = this.appLastOutputs[app.id];
+        } else {
+          this.appStates[app.id] = 'error';
+          this.appLastOutputs[app.id] = (result && result.output) || `✗ Failed to reprovision ${app.name}.`;
+          app.state = 'error';
+          app.lastOutput = this.appLastOutputs[app.id];
+        }
+        await this.refreshAllStatuses();
+        const apiState = this.appStates[app.id] ?? app.state;
+        app.state = apiState;
+        app.currentCommandValue = (apiState === 'running' || apiState === 'starting') ? app.stopCmd : app.startCmd;
         resolve();
       });
     });
@@ -437,6 +542,8 @@ export class AppsManagerService {
           await this.refreshAllStatuses();
           const apiState = this.appStates[app.id] ?? app.state;
           try { app.state = apiState; } catch (e) { }
+          // Always sync currentCommandValue with actual state after refresh
+          try { app.currentCommandValue = apiState === 'running' ? app.stopCmd : app.startCmd; } catch (e) { }
         } catch (e) {
           console.error('refreshAllStatuses failed after stop:', e);
         }
@@ -444,5 +551,4 @@ export class AppsManagerService {
       });
     });
   }
-
 }

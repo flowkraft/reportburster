@@ -44,10 +44,9 @@ public class ServicesManager {
 	}
 
 	private static final List<String> FLOWKRAFT_APPS = List.of(
-		"admin-grails-playground",
-		"bkend-boot-groovy-playground",
-		"frend-grails-playground"
-	);
+			"admin-grails-playground",
+			"bkend-boot-groovy-playground",
+			"frend-grails-playground");
 
 	// Define the family name this CLI currently handles primarily
 	private static final String DB_FAMILY = "database";
@@ -60,7 +59,7 @@ public class ServicesManager {
 	private static final String CMD_LIST = "list";
 	private static final String CMD_INFO = "info";
 	private static final String CMD_QUERY = "query"; // Keep Northwind query capability
-	
+
 	// Programmatic API: Result and execute() entrypoint
 	public static class Result {
 		public final String status;
@@ -93,33 +92,33 @@ public class ServicesManager {
 					: "";
 
 			switch (subCmd) {
-			case CMD_START: {
-				String out = captureOutput(() -> handleNorthwindStart(managerArgsString));
-				String status = (out.contains("✓ Northwind") || out.contains("database is running")) ? "running"
-						: (out.contains("✗") ? "error" : "running");
-				return new Result(status, out);
-			}
-			case CMD_STOP: {
-				String out = captureOutput(() -> handleNorthwindStop(managerArgsString));
-				return new Result("stopped", out);
-			}
-			case CMD_LIST: {
-				String out = captureOutput(() -> handleNorthwindList());
-				return new Result("ok", out);
-			}
-			case CMD_INFO: {
-				String out = captureOutput(() -> handleNorthwindInfo(managerArgsString));
-				String status = out.contains("Status:    RUNNING") ? "running"
-						: (out.contains("is not running") ? "stopped" : "ok");
-				return new Result(status, out);
-			}
-			case CMD_QUERY: {
-				String out = captureOutput(() -> handleNorthwindQuery(managerArgsString));
-				String status = out.toLowerCase().contains("error") ? "error" : "ok";
-				return new Result(status, out);
-			}
-			default:
-				return new Result("error", "Unknown database command: " + subCmd);
+				case CMD_START: {
+					String out = captureOutput(() -> handleNorthwindStart(managerArgsString));
+					String status = (out.contains("✓ Northwind") || out.contains("database is running")) ? "running"
+							: (out.contains("✗") ? "error" : "running");
+					return new Result(status, out);
+				}
+				case CMD_STOP: {
+					String out = captureOutput(() -> handleNorthwindStop(managerArgsString));
+					return new Result("stopped", out);
+				}
+				case CMD_LIST: {
+					String out = captureOutput(() -> handleNorthwindList());
+					return new Result("ok", out);
+				}
+				case CMD_INFO: {
+					String out = captureOutput(() -> handleNorthwindInfo(managerArgsString));
+					String status = out.contains("Status:    RUNNING") ? "running"
+							: (out.contains("is not running") ? "stopped" : "ok");
+					return new Result(status, out);
+				}
+				case CMD_QUERY: {
+					String out = captureOutput(() -> handleNorthwindQuery(managerArgsString));
+					String status = out.toLowerCase().contains("error") ? "error" : "ok";
+					return new Result(status, out);
+				}
+				default:
+					return new Result("error", "Unknown database command: " + subCmd);
 			}
 		}
 
@@ -133,17 +132,17 @@ public class ServicesManager {
 					: "";
 
 			switch (subCmd) {
-			case CMD_START: {
-				String out = captureOutput(() -> handleAppStart(serviceName, args));
-				String status = out.contains("✓") ? "running" : (out.contains("✗") ? "error" : "running");
-				return new Result(status, out);
-			}
-			case CMD_STOP: {
-				String out = captureOutput(() -> handleAppStop(serviceName, args));
-				return new Result("stopped", out);
-			}
-			default:
-				return new Result("error", "Unknown app command: " + subCmd);
+				case CMD_START: {
+					String out = captureOutput(() -> handleAppStart(serviceName, args));
+					String status = out.contains("✓") ? "running" : (out.contains("✗") ? "error" : "running");
+					return new Result(status, out);
+				}
+				case CMD_STOP: {
+					String out = captureOutput(() -> handleAppStop(serviceName, args));
+					return new Result("stopped", out);
+				}
+				default:
+					return new Result("error", "Unknown app command: " + subCmd);
 			}
 		}
 
@@ -202,8 +201,11 @@ public class ServicesManager {
 		dbManager.startDatabase(vendor, customPath, customPort); // Call manager
 	}
 
-	/** Handle 'database stop northwind <vendor>' 
-	 * @throws Exception */
+	/**
+	 * Handle 'database stop northwind <vendor>'
+	 * 
+	 * @throws Exception
+	 */
 	private static void handleNorthwindStop(String managerArgsString) throws Exception {
 
 		String vendorName = managerArgsString.split("\\s+")[0].toUpperCase();
@@ -291,37 +293,38 @@ public class ServicesManager {
 		String tableQuery = null;
 		// (Keep the switch statement for different vendor queries as before)
 		switch (vendor) {
-		case ORACLE:
-			tableQuery = "SELECT table_name, num_rows FROM user_tables ORDER BY table_name";
-			break;
-		case SQLSERVER:
-			tableQuery = "SELECT t.name AS table_name, p.rows AS num_rows FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id JOIN sys.partitions p ON t.object_id = p.object_id WHERE p.index_id IN (0, 1) AND s.name = SCHEMA_NAME() ORDER BY t.name";
-			break;
-		case DB2:
-			tableQuery = "SELECT tabname AS table_name, card AS num_rows FROM syscat.tables WHERE tabschema = CURRENT SCHEMA ORDER BY tabname";
-			break;
-		case POSTGRES:
-			tableQuery = "SELECT tablename AS table_name, COALESCE(n_live_tup, 0) AS num_rows FROM pg_stat_user_tables WHERE schemaname = current_schema() ORDER BY tablename";
-			break;
-		case MYSQL:
-		case MARIADB:
-			tableQuery = "SELECT table_name, table_rows AS num_rows FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name";
-			break;
-		case SQLITE:
-			try (ResultSet rs = stmt.executeQuery(
-					"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")) {
-				while (rs.next()) {
-					String tableName = rs.getString(1);
-					try (Statement countStmt = conn.createStatement();
-							ResultSet countRs = countStmt.executeQuery("SELECT COUNT(*) FROM \"" + tableName + "\"")) {
-						if (countRs.next())
-							countRs.getLong(1);
+			case ORACLE:
+				tableQuery = "SELECT table_name, num_rows FROM user_tables ORDER BY table_name";
+				break;
+			case SQLSERVER:
+				tableQuery = "SELECT t.name AS table_name, p.rows AS num_rows FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id JOIN sys.partitions p ON t.object_id = p.object_id WHERE p.index_id IN (0, 1) AND s.name = SCHEMA_NAME() ORDER BY t.name";
+				break;
+			case DB2:
+				tableQuery = "SELECT tabname AS table_name, card AS num_rows FROM syscat.tables WHERE tabschema = CURRENT SCHEMA ORDER BY tabname";
+				break;
+			case POSTGRES:
+				tableQuery = "SELECT tablename AS table_name, COALESCE(n_live_tup, 0) AS num_rows FROM pg_stat_user_tables WHERE schemaname = current_schema() ORDER BY tablename";
+				break;
+			case MYSQL:
+			case MARIADB:
+				tableQuery = "SELECT table_name, table_rows AS num_rows FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name";
+				break;
+			case SQLITE:
+				try (ResultSet rs = stmt.executeQuery(
+						"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")) {
+					while (rs.next()) {
+						String tableName = rs.getString(1);
+						try (Statement countStmt = conn.createStatement();
+								ResultSet countRs = countStmt
+										.executeQuery("SELECT COUNT(*) FROM \"" + tableName + "\"")) {
+							if (countRs.next())
+								countRs.getLong(1);
+						}
 					}
 				}
-			}
-			return; // Exit after handling SQLite
-		default:
-			return;
+				return; // Exit after handling SQLite
+			default:
+				return;
 		}
 		// Execute query for other databases
 		try (ResultSet rs = stmt.executeQuery(tableQuery)) {
@@ -372,21 +375,9 @@ public class ServicesManager {
 		}
 	}
 
-	/** Check if provisioning is complete by looking for provisioned indicator */
-	private static boolean checkProvisioned(Path workingDir, String serviceName) {
-		if (serviceName.equals("cms-webportal-playground")) {
-			// Check for composer.lock or composer.json in wp-themes/reportburster-sage
-			Path composerLock = workingDir.resolve("wp-themes").resolve("reportburster-sage").resolve("composer.lock");
-			Path composerJson = workingDir.resolve("wp-themes").resolve("reportburster-sage").resolve("composer.json");
-			return Files.exists(composerLock) && Files.exists(composerJson);
-		}
-		// For other services, assume not provisioned (run full compose)
-		return false;
-	}
-
 	/** Handle 'app start <serviceName> [args]' */
 	private static void handleAppStart(String serviceName, String args) throws Exception {
-		//System.out.println("Starting app '" + serviceName + "'...");
+		// System.out.println("Starting app '" + serviceName + "'...");
 
 		String composePath = getComposePath(serviceName);
 
@@ -403,7 +394,11 @@ public class ServicesManager {
 		boolean shouldBuild = false;
 		boolean noCache = false;
 		boolean enableLiquibase = false;
-		
+		boolean enableFull = false;
+        
+		boolean forceRecreate = false;
+		boolean reprovision = false;
+
 		if (args != null && !args.trim().isEmpty()) {
 			String[] argParts = args.trim().split("\\s+");
 			for (String part : argParts) {
@@ -415,10 +410,19 @@ public class ServicesManager {
 					noCache = true;
 				} else if (part.equalsIgnoreCase("--liquibase")) {
 					enableLiquibase = true;
+				} else if (part.equalsIgnoreCase("--full")) {
+					// Full = remove local images and use no-cache (heaviest option)
+					enableFull = true;
+					noCache = true;
+				} else if (part.equalsIgnoreCase("--force-recreate")) {
+					forceRecreate = true;
+				} else if (part.equalsIgnoreCase("--rebuild-theme") || part.equalsIgnoreCase("--theme-rebuild")
+						|| part.equalsIgnoreCase("--reprovision")) {
+					reprovision = true;
 				}
 			}
 		}
-		
+
 		// Prepare environment variables map (shared between build and up commands)
 		java.util.Map<String, String> env = new java.util.HashMap<>(System.getenv());
 		if (customPort != null) {
@@ -427,40 +431,128 @@ public class ServicesManager {
 		}
 		if (enableLiquibase) {
 			env.put("ENABLE_LIQUIBASE_GROOVY_MIGRATIONS", "true");
-			env.put("DB_CREATE", "none");  // Disable GORM auto-schema when Liquibase manages migrations (Grails)
-			env.put("DDL_AUTO", "none");   // Disable Hibernate ddl-auto when Liquibase manages migrations (Spring Boot)
-			log.info("Enabling Liquibase Groovy migrations: ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=true, DB_CREATE=none, DDL_AUTO=none");
+			env.put("DB_CREATE", "none"); // Disable GORM auto-schema when Liquibase manages migrations (Grails)
+			env.put("DDL_AUTO", "none"); // Disable Hibernate ddl-auto when Liquibase manages migrations (Spring Boot)
+			log.info(
+					"Enabling Liquibase Groovy migrations: ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=true, DB_CREATE=none, DDL_AUTO=none");
 		}
 
 		List<String> command = new ArrayList<>();
 		command.add("docker");
 		command.add("compose");
 		command.add("-f");
-		command.add(composeFileName);  // Relative to workingDir
+		command.add(composeFileName); // Relative to workingDir
 		command.add("up");
-		
+
 		// Add --build flag if requested (rebuilds image from Dockerfile)
 		if (shouldBuild) {
 			command.add("--build");
 			log.info("Using --build flag to rebuild image");
 		}
-		
-		// Add --no-cache flag if requested (requires --build, forces fresh build without cache)
-		// Note: --no-cache is a docker build flag, for compose we need to use docker compose build --no-cache first
-		// Actually for docker compose up, we can pass --build, but --no-cache needs docker compose build
-		
+
+		// Add --no-cache flag if requested (requires --build, forces fresh build
+		// without cache)
+		// Note: --no-cache is a docker build flag, for compose we need to use docker
+		// compose build --no-cache first
+		// Actually for docker compose up, we can pass --build, but --no-cache needs
+		// docker compose build
+
 		command.add("-d");
 		command.add("--remove-orphans");
+		if (forceRecreate || reprovision) {
+			command.add("--force-recreate");
+		}
 
-		// For cms-webportal-playground, conditionally run only main service if provisioned
-		if (serviceName.equals("cms-webportal-playground")) {
-			boolean provisioned = checkProvisioned(workingDir, serviceName);
-			if (provisioned) {
-				command.add(serviceName);
+		if (reprovision) {
+			log.info("Reprovision requested for {} in {}", serviceName, workingDir);
+
+			env.put("FORCE_BUILD", "true");
+			
+			List<String> helperCmd = new ArrayList<>();
+			helperCmd.add("docker");
+			helperCmd.add("compose");
+			helperCmd.add("-f");
+			helperCmd.add(composeFileName);
+			helperCmd.add("run");
+			helperCmd.add("--rm");
+			helperCmd.add("cms-webportal-playground-cli");
+
+			// Run reprovision cleanup:
+			// 1. Remove provisioning marker file
+			// 2. Remove WordPress provisioning option
+			helperCmd.add("sh");
+			helperCmd.add("-c");
+			helperCmd.add(
+				"rm -f /var/www/html/.provisioned || true && " +
+				"wp option delete reportburster_demo_data_provisioned --allow-root || true"
+			);
+
+			try {
+				log.info("Running cms-webportal-playground-cli for reprovision cleanup: {}", helperCmd);
+
+				ProcessResult helperResult = new ProcessExecutor()
+					.command(helperCmd)
+					.directory(workingDir.toFile())
+					.redirectOutput(Slf4jStream.of(log).asInfo())
+					.redirectError(Slf4jStream.of(log).asInfo())
+					.timeout(600, TimeUnit.SECONDS)
+					.environment(env)
+					.execute();
+
+				log.info("Reprovision cleanup exit code: {}", helperResult.getExitValue());
+			} catch (Exception e) {
+				log.warn("Failed to run reprovision cleanup: {}", e.getMessage());
 			}
-		}else
+		}
+
+		// For cms-webportal-playground, default behavior is to start the entire compose
+		// file
+		// instead of a single declared service. This allows docker-compose to
+		// orchestrate
+		// service dependencies like the CLI and theme-builder, avoiding hardcoded
+		// start/stop calls from the UI.
+		// Normalize serviceName (trim to avoid whitespace issues) and log decision
+		String normalizedServiceName = serviceName == null ? "" : serviceName.trim();
+		log.info("handleAppStart: serviceName='{}' | normalized='{}'", serviceName, normalizedServiceName);
+		if (!normalizedServiceName.equals("cms-webportal-playground")) {
+			// Start the requested service only; docker-compose will bring up declared
+			// dependencies automatically for most apps. For cms-webportal-playground
+			// avoid specifying the service so all services declared in the compose
+			// file are started and their inter-service dependencies handled by
+			// docker-compose.
 			command.add(serviceName);
-	
+		} else {
+			log.info("Starting full compose for cms-webportal-playground (letting compose orchestrate all dependent services)");
+		}
+
+		// If --full is requested, run docker compose down --remove-orphans --rmi local
+		// first
+		if (enableFull) {
+			log.info("Running docker compose down --remove-orphans --rmi local first (full mode)");
+			List<String> downCmd = new ArrayList<>();
+			downCmd.add("docker");
+			downCmd.add("compose");
+			downCmd.add("-f");
+			downCmd.add(composeFileName);
+			downCmd.add("down");
+			downCmd.add("--remove-orphans");
+			downCmd.add("--rmi");
+			downCmd.add("local");
+			
+			ProcessExecutor downExecutor = new ProcessExecutor().command(downCmd).directory(workingDir.toFile())
+					.redirectOutput(Slf4jStream.of(log).asInfo())
+					.redirectError(Slf4jStream.of(log).asInfo())
+					.timeout(300, TimeUnit.SECONDS)
+					.environment(env);
+			log.info("Executing down command (full mode): {} in directory: {}", downCmd, workingDir);
+			ProcessResult downResult = downExecutor.execute();
+			log.info("Down command exit code: {}", downResult.getExitValue());
+			if (downResult.getExitValue() != 0) {
+				System.out.println(
+						"✗ Failed to run docker compose down for full mode. Exit code: " + downResult.getExitValue());
+			}
+		}
+
 		// If --no-cache is requested, run docker compose build --no-cache first
 		if (noCache) {
 			log.info("Running docker compose build --no-cache first");
@@ -471,18 +563,21 @@ public class ServicesManager {
 			buildCommand.add(composeFileName);
 			buildCommand.add("build");
 			buildCommand.add("--no-cache");
-			buildCommand.add(serviceName);
-			
+			// Build the requested service (let docker-compose handle service dependencies)
+			String buildTarget = serviceName;
+			buildCommand.add(buildTarget);
+
 			ProcessExecutor buildExecutor = new ProcessExecutor().command(buildCommand).directory(workingDir.toFile())
-				.redirectOutput(Slf4jStream.of(log).asInfo())
-				.redirectError(Slf4jStream.of(log).asInfo())
-				.timeout(7200, TimeUnit.SECONDS)
-				.environment(env);
-			
+					.redirectOutput(Slf4jStream.of(log).asInfo())
+					.redirectError(Slf4jStream.of(log).asInfo())
+					.timeout(7200, TimeUnit.SECONDS)
+					.environment(env);
+
 			log.info("Executing build command: {} in directory: {}", buildCommand, workingDir);
 			ProcessResult buildResult = buildExecutor.execute();
 			if (buildResult.getExitValue() != 0) {
-				System.out.println("✗ Failed to build app '" + serviceName + "' with --no-cache. Exit code: " + buildResult.getExitValue());
+				System.out.println("✗ Failed to build app '" + serviceName + "' with --no-cache. Exit code: "
+						+ buildResult.getExitValue());
 				return;
 			}
 		}
@@ -491,10 +586,11 @@ public class ServicesManager {
 
 		// Use ProcessExecutor like NorthwindManager for better output handling
 		ProcessExecutor executor = new ProcessExecutor().command(command).directory(workingDir.toFile())
-			.redirectOutput(Slf4jStream.of(log).asInfo())  // Capture stdout to log
-			.redirectError(Slf4jStream.of(log).asInfo())  // Capture stderr to log
-			.timeout(7200, TimeUnit.SECONDS)  // Add timeout to prevent hanging
-			.environment(env);  // Pass environment variables including HOST_PORT and ENABLE_LIQUIBASE_GROOVY_MIGRATIONS
+				.redirectOutput(Slf4jStream.of(log).asInfo()) // Capture stdout to log
+				.redirectError(Slf4jStream.of(log).asInfo()) // Capture stderr to log
+				.timeout(7200, TimeUnit.SECONDS) // Add timeout to prevent hanging
+				.environment(env); // Pass environment variables including HOST_PORT and
+									// ENABLE_LIQUIBASE_GROOVY_MIGRATIONS
 
 		ProcessResult result = executor.execute();
 
@@ -508,7 +604,7 @@ public class ServicesManager {
 
 	/** Handle 'app stop <serviceName> [args]' */
 	private static void handleAppStop(String serviceName, String args) throws Exception {
-		//System.out.println("Stopping app '" + serviceName + "'...");
+		// System.out.println("Stopping app '" + serviceName + "'...");
 
 		String composePath = getComposePath(serviceName);
 
@@ -520,8 +616,22 @@ public class ServicesManager {
 		Path workingDir = composeFilePath.getParent();
 		String composeFileName = composeFilePath.getFileName().toString();
 
+		// Parse args for --volumes flag to remove volumes
+		boolean removeVolumes = false;
+		if (args != null && !args.trim().isEmpty()) {
+			String[] parts = args.trim().split("\\s+");
+			for (String p : parts) {
+				if (p.equalsIgnoreCase("--volumes") || p.equalsIgnoreCase("-v")
+						|| p.equalsIgnoreCase("--remove-volumes")) {
+					removeVolumes = true;
+					break;
+				}
+			}
+		}
+
 		// Use 'docker compose down' to stop ALL containers in the compose file
-		// This prevents orphaned containers (e.g., matomo-fpm, matomo-db when stopping matomo)
+		// This prevents orphaned containers (e.g., matomo-fpm, matomo-db when stopping
+		// matomo)
 		List<String> command = new ArrayList<>();
 		command.add("docker");
 		command.add("compose");
@@ -529,10 +639,15 @@ public class ServicesManager {
 		command.add(composeFileName);
 		command.add("down");
 		command.add("--remove-orphans");
+		if (removeVolumes) {
+			command.add("--volumes");
+		}
 		// Note: Not using -v to preserve volumes/data between restarts
 		// Add --volumes flag in args if user wants to purge data
 
-		ProcessExecutor executor = new ProcessExecutor().command(command).directory(workingDir.toFile()).redirectOutput(Slf4jStream.of(log).asInfo()).redirectError(Slf4jStream.of(log).asInfo()).timeout(300, TimeUnit.SECONDS);
+		ProcessExecutor executor = new ProcessExecutor().command(command).directory(workingDir.toFile())
+				.redirectOutput(Slf4jStream.of(log).asInfo()).redirectError(Slf4jStream.of(log).asInfo())
+				.timeout(300, TimeUnit.SECONDS);
 
 		ProcessResult result = executor.execute();
 

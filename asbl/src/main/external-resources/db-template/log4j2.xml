@@ -8,6 +8,11 @@
 	</Properties>
 
 	<Appenders>
+		
+		<Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
 		<RollingFile name="info-out"
 			fileName="${APP_LOG_ROOT}/info.log"
 			filePattern="${APP_LOG_ROOT}/info-%d{MM-dd-yyyy}.log.zip">
@@ -93,6 +98,11 @@
 			<AppenderRef ref="debug-out" />
 
 		</Logger>
+
+		<!-- Only log com.flowkraft.jobman to console at INFO and above -->
+        <Logger name="com.flowkraft" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
 
 		<Root level="warn">
 

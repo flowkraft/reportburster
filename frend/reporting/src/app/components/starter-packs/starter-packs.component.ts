@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, SecurityContext } from '@angular/core'; // Import SecurityContext
+import { Component, OnInit, OnDestroy, SecurityContext, ChangeDetectorRef } from '@angular/core'; // Import SecurityContext
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser'; // Import DomSanitizer
 import { Subscription, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -27,6 +27,7 @@ import { ShellService } from '../../providers/shell.service';
 import { ConfirmService } from '../dialog-confirm/confirm.service';
 import { StateStoreService } from '../../providers/state-store.service';
 import { Router } from '@angular/router';
+import { PollingHelper } from '../../providers/polling.helper';
 
 // Interface for dynamic status data from API
 interface StarterPackStatusData {
@@ -98,6 +99,9 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
   // Debounce search input
   public searchSubject = new Subject<string>();
   private searchSubscription: Subscription | null = null;
+  
+  // Polling subscription for packs in transitional states (starting/stopping)
+  private pollingSubscription: Subscription | null = null;
 
   // Inject DomSanitizer along with other services
   constructor(
@@ -107,8 +111,16 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     protected confirmService: ConfirmService,
     protected stateStore: StateStoreService,
     protected router: Router,
-    protected sanitizer: DomSanitizer, // Inject DomSanitizer
+    protected sanitizer: DomSanitizer,
+    protected cdRef: ChangeDetectorRef,
   ) { }
+
+  /**
+   * Returns true if Docker is installed and available.
+   */
+  get isDockerAvailable(): boolean {
+    return !!this.stateStore?.configSys?.sysInfo?.setup?.docker?.isDockerOk;
+  }
 
   ngOnInit(): void {
     this.loadInitialData(); // Fetch data when component initializes
@@ -125,6 +137,8 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // Unsubscribe to prevent memory leaks
     this.searchSubscription?.unsubscribe();
+    this.searchSubject.complete(); // Complete subject to prevent memory leaks
+    this.stopTransitionPolling();
   }
 
   // --- Data Fetching & Processing ---
@@ -234,7 +248,10 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
         });
 
         const oldStatus = pack.status;
-        pack.status = service ? (service.status === 'running' ? 'running' : 'stopped') : 'unknown';
+        // Use shared helper to map backend status to UI state (handles healthcheck states)
+        pack.status = service ? PollingHelper.mapBackendStatusToUiState(service.status) : 'unknown';
+        // Update command based on new status
+        pack.currentCommandValue = (pack.status === 'running' || pack.status === 'starting') ? pack.stopCmd : pack.startCmd;
         // DEBUG: Log result
         console.log(`  Result for ${pack.id}: service found=${!!service}, status changed ${oldStatus} -> ${pack.status}`);
       }
@@ -263,7 +280,11 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const dialogQuestion = `${action === 'start' ? 'Start' : 'Stop'} ${pack.displayName}?`;
+    let dialogQuestion = `${action === 'start' ? 'Start' : 'Stop'} ${pack.displayName}?`;
+
+    if (action === 'start') {
+      dialogQuestion += ' Be patient — the first start takes longer while required components download and configure; subsequent start/stop cycles are faster.';
+    }
 
     this.confirmService.askConfirmation({
       message: dialogQuestion,
@@ -283,15 +304,19 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
       `${action}ing ${pack.displayName}`,
       async (result: any) => {
         if (result.success) {
-          pack.status = action === 'start' ? 'running' : 'stopped';
-          pack.currentCommandValue = pack.status === 'running' ? pack.stopCmd : pack.startCmd;
-          pack.lastOutput = result.output || `${pack.displayName} ${action}ed successfully`;
+          // Don't immediately set to final state - keep as transitional until healthcheck passes
+          // The polling will set the correct state based on Docker's health status
+          pack.status = action === 'start' ? 'starting' : 'stopping';
+          // Command will be updated by refreshAllStatuses based on actual status
+          pack.lastOutput = result.output || `${pack.displayName} container ${action}ed, waiting for health check...`;
         } else {
           pack.status = 'error';
           pack.currentCommandValue = pack.startCmd;
           pack.lastOutput = result.error || `Failed to ${action} ${pack.displayName}`;
         }
         await this.refreshAllStatuses();
+        // Start polling after action to track healthcheck status
+        this.startTransitionPolling();
       }
     );
   }
@@ -407,6 +432,83 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     } catch (err) {
       //console.error('Failed to copy text to clipboard:', err);
       alert('Failed to copy text.');
+    }
+  }
+
+  // --- Polling Methods (shared logic with apps-manager via PollingHelper) ---
+
+  /**
+   * Start polling for status updates while any pack is in a transitional state (starting/stopping).
+   * Polls every 3 seconds until all packs reach a stable state (running/stopped/error/unknown).
+   * Uses shared PollingHelper for consistent behavior with apps-manager.
+   */
+  private startTransitionPolling(): void {
+    // Don't start multiple polling loops - if one is active, it will pick up the new transitional pack
+    if (this.pollingSubscription && !this.pollingSubscription.closed) {
+      console.log('Polling already active, skipping...');
+      return;
+    }
+    
+    console.log('Starting polling subscription (max timeout: ' + PollingHelper.getMaxTimeoutDescription() + ')...');
+    
+    this.pollingSubscription = PollingHelper.createPollingSubscription(
+      // onPoll callback - returns true to stop polling
+      async () => {
+        // First refresh to get latest state
+        await this.refreshDataSilent();
+        
+        console.log('After refresh, pack states:', this.starterPacks.map(p => ({ id: p.id, status: p.status })));
+        
+        // Check if we should stop polling
+        const hasTransitionalPacks = PollingHelper.hasTransitionalItems(this.starterPacks);
+        
+        if (!hasTransitionalPacks) {
+          this.stopTransitionPolling();
+          return true; // Signal to stop
+        }
+        return false; // Continue polling
+      },
+      // onComplete callback
+      (reason) => {
+        this.pollingSubscription = null;
+        if (reason === 'maxIterations') {
+          console.warn('Polling stopped: max iterations reached. Some packs may still be starting.');
+        }
+      },
+      // onError callback
+      (err) => {
+        console.error('Polling error:', err);
+        this.pollingSubscription = null;
+      }
+    );
+  }
+
+  /**
+   * Stop transition polling explicitly (called on component destroy).
+   */
+  private stopTransitionPolling(): void {
+    if (this.pollingSubscription) {
+      this.pollingSubscription.unsubscribe();
+      this.pollingSubscription = null;
+    }
+  }
+
+  /**
+   * Silently refresh data without setting isRefreshing flag (avoids UI flicker during polling).
+   */
+  private async refreshDataSilent(): Promise<void> {
+    try {
+      await this.refreshAllStatuses();
+      this.applyFilters();
+      // Force Angular to detect changes - important since we're in an async context
+      try { 
+        this.cdRef.markForCheck();
+        this.cdRef.detectChanges(); 
+      } catch (e) { 
+        // View might be destroyed
+      }
+    } catch (err) {
+      console.error('Failed polling pack statuses', err);
     }
   }
 }

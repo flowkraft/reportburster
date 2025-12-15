@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pay Statement - ${FullName}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+            background: #fff;
+            padding: 20px;
+        }
+        
+        .payslip {
+            max-width: 700px;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .company-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .company-address {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .pay-statement-title {
+            text-align: right;
+        }
+        
+        .pay-statement-title h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .pay-statement-title .pay-period {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        .employee-info {
+            background: #f8fafc;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .info-item {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .info-label {
+            color: #64748b;
+            font-size: 12px;
+            min-width: 80px;
+        }
+        
+        .info-value {
+            font-weight: 500;
+            font-size: 13px;
+        }
+        
+        .section {
+            padding: 20px 24px;
+        }
+        
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .row:last-child {
+            border-bottom: none;
+        }
+        
+        .row-label {
+            color: #475569;
+        }
+        
+        .row-value {
+            font-weight: 500;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        
+        .row.total {
+            background: #f8fafc;
+            margin: 8px -24px -20px;
+            padding: 12px 24px;
+            font-weight: 600;
+        }
+        
+        .earnings .row.total .row-value {
+            color: #16a34a;
+        }
+        
+        .deductions .row.total .row-value {
+            color: #dc2626;
+        }
+        
+        .net-pay-section {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .net-pay-label {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .net-pay-amount {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        
+        .ytd-section {
+            background: #f8fafc;
+            padding: 16px 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .ytd-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            text-align: center;
+        }
+        
+        .ytd-item {
+            padding: 8px;
+        }
+        
+        .ytd-label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .ytd-value {
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        
+        .footer {
+            padding: 16px 24px;
+            text-align: center;
+            font-size: 11px;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        /* ===== PRINT STYLES ===== */
+        @media print {
+            /* Force browsers to print background colors and images */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            
+            /* Remove body padding/margin for print */
+            body {
+                padding: 0;
+                margin: 0;
+            }
+            
+            /* Ensure payslip fits on one page */
+            .payslip {
+                max-width: 100%;
+                border: none;
+                box-shadow: none;
+                page-break-inside: avoid;
+            }
+            
+            /* Reduce section padding slightly for print */
+            .section {
+                padding: 14px 20px;
+            }
+            
+            .header {
+                padding: 18px 20px;
+            }
+            
+            .employee-info {
+                padding: 12px 20px;
+            }
+            
+            .net-pay-section {
+                padding: 14px 20px;
+            }
+            
+            .ytd-section {
+                padding: 12px 20px;
+            }
+            
+            .footer {
+                padding: 12px 20px;
+            }
+            
+            /* Ensure colored backgrounds print correctly */
+            .header {
+                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+                color: white !important;
+            }
+            
+            .net-pay-section {
+                background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+                color: white !important;
+            }
+            
+            /* Hide page margins if possible */
+            @page {
+                margin: 0.5cm;
+                size: A4;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="payslip">
+        <div class="header">
+            <div class="company-info-block">
+                <div class="company-name">${CompanyName}</div>
+                <div class="company-address">${CompanyAddress}<br>${CompanyCity}</div>
+            </div>
+            <div class="pay-statement-title">
+                <h1>Pay Statement</h1>
+                <div class="pay-period">${PayPeriod}</div>
+            </div>
+        </div>
+        
+        <div class="employee-info">
+            <div class="info-item">
+                <span class="info-label">Employee:</span>
+                <span class="info-value">${FullName}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Employee ID:</span>
+                <span class="info-value">${EmployeeCode}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Department:</span>
+                <span class="info-value">${Department}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Pay Date:</span>
+                <span class="info-value">${PayDate}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Position:</span>
+                <span class="info-value">${Position}</span>
+            </div>
+        </div>
+        
+        <div class="section earnings">
+            <div class="section-title">Earnings</div>
+            <div class="row">
+                <span class="row-label">Base Salary</span>
+                <span class="row-value">$${BaseSalary?string["#,##0.00"]}</span>
+            </div>
+            <div class="row">
+                <span class="row-label">Overtime</span>
+                <span class="row-value">$${Overtime?string["#,##0.00"]}</span>
+            </div>
+            <div class="row">
+                <span class="row-label">Bonus</span>
+                <span class="row-value">$${Bonus?string["#,##0.00"]}</span>
+            </div>
+            <div class="row total">
+                <span class="row-label">Gross Earnings</span>
+                <span class="row-value">$${GrossEarnings?string["#,##0.00"]}</span>
+            </div>
+        </div>
+        
+        <div class="section deductions">
+            <div class="section-title">Deductions</div>
+            <div class="row">
+                <span class="row-label">Federal Tax</span>
+                <span class="row-value">$${FederalTax?string["#,##0.00"]}</span>
+            </div>
+            <div class="row">
+                <span class="row-label">State Tax</span>
+                <span class="row-value">$${StateTax?string["#,##0.00"]}</span>
+            </div>
+            <div class="row">
+                <span class="row-label">Social Security</span>
+                <span class="row-value">$${SocialSecurity?string["#,##0.00"]}</span>
+            </div>
+            <div class="row">
+                <span class="row-label">Medicare</span>
+                <span class="row-value">$${Medicare?string["#,##0.00"]}</span>
+            </div>
+            <div class="row">
+                <span class="row-label">Health Insurance</span>
+                <span class="row-value">$${HealthInsurance?string["#,##0.00"]}</span>
+            </div>
+            <div class="row">
+                <span class="row-label">401(k) Retirement</span>
+                <span class="row-value">$${Retirement401k?string["#,##0.00"]}</span>
+            </div>
+            <div class="row total">
+                <span class="row-label">Total Deductions</span>
+                <span class="row-value">$${TotalDeductions?string["#,##0.00"]}</span>
+            </div>
+        </div>
+        
+        <div class="net-pay-section">
+            <span class="net-pay-label">Net Pay</span>
+            <span class="net-pay-amount">$${NetPay?string["#,##0.00"]}</span>
+        </div>
+        
+        <div class="ytd-section">
+            <div class="section-title" style="border-bottom-color: #cbd5e1;">Year-to-Date Summary</div>
+            <div class="ytd-grid">
+                <div class="ytd-item">
+                    <div class="ytd-label">YTD Gross</div>
+                    <div class="ytd-value">$${YtdGross?string["#,##0.00"]}</div>
+                </div>
+                <div class="ytd-item">
+                    <div class="ytd-label">YTD Deductions</div>
+                    <div class="ytd-value">$${YtdDeductions?string["#,##0.00"]}</div>
+                </div>
+                <div class="ytd-item">
+                    <div class="ytd-label">YTD Net</div>
+                    <div class="ytd-value">$${YtdNet?string["#,##0.00"]}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            This is a computer-generated document. Please retain for your records.
+        </div>
+    </div>
+</body>
+</html>

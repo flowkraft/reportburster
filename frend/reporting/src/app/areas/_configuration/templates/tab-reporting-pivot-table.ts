@@ -13,14 +13,19 @@ export const tabReportingPivotTableTemplate = `<ng-template
                   <strong>Pivot Table is not yet configured.</strong> To display a pivot table, go to the <strong>Pivot Table Options</strong> tab and configure your pivot table settings.
                 </div>
 
-                <!-- Placeholder for pivot table component - will be implemented when Svelte component is ready -->
-                <div *ngIf="activePivotTableConfigScriptGroovy?.trim() && reportDataResult && !reportDataResultIsError && reportDataResult?.reportData?.length > 0" class="text-center" style="padding: 20px; background-color: #f5f5f5; border: 2px dashed #ccc; border-radius: 8px;">
-                  <p><strong>Pivot Table Preview</strong></p>
-                  <p style="color: #666;">Pivot Table component will be rendered here once the Svelte web component is implemented.</p>
-                  <hr/>
-                  <p><strong>Current Configuration:</strong></p>
-                  <pre style="text-align: left; max-height: 200px; overflow: auto; background: #fff; padding: 10px; border-radius: 4px;">{{ activePivotTableConfigOptions | json }}</pre>
-                </div>
+                <!-- Pivot Table Web Component -->
+                <rb-pivot-table #pivotTable
+                  *ngIf="activePivotTableConfigScriptGroovy?.trim() && reportDataResult && !reportDataResultIsError && reportDataResult?.reportData?.length > 0"
+                  [data]="reportDataResult?.reportData"
+                  [rows]="activePivotTableConfigOptions?.rows || []"
+                  [cols]="activePivotTableConfigOptions?.cols || []"
+                  [vals]="activePivotTableConfigOptions?.vals || []"
+                  [aggregatorName]="activePivotTableConfigOptions?.aggregatorName || 'Count'"
+                  [rendererName]="activePivotTableConfigOptions?.rendererName || 'Table'"
+                  [rowOrder]="activePivotTableConfigOptions?.rowOrder || 'key_a_to_z'"
+                  [colOrder]="activePivotTableConfigOptions?.colOrder || 'key_a_to_z'"
+                  [valueFilter]="activePivotTableConfigOptions?.valueFilter || {}"
+                ></rb-pivot-table>
 
                 <!-- Show 'No Data' when pivot table is configured but no data -->
                 <div id="noDataPivotTable" *ngIf="activePivotTableConfigScriptGroovy?.trim() && (!reportDataResult || (!reportDataResultIsError && (!reportDataResult?.reportData || reportDataResult?.reportData?.length === 0)))" class="text-center" style="padding: 20px;">

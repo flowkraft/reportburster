@@ -274,9 +274,10 @@ public class NorthwindManager implements AutoCloseable {
 	 */
 	private void waitForDatabaseToBeReady(DatabaseVendor vendor, Integer hostPort) throws Exception {
 		final int port = (hostPort != null) ? hostPort : getDefaultHostPort(vendor);
-		final String host = "localhost";
+		// Get effective host - converts localhost to host.docker.internal when running in Docker
+		final String host = Utils.getEffectiveHost("localhost");
 
-		log.info("[SQL_SERVER_DEBUG] waitForDatabaseToBeReady: vendor={}, port={}", vendor, port);
+		log.info("[SQL_SERVER_DEBUG] waitForDatabaseToBeReady: vendor={}, host={}, port={}", vendor, host, port);
 
 		// Failsafe retry policy for the connection attempt
 		RetryPolicy<Object> retryPolicy = new RetryPolicy<>().handle(Throwable.class) // Handle any exception
@@ -333,7 +334,9 @@ public class NorthwindManager implements AutoCloseable {
 	 */
 	private void ensureSqlServerDatabaseExists(DatabaseVendor vendor, Integer hostPort) throws Exception {
 		final int port = (hostPort != null) ? hostPort : getDefaultHostPort(vendor);
-		final String masterUrl = "jdbc:sqlserver://localhost:" + port
+		// Get effective host - converts localhost to host.docker.internal when running in Docker
+		final String host = Utils.getEffectiveHost("localhost");
+		final String masterUrl = "jdbc:sqlserver://" + host + ":" + port
 				+ ";databaseName=master;encrypt=false;trustServerCertificate=true";
 		final String dbName = vendor.getDefaultDbName();
 
@@ -354,7 +357,7 @@ public class NorthwindManager implements AutoCloseable {
 				.onFailure(e -> log.error("[SQL_SERVER_DEBUG] Failed to connect to SQL Server master", e.getFailure()));
 
 		Failsafe.with(retryPolicy).run(() -> {
-			if (!Utils.isPortOpen("localhost", port, 2000)) {
+			if (!Utils.isPortOpen(host, port, 2000)) {
 				throw new IOException("Port " + port + " not open");
 			}
 
@@ -401,29 +404,33 @@ public class NorthwindManager implements AutoCloseable {
 
 	/**
 	 * Constructs the JDBC URL for a given database vendor.
+	 * Uses Utils.getEffectiveHost() to handle Docker environment detection,
+	 * automatically converting localhost to host.docker.internal when running in Docker.
 	 */
 	public String getJdbcUrl(DatabaseVendor vendor) {
 
 		int port = activeHostPorts.getOrDefault(vendor, getDefaultHostPort(vendor));
 		String dbName = vendor.getDefaultDbName();
+		// Get effective host - converts localhost to host.docker.internal when running in Docker
+		String host = Utils.getEffectiveHost("localhost");
 
 		switch (vendor) {
 			case POSTGRES:
-				return "jdbc:postgresql://localhost:" + port + "/" + dbName;
+				return "jdbc:postgresql://" + host + ":" + port + "/" + dbName;
 			case MYSQL:
-				return "jdbc:mysql://localhost:" + port + "/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true";
+				return "jdbc:mysql://" + host + ":" + port + "/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true";
 			case MARIADB:
-				return "jdbc:mariadb://localhost:" + port + "/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true";
+				return "jdbc:mariadb://" + host + ":" + port + "/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true";
 			case SQLITE:
 				return "jdbc:sqlite:" + getActualDataPath(vendor).resolve("northwind.db").toString();
 			case SQLSERVER:
-				String url = "jdbc:sqlserver://localhost:" + port + ";databaseName=" + dbName + ";encrypt=false";
+				String url = "jdbc:sqlserver://" + host + ":" + port + ";databaseName=" + dbName + ";encrypt=false";
 				log.info("[SQL_SERVER_DEBUG] Constructed SQL Server URL: {}", url);
 				return url;
 			case ORACLE:
-				return "jdbc:oracle:thin:@//localhost:" + port + "/" + dbName;
+				return "jdbc:oracle:thin:@//" + host + ":" + port + "/" + dbName;
 			case DB2:
-				return "jdbc:db2://localhost:" + port + "/" + dbName;
+				return "jdbc:db2://" + host + ":" + port + "/" + dbName;
 			default:
 				throw new IllegalArgumentException("Unsupported database vendor: " + vendor);
 		}

@@ -72,9 +72,7 @@
     <div class="hero-section">
         <h1 class="hero-tagline">Dashboards. Self Service Portals.</h1>
         <br><br>
-        <p class="hero-description">
-            Bring your reports to the <strong>frontend</strong>: dashboards, portals, anywhere your users need them.
-        </p>
+        <p class="hero-description">Bring your reports to the <strong>frontend</strong>: dashboards, portals, anywhere your users need them. Use our 'quick to get things done' (highly capable and fully customizable) portal, or <strong>embed ReportBurster reports</strong> directly into your existing web applications and portals — responsive, secure, and themeable to match your look and feel.</p>
     </div>
     
     <!-- Component Navigation -->
@@ -105,6 +103,11 @@
                 <i class="bi bi-file-earmark-text icon"></i>
                 <h6>Reports</h6>
                 <p>Full report examples</p>
+            </g:link>
+            <g:link uri="/your-canvas" class="component-card text-decoration-none">
+                <i class="bi bi-easel icon"></i>
+                <h6>Your Canvas</h6>
+                <p>Build your own</p>
             </g:link>
         </div>
     </div>

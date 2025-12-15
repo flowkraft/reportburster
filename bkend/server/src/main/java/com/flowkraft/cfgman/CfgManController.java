@@ -57,6 +57,29 @@ public class CfgManController {
 		return Flux.fromStream(rbSettingsService.loadSettingsAll());
 	}
 
+	/**
+	 * MINIMAL LOADING - Fast startup endpoint.
+	 * Returns only basic metadata needed for UI menus (no DSL parsing).
+	 * Use loadConfigDetails() to get full DSL options for a specific config.
+	 */
+	@GetMapping(value = "/rb/load-all-minimal")
+	public Flux<ConfigurationFileInfo> loadRbSettingsAllMinimal() throws Exception {
+		return Flux.fromStream(rbSettingsService.loadSettingsAllMinimal());
+	}
+
+	/**
+	 * FULL DETAILS LOADING - On-demand endpoint for a specific configuration.
+	 * Parses and returns DSL options (reportParameters, tabulatorOptions, etc.)
+	 * 
+	 * @param path The relative path to settings.xml (e.g., "/config/samples/_frend/sales-region-prod-qtr/settings.xml")
+	 */
+	@GetMapping(value = "/rb/load-config-details")
+	public Mono<ConfigurationFileInfo> loadConfigDetails(@RequestParam String path) throws Exception {
+		String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
+		ConfigurationFileInfo details = rbSettingsService.loadConfigDetails(decodedPath);
+		return details != null ? Mono.just(details) : Mono.empty();
+	}
+
 	@GetMapping(value = "/rb/load")
 	public Mono<DocumentBursterSettings> loadRbSettings(@RequestParam String path) throws Exception {
 

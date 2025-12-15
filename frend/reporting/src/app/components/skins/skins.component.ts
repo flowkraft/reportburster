@@ -1,4 +1,5 @@
 import { OnInit, Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
@@ -34,7 +35,8 @@ export class SkinsComponent implements OnInit {
   constructor(
     protected settingsService: SettingsService,
     protected storeService: StateStoreService,
-    protected messagesService: ToastrMessagesService
+    protected messagesService: ToastrMessagesService,
+    protected router: Router,
   ) {}
 
   async ngOnInit() {

@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.flowkraft.common.AppPaths;
-
+import com.flowkraft.common.Utils;
 import jakarta.annotation.PostConstruct;
 
 /**
@@ -39,6 +39,14 @@ public class ApiKeyManager {
     
     @PostConstruct
     public void init() {
+        // Check for API_KEY environment variable first
+        String envApiKey = Utils.getJvmArgumentValue("-DAPI_KEY=");
+        if (envApiKey != null && !envApiKey.isEmpty()) {
+            apiKey = envApiKey;
+            log.info("Using API key from environment variable");
+            return;
+        }
+        
         try {
             Path apiKeyPath = getApiKeyPath();
             

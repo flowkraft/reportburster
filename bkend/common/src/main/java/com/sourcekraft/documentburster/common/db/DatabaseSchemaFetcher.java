@@ -24,6 +24,7 @@ import com.sourcekraft.documentburster.common.db.schema.TableSchema;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
 import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
+import com.sourcekraft.documentburster.utils.Utils;
 
 /**
  * Fetches database schema information (tables, views, columns, keys, indexes)
@@ -311,6 +312,7 @@ public class DatabaseSchemaFetcher {
         // ... (implementation remains the same, but needs enhancement for production
         // use) ...
         String dbType = settings.type.toLowerCase();
+        String effectiveHost = Utils.getEffectiveHost(settings.host);
         switch (dbType) {
             case "sqlite":
                 if (StringUtils.isBlank(settings.database))
@@ -320,14 +322,14 @@ public class DatabaseSchemaFetcher {
             case "oracle":
                 // Example: jdbc:oracle:thin:@//<host>:<port>/<service_name_or_sid>
                 // Needs refinement for Service Name vs SID, TNSNames, etc.
-                return String.format("jdbc:oracle:thin:@//%s:%s/%s", settings.host, settings.port, settings.database);
+                return String.format("jdbc:oracle:thin:@//%s:%s/%s", effectiveHost, settings.port, settings.database);
             case "sqlserver":
                 // Example:
                 // jdbc:sqlserver://<host>:<port>;databaseName=<database>;encrypt=...;trustServerCertificate=...
                 // Needs robust handling of settings.usessl and related properties.
                 String sslProps = settings.usessl ? ";encrypt=true;trustServerCertificate=true" : ";encrypt=false"; // Simplified
                                                                                                                     // example
-                return String.format("jdbc:sqlserver://%s:%s;databaseName=%s%s", settings.host, settings.port,
+                return String.format("jdbc:sqlserver://%s:%s;databaseName=%s%s", effectiveHost, settings.port,
                         settings.database, sslProps);
             case "postgres":
             case "postgresql":
@@ -335,26 +337,26 @@ public class DatabaseSchemaFetcher {
                 // jdbc:postgresql://<host>:<port>/<database>?ssl=true&sslmode=require...
                 // Needs robust handling of settings.usessl and sslmode.
                 String pgSsl = settings.usessl ? "?ssl=true&sslmode=prefer" : ""; // Simplified example
-                return String.format("jdbc:postgresql://%s:%s/%s%s", settings.host, settings.port, settings.database,
+                return String.format("jdbc:postgresql://%s:%s/%s%s", effectiveHost, settings.port, settings.database,
                         pgSsl);
             case "mysql":
                 // Example: jdbc:mysql://<host>:<port>/<database>?useSSL=true&requireSSL=true...
                 // Needs robust handling of settings.usessl.
                 String mysqlSsl = settings.usessl ? "?useSSL=true&requireSSL=true" : "?useSSL=false"; // Simplified
                                                                                                       // example
-                return String.format("jdbc:mysql://%s:%s/%s%s", settings.host, settings.port, settings.database,
+                return String.format("jdbc:mysql://%s:%s/%s%s", effectiveHost, settings.port, settings.database,
                         mysqlSsl);
             case "mariadb":
                 // Example: jdbc:mariadb://<host>:<port>/<database>?useSSL=true...
                 // Needs robust handling of settings.usessl.
                 String mariaSsl = settings.usessl ? "?useSSL=true" : "?useSSL=false"; // Simplified example
-                return String.format("jdbc:mariadb://%s:%s/%s%s", settings.host, settings.port, settings.database,
+                return String.format("jdbc:mariadb://%s:%s/%s%s", effectiveHost, settings.port, settings.database,
                         mariaSsl);
             case "ibmdb2":
                 // Example: jdbc:db2://<host>:<port>/<database>:sslConnection=true;...
                 // Needs robust handling of settings.usessl.
                 String db2Ssl = settings.usessl ? ":sslConnection=true;" : ""; // Simplified example
-                return String.format("jdbc:db2://%s:%s/%s%s", settings.host, settings.port, settings.database, db2Ssl);
+                return String.format("jdbc:db2://%s:%s/%s%s", effectiveHost, settings.port, settings.database, db2Ssl);
             default:
                 log.warn("Cannot construct JDBC URL for unsupported database type: {}", dbType);
                 return null;

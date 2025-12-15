@@ -16,6 +16,7 @@ class UrlMappings {
         "/pivottables"(controller: "pivotTables", action: "index")
         "/report-parameters"(controller: "reportParameters", action: "index")
         "/reports"(controller: "reports", action: "index")
+        "/your-canvas"(controller: "yourCanvas", action: "index")
 
         "500"(view:'/error')
         "404"(view:'/notFound')

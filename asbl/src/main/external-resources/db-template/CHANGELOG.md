@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 12.2.0 - 2025-12-15
+
+### Added
+
+- Improved **Apps**
+  - ReportBurster Self Service Portal - fastest way to build an Employee Portal / Customer Portal  / Partner Portal / Student Portal
+  - Flowkraft Frontend App (Dashboards & Portals)
+- ReportBurster can now create pivot tables
+- New embeddable web components rb-report, rb-tabulator, rb-chart, rb-pivottable, rb-parameters
+
+### Fixed
+
+- Improved performance when loading many report configuration templates
+
 ## 12.1.0 - 2025-12-08
 
 ### Added

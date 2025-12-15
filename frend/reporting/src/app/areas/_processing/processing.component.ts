@@ -293,6 +293,13 @@ export class ProcessingComponent implements OnInit {
                 params.prefilledSelectedMailMergeClassicReport,
               ),
             );
+        
+        // Lazy load DSL details for the pre-filled sample report
+        if (this.processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport) {
+          await this.settingsService.loadConfigurationDetailsAsync(
+            this.processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport
+          );
+        }
       }
 
       if (params.leftMenu) {
@@ -1546,9 +1553,15 @@ export class ProcessingComponent implements OnInit {
 
   //end samples
 
-  onReportSelectionChange($event: any) {
+  async onReportSelectionChange($event: any) {
     //console.log(`onReportSelectionChange: ${JSON.stringify($event)}`);
-    // Update the selected report in the processing service
+    // Lazy load DSL details for the selected report
+    if ($event && (
+      $event.type === 'config-reports' || 
+      $event.type === 'config-samples'
+    )) {
+      await this.settingsService.loadConfigurationDetailsAsync($event);
+    }
   }
 
   allowedInputFileTypes(): string {

@@ -25,11 +25,13 @@ import jakarta.servlet.http.HttpServletResponse;
  * - Electron/Grails/WordPress: Uses API key (this filter)
  * 
  * If X-API-Key header is present and valid, this filter authenticates the request.
+ * For WebSocket endpoints, also checks access_token query parameter (SockJS pattern).
  * If not present, the request continues to standard session-based authentication.
  */
 public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     
     private static final String API_KEY_HEADER = "X-API-Key";
+    private static final String ACCESS_TOKEN_PARAM = "access_token";
     
     private final ApiKeyManager apiKeyManager;
     
@@ -45,7 +47,12 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         
         String apiKey = request.getHeader(API_KEY_HEADER);
         
-        // If API key header is present, validate it
+        // If no header, check for access_token query parameter (used by SockJS/WebSocket)
+        if ((apiKey == null || apiKey.isEmpty()) && request.getRequestURI().contains("/ws")) {
+            apiKey = request.getParameter(ACCESS_TOKEN_PARAM);
+        }
+        
+        // If API key is present (from header or query param), validate it
         if (apiKey != null && !apiKey.isEmpty()) {
             if (apiKeyManager.isValidApiKey(apiKey)) {
                 // Create authentication token

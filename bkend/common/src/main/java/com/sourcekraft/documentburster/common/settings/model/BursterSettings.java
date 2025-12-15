@@ -53,23 +53,23 @@ public class BursterSettings extends DumpToString {
 
 	public SendFiles sendfiles;
 
-	public boolean deletefiles;
-	public boolean quarantinefiles;
+	public Boolean deletefiles;
+	public Boolean quarantinefiles;
 
 	/* start text extraction options */
-	public boolean sortbyposition;
-	public boolean shouldseparatebybeads;
-	public boolean suppressduplicateoverlappingtext;
+	public Boolean sortbyposition;
+	public Boolean shouldseparatebybeads;
+	public Boolean suppressduplicateoverlappingtext;
 
-	public float averagechartolerancevalue = -1;
-	public float spacingtolerancevalue = -1;
+	public Float averagechartolerancevalue;
+	public Float spacingtolerancevalue;
 
 	/* end text extraction options */
 
 	public ServerEmailSettings emailserver;
 
-	public boolean htmlemail;
-	public boolean htmlemaileditcode;
+	public Boolean htmlemail;
+	public Boolean htmlemaileditcode;
 
 	public EmailSettings emailsettings;
 
@@ -88,22 +88,22 @@ public class BursterSettings extends DumpToString {
 	public Locale locale;
 	public FreeMarkerSettings freemarker;
 
-	public int numberofuservariables;
-	public double delayeachdistributionby;
+	public Integer numberofuservariables;
+	public Double delayeachdistributionby;
 
-	public boolean reusetokenswhennotfound;
-	public boolean failjobifanydistributionfails;
+	public Boolean reusetokenswhennotfound;
+	public Boolean failjobifanydistributionfails;
 
-	public boolean enableretrypolicy;
+	public Boolean enableretrypolicy;
 
 	public RetryPolicy retrypolicy;
 
-	public boolean split2ndtime;
+	public Boolean split2ndtime;
 	public BurstTokenDelimiters bursttokendelimiters;
 	
-	public boolean dumprecorddataasxml;
+	public Boolean dumprecorddataasxml;
 
-	public boolean enableincubatingfeatures;
+	public Boolean enableincubatingfeatures;
 
 	public String notes;
 	public String visibility;

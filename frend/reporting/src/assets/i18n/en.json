@@ -413,6 +413,9 @@
         "REPORTING-TABULATOR": "Tabulator",
         "REPORTING-CHART": "Chart",
         "REPORTING-PIVOT-TABLE": "Pivot Table",
+        "REPORTING": {
+          "USAGE": "Usage"
+        },
         "QA": "Test Email Server",
         "SMS": {
           "MESSAGE": "Message",

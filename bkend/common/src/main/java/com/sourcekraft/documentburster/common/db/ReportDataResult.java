@@ -11,4 +11,8 @@ public class ReportDataResult extends DumpToString {
 	public long executionTimeMillis;
 	public boolean isPreview;
 	public int totalRows;
+	
+	// Entity-specific rendering fields
+	public String entityCode;
+	public String renderedHtml;
 }

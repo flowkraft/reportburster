@@ -1,20 +1,67 @@
-services:
-  cms-webportal-playground:
-    image: wordpress:6.8.2-php8.4-apache
-    container_name: rb-cms-webportal-playground
-    depends_on:
-      - cms-webportal-playground-db
-    ports:
-      - "${HOST_PORT:-8080}:80"
+﻿services:
+  # ============================================================================
+  # READY SERVICE - Have everything READY
+  # ============================================================================
+  cms-webportal-playground-ready:
+    image: alpine:latest
+    container_name: rb-cms-webportal-playground-ready
+    # Mounts the shared volume to access the filesystem
     volumes:
-      - ./config/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
-      - ./logs-wp/apache2:/var/log/apache2
-      - ./wp-plugins:/var/www/html/wp-content/plugins
-      - ./wp-themes/reportburster-sage:/var/www/html/wp-content/themes/reportburster-sage
       - wp_html:/var/www/html
     env_file:
       - .env
+    # This service depends on ALL other services to be healthy and complete first
+    depends_on:
+      cms-webportal-playground-cli:
+        condition: service_completed_successfully
+      theme-builder:
+        condition: service_completed_successfully
+    command: >
+      /bin/sh -c '
+        echo "📌 Creating provisioning marker...";
+        # Create the .provisioned file here, in the shared volume
+        touch /var/www/html/.provisioned;
+        
+        echo "✅ All provisioning complete - WordPress is ready!";
+      '
+    restart: "no"
+
+  cms-webportal-playground:
+    build:
+      context: .
+      dockerfile: Dockerfile.deps
+    container_name: rb-cms-webportal-playground
+    depends_on:
+      cms-webportal-playground-db:
+        condition: service_healthy
+    ports:
+      - "${HOST_PORT:-8080}:80"
+    volumes:
+      # WordPress core
+      - wp_html:/var/www/html
+
+      # Plugin source code (host)
+      - ./wp-plugins/reportburster-portal:/var/www/html/wp-content/plugins/reportburster-portal
+
+      # Theme source code (host)
+      - ./wp-themes/reportburster-theme/theme:/var/www/html/wp-content/themes/reportburster-theme
+
+      # Dependencies baked in image
+      - reportburster_vendor:/var/www/html/wp-content/plugins/reportburster-portal/vendor
+      - reportburster_node_modules:/var/www/html/wp-content/themes/reportburster-theme/node_modules
+
+      # Writable dirs for WordPress
+      - wp_uploads:/var/www/html/wp-content/uploads
+      - wp_upgrade:/var/www/html/wp-content/upgrade
+    env_file:
+      - .env
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /var/www/html/.provisioned && curl -f http://localhost/ -o /dev/null -s || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 300
+      start_period: 30s
 
   cms-webportal-playground-db:
     image: mysql:8.0
@@ -28,41 +75,58 @@ services:
       MYSQL_USER:          ${MYSQL_USER}
       MYSQL_PASSWORD:      ${MYSQL_PASSWORD}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   cms-webportal-playground-cli:
-    build:
-      context: .
-      dockerfile: Dockerfile.cli
+    image: wordpress:cli-2.12.0-php8.4
     container_name: rb-cms-webportal-playground-cli
-    user: root
+    user: "0:0"
     environment:
       - WP_CLI_ALLOW_ROOT=1
     depends_on:
-      - cms-webportal-playground
+      cms-webportal-playground:
+        condition: service_started
+      theme-builder:
+        condition: service_completed_successfully  
     volumes:
-      - ./wp-plugins:/var/www/html/wp-content/plugins
-      - ./wp-themes/reportburster-sage:/var/www/html/wp-content/themes/reportburster-sage
-      - ./scripts:/var/www/html/scripts
+      # WordPress core
       - wp_html:/var/www/html
+
+      # Plugin source code (host)
+      - ./wp-plugins/reportburster-portal:/var/www/html/wp-content/plugins/reportburster-portal
+
+      # Theme source code (host)
+      - ./wp-themes/reportburster-theme/theme:/var/www/html/wp-content/themes/reportburster-theme
+
+      # Dependencies baked in image
+      - reportburster_vendor:/var/www/html/wp-content/plugins/reportburster-portal/vendor
+      - reportburster_node_modules:/var/www/html/wp-content/themes/reportburster-theme/node_modules
+
+      # Writable dirs for WordPress
+      - wp_uploads:/var/www/html/wp-content/uploads
+      - wp_upgrade:/var/www/html/wp-content/upgrade
     env_file:
       - .env
     restart: "no"
     command: >
       /bin/sh -c '
-
-        # Increase Composer timeout globally to prevent unzip hangs
-        composer config --global process-timeout 600  # Increase to 10 minutes
+        # Early exit if already provisioned (saves doing effort on restarts)
+        if [ -f /var/www/html/.provisioned ]; then
+          echo "✅ Already provisioned (.provisioned exists). Skipping CLI provisioning.";
+          exit 0;
+        fi
 
         echo "⏳ Waiting for Wordpress core files…";
         while [ ! -f /var/www/html/wp-settings.php ]; do sleep 2; done
 
         echo "🔐 Waiting for wp-content to settle…";
-        # you could check owner=33 or just sleep a few seconds
-        sleep 3
-
-        echo "🔧 Fixing permissions…";
-        chown -R www-data:www-data /var/www/html/wp-content
-        chmod -R u+rwX            /var/www/html/wp-content
+        # Wait for directories to be properly created
+        sleep 5
 
         echo "🕓 Waiting for the database to be responsive…";
         until mysqladmin ping \
@@ -73,7 +137,7 @@ services:
           sleep 2;
         done
 
-        sleep 2;
+        sleep 5;
 
         echo "🚀 Checking WordPress install...";
 
@@ -86,63 +150,55 @@ services:
             --admin_password="${WP_ADMIN_PASSWORD}" \
             --admin_email="${WP_ADMIN_EMAIL}";
 
-          echo "🎯 Installing theme (first run only)…";
-          THEME_DIR="/var/www/html/wp-content/themes/reportburster-sage"
-          if [ ! -f "$$THEME_DIR/composer.json" ]; then
-            rm -rf "$$THEME_DIR"
-            # Add retry and error handling for Composer
-            if ! composer create-project roots/sage "$$THEME_DIR" --no-interaction --no-progress; then
-              echo "Composer create-project failed, retrying with increased timeout...";
-              composer config --global process-timeout 1200  # Increase to 20 minutes for retry
-              composer create-project roots/sage "$$THEME_DIR" --no-interaction --no-progress || echo "Theme installation failed, skipping.";
-            fi
-            chown -R www-data:www-data "$$THEME_DIR"
-          fi
-        
           echo "🧹 Removing default bundled plugins…";
           wp plugin is-installed akismet && wp plugin delete akismet || true
           wp plugin is-installed hello   && wp plugin delete hello   || true
 
-          echo "📦 Ensuring Composer deps for custom plugin…";
-          PLUGIN_PATH="/var/www/html/wp-content/plugins/reportburster-integration"
-          if [ -d "$$PLUGIN_PATH" ]; then
-            if [ ! -f "$$PLUGIN_PATH/vendor/autoload.php" ]; then
-              echo "Running composer install for reportburster-integration...";
-              # Add retry and error handling
-              if ! (cd "$$PLUGIN_PATH" && composer install --no-interaction --prefer-dist --no-progress); then
-                echo "Composer install failed for plugin, retrying...";
-                (cd "$$PLUGIN_PATH" && composer install --no-interaction --prefer-dist --no-progress) || echo "Plugin composer install failed, plugin may not activate.";
-              fi
-            fi
-            wp plugin is-active reportburster-integration || wp plugin activate reportburster-integration || echo "Plugin activation failed.";
+          # ================================================================
+          # PODS FRAMEWORK - Install FIRST (dependency for reportburster-portal)
+          # ================================================================
+          echo "📦 Installing Pods framework (required by reportburster-portal)…";
+          if ! wp plugin is-installed pods; then
+            wp plugin install pods --version=3.3.3 --activate
+          else
+            wp plugin is-active pods || wp plugin activate pods || true
           fi
+          # Small delay to let Pods initialize its tables
+          sleep 5
 
-          ensure() {
-            SLUG="$$1"; VER="$$2"; ACTIVATE="$$3";
-            if ! wp plugin is-installed "$$SLUG"; then
-              if [ -n "$$VER" ]; then
-                wp plugin install "$$SLUG" --version="$$VER" $${ACTIVATE:+--activate}
-              else
-                wp plugin install "$$SLUG" $${ACTIVATE:+--activate}
-              fi
-            else
-              if [ "$$ACTIVATE" = "yes" ]; then
-                wp plugin is-active "$$SLUG" || wp plugin activate "$$SLUG" || true
-              fi
-            fi
-          }
+          
+          # =========================================================================
+          # IDEMPOTENT PROVISIONING (runs every time, safe to re-run)
+          # =========================================================================
+          echo "🔐 Ensuring custom roles…";
+          wp role exists employee || wp role create employee 'Employee' --clone=subscriber
+          wp role exists customer || wp role create customer 'Customer' --clone=subscriber
+        
+          sleep 2
 
-          echo "🎯 Installing / Ensuring plugins (grouped & idempotent)…";
+          echo "🎨 Activating reportburster-theme…";
+          # Check if theme exists before trying to activate
+          if wp theme is-installed reportburster-theme; then
+            wp theme activate reportburster-theme
+          else
+            echo "Theme not found yet, will be activated after build."
+          fi
+        
+          sleep 2
 
-          echo "== Installing Content Types & Fields Plugins ==";
-          ensure pods 3.3.3 yes
-          # ensure gravityforms 2.9.0
-          # ensure pods-gravity-forms 1.4.4
+          echo "🎨 Activating reportburster-portal…";
+          
+          if wp plugin is-installed reportburster-portal; then
+            wp plugin activate reportburster-portal
+          else
+            echo "Plugin not found yet, will be activated later."
+          fi
+          
+          # ================================================================
+          # OTHER PLUGINS (uncomment as needed)
+          # ================================================================
 
-          echo "== Installing ReportBurster Integration (Depends on Pods) Plugins ==";
-          # already handled above
-
-          echo "== Installing Site and Admin Management Plugins ==";
+          # echo "== Installing Site and Admin Management Plugins ==";
           # ensure matomo 5.3.1
           # ensure burst-statistics 2.1.0
           # ensure jwt-authentication-for-wp-rest-api 1.3.8
@@ -154,10 +210,10 @@ services:
           # ensure oauth2-provider 4.4.0
           # ensure redux-framework 4.5.7
 
-          echo "== Installing Spam / Security Plugins ==";
+          # echo "== Installing Spam / Security Plugins ==";
           # ensure antispam-bee 2.11.7
 
-          echo "== Installing Contact Forms and Enhancements Plugins ==";
+          # echo "== Installing Contact Forms and Enhancements Plugins ==";
           # ensure forminator 1.44.3
           # ensure contact-form-7 6.1
           # ensure contact-form-7-paypal-add-on 2.4.3
@@ -165,74 +221,116 @@ services:
           # ensure contact-form-7-simple-recaptcha 0.1.6
           # ensure cf7-grid-layout 4.15.8
 
-          echo "== Installing Email Management Plugins ==";
+          # echo "== Installing Email Management Plugins ==";
           # ensure fluent-smtp 2.2.90
 
           echo "== Installing Developer Tools and Utilities Plugins ==";
-          ensure query-monitor 3.20.0
+          # Query Monitor plugin
+          if ! wp plugin is-installed query-monitor; then
+            wp plugin install query-monitor --version=3.20.0
+          fi
           # ensure font-awesome 5.0.2
           # ensure codepress-admin-columns 4.7.7
 
-          echo "== Installing Social / Community (Optional) Plugins ==";
+          # echo "== Installing Social / Community (Optional) Plugins ==";
           # ensure buddypress 14.3.4
 
-          echo "== Installing LMS / Donation (Optional) Plugins ==";
+          # echo "== Installing LMS / Donation (Optional) Plugins ==";
           # ensure give 4.4.0
           # ensure tutor 3.6.3
           # ensure learnpress 4.2.8.7.3
 
-          echo "== Installing Search & Indexing (Optional) Plugins ==";
+          # echo "== Installing Search & Indexing (Optional) Plugins ==";
           # ensure facetwp 4.3.2
           # ensure relevanssi 4.22.1
           # ensure add-search-to-menu 1.3.1
           # ensure search-filter 1.2.16
           # ensure elasticpress 5.0.3
 
-          echo "== Installing Permalinks / Structure (Optional) Plugins ==";
+          # echo "== Installing Permalinks / Structure (Optional) Plugins ==";
           # ensure custom-post-type-permalinks 3.5.1
 
-          echo "🔐 Ensuring custom roles…";
-          wp role exists employee || wp role create employee 'Employee' --clone=subscriber
-          wp role exists customer || wp role create customer 'Customer' --clone=subscriber
+          echo "🔗 Setting permalink structure to /%postname%/…";
+          wp rewrite structure "/%postname%/" --hard;
+          wp rewrite flush --hard;
 
-          echo "📝 Provisioning demo content types and sample data…"
-          wp eval-file /var/www/html/scripts/provision-content-types-and-sample-data.php
+          echo "🔧 Updating site URLs…";
+          wp option update home    "${WP_SITE_URL}";
+          wp option update siteurl "${WP_SITE_URL}";
 
-          echo \"🔧 Updating site URLs…\";
-          wp option update home    \"${WP_SITE_URL}\";
-          wp option update siteurl \"${WP_SITE_URL}\";
-          
+          echo "📌 First-run provisioning complete.";
         fi
 
-        echo \"✅ Provisioning complete.\";
+        # Demo users, Pods CPT, and sample data are now provisioned automatically
+        # by the ReportBurster Portal plugin when WordPress loads (via Provisioner class).
+        # This eliminates dependency on fragile shell script execution.
+
+        echo "✅ CLI provisioning complete.";
       '
 
-  sage-theme-builder:
-    image: node:20-bullseye
-    container_name: rb-sage-theme-builder
+  # ============================================================================
+  # THEME BUILDER - Compiles theme assets (CSS, JS)
+  # ============================================================================
+  theme-builder:
+    image: node:20-alpine
+    container_name: rb-theme-builder
     depends_on:
-      cms-webportal-playground-cli:
-        condition: service_completed_successfully
-    working_dir: /var/www/html/wp-content/themes/reportburster-sage
+      cms-webportal-playground:
+        condition: service_started
+    working_dir: /theme-src
     volumes:
-      - ./wp-themes/reportburster-sage:/var/www/html/wp-content/themes/reportburster-sage
       - wp_html:/var/www/html
+      - ./wp-themes/reportburster-theme:/theme-src
+      - ./wp-plugins/reportburster-portal:/var/www/html/wp-content/plugins/reportburster-portal
+      - reportburster_node_modules:/theme-src/node_modules
+    env_file:
+      - .env
     environment:
       - FORCE_BUILD=${FORCE_BUILD:-false}
     command: >
       /bin/sh -c '
-        # always npm install on first run, or when FORCE_BUILD=true
-        if [ ! -d node_modules ] || [ "$FORCE_BUILD" = "true" ]; then
-          npm install;
+        set -e
+
+        # If we are forcing a build, remove the old marker to ensure the full cycle completes
+        if [ "${FORCE_BUILD}" = "true" ]; then
+          echo "🔄 FORCE_BUILD is true. Removing old .provisioned marker to build the theme.";
+          rm -f /var/www/html/.provisioned
+        fi
+        
+        # Early exit if already provisioned (saves doing effort on restarts)
+        if [ -f /var/www/html/.provisioned ]; then
+          echo "✅ Already provisioned (.provisioned exists). Skipping CLI provisioning.";
+          exit 0;
+        fi
+        
+        echo "🔨 Starting theme asset build...";
+
+        if [ ! -d "node_modules" ]; then
+          echo "📦 Installing Node.js dependencies...";
+          npm ci;
         fi
 
-        # always rebuild if manifest missing, or if FORCE_BUILD=true
-        if [ ! -f public/build/manifest.json ] || [ "$FORCE_BUILD" = "true" ]; then
-          npm run build;
-        fi
+        npm install -g cross-env;
+          
+        echo "🎨 Compiling Tailwind CSS for frontend...";
+        npm run production:tailwind:frontend;
+          
+        echo "🎨 Compiling Tailwind CSS for editor...";
+        npm run production:tailwind:editor;
+          
+        echo "⚙️ Bundling JavaScript with esbuild...";
+        npm run production:esbuild;
+                          
+        chown -R 33:33 /theme-src
+        
+        echo "✅ Theme build complete!";
       '
     restart: "no"
 
 volumes:
   wp_html:
+  reportburster_vendor:
+  reportburster_node_modules:
+  wp_uploads:
+  wp_upgrade:
   wp_db_data:

@@ -17,7 +17,13 @@ public class ServerApplication implements ExitCodeGenerator {
 
     public static void main(String[] args) {
 
-        boolean serveWeb = _getShouldServeWeb(args);
+        // SERVE_WEB is the SINGLE source of truth
+        // Check BOTH: JVM property -DSERVE_WEB=true (for Maven spring-boot:run) 
+        // AND environment variable (for .bat/.sh scripts)
+        // This works 100% reliably across all platforms
+        String serveWebProp = System.getProperty("SERVE_WEB");
+        String serveWebEnv = System.getenv("SERVE_WEB");
+        boolean serveWeb = "true".equalsIgnoreCase(serveWebProp) || "true".equalsIgnoreCase(serveWebEnv);
 
         SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(ServerApplication.class);
 
@@ -26,14 +32,15 @@ public class ServerApplication implements ExitCodeGenerator {
         
         if (!serveWeb) {
             // Non-web mode - print PID and exit immediately
-            System.out.println("Started ServerApplication with PID " + pid);
+            System.out.println("Started ServerApplication with PID " + pid + " serveWeb=false");
             appBuilder.web(WebApplicationType.NONE);
             exitCode = SpringApplication.exit(appBuilder.run(args));
         } else {
-            // Web mode - register event listener to print PID AFTER server is ready
+            // Web mode - explicitly set SERVLET type and register event listener
+            appBuilder.web(WebApplicationType.SERVLET);
             appBuilder.listeners(event -> {
                 if (event instanceof org.springframework.boot.context.event.ApplicationReadyEvent) {
-                    System.out.println("Started ServerApplication with PID " + pid);
+                    System.out.println("Started ServerApplication with PID " + pid + " serveWeb=true");
                 }
             });
             appBuilder.run(args);
@@ -48,18 +55,6 @@ public class ServerApplication implements ExitCodeGenerator {
         } catch (Throwable t) {
             return -1;
         }
-    }
-
-    private static boolean _getShouldServeWeb(String... args) {
-        boolean serve = false;
-        int i = 0;
-        while (i < args.length && args[i].startsWith("-")) {
-            String arg = args[i];
-            if (arg.equals("-serve"))
-                serve = true;
-            i++;
-        }
-        return serve;
     }
 
     @Override

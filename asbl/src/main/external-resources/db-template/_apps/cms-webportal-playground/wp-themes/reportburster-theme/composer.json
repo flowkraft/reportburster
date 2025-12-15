@@ -1,0 +1,22 @@
+{
+	"require-dev": {
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.1",
+		"phpcompatibility/phpcompatibility-wp": "^2.1",
+		"sirbrillig/phpcs-changed": "^2.11",
+		"sirbrillig/phpcs-variable-analysis": "^2.12",
+		"wp-cli/i18n-command": "^2.6",
+		"wp-coding-standards/wpcs": "^3.2"
+	},
+	"scripts": {
+		"php:lint": "vendor/bin/phpcs -p -s",
+		"php:lint:errors": "vendor/bin/phpcs -p -s --runtime-set ignore_warnings_on_exit 1",
+		"php:lint:autofix": "vendor/bin/phpcbf",
+		"php:lint:changed": "vendor/bin/phpcs-changed --git --git-unstaged",
+		"make-pot": "wp i18n make-pot . theme/languages/reportburster-theme.pot"
+	},
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	}
+}

@@ -58,6 +58,9 @@
   // ============================================================================
   let loading = false;
   let error: string | null = null;
+  
+  // Raw DSL source code (exposed for Configuration tab)
+  export let configDsl: string = '';
 
   // ============================================================================
   // Internal State
@@ -150,6 +153,16 @@
     await tick();
     injectStyles();
     
+    // Read attributes directly from host element (Svelte props may not be populated yet)
+    // Navigate from container up through shadow DOM to host element
+    const shadowRoot = container?.getRootNode();
+    const hostEl = (shadowRoot as ShadowRoot)?.host;
+    if (hostEl) {
+      if (!reportCode) reportCode = hostEl.getAttribute('report-code') || '';
+      if (!apiBaseUrl) apiBaseUrl = hostEl.getAttribute('api-base-url') || '';
+      if (!apiKey) apiKey = hostEl.getAttribute('api-key') || '';
+    }
+    
     // ========================================================================
     // Hybrid Mode: if reportCode provided, self-fetch config + data
     // ========================================================================
@@ -157,14 +170,20 @@
       loading = true;
       error = null;
       
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const headers: Record<string, string> = {};
       if (apiKey) headers['X-API-Key'] = apiKey;
       
       try {
         // Fetch config
+        console.log('[rb-pivot-table] Fetching config from:', `${apiBaseUrl}/reports/${reportCode}/config`);
         const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
         if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
         const config = await configRes.json();
+        console.log('[rb-pivot-table] Config received:', { 
+          hasPivotTable: config.hasPivotTable, 
+          pivotTableDsl: config.pivotTableDsl ? `${config.pivotTableDsl.length} chars` : 'MISSING',
+          pivotTableOptions: config.pivotTableOptions 
+        });
         
         // Apply pivot table options from config
         if (config.pivotTableOptions) {
@@ -179,14 +198,24 @@
           if (opts.colOrder) colOrder = opts.colOrder;
         }
         
-        // Fetch data (empty params for initial load)
-        const dataRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({})
-        });
+        // Store raw DSL for Configuration tab display
+        if (config.pivotTableDsl) {
+          configDsl = config.pivotTableDsl;
+          console.log('[rb-pivot-table] configDsl set, length:', configDsl.length);
+        } else {
+          console.warn('[rb-pivot-table] No pivotTableDsl in config response!');
+        }
+        
+        // Fetch data (GET with empty query params for initial load)
+        const dataRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, { headers });
         if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
-        data = await dataRes.json();
+        const dataResult = await dataRes.json();
+        // Backend returns { reportData: [...] }, extract the array
+        data = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
+        
+        // Dispatch event so host page knows config/data is ready
+        dispatch('configLoaded', { configDsl, config });
+        dispatch('dataFetched', { data });
         
       } catch (err: any) {
         error = err.message || 'Failed to load report';
@@ -573,17 +602,44 @@
     }
     
     loading = true;
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const headers: Record<string, string> = {};
     if (apiKey) headers['X-API-Key'] = apiKey;
     
     try {
-      const res = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(params)
-      });
+      // Re-fetch config to get any DSL changes
+      const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
+      if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
+      const config = await configRes.json();
+      
+      // Update pivot table options from fresh config
+      if (config.pivotTableOptions) {
+        const opts = config.pivotTableOptions;
+        if (opts.rows) rows = opts.rows;
+        if (opts.cols) cols = opts.cols;
+        if (opts.vals) vals = opts.vals;
+        if (opts.aggregatorName) aggregatorName = opts.aggregatorName;
+        if (opts.rendererName) rendererName = opts.rendererName;
+        if (opts.valueFilter) valueFilter = opts.valueFilter;
+        if (opts.rowOrder) rowOrder = opts.rowOrder;
+        if (opts.colOrder) colOrder = opts.colOrder;
+      }
+      
+      // Update raw DSL for Configuration tab
+      if (config.pivotTableDsl) {
+        configDsl = config.pivotTableDsl;
+      }
+      
+      // Build query string from params
+      const queryString = new URLSearchParams(params as Record<string, string>).toString();
+      const url = queryString 
+        ? `${apiBaseUrl}/reports/${reportCode}/data?${queryString}`
+        : `${apiBaseUrl}/reports/${reportCode}/data`;
+      
+      const res = await fetch(url, { headers });
       if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
-      data = await res.json();
+      const dataResult = await res.json();
+      // Backend returns { reportData: [...] }, extract the array
+      data = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
       materializeInput(data);
       dispatch('dataFetched', { data });
     } catch (err: any) {
@@ -597,13 +653,23 @@
 <!-- ============================================================================ -->
 <!-- Template -->
 <!-- ============================================================================ -->
-<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 {#if loading}
   <div class="rb-loading">Loading...</div>
-{:else if error}
+{/if}
+{#if error}
   <div class="rb-error">{error}</div>
-{:else}
-<div bind:this={container} class="pvtUi-container" on:click={() => openDropdown = false}>
+{/if}
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<div 
+  bind:this={container} 
+  class="pvtUi-container" 
+  style:display={loading || error ? 'none' : 'block'} 
+  on:click={() => openDropdown = false}
+  on:keydown={(e) => { if (e.key === 'Escape') openDropdown = false; }}
+  role="application"
+  aria-label="Pivot Table"
+  tabindex="-1"
+>
   <table class="pvtUi">
     <tbody>
       {#if horizUnused}
@@ -653,11 +719,13 @@
                 </span>
                 
                 {#if openFilterBox === attr}
-                  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
                   <div 
                     class="pvtFilterBox" 
                     style="z-index: {zIndices[attr] || maxZIndex}"
                     on:click|stopPropagation={() => moveToTop(attr)}
+                    on:keydown|stopPropagation={(e) => { if (e.key === 'Escape') openFilterBox = null; }}
+                    role="dialog" tabindex="-1"
+                    aria-label="Filter {attr}"
                   >
                     <button type="button" class="pvtCloseX" on:click|stopPropagation={() => openFilterBox = null}>×</button>
                     <h4>{attr}</h4>
@@ -682,7 +750,7 @@
                             class="pvtCheckItem {isValueFiltered(attr, value) ? '' : 'selected'}"
                             on:click={() => toggleValue(attr, value)}
                           >
-                            <span class="pvtOnly" on:click|stopPropagation={() => selectOnly(attr, value)}>only</span>
+                            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions --><span class="pvtOnly" on:click|stopPropagation={() => selectOnly(attr, value)}>only</span>
                             <span class="pvtOnlySpacer">&nbsp;</span>
                             {value === '' ? '(blank)' : value}
                           </button>
@@ -773,6 +841,50 @@
                   {attr}
                   <button type="button" class="pvtTriangle" on:click|stopPropagation={() => toggleFilterBox(attr)}>▾</button>
                 </span>
+                
+                {#if openFilterBox === attr}
+                  <div 
+                    class="pvtFilterBox" 
+                    style="z-index: {zIndices[attr] || maxZIndex}"
+                    on:click|stopPropagation={() => moveToTop(attr)}
+                    on:keydown|stopPropagation={(e) => { if (e.key === 'Escape') openFilterBox = null; }}
+                    role="dialog" tabindex="-1"
+                    aria-label="Filter {attr}"
+                  >
+                    <button type="button" class="pvtCloseX" on:click|stopPropagation={() => openFilterBox = null}>×</button>
+                    <h4>{attr}</h4>
+                    
+                    {#if Object.keys(attrValues[attr] || {}).length < menuLimit}
+                      <p>
+                        <input 
+                          type="text" 
+                          class="pvtSearch" 
+                          placeholder="Filter values"
+                          bind:value={filterText}
+                        />
+                        <br />
+                        <button type="button" class="pvtButton" on:click={() => selectAllFiltered(attr)}>Select All</button>
+                        <button type="button" class="pvtButton" on:click={() => deselectAllFiltered(attr)}>Deselect All</button>
+                      </p>
+                      
+                      <div class="pvtCheckContainer">
+                        {#each Object.keys(attrValues[attr] || {}).filter(matchesFilter).sort(getSort(sorters, attr)) as value}
+                          <button 
+                            type="button"
+                            class="pvtCheckItem {isValueFiltered(attr, value) ? '' : 'selected'}"
+                            on:click={() => toggleValue(attr, value)}
+                          >
+                            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions --><span class="pvtOnly" on:click|stopPropagation={() => selectOnly(attr, value)}>only</span>
+                            <span class="pvtOnlySpacer">&nbsp;</span>
+                            {value === '' ? '(blank)' : value}
+                          </button>
+                        {/each}
+                      </div>
+                    {:else}
+                      <p>(too many values to show)</p>
+                    {/if}
+                  </div>
+                {/if}
               </li>
             {/each}
           </td>
@@ -791,6 +903,50 @@
                   {attr}
                   <button type="button" class="pvtTriangle" on:click|stopPropagation={() => toggleFilterBox(attr)}>▾</button>
                 </span>
+                
+                {#if openFilterBox === attr}
+                  <div 
+                    class="pvtFilterBox" 
+                    style="z-index: {zIndices[attr] || maxZIndex}"
+                    on:click|stopPropagation={() => moveToTop(attr)}
+                    on:keydown|stopPropagation={(e) => { if (e.key === 'Escape') openFilterBox = null; }}
+                    role="dialog" tabindex="-1"
+                    aria-label="Filter {attr}"
+                  >
+                    <button type="button" class="pvtCloseX" on:click|stopPropagation={() => openFilterBox = null}>×</button>
+                    <h4>{attr}</h4>
+                    
+                    {#if Object.keys(attrValues[attr] || {}).length < menuLimit}
+                      <p>
+                        <input 
+                          type="text" 
+                          class="pvtSearch" 
+                          placeholder="Filter values"
+                          bind:value={filterText}
+                        />
+                        <br />
+                        <button type="button" class="pvtButton" on:click={() => selectAllFiltered(attr)}>Select All</button>
+                        <button type="button" class="pvtButton" on:click={() => deselectAllFiltered(attr)}>Deselect All</button>
+                      </p>
+                      
+                      <div class="pvtCheckContainer">
+                        {#each Object.keys(attrValues[attr] || {}).filter(matchesFilter).sort(getSort(sorters, attr)) as value}
+                          <button 
+                            type="button"
+                            class="pvtCheckItem {isValueFiltered(attr, value) ? '' : 'selected'}"
+                            on:click={() => toggleValue(attr, value)}
+                          >
+                            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions --><span class="pvtOnly" on:click|stopPropagation={() => selectOnly(attr, value)}>only</span>
+                            <span class="pvtOnlySpacer">&nbsp;</span>
+                            {value === '' ? '(blank)' : value}
+                          </button>
+                        {/each}
+                      </div>
+                    {:else}
+                      <p>(too many values to show)</p>
+                    {/if}
+                  </div>
+                {/if}
               </li>
             {/each}
           </td>
@@ -908,7 +1064,6 @@
     </tbody>
   </table>
 </div>
-{/if}
 
 <script context="module" lang="ts">
   // CSS embedded for shadow DOM
@@ -1022,6 +1177,7 @@ button.pvtRowOrder, button.pvtColOrder {
   background: white;
   position: absolute;
   width: 100%;
+  min-width: 200px;
   margin-top: -1px;
   border-radius: 0 0 4px 4px;
   border: 1px solid #a2b1c6;

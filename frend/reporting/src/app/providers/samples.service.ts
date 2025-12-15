@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { SettingsService } from './settings.service';
+import { ApiService } from './api.service';
 import Utilities from '../helpers/utilities';
 
 export interface SampleInfo {
@@ -69,6 +70,7 @@ export class SamplesService {
   constructor(
     protected translateService: TranslateService,
     protected settingsService: SettingsService,
+    protected apiService: ApiService,
   ) { }
 
   countVisibleSamples = -1;

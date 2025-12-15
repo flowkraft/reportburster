@@ -26,6 +26,7 @@ export class ConfirmService {
         : 'No';
 
       this.modalRef.content.confirmAction = options.confirmAction;
+      this.modalRef.content.confirmationText = options.confirmationText || null;
 
       this.modalRef.content.onClose.subscribe((result: boolean) => {
         this.modalService.hide();

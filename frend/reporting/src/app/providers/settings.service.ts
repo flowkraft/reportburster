@@ -481,9 +481,23 @@ export class SettingsService {
     );
   }
 
+  // Cache for loaded DSL details to avoid re-parsing
+  private configDetailsCache: Map<string, {
+    reportParameters?: ReportParameter[];
+    tabulatorOptions?: any;
+    chartOptions?: any;
+    pivotTableOptions?: any;
+  }> = new Map();
+
+  /**
+   * MINIMAL LOADING - Fast startup.
+   * Returns only basic metadata needed for UI menus (no DSL parsing).
+   * DSL options are loaded on-demand via loadConfigurationDetailsAsync().
+   */
   async loadAllSettingsFilesAsync({
     forceReload = false,
-  }: { forceReload?: boolean } = {}): Promise<Array<CfgTmplFileInfo>> {
+    fullLoad = false,  // Set to true for backward-compat scenarios needing all details upfront
+  }: { forceReload?: boolean; fullLoad?: boolean } = {}): Promise<Array<CfgTmplFileInfo>> {
     if (
       !forceReload &&
       this.configurationFiles &&
@@ -491,9 +505,82 @@ export class SettingsService {
     )
       return this.configurationFiles;
 
-    this.configurationFiles = await this.apiService.get('/cfgman/rb/load-all');
+    // Clear cache on force reload
+    if (forceReload) {
+      this.configDetailsCache.clear();
+    }
+
+    // Use minimal endpoint for fast startup, full endpoint only when explicitly needed
+    const endpoint = fullLoad ? '/cfgman/rb/load-all' : '/cfgman/rb/load-all-minimal';
+    this.configurationFiles = await this.apiService.get(endpoint);
 
     return this.configurationFiles;
+  }
+
+  /**
+   * FULL DETAILS LOADING - On-demand for a specific configuration.
+   * Loads and caches DSL options (reportParameters, tabulatorOptions, etc.)
+   * Merges the loaded details into the existing configurationFiles entry.
+   * 
+   * @param configFile The configuration to load details for
+   * @returns The updated configuration with DSL options populated
+   */
+  async loadConfigurationDetailsAsync(configFile: CfgTmplFileInfo): Promise<CfgTmplFileInfo> {
+    // Only reports and samples have DSL files to parse
+    if (configFile.type !== 'config-reports' && configFile.type !== 'config-samples') {
+      return configFile;
+    }
+
+    const cacheKey = configFile.filePath;
+
+    // Check cache first
+    if (this.configDetailsCache.has(cacheKey)) {
+      const cached = this.configDetailsCache.get(cacheKey);
+      configFile.reportParameters = cached.reportParameters || [];
+      configFile.tabulatorOptions = cached.tabulatorOptions;
+      configFile.chartOptions = cached.chartOptions;
+      configFile.pivotTableOptions = cached.pivotTableOptions;
+      return configFile;
+    }
+
+    try {
+      const details = await this.apiService.get('/cfgman/rb/load-config-details', {
+        path: configFile.filePath,
+      });
+
+      if (details) {
+        // Merge loaded details into the config
+        configFile.reportParameters = details.reportParameters || [];
+        configFile.tabulatorOptions = details.tabulatorOptions;
+        configFile.chartOptions = details.chartOptions;
+        configFile.pivotTableOptions = details.pivotTableOptions;
+
+        // Cache the results
+        this.configDetailsCache.set(cacheKey, {
+          reportParameters: configFile.reportParameters,
+          tabulatorOptions: configFile.tabulatorOptions,
+          chartOptions: configFile.chartOptions,
+          pivotTableOptions: configFile.pivotTableOptions,
+        });
+      }
+    } catch (error) {
+      console.error(`Failed to load config details for ${configFile.folderName}:`, error);
+    }
+
+    return configFile;
+  }
+
+  /**
+   * Invalidate cached details for a specific configuration.
+   * Call this when DSL files are saved/modified to ensure fresh data on next load.
+   */
+  invalidateConfigDetailsCache(filePath?: string): void {
+    if (filePath) {
+      this.configDetailsCache.delete(filePath);
+    } else {
+      // Clear entire cache
+      this.configDetailsCache.clear();
+    }
   }
 
   refreshConnectionsUsedByInformation(

@@ -33,7 +33,6 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { LiveChatComponent } from '../components/live-chat/live-chat.component';
 import { SafePipe } from './safe.pipe';
-import { ReportParametersFormComponent } from '../components/report-parameters-form/report-parameters-form.component';
 import { AppRoutingModule } from '../app-routing.module';
 import { RouterModule } from '@angular/router';
 import { ButtonVariablesComponent } from '../components/button-variables/button-variables.component';
@@ -63,7 +62,6 @@ import { DockerComponent } from '../components/docker/docker.component';
     ConfirmDialogComponent,
     InfoDialogComponent,
     AskForFeatureDialogComponent,
-    ReportParametersFormComponent,
     ButtonVariablesComponent,
     AppsManagerComponent,
     AiManagerComponent,
@@ -89,7 +87,6 @@ import { DockerComponent } from '../components/docker/docker.component';
     LogFilesViewerAllTogetherModule,
     LogFilesViewerSeparateTabsModule,
     ButtonClearLogsModule,
-    ReportParametersFormComponent,
     ButtonVariablesComponent,
     ButtonWellKnownEmailProvidersComponent,
     AppsManagerComponent,

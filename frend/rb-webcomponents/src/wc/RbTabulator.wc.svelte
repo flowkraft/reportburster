@@ -37,6 +37,9 @@
   // ============================================================================
   let loading = false;
   let error: string | null = null;
+  
+  // Raw DSL source code (exposed for Configuration tab)
+  export let configDsl: string = '';
 
   let container: HTMLDivElement;
   let table: Tabulator;
@@ -130,6 +133,22 @@
   onMount(async () => {
     patchResizeObserver();
     await tick(); // ensure <div> is in the DOM
+    
+    // Read attributes directly from host element (Svelte props may not be populated yet)
+    // Navigate from container up through shadow DOM to host element
+    const shadowRoot = container?.getRootNode();
+    const hostEl = (shadowRoot as ShadowRoot)?.host;
+    if (hostEl) {
+      if (!reportCode) reportCode = hostEl.getAttribute('report-code') || '';
+      if (!apiBaseUrl) apiBaseUrl = hostEl.getAttribute('api-base-url') || '';
+      if (!apiKey) apiKey = hostEl.getAttribute('api-key') || '';
+    }
+    
+    // DEBUG: Log prop values after reading from attributes
+    console.log('[rb-tabulator] onMount - props after reading attributes:');
+    console.log('[rb-tabulator] reportCode =', JSON.stringify(reportCode));
+    console.log('[rb-tabulator] apiBaseUrl =', JSON.stringify(apiBaseUrl));
+    console.log('[rb-tabulator] apiKey =', JSON.stringify(apiKey));
 
     if (!container) {
       dispatch('initError', { message: 'Missing container element' });
@@ -143,28 +162,57 @@
       loading = true;
       error = null;
       
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const headers: Record<string, string> = {};
       if (apiKey) headers['X-API-Key'] = apiKey;
+      
+      // DEBUG: Log what we're about to call
+      console.log('[rb-tabulator] Self-fetch mode activated');
+      console.log('[rb-tabulator] reportCode:', reportCode);
+      console.log('[rb-tabulator] apiBaseUrl:', apiBaseUrl);
+      console.log('[rb-tabulator] apiKey:', apiKey ? '(set)' : '(not set)');
       
       try {
         // Fetch config
-        const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
-        if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
+        const configUrl = `${apiBaseUrl}/reports/${reportCode}/config`;
+        console.log('[rb-tabulator] Fetching config from:', configUrl);
+        const configRes = await fetch(configUrl, { headers });
+        console.log('[rb-tabulator] Config response status:', configRes.status);
+        if (!configRes.ok) {
+          const errorText = await configRes.text();
+          console.error('[rb-tabulator] Config error response:', errorText);
+          throw new Error(`Config fetch failed: ${configRes.status}`);
+        }
         const config = await configRes.json();
+        console.log('[rb-tabulator] Config received:', config);
         
         // Apply tabulator options from config
         if (config.tabulatorOptions) {
           options = config.tabulatorOptions;
         }
         
-        // Fetch data (empty params for initial load)
-        const dataRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({})
-        });
-        if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
-        data = await dataRes.json();
+        // Store raw DSL for Configuration tab display
+        if (config.tabulatorDsl) {
+          configDsl = config.tabulatorDsl;
+        }
+        
+        // Fetch data (GET with empty query params for initial load)
+        const dataUrl = `${apiBaseUrl}/reports/${reportCode}/data`;
+        console.log('[rb-tabulator] Fetching data from:', dataUrl);
+        const dataRes = await fetch(dataUrl, { headers });
+        console.log('[rb-tabulator] Data response status:', dataRes.status);
+        if (!dataRes.ok) {
+          const errorText = await dataRes.text();
+          console.error('[rb-tabulator] Data error response:', errorText);
+          throw new Error(`Data fetch failed: ${dataRes.status}`);
+        }
+        const dataResult = await dataRes.json();
+        // Backend returns { reportData: [...] }, extract the array
+        data = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
+        console.log('[rb-tabulator] Data received, rows:', data.length);
+        
+        // Dispatch events for config and data loaded
+        dispatch('configLoaded', { configDsl, config });
+        dispatch('dataFetched', { data });
         
       } catch (err: any) {
         error = err.message || 'Failed to load report';
@@ -174,9 +222,15 @@
         return;
       }
       loading = false;
+      // Wait for Svelte to re-render after state changes
+      await tick();
     }
 
     // inject Tabulator CSS into shadow root
+    if (!container) {
+      console.error('[rb-tabulator] Container not available for CSS injection');
+      return;
+    }
     const root = container.getRootNode();
     if (root instanceof ShadowRoot) {
       const link = document.createElement('link');
@@ -269,17 +323,48 @@
     }
     
     loading = true;
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const headers: Record<string, string> = {};
     if (apiKey) headers['X-API-Key'] = apiKey;
     
     try {
-      const res = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(params)
-      });
+      // Re-fetch config to get any DSL changes
+      const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
+      if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
+      const config = await configRes.json();
+      
+      // Update tabulator options from fresh config
+      if (config.tabulatorOptions) {
+        options = config.tabulatorOptions;
+        // Update resolved columns from new config
+        resolvedColumns = (columns && columns.length) ? columns : 
+          ((Array.isArray(options?.columns) && options.columns.length) ? options.columns : undefined);
+      }
+      
+      // Update raw DSL for Configuration tab
+      if (config.tabulatorDsl) {
+        configDsl = config.tabulatorDsl;
+      }
+      
+      // Build query string from params
+      const queryString = new URLSearchParams(params as Record<string, string>).toString();
+      const url = queryString 
+        ? `${apiBaseUrl}/reports/${reportCode}/data?${queryString}`
+        : `${apiBaseUrl}/reports/${reportCode}/data`;
+      
+      const res = await fetch(url, { headers });
       if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
-      data = await res.json();
+      const dataResult = await res.json();
+      // Backend returns { reportData: [...] }, extract the array
+      data = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
+      
+      // Update the table with new columns and data
+      if (isReady && table) {
+        if (resolvedColumns && resolvedColumns.length) {
+          table.setColumns(resolvedColumns);
+        }
+        table.replaceData(data);
+      }
+      
       dispatch('dataFetched', { data });
     } catch (err: any) {
       error = err.message || 'Failed to fetch data';
@@ -291,11 +376,11 @@
 
 {#if loading}
   <div class="rb-loading">Loading...</div>
-{:else if error}
-  <div class="rb-error">{error}</div>
-{:else}
-  <div bind:this={container}></div>
 {/if}
+{#if error}
+  <div class="rb-error">{error}</div>
+{/if}
+<div bind:this={container} style:display={loading || error ? 'none' : 'block'}></div>
 
 <style>
   .rb-loading {

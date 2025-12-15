@@ -168,13 +168,6 @@ get_header();
 ?>
 
 <div class="max-w-4xl mx-auto py-8">
-  <div class="flex justify-between items-center mb-6">
-    <div class="text-sm text-gray-700">
-      Logged in as <strong><?php echo esc_html( $current_user->display_name ); ?></strong>
-    </div>
-    <a class="text-red-600 hover:underline text-sm" href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>">Logout</a>
-  </div>
-
   <h1 class="text-2xl font-bold mb-2">My Invoices</h1>
   <p class="text-sm text-gray-600 mb-4">
     Invoices you are authorized to view.
