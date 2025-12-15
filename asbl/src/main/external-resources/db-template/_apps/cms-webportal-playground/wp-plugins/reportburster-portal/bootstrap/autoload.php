@@ -27,24 +27,24 @@ require_once __DIR__ . '/../vendor/autoload.php';
 |
 */
 
-final class ReportBurster_Integration
+final class ReportBurster_Portal
 {
-    public const TEXTDOMAIN = 'reportburster-integration';
+    public const TEXTDOMAIN = 'reportburster-portal';
     public static $plugin;
     public static $start;
 }
 
-ReportBurster_Integration::$plugin = require_once __DIR__ . '/plugin.php';
-ReportBurster_Integration::$start = microtime(true);
+ReportBurster_Portal::$plugin = require_once __DIR__ . '/plugin.php';
+ReportBurster_Portal::$start = microtime(true);
 
 // Commodity function to get the plugin instance
-if (!function_exists('ReportBurster_Integration')) {
+if (!function_exists('ReportBurster_Portal')) {
     /**
      * Return the instance of plugin.
      *
      */
-    function ReportBurster_Integration()
+    function ReportBurster_Portal()
     {
-        return ReportBurster_Integration::$plugin;
+        return ReportBurster_Portal::$plugin;
     }
 }
