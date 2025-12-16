@@ -38,13 +38,8 @@
     </li>
 </content>
 
-<div class="svg" role="presentation">
-    <div class="bg-dark-subtle text-center">
-        <asset:image src="favicon.svg" class="w-50"/>
-    </div>
-</div>
-
 <div id="content" role="main">
+    <div class="container-fluid">
     <div class="container">
         <div class="hero-section">
             <h1 class="hero-tagline">FlowKraft Admin Panel</h1>
@@ -58,6 +53,11 @@
         <div class="container">
             <h5 class="text-center text-muted mb-3">Admin Tools</h5>
             <div class="component-grid">
+                <g:link uri="/documents" class="component-card text-decoration-none">
+                    <i class="bi bi-file-earmark-text icon"></i>
+                    <h6>Documents</h6>
+                    <p>Paystubs and other documents</p>
+                </g:link>
                 <g:link uri="/users" class="component-card text-decoration-none">
                     <i class="bi bi-people icon"></i>
                     <h6>Users</h6>
@@ -69,7 +69,7 @@
                     <p>Permission and policy control</p>
                 </g:link>
                 <g:link uri="/workflows" class="component-card text-decoration-none">
-                    <i class="bi bi-flow-chart icon"></i>
+                    <i class="bi bi-diagram-3 icon"></i>
                     <h6>Workflows</h6>
                     <p>Approval rules and automations</p>
                 </g:link>
