@@ -16,6 +16,7 @@ export interface ManagedApp {
   service_name?: string;
   command?: string;
   url?: string;
+  website?: string;
   state?: 'running' | 'stopped' | 'unknown' | 'starting' | 'stopping' | 'error';
   index?: number;
   value?: string;
@@ -88,7 +89,7 @@ export class AppsManagerService {
         service_name: 'cms-webportal-playground',
         startCmd: 'service app start cms-webportal-playground 8080',
         stopCmd: 'service app stop cms-webportal-playground',
-        tags: ['cms', 'webportal', 'admin-panel', 'customer-portal', 'cms', 'wordpress', 'ReportBurster\'s App'],
+        tags: ['cms', 'webportal', 'backend', 'frontend', 'admin-panel', 'customer-portal', 'cms', 'wordpress', 'ReportBurster\'s App'],
         visible: true,
       },
       {
@@ -103,7 +104,7 @@ export class AppsManagerService {
         service_name: 'frend-grails-playground',
         startCmd: 'service app start frend-grails-playground 8481',
         stopCmd: 'service app stop frend-grails-playground',
-        tags: ['flowkraft', 'dashboards', 'customer-portal', 'ReportBurster\'s App'],
+        tags: ['flowkraft', 'frontend', 'dashboards', 'customer-portal', 'ReportBurster\'s App'],
         visible: true,
       },
       {
@@ -118,7 +119,7 @@ export class AppsManagerService {
         service_name: 'admin-grails-playground',
         startCmd: 'service app start admin-grails-playground 8482',
         stopCmd: 'service app stop admin-grails-playground',
-        tags: ['flowkraft', 'admin-panel', 'cms', 'ReportBurster\'s App'],
+        tags: ['flowkraft', 'admin-panel', 'backend', 'cms', 'ReportBurster\'s App'],
         visible: true,
       },
       {
@@ -151,6 +152,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop rundeck',
         tags: ['automation', 'job-scheduling'],
         visible: true,
+        website: 'https://www.rundeck.com/',
       },
       {
         id: 'cloudbeaver',
@@ -166,6 +168,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop cloudbeaver',
         tags: ['database-management'],
         visible: true,
+        website: 'https://cloudbeaver.io/',
       },
       {
         id: 'matomo',
@@ -181,6 +184,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop matomo',
         tags: ['analytics', 'web-analytics'],
         visible: true,
+        website: 'https://matomo.org/',
       },
       {
         id: 'docuseal',
@@ -196,6 +200,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop docuseal',
         tags: ['document-signing', 'security'],
         visible: true,
+        website: 'https://docuseal.com/',
       },
       {
         id: 'metabase',
@@ -211,6 +216,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop metabase',
         tags: ['bi', 'analytics', 'visualization'],
         visible: true,
+        website: 'https://www.metabase.com/',
       },
       {
         id: 'clickhouse',
@@ -226,8 +232,8 @@ export class AppsManagerService {
         stopCmd: 'service app stop clickhouse',
         tags: ['database', 'olap', 'analytics'],
         visible: true,
-        state: 'stopped' as ManagedApp['state'],
         launch: false, // No UI - API/database server only
+        website: 'https://clickhouse.com/',
       },
       {
         id: 'vanna-ai',
