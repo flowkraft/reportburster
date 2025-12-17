@@ -110,13 +110,13 @@ RUN apk --no-cache add \
 WORKDIR /app
 
 # Copy template folder structure (rarely changes)
-COPY ./asbl/src/main/external-resources/db-template/ ./
-COPY ./asbl/src/main/external-resources/db-server-template/ ./
-COPY ./bkend/reporting/src/main/external-resources/template/ ./
+COPY ./asbl/src/main/external-resources/db-template .
+COPY ./asbl/src/main/external-resources/db-server-template .
+COPY ./bkend/reporting/src/main/external-resources/template .
 
 # NoExeAssembler generated files (config, db)
-COPY ./asbl/target/package/verified-db-noexe/ReportBurster/config/ ./config/
-COPY ./asbl/target/package/verified-db-noexe/ReportBurster/db/ ./db/
+COPY ./asbl/target/package/verified-db-noexe/ReportBurster/config ./config
+COPY ./asbl/target/package/verified-db-noexe/ReportBurster/db ./db
 
 # Preserve a copy of defaults in a safe location so runtime can extract them
 RUN mkdir -p /opt/reportburster/defaults && cp -a ./config /opt/reportburster/defaults/ || true
