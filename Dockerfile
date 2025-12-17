@@ -75,12 +75,15 @@ WORKDIR /app/frend
 
 # Copy package files first (for npm cache)
 COPY ./frend/reporting/package*.json ./
+# Also copy rb-webcomponents package files so we can install its deps (cacheable)
+COPY ./frend/rb-webcomponents/package*.json ../rb-webcomponents/
 
 # Install dependencies (cached unless package.json changes)
-RUN npm install -g @angular/cli && npm install --force
+RUN npm install -g @angular/cli && npm install --force && npm --prefix ../rb-webcomponents install --force
 
 # Copy source code and build
 COPY ./frend/reporting .
+COPY ./frend/rb-webcomponents ../rb-webcomponents
 
 # Build Angular for web deployment
 RUN npm run custom:release-web && npm prune --production --force
@@ -92,12 +95,13 @@ FROM eclipse-temurin:17-jre-alpine
 
 # Metadata
 LABEL maintainer="FlowKraft" \
-      version="10.2.0" \
-      description="ReportBurster Server - Document Processing & Distribution"
+      version="12.2.0" \
+      description="ReportBurster Server - Business Intelligence, Reporting, and Document Distribution in the Age of AI"
 
 # Install runtime dependencies
 RUN apk --no-cache add \
     curl \
+    rclone \
     docker-cli \
     docker-cli-compose \
     bash
@@ -110,18 +114,22 @@ COPY ./asbl/src/main/external-resources/db-template/ ./
 COPY ./asbl/src/main/external-resources/db-server-template/ ./
 COPY ./bkend/reporting/src/main/external-resources/template/ ./
 
+# NoExeAssembler generated files (config, db)
+COPY ./asbl/target/package/verified-db-noexe/ReportBurster/config/ ./config/
+COPY ./asbl/target/package/verified-db-noexe/ReportBurster/db/ ./db/
+
+# Preserve a copy of defaults in a safe location so runtime can extract them
+RUN mkdir -p /opt/reportburster/defaults && cp -a ./config /opt/reportburster/defaults/ || true
+
 # Configure default settings for Docker environment
-RUN cp /app/config/burst/settings.xml /app/config/_defaults/settings.xml && \
-    cp /app/config/burst/settings.xml /app/config/samples/split-only/settings.xml && \
-    cp /app/config/burst/settings.xml /app/config/samples/split-two-times/settings.xml && \
-    sed -i 's|<reportdistribution>true</reportdistribution>|<reportdistribution>false</reportdistribution>|g' /app/config/samples/split-two-times/settings.xml && \
-    sed -i 's|<split2ndtime>false</split2ndtime>|<split2ndtime>true</split2ndtime>|g' /app/config/samples/split-two-times/settings.xml && \
-    sed -i 's|<host>localhost</host>|<host>mailhog</host>|g' /app/config/burst/settings.xml && \
+RUN sed -i 's|<host>localhost</host>|<host>mailhog</host>|g' /app/config/burst/settings.xml && \
     sed -i 's|<weburl>http://localhost:8025</weburl>|<weburl>http://mailhog:8025</weburl>|g' /app/config/burst/settings.xml && \
-    cp /app/config/_internal/license.xml /app/config/_defaults/license.xml
+    sed -i 's|<runtime>windows</runtime>|<runtime>docker</runtime>|g' /app/config/_internal/settings.xml || true
 
 # Copy built artifacts from build stages
 COPY --from=frontend-build /app/frend/dist /app/lib/frend
+# Copy rb-webcomponents assets built during frontend build into tools for runtime serving
+COPY --from=frontend-build /app/rb-webcomponents/dist /app/tools/rb-webcomponents
 COPY --from=backend-build /app/bkend/reporting/target/dependencies /app/lib/burst
 COPY --from=backend-build /app/bkend/reporting/target/rb-reporting.jar /app/lib/burst/rb-reporting.jar
 COPY --from=backend-build /app/bkend/server/target/rb-server.jar /app/lib/server/rb-server.jar
@@ -148,25 +156,27 @@ eval java -DDOCUMENTBURSTER_HOME="$(pwd)" \
     $ARGS \
     -emacs >> logs/reportburster.sh.log 2>&1
 EOF
-RUN chmod +x ./reportburster.sh
+RUN sed -i 's/\r$//' ./reportburster.sh && chmod +x ./reportburster.sh
 
 # Generate test email server scripts
 RUN echo '#!/bin/sh' > ./tools/test-email-server/startTestEmailServer.sh && \
     echo 'docker start mailhog' >> ./tools/test-email-server/startTestEmailServer.sh && \
+    sed -i 's/\r$//' ./tools/test-email-server/startTestEmailServer.sh && \
     chmod +x ./tools/test-email-server/startTestEmailServer.sh
 
 RUN echo '#!/bin/sh' > ./tools/test-email-server/shutTestEmailServer.sh && \
     echo 'docker stop mailhog' >> ./tools/test-email-server/shutTestEmailServer.sh && \
+    sed -i 's/\r$//' ./tools/test-email-server/shutTestEmailServer.sh && \
     chmod +x ./tools/test-email-server/shutTestEmailServer.sh
 
-# Create the docker-entrypoint.sh script
+# Create the docker-entrypoint.sh script and normalize line endings
 RUN cat > /usr/local/bin/docker-entrypoint.sh << 'ENTRYPOINT_EOF'
 #!/bin/bash
 set -e
 
 # =============================================================================
 # ReportBurster Docker Entrypoint
-# Handles API key generation and server startup
+# Handles first-run extraction, API key generation and server startup
 # =============================================================================
 
 PORTABLE_EXECUTABLE_DIR_PATH=/app
@@ -222,6 +232,9 @@ if [ "$1" = "reportburster.sh" ]; then
 else
     # Server mode: start the Spring Boot server
     echo "Starting ReportBurster Server..."
+
+    # No automatic initial-folder extraction is performed here; ensure host mounts
+    # are populated externally when needed
     
     # Setup API key authentication
     setup_api_key
@@ -241,6 +254,8 @@ else
     
     # Start the Spring Boot server
     exec java \
+        -Dorg.springframework.boot.logging.LoggingSystem=org.springframework.boot.logging.log4j2.Log4J2LoggingSystem \
+        -Dlog4j.configurationFile=/app/log4j2.xml \
         -Dserver.port=$SERVER_PORT \
         -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH \
         -DUID=$SERVER_PORT \
@@ -253,8 +268,8 @@ else
 fi
 ENTRYPOINT_EOF
 
-# Make entrypoint executable
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Normalize line endings and make the entrypoint executable
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh && chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Create required directories
 RUN mkdir -p /app/temp /app/logs /app/poll /app/output /app/quarantine /app/backup
@@ -263,8 +278,8 @@ RUN mkdir -p /app/temp /app/logs /app/poll /app/output /app/quarantine /app/back
 EXPOSE 9090
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:9090/api/jobman/system/version || exit 1
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+#     CMD curl -f http://localhost:9090/api/jobman/system/version || exit 1
 
 # Set entrypoint
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

@@ -54,6 +54,14 @@ public class AssemblerTest {
 		System.out.println(
 				"------------------------------------- FINISHED Assembler:ReportBursterServerSpringBootAssembler ... -------------------------------------");
 
+		// Build a Docker image from the project root (requires docker daemon available)
+		AbstractAssembler dockerAssembler = new DockerAssembler();
+		dockerAssembler.assemble();
+		dockerAssembler.verify();
+		System.out.println(
+				"------------------------------------- FINISHED Assembler:DockerAssembler ... -------------------------------------");
+
+		
 		AbstractAssembler rbSourceAssembler = new ReportBursterSourceAssembler();
 		
 		rbSourceAssembler.assemble();

@@ -45,6 +45,8 @@ asbl/**/Thumbs.db
 asbl/**/bones
 asbl/**/.bones_renamed
 
+asbl/docker
+
 #################
 ## CMS Webportal Playground - selective inclusion
 #################
@@ -52,10 +54,18 @@ asbl/**/.bones_renamed
 asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/*
 
 # Unignore specific files
+asbl/docker/_clean.sh
+asbl/docker/docker-compose.yml
+asbl/docker/README.md
+asbl/docker/reportburster.sh
+asbl/docker/shutServer.sh
+asbl/docker/startServer.sh
+
 !asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/.env
 !asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/docker-compose.yml
 !asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/Dockerfile.deps
 !asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/README.md
+
 
 # Unignore the wp-plugins directory itself
 !asbl/src/main/external-resources/db-template/_apps/cms-webportal-playground/wp-plugins/

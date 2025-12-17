@@ -7,6 +7,8 @@
 		<backendurl>http://localhost:9090/api</backendurl>
 		<copiloturl>https://chatgpt.com/</copiloturl>
 
+		<runtime>windows</runtime>
+		
 	</settings>
 
 </documentburster>

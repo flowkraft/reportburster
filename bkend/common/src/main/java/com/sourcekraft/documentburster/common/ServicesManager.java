@@ -77,10 +77,10 @@ public class ServicesManager {
 	 * info, query, help).
 	 */
 	public static Result execute(String commandLine) throws Exception {
-		String[] tokens = commandLine.trim().split("\\s+");
+        String[] tokens = commandLine.trim().split("\\s+");
 
-		// Family: database
-		if (tokens[0].equalsIgnoreCase(DB_FAMILY)) {
+        // Family: database
+        if (tokens[0].equalsIgnoreCase(DB_FAMILY)) {
 			String subCmd = tokens[1].toLowerCase();
 
 			String packName = tokens[2].toLowerCase();

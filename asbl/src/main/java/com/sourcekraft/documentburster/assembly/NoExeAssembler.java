@@ -956,6 +956,150 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// SAMPLES END
 
+		// FREND SAMPLES START
+		// par-employee-hire-dates
+
+		String parEmployeeHireDatesDir = packageDirPath + "/" + topFolderName + "/config/samples/_frend/par-employee-hire-dates";
+		String parEmployeeHireDatesSettingsFilePath = parEmployeeHireDatesDir + "/settings.xml";
+		String parEmployeeHireDatesReportingFilePath = parEmployeeHireDatesDir + "/reporting.xml";
+
+		// copy base settings and tweak for this sample
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(parEmployeeHireDatesSettingsFilePath));
+		content = FileUtils.readFileToString(new File(parEmployeeHireDatesSettingsFilePath), "UTF-8");
+
+		// friendly template name
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+				"<template>EmployeeHireDates</template>");
+
+		content = content.replaceAll(
+				"(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replaceAll(
+				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+
+		FileUtils.writeStringToFile(new File(parEmployeeHireDatesSettingsFilePath), content, "UTF-8");
+		
+				// prepare reporting.xml (defaults -> override to use script datasource + HTML
+		// output + template)
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(parEmployeeHireDatesReportingFilePath));
+
+		content = FileUtils.readFileToString(new File(parEmployeeHireDatesReportingFilePath), "UTF-8");
+
+
+		// datasource -> ds.scriptfile
+		content = content.replaceAll("(?si)<type\\s*>\\s*ds\\.csvfile\\s*</type>", "<type>ds.scriptfile</type>");
+
+		// set connection to sample northwind sqlite DB
+		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
+				"<conncode>rbt-sample-northwind-sqlite-4f2</conncode>");
+
+		// set script name used by the ScriptedReporter
+		content = content.replaceAll("(?s)<scriptname\\s*/>|<scriptname>\\s*</scriptname>",
+				"<scriptname>par-employee-hire-dates-script.groovy</scriptname>");
+
+		content = content.replaceAll("(?s)<scriptnameparamsspec\\s*/>|<scriptnameparamsspec>\\s*</scriptnameparamsspec>",
+				"<scriptnameparamsspec>par-employee-hire-dates-report-parameters-spec.groovy</scriptnameparamsspec>");
+
+		FileUtils.writeStringToFile(new File(parEmployeeHireDatesReportingFilePath), content, "UTF-8");
+
+		//piv-sales-region-prod-qtr		
+		String pivSalesRegionProdSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/piv-sales-region-prod-qtr\t";
+		String pivSalesRegionProdSettingsFilePath = pivSalesRegionProdSampleDir + "/settings.xml";
+		String pivSalesRegionProdReportingFilePath = pivSalesRegionProdSampleDir + "/reporting.xml";
+
+		// copy base settings and tweak for this sample
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(pivSalesRegionProdSettingsFilePath));
+		content = FileUtils.readFileToString(new File(pivSalesRegionProdSettingsFilePath), "UTF-8");
+
+		// friendly template name
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+				"<template>SalesRegionProdQtr</template>");
+
+		content = content.replaceAll(
+				"(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replaceAll(
+				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+
+		FileUtils.writeStringToFile(new File(pivSalesRegionProdSettingsFilePath), content, "UTF-8");
+		
+		// prepare reporting.xml (defaults -> override to use script datasource + HTML
+		// output + template)
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(pivSalesRegionProdReportingFilePath));
+
+		content = FileUtils.readFileToString(new File(pivSalesRegionProdReportingFilePath), "UTF-8");	
+
+		// datasource -> ds.scriptfile
+		content = content.replaceAll("(?si)<type\\s*>\\s*ds\\.csvfile\\s*</type>", "<type>ds.scriptfile</type>");
+
+		// set connection to sample northwind sqlite DB
+		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
+				"<conncode>rbt-sample-northwind-sqlite-4f2</conncode>");
+
+		// set script name used by the ScriptedReporter
+		content = content.replaceAll("(?s)<scriptname\\s*/>|<scriptname>\\s*</scriptname>",
+				"<scriptname>piv-sales-region-prod-qtr-script.groovy</scriptname>");
+
+		FileUtils.writeStringToFile(new File(pivSalesRegionProdReportingFilePath), content, "UTF-8");
+		
+		//rep-employee-payslip
+		
+		String repEmployeePayslipSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/rep-employee-payslip";
+		String repEmployeePayslipSettingsFilePath = repEmployeePayslipSampleDir + "/settings.xml";
+		String repEmployeePayslipReportingFilePath = repEmployeePayslipSampleDir + "/reporting.xml";
+
+		// copy base settings and tweak for this sample
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(repEmployeePayslipSettingsFilePath));
+		content = FileUtils.readFileToString(new File(repEmployeePayslipSettingsFilePath), "UTF-8");
+
+		// friendly template name
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+				"<template>EmployeePayslip</template>");
+
+		content = content.replaceAll(
+				"(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replaceAll(
+				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+
+		FileUtils.writeStringToFile(new File(repEmployeePayslipSettingsFilePath), content, "UTF-8");
+		
+		// prepare reporting.xml (defaults -> override to use script datasource + HTML
+		// output + template)
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(repEmployeePayslipReportingFilePath));
+
+		content = FileUtils.readFileToString(new File(repEmployeePayslipReportingFilePath), "UTF-8");	
+
+		// datasource -> ds.scriptfile
+		content = content.replaceAll("(?si)<type\\s*>\\s*ds\\.csvfile\\s*</type>", "<type>ds.scriptfile</type>");
+
+		// set connection to sample northwind sqlite DB
+		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
+				"<conncode>rbt-sample-northwind-sqlite-4f2</conncode>");
+
+		// set script name used by the ScriptedReporter
+		content = content.replaceAll("(?s)<scriptname\\s*/>|<scriptname>\\s*</scriptname>",
+				"<scriptname>rep-employee-payslip-script.groovy</scriptname>");
+
+		content = content.replace("output.none", "output.html");
+
+		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
+				"<documentpath>rep-employee-payslip-template.html</documentpath>");
+				
+		FileUtils.writeStringToFile(new File(repEmployeePayslipReportingFilePath), content, "UTF-8");
+		
+		
+		// FREND SAMPLES END
+
 		// WebPortal samples - copy paystub templates to plugin views folder
 		String webportalSamplesPath = Utils.getTopProjectFolderPath()
 				+ "/bkend/reporting/src/main/external-resources/template/samples/webportal";
