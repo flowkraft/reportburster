@@ -83,10 +83,22 @@ public class SecurityConfig {
             .addFilterBefore(new ApiKeyAuthenticationFilter(apiKeyManager), BasicAuthenticationFilter.class)
 
             // === AUTHORIZATION RULES ===
-            // Allow unauthenticated access to web components (static resources for external embedding)
-            // All other requests require authentication
+            // Allow unauthenticated access to all static assets + web components (static resources for external embedding)
+            // Remaining (API) requests require authentication
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/rb-webcomponents/**").permitAll()
+                .requestMatchers("/", "/index.html", "/favicon.ico", "/assets/**", "/lib/frend/**").permitAll()
+                // Permit direct requests for common static file extensions (safe replacement for /**/*.css / **/*.js which are invalid patterns)
+                .requestMatchers(request -> {
+                    String uri = request.getRequestURI();
+                    return uri != null && (
+                        uri.endsWith(".css") || uri.endsWith(".js") || uri.endsWith(".map") ||
+                        uri.endsWith(".png") || uri.endsWith(".svg") ||
+                        uri.endsWith(".woff") || uri.endsWith(".woff2") ||
+                        uri.endsWith(".eot") || uri.endsWith(".ttf") || uri.endsWith(".ico") ||
+                        uri.startsWith("/.well-known/")
+                    );
+                }).permitAll()
                 .anyRequest().authenticated()
             );
         

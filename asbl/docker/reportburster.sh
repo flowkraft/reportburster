@@ -1,38 +1,18 @@
 #!/bin/bash
+set -euo pipefail
 
-# Define the image name
-image="flowkraft/reportburster-server:10.1.1"
+# Minimal CLI forwarder
+# Usage: ./reportburster.sh <args...>
+# For example: ./reportburster.sh -c config/my-config.xml --testlist entry1
 
-# Define the directories to copy
-directories=("backup", "config" "input-files" "logs" "output" "quarantine" "poll" "samples" "scripts")
+COMPOSE_FILE="docker-compose.yml"
+SERVICE_NAME="reportburster-server"
 
-# Check if the config directory exists and is not empty
-if [ ! -d "config" ] || [ -z "$(ls -A config)" ]; then
-  # If the config directory does not exist or is empty, create a temporary container
-  container=$(docker create $image)
-  
-  # Loop over the directories
-  for dir in "${directories[@]}"; do
-    # Copy the files from the container to the host
-    docker cp $container:/app/$dir $dir
-  done
-  
-  # Remove the temporary container
-  docker rm $container
+if [ "$#" -eq 0 ]; then
+  echo "Usage: $0 <reportburster CLI args...>"
+  echo "This script forwards the arguments to the 'reportburster' CLI inside the service container."
+  exit 2
 fi
 
-# Store the script arguments
-args="$@"
-
-# Run the Docker command with the arguments
-docker run -it --rm \
-  -v $(pwd)/backup:/app/backup \
-  -v $(pwd)/config:/app/config \
-  -v $(pwd)/input-files:/app/input-files \
-  -v $(pwd)/logs:/app/logs \
-  -v $(pwd)/output:/app/output \
-  -v $(pwd)/quarantine:/app/quarantine \
-  -v $(pwd)/poll:/app/poll \
-  -v $(pwd)/samples:/app/samples \
-  -v $(pwd)/scripts:/app/scripts \
-  $image reportburster.sh $args
+# Forward args to the service's reportburster.sh CLI using docker compose
+exec docker compose -f "$COMPOSE_FILE" run --rm "$SERVICE_NAME" reportburster.sh "$@"

@@ -18,8 +18,11 @@ import com.sourcekraft.documentburster.utils.DumpToString;
 
 public class InternalSettings extends DumpToString {
 
-	public String skin;
-	public String backendurl;
+    public String skin;
+    public String backendurl;
     public String copiloturl;
+
+    // runtime: windows | linux | docker
+    public String runtime;
 
 }

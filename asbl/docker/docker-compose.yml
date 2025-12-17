@@ -9,8 +9,8 @@
 #   Shell:  docker-compose exec reportburster-server bash
 #
 # FIRST RUN:
-#   The startServer.sh script will extract default config files from the image
-#   before starting the services.
+#   The container entrypoint will extract default config files from the image
+#   into host bind-mounts (if directories are missing or empty) before starting the services.
 #
 # API KEY:
 #   - Auto-generated on first start, persisted in ./config/_internal/api-key.txt
@@ -20,7 +20,7 @@
 
 services:
   reportburster-server:
-    image: flowkraft/reportburster-server:10.2.0
+    image: flowkraft/reportburster-server:12.2.0
     container_name: reportburster-server
     ports:
       - "${SERVER_PORT:-9090}:9090"
@@ -36,26 +36,27 @@ services:
       # Docker-in-Docker: Required for StarterPacks and Docker Apps
       - /var/run/docker.sock:/var/run/docker.sock
       # Data volumes (persisted on host)
+      - ./_apps:/app/_apps
       - ./backup:/app/backup
       - ./config:/app/config
+      - ./db:/app/db
       - ./input-files:/app/input-files
       - ./logs:/app/logs
       - ./output:/app/output
-      - ./quarantine:/app/quarantine
       - ./poll:/app/poll
+      - ./quarantine:/app/quarantine
       - ./samples:/app/samples
       - ./scripts:/app/scripts
-      - ./_apps:/app/_apps
-      - ./db:/app/db
-    networks:
-      - reportburster_network
+      - ./temp:/app/temp
+      - ./templates:/app/templates
+      - ./tools:/app/tools
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9090/api/jobman/system/version"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+    #healthcheck:
+    #  test: ["CMD", "curl", "-f", "http://localhost:9090/api/jobman/system/version"]
+    #  interval: 30s
+    #  timeout: 10s
+    #  retries: 3
+    #  start_period: 60s
 
   mailhog:
     image: mailhog/mailhog
@@ -63,10 +64,4 @@ services:
     ports:
       - "1025:1025"   # SMTP
       - "8025:8025"   # Web UI
-    networks:
-      - reportburster_network
     restart: unless-stopped
-
-networks:
-  reportburster_network:
-    name: reportburster_network
