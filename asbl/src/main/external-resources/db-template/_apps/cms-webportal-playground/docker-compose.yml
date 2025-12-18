@@ -343,7 +343,7 @@
         
         echo "✅ Theme build complete!";
       '
-    restart: on-failure
+    restart: "no"
 
 volumes:
   wp_html:

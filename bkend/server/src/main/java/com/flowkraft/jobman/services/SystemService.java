@@ -32,8 +32,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.Tailer;
 import org.apache.commons.io.input.TailerListenerAdapter;
 import org.apache.commons.lang3.StringUtils;
@@ -48,6 +52,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowkraft.common.AppPaths;
 import com.flowkraft.common.Utils;
+import com.flowkraft.common.Constants;
+import com.sourcekraft.documentburster.common.ServicesManager;
 import com.flowkraft.jobman.dtos.DirCriteriaDto;
 import com.flowkraft.jobman.dtos.FileCriteriaDto;
 import com.flowkraft.jobman.dtos.FindCriteriaDto;
@@ -544,6 +550,7 @@ public class SystemService {
 	}
 
 	public List<ServiceStatusInfo> getAllServicesStatus() throws Exception {
+
 		// Build the Docker command to get all running containers
 		List<String> command = new ArrayList<>();
 		command.add("docker");
@@ -580,11 +587,14 @@ public class SystemService {
 			for (Map<String, Object> service : services) {
 				ServiceStatusInfo info = new ServiceStatusInfo();
 				info.name = (String) service.get("Names");
-				// Check health status: if container has healthcheck and is not healthy, report as "starting"
+				// Check health status: if container has healthcheck and is not healthy, report
+				// as "starting"
 				String state = (String) service.get("State");
-				String statusText = (String) service.get("Status"); // e.g., "Up 30 seconds (healthy)" or "Up 10 seconds (health: starting)"
+				String statusText = (String) service.get("Status"); // e.g., "Up 30 seconds (healthy)" or "Up 10 seconds
+																	// (health: starting)"
 				info.health = extractHealthStatus(statusText);
-				// If container is running but health is not "healthy", report as "starting" so UI waits
+				// If container is running but health is not "healthy", report as "starting" so
+				// UI waits
 				if ("running".equals(state) && info.health != null && !"healthy".equals(info.health)) {
 					info.status = "starting";
 				} else {
@@ -607,11 +617,13 @@ public class SystemService {
 					if (service.containsKey("Names")) {
 						ServiceStatusInfo info = new ServiceStatusInfo();
 						info.name = (String) service.get("Names");
-						// Check health status: if container has healthcheck and is not healthy, report as "starting"
+						// Check health status: if container has healthcheck and is not healthy, report
+						// as "starting"
 						String state = (String) service.get("State");
 						String statusText = (String) service.get("Status");
 						info.health = extractHealthStatus(statusText);
-						// If container is running but health is not "healthy", report as "starting" so UI waits
+						// If container is running but health is not "healthy", report as "starting" so
+						// UI waits
 						if ("running".equals(state) && info.health != null && !"healthy".equals(info.health)) {
 							info.status = "starting";
 						} else {
@@ -629,21 +641,103 @@ public class SystemService {
 			System.err.println("Non-JSON output from Docker: " + output);
 		}
 
+		processPauseCancelJobs();
+
 		return statuses;
 	}
 
 	/**
 	 * Extract health status from Docker's Status string.
-	 * Examples: "Up 30 seconds (healthy)", "Up 10 seconds (health: starting)", "Up 5 seconds (unhealthy)"
+	 * Examples: "Up 30 seconds (healthy)", "Up 10 seconds (health: starting)", "Up
+	 * 5 seconds (unhealthy)"
 	 * Returns: "healthy", "starting", "unhealthy", or null if no healthcheck
 	 */
 	private String extractHealthStatus(String statusText) {
-		if (statusText == null) return null;
-		if (statusText.contains("(healthy)")) return "healthy";
-		if (statusText.contains("(health: starting)")) return "starting";
-		if (statusText.contains("(unhealthy)")) return "unhealthy";
+		if (statusText == null)
+			return null;
+		if (statusText.contains("(healthy)"))
+			return "healthy";
+		if (statusText.contains("(health: starting)"))
+			return "starting";
+		if (statusText.contains("(unhealthy)"))
+			return "unhealthy";
 		// No health info in status = no healthcheck configured
 		return null;
+	}
+
+	/**
+	 * Scan the jobs temp folder for *.pause / *.cancel files and handle them.
+	 * For each found signal file we look for the matching .job file, parse its
+	 * <filepath> to find a candidate folder and search upwards for a
+	 * docker-compose.yml (or .yaml). If found, we run `docker compose down
+	 * --remove-orphans`
+	 * in that folder and then remove the main job file and the pause/cancel file
+	 * (and any .progress file).
+	 */
+	private void processPauseCancelJobs() throws Exception {
+		Path jobsDir = Paths.get(AppPaths.JOBS_DIR_PATH);
+		if (!Files.exists(jobsDir) || !Files.isDirectory(jobsDir))
+			return;
+
+		List<Path> files = Files.list(jobsDir).collect(Collectors.toList());
+
+		for (Path p : files) {
+			String fname = p.getFileName().toString();
+			if (!(fname.endsWith(".pause") || fname.endsWith(".cancel")))
+				continue;
+
+			String baseName = FilenameUtils.getBaseName(fname); // e.g. "123456789"
+			String jobFileName = baseName + Constants.EXTENTION_JOB_FILE; // ".job"
+			Path jobPath = jobsDir.resolve(jobFileName);
+			if (!Files.exists(jobPath)) {
+				// nothing to do if the main job file is not present
+				continue;
+			}
+
+			String jobContent = Files.readString(jobPath, StandardCharsets.UTF_8);
+			// Require explicit jobtype: only handle 'app start <service>' – no filepath
+			// fallback
+			Pattern jobtypePtn = Pattern.compile("<jobtype>(.*?)</jobtype>", Pattern.DOTALL);
+			Matcher jobtypeMatcher = jobtypePtn.matcher(jobContent);
+			if (!jobtypeMatcher.find()) {
+				// No jobtype -> skip (per requested behavior, do not fallback)
+				continue;
+			}
+			String jobtype = jobtypeMatcher.group(1).trim();
+			String[] tokens = jobtype.split("\\s+");
+			if (tokens.length < 3 || !tokens[0].equalsIgnoreCase("app") || !tokens[1].equalsIgnoreCase("start")) {
+				// Not an app start job -> skip (explicit policy)
+				continue;
+			}
+			String serviceName = tokens[2].trim();
+
+			// Use the unified ServicesManager stop flow instead of resolving/composing
+			// ourselves
+			try {
+				ServicesManager.Result r = ServicesManager.execute("app stop " + serviceName);
+				String status = (r != null ? r.status : "null");
+				String output = (r != null && r.output != null ? r.output.replaceAll("\r?\n", " ") : "");
+				System.out.println("pause/cancel: executed 'app stop " + serviceName + "' -> status=" + status
+						+ " output=" + output);
+
+				// Consider the stop successful if ServicesManager returned "stopped" or similar
+				if ("stopped".equalsIgnoreCase(status) || "ok".equalsIgnoreCase(status)) {
+					// remove job files (main + signal + possible progress)
+					FileUtils.deleteQuietly(jobPath.toFile());
+					FileUtils.deleteQuietly(p.toFile());
+					FileUtils.deleteQuietly(jobsDir.resolve(baseName + ".progress").toFile());
+					System.out.println("pause/cancel: cleaned up job files for " + baseName);
+				} else {
+					System.err.println("pause/cancel: stop command did not indicate success for " + serviceName
+							+ " (status=" + status + "). Leaving signal file for retry.");
+				}
+			} catch (Exception ex) {
+				System.err.println(
+						"pause/cancel: Exception while executing stop for " + serviceName + ": " + ex.getMessage());
+				// Keep the *.pause / *.cancel file so the next poll retries
+			}
+		}
+
 	}
 
 	private String getCommandReadyToBeRunAsAdministratorUsingBatchCmd(String commandToElevate) throws Exception {
