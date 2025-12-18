@@ -459,7 +459,7 @@ public class ServicesManager {
 
 		command.add("-d");
 		command.add("--remove-orphans");
-		//if (forceRecreate || shouldBuild || noCache ||reprovision) {
+		//if (forceRecreate || shouldBuild || noCache || reprovision) {
 		command.add("--force-recreate");
 		//}
 
