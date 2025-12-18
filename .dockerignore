@@ -44,6 +44,11 @@ Thumbs.db
 # Release artifacts
 **/release/
 asbl/target/
+# Allow verified NoExe package into Docker build context so Dockerfile COPY can access
+# the assembled ReportBurster files (config/db). This is intentionally targeted
+# and does not include other 'target' outputs.
+!asbl/target/package/verified-db-noexe/
+!asbl/target/package/verified-db-noexe/**
 
 # Docker files in subdirectories (we only need root Dockerfile)
 asbl/docker/

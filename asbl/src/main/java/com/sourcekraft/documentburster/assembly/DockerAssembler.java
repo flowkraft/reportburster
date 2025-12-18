@@ -6,7 +6,14 @@ import java.io.File;
 
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.stream.LogOutputStream;
+import org.zeroturnaround.zip.ZipUtil;
 import org.apache.commons.io.FileUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DockerAssembler extends AbstractAssembler {
 
@@ -14,8 +21,8 @@ public class DockerAssembler extends AbstractAssembler {
     private String version = "latest";
 
     public DockerAssembler() {
-        // No zip produced for Docker packaging; packageDir used for temporary workspace
-        super("target/package/docker", "target/package/verified-docker", "");
+        // Package the docker bundle into a zip so it can be distributed and verified
+        super("target/package/docker", "target/package/verified-docker", "target/reportburster-server-docker.zip");
         // default imageTag uses latest until we read version from settings.xml
         this.imageTag = "flowkraft/reportburster-server:latest";
     }
@@ -53,7 +60,7 @@ public class DockerAssembler extends AbstractAssembler {
 
         // Build the Docker image without cache using the preprocessed Dockerfile
         new ProcessExecutor().directory(top)
-                .command("docker", "build", "--no-cache", "-t", imageTag, "-f", dockerfileBuild.getName(), ".")
+                .command("docker", "build", "--no-cache", "-t", imageTag, "-t", "flowkraft/reportburster-server:latest", "-f", dockerfileBuild.getName(), ".")
                 .redirectOutput(new LogOutputStream() {
                     @Override
                     protected void processLine(String line) {
@@ -75,32 +82,18 @@ public class DockerAssembler extends AbstractAssembler {
     protected void preparePackage() throws Exception {
         System.out.println("------------------------------------- START: DockerAssembler.preparePackage() ... -------------------------------------");
 
-        // Write a self-contained docker compose bundle into the package directory
-        File dockerDir = new File(packageDirPath + "/" + this.topFolderName + "/docker");
-        FileUtils.forceMkdir(dockerDir);
-
         // Generate a docker-compose.yml that uses 'latest' by default and comments the pinned version
         File templateCompose = new File(Utils.getTopProjectFolderPath() + "/asbl/docker/docker-compose.yml");
         String composeContent = FileUtils.readFileToString(templateCompose, "UTF-8");
 
-        // Replace image line with two lines: unpinned 'latest' and commented pinned version
-        composeContent = composeContent.replaceAll("(?m)^\\s*image:\\s*flowkraft/reportburster-server:\\S+",
-                "image: flowkraft/reportburster-server:latest\n    # pinned: image: flowkraft/reportburster-server:" + this.version);
+        // Replace image line with two lines: pinned version active and commented unpinned 'latest'
+        // Preserve indentation by capturing leading whitespace and reusing it in the replacement
+        composeContent = composeContent.replaceAll("(?m)^(\\s*)image:\\s*flowkraft/reportburster-server:\\S+",
+                "$1image: flowkraft/reportburster-server:" + this.version + "\n$1# unpinned: image: flowkraft/reportburster-server:latest");
 
-        File outCompose = new File(dockerDir, "docker-compose.yml");
+        // Write the compose file at the root of the assembled ReportBurster bundle
+        File outCompose = new File(packageDirPath + "/" + this.topFolderName, "docker-compose.yml");
         FileUtils.writeStringToFile(outCompose, composeContent, "UTF-8");
-
-        // NOTE: README is maintained under asbl/docker/README.md and is not generated here.
-        // Create a small start.sh wrapper (POSIX)
-        File startSh = new File(dockerDir, "start.sh");
-        String startShContent = "#!/bin/sh\nset -e\ndocker compose -f docker-compose.yml up --build -d\n";
-        FileUtils.writeStringToFile(startSh, startShContent, "UTF-8");
-        startSh.setExecutable(true, false);
-
-        // Create a small start.ps1 wrapper for convenience (Windows PowerShell)
-        File startPs1 = new File(dockerDir, "start.ps1");
-        String startPs1Content = "docker compose -f docker-compose.yml up --build -d";
-        FileUtils.writeStringToFile(startPs1, startPs1Content, "UTF-8");
 
         // Copy initial directories from the verified NoExe package into the assembled package directory
         // DIRECTORIES = ("_apps", "backup", "config", "db", "input-files", "logs", "output", "poll", "quarantine", "samples", "scripts", "temp", "templates")
@@ -120,6 +113,20 @@ public class DockerAssembler extends AbstractAssembler {
             }
         }
 
+        // Post-process packaged config to ensure Docker defaults (host/mailhog/runtime) are set
+        File packagedBurst = new File(packageDirPath + "/" + this.topFolderName + "/config/burst/settings.xml");
+        String bc = FileUtils.readFileToString(packagedBurst, "UTF-8");
+        bc = bc.replaceAll("(?is)<host\\b[^>]*>\\s*localhost\\s*</host>", "<host>mailhog</host>");
+        bc = bc.replaceAll("(?is)<weburl\\b[^>]*>\\s*https?://localhost:8025\\s*</weburl>", "<weburl>http://mailhog:8025</weburl>");
+        FileUtils.writeStringToFile(packagedBurst, bc, "UTF-8");
+        System.out.println("Patched packaged burst/settings.xml for docker defaults");
+
+        File packagedInternal = new File(packageDirPath + "/" + this.topFolderName + "/config/_internal/settings.xml");
+        String ic = FileUtils.readFileToString(packagedInternal, "UTF-8");
+        ic = ic.replaceAll("(?is)<runtime\\b[^>]*>\\s*windows\\s*</runtime>", "<runtime>docker</runtime>");
+        FileUtils.writeStringToFile(packagedInternal, ic, "UTF-8");
+        System.out.println("Patched packaged _internal/settings.xml runtime to docker");
+
         System.out.println("------------------------------------- DONE: DockerAssembler.preparePackage() wrote docker/ bundle with version '" + this.version + "' ... -------------------------------------");
     }
 
@@ -133,7 +140,123 @@ public class DockerAssembler extends AbstractAssembler {
         String imageId = pr.getOutput().getString().trim();
         assertThat(imageId).as("Docker image %s should exist", imageTag).isNotEmpty();
 
-        System.out.println("------------------------------------- VERIFIED: DockerAssembler image exists: " + imageId + " ... -------------------------------------");
+        // ---------------------------------------------------------------------
+        // Read settings files from the built image and verify versions
+        // (read from /app/config/_defaults/settings.xml and /app/config/burst/settings.xml inside image)
+        // ---------------------------------------------------------------------
+        String defaultsContent;
+        String burstContent;
+        try {
+            defaultsContent = new ProcessExecutor().directory(top)
+                    .command("docker", "run", "--rm", "--entrypoint", "cat", imageTag, "/app/config/_defaults/settings.xml")
+                    .readOutput(true).execute().getOutput().getString();
+        } catch (Throwable t) {
+            throw new RuntimeException("Failed to read /app/config/_defaults/settings.xml from image " + imageTag + ": " + t.getMessage(), t);
+        }
+
+        try {
+            burstContent = new ProcessExecutor().directory(top)
+                    .command("docker", "run", "--rm", "--entrypoint", "cat", imageTag, "/app/config/burst/settings.xml")
+                    .readOutput(true).execute().getOutput().getString();
+        } catch (Throwable t) {
+            throw new RuntimeException("Failed to read /app/config/burst/settings.xml from image " + imageTag + ": " + t.getMessage(), t);
+        }
+
+        String defaultsVersion = null;
+        String burstVersion = null;
+
+        Matcher dm = Pattern.compile("<version>([^<]+)</version>").matcher(defaultsContent);
+        if (dm.find()) {
+            defaultsVersion = dm.group(1).trim();
+        }
+
+        Matcher bm = Pattern.compile("<version>([^<]+)</version>").matcher(burstContent);
+        if (bm.find()) {
+            burstVersion = bm.group(1).trim();
+        }
+
+        assertThat(defaultsVersion).as("version tag missing in image:/app/config/_defaults/settings.xml").isNotNull();
+        assertThat(burstVersion).as("version tag missing in image:/app/config/burst/settings.xml").isNotNull();
+        assertThat(defaultsVersion).isEqualTo(burstVersion);
+        assertThat(burstVersion).isEqualTo(this.version);
+
+        // Optionally check image label 'version' if present (use JSON inspect to avoid template parsing errors)
+        try {
+            String labelsJson = new ProcessExecutor().directory(top)
+                    .command("docker", "image", "inspect", "--format", "{{ json .Config.Labels }}", imageTag)
+                    .readOutput(true).execute().getOutput().getString().trim();
+            if (labelsJson != null && !labelsJson.isEmpty() && !labelsJson.equals("null")) {
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode root = mapper.readTree(labelsJson);
+                    JsonNode v = root.get("version");
+                    if (v != null && !v.asText().isEmpty()) {
+                        assertThat(v.asText()).isEqualTo(this.version);
+                    } // else: no version label present, silently skip
+                } catch (Exception ex) {
+                    System.out.println("Warning: failed to parse image labels JSON: " + ex.getMessage());
+                }
+            }
+        } catch (Throwable t) {
+            System.out.println("Warning: failed to read image label version: " + t.getMessage());
+        }
+
+        ZipUtil.unpack(new File(targetPathZipFile), new File(verifyDirPath));
+
+        // ---------------------------------------------------------------------
+        // Verify host-side verified package (verifyDirPath) matches the image
+        // ---------------------------------------------------------------------
+        File hostVerifiedRoot = new File(verifyDirPath + "/" + this.topFolderName);
+        File hostDefaultsSettings = new File(hostVerifiedRoot, "config/_defaults/settings.xml");
+        File hostBurstSettings = new File(hostVerifiedRoot, "config/burst/settings.xml");
+
+        assertThat(hostVerifiedRoot.exists()).as("Expected host verified package folder %s to exist", hostVerifiedRoot.getPath()).isTrue();
+        assertThat(hostDefaultsSettings.exists()).as("Expected %s to exist", hostDefaultsSettings.getPath()).isTrue();
+        assertThat(hostBurstSettings.exists()).as("Expected %s to exist", hostBurstSettings.getPath()).isTrue();
+
+        String hostDefaultsContent = FileUtils.readFileToString(hostDefaultsSettings, "UTF-8");
+        String hostBurstContent = FileUtils.readFileToString(hostBurstSettings, "UTF-8");
+
+        // Verify the packaged burst settings were patched for Docker
+        File hostInternalSettings = new File(hostVerifiedRoot, "config/_internal/settings.xml");
+        assertThat(hostInternalSettings.exists()).as("Expected %s to exist", hostInternalSettings.getPath()).isTrue();
+        String hostInternalContent = FileUtils.readFileToString(hostInternalSettings, "UTF-8");
+        assertThat(hostBurstContent).as("Expected burst settings to reference mailhog").contains("mailhog");
+        assertThat(hostBurstContent).as("Expected burst settings to reference mailhog weburl").contains("http://mailhog:8025");
+        assertThat(hostInternalContent).as("Expected runtime to be docker in %s", hostInternalSettings.getPath()).contains("<runtime>docker</runtime>");
+
+        String hostDefaultsVersion = null;
+        String hostBurstVersion = null;
+
+        Matcher hm1 = Pattern.compile("<version>([^<]+)</version>").matcher(hostDefaultsContent);
+        if (hm1.find()) {
+            hostDefaultsVersion = hm1.group(1).trim();
+        }
+        Matcher hm2 = Pattern.compile("<version>([^<]+)</version>").matcher(hostBurstContent);
+        if (hm2.find()) {
+            hostBurstVersion = hm2.group(1).trim();
+        }
+
+        assertThat(hostDefaultsVersion).as("version tag missing in %s", hostDefaultsSettings.getPath()).isNotNull();
+        assertThat(hostBurstVersion).as("version tag missing in %s", hostBurstSettings.getPath()).isNotNull();
+
+        // host versions must match the image/builder version
+        assertThat(hostDefaultsVersion).isEqualTo(defaultsVersion);
+        assertThat(hostBurstVersion).isEqualTo(burstVersion);
+
+        // ---------------------------------------------------------------------
+        // Verify docker-compose bundle contains the pinned version comment
+        // ---------------------------------------------------------------------
+        File composeFile = new File(packageDirPath + "/" + this.topFolderName + "/docker-compose.yml");
+        assertThat(composeFile.exists()).as("Expected compose file %s to exist", composeFile.getPath()).isTrue();
+
+        String compose = FileUtils.readFileToString(composeFile, "UTF-8");
+        Matcher pm = Pattern.compile("(?m)^\\s*image:\\s*\\S*:(\\S+)").matcher(compose);
+        assertThat(pm.find()).as("Image line should be present in %s", composeFile.getPath()).isTrue();
+        String pinnedVersion = pm.group(1).trim();
+        assertThat(pinnedVersion).isEqualTo(this.version);
+
+        System.out.println("------------------------------------- VERIFIED: DockerAssembler image exists: " + imageId + " and versions are consistent: " + this.version + " ... -------------------------------------");
     }
 
     private String _readVersionFromSettingsXml() {
@@ -153,7 +276,7 @@ public class DockerAssembler extends AbstractAssembler {
             }
 
             String content = FileUtils.readFileToString(settingsPath, "UTF-8");
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("<version>([^<]+)</version>").matcher(content);
+            Matcher m = Pattern.compile("<version>([^<]+)</version>").matcher(content);
             if (m.find()) {
                 return m.group(1).trim();
             }

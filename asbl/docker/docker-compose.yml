@@ -49,7 +49,6 @@ services:
       - ./scripts:/app/scripts
       - ./temp:/app/temp
       - ./templates:/app/templates
-      - ./tools:/app/tools
     restart: unless-stopped
     #healthcheck:
     #  test: ["CMD", "curl", "-f", "http://localhost:9090/api/jobman/system/version"]

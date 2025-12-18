@@ -104,7 +104,12 @@ RUN apk --no-cache add \
     rclone \
     docker-cli \
     docker-cli-compose \
-    bash
+    bash \
+    perl \
+    xmlstarlet \
+    sed \
+    awk \
+    jq
 
 # Set working directory
 WORKDIR /app
@@ -121,10 +126,10 @@ COPY ./asbl/target/package/verified-db-noexe/ReportBurster/db ./db
 # Preserve a copy of defaults in a safe location so runtime can extract them
 RUN mkdir -p /opt/reportburster/defaults && cp -a ./config /opt/reportburster/defaults/ || true
 
-# Configure default settings for Docker environment
-RUN sed -i 's|<host>localhost</host>|<host>mailhog</host>|g' /app/config/burst/settings.xml && \
-    sed -i 's|<weburl>http://localhost:8025</weburl>|<weburl>http://mailhog:8025</weburl>|g' /app/config/burst/settings.xml && \
-    sed -i 's|<runtime>windows</runtime>|<runtime>docker</runtime>|g' /app/config/_internal/settings.xml || true
+# Configure default settings for Docker environment (robust, portable replacements)
+RUN perl -0777 -pi -e 's#<host\b[^>]*>\s*localhost\s*</host>#<host>mailhog</host>#ig' /app/config/burst/settings.xml && \
+    perl -0777 -pi -e 's#<weburl\b[^>]*>\s*https?://localhost:8025\s*</weburl>#<weburl>http://mailhog:8025</weburl>#ig' /app/config/burst/settings.xml && \
+    perl -0777 -pi -e 's#<runtime\b[^>]*>\s*windows\s*</runtime>#<runtime>docker</runtime>#ig' /app/config/_internal/settings.xml
 
 # Copy built artifacts from build stages
 COPY --from=frontend-build /app/frend/dist /app/lib/frend
