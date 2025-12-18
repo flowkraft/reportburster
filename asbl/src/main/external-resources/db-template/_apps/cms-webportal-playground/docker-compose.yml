@@ -12,10 +12,10 @@
       - .env
     # This service depends on ALL other services to be healthy and complete first
     depends_on:
-      cms-webportal-playground-cli:
-        condition: service_completed_successfully
       theme-builder:
         condition: service_completed_successfully
+      cms-webportal-playground-cli:
+        condition: service_completed_successfully  
     command: >
       /bin/sh -c '
         echo "📌 Creating provisioning marker...";
@@ -47,8 +47,8 @@
       - ./wp-themes/reportburster-theme/theme:/var/www/html/wp-content/themes/reportburster-theme
 
       # Dependencies baked in image
-      - reportburster_vendor:/var/www/html/wp-content/plugins/reportburster-portal/vendor
-      - reportburster_node_modules:/var/www/html/wp-content/themes/reportburster-theme/node_modules
+      - reportburster_portal_plugin_vendor:/var/www/html/wp-content/plugins/reportburster-portal/vendor
+      - reportburster_theme_node_modules:/var/www/html/wp-content/themes/reportburster-theme/node_modules
 
       # Writable dirs for WordPress
       - wp_uploads:/var/www/html/wp-content/uploads
@@ -92,7 +92,7 @@
       cms-webportal-playground:
         condition: service_started
       theme-builder:
-        condition: service_completed_successfully  
+        condition: service_completed_successfully
     volumes:
       # WordPress core
       - wp_html:/var/www/html
@@ -104,8 +104,8 @@
       - ./wp-themes/reportburster-theme/theme:/var/www/html/wp-content/themes/reportburster-theme
 
       # Dependencies baked in image
-      - reportburster_vendor:/var/www/html/wp-content/plugins/reportburster-portal/vendor
-      - reportburster_node_modules:/var/www/html/wp-content/themes/reportburster-theme/node_modules
+      - reportburster_portal_plugin_vendor:/var/www/html/wp-content/plugins/reportburster-portal/vendor
+      - reportburster_theme_node_modules:/var/www/html/wp-content/themes/reportburster-theme/node_modules
 
       # Writable dirs for WordPress
       - wp_uploads:/var/www/html/wp-content/uploads
@@ -282,7 +282,7 @@
       - wp_html:/var/www/html
       - ./wp-themes/reportburster-theme:/theme-src
       - ./wp-plugins/reportburster-portal:/var/www/html/wp-content/plugins/reportburster-portal
-      - reportburster_node_modules:/theme-src/node_modules
+      - reportburster_theme_node_modules:/theme-src/node_modules
     env_file:
       - .env
     environment:
@@ -301,6 +301,19 @@
         if [ -f /var/www/html/.provisioned ]; then
           echo "✅ Already provisioned (.provisioned exists). Skipping CLI provisioning.";
           exit 0;
+        fi
+        
+        echo "⏳ Waiting for theme sources (package.json)...";
+        
+        COUNT=0;
+        while [ ! -f /theme-src/package.json ] && [ $$COUNT -lt 2 ]; do
+          COUNT=$$((COUNT+1));
+          sleep 1;
+        done
+
+        if [ ! -f /theme-src/package.json ]; then
+          echo "❌ ERROR: /theme-src/package.json not found after timeout; exiting.";
+          exit 1;
         fi
         
         echo "🔨 Starting theme asset build...";
@@ -330,12 +343,12 @@
         
         echo "✅ Theme build complete!";
       '
-    restart: "no"
+    restart: on-failure
 
 volumes:
   wp_html:
-  reportburster_vendor:
-  reportburster_node_modules:
+  reportburster_portal_plugin_vendor:
+  reportburster_theme_node_modules:
   wp_uploads:
   wp_upgrade:
   wp_db_data:
