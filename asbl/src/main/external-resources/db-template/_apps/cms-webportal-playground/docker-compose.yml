@@ -307,7 +307,12 @@
 
         if [ ! -d "node_modules" ]; then
           echo "📦 Installing Node.js dependencies...";
-          npm ci;
+          # Try a clean ci install first (fast & reproducible). If the lockfile is out-of-sync
+          # fall back to `npm install` which updates the lockfile and succeeds in this environment.
+          if ! npm ci --no-audit --no-fund; then
+            echo "🔁 npm ci failed; falling back to npm install (this will update package-lock.json)";
+            npm install --no-audit --no-fund;
+          fi
         fi
 
         npm install -g cross-env;

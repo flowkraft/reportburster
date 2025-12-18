@@ -1005,8 +1005,8 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		FileUtils.writeStringToFile(new File(parEmployeeHireDatesReportingFilePath), content, "UTF-8");
 
-		//piv-sales-region-prod-qtr		
-		String pivSalesRegionProdSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/piv-sales-region-prod-qtr\t";
+		// piv-sales-region-prod-qtr
+		String pivSalesRegionProdSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/_frend/piv-sales-region-prod-qtr";
 		String pivSalesRegionProdSettingsFilePath = pivSalesRegionProdSampleDir + "/settings.xml";
 		String pivSalesRegionProdReportingFilePath = pivSalesRegionProdSampleDir + "/reporting.xml";
 
@@ -1050,7 +1050,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		
 		//rep-employee-payslip
 		
-		String repEmployeePayslipSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/rep-employee-payslip";
+		String repEmployeePayslipSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/_frend/rep-employee-payslip";
 		String repEmployeePayslipSettingsFilePath = repEmployeePayslipSampleDir + "/settings.xml";
 		String repEmployeePayslipReportingFilePath = repEmployeePayslipSampleDir + "/reporting.xml";
 

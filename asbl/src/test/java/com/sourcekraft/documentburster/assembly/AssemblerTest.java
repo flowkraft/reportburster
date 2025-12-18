@@ -58,9 +58,10 @@ public class AssemblerTest {
 		AbstractAssembler dockerAssembler = new DockerAssembler();
 		dockerAssembler.assemble();
 		dockerAssembler.verify();
+		dockerAssembler.install();
+		
 		System.out.println(
 				"------------------------------------- FINISHED Assembler:DockerAssembler ... -------------------------------------");
-
 		
 		AbstractAssembler rbSourceAssembler = new ReportBursterSourceAssembler();
 		
