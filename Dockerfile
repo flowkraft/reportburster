@@ -108,7 +108,7 @@ RUN apk --no-cache add \
     perl \
     xmlstarlet \
     sed \
-    awk \
+    gawk \
     jq
 
 # Set working directory
@@ -120,6 +120,7 @@ COPY ./asbl/src/main/external-resources/db-server-template .
 COPY ./bkend/reporting/src/main/external-resources/template .
 
 # NoExeAssembler generated files (config, db)
+COPY ./asbl/target/package/verified-db-noexe/ReportBurster/_apps ./_apps
 COPY ./asbl/target/package/verified-db-noexe/ReportBurster/config ./config
 COPY ./asbl/target/package/verified-db-noexe/ReportBurster/db ./db
 

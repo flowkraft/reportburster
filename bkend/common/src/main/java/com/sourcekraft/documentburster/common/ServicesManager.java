@@ -459,9 +459,9 @@ public class ServicesManager {
 
 		command.add("-d");
 		command.add("--remove-orphans");
-		if (forceRecreate || reprovision) {
-			command.add("--force-recreate");
-		}
+		//if (forceRecreate || shouldBuild || noCache ||reprovision) {
+		command.add("--force-recreate");
+		//}
 
 		if (reprovision) {
 			log.info("Reprovision requested for {} in {}", serviceName, workingDir);
