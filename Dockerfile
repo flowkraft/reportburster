@@ -259,14 +259,13 @@ else
     find /app/temp -type f ! -name "*progress*" -delete 2>/dev/null || true
     
     # Start the Spring Boot server
+    # TEMP: API key disabled for rollback — API key will not be passed as a JVM -D to avoid accidental usage
     exec java \
         -Dorg.springframework.boot.logging.LoggingSystem=org.springframework.boot.logging.log4j2.Log4J2LoggingSystem \
         -Dlog4j.configurationFile=/app/log4j2.xml \
         -Dserver.port=$SERVER_PORT \
         -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH \
         -DUID=$SERVER_PORT \
-        # TEMP: API key disabled for rollback
-        # -DAPI_KEY="$CURRENT_API_KEY" \
         -Dspring.resources.add-mappings=true \
         -Dspring.web.resources.static-locations=file:///$FRONTEND_PATH \
         -Dspring.mvc.static-path-pattern="/**" \
