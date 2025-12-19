@@ -5,6 +5,7 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -12,13 +13,16 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
+import org.apache.commons.lang3.StringUtils;
 
 import com.sourcekraft.documentburster.utils.Utils;
 
@@ -377,12 +381,30 @@ public class ServicesManager {
 
 	/** Handle 'app start <serviceName> [args]' */
 	private static void handleAppStart(String serviceName, String args) throws Exception {
+		// Ensure portable apps config marker exists and .env files are updated when missing
+		ensurePortableAppsConfig();
 		// System.out.println("Starting app '" + serviceName + "'...");
 
 		String composePath = getComposePath(serviceName);
 
-		// Log the compose file path and JVM working directory for diagnostics
-		log.info("handleAppStart: composePath='{}' | jvm.cwd='{}'", composePath, System.getProperty("user.dir"));
+		// Small, non-intrusive diagnostics to help determine where PORTABLE_EXECUTABLE_DIR comes from
+		log.info("PORTABLE_EXECUTABLE_DIR (system property)='{}', env='{}', Utils.getPortableExecutableDir='{}'",
+				System.getProperty("PORTABLE_EXECUTABLE_DIR"), System.getenv("PORTABLE_EXECUTABLE_DIR"), Utils.getPortableExecutableDir());
+
+		// Log the compose file path and the JVM process current directory for diagnostics
+		log.info("handleAppStart: composePath='{}' | process.cwd='{}'", composePath, Paths.get(".").toAbsolutePath().normalize().toString());
+
+		// Extra diagnostics: resolve the intended working directory absolutely and report file existence
+		Path composeFilePathCheck = Paths.get(composePath);
+		Path workingDirCheck = composeFilePathCheck.getParent();
+		Path absWorkingDir = workingDirCheck.isAbsolute() ? workingDirCheck : Paths.get(".").toAbsolutePath().resolve(workingDirCheck).normalize();
+		boolean composeExists = Files.exists(absWorkingDir.resolve(composeFilePathCheck.getFileName()));
+		log.info("Resolved workingDir absolute='{}' | compose file exists='{}'", absWorkingDir.toString(), composeExists);
+
+		// Check common testground location presence for quick diagnosis
+		boolean testgroundE2eAppsExists = Files.exists(Paths.get(".").toAbsolutePath().resolve("testground").resolve("e2e").resolve("_apps"));
+		boolean testgroundAppsExists = Files.exists(Paths.get(".").toAbsolutePath().resolve("testground").resolve("_apps"));
+		log.info("testground/e2e/_apps exists='{}' | testground/_apps exists='{}'", testgroundE2eAppsExists, testgroundAppsExists);
 
 		// Set working directory to the compose file's parent (like NorthwindManager)
 		Path composeFilePath = Paths.get(composePath);
@@ -602,6 +624,65 @@ public class ServicesManager {
 		}
 	}
 
+	/**
+	 * Ensure portable apps config marker exists and update .env files if missing.
+	 * Minimal behavior: if PORTABLE_EXECUTABLE_DIR/config/_internal/.pedp-apps does not exist,
+	 * update two .env files to contain PORTABLE_EXECUTABLE_DIR_PATH=<portableDir> and
+	 * create the .pedp-apps marker file.
+	 */
+	private static void ensurePortableAppsConfig() throws Exception {
+		String portableDir = com.sourcekraft.documentburster.utils.Utils.getPortableExecutableDir();
+		if (StringUtils.isBlank(portableDir)) return;
+
+		Path pedpPath = Paths.get(portableDir).resolve("config").resolve("_internal").resolve(".pedp-apps");
+		if (Files.exists(pedpPath)) return;
+
+		// Files to update (relative to repo)
+		Path appsDir = Paths.get(portableDir).resolve("_apps");
+		Path flowkraftEnv = appsDir.resolve("flowkraft").resolve(".env");
+		Path cmsEnv = appsDir.resolve("cms-webportal-playground").resolve(".env");
+
+		String newLine = "PORTABLE_EXECUTABLE_DIR_PATH=" + portableDir;
+
+		Consumer<Path> updateEnv = (path) -> {
+			try {
+				List<String> lines = new ArrayList<>();
+				if (Files.exists(path)) {
+					lines = Files.readAllLines(path);
+					boolean replaced = false;
+					for (int i = 0; i < lines.size(); i++) {
+						String l = lines.get(i);
+						if (l.startsWith("PORTABLE_EXECUTABLE_DIR_PATH=")) {
+							lines.set(i, newLine);
+							replaced = true;
+							break;
+						}
+					}
+					if (!replaced) {
+						lines.add(newLine);
+					}
+				} else {
+					// create parent directories if needed
+					Files.createDirectories(path.getParent());
+					lines.add(newLine);
+				}
+				Files.write(path, lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+			} catch (Exception e) {
+				System.err.println("Failed to update env file " + path + " : " + e.getMessage());
+			}
+		};
+
+		updateEnv.accept(flowkraftEnv);
+		updateEnv.accept(cmsEnv);
+
+		try {
+			Files.createDirectories(pedpPath.getParent());
+			Files.write(pedpPath, Collections.singletonList(""), StandardOpenOption.CREATE);
+		} catch (Exception e) {
+			System.err.println("Failed to create .pedp-apps marker: " + e.getMessage());
+		}
+	}
+
 	/** Handle 'app stop <serviceName> [args]' */
 	private static void handleAppStop(String serviceName, String args) throws Exception {
 		// System.out.println("Stopping app '" + serviceName + "'...");
@@ -667,5 +748,6 @@ public class ServicesManager {
 		}
 		return appsFolderPath + serviceName + "/docker-compose.yml";
 	}
+	
 
 }

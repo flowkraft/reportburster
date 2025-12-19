@@ -13,7 +13,7 @@ spring:
 dataSource:
     driverClassName: org.sqlite.JDBC
     dbCreate: ${DB_CREATE:update}
-    url: jdbc:sqlite:${DB_PATH:../../../db/sample-northwind-sqlite/northwind.db}
+    url: jdbc:sqlite:${DB_PATH:/app/db/sample-northwind-sqlite/northwind.db}
     username:
     password:
 hibernate:

@@ -29,7 +29,7 @@
   cms-webportal-playground:
     build:
       context: .
-      dockerfile: Dockerfile.deps
+      dockerfile: Dockerfile.cms-webportal
     container_name: rb-cms-webportal-playground
     depends_on:
       cms-webportal-playground-db:
@@ -40,15 +40,12 @@
       # WordPress core
       - wp_html:/var/www/html
 
-      # Plugin source code (host)
-      - ./wp-plugins/reportburster-portal:/var/www/html/wp-content/plugins/reportburster-portal
+      # Plugin source code (use Docker-managed volume populated from image)
+      - reportburster_plugin_build:/var/www/html/wp-content/plugins/reportburster-portal:ro
 
-      # Theme source code (host)
-      - ./wp-themes/reportburster-theme/theme:/var/www/html/wp-content/themes/reportburster-theme
-
-      # Dependencies baked in image
-      - reportburster_portal_plugin_vendor:/var/www/html/wp-content/plugins/reportburster-portal/vendor
-      - reportburster_theme_node_modules:/var/www/html/wp-content/themes/reportburster-theme/node_modules
+      # Theme source code (host) — commented out to prefer the builder volume
+      # Use the builder-produced theme build so the web container sees the compiled assets
+      - reportburster_theme_build:/var/www/html/wp-content/themes/reportburster-theme:ro
 
       # Writable dirs for WordPress
       - wp_uploads:/var/www/html/wp-content/uploads
@@ -86,6 +83,8 @@
     image: wordpress:cli-2.12.0-php8.4
     container_name: rb-cms-webportal-playground-cli
     user: "0:0"
+    env_file:
+      - .env
     environment:
       - WP_CLI_ALLOW_ROOT=1
     depends_on:
@@ -97,21 +96,12 @@
       # WordPress core
       - wp_html:/var/www/html
 
-      # Plugin source code (host)
-      - ./wp-plugins/reportburster-portal:/var/www/html/wp-content/plugins/reportburster-portal
+      # Plugin source code (use Docker-managed volume populated from image)
+      - reportburster_plugin_build:/var/www/html/wp-content/plugins/reportburster-portal
 
-      # Theme source code (host)
-      - ./wp-themes/reportburster-theme/theme:/var/www/html/wp-content/themes/reportburster-theme
+      # Use the builder-produced theme build so the CLI and web see the same compiled assets
+      - reportburster_theme_build:/var/www/html/wp-content/themes/reportburster-theme
 
-      # Dependencies baked in image
-      - reportburster_portal_plugin_vendor:/var/www/html/wp-content/plugins/reportburster-portal/vendor
-      - reportburster_theme_node_modules:/var/www/html/wp-content/themes/reportburster-theme/node_modules
-
-      # Writable dirs for WordPress
-      - wp_uploads:/var/www/html/wp-content/uploads
-      - wp_upgrade:/var/www/html/wp-content/upgrade
-    env_file:
-      - .env
     restart: "no"
     command: >
       /bin/sh -c '
@@ -272,17 +262,18 @@
   # THEME BUILDER - Compiles theme assets (CSS, JS)
   # ============================================================================
   theme-builder:
-    image: node:20-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.theme-builder
     container_name: rb-theme-builder
+    user: "0:0"
     depends_on:
       cms-webportal-playground:
         condition: service_started
     working_dir: /theme-src
     volumes:
       - wp_html:/var/www/html
-      - ./wp-themes/reportburster-theme:/theme-src
-      - ./wp-plugins/reportburster-portal:/var/www/html/wp-content/plugins/reportburster-portal
-      - reportburster_theme_node_modules:/theme-src/node_modules
+      - reportburster_theme_build:/theme-dist
     env_file:
       - .env
     environment:
@@ -290,6 +281,9 @@
     command: >
       /bin/sh -c '
         set -e
+
+        # Ensure we are in the theme folder (defensive)
+        cd /theme-src
 
         # If we are forcing a build, remove the old marker to ensure the full cycle completes
         if [ "${FORCE_BUILD}" = "true" ]; then
@@ -306,7 +300,7 @@
         echo "⏳ Waiting for theme sources (package.json)...";
         
         COUNT=0;
-        while [ ! -f /theme-src/package.json ] && [ $$COUNT -lt 2 ]; do
+        while [ ! -f /theme-src/package.json ] && [ $$COUNT -lt 3 ]; do
           COUNT=$$((COUNT+1));
           sleep 1;
         done
@@ -322,22 +316,21 @@
           echo "📦 Installing Node.js dependencies...";
           # Try a clean ci install first (fast & reproducible). If the lockfile is out-of-sync
           # fall back to `npm install` which updates the lockfile and succeeds in this environment.
-          if ! npm ci --no-audit --no-fund; then
+          if ! npm ci --no-audit --no-fund --legacy-peer-deps; then
             echo "🔁 npm ci failed; falling back to npm install (this will update package-lock.json)";
-            npm install --no-audit --no-fund;
+            npm install --no-audit --no-fund --legacy-peer-deps;
           fi
         fi
 
         npm install -g cross-env;
           
-        echo "🎨 Compiling Tailwind CSS for frontend...";
-        npm run production:tailwind:frontend;
-          
-        echo "🎨 Compiling Tailwind CSS for editor...";
-        npm run production:tailwind:editor;
-          
-        echo "⚙️ Bundling JavaScript with esbuild...";
-        npm run production:esbuild;
+        echo "🔨 Running production build (Tailwind & esbuild)...";
+        npm run production;
+        
+        echo "📦 Publishing built theme to shared volume (/theme-dist)...";
+        # Copy built theme output into the build volume so web/cli can consume it
+        cp -R /theme-src/theme/* /theme-dist/ || true
+        chown -R 33:33 /theme-dist
                           
         chown -R 33:33 /theme-src
         
@@ -347,8 +340,8 @@
 
 volumes:
   wp_html:
-  reportburster_portal_plugin_vendor:
-  reportburster_theme_node_modules:
+  reportburster_theme_build:
+  reportburster_plugin_build:
   wp_uploads:
   wp_upgrade:
   wp_db_data:

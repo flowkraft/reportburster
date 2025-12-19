@@ -1,0 +1,8 @@
+# =============================================================================
+# Docker Build Ignore File
+# Speeds up builds by excluding unnecessary files from the build context
+# =============================================================================
+
+# Build outputs (will be created inside container)
+**/vendor/
+**/node_modules/

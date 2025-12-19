@@ -18,11 +18,6 @@
         })();
     </script>
 
-    <!-- ReportBurster configuration (api-key auto-discovery) -->
-    <script>
-        <rb:configScript/>
-    </script>
-
     <!-- Google Fonts - Roboto (professional, compact) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
