@@ -1,7 +1,9 @@
 services:
   
   frend-grails-playground:
-    build: ./frend-grails-playground
+    build: 
+      context: ../.. 
+      dockerfile: _apps/flowkraft/frend-grails-playground/Dockerfile
     image: frend-grails-playground:latest
     container_name: fkraft-frend-grails-playground
     ports:
@@ -10,10 +12,9 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:-false}
       - DB_CREATE=${DB_CREATE:-update}
-      - DB_PATH=/db/northwind.db
+      - DB_PATH=/app/db/sample-northwind-sqlite/northwind.db
     volumes:
-      - ../../db/sample-northwind-sqlite:/db
-      - ../../config/_internal:/config:ro
+      - ${CONFIG_DIR_PATH}:/app/config:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/"]
@@ -23,7 +24,9 @@ services:
       start_period: 10s
 
   admin-grails-playground:
-    build: ./admin-grails-playground
+    build: 
+      context: ../.. 
+      dockerfile: _apps/flowkraft/admin-grails-playground/Dockerfile
     image: admin-grails-playground:latest
     container_name: fkraft-admin-grails-playground
     ports:
@@ -32,9 +35,9 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:-false}
       - DB_CREATE=${DB_CREATE:-update}
+      - DB_PATH=/app/db/sample-northwind-sqlite/northwind.db
     volumes:
-      - ../../db/sample-northwind-sqlite:/db
-      - ../../config/_internal:/config:ro
+      - ${CONFIG_DIR_PATH}:/app/config:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/"]
@@ -44,7 +47,9 @@ services:
       start_period: 10s
 
   bkend-boot-groovy-playground:
-    build: ./bkend-boot-groovy-playground
+    build: 
+      context: ../.. 
+      dockerfile: _apps/flowkraft/bkend-boot-groovy-playground/Dockerfile
     image: bkend-boot-groovy-playground:latest
     container_name: fkraft-bkend-boot-groovy-playground
     ports:
@@ -53,9 +58,9 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:-false}
       - DDL_AUTO=${DDL_AUTO:-update}
+      - DB_PATH=/app/db/sample-northwind-sqlite/northwind.db
     volumes:
-      - ../../db/sample-northwind-sqlite:/db
-      - ../../config/_internal:/config:ro
+      - ${CONFIG_DIR_PATH}:/app/config:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]

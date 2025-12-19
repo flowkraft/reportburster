@@ -29,7 +29,7 @@ class RbUtils {
     }
     
     /**
-     * Returns the API key from /config/api-key.txt, falls back to "123" in dev.
+     * Returns the API key from /app/config/api-key.txt, falls back to "123" in dev.
      */
     static String getApiKey() {
         if (cachedApiKey != null) {
@@ -37,7 +37,7 @@ class RbUtils {
         }
         
         try {
-            def apiKeyPath = Paths.get('/config/api-key.txt')
+            def apiKeyPath = Paths.get('/app/config/api-key.txt')
             if (Files.exists(apiKeyPath)) {
                 cachedApiKey = Files.readString(apiKeyPath).trim()
                 return cachedApiKey
@@ -57,4 +57,11 @@ class RbUtils {
         def config = Holders.grailsApplication?.config
         return config?.getProperty('reportburster.backend.baseUrl', String, 'http://localhost:9090')
     }
-}
+    
+    /**
+     * Clear the cached API key (useful if the key file is regenerated).
+     */
+    static void clearCache() {
+        cachedApiKey = null
+    }
+} 

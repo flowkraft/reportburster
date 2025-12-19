@@ -19,9 +19,13 @@
     </script>
     
     <!-- ReportBurster configuration (api-key.txt auto-discovery with '123' fallback for dev) -->
+    <%@ page import="flowkraft.frend.RbUtils" %>
     <script>
-        <rb:configScript/>
-    </script>
+        window.rbConfig = {
+            apiBaseUrl: '${RbUtils.apiBaseUrl}',
+            apiKey: '${RbUtils.apiKey}'
+        };
+    </script> 
     
     <!-- Google Fonts - Inter for clean professional look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

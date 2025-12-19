@@ -1,0 +1,22 @@
+# Stage 1: Composer
+FROM composer:2.5 AS composer
+WORKDIR /app/reportburster-portal
+COPY ./wp-plugins/reportburster-portal /app/reportburster-portal
+RUN composer install --no-interaction --prefer-dist --no-progress --no-suggest --no-dev --optimize-autoloader
+
+# Stage 2: Node
+FROM node:20-alpine AS theme-builder
+WORKDIR /app/reportburster-theme
+COPY ./wp-plugins/reportburster-portal /var/www/html/wp-content/plugins/reportburster-portal
+COPY ./wp-themes/reportburster-theme /app/reportburster-theme
+RUN (npm ci --no-audit --no-fund --legacy-peer-deps || npm install --no-audit --no-fund --legacy-peer-deps) && npm run production
+
+# Stage 3: Final
+FROM wordpress:6.8.2-php8.4-apache
+
+COPY --from=composer /app/reportburster-portal /var/www/html/wp-content/plugins/reportburster-portal
+COPY --from=theme-builder /app/reportburster-theme/theme /var/www/html/wp-content/themes/reportburster-theme
+
+# Create directories with proper permissions
+RUN mkdir -p /var/www/html/wp-content/uploads /var/www/html/wp-content/upgrade \
+    && chown -R www-data:www-data /var/www/html/wp-content

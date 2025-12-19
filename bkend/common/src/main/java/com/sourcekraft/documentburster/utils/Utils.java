@@ -149,6 +149,51 @@ public class Utils {
 			return getParentFolderPathHavingName(configurationFilePath, "config");
 	}
 
+	/**
+	 * Returns the portable executable directory for this runtime.
+	 * Checks in this order: System property PORTABLE_EXECUTABLE_DIR, then
+	 * environment variable PORTABLE_EXECUTABLE_DIR. Returns empty string if not set.
+	 *
+	 * Behavior note: if PORTABLE_EXECUTABLE_DIR is provided via environment and is a
+	 * relative path (e.g., "testground/e2e"), we return it as-is (normalized slashes)
+	 * instead of converting it to an absolute path. This preserves backward-compatible
+	 * behavior for processes started from the project root (older behavior relied on
+	 * relative paths resolving against the JVM working dir).
+	 */
+	public static String getPortableExecutableDir() {
+		// Prefer system property (explicit JVM arg -DPORTABLE_EXECUTABLE_DIR)
+		String portableDir = System.getProperty("PORTABLE_EXECUTABLE_DIR");
+		boolean fromSystemProperty = true;
+		if (StringUtils.isBlank(portableDir)) {
+			portableDir = System.getenv("PORTABLE_EXECUTABLE_DIR");
+			fromSystemProperty = false;
+		}
+		if (StringUtils.isBlank(portableDir)) return StringUtils.EMPTY;
+
+		// If it originated from a system property, keep existing behavior: resolve to absolute path
+		if (fromSystemProperty) {
+			try {
+				Path p = Paths.get(portableDir);
+				if (!p.isAbsolute()) p = p.toAbsolutePath().normalize();
+				return p.toString().replace("\\", "/");
+			} catch (Exception e) {
+				return portableDir.replace("\\", "/");
+			}
+		} else {
+			// Env var case: if absolute, normalize; if relative, leave relative (preserve legacy semantics)
+			try {
+				Path p = Paths.get(portableDir);
+				if (p.isAbsolute()) {
+					return p.toAbsolutePath().normalize().toString().replace("\\", "/");
+				} else {
+					return portableDir.replace("\\", "/");
+				}
+			} catch (Exception e) {
+				return portableDir.replace("\\", "/");
+			}
+		}
+	}
+
 	public static String getRandomJobFileName() {
 
 		return getRandomFileName("temp.job");

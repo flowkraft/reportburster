@@ -24,7 +24,6 @@ plugins {
 apply plugin: "org.apache.grails.gradle.grails-web"
 apply plugin: "org.apache.grails.gradle.grails-gsp"
 apply plugin: "cloud.wondrify.asset-pipeline"
-apply plugin: "org.apache.grails.gradle.grails-gson"
 
 group = "com.flowkraft"
 
@@ -45,7 +44,6 @@ dependencies {
     implementation "org.apache.grails:grails-core"
     implementation "org.apache.grails:grails-data-hibernate5"
     implementation "org.apache.grails:grails-data-hibernate5-dbmigration"
-    implementation "org.apache.grails:grails-data-mongodb-gson-templates"
     implementation "org.apache.grails:grails-databinding"
     implementation "org.apache.grails:grails-events"
     implementation "org.apache.grails:grails-gsp"
