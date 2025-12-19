@@ -139,12 +139,14 @@ export class ApiService {
       // Electron/Grails/WordPress: Use API key from file system
       // headers.set('X-API-Key', this.apiKey);
     } else {
+      // TEMP (2025-12-19): XSRF header injection disabled for rollback/testing.
+      // Original XSRF header logic preserved below for easy re-enable.
       // Web mode: Use CSRF token (Spring Security standard pattern)
       // Spring sets XSRF-TOKEN cookie, we send it as X-XSRF-TOKEN header
-      const xsrfToken = this.getXsrfToken();
-      if (xsrfToken) {
-        headers.set('X-XSRF-TOKEN', xsrfToken);
-      }
+      // const xsrfToken = this.getXsrfToken();
+      // if (xsrfToken) {
+      //   headers.set('X-XSRF-TOKEN', xsrfToken);
+      // }
     }
     
     const options: RequestInit = {
