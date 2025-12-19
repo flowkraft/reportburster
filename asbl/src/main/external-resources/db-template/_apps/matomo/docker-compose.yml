@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   matomo:
     image: nginx:alpine3.22
@@ -5,39 +7,40 @@ services:
     depends_on: 
       - matomo-fpm
     ports:
-      - "${HOST_PORT:-8081}:8080"  
+      - "${HOST_PORT:-8081}:8080"
     volumes:
       - matomo_html:/var/www/html
-      # see https://github.com/matomo-org/matomo-nginx
-      - ./config/matomo.conf:/etc/nginx/conf.d/default.conf:z,ro
+      # Override nginx default.conf with your custom config
+      - ./config/matomo.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
-    
+
   matomo-fpm:
     image: matomo:5.6.1-fpm-alpine
     container_name: rb-matomo-fpm
     depends_on:
       - matomo-db
     volumes:
-      # - ./config:/var/www/html/config:z
-      # - ./logs:/var/www/html/logs:z
       - matomo_html:/var/www/html
+      # Uncomment if you want to persist config/logs on host
+      # - ./config:/var/www/html/config
+      # - ./logs:/var/www/html/logs
     environment:
       - MATOMO_DATABASE_HOST=matomo-db
       - PHP_MEMORY_LIMIT=2048M
     env_file:
       - ./config/.env
     restart: unless-stopped
-    
+
   matomo-db:
     image: mariadb:10.11
     container_name: rb-matomo-db
     command: --max-allowed-packet=64MB
     volumes:
-      - matomo_data:/var/lib/mysql:Z
+      - matomo_data:/var/lib/mysql
     env_file:
       - ./config/.env
     restart: unless-stopped
-    
+
 volumes:
   matomo_html:
   matomo_data:
