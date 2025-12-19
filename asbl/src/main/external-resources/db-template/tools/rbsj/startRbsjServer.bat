@@ -50,12 +50,13 @@ powershell -Command "(Get-Content '%SETTINGS_FILE%') -replace 'http://localhost:
 
 REM ========================================================================
 REM Generate new API key and write to api-key.txt
+REM (TEMPORARILY DISABLED for rollback)
 REM ========================================================================
-powershell -Command ^
-  "$bytes = New-Object byte[] 32; ^
-    [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes); ^
-    $apiKey = [System.Convert]::ToBase64String($bytes).TrimEnd('='); ^
-    Set-Content -Path '%API_KEY_FILE%' -Value $apiKey -Encoding ASCII"
+REM powershell -Command ^
+REM   "$bytes = New-Object byte[] 32; ^
+REM     [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes); ^
+REM     $apiKey = [System.Convert]::ToBase64String($bytes).TrimEnd('='); ^
+REM     Set-Content -Path '%API_KEY_FILE%' -Value $apiKey -Encoding ASCII"
 
 
 set "JAVA_CMD=-Dorg.springframework.boot.logging.LoggingSystem=org.springframework.boot.logging.log4j2.Log4J2LoggingSystem -Dlog4j.configurationFile=%PORTABLE_EXECUTABLE_DIR_PATH%\log4j2.xml -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT%"
@@ -102,12 +103,12 @@ if "%RB_SERVER_MODE%"=="true" (
   REM ========================================================================
   REM Read API key from api-key.txt and write it to FRONTEND_PATH/assets/config.json
   REM ========================================================================
-  powershell -Command ^
-    "$apiKey = Get-Content '%API_KEY_FILE%' -Raw; ^
-     $config = @{ apiKey = $apiKey } | ConvertTo-Json; ^
-     $assetsPath = '%FRONTEND_PATH%\assets'; ^
-     if (-not (Test-Path $assetsPath)) { New-Item -ItemType Directory -Path $assetsPath -Force | Out-Null }; ^
-     Set-Content -Path (Join-Path $assetsPath 'config.json') -Value $config -Encoding ASCII"
+  REM powershell -Command ^
+  REM   "$apiKey = Get-Content '%API_KEY_FILE%' -Raw; ^
+  REM    $config = @{ apiKey = $apiKey } | ConvertTo-Json; ^
+  REM    $assetsPath = '%FRONTEND_PATH%\assets'; ^
+  REM    if (-not (Test-Path $assetsPath)) { New-Item -ItemType Directory -Path $assetsPath -Force | Out-Null }; ^
+  REM    Set-Content -Path (Join-Path $assetsPath 'config.json') -Value $config -Encoding ASCII"
 
   REM Run Java with our PowerShell tee script
   java %JAVA_CMD% 2>&1 | powershell -NoProfile -ExecutionPolicy Bypass -File "%TEE_PS1%" "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-server.log"

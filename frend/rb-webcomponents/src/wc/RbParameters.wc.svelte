@@ -99,7 +99,8 @@
       error = null;
       
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (apiKey) headers['X-API-Key'] = apiKey;
+      // TEMP: API key disabled for rollback
+      // if (apiKey) headers['X-API-Key'] = apiKey;
       
       const configUrl = `${apiBaseUrl}/reports/${reportCode}/config`;
       console.log('[rb-parameters] Fetching config from:', configUrl);
@@ -405,7 +406,8 @@
     error = null;
     
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (apiKey) headers['X-API-Key'] = apiKey;
+    // TEMP: API key disabled for rollback
+    // if (apiKey) headers['X-API-Key'] = apiKey;
     
     try {
       // Fetch config

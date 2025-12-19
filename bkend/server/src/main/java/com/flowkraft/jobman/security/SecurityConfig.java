@@ -69,8 +69,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .csrfTokenRequestHandler(requestHandler)
-                // Ignore CSRF for API key authenticated requests (Electron, Grails, WordPress)
-                .ignoringRequestMatchers(request -> request.getHeader("X-API-Key") != null)
+                // TEMP: CSRF ignoring for API key requests is disabled for rollback.
+                // .ignoringRequestMatchers(request -> request.getHeader("X-API-Key") != null)
             )
 
             // === SESSION MANAGEMENT ===
@@ -80,7 +80,8 @@ public class SecurityConfig {
 
             // === API KEY FILTER ===
             // For Electron/Grails/WordPress that send X-API-Key header
-            .addFilterBefore(new ApiKeyAuthenticationFilter(apiKeyManager), BasicAuthenticationFilter.class)
+            // TEMP: API key filter disabled for rollback (kept for future reuse)
+            // .addFilterBefore(new ApiKeyAuthenticationFilter(apiKeyManager), BasicAuthenticationFilter.class)
 
             // === AUTHORIZATION RULES ===
             // Allow unauthenticated access to all static assets + web components (static resources for external embedding)
@@ -99,7 +100,8 @@ public class SecurityConfig {
                         uri.startsWith("/.well-known/")
                     );
                 }).permitAll()
-                .anyRequest().authenticated()
+                // TEMP: API key auth disabled; permit all requests during rollback
+                .anyRequest().permitAll()
             );
         
         return http.build();

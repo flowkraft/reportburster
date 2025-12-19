@@ -33,7 +33,7 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
 		registry.addEndpoint(Constants.WS_ENDPOINT)
 			.setAllowedOriginPatterns("*")
-			.addInterceptors(new WebSocketHandshakeInterceptor(apiKeyManager, securityEnabled))
+			.addInterceptors(new WebSocketHandshakeInterceptor(apiKeyManager, false)) // TEMP: disable API key handshake validation during rollback
 			.withSockJS();
 	}
 

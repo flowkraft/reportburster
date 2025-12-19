@@ -136,9 +136,10 @@
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      if (apiKey) {
-        headers['X-API-Key'] = apiKey;
-      }
+      // TEMP: API key disabled for rollback
+      // if (apiKey) {
+      //   headers['X-API-Key'] = apiKey;
+      // }
       
       const response = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
       
@@ -184,9 +185,10 @@
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      if (apiKey) {
-        headers['X-API-Key'] = apiKey;
-      }
+      // TEMP: API key disabled for rollback
+      // if (apiKey) {
+      //   headers['X-API-Key'] = apiKey;
+      // }
       
       // Build query string from parameters
       const params = new URLSearchParams();

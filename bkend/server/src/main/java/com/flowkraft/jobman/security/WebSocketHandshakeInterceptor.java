@@ -66,12 +66,10 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
             
             String accessToken = queryParams.get("access_token");
             if (accessToken != null && !accessToken.isEmpty()) {
-                // Validate API key
-                if (apiKeyManager.isValidApiKey(accessToken)) {
-                    attributes.put("authenticated", true);
-                    attributes.put("apiKey", accessToken);
-                    return true;
-                }
+                // TEMP: API key validation disabled for rollback - mark as authenticated for compatibility
+                attributes.put("authenticated", true);
+                attributes.put("apiKey", accessToken);
+                return true;
             }
         }
 

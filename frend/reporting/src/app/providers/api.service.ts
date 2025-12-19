@@ -48,7 +48,9 @@ export class ApiService {
    * This is called during app initialization for Electron mode only.
    */
   setApiKey(key: string): void {
-    this.apiKey = key;
+    // TEMP: API key usage disabled for rollback
+    // this.apiKey = key;
+    this.apiKey = '';
   }
 
   /**
@@ -100,7 +102,8 @@ export class ApiService {
    * Returns the API key if set, otherwise null.
    */
   public getApiKey(): string | null {
-    return this.apiKey || null;
+    // TEMP: API key disabled during rollback
+    return null;
   }
 
   private async request(
@@ -131,9 +134,10 @@ export class ApiService {
     const headers = new Headers(customHeaders || this.headers);
     
     // Authentication: Add appropriate header based on mode
-    if (this.apiKey) {
+    if (false) {
+      // TEMP: API key header disabled during rollback
       // Electron/Grails/WordPress: Use API key from file system
-      headers.set('X-API-Key', this.apiKey);
+      // headers.set('X-API-Key', this.apiKey);
     } else {
       // Web mode: Use CSRF token (Spring Security standard pattern)
       // Spring sets XSRF-TOKEN cookie, we send it as X-XSRF-TOKEN header
