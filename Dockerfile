@@ -242,8 +242,8 @@ else
     # No automatic initial-folder extraction is performed here; ensure host mounts
     # are populated externally when needed
     
-    # Setup API key authentication
-    setup_api_key
+    # Setup API key authentication (TEMPORARILY DISABLED for rollback)
+    # setup_api_key
     
     # Export environment variables
     export PORTABLE_EXECUTABLE_DIR_PATH
@@ -265,7 +265,8 @@ else
         -Dserver.port=$SERVER_PORT \
         -DPORTABLE_EXECUTABLE_DIR=$PORTABLE_EXECUTABLE_DIR_PATH \
         -DUID=$SERVER_PORT \
-        -DAPI_KEY="$CURRENT_API_KEY" \
+        # TEMP: API key disabled for rollback
+        # -DAPI_KEY="$CURRENT_API_KEY" \
         -Dspring.resources.add-mappings=true \
         -Dspring.web.resources.static-locations=file:///$FRONTEND_PATH \
         -Dspring.mvc.static-path-pattern="/**" \

@@ -297,7 +297,8 @@
                     const reportCode = 'par-employee-hire-dates';
                     
                     const headers = { 'Content-Type': 'application/json' };
-                    if (apiKey) headers['X-API-Key'] = apiKey;
+                    // TEMP: API key disabled for rollback
+                    // if (apiKey) headers['X-API-Key'] = apiKey;
                     
                     const dataUrl = apiBaseUrl + '/reports/' + reportCode + '/data?' + queryParams.toString();
                     console.log('[reportParameters GSP] Fetching filtered data from:', dataUrl);

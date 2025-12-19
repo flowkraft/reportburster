@@ -141,13 +141,11 @@ export class WebSocketEndpoint {
 
     let socketUrl = this.BACKEND_URL + this.socketUrl;
     
-    // For Electron/Grails/WordPress: Pass API key as query parameter
-    // This is validated by WebSocketHandshakeInterceptor on the server
-    if (this.accessToken) {
-      socketUrl += `?access_token=${encodeURIComponent(this.accessToken)}`;
-      // Also set in STOMP headers for the ChannelInterceptor
-      headers['X-API-Key'] = this.accessToken;
-    }
+    // TEMP: API key / access_token disabled during rollback
+    // if (this.accessToken) {
+    //   socketUrl += `?access_token=${encodeURIComponent(this.accessToken)}`;
+    //   headers['X-API-Key'] = this.accessToken;
+    // }
     // For Web mode: SockJS automatically includes cookies (JSESSIONID)
     // No additional headers needed - session authentication is automatic
 

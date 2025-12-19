@@ -171,7 +171,8 @@
       error = null;
       
       const headers: Record<string, string> = {};
-      if (apiKey) headers['X-API-Key'] = apiKey;
+      // TEMP: API key disabled for rollback
+      // if (apiKey) headers['X-API-Key'] = apiKey;
       
       try {
         // Fetch config
@@ -603,7 +604,8 @@
     
     loading = true;
     const headers: Record<string, string> = {};
-    if (apiKey) headers['X-API-Key'] = apiKey;
+    // TEMP: API key disabled for rollback
+    // if (apiKey) headers['X-API-Key'] = apiKey;
     
     try {
       // Re-fetch config to get any DSL changes

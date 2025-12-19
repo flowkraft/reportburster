@@ -36,9 +36,19 @@ public class ApiKeyManager {
     private static final int API_KEY_LENGTH = 32; // 256 bits of entropy
     
     private String apiKey;
+
+    // TEMP: Disable API key generation/persistence during rollback
+    private boolean API_KEY_TEMP_DISABLED = true;
     
     @PostConstruct
     public void init() {
+        // TEMP: API key management temporarily disabled during rollback
+        if (API_KEY_TEMP_DISABLED) {
+            log.info("API key management temporarily disabled by rollback");
+            apiKey = null;
+            return;
+        }
+
         // Check for API_KEY environment variable first
         String envApiKey = Utils.getJvmArgumentValue("-DAPI_KEY=");
         if (envApiKey != null && !envApiKey.isEmpty()) {

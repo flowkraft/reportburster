@@ -52,10 +52,8 @@ export class WebSocketService extends WebSocketEndpoint {
 
     this.socketUrl = Constants.WS_ENDPOINT;
     
-    // Authentication for WebSocket:
-    // - Electron mode: Use API key from apiService (read from file system)
-    // - Web mode: Session cookie (JSESSIONID) is sent automatically by SockJS
-    this.accessToken = this.apiService.getApiKey();
+    // TEMP: API key disabled for rollback - do not set access token
+    this.accessToken = null;
 
     await this.makeWSConnection([
       topicOptionsExecutionStats,

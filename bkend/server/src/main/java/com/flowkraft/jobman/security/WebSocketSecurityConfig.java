@@ -67,6 +67,12 @@ public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer
                         return message;
                     }
                     
+                    // TEMP (2025-12-19): API key authentication disabled for rollback.
+                    // We return early to avoid executing the API key/STOMP authentication block below
+                    // which is preserved (commented) for easy re-enabling in the future.
+                    return message;
+
+                    /* ORIGINAL AUTHENTICATION LOGIC (PRESERVED FOR RE-ENABLING)
                     // Check for API key in STOMP headers (Electron/Grails/WordPress)
                     String apiKey = accessor.getFirstNativeHeader("X-API-Key");
                     
@@ -107,6 +113,7 @@ public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer
                     // No valid authentication found - reject connection
                     throw new SecurityException("WebSocket connection requires authentication. " +
                         "Provide either a valid session (web mode) or X-API-Key header/access_token parameter (Electron mode).");
+                    END ORIGINAL */
                 }
 
                 return message;

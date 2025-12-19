@@ -38,20 +38,32 @@ public class SecurityController {
      */
     @GetMapping("/bootstrap")
     public Map<String, Object> bootstrap(HttpServletRequest request) {
-        // Only allow localhost access
-        String remoteAddr = request.getRemoteAddr();
-        boolean isLocalhost = "127.0.0.1".equals(remoteAddr) || 
-                              "0:0:0:0:0:0:0:1".equals(remoteAddr) ||
-                              "localhost".equalsIgnoreCase(remoteAddr);
-        
-        if (!isLocalhost) {
-            throw new SecurityException("Bootstrap endpoint only accessible from localhost");
-        }
-        
+        // TEMP (2025-12-19): Bootstrap endpoint disabled during API key rollback.
+        // Original implementation preserved below for easy re-enabling.
+        // ---------------------------------------------------------------
+        // // Only allow localhost access
+        // String remoteAddr = request.getRemoteAddr();
+        // boolean isLocalhost = "127.0.0.1".equals(remoteAddr) || 
+        //                       "0:0:0:0:0:0:0:1".equals(remoteAddr) ||
+        //                       "localhost".equalsIgnoreCase(remoteAddr);
+        //
+        // if (!isLocalhost) {
+        //     throw new SecurityException("Bootstrap endpoint only accessible from localhost");
+        // }
+        //
+        // return Map.of(
+        //     "apiKey", apiKeyManager.getApiKey(),
+        //     "header", "X-API-Key",
+        //     "queryParam", "apiKey"
+        // );
+        // ---------------------------------------------------------------
+
+        // Return a safe, non-leaking response so internal clients don't fail on startup.
         return Map.of(
-            "apiKey", apiKeyManager.getApiKey(),
+            "apiKey", null,
             "header", "X-API-Key",
-            "queryParam", "apiKey"
+            "queryParam", "apiKey",
+            "note", "Bootstrap endpoint disabled: API key auth temporarily disabled"
         );
     }
     
