@@ -66,12 +66,15 @@ public class SecurityConfig {
             // === CSRF CONFIGURATION (Standard Spring Security + Angular pattern) ===
             // CookieCsrfTokenRepository: Puts CSRF token in XSRF-TOKEN cookie
             // Angular's HttpClient reads this cookie and sends as X-XSRF-TOKEN header
-            .csrf(csrf -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .csrfTokenRequestHandler(requestHandler)
-                // TEMP: CSRF ignoring for API key requests is disabled for rollback.
-                // .ignoringRequestMatchers(request -> request.getHeader("X-API-Key") != null)
-            )
+            // TEMP (2025-12-19): CSRF temporarily disabled for rollback/testing.
+            // Original CSRF configuration preserved below for easy re-enable.
+            // .csrf(csrf -> csrf
+            //     .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+            //     .csrfTokenRequestHandler(requestHandler)
+            //     // TEMP: CSRF ignoring for API key requests is disabled for rollback.
+            //     // .ignoringRequestMatchers(request -> request.getHeader("X-API-Key") != null)
+            // )
+            .csrf(csrf -> csrf.disable())
 
             // === SESSION MANAGEMENT ===
             // IF_REQUIRED: Create session when needed (for Angular web mode)

@@ -309,7 +309,8 @@ export class AppsManagerService {
       const response = await this.apiService.get('/jobman/system/services/status');
       const statuses: any[] = response;  // Array of {name, status, ports, health}
 
-      console.log('API response statuses:', statuses);
+      // Use debug-level logging to avoid noisy console output in normal operation
+      console.debug('[AppsManager] API response statuses:', statuses);
 
       // Update app states based on API response
       for (const app of this.allAppsData.apps) {
@@ -325,7 +326,8 @@ export class AppsManagerService {
           return false;
         });
         
-        console.log(`App ${app.id}: service_name=${app.service_name}, matched service=`, service);
+        // Debug-level output so it only appears when debug logging is enabled
+        console.debug(`[AppsManager] App ${app.id}: service_name=${app.service_name}, matched service=`, service);
         
         if (service) {
           // Use shared helper to map backend status to UI state (handles healthcheck states)
