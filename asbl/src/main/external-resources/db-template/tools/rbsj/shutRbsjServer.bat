@@ -7,7 +7,7 @@ set "SCRIPT_DIR=%~dp0"
 set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 
 :: Navigate to the ReportBurster directory
-cd "%SCRIPT_DIR%\..\.."
+cd /d "%SCRIPT_DIR%\..\.."
 set "PORTABLE_EXECUTABLE_DIR_PATH=%cd%"
 
 :: Only set RB_SERVER_MODE to false if it's not already defined
