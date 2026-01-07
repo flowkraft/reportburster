@@ -6,13 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- ReportBurster can now create pivot tables
 - New embeddable web components rb-report, rb-tabulator, rb-chart, rb-pivottable, rb-parameters; embed ReportBurster reports directly into your existing web applications and portals 
 - Improved **Apps**
   - 'ReportBurster Self Service Portal' is a fast way to build an Employee Portal / Customer Portal  / Partner Portal / Student Portal
   -  Use 'Flowkraft Frontend App' for creating custom dashboards & portals
   - 'Flowkraft Admin Panel App' can be used to easily build admin user interfaces on top of your business data
   - 'Flowkraft Backend App' can be used to quickly deploy / run automation flows across your business systems
+- ReportBurster can now create pivot tables
 
 ### Fixed
 

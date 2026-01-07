@@ -100,16 +100,24 @@ LABEL maintainer="FlowKraft" \
 
 # Install runtime dependencies
 RUN apk --no-cache add \
+    \
+    # --- Networking & Transfer Tools ---
     curl \
     rclone \
+    openssh-client \
+    rsync \
+    \
+    # --- Container / DevOps Tools ---
     docker-cli \
     docker-cli-compose \
+    \
+    # --- Shell & Scripting Utilities ---
     bash \
     perl \
-    xmlstarlet \
-    sed \
     gawk \
-    jq
+    sed \
+    jq \
+    xmlstarlet
 
 # Set working directory
 WORKDIR /app

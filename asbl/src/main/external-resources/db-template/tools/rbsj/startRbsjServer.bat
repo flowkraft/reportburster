@@ -59,19 +59,23 @@ REM     $apiKey = [System.Convert]::ToBase64String($bytes).TrimEnd('='); ^
 REM     Set-Content -Path '%API_KEY_FILE%' -Value $apiKey -Encoding ASCII"
 
 
-set "JAVA_CMD=-Dorg.springframework.boot.logging.LoggingSystem=org.springframework.boot.logging.log4j2.Log4J2LoggingSystem -Dlog4j.configurationFile=%PORTABLE_EXECUTABLE_DIR_PATH%\log4j2.xml -Dserver.port=%PORT% -DPORTABLE_EXECUTABLE_DIR=%PORTABLE_EXECUTABLE_DIR_PATH% -DUID=%PORT%"
+set JAVA_CMD=-Dorg.springframework.boot.logging.LoggingSystem=org.springframework.boot.logging.log4j2.Log4J2LoggingSystem
+set JAVA_CMD=!JAVA_CMD! "-Dlog4j.configurationFile=!PORTABLE_EXECUTABLE_DIR_PATH!\log4j2.xml"
+set JAVA_CMD=!JAVA_CMD! -Dserver.port=!PORT!
+set JAVA_CMD=!JAVA_CMD! "-DPORTABLE_EXECUTABLE_DIR=!PORTABLE_EXECUTABLE_DIR_PATH!"
+set JAVA_CMD=!JAVA_CMD! -DUID=!PORT!
 
-if not "%FRONTEND_PATH%"=="" (
-  set "JAVA_CMD=!JAVA_CMD! -Dspring.resources.add-mappings=true"
-  set "JAVA_CMD=!JAVA_CMD! -Dspring.web.resources.static-locations=file:///%FRONTEND_PATH:/=\%"
-  set "JAVA_CMD=!JAVA_CMD! -Dspring.mvc.static-path-pattern=/**"
+if not "!FRONTEND_PATH!"=="" (
+  set JAVA_CMD=!JAVA_CMD! -Dspring.resources.add-mappings=true
+  set JAVA_CMD=!JAVA_CMD! "-Dspring.web.resources.static-locations=file:///!FRONTEND_PATH:/=\!"
+  set JAVA_CMD=!JAVA_CMD! -Dspring.mvc.static-path-pattern=/**
 )
 
-if not "%POLLING_PATH%"==""  set "JAVA_CMD=!JAVA_CMD! -DPOLLING_PATH=%POLLING_PATH%"
-if not "%ELECTRON_PID%"==""  set "JAVA_CMD=!JAVA_CMD! -DELECTRON_PID=%ELECTRON_PID%"
+if not "!POLLING_PATH!"=="" set JAVA_CMD=!JAVA_CMD! "-DPOLLING_PATH=!POLLING_PATH!"
+if not "!ELECTRON_PID!"=="" set JAVA_CMD=!JAVA_CMD! -DELECTRON_PID=!ELECTRON_PID!
 
-set "JAVA_CMD=!JAVA_CMD! -Djava.io.tmpdir=%PORTABLE_EXECUTABLE_DIR_PATH%\temp"
-set "JAVA_CMD=!JAVA_CMD! -jar %JAR_FILE%"
+set JAVA_CMD=!JAVA_CMD! "-Djava.io.tmpdir=!PORTABLE_EXECUTABLE_DIR_PATH!\temp"
+set JAVA_CMD=!JAVA_CMD! -jar "!JAR_FILE!"
 
 REM SERVE_WEB=true is the SINGLE source of truth for web server mode
 set "SERVE_WEB=true"
