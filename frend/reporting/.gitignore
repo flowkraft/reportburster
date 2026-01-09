@@ -52,3 +52,8 @@ node_modules
 Thumbs.db
 
 *storybook.log
+
+#################
+## Autonomous Coding Harness Templates (local dev only)
+#################
+.harness/
