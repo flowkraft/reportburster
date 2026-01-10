@@ -11,6 +11,7 @@ services:
       - GIT_EMAIL=virgil.trasca@gmail.com
     volumes:
       - ..:/workspace
+      - /var/kraft-internalsystems/apps/cvs/code-server-reportburster:/home/coder/.local/share/code-server
       # - ../../..:/workspace
       # - ../.vscode/settings.json:/home/coder/.local/share/code-server/User/settings.json
     restart: unless-stopped
