@@ -23,7 +23,7 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
   allTags: string[] = [];
   isLoading: boolean = true;
   isRefreshing: boolean = false;
-  
+
   // Polling subscription for apps in transitional states (starting/stopping)
   private pollingSubscription: Subscription | null = null;
 
@@ -35,13 +35,13 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
   // Actual list displayed by the UI (either all apps after filtering, or provided input app(s))
   public visibleApps: ManagedApp[] = [];
   @Input() dropdownDirection: 'up' | 'down' | 'expandedList' = 'down';
-  
+
   /** Optional: When provided, renders an "Ask AI" button next to Start/Stop in expandedList mode */
   @Input() askAiForHelpOutputTypeCode: string = '';
-  
+
   /** Optional: When false, hides dev-oriented controls (command input, build flags). Default: true */
   @Input() showDevButtons: boolean = true;
-  
+
   /** Reference to the embedded AI manager component */
   @ViewChild('aiManagerInstance') aiManagerInstance: AiManagerComponent | undefined;
 
@@ -148,7 +148,7 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
       void this.loadInitialApps();
     }
   }
-  
+
   ngOnDestroy(): void {
     this.searchSubscription?.unsubscribe();
     this.searchSubject.complete(); // Complete subject to prevent memory leaks
@@ -181,7 +181,7 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
       this.visibleApps = [...this.masterApps];
     }
     // Refresh statuses using the API
-    await this.appsManagerService.refreshAllStatuses();
+    await this.appsManagerService.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.masterApps));
     // Update state from service
     const fetched = await Promise.all(this.masterApps.map(async (app) => this.appsManagerService.getAppById(app.id)));
     this.masterApps = fetched.map(a => a || ({} as ManagedApp));
@@ -198,7 +198,7 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
       this.searchTerm = '';
     }
     this.isLoading = false;
-    
+
     // If any app is already in a transitional state (starting/stopping), start polling
     // This handles the case where user navigates away and back while an app is still starting
     const hasTransitionalApps = PollingHelper.hasTransitionalItems(this.masterApps);
@@ -246,7 +246,7 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
     if (this.isRefreshing) return;
     this.isRefreshing = true;
     try {
-      await this.appsManagerService.refreshAllStatuses();
+      await this.appsManagerService.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.masterApps));
       // update local UI state
       const fetched = await Promise.all(this.masterApps.map(async (app) => this.appsManagerService.getAppById(app.id)));
       this.masterApps = fetched.map(a => a || ({} as ManagedApp));
@@ -295,9 +295,9 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
   toggleCommandFlag(app: ManagedApp, flag: string, event: Event): void {
     const checkbox = event.target as HTMLInputElement;
     const isChecked = checkbox.checked;
-    
+
     if (!app.currentCommandValue) return;
-    
+
     // Remove flag if unchecked
     if (!isChecked) {
       app.currentCommandValue = app.currentCommandValue
@@ -358,25 +358,43 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
   // Note: 'Reprovision' is now a switch that adds '--reprovision' to the start command.
   // The actual start invocation will include this flag when the user clicks Start.
 
-async onToggleApp(app: ManagedApp) {
-    
+  async onToggleApp(app: ManagedApp) {
+
+    // Check if Docker is required and not installed, and only for starting (not stopping)
     // Check if Docker is required and not installed, and only for starting (not stopping)
     if (app.state !== 'running' && !this.stateStore?.configSys?.sysInfo?.setup?.docker?.isDockerOk) {
-      const message = `Docker is not installed and it is required for starting the <strong>${app.name}</strong> application.<br><br>Would you like to see how to install it?`;
+      const dockerInfo = this.stateStore?.configSys?.sysInfo?.setup?.docker;
+      let message = '';
 
-      this.confirmService.askConfirmation({
-        message: message,
-        confirmAction: () => {
-          // Navigate to help section with active tab
-          this.router.navigate(['/help', 'starterPacksMenuSelected'], { queryParams: { activeTab: 'extraPackagesTab' } });
-        },
-        cancelAction: () => {
-          // Do nothing on No - don't proceed with toggle
-        }
-      });
+      if (dockerInfo && dockerInfo.isDockerInstalled && !dockerInfo.isDockerDaemonRunning) {
+        message = `Docker is installed but the background service is not running. Please start Docker Desktop to use <strong>${app.name}</strong>.`;
+
+        this.confirmService.askConfirmation({
+          message: message,
+          confirmAction: () => {
+            // No navigation for daemon not running
+          },
+          cancelAction: () => {
+          }
+        });
+      } else {
+        message = `Docker is not installed and it is required for starting the <strong>${app.name}</strong> application.<br><br>Would you like to see how to install it?`;
+
+        this.confirmService.askConfirmation({
+          message: message,
+          confirmAction: () => {
+            // Navigate to help section with active tab
+            this.router.navigate(['/help', 'starterPacksMenuSelected'], { queryParams: { activeTab: 'extraPackagesTab' } });
+          },
+          cancelAction: () => {
+            // Do nothing on No - don't proceed with toggle
+          }
+        });
+      }
+
       return;  // Exit without proceeding to normal toggle
     }
-    
+
     let dialogQuestion = `Stop ${app.name}?`;
     if (app.state !== 'running') {
       // Default concise start message with patience note
@@ -395,7 +413,7 @@ async onToggleApp(app: ManagedApp) {
         app.state = app.state === 'running' ? 'stopping' : 'starting';
 
         await this.appsManagerService.toggleApp(app);
-        
+
         // After toggleApp completes, start polling if any app is still in transitional state
         this.startTransitionPolling();
       }
@@ -413,20 +431,20 @@ async onToggleApp(app: ManagedApp) {
       console.log('Polling already active, skipping...');
       return;
     }
-    
+
     console.log('Starting polling subscription (max timeout: ' + PollingHelper.getMaxTimeoutDescription() + ')...');
-    
+
     this.pollingSubscription = PollingHelper.createPollingSubscription(
       // onPoll callback - returns true to stop polling
       async () => {
         // First refresh to get latest state
         await this.refreshDataSilent();
-        
+
         console.log('After refresh, app states:', this.masterApps.map(a => ({ id: a.id, state: a.state })));
-        
+
         // Check if we should stop polling
         const hasTransitionalApps = PollingHelper.hasTransitionalItems(this.masterApps);
-        
+
         if (!hasTransitionalApps) {
           this.stopTransitionPolling();
           return true; // Signal to stop
@@ -463,17 +481,17 @@ async onToggleApp(app: ManagedApp) {
    */
   private async refreshDataSilent(): Promise<void> {
     try {
-      await this.appsManagerService.refreshAllStatuses();
+      await this.appsManagerService.refreshAllStatuses(true);
       // Update local UI state
       const fetched = await Promise.all(this.masterApps.map(async (app) => this.appsManagerService.getAppById(app.id)));
       this.masterApps = fetched.map(a => a || ({} as ManagedApp));
       this.visibleApps = [...this.masterApps];
       this.applyFilters();
       // Force Angular to detect changes - important since we're in an async context
-      try { 
+      try {
         this.cdRef.markForCheck();
-        this.cdRef.detectChanges(); 
-      } catch (e) { 
+        this.cdRef.detectChanges();
+      } catch (e) {
         // View might be destroyed
       }
     } catch (err) {

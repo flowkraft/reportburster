@@ -14,6 +14,8 @@ export const SystemInfo = {
     docker: {
       //isDockerOk: false,
       isDockerOk: true,
+      isDockerInstalled: true,
+      isDockerDaemonRunning: true,
       version: '',
     },
     portal: {
