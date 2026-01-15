@@ -1,14 +1,12 @@
-# 🚀 ReportBurster: Reporting & Document Distribution in the Age of AI
+# The Open-Source Crystal Reports Alternative (You've Been Waiting For)
 
 <br>
 
-Automate, customize, and scale your document workflows with a top-notch solution for report generation and distribution.
-
-Define your reports with the help of AI — just describe what you need, and AI will generate the report definition for you. No coding, no SQL, no template design required (unless you want to!).
+Report generation + report bursting + self-service portal + embeddable dashboards. All in one platform. Self-hosted.
 
 <br>
 
-## ▶️ Watch the demo
+## ▶️ Watch the Video
 
 <br>
 
@@ -17,19 +15,27 @@ Define your reports with the help of AI — just describe what you need, and AI 
 
 <br>
 
-## ✨ Why ReportBurster?
+## Powerful BI Features
 
 <br>
 
-- **AI-Driven Reporting:** Instantly configure your reports with artificial intelligence—no coding, SQL, or template design required.
-- **Flexible Report Generation:** Generate professional reports from databases, PDF, Excel, CSV, Word, HTML, XML, JSON, etc.
-- **Automated Report Bursting:** Split and personalize reports for each recipient with customizable rules.
-- **Seamless Report Distribution:** Deliver reports via email, web, file sharing, or cloud services.
-- **Self-Service Web Portal:** Provide a portal for employees, customers, and partners to receive documents and make payments.
-- **Quality Assurance:** Built-in tools ensure your reports are accurate and reliably delivered.
-- **Easy to Get Started:** Simple setup with no complex configuration.
-- **Enterprise-Grade Reliability:** Trusted by businesses of all sizes, including Fortune 500 companies.
-- **Professional Support:** Friendly, expert support you can always rely on.
+### 🧠 AI-Driven Report Generation
+Connect to any database and leverage AI to visualize, query, and design reports. Generate and export reports in multiple formats including CSV, Excel, PDF, and HTML.
+
+<br>
+
+### 📨 Automated Report Distribution
+Burst reports to thousands automatically via email, FTP, cloud storage, Slack, and Teams. Automate critical workflows like payslips, invoicing, and payment processing directly from your databases.
+
+<br>
+
+### 📊 Embeddable Analytics
+Utilize powerful components like charts, pivot tables, and datatables to build custom dashboards. Seamlessly embed and share analytics directly into your existing websites and applications.
+
+<br>
+
+### 🌐 Self-Service Portal
+Provide secure, 24/7 web access to reports for your team, employees, and customers. Streamline specific workflows with dedicated portals for HR payslips, client invoices, and student grades.
 
 <br>
 
@@ -39,57 +45,6 @@ Define your reports with the help of AI — just describe what you need, and AI 
 
 1. <a href="https://www.reportburster.com" target="_blank"><strong>Download ReportBurster</strong></a>
 2. <a href="https://www.reportburster.com/docs/quickstart" target="_blank"><strong>ReportBurster in 5 Minutes</strong></a>
-
-<br>
-
-## 🧠 AI Capabilities
-
-<br>
-
-- Natural language report templates design/creation
-- SQL query generation from text descriptions
-
-<br>
-
-## 📈 Report Generation
-
-<br>
-
-**Data Sources:**  
-Connect to databases, CSV, TSV, Excel, Google Sheets (coming soon) and Office 365 (coming soon).
-
-**Output Formats:**  
-Generate reports as PDF, Excel (XLSX), HTML, Word (DOCX), or use raw data for further processing.
-
-<br>
-
-## 📄 Document Processing
-
-<br>
-
-- PDF and Excel report bursting
-- Document merging and splitting
-- Batch processing of large document sets
-
-<br>
-
-## 🔄 Automation
-
-<br>
-
-- Email distribution workflows
-- Scheduled report generation
-- Integration with existing systems
-
-<br>
-
-## 🌐 Self-Service Web Portal
-
-<br>
-
-Deploy your own secure, full-featured CMS portal—powered by ReportBurster. Seamlessly distribute payslips, invoices, and other documents to employees, students, customers, partners, and parents.
-
-Each user can log in, access their documents, manage their account, and even pay bills—all in one place.
 
 <br>
 
