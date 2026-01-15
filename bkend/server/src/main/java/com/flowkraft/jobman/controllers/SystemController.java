@@ -347,8 +347,10 @@ public class SystemController {
 	}
 
 	@GetMapping("/services/status")
-	public Mono<List<SystemService.ServiceStatusInfo>> getAllServicesStatus() throws Exception {
-		List<SystemService.ServiceStatusInfo> statuses = systemService.getAllServicesStatus();
+	public Mono<List<SystemService.ServiceStatusInfo>> getAllServicesStatus(@RequestParam Optional<Boolean> forceProbe, @RequestParam Optional<Boolean> skipProbe) throws Exception {
+		boolean force = forceProbe.orElse(false);
+		boolean skip = skipProbe.orElse(false);
+		List<SystemService.ServiceStatusInfo> statuses = systemService.getAllServicesStatus(force, skip);
 		return Mono.just(statuses);
 	}
 }

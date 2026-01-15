@@ -84,7 +84,7 @@ export class AppsManagerService {
             </div>
           </div>
         `,
-        
+
         entrypoint: 'cms-webportal-playground/docker-compose.yml',
         service_name: 'cms-webportal-playground',
         startCmd: 'service app start cms-webportal-playground 8080',
@@ -138,7 +138,7 @@ export class AppsManagerService {
         visible: true,
         launch: false, // No UI - API/automation only
       },
-       {
+      {
         id: 'rundeck',
         name: 'Rundeck (Automation & Job Scheduling)',
         icon: 'fa fa-cogs',
@@ -304,9 +304,12 @@ export class AppsManagerService {
   ) { }
 
   // Add method to fetch statuses from API
-  public async refreshAllStatuses(): Promise<void> {
+  public async refreshAllStatuses(skipProbe: boolean = false): Promise<void> {
     try {
-      const response = await this.apiService.get('/jobman/system/services/status');
+      // Refresh system info (docker status) along with service statuses
+      await this.refreshSystemInfo();
+
+      const response = await this.apiService.get('/jobman/system/services/status', { skipProbe });
       const statuses: any[] = response;  // Array of {name, status, ports, health}
 
       // Use debug-level logging to avoid noisy console output in normal operation
@@ -325,10 +328,10 @@ export class AppsManagerService {
           if (id && (name === id || name === `rb-${id}` || name.endsWith(`-${id}`) || name.endsWith(`/${id}`))) return true;
           return false;
         });
-        
+
         // Debug-level output so it only appears when debug logging is enabled
         console.debug(`[AppsManager] App ${app.id}: service_name=${app.service_name}, matched service=`, service);
-        
+
         if (service) {
           // Use shared helper to map backend status to UI state (handles healthcheck states)
           this.appStates[app.id] = PollingHelper.mapBackendStatusToUiState(service.status);
@@ -358,6 +361,27 @@ export class AppsManagerService {
     } catch (error) {
       console.error('Error refreshing statuses:', error);
       // Set to 'error' or leave as-is
+    }
+  }
+
+  // Fetch authoritative system info (Docker status) from backend
+  private async refreshSystemInfo(): Promise<void> {
+    try {
+      const backendSystemInfo = await this.apiService.get('/jobman/system/info');
+      if (backendSystemInfo) {
+        const dockerSetup = this.stateStore.configSys.sysInfo.setup.docker;
+        dockerSetup.isDockerInstalled = backendSystemInfo.isDockerInstalled;
+        dockerSetup.isDockerDaemonRunning = backendSystemInfo.isDockerDaemonRunning;
+
+        // Calculate isDockerOk based on authoritative backend status
+        dockerSetup.isDockerOk = backendSystemInfo.isDockerInstalled && backendSystemInfo.isDockerDaemonRunning;
+
+        if (backendSystemInfo.dockerVersion && backendSystemInfo.dockerVersion !== 'DOCKER_NOT_INSTALLED') {
+          dockerSetup.version = backendSystemInfo.dockerVersion;
+        }
+      }
+    } catch (e) {
+      console.warn('[AppsManager] Failed to fetch backend system info', e);
     }
   }
 
@@ -446,7 +470,7 @@ export class AppsManagerService {
           app.lastOutput = this.appLastOutputs[app.id];
           app.currentCommandValue = app.startCmd;
         }
-        await this.refreshAllStatuses();
+        await this.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.allAppsData.apps));
         const apiState = this.appStates[app.id] ?? app.state;
         app.state = apiState;
         // Always sync currentCommandValue with actual state after refresh
@@ -487,7 +511,7 @@ export class AppsManagerService {
           app.state = 'error';
           app.lastOutput = this.appLastOutputs[app.id];
         }
-        await this.refreshAllStatuses();
+        await this.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.allAppsData.apps));
         const apiState = this.appStates[app.id] ?? app.state;
         app.state = apiState;
         app.currentCommandValue = (apiState === 'running' || apiState === 'starting') ? app.stopCmd : app.startCmd;
@@ -547,7 +571,7 @@ export class AppsManagerService {
         }
         // Automatic refresh after action to get authoritative state from API
         try {
-          await this.refreshAllStatuses();
+          await this.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.allAppsData.apps));
           const apiState = this.appStates[app.id] ?? app.state;
           try { app.state = apiState; } catch (e) { }
           // Always sync currentCommandValue with actual state after refresh

@@ -99,7 +99,7 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
   // Debounce search input
   public searchSubject = new Subject<string>();
   private searchSubscription: Subscription | null = null;
-  
+
   // Polling subscription for packs in transitional states (starting/stopping)
   private pollingSubscription: Subscription | null = null;
 
@@ -217,46 +217,68 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
   }
 
 
-  private async refreshAllStatuses(): Promise<void> {
+  async refreshAllStatuses(skipProbe: boolean = false): Promise<void> {
+
+    // Note: We use a separate loading flag or rely on caller to manage 'isLoading' if needed,
+    // but here we just proceed. If careful throttling is needed, check `this.isLoading` if appropriate.
+    // However, fetchStarterPacksStatus manages isLoading too.
+
     try {
-      const response = await this.apiService.get('/jobman/system/services/status');
-      const statuses: any[] = response;
+      // 1. Refresh System Info (Docker status)
+      await this.refreshSystemInfo();
 
-      // DEBUG: Log what the API returns
-      console.log('API returned statuses:', JSON.stringify(statuses, null, 2));
+      // 2. Fetch container statuses
+      const statuses = await this.apiService.get('/jobman/system/services/status', { skipProbe });
 
-      const TARGET_ALIASES: Record<string, string[]> = {
-        ibmdb2: ['db2', 'ibm-db2'],
-        postgres: ['postgresql'],
-        postgresql: ['postgres'],
-        sqlserver: ['mssql'],
-      };
+      console.debug('[StarterPacks] API response statuses:', statuses);
 
       for (const pack of this.starterPacks) {
-        const base = (pack.target || '').toLowerCase();
-        const candidates = [base, ...(TARGET_ALIASES[base] || [])];
-
-        // DEBUG: Log matching attempt
-        console.log(`Pack ${pack.id} (target: ${pack.target}) checking candidates:`, candidates);
-
-        const service = statuses.find(s => {
+        /* Matching logic adjusted to match AppsManager:
+           - Prefer exact match on service_name
+           - Fallback to container name/id logic
+        */
+        const service = (statuses as any[]).find((s: any) => {
           const name = (s.name || '').toLowerCase();
-          const matches = candidates.some(c => name.endsWith(`-${c}`) || name === c);
-          // DEBUG: Log each comparison
-          console.log(`  Comparing "${name}" with candidates ${JSON.stringify(candidates)}: ${matches}`);
-          return matches;
+          // 'pack.id' is what we use as service_name key in this component (e.g. 'postgres', 'ibm-db2')
+          const id = (pack.id || '').toLowerCase();
+
+          if (!id) return false;
+          // Check for exact match or rb-{id} or -{id} suffix
+          if (name === id || name === `rb-${id}` || name.endsWith(`-${id}`)) return true;
+
+          return false;
         });
 
-        const oldStatus = pack.status;
-        // Use shared helper to map backend status to UI state (handles healthcheck states)
-        pack.status = service ? PollingHelper.mapBackendStatusToUiState(service.status) : 'unknown';
-        // Update command based on new status
-        pack.currentCommandValue = (pack.status === 'running' || pack.status === 'starting') ? pack.stopCmd : pack.startCmd;
-        // DEBUG: Log result
-        console.log(`  Result for ${pack.id}: service found=${!!service}, status changed ${oldStatus} -> ${pack.status}`);
+        if (service) {
+          // Map backend status to UI state
+          pack.status = PollingHelper.mapBackendStatusToUiState(service.status);
+        } else {
+          pack.status = 'unknown';
+        }
       }
     } catch (error) {
-      console.error('Error refreshing statuses:', error);
+      console.error('[StarterPacks] Error refreshing statuses:', error);
+    }
+  }
+
+  // Fetch authoritative system info (Docker status) from backend
+  private async refreshSystemInfo(): Promise<void> {
+    try {
+      const backendSystemInfo = await this.apiService.get('/jobman/system/info');
+      if (backendSystemInfo) {
+        const dockerSetup = this.stateStore.configSys.sysInfo.setup.docker;
+        dockerSetup.isDockerInstalled = backendSystemInfo.isDockerInstalled;
+        dockerSetup.isDockerDaemonRunning = backendSystemInfo.isDockerDaemonRunning;
+
+        // Calculate isDockerOk based on authoritative backend status
+        dockerSetup.isDockerOk = backendSystemInfo.isDockerInstalled && backendSystemInfo.isDockerDaemonRunning;
+
+        if (backendSystemInfo.dockerVersion && backendSystemInfo.dockerVersion !== 'DOCKER_NOT_INSTALLED') {
+          dockerSetup.version = backendSystemInfo.dockerVersion;
+        }
+      }
+    } catch (e) {
+      console.warn('[StarterPacks] Failed to fetch backend system info', e);
     }
   }
   // --- Action Trigger ---
@@ -269,14 +291,29 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
 
     // Keep existing Docker guidance when starting and Docker is not OK
     if (action === 'start' && !this.stateStore?.configSys?.sysInfo?.setup?.docker?.isDockerOk) {
-      const message = `Docker is not installed and it is required for executing <strong>${pack.displayName}</strong>.<br><br>Would you like to check the nearby <strong>Docker / Extra Utilities</strong> (tab) to see how to install it?)`;
+      const dockerInfo = this.stateStore?.configSys?.sysInfo?.setup?.docker;
+      let message = '';
 
-      this.confirmService.askConfirmation({
-        message,
-        confirmAction: () => {
-          this.router.navigate(['/help', 'appsMenuSelected'], { queryParams: { activeTab: 'extraPackagesTab' } });
-        }
-      });
+      if (dockerInfo && dockerInfo.isDockerInstalled && !dockerInfo.isDockerDaemonRunning) {
+        message = `Docker is installed but the background service is not running. Please start Docker Desktop to use <strong>${pack.displayName}</strong>.`;
+
+        this.confirmService.askConfirmation({
+          message,
+          confirmAction: () => {
+            // No navigation
+          }
+        });
+      } else {
+        message = `Docker is not installed and it is required for executing <strong>${pack.displayName}</strong>.<br><br>Would you like to check the nearby <strong>Docker / Extra Utilities</strong> (tab) to see how to install it?`;
+
+        this.confirmService.askConfirmation({
+          message,
+          confirmAction: () => {
+            this.router.navigate(['/help', 'appsMenuSelected'], { queryParams: { activeTab: 'extraPackagesTab' } });
+          }
+        });
+      }
+
       return;
     }
 
@@ -448,20 +485,20 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
       console.log('Polling already active, skipping...');
       return;
     }
-    
+
     console.log('Starting polling subscription (max timeout: ' + PollingHelper.getMaxTimeoutDescription() + ')...');
-    
+
     this.pollingSubscription = PollingHelper.createPollingSubscription(
       // onPoll callback - returns true to stop polling
       async () => {
         // First refresh to get latest state
         await this.refreshDataSilent();
-        
+
         console.log('After refresh, pack states:', this.starterPacks.map(p => ({ id: p.id, status: p.status })));
-        
+
         // Check if we should stop polling
         const hasTransitionalPacks = PollingHelper.hasTransitionalItems(this.starterPacks);
-        
+
         if (!hasTransitionalPacks) {
           this.stopTransitionPolling();
           return true; // Signal to stop
@@ -498,13 +535,13 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
    */
   private async refreshDataSilent(): Promise<void> {
     try {
-      await this.refreshAllStatuses();
+      await this.refreshAllStatuses(true);
       this.applyFilters();
       // Force Angular to detect changes - important since we're in an async context
-      try { 
+      try {
         this.cdRef.markForCheck();
-        this.cdRef.detectChanges(); 
-      } catch (e) { 
+        this.cdRef.detectChanges();
+      } catch (e) {
         // View might be destroyed
       }
     } catch (err) {

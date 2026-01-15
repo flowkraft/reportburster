@@ -45,8 +45,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.unix4j.Unix4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
+import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,10 +72,115 @@ import reactor.core.publisher.Mono;
 @Service
 public class SystemService {
 
+	private static final Logger log = LoggerFactory.getLogger(SystemService.class);
+
 	@Autowired
 	private SimpMessageSendingOperations messagingTemplate;
 
 	private Map<String, Tailer> existingTailers = new HashMap<>();
+
+	// Cached availability/version information
+	private volatile boolean cachedDockerDaemonRunning = false;
+	private volatile boolean cachedDockerOk = false; // convenience: installed && daemon running
+	// Initial state: not yet checked. After first probe this will become either
+	// a version string or the sentinel "DOCKER_NOT_INSTALLED".
+	private volatile String cachedDockerVersion = "DOCKER_NOT_CHECKED"; // DOCKER_NOT_CHECKED means probe not yet run
+
+	// TTL-based caching for Docker probe to avoid repeated blocking probes during
+	// rapid polling
+	private static final long DOCKER_PROBE_TTL_MS = 15_000; // 15 seconds
+	private volatile long lastDockerProbeTimeMs = 0L;
+
+	// Note: Chocolatey probing removed to keep backend focused on Docker status.
+	// Frontend/Electron still records choco in logs.
+
+	/**
+	 * Synchronously refresh Docker presence/version and daemon status.
+	 * Blocking and intended to be used when the caller needs the latest status
+	 * (e.g., right before performing `docker ps`).
+	 */
+	public synchronized void refreshChocoAndDockerSync() {
+		// Docker: check binary then daemon (Chocolatey probe removed per simplification)
+
+		// Keep previous values and compute new ones locally, then only log when
+		// status actually changes to avoid repeated identical debug lines.
+		String prevVersion = cachedDockerVersion;
+		boolean prevDaemonRunning = cachedDockerDaemonRunning;
+		boolean prevOk = cachedDockerOk;
+
+		String newDockerVersion = cachedDockerVersion;
+		boolean newDockerDaemonRunning = cachedDockerDaemonRunning;
+
+		try {
+			ProcessResult pr = new ProcessExecutor().command("docker", "--version").readOutput(true)
+					.redirectErrorStream(true)
+					.timeout(3, TimeUnit.SECONDS)
+					.execute();
+			if (pr.getExitValue() == 0) {
+				String out = pr.getOutput().getString();
+				java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+(?:\\.\\d+)+)").matcher(out);
+				newDockerVersion = m.find() ? m.group(1) : out.trim();
+			} else {
+				newDockerVersion = "DOCKER_NOT_INSTALLED";
+			}
+		} catch (Exception e) {
+			newDockerVersion = "DOCKER_NOT_INSTALLED";
+		}
+
+		// If binary present, check if daemon is reachable (docker info)
+		try {
+			if (!"DOCKER_NOT_INSTALLED".equals(newDockerVersion)) {
+				ProcessResult pr2 = new ProcessExecutor().command("docker", "info").readOutput(true)
+						.redirectErrorStream(true)
+						.timeout(3, TimeUnit.SECONDS)
+						.execute();
+				newDockerDaemonRunning = pr2.getExitValue() == 0;
+			} else {
+				newDockerDaemonRunning = false;
+			}
+		} catch (Exception e) {
+			newDockerDaemonRunning = false;
+		}
+
+		// convenience flag
+		boolean newOk = (!"DOCKER_NOT_INSTALLED".equals(newDockerVersion)) && newDockerDaemonRunning;
+
+		// Log only when status changed from last probe
+		if (!Objects.equals(prevVersion, newDockerVersion) || prevDaemonRunning != newDockerDaemonRunning
+				|| prevOk != newOk) {
+			log.debug(
+					"refreshChocoAndDockerSync: docker status changed: version {}->{}, daemon {}->{}, ok {}->{}",
+					prevVersion, newDockerVersion, prevDaemonRunning, newDockerDaemonRunning, prevOk, newOk);
+		}
+
+		cachedDockerVersion = newDockerVersion;
+		cachedDockerDaemonRunning = newDockerDaemonRunning;
+		cachedDockerOk = newOk;
+
+		// update probe timestamp
+		lastDockerProbeTimeMs = System.currentTimeMillis();
+	}
+
+	/**
+	 * Refresh Docker probe if TTL expired or if forced.
+	 * 
+	 * @param force     if true, always run probe synchronously
+	 * @param skipProbe if true, skip probing even if TTL expired (used during
+	 *                  transitions)
+	 */
+	public synchronized void refreshDockerIfStale(boolean force, boolean skipProbe) {
+		if (skipProbe) {
+			// Caller requested skipping probes (e.g., items are in starting/stopping)
+			return;
+		}
+		long now = System.currentTimeMillis();
+		if (!force && (now - lastDockerProbeTimeMs) < DOCKER_PROBE_TTL_MS) {
+			// Cache still fresh, skip probe
+			return;
+		}
+		// Run the synchronous refresh
+		refreshChocoAndDockerSync();
+	}
 
 	public SystemInfo getSystemInfo() throws Exception {
 		SystemInfo info = new SystemInfo();
@@ -100,7 +208,36 @@ public class SystemService {
 		if (!Objects.isNull(startServerScripts) && startServerScripts.size() > 0)
 			info.product = "ReportBurster Server";
 
+		// Use cached Docker probe results (Chocolatey fields left as defaults)
+		info.isDockerDaemonRunning = this.cachedDockerDaemonRunning;
+		info.dockerVersion = this.cachedDockerVersion;
+		// Consider Docker installed only if we've probed and the version is not the
+		// sentinel for "not installed" or "not checked yet".
+		info.isDockerInstalled = !"DOCKER_NOT_INSTALLED".equals(this.cachedDockerVersion)
+			&& !"DOCKER_NOT_CHECKED".equals(this.cachedDockerVersion);
+		info.isChocoOk = false; // not probed by backend
+		info.chocoVersion = "CHOCO_NOT_CHECKED_YET";
+
 		return info;
+
+	}
+
+	private String getDockerVersion() {
+		try {
+			ProcessResult r = new ProcessExecutor().command("docker", "--version").readOutput(true)
+					.redirectErrorStream(true)
+					.timeout(3, TimeUnit.SECONDS)
+					.execute();
+			if (r.getExitValue() != 0)
+				return "";
+			String out = r.getOutput().getString();
+			java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+(?:\\.\\d+)+)").matcher(out);
+			if (m.find())
+				return m.group(1);
+			return out.trim();
+		} catch (Exception e) {
+			return "";
+		}
 	}
 
 	public String unixCliCat(String path) {
@@ -549,101 +686,129 @@ public class SystemService {
 		public String health; // e.g., "healthy", "unhealthy", "starting", or null if no healthcheck
 	}
 
-	public List<ServiceStatusInfo> getAllServicesStatus() throws Exception {
+	public List<ServiceStatusInfo> getAllServicesStatus(boolean forceProbe, boolean skipProbe) throws Exception {
 
-		// Build the Docker command to get all running containers
-		List<String> command = new ArrayList<>();
-		command.add("docker");
-		command.add("ps");
-		command.add("--format");
-		command.add("json"); // Get output as JSON for easy parsing
-
-		// Execute the command (no working directory needed for global query)
-		ProcessResult result = new ProcessExecutor().command(command).readOutput(true).redirectErrorStream(true)
-				.execute();
-		String output = result.getOutput().getString();
-
-		// Check if the command succeeded (exit code 0)
-		if (result.getExitValue() != 0) {
-			System.err.println("Docker command failed with exit code: " + result.getExitValue());
-			System.err.println("Combined output (stdout + stderr): " + output);
-			return new ArrayList<>();
-		}
-
-		// Trim and check the output format
-		output = output.trim();
-		if (output.isEmpty()) {
-			return new ArrayList<>();
-		}
-
-		ObjectMapper mapper = new ObjectMapper();
 		List<ServiceStatusInfo> statuses = new ArrayList<>();
-
-		if (output.startsWith("[")) {
-			// Parse as JSON array
-			List<Map<String, Object>> services = mapper.readValue(output,
-					new TypeReference<List<Map<String, Object>>>() {
-					});
-			for (Map<String, Object> service : services) {
-				ServiceStatusInfo info = new ServiceStatusInfo();
-				info.name = (String) service.get("Names");
-				// Check health status: if container has healthcheck and is not healthy, report
-				// as "starting"
-				String state = (String) service.get("State");
-				String statusText = (String) service.get("Status"); // e.g., "Up 30 seconds (healthy)" or "Up 10 seconds
-																	// (health: starting)"
-				info.health = extractHealthStatus(statusText);
-				// If container is running but health is not "healthy", report as "starting" so
-				// UI waits
-				if ("running".equals(state) && info.health != null && !"healthy".equals(info.health)) {
-					info.status = "starting";
-				} else {
-					info.status = state;
-				}
-				info.ports = service.get("Ports") != null ? service.get("Ports").toString() : "N/A";
-				statuses.add(info);
+		try {
+			// Refresh Docker probe only if cache is stale (avoid probing during rapid
+			// polling)
+			// Do not probe on every poll; only when cached info is older than TTL or caller
+			// forces it.
+			refreshDockerIfStale(forceProbe, skipProbe);
+			// If docker binary not present, skip
+			if ("DOCKER_NOT_INSTALLED".equals(this.cachedDockerVersion)) {
+				log.warn("Docker CLI not installed (cached) - skipping getAllServicesStatus");
+				return statuses;
 			}
-		} else if (output.startsWith("{")) {
-			// Handle newline-delimited JSON objects (docker ps outputs one JSON per line)
-			String[] lines = output.split("\\R"); // Split by any line separator
-			for (String line : lines) {
-				line = line.trim();
-				if (line.isEmpty() || !line.startsWith("{")) {
-					continue;
-				}
-				try {
-					Map<String, Object> service = mapper.readValue(line, new TypeReference<Map<String, Object>>() {
-					});
-					if (service.containsKey("Names")) {
-						ServiceStatusInfo info = new ServiceStatusInfo();
-						info.name = (String) service.get("Names");
-						// Check health status: if container has healthcheck and is not healthy, report
-						// as "starting"
-						String state = (String) service.get("State");
-						String statusText = (String) service.get("Status");
-						info.health = extractHealthStatus(statusText);
-						// If container is running but health is not "healthy", report as "starting" so
-						// UI waits
-						if ("running".equals(state) && info.health != null && !"healthy".equals(info.health)) {
-							info.status = "starting";
-						} else {
-							info.status = state;
-						}
-						info.ports = service.get("Ports") != null ? service.get("Ports").toString() : "N/A";
-						statuses.add(info);
+			// If docker daemon not running, skip
+			if (!this.cachedDockerDaemonRunning) {
+				log.warn("Docker CLI present but daemon not running (cached) - skipping getAllServicesStatus");
+				return statuses;
+			}
+
+			// Build the Docker command to get all running containers
+			List<String> command = Arrays.asList("docker", "ps", "--format", "json");
+
+			// Execute the command (no working directory needed for global query)
+			ProcessResult result = new ProcessExecutor().command(command).readOutput(true).redirectErrorStream(true)
+					.timeout(5, TimeUnit.SECONDS)
+					.execute();
+			String output = result.getOutput().getString();
+
+			// Check if the command succeeded (exit code 0)
+			if (result.getExitValue() != 0) {
+				log.warn("Docker command failed (exit code={}): {}", result.getExitValue(), output);
+				return statuses;
+			}
+
+			// Trim and check the output format
+			output = output.trim();
+			if (output.isEmpty()) {
+				return statuses;
+			}
+
+			ObjectMapper mapper = new ObjectMapper();
+
+			if (output.startsWith("[")) {
+				// Parse as JSON array
+				List<Map<String, Object>> services = mapper.readValue(output,
+						new TypeReference<List<Map<String, Object>>>() {
+						});
+				for (Map<String, Object> service : services) {
+					ServiceStatusInfo info = new ServiceStatusInfo();
+					info.name = (String) service.get("Names");
+					String state = (String) service.get("State");
+					String statusText = (String) service.get("Status");
+					info.health = extractHealthStatus(statusText);
+					if ("running".equals(state) && info.health != null && !"healthy".equals(info.health)) {
+						info.status = "starting";
+					} else {
+						info.status = state;
 					}
-				} catch (Exception e) {
-					System.err.println("Failed to parse JSON line: " + line);
+					info.ports = service.get("Ports") != null ? service.get("Ports").toString() : "N/A";
+					statuses.add(info);
 				}
+			} else if (output.startsWith("{")) {
+				// Handle newline-delimited JSON objects (docker ps outputs one JSON per line)
+				String[] lines = output.split("\\R"); // Split by any line separator
+				for (String line : lines) {
+					line = line.trim();
+					if (line.isEmpty() || !line.startsWith("{")) {
+						continue;
+					}
+					try {
+						Map<String, Object> service = mapper.readValue(line, new TypeReference<Map<String, Object>>() {
+						});
+						if (service.containsKey("Names")) {
+							ServiceStatusInfo info = new ServiceStatusInfo();
+							info.name = (String) service.get("Names");
+							String state = (String) service.get("State");
+							String statusText = (String) service.get("Status");
+							info.health = extractHealthStatus(statusText);
+							if ("running".equals(state) && info.health != null && !"healthy".equals(info.health)) {
+								info.status = "starting";
+							} else {
+								info.status = state;
+							}
+							info.ports = service.get("Ports") != null ? service.get("Ports").toString() : "N/A";
+							statuses.add(info);
+						}
+					} catch (Exception e) {
+						log.debug("Failed to parse Docker JSON line (ignored): {}", line);
+					}
+				}
+			} else {
+				// Non-JSON output (e.g., plain text error)
+				log.warn("Non-JSON output from Docker (ignored): {}", output);
 			}
-		} else {
-			// Non-JSON output (e.g., plain text error)
-			System.err.println("Non-JSON output from Docker: " + output);
+		} catch (Exception e) {
+			log.warn("Exception while fetching Docker services status: {}", e.getMessage());
+			// Return empty statuses on any issue to avoid noisy failures in normal app flow
+			return statuses;
+		} finally {
+			try {
+				processPauseCancelJobs();
+			} catch (Exception e) {
+				log.debug("processPauseCancelJobs failed (ignored): {}", e.getMessage());
+			}
 		}
-
-		processPauseCancelJobs();
 
 		return statuses;
+	}
+
+	/**
+	 * Quick check whether Docker CLI is available and responsive.
+	 */
+	private boolean isDockerAvailable() {
+		try {
+			ProcessResult r = new ProcessExecutor().command("docker", "--version").readOutput(true)
+					.redirectErrorStream(true)
+					.timeout(3, TimeUnit.SECONDS)
+					.execute();
+			return r.getExitValue() == 0;
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
 	/**
