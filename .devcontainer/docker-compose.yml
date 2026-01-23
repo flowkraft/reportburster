@@ -16,23 +16,6 @@ services:
     networks:
       - bridge_current_host_cross_containers_net
 
-  claude-code-kate:
-    container_name: claude-code-kate
-    build:
-      context: .
-      dockerfile: Dockerfile.claude-code
-    # Configure git, then start the Claude Code UI
-    command: >-
-      bash -lc "git config --global user.name $$GIT_USERNAME && git config --global user.email $$GIT_EMAIL && exec claude-code-ui"
-    environment:
-      - GIT_USERNAME=flowkraft
-      - GIT_EMAIL=virgil.trasca@gmail.com
-    volumes:
-      - ..:/workspace
-    restart: unless-stopped
-    networks:
-      - bridge_current_host_cross_containers_net   
-
 networks:
   bridge_current_host_cross_containers_net:
     driver: bridge
