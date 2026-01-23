@@ -23,7 +23,7 @@ RUN code-server --install-extension esbenp.prettier-vscode
 
 # RUN code-server --install-extension Gruntfuggly.todo-tree
 
-RUN code-server --install-extension RooVeterinaryInc.roo-cline
+# RUN code-server --install-extension RooVeterinaryInc.roo-cline
 
 # stopped working?
 # RUN code-server --install-extension tootone.org-mode
