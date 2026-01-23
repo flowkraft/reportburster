@@ -22,7 +22,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.claude-code
-    command: bash -c "git config --global user.name $$GIT_USERNAME && git config --global user.email $$GIT_EMAIL"
+    # Configure git, then start the Claude Code UI
+    command: >-
+      bash -lc "git config --global user.name $$GIT_USERNAME && git config --global user.email $$GIT_EMAIL && exec claude-code-ui"
     environment:
       - GIT_USERNAME=flowkraft
       - GIT_EMAIL=virgil.trasca@gmail.com
