@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   code-server-reportburster:
     container_name: code-server-reportburster
