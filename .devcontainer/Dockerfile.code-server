@@ -1,11 +1,15 @@
 # Start from a base image with Node.js
-FROM node:18
+FROM node:20-slim
 
 # Set the working directory
 WORKDIR /workspace
 
 # Install utilities
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install code-server
 RUN curl -fsSL https://code-server.dev/install.sh | sh
