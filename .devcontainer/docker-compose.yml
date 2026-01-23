@@ -22,8 +22,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.claude-code
-    # use a different bind port so both services can run on the same host
-    command: bash -c "git config --global user.name $$GIT_USERNAME && git config --global user.email $$GIT_EMAIL && /usr/bin/code-server --auth none --bind-addr 0.0.0.0:8081"
+    command: bash -c "git config --global user.name $$GIT_USERNAME && git config --global user.email $$GIT_EMAIL"
     environment:
       - GIT_USERNAME=flowkraft
       - GIT_EMAIL=virgil.trasca@gmail.com
