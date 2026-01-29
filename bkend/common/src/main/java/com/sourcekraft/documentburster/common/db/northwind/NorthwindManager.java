@@ -58,6 +58,7 @@ public class NorthwindManager implements AutoCloseable {
 		MYSQL(3306, "root", "password", "Northwind", Duration.ofMinutes(30)),
 		MARIADB(3307, "root", "password", "Northwind", Duration.ofMinutes(30)), // Use 3307 to avoid conflict
 		SQLITE(0, null, null, "Northwind", Duration.ofMinutes(10)),
+		DUCKDB(0, null, null, "northwind.duckdb", Duration.ofMinutes(10)),
 		SQLSERVER(1433, "sa", "Password123!", "Northwind", Duration.ofMinutes(60)),
 		ORACLE(1521, "oracle", "oracle", "XEPDB1", Duration.ofMinutes(60)), // DB name is XE for Oracle XE
 		DB2(50000, "db2inst1", "password", "NORTHWND", Duration.ofMinutes(60));
@@ -139,6 +140,9 @@ public class NorthwindManager implements AutoCloseable {
 		if (vendor == DatabaseVendor.SQLITE) {
 			sqliteDbFile = hostDataPath.resolve("northwind.db").toFile();
 			needsInitialization = !sqliteDbFile.exists() || sqliteDbFile.length() == 0;
+		} else if (vendor == DatabaseVendor.DUCKDB) {
+			sqliteDbFile = hostDataPath.resolve("northwind.duckdb").toFile();
+			needsInitialization = !sqliteDbFile.exists() || sqliteDbFile.length() == 0;
 		} else {
 			Path markerFile = hostDataPath.resolve(MARKER_FILENAME);
 			needsInitialization = !Files.exists(markerFile);
@@ -150,10 +154,12 @@ public class NorthwindManager implements AutoCloseable {
 		}
 
 		// --- Start Service ---
-		if (vendor != DatabaseVendor.SQLITE) {
-			startDatabaseWithDockerCompose(vendor, hostPortToUse);
-		} else {
+		if (vendor == DatabaseVendor.SQLITE) {
 			setupSQLite(hostDataPath);
+		} else if (vendor == DatabaseVendor.DUCKDB) {
+			setupDuckDB(hostDataPath);
+		} else {
+			startDatabaseWithDockerCompose(vendor, hostPortToUse);
 		}
 
 		// --- Update State ---
@@ -239,7 +245,7 @@ public class NorthwindManager implements AutoCloseable {
 	 * Stops a specific database service using `docker-compose stop`.
 	 */
 	public void stopDatabase(DatabaseVendor vendor) throws Exception {
-		if (vendor == DatabaseVendor.SQLITE) {
+		if (vendor == DatabaseVendor.SQLITE || vendor == DatabaseVendor.DUCKDB) {
 			sqliteDbFile = null; // Just clear the reference
 		} else {
 			String serviceName = vendor.getDockerComposeServiceName();
@@ -423,6 +429,8 @@ public class NorthwindManager implements AutoCloseable {
 				return "jdbc:mariadb://" + host + ":" + port + "/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true";
 			case SQLITE:
 				return "jdbc:sqlite:" + getActualDataPath(vendor).resolve("northwind.db").toString();
+			case DUCKDB:
+				return "jdbc:duckdb:" + getActualDataPath(vendor).resolve("northwind.duckdb").toString();
 			case SQLSERVER:
 				String url = "jdbc:sqlserver://" + host + ":" + port + ";databaseName=" + dbName + ";encrypt=false";
 				log.info("[SQL_SERVER_DEBUG] Constructed SQL Server URL: {}", url);
@@ -443,7 +451,32 @@ public class NorthwindManager implements AutoCloseable {
 		Files.createDirectories(this.sqliteDbFile.getParentFile().toPath());
 	}
 
+	private void setupDuckDB(Path hostDataPath) throws IOException {
+		this.sqliteDbFile = hostDataPath.resolve("northwind.duckdb").toFile();
+		Files.createDirectories(this.sqliteDbFile.getParentFile().toPath());
+	}
+
 	public void initializeDatabaseWithGenerator(DatabaseVendor vendor, Path hostDataPath) throws Exception {
+
+        // DuckDB uses a specialized data warehouse creator (dimensional model, not OLTP)
+        // REASON: DuckDB is for analytics/OLAP, so we create a Star Schema warehouse
+        //         instead of using JPA to create OLTP tables like other vendors
+        if (vendor == DatabaseVendor.DUCKDB) {
+            log.info("Initializing DuckDB data warehouse (Star Schema)...");
+            String duckdbPath = hostDataPath.resolve("northwind.duckdb").toString();
+            String sqlitePath = hostDataPath.getParent().resolve("sample-northwind-sqlite").resolve("northwind.db").toString();
+
+            // Call static method to create data warehouse using pure SQL
+            // This bypasses JPA entirely - DuckDB warehouse is created via:
+            // 1. ATTACH SQLite OLTP database
+            // 2. Copy OLTP tables (for e2e test compatibility)
+            // 3. Transform into Star Schema (fact_sales + 5 dimensions)
+            // 4. Create analytical views (vw_sales_detail for instant pivots)
+            DuckDBDataWarehouseCreator.main(new String[]{});
+
+            log.info("DuckDB data warehouse created successfully");
+            return; // Skip JPA initialization below - already created via SQL
+        }
 
         log.info("[SQL_SERVER_DEBUG] Starting JPA initialization for {}", vendor);
         log.info("[SQL_SERVER_DEBUG] Persistence unit: northwind-{}", vendor.name().toLowerCase());

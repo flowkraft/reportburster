@@ -16,6 +16,7 @@ export const DB_VENDORS_SUPPORTED = [
   'mariadb',
   'ibmdb2',
   'sqlite',
+  'duckdb',
 ];
 
 export const DB_VENDORS_DEFAULT = 'sqlite';
@@ -42,6 +43,8 @@ function vendorToPackId(vendor: string): string {
       return 'db-northwind-mysql';
     case 'sqlite':
       return 'db-northwind-sqlite';
+    case 'duckdb':
+      return 'db-northwind-duckdb';
     default:
       return `db-northwind-${v}`;
   }

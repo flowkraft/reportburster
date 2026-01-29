@@ -53,6 +53,8 @@ public class DatabaseConnectionManager {
 		switch (dbType.toLowerCase()) {
 			case "sqlite":
 				return "org.sqlite.JDBC";
+			case "duckdb":
+				return "org.duckdb.DuckDBDriver";
 			case "oracle":
 				return "oracle.jdbc.driver.OracleDriver";
 			case "sqlserver":

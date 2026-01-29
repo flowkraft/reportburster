@@ -36,9 +36,11 @@ import { AppsManagerService, ManagedApp } from '../apps-manager/apps-manager.ser
 
 const PACK_DEFAULTS: Record<string, { host: string; port: string; database: string; userid: string; userpassword: string; usessl?: boolean }> = {
   postgresql: { host: 'localhost', port: '5432', database: 'Northwind', userid: 'postgres', userpassword: 'postgres', usessl: false },
-  postgres:   { host: 'localhost', port: '5432', database: 'Northwind', userid: 'postgres', userpassword: 'postgres', usessl: false }, 
+  postgres:   { host: 'localhost', port: '5432', database: 'Northwind', userid: 'postgres', userpassword: 'postgres', usessl: false },
   mysql: { host: 'localhost', port: '3306', database: 'Northwind', userid: 'root', userpassword: 'password', usessl: false },
   mariadb: { host: 'localhost', port: '3307', database: 'Northwind', userid: 'root', userpassword: 'password', usessl: false }, // pack uses 3307
+  sqlite: { host: '', port: '', database: '/db/sample-northwind-sqlite/northwind.db', userid: '', userpassword: '' },
+  duckdb: { host: '', port: '', database: '/db/sample-northwind-duckdb/northwind.duckdb', userid: '', userpassword: '' },
   sqlserver: { host: 'localhost', port: '1433', database: 'Northwind', userid: 'sa', userpassword: 'Password123!', usessl: false },
   oracle: { host: 'localhost', port: '1521', database: 'XEPDB1', userid: 'oracle', userpassword: 'oracle', usessl: false },
   ibmdb2: { host: 'localhost', port: '50000', database: 'NORTHWND', userid: 'db2inst1', userpassword: 'password', usessl: false },
@@ -347,7 +349,7 @@ export class ConnectionDetailsComponent implements OnInit {
     const dbServer =
       this.modalConnectionInfo.database.documentburster.connection.databaseserver;
 
-    if (newType === 'sqlite') {
+    if (newType === 'sqlite' || newType === 'duckdb') {
       dbServer.database = '';
       dbServer.host = '';
       dbServer.port = '';
@@ -502,14 +504,14 @@ export class ConnectionDetailsComponent implements OnInit {
     }
 
     // Rule 2: Check based on type
-    if (dbServer.type === 'sqlite') {
-      // For SQLite: Database File must be provided (and not be the placeholder if any)
+    if (dbServer.type === 'sqlite' || dbServer.type === 'duckdb') {
+      // For SQLite/DuckDB: Database File must be provided (and not be the placeholder if any)
       // Since the placeholder is cleared to '' on type change, checking for non-empty is sufficient.
       if (!dbServer.database) {
         return true; // Disabled if database file path is missing
       }
     } else {
-      // For non-SQLite types: Check if fields are empty OR still contain the placeholder text
+      // For non-SQLite/DuckDB types: Check if fields are empty OR still contain the placeholder text
       if (
         !dbServer.host ||
         dbServer.host === newDatabaseServer.host ||
@@ -985,7 +987,7 @@ export class ConnectionDetailsComponent implements OnInit {
     const dbServer =
       this.modalConnectionInfo.database.documentburster.connection
         .databaseserver;
-    if (dbServer.type === 'sqlite') {
+    if (dbServer.type === 'sqlite' || dbServer.type === 'duckdb') {
       dbServer.database = filePath;
     }
   }

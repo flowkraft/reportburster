@@ -280,6 +280,8 @@ public class DatabaseSchemaFetcher {
         switch (dbType) {
             case "sqlite":
                 return "org.sqlite.JDBC";
+            case "duckdb":
+                return "org.duckdb.DuckDBDriver";
             case "oracle":
                 return "oracle.jdbc.driver.OracleDriver"; // Example
             case "sqlserver":
@@ -319,6 +321,11 @@ public class DatabaseSchemaFetcher {
                     return null; // Path is required
                 // Ensure forward slashes for JDBC compatibility, even on Windows
                 return "jdbc:sqlite:" + settings.database.replace("\\", "/");
+            case "duckdb":
+                if (StringUtils.isBlank(settings.database))
+                    return null; // Path is required
+                // Ensure forward slashes for JDBC compatibility, even on Windows
+                return "jdbc:duckdb:" + settings.database.replace("\\", "/");
             case "oracle":
                 // Example: jdbc:oracle:thin:@//<host>:<port>/<service_name_or_sid>
                 // Needs refinement for Service Name vs SID, TNSNames, etc.
@@ -551,6 +558,11 @@ public class DatabaseSchemaFetcher {
         switch (dbType) { // dbType is already lower-case
             case "sqlite":
                 return lowerCaseName.startsWith("sqlite_");
+            case "duckdb":
+                // Filter DuckDB system tables and internal schemas
+                return lowerCaseName.startsWith("duckdb_")
+                    || lowerCaseName.startsWith("information_schema")
+                    || lowerCaseName.startsWith("system");
             case "postgresql":
                 return lowerCaseName.startsWith("pg_"); // Covers pg_toast, pg_temp_, etc.
             case "oracle":
