@@ -28,6 +28,12 @@ public class ServerDatabaseSettings extends DumpToString {
 				if (isBlank(this.url))    this.url    = "jdbc:sqlite:" + this.database;
 				break;
 
+			case "duckdb":
+				if (isBlank(this.driver)) this.driver = "org.duckdb.DuckDBDriver";
+				// database holds the file path for duckdb (like sqlite)
+				if (isBlank(this.url))    this.url    = "jdbc:duckdb:" + this.database;
+				break;
+
 			case "mysql":
 				if (isBlank(this.driver)) this.driver = "com.mysql.cj.jdbc.Driver";
 				if (isBlank(this.url)) {

@@ -707,6 +707,354 @@ export class SelfServicePortalsTestHelper {
   }
 
   // ----------------------------------------------------------
+  // Pivot Table Helper Functions for Analytics Testing
+  // ----------------------------------------------------------
+
+  /**
+   * Set the engine for a pivot table component.
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @param engine - 'browser' (default, PivotTable.js) or 'duckdb' (server-side)
+   */
+  static async setPivotEngine(page: Page, componentId: string, engine: 'browser' | 'duckdb'): Promise<void> {
+    console.log(`Setting pivot engine to '${engine}' for #${componentId}...`);
+    await page.evaluate(({ id, eng }) => {
+      const component = document.getElementById(id) as any;
+      if (component) {
+        component.setAttribute('engine', eng);
+      }
+    }, { id: componentId, eng: engine });
+    // Wait for re-render
+    await page.waitForTimeout(1000);
+  }
+
+  /**
+   * Wait for a pivot table to fully render.
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   */
+  static async waitForPivotTableRender(page: Page, componentId: string): Promise<void> {
+    console.log(`Waiting for pivot table #${componentId} to render...`);
+
+    // Wait for component to be visible
+    await expect(page.locator(`#${componentId}`)).toBeVisible({ timeout: 15000 });
+
+    // Wait for PivotTable.js UI to be rendered (either .pvtTable or .pvtUi)
+    const pvtSelector = `#${componentId} .pvtTable, #${componentId} .pvtUi, #${componentId} .pvtRendererArea`;
+    await expect(page.locator(pvtSelector).first()).toBeVisible({ timeout: 20000 });
+
+    // Wait for actual data cells to appear
+    await expect(page.locator(`#${componentId} .pvtTable tbody tr`).first()).toBeVisible({ timeout: 20000 });
+
+    // Additional wait for any animations/transitions
+    await page.waitForTimeout(1500);
+    console.log(`Pivot table #${componentId} fully rendered ✓`);
+  }
+
+  /**
+   * Get the grand total value from a pivot table.
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @returns The grand total value as a number
+   */
+  static async getPivotGrandTotal(page: Page, componentId: string): Promise<number> {
+    const totalText = await page.locator(`#${componentId} .pvtGrandTotal, #${componentId} .pvtTotal`).last().textContent();
+    const numericValue = totalText?.replace(/[^0-9.-]/g, '') || '0';
+    return parseFloat(numericValue);
+  }
+
+  /**
+   * Get a specific cell value from the pivot table.
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @param rowLabel - Row label to find
+   * @param colLabel - Column label to find (optional, for grand totals use null)
+   * @returns The cell value as a number
+   */
+  static async getPivotCellValue(
+    page: Page,
+    componentId: string,
+    rowLabel: string,
+    colLabel?: string
+  ): Promise<number> {
+    const cellText = await page.evaluate(
+      ({ id, row, col }) => {
+        const component = document.getElementById(id);
+        if (!component) return '0';
+
+        const table = component.querySelector('.pvtTable') as HTMLTableElement;
+        if (!table) return '0';
+
+        // Find row by label
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        const targetRow = rows.find(r => r.textContent?.includes(row));
+        if (!targetRow) return '0';
+
+        if (!col) {
+          // Get row total (last cell)
+          const cells = targetRow.querySelectorAll('td');
+          return cells[cells.length - 1]?.textContent || '0';
+        }
+
+        // Find column index by label
+        const headers = Array.from(table.querySelectorAll('thead th'));
+        const colIndex = headers.findIndex(h => h.textContent?.includes(col));
+        if (colIndex === -1) return '0';
+
+        const cells = targetRow.querySelectorAll('td');
+        return cells[colIndex]?.textContent || '0';
+      },
+      { id: componentId, row: rowLabel, col: colLabel || '' }
+    );
+
+    const numericValue = cellText?.replace(/[^0-9.-]/g, '') || '0';
+    return parseFloat(numericValue);
+  }
+
+  /**
+   * Drag a dimension from unused area to rows.
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @param dimensionName - Name of the dimension to drag
+   */
+  static async dragDimensionToRows(page: Page, componentId: string, dimensionName: string): Promise<void> {
+    console.log(`Dragging dimension '${dimensionName}' to rows...`);
+    await page.evaluate(
+      ({ id, dimension }) => {
+        const component = document.getElementById(id);
+        if (!component) return;
+
+        // Find the dimension button in unused area
+        const unusedArea = component.querySelector('.pvtUnused, .pvtAxisContainer');
+        if (!unusedArea) return;
+
+        const dimensionBtn = Array.from(unusedArea.querySelectorAll('.pvtAttr')).find(
+          el => el.textContent?.trim() === dimension
+        ) as HTMLElement;
+
+        if (!dimensionBtn) return;
+
+        // Find rows drop zone
+        const rowsArea = component.querySelector('.pvtRows, .pvtAxisContainer');
+        if (!rowsArea) return;
+
+        // Simulate drag and drop
+        const dragEvent = new DragEvent('dragstart', { bubbles: true });
+        const dropEvent = new DragEvent('drop', { bubbles: true });
+
+        dimensionBtn.dispatchEvent(dragEvent);
+        rowsArea.dispatchEvent(dropEvent);
+      },
+      { id: componentId, dimension: dimensionName }
+    );
+
+    await page.waitForTimeout(1500); // Wait for re-render
+    console.log(`Dimension '${dimensionName}' dragged to rows ✓`);
+  }
+
+  /**
+   * Drag a dimension from unused area to columns.
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @param dimensionName - Name of the dimension to drag
+   */
+  static async dragDimensionToCols(page: Page, componentId: string, dimensionName: string): Promise<void> {
+    console.log(`Dragging dimension '${dimensionName}' to columns...`);
+    await page.evaluate(
+      ({ id, dimension }) => {
+        const component = document.getElementById(id);
+        if (!component) return;
+
+        const unusedArea = component.querySelector('.pvtUnused, .pvtAxisContainer');
+        if (!unusedArea) return;
+
+        const dimensionBtn = Array.from(unusedArea.querySelectorAll('.pvtAttr')).find(
+          el => el.textContent?.trim() === dimension
+        ) as HTMLElement;
+
+        if (!dimensionBtn) return;
+
+        const colsArea = component.querySelector('.pvtCols, .pvtAxisContainer');
+        if (!colsArea) return;
+
+        const dragEvent = new DragEvent('dragstart', { bubbles: true });
+        const dropEvent = new DragEvent('drop', { bubbles: true });
+
+        dimensionBtn.dispatchEvent(dragEvent);
+        colsArea.dispatchEvent(dropEvent);
+      },
+      { id: componentId, dimension: dimensionName }
+    );
+
+    await page.waitForTimeout(1500);
+    console.log(`Dimension '${dimensionName}' dragged to columns ✓`);
+  }
+
+  /**
+   * Move a dimension from columns to rows.
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @param dimensionName - Name of the dimension to move
+   */
+  static async moveDimensionFromColsToRows(page: Page, componentId: string, dimensionName: string): Promise<void> {
+    console.log(`Moving dimension '${dimensionName}' from columns to rows...`);
+    await page.evaluate(
+      ({ id, dimension }) => {
+        const component = document.getElementById(id);
+        if (!component) return;
+
+        const colsArea = component.querySelector('.pvtCols');
+        if (!colsArea) return;
+
+        const dimensionBtn = Array.from(colsArea.querySelectorAll('.pvtAttr')).find(
+          el => el.textContent?.trim() === dimension
+        ) as HTMLElement;
+
+        if (!dimensionBtn) return;
+
+        const rowsArea = component.querySelector('.pvtRows');
+        if (!rowsArea) return;
+
+        const dragEvent = new DragEvent('dragstart', { bubbles: true });
+        const dropEvent = new DragEvent('drop', { bubbles: true });
+
+        dimensionBtn.dispatchEvent(dragEvent);
+        rowsArea.dispatchEvent(dropEvent);
+      },
+      { id: componentId, dimension: dimensionName }
+    );
+
+    await page.waitForTimeout(1500);
+    console.log(`Dimension '${dimensionName}' moved from columns to rows ✓`);
+  }
+
+  /**
+   * Change the aggregator (Sum, Average, Count, etc.).
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @param aggregatorName - Name of the aggregator (e.g., 'Average', 'Sum')
+   */
+  static async changeAggregator(page: Page, componentId: string, aggregatorName: string): Promise<void> {
+    console.log(`Changing aggregator to '${aggregatorName}'...`);
+    const selector = `#${componentId} .pvtAggregator`;
+    await page.selectOption(selector, { label: aggregatorName });
+    await page.waitForTimeout(1500);
+    console.log(`Aggregator changed to '${aggregatorName}' ✓`);
+  }
+
+  /**
+   * Change the value field (metric to aggregate).
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @param valueName - Name of the value field (e.g., 'Revenue', 'Profit')
+   */
+  static async changeValueField(page: Page, componentId: string, valueName: string): Promise<void> {
+    console.log(`Changing value field to '${valueName}'...`);
+
+    // Click the value dropdown in the vals area
+    const valsDropdown = page.locator(`#${componentId} .pvtVals select, #${componentId} .pvtAttrDropdown`).first();
+    await valsDropdown.selectOption({ label: valueName });
+
+    await page.waitForTimeout(1500);
+    console.log(`Value field changed to '${valueName}' ✓`);
+  }
+
+  /**
+   * Change the renderer (Table, Bar Chart, etc.).
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @param rendererName - Name of the renderer (e.g., 'Table', 'Grouped Column Chart')
+   */
+  static async changeRenderer(page: Page, componentId: string, rendererName: string): Promise<void> {
+    console.log(`Changing renderer to '${rendererName}'...`);
+    const selector = `#${componentId} .pvtRenderer`;
+    await page.selectOption(selector, { label: rendererName });
+    await page.waitForTimeout(2000); // Charts take longer to render
+    console.log(`Renderer changed to '${rendererName}' ✓`);
+  }
+
+  /**
+   * Filter a dimension by unchecking specific values.
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @param dimensionName - Name of the dimension to filter
+   * @param valuesToUncheck - Array of values to uncheck
+   */
+  static async filterDimension(
+    page: Page,
+    componentId: string,
+    dimensionName: string,
+    valuesToUncheck: string[]
+  ): Promise<void> {
+    console.log(`Filtering dimension '${dimensionName}', unchecking: ${valuesToUncheck.join(', ')}...`);
+
+    // Find and click the filter triangle for the dimension
+    await page.evaluate(
+      ({ id, dimension, values }) => {
+        const component = document.getElementById(id);
+        if (!component) return;
+
+        // Find the dimension label
+        const dimensionLabel = Array.from(component.querySelectorAll('.pvtAttr')).find(
+          el => el.textContent?.includes(dimension)
+        );
+
+        if (!dimensionLabel) return;
+
+        // Find and click the filter triangle
+        const filterTriangle = dimensionLabel.querySelector('.pvtTriangle') as HTMLElement;
+        if (filterTriangle) {
+          filterTriangle.click();
+        }
+      },
+      { id: componentId, dimension: dimensionName, values: valuesToUncheck }
+    );
+
+    await page.waitForTimeout(500);
+
+    // Uncheck the specified values in the filter dialog
+    for (const value of valuesToUncheck) {
+      const checkbox = page.locator(`.pvtFilterBox input[type="checkbox"][value="${value}"]`);
+      if (await checkbox.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await checkbox.uncheck();
+      }
+    }
+
+    // Click OK or close the filter dialog
+    const okButton = page.locator('.pvtFilterBox button:has-text("OK")');
+    if (await okButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await okButton.click();
+    }
+
+    await page.waitForTimeout(1500);
+    console.log(`Dimension '${dimensionName}' filtered ✓`);
+  }
+
+  /**
+   * Sort pivot table by a specific dimension.
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @param order - 'key_a_to_z' or 'value_z_to_a' etc.
+   */
+  static async sortPivot(page: Page, componentId: string, order: string): Promise<void> {
+    console.log(`Sorting pivot table by '${order}'...`);
+    await page.evaluate(
+      ({ id, sortOrder }) => {
+        const component = document.getElementById(id) as any;
+        if (component && component.pivotUI) {
+          // Update the pivotUI config with new sort order
+          component.pivotUI.rowOrder = sortOrder;
+          component.fetchData({});
+        }
+      },
+      { id: componentId, sortOrder: order }
+    );
+
+    await page.waitForTimeout(1500);
+    console.log(`Pivot table sorted by '${order}' ✓`);
+  }
+
+  // ----------------------------------------------------------
   // rb-parameters Web Component
   // ----------------------------------------------------------
   /**

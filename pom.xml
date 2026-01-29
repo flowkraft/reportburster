@@ -77,6 +77,7 @@
 		<h2database.version>2.3.232</h2database.version>
 
 		<sqlite-jdbc.version>3.49.1.0</sqlite-jdbc.version>
+		<duckdb.version>1.4.4.0</duckdb.version>
 
 		<mssql-jdbc.version>13.2.0.jre11</mssql-jdbc.version>
 		<oracle-jdbc.version>23.9.0.25.07</oracle-jdbc.version>
@@ -399,6 +400,11 @@
 				<groupId>org.xerial</groupId>
 				<artifactId>sqlite-jdbc</artifactId>
 				<version>${sqlite-jdbc.version}</version> <!-- Use an appropriate version -->
+			</dependency>
+			<dependency>
+				<groupId>org.duckdb</groupId>
+				<artifactId>duckdb_jdbc</artifactId>
+				<version>${duckdb.version}</version>
 			</dependency>
 
 			<dependency>

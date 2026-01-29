@@ -13,14 +13,17 @@
     chartRendererNames,
     type RendererInfo
   } from './services/pivot-renderers';
-  import type { 
-    PivotTableProps, 
-    PivotTableState, 
-    ValueFilter, 
+  import type {
+    PivotTableProps,
+    PivotTableState,
+    ValueFilter,
     SortOrder,
     AggregatorFactory,
-    TableClickCallback
+    TableClickCallback,
+    PivotEngine
   } from './services/pivot-types';
+  import { pivotApi, buildServerPivotRequest } from './services/pivot-api';
+  import type { ServerPivotResponse } from './services/pivot-api';
 
   // ============================================================================
   // Hybrid Mode Props - when reportCode is provided, component self-fetches
@@ -53,14 +56,22 @@
   export let aggregators: Record<string, AggregatorFactory> = {};
   export let tableClickCallback: TableClickCallback | null = null;
 
+  // Server-side processing props
+  export let engine: PivotEngine = 'browser';
+  export let connectionCode: string = '';
+  export let tableName: string = '';
+
   // ============================================================================
   // Internal state for self-fetch mode
   // ============================================================================
   let loading = false;
   let error: string | null = null;
-  
+
   // Raw DSL source code (exposed for Configuration tab)
   export let configDsl: string = '';
+
+  // Server-side pivot response metadata
+  let serverMetadata: ServerPivotResponse['metadata'] | null = null;
 
   // ============================================================================
   // Internal State
@@ -130,7 +141,7 @@
   // ============================================================================
   // PivotData Computation
   // ============================================================================
-  
+
   $: pivotData = new PivotData({
     data: materializedInput,
     aggregators: mergedAggregators,
@@ -144,6 +155,60 @@
     rowOrder,
     colOrder,
   });
+
+  // ============================================================================
+  // Server-side Processing (DuckDB Engine)
+  // ============================================================================
+
+  // Reactive statement to trigger server-side pivot when engine='duckdb'
+  $: if (engine === 'duckdb' && connectionCode && tableName) {
+    executePivotOnServer();
+  }
+
+  async function executePivotOnServer() {
+    if (!connectionCode || !tableName) {
+      error = 'connectionCode and tableName are required for server-side processing';
+      return;
+    }
+
+    loading = true;
+    error = null;
+    serverMetadata = null;
+
+    try {
+      const request = buildServerPivotRequest(connectionCode, tableName, {
+        rows,
+        cols,
+        vals,
+        aggregatorName,
+        valueFilter,
+        rowOrder,
+        colOrder,
+      });
+
+      console.log('[rb-pivot-table] Executing server-side pivot:', request);
+      const response = await pivotApi.executePivot(request, 'pivot-table-main');
+
+      console.log('[rb-pivot-table] Server response received:', {
+        rowCount: response.metadata.rowCount,
+        executionTimeMs: response.metadata.executionTimeMs,
+        aggregator: response.metadata.aggregatorUsed,
+      });
+
+      // Update data with server results
+      data = response.data;
+      serverMetadata = response.metadata;
+
+      dispatch('pivotExecuted', { metadata: serverMetadata });
+
+    } catch (err: any) {
+      error = err.message || 'Failed to execute server-side pivot';
+      console.error('[rb-pivot-table] Server-side pivot error:', err);
+      dispatch('pivotError', { message: error });
+    } finally {
+      loading = false;
+    }
+  }
 
   // ============================================================================
   // Lifecycle
@@ -656,10 +721,21 @@
 <!-- Template -->
 <!-- ============================================================================ -->
 {#if loading}
-  <div class="rb-loading">Loading...</div>
+  <div class="rb-loading">
+    {#if engine === 'duckdb'}
+      Loading pivot data from server...
+    {:else}
+      Loading...
+    {/if}
+  </div>
 {/if}
 {#if error}
   <div class="rb-error">{error}</div>
+{/if}
+{#if serverMetadata && engine === 'duckdb'}
+  <div class="rb-server-info">
+    ⚡ Server-side processing: {serverMetadata.rowCount} rows in {serverMetadata.executionTimeMs}ms
+  </div>
 {/if}
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div 
@@ -1370,5 +1446,15 @@ button.pvtButton:hover {
     background: #fff5f5;
     border: 1px solid #dc3545;
     border-radius: 4px;
+  }
+  .rb-server-info {
+    padding: 0.5rem 1rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #059669;
+    background: #ecfdf5;
+    border: 1px solid #10b981;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
   }
 </style>

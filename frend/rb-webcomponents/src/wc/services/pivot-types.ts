@@ -75,6 +75,9 @@ export type TableClickCallback = (
   pivotData: PivotData
 ) => void;
 
+// Processing engine type
+export type PivotEngine = 'browser' | 'duckdb';
+
 // PivotTableUI component props (extends PivotDataProps)
 export interface PivotTableProps extends PivotDataProps {
   rendererName?: RendererName | string;
@@ -85,6 +88,10 @@ export interface PivotTableProps extends PivotDataProps {
   menuLimit?: number;
   tableClickCallback?: TableClickCallback;
   onChange?: (state: PivotTableState) => void;
+  // Server-side processing options
+  engine?: PivotEngine;
+  connectionCode?: string;  // Required when engine='duckdb'
+  tableName?: string;        // Required when engine='duckdb'
 }
 
 // State object passed to onChange callback

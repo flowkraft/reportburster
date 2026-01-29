@@ -93,6 +93,11 @@
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="warehouse-tab" data-bs-toggle="tab" data-bs-target="#warehouse-pane" type="button" role="tab" aria-controls="warehouse-pane" aria-selected="false">
+                        <i class="bi bi-database"></i> Northwind Warehouse DB
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link" id="rawdata-tab" data-bs-toggle="tab" data-bs-target="#rawdata-pane" type="button" role="tab" aria-controls="rawdata-pane" aria-selected="false">
                         <i class="bi bi-table"></i> Raw Data
                     </button>
@@ -124,7 +129,28 @@
                         api-key="${RbUtils.apiKey}"
                     ></rb-pivot-table>
                 </div>
-                
+
+                <!-- Northwind Warehouse Tab -->
+                <div class="tab-pane fade" id="warehouse-pane" role="tabpanel" aria-labelledby="warehouse-tab">
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-database me-2"></i>
+                        <strong>Real Data Warehouse</strong> — This pivot queries the Northwind DB warehouse (<code>vw_sales_detail</code> view with Star Schema).
+                        ~800 rows currently, designed to scale to 10M+ rows. Server-side engine processing all aggregations.
+                    </div>
+                    <div class="d-flex justify-content-end mb-2">
+                        <button id="refreshWarehouseBtn" class="btn btn-outline-secondary btn-sm" title="Refresh">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                    <rb-pivot-table
+                        id="warehousePivot"
+                        report-code="piv-northwind-warehouse-sales"
+                        api-base-url="${RbUtils.apiBaseUrl}"
+                        api-key="${RbUtils.apiKey}"
+                        engine="duckdb"
+                    ></rb-pivot-table>
+                </div>
+
                 <!-- Raw Data Tab -->
                 <div class="tab-pane fade" id="rawdata-pane" role="tabpanel" aria-labelledby="rawdata-tab">
                     <p class="text-muted small mb-3">
@@ -306,9 +332,14 @@ FROM sales GROUP BY Product;
             setTimeout(updateConfigDisplay, 100);
             setTimeout(updateConfigDisplay, 500);
             
-            // Refresh button
+            // Refresh button (demo pivot)
             document.getElementById('refreshBtn').addEventListener('click', () => {
                 component.fetchData({});
+            });
+
+            // Refresh button (warehouse pivot)
+            document.getElementById('refreshWarehouseBtn').addEventListener('click', () => {
+                document.getElementById('warehousePivot').fetchData({});
             });
             
             // Copy config button

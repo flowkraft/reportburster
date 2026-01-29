@@ -867,4 +867,224 @@ public class ScriptedReporterTest {
 		log.info("========== Test completed: {} ==========", TEST_NAME);
 	}
 
+	/**
+	 * Tests DuckDB with Groovy script querying CSV file.
+	 * This provides basic confidence that DuckDB works with ScriptedReporter flows.
+	 */
+	@Test
+	public void testDuckDBGroovyScriptQueryCSV() throws Exception {
+		final String TEST_NAME = "ScriptedReporterTest-DuckDB-CSV";
+		log.info("========== Starting test: {} ==========", TEST_NAME);
+
+		// Use in-memory DuckDB
+		final String DUCKDB_URL = "jdbc:duckdb:";
+		final String DUCKDB_USER = "";
+		final String DUCKDB_PASS = "";
+		final String DUCKDB_CONN_CODE = "DUCKDB_SCRIPT_TEST_CONN";
+
+		TestBursterFactory.ScriptedReporter reporter = new TestBursterFactory.ScriptedReporter(StringUtils.EMPTY,
+				TEST_NAME, DUCKDB_URL, DUCKDB_USER, DUCKDB_PASS) {
+			@Override
+			protected void executeController() throws Exception {
+				super.executeController();
+
+				// Configure ScriptedReporter to use inline Groovy script
+				ctx.settings.getReportDataSource().scriptoptions.conncode = DUCKDB_CONN_CODE;
+				ctx.settings.getReportDataSource().scriptoptions.idcolumn = "employee_id";
+				ctx.settings.getReportDataSource().scriptoptions.scriptname = "test_duckdb_csv.groovy";
+
+				// Configure output
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_HTML;
+				ctx.settings.getReportTemplate().documentpath = NorthwindTestUtils.CUSTOMER_SUMMARY_TEMPLATE_HTML;
+				ctx.settings.setBurstFileName("employee_${burst_token}.html");
+
+				// Create inline Groovy script that uses DuckDB to query CSV
+				String scriptContent =
+					"import java.sql.*\n" +
+					"import groovy.sql.Sql\n" +
+					"\n" +
+					"log.info('DuckDB CSV Script: Starting...')\n" +
+					"\n" +
+					"def csvPath = new File('src/test/resources/input/unit/other/employees.csv').absolutePath\n" +
+					"log.info('CSV Path: {}', csvPath)\n" +
+					"\n" +
+					"// Query CSV file using DuckDB\n" +
+					"def sql = Sql.newInstance(ctx.conn)\n" +
+					"def query = \"SELECT employee_id, email_address, first_name, last_name FROM read_csv_auto('\" + csvPath + \"') WHERE employee_id IN (1, 2)\"\n" +
+					"log.info('Executing query: {}', query)\n" +
+					"\n" +
+					"def results = []\n" +
+					"sql.eachRow(query) { row ->\n" +
+					"    results << new LinkedHashMap([\n" +
+					"        employee_id: row.employee_id,\n" +
+					"        email_address: row.email_address,\n" +
+					"        first_name: row.first_name,\n" +
+					"        last_name: row.last_name\n" +
+					"    ])\n" +
+					"}\n" +
+					"\n" +
+					"ctx.reportData = results\n" +
+					"ctx.reportColumnNames = ['employee_id', 'email_address', 'first_name', 'last_name']\n" +
+					"\n" +
+					"log.info('DuckDB CSV Script: Generated {} records', results.size())\n";
+
+				// Write script to expected location
+				java.nio.file.Path scriptPath = java.nio.file.Paths.get("src/test/groovy/reporting/test_duckdb_csv.groovy");
+				java.nio.file.Files.createDirectories(scriptPath.getParent());
+				java.nio.file.Files.writeString(scriptPath, scriptContent);
+			}
+		};
+
+		// Execute the burst process
+		reporter.burst();
+
+		// Verify results
+		BurstingContext ctx = reporter.getCtx();
+		assertNotNull("BurstingContext should not be null", ctx);
+		assertNotNull("Report data should not be null", ctx.reportData);
+		assertEquals("Should have 2 employee records", 2, ctx.reportData.size());
+
+		// Verify burst tokens
+		assertNotNull("Burst tokens should not be null", ctx.burstTokens);
+		assertEquals("Should have 2 burst tokens", 2, ctx.burstTokens.size());
+		assertTrue("Should have token for employee 1", ctx.burstTokens.contains("1"));
+		assertTrue("Should have token for employee 2", ctx.burstTokens.contains("2"));
+
+		// Verify output files
+		assertTrue("Output file for employee 1 should exist",
+			new File(ctx.outputFolder + "/employee_1.html").exists());
+		assertTrue("Output file for employee 2 should exist",
+			new File(ctx.outputFolder + "/employee_2.html").exists());
+
+		// Clean up test script
+		java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get("src/test/groovy/reporting/test_duckdb_csv.groovy"));
+
+		log.info("========== Test completed: {} ==========", TEST_NAME);
+	}
+
+	/**
+	 * Tests DuckDB with Groovy script mixing CSV and in-memory data.
+	 * This demonstrates DuckDB's ability to combine multiple data sources.
+	 */
+	@Test
+	public void testDuckDBGroovyScriptMixedSources() throws Exception {
+		final String TEST_NAME = "ScriptedReporterTest-DuckDB-Mixed";
+		log.info("========== Starting test: {} ==========", TEST_NAME);
+
+		// Use in-memory DuckDB
+		final String DUCKDB_URL = "jdbc:duckdb:";
+		final String DUCKDB_USER = "";
+		final String DUCKDB_PASS = "";
+		final String DUCKDB_CONN_CODE = "DUCKDB_MIXED_TEST_CONN";
+
+		TestBursterFactory.ScriptedReporter reporter = new TestBursterFactory.ScriptedReporter(StringUtils.EMPTY,
+				TEST_NAME, DUCKDB_URL, DUCKDB_USER, DUCKDB_PASS) {
+			@Override
+			protected void executeController() throws Exception {
+				super.executeController();
+
+				// Configure ScriptedReporter
+				ctx.settings.getReportDataSource().scriptoptions.conncode = DUCKDB_CONN_CODE;
+				ctx.settings.getReportDataSource().scriptoptions.idcolumn = "employee_id";
+				ctx.settings.getReportDataSource().scriptoptions.scriptname = "test_duckdb_mixed.groovy";
+
+				// Configure output
+				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_HTML;
+				ctx.settings.getReportTemplate().documentpath = NorthwindTestUtils.CUSTOMER_SUMMARY_TEMPLATE_HTML;
+				ctx.settings.setBurstFileName("enriched_${burst_token}.html");
+
+				// Create inline Groovy script that combines CSV and in-memory data
+				String scriptContent =
+					"import java.sql.*\n" +
+					"import groovy.sql.Sql\n" +
+					"\n" +
+					"log.info('DuckDB Mixed Sources Script: Starting...')\n" +
+					"\n" +
+					"def csvPath = new File('src/test/resources/input/unit/other/employees.csv').absolutePath\n" +
+					"def sql = Sql.newInstance(ctx.conn)\n" +
+					"\n" +
+					"// Create an in-memory table with department data\n" +
+					"sql.execute('''\n" +
+					"    CREATE TABLE departments (\n" +
+					"        employee_id INTEGER,\n" +
+					"        department VARCHAR,\n" +
+					"        salary DECIMAL(10,2)\n" +
+					"    )\n" +
+					"''')\n" +
+					"\n" +
+					"sql.execute(\"INSERT INTO departments VALUES (1, 'Engineering', 75000.00)\")\n" +
+					"sql.execute(\"INSERT INTO departments VALUES (2, 'Sales', 65000.00)\")\n" +
+					"sql.execute(\"INSERT INTO departments VALUES (3, 'Marketing', 70000.00)\")\n" +
+					"\n" +
+					"// Join CSV data with in-memory table\n" +
+					"def query = '''\n" +
+					"    SELECT \n" +
+					"        e.employee_id,\n" +
+					"        e.email_address,\n" +
+					"        e.first_name,\n" +
+					"        e.last_name,\n" +
+					"        d.department,\n" +
+					"        d.salary\n" +
+					"    FROM read_csv_auto('\" + csvPath + \"') e\n" +
+					"    INNER JOIN departments d ON e.employee_id = d.employee_id\n" +
+					"    WHERE e.employee_id IN (1, 2)\n" +
+					"    ORDER BY e.employee_id\n" +
+					"'''\n" +
+					"\n" +
+					"def results = []\n" +
+					"sql.eachRow(query) { row ->\n" +
+					"    results << new LinkedHashMap([\n" +
+					"        employee_id: row.employee_id,\n" +
+					"        email_address: row.email_address,\n" +
+					"        first_name: row.first_name,\n" +
+					"        last_name: row.last_name,\n" +
+					"        department: row.department,\n" +
+					"        salary: row.salary\n" +
+					"    ])\n" +
+					"}\n" +
+					"\n" +
+					"ctx.reportData = results\n" +
+					"ctx.reportColumnNames = ['employee_id', 'email_address', 'first_name', 'last_name', 'department', 'salary']\n" +
+					"\n" +
+					"log.info('DuckDB Mixed Sources Script: Generated {} enriched records', results.size())\n";
+
+				// Write script to expected location
+				java.nio.file.Path scriptPath = java.nio.file.Paths.get("src/test/groovy/reporting/test_duckdb_mixed.groovy");
+				java.nio.file.Files.createDirectories(scriptPath.getParent());
+				java.nio.file.Files.writeString(scriptPath, scriptContent);
+			}
+		};
+
+		// Execute the burst process
+		reporter.burst();
+
+		// Verify results
+		BurstingContext ctx = reporter.getCtx();
+		assertNotNull("BurstingContext should not be null", ctx);
+		assertNotNull("Report data should not be null", ctx.reportData);
+		assertEquals("Should have 2 enriched employee records", 2, ctx.reportData.size());
+
+		// Verify column names include both CSV and in-memory data
+		assertNotNull("Column names should not be null", ctx.reportColumnNames);
+		assertEquals("Should have 6 columns", 6, ctx.reportColumnNames.size());
+		assertTrue("Should have department column", ctx.reportColumnNames.contains("department"));
+		assertTrue("Should have salary column", ctx.reportColumnNames.contains("salary"));
+
+		// Verify first employee data
+		Map<String, Object> emp1 = ctx.reportData.get(0);
+		assertEquals("1", emp1.get("employee_id").toString());
+		assertEquals("Engineering", emp1.get("department"));
+
+		// Verify output files
+		assertTrue("Output file for employee 1 should exist",
+			new File(ctx.outputFolder + "/enriched_1.html").exists());
+		assertTrue("Output file for employee 2 should exist",
+			new File(ctx.outputFolder + "/enriched_2.html").exists());
+
+		// Clean up test script
+		java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get("src/test/groovy/reporting/test_duckdb_mixed.groovy"));
+
+		log.info("========== Test completed: {} ==========", TEST_NAME);
+	}
+
 }

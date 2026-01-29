@@ -9,8 +9,8 @@ import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test
 import { ConnectionsTestHelper, DB_VENDORS_DEFAULT, DB_VENDORS_SUPPORTED } from '../../helpers/areas/connections-test-helper';
 
 const DB_VENDORS_SELECTED: string[] = (() => {
-  const required = 'sqlite';
-  const pool = DB_VENDORS_SUPPORTED.filter(v => v !== required);
+  const requiredVendors = ['sqlite', 'duckdb']; // Always test SQLite and DuckDB
+  const pool = DB_VENDORS_SUPPORTED.filter(v => !requiredVendors.includes(v));
 
   // Use date-based seed for daily variation but consistent within a run
   const today = new Date().toISOString().split('T')[0]; // e.g., "2025-12-02"
@@ -23,11 +23,16 @@ const DB_VENDORS_SELECTED: string[] = (() => {
   };
 
   const shuffled = [...pool].sort((a, b) => seededRandom(pool.indexOf(a)) - seededRandom(pool.indexOf(b)));
-  const pickedOthers = shuffled.slice(0, 2);
+  const pickedOthers = shuffled.slice(0, 1); // Pick only 1 other vendor (was 2)
 
-  const list = [required, ...pickedOthers];
+  const list = [...requiredVendors, ...pickedOthers]; // sqlite, duckdb, + 1 random
   return list;
 })();
+
+// Helper to check if a database vendor is file-based (no Docker container needed)
+const isFileBasedVendor = (vendor: string): boolean => {
+  return vendor === 'sqlite' || vendor === 'duckdb';
+};
 
 //DONE2
 test.describe('', async () => {
@@ -813,8 +818,8 @@ test.describe('', async () => {
           `Testing database connection for randomly selected vendor: ${dbVendor}`,
         );
 
-        // Start starter-pack only for non-sqlite vendors
-        if (dbVendor !== 'sqlite') {
+        // Start starter-pack only for server-based vendors (not file-based like SQLite/DuckDB)
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'start');
         }
 
@@ -845,7 +850,7 @@ test.describe('', async () => {
           .waitOnElementToBecomeEnabled('#btnTestDbConnection')
           .click('#btnTestDbConnection');
 
-        if (dbVendor !== 'sqlite') {
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ft.infoDialogShouldBeVisible()
             .clickYesDoThis()
             .click('#btnClearLogsDbConnection')
@@ -913,7 +918,7 @@ test.describe('', async () => {
         );
 
         // Stop starter-pack when done
-        if (dbVendor !== 'sqlite') {
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'stop');
         }
 
@@ -933,8 +938,8 @@ test.describe('', async () => {
           `Testing (NEW) database connection for randomly selected vendor: ${dbVendor}`,
         );
 
-        // Start starter-pack only for non-sqlite vendors
-        if (dbVendor !== 'sqlite') {
+        // Start starter-pack only for server-based vendors (not file-based like SQLite/DuckDB)
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'start');
         }
 
@@ -970,7 +975,7 @@ test.describe('', async () => {
           .waitOnElementToBecomeEnabled('#btnTestDbConnection')
           .click('#btnTestDbConnection');
 
-        if (dbVendor !== 'sqlite') {
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ft.infoDialogShouldBeVisible()
             .clickYesDoThis()
             .click('#btnClearLogsDbConnection')
@@ -1089,7 +1094,7 @@ test.describe('', async () => {
         );
 
         // Stop starter-pack when done
-        if (dbVendor !== 'sqlite') {
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'stop');
         }
 
@@ -1108,8 +1113,8 @@ test.describe('', async () => {
           `STEP 0.0: Testing 'Information Schema' Tab for randomly selected vendor: ${dbVendor}`,
         );
 
-        // Start starter-pack only for non-sqlite vendors
-        if (dbVendor !== 'sqlite') {
+        // Start starter-pack only for server-based vendors (not file-based like SQLite/DuckDB)
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'start');
         }
 
@@ -1158,7 +1163,7 @@ test.describe('', async () => {
           .waitOnElementToBecomeEnabled('#btnTestDbConnection')
           .click('#btnTestDbConnection');
 
-        if (dbVendor !== 'sqlite') {
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ft.infoDialogShouldBeVisible()
             .clickYesDoThis()
             .click('#btnClearLogsDbConnection')
@@ -1362,7 +1367,7 @@ test.describe('', async () => {
         );
 
         // Stop starter-pack when done
-        if (dbVendor !== 'sqlite') {
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'stop');
         }
 
@@ -1381,8 +1386,8 @@ test.describe('', async () => {
           `STEP 0.0: Testing 'Domain-Grouped Schema' Tab for randomly selected vendor: ${dbVendor}`,
         );
 
-        // Start starter-pack only for non-sqlite vendors
-        if (dbVendor !== 'sqlite') {
+        // Start starter-pack only for server-based vendors (not file-based like SQLite/DuckDB)
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'start');
         }
 
@@ -1415,7 +1420,7 @@ test.describe('', async () => {
           .waitOnElementToBecomeEnabled('#btnTestDbConnection')
           .click('#btnTestDbConnection');
 
-        if (dbVendor !== 'sqlite') {
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ft.infoDialogShouldBeVisible()
             .clickYesDoThis()
             .click('#btnClearLogsDbConnection')
@@ -1847,7 +1852,7 @@ test.describe('', async () => {
         );
 
         // Stop starter-pack when done
-        if (dbVendor !== 'sqlite') {
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'stop');
         }
 
@@ -1866,8 +1871,8 @@ test.describe('', async () => {
           `STEP 0.0: Testing 'ER Diagram' Tab with vendor: ${dbVendor}`,
         );
 
-        // Start starter-pack only for non-sqlite vendors
-        if (dbVendor !== 'sqlite') {
+        // Start starter-pack only for server-based vendors (not file-based like SQLite/DuckDB)
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'start');
         }
 
@@ -1917,7 +1922,7 @@ test.describe('', async () => {
           .waitOnElementToBecomeEnabled('#btnTestDbConnection')
           .click('#btnTestDbConnection');
 
-        if (dbVendor !== 'sqlite') {
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ft.infoDialogShouldBeVisible()
             .clickYesDoThis()
             .click('#btnClearLogsDbConnection')
@@ -2194,7 +2199,7 @@ CustomerCustomerDemo }|--|| CustomerDemographics : "CustomerTypeID"
         );
 
         // Stop starter-pack when done
-        if (dbVendor !== 'sqlite') {
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'stop');
         }
 
@@ -2214,7 +2219,7 @@ CustomerCustomerDemo }|--|| CustomerDemographics : "CustomerTypeID"
         );
 
         // Start starter-pack only for non-sqlite vendors
-        // if (dbVendor !== 'sqlite') {
+        // if (!isFileBasedVendor(dbVendor)) {
         //   ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'start');
         // }
 
@@ -2384,7 +2389,7 @@ CustomerCustomerDemo }|--|| CustomerDemographics : "CustomerTypeID"
         );
 
         // Stop starter-pack when done
-        // if (dbVendor !== 'sqlite') {
+        // if (!isFileBasedVendor(dbVendor)) {
         //   ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'stop');
         // }
 
@@ -2406,8 +2411,8 @@ CustomerCustomerDemo }|--|| CustomerDemographics : "CustomerTypeID"
           `Chat2DB Tab with vendor: ${dbVendor}`,
         );
 
-        // Start starter-pack only for non-sqlite vendors
-        if (dbVendor !== 'sqlite') {
+        // Start starter-pack only for server-based vendors (not file-based like SQLite/DuckDB)
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'start');
         }
 
@@ -2431,7 +2436,7 @@ CustomerCustomerDemo }|--|| CustomerDemographics : "CustomerTypeID"
         // Test Connection (save if needed)
         ft = ft.waitOnElementToBecomeEnabled('#btnTestDbConnection').click('#btnTestDbConnection');
 
-        if (dbVendor !== 'sqlite') {
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ft.infoDialogShouldBeVisible()
             .clickYesDoThis()
             .click('#btnClearLogsDbConnection')
@@ -2654,7 +2659,7 @@ CustomerCustomerDemo }|--|| CustomerDemographics : "CustomerTypeID"
         );
 
         // Stop starter-pack when done
-        if (dbVendor !== 'sqlite') {
+        if (!isFileBasedVendor(dbVendor)) {
           ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'stop');
         }
 
