@@ -3,7 +3,7 @@
  *
  * Tests two self-service portal implementations:
  * 1. WordPress-based CMS WebPortal - Document distribution portal with paystubs
- * 2. Grails Playground - Frontend dashboards with Svelte web components
+ * 2. Next.js Playground - Frontend dashboards with ReportBurster web components
  *
  * Both tests:
  * - Start the app via ReportBurster UI (fluent)
@@ -102,30 +102,30 @@ test.describe('Self-Service Portals', () => {
   );
 
   // ============================================================
-  // Test 2: Grails Frontend Playground
+  // Test 2: Next.js Frontend Playground (formerly Grails)
   // ============================================================
   electronBeforeAfterAllTest(
-    'Grails Playground: should start, navigate all pages with web components, and stop cleanly',
+    'Next.js Playground: should start, navigate all pages with web components, and stop cleanly',
     async ({ beforeAfterEach: firstPage }) => {
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
       let externalBrowser = null;
 
       try {
-        // Navigate to Apps tab and start the Grails app (fluent chain)
+        // Navigate to Apps tab and start the Next.js app (fluent chain)
         await SelfServicePortalsTestHelper.startApp(
           new FluentTester(firstPage).gotoApps(),
           SelfServicePortalsTestHelper.APP_ID_GRAILS,
         );
 
-        // Open external browser and test all Grails pages
+        // Open external browser and test all Next.js pages
         const { browser, page } = await SelfServicePortalsTestHelper.createExternalBrowser();
         externalBrowser = browser;
 
-        // Navigate and assert all Grails pages (Home, Tabulator, Charts, Pivot, Parameters, Reports, Your Canvas)
+        // Navigate and assert all Next.js pages (Home, Tabulator, Charts, Pivot, Parameters, Reports, Your Canvas)
         await SelfServicePortalsTestHelper.assertAllGrailsPages(page);
 
-        console.log('Grails Playground: All page assertions passed.');
+        console.log('Next.js Playground: All page assertions passed.');
 
       } finally {
         // Close external browser first (this is independent of Electron)
@@ -137,17 +137,17 @@ test.describe('Self-Service Portals', () => {
           }
         }
 
-        // Stop Grails app (fluent chain) - may fail if Electron crashed
+        // Stop Next.js app (fluent chain) - may fail if Electron crashed
         try {
           await SelfServicePortalsTestHelper.stopApp(
             new FluentTester(firstPage).gotoApps(),
             SelfServicePortalsTestHelper.APP_ID_GRAILS,
           );
         } catch (e) {
-          console.error('Failed to stop Grails app (Electron may have crashed):', e);
+          console.error('Failed to stop Next.js app (Electron may have crashed):', e);
         }
 
-        console.log('Grails Playground: Test completed - app stopped cleanly.');
+        console.log('Next.js Playground: Test completed - app stopped cleanly.');
       }
     },
   );

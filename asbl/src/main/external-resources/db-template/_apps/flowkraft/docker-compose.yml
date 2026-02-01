@@ -1,5 +1,88 @@
 services:
-  
+
+  # ===================================================================
+  # KEYCLOAK AUTHENTICATION SERVICE (DISABLED BY DEFAULT)
+  # ===================================================================
+  # QUICK START:
+  # 1. Uncomment the keycloak service + keycloak-postgres service below
+  # 2. Run: docker-compose up -d keycloak-postgres keycloak
+  # 3. Access at http://localhost:8480 (admin/admin)
+  # 4. See ENABLE_KEYCLOAK.md for app integration instructions
+  #
+  # DATABASE OPTIONS:
+  # - H2 (Development): Fast setup, file-based, good for testing
+  #   → Keep KC_DB=h2-file, comment out keycloak-postgres service
+  # - PostgreSQL (Production): Scalable, production-ready
+  #   → Keep KC_DB=postgres, uncomment keycloak-postgres service
+  # ===================================================================
+
+  # PostgreSQL Database for Keycloak (PRODUCTION - Recommended)
+  # Comment out this service to use H2 instead
+  # keycloak-postgres:
+  #   image: postgres:15-alpine
+  #   container_name: fkraft-keycloak-db
+  #   environment:
+  #     - POSTGRES_DB=keycloak
+  #     - POSTGRES_USER=keycloak
+  #     - POSTGRES_PASSWORD=keycloak_secret_password  # CHANGE THIS IN PRODUCTION!
+  #   volumes:
+  #     - ./keycloak-postgres-data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # Keycloak Authentication Service
+  # keycloak:
+  #   image: quay.io/keycloak/keycloak:23.0
+  #   container_name: fkraft-keycloak
+  #   # Uncomment depends_on when using PostgreSQL
+  #   # depends_on:
+  #   #   keycloak-postgres:
+  #   #     condition: service_healthy
+  #   ports:
+  #     - "8480:8080"
+  #   environment:
+  #     # Admin credentials (CHANGE IN PRODUCTION!)
+  #     - KEYCLOAK_ADMIN=admin
+  #     - KEYCLOAK_ADMIN_PASSWORD=admin
+  #
+  #     # ─────────────────────────────────────────────────────────────
+  #     # DATABASE CONFIGURATION - Choose H2 or PostgreSQL:
+  #     # ─────────────────────────────────────────────────────────────
+  #
+  #     # OPTION A: H2 (Development) - Uncomment these 2 lines:
+  #     # - KC_DB=h2-file
+  #     # - KC_DB_URL_PATH=/opt/keycloak/data/h2
+  #
+  #     # OPTION B: PostgreSQL (Production) - Uncomment these 4 lines:
+  #     - KC_DB=postgres
+  #     - KC_DB_URL=jdbc:postgresql://keycloak-postgres:5432/keycloak
+  #     - KC_DB_USERNAME=keycloak
+  #     - KC_DB_PASSWORD=keycloak_secret_password  # MUST MATCH POSTGRES_PASSWORD ABOVE!
+  #
+  #     # ─────────────────────────────────────────────────────────────
+  #     # Common Settings (always enabled)
+  #     # ─────────────────────────────────────────────────────────────
+  #     - KC_HOSTNAME=localhost
+  #     - KC_HOSTNAME_PORT=8480
+  #     - KC_HOSTNAME_STRICT=false  # Set to true in production with proper domain
+  #     - KC_HTTP_ENABLED=true      # Use false in production (HTTPS only)
+  #     - KC_HEALTH_ENABLED=true
+  #   volumes:
+  #     # Only needed for H2 - persist data between restarts
+  #     - ./keycloak-data:/opt/keycloak/data
+  #   command: start-dev  # Use 'start' (not start-dev) for production
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 30s
+
   frend-grails-playground:
     build: 
       context: ../.. 

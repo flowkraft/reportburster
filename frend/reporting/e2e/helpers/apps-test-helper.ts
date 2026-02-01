@@ -6,7 +6,7 @@ import { Constants } from '../utils/constants';
 // 'name' is a minimal unique substring for resilience to minor UI text changes
 export const VISIBLE_APPS = [
   { id: 'cms-webportal', name: 'WebPortal' },
-  { id: 'flowkraft-frend-grails', name: 'Frontend App' },
+  { id: 'flowkraft-frend-next', name: 'Frontend App (Next.js)' },
   { id: 'flowkraft-admin-grails', name: 'Admin Panel' },
   { id: 'flowkraft-bkend-boot-groovy', name: 'Backend App', launch: false },
   { id: 'rundeck', name: 'Rundeck' },

@@ -1,0 +1,33 @@
+{
+  "folders": [
+    {
+      "name": "FlowKraft's Place",
+      "path": "/project-rb"
+    }
+  ],
+  "settings": {
+    "workbench.colorTheme": "Visual Studio Dark",
+    "workbench.colorCustomizations": {
+      "activityBar.background": "#22a7c8",
+      "activityBar.foreground": "#ffffff",
+      "activityBar.inactiveForeground": "#aaaaaa",
+      "sideBar.border": "#22a7c8"
+    },
+    "window.title": "${dirty} FlowKraft's Place > ${activeEditorShort}",
+    "files.watcherExclude": {
+      "**/node_modules/*/**": true,
+      "**/.venv/*/**": true
+    },
+    "git.autofetch": true,
+    "files.autoSave": "afterDelay",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "eslint.validate": [
+      "javascript",
+      "javascriptreact",
+      "typescript",
+      "typescriptreact"
+    ]
+  }
+}
