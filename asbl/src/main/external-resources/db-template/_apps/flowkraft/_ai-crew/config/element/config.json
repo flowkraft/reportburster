@@ -1,0 +1,23 @@
+{
+  "default_server_config": {
+    "m.homeserver": {
+      "base_url": "http://localhost:8008",
+      "server_name": "localhost"
+    }
+  },
+  "disable_custom_urls": true,
+  "disable_guests": false,
+  "brand": "FlowKraft's AI Crew",
+  "integrations_ui_url": "https://scalar.vector.im/",
+  "integrations_rest_url": "https://scalar.vector.im/api",
+  "bug_report_endpoint_url": "https://element.io/bugreports/submit",
+  "default_country_code": "US",
+  "show_labs_settings": true,
+  "features": {},
+  "default_federate": false,
+  "default_theme": "dark",
+  "setting_defaults": {
+    "breadcrumbs": true
+  },
+  "permalink_prefix": "http://localhost:8090"
+}

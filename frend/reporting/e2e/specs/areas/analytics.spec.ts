@@ -51,7 +51,7 @@ test.describe('Pivot Table Analytics', async () => {
       let externalBrowser = null;
 
       try {
-        // Start Grails app
+        // Start Next.js app
         await SelfServicePortalsTestHelper.startApp(
           new FluentTester(firstPage).gotoApps(),
           SelfServicePortalsTestHelper.APP_ID_GRAILS,
@@ -85,7 +85,7 @@ test.describe('Pivot Table Analytics', async () => {
             SelfServicePortalsTestHelper.APP_ID_GRAILS,
           );
         } catch (e) {
-          console.error('Failed to stop Grails app:', e);
+          console.error('Failed to stop Next.js app:', e);
         }
       }
     },
@@ -102,7 +102,7 @@ test.describe('Pivot Table Analytics', async () => {
       let externalBrowser = null;
 
       try {
-        // Start Grails app
+        // Start Next.js app
         await SelfServicePortalsTestHelper.startApp(
           new FluentTester(firstPage).gotoApps(),
           SelfServicePortalsTestHelper.APP_ID_GRAILS,
@@ -136,7 +136,7 @@ test.describe('Pivot Table Analytics', async () => {
             SelfServicePortalsTestHelper.APP_ID_GRAILS,
           );
         } catch (e) {
-          console.error('Failed to stop Grails app:', e);
+          console.error('Failed to stop Next.js app:', e);
         }
       }
     },
@@ -157,7 +157,7 @@ test.describe('Pivot Table Analytics', async () => {
       let externalBrowser = null;
 
       try {
-        // Start Grails app
+        // Start Next.js app
         await SelfServicePortalsTestHelper.startApp(
           new FluentTester(firstPage).gotoApps(),
           SelfServicePortalsTestHelper.APP_ID_GRAILS,
@@ -191,7 +191,7 @@ test.describe('Pivot Table Analytics', async () => {
             SelfServicePortalsTestHelper.APP_ID_GRAILS,
           );
         } catch (e) {
-          console.error('Failed to stop Grails app:', e);
+          console.error('Failed to stop Next.js app:', e);
         }
       }
     },
@@ -212,7 +212,7 @@ test.describe('Pivot Table Analytics', async () => {
       let externalBrowser = null;
 
       try {
-        // Start Grails app
+        // Start Next.js app
         await SelfServicePortalsTestHelper.startApp(
           new FluentTester(firstPage).gotoApps(),
           SelfServicePortalsTestHelper.APP_ID_GRAILS,
@@ -246,7 +246,7 @@ test.describe('Pivot Table Analytics', async () => {
             SelfServicePortalsTestHelper.APP_ID_GRAILS,
           );
         } catch (e) {
-          console.error('Failed to stop Grails app:', e);
+          console.error('Failed to stop Next.js app:', e);
         }
       }
     },

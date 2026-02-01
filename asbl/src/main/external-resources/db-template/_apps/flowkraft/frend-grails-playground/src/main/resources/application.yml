@@ -18,3 +18,33 @@ dataSource:
     password:
 hibernate:
     dialect: org.sqlite.hibernate.dialect.SQLiteDialect
+
+# ===================================================================
+# KEYCLOAK AUTHENTICATION (DISABLED BY DEFAULT)
+# ===================================================================
+# To enable Keycloak authentication:
+# 1. Start Keycloak: docker-compose up -d keycloak
+# 2. Configure realm and client in Keycloak admin
+# 3. Uncomment the configuration below
+# 4. Add Spring Security OAuth2 dependencies to build.gradle
+# 5. See ENABLE_KEYCLOAK.md for detailed instructions
+# ===================================================================
+
+# keycloak:
+#   enabled: false  # Set to true to enable Keycloak
+#   auth-server-url: http://localhost:8480
+#   realm: customers  # Use 'customers' realm for B2B/B2C portal
+#   resource: frend-grails-playground
+#   bearer-only: false  # Allow redirects for user login
+#   ssl-required: none  # Use 'all' in production with HTTPS
+#   public-client: true  # Or false with client secret
+#   # credentials:
+#   #   secret: your-client-secret-here  # Only if public-client: false
+#
+# spring:
+#   security:
+#     oauth2:
+#       resourceserver:
+#         jwt:
+#           issuer-uri: ${keycloak.auth-server-url}/realms/${keycloak.realm}
+#           jwk-set-uri: ${keycloak.auth-server-url}/realms/${keycloak.realm}/protocol/openid-connect/certs
