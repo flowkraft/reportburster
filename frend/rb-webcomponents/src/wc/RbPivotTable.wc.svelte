@@ -157,11 +157,17 @@
   });
 
   // ============================================================================
-  // Server-side Processing (DuckDB Engine)
+  // Server-side Processing (Auto-Detect or Explicit Engine)
   // ============================================================================
 
-  // Reactive statement to trigger server-side pivot when engine='duckdb'
-  $: if (engine === 'duckdb' && connectionCode && tableName) {
+  // Helper to determine if server-side processing should be used
+  // Server-side is used when connectionCode and tableName are provided AND engine is not explicitly 'browser'
+  function shouldUseServerProcessing(): boolean {
+    return engine !== 'browser' && !!connectionCode && !!tableName;
+  }
+
+  // Reactive statement to trigger server-side pivot when conditions are met
+  $: if (shouldUseServerProcessing()) {
     executePivotOnServer();
   }
 
@@ -176,6 +182,10 @@
     serverMetadata = null;
 
     try {
+      // If engine is undefined, let backend auto-detect from connection type
+      // If engine is 'duckdb' or 'clickhouse', explicitly pass it
+      const engineToUse = engine as 'duckdb' | 'clickhouse' | undefined;
+      
       const request = buildServerPivotRequest(connectionCode, tableName, {
         rows,
         cols,
@@ -184,10 +194,18 @@
         valueFilter,
         rowOrder,
         colOrder,
-      });
+      }, engineToUse);
 
       console.log('[rb-pivot-table] Executing server-side pivot:', request);
       const response = await pivotApi.executePivot(request, 'pivot-table-main');
+
+      // Check if backend returned 'browser' engine (non-OLAP connection)
+      if ((response as any).engine === 'browser') {
+        console.log('[rb-pivot-table] Backend detected non-OLAP connection, switching to browser processing');
+        dispatch('pivotEngineDetected', { detectedEngine: 'browser' });
+        loading = false;
+        return;
+      }
 
       console.log('[rb-pivot-table] Server response received:', {
         rowCount: response.metadata.rowCount,
@@ -722,8 +740,8 @@
 <!-- ============================================================================ -->
 {#if loading}
   <div class="rb-loading">
-    {#if engine === 'duckdb'}
-      Loading pivot data from server...
+    {#if engine === 'duckdb' || engine === 'clickhouse'}
+      Loading pivot data from server ({engine})...
     {:else}
       Loading...
     {/if}
@@ -732,9 +750,9 @@
 {#if error}
   <div class="rb-error">{error}</div>
 {/if}
-{#if serverMetadata && engine === 'duckdb'}
+{#if serverMetadata && (engine === 'duckdb' || engine === 'clickhouse')}
   <div class="rb-server-info">
-    ⚡ Server-side processing: {serverMetadata.rowCount} rows in {serverMetadata.executionTimeMs}ms
+    ⚡ Server-side processing ({engine}): {serverMetadata.rowCount} rows in {serverMetadata.executionTimeMs}ms
   </div>
 {/if}
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->

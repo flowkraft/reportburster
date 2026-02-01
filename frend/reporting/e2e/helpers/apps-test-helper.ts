@@ -14,7 +14,7 @@ export const VISIBLE_APPS = [
   { id: 'matomo', name: 'Matomo' },
   { id: 'docuseal', name: 'Docuseal' },
   { id: 'metabase', name: 'Metabase' },
-  { id: 'clickhouse', name: 'ClickHouse', launch: false },
+  // ClickHouse moved to Starter Packs (Databases) - no longer in Apps Manager
 ];
 
 // Sanitizes app id the same way as the component does (removes spaces only)

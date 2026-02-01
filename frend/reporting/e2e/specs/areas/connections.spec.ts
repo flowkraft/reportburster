@@ -6,7 +6,7 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import * as PATHS from '../../utils/paths';
 import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test-helper';
-import { ConnectionsTestHelper, DB_VENDORS_DEFAULT, DB_VENDORS_SUPPORTED } from '../../helpers/areas/connections-test-helper';
+import { ConnectionsTestHelper, DB_VENDORS_DEFAULT, DB_VENDORS_SUPPORTED, isOlapVendor, SCHEMA_TABLES_OLAP, SCHEMA_VIEWS_OLAP } from '../../helpers/areas/connections-test-helper';
 
 const DB_VENDORS_SELECTED: string[] = (() => {
   const requiredVendors = ['sqlite', 'duckdb']; // Always test SQLite and DuckDB
@@ -1216,6 +1216,38 @@ test.describe('', async () => {
         ft = ft.waitOnElementToBecomeVisible(
           '#treeNodeProductssourceTreedatabaseSchemaPicklist',
         );
+
+        // For OLAP vendors (DuckDB, ClickHouse), also assert Star Schema tables and views
+        if (isOlapVendor(dbVendor)) {
+          ft = ft.consoleLog('STEP 1.5: Asserting OLAP Star Schema tables and views (DuckDB/ClickHouse)');
+          // Assert dimension tables
+          ft = ft.waitOnElementToBecomeVisible(
+            '#treeNodedim_customersourceTreedatabaseSchemaPicklist',
+          );
+          ft = ft.waitOnElementToBecomeVisible(
+            '#treeNodedim_productsourceTreedatabaseSchemaPicklist',
+          );
+          ft = ft.waitOnElementToBecomeVisible(
+            '#treeNodedim_timesourceTreedatabaseSchemaPicklist',
+          );
+          ft = ft.waitOnElementToBecomeVisible(
+            '#treeNodedim_employeesourceTreedatabaseSchemaPicklist',
+          );
+          ft = ft.waitOnElementToBecomeVisible(
+            '#treeNodedim_shippersourceTreedatabaseSchemaPicklist',
+          );
+          // Assert fact table
+          ft = ft.waitOnElementToBecomeVisible(
+            '#treeNodefact_salessourceTreedatabaseSchemaPicklist',
+          );
+          // Assert views
+          ft = ft.waitOnElementToBecomeVisible(
+            '#treeNodevw_sales_detailsourceTreedatabaseSchemaPicklist',
+          );
+          ft = ft.waitOnElementToBecomeVisible(
+            '#treeNodevw_monthly_salessourceTreedatabaseSchemaPicklist',
+          );
+        }
 
         ft = ft.consoleLog('STEP 2: Test Picklist Functionality');
         //Test 'Searching' Type "Test" into the search filter

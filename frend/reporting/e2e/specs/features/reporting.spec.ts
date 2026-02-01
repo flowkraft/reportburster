@@ -152,7 +152,29 @@ test.describe('', async () => {
     WHERE "HireDate" BETWEEN CAST(:startDate AS DATE) AND CAST(:endDate AS DATE)
     ORDER BY "HireDate"
   `
-                    : `
+                    : dbVendor === 'duckdb'
+                      ? `
+    SELECT 
+        "EmployeeID", 
+        "FirstName", 
+        "LastName", 
+        "HireDate"
+    FROM "Employees"
+    WHERE "HireDate" BETWEEN CAST(:startDate AS DATE) AND CAST(:endDate AS DATE)
+    ORDER BY "HireDate"
+  `
+                      : dbVendor === 'clickhouse'
+                        ? `
+    SELECT 
+        EmployeeID, 
+        FirstName, 
+        LastName, 
+        HireDate
+    FROM Employees
+    WHERE HireDate BETWEEN toDate(:startDate) AND toDate(:endDate)
+    ORDER BY HireDate
+  `
+                        : `
     SELECT 
         EmployeeID, 
         FirstName, 
@@ -451,7 +473,29 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
     WHERE "HireDate" BETWEEN CAST(:startDate AS DATE) AND CAST(:endDate AS DATE)
     ORDER BY "HireDate"
   `
-                    : `
+                    : dbVendor === 'duckdb'
+                      ? `
+    SELECT 
+        "EmployeeID", 
+        "FirstName", 
+        "LastName", 
+        "HireDate"
+    FROM "Employees"
+    WHERE "HireDate" BETWEEN CAST(:startDate AS DATE) AND CAST(:endDate AS DATE)
+    ORDER BY "HireDate"
+  `
+                      : dbVendor === 'clickhouse'
+                        ? `
+    SELECT 
+        EmployeeID, 
+        FirstName, 
+        LastName, 
+        HireDate
+    FROM Employees
+    WHERE HireDate BETWEEN toDate(:startDate) AND toDate(:endDate)
+    ORDER BY HireDate
+  `
+                        : `
     SELECT 
         EmployeeID, 
         FirstName, 
@@ -503,7 +547,27 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
     FROM "DB2INST1"."Employees"
     ORDER BY "HireDate"
   `
-                    : `
+                    : dbVendor === 'duckdb'
+                      ? `
+    SELECT 
+        "EmployeeID", 
+        "FirstName", 
+        "LastName", 
+        "HireDate"
+    FROM "Employees"
+    ORDER BY "HireDate"
+  `
+                      : dbVendor === 'clickhouse'
+                        ? `
+    SELECT 
+        EmployeeID, 
+        FirstName, 
+        LastName, 
+        HireDate
+    FROM Employees
+    ORDER BY HireDate
+  `
+                        : `
     SELECT 
         EmployeeID, 
         FirstName, 

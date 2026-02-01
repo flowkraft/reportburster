@@ -22,7 +22,7 @@ services:
       - ELEMENT_URL=http://flowkraft-ai-crew-element-web:80
       - CODE_SERVER_URL=http://localhost:8443
     ports:
-      - "8484:3000"  # AI Crew Dashboard UI
+      - "8520:3000"  # AI Crew Dashboard UI
     restart: unless-stopped
     networks:
       - ai-crew-network

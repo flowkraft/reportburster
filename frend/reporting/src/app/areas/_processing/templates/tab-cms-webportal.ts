@@ -23,7 +23,7 @@ export const tabCmsWebPortalTemplate = `<ng-template
       <div class="col-xs-12">
         <dburst-apps-manager
           [dropdownDirection]="'expandedList'"
-          [inputAppsToShow]="['flowkraft-frend-grails']"
+          [inputAppsToShow]="['flowkraft-grails']"
           [showDevButtons]="false"
         >
         </dburst-apps-manager>

@@ -61,7 +61,8 @@ public class NorthwindManager implements AutoCloseable {
 		DUCKDB(0, null, null, "northwind.duckdb", Duration.ofMinutes(10)),
 		SQLSERVER(1433, "sa", "Password123!", "Northwind", Duration.ofMinutes(60)),
 		ORACLE(1521, "oracle", "oracle", "XEPDB1", Duration.ofMinutes(60)), // DB name is XE for Oracle XE
-		DB2(50000, "db2inst1", "password", "NORTHWND", Duration.ofMinutes(60));
+		DB2(50000, "db2inst1", "password", "NORTHWND", Duration.ofMinutes(60)),
+		CLICKHOUSE(8123, "default", "clickhouse", "northwind", Duration.ofMinutes(30)); // HTTP interface port
 
 		private final int containerPort;
 		private final String defaultUser;
@@ -439,6 +440,8 @@ public class NorthwindManager implements AutoCloseable {
 				return "jdbc:oracle:thin:@//" + host + ":" + port + "/" + dbName;
 			case DB2:
 				return "jdbc:db2://" + host + ":" + port + "/" + dbName;
+			case CLICKHOUSE:
+				return "jdbc:clickhouse://" + host + ":" + port + "/" + dbName;
 			default:
 				throw new IllegalArgumentException("Unsupported database vendor: " + vendor);
 		}
@@ -475,6 +478,35 @@ public class NorthwindManager implements AutoCloseable {
             DuckDBDataWarehouseCreator.main(new String[]{});
 
             log.info("DuckDB data warehouse created successfully");
+            return; // Skip JPA initialization below - already created via SQL
+        }
+
+        // ClickHouse uses a specialized data warehouse creator (columnar OLAP, not OLTP)
+        // REASON: ClickHouse is for analytics/OLAP with columnar storage (MergeTree engine),
+        //         JPA/Hibernate doesn't support ClickHouse DDL properly
+        // CRITICAL: Data is imported from SQLite (same source as DuckDB) to ensure
+        //           IDENTICAL data in both OLAP databases for pivot table consistency
+        if (vendor == DatabaseVendor.CLICKHOUSE) {
+            log.info("Initializing ClickHouse data warehouse (Star Schema)...");
+            
+            // Get JDBC URL with proper host/port
+            int port = activeHostPorts.getOrDefault(vendor, getDefaultHostPort(vendor));
+            String host = Utils.getEffectiveHost("localhost");
+            String jdbcUrl = "jdbc:clickhouse://" + host + ":" + port + "/" + vendor.getDefaultDbName();
+            
+            // SQLite path (same source as DuckDB - ensures identical OLAP data)
+            String sqlitePath = hostDataPath.getParent().resolve("sample-northwind-sqlite").resolve("northwind.db").toString();
+            
+            // Call ClickHouse creator with connection details and SQLite path
+            ClickHouseDataWarehouseCreator.createDataWarehouse(jdbcUrl, getUsername(vendor), getPassword(vendor), sqlitePath);
+            
+            log.info("ClickHouse data warehouse created successfully");
+            
+            // Create marker file to prevent re-initialization
+            Path markerFilePath = hostDataPath.resolve(MARKER_FILENAME);
+            Files.createDirectories(hostDataPath);
+            Files.createFile(markerFilePath);
+            
             return; // Skip JPA initialization below - already created via SQL
         }
 

@@ -295,6 +295,8 @@ public class DatabaseSchemaFetcher {
                 return "org.mariadb.jdbc.Driver"; // Example
             case "ibmdb2":
                 return "com.ibm.db2.jcc.DB2Driver"; // Example (Type 4)
+            case "clickhouse":
+                return "com.clickhouse.jdbc.ClickHouseDriver";
             default:
                 log.warn("No JDBC driver class configured for database type: {}", dbType);
                 return null;
@@ -364,6 +366,10 @@ public class DatabaseSchemaFetcher {
                 // Needs robust handling of settings.usessl.
                 String db2Ssl = settings.usessl ? ":sslConnection=true;" : ""; // Simplified example
                 return String.format("jdbc:db2://%s:%s/%s%s", effectiveHost, settings.port, settings.database, db2Ssl);
+            case "clickhouse":
+                // Example: jdbc:clickhouse://<host>:<port>/<database>
+                // ClickHouse uses HTTP interface on port 8123 by default
+                return String.format("jdbc:clickhouse://%s:%s/%s", effectiveHost, settings.port, settings.database);
             default:
                 log.warn("Cannot construct JDBC URL for unsupported database type: {}", dbType);
                 return null;

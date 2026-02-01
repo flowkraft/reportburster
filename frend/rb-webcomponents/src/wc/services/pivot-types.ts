@@ -76,7 +76,11 @@ export type TableClickCallback = (
 ) => void;
 
 // Processing engine type
-export type PivotEngine = 'browser' | 'duckdb';
+// - 'browser': Client-side processing (explicit, for non-OLAP databases)
+// - 'duckdb': Server-side processing using DuckDB (explicit)
+// - 'clickhouse': Server-side processing using ClickHouse (explicit)
+// - undefined: Auto-detect from connection database type (backend decides)
+export type PivotEngine = 'browser' | 'duckdb' | 'clickhouse';
 
 // PivotTableUI component props (extends PivotDataProps)
 export interface PivotTableProps extends PivotDataProps {
@@ -89,9 +93,9 @@ export interface PivotTableProps extends PivotDataProps {
   tableClickCallback?: TableClickCallback;
   onChange?: (state: PivotTableState) => void;
   // Server-side processing options
-  engine?: PivotEngine;
-  connectionCode?: string;  // Required when engine='duckdb'
-  tableName?: string;        // Required when engine='duckdb'
+  engine?: PivotEngine;      // Optional - if omitted, auto-detected from connection type
+  connectionCode?: string;   // Required for server-side processing
+  tableName?: string;        // Required for server-side processing
 }
 
 // State object passed to onChange callback

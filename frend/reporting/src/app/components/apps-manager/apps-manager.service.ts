@@ -27,6 +27,8 @@ export interface ManagedApp {
   tags?: string[];
   visible?: boolean;
   launch?: boolean; // Set to false to hide Launch button (e.g., for headless/API-only apps)
+  // Multiple launch URLs for apps with several entry points (dropdown)
+  launchLinks?: { label: string; url: string; icon?: string }[];
   // Build flags for Flowkraft apps
   buildOnStart?: boolean;
   noCacheOnStart?: boolean;
@@ -93,33 +95,22 @@ export class AppsManagerService {
         visible: true,
       },
       {
-        id: 'flowkraft-frend-next',
-        name: 'Flowkraft\'s Frontend App (Dashboards & Portals)',
+        id: 'flowkraft-grails',
+        name: 'Flowkraft\'s Grails Apps (Admin & Webportal)',
         icon: 'fa fa-cube',
-        category: 'Frontend Tools',
+        category: 'Full-Stack Apps',
         type: 'docker',
-        description: 'Bring your reports to the <strong>frontend</strong>: dashboards, portals, anywhere your users need them. Use our \'quick to get things done\' (highly capable and fully customizable) portal, or <strong>embed ReportBurster reports</strong> directly into your existing web applications and portals — responsive, secure, and themeable to match your look and feel. <br/><br/>Wondering if it\'s hard? Not at all!&nbsp;<a href="https://www.reportburster.com/docs/dashboards-self-service-portal" target="_blank"><i class="fa fa-book"></i>&nbsp;learn more</a>',
-        url: 'http://localhost:8481',
+        description: 'Build admin panels and self-service portals using <strong>Grails/Groovy</strong> — our <em>recommended stack</em> for consistency with ReportBurster\'s scripting and backend. Includes admin panel (CRUD, data management) and customer webportal (dashboards, document access). <a href="https://www.reportburster.com/docs/grails-apps" target="_blank"><i class="fa fa-book"></i>&nbsp;learn more</a>',
+        url: 'http://localhost:8480',
+        launchLinks: [
+          { label: 'Admin Panel', url: 'http://localhost:8480', icon: 'fa fa-cog' },
+          { label: 'Self-Service Webportal', url: 'http://localhost:8490', icon: 'fa fa-users' }
+        ],
         entrypoint: 'flowkraft/docker-compose.yml',
-        service_name: 'frend-next-playground',
-        startCmd: 'service app start frend-next-playground 8481',
-        stopCmd: 'service app stop frend-next-playground',
-        tags: ['flowkraft', 'frontend', 'dashboards', 'customer-portal', 'next.js', 'react', 'ReportBurster\'s App'],
-        visible: true,
-      },
-      {
-        id: 'flowkraft-admin-grails',
-        name: 'Flowkraft\'s Admin Panel App',
-        icon: 'fa fa-cube',
-        category: 'Admin Tools',
-        type: 'docker',
-        description: 'Easily build admin user interfaces on top of your business data',
-        url: 'http://localhost:8482',
-        entrypoint: 'flowkraft/docker-compose.yml',
-        service_name: 'admin-grails-playground',
-        startCmd: 'service app start admin-grails-playground 8482',
-        stopCmd: 'service app stop admin-grails-playground',
-        tags: ['flowkraft', 'admin-panel', 'backend', 'cms', 'ReportBurster\'s App'],
+        service_name: 'grails-admin grails-webportal',
+        startCmd: 'service app start grails-admin 8480 && service app start grails-webportal 8490',
+        stopCmd: 'service app stop grails-admin && service app stop grails-webportal',
+        tags: ['flowkraft', 'admin-panel', 'webportal', 'grails', 'groovy', 'recommended', 'ReportBurster\'s App'],
         visible: true,
       },
       {
@@ -129,14 +120,33 @@ export class AppsManagerService {
         category: 'Backend Services',
         type: 'docker',
         description: 'Quickly deploy / run automation flows across your business systems',
-        url: 'http://localhost:8483',
+        url: 'http://localhost:8500',
         entrypoint: 'flowkraft/docker-compose.yml',
         service_name: 'bkend-boot-groovy-playground',
-        startCmd: 'service app start bkend-boot-groovy-playground 8483',
+        startCmd: 'service app start bkend-boot-groovy-playground 8500',
         stopCmd: 'service app stop bkend-boot-groovy-playground',
         tags: ['flowkraft', 'backend', 'automation', 'job-scheduling', 'ReportBurster\'s App'],
         visible: true,
         launch: false, // No UI - API/automation only
+      },
+      {
+        id: 'flowkraft-next',
+        name: 'Flowkraft\'s Next.js Apps (Alternative Stack)',
+        icon: 'fa fa-cube',
+        category: 'Full-Stack Apps',
+        type: 'docker',
+        description: 'Build dashboards and portals using <strong>Next.js 16 + Tailwind 4 + shadcn</strong> — for users who prefer the modern React/TypeScript ecosystem. Same capabilities as the Grails apps but with a different tech stack. <a href="https://www.reportburster.com/docs/nextjs-apps" target="_blank"><i class="fa fa-book"></i>&nbsp;learn more</a>',
+        url: 'http://localhost:8510',
+        launchLinks: [
+          { label: 'Main Portal', url: 'http://localhost:8510', icon: 'fa fa-home' },
+          { label: 'Admin Panel', url: 'http://localhost:8510/admin', icon: 'fa fa-cog' }
+        ],
+        entrypoint: 'flowkraft/next-playground/docker-compose.yml',
+        service_name: 'next-playground',
+        startCmd: 'service app start next-playground 8510',
+        stopCmd: 'service app stop next-playground',
+        tags: ['flowkraft', 'frontend', 'dashboards', 'customer-portal', 'next.js', 'react', 'alternative', 'ReportBurster\'s App'],
+        visible: true,
       },
       {
         id: 'flowkraft-ai-crew',
@@ -145,10 +155,10 @@ export class AppsManagerService {
         category: 'AI & Agents',
         type: 'docker',
         description: 'AI Agent Management Dashboard powered by Letta. Provision and manage Greek advisor agents (Athena, Hephaestus, Hermes) for data modeling, ETL/automation, and UI guidance.',
-        url: 'http://localhost:8484',
+        url: 'http://localhost:8520',
         entrypoint: 'flowkraft/_ai-crew/docker-compose.yml',
         service_name: 'ai-crew-frontend',
-        startCmd: 'service app start ai-crew-frontend 8484',
+        startCmd: 'service app start ai-crew-frontend 8520',
         stopCmd: 'service app stop ai-crew-frontend',
         tags: ['flowkraft', 'ai-agents'],
         visible: true,
@@ -234,23 +244,7 @@ export class AppsManagerService {
         visible: true,
         website: 'https://www.metabase.com/',
       },
-      {
-        id: 'clickhouse',
-        name: 'ClickHouse (OLAP Database)',
-        icon: 'fa fa-database',
-        category: 'Databases & Analytics',
-        type: 'docker',
-        description: 'High-performance columnar OLAP (real-time) database for analytics and reporting workloads.',
-        url: 'http://localhost:8123',
-        entrypoint: 'clickhouse/docker-compose.yml',
-        service_name: 'clickhouse',
-        startCmd: 'service app start clickhouse 8123',
-        stopCmd: 'service app stop clickhouse',
-        tags: ['database', 'olap', 'analytics'],
-        visible: true,
-        launch: false, // No UI - API/database server only
-        website: 'https://clickhouse.com/',
-      },
+      // ClickHouse moved to Starter Packs (Databases) - see starter-packs.service.ts
       {
         id: 'vanna-ai',
         name: 'Vanna.AI',

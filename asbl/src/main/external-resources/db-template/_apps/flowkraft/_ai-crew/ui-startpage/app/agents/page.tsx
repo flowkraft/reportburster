@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Info, Code, Rocket, Loader2 } from 'lucide-react';
+import { MessageSquare, Info, Code, Rocket, Loader2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -12,6 +12,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+
+// Stack options for the Web Apps Stack selector
+const STACK_OPTIONS = [
+  { value: 'grails', label: 'Grails (Recommended)', stackTag: 'stack:grails' },
+  { value: 'nextjs', label: 'Next.js', stackTag: 'stack:nextjs' },
+] as const;
+
+type StackValue = typeof STACK_OPTIONS[number]['value'];
 
 // Sample agent data - fallback if API fails
 const sampleAgents = [
@@ -66,6 +74,27 @@ export default function AgentsPage() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const [selectedStack, setSelectedStack] = useState<StackValue>('grails');
+  const [stackLoading, setStackLoading] = useState(true);
+
+  // Fetch stack config from database
+  useEffect(() => {
+    const fetchStackConfig = async () => {
+      try {
+        const response = await fetch('/api/config?key=webapp_stack');
+        const data = await response.json();
+        if (data.success && data.config) {
+          setSelectedStack(data.config.value as StackValue);
+        }
+      } catch (error) {
+        console.error('Error fetching stack config:', error);
+        // Keep default 'grails' on error
+      } finally {
+        setStackLoading(false);
+      }
+    };
+    fetchStackConfig();
+  }, []);
 
   useEffect(() => {
     fetchAgents();
@@ -136,6 +165,39 @@ export default function AgentsPage() {
     } finally {
       setProvisioning(false);
     }
+  };
+
+  const handleStackChange = async (newStack: StackValue) => {
+    const previousStack = selectedStack;
+    setSelectedStack(newStack); // Optimistic update
+
+    try {
+      const response = await fetch('/api/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: 'webapp_stack',
+          value: newStack,
+          description: 'Selected web application stack for the project',
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`Stack changed to ${STACK_OPTIONS.find(s => s.value === newStack)?.label}`);
+      } else {
+        throw new Error(data.error || 'Failed to save stack');
+      }
+    } catch (error) {
+      console.error('Error saving stack config:', error);
+      setSelectedStack(previousStack); // Rollback on error
+      toast.error('Failed to save stack preference');
+    }
+  };
+
+  // Helper to check if an agent matches the selected stack
+  const isStackAgent = (agent: Agent): boolean => {
+    const stackOption = STACK_OPTIONS.find(s => s.value === selectedStack);
+    return stackOption ? agent.tags.includes(stackOption.stackTag) : false;
   };
 
   const handleChatWithAgent = (agent: Agent) => {
@@ -263,6 +325,36 @@ export default function AgentsPage() {
         </Button>
       </div>
 
+      {/* Web Apps Stack Selector */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <div className="bg-card border border-border rounded-lg p-4">
+          <div className="flex items-center gap-4">
+            <label htmlFor="stack-select" className="text-sm font-medium text-foreground whitespace-nowrap">
+              Web Apps Stack:
+            </label>
+            <div className="relative">
+              <select
+                id="stack-select"
+                value={selectedStack}
+                onChange={(e) => handleStackChange(e.target.value as StackValue)}
+                disabled={stackLoading}
+                className="appearance-none bg-background border border-border rounded-md px-4 py-2 pr-10 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-rb-cyan focus:border-rb-cyan disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {STACK_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            </div>
+            <span className="text-xs text-muted-foreground">
+              Agents with expertise in the selected stack will be highlighted
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Agents Grid */}
       <div className="max-w-7xl mx-auto mb-6">
         <div className="bg-card border border-border rounded-lg overflow-hidden">
@@ -276,23 +368,34 @@ export default function AgentsPage() {
 
           {/* Table Body */}
           <div className="divide-y divide-border">
-            {agents.map((agent) => (
-              <div
-                key={agent.id}
-                className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-muted/30 transition-colors"
-              >
-                {/* Name Column */}
-                <div className="col-span-12 sm:col-span-3">
-                  <Link
-                    href={`/agents/${agent.id}`}
-                    className="font-semibold text-foreground hover:text-rb-cyan hover:underline transition-colors"
-                  >
-                    {agent.name}
-                  </Link>
-                  <div className="text-sm text-muted-foreground sm:hidden mt-1">
-                    {agent.tags.join(', ')}
+            {agents.map((agent) => {
+              const isHighlighted = isStackAgent(agent);
+              return (
+                <div
+                  key={agent.id}
+                  className={`grid grid-cols-12 gap-4 px-6 py-4 hover:bg-muted/30 transition-colors ${
+                    isHighlighted ? 'bg-rb-cyan/5 border-l-2 border-l-rb-cyan' : ''
+                  }`}
+                >
+                  {/* Name Column */}
+                  <div className="col-span-12 sm:col-span-3">
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/agents/${agent.id}`}
+                        className="font-semibold text-foreground hover:text-rb-cyan hover:underline transition-colors"
+                      >
+                        {agent.name}
+                      </Link>
+                      {isHighlighted && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rb-cyan text-white uppercase tracking-wider">
+                          {selectedStack}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-muted-foreground sm:hidden mt-1">
+                      {agent.tags.join(', ')}
+                    </div>
                   </div>
-                </div>
 
                 {/* Tags Column (hidden on mobile) */}
                 <div className="hidden sm:block sm:col-span-3">
@@ -337,7 +440,8 @@ export default function AgentsPage() {
                   </Button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

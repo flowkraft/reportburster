@@ -20,7 +20,7 @@ docker-compose up -d keycloak-postgres keycloak
 
 ## Authentication Behavior
 
-### admin-grails-playground (Admin Portal)
+### grails-admin (Admin Portal)
 
 | Auth State | Behavior |
 |------------|----------|
@@ -31,7 +31,7 @@ docker-compose up -d keycloak-postgres keycloak
 
 ---
 
-### frend-next-playground (Customer Portal)
+### next-playground (Next.js Customer Portal)
 
 | Auth State | Route | Example | Behavior |
 |------------|-------|---------|----------|
@@ -98,26 +98,26 @@ Settings:
 
 ### Create Clients
 
-**frend-next-playground** (customers realm)
+**next-playground** (customers realm)
 ```
-Client ID: frend-next-playground
-Root URL: http://localhost:8481
-Valid Redirect URIs: http://localhost:8481/*
+Client ID: next-playground
+Root URL: http://localhost:8510
+Valid Redirect URIs: http://localhost:8510/*
 Web Origins: +
 ```
 
-**admin-grails-playground** (flowkraft-admin realm)
+**grails-admin** (flowkraft-admin realm)
 ```
-Client ID: admin-grails-playground
-Root URL: http://localhost:8482
-Valid Redirect URIs: http://localhost:8482/*
+Client ID: grails-admin
+Root URL: http://localhost:8480
+Valid Redirect URIs: http://localhost:8480/*
 ```
 
 ---
 
 ## 3. Enable in Applications
 
-### Grails (admin-grails-playground)
+### Grails (grails-admin)
 
 **1. Add Dependencies** (build.gradle):
 ```groovy
@@ -133,12 +133,12 @@ keycloak:
   enabled: true
   auth-server-url: http://localhost:8480
   realm: flowkraft-admin
-  resource: admin-grails-playground
+  resource: grails-admin
 ```
 
 ---
 
-### Next.js (frend-next-playground)
+### Next.js (next-playground)
 
 **1. Dependencies** (already installed):
 ```json
@@ -151,10 +151,10 @@ cp .env.example .env.local
 
 # Edit .env.local:
 KEYCLOAK_ENABLED=true
-KEYCLOAK_CLIENT_ID=frend-next-playground
+KEYCLOAK_CLIENT_ID=next-playground
 KEYCLOAK_CLIENT_SECRET=get-from-keycloak-admin
 KEYCLOAK_ISSUER=http://localhost:8480/realms/customers
-NEXTAUTH_URL=http://localhost:8481
+NEXTAUTH_URL=http://localhost:8510
 NEXTAUTH_SECRET=$(openssl rand -base64 32)
 ```
 
@@ -180,7 +180,7 @@ DOC_ALWAYS_PUBLIC=marketing,brochures
 
 **Email sent by ReportBurster:**
 ```
-http://localhost:8481/invoice/ABC-2025-001?token=secret123
+http://localhost:8510/invoice/ABC-2025-001?token=secret123
 ```
 
 **Customer Flow:**
@@ -199,7 +199,7 @@ http://localhost:8481/invoice/ABC-2025-001?token=secret123
 
 **Email sent:**
 ```
-http://localhost:8481/payslip/PAY-2025-001?token=xxx
+http://localhost:8510/payslip/PAY-2025-001?token=xxx
 ```
 
 **Employee Flow:**
@@ -272,30 +272,30 @@ class KeycloakAdminService {
 
 ### Without Keycloak (Default)
 ```bash
-curl http://localhost:8482/  # ✅ admin-grails
-curl http://localhost:8481/  # ✅ frend-next
+curl http://localhost:8480/  # ✅ admin-grails
+curl http://localhost:8510/  # ✅ frend-next
 ```
 
 ### With Keycloak Enabled
 
 **Admin (all protected):**
 ```bash
-curl http://localhost:8482/  # 🔒 401 Unauthorized
+curl http://localhost:8480/  # 🔒 401 Unauthorized
 ```
 
 **Customer Portal (granular):**
 ```bash
 # Invoice with token (public):
-curl "http://localhost:8481/invoice/ABC?token=valid"  # ✅ 200 OK
+curl "http://localhost:8510/invoice/ABC?token=valid"  # ✅ 200 OK
 
 # Invoice without token (protected):
-curl "http://localhost:8481/invoice/ABC"  # 🔒 302 /auth/signin
+curl "http://localhost:8510/invoice/ABC"  # 🔒 302 /auth/signin
 
 # Payslip with token (still protected):
-curl "http://localhost:8481/payslip/PAY?token=valid"  # 🔒 302 /auth/signin
+curl "http://localhost:8510/payslip/PAY?token=valid"  # 🔒 302 /auth/signin
 
 # Dashboard (always protected):
-curl "http://localhost:8481/dashboard"  # 🔒 302 /auth/signin
+curl "http://localhost:8510/dashboard"  # 🔒 302 /auth/signin
 ```
 
 ---

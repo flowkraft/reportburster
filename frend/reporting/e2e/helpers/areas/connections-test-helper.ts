@@ -17,9 +17,46 @@ export const DB_VENDORS_SUPPORTED = [
   'ibmdb2',
   'sqlite',
   'duckdb',
+  'clickhouse',
 ];
 
 export const DB_VENDORS_DEFAULT = 'sqlite';
+
+// OLAP vendors (have Star Schema with fact/dimension tables + views)
+export const DB_VENDORS_OLAP = ['duckdb', 'clickhouse'];
+
+// Helper to check if vendor is OLAP (has Star Schema)
+export function isOlapVendor(vendor: string): boolean {
+  return DB_VENDORS_OLAP.includes(vendor.toLowerCase());
+}
+
+// OLTP tables (present in ALL databases)
+export const SCHEMA_TABLES_OLTP = [
+  'Categories',
+  'Customers',
+  'Employees',
+  'OrderDetails',
+  'Orders',
+  'Products',
+  'Shippers',
+  'Suppliers',
+];
+
+// OLAP Star Schema tables (present only in DuckDB and ClickHouse)
+export const SCHEMA_TABLES_OLAP = [
+  'dim_customer',
+  'dim_employee',
+  'dim_product',
+  'dim_shipper',
+  'dim_time',
+  'fact_sales',
+];
+
+// OLAP Views (present only in DuckDB and ClickHouse)
+export const SCHEMA_VIEWS_OLAP = [
+  'vw_monthly_sales',
+  'vw_sales_detail',
+];
 
 type StarterPackState = 'running' | 'stopped' | 'starting' | 'stopping' | 'error' | 'unknown';
 
@@ -45,6 +82,8 @@ function vendorToPackId(vendor: string): string {
       return 'db-northwind-sqlite';
     case 'duckdb':
       return 'db-northwind-duckdb';
+    case 'clickhouse':
+      return 'db-northwind-clickhouse';
     default:
       return `db-northwind-${v}`;
   }
@@ -70,6 +109,11 @@ export class ConnectionsTestHelper {
         return { host: 'localhost', port: '1521', db: 'XEPDB1', user: 'oracle', pass: 'oracle' };
       case 'ibmdb2':
         return { host: 'localhost', port: '50000', db: 'NORTHWND', user: 'db2inst1', pass: 'password' };
+      case 'duckdb':
+        // DuckDB is file-based: no host/port/user/pass needed, only the database file path
+        return { host: '', port: '', db: '/db/sample-northwind-duckdb/northwind.duckdb', user: '', pass: '' };
+      case 'clickhouse':
+        return { host: 'localhost', port: '8123', db: 'northwind', user: 'default', pass: 'clickhouse' };
       default:
         return { host: 'localhost', port: '5432', db: 'Northwind', user: 'postgres', pass: 'postgres' };
     }
@@ -505,8 +549,14 @@ export class ConnectionsTestHelper {
           '#dbName',
           '/db/sample-northwind-sqlite-test/northwind-test.db',
         );
+    } else if (dbVendor === 'duckdb') {
+      // For DuckDB, we update the database file path (file-based like SQLite)
+      sequence = sequence
+        .click('#dbName')
+        .typeText('')
+        .typeText('/db/sample-northwind-duckdb/northwind-updated.duckdb');
     } else {
-      // For other database types, update host and port
+      // For server-based databases (PostgreSQL, MySQL, ClickHouse, etc.), update host and port
       sequence = sequence
         .click('#dbHost')
         .typeText('')
@@ -751,18 +801,8 @@ export class ConnectionsTestHelper {
     ft = ft.dropDownSelectOptionHavingValue('#dbType', dbVendorSelectValue);
 
     // 3. Fill vendor-specific details
-    if (dbVendorSelectValue !== 'sqlite') {
-      const d = ConnectionsTestHelper.dbServerConnDefaults(dbVendorSelectValue);
-
-      ft = ft
-        .waitOnElementToBecomeEnabled('#dbHost').click('#dbHost').typeText(d.host)
-        .waitOnElementToBecomeEnabled('#dbPort').click('#dbPort').typeText(d.port)
-        .waitOnElementToBecomeEnabled('#dbName').click('#dbName').typeText(d.db)
-        .waitOnElementToBecomeEnabled('#dbUsername').click('#dbUsername').typeText(d.user)
-        .waitOnElementToBecomeEnabled('#dbPassword').click('#dbPassword').typeText(d.pass);
-    } else {
-      // SQLite requires a file path
-      // For testing, we'll use a placeholder path that would be selected in the UI
+    if (dbVendorSelectValue === 'sqlite') {
+      // SQLite requires a file path via file browser
       ft = ft.waitOnElementToBecomeEnabled('#btnBrowseSqliteFile');
       ft = ft.click('#btnBrowseSqliteFile');
 
@@ -783,6 +823,22 @@ export class ConnectionsTestHelper {
         '#dbName',
         '/db/sample-northwind-sqlite/northwind.db',
       );
+    } else if (dbVendorSelectValue === 'duckdb') {
+      // DuckDB is file-based: only database path matters, host/port/user/pass are empty
+      const d = ConnectionsTestHelper.dbServerConnDefaults(dbVendorSelectValue);
+      ft = ft
+        .waitOnElementToBecomeEnabled('#dbName').click('#dbName').typeText(d.db);
+      // Host, Port, Username, Password fields are visible but should remain empty for DuckDB
+    } else {
+      // Server-based databases (PostgreSQL, MySQL, ClickHouse, etc.)
+      const d = ConnectionsTestHelper.dbServerConnDefaults(dbVendorSelectValue);
+
+      ft = ft
+        .waitOnElementToBecomeEnabled('#dbHost').click('#dbHost').typeText(d.host)
+        .waitOnElementToBecomeEnabled('#dbPort').click('#dbPort').typeText(d.port)
+        .waitOnElementToBecomeEnabled('#dbName').click('#dbName').typeText(d.db)
+        .waitOnElementToBecomeEnabled('#dbUsername').click('#dbUsername').typeText(d.user)
+        .waitOnElementToBecomeEnabled('#dbPassword').click('#dbPassword').typeText(d.pass);
     }
 
     ft = ft.consoleLog(

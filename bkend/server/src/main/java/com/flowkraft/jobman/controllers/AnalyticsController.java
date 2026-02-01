@@ -1,9 +1,12 @@
 package com.flowkraft.jobman.controllers;
 
+import com.flowkraft.jobman.services.ClickHouseAnalyticsService;
 import com.flowkraft.jobman.services.DuckDBAnalyticsService;
 import com.sourcekraft.documentburster.common.analytics.dto.PivotRequest;
 import com.sourcekraft.documentburster.common.analytics.dto.PivotResponse;
 import com.sourcekraft.documentburster.common.analytics.duckdb.DuckDBFileHandler;
+import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
+import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -16,7 +19,15 @@ import java.util.Map;
 
 /**
  * REST API Controller for OLAP analytics operations.
- * Provides endpoints for server-side pivot table processing using DuckDB.
+ * Provides endpoints for server-side pivot table processing using DuckDB or ClickHouse.
+ * 
+ * Engine routing:
+ * - engine="duckdb": Uses DuckDB for OLAP processing
+ * - engine="clickhouse": Uses ClickHouse for OLAP processing
+ * - engine not specified: Auto-detects from connection database type
+ *   - duckdb connection → duckdb engine
+ *   - clickhouse connection → clickhouse engine
+ *   - other connections → browser (client-side processing)
  */
 @RestController
 @RequestMapping("/api/analytics")
@@ -25,10 +36,45 @@ public class AnalyticsController {
 
     private static final Logger log = LoggerFactory.getLogger(AnalyticsController.class);
 
-    private final DuckDBAnalyticsService analyticsService;
+    private final DuckDBAnalyticsService duckDBService;
+    private final ClickHouseAnalyticsService clickHouseService;
+    private final DatabaseConnectionManager connectionManager;
 
-    public AnalyticsController(DuckDBAnalyticsService analyticsService) {
-        this.analyticsService = analyticsService;
+    public AnalyticsController(DuckDBAnalyticsService duckDBService, 
+                               ClickHouseAnalyticsService clickHouseService,
+                               DatabaseConnectionManager connectionManager) {
+        this.duckDBService = duckDBService;
+        this.clickHouseService = clickHouseService;
+        this.connectionManager = connectionManager;
+    }
+
+    /**
+     * Auto-detect the appropriate OLAP engine from the database connection type.
+     * 
+     * @param connectionCode The connection code to look up
+     * @return The detected engine: "duckdb", "clickhouse", or "browser"
+     */
+    private String detectEngineFromConnection(String connectionCode) {
+        try {
+            ServerDatabaseSettings dbSettings = connectionManager.getServerDatabaseSettings(connectionCode);
+            String dbType = dbSettings.type != null ? dbSettings.type.toLowerCase() : "";
+            
+            switch (dbType) {
+                case "duckdb":
+                    log.debug("Auto-detected engine 'duckdb' from connection type '{}'", dbType);
+                    return "duckdb";
+                case "clickhouse":
+                    log.debug("Auto-detected engine 'clickhouse' from connection type '{}'", dbType);
+                    return "clickhouse";
+                default:
+                    log.debug("Connection type '{}' is not an OLAP database, falling back to 'browser' engine", dbType);
+                    return "browser";
+            }
+        } catch (Exception e) {
+            log.warn("Failed to detect engine from connection '{}': {}. Falling back to 'browser'", 
+                    connectionCode, e.getMessage());
+            return "browser";
+        }
     }
 
     /**
@@ -40,6 +86,7 @@ public class AnalyticsController {
      * {
      *   "connectionCode": "my-connection",
      *   "tableName": "orders",
+     *   "engine": "duckdb",  // or "clickhouse" (optional, auto-detected from connection if omitted)
      *   "rows": ["country", "city"],
      *   "cols": ["product_category"],
      *   "vals": ["revenue"],
@@ -55,7 +102,8 @@ public class AnalyticsController {
     @PostMapping("/pivot")
     public ResponseEntity<?> executePivot(@RequestBody PivotRequest request) {
         try {
-            log.info("Received pivot request for table: {}", request.getTableName());
+            log.info("Received pivot request for table: {}, engine: {}", 
+                    request.getTableName(), request.getEngine());
 
             // Validate request
             if (request.getConnectionCode() == null || request.getConnectionCode().isEmpty()) {
@@ -67,8 +115,38 @@ public class AnalyticsController {
                         .body(createErrorResponse("tableName is required"));
             }
 
-            // Execute pivot
-            PivotResponse response = analyticsService.executePivot(request);
+            // Determine engine: use provided value or auto-detect from connection
+            String engine;
+            if (request.getEngine() != null && !request.getEngine().isEmpty()) {
+                engine = request.getEngine().toLowerCase();
+                log.debug("Using explicitly provided engine: {}", engine);
+            } else {
+                engine = detectEngineFromConnection(request.getConnectionCode());
+                log.info("Auto-detected engine '{}' from connection '{}'", engine, request.getConnectionCode());
+            }
+            
+            // Browser engine means client-side processing - return empty response
+            if ("browser".equals(engine)) {
+                log.debug("Engine is 'browser', returning indication for client-side processing");
+                Map<String, Object> browserResponse = new HashMap<>();
+                browserResponse.put("engine", "browser");
+                browserResponse.put("message", "Connection type requires client-side (browser) pivot processing");
+                return ResponseEntity.ok(browserResponse);
+            }
+
+            // Route to appropriate OLAP service based on engine
+            PivotResponse response;
+            switch (engine) {
+                case "clickhouse":
+                    log.debug("Routing to ClickHouse analytics service");
+                    response = clickHouseService.executePivot(request);
+                    break;
+                case "duckdb":
+                default:
+                    log.debug("Routing to DuckDB analytics service");
+                    response = duckDBService.executePivot(request);
+                    break;
+            }
 
             return ResponseEntity.ok(response);
 
@@ -88,12 +166,20 @@ public class AnalyticsController {
      * Get list of supported aggregators.
      *
      * GET /api/analytics/aggregators
+     * GET /api/analytics/aggregators?engine=clickhouse
      *
+     * @param engine Optional engine parameter (duckdb or clickhouse)
      * @return List of aggregator names
      */
     @GetMapping("/aggregators")
-    public ResponseEntity<List<String>> getSupportedAggregators() {
-        List<String> aggregators = analyticsService.getSupportedAggregators();
+    public ResponseEntity<List<String>> getSupportedAggregators(
+            @RequestParam(defaultValue = "duckdb") String engine) {
+        List<String> aggregators;
+        if ("clickhouse".equalsIgnoreCase(engine)) {
+            aggregators = clickHouseService.getSupportedAggregators();
+        } else {
+            aggregators = duckDBService.getSupportedAggregators();
+        }
         return ResponseEntity.ok(aggregators);
     }
 
@@ -106,7 +192,7 @@ public class AnalyticsController {
      */
     @GetMapping("/aggregators/display-names")
     public ResponseEntity<Map<String, String>> getAggregatorDisplayNames() {
-        Map<String, String> displayNames = analyticsService.getAggregatorDisplayNames();
+        Map<String, String> displayNames = duckDBService.getAggregatorDisplayNames();
         return ResponseEntity.ok(displayNames);
     }
 
@@ -121,9 +207,17 @@ public class AnalyticsController {
     public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> health = new HashMap<>();
         health.put("status", "UP");
-        health.put("service", "DuckDB Analytics");
-        health.put("supportedAggregators", analyticsService.getSupportedAggregators().size());
-        health.put("cache", analyticsService.getCacheStats());
+        health.put("service", "Analytics (DuckDB + ClickHouse)");
+        health.put("engines", Map.of(
+            "duckdb", Map.of(
+                "supportedAggregators", duckDBService.getSupportedAggregators().size(),
+                "cache", duckDBService.getCacheStats()
+            ),
+            "clickhouse", Map.of(
+                "supportedAggregators", clickHouseService.getSupportedAggregators().size(),
+                "cache", clickHouseService.getCacheStats()
+            )
+        ));
         return ResponseEntity.ok(health);
     }
 
@@ -131,26 +225,53 @@ public class AnalyticsController {
      * Get cache statistics.
      *
      * GET /api/analytics/cache/stats
+     * GET /api/analytics/cache/stats?engine=clickhouse
      *
+     * @param engine Optional engine parameter (duckdb or clickhouse)
      * @return Cache statistics
      */
     @GetMapping("/cache/stats")
-    public ResponseEntity<Map<String, Object>> getCacheStats() {
-        return ResponseEntity.ok(analyticsService.getCacheStats());
+    public ResponseEntity<Map<String, Object>> getCacheStats(
+            @RequestParam(defaultValue = "duckdb") String engine) {
+        Map<String, Object> stats;
+        if ("clickhouse".equalsIgnoreCase(engine)) {
+            stats = clickHouseService.getCacheStats();
+        } else {
+            stats = duckDBService.getCacheStats();
+        }
+        return ResponseEntity.ok(stats);
     }
 
     /**
      * Clear query cache.
      *
      * POST /api/analytics/cache/clear
+     * POST /api/analytics/cache/clear?engine=clickhouse
+     * POST /api/analytics/cache/clear?engine=all
      *
+     * @param engine Optional engine parameter (duckdb, clickhouse, or all)
      * @return Success message
      */
     @PostMapping("/cache/clear")
-    public ResponseEntity<Map<String, Object>> clearCache() {
-        analyticsService.clearCache();
+    public ResponseEntity<Map<String, Object>> clearCache(
+            @RequestParam(defaultValue = "duckdb") String engine) {
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "Cache cleared successfully");
+        
+        if ("all".equalsIgnoreCase(engine)) {
+            duckDBService.clearCache();
+            clickHouseService.clearCache();
+            response.put("message", "All caches cleared successfully");
+            response.put("engines", List.of("duckdb", "clickhouse"));
+        } else if ("clickhouse".equalsIgnoreCase(engine)) {
+            clickHouseService.clearCache();
+            response.put("message", "ClickHouse cache cleared successfully");
+            response.put("engine", "clickhouse");
+        } else {
+            duckDBService.clearCache();
+            response.put("message", "DuckDB cache cleared successfully");
+            response.put("engine", "duckdb");
+        }
+        
         response.put("timestamp", System.currentTimeMillis());
         return ResponseEntity.ok(response);
     }

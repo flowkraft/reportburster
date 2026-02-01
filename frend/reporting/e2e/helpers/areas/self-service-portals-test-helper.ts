@@ -23,11 +23,12 @@ export class SelfServicePortalsTestHelper {
   static readonly WP_ADMIN_PAYSTUBS_URL = `${SelfServicePortalsTestHelper.WP_BASE_URL}/wp-admin/edit.php?post_type=paystub`;
 
   // Next.js Playground Constants (formerly Grails Playground)
-  static readonly GRAILS_BASE_URL = 'http://localhost:8481'; // Name kept for backward compatibility
+  static readonly GRAILS_BASE_URL = 'http://localhost:8490'; // Points to grails-webportal (demo pages)
 
   // App IDs
   static readonly APP_ID_WORDPRESS = 'cms-webportal';
-  static readonly APP_ID_GRAILS = 'flowkraft-frend-next'; // Next.js app (formerly flowkraft-frend-grails)
+  static readonly APP_ID_GRAILS = 'flowkraft-grails'; // Grails apps (admin + webportal)
+  static readonly APP_ID_NEXT = 'flowkraft-next'; // Next.js app
 
   /**
    * Convert employee name to slug format (matches WordPress sanitize_title).

@@ -115,6 +115,27 @@ services:
       retries: 30
     restart: unless-stopped
 
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3-alpine
+    container_name: rb-northwind-clickhouse
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-clickhouse}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-northwind}
+    ports:
+      - "${CLICKHOUSE_PORT:-8123}:8123"   # HTTP interface (queries via curl, BI tools, etc.)
+      - "9000:9000"   # Native TCP interface (clients, drivers)
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8123/ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
 volumes:
   postgres_data:
   mysql_data:
@@ -122,3 +143,5 @@ volumes:
   sqlserver_data:
   oracle_data:
   db2_data:
+  clickhouse_data:
+  clickhouse_logs:
