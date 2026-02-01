@@ -264,7 +264,34 @@
             <i class="fa fa-magic"></i> {{ getAiButtonLabel() }}
           </button>
           
-           <a *ngIf="app.type !== 'desktop'"
+          <!-- Launch Dropdown (when app has multiple launchLinks) -->
+          <div *ngIf="app.type !== 'desktop' && app.launchLinks?.length > 1" 
+               class="btn-group pull-right" 
+               style="margin-left: 10px;">
+            <button type="button" 
+                    class="btn btn-default dropdown-toggle" 
+                    data-toggle="dropdown"
+                    [disabled]="!isAppRunning(app)"
+                    [class.disabled]="!isAppRunning(app)"
+                    [title]="isAppRunning(app) ? 'Launch ' + app.name : app.name + ' is stopped'">
+              <i class="fa fa-external-link"></i> Launch <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-right">
+              <li *ngFor="let link of app.launchLinks">
+                <a [href]="isAppRunning(app) ? link.url : null" 
+                   target="_blank"
+                   [class.disabled]="!isAppRunning(app)"
+                   [style.pointerEvents]="!isAppRunning(app) ? 'none' : 'auto'"
+                   [style.color]="!isAppRunning(app) ? '#999' : 'inherit'">
+                  <i *ngIf="link.icon" [class]="link.icon" style="margin-right: 6px; width: 14px; text-align: center;"></i>
+                  {{ link.label }}
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Simple Launch Button (when app has single URL or no launchLinks) -->
+          <a *ngIf="app.type !== 'desktop' && (!app.launchLinks || app.launchLinks.length <= 1)"
              [id]="'btnLaunch_' + sanitizeAppId(app.id)"
              [href]="isAppRunning(app) && app.url ? app.url : null"
              target="_blank"

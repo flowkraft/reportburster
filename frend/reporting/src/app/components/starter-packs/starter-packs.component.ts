@@ -4,7 +4,7 @@ import { Subscription, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 // Import specific icons you need from simple-icons
-// Using distinct placeholders for Oracle/SQLServer/DB2
+// Using distinct placeholders for Oracle/SQLServer/DB2/ClickHouse
 import {
   siPostgresql,
   siMysql,
@@ -13,6 +13,7 @@ import {
   siMongodb, // Placeholder 1
   siElasticsearch, // Placeholder 2
   siServerless, // Placeholder 3
+  siApachecassandra, // Placeholder 4 - for ClickHouse (columnar DB)
   // Add any other icons you might use here
 } from 'simple-icons';
 
@@ -63,6 +64,7 @@ const iconMap = {
   oracle: siMongodb, // Placeholder 1
   sqlserver: siElasticsearch, // Placeholder 2
   ibmdb2: siServerless, // Placeholder 3
+  clickhouse: siApachecassandra, // Placeholder 4 - columnar DB icon
   postgresql: siPostgresql,
   mysql: siMysql,
   mariadb: siMariadb,

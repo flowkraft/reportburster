@@ -83,14 +83,14 @@ services:
   #     retries: 5
   #     start_period: 30s
 
-  frend-grails-playground:
+  grails-webportal:
     build: 
       context: ../.. 
-      dockerfile: _apps/flowkraft/frend-grails-playground/Dockerfile
-    image: frend-grails-playground:latest
-    container_name: fkraft-frend-grails-playground
+      dockerfile: _apps/flowkraft/grails-playground/webportal/Dockerfile
+    image: grails-webportal:latest
+    container_name: fkraft-grails-webportal
     ports:
-      - "${HOST_PORT:-8481}:8080"
+      - "${HOST_PORT:-8490}:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:-false}
@@ -106,14 +106,14 @@ services:
       retries: 30       
       start_period: 10s
 
-  admin-grails-playground:
+  grails-admin:
     build: 
       context: ../.. 
-      dockerfile: _apps/flowkraft/admin-grails-playground/Dockerfile
-    image: admin-grails-playground:latest
-    container_name: fkraft-admin-grails-playground
+      dockerfile: _apps/flowkraft/grails-playground/admin/Dockerfile
+    image: grails-admin:latest
+    container_name: fkraft-grails-admin
     ports:
-      - "${HOST_PORT:-8482}:8080"
+      - "${HOST_PORT:-8480}:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:-false}
@@ -136,7 +136,7 @@ services:
     image: bkend-boot-groovy-playground:latest
     container_name: fkraft-bkend-boot-groovy-playground
     ports:
-      - "${HOST_PORT:-8483}:8080"
+      - "${HOST_PORT:-8500}:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:-false}
@@ -151,3 +151,64 @@ services:
       timeout: 5s     
       retries: 30       
       start_period: 10s
+
+  # ===================================================================
+  # CLICKHOUSE CDC SINK CONNECTOR (DISABLED BY DEFAULT)
+  # ===================================================================
+  # Enables real-time CDC replication from MySQL/PostgreSQL to ClickHouse
+  # using Debezium + Altinity Sink Connector in lightweight mode (no Kafka).
+  #
+  # PREREQUISITES:
+  # - ClickHouse database accessible (use _apps/clickhouse sample or your own)
+  # - Source database with binlog (MySQL) or WAL (PostgreSQL) enabled
+  # - Replication user created in source database
+  #
+  # See ENABLE_CH_SINK_CONNECTOR.md for detailed setup instructions.
+  # ===================================================================
+
+  # Altinity ClickHouse Sink Connector (Lightweight Mode)
+  # clickhouse-sink-connector:
+  #   image: altinityinfra/clickhouse-sink-connector:latest
+  #   container_name: fkraft-ch-sink
+  #   environment:
+  #     # ─────────────────────────────────────────────────────────────
+  #     # SOURCE DATABASE CONFIGURATION
+  #     # ─────────────────────────────────────────────────────────────
+  #     # MySQL Source (default)
+  #     - DATABASE_HOSTNAME=host.docker.internal  # Your MySQL/PostgreSQL host
+  #     - DATABASE_PORT=3306                      # 3306 for MySQL, 5432 for PostgreSQL
+  #     - DATABASE_USER=replicator
+  #     - DATABASE_PASSWORD=repl_password         # CHANGE THIS!
+  #     - DATABASE_NAME=your_database
+  #     - DATABASE_SERVER_NAME=mysql-source
+  #     - DATABASE_ALLOWPUBLICKEYRETRIEVAL=true
+  #     
+  #     # For PostgreSQL, also set:
+  #     # - CONNECTOR_CLASS=io.debezium.connector.postgresql.PostgresConnector
+  #     # - SLOT_NAME=ch_sink_slot
+  #     # - PUBLICATION_NAME=my_publication
+  #     
+  #     # ─────────────────────────────────────────────────────────────
+  #     # CLICKHOUSE TARGET CONFIGURATION
+  #     # ─────────────────────────────────────────────────────────────
+  #     - CLICKHOUSE_URL=http://fkraft-clickhouse:8123
+  #     - CLICKHOUSE_USER=default
+  #     - CLICKHOUSE_PASSWORD=mysecret             # MUST MATCH CLICKHOUSE ABOVE!
+  #     - CLICKHOUSE_DATABASE=default
+  #     
+  #     # ─────────────────────────────────────────────────────────────
+  #     # REPLICATION SETTINGS
+  #     # ─────────────────────────────────────────────────────────────
+  #     # Tables to replicate (comma-separated database.table)
+  #     - TABLE_INCLUDE_LIST=your_database.orders,your_database.customers
+  #     
+  #     # Lightweight mode (no Kafka required)
+  #     - AUTO_CREATE_TABLES=true
+  #     - SINK_CONNECTOR_LIGHTWEIGHT_UPDATE_DELETE=true
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:8083/connectors || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 60s

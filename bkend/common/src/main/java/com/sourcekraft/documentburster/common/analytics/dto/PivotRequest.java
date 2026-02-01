@@ -13,6 +13,7 @@ public class PivotRequest {
 
     private String connectionCode;
     private String tableName;
+    private String engine = "duckdb";  // Backend engine: "duckdb" or "clickhouse" (default: duckdb)
     private List<String> rows = new ArrayList<>();
     private List<String> cols = new ArrayList<>();
     private List<String> vals = new ArrayList<>();
@@ -59,6 +60,14 @@ public class PivotRequest {
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
+    }
+
+    public String getEngine() {
+        return engine;
+    }
+
+    public void setEngine(String engine) {
+        this.engine = engine;
     }
 
     public List<String> getRows() {
@@ -194,6 +203,7 @@ public class PivotRequest {
         return "PivotRequest{" +
                 "connectionCode='" + connectionCode + '\'' +
                 ", tableName='" + tableName + '\'' +
+                ", engine='" + engine + '\'' +
                 ", rows=" + rows +
                 ", cols=" + cols +
                 ", vals=" + vals +

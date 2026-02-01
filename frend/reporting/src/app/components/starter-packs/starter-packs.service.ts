@@ -101,6 +101,18 @@ export class StarterPacksService {
       stopCmd: 'service database stop northwind mariadb', // Stop command
       tags: ['database', 'northwind', 'mariadb'],
     },
+    {
+      id: 'db-northwind-clickhouse',
+      family: 'database',
+      packName: 'northwind',
+      target: 'clickhouse',
+      displayName: 'Northwind DB (ClickHouse)',
+      description: 'Sample ClickHouse OLAP database for analytics.',
+      icon: 'clickhouse', // Use simple key matching iconMap
+      startCmd: 'service database start northwind clickhouse 8123', // Start command with port
+      stopCmd: 'service database stop northwind clickhouse', // Stop command
+      tags: ['database', 'northwind', 'clickhouse', 'olap', 'analytics'],
+    },
     // --- Add other families/packs here as needed ---
     // Example for a hypothetical 'messaging' family:
     // {

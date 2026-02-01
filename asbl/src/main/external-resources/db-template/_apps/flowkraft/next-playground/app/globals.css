@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+/* ReportBurster Brand Colors - Cyan #22a7c8 */
+:root {
+  --rb-cyan: #22a7c8;
+  --rb-cyan-light: #3ab8d6;
+  --rb-cyan-dark: #1a8aa6;
+
+  /* Light theme (default) */
+  --background: #fafafa;
+  --foreground: #14203a;
+  --card: #ffffff;
+  --card-foreground: #14203a;
+  --popover: #ffffff;
+  --popover-foreground: #14203a;
+  --primary: var(--rb-cyan);
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #14203a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: var(--rb-cyan);
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: var(--rb-cyan);
+  --radius: 0.5rem;
+}
+
+/* Dark theme - applied via .dark class OR [data-theme="dark"] */
+.dark,
+[data-theme="dark"] {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+  --popover: #1e293b;
+  --popover-foreground: #f8fafc;
+  --primary: var(--rb-cyan);
+  --primary-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: var(--rb-cyan);
+  --accent-foreground: #ffffff;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #f8fafc;
+  --border: #334155;
+  --input: #334155;
+  --ring: var(--rb-cyan);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius: var(--radius);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* ReportBurster brand utilities */
+.text-rb-cyan {
+  color: var(--rb-cyan);
+}
+
+.bg-rb-cyan {
+  background-color: var(--rb-cyan);
+}
+
+.border-rb-cyan {
+  border-color: var(--rb-cyan);
+}
+
+/* Cursor pointer for all interactive elements */
+button,
+[role="button"],
+a,
+select,
+input[type="checkbox"],
+input[type="radio"],
+input[type="submit"],
+input[type="button"],
+.cursor-pointer {
+  cursor: pointer;
+}

@@ -1,12 +1,15 @@
 /**
- * HTTP client for DuckDB Analytics API
+ * HTTP client for Server-side Analytics API (DuckDB/ClickHouse)
  * Provides type-safe interface for server-side pivot table operations
  */
+
+import type { PivotEngine } from './pivot-types';
 
 // Server-side request/response types matching Java DTOs
 export interface ServerPivotRequest {
   connectionCode: string;
   tableName: string;
+  engine?: 'duckdb' | 'clickhouse';  // Backend engine (if omitted, backend auto-detects from connection type)
   rows?: string[];
   cols?: string[];
   vals?: string[];
@@ -228,11 +231,13 @@ export function buildServerPivotRequest(
     valueFilter?: Record<string, Record<string, boolean>>;
     rowOrder?: 'key_a_to_z' | 'value_a_to_z' | 'value_z_to_a';
     colOrder?: 'key_a_to_z' | 'value_a_to_z' | 'value_z_to_a';
-  }
+  },
+  engine?: 'duckdb' | 'clickhouse'
 ): ServerPivotRequest {
   return {
     connectionCode,
     tableName,
+    engine,
     rows: state.rows || [],
     cols: state.cols || [],
     vals: state.vals || [],

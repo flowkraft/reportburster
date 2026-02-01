@@ -84,7 +84,7 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
 
   isFlowkraftApp(app: ManagedApp | undefined): boolean {
     if (!app) return false;
-    return ['flowkraft-admin-grails', 'flowkraft-frend-grails', 'flowkraft-bkend-boot-groovy'].includes(app.id);
+    return ['flowkraft-grails', 'flowkraft-next', 'flowkraft-bkend-boot-groovy'].includes(app.id);
   }
 
   isStartingOrStopping(app: ManagedApp | undefined): boolean {

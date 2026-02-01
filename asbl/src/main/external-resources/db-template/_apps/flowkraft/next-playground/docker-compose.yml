@@ -1,0 +1,37 @@
+version: '3.8'
+
+# FlowKraft Customer Portal - Next.js
+# B2B/B2C portal for invoice viewing and payments
+# Runs separately from ai-crew (development helper)
+
+services:
+  next-playground:
+    container_name: flowkraft-next-playground
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - REPORTBURSTER_API_URL=${REPORTBURSTER_API_URL:-http://host.docker.internal:9090}
+    ports:
+      - "8510:3000"  # Next.js Customer Portal UI
+    volumes:
+      # Persist SQLite database across container restarts
+      - next-playground-data:/app/data
+    restart: unless-stopped
+    networks:
+      - frend-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+volumes:
+  next-playground-data:
+    driver: local
+
+networks:
+  frend-network:
+    driver: bridge

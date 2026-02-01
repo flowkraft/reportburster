@@ -78,6 +78,7 @@
 
 		<sqlite-jdbc.version>3.49.1.0</sqlite-jdbc.version>
 		<duckdb.version>1.4.4.0</duckdb.version>
+		<clickhouse-jdbc.version>0.9.6</clickhouse-jdbc.version>
 
 		<mssql-jdbc.version>13.2.0.jre11</mssql-jdbc.version>
 		<oracle-jdbc.version>23.9.0.25.07</oracle-jdbc.version>
@@ -405,6 +406,12 @@
 				<groupId>org.duckdb</groupId>
 				<artifactId>duckdb_jdbc</artifactId>
 				<version>${duckdb.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.clickhouse</groupId>
+				<artifactId>clickhouse-jdbc</artifactId>
+				<version>${clickhouse-jdbc.version}</version>
+				<classifier>all</classifier>
 			</dependency>
 
 			<dependency>

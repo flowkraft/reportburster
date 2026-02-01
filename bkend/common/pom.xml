@@ -131,6 +131,12 @@
 			<groupId>org.xerial</groupId>
 			<artifactId>sqlite-jdbc</artifactId>
 		</dependency>
+
+		<!-- ClickHouse JDBC Driver for OLAP Analytics -->
+		<dependency>
+			<groupId>com.clickhouse</groupId>
+			<artifactId>clickhouse-jdbc</artifactId>
+		</dependency>
 		<!--DATABASE END -->
 
 		<dependency>

@@ -48,9 +48,10 @@ public class ServicesManager {
 	}
 
 	private static final List<String> FLOWKRAFT_APPS = List.of(
-			"admin-grails-playground",
+			"grails-admin",
+			"grails-webportal",
 			"bkend-boot-groovy-playground",
-			"frend-grails-playground");
+			"next-playground");
 
 	// Define the family name this CLI currently handles primarily
 	private static final String DB_FAMILY = "database";
