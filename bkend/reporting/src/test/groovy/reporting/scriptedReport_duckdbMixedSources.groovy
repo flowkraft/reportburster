@@ -4,7 +4,9 @@ import groovy.sql.Sql
 log.info('DuckDB Mixed Sources Script: Starting...')
 
 def csvPath = new File('src/test/resources/input/unit/other/employees.csv').absolutePath
-def sql = Sql.newInstance(ctx.conn)
+
+// Use ctx.dbSql which is the Groovy SQL wrapper provided by the framework
+def sql = ctx.dbSql
 
 // Create an in-memory table with department data
 sql.execute('''
