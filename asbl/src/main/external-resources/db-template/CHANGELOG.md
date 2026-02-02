@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## 13.1.0 - 2026-02-09
+
+### Added
+
+- **Enhanced OLAP Analytics** — New pivot table analytics engines for enterprise-scale data analysis
+  - **DuckDB Engine** — Fast in-process OLAP for instant client-side analytics on local datasets
+  - **ClickHouse Engine** — High-performance columnar OLAP for real-time analytics on billions of rows;
+  - CDC (Change Data Capture) sink connector for real-time data replication from your own OLTP databases 
+  to ClickHouse (OLAP)
+  
+- **AI Assistants** — A powerful crew of AI agents to accelerate your work
+  - **Athena** — ReportBurster Guru & Data Modeling advisor; expert on all ReportBurster features, report configuration, and schema design
+  - **Hephaestus** — Automation & ETL specialist for building data pipelines and job workflows
+  - **Hermes** — Grails Guru & Self-Service Portal advisor for GSP views, Groovy scripting, and portal best practices
+  - **Apollo** — Next.js/React specialist for modern TypeScript/Tailwind dashboards and admin panels
+  
+- **Next.js Document Portal Boilerplate** — A complete TypeScript/Next.js 15 + Tailwind 4 + shadcn starter template for building custom self-service portals
+  - Modern React ecosystem alternative to the Grails/Groovy stack
+  - Includes admin panel integration with Prisma ORM
+  - Ready-to-use components for payslips, invoices, and document distribution workflows
+
+### Changed
+
+- Reorganized Flowkraft apps folder structure for better organization
+- Apps Manager UI now shows Grails apps (Admin & Webportal) as a consolidated entry with launch dropdown
+- Updated port allocation with +10 gaps for flexibility (8480, 8490, 8500, 8510, 8520)
+
 ## 12.2.0 - 2026-01-12
 
 ### Added

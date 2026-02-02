@@ -2,7 +2,7 @@
 <documentburster>
 	<settings>
 		<!-- DocumentBurster version -->
-		<version>12.2.0</version>
+		<version>13.1.0</version>
 		<!-- template name -->
 		<template>My Reports</template>
 		<!-- file name for the burst files -->
