@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster._helpers.NorthwindTestUtils;
 import com.sourcekraft.documentburster._helpers.TestBursterFactory;
+import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.utils.CsvUtils; // For OUTPUT_TYPE_HTML etc.
 // Import the fixed date from the generator
@@ -880,10 +881,25 @@ public class ScriptedReporterTest {
 		final String DUCKDB_URL = "jdbc:duckdb:";
 		final String DUCKDB_USER = "";
 		final String DUCKDB_PASS = "";
-		final String DUCKDB_CONN_CODE = "DUCKDB_SCRIPT_TEST_CONN";
+		final String DUCKDB_CONN_CODE = "DUCKDB_CSV_TEST_CONN";
 
 		TestBursterFactory.ScriptedReporter reporter = new TestBursterFactory.ScriptedReporter(StringUtils.EMPTY,
 				TEST_NAME, DUCKDB_URL, DUCKDB_USER, DUCKDB_PASS) {
+			
+			@Override
+			protected ServerDatabaseSettings getServerDatabaseSettings(String connectionCode) throws Exception {
+				// Handle DuckDB connection code - create settings directly without XML file
+				if (connectionCode.equals(DUCKDB_CONN_CODE)) {
+					ServerDatabaseSettings duckdbSettings = new ServerDatabaseSettings();
+					duckdbSettings.url = DUCKDB_URL;
+					duckdbSettings.userid = DUCKDB_USER;
+					duckdbSettings.userpassword = DUCKDB_PASS;
+					duckdbSettings.driver = "org.duckdb.DuckDBDriver";
+					return duckdbSettings;
+				}
+				return super.getServerDatabaseSettings(connectionCode);
+			}
+			
 			@Override
 			protected void executeController() throws Exception {
 				super.executeController();
@@ -893,9 +909,9 @@ public class ScriptedReporterTest {
 				ctx.settings.getReportDataSource().scriptoptions.idcolumn = "employee_id";
 				ctx.settings.getReportDataSource().scriptoptions.scriptname = "scriptedReport_duckdbCsvQuery.groovy";
 
-				// Configure output
+				// Configure output - use employee-specific template that matches CSV columns
 				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_HTML;
-				ctx.settings.getReportTemplate().documentpath = NorthwindTestUtils.CUSTOMER_SUMMARY_TEMPLATE_HTML;
+				ctx.settings.getReportTemplate().documentpath = NorthwindTestUtils.DUCKDB_EMPLOYEE_TEMPLATE_HTML;
 				ctx.settings.setBurstFileName("employee_${burst_token}.html");
 			}
 		};
@@ -941,6 +957,21 @@ public class ScriptedReporterTest {
 
 		TestBursterFactory.ScriptedReporter reporter = new TestBursterFactory.ScriptedReporter(StringUtils.EMPTY,
 				TEST_NAME, DUCKDB_URL, DUCKDB_USER, DUCKDB_PASS) {
+			
+			@Override
+			protected ServerDatabaseSettings getServerDatabaseSettings(String connectionCode) throws Exception {
+				// Handle DuckDB connection code - create settings directly without XML file
+				if (connectionCode.equals(DUCKDB_CONN_CODE)) {
+					ServerDatabaseSettings duckdbSettings = new ServerDatabaseSettings();
+					duckdbSettings.url = DUCKDB_URL;
+					duckdbSettings.userid = DUCKDB_USER;
+					duckdbSettings.userpassword = DUCKDB_PASS;
+					duckdbSettings.driver = "org.duckdb.DuckDBDriver";
+					return duckdbSettings;
+				}
+				return super.getServerDatabaseSettings(connectionCode);
+			}
+			
 			@Override
 			protected void executeController() throws Exception {
 				super.executeController();
@@ -950,9 +981,9 @@ public class ScriptedReporterTest {
 				ctx.settings.getReportDataSource().scriptoptions.idcolumn = "employee_id";
 				ctx.settings.getReportDataSource().scriptoptions.scriptname = "scriptedReport_duckdbMixedSources.groovy";
 
-				// Configure output
+				// Configure output - use enriched employee template that matches joined columns
 				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_HTML;
-				ctx.settings.getReportTemplate().documentpath = NorthwindTestUtils.CUSTOMER_SUMMARY_TEMPLATE_HTML;
+				ctx.settings.getReportTemplate().documentpath = NorthwindTestUtils.DUCKDB_ENRICHED_EMPLOYEE_TEMPLATE_HTML;
 				ctx.settings.setBurstFileName("enriched_${burst_token}.html");
 			}
 		};

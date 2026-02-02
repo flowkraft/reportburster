@@ -61,6 +61,10 @@ public class NorthwindTestUtils {
 	public static final String SCRIPTED_SCORECARD_TEMPLATE_HTML = TEMPLATES_DIR
 			+ "scriptedReport_scorecard_template.html";
 
+	// DuckDB Employee Template Paths (for CSV/mixed sources tests)
+	public static final String DUCKDB_EMPLOYEE_TEMPLATE_HTML = TEMPLATES_DIR + "duckdb_employee_template.html";
+	public static final String DUCKDB_ENRICHED_EMPLOYEE_TEMPLATE_HTML = TEMPLATES_DIR + "duckdb_enriched_employee_template.html";
+
 	public static void ensureTemplateDirectoryExists(String dirPath) {
 		File dir = new File(dirPath);
 		if (!dir.exists()) {
@@ -518,6 +522,11 @@ public class NorthwindTestUtils {
 		generateScriptedCrosstabTemplateFile(SCRIPTED_CROSSTAB_TEMPLATE_HTML);
 		generateScriptedTrendTemplateFile(SCRIPTED_TREND_TEMPLATE_HTML);
 		generateScriptedScorecardTemplateFile(SCRIPTED_SCORECARD_TEMPLATE_HTML);
+
+		// DuckDB employee templates (for CSV/mixed sources tests)
+		generateSimpleHtmlTemplate(DUCKDB_EMPLOYEE_TEMPLATE_HTML, "employee_id", "email_address", "first_name", "last_name");
+		generateSimpleHtmlTemplate(DUCKDB_ENRICHED_EMPLOYEE_TEMPLATE_HTML, "employee_id", "email_address", "first_name", "last_name", "department", "salary");
+
 		log.info("Finished checking/generating reporting templates.");
 	}
 

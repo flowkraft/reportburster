@@ -6,8 +6,8 @@ log.info('DuckDB CSV Script: Starting...')
 def csvPath = new File('src/test/resources/input/unit/other/employees.csv').absolutePath
 log.info('CSV Path: {}', csvPath)
 
-// Query CSV file using DuckDB
-def sql = Sql.newInstance(ctx.conn)
+// Use ctx.dbSql which is the Groovy SQL wrapper provided by the framework
+def sql = ctx.dbSql
 def query = "SELECT employee_id, email_address, first_name, last_name FROM read_csv_auto('" + csvPath + "') WHERE employee_id IN (1, 2)"
 log.info('Executing query: {}', query)
 
