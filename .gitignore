@@ -178,3 +178,5 @@ $RECYCLE.BIN/
 .aider*
 _ai_crew_chat_with*
 .workspace-*
+
+Dockerfile.assembled
