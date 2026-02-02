@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -231,6 +232,15 @@ public class SqlReporterTest {
 				ctx.settings.getReportTemplate().documentpath = NorthwindTestUtils.CUSTOMER_SUMMARY_TEMPLATE_DOCX;
 				ctx.settings.setBurstFileName("${burst_token}.docx");
 			}
+
+			@Override
+			protected Jdbi retrieveJdbiInstance(String connectionCode) throws Exception {
+				// For DuckDB test connection, create a Jdbi instance directly
+				if (connectionCode.equals(DUCKDB_CONN_CODE)) {
+					return Jdbi.create(DUCKDB_URL, DUCKDB_USER, DUCKDB_PASS);
+				}
+				return super.retrieveJdbiInstance(connectionCode);
+			}
 		};
 
 		// Execute the burst process
@@ -297,6 +307,15 @@ public class SqlReporterTest {
 				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_DOCX;
 				ctx.settings.getReportTemplate().documentpath = NorthwindTestUtils.CUSTOMER_SUMMARY_TEMPLATE_DOCX;
 				ctx.settings.setBurstFileName("${burst_token}.docx");
+			}
+
+			@Override
+			protected Jdbi retrieveJdbiInstance(String connectionCode) throws Exception {
+				// For DuckDB test connection, create a Jdbi instance directly
+				if (connectionCode.equals(DUCKDB_CONN_CODE)) {
+					return Jdbi.create(DUCKDB_URL, DUCKDB_USER, DUCKDB_PASS);
+				}
+				return super.retrieveJdbiInstance(connectionCode);
 			}
 		};
 
