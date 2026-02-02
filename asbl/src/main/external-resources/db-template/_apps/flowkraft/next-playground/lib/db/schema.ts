@@ -27,6 +27,10 @@ export const payslips = sqliteTable("payslips", {
   updatedAt: text("updated_at").default("CURRENT_TIMESTAMP"),
 });
 
+// Payment methods
+export const paymentMethods = ["stripe", "paypal", "bank_transfer", "cash", "other"] as const;
+export type PaymentMethod = (typeof paymentMethods)[number];
+
 // Invoices table
 export const invoices = sqliteTable("invoices", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -45,6 +49,10 @@ export const invoices = sqliteTable("invoices", {
   currency: text("currency").default("USD").notNull(),
   status: text("status", { enum: invoiceStatuses }).default("draft").notNull(),
   notes: text("notes"),
+  // Payment fields
+  paidAt: text("paid_at"),
+  paymentMethod: text("payment_method", { enum: paymentMethods }),
+  paymentReference: text("payment_reference"),
   createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
   updatedAt: text("updated_at").default("CURRENT_TIMESTAMP"),
 });

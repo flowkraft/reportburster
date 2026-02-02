@@ -137,6 +137,12 @@
 			<groupId>com.clickhouse</groupId>
 			<artifactId>clickhouse-jdbc</artifactId>
 		</dependency>
+
+		<!-- DuckDB JDBC Driver for embedded OLAP Analytics -->
+		<dependency>
+			<groupId>org.duckdb</groupId>
+			<artifactId>duckdb_jdbc</artifactId>
+		</dependency>
 		<!--DATABASE END -->
 
 		<dependency>
