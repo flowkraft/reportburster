@@ -95,7 +95,7 @@ FROM eclipse-temurin:17-jre-alpine
 
 # Metadata
 LABEL maintainer="FlowKraft" \
-      version="12.2.0" \
+      version="13.1.0" \
       description="ReportBurster Server - Business Intelligence, Reporting, and Document Distribution in the Age of AI"
 
 # Install runtime dependencies
