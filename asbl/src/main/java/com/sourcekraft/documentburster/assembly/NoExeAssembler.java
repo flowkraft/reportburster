@@ -1274,16 +1274,40 @@ public class NoExeAssembler extends AbstractAssembler {
 			}
 
 			// ===========================================
-			// CMS-WEBPORTAL-PLAYGROUND: Include everything from source
-			// (no special filtering - whatever is in asbl gets packaged)
+			// GLOBAL NODE.JS/NEXT.JS EXCLUSIONS for ALL _apps
+			// These build artifacts and dependencies should NEVER be packaged
+			// node_modules can be 500MB+, .next can be 60MB+
+			// ===========================================
+			if (path.contains("/_apps/")) {
+				// Exclude node_modules (dependencies - user runs npm install)
+				if (file.getName().equals("node_modules") || path.contains("/node_modules/")) {
+					return false;
+				}
+				// Exclude .next (Next.js build cache - regenerated on build)
+				if (file.getName().equals(".next") || path.contains("/.next/")) {
+					return false;
+				}
+				// Exclude .git (version control)
+				if (file.getName().equals(".git") || path.contains("/.git/")) {
+					return false;
+				}
+				// Exclude IDE/editor folders
+				if (file.getName().equals(".vscode") || path.contains("/.vscode/")) {
+					return false;
+				}
+				if (file.getName().equals(".idea") || path.contains("/.idea/")) {
+					return false;
+				}
+			}
+
+			// ===========================================
+			// CMS-WEBPORTAL-PLAYGROUND: Additional exclusions
 			// ===========================================
 			if (path.contains("/cms-webportal-playground/")) {
-				// Only exclude standard build artifacts
-				return !path.contains("/node_modules/") && !path.contains("/vendor/")
-						&& !path.contains("/public/build/") && !path.contains("/.git/")
-						&& !path.contains("/.vscode/") && !path.contains("/.cache/")
-						&& !file.getName().equals("node_modules") && !file.getName().equals("vendor")
-						&& !file.getName().equals(".git");
+				// Exclude PHP vendor folder and public build artifacts
+				return !path.contains("/vendor/") && !path.contains("/public/build/")
+						&& !path.contains("/.cache/")
+						&& !file.getName().equals("vendor");
 			}
 
 			return true;
