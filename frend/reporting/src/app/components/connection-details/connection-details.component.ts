@@ -323,6 +323,29 @@ export class ConnectionDetailsComponent implements OnInit {
 
   async onModalOK() {
     const isDb = this.isModalDbConnectionVisible;
+    
+    // Check if this is a DuckDB connection without a file (in-memory)
+    if (isDb) {
+      const dbServer = this.modalConnectionInfo.database.documentburster.connection.databaseserver;
+      if (dbServer.type === 'duckdb' && !dbServer.database) {
+        // Show confirmation for in-memory DuckDB
+        this.confirmService.askConfirmation({
+          message: 'You did not select any DuckDB database file. This means you want to create an "in-memory" DuckDB connection (useful for querying CSV/Parquet files directly). Continue?',
+          confirmAction: async () => {
+            await this.proceedWithSave(isDb);
+          },
+          cancelAction: () => {
+            // User cancelled, don't save
+          },
+        });
+        return;
+      }
+    }
+    
+    await this.proceedWithSave(isDb);
+  }
+
+  private async proceedWithSave(isDb: boolean) {
     const mainConnectionSaved = await this.saveCurrentConnection(isDb); // Saves the .xml connection file
 
     if (mainConnectionSaved) {
@@ -505,12 +528,15 @@ export class ConnectionDetailsComponent implements OnInit {
     }
 
     // Rule 2: Check based on type
-    if (dbServer.type === 'sqlite' || dbServer.type === 'duckdb') {
-      // For SQLite/DuckDB: Database File must be provided (and not be the placeholder if any)
-      // Since the placeholder is cleared to '' on type change, checking for non-empty is sufficient.
+    if (dbServer.type === 'sqlite') {
+      // For SQLite: Database File must be provided
       if (!dbServer.database) {
         return true; // Disabled if database file path is missing
       }
+    } else if (dbServer.type === 'duckdb') {
+      // For DuckDB: File is OPTIONAL (empty = in-memory connection)
+      // Always allow testing for DuckDB as in-memory is valid
+      return false;
     } else {
       // For non-SQLite/DuckDB types: Check if fields are empty OR still contain the placeholder text
       if (

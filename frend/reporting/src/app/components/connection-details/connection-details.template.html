@@ -334,7 +334,8 @@
 
         <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
-              .databaseserver.type !== 'sqlite'
+              .databaseserver.type !== 'sqlite' && modalConnectionInfo.database.documentburster.connection
+              .databaseserver.type !== 'duckdb'
           ">
           <div class="col-xs-2">
             {{
@@ -360,7 +361,8 @@
 
         <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
-              .databaseserver.type !== 'sqlite'
+              .databaseserver.type !== 'sqlite' && modalConnectionInfo.database.documentburster.connection
+              .databaseserver.type !== 'duckdb'
           ">
           <div class="col-xs-2">
             {{
@@ -386,7 +388,8 @@
 
         <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
-              .databaseserver.type === 'sqlite'
+              .databaseserver.type === 'sqlite' || modalConnectionInfo.database.documentburster.connection
+              .databaseserver.type === 'duckdb'
           ">
           <div class="col-xs-2">
             {{
@@ -400,7 +403,7 @@
               <input id="dbName" [(ngModel)]="
                   modalConnectionInfo.database.documentburster.connection
                     .databaseserver.database
-                " class="form-control" placeholder="Select SQLite database file" readonly [title]="
+                " class="form-control" [placeholder]="modalConnectionInfo.database.documentburster.connection.databaseserver.type === 'duckdb' ? 'Select DuckDB file (optional for in-memory)' : 'Select SQLite database file'" readonly [title]="
                   modalConnectionInfo.database.documentburster.connection
                     .databaseserver.database
                 " />
@@ -411,13 +414,15 @@
                 </button>
               </span>
             </div>
-            <small class="text-muted">Select a .db, .sqlite or .sqlite3 file</small>
+            <small class="text-muted" *ngIf="modalConnectionInfo.database.documentburster.connection.databaseserver.type === 'sqlite'">Select a .db, .sqlite or .sqlite3 file</small>
+            <small class="text-muted" *ngIf="modalConnectionInfo.database.documentburster.connection.databaseserver.type === 'duckdb'">Select a .duckdb file, or leave empty for in-memory DuckDB (useful for CSV/Parquet queries)</small>
           </div>
         </div>
 
         <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
-              .databaseserver.type !== 'sqlite'
+              .databaseserver.type !== 'sqlite' && modalConnectionInfo.database.documentburster.connection
+              .databaseserver.type !== 'duckdb'
           ">
           <div class="col-xs-2">
             {{
@@ -444,7 +449,8 @@
 
         <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
-              .databaseserver.type !== 'sqlite'
+              .databaseserver.type !== 'sqlite' && modalConnectionInfo.database.documentburster.connection
+              .databaseserver.type !== 'duckdb'
           ">
           <div class="col-xs-2">
             {{
@@ -470,7 +476,8 @@
 
         <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
-              .databaseserver.type !== 'sqlite'
+              .databaseserver.type !== 'sqlite' && modalConnectionInfo.database.documentburster.connection
+              .databaseserver.type !== 'duckdb'
           ">
           <div class="col-xs-2">
             {{
@@ -496,7 +503,8 @@
 
         <div class="row" *ngIf="
             modalConnectionInfo.database.documentburster.connection
-              .databaseserver.type !== 'sqlite'
+              .databaseserver.type !== 'sqlite' && modalConnectionInfo.database.documentburster.connection
+              .databaseserver.type !== 'duckdb'
           ">
           <div class="col-xs-2"></div>
 
