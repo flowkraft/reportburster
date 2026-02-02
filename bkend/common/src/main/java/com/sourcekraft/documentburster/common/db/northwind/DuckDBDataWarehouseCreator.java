@@ -21,13 +21,48 @@ import java.sql.ResultSet;
  */
 public class DuckDBDataWarehouseCreator {
 
-    public static void main(String[] args) throws Exception {
-        String duckdbPath = "./asbl/src/main/external-resources/db-template/db/sample-northwind-duckdb/northwind.duckdb";
-        String sqlitePath = "./asbl/src/main/external-resources/db-template/db/sample-northwind-sqlite/northwind.db";
+    // Default paths for standalone execution (from project root)
+    private static final String DEFAULT_DUCKDB_PATH = "./asbl/src/main/external-resources/db-template/db/sample-northwind-duckdb/northwind.duckdb";
+    private static final String DEFAULT_SQLITE_PATH = "./asbl/src/main/external-resources/db-template/db/sample-northwind-sqlite/northwind.db";
 
+    /**
+     * Create DuckDB data warehouse with specified paths.
+     * Called from NorthwindManager during database initialization.
+     */
+    public static void createDataWarehouse(String duckdbPath, String sqlitePath) throws Exception {
+        createDataWarehouseInternal(duckdbPath, sqlitePath);
+    }
+
+    /**
+     * Main method for standalone execution (from project root).
+     * Falls back to default paths if not provided.
+     */
+    public static void main(String[] args) throws Exception {
+        String duckdbPath = args.length > 0 ? args[0] : DEFAULT_DUCKDB_PATH;
+        String sqlitePath = args.length > 1 ? args[1] : DEFAULT_SQLITE_PATH;
+        createDataWarehouseInternal(duckdbPath, sqlitePath);
+    }
+
+    private static void createDataWarehouseInternal(String duckdbPath, String sqlitePath) throws Exception {
         System.out.println("=== Creating DuckDB Northwind Data Warehouse (Star Schema) ===");
         System.out.println("Source (OLTP SQLite): " + sqlitePath);
         System.out.println("Target (OLAP DuckDB): " + duckdbPath);
+
+        // CRITICAL: Validate SQLite source file exists before attempting import
+        // DuckDB ATTACH will fail with cryptic error if SQLite doesn't exist
+        Path sqliteFile = Paths.get(sqlitePath);
+        if (!Files.exists(sqliteFile)) {
+            throw new IllegalStateException(
+                "SQLite source database not found at: " + sqliteFile.toAbsolutePath() + 
+                ". Ensure the SQLite Northwind database has been created before creating DuckDB. " +
+                "The SQLite database should exist at: db/sample-northwind-sqlite/northwind.db");
+        }
+        if (Files.size(sqliteFile) == 0) {
+            throw new IllegalStateException(
+                "SQLite source database is empty at: " + sqliteFile.toAbsolutePath() + 
+                ". The database file exists but contains no data.");
+        }
+        System.out.println("SQLite source validated: " + sqliteFile.toAbsolutePath() + " (" + Files.size(sqliteFile) + " bytes)");
 
         // Ensure parent directory exists
         Path dbFile = Paths.get(duckdbPath);
