@@ -136,7 +136,7 @@ services:
       retries: 10
       start_period: 10s
 
-# ===================================================================
+  # ===================================================================
   # CLICKHOUSE CDC SINK CONNECTOR (DISABLED BY DEFAULT)
   # ===================================================================
   # Enables real-time CDC replication from MySQL/PostgreSQL to ClickHouse

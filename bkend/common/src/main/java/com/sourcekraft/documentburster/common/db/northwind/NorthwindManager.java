@@ -466,8 +466,16 @@ public class NorthwindManager implements AutoCloseable {
         //         instead of using JPA to create OLTP tables like other vendors
         if (vendor == DatabaseVendor.DUCKDB) {
             log.info("Initializing DuckDB data warehouse (Star Schema)...");
-            String duckdbPath = hostDataPath.resolve("northwind.duckdb").toString();
-            String sqlitePath = hostDataPath.getParent().resolve("sample-northwind-sqlite").resolve("northwind.db").toString();
+            String duckdbPath = hostDataPath.resolve("northwind.duckdb").toAbsolutePath().toString();
+            
+            // SQLite path - SQLite and DuckDB are sibling folders under the same parent (db/)
+            // Use hostDataPath.getParent() to get the common db/ folder, then resolve SQLite sibling
+            // This works for both:
+            //   - Build time: target/package/db-noexe/ReportBurster/db/ (no PORTABLE_EXECUTABLE_DIR)
+            //   - Runtime: {PORTABLE_EXECUTABLE_DIR}/db/ (when running as packaged app)
+            Path sqliteDbPath = hostDataPath.getParent().resolve("sample-northwind-sqlite").resolve("northwind.db");
+            String sqlitePath = sqliteDbPath.toAbsolutePath().toString();
+            log.info("DuckDB target: {}, SQLite source: {}", duckdbPath, sqlitePath);
 
             // Call static method to create data warehouse using pure SQL
             // This bypasses JPA entirely - DuckDB warehouse is created via:
@@ -475,7 +483,7 @@ public class NorthwindManager implements AutoCloseable {
             // 2. Copy OLTP tables (for e2e test compatibility)
             // 3. Transform into Star Schema (fact_sales + 5 dimensions)
             // 4. Create analytical views (vw_sales_detail for instant pivots)
-            DuckDBDataWarehouseCreator.main(new String[]{});
+            DuckDBDataWarehouseCreator.createDataWarehouse(duckdbPath, sqlitePath);
 
             log.info("DuckDB data warehouse created successfully");
             return; // Skip JPA initialization below - already created via SQL
@@ -494,8 +502,13 @@ public class NorthwindManager implements AutoCloseable {
             String host = Utils.getEffectiveHost("localhost");
             String jdbcUrl = "jdbc:clickhouse://" + host + ":" + port + "/" + vendor.getDefaultDbName();
             
-            // SQLite path (same source as DuckDB - ensures identical OLAP data)
-            String sqlitePath = hostDataPath.getParent().resolve("sample-northwind-sqlite").resolve("northwind.db").toString();
+            // SQLite path - SQLite and ClickHouse marker folders are siblings under the same parent (db/)
+            // Use hostDataPath.getParent() for consistency with DuckDB approach
+            // At runtime, PORTABLE_EXECUTABLE_DIR is set, so this resolves to:
+            //   {PORTABLE_EXECUTABLE_DIR}/db/sample-northwind-sqlite/northwind.db
+            Path sqliteDbPath = hostDataPath.getParent().resolve("sample-northwind-sqlite").resolve("northwind.db");
+            String sqlitePath = sqliteDbPath.toAbsolutePath().toString();
+            log.info("SQLite source path (for ETL): {}", sqlitePath);
             
             // Call ClickHouse creator with connection details and SQLite path
             ClickHouseDataWarehouseCreator.createDataWarehouse(jdbcUrl, getUsername(vendor), getPassword(vendor), sqlitePath);
@@ -505,7 +518,10 @@ public class NorthwindManager implements AutoCloseable {
             // Create marker file to prevent re-initialization
             Path markerFilePath = hostDataPath.resolve(MARKER_FILENAME);
             Files.createDirectories(hostDataPath);
-            Files.createFile(markerFilePath);
+            if (!Files.exists(markerFilePath)) {
+                Files.createFile(markerFilePath);
+            }
+            log.info("ClickHouse marker file ensured: {}", markerFilePath);
             
             return; // Skip JPA initialization below - already created via SQL
         }
@@ -561,8 +577,10 @@ public class NorthwindManager implements AutoCloseable {
             if (vendor != DatabaseVendor.SQLITE) {
                 Path markerFilePath = hostDataPath.resolve(MARKER_FILENAME);
                 Files.createDirectories(hostDataPath);
-                Files.createFile(markerFilePath);
-                log.info("[SQL_SERVER_DEBUG] Marker file created: {}", markerFilePath);
+                if (!Files.exists(markerFilePath)) {
+                    Files.createFile(markerFilePath);
+                }
+                log.info("[SQL_SERVER_DEBUG] Marker file ensured: {}", markerFilePath);
             }
         } finally {
             if (em != null && em.isOpen()) {
@@ -610,7 +628,7 @@ public class NorthwindManager implements AutoCloseable {
 
 	private Path getDefaultHostDataPath(DatabaseVendor vendor) {
 		String subDirName = "sample-northwind-" + vendor.name().toLowerCase().replace("_", "-");
-		return Paths.get(this.baseDataPath, subDirName);
+		return Paths.get(this.baseDataPath, subDirName).toAbsolutePath();
 	}
 
 	private Integer getDefaultHostPort(DatabaseVendor vendor) {

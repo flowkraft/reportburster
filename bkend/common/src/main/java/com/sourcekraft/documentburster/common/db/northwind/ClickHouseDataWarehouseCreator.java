@@ -1,5 +1,6 @@
 package com.sourcekraft.documentburster.common.db.northwind;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -42,6 +43,22 @@ public class ClickHouseDataWarehouseCreator {
         log.info("=== Creating ClickHouse Northwind Data Warehouse (Star Schema) ===");
         log.info("Source (OLTP SQLite): {}", sqlitePath);
         log.info("Target (OLAP ClickHouse): {}", clickHouseJdbcUrl);
+
+        // CRITICAL: Validate SQLite source file exists before attempting import
+        // SQLite JDBC will create an empty DB if file doesn't exist, causing silent failures
+        File sqliteFile = new File(sqlitePath);
+        if (!sqliteFile.exists()) {
+            throw new IllegalStateException(
+                "SQLite source database not found at: " + sqliteFile.getAbsolutePath() + 
+                ". Ensure the SQLite Northwind database has been created before starting ClickHouse. " +
+                "The SQLite database should exist at: db/sample-northwind-sqlite/northwind.db");
+        }
+        if (sqliteFile.length() == 0) {
+            throw new IllegalStateException(
+                "SQLite source database is empty at: " + sqliteFile.getAbsolutePath() + 
+                ". The database file exists but contains no data.");
+        }
+        log.info("SQLite source validated: {} ({} bytes)", sqliteFile.getAbsolutePath(), sqliteFile.length());
 
         // Load JDBC drivers
         Class.forName("com.clickhouse.jdbc.ClickHouseDriver");
