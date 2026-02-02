@@ -147,7 +147,7 @@ services:
   # - Source database with binlog (MySQL) or WAL (PostgreSQL) enabled
   # - Replication user created in source database
   #
-  # See ENABLE_CLICKHOUSE.md for detailed setup instructions.
+  # See ENABLE_DATA_WAREHOUSE_SYNC.md for detailed setup instructions.
   # ===================================================================
 
   # Altinity ClickHouse Sink Connector (Lightweight Mode)
