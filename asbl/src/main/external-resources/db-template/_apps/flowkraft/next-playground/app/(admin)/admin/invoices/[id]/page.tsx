@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Pencil, Trash2, Mail, Download } from "lucide-react"
+import { ArrowLeft, Pencil, Trash2, Mail, Download, CheckCircle2, AlertCircle, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { InvoicePayment } from "@/components/payments"
 
 interface Invoice {
   id: number
@@ -34,6 +35,9 @@ interface Invoice {
   currency: string
   status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
   notes?: string
+  paidAt?: string
+  paymentMethod?: string
+  paymentReference?: string
   createdAt: string
   updatedAt: string
 }
@@ -126,6 +130,43 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="space-y-6">
+      {/* Prominent Status Banner */}
+      {invoice.status === "paid" && (
+        <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+          <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+          <div>
+            <p className="font-semibold text-green-800 dark:text-green-200">Payment Received</p>
+            <p className="text-sm text-green-600 dark:text-green-400">
+              This invoice was paid{invoice.paidAt ? ` on ${formatDate(invoice.paidAt)}` : ""}{invoice.paymentMethod ? ` via ${invoice.paymentMethod}` : ""}
+            </p>
+          </div>
+        </div>
+      )}
+      {invoice.status === "overdue" && (
+        <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+          <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+          <div>
+            <p className="font-semibold text-red-800 dark:text-red-200">Payment Overdue</p>
+            <p className="text-sm text-red-600 dark:text-red-400">
+              This invoice was due on {formatDate(invoice.dueDate)}
+            </p>
+          </div>
+        </div>
+      )}
+      {(invoice.status === "sent" || invoice.status === "draft") && (
+        <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <Clock className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          <div>
+            <p className="font-semibold text-blue-800 dark:text-blue-200">
+              {invoice.status === "draft" ? "Draft Invoice" : "Awaiting Payment"}
+            </p>
+            <p className="text-sm text-blue-600 dark:text-blue-400">
+              Due date: {formatDate(invoice.dueDate)}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/admin/invoices">
@@ -144,6 +185,14 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {invoice.status !== "paid" && invoice.status !== "cancelled" && (
+            <InvoicePayment
+              invoiceId={invoice.id}
+              amount={Math.round(invoice.totalAmount * 100)} // Convert to cents
+              currency={invoice.currency}
+              onPaymentSuccess={() => fetchInvoice()}
+            />
+          )}
           <Button variant="outline" size="sm">
             <Mail className="h-4 w-4 mr-2" />
             Send
@@ -255,6 +304,32 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 {formatCurrency(invoice.totalAmount, invoice.currency)}
               </span>
             </div>
+            {invoice.status === "paid" && invoice.paidAt && (
+              <>
+                <Separator />
+                <div className="pt-4 space-y-3">
+                  <h4 className="text-sm font-semibold text-green-600">Payment Received</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Paid On</p>
+                      <p className="font-medium">{formatDate(invoice.paidAt)}</p>
+                    </div>
+                    {invoice.paymentMethod && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Payment Method</p>
+                        <p className="font-medium capitalize">{invoice.paymentMethod}</p>
+                      </div>
+                    )}
+                    {invoice.paymentReference && (
+                      <div className="col-span-2">
+                        <p className="text-sm text-muted-foreground">Transaction Reference</p>
+                        <p className="font-medium font-mono text-xs">{invoice.paymentReference}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
