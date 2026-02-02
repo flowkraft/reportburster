@@ -1254,10 +1254,11 @@ public class NoExeAssembler extends AbstractAssembler {
 				return false;
 			}
 			if (fileName.equals("build") && file.isDirectory() && 
-				(path.contains("-grails-playground") || path.contains("-playground/build"))) {
+				(path.contains("grails-playground") || path.contains("-playground/build"))) {
 				return false;
 			}
-			if (path.contains("-grails-playground/build/")) {
+			if (path.contains("grails-playground/admin/build/") || 
+				path.contains("grails-playground/webportal/build/")) {
 				return false;
 			}
 			
