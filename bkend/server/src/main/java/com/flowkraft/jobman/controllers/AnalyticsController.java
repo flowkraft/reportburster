@@ -343,7 +343,7 @@ public class AnalyticsController {
 
             // Execute file query
             DuckDBFileHandler.FileQueryConfig config = new DuckDBFileHandler.FileQueryConfig(filePath, fileFormat, options);
-            List<Map<String, Object>> results = analyticsService.queryFile(connectionCode, config, query);
+            List<Map<String, Object>> results = duckDBService.queryFile(connectionCode, config, query);
 
             Map<String, Object> response = new HashMap<>();
             response.put("data", results);
@@ -416,7 +416,7 @@ public class AnalyticsController {
             }
 
             DuckDBFileHandler.FileQueryConfig config = new DuckDBFileHandler.FileQueryConfig(filePath, fileFormat);
-            List<Map<String, String>> schema = analyticsService.getFileSchema(connectionCode, config);
+            List<Map<String, String>> schema = duckDBService.getFileSchema(connectionCode, config);
 
             Map<String, Object> response = new HashMap<>();
             response.put("schema", schema);
@@ -485,7 +485,7 @@ public class AnalyticsController {
             }
 
             DuckDBFileHandler.FileQueryConfig config = new DuckDBFileHandler.FileQueryConfig(filePath, fileFormat);
-            List<Map<String, Object>> sample = analyticsService.getFileSample(connectionCode, config, limit);
+            List<Map<String, Object>> sample = duckDBService.getFileSample(connectionCode, config, limit);
 
             Map<String, Object> response = new HashMap<>();
             response.put("data", sample);

@@ -92,10 +92,11 @@
 			<artifactId>sqlite-jdbc</artifactId>
 		</dependency>
 
-		<!-- ClickHouse JDBC Driver for OLAP Analytics -->
+		<!-- ClickHouse JDBC Driver for OLAP Analytics (not managed by Spring Boot) -->
 		<dependency>
 			<groupId>com.clickhouse</groupId>
 			<artifactId>clickhouse-jdbc</artifactId>
+			<version>0.9.6</version>
 			<classifier>all</classifier>
 		</dependency>
 
