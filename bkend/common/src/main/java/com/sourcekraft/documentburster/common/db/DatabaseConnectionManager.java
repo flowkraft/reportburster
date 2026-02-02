@@ -55,6 +55,8 @@ public class DatabaseConnectionManager {
 				return "org.sqlite.JDBC";
 			case "duckdb":
 				return "org.duckdb.DuckDBDriver";
+			case "clickhouse":
+				return "com.clickhouse.jdbc.ClickHouseDriver";
 			case "oracle":
 				return "oracle.jdbc.driver.OracleDriver";
 			case "sqlserver":
