@@ -888,50 +888,15 @@ public class ScriptedReporterTest {
 			protected void executeController() throws Exception {
 				super.executeController();
 
-				// Configure ScriptedReporter to use inline Groovy script
+				// Configure ScriptedReporter to use pre-created Groovy script
 				ctx.settings.getReportDataSource().scriptoptions.conncode = DUCKDB_CONN_CODE;
 				ctx.settings.getReportDataSource().scriptoptions.idcolumn = "employee_id";
-				ctx.settings.getReportDataSource().scriptoptions.scriptname = "test_duckdb_csv.groovy";
+				ctx.settings.getReportDataSource().scriptoptions.scriptname = "scriptedReport_duckdbCsvQuery.groovy";
 
 				// Configure output
 				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_HTML;
 				ctx.settings.getReportTemplate().documentpath = NorthwindTestUtils.CUSTOMER_SUMMARY_TEMPLATE_HTML;
 				ctx.settings.setBurstFileName("employee_${burst_token}.html");
-
-				// Create inline Groovy script that uses DuckDB to query CSV
-				String scriptContent =
-					"import java.sql.*\n" +
-					"import groovy.sql.Sql\n" +
-					"\n" +
-					"log.info('DuckDB CSV Script: Starting...')\n" +
-					"\n" +
-					"def csvPath = new File('src/test/resources/input/unit/other/employees.csv').absolutePath\n" +
-					"log.info('CSV Path: {}', csvPath)\n" +
-					"\n" +
-					"// Query CSV file using DuckDB\n" +
-					"def sql = Sql.newInstance(ctx.conn)\n" +
-					"def query = \"SELECT employee_id, email_address, first_name, last_name FROM read_csv_auto('\" + csvPath + \"') WHERE employee_id IN (1, 2)\"\n" +
-					"log.info('Executing query: {}', query)\n" +
-					"\n" +
-					"def results = []\n" +
-					"sql.eachRow(query) { row ->\n" +
-					"    results << new LinkedHashMap([\n" +
-					"        employee_id: row.employee_id,\n" +
-					"        email_address: row.email_address,\n" +
-					"        first_name: row.first_name,\n" +
-					"        last_name: row.last_name\n" +
-					"    ])\n" +
-					"}\n" +
-					"\n" +
-					"ctx.reportData = results\n" +
-					"ctx.reportColumnNames = ['employee_id', 'email_address', 'first_name', 'last_name']\n" +
-					"\n" +
-					"log.info('DuckDB CSV Script: Generated {} records', results.size())\n";
-
-				// Write script to expected location
-				java.nio.file.Path scriptPath = java.nio.file.Paths.get("src/test/groovy/reporting/test_duckdb_csv.groovy");
-				java.nio.file.Files.createDirectories(scriptPath.getParent());
-				java.nio.file.Files.writeString(scriptPath, scriptContent);
 			}
 		};
 
@@ -955,9 +920,6 @@ public class ScriptedReporterTest {
 			new File(ctx.outputFolder + "/employee_1.html").exists());
 		assertTrue("Output file for employee 2 should exist",
 			new File(ctx.outputFolder + "/employee_2.html").exists());
-
-		// Clean up test script
-		java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get("src/test/groovy/reporting/test_duckdb_csv.groovy"));
 
 		log.info("========== Test completed: {} ==========", TEST_NAME);
 	}
@@ -983,75 +945,15 @@ public class ScriptedReporterTest {
 			protected void executeController() throws Exception {
 				super.executeController();
 
-				// Configure ScriptedReporter
+				// Configure ScriptedReporter to use pre-created Groovy script
 				ctx.settings.getReportDataSource().scriptoptions.conncode = DUCKDB_CONN_CODE;
 				ctx.settings.getReportDataSource().scriptoptions.idcolumn = "employee_id";
-				ctx.settings.getReportDataSource().scriptoptions.scriptname = "test_duckdb_mixed.groovy";
+				ctx.settings.getReportDataSource().scriptoptions.scriptname = "scriptedReport_duckdbMixedSources.groovy";
 
 				// Configure output
 				ctx.settings.getReportTemplate().outputtype = CsvUtils.OUTPUT_TYPE_HTML;
 				ctx.settings.getReportTemplate().documentpath = NorthwindTestUtils.CUSTOMER_SUMMARY_TEMPLATE_HTML;
 				ctx.settings.setBurstFileName("enriched_${burst_token}.html");
-
-				// Create inline Groovy script that combines CSV and in-memory data
-				String scriptContent =
-					"import java.sql.*\n" +
-					"import groovy.sql.Sql\n" +
-					"\n" +
-					"log.info('DuckDB Mixed Sources Script: Starting...')\n" +
-					"\n" +
-					"def csvPath = new File('src/test/resources/input/unit/other/employees.csv').absolutePath\n" +
-					"def sql = Sql.newInstance(ctx.conn)\n" +
-					"\n" +
-					"// Create an in-memory table with department data\n" +
-					"sql.execute('''\n" +
-					"    CREATE TABLE departments (\n" +
-					"        employee_id INTEGER,\n" +
-					"        department VARCHAR,\n" +
-					"        salary DECIMAL(10,2)\n" +
-					"    )\n" +
-					"''')\n" +
-					"\n" +
-					"sql.execute(\"INSERT INTO departments VALUES (1, 'Engineering', 75000.00)\")\n" +
-					"sql.execute(\"INSERT INTO departments VALUES (2, 'Sales', 65000.00)\")\n" +
-					"sql.execute(\"INSERT INTO departments VALUES (3, 'Marketing', 70000.00)\")\n" +
-					"\n" +
-					"// Join CSV data with in-memory table\n" +
-					"def query = '''\n" +
-					"    SELECT \n" +
-					"        e.employee_id,\n" +
-					"        e.email_address,\n" +
-					"        e.first_name,\n" +
-					"        e.last_name,\n" +
-					"        d.department,\n" +
-					"        d.salary\n" +
-					"    FROM read_csv_auto('\" + csvPath + \"') e\n" +
-					"    INNER JOIN departments d ON e.employee_id = d.employee_id\n" +
-					"    WHERE e.employee_id IN (1, 2)\n" +
-					"    ORDER BY e.employee_id\n" +
-					"'''\n" +
-					"\n" +
-					"def results = []\n" +
-					"sql.eachRow(query) { row ->\n" +
-					"    results << new LinkedHashMap([\n" +
-					"        employee_id: row.employee_id,\n" +
-					"        email_address: row.email_address,\n" +
-					"        first_name: row.first_name,\n" +
-					"        last_name: row.last_name,\n" +
-					"        department: row.department,\n" +
-					"        salary: row.salary\n" +
-					"    ])\n" +
-					"}\n" +
-					"\n" +
-					"ctx.reportData = results\n" +
-					"ctx.reportColumnNames = ['employee_id', 'email_address', 'first_name', 'last_name', 'department', 'salary']\n" +
-					"\n" +
-					"log.info('DuckDB Mixed Sources Script: Generated {} enriched records', results.size())\n";
-
-				// Write script to expected location
-				java.nio.file.Path scriptPath = java.nio.file.Paths.get("src/test/groovy/reporting/test_duckdb_mixed.groovy");
-				java.nio.file.Files.createDirectories(scriptPath.getParent());
-				java.nio.file.Files.writeString(scriptPath, scriptContent);
 			}
 		};
 
@@ -1080,9 +982,6 @@ public class ScriptedReporterTest {
 			new File(ctx.outputFolder + "/enriched_1.html").exists());
 		assertTrue("Output file for employee 2 should exist",
 			new File(ctx.outputFolder + "/enriched_2.html").exists());
-
-		// Clean up test script
-		java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get("src/test/groovy/reporting/test_duckdb_mixed.groovy"));
 
 		log.info("========== Test completed: {} ==========", TEST_NAME);
 	}
