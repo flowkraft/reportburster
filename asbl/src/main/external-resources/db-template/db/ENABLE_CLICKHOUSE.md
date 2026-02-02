@@ -7,19 +7,16 @@
 ## Quick Start
 
 ```bash
-# Option A: Use the sample ClickHouse from _apps/clickhouse
-cd _apps/clickhouse
-docker-compose up -d
-
-# Option B: Use your own ClickHouse database
-# Just configure the connection in ReportBurster (see Section 4)
+# Start ClickHouse (uncomment clickhouse service in docker-compose.yml first)
+cd db
+docker-compose up -d clickhouse
 
 # Verify ClickHouse is running
 curl "http://localhost:8123/?query=SELECT%20version()"
 
 # (Optional) Enable CDC replication from MySQL/PostgreSQL
-# Uncomment clickhouse-sink-connector in flowkraft/docker-compose.yml
-docker-compose -f flowkraft/docker-compose.yml up -d clickhouse-sink-connector
+# Uncomment clickhouse-sink-connector in db/docker-compose.yml
+docker-compose up -d clickhouse-sink-connector
 ```
 
 ---
@@ -62,20 +59,20 @@ The [Altinity ClickHouse Sink Connector](https://github.com/Altinity/clickhouse-
 
 ## 1. Start ClickHouse
 
-### Option A: Use Sample ClickHouse (Recommended for Testing)
+### Option A: Use ClickHouse from db/docker-compose.yml (Recommended)
 
-A sample ClickHouse is available at `_apps/clickhouse/`:
+ClickHouse is defined in `db/docker-compose.yml`. Uncomment the `clickhouse` service and start it:
 
 ```bash
-cd _apps/clickhouse
-docker-compose up -d
+cd db
+docker-compose up -d clickhouse
 ```
 
-Default credentials:
+Default credentials (from `.env`):
 - **Host:** localhost
 - **Port:** 8123 (HTTP) / 9000 (Native)
-- **User:** default
-- **Password:** mysecret
+- **User:** default (or `${CLICKHOUSE_USER}`)
+- **Password:** clickhouse (or `${CLICKHOUSE_PASSWORD}`)
 
 ### Option B: Use Your Own ClickHouse
 
