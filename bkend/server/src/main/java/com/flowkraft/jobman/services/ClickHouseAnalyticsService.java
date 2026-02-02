@@ -2,6 +2,7 @@ package com.flowkraft.jobman.services;
 
 import com.sourcekraft.documentburster.common.analytics.PivotSQLGenerator;
 import com.sourcekraft.documentburster.common.analytics.clickhouse.ClickHousePivotProcessor;
+import com.sourcekraft.documentburster.common.analytics.dto.AggregatorType;
 import com.sourcekraft.documentburster.common.analytics.dto.PivotRequest;
 import com.sourcekraft.documentburster.common.analytics.dto.PivotResponse;
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
@@ -131,6 +132,17 @@ public class ClickHouseAnalyticsService {
      */
     public boolean supportsAggregator(String aggregatorName) {
         return sqlGenerator.supportsAggregator(aggregatorName);
+    }
+
+    /**
+     * Get aggregator display names for UI.
+     */
+    public Map<String, String> getAggregatorDisplayNames() {
+        Map<String, String> displayNames = new HashMap<>();
+        for (AggregatorType type : AggregatorType.values()) {
+            displayNames.put(type.name(), type.getDisplayName());
+        }
+        return displayNames;
     }
 
     /**
