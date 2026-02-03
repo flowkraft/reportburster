@@ -28,7 +28,7 @@ const employees: Employee[] = [
 
 export default function ReportsPage() {
   const reportRef = useRef<RbReportElement>(null)
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false)
+  const [isReady, setIsReady] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>("component")
   const [copiedUsage, setCopiedUsage] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
@@ -36,19 +36,20 @@ export default function ReportsPage() {
   const { toast } = useToast()
 
   useEffect(() => {
-    if (!customElements.get("rb-report")) {
-      const script = document.createElement("script")
-      script.src = `${rbConfig.apiBaseUrl}/web-components/reportburster.js`
-      script.onload = () => {
-        console.log("ReportBurster web components loaded")
-        setIsScriptLoaded(true)
-      }
-      script.onerror = () => {
-        console.error("Failed to load ReportBurster web components")
-      }
-      document.head.appendChild(script)
-    } else {
-      setIsScriptLoaded(true)
+    // Check if components are already loaded
+    if (customElements.get("rb-report")) {
+      setIsReady(true)
+      return
+    }
+
+    // Listen for the global loader event
+    const handleComponentsLoaded = () => {
+      setIsReady(true)
+    }
+    
+    window.addEventListener("rb-components-loaded", handleComponentsLoaded)
+    return () => {
+      window.removeEventListener("rb-components-loaded", handleComponentsLoaded)
     }
   }, [])
 

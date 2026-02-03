@@ -12,27 +12,28 @@ interface RbChartElement extends HTMLElement {
 export default function ChartsPage() {
   const componentRef = useRef<RbChartElement>(null)
   const [configDsl, setConfigDsl] = useState("")
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false)
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    if (!customElements.get("rb-chart")) {
-      const script = document.createElement("script")
-      script.src = `${rbConfig.apiBaseUrl}/web-components/reportburster.js`
-      script.onload = () => {
-        console.log("ReportBurster web components loaded")
-        setIsScriptLoaded(true)
-      }
-      script.onerror = () => {
-        console.error("Failed to load ReportBurster web components")
-      }
-      document.head.appendChild(script)
-    } else {
-      setIsScriptLoaded(true)
+    // Check if components are already loaded
+    if (customElements.get("rb-chart")) {
+      setIsReady(true)
+      return
+    }
+
+    // Listen for the global loader event
+    const handleComponentsLoaded = () => {
+      setIsReady(true)
+    }
+    
+    window.addEventListener("rb-components-loaded", handleComponentsLoaded)
+    return () => {
+      window.removeEventListener("rb-components-loaded", handleComponentsLoaded)
     }
   }, [])
 
   useEffect(() => {
-    if (!isScriptLoaded || !componentRef.current) return
+    if (!isReady || !componentRef.current) return
 
     const element = componentRef.current
 
@@ -63,7 +64,7 @@ export default function ChartsPage() {
       element.removeEventListener("dataFetched", handleDataFetched)
       element.removeEventListener("chartBuilt", handleChartBuilt)
     }
-  }, [isScriptLoaded])
+  }, [isReady])
 
   const handleRefresh = () => {
     if (componentRef.current?.fetchData) {
@@ -77,7 +78,7 @@ export default function ChartsPage() {
   api-key="${rbConfig.apiKey}"
 ></rb-chart>
 
-<script src="${rbConfig.apiBaseUrl}/web-components/reportburster.js"></script>
+<script src="${rbConfig.apiBaseUrl}/rb-webcomponents/rb-webcomponents.umd.js"></script>
 
 <script>
   const chartComponent = document.querySelector('rb-chart');

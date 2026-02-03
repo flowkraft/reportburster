@@ -1,6 +1,6 @@
 "use client"
 
-import { PayPalScriptProvider, PayPalScriptOptions } from "@paypal/react-paypal-js"
+import { PayPalScriptProvider, ReactPayPalScriptOptions } from "@paypal/react-paypal-js"
 import { ReactNode } from "react"
 
 interface PayPalProviderProps {
@@ -15,7 +15,7 @@ export function PayPalProvider({ children }: PayPalProviderProps) {
     return <>{children}</>
   }
 
-  const initialOptions: PayPalScriptOptions = {
+  const initialOptions: ReactPayPalScriptOptions = {
     clientId,
     currency: "USD",
     intent: "capture",

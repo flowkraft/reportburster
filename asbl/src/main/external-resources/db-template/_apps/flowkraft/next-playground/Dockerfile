@@ -41,17 +41,22 @@ RUN adduser --system --uid 1001 nextjs
 # Create data directory for SQLite database
 RUN mkdir -p ./data && chown nextjs:nodejs ./data
 
+# Create public directory (may be empty)
+RUN mkdir -p ./public
+
 # Copy built application
-COPY --from=builder /app/public ./public
+# Copy public folder contents if they exist (using wildcard to handle empty folder)
+COPY --from=builder /app/public* ./public/
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy drizzle files for runtime migrations if needed
-COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
+# Copy drizzle files for runtime migrations if needed (optional)
+RUN mkdir -p ./drizzle
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle* ./drizzle/
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
 
-# Copy seed script for optional data initialization
-COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+# Scripts directory is optional - create if needed
+RUN mkdir -p ./scripts
 
 USER nextjs
 

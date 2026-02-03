@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # FlowKraft Unified Grails App - Admin + Portal combined
+  grails-playground:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: grails-playground
+    ports:
+      - "${HOST_PORT:-8490}:8080"
+    environment:
+      # Server configuration
+      - SERVER_PORT=8080
+      - GRAILS_ENV=production
+      # Database path - use writable location
+      - DB_PATH=/app/data/flowkraft.db
+      - DB_CREATE=update
+
+      # JVM options
+      - JAVA_OPTS=-Xmx512m -Xms256m
+
+    volumes:
+      # Persist database
+      - flowkraft-data:/app/data
+      # Persist logs
+      - flowkraft-logs:/app/logs
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    
+    restart: unless-stopped
+
+volumes:
+  flowkraft-data:
+  flowkraft-logs:
+
+networks:
+  default:
+    name: flowkraft-network

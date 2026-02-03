@@ -26,4 +26,13 @@ export const DEFAULT_CONFIG = {
     value: 'grails',
     description: 'Preferred web app stack for self-service portals (grails or nextjs)',
   },
+  // Theme settings - persisted in SQLite instead of localStorage
+  'theme.color': {
+    value: 'reportburster',
+    description: 'Color theme name (reportburster, ocean, forest, sunset, etc.)',
+  },
+  'theme.mode': {
+    value: 'light',
+    description: 'Theme mode (light or dark)',
+  },
 } as const;

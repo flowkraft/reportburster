@@ -23,31 +23,32 @@ export default function PivotTablesPage() {
   const warehousePivotRef = useRef<RbPivotTableElement>(null)
   const rawDataRef = useRef<RbTabulatorElement>(null)
   const [configDsl, setConfigDsl] = useState("")
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false)
+  const [isReady, setIsReady] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>("pivot")
   const [copiedConfig, setCopiedConfig] = useState(false)
   const [copiedUsage, setCopiedUsage] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
-    if (!customElements.get("rb-pivot-table")) {
-      const script = document.createElement("script")
-      script.src = `${rbConfig.apiBaseUrl}/web-components/reportburster.js`
-      script.onload = () => {
-        console.log("ReportBurster web components loaded")
-        setIsScriptLoaded(true)
-      }
-      script.onerror = () => {
-        console.error("Failed to load ReportBurster web components")
-      }
-      document.head.appendChild(script)
-    } else {
-      setIsScriptLoaded(true)
+    // Check if components are already loaded
+    if (customElements.get("rb-pivot-table")) {
+      setIsReady(true)
+      return
+    }
+
+    // Listen for the global loader event
+    const handleComponentsLoaded = () => {
+      setIsReady(true)
+    }
+    
+    window.addEventListener("rb-components-loaded", handleComponentsLoaded)
+    return () => {
+      window.removeEventListener("rb-components-loaded", handleComponentsLoaded)
     }
   }, [])
 
   useEffect(() => {
-    if (!isScriptLoaded || !demoPivotRef.current) return
+    if (!isReady || !demoPivotRef.current) return
 
     const element = demoPivotRef.current
 
@@ -67,7 +68,7 @@ export default function PivotTablesPage() {
       element.removeEventListener("configLoaded", updateConfig)
       element.removeEventListener("dataFetched", updateConfig)
     }
-  }, [isScriptLoaded])
+  }, [isReady])
 
   const copyToClipboard = async (text: string, type: "config" | "usage") => {
     try {

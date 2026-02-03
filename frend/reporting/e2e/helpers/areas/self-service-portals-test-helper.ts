@@ -27,7 +27,7 @@ export class SelfServicePortalsTestHelper {
 
   // App IDs
   static readonly APP_ID_WORDPRESS = 'cms-webportal';
-  static readonly APP_ID_GRAILS = 'flowkraft-grails'; // Grails apps (admin + webportal)
+  static readonly APP_ID_GRAILS = 'flowkraft-grails'; // Grails unified app (portal + admin)
   static readonly APP_ID_NEXT = 'flowkraft-next'; // Next.js app
 
   /**

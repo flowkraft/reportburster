@@ -12,27 +12,28 @@ interface RbTabulatorElement extends HTMLElement {
 export default function TabulatorPage() {
   const componentRef = useRef<RbTabulatorElement>(null)
   const [configDsl, setConfigDsl] = useState("")
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false)
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    if (!customElements.get("rb-tabulator")) {
-      const script = document.createElement("script")
-      script.src = `${rbConfig.apiBaseUrl}/web-components/reportburster.js`
-      script.onload = () => {
-        console.log("ReportBurster web components loaded")
-        setIsScriptLoaded(true)
-      }
-      script.onerror = () => {
-        console.error("Failed to load ReportBurster web components")
-      }
-      document.head.appendChild(script)
-    } else {
-      setIsScriptLoaded(true)
+    // Check if components are already loaded
+    if (customElements.get("rb-tabulator")) {
+      setIsReady(true)
+      return
+    }
+
+    // Listen for the global loader event
+    const handleComponentsLoaded = () => {
+      setIsReady(true)
+    }
+    
+    window.addEventListener("rb-components-loaded", handleComponentsLoaded)
+    return () => {
+      window.removeEventListener("rb-components-loaded", handleComponentsLoaded)
     }
   }, [])
 
   useEffect(() => {
-    if (!isScriptLoaded || !componentRef.current) return
+    if (!isReady || !componentRef.current) return
 
     const element = componentRef.current
 
@@ -63,7 +64,7 @@ export default function TabulatorPage() {
       element.removeEventListener("dataFetched", handleDataFetched)
       element.removeEventListener("tableBuilt", handleTableBuilt)
     }
-  }, [isScriptLoaded])
+  }, [isReady])
 
   const handleRefresh = () => {
     if (componentRef.current?.fetchData) {
@@ -77,7 +78,7 @@ export default function TabulatorPage() {
   api-key="${rbConfig.apiKey}"
 ></rb-tabulator>
 
-<script src="${rbConfig.apiBaseUrl}/web-components/reportburster.js"></script>
+<script src="${rbConfig.apiBaseUrl}/rb-webcomponents/rb-webcomponents.umd.js"></script>
 
 <script>
   const tabulatorComponent = document.querySelector('rb-tabulator');
@@ -102,7 +103,7 @@ export default function TabulatorPage() {
   return (
     <ComponentDemo
       title="Tabulator"
-      description="Interactive data tables with sorting, filtering, and pagination. Fetches data from ReportBurster API and provides powerful table functionality."
+      description="Interactive data tables with sorting, filtering, and pagination. Fetches data from ReportBurster API and provides powerful table functionality. Note: Requires ReportBurster backend running on localhost:9090 for live data."
       component={
         <div className="w-full">
           {/* @ts-expect-error - Web component custom element */}
@@ -114,7 +115,7 @@ export default function TabulatorPage() {
           />
         </div>
       }
-      configuration={configDsl || "// Configuration will load after component initializes..."}
+      configuration={configDsl}
       usageCode={usageCode}
       onRefresh={handleRefresh}
     />

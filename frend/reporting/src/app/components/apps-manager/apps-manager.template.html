@@ -52,11 +52,15 @@
           border-radius: 6px;
           transition: all 0.2s ease-in-out;
           box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+          position: relative;
+          z-index: 1;
         }
-        .app-card-expanded:hover {
+        .app-card-expanded:hover,
+        .app-card-expanded:focus-within {
           border-color: #bbb;
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
           transform: translateY(-2px);
+          z-index: 200;
         }
         .app-card-expanded.panel-info {
           border-color: #bce8f1;
@@ -73,6 +77,12 @@
         .app-card-expanded.panel-danger:hover {
           border-color: #a94442;
         }
+        .app-card-expanded .btn-group.open {
+          z-index: 300;
+        }
+        .app-card-expanded .btn-group.open .dropdown-menu {
+          z-index: 10000;
+        }
       </style>
       <div *ngFor="let app of visibleApps" class="panel app-card-expanded" 
            [id]="'appPanel_' + sanitizeAppId(app.id)"
@@ -81,7 +91,7 @@
   'panel-primary': isStartingOrStopping(app),
   'panel-danger': isAppError(app),
   'panel-default': isAppStopped(app)
-}" style="margin-bottom: 10px;">
+}" style="margin-bottom: 10px; overflow: visible;">
         <script>
           // DEBUG: Output app state and url for troubleshooting Launch button
           try {
@@ -230,7 +240,7 @@
               'btn-primary': isAppRunning(app) || isStartingOrStopping(app),
               'btn-default': isAppStopped(app)
             }"
-            [disabled]="isStartingOrStopping(app) || (!isAppRunning(app) && isDockerRequiredButMissing(app))"
+            [disabled]="isStartingOrStopping(app)"
             (click)="onToggleApp(app)"
           >
             <i *ngIf="isStartingOrStopping(app)" [id]="'appSpinner_' + sanitizeAppId(app.id)" class="fa fa-spinner fa-spin"></i>
@@ -241,17 +251,6 @@
 
             <!-- Duplicate general volumes checkbox removed (CMS-specific volumes block above retained) -->
 
-          <!-- Docker Required Notice (shown when Docker is missing and app is not running) -->
-          <div *ngIf="!isAppRunning(app) && isDockerRequiredButMissing(app)"
-               class="alert alert-warning" 
-               style="margin-top: 10px; margin-bottom: 0; padding: 8px 12px; font-size: 0.9em;">
-            <i class="fa fa-exclamation-triangle" style="margin-right: 6px;"></i>
-            <strong>Docker must be installed &amp; started</strong> to run this application.
-            <a href="https://www.reportburster.com/docs/troubleshooting" target="_blank" style="margin-left: 5px;">
-              <i class="fa fa-book" style="margin-right: 3px;"></i>See how to install Docker
-            </a>
-          </div>
-          
           <!-- Ask AI Button (only when askAiForHelpOutputTypeCode is provided) -->
           <button
             *ngIf="askAiForHelpOutputTypeCode"
@@ -266,8 +265,8 @@
           
           <!-- Launch Dropdown (when app has multiple launchLinks) -->
           <div *ngIf="app.type !== 'desktop' && app.launchLinks?.length > 1" 
-               class="btn-group pull-right" 
-               style="margin-left: 10px;">
+            class="btn-group pull-right" 
+            style="margin-left: 10px; position: relative; z-index: 9999;">
             <button type="button" 
                     class="btn btn-default dropdown-toggle" 
                     data-toggle="dropdown"
@@ -276,7 +275,7 @@
                     [title]="isAppRunning(app) ? 'Launch ' + app.name : app.name + ' is stopped'">
               <i class="fa fa-external-link"></i> Launch <span class="caret"></span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-right">
+            <ul class="dropdown-menu dropdown-menu-right" style="z-index: 10000;">
               <li *ngFor="let link of app.launchLinks">
                 <a [href]="isAppRunning(app) ? link.url : null" 
                    target="_blank"

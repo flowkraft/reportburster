@@ -5,18 +5,21 @@
   --rb-cyan: #22a7c8;
   --rb-cyan-light: #3ab8d6;
   --rb-cyan-dark: #1a8aa6;
+  
+  /* Font family using Next.js Inter */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
   /* Light theme (default) */
   --background: #fafafa;
-  --foreground: #14203a;
+  --foreground: #1e293b;
   --card: #ffffff;
-  --card-foreground: #14203a;
+  --card-foreground: #1e293b;
   --popover: #ffffff;
-  --popover-foreground: #14203a;
+  --popover-foreground: #1e293b;
   --primary: var(--rb-cyan);
   --primary-foreground: #ffffff;
   --secondary: #f1f5f9;
-  --secondary-foreground: #14203a;
+  --secondary-foreground: #1e293b;
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
   --accent: var(--rb-cyan);
@@ -33,16 +36,16 @@
 .dark,
 [data-theme="dark"] {
   --background: #0f172a;
-  --foreground: #f8fafc;
+  --foreground: #f1f5f9;
   --card: #1e293b;
-  --card-foreground: #f8fafc;
+  --card-foreground: #f1f5f9;
   --popover: #1e293b;
-  --popover-foreground: #f8fafc;
+  --popover-foreground: #f1f5f9;
   --primary: var(--rb-cyan);
   --primary-foreground: #ffffff;
   --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
-  --muted: #1e293b;
+  --secondary-foreground: #f1f5f9;
+  --muted: #334155;
   --muted-foreground: #94a3b8;
   --accent: var(--rb-cyan);
   --accent-foreground: #ffffff;

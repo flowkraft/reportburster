@@ -62,3 +62,17 @@ export type Payslip = typeof payslips.$inferSelect;
 export type NewPayslip = typeof payslips.$inferInsert;
 export type Invoice = typeof invoices.$inferSelect;
 export type NewInvoice = typeof invoices.$inferInsert;
+
+// Settings table - à la Django Constance key-value config store
+export const settings = sqliteTable("settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  key: text("setting_key").notNull().unique(),
+  value: text("setting_value"),
+  description: text("description"),
+  category: text("category").default("general").notNull(),
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
+  updatedAt: text("updated_at").default("CURRENT_TIMESTAMP"),
+});
+
+export type Setting = typeof settings.$inferSelect;
+export type NewSetting = typeof settings.$inferInsert;

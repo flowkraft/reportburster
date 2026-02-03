@@ -27,6 +27,7 @@ import {
 import { ShellService } from '../../providers/shell.service';
 import { ConfirmService } from '../dialog-confirm/confirm.service';
 import { StateStoreService } from '../../providers/state-store.service';
+import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 import { Router } from '@angular/router';
 import { PollingHelper } from '../../providers/polling.helper';
 
@@ -112,6 +113,7 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     protected starterPacksService: StarterPacksService,
     protected confirmService: ConfirmService,
     protected stateStore: StateStoreService,
+    protected messagesService: ToastrMessagesService,
     protected router: Router,
     protected sanitizer: DomSanitizer,
     protected cdRef: ChangeDetectorRef,
@@ -269,18 +271,33 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
       const backendSystemInfo = await this.apiService.get('/jobman/system/info');
       if (backendSystemInfo) {
         const dockerSetup = this.stateStore.configSys.sysInfo.setup.docker;
-        dockerSetup.isDockerInstalled = backendSystemInfo.isDockerInstalled;
-        dockerSetup.isDockerDaemonRunning = backendSystemInfo.isDockerDaemonRunning;
+        
+        // Only update if we got valid boolean values from the backend
+        // This prevents clearing good status with undefined/null values
+        if (typeof backendSystemInfo.isDockerInstalled === 'boolean') {
+          dockerSetup.isDockerInstalled = backendSystemInfo.isDockerInstalled;
+        }
+        if (typeof backendSystemInfo.isDockerDaemonRunning === 'boolean') {
+          dockerSetup.isDockerDaemonRunning = backendSystemInfo.isDockerDaemonRunning;
+        }
 
-        // Calculate isDockerOk based on authoritative backend status
-        dockerSetup.isDockerOk = backendSystemInfo.isDockerInstalled && backendSystemInfo.isDockerDaemonRunning;
+        // Calculate isDockerOk based on current values (using potentially updated values)
+        dockerSetup.isDockerOk = dockerSetup.isDockerInstalled && dockerSetup.isDockerDaemonRunning;
 
         if (backendSystemInfo.dockerVersion && backendSystemInfo.dockerVersion !== 'DOCKER_NOT_INSTALLED') {
           dockerSetup.version = backendSystemInfo.dockerVersion;
         }
+        
+        console.debug('[StarterPacks] Docker status after refresh:', {
+          isDockerInstalled: dockerSetup.isDockerInstalled,
+          isDockerDaemonRunning: dockerSetup.isDockerDaemonRunning,
+          isDockerOk: dockerSetup.isDockerOk,
+          version: dockerSetup.version
+        });
       }
     } catch (e) {
-      console.warn('[StarterPacks] Failed to fetch backend system info', e);
+      // On API failure, keep existing Docker status (don't set isDockerOk = false)
+      console.warn('[StarterPacks] Failed to fetch backend system info, keeping existing Docker status', e);
     }
   }
   // --- Action Trigger ---
@@ -291,34 +308,6 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
 
     const action: 'start' | 'stop' = pack.status === 'running' ? 'stop' : 'start';
 
-    // Keep existing Docker guidance when starting and Docker is not OK
-    if (action === 'start' && !this.stateStore?.configSys?.sysInfo?.setup?.docker?.isDockerOk) {
-      const dockerInfo = this.stateStore?.configSys?.sysInfo?.setup?.docker;
-      let message = '';
-
-      if (dockerInfo && dockerInfo.isDockerInstalled && !dockerInfo.isDockerDaemonRunning) {
-        message = `Docker is installed but the background service is not running. Please start Docker Desktop to use <strong>${pack.displayName}</strong>.`;
-
-        this.confirmService.askConfirmation({
-          message,
-          confirmAction: () => {
-            // No navigation
-          }
-        });
-      } else {
-        message = `Docker is not installed and it is required for executing <strong>${pack.displayName}</strong>.<br><br>Would you like to check the nearby <strong>Docker / Extra Utilities</strong> (tab) to see how to install it?`;
-
-        this.confirmService.askConfirmation({
-          message,
-          confirmAction: () => {
-            this.router.navigate(['/help', 'appsMenuSelected'], { queryParams: { activeTab: 'extraPackagesTab' } });
-          }
-        });
-      }
-
-      return;
-    }
-
     let dialogQuestion = `${action === 'start' ? 'Start' : 'Stop'} ${pack.displayName}?`;
 
     if (action === 'start') {
@@ -327,7 +316,32 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
 
     this.confirmService.askConfirmation({
       message: dialogQuestion,
-      confirmAction: () => this.executePackAction(pack, action),
+      confirmAction: async () => {
+        // Refresh Docker status BEFORE checking it (to get the latest status, not stale cached value)
+        if (action === 'start') {
+          await this.refreshSystemInfo();
+        }
+
+        // Check Docker AFTER user confirms they want to start
+        if (action === 'start' && !this.stateStore?.configSys?.sysInfo?.setup?.docker?.isDockerOk) {
+          const dockerInfo = this.stateStore?.configSys?.sysInfo?.setup?.docker;
+
+          if (dockerInfo && dockerInfo.isDockerInstalled && !dockerInfo.isDockerDaemonRunning) {
+            this.messagesService.showWarning(
+              `Docker is installed but the background service is not running. Please start Docker Desktop first.`,
+              'Docker Not Running'
+            );
+          } else {
+            this.messagesService.showWarning(
+              `Docker is not installed and it is required for this starter pack. See the Docker / Extra Utilities tab for installation instructions.`,
+              'Docker Required'
+            );
+          }
+          return; // Don't proceed with starting
+        }
+
+        this.executePackAction(pack, action);
+      },
     });
   }
 
