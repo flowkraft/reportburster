@@ -3,7 +3,14 @@ import Stripe from "stripe"
 import { db, invoices } from "@/lib/db"
 import { eq } from "drizzle-orm"
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+// Lazy initialization to avoid build-time errors
+let stripe: Stripe | null = null
+function getStripe() {
+  if (!stripe) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+  }
+  return stripe
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create a PaymentIntent with Stripe
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await getStripe().paymentIntents.create({
       amount: Math.round(amount), // Amount in cents
       currency: currency?.toLowerCase() || "usd",
       metadata: {

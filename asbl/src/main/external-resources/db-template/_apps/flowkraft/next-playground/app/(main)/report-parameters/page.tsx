@@ -25,7 +25,7 @@ export default function ReportParametersPage() {
   const dataTableRef = useRef<RbTabulatorElement>(null)
   const [configDsl, setConfigDsl] = useState("")
   const [paramValues, setParamValues] = useState<Record<string, unknown>>({})
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false)
+  const [isReady, setIsReady] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>("component")
   const [copiedConfig, setCopiedConfig] = useState(false)
   const [copiedUsage, setCopiedUsage] = useState(false)
@@ -36,24 +36,25 @@ export default function ReportParametersPage() {
   const { toast } = useToast()
 
   useEffect(() => {
-    if (!customElements.get("rb-parameters")) {
-      const script = document.createElement("script")
-      script.src = `${rbConfig.apiBaseUrl}/web-components/reportburster.js`
-      script.onload = () => {
-        console.log("ReportBurster web components loaded")
-        setIsScriptLoaded(true)
-      }
-      script.onerror = () => {
-        console.error("Failed to load ReportBurster web components")
-      }
-      document.head.appendChild(script)
-    } else {
-      setIsScriptLoaded(true)
+    // Check if components are already loaded
+    if (customElements.get("rb-parameters")) {
+      setIsReady(true)
+      return
+    }
+
+    // Listen for the global loader event
+    const handleComponentsLoaded = () => {
+      setIsReady(true)
+    }
+    
+    window.addEventListener("rb-components-loaded", handleComponentsLoaded)
+    return () => {
+      window.removeEventListener("rb-components-loaded", handleComponentsLoaded)
     }
   }, [])
 
   useEffect(() => {
-    if (!isScriptLoaded || !paramsRef.current) return
+    if (!isReady || !paramsRef.current) return
 
     const element = paramsRef.current
 
@@ -79,10 +80,10 @@ export default function ReportParametersPage() {
       element.removeEventListener("configLoaded", updateConfig)
       element.removeEventListener("configFetched", updateConfig)
     }
-  }, [isScriptLoaded])
+  }, [isReady])
 
   useEffect(() => {
-    if (!isScriptLoaded || !dataTableRef.current) return
+    if (!isReady || !dataTableRef.current) return
 
     const element = dataTableRef.current
 
@@ -111,7 +112,7 @@ export default function ReportParametersPage() {
       element.removeEventListener("dataLoaded", handleDataLoaded)
       element.removeEventListener("ready", handleReady)
     }
-  }, [isScriptLoaded])
+  }, [isReady])
 
   const copyToClipboard = async (text: string, type: "config" | "usage") => {
     try {

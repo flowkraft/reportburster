@@ -3,7 +3,14 @@ import Stripe from "stripe"
 import { db, invoices } from "@/lib/db"
 import { eq } from "drizzle-orm"
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+// Lazy initialization to avoid build-time errors
+let stripe: Stripe | null = null
+function getStripe() {
+  if (!stripe) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+  }
+  return stripe
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Retrieve the payment intent to verify status
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
+    const paymentIntent = await getStripe().paymentIntents.retrieve(paymentIntentId)
 
     if (paymentIntent.status !== "succeeded") {
       return NextResponse.json(

@@ -84,7 +84,7 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
 
   isFlowkraftApp(app: ManagedApp | undefined): boolean {
     if (!app) return false;
-    return ['flowkraft-grails', 'flowkraft-next', 'flowkraft-bkend-boot-groovy'].includes(app.id);
+    return ['flowkraft-grails', 'flowkraft-next', 'flowkraft-bkend-boot-groovy', 'flowkraft-ai-crew'].includes(app.id);
   }
 
   isStartingOrStopping(app: ManagedApp | undefined): boolean {
@@ -360,41 +360,6 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
 
   async onToggleApp(app: ManagedApp) {
 
-    // Check if Docker is required and not installed, and only for starting (not stopping)
-    // Check if Docker is required and not installed, and only for starting (not stopping)
-    if (app.state !== 'running' && !this.stateStore?.configSys?.sysInfo?.setup?.docker?.isDockerOk) {
-      const dockerInfo = this.stateStore?.configSys?.sysInfo?.setup?.docker;
-      let message = '';
-
-      if (dockerInfo && dockerInfo.isDockerInstalled && !dockerInfo.isDockerDaemonRunning) {
-        message = `Docker is installed but the background service is not running. Please start Docker Desktop to use <strong>${app.name}</strong>.`;
-
-        this.confirmService.askConfirmation({
-          message: message,
-          confirmAction: () => {
-            // No navigation for daemon not running
-          },
-          cancelAction: () => {
-          }
-        });
-      } else {
-        message = `Docker is not installed and it is required for starting the <strong>${app.name}</strong> application.<br><br>Would you like to see how to install it?`;
-
-        this.confirmService.askConfirmation({
-          message: message,
-          confirmAction: () => {
-            // Navigate to help section with active tab
-            this.router.navigate(['/help', 'starterPacksMenuSelected'], { queryParams: { activeTab: 'extraPackagesTab' } });
-          },
-          cancelAction: () => {
-            // Do nothing on No - don't proceed with toggle
-          }
-        });
-      }
-
-      return;  // Exit without proceeding to normal toggle
-    }
-
     let dialogQuestion = `Stop ${app.name}?`;
     if (app.state !== 'running') {
       // Default concise start message with patience note
@@ -409,10 +374,36 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: async () => {
+        // Refresh Docker status BEFORE checking it (to get the latest status, not stale cached value)
+        if (app.state !== 'running' && app.type === 'docker') {
+          await this.appsManagerService.refreshAllStatuses(true);
+        }
+
+        // Check Docker AFTER user confirms they want to start (only for docker apps, not for stopping)
+        if (app.state !== 'running' && app.type === 'docker' && !this.stateStore?.configSys?.sysInfo?.setup?.docker?.isDockerOk) {
+          const dockerInfo = this.stateStore?.configSys?.sysInfo?.setup?.docker;
+
+          if (dockerInfo && dockerInfo.isDockerInstalled && !dockerInfo.isDockerDaemonRunning) {
+            this.messagesService.showWarning(
+              `Docker is installed but the background service is not running. Please start Docker Desktop first.`,
+              'Docker Not Running'
+            );
+          } else {
+            this.messagesService.showWarning(
+              `Docker is not installed and it is required for this application. See Help → Apps / Starter Packs for installation instructions.`,
+              'Docker Required'
+            );
+          }
+          return; // Don't proceed with starting
+        }
+
         // Set immediate UI feedback
         app.state = app.state === 'running' ? 'stopping' : 'starting';
 
         await this.appsManagerService.toggleApp(app);
+
+        // Immediately refresh UI with final state from service (don't wait for polling interval)
+        await this.refreshDataSilent();
 
         // After toggleApp completes, start polling if any app is still in transitional state
         this.startTransitionPolling();

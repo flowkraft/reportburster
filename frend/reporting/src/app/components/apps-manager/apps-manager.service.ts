@@ -50,6 +50,76 @@ export class AppsManagerService {
   private allAppsData: { apps: ManagedApp[] } = {
     apps: [
       {
+        id: 'flowkraft-grails',
+        name: 'Flowkraft\'s Grails App',
+        icon: 'fa fa-cube',
+        category: 'Full-Stack Apps',
+        type: 'docker',
+        description: 'Build admin panels and self-service portals using <strong>Grails/Groovy</strong> — our <em>recommended stack</em> for consistency with ReportBurster\'s scripting and backend. A simple and effective way for building a custom app with an admin panel (CRUD, data management) and a front-facing portal (dashboards, document access).',
+        url: 'http://localhost:8490',
+        launchLinks: [
+          { label: 'Front-Facing Area /', url: 'http://localhost:8490', icon: 'fa fa-globe' },
+          { label: 'Admin Area /admin', url: 'http://localhost:8490/admin', icon: 'fa fa-cog' }
+        ],
+        entrypoint: 'flowkraft/grails-playground/docker-compose.yml',
+        service_name: 'grails-playground',
+        startCmd: 'service app start grails-playground 8490',
+        stopCmd: 'service app stop grails-playground',
+        tags: ['flowkraft', 'admin-panel', 'webportal', 'grails', 'groovy', 'recommended', 'ReportBurster\'s App'],
+        visible: true,
+      },
+      {
+        id: 'flowkraft-bkend-boot-groovy',
+        name: 'Flowkraft\'s Backend App (Automation & Job Scheduling)',
+        icon: 'fa fa-cogs',
+        category: 'Backend Services',
+        type: 'docker',
+        description: 'Quickly deploy / run automation flows across your business systems',
+        url: 'http://localhost:8500',
+        entrypoint: 'flowkraft/docker-compose.yml',
+        service_name: 'bkend-boot-groovy-playground',
+        startCmd: 'service app start bkend-boot-groovy-playground 8500',
+        stopCmd: 'service app stop bkend-boot-groovy-playground',
+        tags: ['flowkraft', 'backend', 'automation', 'job-scheduling', 'ReportBurster\'s App'],
+        visible: true,
+        launch: false, // No UI - API/automation only
+      },
+      {
+        id: 'flowkraft-ai-crew',
+        name: 'FlowKraft AI Crew (Agent Management)',
+        icon: 'fa fa-robot',
+        category: 'AI & Agents',
+        type: 'docker',
+        description: 'AI Agent Management Dashboard powered by Letta. Provision and manage Greek advisor agents (Athena, Hephaestus, Hermes) for data modeling, ETL/automation, and UI guidance.',
+        url: 'http://localhost:8520',
+        entrypoint: 'flowkraft/_ai-crew/docker-compose.yml',
+        service_name: 'ai-crew-frontend',
+        startCmd: 'service app start ai-crew-frontend 8520',
+        stopCmd: 'service app stop ai-crew-frontend',
+        tags: ['flowkraft', 'ai-agents', 'ReportBurster\'s App'],
+        visible: true,
+        launch: true,
+      },
+      {
+        id: 'flowkraft-next',
+        name: 'Flowkraft\'s Next.js App (Alternative Stack)',
+        icon: 'fa fa-cube',
+        category: 'Full-Stack Apps',
+        type: 'docker',
+        description: 'Build dashboards and portals using <strong>Next.js 15 + Tailwind 4 + shadcn</strong> — for users who prefer the modern React/TypeScript ecosystem. Same capabilities as the Grails app but with a different tech stack.',
+        url: 'http://localhost:8510',
+        launchLinks: [
+          { label: 'Front-Facing Area /', url: 'http://localhost:8510', icon: 'fa fa-globe' },
+          { label: 'Admin Area /admin', url: 'http://localhost:8510/admin', icon: 'fa fa-cog' }
+        ],
+        entrypoint: 'flowkraft/next-playground/docker-compose.yml',
+        service_name: 'next-playground',
+        startCmd: 'service app start next-playground 8510',
+        stopCmd: 'service app stop next-playground',
+        tags: ['flowkraft', 'frontend', 'dashboards', 'customer-portal', 'next.js', 'react', 'alternative', 'ReportBurster\'s App'],
+        visible: true,
+      },
+      {
         id: 'cms-webportal',
         name: 'WebPortal / Customer Portal',
         icon: 'fa fa-users',
@@ -93,76 +163,6 @@ export class AppsManagerService {
         stopCmd: 'service app stop cms-webportal-playground',
         tags: ['cms', 'webportal', 'backend', 'frontend', 'admin-panel', 'customer-portal', 'cms', 'wordpress', 'ReportBurster\'s App'],
         visible: true,
-      },
-      {
-        id: 'flowkraft-grails',
-        name: 'Flowkraft\'s Grails Apps (Admin & Webportal)',
-        icon: 'fa fa-cube',
-        category: 'Full-Stack Apps',
-        type: 'docker',
-        description: 'Build admin panels and self-service portals using <strong>Grails/Groovy</strong> — our <em>recommended stack</em> for consistency with ReportBurster\'s scripting and backend. Includes admin panel (CRUD, data management) and customer webportal (dashboards, document access). <a href="https://www.reportburster.com/docs/grails-apps" target="_blank"><i class="fa fa-book"></i>&nbsp;learn more</a>',
-        url: 'http://localhost:8480',
-        launchLinks: [
-          { label: 'Admin Panel', url: 'http://localhost:8480', icon: 'fa fa-cog' },
-          { label: 'Self-Service Webportal', url: 'http://localhost:8490', icon: 'fa fa-users' }
-        ],
-        entrypoint: 'flowkraft/docker-compose.yml',
-        service_name: 'grails-admin grails-webportal',
-        startCmd: 'service app start grails-admin 8480 && service app start grails-webportal 8490',
-        stopCmd: 'service app stop grails-admin && service app stop grails-webportal',
-        tags: ['flowkraft', 'admin-panel', 'webportal', 'grails', 'groovy', 'recommended', 'ReportBurster\'s App'],
-        visible: true,
-      },
-      {
-        id: 'flowkraft-bkend-boot-groovy',
-        name: 'Flowkraft\'s Backend App (Automation & Job Scheduling)',
-        icon: 'fa fa-cogs',
-        category: 'Backend Services',
-        type: 'docker',
-        description: 'Quickly deploy / run automation flows across your business systems',
-        url: 'http://localhost:8500',
-        entrypoint: 'flowkraft/docker-compose.yml',
-        service_name: 'bkend-boot-groovy-playground',
-        startCmd: 'service app start bkend-boot-groovy-playground 8500',
-        stopCmd: 'service app stop bkend-boot-groovy-playground',
-        tags: ['flowkraft', 'backend', 'automation', 'job-scheduling', 'ReportBurster\'s App'],
-        visible: true,
-        launch: false, // No UI - API/automation only
-      },
-      {
-        id: 'flowkraft-next',
-        name: 'Flowkraft\'s Next.js Apps (Alternative Stack)',
-        icon: 'fa fa-cube',
-        category: 'Full-Stack Apps',
-        type: 'docker',
-        description: 'Build dashboards and portals using <strong>Next.js 16 + Tailwind 4 + shadcn</strong> — for users who prefer the modern React/TypeScript ecosystem. Same capabilities as the Grails apps but with a different tech stack. <a href="https://www.reportburster.com/docs/nextjs-apps" target="_blank"><i class="fa fa-book"></i>&nbsp;learn more</a>',
-        url: 'http://localhost:8510',
-        launchLinks: [
-          { label: 'Main Portal', url: 'http://localhost:8510', icon: 'fa fa-home' },
-          { label: 'Admin Panel', url: 'http://localhost:8510/admin', icon: 'fa fa-cog' }
-        ],
-        entrypoint: 'flowkraft/next-playground/docker-compose.yml',
-        service_name: 'next-playground',
-        startCmd: 'service app start next-playground 8510',
-        stopCmd: 'service app stop next-playground',
-        tags: ['flowkraft', 'frontend', 'dashboards', 'customer-portal', 'next.js', 'react', 'alternative', 'ReportBurster\'s App'],
-        visible: true,
-      },
-      {
-        id: 'flowkraft-ai-crew',
-        name: 'FlowKraft AI Crew (Agent Management)',
-        icon: 'fa fa-robot',
-        category: 'AI & Agents',
-        type: 'docker',
-        description: 'AI Agent Management Dashboard powered by Letta. Provision and manage Greek advisor agents (Athena, Hephaestus, Hermes) for data modeling, ETL/automation, and UI guidance.',
-        url: 'http://localhost:8520',
-        entrypoint: 'flowkraft/_ai-crew/docker-compose.yml',
-        service_name: 'ai-crew-frontend',
-        startCmd: 'service app start ai-crew-frontend 8520',
-        stopCmd: 'service app stop ai-crew-frontend',
-        tags: ['flowkraft', 'ai-agents'],
-        visible: true,
-        launch: true,
       },
       {
         id: 'rundeck',
@@ -380,18 +380,33 @@ export class AppsManagerService {
       const backendSystemInfo = await this.apiService.get('/jobman/system/info');
       if (backendSystemInfo) {
         const dockerSetup = this.stateStore.configSys.sysInfo.setup.docker;
-        dockerSetup.isDockerInstalled = backendSystemInfo.isDockerInstalled;
-        dockerSetup.isDockerDaemonRunning = backendSystemInfo.isDockerDaemonRunning;
+        
+        // Only update if we got valid boolean values from the backend
+        // This prevents clearing good status with undefined/null values
+        if (typeof backendSystemInfo.isDockerInstalled === 'boolean') {
+          dockerSetup.isDockerInstalled = backendSystemInfo.isDockerInstalled;
+        }
+        if (typeof backendSystemInfo.isDockerDaemonRunning === 'boolean') {
+          dockerSetup.isDockerDaemonRunning = backendSystemInfo.isDockerDaemonRunning;
+        }
 
-        // Calculate isDockerOk based on authoritative backend status
-        dockerSetup.isDockerOk = backendSystemInfo.isDockerInstalled && backendSystemInfo.isDockerDaemonRunning;
+        // Calculate isDockerOk based on current values (using potentially updated values)
+        dockerSetup.isDockerOk = dockerSetup.isDockerInstalled && dockerSetup.isDockerDaemonRunning;
 
         if (backendSystemInfo.dockerVersion && backendSystemInfo.dockerVersion !== 'DOCKER_NOT_INSTALLED') {
           dockerSetup.version = backendSystemInfo.dockerVersion;
         }
+        
+        console.debug('[AppsManager] Docker status after refresh:', {
+          isDockerInstalled: dockerSetup.isDockerInstalled,
+          isDockerDaemonRunning: dockerSetup.isDockerDaemonRunning,
+          isDockerOk: dockerSetup.isDockerOk,
+          version: dockerSetup.version
+        });
       }
     } catch (e) {
-      console.warn('[AppsManager] Failed to fetch backend system info', e);
+      // On API failure, keep existing Docker status (don't set isDockerOk = false)
+      console.warn('[AppsManager] Failed to fetch backend system info, keeping existing Docker status', e);
     }
   }
 

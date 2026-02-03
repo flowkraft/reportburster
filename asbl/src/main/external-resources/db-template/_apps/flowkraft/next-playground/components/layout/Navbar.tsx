@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { Menu, X, Sun, Moon } from "lucide-react"
 import { ThemeSelector } from "@/components/ThemeSelector"
 import { applyTheme } from "@/lib/themes"
+import { setSetting, getSetting, SETTING_KEYS } from "@/lib/settings"
 
 export function Navbar() {
   const pathname = usePathname()
@@ -13,15 +14,27 @@ export function Navbar() {
   const [mode, setMode] = useState<"light" | "dark">("light")
 
   useEffect(() => {
-    const savedMode = localStorage.getItem("rb-theme") as "light" | "dark"
-    if (savedMode) {
-      setMode(savedMode)
+    // Load theme from SQLite settings
+    const loadTheme = async () => {
+      try {
+        const savedMode = await getSetting(SETTING_KEYS.THEME_MODE) as "light" | "dark" | null
+        if (savedMode) {
+          setMode(savedMode)
+        }
+      } catch (error) {
+        // Fallback to localStorage if API fails
+        const localMode = localStorage.getItem("rb-theme") as "light" | "dark"
+        if (localMode) {
+          setMode(localMode)
+        }
+      }
     }
+    loadTheme()
   }, [])
 
   const isActive = (path: string) => pathname === path
 
-  const toggleMode = () => {
+  const toggleMode = async () => {
     const newMode = mode === "light" ? "dark" : "light"
     const currentTheme = localStorage.getItem("rb-color-theme") || "reportburster"
 
@@ -35,6 +48,14 @@ export function Navbar() {
       document.documentElement.classList.remove("dark")
     }
     
+    // Save to SQLite settings
+    try {
+      await setSetting(SETTING_KEYS.THEME_MODE, newMode, "theme")
+    } catch (error) {
+      console.error("Failed to save theme to settings:", error)
+    }
+    
+    // Also keep localStorage as fallback
     localStorage.setItem("rb-theme", newMode)
     applyTheme(currentTheme, newMode)
   }

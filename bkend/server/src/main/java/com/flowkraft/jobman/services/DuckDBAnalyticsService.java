@@ -9,7 +9,6 @@ import com.sourcekraft.documentburster.common.analytics.duckdb.DuckDBPivotProces
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -24,7 +23,6 @@ import java.util.Map;
  * Service for executing OLAP analytics queries using DuckDB.
  * Handles pivot table operations with server-side processing.
  */
-@Service
 public class DuckDBAnalyticsService {
 
     private static final Logger log = LoggerFactory.getLogger(DuckDBAnalyticsService.class);

@@ -1,11 +1,13 @@
 package com.flowkraft.jobman.controllers;
 
+import com.flowkraft.common.AppPaths;
 import com.flowkraft.jobman.services.ClickHouseAnalyticsService;
 import com.flowkraft.jobman.services.DuckDBAnalyticsService;
 import com.sourcekraft.documentburster.common.analytics.dto.PivotRequest;
 import com.sourcekraft.documentburster.common.analytics.dto.PivotResponse;
 import com.sourcekraft.documentburster.common.analytics.duckdb.DuckDBFileHandler;
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,16 +39,28 @@ public class AnalyticsController {
 
     private static final Logger log = LoggerFactory.getLogger(AnalyticsController.class);
 
-    private final DuckDBAnalyticsService duckDBService;
-    private final ClickHouseAnalyticsService clickHouseService;
-    private final DatabaseConnectionManager connectionManager;
+    private DuckDBAnalyticsService duckDBService;
+    private ClickHouseAnalyticsService clickHouseService;
+    private DatabaseConnectionManager connectionManager;
 
-    public AnalyticsController(DuckDBAnalyticsService duckDBService, 
-                               ClickHouseAnalyticsService clickHouseService,
-                               DatabaseConnectionManager connectionManager) {
-        this.duckDBService = duckDBService;
-        this.clickHouseService = clickHouseService;
-        this.connectionManager = connectionManager;
+    /**
+     * Lazy initialization of the DatabaseConnectionManager and analytics services.
+     * Creates the services on first use with Settings loaded from config.
+     */
+    private void ensureServicesInitialized() {
+        if (connectionManager == null) {
+            try {
+                String settingsPath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "burst", "settings.xml").toString();
+                Settings settings = new Settings(settingsPath);
+                connectionManager = new DatabaseConnectionManager(settings);
+                duckDBService = new DuckDBAnalyticsService(connectionManager);
+                clickHouseService = new ClickHouseAnalyticsService(connectionManager);
+                log.info("Analytics services initialized successfully");
+            } catch (Exception e) {
+                log.error("Failed to initialize analytics services", e);
+                throw new RuntimeException("Failed to initialize analytics services: " + e.getMessage(), e);
+            }
+        }
     }
 
     /**
@@ -55,6 +70,7 @@ public class AnalyticsController {
      * @return The detected engine: "duckdb", "clickhouse", or "browser"
      */
     private String detectEngineFromConnection(String connectionCode) {
+        ensureServicesInitialized();
         try {
             ServerDatabaseSettings dbSettings = connectionManager.getServerDatabaseSettings(connectionCode);
             String dbType = dbSettings.type != null ? dbSettings.type.toLowerCase() : "";
@@ -101,6 +117,7 @@ public class AnalyticsController {
      */
     @PostMapping("/pivot")
     public ResponseEntity<?> executePivot(@RequestBody PivotRequest request) {
+        ensureServicesInitialized();
         try {
             log.info("Received pivot request for table: {}, engine: {}", 
                     request.getTableName(), request.getEngine());
@@ -174,6 +191,7 @@ public class AnalyticsController {
     @GetMapping("/aggregators")
     public ResponseEntity<List<String>> getSupportedAggregators(
             @RequestParam(defaultValue = "duckdb") String engine) {
+        ensureServicesInitialized();
         List<String> aggregators;
         if ("clickhouse".equalsIgnoreCase(engine)) {
             aggregators = clickHouseService.getSupportedAggregators();
@@ -192,6 +210,7 @@ public class AnalyticsController {
      */
     @GetMapping("/aggregators/display-names")
     public ResponseEntity<Map<String, String>> getAggregatorDisplayNames() {
+        ensureServicesInitialized();
         Map<String, String> displayNames = duckDBService.getAggregatorDisplayNames();
         return ResponseEntity.ok(displayNames);
     }
@@ -205,6 +224,7 @@ public class AnalyticsController {
      */
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
+        ensureServicesInitialized();
         Map<String, Object> health = new HashMap<>();
         health.put("status", "UP");
         health.put("service", "Analytics (DuckDB + ClickHouse)");
@@ -233,6 +253,7 @@ public class AnalyticsController {
     @GetMapping("/cache/stats")
     public ResponseEntity<Map<String, Object>> getCacheStats(
             @RequestParam(defaultValue = "duckdb") String engine) {
+        ensureServicesInitialized();
         Map<String, Object> stats;
         if ("clickhouse".equalsIgnoreCase(engine)) {
             stats = clickHouseService.getCacheStats();

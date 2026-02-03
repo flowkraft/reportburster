@@ -48,10 +48,8 @@ public class ServicesManager {
 	}
 
 	private static final List<String> FLOWKRAFT_APPS = List.of(
-			"grails-admin",
-			"grails-webportal",
-			"bkend-boot-groovy-playground",
-			"next-playground");
+			"bkend-boot-groovy-playground");
+	// Note: grails-playground and next-playground use their own folders under flowkraft/
 
 	// Define the family name this CLI currently handles primarily
 	private static final String DB_FAMILY = "database";
@@ -746,6 +744,18 @@ public class ServicesManager {
 		String appsFolderPath = Utils.getAppsFolderPath();
 		if (FLOWKRAFT_APPS.contains(serviceName)) {
 			return appsFolderPath + "flowkraft/docker-compose.yml";
+		}
+		// Grails unified app lives in flowkraft subdirectory
+		if ("grails-playground".equals(serviceName)) {
+			return appsFolderPath + "flowkraft/grails-playground/docker-compose.yml";
+		}
+		// Next.js app lives in flowkraft subdirectory
+		if ("next-playground".equals(serviceName)) {
+			return appsFolderPath + "flowkraft/next-playground/docker-compose.yml";
+		}
+		// AI Crew frontend lives in flowkraft/_ai-crew subdirectory
+		if ("ai-crew-frontend".equals(serviceName)) {
+			return appsFolderPath + "flowkraft/_ai-crew/docker-compose.yml";
 		}
 		return appsFolderPath + serviceName + "/docker-compose.yml";
 	}

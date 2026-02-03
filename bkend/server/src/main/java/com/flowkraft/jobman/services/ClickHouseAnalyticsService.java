@@ -8,7 +8,6 @@ import com.sourcekraft.documentburster.common.analytics.dto.PivotResponse;
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -30,7 +29,6 @@ import java.util.Map;
  * - High-speed data ingestion
  * - Efficient storage compression
  */
-@Service
 public class ClickHouseAnalyticsService {
 
     private static final Logger log = LoggerFactory.getLogger(ClickHouseAnalyticsService.class);

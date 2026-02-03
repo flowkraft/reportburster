@@ -25,6 +25,9 @@ public class ServerApplication implements ExitCodeGenerator {
         String serveWebEnv = System.getenv("SERVE_WEB");
         boolean serveWeb = "true".equalsIgnoreCase(serveWebProp) || "true".equalsIgnoreCase(serveWebEnv);
 
+        // Debug output to understand SERVE_WEB resolution
+        System.out.println("DEBUG: SERVE_WEB property=" + serveWebProp + ", env=" + serveWebEnv + ", resolved=" + serveWeb);
+
         SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(ServerApplication.class);
 
         // Print PID in classic Spring Boot format (no timings)
@@ -37,13 +40,22 @@ public class ServerApplication implements ExitCodeGenerator {
             exitCode = SpringApplication.exit(appBuilder.run(args));
         } else {
             // Web mode - explicitly set SERVLET type and register event listener
+            System.out.println("DEBUG: Entering web mode, setting SERVLET type");
             appBuilder.web(WebApplicationType.SERVLET);
             appBuilder.listeners(event -> {
                 if (event instanceof org.springframework.boot.context.event.ApplicationReadyEvent) {
                     System.out.println("Started ServerApplication with PID " + pid + " serveWeb=true");
                 }
             });
-            appBuilder.run(args);
+            try {
+                System.out.println("DEBUG: About to call appBuilder.run()");
+                appBuilder.run(args);
+                System.out.println("DEBUG: appBuilder.run() returned successfully");
+            } catch (Exception e) {
+                System.err.println("DEBUG: Exception in appBuilder.run(): " + e.getMessage());
+                e.printStackTrace(System.err);
+                throw e;
+            }
         }
 
         System.setProperty("spring.devtools.restart.enabled", "false");

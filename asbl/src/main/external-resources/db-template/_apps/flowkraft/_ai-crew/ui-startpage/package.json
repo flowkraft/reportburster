@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "next lint",
+    "db:push": "npx drizzle-kit push",
+    "db:studio": "npx drizzle-kit studio",
     "build:agents": "npx --yes -p typescript tsc scripts/init-agents.ts scripts/delete-agents.ts scripts/list-agents.ts scripts/truncate-db.ts --outDir .build --module commonjs --target es2020",
     "agents:list": "npm run build:agents && node ./.build/scripts/list-agents.js",
     "agents:provision": "npm run build:agents && node ./.build/scripts/init-agents.js",

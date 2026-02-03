@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import { faker } from "@faker-js/faker";
-import { payslips, invoices, payslipStatuses, invoiceStatuses } from "./schema";
+import { payslips, invoices, settings, payslipStatuses, invoiceStatuses } from "./schema";
 import path from "path";
 import fs from "fs";
 
@@ -56,6 +56,19 @@ async function seed() {
       currency TEXT DEFAULT 'USD' NOT NULL,
       status TEXT DEFAULT 'draft' NOT NULL,
       notes TEXT,
+      paid_at TEXT,
+      payment_method TEXT,
+      payment_reference TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS settings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      setting_key TEXT NOT NULL UNIQUE,
+      setting_value TEXT,
+      description TEXT,
+      category TEXT DEFAULT 'general' NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
@@ -128,6 +141,22 @@ async function seed() {
 
   db.insert(invoices).values(invoiceData).run();
   console.log("✅ Seeded 10 invoices");
+
+  // Seed default settings (like Grails BootStrap.groovy)
+  const defaultSettings = [
+    { key: "theme.color", value: "reportburster", category: "theme", description: "Color theme name" },
+    { key: "theme.mode", value: "light", category: "theme", description: "Theme mode (light/dark)" },
+    { key: "company.name", value: "FlowKraft Inc.", category: "company", description: "Company name" },
+    { key: "company.email", value: "contact@flowkraft.com", category: "company", description: "Company email" },
+    { key: "preferences.currency", value: "USD", category: "preferences", description: "Default currency" },
+    { key: "preferences.dateFormat", value: "MM/dd/yyyy", category: "preferences", description: "Date format" },
+  ];
+
+  db.delete(settings).run();
+  for (const setting of defaultSettings) {
+    db.insert(settings).values(setting).run();
+  }
+  console.log("✅ Seeded default settings");
 
   sqlite.close();
   console.log("🎉 Database seeding complete!");

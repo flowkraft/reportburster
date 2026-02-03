@@ -1,0 +1,45 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Build outputs
+.next
+out
+dist
+
+# Database files (created at runtime, not during build)
+data/
+*.db
+*.db-journal
+
+# Development files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+README.md
+*.md
+
+# Tests
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx

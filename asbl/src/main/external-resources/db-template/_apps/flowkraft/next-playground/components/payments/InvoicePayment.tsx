@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,12 +16,14 @@ import { PayPalProvider } from "./PayPalProvider"
 import { PayPalCheckout } from "./PayPalCheckout"
 import { CreditCard, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getSetting, SETTING_KEYS } from "@/lib/settings"
 
 interface InvoicePaymentProps {
   invoiceId: number
   amount: number
   currency: string
   onPaymentSuccess?: () => void
+  defaultProcessor?: "stripe" | "paypal"
 }
 
 type PaymentMethod = "stripe" | "paypal"
@@ -31,13 +33,25 @@ export function InvoicePayment({
   amount,
   currency,
   onPaymentSuccess,
+  defaultProcessor,
 }: InvoicePaymentProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("stripe")
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(defaultProcessor || "stripe")
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [paymentComplete, setPaymentComplete] = useState(false)
+
+  // Load default processor from settings on mount
+  useEffect(() => {
+    if (!defaultProcessor) {
+      getSetting(SETTING_KEYS.PAYMENT_PROCESSOR).then((processor) => {
+        if (processor === "stripe" || processor === "paypal") {
+          setPaymentMethod(processor)
+        }
+      })
+    }
+  }, [defaultProcessor])
 
   const handleOpenChange = async (open: boolean) => {
     setIsOpen(open)

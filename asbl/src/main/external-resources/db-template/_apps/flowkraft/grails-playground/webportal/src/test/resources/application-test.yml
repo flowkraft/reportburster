@@ -1,3 +1,0 @@
-dataSource:
-  url: jdbc:tc:mysql:8:///db
-  driverClassName: org.testcontainers.jdbc.ContainerDatabaseDriver

@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
+import { RbWebComponentsLoader } from "@/components/RbWebComponentsLoader";
+
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
   title: "ReportBurster - Dashboards & Self Service Portals",
@@ -15,6 +23,7 @@ export const metadata: Metadata = {
  * - HTML/body structure
  * - ThemeProvider for dark/light mode
  * - Toaster for notifications
+ * - RbWebComponentsLoader for web components
  * 
  * Navigation is handled by route group layouts:
  * - (main)/layout.tsx - Main app with Navbar/Footer
@@ -26,9 +35,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
+    <html lang="en" suppressHydrationWarning className={inter.variable}>
+      <body className="font-sans antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
         <ThemeProvider>
+          <RbWebComponentsLoader />
           {children}
           <Toaster />
         </ThemeProvider>
