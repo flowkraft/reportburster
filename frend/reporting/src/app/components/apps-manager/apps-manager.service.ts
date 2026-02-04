@@ -50,20 +50,41 @@ export class AppsManagerService {
   private allAppsData: { apps: ManagedApp[] } = {
     apps: [
       {
+        id: 'flowkraft-ai-hub',
+        name: 'FlowKraft AI Hub',
+        icon: 'fa fa-robot',
+        category: 'AI & Agents',
+        type: 'docker',
+        description: 'Meet your AI assistants! Athena, Hephaestus, Hermes, and Apollo are here to help with ReportBurster tasks, data exploration & visualization, ETL/cron automations, and building admin panels, dashboards, or customer-facing web apps. Visit Athena\'s Data Lab to chat with your databases and create stunning charts!',
+        url: 'http://localhost:8400',
+        launchLinks: [
+          { label: 'Meet the FlowKraft AI Crew', url: 'http://localhost:8400', icon: 'fa fa-free-code-camp' },
+          { label: 'Go and Explore Athena\'s Data Lab', url: 'http://localhost:8401', icon: 'fa fa-flask' },
+          { label: 'Chat with the Ancient Greeks ... Oracles@Your Service', url: 'http://localhost:8402', icon: 'fa fa-commenting-o' },
+        ],
+        entrypoint: 'flowkraft/_ai-crew/docker-compose.yml',
+        service_name: 'ai-hub-frontend',
+        startCmd: 'service app start ai-hub-frontend 8400',
+        stopCmd: 'service app stop ai-hub-frontend',
+        tags: ['flowkraft', 'ai-agents', 'ReportBurster\'s App'],
+        visible: true,
+        launch: true,
+      },
+      {
         id: 'flowkraft-grails',
         name: 'Flowkraft\'s Grails App',
         icon: 'fa fa-cube',
         category: 'Full-Stack Apps',
         type: 'docker',
-        description: 'Build admin panels and self-service portals using <strong>Grails/Groovy</strong> — our <em>recommended stack</em> for consistency with ReportBurster\'s scripting and backend. A simple and effective way for building a custom app with an admin panel (CRUD, data management) and a front-facing portal (dashboards, document access).',
-        url: 'http://localhost:8490',
+        description: 'Build admin panels and self-service portals using <strong>Grails</strong> — our <em>recommended stack</em> for consistency with ReportBurster\'s scripting and backend. A simple and effective way for building a custom app with an admin panel (CRUD, data management) and a front-facing portal (dashboards, document access).',
+        url: 'http://localhost:8410',
         launchLinks: [
-          { label: 'Front-Facing Area /', url: 'http://localhost:8490', icon: 'fa fa-globe' },
-          { label: 'Admin Area /admin', url: 'http://localhost:8490/admin', icon: 'fa fa-cog' }
+          { label: 'Front-Facing Area /', url: 'http://localhost:8410', icon: 'fa fa-globe' },
+          { label: 'Admin Area /admin', url: 'http://localhost:8410/admin', icon: 'fa fa-cog' }
         ],
         entrypoint: 'flowkraft/grails-playground/docker-compose.yml',
         service_name: 'grails-playground',
-        startCmd: 'service app start grails-playground 8490',
+        startCmd: 'service app start grails-playground 8410',
         stopCmd: 'service app stop grails-playground',
         tags: ['flowkraft', 'admin-panel', 'webportal', 'grails', 'groovy', 'recommended', 'ReportBurster\'s App'],
         visible: true,
@@ -75,30 +96,14 @@ export class AppsManagerService {
         category: 'Backend Services',
         type: 'docker',
         description: 'Quickly deploy / run automation flows across your business systems',
-        url: 'http://localhost:8500',
+        url: 'http://localhost:8420',
         entrypoint: 'flowkraft/docker-compose.yml',
         service_name: 'bkend-boot-groovy-playground',
-        startCmd: 'service app start bkend-boot-groovy-playground 8500',
+        startCmd: 'service app start bkend-boot-groovy-playground 8420',
         stopCmd: 'service app stop bkend-boot-groovy-playground',
-        tags: ['flowkraft', 'backend', 'automation', 'job-scheduling', 'ReportBurster\'s App'],
+        tags: ['flowkraft', 'backend', 'groovy', 'automation', 'job-scheduling', 'ReportBurster\'s App'],
         visible: true,
         launch: false, // No UI - API/automation only
-      },
-      {
-        id: 'flowkraft-ai-crew',
-        name: 'FlowKraft AI Crew (Agent Management)',
-        icon: 'fa fa-robot',
-        category: 'AI & Agents',
-        type: 'docker',
-        description: 'AI Agent Management Dashboard powered by Letta. Provision and manage Greek advisor agents (Athena, Hephaestus, Hermes) for data modeling, ETL/automation, and UI guidance.',
-        url: 'http://localhost:8520',
-        entrypoint: 'flowkraft/_ai-crew/docker-compose.yml',
-        service_name: 'ai-crew-frontend',
-        startCmd: 'service app start ai-crew-frontend 8520',
-        stopCmd: 'service app stop ai-crew-frontend',
-        tags: ['flowkraft', 'ai-agents', 'ReportBurster\'s App'],
-        visible: true,
-        launch: true,
       },
       {
         id: 'flowkraft-next',
@@ -107,14 +112,14 @@ export class AppsManagerService {
         category: 'Full-Stack Apps',
         type: 'docker',
         description: 'Build dashboards and portals using <strong>Next.js 15 + Tailwind 4 + shadcn</strong> — for users who prefer the modern React/TypeScript ecosystem. Same capabilities as the Grails app but with a different tech stack.',
-        url: 'http://localhost:8510',
+        url: 'http://localhost:8430',
         launchLinks: [
-          { label: 'Front-Facing Area /', url: 'http://localhost:8510', icon: 'fa fa-globe' },
-          { label: 'Admin Area /admin', url: 'http://localhost:8510/admin', icon: 'fa fa-cog' }
+          { label: 'Front-Facing Area /', url: 'http://localhost:8430', icon: 'fa fa-globe' },
+          { label: 'Admin Area /admin', url: 'http://localhost:8430/admin', icon: 'fa fa-cog' }
         ],
         entrypoint: 'flowkraft/next-playground/docker-compose.yml',
         service_name: 'next-playground',
-        startCmd: 'service app start next-playground 8510',
+        startCmd: 'service app start next-playground 8430',
         stopCmd: 'service app stop next-playground',
         tags: ['flowkraft', 'frontend', 'dashboards', 'customer-portal', 'next.js', 'react', 'alternative', 'ReportBurster\'s App'],
         visible: true,
@@ -126,7 +131,7 @@ export class AppsManagerService {
         category: 'Web Portal',
         type: 'docker',
         description: 'The fastest way to build your <em>You Name It</em> <strong>Web Portal</strong> - could be Employee Portal, Customer Portal, Partner Portal, Student Portal or any other Self-Service Portal <a href="https://www.reportburster.com/docs/web-portal-cms" target="_blank"><i class="fa fa-book"></i>&nbsp;see how</a>',
-        url: 'http://localhost:8080/wp-admin',
+        url: 'http://localhost:8440/wp-admin',
         demoInfo: `
           <div style="margin-top: 18px; padding: 14px 16px; background: #f0f7fa; border: 1px solid #d0e4ed; border-radius: 6px; font-size: 0.88em; color: #333;">
             <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #d0e4ed; color: #555;">
@@ -138,16 +143,16 @@ export class AppsManagerService {
                 <span style="font-weight: 600; color: #2c5282; margin-left: 8px; background: #fff; padding: 2px 8px; border-radius: 3px; border: 1px solid #d0e4ed;">u2changeme</span>
                 <span style="color: #bbb; margin: 0 6px;">/</span>
                 <span style="font-weight: 600; color: #2c5282; background: #fff; padding: 2px 8px; border-radius: 3px; border: 1px solid #d0e4ed;">p2changeme123!</span>
-                <a href="http://localhost:8080/wp-admin" target="_blank" style="color: #5a9bb8;">admin area</a>
+                <a href="http://localhost:8440/wp-admin" target="_blank" style="color: #5a9bb8;">admin area</a>
                 <span style="color: #ddd; margin: 0 6px;">•</span>
-                <a href="http://localhost:8080/my-documents" target="_blank" style="color: #5a9bb8;">frontend</a>
+                <a href="http://localhost:8440/my-documents" target="_blank" style="color: #5a9bb8;">frontend</a>
               </div>
               <div>
                 <span style="color: #666;">Employee:</span>
                 <span style="font-weight: 600; color: #2c5282; margin-left: 8px; background: #fff; padding: 2px 8px; border-radius: 3px; border: 1px solid #d0e4ed;">clyde.grew</span>
                 <span style="color: #bbb; margin: 0 6px;">/</span>
                 <span style="font-weight: 600; color: #2c5282; background: #fff; padding: 2px 8px; border-radius: 3px; border: 1px solid #d0e4ed;">demo1234</span>
-                <a href="http://localhost:8080/my-documents" target="_blank" style="color: #5a9bb8;">frontend</a>
+                <a href="http://localhost:8440/my-documents" target="_blank" style="color: #5a9bb8;">frontend</a>
                 <span style="color: #888; margin-left: 12px;">— sees only own docs</span>
               </div>
             </div>
@@ -159,26 +164,10 @@ export class AppsManagerService {
 
         entrypoint: 'cms-webportal-playground/docker-compose.yml',
         service_name: 'cms-webportal-playground',
-        startCmd: 'service app start cms-webportal-playground 8080',
+        startCmd: 'service app start cms-webportal-playground 8440',
         stopCmd: 'service app stop cms-webportal-playground',
         tags: ['cms', 'webportal', 'backend', 'frontend', 'admin-panel', 'customer-portal', 'cms', 'wordpress', 'ReportBurster\'s App'],
         visible: true,
-      },
-      {
-        id: 'rundeck',
-        name: 'Rundeck (Automation & Job Scheduling)',
-        icon: 'fa fa-cogs',
-        category: 'Automation & Job Scheduling',
-        type: 'docker',
-        description: 'Runbook automation service with a web console, command line tools and a WebAPI. It lets you easily standardize tasks to improve operational quality by deploying automation across your organization.',
-        url: 'http://localhost:4440',
-        entrypoint: 'rundeck/docker-compose.yml',
-        service_name: 'rundeck',
-        startCmd: 'service app start rundeck 4440',
-        stopCmd: 'service app stop rundeck',
-        tags: ['automation', 'job-scheduling'],
-        visible: true,
-        website: 'https://www.rundeck.com/',
       },
       {
         id: 'cloudbeaver',
@@ -197,6 +186,22 @@ export class AppsManagerService {
         website: 'https://cloudbeaver.io/',
       },
       {
+        id: 'rundeck',
+        name: 'Rundeck (Automation & Job Scheduling)',
+        icon: 'fa fa-cogs',
+        category: 'Automation & Job Scheduling',
+        type: 'docker',
+        description: 'Runbook automation service with a web console, command line tools and a WebAPI. It lets you easily standardize tasks to improve operational quality by deploying automation across your organization.',
+        url: 'http://localhost:4440',
+        entrypoint: 'rundeck/docker-compose.yml',
+        service_name: 'rundeck',
+        startCmd: 'service app start rundeck 4440',
+        stopCmd: 'service app stop rundeck',
+        tags: ['automation', 'job-scheduling'],
+        visible: true,
+        website: 'https://www.rundeck.com/',
+      },
+      {
         id: 'matomo',
         name: 'Matomo (Web Analytics)',
         icon: 'fa fa-bar-chart',
@@ -208,7 +213,7 @@ export class AppsManagerService {
         service_name: 'matomo',
         startCmd: 'service app start matomo 8081',
         stopCmd: 'service app stop matomo',
-        tags: ['analytics', 'web-analytics'],
+        tags: ['web-analytics'],
         visible: true,
         website: 'https://matomo.org/',
       },
@@ -365,7 +370,16 @@ export class AppsManagerService {
             this.stateStore.configSys.sysInfo.setup.portal.isProvisioned = true;
           }
         } else {
-          this.appStates[app.id] = 'unknown';
+          // No matching container found - but if we're already in a transitional state
+          // (starting/stopping), preserve it. The docker compose may still be building
+          // or the container may not have been created yet.
+          const currentState = this.appStates[app.id];
+          if (currentState === 'starting' || currentState === 'stopping') {
+            console.debug(`[AppsManager] No container found for ${app.id}, preserving transitional state: ${currentState}`);
+            // Keep the current transitional state
+          } else {
+            this.appStates[app.id] = 'stopped';
+          }
         }
       }
     } catch (error) {
@@ -412,24 +426,30 @@ export class AppsManagerService {
 
   public async getAllApps(): Promise<ManagedApp[]> {
     const appsToReturn = this.allAppsData.apps.filter(app => app.visible === true);
-    return appsToReturn.map(app => ({
-      ...app,
-      type: app.type as 'docker' | 'local' | 'desktop' | 'url',
-      state: this.appStates[app.id] ?? 'stopped',
-      lastOutput: this.appLastOutputs[app.id] ?? '',
-      currentCommandValue: (this.appStates[app.id] ?? 'stopped') === 'running' ? app.stopCmd : app.startCmd,
-    }));
+    return appsToReturn.map(app => {
+      const state = this.appStates[app.id] ?? 'stopped';
+      return {
+        ...app,
+        type: app.type as 'docker' | 'local' | 'desktop' | 'url',
+        state: state,
+        lastOutput: this.appLastOutputs[app.id] ?? '',
+        // Show stopCmd when running OR starting (so user can stop a starting app)
+        currentCommandValue: (state === 'running' || state === 'starting') ? app.stopCmd : app.startCmd,
+      };
+    });
   }
 
   public async getAppById(id: string): Promise<ManagedApp> {
     const appData = this.allAppsData.apps.find(app => app.id === id);
     if (!appData) return undefined;
+    const state = this.appStates[id] ?? 'stopped';
     return {
       ...appData,
       type: appData.type as 'docker' | 'local' | 'desktop' | 'url',
-      state: this.appStates[id] ?? 'stopped',
+      state: state,
       lastOutput: this.appLastOutputs[id] ?? '',
-      currentCommandValue: (this.appStates[id] ?? 'stopped') === 'running' ? appData.stopCmd : appData.startCmd,
+      // Show stopCmd when running OR starting (so user can stop a starting app)
+      currentCommandValue: (state === 'running' || state === 'starting') ? appData.stopCmd : appData.startCmd,
     };
   }
 

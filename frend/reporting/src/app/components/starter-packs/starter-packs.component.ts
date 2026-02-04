@@ -201,7 +201,8 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
           ...definition,
           status: currentStatus,
           lastOutput: existingPack?.lastOutput || (currentStatus === 'running' ? `Running ${definition.displayName}` : `Ready to start ${definition.displayName}`),
-          currentCommandValue: currentStatus === 'running' ? definition.stopCmd : definition.startCmd
+          // Show stopCmd when running OR starting (so user can stop a starting pack)
+          currentCommandValue: (currentStatus === 'running' || currentStatus === 'starting') ? definition.stopCmd : definition.startCmd
 
         };
       });
@@ -209,6 +210,13 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
       // 3. Setup UI elements
       this.extractAllTags();
       this.applyFilters();
+
+      // 4. If any pack is in a transitional state (starting/stopping), start polling
+      // This handles the case where user navigates away and back while a pack is starting
+      if (PollingHelper.hasTransitionalItems(this.starterPacks)) {
+        console.log('[StarterPacks] Detected transitional states on init, starting polling...');
+        this.startTransitionPolling();
+      }
 
     } catch (err) {
       console.error('Error setting up starter packs:', err);

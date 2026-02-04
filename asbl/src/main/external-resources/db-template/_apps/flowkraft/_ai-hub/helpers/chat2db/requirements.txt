@@ -1,0 +1,30 @@
+# Core Jupyter packages
+jupyterlab==4.3.5
+notebook==7.4.4
+ipykernel==6.29.5
+ipywidgets==8.1.5
+
+# JDBC connectivity via Java bridge
+jaydebeapi==1.2.3
+JPype1==1.5.2
+
+# Data handling and visualization
+pandas==2.2.3
+numpy==2.2.3
+plotly==5.24.1
+matplotlib==3.10.0
+
+# HTTP client for Letta AI
+httpx==0.28.1
+requests==2.32.3
+
+# Alternative LLM providers
+openai==1.59.9
+ollama==0.4.7
+
+# XML parsing for ReportBurster connections
+lxml==5.3.1
+defusedxml==0.7.1
+
+# SQL utilities
+sqlparse==0.5.3

@@ -41,6 +41,14 @@ asbl/**/*.bladec
 asbl/**/.DS_Store
 asbl/**/Thumbs.db
 
+# SQLite database files
+asbl/**/*.db
+asbl/**/*.db-shm
+asbl/**/*.db-wal
+*.db
+*.db-shm
+*.db-wal
+
 # WP-Bones generated files
 asbl/**/bones
 asbl/**/.bones_renamed

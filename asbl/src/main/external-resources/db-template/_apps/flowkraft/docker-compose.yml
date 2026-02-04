@@ -90,7 +90,7 @@ services:
     image: grails-webportal:latest
     container_name: fkraft-grails-webportal
     ports:
-      - "${HOST_PORT:-8490}:8080"
+      - "${HOST_PORT:-8410}:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:-false}
@@ -136,7 +136,7 @@ services:
     image: bkend-boot-groovy-playground:latest
     container_name: fkraft-bkend-boot-groovy-playground
     ports:
-      - "${HOST_PORT:-8500}:8080"
+      - "${HOST_PORT:-8420}:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:-false}
