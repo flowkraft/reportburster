@@ -1,0 +1,327 @@
+# AI Crew Development Stack
+# This is a development helper service, not part of the main production apps
+# Run separately from the main flowkraft services (keycloak, admin, etc.)
+
+services:
+  # ============================================
+  # Frontend Applications
+  # ============================================
+
+  ai-hub-frontend:
+    container_name: flowkraft-ai-hub-frontend
+    build:
+      context: ./ui-startpage
+      dockerfile: Dockerfile
+    depends_on:
+      letta:
+        condition: service_healthy
+      element-web:
+        condition: service_started
+    environment:
+      - NODE_ENV=production
+      - LETTA_BASE_URL=http://flowkraft-ai-hub-letta:8283
+      - LETTA_API_KEY=${LETTA_API_KEY:-}
+      - NEXT_PUBLIC_AGENTS_CHAT_URL=${NEXT_PUBLIC_AGENTS_CHAT_URL:-http://localhost:8402}
+      - ELEMENT_URL=http://flowkraft-ai-hub-element-web:80
+      - CODE_SERVER_URL=http://localhost:8443
+      # Matrix provisioner config (for automated room setup)
+      - MATRIX_HOMESERVER_URL=http://flowkraft-ai-hub-matrix-synapse:8008
+      - MATRIX_SERVER_NAME=localhost
+      - MATRIX_REGISTRATION_SECRET=${MATRIX_REGISTRATION_SECRET:-6180e53cc7b443e691d1bfc93c83bf2d60c8ee90a0db4bb194d74db52dd6f6cd}
+    ports:
+      - "8400:3000"  # AI Hub Dashboard UI
+    volumes:
+      # Persist SQLite database across container restarts
+      - ai-hub-data:/app/data
+    restart: unless-stopped
+    networks:
+      - ai-hub-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  ai-hub-tools:
+    build:
+      context: ./ui-startpage
+      dockerfile: Dockerfile
+      target: builder
+    container_name: flowkraft-ai-hub-tools
+    working_dir: /app
+    environment:
+      - LETTA_BASE_URL=http://flowkraft-ai-hub-letta:8283
+      - LETTA_API_KEY=${LETTA_API_KEY:-}
+    volumes:
+      - ./custom-tools:/custom-tools
+      - ./agents:/agents-hq
+    # No entrypoint - for running CLI commands like: docker compose run --rm ai-hub-tools npm run agents:list
+    tty: true
+    stdin_open: true
+    networks:
+      - ai-hub-network
+
+  # ============================================
+  # AI Backend Services
+  # ============================================
+
+  letta:
+    build:
+      context: .
+      dockerfile: helpers/letta/Dockerfile
+    container_name: flowkraft-ai-hub-letta
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_API_BASE=${OPENAI_API_BASE:-}
+      - OLLAMA_BASE_URL=http://flowkraft-ai-hub-ollama:11434
+      - AUTO_APPROVE_SHELL_COMMANDS=false
+      - POSTGRES_USER=letta
+      - POSTGRES_PASSWORD=${LETTA_DB_PASSWORD:-letta}
+      - POSTGRES_DB=letta
+    volumes:
+      - letta-data:/var/lib/postgresql/data
+      # ReportBurster installation root - all agent resources accessed from here
+      # Set REPORTBURSTER_INSTALLATION_FOLDER to your ReportBurster installation path
+      # Example: REPORTBURSTER_INSTALLATION_FOLDER=C:\reportburster or /opt/reportburster
+      # 
+      # Agents access everything via /reportburster:
+      # - Skills: /reportburster/_apps/flowkraft/_ai-crew/.skills
+      # - Agent offices: /reportburster/_apps/flowkraft/_ai-crew/agents
+      # - PRD docs: /reportburster/_apps/flowkraft/_ai-crew/docs
+      # - WordPress portal: /reportburster/_apps/cms-webportal-playground
+      # - Grails playground: /reportburster/_apps/flowkraft/grails-playground
+      # - Next.js playground: /reportburster/_apps/flowkraft/next-playground
+      # - Backend playground: /reportburster/_apps/flowkraft/bkend-boot-groovy-playground
+      - ${REPORTBURSTER_INSTALLATION_FOLDER:-../../../..}:/reportburster
+    # Ports commented - internal services accessed via ai-hub-network
+    # Uncomment only if you need direct external access for debugging
+    # ports:
+    #   - "8283:8283"  # Letta API
+    #   - "5432:5432"  # PostgreSQL
+    #   - "6379:6379"  # Redis
+    restart: unless-stopped
+    networks:
+      - ai-hub-network
+    healthcheck:
+      # Use /v1/providers/ endpoint since /health doesn't exist in current Letta version
+      test: ["CMD-SHELL", "curl -sf http://localhost:8283/v1/providers/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  ollama:
+    image: ollama/ollama:0.13.5
+    container_name: flowkraft-ai-hub-ollama
+    volumes:
+      - ollama-data:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        # Start Ollama server in background
+        /bin/ollama serve &
+        OLLAMA_PID=$!
+
+        # Wait for Ollama API to be ready (max 30 seconds)
+        echo "Waiting for Ollama to start..."
+        for i in $(seq 1 30); do
+          if /bin/ollama list >/dev/null 2>&1; then
+            echo "Ollama is ready!"
+            break
+          fi
+          sleep 1
+        done
+
+        # Verify Ollama is actually running
+        if ! /bin/ollama list >/dev/null 2>&1; then
+          echo "ERROR: Ollama failed to start"
+          exit 1
+        fi
+
+        # Pull embedding model (skips if already present)
+        echo "Ensuring mxbai-embed-large is available..."
+        if /bin/ollama pull mxbai-embed-large; then
+          echo "Model ready: mxbai-embed-large"
+        else
+          echo "WARNING: Failed to pull model, but continuing if model exists locally"
+        fi
+
+        # Keep container running and wait for Ollama process
+        echo "Ollama container ready"
+        wait $OLLAMA_PID
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/bin/ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - ai-hub-network
+
+  # ============================================
+  # Chat & Collaboration Services
+  # ============================================
+
+  baibot:
+    build:
+      context: ./helpers/baibot
+      dockerfile: Dockerfile
+    container_name: flowkraft-ai-hub-baibot
+    depends_on:
+      letta:
+        condition: service_healthy
+      matrix-synapse:
+        condition: service_healthy
+    environment:
+      - BAIBOT_SEND_N_NEWEST_MESSAGES=1
+      - BAIBOT_CONFIG_FILE_PATH=/app/config.yml
+      - BAIBOT_PERSISTENCE_DATA_DIR_PATH=/data
+    volumes:
+      - ./config/baibot/config.yml:/app/config.yml:ro
+      - baibot-data:/data
+    restart: unless-stopped
+    networks:
+      - ai-hub-network
+
+  matrix-synapse:
+    image: ghcr.io/element-hq/synapse:v1.131.0
+    container_name: flowkraft-ai-hub-matrix-synapse
+    depends_on:
+      matrix-synapsedb-postgres:
+        condition: service_healthy
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+      - DB_USER=${DB_USER:-synapse}
+      - DB_PASSWORD=${DB_PASSWORD:-synapse}
+    volumes:
+      - ./config/synapse:/data
+      - synapse-data:/data/media_store
+    # Port commented - Matrix accessed via Element Web UI (port 8090)
+    # Uncomment only if you need direct Matrix API access
+    # ports:
+    #   - "8008:8008"  # Matrix Synapse API
+    restart: unless-stopped
+    networks:
+      - ai-hub-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8008/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  element-web:
+    image: vectorim/element-web:v1.11.102
+    container_name: flowkraft-ai-hub-element-web
+    depends_on:
+      matrix-synapse:
+        condition: service_healthy
+    volumes:
+      - ./config/element/config.json:/app/config.json:ro
+    ports:
+      - "8402:80"  # Element Web Chat UI
+    restart: unless-stopped
+    networks:
+      - ai-hub-network
+
+  # ============================================
+  # Database Services
+  # ============================================
+
+  matrix-synapsedb-postgres:
+    image: postgres:17-alpine
+    container_name: flowkraft-ai-hub-matrix-db
+    volumes:
+      - synapse-db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-synapse}
+      POSTGRES_USER: ${DB_USER:-synapse}
+      POSTGRES_DB: matrix-synapsedb
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_INITDB_ARGS: '--lc-collate=C --lc-ctype=C --encoding=UTF8'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-synapse} -d matrix-synapsedb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ai-hub-network
+
+  code-server:
+    image: codercom/code-server:latest
+    container_name: flowkraft-ai-hub-code-server
+    environment:
+      - PASSWORD=${CODE_SERVER_PASSWORD:-admin}
+      - SUDO_PASSWORD=${CODE_SERVER_PASSWORD:-admin}
+    volumes:
+      - ./agents:/home/coder/project
+      - code-server-data:/home/coder/.local/share/code-server
+    ports:
+      - "8443:8443"  # Code Server (VS Code in browser)
+    restart: unless-stopped
+    networks:
+      - ai-hub-network
+
+  # ============================================
+  # Chat2DB - Natural Language SQL in Jupyter
+  # ============================================
+
+  chat2db-jupyter:
+    build:
+      context: ./helpers/chat2db
+      dockerfile: Dockerfile
+    container_name: flowkraft-ai-hub-chat2db
+    depends_on:
+      letta:
+        condition: service_healthy
+    environment:
+      # Jupyter settings
+      - JUPYTER_TOKEN=${JUPYTER_TOKEN:-reportburster}
+      # Letta AI (internal network - no need for host.docker.internal)
+      - LETTA_API_BASE_URL=http://flowkraft-ai-hub-letta:8283
+      - LETTA_API_KEY=${LETTA_API_KEY:-}
+      # Agent IDs (set these after creating agents in Letta)
+      - AGENT_ATHENA_ID=${AGENT_ATHENA_ID:-}
+      - AGENT_HEPHAESTUS_ID=${AGENT_HEPHAESTUS_ID:-}
+      - AGENT_HERMES_ID=${AGENT_HERMES_ID:-}
+      - AGENT_APOLLO_ID=${AGENT_APOLLO_ID:-}
+      - DEFAULT_AGENT=${DEFAULT_AGENT:-ATHENA}
+      # Alternative LLM providers (if not using Letta agents)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - LLM_MODEL_NAME=${LLM_MODEL_NAME:-gpt-4o-mini}
+      # Paths inside container
+      - REPORTBURSTER_CONNECTIONS_PATH=/reportburster/config/connections
+      - JDBC_DRIVERS_PATH=/reportburster/lib
+      - REPORTBURSTER_DB_PATH=/reportburster/db
+    volumes:
+      # Notebooks directory
+      - ./notebooks:/app/notebooks
+      # ReportBurster root (same mount as letta) - for connections, JDBC drivers, db
+      - ${REPORTBURSTER_INSTALLATION_FOLDER:-../../../..}:/reportburster:ro
+      # Persist Jupyter workspace settings
+      - jupyter-data:/home/jupyter/.jupyter
+    ports:
+      - "${JUPYTER_PORT:-8401}:8888"  # JupyterLab Chat2DB UI
+    restart: unless-stopped
+    networks:
+      - ai-hub-network
+
+networks:
+  ai-hub-network:
+    driver: bridge
+
+volumes:
+  ai-hub-data:
+  letta-data:
+  ollama-data:
+  baibot-data:
+  synapse-data:
+  synapse-db-data:
+  code-server-data:
+  jupyter-data:

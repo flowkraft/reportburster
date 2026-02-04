@@ -1,0 +1,106 @@
+homeserver:
+  # The canonical homeserver domain name (for localhost development)
+  server_name: localhost
+  # Use the Docker Compose service hostname and internal port
+  url: http://flowkraft-ai-hub-matrix-synapse:8008
+
+user:
+  mxid_localpart: kraftbot
+  password: kraftbot
+
+  # The name the bot uses as a display name and when it refers to itself.
+  name: kraftbot
+
+  # An optional path to an image file to be used as a custom avatar image.
+  avatar: null
+
+  encryption:
+    # Passphrase for backing up and recovering the bot's encryption keys.
+    # Generate with: openssl rand -base64 32
+    recovery_passphrase: 8647ead504e9439d94e333bbb8e7510a5c1743ca662941c0ab7ab04bc27ad356
+
+    # Flag to reset the encryption recovery passphrase.
+    recovery_reset_allowed: false
+
+# Command prefix
+command_prefix: "!kraft"
+
+room:
+  # Whether the bot should send an introduction message after joining a room.
+  post_join_self_introduction_enabled: true
+
+access:
+  # Space-separated list of MXID patterns which specify who is an admin.
+  admin_patterns:
+    - "@admin:localhost"
+    - "@*:localhost"  # Allow all localhost users as admin for development
+
+persistence:
+  # This is unset here, because we expect the configuration to come from an environment variable (BAIBOT_PERSISTENCE_DATA_DIR_PATH).
+  data_dir_path: null
+
+  # Secret for encrypting the bot's session data (stored in data_dir_path).
+  # Generate with: openssl rand -hex 32
+  session_encryption_key: 1e0baffb6d0646cdbc24bcdb3cf428e7f09b3bc130a044cea8b13d565020f256
+
+  # Secret for encrypting bot configuration stored in Matrix's account data.
+  # Generate with: openssl rand -hex 32
+  config_encryption_key: 1fabce6dc36a4df18c1be299687dadfc89492d33ef0e4e258846a81181e0b906
+
+agents:
+  # A list of statically-defined agents.
+  # These point to the ai-crew frontend's OpenAI-compatible Letta endpoints
+  static_definitions:
+    # Example agents - customize these based on your actual Letta agents
+    # Greek Oracle Assistants - each points to the Letta OpenAI adapter
+    - id: athena
+      provider: openai
+      config:
+        # Points to ai-crew frontend's OpenAI-compatible Letta endpoint
+        base_url: "http://flowkraft-ai-hub-frontend:3000/api/openai/athena/v1"
+        api_key: ""   # Empty for local dev
+        text_generation:
+          model_id: "letta:athena"
+
+    - id: hephaestus
+      provider: openai
+      config:
+        base_url: "http://flowkraft-ai-hub-frontend:3000/api/openai/hephaestus/v1"
+        api_key: ""
+        text_generation:
+          model_id: "letta:hephaestus"
+
+    - id: hermes
+      provider: openai
+      config:
+        base_url: "http://flowkraft-ai-hub-frontend:3000/api/openai/hermes/v1"
+        api_key: ""
+        text_generation:
+          model_id: "letta:hermes"
+
+    - id: apollo
+      provider: openai
+      config:
+        base_url: "http://flowkraft-ai-hub-frontend:3000/api/openai/apollo/v1"
+        api_key: ""
+        text_generation:
+          model_id: "letta:apollo"
+
+    # Additional agents can be added here:
+
+# Initial global configuration. This only affects the first run of the bot.
+initial_global_config:
+  handler:
+    catch_all: null
+    text_generation: "static/athena"  # Default to Athena for general queries
+    text_to_speech: null
+    speech_to_text: null
+    image_generation: null
+
+  # Space-separated list of MXID patterns which specify who can use the bot.
+  # For localhost development, allow all users
+  user_patterns:
+    - "@*:localhost"
+
+# Controls logging.
+logging: warn,mxlink=debug,baibot=debug

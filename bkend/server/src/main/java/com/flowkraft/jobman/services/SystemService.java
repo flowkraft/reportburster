@@ -132,13 +132,16 @@ public class SystemService {
 			if (!"DOCKER_NOT_INSTALLED".equals(newDockerVersion)) {
 				ProcessResult pr2 = new ProcessExecutor().command("docker", "info").readOutput(true)
 						.redirectErrorStream(true)
-						.timeout(3, TimeUnit.SECONDS)
+						.timeout(10, TimeUnit.SECONDS)
 						.execute();
-				newDockerDaemonRunning = pr2.getExitValue() == 0;
+				int exitVal = pr2.getExitValue();
+				log.info("docker info exit code: {}", exitVal);
+				newDockerDaemonRunning = exitVal == 0;
 			} else {
 				newDockerDaemonRunning = false;
 			}
 		} catch (Exception e) {
+			log.warn("docker info check failed with exception: {}", e.getMessage());
 			newDockerDaemonRunning = false;
 		}
 
