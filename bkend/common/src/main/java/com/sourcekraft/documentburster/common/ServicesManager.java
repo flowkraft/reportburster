@@ -753,9 +753,9 @@ public class ServicesManager {
 		if ("next-playground".equals(serviceName)) {
 			return appsFolderPath + "flowkraft/next-playground/docker-compose.yml";
 		}
-		// AI Crew frontend lives in flowkraft/_ai-crew subdirectory
-		if ("ai-hub-frontend".equals(serviceName)) {
-			return appsFolderPath + "flowkraft/_ai-crew/docker-compose.yml";
+		// AI Hub frontend lives in flowkraft/_ai-hub subdirectory
+		if ("ai-hub-frend".equals(serviceName)) {
+			return appsFolderPath + "flowkraft/_ai-hub/docker-compose.yml";
 		}
 		return appsFolderPath + serviceName + "/docker-compose.yml";
 	}

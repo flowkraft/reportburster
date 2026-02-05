@@ -57,7 +57,7 @@ agents:
       provider: openai
       config:
         # Points to ai-crew frontend's OpenAI-compatible Letta endpoint
-        base_url: "http://flowkraft-ai-hub-frontend:3000/api/openai/athena/v1"
+        base_url: "http://flowkraft-ai-hub-frend:3000/api/openai/athena/v1"
         api_key: ""   # Empty for local dev
         text_generation:
           model_id: "letta:athena"
@@ -65,7 +65,7 @@ agents:
     - id: hephaestus
       provider: openai
       config:
-        base_url: "http://flowkraft-ai-hub-frontend:3000/api/openai/hephaestus/v1"
+        base_url: "http://flowkraft-ai-hub-frend:3000/api/openai/hephaestus/v1"
         api_key: ""
         text_generation:
           model_id: "letta:hephaestus"
@@ -73,7 +73,7 @@ agents:
     - id: hermes
       provider: openai
       config:
-        base_url: "http://flowkraft-ai-hub-frontend:3000/api/openai/hermes/v1"
+        base_url: "http://flowkraft-ai-hub-frend:3000/api/openai/hermes/v1"
         api_key: ""
         text_generation:
           model_id: "letta:hermes"
@@ -81,7 +81,7 @@ agents:
     - id: apollo
       provider: openai
       config:
-        base_url: "http://flowkraft-ai-hub-frontend:3000/api/openai/apollo/v1"
+        base_url: "http://flowkraft-ai-hub-frend:3000/api/openai/apollo/v1"
         api_key: ""
         text_generation:
           model_id: "letta:apollo"

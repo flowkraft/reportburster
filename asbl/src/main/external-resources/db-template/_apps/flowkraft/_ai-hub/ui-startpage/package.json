@@ -1,5 +1,5 @@
 {
-  "name": "flowkraft-ai-hub-dashboard",
+  "name": "flowkraft-ai-hub-frend",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -19,10 +19,10 @@
     "agents:truncate-empty-db:force": "npm run build:agents && TRUNCATE_YES=true FORCE_TRUNCATE=true node ./.build/scripts/truncate-db.js"
   },
   "dependencies": {
-    "@ai-sdk/react": "^3.0.70",
-    "@letta-ai/letta-client": "^1.7.7",
+    "@ai-sdk/react": "^2.0.118",
+    "@letta-ai/letta-client": "^1.6.1",
     "@letta-ai/vercel-ai-sdk-provider": "^1.4.0",
-    "ai": "^6.0.68",
+    "ai": "^5.0.116",
     "matrix-js-sdk": "^37.1.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.1.1",
@@ -37,8 +37,8 @@
     "pako": "^2.1.0",
     "prism-react-renderer": "^2.4.1",
     "prismjs": "^1.30.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
+    "react": "19.0.1",
+    "react-dom": "19.0.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0"
   },

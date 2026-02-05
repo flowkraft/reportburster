@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     const scriptName = force ? 'agents:provision-force' : 'agents:provision';
     
     // Add environment variables
-    const envVars: Record<string, string> = { ...process.env as Record<string, string> };
+    const envVars = { ...process.env };
     if (skipMatrix || lettaOnly) {
       envVars.SKIP_MATRIX = 'true';
     }
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     const { stdout, stderr } = await execAsync(`npm run ${scriptName}`, {
       cwd: process.cwd(),
-      env: envVars,
+      env: envVars as NodeJS.ProcessEnv,
       maxBuffer: 1024 * 1024 * 10, // 10MB buffer for output
     });
 

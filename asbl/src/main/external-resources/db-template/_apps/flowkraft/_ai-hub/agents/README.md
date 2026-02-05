@@ -35,7 +35,7 @@ These folders are mounted in the Letta container as `/agents-hq/`:
 
 ```yaml
 volumes:
-  - ${REPORTBURSTER_INSTALLATION_FOLDER}/_apps/flowkraft/_ai-crew/agents:/agents-hq
+  - ${REPORTBURSTER_INSTALLATION_FOLDER}/_apps/flowkraft/_ai-hub/agents:/agents-hq
 ```
 
 ## Notes

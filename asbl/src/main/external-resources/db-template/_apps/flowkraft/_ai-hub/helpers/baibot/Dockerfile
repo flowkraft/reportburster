@@ -40,6 +40,8 @@ COPY patches/src/entity/cfg/config.patched /app/src/entity/cfg/config.rs
 COPY patches/src/entity/globalconfig/entity.patched /app/src/entity/globalconfig/entity.rs
 COPY patches/src/bot/load_config.patched /app/src/bot/load_config.rs
 COPY patches/src/controller/chat_completion/mod.patched /app/src/controller/chat_completion/mod.rs
+COPY patches/src/conversation/matrix/entity.patched /app/src/conversation/matrix/entity.rs
+COPY patches/src/conversation/matrix_llm_bridge.patched /app/src/conversation/matrix_llm_bridge.rs
 
 ARG RELEASE_BUILD=true
 
