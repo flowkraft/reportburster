@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 # Install system dependencies for JDBC (Java) and database connectivity
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    openjdk-17-jre-headless \
+    openjdk-21-jre-headless \
     build-essential \
     libpq-dev \
     unixodbc-dev \
@@ -10,16 +10,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Set JAVA_HOME for JayDeBeApi/JPype
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # Create non-root user
 RUN useradd --create-home jupyter \
     && mkdir -p /app/notebooks /app/config /app/jdbc-drivers /app/db \
-    && chown -R jupyter:jupyter /app
+    && mkdir -p /home/jupyter/.jupyter \
+    && chown -R jupyter:jupyter /app /home/jupyter/.jupyter
 
 USER jupyter
 WORKDIR /app
+
+# Add user local bin to PATH (where pip installs executables)
+ENV PATH="/home/jupyter/.local/bin:${PATH}"
 
 # Copy requirements and install Python dependencies
 COPY --chown=jupyter:jupyter requirements.txt .

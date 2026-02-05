@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getLettaClient } from '../../../../../src/services/letta/client';
+import { getLettaClient } from '../../../../../../src/services/letta/client';
 
 export async function GET(
   request: NextRequest,

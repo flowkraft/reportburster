@@ -7,8 +7,8 @@ services:
   # Frontend Applications
   # ============================================
 
-  ai-hub-frontend:
-    container_name: flowkraft-ai-hub-frontend
+  ai-hub-frend:
+    container_name: flowkraft-ai-hub-frend
     build:
       context: ./ui-startpage
       dockerfile: Dockerfile
@@ -17,11 +17,13 @@ services:
         condition: service_healthy
       element-web:
         condition: service_started
+      chat2db:
+        condition: service_started
     environment:
       - NODE_ENV=production
       - LETTA_BASE_URL=http://flowkraft-ai-hub-letta:8283
       - LETTA_API_KEY=${LETTA_API_KEY:-}
-      - NEXT_PUBLIC_AGENTS_CHAT_URL=${NEXT_PUBLIC_AGENTS_CHAT_URL:-http://localhost:8402}
+      - NEXT_PUBLIC_AGENTS_CHAT_URL=${NEXT_PUBLIC_AGENTS_CHAT_URL:-http://localhost:8442}
       - ELEMENT_URL=http://flowkraft-ai-hub-element-web:80
       - CODE_SERVER_URL=http://localhost:8443
       # Matrix provisioner config (for automated room setup)
@@ -29,7 +31,7 @@ services:
       - MATRIX_SERVER_NAME=localhost
       - MATRIX_REGISTRATION_SECRET=${MATRIX_REGISTRATION_SECRET:-6180e53cc7b443e691d1bfc93c83bf2d60c8ee90a0db4bb194d74db52dd6f6cd}
     ports:
-      - "8400:3000"  # AI Hub Dashboard UI
+      - "8440:3000"  # AI Hub Dashboard UI
     volumes:
       # Persist SQLite database across container restarts
       - ai-hub-data:/app/data
@@ -89,9 +91,9 @@ services:
       # Example: REPORTBURSTER_INSTALLATION_FOLDER=C:\reportburster or /opt/reportburster
       # 
       # Agents access everything via /reportburster:
-      # - Skills: /reportburster/_apps/flowkraft/_ai-crew/.skills
-      # - Agent offices: /reportburster/_apps/flowkraft/_ai-crew/agents
-      # - PRD docs: /reportburster/_apps/flowkraft/_ai-crew/docs
+      # - Skills: /reportburster/_apps/flowkraft/_ai-hub/.skills
+      # - Agent offices: /reportburster/_apps/flowkraft/_ai-hub/agents
+      # - PRD docs: /reportburster/_apps/flowkraft/_ai-hub/docs
       # - WordPress portal: /reportburster/_apps/cms-webportal-playground
       # - Grails playground: /reportburster/_apps/flowkraft/grails-playground
       # - Next.js playground: /reportburster/_apps/flowkraft/next-playground
@@ -224,7 +226,7 @@ services:
     volumes:
       - ./config/element/config.json:/app/config.json:ro
     ports:
-      - "8402:80"  # Element Web Chat UI
+      - "8442:80"  # Element Web Chat UI
     restart: unless-stopped
     networks:
       - ai-hub-network
@@ -271,8 +273,7 @@ services:
   # ============================================
   # Chat2DB - Natural Language SQL in Jupyter
   # ============================================
-
-  chat2db-jupyter:
+  chat2db:
     build:
       context: ./helpers/chat2db
       dockerfile: Dockerfile
@@ -307,7 +308,7 @@ services:
       # Persist Jupyter workspace settings
       - jupyter-data:/home/jupyter/.jupyter
     ports:
-      - "${JUPYTER_PORT:-8401}:8888"  # JupyterLab Chat2DB UI
+      - "${JUPYTER_PORT:-8441}:8888"  # JupyterLab Chat2DB UI
     restart: unless-stopped
     networks:
       - ai-hub-network

@@ -1163,7 +1163,7 @@ export interface FullProvisionResult {
  * 2. Provisions Matrix/Synapse (admin user, oracle rooms, kraftbot handlers)
  * 
  * After this completes, users can:
- * - Login to Element (http://localhost:8401) with admin/admin
+ * - Login to Element (http://localhost:8441) with admin/admin
  * - Chat with any oracle in their dedicated rooms (#athena, #hephaestus, #hermes, #apollo)
  * 
  * @param options - Configuration options
@@ -1287,7 +1287,7 @@ export async function provisionAll(options?: {
   console.log(`\n🚀 Status: ${result.success ? '✅ SUCCESS' : '⚠️ PARTIAL SUCCESS'}`);
   if (result.matrix) {
     console.log('\n🌐 Next steps:');
-    console.log('   1. Open Element: http://localhost:8401');
+    console.log('   1. Open Element: http://localhost:8441');
     console.log(`   2. Login with: ${result.matrix.adminUser.username} / ${result.matrix.adminUser.password}`);
     console.log('   3. Join rooms: #athena, #hephaestus, #hermes, #apollo');
     console.log('   4. Start chatting with your AI oracles!');

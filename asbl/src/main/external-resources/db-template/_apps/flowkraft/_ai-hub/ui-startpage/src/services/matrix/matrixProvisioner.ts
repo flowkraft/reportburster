@@ -1071,7 +1071,7 @@ export async function provisionMatrixRooms(options?: {
     console.log(`⚠️ Errors: ${result.errors.length}`);
     result.errors.forEach(e => console.log(`   - ${e}`));
   }
-  console.log('\n🌐 Open Element at http://localhost:8401 to chat with your oracles!');
+  console.log('\n🌐 Open Element at http://localhost:8441 to chat with your oracles!');
   console.log('='.repeat(60) + '\n');
 
   return result;

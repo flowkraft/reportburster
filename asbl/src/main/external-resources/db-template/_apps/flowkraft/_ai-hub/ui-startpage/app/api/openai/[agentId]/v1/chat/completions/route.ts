@@ -19,7 +19,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { streamText, generateText, convertToModelMessages } from 'ai';
 import type { TextPart } from 'ai';
 import { createLetta } from '@letta-ai/vercel-ai-sdk-provider';
-import { getLettaClient } from '../../../../../../src/services/letta/client';
+import { getLettaClient } from '../../../../../../../src/services/letta/client';
 
 interface OpenAIMessage {
   role: 'user' | 'assistant' | 'system';
@@ -146,7 +146,7 @@ export async function POST(
   });
 
   // Resolve the agent ID from various sources
-  let requestedAgent = agentIdParam;
+  let requestedAgent: string | undefined = agentIdParam;
   
   // Also check body.agentId or model field for "letta:agentKey" format
   if (!requestedAgent) {

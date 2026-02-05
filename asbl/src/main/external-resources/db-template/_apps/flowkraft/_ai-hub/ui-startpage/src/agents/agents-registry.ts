@@ -4,6 +4,7 @@ import type { AgentConfig } from './common';
 import athenaAgent from './athena/config';
 import hephaestusAgent from './hephaestus/config';
 import hermesAgent from './hermes/config';
+import pythiaAgent from './pythia/config';
 import apolloAgent from './apollo/config';
 
 // Other agents (examples from reference project - commented out)
@@ -28,7 +29,8 @@ export const AGENTS: AgentConfig[] = [
   athenaAgent,
   hephaestusAgent,
   hermesAgent,
-  apolloAgent,  // Next.js/React/TypeScript advisor
+  pythiaAgent,   // WordPress/PHP portal advisor
+  apolloAgent,   // Next.js/React/TypeScript advisor
 
   // Other agents (examples from reference project)
   // adaAgent, carolineAgent, jimmyAgent, mariaAgent, kateAgent

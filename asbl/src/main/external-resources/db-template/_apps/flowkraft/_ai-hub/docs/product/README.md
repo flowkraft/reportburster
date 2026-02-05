@@ -98,7 +98,7 @@ This folder is mounted in the Letta container as `/docs/`:
 
 ```yaml
 volumes:
-  - ${REPORTBURSTER_INSTALLATION_FOLDER}/_apps/flowkraft/_ai-crew/docs:/docs
+  - ${REPORTBURSTER_INSTALLATION_FOLDER}/_apps/flowkraft/_ai-hub/docs:/docs
 ```
 
 Agents access PRDs at `/docs/product/*.org` inside the container.

@@ -15,7 +15,7 @@ services:
       - NEXT_PUBLIC_RB_API_BASE_URL=${NEXT_PUBLIC_RB_API_BASE_URL:-http://host.docker.internal:9090}
       - NEXT_PUBLIC_RB_API_KEY=${NEXT_PUBLIC_RB_API_KEY:-123}
     ports:
-      - "8430:3000"  # Next.js Customer Portal UI
+      - "8420:3000"  # Next.js Customer Portal UI
     volumes:
       # Persist SQLite database across container restarts
       - next-playground-data:/app/data

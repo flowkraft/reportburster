@@ -101,8 +101,8 @@ Settings:
 **next-playground** (customers realm)
 ```
 Client ID: next-playground
-Root URL: http://localhost:8430
-Valid Redirect URIs: http://localhost:8430/*
+Root URL: http://localhost:8420
+Valid Redirect URIs: http://localhost:8420/*
 Web Origins: +
 ```
 
@@ -154,7 +154,7 @@ KEYCLOAK_ENABLED=true
 KEYCLOAK_CLIENT_ID=next-playground
 KEYCLOAK_CLIENT_SECRET=get-from-keycloak-admin
 KEYCLOAK_ISSUER=http://localhost:8480/realms/customers
-NEXTAUTH_URL=http://localhost:8430
+NEXTAUTH_URL=http://localhost:8420
 NEXTAUTH_SECRET=$(openssl rand -base64 32)
 ```
 
@@ -180,7 +180,7 @@ DOC_ALWAYS_PUBLIC=marketing,brochures
 
 **Email sent by ReportBurster:**
 ```
-http://localhost:8430/invoice/ABC-2025-001?token=secret123
+http://localhost:8420/invoice/ABC-2025-001?token=secret123
 ```
 
 **Customer Flow:**
@@ -199,7 +199,7 @@ http://localhost:8430/invoice/ABC-2025-001?token=secret123
 
 **Email sent:**
 ```
-http://localhost:8430/payslip/PAY-2025-001?token=xxx
+http://localhost:8420/payslip/PAY-2025-001?token=xxx
 ```
 
 **Employee Flow:**
@@ -273,7 +273,7 @@ class KeycloakAdminService {
 ### Without Keycloak (Default)
 ```bash
 curl http://localhost:8480/  # ✅ admin-grails
-curl http://localhost:8430/  # ✅ frend-next
+curl http://localhost:8420/  # ✅ frend-next
 ```
 
 ### With Keycloak Enabled
@@ -286,16 +286,16 @@ curl http://localhost:8480/  # 🔒 401 Unauthorized
 **Customer Portal (granular):**
 ```bash
 # Invoice with token (public):
-curl "http://localhost:8430/invoice/ABC?token=valid"  # ✅ 200 OK
+curl "http://localhost:8420/invoice/ABC?token=valid"  # ✅ 200 OK
 
 # Invoice without token (protected):
-curl "http://localhost:8430/invoice/ABC"  # 🔒 302 /auth/signin
+curl "http://localhost:8420/invoice/ABC"  # 🔒 302 /auth/signin
 
 # Payslip with token (still protected):
-curl "http://localhost:8430/payslip/PAY?token=valid"  # 🔒 302 /auth/signin
+curl "http://localhost:8420/payslip/PAY?token=valid"  # 🔒 302 /auth/signin
 
 # Dashboard (always protected):
-curl "http://localhost:8430/dashboard"  # 🔒 302 /auth/signin
+curl "http://localhost:8420/dashboard"  # 🔒 302 /auth/signin
 ```
 
 ---
