@@ -49,8 +49,9 @@ class LettaChat2DB:
     """
 
     # Minimal context - Athena already knows SQL from her skills
-    # This just identifies the interface context
-    CHAT2DB_CONTEXT = "[Chat2DB/Jupyter Interface]"
+    # This just identifies the interface context + hints about SQL formatting
+    # for reliable extraction by _extract_sql()
+    CHAT2DB_CONTEXT = "[Chat2DB/Jupyter Interface] When responding with SQL, wrap it in a ```sql code block so the notebook can extract and execute it automatically."
 
     def __init__(self,
                  base_url: Optional[str] = None,

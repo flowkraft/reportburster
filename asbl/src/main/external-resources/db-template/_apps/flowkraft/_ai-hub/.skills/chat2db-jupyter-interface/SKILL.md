@@ -7,15 +7,15 @@
 | **THIS SKILL** (chat2db-jupyter-interface) | User wants to **query data** or **talk** through the notebook | "Show top 10 customers", "Hello!", "Help me write SQL" |
 | **troubleshoot-cloudbeaver-chat2db** | User has a **broken tool** that needs fixing | "CloudBeaver won't connect", "Chat2DB can't find my database", "Driver error" |
 
-**Simple rule:** If they're asking about data → THIS skill. If the tool is broken → troubleshoot skill.
+**Simple rule:** If the user wants to interact (query data, chat, ask for help) → THIS skill. If the tool itself is broken → troubleshoot skill.
 
 ---
 
 ## When This Skill Applies
 
-I'm receiving a message through the **Chat2DB / Jupyter interface** — the interactive notebook environment where users run SQL queries using natural language.
+I'm receiving a message through the **Chat2DB / Jupyter interface** — the interactive notebook environment where users interact with me for data queries, general conversation, or ReportBurster guidance.
 
-This skill is about **understanding the context** of messages from this interface and responding appropriately (SQL, chit-chat, or guidance).
+This skill is about **classifying intent** and responding appropriately — SQL when they want data, conversation when they're chatting, guidance when they need help with ReportBurster.
 
 ---
 
@@ -109,11 +109,12 @@ grep -i "orders" /reportburster/config/connections/<slug>/*-information-schema.j
 
 When generating SQL for Chat2DB users:
 
-1. **Check database vendor first** — SQLite/DuckDB/PostgreSQL/MySQL have different syntax
-2. **Use only confirmed table/column names** — from provided schema OR disk investigation
-3. **Add LIMIT clauses** — be conservative with data volume
-4. **No destructive operations** — never DELETE, DROP, UPDATE, TRUNCATE, ALTER
-5. **Explain after generating** — help users learn
+1. **Wrap SQL in a ` ```sql ``` ` code block** — the notebook auto-extracts and executes it
+2. **Check database vendor first** — SQLite/DuckDB/PostgreSQL/MySQL have different syntax
+3. **Use only confirmed table/column names** — from provided schema OR disk investigation
+4. **Add LIMIT clauses** — be conservative with data volume
+5. **No destructive operations** — never DELETE, DROP, UPDATE, TRUNCATE, ALTER
+6. **Explain after generating** — help users learn
 
 ### Vendor-Specific Patterns
 
