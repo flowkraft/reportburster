@@ -1,0 +1,47 @@
+@startwbs Invoicing Backend — Work Breakdown
+
+title Invoicing Backend — Hephaestus Task Breakdown
+
+* Backend Jobs & Automation (Grails)
+** 1. Domain Models
+*** 1.1 Invoice.groovy
+**** Fields: invoiceNumber, customer*, dates, amounts, status, payment*
+**** Constraints & validation
+**** Business methods: calculateTotals(), markAsPaid(), isOverdue()
+*** 1.2 Setting.groovy
+**** Key-value store with category grouping
+**** Static helpers: getValue(), setValue(), getByCategory()
+** 2. ETL & Data Pipelines
+*** 2.1 Invoice Data Import
+**** CSV/Excel ingestion from external systems
+**** Field mapping & validation rules
+**** Duplicate detection & merge strategy
+*** 2.2 Invoice Data Export
+**** Generate reports in CSV, JSON, XML formats
+**** Scheduled nightly export to accounting systems
+**** ReportBurster integration for document bursting
+** 3. Scheduled Jobs & Cron Tasks
+*** 3.1 OverdueDetectionJob (Quartz)
+**** Daily scan: invoices where status=sent AND dueDate < today
+**** Batch update status to overdue
+**** Trigger notification events
+*** 3.2 InvoiceReminderJob
+**** Weekly: email reminders for unpaid invoices approaching due date
+**** Configurable reminder intervals (7d, 3d, 1d before due)
+*** 3.3 ReportGenerationJob
+**** Monthly: aggregate revenue, outstanding, overdue stats
+**** Export summary to configured output directory
+** 4. Batch Processing
+*** 4.1 BulkInvoiceGenerator
+**** Generate invoices in batch from customer roster + template
+**** Support recurring invoice schedules (monthly, quarterly)
+*** 4.2 PaymentReconciliation
+**** Match bank statement entries to open invoices
+**** Flag unmatched payments for manual review
+** 5. Bootstrap & Seed Data
+*** 5.1 BootStrap.groovy
+**** 10 sample invoices (mixed statuses)
+**** Default settings (theme, company, currency)
+**** Sample job schedules (overdue check, reminders)
+
+@endwbs

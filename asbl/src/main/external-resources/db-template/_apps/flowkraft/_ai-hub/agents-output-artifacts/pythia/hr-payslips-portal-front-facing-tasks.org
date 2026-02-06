@@ -1,0 +1,169 @@
+#+TITLE: HR Payslips Portal — Front-Facing Templates & Publishing (WordPress)
+#+AUTHOR: Pythia (WordPress CMS Portal Advisor)
+#+DATE: 2026-01-22
+
+* TODO Task1: Create single-paystub.php (Individual Payslip View)
+File location: ~wp-themes/reportburster-theme/single-paystub.php~
+
+** 1.1 Access Control Logic (top of file)
+#+begin_src php
+$pod = pods(get_post_type(), get_the_ID());
+$allow_public = (bool)$pod->field('allow_public_view');
+
+if (!$allow_public) {
+    if (!is_user_logged_in()) {
+        wp_redirect(wp_login_url(get_permalink()));
+        exit;
+    }
+    // Check ownership via associated_user
+    $assoc_user = $pod->field('associated_user');
+    $current = wp_get_current_user();
+    if ($assoc_user && isset($assoc_user['ID']) && $assoc_user['ID'] != $current->ID
+        && !current_user_can('administrator')) {
+        wp_die('Access denied.');
+    }
+}
+#+end_src
+
+** 1.2 Data Extraction
+#+begin_src php
+$employee       = esc_html($pod->display('employee'));
+$employee_id    = esc_html($pod->display('employee_id'));
+$department     = esc_html($pod->display('department'));
+$job_title      = esc_html($pod->display('job_title'));
+$period         = esc_html($pod->display('period'));
+$basic_salary   = number_format((float)$pod->field('basic_salary'), 2);
+$bonuses        = number_format((float)$pod->field('bonuses'), 2);
+$total_earnings = number_format((float)$pod->field('total_earnings'), 2);
+// ... same pattern for all deduction fields
+$net_pay        = number_format((float)$pod->field('net_pay'), 2);
+#+end_src
+
+** 1.3 HTML Layout
+- Call ~get_header()~ to load Sage theme with Tailwind CSS
+- Company header section (name, period)
+- Employee details table: name, ID, department, job title
+- Earnings/Deductions two-column table:
+  - Left column: Basic Salary, Bonuses, Total Earnings
+  - Right column: Federal Tax, SS Tax, Medicare, State Tax, Medical, Dental, Total Deductions
+- Net Pay highlighted at bottom
+- Print button: ~onclick="window.print()"~
+- "Back to My Documents" link: ~get_permalink(get_option('reportburster_account_page_id'))~
+- Call ~get_footer()~
+
+* TODO Task2: Create page-my-documents.php (Payslip List View)
+File location: ~wp-themes/reportburster-theme/page-my-documents.php~
+
+** 2.1 Authentication
+#+begin_src php
+if (!is_user_logged_in()) {
+    auth_redirect();
+}
+$current_user = wp_get_current_user();
+$is_admin = current_user_can('administrator');
+#+end_src
+
+** 2.2 Query with Pagination and Search
+#+begin_src php
+$post_type = 'paystub';
+$per_page = 15;
+$page_num = max(1, intval($_GET['page'] ?? 1));
+$offset = ($page_num - 1) * $per_page;
+$search_q = sanitize_text_field(wp_unslash($_GET['q'] ?? ''));
+
+$params = [
+    'limit'   => $per_page,
+    'offset'  => $offset,
+    'orderby' => 'post_date DESC',
+];
+
+// Build WHERE conditions
+$conditions = [];
+
+// Ownership filter: non-admins see only their own
+if (!$is_admin && $ownership_field_exists) {
+    $conditions[] = "associated_user.ID = " . intval($current_user->ID);
+}
+
+// Search filter
+if ($search_q) {
+    $sq = esc_sql($search_q);
+    $conditions[] = "(t.post_title LIKE '%{$sq}%' OR employee.meta_value LIKE '%{$sq}%' OR period.meta_value LIKE '%{$sq}%')";
+}
+
+if ($conditions) {
+    $params['where'] = implode(' AND ', $conditions);
+}
+
+$pod = pods($post_type, $params);
+$total_found = (int)$pod->total();
+#+end_src
+
+** 2.3 HTML Table Layout
+- Header: "My Payslips" with search form
+- Table columns: Employee, Period, Department, Job Title, Basic Salary, Net Pay, Date, View
+- Each row links to the single-paystub.php view
+- Pagination links at bottom
+- "No payslips found" message when empty
+- Logout link in header
+
+* TODO Task3: Create endExtractDocument.groovy (ReportBurster Publishing Script)
+File location: ~/reportburster/scripts/burst/endExtractDocument.groovy~
+
+** 3.1 Guard Pattern
+Only execute for payslip template:
+#+begin_src groovy
+if (ctx.settings.getTemplateName().toLowerCase().indexOf("payslips2portal") != -1) {
+    // ... publishing code
+}
+#+end_src
+
+** 3.2 Check/Create WordPress User
+#+begin_src groovy
+// Check if employee user exists
+def checkUrl = "${portalBaseUrl}/wp-json/wp/v2/users?search=${employeeEmail}"
+// GET request with Basic Auth
+// If not found: POST to /wp-json/wp/v2/users to create with role "employee"
+#+end_src
+
+** 3.3 Publish Payslip
+#+begin_src groovy
+def publishUrl = "${portalBaseUrl}/wp-json/wp/v2/paystub"
+def payload = [
+    title: "Payslip - ${employeeName} - ${period}",
+    status: "publish",
+    fields: [
+        employee: employeeName,
+        employee_id: employeeId,
+        period: period,
+        department: department,
+        basic_salary: basicSalary,
+        // ... all other fields from burst variables
+        associated_user: userId
+    ]
+]
+// POST with Basic Auth, log result
+#+end_src
+
+** 3.4 Variable Mapping
+| Burst Variable | Field            |
+|----------------+------------------|
+| var0           | employee         |
+| var1           | employee_id      |
+| var2           | period           |
+| var3           | department       |
+| var4           | basic_salary     |
+| var5           | bonuses          |
+| var6           | total_earnings   |
+| var7           | total_deductions |
+| var8           | net_pay          |
+| var9           | employee email   |
+
+* TODO Task4: Test End-to-End
+1. Create a payslip via WP Admin and assign to a test employee user
+2. Log out, log in as the employee
+3. Navigate to "My Documents" — verify only their payslip appears
+4. Click to view — verify single-paystub.php renders correctly
+5. Test print button
+6. Log in as admin — verify admin sees all payslips
+7. Test ReportBurster publishing by running a burst with payslips2portal template

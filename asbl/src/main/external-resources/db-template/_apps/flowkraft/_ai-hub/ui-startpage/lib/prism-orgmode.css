@@ -1,0 +1,51 @@
+/* Org-mode custom token styles for Prism.js */
+/* Emacs-inspired colors for dark backgrounds (Gruvbox-ish palette) */
+
+/* Headings — blue, bold */
+.token.org-heading { color: #83a598; font-weight: bold; }
+.token.org-heading-star { color: #665c54; }
+.token.org-todo { color: #fb4934; font-weight: bold; }
+.token.org-done { color: #b8bb26; font-weight: bold; }
+.token.org-heading-tag { color: #928374; font-weight: normal; }
+.token.org-priority { color: #fe8019; }
+
+/* Metadata #+KEY: value */
+.token.org-meta { color: #928374; }
+.token.org-meta-key { color: #d3869b; }
+
+/* Drawers :PROPERTIES: :END: */
+.token.org-drawer { color: #928374; }
+
+/* Bold, italic, underline */
+.token.org-bold { font-weight: bold; color: #ebdbb2; }
+.token.org-italic { font-style: italic; color: #d3869b; }
+.token.org-underline { text-decoration: underline; }
+
+/* Inline code =code= ~code~ */
+.token.org-code { color: #8ec07c; background: rgba(142, 192, 124, 0.1); padding: 1px 3px; border-radius: 2px; }
+
+/* Links [[url][text]] */
+.token.org-link { color: #83a598; text-decoration: underline; }
+.token.org-link .token.punctuation { color: #665c54; text-decoration: none; }
+
+/* Timestamps <2024-01-01 Mon> */
+.token.org-timestamp { color: #d3869b; }
+
+/* Checkboxes [X] [ ] [-] */
+.token.org-checkbox { color: #83a598; font-weight: bold; }
+
+/* List markers - + 1. */
+.token.org-list-marker { color: #fabd2f; }
+
+/* Source/quote blocks */
+.token.org-block { color: #8ec07c; }
+.token.org-block-keyword { color: #928374; }
+
+/* Tables */
+.token.org-table-sep { color: #665c54; }
+
+/* Horizontal rules */
+.token.org-hr { color: #665c54; }
+
+/* Tags :tag: */
+.token.org-tag { color: #928374; }

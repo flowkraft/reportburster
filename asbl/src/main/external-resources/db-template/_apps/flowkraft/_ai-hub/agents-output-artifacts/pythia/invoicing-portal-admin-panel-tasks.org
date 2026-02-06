@@ -1,0 +1,78 @@
+#+TITLE: Invoicing Portal — Admin Panel Tasks (WordPress + PODS)
+#+AUTHOR: Pythia (WordPress CMS Portal Advisor)
+#+DATE: 2026-01-24
+
+* TODO Task1: Create "Invoice" Custom Post Type in PODS
+- Go to Pods Admin > Add New > Custom Post Type
+- Pod Name: ~invoice~
+- Label: "Invoice" (singular), "Invoices" (plural)
+- Enable REST API: Yes
+
+* TODO Task2: Define Invoice Fields in PODS Admin
+Add these custom fields to the invoice Pod:
+
+** 2.1 Core Invoice Fields
+| Field Name    | Field Type | Notes                          |
+|---------------+------------+--------------------------------|
+| order_id      | Text       | External order/invoice number  |
+| order_date    | Date       | Invoice issue date             |
+| customer_id   | Text       | Customer identifier            |
+| customer_name | Text       | Customer display name          |
+
+** 2.2 Financial Fields
+| Field Name | Field Type | Notes                    |
+|------------+------------+--------------------------|
+| freight    | Number     | Shipping/freight charge  |
+| subtotal   | Number     | Line items total         |
+| tax        | Number     | Tax amount               |
+| grand_total | Number    | Final amount due         |
+
+** 2.3 Line Items & Status
+| Field Name      | Field Type       | Notes                                  |
+|-----------------+------------------+----------------------------------------|
+| line_items_json | Text / Textarea  | JSON array of products (see format)    |
+| document_status | Dropdown         | Options: "UN|Unpaid", "PA|Paid"       |
+| was_viewed_by   | Text             | Tracking: not_viewed, viewed_by_*      |
+
+Line items JSON format:
+#+begin_src json
+[
+  {"product_name": "Widget A", "quantity": 2, "unit_price": 10.50, "discount": 0.10},
+  {"product_name": "Widget B", "quantity": 1, "unit_price": 20.00, "discount": 0}
+]
+#+end_src
+
+** 2.4 Access Control Fields
+| Field Name        | Field Type          | Notes                                |
+|-------------------+---------------------+--------------------------------------|
+| associated_user   | User Relationship   | Links invoice to one customer user   |
+| associated_groups | Pick / Multi-Select | Group-based access (optional)        |
+| associated_roles  | Pick / Multi-Select | Role-based access (optional)         |
+| allow_public_view | Boolean             | Bypass auth checks                   |
+
+* TODO Task3: Create Custom Role "Customer"
+- ~wp role create customer 'Customer' --clone=subscriber~
+- Customers can log in and view their own invoices
+- Consider the ~members~ plugin (already in our docker-compose.yml) for advanced role management
+
+* TODO Task4: Create Test Invoice Entry
+- WP Admin > Invoices > Add New
+- Fill all fields including line_items_json with valid JSON
+- Set document_status to "UN" (Unpaid)
+- Assign an associated_user
+- Verify all fields save and display correctly
+
+* TODO Task5: Configure Plugin Permissions
+- Ensure the ~reportburster-portal~ plugin is activated
+- The plugin's Provisioner class handles:
+  - Creating demo users on activation
+  - Setting up sample data
+  - Registering custom roles
+
+* TODO Task6: Plugin Ecosystem Check
+Before building custom payment code, check available plugins in docker-compose.yml:
+- *forminator 1.44.3* — Stripe & PayPal payment forms out of the box
+  - ~wp plugin activate forminator~
+  - Configure payment settings via Forminator > Settings > Payments
+  - Create a payment form linked to invoice amounts
+- This saves writing custom payment gateway integration code

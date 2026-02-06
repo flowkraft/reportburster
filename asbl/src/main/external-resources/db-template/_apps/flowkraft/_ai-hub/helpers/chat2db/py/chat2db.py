@@ -340,69 +340,313 @@ class Chat2DB:
     
     def interactive(self):
         """
-        Launch interactive chat interface with widgets.
-        
-        Provides a text input for questions and displays results
-        in a formatted output area.
+        Launch a chat-friendly interface for querying databases.
+
+        Provides a conversational UI: pick a database from the dropdown,
+        then type questions in plain English. Athena generates SQL, runs
+        it, and explains the results — all shown as chat messages.
         """
         try:
             import ipywidgets as widgets
-            from IPython.display import display, clear_output, HTML
-            
-            # Input box
-            input_box = widgets.Text(
-                placeholder='Ask Athena about your data...',
-                description='Question:',
-                layout=widgets.Layout(width='70%')
-            )
-            
-            # Submit button
-            submit_btn = widgets.Button(
-                description='Ask Athena',
-                button_style='primary',
-                icon='search'
-            )
-            
-            # Output area
-            output_area = widgets.Output()
-            
-            def on_submit(btn):
-                question = input_box.value
-                if not question:
-                    return
-                
-                with output_area:
-                    print(f"\n{'='*60}")
-                    print(f"🗣️ You: {question}")
-                    print(f"\n🦉 Athena is thinking...")
-                    
-                    result = self.ask(question)
-                    
-                    clear_output(wait=True)
-                    print(f"🗣️ You: {question}")
-                    print(f"\n🦉 Athena responds:")
-                    
-                    if result.error:
-                        print(f"❌ Error: {result.error}")
-                    else:
-                        display(result.df)
-                        if result.explanation:
-                            print(f"\n💡 {result.explanation}")
-                
-                input_box.value = ''
-            
-            submit_btn.on_click(on_submit)
-            
-            # Handle Enter key in input
-            input_box.on_submit(lambda x: on_submit(None))
-            
-            # Display widgets
-            header = widgets.HTML("<h3>🦉 Chat2DB - Ask Athena About Your Data</h3>")
-            input_row = widgets.HBox([input_box, submit_btn])
-            display(widgets.VBox([header, input_row, output_area]))
-            
+            from IPython.display import display, HTML
         except ImportError:
             print("Install ipywidgets for interactive mode: pip install ipywidgets")
+            return
+
+        # -- HTML renderers ---------------------------------------------------
+
+        def _user_bubble(text):
+            return (
+                '<div style="display:flex;justify-content:flex-end;margin:12px 0;">'
+                '<div style="background:#0084ff;color:#fff;padding:10px 16px;'
+                'border-radius:18px 18px 4px 18px;max-width:70%;font-size:14px;'
+                f'line-height:1.5;">{text}</div></div>'
+            )
+
+        def _athena_bubble(sql=None, table_html=None, explanation=None,
+                           error=None, row_count=0, exec_ms=0.0):
+            p = [
+                '<div style="display:flex;align-items:flex-start;gap:8px;margin:12px 0;">',
+                '<div style="width:30px;height:30px;border-radius:50%;'
+                'background:#6366f1;display:flex;align-items:center;'
+                'justify-content:center;flex-shrink:0;font-size:16px;">'
+                '\U0001f989</div>',
+                '<div style="flex:1;max-width:85%;">',
+            ]
+            if error:
+                p.append(
+                    '<div style="background:#fee2e2;color:#991b1b;padding:10px 14px;'
+                    f'border-radius:0 18px 18px 18px;font-size:14px;">{error}</div>'
+                )
+            else:
+                if sql:
+                    try:
+                        safe = sqlparse.format(sql, reindent=True, keyword_case='upper')
+                    except Exception:
+                        safe = sql
+                    safe = safe.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                    p.append(
+                        '<div style="background:#f3f4f6;padding:8px 14px;'
+                        'border-radius:0 18px 4px 4px;font-size:13px;">'
+                        '<details><summary style="cursor:pointer;color:#6b7280;'
+                        'font-size:12px;">\u25B6 Show SQL</summary>'
+                        '<pre style="background:#1e1e2e;color:#cdd6f4;padding:8px;'
+                        'border-radius:6px;font-size:12px;overflow-x:auto;'
+                        f'margin:6px 0 0;white-space:pre-wrap;">{safe}</pre>'
+                        '</details></div>'
+                    )
+                if table_html:
+                    stats = f'{row_count} row{"s" if row_count != 1 else ""}'
+                    if exec_ms:
+                        stats += f' \u00b7 {exec_ms:.0f} ms'
+                    p.append(
+                        '<div style="background:#fff;border:1px solid #e5e7eb;'
+                        'padding:6px;border-radius:4px;margin-top:2px;'
+                        'overflow-x:auto;font-size:13px;">'
+                        f'<div style="color:#9ca3af;font-size:11px;margin-bottom:4px;">{stats}</div>'
+                        f'{table_html}</div>'
+                    )
+                if explanation:
+                    p.append(
+                        '<div style="background:#f0fdf4;color:#166534;'
+                        'padding:10px 14px;border-radius:4px 4px 18px 18px;'
+                        'font-size:14px;margin-top:2px;line-height:1.5;">'
+                        f'\U0001f4a1 {explanation}</div>'
+                    )
+            p.append('</div></div>')
+            return ''.join(p)
+
+        def _sys(text):
+            return (
+                '<div style="text-align:center;color:#9ca3af;'
+                f'font-size:12px;margin:8px 0;">\u2014 {text} \u2014</div>'
+            )
+
+        # -- Connection widgets ------------------------------------------------
+
+        connections = self._conn_manager.list_connections()
+        conn_map = {}
+        labels = ['-- Select a database --']
+        for c in connections:
+            lbl = f"{c.code} \u2014 {c.name} ({c.db_type})"
+            labels.append(lbl)
+            conn_map[lbl] = c.code
+
+        conn_dd = widgets.Dropdown(
+            options=labels, value=labels[0],
+            layout=widgets.Layout(width='420px'),
+        )
+        conn_btn = widgets.Button(
+            description='Connect', button_style='primary', icon='plug',
+            layout=widgets.Layout(width='110px'),
+        )
+        status = widgets.HTML(
+            '<span style="color:#9ca3af;font-size:13px;">No database selected</span>'
+        )
+
+        # -- Chat area ---------------------------------------------------------
+
+        chat_out = widgets.Output(
+            layout=widgets.Layout(
+                min_height='300px', max_height='500px',
+                overflow_y='auto', border='1px solid #e5e7eb',
+                padding='12px', border_radius='8px',
+            )
+        )
+
+        # -- Input widgets -----------------------------------------------------
+
+        inp = widgets.Text(
+            placeholder='Ask a question about your data\u2026',
+            layout=widgets.Layout(width='85%'), disabled=True,
+        )
+        send_btn = widgets.Button(
+            description='Send', button_style='primary', icon='paper-plane',
+            layout=widgets.Layout(width='100px'), disabled=True,
+        )
+
+        # -- Clear button with inline confirmation ----------------------------
+
+        clear_btn = widgets.Button(
+            description='Clear All Messages', button_style='',
+            icon='trash',
+            tooltip='Start Clean - Clear All Message History',
+            layout=widgets.Layout(width='auto'),
+        )
+        confirm_yes = widgets.Button(
+            description='Yes, clear', button_style='danger', icon='check',
+            layout=widgets.Layout(width='auto'),
+        )
+        confirm_no = widgets.Button(
+            description='Cancel', button_style='', icon='times',
+            layout=widgets.Layout(width='auto'),
+        )
+        confirm_box = widgets.HBox(
+            [
+                widgets.HTML(
+                    '<span style="color:#ef4444;font-size:13px;'
+                    'margin-right:6px;">Clear all messages?</span>'
+                ),
+                confirm_yes, confirm_no,
+            ],
+            layout=widgets.Layout(display='none'),
+        )
+
+        def _show_confirm(_btn):
+            clear_btn.layout.display = 'none'
+            confirm_box.layout.display = 'flex'
+
+        def _do_clear(_btn):
+            chat_out.clear_output()
+            with chat_out:
+                if self._connection and self._connection_config:
+                    display(HTML(_sys(
+                        f'Connected to {self._connection_config.name} '
+                        f'({self._connection_config.db_type}). Ask me anything!'
+                    )))
+                else:
+                    display(HTML(_sys(
+                        'Select a database above, then ask questions in plain English'
+                    )))
+            confirm_box.layout.display = 'none'
+            clear_btn.layout.display = ''
+
+        def _cancel_clear(_btn):
+            confirm_box.layout.display = 'none'
+            clear_btn.layout.display = ''
+
+        clear_btn.on_click(_show_confirm)
+        confirm_yes.on_click(_do_clear)
+        confirm_no.on_click(_cancel_clear)
+
+        # -- Handlers ----------------------------------------------------------
+
+        def _unlock():
+            inp.disabled = False
+            send_btn.disabled = False
+
+        def _on_connect(_btn):
+            code = conn_map.get(conn_dd.value)
+            if not code:
+                status.value = (
+                    '<span style="color:#ef4444;font-size:13px;">'
+                    'Please select a database first</span>'
+                )
+                return
+            status.value = (
+                '<span style="color:#f59e0b;font-size:13px;">Connecting\u2026</span>'
+            )
+            try:
+                self.connect(code)
+                status.value = (
+                    f'<span style="color:#22c55e;font-size:13px;">'
+                    f'\u2713 Connected to {code}</span>'
+                )
+                _unlock()
+                with chat_out:
+                    display(HTML(_sys(
+                        f'Connected to {self._connection_config.name} '
+                        f'({self._connection_config.db_type}). Ask me anything!'
+                    )))
+            except Exception as exc:
+                status.value = (
+                    f'<span style="color:#ef4444;font-size:13px;">'
+                    f'Error: {exc}</span>'
+                )
+
+        def _on_send(_btn=None):
+            question = inp.value.strip()
+            if not question:
+                return
+            inp.value = ''
+
+            with chat_out:
+                display(HTML(_user_bubble(question)))
+
+            try:
+                result = self.ask(question)
+                tbl = (
+                    result.df.head(20).to_html(index=False)
+                    if not result.error and len(result.df) > 0
+                    else None
+                )
+                with chat_out:
+                    display(HTML(_athena_bubble(
+                        sql=result.sql or None,
+                        table_html=tbl,
+                        explanation=result.explanation,
+                        error=result.error,
+                        row_count=result.row_count,
+                        exec_ms=result.execution_time_ms,
+                    )))
+            except Exception as exc:
+                with chat_out:
+                    display(HTML(_athena_bubble(error=str(exc))))
+
+        conn_btn.on_click(_on_connect)
+        send_btn.on_click(_on_send)
+        inp.on_submit(lambda _: _on_send())
+
+        # -- Auto-connect if session already active ----------------------------
+
+        if self._connection and self._connection_config:
+            for lbl, code in conn_map.items():
+                if code == self._connection_config.code:
+                    conn_dd.value = lbl
+                    break
+            status.value = (
+                f'<span style="color:#22c55e;font-size:13px;">'
+                f'\u2713 Connected to {self._connection_config.code}</span>'
+            )
+            _unlock()
+            with chat_out:
+                display(HTML(_sys(
+                    f'Connected to {self._connection_config.name}. Ask me anything!'
+                )))
+        else:
+            with chat_out:
+                display(HTML(_sys(
+                    'Select a database above, then ask questions in plain English'
+                )))
+                if not connections:
+                    display(HTML(_sys(
+                        '\u26A0 No database connections found. '
+                        'Check REPORTBURSTER_CONNECTIONS_PATH.'
+                    )))
+
+        # -- Assemble layout ---------------------------------------------------
+
+        header = widgets.HBox(
+            [
+                widgets.HTML(
+                    '<h3 style="margin:0;color:#1e1b4b;">'
+                    '\U0001f989 Chat2DB</h3>'
+                ),
+                widgets.Box(layout=widgets.Layout(flex='1')),
+                clear_btn,
+                confirm_box,
+            ],
+            layout=widgets.Layout(
+                align_items='center', margin='0 0 8px',
+            ),
+        )
+        conn_row = widgets.HBox(
+            [conn_dd, conn_btn, status],
+            layout=widgets.Layout(margin='0 0 8px'),
+        )
+        input_row = widgets.HBox(
+            [inp, send_btn],
+            layout=widgets.Layout(margin='8px 0 0'),
+        )
+
+        container = widgets.VBox(
+            [header, conn_row, chat_out, input_row],
+            layout=widgets.Layout(
+                padding='16px', border='1px solid #e5e7eb',
+                border_radius='12px',
+            ),
+        )
+        display(container)
     
     def close(self):
         """Close all connections."""

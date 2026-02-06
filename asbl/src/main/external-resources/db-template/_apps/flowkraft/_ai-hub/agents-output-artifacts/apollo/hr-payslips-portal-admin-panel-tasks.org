@@ -1,0 +1,112 @@
+#+TITLE: HR Payslips Portal — Admin Panel Tasks (Next.js)
+#+AUTHOR: Apollo (Next.js Guru & Modern Web Advisor)
+#+DATE: 2026-01-20
+
+* TODO Task 1: Drizzle Schema — Payslips Table
+File: ~lib/db/schema.ts~
+
+Define the payslips table with Drizzle ORM:
+- id: integer, primary key, auto-increment
+- payslipNumber: text, unique, not null (format: PAY-YYYY-NNNN)
+- employeeId: text, not null
+- employeeName: text, not null
+- employeeEmail: text, nullable
+- department: text, nullable
+- payPeriodStart: text, not null (ISO date)
+- payPeriodEnd: text, not null (ISO date)
+- grossAmount: real, not null
+- deductions: real, default 0
+- netAmount: real, not null (= gross - deductions)
+- currency: text, default "USD"
+- status: text, default "draft" (draft | sent | viewed | downloaded)
+- createdAt, updatedAt: text, default CURRENT_TIMESTAMP
+
+Run ~npm run db:push~ to apply schema.
+
+* TODO Task 2: Payslip API Routes
+File: ~app/api/payslips/route.ts~ (GET list, POST create)
+File: ~app/api/payslips/[id]/route.ts~ (GET single, PUT update, DELETE)
+
+- GET /api/payslips: support ?status= and ?search= query params
+  - Search filters: employeeName, payslipNumber, employeeId (LIKE match)
+  - Status filter: exact match on status field
+  - Order by createdAt DESC
+- POST /api/payslips: auto-generate payslipNumber, validate required fields,
+  calculate netAmount = grossAmount - deductions
+- PUT /api/payslips/[id]: update fields, recalculate netAmount
+- DELETE /api/payslips/[id]: remove from database
+
+* TODO Task 3: Admin Layout
+File: ~app/(admin)/layout.tsx~
+
+- Server component wrapping admin pages
+- AdminSidebar (left): links to Dashboard, Payslips, Settings
+- AdminHeader (top): breadcrumb, theme toggle
+- Use shadcn/ui components
+- Responsive: sidebar hidden on mobile, hamburger toggle
+
+* TODO Task 4: Admin Dashboard
+File: ~app/(admin)/admin/page.tsx~
+
+- Fetch stats from GET /api/stats
+- 3 stat cards: Total Payslips, Total Disbursed, Recent Activity
+- Quick action buttons: "New Payslip", "View All Payslips"
+- Uses shadcn Card component with Lucide icons
+
+* TODO Task 5: Payslip List Page
+File: ~app/(admin)/admin/payslips/page.tsx~
+
+- Client component ("use client") for interactive filtering
+- Fetch payslips from /api/payslips with search + status params
+- shadcn Table with columns: Number, Employee, Department, Period, Net Pay, Status, Actions
+- Search input with debounce
+- Status filter select: All, Draft, Sent, Viewed, Downloaded
+- Status badges using shadcn Badge with variant colors
+- Action buttons: View (eye icon), Edit (pencil), Delete (trash with confirm dialog)
+
+* TODO Task 6: Create Payslip Form
+File: ~app/(admin)/admin/payslips/new/page.tsx~
+
+- Client component with controlled form state
+- Form sections: Payslip Info, Employee Info, Pay Period, Amounts
+- Fields: employeeId, employeeName, employeeEmail, department,
+  payPeriodStart (date input), payPeriodEnd (date input),
+  grossAmount, deductions
+- Auto-calculate netAmount on change: gross - deductions
+- Currency selector (USD, EUR, GBP, CAD, AUD)
+- Submit: POST to /api/payslips, redirect to list on success
+- Toast notification on success/error
+
+* TODO Task 7: Payslip Detail Page
+File: ~app/(admin)/admin/payslips/[id]/page.tsx~
+
+- Fetch single payslip from /api/payslips/[id]
+- Employee info card: name, ID, email, department
+- Pay period card: formatted date range
+- Amounts card: gross, deductions (breakdown), net (highlighted)
+- Status badge with timeline visualization
+- Action buttons based on status:
+  - Draft: Send, Edit, Delete
+  - Sent: view-only (waiting for employee)
+  - Viewed/Downloaded: status indicator only
+- "Back to Payslips" link
+
+* TODO Task 8: Edit Payslip Form
+File: ~app/(admin)/admin/payslips/[id]/edit/page.tsx~
+
+- Same form as create, pre-populated with existing values
+- Fetch payslip on mount, populate form state
+- Submit: PUT to /api/payslips/[id]
+- Only editable if status is "draft"
+- Redirect to detail page on success
+
+* TODO Task 9: Seed Data Script
+File: ~lib/db/seed.ts~
+
+- Generate 10 sample payslips using @faker-js/faker
+- Departments: Engineering, Marketing, Sales, HR, Finance
+- Gross amounts: $4,000-$8,000 range
+- Deductions: 20-30% of gross
+- Mix of statuses: 3 draft, 3 sent, 2 viewed, 2 downloaded
+- Pay periods: last 5 months, bi-monthly
+- Called automatically on first DB access when payslips count is 0

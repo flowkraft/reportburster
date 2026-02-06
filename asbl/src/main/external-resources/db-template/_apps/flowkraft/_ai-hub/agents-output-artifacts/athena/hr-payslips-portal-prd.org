@@ -1,0 +1,76 @@
+#+TITLE: HR Payslips Portal — Product Requirements Document
+#+AUTHOR: Athena (ReportBurster Guru & Business Analysis Expert)
+#+DATE: 2026-01-15
+
+* 1. Overview
+
+** 1.1 What We're Building
+A self-service payslip portal where HR creates and publishes payslips, and employees
+view and download their pay documents securely. Each employee sees only their own payslips.
+
+** 1.2 Why
+Distributing payslips via email or print is inefficient, insecure, and hard to audit.
+A portal gives employees 24/7 access to their pay history while giving HR visibility
+into who has viewed and downloaded their payslips.
+
+** 1.3 For Whom
+- *HR Administrators* — create payslips, send to employees, track engagement
+- *Employees* — view payslip details, download PDF copies
+
+* 2. Data Model
+
+** 2.1 Payslip Entity
+| Field          | Type       | Notes                                    |
+|----------------+------------+------------------------------------------|
+| payslipNumber  | String     | Auto-generated: PS-YYYY-NNN, unique      |
+| employeeId     | String     | External employee identifier             |
+| employeeName   | String     | Full name for display                    |
+| employeeEmail  | String     | Optional, for email notification         |
+| department     | String     | Engineering, Sales, HR, Finance, etc.    |
+| payPeriodStart | Date       | First day of the pay period              |
+| payPeriodEnd   | Date       | Last day of the pay period               |
+| grossAmount    | BigDecimal | Total earnings before deductions         |
+| deductions     | BigDecimal | Total deductions (tax, benefits, etc.)   |
+| netAmount      | BigDecimal | Take-home pay = gross - deductions       |
+| currency       | String     | USD, EUR, GBP, CAD, AUD                  |
+| status         | String     | draft -> sent -> viewed -> downloaded    |
+
+* 3. User Stories
+
+** 3.1 HR Admin Stories
+- As HR, I can create a payslip with employee details, period, and amounts
+- As HR, I can send a payslip (status: draft -> sent, employee gets notified)
+- As HR, I can list all payslips with search by name/period and status filter
+- As HR, I can see which employees have viewed and downloaded their payslips
+- As HR, I can edit a draft payslip before sending
+
+** 3.2 Employee Stories
+- As employee, I can see a list of my payslips sorted by date
+- As employee, I can view a payslip's detail (gross, deductions, net)
+- As employee, I can download my payslip as PDF
+- I can only see my own payslips — not other employees'
+
+* 4. Pages
+
+** 4.1 Admin Panel
+- Dashboard — stats (total payslips, employees, recent payslips)
+- Payslip List — table with search, status filter, pagination
+- Payslip Detail — amounts breakdown, employee info, status, actions
+- Payslip Create/Edit — form with employee selection, period, amounts
+
+** 4.2 Employee Portal
+- Payslip List — filtered to logged-in employee, sorted newest first
+- Payslip Detail — full pay breakdown with download button
+- On view: status changes to "viewed"; on download: status changes to "downloaded"
+
+* 5. Payslip Lifecycle
+1. *Draft* — HR creates the payslip with all details
+2. *Sent* — HR publishes the payslip; it becomes visible in the employee portal
+3. *Viewed* — Employee opens the payslip detail page
+4. *Downloaded* — Employee downloads the PDF
+
+* 6. Success Criteria
+- Employees can access their payslips within seconds of HR publishing them
+- Each employee sees only their own payslips (strict access control)
+- HR can see at a glance which employees have viewed/downloaded
+- The portal works on mobile for employees checking payslips on the go

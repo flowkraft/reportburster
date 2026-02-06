@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Info, Code, Rocket, Loader2, Bug } from 'lucide-react';
+import { MessageSquare, Info, Code, Rocket, Loader2, Copy, X, CheckCircle2, XCircle, Terminal, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -22,8 +22,8 @@ const AGENT_DESCRIPTIONS: Record<string, string> = {
   'Apollo': 'Next.js Guru & Modern Web Advisor',
 };
 
-// Tags that identify alternative stack agents (hidden by default)
-const ALTERNATIVE_STACK_TAGS = ['stack:nextjs', 'stack:wordpress'];
+// Tag prefixes that identify alternative stack agents (hidden by default)
+const ALTERNATIVE_STACK_PREFIXES = ['stack:nextjs', 'stack:wordpress'];
 
 // Sample agent data - fallback if API fails
 const sampleAgents = [
@@ -71,17 +71,35 @@ const sampleAgents = [
 
 type Agent = typeof sampleAgents[0];
 
+type LogLine = { type: 'log' | 'error' | 'warn'; message: string; ts: string };
+
 export default function AgentsPage() {
+  const router = useRouter();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [provisioning, setProvisioning] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const [showProvisionConfirm, setShowProvisionConfirm] = useState(false);
   const [showAlternatives, setShowAlternatives] = useState(false);
+  const [showLogModal, setShowLogModal] = useState(false);
+  const [logLines, setLogLines] = useState<LogLine[]>([]);
+  const [logStatus, setLogStatus] = useState<'running' | 'success' | 'error'>('running');
+  const [forceUpdate, setForceUpdate] = useState(false);
 
   useEffect(() => {
     fetchAgents();
+  }, []);
+
+  // Listen for "Update Agents" triggered from the navbar settings menu
+  useEffect(() => {
+    const handler = () => {
+      setForceUpdate(false);
+      setShowUpdateConfirm(true);
+    };
+    window.addEventListener('trigger-update-agents', handler);
+    return () => window.removeEventListener('trigger-update-agents', handler);
   }, []);
 
   const fetchAgents = async () => {
@@ -91,15 +109,40 @@ export default function AgentsPage() {
       const data = await response.json();
 
       if (data.success && data.agents.length > 0) {
+        // Filter out sleeptime/internal agents (Letta creates companion
+        // agents named "{Name}-sleeptime" that users should never see)
+        const userAgents = data.agents.filter(
+          (a: any) =>
+            a.metadata?.agentKey &&
+            !a.name?.toLowerCase().includes('sleeptime')
+        );
         // Map Letta agents to our format
-        const mappedAgents = data.agents.map((agent: any) => ({
+        const mappedAgents = userAgents.map((agent: any) => ({
           id: agent.id,
           name: agent.name,
-          tags: agent.tags || [],
+          tags: (Array.isArray(agent.tags) && agent.tags.length > 0)
+            ? agent.tags
+            : (agent.metadata?.tags || []),
           description: agent.system || 'No description available',
           whenToUse: 'Contact this agent for assistance',
           matrixRoom: `@${agent.name.toLowerCase().replace(/\s+/g, '-')}:localhost`,
         }));
+
+        // Sort: Athena first, then non-alternatives alphabetically, alternatives last
+        mappedAgents.sort((a: Agent, b: Agent) => {
+          const aIsAthena = a.name === 'Athena' || a.tags.includes('reportburster');
+          const bIsAthena = b.name === 'Athena' || b.tags.includes('reportburster');
+          if (aIsAthena && !bIsAthena) return -1;
+          if (!aIsAthena && bIsAthena) return 1;
+
+          const aIsAlt = a.tags.some((t: string) => ALTERNATIVE_STACK_PREFIXES.some(prefix => t.startsWith(prefix)));
+          const bIsAlt = b.tags.some((t: string) => ALTERNATIVE_STACK_PREFIXES.some(prefix => t.startsWith(prefix)));
+          if (aIsAlt && !bIsAlt) return 1;
+          if (!aIsAlt && bIsAlt) return -1;
+
+          return a.name.localeCompare(b.name);
+        });
+
         setAgents(mappedAgents);
       } else {
         // No agents found
@@ -117,35 +160,82 @@ export default function AgentsPage() {
   const handleProvisionAgents = async (force: boolean = true) => {
     try {
       setProvisioning(true);
+      setLogLines([]);
+      setLogStatus('running');
+      setShowLogModal(true);
+
       const response = await fetch('/api/agents/provision', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ force }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force, stream: true }),
       });
-      const data = await response.json();
 
-      if (data.success) {
-        toast.success('FlowKraft AI Crew agents provisioned successfully!');
-        // Refresh agents list
-        await fetchAgents();
-      } else {
-        // Check if env variables are missing
+      // Non-OK response (e.g. 400 missing env vars) — fall back to JSON
+      if (!response.ok) {
+        const data = await response.json();
         if (data.missing && data.missing.length > 0) {
           toast.error(
             `Missing required environment variables: ${data.missing.join(', ')}. Please add them to your .env file, restart the app, and try again.`,
-            {
-              duration: 8000,
-            }
+            { duration: 5000 }
           );
         } else {
           toast.error(data.message || 'Failed to provision agents');
+        }
+        setLogStatus('error');
+        setLogLines([{
+          type: 'error',
+          message: data.message || 'Failed to provision agents',
+          ts: new Date().toISOString(),
+        }]);
+        return;
+      }
+
+      // Stream SSE events
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+            if (event.type === 'done') {
+              setLogStatus(event.message === 'success' ? 'success' : 'error');
+              if (event.message === 'success') {
+                toast.success('FlowKraft AI Crew agents provisioned successfully!');
+                await fetchAgents();
+              } else {
+                toast.error('Provisioning completed with errors');
+              }
+            } else if (event.type === 'result') {
+              // Result JSON stored internally, not shown as log line
+            } else {
+              setLogLines(prev => [
+                { type: event.type, message: event.message, ts: event.ts },
+                ...prev,
+              ]);
+            }
+          } catch {
+            // ignore malformed SSE events
+          }
         }
       }
     } catch (error) {
       console.error('Error provisioning agents:', error);
       toast.error('Failed to provision agents. Please check if Letta server is running.');
+      setLogStatus('error');
+      setLogLines(prev => [
+        { type: 'error', message: 'Connection error: Failed to reach provisioning service', ts: new Date().toISOString() },
+        ...prev,
+      ]);
     } finally {
       setProvisioning(false);
     }
@@ -153,7 +243,7 @@ export default function AgentsPage() {
 
   // Check if an agent is an alternative stack oracle (Next.js or WordPress)
   const isAlternativeOracle = (agent: Agent): boolean => {
-    return agent.tags.some(tag => ALTERNATIVE_STACK_TAGS.includes(tag));
+    return agent.tags.some(tag => ALTERNATIVE_STACK_PREFIXES.some(prefix => tag.startsWith(prefix)));
   };
 
   // Check if an agent is Athena
@@ -173,7 +263,7 @@ export default function AgentsPage() {
 
   const handleChatWithAgent = (agent: Agent) => {
     // Open Element Matrix with the agent's room
-    const elementUrl = `http://localhost:8090/#/room/${encodeURIComponent(agent.matrixRoom)}`;
+    const elementUrl = `http://localhost:8442/#/room/${encodeURIComponent(agent.matrixRoom)}`;
     window.open(elementUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -187,12 +277,108 @@ export default function AgentsPage() {
     window.open('http://localhost:8443', '_blank', 'noopener,noreferrer');
   };
 
+  const renderLogPanel = () => {
+    if (!showLogModal) return null;
+
+    const headerBg =
+      logStatus === 'success'
+        ? 'bg-green-700'
+        : logStatus === 'error'
+          ? 'bg-red-700'
+          : 'bg-slate-800';
+
+    const StatusIcon =
+      logStatus === 'success'
+        ? CheckCircle2
+        : logStatus === 'error'
+          ? XCircle
+          : Loader2;
+
+    const handleCopy = () => {
+      const text = [...logLines]
+        .reverse()
+        .map((l) => `[${l.ts}] [${l.type.toUpperCase()}] ${l.message}`)
+        .join('\n');
+      navigator.clipboard.writeText(text).then(() => toast.success('Logs copied to clipboard'));
+    };
+
+    const handleClose = () => {
+      if (!provisioning) setShowLogModal(false);
+    };
+
+    return (
+      <>
+        {/* Semi-transparent overlay */}
+        <div className="fixed inset-0 bg-black/40 z-40" onClick={handleClose} />
+
+        {/* Log panel — right half (full width on mobile) */}
+        <div className="fixed right-0 top-0 bottom-0 w-full md:w-1/2 z-50 flex flex-col shadow-2xl">
+          {/* Header bar */}
+          <div className={`${headerBg} px-4 py-3 flex items-center justify-between text-white`}>
+            <div className="flex items-center gap-2">
+              <Terminal className="w-5 h-5" />
+              <StatusIcon className={`w-5 h-5 ${logStatus === 'running' ? 'animate-spin' : ''}`} />
+              <span className="font-semibold">Provisioning Logs</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCopy}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm bg-white/20 hover:bg-white/30 transition-colors"
+                title="Copy logs to clipboard"
+              >
+                <Copy className="w-4 h-4" />
+                Copy
+              </button>
+              <button
+                onClick={handleClose}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm bg-white/20 hover:bg-white/30 transition-colors ${
+                  provisioning ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                disabled={provisioning}
+                title={provisioning ? 'Wait for provisioning to complete' : 'Close log panel'}
+              >
+                <X className="w-4 h-4" />
+                Close
+              </button>
+            </div>
+          </div>
+
+          {/* Log content — newest first */}
+          <div className="flex-1 bg-[#1e1e2e] overflow-y-auto p-4 font-mono text-sm">
+            {logLines.length === 0 ? (
+              <div className="text-gray-500 text-center mt-8">Waiting for logs...</div>
+            ) : (
+              logLines.map((line, i) => (
+                <div
+                  key={i}
+                  className={`py-0.5 ${
+                    line.type === 'error'
+                      ? 'text-red-400'
+                      : line.type === 'warn'
+                        ? 'text-yellow-400'
+                        : 'text-gray-300'
+                  }`}
+                >
+                  <span className="text-gray-600 mr-2">
+                    {new Date(line.ts).toLocaleTimeString()}
+                  </span>
+                  {line.message}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </>
+    );
+  };
+
   if (loading) {
     return (
       <div className="w-full py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center py-12">
           <p className="text-muted-foreground">Loading agents...</p>
         </div>
+        {renderLogPanel()}
       </div>
     );
   }
@@ -214,7 +400,7 @@ export default function AgentsPage() {
           <div className="flex justify-center">
             <Button
               size="lg"
-              onClick={() => handleProvisionAgents()}
+              onClick={() => setShowProvisionConfirm(true)}
               disabled={provisioning}
               className="bg-rb-cyan hover:bg-rb-cyan/90 text-white px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
@@ -261,6 +447,39 @@ export default function AgentsPage() {
             </p>
           </div>
         </div>
+
+        {/* Provision Confirmation Dialog */}
+        <Dialog open={showProvisionConfirm} onOpenChange={setShowProvisionConfirm}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Provision AI Crew?</DialogTitle>
+              <DialogDescription>
+                This will provision Athena, Hephaestus, Hermes, Apollo, and Pythia as your FlowKraft AI Crew agents. This may take 60-120 seconds. Are you sure?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-3 mt-4">
+              <Button
+                onClick={() => {
+                  setShowProvisionConfirm(false);
+                  handleProvisionAgents();
+                }}
+                disabled={provisioning}
+                className="bg-rb-cyan hover:bg-rb-cyan/90 text-white"
+              >
+                Yes, Provision Agents
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowProvisionConfirm(false)}
+                disabled={provisioning}
+              >
+                No
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {renderLogPanel()}
       </div>
     );
   }
@@ -268,57 +487,37 @@ export default function AgentsPage() {
   return (
     <div className="w-full py-8 px-4 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="mb-8 max-w-7xl mx-auto flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">AI Agents</h1>
-          <p className="text-muted-foreground">
-            Manage and interact with your AI crew. Click on an agent to chat or view details.
-          </p>
+      <div className="mb-8 max-w-7xl mx-auto">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">The Oracles of Ancient Greece</h1>
+            <p className="text-muted-foreground">
+              FlowKraft&apos;s council of AI oracles, each a master of their domain. Seek their counsel or explore their workspace.
+            </p>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap mt-2">
+            <input
+              type="checkbox"
+              checked={showAlternatives}
+              onChange={(e) => setShowAlternatives(e.target.checked)}
+              className="rounded border-border text-rb-cyan focus:ring-rb-cyan cursor-pointer"
+            />
+            <span className="text-xs text-muted-foreground">Show Next.js &amp; WordPress Oracles</span>
+          </label>
         </div>
-
-        {/* Re-provision Button (only shown when agents exist) */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowUpdateConfirm(true)}
-          disabled={provisioning}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground hover:border-rb-cyan"
-          title="Update agents (re-provision without force)"
-        >
-          {provisioning ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Updating...
-            </>
-          ) : (
-            <>
-              <Rocket className="w-4 h-4" />
-              Update Agents
-            </>
-          )}
-        </Button>
       </div>
 
       {/* Agents Table */}
       <div className="max-w-7xl mx-auto mb-6">
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          {/* Table Header with Checkbox */}
-          <div className="bg-muted/50 px-6 py-3 border-b border-border flex items-center justify-between">
-            <div className="grid grid-cols-12 gap-4 flex-1 font-semibold text-sm text-muted-foreground">
+          {/* Table Header */}
+          <div className="bg-muted/50 px-6 py-3 border-b border-border">
+            <div className="grid grid-cols-12 gap-4 font-semibold text-sm text-muted-foreground">
               <div className="col-span-12 sm:col-span-2">Name</div>
               <div className="hidden sm:block sm:col-span-4">Description</div>
               <div className="hidden md:block md:col-span-4">Tags</div>
               <div className="col-span-12 sm:col-span-2 text-right">Actions</div>
             </div>
-            <label className="flex items-center gap-2 ml-4 cursor-pointer whitespace-nowrap">
-              <input
-                type="checkbox"
-                checked={showAlternatives}
-                onChange={(e) => setShowAlternatives(e.target.checked)}
-                className="rounded border-border text-rb-cyan focus:ring-rb-cyan cursor-pointer"
-              />
-              <span className="text-xs text-muted-foreground">Show Next.js &amp; WordPress Oracles</span>
-            </label>
           </div>
 
           {/* Table Body */}
@@ -336,16 +535,15 @@ export default function AgentsPage() {
                   {/* Name Column */}
                   <div className="col-span-12 sm:col-span-2">
                     <div className="flex items-center gap-2">
-                      <Link
-                        href={`/agents/${agent.id}`}
-                        className={`hover:text-rb-cyan hover:underline transition-colors ${
+                      <span
+                        className={`${
                           athena
-                            ? 'font-bold text-foreground'
-                            : 'font-semibold text-foreground'
+                            ? 'font-semibold text-foreground'
+                            : 'font-normal text-foreground ml-3'
                         }`}
                       >
                         {agent.name}
-                      </Link>
+                      </span>
                       {alternative && (
                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
                           alt
@@ -379,13 +577,6 @@ export default function AgentsPage() {
 
                   {/* Actions Column */}
                   <div className="col-span-12 sm:col-span-2 flex items-center justify-end gap-2">
-                    <Link
-                      href={`/agents/${agent.id}/debug`}
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3 text-muted-foreground"
-                      title="Debug agent"
-                    >
-                      <Bug className="w-4 h-4" />
-                    </Link>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -412,8 +603,17 @@ export default function AgentsPage() {
         </div>
       </div>
 
-      {/* Code with Claude Button */}
-      <div className="max-w-7xl mx-auto">
+      {/* Action Buttons */}
+      <div className="max-w-7xl mx-auto flex gap-3">
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={() => router.push('/workspaces')}
+          className="border-rb-cyan text-rb-cyan hover:bg-rb-cyan hover:text-white"
+        >
+          <FolderOpen className="w-5 h-5 mr-2" />
+          View Oracle Workspaces
+        </Button>
         <Button
           variant="outline"
           size="lg"
@@ -489,11 +689,39 @@ export default function AgentsPage() {
           <DialogHeader>
             <DialogTitle>Update Agents?</DialogTitle>
             <DialogDescription>
-              This will re-provision your AI crew agents without forcing recreation.
-              Existing agent configurations will be updated.
+              This will re-provision your AI crew agents. Existing agent configurations
+              and memory blocks will be updated to match the latest definitions.
             </DialogDescription>
           </DialogHeader>
+
+          {/* Force checkbox */}
+          <label className="flex items-start gap-3 mt-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={forceUpdate}
+              onChange={(e) => setForceUpdate(e.target.checked)}
+              className="mt-0.5 rounded border-border text-rb-cyan focus:ring-rb-cyan cursor-pointer"
+            />
+            <div>
+              <span className="text-sm font-medium text-foreground">Force recreate</span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Delete and recreate all agents from scratch. Use this if agents are
+                in a broken state. All conversation history will be lost.
+              </p>
+            </div>
+          </label>
+
           <div className="flex justify-end gap-3 mt-4">
+            <Button
+              onClick={() => {
+                setShowUpdateConfirm(false);
+                handleProvisionAgents(forceUpdate);
+              }}
+              disabled={provisioning}
+              className="bg-rb-cyan hover:bg-rb-cyan/90 text-white"
+            >
+              Yes, Update Agents
+            </Button>
             <Button
               variant="outline"
               onClick={() => setShowUpdateConfirm(false)}
@@ -501,19 +729,11 @@ export default function AgentsPage() {
             >
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                setShowUpdateConfirm(false);
-                handleProvisionAgents(false);
-              }}
-              disabled={provisioning}
-              className="bg-rb-cyan hover:bg-rb-cyan/90 text-white"
-            >
-              Yes, Update Agents
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {renderLogPanel()}
     </div>
   );
 }

@@ -19,6 +19,8 @@ services:
         condition: service_started
       chat2db:
         condition: service_started
+      baibot:
+        condition: service_started
     environment:
       - NODE_ENV=production
       - LETTA_BASE_URL=http://flowkraft-ai-hub-letta:8283
@@ -26,6 +28,9 @@ services:
       - NEXT_PUBLIC_AGENTS_CHAT_URL=${NEXT_PUBLIC_AGENTS_CHAT_URL:-http://localhost:8442}
       - ELEMENT_URL=http://flowkraft-ai-hub-element-web:80
       - CODE_SERVER_URL=http://localhost:8443
+      # LLM provider config (needed by provision route env check)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_API_BASE=${OPENAI_API_BASE:-}
       # Matrix provisioner config (for automated room setup)
       - MATRIX_HOMESERVER_URL=http://flowkraft-ai-hub-matrix-synapse:8008
       - MATRIX_SERVER_NAME=localhost
@@ -35,6 +40,10 @@ services:
     volumes:
       # Persist SQLite database across container restarts
       - ai-hub-data:/app/data
+      # Custom tools needed by agent provisioner (Python files registered in Letta)
+      - ./custom-tools:/custom-tools:ro
+      # Agent output artifacts — browsed by the workspace UI (read-only)
+      - ./agents-output-artifacts:/app/workspace/agents-output-artifacts:ro
     restart: unless-stopped
     networks:
       - ai-hub-network
@@ -57,7 +66,7 @@ services:
       - LETTA_API_KEY=${LETTA_API_KEY:-}
     volumes:
       - ./custom-tools:/custom-tools
-      - ./agents:/agents-hq
+      - ./agents-output-artifacts:/agent-output-artifacts
     # No entrypoint - for running CLI commands like: docker compose run --rm ai-hub-tools npm run agents:list
     tty: true
     stdin_open: true
@@ -92,13 +101,12 @@ services:
       # 
       # Agents access everything via /reportburster:
       # - Skills: /reportburster/_apps/flowkraft/_ai-hub/.skills
-      # - Agent offices: /reportburster/_apps/flowkraft/_ai-hub/agents
-      # - PRD docs: /reportburster/_apps/flowkraft/_ai-hub/docs
+      # - Agent output artifacts: /reportburster/_apps/flowkraft/_ai-hub/agents-output-artifacts
       # - WordPress portal: /reportburster/_apps/cms-webportal-playground
       # - Grails playground: /reportburster/_apps/flowkraft/grails-playground
       # - Next.js playground: /reportburster/_apps/flowkraft/next-playground
       # - Backend playground: /reportburster/_apps/flowkraft/bkend-boot-groovy-playground
-      - ${REPORTBURSTER_INSTALLATION_FOLDER:-../../../..}:/reportburster
+      - ${REPORTBURSTER_INSTALLATION_FOLDER:-../../..}:/reportburster
     # Ports commented - internal services accessed via ai-hub-network
     # Uncomment only if you need direct external access for debugging
     # ports:
@@ -203,10 +211,10 @@ services:
     volumes:
       - ./config/synapse:/data
       - synapse-data:/data/media_store
-    # Port commented - Matrix accessed via Element Web UI (port 8090)
-    # Uncomment only if you need direct Matrix API access
-    # ports:
-    #   - "8008:8008"  # Matrix Synapse API
+    # Element Web runs in the browser, so the browser needs to reach Synapse
+    # via localhost — this port MUST be exposed for Element Web to work
+    ports:
+      - "8008:8008"  # Matrix Synapse API (required by Element Web in browser)
     restart: unless-stopped
     networks:
       - ai-hub-network
@@ -262,7 +270,7 @@ services:
       - PASSWORD=${CODE_SERVER_PASSWORD:-admin}
       - SUDO_PASSWORD=${CODE_SERVER_PASSWORD:-admin}
     volumes:
-      - ./agents:/home/coder/project
+      - ./agents-output-artifacts:/home/coder/project
       - code-server-data:/home/coder/.local/share/code-server
     ports:
       - "8443:8443"  # Code Server (VS Code in browser)
@@ -284,18 +292,10 @@ services:
     environment:
       # Jupyter settings
       - JUPYTER_TOKEN=${JUPYTER_TOKEN:-reportburster}
-      # Letta AI (internal network - no need for host.docker.internal)
-      - LETTA_API_BASE_URL=http://flowkraft-ai-hub-letta:8283
-      - LETTA_API_KEY=${LETTA_API_KEY:-}
-      # Agent IDs (set these after creating agents in Letta)
-      - AGENT_ATHENA_ID=${AGENT_ATHENA_ID:-}
-      - AGENT_HEPHAESTUS_ID=${AGENT_HEPHAESTUS_ID:-}
-      - AGENT_HERMES_ID=${AGENT_HERMES_ID:-}
-      - AGENT_APOLLO_ID=${AGENT_APOLLO_ID:-}
-      - DEFAULT_AGENT=${DEFAULT_AGENT:-ATHENA}
-      # Alternative LLM providers (if not using Letta agents)
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - LLM_MODEL_NAME=${LLM_MODEL_NAME:-gpt-4o-mini}
+      # Athena AI via OpenAI-compatible adapter (ai-hub-frend wraps Letta agents)
+      # The adapter resolves "athena" agent key automatically — no agent ID needed
+      - OPENAI_API_BASE=http://flowkraft-ai-hub-frend:3000/api/openai/athena/v1
+      - OPENAI_MODEL=letta:athena
       # Paths inside container
       - REPORTBURSTER_CONNECTIONS_PATH=/reportburster/config/connections
       - JDBC_DRIVERS_PATH=/reportburster/lib
@@ -304,7 +304,7 @@ services:
       # Notebooks directory
       - ./notebooks:/app/notebooks
       # ReportBurster root (same mount as letta) - for connections, JDBC drivers, db
-      - ${REPORTBURSTER_INSTALLATION_FOLDER:-../../../..}:/reportburster:ro
+      - ${REPORTBURSTER_INSTALLATION_FOLDER:-../../..}:/reportburster:ro
       # Persist Jupyter workspace settings
       - jupyter-data:/home/jupyter/.jupyter
     ports:

@@ -12,7 +12,8 @@ user:
   name: kraftbot
 
   # An optional path to an image file to be used as a custom avatar image.
-  avatar: null
+  # "keep" = skip avatar management entirely (avoids upload failures blocking startup)
+  avatar: "keep"
 
   encryption:
     # Passphrase for backing up and recovering the bot's encryption keys.
@@ -85,6 +86,14 @@ agents:
         api_key: ""
         text_generation:
           model_id: "letta:apollo"
+
+    - id: pythia
+      provider: openai
+      config:
+        base_url: "http://flowkraft-ai-hub-frend:3000/api/openai/pythia/v1"
+        api_key: ""
+        text_generation:
+          model_id: "letta:pythia"
 
     # Additional agents can be added here:
 

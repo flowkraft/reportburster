@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Lifecycle Flow</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; margin: 40px auto; max-width: 900px; color: #1e293b; }
+  h1 { font-size: 1.4rem; color: #0f172a; border-bottom: 2px solid #0ea5e9; padding-bottom: 8px; margin-bottom: 24px; }
+  .mermaid { margin: 24px 0; }
+  h2 { font-size: 1.1rem; color: #334155; margin-top: 40px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<h1>Invoice Lifecycle Flow</h1>
+
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> Draft : Admin creates invoice
+    Draft --> Sent : Send to customer
+    Sent --> Paid : Customer pays (Stripe/PayPal)
+    Sent --> Overdue : Due date passed (batch job)
+    Sent --> Cancelled : Admin cancels
+    Draft --> Cancelled : Admin cancels
+    Overdue --> Paid : Late payment received
+    Paid --> [*]
+    Cancelled --> [*]
+</div>
+
+<h2>Payment Flow (Stripe)</h2>
+<div class="mermaid">
+sequenceDiagram
+    participant C as Customer Portal
+    participant B as Backend API
+    participant S as Stripe API
+
+    C->>B: POST /payment/stripe/create-intent (invoiceId, amount)
+    B->>S: Create PaymentIntent
+    S-->>B: clientSecret
+    B-->>C: Return clientSecret
+    C->>S: Confirm payment (card details)
+    S-->>C: Payment confirmed
+    C->>B: POST /payment/stripe/confirm (paymentIntentId)
+    B->>B: invoice.markAsPaid("stripe", paymentIntentId)
+    B-->>C: Success — Invoice paid
+</div>
+
+<h2>Payment Flow (PayPal)</h2>
+<div class="mermaid">
+sequenceDiagram
+    participant C as Customer Portal
+    participant B as Backend API
+    participant P as PayPal API
+
+    C->>B: POST /payment/paypal/create-order (invoiceId, amount)
+    B->>P: POST /v2/checkout/orders
+    P-->>B: orderId + approval URL
+    B-->>C: Redirect to PayPal
+    C->>P: Customer approves payment
+    P-->>C: Redirect back with orderId
+    C->>B: POST /payment/paypal/capture-order (orderId)
+    B->>P: POST /v2/checkout/orders/{id}/capture
+    P-->>B: COMPLETED
+    B->>B: invoice.markAsPaid("paypal", orderId)
+    B-->>C: Success — Invoice paid
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

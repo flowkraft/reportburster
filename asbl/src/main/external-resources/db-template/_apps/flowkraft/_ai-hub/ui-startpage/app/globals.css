@@ -1,30 +1,30 @@
 @import "tailwindcss";
 
-/* ReportBurster Brand Colors - Cyan #22a7c8 */
+/* ReportBurster Brand Colors - Professional Teal */
 :root {
-  --rb-cyan: #22a7c8;
-  --rb-cyan-light: #3ab8d6;
-  --rb-cyan-dark: #1a8aa6;
-  
-  /* Font family using Next.js Inter */
+  --rb-cyan: #0891b2;
+  --rb-cyan-light: #22d3ee;
+  --rb-cyan-dark: #0e7490;
+
+  /* Font family using Next.js Inter - optimized for readability */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
-  /* Light theme (default) */
-  --background: #fafafa;
-  --foreground: #1e293b;
+  /* Light theme (default) - Professional, high contrast */
+  --background: #ffffff;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #1e293b;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #1e293b;
+  --popover-foreground: #0f172a;
   --primary: var(--rb-cyan);
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #1e293b;
+  --secondary: #f8fafc;
+  --secondary-foreground: #0f172a;
   --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted-foreground: #475569;
   --accent: var(--rb-cyan);
   --accent-foreground: #ffffff;
-  --destructive: #ef4444;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   --border: #e2e8f0;
   --input: #e2e8f0;
@@ -35,25 +35,25 @@
 /* Dark theme - applied via .dark class OR [data-theme="dark"] */
 .dark,
 [data-theme="dark"] {
-  --background: #0f172a;
-  --foreground: #f1f5f9;
-  --card: #1e293b;
-  --card-foreground: #f1f5f9;
-  --popover: #1e293b;
-  --popover-foreground: #f1f5f9;
-  --primary: var(--rb-cyan);
-  --primary-foreground: #ffffff;
+  --background: #0a0f1a;
+  --foreground: #f8fafc;
+  --card: #111827;
+  --card-foreground: #f8fafc;
+  --popover: #111827;
+  --popover-foreground: #f8fafc;
+  --primary: #22d3ee;
+  --primary-foreground: #0a0f1a;
   --secondary: #1e293b;
-  --secondary-foreground: #f1f5f9;
-  --muted: #334155;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
   --muted-foreground: #94a3b8;
-  --accent: var(--rb-cyan);
-  --accent-foreground: #ffffff;
-  --destructive: #7f1d1d;
-  --destructive-foreground: #f8fafc;
+  --accent: #22d3ee;
+  --accent-foreground: #0a0f1a;
+  --destructive: #991b1b;
+  --destructive-foreground: #fef2f2;
   --border: #334155;
   --input: #334155;
-  --ring: var(--rb-cyan);
+  --ring: #22d3ee;
 }
 
 @theme inline {
@@ -86,6 +86,10 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* Smooth transitions for theme changes */
@@ -118,5 +122,3 @@ input[type="button"],
 .cursor-pointer {
   cursor: pointer;
 }
-
-

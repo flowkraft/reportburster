@@ -1,0 +1,59 @@
+@startuml Invoicing Portal - Entity Relationship Diagram
+
+title Invoicing Portal — Data Model (Grails Playground)
+
+skinparam backgroundColor #FEFEFE
+skinparam roundcorner 8
+
+entity "Invoice" as inv {
+  * id : Long <<PK>>
+  --
+  * invoiceNumber : String <<unique>>
+  * customerId : String
+  * customerName : String
+  customerEmail : String
+  customerAddress : String
+  * issueDate : Date
+  * dueDate : Date
+  * subtotal : BigDecimal
+  taxRate : BigDecimal = 0
+  taxAmount : BigDecimal
+  discount : BigDecimal = 0
+  * totalAmount : BigDecimal
+  currency : String = "USD"
+  * status : String
+  notes : String
+  paidAt : Date
+  paymentMethod : String
+  paymentReference : String
+  dateCreated : Date
+  lastUpdated : Date
+}
+
+entity "Setting" as set {
+  * id : Long <<PK>>
+  --
+  * key : String <<unique>>
+  value : String
+  description : String
+  category : String = "general"
+  dateCreated : Date
+  lastUpdated : Date
+}
+
+note right of inv::status
+  draft | sent | paid
+  overdue | cancelled
+end note
+
+note right of inv::paymentMethod
+  stripe | paypal
+  bank_transfer | cash | other
+end note
+
+note right of set::category
+  theme | company
+  preferences | payment
+end note
+
+@enduml

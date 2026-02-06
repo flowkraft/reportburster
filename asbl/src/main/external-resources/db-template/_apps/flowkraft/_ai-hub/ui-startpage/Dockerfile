@@ -1,5 +1,5 @@
 # ============================================
-# FlowKraft AI Crew Dashboard - Next.js 15
+# FlowKraft's AI Crew - Next.js 15
 # ============================================
 # Multi-stage build for production deployment
 
@@ -20,6 +20,9 @@ WORKDIR /app
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Rebuild native modules for Alpine (better-sqlite3 needs recompilation)
+RUN npm rebuild better-sqlite3
 
 # Create data directory for SQLite and initialize database schema
 RUN mkdir -p ./data

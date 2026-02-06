@@ -170,7 +170,6 @@ async function ensureCustomToolsRegistered(client: any): Promise<Map<string, str
   const toolFiles = [
     'better_web_search.py',
     'better_fetch_webpage.py',
-    'execute_shell_command.py'
   ];
 
   const baseUrl = process.env.LETTA_BASE_URL || 'http://localhost:8283';
@@ -1276,7 +1275,8 @@ export async function provisionAll(options?: {
     if (result.matrix.skipped) {
       console.log(`   • Matrix Rooms: Already provisioned (skipped)`);
     } else {
-      console.log(`   • Matrix Rooms: ${result.matrix.rooms.filter(r => r.handlerSet).length}/${result.matrix.rooms.length} configured`);
+      const fullyOp = result.matrix.rooms.filter(r => r.roomId && r.botJoined && r.handlerSet).length;
+      console.log(`   • Matrix Rooms: ${fullyOp}/${result.matrix.rooms.length} fully operational (bot joined + handler set)`);
     }
     console.log(`   • Admin Login:  ${result.matrix.adminUser.username} / ${result.matrix.adminUser.password}`);
   }
@@ -1284,14 +1284,20 @@ export async function provisionAll(options?: {
     console.log(`\n⚠️ Errors (${result.errors.length}):`);
     result.errors.forEach(e => console.log(`   - ${e}`));
   }
-  console.log(`\n🚀 Status: ${result.success ? '✅ SUCCESS' : '⚠️ PARTIAL SUCCESS'}`);
-  if (result.matrix) {
+  console.log(`\n🚀 Status: ${result.success ? '✅ SUCCESS' : '❌ FAILED'}`);
+  if (result.success && result.matrix) {
     console.log('\n🌐 Next steps:');
-    console.log('   1. Open Element: http://localhost:8441');
+    console.log('   1. Open Element: http://localhost:8442');
     console.log(`   2. Login with: ${result.matrix.adminUser.username} / ${result.matrix.adminUser.password}`);
-    console.log('   3. Join rooms: #athena, #hephaestus, #hermes, #apollo');
+    console.log('   3. Join rooms: #athena, #hephaestus, #hermes, #pythia, #apollo');
     console.log('   4. Start chatting with your AI oracles!');
   }
+
+  console.log('\n█  CHAT2DB (JupyterLab)');
+  console.log('█  Athena endpoint: http://flowkraft-ai-hub-frend:3000/api/openai/athena/v1/chat/completions');
+  console.log('█  Status: Pre-configured (resolves agent key "athena" automatically)');
+  console.log('█  JupyterLab: http://localhost:8441/lab/tree/00-chat.ipynb');
+
   console.log('\n' + '█'.repeat(70) + '\n');
 
   return result;

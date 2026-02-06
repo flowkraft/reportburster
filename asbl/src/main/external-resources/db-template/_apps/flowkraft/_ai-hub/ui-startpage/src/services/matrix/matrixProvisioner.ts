@@ -96,36 +96,52 @@ function buildRoomAlias(aliasName: string): string {
 }
 
 /**
- * Make an authenticated request to the Matrix API
+ * Make an authenticated request to the Matrix API.
+ * Automatically retries on rate limiting (429 / M_LIMIT_EXCEEDED) with backoff.
  */
 async function matrixFetch<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  maxRetries: number = 3
 ): Promise<T> {
-  const url = `${config.homeserverUrl}${endpoint}`;
-  
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> || {}),
-  };
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const url = `${config.homeserverUrl}${endpoint}`;
 
-  if (config.adminAccessToken && !headers['Authorization']) {
-    headers['Authorization'] = `Bearer ${config.adminAccessToken}`;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string> || {}),
+    };
+
+    if (config.adminAccessToken && !headers['Authorization']) {
+      headers['Authorization'] = `Bearer ${config.adminAccessToken}`;
+    }
+
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return data as T;
+    }
+
+    // Rate limited — retry with capped backoff (Synapse can return absurd retry_after_ms values like 300s+)
+    const apiError = data as MatrixApiError & { retry_after_ms?: number };
+    if (response.status === 429 && attempt < maxRetries) {
+      const MAX_RETRY_DELAY_MS = 5000;
+      const retryAfterMs = Math.min(apiError.retry_after_ms || 2000, MAX_RETRY_DELAY_MS);
+      const backoff = retryAfterMs + 500 * (attempt + 1);
+      console.warn(`[Matrix] Rate limited on ${endpoint}, retrying in ${backoff}ms (attempt ${attempt + 1}/${maxRetries})...`);
+      await sleep(backoff);
+      continue;
+    }
+
+    throw new Error(`Matrix API Error [${apiError.errcode}]: ${apiError.error}`);
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    const error = data as MatrixApiError;
-    throw new Error(`Matrix API Error [${error.errcode}]: ${error.error}`);
-  }
-
-  return data as T;
+  throw new Error(`Max retries (${maxRetries}) exceeded for ${endpoint}`);
 }
 
 // ============================================================================
@@ -698,6 +714,27 @@ export async function roomExists(alias: string): Promise<boolean> {
 }
 
 // ============================================================================
+// Utility: Check if user has joined a room
+// ============================================================================
+
+/**
+ * Check if a user has joined a specific room.
+ * Uses the joined_members endpoint which returns only users with 'join' membership.
+ */
+async function isUserInRoom(username: string, roomId: string): Promise<boolean> {
+  const userId = buildUserId(username);
+
+  try {
+    const resp = await matrixFetch<{ joined: Record<string, unknown> }>(
+      `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/joined_members`
+    );
+    return userId in (resp.joined || {});
+  } catch {
+    return false;
+  }
+}
+
+// ============================================================================
 // ORCHESTRATION: Provision All Matrix Resources
 // ============================================================================
 
@@ -707,30 +744,37 @@ export async function roomExists(alias: string): Promise<boolean> {
 export const ORACLE_ROOMS = [
   {
     agentKey: 'athena',
-    name: 'Oracle: Athena',
+    name: 'Athena (ReportBurster Guru & Data Modeling/Business Analysis Expert)',
     alias: 'athena',
-    topic: 'Chat with Athena - Data & Analytics Oracle (SQL, dashboards, data analysis)',
+    topic: 'Chat with Athena - ReportBurster Guru & Data Modeling/Business Analysis Expert',
     staticHandler: 'static/athena',
   },
   {
     agentKey: 'hephaestus',
-    name: 'Oracle: Hephaestus',
+    name: 'Hephaestus (Backend Jobs/ETL/Automation Advisor)',
     alias: 'hephaestus',
-    topic: 'Chat with Hephaestus - Infrastructure & DevOps Oracle (Docker, CI/CD, cloud)',
+    topic: 'Chat with Hephaestus - Backend Jobs/ETL/Automation Advisor',
     staticHandler: 'static/hephaestus',
   },
   {
     agentKey: 'hermes',
-    name: 'Oracle: Hermes',
+    name: 'Hermes (Grails Guru & Self-Service Portal Advisor)',
     alias: 'hermes',
-    topic: 'Chat with Hermes - Integration & Messaging Oracle (APIs, webhooks, events)',
+    topic: 'Chat with Hermes - Grails Guru & Self-Service Portal Advisor',
     staticHandler: 'static/hermes',
   },
   {
+    agentKey: 'pythia',
+    name: 'Pythia (WordPress CMS Portal Advisor)',
+    alias: 'pythia',
+    topic: 'Chat with Pythia - WordPress CMS Portal Advisor',
+    staticHandler: 'static/pythia',
+  },
+  {
     agentKey: 'apollo',
-    name: 'Oracle: Apollo',
+    name: 'Apollo (Next.js Guru & Modern Web Advisor)',
     alias: 'apollo',
-    topic: 'Chat with Apollo - Documentation & Knowledge Oracle (docs, search, answers)',
+    topic: 'Chat with Apollo - Next.js Guru & Modern Web Advisor',
     staticHandler: 'static/apollo',
   },
 ] as const;
@@ -755,14 +799,111 @@ export async function isMatrixProvisioned(): Promise<boolean> {
 }
 
 /**
- * Reset Matrix provisioning by deleting all oracle rooms.
- * This requires admin access token to be configured.
- * 
- * Note: In Matrix, rooms can't truly be "deleted" - they can only be
- * "forgotten" and have all members removed. We'll remove the room alias
- * and kick everyone out, effectively making the room inaccessible.
- * 
- * @returns List of rooms that were reset/deleted
+ * Make a user forget a room (removes it from their room list in clients like Element).
+ * Must be called AFTER the user has left the room.
+ */
+async function forgetRoomForUser(roomId: string, userId: string): Promise<void> {
+  try {
+    // Use Synapse Admin API to make user forget the room
+    // POST /_synapse/admin/v1/users/{user_id}/rooms/{room_id}/forget
+    await matrixFetch(
+      `/_synapse/admin/v1/users/${encodeURIComponent(userId)}/rooms/${encodeURIComponent(roomId)}/forget`,
+      { method: 'POST', body: JSON.stringify({}) }
+    );
+  } catch {
+    // Ignore errors - user may have already forgotten or never joined
+  }
+}
+
+/**
+ * Delete a single room by ID using Synapse Admin API v2 (async delete with polling).
+ * Also makes known users forget the room to prevent stale entries in Element.
+ * Returns true if successfully deleted/purged, false otherwise.
+ */
+async function deleteRoomById(roomId: string, label: string): Promise<boolean> {
+  try {
+    // First, get room members so we can make them forget the room after deletion
+    let members: string[] = [];
+    try {
+      const membersResp = await matrixFetch<{ members: string[] }>(
+        `/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/members`
+      );
+      members = membersResp.members || [];
+    } catch {
+      // Ignore - we'll still try to delete the room
+    }
+
+    const deleteResponse = await matrixFetch<{ delete_id?: string }>(
+      `/_synapse/admin/v2/rooms/${encodeURIComponent(roomId)}`,
+      {
+        method: 'DELETE',
+        body: JSON.stringify({ purge: true, force_purge: true, message: 'Room deleted for re-provisioning' }),
+      }
+    );
+
+    let deleteSuccess = false;
+
+    if (deleteResponse.delete_id) {
+      // Poll until purge completes
+      for (let i = 0; i < 30; i++) {
+        await sleep(1000);
+        try {
+          const status = await matrixFetch<{ status: string; error?: string }>(
+            `/_synapse/admin/v2/rooms/delete_status/${encodeURIComponent(deleteResponse.delete_id)}`
+          );
+          if (status.status === 'complete') {
+            deleteSuccess = true;
+            break;
+          }
+          if (status.status === 'failed') {
+            console.error(`   ❌ Purge failed for ${label}: ${status.error || 'unknown'}`);
+            return false;
+          }
+        } catch {
+          deleteSuccess = true; // Status endpoint unavailable — assume done
+          break;
+        }
+      }
+      if (!deleteSuccess) {
+        console.error(`   ❌ Purge timed out for ${label}`);
+        return false;
+      }
+    } else {
+      deleteSuccess = true; // No delete_id — sync response, already gone
+    }
+
+    // After successful deletion, make all members forget the room
+    // This removes stale room entries from Element and other clients
+    if (deleteSuccess && members.length > 0) {
+      console.log(`      Making ${members.length} user(s) forget room...`);
+      for (const userId of members) {
+        await forgetRoomForUser(roomId, userId);
+      }
+    }
+
+    return deleteSuccess;
+  } catch (err) {
+    console.error(`   ❌ Delete failed for ${label}: ${(err as Error).message}`);
+    return false;
+  }
+}
+
+/**
+ * List ALL rooms on the Synapse server using the Admin API.
+ * IMPORTANT: This throws on failure - do NOT silently return [] which masks errors!
+ */
+async function listAllRooms(): Promise<Array<{ room_id: string; name: string; canonical_alias: string }>> {
+  const resp = await matrixFetch<{ rooms: Array<{ room_id: string; name: string; canonical_alias: string }>; total_rooms: number }>(
+    '/_synapse/admin/v1/rooms?limit=100'
+  );
+  console.log(`   [listAllRooms] Found ${resp.total_rooms} room(s) on server`);
+  return resp.rooms || [];
+}
+
+/**
+ * Nuclear reset: delete ALL rooms on the Synapse server.
+ * Lists every room via Admin API and deletes each one.
+ * After deletion, verifies room count is 0 before returning success.
  */
 export async function resetMatrixProvisioning(): Promise<{
   success: boolean;
@@ -775,73 +916,78 @@ export async function resetMatrixProvisioning(): Promise<{
     errors: [] as string[],
   };
 
-  console.log('\n🗑️ Resetting Matrix provisioning...');
+  console.log('\n🗑️ Resetting Matrix — deleting ALL rooms...');
+  console.log(`   Admin token configured: ${config.adminAccessToken ? 'YES (' + config.adminAccessToken.substring(0, 20) + '...)' : 'NO!'}`);
 
-  for (const oracleRoom of ORACLE_ROOMS) {
-    const alias = `#${oracleRoom.alias}:${config.serverName}`;
-    
-    try {
-      // Check if room exists
-      const exists = await roomExists(oracleRoom.alias);
-      if (!exists) {
-        console.log(`   ℹ️ Room ${alias} doesn't exist, skipping`);
-        continue;
-      }
+  // Step 1: List every room on the server
+  let allRooms: Array<{ room_id: string; name: string; canonical_alias: string }>;
+  try {
+    allRooms = await listAllRooms();
+    console.log(`   Found ${allRooms.length} room(s) on server`);
+  } catch (error) {
+    const err = error as Error;
+    const msg = `Failed to list rooms (Admin API error): ${err.message}`;
+    console.error(`   ❌ ${msg}`);
+    result.errors.push(msg);
+    return result; // FAIL - don't proceed if we can't list rooms
+  }
 
-      // Get room ID from alias
-      const aliasResponse = await matrixFetch<{ room_id: string }>(
-        `/_matrix/client/v3/directory/room/${encodeURIComponent(alias)}`
-      );
-      const roomId = aliasResponse.room_id;
+  if (allRooms.length === 0) {
+    console.log('   ✅ No rooms to delete — server is clean');
+    result.success = true;
+    return result;
+  }
 
-      // Use Synapse Admin API to delete the room
-      // DELETE /_synapse/admin/v2/rooms/{room_id}
-      // This will:
-      // - Remove all local users from the room
-      // - Remove the room from the room directory
-      // - Block new joins
-      console.log(`   🗑️ Deleting room ${alias} (${roomId})...`);
-      
-      try {
-        await matrixFetch(`/_synapse/admin/v2/rooms/${encodeURIComponent(roomId)}`, {
-          method: 'DELETE',
-          body: JSON.stringify({
-            purge: true, // Completely remove all traces
-            message: 'Room deleted for re-provisioning',
-          }),
-        });
-        result.deletedRooms.push(alias);
-        console.log(`   ✅ Deleted ${alias}`);
-      } catch (deleteErr) {
-        // Try alternative: just remove the alias so we can recreate
-        console.log(`   ⚠️ Full delete failed, trying to remove alias only...`);
-        try {
-          await matrixFetch(
-            `/_matrix/client/v3/directory/room/${encodeURIComponent(alias)}`,
-            { method: 'DELETE' }
-          );
-          result.deletedRooms.push(`${alias} (alias only)`);
-          console.log(`   ✅ Removed alias ${alias}`);
-        } catch (aliasErr) {
-          const err = aliasErr as Error;
-          result.errors.push(`Failed to delete ${alias}: ${err.message}`);
-          console.error(`   ❌ Failed to delete ${alias}: ${err.message}`);
-        }
-      }
-    } catch (error) {
-      const err = error as Error;
-      result.errors.push(`Error processing ${alias}: ${err.message}`);
-      console.error(`   ❌ Error processing ${alias}: ${err.message}`);
+  // Step 2: Delete every room
+  for (const room of allRooms) {
+    const label = room.canonical_alias || room.name || room.room_id;
+    console.log(`   🗑️ Deleting ${label} (${room.room_id})...`);
+    const ok = await deleteRoomById(room.room_id, label);
+    if (ok) {
+      result.deletedRooms.push(label);
+      console.log(`   ✅ Deleted ${label}`);
+    } else {
+      result.errors.push(`Failed to delete ${label}`);
     }
   }
 
-  // Wait a bit for deletions to propagate
-  console.log('   ⏳ Waiting for deletions to propagate...');
-  await sleep(2000);
+  // Step 3: Verify room count is 0
+  console.log('   🔍 Verifying all rooms are deleted...');
+  const maxVerifyAttempts = 5;
+  for (let i = 0; i < maxVerifyAttempts; i++) {
+    await sleep(1000);
+    try {
+      const remaining = await listAllRooms();
+      if (remaining.length === 0) {
+        console.log('   ✅ Verified: 0 rooms remaining on server');
+        result.success = result.errors.length === 0;
+        console.log(`\n✅ Reset complete: ${result.deletedRooms.length} rooms deleted`);
+        return result;
+      }
+      console.log(`   ⏳ ${remaining.length} room(s) still remaining, waiting... (${i + 1}/${maxVerifyAttempts})`);
+    } catch (error) {
+      const err = error as Error;
+      console.error(`   ❌ Failed to verify rooms: ${err.message}`);
+      result.errors.push(`Failed to verify room deletion: ${err.message}`);
+      return result;
+    }
+  }
+
+  // Rooms still remain after all attempts
+  try {
+    const finalRemaining = await listAllRooms();
+    if (finalRemaining.length > 0) {
+      const msg = `${finalRemaining.length} room(s) could not be deleted`;
+      result.errors.push(msg);
+      console.error(`   ❌ ${msg}`);
+    }
+  } catch (error) {
+    const err = error as Error;
+    result.errors.push(`Failed to verify final room count: ${err.message}`);
+  }
 
   result.success = result.errors.length === 0;
-  console.log(`\n✅ Reset complete: ${result.deletedRooms.length} rooms deleted`);
-  
+  console.log(`\n${result.success ? '✅' : '❌'} Reset complete: ${result.deletedRooms.length} rooms deleted`);
   return result;
 }
 
@@ -857,6 +1003,7 @@ export interface MatrixProvisionResult {
     agentKey: string;
     roomId: string;
     roomAlias: string;
+    botJoined: boolean;
     handlerSet: boolean;
   }>;
   errors: string[];
@@ -879,6 +1026,16 @@ export interface MatrixProvisionResult {
  * @param options - Optional configuration
  * @returns Provisioning result with admin credentials and room info
  */
+/**
+ * Synapse default rate limits (reference — so we can set smart delays to stay under them):
+ *   rc_invites.per_user:  burst=5, then 1 per 333s  ← main bottleneck for 5-room provisioning
+ *   rc_invites.per_room:  burst=10, then 1 per 3.3s
+ *   rc_joins.local:       burst=10, then 1 per 10s
+ *   rc_message:           burst=10, then 1 per 5s
+ *
+ * Our homeserver.yaml relaxes these for local dev, but the smart delays below
+ * keep provisioning safe even on a stock Synapse with default limits.
+ */
 export async function provisionMatrixRooms(options?: {
   /** Admin username (default: 'admin') */
   adminUsername?: string;
@@ -886,7 +1043,7 @@ export async function provisionMatrixRooms(options?: {
   adminPassword?: string;
   /** Kraftbot username (default: 'kraftbot') */
   kraftbotUsername?: string;
-  /** Delay in ms to wait for bot to join (default: 3000) */
+  /** Delay in ms to wait for bot to join each check (default: 3000) */
   botJoinDelayMs?: number;
   /** Delay in ms between handler commands (default: 1000) */
   commandDelayMs?: number;
@@ -917,56 +1074,9 @@ export async function provisionMatrixRooms(options?: {
   console.log('='.repeat(60));
 
   // -------------------------------------------------------------------------
-  // Step 0: Check if already provisioned
+  // Step 0: Create/login admin user (must happen FIRST so sentinel check has auth)
   // -------------------------------------------------------------------------
-  console.log('\n🔍 Checking if Matrix is already provisioned...');
-  
-  const alreadyProvisioned = await isMatrixProvisioned();
-  
-  if (alreadyProvisioned) {
-    if (force) {
-      console.log('⚠️  Force flag set - will reset and re-provision Matrix');
-      
-      // First, we need admin access to delete rooms
-      console.log('\n📝 Getting admin access for reset...');
-      try {
-        const adminResult = await registerUserWithSharedSecret({
-          username: adminUsername,
-          password: adminPassword,
-          displayName: 'Admin',
-          admin: true,
-        });
-        result.adminUser.userId = adminResult.userId;
-        initMatrixConfig({ adminAccessToken: adminResult.accessToken });
-      } catch (error) {
-        const err = error as Error;
-        result.errors.push(`Failed to get admin access for reset: ${err.message}`);
-        console.error(`❌ Failed to get admin access: ${err.message}`);
-        return result;
-      }
-
-      // Now reset
-      const resetResult = await resetMatrixProvisioning();
-      if (!resetResult.success) {
-        console.warn('⚠️  Some rooms could not be deleted, but continuing with provisioning...');
-        // Don't fail - we'll try to recreate anyway
-      }
-    } else {
-      console.log('✅ Matrix already provisioned (rooms exist)');
-      console.log('   Use force=true to delete and re-provision');
-      console.log(`📝 Login credentials: ${adminUsername} / ${adminPassword}`);
-      result.success = true;
-      result.skipped = true;
-      return result;
-    }
-  } else {
-    console.log('📝 Matrix not yet provisioned, proceeding with setup...');
-  }
-
-  // -------------------------------------------------------------------------
-  // Step 1: Create/login admin user
-  // -------------------------------------------------------------------------
-  console.log('\n📝 Step 1: Creating admin user...');
+  console.log('\n📝 Step 0: Creating admin user...');
   try {
     const adminResult = await registerUserWithSharedSecret({
       username: adminUsername,
@@ -974,12 +1084,12 @@ export async function provisionMatrixRooms(options?: {
       displayName: 'Admin',
       admin: true,
     });
-    
+
     result.adminUser.userId = adminResult.userId;
-    
-    // Set the token for subsequent API calls
+
+    // Set the token for subsequent API calls (needed for sentinel check & everything else)
     initMatrixConfig({ adminAccessToken: adminResult.accessToken });
-    
+
     console.log(`✅ Admin user ready: ${adminResult.userId}`);
     console.log(`   Login credentials: ${adminUsername} / ${adminPassword}`);
   } catch (error) {
@@ -990,15 +1100,80 @@ export async function provisionMatrixRooms(options?: {
   }
 
   // -------------------------------------------------------------------------
-  // Step 2-5: For each oracle room
+  // Step 1: Check if already provisioned (now with valid auth token)
+  // -------------------------------------------------------------------------
+  console.log('\n🔍 Checking if Matrix is already provisioned...');
+
+  const alreadyProvisioned = await isMatrixProvisioned();
+
+  if (alreadyProvisioned) {
+    if (force) {
+      console.log('⚠️  Force flag set - will reset and re-provision Matrix');
+
+      // Nuclear reset — delete ALL rooms and verify 0 remain
+      const resetResult = await resetMatrixProvisioning();
+      if (!resetResult.success) {
+        result.errors.push('Force reset failed: could not delete all rooms');
+        console.error('❌ Force reset failed — cannot proceed with rooms still present');
+        return result;
+      }
+      // Double-check: verify room count is truly 0
+      const remaining = await listAllRooms();
+      if (remaining.length > 0) {
+        result.errors.push(`Force reset incomplete: ${remaining.length} room(s) still present`);
+        console.error(`❌ ${remaining.length} room(s) still present after reset — aborting`);
+        return result;
+      }
+      console.log('✅ Server confirmed clean (0 rooms) — proceeding with fresh provisioning');
+    } else {
+      // force=false and sentinel room exists — skip all provisioning
+      console.log('✅ Matrix already provisioned (sentinel room #athena exists) — skipping all');
+      result.success = true;
+      result.skipped = true;
+      return result;
+    }
+  } else {
+    console.log('📝 Matrix not yet provisioned, proceeding with setup...');
+  }
+
+  // -------------------------------------------------------------------------
+  // Step 1b: Register kraftbot user (so baibot can log in)
+  // -------------------------------------------------------------------------
+  console.log('\n📝 Step 1b: Registering kraftbot user...');
+  try {
+    const kraftbotPassword = process.env.KRAFTBOT_PASSWORD || 'kraftbot';
+    await registerUserWithSharedSecret({
+      username: kraftbotUsername,
+      password: kraftbotPassword,
+      displayName: kraftbotUsername,
+      admin: false,
+    });
+    console.log(`✅ Kraftbot user ready: @${kraftbotUsername}:${config.serverName}`);
+  } catch (error) {
+    const err = error as Error;
+    result.errors.push(`Failed to register kraftbot user: ${err.message}`);
+    console.error(`❌ Failed to register kraftbot user: ${err.message}`);
+    console.error(`❌ Without the kraftbot user, the bot cannot log in and rooms will not work.`);
+    return result;
+  }
+
+  // -------------------------------------------------------------------------
+  // Step 2-5: For each oracle room (serial, with smart pacing)
+  //
+  // Synapse default rc_invites.per_user: burst=5, then 1 per 333s.
+  // With 5 rooms we're right at burst limit. Defense layers:
+  //   Layer 1: homeserver.yaml relaxes limits to 1000/s (prevents 429 entirely)
+  //   Layer 2: 200ms settle after create + natural API call spacing (~700ms/room)
+  //   Layer 3: matrixFetch retries 429s with capped 5s backoff (last resort)
   // -------------------------------------------------------------------------
   for (const oracleRoom of ORACLE_ROOMS) {
     console.log(`\n🏛️ Processing room: ${oracleRoom.name}`);
-    
+
     const roomResult = {
       agentKey: oracleRoom.agentKey,
       roomId: '',
       roomAlias: `#${oracleRoom.alias}:${config.serverName}`,
+      botJoined: false,
       handlerSet: false,
     };
 
@@ -1009,18 +1184,21 @@ export async function provisionMatrixRooms(options?: {
         name: oracleRoom.name,
         alias: oracleRoom.alias,
         topic: oracleRoom.topic,
-        isPublic: true, // Make rooms discoverable
+        isPublic: true,
       });
-      
+
       roomResult.roomId = createResult.roomId;
-      console.log(`   ✅ Room ${createResult.created ? 'created' : 'exists'}: ${createResult.roomId}`);
+      console.log(`   ✅ Room created: ${createResult.roomId}`);
     } catch (error) {
       const err = error as Error;
       result.errors.push(`Failed to create room ${oracleRoom.alias}: ${err.message}`);
       console.error(`   ❌ Failed to create room: ${err.message}`);
       result.rooms.push(roomResult);
-      continue; // Try next room
+      continue;
     }
+
+    // Brief settle — let Synapse finish indexing the new room before invite
+    await sleep(200);
 
     // Step 3: Invite kraftbot
     console.log(`   📨 Inviting @${kraftbotUsername} to room...`);
@@ -1029,23 +1207,45 @@ export async function provisionMatrixRooms(options?: {
       console.log(`   ✅ Invitation sent`);
     } catch (error) {
       const err = error as Error;
-      // Not fatal - bot might already be in room or auto-join
-      console.warn(`   ⚠️ Invite issue (may be OK): ${err.message}`);
+      result.errors.push(`Failed to invite kraftbot to ${oracleRoom.alias}: ${err.message}`);
+      console.error(`   ❌ Failed to invite kraftbot: ${err.message}`);
+      result.rooms.push(roomResult);
+      continue;
     }
 
-    // Step 4: Wait for bot to join
-    console.log(`   ⏳ Waiting ${botJoinDelayMs}ms for bot to join...`);
-    await sleep(botJoinDelayMs);
+    // Step 4: Wait for bot to join, then verify membership
+    console.log(`   ⏳ Waiting for bot to join...`);
+    const maxJoinChecks = 3;
+    const joinCheckIntervalMs = botJoinDelayMs;
+    for (let check = 1; check <= maxJoinChecks; check++) {
+      await sleep(joinCheckIntervalMs);
+      const joined = await isUserInRoom(kraftbotUsername, roomResult.roomId);
+      if (joined) {
+        roomResult.botJoined = true;
+        console.log(`   ✅ Bot joined room (verified on check ${check}/${maxJoinChecks})`);
+        break;
+      }
+      if (check < maxJoinChecks) {
+        console.log(`   ⏳ Bot not yet joined, waiting... (check ${check}/${maxJoinChecks})`);
+      }
+    }
 
-    // Step 5: Set room handler
+    if (!roomResult.botJoined) {
+      const msg = `Kraftbot did not join room ${oracleRoom.alias} after ${maxJoinChecks * joinCheckIntervalMs / 1000}s — is the baibot container running?`;
+      result.errors.push(msg);
+      console.error(`   ❌ ${msg}`);
+      result.rooms.push(roomResult);
+      continue;
+    }
+
+    // Step 5: Set room handler (only if bot is confirmed in room)
     console.log(`   🔧 Setting handler: ${oracleRoom.staticHandler}...`);
     try {
       const handlerCommand = `!kraft config room set-handler text-generation ${oracleRoom.staticHandler}`;
       await sendCommandMessageToRoom(handlerCommand, roomResult.roomId);
       roomResult.handlerSet = true;
       console.log(`   ✅ Handler command sent`);
-      
-      // Small delay between commands
+
       await sleep(commandDelayMs);
     } catch (error) {
       const err = error as Error;
@@ -1057,21 +1257,34 @@ export async function provisionMatrixRooms(options?: {
   }
 
   // -------------------------------------------------------------------------
-  // Summary
+  // Summary — honest reporting
   // -------------------------------------------------------------------------
-  const successCount = result.rooms.filter(r => r.roomId && r.handlerSet).length;
-  result.success = successCount === ORACLE_ROOMS.length && result.errors.length === 0;
+  const fullyOk = result.rooms.filter(r => r.roomId && r.botJoined && r.handlerSet);
+  const roomsCreated = result.rooms.filter(r => r.roomId);
+  const botJoined = result.rooms.filter(r => r.botJoined);
+  const handlersSet = result.rooms.filter(r => r.handlerSet);
+
+  result.success = fullyOk.length === ORACLE_ROOMS.length && result.errors.length === 0;
 
   console.log('\n' + '='.repeat(60));
-  console.log('🔮 MATRIX PROVISIONING COMPLETE');
+  if (result.success) {
+    console.log('🔮 MATRIX PROVISIONING COMPLETE — SUCCESS');
+  } else {
+    console.log('🔮 MATRIX PROVISIONING COMPLETE — FAILED');
+  }
   console.log('='.repeat(60));
-  console.log(`✅ Rooms provisioned: ${successCount}/${ORACLE_ROOMS.length}`);
+  console.log(`   Rooms created:     ${roomsCreated.length}/${ORACLE_ROOMS.length}`);
+  console.log(`   Bot joined:        ${botJoined.length}/${ORACLE_ROOMS.length}`);
+  console.log(`   Handlers set:      ${handlersSet.length}/${ORACLE_ROOMS.length}`);
+  console.log(`   Fully operational: ${fullyOk.length}/${ORACLE_ROOMS.length}`);
   console.log(`📝 Admin login: ${adminUsername} / ${adminPassword}`);
   if (result.errors.length > 0) {
-    console.log(`⚠️ Errors: ${result.errors.length}`);
-    result.errors.forEach(e => console.log(`   - ${e}`));
+    console.log(`\n❌ ERRORS (${result.errors.length}):`);
+    result.errors.forEach(e => console.error(`   - ${e}`));
   }
-  console.log('\n🌐 Open Element at http://localhost:8441 to chat with your oracles!');
+  if (result.success) {
+    console.log('\n🌐 Open Element at http://localhost:8442 to chat with your oracles!');
+  }
   console.log('='.repeat(60) + '\n');
 
   return result;

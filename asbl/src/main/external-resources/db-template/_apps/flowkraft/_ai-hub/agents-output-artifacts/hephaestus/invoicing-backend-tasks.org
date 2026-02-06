@@ -1,0 +1,96 @@
+#+TITLE: Invoicing Backend — Implementation Tasks
+#+AUTHOR: Hephaestus (Backend Jobs & ETL & Automation Advisor)
+#+DATE: 2026-01-18
+
+* TODO Task 1: Invoice Domain Model
+Create ~grails-app/domain/com/flowkraft/Invoice.groovy~
+
+- Fields: invoiceNumber (unique), customerId, customerName, customerEmail,
+  customerAddress, issueDate, dueDate, subtotal, taxRate, taxAmount, discount,
+  totalAmount, currency, status, notes, paidAt, paymentMethod, paymentReference
+- Constraints: invoiceNumber unique, amounts min 0, status in [draft,sent,paid,overdue,cancelled],
+  currency in [USD,EUR,GBP,CAD,AUD], paymentMethod in [stripe,paypal,bank_transfer,cash,other]
+- Methods: calculateTotals(), markAsPaid(method, ref), isPayable(), isOverdue(),
+  getStatusBadgeClass(), formatAmount()
+- Mapping: table "invoices"
+
+* TODO Task 2: Setting Domain Model
+Create ~grails-app/domain/com/flowkraft/Setting.groovy~
+
+- Fields: key (unique), value, description, category
+- Static methods: getValue(key, default), setValue(key, value, category, desc),
+  getByCategory(category), getAllAsMap()
+- Mapping: table "settings", columns: setting_key, setting_value
+
+* TODO Task 3: Invoice Data Import ETL Pipeline
+Create ~grails-app/services/com/flowkraft/InvoiceImportService.groovy~
+
+- Parse CSV/Excel files from a configurable watch directory
+- Map external fields to Invoice domain columns (configurable field mapping)
+- Validate required fields, amounts, date formats
+- Duplicate detection: match on invoiceNumber or customerId+amount+date
+- Merge strategy: skip duplicates or update existing
+- Log import results: total, imported, skipped, errors
+
+* TODO Task 4: Invoice Data Export Pipeline
+Create ~grails-app/services/com/flowkraft/InvoiceExportService.groovy~
+
+- Export invoices to CSV, JSON, and XML formats
+- Filter by date range, status, and customer
+- ReportBurster integration: generate per-customer invoice bundles
+- Output to configurable export directory
+- Include summary statistics in export metadata
+
+* TODO Task 5: Overdue Detection Scheduled Job
+Create ~grails-app/jobs/com/flowkraft/OverdueDetectionJob.groovy~
+
+- Quartz cron trigger: runs daily at 02:00 AM
+- Query: invoices where status in [sent] AND dueDate < today
+- Batch update each to status = "overdue"
+- Fire notification event per overdue invoice (for email/webhook consumers)
+- Log job execution: count processed, count updated, duration
+
+* TODO Task 6: Invoice Reminder Scheduled Job
+Create ~grails-app/jobs/com/flowkraft/InvoiceReminderJob.groovy~
+
+- Quartz cron trigger: runs daily at 08:00 AM
+- Configurable reminder windows: 7 days, 3 days, 1 day before due date
+- Query: invoices where status = "sent" AND dueDate within reminder window
+- Generate reminder events (consumed by notification service)
+- Track last reminder sent to avoid duplicate notifications
+
+* TODO Task 7: Monthly Report Generation Job
+Create ~grails-app/jobs/com/flowkraft/ReportGenerationJob.groovy~
+
+- Quartz cron trigger: runs 1st of each month at 03:00 AM
+- Aggregate stats: total revenue, outstanding balances, overdue count,
+  average days to payment, top customers by volume
+- Export summary report to configured output directory (CSV + JSON)
+- Archive previous month's data snapshot
+
+* TODO Task 8: Bulk Invoice Generator
+Create ~grails-app/services/com/flowkraft/BulkInvoiceService.groovy~
+
+- Generate invoices in batch from customer roster + invoice template
+- Support recurring schedules: monthly, quarterly, annual
+- Auto-generate invoiceNumber sequence: INV-YYYY-NNN
+- Calculate totals including tax and discount per template rules
+- Return batch result: count created, count skipped (already exists), errors
+
+* TODO Task 9: Payment Reconciliation Service
+Create ~grails-app/services/com/flowkraft/PaymentReconciliationService.groovy~
+
+- Import bank statement data (CSV format)
+- Match entries to open invoices by amount, reference, or customer
+- Auto-mark matched invoices as paid with payment details
+- Flag unmatched payments for manual review
+- Generate reconciliation report: matched, unmatched, discrepancies
+
+* TODO Task 10: BootStrap Seed Data
+Update ~grails-app/init/com/flowkraft/BootStrap.groovy~
+
+- On first run (Invoice.count() == 0): create 10 sample invoices across all statuses
+- Sample customers: Acme Corp, TechStart Inc, Global Solutions Ltd, Innovation Labs, Digital Ventures
+- Amounts range $1K-$10K with tax calculations
+- Default settings: theme.mode=light, company.name, preferences.currency=USD
+- Sample job schedules: overdue check daily, reminders daily, reports monthly

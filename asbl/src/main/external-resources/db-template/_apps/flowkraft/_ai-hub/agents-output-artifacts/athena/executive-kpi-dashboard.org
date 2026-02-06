@@ -1,0 +1,70 @@
+#+TITLE: Executive KPI Dashboard — Product Requirements Document
+#+AUTHOR: Athena (ReportBurster Guru & Business Analysis Expert)
+#+DATE: 2026-01-20
+
+* 1. Overview
+
+** 1.1 What We're Building
+A single-page executive dashboard that surfaces the most important financial and
+operational KPIs from the invoicing and payslip data. Designed for quick scanning
+by management — not deep analysis.
+
+** 1.2 Why
+Executives need a 30-second view of business health. They shouldn't have to open
+multiple admin pages or run queries. One page, the right numbers, updated in real-time.
+
+* 2. KPI Cards (Top Row)
+
+| KPI              | Source                          | Calculation                              |
+|------------------+---------------------------------+------------------------------------------|
+| Total Revenue    | invoices where status = paid    | SUM(totalAmount)                         |
+| Collection Rate  | paid vs total invoices          | COUNT(paid) / COUNT(all non-draft) * 100 |
+| Overdue Amount   | invoices where status = overdue | SUM(totalAmount) + count                 |
+| Payroll Disbursed | payslips where status != draft | SUM(netAmount) + count                   |
+
+Each card shows: value, trend vs prior period (% change or absolute delta).
+
+* 3. Charts (Middle Row)
+
+** 3.1 Monthly Invoiced vs Collected (Bar Chart)
+- X axis: months (Jan-Jun or last 6 months)
+- Two bars per month: invoiced amount (blue), collected amount (green)
+- Purpose: visualize the gap between what we bill and what we collect
+
+** 3.2 Invoice Status Distribution (Donut Chart)
+- Segments: Paid, Pending (sent), Overdue, Draft
+- Center shows collection rate percentage
+- Purpose: at-a-glance health of the receivables pipeline
+
+* 4. Tables (Bottom Row)
+
+** 4.1 Top Overdue Invoices
+| Column   | Description                        |
+|----------+------------------------------------|
+| Invoice  | Invoice number (INV-YYYY-NNN)      |
+| Customer | Customer name                      |
+| Amount   | Total amount owed                  |
+| Days Late| Calendar days past due date        |
+
+Show top 5 sorted by days late descending.
+
+** 4.2 Recent Payslips
+| Column   | Description                        |
+|----------+------------------------------------|
+| Payslip  | Payslip number (PS-YYYY-NNN)       |
+| Employee | Employee name                      |
+| Net Pay  | Take-home amount                   |
+| Status   | Sent / Viewed / Downloaded         |
+
+Show last 5 payslips sorted by date descending.
+
+* 5. Data Refresh
+- KPIs refresh on page load (server-rendered from database)
+- No auto-refresh needed — executives reload when they want fresh data
+- API endpoint: GET /api/stats returns all KPI values in one call
+
+* 6. Design Constraints
+- One screen, no scrolling on desktop (1920x1080)
+- Clean, professional look — not flashy
+- Color palette: slate/navy base, blue for invoiced, green for paid, amber for overdue
+- Must work on tablet (iPad landscape) for boardroom use
