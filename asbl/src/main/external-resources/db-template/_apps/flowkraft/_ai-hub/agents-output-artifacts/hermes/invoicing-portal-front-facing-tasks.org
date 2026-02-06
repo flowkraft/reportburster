@@ -1,0 +1,53 @@
+#+TITLE: Invoicing Portal — Front-Facing Portal Tasks (Grails)
+#+AUTHOR: Hermes (Grails Guru & Self-Service Portal Advisor)
+#+DATE: 2026-01-22
+
+* TODO Task 1: Portal Layout
+Create ~grails-app/views/layouts/portal.gsp~
+
+- Clean, customer-facing layout (no admin sidebar)
+- Top navbar: portal name, user greeting, logout link
+- Footer with company info
+- Bootstrap 5 responsive layout
+- Different styling from admin — lighter, more welcoming
+
+* TODO Task 2: Customer Invoice List
+Create ~grails-app/views/portalInvoice/index.gsp~
+
+- Heading: "My Invoices"
+- Table: Invoice Number, Date, Amount, Status, Action
+- Status badges: color-coded (paid=green, sent=blue, overdue=red)
+- "View" button links to invoice detail
+- "Pay" button shown only for unpaid invoices (isPayable())
+- Sorted by issueDate descending (newest first)
+- Note: demo mode shows all invoices; production would filter by logged-in user
+
+* TODO Task 3: Customer Invoice Detail
+Create ~grails-app/views/portalInvoice/show.gsp~
+
+- Invoice header: number, date, status badge
+- Customer info section
+- Amounts breakdown: subtotal, tax, discount, total
+- If paid: payment confirmation with method and date
+- If unpaid: prominent "Pay Invoice" button -> links to payment page
+- "Back to My Invoices" link
+
+* TODO Task 4: Payment Page
+Create ~grails-app/views/portalInvoice/pay.gsp~
+
+- Shows invoice summary (number, amount, currency)
+- Two payment options:
+  - Stripe: embedded card form using Stripe.js Elements
+  - PayPal: "Pay with PayPal" button using PayPal JS SDK
+- On success: redirect to invoice detail with "paid" confirmation
+- On error: display error message, let customer retry
+- JavaScript handles async calls to /payment/stripe/create-intent and /payment/paypal/create-order
+
+* TODO Task 5: Homepage
+Create ~grails-app/views/home/index.gsp~
+
+- Hero section with portal branding
+- Grid of feature cards linking to demos:
+  - Invoices, Charts, Tabulator, Pivot Tables, Reports, Parameters, Your Canvas
+- Each card: icon, title, short description
+- Responsive grid: 3 columns desktop, 2 tablet, 1 mobile

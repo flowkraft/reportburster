@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Executive KPI Dashboard - Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
+  .header { background: #0f172a; color: white; padding: 16px 28px; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { font-size: 1.15rem; font-weight: 600; }
+  .header .period { color: #94a3b8; font-size: 0.85rem; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+  /* KPI Cards Row */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+  .kpi-card .label { font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .kpi-card .value { font-size: 1.7rem; font-weight: 700; }
+  .kpi-card .change { font-size: 0.8rem; margin-top: 4px; }
+  .kpi-card .change.up { color: #16a34a; }
+  .kpi-card .change.down { color: #dc2626; }
+  .kpi-card .change.neutral { color: #64748b; }
+
+  .kpi-card.revenue .value { color: #0f172a; }
+  .kpi-card.collection .value { color: #0ea5e9; }
+  .kpi-card.overdue .value { color: #f59e0b; }
+  .kpi-card.payroll .value { color: #8b5cf6; }
+
+  /* Chart section */
+  .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .chart-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+  .chart-card h3 { font-size: 0.9rem; color: #334155; margin-bottom: 16px; font-weight: 600; }
+
+  /* Bar chart */
+  .bar-chart { display: flex; align-items: flex-end; gap: 12px; height: 180px; border-bottom: 1px solid #e2e8f0; padding-bottom: 0; }
+  .bar-group { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 3px; height: 100%; }
+  .bar { width: 18px; border-radius: 3px 3px 0 0; transition: height 0.3s; }
+  .bar.invoiced { background: #0ea5e9; }
+  .bar.collected { background: #22c55e; }
+  .bar-labels { display: flex; gap: 12px; margin-top: 6px; }
+  .bar-labels span { flex: 1; text-align: center; font-size: 0.72rem; color: #94a3b8; }
+
+  /* Donut chart */
+  .donut-container { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .donut { width: 140px; height: 140px; border-radius: 50%; background: conic-gradient(#22c55e 0% 62%, #f59e0b 62% 78%, #ef4444 78% 88%, #94a3b8 88% 100%); position: relative; }
+  .donut::after { content: '62%'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; color: #22c55e; }
+  .donut-legend { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: #475569; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+  .legend-dot.paid { background: #22c55e; }
+  .legend-dot.pending { background: #f59e0b; }
+  .legend-dot.overdue { background: #ef4444; }
+  .legend-dot.draft { background: #94a3b8; }
+
+  /* Bottom row */
+  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .table-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+  .table-card h3 { font-size: 0.9rem; color: #334155; margin-bottom: 12px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th { text-align: left; color: #64748b; font-weight: 500; padding: 6px 0; border-bottom: 1px solid #e2e8f0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3px; }
+  td { padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 500; }
+  .badge.paid { background: #dcfce7; color: #166534; }
+  .badge.overdue { background: #fef3c7; color: #92400e; }
+  .badge.sent { background: #dbeafe; color: #1e40af; }
+  .badge.viewed { background: #f3e8ff; color: #6b21a8; }
+  .amount { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .footer { text-align: center; padding: 20px; color: #94a3b8; font-size: 0.78rem; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Executive Dashboard</h1>
+  <span class="period">Period: Jan &ndash; Jun 2026</span>
+</div>
+
+<div class="container">
+
+  <!-- KPI Cards -->
+  <div class="kpi-row">
+    <div class="kpi-card revenue">
+      <div class="label">Total Revenue</div>
+      <div class="value">$284,500</div>
+      <div class="change up">+12.3% vs prior period</div>
+    </div>
+    <div class="kpi-card collection">
+      <div class="label">Collection Rate</div>
+      <div class="value">87.4%</div>
+      <div class="change up">+3.1pp vs prior period</div>
+    </div>
+    <div class="kpi-card overdue">
+      <div class="label">Overdue Amount</div>
+      <div class="value">$18,200</div>
+      <div class="change down">4 invoices past due</div>
+    </div>
+    <div class="kpi-card payroll">
+      <div class="label">Payroll Disbursed</div>
+      <div class="value">$156,800</div>
+      <div class="change neutral">42 payslips this period</div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <h3>Monthly Invoiced vs Collected (USD)</h3>
+      <div class="bar-chart">
+        <div class="bar-group">
+          <div class="bar invoiced" style="height:60%"></div>
+          <div class="bar collected" style="height:52%"></div>
+        </div>
+        <div class="bar-group">
+          <div class="bar invoiced" style="height:75%"></div>
+          <div class="bar collected" style="height:65%"></div>
+        </div>
+        <div class="bar-group">
+          <div class="bar invoiced" style="height:55%"></div>
+          <div class="bar collected" style="height:50%"></div>
+        </div>
+        <div class="bar-group">
+          <div class="bar invoiced" style="height:90%"></div>
+          <div class="bar collected" style="height:78%"></div>
+        </div>
+        <div class="bar-group">
+          <div class="bar invoiced" style="height:100%"></div>
+          <div class="bar collected" style="height:92%"></div>
+        </div>
+        <div class="bar-group">
+          <div class="bar invoiced" style="height:82%"></div>
+          <div class="bar collected" style="height:70%"></div>
+        </div>
+      </div>
+      <div class="bar-labels">
+        <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:12px;font-size:0.75rem;color:#64748b;">
+        <span><span style="display:inline-block;width:10px;height:10px;background:#0ea5e9;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Invoiced</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Collected</span>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Invoice Status Distribution</h3>
+      <div class="donut-container">
+        <div class="donut"></div>
+        <div class="donut-legend">
+          <div class="legend-item"><div class="legend-dot paid"></div>Paid (62%)</div>
+          <div class="legend-item"><div class="legend-dot pending"></div>Pending (16%)</div>
+          <div class="legend-item"><div class="legend-dot overdue"></div>Overdue (10%)</div>
+          <div class="legend-item"><div class="legend-dot draft"></div>Draft (12%)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Tables Row -->
+  <div class="bottom-row">
+    <div class="table-card">
+      <h3>Top 5 Overdue Invoices</h3>
+      <table>
+        <tr><th>Invoice</th><th>Customer</th><th>Amount</th><th>Days Late</th></tr>
+        <tr><td>INV-2026-047</td><td>Global Solutions Ltd</td><td class="amount">$8,400</td><td><span class="badge overdue">32 days</span></td></tr>
+        <tr><td>INV-2026-039</td><td>TechStart Inc</td><td class="amount">$4,200</td><td><span class="badge overdue">21 days</span></td></tr>
+        <tr><td>INV-2026-051</td><td>Digital Ventures</td><td class="amount">$3,100</td><td><span class="badge overdue">14 days</span></td></tr>
+        <tr><td>INV-2026-044</td><td>Innovation Labs</td><td class="amount">$1,800</td><td><span class="badge overdue">8 days</span></td></tr>
+        <tr><td>INV-2026-055</td><td>Acme Corp</td><td class="amount">$700</td><td><span class="badge overdue">3 days</span></td></tr>
+      </table>
+    </div>
+
+    <div class="table-card">
+      <h3>Recent Payslips</h3>
+      <table>
+        <tr><th>Payslip</th><th>Employee</th><th>Net Pay</th><th>Status</th></tr>
+        <tr><td>PS-2026-042</td><td>Sarah Chen</td><td class="amount">$5,840</td><td><span class="badge paid">Downloaded</span></td></tr>
+        <tr><td>PS-2026-041</td><td>James Wilson</td><td class="amount">$4,920</td><td><span class="badge viewed">Viewed</span></td></tr>
+        <tr><td>PS-2026-040</td><td>Maria Garcia</td><td class="amount">$6,100</td><td><span class="badge sent">Sent</span></td></tr>
+        <tr><td>PS-2026-039</td><td>David Kim</td><td class="amount">$5,350</td><td><span class="badge paid">Downloaded</span></td></tr>
+        <tr><td>PS-2026-038</td><td>Emily Brown</td><td class="amount">$4,680</td><td><span class="badge sent">Sent</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">Mockup generated by Athena &mdash; FlowKraft AI Crew</div>
+</body>
+</html>

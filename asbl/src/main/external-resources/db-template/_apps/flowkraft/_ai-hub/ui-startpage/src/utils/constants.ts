@@ -28,7 +28,7 @@ export const lettaConfig = {
   app: {
     name: 'FlowKraft AI Crew',
     version: '1.0.0',
-    description: 'AI Crew Dashboard for FlowKraft advisor agents',
+    description: 'FlowKraft\'s AI Crew - advisor agents dashboard',
   },
 } as const;
 

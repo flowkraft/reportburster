@@ -1,0 +1,161 @@
+#+TITLE: Invoicing Portal — Front-Facing Templates & Publishing (WordPress)
+#+AUTHOR: Pythia (WordPress CMS Portal Advisor)
+#+DATE: 2026-01-26
+
+* TODO Task1: Create single-invoice.php (Individual Invoice View)
+File location: ~wp-themes/reportburster-theme/single-invoice.php~
+
+** 1.1 Access Control
+#+begin_src php
+$pod = pods(get_post_type(), get_the_ID());
+$allow_public = (bool)$pod->field('allow_public_view');
+
+if (!$allow_public) {
+    if (!is_user_logged_in()) {
+        wp_redirect(wp_login_url(get_permalink()));
+        exit;
+    }
+    $assoc_user = $pod->field('associated_user');
+    $current = wp_get_current_user();
+    if ($assoc_user && isset($assoc_user['ID']) && $assoc_user['ID'] != $current->ID
+        && !current_user_can('administrator')) {
+        wp_die('Access denied.');
+    }
+}
+#+end_src
+
+** 1.2 Data Extraction
+#+begin_src php
+$order_id      = esc_html($pod->display('order_id'));
+$order_date    = esc_html($pod->display('order_date'));
+$customer_name = esc_html($pod->display('customer_name'));
+$freight       = number_format((float)$pod->field('freight'), 2);
+$subtotal      = number_format((float)$pod->field('subtotal'), 2);
+$tax           = number_format((float)$pod->field('tax'), 2);
+$grand_total   = number_format((float)$pod->field('grand_total'), 2);
+$status        = $pod->field('document_status');
+$line_items    = json_decode($pod->field('line_items_json'), true) ?: [];
+#+end_src
+
+** 1.3 HTML Layout
+- get_header() to load Sage theme with Tailwind
+- Invoice header: Order ID, Date, Status badge (Paid=green, Unpaid=amber)
+- Customer info section
+- Line items table:
+  | Product | Qty | Unit Price | Discount | Line Total |
+  - Each row from $line_items array
+  - Line total = qty * unit_price * (1 - discount)
+- Amounts summary: Subtotal, Freight, Tax, Grand Total
+- If Paid: strikethrough on grand total, payment confirmation
+- If Unpaid + not admin: "Pay Invoice" button
+- Admin-only: "Viewed" indicator from was_viewed_by field
+- Print button, Back to My Documents link
+- get_footer()
+
+** 1.4 Update was_viewed_by on Access
+#+begin_src php
+// Mark as viewed if customer (not admin) is viewing
+if (!current_user_can('administrator') && $pod->field('was_viewed_by') === 'not_viewed') {
+    $pod->save(['was_viewed_by' => 'viewed_by_' . $current->ID]);
+}
+#+end_src
+
+* TODO Task2: Update page-my-documents.php for Invoices
+If the portal serves both payslips and invoices, add an invoice section to
+the existing page-my-documents.php, or create a separate page.
+
+** 2.1 Invoice Query
+#+begin_src php
+$post_type = 'invoice';
+$pod = pods($post_type, [
+    'limit'   => $per_page,
+    'offset'  => $offset,
+    'orderby' => 'post_date DESC',
+    'where'   => $conditions,  // ownership + search filters
+]);
+#+end_src
+
+** 2.2 Table Columns for Invoices
+| Column        | Source                        |
+|---------------+-------------------------------|
+| Order ID      | order_id field                |
+| Customer      | customer_name field           |
+| Date          | order_date field              |
+| Amount        | grand_total field (formatted) |
+| Status        | document_status (badge)       |
+| Action        | View link + Pay button        |
+
+** 2.3 Status-Dependent Actions
+- Unpaid: Show "View" + "Pay Invoice" buttons
+- Paid: Show "View" only, strikethrough on amount
+- Admin: Show "View" + "Viewed" indicator (no pay button)
+
+* TODO Task3: Create endExtractDocument.groovy for Invoices
+File: ~/reportburster/scripts/burst/endExtractDocument.groovy~
+
+** 3.1 Guard
+#+begin_src groovy
+if (ctx.settings.getTemplateName().toLowerCase().indexOf("invoices2portal") != -1) {
+    // invoice publishing code
+}
+#+end_src
+
+** 3.2 Variable Mapping
+| Burst Variable | Invoice Field   |
+|----------------+-----------------|
+| var0           | order_id        |
+| var1           | order_date      |
+| var2           | customer_id     |
+| var3           | customer_name   |
+| var4           | freight         |
+| var5           | line_items_json |
+| var6           | subtotal        |
+| var7           | tax             |
+| var8           | grand_total     |
+| var9           | customer email  |
+| var10          | document_status |
+
+** 3.3 Publish Invoice via REST API
+#+begin_src groovy
+def publishUrl = "${portalBaseUrl}/wp-json/wp/v2/invoice"
+def payload = [
+    title: "Invoice ${orderId}",
+    status: "publish",
+    fields: [
+        order_id: orderId,
+        order_date: orderDate,
+        customer_name: customerName,
+        grand_total: grandTotal,
+        line_items_json: lineItemsJson,
+        document_status: "UN",
+        was_viewed_by: "not_viewed",
+        associated_user: userId
+    ]
+]
+// POST with Basic Auth
+#+end_src
+
+* TODO Task4: Payment Integration Options
+Two approaches — choose based on complexity needs:
+
+** Option A: Forminator Plugin (Recommended for v1)
+- Activate forminator plugin: ~wp plugin activate forminator~
+- Create payment form with Stripe/PayPal in Forminator admin
+- Link "Pay Invoice" button to the Forminator form with amount pre-filled
+- On successful payment, use Forminator webhook to update document_status to "PA"
+- Zero custom payment code needed
+
+** Option B: Custom Payment Code
+- Write custom Stripe/PayPal integration in the reportburster-portal plugin
+- More control but significantly more code
+- Only if Forminator doesn't meet specific requirements
+
+* TODO Task5: End-to-End Testing
+1. Create invoice via WP Admin with sample line items JSON
+2. Assign to a customer user
+3. Log in as customer > My Documents > verify invoice appears
+4. Click invoice > verify line items table renders from JSON
+5. Click "Pay Invoice" > verify payment flow
+6. After payment > verify status changes to "PA" (Paid)
+7. Log in as admin > verify "Viewed" indicator shows
+8. Test ReportBurster publishing with invoices2portal template

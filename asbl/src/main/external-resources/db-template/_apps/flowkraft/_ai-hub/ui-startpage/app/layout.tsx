@@ -6,15 +6,16 @@ import { Footer } from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "sonner";
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "AI Crew Dashboard",
-  description: "AI Agent Management and Monitoring Dashboard",
+  title: "FlowKraft's (AI) Crew",
+  description: "FlowKraft's (AI) Crew Dashboard",
 };
 
 export default function RootLayout({

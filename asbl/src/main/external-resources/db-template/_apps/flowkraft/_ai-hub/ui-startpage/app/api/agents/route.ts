@@ -6,8 +6,10 @@ export async function GET() {
     const client = getLettaClient();
     const agentsResponse: any = await client.agents.list();
 
-    // The response is a paginated object with an 'agents' array
-    const agentsList = Array.isArray(agentsResponse) ? agentsResponse : (agentsResponse.agents || []);
+    // Letta SDK returns { items: [...] } for paginated list endpoints
+    const agentsList = Array.isArray(agentsResponse)
+      ? agentsResponse
+      : (agentsResponse.items || agentsResponse.agents || []);
 
     return NextResponse.json({
       success: true,

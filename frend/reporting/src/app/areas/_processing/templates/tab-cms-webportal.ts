@@ -10,9 +10,9 @@ export const tabCmsWebPortalTemplate = `<ng-template
           [routerLink]="['/help','appsMenuSelected']"
           skipLocationChange="true"
           class="btn btn-default"
-          style="font-size: 1.05em; padding: 8px 20px; border-radius: 4px;"
+          style="font-size: 1.05em; padding: 10px 24px; border-radius: 4px; border: 1.5px solid #aaa;"
         >
-          <u>Explore More Apps That Go Well Together with ReportBurster</u>
+          Explore More Apps That Go Well Together with ReportBurster
         </a>
       </div>
   </div>

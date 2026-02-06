@@ -1,0 +1,78 @@
+#+TITLE: HR Payslips Portal — Admin Panel Tasks (WordPress + PODS)
+#+AUTHOR: Pythia (WordPress CMS Portal Advisor)
+#+DATE: 2026-01-20
+
+* TODO Task1: Install PODS Framework
+- Navigate to WP Admin > Plugins > Add New
+- Search for "Pods" and install version 3.3.x
+- Activate the plugin
+- Wait 5 seconds for PODS to initialize its tables
+
+* TODO Task2: Create "Paystub" Custom Post Type in PODS
+- Go to Pods Admin > Add New > Custom Post Type
+- Pod Name: ~paystub~
+- Label: "Payslip" (singular), "Payslips" (plural)
+- Enable REST API: Yes (needed for ReportBurster publishing)
+
+* TODO Task3: Define Paystub Fields in PODS Admin
+Add these custom fields to the paystub Pod:
+
+** 3.1 Employee Information Fields
+| Field Name    | Field Type | Notes                    |
+|---------------+------------+--------------------------|
+| employee      | Text       | Employee full name       |
+| employee_id   | Text       | Employee identifier      |
+| department    | Text       | Department name          |
+| job_title     | Text       | Position title           |
+
+** 3.2 Financial Fields
+| Field Name       | Field Type | Notes                        |
+|------------------+------------+------------------------------|
+| basic_salary     | Number     | Base salary amount           |
+| bonuses          | Number     | Bonus amount                 |
+| total_earnings   | Number     | = basic_salary + bonuses     |
+| federal_tax      | Number     | Federal tax deduction        |
+| social_security_tax | Number  | SS tax deduction            |
+| medicare_tax     | Number     | Medicare deduction           |
+| state_tax        | Number     | State tax deduction          |
+| medical          | Number     | Medical insurance deduction  |
+| dental           | Number     | Dental insurance deduction   |
+| total_deductions | Number     | Sum of all deductions        |
+| net_pay          | Number     | = total_earnings - total_deductions |
+
+** 3.3 Period Field
+| Field Name | Field Type | Notes                        |
+|------------+------------+------------------------------|
+| period     | Text       | e.g., "January 2026"        |
+
+** 3.4 Access Control Fields
+| Field Name        | Field Type              | Notes                              |
+|-------------------+-------------------------+------------------------------------|
+| associated_user   | User Relationship       | Links payslip to one WP user       |
+| associated_groups | Pick / Multi-Select     | Group-based access (optional)      |
+| associated_roles  | Pick / Multi-Select     | Role-based access (optional)       |
+| allow_public_view | Boolean                 | Bypass all auth checks if true     |
+
+* TODO Task4: Create Custom WordPress Role
+- Via WP-CLI or plugin: ~wp role create employee 'Employee' --clone=subscriber~
+- This role allows employees to log in and view their own payslips
+- Admins retain full access to all payslips
+
+* TODO Task5: Create "My Documents" Page
+- Go to WP Admin > Pages > Add New
+- Title: "My Documents"
+- Slug: ~my-documents~
+- Template: leave as default (WordPress will auto-load ~page-my-documents.php~ from theme)
+- Store the page ID in WordPress option: ~reportburster_account_page_id~
+
+* TODO Task6: Create Test Payslip Entry
+- Go to WP Admin > Payslips > Add New
+- Fill in all fields with sample data to verify PODS configuration works
+- Assign an ~associated_user~ to test access control
+- Verify the entry saves correctly and all fields display
+
+* TODO Task7: Verify REST API Access
+- Test: GET ~http://localhost:8430/wp-json/wp/v2/paystub~
+- Should return the test payslip as JSON
+- Verify all custom fields appear in the response
+- This endpoint is used by the ReportBurster Groovy script to publish payslips

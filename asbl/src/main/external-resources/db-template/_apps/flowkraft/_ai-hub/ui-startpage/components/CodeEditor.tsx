@@ -17,8 +17,9 @@ import 'prismjs/components/prism-groovy';
 import '../lib/prism-plantuml';
 import '../lib/prism-orgmode';
 
-// Import Prism theme
+// Import Prism theme + custom org-mode colors
 import 'prismjs/themes/prism-tomorrow.css';
+import '../lib/prism-orgmode.css';
 
 interface CodeEditorProps {
   code: string;

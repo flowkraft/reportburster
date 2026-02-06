@@ -92,3 +92,36 @@ allow_public_rooms_over_federation: false
 # Retention policy
 retention:
   enabled: false
+
+# Disable rate limiting for local development
+# Prevents provisioning failures when creating multiple rooms rapidly
+rc_message:
+  per_second: 1000
+  burst_count: 1000
+rc_registration:
+  per_second: 1000
+  burst_count: 1000
+rc_login:
+  address:
+    per_second: 1000
+    burst_count: 1000
+  account:
+    per_second: 1000
+    burst_count: 1000
+rc_admin_redaction:
+  per_second: 1000
+  burst_count: 1000
+rc_joins:
+  local:
+    per_second: 1000
+    burst_count: 1000
+  remote:
+    per_second: 1000
+    burst_count: 1000
+rc_invites:
+  per_room:
+    per_second: 1000
+    burst_count: 1000
+  per_user:
+    per_second: 1000
+    burst_count: 1000

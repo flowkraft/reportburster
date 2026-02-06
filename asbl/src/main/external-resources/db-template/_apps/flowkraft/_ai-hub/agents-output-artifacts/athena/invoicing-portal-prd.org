@@ -1,0 +1,97 @@
+#+TITLE: Invoicing Portal — Product Requirements Document
+#+AUTHOR: Athena (ReportBurster Guru & Business Analysis Expert)
+#+DATE: 2026-01-15
+
+* 1. Overview
+
+** 1.1 What We're Building
+A self-service invoicing portal where administrators create and manage invoices,
+customers view and pay them online, and the system tracks payment status automatically.
+
+** 1.2 Why
+Manual invoice handling (email PDFs, wait for bank transfers, chase late payments)
+doesn't scale. This portal gives customers a single place to see their invoices and
+pay with one click, while giving the business real-time visibility into cash flow.
+
+** 1.3 For Whom
+- *Administrators* — create invoices, track status, manage overdue items
+- *Customers* — view their invoices, pay online (Stripe / PayPal)
+
+* 2. Data Model
+
+** 2.1 Invoice Entity
+| Field            | Type       | Notes                                        |
+|------------------+------------+----------------------------------------------|
+| invoiceNumber    | String     | Auto-generated: INV-YYYY-NNN, unique         |
+| customerId       | String     | External customer identifier                 |
+| customerName     | String     | Display name                                 |
+| customerEmail    | String     | Optional, for email delivery                 |
+| customerAddress  | String     | Optional                                     |
+| issueDate        | Date       | When the invoice was created                 |
+| dueDate          | Date       | Payment deadline                             |
+| subtotal         | BigDecimal | Sum of line items before tax                 |
+| taxRate          | BigDecimal | Percentage (0-100), default 0                |
+| taxAmount        | BigDecimal | Calculated: subtotal * taxRate / 100         |
+| discount         | BigDecimal | Flat discount amount, default 0              |
+| totalAmount      | BigDecimal | subtotal + taxAmount - discount              |
+| currency         | String     | USD, EUR, GBP, CAD, AUD                      |
+| status           | String     | draft -> sent -> paid / overdue / cancelled  |
+| notes            | String     | Free text for payment instructions           |
+| paidAt           | Date       | Timestamp of payment                         |
+| paymentMethod    | String     | stripe, paypal, bank_transfer, cash, other   |
+| paymentReference | String     | Transaction ID from payment processor        |
+
+** 2.2 Settings Entity
+Key-value store for company name, currency defaults, payment processor config, theme.
+
+* 3. User Stories
+
+** 3.1 Admin Stories
+- As admin, I can create a new invoice with customer details and amounts
+- As admin, I can send an invoice (status changes from draft to sent)
+- As admin, I can view a list of all invoices with search and status filter
+- As admin, I can see which invoices are overdue
+- As admin, I can manually mark an invoice as paid
+- As admin, I can cancel an invoice
+- As admin, I can configure company settings (name, email, currency)
+
+** 3.2 Customer Stories
+- As customer, I can see a list of my invoices
+- As customer, I can view invoice details (amounts, dates, status)
+- As customer, I can pay an unpaid invoice using Stripe or PayPal
+- As customer, I see a confirmation when my payment is processed
+
+* 4. Pages
+
+** 4.1 Admin Panel
+- Dashboard — stats cards (total invoices, revenue, pending, overdue)
+- Invoice List — table with search, status filter, pagination
+- Invoice Detail — full info, action buttons (send, mark paid, cancel)
+- Invoice Create/Edit — form with all fields, auto-calculation
+- Settings — company info, payment processor toggle
+
+** 4.2 Customer Portal
+- Invoice List — filtered to logged-in customer
+- Invoice Detail — amounts, status badge, "Pay Invoice" button
+- Payment Page — Stripe card form or PayPal checkout
+
+* 5. Payment Integration
+
+** 5.1 Stripe Flow
+1. Customer clicks "Pay" → frontend calls POST /payment/stripe/create-intent
+2. Backend creates PaymentIntent with invoice amount → returns clientSecret
+3. Frontend renders Stripe Elements form
+4. Customer submits → Stripe processes → POST /payment/stripe/confirm
+5. Backend marks invoice as paid, records paymentReference
+
+** 5.2 PayPal Flow
+1. Customer clicks "Pay with PayPal" → POST /payment/paypal/create-order
+2. Customer redirected to PayPal approval page
+3. On return → POST /payment/paypal/capture-order
+4. Backend marks invoice as paid
+
+* 6. Success Criteria
+- Admin can go from "create invoice" to "customer pays online" in under 2 minutes
+- Overdue invoices are automatically flagged
+- Customer sees only their own invoices (no data leakage)
+- Payment confirmation is immediate (no manual reconciliation needed)

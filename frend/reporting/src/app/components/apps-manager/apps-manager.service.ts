@@ -150,15 +150,15 @@ export class AppsManagerService {
       },
       {
         id: 'flowkraft-ai-hub',
-        name: 'FlowKraft AI Hub',
+        name: 'FlowKraft\'s AI Hub',
         icon: 'fa fa-robot',
         category: 'AI & Agents',
         type: 'docker',
-        description: 'Meet your AI assistants! Athena, Hephaestus, Hermes, and Apollo are here to help with ReportBurster tasks, data exploration & visualization, ETL/cron automations, and building admin panels, dashboards, or customer-facing web apps. Visit Athena\'s Data Lab to chat with your databases and create stunning charts!',
+        description: 'Meet your AI assistants! Athena, Hephaestus, Hermes, and Apollo are here to help with ReportBurster tasks, data exploration & visualization, ETL/cron automations, and building admin panels, BI dashboards, or customer-facing web apps.<br><br><b>Visit FlowKraft\'s Data Analysis Lab to chat with your databases and create stunning charts!</b>',
         url: 'http://localhost:8440',
         launchLinks: [
           { label: 'Meet the FlowKraft AI Crew', url: 'http://localhost:8440', icon: 'fa fa-free-code-camp' },
-          { label: 'Go and Explore Athena\'s Data Lab', url: 'http://localhost:8441', icon: 'fa fa-flask' },
+          { label: 'FlowKraft\'s Data Analysis Lab', url: 'http://localhost:8441/lab/tree/00-chat.ipynb', icon: 'fa fa-flask' },
           { label: 'Chat with the Ancient Greeks ... Oracles@Your Service', url: 'http://localhost:8442', icon: 'fa fa-commenting-o' },
         ],
         entrypoint: 'flowkraft/_ai-hub/docker-compose.yml',
@@ -311,12 +311,47 @@ export class AppsManagerService {
     ],
   };
 
+  // localStorage key and timeout for persisting transitional states across page reloads
+  private static readonly TRANSITIONAL_STATES_KEY = 'rb-apps-transitional-states';
+  private static readonly TRANSITIONAL_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+
   constructor(
     private shellService: ShellService,
     private messagesService: ToastrMessagesService,
     private apiService: ApiService,
     private stateStore: StateStoreService,
   ) { }
+
+  private saveTransitionalState(appId: string, state: 'starting' | 'stopping'): void {
+    try {
+      const stored = JSON.parse(localStorage.getItem(AppsManagerService.TRANSITIONAL_STATES_KEY) || '{}');
+      stored[appId] = { state, timestamp: Date.now() };
+      localStorage.setItem(AppsManagerService.TRANSITIONAL_STATES_KEY, JSON.stringify(stored));
+    } catch (e) { /* ignore localStorage errors */ }
+  }
+
+  private clearTransitionalState(appId: string): void {
+    try {
+      const stored = JSON.parse(localStorage.getItem(AppsManagerService.TRANSITIONAL_STATES_KEY) || '{}');
+      delete stored[appId];
+      localStorage.setItem(AppsManagerService.TRANSITIONAL_STATES_KEY, JSON.stringify(stored));
+    } catch (e) { /* ignore localStorage errors */ }
+  }
+
+  private getPersistedTransitionalState(appId: string): 'starting' | 'stopping' | null {
+    try {
+      const stored = JSON.parse(localStorage.getItem(AppsManagerService.TRANSITIONAL_STATES_KEY) || '{}');
+      const entry = stored[appId];
+      if (entry && (Date.now() - entry.timestamp) < AppsManagerService.TRANSITIONAL_TIMEOUT_MS) {
+        return entry.state;
+      }
+      if (entry) {
+        delete stored[appId];
+        localStorage.setItem(AppsManagerService.TRANSITIONAL_STATES_KEY, JSON.stringify(stored));
+      }
+      return null;
+    } catch (e) { return null; }
+  }
 
   // Add method to fetch statuses from API
   public async refreshAllStatuses(skipProbe: boolean = false): Promise<void> {
@@ -351,6 +386,11 @@ export class AppsManagerService {
           // Use shared helper to map backend status to UI state (handles healthcheck states)
           this.appStates[app.id] = PollingHelper.mapBackendStatusToUiState(service.status);
 
+          // Clear persisted transitional state once we reach a stable state
+          if (PollingHelper.isStableState(this.appStates[app.id])) {
+            this.clearTransitionalState(app.id);
+          }
+
           // If app has no `url`, derive one from the container's exposed ports (use first host-mapped port)
           try {
             if (!app.url && service.ports) {
@@ -370,15 +410,21 @@ export class AppsManagerService {
             this.stateStore.configSys.sysInfo.setup.portal.isProvisioned = true;
           }
         } else {
-          // No matching container found - but if we're already in a transitional state
-          // (starting/stopping), preserve it. The docker compose may still be building
-          // or the container may not have been created yet.
+          // No matching container found — check if we should preserve a transitional state.
+          // The localStorage timeout (10 min) handles builds that truly failed.
           const currentState = this.appStates[app.id];
           if (currentState === 'starting' || currentState === 'stopping') {
+            // Preserve in-memory transitional state while container is still building/stopping
             console.debug(`[AppsManager] No container found for ${app.id}, preserving transitional state: ${currentState}`);
-            // Keep the current transitional state
           } else {
-            this.appStates[app.id] = 'stopped';
+            // Check localStorage for persisted transitional state (survives page reloads)
+            const persistedState = this.getPersistedTransitionalState(app.id);
+            if (persistedState) {
+              this.appStates[app.id] = persistedState;
+              console.debug(`[AppsManager] Restored transitional state for ${app.id} from localStorage: ${persistedState}`);
+            } else {
+              this.appStates[app.id] = 'stopped';
+            }
           }
         }
       }
@@ -496,6 +542,7 @@ export class AppsManagerService {
 
     // Set instant feedback
     this.appStates[app.id] = 'starting';
+    this.saveTransitionalState(app.id, 'starting');
     this.appLastOutputs[app.id] = 'Executing start...';
 
     return new Promise<void>((resolve, reject) => {
@@ -504,12 +551,15 @@ export class AppsManagerService {
         if (result && result.success) {
           // Don't immediately set to 'running' - keep as 'starting' until healthcheck passes
           // The refreshAllStatuses() will set the correct state based on Docker's health status
+          // NOTE: Do NOT call markProcessCompleted() here - the shell script exits after launching
+          // docker compose in detached mode, but the container is still building. Only mark completed on error.
           this.appStates[app.id] = 'starting';
           this.appLastOutputs[app.id] = result.output || `✓ ${app.name} container started, waiting for health check...`;
           app.state = 'starting';
           app.lastOutput = this.appLastOutputs[app.id];
         } else {
           this.appStates[app.id] = 'error';
+          this.clearTransitionalState(app.id);
           this.appLastOutputs[app.id] = (result && result.output) || `✗ Failed to start ${app.name}.`;
           app.state = 'error';
           app.lastOutput = this.appLastOutputs[app.id];
@@ -541,6 +591,7 @@ export class AppsManagerService {
     if (!cmdParts.includes('--reprovision')) cmdParts.push('--reprovision');
 
     this.appStates[app.id] = 'starting';
+    this.saveTransitionalState(app.id, 'starting');
     this.appLastOutputs[app.id] = 'Starting theme rebuild...';
 
     return new Promise<void>((resolve) => {
@@ -552,6 +603,7 @@ export class AppsManagerService {
           app.lastOutput = this.appLastOutputs[app.id];
         } else {
           this.appStates[app.id] = 'error';
+          this.clearTransitionalState(app.id);
           this.appLastOutputs[app.id] = (result && result.output) || `✗ Failed to reprovision ${app.name}.`;
           app.state = 'error';
           app.lastOutput = this.appLastOutputs[app.id];
@@ -598,18 +650,21 @@ export class AppsManagerService {
 
     // Set instant feedback
     this.appStates[app.id] = 'stopping';
+    this.saveTransitionalState(app.id, 'stopping');
     this.appLastOutputs[app.id] = 'Executing stop...';
 
     return new Promise<void>((resolve, reject) => {
       this.shellService.runBatFile(command, `Stopping ${app.name}`, async (result) => {
         if (result && result.success) {
           this.appStates[app.id] = 'stopped';
+          this.clearTransitionalState(app.id);
           this.appLastOutputs[app.id] = result.output || `✓ ${app.name} stopped successfully.`;
           try { app.state = 'stopped'; } catch (e) { }
           try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e) { }
           try { app.currentCommandValue = app.startCmd; } catch (e) { }
         } else {
           this.appStates[app.id] = 'error';
+          this.clearTransitionalState(app.id);
           this.appLastOutputs[app.id] = (result && result.output) || `✗ Failed to stop ${app.name}.`;
           try { app.state = 'error'; } catch (e) { }
           try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e) { }

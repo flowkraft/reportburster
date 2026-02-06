@@ -1,0 +1,77 @@
+#+TITLE: Invoicing Portal — Admin Panel Tasks (Grails)
+#+AUTHOR: Hermes (Grails Guru & Self-Service Portal Advisor)
+#+DATE: 2026-01-20
+
+* TODO Task 1: Admin Layout
+Create ~grails-app/views/layouts/admin.gsp~
+
+- Sidebar navigation: Dashboard, Invoices, Settings
+- Top header bar with app name and user menu
+- Based on AdminLTE 4 + Bootstrap 5
+- Responsive: sidebar collapses on mobile
+
+* TODO Task 2: Admin Dashboard Page
+Create ~grails-app/views/admin/index.gsp~
+
+- 3 stats cards at top: Total Invoices, Total Revenue, Pending Payments
+- Data comes from AdminController.index() which queries counts and sums
+- Quick action buttons: "New Invoice", "View All"
+- Recent activity list (last 5 invoices)
+
+* TODO Task 3: Invoice List View
+Create ~grails-app/views/invoice/index.gsp~
+
+- Table columns: #, Invoice Number, Customer, Amount, Status, Date, Actions
+- Search box: filters by invoiceNumber, customerName, customerId
+- Status dropdown filter: All, Draft, Sent, Paid, Overdue, Cancelled
+- Pagination: 20 per page with prev/next controls
+- Status badges with color coding (getStatusBadgeClass())
+- Actions column: View, Edit, Delete buttons
+
+* TODO Task 4: Invoice Create Form
+Create ~grails-app/views/invoice/create.gsp~
+
+- Form sections: Customer Information, Dates, Amounts, Notes
+- Customer fields: customerId, customerName, customerEmail, customerAddress
+- Date fields: issueDate (datepicker), dueDate (datepicker)
+- Amount fields: subtotal, taxRate, discount — taxAmount and totalAmount auto-calculated
+- Currency selector dropdown
+- Submit button calls InvoiceController.save()
+
+* TODO Task 5: Invoice Detail View
+Create ~grails-app/views/invoice/show.gsp~
+
+- Header: invoice number + status badge
+- Customer info card
+- Amounts breakdown card (subtotal, tax, discount, total)
+- Payment info card (if paid: method, reference, paidAt)
+- Action buttons based on status:
+  - Draft: Send, Edit, Delete
+  - Sent: Mark Paid, Cancel
+  - Overdue: Mark Paid, Cancel
+  - Paid: Download only
+  - Cancelled: no actions
+
+* TODO Task 6: Invoice Edit Form
+Create ~grails-app/views/invoice/edit.gsp~
+
+- Same layout as create form, pre-populated with existing values
+- Only editable if status is "draft"
+- Submit calls InvoiceController.update()
+
+* TODO Task 7: Settings Page
+Create ~grails-app/views/admin/settings.gsp~
+
+- Grouped by category: Company, Preferences, Theme
+- Company: name, email, address
+- Preferences: currency (dropdown), dateFormat (dropdown)
+- Theme: mode toggle (light/dark)
+- Save button calls AdminController.saveSettings()
+
+* TODO Task 8: URL Mappings
+Update ~grails-app/controllers/UrlMappings.groovy~
+
+- /admin -> AdminController.index
+- /admin/settings -> AdminController.settings
+- /admin/invoices/** -> InvoiceController
+- Standard REST-style mappings for CRUD operations

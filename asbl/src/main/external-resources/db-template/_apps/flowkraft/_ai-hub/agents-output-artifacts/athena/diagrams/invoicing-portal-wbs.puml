@@ -1,0 +1,36 @@
+@startwbs Invoicing Portal — Work Breakdown
+
+title Invoicing Portal — WBS
+
+* Invoicing Portal
+** 1. Requirements & Data Modeling
+*** 1.1 Invoice PRD
+*** 1.2 ER Diagram
+*** 1.3 Process Flow
+** 2. Backend (Hephaestus)
+*** 2.1 Invoice Domain + GORM
+*** 2.2 Settings Domain
+*** 2.3 Invoice CRUD Controller
+*** 2.4 Invoice Action Endpoints
+*** 2.5 Portal Invoice Controller
+*** 2.6 Payment API (Stripe)
+*** 2.7 Payment API (PayPal)
+*** 2.8 BootStrap Seed Data
+** 3. Admin Panel (Hermes)
+*** 3.1 Admin Layout + Sidebar
+*** 3.2 Dashboard (stats cards)
+*** 3.3 Invoice List View
+*** 3.4 Invoice Create/Edit Forms
+*** 3.5 Invoice Detail + Actions
+*** 3.6 Settings Page
+** 4. Customer Portal (Hermes)
+*** 4.1 Portal Layout
+*** 4.2 Invoice List (filtered)
+*** 4.3 Invoice Detail + Pay
+*** 4.4 Payment Page
+** 5. Payment Integration
+*** 5.1 Stripe PaymentIntent Flow
+*** 5.2 PayPal Order Flow
+*** 5.3 Payment Confirmation + Status Update
+
+@endwbs

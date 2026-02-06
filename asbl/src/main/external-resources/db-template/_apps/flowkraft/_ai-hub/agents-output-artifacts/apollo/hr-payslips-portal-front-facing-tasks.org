@@ -1,0 +1,72 @@
+#+TITLE: HR Payslips Portal — Front-Facing Portal Tasks (Next.js)
+#+AUTHOR: Apollo (Next.js Guru & Modern Web Advisor)
+#+DATE: 2026-01-22
+
+* TODO Task 1: Main Layout (Public Pages)
+File: ~app/(main)/layout.tsx~
+
+- Navbar component with app branding, nav links (Home, features), theme toggle
+- Footer with company info
+- Wraps all public/demo pages
+- Responsive: hamburger menu on mobile
+
+* TODO Task 2: Homepage
+File: ~app/(main)/page.tsx~
+
+- Hero section: portal branding, tagline, CTA button to admin panel
+- Feature grid: 6 cards linking to demo components
+  - Tabulator, Charts, Pivot Tables, Report Parameters, Reports, Your Canvas
+- Each card: Lucide icon, title, description
+- shadcn Card components with hover effect
+- Responsive: 3-col desktop, 2-col tablet, 1-col mobile
+
+* TODO Task 3: Employee Payslip List (Portal View)
+This is the front-facing view for employees accessing their payslips.
+
+Note: In the Next.js playground, the admin panel doubles as the portal view
+(the /admin/payslips route). In a production app, you'd create a separate
+/portal/payslips route with employee-filtered data. The admin views demonstrate
+the full UI pattern that would be adapted for the portal.
+
+Key differences for a production portal route:
+- Filter payslips by logged-in user's employeeId (via NextAuth session)
+- Hide admin actions (edit, delete)
+- Show only "View" and "Download" buttons
+- Status auto-updates: "sent" -> "viewed" on page load
+
+* TODO Task 4: Employee Payslip Detail (Portal View)
+Same note as Task 3 — the admin detail page (/admin/payslips/[id]) demonstrates
+the UI pattern. For production portal:
+- Read-only view (no edit button)
+- Download PDF button prominently displayed
+- Pay period and amounts breakdown
+- Auto-mark status as "viewed" on first access
+- Auto-mark status as "downloaded" on PDF download
+
+* TODO Task 5: Component Demo Pages
+Files: ~app/(main)/tabulator/page.tsx~, ~charts/page.tsx~, etc.
+
+These pages showcase ReportBurster web components embedded in the Next.js app.
+Each page:
+- Loads RbWebComponentsLoader for custom elements
+- Renders the web component with sample configuration
+- Shows a code example of how to embed the component
+- Demonstrates the component's interactive features
+
+* TODO Task 6: Theme System
+Files: ~components/ThemeProvider.tsx~, ~components/ThemeSelector.tsx~, ~hooks/useThemeSettings.ts~
+
+- ThemeProvider wraps the app, reads theme from /api/settings
+- Dark/light mode toggle persisted in SQLite (not localStorage)
+- CSS variables define the color palette
+- shadcn/ui components respond to theme automatically via Tailwind dark: prefix
+
+* TODO Task 7: Settings Page
+File: ~app/(admin)/admin/settings/page.tsx~
+
+- Three settings cards: Company, Preferences, Payment
+- Company: name (text), email (text)
+- Preferences: currency (select), dateFormat (select)
+- Payment: processor toggle (Stripe / PayPal / Bank Transfer)
+- Bulk save via PUT /api/settings
+- Toast feedback on save

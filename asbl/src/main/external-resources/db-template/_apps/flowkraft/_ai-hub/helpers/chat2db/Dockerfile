@@ -40,5 +40,5 @@ ENV PYTHONPATH="${PYTHONPATH}:/app/py"
 # Expose JupyterLab port
 EXPOSE 8888
 
-# Start JupyterLab with token from environment
-CMD ["sh", "-c", "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --NotebookApp.token=${JUPYTER_TOKEN:-reportburster}"]
+# Start JupyterLab rooted in /app/notebooks and auto-open the chat notebook
+CMD ["sh", "-c", "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --ServerApp.token=${JUPYTER_TOKEN:-reportburster} --ServerApp.root_dir=/app/notebooks"]
