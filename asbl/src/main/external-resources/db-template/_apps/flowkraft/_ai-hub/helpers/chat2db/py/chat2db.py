@@ -10,6 +10,8 @@ This module uses Athena (the data & analytics oracle) exclusively.
 
 import os
 import re
+import io
+import base64
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
@@ -34,6 +36,9 @@ class QueryResult:
     error: Optional[str] = None
     # For conversational responses (chit-chat, guidance) where no SQL is generated
     text_response: Optional[str] = None
+    # Visualization: Athena's suggested Python code + rendered base64 PNG
+    viz_code: Optional[str] = None
+    viz_image: Optional[str] = None  # base64-encoded PNG
 
     def _repr_html_(self):
         """Jupyter notebook HTML representation."""
@@ -59,9 +64,22 @@ class QueryResult:
             html_parts.append(f"<h4>📊 Results ({self.row_count} rows, {self.execution_time_ms:.1f}ms)</h4>")
             html_parts.append(self.df.to_html(max_rows=20, max_cols=10))
 
-        # Explanation
+        # Visualization
+        if self.viz_image:
+            html_parts.append(f'<h4>📈 Visualization</h4>')
+            html_parts.append(f'<img src="data:image/png;base64,{self.viz_image}" style="max-width:100%;">')
+
+        # Athena's narrative (render markdown for bold, bullets, etc.)
         if self.explanation:
-            html_parts.append(f"<h4>💡 Explanation</h4><p>{self.explanation}</p>")
+            try:
+                import mistune
+                rendered = mistune.html(self.explanation)
+            except ImportError:
+                import html
+                rendered = f"<p>{html.escape(self.explanation).replace(chr(10), '<br>')}</p>"
+            html_parts.append(
+                f"<div style='color:#374151;line-height:1.6;font-size:14px;'>{rendered}</div>"
+            )
 
         return "".join(html_parts)
 
@@ -97,23 +115,20 @@ class Chat2DB:
     def __init__(self,
                  connection_code: Optional[str] = None,
                  connection_config: Optional[DatabaseConnection] = None,
-                 auto_explain: bool = True,
                  block_dangerous: bool = True,
                  max_rows: int = 1000):
         """
         Initialize Chat2DB.
-        
+
         Args:
             connection_code: ReportBurster connection code (e.g., 'db-northwind-postgres').
             connection_config: Or provide a DatabaseConnection directly.
-            auto_explain: Automatically generate AI explanations for results.
             block_dangerous: Block DELETE, DROP, UPDATE, etc. queries.
             max_rows: Maximum rows to return from queries.
         """
         # Load settings from environment
         self.block_dangerous = block_dangerous if block_dangerous else os.environ.get('BLOCK_DANGEROUS_SQL', 'true').lower() == 'true'
         self.max_rows = max_rows if max_rows != 1000 else int(os.environ.get('MAX_RESULT_ROWS', '1000'))
-        self.auto_explain = auto_explain
         
         # Initialize connection manager
         self._conn_manager = ReportBursterConnections()
@@ -317,9 +332,72 @@ class Chat2DB:
             print(f"⚠️ Could not fetch table list: {e}")
     
     # -------------------------------------------------------------------------
+    # Visualization
+    # -------------------------------------------------------------------------
+
+    def _execute_viz(self, viz_code: str, df: pd.DataFrame) -> Optional[str]:
+        """
+        Execute Athena's visualization code and capture the result as base64 PNG.
+
+        The code runs in a sandboxed namespace with `df` (the query result),
+        `pd` (pandas), and plotting libraries pre-injected.
+
+        Args:
+            viz_code: Python code from Athena (matplotlib/plotly).
+            df: The query result DataFrame.
+
+        Returns:
+            Base64-encoded PNG string, or None if execution fails.
+        """
+        try:
+            import matplotlib
+            matplotlib.use('Agg')  # Non-interactive backend
+            import matplotlib.pyplot as plt
+
+            # Close any leftover figures
+            plt.close('all')
+
+            # Build a safe namespace for exec
+            namespace = {
+                'df': df,
+                'pd': pd,
+                'plt': plt,
+            }
+
+            # Try to inject plotly if available
+            try:
+                import plotly.express as px
+                import plotly.graph_objects as go
+                namespace['px'] = px
+                namespace['go'] = go
+            except ImportError:
+                pass
+
+            # Execute Athena's code
+            exec(viz_code, namespace)
+
+            # Capture the current matplotlib figure
+            fig = plt.gcf()
+            if fig.get_axes():
+                buf = io.BytesIO()
+                fig.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+                buf.seek(0)
+                img_b64 = base64.b64encode(buf.read()).decode('utf-8')
+                buf.close()
+                plt.close('all')
+                return img_b64
+
+            plt.close('all')
+            return None
+
+        except Exception as e:
+            print(f"⚠️ Visualization failed: {e}")
+            return None
+
+    # -------------------------------------------------------------------------
     # Query Methods
     # -------------------------------------------------------------------------
-    
+
     def ask(self, question: str, send_schema: bool = True) -> QueryResult:
         """
         Ask a natural language question about your data.
@@ -387,21 +465,17 @@ class Chat2DB:
                 sql=sql,
                 df=df,
                 execution_time_ms=execution_time,
-                row_count=len(df)
+                row_count=len(df),
+                viz_code=response.viz_code,
             )
-            
-            # Get explanation if enabled
-            if self.auto_explain and len(df) > 0:
-                try:
-                    explain_response = self._letta.explain_results(
-                        question=question,
-                        sql=sql,
-                        results=df.head(20).to_string()
-                    )
-                    result.explanation = explain_response.content
-                except Exception as e:
-                    print(f"⚠️ Could not generate explanation: {e}")
-            
+
+            # Execute visualization if Athena suggested one
+            if response.viz_code and len(df) > 0:
+                result.viz_image = self._execute_viz(response.viz_code, df)
+
+            # Use Athena's inline narrative (text around code blocks) as explanation
+            result.explanation = response.narrative
+
             return result
             
         except Exception as e:
@@ -476,7 +550,7 @@ class Chat2DB:
 
         def _athena_bubble(sql=None, table_html=None, explanation=None,
                            error=None, row_count=0, exec_ms=0.0,
-                           text_response=None):
+                           text_response=None, viz_image=None):
             """Render Athena's response bubble.
 
             Args:
@@ -541,12 +615,26 @@ class Chat2DB:
                         f'<div style="color:#9ca3af;font-size:11px;margin-bottom:4px;">{stats}</div>'
                         f'{table_html}</div>'
                     )
-                if explanation:
+                if viz_image:
                     p.append(
-                        '<div style="background:#f0fdf4;color:#166534;'
-                        'padding:10px 14px;border-radius:4px 4px 18px 18px;'
-                        'font-size:14px;margin-top:2px;line-height:1.5;">'
-                        f'\U0001f4a1 {explanation}</div>'
+                        '<div style="background:#fff;border:1px solid #e5e7eb;'
+                        'padding:6px;border-radius:4px;margin-top:2px;'
+                        'overflow-x:auto;">'
+                        f'<img src="data:image/png;base64,{viz_image}" '
+                        'style="max-width:100%;height:auto;">'
+                        '</div>'
+                    )
+                if explanation:
+                    try:
+                        import mistune
+                        rendered_expl = mistune.html(explanation)
+                    except ImportError:
+                        import html as html_mod
+                        rendered_expl = html_mod.escape(explanation).replace('\n', '<br>')
+                    p.append(
+                        '<div style="padding:10px 14px;border-radius:4px 4px 18px 18px;'
+                        'font-size:14px;margin-top:2px;line-height:1.6;color:#374151;">'
+                        f'{rendered_expl}</div>'
                     )
             p.append('</div></div>')
             return _wrap(''.join(p))
@@ -800,6 +888,7 @@ class Chat2DB:
                     row_count=result.row_count,
                     exec_ms=result.execution_time_ms,
                     text_response=result.text_response,
+                    viz_image=result.viz_image,
                 ))
             except Exception as exc:
                 # Remove thinking indicator
