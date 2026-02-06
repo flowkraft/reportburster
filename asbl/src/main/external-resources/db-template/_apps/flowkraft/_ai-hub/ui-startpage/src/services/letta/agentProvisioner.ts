@@ -170,6 +170,7 @@ async function ensureCustomToolsRegistered(client: any): Promise<Map<string, str
   const toolFiles = [
     'better_web_search.py',
     'better_fetch_webpage.py',
+    'execute_shell_command.py',
   ];
 
   const baseUrl = process.env.LETTA_BASE_URL || 'http://localhost:8283';
@@ -673,7 +674,7 @@ export async function provisionAllAgents(opts: { force?: boolean } = {}) {
       // Attach tools
       // For custom tools (better_web_search, better_fetch_webpage, execute_shell_command), use cached IDs from registration
       // These use unique names to avoid conflicts with Letta's built-in tools
-      const CUSTOM_TOOL_NAMES = ['better_web_search', 'better_fetch_webpage'];
+      const CUSTOM_TOOL_NAMES = ['better_web_search', 'better_fetch_webpage', 'execute_shell_command'];
       
       // First, get the agent's currently attached tools so we can detach old versions
       let agentCurrentTools: any[] = [];

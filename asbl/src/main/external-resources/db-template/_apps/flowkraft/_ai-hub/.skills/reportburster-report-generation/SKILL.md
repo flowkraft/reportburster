@@ -8,7 +8,7 @@ Each document type users want to generate (invoices, payslips, statements) needs
 
 ### Report Folder Structure
 
-Each new Report (e.g., "Invoices") creates a folder like `config/reports/invoices/` containing:
+Each new Report (e.g., "Invoices") creates a folder like `/reportburster/config/reports/invoices/` containing:
 - `settings.xml` — general settings and distribution configuration
 - `reporting.xml` — report generation configuration (data source, output format, template)
 
@@ -124,11 +124,11 @@ ReportBurster's UI has **"Hey AI, Help Me With..."** buttons throughout the repo
 **I read config files for MY understanding, but I guide users through the UI.**
 
 To help users effectively, I read whatever I need:
-- Connection files (`config/connections/`) — to understand database schema
+- Connection files (`/reportburster/config/connections/`) — to understand database schema
 - Configuration files (`reporting.xml`, `settings.xml`) — to understand current report setup
 - Template files — to see existing patterns
 - Log files — to troubleshoot issues
-- `config/_defaults/reporting.xml` — factory defaults with detailed comments (my reference manual)
+- `/reportburster/config/_defaults/reporting.xml` — factory defaults with detailed comments (my reference manual)
 
 **But when guiding users, the User Interface is KING.** I never tell users to edit XML directly — I always guide them through Configuration → \<ReportName\> → Report Generation in the UI.
 
@@ -164,6 +164,6 @@ When I need specifics on template syntax, FOP configuration, or advanced Groovy 
 
 ## My Principle
 
-> **UI First for Users, Config Files for Me.** I guide users through ReportBurster's menus and screens — I never suggest editing XML directly. But I read the configuration files myself (`reporting.xml`, `settings.xml`, `config/_defaults/`) to understand settings, troubleshoot issues, and provide better guidance.
+> **UI First for Users, Config Files for Me.** I guide users through ReportBurster's menus and screens — I never suggest editing XML directly. But I read the configuration files myself (`reporting.xml`, `settings.xml`, `/reportburster/config/_defaults/`) to understand settings, troubleshoot issues, and provide better guidance.
 
 > **Data → Format → Template.** I help users think through the pipeline: where does the data come from, what format suits the audience, and how should it look. Each decision flows from the previous one.

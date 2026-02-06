@@ -18,10 +18,10 @@ This is MY diagnostic insight — I use it to guide my investigation, but I **ne
 ## My Diagnostic Flow
 
 ```
-1. /logs/errors.log          → Recent Java stacktraces
-2. /logs/reportburster.bat.log → What command was actually run
-3. Compare config vs /config/_defaults/settings.xml
-4. Check /config/samples     → Working example for this use case?
+1. /reportburster/logs/errors.log          → Recent Java stacktraces
+2. /reportburster/logs/reportburster.bat.log → What command was actually run
+3. Compare config vs /reportburster/config/_defaults/settings.xml
+4. Check /reportburster/config/samples     → Working example for this use case?
 ```
 
 ---
@@ -34,7 +34,7 @@ This is MY diagnostic insight — I use it to guide my investigation, but I **ne
 
 ✅ **Check first:** `Send documents by Email` checkbox — must be ENABLED (it's OFF by default!)
 
-If enabled but still failing → check `/logs/errors.log`. Usually:
+If enabled but still failing → check `/reportburster/logs/errors.log`. Usually:
 | Symptom | Root Cause |
 |---------|------------|
 | Authentication failed | Wrong SMTP credentials |
@@ -56,7 +56,7 @@ If enabled but still failing → check `/logs/errors.log`. Usually:
 
 ### Cannot Get ReportBurster Setup and Working
 
-→ **First check:** `REPORTBURSTER_INSTALLATION_FOLDER/readme-Prerequisites.txt`
+→ **First check:** `/reportburster/readme-Prerequisites.txt`
 
 This file contains the same prerequisite steps as the UI, but for manual execution. Sometimes the UI setup fails due to permissions — manual install always works.
 
@@ -76,14 +76,14 @@ This file contains the same prerequisite steps as the UI, but for manual executi
 
 | File | What It Contains |
 |------|------------------|
-| `/logs/errors.log` | Java stacktraces, error details |
-| `/logs/reportburster.bat.log` | Command that was executed, context |
-| `/logs/info.log` | General processing info |
+| `/reportburster/logs/errors.log` | Java stacktraces, error details |
+| `/reportburster/logs/reportburster.bat.log` | Command that was executed, context |
+| `/reportburster/logs/info.log` | General processing info |
 
 ### Reading errors.log
 
 ```
-tail -n 100 /logs/errors.log
+tail -n 100 /reportburster/logs/errors.log
 ```
 
 Look for:
@@ -98,21 +98,21 @@ Look for:
 When something "used to work" and now doesn't:
 
 ```
-diff /config/reports/MyReport/settings.xml /config/_defaults/settings.xml
+diff /reportburster/config/reports/MyReport/settings.xml /reportburster/config/_defaults/settings.xml
 ```
 
 Users often change settings they don't understand. Comparing with defaults reveals the culprit.
 
 ---
 
-## Working Examples in /config/samples
+## Working Examples in /reportburster/config/samples
 
 Before debugging complex issues, check if a working sample exists:
 
 | Sample | Use Case |
 |--------|----------|
-| `/config/samples/` | Various report configurations |
-| `/samples/` | Sample input files (PDF, Excel, CSV) |
+| `/reportburster/config/samples/` | Various report configurations |
+| `/reportburster/samples/` | Sample input files (PDF, Excel, CSV) |
 
 If the sample works but user's config doesn't → the issue is in their customization.
 
@@ -121,7 +121,7 @@ If the sample works but user's config doesn't → the issue is in their customiz
 ## My Working Mode (Read-Only + Collaborative)
 
 **What I CAN read directly:**
-- Log files (`/logs/errors.log`, `/logs/reportburster.bat.log`)
+- Log files (`/reportburster/logs/errors.log`, `/reportburster/logs/reportburster.bat.log`)
 - Configuration files (`settings.xml`, connection configs)
 - Sample files and defaults for comparison
 

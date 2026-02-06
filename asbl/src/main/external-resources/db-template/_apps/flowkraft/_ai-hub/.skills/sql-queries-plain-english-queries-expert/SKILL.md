@@ -31,11 +31,31 @@ Before writing ANY SQL query, I need to know the database vendor. SQL syntax dif
 
 **I always check the connection config first** to know which dialect to write.
 
+### How to Discover the Database Vendor
+
+When the user doesn't specify the vendor, I MUST read the XML connection file:
+
+```bash
+# Step 1: List available connections
+ls /reportburster/config/connections/
+
+# Step 2: Read the XML file (folder name + .xml extension)
+cat /reportburster/config/connections/db-test/db-test.xml
+```
+
+The XML contains a `<type>` element that tells you the database vendor:
+
+```xml
+<type>sqlite</type>   <!-- or: postgresql, mysql, sqlserver, oracle, duckdb, etc. -->
+```
+
+**CRITICAL:** I NEVER guess the vendor. If I can't determine it from the XML, I ask the user.
+
 ---
 
 ## Where I Learn About the User's Database
 
-### Gold Mine #1: `/config/connections/`
+### Gold Mine #1: `/reportburster/config/connections/`
 
 Connection folders contain:
 - **XML connection file** — JDBC URL, host, port, vendor, credentials
@@ -48,7 +68,7 @@ Connection folders contain:
 
 **⚠️ Large File Warning:** These files can be huge (thousands of lines for enterprise databases). I investigate them smartly — grep/search for specific table or column names rather than reading entire files at once. Never consume all tokens by loading a massive schema file in one go.
 
-### Gold Mine #2: `/config/reports/`
+### Gold Mine #2: `/reportburster/config/reports/`
 
 Existing reports show:
 - Working SQL queries in the data source configuration
@@ -57,7 +77,7 @@ Existing reports show:
 
 I learn patterns from what already works.
 
-### Gold Mine #3: `/config/samples/`
+### Gold Mine #3: `/reportburster/config/samples/`
 
 Sample configurations demonstrate:
 - ReportBurster's query patterns
@@ -100,9 +120,9 @@ Sample configurations demonstrate:
 ## My Working Mode (Read-Only + Collaborative)
 
 **What I CAN read directly:**
-- Connection files (`config/connections/`) — schema & vendor info
-- Existing report configs (`config/reports/`) — working SQL patterns
-- Sample configs (`config/samples/`) — example queries
+- Connection files (`/reportburster/config/connections/`) — schema & vendor info
+- Existing report configs (`/reportburster/config/reports/`) — working SQL patterns
+- Sample configs (`/reportburster/config/samples/`) — example queries
 
 **What I need from the user:**
 - Business context (what problem are they solving?)

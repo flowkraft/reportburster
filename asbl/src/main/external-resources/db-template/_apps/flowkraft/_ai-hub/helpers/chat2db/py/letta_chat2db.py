@@ -48,25 +48,9 @@ class LettaChat2DB:
         print(response.sql)
     """
 
-    # System prompt for SQL generation
-    SQL_SYSTEM_PROMPT = """You are Athena, the goddess of wisdom and expert SQL assistant.
-
-Your role:
-1. When given a natural language question about data, generate ONLY the SQL query
-2. When given query results, explain them in plain English
-3. Remember previous context in our conversation
-
-Rules for SQL generation:
-- Output ONLY the SQL query, no explanations or markdown
-- Use standard SQL syntax
-- Be conservative with data - use LIMIT clauses
-- Never generate DELETE, DROP, UPDATE, TRUNCATE, or ALTER statements
-- If unsure about the schema, ask for clarification
-
-When explaining results:
-- Be concise and highlight key insights
-- Use bullet points for multiple findings
-- Mention any notable patterns or anomalies"""
+    # Minimal context - Athena already knows SQL from her skills
+    # This just identifies the interface context
+    CHAT2DB_CONTEXT = "[Chat2DB/Jupyter Interface]"
 
     def __init__(self,
                  base_url: Optional[str] = None,
@@ -85,7 +69,9 @@ When explaining results:
         )).rstrip('/')
         self.model = model or os.environ.get('OPENAI_MODEL', 'letta:athena')
 
-        self._client = httpx.Client(timeout=120.0)
+        # Letta agents can be slow (memory ops, summarization, multiple LLM calls)
+        # Use a generous timeout - 5 minutes
+        self._client = httpx.Client(timeout=300.0)
         self._schema_context: Optional[str] = None
 
     def set_schema_context(self, schema: str):
@@ -100,44 +86,86 @@ When explaining results:
         """
         self._schema_context = schema
 
-    def _build_messages(self, user_message: str) -> List[Dict[str, str]]:
-        """Build the OpenAI-format messages array with system context."""
-        messages = [
-            {"role": "system", "content": self.SQL_SYSTEM_PROMPT},
-            {"role": "user", "content": user_message},
-        ]
+    def _build_user_prompt(self, question: str) -> str:
+        """
+        Build the user prompt with optional database context.
+
+        Structure (question first, context second):
+        - USER QUERY: <the actual question to answer>
+        - --- DATABASE CONTEXT --- (only if Send Tables is checked)
+
+        Athena decides what to do based on the question:
+        - Data query → generate SQL
+        - Chit-chat → respond conversationally
+        - ReportBurster config → guide through UI
+        - Unclear → ask for clarification
+
+        We trust her skills (chat2db-jupyter-interface, sql-queries-plain-english-queries-expert).
+        """
+        parts = []
+
+        # User's question comes FIRST - this is what Athena should answer
+        parts.append(f"USER QUERY: {question}")
+
+        # Database context comes AFTER (if provided)
+        if self._schema_context:
+            parts.append("")
+            parts.append("--- DATABASE CONTEXT ---")
+            parts.append(self._schema_context)
+
+        return "\n".join(parts)
+
+    def _build_messages(self, user_message: str, include_context_tag: bool = True) -> List[Dict[str, str]]:
+        """Build the OpenAI-format messages array.
+
+        Note: Athena already has all SQL knowledge from her skills
+        (sql-queries-plain-english-queries-expert, chat2db-jupyter-interface).
+        We just add a minimal context tag so she knows the interface.
+        """
+        messages = []
+
+        if include_context_tag:
+            # Minimal context - just identify the interface
+            messages.append({"role": "system", "content": self.CHAT2DB_CONTEXT})
+
+        messages.append({"role": "user", "content": user_message})
         return messages
 
-    def _build_sql_prompt(self, question: str) -> str:
-        """Build the prompt for SQL generation."""
-        prompt_parts = []
-
-        if self._schema_context:
-            prompt_parts.append(f"Database Schema:\n{self._schema_context}\n")
-
-        prompt_parts.append(f"Question: {question}")
-        prompt_parts.append("\nGenerate ONLY the SQL query to answer this question. No explanations.")
-
-        return "\n".join(prompt_parts)
+    def _debug_prompt(self, prompt: str) -> None:
+        """Print debug info if CHAT2DB_DEBUG is enabled."""
+        if os.environ.get('CHAT2DB_DEBUG', '').lower() == 'true':
+            print("\n" + "=" * 60)
+            print("DEBUG: Prompt being sent to Athena:")
+            print("=" * 60)
+            print(prompt)
+            print("=" * 60 + "\n")
 
     def generate_sql(self, question: str, schema: Optional[str] = None) -> LettaResponse:
         """
-        Generate SQL from a natural language question.
+        Ask Athena a question, optionally with table index context.
+
+        Athena decides the appropriate response based on intent:
+        - Data query → generates SQL
+        - Chit-chat → responds conversationally
+        - ReportBurster config → guides through UI
+        - Unclear → asks for clarification
 
         Args:
-            question: Natural language question about the data.
-            schema: Optional schema context (uses stored schema if not provided).
+            question: Natural language question or message.
+            schema: Optional table index (table names only, not columns).
 
         Returns:
-            LettaResponse with generated SQL.
+            LettaResponse with content and extracted SQL (if applicable).
         """
-        if schema:
-            self._schema_context = schema
+        # Update schema context
+        self._schema_context = schema
 
-        prompt = self._build_sql_prompt(question)
-        response = self.send_message(prompt)
+        prompt = self._build_user_prompt(question)
+        self._debug_prompt(prompt)
 
-        # Extract SQL from response
+        response = self.send_message(prompt, include_context_tag=True)
+
+        # Try to extract SQL if present (Athena may or may not generate SQL)
         sql = self._extract_sql(response.content)
         response.sql = sql
 
@@ -163,16 +191,17 @@ SQL executed:
 Results:
 {results}
 
-Please explain these results in plain English. Highlight any interesting patterns or insights."""
+Please explain these results. Highlight any interesting patterns or insights."""
 
-        return self.send_message(prompt)
+        return self.send_message(prompt, include_context_tag=True)
 
-    def send_message(self, message: str) -> LettaResponse:
+    def send_message(self, message: str, include_context_tag: bool = True) -> LettaResponse:
         """
         Send a message to Athena via the OpenAI-compatible adapter.
 
         Args:
             message: Message content to send.
+            include_context_tag: Whether to include [Chat2DB/Jupyter] context tag.
 
         Returns:
             LettaResponse from Athena.
@@ -181,7 +210,7 @@ Please explain these results in plain English. Highlight any interesting pattern
 
         payload = {
             "model": self.model,
-            "messages": self._build_messages(message),
+            "messages": self._build_messages(message, include_context_tag=include_context_tag),
             "stream": False,
         }
 
