@@ -184,62 +184,147 @@ class Chat2DB:
             self._connection = None
     
     def _fetch_schema(self):
-        """Fetch and cache database schema for AI context."""
+        """
+        Fetch and cache database table names for AI context.
+
+        Only fetches TABLE NAMES (not columns) to keep token count minimal.
+        This serves as an "index" for Athena - she can look up column details
+        from the full schema files on disk when needed.
+
+        Supports: SQLite, DuckDB, PostgreSQL, MySQL, MariaDB, SQL Server,
+                  Oracle, IBM Db2, ClickHouse
+        """
         if not self._connection:
             return
-        
+
         try:
-            # This is a simplified schema fetch - actual implementation depends on DB type
             schema_parts = []
-            
-            if hasattr(self._connection, 'execute'):
-                # Try to get table information
-                # This works for most databases with information_schema
+            db_type = ''
+
+            # Include database type so Athena generates correct SQL dialect
+            if self._connection_config:
+                db_type = self._connection_config.db_type.upper()
+                schema_parts.append(f"DATABASE TYPE: {db_type}")
+                schema_parts.append("")
+                schema_parts.append("TABLE INDEX: Only table names listed (not columns) to keep context minimal.")
+                schema_parts.append("For additional schema details, including columns, grep schema files using table names as search terms.")
+                schema_parts.append("")
+
+            tables = []
+            cursor = self._connection.cursor()
+
+            # =========================================================
+            # SQLite / DuckDB
+            # =========================================================
+            if db_type in ('SQLITE', 'DUCKDB'):
                 try:
-                    cursor = self._connection.execute("""
-                        SELECT table_name, column_name, data_type 
-                        FROM information_schema.columns 
-                        WHERE table_schema = 'public' OR table_schema = 'dbo'
-                        ORDER BY table_name, ordinal_position
+                    if db_type == 'SQLITE':
+                        cursor.execute(
+                            "SELECT name FROM sqlite_master WHERE type='table' "
+                            "AND name NOT LIKE 'sqlite_%' ORDER BY name"
+                        )
+                    else:  # DuckDB
+                        cursor.execute("SELECT table_name FROM information_schema.tables "
+                                       "WHERE table_schema = 'main' ORDER BY table_name")
+                    tables = [row[0] for row in cursor.fetchall()]
+                except Exception as e:
+                    print(f"⚠️ {db_type} table list fetch failed: {e}")
+
+            # =========================================================
+            # Oracle
+            # =========================================================
+            elif db_type == 'ORACLE':
+                try:
+                    cursor.execute("""
+                        SELECT DISTINCT table_name FROM ALL_TAB_COLUMNS
+                        WHERE owner = USER ORDER BY table_name
                     """)
-                    
-                    current_table = None
-                    for row in cursor:
-                        table, column, dtype = row
-                        if table != current_table:
-                            if current_table:
-                                schema_parts.append("")
-                            schema_parts.append(f"Table: {table}")
-                            current_table = table
-                        schema_parts.append(f"  - {column}: {dtype}")
-                    
-                except Exception:
-                    # Fallback: just note the connection
-                    schema_parts.append(f"Connected to: {self._connection_config.name}")
-            
+                    tables = [row[0] for row in cursor.fetchall()]
+                except Exception as e:
+                    print(f"⚠️ Oracle table list fetch failed: {e}")
+
+            # =========================================================
+            # IBM Db2
+            # =========================================================
+            elif db_type in ('IBMDB2', 'DB2'):
+                try:
+                    cursor.execute("""
+                        SELECT DISTINCT tabname FROM SYSCAT.COLUMNS
+                        WHERE tabschema = CURRENT SCHEMA ORDER BY tabname
+                    """)
+                    tables = [row[0] for row in cursor.fetchall()]
+                except Exception as e:
+                    print(f"⚠️ IBM Db2 table list fetch failed: {e}")
+
+            # =========================================================
+            # ClickHouse
+            # =========================================================
+            elif db_type == 'CLICKHOUSE':
+                try:
+                    cursor.execute("""
+                        SELECT DISTINCT table FROM system.columns
+                        WHERE database = currentDatabase() ORDER BY table
+                    """)
+                    tables = [row[0] for row in cursor.fetchall()]
+                except Exception as e:
+                    print(f"⚠️ ClickHouse table list fetch failed: {e}")
+
+            # =========================================================
+            # PostgreSQL, MySQL, MariaDB, SQL Server - information_schema
+            # =========================================================
+            if not tables:
+                try:
+                    if db_type == 'SQLSERVER':
+                        schema_filter = "table_schema = 'dbo'"
+                    elif db_type in ('MYSQL', 'MARIADB'):
+                        schema_filter = "table_schema = DATABASE()"
+                    else:  # PostgreSQL and others
+                        schema_filter = "table_schema = 'public'"
+
+                    cursor.execute(f"""
+                        SELECT DISTINCT table_name
+                        FROM information_schema.tables
+                        WHERE {schema_filter} AND table_type = 'BASE TABLE'
+                        ORDER BY table_name
+                    """)
+                    tables = [row[0] for row in cursor.fetchall()]
+                except Exception as e:
+                    print(f"⚠️ information_schema fetch failed: {e}")
+
+            cursor.close()
+
+            if tables:
+                schema_parts.append(f"TABLES ({len(tables)}):")
+                for table in tables:
+                    # Quote tables with spaces
+                    display = f'"{table}"' if ' ' in table else table
+                    schema_parts.append(f"  - {display}")
+            else:
+                schema_parts.append(f"Connected to: {self._connection_config.name}")
+                schema_parts.append("(Table list could not be fetched automatically)")
+
             self._schema = "\n".join(schema_parts) if schema_parts else None
-            
-            # Send schema to Athena
-            if self._schema:
-                self._letta.set_schema_context(self._schema)
-                
+
         except Exception as e:
-            print(f"⚠️ Could not fetch schema: {e}")
+            print(f"⚠️ Could not fetch table list: {e}")
     
     # -------------------------------------------------------------------------
     # Query Methods
     # -------------------------------------------------------------------------
     
-    def ask(self, question: str) -> QueryResult:
+    def ask(self, question: str, send_schema: bool = True) -> QueryResult:
         """
         Ask a natural language question about your data.
-        
+
         Args:
             question: Natural language question (e.g., "Show top 5 products by revenue")
-        
+            send_schema: If True (default), send table names as an index to help Athena.
+                        She can grep the full schema on disk for column details.
+                        Set False for chit-chat or non-database topics.
+
         Returns:
             QueryResult with SQL, DataFrame, and optional explanation.
-        
+
         Example:
             result = chat.ask("Which customers have the highest order totals?")
             result.df  # View the data
@@ -247,9 +332,10 @@ class Chat2DB:
         """
         if not self._connection:
             raise RuntimeError("Not connected to a database. Use connect() first.")
-        
-        # Generate SQL using Athena
-        response = self._letta.generate_sql(question, self._schema)
+
+        # Generate SQL using Athena (optionally include schema)
+        schema_to_send = self._schema if send_schema else None
+        response = self._letta.generate_sql(question, schema_to_send)
         sql = response.sql
         
         if not sql:
@@ -355,12 +441,24 @@ class Chat2DB:
 
         # -- HTML renderers ---------------------------------------------------
 
-        def _user_bubble(text):
+        def _wrap(html):
+            """Wrap HTML in a container that enforces strict overflow clipping."""
             return (
+                '<div style="position:relative;overflow:hidden;max-width:100%;'
+                'box-sizing:border-box;">'
+                f'{html}</div>'
+            )
+
+        def _user_bubble(text):
+            # Escape HTML to prevent XSS and ensure proper rendering
+            safe_text = (text.replace('&', '&amp;').replace('<', '&lt;')
+                            .replace('>', '&gt;').replace('\n', '<br>'))
+            return _wrap(
                 '<div style="display:flex;justify-content:flex-end;margin:12px 0;">'
                 '<div style="background:#0084ff;color:#fff;padding:10px 16px;'
                 'border-radius:18px 18px 4px 18px;max-width:70%;font-size:14px;'
-                f'line-height:1.5;">{text}</div></div>'
+                'line-height:1.5;word-wrap:break-word;overflow-wrap:break-word;'
+                f'word-break:break-word;overflow:hidden;">{safe_text}</div></div>'
             )
 
         def _athena_bubble(sql=None, table_html=None, explanation=None,
@@ -414,10 +512,10 @@ class Chat2DB:
                         f'\U0001f4a1 {explanation}</div>'
                     )
             p.append('</div></div>')
-            return ''.join(p)
+            return _wrap(''.join(p))
 
         def _sys(text):
-            return (
+            return _wrap(
                 '<div style="text-align:center;color:#9ca3af;'
                 f'font-size:12px;margin:8px 0;">\u2014 {text} \u2014</div>'
             )
@@ -434,25 +532,78 @@ class Chat2DB:
 
         conn_dd = widgets.Dropdown(
             options=labels, value=labels[0],
-            layout=widgets.Layout(width='420px'),
+            layout=widgets.Layout(width='350px'),
         )
         conn_btn = widgets.Button(
             description='Connect', button_style='primary', icon='plug',
-            layout=widgets.Layout(width='110px'),
+            layout=widgets.Layout(width='100px'),
         )
+
+        # Schema checkbox - checked by default (sends table names as index)
+        schema_checkbox = widgets.Checkbox(
+            value=True,
+            description='Send Tables',
+            indent=False,
+            layout=widgets.Layout(width='auto'),
+            style={'description_width': 'auto'},
+        )
+        schema_tooltip = widgets.HTML(
+            value=(
+                '<span title="Sends table names to Athena as a quick index. '
+                'Recommended for database queries. '
+                'Uncheck only for chit-chat or non-database topics." '
+                'style="cursor:help;color:#6b7280;font-size:14px;margin-left:2px;">'
+                '\u24D8</span>'
+            )
+        )
+
         status = widgets.HTML(
             '<span style="color:#9ca3af;font-size:13px;">No database selected</span>'
         )
 
         # -- Chat area ---------------------------------------------------------
+        # Use widgets.HTML with a message list - re-render ALL messages each time.
+        # This avoids the Output widget's broken overflow behavior.
 
-        chat_out = widgets.Output(
+        chat_messages = []  # List of HTML strings
+
+        def _render_chat():
+            """Re-render all chat messages as a single HTML block."""
+            content = ''.join(chat_messages)
+            # Wrap in a scrollable container
+            # Use inline onload trick + setTimeout to ensure scroll happens after render
+            return (
+                f'<div class="chat2db-scroll-container" style="height:380px;overflow-y:auto;'
+                f'overflow-x:hidden;padding:12px;box-sizing:border-box;">'
+                f'{content}'
+                f'</div>'
+                f'<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" '
+                f'onload="(function(img){{'
+                f'var c=img.previousElementSibling;'
+                f'if(c)c.scrollTop=c.scrollHeight;'
+                f'img.remove();'
+                f'}})(this)" style="display:none">'
+            )
+
+        chat_html = widgets.HTML(
+            value=_render_chat(),
             layout=widgets.Layout(
-                min_height='300px', max_height='500px',
-                overflow_y='auto', border='1px solid #e5e7eb',
-                padding='12px', border_radius='8px',
+                height='400px',
+                border='1px solid #e5e7eb',
+                border_radius='8px',
             )
         )
+
+        def _add_message(html):
+            """Add a message and re-render the chat."""
+            chat_messages.append(html)
+            chat_html.value = _render_chat()
+
+        def _remove_thinking():
+            """Remove thinking indicator from message list."""
+            nonlocal chat_messages
+            chat_messages = [m for m in chat_messages if 'chat2db-thinking' not in m]
+            chat_html.value = _render_chat()
 
         # -- Input widgets -----------------------------------------------------
 
@@ -497,17 +648,16 @@ class Chat2DB:
             confirm_box.layout.display = 'flex'
 
         def _do_clear(_btn):
-            chat_out.clear_output()
-            with chat_out:
-                if self._connection and self._connection_config:
-                    display(HTML(_sys(
-                        f'Connected to {self._connection_config.name} '
-                        f'({self._connection_config.db_type}). Ask me anything!'
-                    )))
-                else:
-                    display(HTML(_sys(
-                        'Select a database above, then ask questions in plain English'
-                    )))
+            chat_messages.clear()
+            if self._connection and self._connection_config:
+                _add_message(_sys(
+                    f'Connected to {self._connection_config.name} '
+                    f'({self._connection_config.db_type}). Ask me anything!'
+                ))
+            else:
+                _add_message(_sys(
+                    'Select a database above, then ask questions in plain English'
+                ))
             confirm_box.layout.display = 'none'
             clear_btn.layout.display = ''
 
@@ -543,16 +693,38 @@ class Chat2DB:
                     f'\u2713 Connected to {code}</span>'
                 )
                 _unlock()
-                with chat_out:
-                    display(HTML(_sys(
-                        f'Connected to {self._connection_config.name} '
-                        f'({self._connection_config.db_type}). Ask me anything!'
-                    )))
+                _add_message(_sys(
+                    f'Connected to {self._connection_config.name} '
+                    f'({self._connection_config.db_type}). Ask me anything!'
+                ))
             except Exception as exc:
                 status.value = (
                     f'<span style="color:#ef4444;font-size:13px;">'
                     f'Error: {exc}</span>'
                 )
+
+        def _thinking_bubble():
+            """Render animated thinking indicator with cycling dots."""
+            return _wrap(
+                '<div class="chat2db-thinking" style="display:flex;align-items:flex-start;gap:8px;margin:12px 0;">'
+                '<div style="width:30px;height:30px;border-radius:50%;'
+                'background:#6366f1;display:flex;align-items:center;'
+                'justify-content:center;flex-shrink:0;font-size:16px;">'
+                '\U0001f989</div>'
+                '<div style="background:#f3f4f6;padding:12px 18px;'
+                'border-radius:0 18px 18px 18px;font-size:14px;color:#6b7280;">'
+                '<style>'
+                '@keyframes pulse{0%,100%{opacity:0.6}50%{opacity:1}}'
+                '@keyframes dot{0%,100%{opacity:0}25%,75%{opacity:1}}'
+                '</style>'
+                '<span style="animation:pulse 1.5s ease-in-out infinite;">Thinking</span>'
+                '<span style="display:inline-block;width:20px;text-align:left;letter-spacing:2px;">'
+                '<span style="animation:dot 1.2s 0.0s ease-in-out infinite;">.</span>'
+                '<span style="animation:dot 1.2s 0.2s ease-in-out infinite;">.</span>'
+                '<span style="animation:dot 1.2s 0.4s ease-in-out infinite;">.</span>'
+                '</span>'
+                '</div></div>'
+            )
 
         def _on_send(_btn=None):
             question = inp.value.strip()
@@ -560,28 +732,45 @@ class Chat2DB:
                 return
             inp.value = ''
 
-            with chat_out:
-                display(HTML(_user_bubble(question)))
+            # Disable input while processing
+            inp.disabled = True
+            send_btn.disabled = True
+
+            # Add user message
+            _add_message(_user_bubble(question))
+
+            # Show thinking indicator
+            _add_message(_thinking_bubble())
 
             try:
-                result = self.ask(question)
+                # Pass schema if checkbox is checked
+                result = self.ask(question, send_schema=schema_checkbox.value)
+
+                # Remove thinking indicator
+                _remove_thinking()
+
                 tbl = (
                     result.df.head(20).to_html(index=False)
                     if not result.error and len(result.df) > 0
                     else None
                 )
-                with chat_out:
-                    display(HTML(_athena_bubble(
-                        sql=result.sql or None,
-                        table_html=tbl,
-                        explanation=result.explanation,
-                        error=result.error,
-                        row_count=result.row_count,
-                        exec_ms=result.execution_time_ms,
-                    )))
+                _add_message(_athena_bubble(
+                    sql=result.sql or None,
+                    table_html=tbl,
+                    explanation=result.explanation,
+                    error=result.error,
+                    row_count=result.row_count,
+                    exec_ms=result.execution_time_ms,
+                ))
             except Exception as exc:
-                with chat_out:
-                    display(HTML(_athena_bubble(error=str(exc))))
+                # Remove thinking indicator
+                _remove_thinking()
+                _add_message(_athena_bubble(error=str(exc)))
+            finally:
+                # Re-enable input
+                inp.disabled = False
+                send_btn.disabled = False
+                inp.focus()
 
         conn_btn.on_click(_on_connect)
         send_btn.on_click(_on_send)
@@ -599,20 +788,18 @@ class Chat2DB:
                 f'\u2713 Connected to {self._connection_config.code}</span>'
             )
             _unlock()
-            with chat_out:
-                display(HTML(_sys(
-                    f'Connected to {self._connection_config.name}. Ask me anything!'
-                )))
+            _add_message(_sys(
+                f'Connected to {self._connection_config.name}. Ask me anything!'
+            ))
         else:
-            with chat_out:
-                display(HTML(_sys(
-                    'Select a database above, then ask questions in plain English'
-                )))
-                if not connections:
-                    display(HTML(_sys(
-                        '\u26A0 No database connections found. '
-                        'Check REPORTBURSTER_CONNECTIONS_PATH.'
-                    )))
+            _add_message(_sys(
+                'Select a database above, then ask questions in plain English'
+            ))
+            if not connections:
+                _add_message(_sys(
+                    '\u26A0 No database connections found. '
+                    'Check REPORTBURSTER_CONNECTIONS_PATH.'
+                ))
 
         # -- Assemble layout ---------------------------------------------------
 
@@ -631,8 +818,8 @@ class Chat2DB:
             ),
         )
         conn_row = widgets.HBox(
-            [conn_dd, conn_btn, status],
-            layout=widgets.Layout(margin='0 0 8px'),
+            [conn_dd, conn_btn, schema_checkbox, schema_tooltip, status],
+            layout=widgets.Layout(margin='0 0 8px', align_items='center'),
         )
         input_row = widgets.HBox(
             [inp, send_btn],
@@ -640,7 +827,7 @@ class Chat2DB:
         )
 
         container = widgets.VBox(
-            [header, conn_row, chat_out, input_row],
+            [header, conn_row, chat_html, input_row],
             layout=widgets.Layout(
                 padding='16px', border='1px solid #e5e7eb',
                 border_radius='12px',

@@ -29,6 +29,7 @@ export const PRIMARY_AGENT_TOOLS: ToolDef[] = [
     // Custom tools from ai-flowstack/custom-tools (unique names to avoid Letta built-in conflicts)
     { name: 'better_web_search', description: 'Enhanced web search using SearX + Jina.ai (no API key required)' },
     { name: 'better_fetch_webpage', description: 'Enhanced webpage fetcher using Jina.ai markdown converter' },
+    { name: 'execute_shell_command', description: 'Execute arbitrary shell commands on the system' },
 ];
 
 // Tools for the SLEEPTIME agent (runs asynchronously during user downtime)
@@ -76,6 +77,7 @@ export const DEFAULT_TOOLS: ToolDef[] = [
     // Custom tools from ai-flowstack/custom-tools (unique names to avoid Letta built-in conflicts)
     { name: 'better_web_search', description: 'Enhanced web search using SearX + Jina.ai (no API key required)' },
     { name: 'better_fetch_webpage', description: 'Enhanced webpage fetcher using Jina.ai markdown converter' },
+    { name: 'execute_shell_command', description: 'Execute arbitrary shell commands on the system' },
 ];
 
 export const DEFAULT_OPTIONS = {
@@ -181,13 +183,16 @@ function getSkill(name: string): { name: string; description: string } {
         'troubleshooting-reportburster': 'Expert troubleshooter for ReportBurster issues. My diagnostic flow: (1) Check /logs/errors.log for Java stacktraces; (2) Check /logs/reportburster.bat.log for command context; (3) Compare config vs /config/_defaults/settings.xml; (4) Check /config/samples for working examples. Top issues: "Emails not sending" — 90% forgot to enable Send documents by Email checkbox (OFF by default); "Bursting not working" — 90% missing/misconfigured burst tokens in source document. Java stacktraces almost NEVER mean ReportBurster bugs — they indicate misconfiguration, bad input data, or user changes that broke things. For startup issues, check readme-Prerequisites.txt. Key docs: https://www.reportburster.com/docs/troubleshooting',
         
         // Data modeling skills (Athena)
-        'sql-queries-plain-english-queries-expert': 'Expert in answering SQL and plain English business queries against the user\'s database. Users ask in plain English ("Show me top 10 customers by revenue") and I construct the appropriate SQL. I pay special attention to database vendor (Oracle ≠ SQL Server ≠ MySQL ≠ PostgreSQL) for correct SQL dialect. I read config/connections/ for schema & vendor, and learn from existing reports in config/reports/ and config/samples/. Key docs: https://www.reportburster.com/docs/report-generation#database-connections',
+        'sql-queries-plain-english-queries-expert': 'SQL expert who helps users build, optimize, and fix database queries. I help with: (1) Building SQL from requirements ("I need a query that joins X with Y..."); (2) Translating plain English to SQL ("Show top 10 customers"); (3) Optimizing slow queries; (4) Fixing syntax errors. **SQL Dialect Matters:** Oracle ≠ SQL Server ≠ MySQL ≠ PostgreSQL ≠ DuckDB — syntax differs (LIMIT vs TOP vs ROWNUM, date functions, string concat). **To discover vendor:** `cat /reportburster/config/connections/<slug>/<slug>.xml` and look for `<type>sqlite</type>` (or postgresql, mysql, sqlserver, oracle, duckdb). I NEVER guess the vendor — if I can\'t determine it, I ask the user. Key docs: https://www.reportburster.com/docs/report-generation#database-connections',
         'olap-data-warehouse-analytics': 'Expert in OLAP analytics and Data Warehouse architecture. Two domains: (1) **Embeddable Analytics** — five web components (<rb-report>, <rb-tabulator>, <rb-chart>, <rb-pivottable>, <rb-parameters>) for dashboards and portals, configured via Groovy DSL; (2) **Data Warehouse Strategy** — "Start Simple, Scale as Needed" from DuckDB multi-source queries → DuckDB sync (byte-to-byte or star schema) → ClickHouse for massive scale. I help design star schemas, ETL sync jobs, and choose the right scaling level. Key docs: https://www.reportburster.com/docs/bi-analytics/embed-web-components',
-        
         'data-modelling': 'Expert in database design with applied knowledge of universal data models from Len Silverston\'s "Data Model Resource Book" series. **Start Simple, Grow Progressively** — I actively recommend the simplest model that gets the job done. Len\'s books present alternatives from simple to complex; the complex ones (multi-versioning, temporal tracking) add significant overhead (more joins, multiple tables per entity). I start simple and only add complexity when truly needed. I help design schemas for Party, Product, Order, Work Effort, Accounting using proven patterns. I dream in tables and speak in JOINs.',
         'business-analysis': 'I assist users in writing Product Requirements Documents (PRDs). I help structure product vision, features, user stories, and acceptance criteria in well-organized documents. Strong preference for Org Mode syntax (.org files) — clean, structured, version-control friendly. Naming convention: <requirement-name>-prd.org for PRDs, <requirement-name>-tasks.org for task breakdowns. I suggest PlantUML WBS diagrams (plantuml.com/wbs-diagram) when visualizing feature breakdowns or project structure would help. Documents stored in /reportburster/_apps/flowkraft/_ai-hub/agents-output-artifacts/athena/ folder. I guide the writing process — users provide the domain knowledge, I help structure and articulate it clearly.',
-        'troubleshoot-cloudbeaver-chat2db': 'Troubleshooting and administration ONLY for CloudBeaver and Chat2DB/JupyterLab. Use this skill when these tools are broken or misconfigured — NOT for answering data queries. I help with: (1) **Diagnosing connection issues** — why a database isn\'t showing, driver not found, authentication failures; (2) **Configuring CloudBeaver** — reading ReportBurster connection XMLs and guiding users through the CloudBeaver UI; (3) **Inspecting internals** — I can read chat2db source code, Docker configs, volume mounts, and CloudBeaver workspace files to find root causes.',
-   
+        // Chat2DB/CloudBeaver skills - TWO DISTINCT PURPOSES
+        // chat2db-jupyter-interface: For ANSWERING data queries through the notebook
+        // troubleshoot-cloudbeaver-chat2db: For FIXING broken tools
+        'chat2db-jupyter-interface': 'Use this skill when receiving messages from the Chat2DB/Jupyter notebook interface. This is for **ANSWERING queries** — SQL generation, chit-chat, or ReportBurster guidance. I classify intent (DATA QUERY, CHIT-CHAT, REPORTBURSTER CONFIG) and respond appropriately. When generating SQL, I investigate schema files on disk at `/reportburster/config/connections/<slug>/`. **WARNING: Schema files can be HUGE** for enterprise databases — I check file size first with `ls -lh` and grep for specific table names rather than reading whole files when they exceed 100KB.',
+        'troubleshoot-cloudbeaver-chat2db': 'Use ONLY when CloudBeaver or Chat2DB is **BROKEN** — NOT for answering data queries. This is for **FIXING tools**: (1) Database not showing in CloudBeaver; (2) Driver not found errors; (3) Authentication failures; (4) Docker/container issues; (5) Volume mount problems. I read source code, Docker configs, and workspace files to diagnose root causes. If the user wants to query data, use `chat2db-jupyter-interface` instead.',
+
     };
     return {
         name,
@@ -433,9 +438,6 @@ export function skillsBlock(skills: string[]): MemoryBlockDef {
 <skills_instructions>
 When I need to perform specialized tasks, I check if my available skills below can help complete the task more effectively.
 
-**CRITICAL - Script Modification Policy:**
-I NEVER modify script files in my available skills (\`/.skills/*/scripts/\` directories). My skill wrapper scripts are maintained externally and must not be edited. Only tool configuration files and CLI options can be modified. If I discover a bug in one of my skill scripts through investigation, I inform the user with the bug description and suggested fix, but I do not attempt to fix it myself.
-
 **Progressive Discovery - Just-In-Time Documentation:**
 I do NOT read all documentation upfront. Instead, I unveil links, files, and reference materials progressively based on context — fetching them only when the current task requires that specific knowledge. This saves tokens, keeps my responses focused, and ensures I retrieve the most relevant information at the moment it becomes actionable.
 
@@ -452,7 +454,7 @@ When I fetch documentation URLs from my skills, I actively look for visual aids:
 3. I explore progressively based on what the task demands:
    - I start with SKILL.md (location provided below) for the quick start guide
    - I fetch references/ or documentation links only when I need deeper context
-   - I review scripts/ folder to understand available command wrappers (READ ONLY - never modify)
+   - I review scripts/ folder to understand available scripts and their use cases, but only when relevant to the task
    - I look for supporting files (assets/, examples/, etc.) only when relevant to the current step
 4. I follow instructions in SKILL.md, fetching external URLs mentioned therein just-in-time as each step requires
 5. When fetching doc URLs, I scan for screenshots/images and use vision to examine them if available

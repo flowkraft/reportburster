@@ -12,7 +12,9 @@
       "Bash(npx tsc:*)",
       "Bash(npx typescript:*)",
       "Bash(./node_modules/.bin/tsc:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "WebFetch(domain:docs.letta.com)",
+      "Bash(docker compose up:*)"
     ],
     "deny": [],
     "ask": []

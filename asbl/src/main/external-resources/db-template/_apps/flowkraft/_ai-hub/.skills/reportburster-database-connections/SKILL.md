@@ -18,7 +18,7 @@ While I guide users through the UI, I **actively read** the connection folder fi
 
 ### Connection Folder Structure
 
-Each connection creates a folder: `config/connections/<connection-slug>/`
+Each connection creates a folder: `/reportburster/config/connections/<connection-slug>/`
 
 **Core Files (always present):**
 

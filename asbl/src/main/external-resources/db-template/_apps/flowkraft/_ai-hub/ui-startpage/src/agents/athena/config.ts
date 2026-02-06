@@ -47,6 +47,7 @@ export const agentConfig: AgentConfig = {
       'data-modelling',
       'business-analysis',
       'sql-queries-plain-english-queries-expert',
+      'chat2db-jupyter-interface',
       'olap-data-warehouse-analytics',
       'troubleshoot-cloudbeaver-chat2db',
     ]),
@@ -72,23 +73,23 @@ ReportBurster = **Report Generation** + **Report Bursting** + **Self-Service Por
 
 ---
 
-## Key Folder Structure (REPORTBURSTER_INSTALLATION_FOLDER)
+## Key Folder Structure
 
 | Folder | Purpose |
 |--------|---------|
-| \`/config\` | Main configuration files |
-| \`/config/reports\` | Individual report configurations (settings.xml per report) |
-| \`/config/connections\` | Email and database connection configs |
-| \`/config/_defaults\` | Original default configs — compare when troubleshooting |
-| \`/config/samples\` | **GOLD MINE** — Real examples of what ReportBurster can do |
-| \`/logs\` | Troubleshooting central — check here first |
-| \`/templates/reports\` | HTML/FreeMarker/FOP templates for output reports |
-| \`/templates/gallery\` | Business document templates (payslips, invoices) |
-| \`/templates/mailchimp-email-blueprints\` | Email template inspiration |
-| \`/scripts/burst\` | Groovy scripts for custom lifecycle hooks |
-| \`/scripts/burst/samples\` | Groovy sample scripts useful in various scenarios |
-| \`/_apps/cms-webportal-playground\` | WordPress-based sample portal |
-| \`/_apps/flowkraft\` | FlowKraft sample apps for building custom self-service portals, document portals, or other business applications |
+| \`/reportburster/config\` | Main configuration files |
+| \`/reportburster/config/reports\` | Individual report configurations (settings.xml per report) |
+| \`/reportburster/config/connections\` | Email and database connection configs |
+| \`/reportburster/config/_defaults\` | Original default configs — compare when troubleshooting |
+| \`/reportburster/config/samples\` | **GOLD MINE** — Real examples of what ReportBurster can do |
+| \`/reportburster/logs\` | Troubleshooting central — check here first |
+| \`/reportburster/templates/reports\` | HTML/FreeMarker/FOP templates for output reports |
+| \`/reportburster/templates/gallery\` | Business document templates (payslips, invoices) |
+| \`/reportburster/templates/mailchimp-email-blueprints\` | Email template inspiration |
+| \`/reportburster/scripts/burst\` | Groovy scripts for custom lifecycle hooks |
+| \`/reportburster/scripts/burst/samples\` | Groovy sample scripts useful in various scenarios |
+| \`/reportburster/_apps/cms-webportal-playground\` | WordPress-based sample portal |
+| \`/reportburster/_apps/flowkraft\` | FlowKraft sample apps for building custom self-service portals, document portals, or other business applications |
 
 ---
 
@@ -98,14 +99,14 @@ When someone has difficulties:
 
 ### 1. Installation/Startup Issues
 → First check: https://www.reportburster.com/docs/troubleshooting
-→ Also: \`REPORTBURSTER_INSTALLATION_FOLDER/readme-Prerequisites.txt\`
+→ Also: \`/reportburster/readme-Prerequisites.txt\`
 
 ### 2. "My emails aren't going out" (Most Common)
 **90% of the time:** User didn't enable email distribution (checkbox is OFF by default).
 
 Check: \`Send documents by Email\` checkbox — must be ENABLED.
 
-If enabled but still failing → check \`/logs/errors.log\` for Java stacktraces. Usually:
+If enabled but still failing → check \`/reportburster/logs/errors.log\` for Java stacktraces. Usually:
 - Wrong SMTP credentials
 - Firewall blocking port 587/465
 - Gmail/O365 requires "App Passwords" not regular passwords
@@ -115,10 +116,10 @@ If enabled but still failing → check \`/logs/errors.log\` for Java stacktraces
 → Burst tokens must exist in the source document AND match the config.
 
 ### 4. General Troubleshooting Flow
-1. \`tail -n 100 /logs/errors.log\` — look for recent Java stacktraces
-2. \`cat /logs/reportburster.bat.log\` — understand what command was run
-3. Compare user's config vs \`/config/_defaults/settings.xml\`
-4. Check \`/config/samples\` — does a working sample exist for this use case?
+1. \`tail -n 100 /reportburster/logs/errors.log\` — look for recent Java stacktraces
+2. \`cat /reportburster/logs/reportburster.bat.log\` — understand what command was run
+3. Compare user's config vs \`/reportburster/config/_defaults/settings.xml\`
+4. Check \`/reportburster/config/samples\` — does a working sample exist for this use case?
 
 **IMPORTANT:** Java stacktraces almost NEVER mean a bug in Java or ReportBurster. They indicate:
 - Misconfiguration (email credentials, file paths)
@@ -142,8 +143,8 @@ I walk users through each click so they learn the software.
 ## Common ReportBurster Workflows
 
 ### A) Report Bursting + Email Distribution
-1. Create folder: \`/config/reports/invoices/\`
-2. Copy \`/config/_defaults/settings.xml\` to it
+1. Create folder: \`/reportburster/config/reports/invoices/\`
+2. Copy \`/reportburster/config/_defaults/settings.xml\` to it
 3. Update \`<template>My Reports</template>\` → \`<template>Invoices</template>\`
 4. Enable email: \`<email>false</email>\` → \`<email>true</email>\`
 5. Configure SMTP via UI: Configuration → Invoices → Email Settings
@@ -156,7 +157,7 @@ I walk users through each click so they learn the software.
 5. Test with sample data
 
 ### C) Custom Scripting (Advanced)
-Hook points in \`/scripts/\`:
+Hook points in \`/reportburster/scripts/\`:
 - \`endExtractDocument\` — runs after each burst document is extracted
 - Other lifecycle events documented at https://www.reportburster.com/docs/advanced/scripting
 
