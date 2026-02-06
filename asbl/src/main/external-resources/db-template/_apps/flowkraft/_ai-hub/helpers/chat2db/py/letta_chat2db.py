@@ -30,6 +30,8 @@ class LettaResponse:
     """Response from Letta AI agent."""
     content: str
     sql: Optional[str] = None
+    viz_code: Optional[str] = None  # Python visualization code (matplotlib/plotly)
+    narrative: Optional[str] = None  # Athena's inline text (code blocks stripped)
     messages: Optional[List[Dict]] = None
     raw_response: Optional[Dict] = None
 
@@ -49,9 +51,16 @@ class LettaChat2DB:
     """
 
     # Minimal context - Athena already knows SQL from her skills
-    # This just identifies the interface context + hints about SQL formatting
-    # for reliable extraction by _extract_sql()
-    CHAT2DB_CONTEXT = "[Chat2DB/Jupyter Interface] When responding with SQL, wrap it in a ```sql code block so the notebook can extract and execute it automatically."
+    # This identifies the interface context + hints about response formatting
+    # for reliable extraction by _extract_sql() and _extract_viz_code()
+    CHAT2DB_CONTEXT = (
+        "[Chat2DB/Jupyter Interface] "
+        "When responding with SQL, wrap it in a ```sql code block. "
+        "When a visualization would help understand the results, also include a ```python code block "
+        "with matplotlib or plotly code that uses `df` (the query result DataFrame). "
+        "Only suggest charts when they genuinely add insight — not for raw data dumps or simple lookups. "
+        "Available libraries: matplotlib, plotly, pandas."
+    )
 
     def __init__(self,
                  base_url: Optional[str] = None,
@@ -167,34 +176,13 @@ class LettaChat2DB:
         response = self.send_message(prompt, include_context_tag=True)
 
         # Try to extract SQL if present (Athena may or may not generate SQL)
-        sql = self._extract_sql(response.content)
-        response.sql = sql
+        response.sql = self._extract_sql(response.content)
+        # Try to extract visualization code if present
+        response.viz_code = self._extract_viz_code(response.content)
+        # Extract Athena's inline narrative (text around code blocks)
+        response.narrative = self._extract_narrative(response.content)
 
         return response
-
-    def explain_results(self, question: str, sql: str, results: str) -> LettaResponse:
-        """
-        Get AI explanation of query results.
-
-        Args:
-            question: Original natural language question.
-            sql: The SQL query that was executed.
-            results: Query results as a string (e.g., DataFrame.to_string()).
-
-        Returns:
-            LettaResponse with explanation.
-        """
-        prompt = f"""Original question: {question}
-
-SQL executed:
-{sql}
-
-Results:
-{results}
-
-Please explain these results. Highlight any interesting patterns or insights."""
-
-        return self.send_message(prompt, include_context_tag=True)
 
     def send_message(self, message: str, include_context_tag: bool = True) -> LettaResponse:
         """
@@ -244,27 +232,70 @@ Please explain these results. Highlight any interesting patterns or insights."""
             raise ConnectionError(f"Failed to communicate with Athena: {e}")
 
     def _extract_sql(self, text: str) -> Optional[str]:
-        """Extract SQL query from LLM response text."""
+        """Extract SQL query from LLM response text.
+
+        Specifically looks for ```sql blocks first, then generic blocks
+        containing SQL, then bare SQL statements. Avoids capturing
+        ```python blocks (which are visualization code).
+        """
         if not text:
             return None
 
-        # Try to find SQL in code blocks
-        code_block_pattern = r'```(?:sql)?\s*([\s\S]*?)```'
-        matches = re.findall(code_block_pattern, text, re.IGNORECASE)
+        # Strategy 1: Explicit ```sql code blocks
+        sql_block_pattern = r'```sql\s*([\s\S]*?)```'
+        matches = re.findall(sql_block_pattern, text, re.IGNORECASE)
         if matches:
             return matches[0].strip()
 
-        # Try to find SELECT/WITH statements
+        # Strategy 2: Generic code blocks (no language tag) that start with SQL
+        generic_block_pattern = r'```\s*((?:SELECT|WITH)[\s\S]*?)```'
+        matches = re.findall(generic_block_pattern, text, re.IGNORECASE)
+        if matches:
+            return matches[0].strip()
+
+        # Strategy 3: Bare SELECT/WITH statements in text
         sql_pattern = r'((?:SELECT|WITH)\s+[\s\S]*?(?:;|$))'
         matches = re.findall(sql_pattern, text, re.IGNORECASE)
         if matches:
             return matches[0].strip().rstrip(';') + ';'
 
-        # If the whole response looks like SQL, return it
+        # Strategy 4: Whole response is SQL
         if text.strip().upper().startswith(('SELECT', 'WITH')):
             return text.strip()
 
         return None
+
+    def _extract_viz_code(self, text: str) -> Optional[str]:
+        """Extract Python visualization code from LLM response text.
+
+        Looks for ```python code blocks that contain visualization
+        commands (matplotlib, plotly, or pandas .plot).
+        """
+        if not text:
+            return None
+
+        python_block_pattern = r'```python\s*([\s\S]*?)```'
+        matches = re.findall(python_block_pattern, text, re.IGNORECASE)
+        if matches:
+            return matches[0].strip()
+
+        return None
+
+    def _extract_narrative(self, text: str) -> Optional[str]:
+        """Extract Athena's inline narrative by stripping all code blocks.
+
+        Returns the surrounding text that Athena wrote alongside SQL and
+        visualization code — her explanations, insights, follow-up suggestions.
+        """
+        if not text:
+            return None
+
+        # Strip all fenced code blocks (```lang ... ```)
+        stripped = re.sub(r'```\w*\s*[\s\S]*?```', '', text)
+        # Collapse multiple blank lines into one
+        stripped = re.sub(r'\n{3,}', '\n\n', stripped).strip()
+
+        return stripped if stripped else None
 
     def health_check(self) -> bool:
         """Check if the Athena endpoint is accessible."""

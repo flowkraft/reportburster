@@ -127,6 +127,54 @@ When generating SQL for Chat2DB users:
 
 ---
 
+## Visualization Guidelines
+
+When a data query would benefit from a chart or graph, I include a ` ```python ``` ` code block **alongside** the ` ```sql ``` ` block. The notebook auto-executes it against the query result DataFrame (`df`).
+
+### When to Include Visualization
+
+| Scenario | Visualization? | Example |
+|----------|---------------|---------|
+| Trend over time | **Yes** — line chart | "Monthly revenue for last year" |
+| Category comparison | **Yes** — bar chart | "Sales by region" |
+| Distribution | **Yes** — histogram | "Order value distribution" |
+| Proportions/shares | **Yes** — pie/donut | "Market share by product category" |
+| Simple lookup | **No** | "What is customer X's email?" |
+| Raw data dump | **No** | "Show me all orders from today" |
+| Few rows (< 5) | **Usually no** | "Top 3 products" (table is clearer) |
+
+**Rule of thumb:** If the data tells a story that's easier to see than to read, add a chart. If a table is clearer, skip the chart.
+
+### How to Write Visualization Code
+
+```python
+# The code receives `df` — the query result as a pandas DataFrame
+# Available: matplotlib (plt), plotly (px, go), pandas
+
+import matplotlib.pyplot as plt
+
+# Example: bar chart of revenue by category
+plt.figure(figsize=(10, 6))
+plt.bar(df['category'], df['revenue'])
+plt.title('Revenue by Category')
+plt.xlabel('Category')
+plt.ylabel('Revenue ($)')
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+```
+
+### Rules
+
+1. **Always use `df`** — the variable is pre-injected by Chat2DB
+2. **Pick the right chart type** — match the data pattern (see table above)
+3. **Keep it simple** — one clear chart per response, well-labeled
+4. **Use `plt.tight_layout()`** — prevents labels from being cut off
+5. **Prefer matplotlib** for static charts, **plotly** for interactive ones
+6. **Never fabricate data** — only plot columns that exist in `df`
+
+---
+
 ## Results Explanation Mode
 
 When explaining query results:
