@@ -24,7 +24,7 @@ from letta_chat2db import LettaChat2DB, LettaResponse
 
 @dataclass
 class QueryResult:
-    """Result of a Chat2DB query."""
+    """Result of a Chat2DB query or conversational response."""
     question: str
     sql: str
     df: pd.DataFrame
@@ -32,29 +32,37 @@ class QueryResult:
     execution_time_ms: float = 0.0
     row_count: int = 0
     error: Optional[str] = None
-    
+    # For conversational responses (chit-chat, guidance) where no SQL is generated
+    text_response: Optional[str] = None
+
     def _repr_html_(self):
         """Jupyter notebook HTML representation."""
         html_parts = []
-        
+
         # Question
         html_parts.append(f"<h4>📝 Question</h4><p>{self.question}</p>")
-        
-        # SQL
-        formatted_sql = sqlparse.format(self.sql, reindent=True, keyword_case='upper')
-        html_parts.append(f"<h4>🔍 Generated SQL</h4><pre>{formatted_sql}</pre>")
-        
+
+        # Conversational response (no SQL)
+        if self.text_response:
+            html_parts.append(f"<h4>🦉 Athena</h4><p>{self.text_response}</p>")
+            return "".join(html_parts)
+
+        # SQL query response
+        if self.sql:
+            formatted_sql = sqlparse.format(self.sql, reindent=True, keyword_case='upper')
+            html_parts.append(f"<h4>🔍 Generated SQL</h4><pre>{formatted_sql}</pre>")
+
         # Results
         if self.error:
             html_parts.append(f"<h4>❌ Error</h4><p style='color:red'>{self.error}</p>")
-        else:
+        elif self.sql:
             html_parts.append(f"<h4>📊 Results ({self.row_count} rows, {self.execution_time_ms:.1f}ms)</h4>")
             html_parts.append(self.df.to_html(max_rows=20, max_cols=10))
-        
+
         # Explanation
         if self.explanation:
             html_parts.append(f"<h4>💡 Explanation</h4><p>{self.explanation}</p>")
-        
+
         return "".join(html_parts)
 
 
@@ -337,13 +345,18 @@ class Chat2DB:
         schema_to_send = self._schema if send_schema else None
         response = self._letta.generate_sql(question, schema_to_send)
         sql = response.sql
-        
+
+        # No SQL extracted - this could be:
+        # 1. Conversational response ("Hello!", "How are you?")
+        # 2. ReportBurster guidance ("How do I burst a PDF?")
+        # 3. Clarification question from Athena
+        # All are valid responses - not errors!
         if not sql:
             return QueryResult(
                 question=question,
                 sql="",
                 df=pd.DataFrame(),
-                error=f"Could not generate SQL. Athena responded: {response.content}"
+                text_response=response.content  # Show as conversational, not error
             )
         
         # Check for dangerous operations
@@ -462,7 +475,19 @@ class Chat2DB:
             )
 
         def _athena_bubble(sql=None, table_html=None, explanation=None,
-                           error=None, row_count=0, exec_ms=0.0):
+                           error=None, row_count=0, exec_ms=0.0,
+                           text_response=None):
+            """Render Athena's response bubble.
+
+            Args:
+                sql: Generated SQL query (for data queries)
+                table_html: HTML table of results
+                explanation: AI explanation of results
+                error: Error message (red bubble)
+                row_count: Number of result rows
+                exec_ms: Execution time in milliseconds
+                text_response: Conversational response (chit-chat, guidance, etc.)
+            """
             p = [
                 '<div style="display:flex;align-items:flex-start;gap:8px;margin:12px 0;">',
                 '<div style="width:30px;height:30px;border-radius:50%;'
@@ -475,6 +500,18 @@ class Chat2DB:
                 p.append(
                     '<div style="background:#fee2e2;color:#991b1b;padding:10px 14px;'
                     f'border-radius:0 18px 18px 18px;font-size:14px;">{error}</div>'
+                )
+            elif text_response:
+                # Conversational response - no SQL, just Athena talking
+                # Convert markdown-style formatting for better display
+                import html
+                safe_text = html.escape(text_response)
+                # Convert newlines to <br> for proper display
+                safe_text = safe_text.replace('\n', '<br>')
+                p.append(
+                    '<div style="background:#ede9fe;color:#4c1d95;padding:10px 14px;'
+                    'border-radius:0 18px 18px 18px;font-size:14px;line-height:1.6;">'
+                    f'{safe_text}</div>'
                 )
             else:
                 if sql:
@@ -749,9 +786,10 @@ class Chat2DB:
                 # Remove thinking indicator
                 _remove_thinking()
 
+                # Build table HTML only for SQL query results
                 tbl = (
                     result.df.head(20).to_html(index=False)
-                    if not result.error and len(result.df) > 0
+                    if not result.error and not result.text_response and len(result.df) > 0
                     else None
                 )
                 _add_message(_athena_bubble(
@@ -761,6 +799,7 @@ class Chat2DB:
                     error=result.error,
                     row_count=result.row_count,
                     exec_ms=result.execution_time_ms,
+                    text_response=result.text_response,
                 ))
             except Exception as exc:
                 # Remove thinking indicator
