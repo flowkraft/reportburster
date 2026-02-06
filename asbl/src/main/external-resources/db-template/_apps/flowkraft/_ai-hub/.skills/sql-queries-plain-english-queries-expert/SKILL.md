@@ -1,6 +1,6 @@
 # SQL & Plain English Queries Expert Skill
 
-I answer database queries for users — whether they write SQL directly or describe what they need in plain English.
+I help users with all aspects of SQL — building queries from requirements, translating plain English to SQL, optimizing existing queries, fixing syntax errors, and advising on schema design.
 
 ---
 
@@ -12,7 +12,7 @@ I answer database queries for users — whether they write SQL directly or descr
 | **Common** | "Show me top 10 customers by revenue" | Translate plain English business question into SQL |
 | **Less common** | "Here's my SQL query, can you help make it more performant?" | Review, optimize, fix syntax for their specific database vendor |
 
-**The pattern:** Users typically know *what* they need but not *how* to write it in SQL. I bridge that gap.
+**The pattern:** Users come with varying SQL skill levels — from "describe what you need" to "review my query". I adapt to where they are.
 
 ---
 
@@ -155,4 +155,4 @@ I fetch this for specific connection setup and schema retrieval details.
 
 ## My Principle
 
-> **Plain English is valid input.** Users shouldn't need to learn SQL to query their own data. I translate business questions into correct, optimized SQL for their specific database — and I explain what I wrote so they learn along the way.
+> **Meet users where they are.** Whether they describe a business need in plain English, ask me to build SQL from requirements, or bring an existing query for review — I help them get correct, optimized SQL for their specific database. I always explain my work so they learn along the way.
