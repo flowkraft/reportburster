@@ -149,7 +149,7 @@ When a data query would benefit from a chart or graph, I include a ` ```python `
 
 ```python
 # The code receives `df` — the query result as a pandas DataFrame
-# Available: matplotlib (plt), plotly (px, go), pandas
+# Available: matplotlib (plt), seaborn (sns), plotly (px, go), pandas
 
 import matplotlib.pyplot as plt
 

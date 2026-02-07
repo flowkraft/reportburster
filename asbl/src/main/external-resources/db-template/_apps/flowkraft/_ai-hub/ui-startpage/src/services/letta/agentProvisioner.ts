@@ -171,6 +171,7 @@ async function ensureCustomToolsRegistered(client: any): Promise<Map<string, str
     'better_web_search.py',
     'better_fetch_webpage.py',
     'execute_shell_command.py',
+    'db_query.py',
   ];
 
   const baseUrl = process.env.LETTA_BASE_URL || 'http://localhost:8283';

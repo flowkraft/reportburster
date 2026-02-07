@@ -64,6 +64,8 @@ RUN set -eux; \
         python3 \
         python3-venv \
         libpq-dev \
+        unixodbc-dev \
+            # ODBC driver manager for SQL Server connectivity via pyodbc. \
         redis-server \
         # --- ESSENTIAL UTILITIES ---
         wget \
@@ -131,6 +133,20 @@ RUN cp /app/otel/otel-collector-config-file.yaml /etc/otel/config-file.yaml && \
 
 # Copy initialization SQL from the cloned Letta repo
 RUN cp /app/init.sql /docker-entrypoint-initdb.d/
+
+# Copy uv from official image for installing additional packages into the venv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/
+
+# Install native Python database drivers for the db_query custom tool.
+# These allow Athena to query any ReportBurster-configured database directly.
+RUN uv pip install --python /app/.venv/bin/python --no-cache-dir \
+    duckdb \
+    psycopg2-binary \
+    mysql-connector-python \
+    pyodbc \
+    oracledb \
+    clickhouse-connect \
+    tabulate
 
 # Normalize startup script line endings (CRLF -> LF) and ensure executable
 RUN if [ -f /app/letta/server/startup.sh ]; then \
