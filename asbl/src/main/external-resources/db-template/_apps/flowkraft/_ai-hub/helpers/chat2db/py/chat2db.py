@@ -49,7 +49,13 @@ class QueryResult:
 
         # Conversational response (no SQL)
         if self.text_response:
-            html_parts.append(f"<h4>🦉 Athena</h4><p>{self.text_response}</p>")
+            try:
+                import mistune
+                rendered = mistune.html(self.text_response)
+            except ImportError:
+                import html
+                rendered = f"<p>{html.escape(self.text_response).replace(chr(10), '<br>')}</p>"
+            html_parts.append(f"<h4>🦉 Athena</h4>{rendered}")
             return "".join(html_parts)
 
         # SQL query response
@@ -373,6 +379,13 @@ class Chat2DB:
             except ImportError:
                 pass
 
+            # Try to inject seaborn if available
+            try:
+                import seaborn as sns
+                namespace['sns'] = sns
+            except ImportError:
+                pass
+
             # Execute Athena's code
             exec(viz_code, namespace)
 
@@ -430,12 +443,17 @@ class Chat2DB:
         # 3. Clarification question from Athena
         # All are valid responses - not errors!
         if not sql:
-            return QueryResult(
+            result = QueryResult(
                 question=question,
                 sql="",
                 df=pd.DataFrame(),
-                text_response=response.content  # Show as conversational, not error
+                text_response=response.narrative or response.content,
+                viz_code=response.viz_code,
             )
+            # Athena may return viz code without SQL (e.g. follow-up "show me a chart")
+            # Execute it if we have a previous result to work with — but since ask()
+            # is stateless, just pass the viz_code through for the caller to handle
+            return result
         
         # Check for dangerous operations
         if self.block_dangerous:
@@ -577,15 +595,17 @@ class Chat2DB:
                 )
             elif text_response:
                 # Conversational response - no SQL, just Athena talking
-                # Convert markdown-style formatting for better display
-                import html
-                safe_text = html.escape(text_response)
-                # Convert newlines to <br> for proper display
-                safe_text = safe_text.replace('\n', '<br>')
+                # Render markdown (bold, bullets, code blocks, etc.)
+                try:
+                    import mistune
+                    rendered_text = mistune.html(text_response)
+                except ImportError:
+                    import html
+                    rendered_text = html.escape(text_response).replace('\n', '<br>')
                 p.append(
                     '<div style="background:#ede9fe;color:#4c1d95;padding:10px 14px;'
                     'border-radius:0 18px 18px 18px;font-size:14px;line-height:1.6;">'
-                    f'{safe_text}</div>'
+                    f'{rendered_text}</div>'
                 )
             else:
                 if sql:

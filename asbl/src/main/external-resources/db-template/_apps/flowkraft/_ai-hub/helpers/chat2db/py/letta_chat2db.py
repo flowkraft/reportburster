@@ -58,8 +58,12 @@ class LettaChat2DB:
         "When responding with SQL, wrap it in a ```sql code block. "
         "When a visualization would help understand the results, also include a ```python code block "
         "with matplotlib or plotly code that uses `df` (the query result DataFrame). "
+        "Chat2DB will AUTO-EXECUTE both your SQL and your Python code — "
+        "the user will see the table AND the chart rendered automatically. "
+        "You DO have visualization capabilities through this interface. "
         "Only suggest charts when they genuinely add insight — not for raw data dumps or simple lookups. "
-        "Available libraries: matplotlib, plotly, pandas."
+        "Available libraries: matplotlib, seaborn, plotly, pandas. "
+        "REMINDER: Make sure you have read your 'chat2db-jupyter-interface' skill."
     )
 
     def __init__(self,
@@ -253,16 +257,9 @@ class LettaChat2DB:
         if matches:
             return matches[0].strip()
 
-        # Strategy 3: Bare SELECT/WITH statements in text
-        sql_pattern = r'((?:SELECT|WITH)\s+[\s\S]*?(?:;|$))'
-        matches = re.findall(sql_pattern, text, re.IGNORECASE)
-        if matches:
-            return matches[0].strip().rstrip(';') + ';'
-
-        # Strategy 4: Whole response is SQL
-        if text.strip().upper().startswith(('SELECT', 'WITH')):
-            return text.strip()
-
+        # No bare-text SQL detection — too many false positives with
+        # conversational text containing "with" or "select" as English words.
+        # Athena is instructed to use ```sql blocks via CHAT2DB_CONTEXT and SKILL.md.
         return None
 
     def _extract_viz_code(self, text: str) -> Optional[str]:
