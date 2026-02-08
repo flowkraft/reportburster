@@ -381,11 +381,15 @@ public class Settings extends DumpToString {
 		// System.out.println("loadSettingsConnection connectionConfigFilePath = " +
 		// connectionConfigFilePath);
 
-		// If path references our packaged sample DB, synthesize settings instead of
-		// reading XML
-		String pathLower = connectionFilePath == null ? "" : connectionFilePath.toLowerCase();
-		if (pathLower.contains("sample-northwind-sqlite") || pathLower.contains("northwind-sqlite")
-				|| pathLower.contains("northwind-sqlite-sample")) {
+		// If path references our packaged sample DB folder (db/sample-northwind-sqlite/),
+		// synthesize settings instead of reading XML.
+		// IMPORTANT: Only match the actual sample DB path pattern, NOT connection config
+		// paths like config/connections/db-northwind-sqlite/ which happen to contain
+		// "northwind-sqlite" in the folder name due to the db-vendor naming convention.
+		String pathLower = connectionFilePath == null ? "" : connectionFilePath.toLowerCase().replace("\\", "/");
+		boolean isSampleDbPath = pathLower.contains("db/sample-northwind-sqlite/")
+				|| pathLower.contains("db/sample-northwind-sqlite-sample/");
+		if (isSampleDbPath) {
 			String dbFilePath = null;
 			String portable = System.getenv("PORTABLE_EXECUTABLE_DIR");
 			if (portable != null && !portable.trim().isEmpty()) {

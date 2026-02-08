@@ -14,8 +14,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "FlowKraft's (AI) Crew",
-  description: "FlowKraft's (AI) Crew Dashboard",
+  title: "FlowKraft's AI Crew",
+  description: "FlowKraft's AI Crew Dashboard",
 };
 
 export default function RootLayout({

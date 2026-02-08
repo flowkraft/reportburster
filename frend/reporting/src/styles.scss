@@ -128,6 +128,15 @@ body > #aiCopilotModal.p-dialog .p-dialog-content {
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
 }
 
+/* Database Connection Modal — taller dialog + overflow visible for Launch dropdown */
+#modalDbConnection.p-dialog {
+  min-height: 65vh;
+}
+#modalDbConnection .p-dialog-content {
+  overflow: visible !important;
+  min-height: 45vh;
+}
+
 //angular-split start
 // Angular Split styles
 as-split {

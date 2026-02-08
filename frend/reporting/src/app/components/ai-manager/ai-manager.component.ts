@@ -6,21 +6,23 @@ import {
   ChangeDetectorRef,
   TemplateRef,
   ViewChild,
+  OnDestroy,
 } from '@angular/core';
 import { AiManagerService, PromptInfo } from './ai-manager.service';
 import { InfoService } from '../../components/dialog-info/info.service';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal'; // Add ngx-bootstrap modal service
 import { AppsManagerService, ManagedApp } from '../apps-manager/apps-manager.service';
 import { SettingsService } from '../../providers/settings.service';
+import { ConfirmService } from '../dialog-confirm/confirm.service';
 
 // Define constants for tab indices for clarity
-const VANNA_TAB_INDEX = 0;
+const CHAT2DB_TAB_INDEX = 0;
 const PROMPTS_TAB_INDEX = 1;
 const HEY_AI_TAB_INDEX = 2;
 
 // Add launch configuration interface
 export type AiManagerLaunchConfig = {
-  initialActiveTabKey?: 'PROMPTS' | 'VANNA' | 'HEY_AI';
+  initialActiveTabKey?: 'PROMPTS' | 'CHAT2DB' | 'HEY_AI';
   initialSelectedCategory?: string;
   initialExpandedPromptId?: string;
   promptVariables?: { [key: string]: string };
@@ -35,14 +37,13 @@ interface CategoryWithCount {
   selector: 'dburst-ai-manager',
   templateUrl: './ai-manager.template.html',
 })
-export class AiManagerComponent implements OnInit, AfterViewChecked {
+export class AiManagerComponent implements OnInit, AfterViewChecked, OnDestroy {
   @Input() mode: 'standalone' | 'embedded' | 'launchCopilot' = 'standalone';
   @Input() dropdownDirection: 'down' | 'up' = 'down';
-  //@Input() showVanna: boolean = true;
 
-  @Input() showVanna: boolean = false;
-  
-  vannaApp: ManagedApp;
+  @Input() showChat2db: boolean = false;
+
+  chat2dbApp: ManagedApp;
 
   // Internal state
   isModalVisible: boolean = false;
@@ -59,7 +60,7 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
   };
 
   // Flags to control active state for ngx-bootstrap tabs
-  isVannaTabActive: boolean = false;
+  isChat2dbTabActive: boolean = false;
   isPromptsTabActive: boolean = false;
   isHeyAiTabActive: boolean = false;
 
@@ -75,7 +76,7 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
   // --- End AI Prompts Tab State ---
 
   // initialState properties from modal
-  @Input() initialActiveTabKey?: 'PROMPTS' | 'VANNA' | 'HEY_AI';
+  @Input() initialActiveTabKey?: 'PROMPTS' | 'CHAT2DB' | 'HEY_AI';
   @Input() initialSelectedCategory?: string;
   @Input() initialExpandedPromptId?: string;
   @Input() promptVariables?: { [key: string]: string };
@@ -86,6 +87,9 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
   // guard to run init logic once per open
   private pendingInit = false;
 
+  // Periodic refresh to stay in sync with other components (apps-manager, starter-packs)
+  private chat2dbRefreshInterval: any;
+
   constructor(
     private aiManagerService: AiManagerService,
     private cdRef: ChangeDetectorRef,
@@ -93,19 +97,38 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
     private modalService: BsModalService, // Add ngx-bootstrap modal service
     protected appsManagerService: AppsManagerService,
     private settingsService: SettingsService,
+    private confirmService: ConfirmService,
   ) {
   }
 
   async ngOnInit(): Promise<void> {
     try {
       this.loadPrompts();
-      this.vannaApp = await this.appsManagerService.getAppById('vanna-ai');
-  
+      this.chat2dbApp = await this.appsManagerService.getAppById('flowkraft-ai-hub');
+
+      // Periodically refresh chat2dbApp state to stay in sync with other components
+      // (e.g., when the app is started from Apps/Starter Packs page or Chat2DB tab)
+      if (this.showChat2db) {
+        this.chat2dbRefreshInterval = setInterval(async () => {
+          try {
+            // If app is in a transitional state, trigger a real Docker status refresh
+            // so healthcheck results are picked up (not just cached state)
+            if (this.chat2dbApp?.state === 'starting' || this.chat2dbApp?.state === 'stopping') {
+              await this.appsManagerService.refreshAllStatuses(true);
+            }
+            const freshApp = await this.appsManagerService.getAppById('flowkraft-ai-hub');
+            if (freshApp && this.chat2dbApp && freshApp.state !== this.chat2dbApp.state) {
+              this.chat2dbApp.state = freshApp.state;
+              this.chat2dbApp.lastOutput = freshApp.lastOutput;
+              this.chat2dbApp.currentCommandValue = freshApp.currentCommandValue;
+              this.cdRef.detectChanges();
+            }
+          } catch (e) { /* ignore refresh errors */ }
+        }, 3000);
+      }
     } catch (error) {
       console.error('Error during AiManagerComponent ngOnInit:', error);
-      // Optionally, handle the error more gracefully, e.g., show a message or disable AI features
     }
-    // remove previous setTimeout logic
   }
 
   ngAfterViewChecked(): void {
@@ -114,6 +137,43 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
       this.completeInitialization();
       this.cdRef.detectChanges();
     }
+  }
+
+  ngOnDestroy(): void {
+    if (this.chat2dbRefreshInterval) {
+      clearInterval(this.chat2dbRefreshInterval);
+    }
+  }
+
+  /**
+   * Toggle the chat2dbApp (start/stop) with confirmation dialog and immediate UI feedback.
+   * Called from the template's play/stop button in the dropdown.
+   */
+  toggleChat2dbApp(): void {
+    if (!this.chat2dbApp) return;
+
+    const isStarting = this.chat2dbApp.state !== 'running';
+    const dialogQuestion = isStarting
+      ? `Start ${this.chat2dbApp.name}? Be patient — the first start takes longer while required components download and configure; subsequent start/stop cycles are faster.`
+      : `Stop ${this.chat2dbApp.name}?`;
+
+    this.confirmService.askConfirmation({
+      message: dialogQuestion,
+      confirmAction: async () => {
+        // Set immediate UI feedback
+        this.chat2dbApp.state = isStarting ? 'starting' : 'stopping';
+        this.cdRef.detectChanges();
+        await this.appsManagerService.toggleApp(this.chat2dbApp);
+        // Re-fetch actual state from service after toggle completes
+        const freshApp = await this.appsManagerService.getAppById('flowkraft-ai-hub');
+        if (freshApp) {
+          this.chat2dbApp.state = freshApp.state;
+          this.chat2dbApp.lastOutput = freshApp.lastOutput;
+          this.chat2dbApp.currentCommandValue = freshApp.currentCommandValue;
+        }
+        this.cdRef.detectChanges();
+      },
+    });
   }
 
   /**
@@ -128,24 +188,24 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
    * Calculate which tab should be active initially
    */
   private determineInitialActiveTab(): number {
-    // Default tab based on Vanna visibility
-    let tabIndexToActivate = this.showVanna
-      ? VANNA_TAB_INDEX
+    // Default tab based on Chat2DB visibility
+    let tabIndexToActivate = this.showChat2db
+      ? CHAT2DB_TAB_INDEX
       : PROMPTS_TAB_INDEX;
 
     // Override with explicit configuration if provided
     if (this.initialActiveTabKey) {
       switch (this.initialActiveTabKey) {
         case 'PROMPTS':
-          tabIndexToActivate = this.showVanna
+          tabIndexToActivate = this.showChat2db
             ? PROMPTS_TAB_INDEX
-            : VANNA_TAB_INDEX;
+            : CHAT2DB_TAB_INDEX;
           break;
-        case 'VANNA':
-          if (this.showVanna) tabIndexToActivate = VANNA_TAB_INDEX;
+        case 'CHAT2DB':
+          if (this.showChat2db) tabIndexToActivate = CHAT2DB_TAB_INDEX;
           break;
         case 'HEY_AI':
-          tabIndexToActivate = this.showVanna
+          tabIndexToActivate = this.showChat2db
             ? HEY_AI_TAB_INDEX
             : PROMPTS_TAB_INDEX;
           break;
@@ -311,24 +371,24 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
   // Helper to set the active tab flags for ngx-bootstrap
   setActiveTab(index: number): void {
     this.intendedTabIndex = index;
-    this.isVannaTabActive = this.showVanna && index === VANNA_TAB_INDEX;
-    // Adjust index checks based on Vanna visibility
-    const promptsIndex = this.showVanna ? PROMPTS_TAB_INDEX : VANNA_TAB_INDEX;
-    const heyAiIndex = this.showVanna ? HEY_AI_TAB_INDEX : PROMPTS_TAB_INDEX;
+    this.isChat2dbTabActive = this.showChat2db && index === CHAT2DB_TAB_INDEX;
+    // Adjust index checks based on Chat2DB visibility
+    const promptsIndex = this.showChat2db ? PROMPTS_TAB_INDEX : CHAT2DB_TAB_INDEX;
+    const heyAiIndex = this.showChat2db ? HEY_AI_TAB_INDEX : PROMPTS_TAB_INDEX;
 
     this.isPromptsTabActive = index === promptsIndex;
     this.isHeyAiTabActive = index === heyAiIndex;
 
-    // Ensure only one tab is active if Vanna is hidden and indices shift
-    if (!this.showVanna) {
+    // Ensure only one tab is active if Chat2DB is hidden and indices shift
+    if (!this.showChat2db) {
       if (this.isPromptsTabActive && this.isHeyAiTabActive) {
         // Default to prompts if somehow both became active due to index shift
         this.isHeyAiTabActive = false;
       }
     } else {
-      // Ensure only one is active when Vanna is shown
+      // Ensure only one is active when Chat2DB is shown
       if (
-        this.isVannaTabActive &&
+        this.isChat2dbTabActive &&
         (this.isPromptsTabActive || this.isHeyAiTabActive)
       ) {
         this.isPromptsTabActive = false;
@@ -346,18 +406,17 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
     window.open(url, '_blank');
   }
 
-  openVannaModal(template: TemplateRef<any>): void {
-    if (this.mode === 'standalone' && this.showVanna) {
-      this.setActiveTab(VANNA_TAB_INDEX);
+  openChat2dbModal(template: TemplateRef<any>): void {
+    if (this.mode === 'standalone' && this.showChat2db) {
+      this.setActiveTab(CHAT2DB_TAB_INDEX);
       this.pendingInit = true;
       this.openModal(template);
-      //console.log('Placeholder: Opening modal to Vanna tab');
     }
   }
 
   openAiPromptsModal(template: TemplateRef<any>): void {
     if (this.mode === 'standalone') {
-      const targetIndex = this.showVanna ? PROMPTS_TAB_INDEX : VANNA_TAB_INDEX;
+      const targetIndex = this.showChat2db ? PROMPTS_TAB_INDEX : CHAT2DB_TAB_INDEX;
       this.setActiveTab(targetIndex);
       this.pendingInit = true;
       this.openModal(template);
@@ -443,7 +502,6 @@ export class AiManagerComponent implements OnInit, AfterViewChecked {
         'Error during AiManagerComponent completeInitialization:',
         error,
       );
-      // Optionally, handle the error more gracefully
     }
   }
 }

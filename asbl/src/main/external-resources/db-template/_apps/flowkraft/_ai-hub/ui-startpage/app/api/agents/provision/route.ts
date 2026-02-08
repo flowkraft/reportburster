@@ -28,6 +28,7 @@ export async function POST(request: Request) {
     // Get parameters from request body
     const body = await request.json().catch(() => ({}));
     const force = body.force === true;
+    const giveDbQueryToolToAthena = body.giveDbQueryToolToAthena === true;
     const skipMatrix = body.skipMatrix === true;
     const lettaOnly = body.lettaOnly === true;
     const stream = body.stream === true;
@@ -81,12 +82,12 @@ export async function POST(request: Request) {
           };
 
           try {
-            send('log', `Provisioning started${force ? ' (force)' : ''}...`);
+            send('log', `Provisioning started${force ? ' (force)' : ''}${giveDbQueryToolToAthena ? ' (db_query→Athena)' : ''}...`);
 
             let result: any;
 
             if (lettaOnly) {
-              const results = await provisionAllAgents({ force });
+              const results = await provisionAllAgents({ force, giveDbQueryToolToAthena });
               const errorCount = results.filter((r: any) => r.status === 'error').length;
               result = {
                 success: errorCount === 0,
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
                 agents: results,
               };
             } else {
-              const fullResult = await provisionAll({ force, skipMatrix });
+              const fullResult = await provisionAll({ force, skipMatrix, giveDbQueryToolToAthena });
               result = {
                 success: fullResult.success,
                 message: fullResult.success
@@ -139,11 +140,11 @@ export async function POST(request: Request) {
     }
 
     // ── Non-streaming mode (backward compatibility) ─────────────────
-    console.log(`Provisioning agents${skipMatrix ? ' (skip-matrix)' : ''}${force ? ' (force)' : ''}`);
+    console.log(`Provisioning agents${skipMatrix ? ' (skip-matrix)' : ''}${force ? ' (force)' : ''}${giveDbQueryToolToAthena ? ' (db_query→Athena)' : ''}`);
 
     if (lettaOnly) {
       // Letta-only provisioning
-      const results = await provisionAllAgents({ force });
+      const results = await provisionAllAgents({ force, giveDbQueryToolToAthena });
       const errorCount = results.filter(r => r.status === 'error').length;
 
       return NextResponse.json({
@@ -159,6 +160,7 @@ export async function POST(request: Request) {
     const result = await provisionAll({
       force,
       skipMatrix,
+      giveDbQueryToolToAthena,
     });
 
     return NextResponse.json({

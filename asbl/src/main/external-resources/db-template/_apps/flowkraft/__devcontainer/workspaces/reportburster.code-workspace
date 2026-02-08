@@ -1,19 +1,19 @@
 {
   "folders": [
     {
-      "name": "FlowKraft's Place",
-      "path": "/project-rb"
+      "name": "ReportBurster",
+      "path": "/reportburster"
     }
   ],
   "settings": {
     "workbench.colorTheme": "Visual Studio Dark",
     "workbench.colorCustomizations": {
-      "activityBar.background": "#22a7c8",
+      "activityBar.background": "#B22222",
       "activityBar.foreground": "#ffffff",
-      "activityBar.inactiveForeground": "#aaaaaa",
-      "sideBar.border": "#22a7c8"
+      "activityBar.inactiveForeground": "#000000",
+      "sideBar.border": "#B22222"
     },
-    "window.title": "${dirty} FlowKraft's Place > ${activeEditorShort}",
+    "window.title": "${dirty} ReportBurster > ${activeEditorShort}",
     "files.watcherExclude": {
       "**/node_modules/*/**": true,
       "**/.venv/*/**": true

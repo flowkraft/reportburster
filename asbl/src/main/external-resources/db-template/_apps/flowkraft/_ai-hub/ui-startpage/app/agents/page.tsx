@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Info, Code, Rocket, Loader2, Copy, X, CheckCircle2, XCircle, Terminal, FolderOpen } from 'lucide-react';
+import { MessageSquare, Info, Code, Rocket, Loader2, Copy, X, CheckCircle2, XCircle, Terminal, FolderOpen, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -87,6 +87,8 @@ export default function AgentsPage() {
   const [logLines, setLogLines] = useState<LogLine[]>([]);
   const [logStatus, setLogStatus] = useState<'running' | 'success' | 'error'>('running');
   const [forceUpdate, setForceUpdate] = useState(false);
+  const [giveDbQueryToolToAthena, setGiveDbQueryToolToAthena] = useState(false);
+  const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
 
   useEffect(() => {
     fetchAgents();
@@ -96,6 +98,7 @@ export default function AgentsPage() {
   useEffect(() => {
     const handler = () => {
       setForceUpdate(false);
+      setGiveDbQueryToolToAthena(false);
       setShowUpdateConfirm(true);
     };
     window.addEventListener('trigger-update-agents', handler);
@@ -157,7 +160,7 @@ export default function AgentsPage() {
     }
   };
 
-  const handleProvisionAgents = async (force: boolean = true) => {
+  const handleProvisionAgents = async (force: boolean = true, giveDbQuery: boolean = false) => {
     try {
       setProvisioning(true);
       setLogLines([]);
@@ -167,7 +170,7 @@ export default function AgentsPage() {
       const response = await fetch('/api/agents/provision', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ force, stream: true }),
+        body: JSON.stringify({ force, giveDbQueryToolToAthena: giveDbQuery, stream: true }),
       });
 
       // Non-OK response (e.g. 400 missing env vars) — fall back to JSON
@@ -270,11 +273,6 @@ export default function AgentsPage() {
   const handleShowInfo = (agent: Agent) => {
     setSelectedAgent(agent);
     setIsModalOpen(true);
-  };
-
-  const handleCodeWithClaude = () => {
-    // Open Code Server
-    window.open('http://localhost:8443', '_blank', 'noopener,noreferrer');
   };
 
   const renderLogPanel = () => {
@@ -614,15 +612,49 @@ export default function AgentsPage() {
           <FolderOpen className="w-5 h-5 mr-2" />
           View Oracle Workspaces
         </Button>
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={handleCodeWithClaude}
-          className="border-primary hover:bg-primary hover:text-primary-foreground"
-        >
-          <Code className="w-5 h-5 mr-2" />
-          Code with Claude
-        </Button>
+        {/* Project dropdown */}
+        <div className="relative">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setProjectDropdownOpen(!projectDropdownOpen)}
+            className="border-primary hover:bg-primary hover:text-primary-foreground"
+          >
+            <FolderOpen className="w-5 h-5 mr-2" />
+            Projects
+            <ChevronDown className="w-4 h-4 ml-2" />
+          </Button>
+
+          {projectDropdownOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setProjectDropdownOpen(false)} />
+              <div className="absolute left-0 mt-2 w-56 bg-card border border-border rounded-md shadow-lg z-50">
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      window.open('http://localhost:8443/?workspace=/workspaces/reportburster.code-workspace', '_blank', 'noopener,noreferrer');
+                      setProjectDropdownOpen(false);
+                    }}
+                    className="w-full px-4 py-2.5 text-sm text-left hover:bg-muted transition-colors flex items-center gap-3"
+                  >
+                    <Code className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-card-foreground">ReportBurster</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      window.open('http://localhost:8443/?workspace=/workspaces/flowkraft-apps.code-workspace', '_blank', 'noopener,noreferrer');
+                      setProjectDropdownOpen(false);
+                    }}
+                    className="w-full px-4 py-2.5 text-sm text-left hover:bg-muted transition-colors flex items-center gap-3"
+                  >
+                    <Code className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-card-foreground">Bkend/ETL Jobs & Frend Web Apps</span>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Agent Info Modal */}
@@ -694,6 +726,25 @@ export default function AgentsPage() {
             </DialogDescription>
           </DialogHeader>
 
+          {/* Give db_query tool to Athena checkbox */}
+          <label className="flex items-start gap-3 mt-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={giveDbQueryToolToAthena}
+              onChange={(e) => setGiveDbQueryToolToAthena(e.target.checked)}
+              className="mt-0.5 rounded border-border text-rb-cyan focus:ring-rb-cyan cursor-pointer"
+            />
+            <div>
+              <span className="text-sm font-medium text-foreground">Give db_query tool to Athena</span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                When checked, Athena gets READ-ONLY access to query your
+                ReportBurster database connections.{' '}
+                <strong className="text-foreground">When unchecked, no AI agent
+                has any database access whatsoever.</strong>
+              </p>
+            </div>
+          </label>
+
           {/* Force checkbox */}
           <label className="flex items-start gap-3 mt-2 cursor-pointer">
             <input
@@ -715,7 +766,7 @@ export default function AgentsPage() {
             <Button
               onClick={() => {
                 setShowUpdateConfirm(false);
-                handleProvisionAgents(forceUpdate);
+                handleProvisionAgents(forceUpdate, giveDbQueryToolToAthena);
               }}
               disabled={provisioning}
               className="bg-rb-cyan hover:bg-rb-cyan/90 text-white"

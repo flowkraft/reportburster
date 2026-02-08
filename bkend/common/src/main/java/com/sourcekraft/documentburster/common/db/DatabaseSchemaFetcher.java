@@ -225,41 +225,30 @@ public class DatabaseSchemaFetcher {
      * @throws Exception If driver loading or connection fails.
      */
     private Connection getConnection(ServerDatabaseSettings settings) throws Exception {
-        // ... (implementation remains the same) ...
-        String dbType = settings.type.toLowerCase();
-
+        // ensureDriverAndUrl() populates settings.driver and settings.url from
+        // the type/host/port/database fields. Use these directly rather than
+        // re-computing via getDriverClass/getJdbcUrl, which can fail for
+        // synthesized connections (e.g., built-in Northwind) where raw fields
+        // like 'database' may be empty even though 'url' is fully set.
         settings.ensureDriverAndUrl();
 
-        Connection connection = null;
-
-        // --- Driver Loading ---
-        String driverClass = getDriverClass(dbType);
-        String jdbcUrl = getJdbcUrl(settings);
-
-        if (driverClass == null || jdbcUrl == null) {
-            throw new UnsupportedOperationException("Database type '" + dbType + "' is not supported for connection.");
+        if (StringUtils.isBlank(settings.driver) || StringUtils.isBlank(settings.url)) {
+            throw new UnsupportedOperationException(
+                    "Database type '" + settings.type + "' is not supported for connection.");
         }
 
         try {
-            log.debug("Loading JDBC driver: {}", driverClass);
-            Class.forName(driverClass);
+            log.debug("Loading JDBC driver: {}", settings.driver);
+            Class.forName(settings.driver);
             log.info("JDBC driver loaded successfully.");
         } catch (ClassNotFoundException e) {
-            log.error("JDBC Driver ({}) not found. Ensure it's in the classpath.", driverClass, e);
-            throw new RuntimeException("JDBC Driver not found: " + driverClass, e);
+            log.error("JDBC Driver ({}) not found. Ensure it's in the classpath.", settings.driver, e);
+            throw new RuntimeException("JDBC Driver not found: " + settings.driver, e);
         }
 
-        // --- Connection Attempt ---
         try {
-            log.debug("Attempting to connect using JDBC URL: {}", jdbcUrl);
-            // Add user/password for non-SQLite types
-            if ("sqlite".equals(dbType)) {
-                connection = DriverManager.getConnection(jdbcUrl);
-            } else {
-                // Basic example, might need Properties object for more options (SSL etc.)
-                connection = DriverManager.getConnection(jdbcUrl, settings.userid, settings.userpassword);
-            }
-            return connection;
+            log.debug("Attempting to connect using JDBC URL: {}", settings.url);
+            return DriverManager.getConnection(settings.url, settings.userid, settings.userpassword);
         } catch (SQLException e) {
             log.error("SQL error during connection attempt: {} (SQLState: {}, ErrorCode: {})", e.getMessage(),
                     e.getSQLState(), e.getErrorCode());

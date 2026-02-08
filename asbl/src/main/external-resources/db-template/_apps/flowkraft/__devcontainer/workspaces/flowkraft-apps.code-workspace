@@ -1,0 +1,33 @@
+{
+  "folders": [
+    {
+      "name": "FlowKraft Apps",
+      "path": "/reportburster/_apps/flowkraft"
+    }
+  ],
+  "settings": {
+    "workbench.colorTheme": "Visual Studio Dark",
+    "workbench.colorCustomizations": {
+      "activityBar.background": "#00CED1",
+      "activityBar.foreground": "#ffffff",
+      "activityBar.inactiveForeground": "#000000",
+      "sideBar.border": "#00CED1"
+    },
+    "window.title": "${dirty} FlowKraft Apps > ${activeEditorShort}",
+    "files.watcherExclude": {
+      "**/node_modules/*/**": true,
+      "**/.venv/*/**": true
+    },
+    "git.autofetch": true,
+    "files.autoSave": "afterDelay",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "eslint.validate": [
+      "javascript",
+      "javascriptreact",
+      "typescript",
+      "typescriptreact"
+    ]
+  }
+}

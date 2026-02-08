@@ -39,6 +39,8 @@ class QueryResult:
     # Visualization: Athena's suggested Python code + rendered base64 PNG
     viz_code: Optional[str] = None
     viz_image: Optional[str] = None  # base64-encoded PNG
+    # Athena's raw response (full markdown, unprocessed) for copy-to-clipboard
+    raw_content: Optional[str] = None
 
     def _repr_html_(self):
         """Jupyter notebook HTML representation."""
@@ -449,6 +451,7 @@ class Chat2DB:
                 df=pd.DataFrame(),
                 text_response=response.narrative or response.content,
                 viz_code=response.viz_code,
+                raw_content=response.content,
             )
             # Athena may return viz code without SQL (e.g. follow-up "show me a chart")
             # Execute it if we have a previous result to work with — but since ask()
@@ -485,6 +488,7 @@ class Chat2DB:
                 execution_time_ms=execution_time,
                 row_count=len(df),
                 viz_code=response.viz_code,
+                raw_content=response.content,
             )
 
             # Execute visualization if Athena suggested one
@@ -568,7 +572,8 @@ class Chat2DB:
 
         def _athena_bubble(sql=None, table_html=None, explanation=None,
                            error=None, row_count=0, exec_ms=0.0,
-                           text_response=None, viz_image=None):
+                           text_response=None, viz_image=None,
+                           raw_content=None):
             """Render Athena's response bubble.
 
             Args:
@@ -579,7 +584,12 @@ class Chat2DB:
                 row_count: Number of result rows
                 exec_ms: Execution time in milliseconds
                 text_response: Conversational response (chit-chat, guidance, etc.)
+                raw_content: Athena's full raw response for copy-to-clipboard
             """
+            bubble_counter[0] += 1
+            bid = f'athena-bubble-{bubble_counter[0]}'
+            raw_id = f'athena-raw-{bubble_counter[0]}'
+            copy_btn = _copy_btn(raw_id)
             p = [
                 '<div style="display:flex;align-items:flex-start;gap:8px;margin:12px 0;">',
                 '<div style="width:30px;height:30px;border-radius:50%;'
@@ -587,6 +597,8 @@ class Chat2DB:
                 'justify-content:center;flex-shrink:0;font-size:16px;">'
                 '\U0001f989</div>',
                 '<div style="flex:1;max-width:85%;">',
+                f'<div style="display:flex;justify-content:flex-end;margin-bottom:4px;">{copy_btn}</div>',
+                f'<div id="{bid}">',
             ]
             if error:
                 p.append(
@@ -656,6 +668,19 @@ class Chat2DB:
                         'font-size:14px;margin-top:2px;line-height:1.6;color:#374151;">'
                         f'{rendered_expl}</div>'
                     )
+            p.append('</div>')  # close content div (bid)
+            # Hidden div with Athena's raw response for copy-to-clipboard
+            if raw_content:
+                safe_raw = (raw_content.replace('&', '&amp;')
+                            .replace('<', '&lt;').replace('>', '&gt;'))
+                p.append(
+                    f'<div id="{raw_id}" style="display:none;">'
+                    f'{safe_raw}</div>'
+                )
+            else:
+                # Fallback: copy visible text if no raw content available
+                p.append(f'<div id="{raw_id}" style="display:none;"></div>')
+            p.append(f'<div style="display:flex;justify-content:flex-end;margin-top:4px;">{copy_btn}</div>')
             p.append('</div></div>')
             return _wrap(''.join(p))
 
@@ -663,6 +688,27 @@ class Chat2DB:
             return _wrap(
                 '<div style="text-align:center;color:#9ca3af;'
                 f'font-size:12px;margin:8px 0;">\u2014 {text} \u2014</div>'
+            )
+
+        def _copy_btn(target_id):
+            """Copy-to-clipboard button targeting a specific element by ID.
+            Uses textContent to read from hidden divs (display:none)."""
+            return (
+                f'<button onclick="(function(btn){{'
+                f'var el=document.getElementById(\'{target_id}\');'
+                f'if(el){{navigator.clipboard.writeText(el.textContent).then(function(){{'
+                f'btn.innerHTML=\'\\u2705\';'
+                f'setTimeout(function(){{btn.innerHTML=\'\\ud83d\\udccb\';}},1500);'
+                f'}});}}'
+                f'}})(this)" '
+                f'title="Copy to clipboard" '
+                f'style="background:none;border:1px solid #d1d5db;border-radius:6px;'
+                f'padding:4px 8px;cursor:pointer;font-size:18px;color:#6b7280;'
+                f'display:inline-flex;align-items:center;'
+                f'transition:all 0.2s;" '
+                f'onmouseover="this.style.background=\'#f3f4f6\';this.style.borderColor=\'#9ca3af\'" '
+                f'onmouseout="this.style.background=\'none\';this.style.borderColor=\'#d1d5db\'"'
+                f'>\U0001f4cb</button>'
             )
 
         # -- Connection widgets ------------------------------------------------
@@ -711,15 +757,18 @@ class Chat2DB:
         # This avoids the Output widget's broken overflow behavior.
 
         chat_messages = []  # List of HTML strings
+        bubble_counter = [0]  # Mutable counter for unique bubble IDs
+        message_history = []  # User's sent messages (most recent last)
+        history_index = [0]  # Current position when walking history with Up/Down
 
         def _render_chat():
             """Re-render all chat messages as a single HTML block."""
             content = ''.join(chat_messages)
-            # Wrap in a scrollable container
-            # Use inline onload trick + setTimeout to ensure scroll happens after render
+            # Scrollable container — auto-scroll to bottom on re-render
             return (
                 f'<div class="chat2db-scroll-container" style="height:380px;overflow-y:auto;'
-                f'overflow-x:hidden;padding:12px;box-sizing:border-box;">'
+                f'overflow-x:hidden;padding:12px;box-sizing:border-box;'
+                f'min-height:150px;">'
                 f'{content}'
                 f'</div>'
                 f'<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" '
@@ -875,6 +924,18 @@ class Chat2DB:
             question = inp.value.strip()
             if not question:
                 return
+
+            # Store in message history for Up/Down arrow navigation
+            # Avoid duplicating if same as last message; cap at 50 entries
+            if not message_history or message_history[-1] != question:
+                message_history.append(question)
+                if len(message_history) > 50:
+                    message_history.pop(0)
+            # Reset history walk index to "past the end" (ready for new input)
+            history_index[0] = len(message_history)
+            # Sync history to JS side for Up/Down arrow navigation
+            _sync_history()
+
             inp.value = ''
 
             # Disable input while processing
@@ -909,6 +970,7 @@ class Chat2DB:
                     exec_ms=result.execution_time_ms,
                     text_response=result.text_response,
                     viz_image=result.viz_image,
+                    raw_content=result.raw_content,
                 ))
             except Exception as exc:
                 # Remove thinking indicator
@@ -949,6 +1011,119 @@ class Chat2DB:
                     'Check REPORTBURSTER_CONNECTIONS_PATH.'
                 ))
 
+        # -- Message history Up/Down arrow key navigation ----------------------
+        # Inject JS that listens for ArrowUp / ArrowDown on the input widget.
+        # The history list is synced from Python via a hidden widget.
+
+        history_data = widgets.HTML(value='')  # Hidden, carries history JSON
+
+        def _sync_history():
+            """Push current message_history to the JS side via hidden widget."""
+            import json
+            history_data.value = (
+                f'<span class="chat2db-history-data" style="display:none;">'
+                f'{json.dumps(message_history)}</span>'
+            )
+
+        # Inject the keyboard handler via a one-time HTML/JS widget
+        arrow_js = widgets.HTML(
+            value=(
+                '<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" '
+                'onload="(function(img){'
+                'var container=img.closest(\'.widget-vbox\');'
+                'if(!container){img.remove();return;}'
+                'function setup(){'
+                'var inp=container.querySelector(\'input[type=text]\');'
+                'if(!inp){setTimeout(setup,200);return;}'
+                'if(inp._chat2db_history_bound){img.remove();return;}'
+                'inp._chat2db_history_bound=true;'
+                'var idx=-1;var saved=\'\';'
+                'inp.addEventListener(\'keydown\',function(e){'
+                'var span=container.querySelector(\'.chat2db-history-data\');'
+                'if(!span)return;'
+                'var hist=[];'
+                'try{hist=JSON.parse(span.textContent);}catch(x){return;}'
+                'if(!hist.length)return;'
+                'if(e.key===\'ArrowUp\'){'
+                'e.preventDefault();'
+                'if(idx===-1){saved=inp.value;idx=hist.length;}'
+                'if(idx>0){idx--;inp.value=hist[idx];'
+                'inp.dispatchEvent(new Event(\'input\',{bubbles:true}));}'
+                '}'
+                'else if(e.key===\'ArrowDown\'){'
+                'e.preventDefault();'
+                'if(idx===-1)return;'
+                'idx++;'
+                'if(idx>=hist.length){idx=-1;inp.value=saved;}'
+                'else{inp.value=hist[idx];}'
+                'inp.dispatchEvent(new Event(\'input\',{bubbles:true}));'
+                '}'
+                'else if(e.key!==\'ArrowLeft\'&&e.key!==\'ArrowRight\'){'
+                'idx=-1;'
+                '}'
+                '});'
+                '}'
+                'setup();'
+                'img.remove();'
+                '})(this)" style="display:none">'
+            )
+        )
+
+        # -- Resize handle (separate widget, survives chat re-renders) ---------
+        # A visible grip bar at the bottom of the entire widget.
+        # Dragging it resizes the chat scroll container + ipywidgets parent.
+        resize_handle = widgets.HTML(
+            value=(
+                '<div class="chat2db-grip" style="'
+                'display:flex;justify-content:center;align-items:center;'
+                'height:10px;cursor:ns-resize;user-select:none;'
+                'color:#9ca3af;font-size:14px;letter-spacing:3px;'
+                'border-top:1px solid #e5e7eb;margin:0 8px;'
+                '" title="Drag to resize">'
+                '\u2261'  # ≡ triple bar grip icon
+                '</div>'
+                '<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" '
+                'onload="(function(img){'
+                'var grip=img.previousElementSibling;'
+                'if(!grip){img.remove();return;}'
+                # Walk up to the VBox container, then find the chat scroll area
+                'var vbox=img.closest(\'.widget-vbox\');'
+                'if(!vbox){img.remove();return;}'
+                'function setup(){'
+                'var sc=vbox.querySelector(\'.chat2db-scroll-container\');'
+                'if(!sc){setTimeout(setup,300);return;}'
+                # Find the ipywidgets HTML wrapper that contains the scroll container
+                'var htmlWidget=sc.closest(\'.widget-html\');'
+                'grip.addEventListener(\'mousedown\',function(e){'
+                'e.preventDefault();'
+                'var startY=e.clientY;'
+                'var startH=sc.offsetHeight;'
+                'var startWH=htmlWidget?htmlWidget.offsetHeight:0;'
+                'document.body.style.cursor=\'ns-resize\';'
+                'function onMove(ev){'
+                'var delta=ev.clientY-startY;'
+                'var newH=startH+delta;'
+                'if(newH<150)newH=150;'
+                'if(newH>900)newH=900;'
+                'sc.style.height=newH+\'px\';'
+                # Also resize the ipywidgets wrapper so it doesn't clip
+                'if(htmlWidget)htmlWidget.style.height=(startWH+delta)+\'px\';'
+                '}'
+                'function onUp(){'
+                'document.body.style.cursor=\'\';'
+                'document.removeEventListener(\'mousemove\',onMove);'
+                'document.removeEventListener(\'mouseup\',onUp);'
+                '}'
+                'document.addEventListener(\'mousemove\',onMove);'
+                'document.addEventListener(\'mouseup\',onUp);'
+                '});'
+                '}'
+                'setup();'
+                'img.remove();'
+                '})(this)" style="display:none">'
+            )
+        )
+
         # -- Assemble layout ---------------------------------------------------
 
         header = widgets.HBox(
@@ -975,7 +1150,8 @@ class Chat2DB:
         )
 
         container = widgets.VBox(
-            [header, conn_row, chat_html, input_row],
+            [header, conn_row, chat_html, input_row, resize_handle,
+             history_data, arrow_js],
             layout=widgets.Layout(
                 padding='16px', border='1px solid #e5e7eb',
                 border_radius='12px',

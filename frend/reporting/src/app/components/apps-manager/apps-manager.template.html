@@ -110,7 +110,13 @@
 
         <div class="panel-heading" style="position: relative;">
           <h4 class="panel-title">
-            <!-- header Launch removed (use inline Launch button instead) -->
+            <!-- Stop icon in heading (consistent with dropdown mode) -->
+            <span *ngIf="isAppRunning(app) && app.type !== 'desktop'"
+                  style="margin-right: 10px; vertical-align: middle; cursor: pointer;"
+                  (click)="onToggleApp(app); $event.stopPropagation();"
+                  title="Stop">
+              <i class="fa fa-stop" style="color: #888; font-size: 16px;"></i>
+            </span>
 
             <i *ngIf="app.icon" [class]="app.icon" [style.color]="(app.state === 'starting' || app.state === 'stopping') ? 'white' : '#333'" style="margin-right: 6px"></i>
             <span [id]="'appName_' + sanitizeAppId(app.id)" [style.color]="(app.state === 'starting' || app.state === 'stopping') ? 'white' : '#333'">{{ app.name }}</span>
@@ -283,7 +289,7 @@
                    [style.pointerEvents]="!isAppRunning(app) ? 'none' : 'auto'"
                    [style.color]="!isAppRunning(app) ? '#999' : 'inherit'">
                   <i *ngIf="link.icon" [class]="link.icon" style="margin-right: 6px; width: 14px; text-align: center;"></i>
-                  {{ link.label }}
+                  <span [innerHTML]="link.label"></span>
                 </a>
               </li>
             </ul>
@@ -445,15 +451,17 @@
         <i
           *ngIf="visibleApps[0]?.icon"
           [class]="visibleApps[0]?.icon"
-          [style.color]="visibleApps[0]?.state === 'running' ? 'green' : '#888'"
+          [style.color]="visibleApps[0]?.state === 'running' ? '#31708f' : '#888'"
           style="margin-right: 6px"
         ></i>
         <span
           id="appsManagerToggleAppName{{sanitizeAppId(visibleApps[0]?.id)}}"
-          [style.color]="visibleApps[0]?.state === 'running' ? 'green' : '#888'">
+          [style.color]="visibleApps[0]?.state === 'running' ? '#31708f' : (visibleApps[0]?.state === 'starting' || visibleApps[0]?.state === 'stopping') ? '#337ab7' : '#888'">
           {{ visibleApps[0]?.name }}
-          <strong *ngIf="visibleApps[0]?.type !== 'desktop' && visibleApps[0]?.state !== 'running'" id="appsManagerToggleAppState{{sanitizeAppId(visibleApps[0]?.id)}}" style="margin-left: 6px;">stopped</strong>
-          <strong *ngIf="visibleApps[0]?.type !== 'desktop' && visibleApps[0]?.state === 'running'" id="appsManagerToggleAppState{{sanitizeAppId(visibleApps[0]?.id)}}" style="margin-left: 6px;">running</strong>
+          <strong *ngIf="visibleApps[0]?.type !== 'desktop'" id="appsManagerToggleAppState{{sanitizeAppId(visibleApps[0]?.id)}}" style="margin-left: 6px;">
+            <i *ngIf="visibleApps[0]?.state === 'starting' || visibleApps[0]?.state === 'stopping'" class="fa fa-spinner fa-spin" style="margin-right: 4px;"></i>
+            {{ visibleApps[0]?.state === 'running' ? 'running' : (visibleApps[0]?.state === 'starting' ? 'starting' : (visibleApps[0]?.state === 'stopping' ? 'stopping' : 'stopped')) }}
+          </strong>
         </span>
       </ng-container>
       <ng-template #manageAppsLabel>
@@ -475,13 +483,15 @@
           <i
             *ngIf="app.icon"
             [class]="app.icon"
-            [style.color]="isAppRunning(app) ? 'green' : '#888'"
+            [style.color]="isAppRunning(app) ? '#31708f' : '#888'"
             style="margin-right: 6px"
           ></i>
-          <span [id]="'appsManagerAppName' + sanitizeAppId(app.id)" [style.color]="app.state === 'running' ? 'green' : '#888'">
+          <span [id]="'appsManagerAppName' + sanitizeAppId(app.id)" [style.color]="app.state === 'running' ? '#31708f' : (app.state === 'starting' || app.state === 'stopping') ? '#337ab7' : '#888'">
             {{ app.name }}
-            <strong *ngIf="app.type !== 'desktop' && app.state !== 'running'" [id]="'appsManagerAppState' + sanitizeAppId(app.id)" style="margin-left: 6px;">stopped</strong>
-            <strong *ngIf="app.type !== 'desktop' && isAppRunning(app)" [id]="'appsManagerAppState' + sanitizeAppId(app.id)" style="margin-left: 6px;">running</strong>
+            <strong *ngIf="app.type !== 'desktop'" [id]="'appsManagerAppState' + sanitizeAppId(app.id)" style="margin-left: 6px;">
+              <i *ngIf="app.state === 'starting' || app.state === 'stopping'" class="fa fa-spinner fa-spin" style="margin-right: 4px;"></i>
+              {{ app.state === 'running' ? 'running' : (app.state === 'starting' ? 'starting' : (app.state === 'stopping' ? 'stopping' : 'stopped')) }}
+            </strong>
           </span>
           <!-- Launch label when running and has URL -->
           <span
@@ -516,16 +526,16 @@
               </button>
             </ng-template>
           </span>
-          <!-- Start button when stopped -->
+          <!-- Start button when stopped (hidden during starting/stopping) -->
           <button
-            *ngIf="app.type !== 'desktop' && app.state !== 'running'"
+            *ngIf="app.type !== 'desktop' && isAppStopped(app)"
             class="btn btn-xs btn-link"
             style="padding: 0 4px; vertical-align: middle;"
             (click)="onToggleApp(app); $event.stopPropagation();"
             [title]="'Start ' + app.name"
             [id]="'appsManagerAppStartBtn' + sanitizeAppId(app.id)"
           >
-            <i class="fa fa-play" style="color: green"></i>
+            <i class="fa fa-play" style="color: #555"></i>
           </button>
           <!-- Desktop launch button -->
           <button
@@ -535,7 +545,7 @@
             (click)="onToggleApp(app); $event.stopPropagation();"
             [title]="'Launch ' + app.name"
           >
-            <i class="fa fa-play-circle" [style.color]="app.state === 'running' ? 'green' : '#888'"></i>
+            <i class="fa fa-play-circle" [style.color]="app.state === 'running' ? '#31708f' : '#888'"></i>
           </button>
         </a>
       </li>

@@ -10,6 +10,7 @@
 
 import getLettaClient from './client';
 import { AGENTS } from '../../agents';
+import { DB_QUERY_MEMORY_SECTION } from '../../agents/sharedMemory';
 import { Constants } from '../../utils/constants';
 import type { AgentState, AgentCreateParams } from '@letta-ai/letta-client/resources/agents';
 import type { Tool } from '@letta-ai/letta-client/resources/tools';
@@ -332,7 +333,7 @@ async function ensureCustomToolsRegistered(client: any): Promise<Map<string, str
   return customToolIds;
 }
 
-export async function provisionAllAgents(opts: { force?: boolean } = {}) {
+export async function provisionAllAgents(opts: { force?: boolean; giveDbQueryToolToAthena?: boolean } = {}) {
   const client = getLettaClient();
   const results: ProvisionResult[] = [];
   const force = !!opts.force;
@@ -675,7 +676,7 @@ export async function provisionAllAgents(opts: { force?: boolean } = {}) {
       // Attach tools
       // For custom tools (better_web_search, better_fetch_webpage, execute_shell_command), use cached IDs from registration
       // These use unique names to avoid conflicts with Letta's built-in tools
-      const CUSTOM_TOOL_NAMES = ['better_web_search', 'better_fetch_webpage', 'execute_shell_command'];
+      const CUSTOM_TOOL_NAMES = ['better_web_search', 'better_fetch_webpage', 'execute_shell_command', 'db_query'];
       
       // First, get the agent's currently attached tools so we can detach old versions
       let agentCurrentTools: any[] = [];
@@ -749,6 +750,62 @@ export async function provisionAllAgents(opts: { force?: boolean } = {}) {
           }
         } catch (err) {
           console.warn('Error while attaching tool', t.name, formatError(err));
+        }
+      }
+
+      // db_query tool: conditionally attach/detach for Athena only
+      if (cfg.key === 'athena') {
+        const dbQueryToolId = customToolIds.get('db_query');
+        if (opts.giveDbQueryToolToAthena && dbQueryToolId) {
+          // Attach db_query to Athena
+          try {
+            await client.agents.tools.attach(dbQueryToolId, { agent_id: agentId });
+            console.log('Attached db_query tool to Athena');
+          } catch (err) {
+            console.warn('Failed to attach db_query to Athena:', formatError(err));
+          }
+        } else if (!opts.giveDbQueryToolToAthena) {
+          // Detach db_query from Athena if currently attached
+          try {
+            const refreshed = await client.agents.retrieve(agentId) as any;
+            const currentTools = refreshed?.tools || [];
+            const dbQueryTool = currentTools.find((t: any) => t.name === 'db_query');
+            if (dbQueryTool) {
+              await client.agents.tools.detach(dbQueryTool.id, { agent_id: agentId });
+              console.log('Detached db_query tool from Athena');
+            }
+          } catch (err) {
+            console.warn('Failed to detach db_query from Athena:', formatError(err));
+          }
+        }
+
+        // Update Athena's available_linux_utilities memory block to match the toggle
+        // Inject db_query docs when enabled, strip them when disabled
+        try {
+          const utilsLabel = `${labelPrefix}__available_linux_utilities`;
+          const blocksResp = await client.blocks.list({ label: utilsLabel, limit: 5 as any });
+          const utilsBlocks = normalizeList<BlockResponse>(blocksResp as unknown);
+          const utilsBlock = utilsBlocks[0] ?? null;
+          if (utilsBlock) {
+            const currentValue = (utilsBlock as any).value || '';
+            const hasDbQuerySection = currentValue.includes('**Database Querying**');
+            if (opts.giveDbQueryToolToAthena && !hasDbQuerySection) {
+              // Insert db_query section before **Version Control**
+              const insertionPoint = '**Version Control**';
+              const updatedValue = currentValue.includes(insertionPoint)
+                ? currentValue.replace(insertionPoint, DB_QUERY_MEMORY_SECTION + insertionPoint)
+                : currentValue + DB_QUERY_MEMORY_SECTION;
+              await (client.blocks as any).update(utilsBlock.id, { value: updatedValue });
+              console.log('Injected db_query docs into Athena available_linux_utilities block');
+            } else if (!opts.giveDbQueryToolToAthena && hasDbQuerySection) {
+              // Strip the db_query section
+              const updatedValue = currentValue.replace(DB_QUERY_MEMORY_SECTION, '');
+              await (client.blocks as any).update(utilsBlock.id, { value: updatedValue });
+              console.log('Stripped db_query docs from Athena available_linux_utilities block');
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to update Athena available_linux_utilities block:', formatError(err));
         }
       }
 
@@ -1173,6 +1230,8 @@ export interface FullProvisionResult {
 export async function provisionAll(options?: {
   /** Force re-provisioning: deletes existing Letta agents AND Matrix rooms before creating new ones */
   force?: boolean;
+  /** Attach db_query tool to Athena only (detach when false) */
+  giveDbQueryToolToAthena?: boolean;
   /** Skip Matrix provisioning */
   skipMatrix?: boolean;
   /** Matrix admin credentials */
@@ -1208,7 +1267,7 @@ export async function provisionAll(options?: {
   console.log('─'.repeat(70));
 
   try {
-    const lettaResults = await provisionAllAgents({ force: options?.force });
+    const lettaResults = await provisionAllAgents({ force: options?.force, giveDbQueryToolToAthena: options?.giveDbQueryToolToAthena });
     result.letta.agents = lettaResults;
     result.letta.successCount = lettaResults.filter(r => r.status === 'ok').length;
     result.letta.errorCount = lettaResults.filter(r => r.status === 'error').length;

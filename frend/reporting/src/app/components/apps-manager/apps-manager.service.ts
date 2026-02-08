@@ -154,11 +154,11 @@ export class AppsManagerService {
         icon: 'fa fa-robot',
         category: 'AI & Agents',
         type: 'docker',
-        description: 'Meet your AI assistants! Athena, Hephaestus, Hermes, and Apollo are here to help with ReportBurster tasks, data exploration & visualization, ETL/cron automations, and building admin panels, BI dashboards, or customer-facing web apps.<br><br><b>Visit FlowKraft\'s Data Analysis Lab to chat with your databases and create stunning charts!</b>',
+        description: 'Meet your AI assistants! <strong>Athena</strong>, Hephaestus, Hermes, and Apollo are here to help with ReportBurster tasks, data exploration & visualization, ETL/cron automations, and building admin panels, BI dashboards, or customer-facing web apps.<br><br><b>Visit FlowKraft\'s Data Analysis Lab to chat with your databases and create stunning charts!</b>',
         url: 'http://localhost:8440',
         launchLinks: [
           { label: 'Meet the FlowKraft AI Crew', url: 'http://localhost:8440', icon: 'fa fa-free-code-camp' },
-          { label: 'FlowKraft\'s Data Analysis Lab', url: 'http://localhost:8441/lab/tree/00-chat.ipynb', icon: 'fa fa-flask' },
+          { label: 'FlowKraft\'s Data Analysis Lab (<strong>Chat2DB</strong>)', url: 'http://localhost:8441/lab/tree/00-chat.ipynb', icon: 'fa fa-flask' },
           { label: 'Chat with the Ancient Greeks ... Oracles@Your Service', url: 'http://localhost:8442', icon: 'fa fa-commenting-o' },
         ],
         entrypoint: 'flowkraft/_ai-hub/docker-compose.yml',
@@ -250,18 +250,6 @@ export class AppsManagerService {
         website: 'https://www.metabase.com/',
       },
       // ClickHouse moved to Starter Packs (Databases) - see starter-packs.service.ts
-      {
-        id: 'vanna-ai',
-        name: 'Vanna.AI',
-        category: 'Database Management',
-        type: 'docker',
-        description: 'AI-powered text-to-SQL agent.',
-        url: 'http://localhost:8084',
-
-        entrypoint: 'docker-compose.yml',
-        service_name: 'vanna-ai',
-        state: 'stopped' as ManagedApp['state'],
-      },
       {
         id: 'redash',
         name: 'Redash',

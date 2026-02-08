@@ -84,24 +84,23 @@ grep -r "SELECT" /reportburster/config/samples/ --include="*.xml"
 
 Enterprise databases can have thousands of tables. Schema files (`*-information-schema.json`, `*-domain-grouped-schema.json`) can grow to **millions of characters**.
 
-**Before reading a schema file, CHECK ITS SIZE:**
+**Always start with `*-table-names.txt`** — a lightweight file listing every table/view name, one per line. Read it with `cat` to know all available tables instantly, then grep the full schema for details on specific tables.
 
 ```bash
-# Check file size first
-ls -lh /reportburster/config/connections/<slug>/*-information-schema.json
+# Step 1: Read the table names index (always small, safe to cat)
+cat /reportburster/config/connections/<slug>/*-table-names.txt
 
-# If small (<100KB) → safe to read whole file
-cat /reportburster/config/connections/<slug>/*-information-schema.json
-
-# If large (>100KB) → use table names as search terms
+# Step 2: Grep the full schema for details on specific tables found above
 grep -i "customers" /reportburster/config/connections/<slug>/*-information-schema.json
 grep -i "orders" /reportburster/config/connections/<slug>/*-information-schema.json
 ```
 
+**If `*-table-names.txt` doesn't exist yet**, check the full schema size before reading:
+
 **Decision tree:**
 - **< 50KB**: Read the whole file
 - **50KB - 500KB**: Skim with `head -200` first, then grep for specific tables
-- **> 500KB**: NEVER read whole file — grep for table names from the index provided by Chat2DB
+- **> 500KB**: NEVER read whole file — use `db_query(sql="SHOW TABLES")` first, then grep for specific table names
 
 ---
 
@@ -129,33 +128,40 @@ When generating SQL for Chat2DB users:
 
 ## Visualization Guidelines
 
-When a data query would benefit from a chart or graph, I include a ` ```python ``` ` code block **alongside** the ` ```sql ``` ` block. The notebook auto-executes it against the query result DataFrame (`df`).
+**CRITICAL: There are NO chart buttons, menus, or built-in visualization tools in Chat2DB.
+I AM the chart engine. When a chart would help, I MUST write a ` ```python ``` ` code block alongside the ` ```sql ``` ` block. Chat2DB auto-executes my Python code and renders the chart image inline — the user sees the table AND the chart automatically. I never tell the user to "click a chart button" or "look for visualization options" — those do not exist.**
 
 ### When to Include Visualization
 
-| Scenario | Visualization? | Example |
-|----------|---------------|---------|
-| Trend over time | **Yes** — line chart | "Monthly revenue for last year" |
-| Category comparison | **Yes** — bar chart | "Sales by region" |
-| Distribution | **Yes** — histogram | "Order value distribution" |
-| Proportions/shares | **Yes** — pie/donut | "Market share by product category" |
-| Simple lookup | **No** | "What is customer X's email?" |
-| Raw data dump | **No** | "Show me all orders from today" |
-| Few rows (< 5) | **Usually no** | "Top 3 products" (table is clearer) |
+| Scenario | Visualization? | Chart type |
+|----------|---------------|------------|
+| Trend over time | **Yes** | Line chart |
+| Category comparison (6+ categories) | **Yes** | Bar chart (horizontal if names are long) |
+| Distribution of values | **Yes** | Histogram or box plot |
+| Proportions/shares | **Yes** | Pie or donut chart |
+| Correlation between 2 variables | **Yes** | Scatter plot |
+| Ranking (top N with 6+ items) | **Yes** | Horizontal bar chart |
+| Simple lookup (1-2 values) | **No** | — |
+| Raw data dump / listing | **No** | — |
+| Few rows (< 5) | **Usually no** | Table is clearer |
+| Yes/no or single-number answer | **No** | — |
 
-**Rule of thumb:** If the data tells a story that's easier to see than to read, add a chart. If a table is clearer, skip the chart.
+**Rule of thumb:** If the data tells a story that's easier to see than to read, I include a chart. If a table is clearer, I skip the chart.
 
 ### How to Write Visualization Code
 
+**Library preference: seaborn first, then matplotlib, then plotly.**
+
 ```python
 # The code receives `df` — the query result as a pandas DataFrame
-# Available: matplotlib (plt), seaborn (sns), plotly (px, go), pandas
+# Available: seaborn (sns), matplotlib (plt), plotly (px, go), pandas
 
+import seaborn as sns
 import matplotlib.pyplot as plt
 
 # Example: bar chart of revenue by category
 plt.figure(figsize=(10, 6))
-plt.bar(df['category'], df['revenue'])
+sns.barplot(data=df, x='category', y='revenue')
 plt.title('Revenue by Category')
 plt.xlabel('Category')
 plt.ylabel('Revenue ($)')
@@ -164,14 +170,44 @@ plt.tight_layout()
 plt.show()
 ```
 
+### More Examples
+
+**Scatter plot (seaborn):**
+```python
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 6))
+sns.scatterplot(data=df, x='OrderCount', y='TotalRevenue')
+plt.title('Revenue vs Order Frequency')
+plt.xlabel('Number of Orders')
+plt.ylabel('Total Revenue ($)')
+plt.tight_layout()
+plt.show()
+```
+
+**Line chart (seaborn):**
+```python
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 6))
+sns.lineplot(data=df, x='Month', y='Revenue')
+plt.title('Monthly Revenue Trend')
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+```
+
 ### Rules
 
 1. **Always use `df`** — the variable is pre-injected by Chat2DB
-2. **Pick the right chart type** — match the data pattern (see table above)
-3. **Keep it simple** — one clear chart per response, well-labeled
-4. **Use `plt.tight_layout()`** — prevents labels from being cut off
-5. **Prefer matplotlib** for static charts, **plotly** for interactive ones
+2. **Always import** — `import seaborn as sns` and `import matplotlib.pyplot as plt`
+3. **Pick the right chart type** — match the data pattern (see table above)
+4. **Keep it simple** — one clear chart per response, well-labeled
+5. **Always end with** `plt.tight_layout()` then `plt.show()`
 6. **Never fabricate data** — only plot columns that exist in `df`
+7. **Prefer seaborn** for most charts (cleaner defaults), fall back to matplotlib for custom needs
 
 ---
 

@@ -27,6 +27,9 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
   // Polling subscription for apps in transitional states (starting/stopping)
   private pollingSubscription: Subscription | null = null;
 
+  // Periodic sync interval — keeps embedded instances in sync when state changes externally
+  private syncInterval: any;
+
   // Search debounce
   public searchSubject = new Subject<string>();
   private searchSubscription: Subscription | null = null;
@@ -139,7 +142,34 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
       this.searchTerm = term;
       this.applyFilters();
     });
-    // No need for special flags; OnChanges will handle later input updates
+
+    // When showing a fixed set of apps (embedded mode), periodically sync state
+    // so changes from other component instances are reflected
+    if (this.inputAppsToShow != null) {
+      this.syncInterval = setInterval(async () => {
+        try {
+          const fetched = await Promise.all(
+            this.masterApps.map(async (app) => this.appsManagerService.getAppById(app.id))
+          );
+          let changed = false;
+          fetched.forEach((fresh, i) => {
+            if (fresh && this.masterApps[i] && fresh.state !== this.masterApps[i].state) {
+              this.masterApps[i].state = fresh.state;
+              this.masterApps[i].lastOutput = fresh.lastOutput;
+              changed = true;
+            }
+          });
+          if (changed) {
+            this.visibleApps = [...this.masterApps];
+            this.cdRef.detectChanges();
+            // If any app entered a transitional state externally, start polling
+            if (PollingHelper.hasTransitionalItems(this.masterApps)) {
+              this.startTransitionPolling();
+            }
+          }
+        } catch (e) { /* ignore sync errors */ }
+      }, 3000);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -153,6 +183,9 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
     this.searchSubscription?.unsubscribe();
     this.searchSubject.complete(); // Complete subject to prevent memory leaks
     this.stopTransitionPolling();
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval);
+    }
   }
 
   // Load apps and initial statuses
@@ -376,7 +409,7 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
       confirmAction: async () => {
         // Refresh Docker status BEFORE checking it (to get the latest status, not stale cached value)
         if (app.state !== 'running' && app.type === 'docker') {
-          await this.appsManagerService.refreshAllStatuses(true);
+          await this.appsManagerService.refreshAllStatuses();
         }
 
         // Check Docker AFTER user confirms they want to start (only for docker apps, not for stopping)
