@@ -48,7 +48,6 @@ def db_query(connection_code: str, sql: str, format: str = "table", max_rows: in
         'REPORTBURSTER_CONNECTIONS_PATH',
         '/reportburster/config/connections'
     )
-    db_path = os.environ.get('REPORTBURSTER_DB_PATH', '/reportburster/db')
 
     dangerous_patterns = [
         r'\bDELETE\b', r'\bDROP\b', r'\bTRUNCATE\b', r'\bUPDATE\b',
@@ -93,10 +92,6 @@ def db_query(connection_code: str, sql: str, format: str = "table", max_rows: in
                 except Exception as e:
                     connections.append(f"  {folder_name} (error: {e})")
 
-        northwind = os.path.join(db_path, 'sample-northwind-sqlite', 'northwind.db')
-        if os.path.exists(northwind):
-            connections.append("  sample-northwind-sqlite (sqlite)")
-
         if not connections:
             return "No database connections found. Check REPORTBURSTER_CONNECTIONS_PATH."
         return "Available ReportBurster Database Connections:\n" + '\n'.join(connections)
@@ -114,43 +109,50 @@ def db_query(connection_code: str, sql: str, format: str = "table", max_rows: in
                     "This tool is READ-ONLY. Only SELECT queries are allowed."
                 )
 
-    # ── Parse connection config ──
-    if connection_code == 'sample-northwind-sqlite':
-        cfg = {
-            'code': connection_code,
-            'db_type': 'sqlite',
-            'database': os.path.join(db_path, 'sample-northwind-sqlite', 'northwind.db'),
-        }
-    else:
-        xml_path = os.path.join(connections_path, connection_code, f'{connection_code}.xml')
-        if not os.path.exists(xml_path):
-            raise Exception(f"Connection config not found: {xml_path}")
+    # ── Parse connection config (always from XML — no synthetic connections) ──
+    xml_path = os.path.join(connections_path, connection_code, f'{connection_code}.xml')
+    if not os.path.exists(xml_path):
+        raise Exception(f"Connection config not found: {xml_path}")
 
-        tree = ET.parse(xml_path)
-        root = tree.getroot()
-        conn_el = root.find('connection')
-        if conn_el is None:
-            raise Exception(f"No <connection> element in {xml_path}")
-        db_el = conn_el.find('databaseserver')
-        if db_el is None:
-            raise Exception(f"No <databaseserver> element in {xml_path}")
+    tree = ET.parse(xml_path)
+    root = tree.getroot()
+    conn_el = root.find('connection')
+    if conn_el is None:
+        raise Exception(f"No <connection> element in {xml_path}")
+    db_el = conn_el.find('databaseserver')
+    if db_el is None:
+        raise Exception(f"No <databaseserver> element in {xml_path}")
 
-        # Inline XML text extraction (no nested function — Letta parses all def statements)
-        cfg = {}
-        for key, parent, tag, default in [
-            ('code', conn_el, 'code', ''),
-            ('db_type', db_el, 'type', ''),
-            ('host', db_el, 'host', ''),
-            ('port', db_el, 'port', ''),
-            ('database', db_el, 'database', ''),
-            ('userid', db_el, 'userid', ''),
-            ('userpassword', db_el, 'userpassword', ''),
-            ('usessl', db_el, 'usessl', 'false'),
-        ]:
-            el = parent.find(tag)
-            cfg[key] = el.text if el is not None and el.text else default
-        cfg['db_type'] = cfg['db_type'].lower()
-        cfg['usessl'] = cfg['usessl'].lower() == 'true'
+    # Inline XML text extraction (no nested function — Letta parses all def statements)
+    cfg = {}
+    for key, parent, tag, default in [
+        ('code', conn_el, 'code', ''),
+        ('db_type', db_el, 'type', ''),
+        ('host', db_el, 'host', ''),
+        ('port', db_el, 'port', ''),
+        ('database', db_el, 'database', ''),
+        ('userid', db_el, 'userid', ''),
+        ('userpassword', db_el, 'userpassword', ''),
+        ('usessl', db_el, 'usessl', 'false'),
+    ]:
+        el = parent.find(tag)
+        cfg[key] = el.text if el is not None and el.text else default
+    cfg['db_type'] = cfg['db_type'].lower()
+    cfg['usessl'] = cfg['usessl'].lower() == 'true'
+
+    # For file-based DBs (SQLite, DuckDB), the XML has the Windows host path.
+    # Inside Docker the same file lives under /reportburster/db/,
+    # so remap the host path to the container mount path.
+    if cfg['db_type'] in ('sqlite', 'duckdb') and cfg['database']:
+        if not os.path.exists(cfg['database']):
+            db_mount = os.environ.get('REPORTBURSTER_DB_PATH', '/reportburster/db')
+            normalized = cfg['database'].replace('\\', '/')
+            idx = normalized.rfind('/db/')
+            if idx >= 0:
+                relative = normalized[idx + len('/db/'):]
+                candidate = os.path.join(db_mount, relative)
+                if os.path.exists(candidate):
+                    cfg['database'] = candidate
 
     db_type = cfg['db_type']
     print(f"db_query: connecting to {connection_code} (type={db_type})")

@@ -64,14 +64,6 @@ export class ConnectionDetailsComponent implements OnInit {
   isUbiquitousLanguageTabActive = false;
   isToolsTabActive = false;
 
-  isVannaAiStarted = false;
-
-  vannaTrainingIncludeDbSchema: boolean = false;
-  vannaTrainingIncludeDomainGroupedSchema: boolean = false;
-  vannaTrainingIncludeErDiagram: boolean = false;
-  vannaTrainingIncludeUbiquitousLanguage: boolean = false;
-  vannaTrainingIncludeSqlQueries: boolean = false;
-
   constructor(
     protected confirmService: ConfirmService,
     protected messagesService: ToastrMessagesService,
@@ -121,7 +113,6 @@ export class ConnectionDetailsComponent implements OnInit {
         connection: {
           code: '',
           name: '',
-          autotrainvanna: false,
           defaultConnection: false,
           databaseserver: { ...newDatabaseServer },
         },
@@ -129,7 +120,7 @@ export class ConnectionDetailsComponent implements OnInit {
     },
   };
 
-  initialAiCopilotActiveTabKey?: 'PROMPTS' | 'VANNA' | 'HEY_AI';
+  initialAiCopilotActiveTabKey?: 'PROMPTS' | 'CHAT2DB' | 'HEY_AI';
   initialAiCopilotSelectedCategory?: string;
   initialAiCopilotExpandedPromptId?: string;
   initialAiCopilotVariables?: { [key: string]: string };
@@ -199,13 +190,17 @@ export class ConnectionDetailsComponent implements OnInit {
         ? this.modalConnectionInfo.database.documentburster.connection.name
         : this.modalConnectionInfo.email.documentburster.connection.name;
 
-      const connectionCode = `${connectionPrefix}-${_.kebabCase(connectionName)}`;
+      let connectionCode = `${connectionPrefix}-${_.kebabCase(connectionName)}`;
+      if (isDbConnection) {
+        const dbType = this.modalConnectionInfo.database.documentburster.connection.databaseserver.type;
+        connectionCode = `${connectionCode}-${dbType}`;
+      }
       const connectionFileName = `${connectionCode}.xml`;
 
       // Create different path structures based on connection type
       if (isDbConnection) {
         // For database connections: create a folder structure
-        // Path format: /config/connections/db-my-connection/db-my-connection.xml
+        // Path format: /config/connections/db-my-connection-postgresql/db-my-connection-postgresql.xml
         const folderPath = `${this.settingsService.CONFIGURATION_CONNECTIONS_FOLDER_PATH}/${connectionCode}`;
         this.modalConnectionInfo.filePath = `${folderPath}/${connectionFileName}`;
 
@@ -781,123 +776,6 @@ export class ConnectionDetailsComponent implements OnInit {
     }
   }
 
-  launchAiCopilotForVannaAITrainingPlanGeneration(): void {
-    // 1. Check if schema is loaded (as before)
-    if (!this.rawSchemaData || !this.rawSchemaData.tables) {
-      this.messagesService.showError(
-        'Raw database schema is not loaded. Please load or refresh the database schema first to generate a Vanna.AI training plan.',
-      );
-      return;
-    }
-
-    // 2. Check if at least one of the 5 checkboxes is selected
-    const includeDbSchema = !!this.vannaTrainingIncludeDbSchema;
-    const includeDomainGroupedSchema = !!this.vannaTrainingIncludeDomainGroupedSchema;
-    const includeErDiagram = !!this.vannaTrainingIncludeErDiagram;
-    const includeUbiquitousLanguage = !!this.vannaTrainingIncludeUbiquitousLanguage;
-    const includeSqlQueries = !!this.vannaTrainingIncludeSqlQueries;
-
-    if (
-      !includeDbSchema &&
-      !includeDomainGroupedSchema &&
-      !includeErDiagram &&
-      !includeUbiquitousLanguage &&
-      !includeSqlQueries
-    ) {
-      this.messagesService.showError(
-        'Please select at least one information source (Database Schema, Domain-Grouped Schema, ER Diagram, Ubiquitous Language, or SQL Queries) to generate a Vanna.AI training plan.',
-      );
-      return;
-    }
-
-    // 3. Prepare variables for the prompt
-    let databaseType = '';
-    let plainDbSchema = '';
-    let domainGroupedSchema = '';
-    let erDiagram = '';
-    let ubiquitousLanguage = '';
-    let sqlQueries = '';
-
-    // Database Type (always included if schema is loaded)
-    if (this.rawSchemaData && this.rawSchemaData.databaseType) {
-      databaseType = this.rawSchemaData.databaseType;
-    } else if (
-      this.modalConnectionInfo &&
-      this.modalConnectionInfo.database &&
-      this.modalConnectionInfo.database.documentburster &&
-      this.modalConnectionInfo.database.documentburster.connection &&
-      this.modalConnectionInfo.database.documentburster.connection.databaseserver &&
-      this.modalConnectionInfo.database.documentburster.connection.databaseserver.type
-    ) {
-      databaseType = this.modalConnectionInfo.database.documentburster.connection.databaseserver.type;
-    }
-
-    // Plain DB Schema (JSON)
-    if (includeDbSchema) {
-      plainDbSchema = JSON.stringify(this.rawSchemaData.tables, null, 2);
-    }
-
-    // Domain-Grouped Schema (Plain Text)
-    if (includeDomainGroupedSchema && this.domainGroupedSchemaJsonTextContent) {
-      domainGroupedSchema = this.domainGroupedSchemaJsonTextContent.trim();
-    }
-
-    // ER Diagram (PlantUML)
-    if (includeErDiagram && this.plantUmlCode) {
-      erDiagram = this.plantUmlCode.trim();
-    }
-
-    // Ubiquitous Language (Markdown)
-    if (includeUbiquitousLanguage && this.ubiquitousLanguageMarkdown) {
-      ubiquitousLanguage = this.ubiquitousLanguageMarkdown.trim();
-    }
-
-    // Existing SQL Queries (Optional)
-    // if (includeSqlQueries && this.sqlQueriesTextContent) {
-    //   sqlQueries = this.sqlQueriesTextContent.trim();
-    // }
-
-    sqlQueries = 'Test SQL Queries';
-
-    // 4. Build the prompt variables object
-    const promptVariables: { [key: string]: string } = {};
-
-    promptVariables['[Specify Database Type, e.g., PostgreSQL, SQL Server, MySQL]'] = databaseType;
-
-    if (includeDbSchema) {
-      promptVariables['[VANNA TRAINING DB SCHEMA]'] = plainDbSchema;
-    }
-    if (includeDomainGroupedSchema) {
-      promptVariables['[VANNA TRAINING DOMAIN GROUPED SCHEMA]'] = domainGroupedSchema;
-    }
-    if (includeErDiagram) {
-      promptVariables['[VANNA TRAINING ER DIAGRAM]'] = erDiagram;
-    }
-    if (includeUbiquitousLanguage) {
-      promptVariables['[VANNA TRAINING UBIQUITOUS LANGUAGE]'] = ubiquitousLanguage;
-    }
-    if (includeSqlQueries) {
-      promptVariables['[VANNA TRAINING EXISTING SQL QUERIES]'] = sqlQueries;
-    }
-
-    // 5. Launch the AI Copilot with the constructed config
-    const launchConfig: AiManagerLaunchConfig = {
-      initialActiveTabKey: 'PROMPTS',
-      initialSelectedCategory: 'Vanna.AI',
-      initialExpandedPromptId: 'VANNA-AI-TRAINING-PLAN',
-      promptVariables,
-    };
-
-    if (this.aiManagerInstance) {
-      this.aiManagerInstance.launchWithConfiguration(launchConfig);
-    } else {
-      this.messagesService.showError('AI Copilot component is not available.');
-      console.error(
-        'AI Copilot instance is not found. Ensure @ViewChild(AiManagerComponent) is correctly configured.',
-      );
-    }
-  }
-
   // Method to handle changes in the JSON editor (ngx-codejar)
   onDomainGroupedSchemaJsonTextContentChanged(newCode: string): void {
     this.domainGroupedSchemaJsonTextContent = newCode;
@@ -1054,8 +932,10 @@ export class ConnectionDetailsComponent implements OnInit {
         this.modalConnectionInfo.duplicate
       ) {
         const prefix = isDbConnection ? 'db' : 'eml';
-        const code = `${prefix}-${_.kebabCase(connectionName)}`;
+        let code = `${prefix}-${_.kebabCase(connectionName)}`;
         if (isDbConnection) {
+          const dbType = this.modalConnectionInfo.database.documentburster.connection.databaseserver.type;
+          code = `${code}-${dbType}`;
           this.modalConnectionInfo.database.documentburster.connection.code =
             code;
 
@@ -1528,6 +1408,19 @@ export class ConnectionDetailsComponent implements OnInit {
           this.showSchemaTreeSelect = true;
 
           this.messagesService.showInfo('Database schema loaded.');
+
+          // Generate a lightweight table-names.txt for AI agents to quickly discover table/view names
+          const tables = (parsed.tables || []).filter((t: any) => (t.tableType || 'TABLE').toUpperCase() === 'TABLE');
+          const views = (parsed.tables || []).filter((t: any) => (t.tableType || '').toUpperCase() === 'VIEW');
+          const tableLines = tables.map((t: any) => t.tableName).sort();
+          const viewLines = views.map((t: any) => `${t.tableName} (VIEW)`).sort();
+          const tableNamesContent = [...tableLines, ...viewLines].join('\n');
+          const tableNamesPath = `config/connections/${connectionCode}/${connectionCode}-table-names.txt`;
+          try {
+            await this.fsService.writeAsync(tableNamesPath, tableNamesContent);
+          } catch (tableNamesErr) {
+            console.error('Error saving table-names.txt:', tableNamesErr);
+          }
         }
       }
     } catch (err) {
@@ -2071,48 +1964,6 @@ export class ConnectionDetailsComponent implements OnInit {
     example +=
       '*   **SLA (Service Level Agreement)**: A commitment between a service provider and a client detailing aspects like quality, availability, responsibilities.\n';
     return example;
-  }
-
-  async toggleVannaAiService() {
-    let dialogQuestion = `Start Vanna.AI?`;
-    if (this.isVannaAiStarted) {
-      dialogQuestion = `Stop Vanna.AI?`;
-    }
-
-    this.confirmService.askConfirmation({
-      message: dialogQuestion,
-      confirmAction: async () => {
-        this.isVannaAiStarted = !this.isVannaAiStarted;
-      }
-    });
-  }
-
-  getAiTrainingCheckboxDisabledTooltip(checkboxId: string): string {
-    switch (checkboxId) {
-      case 'vannaTrainingIncludeDbSchema':
-        if (this.isSchemaLoading) return 'Database schema is loading...';
-        if (!this.sourceSchemaObjects || this.sourceSchemaObjects.length === 0)
-          return 'No database schema loaded. Please test or refresh the connection first.';
-        return '';
-      case 'vannaTrainingIncludeDomainGroupedSchema':
-        if (!this.domainGroupedSchemaExists)
-          return 'No domain-grouped schema found. Please generate or save one first.';
-        return '';
-      case 'vannaTrainingIncludeErDiagram':
-        if (!this.erDiagramExists)
-          return 'No ER diagram found. Please create and save an ER diagram first.';
-        return '';
-      case 'vannaTrainingIncludeUbiquitousLanguage':
-        if (!this.isStringAndNotEmpty(this.ubiquitousLanguageMarkdown))
-          return 'No Ubiquitous Language content found. Please add and save some content first.';
-        return '';
-      case 'vannaTrainingIncludeSqlReportQueries':
-        if (!(this as any).hasSqlReportQueries)
-          return 'No SQL-based report queries found for this connection.';
-        return '';
-      default:
-        return '';
-    }
   }
 
 }

@@ -58,17 +58,20 @@ The XML contains a `<type>` element that tells you the database vendor:
 ### Gold Mine #1: `/reportburster/config/connections/`
 
 Connection folders contain:
-- **XML connection file** — JDBC URL, host, port, vendor, credentials
-- **`*-information-schema.json`** — Raw database schema (tables, columns, types, keys)
+- **XML connection file** (always present) — JDBC URL, host, port, vendor, credentials
 
-**Optional files (worth looking for):**
+**Almost always present** (created when the user clicks "Test Connection" — technically optional, but in practice nearly every connection has them):
+- **`*-information-schema.json`** — Raw database schema (tables, columns, types, keys)
+- **`*-table-names.txt`** — Lightweight list of all table/view names, one per line. **Read this first** to know what tables exist before grepping the full schema
+
+**Other optional files (worth looking for):**
 - **`*-domain-grouped-schema.json`** — Tables organized by business domain — great for understanding context
 - **`*.puml` or `*-er-diagram.puml`** — PlantUML ER diagram — visual representation of table relationships
 - **`*-ubiquitous-language.txt`** — Domain-Driven Design ubiquitous language glossary — business terms mapped to database entities
 
-**⚠️ Large File Warning:** These files can be huge (thousands of lines for enterprise databases). I investigate them smartly — grep/search for specific table or column names rather than reading entire files at once. Never consume all tokens by loading a massive schema file in one go.
+**⚠️ Large File Warning:** Schema files can be huge (thousands of lines for enterprise databases). **Always start with `*-table-names.txt`** — it lists every table/view name in a tiny file. Then grep the full `*-information-schema.json` for specific table names I found there. Never consume all tokens by loading a massive schema file in one go.
 
-**Don't know the table names yet?** Use `db_query(connection_code="db-xxx", sql="SHOW TABLES")` to discover them first, then grep schema files for details on specific tables.
+**Don't know the table names yet?** Read `*-table-names.txt` first. If that file doesn't exist, use `db_query(connection_code="db-xxx", sql="SHOW TABLES")` to discover them, then grep schema files for details on specific tables.
 
 ### Gold Mine #2: `/reportburster/config/reports/`
 

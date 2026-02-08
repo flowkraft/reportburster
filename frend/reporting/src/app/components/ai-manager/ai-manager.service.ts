@@ -18,7 +18,7 @@ export interface PromptInfo {
   | 'SQL Writing Assistance'
   | 'Script Writing Assistance'
   | 'Web Portal / CMS'
-  | 'Vanna.AI';
+;
 }
 
 @Injectable({
@@ -1869,87 +1869,6 @@ try {
 ---`,
       tags: ['groovy', 'transformation', 'java8=stream-api'],
       category: 'Script Writing Assistance',
-    },
-    // --- Vanna.AI ---
-    {
-      id: 'VANNA-AI-TRAINING-PLAN',
-      title: 'Generate Vanna.AI Training Plan',
-      description:
-        'Generates a comprehensive Python script for a Vanna.AI training plan based on provided database context.',
-      promptText: `You are an expert Vanna.AI consultant. Your primary goal is to generate a comprehensive, effective, and well-structured Vanna.AI Training Plan based on the provided database context. The output must be a single, clean, and ready-to-use Python script that can be easily executed in a Jupyter Notebook.
-
-Adhere strictly to Vanna.AI's documented best practices to ensure the highest possible accuracy for the resulting RAG model.
-
-**Vanna.AI Core Principles to Follow:**
-1.  **Primacy of Training Data:** The quality of the training data is the single most important factor for accuracy.
-2.  **Value of Question-SQL Pairs:** Prioritize generating high-quality, descriptive questions for every SQL query. This provides invaluable context.
-3.  **Specificity over Generality:** You MUST NOT use \`SELECT * FROM table\`. All SQL statements, whether from existing reports or AI-generated, must explicitly list the column names (e.g., \`SELECT id, name, email FROM my_table\`). This is non-negotiable.
-4.  **Bite-Sized Chunks:** Break down all provided information (DDL, documentation, etc.) into logical, bite-sized chunks. Each piece of information should be a separate \`train()\` call within the plan.
-5.  **Comprehensive Context:** Leverage all available information (Schema, Domain Groupings, ER Diagrams, Ubiquitous Language, existing SQL) to create a rich, interconnected context.
-
-**Your Task:**
-Generate a Python script that defines a \`TrainingPlan\` object. Populate this plan by processing the database information provided in the placeholders below. If a placeholder is empty or not provided, simply omit that section from the training plan.
-
-**Input Database Context:**
-
-*   **Database Type:** \`[Specify Database Type, e.g., PostgreSQL, SQL Server, MySQL]\`
-*   **Plain DB Schema (JSON):**
-    \`\`\`json
-    [VANNA TRAINING DB SCHEMA]
-    \`\`\`
-*   **Domain-Grouped Schema (Plain Text):**
-    \`\`\`text
-    [VANNA TRAINING DOMAIN GROUPED SCHEMA]
-    \`\`\`
-*   **ER Diagram (PlantUML):**
-    \`\`\`plantuml
-    [VANNA TRAINING ER DIAGRAM]
-    \`\`\`
-*   **Ubiquitous Language (Markdown):**
-    \`\`\`markdown
-    [VANNA TRAINING UBIQUITOUS LANGUAGE]
-    \`\`\`
-*   **Existing SQL Queries (Optional):**
-    \`\`\`sql
-    [VANNA TRAINING EXISTING SQL QUERIES]
-    \`\`\`
-
----
-
-**LLM INSTRUCTION: BEGIN Vanna.AI Training Plan Generation**
-
-Based on the context and rules above, generate the Python \`TrainingPlan\` now.
-
-**Python Script Structure Requirements:**
-*   The script must be structured for easy use in a Jupyter Notebook. Use comments like \`# %%\` to delineate logical cells that a user can run step-by-step.
-*   At the very beginning of the script, include a commented-out code block for resetting the training data. This block must have clear comments explaining to the user when they should (e.g., starting fresh, major schema changes) and should not (e.g., incrementally adding new data) uncomment and run it.
-*   Add comments before each major step (e.g., "Step 1: Add DDL Statements", "Step 2: Add Documentation") to guide the user.
-
-**Methodology:**
-
-1.  **DDL Statements (from JSON Schema):** The \`Plain DB Schema\` is provided as JSON. Parse this JSON. For each table object, generate a synthetic \`CREATE TABLE\` DDL statement. Include all columns with their data types. Add this synthetic DDL statement to the plan using \`plan.add_ddl(ddl=...)\`.
-
-2.  **Documentation - Ubiquitous Language:** For the \`Ubiquitous Language\` markdown, break it down into logical paragraphs or sections. For each chunk, add a \`plan.add_documentation(documentation=...)\` entry.
-
-3.  **Documentation - Domain-Grouped Schema:** The \`Domain-Grouped Schema\` is provided as pre-processed plain text. Add each line (e.g., "The 'Sales' domain includes tables: Orders, Customers") as a separate documentation entry using \`plan.add_documentation(documentation=...)\`.
-
-4.  **Documentation - ER Diagram:** If \`ER Diagram\` PlantUML is provided, add it as a single documentation entry. Add a comment explaining that this text describes the entity relationships in PlantUML format. Use \`plan.add_documentation(documentation=...)\`.
-
-5.  **Question-SQL Pairs from Existing Queries:** If \`Existing SQL Queries\` are provided, perform the following for each query:
-    *   Add the original query using \`plan.add_sql(sql=...)\`.
-    *   Generate 3-5 high-quality, natural language questions that a business user might ask to get the result of that specific SQL query.
-    *   For each generated question, create a \`plan.add_question_sql(question=..., sql=...)\` entry.
-
-6.  **AI-Generated Question-SQL Pairs (Critical Task):** This is the most important step. You must **proactively generate a new, diverse set of 10-15 high-quality Question-SQL pairs from scratch.**
-    *   **Analyze** all the provided context: the schema, the domains, the ubiquitous language, and the ER diagram.
-    *   **Synthesize** what a business user would want to know from this database. Think about common business questions: "What are the top 5 ...?", "Show me the total ... by month.", "Who are the customers that ...?", "List all products in the ... category."
-    *   **Formulate** SQL queries that answer these business questions. The queries should be realistic, using joins, aggregations, and filtering where appropriate. **You MUST NOT use \`SELECT *\`.**
-    *   For each SQL query you create, write a clear, corresponding natural language question.
-    *   Add each of these newly generated pairs to the plan using \`plan.add_question_sql(question=..., sql=...)\`.
-
-The final output must be a single Python code block, starting with the necessary imports and following all structuring and methodological rules. Do not include any text or explanation outside of the Python code block.`,
-      tags: ['vanna', 'ai', 'training', 'rag', 'python'],
-      category: 'Vanna.AI',
     },
      {
       id: 'SINGLE-MODEL-TEMPLATE-FROM-FIELDS',

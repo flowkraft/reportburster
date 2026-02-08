@@ -56,13 +56,16 @@ class LettaChat2DB:
     CHAT2DB_CONTEXT = (
         "[Chat2DB/Jupyter Interface] "
         "When responding with SQL, wrap it in a ```sql code block. "
-        "When a visualization would help understand the results, also include a ```python code block "
-        "with matplotlib or plotly code that uses `df` (the query result DataFrame). "
-        "Chat2DB will AUTO-EXECUTE both your SQL and your Python code — "
-        "the user will see the table AND the chart rendered automatically. "
-        "You DO have visualization capabilities through this interface. "
-        "Only suggest charts when they genuinely add insight — not for raw data dumps or simple lookups. "
-        "Available libraries: matplotlib, seaborn, plotly, pandas. "
+        "VISUALIZATION: There are NO chart buttons or menus in this interface. "
+        "YOU are the chart engine. When a visualization would help, YOU MUST write "
+        "a ```python code block using `df` (the query result DataFrame). "
+        "Chat2DB auto-executes your Python code and renders the chart image inline. "
+        "The user sees the table AND your chart rendered automatically — no extra steps. "
+        "Library preference: seaborn (sns) first, then matplotlib (plt), then plotly. "
+        "Always import what you use: `import seaborn as sns` / `import matplotlib.pyplot as plt`. "
+        "Always end with `plt.tight_layout()` and `plt.show()`. "
+        "DO include a chart when: trends, comparisons, distributions, proportions (6+ rows). "
+        "Do NOT include a chart when: simple lookups, raw data dumps, few rows (<5), yes/no answers. "
         "REMINDER: Make sure you have read your 'chat2db-jupyter-interface' skill."
     )
 
@@ -104,17 +107,16 @@ class LettaChat2DB:
         """
         Build the user prompt with optional database context.
 
-        Structure (question first, context second):
+        Structure:
         - USER QUERY: <the actual question to answer>
         - --- DATABASE CONTEXT --- (only if Send Tables is checked)
+        - --- CHAT2DB INTERFACE --- (always appended so Athena knows the context)
 
         Athena decides what to do based on the question:
-        - Data query → generate SQL
+        - Data query → generate SQL + optional visualization
         - Chit-chat → respond conversationally
         - ReportBurster config → guide through UI
         - Unclear → ask for clarification
-
-        We trust her skills (chat2db-jupyter-interface, sql-queries-plain-english-queries-expert).
         """
         parts = []
 
@@ -127,21 +129,24 @@ class LettaChat2DB:
             parts.append("--- DATABASE CONTEXT ---")
             parts.append(self._schema_context)
 
+        # Interface context ALWAYS appended — must be in user message
+        # because Letta may not forward external system messages to the LLM
+        parts.append("")
+        parts.append("--- CHAT2DB INTERFACE ---")
+        parts.append(self.CHAT2DB_CONTEXT)
+
         return "\n".join(parts)
 
     def _build_messages(self, user_message: str, include_context_tag: bool = True) -> List[Dict[str, str]]:
         """Build the OpenAI-format messages array.
 
-        Note: Athena already has all SQL knowledge from her skills
-        (sql-queries-plain-english-queries-expert, chat2db-jupyter-interface).
-        We just add a minimal context tag so she knows the interface.
+        All messages are sent as 'user' role only — never 'system'.
+        Letta manages its own system prompt (memory blocks, persona, skills)
+        and external system messages can interfere with that.
+        The CHAT2DB_CONTEXT is already embedded in the user prompt
+        via _build_user_prompt().
         """
         messages = []
-
-        if include_context_tag:
-            # Minimal context - just identify the interface
-            messages.append({"role": "system", "content": self.CHAT2DB_CONTEXT})
-
         messages.append({"role": "user", "content": user_message})
         return messages
 

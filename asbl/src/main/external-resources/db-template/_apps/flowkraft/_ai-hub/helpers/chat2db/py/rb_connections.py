@@ -141,10 +141,10 @@ class ReportBursterConnections:
                              Defaults to JDBC_DRIVERS_PATH env var.
         """
         self.connections_path = connections_path or os.environ.get(
-            'REPORTBURSTER_CONNECTIONS_PATH', '/app/config/connections'
+            'REPORTBURSTER_CONNECTIONS_PATH', '/reportburster/config/connections'
         )
         self.jdbc_drivers_path = jdbc_drivers_path or os.environ.get(
-            'JDBC_DRIVERS_PATH', '/app/jdbc-drivers'
+            'JDBC_DRIVERS_PATH', '/reportburster/lib'
         )
         self._connections: Dict[str, DatabaseConnection] = {}
         self._active_connection: Optional[jaydebeapi.Connection] = None
@@ -185,21 +185,6 @@ class ReportBursterConnections:
                     self._connections[conn.code] = conn
             except Exception as e:
                 print(f"⚠️ Error parsing {xml_file}: {e}")
-        
-        # Also check for sample Northwind SQLite database
-        db_path = os.environ.get('REPORTBURSTER_DB_PATH', '/app/db')
-        northwind_path = os.path.join(db_path, 'sample-northwind-sqlite', 'northwind.db')
-        if os.path.exists(northwind_path):
-            sample_conn = DatabaseConnection(
-                code='sample-northwind-sqlite',
-                name='Sample Northwind (SQLite)',
-                db_type='sqlite',
-                database=northwind_path,
-                default_connection=False,
-                file_path=northwind_path
-            )
-            connections.append(sample_conn)
-            self._connections[sample_conn.code] = sample_conn
         
         return connections
     
@@ -248,14 +233,32 @@ class ReportBursterConnections:
                 val = get_text(element, tag, str(default)).lower()
                 return val in ('true', '1', 'yes')
             
+            db_value = get_text(databaseserver, 'database') or None
+            db_type_value = get_text(databaseserver, 'type')
+
+            # For file-based DBs (SQLite, DuckDB), the XML has the Windows host path
+            # (e.g. "C:/Projects/.../db/sample-northwind-sqlite/northwind.db").
+            # Inside Docker the same file lives under /reportburster/db/...,
+            # so remap the host path to the container mount path.
+            if db_value and db_type_value and db_type_value.lower() in ('sqlite', 'duckdb'):
+                if not os.path.exists(db_value):
+                    db_mount = os.environ.get('REPORTBURSTER_DB_PATH', '/reportburster/db')
+                    normalized = db_value.replace('\\', '/')
+                    idx = normalized.rfind('/db/')
+                    if idx >= 0:
+                        relative = normalized[idx + len('/db/'):]
+                        candidate = os.path.join(db_mount, relative)
+                        if os.path.exists(candidate):
+                            db_value = candidate
+
             return DatabaseConnection(
                 code=get_text(connection, 'code'),
                 name=get_text(connection, 'name'),
                 default_connection=get_bool(connection, 'default'),
-                db_type=get_text(databaseserver, 'type'),
+                db_type=db_type_value,
                 host=get_text(databaseserver, 'host') or None,
                 port=get_text(databaseserver, 'port') or None,
-                database=get_text(databaseserver, 'database') or None,
+                database=db_value,
                 userid=get_text(databaseserver, 'userid') or None,
                 userpassword=get_text(databaseserver, 'userpassword') or None,
                 usessl=get_bool(databaseserver, 'usessl'),

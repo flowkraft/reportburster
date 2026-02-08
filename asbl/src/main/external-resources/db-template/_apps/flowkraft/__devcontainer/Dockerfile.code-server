@@ -3,7 +3,7 @@
 FROM mcr.microsoft.com/playwright:v1.58.0-noble
 
 # Set the working directory
-WORKDIR /workspaces
+WORKDIR /reportburster
 
 # Install essential utilities + Java/Maven for project compilation
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -75,7 +75,7 @@ RUN code-server --install-extension realDestroyer.org-vscode
 # RUN code-server --install-extension tootone.org-mode
 
 # Expose port for code-server
-EXPOSE 8080
+EXPOSE 8443
 
 # Start code-server
-CMD ["code-server", "--bind-addr", "0.0.0.0:8080", "--auth", "none"]
+CMD ["code-server", "--bind-addr", "0.0.0.0:8443", "--auth", "none"]

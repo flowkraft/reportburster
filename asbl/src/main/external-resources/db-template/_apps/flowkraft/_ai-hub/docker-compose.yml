@@ -21,6 +21,8 @@ services:
         condition: service_started
       baibot:
         condition: service_started
+      code-server:
+        condition: service_started
     environment:
       - NODE_ENV=production
       - LETTA_BASE_URL=http://flowkraft-ai-hub-letta:8283
@@ -264,14 +266,25 @@ services:
       - ai-hub-network
 
   code-server:
-    image: codercom/code-server:latest
     container_name: flowkraft-ai-hub-code-server
+    build:
+      context: ../__devcontainer
+      dockerfile: Dockerfile.code-server
+    command: >-
+      bash -c "git config --global user.name 'flowkraft' &&
+               git config --global user.email 'virgil.trasca@gmail.com' &&
+               code-server --bind-addr 0.0.0.0:8443 --auth none"
     environment:
-      - PASSWORD=${CODE_SERVER_PASSWORD:-admin}
-      - SUDO_PASSWORD=${CODE_SERVER_PASSWORD:-admin}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
     volumes:
-      - ./agents-output-artifacts:/home/coder/project
-      - code-server-data:/home/coder/.local/share/code-server
+      # ReportBurster project (full repo)
+      - ${REPORTBURSTER_INSTALLATION_FOLDER:-../../..}:/reportburster
+
+      # Workspace files with color configurations
+      - ../__devcontainer/workspaces:/workspaces
+
+      # Claude authentication persistence (survives docker compose down -v)
+      - /var/kraft-internalsystems/apps/cvs/shelf-code-server/config/.claude:/root/.claude
     ports:
       - "8443:8443"  # Code Server (VS Code in browser)
     restart: unless-stopped
@@ -324,5 +337,4 @@ volumes:
   baibot-data:
   synapse-data:
   synapse-db-data:
-  code-server-data:
   jupyter-data:

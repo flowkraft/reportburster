@@ -197,7 +197,7 @@ export async function POST(
         providerOptions: { 
           letta: { 
             agent: { id: agentId }, 
-            timeoutInSeconds: 120, 
+            timeoutInSeconds: 300,
             ...modelParams 
           } 
         },

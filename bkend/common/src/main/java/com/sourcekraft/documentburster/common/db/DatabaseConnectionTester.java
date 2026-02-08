@@ -4,8 +4,6 @@ import java.sql.Connection;
 import java.sql.Statement;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
@@ -15,8 +13,6 @@ import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConn
  * Designed to be used by CliJob and potentially other services.
  */
 public class DatabaseConnectionTester {
-
-	private static final Logger log = LoggerFactory.getLogger(DatabaseConnectionTester.class);
 
 	/**
 	 * Tests the database connection based on the provided settings. Logs detailed
@@ -31,11 +27,18 @@ public class DatabaseConnectionTester {
 		DocumentBursterConnectionDatabaseSettings dbSettings = settings
 				.loadSettingsConnectionDatabaseByPath(connectionFilePath);
 
-		DatabaseConnectionManager dbManager = new DatabaseConnectionManager(settings);
+		// Use the already-loaded settings directly to build the JDBC connection
+		// instead of round-tripping through getJdbcConnection(code), which would
+		// try to re-load settings by code and fail for synthesized connections
+		// (e.g., built-in Northwind SQLite) that have no code/XML file.
+		dbSettings.connection.databaseserver.ensureDriverAndUrl();
+		Class.forName(dbSettings.connection.databaseserver.driver);
 
-		try (Connection connection = dbManager.getJdbcConnection(dbSettings.connection.code)) {
+		try (Connection connection = java.sql.DriverManager.getConnection(
+				dbSettings.connection.databaseserver.url,
+				dbSettings.connection.databaseserver.userid,
+				dbSettings.connection.databaseserver.userpassword)) {
 			try (Statement stmt = connection.createStatement()) {
-				// ✅ Oracle-compatible test query
 				String testSql = getTestQueryForDatabase(dbSettings.connection.databaseserver.type);
 				stmt.executeQuery(testSql);
 			}

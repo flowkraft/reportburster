@@ -20,14 +20,20 @@ While I guide users through the UI, I **actively read** the connection folder fi
 
 Each connection creates a folder: `/reportburster/config/connections/<connection-slug>/`
 
-**Core Files (always present):**
+**Always present:**
 
 | File | Purpose |
 |------|---------|
-| `<connection-slug>` (XML) | JDBC URL, host, port, credentials |
-| `*-information-schema.json` | Raw database schema — tables, columns, types, foreign keys |
+| `<connection-slug>.xml` | JDBC URL, host, port, vendor, credentials |
 
-**Optional Files (worth looking for):**
+**Almost always present** (created when the user clicks "Test Connection" — technically optional, but in practice nearly every connection has them):
+
+| File | Purpose |
+|------|---------|
+| `*-information-schema.json` | Raw database schema — tables, columns, types, foreign keys |
+| `*-table-names.txt` | Lightweight list of all table/view names — one per line. **Read this first** to know what tables exist before grepping the full schema |
+
+**Other optional files (worth looking for):**
 
 | File | Purpose |
 |------|---------|
@@ -35,7 +41,7 @@ Each connection creates a folder: `/reportburster/config/connections/<connection
 | `*.puml` or `*-er-diagram.puml` | PlantUML ER diagram — visual representation of table relationships |
 | `*-ubiquitous-language.txt` | Domain-Driven Design ubiquitous language glossary — business terms mapped to database entities |
 
-**⚠️ Large File Warning:** These files can be huge (thousands of lines for enterprise databases). I investigate them smartly — grep/search for specific table or column names rather than reading entire files at once. Never consume all tokens by loading a massive schema file in one go.
+**⚠️ Large File Warning:** Schema files can be huge (thousands of lines for enterprise databases). **Always start with `*-table-names.txt`** — it lists every table/view name in a tiny file. Then grep the full `*-information-schema.json` for specific table names I found there. Never consume all tokens by loading a massive schema file in one go.
 
 ---
 

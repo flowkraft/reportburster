@@ -30,7 +30,6 @@ export const PRIMARY_AGENT_TOOLS: ToolDef[] = [
     { name: 'better_web_search', description: 'Enhanced web search using SearX + Jina.ai (no API key required)' },
     { name: 'better_fetch_webpage', description: 'Enhanced webpage fetcher using Jina.ai markdown converter' },
     { name: 'execute_shell_command', description: 'Execute arbitrary shell commands on the system' },
-    { name: 'db_query', description: 'Execute READ-ONLY SQL queries on any ReportBurster database connection (SQLite, DuckDB, PostgreSQL, MySQL, MariaDB, SQL Server, Oracle, IBM Db2, ClickHouse). Use sql="LIST CONNECTIONS" to see available databases, sql="SHOW TABLES" to list tables.' },
 ];
 
 // Tools for the SLEEPTIME agent (runs asynchronously during user downtime)
@@ -79,8 +78,17 @@ export const DEFAULT_TOOLS: ToolDef[] = [
     { name: 'better_web_search', description: 'Enhanced web search using SearX + Jina.ai (no API key required)' },
     { name: 'better_fetch_webpage', description: 'Enhanced webpage fetcher using Jina.ai markdown converter' },
     { name: 'execute_shell_command', description: 'Execute arbitrary shell commands on the system' },
-    { name: 'db_query', description: 'Execute READ-ONLY SQL queries on any ReportBurster database connection (SQLite, DuckDB, PostgreSQL, MySQL, MariaDB, SQL Server, Oracle, IBM Db2, ClickHouse). Use sql="LIST CONNECTIONS" to see available databases, sql="SHOW TABLES" to list tables.' },
 ];
+
+// db_query memory section — injected into Athena's available_linux_utilities block
+// only when giveDbQueryToolToAthena is true during provisioning
+export const DB_QUERY_MEMORY_SECTION = `\n**Database Querying**
+- db_query - Universal database query tool for ALL ReportBurster connections (SQLite, DuckDB, PostgreSQL, MySQL, MariaDB, SQL Server, Oracle, IBM Db2, ClickHouse). Use this instead of database-specific CLIs.
+  - db_query(connection_code="", sql="LIST CONNECTIONS") → list available databases
+  - db_query(connection_code="db-xxx", sql="SHOW TABLES") → list tables
+  - db_query(connection_code="db-xxx", sql="SELECT ...") → query data
+  - READ-ONLY: destructive SQL is blocked at the tool level
+- Table name discovery: Each connection folder has a *-table-names.txt file listing all table/view names (one per line). Read this first before grepping large schema files.\n`;
 
 export const DEFAULT_OPTIONS = {
     maxSteps: 12,
@@ -626,13 +634,6 @@ I can assume the below essential commands are installed and ready for use:
 **Data Processing**
 - jq - Command-line JSON processor for parsing configs and API responses
 - xmlstarlet - Command-line XML processor for parsing configurations
-
-**Database Querying**
-- db_query - Universal database query tool for ALL ReportBurster connections (SQLite, DuckDB, PostgreSQL, MySQL, MariaDB, SQL Server, Oracle, IBM Db2, ClickHouse). Use this instead of database-specific CLIs.
-  - db_query(connection_code="", sql="LIST CONNECTIONS") → list available databases
-  - db_query(connection_code="db-xxx", sql="SHOW TABLES") → list tables
-  - db_query(connection_code="db-xxx", sql="SELECT ...") → query data
-  - READ-ONLY: destructive SQL is blocked at the tool level
 
 **Version Control**
 - git - Repository analysis, history inspection, context gathering, and applying targeted changes

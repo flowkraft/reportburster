@@ -453,7 +453,7 @@ export class ConnectionsTestHelper {
     connectionName: string,
     dbVendor: string,
   ): FluentTester {
-    const connectionCode = `db-${_.kebabCase(connectionName)}`;
+    const connectionCode = `db-${_.kebabCase(connectionName)}-${dbVendor}`;
     //const kebabConnectionName = _.kebabCase(connectionName); // Needed for fillNewDatabaseConnectionDetails
 
     // Navigate and open the modal
@@ -508,7 +508,7 @@ export class ConnectionsTestHelper {
     connectionName: string,
     dbVendor: string,
   ): FluentTester {
-    const connectionCode = `db-${_.kebabCase(connectionName)}`;
+    const connectionCode = `db-${_.kebabCase(connectionName)}-${dbVendor}`;
     const updatedConnectionName = `${connectionName} Updated`;
 
     // Start sequence for updating
@@ -590,12 +590,12 @@ export class ConnectionsTestHelper {
     connectionName: string,
     dbVendor: string,
   ): FluentTester {
-    const originalConnectionCode = `db-${_.kebabCase(connectionName)}`; // e.g., "db-test-database-connection"
+    const originalConnectionCode = `db-${_.kebabCase(connectionName)}-${dbVendor}`;
 
     // This will be the new unique name we type for the duplicated connection.
-    const newNameForDuplicate = `${connectionName} Duplicated`; // e.g., "Test Database Connection Updated Duplicated"
+    const newNameForDuplicate = `${connectionName} Duplicated`;
     // This will be the code/ID of the newly created duplicated connection based on the new unique name.
-    const newDuplicateConnectionCode = `db-${_.kebabCase(newNameForDuplicate)}`;
+    const newDuplicateConnectionCode = `db-${_.kebabCase(newNameForDuplicate)}-${dbVendor}`;
 
     return (
       ft

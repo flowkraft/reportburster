@@ -51,33 +51,59 @@
         >
       </a>
     </li>
-    <li *ngIf="showVanna">
+    <li *ngIf="showChat2db">
+      <!-- Running: clickable launch link with stop icon -->
       <a
-        href="javascript:void(0)"
-        id="btnLaunchVannaModal"
-        (click)="openVannaModal(aiManagerModalTemplate)"
+        *ngIf="chat2dbApp?.state === 'running'"
+        href="http://localhost:8441/lab/tree/00-chat.ipynb"
+        target="_blank"
+        id="btnLaunchChat2DB"
         style="display: flex; align-items: center;"
       >
-        <i class="fa fa-comment"></i>
-        <ng-container *ngIf="vannaApp?.state === 'running'; else vannaStopped">
-          <strong>
-            {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.CHAT-WITH-DB' | translate }}
-          </strong>
-        </ng-container>
-        <ng-template #vannaStopped>
-          <span class="text-muted" style="margin-left: 6px;">
-            {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.CHAT-WITH-DB' | translate }}
-            <strong style="margin-left: 6px;">stopped</strong>
-          </span>
-          <button
-            class="btn btn-xs btn-link"
-            style="padding: 0 4px; vertical-align: middle; margin-left: 6px;"
-            (click)="appsManagerService.toggleApp(vannaApp); $event.stopPropagation();"
-            [title]="'Start ' + vannaApp?.name"
-          >
-            <i class="fa fa-play text-success"></i>
-          </button>
-        </ng-template>
+        <span
+          style="margin-right: 6px; vertical-align: middle; cursor: pointer;"
+          (click)="toggleChat2dbApp(); $event.stopPropagation(); $event.preventDefault();"
+          title="Stop">
+          <i class="fa fa-stop" style="color: #888; font-size: 16px;"></i>
+        </span>
+        <i class="fa fa-flask" style="color: #31708f;"></i><span style="color: #31708f;">{{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.CHAT-WITH-DB' | translate }}&nbsp;</span>
+        <span style="margin-left: auto; padding-left: 8px; color: #31708f; text-decoration: underline; font-weight: bold;">
+          <i class="fa fa-external-link" style="margin-right: 5px;"></i>Launch
+        </span>
+      </a>
+      <!-- Starting/Stopping: non-clickable, shows spinner -->
+      <a
+        *ngIf="chat2dbApp?.state === 'starting' || chat2dbApp?.state === 'stopping'"
+        href="javascript:void(0)"
+        id="btnLaunchChat2DB"
+        style="display: flex; align-items: center; cursor: default;"
+        (click)="$event.preventDefault();"
+      >
+        <i class="fa fa-flask" style="color: #337ab7;"></i>
+        <span class="text-muted" style="margin-left: 6px;">
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.CHAT-WITH-DB' | translate }}&nbsp;
+        </span>
+        <span style="margin-left: auto; color: #337ab7;">
+          <i class="fa fa-spinner fa-spin" style="margin-right: 4px;"></i>
+          <strong>{{ chat2dbApp?.state }}</strong>
+        </span>
+      </a>
+      <!-- Stopped: shows play button to start -->
+      <a
+        *ngIf="chat2dbApp?.state !== 'running' && chat2dbApp?.state !== 'starting' && chat2dbApp?.state !== 'stopping'"
+        href="javascript:void(0)"
+        id="btnLaunchChat2DB"
+        style="display: flex; align-items: center;"
+        (click)="toggleChat2dbApp(); $event.stopPropagation(); $event.preventDefault();"
+      >
+        <i class="fa fa-flask" style="color: #888;"></i>
+        <span class="text-muted" style="margin-left: 6px;">
+          {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.BUTTONS.CHAT-WITH-DB' | translate }}&nbsp;
+        </span>
+        <span style="margin-left: auto; color: #888;">
+          <strong>stopped</strong>
+          <i class="fa fa-play" style="margin-left: 6px; color: #555;"></i>
+        </span>
       </a>
     </li>
   </ul>
@@ -165,7 +191,6 @@
     "
   >
     <!-- Tab 1: AI Prompts -->
-    <!-- Adjust index based on Vanna visibility for selectTab -->
     <tab (selectTab)="onTabSelect(0)" [active]="isPromptsTabActive">
       <ng-template tabHeading>
         <i class="fa fa-list"></i>&nbsp; AI Prompts
@@ -477,26 +502,7 @@
       </div>
     </tab>
 
-    <!-- Tab 2: Chat with DB (Vanna) -->
-    <!--
-    <tab
-      [hidden]="!showVanna"
-      (selectTab)="onTabSelect(1)"
-      [active]="isVannaTabActive"
-    >
-      <ng-template tabHeading>
-        <i class="fa fa-comment"></i>&nbsp; Chat with Your SQL Database
-      </ng-template>
-      <div
-        class="p-3"
-        style="height: calc(100vh - 215px); overflow: auto; max-width: 100%"
-      >
-        <p>Chat with DB (Vanna) Content Placeholder</p>
-      </div>
-    </tab>
-    -->
-
-    <!-- Tab 3: Hey AI -->
+    <!-- Tab 2: Hey AI -->
     <tab (selectTab)="onTabSelect(1)" [active]="isHeyAiTabActive">
       <ng-template tabHeading>
         <i class="fa fa-magic"></i>&nbsp; Hey AI, Help Me...

@@ -315,7 +315,7 @@
             <select id="dbType" [(ngModel)]="
                 modalConnectionInfo.database.documentburster.connection
                   .databaseserver.type
-              " (ngModelChange)="onDbTypeChange($event)" class="form-control" [disabled]="mode === 'viewMode'">
+              " (ngModelChange)="onDbTypeChange($event)" class="form-control" [disabled]="mode === 'viewMode' || modalConnectionInfo.crudMode === 'update'">
               <option value="oracle">Oracle</option>
               <option value="sqlserver">SQL Server</option>
               <option value="postgres">PostgreSQL</option>
@@ -1197,7 +1197,7 @@
         </div>
       </tab>
 
-      <!-- Tab 6: Tools -->
+      <!-- Tab 6: Chat2DB — FlowKraft AI Hub -->
       <tab id="toolsTab" [active]="isToolsTabActive" (selectTab)="
         isToolsTabActive = true;
         isConnectionDetailsTabActive = false;
@@ -1207,135 +1207,19 @@
         isUbiquitousLanguageTabActive = false
       " (deselectTab)="isToolsTabActive = false" *ngIf="context !== 'sqlQuery' || (showSchemaTreeSelect && domainGroupedSchemaExists && erDiagramExists && isStringAndNotEmpty(ubiquitousLanguageMarkdown))">
         <ng-template tabHeading>
-          <i class="fa fa-comments" [style.color]="isVannaAiStarted ? 'green' : '#888'"></i> &nbsp;Chat2DB (AI)
+          <i class="fa fa-robot"></i> &nbsp;Chat2DB
         </ng-template>
 
-        <!-- Show schema not loaded message if schema is not available -->
-        <div *ngIf="!showSchemaTreeSelect" class="text-center"
-          style="min-height: 400px; display: flex; align-items: center; justify-content: center; padding: 15px;">
-          <span id="schemaNotLoadedChat2DB">
-            <strong>
-              To load the schema, please ensure your connection details are configured and then test the connection or
-              refresh the schema.
-            </strong>
-          </span>
+        <div style="padding: 15px; min-height: 420px; overflow: visible;">
+          <div style="max-width: 700px; overflow: visible;">
+            <dburst-apps-manager
+              [dropdownDirection]="'expandedList'"
+              [inputAppsToShow]="['flowkraft-ai-hub']"
+              [showDevButtons]="false"
+            >
+            </dburst-apps-manager>
+          </div>
         </div>
-
-        <!-- Existing content, shown only if schema is available -->
-        <ng-container *ngIf="showSchemaTreeSelect">
-          <div class="row" style="padding: 15px 15px 0 15px">
-            <div class="col-xs-6">
-              <button id="btnChatWithDb" type="button" class="btn btn-default btn-block" [disabled]="!isVannaAiStarted">
-                <i class="fa fa-comments" [style.color]="isVannaAiStarted ? 'green' : '#888'"></i>&nbsp; Chat With Your
-                Database (AI)
-              </button>
-            </div>
-            <div class="col-xs-6">
-              <button id="btnToggleVannaAi" type="button" class="btn btn-default btn-block"
-                (click)="toggleVannaAiService()">
-                <i class="fa" [ngClass]="{
-                  'fa-play': !isVannaAiStarted,
-                  'fa-stop': isVannaAiStarted
-                }"></i>
-                <span *ngIf="!isVannaAiStarted">&nbsp; <strong>Start Vanna.AI</strong></span>
-                <span *ngIf="isVannaAiStarted">&nbsp; Stop Vanna.AI</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="row" style="padding: 15px" *ngIf="context !== 'sqlQuery'">
-            <div class="col-xs-12">
-              <div class="checkbox">
-                <label>
-                  <input id="vannaTrainingIncludeDbSchema" type="checkbox" [(ngModel)]="vannaTrainingIncludeDbSchema"
-                    [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeDbSchema') !== ''"
-                    [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeDbSchema')" />
-
-                  <!-- Text displayed when NO specific tables are selected -->
-                  <span *ngIf="targetSchemaObjects.length === 0">
-                    Include <strong>*.tables</strong> plain DB Schema Information
-                  </span>
-
-                  <!-- Text displayed when specific tables ARE selected -->
-                  <span *ngIf="targetSchemaObjects.length > 0">
-                    Include selected tables' plain DB Schema Information
-                  </span>
-                </label>
-
-                <!-- Button to choose tables (shown when none are selected) -->
-                <button *ngIf="targetSchemaObjects.length === 0" id="btnChooseSpecificTables" type="button"
-                  class="btn btn-default btn-xs" style="margin-left: 20px"
-                  (click)="isDatabaseSchemaTabActive = true; isToolsTabActive = false;">
-                  Choose Specific Tables
-                </button>
-
-                <!-- Button and badge to show/edit selection status -->
-                <span *ngIf="targetSchemaObjects.length > 0" style="margin-left: 20px">
-                  <button id="btnEditSpecificTables" type="button" class="btn btn-info btn-xs"
-                    (click)="isDatabaseSchemaTabActive = true; isToolsTabActive = false;">
-                    Edit Selection
-                  </button>
-                  <span class="label label-primary" style="margin-left: 5px;">
-                    {{ targetSchemaObjects.length }} table(s) selected
-                  </span>
-                </span>
-              </div>
-              <div class="checkbox">
-                <label>
-                  <input id="vannaTrainingIncludeDomainGroupedSchema" type="checkbox"
-                    [(ngModel)]="vannaTrainingIncludeDomainGroupedSchema"
-                    [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeDomainGroupedSchema') !== ''"
-                    [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeDomainGroupedSchema')" />
-                  Include Domain-Grouped Schema Information
-                </label>
-              </div>
-              <div class="checkbox">
-                <label>
-                  <input id="vannaTrainingIncludeErDiagram" type="checkbox" [(ngModel)]="vannaTrainingIncludeErDiagram"
-                    [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeErDiagram') !== ''"
-                    [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeErDiagram')" />
-                  Include ER Diagram Information
-                </label>
-              </div>
-              <div class="checkbox">
-                <label>
-                  <input id="vannaTrainingIncludeUbiquitousLanguage" type="checkbox"
-                    [(ngModel)]="vannaTrainingIncludeUbiquitousLanguage"
-                    [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeUbiquitousLanguage') !== ''"
-                    [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeUbiquitousLanguage')" />
-                  Include 'Ubiquitous Language' Information
-                </label>
-              </div>
-              <div class="checkbox">
-                <label>
-                  <input id="vannaTrainingIncludeSqlQueries" type="checkbox"
-                    [(ngModel)]="vannaTrainingIncludeSqlQueries"
-                    [disabled]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeSqlQueries') !== ''"
-                    [title]="getAiTrainingCheckboxDisabledTooltip('vannaTrainingIncludeSqlQueries')" />
-                  Include existing SQL-based Report queries information
-                </label>
-              </div>
-
-              <div class="row" style="margin-top: 20px">
-                <div class="col-xs-6">
-                  <button id="btnGenerateVannaTrainingPlan" type="button" class="btn btn-default btn-block"
-                    (click)="launchAiCopilotForVannaAITrainingPlanGeneration()">
-                    <i class="fa fa-magic"></i>&nbsp; Generate Vanna.AI Training
-                    Plan
-                  </button>
-                </div>
-                <div class="col-xs-6">
-                  <button id="btnTrainVannaAi" type="button" class="btn btn-default btn-block"
-                    [disabled]="!isVannaAiStarted">
-                    <i class="fa fa-graduation-cap" [style.color]="isVannaAiStarted ? 'green' : '#888'"></i>&nbsp;
-                    <strong>Train Vanna.AI on This
-                      Database</strong>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </ng-container>
       </tab>
 
     </tabset>
@@ -1348,9 +1232,7 @@
       width: 100%;
     ">
     <div style="display: flex; align-items: center; gap: 10px">
-      <!--<dburst-ai-manager [showVanna]="true" dropdownDirection="up">-->
-
-      <dburst-ai-manager #aiManagerInstance dropdownDirection="up" [showVanna]="true" [initialActiveTabKey]="'PROMPTS'"
+      <dburst-ai-manager #aiManagerInstance dropdownDirection="up" [showChat2db]="true" [initialActiveTabKey]="'PROMPTS'"
         [initialSelectedCategory]="'Database Schema'">
       </dburst-ai-manager>
 

@@ -177,6 +177,9 @@ local.properties
 Thumbs.db
 ehthumbs.db
 
+# Literal "nul" file created when tools redirect to /dev/null on Windows
+nul
+
 # Folder config file
 Desktop.ini
 

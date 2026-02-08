@@ -79,10 +79,10 @@ test.describe('', async () => {
           dbConnections.push({ connectionName: connectionNameNoSchema, dbConnectionType: 'dbcon-no-schema', defaultDbConnection: true });
           await ft.gotoConnections();
 
-          const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConnNoSchema.connectionName)}"]`;
+          const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConnNoSchema.connectionName)}-${dbVendor}"]`;
           const alreadyDefault = await ft.elementExistsNow2(prefixSel);
           ft = ft.consoleLog(`alreadyDefault value: ${alreadyDefault}`);
-          if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnNoSchema.connectionName)}\\.xml`);
+          if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnNoSchema.connectionName)}-${dbVendor}\\.xml`);
 
           let clearLogs = false;
           if (dbVendor !== 'sqlite')
@@ -348,7 +348,7 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           for (const connName of deleteOrder) {
             ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
               ft,
-              `db-${_.kebabCase(connName)}\\.xml`,
+              `db-${_.kebabCase(connName)}-${dbVendor}\\.xml`,
               dbVendor,
             );
           }
@@ -399,10 +399,10 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           ft = ft
             .gotoConnections();
 
-          const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConnNoSchema.connectionName)}"]`;
+          const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConnNoSchema.connectionName)}-${dbVendor}"]`;
           const alreadyDefault = await ft.elementExistsNow2(prefixSel);
           ft = ft.consoleLog(`alreadyDefault value: ${alreadyDefault}`);
-          if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnNoSchema.connectionName)}\\.xml`);
+          if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnNoSchema.connectionName)}-${dbVendor}\\.xml`);
 
           let clearLogs = false;
           if (dbVendor !== 'sqlite')
@@ -766,10 +766,10 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           ft = ConfTemplatesTestHelper.deleteTemplate(ft, 'script-payslips');
 
           // Delete all 4 DB connections
-          ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameNoSchema)}\\.xml`, dbVendor);
-          ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNamePlainSchema)}\\.xml`, dbVendor);
-          ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameDomainGrouped)}\\.xml`, dbVendor);
-          ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameAllFeatures)}\\.xml`, dbVendor);
+          ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameNoSchema)}-${dbVendor}\\.xml`, dbVendor);
+          ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNamePlainSchema)}-${dbVendor}\\.xml`, dbVendor);
+          ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameDomainGrouped)}-${dbVendor}\\.xml`, dbVendor);
+          ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameAllFeatures)}-${dbVendor}\\.xml`, dbVendor);
 
           // Stop starter-pack when done
           if (dbVendor !== 'sqlite') {
@@ -818,10 +818,10 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
       ft = ft
         .gotoConnections();
 
-      const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConnPlainSchema.connectionName)}"]`;
+      const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConnPlainSchema.connectionName)}-${dbVendor}"]`;
       const alreadyDefault = await ft.elementExistsNow2(prefixSel);
       ft = ft.consoleLog(`alreadyDefault value: ${alreadyDefault}`);
-      if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnPlainSchema.connectionName)}\\.xml`);
+      if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnPlainSchema.connectionName)}-${dbVendor}\\.xml`);
 
       dbConnections.push({
         connectionName: dbConnPlainSchema.connectionName,
@@ -939,7 +939,7 @@ log.info("Finished scriptedReport_employeesByHireDate_noParams.groovy. Rows: {}"
       ft = ConfTemplatesTestHelper.deleteTemplate(ft, _.kebabCase(TEST_NAME));
       ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
         ft,
-        `db-${_.kebabCase(dbConnPlainSchema.connectionName)}\\.xml`,
+        `db-${_.kebabCase(dbConnPlainSchema.connectionName)}-${dbVendor}\\.xml`,
         dbVendor
       );
 
@@ -980,10 +980,10 @@ log.info("Finished scriptedReport_employeesByHireDate_noParams.groovy. Rows: {}"
       ft = ft
         .gotoConnections();
 
-      const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConn.connectionName)}"]`;
+      const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConn.connectionName)}-${dbVendor}"]`;
       const alreadyDefault = await ft.elementExistsNow2(prefixSel);
       ft = ft.consoleLog(`alreadyDefault value: ${alreadyDefault}`);
-      if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConn.connectionName)}\\.xml`);
+      if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConn.connectionName)}-${dbVendor}\\.xml`);
 
       dbConnections.push({
         connectionName: dbConn.connectionName,
@@ -1105,7 +1105,7 @@ log.info("Finished scriptedReport_employeesByHireDate_noParams.groovy. Rows: {}"
       ft = ConfTemplatesTestHelper.deleteTemplate(ft, _.kebabCase(TEST_NAME));
       ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
         ft,
-        `db-${_.kebabCase(dbConn.connectionName)}\\.xml`,
+        `db-${_.kebabCase(dbConn.connectionName)}-${dbVendor}\\.xml`,
         dbVendor
       );
 
@@ -1707,19 +1707,8 @@ function configureAndRunReportGeneration2(
                 .elementShouldNotBeVisible('#noUbiquitousLanguageContentInfo')
                 .elementShouldNotBeVisible('#btnUbiquitousLanguageStartEditing')
                 .elementShouldNotBeVisible('#ubiquitousLanguageEditor')
+                // TODO: Write Chat2DB tab e2e tests for FlowKraft AI Hub app
                 .click('#toolsTab-link')
-                .waitOnElementToBecomeEnabled('#btnToggleVannaAi')
-                .waitOnElementToBecomeVisible('#btnChatWithDb')
-                .elementShouldBeDisabled('#btnChatWithDb')
-                .elementShouldNotBeVisible('#schemaNotLoadedChat2DB')
-                .elementShouldNotBeVisible('#btnGenerateVannaTrainingPlan')
-                .elementShouldNotBeVisible('#btnTrainVannaAi')
-
-                .elementShouldNotBeVisible('#vannaTrainingIncludeDbSchema')
-                .elementShouldNotBeVisible('#vannaTrainingIncludeDomainGroupedSchema')
-                .elementShouldNotBeVisible('#vannaTrainingIncludeErDiagram')
-                .elementShouldNotBeVisible('#vannaTrainingIncludeUbiquitousLanguage')
-
                 .click('#btnCloseDbConnectionModal');
             }
 
@@ -2127,7 +2116,7 @@ function createDbConnection(
     dbConnectionType !== 'dbcon-no-schema') {
 
     ft = ft
-      .clickAndSelectTableRow(`#db-${_.kebabCase(connectionName)}\\.xml`)
+      .clickAndSelectTableRow(`#db-${_.kebabCase(connectionName)}-${dbVendor}\\.xml`)
       .waitOnElementToBecomeEnabled('#btnEdit')
       .click('#btnEdit')
       .waitOnElementToBecomeEnabled('#btnTestDbConnection')
