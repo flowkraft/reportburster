@@ -27,9 +27,10 @@ services:
       - NODE_ENV=production
       - LETTA_BASE_URL=http://flowkraft-ai-hub-letta:8283
       - LETTA_API_KEY=${LETTA_API_KEY:-}
-      - NEXT_PUBLIC_AGENTS_CHAT_URL=${NEXT_PUBLIC_AGENTS_CHAT_URL:-http://localhost:8442}
+      - NEXT_PUBLIC_AGENTS_CHAT_URL=${NEXT_PUBLIC_AGENTS_CHAT_URL:-http://localhost:8441}
       - ELEMENT_URL=http://flowkraft-ai-hub-element-web:80
-      - CODE_SERVER_URL=http://localhost:8443
+      - CODE_SERVER_URL=http://localhost:8442
+      - CHAT2DB_URL=http://flowkraft-ai-hub-chat2db:8888
       # LLM provider config (needed by provision route env check)
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_API_BASE=${OPENAI_API_BASE:-}
@@ -236,7 +237,7 @@ services:
     volumes:
       - ./config/element/config.json:/app/config.json:ro
     ports:
-      - "8442:80"  # Element Web Chat UI
+      - "8441:80"  # Element Web Chat UI
     restart: unless-stopped
     networks:
       - ai-hub-network
@@ -286,13 +287,13 @@ services:
       # Claude authentication persistence (survives docker compose down -v)
       - /var/kraft-internalsystems/apps/cvs/shelf-code-server/config/.claude:/root/.claude
     ports:
-      - "8443:8443"  # Code Server (VS Code in browser)
+      - "8442:8443"  # Code Server (VS Code in browser)
     restart: unless-stopped
     networks:
       - ai-hub-network
 
   # ============================================
-  # Chat2DB - Natural Language SQL in Jupyter
+  # Chat2DB - Data Analysis Lab (Natural Language SQL via FastAPI)
   # ============================================
   chat2db:
     build:
@@ -303,25 +304,14 @@ services:
       letta:
         condition: service_healthy
     environment:
-      # Jupyter settings
-      - JUPYTER_TOKEN=${JUPYTER_TOKEN:-reportburster}
       # Athena AI via OpenAI-compatible adapter (ai-hub-frend wraps Letta agents)
-      # The adapter resolves "athena" agent key automatically — no agent ID needed
       - OPENAI_API_BASE=http://flowkraft-ai-hub-frend:3000/api/openai/athena/v1
       - OPENAI_MODEL=letta:athena
-      # Paths inside container
-      - REPORTBURSTER_CONNECTIONS_PATH=/reportburster/config/connections
-      - JDBC_DRIVERS_PATH=/reportburster/lib
-      - REPORTBURSTER_DB_PATH=/reportburster/db
     volumes:
-      # Notebooks directory
-      - ./notebooks:/app/notebooks
-      # ReportBurster root (same mount as letta) - for connections, JDBC drivers, db
+      # ReportBurster root — Python code derives all paths from /reportburster
+      # (config/connections, lib, db) via hardcoded defaults in rb_connections.py
       - ${REPORTBURSTER_INSTALLATION_FOLDER:-../../..}:/reportburster:ro
-      # Persist Jupyter workspace settings
-      - jupyter-data:/home/jupyter/.jupyter
-    ports:
-      - "${JUPYTER_PORT:-8441}:8888"  # JupyterLab Chat2DB UI
+    # No port exposed — accessed only by ai-hub-frend via Docker network
     restart: unless-stopped
     networks:
       - ai-hub-network
@@ -337,4 +327,3 @@ volumes:
   baibot-data:
   synapse-data:
   synapse-db-data:
-  jupyter-data:

@@ -1283,7 +1283,7 @@ export async function provisionMatrixRooms(options?: {
     result.errors.forEach(e => console.error(`   - ${e}`));
   }
   if (result.success) {
-    console.log('\n🌐 Open Element at http://localhost:8442 to chat with your oracles!');
+    console.log('\n🌐 Open Element at http://localhost:8441 to chat with your oracles!');
   }
   console.log('='.repeat(60) + '\n');
 

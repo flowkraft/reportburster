@@ -19,5 +19,5 @@
   "setting_defaults": {
     "breadcrumbs": true
   },
-  "permalink_prefix": "http://localhost:8442"
+  "permalink_prefix": "http://localhost:8441"
 }

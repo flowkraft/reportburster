@@ -17,10 +17,22 @@ All notable changes to this project will be documented in this file.
   - **Hephaestus** — Automation & ETL specialist for building data pipelines and job workflows
   - **Hermes** — Grails Guru & Self-Service Portal advisor for GSP views, Groovy scripting, and portal best practices
   - **Apollo** — Next.js/React specialist for modern TypeScript/Tailwind dashboards and admin panels
-  
+
+- **Data Analysis Lab (Chat2DB)** — Chat with Athena to explore your databases using plain English
+  - Connect to any configured database (PostgreSQL, MySQL, SQL Server, Oracle, SQLite, DuckDB, ClickHouse, and more)
+  - Ask natural language questions — Athena generates SQL, executes it, and explains the results
+  - Auto-generated charts and visualizations rendered inline alongside query results
+  - Collapsible syntax-highlighted SQL blocks, result tables with row counts and execution times
+  - Follow-up questions supported — refine queries, request different chart types, or drill deeper
+
+- **AI Crew Chat** — A built-in web chat to message your AI assistants directly from the browser
+  - Dedicated chat rooms for each agent — Athena, Hephaestus, Hermes, Apollo, and Pythia
+  - Persistent, encrypted conversation history across sessions
+  - Collaborate with multiple agents on different topics simultaneously
+
 - **Next.js Document Portal Boilerplate** — A complete TypeScript/Next.js 15 + Tailwind 4 + shadcn starter template for building custom self-service portals
   - Modern React ecosystem alternative to the Grails/Groovy stack
-  - Includes admin panel integration with Prisma ORM
+  - Includes admin panel integration with Drizzle ORM
   - Ready-to-use components for payslips, invoices, and document distribution workflows
 
 ### Changed

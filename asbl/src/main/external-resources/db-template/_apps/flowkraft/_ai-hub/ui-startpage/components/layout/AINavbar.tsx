@@ -62,6 +62,7 @@ export function AINavbar() {
 
   const navLinks = [
     { href: "/", label: "Agents" },
+    { href: "/chat2db", label: "Chat2DB" },
   ]
 
   return (
