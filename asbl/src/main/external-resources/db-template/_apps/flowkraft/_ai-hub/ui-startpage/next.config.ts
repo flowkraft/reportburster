@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  transpilePackages: ["react-markdown"],
 };
 
 export default nextConfig;

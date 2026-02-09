@@ -266,7 +266,7 @@ export default function AgentsPage() {
 
   const handleChatWithAgent = (agent: Agent) => {
     // Open Element Matrix with the agent's room
-    const elementUrl = `http://localhost:8442/#/room/${encodeURIComponent(agent.matrixRoom)}`;
+    const elementUrl = `http://localhost:8441/#/room/${encodeURIComponent(agent.matrixRoom)}`;
     window.open(elementUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -632,7 +632,7 @@ export default function AgentsPage() {
                 <div className="py-1">
                   <button
                     onClick={() => {
-                      window.open('http://localhost:8443/?workspace=/workspaces/reportburster.code-workspace', '_blank', 'noopener,noreferrer');
+                      window.open('http://localhost:8442/?workspace=/workspaces/reportburster.code-workspace', '_blank', 'noopener,noreferrer');
                       setProjectDropdownOpen(false);
                     }}
                     className="w-full px-4 py-2.5 text-sm text-left hover:bg-muted transition-colors flex items-center gap-3"
@@ -642,7 +642,7 @@ export default function AgentsPage() {
                   </button>
                   <button
                     onClick={() => {
-                      window.open('http://localhost:8443/?workspace=/workspaces/flowkraft-apps.code-workspace', '_blank', 'noopener,noreferrer');
+                      window.open('http://localhost:8442/?workspace=/workspaces/flowkraft-apps.code-workspace', '_blank', 'noopener,noreferrer');
                       setProjectDropdownOpen(false);
                     }}
                     className="w-full px-4 py-2.5 text-sm text-left hover:bg-muted transition-colors flex items-center gap-3"

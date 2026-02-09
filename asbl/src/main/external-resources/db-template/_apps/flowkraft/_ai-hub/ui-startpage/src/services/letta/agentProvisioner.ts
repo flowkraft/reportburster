@@ -1348,7 +1348,7 @@ export async function provisionAll(options?: {
   console.log(`\n🚀 Status: ${result.success ? '✅ SUCCESS' : '❌ FAILED'}`);
   if (result.success && result.matrix) {
     console.log('\n🌐 Next steps:');
-    console.log('   1. Open Element: http://localhost:8442');
+    console.log('   1. Open Element: http://localhost:8441');
     console.log(`   2. Login with: ${result.matrix.adminUser.username} / ${result.matrix.adminUser.password}`);
     console.log('   3. Join rooms: #athena, #hephaestus, #hermes, #pythia, #apollo');
     console.log('   4. Start chatting with your AI oracles!');

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AINavbar } from "@/components/layout/AINavbar";
-import { Footer } from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "sonner";
 
@@ -33,7 +32,6 @@ export default function RootLayout({
               {children}
             </div>
           </main>
-          <Footer />
           <Toaster position="top-right" richColors />
         </ThemeProvider>
       </body>

@@ -158,8 +158,8 @@ export class AppsManagerService {
         url: 'http://localhost:8440',
         launchLinks: [
           { label: 'Meet the FlowKraft AI Crew', url: 'http://localhost:8440', icon: 'fa fa-free-code-camp' },
-          { label: 'FlowKraft\'s Data Analysis Lab (<strong>Chat2DB</strong>)', url: 'http://localhost:8441/lab/tree/00-chat.ipynb', icon: 'fa fa-flask' },
-          { label: 'Chat with the Ancient Greeks ... Oracles@Your Service', url: 'http://localhost:8442', icon: 'fa fa-commenting-o' },
+          { label: 'Chat2DB', url: 'http://localhost:8440/chat2db', icon: 'fa fa-flask' },
+          { label: 'Chat with the Ancient Greeks ... Oracles@Your Service', url: 'http://localhost:8441', icon: 'fa fa-commenting-o' },
         ],
         entrypoint: 'flowkraft/_ai-hub/docker-compose.yml',
         service_name: 'ai-hub-frend',
@@ -399,20 +399,24 @@ export class AppsManagerService {
           }
         } else {
           // No matching container found — check if we should preserve a transitional state.
-          // The localStorage timeout (10 min) handles builds that truly failed.
+          // Use the localStorage timestamp to expire stale transitional states.
           const currentState = this.appStates[app.id];
-          if (currentState === 'starting' || currentState === 'stopping') {
-            // Preserve in-memory transitional state while container is still building/stopping
+          const persistedState = this.getPersistedTransitionalState(app.id);
+
+          if ((currentState === 'starting' || currentState === 'stopping') && persistedState) {
+            // Still within the 10-minute timeout — preserve transitional state
             console.debug(`[AppsManager] No container found for ${app.id}, preserving transitional state: ${currentState}`);
+          } else if (persistedState) {
+            // Restore from localStorage (page reload case, still within timeout)
+            this.appStates[app.id] = persistedState;
+            console.debug(`[AppsManager] Restored transitional state for ${app.id} from localStorage: ${persistedState}`);
           } else {
-            // Check localStorage for persisted transitional state (survives page reloads)
-            const persistedState = this.getPersistedTransitionalState(app.id);
-            if (persistedState) {
-              this.appStates[app.id] = persistedState;
-              console.debug(`[AppsManager] Restored transitional state for ${app.id} from localStorage: ${persistedState}`);
-            } else {
-              this.appStates[app.id] = 'stopped';
+            // No persisted state or timeout expired — reset to stopped
+            if (currentState === 'starting' || currentState === 'stopping') {
+              console.warn(`[AppsManager] Transitional state for ${app.id} expired (no container found after timeout), resetting to stopped`);
+              this.clearTransitionalState(app.id);
             }
+            this.appStates[app.id] = 'stopped';
           }
         }
       }

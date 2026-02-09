@@ -14,31 +14,29 @@ ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # Create non-root user
-RUN useradd --create-home jupyter \
-    && mkdir -p /app/notebooks /app/config /app/jdbc-drivers /app/db \
-    && mkdir -p /home/jupyter/.jupyter \
-    && chown -R jupyter:jupyter /app /home/jupyter/.jupyter
+RUN useradd --create-home appuser \
+    && mkdir -p /app/py \
+    && chown -R appuser:appuser /app
 
-USER jupyter
+USER appuser
 WORKDIR /app
 
 # Add user local bin to PATH (where pip installs executables)
-ENV PATH="/home/jupyter/.local/bin:${PATH}"
+ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 # Copy requirements and install Python dependencies
-COPY --chown=jupyter:jupyter requirements.txt .
+COPY --chown=appuser:appuser requirements.txt .
 RUN python -m pip install --no-cache-dir --upgrade pip \
-    && python -m pip install --no-cache-dir -r requirements.txt \
-    && python -m ipykernel install --user --name python3 --display-name "Python 3 (Chat2DB)"
+    && python -m pip install --no-cache-dir -r requirements.txt
 
 # Copy Python modules
-COPY --chown=jupyter:jupyter py/ /app/py/
+COPY --chown=appuser:appuser py/ /app/py/
 
 # Add Python modules to path
 ENV PYTHONPATH="${PYTHONPATH}:/app/py"
 
-# Expose JupyterLab port
+# Expose FastAPI port
 EXPOSE 8888
 
-# Start JupyterLab rooted in /app/notebooks and auto-open the chat notebook
-CMD ["sh", "-c", "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --ServerApp.token=${JUPYTER_TOKEN:-reportburster} --ServerApp.root_dir=/app/notebooks"]
+# Start FastAPI via uvicorn
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8888", "--app-dir", "/app/py"]
