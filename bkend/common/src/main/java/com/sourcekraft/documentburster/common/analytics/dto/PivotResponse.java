@@ -56,6 +56,7 @@ public class PivotResponse {
         private int rowCount;
         private String aggregatorUsed;
         private boolean cached = false;
+        private List<String> availableColumns;
 
         public long getExecutionTimeMs() {
             return executionTimeMs;
@@ -87,6 +88,14 @@ public class PivotResponse {
 
         public void setCached(boolean cached) {
             this.cached = cached;
+        }
+
+        public List<String> getAvailableColumns() {
+            return availableColumns;
+        }
+
+        public void setAvailableColumns(List<String> availableColumns) {
+            this.availableColumns = availableColumns;
         }
 
         @Override

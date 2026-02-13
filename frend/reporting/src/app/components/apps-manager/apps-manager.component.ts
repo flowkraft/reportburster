@@ -115,6 +115,11 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
     return app.state === 'error';
   }
 
+  /** trackBy function for *ngFor — prevents DOM destruction/recreation when array items are replaced with new objects */
+  trackByAppId(index: number, app: ManagedApp): string {
+    return app.id;
+  }
+
   /**
    * Returns true if the app requires Docker (type === 'docker') and Docker is NOT available.
    * Used in the template to disable Start button and show notice.
@@ -147,6 +152,8 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
     // so changes from other component instances are reflected
     if (this.inputAppsToShow != null) {
       this.syncInterval = setInterval(async () => {
+        // Skip sync while polling is active — polling already refreshes state
+        if (this.pollingSubscription && !this.pollingSubscription.closed) return;
         try {
           const fetched = await Promise.all(
             this.masterApps.map(async (app) => this.appsManagerService.getAppById(app.id))
@@ -506,9 +513,25 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
   private async refreshDataSilent(): Promise<void> {
     try {
       await this.appsManagerService.refreshAllStatuses(true);
-      // Update local UI state
+      // Update local UI state — merge in-place to preserve user's checkbox flags
       const fetched = await Promise.all(this.masterApps.map(async (app) => this.appsManagerService.getAppById(app.id)));
-      this.masterApps = fetched.map(a => a || ({} as ManagedApp));
+      fetched.forEach((fresh, i) => {
+        if (fresh && this.masterApps[i]) {
+          const existing = this.masterApps[i];
+          const wasRunningOrStopping = existing.state === 'running' || existing.state === 'stopping';
+          const isRunningOrStopping = fresh.state === 'running' || fresh.state === 'stopping';
+
+          // Update status fields
+          existing.state = fresh.state;
+          existing.lastOutput = fresh.lastOutput;
+
+          // Only reset currentCommandValue when command direction changes
+          // (e.g., stopped→running flips to stopCmd, running→stopped flips to startCmd)
+          if (wasRunningOrStopping !== isRunningOrStopping) {
+            existing.currentCommandValue = fresh.currentCommandValue;
+          }
+        }
+      });
       this.visibleApps = [...this.masterApps];
       this.applyFilters();
       // Force Angular to detect changes - important since we're in an async context

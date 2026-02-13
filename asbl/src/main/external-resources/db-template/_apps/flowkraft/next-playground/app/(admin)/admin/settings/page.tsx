@@ -158,23 +158,29 @@ export default function SettingsPage() {
           <CardContent className="space-y-3">
             <div className="space-y-1">
               <Label htmlFor="defaultCurrency" className="text-xs text-slate-600 dark:text-slate-400">Currency</Label>
-              <Input 
-                id="defaultCurrency" 
+              <select
+                id="defaultCurrency"
                 value={defaultCurrency}
                 onChange={(e) => setDefaultCurrency(e.target.value)}
-                placeholder="USD"
-                className="h-8 text-sm"
-              />
+                className="flex h-8 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-600"
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+              </select>
             </div>
             <div className="space-y-1">
               <Label htmlFor="dateFormat" className="text-xs text-slate-600 dark:text-slate-400">Date Format</Label>
-              <Input 
-                id="dateFormat" 
+              <select
+                id="dateFormat"
                 value={dateFormat}
                 onChange={(e) => setDateFormat(e.target.value)}
-                placeholder="MM/DD/YYYY"
-                className="h-8 text-sm"
-              />
+                className="flex h-8 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-600"
+              >
+                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+              </select>
             </div>
             <Button 
               id="btn-save-preferences"

@@ -36,20 +36,20 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label">Customer ID <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control ${hasErrors(bean: invoice, field: 'customerId', 'is-invalid')}" 
-                                       name="customerId" value="${invoice?.customerId}"/>
+                                <input type="text" class="form-control ${hasErrors(bean: invoice, field: 'customerId', 'is-invalid')}"
+                                       id="customerId" name="customerId" value="${invoice?.customerId}"/>
                                 <g:renderErrors bean="${invoice}" field="customerId"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Customer Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control ${hasErrors(bean: invoice, field: 'customerName', 'is-invalid')}" 
-                                       name="customerName" value="${invoice?.customerName}"/>
+                                <input type="text" class="form-control ${hasErrors(bean: invoice, field: 'customerName', 'is-invalid')}"
+                                       id="customerName" name="customerName" value="${invoice?.customerName}"/>
                                 <g:renderErrors bean="${invoice}" field="customerName"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Customer Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control ${hasErrors(bean: invoice, field: 'customerEmail', 'is-invalid')}" 
-                                       name="customerEmail" value="${invoice?.customerEmail}"/>
+                                <input type="email" class="form-control ${hasErrors(bean: invoice, field: 'customerEmail', 'is-invalid')}"
+                                       id="customerEmail" name="customerEmail" value="${invoice?.customerEmail}"/>
                                 <g:renderErrors bean="${invoice}" field="customerEmail"/>
                             </div>
                             <div class="col-md-6">
@@ -65,14 +65,14 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label">Issue Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control ${hasErrors(bean: invoice, field: 'issueDate', 'is-invalid')}" 
-                                       name="issueDate" value="${invoice?.issueDate ? new java.text.SimpleDateFormat('yyyy-MM-dd').format(invoice.issueDate) : ''}"/>
+                                <input type="date" class="form-control ${hasErrors(bean: invoice, field: 'issueDate', 'is-invalid')}"
+                                       id="issueDate" name="issueDate" value="${invoice?.issueDate ? new java.text.SimpleDateFormat('yyyy-MM-dd').format(invoice.issueDate) : ''}"/>
                                 <g:renderErrors bean="${invoice}" field="issueDate"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Due Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control ${hasErrors(bean: invoice, field: 'dueDate', 'is-invalid')}" 
-                                       name="dueDate" value="${invoice?.dueDate ? new java.text.SimpleDateFormat('yyyy-MM-dd').format(invoice.dueDate) : ''}"/>
+                                <input type="date" class="form-control ${hasErrors(bean: invoice, field: 'dueDate', 'is-invalid')}"
+                                       id="dueDate" name="dueDate" value="${invoice?.dueDate ? new java.text.SimpleDateFormat('yyyy-MM-dd').format(invoice.dueDate) : ''}"/>
                                 <g:renderErrors bean="${invoice}" field="dueDate"/>
                             </div>
                         </div>

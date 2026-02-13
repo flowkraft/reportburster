@@ -72,7 +72,7 @@ Add these custom fields to the paystub Pod:
 - Verify the entry saves correctly and all fields display
 
 * TODO Task7: Verify REST API Access
-- Test: GET ~http://localhost:8430/wp-json/wp/v2/paystub~
+- Test: GET ~http://localhost:8080/wp-json/wp/v2/paystub~
 - Should return the test payslip as JSON
 - Verify all custom fields appear in the response
 - This endpoint is used by the ReportBurster Groovy script to publish payslips

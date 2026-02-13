@@ -68,7 +68,7 @@ class OpenAIProvider(BaseLLMProvider):
     
     def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o-mini"):
         self.api_key = api_key or os.environ.get('OPENAI_API_KEY')
-        self.model = model or os.environ.get('LLM_MODEL_NAME', 'gpt-4o-mini')
+        self.model = model or os.environ.get('LLM_MODEL_ID', os.environ.get('LLM_MODEL_NAME', 'gpt-4o-mini'))
         
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY not set")
@@ -111,7 +111,7 @@ class OpenRouterProvider(BaseLLMProvider):
                  api_key: Optional[str] = None, 
                  model: str = "mistralai/mistral-7b-instruct"):
         self.api_key = api_key or os.environ.get('OPENROUTER_API_KEY')
-        self.model = model or os.environ.get('LLM_MODEL_NAME', 'mistralai/mistral-7b-instruct')
+        self.model = model or os.environ.get('LLM_MODEL_ID', os.environ.get('LLM_MODEL_NAME', 'mistralai/mistral-7b-instruct'))
         self.base_url = os.environ.get('OPENAI_API_BASE', 'https://openrouter.ai/api/v1')
         
         if not self.api_key:
@@ -153,7 +153,7 @@ class OllamaProvider(BaseLLMProvider):
                  base_url: Optional[str] = None, 
                  model: str = "llama3"):
         self.base_url = base_url or os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
-        self.model = model or os.environ.get('LLM_MODEL_NAME', 'llama3')
+        self.model = model or os.environ.get('LLM_MODEL_ID', os.environ.get('LLM_MODEL_NAME', 'llama3'))
         
         import ollama
         self.client = ollama

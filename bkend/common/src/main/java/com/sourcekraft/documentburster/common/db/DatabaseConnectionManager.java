@@ -26,7 +26,7 @@ import com.zaxxer.hikari.HikariDataSource;
  * file loading for other connection codes. DataSources and Jdbi instances are
  * cached.
  */
-public class DatabaseConnectionManager {
+public class DatabaseConnectionManager implements AutoCloseable {
 
 	private static final Logger log = LoggerFactory.getLogger(DatabaseConnectionManager.class);
 
@@ -188,9 +188,14 @@ public class DatabaseConnectionManager {
 		config.setMaximumPoolSize(10); // Example size
 		config.setMinimumIdle(2); // Example idle
 		config.setPoolName("HikariPool-" + connectionCode);
-		config.addDataSourceProperty("cachePrepStmts", "true");
-		config.addDataSourceProperty("prepStmtCacheSize", "250");
-		config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+
+		// Prepared statement cache — MySQL/MariaDB only; other drivers reject these properties
+		String dbType = connSettings.databaseserver.type != null ? connSettings.databaseserver.type.toLowerCase() : "";
+		if ("mysql".equals(dbType) || "mariadb".equals(dbType)) {
+			config.addDataSourceProperty("cachePrepStmts", "true");
+			config.addDataSourceProperty("prepStmtCacheSize", "250");
+			config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+		}
 		log.trace("Hikari pool properties set for code: {}", connectionCode);
 
 		HikariDataSource dataSource = null;
@@ -281,6 +286,11 @@ public class DatabaseConnectionManager {
 		jdbiInstances.clear(); // Clear Jdbi cache as well
 		loadedConnectionDetails.clear(); // Clear connection settings cache
 		log.info("All connection pools shut down and caches cleared.");
+	}
+
+	@Override
+	public void close() {
+		shutdownConnections();
 	}
 
 	// --- Offer lightweight access to server settings for ScriptedReporter ---

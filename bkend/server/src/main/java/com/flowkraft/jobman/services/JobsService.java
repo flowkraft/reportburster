@@ -1,6 +1,9 @@
 package com.flowkraft.jobman.services;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -9,7 +12,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.unix4j.Unix4j;
 
 import com.flowkraft.common.Constants;
 import com.flowkraft.common.Utils;
@@ -33,28 +35,28 @@ public class JobsService implements JobsApi {
 	@Override
 	public Stream<FileInfo> fetchStats() throws Exception {
 
-		List<String> allJobFileNames = Unix4j.cd(AppPaths.JOBS_DIR_PATH).ls().toStringList();
+		Path jobsDir = Path.of(AppPaths.JOBS_DIR_PATH);
 		List<FileInfo> allJobDetails = new ArrayList<FileInfo>();
+
+		if (!Files.exists(jobsDir) || !Files.isDirectory(jobsDir))
+			return allJobDetails.stream();
 
 		boolean trimFileContent = false;
 
-		for (String jobFileName : allJobFileNames) {
-			String jobFilePath = AppPaths.JOBS_DIR_PATH + "/" + jobFileName;
-
-			File jobFile = new File(jobFilePath);
-			if (jobFile.exists())
+		// Use NIO Files.readString() instead of Unix4j.cat() — Unix4j can hold
+		// file handles open on Windows, preventing deletion by other threads.
+		try (java.util.stream.Stream<Path> entries = Files.list(jobsDir)) {
+			for (Path entry : (Iterable<Path>) entries::iterator) {
+				String jobFileName = entry.getFileName().toString();
 				try {
-
-					// System.out.println(jobFilePath);
-
-					FileInfo jobFileInfo = new FileInfo(jobFileName,
-							Unix4j.cd(AppPaths.JOBS_DIR_PATH).cat(jobFileName).toStringResult(), trimFileContent);
-					jobFileInfo.filePath = jobFilePath;
-
+					String content = Files.readString(entry, StandardCharsets.UTF_8);
+					FileInfo jobFileInfo = new FileInfo(jobFileName, content, trimFileContent);
+					jobFileInfo.filePath = entry.toString();
 					allJobDetails.add(jobFileInfo);
 				} catch (Exception e) {
+					// File may have been deleted between listing and reading — ignore
 				}
-
+			}
 		}
 
 		return allJobDetails.stream();

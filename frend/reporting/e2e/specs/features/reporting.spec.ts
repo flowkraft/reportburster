@@ -21,9 +21,19 @@ const dataSourceTypeDisplayMap: Record<string, string> = {
   // add more if needed
 };
 
+// ── DEV OVERRIDES
+const SKIP_NON_DATABASE_TESTS = true;
+//const SKIP_NON_DATABASE_TESTS = false;
+
 const DB_VENDORS_SELECTED: string[] = (() => {
-  const required = 'sqlite';
-  const pool = DB_VENDORS_SUPPORTED.filter(v => v !== required);
+  // ── DEV OVERRIDES (uncomment ONE line to limit vendor scope) ──
+  //return ['postgres'];
+  //return ['duckdb'];
+  //return ['clickhouse'];
+  //return ['duckdb', 'clickhouse'];
+  // return ['sqlite', 'duckdb', 'clickhouse'];
+  const alwaysIncluded = ['sqlite', 'duckdb'];
+  const pool = DB_VENDORS_SUPPORTED.filter(v => !alwaysIncluded.includes(v));
 
   // Use date-based seed for daily variation but consistent within a run
   const today = new Date().toISOString().split('T')[0]; // e.g., "2025-12-02"
@@ -38,7 +48,7 @@ const DB_VENDORS_SELECTED: string[] = (() => {
   const shuffled = [...pool].sort((a, b) => seededRandom(pool.indexOf(a)) - seededRandom(pool.indexOf(b)));
   const pickedOthers = shuffled.slice(0, 2);
 
-  const list = [required, ...pickedOthers];
+  const list = [...alwaysIncluded, ...pickedOthers];
   return list;
 })();
 
@@ -65,8 +75,8 @@ test.describe('', async () => {
           //const dbVendor: string = 'ibmdb2';
           let ft = new FluentTester(firstPage);
 
-          // Start starter-pack only for non-sqlite vendors
-          if (dbVendor !== 'sqlite') {
+          // Start starter-pack only for server-based vendors (not file-based like SQLite/DuckDB)
+          if (dbVendor !== 'sqlite' && dbVendor !== 'duckdb') {
             ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'start');
           }
 
@@ -77,15 +87,11 @@ test.describe('', async () => {
           ft = dbConnNoSchema.ft;
           const connectionNameNoSchema = dbConnNoSchema.connectionName;
           dbConnections.push({ connectionName: connectionNameNoSchema, dbConnectionType: 'dbcon-no-schema', defaultDbConnection: true });
-          await ft.gotoConnections();
 
-          const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConnNoSchema.connectionName)}-${dbVendor}"]`;
-          const alreadyDefault = await ft.elementExistsNow2(prefixSel);
-          ft = ft.consoleLog(`alreadyDefault value: ${alreadyDefault}`);
-          if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnNoSchema.connectionName)}-${dbVendor}\\.xml`);
+          // First DB connection is always auto-default after restoreDocumentBursterCleanState
 
           let clearLogs = false;
-          if (dbVendor !== 'sqlite')
+          if (dbVendor !== 'sqlite' && dbVendor !== 'duckdb')
             clearLogs = true;
 
           const dbConnPlainSchema = createDbConnection(ft, TEST_NAME, 'dbcon-plain-schema-only', dbVendor, clearLogs);
@@ -186,7 +192,7 @@ test.describe('', async () => {
   `;
           const dbConnectionType = 'dbcon-plain-schema-only'; // or any other type you need
 
-          ft = configureAndRunReportGeneration2(ft, TEST_NAME, {
+          ft = configureAndRunReportGeneration2(ft, TEST_NAME, dbVendor, {
             dataSourceType: 'ds.sqlquery',
             dbConnectionType: dbConnectionType,
             dbConnections: dbConnections,
@@ -354,15 +360,15 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           }
 
           // Stop starter-pack when done
-          if (dbVendor !== 'sqlite') {
+          if (dbVendor !== 'sqlite' && dbVendor !== 'duckdb') {
             ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'stop');
           }
 
           return ft;
         } finally {
-          // cleanup after test
-          //if (dbVendor !== 'sqlite')
-          //ConnectionsTestHelper.dockerComposeDownInDbFolder();
+          if (dbVendor !== 'sqlite' && dbVendor !== 'duckdb') {
+            ConnectionsTestHelper.dockerComposeDownInDbFolder();
+          }
         }
       },
     );
@@ -383,8 +389,8 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           //const dbVendor = 'sqlite';
           let ft = new FluentTester(firstPage);
 
-          // Start starter-pack only for non-sqlite vendors
-          if (dbVendor !== 'sqlite') {
+          // Start starter-pack only for server-based vendors (not file-based like SQLite/DuckDB)
+          if (dbVendor !== 'sqlite' && dbVendor !== 'duckdb') {
             ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'start');
           }
 
@@ -396,16 +402,10 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           const connectionNameNoSchema = dbConnNoSchema.connectionName;
           dbConnections.push({ connectionName: connectionNameNoSchema, dbConnectionType: 'dbcon-no-schema', defaultDbConnection: true });
 
-          ft = ft
-            .gotoConnections();
-
-          const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConnNoSchema.connectionName)}-${dbVendor}"]`;
-          const alreadyDefault = await ft.elementExistsNow2(prefixSel);
-          ft = ft.consoleLog(`alreadyDefault value: ${alreadyDefault}`);
-          if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnNoSchema.connectionName)}-${dbVendor}\\.xml`);
+          // First DB connection is always auto-default after restoreDocumentBursterCleanState
 
           let clearLogs = false;
-          if (dbVendor !== 'sqlite')
+          if (dbVendor !== 'sqlite' && dbVendor !== 'duckdb')
             clearLogs = true;
 
           const dbConnPlainSchema = createDbConnection(ft, TEST_NAME, 'dbcon-plain-schema-only', dbVendor, clearLogs);
@@ -578,7 +578,7 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
   `;
           const dbConnectionType = 'dbcon-plain-schema-only'; // or any other type you need
 
-          ft = configureAndRunReportGeneration2(ft, TEST_NAME, {
+          ft = configureAndRunReportGeneration2(ft, TEST_NAME, dbVendor, {
             dataSourceType: 'ds.scriptfile',
             dbConnectionType: dbConnectionType,
             dbConnections: dbConnections,
@@ -772,20 +772,22 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `db-${_.kebabCase(connectionNameAllFeatures)}-${dbVendor}\\.xml`, dbVendor);
 
           // Stop starter-pack when done
-          if (dbVendor !== 'sqlite') {
+          if (dbVendor !== 'sqlite' && dbVendor !== 'duckdb') {
             ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'stop');
           }
 
           return ft;
         } finally {
-          // cleanup after test
-          //if (dbVendor !== 'sqlite')
-          //ConnectionsTestHelper.dockerComposeDownInDbFolder();
+          if (dbVendor !== 'sqlite' && dbVendor !== 'duckdb') {
+            ConnectionsTestHelper.dockerComposeDownInDbFolder();
+          }
         }
       },
     );
 
-  }
+  } // end of for (const dbVendor of DB_VENDORS_SELECTED)
+
+    if (!SKIP_NON_DATABASE_TESTS) {
 
   electronBeforeAfterAllTest(
     `(sqlite) should generate XLSX report from Groovy script datasource (WITHOUT parameters)`,
@@ -815,13 +817,7 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
       const dbConnPlainSchema = createDbConnection(ft, TEST_NAME, dbConnectionType, dbVendor, false);
       ft = dbConnPlainSchema.ft;
 
-      ft = ft
-        .gotoConnections();
-
-      const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConnPlainSchema.connectionName)}-${dbVendor}"]`;
-      const alreadyDefault = await ft.elementExistsNow2(prefixSel);
-      ft = ft.consoleLog(`alreadyDefault value: ${alreadyDefault}`);
-      if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConnPlainSchema.connectionName)}-${dbVendor}\\.xml`);
+      // First DB connection is always auto-default after restoreDocumentBursterCleanState
 
       dbConnections.push({
         connectionName: dbConnPlainSchema.connectionName,
@@ -854,7 +850,7 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           `;
 
       // Run test using existing helper (no reportParametersScript, no transformationScript)
-      ft = configureAndRunReportGeneration2(ft, TEST_NAME, {
+      ft = configureAndRunReportGeneration2(ft, TEST_NAME, dbVendor, {
         dataSourceType: 'ds.scriptfile',
         dbConnectionType: dbConnectionType,
         dbConnections,
@@ -977,13 +973,7 @@ log.info("Finished scriptedReport_employeesByHireDate_noParams.groovy. Rows: {}"
       const dbConn = createDbConnection(ft, TEST_NAME, dbConnectionType, dbVendor, false);
       ft = dbConn.ft;
 
-      ft = ft
-        .gotoConnections();
-
-      const prefixSel = `[id^="btnDefault_db-${_.kebabCase(dbConn.connectionName)}-${dbVendor}"]`;
-      const alreadyDefault = await ft.elementExistsNow2(prefixSel);
-      ft = ft.consoleLog(`alreadyDefault value: ${alreadyDefault}`);
-      if (!alreadyDefault) ft = ConnectionsTestHelper.makeConnectionAsDefault(ft, `db-${_.kebabCase(dbConn.connectionName)}-${dbVendor}\\.xml`);
+      // First DB connection is always auto-default after restoreDocumentBursterCleanState
 
       dbConnections.push({
         connectionName: dbConn.connectionName,
@@ -1015,7 +1005,7 @@ log.info("Finished scriptedReport_employeesByHireDate_noParams.groovy. Rows: {}"
             ORDER BY "HireDate"
           `;
 
-      ft = configureAndRunReportGeneration2(ft, TEST_NAME, {
+      ft = configureAndRunReportGeneration2(ft, TEST_NAME, dbVendor, {
         dataSourceType: 'ds.sqlquery',
         dbConnectionType: dbConnectionType,
         dbConnections: dbConnections,
@@ -1419,11 +1409,14 @@ log.info("Finished scriptedReport_employeesByHireDate_noParams.groovy. Rows: {}"
     },
   );
 
+  } // end SKIP_NON_DATABASE_TESTS
+
 });
 
 function configureAndRunReportGeneration2(
   ft: FluentTester,
   testName: string,
+  dbVendor: string,
   params: {
     dataSourceType: 'ds.sqlquery' | 'ds.scriptfile';
     dataSourceFilePath?: string;
@@ -1464,7 +1457,7 @@ function configureAndRunReportGeneration2(
       prompt2TableNameProducts: '"tableName": "Products"',
       prompt3ColumnNameDiscontinued: '"columnName": "Discontinued"',
       prompt4TableNameOrders: '"tableName": "Orders"',
-      prompt5TableNameOrderDetails: '"tableName": "Order Details"',
+      prompt5TableNameOrderDetails: `"tableName": "${dbVendor === 'clickhouse' ? 'OrderDetails' : 'Order Details'}"`,
     },
     'ds.scriptfile': {
       aiHelp: '#btnHelpWithScriptAI',
@@ -2172,7 +2165,7 @@ function createDbConnection(
                   ]
                 },
                 {
-                  tableName: "Order Details",
+                  tableName: dbVendor === 'clickhouse' ? "OrderDetails" : "Order Details",
                   columns: [
                     { name: "OrderID" },
                     { name: "ProductID" },
@@ -2225,6 +2218,7 @@ function createDbConnection(
   // Add all features if requested
   if (dbConnectionType === 'dbcon-all-features') {
     // ER Diagram (PlantUML)
+    const odEntity = dbVendor === 'clickhouse' ? 'OrderDetails' : '"Order Details"';
     ft = ft
       .waitOnElementToBecomeVisible('#databaseDiagramTab-link')
       .click('#databaseDiagramTab-link')
@@ -2239,7 +2233,7 @@ entity "Orders" {
   CustomerID : string
   OrderDate : date
 }
-entity "Order Details" {
+entity ${odEntity} {
   *OrderID : int
   *ProductID : int
   Quantity : int
@@ -2259,8 +2253,8 @@ entity "Customers" {
   CompanyName : string
   ContactName : string
 }
-Orders ||--o{ "Order Details" : contains
-Products ||--o{ "Order Details" : referenced
+Orders ||--o{ ${odEntity} : contains
+Products ||--o{ ${odEntity} : referenced
 Categories ||--o{ Products : categorized
 Customers ||--o{ Orders : places
 @enduml`
@@ -2269,6 +2263,7 @@ Customers ||--o{ Orders : places
       .waitOnElementToBecomeVisible('#btnDatabaseDiagramShowCode');
 
     // Ubiquitous Language (Markdown)
+    const odLabel = dbVendor === 'clickhouse' ? 'OrderDetails' : 'Order Details';
     ft = ft
       .waitOnElementToBecomeVisible('#databaseUbiquitousLanguageTab-link')
       .click('#databaseUbiquitousLanguageTab-link')
@@ -2281,7 +2276,7 @@ Customers ||--o{ Orders : places
 
 **Order**: A request by a customer for products.
 
-**Order Details**: Line items in an order, specifying product and quantity.
+**${odLabel}**: Line items in an order, specifying product and quantity.
 
 **Product**: An item available for sale.
 
@@ -2293,8 +2288,8 @@ Customers ||--o{ Orders : places
 
 **Relationships**:
 - Customers place Orders.
-- Orders contain "Order Details".
-- "Order Details" reference Products.
+- Orders contain "${odLabel}".
+- "${odLabel}" reference Products.
 - Products belong to Categories.
 - Products are supplied by Suppliers.
 `

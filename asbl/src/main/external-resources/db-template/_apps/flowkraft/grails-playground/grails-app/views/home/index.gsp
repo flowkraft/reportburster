@@ -164,6 +164,13 @@
                 <p>Full report examples</p>
             </a>
             
+            <!-- Data Warehouse - matches Next.js { href: "/data-warehouse", icon: Database, title: "Data Warehouse", description: "Explore & query data" } -->
+            <a href="${createLink(uri: '/data-warehouse')}" class="component-card">
+                <i class="bi bi-database icon"></i>
+                <h6>Data Warehouse</h6>
+                <p>Explore & query data</p>
+            </a>
+
             <!-- Your Canvas - matches Next.js { href: "/your-canvas", icon: Layout, title: "Your Canvas", description: "Build your own" } -->
             <a href="${createLink(uri: '/your-canvas')}" class="component-card">
                 <i class="bi bi-easel icon"></i>

@@ -47,7 +47,6 @@ export const SCHEMA_TABLES_OLAP = [
   'dim_customer',
   'dim_employee',
   'dim_product',
-  'dim_shipper',
   'dim_time',
   'fact_sales',
 ];
@@ -550,11 +549,31 @@ export class ConnectionsTestHelper {
           '/db/sample-northwind-sqlite-test/northwind-test.db',
         );
     } else if (dbVendor === 'duckdb') {
-      // For DuckDB, we update the database file path (file-based like SQLite)
+      // DuckDB update: copy file to test dir, browse to it (#dbName is readonly)
       sequence = sequence
-        .click('#dbName')
-        .typeText('')
-        .typeText('/db/sample-northwind-duckdb/northwind-updated.duckdb');
+        .createFolder(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/db/sample-northwind-duckdb-test`,
+        )
+        .copyFile(
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/db/sample-northwind-duckdb/northwind.duckdb`,
+          `${process.env.PORTABLE_EXECUTABLE_DIR}/db/sample-northwind-duckdb-test/northwind-test.duckdb`,
+        )
+        .click('#btnBrowseSqliteFile')
+        .waitOnElementToBecomeEnabled(
+          '#childDirLinksample-northwind-duckdb-test',
+        )
+        .click('#childDirLinksample-northwind-duckdb-test')
+        .waitOnElementToBecomeVisible('#tdFileNamenorthwind-test\\.duckdb')
+        .elementShouldBeDisabled('#btnSelectFileExplorer')
+        .click('#tdFileNamenorthwind-test\\.duckdb');
+      sequence = sequence
+        .waitOnElementToBecomeEnabled('#btnSelectFileExplorer')
+        .click('#btnSelectFileExplorer')
+        .waitOnElementToBecomeInvisible('#btnSelectFileExplorer')
+        .waitOnInputValueToContainText(
+          '#dbName',
+          '/db/sample-northwind-duckdb-test/northwind-test.duckdb',
+        );
     } else {
       // For server-based databases (PostgreSQL, MySQL, ClickHouse, etc.), update host and port
       sequence = sequence
@@ -799,6 +818,8 @@ export class ConnectionsTestHelper {
     // 2. Select Database Type
     const dbVendorSelectValue = dbVendor.toLowerCase();
     ft = ft.dropDownSelectOptionHavingValue('#dbType', dbVendorSelectValue);
+    // No verification needed - if selection fails, subsequent steps (file browser, save) will fail anyway
+    // Original working code (connections.spec.ignore) never verified dropdown selection
 
     // 3. Fill vendor-specific details
     if (dbVendorSelectValue === 'sqlite') {
@@ -824,11 +845,21 @@ export class ConnectionsTestHelper {
         '/db/sample-northwind-sqlite/northwind.db',
       );
     } else if (dbVendorSelectValue === 'duckdb') {
-      // DuckDB is file-based: only database path matters, host/port/user/pass are empty
-      const d = ConnectionsTestHelper.dbServerConnDefaults(dbVendorSelectValue);
-      ft = ft
-        .waitOnElementToBecomeEnabled('#dbName').click('#dbName').typeText(d.db);
-      // Host, Port, Username, Password fields are visible but should remain empty for DuckDB
+      // DuckDB is file-based: use file browser (same as SQLite — #dbName is readonly)
+      ft = ft.waitOnElementToBecomeEnabled('#btnBrowseSqliteFile');
+      ft = ft.click('#btnBrowseSqliteFile');
+      ft = ft.waitOnElementToBecomeEnabled('#childDirLinksample-northwind-duckdb');
+      ft = ft.click('#childDirLinksample-northwind-duckdb');
+      ft = ft.waitOnElementToBecomeVisible('#tdFileNamenorthwind\\.duckdb');
+      ft = ft.elementShouldBeDisabled('#btnSelectFileExplorer');
+      ft = ft.click('#tdFileNamenorthwind\\.duckdb');
+      ft = ft.waitOnElementToBecomeEnabled('#btnSelectFileExplorer');
+      ft = ft.click('#btnSelectFileExplorer');
+      ft = ft.waitOnElementToBecomeInvisible('#btnSelectFileExplorer');
+      ft = ft.waitOnInputValueToContainText(
+        '#dbName',
+        '/db/sample-northwind-duckdb/northwind.duckdb',
+      );
     } else {
       // Server-based databases (PostgreSQL, MySQL, ClickHouse, etc.)
       const d = ConnectionsTestHelper.dbServerConnDefaults(dbVendorSelectValue);
@@ -994,7 +1025,10 @@ export class ConnectionsTestHelper {
     return seq;
   }
 
-  static dockerComposeDownInDbFolder(timeoutMs: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS): void {
+  static dockerComposeDownInDbFolder(
+    timeoutMs: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS,
+    removeVolumes: boolean = false
+  ): void {
     const baseDir = String(process.env.PORTABLE_EXECUTABLE_DIR || '.');
     const dbDir = path.resolve(baseDir, 'db');
     const isWin = process.platform === 'win32';
@@ -1002,13 +1036,15 @@ export class ConnectionsTestHelper {
     let cmd: string;
     let args: string[];
 
+    const downCmd = removeVolumes ? 'docker compose down -v' : 'docker compose down';
+
     if (isWin) {
       cmd = 'powershell.exe';
       // run the compose command inside PowerShell so PATH/resolution works on Windows
-      args = ['-NoProfile', '-NonInteractive', '-Command', 'docker compose down -v'];
+      args = ['-NoProfile', '-NonInteractive', '-Command', downCmd];
     } else {
       cmd = 'docker';
-      args = ['compose', 'down', '-v'];
+      args = removeVolumes ? ['compose', 'down', '-v'] : ['compose', 'down'];
     }
 
     console.log(`[ConnectionsTestHelper] (blocking) running: ${cmd} ${args.join(' ')} (cwd=${dbDir})`);

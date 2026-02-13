@@ -1,4 +1,4 @@
-import type { AgentConfig } from '../common';
+import { LLM_MODEL_ID, type AgentConfig } from '../common';
 import { HEPHAESTUS_SYSTEM_PROMPT } from './systemPrompt';
 import {
   personaTemplate,
@@ -16,7 +16,7 @@ export const agentConfig: AgentConfig = {
   description: 'Backend Jobs/ETL/Automation Advisor. Expert guidance on job scheduling, ETL pipelines, Groovy scripting, and automation patterns.',
 
   // Model configuration
-  model: 'openai-proxy/glm-4.7',
+  model: LLM_MODEL_ID,
   embedding: 'ollama/mxbai-embed-large:latest',
 
   tags: ['advisor', 'etl-pipelines', 'automation', 'jobs', 'crons', 'scheduling', 'backend'],

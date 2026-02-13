@@ -46,6 +46,11 @@ export class AppsManagerService {
   // Simulated last output for each app
   private appLastOutputs: { [id: string]: string } = {};
 
+  // Track apps with in-flight commands (spawn process still running, callback not yet fired).
+  // Only while a command is actively running do we preserve 'starting'/'stopping' when docker ps finds no container.
+  // Once the command completes (callback fires), docker ps is the ground truth.
+  private commandsInFlight = new Set<string>();
+
   // Simulated "backend" data (replace with REST call in future)
   private allAppsData: { apps: ManagedApp[] } = {
     apps: [
@@ -55,7 +60,7 @@ export class AppsManagerService {
         icon: 'fa fa-cube',
         category: 'Full-Stack Apps',
         type: 'docker',
-        description: 'Build admin panels and self-service portals using <strong>Grails</strong> — our <em>recommended stack</em> for consistency with ReportBurster\'s scripting and backend. A simple and effective way for building a custom app with an admin panel (CRUD, data management) and a front-facing portal (dashboards, document access).',
+        description: 'Build admin panels and self-service portals using Grails — our <em>recommended stack</em> for consistency with ReportBurster\'s scripting and backend. Create custom apps with real-time analytics dashboards (DuckDB/ClickHouse OLAP), secure document distribution (payslips, invoices with payments, student portals), and interactive data visualization.',
         url: 'http://localhost:8400',
         launchLinks: [
           { label: 'Front-Facing Area /', url: 'http://localhost:8400', icon: 'fa fa-globe' },
@@ -65,7 +70,7 @@ export class AppsManagerService {
         service_name: 'grails-playground',
         startCmd: 'service app start grails-playground 8400',
         stopCmd: 'service app stop grails-playground',
-        tags: ['flowkraft', 'admin-panel', 'webportal', 'grails', 'groovy', 'recommended', 'ReportBurster\'s App'],
+        tags: ['flowkraft', 'admin-panel', 'grails', 'front-facing' , 'customer-portal', 'payments', 'bi', 'charts', 'analytics', 'olap', 'visualization', 'data-warehouse', 'ReportBurster\'s App'],
         visible: true,
       },
       {
@@ -74,13 +79,13 @@ export class AppsManagerService {
         icon: 'fa fa-cogs',
         category: 'Backend Services',
         type: 'docker',
-        description: 'Quickly deploy / run automation flows across your business systems',
+        description: 'Quickly deploy / run automation flows across your business systems.',
         url: 'http://localhost:8410',
-        entrypoint: 'flowkraft/docker-compose.yml',
+        entrypoint: 'flowkraft/bkend-boot-groovy-playground/docker-compose.yml',
         service_name: 'bkend-boot-groovy-playground',
         startCmd: 'service app start bkend-boot-groovy-playground 8410',
         stopCmd: 'service app stop bkend-boot-groovy-playground',
-        tags: ['flowkraft', 'backend', 'groovy', 'automation', 'job-scheduling', 'ReportBurster\'s App'],
+        tags: ['flowkraft', 'backend', 'etl', 'automation', 'crons-job-scheduling', 'ReportBurster\'s App'],
         visible: true,
         launch: false, // No UI - API/automation only
       },
@@ -100,7 +105,7 @@ export class AppsManagerService {
         service_name: 'next-playground',
         startCmd: 'service app start next-playground 8420',
         stopCmd: 'service app stop next-playground',
-        tags: ['flowkraft', 'frontend', 'dashboards', 'customer-portal', 'next.js', 'react', 'alternative', 'ReportBurster\'s App'],
+        tags: ['flowkraft', 'admin-panel', 'front-facing', 'dashboards', 'customer-portal', 'payments', 'next.js', 'react', 'bi', 'charts', 'analytics', 'olap', 'visualization', 'data-warehouse', 'ReportBurster\'s App'],
         visible: true,
       },
       {
@@ -110,7 +115,7 @@ export class AppsManagerService {
         category: 'Web Portal',
         type: 'docker',
         description: 'The fastest way to build your <em>You Name It</em> <strong>Web Portal</strong> - could be Employee Portal, Customer Portal, Partner Portal, Student Portal or any other Self-Service Portal <a href="https://www.reportburster.com/docs/web-portal-cms" target="_blank"><i class="fa fa-book"></i>&nbsp;see how</a>',
-        url: 'http://localhost:8430/wp-admin',
+        url: 'http://localhost:8080/wp-admin',
         demoInfo: `
           <div style="margin-top: 18px; padding: 14px 16px; background: #f0f7fa; border: 1px solid #d0e4ed; border-radius: 6px; font-size: 0.88em; color: #333;">
             <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #d0e4ed; color: #555;">
@@ -122,16 +127,16 @@ export class AppsManagerService {
                 <span style="font-weight: 600; color: #2c5282; margin-left: 8px; background: #fff; padding: 2px 8px; border-radius: 3px; border: 1px solid #d0e4ed;">u2changeme</span>
                 <span style="color: #bbb; margin: 0 6px;">/</span>
                 <span style="font-weight: 600; color: #2c5282; background: #fff; padding: 2px 8px; border-radius: 3px; border: 1px solid #d0e4ed;">p2changeme123!</span>
-                <a href="http://localhost:8430/wp-admin" target="_blank" style="color: #5a9bb8;">admin area</a>
+                <a href="http://localhost:8080/wp-admin" target="_blank" style="color: #5a9bb8;">admin area</a>
                 <span style="color: #ddd; margin: 0 6px;">•</span>
-                <a href="http://localhost:8430/my-documents" target="_blank" style="color: #5a9bb8;">frontend</a>
+                <a href="http://localhost:8080/my-documents" target="_blank" style="color: #5a9bb8;">frontend</a>
               </div>
               <div>
                 <span style="color: #666;">Employee:</span>
                 <span style="font-weight: 600; color: #2c5282; margin-left: 8px; background: #fff; padding: 2px 8px; border-radius: 3px; border: 1px solid #d0e4ed;">clyde.grew</span>
                 <span style="color: #bbb; margin: 0 6px;">/</span>
                 <span style="font-weight: 600; color: #2c5282; background: #fff; padding: 2px 8px; border-radius: 3px; border: 1px solid #d0e4ed;">demo1234</span>
-                <a href="http://localhost:8430/my-documents" target="_blank" style="color: #5a9bb8;">frontend</a>
+                <a href="http://localhost:8080/my-documents" target="_blank" style="color: #5a9bb8;">frontend</a>
                 <span style="color: #888; margin-left: 12px;">— sees only own docs</span>
               </div>
             </div>
@@ -143,9 +148,9 @@ export class AppsManagerService {
 
         entrypoint: 'cms-webportal-playground/docker-compose.yml',
         service_name: 'cms-webportal-playground',
-        startCmd: 'service app start cms-webportal-playground 8430',
+        startCmd: 'service app start cms-webportal-playground 8080',
         stopCmd: 'service app stop cms-webportal-playground',
-        tags: ['cms', 'webportal', 'backend', 'frontend', 'admin-panel', 'customer-portal', 'cms', 'wordpress', 'ReportBurster\'s App'],
+        tags: ['flowkraft', 'cms', 'admin-panel', 'front-facing', 'customer-portal', 'cms', 'wordpress', 'ReportBurster\'s App'],
         visible: true,
       },
       {
@@ -154,7 +159,7 @@ export class AppsManagerService {
         icon: 'fa fa-robot',
         category: 'AI & Agents',
         type: 'docker',
-        description: 'Meet your AI assistants! <strong>Athena</strong>, Hephaestus, Hermes, and Apollo are here to help with ReportBurster tasks, data exploration & visualization, ETL/cron automations, and building admin panels, BI dashboards, or customer-facing web apps.<br><br><b>Visit FlowKraft\'s Data Analysis Lab to chat with your databases and create stunning charts!</b>',
+        description: 'Meet your AI experts! <strong>Athena</strong>, Hephaestus, Hermes, and Apollo are here to help with ReportBurster tasks, data exploration & visualization, ETL/cron automations, and building admin panels, BI dashboards, or customer-facing web apps.<br><br><b>Visit Chat2DB to chat with your databases and create stunning charts!</b>',
         url: 'http://localhost:8440',
         launchLinks: [
           { label: 'Meet the FlowKraft AI Crew', url: 'http://localhost:8440', icon: 'fa fa-free-code-camp' },
@@ -165,7 +170,7 @@ export class AppsManagerService {
         service_name: 'ai-hub-frend',
         startCmd: 'service app start ai-hub-frend 8440',
         stopCmd: 'service app stop ai-hub-frend',
-        tags: ['flowkraft', 'ai-agents', 'ReportBurster\'s App'],
+        tags: ['flowkraft', 'ai-agents', 'ReportBurster\'s App', 'visualization', 'analytics', 'chat2db', 'charts'],
         visible: true,
         launch: true,
       },
@@ -197,7 +202,7 @@ export class AppsManagerService {
         service_name: 'rundeck',
         startCmd: 'service app start rundeck 4440',
         stopCmd: 'service app stop rundeck',
-        tags: ['automation', 'job-scheduling'],
+        tags: ['automation', 'crons-job-scheduling'],
         visible: true,
         website: 'https://www.rundeck.com/',
       },
@@ -245,7 +250,7 @@ export class AppsManagerService {
         service_name: 'metabase',
         startCmd: 'service app start metabase 3000',
         stopCmd: 'service app stop metabase',
-        tags: ['bi', 'analytics', 'visualization'],
+        tags: ['bi', 'analytics'],
         visible: true,
         website: 'https://www.metabase.com/',
       },
@@ -299,9 +304,8 @@ export class AppsManagerService {
     ],
   };
 
-  // localStorage key and timeout for persisting transitional states across page reloads
+  // localStorage key for cleaning up stale transitional states
   private static readonly TRANSITIONAL_STATES_KEY = 'rb-apps-transitional-states';
-  private static readonly TRANSITIONAL_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 
   constructor(
     private shellService: ShellService,
@@ -310,35 +314,12 @@ export class AppsManagerService {
     private stateStore: StateStoreService,
   ) { }
 
-  private saveTransitionalState(appId: string, state: 'starting' | 'stopping'): void {
-    try {
-      const stored = JSON.parse(localStorage.getItem(AppsManagerService.TRANSITIONAL_STATES_KEY) || '{}');
-      stored[appId] = { state, timestamp: Date.now() };
-      localStorage.setItem(AppsManagerService.TRANSITIONAL_STATES_KEY, JSON.stringify(stored));
-    } catch (e) { /* ignore localStorage errors */ }
-  }
-
   private clearTransitionalState(appId: string): void {
     try {
       const stored = JSON.parse(localStorage.getItem(AppsManagerService.TRANSITIONAL_STATES_KEY) || '{}');
       delete stored[appId];
       localStorage.setItem(AppsManagerService.TRANSITIONAL_STATES_KEY, JSON.stringify(stored));
     } catch (e) { /* ignore localStorage errors */ }
-  }
-
-  private getPersistedTransitionalState(appId: string): 'starting' | 'stopping' | null {
-    try {
-      const stored = JSON.parse(localStorage.getItem(AppsManagerService.TRANSITIONAL_STATES_KEY) || '{}');
-      const entry = stored[appId];
-      if (entry && (Date.now() - entry.timestamp) < AppsManagerService.TRANSITIONAL_TIMEOUT_MS) {
-        return entry.state;
-      }
-      if (entry) {
-        delete stored[appId];
-        localStorage.setItem(AppsManagerService.TRANSITIONAL_STATES_KEY, JSON.stringify(stored));
-      }
-      return null;
-    } catch (e) { return null; }
   }
 
   // Add method to fetch statuses from API
@@ -398,25 +379,21 @@ export class AppsManagerService {
             this.stateStore.configSys.sysInfo.setup.portal.isProvisioned = true;
           }
         } else {
-          // No matching container found — check if we should preserve a transitional state.
-          // Use the localStorage timestamp to expire stale transitional states.
-          const currentState = this.appStates[app.id];
-          const persistedState = this.getPersistedTransitionalState(app.id);
-
-          if ((currentState === 'starting' || currentState === 'stopping') && persistedState) {
-            // Still within the 10-minute timeout — preserve transitional state
-            console.debug(`[AppsManager] No container found for ${app.id}, preserving transitional state: ${currentState}`);
-          } else if (persistedState) {
-            // Restore from localStorage (page reload case, still within timeout)
-            this.appStates[app.id] = persistedState;
-            console.debug(`[AppsManager] Restored transitional state for ${app.id} from localStorage: ${persistedState}`);
+          // No matching container found in docker ps.
+          // Docker ps is the ground truth. Only preserve transitional state while a command
+          // is actively running (spawn process hasn't returned yet, e.g. image still downloading).
+          // Once the command completes or on page reload, no container = stopped.
+          if (this.commandsInFlight.has(app.id)) {
+            // Command still executing (image downloading, build in progress) — keep transitional state
+            console.debug(`[AppsManager] No container for ${app.id}, but command still in-flight — preserving transitional state`);
           } else {
-            // No persisted state or timeout expired — reset to stopped
+            // Command completed or page was reloaded — docker ps is truth, no container = stopped
+            const currentState = this.appStates[app.id];
             if (currentState === 'starting' || currentState === 'stopping') {
-              console.warn(`[AppsManager] Transitional state for ${app.id} expired (no container found after timeout), resetting to stopped`);
-              this.clearTransitionalState(app.id);
+              console.warn(`[AppsManager] No container found for ${app.id} and no command in-flight, resetting to stopped`);
             }
             this.appStates[app.id] = 'stopped';
+            this.clearTransitionalState(app.id);
           }
         }
       }
@@ -534,11 +511,12 @@ export class AppsManagerService {
 
     // Set instant feedback
     this.appStates[app.id] = 'starting';
-    this.saveTransitionalState(app.id, 'starting');
+    this.commandsInFlight.add(app.id);
     this.appLastOutputs[app.id] = 'Executing start...';
 
     return new Promise<void>((resolve, reject) => {
       this.shellService.runBatFile(command, `Starting ${app.name}`, async (result) => {
+        this.commandsInFlight.delete(app.id);
         //console.log('Callback fired for', app.name, 'result:', JSON.stringify(result));
         if (result && result.success) {
           // Don't immediately set to 'running' - keep as 'starting' until healthcheck passes
@@ -583,11 +561,12 @@ export class AppsManagerService {
     if (!cmdParts.includes('--reprovision')) cmdParts.push('--reprovision');
 
     this.appStates[app.id] = 'starting';
-    this.saveTransitionalState(app.id, 'starting');
+    this.commandsInFlight.add(app.id);
     this.appLastOutputs[app.id] = 'Starting theme rebuild...';
 
     return new Promise<void>((resolve) => {
       this.shellService.runBatFile(cmdParts, `Rebuilding theme for ${app.name}`, async (result) => {
+        this.commandsInFlight.delete(app.id);
         if (result && result.success) {
           this.appStates[app.id] = 'starting';
           this.appLastOutputs[app.id] = result.output || `✓ Reprovision started for ${app.name}`;
@@ -642,11 +621,12 @@ export class AppsManagerService {
 
     // Set instant feedback
     this.appStates[app.id] = 'stopping';
-    this.saveTransitionalState(app.id, 'stopping');
+    this.commandsInFlight.add(app.id);
     this.appLastOutputs[app.id] = 'Executing stop...';
 
     return new Promise<void>((resolve, reject) => {
       this.shellService.runBatFile(command, `Stopping ${app.name}`, async (result) => {
+        this.commandsInFlight.delete(app.id);
         if (result && result.success) {
           this.appStates[app.id] = 'stopped';
           this.clearTransitionalState(app.id);

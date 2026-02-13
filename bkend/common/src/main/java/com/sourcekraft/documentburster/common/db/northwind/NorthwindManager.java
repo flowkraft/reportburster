@@ -600,7 +600,7 @@ public class NorthwindManager implements AutoCloseable {
 
 		if (forDdl) {
 			properties.put("jakarta.persistence.schema-generation.database.action", "drop-and-create");
-			properties.put("hibernate.hbm2ddl.auto", "create-drop"); // For Hibernate
+			properties.put("hibernate.hbm2ddl.auto", "create"); // For Hibernate
 		}
 
 		return properties;

@@ -79,6 +79,9 @@ public class PivotTableOptionsParser {
 		if (map.containsKey("menuLimit")) {
 			opts.setMenuLimit((Integer) map.get("menuLimit"));
 		}
+		if (map.containsKey("tableName")) {
+			opts.setTableName(String.valueOf(map.get("tableName")));
+		}
 		if (map.containsKey("sorters")) {
 			opts.setSorters((Map<String, Object>) map.get("sorters"));
 		}

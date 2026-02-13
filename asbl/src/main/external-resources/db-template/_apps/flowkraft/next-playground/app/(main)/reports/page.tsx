@@ -46,11 +46,24 @@ export default function ReportsPage() {
     const handleComponentsLoaded = () => {
       setIsReady(true)
     }
-    
+
     window.addEventListener("rb-components-loaded", handleComponentsLoaded)
     return () => {
       window.removeEventListener("rb-components-loaded", handleComponentsLoaded)
     }
+  }, [])
+
+  // Auto-select a random employee on load (mirrors Grails)
+  useEffect(() => {
+    const codes = employees.map(e => e.code)
+    const randomCode = codes[Math.floor(Math.random() * codes.length)]
+    setSelectedEmployee(randomCode)
+    setShowPlaceholder(false)
+    if (reportRef.current) {
+      reportRef.current.setAttribute("entity-code", randomCode)
+      reportRef.current.entityCode = randomCode
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const selectEmployee = (code: string) => {
@@ -145,6 +158,7 @@ export default function ReportsPage() {
                 Report
               </button>
               <button
+                id="usage-tab"
                 onClick={() => setActiveTab("usage")}
                 className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2 ${
                   activeTab === "usage"
@@ -169,12 +183,13 @@ export default function ReportsPage() {
                   {employees.map((emp) => (
                     <div
                       key={emp.code}
+                      data-code={emp.code}
                       onClick={() => selectEmployee(emp.code)}
                       className={`
-                        px-6 py-4 border-2 rounded-lg cursor-pointer transition-all min-w-[180px]
+                        employee-card px-6 py-4 border-2 rounded-lg cursor-pointer transition-all min-w-[180px]
                         ${
                           selectedEmployee === emp.code
-                            ? "border-blue-600 bg-blue-50 dark:bg-blue-950 shadow-[0_0_0_3px_rgba(59,130,246,0.2)]"
+                            ? "active border-blue-600 bg-blue-50 dark:bg-blue-950 shadow-[0_0_0_3px_rgba(59,130,246,0.2)]"
                             : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950"
                         }
                       `}
@@ -243,7 +258,9 @@ export default function ReportsPage() {
                   {copiedUsage ? "Copied!" : "Copy"}
                 </Button>
               </div>
-              <CodeBlock code={usageCode} language="markup" />
+              <div id="usageCode">
+                <CodeBlock code={usageCode} language="markup" />
+              </div>
             </div>
           )}
         </div>

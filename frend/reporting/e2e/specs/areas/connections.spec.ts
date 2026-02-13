@@ -9,6 +9,11 @@ import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test
 import { ConnectionsTestHelper, DB_VENDORS_DEFAULT, DB_VENDORS_SUPPORTED, isOlapVendor, SCHEMA_TABLES_OLAP, SCHEMA_VIEWS_OLAP } from '../../helpers/areas/connections-test-helper';
 
 const DB_VENDORS_SELECTED: string[] = (() => {
+  
+  //return ['duckdb', 'clickhouse']; // DEV FOCUS — comment out to restore full rotation
+  //return ['duckdb']; // DEV FOCUS — comment out to restore full rotation
+  //return ['clickhouse']; // DEV FOCUS — comment out to restore full rotation
+
   const requiredVendors = ['sqlite', 'duckdb']; // Always test SQLite and DuckDB
   const pool = DB_VENDORS_SUPPORTED.filter(v => !requiredVendors.includes(v));
 
@@ -1131,9 +1136,8 @@ test.describe('', async () => {
           .waitOnElementToBecomeVisible('#schemaNotLoadedDomainGroupedSchema')
           .click('#databaseDiagramTab-link')
           .waitOnElementToBecomeVisible('#schemaNotLoadedERDiagram')
-          // Chat2DB tab assertions commented out — tab now hosts flowkraft-ai-hub app
-          // .click('#toolsTab-link')
-          // .waitOnElementToBecomeVisible('#schemaNotLoadedChat2DB')
+          .click('#toolsTab-link')
+          .waitOnElementToBecomeVisible('#appPanel_flowkraft-ai-hub')
           .click('#connectionDetailsTab-link')
           .waitOnElementToBecomeEnabled('#dbConnectionName');
 
@@ -1221,9 +1225,6 @@ test.describe('', async () => {
           );
           ft = ft.waitOnElementToBecomeVisible(
             '#treeNodedim_employeesourceTreedatabaseSchemaPicklist',
-          );
-          ft = ft.waitOnElementToBecomeVisible(
-            '#treeNodedim_shippersourceTreedatabaseSchemaPicklist',
           );
           // Assert fact table
           ft = ft.waitOnElementToBecomeVisible(
@@ -1489,7 +1490,8 @@ test.describe('', async () => {
           'You are an expert Database Modeler and Data Architect.',
         );
 
-        ft = ft.clipboardShouldContainText('"tableName": "Order Details"');
+        const orderDetailsName = dbVendor === 'clickhouse' ? 'OrderDetails' : 'Order Details';
+        ft = ft.clipboardShouldContainText(`"tableName": "${orderDetailsName}"`);
         ft = ft
           .clipboardShouldContainText('"columnName": "UnitPrice"')
           .click('#btnCloseAiCopilotModal')
@@ -1828,7 +1830,8 @@ test.describe('', async () => {
         ft = ft.clipboardShouldContainText('You are an expert SQL Developer');
         // Check for tables from "Sales & Orders" domain
         ft = ft.clipboardShouldContainText('"tableName": "Orders"');
-        ft = ft.clipboardShouldContainText('"tableName": "Order Details"');
+        const orderDetailsName2 = dbVendor === 'clickhouse' ? 'OrderDetails' : 'Order Details';
+        ft = ft.clipboardShouldContainText(`"tableName": "${orderDetailsName2}"`);
         // Check for a column from each table
         ft = ft.clipboardShouldContainText('"columnName": "OrderDate"'); // From Orders table
         ft = ft.clipboardShouldContainText('"columnName": "UnitPrice"'); // From Order Details table
@@ -1991,12 +1994,10 @@ test.describe('', async () => {
         ft = ft.clipboardShouldContainText(
           'You are an expert Database Modeler and Visual Designer specializing in Entity-Relationship (ER) diagrams using PlantUML.',
         );
-        // Check for tables from "Sales & Orders" domain
         ft = ft.clipboardShouldContainText('"tableName": "CustomerDemographics"');
         ft = ft.clipboardShouldContainText('"tableName": "Customers"');
-        // Check for a column from each table
-        ft = ft.clipboardShouldContainText('"columnName": "Fax"'); // From Orders table
-        ft = ft.clipboardShouldContainText('"columnName": "ContactTitle"'); // From Order Details table
+        ft = ft.clipboardShouldContainText('"columnName": "Fax"');
+        ft = ft.clipboardShouldContainText('"columnName": "ContactTitle"');
 
         ft = ft
           .click('#btnCloseAiCopilotModal')
@@ -2403,7 +2404,186 @@ CustomerCustomerDemo }|--|| CustomerDemographics : "CustomerTypeID"
       },
     );
 
-    // TODO: Write Chat2DB tab e2e tests for FlowKraft AI Hub app
   }
+
+  // ============================================================
+  // In-Memory DuckDB CRUD test
+  // DuckDB supports in-memory mode (empty dbName = no file needed).
+  // This test verifies create/update/delete without file browsing.
+  // ============================================================
+  electronBeforeAfterAllTest(
+    '(database-connection) [duckdb] in-memory mode: create, update, and delete',
+    async function ({ beforeAfterEach: firstPage }) {
+      test.setTimeout(Constants.DELAY_FIVE_HUNDRED_SECONDS);
+
+      const connectionName = 'In-Memory DuckDB Test';
+      const connectionCode = `db-${_.kebabCase(connectionName)}-duckdb`;
+      const fileId = `${connectionCode}\\.xml`;
+      const updatedName = `${connectionName} Updated`;
+
+      let ft = new FluentTester(firstPage);
+
+      // --- CREATE: name + type=duckdb, no file selected (in-memory) ---
+      ft = ft
+        .gotoConnections()
+        .waitOnElementToBecomeEnabled('#btnNewDropdown')
+        .click('#btnNewDropdown')
+        .waitOnElementToBecomeVisible('#btnNewDatabase')
+        .click('#btnNewDatabase')
+        .waitOnElementToBecomeVisible('#modalDbConnection')
+        .waitOnElementToBecomeEnabled('#dbConnectionName')
+        .click('#dbConnectionName')
+        .typeText(connectionName)
+        .dropDownSelectOptionHavingValue('#dbType', 'duckdb');
+
+      // Don't touch #dbName — leave empty = in-memory DuckDB
+      ft = ft
+        .waitOnElementToBecomeEnabled('#btnOKConfirmationDbConnectionModal')
+        .click('#btnOKConfirmationDbConnectionModal')
+        // In-memory DuckDB shows confirmation: "You did not select any DuckDB database file..."
+        .confirmDialogShouldBeVisible()
+        .clickYesDoThis()
+        .waitOnElementToBecomeInvisible('#btnOKConfirmationDbConnectionModal')
+        .waitOnElementToBecomeVisible(`#${fileId}`)
+        .clickAndSelectTableRow(`#${fileId}`)
+        .elementShouldContainText(`#${fileId} td:first-child`, connectionName);
+
+      // --- UPDATE: change name only ---
+      ft = ft
+        .gotoConnections()
+        .clickAndSelectTableRow(`#${fileId}`)
+        .waitOnElementToBecomeEnabled('#btnEdit')
+        .click('#btnEdit')
+        .waitOnElementToBecomeVisible('#dbConnectionName')
+        .click('#dbConnectionName')
+        .typeText('')
+        .typeText(updatedName)
+        .waitOnElementToBecomeEnabled('#btnOKConfirmationDbConnectionModal')
+        .click('#btnOKConfirmationDbConnectionModal')
+        // In-memory DuckDB: confirmation dialog appears again on update (dbName still empty)
+        .confirmDialogShouldBeVisible()
+        .clickYesDoThis()
+        .waitOnElementToBecomeInvisible('#btnOKConfirmationDbConnectionModal')
+        .waitOnElementToBecomeVisible(`#${fileId}`)
+        .clickAndSelectTableRow(`#${fileId}`)
+        .elementShouldContainText(`#${fileId} td:first-child`, updatedName);
+
+      // --- DELETE ---
+      ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
+        ft,
+        fileId,
+        'duckdb',
+      );
+
+      return ft;
+    },
+  );
+
+  // ============================================================
+  // T19: Chat2DB tab — AI Hub start/stop + ai-manager state
+  // Outside vendor loop (not vendor-specific)
+  // ============================================================
+  electronBeforeAfterAllTest(
+    'Chat2DB tab: AI Hub start/stop lifecycle and ai-manager dropdown state',
+    async ({ beforeAfterEach: firstPage }) => {
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      let ft = new FluentTester(firstPage);
+
+      // Step 1: Open connection modal, navigate to Chat2DB tab
+      ft = ft
+        .gotoConnections()
+        .waitOnElementToBecomeEnabled('#btnNewDropdown')
+        .click('#btnNewDropdown')
+        .waitOnElementToBecomeVisible('#btnNewDatabase')
+        .click('#btnNewDatabase')
+        .waitOnElementToBecomeVisible('#modalDbConnection')
+        .click('#toolsTab-link')
+        .sleep(1000);
+
+      // Step 2: Assert AI Hub shown as stopped
+      ft = ft
+        .consoleLog('[T19] Step 2: Assert AI Hub is stopped')
+        .waitOnElementToBecomeVisible('#appPanel_flowkraft-ai-hub')
+        .elementShouldContainText('#appState_flowkraft-ai-hub', 'stopped')
+        .elementShouldContainText('#btnStartStop_flowkraft-ai-hub', 'Start')
+        .waitOnElementToHaveClass('#appIcon_flowkraft-ai-hub', 'fa-play');
+
+      // Step 3: Assert ai-manager dropdown shows stopped state
+      ft = ft
+        .consoleLog('[T19] Step 3: Assert ai-manager dropdown (stopped)')
+        .click('#btnAiDropdownToggle')
+        .sleep(500)
+        .elementShouldContainText('#btnLaunchChat2DB', 'stopped')
+        .click('#btnAiDropdownToggle')
+        .sleep(300);
+
+      // Step 4: Start AI Hub from apps-manager
+      ft = ft
+        .consoleLog('[T19] Step 4: Starting AI Hub from Chat2DB tab')
+        .waitOnElementToBecomeEnabled('#btnStartStop_flowkraft-ai-hub')
+        .click('#btnStartStop_flowkraft-ai-hub')
+        .confirmDialogShouldBeVisible()
+        .waitOnElementToContainText('#confirmDialog .modal-body', 'FlowKraft')
+        .clickYesDoThis()
+        // Wait for starting state
+        .waitOnElementToBecomeDisabled('#btnStartStop_flowkraft-ai-hub')
+        .waitOnElementToBecomeVisible('#appSpinner_flowkraft-ai-hub')
+        .waitOnElementToContainText('#appState_flowkraft-ai-hub', 'starting')
+        .consoleLog('[T19] AI Hub is starting...')
+        // Wait for running state
+        .waitOnElementToBecomeEnabled('#btnStartStop_flowkraft-ai-hub')
+        .waitOnElementToContainText('#appState_flowkraft-ai-hub', 'running')
+        .waitOnElementToContainText('#btnStartStop_flowkraft-ai-hub', 'Stop')
+        .waitOnElementToHaveClass('#appIcon_flowkraft-ai-hub', 'fa-stop')
+        .consoleLog('[T19] AI Hub is running.');
+
+      // Step 5: Assert ai-manager dropdown shows running state
+      ft = ft
+        .consoleLog('[T19] Step 5: Assert ai-manager dropdown (running)')
+        .click('#btnAiDropdownToggle')
+        .sleep(500)
+        .elementShouldContainText('#btnLaunchChat2DB', 'Launch')
+        .click('#btnAiDropdownToggle')
+        .sleep(300);
+
+      // Step 6: Stop AI Hub from apps-manager
+      ft = ft
+        .consoleLog('[T19] Step 6: Stopping AI Hub from Chat2DB tab')
+        .waitOnElementToBecomeEnabled('#btnStartStop_flowkraft-ai-hub')
+        .click('#btnStartStop_flowkraft-ai-hub')
+        .confirmDialogShouldBeVisible()
+        .waitOnElementToContainText('#confirmDialog .modal-body', 'FlowKraft')
+        .clickYesDoThis()
+        // Wait for stopping state
+        .waitOnElementToBecomeDisabled('#btnStartStop_flowkraft-ai-hub')
+        .waitOnElementToBecomeVisible('#appSpinner_flowkraft-ai-hub')
+        .waitOnElementToContainText('#appState_flowkraft-ai-hub', 'stopping')
+        .consoleLog('[T19] AI Hub is stopping...')
+        // Wait for stopped state
+        .waitOnElementToBecomeEnabled('#btnStartStop_flowkraft-ai-hub')
+        .waitOnElementToContainText('#appState_flowkraft-ai-hub', 'stopped')
+        .waitOnElementToContainText('#btnStartStop_flowkraft-ai-hub', 'Start')
+        .waitOnElementToHaveClass('#appIcon_flowkraft-ai-hub', 'fa-play')
+        .consoleLog('[T19] AI Hub is stopped.');
+
+      // Step 7: Assert ai-manager dropdown shows stopped state again
+      ft = ft
+        .consoleLog('[T19] Step 7: Assert ai-manager dropdown (stopped again)')
+        .click('#btnAiDropdownToggle')
+        .sleep(500)
+        .elementShouldContainText('#btnLaunchChat2DB', 'stopped')
+        .click('#btnAiDropdownToggle')
+        .sleep(300);
+
+      // Step 8: Close modal
+      ft = ft
+        .consoleLog('[T19] Step 8: Closing modal')
+        .click('#btnCloseDbConnectionModal')
+        .consoleLog('[T19] Chat2DB tab test complete.');
+
+      await ft;
+    },
+  );
 
 });

@@ -7,8 +7,11 @@ import type { PivotEngine } from './pivot-types';
 
 // Server-side request/response types matching Java DTOs
 export interface ServerPivotRequest {
-  connectionCode: string;
-  tableName: string;
+  // Option 1 (recommended): server resolves connectionCode + tableName internally
+  reportCode?: string;
+  // Option 2 (legacy): client provides connectionCode + tableName directly
+  connectionCode?: string;
+  tableName?: string;
   engine?: 'duckdb' | 'clickhouse';  // Backend engine (if omitted, backend auto-detects from connection type)
   rows?: string[];
   cols?: string[];
@@ -29,6 +32,7 @@ export interface ServerPivotResponse {
     rowCount: number;
     aggregatorUsed: string;
     cached: boolean;
+    availableColumns?: string[];
   };
 }
 
@@ -52,7 +56,7 @@ export interface ErrorResponse {
  * Client for /api/analytics endpoints
  */
 export class PivotApiClient {
-  private baseUrl: string;
+  public baseUrl: string;
   private abortControllers: Map<string, AbortController>;
 
   constructor(baseUrl: string = '/api/analytics') {
@@ -218,11 +222,11 @@ export function convertValueFilterToServerFilters(
 }
 
 /**
- * Helper to build ServerPivotRequest from PivotTable state
+ * Helper to build ServerPivotRequest from PivotTable state.
+ * Uses reportCode so the server resolves connectionCode + tableName internally.
  */
 export function buildServerPivotRequest(
-  connectionCode: string,
-  tableName: string,
+  reportCode: string,
   state: {
     rows?: string[];
     cols?: string[];
@@ -235,8 +239,7 @@ export function buildServerPivotRequest(
   engine?: 'duckdb' | 'clickhouse'
 ): ServerPivotRequest {
   return {
-    connectionCode,
-    tableName,
+    reportCode,
     engine,
     rows: state.rows || [],
     cols: state.cols || [],

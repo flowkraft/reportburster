@@ -294,6 +294,11 @@
                             </g:link>
                         </li>
                         <li class="nav-item">
+                            <g:link uri="/data-warehouse" class="nav-link ${controllerName == 'dataWarehouse' ? 'active' : ''}">
+                                Data Warehouse
+                            </g:link>
+                        </li>
+                        <li class="nav-item">
                             <g:link uri="/your-canvas" class="nav-link ${controllerName == 'yourCanvas' ? 'active' : ''}">
                                 Your Canvas
                             </g:link>

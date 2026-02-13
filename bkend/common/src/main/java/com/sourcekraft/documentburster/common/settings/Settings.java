@@ -272,7 +272,7 @@ public class Settings extends DumpToString {
 
 				String dbConfigFilePath = configFolderPath + "/connections/" + connCode + "/" + connCode + ".xml";
 
-				// Special-case: synthesize settings for packaged sample Northwind SQLite
+				// Special-case: synthesize settings for packaged sample Northwind databases
 				String codeLower = connCode == null ? "" : connCode.trim().toLowerCase();
 				if (codeLower.contains("rbt-sample-northwind-sqlite-4f2")) {
 					String dbFilePath = null;
@@ -303,6 +303,55 @@ public class Settings extends DumpToString {
 					server.url = jdbcUrl;
 					server.userid = "";
 					server.userpassword = "";
+					conn.databaseserver = server;
+					connectionDatabaseSettings.connection = conn;
+
+				} else if (codeLower.contains("rbt-sample-northwind-duckdb-4f2")) {
+					// Virtual DuckDB connection — file on disk, invisible to UI
+					String dbFilePath = null;
+					String portable = System.getenv("PORTABLE_EXECUTABLE_DIR");
+					if (portable != null && !portable.trim().isEmpty()) {
+						dbFilePath = portable + java.io.File.separator + "db" + java.io.File.separator
+								+ "sample-northwind-duckdb" + java.io.File.separator + "northwind.duckdb";
+					} else {
+						try {
+							dbFilePath = com.sourcekraft.documentburster.utils.Utils.getDbFolderPath()
+									+ java.io.File.separator + "sample-northwind-duckdb" + java.io.File.separator
+									+ "northwind.duckdb";
+						} catch (Throwable t) {
+							dbFilePath = "db" + java.io.File.separator + "sample-northwind-duckdb"
+									+ java.io.File.separator + "northwind.duckdb";
+						}
+					}
+
+					java.io.File dbFile = new java.io.File(dbFilePath);
+					String resolvedPath = dbFile.getAbsolutePath();
+					String jdbcUrl = "jdbc:duckdb:" + resolvedPath;
+
+					connectionDatabaseSettings = new DocumentBursterConnectionDatabaseSettings();
+					ConnectionDatabaseSettings conn = new ConnectionDatabaseSettings();
+					ServerDatabaseSettings server = new ServerDatabaseSettings();
+					server.type = "duckdb";
+					server.driver = "org.duckdb.DuckDBDriver";
+					server.url = jdbcUrl;
+					server.database = resolvedPath;
+					server.userid = "";
+					server.userpassword = "";
+					conn.databaseserver = server;
+					connectionDatabaseSettings.connection = conn;
+
+				} else if (codeLower.contains("rbt-sample-northwind-clickhouse-4f2")) {
+					// ClickHouse starter pack connection — hardcoded defaults (localhost:8123/northwind)
+					// Requires ClickHouse starter pack to be running; not a file on disk like DuckDB
+					connectionDatabaseSettings = new DocumentBursterConnectionDatabaseSettings();
+					ConnectionDatabaseSettings conn = new ConnectionDatabaseSettings();
+					ServerDatabaseSettings server = new ServerDatabaseSettings();
+					server.type = "clickhouse";
+					server.host = "localhost";
+					server.port = "8123";
+					server.database = "northwind";
+					server.userid = "default";
+					server.userpassword = "clickhouse";
 					conn.databaseserver = server;
 					connectionDatabaseSettings.connection = conn;
 
@@ -367,6 +416,68 @@ public class Settings extends DumpToString {
 
 	public DocumentBursterConnectionDatabaseSettings loadSettingsConnectionDatabase(String connectionCode)
 			throws Exception {
+
+		// Virtual connections: synthesize settings for packaged sample databases
+		String codeLower = connectionCode == null ? "" : connectionCode.trim().toLowerCase();
+
+		if (codeLower.contains("rbt-sample-northwind-duckdb-4f2")) {
+			String dbFilePath = null;
+			String portable = System.getenv("PORTABLE_EXECUTABLE_DIR");
+			if (portable != null && !portable.trim().isEmpty()) {
+				dbFilePath = portable + java.io.File.separator + "db" + java.io.File.separator
+						+ "sample-northwind-duckdb" + java.io.File.separator + "northwind.duckdb";
+			} else {
+				try {
+					dbFilePath = com.sourcekraft.documentburster.utils.Utils.getDbFolderPath()
+							+ java.io.File.separator + "sample-northwind-duckdb" + java.io.File.separator
+							+ "northwind.duckdb";
+				} catch (Throwable t) {
+					dbFilePath = "db" + java.io.File.separator + "sample-northwind-duckdb"
+							+ java.io.File.separator + "northwind.duckdb";
+				}
+			}
+
+			java.io.File dbFile = new java.io.File(dbFilePath);
+			String resolvedPath = dbFile.getAbsolutePath();
+			String jdbcUrl = "jdbc:duckdb:" + resolvedPath;
+
+			DocumentBursterConnectionDatabaseSettings connDatabaseSettings = new DocumentBursterConnectionDatabaseSettings();
+			ConnectionDatabaseSettings conn = new ConnectionDatabaseSettings();
+			ServerDatabaseSettings server = new ServerDatabaseSettings();
+			server.type = "duckdb";
+			server.driver = "org.duckdb.DuckDBDriver";
+			server.url = jdbcUrl;
+			server.database = resolvedPath;
+			server.userid = "";
+			server.userpassword = "";
+			conn.databaseserver = server;
+			connDatabaseSettings.connection = conn;
+
+			if (connDatabaseSettings.connection != null && connDatabaseSettings.connection.databaseserver != null)
+				connDatabaseSettings.connection.databaseserver.ensureDriverAndUrl();
+
+			return connDatabaseSettings;
+
+		} else if (codeLower.contains("rbt-sample-northwind-clickhouse-4f2")) {
+			// ClickHouse starter pack connection — hardcoded defaults (localhost:8123/northwind)
+			// Requires ClickHouse starter pack to be running; not a file on disk like DuckDB
+			DocumentBursterConnectionDatabaseSettings connDatabaseSettings = new DocumentBursterConnectionDatabaseSettings();
+			ConnectionDatabaseSettings conn = new ConnectionDatabaseSettings();
+			ServerDatabaseSettings server = new ServerDatabaseSettings();
+			server.type = "clickhouse";
+			server.host = "localhost";
+			server.port = "8123";
+			server.database = "northwind";
+			server.userid = "default";
+			server.userpassword = "clickhouse";
+			conn.databaseserver = server;
+			connDatabaseSettings.connection = conn;
+
+			if (connDatabaseSettings.connection != null && connDatabaseSettings.connection.databaseserver != null)
+				connDatabaseSettings.connection.databaseserver.ensureDriverAndUrl();
+
+			return connDatabaseSettings;
+		}
 
 		String connectionConfigFilePath = Paths
 				.get(PORTABLE_EXECUTABLE_DIR_PATH, "config/connections", connectionCode, connectionCode + ".xml")

@@ -119,6 +119,23 @@ public class ClickHouseAnalyticsService {
     }
 
     /**
+     * Get all column names for a table/view.
+     */
+    public List<String> getTableColumns(String connectionCode, String tableName) throws Exception {
+        List<String> columns = new ArrayList<>();
+        String sql = "SELECT * FROM `" + tableName.replace("`", "``") + "` LIMIT 0";
+        try (Connection conn = connectionManager.getJdbcConnection(connectionCode);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            ResultSetMetaData metaData = rs.getMetaData();
+            for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                columns.add(metaData.getColumnName(i));
+            }
+        }
+        return columns;
+    }
+
+    /**
      * Get list of supported aggregators.
      */
     public List<String> getSupportedAggregators() {

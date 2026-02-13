@@ -315,7 +315,12 @@
   });
 
   export { updateTable as updateTable };
-  
+
+  // Public method to force a Tabulator redraw (e.g., after tab becomes visible)
+  export function redraw() {
+    if (table) table.redraw(true);
+  }
+
   // Public method to fetch data with parameters (for use after initial load)
   export async function fetchData(params: Record<string, any> = {}) {
     if (!reportCode || !apiBaseUrl) {

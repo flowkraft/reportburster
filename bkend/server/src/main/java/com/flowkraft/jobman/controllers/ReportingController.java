@@ -1,6 +1,7 @@
 package com.flowkraft.jobman.controllers;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -143,18 +144,15 @@ public class ReportingController {
 
 			// System.out.println("[DEBUG] /fetch-data: calling reportingService.fetchData...");
 			ReportDataResult result = reportingService.fetchData(cfgFilePath, parameters);
-			// System.out.println("[DEBUG] /fetch-data: service returned, reportData size=" + 
-			//	(result.reportData != null ? result.reportData.size() : "null") + 
+			// System.out.println("[DEBUG] /fetch-data: service returned, reportData size=" +
+			//	(result.reportData != null ? result.reportData.size() : "null") +
 			//	", columns=" + (result.reportColumnNames != null ? result.reportColumnNames.size() : "null"));
 			// System.out.println("[DEBUG] /fetch-data: about to return result to HTTP response...");
 			return result;
-		}).doOnSuccess(result -> {
-			// System.out.println("[DEBUG] /fetch-data: Mono completed successfully, sending HTTP response");
 		}).doOnError(e -> {
-			//System.out.println("Error fetching data: " + e.getMessage());
 			log.error("Error fetching data", e);
-		}).onErrorResume(e -> Mono
-				.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to fetch data", e)));
+		}).onErrorResume(e -> Mono.error(
+			new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to fetch data", e)));
 	}
 
 	/**
@@ -191,19 +189,36 @@ public class ReportingController {
 	@GetMapping(value = "/reports/{reportCode}/data", consumes = MediaType.ALL_VALUE)
 	public Mono<ReportDataResult> fetchReportData(
 			@PathVariable String reportCode,
+			@RequestParam(required = false) Integer offset,
+			@RequestParam(required = false) Integer limit,
 			@RequestParam Map<String, String> parameters) {
-		System.out.println("[DEBUG] GET /reports/" + reportCode + "/data - ENTERING, params=" + parameters);
+		// Remove pagination params so they don't reach the Groovy script
+		parameters.remove("offset");
+		parameters.remove("limit");
+		System.out.println("[DEBUG] GET /reports/" + reportCode + "/data - ENTERING, params=" + parameters
+				+ ", offset=" + offset + ", limit=" + limit);
 		return Mono.fromCallable(() -> {
 			System.out.println("[DEBUG] GET /reports/" + reportCode + "/data - calling reportingService.fetchReportData");
 			ReportDataResult result = reportingService.fetchReportData(reportCode, parameters);
 			System.out.println("[DEBUG] GET /reports/" + reportCode + "/data - SUCCESS, rows=" + (result.reportData != null ? result.reportData.size() : "null"));
+
+			// Server-side pagination: always set totalRows, then slice if requested
+			if (result.reportData != null) {
+				result.totalRows = result.reportData.size();
+				if (offset != null && limit != null) {
+					int from = Math.min(offset, result.reportData.size());
+					int to = Math.min(from + limit, result.reportData.size());
+					result.reportData = new ArrayList<>(result.reportData.subList(from, to));
+				}
+			}
+
 			return result;
 		}).doOnError(e -> {
 			System.out.println("[DEBUG] GET /reports/" + reportCode + "/data - ERROR: " + e.getMessage());
 			e.printStackTrace();
 			log.error("Error fetching report data for: " + reportCode, e);
 		}).onErrorResume(e -> Mono.error(
-				new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to fetch report data", e)));
+			new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to fetch report data", e)));
 	}
 
 }

@@ -1026,6 +1026,10 @@ public class NoExeAssembler extends AbstractAssembler {
 				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
 				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
 
+		content = content.replaceAll(
+				"(?s)<burstfilename>.*?</burstfilename>",
+				"<burstfilename>pivot-data.none</burstfilename>");
+
 		FileUtils.writeStringToFile(new File(pivSalesRegionProdSettingsFilePath), content, "UTF-8");
 		
 		// prepare reporting.xml (defaults -> override to use script datasource + HTML
@@ -1047,7 +1051,112 @@ public class NoExeAssembler extends AbstractAssembler {
 				"<scriptname>piv-sales-region-prod-qtr-script.groovy</scriptname>");
 
 		FileUtils.writeStringToFile(new File(pivSalesRegionProdReportingFilePath), content, "UTF-8");
-		
+
+		// piv-northwind-warehouse-browser
+		String pivWhBrowserSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/_frend/piv-northwind-warehouse-browser";
+		String pivWhBrowserSettingsFilePath = pivWhBrowserSampleDir + "/settings.xml";
+		String pivWhBrowserReportingFilePath = pivWhBrowserSampleDir + "/reporting.xml";
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(pivWhBrowserSettingsFilePath));
+		content = FileUtils.readFileToString(new File(pivWhBrowserSettingsFilePath), "UTF-8");
+
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+				"<template>NorthwindWarehouseBrowser</template>");
+		content = content.replaceAll(
+				"(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replaceAll(
+				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		content = content.replaceAll(
+				"(?s)<burstfilename>.*?</burstfilename>",
+				"<burstfilename>pivot-data.none</burstfilename>");
+
+		FileUtils.writeStringToFile(new File(pivWhBrowserSettingsFilePath), content, "UTF-8");
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(pivWhBrowserReportingFilePath));
+		content = FileUtils.readFileToString(new File(pivWhBrowserReportingFilePath), "UTF-8");
+
+		content = content.replaceAll("(?si)<type\\s*>\\s*ds\\.csvfile\\s*</type>", "<type>ds.scriptfile</type>");
+		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
+				"<conncode>rbt-sample-northwind-sqlite-4f2</conncode>");
+		content = content.replaceAll("(?s)<scriptname\\s*/>|<scriptname>\\s*</scriptname>",
+				"<scriptname>piv-northwind-warehouse-browser-script.groovy</scriptname>");
+
+		FileUtils.writeStringToFile(new File(pivWhBrowserReportingFilePath), content, "UTF-8");
+
+		// piv-northwind-warehouse-duckdb
+		String pivWhDuckdbSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/_frend/piv-northwind-warehouse-duckdb";
+		String pivWhDuckdbSettingsFilePath = pivWhDuckdbSampleDir + "/settings.xml";
+		String pivWhDuckdbReportingFilePath = pivWhDuckdbSampleDir + "/reporting.xml";
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(pivWhDuckdbSettingsFilePath));
+		content = FileUtils.readFileToString(new File(pivWhDuckdbSettingsFilePath), "UTF-8");
+
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+				"<template>NorthwindWarehouseDuckdb</template>");
+		content = content.replaceAll(
+				"(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replaceAll(
+				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		content = content.replaceAll(
+				"(?s)<burstfilename>.*?</burstfilename>",
+				"<burstfilename>pivot-data.none</burstfilename>");
+
+		FileUtils.writeStringToFile(new File(pivWhDuckdbSettingsFilePath), content, "UTF-8");
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(pivWhDuckdbReportingFilePath));
+		content = FileUtils.readFileToString(new File(pivWhDuckdbReportingFilePath), "UTF-8");
+
+		content = content.replaceAll("(?si)<type\\s*>\\s*ds\\.csvfile\\s*</type>", "<type>ds.scriptfile</type>");
+		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
+				"<conncode>rbt-sample-northwind-duckdb-4f2</conncode>");
+		content = content.replaceAll("(?s)<scriptname\\s*/>|<scriptname>\\s*</scriptname>",
+				"<scriptname>piv-northwind-warehouse-duckdb-script.groovy</scriptname>");
+
+		FileUtils.writeStringToFile(new File(pivWhDuckdbReportingFilePath), content, "UTF-8");
+
+		// piv-northwind-warehouse-clickhouse
+		String pivWhClickhouseSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/_frend/piv-northwind-warehouse-clickhouse";
+		String pivWhClickhouseSettingsFilePath = pivWhClickhouseSampleDir + "/settings.xml";
+		String pivWhClickhouseReportingFilePath = pivWhClickhouseSampleDir + "/reporting.xml";
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(pivWhClickhouseSettingsFilePath));
+		content = FileUtils.readFileToString(new File(pivWhClickhouseSettingsFilePath), "UTF-8");
+
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+				"<template>NorthwindWarehouseClickhouse</template>");
+		content = content.replaceAll(
+				"(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replaceAll(
+				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		content = content.replaceAll(
+				"(?s)<burstfilename>.*?</burstfilename>",
+				"<burstfilename>pivot-data.none</burstfilename>");
+
+		FileUtils.writeStringToFile(new File(pivWhClickhouseSettingsFilePath), content, "UTF-8");
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(pivWhClickhouseReportingFilePath));
+		content = FileUtils.readFileToString(new File(pivWhClickhouseReportingFilePath), "UTF-8");
+
+		content = content.replaceAll("(?si)<type\\s*>\\s*ds\\.csvfile\\s*</type>", "<type>ds.scriptfile</type>");
+		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
+				"<conncode>rbt-sample-northwind-clickhouse-4f2</conncode>");
+		content = content.replaceAll("(?s)<scriptname\\s*/>|<scriptname>\\s*</scriptname>",
+				"<scriptname>piv-northwind-warehouse-clickhouse-script.groovy</scriptname>");
+
+		FileUtils.writeStringToFile(new File(pivWhClickhouseReportingFilePath), content, "UTF-8");
+
 		//rep-employee-payslip
 		
 		String repEmployeePayslipSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/_frend/rep-employee-payslip";

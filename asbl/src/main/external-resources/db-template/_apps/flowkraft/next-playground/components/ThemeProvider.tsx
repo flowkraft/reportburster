@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { applyTheme } from "@/lib/themes"
 
 // Settings keys for theme (must match useThemeSettings.ts)
@@ -10,8 +10,6 @@ const DEFAULT_THEME = "reportburster"
 const DEFAULT_MODE = "light"
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [isLoaded, setIsLoaded] = useState(false)
-
   useEffect(() => {
     async function loadThemeFromDB() {
       try {
@@ -27,7 +25,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const savedTheme = colorData?.value || DEFAULT_THEME
         const savedMode = modeData?.value || DEFAULT_MODE
 
-        // Apply theme immediately
+        // Apply theme via DOM attributes — no need to gate children rendering
         document.documentElement.setAttribute("data-theme", savedMode)
         if (savedMode === "dark") {
           document.documentElement.classList.add("dark")
@@ -40,18 +38,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         // Fall back to defaults
         document.documentElement.setAttribute("data-theme", DEFAULT_MODE)
         applyTheme(DEFAULT_THEME, DEFAULT_MODE)
-      } finally {
-        setIsLoaded(true)
       }
     }
 
     loadThemeFromDB()
   }, [])
-
-  // Show nothing until theme is loaded to prevent flash
-  if (!isLoaded) {
-    return null
-  }
 
   return <>{children}</>
 }

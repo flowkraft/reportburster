@@ -12,14 +12,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { LLMProviderForm } from '@/components/llm/LLMProviderForm';
+import { getSetting, setSetting, SETTING_KEYS } from '@/lib/settings';
+import { DEFAULT_LLM_FULL_CONFIG, type LLMFullConfig } from '@/lib/llm-providers';
 
 // Short descriptions for display (avoids importing heavy agent configs into client bundle)
 const AGENT_DESCRIPTIONS: Record<string, string> = {
   'Athena': 'ReportBurster Guru & Data Modeling/Business Analysis Expert',
-  'Hephaestus': 'Backend Jobs/ETL/Automation Advisor',
-  'Hermes': 'Grails Guru & Self-Service Portal Advisor',
-  'Pythia': 'WordPress CMS Portal Advisor',
-  'Apollo': 'Next.js Guru & Modern Web Advisor',
+  'Hephaestus': 'Backend Jobs/ETL/Automation Expert',
+  'Hermes': 'Grails Guru & Web Portal Expert',
+  'Pythia': 'WordPress CMS Web Portal Expert',
+  'Apollo': 'Next.js Guru & Modern Web Expert',
 };
 
 // Tag prefixes that identify alternative stack agents (hidden by default)
@@ -89,6 +92,9 @@ export default function AgentsPage() {
   const [forceUpdate, setForceUpdate] = useState(false);
   const [giveDbQueryToolToAthena, setGiveDbQueryToolToAthena] = useState(false);
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<'update' | 'provider'>('update');
+  const [llmConfig, setLlmConfig] = useState<LLMFullConfig>(DEFAULT_LLM_FULL_CONFIG);
+  const [llmConfigLoaded, setLlmConfigLoaded] = useState(false);
 
   useEffect(() => {
     fetchAgents();
@@ -99,11 +105,31 @@ export default function AgentsPage() {
     const handler = () => {
       setForceUpdate(false);
       setGiveDbQueryToolToAthena(false);
+      setSettingsTab('update');
       setShowUpdateConfirm(true);
     };
     window.addEventListener('trigger-update-agents', handler);
     return () => window.removeEventListener('trigger-update-agents', handler);
   }, []);
+
+  // Load LLM provider config when the settings dialog opens
+  useEffect(() => {
+    if (showUpdateConfirm && !llmConfigLoaded) {
+      getSetting(SETTING_KEYS.LLM_PROVIDER).then((raw) => {
+        if (raw) {
+          try {
+            setLlmConfig(JSON.parse(raw) as LLMFullConfig);
+          } catch {
+            setLlmConfig(DEFAULT_LLM_FULL_CONFIG);
+          }
+        }
+        setLlmConfigLoaded(true);
+      });
+    }
+    if (!showUpdateConfirm) {
+      setLlmConfigLoaded(false);
+    }
+  }, [showUpdateConfirm, llmConfigLoaded]);
 
   const fetchAgents = async () => {
     try {
@@ -167,23 +193,38 @@ export default function AgentsPage() {
       setLogStatus('running');
       setShowLogModal(true);
 
+      // Update .env file with saved LLM provider config before provisioning
+      try {
+        const envRes = await fetch('/api/llm/update-env', { method: 'POST' });
+        const envData = await envRes.json();
+        if (envData.success) {
+          setLogLines(prev => [
+            { type: 'log', message: `Updated .env → ${envData.provider} (model: ${envData.model})`, ts: new Date().toISOString() },
+            ...prev,
+          ]);
+        } else if (envData.error) {
+          setLogLines(prev => [
+            { type: 'warn', message: `Could not update .env: ${envData.error}`, ts: new Date().toISOString() },
+            ...prev,
+          ]);
+        }
+      } catch {
+        setLogLines(prev => [
+          { type: 'warn', message: 'Could not update .env (API Provider may not be configured yet)', ts: new Date().toISOString() },
+          ...prev,
+        ]);
+      }
+
       const response = await fetch('/api/agents/provision', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ force, giveDbQueryToolToAthena: giveDbQuery, stream: true }),
       });
 
-      // Non-OK response (e.g. 400 missing env vars) — fall back to JSON
+      // Non-OK response (e.g. 400 no API key configured) — fall back to JSON
       if (!response.ok) {
         const data = await response.json();
-        if (data.missing && data.missing.length > 0) {
-          toast.error(
-            `Missing required environment variables: ${data.missing.join(', ')}. Please add them to your .env file, restart the app, and try again.`,
-            { duration: 5000 }
-          );
-        } else {
-          toast.error(data.message || 'Failed to provision agents');
-        }
+        toast.error(data.message || 'Failed to provision agents', { duration: 5000 });
         setLogStatus('error');
         setLogLines([{
           type: 'error',
@@ -310,7 +351,7 @@ export default function AgentsPage() {
         <div className="fixed inset-0 bg-black/40 z-40" onClick={handleClose} />
 
         {/* Log panel — right half (full width on mobile) */}
-        <div className="fixed right-0 top-0 bottom-0 w-full md:w-1/2 z-50 flex flex-col shadow-2xl">
+        <div id="log-panel" className="fixed right-0 top-0 bottom-0 w-full md:w-1/2 z-50 flex flex-col shadow-2xl">
           {/* Header bar */}
           <div className={`${headerBg} px-4 py-3 flex items-center justify-between text-white`}>
             <div className="flex items-center gap-2">
@@ -328,6 +369,7 @@ export default function AgentsPage() {
                 Copy
               </button>
               <button
+                id="log-panel-close-button"
                 onClick={handleClose}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm bg-white/20 hover:bg-white/30 transition-colors ${
                   provisioning ? 'opacity-50 cursor-not-allowed' : ''
@@ -387,8 +429,8 @@ export default function AgentsPage() {
       <div className="w-full py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-foreground mb-4">Welcome to AI Crew</h1>
+          <div id="agents-empty-state" className="text-center mb-12">
+            <h1 id="agents-page-heading" className="text-4xl font-bold text-foreground mb-4">Welcome to AI Crew</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               No agents found. Provision the FlowKraft AI Crew to get started.
             </p>
@@ -397,6 +439,7 @@ export default function AgentsPage() {
           {/* Provision Button */}
           <div className="flex justify-center">
             <Button
+              id="btn-provision-agents"
               size="lg"
               onClick={() => setShowProvisionConfirm(true)}
               disabled={provisioning}
@@ -420,17 +463,17 @@ export default function AgentsPage() {
           <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-card border border-border rounded-lg p-6 text-center">
               <h3 className="font-semibold text-foreground mb-2">Athena</h3>
-              <p className="text-sm text-muted-foreground font-medium">ReportBurster Guru & Data Expert</p>
-              <p className="text-xs text-muted-foreground mt-2">Ask about ReportBurster features, SQL queries, data modeling, database connections, and reporting solutions</p>
+              <p className="text-sm text-muted-foreground font-medium">ReportBurster Guru & Data Architect/Expert</p>
+              <p className="text-xs text-muted-foreground mt-2">Get help mastering ReportBurster, designing data models, writing SQL, architecting business intelligence and reporting solutions</p>
             </div>
             <div className="bg-card border border-border rounded-lg p-6 text-center">
               <h3 className="font-semibold text-foreground mb-2">Hephaestus</h3>
-              <p className="text-sm text-muted-foreground font-medium">Automation & Backend Architect</p>
+              <p className="text-sm text-muted-foreground font-medium">Automation & Backend Expert</p>
               <p className="text-xs text-muted-foreground mt-2">Ask about scheduled jobs, ETL pipelines, cron automations, Groovy scripts, and backend integrations</p>
             </div>
             <div className="bg-card border border-border rounded-lg p-6 text-center">
               <h3 className="font-semibold text-foreground mb-2">Hermes</h3>
-              <p className="text-sm text-muted-foreground font-medium">Grails Guru & Portal Builder</p>
+              <p className="text-sm text-muted-foreground font-medium">Grails Guru & Web Portal Expert</p>
               <p className="text-xs text-muted-foreground mt-2">Ask about building dashboards, admin panels, customer portals, and self-service web applications</p>
             </div>
           </div>
@@ -448,7 +491,7 @@ export default function AgentsPage() {
 
         {/* Provision Confirmation Dialog */}
         <Dialog open={showProvisionConfirm} onOpenChange={setShowProvisionConfirm}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent id="dialog-provision-confirm" className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Provision AI Crew?</DialogTitle>
               <DialogDescription>
@@ -457,6 +500,7 @@ export default function AgentsPage() {
             </DialogHeader>
             <div className="flex justify-end gap-3 mt-4">
               <Button
+                id="btn-provision-confirm-yes"
                 onClick={() => {
                   setShowProvisionConfirm(false);
                   handleProvisionAgents();
@@ -488,7 +532,7 @@ export default function AgentsPage() {
       <div className="mb-8 max-w-7xl mx-auto">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">The Oracles of Ancient Greece</h1>
+            <h1 id="agents-page-heading" className="text-3xl font-bold text-foreground mb-2">The Oracles of Ancient Greece</h1>
             <p className="text-muted-foreground">
               FlowKraft&apos;s council of AI oracles, each a master of their domain. Seek their counsel or explore their workspace.
             </p>
@@ -506,7 +550,7 @@ export default function AgentsPage() {
       </div>
 
       {/* Agents Table */}
-      <div className="max-w-7xl mx-auto mb-6">
+      <div id="agents-table" className="max-w-7xl mx-auto mb-6">
         <div className="bg-card border border-border rounded-lg overflow-hidden">
           {/* Table Header */}
           <div className="bg-muted/50 px-6 py-3 border-b border-border">
@@ -526,6 +570,7 @@ export default function AgentsPage() {
               return (
                 <div
                   key={agent.id}
+                  id={`agent-row-${agent.name.toLowerCase().replace(/\s+/g, '-')}`}
                   className={`grid grid-cols-12 gap-4 px-6 py-4 hover:bg-muted/30 transition-colors ${
                     athena ? 'bg-rb-cyan/5 border-l-2 border-l-rb-cyan' : ''
                   }`}
@@ -604,6 +649,7 @@ export default function AgentsPage() {
       {/* Action Buttons */}
       <div className="max-w-7xl mx-auto flex gap-3">
         <Button
+          id="btn-view-workspaces"
           variant="outline"
           size="lg"
           onClick={() => router.push('/workspaces')}
@@ -715,72 +761,123 @@ export default function AgentsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Update Agents Confirmation Dialog */}
+      {/* Settings Dialog (Update Agents + API Provider tabs) */}
       <Dialog open={showUpdateConfirm} onOpenChange={setShowUpdateConfirm}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent id="dialog-update-confirm" className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Update Agents?</DialogTitle>
-            <DialogDescription>
-              This will re-provision your AI crew agents. Existing agent configurations
-              and memory blocks will be updated to match the latest definitions.
+            <DialogTitle>Settings</DialogTitle>
+            <DialogDescription className="sr-only">
+              Configure agent updates and LLM API provider settings
             </DialogDescription>
           </DialogHeader>
 
-          {/* Give db_query tool to Athena checkbox */}
-          <label className="flex items-start gap-3 mt-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={giveDbQueryToolToAthena}
-              onChange={(e) => setGiveDbQueryToolToAthena(e.target.checked)}
-              className="mt-0.5 rounded border-border text-rb-cyan focus:ring-rb-cyan cursor-pointer"
-            />
-            <div>
-              <span className="text-sm font-medium text-foreground">Give db_query tool to Athena</span>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                When checked, Athena gets READ-ONLY access to query your
-                ReportBurster database connections.{' '}
-                <strong className="text-foreground">When unchecked, no AI agent
-                has any database access whatsoever.</strong>
-              </p>
-            </div>
-          </label>
-
-          {/* Force checkbox */}
-          <label className="flex items-start gap-3 mt-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={forceUpdate}
-              onChange={(e) => setForceUpdate(e.target.checked)}
-              className="mt-0.5 rounded border-border text-rb-cyan focus:ring-rb-cyan cursor-pointer"
-            />
-            <div>
-              <span className="text-sm font-medium text-foreground">Force recreate</span>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Delete and recreate all agents from scratch. Use this if agents are
-                in a broken state. All conversation history will be lost.
-              </p>
-            </div>
-          </label>
-
-          <div className="flex justify-end gap-3 mt-4">
-            <Button
-              onClick={() => {
-                setShowUpdateConfirm(false);
-                handleProvisionAgents(forceUpdate, giveDbQueryToolToAthena);
-              }}
-              disabled={provisioning}
-              className="bg-rb-cyan hover:bg-rb-cyan/90 text-white"
+          {/* Tab bar */}
+          <div className="flex border-b border-border -mx-6 px-6">
+            <button
+              type="button"
+              onClick={() => setSettingsTab('update')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                settingsTab === 'update'
+                  ? 'border-rb-cyan text-rb-cyan'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
             >
-              Yes, Update Agents
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowUpdateConfirm(false)}
-              disabled={provisioning}
+              Update Agents
+            </button>
+            <button
+              type="button"
+              onClick={() => setSettingsTab('provider')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                settingsTab === 'provider'
+                  ? 'border-rb-cyan text-rb-cyan'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
             >
-              Cancel
-            </Button>
+              API Provider
+            </button>
           </div>
+
+          {/* Tab: Update Agents */}
+          {settingsTab === 'update' && (
+            <div>
+              <p className="text-sm text-muted-foreground mb-4">
+                This will re-provision your AI crew agents. Existing agent configurations
+                and memory blocks will be updated to match the latest definitions.
+              </p>
+
+              {/* Give db_query tool to Athena checkbox */}
+              <label className="flex items-start gap-3 mt-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={giveDbQueryToolToAthena}
+                  onChange={(e) => setGiveDbQueryToolToAthena(e.target.checked)}
+                  className="mt-0.5 rounded border-border text-rb-cyan focus:ring-rb-cyan cursor-pointer"
+                />
+                <div>
+                  <span className="text-sm font-medium text-foreground">Give db_query tool to Athena</span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    When checked, Athena gets READ-ONLY access to query your
+                    ReportBurster database connections.{' '}
+                    <strong className="text-foreground">When unchecked, no AI agent
+                    has any database access whatsoever.</strong>
+                  </p>
+                </div>
+              </label>
+
+              {/* Force checkbox */}
+              <label className="flex items-start gap-3 mt-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={forceUpdate}
+                  onChange={(e) => setForceUpdate(e.target.checked)}
+                  className="mt-0.5 rounded border-border text-rb-cyan focus:ring-rb-cyan cursor-pointer"
+                />
+                <div>
+                  <span className="text-sm font-medium text-foreground">Force recreate</span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Delete and recreate all agents from scratch. Use this if agents are
+                    in a broken state. All conversation history will be lost.
+                  </p>
+                </div>
+              </label>
+
+              <div className="flex justify-end gap-3 mt-4">
+                <Button
+                  id="btn-update-confirm-yes"
+                  onClick={() => {
+                    setShowUpdateConfirm(false);
+                    handleProvisionAgents(forceUpdate, giveDbQueryToolToAthena);
+                  }}
+                  disabled={provisioning}
+                  className="bg-rb-cyan hover:bg-rb-cyan/90 text-white"
+                >
+                  Yes, Update Agents
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowUpdateConfirm(false)}
+                  disabled={provisioning}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Tab: API Provider */}
+          {settingsTab === 'provider' && (
+            <LLMProviderForm
+              fullConfig={llmConfig}
+              onSave={async (newFullConfig) => {
+                await setSetting(
+                  SETTING_KEYS.LLM_PROVIDER,
+                  JSON.stringify(newFullConfig),
+                  'LLM API provider configuration'
+                );
+                setLlmConfig(newFullConfig);
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

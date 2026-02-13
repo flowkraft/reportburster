@@ -364,9 +364,12 @@ export class ConnectionDetailsComponent implements OnInit {
     this.isModalDbConnectionVisible = false;
   }
 
-  onDbTypeChange(newType: string): void {
+  async onDbTypeChange(newType: string): Promise<void> {
     const dbServer =
       this.modalConnectionInfo.database.documentburster.connection.databaseserver;
+
+    // CRITICAL: Explicitly set the type property FIRST so updateModelAndForm() reads correct value
+    dbServer.type = newType;
 
     if (newType === 'sqlite' || newType === 'duckdb') {
       dbServer.database = '';
@@ -375,6 +378,9 @@ export class ConnectionDetailsComponent implements OnInit {
       dbServer.userid = '';
       dbServer.userpassword = '';
       dbServer.usessl = false;
+
+      // Rebuild folder path with correct vendor suffix (async - will complete in background)
+      await this.updateModelAndForm();
       return;
     }
 
@@ -388,6 +394,9 @@ export class ConnectionDetailsComponent implements OnInit {
       dbServer.userpassword = d.userpassword;
       dbServer.usessl = !!d.usessl;
     }
+
+    // Rebuild folder path with correct vendor suffix (async - will complete in background)
+    await this.updateModelAndForm();
   }
 
   openSqliteFileBrowser() {
@@ -1408,19 +1417,6 @@ export class ConnectionDetailsComponent implements OnInit {
           this.showSchemaTreeSelect = true;
 
           this.messagesService.showInfo('Database schema loaded.');
-
-          // Generate a lightweight table-names.txt for AI agents to quickly discover table/view names
-          const tables = (parsed.tables || []).filter((t: any) => (t.tableType || 'TABLE').toUpperCase() === 'TABLE');
-          const views = (parsed.tables || []).filter((t: any) => (t.tableType || '').toUpperCase() === 'VIEW');
-          const tableLines = tables.map((t: any) => t.tableName).sort();
-          const viewLines = views.map((t: any) => `${t.tableName} (VIEW)`).sort();
-          const tableNamesContent = [...tableLines, ...viewLines].join('\n');
-          const tableNamesPath = `config/connections/${connectionCode}/${connectionCode}-table-names.txt`;
-          try {
-            await this.fsService.writeAsync(tableNamesPath, tableNamesContent);
-          } catch (tableNamesErr) {
-            console.error('Error saving table-names.txt:', tableNamesErr);
-          }
         }
       }
     } catch (err) {

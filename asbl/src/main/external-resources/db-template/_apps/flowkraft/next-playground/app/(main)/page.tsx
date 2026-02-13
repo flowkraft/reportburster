@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Table, BarChart3, Grid3x3, Sliders, FileText, Layout } from "lucide-react";
+import { Table, BarChart3, Grid3x3, Sliders, FileText, Database, Layout } from "lucide-react";
 
 export default function Home() {
   const components = [
@@ -34,6 +34,12 @@ export default function Home() {
       description: "Full report examples",
     },
     {
+      href: "/data-warehouse",
+      icon: Database,
+      title: "Data Warehouse",
+      description: "Explore & query data",
+    },
+    {
       href: "/your-canvas",
       icon: Layout,
       title: "Your Canvas",
@@ -61,7 +67,7 @@ export default function Home() {
         <h5 className="text-center text-muted-foreground mb-6 text-sm font-medium">
           Explore Components
         </h5>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {components.map((component) => {
             const Icon = component.icon;
             return (

@@ -435,7 +435,7 @@ export async function provisionAllAgents(opts: { force?: boolean; giveDbQueryToo
         const createPayload: AgentCreateParams = {
           name: cfg.displayName,
           description: cfg.description,
-          model: cfg.model,
+          model: process.env.LLM_MODEL_ID || cfg.model,
           tags: [...(cfg.tags || [])],
           system: cfg.systemPrompt,
           // Keep agentKey in metadata; do not duplicate it inside metadata.tags
@@ -503,7 +503,8 @@ export async function provisionAllAgents(opts: { force?: boolean; giveDbQueryToo
       try {
         const desiredPayload: Record<string, unknown> = {};
         if (agent && typeof cfg.systemPrompt === 'string' && agent.system !== cfg.systemPrompt) desiredPayload.system = cfg.systemPrompt;
-        if (agent && typeof cfg.model === 'string' && agent.model !== cfg.model) desiredPayload.model = cfg.model;
+        const effectiveModel = process.env.LLM_MODEL_ID || cfg.model;
+        if (agent && typeof effectiveModel === 'string' && agent.model !== effectiveModel) desiredPayload.model = effectiveModel;
         if (agent && typeof cfg.displayName === 'string' && agent.name !== cfg.displayName) desiredPayload.name = cfg.displayName;
         if (agent && typeof cfg.options?.enableSleeptime === 'boolean' && agent.enable_sleeptime !== cfg.options?.enableSleeptime)
           desiredPayload.enable_sleeptime = cfg.options.enableSleeptime;

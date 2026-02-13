@@ -84,7 +84,7 @@
           z-index: 10000;
         }
       </style>
-      <div *ngFor="let app of visibleApps" class="panel app-card-expanded" 
+      <div *ngFor="let app of visibleApps; trackBy: trackByAppId" class="panel app-card-expanded"
            [id]="'appPanel_' + sanitizeAppId(app.id)"
            [ngClass]="{
   'panel-info': isAppRunning(app),
@@ -470,7 +470,7 @@
       <span class="caret"></span>
     </button>
     <ul class="dropdown-menu" role="menu">
-      <li role="menuitem" *ngFor="let app of visibleApps" [id]="'appsManagerApp' + sanitizeAppId(app.id)">
+      <li role="menuitem" *ngFor="let app of visibleApps; trackBy: trackByAppId" [id]="'appsManagerApp' + sanitizeAppId(app.id)">
         <a class="dropdown-item" href="javascript:void(0)">
           <!-- Stop icon to the left of app name when running (dropdown mode) -->
           <span *ngIf="app.state === 'running' && app.type !== 'desktop'"

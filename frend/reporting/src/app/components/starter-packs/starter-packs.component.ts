@@ -257,6 +257,10 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
           if (!id) return false;
           // Check for exact match or rb-{id} or -{id} suffix
           if (name === id || name === `rb-${id}` || name.endsWith(`-${id}`)) return true;
+          // Also match Docker container naming convention: rb-{packName}-{target}
+          const packName = (pack.packName || '').toLowerCase();
+          const target = (pack.target || '').toLowerCase();
+          if (packName && target && name === `rb-${packName}-${target}`) return true;
 
           return false;
         });

@@ -1,6 +1,7 @@
 import { Browser, BrowserContext, Page, chromium } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { FluentTester } from '../fluent-tester';
+import { AppsTestHelper } from '../apps-test-helper';
 import { Constants } from '../../utils/constants';
 
 import { spawnSync } from 'child_process';
@@ -22,8 +23,9 @@ export class SelfServicePortalsTestHelper {
   // Paystubs custom post type URL in admin
   static readonly WP_ADMIN_PAYSTUBS_URL = `${SelfServicePortalsTestHelper.WP_BASE_URL}/wp-admin/edit.php?post_type=paystub`;
 
-  // Next.js Playground Constants (formerly Grails Playground)
-  static readonly GRAILS_BASE_URL = 'http://localhost:8490'; // Points to grails-webportal (demo pages)
+  // Playground Constants
+  static readonly GRAILS_BASE_URL = 'http://localhost:8400'; // Points to grails-playground
+  static readonly NEXT_BASE_URL = 'http://localhost:8420'; // Points to next-playground
 
   // App IDs
   static readonly APP_ID_WORDPRESS = 'cms-webportal';
@@ -83,25 +85,7 @@ export class SelfServicePortalsTestHelper {
     appId: string,
     timeout: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS,
   ): FluentTester {
-    const btnSel = `#btnStartStop_${appId}`;
-    const stateSel = `#appState_${appId}`;
-    const spinnerSel = `#appSpinner_${appId}`;
-
-    return ft
-      .consoleLog(`Stopping app '${appId}'...`)
-      .waitOnElementToBecomeVisible(btnSel, timeout)
-      .waitOnElementToBecomeEnabled(btnSel, timeout)
-      .click(btnSel)
-      .confirmDialogShouldBeVisible()
-      .clickYesDoThis()
-      .waitOnElementToBecomeDisabled(btnSel, timeout)
-      .waitOnElementToBecomeVisible(spinnerSel, timeout)
-      .waitOnElementToContainText(stateSel, 'stopping', timeout)
-      .consoleLog(`App '${appId}' is stopping...`)
-      .waitOnElementToBecomeEnabled(btnSel, timeout)
-      .waitOnElementToContainText(stateSel, 'stopped', timeout)
-      .waitOnElementToContainText(btnSel, 'Start', timeout)
-      .consoleLog(`App '${appId}' is stopped.`);
+    return AppsTestHelper.stopApp(ft, appId, timeout);
   }
 
   /**
@@ -575,8 +559,8 @@ export class SelfServicePortalsTestHelper {
    * Assert rb-tabulator web component on the Tabulator page.
    * NOTE: Tabulator config is OPTIONAL - this demo uses defaults (no config file).
    */
-  static async assertRbTabulatorComponent(page: Page): Promise<void> {
-    const url = `${SelfServicePortalsTestHelper.GRAILS_BASE_URL}/tabulator`;
+  static async assertRbTabulatorComponent(page: Page, baseUrl: string = SelfServicePortalsTestHelper.GRAILS_BASE_URL): Promise<void> {
+    const url = `${baseUrl}/tabulator`;
     const reportCode = 'g-scr2htm-trend';
     console.log('Grails Tabulator: Checking rb-tabulator component...');
 
@@ -626,8 +610,8 @@ export class SelfServicePortalsTestHelper {
    * Assert rb-chart web component on the Charts page.
    * Chart REQUIRES a config file (chart-config.groovy).
    */
-  static async assertRbChartComponent(page: Page): Promise<void> {
-    const url = `${SelfServicePortalsTestHelper.GRAILS_BASE_URL}/charts`;
+  static async assertRbChartComponent(page: Page, baseUrl: string = SelfServicePortalsTestHelper.GRAILS_BASE_URL): Promise<void> {
+    const url = `${baseUrl}/charts`;
     const reportCode = 'g-scr2htm-trend';
     console.log('Grails Charts: Checking rb-chart component...');
 
@@ -670,22 +654,29 @@ export class SelfServicePortalsTestHelper {
    * Assert rb-pivot-table web component on the Pivot Tables page.
    * Pivot table REQUIRES a config file (pivot-config.groovy).
    */
-  static async assertRbPivotTableComponent(page: Page): Promise<void> {
-    const url = `${SelfServicePortalsTestHelper.GRAILS_BASE_URL}/pivottables`;
+  static async assertRbPivotTableComponent(page: Page, baseUrl: string = SelfServicePortalsTestHelper.GRAILS_BASE_URL, pivotTablesPath: string = '/pivot-tables'): Promise<void> {
+    const url = `${baseUrl}${pivotTablesPath}`;
     const reportCode = 'piv-sales-region-prod-qtr';
-    console.log('Grails Pivot Tables: Checking rb-pivot-table component...');
+    console.log('Pivot Tables: Checking rb-pivot-table component...');
 
     await page.goto(url, { timeout: 30000 });
     await page.waitForLoadState('networkidle');
 
     // ---- DOM Presence ----
     await expect(page.locator('rb-pivot-table')).toBeVisible({ timeout: 15000 });
-    console.log('Grails Pivot Tables: DOM - rb-pivot-table element visible ✓');
+    console.log('Pivot Tables: DOM - rb-pivot-table element visible ✓');
 
     // ---- Data Assertions ----
     // PivotTable.js renders .pvtTable or .pvtUi or .pvtRendererArea
     await expect(page.locator('.pvtTable, .pvtUi, .pvtRendererArea').first()).toBeVisible({ timeout: 20000 });
-    console.log('Grails Pivot Tables: Data - pivot table UI rendered ✓');
+    console.log('Pivot Tables: Data - pivot table UI rendered ✓');
+
+    // ---- Raw Data Tab ----
+    await page.click('#rawdata-tab');
+    await page.waitForTimeout(1000);
+    await expect(page.locator('#rawDataTable')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#rawDataTable .tabulator-row').first()).toBeVisible({ timeout: 15000 });
+    console.log('Pivot Tables: Raw Data tab - rb-tabulator rendered with data ✓');
 
     // ---- Config Assertions ----
     // Pivot table REQUIRES config - verify it loads
@@ -696,7 +687,7 @@ export class SelfServicePortalsTestHelper {
     expect(configText?.length).toBeGreaterThan(50);
     // Should contain pivot-specific config keywords
     expect(configText?.toLowerCase()).toMatch(/pivot|rows|cols|aggregator|vals/i);
-    console.log('Grails Pivot Tables: Config - pivot configuration loaded ✓');
+    console.log('Pivot Tables: Config - pivot configuration loaded ✓');
 
     // ---- Usage Assertions ----
     await page.click('#usage-tab');
@@ -704,7 +695,81 @@ export class SelfServicePortalsTestHelper {
     const usageText = await page.locator('#usageCode').textContent();
     expect(usageText).toContain('rb-pivot-table');
     expect(usageText).toContain(reportCode);
-    console.log('Grails Pivot Tables: Usage - HTML snippet valid ✓');
+    console.log('Pivot Tables: Usage - HTML snippet valid ✓');
+  }
+
+  // ----------------------------------------------------------
+  // Data Warehouse Page (Browser/DuckDB/ClickHouse engines)
+  // ----------------------------------------------------------
+  /**
+   * Assert data warehouse page — 3 engine pivots, config, and usage tabs.
+   * All 3 engines are displayed vertically (no sub-tabs).
+   */
+  static async assertDataWarehousePage(
+    page: Page,
+    baseUrl: string,
+    dataWarehousePath: string,
+  ): Promise<void> {
+    const url = `${baseUrl}${dataWarehousePath}`;
+    console.log('Data Warehouse: Checking page...');
+
+    await page.goto(url, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+
+    // ---- Engine Sections Visible ----
+    await expect(page.locator('#engine-browser')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#engine-duckdb')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#engine-clickhouse')).toBeVisible({ timeout: 15000 });
+    console.log('Data Warehouse: DOM - all 3 engine sections visible ✓');
+
+    // ---- Browser Pivot Renders ----
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, 'warehousePivotBrowser');
+    const grandTotal = await SelfServicePortalsTestHelper.getPivotGrandTotal(page, 'warehousePivotBrowser');
+    expect(grandTotal).toBeGreaterThan(0);
+    console.log(`Data Warehouse: Browser pivot rendered, grand total: $${grandTotal.toLocaleString()} ✓`);
+
+    // ---- DuckDB Pivot Renders ----
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, 'warehousePivotDuckdb');
+    console.log('Data Warehouse: DuckDB pivot rendered ✓');
+
+    // ---- ClickHouse Warning Visible (pack not running during smoke test) ----
+    await expect(page.locator('#clickhouseWarning')).toBeVisible({ timeout: 5000 });
+    console.log('Data Warehouse: ClickHouse warning visible (pack not running) ✓');
+
+    // ---- Raw Data Tab (server-side pagination) ----
+    await page.click('#rawdata-tab');
+    await page.waitForTimeout(2000);
+    await expect(page.locator('#rawDataTable')).toBeVisible({ timeout: 15000 });
+    const rawDataInfo = await page.locator('#rawDataInfo').textContent();
+    expect(rawDataInfo).toContain('Showing');
+    await expect(page.locator('#rawDataPagination')).toBeVisible({ timeout: 5000 });
+    // Change page size to 50 and verify reload
+    await page.selectOption('#rawDataPageSize', '50');
+    await page.waitForTimeout(2000);
+    const updatedInfo = await page.locator('#rawDataInfo').textContent();
+    expect(updatedInfo).toContain('Showing');
+    expect(updatedInfo).toMatch(/1[-–]50/);  // Match both hyphen (-) and en-dash (–)
+    console.log(`Data Warehouse: Raw Data - pagination works (${updatedInfo}) ✓`);
+
+    // ---- Config Tab ----
+    await page.click('#config-tab');
+    await page.waitForTimeout(500);
+    await expect(page.locator('#configCodeBrowser')).not.toContainText('Loading configuration...', { timeout: 10000 });
+    await expect(page.locator('#configCodeDuckdb')).not.toContainText('Loading configuration...', { timeout: 10000 });
+    const configText = await page.locator('#configCodeBrowser').textContent();
+    expect(configText?.length).toBeGreaterThan(50);
+    console.log('Data Warehouse: Config - engine configurations loaded ✓');
+
+    // ---- Usage Tab ----
+    await page.click('#usage-tab');
+    await page.waitForTimeout(300);
+    const browserUsage = await page.locator('#usageCodeBrowser').textContent();
+    expect(browserUsage).toContain('piv-northwind-warehouse-browser');
+    const duckdbUsage = await page.locator('#usageCodeDuckdb').textContent();
+    expect(duckdbUsage).toContain('piv-northwind-warehouse-duckdb');
+    const clickhouseUsage = await page.locator('#usageCodeClickhouse').textContent();
+    expect(clickhouseUsage).toContain('piv-northwind-warehouse-clickhouse');
+    console.log('Data Warehouse: Usage - all 3 engine snippets valid ✓');
   }
 
   // ----------------------------------------------------------
@@ -717,7 +782,7 @@ export class SelfServicePortalsTestHelper {
    * @param componentId - ID of the rb-pivot-table element
    * @param engine - 'browser' (default, PivotTable.js) or 'duckdb' (server-side)
    */
-  static async setPivotEngine(page: Page, componentId: string, engine: 'browser' | 'duckdb'): Promise<void> {
+  static async setPivotEngine(page: Page, componentId: string, engine: 'browser' | 'duckdb' | 'clickhouse'): Promise<void> {
     console.log(`Setting pivot engine to '${engine}' for #${componentId}...`);
     await page.evaluate(({ id, eng }) => {
       const component = document.getElementById(id) as any;
@@ -741,11 +806,39 @@ export class SelfServicePortalsTestHelper {
     await expect(page.locator(`#${componentId}`)).toBeVisible({ timeout: 15000 });
 
     // Wait for PivotTable.js UI to be rendered (either .pvtTable or .pvtUi)
+    // Server-side engines (ClickHouse) can take 20+ seconds for complex queries
+    // (e.g., adding employee_name dimension: 640→1825 rows, ~22s query time).
+    // The component hides .pvtUi during loading, so this timeout must exceed the slowest query.
     const pvtSelector = `#${componentId} .pvtTable, #${componentId} .pvtUi, #${componentId} .pvtRendererArea`;
-    await expect(page.locator(pvtSelector).first()).toBeVisible({ timeout: 20000 });
+    await expect(page.locator(pvtSelector).first()).toBeVisible({ timeout: 60000 });
 
-    // Wait for actual data cells to appear
-    await expect(page.locator(`#${componentId} .pvtTable tbody tr`).first()).toBeVisible({ timeout: 20000 });
+    // Check if rendering as chart (SVG/Canvas) or table
+    const isChart = await page.locator(`#${componentId} svg, #${componentId} canvas`).first().isVisible().catch(() => false);
+
+    if (isChart) {
+      // For charts, wait for SVG or Canvas element
+      await expect(page.locator(`#${componentId} svg, #${componentId} canvas`).first()).toBeVisible({ timeout: 20000 });
+      console.log(`Chart renderer detected - SVG/Canvas visible`);
+    } else {
+      // For table renderers, wait for actual DATA (not just the empty grand totals row).
+      // Server-side engines (DuckDB/ClickHouse) render an empty table first (Phase 1),
+      // then re-render after the server response arrives (Phase 2).
+      // Phase 1 empty render has ONLY: <th.pvtTotalLabel> + <td.pvtGrandTotal>
+      //   (no pvtRowLabel, no pvtVal, no pvtTotal — because rowKeys=[] and colKeys=[])
+      // Phase 2 (with data) has at least one of:
+      //   - th.pvtRowLabel: data rows when row dimensions exist
+      //   - td.pvtVal: data cells when BOTH row and col dimensions exist
+      //   - td.pvtTotal: column totals in grand totals row (when col dimensions exist,
+      //     even if row dimensions are empty — covers flat pivots with no row dims)
+      const dataSelector = [
+        `#${componentId} .pvtTable tbody tr th.pvtRowLabel`,
+        `#${componentId} .pvtTable tbody tr td.pvtVal`,
+        `#${componentId} .pvtTable tbody tr td.pvtTotal`,
+      ].join(', ');
+      await expect(
+        page.locator(dataSelector).first()
+      ).toBeVisible({ timeout: 30000 });
+    }
 
     // Additional wait for any animations/transitions
     await page.waitForTimeout(1500);
@@ -756,12 +849,87 @@ export class SelfServicePortalsTestHelper {
    * Get the grand total value from a pivot table.
    * @param page - Playwright page object
    * @param componentId - ID of the rb-pivot-table element
+   * @param previousValue - Optional previous value to verify change (waits for value to differ)
    * @returns The grand total value as a number
    */
-  static async getPivotGrandTotal(page: Page, componentId: string): Promise<number> {
-    const totalText = await page.locator(`#${componentId} .pvtGrandTotal, #${componentId} .pvtTotal`).last().textContent();
+  static async getPivotGrandTotal(page: Page, componentId: string, previousValue?: number): Promise<number> {
+    // If previousValue is provided, wait for the value to actually change
+    if (previousValue !== undefined) {
+      console.log(`[getPivotGrandTotal] Waiting for grand total to change from ${previousValue}...`);
+
+      // Retry up to 10 times (10 seconds) waiting for the value to change
+      for (let attempt = 1; attempt <= 10; attempt++) {
+        const totalText = await page.evaluate(
+          ({ id }) => {
+            const component = document.getElementById(id);
+            if (!component) return '0';
+
+            const root = component.shadowRoot || component;
+            const table = root.querySelector('.pvtTable');
+            if (!table) return '0';
+
+            const grandTotalCell = table.querySelector('.pvtGrandTotal') as HTMLElement;
+            return grandTotalCell?.textContent?.trim() || '0';
+          },
+          { id: componentId }
+        );
+
+        const numericValue = totalText?.replace(/[^0-9.-]/g, '') || '0';
+        const currentValue = parseFloat(numericValue);
+
+        // Reject 0 as a valid new value — server-side engines briefly render an empty table
+        // (Phase 1) with grand total = 0 before the actual data arrives (Phase 2)
+        if (currentValue !== previousValue && currentValue > 0) {
+          console.log(`[getPivotGrandTotal] Value changed from ${previousValue} to ${currentValue} after ${attempt} attempts ✓`);
+          return currentValue;
+        }
+
+        console.log(`[getPivotGrandTotal] Attempt ${attempt}/10: Value is ${currentValue} (waiting for non-zero change from ${previousValue})...`);
+        await page.waitForTimeout(1000);
+      }
+
+      console.error(`[getPivotGrandTotal] Value did not change after 10 seconds, still ${previousValue}`);
+      return previousValue;
+    }
+
+    // No previous value - just read the current value
+    const totalText = await page.evaluate(
+      ({ id }) => {
+        const component = document.getElementById(id);
+        if (!component) {
+          console.error(`[getPivotGrandTotal] Component #${id} not found`);
+          return '0';
+        }
+
+        // Access Shadow DOM
+        const root = component.shadowRoot || component;
+        const table = root.querySelector('.pvtTable');
+        if (!table) {
+          console.error(`[getPivotGrandTotal] .pvtTable not found`);
+          return '0';
+        }
+
+        // The grand total cell is the ONLY cell with class .pvtGrandTotal
+        // See pivot-renderers.ts line 227: html += `<td class="pvtGrandTotal">${grandTotalAggregator.format(...)}</td>`
+        // Row/column totals use .pvtTotal (lines 209, 224), so we MUST NOT use that selector
+        const grandTotalCell = table.querySelector('.pvtGrandTotal') as HTMLElement;
+
+        if (grandTotalCell) {
+          const value = grandTotalCell.textContent?.trim() || '0';
+          console.log(`[getPivotGrandTotal] Found grand total: "${value}"`);
+          return value;
+        }
+
+        console.error(`[getPivotGrandTotal] .pvtGrandTotal cell not found in pivot table`);
+        return '0';
+      },
+      { id: componentId }
+    );
+
     const numericValue = totalText?.replace(/[^0-9.-]/g, '') || '0';
-    return parseFloat(numericValue);
+    const result = parseFloat(numericValue);
+    console.log(`[getPivotGrandTotal] Final result: ${result}`);
+    return result;
   }
 
   /**
@@ -778,38 +946,137 @@ export class SelfServicePortalsTestHelper {
     rowLabel: string,
     colLabel?: string
   ): Promise<number> {
-    const cellText = await page.evaluate(
+    const result = await page.evaluate(
       ({ id, row, col }) => {
         const component = document.getElementById(id);
-        if (!component) return '0';
-
-        const table = component.querySelector('.pvtTable') as HTMLTableElement;
-        if (!table) return '0';
-
-        // Find row by label
-        const rows = Array.from(table.querySelectorAll('tbody tr'));
-        const targetRow = rows.find(r => r.textContent?.includes(row));
-        if (!targetRow) return '0';
-
-        if (!col) {
-          // Get row total (last cell)
-          const cells = targetRow.querySelectorAll('td');
-          return cells[cells.length - 1]?.textContent || '0';
+        if (!component) {
+          return { value: '0', debug: `Component #${id} not found` };
         }
 
-        // Find column index by label
-        const headers = Array.from(table.querySelectorAll('thead th'));
-        const colIndex = headers.findIndex(h => h.textContent?.includes(col));
-        if (colIndex === -1) return '0';
+        // Access Shadow DOM
+        const root = component.shadowRoot || component;
+        const table = root.querySelector('.pvtTable') as HTMLTableElement;
+        if (!table) {
+          return { value: '0', debug: `.pvtTable not found (shadowRoot=${!!component.shadowRoot})` };
+        }
 
-        const cells = targetRow.querySelectorAll('td');
-        return cells[colIndex]?.textContent || '0';
+        // Use :scope > tbody > tr to ONLY get direct tbody children of this table,
+        // not rows from the outer .pvtUi table's tbody (inner table is nested inside it)
+        const tbody = table.querySelector(':scope > tbody');
+        if (!tbody) {
+          return { value: '0', debug: `No direct tbody found in .pvtTable` };
+        }
+        const rows = Array.from(tbody.querySelectorAll(':scope > tr'));
+
+        // Grand totals row ("Totals") is always the LAST tbody row.
+        // Must handle it as a special case because the text "Totals" also appears in
+        // the thead as a column header (<th class="pvtTotalLabel" rowspan="2">Totals</th>),
+        // and the nested table structure can cause querySelector to find that one first.
+        if (row === 'Totals') {
+          const lastRow = rows[rows.length - 1];
+          if (!lastRow) {
+            return { value: '0', debug: `No rows in tbody` };
+          }
+          const totalLabel = lastRow.querySelector('th.pvtTotalLabel');
+          if (!totalLabel || totalLabel.textContent?.trim() !== 'Totals') {
+            return { value: '0', debug: `Last row is not grand totals row` };
+          }
+          if (!col) {
+            // Return the grand total (last cell)
+            const grandTotal = lastRow.querySelector('td.pvtGrandTotal');
+            return { value: grandTotal?.textContent || '0', debug: `grandTotalsRow lastCell` };
+          }
+          // Find column index from thead pvtColLabel headers
+          const colHeaders = Array.from(table.querySelectorAll('thead th.pvtColLabel'));
+          const colIndex = colHeaders.findIndex(h => h.textContent?.trim() === col);
+          if (colIndex === -1) {
+            const availCols = colHeaders.slice(0, 10).map(h => h.textContent?.trim()).join(', ');
+            return { value: '0', debug: `Col '${col}' not in ${colHeaders.length} pvtColLabel: [${availCols}]` };
+          }
+          const cells = lastRow.querySelectorAll('td');
+          return { value: cells[colIndex]?.textContent || '0', debug: `grandTotalsRow colIdx=${colIndex} cells=${cells.length}` };
+        }
+
+        // Find the anchor row for non-Totals labels
+        let anchorIdx = -1;
+        let spanCount = 1;
+
+        for (let i = 0; i < rows.length; i++) {
+          const headers = rows[i].querySelectorAll('th.pvtRowLabel, th.pvtTotalLabel');
+          for (let h = 0; h < headers.length; h++) {
+            if (headers[h].textContent?.trim() === row) {
+              anchorIdx = i;
+              spanCount = parseInt(headers[h].getAttribute('rowspan') || '1', 10);
+              break;
+            }
+          }
+          if (anchorIdx !== -1) break;
+        }
+
+        // Fallback: search by text content
+        if (anchorIdx === -1) {
+          anchorIdx = rows.findIndex(r => r.textContent?.includes(row));
+          spanCount = 1;
+        }
+
+        if (anchorIdx === -1) {
+          return { value: '0', debug: `Anchor '${row}' not found in ${rows.length} rows` };
+        }
+
+        if (spanCount <= 1) {
+          const targetRow = rows[anchorIdx];
+          if (!col) {
+            const cells = targetRow.querySelectorAll('td');
+            return { value: cells[cells.length - 1]?.textContent || '0', debug: `anchor=${anchorIdx} span=1 lastCell` };
+          }
+          // Use pvtColLabel headers which map 1:1 to <td> data cells
+          const colHeaders = Array.from(table.querySelectorAll('thead th.pvtColLabel'));
+          const colIndex = colHeaders.findIndex(h => h.textContent?.trim() === col);
+          if (colIndex === -1) {
+            const availCols = colHeaders.slice(0, 10).map(h => h.textContent?.trim()).join(', ');
+            return { value: '0', debug: `Col '${col}' not in ${colHeaders.length} pvtColLabel: [${availCols}]` };
+          }
+          const cells = targetRow.querySelectorAll('td');
+          return { value: cells[colIndex]?.textContent || '0', debug: `anchor=${anchorIdx} colIdx=${colIndex} cells=${cells.length}` };
+        }
+
+        // Hierarchical pivot — sum across spanned rows
+        if (col) {
+          // Sum a specific COLUMN's cells across spanned rows
+          const colHeaders = Array.from(table.querySelectorAll('thead th.pvtColLabel'));
+          const colIndex = colHeaders.findIndex(h => h.textContent?.trim() === col);
+          if (colIndex === -1) {
+            const availCols = colHeaders.slice(0, 10).map(h => h.textContent?.trim()).join(', ');
+            return { value: '0', debug: `Col '${col}' not in ${colHeaders.length} pvtColLabel: [${availCols}]` };
+          }
+          let sum = 0;
+          for (let i = anchorIdx; i < anchorIdx + spanCount && i < rows.length; i++) {
+            const cells = rows[i].querySelectorAll('td');
+            if (cells[colIndex]) {
+              const val = parseFloat(cells[colIndex].textContent?.replace(/[^0-9.-]/g, '') || '0');
+              if (!isNaN(val)) sum += val;
+            }
+          }
+          return { value: sum.toFixed(2), debug: `anchor=${anchorIdx} span=${spanCount} colIdx=${colIndex} sum=${sum}` };
+        }
+        // No column specified — sum the row total (pvtTotal) cells
+        let sum = 0;
+        for (let i = anchorIdx; i < anchorIdx + spanCount && i < rows.length; i++) {
+          const totalCell = rows[i].querySelector('td.pvtTotal');
+          if (totalCell) {
+            const val = parseFloat(totalCell.textContent?.replace(/[^0-9.-]/g, '') || '0');
+            if (!isNaN(val)) sum += val;
+          }
+        }
+        return { value: sum.toFixed(2), debug: `anchor=${anchorIdx} span=${spanCount} sum=${sum}` };
       },
       { id: componentId, row: rowLabel, col: colLabel || '' }
     );
 
-    const numericValue = cellText?.replace(/[^0-9.-]/g, '') || '0';
-    return parseFloat(numericValue);
+    const numericValue = result?.value?.replace(/[^0-9.-]/g, '') || '0';
+    const parsed = parseFloat(numericValue);
+    console.log(`[getPivotCellValue] #${componentId} row='${rowLabel}' col='${colLabel}' => ${parsed} (${result?.debug})`);
+    return parsed;
   }
 
   /**
@@ -822,34 +1089,17 @@ export class SelfServicePortalsTestHelper {
     console.log(`Dragging dimension '${dimensionName}' to rows...`);
     await page.evaluate(
       ({ id, dimension }) => {
-        const component = document.getElementById(id);
-        if (!component) return;
+        const component = document.getElementById(id) as any;
+        if (!component || !component.moveDimension) return;
 
-        // Find the dimension button in unused area
-        const unusedArea = component.querySelector('.pvtUnused, .pvtAxisContainer');
-        if (!unusedArea) return;
-
-        const dimensionBtn = Array.from(unusedArea.querySelectorAll('.pvtAttr')).find(
-          el => el.textContent?.trim() === dimension
-        ) as HTMLElement;
-
-        if (!dimensionBtn) return;
-
-        // Find rows drop zone
-        const rowsArea = component.querySelector('.pvtRows, .pvtAxisContainer');
-        if (!rowsArea) return;
-
-        // Simulate drag and drop
-        const dragEvent = new DragEvent('dragstart', { bubbles: true });
-        const dropEvent = new DragEvent('drop', { bubbles: true });
-
-        dimensionBtn.dispatchEvent(dragEvent);
-        rowsArea.dispatchEvent(dropEvent);
+        // Call the SAME function that the UI drag operation uses
+        component.moveDimension(dimension, 'rows');
       },
       { id: componentId, dimension: dimensionName }
     );
 
-    await page.waitForTimeout(1500); // Wait for re-render
+    // Wait for re-render to complete
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, componentId);
     console.log(`Dimension '${dimensionName}' dragged to rows ✓`);
   }
 
@@ -863,31 +1113,17 @@ export class SelfServicePortalsTestHelper {
     console.log(`Dragging dimension '${dimensionName}' to columns...`);
     await page.evaluate(
       ({ id, dimension }) => {
-        const component = document.getElementById(id);
-        if (!component) return;
+        const component = document.getElementById(id) as any;
+        if (!component || !component.moveDimension) return;
 
-        const unusedArea = component.querySelector('.pvtUnused, .pvtAxisContainer');
-        if (!unusedArea) return;
-
-        const dimensionBtn = Array.from(unusedArea.querySelectorAll('.pvtAttr')).find(
-          el => el.textContent?.trim() === dimension
-        ) as HTMLElement;
-
-        if (!dimensionBtn) return;
-
-        const colsArea = component.querySelector('.pvtCols, .pvtAxisContainer');
-        if (!colsArea) return;
-
-        const dragEvent = new DragEvent('dragstart', { bubbles: true });
-        const dropEvent = new DragEvent('drop', { bubbles: true });
-
-        dimensionBtn.dispatchEvent(dragEvent);
-        colsArea.dispatchEvent(dropEvent);
+        // Call the SAME function that the UI drag operation uses
+        component.moveDimension(dimension, 'cols');
       },
       { id: componentId, dimension: dimensionName }
     );
 
-    await page.waitForTimeout(1500);
+    // Wait for re-render to complete
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, componentId);
     console.log(`Dimension '${dimensionName}' dragged to columns ✓`);
   }
 
@@ -930,6 +1166,54 @@ export class SelfServicePortalsTestHelper {
   }
 
   /**
+   * Drag a dimension from rows back to unused area.
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @param dimensionName - Name of the dimension to remove
+   */
+  static async dragDimensionFromRowsToUnused(page: Page, componentId: string, dimensionName: string): Promise<void> {
+    console.log(`Dragging dimension '${dimensionName}' from rows to unused...`);
+    await page.evaluate(
+      ({ id, dimension }) => {
+        const component = document.getElementById(id) as any;
+        if (!component || !component.moveDimension) return;
+
+        // Call the SAME function that the UI drag operation uses
+        component.moveDimension(dimension, 'unused');
+      },
+      { id: componentId, dimension: dimensionName }
+    );
+
+    // Wait for re-render to complete
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, componentId);
+    console.log(`Dimension '${dimensionName}' removed from rows ✓`);
+  }
+
+  /**
+   * Drag a dimension from columns back to unused area.
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @param dimensionName - Name of the dimension to remove
+   */
+  static async dragDimensionFromColsToUnused(page: Page, componentId: string, dimensionName: string): Promise<void> {
+    console.log(`Dragging dimension '${dimensionName}' from columns to unused...`);
+    await page.evaluate(
+      ({ id, dimension }) => {
+        const component = document.getElementById(id) as any;
+        if (!component || !component.moveDimension) return;
+
+        // Call the SAME function that the UI drag operation uses
+        component.moveDimension(dimension, 'unused');
+      },
+      { id: componentId, dimension: dimensionName }
+    );
+
+    // Wait for re-render to complete
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, componentId);
+    console.log(`Dimension '${dimensionName}' removed from columns ✓`);
+  }
+
+  /**
    * Change the aggregator (Sum, Average, Count, etc.).
    * @param page - Playwright page object
    * @param componentId - ID of the rb-pivot-table element
@@ -937,9 +1221,25 @@ export class SelfServicePortalsTestHelper {
    */
   static async changeAggregator(page: Page, componentId: string, aggregatorName: string): Promise<void> {
     console.log(`Changing aggregator to '${aggregatorName}'...`);
-    const selector = `#${componentId} .pvtAggregator`;
-    await page.selectOption(selector, { label: aggregatorName });
-    await page.waitForTimeout(1500);
+
+    // Call the component's public API
+    await page.evaluate(
+      ({ id, aggregator }) => {
+        const component = document.getElementById(id) as any;
+        if (!component || !component.changeAggregator) {
+          console.error(`[changeAggregator] Component #${id} not found or API not available`);
+          return;
+        }
+
+        // Call the SAME function that the UI dropdown uses
+        component.changeAggregator(aggregator);
+        console.log(`[changeAggregator] Changed to '${aggregator}' ✓`);
+      },
+      { id: componentId, aggregator: aggregatorName }
+    );
+
+    // Wait for pivot table to re-render
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, componentId);
     console.log(`Aggregator changed to '${aggregatorName}' ✓`);
   }
 
@@ -952,11 +1252,24 @@ export class SelfServicePortalsTestHelper {
   static async changeValueField(page: Page, componentId: string, valueName: string): Promise<void> {
     console.log(`Changing value field to '${valueName}'...`);
 
-    // Click the value dropdown in the vals area
-    const valsDropdown = page.locator(`#${componentId} .pvtVals select, #${componentId} .pvtAttrDropdown`).first();
-    await valsDropdown.selectOption({ label: valueName });
+    // Call the component's public API
+    await page.evaluate(
+      ({ id, value }) => {
+        const component = document.getElementById(id) as any;
+        if (!component || !component.changeValueField) {
+          console.error(`[changeValueField] Component #${id} not found or API not available`);
+          return;
+        }
 
-    await page.waitForTimeout(1500);
+        // Call the SAME function that the UI dropdown uses
+        component.changeValueField(value);
+        console.log(`[changeValueField] Changed to '${value}' ✓`);
+      },
+      { id: componentId, value: valueName }
+    );
+
+    // Wait for pivot table to re-render with new value
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, componentId);
     console.log(`Value field changed to '${valueName}' ✓`);
   }
 
@@ -968,67 +1281,99 @@ export class SelfServicePortalsTestHelper {
    */
   static async changeRenderer(page: Page, componentId: string, rendererName: string): Promise<void> {
     console.log(`Changing renderer to '${rendererName}'...`);
-    const selector = `#${componentId} .pvtRenderer`;
-    await page.selectOption(selector, { label: rendererName });
-    await page.waitForTimeout(2000); // Charts take longer to render
+
+    // Call the component's public API
+    await page.evaluate(
+      ({ id, renderer }) => {
+        const component = document.getElementById(id) as any;
+        if (!component || !component.changeRenderer) {
+          console.error(`[changeRenderer] Component #${id} not found or API not available`);
+          return;
+        }
+
+        // Call the SAME function that the UI dropdown uses
+        component.changeRenderer(renderer);
+        console.log(`[changeRenderer] Changed to '${renderer}' ✓`);
+      },
+      { id: componentId, renderer: rendererName }
+    );
+
+    // Wait for pivot table to re-render (charts take longer)
+    await page.waitForTimeout(2000);
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, componentId);
     console.log(`Renderer changed to '${rendererName}' ✓`);
   }
 
   /**
-   * Filter a dimension by unchecking specific values.
+   * Filter a dimension by excluding specific values.
    * @param page - Playwright page object
    * @param componentId - ID of the rb-pivot-table element
    * @param dimensionName - Name of the dimension to filter
-   * @param valuesToUncheck - Array of values to uncheck
+   * @param valuesToExclude - Array of values to exclude (hide) from the pivot table
    */
   static async filterDimension(
     page: Page,
     componentId: string,
     dimensionName: string,
-    valuesToUncheck: string[]
+    valuesToExclude: string[]
   ): Promise<void> {
-    console.log(`Filtering dimension '${dimensionName}', unchecking: ${valuesToUncheck.join(', ')}...`);
+    console.log(`Filtering dimension '${dimensionName}', unchecking: ${valuesToExclude.join(', ')}...`);
 
-    // Find and click the filter triangle for the dimension
+    // Call the component's public API
     await page.evaluate(
       ({ id, dimension, values }) => {
-        const component = document.getElementById(id);
-        if (!component) return;
-
-        // Find the dimension label
-        const dimensionLabel = Array.from(component.querySelectorAll('.pvtAttr')).find(
-          el => el.textContent?.includes(dimension)
-        );
-
-        if (!dimensionLabel) return;
-
-        // Find and click the filter triangle
-        const filterTriangle = dimensionLabel.querySelector('.pvtTriangle') as HTMLElement;
-        if (filterTriangle) {
-          filterTriangle.click();
+        const component = document.getElementById(id) as any;
+        if (!component || !component.setFilter) {
+          console.error(`[filterDimension] Component #${id} not found or API not available`);
+          return;
         }
+
+        // Call the SAME function that the UI filter dialog uses
+        component.setFilter(dimension, values);
+        console.log(`[filterDimension] Filter set for '${dimension}': excluding ${values.join(', ')} ✓`);
       },
-      { id: componentId, dimension: dimensionName, values: valuesToUncheck }
+      { id: componentId, dimension: dimensionName, values: valuesToExclude }
     );
 
-    await page.waitForTimeout(500);
-
-    // Uncheck the specified values in the filter dialog
-    for (const value of valuesToUncheck) {
-      const checkbox = page.locator(`.pvtFilterBox input[type="checkbox"][value="${value}"]`);
-      if (await checkbox.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await checkbox.uncheck();
-      }
-    }
-
-    // Click OK or close the filter dialog
-    const okButton = page.locator('.pvtFilterBox button:has-text("OK")');
-    if (await okButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await okButton.click();
-    }
-
-    await page.waitForTimeout(1500);
+    // Wait for pivot table to re-render
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, componentId);
     console.log(`Dimension '${dimensionName}' filtered ✓`);
+  }
+
+  /**
+   * Clear all filters from a pivot table.
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @param dimensionNames - Array of dimension names to clear filters from
+   */
+  static async clearFilters(
+    page: Page,
+    componentId: string,
+    dimensionNames: string[]
+  ): Promise<void> {
+    console.log(`Clearing filters for dimensions: ${dimensionNames.join(', ')}...`);
+
+    for (const dimensionName of dimensionNames) {
+      // Call setFilter with empty array to clear the filter
+      await page.evaluate(
+        ({ id, dimension }) => {
+          const component = document.getElementById(id) as any;
+          if (!component || !component.setFilter) {
+            console.error(`[clearFilters] Component #${id} not found or API not available`);
+            return;
+          }
+
+          // Empty array clears the filter for this dimension
+          component.setFilter(dimension, []);
+          console.log(`[clearFilters] Cleared filter for '${dimension}' ✓`);
+        },
+        { id: componentId, dimension: dimensionName }
+      );
+    }
+
+    // Wait for pivot table to re-render after clearing all filters
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, componentId);
+    console.log(`All filters cleared ✓`);
   }
 
   /**
@@ -1042,17 +1387,94 @@ export class SelfServicePortalsTestHelper {
     await page.evaluate(
       ({ id, sortOrder }) => {
         const component = document.getElementById(id) as any;
-        if (component && component.pivotUI) {
-          // Update the pivotUI config with new sort order
-          component.pivotUI.rowOrder = sortOrder;
-          component.fetchData({});
-        }
+        if (!component) return;
+        // Set rowOrder directly on the custom element (accessors={true} creates setter)
+        // This triggers reactive PivotData recomputation + re-render.
+        // Do NOT call fetchData() — it re-fetches config and overwrites rowOrder.
+        component.rowOrder = sortOrder;
       },
       { id: componentId, sortOrder: order }
     );
 
-    await page.waitForTimeout(1500);
+    // Wait for reactive re-render (server-side engines also re-execute on server)
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, componentId);
     console.log(`Pivot table sorted by '${order}' ✓`);
+  }
+
+  /**
+   * Click the row order toggle button to cycle through sort modes.
+   * Modes cycle: key_a_to_z (↕) → value_a_to_z (↓) → value_z_to_a (↑) → key_a_to_z
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @returns The new row order after toggle
+   */
+  static async toggleRowOrder(page: Page, componentId: string): Promise<string> {
+    console.log(`Toggling row order...`);
+
+    // Get current row order before clicking (use Svelte accessor, not pivotUI)
+    const currentOrder = await page.evaluate(
+      ({ id }) => {
+        const component = document.getElementById(id) as any;
+        return component?.rowOrder || 'key_a_to_z';
+      },
+      { id: componentId }
+    );
+
+    // Click the row order button (Playwright pierces Shadow DOM)
+    await page.locator(`#${componentId} .pvtRowOrder`).click();
+
+    // Wait for re-render (server engines re-execute query on rowOrder change)
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, componentId);
+
+    // Get new row order after clicking (use Svelte accessor)
+    const newOrder = await page.evaluate(
+      ({ id }) => {
+        const component = document.getElementById(id) as any;
+        return component?.rowOrder || 'key_a_to_z';
+      },
+      { id: componentId }
+    );
+
+    console.log(`Row order toggled: ${currentOrder} → ${newOrder} ✓`);
+    return newOrder;
+  }
+
+  /**
+   * Click the column order toggle button to cycle through sort modes.
+   * Modes cycle: key_a_to_z (↔) → value_a_to_z (→) → value_z_to_a (←) → key_a_to_z
+   * @param page - Playwright page object
+   * @param componentId - ID of the rb-pivot-table element
+   * @returns The new column order after toggle
+   */
+  static async toggleColOrder(page: Page, componentId: string): Promise<string> {
+    console.log(`Toggling column order...`);
+
+    // Use Svelte accessor, not pivotUI
+    const currentOrder = await page.evaluate(
+      ({ id }) => {
+        const component = document.getElementById(id) as any;
+        return component?.colOrder || 'key_a_to_z';
+      },
+      { id: componentId }
+    );
+
+    // Click the column order button (Playwright pierces Shadow DOM)
+    await page.locator(`#${componentId} .pvtColOrder`).click();
+
+    // Wait for re-render (server engines re-execute query on colOrder change)
+    await SelfServicePortalsTestHelper.waitForPivotTableRender(page, componentId);
+
+    // Use Svelte accessor
+    const newOrder = await page.evaluate(
+      ({ id }) => {
+        const component = document.getElementById(id) as any;
+        return component?.colOrder || 'key_a_to_z';
+      },
+      { id: componentId }
+    );
+
+    console.log(`Column order toggled: ${currentOrder} → ${newOrder} ✓`);
+    return newOrder;
   }
 
   // ----------------------------------------------------------
@@ -1063,8 +1485,8 @@ export class SelfServicePortalsTestHelper {
    * Parameters REQUIRES a config file (report-parameters-spec.groovy).
    * Also tests filtering workflow: initial state -> Run Report -> Clear.
    */
-  static async assertRbParametersComponent(page: Page): Promise<void> {
-    const url = `${SelfServicePortalsTestHelper.GRAILS_BASE_URL}/report-parameters`;
+  static async assertRbParametersComponent(page: Page, baseUrl: string = SelfServicePortalsTestHelper.GRAILS_BASE_URL): Promise<void> {
+    const url = `${baseUrl}/report-parameters`;
     console.log('Grails Parameters: Checking rb-parameters component...');
 
     await page.goto(url, { timeout: 30000 });
@@ -1126,8 +1548,8 @@ export class SelfServicePortalsTestHelper {
    * Assert rb-report web component on the Reports page.
    * Reports page shows employee cards; clicking one loads the report.
    */
-  static async assertRbReportComponent(page: Page): Promise<void> {
-    const url = `${SelfServicePortalsTestHelper.GRAILS_BASE_URL}/reports`;
+  static async assertRbReportComponent(page: Page, baseUrl: string = SelfServicePortalsTestHelper.GRAILS_BASE_URL): Promise<void> {
+    const url = `${baseUrl}/reports`;
     console.log('Grails Reports: Checking rb-report component...');
 
     await page.goto(url, { timeout: 30000 });
@@ -1135,6 +1557,7 @@ export class SelfServicePortalsTestHelper {
 
     // ---- DOM Presence (before selection) ----
     // Employee cards should be visible
+    await expect(page.locator('.employee-card').first()).toBeVisible({ timeout: 10000 });
     const cardCount = await page.locator('.employee-card').count();
     expect(cardCount).toBe(3);
     console.log('Grails Reports: DOM - 3 employee cards visible ✓');
@@ -1174,8 +1597,8 @@ export class SelfServicePortalsTestHelper {
   /**
    * Assert simple page without web component (Home, Your Canvas).
    */
-  static async assertGrailsSimplePage(page: Page, path: string, title: string, contentChecks: string[]): Promise<void> {
-    const url = `${SelfServicePortalsTestHelper.GRAILS_BASE_URL}${path}`;
+  static async assertSimplePage(page: Page, baseUrl: string, path: string, title: string, contentChecks: string[]): Promise<void> {
+    const url = `${baseUrl}${path}`;
     console.log(`Grails ${title}: Checking page content...`);
 
     await page.goto(url, { timeout: 30000 });
@@ -1190,49 +1613,368 @@ export class SelfServicePortalsTestHelper {
   }
 
   // ----------------------------------------------------------
-  // Main Entry Point: Assert All Grails Pages
+  // Admin Panel Helpers (shared by Grails and Next.js)
+  // ----------------------------------------------------------
+
+  /**
+   * Derive base URL and new-entity path from app name.
+   */
+  private static getAppConfig(appName: 'grails' | 'nextjs') {
+    return {
+      baseUrl: appName === 'grails'
+        ? SelfServicePortalsTestHelper.GRAILS_BASE_URL
+        : SelfServicePortalsTestHelper.NEXT_BASE_URL,
+      newEntityPath: appName === 'grails' ? '/create' : '/new',
+    };
+  }
+
+  /**
+   * Assert admin dashboard loads with 4 stat cards showing real numeric data.
+   */
+  static async assertAdminDashboard(page: Page, appName: 'grails' | 'nextjs'): Promise<void> {
+    const { baseUrl } = SelfServicePortalsTestHelper.getAppConfig(appName);
+    console.log(`${appName} Admin: Checking dashboard...`);
+
+    await page.goto(`${baseUrl}/admin`, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+
+    // Page title
+    await expect(page.locator('#admin-page-title')).toBeVisible({ timeout: 10000 });
+
+    // 4 stat cards with numeric values
+    const statIds = ['stat-value-payslips', 'stat-value-invoices', 'stat-value-revenue', 'stat-value-pending'];
+    for (const id of statIds) {
+      const el = page.locator(`#${id}`);
+      await expect(el).toBeVisible({ timeout: 5000 });
+      const text = await el.textContent();
+      const numeric = text?.replace(/[^0-9.-]/g, '') || '';
+      expect(numeric.length).toBeGreaterThan(0);
+      console.log(`${appName} Admin: #${id} = ${text} ✓`);
+    }
+
+    // Quick action navigation
+    await expect(page.locator('#btn-view-payslips')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#btn-view-invoices')).toBeVisible({ timeout: 5000 });
+
+    console.log(`${appName} Admin: Dashboard OK ✓`);
+  }
+
+  /**
+   * Exercise full invoice CRUD lifecycle: create, read, edit, delete.
+   */
+  static async performInvoiceCRUD(page: Page, appName: 'grails' | 'nextjs'): Promise<void> {
+    const { baseUrl, newEntityPath } = SelfServicePortalsTestHelper.getAppConfig(appName);
+    console.log(`${appName} Admin: Invoice CRUD lifecycle...`);
+
+    // Navigate to invoices list
+    await page.goto(`${baseUrl}/admin/invoices`, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#invoices-page-title')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#invoices-table')).toBeVisible({ timeout: 10000 });
+
+    // Count initial rows
+    const initialRows = await page.locator('#invoices-table tbody tr').count();
+    console.log(`${appName} Admin: Initial invoice count = ${initialRows}`);
+
+    // CREATE: click new, fill form, submit
+    await page.click('#btn-new-invoice');
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#subtotal')).toBeVisible({ timeout: 10000 });
+
+    // Fill all required fields
+    await page.fill('#customerName', 'E2E Test Customer');
+    await page.fill('#customerEmail', 'e2e-test@example.com');
+    await page.fill('#customerId', 'CUST-E2E-TEST');
+
+    // Set due date to 30 days from now
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30);
+    await page.fill('#dueDate', dueDate.toISOString().split('T')[0]);
+
+    // Fill invoiceNumber (both apps have this field)
+    await page.fill('#invoiceNumber', `INV-E2E-${Date.now()}`);
+
+    // Fill amount fields
+    await page.fill('#subtotal', '1000');
+    await page.fill('#taxRate', '10');
+    await page.fill('#discount', '50');
+    await page.waitForTimeout(500); // Let calculated fields update
+
+    // Submit the form
+    const submitBtn = page.locator('button[type="submit"], input[type="submit"]');
+    await submitBtn.click();
+    await page.waitForLoadState('networkidle');
+
+    // READ: verify new invoice appears in list
+    await page.goto(`${baseUrl}/admin/invoices`, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+    const afterCreateRows = await page.locator('#invoices-table tbody tr').count();
+    expect(afterCreateRows).toBeGreaterThan(initialRows);
+    console.log(`${appName} Admin: Invoice created, count = ${afterCreateRows} ✓`);
+
+    // EDIT: click last row's edit link, change amount, save
+    const editLinks = page.locator('#invoices-table tbody tr a:has-text("Edit"), #invoices-table tbody tr a[href*="edit"]');
+    const editCount = await editLinks.count();
+    if (editCount > 0) {
+      await editLinks.last().click();
+      await page.waitForLoadState('networkidle');
+      await expect(page.locator('#subtotal')).toBeVisible({ timeout: 10000 });
+      await page.fill('#subtotal', '2000');
+      await page.waitForTimeout(500);
+      const saveBtn = page.locator('button[type="submit"], input[type="submit"]');
+      await saveBtn.click();
+      await page.waitForLoadState('networkidle');
+      console.log(`${appName} Admin: Invoice edited ✓`);
+    }
+
+    // DELETE: click last row's delete, confirm, verify gone
+    await page.goto(`${baseUrl}/admin/invoices`, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+    const beforeDeleteRows = await page.locator('#invoices-table tbody tr').count();
+
+    const deleteLinks = page.locator('#invoices-table tbody tr a:has-text("Delete"), #invoices-table tbody tr button:has-text("Delete")');
+    const deleteCount = await deleteLinks.count();
+    if (deleteCount > 0) {
+      await deleteLinks.last().click();
+      // Handle confirm dialog (Grails uses #deleteModal, Next.js uses shadcn)
+      const deleteModal = page.locator('#deleteModal, [role="alertdialog"]');
+      if (await deleteModal.isVisible({ timeout: 3000 }).catch(() => false)) {
+        const confirmBtn = page.locator('#deleteModal button:has-text("Delete"), [role="alertdialog"] button:has-text("Delete"), [role="alertdialog"] button:has-text("Confirm")');
+        await confirmBtn.click();
+      }
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      const afterDeleteRows = await page.locator('#invoices-table tbody tr').count();
+      expect(afterDeleteRows).toBeLessThan(beforeDeleteRows);
+      console.log(`${appName} Admin: Invoice deleted, count = ${afterDeleteRows} ✓`);
+    }
+
+    console.log(`${appName} Admin: Invoice CRUD lifecycle OK ✓`);
+  }
+
+  /**
+   * Exercise full payslip CRUD lifecycle: create, read, edit, delete.
+   */
+  static async performPayslipCRUD(page: Page, appName: 'grails' | 'nextjs'): Promise<void> {
+    const { baseUrl, newEntityPath } = SelfServicePortalsTestHelper.getAppConfig(appName);
+    console.log(`${appName} Admin: Payslip CRUD lifecycle...`);
+
+    // Navigate to payslips list
+    await page.goto(`${baseUrl}/admin/payslips`, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#payslips-page-title')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#payslips-table')).toBeVisible({ timeout: 10000 });
+
+    // Count initial rows
+    const initialRows = await page.locator('#payslips-table tbody tr').count();
+    console.log(`${appName} Admin: Initial payslip count = ${initialRows}`);
+
+    // CREATE: click new, fill form, submit
+    await page.click('#btn-new-payslip');
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#grossAmount')).toBeVisible({ timeout: 10000 });
+
+    // Fill payslipNumber (both apps have this field)
+    await page.fill('#payslipNumber', `PS-E2E-${Date.now()}`);
+
+    // Fill all required fields
+    await page.fill('#employeeName', 'E2E Test Employee');
+    await page.fill('#employeeEmail', 'e2e-employee@example.com');
+    await page.fill('#employeeId', 'EMP-E2E-TEST');
+
+    // Set pay period dates
+    const periodStart = new Date();
+    periodStart.setDate(1); // First of current month
+    await page.fill('#payPeriodStart', periodStart.toISOString().split('T')[0]);
+    const periodEnd = new Date();
+    periodEnd.setMonth(periodEnd.getMonth() + 1, 0); // Last day of current month
+    await page.fill('#payPeriodEnd', periodEnd.toISOString().split('T')[0]);
+
+    // Fill amount fields
+    await page.fill('#grossAmount', '5000');
+    await page.fill('#deductions', '500');
+    await page.waitForTimeout(500); // Let calculated fields update
+
+    // Submit the form
+    const submitBtn = page.locator('button[type="submit"], input[type="submit"]');
+    await submitBtn.click();
+    await page.waitForLoadState('networkidle');
+
+    // READ: verify new payslip appears in list
+    await page.goto(`${baseUrl}/admin/payslips`, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+    const afterCreateRows = await page.locator('#payslips-table tbody tr').count();
+    expect(afterCreateRows).toBeGreaterThan(initialRows);
+    console.log(`${appName} Admin: Payslip created, count = ${afterCreateRows} ✓`);
+
+    // EDIT: click last row's edit link, change amount, save
+    const editLinks = page.locator('#payslips-table tbody tr a:has-text("Edit"), #payslips-table tbody tr a[href*="edit"]');
+    const editCount = await editLinks.count();
+    if (editCount > 0) {
+      await editLinks.last().click();
+      await page.waitForURL('**/edit**', { timeout: 10000 });
+      await page.waitForLoadState('networkidle');
+      await expect(page.locator('#grossAmount')).toBeVisible({ timeout: 10000 });
+      await page.fill('#grossAmount', '6000');
+      await page.waitForTimeout(500);
+      const saveBtn = page.locator('button[type="submit"], input[type="submit"]');
+      await saveBtn.click();
+      await page.waitForLoadState('networkidle');
+      console.log(`${appName} Admin: Payslip edited ✓`);
+    }
+
+    // DELETE: click last row's delete, confirm, verify gone
+    await page.goto(`${baseUrl}/admin/payslips`, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+    const beforeDeleteRows = await page.locator('#payslips-table tbody tr').count();
+
+    const deleteLinks = page.locator('#payslips-table tbody tr a:has-text("Delete"), #payslips-table tbody tr button:has-text("Delete")');
+    const deleteCount = await deleteLinks.count();
+    if (deleteCount > 0) {
+      await deleteLinks.last().click();
+      const deleteModal = page.locator('#deleteModal, [role="alertdialog"]');
+      if (await deleteModal.isVisible({ timeout: 3000 }).catch(() => false)) {
+        const confirmBtn = page.locator('#deleteModal button:has-text("Delete"), [role="alertdialog"] button:has-text("Delete"), [role="alertdialog"] button:has-text("Confirm")');
+        await confirmBtn.click();
+      }
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      const afterDeleteRows = await page.locator('#payslips-table tbody tr').count();
+      expect(afterDeleteRows).toBeLessThan(beforeDeleteRows);
+      console.log(`${appName} Admin: Payslip deleted, count = ${afterDeleteRows} ✓`);
+    }
+
+    console.log(`${appName} Admin: Payslip CRUD lifecycle OK ✓`);
+  }
+
+  /**
+   * Verify settings save and persist across page reloads.
+   * Restores original values after testing.
+   */
+  static async assertSettingsPersistence(page: Page, appName: 'grails' | 'nextjs'): Promise<void> {
+    const { baseUrl } = SelfServicePortalsTestHelper.getAppConfig(appName);
+    const settingsUrl = `${baseUrl}/admin/settings`;
+    console.log(`${appName} Admin: Checking settings persistence...`);
+
+    await page.goto(settingsUrl, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#settings-page-title')).toBeVisible({ timeout: 10000 });
+
+    // Save original values for restoration
+    const origCompanyName = await page.inputValue('#companyName');
+    const origCurrency = await page.inputValue('#defaultCurrency');
+    const origPaymentProcessor = await page.locator('#paymentProcessor').inputValue();
+
+    // Company name: change, save, reload, verify
+    const testCompanyName = `E2E Test Corp ${Date.now()}`;
+    await page.fill('#companyName', testCompanyName);
+    await page.click('#btn-save-company');
+    await page.waitForTimeout(1000);
+    await page.goto(settingsUrl, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+    const savedCompanyName = await page.inputValue('#companyName');
+    expect(savedCompanyName).toBe(testCompanyName);
+    console.log(`${appName} Admin: Company name persisted ✓`);
+
+    // Currency: change, save, reload, verify
+    const testCurrency = 'EUR';
+    await page.selectOption('#defaultCurrency', testCurrency);
+    await page.click('#btn-save-preferences');
+    await page.waitForTimeout(1000);
+    await page.goto(settingsUrl, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+    const savedCurrency = await page.inputValue('#defaultCurrency');
+    expect(savedCurrency).toBe(testCurrency);
+    console.log(`${appName} Admin: Currency persisted ✓`);
+
+    // Payment processor: change, save, reload, verify
+    const optionValues = await page.locator('#paymentProcessor option').evaluateAll(
+      (opts: HTMLOptionElement[]) => opts.map(o => o.value).filter(v => v !== '')
+    );
+    const testPaymentValue = optionValues.find(v => v !== origPaymentProcessor) || origPaymentProcessor;
+    await page.selectOption('#paymentProcessor', testPaymentValue);
+    await page.click('#btn-save-payment');
+    await page.waitForTimeout(1000);
+    await page.goto(settingsUrl, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+    const savedPaymentProcessor = await page.locator('#paymentProcessor').inputValue();
+    expect(savedPaymentProcessor).toBe(testPaymentValue);
+    console.log(`${appName} Admin: Payment processor persisted ✓`);
+
+    // Restore original values
+    await page.fill('#companyName', origCompanyName);
+    await page.click('#btn-save-company');
+    await page.waitForTimeout(500);
+    await page.selectOption('#defaultCurrency', origCurrency);
+    await page.click('#btn-save-preferences');
+    await page.waitForTimeout(500);
+    await page.selectOption('#paymentProcessor', origPaymentProcessor);
+    await page.click('#btn-save-payment');
+    await page.waitForTimeout(500);
+    console.log(`${appName} Admin: Original values restored ✓`);
+
+    console.log(`${appName} Admin: Settings persistence OK ✓`);
+  }
+
+  // ----------------------------------------------------------
+  // Main Entry Point: Assert All Front-Facing Pages
   // ----------------------------------------------------------
   /**
-   * Assert all Grails playground pages with per-component validation.
-   * Each web component has dedicated assertions for DOM, data, config, and usage.
+   * Assert all front-facing playground pages with per-component validation.
+   * Works for both Grails and Next.js playgrounds — same pages, same assertions.
+   * @param page - Playwright page object
+   * @param appName - 'grails' or 'nextjs'
    */
-  static async assertAllGrailsPages(page: Page): Promise<void> {
-    console.log('Grails: Waiting for server to be ready...');
-    await SelfServicePortalsTestHelper.waitForServerReady(
-      page,
-      SelfServicePortalsTestHelper.GRAILS_BASE_URL,
-      30,
-      2000
-    );
+  static async assertAllFrontFacingPages(page: Page, appName: 'grails' | 'nextjs'): Promise<void> {
+    const baseUrl = appName === 'grails'
+      ? SelfServicePortalsTestHelper.GRAILS_BASE_URL
+      : SelfServicePortalsTestHelper.NEXT_BASE_URL;
+    const pivotTablesPath = '/pivot-tables';
+
+    console.log(`${appName}: Waiting for server to be ready...`);
+    await SelfServicePortalsTestHelper.waitForServerReady(page, baseUrl, 30, 2000);
 
     // Grant clipboard permissions (needed for some browsers)
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 
     // Home page (no component)
-    await SelfServicePortalsTestHelper.assertGrailsSimplePage(
-      page, '/', 'Home', ['Dashboards', 'Self Service', 'Explore Components']
+    await SelfServicePortalsTestHelper.assertSimplePage(
+      page, baseUrl, '/', 'Home', ['Dashboards', 'Self Service', 'Explore Components']
     );
 
     // rb-tabulator - data table (config is OPTIONAL, this demo has none)
-    await SelfServicePortalsTestHelper.assertRbTabulatorComponent(page);
+    await SelfServicePortalsTestHelper.assertRbTabulatorComponent(page, baseUrl);
 
     // rb-chart - chart visualization (config REQUIRED)
-    await SelfServicePortalsTestHelper.assertRbChartComponent(page);
+    await SelfServicePortalsTestHelper.assertRbChartComponent(page, baseUrl);
 
     // rb-pivot-table - pivot table (config REQUIRED)
-    await SelfServicePortalsTestHelper.assertRbPivotTableComponent(page);
+    await SelfServicePortalsTestHelper.assertRbPivotTableComponent(page, baseUrl, pivotTablesPath);
 
     // rb-parameters - parameter form with filtering (config REQUIRED)
-    await SelfServicePortalsTestHelper.assertRbParametersComponent(page);
+    await SelfServicePortalsTestHelper.assertRbParametersComponent(page, baseUrl);
 
     // rb-report - report viewer with entity selection
-    await SelfServicePortalsTestHelper.assertRbReportComponent(page);
+    await SelfServicePortalsTestHelper.assertRbReportComponent(page, baseUrl);
+
+    // Data Warehouse page — 3 engine pivots, config, usage (navbar: after Reports)
+    const dataWarehousePath = '/data-warehouse';
+    await SelfServicePortalsTestHelper.assertDataWarehousePage(page, baseUrl, dataWarehousePath);
 
     // Your Canvas (no component)
-    await SelfServicePortalsTestHelper.assertGrailsSimplePage(
-      page, '/your-canvas', 'Your Canvas', ['Your Canvas', 'Awaits', 'Build']
+    await SelfServicePortalsTestHelper.assertSimplePage(
+      page, baseUrl, '/your-canvas', 'Your Canvas', ['Your Canvas', 'Awaits', 'Build']
     );
 
-    console.log('Grails Playground: All assertions PASSED ✓');
+    console.log(`${appName} Playground: All assertions PASSED ✓`);
+  }
+
+  /**
+   * Backward-compatible wrapper: assert all Grails playground pages.
+   */
+  static async assertAllGrailsPages(page: Page): Promise<void> {
+    await SelfServicePortalsTestHelper.assertAllFrontFacingPages(page, 'grails');
   }
 }

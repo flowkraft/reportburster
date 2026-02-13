@@ -4,6 +4,7 @@ import { expect } from '@playwright/test';
 
 const slash = require('slash');
 import * as path from 'path';
+import { spawnSync } from 'child_process';
 
 import * as jetpack from 'fs-jetpack';
 
@@ -2972,5 +2973,82 @@ export class FluentTester implements PromiseLike<void> {
       '#topMenuConfigurationLoad_burst_' + PATHS.SETTINGS_CONFIG_FILE,
     );
     await this.doClick('#leftMenuSMSSettings');
+  }
+
+  /**
+   * Execute an arbitrary shell command in a directory relative to PORTABLE_EXECUTABLE_DIR.
+   * Useful for docker compose commands, git operations, etc.
+   *
+   * @param command - The command to execute (e.g., 'docker compose down', 'git status')
+   * @param relativeDir - Directory relative to PORTABLE_EXECUTABLE_DIR (e.g., 'db', 'config'). Defaults to base directory.
+   * @param timeoutMs - Command timeout in milliseconds. Defaults to 5 seconds.
+   * @returns FluentTester instance for chaining
+   *
+   * @example
+   * // Docker compose down in db folder
+   * new FluentTester(page).executeCommand('docker compose down', 'db');
+   *
+   * @example
+   * // Docker compose up without volumes
+   * new FluentTester(page).executeCommand('docker compose up -d', 'db', 10000);
+   */
+  executeCommand(
+    command: string,
+    relativeDir: string = '',
+    timeoutMs: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS
+  ): FluentTester {
+    this.actions.push(async (): Promise<void> => {
+      await this.doExecuteCommand(command, relativeDir, timeoutMs);
+    });
+    return this;
+  }
+
+  private async doExecuteCommand(
+    command: string,
+    relativeDir: string,
+    timeoutMs: number
+  ): Promise<void> {
+    const baseDir = String(process.env.PORTABLE_EXECUTABLE_DIR || '.');
+    const targetDir = relativeDir ? path.resolve(baseDir, relativeDir) : baseDir;
+    const isWin = process.platform === 'win32';
+
+    let cmd: string;
+    let args: string[];
+
+    if (isWin) {
+      cmd = 'powershell.exe';
+      args = ['-NoProfile', '-NonInteractive', '-Command', command];
+    } else {
+      // Split command into parts for non-Windows
+      const parts = command.split(/\s+/);
+      cmd = parts[0];
+      args = parts.slice(1);
+    }
+
+    console.log(`[FluentTester] Executing: ${command} (cwd=${targetDir})`);
+
+    const res = spawnSync(cmd, args, {
+      cwd: targetDir,
+      encoding: 'utf8',
+      timeout: timeoutMs,
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    if (res.error) {
+      console.error('[FluentTester] spawnSync error:', res.error);
+      throw res.error;
+    }
+
+    if (res.status !== 0) {
+      const out = (res.stdout || '').toString();
+      const err = (res.stderr || '').toString();
+      console.error(`[FluentTester] Command failed (status=${res.status})\nSTDOUT:\n${out}\nSTDERR:\n${err}`);
+      throw new Error(`Command '${command}' failed (status=${res.status}): ${err || out}`);
+    }
+
+    if (res.stdout) console.log(res.stdout.toString());
+    if (res.stderr) console.error(res.stderr.toString());
+    console.log(`[FluentTester] Command completed: ${command}`);
   }
 }

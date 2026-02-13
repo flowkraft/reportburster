@@ -7,9 +7,9 @@
 ## Quick Start
 
 ```bash
-# 1. Uncomment keycloak services in docker-compose.yml (lines 21-84)
+# 1. Create a keycloak/docker-compose.yml (see Section 1 below)
 # 2. Start services
-docker-compose up -d keycloak-postgres keycloak
+docker compose -f keycloak/docker-compose.yml up -d
 
 # 3. Access Keycloak admin
 # URL: http://localhost:8480
@@ -20,7 +20,7 @@ docker-compose up -d keycloak-postgres keycloak
 
 ## Authentication Behavior
 
-### grails-admin (Admin Portal)
+### grails-playground (Grails App — Admin + Portal)
 
 | Auth State | Behavior |
 |------------|----------|
@@ -55,24 +55,74 @@ ALWAYS_PUBLIC: ['marketing', 'brochures']                         // No auth
 
 ## 1. Enable Keycloak Service
 
-### PostgreSQL (Production - Default)
+Create `flowkraft/keycloak/docker-compose.yml` with the Keycloak services.
 
-Uncomment in docker-compose.yml:
+### PostgreSQL (Production - Recommended)
+
 ```yaml
-keycloak-postgres:    # Lines 21-35
-keycloak:             # Lines 38-84
-  environment:
-    - KC_DB=postgres  # Lines 61-64 (already uncommented)
+services:
+  keycloak-postgres:
+    image: postgres:15-alpine
+    container_name: fkraft-keycloak-db
+    environment:
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=keycloak_secret_password  # CHANGE IN PRODUCTION!
+    volumes:
+      - keycloak-postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: fkraft-keycloak
+    depends_on:
+      keycloak-postgres:
+        condition: service_healthy
+    ports:
+      - "8480:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://keycloak-postgres:5432/keycloak
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak_secret_password
+      - KC_HOSTNAME=localhost
+      - KC_HOSTNAME_PORT=8480
+      - KC_HOSTNAME_STRICT=false
+      - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+    command: start-dev  # Use 'start' for production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  keycloak-postgres-data:
 ```
 
 ### H2 (Development Alternative)
 
+Replace the Keycloak environment block with:
 ```yaml
-# 1. Comment PostgreSQL lines (61-64)
-# 2. Uncomment H2 lines (57-58):
-#   - KC_DB=h2-file
-#   - KC_DB_URL_PATH=/opt/keycloak/data/h2
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_DB=h2-file
+      - KC_DB_URL_PATH=/opt/keycloak/data/h2
+    volumes:
+      - keycloak-data:/opt/keycloak/data
 ```
+And remove the `keycloak-postgres` service and `depends_on`.
 
 ---
 
@@ -106,18 +156,18 @@ Valid Redirect URIs: http://localhost:8420/*
 Web Origins: +
 ```
 
-**grails-admin** (flowkraft-admin realm)
+**grails-playground** (flowkraft-admin realm)
 ```
-Client ID: grails-admin
-Root URL: http://localhost:8480
-Valid Redirect URIs: http://localhost:8480/*
+Client ID: admin-grails-playground
+Root URL: http://localhost:8400
+Valid Redirect URIs: http://localhost:8400/*
 ```
 
 ---
 
 ## 3. Enable in Applications
 
-### Grails (grails-admin)
+### Grails (grails-playground)
 
 **1. Add Dependencies** (build.gradle):
 ```groovy
@@ -126,14 +176,14 @@ Valid Redirect URIs: http://localhost:8480/*
 // implementation 'org.springframework.boot:spring-boot-starter-security'
 ```
 
-**2. Enable** (application.yml):
+**2. Enable** (grails-app/conf/application.yml):
 ```yaml
 # Uncomment and set enabled: true
 keycloak:
   enabled: true
   auth-server-url: http://localhost:8480
   realm: flowkraft-admin
-  resource: grails-admin
+  resource: admin-grails-playground
 ```
 
 ---
@@ -249,7 +299,7 @@ keycloak:
       client-secret: your-secret-from-keycloak
 ```
 
-**Code** (grails-app/services/KeycloakAdminService.groovy):
+**Code** (grails-playground/grails-app/services/KeycloakAdminService.groovy):
 ```groovy
 @Service
 class KeycloakAdminService {
@@ -272,15 +322,15 @@ class KeycloakAdminService {
 
 ### Without Keycloak (Default)
 ```bash
-curl http://localhost:8480/  # ✅ admin-grails
-curl http://localhost:8420/  # ✅ frend-next
+curl http://localhost:8400/  # ✅ grails-playground
+curl http://localhost:8420/  # ✅ next-playground
 ```
 
 ### With Keycloak Enabled
 
-**Admin (all protected):**
+**Grails (all protected):**
 ```bash
-curl http://localhost:8480/  # 🔒 401 Unauthorized
+curl http://localhost:8400/  # 🔒 401 Unauthorized
 ```
 
 **Customer Portal (granular):**
@@ -308,8 +358,8 @@ curl "http://localhost:8420/dashboard"  # 🔒 302 /auth/signin
 docker-compose stop keycloak
 
 # Option 2: Set flag
-# Grails: keycloak.enabled: false
-# Next.js: KEYCLOAK_ENABLED=false
+# grails-playground: keycloak.enabled: false (in application.yml)
+# next-playground: KEYCLOAK_ENABLED=false (in .env.local)
 ```
 
 Apps fall back to no-auth/mock-auth automatically.

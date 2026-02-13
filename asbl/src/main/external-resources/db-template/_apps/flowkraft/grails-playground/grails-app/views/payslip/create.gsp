@@ -27,25 +27,38 @@
                 </div>
                 <div class="card-body">
                     <g:form action="save" method="POST">
+                        <!-- Payslip Details -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Payslip Number</label>
+                                <input type="text" class="form-control"
+                                       id="payslipNumber" name="payslipNumber" value="${payslip?.payslipNumber}"
+                                       placeholder="PAY-2024-001"/>
+                                <small class="text-muted">Leave blank to auto-generate</small>
+                            </div>
+                        </div>
+
+                        <hr class="my-4"/>
+
                         <!-- Employee Information -->
                         <h6 class="text-muted mb-3">Employee Information</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label">Employee ID <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control ${hasErrors(bean: payslip, field: 'employeeId', 'is-invalid')}" 
-                                       name="employeeId" value="${payslip?.employeeId}"/>
+                                <input type="text" class="form-control ${hasErrors(bean: payslip, field: 'employeeId', 'is-invalid')}"
+                                       id="employeeId" name="employeeId" value="${payslip?.employeeId}"/>
                                 <g:renderErrors bean="${payslip}" field="employeeId"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Employee Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control ${hasErrors(bean: payslip, field: 'employeeName', 'is-invalid')}" 
-                                       name="employeeName" value="${payslip?.employeeName}"/>
+                                <input type="text" class="form-control ${hasErrors(bean: payslip, field: 'employeeName', 'is-invalid')}"
+                                       id="employeeName" name="employeeName" value="${payslip?.employeeName}"/>
                                 <g:renderErrors bean="${payslip}" field="employeeName"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Employee Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control ${hasErrors(bean: payslip, field: 'employeeEmail', 'is-invalid')}" 
-                                       name="employeeEmail" value="${payslip?.employeeEmail}"/>
+                                <input type="email" class="form-control ${hasErrors(bean: payslip, field: 'employeeEmail', 'is-invalid')}"
+                                       id="employeeEmail" name="employeeEmail" value="${payslip?.employeeEmail}"/>
                                 <g:renderErrors bean="${payslip}" field="employeeEmail"/>
                             </div>
                             <div class="col-md-6">
@@ -61,14 +74,14 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label">Period Start <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control ${hasErrors(bean: payslip, field: 'payPeriodStart', 'is-invalid')}" 
-                                       name="payPeriodStart" value="${payslip?.payPeriodStart ? new java.text.SimpleDateFormat('yyyy-MM-dd').format(payslip.payPeriodStart) : ''}"/>
+                                <input type="date" class="form-control ${hasErrors(bean: payslip, field: 'payPeriodStart', 'is-invalid')}"
+                                       id="payPeriodStart" name="payPeriodStart" value="${payslip?.payPeriodStart ? new java.text.SimpleDateFormat('yyyy-MM-dd').format(payslip.payPeriodStart) : ''}"/>
                                 <g:renderErrors bean="${payslip}" field="payPeriodStart"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Period End <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control ${hasErrors(bean: payslip, field: 'payPeriodEnd', 'is-invalid')}" 
-                                       name="payPeriodEnd" value="${payslip?.payPeriodEnd ? new java.text.SimpleDateFormat('yyyy-MM-dd').format(payslip.payPeriodEnd) : ''}"/>
+                                <input type="date" class="form-control ${hasErrors(bean: payslip, field: 'payPeriodEnd', 'is-invalid')}"
+                                       id="payPeriodEnd" name="payPeriodEnd" value="${payslip?.payPeriodEnd ? new java.text.SimpleDateFormat('yyyy-MM-dd').format(payslip.payPeriodEnd) : ''}"/>
                                 <g:renderErrors bean="${payslip}" field="payPeriodEnd"/>
                             </div>
                         </div>
@@ -82,8 +95,8 @@
                                 <label class="form-label">Gross Amount <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input type="number" step="0.01" class="form-control ${hasErrors(bean: payslip, field: 'grossAmount', 'is-invalid')}" 
-                                           name="grossAmount" value="${payslip?.grossAmount}" onchange="calculateNet()"/>
+                                    <input type="number" step="0.01" class="form-control ${hasErrors(bean: payslip, field: 'grossAmount', 'is-invalid')}"
+                                           id="grossAmount" name="grossAmount" value="${payslip?.grossAmount}" onchange="calculateNet()"/>
                                 </div>
                                 <g:renderErrors bean="${payslip}" field="grossAmount"/>
                             </div>

@@ -40,7 +40,10 @@ public class PivotTableOptions {
 	private List<String> hiddenFromDragDrop = new ArrayList<>();
 	private Integer unusedOrientationCutoff = null;
 	private Integer menuLimit = null;
-	
+
+	// Server-side table/view name for DuckDB/ClickHouse aggregation
+	private String tableName = null;
+
 	// Custom sorters: { attrName: ['val1', 'val2', ...] } for custom order
 	private Map<String, Object> sorters = new LinkedHashMap<>();
 	
@@ -92,6 +95,9 @@ public class PivotTableOptions {
 
 	public Integer getMenuLimit() { return menuLimit; }
 	public void setMenuLimit(Integer menuLimit) { this.menuLimit = menuLimit; }
+
+	public String getTableName() { return tableName; }
+	public void setTableName(String tableName) { this.tableName = tableName; }
 
 	public Map<String, Object> getSorters() { return sorters; }
 	public void setSorters(Map<String, Object> sorters) { this.sorters = sorters; }

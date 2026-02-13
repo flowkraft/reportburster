@@ -113,17 +113,32 @@ public class ClickHousePivotProcessor implements PivotSQLGenerator {
             sql.append(", ");
         }
 
-        // Add aggregation columns
-        String valuesColumn = request.getVals().isEmpty() ? "*" : request.getVals().get(0);
+        // Add aggregation columns — support multiple val columns + fraction aggregators
         AggregatorType aggregator = AggregatorType.fromString(request.getAggregatorName());
 
-        if (valuesColumn.equals("*") && aggregator != AggregatorType.COUNT) {
-            throw new IllegalArgumentException("Aggregator " + aggregator.name() + " requires a specific column, not *");
+        if (request.getVals().isEmpty()) {
+            if (aggregator != AggregatorType.COUNT && aggregator != AggregatorType.COUNT_FRACTION_TOTAL) {
+                throw new IllegalArgumentException("Aggregator " + aggregator.name() + " requires a specific column");
+            }
+            if (aggregator.requiresPostProcessing()) {
+                sql.append(generateFractionSQL(aggregator, null, request));
+            } else {
+                sql.append("count(*)");
+            }
+            sql.append(" AS aggregated_value");
+        } else {
+            List<String> aggColumns = new ArrayList<>();
+            for (String valCol : request.getVals()) {
+                String aggSql;
+                if (aggregator.requiresPostProcessing()) {
+                    aggSql = generateFractionSQL(aggregator, valCol, request);
+                } else {
+                    aggSql = generateAggregationSQL(aggregator, valCol);
+                }
+                aggColumns.add(aggSql + " AS " + valCol);
+            }
+            sql.append(String.join(", ", aggColumns));
         }
-
-        String aggregationSQL = generateAggregationSQL(aggregator, valuesColumn);
-        sql.append(aggregationSQL);
-        sql.append(" AS aggregated_value");
 
         // FROM clause
         sql.append(" FROM ").append(quoteIdentifier(request.getTableName()));
@@ -147,12 +162,35 @@ public class ClickHousePivotProcessor implements PivotSQLGenerator {
             }
         }
 
-        // ORDER BY clause
+        // ORDER BY clause — row dimensions use rowOrder, col dimensions use colOrder
         if (!dimensions.isEmpty()) {
             sql.append(" ORDER BY ");
-            sql.append(dimensions.stream()
-                    .map(dim -> quoteIdentifier(dim) + getOrderDirection(request.getRowOrder()))
-                    .collect(Collectors.joining(", ")));
+            List<String> orderParts = new ArrayList<>();
+
+            // Aggregate alias for value-based sorting
+            String aggAlias = request.getVals().isEmpty()
+                    ? "aggregated_value"
+                    : request.getVals().get(0);
+
+            // Row dimensions → use rowOrder
+            if (isValueSort(request.getRowOrder()) && !request.getRows().isEmpty()) {
+                orderParts.add(aggAlias + getDirectionSuffix(request.getRowOrder()));
+            } else {
+                for (String dim : request.getRows()) {
+                    orderParts.add(quoteIdentifier(dim) + getDirectionSuffix(request.getRowOrder()));
+                }
+            }
+
+            // Col dimensions → use colOrder
+            if (isValueSort(request.getColOrder()) && !request.getCols().isEmpty()) {
+                orderParts.add(aggAlias + getDirectionSuffix(request.getColOrder()));
+            } else {
+                for (String dim : request.getCols()) {
+                    orderParts.add(quoteIdentifier(dim) + getDirectionSuffix(request.getColOrder()));
+                }
+            }
+
+            sql.append(String.join(", ", orderParts));
         }
 
         // LIMIT clause
@@ -250,20 +288,52 @@ public class ClickHousePivotProcessor implements PivotSQLGenerator {
         return result;
     }
 
-    private String getOrderDirection(String orderType) {
-        if (orderType == null) {
-            return " ASC";
+    private boolean isValueSort(String orderType) {
+        return orderType != null && orderType.toLowerCase().startsWith("value_");
+    }
+
+    private String getDirectionSuffix(String orderType) {
+        if (orderType == null) return " ASC";
+        return orderType.toLowerCase().contains("z_to_a") ? " DESC" : " ASC";
+    }
+
+    /**
+     * Generate fraction SQL using window functions over aggregates.
+     * Uses ClickHouse-compatible syntax (sum/count + OVER).
+     */
+    private String generateFractionSQL(AggregatorType aggregator, String column, PivotRequest request) {
+        String baseAgg;
+        if (aggregator == AggregatorType.COUNT_FRACTION_TOTAL || column == null) {
+            baseAgg = "count(*)";
+        } else {
+            baseAgg = "sum(" + quoteIdentifier(column) + ")";
         }
 
-        switch (orderType.toLowerCase()) {
-            case "key_z_to_a":
-            case "value_z_to_a":
-                return " DESC";
-            case "key_a_to_z":
-            case "value_a_to_z":
-            default:
-                return " ASC";
+        String partitionClause;
+        switch (aggregator) {
+            case SUM_FRACTION_ROWS:
+                if (!request.getRows().isEmpty()) {
+                    partitionClause = "PARTITION BY " + request.getRows().stream()
+                            .map(this::quoteIdentifier).collect(Collectors.joining(", "));
+                } else {
+                    partitionClause = "";
+                }
+                break;
+            case SUM_FRACTION_COLS:
+                if (!request.getCols().isEmpty()) {
+                    partitionClause = "PARTITION BY " + request.getCols().stream()
+                            .map(this::quoteIdentifier).collect(Collectors.joining(", "));
+                } else {
+                    partitionClause = "";
+                }
+                break;
+            default:  // SUM_FRACTION_TOTAL, COUNT_FRACTION_TOTAL
+                partitionClause = "";
+                break;
         }
+
+        String overClause = partitionClause.isEmpty() ? "OVER ()" : "OVER (" + partitionClause + ")";
+        return "CAST(" + baseAgg + " AS Float64) / nullIf(sum(" + baseAgg + ") " + overClause + ", 0)";
     }
 
     /**
