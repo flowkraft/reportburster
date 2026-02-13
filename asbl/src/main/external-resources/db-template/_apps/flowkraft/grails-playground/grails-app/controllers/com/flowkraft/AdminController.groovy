@@ -59,7 +59,13 @@ class AdminController {
             preferenceSettings = Setting.getByCategory('preferences')
         }
         
-        [companySettings: companySettings, preferenceSettings: preferenceSettings]
+        def paymentSettings = Setting.getByCategory('payment')
+        if (!paymentSettings) {
+            Setting.setValue('payment.processor', 'stripe', 'payment', 'Default payment processor')
+            paymentSettings = Setting.getByCategory('payment')
+        }
+
+        [companySettings: companySettings, preferenceSettings: preferenceSettings, paymentSettings: paymentSettings]
     }
 
     /**

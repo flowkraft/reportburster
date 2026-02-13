@@ -46,4 +46,11 @@ public class ReportFullConfigDto {
     public boolean hasChart;
     public boolean hasPivotTable;
     public boolean hasParameters;
+
+    /**
+     * Pivot engine mode: "browser" (download all data, aggregate client-side)
+     * or "server" (aggregate server-side on DuckDB/ClickHouse, send only results).
+     * Only relevant when hasPivotTable=true.
+     */
+    public String pivotEngineMode = "browser";  // default
 }

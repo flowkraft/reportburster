@@ -35,6 +35,7 @@ import com.sourcekraft.documentburster.common.db.DatabaseConnectionTester;
 import com.sourcekraft.documentburster.common.db.DatabaseSchemaFetcher;
 import com.sourcekraft.documentburster.common.db.ReportDataResult;
 import com.sourcekraft.documentburster.common.db.schema.SchemaInfo;
+import com.sourcekraft.documentburster.common.db.schema.TableSchema;
 import com.sourcekraft.documentburster.common.settings.EmailConnection;
 import com.sourcekraft.documentburster.common.settings.NewFeatureRequest;
 import com.sourcekraft.documentburster.common.settings.Settings;
@@ -142,8 +143,7 @@ public class CliJob {
 			(new Scripting()).executeSenderScript(Scripts.EMAIL, message);
 
 		} finally {
-			if ((jobFile != null) && (jobFile.exists()))
-				jobFile.delete();
+			_deleteJobFileWithRetry(jobFile);
 		}
 
 	}
@@ -181,9 +181,8 @@ public class CliJob {
 
 					rnfXmlFile.delete();
 
-					if ((jobFile != null) && (jobFile.exists()))
-						jobFile.delete();
-				}
+					_deleteJobFileWithRetry(jobFile);
+			}
 
 			} else
 				throw new Exception("'Request New Feature' XML file does not exist: " + newFeatureRequestFilePath);
@@ -219,8 +218,7 @@ public class CliJob {
 
 		} finally {
 
-			if ((jobFile != null) && (jobFile.exists()))
-				jobFile.delete();
+			_deleteJobFileWithRetry(jobFile);
 
 		}
 
@@ -252,8 +250,7 @@ public class CliJob {
 			burster.burst(filePath, testAll, listOfTestTokens, numberOfRandomTestTokens);
 
 		} finally {
-			if ((jobFile != null) && (jobFile.exists()))
-				jobFile.delete();
+			_deleteJobFileWithRetry(jobFile);
 		}
 
 	}
@@ -296,6 +293,31 @@ public class CliJob {
 
 		return Utils.getTempFolder();
 
+	}
+
+	/**
+	 * Deletes the job file with retry — on Windows the 250ms WebSocket scheduler
+	 * in JobsService.fetchStats() may briefly hold a file handle, causing
+	 * File.delete() to fail. Retries up to 5 times with 100ms delay.
+	 */
+	private void _deleteJobFileWithRetry(File jobFile) {
+		if (jobFile == null || !jobFile.exists())
+			return;
+		for (int attempt = 1; attempt <= 5; attempt++) {
+			if (jobFile.delete())
+				return;
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException ie) {
+				Thread.currentThread().interrupt();
+				break;
+			}
+		}
+		// Last resort: ask the JVM to delete on exit
+		if (jobFile.exists()) {
+			log.warn("Could not delete job file after retries: {}. Scheduling deleteOnExit.", jobFile.getAbsolutePath());
+			jobFile.deleteOnExit();
+		}
 	}
 
 	private File _createJobFile(String targetFilePath, String jobType) throws Exception {
@@ -347,8 +369,7 @@ public class CliJob {
 			mergedFilePath = merger.doMerge(filePaths, outputFileName);
 
 		} finally {
-			if ((jobFile != null) && (jobFile.exists()))
-				jobFile.delete();
+			_deleteJobFileWithRetry(jobFile);
 		}
 
 		return mergedFilePath;
@@ -365,8 +386,7 @@ public class CliJob {
 			jobFile = _createJobFile(licenseUtils.getLicenseFilePath(), "activate-licenseUtils-key");
 			licenseUtils.activateLicense();
 		} finally {
-			if ((jobFile != null) && (jobFile.exists()))
-				jobFile.delete();
+			_deleteJobFileWithRetry(jobFile);
 		}
 
 	}
@@ -381,8 +401,7 @@ public class CliJob {
 			jobFile = _createJobFile(licenseUtils.getLicenseFilePath(), "deactivate-licenseUtils-key");
 			licenseUtils.deActivateLicense();
 		} finally {
-			if ((jobFile != null) && (jobFile.exists()))
-				jobFile.delete();
+			_deleteJobFileWithRetry(jobFile);
 		}
 
 	}
@@ -397,8 +416,7 @@ public class CliJob {
 			jobFile = _createJobFile(licenseUtils.getLicenseFilePath(), "check-licenseUtils-key");
 			licenseUtils.checkLicense();
 		} finally {
-			if ((jobFile != null) && (jobFile.exists()))
-				jobFile.delete();
+			_deleteJobFileWithRetry(jobFile);
 		}
 
 	}
@@ -419,26 +437,24 @@ public class CliJob {
 			jobFile = _createJobFile(Scripts.TWILIO, "check-twilio");
 			(new Scripting()).executeSenderScript(Scripts.TWILIO, message);
 		} finally {
-			if ((jobFile != null) && (jobFile.exists()))
-				jobFile.delete();
+			_deleteJobFileWithRetry(jobFile);
 		}
 
 	}
 
+	/**
+	 * Fetch report data for preview/display purposes (read-only operation).
+	 * Does NOT create a job file since this is not a trackable job - it's just a database query.
+	 * Job files are only needed for operations with side effects (burst, merge, email, etc.).
+	 */
 	public ReportDataResult doFetchData(Map<String, String> parameters) throws Exception {
 
-		File jobFile = null;
 		ReportDataResult result = new ReportDataResult();
+		AbstractBurster burster = null;
 
 		try {
 			// System.out.println("doFetchData: configurationFilePath = " +
 			// configurationFilePath);
-
-			// Create job file
-			jobFile = _createJobFile(configurationFilePath, "fetch-data");
-			// System.out.println(
-			// "doFetchData: Created job file: " + (jobFile != null ?
-			// jobFile.getAbsolutePath() : "null"));
 
 			// Load settings and determine job type
 			settings.setConfigurationFilePath(configurationFilePath);
@@ -451,7 +467,7 @@ public class CliJob {
 			this.setJobType(dsType);
 
 			// Get the correct reporter (SqlReporter, ScriptReporter, etc.)
-			AbstractBurster burster = getBurster(configurationFilePath);
+			burster = getBurster(configurationFilePath);
 			// System.out.println("doFetchData: Got burster of type: "
 			// + (burster != null ? burster.getClass().getName() : "null"));
 
@@ -479,7 +495,7 @@ public class CliJob {
 			// System.out.println("doFetchData: burst finished");
 
 			// Prepare and return the result
-			
+
 			result.reportData = burster.getCtx().reportData;
 			result.reportColumnNames = burster.getCtx().reportColumnNames;
 			result.isPreview = true;
@@ -492,22 +508,28 @@ public class CliJob {
 			// + (result.reportColumnNames != null ? result.reportColumnNames.toString() :
 			// "null"));
 			return result;
-			
+
 		} catch (Throwable t) {
             String msg = (t.getMessage() == null || t.getMessage().isEmpty()) ? t.toString() : t.getMessage();
-            
+
 			// Log everything (goes through SLF4J/logback appenders)
             if (!msg.toLowerCase().contains("no burst tokens were provided or fetched for the document")) {
-				log.error("Exception: ", t);
+				// Check if this is a ClickHouse connection error (non-critical)
+				if (isClickHouseConnectionError(t)) {
+					log.warn("ClickHouse connection failed (likely not running): {}",
+						msg.length() > 200 ? msg.substring(0, 200) + "..." : msg);
+				} else {
+					log.error("Exception: ", t);
+				}
 			}
 			else {
 				log.info(msg);
 			}
-            
+
 			// Otherwise, we are invoked from the server (REST preview) — return a safe error payload
             LinkedHashMap<String, Object> row = new LinkedHashMap<>();
             row.put("ERROR_MESSAGE", msg);
-            result.reportData = Arrays.asList(row);                    
+            result.reportData = Arrays.asList(row);
             result.reportColumnNames = Arrays.asList("ERROR_MESSAGE");
             result.isPreview = true;
             result.executionTimeMillis = 0L;
@@ -521,12 +543,48 @@ public class CliJob {
 			return result;
 
         } finally {
-			if ((jobFile != null) && (jobFile.exists())) {
-				// System.out.println("doTestFetchData: Deleting job file: " +
-				// jobFile.getAbsolutePath());
-				jobFile.delete();
+			// Release database connection pools to prevent file lock leaks (DuckDB)
+			// and connection leaks (all database vendors)
+			if (burster != null && burster.getCtx() != null && burster.getCtx().dbManager != null) {
+				burster.getCtx().dbManager.close();
 			}
 		}
+	}
+
+	/**
+	 * Check if an exception is a ClickHouse connection error (non-critical).
+	 * These errors occur when ClickHouse is simply not running.
+	 */
+	private boolean isClickHouseConnectionError(Throwable e) {
+		if (e == null) {
+			return false;
+		}
+
+		String message = e.getMessage();
+		String causeMessage = e.getCause() != null ? e.getCause().getMessage() : null;
+
+		// Check exception message for ClickHouse indicators
+		if (message != null &&
+			(message.contains("clickhouse") ||
+			 message.contains("localhost:8123") ||
+			 message.contains("Connection refused"))) {
+			return true;
+		}
+
+		// Check cause message for ClickHouse indicators
+		if (causeMessage != null &&
+			(causeMessage.contains("clickhouse") ||
+			 causeMessage.contains("localhost:8123") ||
+			 causeMessage.contains("Connection refused"))) {
+			return true;
+		}
+
+		// Recursively check the cause chain
+		if (e.getCause() != null && e.getCause() != e) {
+			return isClickHouseConnectionError(e.getCause());
+		}
+
+		return false;
 	}
 
 	public void doTestAndFetchDatabaseSchema(String connectionFilePath) throws Exception {
@@ -583,6 +641,22 @@ public class CliJob {
 			fetcher.saveSchemaToJson(schemaInfo, outputJsonPath);
 			log.info("Successfully saved schema to: {}", outputJsonPath);
 
+			// Generate lightweight table-names.txt for AI agents to quickly discover table/view names
+			String tableNamesFileName = baseName + "-table-names.txt";
+			String tableNamesPath = parentDir.resolve(tableNamesFileName).toString();
+			StringBuilder tableNamesSb = new StringBuilder();
+			for (TableSchema table : schemaInfo.tables) {
+				String type = (table.tableType != null) ? table.tableType.toUpperCase() : "TABLE";
+				if ("VIEW".equals(type)) {
+					tableNamesSb.append(table.tableName).append(" (VIEW)").append("\n");
+				} else {
+					tableNamesSb.append(table.tableName).append("\n");
+				}
+			}
+			String tableNamesContent = tableNamesSb.toString().trim();
+			Files.writeString(Path.of(tableNamesPath), tableNamesContent);
+			log.info("Saved table names to: {}", tableNamesPath);
+
 			log.info("Database connection test and schema fetch completed successfully for: {}", connectionFilePath);
 			// --- End Core Logic ---
 
@@ -592,10 +666,7 @@ public class CliJob {
 			// System.out.println("jobFile.getAbsolutePath(): " +
 			// jobFile.getAbsolutePath());
 
-			if ((jobFile != null) && (jobFile.exists())) {
-				log.debug("Deleting job file: {}", jobFile.getAbsolutePath());
-				jobFile.delete();
-			}
+			_deleteJobFileWithRetry(jobFile);
 		}
 
 	}
@@ -606,10 +677,7 @@ public class CliJob {
 			jobFile = _createJobFile(serviceName, commandLine);
 			ServicesManager.execute(commandLine);
 		} finally {
-			// always clean up the temp job file
-			if (jobFile != null && jobFile.exists()) {
-				jobFile.delete();
-			}
+			_deleteJobFileWithRetry(jobFile);
 		}
 	}
 

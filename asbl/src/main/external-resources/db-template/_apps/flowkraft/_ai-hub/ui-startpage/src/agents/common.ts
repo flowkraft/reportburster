@@ -35,3 +35,6 @@ export type AgentConfig = {
 };
 
 export const AGENTS_DIR = path.join(process.cwd(), 'src', 'agents');
+
+/** LLM model ID — read from env, fallback to default */
+export const LLM_MODEL_ID = process.env.LLM_MODEL_ID || 'openai-proxy/glm-4.7';

@@ -316,6 +316,7 @@ export default function Chat2DBPage() {
 
         {/* Dropdown */}
         <select
+          id="database-selector"
           value={selectedCode}
           onChange={(e) => setSelectedCode(e.target.value)}
           className="h-9 rounded-md border bg-background px-3 text-sm outline-none focus:ring-1 focus:ring-ring"
@@ -330,6 +331,7 @@ export default function Chat2DBPage() {
 
         {/* Connect button */}
         <Button
+          id="btn-connect-database"
           size="sm"
           onClick={handleConnect}
           disabled={!selectedCode || connStatus === "connecting"}
@@ -356,7 +358,7 @@ export default function Chat2DBPage() {
         </label>
 
         {/* Status */}
-        <div className="ml-auto flex items-center gap-1.5 text-sm">
+        <div id="connection-status" className="ml-auto flex items-center gap-1.5 text-sm">
           {connStatus === "connected" && (
             <>
               <Check className="h-4 w-4 text-green-500" />
@@ -376,7 +378,7 @@ export default function Chat2DBPage() {
       </div>
 
       {/* ====== Chat area ====== */}
-      <Conversation className="flex-1">
+      <Conversation id="chat-conversation" className="flex-1">
         {/* Header row with Clear button */}
         {messages.length > 0 && (
           <div className="flex items-center justify-end border-b px-4 py-1.5">
@@ -579,10 +581,12 @@ export default function Chat2DBPage() {
       {/* ====== Input bar ====== */}
       <div className="border-t bg-background px-4 py-3">
         <PromptInput
+          id="chat-input-form"
           onSubmit={handleSubmit}
           className="mx-auto max-w-4xl"
         >
           <PromptInputTextarea
+            id="chat-input-textarea"
             ref={inputRef}
             value={input}
             onChange={(e) => {
@@ -598,6 +602,7 @@ export default function Chat2DBPage() {
             disabled={!isConnected || isLoading}
           />
           <PromptInputSubmit
+            id="btn-submit-chat"
             status={isLoading ? "streaming" : "ready"}
             disabled={!isConnected || !input.trim()}
           />

@@ -93,11 +93,6 @@
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="warehouse-tab" data-bs-toggle="tab" data-bs-target="#warehouse-pane" type="button" role="tab" aria-controls="warehouse-pane" aria-selected="false">
-                        <i class="bi bi-database"></i> Northwind Warehouse DB
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
                     <button class="nav-link" id="rawdata-tab" data-bs-toggle="tab" data-bs-target="#rawdata-pane" type="button" role="tab" aria-controls="rawdata-pane" aria-selected="false">
                         <i class="bi bi-table"></i> Raw Data
                     </button>
@@ -128,26 +123,95 @@
                         api-base-url="${RbUtils.apiBaseUrl}"
                         api-key="${RbUtils.apiKey}"
                     ></rb-pivot-table>
-                </div>
 
-                <!-- Northwind Warehouse Tab -->
-                <div class="tab-pane fade" id="warehouse-pane" role="tabpanel" aria-labelledby="warehouse-tab">
-                    <div class="alert alert-info mb-3">
-                        <i class="bi bi-database me-2"></i>
-                        <strong>Real Data Warehouse</strong> — This pivot queries the Northwind DB warehouse (<code>vw_sales_detail</code> view with Star Schema).
-                        ~800 rows currently, designed to scale to 10M+ rows. Server-side engine processing all aggregations.
+                    <!-- How to Use Section (demo pivot) -->
+                    <div class="howto-section">
+                        <h5><i class="bi bi-lightbulb"></i> How to Use This Pivot Table</h5>
+
+                        <p><strong>What you're looking at:</strong> 64 rows of sales data — 4 Regions × 4 Products × 4 Quarters.
+                        The pivot table transforms this into an instant analysis grid. No SQL, no formulas.</p>
+
+                        <h6>Quick Actions (Try These Now)</h6>
+
+                        <div class="step">
+                            <div class="step-title">1. Change the Metric</div>
+                            <p class="mb-1">Current: <span class="step-action">Sum of Revenue</span></p>
+                            <p class="mb-1"><strong>Try:</strong> Click the <span class="step-action">Revenue ▼</span> dropdown (top area) → Select <strong>Profit</strong></p>
+                            <p class="mb-0 insight">→ Now see profit margins. High revenue but low profit? You'll spot it instantly.</p>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-title">2. Rearrange Dimensions</div>
+                            <p class="mb-1"><strong>Try:</strong> Drag <span class="step-action">Quarter</span> from columns → Drop into rows below Region</p>
+                            <p class="mb-0 insight">→ Now quarters are rows. "Which quarter was strongest?" — see row totals immediately.</p>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-title">3. Add a Dimension</div>
+                            <p class="mb-1"><strong>Try:</strong> Drag <span class="step-action">SalesRep</span> from unused area → Drop into rows after Product</p>
+                            <p class="mb-0 insight">→ See Region → Product → SalesRep hierarchy. "Who sold most Laptops in North?" — answered.</p>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-title">4. Filter Data</div>
+                            <p class="mb-1"><strong>Try:</strong> Click the <span class="step-action">▼</span> triangle next to Region → Uncheck North and West</p>
+                            <p class="mb-0 insight">→ Table now shows ONLY South and East. Focus on what matters.</p>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-title">5. Change Aggregation</div>
+                            <p class="mb-1"><strong>Try:</strong> Click <span class="step-action">Sum ▼</span> dropdown (top left) → Select <strong>Average</strong></p>
+                            <p class="mb-0 insight">→ See average per transaction, not totals. "Are Q4 prices higher or just more volume?"</p>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-title">6. Visualize as Chart</div>
+                            <p class="mb-1"><strong>Try:</strong> Click <span class="step-action">Table ▼</span> dropdown → Select <strong>Grouped Column Chart</strong></p>
+                            <p class="mb-0 insight">→ Same data, visual format. Trends jump out. Try "Stacked Bar" or "Line Chart" too.</p>
+                        </div>
+
+                        <h6>Real Business Questions This Answers</h6>
+                        <ul>
+                            <li><strong>"Which product is our cash cow?"</strong> — Put Product in rows, look at Totals column. Laptop = $258,000 (highest).</li>
+                            <li><strong>"Is East region underperforming?"</strong> — Current view: East = $170,850 vs West = $173,850. Yes, investigate.</li>
+                            <li><strong>"Who gets the sales bonus?"</strong> — Drag SalesRep to rows, sort by totals. Highest revenue wins.</li>
+                            <li><strong>"Are we profitable or just busy?"</strong> — Switch from Revenue to Profit. High revenue + low margins? Now you see it.</li>
+                        </ul>
+
+                        <h6>The Point: Why This Matters</h6>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Without pivot table:</strong></p>
+                                <div class="sql-compare">
+  <pre>
+-- Question 1: Revenue by region
+SELECT Region, SUM(Revenue)
+FROM sales GROUP BY Region;
+
+-- Question 2: Revenue by product
+SELECT Product, SUM(Revenue)
+FROM sales GROUP BY Product;
+
+-- 20 more queries for different angles...
+  </pre>
+</div>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>With pivot table:</strong></p>
+                                <div class="pivot-compare">
+<strong>✓</strong> Drag Region to rows → Question 1 answered<br>
+<strong>✓</strong> Drag Product instead → Question 2 answered<br>
+<strong>✓</strong> 3 seconds total, no coding<br>
+<strong>✓</strong> 1000 ways to slice the same data</div>
+                            </div>
+                        </div>
+
+                        <p class="mt-3 mb-0">
+                            <strong>Bottom line:</strong> Pivot tables = SQL GROUP BY + Excel formulas + visualization — combined.
+                            Drag and drop. Instant answers. Questions answered faster = better decisions.
+                        </p>
                     </div>
-                    <div class="d-flex justify-content-end mb-2">
-                        <button id="refreshWarehouseBtn" class="btn btn-outline-secondary btn-sm" title="Refresh">
-                            <i class="bi bi-arrow-clockwise"></i>
-                        </button>
-                    </div>
-                    <rb-pivot-table
-                        id="warehousePivot"
-                        report-code="piv-northwind-warehouse-sales"
-                        api-base-url="${RbUtils.apiBaseUrl}"
-                        api-key="${RbUtils.apiKey}"
-                    ></rb-pivot-table>
                 </div>
 
                 <!-- Raw Data Tab -->
@@ -188,98 +252,10 @@
 &gt;&lt;/rb-pivot-table&gt;</code></pre>
                 </div>
             </div>
-            
-            <!-- How to Use Section -->
-            <div class="howto-section">
-                <h5><i class="bi bi-lightbulb"></i> How to Use This Pivot Table</h5>
-                
-                <p><strong>What you're looking at:</strong> 64 rows of sales data — 4 Regions × 4 Products × 4 Quarters. 
-                The pivot table transforms this into an instant analysis grid. No SQL, no formulas.</p>
-                
-                <h6>Quick Actions (Try These Now)</h6>
-                
-                <div class="step">
-                    <div class="step-title">1. Change the Metric</div>
-                    <p class="mb-1">Current: <span class="step-action">Sum of Revenue</span></p>
-                    <p class="mb-1"><strong>Try:</strong> Click the <span class="step-action">Revenue ▼</span> dropdown (top area) → Select <strong>Profit</strong></p>
-                    <p class="mb-0 insight">→ Now see profit margins. High revenue but low profit? You'll spot it instantly.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">2. Rearrange Dimensions</div>
-                    <p class="mb-1"><strong>Try:</strong> Drag <span class="step-action">Quarter</span> from columns → Drop into rows below Region</p>
-                    <p class="mb-0 insight">→ Now quarters are rows. "Which quarter was strongest?" — see row totals immediately.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">3. Add a Dimension</div>
-                    <p class="mb-1"><strong>Try:</strong> Drag <span class="step-action">SalesRep</span> from unused area → Drop into rows after Product</p>
-                    <p class="mb-0 insight">→ See Region → Product → SalesRep hierarchy. "Who sold most Laptops in North?" — answered.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">4. Filter Data</div>
-                    <p class="mb-1"><strong>Try:</strong> Click the <span class="step-action">▼</span> triangle next to Region → Uncheck North and West</p>
-                    <p class="mb-0 insight">→ Table now shows ONLY South and East. Focus on what matters.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">5. Change Aggregation</div>
-                    <p class="mb-1"><strong>Try:</strong> Click <span class="step-action">Sum ▼</span> dropdown (top left) → Select <strong>Average</strong></p>
-                    <p class="mb-0 insight">→ See average per transaction, not totals. "Are Q4 prices higher or just more volume?"</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">6. Visualize as Chart</div>
-                    <p class="mb-1"><strong>Try:</strong> Click <span class="step-action">Table ▼</span> dropdown → Select <strong>Grouped Column Chart</strong></p>
-                    <p class="mb-0 insight">→ Same data, visual format. Trends jump out. Try "Stacked Bar" or "Line Chart" too.</p>
-                </div>
-                
-                <h6>Real Business Questions This Answers</h6>
-                <ul>
-                    <li><strong>"Which product is our cash cow?"</strong> — Put Product in rows, look at Totals column. Laptop = $291,800 (highest).</li>
-                    <li><strong>"Is East region underperforming?"</strong> — Current view: East = $133,850 vs West = $156,050. Yes, investigate.</li>
-                    <li><strong>"Who gets the sales bonus?"</strong> — Drag SalesRep to rows, sort by totals. Highest revenue wins.</li>
-                    <li><strong>"Are we profitable or just busy?"</strong> — Switch from Revenue to Profit. High revenue + low margins? Now you see it.</li>
-                </ul>
-                
-                <h6>The Point: Why This Matters</h6>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <p class="mb-1"><strong>Without pivot table:</strong></p>
-                        <div class="sql-compare">
-  <pre>
--- Question 1: Revenue by region
-SELECT Region, SUM(Revenue) 
-FROM sales GROUP BY Region;
 
--- Question 2: Revenue by product  
-SELECT Product, SUM(Revenue) 
-FROM sales GROUP BY Product;
-
--- 20 more queries for different angles...
-  </pre>
-</div>
-                    </div>
-                    <div class="col-md-6">
-                        <p class="mb-1"><strong>With pivot table:</strong></p>
-                        <div class="pivot-compare">
-<strong>✓</strong> Drag Region to rows → Question 1 answered<br>
-<strong>✓</strong> Drag Product instead → Question 2 answered<br>
-<strong>✓</strong> 3 seconds total, no coding<br>
-<strong>✓</strong> 1000 ways to slice the same data</div>
-                    </div>
-                </div>
-                
-                <p class="mt-3 mb-0">
-                    <strong>Bottom line:</strong> Pivot tables = SQL GROUP BY + Excel formulas + visualization — combined. 
-                    Drag and drop. Instant answers. Questions answered faster = better decisions.
-                </p>
-            </div>
         </div>
     </div>
-    
+
     <!-- Toast container -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="copyToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
@@ -336,11 +312,6 @@ FROM sales GROUP BY Product;
                 component.fetchData({});
             });
 
-            // Refresh button (warehouse pivot)
-            document.getElementById('refreshWarehouseBtn').addEventListener('click', () => {
-                document.getElementById('warehousePivot').fetchData({});
-            });
-            
             // Copy config button
             document.getElementById('copyConfigBtn').addEventListener('click', function() {
                 copyWithFeedback(this, component.configDsl || '');

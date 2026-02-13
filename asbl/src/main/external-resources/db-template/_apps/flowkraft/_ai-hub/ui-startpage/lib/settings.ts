@@ -57,4 +57,7 @@ export const SETTING_KEYS = {
   // Preferences
   DEFAULT_CURRENCY: "preferences.currency",
   DATE_FORMAT: "preferences.dateFormat",
+
+  // LLM Provider
+  LLM_PROVIDER: "llm.provider",
 } as const

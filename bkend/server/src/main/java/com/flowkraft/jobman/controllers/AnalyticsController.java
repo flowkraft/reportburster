@@ -64,8 +64,126 @@ public class AnalyticsController {
     }
 
     /**
+     * Resolve connectionCode and tableName from a reportCode by reading reporting.xml.
+     * Populates the PivotRequest with the resolved values.
+     *
+     * @param request The pivot request with reportCode set
+     * @throws RuntimeException if reporting.xml not found or invalid
+     */
+    private void resolveConnectionFromReportCode(PivotRequest request) throws RuntimeException {
+        try {
+            String reportCode = request.getReportCode();
+
+            // Find the report directory (same logic as ReportingService)
+            java.nio.file.Path reportsDir = java.nio.file.Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "reports", reportCode);
+            java.nio.file.Path samplesDir = java.nio.file.Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples", reportCode);
+            java.nio.file.Path frendSamplesDir = java.nio.file.Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples", "_frend", reportCode);
+
+            java.nio.file.Path reportDir = null;
+            if (java.nio.file.Files.exists(reportsDir)) {
+                reportDir = reportsDir;
+            } else if (java.nio.file.Files.exists(samplesDir)) {
+                reportDir = samplesDir;
+            } else if (java.nio.file.Files.exists(frendSamplesDir)) {
+                reportDir = frendSamplesDir;
+            } else {
+                throw new RuntimeException("Report not found: " + reportCode);
+            }
+
+            // Read reporting.xml using JAXB (same as Settings.java)
+            java.nio.file.Path reportingXml = reportDir.resolve("reporting.xml");
+            if (!java.nio.file.Files.exists(reportingXml)) {
+                throw new RuntimeException("reporting.xml not found for report: " + reportCode);
+            }
+
+            // Use JAXB to properly parse the XML (same pattern as Settings.java)
+            jakarta.xml.bind.JAXBContext jaxbContext = jakarta.xml.bind.JAXBContext.newInstance(
+                com.sourcekraft.documentburster.common.settings.model.ReportingSettings.class
+            );
+            jakarta.xml.bind.Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+
+            com.sourcekraft.documentburster.common.settings.model.ReportingSettings reportingSettings;
+            try (java.io.FileInputStream fis = new java.io.FileInputStream(reportingXml.toFile())) {
+                reportingSettings = (com.sourcekraft.documentburster.common.settings.model.ReportingSettings) unmarshaller.unmarshal(fis);
+            }
+
+            if (reportingSettings == null || reportingSettings.report == null || reportingSettings.report.datasource == null) {
+                throw new RuntimeException("Invalid reporting.xml structure for report: " + reportCode);
+            }
+
+            com.sourcekraft.documentburster.common.settings.model.ReportSettings.DataSource ds = reportingSettings.report.datasource;
+            String dsType = ds.type;
+            log.debug("resolveConnectionFromReportCode - datasource type: {}", dsType);
+
+            String connectionCode = null;
+
+            // Extract connection code from the appropriate section
+            if ("ds.sqlquery".equals(dsType) && ds.sqloptions != null) {
+                connectionCode = ds.sqloptions.conncode;
+            } else if ("ds.scriptfile".equals(dsType) && ds.scriptoptions != null) {
+                connectionCode = ds.scriptoptions.conncode;
+            }
+
+            log.debug("resolveConnectionFromReportCode - extracted connectionCode: {}", connectionCode);
+
+            if (connectionCode == null || connectionCode.isEmpty()) {
+                throw new RuntimeException("No connection code found in reporting.xml for report: " + reportCode);
+            }
+
+            // Priority 1: Check if user explicitly configured tableName in pivot DSL
+            String tableName = null;
+            java.nio.file.Path pivotConfigPath = reportDir.resolve(reportCode + "-pivot-config.groovy");
+            if (java.nio.file.Files.exists(pivotConfigPath)) {
+                try {
+                    String pivotDsl = java.nio.file.Files.readString(pivotConfigPath);
+                    com.sourcekraft.documentburster.common.pivottable.PivotTableOptions pivotOpts =
+                        com.sourcekraft.documentburster.common.pivottable.PivotTableOptionsParser.parseGroovyPivotTableDslCode(pivotDsl);
+                    tableName = pivotOpts.getTableName();
+
+                    if (tableName != null && !tableName.isEmpty()) {
+                        log.info("Using explicit tableName from pivot DSL: '{}'", tableName);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to parse pivot config for report '{}': {}", reportCode, e.getMessage());
+                }
+            }
+
+            // Priority 2: If no explicit tableName, fallback to auto-plumbing sentinel
+            if (tableName == null || tableName.isEmpty()) {
+                tableName = "__SCRIPT_DATA__";
+                log.info("No explicit tableName in pivot DSL - will auto-plumb script data for report '{}'", reportCode);
+            }
+
+            // Populate the request
+            request.setConnectionCode(connectionCode);
+            request.setTableName(tableName);
+
+            // Smart auto-substitution: if client explicitly requests DuckDB but report has non-DuckDB connection,
+            // auto-configure virtual DuckDB connection (only if not already DuckDB)
+            String clientEngine = request.getEngine();
+            if ("duckdb".equalsIgnoreCase(clientEngine)) {
+                String detectedEngine = detectEngineFromConnection(connectionCode);
+
+                if (!"duckdb".equalsIgnoreCase(detectedEngine)) {
+                    // Client explicitly requested DuckDB, auto-configure virtual connection
+                    log.info("Client requested DuckDB engine but report uses '{}' connection - auto-configuring virtual DuckDB",
+                            connectionCode);
+                    request.setConnectionCode("rbt-sample-northwind-duckdb-4f2");
+                }
+            }
+
+            log.info("Resolved reportCode '{}' to connectionCode='{}', tableName='{}'",
+                    reportCode, connectionCode, tableName);
+
+        } catch (Exception e) {
+            log.error("Failed to resolve reportCode: {}", request.getReportCode(), e);
+            throw new RuntimeException("Failed to resolve report configuration: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Auto-detect the appropriate OLAP engine from the database connection type.
-     * 
+     *
      * @param connectionCode The connection code to look up
      * @return The detected engine: "duckdb", "clickhouse", or "browser"
      */
@@ -98,11 +216,9 @@ public class AnalyticsController {
      *
      * POST /api/analytics/pivot
      *
-     * Request body example:
+     * Request body example (Option 1 - recommended):
      * {
-     *   "connectionCode": "my-connection",
-     *   "tableName": "orders",
-     *   "engine": "duckdb",  // or "clickhouse" (optional, auto-detected from connection if omitted)
+     *   "reportCode": "piv-northwind-warehouse-duckdb",
      *   "rows": ["country", "city"],
      *   "cols": ["product_category"],
      *   "vals": ["revenue"],
@@ -112,6 +228,17 @@ public class AnalyticsController {
      *   }
      * }
      *
+     * Request body example (Option 2 - legacy):
+     * {
+     *   "connectionCode": "my-connection",
+     *   "tableName": "orders",
+     *   "engine": "duckdb",
+     *   "rows": ["country", "city"],
+     *   "cols": ["product_category"],
+     *   "vals": ["revenue"],
+     *   "aggregatorName": "Sum"
+     * }
+     *
      * @param request The pivot configuration
      * @return PivotResponse with aggregated data
      */
@@ -119,17 +246,23 @@ public class AnalyticsController {
     public ResponseEntity<?> executePivot(@RequestBody PivotRequest request) {
         ensureServicesInitialized();
         try {
-            log.info("Received pivot request for table: {}, engine: {}", 
-                    request.getTableName(), request.getEngine());
+            // If reportCode is provided, resolve connectionCode + tableName from reporting.xml
+            if (request.getReportCode() != null && !request.getReportCode().isEmpty()) {
+                log.info("Received pivot request for reportCode: {}", request.getReportCode());
+                resolveConnectionFromReportCode(request);
+            } else {
+                log.info("Received pivot request for table: {}, engine: {}",
+                        request.getTableName(), request.getEngine());
+            }
 
-            // Validate request
+            // Validate request (after resolution)
             if (request.getConnectionCode() == null || request.getConnectionCode().isEmpty()) {
                 return ResponseEntity.badRequest()
-                        .body(createErrorResponse("connectionCode is required"));
+                        .body(createErrorResponse("connectionCode is required (or provide reportCode)"));
             }
             if (request.getTableName() == null || request.getTableName().isEmpty()) {
                 return ResponseEntity.badRequest()
-                        .body(createErrorResponse("tableName is required"));
+                        .body(createErrorResponse("tableName is required (or provide reportCode)"));
             }
 
             // Determine engine: use provided value or auto-detect from connection
@@ -153,16 +286,24 @@ public class AnalyticsController {
 
             // Route to appropriate OLAP service based on engine
             PivotResponse response;
+            java.util.List<String> availableColumns = null;
             switch (engine) {
                 case "clickhouse":
                     log.debug("Routing to ClickHouse analytics service");
                     response = clickHouseService.executePivot(request);
+                    availableColumns = clickHouseService.getTableColumns(request.getConnectionCode(), request.getTableName());
                     break;
                 case "duckdb":
                 default:
                     log.debug("Routing to DuckDB analytics service");
                     response = duckDBService.executePivot(request);
+                    availableColumns = duckDBService.getTableColumns(request.getConnectionCode(), request.getTableName());
                     break;
+            }
+
+            // Include all table columns so frontend can show draggable fields
+            if (availableColumns != null) {
+                response.getMetadata().setAvailableColumns(availableColumns);
             }
 
             return ResponseEntity.ok(response);

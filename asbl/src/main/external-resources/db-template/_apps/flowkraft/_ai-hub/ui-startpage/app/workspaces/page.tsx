@@ -262,10 +262,10 @@ export default function WorkspacesPage() {
       <div className="border-b border-border px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/agents" className="text-rb-cyan hover:underline">
+            <Link id="btn-back-to-agents" href="/agents" className="text-rb-cyan hover:underline">
               &larr; Back
             </Link>
-            <h1 className="text-xl font-bold">Oracle Output Artifacts</h1>
+            <h1 id="workspaces-page-heading" className="text-xl font-bold">Oracle Output Artifacts</h1>
           </div>
 
           {/* Mobile Panel Selector */}
@@ -301,6 +301,7 @@ export default function WorkspacesPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* LEFT PANEL: File Explorer */}
         <div
+          id="file-explorer-panel"
           className={`border-r border-border bg-card overflow-y-auto transition-all duration-300 ${
             mobilePanel === 'files' ? 'block' : 'hidden'
           } md:block ${isLeftPanelCollapsed ? 'md:!w-12' : ''}`}
@@ -362,6 +363,7 @@ export default function WorkspacesPage() {
 
         {/* CENTER PANEL: Code Editor */}
         <div
+          id="code-editor-panel"
           className={`overflow-hidden transition-all duration-300 ${
             mobilePanel === 'editor' ? 'block' : 'hidden'
           } md:block ${isCodeEditorCollapsed && showPreview ? 'md:!w-12 md:!min-w-[48px] md:!flex-none' : 'flex-1'}`}
@@ -433,6 +435,7 @@ export default function WorkspacesPage() {
               />
             )}
             <div
+              id="preview-panel"
               className={`border-l border-border bg-card overflow-y-auto ${
                 mobilePanel === 'preview' ? 'block' : 'hidden'
               } md:block`}

@@ -48,6 +48,7 @@ public abstract class PivotTableOptionsScript extends Script {
 	private final List<String> hiddenFromDragDrop = new ArrayList<>();
 	private Integer unusedOrientationCutoff = null;
 	private Integer menuLimit = null;
+	private String tableName = null;
 	private final Map<String, Object> sorters = new LinkedHashMap<>();
 	private final Map<String, String> derivedAttributes = new LinkedHashMap<>();
 
@@ -190,6 +191,11 @@ public abstract class PivotTableOptionsScript extends Script {
 		this.menuLimit = value;
 	}
 
+	// Server-side table/view name for DuckDB/ClickHouse aggregation
+	public void tableName(String name) {
+		this.tableName = name;
+	}
+
 	// Custom sorters - map form: sorters region: ['West', 'East', 'North', 'South']
 	public void sorters(Map<String, Object> map) {
 		if (map != null) sorters.putAll(map);
@@ -220,6 +226,7 @@ public abstract class PivotTableOptionsScript extends Script {
 		if (!hiddenFromDragDrop.isEmpty()) out.put("hiddenFromDragDrop", new ArrayList<>(hiddenFromDragDrop));
 		if (unusedOrientationCutoff != null) out.put("unusedOrientationCutoff", unusedOrientationCutoff);
 		if (menuLimit != null) out.put("menuLimit", menuLimit);
+		if (tableName != null) out.put("tableName", tableName);
 		if (!sorters.isEmpty()) out.put("sorters", new LinkedHashMap<>(sorters));
 		if (!derivedAttributes.isEmpty()) out.put("derivedAttributes", new LinkedHashMap<>(derivedAttributes));
 		return out;

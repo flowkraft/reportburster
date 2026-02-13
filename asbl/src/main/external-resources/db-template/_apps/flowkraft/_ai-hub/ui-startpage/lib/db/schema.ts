@@ -35,4 +35,8 @@ export const DEFAULT_CONFIG = {
     value: 'light',
     description: 'Theme mode (light or dark)',
   },
+  'llm.provider': {
+    value: '{"activeProviderId":"openai","providers":{}}',
+    description: 'LLM API provider configuration (JSON)',
+  },
 } as const;

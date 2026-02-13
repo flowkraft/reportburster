@@ -181,56 +181,6 @@
 		</properties>
 	</persistence-unit>
 
-	<!-- ==================== DuckDB ==================== -->
-	<!-- NOTE: This persistence unit is UNUSED and kept only for reference.
-	     DuckDB database creation uses DuckDBDataWarehouseCreator (pure SQL)
-	     instead of JPA because it creates a Star Schema data warehouse,
-	     not an OLTP database like other vendors.
-
-	     The persistence unit is provided for potential future use cases where
-	     JPA access to the existing DuckDB warehouse might be needed.
-	-->
-	<persistence-unit name="northwind-duckdb" transaction-type="RESOURCE_LOCAL">
-		<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-		<!-- List all entity classes -->
-		<class>
-			com.sourcekraft.documentburster.common.db.northwind.entities.Category</class>
-		<class>
-			com.sourcekraft.documentburster.common.db.northwind.entities.Customer</class>
-		<class>
-			com.sourcekraft.documentburster.common.db.northwind.entities.CustomerDemographics</class>
-		<class>
-			com.sourcekraft.documentburster.common.db.northwind.entities.Employee</class>
-		<class>
-			com.sourcekraft.documentburster.common.db.northwind.entities.Order</class>
-		<class>
-			com.sourcekraft.documentburster.common.db.northwind.entities.OrderDetail</class>
-		<class>
-			com.sourcekraft.documentburster.common.db.northwind.entities.Product</class>
-		<class>
-			com.sourcekraft.documentburster.common.db.northwind.entities.Region</class>
-		<class>
-			com.sourcekraft.documentburster.common.db.northwind.entities.Shipper</class>
-		<class>
-			com.sourcekraft.documentburster.common.db.northwind.entities.Supplier</class>
-		<class>
-			com.sourcekraft.documentburster.common.db.northwind.entities.Territory</class>
-		<properties>
-			<!-- Placeholders -->
-			<property name="jakarta.persistence.jdbc.driver"
-				value="org.duckdb.DuckDBDriver" />
-			<property name="jakarta.persistence.jdbc.url"
-				value="jdbc:duckdb:./asbl/src/main/external-resources/db-template/db/sample-northwind-duckdb/northwind.duckdb" />
-			<property name="jakarta.persistence.jdbc.user" value="" />
-			<property name="jakarta.persistence.jdbc.password" value="" />
-			<property name="hibernate.dialect"
-				value="org.hibernate.community.dialect.DuckDBDialect" />
-			<property name="hibernate.hbm2ddl.auto" value="none" />
-			<property name="hibernate.show_sql" value="false" />
-			<property name="hibernate.format_sql" value="false" />
-		</properties>
-	</persistence-unit>
-
 	<!-- ==================== SQL Server ==================== -->
 	<persistence-unit name="northwind-sqlserver"
 		transaction-type="RESOURCE_LOCAL">

@@ -225,14 +225,116 @@ public class ReportingService {
 				if (opts.getOptions() != null && !opts.getOptions().isEmpty()) {
 					config.pivotTableOptions.put("options", opts.getOptions());
 				}
+				if (opts.getHiddenAttributes() != null && !opts.getHiddenAttributes().isEmpty()) {
+					config.pivotTableOptions.put("hiddenAttributes", opts.getHiddenAttributes());
+				}
+				if (opts.getHiddenFromAggregators() != null && !opts.getHiddenFromAggregators().isEmpty()) {
+					config.pivotTableOptions.put("hiddenFromAggregators", opts.getHiddenFromAggregators());
+				}
+				if (opts.getHiddenFromDragDrop() != null && !opts.getHiddenFromDragDrop().isEmpty()) {
+					config.pivotTableOptions.put("hiddenFromDragDrop", opts.getHiddenFromDragDrop());
+				}
+				if (opts.getUnusedOrientationCutoff() != null) {
+					config.pivotTableOptions.put("unusedOrientationCutoff", opts.getUnusedOrientationCutoff());
+				}
+				if (opts.getMenuLimit() != null) {
+					config.pivotTableOptions.put("menuLimit", opts.getMenuLimit());
+				}
+				if (opts.getTableName() != null) {
+					config.pivotTableOptions.put("tableName", opts.getTableName());
+				}
 				config.hasPivotTable = true;
 				System.out.println("[DEBUG] Pivot config set: hasPivotTable=true, pivotTableDsl length=" + config.pivotTableDsl.length());
+			}
+
+			// Detect pivot engine mode from datasource type
+			if (config.hasPivotTable) {
+				String engineMode = detectPivotEngineMode(itemDir);
+				config.pivotEngineMode = engineMode;
+				System.out.println("[DEBUG] Detected pivotEngineMode=" + engineMode + " for report " + reportCode);
 			}
 		} else {
 			System.out.println("[DEBUG] No pivot DSL file found at: " + pivotPath);
 		}
-		
+
 		return config;
+	}
+
+	/**
+	 * Detect whether this report should use browser-side or server-side pivot aggregation
+	 * by examining the datasource connection file.
+	 * Uses JAXB unmarshalling for proper XML parsing.
+	 */
+	private String detectPivotEngineMode(Path reportDir) {
+		try {
+			Path reportingXml = reportDir.resolve("reporting.xml");
+			if (!Files.exists(reportingXml)) {
+				return "browser";  // no reporting.xml = fallback to browser mode
+			}
+
+			// Use JAXB to properly parse the XML
+			jakarta.xml.bind.JAXBContext jaxbContext = jakarta.xml.bind.JAXBContext.newInstance(
+				com.sourcekraft.documentburster.common.settings.model.ReportingSettings.class
+			);
+			jakarta.xml.bind.Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+
+			com.sourcekraft.documentburster.common.settings.model.ReportingSettings reportingSettings;
+			try (java.io.FileInputStream fis = new java.io.FileInputStream(reportingXml.toFile())) {
+				reportingSettings = (com.sourcekraft.documentburster.common.settings.model.ReportingSettings) unmarshaller.unmarshal(fis);
+			}
+
+			if (reportingSettings == null || reportingSettings.report == null || reportingSettings.report.datasource == null) {
+				return "browser";
+			}
+
+			com.sourcekraft.documentburster.common.settings.model.ReportSettings.DataSource ds = reportingSettings.report.datasource;
+			String dsType = ds.type;
+			System.out.println("[DEBUG] detectPivotEngineMode - datasource type: " + dsType);
+
+			String connectionCode = null;
+
+			// Extract connection code from the appropriate section
+			if ("ds.sqlquery".equals(dsType)) {
+				System.out.println("[DEBUG] ds.sqlquery path - sqloptions is null? " + (ds.sqloptions == null));
+				if (ds.sqloptions != null) {
+					System.out.println("[DEBUG] sqloptions.conncode value: '" + ds.sqloptions.conncode + "'");
+					System.out.println("[DEBUG] sqloptions.query value length: " + (ds.sqloptions.query != null ? ds.sqloptions.query.length() : "null"));
+					connectionCode = ds.sqloptions.conncode;
+				}
+			} else if ("ds.scriptfile".equals(dsType)) {
+				System.out.println("[DEBUG] ds.scriptfile path - scriptoptions is null? " + (ds.scriptoptions == null));
+				if (ds.scriptoptions != null) {
+					System.out.println("[DEBUG] scriptoptions.conncode value: '" + ds.scriptoptions.conncode + "'");
+					connectionCode = ds.scriptoptions.conncode;
+				}
+			}
+
+			System.out.println("[DEBUG] detectPivotEngineMode - extracted connectionCode: " + connectionCode);
+
+			if (connectionCode == null || connectionCode.isEmpty()) {
+				return "browser";  // no connection = browser mode
+			}
+
+			// Simple detection: check if connection code contains engine name
+			String codeLower = connectionCode.toLowerCase();
+			if (codeLower.contains("duckdb")) {
+				System.out.println("[DEBUG] DuckDB detected in connectionCode: " + connectionCode);
+				return "duckdb";
+			}
+			if (codeLower.contains("clickhouse")) {
+				System.out.println("[DEBUG] ClickHouse detected in connectionCode: " + connectionCode);
+				return "clickhouse";
+			}
+
+			// Default to browser if no OLAP database detected
+			System.out.println("[DEBUG] No OLAP engine detected, defaulting to browser mode");
+			return "browser";
+
+		} catch (Exception e) {
+			System.out.println("[DEBUG] Error detecting engine mode: " + e.getMessage());
+			e.printStackTrace();
+			return "browser";  // fallback to browser on any error
+		}
 	}
 	
 	/**

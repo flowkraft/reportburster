@@ -42,6 +42,8 @@ class Setting {
         def setting = Setting.findByKey(key)
         if (!setting) {
             setting = new Setting(key: key, category: category)
+        } else {
+            setting.category = category  // Update category on existing settings
         }
         setting.value = value
         if (description) {

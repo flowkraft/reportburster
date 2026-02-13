@@ -56,8 +56,14 @@
   export let aggregators: Record<string, AggregatorFactory> = {};
   export let tableClickCallback: TableClickCallback | null = null;
 
-  // Server-side processing props
+  // Server-side processing - engine mode is auto-detected by backend from datasource config
+  // "browser" = download all data, aggregate client-side
+  // "duckdb" or "clickhouse" = aggregate server-side, only send results
   export let engine: PivotEngine = 'browser';
+
+  // DEPRECATED: connectionCode and tableName are no longer needed.
+  // The backend already knows which connection/table to use from reporting.xml.
+  // These props remain for backwards compatibility but are ignored.
   export let connectionCode: string = '';
   export let tableName: string = '';
 
@@ -161,19 +167,24 @@
   // ============================================================================
 
   // Helper to determine if server-side processing should be used
-  // Server-side is used when connectionCode and tableName are provided AND engine is not explicitly 'browser'
+  // Server-side is used when reportCode is available AND engine is duckdb/clickhouse
   function shouldUseServerProcessing(): boolean {
-    return engine !== 'browser' && !!connectionCode && !!tableName;
+    return engine !== 'browser' && !!reportCode;
   }
 
-  // Reactive statement to trigger server-side pivot when conditions are met
-  $: if (shouldUseServerProcessing()) {
-    executePivotOnServer();
+  // Reactive statement to trigger server-side pivot when conditions are met.
+  // Dependencies must be inlined — Svelte can't see inside function calls.
+  // Re-fires on any pivot parameter change so server re-aggregates.
+  // Debounced to avoid rapid cancellations during config loading.
+  let _serverPivotTimer: any = null;
+  $: if (engine !== 'browser' && reportCode && rows && cols && vals && aggregatorName && rowOrder && colOrder) {
+    clearTimeout(_serverPivotTimer);
+    _serverPivotTimer = setTimeout(() => executePivotOnServer(), 150);
   }
 
   async function executePivotOnServer() {
-    if (!connectionCode || !tableName) {
-      error = 'connectionCode and tableName are required for server-side processing';
+    if (!reportCode) {
+      error = 'reportCode is required for server-side processing';
       return;
     }
 
@@ -182,11 +193,10 @@
     serverMetadata = null;
 
     try {
-      // If engine is undefined, let backend auto-detect from connection type
-      // If engine is 'duckdb' or 'clickhouse', explicitly pass it
+      // Server resolves connectionCode + tableName from reportCode internally
       const engineToUse = engine as 'duckdb' | 'clickhouse' | undefined;
-      
-      const request = buildServerPivotRequest(connectionCode, tableName, {
+
+      const request = buildServerPivotRequest(reportCode, {
         rows,
         cols,
         vals,
@@ -196,8 +206,14 @@
         colOrder,
       }, engineToUse);
 
+      // Derive analytics API URL from apiBaseUrl (e.g. http://host:port/api/jobman/reporting -> http://host:port/api/analytics)
+      if (apiBaseUrl) {
+        const baseOrigin = apiBaseUrl.replace(/\/api\/jobman\/reporting\/?$/, '');
+        pivotApi.baseUrl = `${baseOrigin}/api/analytics`;
+      }
+
       console.log('[rb-pivot-table] Executing server-side pivot:', request);
-      const response = await pivotApi.executePivot(request, 'pivot-table-main');
+      const response = await pivotApi.executePivot(request, `pivot-${reportCode}`);
 
       // Check if backend returned 'browser' engine (non-OLAP connection)
       if ((response as any).engine === 'browser') {
@@ -213,8 +229,25 @@
         aggregator: response.metadata.aggregatorUsed,
       });
 
+      // Inject missing columns so PivotData discovers all draggable fields.
+      // Server returns only GROUP BY dimensions + aggregated value, but the source
+      // table has more columns (continent, employee_name, etc.) that users can drag.
+      const serverData = response.data;
+      const availableCols = response.metadata.availableColumns;
+      if (availableCols && availableCols.length > 0 && serverData.length > 0) {
+        const existingKeys = new Set(Object.keys(serverData[0]));
+        const missingCols = availableCols.filter(c => !existingKeys.has(c));
+        if (missingCols.length > 0) {
+          for (const row of serverData) {
+            for (const col of missingCols) {
+              row[col] = null;
+            }
+          }
+        }
+      }
+
       // Update data with server results
-      data = response.data;
+      data = serverData;
       serverMetadata = response.metadata;
 
       dispatch('pivotExecuted', { metadata: serverMetadata });
@@ -222,9 +255,36 @@
     } catch (err: any) {
       error = err.message || 'Failed to execute server-side pivot';
       console.error('[rb-pivot-table] Server-side pivot error:', err);
-      dispatch('pivotError', { message: error });
+      dispatch('error', { message: error });
     } finally {
       loading = false;
+    }
+  }
+
+  // ============================================================================
+  // Helpers
+  // ============================================================================
+
+  /**
+   * Fetch with timeout to prevent hanging on slow/unreachable backends
+   */
+  async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = 30000) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error(`Request timeout after ${timeoutMs}ms: ${url}`);
+      }
+      throw error;
     }
   }
 
@@ -247,28 +307,28 @@
     }
     
     // ========================================================================
-    // Hybrid Mode: if reportCode provided, self-fetch config + data
+    // Hybrid Mode: if reportCode provided, self-fetch config + optionally data
     // ========================================================================
     if (reportCode && apiBaseUrl) {
       loading = true;
       error = null;
-      
+
       const headers: Record<string, string> = {};
       // TEMP: API key disabled for rollback
       // if (apiKey) headers['X-API-Key'] = apiKey;
-      
+
       try {
         // Fetch config
         console.log('[rb-pivot-table] Fetching config from:', `${apiBaseUrl}/reports/${reportCode}/config`);
-        const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
+        const configRes = await fetchWithTimeout(`${apiBaseUrl}/reports/${reportCode}/config`, { headers }, 10000);
         if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
         const config = await configRes.json();
-        console.log('[rb-pivot-table] Config received:', { 
-          hasPivotTable: config.hasPivotTable, 
+        console.log('[rb-pivot-table] Config received:', {
+          hasPivotTable: config.hasPivotTable,
           pivotTableDsl: config.pivotTableDsl ? `${config.pivotTableDsl.length} chars` : 'MISSING',
-          pivotTableOptions: config.pivotTableOptions 
+          pivotTableOptions: config.pivotTableOptions
         });
-        
+
         // Apply pivot table options from config
         if (config.pivotTableOptions) {
           const opts = config.pivotTableOptions;
@@ -280,8 +340,19 @@
           if (opts.valueFilter) valueFilter = opts.valueFilter;
           if (opts.rowOrder) rowOrder = opts.rowOrder;
           if (opts.colOrder) colOrder = opts.colOrder;
+          if (opts.hiddenAttributes) hiddenAttributes = opts.hiddenAttributes;
+          if (opts.hiddenFromAggregators) hiddenFromAggregators = opts.hiddenFromAggregators;
+          if (opts.hiddenFromDragDrop) hiddenFromDragDrop = opts.hiddenFromDragDrop;
+          if (opts.unusedOrientationCutoff != null) unusedOrientationCutoff = opts.unusedOrientationCutoff;
+          if (opts.menuLimit != null) menuLimit = opts.menuLimit;
         }
-        
+
+        // Apply engine mode from backend auto-detection
+        if (config.pivotEngineMode) {
+          engine = config.pivotEngineMode as PivotEngine;
+          console.log('[rb-pivot-table] Backend detected engine mode:', engine);
+        }
+
         // Store raw DSL for Configuration tab display
         if (config.pivotTableDsl) {
           configDsl = config.pivotTableDsl;
@@ -289,28 +360,47 @@
         } else {
           console.warn('[rb-pivot-table] No pivotTableDsl in config response!');
         }
-        
-        // Fetch data (GET with empty query params for initial load)
-        const dataRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, { headers });
-        if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
-        const dataResult = await dataRes.json();
-        // Backend returns { reportData: [...] }, extract the array
-        data = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
-        
-        // Dispatch event so host page knows config/data is ready
+
+        // Decide whether to fetch full data from /data endpoint:
+        // - Browser mode: always fetch all rows (client-side aggregation)
+        // - DuckDB/ClickHouse: skip fetch, server-side aggregation via /api/analytics/pivot
+        const needsDataFetch = engine === 'browser' || !shouldUseServerProcessing();
+        if (needsDataFetch) {
+          console.log('[rb-pivot-table]', engine, 'mode: fetching dataset from /data endpoint...');
+          // Longer timeout (60s) because backend may process multiple requests sequentially
+          const dataRes = await fetchWithTimeout(`${apiBaseUrl}/reports/${reportCode}/data`, { headers }, 60000);
+          if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
+          const dataResult = await dataRes.json();
+          // Backend returns { reportData: [...] }, extract the array
+          data = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
+
+          // Check if backend returned an error payload (ClickHouse unavailable, SQL error, etc.)
+          if (data && data.length === 1 && data[0].ERROR_MESSAGE) {
+            error = data[0].ERROR_MESSAGE;
+            dispatch('error', { message: error });
+            loading = false;
+            return;
+          }
+
+          dispatch('dataFetched', { data });
+        } else {
+          console.log('[rb-pivot-table] Server-side aggregation mode (', engine, '): skipping data download, will aggregate on server');
+          // Server-side aggregation will happen via reactive statement when user interacts
+        }
+
+        // Dispatch event so host page knows config is ready
         dispatch('configLoaded', { configDsl, config });
-        dispatch('dataFetched', { data });
-        
+
       } catch (err: any) {
         error = err.message || 'Failed to load report';
         console.error('rb-pivot-table self-fetch error:', err);
-        dispatch('fetchError', { message: error });
+        dispatch('error', { message: error });
         loading = false;
         return;
       }
       loading = false;
     }
-    
+
     materializeInput(data);
   });
 
@@ -598,45 +688,25 @@
   function onDropRows(e: DragEvent) {
     e.preventDefault();
     if (!draggedAttr) return;
-    
-    // Remove from cols if present
-    cols = cols.filter(c => c !== draggedAttr);
-    
-    // Add to rows if not already there
-    if (!rows.includes(draggedAttr)) {
-      rows = [...rows, draggedAttr];
-    }
-    
+
+    moveDimension(draggedAttr, 'rows');  // Use the public API
     draggedAttr = null;
-    emitChange();
   }
 
   function onDropCols(e: DragEvent) {
     e.preventDefault();
     if (!draggedAttr) return;
-    
-    // Remove from rows if present
-    rows = rows.filter(r => r !== draggedAttr);
-    
-    // Add to cols if not already there
-    if (!cols.includes(draggedAttr)) {
-      cols = [...cols, draggedAttr];
-    }
-    
+
+    moveDimension(draggedAttr, 'cols');  // Use the public API
     draggedAttr = null;
-    emitChange();
   }
 
   function onDropUnused(e: DragEvent) {
     e.preventDefault();
     if (!draggedAttr) return;
-    
-    // Remove from both
-    rows = rows.filter(r => r !== draggedAttr);
-    cols = cols.filter(c => c !== draggedAttr);
-    
+
+    moveDimension(draggedAttr, 'unused');  // Use the public API
     draggedAttr = null;
-    emitChange();
   }
 
   function removeFromRows(attr: string) {
@@ -646,6 +716,104 @@
 
   function removeFromCols(attr: string) {
     cols = cols.filter(c => c !== attr);
+    emitChange();
+  }
+
+  // ============================================================================
+  // Public API for programmatic dimension movement (for tests)
+  // ============================================================================
+
+  /**
+   * Move a dimension to a specific drop zone programmatically.
+   * This is the SAME logic that onDropRows/onDropCols/onDropUnused use.
+   * @param dimension - Name of the dimension to move
+   * @param targetZone - Where to move it: 'rows', 'cols', or 'unused'
+   */
+  export function moveDimension(dimension: string, targetZone: 'rows' | 'cols' | 'unused'): void {
+    switch (targetZone) {
+      case 'rows':
+        // Remove from cols if present
+        cols = cols.filter(c => c !== dimension);
+        // Add to rows if not already there
+        if (!rows.includes(dimension)) {
+          rows = [...rows, dimension];
+        }
+        break;
+
+      case 'cols':
+        // Remove from rows if present
+        rows = rows.filter(r => r !== dimension);
+        // Add to cols if not already there
+        if (!cols.includes(dimension)) {
+          cols = [...cols, dimension];
+        }
+        break;
+
+      case 'unused':
+        // Remove from both
+        rows = rows.filter(r => r !== dimension);
+        cols = cols.filter(c => c !== dimension);
+        break;
+    }
+
+    // Trigger re-render
+    emitChange();
+  }
+
+  /**
+   * Change the value field programmatically.
+   * This is the SAME logic that the dropdown click handler uses.
+   * @param valueName - Name of the value field to select (e.g., 'Revenue', 'Profit')
+   */
+  export function changeValueField(valueName: string): void {
+    // Find the index of the first value slot (usually 0 for single-value pivots)
+    const index = 0;
+    // Call the internal setVal function
+    vals = [...vals.slice(0, index), valueName, ...vals.slice(index + 1)];
+    openDropdown = false;
+    emitChange();
+  }
+
+  /**
+   * Change the aggregator programmatically.
+   * @param newAggregator - Name of the aggregator (e.g., 'Sum', 'Average', 'Count')
+   */
+  export function changeAggregator(newAggregator: string): void {
+    aggregatorName = newAggregator;
+    emitChange();
+  }
+
+  /**
+   * Change the renderer programmatically.
+   * @param newRenderer - Name of the renderer (e.g., 'Table', 'Grouped Column Chart')
+   */
+  export function changeRenderer(newRenderer: string): void {
+    rendererName = newRenderer;
+    openDropdown = false;
+    emitChange();
+  }
+
+  /**
+   * Set filter values programmatically for a dimension.
+   * This is the SAME logic that the filter dialog uses.
+   * @param dimensionName - Name of the dimension to filter (e.g., 'Region')
+   * @param valuesToExclude - Array of values to exclude/hide from the pivot table
+   */
+  export function setFilter(dimensionName: string, valuesToExclude: string[]): void {
+    const newFilter = { ...valueFilter };
+
+    if (valuesToExclude.length === 0) {
+      // No values to exclude = clear the filter for this dimension
+      delete newFilter[dimensionName];
+    } else {
+      // Create filter object with excluded values
+      newFilter[dimensionName] = {};
+      for (const value of valuesToExclude) {
+        newFilter[dimensionName][value] = true;
+      }
+    }
+
+    valueFilter = newFilter;
     emitChange();
   }
 
@@ -692,10 +860,10 @@
     
     try {
       // Re-fetch config to get any DSL changes
-      const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
+      const configRes = await fetchWithTimeout(`${apiBaseUrl}/reports/${reportCode}/config`, { headers }, 10000);
       if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
       const config = await configRes.json();
-      
+
       // Update pivot table options from fresh config
       if (config.pivotTableOptions) {
         const opts = config.pivotTableOptions;
@@ -707,29 +875,44 @@
         if (opts.valueFilter) valueFilter = opts.valueFilter;
         if (opts.rowOrder) rowOrder = opts.rowOrder;
         if (opts.colOrder) colOrder = opts.colOrder;
+        if (opts.hiddenAttributes) hiddenAttributes = opts.hiddenAttributes;
+        if (opts.hiddenFromAggregators) hiddenFromAggregators = opts.hiddenFromAggregators;
+        if (opts.hiddenFromDragDrop) hiddenFromDragDrop = opts.hiddenFromDragDrop;
+        if (opts.unusedOrientationCutoff != null) unusedOrientationCutoff = opts.unusedOrientationCutoff;
+        if (opts.menuLimit != null) menuLimit = opts.menuLimit;
       }
-      
+
       // Update raw DSL for Configuration tab
       if (config.pivotTableDsl) {
         configDsl = config.pivotTableDsl;
       }
-      
+
       // Build query string from params
       const queryString = new URLSearchParams(params as Record<string, string>).toString();
-      const url = queryString 
+      const url = queryString
         ? `${apiBaseUrl}/reports/${reportCode}/data?${queryString}`
         : `${apiBaseUrl}/reports/${reportCode}/data`;
-      
-      const res = await fetch(url, { headers });
+
+      // Longer timeout (60s) because backend may process multiple requests sequentially
+      const res = await fetchWithTimeout(url, { headers }, 60000);
       if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
       const dataResult = await res.json();
       // Backend returns { reportData: [...] }, extract the array
       data = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
+
+      // Check if backend returned an error payload (ClickHouse unavailable, SQL error, etc.)
+      if (data && data.length === 1 && data[0].ERROR_MESSAGE) {
+        error = data[0].ERROR_MESSAGE;
+        dispatch('error', { message: error });
+        loading = false;
+        return;
+      }
+
       materializeInput(data);
       dispatch('dataFetched', { data });
     } catch (err: any) {
       error = err.message || 'Failed to fetch data';
-      dispatch('fetchError', { message: error });
+      dispatch('error', { message: error });
     }
     loading = false;
   }

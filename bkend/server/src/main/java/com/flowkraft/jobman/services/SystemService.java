@@ -127,21 +127,23 @@ public class SystemService {
 			newDockerVersion = "DOCKER_NOT_INSTALLED";
 		}
 
-		// If binary present, check if daemon is reachable (docker info)
+		// If binary present, check if daemon is reachable (docker version is
+		// lighter than docker info — it only contacts the daemon for its version
+		// instead of collecting full system metadata)
 		try {
 			if (!"DOCKER_NOT_INSTALLED".equals(newDockerVersion)) {
-				ProcessResult pr2 = new ProcessExecutor().command("docker", "info").readOutput(true)
+				ProcessResult pr2 = new ProcessExecutor().command("docker", "version").readOutput(true)
 						.redirectErrorStream(true)
-						.timeout(10, TimeUnit.SECONDS)
+						.timeout(30, TimeUnit.SECONDS)
 						.execute();
 				int exitVal = pr2.getExitValue();
-				log.info("docker info exit code: {}", exitVal);
+				log.info("docker version exit code: {}", exitVal);
 				newDockerDaemonRunning = exitVal == 0;
 			} else {
 				newDockerDaemonRunning = false;
 			}
 		} catch (Exception e) {
-			log.warn("docker info check failed with exception: {}", e.getMessage());
+			log.warn("docker version check failed with exception: {}", e.getMessage());
 			newDockerDaemonRunning = false;
 		}
 

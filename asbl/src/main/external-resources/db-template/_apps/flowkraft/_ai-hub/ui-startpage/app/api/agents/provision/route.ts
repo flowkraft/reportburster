@@ -1,25 +1,32 @@
 import { NextResponse } from 'next/server';
+import { getConfig } from '@/lib/db';
+import { getActiveProviderConfig, type LLMFullConfig } from '@/lib/llm-providers';
 import provisionAll, { provisionAllAgents } from '../../../../src/services/letta/agentProvisioner';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
-    // Check required environment variables for Letta
-    const openaiApiKey = process.env.OPENAI_API_KEY;
-    const openaiApiBase = process.env.OPENAI_API_BASE;
-
-    if (!openaiApiKey || !openaiApiBase) {
-      const missing = [];
-      if (!openaiApiKey) missing.push('OPENAI_API_KEY');
-      if (!openaiApiBase) missing.push('OPENAI_API_BASE');
-
+    // Check that an LLM provider is configured (reads from SQLite, not env vars)
+    const raw = getConfig('llm.provider');
+    if (!raw) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Missing required environment variables',
-          missing,
-          message: `Please add ${missing.join(' and ')} to your .env file, then restart the app and try again.`,
+          error: 'No LLM provider configured',
+          message: 'Go to Settings → API Provider to configure your LLM provider.',
+        },
+        { status: 400 }
+      );
+    }
+    const fullConfig = JSON.parse(raw) as LLMFullConfig;
+    const llmConfig = getActiveProviderConfig(fullConfig);
+    if (llmConfig.providerId !== 'ollama' && !llmConfig.apiKey) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No API key configured',
+          message: 'Go to Settings → API Provider to enter your API key.',
         },
         { status: 400 }
       );

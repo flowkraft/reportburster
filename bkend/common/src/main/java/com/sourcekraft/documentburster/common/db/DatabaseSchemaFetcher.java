@@ -386,7 +386,7 @@ public class DatabaseSchemaFetcher {
         String catalog = getCatalog(settings, metaData);
         String schemaPattern = getSchemaPattern(settings, metaData);
         String tableNamePattern = "%"; // Wildcard for all tables/views
-        String[] types = { "TABLE", "VIEW" }; // Fetch both tables and views
+        String[] types = { "TABLE", "BASE TABLE", "VIEW" }; // Fetch tables and views (DuckDB uses "BASE TABLE")
 
         log.debug("Fetching tables/views (catalog={}, schemaPattern={}, tableNamePattern={}, types={})...",
                 catalog, schemaPattern, tableNamePattern, String.join(",", types));
@@ -398,11 +398,12 @@ public class DatabaseSchemaFetcher {
 
                 String tableName = tablesResultSet.getString("TABLE_NAME");
                 String tableType = tablesResultSet.getString("TABLE_TYPE");
+                String tableSchem = tablesResultSet.getString("TABLE_SCHEM");
                 // Fetch table remarks directly from getTables result set.
 
                 // Filter out system tables/views based on naming conventions.
                 // This is heuristic and might need refinement per database vendor.
-                if (isSystemTableOrView(tableName, tableType, settings.type)) {
+                if (isSystemTableOrView(tableName, tableType, tableSchem, settings.type)) {
                     log.debug("Skipping potential system object: {} (Type: {})", tableName, tableType);
                     continue;
                 }
@@ -465,6 +466,9 @@ public class DatabaseSchemaFetcher {
             case "sqlserver":
                 // SQL Server: catalog = database name
                 return settings.database;
+            case "clickhouse":
+                // ClickHouse: catalog = database name (limits to northwind, excludes system tables)
+                return settings.database;
             default:
                 // Postgres/Oracle/DB2/SQLite typically don’t use catalog here
                 return null;
@@ -526,13 +530,13 @@ public class DatabaseSchemaFetcher {
      *
      * @param name   The name of the table or view.
      * @param type   The type ("TABLE", "VIEW").
+     * @param schema The TABLE_SCHEM from the ResultSet (may be null).
      * @param dbType The lower-case database type string.
      * @return True if the object is likely a system object, false otherwise.
      */
-    private boolean isSystemTableOrView(String name, String type, String dbType) {
+    private boolean isSystemTableOrView(String name, String type, String schema, String dbType) {
         String lowerCaseName = name.toLowerCase();
-        // String lowerCaseType = type.toLowerCase(); // Type not currently used in
-        // filtering logic
+        String lowerCaseSchema = (schema != null) ? schema.toLowerCase() : "";
 
         // General check for common system schema names if schema pattern wasn't
         // specific enough
@@ -558,6 +562,11 @@ public class DatabaseSchemaFetcher {
                 return lowerCaseName.startsWith("duckdb_")
                     || lowerCaseName.startsWith("information_schema")
                     || lowerCaseName.startsWith("system");
+            case "clickhouse":
+                // ClickHouse JDBC leaks information_schema and system tables despite catalog filter.
+                // Use TABLE_SCHEM from ResultSet to reliably filter them out.
+                return "information_schema".equals(lowerCaseSchema)
+                        || "system".equals(lowerCaseSchema);
             case "postgresql":
                 return lowerCaseName.startsWith("pg_"); // Covers pg_toast, pg_temp_, etc.
             case "oracle":

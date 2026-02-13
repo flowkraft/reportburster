@@ -7,9 +7,10 @@ package com.flowkraft
  * - /                   -> Home with component grid
  * - /tabulator          -> Tabulator data tables demo
  * - /charts             -> Charts demo
- * - /pivot-tables       -> Pivot tables demo  
+ * - /pivot-tables       -> Pivot tables demo
  * - /report-parameters  -> Report parameters demo
  * - /reports            -> Reports demo
+ * - /data-warehouse     -> Northwind Data Warehouse OLAP (Browser/DuckDB/ClickHouse)
  * - /your-canvas        -> Build your own
  * - /admin/*            -> Admin panel
  * - /payment/*          -> Payment API endpoints
@@ -31,6 +32,10 @@ class UrlMappings {
         "/pivot-tables"(controller: 'pivotTables', action: 'index')
         "/report-parameters"(controller: 'reportParameters', action: 'index')
         "/reports"(controller: 'reports', action: 'index')
+        "/data-warehouse"(controller: 'dataWarehouse', action: 'index')
+        "/data-warehouse/browser"(controller: 'dataWarehouse', action: 'browser')
+        "/data-warehouse/duckdb"(controller: 'dataWarehouse', action: 'duckdb')
+        "/data-warehouse/clickhouse"(controller: 'dataWarehouse', action: 'clickhouse')
         "/your-canvas"(controller: 'yourCanvas', action: 'index')
         
         // ===== PORTAL ROUTES =====

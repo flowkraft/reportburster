@@ -1,4 +1,4 @@
-import type { AgentConfig } from '../common';
+import { LLM_MODEL_ID, type AgentConfig } from '../common';
 import { ATHENA_SYSTEM_PROMPT } from './systemPrompt';
 import {
   personaTemplate,
@@ -13,10 +13,10 @@ import {
 export const agentConfig: AgentConfig = {
   key: 'athena',
   displayName: 'Athena',
-  description: 'ReportBurster Guru & Data Modeling/Business Analysis Expert. I help our team master ReportBurster, design data models, write SQL, and architect reporting solutions.',
+  description: 'ReportBurster Guru & Data Modeling/Business Analysis Expert. I help our team master ReportBurster, design data models, write SQL, and architect business and reporting solutions.',
 
   // Model configuration
-  model: 'openai-proxy/glm-4.7',
+  model: LLM_MODEL_ID,
   embedding: 'ollama/mxbai-embed-large:latest',
 
   tags: ['advisor', 'reportburster', 'reporting', 'sql', 'data-modeling', 'analytics', 'data-warehousing', 'olap', 'duckdb', 'clickhouse', 'business-analysis'],

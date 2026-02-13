@@ -1218,6 +1218,10 @@
               [showDevButtons]="false"
             >
             </dburst-apps-manager>
+            <div style="margin-top: 10px; line-height: 1.4;">
+              <span style="font-size: 13px; font-weight: 600;">Chat2DB</span>
+              <span style="font-size: 11px; color: #6b7280; margin-left: 6px;">powered by Athena — ask in plain English, get SQL + results + charts. Refine, drill deeper, visualize.</span>
+            </div>
           </div>
         </div>
       </tab>
@@ -1267,9 +1271,9 @@
       </button>
     </div>
   </p-footer>
-  <!-- SQLite File Browser Dialog -->
+  <!-- SQLite / DuckDB File Browser Dialog -->
   <dburst-file-explorer-dialog #fileExplorerDialog [(visible)]="sqliteFileBrowserVisible"
-    [title]="'Select File (SQLite Database)'" [initialPath]="'/db'"
-    [fileFilterExtensions]="['.db', '.sqlite', '.sqlite3']"
+    [title]="'Select File (SQLite / DuckDB Database)'" [initialPath]="'/db'"
+    [fileFilterExtensions]="['.db', '.sqlite', '.sqlite3', '.duckdb', '.ddb']"
     (fileSelected)="onSqliteFileSelected($event)"></dburst-file-explorer-dialog>
 </p-dialog>

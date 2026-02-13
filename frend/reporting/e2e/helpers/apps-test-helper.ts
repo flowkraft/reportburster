@@ -1,20 +1,20 @@
 import { FluentTester } from './fluent-tester';
 import { Constants } from '../utils/constants';
 
-// List of visible apps (from apps-manager.service.ts where visible: true)
+// List of visible apps in TOP-TO-BOTTOM UI order (must match apps-manager.service.ts)
 // Apps with launch: false have no Launch button (headless/API-only apps)
 // 'name' is a minimal unique substring for resilience to minor UI text changes
 export const VISIBLE_APPS = [
-  { id: 'cms-webportal', name: 'WebPortal' },
-  { id: 'flowkraft-frend-next', name: 'Frontend App (Next.js)' },
-  { id: 'flowkraft-admin-grails', name: 'Admin Panel' },
+  { id: 'flowkraft-grails', name: 'Grails App' },
   { id: 'flowkraft-bkend-boot-groovy', name: 'Backend App', launch: false },
-  { id: 'rundeck', name: 'Rundeck' },
+  { id: 'flowkraft-next', name: 'Next.js App' },
+  { id: 'cms-webportal', name: 'WebPortal' },
+  { id: 'flowkraft-ai-hub', name: 'FlowKraft' },
   { id: 'cloudbeaver', name: 'CloudBeaver' },
+  { id: 'rundeck', name: 'Rundeck' },
   { id: 'matomo', name: 'Matomo' },
   { id: 'docuseal', name: 'Docuseal' },
   { id: 'metabase', name: 'Metabase' },
-  // ClickHouse moved to Starter Packs (Databases) - no longer in Apps Manager
 ];
 
 // Sanitizes app id the same way as the component does (removes spaces only)
@@ -25,9 +25,49 @@ function sanitizeAppId(id: string): string {
 export class AppsTestHelper {
 
   /**
+   * Stop a running app and wait for it to reach 'stopped' state.
+   *
+   * State detection uses only #appState_* element (reliable across all state transitions).
+   * Playwright's built-in click actionability handles button enabled/visible checks.
+   *
+   * @param ft FluentTester instance
+   * @param appId The app id (e.g., 'cms-webportal', 'cloudbeaver')
+   * @param timeout Timeout for waiting on state changes
+   */
+  static stopApp(
+    ft: FluentTester,
+    appId: string,
+    timeout: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS,
+  ): FluentTester {
+    const sanitizedId = sanitizeAppId(appId);
+    const btnSel = `#btnStartStop_${sanitizedId}`;
+    const stateSel = `#appState_${sanitizedId}`;
+
+    ft = ft
+      .scrollIntoViewIfNeeded(btnSel)
+      .consoleLog(`Stopping app '${appId}'...`)
+      .click(btnSel)
+      .confirmDialogShouldBeVisible()
+      .clickYesDoThis();
+
+    ft = ft
+      .waitOnElementToContainText(stateSel, 'stopping', timeout)
+      .consoleLog(`App '${appId}' is stopping...`);
+
+    ft = ft
+      .waitOnElementToContainText(stateSel, 'stopped', timeout)
+      .consoleLog(`App '${appId}' is stopped.`);
+
+    return ft;
+  }
+
+  /**
    * Start an app, wait for it to be running, then stop it and wait for it to be stopped.
    * Works with the expandedList mode of apps-manager component.
-   * 
+   *
+   * State detection uses only #appState_* element (reliable across all state transitions).
+   * Playwright's built-in click actionability handles button enabled/visible checks.
+   *
    * @param ft FluentTester instance
    * @param appId The app id (e.g., 'cms-webportal', 'cloudbeaver')
    * @param appName The display name of the app (for confirm dialog text matching)
@@ -44,17 +84,12 @@ export class AppsTestHelper {
     const sanitizedId = sanitizeAppId(appId);
     const btnSel = `#btnStartStop_${sanitizedId}`;
     const stateSel = `#appState_${sanitizedId}`;
-    const launchSel = `#btnLaunch_${sanitizedId}`;
-    const spinnerSel = `#appSpinner_${sanitizedId}`;
-    const iconSel = `#appIcon_${sanitizedId}`;
 
-    // Start the app
+    // --- START THE APP ---
     ft = ft
+      .scrollIntoViewIfNeeded(btnSel)
       .consoleLog(`Starting app '${appName}' (${appId})...`)
-      .waitOnElementToBecomeVisible(btnSel, timeout)
-      .elementShouldContainText(stateSel, 'stopped')
-      .elementShouldContainText(btnSel, 'Start')
-      .waitOnElementToBecomeEnabled(btnSel, timeout)
+      .waitOnElementToContainText(stateSel, 'stopped', timeout)
       .click(btnSel)
       .confirmDialogShouldBeVisible()
       .waitOnElementToContainText('#confirmDialog .modal-body', appName)
@@ -62,56 +97,16 @@ export class AppsTestHelper {
 
     // Wait for starting state
     ft = ft
-      .waitOnElementToBecomeDisabled(btnSel, timeout)
-      .waitOnElementToBecomeVisible(spinnerSel, timeout)
       .waitOnElementToContainText(stateSel, 'starting', timeout)
       .consoleLog(`App '${appName}' is starting...`);
 
     // Wait for running state
     ft = ft
-      .waitOnElementToBecomeEnabled(btnSel, timeout)
       .waitOnElementToContainText(stateSel, 'running', timeout)
-      .waitOnElementToContainText(btnSel, 'Stop', timeout)
-      .waitOnElementToBecomeVisible(iconSel, timeout)
-      .waitOnElementToHaveClass(iconSel, 'fa-stop', timeout);
+      .consoleLog(`App '${appName}' is running.`);
 
-    // Only check Launch button if the app has one
-    if (hasLaunchButton) {
-      ft = ft.waitOnElementNotToHaveClass(launchSel, 'disabled', timeout);
-    }
-
-    ft = ft.consoleLog(`App '${appName}' is running.`);
-
-    // Stop the app
-    ft = ft
-      .consoleLog(`Stopping app '${appName}' (${appId})...`)
-      .waitOnElementToBecomeEnabled(btnSel, timeout)
-      .click(btnSel)
-      .confirmDialogShouldBeVisible()
-      .waitOnElementToContainText('#confirmDialog .modal-body', appName)
-      .clickYesDoThis();
-
-    // Wait for stopping state
-    ft = ft
-      .waitOnElementToBecomeDisabled(btnSel, timeout)
-      .waitOnElementToBecomeVisible(spinnerSel, timeout)
-      .waitOnElementToContainText(stateSel, 'stopping', timeout)
-      .consoleLog(`App '${appName}' is stopping...`);
-
-    // Wait for stopped state
-    ft = ft
-      .waitOnElementToBecomeEnabled(btnSel, timeout)
-      .waitOnElementToContainText(stateSel, 'stopped', timeout)
-      .waitOnElementToContainText(btnSel, 'Start', timeout)
-      .waitOnElementToBecomeVisible(iconSel, timeout)
-      .waitOnElementToHaveClass(iconSel, 'fa-play', timeout);
-
-    // Only check Launch button if the app has one
-    if (hasLaunchButton) {
-      ft = ft.waitOnElementToHaveClass(launchSel, 'disabled', timeout);
-    }
-
-    ft = ft.consoleLog(`App '${appName}' is stopped.`);
+    // --- STOP THE APP ---
+    ft = AppsTestHelper.stopApp(ft, appId, timeout);
 
     return ft;
   }

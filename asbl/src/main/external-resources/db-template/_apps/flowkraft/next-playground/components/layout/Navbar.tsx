@@ -3,8 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Menu, X, Sun, Moon } from "lucide-react"
-import { ThemeSelector } from "@/components/ThemeSelector"
+import { Menu, X, Sun, Moon, Settings } from "lucide-react"
 import { applyTheme } from "@/lib/themes"
 import { setSetting, getSetting, SETTING_KEYS } from "@/lib/settings"
 
@@ -67,6 +66,7 @@ export function Navbar() {
     { href: "/pivot-tables", label: "Pivot Tables" },
     { href: "/report-parameters", label: "Parameters" },
     { href: "/reports", label: "Reports" },
+    { href: "/data-warehouse", label: "Data Warehouse" },
     { href: "/your-canvas", label: "Your Canvas" },
   ]
 
@@ -101,8 +101,15 @@ export function Navbar() {
               </Link>
             ))}
 
-            {/* Theme Selector */}
-            <ThemeSelector />
+            {/* Admin button - matches Grails */}
+            <Link
+              href="/admin"
+              className="ml-2 px-3 py-1.5 text-sm font-medium text-white rounded-md transition-all hover:-translate-y-0.5 hover:shadow-lg"
+              style={{ background: 'linear-gradient(135deg, #22a7c8 0%, #0891b2 100%)' }}
+            >
+              <Settings className="w-4 h-4 inline mr-1" />
+              Admin
+            </Link>
 
             {/* Light/Dark Mode Toggle */}
             <button

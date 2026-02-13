@@ -100,6 +100,7 @@ export function AINavbar() {
             {/* Settings gear */}
             <div className="relative ml-1">
               <button
+                id="navbar-settings-button"
                 type="button"
                 onClick={() => setShowSettings(!showSettings)}
                 className="p-2 text-gray-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors rounded-md"
@@ -114,7 +115,7 @@ export function AINavbar() {
                   <div className="fixed inset-0 z-30" onClick={() => setShowSettings(false)} />
 
                   {/* Dropdown */}
-                  <div className="absolute right-0 top-full mt-1 z-40 w-64 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg py-2">
+                  <div id="settings-dropdown" className="absolute right-0 top-full mt-1 z-40 w-64 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg py-2">
                     {/* Theme section */}
                     <div className="px-4 py-2">
                       <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Appearance</span>
@@ -136,6 +137,7 @@ export function AINavbar() {
                       <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Administration</span>
                     </div>
                     <button
+                      id="settings-update-agents-button"
                       type="button"
                       onClick={handleUpdateAgents}
                       className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-3"

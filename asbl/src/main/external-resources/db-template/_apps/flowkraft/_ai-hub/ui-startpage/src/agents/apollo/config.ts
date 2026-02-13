@@ -1,4 +1,4 @@
-import type { AgentConfig } from '../common';
+import { LLM_MODEL_ID, type AgentConfig } from '../common';
 import { APOLLO_SYSTEM_PROMPT } from './systemPrompt';
 import {
   personaTemplate,
@@ -16,7 +16,7 @@ export const agentConfig: AgentConfig = {
   description: 'Next.js Guru & Modern Web Advisor. Expert guidance on React, TypeScript, Tailwind CSS, shadcn/ui, and modern frontend architecture.',
 
   // Model configuration
-  model: 'openai-proxy/glm-4.7',
+  model: LLM_MODEL_ID,
   embedding: 'ollama/mxbai-embed-large:latest',
 
   tags: ['advisor', 'web-apps', 'admin-panels', 'self-service-document-portals', 'analytics-dashboards', 'stack:nextjs-with-tailwind'],

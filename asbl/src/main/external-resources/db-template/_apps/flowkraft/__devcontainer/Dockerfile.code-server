@@ -62,16 +62,17 @@ RUN code-server --install-extension emmanuelbeziat.vscode-great-icons
 
 # Java/Maven/Python development
 RUN code-server --install-extension vscjava.vscode-java-pack
-RUN code-server --install-extension ms-python.python
+#RUN code-server --install-extension ms-python.python
 
 RUN code-server --install-extension jebbs.plantuml
 
 # Org Mode
 RUN code-server --install-extension realDestroyer.org-vscode
 
+RUN code-server --install-extension RooVeterinaryInc.roo-cline
+
 # Commented out (uncomment if needed)
 # RUN code-server --install-extension Gruntfuggly.todo-tree
-# RUN code-server --install-extension RooVeterinaryInc.roo-cline
 # RUN code-server --install-extension tootone.org-mode
 
 # Expose port for code-server

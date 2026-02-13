@@ -1,4 +1,4 @@
-import type { AgentConfig } from '../common';
+import { LLM_MODEL_ID, type AgentConfig } from '../common';
 import { PYTHIA_SYSTEM_PROMPT } from './systemPrompt';
 import {
   personaTemplate,
@@ -16,7 +16,7 @@ export const agentConfig: AgentConfig = {
   description: 'WordPress CMS Portal Advisor. Expert guidance on WordPress/PHP, Sage theme (Roots), PODS content modeling, and self-service portal architecture.',
 
   // Model configuration
-  model: 'openai-proxy/glm-4.7',
+  model: LLM_MODEL_ID,
   embedding: 'ollama/mxbai-embed-large:latest',
 
   tags: ['advisor', 'web-apps', 'admin-panels', 'self-service-document-portals', 'analytics-dashboards', 'stack:wordpress-with-sage-pods'],

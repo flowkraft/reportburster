@@ -132,10 +132,11 @@
 			<artifactId>sqlite-jdbc</artifactId>
 		</dependency>
 
-		<!-- ClickHouse JDBC Driver for OLAP Analytics -->
+		<!-- ClickHouse JDBC Driver for OLAP Analytics (uber-jar bundles Guava internally) -->
 		<dependency>
 			<groupId>com.clickhouse</groupId>
 			<artifactId>clickhouse-jdbc</artifactId>
+			<classifier>all</classifier>
 		</dependency>
 
 		<!-- DuckDB JDBC Driver for embedded OLAP Analytics -->

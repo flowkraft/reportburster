@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 13.1.0 - 2026-02-09
+## 13.1.0 - 2026-02-16
 
 ### Added
 
@@ -45,7 +45,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- New embeddable web components rb-report, rb-tabulator, rb-chart, rb-pivottable, rb-parameters; embed ReportBurster reports directly into your existing web applications and portals 
+- New 'embeddable analytics' web components rb-report, rb-tabulator, rb-chart, rb-pivottable, rb-parameters; embed ReportBurster reports directly into your existing web applications and portals 
 - Improved **Apps**
   - 'ReportBurster Self Service Portal' is a fast way to build an Employee Portal / Customer Portal  / Partner Portal / Student Portal
   -  Use 'Flowkraft Frontend App' for creating custom dashboards & portals

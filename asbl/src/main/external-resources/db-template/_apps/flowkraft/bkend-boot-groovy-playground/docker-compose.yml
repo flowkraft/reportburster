@@ -1,0 +1,23 @@
+services:
+  bkend-boot-groovy-playground:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bkend-boot-groovy-playground:latest
+    container_name: fkraft-bkend-boot-groovy-playground
+    ports:
+      - "${HOST_PORT:-8410}:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - ENABLE_LIQUIBASE_GROOVY_MIGRATIONS=${ENABLE_LIQUIBASE_GROOVY_MIGRATIONS:-false}
+      - DDL_AUTO=${DDL_AUTO:-update}
+      - DB_PATH=/app/db/sample-northwind-sqlite/northwind.db
+    volumes:
+      - ../../../db:/app/db:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s

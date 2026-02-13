@@ -1,4 +1,4 @@
-import type { AgentConfig } from '../common';
+import { LLM_MODEL_ID, type AgentConfig } from '../common';
 import { HERMES_SYSTEM_PROMPT } from './systemPrompt';
 import {
   personaTemplate,
@@ -16,7 +16,7 @@ export const agentConfig: AgentConfig = {
   description: 'Grails Guru & Self-Service Portal Advisor. Expert guidance on Grails/Groovy views (GSP), PODS content modeling, and self-service portal architecture.',
 
   // Model configuration
-  model: 'openai-proxy/glm-4.7',
+  model: LLM_MODEL_ID,
   embedding: 'ollama/mxbai-embed-large:latest',
 
   // Stack tag for filtering - Hermes is the Grails/Groovy advisor

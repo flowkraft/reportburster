@@ -35,7 +35,7 @@
       cms-webportal-playground-db:
         condition: service_healthy
     ports:
-      - "${HOST_PORT:-8430}:80"
+      - "${HOST_PORT:-8080}:80"
     volumes:
       # WordPress core
       - wp_html:/var/www/html

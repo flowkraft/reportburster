@@ -706,7 +706,16 @@ export class SettingsService {
         defaultConnection: true,
         connectionCode: '',
       });
+    } else {
+      this.connectionFiles = [];
+      this.defaultEmailConnectionFile = null;
+      this.defaultDatabaseConnectionFile = null;
     }
+
+    // Invalidate derived caches so they recompute from fresh connectionFiles
+    this._emailConnectionsFiles = null;
+    this._databaseConnectionsFiles = null;
+
     this.connectionsLoading = 0;
     return this.connectionFiles;
   }
