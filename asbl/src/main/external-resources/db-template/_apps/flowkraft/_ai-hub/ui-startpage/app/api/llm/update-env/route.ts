@@ -67,6 +67,9 @@ export async function POST() {
     for (const [pid, settings] of Object.entries(fullConfig.providers)) {
       if (!settings.apiKey && pid !== "ollama") continue;
       const isActive = pid === fullConfig.activeProviderId;
+      // Skip inactive providers that share the same .env section as the active one
+      // (e.g., "zai" and "other" both map to "# --- Other (OpenAI Compatible) ---")
+      if (!isActive && SECTION_LABELS[pid] === SECTION_LABELS[fullConfig.activeProviderId]) continue;
       content = populateProviderSection(content, pid, settings.apiKey, settings.baseUrl, !isActive);
     }
 
@@ -112,7 +115,8 @@ const SECTION_LABELS: Record<string, string> = {
   openai: "# --- OpenAI ---",
   anthropic: "# --- Anthropic ---",
   google: "# --- Google Gemini ---",
-  zai: "# --- Z.ai ---",
+  zai: "# --- Other (OpenAI Compatible) ---",       // Coding Plan → routes through Other section
+  "zai-credits": "# --- Z.ai ---",                  // API Credits → native Z.ai section
   openrouter: "# --- OpenRouter.ai ---",
   other: "# --- Other (OpenAI Compatible) ---",
   ollama: "# --- Ollama (Local) ---",
@@ -122,13 +126,14 @@ const SECTION_LABELS: Record<string, string> = {
 // Letta 0.16.4: each provider registers models as "{provider_type}/{model}".
 // "other" uses OPENAI_API_BASE with custom URL → Letta generates "openai-proxy/".
 const LETTA_PREFIX: Record<string, string> = {
-  openai:     "openai",
-  anthropic:  "anthropic",
-  google:     "google_ai",      // Letta enum is "google_ai", not "google"
-  ollama:     "ollama",
-  zai:        "zai",            // native ZAI provider
-  openrouter: "openrouter",     // native OpenRouter provider
-  other:      "openai-proxy",   // custom OPENAI_API_BASE in Letta 0.16.4
+  openai:         "openai",
+  anthropic:      "anthropic",
+  google:         "google_ai",      // Letta enum is "google_ai", not "google"
+  ollama:         "ollama",
+  zai:            "openai-proxy",   // Coding Plan → OPENAI_API_BASE route
+  "zai-credits":  "zai",            // API Credits → native ZAI provider
+  openrouter:     "openrouter",     // native OpenRouter provider
+  other:          "openai-proxy",   // custom OPENAI_API_BASE in Letta 0.16.4
 };
 
 // ── Env var patterns that can appear in provider sections ─────────
@@ -186,7 +191,7 @@ function populateProviderSection(
       if (/GEMINI_API_KEY=/.test(trimmed)) {
         lines[i] = `${pfx}GEMINI_API_KEY=${apiKey}`;
       }
-    } else if (providerId === "zai") {
+    } else if (providerId === "zai-credits") {
       if (/ZAI_API_KEY=/.test(trimmed)) {
         lines[i] = `${pfx}ZAI_API_KEY=${apiKey}`;
       }
@@ -243,6 +248,12 @@ function syncProcessEnv(
       process.env.GEMINI_API_KEY = apiKey;
       break;
     case "zai":
+      // Coding Plan → routes through OPENAI_API_BASE (coding endpoint)
+      process.env.OPENAI_API_KEY = apiKey;
+      process.env.OPENAI_API_BASE = baseUrl || "https://api.z.ai/api/coding/paas/v4";
+      break;
+    case "zai-credits":
+      // API Credits → native ZAI provider
       process.env.ZAI_API_KEY = apiKey;
       break;
     case "openrouter":

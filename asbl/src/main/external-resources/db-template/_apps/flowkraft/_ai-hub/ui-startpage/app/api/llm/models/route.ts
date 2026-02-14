@@ -61,7 +61,9 @@ async function fetchModelsForProvider(
     case "openrouter":
       return fetchOpenRouter(apiKey);
     case "zai":
-      return fetchZai(apiKey);
+      return fetchZai(apiKey, "https://api.z.ai/api/coding/paas/v4/models");
+    case "zai-credits":
+      return fetchZai(apiKey, "https://api.z.ai/api/paas/v4/models");
     case "ollama":
       return fetchOllama(baseUrl);
     default:
@@ -176,8 +178,8 @@ async function fetchOpenRouter(apiKey: string): Promise<NormalizedModel[]> {
  * Note: This endpoint is undocumented but Z.ai claims OpenAI compatibility.
  * Falls back gracefully if it doesn't work.
  */
-async function fetchZai(apiKey: string): Promise<NormalizedModel[]> {
-  const res = await fetch("https://api.z.ai/api/coding/paas/v4/models", {
+async function fetchZai(apiKey: string, modelsUrl: string): Promise<NormalizedModel[]> {
+  const res = await fetch(modelsUrl, {
     headers: { Authorization: `Bearer ${apiKey}` },
   });
 
