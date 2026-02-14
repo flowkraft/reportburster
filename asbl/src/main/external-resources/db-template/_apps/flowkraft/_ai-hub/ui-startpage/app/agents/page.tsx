@@ -198,10 +198,17 @@ export default function AgentsPage() {
         const envRes = await fetch('/api/llm/update-env', { method: 'POST' });
         const envData = await envRes.json();
         if (envData.success) {
-          setLogLines(prev => [
+          const lines: LogLine[] = [
             { type: 'log', message: `Updated .env → ${envData.provider} (model: ${envData.model})`, ts: new Date().toISOString() },
-            ...prev,
-          ]);
+          ];
+          if (envData.providerChanged) {
+            lines.push({
+              type: 'warn',
+              message: 'Provider changed — stop and start your FlowKraft\'s AI Hub application again to apply new API keys',
+              ts: new Date().toISOString(),
+            });
+          }
+          setLogLines(prev => [...lines, ...prev]);
         } else if (envData.error) {
           setLogLines(prev => [
             { type: 'warn', message: `Could not update .env: ${envData.error}`, ts: new Date().toISOString() },

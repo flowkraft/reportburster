@@ -50,6 +50,14 @@ export async function POST() {
       );
     }
 
+    // Detect provider change by reading the existing .env (if any)
+    let previousProvider = "";
+    if (fs.existsSync(envPath)) {
+      const existing = fs.readFileSync(envPath, "utf-8");
+      const m = existing.match(/^LLM_MODEL_ID=(\S+)/m);
+      if (m) previousProvider = m[1].split("/")[0]; // e.g., "zai" from "zai/glm-5"
+    }
+
     // Always start from the immutable template
     let content = fs.readFileSync(templatePath, "utf-8");
 
@@ -81,10 +89,14 @@ export async function POST() {
     // Sync to running process so provisioning picks up changes immediately
     syncProcessEnv(active.providerId, active.apiKey, effectiveModel, active.baseUrl);
 
+    const newProvider = prefix;
+    const providerChanged = previousProvider !== "" && previousProvider !== newProvider;
+
     return NextResponse.json({
       success: true,
       provider: active.providerId,
       model: active.model,
+      providerChanged,
     });
   } catch (error: any) {
     console.error("Error updating .env:", error);
