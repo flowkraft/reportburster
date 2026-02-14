@@ -9,22 +9,31 @@ import fs from "fs";
 const DATA_DIR = path.join(process.cwd(), "data");
 const DB_PATH = path.join(DATA_DIR, "ai-crew.db");
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+// Lazy-initialized — no DB operations at import time (safe for `npm run build`)
+let _sqlite: InstanceType<typeof Database> | null = null;
+let _db: ReturnType<typeof drizzle> | null = null;
+let _initialized = false;
 
-// Create SQLite connection
-const sqlite = new Database(DB_PATH);
-sqlite.pragma("journal_mode = WAL");
+/**
+ * Lazy DB accessor — opens the connection and seeds defaults on first call.
+ * This ensures zero side-effects at module import time so `npm run build`
+ * never touches the database.
+ */
+function ensureDb() {
+  if (_initialized) return { sqlite: _sqlite!, db: _db! };
 
-// Create Drizzle instance
-export const db = drizzle(sqlite, { schema });
+  // Create data directory
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
 
-// Initialize database tables
-export function initializeDatabase() {
-  // Create config table if not exists
-  sqlite.exec(`
+  // Open connection
+  _sqlite = new Database(DB_PATH);
+  _sqlite.pragma("journal_mode = WAL");
+  _db = drizzle(_sqlite, { schema });
+
+  // Create table (idempotent)
+  _sqlite.exec(`
     CREATE TABLE IF NOT EXISTS config (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL,
@@ -34,34 +43,41 @@ export function initializeDatabase() {
     )
   `);
 
-  // Seed default config values if not present (INSERT OR IGNORE is atomic — safe for concurrent build workers)
+  // Seed defaults (INSERT OR IGNORE — atomic, no race condition)
   const now = new Date().toISOString();
   for (const [key, data] of Object.entries(schema.DEFAULT_CONFIG)) {
-    sqlite.prepare(
+    _sqlite.prepare(
       "INSERT OR IGNORE INTO config (key, value, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?)"
     ).run(key, data.value, data.description, now, now);
   }
+
+  _initialized = true;
+  return { sqlite: _sqlite, db: _db };
 }
 
-// Initialize on module load
-initializeDatabase();
-
 /**
- * Get a config value by key
+ * Get a config value by key.
+ * Falls back to DEFAULT_CONFIG if the key isn't in the DB.
  */
 export function getConfig(key: string): string | null {
+  const { db } = ensureDb();
   const result = db.select().from(schema.config).where(eq(schema.config.key, key)).get();
-  return result?.value ?? null;
+  if (result) return result.value;
+
+  // Fallback to compiled defaults
+  const def = schema.DEFAULT_CONFIG[key as keyof typeof schema.DEFAULT_CONFIG];
+  return def?.value ?? null;
 }
 
 /**
  * Set a config value
  */
 export function setConfig(key: string, value: string, description?: string): void {
+  const { db } = ensureDb();
   const now = new Date().toISOString();
-  const existing = getConfig(key);
-  
-  if (existing !== null) {
+  const existing = db.select().from(schema.config).where(eq(schema.config.key, key)).get();
+
+  if (existing) {
     db.update(schema.config)
       .set({ value, updatedAt: now })
       .where(eq(schema.config.key, key))
@@ -74,10 +90,28 @@ export function setConfig(key: string, value: string, description?: string): voi
 }
 
 /**
- * Get all config entries
+ * Get all config entries (DB rows merged with any unseeded defaults)
  */
 export function getAllConfig(): schema.Config[] {
-  return db.select().from(schema.config).all();
+  const { db } = ensureDb();
+  const rows = db.select().from(schema.config).all();
+
+  // Merge: if a DEFAULT_CONFIG key is missing from DB, include it
+  const dbKeys = new Set(rows.map((r) => r.key));
+  const now = new Date().toISOString();
+  for (const [key, data] of Object.entries(schema.DEFAULT_CONFIG)) {
+    if (!dbKeys.has(key)) {
+      rows.push({
+        key,
+        value: data.value,
+        description: data.description,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+
+  return rows;
 }
 
 // Export db path for debugging
