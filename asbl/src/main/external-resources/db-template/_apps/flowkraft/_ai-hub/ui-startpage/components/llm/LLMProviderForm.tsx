@@ -302,6 +302,12 @@ export function LLMProviderForm({ fullConfig, onSave }: LLMProviderFormProps) {
             ))}
           </optgroup>
         </select>
+
+        {providerDef?.description && (
+          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+            {providerDef.description}
+          </p>
+        )}
       </div>
     );
   };

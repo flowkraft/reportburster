@@ -28,6 +28,7 @@ export interface LLMFullConfig {
 export interface ProviderDef {
   id: string
   name: string
+  description?: string     // hint text shown below provider dropdown when selected
   group?: string           // if set, rendered inside an <optgroup>
   baseUrl?: string         // pre-populated base URL (read-only for openrouter/zai)
   baseUrlEditable?: boolean // true only for "other"
@@ -91,12 +92,25 @@ const COMPATIBLE_PROVIDERS: ProviderDef[] = [
   },
   {
     id: 'zai',
-    name: 'Z.ai',
+    name: 'Z.ai (Coding Plan)',
+    description: 'Uses your Z.ai monthly subscription. Quota refreshes every 5 hours.',
     group: 'OpenAI Compatible',
     baseUrl: 'https://api.z.ai/api/coding/paas/v4',
     showBaseUrl: true,
     baseUrlEditable: false,
     modelsEndpoint: 'https://api.z.ai/api/coding/paas/v4/models',
+    authStyle: 'bearer',
+    modelInputType: 'fetch',
+  },
+  {
+    id: 'zai-credits',
+    name: 'Z.ai (API Credits)',
+    description: 'Uses pay-as-you-go API credits (top up at z.ai). No quota limits.',
+    group: 'OpenAI Compatible',
+    baseUrl: 'https://api.z.ai/api/paas/v4',
+    showBaseUrl: true,
+    baseUrlEditable: false,
+    modelsEndpoint: 'https://api.z.ai/api/paas/v4/models',
     authStyle: 'bearer',
     modelInputType: 'fetch',
   },
