@@ -35,6 +35,7 @@ class LettaResponse:
     plantuml_code: Optional[str] = None  # PlantUML diagram source
     mermaid_code: Optional[str] = None   # Mermaid diagram source
     html_content: Optional[str] = None   # HTML content (dashboards, mockups)
+    content_segments: Optional[list] = None   # Ordered content segments preserving Athena's order
     messages: Optional[List[Dict]] = None
     raw_response: Optional[Dict] = None
 
@@ -207,6 +208,8 @@ class LettaChat2DB:
         response.html_content = self._extract_html(response.content)
         # Extract Athena's inline narrative (text around specifically-rendered blocks)
         response.narrative = self._extract_narrative(response.content)
+        # Parse ordered content segments to preserve Athena's rendering order
+        response.content_segments = self._extract_content_segments(response.content)
 
         return response
 
@@ -340,6 +343,45 @@ class LettaChat2DB:
         stripped = re.sub(r'\n{3,}', '\n\n', stripped).strip()
 
         return stripped if stripped else None
+
+    def _extract_content_segments(self, text: str) -> list:
+        """Parse response into ordered content segments, preserving Athena's order.
+
+        Returns list of dicts: [{"type": "narrative", "content": "..."}, {"type": "plantuml", "content": "..."}, ...]
+        Special block types (sql, python, plantuml, mermaid, html) get their own segments.
+        Everything else (including generic code blocks like groovy/bash) stays in narrative segments.
+        """
+        if not text:
+            return []
+
+        segments = []
+        pattern = r'```(sql|python|plantuml|mermaid|html)\s*([\s\S]*?)```'
+        last_end = 0
+
+        for match in re.finditer(pattern, text, re.IGNORECASE):
+            # Narrative text before this block
+            before = text[last_end:match.start()].strip()
+            if before:
+                segments.append({"type": "narrative", "content": before})
+
+            block_type = match.group(1).lower()
+            block_content = match.group(2).strip()
+
+            if block_type == "sql":
+                segments.append({"type": "sql_results", "content": block_content})
+            elif block_type == "python":
+                segments.append({"type": "viz", "content": block_content})
+            else:
+                segments.append({"type": block_type, "content": block_content})
+
+            last_end = match.end()
+
+        # Narrative text after the last block
+        after = text[last_end:].strip()
+        if after:
+            segments.append({"type": "narrative", "content": after})
+
+        return segments
 
     def health_check(self) -> bool:
         """Check if the Athena endpoint is accessible."""

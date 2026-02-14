@@ -133,6 +133,7 @@ def ask(req: AskRequest):
             "plantuml_code": result.plantuml_code,
             "mermaid_code": result.mermaid_code,
             "html_content": result.html_content,
+            "content_segments": result.content_segments,
             "error": result.error,
             "raw_content": result.raw_content,
         }
