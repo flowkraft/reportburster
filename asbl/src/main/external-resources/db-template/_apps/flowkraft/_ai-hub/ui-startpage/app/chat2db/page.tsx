@@ -302,78 +302,82 @@ export default function Chat2DBPage() {
 
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden">
-      {/* ====== Connection bar ====== */}
-      <div className="flex flex-wrap items-center gap-3 border-b bg-background px-4 py-2">
-        <div className="flex items-center gap-2 mr-1">
+      {/* ====== Connection bar (2-line compact layout, stays pinned) ====== */}
+      <div className="flex-shrink-0 border-b bg-background px-4 py-2 space-y-1.5">
+        {/* Line 1: Brand */}
+        <div className="flex items-center gap-2">
           <span className="text-lg">🦉</span>
-          <div className="leading-tight">
-            <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">Chat2DB</span>
-            <span className="text-xs text-muted-foreground ml-1.5">powered by Athena — ask in plain English, get SQL + results + charts. Refine, drill deeper, visualize.</span>
-          </div>
-        </div>
-        <div className="h-6 w-px bg-border" />
-        <Database className="h-4 w-4 text-muted-foreground" />
-
-        {/* Dropdown */}
-        <select
-          id="database-selector"
-          value={selectedCode}
-          onChange={(e) => setSelectedCode(e.target.value)}
-          className="h-9 rounded-md border bg-background px-3 text-sm outline-none focus:ring-1 focus:ring-ring"
-        >
-          <option value="">-- Select a database --</option>
-          {connections.map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.code} — {c.name} ({c.db_type})
-            </option>
-          ))}
-        </select>
-
-        {/* Connect button */}
-        <Button
-          id="btn-connect-database"
-          size="sm"
-          onClick={handleConnect}
-          disabled={!selectedCode || connStatus === "connecting"}
-        >
-          <Plug className="mr-1 h-3.5 w-3.5" />
-          {connStatus === "connecting" ? "Connecting..." : "Connect"}
-        </Button>
-
-        {/* Send Tables checkbox */}
-        <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <input
-            type="checkbox"
-            checked={sendSchema}
-            onChange={(e) => setSendSchema(e.target.checked)}
-            className="h-4 w-4 rounded border"
-          />
-          Send Tables
-          <span
-            title="Sends table names to Athena as a quick index. Recommended for database queries. Uncheck only for chit-chat or non-database topics."
-            className="cursor-help text-muted-foreground"
-          >
-            &#9432;
+          <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">Chat2DB</span>
+          <span className="text-xs text-muted-foreground">
+            powered by Athena — ask in plain English, get SQL + results + charts. Refine, drill deeper, visualize.
           </span>
-        </label>
+        </div>
 
-        {/* Status */}
-        <div id="connection-status" className="ml-auto flex items-center gap-1.5 text-sm">
-          {connStatus === "connected" && (
-            <>
-              <Check className="h-4 w-4 text-green-500" />
-              <span className="text-green-600 dark:text-green-400">Connected to {selectedCode}</span>
-            </>
-          )}
-          {connStatus === "error" && (
-            <>
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <span className="text-red-600 dark:text-red-400">{connError}</span>
-            </>
-          )}
-          {connStatus === "idle" && (
-            <span className="text-muted-foreground">No database selected</span>
-          )}
+        {/* Line 2: DB controls + status */}
+        <div className="flex items-center gap-2 text-sm">
+          <Database className="h-4 w-4 text-muted-foreground shrink-0" />
+
+          {/* Dropdown */}
+          <select
+            id="database-selector"
+            value={selectedCode}
+            onChange={(e) => setSelectedCode(e.target.value)}
+            className="h-8 rounded-md border bg-background px-2 text-sm outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">-- Select a database --</option>
+            {connections.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.code} — {c.name} ({c.db_type})
+              </option>
+            ))}
+          </select>
+
+          {/* Connect button */}
+          <Button
+            id="btn-connect-database"
+            size="sm"
+            onClick={handleConnect}
+            disabled={!selectedCode || connStatus === "connecting"}
+          >
+            <Plug className="mr-1 h-3.5 w-3.5" />
+            {connStatus === "connecting" ? "Connecting..." : "Connect"}
+          </Button>
+
+          {/* Send Tables checkbox */}
+          <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={sendSchema}
+              onChange={(e) => setSendSchema(e.target.checked)}
+              className="h-4 w-4 rounded border"
+            />
+            Send Tables
+            <span
+              title="Sends table names to Athena as a quick index. Recommended for database queries. Uncheck only for chit-chat or non-database topics."
+              className="cursor-help text-muted-foreground"
+            >
+              &#9432;
+            </span>
+          </label>
+
+          {/* Status — right-aligned, truncated to prevent 3rd line */}
+          <div id="connection-status" className="ml-auto flex items-center gap-1.5 text-sm truncate">
+            {connStatus === "connected" && (
+              <>
+                <Check className="h-4 w-4 text-green-500 shrink-0" />
+                <span className="text-green-600 dark:text-green-400 truncate">Connected to {selectedCode}</span>
+              </>
+            )}
+            {connStatus === "error" && (
+              <>
+                <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
+                <span className="text-red-600 dark:text-red-400 truncate">{connError}</span>
+              </>
+            )}
+            {connStatus === "idle" && (
+              <span className="text-muted-foreground">No database selected</span>
+            )}
+          </div>
         </div>
       </div>
 

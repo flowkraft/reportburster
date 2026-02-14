@@ -41,6 +41,11 @@ RUN git clone --depth 1 --branch ${LETTA_VERSION} https://github.com/letta-ai/le
 RUN sed -i '/"glm-4.7": 200000,/a\    "glm-5": 200000,' /app/letta/schemas/providers/zai.py && \
     sed -i '/Couldn.t find context window size/{n;s/continue/context_window_size = 200000/}' /app/letta/schemas/providers/zai.py
 
+# Patch constants.py: add missing Z.ai models to LLM_MAX_CONTEXT_WINDOW so
+# openai-proxy (used by Z.ai Coding Plan) assigns correct context windows
+# instead of the 30K default.
+RUN sed -i '/"glm-4.5": 128000,/a\    "glm-4.7": 200000,\n    "glm-4.5-air": 128000,\n    "glm-5": 200000,' /app/letta/constants.py
+
 RUN uv sync --frozen --no-dev --all-extras --python 3.11
 
 # Runtime stage
