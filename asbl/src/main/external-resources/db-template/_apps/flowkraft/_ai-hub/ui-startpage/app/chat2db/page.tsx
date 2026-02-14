@@ -14,9 +14,23 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Database, Plug, Check, AlertCircle, Copy, ChevronDown, Trash2 } from "lucide-react";
+import { Database, Plug, Check, AlertCircle, Copy, ChevronDown, Trash2, ExternalLink } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import pako from "pako";
+import Prism from "prismjs";
+import "prismjs/themes/prism-tomorrow.css";
+import "prismjs/components/prism-markup";
+import "prismjs/components/prism-css";
+import "prismjs/components/prism-javascript";
+import "prismjs/components/prism-typescript";
+import "prismjs/components/prism-python";
+import "prismjs/components/prism-json";
+import "prismjs/components/prism-groovy";
+import "prismjs/components/prism-bash";
+import "prismjs/components/prism-yaml";
+import "prismjs/components/prism-java";
+import "prismjs/components/prism-sql";
 
 /** Highlight SQL with inline styles — no CSS dependency. */
 function highlightSQL(sql: string): string {
@@ -70,9 +84,63 @@ interface Chat2DBResponse {
   explanation?: string | null;
   viz_image?: string | null;
   text_response?: string | null;
+  plantuml_code?: string | null;
+  mermaid_code?: string | null;
+  html_content?: string | null;
   error?: string | null;
   raw_content?: string | null;
 }
+
+/** Encode diagram source for Kroki.io SVG rendering. */
+function krokiUrl(type: "plantuml" | "mermaid", source: string): string {
+  const bytes = new TextEncoder().encode(source);
+  const deflated = pako.deflate(bytes);
+  const base64 = btoa(Array.from(deflated).map((b) => String.fromCharCode(b)).join(""));
+  const urlSafe = base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  return `https://kroki.io/${type}/svg/${urlSafe}`;
+}
+
+/** Open HTML content in a new browser tab (full-screen preview). */
+function openHtmlInBrowser(html: string) {
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, "_blank");
+  if (win) setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+/** Prism-highlighted code component for ReactMarkdown. */
+function MarkdownCode({ className, children, ...props }: React.HTMLAttributes<HTMLElement> & { children?: React.ReactNode }) {
+  const match = /language-(\w+)/.exec(className || "");
+  const lang = match ? match[1] : "";
+  const code = String(children).replace(/\n$/, "");
+
+  if (lang && Prism.languages[lang]) {
+    const highlighted = Prism.highlight(code, Prism.languages[lang], lang);
+    return (
+      <pre className="overflow-x-auto rounded-lg text-xs my-2" style={{ margin: 0, background: "#2d2d2d", color: "#ccc", padding: "1rem" }}>
+        <code dangerouslySetInnerHTML={{ __html: highlighted }} />
+      </pre>
+    );
+  }
+
+  // Fenced block without recognized language — dark code block, no highlighting
+  if (className?.startsWith("language-")) {
+    return (
+      <pre className="overflow-x-auto rounded-lg text-xs my-2" style={{ margin: 0, background: "#2d2d2d", color: "#ccc", padding: "1rem" }}>
+        <code>{code}</code>
+      </pre>
+    );
+  }
+
+  // Inline code
+  return <code className="bg-muted px-1.5 py-0.5 rounded text-sm" {...props}>{children}</code>;
+}
+
+/** Shared markdown components for ReactMarkdown — uses Prism for code highlighting. */
+const markdownComponents = {
+  code: MarkdownCode,
+  pre: ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>) => <>{children}</>,
+};
 
 interface ChatMessage {
   id: string;
@@ -461,7 +529,7 @@ export default function Chat2DBPage() {
                     {/* Text response (chit-chat, guidance) */}
                     {r?.text_response && !r?.error && (
                       <MessageResponse className="bg-indigo-50 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-100">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{r.text_response}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{r.text_response}</ReactMarkdown>
                       </MessageResponse>
                     )}
 
@@ -534,10 +602,67 @@ export default function Chat2DBPage() {
                       </div>
                     )}
 
+                    {/* PlantUML diagram */}
+                    {r?.plantuml_code && !r?.error && (
+                      <div className="overflow-hidden rounded-xl border">
+                        <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
+                          <span>PlantUML Diagram</span>
+                          <button
+                            onClick={() => window.open(krokiUrl("plantuml", r.plantuml_code!), "_blank")}
+                            className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors hover:bg-accent"
+                          >
+                            <ExternalLink className="h-3 w-3" /> View Full Screen
+                          </button>
+                        </div>
+                        <div className="p-4 bg-white dark:bg-slate-50 flex justify-center">
+                          <img src={krokiUrl("plantuml", r.plantuml_code!)} alt="PlantUML Diagram" className="max-w-full" />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mermaid diagram */}
+                    {r?.mermaid_code && !r?.error && (
+                      <div className="overflow-hidden rounded-xl border">
+                        <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
+                          <span>Mermaid Diagram</span>
+                          <button
+                            onClick={() => window.open(krokiUrl("mermaid", r.mermaid_code!), "_blank")}
+                            className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors hover:bg-accent"
+                          >
+                            <ExternalLink className="h-3 w-3" /> View Full Screen
+                          </button>
+                        </div>
+                        <div className="p-4 bg-white dark:bg-slate-50 flex justify-center">
+                          <img src={krokiUrl("mermaid", r.mermaid_code!)} alt="Mermaid Diagram" className="max-w-full" />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* HTML preview */}
+                    {r?.html_content && !r?.error && (
+                      <div className="overflow-hidden rounded-xl border">
+                        <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
+                          <span>HTML Preview</span>
+                          <button
+                            onClick={() => openHtmlInBrowser(r.html_content!)}
+                            className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors hover:bg-accent"
+                          >
+                            <ExternalLink className="h-3 w-3" /> View Full Screen
+                          </button>
+                        </div>
+                        <iframe
+                          srcDoc={r.html_content}
+                          sandbox="allow-scripts"
+                          className="w-full border-0"
+                          style={{ minHeight: "300px" }}
+                        />
+                      </div>
+                    )}
+
                     {/* Explanation */}
                     {r?.explanation && !r?.text_response && !r?.error && (
                       <div className="prose prose-sm dark:prose-invert max-w-none text-foreground/80">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{r.explanation}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{r.explanation}</ReactMarkdown>
                       </div>
                     )}
 

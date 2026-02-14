@@ -32,6 +32,9 @@ class LettaResponse:
     sql: Optional[str] = None
     viz_code: Optional[str] = None  # Python visualization code (matplotlib/plotly)
     narrative: Optional[str] = None  # Athena's inline text (code blocks stripped)
+    plantuml_code: Optional[str] = None  # PlantUML diagram source
+    mermaid_code: Optional[str] = None   # Mermaid diagram source
+    html_content: Optional[str] = None   # HTML content (dashboards, mockups)
     messages: Optional[List[Dict]] = None
     raw_response: Optional[Dict] = None
 
@@ -66,6 +69,13 @@ class LettaChat2DB:
         "Always end with `plt.tight_layout()` and `plt.show()`. "
         "DO include a chart when: trends, comparisons, distributions, proportions (6+ rows). "
         "Do NOT include a chart when: simple lookups, raw data dumps, few rows (<5), yes/no answers. "
+        "DIAGRAMS: When a diagram would help (ER diagrams, flows, relationships), "
+        "wrap it in a ```plantuml or ```mermaid code block. "
+        "Chat2DB renders these as SVG diagrams inline — the user sees the diagram automatically. "
+        "HTML MOCKUPS: When generating interactive HTML (dashboards, mockups), "
+        "wrap it in a ```html code block. Chat2DB renders it in an iframe inline. "
+        "CODE: When sharing code examples (groovy, bash, etc.), use fenced code blocks "
+        "with the language tag (e.g. ```groovy). Chat2DB syntax-highlights them automatically. "
         "REMINDER: Make sure you have read your 'chat2db-jupyter-interface' skill."
     )
 
@@ -188,7 +198,11 @@ class LettaChat2DB:
         response.sql = self._extract_sql(response.content)
         # Try to extract visualization code if present
         response.viz_code = self._extract_viz_code(response.content)
-        # Extract Athena's inline narrative (text around code blocks)
+        # Extract diagram and HTML content if present
+        response.plantuml_code = self._extract_plantuml(response.content)
+        response.mermaid_code = self._extract_mermaid(response.content)
+        response.html_content = self._extract_html(response.content)
+        # Extract Athena's inline narrative (text around specifically-rendered blocks)
         response.narrative = self._extract_narrative(response.content)
 
         return response
@@ -283,17 +297,42 @@ class LettaChat2DB:
 
         return None
 
-    def _extract_narrative(self, text: str) -> Optional[str]:
-        """Extract Athena's inline narrative by stripping all code blocks.
+    def _extract_plantuml(self, text: str) -> Optional[str]:
+        """Extract PlantUML diagram source from ```plantuml code blocks."""
+        if not text:
+            return None
+        matches = re.findall(r'```plantuml\s*([\s\S]*?)```', text, re.IGNORECASE)
+        return matches[0].strip() if matches else None
 
-        Returns the surrounding text that Athena wrote alongside SQL and
-        visualization code — her explanations, insights, follow-up suggestions.
+    def _extract_mermaid(self, text: str) -> Optional[str]:
+        """Extract Mermaid diagram source from ```mermaid code blocks."""
+        if not text:
+            return None
+        matches = re.findall(r'```mermaid\s*([\s\S]*?)```', text, re.IGNORECASE)
+        return matches[0].strip() if matches else None
+
+    def _extract_html(self, text: str) -> Optional[str]:
+        """Extract HTML content from ```html code blocks."""
+        if not text:
+            return None
+        matches = re.findall(r'```html\s*([\s\S]*?)```', text, re.IGNORECASE)
+        return matches[0].strip() if matches else None
+
+    def _extract_narrative(self, text: str) -> Optional[str]:
+        """Extract Athena's inline narrative by stripping specifically-rendered blocks.
+
+        Only strips code blocks that get special rendering (SQL, Python viz,
+        PlantUML, Mermaid, HTML). Generic code blocks (groovy, bash, etc.)
+        are preserved so ReactMarkdown can render them with syntax highlighting.
         """
         if not text:
             return None
 
-        # Strip all fenced code blocks (```lang ... ```)
-        stripped = re.sub(r'```\w*\s*[\s\S]*?```', '', text)
+        # Strip only the block types we extract for special rendering
+        stripped = re.sub(
+            r'```(?:sql|python|plantuml|mermaid|html)\s*[\s\S]*?```',
+            '', text, flags=re.IGNORECASE
+        )
         # Collapse multiple blank lines into one
         stripped = re.sub(r'\n{3,}', '\n\n', stripped).strip()
 
