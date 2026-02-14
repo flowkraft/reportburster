@@ -46,6 +46,12 @@ RUN sed -i '/"glm-4.7": 200000,/a\    "glm-5": 200000,' /app/letta/schemas/provi
 # instead of the 30K default.
 RUN sed -i '/"glm-4.5": 128000,/a\    "glm-4.7": 200000,\n    "glm-4.5-air": 128000,\n    "glm-5": 200000,' /app/letta/constants.py
 
+# Patch provider_manager.py: Ollama embedding endpoint needs /v1 suffix.
+# Letta bug: OllamaProvider.list_embedding_models_async() uses openai_compat_base_url
+# (with /v1), but get_embedding_config_from_handle() uses raw provider.base_url.
+# The OpenAI Python client appends /embeddings, so without /v1 we get 404.
+RUN sed -i 's|embedding_endpoint=provider.base_url|embedding_endpoint=provider.base_url.rstrip("/") + "/v1" if provider.provider_type.value == "ollama" else provider.base_url|' /app/letta/services/provider_manager.py
+
 RUN uv sync --frozen --no-dev --all-extras --python 3.11
 
 # Runtime stage
