@@ -423,7 +423,7 @@ class Chat2DB:
                 question=question,
                 sql="",
                 df=pd.DataFrame(),
-                text_response=response.narrative or response.content,
+                text_response=response.narrative,
                 viz_code=response.viz_code,
                 plantuml_code=response.plantuml_code,
                 mermaid_code=response.mermaid_code,
