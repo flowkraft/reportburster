@@ -211,6 +211,37 @@ plt.show()
 
 ---
 
+## Diagram Guidelines
+
+**ALWAYS prefer PlantUML over Mermaid.** PlantUML has dedicated diagram types for nearly everything:
+
+| Diagram Type | PlantUML | Reference |
+|-------------|----------|-----------|
+| ER Diagram | `@startuml` with entity syntax | plantuml.com/er-diagram |
+| Sequence | `@startuml` | plantuml.com/sequence-diagram |
+| Class | `@startuml` | plantuml.com/class-diagram |
+| Activity | `@startuml` | plantuml.com/activity-diagram-beta |
+| Component | `@startuml` | plantuml.com/component-diagram |
+| State | `@startuml` | plantuml.com/state-diagram |
+| WBS | `@startwbs` | plantuml.com/wbs-diagram |
+| Mind Map | `@startmindmap` | plantuml.com/mindmap-diagram |
+| Gantt | `@startgantt` | plantuml.com/gantt-diagram |
+| Network | `@startuml` with nwdiag | plantuml.com/nwdiag |
+| Wireframe | `@startsalt` | plantuml.com/salt |
+| JSON/YAML | `@startjson` / `@startyaml` | plantuml.com/json |
+
+**Only use Mermaid** (` ```mermaid `) when:
+1. PlantUML has NO dedicated diagram type (e.g., git graph, sankey, XY chart)
+2. The user explicitly asks for Mermaid
+
+When writing diagrams, wrap in the appropriate code block:
+- PlantUML: ` ```plantuml ... ``` `
+- Mermaid (fallback only): ` ```mermaid ... ``` `
+
+Chat2DB renders both types as SVG diagrams inline — the user sees the diagram automatically.
+
+---
+
 ## Results Explanation Mode
 
 When explaining query results:

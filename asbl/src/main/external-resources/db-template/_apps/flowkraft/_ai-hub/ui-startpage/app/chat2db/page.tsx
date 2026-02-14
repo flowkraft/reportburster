@@ -31,6 +31,7 @@ import "prismjs/components/prism-bash";
 import "prismjs/components/prism-yaml";
 import "prismjs/components/prism-java";
 import "prismjs/components/prism-sql";
+import "../lib/prism-plantuml";
 
 /** Highlight SQL with inline styles — no CSS dependency. */
 function highlightSQL(sql: string): string {
@@ -106,6 +107,50 @@ function openHtmlInBrowser(html: string) {
   const url = URL.createObjectURL(blob);
   const win = window.open(url, "_blank");
   if (win) setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+/** Build self-contained HTML that renders a Mermaid diagram via CDN (same approach as /workspaces). */
+function mermaidHtml(source: string): string {
+  const escaped = source.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return `<!DOCTYPE html>
+<html><head>
+  <meta charset="utf-8"/>
+  <style>body{display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#fff;font-family:sans-serif;}</style>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+  </script>
+</head><body>
+  <pre class="mermaid">${escaped}</pre>
+</body></html>`;
+}
+
+/** Open a Mermaid diagram full-screen in a new tab. */
+function openMermaidFullScreen(source: string) {
+  openHtmlInBrowser(mermaidHtml(source));
+}
+
+/** PlantUML diagram with Kroki.io rendering and error fallback. */
+function PlantUMLDiagram({ source }: { source: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    const highlighted = Prism.languages.plantuml
+      ? Prism.highlight(source, Prism.languages.plantuml, "plantuml")
+      : source;
+    return (
+      <div>
+        <div className="rounded-md bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-700 dark:text-amber-300 mb-2">
+          Kroki.io failed to render this diagram — showing source code
+        </div>
+        <pre className="overflow-x-auto rounded-lg text-xs" style={{ margin: 0, background: "#2d2d2d", color: "#ccc", padding: "1rem" }}>
+          <code dangerouslySetInnerHTML={{ __html: highlighted }} />
+        </pre>
+      </div>
+    );
+  }
+
+  return <img src={krokiUrl("plantuml", source)} alt="PlantUML Diagram" className="max-w-full" onError={() => setFailed(true)} />;
 }
 
 /** Prism-highlighted code component for ReactMarkdown. */
@@ -602,7 +647,7 @@ export default function Chat2DBPage() {
                       </div>
                     )}
 
-                    {/* PlantUML diagram */}
+                    {/* PlantUML diagram — rendered via Kroki.io with error fallback */}
                     {r?.plantuml_code && !r?.error && (
                       <div className="overflow-hidden rounded-xl border">
                         <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
@@ -615,26 +660,29 @@ export default function Chat2DBPage() {
                           </button>
                         </div>
                         <div className="p-4 bg-white dark:bg-slate-50 flex justify-center">
-                          <img src={krokiUrl("plantuml", r.plantuml_code!)} alt="PlantUML Diagram" className="max-w-full" />
+                          <PlantUMLDiagram source={r.plantuml_code!} />
                         </div>
                       </div>
                     )}
 
-                    {/* Mermaid diagram */}
+                    {/* Mermaid diagram — rendered via Kroki.io with error fallback */}
                     {r?.mermaid_code && !r?.error && (
                       <div className="overflow-hidden rounded-xl border">
                         <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
                           <span>Mermaid Diagram</span>
                           <button
-                            onClick={() => window.open(krokiUrl("mermaid", r.mermaid_code!), "_blank")}
+                            onClick={() => openMermaidFullScreen(r.mermaid_code!)}
                             className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors hover:bg-accent"
                           >
                             <ExternalLink className="h-3 w-3" /> View Full Screen
                           </button>
                         </div>
-                        <div className="p-4 bg-white dark:bg-slate-50 flex justify-center">
-                          <img src={krokiUrl("mermaid", r.mermaid_code!)} alt="Mermaid Diagram" className="max-w-full" />
-                        </div>
+                        <iframe
+                          srcDoc={mermaidHtml(r.mermaid_code!)}
+                          sandbox="allow-scripts"
+                          className="w-full border-0"
+                          style={{ minHeight: "400px" }}
+                        />
                       </div>
                     )}
 
