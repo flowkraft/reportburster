@@ -190,7 +190,7 @@
               <code>--no-cache</code>
               <i class="fa fa-info-circle text-muted" style="margin-left: 3px;"></i>
             </label>
-            <label *ngIf="isFlowkraftApp(app)" class="checkbox-inline" style="font-size: 0.85em; margin-left: 15px; cursor: pointer;"
+            <label *ngIf="isFlowkraftApp(app) && (app.id === 'flowkraft-grails' || app.id === 'flowkraft-bkend-boot-groovy')" class="checkbox-inline" style="font-size: 0.85em; margin-left: 15px; cursor: pointer;"
                    title="Enable Liquibase Groovy DSL database migrations. Runs changesets from db/migration/changelog.groovy on startup.">
               <input type="checkbox" 
                      [checked]="app.currentCommandValue?.includes('--liquibase')"
