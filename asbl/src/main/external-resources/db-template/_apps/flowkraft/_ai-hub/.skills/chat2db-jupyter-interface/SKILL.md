@@ -230,6 +230,50 @@ plt.show()
 | Wireframe | `@startsalt` | plantuml.com/salt |
 | JSON/YAML | `@startjson` / `@startyaml` | plantuml.com/json |
 
+### PlantUML ER Diagram Example (MUST follow this syntax)
+
+```plantuml
+@startuml
+entity "Customer" as customer {
+  *customer_id : INT <<PK>>
+  --
+  name : VARCHAR
+  email : VARCHAR
+  phone : VARCHAR
+}
+
+entity "Order" as order {
+  *order_id : INT <<PK>>
+  --
+  *customer_id : INT <<FK>>
+  order_date : DATE
+  total : DECIMAL
+}
+
+entity "Order Details" as order_details {
+  *detail_id : INT <<PK>>
+  --
+  *order_id : INT <<FK>>
+  *product_id : INT <<FK>>
+  quantity : INT
+  unit_price : DECIMAL
+}
+
+customer ||--o{ order : places
+order ||--|{ order_details : contains
+@enduml
+```
+
+**ER Diagram Syntax Rules:**
+- Use `entity "Display Name" as alias { ... }` — for tables with spaces, the quoted name is the display label, the alias is used in relationships
+- Mark primary keys with `*` prefix and `<<PK>>` annotation
+- Mark foreign keys with `*` prefix and `<<FK>>` annotation
+- Use `--` separator between PK columns and other columns
+- Relationships: `||--o{` (one-to-many), `||--||` (one-to-one), `}o--o{` (many-to-many), `||--|{` (one-to-many mandatory)
+- **NEVER** use `!define TABLE(name)` macros with `%%` placeholders — that is INVALID PlantUML syntax
+- **NEVER** reference aliases that don't exist — every alias in a relationship MUST have a matching `entity` definition above
+- Keep diagrams focused — show the most important 5-15 entities, not every table in the database
+
 **Only use Mermaid** (` ```mermaid `) when:
 1. PlantUML has NO dedicated diagram type (e.g., git graph, sankey, XY chart)
 2. The user explicitly asks for Mermaid

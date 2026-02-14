@@ -130,9 +130,28 @@ function openMermaidFullScreen(source: string) {
   openHtmlInBrowser(mermaidHtml(source));
 }
 
-/** PlantUML diagram with Kroki.io rendering and error fallback. */
+/** PlantUML diagram with Kroki.io rendering and error fallback.
+ *  Uses fetch() to detect HTTP errors reliably — Kroki returns 400 for syntax
+ *  errors but as a renderable SVG, so <img onError> never fires. */
 function PlantUMLDiagram({ source }: { source: string }) {
+  const [svgHtml, setSvgHtml] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(krokiUrl("plantuml", source))
+      .then((res) => {
+        if (!res.ok) throw new Error(`Kroki returned ${res.status}`);
+        return res.text();
+      })
+      .then((svg) => {
+        if (!cancelled) setSvgHtml(svg);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    return () => { cancelled = true; };
+  }, [source]);
 
   if (failed) {
     const highlighted = Prism.languages.plantuml
@@ -150,7 +169,11 @@ function PlantUMLDiagram({ source }: { source: string }) {
     );
   }
 
-  return <img src={krokiUrl("plantuml", source)} alt="PlantUML Diagram" className="max-w-full" onError={() => setFailed(true)} />;
+  if (!svgHtml) {
+    return <div className="text-sm text-muted-foreground p-4">Rendering diagram...</div>;
+  }
+
+  return <div dangerouslySetInnerHTML={{ __html: svgHtml }} className="max-w-full [&>svg]:max-w-full" />;
 }
 
 /** Prism-highlighted code component for ReactMarkdown. */
