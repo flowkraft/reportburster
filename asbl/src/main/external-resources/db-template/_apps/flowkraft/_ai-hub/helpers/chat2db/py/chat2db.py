@@ -37,6 +37,10 @@ class QueryResult:
     # Visualization: Athena's suggested Python code + rendered base64 PNG
     viz_code: Optional[str] = None
     viz_image: Optional[str] = None  # base64-encoded PNG
+    # Diagram and HTML content for inline preview
+    plantuml_code: Optional[str] = None
+    mermaid_code: Optional[str] = None
+    html_content: Optional[str] = None
     # Athena's raw response (full markdown, unprocessed) for copy-to-clipboard
     raw_content: Optional[str] = None
 
@@ -408,6 +412,9 @@ class Chat2DB:
                     # Use narrative (code blocks stripped) — don't show raw Python in UI
                     text_response=response.narrative,
                     explanation=response.narrative,
+                    plantuml_code=response.plantuml_code,
+                    mermaid_code=response.mermaid_code,
+                    html_content=response.html_content,
                     raw_content=response.content,
                 )
 
@@ -418,6 +425,9 @@ class Chat2DB:
                 df=pd.DataFrame(),
                 text_response=response.narrative or response.content,
                 viz_code=response.viz_code,
+                plantuml_code=response.plantuml_code,
+                mermaid_code=response.mermaid_code,
+                html_content=response.html_content,
                 raw_content=response.content,
             )
         
@@ -452,6 +462,9 @@ class Chat2DB:
                 execution_time_ms=execution_time,
                 row_count=len(df),
                 viz_code=response.viz_code,
+                plantuml_code=response.plantuml_code,
+                mermaid_code=response.mermaid_code,
+                html_content=response.html_content,
                 raw_content=response.content,
             )
 

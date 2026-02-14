@@ -130,6 +130,9 @@ def ask(req: AskRequest):
             "explanation": result.explanation,
             "viz_image": result.viz_image,
             "text_response": result.text_response,
+            "plantuml_code": result.plantuml_code,
+            "mermaid_code": result.mermaid_code,
+            "html_content": result.html_content,
             "error": result.error,
             "raw_content": result.raw_content,
         }
