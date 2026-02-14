@@ -52,20 +52,20 @@ export function LLMProviderForm({ fullConfig, onSave }: LLMProviderFormProps) {
   const providerDef = getProviderDef(providerId);
 
   // Check if form is dirty by comparing against the saved config for the current provider
+  const isProviderChanged = providerId !== savedFullConfig.activeProviderId;
   const isDirty = useMemo(() => {
     const savedSettings = savedFullConfig.providers[providerId];
     const savedApiKey = savedSettings?.apiKey || "";
     const savedModel = savedSettings?.model || "";
     const savedBaseUrl = savedSettings?.baseUrl || "";
-    const isActiveChanged = providerId !== savedFullConfig.activeProviderId;
 
     return (
-      isActiveChanged ||
+      isProviderChanged ||
       apiKey !== savedApiKey ||
       model !== savedModel ||
       baseUrl !== savedBaseUrl
     );
-  }, [providerId, apiKey, model, baseUrl, savedFullConfig]);
+  }, [providerId, apiKey, model, baseUrl, savedFullConfig, isProviderChanged]);
 
   // Sync with prop changes (e.g. when dialog reopens with fresh data)
   useEffect(() => {
@@ -587,6 +587,20 @@ export function LLMProviderForm({ fullConfig, onSave }: LLMProviderFormProps) {
   return (
     <div className="space-y-4">
       {renderProviderSelect()}
+
+      {/* Provider-change restart note */}
+      {isProviderChanged && (
+        <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 px-3 py-2">
+          <div className="flex gap-2 items-start">
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-800 dark:text-amber-200">
+              Switching providers requires a restart to apply new API keys.
+              After saving, stop and start your FlowKraft&apos;s AI Hub application again before provisioning agents.
+            </p>
+          </div>
+        </div>
+      )}
+
       {renderBaseUrl()}
       {providerDef?.requiresApiKey !== false && renderApiKey()}
       {renderOllamaSection()}
