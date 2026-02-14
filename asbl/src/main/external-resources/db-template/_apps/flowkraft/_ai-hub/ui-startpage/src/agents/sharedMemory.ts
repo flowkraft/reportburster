@@ -2,6 +2,52 @@ import type { MemoryBlockDef, ToolDef } from './common';
 import { Constants } from '../utils/constants';
 
 // ============================================================================
+// TOOL CALLING PROTOCOL — standalone block for injection into sleeptime agents
+// ============================================================================
+// GLM-4.7 defaults to XML tool call format unless explicitly instructed.
+// Letta auto-creates sleeptime agents with a hardcoded system prompt that lacks
+// JSON format instructions, so we inject this block post-provisioning.
+export const TOOL_CALLING_PROTOCOL_BLOCK = `
+<tool_calling_protocol>
+CRITICAL: When I call ANY function or tool, I MUST format arguments as STRICT JSON.
+
+**Required Format:**
+- Use ONLY valid JSON objects: {"key": "value"}
+- NEVER use XML tags: <parameter>, <arg_key>, <arg_value>, <invoke>
+- NEVER mix XML and JSON syntax
+- ALL string values must be properly quoted
+- Nested objects must use valid JSON structure
+
+**Examples:**
+
+CORRECT:
+{
+  "label": "human",
+  "old_str": "Name: Unknown",
+  "new_str": "Name: John"
+}
+
+CORRECT (nested):
+{
+  "data": {
+    "command": "insert_content_after",
+    "page_id": "abc123",
+    "new_str": "Updated content"
+  }
+}
+
+WRONG - XML format will cause system failure:
+<parameter name="label">human</parameter>
+<arg_key>label</arg_key><arg_value>human</arg_value>
+
+WRONG - Mixed format:
+{"label": "<value>human</value>"}
+
+This is NON-NEGOTIABLE. The system parser expects pure JSON. Any XML or malformed JSON will cause tool execution to fail completely.
+</tool_calling_protocol>
+`;
+
+// ============================================================================
 // SLEEPTIME ARCHITECTURE TOOL DEFINITIONS
 // ============================================================================
 // Per Letta docs (https://docs.letta.com/guides/agents/architectures/sleeptime/):
@@ -949,43 +995,7 @@ export function systemPromptTemplate(agentName: string): string {
         This meta-layer is part of what makes me unique.
         </meta_awareness>
 
-        <tool_calling_protocol>
-        CRITICAL: When I call ANY function or tool, I MUST format arguments as STRICT JSON.
-
-        **Required Format:**
-        - Use ONLY valid JSON objects: {"key": "value"}
-        - NEVER use XML tags: <parameter>, <arg_key>, <arg_value>, <invoke>
-        - NEVER mix XML and JSON syntax
-        - ALL string values must be properly quoted
-        - Nested objects must use valid JSON structure
-
-        **Examples:**
-
-        ✅ CORRECT:
-        {
-          "label": "human",
-          "old_str": "Name: Unknown",
-          "new_str": "Name: John"
-        }
-
-        ✅ CORRECT (nested):
-        {
-          "data": {
-            "command": "insert_content_after",
-            "page_id": "abc123",
-            "new_str": "Updated content"
-          }
-        }
-
-        ❌ WRONG - XML format will cause system failure:
-        <parameter name="label">human</parameter>
-        <arg_key>label</arg_key><arg_value>human</arg_value>
-
-        ❌ WRONG - Mixed format:
-        {"label": "<value>human</value>"}
-
-        This is NON-NEGOTIABLE. The system parser expects pure JSON. Any XML or malformed JSON will cause tool execution to fail completely.
-        </tool_calling_protocol>
+        ${TOOL_CALLING_PROTOCOL_BLOCK}
 
         <security_protocol>
         CRITICAL SECURITY CONSTRAINTS:

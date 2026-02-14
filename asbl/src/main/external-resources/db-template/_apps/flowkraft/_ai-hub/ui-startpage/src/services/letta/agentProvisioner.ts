@@ -10,7 +10,7 @@
 
 import getLettaClient from './client';
 import { AGENTS } from '../../agents';
-import { DB_QUERY_MEMORY_SECTION } from '../../agents/sharedMemory';
+import { DB_QUERY_MEMORY_SECTION, TOOL_CALLING_PROTOCOL_BLOCK } from '../../agents/sharedMemory';
 import { Constants } from '../../utils/constants';
 import type { AgentState, AgentCreateParams } from '@letta-ai/letta-client/resources/agents';
 import type { Tool } from '@letta-ai/letta-client/resources/tools';
@@ -520,6 +520,31 @@ export async function provisionAllAgents(opts: { force?: boolean; giveDbQueryToo
         }
       } catch (err) {
         console.warn('Error while ensuring agent properties:', formatError(err));
+      }
+
+      // Patch the sleeptime companion agent's system prompt with tool_calling_protocol.
+      // Letta auto-creates {Name}-sleeptime with a hardcoded prompt that lacks JSON format
+      // instructions, causing GLM-4.7 to generate XML tool calls which fail JSON parsing.
+      if (cfg.options?.enableSleeptime) {
+        try {
+          const sleeptimeName = `${cfg.displayName}-sleeptime`;
+          const allAgents = normalizeList<AgentState>(await client.agents.list({ limit: 100 as any }) as unknown);
+          const sleeptimeAgent = allAgents.find((a: any) => a.name === sleeptimeName);
+          if (sleeptimeAgent) {
+            const hasTcp = sleeptimeAgent.system?.includes('tool_calling_protocol');
+            if (!hasTcp) {
+              const patchedSystem = TOOL_CALLING_PROTOCOL_BLOCK.trim() + '\n\n' + (sleeptimeAgent.system || '');
+              await (client.agents as any).update(sleeptimeAgent.id, { system: patchedSystem });
+              console.log('Patched sleeptime agent system prompt with tool_calling_protocol:', sleeptimeAgent.id);
+            } else {
+              console.log('Sleeptime agent already has tool_calling_protocol:', sleeptimeAgent.id);
+            }
+          } else {
+            console.warn('Sleeptime companion agent not found:', sleeptimeName);
+          }
+        } catch (err) {
+          console.warn('Failed to patch sleeptime agent system prompt:', formatError(err));
+        }
       }
 
       // Create memory blocks (use per-agent blocks by default; shared subset will still be shared but names are namespaced by agent)
