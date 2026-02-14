@@ -94,12 +94,12 @@ const PIVOT_APPS = [
     name: 'Grails',
     baseUrl: SelfServicePortalsTestHelper.GRAILS_BASE_URL,
   },
-  //{
-  //  appId: SelfServicePortalsTestHelper.APP_ID_NEXT,
-  //  appName: 'nextjs' as const,
-  //  name: 'Next.js',
-  //  baseUrl: SelfServicePortalsTestHelper.NEXT_BASE_URL,
-  //},
+  {
+    appId: SelfServicePortalsTestHelper.APP_ID_NEXT,
+    appName: 'nextjs' as const,
+    name: 'Next.js',
+    baseUrl: SelfServicePortalsTestHelper.NEXT_BASE_URL,
+  },
 ];
 
 // Module-level shared state per app (survives across test blocks)

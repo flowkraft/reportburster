@@ -13,10 +13,14 @@ import fs from "fs";
  * Strategy: always read .env.example as the immutable template, populate ALL
  * stored providers' API keys (commented for inactive, uncommented for active),
  * and write .env. Idempotent and self-healing.
+ *
+ * Each provider uses its native Letta env var (e.g., ZAI_API_KEY for Z.ai,
+ * OPENROUTER_API_KEY for OpenRouter) so Letta activates the correct native
+ * provider and generates the right model handle prefix.
  */
 export async function POST() {
   try {
-    const aiHubDir = path.resolve(process.cwd(), "..");
+    const aiHubDir = "/ai-hub";
     const templatePath = path.join(aiHubDir, ".env.example");
     const envPath = path.join(aiHubDir, ".env");
 
@@ -51,9 +55,9 @@ export async function POST() {
 
     // 1. Populate ALL stored providers' sections with their API keys
     //    Inactive providers stay commented (e.g., #GEMINI_API_KEY=AIza...)
-    //    Active provider gets uncommented (e.g., OPENAI_API_KEY=sk-xxx)
+    //    Active provider gets uncommented (e.g., ZAI_API_KEY=sk-xxx)
     for (const [pid, settings] of Object.entries(fullConfig.providers)) {
-      if (!settings.apiKey && pid !== "ollama") continue; // skip providers with no stored key
+      if (!settings.apiKey && pid !== "ollama") continue;
       const isActive = pid === fullConfig.activeProviderId;
       content = populateProviderSection(content, pid, settings.apiKey, settings.baseUrl, !isActive);
     }
@@ -63,11 +67,13 @@ export async function POST() {
       content = setEnvVar(content, /^OLLAMA_BASE_URL=.*/m, `OLLAMA_BASE_URL=${active.baseUrl}`);
     }
 
-    // 3. Update LLM_MODEL_ID (with ollama/ prefix for Ollama provider)
-    const effectiveModel =
-      active.providerId === "ollama"
-        ? active.model.startsWith("ollama/") ? active.model : `ollama/${active.model}`
-        : active.model;
+    // 3. Prefix the model with the Letta provider handle.
+    //    Each native provider uses its own prefix (e.g., zai/glm-5, openrouter/model).
+    //    "other" routes through OPENAI_API_BASE → Letta 0.16.4 uses "openai-proxy/" prefix.
+    const prefix = LETTA_PREFIX[active.providerId] ?? "openai";
+    const effectiveModel = active.model.startsWith(`${prefix}/`)
+      ? active.model
+      : `${prefix}/${active.model}`;
     content = setEnvVar(content, /^#?\s*LLM_MODEL_ID=.*/m, `LLM_MODEL_ID=${effectiveModel}`);
 
     fs.writeFileSync(envPath, content, "utf-8");
@@ -89,28 +95,38 @@ export async function POST() {
   }
 }
 
-// ── Section labels mapping ─────────────────────────────────────────
+// ── Section labels — must match .env.example headers exactly ──────
 const SECTION_LABELS: Record<string, string> = {
   openai: "# --- OpenAI ---",
   anthropic: "# --- Anthropic ---",
   google: "# --- Google Gemini ---",
-  ollama: "# --- Ollama (Local) ---",
-  openrouter: "# --- OpenRouter.ai (OpenAI Compatible) ---",
-  zai: "# --- Z.ai (OpenAI Compatible) ---",
+  zai: "# --- Z.ai ---",
+  openrouter: "# --- OpenRouter.ai ---",
   other: "# --- Other (OpenAI Compatible) ---",
+  ollama: "# --- Ollama (Local) ---",
 };
 
-const ENV_BASE_URLS: Record<string, string> = {
-  openai: "https://api.openai.com/v1",
-  openrouter: "https://openrouter.ai/api/v1",
-  zai: "https://api.z.ai/api/coding/paas/v4",
+// ── Letta model handle prefixes (one per native provider) ─────────
+// Letta 0.16.4: each provider registers models as "{provider_type}/{model}".
+// "other" uses OPENAI_API_BASE with custom URL → Letta generates "openai-proxy/".
+const LETTA_PREFIX: Record<string, string> = {
+  openai:     "openai",
+  anthropic:  "anthropic",
+  google:     "google_ai",      // Letta enum is "google_ai", not "google"
+  ollama:     "ollama",
+  zai:        "zai",            // native ZAI provider
+  openrouter: "openrouter",     // native OpenRouter provider
+  other:      "openai-proxy",   // custom OPENAI_API_BASE in Letta 0.16.4
 };
 
+// ── Env var patterns that can appear in provider sections ─────────
 const PROVIDER_VAR_PATTERNS = [
   /^#?\s*OPENAI_API_KEY=/,
   /^#?\s*OPENAI_API_BASE=/,
   /^#?\s*ANTHROPIC_API_KEY=/,
   /^#?\s*GEMINI_API_KEY=/,
+  /^#?\s*ZAI_API_KEY=/,
+  /^#?\s*OPENROUTER_API_KEY=/,
 ];
 
 function isProviderVarLine(line: string): boolean {
@@ -120,6 +136,7 @@ function isProviderVarLine(line: string): boolean {
 
 /**
  * Populate a provider's section with its stored API key.
+ * Each provider writes its own native env var (e.g., ZAI_API_KEY for Z.ai).
  *
  * @param commented - true for inactive providers (lines stay prefixed with #),
  *                    false for the active provider (lines are uncommented)
@@ -147,24 +164,31 @@ function populateProviderSection(
 
     if (!isProviderVarLine(lines[i])) continue;
 
-    const prefix = commented ? "#" : "";
+    const pfx = commented ? "#" : "";
 
     if (providerId === "anthropic") {
       if (/ANTHROPIC_API_KEY=/.test(trimmed)) {
-        lines[i] = `${prefix}ANTHROPIC_API_KEY=${apiKey}`;
+        lines[i] = `${pfx}ANTHROPIC_API_KEY=${apiKey}`;
       }
     } else if (providerId === "google") {
       if (/GEMINI_API_KEY=/.test(trimmed)) {
-        lines[i] = `${prefix}GEMINI_API_KEY=${apiKey}`;
+        lines[i] = `${pfx}GEMINI_API_KEY=${apiKey}`;
+      }
+    } else if (providerId === "zai") {
+      if (/ZAI_API_KEY=/.test(trimmed)) {
+        lines[i] = `${pfx}ZAI_API_KEY=${apiKey}`;
+      }
+    } else if (providerId === "openrouter") {
+      if (/OPENROUTER_API_KEY=/.test(trimmed)) {
+        lines[i] = `${pfx}OPENROUTER_API_KEY=${apiKey}`;
       }
     } else {
-      // openai, openrouter, zai, other — all use OPENAI_API_KEY/BASE
+      // openai, other — use OPENAI_API_KEY/BASE
       if (/OPENAI_API_KEY=/.test(trimmed)) {
-        lines[i] = `${prefix}OPENAI_API_KEY=${apiKey}`;
+        lines[i] = `${pfx}OPENAI_API_KEY=${apiKey}`;
       }
       if (/OPENAI_API_BASE=/.test(trimmed)) {
-        const envBase = ENV_BASE_URLS[providerId] || baseUrl || "";
-        lines[i] = `${prefix}OPENAI_API_BASE=${envBase}`;
+        lines[i] = `${pfx}OPENAI_API_BASE=${baseUrl || ""}`;
       }
     }
   }
@@ -191,10 +215,13 @@ function syncProcessEnv(
   model: string,
   baseUrl?: string
 ) {
+  // Clear all provider keys first
   delete process.env.OPENAI_API_KEY;
   delete process.env.OPENAI_API_BASE;
   delete process.env.ANTHROPIC_API_KEY;
   delete process.env.GEMINI_API_KEY;
+  delete process.env.ZAI_API_KEY;
+  delete process.env.OPENROUTER_API_KEY;
 
   switch (providerId) {
     case "anthropic":
@@ -203,12 +230,22 @@ function syncProcessEnv(
     case "google":
       process.env.GEMINI_API_KEY = apiKey;
       break;
+    case "zai":
+      process.env.ZAI_API_KEY = apiKey;
+      break;
+    case "openrouter":
+      process.env.OPENROUTER_API_KEY = apiKey;
+      break;
     case "ollama":
       if (baseUrl) process.env.OLLAMA_BASE_URL = baseUrl;
       break;
-    default:
+    case "other":
       process.env.OPENAI_API_KEY = apiKey;
-      process.env.OPENAI_API_BASE = ENV_BASE_URLS[providerId] || baseUrl || "";
+      process.env.OPENAI_API_BASE = baseUrl || "";
+      break;
+    default:
+      // openai
+      process.env.OPENAI_API_KEY = apiKey;
       break;
   }
 
