@@ -34,15 +34,12 @@ export function initializeDatabase() {
     )
   `);
 
-  // Seed default config values if not present
+  // Seed default config values if not present (INSERT OR IGNORE is atomic — safe for concurrent build workers)
   const now = new Date().toISOString();
   for (const [key, data] of Object.entries(schema.DEFAULT_CONFIG)) {
-    const existing = sqlite.prepare("SELECT key FROM config WHERE key = ?").get(key);
-    if (!existing) {
-      sqlite.prepare(
-        "INSERT INTO config (key, value, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?)"
-      ).run(key, data.value, data.description, now, now);
-    }
+    sqlite.prepare(
+      "INSERT OR IGNORE INTO config (key, value, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?)"
+    ).run(key, data.value, data.description, now, now);
   }
 }
 
