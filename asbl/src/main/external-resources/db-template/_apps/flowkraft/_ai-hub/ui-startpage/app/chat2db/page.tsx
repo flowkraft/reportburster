@@ -13,7 +13,7 @@
  * and proxies requests to the FastAPI backend via Next.js API routes.
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Database, Plug, Check, AlertCircle, Copy, ChevronDown, Trash2, ExternalLink } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -88,6 +88,7 @@ interface Chat2DBResponse {
   plantuml_code?: string | null;
   mermaid_code?: string | null;
   html_content?: string | null;
+  content_segments?: { type: string; content: string }[];
   error?: string | null;
   raw_content?: string | null;
 }
@@ -594,147 +595,127 @@ export default function Chat2DBPage() {
                       </div>
                     )}
 
-                    {/* Text response (chit-chat, guidance) */}
-                    {r?.text_response && !r?.error && (
-                      <MessageResponse className="bg-indigo-50 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-100">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{r.text_response}</ReactMarkdown>
-                      </MessageResponse>
-                    )}
-
-                    {/* SQL block (collapsible, Prism highlighted) */}
-                    {r?.sql && !r?.error && (
-                      <details className="rounded-xl bg-muted text-sm overflow-hidden">
-                        <summary className="cursor-pointer px-4 py-2 text-xs text-muted-foreground hover:bg-accent">
-                          <ChevronDown className="mr-1 inline h-3 w-3" />
-                          Show SQL
-                        </summary>
-                        <pre className="overflow-x-auto px-4 py-3 text-xs" style={{ margin: 0, background: "#2d2d2d", color: "#ccc" }}>
-                          <code
-                            dangerouslySetInnerHTML={{
-                              __html: highlightSQL(r.sql),
-                            }}
-                          />
-                        </pre>
-                      </details>
-                    )}
-
-                    {/* Data table */}
-                    {r?.data && r.data.length > 0 && !r?.error && (
-                      <div className="overflow-x-auto rounded-xl border text-sm">
-                        <div className="px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
-                          {r.row_count} row{r.row_count !== 1 ? "s" : ""}
-                          {r.execution_time_ms ? ` · ${r.execution_time_ms.toFixed(0)} ms` : ""}
-                        </div>
-                        <table className="w-full text-left text-xs">
-                          <thead>
-                            <tr className="border-b bg-muted/30">
-                              {Object.keys(r.data[0]).map((col) => (
-                                <th key={col} className="px-3 py-2 font-medium whitespace-nowrap">
-                                  {col}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {r.data.slice(0, 20).map((row, i) => (
-                              <tr key={i} className="border-b last:border-0 hover:bg-muted/20">
-                                {Object.values(row).map((val, j) => (
-                                  <td key={j} className="px-3 py-1.5 whitespace-nowrap">
-                                    {val === null ? (
-                                      <span className="text-muted-foreground italic">null</span>
-                                    ) : (
-                                      String(val)
-                                    )}
-                                  </td>
-                                ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                        {r.data.length > 20 && (
-                          <div className="px-3 py-1.5 text-xs text-muted-foreground border-t bg-muted/50">
-                            Showing 20 of {r.row_count} rows
+                    {/* Content segments — rendered in Athena's original order */}
+                    {r?.content_segments && !r?.error ? (
+                      r.content_segments.map((seg: { type: string; content: string }, segIdx: number) => (
+                        <React.Fragment key={segIdx}>
+                          {seg.type === "narrative" && (
+                            <MessageResponse className="bg-indigo-50 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-100">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{seg.content}</ReactMarkdown>
+                            </MessageResponse>
+                          )}
+                          {seg.type === "sql_results" && (
+                            <>
+                              {r.sql && (
+                                <details className="rounded-xl bg-muted text-sm overflow-hidden">
+                                  <summary className="cursor-pointer px-4 py-2 text-xs text-muted-foreground hover:bg-accent">
+                                    <ChevronDown className="mr-1 inline h-3 w-3" />
+                                    Show SQL
+                                  </summary>
+                                  <pre className="overflow-x-auto px-4 py-3 text-xs" style={{ margin: 0, background: "#2d2d2d", color: "#ccc" }}>
+                                    <code dangerouslySetInnerHTML={{ __html: highlightSQL(r.sql) }} />
+                                  </pre>
+                                </details>
+                              )}
+                              {r.data && r.data.length > 0 && (
+                                <div className="overflow-x-auto rounded-xl border text-sm">
+                                  <div className="px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
+                                    {r.row_count} row{r.row_count !== 1 ? "s" : ""}
+                                    {r.execution_time_ms ? ` · ${r.execution_time_ms.toFixed(0)} ms` : ""}
+                                  </div>
+                                  <table className="w-full text-left text-xs">
+                                    <thead>
+                                      <tr className="border-b bg-muted/30">
+                                        {Object.keys(r.data[0]).map((col) => (
+                                          <th key={col} className="px-3 py-2 font-medium whitespace-nowrap">{col}</th>
+                                        ))}
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {r.data.slice(0, 20).map((row, i) => (
+                                        <tr key={i} className="border-b last:border-0 hover:bg-muted/20">
+                                          {Object.values(row).map((val, j) => (
+                                            <td key={j} className="px-3 py-1.5 whitespace-nowrap">
+                                              {val === null ? <span className="text-muted-foreground italic">null</span> : String(val)}
+                                            </td>
+                                          ))}
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                  {r.data.length > 20 && (
+                                    <div className="px-3 py-1.5 text-xs text-muted-foreground border-t bg-muted/50">
+                                      Showing 20 of {r.row_count} rows
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </>
+                          )}
+                          {seg.type === "viz" && r.viz_image && (
+                            <div className="overflow-hidden rounded-xl border">
+                              <img src={`data:image/png;base64,${r.viz_image}`} alt="Visualization" className="max-w-full" />
+                            </div>
+                          )}
+                          {seg.type === "plantuml" && (
+                            <div className="overflow-hidden rounded-xl border">
+                              <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
+                                <span>PlantUML Diagram</span>
+                                <button
+                                  onClick={() => window.open(krokiUrl("plantuml", seg.content), "_blank")}
+                                  className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors hover:bg-accent"
+                                >
+                                  <ExternalLink className="h-3 w-3" /> View Full Screen
+                                </button>
+                              </div>
+                              <div className="p-4 bg-white dark:bg-slate-50 flex justify-center">
+                                <PlantUMLDiagram source={seg.content} />
+                              </div>
+                            </div>
+                          )}
+                          {seg.type === "mermaid" && (
+                            <div className="overflow-hidden rounded-xl border">
+                              <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
+                                <span>Mermaid Diagram</span>
+                                <button
+                                  onClick={() => openMermaidFullScreen(seg.content)}
+                                  className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors hover:bg-accent"
+                                >
+                                  <ExternalLink className="h-3 w-3" /> View Full Screen
+                                </button>
+                              </div>
+                              <iframe srcDoc={mermaidHtml(seg.content)} sandbox="allow-scripts" className="w-full border-0" style={{ minHeight: "400px" }} />
+                            </div>
+                          )}
+                          {seg.type === "html" && (
+                            <div className="overflow-hidden rounded-xl border">
+                              <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
+                                <span>HTML Preview</span>
+                                <button
+                                  onClick={() => openHtmlInBrowser(seg.content)}
+                                  className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors hover:bg-accent"
+                                >
+                                  <ExternalLink className="h-3 w-3" /> View Full Screen
+                                </button>
+                              </div>
+                              <iframe srcDoc={seg.content} sandbox="allow-scripts" className="w-full border-0" style={{ minHeight: "300px" }} />
+                            </div>
+                          )}
+                        </React.Fragment>
+                      ))
+                    ) : !r?.error && (
+                      <>
+                        {r?.text_response && (
+                          <MessageResponse className="bg-indigo-50 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-100">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{r.text_response}</ReactMarkdown>
+                          </MessageResponse>
+                        )}
+                        {r?.explanation && !r?.text_response && (
+                          <div className="prose prose-sm dark:prose-invert max-w-none text-foreground/80">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{r.explanation}</ReactMarkdown>
                           </div>
                         )}
-                      </div>
-                    )}
-
-                    {/* Visualization */}
-                    {r?.viz_image && (
-                      <div className="overflow-hidden rounded-xl border">
-                        <img
-                          src={`data:image/png;base64,${r.viz_image}`}
-                          alt="Visualization"
-                          className="max-w-full"
-                        />
-                      </div>
-                    )}
-
-                    {/* PlantUML diagram — rendered via Kroki.io with error fallback */}
-                    {r?.plantuml_code && !r?.error && (
-                      <div className="overflow-hidden rounded-xl border">
-                        <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
-                          <span>PlantUML Diagram</span>
-                          <button
-                            onClick={() => window.open(krokiUrl("plantuml", r.plantuml_code!), "_blank")}
-                            className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors hover:bg-accent"
-                          >
-                            <ExternalLink className="h-3 w-3" /> View Full Screen
-                          </button>
-                        </div>
-                        <div className="p-4 bg-white dark:bg-slate-50 flex justify-center">
-                          <PlantUMLDiagram source={r.plantuml_code!} />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Mermaid diagram — rendered via Kroki.io with error fallback */}
-                    {r?.mermaid_code && !r?.error && (
-                      <div className="overflow-hidden rounded-xl border">
-                        <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
-                          <span>Mermaid Diagram</span>
-                          <button
-                            onClick={() => openMermaidFullScreen(r.mermaid_code!)}
-                            className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors hover:bg-accent"
-                          >
-                            <ExternalLink className="h-3 w-3" /> View Full Screen
-                          </button>
-                        </div>
-                        <iframe
-                          srcDoc={mermaidHtml(r.mermaid_code!)}
-                          sandbox="allow-scripts"
-                          className="w-full border-0"
-                          style={{ minHeight: "400px" }}
-                        />
-                      </div>
-                    )}
-
-                    {/* HTML preview */}
-                    {r?.html_content && !r?.error && (
-                      <div className="overflow-hidden rounded-xl border">
-                        <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
-                          <span>HTML Preview</span>
-                          <button
-                            onClick={() => openHtmlInBrowser(r.html_content!)}
-                            className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors hover:bg-accent"
-                          >
-                            <ExternalLink className="h-3 w-3" /> View Full Screen
-                          </button>
-                        </div>
-                        <iframe
-                          srcDoc={r.html_content}
-                          sandbox="allow-scripts"
-                          className="w-full border-0"
-                          style={{ minHeight: "300px" }}
-                        />
-                      </div>
-                    )}
-
-                    {/* Explanation */}
-                    {r?.explanation && !r?.text_response && !r?.error && (
-                      <div className="prose prose-sm dark:prose-invert max-w-none text-foreground/80">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{r.explanation}</ReactMarkdown>
-                      </div>
+                      </>
                     )}
 
                     {/* Copy button */}

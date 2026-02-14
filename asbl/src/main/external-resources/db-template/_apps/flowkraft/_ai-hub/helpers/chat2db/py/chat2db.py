@@ -41,6 +41,8 @@ class QueryResult:
     plantuml_code: Optional[str] = None
     mermaid_code: Optional[str] = None
     html_content: Optional[str] = None
+    # Ordered content segments preserving Athena's rendering order
+    content_segments: Optional[list] = None
     # Athena's raw response (full markdown, unprocessed) for copy-to-clipboard
     raw_content: Optional[str] = None
 
@@ -415,6 +417,7 @@ class Chat2DB:
                     plantuml_code=response.plantuml_code,
                     mermaid_code=response.mermaid_code,
                     html_content=response.html_content,
+                    content_segments=response.content_segments,
                     raw_content=response.content,
                 )
 
@@ -428,6 +431,7 @@ class Chat2DB:
                 plantuml_code=response.plantuml_code,
                 mermaid_code=response.mermaid_code,
                 html_content=response.html_content,
+                content_segments=response.content_segments,
                 raw_content=response.content,
             )
         
@@ -465,6 +469,7 @@ class Chat2DB:
                 plantuml_code=response.plantuml_code,
                 mermaid_code=response.mermaid_code,
                 html_content=response.html_content,
+                content_segments=response.content_segments,
                 raw_content=response.content,
             )
 
