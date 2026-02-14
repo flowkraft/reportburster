@@ -16,6 +16,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Database, Plug, Check, AlertCircle, Copy, ChevronDown, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 /** Highlight SQL with inline styles — no CSS dependency. */
 function highlightSQL(sql: string): string {
@@ -460,7 +461,7 @@ export default function Chat2DBPage() {
                     {/* Text response (chit-chat, guidance) */}
                     {r?.text_response && !r?.error && (
                       <MessageResponse className="bg-indigo-50 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-100">
-                        <ReactMarkdown>{r.text_response}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{r.text_response}</ReactMarkdown>
                       </MessageResponse>
                     )}
 
@@ -536,7 +537,7 @@ export default function Chat2DBPage() {
                     {/* Explanation */}
                     {r?.explanation && !r?.text_response && !r?.error && (
                       <div className="prose prose-sm dark:prose-invert max-w-none text-foreground/80">
-                        <ReactMarkdown>{r.explanation}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{r.explanation}</ReactMarkdown>
                       </div>
                     )}
 
