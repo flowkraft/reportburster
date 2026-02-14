@@ -31,7 +31,7 @@ import "prismjs/components/prism-bash";
 import "prismjs/components/prism-yaml";
 import "prismjs/components/prism-java";
 import "prismjs/components/prism-sql";
-import "../lib/prism-plantuml";
+import "@/lib/prism-plantuml";
 
 /** Highlight SQL with inline styles — no CSS dependency. */
 function highlightSQL(sql: string): string {
