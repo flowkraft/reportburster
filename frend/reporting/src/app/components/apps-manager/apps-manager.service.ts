@@ -79,7 +79,7 @@ export class AppsManagerService {
         icon: 'fa fa-cogs',
         category: 'Backend Services',
         type: 'docker',
-        description: 'Quickly deploy / run automation flows across your business systems.',
+        description: 'Schedule report generation jobs, automate document delivery (payslips, invoices, statements), build ETL/data warehouse pipelines, and manage cron-based batch processing across your business systems.',
         url: 'http://localhost:8410',
         entrypoint: 'flowkraft/bkend-boot-groovy-playground/docker-compose.yml',
         service_name: 'bkend-boot-groovy-playground',

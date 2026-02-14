@@ -24,6 +24,7 @@ asbl/**/node_modules/
 asbl/**/.cache/
 asbl/**/.gradle/
 asbl/**/.parcel-cache/
+asbl/**/.next/
 asbl/**/.turbo/
 asbl/**/__pycache__/
 

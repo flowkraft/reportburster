@@ -37,6 +37,10 @@ RUN git clone --depth 1 --branch ${LETTA_VERSION} https://github.com/letta-ai/le
 # COPY ./.patches/server.patched /app/letta/server/server.py
 # COPY ./.patches/constants.patched /app/letta/constants.py
 
+# Patch zai.py: add glm-5 to context windows + default fallback for future models
+RUN sed -i '/"glm-4.7": 200000,/a\    "glm-5": 200000,' /app/letta/schemas/providers/zai.py && \
+    sed -i '/Couldn.t find context window size/{n;s/continue/context_window_size = 200000/}' /app/letta/schemas/providers/zai.py
+
 RUN uv sync --frozen --no-dev --all-extras --python 3.11
 
 # Runtime stage
