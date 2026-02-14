@@ -47,6 +47,8 @@ services:
       - ./custom-tools:/custom-tools:ro
       # Agent output artifacts — browsed by the workspace UI (read-only)
       - ./agents-output-artifacts:/app/workspace/agents-output-artifacts:ro
+      # Mount _ai-hub/ so update-env can read .env.example and write .env to host
+      - .:/ai-hub
     restart: unless-stopped
     networks:
       - ai-hub-network
@@ -89,8 +91,13 @@ services:
       ollama:
         condition: service_healthy
     environment:
+      # LLM provider API keys (each activates its native Letta provider)
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_API_BASE=${OPENAI_API_BASE:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - ZAI_API_KEY=${ZAI_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - OLLAMA_BASE_URL=http://flowkraft-ai-hub-ollama:11434
       - AUTO_APPROVE_SHELL_COMMANDS=false
       - POSTGRES_USER=letta

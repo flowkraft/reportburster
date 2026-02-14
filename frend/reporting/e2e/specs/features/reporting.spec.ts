@@ -22,8 +22,8 @@ const dataSourceTypeDisplayMap: Record<string, string> = {
 };
 
 // ── DEV OVERRIDES
-const SKIP_NON_DATABASE_TESTS = true;
-//const SKIP_NON_DATABASE_TESTS = false;
+//const SKIP_NON_DATABASE_TESTS = true;
+const SKIP_NON_DATABASE_TESTS = false;
 
 const DB_VENDORS_SELECTED: string[] = (() => {
   // ── DEV OVERRIDES (uncomment ONE line to limit vendor scope) ──

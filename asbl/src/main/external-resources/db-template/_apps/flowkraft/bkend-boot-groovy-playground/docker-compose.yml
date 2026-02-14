@@ -13,7 +13,7 @@ services:
       - DDL_AUTO=${DDL_AUTO:-update}
       - DB_PATH=/app/db/sample-northwind-sqlite/northwind.db
     volumes:
-      - ../../../db:/app/db:ro
+      - ../../../db:/app/db
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
