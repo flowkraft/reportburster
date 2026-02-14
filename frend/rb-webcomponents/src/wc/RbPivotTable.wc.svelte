@@ -1288,9 +1288,38 @@
             </div>
             <button type="button" class="pvtRowOrder" on:click={toggleRowOrder}>{sortIcons[rowOrder].rowSymbol}</button>
             <button type="button" class="pvtColOrder" on:click={toggleColOrder}>{sortIcons[colOrder].colSymbol}</button>
+            {#if numValsAllowed > 0}
+              <br />
+              {#each Array(numValsAllowed) as _, i}
+                <div class="pvtDropdown" style="z-index: {openDropdown === `val${i}` ? maxZIndex + 1 : 1}">
+                  <button
+                    type="button"
+                    class="pvtDropdownValue pvtDropdownCurrent {openDropdown === `val${i}` ? 'pvtDropdownCurrentOpen' : ''}"
+                    on:click|stopPropagation={() => openDropdown = openDropdown === `val${i}` ? false : `val${i}`}
+                  >
+                    <span class="pvtDropdownIcon">{openDropdown === `val${i}` ? '×' : '▾'}</span>
+                    {vals[i] || '(select)'}
+                  </button>
+                  {#if openDropdown === `val${i}`}
+                    <div class="pvtDropdownMenu">
+                      {#each valOptions as opt}
+                        <button
+                          type="button"
+                          class="pvtDropdownValue {opt === vals[i] ? 'pvtDropdownActiveValue' : ''}"
+                          on:click|stopPropagation={() => setVal(i, opt)}
+                        >
+                          {opt}
+                        </button>
+                      {/each}
+                    </div>
+                  {/if}
+                </div>
+                {#if i < numValsAllowed - 1}<br />{/if}
+              {/each}
+            {/if}
           </td>
-          
-          <td 
+
+          <td
             class="pvtAxisContainer pvtHorizList pvtCols"
             on:dragover={onDragOver}
             on:drop={onDropCols}
