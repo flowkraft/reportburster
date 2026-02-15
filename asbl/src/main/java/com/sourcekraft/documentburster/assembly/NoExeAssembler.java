@@ -1420,6 +1420,14 @@ public class NoExeAssembler extends AbstractAssembler {
 						&& !file.getName().equals("vendor");
 			}
 
+			// ===========================================
+			// EXCLUDE DESIGN SOURCE FILES (.afdesign)
+			// These are Affinity Designer project files - not runtime assets
+			// ===========================================
+			if (fileName.endsWith(".afdesign")) {
+				return false;
+			}
+
 			return true;
 		};
 	}
