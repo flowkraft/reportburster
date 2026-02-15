@@ -340,7 +340,7 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
 
           if (dockerInfo && dockerInfo.isDockerInstalled && !dockerInfo.isDockerDaemonRunning) {
             this.messagesService.showWarning(
-              `Docker is installed but the background service is not running. Please start Docker Desktop first.`,
+              `Docker is installed but cannot be reached. Please ensure Docker Desktop is running and that ReportBurster was started with "Run as Administrator".`,
               'Docker Not Running'
             );
           } else {
