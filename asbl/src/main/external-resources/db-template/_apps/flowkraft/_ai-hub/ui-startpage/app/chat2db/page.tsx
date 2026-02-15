@@ -86,7 +86,6 @@ interface Chat2DBResponse {
   viz_image?: string | null;
   text_response?: string | null;
   plantuml_code?: string | null;
-  mermaid_code?: string | null;
   html_content?: string | null;
   content_segments?: { type: string; content: string }[];
   error?: string | null;
@@ -94,7 +93,7 @@ interface Chat2DBResponse {
 }
 
 /** Encode diagram source for Kroki.io SVG rendering. */
-function krokiUrl(type: "plantuml" | "mermaid", source: string): string {
+function krokiUrl(type: "plantuml", source: string): string {
   const bytes = new TextEncoder().encode(source);
   const deflated = pako.deflate(bytes);
   const base64 = btoa(Array.from(deflated).map((b) => String.fromCharCode(b)).join(""));
@@ -110,25 +109,55 @@ function openHtmlInBrowser(html: string) {
   if (win) setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-/** Build self-contained HTML that renders a Mermaid diagram via CDN (same approach as /workspaces). */
-function mermaidHtml(source: string): string {
-  const escaped = source.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  return `<!DOCTYPE html>
-<html><head>
-  <meta charset="utf-8"/>
-  <style>body{display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#fff;font-family:sans-serif;}</style>
-  <script type="module">
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-    mermaid.initialize({ startOnLoad: true, theme: 'default' });
-  </script>
-</head><body>
-  <pre class="mermaid">${escaped}</pre>
-</body></html>`;
+/** Inject a postMessage resize script into HTML content for iframe auto-sizing. */
+function withAutoResize(html: string): string {
+  const resizeScript = `<script>
+    function notifyHeight() {
+      window.parent.postMessage({ type: 'iframe-resize', height: document.body.scrollHeight }, '*');
+    }
+    window.addEventListener('load', function() { setTimeout(notifyHeight, 300); });
+    new MutationObserver(notifyHeight).observe(document.body, { childList: true, subtree: true });
+  </script>`;
+  if (html.includes('</body>')) {
+    return html.replace('</body>', resizeScript + '</body>');
+  }
+  return html + resizeScript;
 }
 
-/** Open a Mermaid diagram full-screen in a new tab. */
-function openMermaidFullScreen(source: string) {
-  openHtmlInBrowser(mermaidHtml(source));
+/** Auto-resizing iframe for HTML content (mockups, Mermaid diagrams, etc.). */
+function HtmlIframe({ content, label, onFullScreen }: { content: string; label: string; onFullScreen: () => void }) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'iframe-resize' && iframeRef.current && e.source === iframeRef.current.contentWindow) {
+        iframeRef.current.style.height = `${e.data.height}px`;
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  return (
+    <div className="overflow-hidden rounded-xl border">
+      <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
+        <span>{label}</span>
+        <button
+          onClick={onFullScreen}
+          className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors hover:bg-accent"
+        >
+          <ExternalLink className="h-3 w-3" /> View Full Screen
+        </button>
+      </div>
+      <iframe
+        ref={iframeRef}
+        srcDoc={withAutoResize(content)}
+        sandbox="allow-scripts"
+        className="w-full border-0"
+        style={{ minHeight: "200px" }}
+      />
+    </div>
+  );
 }
 
 /** PlantUML diagram with Kroki.io rendering and error fallback.
@@ -673,33 +702,12 @@ export default function Chat2DBPage() {
                               </div>
                             </div>
                           )}
-                          {seg.type === "mermaid" && (
-                            <div className="overflow-hidden rounded-xl border">
-                              <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
-                                <span>Mermaid Diagram</span>
-                                <button
-                                  onClick={() => openMermaidFullScreen(seg.content)}
-                                  className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors hover:bg-accent"
-                                >
-                                  <ExternalLink className="h-3 w-3" /> View Full Screen
-                                </button>
-                              </div>
-                              <iframe srcDoc={mermaidHtml(seg.content)} sandbox="allow-scripts" className="w-full border-0" style={{ minHeight: "400px" }} />
-                            </div>
-                          )}
                           {seg.type === "html" && (
-                            <div className="overflow-hidden rounded-xl border">
-                              <div className="flex justify-between items-center px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/50">
-                                <span>HTML Preview</span>
-                                <button
-                                  onClick={() => openHtmlInBrowser(seg.content)}
-                                  className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs transition-colors hover:bg-accent"
-                                >
-                                  <ExternalLink className="h-3 w-3" /> View Full Screen
-                                </button>
-                              </div>
-                              <iframe srcDoc={seg.content} sandbox="allow-scripts" className="w-full border-0" style={{ minHeight: "300px" }} />
-                            </div>
+                            <HtmlIframe
+                              content={seg.content}
+                              label="HTML Preview"
+                              onFullScreen={() => openHtmlInBrowser(seg.content)}
+                            />
                           )}
                         </React.Fragment>
                       ))

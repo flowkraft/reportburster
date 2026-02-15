@@ -33,8 +33,7 @@ class LettaResponse:
     viz_code: Optional[str] = None  # Python visualization code (matplotlib/plotly)
     narrative: Optional[str] = None  # Athena's inline text (code blocks stripped)
     plantuml_code: Optional[str] = None  # PlantUML diagram source
-    mermaid_code: Optional[str] = None   # Mermaid diagram source
-    html_content: Optional[str] = None   # HTML content (dashboards, mockups)
+    html_content: Optional[str] = None   # HTML content (dashboards, mockups, Mermaid diagrams)
     content_segments: Optional[list] = None   # Ordered content segments preserving Athena's order
     messages: Optional[List[Dict]] = None
     raw_response: Optional[Dict] = None
@@ -73,11 +72,21 @@ class LettaChat2DB:
         "DIAGRAMS: ALWAYS prefer PlantUML (```plantuml) — it supports ER diagrams (plantuml.com/er-diagram), "
         "sequence, class, activity, component, state, WBS (plantuml.com/wbs-diagram), mindmap, Gantt, "
         "network, wireframe (Salt), JSON/YAML, and more. "
-        "Only use Mermaid (```mermaid) when PlantUML has NO dedicated diagram type for what's needed "
-        "(e.g. git graph, sankey, XY chart, pie chart) or the user explicitly asks for Mermaid. "
-        "Chat2DB renders both as SVG diagrams inline — the user sees the diagram automatically. "
-        "HTML MOCKUPS: When generating interactive HTML (dashboards, mockups), "
-        "wrap it in a ```html code block. Chat2DB renders it in an iframe inline. "
+        "Chat2DB renders PlantUML as SVG diagrams inline — the user sees the diagram automatically. "
+        "MERMAID DIAGRAMS: When Mermaid is needed (only when PlantUML has NO dedicated diagram type "
+        "or user explicitly asks for Mermaid), generate a COMPLETE self-contained HTML page in a ```html block. "
+        "Include the Mermaid CDN script so it renders standalone. Example: "
+        "```html\\n<!DOCTYPE html>\\n<html><head><meta charset=\"utf-8\"/>\\n"
+        "<script src=\"https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js\"></script>\\n"
+        "<script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>\\n"
+        "</head><body>\\n<div class=\"mermaid\">\\nflowchart TD\\n  A[Start] --> B{Decision}\\n</div>\\n"
+        "</body></html>\\n``` "
+        "Chat2DB renders it in an iframe — the user sees the diagram automatically. "
+        "HTML CONTENT: ALL ```html blocks (dashboards, mockups, Mermaid diagrams, etc.) "
+        "MUST be fully self-contained HTML pages. Include ALL needed CSS and JS from CDN "
+        "(e.g. Bootstrap, Tailwind, Chart.js, D3 — whatever the content needs). "
+        "The HTML runs inside an isolated iframe with NO access to parent page resources. "
+        "Chat2DB renders it in an iframe inline. "
         "CODE: When sharing code examples (groovy, bash, etc.), use fenced code blocks "
         "with the language tag (e.g. ```groovy). Chat2DB syntax-highlights them automatically. "
         "REMINDER: Make sure you have read your 'chat2db-jupyter-interface' skill."
@@ -204,7 +213,6 @@ class LettaChat2DB:
         response.viz_code = self._extract_viz_code(response.content)
         # Extract diagram and HTML content if present
         response.plantuml_code = self._extract_plantuml(response.content)
-        response.mermaid_code = self._extract_mermaid(response.content)
         response.html_content = self._extract_html(response.content)
         # Extract Athena's inline narrative (text around specifically-rendered blocks)
         response.narrative = self._extract_narrative(response.content)
@@ -310,13 +318,6 @@ class LettaChat2DB:
         matches = re.findall(r'```plantuml\s*([\s\S]*?)```', text, re.IGNORECASE)
         return matches[0].strip() if matches else None
 
-    def _extract_mermaid(self, text: str) -> Optional[str]:
-        """Extract Mermaid diagram source from ```mermaid code blocks."""
-        if not text:
-            return None
-        matches = re.findall(r'```mermaid\s*([\s\S]*?)```', text, re.IGNORECASE)
-        return matches[0].strip() if matches else None
-
     def _extract_html(self, text: str) -> Optional[str]:
         """Extract HTML content from ```html code blocks."""
         if not text:
@@ -328,7 +329,7 @@ class LettaChat2DB:
         """Extract Athena's inline narrative by stripping specifically-rendered blocks.
 
         Only strips code blocks that get special rendering (SQL, Python viz,
-        PlantUML, Mermaid, HTML). Generic code blocks (groovy, bash, etc.)
+        PlantUML, HTML). Generic code blocks (groovy, bash, etc.)
         are preserved so ReactMarkdown can render them with syntax highlighting.
         """
         if not text:
@@ -336,7 +337,7 @@ class LettaChat2DB:
 
         # Strip only the block types we extract for special rendering
         stripped = re.sub(
-            r'```(?:sql|python|plantuml|mermaid|html)\s*[\s\S]*?```',
+            r'```(?:sql|python|plantuml|html)\s*[\s\S]*?```',
             '', text, flags=re.IGNORECASE
         )
         # Collapse multiple blank lines into one
@@ -348,14 +349,14 @@ class LettaChat2DB:
         """Parse response into ordered content segments, preserving Athena's order.
 
         Returns list of dicts: [{"type": "narrative", "content": "..."}, {"type": "plantuml", "content": "..."}, ...]
-        Special block types (sql, python, plantuml, mermaid, html) get their own segments.
+        Special block types (sql, python, plantuml, html) get their own segments.
         Everything else (including generic code blocks like groovy/bash) stays in narrative segments.
         """
         if not text:
             return []
 
         segments = []
-        pattern = r'```(sql|python|plantuml|mermaid|html)\s*([\s\S]*?)```'
+        pattern = r'```(sql|python|plantuml|html)\s*([\s\S]*?)```'
         last_end = 0
 
         for match in re.finditer(pattern, text, re.IGNORECASE):
