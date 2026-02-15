@@ -69,10 +69,10 @@ class LettaChat2DB:
         "Always end with `plt.tight_layout()` and `plt.show()`. "
         "DO include a chart when: trends, comparisons, distributions, proportions (6+ rows). "
         "Do NOT include a chart when: simple lookups, raw data dumps, few rows (<5), yes/no answers. "
-        "DIAGRAMS: ALWAYS prefer PlantUML (```plantuml) — it supports ER diagrams (plantuml.com/er-diagram), "
-        "sequence, class, activity, component, state, WBS (plantuml.com/wbs-diagram), mindmap, Gantt, "
-        "network, wireframe (Salt), JSON/YAML, and more. "
-        "Chat2DB renders PlantUML as SVG diagrams inline — the user sees the diagram automatically. "
+        "DIAGRAMS: ALWAYS use PlantUML (```plantuml) for: ER diagrams, sequence, class, activity, "
+        "component, state, WBS, mindmap, Gantt, network, wireframe, JSON/YAML. "
+        "ER DIAGRAMS: MUST use ```plantuml with entity syntax — see your chat2db-jupyter-interface skill for the exact example. "
+        "Chat2DB renders PlantUML as SVG inline — the user sees the diagram automatically. "
         "MERMAID DIAGRAMS: When Mermaid is needed (only when PlantUML has NO dedicated diagram type "
         "or user explicitly asks for Mermaid), generate a COMPLETE self-contained HTML page in a ```html block. "
         "Include the Mermaid CDN script so it renders standalone. Example: "
@@ -89,6 +89,10 @@ class LettaChat2DB:
         "Chat2DB renders it in an iframe inline. "
         "CODE: When sharing code examples (groovy, bash, etc.), use fenced code blocks "
         "with the language tag (e.g. ```groovy). Chat2DB syntax-highlights them automatically. "
+        "IMPORTANT: In Chat2DB, respond directly in the conversation with whatever fits — "
+        "narrative text, SQL, visualizations, diagrams (```plantuml), HTML mockups (```html), code examples, etc. "
+        "Do NOT create or modify files on disk unless the user explicitly asks to create/modify files on disk. "
+        "Your response IS the output — the user sees it rendered automatically. "
         "REMINDER: Make sure you have read your 'chat2db-jupyter-interface' skill."
     )
 
@@ -110,8 +114,8 @@ class LettaChat2DB:
         self.model = model or os.environ.get('OPENAI_MODEL', 'letta:athena')
 
         # Letta agents can be slow (memory ops, summarization, multiple LLM calls)
-        # Use a generous timeout - 5 minutes
-        self._client = httpx.Client(timeout=300.0)
+        # Use a generous timeout - 10 minutes
+        self._client = httpx.Client(timeout=600.0)
         self._schema_context: Optional[str] = None
 
     def set_schema_context(self, schema: str):
