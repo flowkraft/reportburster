@@ -94,6 +94,63 @@ public class SystemService {
 	// Note: Chocolatey probing removed to keep backend focused on Docker status.
 	// Frontend/Electron still records choco in logs.
 
+	// On Windows the active Docker context (desktop-linux) may use a named pipe
+	// (dockerDesktopLinuxEngine) whose ACLs deny access to the Java process,
+	// even though Docker Desktop is running and the standard docker_engine pipe
+	// is perfectly accessible.  This field caches the -H flag we need (if any)
+	// so we only pay the fallback cost once.
+	private volatile String dockerHostOverride = null; // null = not yet determined
+	private static final String DOCKER_ENGINE_PIPE = "npipe:////./pipe/docker_engine";
+
+	/**
+	 * Execute a Docker daemon command with automatic fallback on Windows.
+	 * If the default context's pipe returns "Access is denied", retries via the
+	 * standard docker_engine pipe.
+	 */
+	private ProcessResult executeDockerDaemonCommand(List<String> dockerArgs, int timeoutSeconds) throws Exception {
+		// Build the command, injecting -H override if we already know we need it
+		List<String> cmd = new ArrayList<>();
+		cmd.add("docker");
+		if (dockerHostOverride != null) {
+			cmd.add("-H");
+			cmd.add(dockerHostOverride);
+		}
+		cmd.addAll(dockerArgs);
+
+		ProcessResult result = new ProcessExecutor().command(cmd)
+				.readOutput(true).redirectErrorStream(true)
+				.timeout(timeoutSeconds, TimeUnit.SECONDS)
+				.execute();
+
+		// On Windows, if the active context's pipe is access-denied, try the
+		// standard docker_engine pipe instead.
+		if (result.getExitValue() != 0
+				&& dockerHostOverride == null
+				&& result.getOutput().getString().contains("Access is denied")
+				&& System.getProperty("os.name").toLowerCase().contains("win")) {
+
+			log.info("Docker pipe access denied, retrying with standard docker_engine pipe");
+			List<String> fallbackCmd = new ArrayList<>();
+			fallbackCmd.add("docker");
+			fallbackCmd.add("-H");
+			fallbackCmd.add(DOCKER_ENGINE_PIPE);
+			fallbackCmd.addAll(dockerArgs);
+
+			result = new ProcessExecutor().command(fallbackCmd)
+					.readOutput(true).redirectErrorStream(true)
+					.timeout(timeoutSeconds, TimeUnit.SECONDS)
+					.execute();
+
+			if (result.getExitValue() == 0 || result.getOutput().getString().contains("Server:")) {
+				// Fallback worked — cache it so future calls skip the failing pipe
+				dockerHostOverride = DOCKER_ENGINE_PIPE;
+				log.info("Docker fallback to docker_engine pipe succeeded, caching for future calls");
+			}
+		}
+
+		return result;
+	}
+
 	/**
 	 * Synchronously refresh Docker presence/version and daemon status.
 	 * Blocking and intended to be used when the caller needs the latest status
@@ -129,22 +186,15 @@ public class SystemService {
 
 		// If binary present, check if daemon is reachable (docker version is
 		// lighter than docker info — it only contacts the daemon for its version
-		// instead of collecting full system metadata)
+		// instead of collecting full system metadata).
+		// Uses executeDockerDaemonCommand() which handles the Windows named-pipe
+		// fallback automatically.
 		try {
 			if (!"DOCKER_NOT_INSTALLED".equals(newDockerVersion)) {
-				ProcessResult pr2 = new ProcessExecutor().command("docker", "version").readOutput(true)
-						.redirectErrorStream(true)
-						.timeout(30, TimeUnit.SECONDS)
-						.execute();
+				ProcessResult pr2 = executeDockerDaemonCommand(Arrays.asList("version"), 30);
 				int exitVal = pr2.getExitValue();
 				String output = pr2.getOutput().getString().trim();
 
-				// On Windows, docker version can return exit code 1 even when the
-				// daemon IS running (credential helper warnings, deprecation notices,
-				// etc.).  The output will still contain "Server:" with version info
-				// when the daemon is reachable.  Use output parsing as the primary
-				// indicator and treat exit code 0 as a sufficient (but not necessary)
-				// condition.
 				boolean outputHasServer = output.contains("Server:");
 				newDockerDaemonRunning = (exitVal == 0) || outputHasServer;
 
@@ -735,12 +785,9 @@ public class SystemService {
 			}
 
 			// Build the Docker command to get all running containers
-			List<String> command = Arrays.asList("docker", "ps", "--format", "json");
-
-			// Execute the command (no working directory needed for global query)
-			ProcessResult result = new ProcessExecutor().command(command).readOutput(true).redirectErrorStream(true)
-					.timeout(5, TimeUnit.SECONDS)
-					.execute();
+			// Uses executeDockerDaemonCommand() for automatic Windows pipe fallback
+			ProcessResult result = executeDockerDaemonCommand(
+					Arrays.asList("ps", "--format", "json"), 5);
 			String output = result.getOutput().getString();
 
 			// Check if the command succeeded (exit code 0)
