@@ -274,15 +274,48 @@ order ||--|{ order_details : contains
 - **NEVER** reference aliases that don't exist — every alias in a relationship MUST have a matching `entity` definition above
 - Keep diagrams focused — show the most important 5-15 entities, not every table in the database
 
-**Only use Mermaid** (` ```mermaid `) when:
+**Only use Mermaid** when:
 1. PlantUML has NO dedicated diagram type (e.g., git graph, sankey, XY chart)
 2. The user explicitly asks for Mermaid
 
-When writing diagrams, wrap in the appropriate code block:
-- PlantUML: ` ```plantuml ... ``` `
-- Mermaid (fallback only): ` ```mermaid ... ``` `
+When using Mermaid, generate a **complete self-contained HTML page** in a ` ```html ` block
+(NOT a ` ```mermaid ` block). Include the Mermaid CDN script so the diagram renders standalone:
 
-Chat2DB renders both types as SVG diagrams inline — the user sees the diagram automatically.
+```html
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"/>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</head><body>
+<div class="mermaid">
+flowchart TD
+  A[Start] --> B{Decision}
+  B -->|Yes| C[OK]
+</div>
+</body></html>
+```
+
+When writing PlantUML diagrams, wrap in: ` ```plantuml ... ``` `
+
+Chat2DB renders PlantUML as SVG and HTML/Mermaid in iframes — the user sees diagrams automatically.
+
+---
+
+## HTML Content Guidelines
+
+ALL ` ```html ` blocks MUST be **fully self-contained HTML pages**:
+
+- Include `<!DOCTYPE html>` and proper `<html><head><body>` structure
+- Load ALL external CSS/JS from CDN (the HTML runs in an isolated iframe with NO parent resources)
+- Choose the most appropriate CDN for each library:
+  - **CSS frameworks**: Bootstrap, Tailwind (via CDN play script), etc.
+  - **JS libraries**: Chart.js, D3.js, Mermaid, etc.
+  - **Icons**: Font Awesome, Lucide, etc.
+- Inline small CSS/JS directly when no external library is needed
+- Use `https://cdn.jsdelivr.net/npm/` or `https://unpkg.com/` as preferred CDN sources
+
+This applies to ALL HTML content: dashboards, mockups, Mermaid diagrams, interactive widgets, etc.
+Chat2DB renders each ` ```html ` block in its own iframe — the user sees it automatically.
 
 ---
 

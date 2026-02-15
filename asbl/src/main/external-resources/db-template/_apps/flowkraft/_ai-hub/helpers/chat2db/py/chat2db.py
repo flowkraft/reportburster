@@ -39,7 +39,6 @@ class QueryResult:
     viz_image: Optional[str] = None  # base64-encoded PNG
     # Diagram and HTML content for inline preview
     plantuml_code: Optional[str] = None
-    mermaid_code: Optional[str] = None
     html_content: Optional[str] = None
     # Ordered content segments preserving Athena's rendering order
     content_segments: Optional[list] = None
@@ -415,7 +414,6 @@ class Chat2DB:
                     text_response=response.narrative,
                     explanation=response.narrative,
                     plantuml_code=response.plantuml_code,
-                    mermaid_code=response.mermaid_code,
                     html_content=response.html_content,
                     content_segments=response.content_segments,
                     raw_content=response.content,
