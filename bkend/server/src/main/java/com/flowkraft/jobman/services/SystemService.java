@@ -137,8 +137,25 @@ public class SystemService {
 						.timeout(30, TimeUnit.SECONDS)
 						.execute();
 				int exitVal = pr2.getExitValue();
-				log.info("docker version exit code: {}", exitVal);
-				newDockerDaemonRunning = exitVal == 0;
+				String output = pr2.getOutput().getString().trim();
+
+				// On Windows, docker version can return exit code 1 even when the
+				// daemon IS running (credential helper warnings, deprecation notices,
+				// etc.).  The output will still contain "Server:" with version info
+				// when the daemon is reachable.  Use output parsing as the primary
+				// indicator and treat exit code 0 as a sufficient (but not necessary)
+				// condition.
+				boolean outputHasServer = output.contains("Server:");
+				newDockerDaemonRunning = (exitVal == 0) || outputHasServer;
+
+				if (exitVal == 0) {
+					log.debug("docker version check passed (exit code: 0)");
+				} else if (outputHasServer) {
+					log.info("docker version exit code {} but output contains Server info — daemon is running", exitVal);
+				} else {
+					log.warn("docker version check failed (exit code: {}, no Server info in output)", exitVal);
+					log.warn("docker version output/error: {}", output);
+				}
 			} else {
 				newDockerDaemonRunning = false;
 			}
@@ -188,6 +205,12 @@ public class SystemService {
 	}
 
 	public SystemInfo getSystemInfo() throws Exception {
+		// Ensure Docker cache is fresh before returning status to the caller.
+		// Without this, the frontend may receive stale/initial values because
+		// getSystemInfo() was previously read-only on the cache while the probe
+		// was only triggered by getAllServicesStatus().
+		refreshDockerIfStale(false, false);
+
 		SystemInfo info = new SystemInfo();
 		info.osName = System.getProperty("os.name");
 		info.osVersion = System.getProperty("os.version");
