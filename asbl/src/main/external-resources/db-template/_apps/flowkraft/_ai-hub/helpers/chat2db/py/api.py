@@ -119,25 +119,22 @@ def ask(req: AskRequest):
     if not chat._connection:
         raise HTTPException(status_code=400, detail="Not connected to a database. Call /api/connect first.")
 
-    try:
-        result = chat.ask(req.question, send_schema=req.send_schema)
-        return {
-            "question": result.question,
-            "sql": result.sql or None,
-            "data": _df_to_records(result.df) if len(result.df) > 0 else [],
-            "row_count": result.row_count,
-            "execution_time_ms": result.execution_time_ms,
-            "explanation": result.explanation,
-            "viz_image": result.viz_image,
-            "text_response": result.text_response,
-            "plantuml_code": result.plantuml_code,
-            "html_content": result.html_content,
-            "content_segments": result.content_segments,
-            "error": result.error,
-            "raw_content": result.raw_content,
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    result = chat.ask(req.question, send_schema=req.send_schema)
+    return {
+        "question": result.question,
+        "sql": result.sql or None,
+        "data": _df_to_records(result.df) if len(result.df) > 0 else [],
+        "row_count": result.row_count,
+        "execution_time_ms": result.execution_time_ms,
+        "explanation": result.explanation,
+        "viz_image": result.viz_image,
+        "text_response": result.text_response,
+        "plantuml_code": result.plantuml_code,
+        "html_content": result.html_content,
+        "content_segments": result.content_segments,
+        "error": result.error,
+        "raw_content": result.raw_content,
+    }
 
 
 @app.post("/api/sql")
@@ -145,11 +142,8 @@ def raw_sql(req: SqlRequest):
     if not chat._connection:
         raise HTTPException(status_code=400, detail="Not connected to a database. Call /api/connect first.")
 
-    try:
-        df = chat.sql(req.query)
-        return {
-            "data": _df_to_records(df),
-            "row_count": len(df),
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    df = chat.sql(req.query)
+    return {
+        "data": _df_to_records(df),
+        "row_count": len(df),
+    }

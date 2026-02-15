@@ -427,7 +427,7 @@ class Chat2DB:
                 text_response=response.narrative,
                 viz_code=response.viz_code,
                 plantuml_code=response.plantuml_code,
-                mermaid_code=response.mermaid_code,
+
                 html_content=response.html_content,
                 content_segments=response.content_segments,
                 raw_content=response.content,
@@ -465,7 +465,7 @@ class Chat2DB:
                 row_count=len(df),
                 viz_code=response.viz_code,
                 plantuml_code=response.plantuml_code,
-                mermaid_code=response.mermaid_code,
+
                 html_content=response.html_content,
                 content_segments=response.content_segments,
                 raw_content=response.content,
