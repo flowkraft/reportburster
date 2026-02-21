@@ -152,6 +152,14 @@
               <i class="fa fa-external-link" style="margin-right: 6px;"></i>{{ app.website }}
             </a>
           </div>
+          <div *ngIf="app.tutorialLink" style="margin-bottom: 10px;">
+            <a [href]="app.tutorialLink.url"
+               target="_blank"
+               rel="noopener noreferrer"
+               style="font-size: 0.95em; color: #2b6cb0; text-decoration: underline; text-underline-offset: 3px; letter-spacing: 0.01em;">
+              {{ app.tutorialLink.label }}
+            </a>
+          </div>
           <p class="text-muted" [innerHTML]="app.description"></p>
           
           <!-- Editable Command Input (only for Docker apps, hidden when showDevButtons=false) -->

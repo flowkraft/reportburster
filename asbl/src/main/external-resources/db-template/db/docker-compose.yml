@@ -147,7 +147,7 @@ services:
   # - Source database with binlog (MySQL) or WAL (PostgreSQL) enabled
   # - Replication user created in source database
   #
-  # See ENABLE_DATA_WAREHOUSE_SYNC.md for detailed setup instructions.
+  # See CONFIGURE_OLTP_2_OLAP_DATA_WAREHOUSE_SYNC.md for detailed setup instructions.
   # ===================================================================
 
   # Altinity ClickHouse Sink Connector (Lightweight Mode)
@@ -175,10 +175,10 @@ services:
   #     # ─────────────────────────────────────────────────────────────
   #     # CLICKHOUSE TARGET CONFIGURATION
   #     # ─────────────────────────────────────────────────────────────
-  #     - CLICKHOUSE_URL=http://fkraft-clickhouse:8123
+  #     - CLICKHOUSE_URL=http://clickhouse:8123
   #     - CLICKHOUSE_USER=default
-  #     - CLICKHOUSE_PASSWORD=mysecret             # MUST MATCH CLICKHOUSE ABOVE!
-  #     - CLICKHOUSE_DATABASE=default
+  #     - CLICKHOUSE_PASSWORD=clickhouse            # MUST MATCH CLICKHOUSE ABOVE!
+  #     - CLICKHOUSE_DATABASE=northwind
   #     
   #     # ─────────────────────────────────────────────────────────────
   #     # REPLICATION SETTINGS
@@ -196,6 +196,36 @@ services:
   #     timeout: 10s
   #     retries: 3
   #     start_period: 60s
+
+  # ===================================================================
+  # DBT TRANSFORM SERVICE (DISABLED BY DEFAULT)
+  # ===================================================================
+  # Transforms raw OLTP data in ClickHouse into OLAP star schema
+  # (fact + dimension tables) using dbt Core + dbt-clickhouse adapter.
+  #
+  # This is a CLI tool (runs and exits), NOT a long-running service.
+  # Usage:
+  #   docker compose run dbt-transform run       # Run all models
+  #   docker compose run dbt-transform test      # Run tests
+  #   docker compose run dbt-transform debug     # Test connection
+  #
+  # PREREQUISITES:
+  # - ClickHouse running with raw OLTP tables loaded
+  #   (via Java initialization OR CDC sink connector replication)
+  #
+  # See CONFIGURE_ETL.md for detailed setup instructions.
+  # ===================================================================
+
+  # dbt-transform:
+  #   build:
+  #     context: ./dbt
+  #     dockerfile: Dockerfile
+  #   container_name: rb-northwind-dbt
+  #   depends_on:
+  #     clickhouse:
+  #       condition: service_healthy
+  #   profiles:
+  #     - transform
 
 volumes:
   postgres_data:

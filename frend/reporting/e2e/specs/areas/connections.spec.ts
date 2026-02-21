@@ -10,6 +10,8 @@ import { ConnectionsTestHelper, DB_VENDORS_DEFAULT, DB_VENDORS_SUPPORTED, isOlap
 
 const DB_VENDORS_SELECTED: string[] = (() => {
   
+  //return ['supabase']; // DEV FOCUS — comment out to restore full rotation
+  
   //return ['duckdb', 'clickhouse']; // DEV FOCUS — comment out to restore full rotation
   //return ['duckdb']; // DEV FOCUS — comment out to restore full rotation
   //return ['clickhouse']; // DEV FOCUS — comment out to restore full rotation

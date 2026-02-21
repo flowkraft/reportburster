@@ -183,7 +183,8 @@ When users configure new reports (Configuration → Report Name → Report Gener
 
 ## Documentation Link
 
-- **Database Connections**: https://www.reportburster.com/docs/report-generation#database-connections
+- **Database Connections**: https://www.reportburster.com/docs/data-exploration/database-connections
+- **Chat2DB AI**: https://www.reportburster.com/docs/data-exploration/chat2db-ai
 
 I fetch this for specific connection setup and schema retrieval details.
 

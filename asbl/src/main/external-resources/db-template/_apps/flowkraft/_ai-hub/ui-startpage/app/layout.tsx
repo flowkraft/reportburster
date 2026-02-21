@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { AINavbar } from "@/components/layout/AINavbar";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -10,6 +11,11 @@ const inter = Inter({
   display: "swap",
   variable: "--font-inter",
   weight: ["400", "500", "600", "700"],
+});
+
+const fontHeading = localFont({
+  src: "../assets/fonts/CalSans-SemiBold.woff2",
+  variable: "--font-heading",
 });
 
 export const metadata: Metadata = {
@@ -23,8 +29,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={inter.variable}>
-      <body className="font-sans antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${fontHeading.variable}`}>
+      <body className="font-sans antialiased min-h-screen flex flex-col bg-background text-foreground">
         <ThemeProvider>
           <AINavbar />
           <main className="flex-1 pt-16 w-full">

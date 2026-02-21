@@ -316,6 +316,47 @@
 		</properties>
 	</persistence-unit>
 
+	<!-- ==================== Supabase (PostgreSQL BaaS) ==================== -->
+	<persistence-unit name="northwind-supabase"
+		transaction-type="RESOURCE_LOCAL">
+		<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+		<class>
+			com.sourcekraft.documentburster.common.db.northwind.entities.Category</class>
+		<class>
+			com.sourcekraft.documentburster.common.db.northwind.entities.Customer</class>
+		<class>
+			com.sourcekraft.documentburster.common.db.northwind.entities.CustomerDemographics</class>
+		<class>
+			com.sourcekraft.documentburster.common.db.northwind.entities.Employee</class>
+		<class>
+			com.sourcekraft.documentburster.common.db.northwind.entities.Order</class>
+		<class>
+			com.sourcekraft.documentburster.common.db.northwind.entities.OrderDetail</class>
+		<class>
+			com.sourcekraft.documentburster.common.db.northwind.entities.Product</class>
+		<class>
+			com.sourcekraft.documentburster.common.db.northwind.entities.Region</class>
+		<class>
+			com.sourcekraft.documentburster.common.db.northwind.entities.Shipper</class>
+		<class>
+			com.sourcekraft.documentburster.common.db.northwind.entities.Supplier</class>
+		<class>
+			com.sourcekraft.documentburster.common.db.northwind.entities.Territory</class>
+		<properties>
+			<property name="jakarta.persistence.jdbc.driver"
+				value="org.postgresql.Driver" />
+			<property name="jakarta.persistence.jdbc.url"
+				value="jdbc:postgresql://localhost:5435/Northwind?currentSchema=public" />
+			<property name="jakarta.persistence.jdbc.user" value="supabase_admin" />
+			<property name="jakarta.persistence.jdbc.password" value="postgres" />
+			<property name="hibernate.dialect"
+				value="org.hibernate.dialect.PostgreSQLDialect" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.format_sql" value="false" />
+		</properties>
+	</persistence-unit>
+
 	<!-- ==================== H2 (Test) ==================== -->
     <persistence-unit name="northwind-h2-test" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>

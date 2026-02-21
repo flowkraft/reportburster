@@ -10,7 +10,7 @@ import { setSetting, getSetting, SETTING_KEYS } from "@/lib/settings"
 export function AINavbar() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
-  const [mode, setMode] = useState<"light" | "dark">("light")
+  const [mode, setMode] = useState<"light" | "dark">("dark")
   const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => {
@@ -66,13 +66,13 @@ export function AINavbar() {
   ]
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 dark:bg-slate-900 dark:border-slate-700">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-foreground/[0.06]">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Brand */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-2 font-bold text-lg text-slate-900 dark:text-white">
-              <svg className="w-5 h-5 text-rb-cyan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <Link href="/" className="flex items-center gap-2 font-bold text-lg text-foreground">
+              <svg className="w-5 h-5 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="5"/>
                 <path d="M12 1v6m0 6v6"/>
                 <path d="m23 12-6-6m-6 6-6-6"/>
@@ -87,13 +87,16 @@ export function AINavbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`relative px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                   isActive(link.href)
-                    ? "text-rb-cyan"
-                    : "text-gray-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {link.label}
+                {isActive(link.href) && (
+                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
+                )}
               </Link>
             ))}
 
@@ -103,7 +106,7 @@ export function AINavbar() {
                 id="navbar-settings-button"
                 type="button"
                 onClick={() => setShowSettings(!showSettings)}
-                className="p-2 text-gray-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors rounded-md"
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md"
                 aria-label="Settings"
               >
                 <Settings className="w-5 h-5" />
@@ -115,34 +118,34 @@ export function AINavbar() {
                   <div className="fixed inset-0 z-30" onClick={() => setShowSettings(false)} />
 
                   {/* Dropdown */}
-                  <div id="settings-dropdown" className="absolute right-0 top-full mt-1 z-40 w-64 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg py-2">
+                  <div id="settings-dropdown" className="absolute right-0 top-full mt-1 z-40 w-64 bg-card border border-border rounded-lg shadow-lg py-2">
                     {/* Theme section */}
                     <div className="px-4 py-2">
-                      <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Appearance</span>
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Appearance</span>
                     </div>
                     <button
                       type="button"
                       onClick={toggleMode}
-                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-3"
+                      className="w-full text-left px-4 py-2.5 text-sm text-card-foreground hover:bg-accent transition-colors flex items-center gap-3"
                     >
-                      {mode === "light" ? <Moon className="w-4 h-4 text-gray-500" /> : <Sun className="w-4 h-4 text-yellow-400" />}
+                      {mode === "light" ? <Moon className="w-4 h-4 text-muted-foreground" /> : <Sun className="w-4 h-4 text-yellow-400" />}
                       {mode === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
                     </button>
 
                     {/* Divider */}
-                    <div className="my-1 border-t border-gray-200 dark:border-slate-700" />
+                    <div className="my-1 border-t border-border" />
 
                     {/* Admin section */}
                     <div className="px-4 py-2">
-                      <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Administration</span>
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Administration</span>
                     </div>
                     <button
                       id="settings-update-agents-button"
                       type="button"
                       onClick={handleUpdateAgents}
-                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-3"
+                      className="w-full text-left px-4 py-2.5 text-sm text-card-foreground hover:bg-accent transition-colors flex items-center gap-3"
                     >
-                      <Rocket className="w-4 h-4 text-gray-500" />
+                      <Rocket className="w-4 h-4 text-muted-foreground" />
                       Update Agents
                     </button>
                   </div>
@@ -156,14 +159,14 @@ export function AINavbar() {
             <button
               type="button"
               onClick={() => setShowSettings(!showSettings)}
-              className="mr-2 p-2 text-gray-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white rounded-md"
+              className="mr-2 p-2 text-muted-foreground hover:text-foreground rounded-md"
               aria-label="Settings"
             >
               <Settings className="w-5 h-5" />
             </button>
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 text-gray-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white"
+              className="p-2 text-muted-foreground hover:text-foreground"
               aria-label="Toggle menu"
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -174,7 +177,7 @@ export function AINavbar() {
 
       {/* Mobile Navigation */}
       {isOpen && (
-        <div className="md:hidden border-t border-gray-200 dark:border-slate-700">
+        <div className="md:hidden border-t border-border">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navLinks.map((link) => (
               <Link
@@ -183,8 +186,8 @@ export function AINavbar() {
                 onClick={() => setIsOpen(false)}
                 className={`block px-3 py-2 rounded-md text-base font-medium ${
                   isActive(link.href)
-                    ? "text-rb-cyan bg-gray-50 dark:bg-slate-800"
-                    : "text-gray-600 hover:text-slate-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-white dark:hover:bg-slate-800"
+                    ? "text-primary bg-accent"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 }`}
               >
                 {link.label}

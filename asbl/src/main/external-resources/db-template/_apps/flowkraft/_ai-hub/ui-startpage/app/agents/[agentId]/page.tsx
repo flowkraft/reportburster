@@ -179,7 +179,7 @@ export default function AgentDetailsPage({ params }: { params: Promise<{ agentId
   if (loading) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-rb-cyan" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -189,7 +189,7 @@ export default function AgentDetailsPage({ params }: { params: Promise<{ agentId
     return (
       <div className="w-full py-8 px-4">
         <div className="max-w-7xl mx-auto">
-          <Link href="/agents" className="text-rb-cyan hover:underline mb-4 inline-block">
+          <Link href="/agents" className="text-primary hover:underline mb-4 inline-block">
             &larr; Back to Agents
           </Link>
           <p className="text-muted-foreground">{error}</p>
@@ -204,7 +204,7 @@ export default function AgentDetailsPage({ params }: { params: Promise<{ agentId
       <div className="border-b border-border px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/agents" className="text-rb-cyan hover:underline">
+            <Link href="/agents" className="text-primary hover:underline">
               &larr; Back
             </Link>
             <h1 className="text-xl font-bold">{agentName}&apos;s Workspace</h1>
@@ -299,7 +299,7 @@ export default function AgentDetailsPage({ params }: { params: Promise<{ agentId
                     key={file.path}
                     onClick={() => setSelectedFile(file)}
                     className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-muted transition-colors ${
-                      selectedFile?.path === file.path ? 'bg-rb-cyan/10 text-rb-cyan' : 'text-foreground'
+                      selectedFile?.path === file.path ? 'bg-primary/10 text-primary' : 'text-foreground'
                     }`}
                   >
                     <FileText className="w-4 h-4 flex-shrink-0" />
@@ -315,9 +315,9 @@ export default function AgentDetailsPage({ params }: { params: Promise<{ agentId
                       className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-muted transition-colors text-foreground"
                     >
                       {expandedFolders.has(folder) ? (
-                        <FolderOpen className="w-4 h-4 flex-shrink-0 text-rb-cyan" />
+                        <FolderOpen className="w-4 h-4 flex-shrink-0 text-primary" />
                       ) : (
-                        <Folder className="w-4 h-4 flex-shrink-0 text-rb-cyan" />
+                        <Folder className="w-4 h-4 flex-shrink-0 text-primary" />
                       )}
                       <span className="truncate font-medium">{folder}</span>
                       <ChevronRight
@@ -336,7 +336,7 @@ export default function AgentDetailsPage({ params }: { params: Promise<{ agentId
                               key={file.path}
                               onClick={() => setSelectedFile(file)}
                               className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-muted transition-colors ${
-                                selectedFile?.path === file.path ? 'bg-rb-cyan/10 text-rb-cyan' : 'text-foreground'
+                                selectedFile?.path === file.path ? 'bg-primary/10 text-primary' : 'text-foreground'
                               }`}
                             >
                               <File className="w-4 h-4 flex-shrink-0" />
@@ -356,7 +356,7 @@ export default function AgentDetailsPage({ params }: { params: Promise<{ agentId
         {/* Left resize handle */}
         {!isLeftPanelCollapsed && (
           <div
-            className="hidden md:block w-1 bg-border hover:bg-rb-cyan cursor-col-resize transition-colors"
+            className="hidden md:block w-1 bg-border hover:bg-primary cursor-col-resize transition-colors"
             onMouseDown={() => setIsDraggingLeft(true)}
           />
         )}
@@ -400,7 +400,7 @@ export default function AgentDetailsPage({ params }: { params: Promise<{ agentId
         {showPreview && selectedFile && (
           <>
             <div
-              className="hidden md:block w-1 bg-border hover:bg-rb-cyan cursor-col-resize transition-colors"
+              className="hidden md:block w-1 bg-border hover:bg-primary cursor-col-resize transition-colors"
               onMouseDown={() => setIsDraggingRight(true)}
             />
             <div

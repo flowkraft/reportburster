@@ -2,6 +2,11 @@
   
   <!--<dburst-docker></dburst-docker>-->
 
+  <!-- Intro paragraph -->
+  <p class="text-muted" style="margin-bottom: 15px; font-size: 0.95em;">
+    Each starter pack below launches a <strong>Northwind</strong> sample database — a realistic dataset with customers, orders, products, and employees — preloaded into a different database engine. Use them to quickly learn how ReportBurster connects to, queries, and generates reports from each supported database vendor.
+  </p>
+
   <!-- Header Row: Title, Search, Tags, Refresh -->
   <div
     class="row"
@@ -157,17 +162,15 @@
           </h3>
         </div>
         <div class="panel-body">
-          <p>{{ pack.description }}</p>
-
           <!-- Display Tags -->
           <div
             *ngIf="pack.tags && pack.tags.length > 0"
-            style="margin-bottom: 10px"
+            style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px"
           >
             <span
               *ngFor="let tag of pack.tags"
               class="label label-default"
-              style="margin-right: 3px"
+              style="display: inline-block"
               >{{ tag }}</span
             >
           </div>
@@ -218,6 +221,19 @@
               ></i>
               {{ pack.status === 'running' ? 'Stop' : pack.status === 'starting' ? 'Starting' : pack.status === 'stopping' ? 'Stopping' : 'Start' }}
             </button>
+          </div>
+
+          <br/>
+          
+          <!-- Supabase website link + extended description (only for Supabase packs) -->
+          <div *ngIf="pack.target === 'supabase'" style="margin-bottom: 8px">
+            <a href="https://supabase.com/" target="_blank" rel="noopener noreferrer"
+               style="text-decoration: none; color: #31708f; font-weight: 500;">
+              <i class="fa fa-external-link" style="margin-right: 6px;"></i>https://supabase.com/
+            </a>
+            <small class="text-muted" style="display: block; margin-top: 6px;">
+              {{ pack.description }}
+            </small>
           </div>
 
           <!-- Last Output Display (Separate from Command) -->

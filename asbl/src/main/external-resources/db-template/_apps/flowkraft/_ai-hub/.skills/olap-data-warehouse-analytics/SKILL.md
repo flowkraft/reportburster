@@ -188,6 +188,8 @@ GROUP BY o.customer_id, c.name
 
 **Performance:** This is the ceiling — columnar storage + star schema + distributed cluster = maximum analytics performance.
 
+**Reference:** `db/CONFIGURE_ETL.md` (dbt setup guide) and `db/dbt/` (sample dbt project with example staging → star schema models)
+
 ---
 
 ### Scaling Decision Tree
@@ -255,11 +257,18 @@ I provide configurations and code snippets to copy — I don't write files direc
 
 ## Documentation Links
 
-- **Embed Web Components**: https://www.reportburster.com/docs/bi-analytics/embed-web-components
-- **Pivot Tables**: https://www.reportburster.com/docs/bi-analytics/embed-web-components/pivottables
-- **Charts**: https://www.reportburster.com/docs/bi-analytics/embed-web-components/charts
-- **Data Tables**: https://www.reportburster.com/docs/bi-analytics/embed-web-components/datatables
+- **Data Warehouse & OLAP**: https://www.reportburster.com/docs/bi-analytics/data-warehouse-olap
+- **Dashboards**: https://www.reportburster.com/docs/bi-analytics/dashboards
+- **Web Components**: https://www.reportburster.com/docs/bi-analytics/web-components
+- **Data Tables**: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
+- **Charts**: https://www.reportburster.com/docs/bi-analytics/web-components/charts
+- **Pivot Tables**: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
+- **Report Parameters**: https://www.reportburster.com/docs/bi-analytics/web-components/parameters
+- **Reports**: https://www.reportburster.com/docs/bi-analytics/web-components/reports
 - **OLTP→ClickHouse Sync**: `db/CONFIGURE_OLTP_2_OLAP_DATA_WAREHOUSE_SYNC.md`
+- **dbt ETL Guide**: `db/CONFIGURE_ETL.md`
+- **Data Warehouse Services**: `db/docker-compose.yml` (ClickHouse, CDC sink connector, dbt-transform service definitions)
+- **dbt Sample Project**: `db/dbt/` (example staging models, dimension/fact marts, analytical views)
 
 ---
 

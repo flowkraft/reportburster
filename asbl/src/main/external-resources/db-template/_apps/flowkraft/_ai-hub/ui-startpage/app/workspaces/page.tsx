@@ -29,6 +29,10 @@ export default function WorkspacesPage() {
 
   const [files, setFiles] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [agentDirMap, setAgentDirMap] = useState<Record<string, string>>({});
+  const [draggedFile, setDraggedFile] = useState<FileNode | null>(null);
+  const [dropTargetFolder, setDropTargetFolder] = useState<string | null>(null);
 
   const showPreview = selectedFile
     ? PREVIEWABLE_EXTENSIONS.has(selectedFile.path.toLowerCase().split('.').pop() || '')
@@ -83,6 +87,7 @@ export default function WorkspacesPage() {
           const data = await res.json();
           const wsFiles: FileNode[] = data.files || [];
           setFiles(wsFiles);
+          if (data.agentDirMap) setAgentDirMap(data.agentDirMap);
 
           // Auto-expand all top-level folders
           const folders = new Set<string>();
@@ -159,6 +164,26 @@ export default function WorkspacesPage() {
     setExpandedFolders(newExpanded);
   };
 
+  // Select a folder (shows folder path on the right, clears file preview)
+  const selectFolder = (folder: string) => {
+    const newExpanded = new Set(expandedFolders);
+    if (!newExpanded.has(folder)) {
+      // Also expand when selecting
+      const isAgentFolder = folder.startsWith('Agents/') && folder.split('/').length === 2;
+      if (isAgentFolder) {
+        for (const p of newExpanded) {
+          if (p.startsWith('Agents/') && p.split('/').length === 2 && p !== folder) {
+            newExpanded.delete(p);
+          }
+        }
+      }
+      newExpanded.add(folder);
+      setExpandedFolders(newExpanded);
+    }
+    setSelectedFile(null);
+    setSelectedFolder(folder);
+  };
+
   const getLanguage = (type: string): string => {
     const map: { [key: string]: string } = {
       markdown: 'markdown',
@@ -188,33 +213,99 @@ export default function WorkspacesPage() {
     }
   };
 
+  // Convert display path to filesystem-relative path (relative to agents-output-artifacts/)
+  const displayPathToFsRel = (displayPath: string): string | null => {
+    if (!displayPath.startsWith('Agents/')) return null;
+    const rest = displayPath.slice('Agents/'.length);
+    for (const [displayName, dirName] of Object.entries(agentDirMap)) {
+      if (rest.startsWith(displayName + '/')) {
+        return dirName + '/' + rest.slice(displayName.length + 1);
+      }
+      if (rest === displayName) {
+        return dirName;
+      }
+    }
+    return null;
+  };
+
+  // Handle file drop onto a folder
+  const handleFileDrop = async (file: FileNode, destFolder: string) => {
+    const fileFolderPath = file.path.substring(0, file.path.lastIndexOf('/'));
+    if (fileFolderPath === destFolder) return;
+
+    const sourceFsRel = displayPathToFsRel(file.path);
+    const destFsRel = displayPathToFsRel(destFolder);
+    if (!sourceFsRel || !destFsRel) {
+      toast.error('Cannot resolve path for move operation');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/workspace', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceFsRelPath: sourceFsRel, destFsRelFolder: destFsRel }),
+      });
+      if (res.ok) {
+        toast.success(`Moved ${file.path.split('/').pop()} to ${destFolder.split('/').pop()}`);
+        const refreshRes = await fetch('/api/workspace');
+        if (refreshRes.ok) {
+          const data = await refreshRes.json();
+          setFiles(data.files || []);
+          if (data.agentDirMap) setAgentDirMap(data.agentDirMap);
+          setSelectedFile(null);
+          setSelectedFolder(destFolder);
+        }
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Failed to move file');
+      }
+    } catch {
+      toast.error('Failed to move file');
+    }
+    setDraggedFile(null);
+  };
+
   // Render a tree node recursively
   const renderTreeNode = (node: TreeNode, depth: number = 0) => {
-    // Pure file leaf
-    if (node.file && node.children.size === 0) {
+    const isFile = node.file && node.children.size === 0;
+    const isExpanded = expandedFolders.has(node.fullPath);
+    const isSelected = isFile && selectedFile?.path === node.file?.path;
+    const isDropping = !isFile && dropTargetFolder === node.fullPath;
+    const isDragging = isFile && draggedFile?.path === node.file?.path;
+
+    // Indent guides for tree depth
+    const guides = Array.from({ length: depth }, (_, i) => (
+      <span key={i} className="file-tree-guide" />
+    ));
+
+    // File leaf
+    if (isFile) {
       return (
-        <button
+        <div
           key={node.fullPath}
-          onClick={() => setSelectedFile(node.file!)}
-          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-muted transition-colors ${
-            selectedFile?.path === node.file.path ? 'bg-rb-cyan/10 text-rb-cyan' : 'text-foreground'
-          }`}
-          style={{ paddingLeft: `${depth * 16 + 8}px` }}
+          className={`file-tree-row${isSelected ? ' selected' : ''}${isDragging ? ' dragging' : ''}`}
+          onClick={() => { setSelectedFile(node.file!); setSelectedFolder(null); }}
+          draggable
+          onDragStart={(e) => {
+            setDraggedFile(node.file!);
+            e.dataTransfer.effectAllowed = 'move';
+          }}
+          onDragEnd={() => { setDraggedFile(null); setDropTargetFolder(null); }}
+          title={node.name}
         >
-          <FileText className="w-4 h-4 flex-shrink-0" />
-          <span className="truncate">{node.name}</span>
-        </button>
+          {guides}
+          <span className="file-tree-no-chevron" />
+          <FileText className="file-tree-icon file" />
+          <span className="file-tree-name">{node.name}</span>
+        </div>
       );
     }
 
-    // Folder (or file that also has children — treat as folder)
-    const isExpanded = expandedFolders.has(node.fullPath);
-
-    // For "Agents" folder, preserve API order (don't sort alphabetically)
-    // For other folders, sort with folders first, then alphabetically
+    // Folder
     const isAgentsFolder = node.fullPath === 'Agents';
     const sortedChildren = isAgentsFolder
-      ? Array.from(node.children.values()) // Preserve insertion order from API
+      ? Array.from(node.children.values())
       : Array.from(node.children.values()).sort((a, b) => {
           const aIsFolder = a.children.size > 0 && !a.file;
           const bIsFolder = b.children.size > 0 && !b.file;
@@ -223,26 +314,49 @@ export default function WorkspacesPage() {
           return a.name.localeCompare(b.name);
         });
 
-    // Athena is "first among equals" - bold her folder name
     const isAthena = node.name.toLowerCase().startsWith('athena');
 
     return (
       <div key={node.fullPath}>
-        <button
-          onClick={() => toggleFolder(node.fullPath)}
-          className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-muted transition-colors text-foreground"
-          style={{ paddingLeft: `${depth * 16 + 8}px` }}
+        <div
+          className={`file-tree-row${isDropping ? ' drop-target' : ''}`}
+          onClick={() => selectFolder(node.fullPath)}
+          onDragOver={(e) => {
+            if (draggedFile) {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+              setDropTargetFolder(node.fullPath);
+            }
+          }}
+          onDragLeave={(e) => {
+            const related = e.relatedTarget as Node | null;
+            if (!related || !e.currentTarget.contains(related)) {
+              setDropTargetFolder(null);
+            }
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDropTargetFolder(null);
+            if (draggedFile) handleFileDrop(draggedFile, node.fullPath);
+          }}
+          title={node.name}
         >
+          {guides}
+          <span
+            className={`file-tree-chevron${isExpanded ? ' expanded' : ''}`}
+            onClick={(e) => { e.stopPropagation(); toggleFolder(node.fullPath); }}
+          >
+            <ChevronRight />
+          </span>
           {isExpanded ? (
-            <FolderOpen className="w-4 h-4 flex-shrink-0 text-rb-cyan" />
+            <FolderOpen className="file-tree-icon folder" />
           ) : (
-            <Folder className="w-4 h-4 flex-shrink-0 text-rb-cyan" />
+            <Folder className="file-tree-icon folder" />
           )}
-          <span className={`whitespace-normal break-words text-left ${isAthena ? 'font-semibold' : 'font-normal'}`}>{node.name}</span>
-          <ChevronRight
-            className={`w-4 h-4 ml-auto transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-          />
-        </button>
+          <span className={`file-tree-name${isAthena ? ' font-semibold' : ''}`}>
+            {node.name}
+          </span>
+        </div>
         {isExpanded && sortedChildren.map((child) => renderTreeNode(child, depth + 1))}
       </div>
     );
@@ -251,7 +365,7 @@ export default function WorkspacesPage() {
   if (loading) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-rb-cyan" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -262,7 +376,7 @@ export default function WorkspacesPage() {
       <div className="border-b border-border px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link id="btn-back-to-agents" href="/agents" className="text-rb-cyan hover:underline">
+            <Link id="btn-back-to-agents" href="/agents" className="text-primary hover:underline">
               &larr; Back
             </Link>
             <h1 id="workspaces-page-heading" className="text-xl font-bold">Oracle Output Artifacts</h1>
@@ -335,11 +449,11 @@ export default function WorkspacesPage() {
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="p-4">
-                <h3 className="font-semibold mb-3 text-sm text-muted-foreground">OUTPUT ARTIFACTS</h3>
+              <div className="file-tree">
+                <div className="file-tree-header">OUTPUT ARTIFACTS</div>
 
                 {files.length === 0 && (
-                  <p className="text-xs text-muted-foreground mt-4">
+                  <p className="text-xs text-muted-foreground px-3 mt-2">
                     No output artifacts found. Files will appear here as the oracles work on projects.
                   </p>
                 )}
@@ -356,7 +470,7 @@ export default function WorkspacesPage() {
         {/* Left resize handle */}
         {!isLeftPanelCollapsed && (
           <div
-            className="hidden md:block w-1 bg-border hover:bg-rb-cyan cursor-col-resize transition-colors"
+            className="hidden md:block w-1 bg-border hover:bg-primary cursor-col-resize transition-colors"
             onMouseDown={() => setIsDraggingLeft(true)}
           />
         )}
@@ -419,8 +533,13 @@ export default function WorkspacesPage() {
               </div>
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center text-muted-foreground">
-              Select a file to view its contents
+            <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-3 px-8">
+              {selectedFolder && (
+                <div className="font-mono text-xs bg-muted px-3 py-1.5 rounded text-foreground/60 max-w-full truncate">
+                  {selectedFolder}
+                </div>
+              )}
+              <p className="text-sm">No file selected yet, please select a file to preview</p>
             </div>
           )}
         </div>
@@ -430,7 +549,7 @@ export default function WorkspacesPage() {
           <>
             {!isCodeEditorCollapsed && (
               <div
-                className="hidden md:block w-1 bg-border hover:bg-rb-cyan cursor-col-resize transition-colors"
+                className="hidden md:block w-1 bg-border hover:bg-primary cursor-col-resize transition-colors"
                 onMouseDown={() => setIsDraggingRight(true)}
               />
             )}

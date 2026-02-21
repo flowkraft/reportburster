@@ -497,6 +497,7 @@ public class DatabaseSchemaFetcher {
                         : null;
             case "postgresql":
             case "postgres":
+            case "supabase":
                 // Default to public to avoid pg_catalog/pg_toast noise
                 return "public";
             case "sqlserver":
@@ -568,6 +569,7 @@ public class DatabaseSchemaFetcher {
                 return "information_schema".equals(lowerCaseSchema)
                         || "system".equals(lowerCaseSchema);
             case "postgresql":
+            case "supabase":
                 return lowerCaseName.startsWith("pg_"); // Covers pg_toast, pg_temp_, etc.
             case "oracle":
                 // SYS/SYSTEM handled above. Check common dictionary view prefixes.

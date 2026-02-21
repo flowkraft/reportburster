@@ -72,6 +72,8 @@ class DatabaseConnection:
                    lambda s: f"jdbc:db2://{s.host}:{s.port}/{s.database}"),
             'clickhouse': ('com.clickhouse.jdbc.ClickHouseDriver',
                           lambda s: f"jdbc:clickhouse://{s.host}:{s.port}/{s.database}"),
+            'supabase': ('org.postgresql.Driver',
+                        lambda s: f"jdbc:postgresql://{s.host}:{s.port}/{s.database}?currentSchema=public"),
         }
         
         if t in driver_map:
@@ -81,59 +83,40 @@ class DatabaseConnection:
             if not self.url:
                 self.url = url_builder(self)
 
-    def get_jdbc_jar_path(self, jdbc_drivers_path: str) -> Optional[str]:
-        """
-        Find the appropriate JDBC driver JAR file for this database type.
-        Searches the ReportBurster lib folder for matching JAR files.
-        """
-        if not self.db_type:
-            return None
-        
-        t = self.db_type.lower()
-        
-        # Map database types to JAR file patterns
-        jar_patterns = {
-            'sqlite': 'sqlite-jdbc*.jar',
-            'duckdb': 'duckdb_jdbc*.jar',
-            'mysql': 'mysql-connector*.jar',
-            'mariadb': 'mariadb-java-client*.jar',
-            'postgresql': 'postgresql*.jar',
-            'postgres': 'postgresql*.jar',
-            'sqlserver': 'mssql-jdbc*.jar',
-            'oracle': 'ojdbc*.jar',
-            'ibmdb2': 'jcc*.jar',
-            'db2': 'jcc*.jar',
-            'clickhouse': 'clickhouse-jdbc*.jar',
-        }
-        
-        pattern = jar_patterns.get(t)
-        if not pattern:
-            return None
-        
-        # Search for matching JARs
-        search_path = os.path.join(jdbc_drivers_path, '**', pattern)
-        jars = glob.glob(search_path, recursive=True)
-        
-        if jars:
-            # Return the first match (usually there's only one version)
-            return jars[0]
-        return None
+# Known JDBC driver JAR filename prefixes (version-agnostic).
+# Only these JARs need to be on the JVM classpath for database connectivity.
+# This avoids loading hundreds of unrelated JARs (~270) which slows the
+# first connection by up to a minute.
+_JDBC_JAR_PREFIXES = (
+    'sqlite-jdbc',
+    'duckdb_jdbc',
+    'mysql-connector',
+    'mariadb-java-client',
+    'postgresql',
+    'mssql-jdbc',
+    'ojdbc',
+    'jcc-',
+    'clickhouse-jdbc',
+    'clickhouse-client',
+    'clickhouse-data',
+    'clickhouse-http-client',
+)
 
 
 class ReportBursterConnections:
     """
     Manages ReportBurster database connections.
-    
+
     Reads connection configurations from ReportBurster's config/connections folder
     and provides JDBC connectivity.
     """
-    
-    def __init__(self, 
+
+    def __init__(self,
                  connections_path: Optional[str] = None,
                  jdbc_drivers_path: Optional[str] = None):
         """
         Initialize the connection manager.
-        
+
         Args:
             connections_path: Path to ReportBurster's config/connections folder.
                             Defaults to REPORTBURSTER_CONNECTIONS_PATH env var.
@@ -148,6 +131,7 @@ class ReportBursterConnections:
         )
         self._connections: Dict[str, DatabaseConnection] = {}
         self._active_connection: Optional[jaydebeapi.Connection] = None
+        self._all_jars: Optional[List[str]] = None
         
     def list_connections(self) -> List[DatabaseConnection]:
         """
@@ -302,13 +286,46 @@ class ReportBursterConnections:
         
         return self.connect_with_config(conn_config)
     
+    def _get_all_jdbc_jars(self) -> List[str]:
+        """
+        Collect JDBC driver JARs from the lib directory.
+
+        JPype starts a single JVM per Python process. JARs passed to
+        jaydebeapi.connect() after the JVM is already running are NOT
+        added to the classpath (known JPype issue #914). To support
+        switching between database types (e.g. SQLite -> DuckDB), we
+        must pass ALL driver JARs on the very first connect() call so
+        every driver class is available for the lifetime of the JVM.
+
+        Only JARs matching known JDBC driver filename prefixes are
+        loaded. This reduces ~270 JARs to ~12, cutting initial
+        connection time from ~60s to a few seconds.
+        """
+        if self._all_jars is not None:
+            return self._all_jars
+
+        search_path = os.path.join(self.jdbc_drivers_path, '**', '*.jar')
+        all_jars = glob.glob(search_path, recursive=True)
+
+        self._all_jars = [
+            jar for jar in all_jars
+            if os.path.basename(jar).lower().startswith(_JDBC_JAR_PREFIXES)
+        ]
+
+        if self._all_jars:
+            print(f"📦 Found {len(self._all_jars)} JDBC driver JAR(s) in {self.jdbc_drivers_path} (filtered from {len(all_jars)} total)")
+        else:
+            print(f"⚠️ No JDBC JARs found in {self.jdbc_drivers_path}")
+
+        return self._all_jars
+
     def connect_with_config(self, conn_config: DatabaseConnection) -> jaydebeapi.Connection:
         """
         Create a JDBC connection using a DatabaseConnection config.
-        
+
         Args:
             conn_config: DatabaseConnection object with connection details.
-        
+
         Returns:
             A JayDeBeApi Connection object.
         """
@@ -316,29 +333,42 @@ class ReportBursterConnections:
             raise ValueError(f"No JDBC driver specified for {conn_config.code}")
         if not conn_config.url:
             raise ValueError(f"No JDBC URL specified for {conn_config.code}")
-        
-        # Find the JDBC driver JAR
-        jar_path = conn_config.get_jdbc_jar_path(self.jdbc_drivers_path)
-        
-        # Prepare credentials
-        creds = []
-        if conn_config.userid:
-            creds.append(conn_config.userid)
-        if conn_config.userpassword:
-            creds.append(conn_config.userpassword)
-        
+
+        # Collect ALL JDBC JARs so every driver is available regardless
+        # of which database type is connected first (JPype issue #914).
+        all_jars = self._get_all_jdbc_jars()
+
+        # Build connection properties.
+        # DuckDB needs duckdb.read_only=true because the Docker volume is
+        # mounted :ro — without it DuckDB fails trying to create WAL/lock files.
+        # jaydebeapi.connect() accepts either a list [user, pass] or a dict.
+        db_type = (conn_config.db_type or '').lower()
+        if db_type == 'duckdb':
+            connect_args = {'duckdb.read_only': 'true'}
+            if conn_config.userid:
+                connect_args['user'] = conn_config.userid
+            if conn_config.userpassword:
+                connect_args['password'] = conn_config.userpassword
+        else:
+            creds = []
+            if conn_config.userid:
+                creds.append(conn_config.userid)
+            if conn_config.userpassword:
+                creds.append(conn_config.userpassword)
+            connect_args = creds if creds else None
+
         print(f"🔌 Connecting to {conn_config.name} ({conn_config.db_type})")
         print(f"   Driver: {conn_config.driver}")
         print(f"   URL: {conn_config.url}")
-        if jar_path:
-            print(f"   JAR: {jar_path}")
-        
-        # Create connection
+        print(f"   JARs on classpath: {len(all_jars)}")
+
+        # Create connection — pass all JARs so the JVM classpath includes
+        # every driver from the first startup onward.
         connection = jaydebeapi.connect(
             conn_config.driver,
             conn_config.url,
-            creds if creds else None,
-            jar_path
+            connect_args,
+            all_jars if all_jars else None
         )
         
         self._active_connection = connection

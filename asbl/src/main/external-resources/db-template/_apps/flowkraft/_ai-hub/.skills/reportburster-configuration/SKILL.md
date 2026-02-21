@@ -30,7 +30,7 @@ When creating a Report, users select **Capabilities**:
 
 Each new Report (e.g., "Invoices") creates a folder like `/reportburster/config/reports/invoices/` containing at least `settings.xml`. Once created, the Report becomes available under **Configuration → <ReportName>** (e.g., Configuration → Invoices) for further configuration.
 
-When I need specifics, I fetch: https://www.reportburster.com/docs/configuration-templates
+When I need specifics, I fetch: https://www.reportburster.com/docs/configuration
 
 ## Report Settings (What I Help Configure)
 
@@ -59,7 +59,7 @@ For any Report (including "My Reports"), I help configure these settings under *
 - Secondary split options (2nd split delimiters)
 - Enable Incubating Features
 
-When I need specifics, I fetch: https://www.reportburster.com/docs/configuration-settings
+When I need specifics, I fetch: https://www.reportburster.com/docs/configuration
 
 ## How I Work
 

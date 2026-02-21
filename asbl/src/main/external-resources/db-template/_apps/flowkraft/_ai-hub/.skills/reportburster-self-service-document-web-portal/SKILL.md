@@ -122,11 +122,14 @@ When I provide scripts or PHP templates, I:
 
 ## Documentation Links
 
-- **Overview**: https://www.reportburster.com/docs/web-portal-cms
-- **Quick Start**: https://www.reportburster.com/docs/web-portal-cms/quickstart
-- **AI-Driven Setup**: https://www.reportburster.com/docs/web-portal-cms/ai-driven-portal-setup-customizations
-- **User Access & Analytics**: https://www.reportburster.com/docs/web-portal-cms/user-access-analytics
-- **Notifications**: https://www.reportburster.com/docs/web-portal-cms/notifications
+- **Overview**: https://www.reportburster.com/docs/document-portal
+- **Quick Start**: https://www.reportburster.com/docs/document-portal/quickstart
+- **Payslips Portal (HR)**: https://www.reportburster.com/docs/document-portal/payslips
+- **Invoices Portal (Billing)**: https://www.reportburster.com/docs/document-portal/invoices
+- **Document Distribution & Payments**: https://www.reportburster.com/docs/document-portal/payments
+- **User Management & Analytics**: https://www.reportburster.com/docs/document-portal/user-management
+- **Notifications**: https://www.reportburster.com/docs/document-portal/notifications
+- **Development Stacks**: https://www.reportburster.com/docs/document-portal/development-stacks
 
 When users ask about portal setup or customization, I fetch these docs for specifics.
 

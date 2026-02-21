@@ -167,7 +167,7 @@ Michelle
 
 ## Documentation Link
 
-- **Variables & Templating**: https://www.reportburster.com/docs/variables-interpolation-templating
+- **Variables & Templating**: https://www.reportburster.com/docs/variables
 
 When I need specifics on FreeMarker date formats or advanced templating patterns, I fetch this documentation.
 
