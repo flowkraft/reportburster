@@ -9,9 +9,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
 
 export default function NewPayslipPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     payslipNumber: "",
@@ -56,14 +58,15 @@ export default function NewPayslipPage() {
       })
 
       if (res.ok) {
+        toast({ title: "Payslip created", duration: 3000 })
         router.push("/admin/payslips")
       } else {
         const error = await res.json()
-        alert(error.error || "Failed to create payslip")
+        toast({ title: error.error || "Failed to create payslip", variant: "destructive", duration: 3000 })
       }
     } catch (error) {
       console.error("Error creating payslip:", error)
-      alert("Failed to create payslip")
+      toast({ title: "Failed to create payslip", variant: "destructive", duration: 3000 })
     } finally {
       setLoading(false)
     }
@@ -268,7 +271,7 @@ export default function NewPayslipPage() {
                   Cancel
                 </Button>
               </Link>
-              <Button type="submit" disabled={loading}>
+              <Button id="btn-submit" type="submit" disabled={loading}>
                 {loading ? "Creating..." : "Create Payslip"}
               </Button>
             </div>

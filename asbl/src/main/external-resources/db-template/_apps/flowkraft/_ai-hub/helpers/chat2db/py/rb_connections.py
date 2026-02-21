@@ -235,12 +235,21 @@ class ReportBursterConnections:
                         if os.path.exists(candidate):
                             db_value = candidate
 
+            # For network-based DBs, the XML typically has "localhost" as the host.
+            # Inside Docker, localhost refers to the container itself, not the host
+            # machine. Remap to host.docker.internal so the container can reach
+            # databases running on the host OS (Docker Desktop provides this DNS).
+            host_value = get_text(databaseserver, 'host') or None
+            if host_value and host_value.lower() in ('localhost', '127.0.0.1'):
+                if os.path.exists('/.dockerenv'):
+                    host_value = 'host.docker.internal'
+
             return DatabaseConnection(
                 code=get_text(connection, 'code'),
                 name=get_text(connection, 'name'),
                 default_connection=get_bool(connection, 'default'),
                 db_type=db_type_value,
-                host=get_text(databaseserver, 'host') or None,
+                host=host_value,
                 port=get_text(databaseserver, 'port') or None,
                 database=db_value,
                 userid=get_text(databaseserver, 'userid') or None,

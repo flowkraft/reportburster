@@ -54,16 +54,16 @@ export class StarterPacksService {
       tags: ['database', 'northwind', 'sqlserver'],
     },
     {
-      id: 'db-northwind-ibmdb2',
+      id: 'db-northwind-db2',
       family: 'database',
       packName: 'northwind',
-      target: 'ibmdb2', // Corresponds to DB2 enum in Java
+      target: 'db2', // Matches Java enum DB2 and docker-compose service name
       displayName: 'Northwind DB (IBM Db2)',
       description: 'Sample IBM Db2 database.',
-      icon: 'ibmdb2', // Use simple key matching iconMap
+      icon: 'db2', // Use simple key matching iconMap
       startCmd: 'service database start northwind db2 50000', // Start command with port
       stopCmd: 'service database stop northwind db2', // Stop command
-      tags: ['database', 'northwind', 'ibm-db2'],
+      tags: ['database', 'northwind', 'ibmdb2'],
     },
     {
       id: 'db-northwind-postgres', // Unique ID for this specific instance

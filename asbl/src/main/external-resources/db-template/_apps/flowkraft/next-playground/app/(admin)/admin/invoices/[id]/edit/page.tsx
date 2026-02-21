@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
 
 interface Invoice {
   id: number
@@ -33,6 +34,7 @@ interface Invoice {
 export default function EditInvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
@@ -124,14 +126,15 @@ export default function EditInvoicePage({ params }: { params: Promise<{ id: stri
       })
 
       if (res.ok) {
+        toast({ title: "Invoice updated", duration: 3000 })
         router.push(`/admin/invoices/${id}`)
       } else {
         const error = await res.json()
-        alert(error.error || "Failed to update invoice")
+        toast({ title: error.error || "Failed to update invoice", variant: "destructive", duration: 3000 })
       }
     } catch (error) {
       console.error("Error updating invoice:", error)
-      alert("Failed to update invoice")
+      toast({ title: "Failed to update invoice", variant: "destructive", duration: 3000 })
     } finally {
       setSaving(false)
     }
@@ -378,7 +381,7 @@ export default function EditInvoicePage({ params }: { params: Promise<{ id: stri
                   Cancel
                 </Button>
               </Link>
-              <Button type="submit" disabled={saving}>
+              <Button id="btn-submit" type="submit" disabled={saving}>
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
             </div>

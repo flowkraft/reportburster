@@ -48,7 +48,7 @@
                         <span class="text-muted small text-uppercase fw-medium">Revenue</span>
                         <i class="bi bi-currency-dollar text-muted"></i>
                     </div>
-                    <div class="h3 fw-semibold mb-0" id="stat-value-revenue">$${String.format('%,.0f', (stats?.totalRevenue ?: 0) as Double)}</div>
+                    <div class="h3 fw-semibold mb-0" id="stat-value-revenue">$${String.format('%,.2f', (stats?.totalRevenue ?: 0) as Double)}</div>
                 </div>
             </div>
         </div>

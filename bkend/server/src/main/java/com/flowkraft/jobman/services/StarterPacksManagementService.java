@@ -71,7 +71,7 @@ public class StarterPacksManagementService {
             new PackDefinition("db-northwind-sqlserver", "database", "northwind", "sqlserver", "database start northwind sqlserver 1433", "database stop northwind sqlserver"),
             new PackDefinition("db-northwind-mariadb", "database", "northwind", "mariadb", "database start northwind mariadb 3306", "database stop northwind mariadb"),
             new PackDefinition("db-northwind-oracle", "database", "northwind", "oracle", "database start northwind oracle 1521", "database stop northwind oracle"),
-            new PackDefinition("db-northwind-ibmdb2", "database", "northwind", "ibmdb2", "database start northwind ibmdb2 50000", "database stop northwind ibmdb2")
+            new PackDefinition("db-northwind-db2", "database", "northwind", "db2", "database start northwind db2 50000", "database stop northwind db2")
             // Add other packs here
         );
 

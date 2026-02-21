@@ -10,19 +10,20 @@ import grails.validation.ValidationException
 class PayslipController {
 
     static layout = 'admin'
-    static allowedMethods = [save: "POST", update: "POST", delete: "DELETE"]
+    static allowedMethods = [save: "POST", update: "POST", delete: ["DELETE", "POST"]]
 
     /**
      * List all payslips with optional filtering
      */
     def index() {
-        def params_max = Math.min(params.max ? params.int('max') : 25, 100)
-        def offset = params.offset ? params.int('offset') : 0
-def sortField = params.sort ?: 'dateCreated'
+        def sortField = params.sort ?: 'dateCreated'
         def sortOrder = params.order ?: 'desc'
+        def pageSize = Math.min(params.int('max') ?: 25, 100)
+        def currentPage = params.int('page') ?: 1
+        def offset = (currentPage - 1) * pageSize
 
         def criteria = Payslip.createCriteria()
-        def payslips = criteria.list(max: params_max, offset: offset) {
+        def payslips = criteria.list(max: pageSize, offset: offset) {
             if (params.status) {
                 eq('status', params.status)
             }
@@ -35,12 +36,16 @@ def sortField = params.sort ?: 'dateCreated'
             }
             order(sortField, sortOrder)
         }
-        
+
         def totalCount = payslips.totalCount
-        
+        def totalPages = Math.max(1, (int) Math.ceil(totalCount / pageSize))
+
         [
-            payslipList: payslips, 
+            payslipList: payslips,
             payslipCount: totalCount,
+            currentPage: currentPage,
+            pageSize: pageSize,
+            totalPages: totalPages,
             statusCounts: getStatusCounts()
         ]
     }

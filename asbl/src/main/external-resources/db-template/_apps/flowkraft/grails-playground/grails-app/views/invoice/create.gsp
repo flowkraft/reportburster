@@ -152,7 +152,7 @@
 
                         <div class="d-flex justify-content-end gap-2">
                             <a href="${createLink(action: 'index')}" class="btn btn-outline-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-violet">
+                            <button type="submit" id="btn-submit" class="btn btn-violet">
                                 <i class="bi bi-check-lg me-1"></i> Create Invoice
                             </button>
                         </div>

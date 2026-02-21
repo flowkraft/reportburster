@@ -91,25 +91,25 @@ test.describe('Dual Playground Tests', () => {
           console.log(`[${app.name}] T10: Admin dashboard stats passed.`);
 
           // ============================================================
-          // T11: Invoice CRUD lifecycle (randomized — one app per day)
+          // T11: Payslip CRUD lifecycle (randomized — one app per day)
           // ============================================================
-          if (RUN_ALL_TESTS || invoiceApp === app.appName) {
-            console.log(`\n=== [${app.name}] T11: Invoice CRUD lifecycle ===\n`);
-            await SelfServicePortalsTestHelper.performInvoiceCRUD(page, app.appName);
-            console.log(`[${app.name}] T11: Invoice CRUD passed.`);
+          if (RUN_ALL_TESTS || payslipApp === app.appName) {
+            console.log(`\n=== [${app.name}] T11: Payslip CRUD lifecycle ===\n`);
+            await SelfServicePortalsTestHelper.performPayslipCRUD(page, app.appName);
+            console.log(`[${app.name}] T11: Payslip CRUD passed.`);
           } else {
-            console.log(`[${app.name}] T11: Invoice CRUD — skipped (assigned to ${invoiceApp} today)`);
+            console.log(`[${app.name}] T11: Payslip CRUD — skipped (assigned to ${payslipApp} today)`);
           }
 
           // ============================================================
-          // T12: Payslip CRUD lifecycle (randomized — one app per day)
+          // T12: Invoice CRUD lifecycle (randomized — one app per day)
           // ============================================================
-          if (RUN_ALL_TESTS || payslipApp === app.appName) {
-            console.log(`\n=== [${app.name}] T12: Payslip CRUD lifecycle ===\n`);
-            await SelfServicePortalsTestHelper.performPayslipCRUD(page, app.appName);
-            console.log(`[${app.name}] T12: Payslip CRUD passed.`);
+          if (RUN_ALL_TESTS || invoiceApp === app.appName) {
+            console.log(`\n=== [${app.name}] T12: Invoice CRUD lifecycle ===\n`);
+            await SelfServicePortalsTestHelper.performInvoiceCRUD(page, app.appName);
+            console.log(`[${app.name}] T12: Invoice CRUD passed.`);
           } else {
-            console.log(`[${app.name}] T12: Payslip CRUD — skipped (assigned to ${payslipApp} today)`);
+            console.log(`[${app.name}] T12: Invoice CRUD — skipped (assigned to ${invoiceApp} today)`);
           }
 
           // ============================================================

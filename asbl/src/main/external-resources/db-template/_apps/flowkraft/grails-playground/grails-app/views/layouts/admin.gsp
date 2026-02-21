@@ -639,5 +639,26 @@
     </script>
 
     <g:pageProperty name="page.scripts"/>
+
+    <!-- Flash Toast -->
+    <g:if test="${flash.message || flash.error}">
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;">
+            <div id="flashToast" class="toast align-items-center text-bg-${flash.error ? 'danger' : 'success'} border-0"
+                 role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi bi-${flash.error ? 'exclamation-circle' : 'check-circle'} me-1"></i>
+                        ${flash.message ?: flash.error}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                new bootstrap.Toast(document.getElementById('flashToast'), { delay: 3000 }).show();
+            });
+        </script>
+    </g:if>
 </body>
 </html>

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
 
 interface Payslip {
   id: number
@@ -29,6 +30,7 @@ interface Payslip {
 export default function EditPayslipPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
@@ -108,14 +110,15 @@ export default function EditPayslipPage({ params }: { params: Promise<{ id: stri
       })
 
       if (res.ok) {
+        toast({ title: "Payslip updated", duration: 3000 })
         router.push(`/admin/payslips/${id}`)
       } else {
         const error = await res.json()
-        alert(error.error || "Failed to update payslip")
+        toast({ title: error.error || "Failed to update payslip", variant: "destructive", duration: 3000 })
       }
     } catch (error) {
       console.error("Error updating payslip:", error)
-      alert("Failed to update payslip")
+      toast({ title: "Failed to update payslip", variant: "destructive", duration: 3000 })
     } finally {
       setSaving(false)
     }
@@ -328,7 +331,7 @@ export default function EditPayslipPage({ params }: { params: Promise<{ id: stri
                   Cancel
                 </Button>
               </Link>
-              <Button type="submit" disabled={saving}>
+              <Button id="btn-submit" type="submit" disabled={saving}>
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
             </div>

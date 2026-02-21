@@ -36,7 +36,7 @@
                             <th class="small text-muted text-uppercase">Period</th>
                             <th class="small text-muted text-uppercase text-end">Net</th>
                             <th class="small text-muted text-uppercase">Status</th>
-                            <th style="width: 80px;"></th>
+                            <th style="width: 200px;"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -61,17 +61,17 @@
                                     </td>
                                     <td>
                                         <div class="d-flex justify-content-end gap-1">
-                                            <a href="${createLink(action: 'show', id: payslip.id)}" 
+                                            <a href="${createLink(action: 'show', id: payslip.id)}"
                                                class="btn btn-link btn-sm p-1 text-muted" title="View">
-                                                <i class="bi bi-eye"></i>
+                                                <i class="bi bi-eye"></i> View
                                             </a>
-                                            <a href="${createLink(action: 'edit', id: payslip.id)}" 
-                                               class="btn btn-link btn-sm p-1 text-muted" title="Edit">
-                                                <i class="bi bi-pencil"></i>
+                                            <a href="${createLink(action: 'edit', id: payslip.id)}"
+                                               class="btn btn-link btn-sm p-1 text-muted btn-edit" title="Edit">
+                                                <i class="bi bi-pencil"></i> Edit
                                             </a>
-                                            <button type="button" class="btn btn-link btn-sm p-1 text-muted" 
+                                            <button type="button" class="btn btn-link btn-sm p-1 text-muted btn-delete"
                                                     title="Delete" onclick="confirmDelete(${payslip.id})">
-                                                <i class="bi bi-trash"></i>
+                                                <i class="bi bi-trash"></i> Delete
                                             </button>
                                         </div>
                                     </td>
@@ -89,6 +89,26 @@
                 </table>
             </div>
         </div>
+        <!-- Pagination -->
+        <g:if test="${payslipCount > 0}">
+            <div class="d-flex justify-content-between align-items-center mt-3 px-1" id="pagination-controls">
+                <span class="small text-muted" id="pagination-info">
+                    Showing ${Math.min((currentPage - 1) * pageSize + 1, payslipCount)}-${Math.min(currentPage * pageSize, payslipCount)} of ${payslipCount}
+                </span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item ${currentPage <= 1 ? 'disabled' : ''}">
+                            <a class="page-link" id="btn-prev-page"
+                               href="${createLink(action: 'index', params: [page: currentPage - 1, max: pageSize, search: params.search, status: params.status])}">Previous</a>
+                        </li>
+                        <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
+                            <a class="page-link" id="btn-next-page"
+                               href="${createLink(action: 'index', params: [page: currentPage + 1, max: pageSize, search: params.search, status: params.status])}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </g:if>
     </div>
 
     <!-- Delete Confirmation Modal - matches Next.js dialog -->
@@ -106,7 +126,7 @@
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <g:form action="delete" method="POST" class="d-inline">
                         <input type="hidden" name="id" id="deletePayslipId"/>
-                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        <button type="submit" id="btn-confirm-delete" class="btn btn-sm btn-danger">Delete</button>
                     </g:form>
                 </div>
             </div>

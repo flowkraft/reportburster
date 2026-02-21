@@ -1,52 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, invoices } from "@/lib/db";
-import { desc, like, eq, or } from "drizzle-orm";
+import { desc, like, eq, or, and, count as countFn, type SQL } from "drizzle-orm";
 
-// GET /api/invoices - List all invoices
+// GET /api/invoices - List invoices with server-side pagination
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status");
     const search = searchParams.get("search");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "25")));
+    const offset = (page - 1) * limit;
 
-    let result;
-
-    if (status && search) {
-      result = await db
-        .select()
-        .from(invoices)
-        .where(
-          or(
-            like(invoices.customerName, `%${search}%`),
-            like(invoices.invoiceNumber, `%${search}%`),
-            like(invoices.customerId, `%${search}%`)
-          )
-        )
-        .orderBy(desc(invoices.createdAt));
-      result = result.filter((inv) => inv.status === status);
-    } else if (status) {
-      result = await db
-        .select()
-        .from(invoices)
-        .where(eq(invoices.status, status as "draft" | "sent" | "paid" | "overdue" | "cancelled"))
-        .orderBy(desc(invoices.createdAt));
-    } else if (search) {
-      result = await db
-        .select()
-        .from(invoices)
-        .where(
-          or(
-            like(invoices.customerName, `%${search}%`),
-            like(invoices.invoiceNumber, `%${search}%`),
-            like(invoices.customerId, `%${search}%`)
-          )
-        )
-        .orderBy(desc(invoices.createdAt));
-    } else {
-      result = await db.select().from(invoices).orderBy(desc(invoices.createdAt));
+    // Build where conditions
+    const conditions: SQL[] = [];
+    if (status) {
+      conditions.push(eq(invoices.status, status as "draft" | "sent" | "paid" | "overdue" | "cancelled"));
+    }
+    if (search) {
+      conditions.push(
+        or(
+          like(invoices.customerName, `%${search}%`),
+          like(invoices.invoiceNumber, `%${search}%`),
+          like(invoices.customerId, `%${search}%`)
+        )!
+      );
     }
 
-    return NextResponse.json(result);
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Get total count with same filters
+    const [{ total }] = await db
+      .select({ total: countFn() })
+      .from(invoices)
+      .where(whereClause);
+
+    // Get paginated data
+    const data = await db
+      .select()
+      .from(invoices)
+      .where(whereClause)
+      .orderBy(desc(invoices.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return NextResponse.json({
+      data,
+      total,
+      page,
+      pageSize: limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    });
   } catch (error) {
     console.error("Error fetching invoices:", error);
     return NextResponse.json(

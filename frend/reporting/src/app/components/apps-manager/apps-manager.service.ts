@@ -118,7 +118,7 @@ export class AppsManagerService {
         icon: 'fa fa-users',
         category: 'Web Portal',
         type: 'docker',
-        description: 'The fastest way to build your <em>You Name It</em> <strong>Web Portal</strong> - could be Employee Portal, Customer Portal, Partner Portal, Student Portal or any other Self-Service Portal <a href="https://www.reportburster.com/docs/web-portal-cms" target="_blank"><i class="fa fa-book"></i>&nbsp;see how</a>',
+        description: 'The fastest way to build your <em>You Name It</em> <strong>Web Portal</strong> - could be Employee Portal, Customer Portal, Partner Portal, Student Portal or any other Self-Service Portal <a href="https://www.reportburster.com/docs/document-portal" target="_blank"><i class="fa fa-book"></i>&nbsp;see how</a>',
         url: 'http://localhost:8080/wp-admin',
         demoInfo: `
           <div style="margin-top: 18px; padding: 14px 16px; background: #f0f7fa; border: 1px solid #d0e4ed; border-radius: 6px; font-size: 0.88em; color: #333;">

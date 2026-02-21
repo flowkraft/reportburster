@@ -69,7 +69,7 @@ function vendorToPackId(vendor: string): string {
     case 'ibm-db2':
     case 'ibmdb2':
     case 'db2':
-      return 'db-northwind-ibmdb2';
+      return 'db-northwind-db2';
     case 'sqlserver':
       return 'db-northwind-sqlserver';
     case 'oracle':
