@@ -10,9 +10,11 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
 
 export default function NewInvoicePage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     invoiceNumber: "",
@@ -66,14 +68,15 @@ export default function NewInvoicePage() {
       })
 
       if (res.ok) {
+        toast({ title: "Invoice created", duration: 3000 })
         router.push("/admin/invoices")
       } else {
         const error = await res.json()
-        alert(error.error || "Failed to create invoice")
+        toast({ title: error.error || "Failed to create invoice", variant: "destructive", duration: 3000 })
       }
     } catch (error) {
       console.error("Error creating invoice:", error)
-      alert("Failed to create invoice")
+      toast({ title: "Failed to create invoice", variant: "destructive", duration: 3000 })
     } finally {
       setLoading(false)
     }
@@ -312,7 +315,7 @@ export default function NewInvoicePage() {
                   Cancel
                 </Button>
               </Link>
-              <Button type="submit" disabled={loading}>
+              <Button id="btn-submit" type="submit" disabled={loading}>
                 {loading ? "Creating..." : "Create Invoice"}
               </Button>
             </div>

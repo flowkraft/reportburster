@@ -80,7 +80,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="px-4 pb-4">
             <div id="stat-value-revenue" className="text-2xl font-semibold text-slate-800 dark:text-slate-100">
-              {loading ? "..." : `$${stats.totalRevenue.toLocaleString()}`}
+              {loading ? "..." : `$${stats.totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </div>
           </CardContent>
         </Card>

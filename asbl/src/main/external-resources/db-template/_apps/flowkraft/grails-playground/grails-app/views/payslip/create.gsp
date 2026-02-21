@@ -128,7 +128,7 @@
 
                         <div class="d-flex justify-content-end gap-2">
                             <a href="${createLink(action: 'index')}" class="btn btn-outline-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-cyan">
+                            <button type="submit" id="btn-submit" class="btn btn-cyan">
                                 <i class="bi bi-check-lg me-1"></i> Create Payslip
                             </button>
                         </div>

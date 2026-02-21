@@ -629,7 +629,7 @@ export default function Chat2DBPage() {
                     <span className="text-xs font-semibold text-athena-accent">Athena</span>
                     {/* Error */}
                     {r?.error && (
-                      <div className="rounded-2xl px-4 py-3 text-sm bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300">
+                      <div id="chat-error-response" className="rounded-2xl px-4 py-3 text-sm bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300">
                         {r.error}
                         <div className="flex justify-end mt-2">
                           <button
@@ -773,7 +773,7 @@ export default function Chat2DBPage() {
               <MessageAvatar className="bg-chat-avatar-bg text-white" fallback="🦉" />
               <MessageContent>
                 <span className="text-xs font-semibold text-athena-accent">Athena</span>
-                <div className="flex items-center gap-2 rounded-2xl px-4 py-3 text-sm bg-chat-assistant-bg text-muted-foreground">
+                <div id="chat-thinking-indicator" className="flex items-center gap-2 rounded-2xl px-4 py-3 text-sm bg-chat-assistant-bg text-muted-foreground">
                   <span className="animate-pulse">Thinking</span>
                   <span className="flex gap-0.5">
                     <span className="animate-bounce [animation-delay:0ms]">.</span>

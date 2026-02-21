@@ -745,10 +745,9 @@ export class SelfServicePortalsTestHelper {
     await expect(page.locator('#rawDataPagination')).toBeVisible({ timeout: 5000 });
     // Change page size to 50 and verify reload
     await page.selectOption('#rawDataPageSize', '50');
-    await page.waitForTimeout(2000);
+    // Use auto-retrying assertion instead of fixed wait — the async fetch may take variable time
+    await expect(page.locator('#rawDataInfo')).toContainText(/1[-–]50/, { timeout: 15000 });
     const updatedInfo = await page.locator('#rawDataInfo').textContent();
-    expect(updatedInfo).toContain('Showing');
-    expect(updatedInfo).toMatch(/1[-–]50/);  // Match both hyphen (-) and en-dash (–)
     console.log(`Data Warehouse: Raw Data - pagination works (${updatedInfo}) ✓`);
 
     // ---- Config Tab ----
@@ -1660,6 +1659,42 @@ export class SelfServicePortalsTestHelper {
   }
 
   /**
+   * Delete any leftover E2E test records from previous failed runs.
+   * Scans the table for rows containing the marker text and deletes them one by one.
+   */
+  private static async cleanupE2ERecords(
+    page: Page,
+    tableSelector: string,
+    marker: string,
+    entityName: string,
+  ): Promise<void> {
+    let cleaned = 0;
+    // Loop: find a matching row, delete it, repeat until none remain
+    while (true) {
+      const markerRow = page.locator(`${tableSelector} tbody tr`, { hasText: marker }).first();
+      if (await markerRow.count() === 0) break;
+
+      // Click the Delete button/link in this row
+      const deleteBtn = markerRow.locator('.btn-delete');
+      if (await deleteBtn.count() === 0) break;
+      await deleteBtn.click();
+
+      // Handle confirmation modal
+      const deleteModal = page.locator('#deleteModal');
+      if (await deleteModal.isVisible({ timeout: 3000 }).catch(() => false)) {
+        const confirmBtn = page.locator('#btn-confirm-delete');
+        await confirmBtn.click();
+      }
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
+      cleaned++;
+    }
+    if (cleaned > 0) {
+      console.log(`${entityName}: Cleaned up ${cleaned} orphan E2E record(s) from previous runs.`);
+    }
+  }
+
+  /**
    * Exercise full invoice CRUD lifecycle: create, read, edit, delete.
    */
   static async performInvoiceCRUD(page: Page, appName: 'grails' | 'nextjs'): Promise<void> {
@@ -1672,7 +1707,10 @@ export class SelfServicePortalsTestHelper {
     await expect(page.locator('#invoices-page-title')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('#invoices-table')).toBeVisible({ timeout: 10000 });
 
-    // Count initial rows
+    // Clean up any orphan E2E records from previous failed runs
+    await SelfServicePortalsTestHelper.cleanupE2ERecords(page, '#invoices-table', 'E2E Test Customer', `${appName} Invoice`);
+
+    // Count initial rows (after cleanup)
     const initialRows = await page.locator('#invoices-table tbody tr').count();
     console.log(`${appName} Admin: Initial invoice count = ${initialRows}`);
 
@@ -1681,27 +1719,24 @@ export class SelfServicePortalsTestHelper {
     await page.waitForLoadState('networkidle');
     await expect(page.locator('#subtotal')).toBeVisible({ timeout: 10000 });
 
-    // Fill all required fields
+    // Fill fields top-down, left-right matching the visual form layout
+    await page.fill('#invoiceNumber', `INV-E2E-${Date.now()}`);
+
+    await page.fill('#customerId', 'CUST-E2E-TEST');
     await page.fill('#customerName', 'E2E Test Customer');
     await page.fill('#customerEmail', 'e2e-test@example.com');
-    await page.fill('#customerId', 'CUST-E2E-TEST');
 
-    // Set due date to 30 days from now
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 30);
     await page.fill('#dueDate', dueDate.toISOString().split('T')[0]);
 
-    // Fill invoiceNumber (both apps have this field)
-    await page.fill('#invoiceNumber', `INV-E2E-${Date.now()}`);
-
-    // Fill amount fields
     await page.fill('#subtotal', '1000');
     await page.fill('#taxRate', '10');
     await page.fill('#discount', '50');
     await page.waitForTimeout(500); // Let calculated fields update
 
     // Submit the form
-    const submitBtn = page.locator('button[type="submit"], input[type="submit"]');
+    const submitBtn = page.locator('#btn-submit');
     await submitBtn.click();
     await page.waitForLoadState('networkidle');
 
@@ -1713,42 +1748,40 @@ export class SelfServicePortalsTestHelper {
     console.log(`${appName} Admin: Invoice created, count = ${afterCreateRows} ✓`);
 
     // EDIT: click last row's edit link, change amount, save
-    const editLinks = page.locator('#invoices-table tbody tr a:has-text("Edit"), #invoices-table tbody tr a[href*="edit"]');
+    const editLinks = page.locator('#invoices-table .btn-edit');
     const editCount = await editLinks.count();
-    if (editCount > 0) {
-      await editLinks.last().click();
-      await page.waitForLoadState('networkidle');
-      await expect(page.locator('#subtotal')).toBeVisible({ timeout: 10000 });
-      await page.fill('#subtotal', '2000');
-      await page.waitForTimeout(500);
-      const saveBtn = page.locator('button[type="submit"], input[type="submit"]');
-      await saveBtn.click();
-      await page.waitForLoadState('networkidle');
-      console.log(`${appName} Admin: Invoice edited ✓`);
-    }
+    expect(editCount).toBeGreaterThan(0); // Fail loudly if no Edit button found
+    await editLinks.last().click();
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#subtotal')).toBeVisible({ timeout: 10000 });
+    await page.fill('#subtotal', '2000');
+    await page.waitForTimeout(500);
+    const saveBtn = page.locator('#btn-submit');
+    await saveBtn.click();
+    await page.waitForLoadState('networkidle');
+    console.log(`${appName} Admin: Invoice edited ✓`);
 
     // DELETE: click last row's delete, confirm, verify gone
     await page.goto(`${baseUrl}/admin/invoices`, { timeout: 30000 });
     await page.waitForLoadState('networkidle');
     const beforeDeleteRows = await page.locator('#invoices-table tbody tr').count();
 
-    const deleteLinks = page.locator('#invoices-table tbody tr a:has-text("Delete"), #invoices-table tbody tr button:has-text("Delete")');
+    const deleteLinks = page.locator('#invoices-table .btn-delete');
     const deleteCount = await deleteLinks.count();
-    if (deleteCount > 0) {
-      await deleteLinks.last().click();
-      // Handle confirm dialog (Grails uses #deleteModal, Next.js uses shadcn)
-      const deleteModal = page.locator('#deleteModal, [role="alertdialog"]');
-      if (await deleteModal.isVisible({ timeout: 3000 }).catch(() => false)) {
-        const confirmBtn = page.locator('#deleteModal button:has-text("Delete"), [role="alertdialog"] button:has-text("Delete"), [role="alertdialog"] button:has-text("Confirm")');
-        await confirmBtn.click();
-      }
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(1000);
-
-      const afterDeleteRows = await page.locator('#invoices-table tbody tr').count();
-      expect(afterDeleteRows).toBeLessThan(beforeDeleteRows);
-      console.log(`${appName} Admin: Invoice deleted, count = ${afterDeleteRows} ✓`);
+    expect(deleteCount).toBeGreaterThan(0); // Fail loudly if no Delete button found
+    await deleteLinks.last().click();
+    // Handle confirm dialog
+    const deleteModal = page.locator('#deleteModal');
+    if (await deleteModal.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const confirmBtn = page.locator('#btn-confirm-delete');
+      await confirmBtn.click();
     }
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    const afterDeleteRows = await page.locator('#invoices-table tbody tr').count();
+    expect(afterDeleteRows).toBeLessThan(beforeDeleteRows);
+    console.log(`${appName} Admin: Invoice deleted, count = ${afterDeleteRows} ✓`);
 
     console.log(`${appName} Admin: Invoice CRUD lifecycle OK ✓`);
   }
@@ -1766,7 +1799,10 @@ export class SelfServicePortalsTestHelper {
     await expect(page.locator('#payslips-page-title')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('#payslips-table')).toBeVisible({ timeout: 10000 });
 
-    // Count initial rows
+    // Clean up any orphan E2E records from previous failed runs
+    await SelfServicePortalsTestHelper.cleanupE2ERecords(page, '#payslips-table', 'E2E Test Employee', `${appName} Payslip`);
+
+    // Count initial rows (after cleanup)
     const initialRows = await page.locator('#payslips-table tbody tr').count();
     console.log(`${appName} Admin: Initial payslip count = ${initialRows}`);
 
@@ -1778,10 +1814,10 @@ export class SelfServicePortalsTestHelper {
     // Fill payslipNumber (both apps have this field)
     await page.fill('#payslipNumber', `PS-E2E-${Date.now()}`);
 
-    // Fill all required fields
+    // Fill fields top-down, left-right matching the visual form layout
+    await page.fill('#employeeId', 'EMP-E2E-TEST');
     await page.fill('#employeeName', 'E2E Test Employee');
     await page.fill('#employeeEmail', 'e2e-employee@example.com');
-    await page.fill('#employeeId', 'EMP-E2E-TEST');
 
     // Set pay period dates
     const periodStart = new Date();
@@ -1797,8 +1833,8 @@ export class SelfServicePortalsTestHelper {
     await page.waitForTimeout(500); // Let calculated fields update
 
     // Submit the form
-    const submitBtn = page.locator('button[type="submit"], input[type="submit"]');
-    await submitBtn.click();
+    const payslipSubmitBtn = page.locator('#btn-submit');
+    await payslipSubmitBtn.click();
     await page.waitForLoadState('networkidle');
 
     // READ: verify new payslip appears in list
@@ -1809,42 +1845,40 @@ export class SelfServicePortalsTestHelper {
     console.log(`${appName} Admin: Payslip created, count = ${afterCreateRows} ✓`);
 
     // EDIT: click last row's edit link, change amount, save
-    const editLinks = page.locator('#payslips-table tbody tr a:has-text("Edit"), #payslips-table tbody tr a[href*="edit"]');
-    const editCount = await editLinks.count();
-    if (editCount > 0) {
-      await editLinks.last().click();
-      await page.waitForURL('**/edit**', { timeout: 10000 });
-      await page.waitForLoadState('networkidle');
-      await expect(page.locator('#grossAmount')).toBeVisible({ timeout: 10000 });
-      await page.fill('#grossAmount', '6000');
-      await page.waitForTimeout(500);
-      const saveBtn = page.locator('button[type="submit"], input[type="submit"]');
-      await saveBtn.click();
-      await page.waitForLoadState('networkidle');
-      console.log(`${appName} Admin: Payslip edited ✓`);
-    }
+    const payslipEditLinks = page.locator('#payslips-table .btn-edit');
+    const editCount = await payslipEditLinks.count();
+    expect(editCount).toBeGreaterThan(0); // Fail loudly if no Edit button found
+    await payslipEditLinks.last().click();
+    await page.waitForURL('**/edit**', { timeout: 10000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#grossAmount')).toBeVisible({ timeout: 10000 });
+    await page.fill('#grossAmount', '6000');
+    await page.waitForTimeout(500);
+    const payslipSaveBtn = page.locator('#btn-submit');
+    await payslipSaveBtn.click();
+    await page.waitForLoadState('networkidle');
+    console.log(`${appName} Admin: Payslip edited ✓`);
 
     // DELETE: click last row's delete, confirm, verify gone
     await page.goto(`${baseUrl}/admin/payslips`, { timeout: 30000 });
     await page.waitForLoadState('networkidle');
     const beforeDeleteRows = await page.locator('#payslips-table tbody tr').count();
 
-    const deleteLinks = page.locator('#payslips-table tbody tr a:has-text("Delete"), #payslips-table tbody tr button:has-text("Delete")');
-    const deleteCount = await deleteLinks.count();
-    if (deleteCount > 0) {
-      await deleteLinks.last().click();
-      const deleteModal = page.locator('#deleteModal, [role="alertdialog"]');
-      if (await deleteModal.isVisible({ timeout: 3000 }).catch(() => false)) {
-        const confirmBtn = page.locator('#deleteModal button:has-text("Delete"), [role="alertdialog"] button:has-text("Delete"), [role="alertdialog"] button:has-text("Confirm")');
-        await confirmBtn.click();
-      }
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(1000);
-
-      const afterDeleteRows = await page.locator('#payslips-table tbody tr').count();
-      expect(afterDeleteRows).toBeLessThan(beforeDeleteRows);
-      console.log(`${appName} Admin: Payslip deleted, count = ${afterDeleteRows} ✓`);
+    const payslipDeleteLinks = page.locator('#payslips-table .btn-delete');
+    const deleteCount = await payslipDeleteLinks.count();
+    expect(deleteCount).toBeGreaterThan(0); // Fail loudly if no Delete button found
+    await payslipDeleteLinks.last().click();
+    const payslipDeleteModal = page.locator('#deleteModal');
+    if (await payslipDeleteModal.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const confirmBtn = page.locator('#btn-confirm-delete');
+      await confirmBtn.click();
     }
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    const afterDeleteRows = await page.locator('#payslips-table tbody tr').count();
+    expect(afterDeleteRows).toBeLessThan(beforeDeleteRows);
+    console.log(`${appName} Admin: Payslip deleted, count = ${afterDeleteRows} ✓`);
 
     console.log(`${appName} Admin: Payslip CRUD lifecycle OK ✓`);
   }

@@ -64,7 +64,7 @@ const iconMap = {
   // Use distinct, non-brand icons as placeholders
   oracle: siMongodb, // Placeholder 1
   sqlserver: siElasticsearch, // Placeholder 2
-  ibmdb2: siServerless, // Placeholder 3
+  db2: siServerless, // Placeholder 3
   clickhouse: siApachecassandra, // Placeholder 4 - columnar DB icon
   postgresql: siPostgresql,
   mysql: siMysql,

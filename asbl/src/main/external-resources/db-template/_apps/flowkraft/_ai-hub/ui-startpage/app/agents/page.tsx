@@ -363,7 +363,7 @@ export default function AgentsPage() {
           <div className={`${headerBg} px-4 py-3 flex items-center justify-between text-white`}>
             <div className="flex items-center gap-2">
               <Terminal className="w-5 h-5" />
-              <StatusIcon className={`w-5 h-5 ${logStatus === 'running' ? 'animate-spin' : ''}`} />
+              <StatusIcon id={`provision-status-${logStatus}`} className={`w-5 h-5 ${logStatus === 'running' ? 'animate-spin' : ''}`} />
               <span className="font-semibold">Provisioning Logs</span>
             </div>
             <div className="flex items-center gap-2">
@@ -578,6 +578,7 @@ export default function AgentsPage() {
                 <div
                   key={agent.id}
                   id={`agent-row-${agent.name.toLowerCase().replace(/\s+/g, '-')}`}
+                  data-highlighted={athena ? 'true' : undefined}
                   className={`grid grid-cols-12 gap-4 px-6 py-4 hover:bg-muted/30 transition-colors ${
                     athena ? 'bg-primary/5 border-l-2 border-l-primary' : ''
                   }`}

@@ -10,7 +10,7 @@ import grails.validation.ValidationException
 class InvoiceController {
 
     static layout = 'admin'
-    static allowedMethods = [save: "POST", update: "POST", delete: "DELETE"]
+    static allowedMethods = [save: "POST", update: "POST", delete: ["DELETE", "POST"]]
 
     // Inject payment services
     def stripeService
@@ -20,13 +20,14 @@ class InvoiceController {
      * List all invoices with optional filtering
      */
     def index() {
-        def params_max = Math.min(params.max ? params.int('max') : 25, 100)
-        def offset = params.offset ? params.int('offset') : 0
-def sortField = params.sort ?: 'dateCreated'
+        def sortField = params.sort ?: 'dateCreated'
         def sortOrder = params.order ?: 'desc'
+        def pageSize = Math.min(params.int('max') ?: 25, 100)
+        def currentPage = params.int('page') ?: 1
+        def offset = (currentPage - 1) * pageSize
 
         def criteria = Invoice.createCriteria()
-        def invoices = criteria.list(max: params_max, offset: offset) {
+        def invoices = criteria.list(max: pageSize, offset: offset) {
             if (params.status) {
                 eq('status', params.status)
             }
@@ -39,12 +40,16 @@ def sortField = params.sort ?: 'dateCreated'
             }
             order(sortField, sortOrder)
         }
-        
+
         def totalCount = invoices.totalCount
-        
+        def totalPages = Math.max(1, (int) Math.ceil(totalCount / pageSize))
+
         [
-            invoiceList: invoices, 
+            invoiceList: invoices,
             invoiceCount: totalCount,
+            currentPage: currentPage,
+            pageSize: pageSize,
+            totalPages: totalPages,
             statusCounts: getStatusCounts()
         ]
     }

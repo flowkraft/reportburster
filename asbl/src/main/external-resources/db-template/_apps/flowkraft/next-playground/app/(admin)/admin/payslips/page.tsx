@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { Plus, Eye, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
 
 type PayslipStatus = "draft" | "sent" | "viewed" | "downloaded"
 
@@ -49,45 +50,57 @@ const getStatusStyle = (status: PayslipStatus) => {
 }
 
 export default function PayslipsPage() {
+  const { toast } = useToast()
   const [payslips, setPayslips] = useState<Payslip[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const pageSize = 25
 
-  const fetchPayslips = async () => {
+  const fetchPayslips = useCallback(async (currentPage: number, currentSearch: string) => {
     setLoading(true)
     try {
-      const res = await fetch("/api/payslips")
+      const params = new URLSearchParams({ page: String(currentPage), limit: String(pageSize) })
+      if (currentSearch) params.set("search", currentSearch)
+      const res = await fetch(`/api/payslips?${params}`)
       if (res.ok) {
-        const data = await res.json()
-        setPayslips(data)
+        const json = await res.json()
+        setPayslips(json.data)
+        setTotal(json.total)
+        setTotalPages(json.totalPages)
       }
     } catch (error) {
       console.error("Error fetching payslips:", error)
     } finally {
       setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    fetchPayslips()
   }, [])
 
-  const filteredPayslips = payslips.filter((p) =>
-    p.employeeName.toLowerCase().includes(search.toLowerCase()) ||
-    p.payslipNumber.toLowerCase().includes(search.toLowerCase()) ||
-    (p.department?.toLowerCase() || "").includes(search.toLowerCase())
-  )
+  useEffect(() => {
+    fetchPayslips(page, search)
+  }, [page, fetchPayslips])
+
+  useEffect(() => {
+    setPage(1)
+    fetchPayslips(1, search)
+  }, [search, fetchPayslips])
 
   const handleDelete = async () => {
     if (!deleteId) return
     try {
       const res = await fetch(`/api/payslips/${deleteId}`, { method: "DELETE" })
       if (res.ok) {
-        setPayslips(payslips.filter((p) => p.id !== deleteId))
+        fetchPayslips(page, search)
+        toast({ title: "Payslip deleted", duration: 3000 })
+      } else {
+        toast({ title: "Failed to delete payslip", variant: "destructive", duration: 3000 })
       }
     } catch (error) {
       console.error("Error deleting payslip:", error)
+      toast({ title: "Failed to delete payslip", variant: "destructive", duration: 3000 })
     } finally {
       setDeleteId(null)
     }
@@ -98,6 +111,9 @@ export default function PayslipsPage() {
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+
+  const showingFrom = total > 0 ? (page - 1) * pageSize + 1 : 0
+  const showingTo = Math.min(page * pageSize, total)
 
   return (
     <div className="space-y-4">
@@ -134,7 +150,7 @@ export default function PayslipsPage() {
               <TableHead className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Period</TableHead>
               <TableHead className="text-right text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Net</TableHead>
               <TableHead className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</TableHead>
-              <TableHead className="w-20"></TableHead>
+              <TableHead className="w-52"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -144,14 +160,14 @@ export default function PayslipsPage() {
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : filteredPayslips.length === 0 ? (
+            ) : payslips.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-6 text-sm text-slate-500">
                   No payslips found.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredPayslips.map((payslip) => (
+              payslips.map((payslip) => (
                 <TableRow key={payslip.id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                   <TableCell className="text-sm font-medium text-slate-800 dark:text-slate-200">{payslip.payslipNumber}</TableCell>
                   <TableCell>
@@ -173,22 +189,22 @@ export default function PayslipsPage() {
                   <TableCell>
                     <div className="flex justify-end gap-0.5">
                       <Link href={`/admin/payslips/${payslip.id}`}>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-                          <Eye className="h-3.5 w-3.5" />
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                          <Eye className="mr-1 h-3.5 w-3.5" /> View
                         </Button>
                       </Link>
                       <Link href={`/admin/payslips/${payslip.id}/edit`}>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-                          <Pencil className="h-3.5 w-3.5" />
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 btn-edit">
+                          <Pencil className="mr-1 h-3.5 w-3.5" /> Edit
                         </Button>
                       </Link>
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-slate-400 hover:text-red-600 dark:hover:text-red-400"
+                        size="sm"
+                        className="h-7 px-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 btn-delete"
                         onClick={() => setDeleteId(payslip.id)}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="mr-1 h-3.5 w-3.5" /> Delete
                       </Button>
                     </div>
                   </TableCell>
@@ -199,9 +215,28 @@ export default function PayslipsPage() {
         </Table>
       </div>
 
+      {/* Pagination */}
+      {total > 0 && (
+        <div className="flex justify-between items-center mt-3 px-1" id="pagination-controls">
+          <span className="text-sm text-slate-500 dark:text-slate-400" id="pagination-info">
+            Showing {showingFrom}-{showingTo} of {total}
+          </span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" id="btn-prev-page"
+              disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+              Previous
+            </Button>
+            <Button variant="outline" size="sm" id="btn-next-page"
+              disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Delete Dialog */}
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent id="deleteModal" className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-slate-800 dark:text-slate-100">Delete Payslip</DialogTitle>
             <DialogDescription>
@@ -212,7 +247,7 @@ export default function PayslipsPage() {
             <Button variant="outline" size="sm" onClick={() => setDeleteId(null)}>
               Cancel
             </Button>
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
+            <Button id="btn-confirm-delete" variant="destructive" size="sm" onClick={handleDelete}>
               Delete
             </Button>
           </DialogFooter>
@@ -221,4 +256,3 @@ export default function PayslipsPage() {
     </div>
   )
 }
-
