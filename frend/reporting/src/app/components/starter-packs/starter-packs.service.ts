@@ -113,6 +113,18 @@ export class StarterPacksService {
       stopCmd: 'service database stop northwind clickhouse', // Stop command
       tags: ['database', 'northwind', 'clickhouse', 'olap', 'analytics'],
     },
+    {
+      id: 'db-northwind-supabase',
+      family: 'database',
+      packName: 'northwind',
+      target: 'supabase',
+      displayName: 'Northwind DB (Supabase)',
+      description: 'Supabase is the Postgres development platform. Start your project with a Postgres database, Authentication, instant APIs, Edge Functions, Realtime subscriptions, Storage, and Vector embeddings.',
+      icon: 'supabase',
+      startCmd: 'service database start northwind supabase 5435',
+      stopCmd: 'service database stop northwind supabase',
+      tags: ['database', 'northwind', 'supabase', 'postgres', 'baas', ' backend-as-a-service', 'auth', 'realtime', 'storage', 'vector-embeddings'],
+    },
     // --- Add other families/packs here as needed ---
     // Example for a hypothetical 'messaging' family:
     // {

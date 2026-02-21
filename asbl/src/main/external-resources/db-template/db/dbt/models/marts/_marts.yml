@@ -1,0 +1,86 @@
+version: 2
+
+models:
+  - name: dim_customer
+    description: "Customer dimension with country and continent"
+    columns:
+      - name: customer_key
+        tests:
+          - not_null
+          - unique
+      - name: company_name
+        tests:
+          - not_null
+      - name: continent
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['North America', 'South America', 'Europe', 'Other']
+
+  - name: dim_product
+    description: "Product dimension with category and list price"
+    columns:
+      - name: product_key
+        tests:
+          - not_null
+          - unique
+      - name: product_name
+        tests:
+          - not_null
+
+  - name: dim_employee
+    description: "Employee dimension"
+    columns:
+      - name: employee_key
+        tests:
+          - not_null
+          - unique
+      - name: full_name
+        tests:
+          - not_null
+
+  - name: dim_time
+    description: "Date dimension (days 1-28 for 2023-2024, 672 rows)"
+    columns:
+      - name: date_key
+        tests:
+          - not_null
+          - unique
+      - name: year
+        tests:
+          - not_null
+
+  - name: fact_sales
+    description: "Sales fact table - one row per order line item"
+    columns:
+      - name: sales_key
+        tests:
+          - not_null
+          - unique
+      - name: date_key
+        tests:
+          - not_null
+      - name: customer_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_key
+      - name: product_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_product')
+              field: product_key
+      - name: employee_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_employee')
+              field: employee_key
+
+  - name: vw_sales_detail
+    description: "Denormalized view joining fact + all dimensions"
+
+  - name: vw_monthly_sales
+    description: "Monthly aggregation view for time-series analysis"

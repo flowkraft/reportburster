@@ -109,6 +109,7 @@ export async function GET() {
     }
 
     const files: Array<{ path: string; type: string; content: string }> = [];
+    const agentDirMap: Record<string, string> = {};
 
     // Scan agents-output-artifacts/{agentName}/ — each subdirectory is an agent
     const artifactsDir = path.join(workspaceRoot, 'agents-output-artifacts');
@@ -132,6 +133,7 @@ export async function GET() {
           // Use full display name with description, or fallback to capitalized name
           const displayName = AGENT_DISPLAY_NAMES[entry.name.toLowerCase()]
             || entry.name.charAt(0).toUpperCase() + entry.name.slice(1);
+          agentDirMap[displayName] = entry.name;
           const fullPath = path.join(artifactsDir, entry.name);
           readDirectoryRecursive(fullPath, `Agents/${displayName}`, files);
         }
@@ -153,9 +155,58 @@ export async function GET() {
       } catch {}
     }
 
-    return NextResponse.json({ files });
+    return NextResponse.json({ files, agentDirMap });
   } catch (err: any) {
     console.error('Workspace API error:', err);
+    return NextResponse.json(
+      { error: err?.message || String(err) },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const { sourceFsRelPath, destFsRelFolder } = await request.json();
+
+    if (!sourceFsRelPath || !destFsRelFolder) {
+      return NextResponse.json({ error: 'Missing source or destination path' }, { status: 400 });
+    }
+
+    const workspaceRoot = getWorkspaceRoot();
+    if (!workspaceRoot) {
+      return NextResponse.json({ error: 'Workspace not available' }, { status: 500 });
+    }
+
+    const artifactsDir = path.join(workspaceRoot, 'agents-output-artifacts');
+    const sourcePath = path.resolve(artifactsDir, sourceFsRelPath);
+    const destFolder = path.resolve(artifactsDir, destFsRelFolder);
+
+    // Security: ensure paths stay within artifactsDir
+    const resolvedArtifacts = path.resolve(artifactsDir);
+    if (!sourcePath.startsWith(resolvedArtifacts) || !destFolder.startsWith(resolvedArtifacts)) {
+      return NextResponse.json({ error: 'Path traversal not allowed' }, { status: 403 });
+    }
+
+    if (!fs.existsSync(sourcePath) || !fs.statSync(sourcePath).isFile()) {
+      return NextResponse.json({ error: 'Source file not found' }, { status: 404 });
+    }
+
+    if (!fs.existsSync(destFolder) || !fs.statSync(destFolder).isDirectory()) {
+      return NextResponse.json({ error: 'Destination folder not found' }, { status: 404 });
+    }
+
+    const fileName = path.basename(sourcePath);
+    const destPath = path.join(destFolder, fileName);
+
+    if (fs.existsSync(destPath)) {
+      return NextResponse.json({ error: 'A file with this name already exists in the destination' }, { status: 409 });
+    }
+
+    fs.renameSync(sourcePath, destPath);
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error('Workspace move error:', err);
     return NextResponse.json(
       { error: err?.message || String(err) },
       { status: 500 }

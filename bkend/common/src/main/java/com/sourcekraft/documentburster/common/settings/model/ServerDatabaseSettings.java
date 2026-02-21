@@ -74,6 +74,11 @@ public class ServerDatabaseSettings extends DumpToString {
 				if (isBlank(this.driver)) this.driver = "com.clickhouse.jdbc.ClickHouseDriver";
 				if (isBlank(this.url))    this.url    = "jdbc:clickhouse://" + host + ":" + port + "/" + database;
 				break;
+
+			case "supabase":
+				if (isBlank(this.driver)) this.driver = "org.postgresql.Driver";
+				if (isBlank(this.url))    this.url    = "jdbc:postgresql://" + host + ":" + port + "/" + database + "?currentSchema=public";
+				break;
 		}
 	}
 

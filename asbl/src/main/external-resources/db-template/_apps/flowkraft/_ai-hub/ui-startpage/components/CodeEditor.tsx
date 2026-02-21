@@ -38,7 +38,7 @@ export function CodeEditor({ code, language, fileName }: CodeEditorProps) {
   }, [code, language]);
 
   return (
-    <div className="h-full overflow-auto bg-[#2d2d2d]">
+    <div className="h-full overflow-auto bg-code-bg">
       <pre className="m-0 p-4 text-sm" style={{ background: 'transparent' }}>
         <code ref={codeRef} className={`language-${language}`}>
           {code}

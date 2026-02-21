@@ -67,6 +67,9 @@ let win: BrowserWindow = null;
 const args = process.argv.slice(1),
   serve = args.some((val) => val === '--serve');
 
+if (!process.env.PORTABLE_EXECUTABLE_DIR) {
+  process.env.PORTABLE_EXECUTABLE_DIR = 'testground/e2e';
+}
 process.env.PORTABLE_EXECUTABLE_DIR = path
   .normalize(path.resolve(process.env.PORTABLE_EXECUTABLE_DIR))
   .replace(/\\/g, '/');

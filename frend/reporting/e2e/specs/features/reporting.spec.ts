@@ -27,6 +27,8 @@ const SKIP_NON_DATABASE_TESTS = false;
 
 const DB_VENDORS_SELECTED: string[] = (() => {
   // ── DEV OVERRIDES (uncomment ONE line to limit vendor scope) ──
+  //return ['supabase']; // DEV FOCUS — comment out to restore full rotation
+  
   //return ['postgres'];
   //return ['duckdb'];
   //return ['clickhouse'];
@@ -114,10 +116,10 @@ test.describe('', async () => {
           const sqlQuery =
             dbVendor === 'sqlite'
               ? `
-    SELECT 
-        "EmployeeID", 
-        "FirstName", 
-        "LastName", 
+    SELECT
+        "EmployeeID",
+        "FirstName",
+        "LastName",
         date("HireDate"/1000, 'unixepoch', 'localtime') AS "HireDate"
     FROM "Employees"
     WHERE date("HireDate"/1000, 'unixepoch', 'localtime') BETWEEN :startDate AND :endDate
@@ -429,16 +431,16 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           const sqlQueryWithParams =
             dbVendor === 'sqlite'
               ? `
-    SELECT 
-        "EmployeeID", 
-        "FirstName", 
-        "LastName", 
+    SELECT
+        "EmployeeID",
+        "FirstName",
+        "LastName",
         date("HireDate"/1000, 'unixepoch', 'localtime') AS "HireDate"
     FROM "Employees"
     WHERE date("HireDate"/1000, 'unixepoch', 'localtime') BETWEEN :startDate AND :endDate
     ORDER BY "HireDate"
   `
-              : dbVendor === 'postgres' || dbVendor === 'postgresql'
+              : dbVendor === 'postgres' || dbVendor === 'postgresql' || dbVendor === 'supabase'
                 ? `
     SELECT
         "EmployeeID",
@@ -509,15 +511,15 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           const sqlQueryNoParams =
             dbVendor === 'sqlite'
               ? `
-    SELECT 
-        "EmployeeID", 
-        "FirstName", 
-        "LastName", 
+    SELECT
+        "EmployeeID",
+        "FirstName",
+        "LastName",
         date("HireDate"/1000, 'unixepoch', 'localtime') AS "HireDate"
     FROM "Employees"
     ORDER BY "HireDate"
   `
-              : dbVendor === 'postgres' || dbVendor === 'postgresql'
+              : dbVendor === 'postgres' || dbVendor === 'postgresql' || dbVendor === 'supabase'
                 ? `
     SELECT
         "EmployeeID",

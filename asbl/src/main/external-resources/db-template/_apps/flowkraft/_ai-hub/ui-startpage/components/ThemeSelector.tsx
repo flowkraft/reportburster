@@ -18,7 +18,7 @@ export function ThemeSelector() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-400">
+      <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground">
         <Palette className="w-4 h-4 animate-pulse" />
         <span className="hidden md:inline">Loading...</span>
       </div>
@@ -29,7 +29,7 @@ export function ThemeSelector() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white rounded-md transition-colors"
+        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md transition-colors"
         aria-label="Select theme"
       >
         <Palette className="w-4 h-4" />

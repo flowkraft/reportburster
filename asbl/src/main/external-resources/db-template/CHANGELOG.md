@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## 13.3.0 - 2026-02-23
+
+### Changed
+
+- Updated documentation to reflect the latest developments
+- Updated AI Crew agents knowledge to reflect the new ReportBurster capabilities
+
+## 13.2.0 - 2026-02-17
+
+### Added
+
+- **Northwind DB (Supabase) Starter Pack** — Supabase is the Postgres development platform. Start your project with a Postgres database, Authentication, instant APIs, Edge Functions, Realtime subscriptions, Storage, and Vector embeddings. Launch the full Supabase stack (13 services) directly from the Starter Packs UI.
+
+- **dbt Core ETL Integration** — Transform raw OLTP data replicated into ClickHouse into a proper OLAP star schema (dimensional model) using [dbt Core](https://docs.getdbt.com/) with the [dbt-clickhouse adapter](https://github.com/ClickHouse/dbt-clickhouse)
+  - Sample Northwind dbt project included: staging views, dimension tables (`dim_customer`, `dim_product`, `dim_employee`, `dim_time`), fact table (`fact_sales`), and analytical views (`vw_sales_detail`, `vw_monthly_sales`)
+  - Dockerized — runs via `docker compose run dbt-transform run`
+  - Completes the ELT pipeline: CDC sink connector handles Extract+Load, dbt handles Transform
+  - See `db/CONFIGURE_ETL.md` for setup instructions
+
 ## 13.1.0 - 2026-02-16
 
 ### Added

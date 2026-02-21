@@ -132,9 +132,9 @@ When distribution fails:
 
 ## Documentation Links
 
-- **Email Distribution**: https://www.reportburster.com/docs/email-report-distribution
-- **Archive & Upload**: https://www.reportburster.com/docs/archive-upload-reports
-- **Variables Reference**: https://www.reportburster.com/docs/variables-interpolation-templating
+- **Email Distribution**: https://www.reportburster.com/docs/report-distribution-email
+- **Archive & Upload**: https://www.reportburster.com/docs/report-distribution-upload
+- **Variables Reference**: https://www.reportburster.com/docs/variables
 
 When I need specifics on a protocol or provider configuration, I fetch these docs for the latest details.
 

@@ -45,6 +45,7 @@ const PACK_DEFAULTS: Record<string, { host: string; port: string; database: stri
   sqlserver: { host: 'localhost', port: '1433', database: 'Northwind', userid: 'sa', userpassword: 'Password123!', usessl: false },
   oracle: { host: 'localhost', port: '1521', database: 'XEPDB1', userid: 'oracle', userpassword: 'oracle', usessl: false },
   ibmdb2: { host: 'localhost', port: '50000', database: 'NORTHWND', userid: 'db2inst1', userpassword: 'password', usessl: false },
+  supabase: { host: 'localhost', port: '5435', database: 'Northwind', userid: 'supabase_admin', userpassword: 'postgres', usessl: false },
 };
 
 @Component({

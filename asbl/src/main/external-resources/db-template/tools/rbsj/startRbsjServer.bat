@@ -25,6 +25,12 @@ if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\rbsj-exe.log"  del /F /Q "%PORTABL
 choco --version > "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log" 2>&1 || echo.
 docker --version >> "%PORTABLE_EXECUTABLE_DIR_PATH%\logs\electron.log" 2>&1 || echo.
 
+REM Safety: stop any hanging Supabase containers so their volume locks are released
+if exist "%PORTABLE_EXECUTABLE_DIR_PATH%\db\supabase\docker-compose.yml" (
+  echo INFO: Stopping any lingering Supabase containers...
+  docker compose -f "%PORTABLE_EXECUTABLE_DIR_PATH%\db\supabase\docker-compose.yml" down >nul 2>&1
+)
+
 set "RB_SERVER_MODE=false"
 if exist "%FRONTEND_PATH%" set "RB_SERVER_MODE=true"
 if exist "%POLLING_PATH%"  set "RB_SERVER_MODE=true"

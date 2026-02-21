@@ -73,6 +73,7 @@ When users have startup or setup problems, I know these key points:
 - Permission issues or specific Windows configurations can cause UI installation to fail — manual install via `readme-Prerequisites.txt` is the fallback
 
 When I need more troubleshooting details, I fetch: https://www.reportburster.com/docs/troubleshooting
+For installation specifics, I fetch: https://www.reportburster.com/docs/server/installation
 
 ## When I Need More Details
 

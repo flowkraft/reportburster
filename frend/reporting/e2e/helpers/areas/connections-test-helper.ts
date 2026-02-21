@@ -18,6 +18,7 @@ export const DB_VENDORS_SUPPORTED = [
   'sqlite',
   'duckdb',
   'clickhouse',
+  'supabase',
 ];
 
 export const DB_VENDORS_DEFAULT = 'sqlite';
@@ -83,6 +84,8 @@ function vendorToPackId(vendor: string): string {
       return 'db-northwind-duckdb';
     case 'clickhouse':
       return 'db-northwind-clickhouse';
+    case 'supabase':
+      return 'db-northwind-supabase';
     default:
       return `db-northwind-${v}`;
   }
@@ -113,6 +116,8 @@ export class ConnectionsTestHelper {
         return { host: '', port: '', db: '/db/sample-northwind-duckdb/northwind.duckdb', user: '', pass: '' };
       case 'clickhouse':
         return { host: 'localhost', port: '8123', db: 'northwind', user: 'default', pass: 'clickhouse' };
+      case 'supabase':
+        return { host: 'localhost', port: '5435', db: 'Northwind', user: 'supabase_admin', pass: 'postgres' };
       default:
         return { host: 'localhost', port: '5432', db: 'Northwind', user: 'postgres', pass: 'postgres' };
     }

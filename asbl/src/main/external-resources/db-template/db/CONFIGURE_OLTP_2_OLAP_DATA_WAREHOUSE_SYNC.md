@@ -84,10 +84,10 @@ clickhouse-sink-connector:
     - DATABASE_SERVER_NAME=mysql-source
     - DATABASE_ALLOWPUBLICKEYRETRIEVAL=true
     # Target
-    - CLICKHOUSE_URL=http://fkraft-clickhouse:8123
+    - CLICKHOUSE_URL=http://clickhouse:8123
     - CLICKHOUSE_USER=default
-    - CLICKHOUSE_PASSWORD=mysecret
-    - CLICKHOUSE_DATABASE=default
+    - CLICKHOUSE_PASSWORD=clickhouse
+    - CLICKHOUSE_DATABASE=northwind
     # Replication
     - TABLE_INCLUDE_LIST=your_database.orders,your_database.customers
     - AUTO_CREATE_TABLES=true
@@ -111,10 +111,10 @@ clickhouse-sink-connector:
     - SLOT_NAME=ch_sink_slot
     - PUBLICATION_NAME=my_publication
     # Target
-    - CLICKHOUSE_URL=http://fkraft-clickhouse:8123
+    - CLICKHOUSE_URL=http://clickhouse:8123
     - CLICKHOUSE_USER=default
-    - CLICKHOUSE_PASSWORD=mysecret
-    - CLICKHOUSE_DATABASE=default
+    - CLICKHOUSE_PASSWORD=clickhouse
+    - CLICKHOUSE_DATABASE=northwind
     # Replication
     - TABLE_INCLUDE_LIST=public.orders,public.customers
     - AUTO_CREATE_TABLES=true
@@ -155,11 +155,11 @@ SELECT * FROM orders WHERE id = 1;
 
 ## Step 6: Use in ReportBurster
 
-1. **Configure a ClickHouse database connection** — [see how](https://www.reportburster.com/docs/report-generation#database-connections)
+1. **Configure a ClickHouse database connection** — [see how](https://www.reportburster.com/docs/data-exploration/database-connections)
 
-2. **Create a Pivot Table** using your ClickHouse connection — [see how](https://www.reportburster.com/docs/bi-analytics/embed-web-components/pivottables)
+2. **Create a Pivot Table** using your ClickHouse connection — [see how](https://www.reportburster.com/docs/bi-analytics/web-components/pivottables)
 
-3. **Use or embed** in ReportBurster's Analytics Portal or your own web apps — [see how](https://www.reportburster.com/docs/bi-analytics/embed-web-components)
+3. **Use or embed** in ReportBurster's Analytics Portal or your own web apps — [see how](https://www.reportburster.com/docs/bi-analytics/web-components)
 
 ---
 

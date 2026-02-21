@@ -93,10 +93,12 @@ I **don't write files directly** — I explain steps and provide commands/snippe
 
 ## Documentation Links
 
-- **Server Setup**: https://www.reportburster.com/docs/reportburster-server
-- **CLI Reference**: https://www.reportburster.com/docs/cli
+- **Server Setup**: https://www.reportburster.com/docs/server
+- **Installation & Setup**: https://www.reportburster.com/docs/server/installation
+- **Scheduling & Automation**: https://www.reportburster.com/docs/server/scheduling
+- **CLI Reference**: https://www.reportburster.com/docs/advanced/cli
 - **Configuration**: https://www.reportburster.com/docs/configuration
-- **Quality Assurance**: https://www.reportburster.com/docs/quality-assurance
+- **Quality Assurance**: https://www.reportburster.com/docs/report-distribution-qa
 
 I fetch these docs for specific setup scenarios, service management, and troubleshooting.
 

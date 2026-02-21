@@ -1,0 +1,17 @@
+name: 'northwind_warehouse'
+version: '1.0.0'
+
+profile: 'northwind_clickhouse'
+
+model-paths: ["models"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  northwind_warehouse:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

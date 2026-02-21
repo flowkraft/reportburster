@@ -174,7 +174,7 @@ public class ServicesManager {
 	 */
 	private static void handleNorthwindStart(String managerArgsString) throws Exception {
 
-		// Parse vendor, path, port from managerArgsString
+		// Parse vendor, path, port from args
 		String[] parts = managerArgsString.split("\\s+");
 		String vendorName = parts[0].toUpperCase();
 		String customPath = null;
@@ -195,9 +195,7 @@ public class ServicesManager {
 		}
 
 		DatabaseVendor vendor = DatabaseVendor.valueOf(vendorName);
-		// ... (rest of the start logic, printing messages, calling
-		// dbManager.startDatabase) ...
-		dbManager.startDatabase(vendor, customPath, customPort); // Call manager
+		dbManager.startDatabase(vendor, customPath, customPort);
 	}
 
 	/**
@@ -302,6 +300,7 @@ public class ServicesManager {
 				tableQuery = "SELECT tabname AS table_name, card AS num_rows FROM syscat.tables WHERE tabschema = CURRENT SCHEMA ORDER BY tabname";
 				break;
 			case POSTGRES:
+			case SUPABASE:
 				tableQuery = "SELECT tablename AS table_name, COALESCE(n_live_tup, 0) AS num_rows FROM pg_stat_user_tables WHERE schemaname = current_schema() ORDER BY tablename";
 				break;
 			case MYSQL:

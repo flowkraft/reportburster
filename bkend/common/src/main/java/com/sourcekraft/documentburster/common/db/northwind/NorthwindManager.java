@@ -62,7 +62,8 @@ public class NorthwindManager implements AutoCloseable {
 		SQLSERVER(1433, "sa", "Password123!", "Northwind", Duration.ofMinutes(60)),
 		ORACLE(1521, "oracle", "oracle", "XEPDB1", Duration.ofMinutes(60)), // DB name is XE for Oracle XE
 		DB2(50000, "db2inst1", "password", "NORTHWND", Duration.ofMinutes(60)),
-		CLICKHOUSE(8123, "default", "clickhouse", "northwind", Duration.ofMinutes(30)); // HTTP interface port
+		CLICKHOUSE(8123, "default", "clickhouse", "northwind", Duration.ofMinutes(30)), // HTTP interface port
+		SUPABASE(5435, "supabase_admin", "postgres", "Northwind", Duration.ofMinutes(30)); // Supabase PostgreSQL BaaS
 
 		private final int containerPort;
 		private final String defaultUser;
@@ -103,6 +104,9 @@ public class NorthwindManager implements AutoCloseable {
 			if (this == SQLSERVER) {
 				return "sqlserver"; // docker-compose service names cannot contain uppercase
 			}
+			if (this == SUPABASE) {
+				return "supabase-db"; // Supabase uses its own compose file with this service name
+			}
 			return this.name().toLowerCase();
 		}
 	}
@@ -122,6 +126,17 @@ public class NorthwindManager implements AutoCloseable {
 	}
 
 	/**
+	 * Returns the docker-compose file path for the given vendor.
+	 * Supabase uses its own compose file in a subdirectory.
+	 */
+	private String getDockerComposeFilePathForVendor(DatabaseVendor vendor) {
+		if (vendor == DatabaseVendor.SUPABASE) {
+			return Paths.get(baseDataPath, "supabase", DOCKER_COMPOSE_FILENAME).toString();
+		}
+		return this.dockerComposeFilePath;
+	}
+
+	/**
 	 * Starts a database service using Docker Compose, then initializes it with data
 	 * if it's the first run.
 	 */
@@ -133,7 +148,7 @@ public class NorthwindManager implements AutoCloseable {
 
 		Integer hostPortToUse = (customHostPort != null) ? customHostPort : getDefaultHostPort(vendor);
 
-		log.info("[SQL_SERVER_DEBUG] Starting database: vendor={}, hostPort={}, hostDataPath={}",
+		log.info("[" + vendor + "] Starting database: vendor={}, hostPort={}, hostDataPath={}",
 				vendor, hostPortToUse, hostDataPath);
 
 		// --- Initialization Check ---
@@ -175,9 +190,6 @@ public class NorthwindManager implements AutoCloseable {
 				getJdbcUrl(vendor));
 	}
 
-	/**
-	 * Overloaded version of startDatabase for backward compatibility.
-	 */
 	public void startDatabase(DatabaseVendor vendor, String customHostPath) throws Exception {
 		startDatabase(vendor, customHostPath, null);
 	}
@@ -187,17 +199,24 @@ public class NorthwindManager implements AutoCloseable {
 	 */
 	private void startDatabaseWithDockerCompose(DatabaseVendor vendor, Integer hostPort) throws Exception {
 		String serviceName = vendor.getDockerComposeServiceName();
-		Path workingDir = Paths.get(this.dockerComposeFilePath).getParent();
+		String composeFilePath = getDockerComposeFilePathForVendor(vendor);
+		Path workingDir = Paths.get(composeFilePath).getParent();
 
 		List<String> command = new ArrayList<>();
 		command.add("docker");
 		command.add("compose");
 		command.add("-f");
 		command.add(DOCKER_COMPOSE_FILENAME);
+
 		command.add("up");
 		command.add("-d");
 		command.add("--remove-orphans"); // Clean up any old containers
-		command.add(serviceName);
+
+		// Supabase has its own compose file — start all services (official behavior).
+		// Other vendors share one compose file — start only the named service.
+		if (vendor != DatabaseVendor.SUPABASE) {
+			command.add(serviceName);
+		}
 
 		ProcessExecutor executor = new ProcessExecutor().command(command).directory(workingDir.toFile())
 				// .redirectOutput(Slf4jStream.of(getClass()).asInfo())
@@ -217,15 +236,15 @@ public class NorthwindManager implements AutoCloseable {
 
 		log.debug("Executing: {}", String.join(" ", command));
 
-		log.info("[SQL_SERVER_DEBUG] Executing docker-compose command: {}", String.join(" ", command));
-		log.info("[SQL_SERVER_DEBUG] Working directory: {}", workingDir);
+		log.info("[" + vendor + "] Executing docker-compose command: {}", String.join(" ", command));
+		log.info("[" + vendor + "] Working directory: {}", workingDir);
 		if (hostPort != null) {
-			log.info("[SQL_SERVER_DEBUG] Environment variable {}={}", vendor.name() + "_PORT", hostPort);
+			log.info("[" + vendor + "] Environment variable {}={}", vendor.name() + "_PORT", hostPort);
 		}
 
 		ProcessResult result = executor.execute();
 
-		log.info("[SQL_SERVER_DEBUG] Docker compose exit code: {}, output: {}",
+		log.info("[" + vendor + "] Docker compose exit code: {}, output: {}",
 				result.getExitValue(), result.outputUTF8());
 
 		if (result.getExitValue() != 0) {
@@ -235,7 +254,7 @@ public class NorthwindManager implements AutoCloseable {
 
 		// ✅ ADD THIS: For SQL Server, create database before normal wait
 		if (vendor == DatabaseVendor.SQLSERVER) {
-			log.info("[SQL_SERVER_DEBUG] SQL Server started, creating Northwind database...");
+			log.info("[" + vendor + "] SQL Server started, creating Northwind database...");
 			ensureSqlServerDatabaseExists(vendor, hostPort);
 		}
 
@@ -250,21 +269,24 @@ public class NorthwindManager implements AutoCloseable {
 			sqliteDbFile = null; // Just clear the reference
 		} else {
 			String serviceName = vendor.getDockerComposeServiceName();
-			Path workingDir = Paths.get(this.dockerComposeFilePath).getParent();
+			String composeFilePath = getDockerComposeFilePathForVendor(vendor);
+			Path workingDir = Paths.get(composeFilePath).getParent();
 
-			// Use the same command structure as startDatabaseWithDockerCompose for
-			// consistency
 			List<String> command = new ArrayList<>();
 			command.add("docker");
 			command.add("compose");
 			command.add("-f");
-			command.add(DOCKER_COMPOSE_FILENAME); // Use relative path like start method
+			command.add(DOCKER_COMPOSE_FILENAME);
+
 			command.add("stop");
-			command.add(serviceName);
+
+			// Supabase has its own compose file — omit service name to stop all 13 services.
+			// Other vendors share one compose file — specify service name to stop only that vendor.
+			if (vendor != DatabaseVendor.SUPABASE) {
+				command.add(serviceName);
+			}
 
 			new ProcessExecutor().command(command).directory(workingDir.toFile())
-					// .redirectOutput(Slf4jStream.of(getClass()).asInfo())
-					// .redirectError(Slf4jStream.of(getClass()).asError())
 					.execute();
 		}
 
@@ -284,7 +306,7 @@ public class NorthwindManager implements AutoCloseable {
 		// Get effective host - converts localhost to host.docker.internal when running in Docker
 		final String host = Utils.getEffectiveHost("localhost");
 
-		log.info("[SQL_SERVER_DEBUG] waitForDatabaseToBeReady: vendor={}, host={}, port={}", vendor, host, port);
+		log.info("[" + vendor + "] waitForDatabaseToBeReady: vendor={}, host={}, port={}", vendor, host, port);
 
 		// Failsafe retry policy for the connection attempt
 		RetryPolicy<Object> retryPolicy = new RetryPolicy<>().handle(Throwable.class) // Handle any exception
@@ -294,14 +316,14 @@ public class NorthwindManager implements AutoCloseable {
 
 		Failsafe.with(retryPolicy).run(() -> {
 
-			log.info("[SQL_SERVER_DEBUG] Retry attempt starting for {}:{}", vendor, port);
+			log.info("[" + vendor + "] Retry attempt starting for {}:{}", vendor, port);
 
 			// First, check if the port is open to avoid immediate JDBC timeout
 			if (!Utils.isPortOpen(host, port, 2000)) {
 				throw new IOException("Port " + port + " is not open.");
 			}
 
-			log.info("[SQL_SERVER_DEBUG] Port {} is open, attempting JDBC connection", port);
+			log.info("[" + vendor + "] Port {} is open, attempting JDBC connection", port);
 
 			// Print classpath for debugging
 			// String classpath = System.getProperty("java.class.path");
@@ -311,7 +333,7 @@ public class NorthwindManager implements AutoCloseable {
 			String jdbcUrl = getJdbcUrl(vendor);
 			log.info("Attempting JDBC connection with URL: {}", jdbcUrl);
 
-			log.info("[SQL_SERVER_DEBUG] DriverManager.getConnection(url={}, user={}, pass=***)",
+			log.info("[" + vendor + "] DriverManager.getConnection(url={}, user={}, pass=***)",
 					jdbcUrl, getUsername(vendor));
 
 			DriverManager.setLoginTimeout(5);
@@ -320,19 +342,19 @@ public class NorthwindManager implements AutoCloseable {
 			try (Connection connection = DriverManager.getConnection(jdbcUrl, getUsername(vendor),
 					getPassword(vendor))) {
 
-				log.info("[SQL_SERVER_DEBUG] Connection established, checking validity");
+				log.info("[" + vendor + "] Connection established, checking validity");
 
 				if (!connection.isValid(5)) {
-					log.info("[SQL_SERVER_DEBUG] Connection is NOT valid");
+					log.info("[" + vendor + "] Connection is NOT valid");
 					throw new IOException("JDBC connection is not valid.");
 				}
 
-				log.info("[SQL_SERVER_DEBUG] Connection is valid, database is ready");
+				log.info("[" + vendor + "] Connection is valid, database is ready");
 
 			}
 		});
 
-		log.info("[SQL_SERVER_DEBUG] waitForDatabaseToBeReady completed successfully");
+		log.info("[" + vendor + "] waitForDatabaseToBeReady completed successfully");
 	}
 
 	/**
@@ -347,7 +369,7 @@ public class NorthwindManager implements AutoCloseable {
 				+ ";databaseName=master;encrypt=false;trustServerCertificate=true";
 		final String dbName = vendor.getDefaultDbName();
 
-		log.info("[SQL_SERVER_DEBUG] Waiting for SQL Server to accept connections on master DB...");
+		log.info("[" + vendor + "] Waiting for SQL Server to accept connections on master DB...");
 
 		// Wait for SQL Server to be ready (connect to master)
 		RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
@@ -357,18 +379,18 @@ public class NorthwindManager implements AutoCloseable {
 				.withMaxRetries(-1)
 				.onRetry(e -> {
 					Throwable cause = e.getLastFailure();
-					log.debug("[SQL_SERVER_DEBUG] Waiting for SQL Server (attempt #{}): {}",
+					log.debug("[" + vendor + "] Waiting for SQL Server (attempt #{}): {}",
 							e.getAttemptCount(),
 							cause != null ? cause.getMessage() : "unknown");
 				})
-				.onFailure(e -> log.error("[SQL_SERVER_DEBUG] Failed to connect to SQL Server master", e.getFailure()));
+				.onFailure(e -> log.error("[" + vendor + "] Failed to connect to SQL Server master", e.getFailure()));
 
 		Failsafe.with(retryPolicy).run(() -> {
 			if (!Utils.isPortOpen(host, port, 2000)) {
 				throw new IOException("Port " + port + " not open");
 			}
 
-			log.debug("[SQL_SERVER_DEBUG] Port {} open, attempting connection to master", port);
+			log.debug("[" + vendor + "] Port {} open, attempting connection to master", port);
 			DriverManager.setLoginTimeout(5);
 
 			try (Connection conn = DriverManager.getConnection(masterUrl, getUsername(vendor), getPassword(vendor))) {
@@ -376,7 +398,7 @@ public class NorthwindManager implements AutoCloseable {
 					throw new IOException("Connection to master not valid");
 				}
 
-				log.info("[SQL_SERVER_DEBUG] Connected to master DB, checking if {} exists", dbName);
+				log.info("[" + vendor + "] Connected to master DB, checking if {} exists", dbName);
 
 				try (Statement stmt = conn.createStatement()) {
 					// Check if database exists
@@ -384,21 +406,21 @@ public class NorthwindManager implements AutoCloseable {
 							"SELECT database_id FROM sys.databases WHERE name = '" + dbName + "'");
 
 					if (!rs.next()) {
-						log.info("[SQL_SERVER_DEBUG] Database {} does not exist, creating it...", dbName);
+						log.info("[" + vendor + "] Database {} does not exist, creating it...", dbName);
 						stmt.execute("CREATE DATABASE [" + dbName + "]");
 
 						// Wait a moment for creation to complete
 						Thread.sleep(2000);
 
-						log.info("[SQL_SERVER_DEBUG] Database {} created successfully", dbName);
+						log.info("[" + vendor + "] Database {} created successfully", dbName);
 					} else {
-						log.info("[SQL_SERVER_DEBUG] Database {} already exists", dbName);
+						log.info("[" + vendor + "] Database {} already exists", dbName);
 					}
 				}
 			}
 		});
 
-		log.info("[SQL_SERVER_DEBUG] ensureSqlServerDatabaseExists() completed");
+		log.info("[" + vendor + "] ensureSqlServerDatabaseExists() completed");
 	}
 
 	/**
@@ -434,7 +456,7 @@ public class NorthwindManager implements AutoCloseable {
 				return "jdbc:duckdb:" + getActualDataPath(vendor).resolve("northwind.duckdb").toString();
 			case SQLSERVER:
 				String url = "jdbc:sqlserver://" + host + ":" + port + ";databaseName=" + dbName + ";encrypt=false";
-				log.info("[SQL_SERVER_DEBUG] Constructed SQL Server URL: {}", url);
+				log.info("[" + vendor + "] Constructed SQL Server URL: {}", url);
 				return url;
 			case ORACLE:
 				return "jdbc:oracle:thin:@//" + host + ":" + port + "/" + dbName;
@@ -442,6 +464,8 @@ public class NorthwindManager implements AutoCloseable {
 				return "jdbc:db2://" + host + ":" + port + "/" + dbName;
 			case CLICKHOUSE:
 				return "jdbc:clickhouse://" + host + ":" + port + "/" + dbName;
+			case SUPABASE:
+				return "jdbc:postgresql://" + host + ":" + port + "/" + dbName + "?currentSchema=public";
 			default:
 				throw new IllegalArgumentException("Unsupported database vendor: " + vendor);
 		}
@@ -526,8 +550,8 @@ public class NorthwindManager implements AutoCloseable {
             return; // Skip JPA initialization below - already created via SQL
         }
 
-        log.info("[SQL_SERVER_DEBUG] Starting JPA initialization for {}", vendor);
-        log.info("[SQL_SERVER_DEBUG] Persistence unit: northwind-{}", vendor.name().toLowerCase());
+        log.info("[" + vendor + "] Starting JPA initialization for {}", vendor);
+        log.info("[" + vendor + "] Persistence unit: northwind-{}", vendor.name().toLowerCase());
 
         EntityManagerFactory emf = null;
         EntityManager em = null;
@@ -539,15 +563,20 @@ public class NorthwindManager implements AutoCloseable {
             // For DB2, set default schema explicitly (optional but safer)
             if (vendor == DatabaseVendor.DB2) {
                 props.putIfAbsent("hibernate.default_schema", "DB2INST1");
-                // You can also add currentSchema via URL if desired:
-                // props.put("jakarta.persistence.jdbc.url", getJdbcUrl(vendor) + ":currentSchema=DB2INST1;");
             }
 
-            log.info("[SQL_SERVER_DEBUG] JPA properties: url={}, user={}",
+            // For Supabase, constrain Hibernate to public schema only.
+            // supabase_admin sees auth/storage/vault schemas — without this,
+            // Hibernate may interfere with Supabase internal objects.
+            if (vendor == DatabaseVendor.SUPABASE) {
+                props.putIfAbsent("hibernate.default_schema", "public");
+            }
+
+            log.info("[" + vendor + "] JPA properties: url={}, user={}",
                     props.get("jakarta.persistence.jdbc.url"),
                     props.get("jakarta.persistence.jdbc.user"));
 
-            log.info("[SQL_SERVER_DEBUG] Creating EntityManagerFactory");
+            log.info("[" + vendor + "] Creating EntityManagerFactory");
 
             // Retry EMF creation to ride over transient DB2 readiness (-4499) issues
             RetryPolicy<EntityManagerFactory> emfRetry = new RetryPolicy<EntityManagerFactory>()
@@ -564,15 +593,15 @@ public class NorthwindManager implements AutoCloseable {
                     Persistence.createEntityManagerFactory(persistenceUnitName, props)
             );
 
-            log.info("[SQL_SERVER_DEBUG] Creating EntityManager");
+            log.info("[" + vendor + "] Creating EntityManager");
             em = emf.createEntityManager();
 
-            log.info("[SQL_SERVER_DEBUG] Running NorthwindDataGenerator");
+            log.info("[" + vendor + "] Running NorthwindDataGenerator");
 
             NorthwindDataGenerator generator = new NorthwindDataGenerator(em);
             generator.generateAll();
 
-            log.info("[SQL_SERVER_DEBUG] Data generation complete, creating marker file");
+            log.info("[" + vendor + "] Data generation complete, creating marker file");
 
             if (vendor != DatabaseVendor.SQLITE) {
                 Path markerFilePath = hostDataPath.resolve(MARKER_FILENAME);
@@ -580,7 +609,7 @@ public class NorthwindManager implements AutoCloseable {
                 if (!Files.exists(markerFilePath)) {
                     Files.createFile(markerFilePath);
                 }
-                log.info("[SQL_SERVER_DEBUG] Marker file ensured: {}", markerFilePath);
+                log.info("[" + vendor + "] Marker file ensured: {}", markerFilePath);
             }
         } finally {
             if (em != null && em.isOpen()) {
@@ -599,8 +628,15 @@ public class NorthwindManager implements AutoCloseable {
 		properties.put("jakarta.persistence.jdbc.password", getPassword(vendor));
 
 		if (forDdl) {
-			properties.put("jakarta.persistence.schema-generation.database.action", "drop-and-create");
-			properties.put("hibernate.hbm2ddl.auto", "create"); // For Hibernate
+			// Supabase's superuser sees internal schemas (auth, storage, vault).
+			// "drop-and-create" fails because the drop phase encounters those objects.
+			// Use "create" only for Supabase — first-run only, nothing to drop anyway.
+			if (vendor == DatabaseVendor.SUPABASE) {
+				properties.put("jakarta.persistence.schema-generation.database.action", "create");
+			} else {
+				properties.put("jakarta.persistence.schema-generation.database.action", "drop-and-create");
+			}
+			properties.put("hibernate.hbm2ddl.auto", "create");
 		}
 
 		return properties;

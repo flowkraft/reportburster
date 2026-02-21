@@ -157,6 +157,7 @@ To help users effectively, I read whatever I need:
 ## Documentation Link
 
 - **Report Generation**: https://www.reportburster.com/docs/report-generation
+- **AI-Powered Reporting**: https://www.reportburster.com/docs/report-generation/ai-powered-reporting
 
 When I need specifics on template syntax, FOP configuration, or advanced Groovy patterns, I fetch this documentation.
 

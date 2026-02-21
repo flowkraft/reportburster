@@ -34,6 +34,7 @@ export interface ManagedApp {
   noCacheOnStart?: boolean;
   // Demo login info HTML (shown when app is running)
   demoInfo?: string;
+  tutorialLink?: { label: string; url: string };
 }
 
 @Injectable({
@@ -72,6 +73,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop grails-playground',
         tags: ['flowkraft', 'admin-panel', 'grails', 'front-facing' , 'customer-portal', 'payments', 'bi', 'charts', 'analytics', 'olap', 'visualization', 'data-warehouse', 'ReportBurster\'s App'],
         visible: true,
+        tutorialLink: { label: 'Want to build your own? See a real walkthrough →', url: 'https://www.reportburster.com/docs/ai-crew/athena#athena---new-billing-portal' },
       },
       {
         id: 'flowkraft-bkend-boot-groovy',
@@ -88,6 +90,7 @@ export class AppsManagerService {
         tags: ['flowkraft', 'backend', 'etl', 'automation', 'crons-job-scheduling', 'ReportBurster\'s App'],
         visible: true,
         launch: false, // No UI - API/automation only
+        tutorialLink: { label: 'Want to build your own? See a real walkthrough →', url: 'https://www.reportburster.com/docs/ai-crew/hephaestus#billing-portal--payment-reminders-for-overdue-bills' },
       },
       {
         id: 'flowkraft-next',
@@ -107,6 +110,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop next-playground',
         tags: ['flowkraft', 'admin-panel', 'front-facing', 'dashboards', 'customer-portal', 'payments', 'next.js', 'react', 'bi', 'charts', 'analytics', 'olap', 'visualization', 'data-warehouse', 'ReportBurster\'s App'],
         visible: true,
+        tutorialLink: { label: 'Want to build your own? See a real walkthrough →', url: 'https://www.reportburster.com/docs/ai-crew/athena#athena---new-billing-portal' },
       },
       {
         id: 'cms-webportal',
@@ -152,6 +156,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop cms-webportal-playground',
         tags: ['flowkraft', 'cms', 'admin-panel', 'front-facing', 'customer-portal', 'cms', 'wordpress', 'ReportBurster\'s App'],
         visible: true,
+        tutorialLink: { label: 'Want to build your own? See a real walkthrough →', url: 'https://www.reportburster.com/docs/ai-crew/athena#athena---new-billing-portal' },
       },
       {
         id: 'flowkraft-ai-hub',

@@ -14,7 +14,7 @@ import {
   siElasticsearch, // Placeholder 2
   siServerless, // Placeholder 3
   siApachecassandra, // Placeholder 4 - for ClickHouse (columnar DB)
-  // Add any other icons you might use here
+  siSupabase,
 } from 'simple-icons';
 
 import { ApiService } from '../../providers/api.service';
@@ -70,7 +70,7 @@ const iconMap = {
   mysql: siMysql,
   mariadb: siMariadb,
   sqlite: siSqlite,
-  // Add other mappings as needed based on your definition.icon values
+  supabase: siSupabase,
 };
 
 // Helper function to construct default commands based on definition
@@ -271,6 +271,14 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
         } else {
           pack.status = 'unknown';
         }
+
+        // Keep displayed command in sync with status so the correct
+        // start/stop command is used when the user clicks the button.
+        // Without this, currentCommandValue can get stuck on stopCmd
+        // after a stop completes, causing a "start" click to actually
+        // send a stop command to the backend.
+        const isActive = (pack.status === 'running' || pack.status === 'starting');
+        pack.currentCommandValue = isActive ? pack.stopCmd : pack.startCmd;
       }
     } catch (error) {
       console.error('[StarterPacks] Error refreshing statuses:', error);
@@ -361,6 +369,8 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     // pending state
     pack.status = action === 'start' ? 'starting' : 'stopping';
     pack.lastOutput = `Executing ${action}...`;
+    // Force Angular to detect the status change (callback may run outside NgZone)
+    this.cdRef.detectChanges();
 
     const args = pack.currentCommandValue.split(/\s+/);
 
@@ -574,6 +584,23 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
       }
     } catch (err) {
       console.error('Failed polling pack statuses', err);
+    }
+  }
+
+  toggleCommandFlag(pack: StarterPackUIData, flag: string, event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    const isChecked = checkbox.checked;
+
+    if (!pack.currentCommandValue) return;
+
+    if (!isChecked) {
+      pack.currentCommandValue = pack.currentCommandValue
+        .replace(new RegExp(`\\s*${flag}`, 'g'), '')
+        .trim();
+    } else {
+      if (!pack.currentCommandValue.includes(flag)) {
+        pack.currentCommandValue = pack.currentCommandValue.trim() + ' ' + flag;
+      }
     }
   }
 }

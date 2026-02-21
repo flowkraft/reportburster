@@ -331,7 +331,7 @@ export default function AgentsPage() {
         ? 'bg-green-700'
         : logStatus === 'error'
           ? 'bg-red-700'
-          : 'bg-slate-800';
+          : 'bg-zinc-800';
 
     const StatusIcon =
       logStatus === 'success'
@@ -391,7 +391,7 @@ export default function AgentsPage() {
           </div>
 
           {/* Log content — newest first */}
-          <div className="flex-1 bg-[#1e1e2e] overflow-y-auto p-4 font-mono text-sm">
+          <div className="flex-1 bg-code-bg overflow-y-auto p-4 font-mono text-sm">
             {logLines.length === 0 ? (
               <div className="text-gray-500 text-center mt-8">Waiting for logs...</div>
             ) : (
@@ -450,7 +450,7 @@ export default function AgentsPage() {
               size="lg"
               onClick={() => setShowProvisionConfirm(true)}
               disabled={provisioning}
-              className="bg-rb-cyan hover:bg-rb-cyan/90 text-white px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {provisioning ? (
                 <>
@@ -513,7 +513,7 @@ export default function AgentsPage() {
                   handleProvisionAgents();
                 }}
                 disabled={provisioning}
-                className="bg-rb-cyan hover:bg-rb-cyan/90 text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 Yes, Provision Agents
               </Button>
@@ -549,7 +549,7 @@ export default function AgentsPage() {
               type="checkbox"
               checked={showAlternatives}
               onChange={(e) => setShowAlternatives(e.target.checked)}
-              className="rounded border-border text-rb-cyan focus:ring-rb-cyan cursor-pointer"
+              className="rounded border-border text-primary focus:ring-primary cursor-pointer"
             />
             <span className="text-xs text-muted-foreground">Show Next.js &amp; WordPress Oracles</span>
           </label>
@@ -579,7 +579,7 @@ export default function AgentsPage() {
                   key={agent.id}
                   id={`agent-row-${agent.name.toLowerCase().replace(/\s+/g, '-')}`}
                   className={`grid grid-cols-12 gap-4 px-6 py-4 hover:bg-muted/30 transition-colors ${
-                    athena ? 'bg-rb-cyan/5 border-l-2 border-l-rb-cyan' : ''
+                    athena ? 'bg-primary/5 border-l-2 border-l-primary' : ''
                   }`}
                 >
                   {/* Name Column */}
@@ -617,7 +617,7 @@ export default function AgentsPage() {
                         .map((tag) => (
                           <span
                             key={tag}
-                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rb-cyan/10 text-rb-cyan border border-rb-cyan/20"
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-tag-bg text-tag-fg border border-tag-border"
                           >
                             {tag}
                           </span>
@@ -640,7 +640,7 @@ export default function AgentsPage() {
                       variant="default"
                       size="sm"
                       onClick={() => handleChatWithAgent(agent)}
-                      className="bg-rb-cyan hover:bg-rb-cyan/90 text-white"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                       <MessageSquare className="w-4 h-4 mr-1.5" />
                       Chat
@@ -660,7 +660,7 @@ export default function AgentsPage() {
           variant="outline"
           size="lg"
           onClick={() => router.push('/workspaces')}
-          className="border-rb-cyan text-rb-cyan hover:bg-rb-cyan hover:text-white"
+          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
         >
           <FolderOpen className="w-5 h-5 mr-2" />
           View Oracle Workspaces
@@ -701,7 +701,7 @@ export default function AgentsPage() {
                     className="w-full px-4 py-2.5 text-sm text-left hover:bg-muted transition-colors flex items-center gap-3"
                   >
                     <Code className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-card-foreground">Bkend/ETL Jobs & Frend Web Apps</span>
+                    <span className="text-card-foreground">The Apps</span>
                   </button>
                 </div>
               </div>
@@ -734,7 +734,7 @@ export default function AgentsPage() {
                   {selectedAgent.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-rb-cyan/10 text-rb-cyan border border-rb-cyan/20"
+                      className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-tag-bg text-tag-fg border border-tag-border"
                     >
                       {tag}
                     </span>
@@ -757,7 +757,7 @@ export default function AgentsPage() {
                     handleChatWithAgent(selectedAgent);
                     setIsModalOpen(false);
                   }}
-                  className="bg-rb-cyan hover:bg-rb-cyan/90 text-white"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Chat with {selectedAgent.name}
@@ -785,7 +785,7 @@ export default function AgentsPage() {
               onClick={() => setSettingsTab('update')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 settingsTab === 'update'
-                  ? 'border-rb-cyan text-rb-cyan'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -796,7 +796,7 @@ export default function AgentsPage() {
               onClick={() => setSettingsTab('provider')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 settingsTab === 'provider'
-                  ? 'border-rb-cyan text-rb-cyan'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -818,7 +818,7 @@ export default function AgentsPage() {
                   type="checkbox"
                   checked={giveDbQueryToolToAthena}
                   onChange={(e) => setGiveDbQueryToolToAthena(e.target.checked)}
-                  className="mt-0.5 rounded border-border text-rb-cyan focus:ring-rb-cyan cursor-pointer"
+                  className="mt-0.5 rounded border-border text-primary focus:ring-primary cursor-pointer"
                 />
                 <div>
                   <span className="text-sm font-medium text-foreground">Give db_query tool to Athena</span>
@@ -837,7 +837,7 @@ export default function AgentsPage() {
                   type="checkbox"
                   checked={forceUpdate}
                   onChange={(e) => setForceUpdate(e.target.checked)}
-                  className="mt-0.5 rounded border-border text-rb-cyan focus:ring-rb-cyan cursor-pointer"
+                  className="mt-0.5 rounded border-border text-primary focus:ring-primary cursor-pointer"
                 />
                 <div>
                   <span className="text-sm font-medium text-foreground">Force recreate</span>
@@ -856,7 +856,7 @@ export default function AgentsPage() {
                     handleProvisionAgents(forceUpdate, giveDbQueryToolToAthena);
                   }}
                   disabled={provisioning}
-                  className="bg-rb-cyan hover:bg-rb-cyan/90 text-white"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   Yes, Update Agents
                 </Button>

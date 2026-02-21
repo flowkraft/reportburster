@@ -192,7 +192,7 @@ function PlantUMLDiagram({ source }: { source: string }) {
         <div className="rounded-md bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-700 dark:text-amber-300 mb-2">
           Kroki.io failed to render this diagram — showing source code
         </div>
-        <pre className="overflow-x-auto rounded-lg text-xs" style={{ margin: 0, background: "#2d2d2d", color: "#ccc", padding: "1rem" }}>
+        <pre className="overflow-x-auto rounded-lg text-xs bg-code-bg text-code-fg p-4" style={{ margin: 0 }}>
           <code dangerouslySetInnerHTML={{ __html: highlighted }} />
         </pre>
       </div>
@@ -215,7 +215,7 @@ function MarkdownCode({ className, children, ...props }: React.HTMLAttributes<HT
   if (lang && Prism.languages[lang]) {
     const highlighted = Prism.highlight(code, Prism.languages[lang], lang);
     return (
-      <pre className="overflow-x-auto rounded-lg text-xs my-2" style={{ margin: 0, background: "#2d2d2d", color: "#ccc", padding: "1rem" }}>
+      <pre className="overflow-x-auto rounded-lg text-xs my-2 bg-code-bg text-code-fg p-4" style={{ margin: 0 }}>
         <code dangerouslySetInnerHTML={{ __html: highlighted }} />
       </pre>
     );
@@ -224,14 +224,14 @@ function MarkdownCode({ className, children, ...props }: React.HTMLAttributes<HT
   // Fenced block without recognized language — dark code block, no highlighting
   if (className?.startsWith("language-")) {
     return (
-      <pre className="overflow-x-auto rounded-lg text-xs my-2" style={{ margin: 0, background: "#2d2d2d", color: "#ccc", padding: "1rem" }}>
+      <pre className="overflow-x-auto rounded-lg text-xs my-2 bg-code-bg text-code-fg p-4" style={{ margin: 0 }}>
         <code>{code}</code>
       </pre>
     );
   }
 
   // Inline code
-  return <code className="bg-muted px-1.5 py-0.5 rounded text-sm" {...props}>{children}</code>;
+  return <code className="px-1.5 py-0.5 rounded text-xs bg-muted" {...props}>{children}</code>;
 }
 
 /** Shared markdown components for ReactMarkdown — uses Prism for code highlighting. */
@@ -255,6 +255,7 @@ export default function Chat2DBPage() {
   // Connection state
   const [connections, setConnections] = useState<DbConnection[]>([]);
   const [selectedCode, setSelectedCode] = useState("");
+  const [connectedCode, setConnectedCode] = useState("");  // actually connected DB
   const [connStatus, setConnStatus] = useState<"idle" | "connecting" | "connected" | "error">("idle");
   const [connError, setConnError] = useState("");
   const [sendSchema, setSendSchema] = useState(true);
@@ -316,6 +317,7 @@ export default function Chat2DBPage() {
       }
 
       setConnStatus("connected");
+      setConnectedCode(selectedCode);
       const conn = connections.find((c) => c.code === selectedCode);
       setMessages((prev) => [
         ...prev,
@@ -465,7 +467,7 @@ export default function Chat2DBPage() {
   // Render helpers
   // ---------------------------------------------------------------------------
 
-  const isConnected = connStatus === "connected";
+  const isConnected = connStatus === "connected" || !!connectedCode;
 
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden">
@@ -474,7 +476,7 @@ export default function Chat2DBPage() {
         {/* Line 1: Brand */}
         <div className="flex items-center gap-2">
           <span className="text-lg">🦉</span>
-          <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">Chat2DB</span>
+          <span className="text-sm font-semibold text-athena-accent">Chat2DB</span>
           <span className="text-xs text-muted-foreground">
             powered by Athena — ask in plain English, get SQL + results + charts. Refine, drill deeper, visualize.
           </span>
@@ -488,7 +490,16 @@ export default function Chat2DBPage() {
           <select
             id="database-selector"
             value={selectedCode}
-            onChange={(e) => setSelectedCode(e.target.value)}
+            onChange={(e) => {
+              setSelectedCode(e.target.value);
+              // Reset status when switching — user must press Connect
+              if (e.target.value !== connectedCode) {
+                setConnStatus("idle");
+                setConnError("");
+              } else if (connectedCode) {
+                setConnStatus("connected");
+              }
+            }}
             className="h-8 rounded-md border bg-background px-2 text-sm outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="">-- Select a database --</option>
@@ -532,8 +543,11 @@ export default function Chat2DBPage() {
             {connStatus === "connected" && (
               <>
                 <Check className="h-4 w-4 text-green-500 shrink-0" />
-                <span className="text-green-600 dark:text-green-400 truncate">Connected to {selectedCode}</span>
+                <span className="text-green-600 dark:text-green-400 truncate">Connected to {connectedCode}</span>
               </>
+            )}
+            {connStatus === "connecting" && (
+              <span className="text-muted-foreground">Connecting...</span>
             )}
             {connStatus === "error" && (
               <>
@@ -541,8 +555,13 @@ export default function Chat2DBPage() {
                 <span className="text-red-600 dark:text-red-400 truncate">{connError}</span>
               </>
             )}
-            {connStatus === "idle" && (
-              <span className="text-muted-foreground">No database selected</span>
+            {connStatus === "idle" && !connectedCode && (
+              <span className="text-muted-foreground">No database connected</span>
+            )}
+            {connStatus === "idle" && connectedCode && (
+              <span className="text-muted-foreground truncate">
+                Press Connect to switch from {connectedCode}
+              </span>
             )}
           </div>
         </div>
@@ -593,7 +612,7 @@ export default function Chat2DBPage() {
                 return (
                   <Message key={msg.id} from="user">
                     <MessageContent className="ml-auto">
-                      <div className="rounded-2xl bg-primary px-4 py-2.5 text-sm text-primary-foreground">
+                      <div className="rounded-2xl px-4 py-2.5 text-sm bg-chat-user-bg text-chat-user-fg">
                         {msg.content}
                       </div>
                     </MessageContent>
@@ -605,17 +624,17 @@ export default function Chat2DBPage() {
               const r = msg.response;
               return (
                 <Message key={msg.id} from="assistant">
-                  <MessageAvatar className="bg-indigo-500 text-white" fallback="🦉" />
+                  <MessageAvatar className="bg-chat-avatar-bg text-white" fallback="🦉" />
                   <MessageContent>
-                    <span className="text-xs font-medium text-indigo-500 dark:text-indigo-400">Athena</span>
+                    <span className="text-xs font-semibold text-athena-accent">Athena</span>
                     {/* Error */}
                     {r?.error && (
-                      <div className="rounded-2xl bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+                      <div className="rounded-2xl px-4 py-3 text-sm bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300">
                         {r.error}
                         <div className="flex justify-end mt-2">
                           <button
                             onClick={() => copyToClipboard(r.error!, msg.id)}
-                            className="inline-flex items-center gap-1 rounded-md border border-red-200 dark:border-red-800 px-2 py-1 text-xs text-red-500 dark:text-red-400 transition-colors hover:bg-red-100 dark:hover:bg-red-900/30"
+                            className="inline-flex items-center gap-1 rounded-md border border-red-500/30 px-2 py-1 text-xs text-red-600 dark:text-red-400 transition-colors hover:bg-red-100 dark:hover:bg-red-900/30"
                           >
                             <Copy className="h-3 w-3" />
                             {copiedId === msg.id ? "Copied!" : "Copy"}
@@ -629,7 +648,7 @@ export default function Chat2DBPage() {
                       r.content_segments.map((seg: { type: string; content: string }, segIdx: number) => (
                         <React.Fragment key={segIdx}>
                           {seg.type === "narrative" && (
-                            <MessageResponse className="bg-indigo-50 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-100">
+                            <MessageResponse className="bg-chat-assistant-bg text-chat-assistant-fg">
                               <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{seg.content}</ReactMarkdown>
                             </MessageResponse>
                           )}
@@ -641,7 +660,7 @@ export default function Chat2DBPage() {
                                     <ChevronDown className="mr-1 inline h-3 w-3" />
                                     Show SQL
                                   </summary>
-                                  <pre className="overflow-x-auto px-4 py-3 text-xs" style={{ margin: 0, background: "#2d2d2d", color: "#ccc" }}>
+                                  <pre className="overflow-x-auto px-4 py-3 text-xs bg-code-bg text-code-fg" style={{ margin: 0 }}>
                                     <code dangerouslySetInnerHTML={{ __html: highlightSQL(r.sql) }} />
                                   </pre>
                                 </details>
@@ -697,7 +716,7 @@ export default function Chat2DBPage() {
                                   <ExternalLink className="h-3 w-3" /> View Full Screen
                                 </button>
                               </div>
-                              <div className="p-4 bg-white dark:bg-slate-50 flex justify-center">
+                              <div className="p-4 bg-white flex justify-center">
                                 <PlantUMLDiagram source={seg.content} />
                               </div>
                             </div>
@@ -714,12 +733,12 @@ export default function Chat2DBPage() {
                     ) : !r?.error && (
                       <>
                         {r?.text_response && (
-                          <MessageResponse className="bg-indigo-50 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-100">
+                          <MessageResponse className="bg-chat-assistant-bg text-chat-assistant-fg">
                             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{r.text_response}</ReactMarkdown>
                           </MessageResponse>
                         )}
                         {r?.explanation && !r?.text_response && (
-                          <div className="prose prose-sm dark:prose-invert max-w-none text-foreground/80">
+                          <div className="prose prose-sm dark:prose-invert max-w-none rounded-2xl px-4 py-3 bg-chat-assistant-bg text-chat-assistant-fg">
                             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{r.explanation}</ReactMarkdown>
                           </div>
                         )}
@@ -751,10 +770,10 @@ export default function Chat2DBPage() {
           {/* Thinking indicator */}
           {isLoading && (
             <Message from="assistant">
-              <MessageAvatar className="bg-indigo-500 text-white" fallback="🦉" />
+              <MessageAvatar className="bg-chat-avatar-bg text-white" fallback="🦉" />
               <MessageContent>
-                <span className="text-xs font-medium text-indigo-500 dark:text-indigo-400">Athena</span>
-                <div className="flex items-center gap-2 rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground">
+                <span className="text-xs font-semibold text-athena-accent">Athena</span>
+                <div className="flex items-center gap-2 rounded-2xl px-4 py-3 text-sm bg-chat-assistant-bg text-muted-foreground">
                   <span className="animate-pulse">Thinking</span>
                   <span className="flex gap-0.5">
                     <span className="animate-bounce [animation-delay:0ms]">.</span>

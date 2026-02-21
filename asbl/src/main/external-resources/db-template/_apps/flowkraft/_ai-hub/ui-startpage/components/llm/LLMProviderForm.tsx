@@ -272,7 +272,7 @@ export function LLMProviderForm({ fullConfig, onSave }: LLMProviderFormProps) {
 
   // Shared input class names
   const inputCls =
-    "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-rb-cyan focus:border-transparent";
+    "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent";
   const labelCls =
     "block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5";
 
@@ -444,7 +444,7 @@ export function LLMProviderForm({ fullConfig, onSave }: LLMProviderFormProps) {
             <div className="mt-2">
               <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-rb-cyan transition-all duration-300 rounded-full"
+                  className="h-full bg-primary transition-all duration-300 rounded-full"
                   style={{ width: `${pullProgress}%` }}
                 />
               </div>
@@ -532,7 +532,7 @@ export function LLMProviderForm({ fullConfig, onSave }: LLMProviderFormProps) {
                       onClick={() => selectModel(m)}
                       className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors ${
                         m.id === model
-                          ? "bg-rb-cyan/10 text-rb-cyan font-medium"
+                          ? "bg-primary/10 text-primary font-medium"
                           : "text-foreground"
                       }`}
                     >
@@ -617,7 +617,7 @@ export function LLMProviderForm({ fullConfig, onSave }: LLMProviderFormProps) {
         <Button
           onClick={handleSave}
           disabled={!isDirty || saving}
-          className="bg-rb-cyan hover:bg-rb-cyan/90 text-white disabled:opacity-50"
+          className="bg-primary hover:bg-primary/90 text-white disabled:opacity-50"
         >
           {saving ? (
             <>

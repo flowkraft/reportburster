@@ -1,0 +1,51 @@
+version: 2
+
+sources:
+  - name: northwind_oltp
+    description: "Raw OLTP tables in ClickHouse (replicated by CDC or loaded by Java initializer)"
+    schema: northwind
+    tables:
+      - name: Orders
+      - name: OrderDetails
+      - name: Customers
+      - name: Products
+      - name: Categories
+      - name: Employees
+
+models:
+  - name: stg_orders
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_order_details
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+      - name: product_id
+        tests:
+          - not_null
+
+  - name: stg_customers
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_products
+    columns:
+      - name: product_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_employees
+    columns:
+      - name: employee_id
+        tests:
+          - not_null
+          - unique

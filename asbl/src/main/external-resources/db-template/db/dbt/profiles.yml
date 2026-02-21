@@ -1,0 +1,12 @@
+northwind_clickhouse:
+  target: dev
+  outputs:
+    dev:
+      type: clickhouse
+      schema: northwind
+      host: clickhouse
+      port: 8123
+      user: default
+      password: clickhouse
+      secure: false
+      threads: 1
