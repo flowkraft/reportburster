@@ -201,16 +201,6 @@ Or ask Athena for a Monthly Sales Trend report — and get interactive charts:
 
 <br>
 
-**Report Distribution — select a report and burst it to the right people**
-
-<br>
-
-<a href="https://www.reportburster.com/docs/quickstart" target="_blank">
-  <img src=".github/screenshots/005_05_Quickstart_After_File_Selected.png" alt="Report Distribution — Burst a Report">
-</a>
-
-<br>
-
 ## Documentation
 
 | Section | Description |
