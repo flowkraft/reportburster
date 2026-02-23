@@ -75,4 +75,4 @@ echo Build complete. Check pack-reportburster.log for details
 echo ========================================
 
 REM Upload dist artifacts to Backblaze B2 (reportburster/newest/)
-REM rclone --config rclone.conf copy C:/Projects/reportburster/asbl/dist/ backblaze:reportburster/newest/ --include "reportburster.zip" --include "reportburster-server.zip" --progress
+REM rclone --config rclone.conf copy C:/Projects/reportburster/asbl/dist/ backblaze:reportburster/newest/ --include "reportburster.zip" --include "reportburster-server.zip" --include "reportburster-server-docker.zip" --include "reportburster-src.zip" --progress
