@@ -139,16 +139,6 @@ Want a visualization? Just ask — Athena generates charts from your data:
 
 <br>
 
-**Document Portal — secure self-service access to payslips, invoices, and more**
-
-<br>
-
-<a href="https://www.reportburster.com/docs/document-portal" target="_blank">
-  <img src=".github/screenshots/000-overview-payslips2portal-user-my-documents-payslips.png" alt="Document Portal — My Payslips">
-</a>
-
-<br>
-
 **Embeddable Analytics & OLAP — ask Athena, get interactive charts and pivot tables**
 
 Ask Athena to build a pivot table over your data warehouse:
@@ -197,6 +187,16 @@ Or ask Athena for a Monthly Sales Trend report — and get interactive charts:
 
 <a href="https://www.reportburster.com/docs/report-generation" target="_blank">
   <img src=".github/screenshots/044_10_ai-driven-report-execution.png" alt="Report Generation — AI-Driven Report Execution">
+</a>
+
+<br>
+
+**Document Portal — secure self-service access to payslips, invoices, and more**
+
+<br>
+
+<a href="https://www.reportburster.com/docs/document-portal" target="_blank">
+  <img src=".github/screenshots/000-overview-payslips2portal-user-my-documents-payslips.png" alt="Document Portal — My Payslips">
 </a>
 
 <br>
