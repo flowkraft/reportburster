@@ -107,10 +107,10 @@ Chat with your experts through the built-in Chat2DB web app or classic desktop a
 
 <br><br>
 
-**Chat2DB — ask questions in plain English, get SQL and charts**
+**Chat with AI agents through Element Web — Hephaestus ready to help with backend tasks**
 
-<a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
-  <img src="https://www.reportburster.com/images/docs/artificial-intelligence/000_20_flowkrafts-ai-crew.png" alt="Chat2DB — AI-powered Data Exploration" width="700">
+<a href="https://www.reportburster.com/docs/ai-crew/chat-client-apps" target="_blank">
+  <img src="https://www.reportburster.com/images/docs/096-other-matrix-element-web.png" alt="Element Web — Chat with AI Crew Agents" width="700">
 </a>
 
 <br><br>
@@ -139,10 +139,10 @@ Chat with your experts through the built-in Chat2DB web app or classic desktop a
 
 <br><br>
 
-**FlowKraft AI Hub — your team of AI experts, ready to chat**
+**AI-generated artifacts — VS Code workspace showing Athena's output (ER diagrams, flowcharts, PRDs)**
 
-<a href="https://www.reportburster.com/docs/ai-crew/the-team" target="_blank">
-  <img src="https://www.reportburster.com/images/docs/096-other-flowkraft-ai-hub-1.png" alt="FlowKraft AI Hub Dashboard" width="700">
+<a href="https://www.reportburster.com/docs/ai-crew/the-team#output-artifacts--workspaces" target="_blank">
+  <img src="https://www.reportburster.com/images/docs/096-other-flowkraft-ai-hub-2.png" alt="VS Code Web — Athena's Output Artifacts" width="700">
 </a>
 
 <br>
