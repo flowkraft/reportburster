@@ -2,6 +2,10 @@
 
 # ReportBurster
 
+<a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
+  <img src=".github/screenshots/041_00_ai-driven-hei-ai-help-me-with-buttons.png" alt="Hey AI, Help Me With This SQL Query ...">
+</a>
+
 ### The Modern Open-Source Alternative to Crystal Reports, Tableau and Chat2DB
 
 AI-powered data exploration. Pixel-perfect report generation. Automated report bursting.<br>
@@ -45,10 +49,6 @@ Most teams cobble together a report designer, a distribution script, an analytic
 - **No switching tools.** Work with your data from a single interface — desktop, web, or AI chat.
 - **No SaaS lock-in.** Self-hosted. Your data never leaves your infrastructure.
 - **AI-native.** A built-in team of AI experts helps you build reports, portals, and dashboards with natural language.
-
-<a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
-  <img src=".github/screenshots/041_00_ai-driven-hei-ai-help-me-with-buttons.png" alt="Hey AI, Help Me With This SQL Query ...">
-</a>
 
 <a href="https://www.reportburster.com/docs/data-exploration" target="_blank">
   <img src=".github/screenshots/042_00_ai-driven-db-conn-new.png" alt="Create Database Connection — Oracle, SQL Server, PostgreSQL, MySQL, DuckDB, ClickHouse and more">
@@ -188,52 +188,6 @@ Or ask Athena for a Monthly Sales Trend report — and get interactive charts:
 <a href="https://www.reportburster.com/docs/quickstart" target="_blank">
   <img src=".github/screenshots/005_05_Quickstart_After_File_Selected.png" alt="Report Distribution — Burst a Report">
 </a>
-
-<br>
-
-## Supported Databases
-
-PostgreSQL | MySQL | SQL Server | Oracle | SQLite | DuckDB | ClickHouse | MariaDB | and more through JDBC
-
-<br>
-
-## Who Uses ReportBurster?
-
-Organizations across education, healthcare, finance, and government use ReportBurster to automate document distribution at scale. Here are a few:
-
-> *"ReportBurster has the master reports separated and emailed to each entity by the time we come in every morning. It has saved hours of time each month and decreased mistakes. A Great program!"*
-> — **Indiana University – Purdue University Indianapolis**
-
-> *"We have been using ReportBurster for the last year to collate and distribute school reports. It has saved us hours of sorting and categorizing. A great product!"*
-> — **Christ the King Sixth Form College**
-
-> *"We have been using it successfully for about 2 years and it has been a huge time and cost saver. My only regret is that our needs don't come anywhere near the capabilities of this product."*
-> — **Catholic Education, Archdiocese of Melbourne**
-
-> *"ReportBurster does what we need right now, and has many applications for future use."*
-> — **University of Northern Iowa**
-
-<details>
-<summary><strong>See more organizations using ReportBurster</strong></summary>
-
-- National University of Health Sciences
-- George Mason University
-- University of Maryland, Baltimore County
-- University of Strathclyde
-- University of Arkansas for Medical Sciences
-- Nelson Mandela Metropolitan University
-- Southern Business School
-- Crossroads School for Arts & Sciences
-- Ludlow Sixth Form College
-- Trinity Lutheran College
-- Lyons Township High School
-- Port Washington Union Free School District
-- Christian Brothers' High School Lewisham
-- Penleigh and Essendon Grammar School
-
-Read the full testimonials: **[Report Distribution](https://www.reportburster.com/testimonials/report-distribution-software)** | **[Crystal Reports](https://www.reportburster.com/testimonials/crystal-reports-distribution)** | **[Email Payslips](https://www.reportburster.com/testimonials/email-payslips)**
-
-</details>
 
 <br>
 
