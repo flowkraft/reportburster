@@ -46,6 +46,14 @@ Most teams cobble together a report designer, a distribution script, an analytic
 - **No SaaS lock-in.** Self-hosted. Your data never leaves your infrastructure.
 - **AI-native.** A built-in team of AI experts helps you build reports, portals, and dashboards with natural language.
 
+<a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
+  <img src=".github/screenshots/041_00_ai-driven-hei-ai-help-me-with-buttons.png" alt="Hey AI, Help Me With This SQL Query ...">
+</a>
+
+<a href="https://www.reportburster.com/docs/data-exploration" target="_blank">
+  <img src=".github/screenshots/042_00_ai-driven-db-conn-new.png" alt="Create Database Connection — Oracle, SQL Server, PostgreSQL, MySQL, DuckDB, ClickHouse and more">
+</a>
+
 <br>
 
 ## Features
@@ -55,18 +63,6 @@ Most teams cobble together a report designer, a distribution script, an analytic
 Connect to any database — PostgreSQL, MySQL, SQL Server, Oracle, SQLite, DuckDB, ClickHouse, and more. Ask questions in plain English and get SQL, charts, and insights. Built-in **[Chat2DB](https://www.reportburster.com/docs/data-exploration/chat2db-ai)** web app for conversational data exploration.
 
 <sub>Replaces: Chat2DB, pgAdmin, DBeaver</sub>
-
-### Report Generation
-
-Design pixel-perfect PDF, Excel, HTML, Word, XML, and JSON documents from any data source. AI-assisted report design with **[Athena](https://www.reportburster.com/docs/ai-crew/athena)**. Multi-format input from SQL, Excel, XML, CSV data sources.
-
-<sub>Replaces: Crystal Reports, JasperReports, SSRS, BIRT</sub>
-
-### Report Distribution & Automation
-
-Split, route, burst, personalize, and auto-deliver reports to the right people. Distribute via email, FTP, cloud storage, or document web portals — at scale, on schedule. Built-in **[quality assurance](https://www.reportburster.com/docs/report-distribution-qa)** guarantees every delivery. Workflow automation for payslips, invoicing, and payment processing.
-
-<sub>Replaces: custom distribution scripts, manual processes</sub>
 
 ### Document Portal & BI Dashboards
 
@@ -95,6 +91,18 @@ Chat with your experts through the built-in Chat2DB web app or classic desktop a
 
 <sub>Unique to ReportBurster — no equivalent in competing tools</sub>
 
+### Report Generation
+
+Design pixel-perfect PDF, Excel, HTML, Word, XML, and JSON documents from any data source. AI-assisted report design with **[Athena](https://www.reportburster.com/docs/ai-crew/athena)**. Multi-format input from SQL, Excel, XML, CSV data sources.
+
+<sub>Replaces: Crystal Reports, JasperReports, SSRS, BIRT</sub>
+
+### Report Distribution & Automation
+
+Split, route, burst, personalize, and auto-deliver reports to the right people. Distribute via email, FTP, cloud storage, or document web portals — at scale, on schedule. Built-in **[quality assurance](https://www.reportburster.com/docs/report-distribution-qa)** guarantees every delivery. Workflow automation for payslips, invoicing, and payment processing.
+
+<sub>Replaces: custom distribution scripts, manual processes</sub>
+
 <br>
 
 ## Screenshots
@@ -121,22 +129,6 @@ Want a visualization? Just ask — Athena generates charts from your data:
 
 <a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
   <img src=".github/screenshots/000_78_chat2db-athena-top-3-pie-chart-5.png" alt="Chat2DB — Revenue Share Pie Chart">
-</a>
-
-<br><br>
-
-**Report Generation — generate and distribute pixel-perfect output files**
-
-<a href="https://www.reportburster.com/docs/report-generation" target="_blank">
-  <img src=".github/screenshots/044_10_ai-driven-report-execution.png" alt="Report Generation — AI-Driven Report Execution">
-</a>
-
-<br><br>
-
-**Report Distribution — select a report and burst it to the right people**
-
-<a href="https://www.reportburster.com/docs/quickstart" target="_blank">
-  <img src=".github/screenshots/005_05_Quickstart_After_File_Selected.png" alt="Report Distribution — Burst a Report">
 </a>
 
 <br><br>
@@ -179,6 +171,22 @@ Or ask Athena for a Monthly Sales Trend report — and get interactive charts:
 
 <a href="https://www.reportburster.com/docs/ai-crew/the-team" target="_blank">
   <img src=".github/screenshots/000_60_ai-crew.png" alt="AI Crew — Meet the Team: Athena, Hephaestus, Hermes, Pythia, Apollo">
+</a>
+
+<br><br>
+
+**Report Generation — generate and distribute pixel-perfect output files**
+
+<a href="https://www.reportburster.com/docs/report-generation" target="_blank">
+  <img src=".github/screenshots/044_10_ai-driven-report-execution.png" alt="Report Generation — AI-Driven Report Execution">
+</a>
+
+<br><br>
+
+**Report Distribution — select a report and burst it to the right people**
+
+<a href="https://www.reportburster.com/docs/quickstart" target="_blank">
+  <img src=".github/screenshots/005_05_Quickstart_After_File_Selected.png" alt="Report Distribution — Burst a Report">
 </a>
 
 <br>
