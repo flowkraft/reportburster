@@ -154,7 +154,7 @@ Want a visualization? Just ask — Athena generates charts from your data:
 Ask Athena to build a pivot table over your data warehouse:
 
 <a href="https://www.reportburster.com/docs/ai-crew/athena#configure--build-a-new-pivot-table-report-over-an-existing-data-warehouse-olap-database" target="_blank">
-  <img src="https://www.reportburster.com/images/docs/artificial-intelligence/000_60_chat2db-athena-pivot-table.png" alt="Ask Athena — Build a Pivot Table over OLAP Data Warehouse" width="700">
+  <img src="https://www.reportburster.com/images/docs/artificial-intelligence/000_79_chat2db-athena-pivot-table.png" alt="Ask Athena — Build a Pivot Table over OLAP Data Warehouse" width="700">
 </a>
 
 <br>
