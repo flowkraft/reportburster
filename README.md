@@ -103,30 +103,24 @@ Chat with your experts through the built-in Chat2DB web app or classic desktop a
 
 Chat with Athena — she sees your database schema (not the data itself) and is ready to help:
 
-<br>
-
 <a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
-  <img src=".github/screenshots/000_70_chat2db-athena-good-afternoon-1.png" alt="Chat2DB — Meet Athena, your Data Exploration AI" width="700">
+  <img src=".github/screenshots/000_70_chat2db-athena-good-afternoon-1.png" alt="Chat2DB — Meet Athena, your Data Exploration AI">
 </a>
 
-<br><br>
+<br>
 
 Ask a question in plain English — Athena writes the SQL and returns results:
 
-<br>
-
 <a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
-  <img src=".github/screenshots/000_74_chat2db-athena-top-3-customers-3.png" alt="Chat2DB — Top 3 Customers SQL Query and Results" width="700">
+  <img src=".github/screenshots/000_74_chat2db-athena-top-3-customers-3.png" alt="Chat2DB — Top 3 Customers SQL Query and Results">
 </a>
 
-<br><br>
+<br>
 
 Want a visualization? Just ask — Athena generates charts from your data:
 
-<br>
-
 <a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
-  <img src=".github/screenshots/000_78_chat2db-athena-top-3-pie-chart-5.png" alt="Chat2DB — Revenue Share Pie Chart" width="700">
+  <img src=".github/screenshots/000_78_chat2db-athena-top-3-pie-chart-5.png" alt="Chat2DB — Revenue Share Pie Chart">
 </a>
 
 <br><br>
@@ -134,7 +128,7 @@ Want a visualization? Just ask — Athena generates charts from your data:
 **Report Generation — generate and distribute pixel-perfect output files**
 
 <a href="https://www.reportburster.com/docs/report-generation" target="_blank">
-  <img src=".github/screenshots/044_15_ai-driven-report-execution-output-files.png" alt="Report Generation — Output Files" width="700">
+  <img src=".github/screenshots/044_10_ai-driven-report-execution.png" alt="Report Generation — AI-Driven Report Execution">
 </a>
 
 <br><br>
@@ -142,7 +136,7 @@ Want a visualization? Just ask — Athena generates charts from your data:
 **Report Distribution — select a report and burst it to the right people**
 
 <a href="https://www.reportburster.com/docs/quickstart" target="_blank">
-  <img src=".github/screenshots/005_05_Quickstart_After_File_Selected.png" alt="Report Distribution — Burst a Report" width="700">
+  <img src=".github/screenshots/005_05_Quickstart_After_File_Selected.png" alt="Report Distribution — Burst a Report">
 </a>
 
 <br><br>
@@ -150,7 +144,7 @@ Want a visualization? Just ask — Athena generates charts from your data:
 **Document Portal — secure self-service access to payslips, invoices, and more**
 
 <a href="https://www.reportburster.com/docs/document-portal" target="_blank">
-  <img src=".github/screenshots/000-overview-payslips2portal-user-my-documents-payslips.png" alt="Document Portal — My Payslips" width="700">
+  <img src=".github/screenshots/000-overview-payslips2portal-user-my-documents-payslips.png" alt="Document Portal — My Payslips">
 </a>
 
 <br><br>
@@ -159,30 +153,24 @@ Want a visualization? Just ask — Athena generates charts from your data:
 
 Ask Athena to build a pivot table over your data warehouse:
 
-<br>
-
 <a href="https://www.reportburster.com/docs/ai-crew/athena#configure--build-a-new-pivot-table-report-over-an-existing-data-warehouse-olap-database" target="_blank">
-  <img src=".github/screenshots/000_79_chat2db-athena-pivot-table.png" alt="Ask Athena — Build a Pivot Table over OLAP Data Warehouse" width="700">
+  <img src=".github/screenshots/000_79_chat2db-athena-pivot-table.png" alt="Ask Athena — Build a Pivot Table over OLAP Data Warehouse">
 </a>
 
-<br><br>
+<br>
 
 ...and get a DuckDB-powered pivot table with server-side processing:
 
-<br>
-
 <a href="https://www.reportburster.com/docs/bi-analytics/web-components/pivottables" target="_blank">
-  <img src=".github/screenshots/037-rb-pivottable-duckdb.png" alt="Embeddable Analytics — DuckDB Pivot Table" width="700">
+  <img src=".github/screenshots/037-rb-pivottable-duckdb.png" alt="Embeddable Analytics — DuckDB Pivot Table">
 </a>
 
-<br><br>
+<br>
 
 Or ask Athena for a Monthly Sales Trend report — and get interactive charts:
 
-<br>
-
 <a href="https://www.reportburster.com/docs/bi-analytics/web-components/charts" target="_blank">
-  <img src=".github/screenshots/030-rb-chart.png" alt="Embeddable Analytics — Charts Web Component" width="700">
+  <img src=".github/screenshots/030-rb-chart.png" alt="Embeddable Analytics — Charts Web Component">
 </a>
 
 <br><br>
@@ -190,7 +178,7 @@ Or ask Athena for a Monthly Sales Trend report — and get interactive charts:
 **AI Crew — your council of AI experts, each a master of their domain**
 
 <a href="https://www.reportburster.com/docs/ai-crew/the-team" target="_blank">
-  <img src=".github/screenshots/000_60_ai-crew.png" alt="AI Crew — Meet the Team: Athena, Hephaestus, Hermes, Pythia, Apollo" width="700">
+  <img src=".github/screenshots/000_60_ai-crew.png" alt="AI Crew — Meet the Team: Athena, Hephaestus, Hermes, Pythia, Apollo">
 </a>
 
 <br>
