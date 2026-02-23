@@ -99,39 +99,31 @@ Chat with your experts through the built-in Chat2DB web app or classic desktop a
 
 ## Screenshots
 
-**ReportBurster desktop — select a report and burst it**
-
-<a href="https://www.reportburster.com/docs/quickstart" target="_blank">
-  <img src="https://www.reportburster.com/images/docs/005_05_Quickstart_After_File_Selected.png" alt="ReportBurster Desktop — Burst a Report" width="700">
-</a>
-
-<br><br>
-
-**Chat with AI agents through Element Web — Hephaestus ready to help with backend tasks**
-
-<a href="https://www.reportburster.com/docs/ai-crew/chat-client-apps" target="_blank">
-  <img src="https://www.reportburster.com/images/docs/096-other-matrix-element-web.png" alt="Element Web — Chat with AI Crew Agents" width="700">
-</a>
-
-<br><br>
-
-**AI-powered database diagrams — visualize data relationships**
+**Data Exploration — AI-powered ER diagrams visualize your data relationships**
 
 <a href="https://www.reportburster.com/docs/data-exploration/database-connections" target="_blank">
-  <img src="https://www.reportburster.com/images/docs/042_30_ai-driven-db-conn-er-diagram-view-in-browser.png" alt="AI-Driven ER Diagram" width="700">
+  <img src="https://www.reportburster.com/images/docs/042_30_ai-driven-db-conn-er-diagram-view-in-browser.png" alt="Data Exploration — AI-Driven ER Diagram" width="700">
 </a>
 
 <br><br>
 
-**Generate reports and distribute output files**
+**Report Generation — generate and distribute pixel-perfect output files**
 
 <a href="https://www.reportburster.com/docs/report-generation" target="_blank">
-  <img src="https://www.reportburster.com/images/docs/044_15_ai-driven-report-execution-output-files.png" alt="Report Execution — Output Files" width="700">
+  <img src="https://www.reportburster.com/images/docs/044_15_ai-driven-report-execution-output-files.png" alt="Report Generation — Output Files" width="700">
 </a>
 
 <br><br>
 
-**Self-service document portal — users access their payslips, invoices, and more**
+**Report Distribution — select a report and burst it to the right people**
+
+<a href="https://www.reportburster.com/docs/quickstart" target="_blank">
+  <img src="https://www.reportburster.com/images/docs/005_05_Quickstart_After_File_Selected.png" alt="Report Distribution — Burst a Report" width="700">
+</a>
+
+<br><br>
+
+**Document Portal — secure self-service access to payslips, invoices, and more**
 
 <a href="https://www.reportburster.com/docs/document-portal" target="_blank">
   <img src="https://www.reportburster.com/images/docs/webportal/000-overview-payslips2portal-user-my-documents-payslips.png" alt="Document Portal — My Payslips" width="700">
@@ -139,10 +131,24 @@ Chat with your experts through the built-in Chat2DB web app or classic desktop a
 
 <br><br>
 
-**AI-generated artifacts — VS Code workspace showing Athena's output (ER diagrams, flowcharts, PRDs)**
+**Embeddable Analytics & OLAP — interactive charts and pivot tables powered by DuckDB**
 
-<a href="https://www.reportburster.com/docs/ai-crew/the-team#output-artifacts--workspaces" target="_blank">
-  <img src="https://www.reportburster.com/images/docs/096-other-flowkraft-ai-hub-2.png" alt="VS Code Web — Athena's Output Artifacts" width="700">
+<a href="https://www.reportburster.com/docs/bi-analytics/web-components/charts" target="_blank">
+  <img src="https://www.reportburster.com/images/docs/bi-analytics/030-rb-chart.png" alt="Embeddable Analytics — Charts Web Component" width="700">
+</a>
+
+<br><br>
+
+<a href="https://www.reportburster.com/docs/bi-analytics/web-components/pivottables" target="_blank">
+  <img src="https://www.reportburster.com/images/docs/bi-analytics/037-rb-pivottable-duckdb.png" alt="Embeddable Analytics — DuckDB Pivot Table" width="700">
+</a>
+
+<br><br>
+
+**AI Crew — your council of AI experts, each a master of their domain**
+
+<a href="https://www.reportburster.com/docs/ai-crew/the-team" target="_blank">
+  <img src="https://www.reportburster.com/images/docs/artificial-intelligence/000_20_flowkrafts-ai-crew-2.png" alt="AI Crew — FlowKraft AI Hub Dashboard" width="700">
 </a>
 
 <br>
