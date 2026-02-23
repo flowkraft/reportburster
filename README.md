@@ -131,13 +131,25 @@ Chat with your experts through the built-in Chat2DB web app or classic desktop a
 
 <br><br>
 
-**Embeddable Analytics & OLAP — interactive charts and pivot tables powered by DuckDB**
+**Embeddable Analytics & OLAP — ask Athena, get interactive charts and pivot tables**
+
+Ask Athena to build a pivot table over your data warehouse:
+
+<a href="https://www.reportburster.com/docs/ai-crew/athena#configure--build-a-new-pivot-table-report-over-an-existing-data-warehouse-olap-database" target="_blank">
+  <img src="https://www.reportburster.com/images/docs/artificial-intelligence/000_60_chat2db-athena-pivot-table.png" alt="Ask Athena — Build a Pivot Table over OLAP Data Warehouse" width="700">
+</a>
+
+<br>
+
+...get interactive charts:
 
 <a href="https://www.reportburster.com/docs/bi-analytics/web-components/charts" target="_blank">
   <img src="https://www.reportburster.com/images/docs/bi-analytics/030-rb-chart.png" alt="Embeddable Analytics — Charts Web Component" width="700">
 </a>
 
-<br><br>
+<br>
+
+...and pivot tables powered by DuckDB:
 
 <a href="https://www.reportburster.com/docs/bi-analytics/web-components/pivottables" target="_blank">
   <img src="https://www.reportburster.com/images/docs/bi-analytics/037-rb-pivottable-duckdb.png" alt="Embeddable Analytics — DuckDB Pivot Table" width="700">
