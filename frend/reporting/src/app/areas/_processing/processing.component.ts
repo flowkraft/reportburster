@@ -519,6 +519,11 @@ export class ProcessingComponent implements OnInit {
     this.processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport =
       null;
 
+    // Reset View Data state so rb-tabulator isn't rendered with null reportCode
+    this.showViewDataTabulator = false;
+    this.isViewDataLoading = false;
+    this.viewDataResult = null;
+
     this.processingService.procReportingMailMergeInfo.inputFile = null;
     this.processingService.procReportingMailMergeInfo.inputFileName = '';
 
@@ -1296,6 +1301,12 @@ export class ProcessingComponent implements OnInit {
   reportDataResult: ReportDataResult | null = null;
   isReportDataLoading = false;
 
+  // View Data — Mode 2 (self-fetch) state
+  isViewDataLoading = false;
+  showViewDataTabulator = false;
+  viewDataParams: { [key: string]: string } = {};
+  viewDataResult: { executionTimeMillis: number; totalRows: number } | null = null;
+
   onReportParamsValidChange(event: Event) {
     // Web component emits CustomEvent with data in .detail
     const isValid = (event as CustomEvent<boolean>).detail;
@@ -1555,9 +1566,14 @@ export class ProcessingComponent implements OnInit {
 
   async onReportSelectionChange($event: any) {
     //console.log(`onReportSelectionChange: ${JSON.stringify($event)}`);
+    // Reset View Data state when report selection changes
+    this.isViewDataLoading = false;
+    this.showViewDataTabulator = false;
+    this.viewDataResult = null;
+
     // Lazy load DSL details for the selected report
     if ($event && (
-      $event.type === 'config-reports' || 
+      $event.type === 'config-reports' ||
       $event.type === 'config-samples'
     )) {
       await this.settingsService.loadConfigurationDetailsAsync($event);
@@ -1759,45 +1775,52 @@ export class ProcessingComponent implements OnInit {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: async () => {
-        try {
-          //console.log('Confirmation received, starting API call');
-
-          this.isReportDataLoading = true;
-
-          // Convert parameters to key-value pairs with proper types
-          const paramsObject =
-            this.processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.reportParameters.reduce(
-              (acc, param) => {
-                const value = this.convertParamValue(
-                  param.type,
-                  this.reportParamsValues[param.id],
-                );
-                //console.log(`Parameter ${param.id}: ${value}`); // Debug log
-                acc[param.id] = value;
-                return acc;
-              },
-              {} as { [key: string]: any },
-            );
-          //console.log('Calling API with params:', paramsObject); // Debug log
-
-          // Call the API
-          this.reportDataResult = await this.reportingService.fetchData(
-            paramsObject,
-            this.processingService.procReportingMailMergeInfo
-              .selectedMailMergeClassicReport.filePath,
+        // Build params from report parameters form (as string key-value pairs for Mode 2)
+        const paramsObject =
+          this.processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport.reportParameters.reduce(
+            (acc, param) => {
+              const value = this.convertParamValue(
+                param.type,
+                this.reportParamsValues[param.id],
+              );
+              if (value !== null && value !== undefined) {
+                acc[param.id] = String(value);
+              }
+              return acc;
+            },
+            {} as { [key: string]: string },
           );
 
-          //console.log(`API response: ${JSON.stringify(this.reportDataResult)}`);
-          this.messagesService.showSuccess('SQL query executed successfully.');
-        } catch (error) {
-          //console.error('API call failed:', error); // Debug log
-          this.messagesService.showError(`Error executing SQL query: ${error.message}`);
-        } finally {
-          //console.log('API call completed'); // Debug log
-          this.isReportDataLoading = false;
-        }
+        // Mode 2: unmount and remount rb-tabulator to trigger a fresh self-fetch
+        this.isViewDataLoading = true;
+        this.viewDataResult = null;
+        this.viewDataParams = paramsObject;
+        this.showViewDataTabulator = false;
+        this.changeDetectorRef.detectChanges();
+        // Re-mount after a tick so the component is freshly created
+        setTimeout(() => {
+          this.showViewDataTabulator = true;
+          this.changeDetectorRef.detectChanges();
+        }, 0);
       },
     });
+  }
+
+  onViewDataFetched(event: any) {
+    this.isViewDataLoading = false;
+    const detail = event.detail || event;
+    this.viewDataResult = {
+      executionTimeMillis: detail.executionTimeMillis || 0,
+      totalRows: detail.totalRows || detail.data?.length || 0,
+    };
+    this.messagesService.showSuccess('SQL query executed successfully');
+    this.changeDetectorRef.detectChanges();
+  }
+
+  onViewDataError(event: any) {
+    this.isViewDataLoading = false;
+    const detail = event.detail || event;
+    this.messagesService.showError(`Error executing query: ${detail.message || 'Unknown error'}`);
   }
 
   @ViewChild(AiManagerComponent) private aiManagerInstance!: AiManagerComponent;

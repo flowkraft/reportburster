@@ -19,6 +19,7 @@ public class ChartOptions {
 	private List<String> labels = new ArrayList<>(); // Explicit labels override
 	private List<Map<String,Object>> datasets = new ArrayList<>(); // Series/dataset configurations
 	private List<Map<String,Object>> data = new ArrayList<>(); // Optional data override
+	private Map<String, ChartOptions> namedOptions = new LinkedHashMap<>(); // Named blocks for aggregator reports
 
 	public String getType() { return type; }
 	public void setType(String type) { this.type = type; }
@@ -37,4 +38,7 @@ public class ChartOptions {
 
 	public List<Map<String, Object>> getData() { return data; }
 	public void setData(List<Map<String, Object>> data) { this.data = data; }
+
+	public Map<String, ChartOptions> getNamedOptions() { return namedOptions; }
+	public void setNamedOptions(Map<String, ChartOptions> namedOptions) { this.namedOptions = namedOptions; }
 }

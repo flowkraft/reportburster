@@ -24,6 +24,7 @@ import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
 import com.sourcekraft.documentburster.common.db.SqlExecutor;
 import com.sourcekraft.documentburster.common.settings.EmailConnection;
 import com.sourcekraft.documentburster.common.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 import com.sourcekraft.documentburster.utils.DumpToString;
 import com.sourcekraft.documentburster.utils.Scripts;
 import com.sourcekraft.documentburster.variables.Variables;
@@ -109,6 +110,9 @@ public class BurstingContext extends DumpToString {
 
 	// Transient Groovy Sql instance provided to scripts when conncode is specified
 	public transient Sql dbSql;
+
+	// Cache for extra Sql connections opened via getConnection()
+	public transient Map<String, Sql> namedDbSql;
 
 	/*
 	 * public List<String> getBurstTokens() { return burstTokens; }
@@ -237,6 +241,64 @@ public class BurstingContext extends DumpToString {
 
 	public void setLastException(Exception lastException) {
 		this.lastException = lastException;
+	}
+
+	/**
+	 * Stores a dataset for visualization reports (charts, tabulators, pivot tables).
+	 * Called from Groovy scripts as: ctx.reportData('salesGrid', sql.rows("..."))
+	 *
+	 * By convention, componentId is set via ctx.variables from request params.
+	 * When set, only the dataset matching the requested component is stored.
+	 */
+	@SuppressWarnings("unchecked")
+	public void reportData(String id, List<?> rows) {
+		String requestedId = (variables != null) ? (String) variables.get("componentId") : null;
+		if (requestedId != null && !id.equals(requestedId))
+			return;
+
+		List<LinkedHashMap<String, Object>> converted = new ArrayList<>();
+		for (Object row : rows) {
+			LinkedHashMap<String, Object> map;
+			if (row instanceof LinkedHashMap) {
+				map = (LinkedHashMap<String, Object>) row;
+			} else if (row instanceof Map) {
+				map = new LinkedHashMap<>((Map<String, Object>) row);
+			} else {
+				continue;
+			}
+			// Sanitize values: convert Groovy GStrings and other non-JSON types to String
+			for (Map.Entry<String, Object> entry : map.entrySet()) {
+				Object val = entry.getValue();
+				if (val != null && !(val instanceof String) && !(val instanceof Number)
+						&& !(val instanceof Boolean) && !(val instanceof Map) && !(val instanceof List)) {
+					entry.setValue(val.toString());
+				}
+			}
+			converted.add(map);
+		}
+		this.reportData = converted;
+		if (!converted.isEmpty() && converted.get(0) != null) {
+			this.reportColumnNames = new ArrayList<>(converted.get(0).keySet());
+		}
+	}
+
+	/**
+	 * Returns a Groovy Sql instance for the given connection code, creating and
+	 * caching it on first use. All cached connections are closed by ScriptedReporter
+	 * after script execution.
+	 * Called from Groovy scripts as: def duckDb = ctx.getConnection('my-duckdb-conn')
+	 */
+	public Sql getConnection(String connectionCode) throws Exception {
+		if (namedDbSql == null)
+			namedDbSql = new LinkedHashMap<>();
+		if (namedDbSql.containsKey(connectionCode))
+			return namedDbSql.get(connectionCode);
+
+		ServerDatabaseSettings dbs = dbManager.getServerDatabaseSettings(connectionCode);
+		dbs.ensureDriverAndUrl();
+		Sql sql = Sql.newInstance(dbs.url, dbs.userid, dbs.userpassword, dbs.driver);
+		namedDbSql.put(connectionCode, sql);
+		return sql;
 	}
 
 }

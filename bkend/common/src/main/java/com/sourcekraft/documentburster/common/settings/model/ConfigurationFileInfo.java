@@ -43,7 +43,7 @@ public class ConfigurationFileInfo extends DumpToString {
 
 	public List<ReportParameter> reportParameters = new ArrayList<>();
 	
-	// Parsed Tabulator DSL options (layoutOptions, columns, data)
+	// Parsed Tabulator DSL options — flat map matching tabulator.info constructor options
 	public Map<String, Object> tabulatorOptions;
 	
 	// Parsed Chart DSL options (type, labelField, options, labels, datasets, data)

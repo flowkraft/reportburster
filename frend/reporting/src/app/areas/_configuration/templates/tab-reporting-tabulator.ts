@@ -55,61 +55,83 @@ export const tabReportingTabulatorTemplate = `<ng-template
     <tabset>
       <tab heading="Preview">
         <div class="row" style="margin-top: 20px;">
-      <div class="col-xs-12">
-        <div class="panel panel-default">
-          <div class="panel-body">
-            <!-- Show table when data exists -->
-            <rb-tabulator #tabulator
-              *ngIf="reportDataResult && !reportDataResultIsError && reportDataResult?.reportData?.length > 0"
-              [data]="reportDataResult?.reportData"
-              [columns]="activeTabulatorConfigOptions?.columns || (reportDataResult?.reportColumnNames | tabulatorColumns)"
-              [options]="activeTabulatorConfigOptions?.layoutOptions || {}"
-              [loading]="isReportDataLoading"
-              (ready)="onTabReady($event)"
-              (initError)="onTabError($any($event).detail.message)"
-              (tableError)="onTabError($any($event).detail.message)"
-            ></rb-tabulator>
-
-            <!-- Show 'No Data' when no query run or query returned empty -->
-            <div id="noDataTabulator" *ngIf="!reportDataResult || (!reportDataResultIsError && (!reportDataResult?.reportData || reportDataResult?.reportData?.length === 0))" class="text-center" style="padding: 20px;">
-              <strong>No Data</strong>
-            </div>
-
-             <div *ngIf="reportDataResult && reportDataResultIsError">
-              <div class="alert alert-danger">
-                <strong>Error:</strong> Query failed. Check Logs below.
+          <div class="col-xs-12">
+            <!-- Named components (aggregator report) -->
+            <ng-container *ngIf="getNamedTabulatorIds().length > 0">
+              <div *ngFor="let cid of getNamedTabulatorIds()" class="panel panel-default" style="margin-bottom: 15px;">
+                <div class="panel-heading"><strong>{{cid}}</strong></div>
+                <div class="panel-body">
+                  <rb-tabulator
+                    *ngIf="showTabulatorPreview"
+                    [reportCode]="getCurrentReportCode()"
+                    [componentId]="cid"
+                    [apiBaseUrl]="reportingService.reportingApiBaseUrl"
+                    [reportParams]="previewParams || {}"
+                    [testMode]="true"
+                    (dataFetched)="onTabulatorDataFetched($any($event))"
+                    (fetchError)="onTabulatorFetchError($any($event))"
+                    (ready)="onTabReady($event)"
+                    (initError)="onTabError($any($event).detail.message)"
+                    (tableError)="onTabError($any($event).detail.message)"
+                  ></rb-tabulator>
+                </div>
               </div>
-              <pre style="white-space:pre-wrap;max-height:300px;overflow:auto;">
-                {{ reportDataResult.reportData?.[0]?.ERROR_MESSAGE }}
-              </pre>
-             <div
-                id="errorsLogTabulator"
-                class="panel-body"
-                style="
-                  color: red;
-                  height: 421px;
-                  overflow-y: scroll;
-                  overflow-x: auto;
-                  -webkit-user-select: all;
-                  user-select: all;
-                "
-              >
-                <dburst-log-file-viewer
-                  logFileName="errors.log"
-                ></dburst-log-file-viewer>
+            </ng-container>
+
+            <!-- Single unnamed component (standard report) — Mode 1: Angular fetches data once, pushes via [data] prop -->
+            <div *ngIf="getNamedTabulatorIds().length === 0" class="panel panel-default">
+              <div class="panel-body">
+                <!-- Show table when data exists -->
+                <rb-tabulator #tabulator
+                  *ngIf="reportDataResult && !reportDataResultIsError && reportDataResult?.reportData?.length > 0"
+                  [data]="reportDataResult?.reportData"
+                  [columns]="activeTabulatorConfigOptions?.columns || (reportDataResult?.reportColumnNames | tabulatorColumns)"
+                  [options]="activeTabulatorConfigOptions || {}"
+                  [loading]="isReportDataLoading"
+                  (ready)="onTabReady($event)"
+                  (initError)="onTabError($any($event).detail.message)"
+                  (tableError)="onTabError($any($event).detail.message)"
+                ></rb-tabulator>
+
+                <!-- Show 'No Data' when no query run or query returned empty -->
+                <div id="noDataTabulator" *ngIf="!reportDataResult || (!reportDataResultIsError && (!reportDataResult?.reportData || reportDataResult?.reportData?.length === 0))" class="text-center" style="padding: 20px;">
+                  <strong>No Data</strong>
+                </div>
+
+                <div *ngIf="reportDataResult && reportDataResultIsError">
+                  <div class="alert alert-danger">
+                    <strong>Error:</strong> Query failed. Check Logs below.
+                  </div>
+                  <pre style="white-space:pre-wrap;max-height:300px;overflow:auto;">
+                    {{ reportDataResult.reportData?.[0]?.ERROR_MESSAGE }}
+                  </pre>
+                  <div
+                    id="errorsLogTabulator"
+                    class="panel-body"
+                    style="
+                      color: red;
+                      height: 421px;
+                      overflow-y: scroll;
+                      overflow-x: auto;
+                      -webkit-user-select: all;
+                      user-select: all;
+                    "
+                  >
+                    <dburst-log-file-viewer
+                      logFileName="errors.log"
+                    ></dburst-log-file-viewer>
+                  </div>
+                </div>
+
+                <div *ngIf="reportDataResult">
+                  <br/>
+                  <p>Execution Time: {{ reportDataResult.executionTimeMillis }}ms</p>
+                  <p>Total Rows: {{ reportDataResult.reportData?.length || 0 }}</p>
+                </div>
+
               </div>
             </div>
-
-            <div *ngIf="reportDataResult">
-              <br/>
-              <p>Execution Time: {{ reportDataResult.executionTimeMillis }}ms</p>
-              <p>Total Rows: {{ reportDataResult.reportData?.length || 0 }}</p>
-              <p>Preview Mode: {{ reportDataResult.isPreview ? 'Yes' : 'No' }}</p>
-            </div>
-
           </div>
-        </div>
-      </div>
         </div>
       </tab>
 
@@ -133,6 +155,9 @@ export const tabReportingTabulatorTemplate = `<ng-template
       <tab heading="Example (Tabulator Options)">
         <div class="row" style="margin-top: 10px;">
           <div class="col-xs-12">
+            <a id="btnSeeMoreTabulatorExamples" href="https://www.reportburster.com/docs/bi-analytics/web-components/datatables" target="_blank" class="btn btn-default btn-block" style="color: #337ab7; text-decoration: underline; margin-bottom: 10px;">
+              See More Tabulator Configuration Examples
+            </a>
             <ngx-codejar
               id="tabulatorConfigExampleEditor"
               [code]="exampleTabulatorConfigScript"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useMemo } from 'react';
 import Prism from 'prismjs';
 
 // Import Prism languages
@@ -18,21 +18,19 @@ interface CodeBlockProps {
 }
 
 export function CodeBlock({ code, language, style }: CodeBlockProps) {
-  const codeRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (codeRef.current) {
-      // Highlight the code
-      Prism.highlightElement(codeRef.current);
-    }
+  const highlightedHtml = useMemo(() => {
+    const grammar = Prism.languages[language];
+    if (!grammar || !code) return code || '';
+    return Prism.highlight(code, grammar, language);
   }, [code, language]);
 
   return (
     <div className="overflow-auto bg-[#2d2d2d] rounded-lg" style={style}>
       <pre className="m-0 p-6 text-sm" style={{ background: 'transparent' }}>
-        <code ref={codeRef} className={`language-${language}`}>
-          {code}
-        </code>
+        <code
+          className={`language-${language}`}
+          dangerouslySetInnerHTML={{ __html: highlightedHtml }}
+        />
       </pre>
     </div>
   );

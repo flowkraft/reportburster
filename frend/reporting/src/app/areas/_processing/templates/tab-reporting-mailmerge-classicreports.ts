@@ -215,9 +215,9 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
           type="button"
           class="btn btn-default btn-block"
           (click)="doViewData()"
-          [disabled]="shouldBeDisabledViewDataButton()"
+          [disabled]="isViewDataLoading || shouldBeDisabledViewDataButton()"
         >
-          <i class="fa fa-play"></i>&nbsp;View Data
+          <i [ngClass]="isViewDataLoading ? 'fa fa-spinner fa-spin' : 'fa fa-play'"></i>&nbsp;{{ isViewDataLoading ? 'Loading...' : 'View Data' }}
         </button>
         
       </div>
@@ -225,30 +225,36 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
     </div>
 
     <div
-      *ngIf="reportDataResult"
+      *ngIf="showViewDataTabulator"
       class="row" style="margin-top: 10px"
     >
        <div class="col-xs-12">
 
-            <!-- in your Angular template -->
-            <rb-tabulator #tabulator
-              [data]="reportDataResult?.reportData"
-              [columns]="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport?.tabulatorOptions?.columns || (reportDataResult?.reportColumnNames | tabulatorColumns)"
-              [options]="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport?.tabulatorOptions?.layoutOptions || {}"
-              [loading]="isReportDataLoading"
+            <!-- MODE 2 — Tabulator self-fetches config + data via [reportCode] + [apiBaseUrl].
+                 View Data uses Mode 2 (not Mode 1) because:
+                 1. It needs server-side pagination support for large datasets (1M+ rows)
+                 2. The component manages its own pagination state (page/size/sort/filter via ajaxRequestFunc)
+                 3. Only Tabulator is shown here (no Chart/Pivot), so no need to share data across components
+                 Unlike Config > Test button (Mode 1) where one fetch feeds Tabulator + Chart + Pivot,
+                 here the component fetches its own data independently. -->
+            <rb-tabulator
+              [reportCode]="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport?.folderName"
+              [apiBaseUrl]="reportingService.reportingApiBaseUrl"
+              [reportParams]="viewDataParams || {}"
+              (dataFetched)="onViewDataFetched($any($event))"
+              (fetchError)="onViewDataError($any($event))"
               (ready)="onTabReady()"
               (initError)="onTabError($any($event).detail.message)"
               (tableError)="onTabError($any($event).detail.message)"
             ></rb-tabulator>
 
-            <div *ngIf="reportDataResult">
+            <div *ngIf="viewDataResult">
               <br/>
-              <p>Execution Time: {{ reportDataResult.executionTimeMillis }}ms</p>
-              <p>Total Rows: {{ reportDataResult.reportData?.length || 0 }}</p>
-              <p>Preview Mode: {{ reportDataResult.isPreview ? 'Yes' : 'No' }}</p>
+              <p>Execution Time: {{ viewDataResult.executionTimeMillis }}ms</p>
+              <p>Total Rows: {{ viewDataResult.totalRows || 0 }}</p>
             </div>
 
-          </div> 
+          </div>
         </div>
 
     <div

@@ -143,6 +143,18 @@ public class ScriptedReporter extends AbstractReporter {
 				ctx.dbSql = null;
 				dbSql = null;
 			}
+			// Close any extra connections opened via ctx.getConnection()
+			if (ctx.namedDbSql != null) {
+				for (Map.Entry<String, Sql> entry : ctx.namedDbSql.entrySet()) {
+					try {
+						entry.getValue().close();
+						log.debug("Closed extra connection: {}", entry.getKey());
+					} catch (Exception ignore) {
+					}
+				}
+				ctx.namedDbSql.clear();
+				ctx.namedDbSql = null;
+			}
 		}
 		log.trace("Exiting fetchData.");
 	}

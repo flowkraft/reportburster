@@ -171,6 +171,13 @@
                 <p>Explore & query data</p>
             </a>
 
+            <!-- Dashboards -->
+            <a href="${createLink(uri: '/dashboards')}" class="component-card">
+                <i class="bi bi-speedometer2 icon"></i>
+                <h6>Dashboards</h6>
+                <p>Executive dashboards</p>
+            </a>
+
             <!-- Your Canvas - matches Next.js { href: "/your-canvas", icon: Layout, title: "Your Canvas", description: "Build your own" } -->
             <a href="${createLink(uri: '/your-canvas')}" class="component-card">
                 <i class="bi bi-easel icon"></i>

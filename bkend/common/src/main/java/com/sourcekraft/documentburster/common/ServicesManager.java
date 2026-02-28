@@ -12,6 +12,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +52,7 @@ public class ServicesManager {
 	private static final String DB_FAMILY = "database";
 	private static final String APP_FAMILY = "app";
 	private static final String NORTHWIND_PACK = "northwind"; // Specific pack name within the database family
+	private static final String CACHE_PACK = "cache"; // Cache services (Redis) — no Northwind provisioning
 
 	// Command constants
 	private static final String CMD_START = "start";
@@ -83,41 +85,57 @@ public class ServicesManager {
 			String subCmd = tokens[1].toLowerCase();
 
 			String packName = tokens[2].toLowerCase();
-			if (!packName.equals(NORTHWIND_PACK)) {
-				return new Result("error", "Unknown pack name '" + packName + "' in family '" + DB_FAMILY + "'.");
-			}
 			String managerArgsString = tokens.length > 3
 					? String.join(" ", java.util.Arrays.copyOfRange(tokens, 3, tokens.length))
 					: "";
 
-			switch (subCmd) {
-				case CMD_START: {
-					String out = captureOutput(() -> handleNorthwindStart(managerArgsString));
-					String status = (out.contains("✓ Northwind") || out.contains("database is running")) ? "running"
-							: (out.contains("✗") ? "error" : "running");
-					return new Result(status, out);
+			if (packName.equals(NORTHWIND_PACK)) {
+				switch (subCmd) {
+					case CMD_START: {
+						String out = captureOutput(() -> handleNorthwindStart(managerArgsString));
+						String status = (out.contains("✓ Northwind") || out.contains("database is running")) ? "running"
+								: (out.contains("✗") ? "error" : "running");
+						return new Result(status, out);
+					}
+					case CMD_STOP: {
+						String out = captureOutput(() -> handleNorthwindStop(managerArgsString));
+						return new Result("stopped", out);
+					}
+					case CMD_LIST: {
+						String out = captureOutput(() -> handleNorthwindList());
+						return new Result("ok", out);
+					}
+					case CMD_INFO: {
+						String out = captureOutput(() -> handleNorthwindInfo(managerArgsString));
+						String status = out.contains("Status:    RUNNING") ? "running"
+								: (out.contains("is not running") ? "stopped" : "ok");
+						return new Result(status, out);
+					}
+					case CMD_QUERY: {
+						String out = captureOutput(() -> handleNorthwindQuery(managerArgsString));
+						String status = out.toLowerCase().contains("error") ? "error" : "ok";
+						return new Result(status, out);
+					}
+					default:
+						return new Result("error", "Unknown database command: " + subCmd);
 				}
-				case CMD_STOP: {
-					String out = captureOutput(() -> handleNorthwindStop(managerArgsString));
-					return new Result("stopped", out);
+			} else if (packName.equals(CACHE_PACK)) {
+				// Cache services (e.g. Redis): just docker compose, skip Northwind provisioning
+				switch (subCmd) {
+					case CMD_START: {
+						String out = captureOutput(() -> handleCacheStart(managerArgsString));
+						String status = out.contains("✓") ? "running" : (out.contains("✗") ? "error" : "running");
+						return new Result(status, out);
+					}
+					case CMD_STOP: {
+						String out = captureOutput(() -> handleCacheStop(managerArgsString));
+						return new Result("stopped", out);
+					}
+					default:
+						return new Result("error", "Unknown cache command: " + subCmd);
 				}
-				case CMD_LIST: {
-					String out = captureOutput(() -> handleNorthwindList());
-					return new Result("ok", out);
-				}
-				case CMD_INFO: {
-					String out = captureOutput(() -> handleNorthwindInfo(managerArgsString));
-					String status = out.contains("Status:    RUNNING") ? "running"
-							: (out.contains("is not running") ? "stopped" : "ok");
-					return new Result(status, out);
-				}
-				case CMD_QUERY: {
-					String out = captureOutput(() -> handleNorthwindQuery(managerArgsString));
-					String status = out.toLowerCase().contains("error") ? "error" : "ok";
-					return new Result(status, out);
-				}
-				default:
-					return new Result("error", "Unknown database command: " + subCmd);
+			} else {
+				return new Result("error", "Unknown pack name '" + packName + "' in family '" + DB_FAMILY + "'.");
 			}
 		}
 
@@ -208,6 +226,77 @@ public class ServicesManager {
 		String vendorName = managerArgsString.split("\\s+")[0].toUpperCase();
 		DatabaseVendor vendor = DatabaseVendor.valueOf(vendorName);
 		dbManager.stopDatabase(vendor); // Call manager
+	}
+
+	/**
+	 * Handle 'database start cache <service> [port]'.
+	 * Runs docker compose in the db/ folder — no data provisioning needed.
+	 */
+	private static void handleCacheStart(String managerArgsString) throws Exception {
+		String[] parts = managerArgsString.split("\\s+");
+		String serviceName = parts[0].toLowerCase();
+		Integer customPort = parts.length > 1 ? Integer.parseInt(parts[1]) : null;
+
+		String dbFolderPath = Utils.getDbFolderPath();
+		Path workingDir = Paths.get(dbFolderPath);
+
+		List<String> command = new ArrayList<>();
+		command.add("docker");
+		command.add("compose");
+		command.add("-f");
+		command.add("docker-compose.yml");
+		command.add("up");
+		command.add("-d");
+		command.add("--remove-orphans");
+		command.add(serviceName);
+
+		ProcessExecutor executor = new ProcessExecutor()
+				.command(command)
+				.directory(workingDir.toFile())
+				.readOutput(true)
+				.timeout(300, TimeUnit.SECONDS);
+
+		if (customPort != null) {
+			Map<String, String> env = new HashMap<>(System.getenv());
+			env.put("REDIS_PORT", customPort.toString());
+			executor.environment(env);
+		}
+
+		log.info("[CACHE] Executing: {} in {}", String.join(" ", command), workingDir);
+		ProcessResult result = executor.execute();
+
+		if (result.getExitValue() == 0) {
+			System.out.println("✓ Cache service '" + serviceName + "' started successfully.");
+		} else {
+			System.out.println("✗ Failed to start cache service '" + serviceName + "'. Exit code: " + result.getExitValue());
+		}
+	}
+
+	/**
+	 * Handle 'database stop cache <service>'.
+	 */
+	private static void handleCacheStop(String managerArgsString) throws Exception {
+		String serviceName = managerArgsString.split("\\s+")[0].toLowerCase();
+
+		String dbFolderPath = Utils.getDbFolderPath();
+		Path workingDir = Paths.get(dbFolderPath);
+
+		List<String> command = new ArrayList<>();
+		command.add("docker");
+		command.add("compose");
+		command.add("-f");
+		command.add("docker-compose.yml");
+		command.add("stop");
+		command.add(serviceName);
+
+		log.info("[CACHE] Executing: {} in {}", String.join(" ", command), workingDir);
+		new ProcessExecutor()
+				.command(command)
+				.directory(workingDir.toFile())
+				.timeout(120, TimeUnit.SECONDS)
+				.execute();
+
+		System.out.println("✓ Cache service '" + serviceName + "' stopped.");
 	}
 
 	/**

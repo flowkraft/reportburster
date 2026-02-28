@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Table, BarChart3, Grid3x3, Sliders, FileText, Database, Layout } from "lucide-react";
+import { Table, BarChart3, Grid3x3, Sliders, FileText, Database, LayoutDashboard, Layout } from "lucide-react";
 
 export default function Home() {
   const components = [
@@ -38,6 +38,12 @@ export default function Home() {
       icon: Database,
       title: "Data Warehouse",
       description: "Explore & query data",
+    },
+    {
+      href: "/dashboards",
+      icon: LayoutDashboard,
+      title: "Dashboards",
+      description: "Executive dashboards",
     },
     {
       href: "/your-canvas",

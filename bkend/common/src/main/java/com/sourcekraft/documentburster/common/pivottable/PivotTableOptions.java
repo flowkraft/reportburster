@@ -50,6 +50,9 @@ public class PivotTableOptions {
 	// Derived attributes: { newColName: 'expression' }
 	private Map<String, String> derivedAttributes = new LinkedHashMap<>();
 
+	// Named blocks for aggregator reports
+	private Map<String, PivotTableOptions> namedOptions = new LinkedHashMap<>();
+
 	// Getters and setters
 	public List<String> getRows() { return rows; }
 	public void setRows(List<String> rows) { this.rows = rows; }
@@ -104,4 +107,7 @@ public class PivotTableOptions {
 
 	public Map<String, String> getDerivedAttributes() { return derivedAttributes; }
 	public void setDerivedAttributes(Map<String, String> derivedAttributes) { this.derivedAttributes = derivedAttributes; }
+
+	public Map<String, PivotTableOptions> getNamedOptions() { return namedOptions; }
+	public void setNamedOptions(Map<String, PivotTableOptions> namedOptions) { this.namedOptions = namedOptions; }
 }

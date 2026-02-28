@@ -6,14 +6,16 @@ export interface ReportDataResult {
   reportData: Array<Record<string, any>>;
   reportColumnNames: string[];
   executionTimeMillis: number;
-  isPreview: boolean;
   totalRows: number;
+  truncated: boolean;
 }
 
+// Flat map matching tabulator.info constructor options directly
 export interface TabulatorOptionsDto {
-  layoutOptions?: any;
   columns?: Array<{ title?: string; field?: string; [k: string]: any }>;
   data?: Array<Record<string, any>>;
+  namedOptions?: Record<string, Record<string, any>>; // componentId → options for aggregator reports
+  [k: string]: any; // all other tabulator.info options (layout, height, pagination, etc.)
 }
 
 export interface ChartOptionsDto {
@@ -21,8 +23,9 @@ export interface ChartOptionsDto {
   labelField?: string; // Which column from reportData to use for X-axis labels
   options?: any; // Chart.js options passthrough
   labels?: string[]; // Explicit labels override
-  datasets?: Array<{ field?: string; label?: string; color?: string; type?: string; [k: string]: any }>; // Series/dataset configurations
+  datasets?: Array<{ field?: string; label?: string; type?: string; [k: string]: any }>; // Series/dataset configurations
   data?: Array<Record<string, any>>; // Optional data override (defaults to reportData)
+  namedOptions?: Record<string, ChartOptionsDto>; // componentId → options for aggregator reports
 }
 
 export interface PivotTableOptionsDto {
@@ -45,6 +48,7 @@ export interface PivotTableOptionsDto {
   // Custom sorters and derived columns
   sorters?: { [attr: string]: any }; // Custom sort order per attribute
   derivedAttributes?: { [name: string]: string }; // Computed columns
+  namedOptions?: Record<string, PivotTableOptionsDto>; // componentId → options for aggregator reports
 }
 
 @Injectable({
@@ -56,40 +60,36 @@ export class ReportingService {
     protected settingsService: SettingsService,
   ) {}
 
+  get reportingApiBaseUrl(): string {
+    return this.apiService.BACKEND_URL + '/jobman/reporting';
+  }
+
   async fetchData(
     parameters: { [key: string]: any },
-    configurationFilePath: string = this.settingsService
-      .currentConfigurationTemplatePath,
+    testMode: boolean = false,
+    reportCode: string = this.settingsService.currentConfigurationTemplate
+      ?.folderName,
   ) {
-    //console.log(
-    //  `fetchData parameters: ${JSON.stringify(parameters)}, configurationFilePath: ${configurationFilePath}`,
-    //);
-
-    // Create URLSearchParams object
     const params = new URLSearchParams();
+    if (testMode) {
+      params.set('testMode', 'true');
+    }
 
-    // Add required parameters
-    params.set('configurationFilePath', configurationFilePath);
-
-    // Add optional parameters
     Object.entries(parameters).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
         params.set(key, value.toString());
       }
     });
 
-    // Convert URLSearchParams to plain object for serialization
     const paramsObj = {};
     params.forEach((value, key) => {
       paramsObj[key] = value;
     });
 
-    //console.log('Sending parameters:', JSON.stringify(paramsObj));
-
-    // Make GET request with query parameters
-    // console.log('[DEBUG] fetchData: calling API with params:', paramsObj);
-    const result = await this.apiService.get('/jobman/reporting/fetch-data', paramsObj);
-    // console.log('[DEBUG] fetchData: received response:', result);
+    const result = await this.apiService.get(
+      `/jobman/reporting/reports/${reportCode}/data`,
+      paramsObj,
+    );
     return result;
   }
 

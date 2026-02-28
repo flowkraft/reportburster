@@ -190,14 +190,14 @@ export default function ReportsPage() {
                         ${
                           selectedEmployee === emp.code
                             ? "active border-blue-600 bg-blue-50 dark:bg-blue-950 shadow-[0_0_0_3px_rgba(59,130,246,0.2)]"
-                            : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950"
+                            : "border-border bg-card hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950"
                         }
                       `}
                     >
                       <div className="font-semibold text-blue-900 dark:text-blue-100">
                         {emp.name}
                       </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <div className="text-sm text-muted-foreground">
                         {emp.code} • {emp.department}
                       </div>
                     </div>

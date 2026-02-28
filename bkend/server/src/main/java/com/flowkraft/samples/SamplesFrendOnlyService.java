@@ -247,7 +247,14 @@ public class SamplesFrendOnlyService {
                                   "<reportdistribution>false</reportdistribution>");
         content = content.replace("<reportgenerationmailmerge>false</reportgenerationmailmerge>",
                                   "<reportgenerationmailmerge>true</reportgenerationmailmerge>");
-        
+
+        // Visualization report (chart/tabulator/pivot) — no per-row file generation.
+        // reporting.xml already defaults <outputtype>output.none</outputtype>, but
+        // burstfilename must also be overridden from ${burst_token}.${output_type_extension}
+        content = content.replaceAll(
+                "(?s)<burstfilename>.*?</burstfilename>",
+                "<burstfilename>output.none</burstfilename>");
+
         FileUtils.writeStringToFile(targetPath.toFile(), content, "UTF-8");
         log.info("Created settings.xml for frend sample: {}", reportCode);
     }

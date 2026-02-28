@@ -659,7 +659,7 @@ async function performComprehensiveDemoPivotActions(page: Page, baseUrl: string)
 
   // --- STEP 11: Reset and verify grand total preserved ---
   console.log('[BROWSER] Step 11: Reset and verify grand total integrity');
-  await page.click('#refreshBtn');
+  // #refreshBtn removed — pivot-tables page no longer has this button
   await SelfServicePortalsTestHelper.waitForPivotTableRender(page, 'demoPivot');
 
   // Clear filters from Steps 8 and 9 so we can compare full dataset

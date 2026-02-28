@@ -357,6 +357,7 @@ export default function ReportParametersPage() {
                     report-code="par-employee-hire-dates"
                     api-base-url={rbConfig.apiBaseUrl}
                     api-key={rbConfig.apiKey}
+                    style={{ display: "block", width: "100%" }}
                   />
                 </div>
                 <div

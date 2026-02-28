@@ -41,6 +41,11 @@ public class ReportFullConfigDto {
     public String pivotTableDsl;
     public String parametersDsl;
     
+    /** Named options for aggregator reports (componentId → options) */
+    public Map<String, Map<String, Object>> namedTabulatorOptions;
+    public Map<String, Map<String, Object>> namedChartOptions;
+    public Map<String, Map<String, Object>> namedPivotTableOptions;
+
     /** Which visualizations are configured */
     public boolean hasTabulator;
     public boolean hasChart;

@@ -255,7 +255,7 @@ public class DuckDBAnalyticsService {
 
         // Execute script via CliJob (same as ReportingService.fetchData)
         CliJob cliJob = new CliJob(cfgFilePath);
-        return cliJob.doFetchData(null);
+        return cliJob.doFetchData(null, false);
     }
 
     /**

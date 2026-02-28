@@ -20,7 +20,7 @@
 
 	<properties>
 
-		<revision>13.3.0</revision>
+		<revision>14.1.0</revision>
 
 		<!-- upgraded -->
 		<commons.beanutils.version>1.9.4</commons.beanutils.version>
@@ -86,6 +86,8 @@
 		<mariadb-jdbc.version>3.5.5</mariadb-jdbc.version>
 		<postgresql-jdbc.version>42.7.7</postgresql-jdbc.version>
 		<ibmdb2-jdbc.version>12.1.2.0</ibmdb2-jdbc.version>
+
+		<lettuce.version>7.4.0.RELEASE</lettuce.version>
 
 		<!--DATABASE END -->
 
@@ -448,6 +450,11 @@
 				<groupId>com.ibm.db2</groupId>
 				<artifactId>jcc</artifactId>
 				<version>${ibmdb2-jdbc.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.lettuce</groupId>
+				<artifactId>lettuce-core</artifactId>
+				<version>${lettuce.version}</version>
 			</dependency>
 			<!--DATABASE END -->
 

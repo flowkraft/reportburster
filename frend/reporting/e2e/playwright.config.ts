@@ -2,6 +2,7 @@
 const config = {
   testDir: '.',
   testMatch: '**/*.spec.ts',
+  grep: process.env.E2E_GREP ? new RegExp(process.env.E2E_GREP) : undefined,
   timeout: 180000,
   use: {
     headless: false,

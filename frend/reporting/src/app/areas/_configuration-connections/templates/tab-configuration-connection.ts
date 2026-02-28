@@ -24,6 +24,9 @@ export const tabExternalConnectionsTemplate = `<ng-template #tabExternalConnecti
                 | translate }}
               </th>
               <th>
+                Code
+              </th>
+              <th>
                 Actions&nbsp;&nbsp;
               </th>
         
@@ -46,7 +49,18 @@ export const tabExternalConnectionsTemplate = `<ng-template #tabExternalConnecti
         <td>
         {{connectionFile.usedBy}}
          </td>
-         
+
+          <td>
+            <span *ngIf="connectionFile.connectionCode" style="font-family: monospace; font-size: 12px;">
+              {{connectionFile.connectionCode}}
+              <button type="button" class="btn btn-xs btn-default" style="margin-left: 4px; padding: 1px 4px;"
+                title="Copy connection code to clipboard"
+                (click)="$event.stopPropagation(); copyConnectionCode(connectionFile.connectionCode)">
+                <i class="fa fa-clipboard"></i>
+              </button>
+            </span>
+          </td>
+
           <td>
  
           <div class="btn-group dropup"> 

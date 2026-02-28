@@ -1026,9 +1026,12 @@ public class NoExeAssembler extends AbstractAssembler {
 				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
 				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
 
+		// Visualization report (chart/tabulator/pivot) — no per-row file generation.
+		// reporting.xml already defaults <outputtype>output.none</outputtype>, but
+		// burstfilename must also be overridden from ${burst_token}.${output_type_extension}
 		content = content.replaceAll(
 				"(?s)<burstfilename>.*?</burstfilename>",
-				"<burstfilename>pivot-data.none</burstfilename>");
+				"<burstfilename>output.none</burstfilename>");
 
 		FileUtils.writeStringToFile(new File(pivSalesRegionProdSettingsFilePath), content, "UTF-8");
 		
@@ -1069,9 +1072,12 @@ public class NoExeAssembler extends AbstractAssembler {
 		content = content.replaceAll(
 				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
 				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		// Visualization report (chart/tabulator/pivot) — no per-row file generation.
+		// reporting.xml already defaults <outputtype>output.none</outputtype>, but
+		// burstfilename must also be overridden from ${burst_token}.${output_type_extension}
 		content = content.replaceAll(
 				"(?s)<burstfilename>.*?</burstfilename>",
-				"<burstfilename>pivot-data.none</burstfilename>");
+				"<burstfilename>output.none</burstfilename>");
 
 		FileUtils.writeStringToFile(new File(pivWhBrowserSettingsFilePath), content, "UTF-8");
 
@@ -1104,9 +1110,12 @@ public class NoExeAssembler extends AbstractAssembler {
 		content = content.replaceAll(
 				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
 				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		// Visualization report (chart/tabulator/pivot) — no per-row file generation.
+		// reporting.xml already defaults <outputtype>output.none</outputtype>, but
+		// burstfilename must also be overridden from ${burst_token}.${output_type_extension}
 		content = content.replaceAll(
 				"(?s)<burstfilename>.*?</burstfilename>",
-				"<burstfilename>pivot-data.none</burstfilename>");
+				"<burstfilename>output.none</burstfilename>");
 
 		FileUtils.writeStringToFile(new File(pivWhDuckdbSettingsFilePath), content, "UTF-8");
 
@@ -1139,9 +1148,12 @@ public class NoExeAssembler extends AbstractAssembler {
 		content = content.replaceAll(
 				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
 				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		// Visualization report (chart/tabulator/pivot) — no per-row file generation.
+		// reporting.xml already defaults <outputtype>output.none</outputtype>, but
+		// burstfilename must also be overridden from ${burst_token}.${output_type_extension}
 		content = content.replaceAll(
 				"(?s)<burstfilename>.*?</burstfilename>",
-				"<burstfilename>pivot-data.none</burstfilename>");
+				"<burstfilename>output.none</burstfilename>");
 
 		FileUtils.writeStringToFile(new File(pivWhClickhouseSettingsFilePath), content, "UTF-8");
 
@@ -1205,8 +1217,121 @@ public class NoExeAssembler extends AbstractAssembler {
 				"<documentpath>rep-employee-payslip-template.html</documentpath>");
 				
 		FileUtils.writeStringToFile(new File(repEmployeePayslipReportingFilePath), content, "UTF-8");
-		
-		
+
+		// tab-examples (tabulator showcase - aggregator report)
+
+		String tabExamplesSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/_frend/tab-examples";
+		String tabExamplesSettingsFilePath = tabExamplesSampleDir + "/settings.xml";
+		String tabExamplesReportingFilePath = tabExamplesSampleDir + "/reporting.xml";
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(tabExamplesSettingsFilePath));
+		content = FileUtils.readFileToString(new File(tabExamplesSettingsFilePath), "UTF-8");
+
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+				"<template>TabulatorExamples</template>");
+		content = content.replaceAll(
+				"(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replaceAll(
+				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		// Visualization report (chart/tabulator/pivot) — no per-row file generation.
+		// reporting.xml already defaults <outputtype>output.none</outputtype>, but
+		// burstfilename must also be overridden from ${burst_token}.${output_type_extension}
+		content = content.replaceAll(
+				"(?s)<burstfilename>.*?</burstfilename>",
+				"<burstfilename>output.none</burstfilename>");
+
+		FileUtils.writeStringToFile(new File(tabExamplesSettingsFilePath), content, "UTF-8");
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(tabExamplesReportingFilePath));
+		content = FileUtils.readFileToString(new File(tabExamplesReportingFilePath), "UTF-8");
+		content = content.replaceAll("(?si)<type\\s*>\\s*ds\\.csvfile\\s*</type>", "<type>ds.scriptfile</type>");
+		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
+				"<conncode>rbt-sample-northwind-sqlite-4f2</conncode>");
+		content = content.replaceAll("(?s)<scriptname\\s*/>|<scriptname>\\s*</scriptname>",
+				"<scriptname>tab-examples-script.groovy</scriptname>");
+
+		FileUtils.writeStringToFile(new File(tabExamplesReportingFilePath), content, "UTF-8");
+
+		// charts-examples (chart showcase - aggregator report)
+
+		String chartsExamplesSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/_frend/charts-examples";
+		String chartsExamplesSettingsFilePath = chartsExamplesSampleDir + "/settings.xml";
+		String chartsExamplesReportingFilePath = chartsExamplesSampleDir + "/reporting.xml";
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(chartsExamplesSettingsFilePath));
+		content = FileUtils.readFileToString(new File(chartsExamplesSettingsFilePath), "UTF-8");
+
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+				"<template>ChartExamples</template>");
+		content = content.replaceAll(
+				"(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replaceAll(
+				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		// Visualization report (chart/tabulator/pivot) — no per-row file generation.
+		// reporting.xml already defaults <outputtype>output.none</outputtype>, but
+		// burstfilename must also be overridden from ${burst_token}.${output_type_extension}
+		content = content.replaceAll(
+				"(?s)<burstfilename>.*?</burstfilename>",
+				"<burstfilename>output.none</burstfilename>");
+
+		FileUtils.writeStringToFile(new File(chartsExamplesSettingsFilePath), content, "UTF-8");
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(chartsExamplesReportingFilePath));
+		content = FileUtils.readFileToString(new File(chartsExamplesReportingFilePath), "UTF-8");
+		content = content.replaceAll("(?si)<type\\s*>\\s*ds\\.csvfile\\s*</type>", "<type>ds.scriptfile</type>");
+		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
+				"<conncode>rbt-sample-northwind-sqlite-4f2</conncode>");
+		content = content.replaceAll("(?s)<scriptname\\s*/>|<scriptname>\\s*</scriptname>",
+				"<scriptname>charts-examples-script.groovy</scriptname>");
+
+		FileUtils.writeStringToFile(new File(chartsExamplesReportingFilePath), content, "UTF-8");
+
+		// dashboard-cfo (CFO analytics dashboard - aggregator report)
+
+		String dashboardCfoSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/_frend/dashboard-cfo";
+		String dashboardCfoSettingsFilePath = dashboardCfoSampleDir + "/settings.xml";
+		String dashboardCfoReportingFilePath = dashboardCfoSampleDir + "/reporting.xml";
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(dashboardCfoSettingsFilePath));
+		content = FileUtils.readFileToString(new File(dashboardCfoSettingsFilePath), "UTF-8");
+
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+				"<template>CFODashboard</template>");
+		content = content.replaceAll(
+				"(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replaceAll(
+				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		// Visualization report (chart/tabulator/pivot) — no per-row file generation.
+		// reporting.xml already defaults <outputtype>output.none</outputtype>, but
+		// burstfilename must also be overridden from ${burst_token}.${output_type_extension}
+		content = content.replaceAll(
+				"(?s)<burstfilename>.*?</burstfilename>",
+				"<burstfilename>output.none</burstfilename>");
+
+		FileUtils.writeStringToFile(new File(dashboardCfoSettingsFilePath), content, "UTF-8");
+
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(dashboardCfoReportingFilePath));
+		content = FileUtils.readFileToString(new File(dashboardCfoReportingFilePath), "UTF-8");
+		content = content.replaceAll("(?si)<type\\s*>\\s*ds\\.csvfile\\s*</type>", "<type>ds.scriptfile</type>");
+		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
+				"<conncode>rbt-sample-northwind-sqlite-4f2</conncode>");
+		content = content.replaceAll("(?s)<scriptname\\s*/>|<scriptname>\\s*</scriptname>",
+				"<scriptname>dashboard-cfo-script.groovy</scriptname>");
+
+		FileUtils.writeStringToFile(new File(dashboardCfoReportingFilePath), content, "UTF-8");
+
 		// FREND SAMPLES END
 
 		// WebPortal samples - copy paystub templates to plugin views folder

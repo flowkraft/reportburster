@@ -36,7 +36,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
-      <body className="font-sans antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
+      <body className="font-sans antialiased min-h-screen flex flex-col bg-background text-foreground">
         <ThemeProvider>
           <RbWebComponentsLoader />
           {children}

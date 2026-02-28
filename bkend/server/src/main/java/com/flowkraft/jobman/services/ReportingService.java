@@ -3,9 +3,16 @@ package com.flowkraft.jobman.services;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,11 +46,11 @@ public class ReportingService {
 	@Autowired
 	SamplesFrendOnlyService samplesFrendOnlyService;
 
-	public ReportDataResult fetchData(String configurationFilePath, Map<String, String> parameters)
+	public ReportDataResult fetchData(String configurationFilePath, Map<String, String> parameters, boolean testMode)
 			throws Exception {
 		CliJob cliJob = new CliJob(configurationFilePath);
 
-		return cliJob.doFetchData(parameters);
+		return cliJob.doFetchData(parameters, testMode);
 	}
 
 	/**
@@ -135,17 +142,14 @@ public class ReportingService {
 				var opts = TabulatorOptionsParser.parseGroovyTabulatorDslCode(dslContent);
 				System.out.println("[DEBUG] Tabulator DSL parsed successfully, opts=" + (opts != null ? "not null" : "null"));
 				if (opts != null) {
-					config.tabulatorOptions = new HashMap<>();
-					if (opts.getLayoutOptions() != null) {
-						config.tabulatorOptions.put("layoutOptions", opts.getLayoutOptions());
+					config.tabulatorOptions = new HashMap<>(opts.getOptions());
+					// Extract named blocks for aggregator reports
+					if (opts.getNamedOptions() != null && !opts.getNamedOptions().isEmpty()) {
+						config.namedTabulatorOptions = opts.getNamedOptions();
 					}
-					if (opts.getColumns() != null) {
-					config.tabulatorOptions.put("columns", opts.getColumns());
-				}
-				if (opts.getData() != null) {
-					config.tabulatorOptions.put("data", opts.getData());
-				}
-				config.hasTabulator = true;
+					// hasTabulator is true when unnamed options or named blocks exist
+					config.hasTabulator = !opts.getOptions().isEmpty()
+							|| (config.namedTabulatorOptions != null);
 			}
 			} catch (Exception e) {
 				System.out.println("[DEBUG] ERROR parsing Tabulator DSL: " + e.getMessage());
@@ -183,10 +187,27 @@ public class ReportingService {
 				if (opts.getData() != null && !opts.getData().isEmpty()) {
 					config.chartOptions.put("data", opts.getData());
 				}
-				config.hasChart = true;
+				// Extract named blocks for aggregator reports
+				if (opts.getNamedOptions() != null && !opts.getNamedOptions().isEmpty()) {
+					config.namedChartOptions = new HashMap<>();
+					for (Map.Entry<String, com.sourcekraft.documentburster.common.chart.ChartOptions> entry : opts.getNamedOptions().entrySet()) {
+						Map<String, Object> m = new HashMap<>();
+						com.sourcekraft.documentburster.common.chart.ChartOptions co = entry.getValue();
+						if (co.getType() != null) m.put("type", co.getType());
+						if (co.getLabelField() != null) m.put("labelField", co.getLabelField());
+						if (co.getOptions() != null && !co.getOptions().isEmpty()) m.put("options", co.getOptions());
+						if (co.getLabels() != null && !co.getLabels().isEmpty()) m.put("labels", co.getLabels());
+						if (co.getDatasets() != null && !co.getDatasets().isEmpty()) m.put("datasets", co.getDatasets());
+						if (co.getData() != null && !co.getData().isEmpty()) m.put("data", co.getData());
+						config.namedChartOptions.put(entry.getKey(), m);
+					}
+				}
+				// hasChart is true when unnamed options or named blocks exist
+				config.hasChart = !config.chartOptions.isEmpty()
+						|| (config.namedChartOptions != null);
 			}
 		}
-		
+
 		// Load Pivot DSL
 		Path pivotPath = itemDir.resolve(reportCode + "-pivot-config.groovy");
 		System.out.println("[DEBUG] Pivot DSL path: " + pivotPath + " exists=" + Files.exists(pivotPath));
@@ -243,8 +264,34 @@ public class ReportingService {
 				if (opts.getTableName() != null) {
 					config.pivotTableOptions.put("tableName", opts.getTableName());
 				}
-				config.hasPivotTable = true;
-				System.out.println("[DEBUG] Pivot config set: hasPivotTable=true, pivotTableDsl length=" + config.pivotTableDsl.length());
+				// Extract named blocks for aggregator reports
+				if (opts.getNamedOptions() != null && !opts.getNamedOptions().isEmpty()) {
+					config.namedPivotTableOptions = new HashMap<>();
+					for (Map.Entry<String, com.sourcekraft.documentburster.common.pivottable.PivotTableOptions> entry : opts.getNamedOptions().entrySet()) {
+						Map<String, Object> m = new HashMap<>();
+						com.sourcekraft.documentburster.common.pivottable.PivotTableOptions po = entry.getValue();
+						if (po.getRows() != null && !po.getRows().isEmpty()) m.put("rows", po.getRows());
+						if (po.getCols() != null && !po.getCols().isEmpty()) m.put("cols", po.getCols());
+						if (po.getVals() != null && !po.getVals().isEmpty()) m.put("vals", po.getVals());
+						if (po.getAggregatorName() != null) m.put("aggregatorName", po.getAggregatorName());
+						if (po.getRendererName() != null) m.put("rendererName", po.getRendererName());
+						if (po.getRowOrder() != null) m.put("rowOrder", po.getRowOrder());
+						if (po.getColOrder() != null) m.put("colOrder", po.getColOrder());
+						if (po.getValueFilter() != null && !po.getValueFilter().isEmpty()) m.put("valueFilter", po.getValueFilter());
+						if (po.getOptions() != null && !po.getOptions().isEmpty()) m.put("options", po.getOptions());
+						if (po.getHiddenAttributes() != null && !po.getHiddenAttributes().isEmpty()) m.put("hiddenAttributes", po.getHiddenAttributes());
+						if (po.getHiddenFromAggregators() != null && !po.getHiddenFromAggregators().isEmpty()) m.put("hiddenFromAggregators", po.getHiddenFromAggregators());
+						if (po.getHiddenFromDragDrop() != null && !po.getHiddenFromDragDrop().isEmpty()) m.put("hiddenFromDragDrop", po.getHiddenFromDragDrop());
+						if (po.getUnusedOrientationCutoff() != null) m.put("unusedOrientationCutoff", po.getUnusedOrientationCutoff());
+						if (po.getMenuLimit() != null) m.put("menuLimit", po.getMenuLimit());
+						if (po.getTableName() != null) m.put("tableName", po.getTableName());
+						config.namedPivotTableOptions.put(entry.getKey(), m);
+					}
+				}
+				// hasPivotTable is true when unnamed options or named blocks exist
+				config.hasPivotTable = !config.pivotTableOptions.isEmpty()
+						|| (config.namedPivotTableOptions != null);
+				System.out.println("[DEBUG] Pivot config set: hasPivotTable=" + config.hasPivotTable + ", pivotTableDsl length=" + config.pivotTableDsl.length());
 			}
 
 			// Detect pivot engine mode from datasource type
@@ -344,7 +391,7 @@ public class ReportingService {
 	 * When entityCode is present, it's expected that the SQL query or Groovy script
 	 * uses :entityCode as a parameter binding, guaranteeing a single row result.
 	 */
-	public ReportDataResult fetchReportData(String reportCode, Map<String, String> parameters) throws Exception {
+	public ReportDataResult fetchReportData(String reportCode, Map<String, String> parameters, boolean testMode) throws Exception {
 		System.out.println("[DEBUG] fetchReportData - START, reportCode=" + reportCode + ", parameters=" + parameters);
 		
 		// Build config file path
@@ -383,7 +430,7 @@ public class ReportingService {
 		
 		// Fetch the report data (entityCode flows through as a parameter to SQL/Script)
 		System.out.println("[DEBUG] fetchReportData - about to call fetchData with cfgFilePath=" + cfgFilePath);
-		ReportDataResult result = fetchData(cfgFilePath, parameters);
+		ReportDataResult result = fetchData(cfgFilePath, parameters, testMode);
 		System.out.println("[DEBUG] fetchReportData - fetchData returned, reportData size=" + (result.reportData != null ? result.reportData.size() : "null"));
 		
 		// Check if entityCode was provided for single-entity HTML rendering
@@ -455,6 +502,120 @@ public class ReportingService {
 		return result;
 	}
 	
+	/**
+	 * Apply server-side filtering, sorting, and pagination to report data in-memory.
+	 * Order: filter → sort → count → paginate.
+	 *
+	 * @param result    The full report data result from fetchData()
+	 * @param page      1-based page number (Tabulator convention)
+	 * @param size      Page size (rows per page)
+	 * @param sortJson  JSON array: [{"field":"name","dir":"asc"}]
+	 * @param filterJson JSON array: [{"field":"age","type":">","value":"30"}]
+	 * @return Modified result with sliced data, totalRows, and lastPage set
+	 */
+	public ReportDataResult applyServerSideOperations(ReportDataResult result,
+			Integer page, Integer size, String sortJson, String filterJson) {
+		if (result.reportData == null) return result;
+
+		List<LinkedHashMap<String, Object>> rows = result.reportData;
+		ObjectMapper mapper = new ObjectMapper();
+
+		// 1. Apply filters
+		if (filterJson != null && !filterJson.isBlank()) {
+			try {
+				List<Map<String, String>> filters = mapper.readValue(filterJson,
+						new TypeReference<List<Map<String, String>>>() {});
+				for (Map<String, String> f : filters) {
+					String field = f.get("field");
+					String type = f.get("type");
+					String value = f.get("value");
+					if (field == null || type == null) continue;
+					rows = new ArrayList<>(rows.stream().filter(row -> {
+						Object cellVal = row.get(field);
+						if (cellVal == null) return "!=".equals(type);
+						String cellStr = String.valueOf(cellVal);
+						switch (type) {
+							case "=": return cellStr.equals(value);
+							case "!=": return !cellStr.equals(value);
+							case "like": return cellStr.toLowerCase().contains(
+									value != null ? value.toLowerCase() : "");
+							case "starts": return cellStr.toLowerCase().startsWith(
+									value != null ? value.toLowerCase() : "");
+							case "ends": return cellStr.toLowerCase().endsWith(
+									value != null ? value.toLowerCase() : "");
+							case "<": return compareValues(cellVal, value) < 0;
+							case ">": return compareValues(cellVal, value) > 0;
+							case "<=": return compareValues(cellVal, value) <= 0;
+							case ">=": return compareValues(cellVal, value) >= 0;
+							default: return true;
+						}
+					}).toList());
+				}
+			} catch (Exception e) {
+				log.warn("Failed to parse filter JSON: {}", e.getMessage());
+			}
+		}
+
+		// 2. Apply sorting
+		if (sortJson != null && !sortJson.isBlank()) {
+			try {
+				List<Map<String, String>> sorters = mapper.readValue(sortJson,
+						new TypeReference<List<Map<String, String>>>() {});
+				if (!sorters.isEmpty()) {
+					Comparator<LinkedHashMap<String, Object>> comparator = null;
+					for (Map<String, String> s : sorters) {
+						String field = s.get("field");
+						String dir = s.getOrDefault("dir", "asc");
+						if (field == null) continue;
+						Comparator<LinkedHashMap<String, Object>> c = (a, b) -> {
+							Object va = a.get(field);
+							Object vb = b.get(field);
+							return compareValues(va, vb);
+						};
+						if ("desc".equalsIgnoreCase(dir)) c = c.reversed();
+						comparator = (comparator == null) ? c : comparator.thenComparing(c);
+					}
+					if (comparator != null) {
+						rows = new ArrayList<>(rows);
+						Collections.sort(rows, comparator);
+					}
+				}
+			} catch (Exception e) {
+				log.warn("Failed to parse sort JSON: {}", e.getMessage());
+			}
+		}
+
+		// 3. Set totalRows AFTER filtering but BEFORE pagination
+		result.totalRows = rows.size();
+
+		// 4. Apply pagination
+		if (page != null && size != null && size > 0) {
+			result.lastPage = Math.max(1, (int) Math.ceil((double) rows.size() / size));
+			int from = Math.min((page - 1) * size, rows.size());
+			int to = Math.min(from + size, rows.size());
+			rows = new ArrayList<>(rows.subList(from, to));
+		} else {
+			result.lastPage = 1;
+		}
+
+		result.reportData = new ArrayList<>(rows);
+		return result;
+	}
+
+	/** Compare two values — tries numeric first, falls back to string */
+	private static int compareValues(Object a, Object b) {
+		if (a == null && b == null) return 0;
+		if (a == null) return -1;
+		if (b == null) return 1;
+		try {
+			double da = (a instanceof Number) ? ((Number) a).doubleValue() : Double.parseDouble(String.valueOf(a));
+			double db = (b instanceof Number) ? ((Number) b).doubleValue() : Double.parseDouble(String.valueOf(b));
+			return Double.compare(da, db);
+		} catch (NumberFormatException e) {
+			return String.valueOf(a).compareToIgnoreCase(String.valueOf(b));
+		}
+	}
+
 	private String extractXmlValue(String content, String tag) {
 		int startPos = content.indexOf("<" + tag + ">") + tag.length() + 2;
 		int endPos = content.indexOf("</" + tag + ">");

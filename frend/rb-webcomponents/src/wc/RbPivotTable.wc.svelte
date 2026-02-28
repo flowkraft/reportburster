@@ -26,11 +26,69 @@
   import type { ServerPivotResponse } from './services/pivot-api';
 
   // ============================================================================
+  // Derived Attribute Expression Parser
+  // Converts string expressions (from JSON config) to JS functions.
+  // Supports: dateFormat(fieldName, "formatStr")
+  //   %Y = 4-digit year, %y = 2-digit year, %m = month (01-12),
+  //   %d = day (01-31), %q = quarter (1-4)
+  // ============================================================================
+  function parseDerivedAttributeExpressions(
+    raw: Record<string, any>
+  ): Record<string, (record: Record<string, any>) => any> {
+    const result: Record<string, (record: Record<string, any>) => any> = {};
+    for (const [key, value] of Object.entries(raw)) {
+      if (typeof value === 'function') {
+        result[key] = value;
+      } else if (typeof value === 'string') {
+        const match = value.match(/^dateFormat\((\w+),\s*"([^"]+)"\)$/);
+        if (match) {
+          const field = match[1];
+          const fmt = match[2];
+          result[key] = (record: Record<string, any>) => {
+            const dateStr = record[field];
+            if (!dateStr) return null;
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return null;
+            return fmt
+              .replace('%Y', String(d.getFullYear()))
+              .replace('%y', String(d.getFullYear()).slice(-2))
+              .replace('%m', String(d.getMonth() + 1).padStart(2, '0'))
+              .replace('%d', String(d.getDate()).padStart(2, '0'))
+              .replace('%q', String(Math.ceil((d.getMonth() + 1) / 3)));
+          };
+        }
+      }
+    }
+    return result;
+  }
+
+  // ============================================================================
+  // Sorters Config Parser
+  // Converts array values from JSON config to sortAs() functions.
+  // JSON sends { region: ["West", "Central", "East"] } but the component
+  // expects { region: sortAs(["West", "Central", "East"]) }.
+  // ============================================================================
+  function parseSortersFromConfig(raw: Record<string, any>): any {
+    const result: Record<string, any> = {};
+    for (const [key, value] of Object.entries(raw)) {
+      if (typeof value === 'function') {
+        result[key] = value;
+      } else if (Array.isArray(value)) {
+        result[key] = sortAs(value);
+      }
+    }
+    return result;
+  }
+
+  // ============================================================================
   // Hybrid Mode Props - when reportCode is provided, component self-fetches
   // ============================================================================
   export let reportCode: string = '';
   export let apiBaseUrl: string = '';
   export let apiKey: string = '';
+  export let componentId: string = '';
+  export let reportParams: Record<string, string> = {};
+  export let testMode: boolean = false;
 
   // ============================================================================
   // Props - matching react-pivottable API
@@ -304,6 +362,15 @@
       if (!reportCode) reportCode = hostEl.getAttribute('report-code') || '';
       if (!apiBaseUrl) apiBaseUrl = hostEl.getAttribute('api-base-url') || '';
       if (!apiKey) apiKey = hostEl.getAttribute('api-key') || '';
+      if (!Object.keys(reportParams).length) {
+        const rp = hostEl.getAttribute('report-params');
+        if (rp) try { reportParams = JSON.parse(rp); } catch(e) {}
+      }
+      if (!testMode) {
+        const tm = hostEl.getAttribute('test-mode');
+        if (tm === 'true' || tm === '') testMode = true;
+      }
+      if (!componentId) componentId = hostEl.getAttribute('component-id') || '';
     }
     
     // ========================================================================
@@ -318,20 +385,21 @@
       // if (apiKey) headers['X-API-Key'] = apiKey;
 
       try {
-        // Fetch config
+        // Fetch config (deduplicated across all rb-pivot-table instances with same report-code)
         console.log('[rb-pivot-table] Fetching config from:', `${apiBaseUrl}/reports/${reportCode}/config`);
-        const configRes = await fetchWithTimeout(`${apiBaseUrl}/reports/${reportCode}/config`, { headers }, 10000);
-        if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
-        const config = await configRes.json();
+        const config = await fetchConfigCached(`${apiBaseUrl}/reports/${reportCode}/config`, headers);
         console.log('[rb-pivot-table] Config received:', {
           hasPivotTable: config.hasPivotTable,
           pivotTableDsl: config.pivotTableDsl ? `${config.pivotTableDsl.length} chars` : 'MISSING',
           pivotTableOptions: config.pivotTableOptions
         });
 
-        // Apply pivot table options from config
-        if (config.pivotTableOptions) {
-          const opts = config.pivotTableOptions;
+        // Apply pivot table options from config (named or default)
+        const pivotOpts = (componentId && config.namedPivotTableOptions?.[componentId])
+          ? config.namedPivotTableOptions[componentId]
+          : config.pivotTableOptions;
+        if (pivotOpts) {
+          const opts = pivotOpts;
           if (opts.rows) rows = opts.rows;
           if (opts.cols) cols = opts.cols;
           if (opts.vals) vals = opts.vals;
@@ -345,6 +413,8 @@
           if (opts.hiddenFromDragDrop) hiddenFromDragDrop = opts.hiddenFromDragDrop;
           if (opts.unusedOrientationCutoff != null) unusedOrientationCutoff = opts.unusedOrientationCutoff;
           if (opts.menuLimit != null) menuLimit = opts.menuLimit;
+          if (opts.derivedAttributes) derivedAttributes = parseDerivedAttributeExpressions(opts.derivedAttributes);
+          if (opts.sorters) sorters = parseSortersFromConfig(opts.sorters);
         }
 
         // Apply engine mode from backend auto-detection
@@ -367,8 +437,16 @@
         const needsDataFetch = engine === 'browser' || !shouldUseServerProcessing();
         if (needsDataFetch) {
           console.log('[rb-pivot-table]', engine, 'mode: fetching dataset from /data endpoint...');
+          // Build data URL with user params + testMode + componentId
+          const dataQueryParams = new URLSearchParams(reportParams as Record<string, string>);
+          if (testMode) dataQueryParams.set('testMode', 'true');
+          if (componentId) dataQueryParams.set('componentId', componentId);
+          const dataQs = dataQueryParams.toString();
+          const dataFetchUrl = dataQs
+              ? `${apiBaseUrl}/reports/${reportCode}/data?${dataQs}`
+              : `${apiBaseUrl}/reports/${reportCode}/data`;
           // Longer timeout (60s) because backend may process multiple requests sequentially
-          const dataRes = await fetchWithTimeout(`${apiBaseUrl}/reports/${reportCode}/data`, { headers }, 60000);
+          const dataRes = await fetchWithTimeout(dataFetchUrl, { headers }, 60000);
           if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
           const dataResult = await dataRes.json();
           // Backend returns { reportData: [...] }, extract the array
@@ -382,7 +460,13 @@
             return;
           }
 
-          dispatch('dataFetched', { data });
+          dispatch('dataFetched', {
+            data,
+            executionTimeMillis: dataResult?.executionTimeMillis || 0,
+            totalRows: dataResult?.totalRows || data.length,
+            truncated: dataResult?.truncated || false,
+            reportColumnNames: dataResult?.reportColumnNames || [],
+          });
         } else {
           console.log('[rb-pivot-table] Server-side aggregation mode (', engine, '): skipping data download, will aggregate on server');
           // Server-side aggregation will happen via reactive statement when user interacts
@@ -859,14 +943,16 @@
     // if (apiKey) headers['X-API-Key'] = apiKey;
     
     try {
-      // Re-fetch config to get any DSL changes
-      const configRes = await fetchWithTimeout(`${apiBaseUrl}/reports/${reportCode}/config`, { headers }, 10000);
-      if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
-      const config = await configRes.json();
+      // Re-fetch config (uses module-level dedup cache)
+      const configUrl = `${apiBaseUrl}/reports/${reportCode}/config`;
+      const config = await fetchConfigCached(configUrl, headers);
 
-      // Update pivot table options from fresh config
-      if (config.pivotTableOptions) {
-        const opts = config.pivotTableOptions;
+      // Update pivot table options from fresh config (named or default)
+      const pivotOpts = (componentId && config.namedPivotTableOptions?.[componentId])
+        ? config.namedPivotTableOptions[componentId]
+        : config.pivotTableOptions;
+      if (pivotOpts) {
+        const opts = pivotOpts;
         if (opts.rows) rows = opts.rows;
         if (opts.cols) cols = opts.cols;
         if (opts.vals) vals = opts.vals;
@@ -880,6 +966,8 @@
         if (opts.hiddenFromDragDrop) hiddenFromDragDrop = opts.hiddenFromDragDrop;
         if (opts.unusedOrientationCutoff != null) unusedOrientationCutoff = opts.unusedOrientationCutoff;
         if (opts.menuLimit != null) menuLimit = opts.menuLimit;
+        if (opts.derivedAttributes) derivedAttributes = parseDerivedAttributeExpressions(opts.derivedAttributes);
+        if (opts.sorters) sorters = opts.sorters;
       }
 
       // Update raw DSL for Configuration tab
@@ -887,8 +975,11 @@
         configDsl = config.pivotTableDsl;
       }
 
-      // Build query string from params
-      const queryString = new URLSearchParams(params as Record<string, string>).toString();
+      // Build query string from params (merge reportParams + caller params + componentId)
+      const mergedParams = new URLSearchParams({ ...reportParams, ...params } as Record<string, string>);
+      if (testMode) mergedParams.set('testMode', 'true');
+      if (componentId) mergedParams.set('componentId', componentId);
+      const queryString = mergedParams.toString();
       const url = queryString
         ? `${apiBaseUrl}/reports/${reportCode}/data?${queryString}`
         : `${apiBaseUrl}/reports/${reportCode}/data`;
@@ -909,7 +1000,13 @@
       }
 
       materializeInput(data);
-      dispatch('dataFetched', { data });
+      dispatch('dataFetched', {
+        data,
+        executionTimeMillis: dataResult?.executionTimeMillis || 0,
+        totalRows: dataResult?.totalRows || data.length,
+        truncated: dataResult?.truncated || false,
+        reportColumnNames: dataResult?.reportColumnNames || [],
+      });
     } catch (err: any) {
       error = err.message || 'Failed to fetch data';
       dispatch('error', { message: error });
@@ -1374,6 +1471,20 @@
 </div>
 
 <script context="module" lang="ts">
+  // Module-level: shared across all <rb-pivot-table> instances on the page.
+  // Deduplicates config requests when N components share the same report-code.
+  const _cfgCache = new Map<string, Promise<any>>();
+
+  function fetchConfigCached(url: string, headers: Record<string, string>): Promise<any> {
+    let p = _cfgCache.get(url);
+    if (p) return p;
+    p = fetch(url, { headers })
+      .then(r => { if (!r.ok) throw new Error(`Config fetch failed: ${r.status}`); return r.json(); })
+      .catch(e => { _cfgCache.delete(url); throw e; });
+    _cfgCache.set(url, p);
+    return p;
+  }
+
   // CSS embedded for shadow DOM
   const PIVOT_CSS = `
 .pvtUi-container {
@@ -1655,6 +1766,7 @@ button.pvtButton:hover {
 }
 .pvtOutput canvas {
   max-width: 100%;
+  min-height: 300px;
   max-height: 400px;
 }
 `;

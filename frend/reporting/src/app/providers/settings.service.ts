@@ -108,11 +108,11 @@ export interface CfgTmplFileInfo {
 
   reportParameters: ReportParameter[];
   
-  // Parsed Tabulator DSL options (layoutOptions, columns, data)
+  // Parsed Tabulator DSL options — flat map matching tabulator.info constructor options
   tabulatorOptions?: {
-    layoutOptions?: any;
     columns?: Array<{ title?: string; field?: string; [k: string]: any }>;
     data?: Array<Record<string, any>>;
+    [k: string]: any; // all other tabulator.info options (layout, height, pagination, etc.)
   };
   
   // Parsed Chart DSL options (type, labelField, options, labels, datasets, data)

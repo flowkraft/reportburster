@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
+
 /* ReportBurster Brand Colors - Cyan #22a7c8 */
 :root {
   --rb-cyan: #22a7c8;
@@ -104,6 +106,15 @@ body {
 
 .border-rb-cyan {
   border-color: var(--rb-cyan);
+}
+
+/* Prevent Tailwind Preflight (img,svg { display:block }) from breaking
+   Tabulator cell contents — star ratings, icons, progress bars, etc.
+   Needed because rb-tabulator uses shadow:"none" (no Shadow DOM). */
+.tabulator img,
+.tabulator svg {
+  display: inline;
+  vertical-align: middle;
 }
 
 /* Cursor pointer for all interactive elements */

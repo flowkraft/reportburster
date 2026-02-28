@@ -1,5 +1,21 @@
 <svelte:options customElement="rb-chart" accessors={true} />
 
+<script context="module" lang="ts">
+  // Module-level: shared across all <rb-chart> instances on the page.
+  // Deduplicates config requests when N components share the same report-code.
+  const _cfgCache = new Map<string, Promise<any>>();
+
+  function fetchConfigCached(url: string, headers: Record<string, string>): Promise<any> {
+    let p = _cfgCache.get(url);
+    if (p) return p;
+    p = fetch(url, { headers })
+      .then(r => { if (!r.ok) throw new Error(`Config fetch failed: ${r.status}`); return r.json(); })
+      .catch(e => { _cfgCache.delete(url); throw e; });
+    _cfgCache.set(url, p);
+    return p;
+  }
+</script>
+
 <script lang="ts">
   import { onMount, afterUpdate, onDestroy, tick, createEventDispatcher } from 'svelte';
 
@@ -13,6 +29,9 @@
   export let reportCode: string = '';
   export let apiBaseUrl: string = '';
   export let apiKey: string = '';
+  export let componentId: string = '';
+  export let reportParams: Record<string, string> = {};
+  export let testMode: boolean = false;
 
   // ============================================================================
   // Props Mode - traditional props-based usage (e.g., from Angular)
@@ -74,15 +93,7 @@
       delete result.field; // Remove field property
       result.data = dataValues;
       if (!result.label) result.label = field;
-      
-      // Map 'color' shorthand to Chart.js properties
-      if (result.color) {
-        // Use color as both border and background (Chart.js will handle transparency)
-        if (!result.borderColor) result.borderColor = result.color;
-        if (!result.backgroundColor) result.backgroundColor = result.color;
-        delete result.color; // Remove shorthand property
-      }
-      
+
       return result;
     });
     
@@ -270,6 +281,15 @@
       if (!reportCode) reportCode = hostEl.getAttribute('report-code') || '';
       if (!apiBaseUrl) apiBaseUrl = hostEl.getAttribute('api-base-url') || '';
       if (!apiKey) apiKey = hostEl.getAttribute('api-key') || '';
+      if (!componentId) componentId = hostEl.getAttribute('component-id') || '';
+      if (!Object.keys(reportParams).length) {
+        const rp = hostEl.getAttribute('report-params');
+        if (rp) try { reportParams = JSON.parse(rp); } catch(e) {}
+      }
+      if (!testMode) {
+        const tm = hostEl.getAttribute('test-mode');
+        if (tm === 'true' || tm === '') testMode = true;
+      }
     }
 
     if (!container) {
@@ -289,39 +309,51 @@
       // if (apiKey) headers['X-API-Key'] = apiKey;
       
       try {
-        // Fetch config
-        const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
-        if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
-        const config = await configRes.json();
+        // Fetch config (deduplicated across all rb-chart instances with same report-code)
+        const config = await fetchConfigCached(`${apiBaseUrl}/reports/${reportCode}/config`, headers);
         
-        // Store full chart configuration from DSL
-        // chartConfig has structure: { type, labelField, datasets, options (Chart.js options) }
-        if (config.chartOptions) {
+        // Store full chart configuration from DSL (named or default)
+        if (componentId && config.namedChartOptions?.[componentId]) {
+          chartConfig = config.namedChartOptions[componentId];
+        } else if (config.chartOptions) {
           chartConfig = config.chartOptions;
-          if (chartConfig.type) type = chartConfig.type;
         }
-        
+        if (chartConfig?.type) type = chartConfig.type;
+
         // Store raw DSL for Configuration tab display
         if (config.chartDsl) {
           configDsl = config.chartDsl;
         }
-        
-        // Fetch data (GET with empty query params for initial load)
-        const dataRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/data`, { headers });
+
+        // Fetch data (GET with user params + testMode + componentId)
+        const dataQueryParams = new URLSearchParams(reportParams as Record<string, string>);
+        if (testMode) dataQueryParams.set('testMode', 'true');
+        if (componentId) dataQueryParams.set('componentId', componentId);
+        const dataQs = dataQueryParams.toString();
+        const dataUrl = dataQs
+            ? `${apiBaseUrl}/reports/${reportCode}/data?${dataQs}`
+            : `${apiBaseUrl}/reports/${reportCode}/data`;
+        const dataRes = await fetch(dataUrl, { headers });
         if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
         const dataResult = await dataRes.json();
         // Backend returns { reportData: [...] }, extract the array
         const reportData = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
-        
+
         // Transform data using chartConfig (which contains datasets with field mappings)
         if (chartConfig && reportData) {
           data = transformChartConfigToChartJS(chartConfig, reportData);
         }
-        
+
         // Dispatch events for config and data loaded
         dispatch('configLoaded', { configDsl, config });
-        dispatch('dataFetched', { data: reportData });
-        
+        dispatch('dataFetched', {
+          data: reportData,
+          executionTimeMillis: dataResult?.executionTimeMillis || 0,
+          totalRows: dataResult?.totalRows || reportData.length,
+          truncated: dataResult?.truncated || false,
+          reportColumnNames: dataResult?.reportColumnNames || [],
+        });
+
       } catch (err: any) {
         error = err.message || 'Failed to load report';
         console.error('rb-chart self-fetch error:', err);
@@ -403,25 +435,29 @@
     // if (apiKey) headers['X-API-Key'] = apiKey;
     
     try {
-      // Re-fetch config to get any DSL changes
-      const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
-      if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
-      const config = await configRes.json();
+      // Re-fetch config (uses module-level dedup cache)
+      const configUrl = `${apiBaseUrl}/reports/${reportCode}/config`;
+      const config = await fetchConfigCached(configUrl, headers);
       
-      // Update chartConfig from fresh config
-      if (config.chartOptions) {
+      // Update chartConfig from fresh config (named or default)
+      if (componentId && config.namedChartOptions?.[componentId]) {
+        chartConfig = config.namedChartOptions[componentId];
+      } else if (config.chartOptions) {
         chartConfig = config.chartOptions;
-        if (chartConfig.type) type = chartConfig.type;
       }
-      
+      if (chartConfig?.type) type = chartConfig.type;
+
       // Update raw DSL for Configuration tab
       if (config.chartDsl) {
         configDsl = config.chartDsl;
       }
-      
-      // Build query string from params
-      const queryString = new URLSearchParams(params as Record<string, string>).toString();
-      const url = queryString 
+
+      // Build query string from params (merge reportParams + caller params)
+      const mergedParams = new URLSearchParams({ ...reportParams, ...params } as Record<string, string>);
+      if (testMode) mergedParams.set('testMode', 'true');
+      if (componentId) mergedParams.set('componentId', componentId);
+      const queryString = mergedParams.toString();
+      const url = queryString
         ? `${apiBaseUrl}/reports/${reportCode}/data?${queryString}`
         : `${apiBaseUrl}/reports/${reportCode}/data`;
       
@@ -440,7 +476,13 @@
       destroyChart();
       await createChart();
       
-      dispatch('dataFetched', { data });
+      dispatch('dataFetched', {
+        data: reportData,
+        executionTimeMillis: dataResult?.executionTimeMillis || 0,
+        totalRows: dataResult?.totalRows || reportData.length,
+        truncated: dataResult?.truncated || false,
+        reportColumnNames: dataResult?.reportColumnNames || [],
+      });
     } catch (err: any) {
       error = err.message || 'Failed to fetch data';
       dispatch('fetchError', { message: error });

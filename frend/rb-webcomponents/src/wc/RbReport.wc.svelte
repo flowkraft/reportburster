@@ -50,6 +50,9 @@
   let pivotEl: any;
   let parametersEl: any;
   let reportIframe: HTMLIFrameElement;
+
+  // Counter to force re-render of named components on param re-submit
+  let fetchCounter = 0;
   
   // ============================================================================
   // Lifecycle
@@ -223,6 +226,7 @@
       reportData = result.reportData || [];
       renderedHtml = result.renderedHtml || '';
       dataLoaded = true;
+      fetchCounter++; // Force re-render of named components on re-fetch
       
       console.log('[RbReport] fetchData - dataLoaded set to true, renderedHtml:', renderedHtml ? renderedHtml.substring(0, 200) + '...' : 'empty');
       
@@ -308,9 +312,8 @@
       if (config.tabulatorOptions?.columns) {
         tabulatorEl.columns = config.tabulatorOptions.columns;
       }
-      if (config.tabulatorOptions?.layoutOptions) {
-        tabulatorEl.options = config.tabulatorOptions.layoutOptions;
-      }
+      // tabulatorOptions is now a flat map matching tabulator.info API directly
+      tabulatorEl.options = config.tabulatorOptions || {};
     }
     
     // Update Chart
@@ -341,6 +344,12 @@
     }
   }
   
+  // Helpers for aggregator reports — extract named component IDs from config
+  $: namedTabulatorIds = config?.namedTabulatorOptions ? Object.keys(config.namedTabulatorOptions) : [];
+  $: namedChartIds = config?.namedChartOptions ? Object.keys(config.namedChartOptions) : [];
+  $: namedPivotIds = config?.namedPivotTableOptions ? Object.keys(config.namedPivotTableOptions) : [];
+  $: hasNamedComponents = namedTabulatorIds.length > 0 || namedChartIds.length > 0 || namedPivotIds.length > 0;
+
   function transformToChartData(data: any[], chartConfig: any) {
     if (!data || data.length === 0) return { labels: [], datasets: [] };
     
@@ -413,23 +422,66 @@
     <!-- Visualizations Section (only show after data loaded) -->
     {#if dataLoaded}
       <div class="rb-report-visualizations">
-        {#if config.hasTabulator}
+        <!-- Unnamed components (standard report - data pushed from RbReport) -->
+        {#if config.hasTabulator && namedTabulatorIds.length === 0}
           <div class="rb-report-section rb-report-table">
             <rb-tabulator bind:this={tabulatorEl}></rb-tabulator>
           </div>
         {/if}
-        
-        {#if config.hasChart}
+
+        {#if config.hasChart && namedChartIds.length === 0}
           <div class="rb-report-section rb-report-chart">
             <rb-chart bind:this={chartEl}></rb-chart>
           </div>
         {/if}
-        
-        {#if config.hasPivotTable}
+
+        {#if config.hasPivotTable && namedPivotIds.length === 0}
           <div class="rb-report-section rb-report-pivot">
             <rb-pivot-table bind:this={pivotEl}></rb-pivot-table>
           </div>
         {/if}
+
+        <!-- Named components (aggregator report - each self-fetches with componentId) -->
+        {#key fetchCounter}
+          {#each namedTabulatorIds as cid}
+            <div class="rb-report-section rb-report-table">
+              <rb-tabulator
+                report-code={reportCode}
+                component-id={cid}
+                api-base-url={apiBaseUrl}
+                api-key={apiKey}
+                report-params={JSON.stringify(parameterValues)}
+                preview-limit="0"
+              ></rb-tabulator>
+            </div>
+          {/each}
+
+          {#each namedChartIds as cid}
+            <div class="rb-report-section rb-report-chart">
+              <rb-chart
+                report-code={reportCode}
+                component-id={cid}
+                api-base-url={apiBaseUrl}
+                api-key={apiKey}
+                report-params={JSON.stringify(parameterValues)}
+                preview-limit="0"
+              ></rb-chart>
+            </div>
+          {/each}
+
+          {#each namedPivotIds as cid}
+            <div class="rb-report-section rb-report-pivot">
+              <rb-pivot-table
+                report-code={reportCode}
+                component-id={cid}
+                api-base-url={apiBaseUrl}
+                api-key={apiKey}
+                report-params={JSON.stringify(parameterValues)}
+                preview-limit="0"
+              ></rb-pivot-table>
+            </div>
+          {/each}
+        {/key}
       </div>
     {/if}
   {/if}

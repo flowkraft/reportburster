@@ -5,6 +5,7 @@ import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
 
 import { spawnSync } from 'child_process';
+import * as fs from 'fs';
 import * as path from 'path';
 
 // Database vendor constants
@@ -1032,7 +1033,7 @@ export class ConnectionsTestHelper {
 
   static dockerComposeDownInDbFolder(
     timeoutMs: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS,
-    removeVolumes: boolean = false
+    removeVolumes: boolean = true
   ): void {
     const baseDir = String(process.env.PORTABLE_EXECUTABLE_DIR || '.');
     const dbDir = path.resolve(baseDir, 'db');
@@ -1076,6 +1077,22 @@ export class ConnectionsTestHelper {
 
     if (res.stdout) console.log(res.stdout.toString());
     if (res.stderr) console.error(res.stderr.toString());
+
+    // When volumes are removed, also delete .northwind_initialized marker files
+    // so NorthwindManager re-provisions on next start (e.g., Playwright retry)
+    if (removeVolumes) {
+      const entries = fs.readdirSync(dbDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isDirectory() && entry.name.startsWith('sample-northwind-')) {
+          const markerPath = path.join(dbDir, entry.name, '.northwind_initialized');
+          if (fs.existsSync(markerPath)) {
+            fs.unlinkSync(markerPath);
+            console.log(`[ConnectionsTestHelper] Removed marker: ${markerPath}`);
+          }
+        }
+      }
+    }
+
     console.log('[ConnectionsTestHelper] docker compose down completed (blocking).');
   }
 

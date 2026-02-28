@@ -6,33 +6,24 @@ import groovy.lang.Closure;
 import java.util.*;
 
 /**
- * Groovy DSL base class for Chart configuration.
- * Aligned with wpDataTables-style chart capabilities.
- * 
- * Minimal DSL:
- * chart {
- *   type 'bar'
- *   
- *   // Which column to use for X-axis labels (optional - auto-detected if not specified)
- *   labelField 'month'
- *   
- *   // Series configuration - which data columns to chart
- *   series {
- *     series field: 'revenue', label: 'Revenue', color: '#4e79a7'
- *     series field: 'cost', label: 'Cost', color: '#e15759', type: 'line'
- *   }
- *   
- *   // Chart.js options passthrough
- *   options {
- *     responsive true
- *     plugins {
- *       title { display true; text 'Sales Report' }
- *       legend { position 'bottom' }
- *     }
- *   }
- * }
- * 
- * Data defaults to ctx.reportData - no override needed in most cases.
+ * Groovy DSL base for parsing Chart.js options.
+ *
+ * DESIGN PRINCIPLES:
+ * 1. This DSL is the MINIMUM POSSIBLE wrapper over the EXACT SAME Chart.js API.
+ *    Every keyword (responsive, maintainAspectRatio, plugins, scales, borderWidth,
+ *    tension, pointRadius, fill, yAxisID, backgroundColor, borderColor, etc.) maps
+ *    1:1 to chartjs.org — no invented concepts, no renamed properties, no wrapper objects.
+ * 2. Only where provably necessary do we deviate from Chart.js's JSON structure:
+ *    - 'field' on series (DSL-specific: maps a reportData column to dataset values,
+ *      since Chart.js has no concept of column binding)
+ *    - Groovy closures for nested structures like options { plugins { title { ... } } }
+ *    Such deviations are kept to the absolute minimum.
+ * 3. Both chart-level and series-level use methodMissing catch-alls so that ANY current
+ *    or future Chart.js property works automatically without code changes here.
+ * 4. The output of getOptions() is a flat Map that matches Chart.js's constructor
+ *    config object directly — no intermediate wrappers.
+ *
+ * Usage: chart { type 'bar'; labelField 'month'; series { series { field 'revenue'; label 'Revenue'; backgroundColor '#4e79a7' } }; options { responsive true; plugins { title { display true; text 'Report' } } } }
  */
 public abstract class ChartOptionsScript extends Script {
 	private String type = null;
@@ -42,10 +33,23 @@ public abstract class ChartOptionsScript extends Script {
 	private final List<Map<String, Object>> datasets = new ArrayList<>();
 	private final List<Map<String, Object>> dataRows = new ArrayList<>();
 
+	// Named blocks: id → options map
+	private final Map<String, Map<String, Object>> namedOptions = new LinkedHashMap<>();
+
+	// DSL root — unnamed (default)
 	public void chart(Closure<?> body) {
 		body.setDelegate(this);
 		body.setResolveStrategy(Closure.DELEGATE_FIRST);
 		body.call();
+	}
+
+	// DSL root — named block for aggregator reports
+	public void chart(String id, Closure<?> body) {
+		NamedChartDelegate delegate = new NamedChartDelegate();
+		body.setDelegate(delegate);
+		body.setResolveStrategy(Closure.DELEGATE_FIRST);
+		body.call();
+		namedOptions.put(id, delegate.getOptions());
 	}
 
 	// Chart type: line, bar, pie, doughnut, radar, polarArea, scatter, bubble
@@ -94,7 +98,7 @@ public abstract class ChartOptionsScript extends Script {
 		if (args != null) this.datasets.add(new LinkedHashMap<>(args));
 	}
 
-	// series block - wpDataTables-inspired series configuration
+	// series block - container for multiple series (dataset) definitions
 	public void series(Closure<?> body) {
 		SeriesContainer sc = new SeriesContainer();
 		body.setDelegate(sc);
@@ -118,6 +122,11 @@ public abstract class ChartOptionsScript extends Script {
 		if (!datasets.isEmpty()) out.put("datasets", new ArrayList<>(datasets));
 		if (!dataRows.isEmpty()) out.put("data", new ArrayList<>(dataRows));
 		return out;
+	}
+
+	/** Return named options map (id → options) for aggregator reports */
+	public Map<String, Map<String, Object>> getNamedOptions() {
+		return namedOptions;
 	}
 
 	@Override
@@ -185,40 +194,108 @@ public abstract class ChartOptionsScript extends Script {
 	}
 
 	/**
-	 * Series delegate - wpDataTables-inspired series properties:
-	 * field, label, color, type, yAxisID, borderWidth, fill, etc.
+	 * Series delegate — thin wrapper over Chart.js dataset properties.
+	 * Only 'field' is DSL-specific (maps a reportData column to dataset values).
+	 * Every other property (label, backgroundColor, borderColor, type, yAxisID,
+	 * borderWidth, fill, tension, pointRadius, etc.) passes through to Chart.js
+	 * via methodMissing — no explicit methods, no invented abstractions.
 	 */
 	private static class SeriesDelegate {
 		private final Map<String, Object> map;
-		
+
 		SeriesDelegate(Map<String, Object> map) { this.map = map; }
-		
-		// Core series properties
+
+		// The one DSL-specific property: which reportData column to plot
 		public void field(String f) { map.put("field", f); }
-		public void label(String l) { map.put("label", l); }
-		public void color(String c) { map.put("color", c); }
-		public void backgroundColor(String c) { map.put("backgroundColor", c); }
-		public void borderColor(String c) { map.put("borderColor", c); }
-		public void type(String t) { map.put("type", t); }
-		
-		// Chart.js dataset properties
-		public void yAxisID(String id) { map.put("yAxisID", id); }
-		public void xAxisID(String id) { map.put("xAxisID", id); }
-		public void borderWidth(Object w) { map.put("borderWidth", w); }
-		public void fill(Object f) { map.put("fill", f); }
-		public void tension(Object t) { map.put("tension", t); }
-		public void pointRadius(Object r) { map.put("pointRadius", r); }
-		public void pointStyle(Object s) { map.put("pointStyle", s); }
-		public void hidden(Object h) { map.put("hidden", h); }
-		public void order(Object o) { map.put("order", o); }
-		
-		// Catch-all for any other Chart.js dataset property
+
+		// Catch-all: any Chart.js dataset property works automatically
 		public void methodMissing(String name, Object args) {
 			if (args instanceof Object[] && ((Object[]) args).length > 0) {
 				map.put(name, ((Object[]) args)[0]);
 			} else {
 				map.put(name, args);
 			}
+		}
+	}
+
+	/**
+	 * Delegate for named chart blocks — captures options independently
+	 * so multiple named blocks don't interfere with each other or the unnamed default.
+	 */
+	private static class NamedChartDelegate {
+		private String type = null;
+		private String labelField = null;
+		private Map<String, Object> options = new LinkedHashMap<>();
+		private final List<String> labels = new ArrayList<>();
+		private final List<Map<String, Object>> datasets = new ArrayList<>();
+		private final List<Map<String, Object>> dataRows = new ArrayList<>();
+
+		public void type(String t) { this.type = t; }
+		public void labelField(String f) { this.labelField = f; }
+
+		public void options(Map<String, Object> args) {
+			if (args != null) options.putAll(args);
+		}
+
+		public void options(Closure<?> body) {
+			NestedMapDelegate d = new NestedMapDelegate(options);
+			body.setDelegate(d);
+			body.setResolveStrategy(Closure.DELEGATE_FIRST);
+			body.call();
+		}
+
+		public void labels(List<String> vals) {
+			if (vals != null) labels.addAll(vals);
+		}
+
+		public void data(List<Map<String, Object>> rows) {
+			if (rows != null) {
+				for (Map<String, Object> r : rows) {
+					this.dataRows.add(new LinkedHashMap<>(r));
+				}
+			}
+		}
+
+		public void datasets(Closure<?> body) {
+			body.setDelegate(this);
+			body.setResolveStrategy(Closure.DELEGATE_FIRST);
+			body.call();
+		}
+
+		public void dataset(Map<String, Object> args) {
+			if (args != null) this.datasets.add(new LinkedHashMap<>(args));
+		}
+
+		public void series(Closure<?> body) {
+			SeriesContainer sc = new SeriesContainer();
+			body.setDelegate(sc);
+			body.setResolveStrategy(Closure.DELEGATE_FIRST);
+			body.call();
+			this.datasets.addAll(sc.getSeries());
+		}
+
+		public void series(Map<String, Object> args) {
+			if (args != null) this.datasets.add(new LinkedHashMap<>(args));
+		}
+
+		public Object methodMissing(String name, Object args) {
+			if (args instanceof Object[] && ((Object[]) args).length > 0) {
+				this.options.put(name, ((Object[]) args)[0]);
+			} else {
+				this.options.put(name, args);
+			}
+			return null;
+		}
+
+		public Map<String, Object> getOptions() {
+			Map<String, Object> out = new LinkedHashMap<>();
+			if (type != null) out.put("type", type);
+			if (labelField != null) out.put("labelField", labelField);
+			if (!options.isEmpty()) out.put("options", new LinkedHashMap<>(options));
+			if (!labels.isEmpty()) out.put("labels", new ArrayList<>(labels));
+			if (!datasets.isEmpty()) out.put("datasets", new ArrayList<>(datasets));
+			if (!dataRows.isEmpty()) out.put("data", new ArrayList<>(dataRows));
+			return out;
 		}
 	}
 }
