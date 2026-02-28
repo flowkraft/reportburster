@@ -6,17 +6,17 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- **Redis Starter Pack** — Your Dashboards Are About to Get Faster.
-
 - **New Tabulator, Charts and Pivot Tables Examples & Configuration** — Many new examples and configurations for tabulator tables, charts, and pivot tables
 
-- **Updated Documentation** — Documentation updated with examples and configurations for tabulator, charts, and pivot tables
+- **Redis Starter Pack** — Your Dashboards Are About to Get Faster.
 
 ### Changed
 
 - **Test SQL Query — Fast preview for large datasets** — Test SQL Query now automatically wraps your SQL as a subquery with a database-specific row limit (e.g., `LIMIT 100`, `TOP 100`, `FETCH FIRST 100 ROWS ONLY`, `ROWNUM <= 100`), so even queries against tables with millions of rows return results in seconds. Supported across all database engines (PostgreSQL, MySQL, SQL Server, Oracle, DB2, SQLite, DuckDB, ClickHouse, Supabase).
 
 - **View Data — Improved large dataset handling** — View Data in the Generate Reports screen now auto-injects client-side pagination (50 rows/page) and virtual DOM rendering, keeping the browser responsive even with large result sets. For truly massive datasets (millions of rows), configure `paginationMode: 'remote'` in the tabulator DSL to enable server-side pagination — the data grid then fetches pages on demand directly from the database.
+
+- **Updated Documentation** — Documentation updated with examples and configurations for tabulator, charts, and pivot tables
 
 ## 13.3.0 - 2026-02-23
 
