@@ -221,6 +221,11 @@
                     <p>Invoices, payslips, statements. Pixel-perfect documents from templates.</p>
                 </div>
                 <div class="showcase-card">
+                    <i class="bi bi-database icon"></i>
+                    <h5>Data Warehouse</h5>
+                    <p>OLAP engines for big data. DuckDB, ClickHouse — query millions of rows.</p>
+                </div>
+                <div class="showcase-card">
                     <i class="bi bi-columns-gap icon"></i>
                     <h5>Dashboards</h5>
                     <p>Combine all of the above. One page, complete insight.</p>

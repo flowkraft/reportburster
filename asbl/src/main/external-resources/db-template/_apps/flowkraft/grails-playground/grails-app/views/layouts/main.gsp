@@ -55,6 +55,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-beta3/dist/css/adminlte.min.css"/>
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <!-- Prism.js syntax highlighting (Tomorrow Night theme) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css"/>
     
     <style>
         /* ReportBurster brand - matches Next.js theme */
@@ -299,6 +301,11 @@
                             </g:link>
                         </li>
                         <li class="nav-item">
+                            <g:link uri="/dashboards" class="nav-link ${controllerName == 'dashboards' ? 'active' : ''}">
+                                Dashboards
+                            </g:link>
+                        </li>
+                        <li class="nav-item">
                             <g:link uri="/your-canvas" class="nav-link ${controllerName == 'yourCanvas' ? 'active' : ''}">
                                 Your Canvas
                             </g:link>
@@ -395,6 +402,11 @@
         });
     </script>
     
+    <!-- Prism.js syntax highlighting -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-groovy.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+
     <!-- ReportBurster Web Components -->
     <script src="http://localhost:9090/rb-webcomponents/rb-webcomponents.umd.js"></script>
     

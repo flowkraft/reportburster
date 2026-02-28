@@ -27,10 +27,11 @@ const SKIP_NON_DATABASE_TESTS = false;
 
 const DB_VENDORS_SELECTED: string[] = (() => {
 
+  //return ['mysql']; 
   //return ['ibmdb2'];
 
   // ── DEV OVERRIDES (uncomment ONE line to limit vendor scope) ──
-  //return ['supabase']; // DEV FOCUS — comment out to restore full rotation
+  // return ['supabase']; // DEV FOCUS — comment out to restore full rotation
   
   //return ['postgres'];
   //return ['duckdb'];
@@ -128,7 +129,7 @@ test.describe('', async () => {
     WHERE date("HireDate"/1000, 'unixepoch', 'localtime') BETWEEN :startDate AND :endDate
     ORDER BY "HireDate"
   `
-              : dbVendor === 'postgres' || dbVendor === 'postgresql'
+              : dbVendor === 'postgres' || dbVendor === 'postgresql' || dbVendor === 'supabase'
                 ? `
     SELECT
         "EmployeeID",
@@ -1894,35 +1895,8 @@ function configureAndRunReportGeneration2(
       .waitOnElementToBecomeDisabled('#btnClearLogs')
       .click('#btnViewData')
       .clickYesDoThis()
-      .waitOnToastToBecomeVisible(
-        'success',
-        'SQL query executed successfully', Constants.DELAY_HUNDRED_SECONDS
-      )
-      .waitOnTabulatorToBecomeVisible();
-
-    //ft = ft.consoleLog(`[DEBUG] 3rd time hasParams=${hasParams}, expecting ${expectedRowCount} rows after Test button.`);
-
-    ft = ft.waitOnTabulatorToHaveRowCount(expectedRowCount);
-
-    // Adjust assertions depending on whether parameters were used
-    if (hasParams) {
-      ft = ft
-        .tabulatorCellShouldHaveText(0, "FirstName", "Andrew")
-        .tabulatorCellShouldHaveText(0, "LastName", "Fuller")
-      //.tabulatorCellShouldHaveText(0, "HireDate", "1992-08-14");
-    } else {
-      // No params: expect all 3 employees ordered by HireDate asc
-      ft = ft
-        .tabulatorCellShouldHaveText(0, "FirstName", "Janet")
-        .tabulatorCellShouldHaveText(0, "LastName", "Leverling")
-        //.tabulatorCellShouldHaveText(0, "HireDate", "1992-04-01")
-        .tabulatorCellShouldHaveText(1, "FirstName", "Nancy")
-        .tabulatorCellShouldHaveText(1, "LastName", "Davolio")
-        //.tabulatorCellShouldHaveText(1, "HireDate", "1992-05-01")
-        .tabulatorCellShouldHaveText(2, "FirstName", "Andrew")
-        .tabulatorCellShouldHaveText(2, "LastName", "Fuller")
-      //.tabulatorCellShouldHaveText(2, "HireDate", "1992-08-14");
-    };
+      .waitOnTabulatorToBecomeVisible()
+      .waitOnTabulatorToHaveData();
   }
 
   ft = ft

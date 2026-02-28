@@ -1,36 +1,30 @@
 package com.sourcekraft.documentburster.common.tabulator;
 
-import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
-import java.util.ArrayList;
 
+/**
+ * Parsed Tabulator DSL result — flat structure matching tabulator.info constructor options.
+ * All table-level options (layout, height, pagination, paginationMode, etc.) plus
+ * columns and data are stored in a single flat options map.
+ */
 public class TabulatorOptions {
-    private Map<String, Object> layoutOptions = new LinkedHashMap<>();
-    private List<Map<String, Object>> columns = new ArrayList<>();
-    private List<Map<String, Object>> data = new ArrayList<>();
+    private Map<String, Object> options = new LinkedHashMap<>();
+    private Map<String, Map<String, Object>> namedOptions = new LinkedHashMap<>();
 
-    public Map<String, Object> getLayoutOptions() {
-        return layoutOptions;
+    public Map<String, Object> getOptions() {
+        return options;
     }
 
-    public void setLayoutOptions(Map<String, Object> layoutOptions) {
-        this.layoutOptions = layoutOptions;
+    public void setOptions(Map<String, Object> options) {
+        this.options = options;
     }
 
-    public List<Map<String, Object>> getColumns() {
-        return columns;
+    public Map<String, Map<String, Object>> getNamedOptions() {
+        return namedOptions;
     }
 
-    public void setColumns(List<Map<String, Object>> columns) {
-        this.columns = columns;
-    }
-
-    public List<Map<String, Object>> getData() {
-        return data;
-    }
-
-    public void setData(List<Map<String, Object>> data) {
-        this.data = data;
+    public void setNamedOptions(Map<String, Map<String, Object>> namedOptions) {
+        this.namedOptions = namedOptions;
     }
 }

@@ -52,11 +52,23 @@ public abstract class PivotTableOptionsScript extends Script {
 	private final Map<String, Object> sorters = new LinkedHashMap<>();
 	private final Map<String, String> derivedAttributes = new LinkedHashMap<>();
 
-	// DSL root
+	// Named blocks: id → options map
+	private final Map<String, Map<String, Object>> namedOptions = new LinkedHashMap<>();
+
+	// DSL root — unnamed (default)
 	public void pivotTable(Closure<?> body) {
 		body.setDelegate(this);
 		body.setResolveStrategy(Closure.DELEGATE_FIRST);
 		body.call();
+	}
+
+	// DSL root — named block for aggregator reports
+	public void pivotTable(String id, Closure<?> body) {
+		NamedPivotTableDelegate delegate = new NamedPivotTableDelegate();
+		body.setDelegate(delegate);
+		body.setResolveStrategy(Closure.DELEGATE_FIRST);
+		body.call();
+		namedOptions.put(id, delegate.getOptions());
 	}
 
 	// Row fields - varargs form
@@ -232,6 +244,11 @@ public abstract class PivotTableOptionsScript extends Script {
 		return out;
 	}
 
+	/** Return named options map (id → options) for aggregator reports */
+	public Map<String, Map<String, Object>> getNamedOptions() {
+		return namedOptions;
+	}
+
 	@Override
 	public Object run() { return null; }
 
@@ -306,6 +323,98 @@ public abstract class PivotTableOptionsScript extends Script {
 				map.put(name, args);
 			}
 			return null;
+		}
+	}
+
+	/**
+	 * Delegate for named pivotTable blocks — captures options independently
+	 * so multiple named blocks don't interfere with each other or the unnamed default.
+	 */
+	private static class NamedPivotTableDelegate {
+		private final List<String> rows = new ArrayList<>();
+		private final List<String> cols = new ArrayList<>();
+		private final List<String> vals = new ArrayList<>();
+		private String aggregatorName = null;
+		private String rendererName = null;
+		private String rowOrder = null;
+		private String colOrder = null;
+		private final Map<String, Map<String, Boolean>> valueFilter = new LinkedHashMap<>();
+		private final Map<String, Object> options = new LinkedHashMap<>();
+		private final List<Map<String, Object>> dataRows = new ArrayList<>();
+		private final List<String> hiddenAttributes = new ArrayList<>();
+		private final List<String> hiddenFromAggregators = new ArrayList<>();
+		private final List<String> hiddenFromDragDrop = new ArrayList<>();
+		private Integer unusedOrientationCutoff = null;
+		private Integer menuLimit = null;
+		private String tableName = null;
+		private final Map<String, Object> sorters = new LinkedHashMap<>();
+		private final Map<String, String> derivedAttributes = new LinkedHashMap<>();
+
+		public void rows(String... fields) { if (fields != null) rows.addAll(Arrays.asList(fields)); }
+		public void rows(List<String> fields) { if (fields != null) rows.addAll(fields); }
+		public void cols(String... fields) { if (fields != null) cols.addAll(Arrays.asList(fields)); }
+		public void cols(List<String> fields) { if (fields != null) cols.addAll(fields); }
+		public void vals(String... fields) { if (fields != null) vals.addAll(Arrays.asList(fields)); }
+		public void vals(List<String> fields) { if (fields != null) vals.addAll(fields); }
+		public void aggregatorName(String name) { this.aggregatorName = name; }
+		public void rendererName(String name) { this.rendererName = name; }
+		public void rowOrder(String order) { this.rowOrder = order; }
+		public void colOrder(String order) { this.colOrder = order; }
+
+		public void valueFilter(Closure<?> body) {
+			ValueFilterDelegate d = new ValueFilterDelegate(valueFilter);
+			body.setDelegate(d);
+			body.setResolveStrategy(Closure.DELEGATE_FIRST);
+			body.call();
+		}
+
+		public void options(Map<String, Object> args) { if (args != null) options.putAll(args); }
+		public void options(Closure<?> body) {
+			NestedMapDelegate d = new NestedMapDelegate(options);
+			body.setDelegate(d);
+			body.setResolveStrategy(Closure.DELEGATE_FIRST);
+			body.call();
+		}
+
+		public void data(List<Map<String, Object>> rows) {
+			if (rows != null) {
+				for (Map<String, Object> r : rows) { this.dataRows.add(new LinkedHashMap<>(r)); }
+			}
+		}
+
+		public void hiddenAttributes(String... attrs) { if (attrs != null) hiddenAttributes.addAll(Arrays.asList(attrs)); }
+		public void hiddenAttributes(List<String> attrs) { if (attrs != null) hiddenAttributes.addAll(attrs); }
+		public void hiddenFromAggregators(String... attrs) { if (attrs != null) hiddenFromAggregators.addAll(Arrays.asList(attrs)); }
+		public void hiddenFromAggregators(List<String> attrs) { if (attrs != null) hiddenFromAggregators.addAll(attrs); }
+		public void hiddenFromDragDrop(String... attrs) { if (attrs != null) hiddenFromDragDrop.addAll(Arrays.asList(attrs)); }
+		public void hiddenFromDragDrop(List<String> attrs) { if (attrs != null) hiddenFromDragDrop.addAll(attrs); }
+		public void unusedOrientationCutoff(int value) { this.unusedOrientationCutoff = value; }
+		public void menuLimit(int value) { this.menuLimit = value; }
+		public void tableName(String name) { this.tableName = name; }
+		public void sorters(Map<String, Object> map) { if (map != null) sorters.putAll(map); }
+		public void derivedAttributes(Map<String, String> map) { if (map != null) derivedAttributes.putAll(map); }
+
+		public Map<String, Object> getOptions() {
+			Map<String, Object> out = new LinkedHashMap<>();
+			if (!rows.isEmpty()) out.put("rows", new ArrayList<>(rows));
+			if (!cols.isEmpty()) out.put("cols", new ArrayList<>(cols));
+			if (!vals.isEmpty()) out.put("vals", new ArrayList<>(vals));
+			if (aggregatorName != null) out.put("aggregatorName", aggregatorName);
+			if (rendererName != null) out.put("rendererName", rendererName);
+			if (rowOrder != null) out.put("rowOrder", rowOrder);
+			if (colOrder != null) out.put("colOrder", colOrder);
+			if (!valueFilter.isEmpty()) out.put("valueFilter", new LinkedHashMap<>(valueFilter));
+			if (!options.isEmpty()) out.put("options", new LinkedHashMap<>(options));
+			if (!dataRows.isEmpty()) out.put("data", new ArrayList<>(dataRows));
+			if (!hiddenAttributes.isEmpty()) out.put("hiddenAttributes", new ArrayList<>(hiddenAttributes));
+			if (!hiddenFromAggregators.isEmpty()) out.put("hiddenFromAggregators", new ArrayList<>(hiddenFromAggregators));
+			if (!hiddenFromDragDrop.isEmpty()) out.put("hiddenFromDragDrop", new ArrayList<>(hiddenFromDragDrop));
+			if (unusedOrientationCutoff != null) out.put("unusedOrientationCutoff", unusedOrientationCutoff);
+			if (menuLimit != null) out.put("menuLimit", menuLimit);
+			if (tableName != null) out.put("tableName", tableName);
+			if (!sorters.isEmpty()) out.put("sorters", new LinkedHashMap<>(sorters));
+			if (!derivedAttributes.isEmpty()) out.put("derivedAttributes", new LinkedHashMap<>(derivedAttributes));
+			return out;
 		}
 	}
 }

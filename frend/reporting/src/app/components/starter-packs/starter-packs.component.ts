@@ -15,6 +15,7 @@ import {
   siServerless, // Placeholder 3
   siApachecassandra, // Placeholder 4 - for ClickHouse (columnar DB)
   siSupabase,
+  siRedis,
 } from 'simple-icons';
 
 import { ApiService } from '../../providers/api.service';
@@ -71,6 +72,7 @@ const iconMap = {
   mariadb: siMariadb,
   sqlite: siSqlite,
   supabase: siSupabase,
+  redis: siRedis,
 };
 
 // Helper function to construct default commands based on definition

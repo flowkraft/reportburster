@@ -136,6 +136,21 @@ services:
       retries: 10
       start_period: 10s
 
+  redis:
+    image: redis:7-alpine
+    container_name: rb-cache-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ===================================================================
   # CLICKHOUSE CDC SINK CONNECTOR (DISABLED BY DEFAULT)
   # ===================================================================
@@ -226,7 +241,7 @@ services:
   #       condition: service_healthy
   #   profiles:
   #     - transform
-
+  
 volumes:
   postgres_data:
   mysql_data:
@@ -236,3 +251,4 @@ volumes:
   db2_data:
   clickhouse_data:
   clickhouse_logs:
+  redis_data:

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.common.db.DatabaseHelper;
 import com.sourcekraft.documentburster.common.settings.model.ReportSettings.DataSource.SQLOptions;
+import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 import com.sourcekraft.documentburster.engine.AbstractReporter;
 import com.sourcekraft.documentburster.variables.Variables;
 import com.sourcekraft.documentburster.utils.Utils;
@@ -63,6 +64,34 @@ public class SqlReporter extends AbstractReporter {
 		}
 		if (StringUtils.isBlank(sqlQuery)) {
 			throw new IllegalArgumentException("SQL query (sqlquery) cannot be empty for SQL data source.");
+		}
+
+		// In test mode, wrap the SQL as a subquery with a DB-specific LIMIT to stop scanning early.
+		// Wrapping as a subquery avoids conflicts with existing LIMIT/FETCH/TOP/ROWNUM in the user's query.
+		if (this.testMode) {
+			ServerDatabaseSettings dbs = ctx.dbManager.getServerDatabaseSettings(connectionCode);
+			String dbType = (dbs != null && dbs.type != null) ? dbs.type.toLowerCase() : "";
+			// Strip trailing semicolons
+			String trimmed = sqlQuery.trim();
+			while (trimmed.endsWith(";")) {
+				trimmed = trimmed.substring(0, trimmed.length() - 1).trim();
+			}
+			switch (dbType) {
+				case "oracle":
+					sqlQuery = "SELECT * FROM (" + trimmed + ") WHERE ROWNUM <= 100";
+					break;
+				case "sqlserver":
+					sqlQuery = "SELECT TOP 100 * FROM (" + trimmed + ") AS _testmode_t";
+					break;
+				case "ibmdb2":
+				case "db2":
+					sqlQuery = "SELECT * FROM (" + trimmed + ") AS _testmode_t FETCH FIRST 100 ROWS ONLY";
+					break;
+				default: // postgres, mysql, mariadb, sqlite, duckdb, clickhouse, supabase
+					sqlQuery = "SELECT * FROM (" + trimmed + ") AS _testmode_t LIMIT 100";
+					break;
+			}
+			log.info("Test mode: wrapped SQL for dbType={}: {}", dbType, sqlQuery);
 		}
 
 		// Get JDBI instance and execute query

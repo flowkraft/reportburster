@@ -6,7 +6,30 @@ export const tabReportingChartTemplate = `<ng-template
       <tab heading="Preview">
         <div class="row" style="margin-top: 20px;">
           <div class="col-xs-12">
-            <div class="panel panel-default">
+            <!-- Named components (aggregator report) -->
+            <ng-container *ngIf="getNamedChartIds().length > 0">
+              <div *ngFor="let cid of getNamedChartIds()" class="panel panel-default" style="margin-bottom: 15px;">
+                <div class="panel-heading"><strong>{{cid}}</strong></div>
+                <div class="panel-body">
+                  <rb-chart
+                    *ngIf="showChartPreview"
+                    [reportCode]="getCurrentReportCode()"
+                    [componentId]="cid"
+                    [apiBaseUrl]="reportingService.reportingApiBaseUrl"
+                    [reportParams]="previewParams || {}"
+                    [testMode]="true"
+                    (dataFetched)="onChartDataFetched($any($event))"
+                    (fetchError)="onChartFetchError($any($event))"
+                    (ready)="onChartReady($event)"
+                    (initError)="onChartError($any($event).detail.message)"
+                    (chartError)="onChartError($any($event).detail.message)"
+                  ></rb-chart>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- Single unnamed component (standard report) — Mode 1: Angular fetches data once, pushes via [data] prop -->
+            <div *ngIf="getNamedChartIds().length === 0" class="panel panel-default">
               <div class="panel-body">
                 <!-- Only show chart if Chart Options script is configured and data exists -->
                 <rb-chart #chart
@@ -57,7 +80,6 @@ export const tabReportingChartTemplate = `<ng-template
                   <br/>
                   <p>Execution Time: {{ reportDataResult.executionTimeMillis }}ms</p>
                   <p>Total Rows: {{ reportDataResult.reportData?.length || 0 }}</p>
-                  <p>Preview Mode: {{ reportDataResult.isPreview ? 'Yes' : 'No' }}</p>
                 </div>
               </div>
             </div>
@@ -85,6 +107,9 @@ export const tabReportingChartTemplate = `<ng-template
       <tab heading="Example (Chart Options)">
         <div class="row" style="margin-top: 10px;">
           <div class="col-xs-12">
+            <a id="btnSeeMoreChartExamples" href="https://www.reportburster.com/docs/bi-analytics/web-components/charts" target="_blank" class="btn btn-default btn-block" style="color: #337ab7; text-decoration: underline; margin-bottom: 10px;">
+              See More Chart Examples
+            </a>
             <ngx-codejar
               id="chartConfigExampleEditor"
               [code]="exampleChartConfigScript"

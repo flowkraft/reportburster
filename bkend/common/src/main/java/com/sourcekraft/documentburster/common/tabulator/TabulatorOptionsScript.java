@@ -5,42 +5,48 @@ import groovy.lang.Closure;
 
 import java.util.*;
 
-/** Minimal Groovy DSL base for parsing Tabulator options (v0)
- *  Supports: tabulator { layoutOptions {...} columns { column { title ""; field "" } } data([ ... ]) }
+/**
+ * Groovy DSL base for parsing Tabulator options.
+ *
+ * DESIGN PRINCIPLES:
+ * 1. This DSL is the MINIMUM POSSIBLE wrapper over the EXACT SAME tabulator.info API.
+ *    Every keyword (layout, height, pagination, paginationSize, paginationMode, filterMode,
+ *    sortMode, headerFilter, sorter, formatter, etc.) maps 1:1 to tabulator.info — no
+ *    invented concepts, no renamed properties, no wrapper objects.
+ * 2. Only where provably necessary (e.g. Groovy syntax requires closures for nested
+ *    structures like columns) do we deviate from tabulator.info's JSON structure, and
+ *    such deviations are kept to the absolute minimum.
+ * 3. Both table-level and column-level use methodMissing catch-alls so that ANY current
+ *    or future tabulator.info property works automatically without code changes here.
+ * 4. The output of getOptions() is a flat Map that matches Tabulator's constructor
+ *    options object directly — no intermediate wrappers.
+ *
+ * Usage: tabulator { layout "fitColumns"; height 400; pagination true; columns { column { title "Name"; field "name" } } }
  */
 public abstract class TabulatorOptionsScript extends Script {
-	private final Map<String, Object> layoutOptions = new LinkedHashMap<>();
+	private final Map<String, Object> tableOptions = new LinkedHashMap<>();
 	private final List<Map<String, Object>> columns = new ArrayList<>();
 	private final List<Map<String, Object>> dataRows = new ArrayList<>();
-	private Map<String,Object> currentColumn = null;
 
-	// DSL root
+	// Named blocks: id → options map
+	private final Map<String, Map<String, Object>> namedOptions = new LinkedHashMap<>();
+
+	// DSL root — unnamed (default)
 	public void tabulator(Closure<?> body) {
 		body.setDelegate(this);
 		body.setResolveStrategy(Closure.DELEGATE_FIRST);
 		body.call();
 	}
 
-	// layoutOptions overload - support map form
-	public void layoutOptions(Map<String, Object> args) {
-		if (args != null) layoutOptions.putAll(args);
-	}
-
-	// layoutOptions overload - support closure form
-	public void layoutOptions(Closure<?> body) {
-		body.setDelegate(this);
+	// DSL root — named block for aggregator reports
+	public void tabulator(String id, Closure<?> body) {
+		// Use a temporary script-like delegate to capture this block's options independently
+		NamedTabulatorDelegate delegate = new NamedTabulatorDelegate();
+		body.setDelegate(delegate);
 		body.setResolveStrategy(Closure.DELEGATE_FIRST);
 		body.call();
+		namedOptions.put(id, delegate.getOptions());
 	}
-
-	// common table-level options we support for v0
-	public void layout(String v) { layoutOptions.put("layout", v); }
-	public void height(Object v) { layoutOptions.put("height", v); }
-	public void autoColumns(Object v) { layoutOptions.put("autoColumns", v); }
-	public void renderVertical(String v) { layoutOptions.put("renderVertical", v); }
-	public void renderHorizontal(String v) { layoutOptions.put("renderHorizontal", v); }
-	public void layoutColumnsOnNewData(Object v) { layoutOptions.put("layoutColumnsOnNewData", v); }
-	public void width(Object v) { layoutOptions.put("width", v); }
 
 	// columns block
 	public void columns(Closure<?> body) {
@@ -67,19 +73,32 @@ public abstract class TabulatorOptionsScript extends Script {
 	public void data(List<Map<String, Object>> rows) {
 		if (rows != null) {
 			for (Map<String,Object> r : rows) {
-				// ensure we copy each map
 				this.dataRows.add(new LinkedHashMap<>(r));
 			}
 		}
 	}
 
-	/** Return final options map */
+	// Catch-all for any Tabulator table-level option (layout, height, pagination, paginationSize, etc.)
+	public Object methodMissing(String name, Object args) {
+		if (args instanceof Object[] && ((Object[]) args).length > 0) {
+			tableOptions.put(name, ((Object[]) args)[0]);
+		} else {
+			tableOptions.put(name, args);
+		}
+		return null;
+	}
+
+	/** Return final options map — flat structure matching tabulator.info API */
 	public Map<String, Object> getOptions() {
-		Map<String, Object> out = new LinkedHashMap<>();
-		if (!layoutOptions.isEmpty()) out.put("layoutOptions", new LinkedHashMap<>(layoutOptions));
+		Map<String, Object> out = new LinkedHashMap<>(tableOptions);
 		if (!columns.isEmpty()) out.put("columns", new ArrayList<>(columns));
 		if (!dataRows.isEmpty()) out.put("data", new ArrayList<>(dataRows));
 		return out;
+	}
+
+	/** Return named options map (id → options) for aggregator reports */
+	public Map<String, Map<String, Object>> getNamedOptions() {
+		return namedOptions;
 	}
 
 	// Column delegate to capture column-level methods
@@ -87,60 +106,67 @@ public abstract class TabulatorOptionsScript extends Script {
 	private static class ColumnDelegate {
 		private final Map<String, Object> map;
 		ColumnDelegate(Map<String, Object> map) { this.map = map; }
-		
-		// Required properties
-		public void title(String t) { map.put("title", t); }
-		public void field(String f) { map.put("field", f); }
-		
-		// Alignment
-		public void hozAlign(String a) { map.put("hozAlign", a); } // left, center, right
-		public void vertAlign(String a) { map.put("vertAlign", a); } // top, middle, bottom
-		public void headerHozAlign(String a) { map.put("headerHozAlign", a); }
-		
-		// Width control
-		public void width(Object w) { map.put("width", w); }
-		public void minWidth(Object w) { map.put("minWidth", w); }
-		public void maxWidth(Object w) { map.put("maxWidth", w); }
-		public void widthGrow(Object w) { map.put("widthGrow", w); }
-		public void widthShrink(Object w) { map.put("widthShrink", w); }
-		
-		// Visibility & Layout
-		public void visible(Object v) { map.put("visible", v); }
-		public void frozen(Object f) { map.put("frozen", f); }
-		public void responsive(Object r) { map.put("responsive", r); }
-		public void resizable(Object r) { map.put("resizable", r); }
-		
-		// Sorting & Filtering
-		public void sorter(Object s) { map.put("sorter", s); } // string, number, alphanum, boolean, exists, date, time, datetime, array
-		public void sorterParams(Object p) { map.put("sorterParams", p); }
-		public void headerSort(Object h) { map.put("headerSort", h); }
-		public void headerFilter(Object f) { map.put("headerFilter", f); } // input, number, list, textarea, etc.
-		public void headerFilterParams(Object p) { map.put("headerFilterParams", p); }
-		public void headerFilterPlaceholder(String p) { map.put("headerFilterPlaceholder", p); }
-		
-		// Formatting & Display
-		public void formatter(Object f) { map.put("formatter", f); } // plaintext, textarea, html, money, image, link, datetime, etc.
-		public void formatterParams(Object p) { map.put("formatterParams", p); }
-		public void cssClass(String c) { map.put("cssClass", c); }
-		public void tooltip(Object t) { map.put("tooltip", t); }
-		
-		// Editing
-		public void editor(Object e) { map.put("editor", e); } // input, textarea, number, range, tick, star, select, autocomplete, date, time, datetime
-		public void editorParams(Object p) { map.put("editorParams", p); }
-		public void editable(Object e) { map.put("editable", e); }
-		public void validator(Object v) { map.put("validator", v); }
-		
-		// Header customization
-		public void headerTooltip(Object t) { map.put("headerTooltip", t); }
-		public void headerVertical(Object v) { map.put("headerVertical", v); }
-		
-		// Catch-all for any other Tabulator column property
+
+		// Catch-all for any Tabulator column property
 		public void methodMissing(String name, Object args) {
 			if (args instanceof Object[] && ((Object[]) args).length > 0) {
 				map.put(name, ((Object[]) args)[0]);
 			} else {
 				map.put(name, args);
 			}
+		}
+	}
+
+	/**
+	 * Delegate for named tabulator blocks — captures options independently
+	 * so multiple named blocks don't interfere with each other or the unnamed default.
+	 */
+	private static class NamedTabulatorDelegate {
+		private final Map<String, Object> tableOptions = new LinkedHashMap<>();
+		private final List<Map<String, Object>> columns = new ArrayList<>();
+		private final List<Map<String, Object>> dataRows = new ArrayList<>();
+
+		public void columns(Closure<?> body) {
+			body.setDelegate(this);
+			body.setResolveStrategy(Closure.DELEGATE_FIRST);
+			body.call();
+		}
+
+		public void column(Map<String, Object> args) { column(args, null); }
+		public void column(Closure<?> body) { column(new LinkedHashMap<>(), body); }
+		public void column(Map<String, Object> args, Closure<?> body) {
+			Map<String, Object> c = new LinkedHashMap<>(args);
+			this.columns.add(c);
+			if (body != null) {
+				ColumnDelegate d = new ColumnDelegate(c);
+				body.setDelegate(d);
+				body.setResolveStrategy(Closure.DELEGATE_FIRST);
+				body.call();
+			}
+		}
+
+		public void data(List<Map<String, Object>> rows) {
+			if (rows != null) {
+				for (Map<String, Object> r : rows) {
+					this.dataRows.add(new LinkedHashMap<>(r));
+				}
+			}
+		}
+
+		public Object methodMissing(String name, Object args) {
+			if (args instanceof Object[] && ((Object[]) args).length > 0) {
+				tableOptions.put(name, ((Object[]) args)[0]);
+			} else {
+				tableOptions.put(name, args);
+			}
+			return null;
+		}
+
+		public Map<String, Object> getOptions() {
+			Map<String, Object> out = new LinkedHashMap<>(tableOptions);
+			if (!columns.isEmpty()) out.put("columns", new ArrayList<>(columns));
+			if (!dataRows.isEmpty()) out.put("data", new ArrayList<>(dataRows));
+			return out;
 		}
 	}
 

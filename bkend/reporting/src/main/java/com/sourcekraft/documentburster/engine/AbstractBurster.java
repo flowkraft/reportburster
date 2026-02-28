@@ -218,7 +218,8 @@ public abstract class AbstractBurster {
 			} else {
 
 				if (ctx.burstTokens.size() == 0) {
-					throw new Exception("No burst tokens were provided or fetched for the document : " + pathToFile);
+					throw new Exception(
+							"No burst tokens were provided or fetched for the document : " + pathToFile);
 				} else if (!this.requestedCancelOrPauseProcessing) {
 
 					boolean shouldSendFiles = shouldSendFiles();

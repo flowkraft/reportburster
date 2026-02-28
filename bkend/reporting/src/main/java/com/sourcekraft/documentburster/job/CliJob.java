@@ -447,7 +447,7 @@ public class CliJob {
 	 * Does NOT create a job file since this is not a trackable job - it's just a database query.
 	 * Job files are only needed for operations with side effects (burst, merge, email, etc.).
 	 */
-	public ReportDataResult doFetchData(Map<String, String> parameters) throws Exception {
+	public ReportDataResult doFetchData(Map<String, String> parameters, boolean testMode) throws Exception {
 
 		ReportDataResult result = new ReportDataResult();
 		AbstractBurster burster = null;
@@ -476,6 +476,7 @@ public class CliJob {
 				// System.out.println("doFetchData: burster is instance of
 				// AbstractReporter");
 				((AbstractReporter) burster).setPreviewMode(true);
+				((AbstractReporter) burster).setTestMode(testMode);
 				// System.out.println("doFetchData: setPreviewMode called");
 
 				((AbstractReporter) burster).setReportParameters(parameters);
@@ -498,7 +499,6 @@ public class CliJob {
 
 			result.reportData = burster.getCtx().reportData;
 			result.reportColumnNames = burster.getCtx().reportColumnNames;
-			result.isPreview = true;
 			result.executionTimeMillis = endTime - startTime;
 			result.totalRows = (result.reportData != null) ? result.reportData.size() : 0;
 
@@ -531,7 +531,6 @@ public class CliJob {
             row.put("ERROR_MESSAGE", msg);
             result.reportData = Arrays.asList(row);
             result.reportColumnNames = Arrays.asList("ERROR_MESSAGE");
-            result.isPreview = true;
             result.executionTimeMillis = 0L;
             result.totalRows = 0;
 

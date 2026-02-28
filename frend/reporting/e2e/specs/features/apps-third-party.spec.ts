@@ -53,4 +53,85 @@ test.describe('Apps Manager Tests', () => {
     },
   );
 
+  // Test 3: Navigate to Starter Packs tab, start and stop Redis
+  electronBeforeAfterAllTest(
+    'should start and stop Redis from Starter Packs',
+    async ({ beforeAfterEach: firstPage }) => {
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const timeout = Constants.DELAY_FIVE_THOUSANDS_SECONDS;
+      const PACK_ID = 'db-redis';
+      const BTN_SEL = `#btnStartStop_${PACK_ID}`;
+      const ICON_SEL = `${BTN_SEL} #starterPackIcon_${PACK_ID}`;
+      const SPINNER_SEL = `${BTN_SEL} #starterPackSpinner_${PACK_ID}`;
+
+      let ft = new FluentTester(firstPage)
+        .consoleLog('\n=== Redis Starter Pack: start/stop lifecycle ===\n');
+
+      // ── Navigate to Starter Packs tab ──
+      ft = ft
+        .gotoStarterPacks()
+        .setValue('#packSearch', 'redis')
+        .sleep(400) // debounce in component is 300ms; add small buffer
+        .waitOnElementToBecomeVisible(BTN_SEL)
+        .consoleLog('  Navigate to Starter Packs PASSED')
+        .consoleLog('  #btnStartStop_db-redis visible PASSED');
+
+      // ── Verify initial state: stopped ──
+      ft = ft
+        .waitOnElementToBecomeEnabled(BTN_SEL, timeout)
+        .waitOnElementToHaveText(BTN_SEL, 'Start', timeout)
+        .waitOnElementToBecomeVisible(ICON_SEL, timeout)
+        .waitOnElementToHaveClass(ICON_SEL, 'fa-play', timeout)
+        .consoleLog('  Redis initial state: stopped PASSED');
+
+      // ── START ──
+      ft = ft
+        .click(BTN_SEL)
+        .confirmDialogShouldBeVisible()
+        .clickYesDoThis()
+        .consoleLog('  Redis start requested PASSED');
+
+      // Wait: starting (button disabled, spinner visible, text = "Starting")
+      ft = ft
+        .waitOnElementToBecomeDisabled(BTN_SEL, timeout)
+        .waitOnElementToBecomeVisible(SPINNER_SEL, timeout)
+        .waitOnElementToHaveText(BTN_SEL, 'Starting', timeout)
+        .consoleLog('  Redis state: starting PASSED');
+
+      // Wait: running (button enabled, text = "Stop", icon = fa-stop)
+      ft = ft
+        .waitOnElementToBecomeEnabled(BTN_SEL, timeout)
+        .waitOnElementToHaveText(BTN_SEL, 'Stop', timeout)
+        .waitOnElementToBecomeVisible(ICON_SEL, timeout)
+        .waitOnElementToHaveClass(ICON_SEL, 'fa-stop', timeout)
+        .consoleLog('  Redis state: running PASSED');
+
+      // ── STOP ──
+      ft = ft
+        .click(BTN_SEL)
+        .confirmDialogShouldBeVisible()
+        .clickYesDoThis()
+        .consoleLog('  Redis stop requested PASSED');
+
+      // Wait: stopping (button disabled, spinner visible, text = "Stopping")
+      ft = ft
+        .waitOnElementToBecomeDisabled(BTN_SEL, timeout)
+        .waitOnElementToBecomeVisible(SPINNER_SEL, timeout)
+        .waitOnElementToHaveText(BTN_SEL, 'Stopping', timeout)
+        .consoleLog('  Redis state: stopping PASSED');
+
+      // Wait: stopped (button enabled, text = "Start", icon = fa-play)
+      ft = ft
+        .waitOnElementToBecomeEnabled(BTN_SEL, timeout)
+        .waitOnElementToHaveText(BTN_SEL, 'Start', timeout)
+        .waitOnElementToBecomeVisible(ICON_SEL, timeout)
+        .waitOnElementToHaveClass(ICON_SEL, 'fa-play', timeout)
+        .consoleLog('  Redis state: stopped PASSED')
+        .consoleLog('\n=== Redis Starter Pack: ALL PASSED ===\n');
+
+      await ft;
+    },
+  );
+
 });

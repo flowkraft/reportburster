@@ -114,7 +114,7 @@
                             <i class="bi bi-clipboard"></i>
                         </button>
                     </div>
-                    <pre id="usageCode" class="code-block"><code>&lt;rb-report 
+                    <pre id="usageCode" class="code-block"><code class="language-markup">&lt;rb-report 
     report-code="rep-employee-payslip"
     entity-code="EMP001"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
@@ -198,6 +198,10 @@
                 }
             });
             
+            // Highlight static usage code block
+            var usageEl = document.querySelector('#usageCode code');
+            if (usageEl && window.Prism) Prism.highlightElement(usageEl);
+
             // Copy usage button
             document.getElementById('copyUsageBtn').addEventListener('click', function() {
                 const text = document.getElementById('usageCode').innerText;

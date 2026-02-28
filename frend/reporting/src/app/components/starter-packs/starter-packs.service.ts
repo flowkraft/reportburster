@@ -123,7 +123,19 @@ export class StarterPacksService {
       icon: 'supabase',
       startCmd: 'service database start northwind supabase 5435',
       stopCmd: 'service database stop northwind supabase',
-      tags: ['database', 'northwind', 'supabase', 'postgres', 'baas', ' backend-as-a-service', 'auth', 'realtime', 'storage', 'vector-embeddings'],
+      tags: ['database', 'northwind', 'supabase', 'postgres', 'baas', ' backend-as-a-service', 'auth', 'real-time', 'storage', 'vector-embeddings'],
+    },
+    {
+      id: 'db-redis',
+      family: 'database',
+      packName: 'cache',
+      target: 'redis',
+      displayName: 'Redis',
+      description: 'Your Dashboards Are About to Get Faster.',
+      icon: 'redis',
+      startCmd: 'service database start cache redis 6379',
+      stopCmd: 'service database stop cache redis',
+      tags: ['database', 'redis', 'cache', 'in-memory', 'key-value', 'real-time', 'performance'],
     },
     // --- Add other families/packs here as needed ---
     // Example for a hypothetical 'messaging' family:

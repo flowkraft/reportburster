@@ -1965,7 +1965,6 @@ export class SelfServicePortalsTestHelper {
     const baseUrl = appName === 'grails'
       ? SelfServicePortalsTestHelper.GRAILS_BASE_URL
       : SelfServicePortalsTestHelper.NEXT_BASE_URL;
-    const pivotTablesPath = '/pivot-tables';
 
     console.log(`${appName}: Waiting for server to be ready...`);
     await SelfServicePortalsTestHelper.waitForServerReady(page, baseUrl, 30, 2000);
@@ -1978,14 +1977,10 @@ export class SelfServicePortalsTestHelper {
       page, baseUrl, '/', 'Home', ['Dashboards', 'Self Service', 'Explore Components']
     );
 
-    // rb-tabulator - data table (config is OPTIONAL, this demo has none)
-    await SelfServicePortalsTestHelper.assertRbTabulatorComponent(page, baseUrl);
-
-    // rb-chart - chart visualization (config REQUIRED)
-    await SelfServicePortalsTestHelper.assertRbChartComponent(page, baseUrl);
-
-    // rb-pivot-table - pivot table (config REQUIRED)
-    await SelfServicePortalsTestHelper.assertRbPivotTableComponent(page, baseUrl, pivotTablesPath);
+    // Tabulator, Charts, Pivot Tables — tested in dedicated spec files:
+    //   apps-grails-nextjs-tabulator.spec.ts
+    //   apps-grails-nextjs-charts.spec.ts
+    //   apps-grails-nextjs-pivot.spec.ts
 
     // rb-parameters - parameter form with filtering (config REQUIRED)
     await SelfServicePortalsTestHelper.assertRbParametersComponent(page, baseUrl);
@@ -1996,6 +1991,11 @@ export class SelfServicePortalsTestHelper {
     // Data Warehouse page — 3 engine pivots, config, usage (navbar: after Reports)
     const dataWarehousePath = '/data-warehouse';
     await SelfServicePortalsTestHelper.assertDataWarehousePage(page, baseUrl, dataWarehousePath);
+
+    // Dashboards — smoke check only (detailed tests in apps-grails-nextjs-dashboards.spec.ts)
+    await SelfServicePortalsTestHelper.assertSimplePage(
+      page, baseUrl, '/dashboards', 'Dashboards', ['Dashboards']
+    );
 
     // Your Canvas (no component)
     await SelfServicePortalsTestHelper.assertSimplePage(

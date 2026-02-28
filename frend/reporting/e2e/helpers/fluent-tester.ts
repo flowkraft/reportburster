@@ -32,7 +32,9 @@ export class FluentTester implements PromiseLike<void> {
   //waitOnElementToExists: any;
 
   /** Global default wait (ms) applied after every click when > 0. Can be set per-file/suite. */
-  public static globalClickWaitMs: number = 0;
+  //public static globalClickWaitMs: number = 0;
+
+  public static globalClickWaitMs: number = 250;
 
   /** Optional per-instance override (if undefined, global is used). */
   private clickWaitMs?: number;
@@ -369,6 +371,19 @@ export class FluentTester implements PromiseLike<void> {
       }
     };
 
+    this.actions.push(action);
+    return this;
+  }
+
+  /**
+   * Wait for the Tabulator table to have at least one row of data.
+   */
+  public waitOnTabulatorToHaveData(waitTime?: number): FluentTester {
+    let delay = Constants.DELAY_HUNDRED_SECONDS;
+    if (waitTime) delay = waitTime;
+    const action = async (): Promise<void> => {
+      await expect(this.window.locator('div.tabulator-row').first()).toBeVisible({ timeout: delay });
+    };
     this.actions.push(action);
     return this;
   }

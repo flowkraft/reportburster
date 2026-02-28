@@ -10,68 +10,76 @@ export default function YourCanvasPage() {
 
         {/* Hero Section */}
         <div className="canvas-hero text-center p-12 mb-8 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950">
-          <h1 className="text-4xl md:text-5xl font-bold text-blue-700 dark:text-cyan-300 mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-blue-800 dark:text-cyan-300 mb-4">
             <i className="bi bi-palette"></i> Your Canvas Awaits
           </h1>
-          <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mb-6">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-6">
             You have the data. You have the components. Now build something that matters to your users.
           </p>
         </div>
 
         {/* What You Can Build */}
         <div className="canvas-section mb-12">
-          <h4 className="text-2xl font-semibold text-blue-700 dark:text-blue-300 mb-4">
+          <h4 className="text-2xl font-semibold text-blue-800 dark:text-blue-300 mb-4">
             <i className="bi bi-stars me-2"></i>What You Can Build
           </h4>
-          <p className="text-slate-600 dark:text-slate-300 mb-6">
+          <p className="text-muted-foreground mb-6">
             Combine these components to create dashboards, self-service portals, and interactive reports:
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-            <div className="showcase-card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
+            <div className="showcase-card bg-card border border-border rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
               <i className="bi bi-table text-5xl text-rb-cyan mb-4 block"></i>
-              <h5 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Data Tables</h5>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <h5 className="text-lg font-semibold text-foreground mb-2">Data Tables</h5>
+              <p className="text-muted-foreground text-sm">
                 Sortable, filterable, paginated tables. Let users explore data their way.
               </p>
             </div>
 
-            <div className="showcase-card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
+            <div className="showcase-card bg-card border border-border rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
               <i className="bi bi-bar-chart text-5xl text-rb-cyan mb-4 block"></i>
-              <h5 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Charts</h5>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <h5 className="text-lg font-semibold text-foreground mb-2">Charts</h5>
+              <p className="text-muted-foreground text-sm">
                 Bar, line, pie, area charts. Turn numbers into stories.
               </p>
             </div>
 
-            <div className="showcase-card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
+            <div className="showcase-card bg-card border border-border rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
               <i className="bi bi-grid-3x3 text-5xl text-rb-cyan mb-4 block"></i>
-              <h5 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Pivot Tables</h5>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <h5 className="text-lg font-semibold text-foreground mb-2">Pivot Tables</h5>
+              <p className="text-muted-foreground text-sm">
                 Drag-and-drop analysis. Users answer their own questions.
               </p>
             </div>
 
-            <div className="showcase-card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
+            <div className="showcase-card bg-card border border-border rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
               <i className="bi bi-sliders text-5xl text-rb-cyan mb-4 block"></i>
-              <h5 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Parameters</h5>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <h5 className="text-lg font-semibold text-foreground mb-2">Parameters</h5>
+              <p className="text-muted-foreground text-sm">
                 Date pickers, dropdowns, filters. Dynamic reports that respond to user input.
               </p>
             </div>
 
-            <div className="showcase-card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
+            <div className="showcase-card bg-card border border-border rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
               <i className="bi bi-file-earmark-text text-5xl text-rb-cyan mb-4 block"></i>
-              <h5 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Rendered Reports</h5>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <h5 className="text-lg font-semibold text-foreground mb-2">Rendered Reports</h5>
+              <p className="text-muted-foreground text-sm">
                 Invoices, payslips, statements. Pixel-perfect documents from templates.
               </p>
             </div>
 
-            <div className="showcase-card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
+            <div className="showcase-card bg-card border border-border rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
+              <i className="bi bi-database text-5xl text-rb-cyan mb-4 block"></i>
+              <h5 className="text-lg font-semibold text-foreground mb-2">Data Warehouse</h5>
+              <p className="text-muted-foreground text-sm">
+                OLAP engines for big data. DuckDB, ClickHouse — query millions of rows.
+              </p>
+            </div>
+
+            <div className="showcase-card bg-card border border-border rounded-xl p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
               <i className="bi bi-columns-gap text-5xl text-rb-cyan mb-4 block"></i>
-              <h5 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Dashboards</h5>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <h5 className="text-lg font-semibold text-foreground mb-2">Dashboards</h5>
+              <p className="text-muted-foreground text-sm">
                 Combine all of the above. One page, complete insight.
               </p>
             </div>
@@ -80,7 +88,7 @@ export default function YourCanvasPage() {
 
         {/* How It Works */}
         <div className="canvas-section mb-12">
-          <h4 className="text-2xl font-semibold text-blue-700 dark:text-blue-300 mb-4">
+          <h4 className="text-2xl font-semibold text-blue-800 dark:text-blue-300 mb-4">
             <i className="bi bi-gear me-2"></i>How It Works
           </h4>
 
@@ -91,27 +99,27 @@ export default function YourCanvasPage() {
                   <span className="absolute left-0 top-0 w-8 h-8 bg-rb-cyan text-white rounded-full flex items-center justify-center font-semibold text-sm">
                     1
                   </span>
-                  <strong className="block text-slate-900 dark:text-slate-100">Define your reports in ReportBurster</strong>
-                  <span className="text-slate-600 dark:text-slate-400"> — Connect to any datasource that returns rows</span>
+                  <strong className="block text-foreground">Define your reports in ReportBurster</strong>
+                  <span className="text-muted-foreground"> — Connect to any datasource that returns rows</span>
                 </li>
                 <li className="relative pl-12">
                   <span className="absolute left-0 top-0 w-8 h-8 bg-rb-cyan text-white rounded-full flex items-center justify-center font-semibold text-sm">
                     2
                   </span>
-                  <strong className="block text-slate-900 dark:text-slate-100">Add the component to your dashboard</strong>
-                  <span className="text-slate-600 dark:text-slate-400"> — One HTML tag per visualization</span>
+                  <strong className="block text-foreground">Add the component to your dashboard</strong>
+                  <span className="text-muted-foreground"> — One HTML tag per visualization</span>
                 </li>
                 <li className="relative pl-12">
                   <span className="absolute left-0 top-0 w-8 h-8 bg-rb-cyan text-white rounded-full flex items-center justify-center font-semibold text-sm">
                     3
                   </span>
-                  <strong className="block text-slate-900 dark:text-slate-100">Deploy</strong>
-                  <span className="text-slate-600 dark:text-slate-400"> — Users access it through any web page</span>
+                  <strong className="block text-foreground">Deploy</strong>
+                  <span className="text-muted-foreground"> — Users access it through any web page</span>
                 </li>
               </ol>
             </div>
             <div>
-              <p className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Example: Add a chart to any page</p>
+              <p className="font-semibold text-foreground mb-3">Example: Add a chart to any page</p>
               <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-gray-300 rounded-lg p-4 font-mono text-sm overflow-x-auto leading-relaxed border border-gray-700">
                 <span className="text-blue-400">&lt;rb-chart</span>
                 {"\n    "}
@@ -123,7 +131,7 @@ export default function YourCanvasPage() {
                 {"\n"}
                 <span className="text-blue-400">&gt;&lt;/rb-chart&gt;</span>
               </div>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mt-3">
+              <p className="text-muted-foreground text-sm mt-3">
                 That&apos;s it. The component fetches data, reads your chart config, and renders.
               </p>
             </div>
@@ -132,51 +140,51 @@ export default function YourCanvasPage() {
 
         {/* Ideas & Inspiration */}
         <div className="canvas-section mb-12">
-          <h4 className="text-2xl font-semibold text-blue-700 dark:text-blue-300 mb-4">
+          <h4 className="text-2xl font-semibold text-blue-800 dark:text-blue-300 mb-4">
             <i className="bi bi-lightbulb me-2"></i>Ideas to Get You Started
           </h4>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-            <div className="card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden h-full">
+            <div className="card bg-card border border-border rounded-lg overflow-hidden h-full">
               <div className="card-body p-6">
                 <h6 className="card-title text-base font-semibold mb-4">
                   <i className="bi bi-people text-blue-600 me-2"></i>HR Portal
                 </h6>
-                <p className="card-text text-sm text-slate-600 dark:text-slate-400">
+                <p className="card-text text-sm text-muted-foreground">
                   Employee payslips, leave balances, org charts. Each employee sees only their own data.
                 </p>
               </div>
             </div>
 
-            <div className="card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden h-full">
+            <div className="card bg-card border border-border rounded-lg overflow-hidden h-full">
               <div className="card-body p-6">
                 <h6 className="card-title text-base font-semibold mb-4">
                   <i className="bi bi-graph-up text-green-600 me-2"></i>Sales Dashboard
                 </h6>
-                <p className="card-text text-sm text-slate-600 dark:text-slate-400">
+                <p className="card-text text-sm text-muted-foreground">
                   Revenue by region, top products, quarterly trends. Pivot table for ad-hoc analysis.
                 </p>
               </div>
             </div>
 
-            <div className="card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden h-full">
+            <div className="card bg-card border border-border rounded-lg overflow-hidden h-full">
               <div className="card-body p-6">
                 <h6 className="card-title text-base font-semibold mb-4">
                   <i className="bi bi-receipt text-yellow-600 me-2"></i>Customer Portal
                 </h6>
-                <p className="card-text text-sm text-slate-600 dark:text-slate-400">
+                <p className="card-text text-sm text-muted-foreground">
                   Invoices, statements, order history. Customers self-serve instead of calling support.
                 </p>
               </div>
             </div>
 
-            <div className="card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden h-full">
+            <div className="card bg-card border border-border rounded-lg overflow-hidden h-full">
               <div className="card-body p-6">
                 <h6 className="card-title text-base font-semibold mb-4">
                   <i className="bi bi-book text-cyan-600 me-2"></i>Student Portal
                 </h6>
-                <p className="card-text text-sm text-slate-600 dark:text-slate-400">
+                <p className="card-text text-sm text-muted-foreground">
                   Grades, class schedules, assignments, tuition payments. Students and parents access everything in one place.
                 </p>
               </div>

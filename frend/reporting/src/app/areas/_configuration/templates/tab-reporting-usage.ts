@@ -6,23 +6,53 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
         <p>Copy and paste the following HTML snippets to embed your report components in external web applications.</p>
        </div>
       <div class="panel-body">
-        <h5><strong>1. Data Table Component</strong></h5>
-        <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- DATA TABLE COMPONENT(S)                                    -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <!-- Named tabulators (multi-component / aggregator report) -->
+        <ng-container *ngIf="getNamedTabulatorIds().length > 0">
+          <div *ngFor="let cid of getNamedTabulatorIds(); let idx = index" style="margin-bottom: 10px;">
+            <h5><strong>1{{ getLetterSuffix(idx) }}. Data Table — {{ cid }}</strong></h5>
+            <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
+&lt;rb-tabulator
+  report-code="{{ getCurrentReportCode() }}"
+  component-id="{{ cid }}"
+  api-base-url="{{ getApiBaseUrl() }}"
+  api-key="{{ getApiKeyForUsage() }}"&gt;
+&lt;/rb-tabulator&gt;
+            </div>
+            <button type="button" class="btn btn-default btn-sm" style="margin-bottom: 10px;" (click)="copyUsageRbTabulatorNamed(cid)">
+              <i class="fa fa-copy"></i> Copy rb-tabulator ({{ cid }})
+            </button>
+          </div>
+          <hr/>
+        </ng-container>
+
+        <!-- Single unnamed tabulator (standard report) -->
+        <ng-container *ngIf="getNamedTabulatorIds().length === 0">
+          <h5><strong>1. Data Table Component</strong></h5>
+          <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;rb-tabulator
   report-code="{{ getCurrentReportCode() }}"
   api-base-url="{{ getApiBaseUrl() }}"
   api-key="{{ getApiKeyForUsage() }}"&gt;
 &lt;/rb-tabulator&gt;
-        </div>
-        <button type="button" class="btn btn-default btn-sm" style="margin-bottom: 15px;" (click)="copyUsageRbTabulator()">
-          <i class="fa fa-copy"></i> Copy rb-tabulator
-        </button>
+          </div>
+          <button type="button" class="btn btn-default btn-sm" style="margin-bottom: 15px;" (click)="copyUsageRbTabulator()">
+            <i class="fa fa-copy"></i> Copy rb-tabulator
+          </button>
+          <hr/>
+        </ng-container>
 
-        <hr/>
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- PARAMETERS COMPONENT                                       -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
 
         <!-- Parameters component - show only if parameters are configured -->
         <div *ngIf="activeParamsSpecScriptGroovy?.trim()">
-          <h5><strong>2. Parameters Component</strong></h5>
+          <h5><strong>{{ getUsageParamsNumber() }}. Parameters Component</strong></h5>
           <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;rb-parameters
   report-code="{{ getCurrentReportCode() }}"
@@ -36,9 +66,32 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
           <hr/>
         </div>
 
-        <!-- Chart component - show only if chart is configured -->
-        <div *ngIf="activeChartConfigScriptGroovy?.trim()">
-          <h5><strong>{{ activeParamsSpecScriptGroovy?.trim() ? '3' : '2' }}. Chart Component (optional - for data visualization)</strong></h5>
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- CHART COMPONENT(S)                                         -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <!-- Named charts (multi-component / aggregator report) -->
+        <ng-container *ngIf="getNamedChartIds().length > 0">
+          <div *ngFor="let cid of getNamedChartIds(); let idx = index" style="margin-bottom: 10px;">
+            <h5><strong>{{ getUsageChartNumber() }}{{ getLetterSuffix(idx) }}. Chart — {{ cid }}</strong></h5>
+            <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
+&lt;rb-chart
+  report-code="{{ getCurrentReportCode() }}"
+  component-id="{{ cid }}"
+  api-base-url="{{ getApiBaseUrl() }}"
+  api-key="{{ getApiKeyForUsage() }}"&gt;
+&lt;/rb-chart&gt;
+            </div>
+            <button type="button" class="btn btn-default btn-sm" style="margin-bottom: 10px;" (click)="copyUsageRbChartNamed(cid)">
+              <i class="fa fa-copy"></i> Copy rb-chart ({{ cid }})
+            </button>
+          </div>
+          <hr/>
+        </ng-container>
+
+        <!-- Single unnamed chart (standard report) -->
+        <div *ngIf="getNamedChartIds().length === 0 && activeChartConfigScriptGroovy?.trim()">
+          <h5><strong>{{ getUsageChartNumber() }}. Chart Component (optional - for data visualization)</strong></h5>
           <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;rb-chart
   report-code="{{ getCurrentReportCode() }}"
@@ -52,8 +105,31 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
           <hr/>
         </div>
 
-        <!-- Pivot Table component - show only if pivot table is configured -->
-        <div *ngIf="activePivotTableConfigScriptGroovy?.trim()">
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- PIVOT TABLE COMPONENT(S)                                   -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <!-- Named pivot tables (multi-component / aggregator report) -->
+        <ng-container *ngIf="getNamedPivotIds().length > 0">
+          <div *ngFor="let cid of getNamedPivotIds(); let idx = index" style="margin-bottom: 10px;">
+            <h5><strong>{{ getUsagePivotTableNumber() }}{{ getLetterSuffix(idx) }}. Pivot Table — {{ cid }}</strong></h5>
+            <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
+&lt;rb-pivottable
+  report-code="{{ getCurrentReportCode() }}"
+  component-id="{{ cid }}"
+  api-base-url="{{ getApiBaseUrl() }}"
+  api-key="{{ getApiKeyForUsage() }}"&gt;
+&lt;/rb-pivottable&gt;
+            </div>
+            <button type="button" class="btn btn-default btn-sm" style="margin-bottom: 10px;" (click)="copyUsageRbPivotTableNamed(cid)">
+              <i class="fa fa-copy"></i> Copy rb-pivottable ({{ cid }})
+            </button>
+          </div>
+          <hr/>
+        </ng-container>
+
+        <!-- Single unnamed pivot table (standard report) -->
+        <div *ngIf="getNamedPivotIds().length === 0 && activePivotTableConfigScriptGroovy?.trim()">
           <h5><strong>{{ getUsagePivotTableNumber() }}. Pivot Table Component (for data analysis)</strong></h5>
           <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;rb-pivottable
@@ -68,9 +144,13 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
           <hr/>
         </div>
 
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- REPORT COMPONENT (always shown, no component-id needed)    -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
         <h5><strong>{{ getUsageRbReportNumber() }}. Report Component</strong></h5>
         <div *ngIf="hasEntityCodeParameter()" class="alert alert-info" style="font-size: 12px; padding: 8px 12px; margin-bottom: 10px;">
-          <i class="fa fa-info-circle"></i> 
+          <i class="fa fa-info-circle"></i>
           This report uses <code>entityCode</code> parameter. Replace <code>YOUR_ENTITY_CODE</code> with the actual entity identifier.
         </div>
         <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
@@ -86,10 +166,14 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
 
         <hr/>
 
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- SCRIPT TAG                                                 -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
         <h5><strong>{{ getUsageScriptNumber() }}. Include the Web Components Script</strong></h5>
         <p class="text-muted" style="font-size: 12px;">
-          <i class="fa fa-info-circle"></i> 
-          All FlowKraft apps (<code>_apps/flowkraft/*</code>) and <code>_apps/cms-webportal-playground</code> have this pre-configured. 
+          <i class="fa fa-info-circle"></i>
+          All FlowKraft apps (<code>_apps/flowkraft/*</code>) and <code>_apps/cms-webportal-playground</code> have this pre-configured.
           Only add this script tag for fully custom applications not pre-configured by ReportBurster.
         </p>
         <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
@@ -100,6 +184,10 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
         </button>
 
         <hr/>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- COMPLETE EXAMPLE                                           -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
 
         <h5><strong>Complete Example</strong></h5>
         <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">{{ getCompleteUsageExample() }}</div>

@@ -67,16 +67,17 @@ export function Navbar() {
     { href: "/report-parameters", label: "Parameters" },
     { href: "/reports", label: "Reports" },
     { href: "/data-warehouse", label: "Data Warehouse" },
+    { href: "/dashboards", label: "Dashboards" },
     { href: "/your-canvas", label: "Your Canvas" },
   ]
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 dark:bg-slate-900 dark:border-slate-700">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-card border-b border-border">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Brand */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-2 font-bold text-lg text-slate-900 dark:text-white">
+            <Link href="/" className="flex items-center gap-2 font-bold text-lg text-foreground">
               <svg className="w-5 h-5 text-rb-cyan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m22 2-7 20-4-9-9-4Z"/>
                 <path d="M22 2 11 13"/>
@@ -94,7 +95,7 @@ export function Navbar() {
                 className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                   isActive(link.href)
                     ? "text-rb-cyan"
-                    : "text-gray-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {link.label}
@@ -114,7 +115,7 @@ export function Navbar() {
             {/* Light/Dark Mode Toggle */}
             <button
               onClick={toggleMode}
-              className="ml-1 p-2 text-gray-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+              className="ml-1 p-2 text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Toggle light/dark mode"
             >
               {mode === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
@@ -125,14 +126,14 @@ export function Navbar() {
           <div className="flex items-center md:hidden">
             <button
               onClick={toggleMode}
-              className="mr-2 p-2 text-gray-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white"
+              className="mr-2 p-2 text-muted-foreground hover:text-foreground"
               aria-label="Toggle light/dark mode"
             >
               {mode === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </button>
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 text-gray-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white"
+              className="p-2 text-muted-foreground hover:text-foreground"
               aria-label="Toggle menu"
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -143,7 +144,7 @@ export function Navbar() {
 
       {/* Mobile Navigation */}
       {isOpen && (
-        <div className="md:hidden border-t border-gray-200 dark:border-slate-700">
+        <div className="md:hidden border-t border-border">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navLinks.map((link) => (
               <Link
@@ -152,8 +153,8 @@ export function Navbar() {
                 onClick={() => setIsOpen(false)}
                 className={`block px-3 py-2 rounded-md text-base font-medium ${
                   isActive(link.href)
-                    ? "text-rb-cyan bg-gray-50 dark:bg-slate-800"
-                    : "text-gray-600 hover:text-slate-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-white dark:hover:bg-slate-800"
+                    ? "text-rb-cyan bg-accent/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/10"
                 }`}
               >
                 {link.label}

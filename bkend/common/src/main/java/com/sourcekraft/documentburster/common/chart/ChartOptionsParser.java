@@ -40,7 +40,7 @@ public class ChartOptionsParser {
 
 		Map<String, Object> map = script.getOptions();
 		ChartOptions out = new ChartOptions();
-		
+
 		// Simple passthrough - no data transformation here
 		if (map.containsKey("type")) out.setType(String.valueOf(map.get("type")));
 		if (map.containsKey("labelField")) out.setLabelField(String.valueOf(map.get("labelField")));
@@ -48,6 +48,24 @@ public class ChartOptionsParser {
 		if (map.containsKey("labels")) out.setLabels((java.util.List<String>) map.get("labels"));
 		if (map.containsKey("datasets")) out.setDatasets((java.util.List<java.util.Map<String,Object>>) map.get("datasets"));
 		if (map.containsKey("data")) out.setData((java.util.List<java.util.Map<String,Object>>) map.get("data"));
+
+		// Extract named blocks for aggregator reports
+		Map<String, Map<String, Object>> namedRaw = script.getNamedOptions();
+		if (namedRaw != null && !namedRaw.isEmpty()) {
+			Map<String, ChartOptions> named = new java.util.LinkedHashMap<>();
+			for (Map.Entry<String, Map<String, Object>> entry : namedRaw.entrySet()) {
+				Map<String, Object> m = entry.getValue();
+				ChartOptions co = new ChartOptions();
+				if (m.containsKey("type")) co.setType(String.valueOf(m.get("type")));
+				if (m.containsKey("labelField")) co.setLabelField(String.valueOf(m.get("labelField")));
+				if (m.containsKey("options")) co.setOptions((java.util.Map<String,Object>) m.get("options"));
+				if (m.containsKey("labels")) co.setLabels((java.util.List<String>) m.get("labels"));
+				if (m.containsKey("datasets")) co.setDatasets((java.util.List<java.util.Map<String,Object>>) m.get("datasets"));
+				if (m.containsKey("data")) co.setData((java.util.List<java.util.Map<String,Object>>) m.get("data"));
+				named.put(entry.getKey(), co);
+			}
+			out.setNamedOptions(named);
+		}
 
 		return out;
 	}

@@ -9,9 +9,10 @@ public class ReportDataResult extends DumpToString {
 	public List<LinkedHashMap<String, Object>> reportData;
 	public List<String> reportColumnNames;
 	public long executionTimeMillis;
-	public boolean isPreview;
 	public int totalRows;
-	
+	public int lastPage;  // total pages for remote pagination (ceil(totalRows / pageSize))
+	public boolean truncated;
+
 	// Entity-specific rendering fields
 	public String entityCode;
 	public String renderedHtml;

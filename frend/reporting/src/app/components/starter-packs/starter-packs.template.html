@@ -236,6 +236,17 @@
             </small>
           </div>
 
+          <!-- Redis website link + extended description (only for Redis packs) -->
+          <div *ngIf="pack.target === 'redis'" style="margin-bottom: 8px">
+            <a href="https://redis.io/" target="_blank" rel="noopener noreferrer"
+               style="text-decoration: none; color: #31708f; font-weight: 500;">
+              <i class="fa fa-external-link" style="margin-right: 6px;"></i>https://redis.io/
+            </a>
+            <small class="text-muted" style="display: block; margin-top: 6px;">
+              {{ pack.description }}
+            </small>
+          </div>
+
           <!-- Last Output Display (Separate from Command) -->
           <div
             *ngIf="pack.lastOutput"

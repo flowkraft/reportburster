@@ -301,13 +301,11 @@ parameters {
 
 ```groovy
 tabulator {
+    pagination true
+    paginationSize 20
     columns {
         column(field: 'region', title: 'Region')
         column(field: 'sales', title: 'Sales', formatter: 'money')
-    }
-    layoutOptions {
-        pagination true
-        paginationSize 20
     }
 }
 ```

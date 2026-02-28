@@ -116,15 +116,18 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                     <strong>Hey AI, Help Me With This SQL Query ...</strong>
                   </button>
                 </div>
+                <!-- MODE 1 — Angular fetches data via doTestSqlQuery(), stores in reportDataResult,
+                     then pushes the SAME data to Tabulator, Chart, and Pivot preview tabs via [data] prop.
+                     This is more efficient than Mode 2 here because one API call feeds three preview components. -->
                 <div class="col-xs-3">
                   <button
                     id="btnTestSqlQuery"
                     type="button"
                     class="btn btn-primary btn-block"
                     (click)="doTestSqlQuery()"
-                    [disabled]="getDatabaseConnectionFilesForUI().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode || !xmlReporting.documentburster.report.datasource.sqloptions.query"
+                    [disabled]="isReportDataLoading || getDatabaseConnectionFilesForUI().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode || !xmlReporting.documentburster.report.datasource.sqloptions.query"
                   >
-                    <i class="fa fa-paper-plane"></i>&nbsp;&nbsp;Test SQL Query
+                    <i [ngClass]="isReportDataLoading ? 'fa fa-spinner fa-spin' : 'fa fa-paper-plane'"></i>&nbsp;&nbsp;{{ isReportDataLoading ? 'Testing...' : 'Test SQL Query' }}
                   </button>
                 </div>
                 <div class="col-xs-3">
@@ -222,14 +225,18 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                       </ul>
                     </div>
                   </div>
+                  <!-- MODE 1 — Angular fetches data via doRunTestScript(), stores in reportDataResult,
+                       then pushes the SAME data to Tabulator, Chart, and Pivot preview tabs via [data] prop.
+                       One API call feeds all three preview components. -->
                   <div class="col-xs-3">
                     <button
                       id="btnTestScript"
                       type="button"
                       class="btn btn-primary btn-block"
                       (click)="doRunTestScript()"
+                      [disabled]="isReportDataLoading"
                     >
-                      <i class="fa fa-paper-plane"></i>&nbsp;&nbsp;Run / Test Script
+                      <i [ngClass]="isReportDataLoading ? 'fa fa-spinner fa-spin' : 'fa fa-paper-plane'"></i>&nbsp;&nbsp;{{ isReportDataLoading ? 'Testing...' : 'Run / Test Script' }}
                     </button>
                   </div>
                   <div class="col-xs-3">

@@ -17,11 +17,6 @@
             line-height: 1.5;
             border: 1px solid #3d3d3d;
         }
-        .code-block .comment { color: #6a9955; }
-        .code-block .keyword { color: #569cd6; }
-        .code-block .string { color: #ce9178; }
-        .code-block .property { color: #9cdcfe; }
-        
         /* Filter state styles */
         #dataTableCard.filtered .card-header {
             background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
@@ -148,7 +143,7 @@
                             <i class="bi bi-clipboard"></i>
                         </button>
                     </div>
-                    <pre id="configCode" class="code-block"><code class="text-muted">Loading configuration...</code></pre>
+                    <pre id="configCode" class="code-block"><code class="language-groovy">Loading configuration...</code></pre>
                 </div>
                 
                 <!-- Usage Tab -->
@@ -159,7 +154,7 @@
                             <i class="bi bi-clipboard"></i>
                         </button>
                     </div>
-                    <pre id="usageCode" class="bg-light p-3 border rounded mb-0"><code>&lt;rb-parameters 
+                    <pre id="usageCode" class="code-block"><code class="language-markup">&lt;rb-parameters 
     report-code="par-employee-hire-dates"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
     api-key="&#36;{RbUtils.apiKey}"
@@ -211,7 +206,8 @@
                         .replace(/&/g, '&amp;')
                         .replace(/</g, '&lt;')
                         .replace(/>/g, '&gt;');
-                    configCodeEl.innerHTML = '<code>' + escaped + '</code>';
+                    configCodeEl.innerHTML = '<code class="language-groovy">' + escaped + '</code>';
+                    if (window.Prism) Prism.highlightElement(configCodeEl.querySelector('code'));
                     console.log('[reportParameters GSP] Configuration tab updated with DSL');
                 } else {
                     console.warn('[reportParameters GSP] No configDsl available!');
@@ -264,6 +260,10 @@
                 copyWithFeedback(this, document.getElementById('configCode').innerText);
             });
             
+            // Highlight static usage code block
+            var usageEl = document.querySelector('#usageCode code');
+            if (usageEl && window.Prism) Prism.highlightElement(usageEl);
+
             // Copy usage button
             document.getElementById('copyUsageBtn').addEventListener('click', function() {
                 copyWithFeedback(this, document.getElementById('usageCode').innerText);

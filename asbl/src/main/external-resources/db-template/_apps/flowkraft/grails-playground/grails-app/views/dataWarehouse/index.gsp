@@ -448,7 +448,7 @@
                                 <i class="bi bi-clipboard"></i>
                             </button>
                         </div>
-                        <pre id="configCodeBrowser" class="code-block mt-2"><code class="text-muted">Loading configuration...</code></pre>
+                        <pre id="configCodeBrowser" class="code-block mt-2"><code class="language-groovy">Loading configuration...</code></pre>
                     </div>
                     <div class="engine-section mb-3">
                         <div class="d-flex justify-content-between align-items-center">
@@ -457,7 +457,7 @@
                                 <i class="bi bi-clipboard"></i>
                             </button>
                         </div>
-                        <pre id="configCodeDuckdb" class="code-block mt-2"><code class="text-muted">Loading configuration...</code></pre>
+                        <pre id="configCodeDuckdb" class="code-block mt-2"><code class="language-groovy">Loading configuration...</code></pre>
                     </div>
                     <div class="engine-section mb-3">
                         <div class="d-flex justify-content-between align-items-center">
@@ -466,7 +466,7 @@
                                 <i class="bi bi-clipboard"></i>
                             </button>
                         </div>
-                        <pre id="configCodeClickhouse" class="code-block mt-2"><code class="text-muted">Loading configuration...</code></pre>
+                        <pre id="configCodeClickhouse" class="code-block mt-2"><code class="language-groovy">Loading configuration...</code></pre>
                     </div>
                 </div>
 
@@ -479,7 +479,7 @@
                                 <i class="bi bi-clipboard"></i>
                             </button>
                         </div>
-                        <pre id="usageCodeBrowser" class="bg-light p-3 border rounded mb-0 mt-2"><code>&lt;rb-pivot-table
+                        <pre id="usageCodeBrowser" class="code-block mt-2"><code class="language-markup">&lt;rb-pivot-table
     report-code="piv-northwind-warehouse-browser"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
     api-key="&#36;{RbUtils.apiKey}"
@@ -492,7 +492,7 @@
                                 <i class="bi bi-clipboard"></i>
                             </button>
                         </div>
-                        <pre id="usageCodeDuckdb" class="bg-light p-3 border rounded mb-0 mt-2"><code>&lt;rb-pivot-table
+                        <pre id="usageCodeDuckdb" class="code-block mt-2"><code class="language-markup">&lt;rb-pivot-table
     report-code="piv-northwind-warehouse-duckdb"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
     api-key="&#36;{RbUtils.apiKey}"
@@ -505,7 +505,7 @@
                                 <i class="bi bi-clipboard"></i>
                             </button>
                         </div>
-                        <pre id="usageCodeClickhouse" class="bg-light p-3 border rounded mb-0 mt-2"><code>&lt;rb-pivot-table
+                        <pre id="usageCodeClickhouse" class="code-block mt-2"><code class="language-markup">&lt;rb-pivot-table
     report-code="piv-northwind-warehouse-clickhouse"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
     api-key="&#36;{RbUtils.apiKey}"
@@ -601,7 +601,8 @@
                             .replace(/&/g, '&amp;')
                             .replace(/</g, '&lt;')
                             .replace(/>/g, '&gt;');
-                        codeEl.innerHTML = '<code>' + escaped + '</code>';
+                        codeEl.innerHTML = '<code class="language-groovy">' + escaped + '</code>';
+                        if (window.Prism) Prism.highlightElement(codeEl.querySelector('code'));
                     }
                 }
 
@@ -609,6 +610,11 @@
                 comp.addEventListener('dataFetched', updateConfig);
                 setTimeout(updateConfig, 500);
                 setTimeout(updateConfig, 2000);
+            });
+
+            // Highlight static usage code blocks
+            document.querySelectorAll('[id^="usageCode"] code').forEach(function(el) {
+                if (window.Prism) Prism.highlightElement(el);
             });
 
             // ================================================================

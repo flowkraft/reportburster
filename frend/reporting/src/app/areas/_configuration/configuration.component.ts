@@ -1817,7 +1817,7 @@ export class ConfigurationComponent implements OnInit {
   activeTransformScriptGroovy: string = '';
   // Tabulator configuration script (Groovy DSL)
   activeTabulatorConfigScriptGroovy: string = '';
-  activeTabulatorConfigOptions: any = null; // { layoutOptions, columns, data }
+  activeTabulatorConfigOptions: any = null; // flat map matching tabulator.info options
   private tabulatorTableInstance: any = null;
 
   // Chart configuration script (Groovy DSL)
@@ -1828,6 +1828,22 @@ export class ConfigurationComponent implements OnInit {
   // Pivot Table configuration script (Groovy DSL)
   activePivotTableConfigScriptGroovy: string = '';
   activePivotTableConfigOptions: any = null; // { rows, cols, vals, aggregatorName, rendererName, etc. }
+
+  // Helper methods for aggregator report previews (named component IDs)
+  getNamedTabulatorIds(): string[] {
+    const named = this.activeTabulatorConfigOptions?.namedOptions;
+    return named ? Object.keys(named) : [];
+  }
+
+  getNamedChartIds(): string[] {
+    const named = this.activeChartConfigOptions?.namedOptions;
+    return named ? Object.keys(named) : [];
+  }
+
+  getNamedPivotIds(): string[] {
+    const named = this.activePivotTableConfigOptions?.namedOptions;
+    return named ? Object.keys(named) : [];
+  }
 
   // Minimal runtime handler registry - keys referenced from the DSL
   private tabulatorHandlerRegistry: { [name: string]: (payload: any, params?: any, table?: any) => void } = {
@@ -2655,86 +2671,96 @@ if (reportParametersProvided) {
 `;
 
   exampleTabulatorConfigScript = `/*
- Tabulator Groovy DSL - aligned with tabulator.info API
- Docs: https://tabulator.info/docs/6.3/columns
- Data comes from ctx.reportData by default - no need to specify it
+ Tabulator Groovy DSL — minimal wrapper over tabulator.info API
+ All options map 1:1 to tabulator.info — no invented concepts.
+ Docs: https://tabulator.info/docs/6.3
+ Data comes from ctx.reportData by default — no need to specify it.
 */
 
 tabulator {
   // ─────────────────────────────────────────────────────────────────────────────
-  // TABLE-LEVEL OPTIONS (layoutOptions block)
+  // TABLE-LEVEL OPTIONS — flat, exactly as in tabulator.info
+  // Any tabulator.info option works here: layout, height, pagination, etc.
   // ─────────────────────────────────────────────────────────────────────────────
-  layoutOptions {
-    layout "fitColumns"       // fitData|fitDataFill|fitDataStretch|fitDataTable|fitColumns
-    height "400px"            // table height (px, %, or number)
-    width "100%"              // table width
-    autoColumns false         // true = auto-generate columns from data
-    renderVertical "virtual"  // virtual|basic - virtual DOM rendering
-    renderHorizontal "basic"  // virtual|basic - horizontal rendering
-    layoutColumnsOnNewData true  // recalc column widths on new data
-  }
+  layout "fitColumns"       // fitData|fitDataFill|fitDataStretch|fitDataTable|fitColumns
+  height "400px"            // table height (px, %, or number)
+  width "100%"              // table width
+  autoColumns false         // true = auto-generate columns from data
+  renderVertical "virtual"  // virtual|basic - virtual DOM rendering
+  renderHorizontal "basic"  // virtual|basic - horizontal rendering
+  layoutColumnsOnNewData true  // recalc column widths on new data
+
+  // Pagination (all tabulator.info pagination options supported)
+  // pagination true
+  // paginationSize 20
+  // paginationMode "local"  // "local" (default) or "remote" for server-side
+
+  // Server-side options (when working with large datasets)
+  // filterMode "local"      // "local" (default) or "remote" for server-side filtering
+  // sortMode "local"        // "local" (default) or "remote" for server-side sorting
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // COLUMN DEFINITIONS - mirrors tabulator.info column API
+  // COLUMN DEFINITIONS — mirrors tabulator.info column definition API
+  // Any tabulator.info column property works here.
   // ─────────────────────────────────────────────────────────────────────────────
   columns {
     // Full-featured column example
-    column { 
+    column {
       // Required
       title "Name"
       field "name"
-      
+
       // Alignment: hozAlign (left|center|right), vertAlign (top|middle|bottom)
       hozAlign "left"
       vertAlign "middle"
       headerHozAlign "center"  // header text alignment
-      
+
       // Width: width, minWidth, maxWidth (px or number)
       width 200
       minWidth 100
       maxWidth 400
       widthGrow 1              // flex grow factor
       widthShrink 1            // flex shrink factor
-      
+
       // Visibility & Layout
       visible true             // false to hide column
       frozen false             // true to freeze column (left/right)
       responsive 0             // responsive priority (lower = hidden first)
       resizable true           // user can resize column
-      
+
       // Sorting: sorter (string|number|alphanum|boolean|exists|date|time|datetime|array)
       sorter "string"
       sorterParams([])         // sorter-specific params
       headerSort true          // enable header click sorting
-      
+
       // Filtering
       headerFilter "input"     // input|number|list|textarea|tick|star|select|autocomplete
       headerFilterParams([values: ["A", "B", "C"]])  // filter-specific params
       headerFilterPlaceholder "Search..."
-      
+
       // Formatting: formatter (plaintext|textarea|html|money|image|link|datetime|tickCross|star|progress|etc)
       formatter "plaintext"
       formatterParams([:])     // formatter-specific params
       cssClass "my-class"      // custom CSS class
       tooltip true             // show cell tooltip
-      
+
       // Editing: editor (input|textarea|number|range|tick|star|select|autocomplete|date|time|datetime)
       editor "input"
       editorParams([:])        // editor-specific params
       editable true            // cell is editable
       validator "required"     // required|unique|integer|float|numeric|string|min|max|etc
-      
+
       // Header customization
       headerTooltip "Column description"
       headerVertical false     // rotate header text
     }
-    
+
     // Compact shorthand examples
     column { title "Age"; field "age"; hozAlign "right"; sorter "number"; formatter "number" }
     column { title "Status"; field "status"; headerFilter "list"; headerFilterParams([values: ["Active", "Pending"]]) }
     column { title "Amount"; field "amount"; formatter "money"; width 120 }
   }
-  
+
   // ─────────────────────────────────────────────────────────────────────────────
   // OPTIONAL: Data override (90% of the time you don't need this)
   // By default, data comes from ctx.reportData. Uncomment to use custom data:
@@ -2771,34 +2797,35 @@ chart {
   series {
     // Full-featured series example
     series {
-      // Core properties
-      field 'revenue'                 // data column name (required)
+      // Core DSL property
+      field 'revenue'                 // data column name (required - maps reportData column to dataset values)
+
+      // All other properties are native Chart.js dataset properties (passthrough via catch-all)
       label 'Revenue'                 // legend label
-      color '#4e79a7'                 // shorthand for backgroundColor + borderColor
       backgroundColor 'rgba(78, 121, 167, 0.5)'  // fill color (can use rgba)
       borderColor '#4e79a7'           // line/border color
       type 'bar'                      // override chart type for this series (mixed charts)
-      
+
       // Axis assignment (for multiple axes)
       yAxisID 'y'                     // which Y axis to use
       xAxisID 'x'                     // which X axis to use
-      
+
       // Line/Area chart options
       borderWidth 2                   // line thickness
       fill false                      // fill area under line (true|false|'origin'|'start'|'end')
       tension 0.4                     // line curve tension (0 = straight, 1 = very curved)
       pointRadius 4                   // data point size
       pointStyle 'circle'             // circle|cross|crossRot|dash|line|rect|rectRounded|rectRot|star|triangle
-      
+
       // Display options
       hidden false                    // hide series initially
       order 0                         // drawing order (lower = drawn first)
     }
-    
-    // Compact shorthand examples
-    series field: 'sales', label: 'Sales', color: '#4e79a7'
-    series field: 'profit', label: 'Profit', color: '#e15759', type: 'line'
-    series field: 'cost', label: 'Cost', color: '#59a14f', fill: true, tension: 0.3
+
+    // Compact shorthand examples (all properties are native Chart.js)
+    series field: 'sales', label: 'Sales', backgroundColor: '#4e79a7', borderColor: '#4e79a7'
+    series field: 'profit', label: 'Profit', backgroundColor: '#e15759', borderColor: '#e15759', type: 'line'
+    series field: 'cost', label: 'Cost', backgroundColor: '#59a14f', borderColor: '#59a14f', fill: true, tension: 0.3
   }
   
   // ─────────────────────────────────────────────────────────────────────────────
@@ -3020,6 +3047,24 @@ pivotTable {
     return this.apiService.getApiKey() || '';
   }
 
+  /**
+   * Convert index to letter suffix for sub-numbering: 0→'a', 1→'b', 2→'c', etc.
+   * Used in the Usage tab for multi-component reports (e.g., "1a. Data Table — salesGrid").
+   */
+  getLetterSuffix(idx: number): string {
+    return String.fromCharCode(97 + idx); // 97 = 'a'
+  }
+
+  getUsageParamsNumber(): number {
+    return 2;
+  }
+
+  getUsageChartNumber(): number {
+    let num = 2;
+    if (this.activeParamsSpecScriptGroovy?.trim()) num++;
+    return num;
+  }
+
   getUsagePivotTableNumber(): number {
     let num = 2;
     if (this.activeParamsSpecScriptGroovy?.trim()) num++;
@@ -3077,6 +3122,10 @@ pivotTable {
     const webComponentsBaseUrl = this.getWebComponentsBaseUrl();
     const entityCodeAttr = this.getEntityCodeAttribute();
 
+    const namedTabIds = this.getNamedTabulatorIds();
+    const namedChartIds = this.getNamedChartIds();
+    const namedPivotIds = this.getNamedPivotIds();
+
     let html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3093,7 +3142,23 @@ pivotTable {
     report-code="${reportCode}"${entityCodeAttr}
     api-base-url="${apiBaseUrl}"
     api-key="${apiKey}">
-  </rb-report>
+  </rb-report>`;
+
+    // Data Table(s)
+    if (namedTabIds.length > 0) {
+      for (const cid of namedTabIds) {
+        html += `
+
+  <!-- Data Table: ${cid} -->
+  <rb-tabulator
+    report-code="${reportCode}"
+    component-id="${cid}"
+    api-base-url="${apiBaseUrl}"
+    api-key="${apiKey}">
+  </rb-tabulator>`;
+      }
+    } else {
+      html += `
 
   <!-- Data Table -->
   <rb-tabulator
@@ -3101,6 +3166,7 @@ pivotTable {
     api-base-url="${apiBaseUrl}"
     api-key="${apiKey}">
   </rb-tabulator>`;
+    }
 
     if (this.activeParamsSpecScriptGroovy?.trim()) {
       html += `
@@ -3113,7 +3179,20 @@ pivotTable {
   </rb-parameters>`;
     }
 
-    if (this.activeChartConfigScriptGroovy?.trim()) {
+    // Chart(s)
+    if (namedChartIds.length > 0) {
+      for (const cid of namedChartIds) {
+        html += `
+
+  <!-- Chart: ${cid} -->
+  <rb-chart
+    report-code="${reportCode}"
+    component-id="${cid}"
+    api-base-url="${apiBaseUrl}"
+    api-key="${apiKey}">
+  </rb-chart>`;
+      }
+    } else if (this.activeChartConfigScriptGroovy?.trim()) {
       html += `
 
   <!-- Chart -->
@@ -3124,7 +3203,20 @@ pivotTable {
   </rb-chart>`;
     }
 
-    if (this.activePivotTableConfigScriptGroovy?.trim()) {
+    // Pivot Table(s)
+    if (namedPivotIds.length > 0) {
+      for (const cid of namedPivotIds) {
+        html += `
+
+  <!-- Pivot Table: ${cid} -->
+  <rb-pivottable
+    report-code="${reportCode}"
+    component-id="${cid}"
+    api-base-url="${apiBaseUrl}"
+    api-key="${apiKey}">
+  </rb-pivottable>`;
+      }
+    } else if (this.activePivotTableConfigScriptGroovy?.trim()) {
       html += `
 
   <!-- Pivot Table -->
@@ -3218,6 +3310,51 @@ pivotTable {
 </rb-pivottable>`;
     navigator.clipboard.writeText(html).then(() => {
       this.messagesService.showInfo('rb-pivottable snippet copied to clipboard!', 'Success');
+    }).catch((err) => {
+      console.error('Failed to copy rb-pivottable snippet: ', err);
+      this.messagesService.showInfo('Failed to copy rb-pivottable snippet.', 'Error');
+    });
+  }
+
+  copyUsageRbTabulatorNamed(componentId: string) {
+    const html = `<rb-tabulator
+  report-code="${this.getCurrentReportCode()}"
+  component-id="${componentId}"
+  api-base-url="${this.getApiBaseUrl()}"
+  api-key="${this.getApiKeyForUsage()}">
+</rb-tabulator>`;
+    navigator.clipboard.writeText(html).then(() => {
+      this.messagesService.showInfo(`rb-tabulator (${componentId}) copied to clipboard!`, 'Success');
+    }).catch((err) => {
+      console.error('Failed to copy rb-tabulator snippet: ', err);
+      this.messagesService.showInfo('Failed to copy rb-tabulator snippet.', 'Error');
+    });
+  }
+
+  copyUsageRbChartNamed(componentId: string) {
+    const html = `<rb-chart
+  report-code="${this.getCurrentReportCode()}"
+  component-id="${componentId}"
+  api-base-url="${this.getApiBaseUrl()}"
+  api-key="${this.getApiKeyForUsage()}">
+</rb-chart>`;
+    navigator.clipboard.writeText(html).then(() => {
+      this.messagesService.showInfo(`rb-chart (${componentId}) copied to clipboard!`, 'Success');
+    }).catch((err) => {
+      console.error('Failed to copy rb-chart snippet: ', err);
+      this.messagesService.showInfo('Failed to copy rb-chart snippet.', 'Error');
+    });
+  }
+
+  copyUsageRbPivotTableNamed(componentId: string) {
+    const html = `<rb-pivottable
+  report-code="${this.getCurrentReportCode()}"
+  component-id="${componentId}"
+  api-base-url="${this.getApiBaseUrl()}"
+  api-key="${this.getApiKeyForUsage()}">
+</rb-pivottable>`;
+    navigator.clipboard.writeText(html).then(() => {
+      this.messagesService.showInfo(`rb-pivottable (${componentId}) copied to clipboard!`, 'Success');
     }).catch((err) => {
       console.error('Failed to copy rb-pivottable snippet: ', err);
       this.messagesService.showInfo('Failed to copy rb-pivottable snippet.', 'Error');
@@ -3613,6 +3750,11 @@ pivotTable {
   isReportDataLoading = false;
   reportDataResultIsError = false;
 
+  // Toggle flags for self-contained component preview
+  showTabulatorPreview = false;
+  showChartPreview = false;
+  showPivotPreview = false;
+
   /*
   reportColumns: any[] = [];
   
@@ -3650,6 +3792,8 @@ pivotTable {
     await this.executeTestQuery(this.reportParameters);
   }
 
+  previewParams: { [key: string]: any } = {};
+
   async runQueryWithParams(parameters: ReportParameter[]) {
     // console.log('[DEBUG] runQueryWithParams: entering with parameters:', parameters);
     // Convert parameters to key-value pairs with proper types
@@ -3663,20 +3807,18 @@ pivotTable {
       },
       {} as { [key: string]: any },
     );
+    this.previewParams = paramsObject;
     // console.log('[DEBUG] runQueryWithParams: paramsObject=', paramsObject);
     // console.log('[DEBUG] runQueryWithParams: calling fetchData...');
-    const result = await this.reportingService.fetchData(paramsObject);
+    const result = await this.reportingService.fetchData(paramsObject, true);
     // console.log('[DEBUG] runQueryWithParams: fetchData returned:', result);
     return result;
   }
 
   async executeTestQuery(parameters: ReportParameter[]) {
     try {
-      // console.log('[DEBUG] executeTestQuery: starting, parameters:', parameters);
       this.isReportDataLoading = true;
-      // console.log('[DEBUG] executeTestQuery: calling runQueryWithParams...');
       this.reportDataResult = await this.runQueryWithParams(parameters);
-      // console.log('[DEBUG] executeTestQuery: received result:', this.reportDataResult);
 
       // detect error payload (single column named ERROR_MESSAGE)
       const isErrorPayload =
@@ -3720,14 +3862,12 @@ pivotTable {
         );
       }
     } catch (error) {
-      // console.log('[DEBUG] executeTestQuery: caught error:', error);
       // Show red toast on error
       this.reportDataResultIsError = true;
       this.messagesService.showError(
         `Error executing SQL query: ${error.message}, check the Errors Log/Tabulator to view the exact error.`,
       );
     } finally {
-      // console.log('[DEBUG] executeTestQuery: finally block, setting isReportDataLoading = false');
       this.isReportDataLoading = false;
     }
   }
@@ -3819,6 +3959,38 @@ pivotTable {
 
   onTabError(msg: string) {
     //console.error('❌ Tabulator error:', msg);
+  }
+
+  // Event handlers for self-contained component previews
+  onTabulatorDataFetched(event: any) {
+    const detail = event.detail;
+    this.reportDataResult = {
+      reportData: detail.data,
+      reportColumnNames: detail.reportColumnNames,
+      executionTimeMillis: detail.executionTimeMillis,
+      totalRows: detail.totalRows,
+      truncated: detail.truncated,
+    };
+  }
+
+  onTabulatorFetchError(event: any) {
+    this.messagesService.showError(`Error: ${event.detail?.message || 'Query failed'}`);
+  }
+
+  onChartDataFetched(event: any) {
+    // Chart handles its own rendering; metadata captured if needed
+  }
+
+  onChartFetchError(event: any) {
+    this.messagesService.showError(`Chart error: ${event.detail?.message || 'Query failed'}`);
+  }
+
+  onPivotDataFetched(event: any) {
+    // Pivot table handles its own rendering; metadata captured if needed
+  }
+
+  onPivotFetchError(event: any) {
+    this.messagesService.showError(`Pivot table error: ${event.detail?.message || 'Query failed'}`);
   }
 
   getTabulatorColumns(

@@ -6,7 +6,27 @@ export const tabReportingPivotTableTemplate = `<ng-template
       <tab heading="Preview">
         <div class="row" style="margin-top: 20px;">
           <div class="col-xs-12">
-            <div class="panel panel-default">
+            <!-- Named components (aggregator report) -->
+            <ng-container *ngIf="getNamedPivotIds().length > 0">
+              <div *ngFor="let cid of getNamedPivotIds()" class="panel panel-default" style="margin-bottom: 15px;">
+                <div class="panel-heading"><strong>{{cid}}</strong></div>
+                <div class="panel-body">
+                  <rb-pivot-table
+                    *ngIf="showPivotPreview"
+                    [reportCode]="getCurrentReportCode()"
+                    [componentId]="cid"
+                    [apiBaseUrl]="reportingService.reportingApiBaseUrl"
+                    [reportParams]="previewParams || {}"
+                    [testMode]="true"
+                    (dataFetched)="onPivotDataFetched($any($event))"
+                    (error)="onPivotFetchError($any($event))"
+                  ></rb-pivot-table>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- Single unnamed component (standard report) — Mode 1: Angular fetches data once, pushes via [data] prop -->
+            <div *ngIf="getNamedPivotIds().length === 0" class="panel panel-default">
               <div class="panel-body">
                 <!-- Show message when Pivot Table Options are not configured -->
                 <div *ngIf="!activePivotTableConfigScriptGroovy?.trim()" class="text-center" style="padding: 20px;">
@@ -59,7 +79,6 @@ export const tabReportingPivotTableTemplate = `<ng-template
                   <br/>
                   <p>Execution Time: {{ reportDataResult.executionTimeMillis }}ms</p>
                   <p>Total Rows: {{ reportDataResult.reportData?.length || 0 }}</p>
-                  <p>Preview Mode: {{ reportDataResult.isPreview ? 'Yes' : 'No' }}</p>
                 </div>
               </div>
             </div>
@@ -87,6 +106,9 @@ export const tabReportingPivotTableTemplate = `<ng-template
       <tab heading="Example (Pivot Table Options)">
         <div class="row" style="margin-top: 10px;">
           <div class="col-xs-12">
+            <a id="btnSeeMorePivotTableExamples" href="https://www.reportburster.com/docs/bi-analytics/web-components/pivottables" target="_blank" class="btn btn-default btn-block" style="color: #337ab7; text-decoration: underline; margin-bottom: 10px;">
+              See More Pivot Tables Examples
+            </a>
             <ngx-codejar
               id="pivotTableConfigExampleEditor"
               [code]="examplePivotTableConfigScript"

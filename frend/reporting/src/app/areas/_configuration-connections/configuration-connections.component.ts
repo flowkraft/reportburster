@@ -437,4 +437,10 @@ export class ConnectionListComponent implements OnInit {
       },
     });
   }
+
+  copyConnectionCode(code: string) {
+    navigator.clipboard.writeText(code).then(() => {
+      this.messagesService.showInfo('Connection code copied to clipboard!', 'Copied');
+    });
+  }
 }

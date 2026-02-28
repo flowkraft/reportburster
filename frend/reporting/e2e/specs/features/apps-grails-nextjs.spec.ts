@@ -68,8 +68,10 @@ test.describe('Dual Playground Tests', () => {
 
           // ============================================================
           // FRONT-FACING AREA — navbar pages (follows navbar order)
-          // Covers: Home, Tabulator, Charts, Pivot Tables, Parameters,
-          //         Reports, Data Warehouse, Your Canvas
+          // Covers: Home, Parameters, Reports, Data Warehouse,
+          //         Dashboards (smoke), Your Canvas
+          // Note: Tabulator, Charts, Pivot Tables tested in dedicated
+          //       spec files (not here).
           // ============================================================
 
           // ============================================================

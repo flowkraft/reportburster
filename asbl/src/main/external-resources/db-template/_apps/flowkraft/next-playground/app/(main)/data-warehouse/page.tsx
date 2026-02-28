@@ -5,6 +5,7 @@ import { Check, Copy, Database, Table, Settings, Code, ArrowDown, Globe, HardDri
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { rbConfig } from "@/lib/rb-config"
+import { CodeBlock } from "@/components/CodeBlock"
 
 interface RbPivotTableElement extends HTMLElement {
   configDsl?: string
@@ -430,7 +431,7 @@ export default function DataWarehousePage() {
             </div>
 
             {/* How to Use Section */}
-            <div className="mt-8 bg-gray-50 dark:bg-slate-800 rounded-lg p-6">
+            <div className="mt-8 bg-muted rounded-lg p-6">
               <h5 className="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-4 flex items-center gap-2">
                 <span>💡</span> How to Use This Warehouse Pivot
               </h5>
@@ -459,8 +460,8 @@ export default function DataWarehousePage() {
                 { title: "9. Filter to Focus", lines: [<><strong>Try:</strong> Click the <code className="bg-indigo-100 dark:bg-indigo-900 px-1.5 py-0.5 rounded text-sm">▼</code> triangle next to <code>customer_country</code> → Uncheck everything except <strong>USA</strong>, <strong>Germany</strong>, and <strong>France</strong>.</>], insight: "→ Noise gone. Three key markets compared side by side. This is how you prepare a board presentation in 10 seconds." },
                 { title: "10. Visualize It", lines: [<><strong>Try:</strong> Click the <code className="bg-indigo-100 dark:bg-indigo-900 px-1.5 py-0.5 rounded text-sm">Table ▼</code> renderer dropdown → Select <strong>Grouped Column Chart</strong>.</>, <>Countries become colored bars, quarters become groups. Trends jump out visually.</>, <>Try <strong>Stacked Bar Chart</strong> (see category proportions) or <strong>Line Chart</strong> (see trends over time).</>], insight: "→ Same data, different presentation. Charts make the pattern obvious for non-technical stakeholders." },
               ].map((step) => (
-                <div key={step.title} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-md p-4 mb-3">
-                  <div className="font-semibold text-slate-700 dark:text-slate-200 mb-2">{step.title}</div>
+                <div key={step.title} className="bg-card border border-border rounded-md p-4 mb-3">
+                  <div className="font-semibold text-foreground mb-2">{step.title}</div>
                   {step.lines.map((line, i) => (
                     <p key={i} className="text-sm mb-1">{line}</p>
                   ))}
@@ -612,9 +613,9 @@ export default function DataWarehousePage() {
                     {isCopied(eng.copyKey) ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>
-                <pre id={eng.id} className="font-mono text-sm bg-gradient-to-br from-[#1e1e1e] to-[#2d2d2d] text-[#d4d4d4] rounded-lg p-4 overflow-x-auto whitespace-pre leading-relaxed border border-[#3d3d3d] max-h-[400px] mt-2">
-                  <code>{eng.config || "Loading configuration..."}</code>
-                </pre>
+                <div id={eng.id} className="mt-2">
+                  <CodeBlock code={eng.config || "Loading configuration..."} language="groovy" style={{ maxHeight: "400px" }} />
+                </div>
               </div>
             ))}
           </div>
@@ -640,9 +641,9 @@ export default function DataWarehousePage() {
                     {isCopied(eng.copyKey) ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>
-                <pre id={eng.id} className="bg-gray-100 dark:bg-slate-800 p-3 border border-border rounded mb-0 mt-2">
-                  <code>{eng.code}</code>
-                </pre>
+                <div id={eng.id} className="mt-2">
+                  <CodeBlock code={eng.code} language="markup" style={{ maxHeight: "400px" }} />
+                </div>
               </div>
             ))}
           </div>

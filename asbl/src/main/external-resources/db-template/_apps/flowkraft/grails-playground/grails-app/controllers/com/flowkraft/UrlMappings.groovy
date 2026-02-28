@@ -36,6 +36,7 @@ class UrlMappings {
         "/data-warehouse/browser"(controller: 'dataWarehouse', action: 'browser')
         "/data-warehouse/duckdb"(controller: 'dataWarehouse', action: 'duckdb')
         "/data-warehouse/clickhouse"(controller: 'dataWarehouse', action: 'clickhouse')
+        "/dashboards"(controller: 'dashboards', action: 'index')
         "/your-canvas"(controller: 'yourCanvas', action: 'index')
         
         // ===== PORTAL ROUTES =====

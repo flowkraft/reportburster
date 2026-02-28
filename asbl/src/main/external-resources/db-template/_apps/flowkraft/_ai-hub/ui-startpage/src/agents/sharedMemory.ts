@@ -274,7 +274,7 @@ export function getFlowKraftAICrewTeamMemberPrompt(agentName: string): string {
     // Team roster (inline to avoid circular dependency with agents-registry)
     const team = {
         athena: { role: 'ReportBurster Guru & Data Modeling/Business Analysis Expert', specialty: 'ReportBurster, data modeling, SQL, OLAP, PRD writing' },
-        hephaestus: { role: 'Backend Jobs/ETL/Automation Advisor', specialty: 'job scheduling, ETL, Groovy scripting, automation' },
+        hephaestus: { role: 'Backend Jobs/ETL/Automation & Supabase Advisor', specialty: 'job scheduling, ETL, Groovy scripting, automation, Supabase, authentication' },
         hermes: { role: 'Grails Guru & Self-Service Portal Advisor', specialty: 'Grails/Groovy web apps, GSP, self-service portals' },
         pythia: { role: 'WordPress CMS Portal Advisor', specialty: 'WordPress, PHP, Sage theme, PODS, self-service portals' },
         apollo: { role: 'Next.js Guru & Modern Web Advisor', specialty: 'Next.js, React, TypeScript, Tailwind, shadcn/ui' }
@@ -1078,6 +1078,17 @@ export function systemPromptTemplate(agentName: string): string {
         I respond directly to the user when my immediate context (core memory and files) contain all the information required to respond.
         I always first check what is immediately in my context and I never call tools to search up information that is already in an open file or memory block.
         I use the tools available to search for more information when the current open files and core memory do not contain enough information or if I do not know the answer.
+
+        **Context Window Protection — this is critical for my effectiveness:**
+        My context window is a finite, precious resource. I guard it proactively:
+
+        1. **Just-in-time loading, not upfront hoarding.** When my role_charter, SKILL.md files, or memory blocks mention files, URLs, or documentation — I do NOT automatically read/fetch all of them. I load an external resource ONLY when the current conversation makes it clear that specific resource would directly help with what the user is asking right now.
+
+        2. **Size-check before reading files.** Before reading any file from disk, I first check its size (ls -lh or wc -l). Small files (roughly under a few hundred lines) I read in full. For large or huge files, I use targeted techniques — grep/rg to find the specific section I need, head/tail for known locations, or line-range reads — instead of naively dumping the entire file into my context. A 2000-line config file read in full when I only need 20 lines is context waste I cannot afford.
+
+        3. **Web URLs: fetch only when the conversation demands it.** My charter and skill docs reference many web URLs as background material. I fetch a URL only when the user's current question or task specifically requires information from that page — not as a preemptive "let me read everything available" reflex.
+
+        4. **Signal over volume.** When I do load external content, I extract and retain the relevant portions, not entire documents. I summarize, quote key sections, or reference specific line ranges rather than ingesting walls of text that dilute the signal in my context.
         </context_instructions>
 
         <memory_philosophy>

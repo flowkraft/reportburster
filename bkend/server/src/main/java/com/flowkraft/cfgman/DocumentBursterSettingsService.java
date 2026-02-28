@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -237,16 +236,7 @@ public class DocumentBursterSettingsService {
 			try {
 				var tabulatorOptions = TabulatorOptionsParser.parseGroovyTabulatorDslCode(Files.readString(tabulatorConfigPath));
 				if (tabulatorOptions != null) {
-					configDetails.tabulatorOptions = new HashMap<>();
-					if (tabulatorOptions.getLayoutOptions() != null) {
-						configDetails.tabulatorOptions.put("layoutOptions", tabulatorOptions.getLayoutOptions());
-					}
-					if (tabulatorOptions.getColumns() != null) {
-						configDetails.tabulatorOptions.put("columns", tabulatorOptions.getColumns());
-					}
-					if (tabulatorOptions.getData() != null) {
-						configDetails.tabulatorOptions.put("data", tabulatorOptions.getData());
-					}
+					configDetails.tabulatorOptions = new HashMap<>(tabulatorOptions.getOptions());
 				}
 			} catch (Exception e) {
 				System.err.println("Failed to parse Tabulator DSL for " + folderName + ": " + e.getMessage());
@@ -538,16 +528,7 @@ public class DocumentBursterSettingsService {
 						try {
 							var tabulatorOptions = TabulatorOptionsParser.parseGroovyTabulatorDslCode(Files.readString(tabulatorConfigPath));
 							if (tabulatorOptions != null) {
-								configFile.tabulatorOptions = new HashMap<>();
-								if (tabulatorOptions.getLayoutOptions() != null) {
-									configFile.tabulatorOptions.put("layoutOptions", tabulatorOptions.getLayoutOptions());
-								}
-								if (tabulatorOptions.getColumns() != null) {
-									configFile.tabulatorOptions.put("columns", tabulatorOptions.getColumns());
-								}
-								if (tabulatorOptions.getData() != null) {
-									configFile.tabulatorOptions.put("data", tabulatorOptions.getData());
-								}
+								configFile.tabulatorOptions = new HashMap<>(tabulatorOptions.getOptions());
 							}
 						} catch (Exception e) {
 							System.err.println("Failed to parse Tabulator DSL for " + configFile.folderName + ": " + e.getMessage());

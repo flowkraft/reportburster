@@ -459,7 +459,7 @@ public class MainProgram implements Callable<Integer> {
 			@Override
 			public Integer call() throws Exception {
 				CliJob job = getJob(config.configFile);
-				job.doFetchData(parameters);
+				job.doFetchData(parameters, false);
 				return 0;
 			}
 		}

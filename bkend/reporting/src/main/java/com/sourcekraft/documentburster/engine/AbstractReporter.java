@@ -67,6 +67,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 	private Map<String, String> reportParameters;
 	private boolean isPreviewMode = false;
+	protected boolean testMode = false;
 
 	public AbstractReporter(String configFilePath) {
 		super(configFilePath);
@@ -595,6 +596,10 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 	public void setPreviewMode(boolean isPreviewMode) {
 		this.isPreviewMode = isPreviewMode;
+	}
+
+	public void setTestMode(boolean testMode) {
+		this.testMode = testMode;
 	}
 
 	protected void checkLicense() throws Exception {
