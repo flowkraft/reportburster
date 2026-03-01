@@ -479,7 +479,7 @@ public abstract class AbstractBurster {
 
 	}
 
-	private void _initializeBursting() throws Exception {
+	protected void _initializeBursting() throws Exception {
 
 		startExecutionTime = System.nanoTime();
 

@@ -14,6 +14,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +41,8 @@ import jakarta.xml.bind.Unmarshaller;
 
 @Service
 public class DocumentBursterSettingsService {
+
+	private static final Logger log = LoggerFactory.getLogger(DocumentBursterSettingsService.class);
 
 	@Autowired
 	SystemService systemService;
@@ -224,7 +228,7 @@ public class DocumentBursterSettingsService {
 				configDetails.reportParameters = ReportParametersHelper
 						.parseGroovyParametersDslCode(Files.readString(paramsSpecPath));
 			} catch (Exception e) {
-				System.err.println("Failed to parse Report Parameters DSL for " + folderName + ": " + e.getMessage());
+				log.error("Failed to parse Report Parameters DSL for {}: {}", folderName, e.getMessage(), e);
 			}
 		}
 		
@@ -239,7 +243,7 @@ public class DocumentBursterSettingsService {
 					configDetails.tabulatorOptions = new HashMap<>(tabulatorOptions.getOptions());
 				}
 			} catch (Exception e) {
-				System.err.println("Failed to parse Tabulator DSL for " + folderName + ": " + e.getMessage());
+				log.error("Failed to parse Tabulator DSL for {}: {}", folderName, e.getMessage(), e);
 			}
 		}
 		
@@ -272,7 +276,7 @@ public class DocumentBursterSettingsService {
 					}
 				}
 			} catch (Exception e) {
-				System.err.println("Failed to parse Chart DSL for " + folderName + ": " + e.getMessage());
+				log.error("Failed to parse Chart DSL for {}: {}", folderName, e.getMessage(), e);
 			}
 		}
 
@@ -317,7 +321,7 @@ public class DocumentBursterSettingsService {
 					}
 				}
 			} catch (Exception e) {
-				System.err.println("Failed to parse Pivot Table DSL for " + folderName + ": " + e.getMessage());
+				log.error("Failed to parse Pivot Table DSL for {}: {}", folderName, e.getMessage(), e);
 			}
 		}
 
@@ -531,7 +535,7 @@ public class DocumentBursterSettingsService {
 								configFile.tabulatorOptions = new HashMap<>(tabulatorOptions.getOptions());
 							}
 						} catch (Exception e) {
-							System.err.println("Failed to parse Tabulator DSL for " + configFile.folderName + ": " + e.getMessage());
+							log.error("Failed to parse Tabulator DSL for {}: {}", configFile.folderName, e.getMessage(), e);
 						}
 					}
 					
@@ -564,7 +568,7 @@ public class DocumentBursterSettingsService {
 								}
 							}
 						} catch (Exception e) {
-							System.err.println("Failed to parse Chart DSL for " + configFile.folderName + ": " + e.getMessage());
+							log.error("Failed to parse Chart DSL for {}: {}", configFile.folderName, e.getMessage(), e);
 						}
 					}
 
@@ -609,7 +613,7 @@ public class DocumentBursterSettingsService {
 								}
 							}
 						} catch (Exception e) {
-							System.err.println("Failed to parse Pivot Table DSL for " + configFile.folderName + ": " + e.getMessage());
+							log.error("Failed to parse Pivot Table DSL for {}: {}", configFile.folderName, e.getMessage(), e);
 						}
 					}
 

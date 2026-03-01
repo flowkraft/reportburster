@@ -73,6 +73,30 @@ public abstract class AbstractReporter extends AbstractBurster {
 		super(configFilePath);
 	}
 
+	/**
+	 * Fetches report data without running the burst loop.
+	 * Used by "Test Script" / "View Data" which only need ctx.reportData
+	 * and ctx.reportColumnNames — no token processing, no document extraction.
+	 */
+	public void fetchDataOnly(String pathToFile) throws Exception {
+		filePath = pathToFile;
+		fileName = FilenameUtils.getName(pathToFile);
+
+		_initializeBursting();
+		ctx.inputDocumentFilePath = pathToFile;
+
+		try {
+			setUpScriptingRoots();
+			executeController();
+			initializeResources();
+
+			fetchData();
+			executeBurstingLifeCycleScript(ctx.scripts.transformFetchedData, ctx);
+		} finally {
+			closeResources();
+		}
+	}
+
 	public void setReportParameters(Map<String, String> reportParameters) {
 
 		// // System.out.println("[DEBUG] AbstractReporter.setReportParameters called with:

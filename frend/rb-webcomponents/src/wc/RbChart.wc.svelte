@@ -336,8 +336,8 @@
         const dataRes = await fetch(dataUrl, { headers });
         if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
         const dataResult = await dataRes.json();
-        // Backend returns { reportData: [...] }, extract the array
-        const reportData = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
+        // Backend returns { data: [...] }, extract the array
+        const reportData = Array.isArray(dataResult) ? dataResult : (dataResult?.data || []);
 
         // Transform data using chartConfig (which contains datasets with field mappings)
         if (chartConfig && reportData) {
@@ -464,8 +464,8 @@
       const res = await fetch(url, { headers });
       if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
       const dataResult = await res.json();
-      // Backend returns { reportData: [...] }, extract the array
-      const reportData = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
+      // Backend returns { data: [...] }, extract the array
+      const reportData = Array.isArray(dataResult) ? dataResult : (dataResult?.data || []);
       
       // Transform data using updated chartConfig
       if (chartConfig && reportData) {

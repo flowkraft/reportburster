@@ -1130,6 +1130,8 @@ export class ConfigurationComponent implements OnInit {
           await this.settingsService.loadConfigurationDetailsAsync(
             this.settingsService.currentConfigurationTemplate
           );
+          console.log('[DEBUG] After loadConfigurationDetailsAsync - tabulatorOptions:',
+            this.settingsService.currentConfigurationTemplate.tabulatorOptions);
         }
       }
 
@@ -1185,8 +1187,12 @@ export class ConfigurationComponent implements OnInit {
           await this.loadExternalReportingScript('transformScript');
           
           // Initialize parsed options from the pre-loaded configuration template
-          // (backend already parsed DSLs when loading all configs)
+          // (backend already parsed DSLs via loadConfigurationDetailsAsync)
           const configTemplate = this.settingsService.currentConfigurationTemplate;
+          console.log('[DEBUG] Reporting init - configTemplate:', configTemplate?.folderName,
+            'tabulatorOptions:', configTemplate?.tabulatorOptions,
+            'chartOptions:', configTemplate?.chartOptions,
+            'pivotTableOptions:', configTemplate?.pivotTableOptions);
           if (configTemplate?.tabulatorOptions) {
             this.activeTabulatorConfigOptions = configTemplate.tabulatorOptions;
           }
@@ -1819,6 +1825,25 @@ export class ConfigurationComponent implements OnInit {
   activeTabulatorConfigScriptGroovy: string = '';
   activeTabulatorConfigOptions: any = null; // flat map matching tabulator.info options
   private tabulatorTableInstance: any = null;
+  tabulatorHasActiveFilters = false;
+
+  onTabulatorFiltered(event: any) {
+    const detail = event?.detail || event;
+    const filters = detail?.filters || [];
+    this.tabulatorHasActiveFilters = filters.length > 0;
+    this.changeDetectorRef.detectChanges();
+  }
+
+  clearAllTabulatorFilters() {
+    this.confirmService.askConfirmation({
+      message: 'Clear All Filters?',
+      confirmAction: () => {
+        if (this.tabulatorTableInstance) {
+          this.tabulatorTableInstance.clearHeaderFilter();
+        }
+      },
+    });
+  }
 
   // Chart configuration script (Groovy DSL)
   activeChartConfigScriptGroovy: string = '';
@@ -3403,7 +3428,13 @@ pivotTable {
     if (content && content.trim().length > 0) {
       try {
         const parsed = await this.reportingService.processGroovyTabulatorDsl(content);
-        this.activeTabulatorConfigOptions = parsed;
+        // /parse-tabulator returns { options: {...}, namedOptions: {} }
+        // Extract the flat options map; attach namedOptions for getNamedTabulatorIds()
+        const opts = parsed?.options || parsed;
+        if (parsed?.namedOptions && Object.keys(parsed.namedOptions).length > 0) {
+            opts.namedOptions = parsed.namedOptions;
+        }
+        this.activeTabulatorConfigOptions = opts;
         this.changeDetectorRef.detectChanges();
       } catch (err) {
         console.warn('Tabulator DSL parse error', err);
@@ -3831,8 +3862,8 @@ pivotTable {
 
       // Extract the error message if present and perform special-case checks
       let errorMsg = '';
-      if (isErrorPayload && Array.isArray(this.reportDataResult.reportData) && this.reportDataResult.reportData.length > 0) {
-        errorMsg = (this.reportDataResult.reportData[0]['ERROR_MESSAGE'] || '').toString();
+      if (isErrorPayload && Array.isArray(this.reportDataResult.data) && this.reportDataResult.data.length > 0) {
+        errorMsg = (this.reportDataResult.data[0]['ERROR_MESSAGE'] || '').toString();
       }
       const lowerMsg = (errorMsg || '').toLowerCase();
 
@@ -3847,7 +3878,7 @@ pivotTable {
         // Show a milder warning - it's not an SQL syntax error, it just returned no rows
         this.messagesService.showWarning('Query executed successfully but returned no rows.');
         // Optional: replace ERROR_MESSAGE payload with empty data so Tabulator shows "no rows"
-        this.reportDataResult.reportData = [];
+        this.reportDataResult.data = [];
         this.reportDataResult.reportColumnNames = [];
         this.reportDataResult.totalRows = 0;
       } else if (finalIsError) {
@@ -3965,7 +3996,7 @@ pivotTable {
   onTabulatorDataFetched(event: any) {
     const detail = event.detail;
     this.reportDataResult = {
-      reportData: detail.data,
+      data: detail.data,
       reportColumnNames: detail.reportColumnNames,
       executionTimeMillis: detail.executionTimeMillis,
       totalRows: detail.totalRows,

@@ -1328,12 +1328,36 @@ export class ProcessingComponent implements OnInit {
     else return 'Samples';
   }
 
-  onTabReady() {
-    //console.log('📊 Tabulator ready');
+  viewDataTabulatorTable: any = null;
+  viewDataHasActiveFilters = false;
+
+  onTabReady(event?: any) {
+    const detail = event?.detail || event;
+    if (detail?.table) {
+      this.viewDataTabulatorTable = detail.table;
+    }
   }
 
   onTabError(msg: string) {
     //console.error('❌ Tabulator error:', msg);
+  }
+
+  onViewDataFiltered(event: any) {
+    const detail = event?.detail || event;
+    const filters = detail?.filters || [];
+    this.viewDataHasActiveFilters = filters.length > 0;
+    this.changeDetectorRef.detectChanges();
+  }
+
+  clearAllViewDataFilters() {
+    this.confirmService.askConfirmation({
+      message: 'Clear All Filters?',
+      confirmAction: () => {
+        if (this.viewDataTabulatorTable) {
+          this.viewDataTabulatorTable.clearHeaderFilter();
+        }
+      },
+    });
   }
 
   getTabulatorColumns(
@@ -1794,6 +1818,8 @@ export class ProcessingComponent implements OnInit {
         // Mode 2: unmount and remount rb-tabulator to trigger a fresh self-fetch
         this.isViewDataLoading = true;
         this.viewDataResult = null;
+        this.viewDataTabulatorTable = null;
+        this.viewDataHasActiveFilters = false;
         this.viewDataParams = paramsObject;
         this.showViewDataTabulator = false;
         this.changeDetectorRef.detectChanges();

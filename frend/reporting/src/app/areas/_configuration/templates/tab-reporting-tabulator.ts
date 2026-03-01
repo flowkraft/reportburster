@@ -81,20 +81,26 @@ export const tabReportingTabulatorTemplate = `<ng-template
             <!-- Single unnamed component (standard report) — Mode 1: Angular fetches data once, pushes via [data] prop -->
             <div *ngIf="getNamedTabulatorIds().length === 0" class="panel panel-default">
               <div class="panel-body">
+                <!-- Clear All Filters link — only visible when filters are active -->
+                <div *ngIf="tabulatorHasActiveFilters" style="text-align: right; margin-bottom: 6px;">
+                  <a href="javascript:void(0)" (click)="clearAllTabulatorFilters()" style="font-weight: bold; cursor: pointer;">Clear All Filters</a>
+                </div>
+
                 <!-- Show table when data exists -->
                 <rb-tabulator #tabulator
-                  *ngIf="reportDataResult && !reportDataResultIsError && reportDataResult?.reportData?.length > 0"
-                  [data]="reportDataResult?.reportData"
+                  *ngIf="reportDataResult && !reportDataResultIsError && reportDataResult?.data?.length > 0"
+                  [data]="reportDataResult?.data"
                   [columns]="activeTabulatorConfigOptions?.columns || (reportDataResult?.reportColumnNames | tabulatorColumns)"
                   [options]="activeTabulatorConfigOptions || {}"
                   [loading]="isReportDataLoading"
                   (ready)="onTabReady($event)"
+                  (dataFiltered)="onTabulatorFiltered($any($event))"
                   (initError)="onTabError($any($event).detail.message)"
                   (tableError)="onTabError($any($event).detail.message)"
                 ></rb-tabulator>
 
                 <!-- Show 'No Data' when no query run or query returned empty -->
-                <div id="noDataTabulator" *ngIf="!reportDataResult || (!reportDataResultIsError && (!reportDataResult?.reportData || reportDataResult?.reportData?.length === 0))" class="text-center" style="padding: 20px;">
+                <div id="noDataTabulator" *ngIf="!reportDataResult || (!reportDataResultIsError && (!reportDataResult?.data || reportDataResult?.data?.length === 0))" class="text-center" style="padding: 20px;">
                   <strong>No Data</strong>
                 </div>
 
@@ -103,7 +109,7 @@ export const tabReportingTabulatorTemplate = `<ng-template
                     <strong>Error:</strong> Query failed. Check Logs below.
                   </div>
                   <pre style="white-space:pre-wrap;max-height:300px;overflow:auto;">
-                    {{ reportDataResult.reportData?.[0]?.ERROR_MESSAGE }}
+                    {{ reportDataResult.data?.[0]?.ERROR_MESSAGE }}
                   </pre>
                   <div
                     id="errorsLogTabulator"
@@ -126,7 +132,7 @@ export const tabReportingTabulatorTemplate = `<ng-template
                 <div *ngIf="reportDataResult">
                   <br/>
                   <p>Execution Time: {{ reportDataResult.executionTimeMillis }}ms</p>
-                  <p>Total Rows: {{ reportDataResult.reportData?.length || 0 }}</p>
+                  <p>Total Rows: {{ reportDataResult.data?.length || 0 }}</p>
                 </div>
 
               </div>

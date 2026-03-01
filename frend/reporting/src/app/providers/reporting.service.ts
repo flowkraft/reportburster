@@ -3,7 +3,7 @@ import { ApiService } from './api.service';
 import { ReportParameter, SettingsService } from './settings.service';
 
 export interface ReportDataResult {
-  reportData: Array<Record<string, any>>;
+  data: Array<Record<string, any>>;
   reportColumnNames: string[];
   executionTimeMillis: number;
   totalRows: number;

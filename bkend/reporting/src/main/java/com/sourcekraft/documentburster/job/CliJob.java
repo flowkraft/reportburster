@@ -488,10 +488,9 @@ public class CliJob {
 				throw new IllegalStateException("Fetch data only supported for AbstractReporter-based bursters");
 			}
 
-			// Run the normal reporting flow (no output/distribution in preview mode)
-			// System.out.println("doFetchData: Calling burst...");
+			// Fetch data only — skip the burst loop (no token processing needed for View Data)
 			long startTime = System.currentTimeMillis();
-			burster.burst(settings.getTemplateName(), false, "", -1);
+			((AbstractReporter) burster).fetchDataOnly(settings.getTemplateName());
 			long endTime = System.currentTimeMillis();
 			// System.out.println("doFetchData: burst finished");
 

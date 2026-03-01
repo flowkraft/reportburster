@@ -33,8 +33,8 @@ export const tabReportingChartTemplate = `<ng-template
               <div class="panel-body">
                 <!-- Only show chart if Chart Options script is configured and data exists -->
                 <rb-chart #chart
-                  *ngIf="reportDataResult && !reportDataResultIsError && activeChartConfigScriptGroovy?.trim() && reportDataResult?.reportData?.length > 0"
-                  [data]="{ chartConfig: activeChartConfigOptions, reportData: reportDataResult?.reportData }"
+                  *ngIf="reportDataResult && !reportDataResultIsError && activeChartConfigScriptGroovy?.trim() && reportDataResult?.data?.length > 0"
+                  [data]="{ chartConfig: activeChartConfigOptions, reportData: reportDataResult?.data }"
                   [options]="activeChartConfigOptions?.options || {}"
                   [type]="activeChartConfigOptions?.type || 'bar'"
                   [loading]="isReportDataLoading"
@@ -49,7 +49,7 @@ export const tabReportingChartTemplate = `<ng-template
                 </div>
 
                 <!-- Show 'No Data' when chart is configured but no data -->
-                <div *ngIf="activeChartConfigScriptGroovy?.trim() && (!reportDataResult || (!reportDataResultIsError && (!reportDataResult?.reportData || reportDataResult?.reportData?.length === 0)))" class="text-center" style="padding: 20px;">
+                <div *ngIf="activeChartConfigScriptGroovy?.trim() && (!reportDataResult || (!reportDataResultIsError && (!reportDataResult?.data || reportDataResult?.data?.length === 0)))" class="text-center" style="padding: 20px;">
                   <strong>No Data</strong>
                 </div>
 
@@ -58,7 +58,7 @@ export const tabReportingChartTemplate = `<ng-template
                     <strong>Error:</strong> Query failed. Check Logs below.
                   </div>
                   <pre style="white-space:pre-wrap;max-height:300px;overflow:auto;">
-                    {{ reportDataResult.reportData?.[0]?.ERROR_MESSAGE }}
+                    {{ reportDataResult.data?.[0]?.ERROR_MESSAGE }}
                   </pre>
                   <div
                     id="errorsLogChart"
@@ -79,7 +79,7 @@ export const tabReportingChartTemplate = `<ng-template
                 <div *ngIf="reportDataResult">
                   <br/>
                   <p>Execution Time: {{ reportDataResult.executionTimeMillis }}ms</p>
-                  <p>Total Rows: {{ reportDataResult.reportData?.length || 0 }}</p>
+                  <p>Total Rows: {{ reportDataResult.data?.length || 0 }}</p>
                 </div>
               </div>
             </div>

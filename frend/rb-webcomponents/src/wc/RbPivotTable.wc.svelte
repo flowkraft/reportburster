@@ -449,8 +449,8 @@
           const dataRes = await fetchWithTimeout(dataFetchUrl, { headers }, 60000);
           if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
           const dataResult = await dataRes.json();
-          // Backend returns { reportData: [...] }, extract the array
-          data = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
+          // Backend returns { data: [...] }, extract the array
+          data = Array.isArray(dataResult) ? dataResult : (dataResult?.data || []);
 
           // Check if backend returned an error payload (ClickHouse unavailable, SQL error, etc.)
           if (data && data.length === 1 && data[0].ERROR_MESSAGE) {
@@ -988,8 +988,8 @@
       const res = await fetchWithTimeout(url, { headers }, 60000);
       if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
       const dataResult = await res.json();
-      // Backend returns { reportData: [...] }, extract the array
-      data = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
+      // Backend returns { data: [...] }, extract the array
+      data = Array.isArray(dataResult) ? dataResult : (dataResult?.data || []);
 
       // Check if backend returned an error payload (ClickHouse unavailable, SQL error, etc.)
       if (data && data.length === 1 && data[0].ERROR_MESSAGE) {

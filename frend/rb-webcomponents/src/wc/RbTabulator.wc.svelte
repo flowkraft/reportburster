@@ -132,7 +132,8 @@
     .tabulator .tabulator-row .tabulator-cell { border-right:1px solid #333; color:#ddd; }
     .tabulator .tabulator-footer { background-color:#1a1a1a; border-top:1px solid #333; color:#ddd; }
     .tabulator .tabulator-footer .tabulator-page { background-color:#222; color:#ddd; border:1px solid #444; }
-    .tabulator .tabulator-footer .tabulator-page:hover { background-color:#333; }
+    .tabulator .tabulator-footer .tabulator-page:hover { background-color:#333; color:#fff; }
+    .tabulator .tabulator-footer .tabulator-page-size { background-color:#222; color:#ddd; border:1px solid #444; }
     .tabulator .tabulator-footer .tabulator-page.active { background-color:#00bc8c; color:#fff; border-color:#00bc8c; }
     .tabulator .tabulator-col-resize-handle { border-right:2px solid #444; }
     .tabulator .tabulator-header-filter input, .tabulator .tabulator-header-filter select { background-color:#222; color:#ddd; border:1px solid #444; }
@@ -162,6 +163,8 @@
 .rb-tabulator-root[data-rb-theme-mode="light"] .tabulator .tabulator-row:hover .tabulator-cell { color: #111 !important; }
 .rb-tabulator-root[data-rb-theme-mode="light"] .tabulator .tabulator-row.tabulator-selected,
 .rb-tabulator-root[data-rb-theme-mode="light"] .tabulator .tabulator-row.tabulator-selected .tabulator-cell { background-color: #1976D2 !important; color: #fff !important; }
+.rb-tabulator-root[data-rb-theme-mode="light"] .tabulator .tabulator-footer .tabulator-page-size { background-color: #fff !important; color: #333 !important; border: 1px solid #aaa !important; }
+.rb-tabulator-root[data-rb-theme-mode="light"] .tabulator .tabulator-footer .tabulator-page:hover { color: #111 !important; }
 
 .rb-tabulator-root[data-rb-theme-mode="dark"] .tabulator,
 .rb-tabulator-root[data-rb-theme-mode="dark"] .tabulator .tabulator-header .tabulator-col,
@@ -175,6 +178,8 @@
 .rb-tabulator-root[data-rb-theme-mode="dark"] .tabulator .tabulator-row:hover .tabulator-cell { color: #fff !important; }
 .rb-tabulator-root[data-rb-theme-mode="dark"] .tabulator .tabulator-row.tabulator-selected,
 .rb-tabulator-root[data-rb-theme-mode="dark"] .tabulator .tabulator-row.tabulator-selected .tabulator-cell { color: #fff !important; }
+.rb-tabulator-root[data-rb-theme-mode="dark"] .tabulator .tabulator-footer .tabulator-page-size { background-color: #222 !important; color: #ddd !important; border: 1px solid #444 !important; }
+.rb-tabulator-root[data-rb-theme-mode="dark"] .tabulator .tabulator-footer .tabulator-page:hover { color: #fff !important; }
 
 /* Moving row clone — Tabulator appends it to <body>, outside .rb-tabulator-root.
    Default theme gives it a white/light background, so force dark text for contrast. */
@@ -205,6 +210,13 @@
   // Enables multiple differently-themed tables on the same page.
   function scopeCSS(css: string, scopeClass: string): string {
     return css.replace(/(^|[},]\s*)(\.tabulator)/gm, `$1.${scopeClass} $2`);
+  }
+
+  // Strip sourceMappingURL comments from raw CSS strings.
+  // The ?raw Vite imports include these from the tabulator-tables package;
+  // when injected into <style> tags the browser tries to fetch the .map file → 404.
+  function stripSourceMapComment(css: string): string {
+    return css.replace(/\/\*#\s*sourceMappingURL=.*?\*\//g, '');
   }
 
   // DEBUG: counters for lifecycle events
@@ -239,7 +251,7 @@
       if (!document.getElementById(cssId)) {
         const style = document.createElement('style');
         style.id = cssId;
-        style.textContent = lightCSS;
+        style.textContent = stripSourceMapComment(lightCSS);
         document.head.appendChild(style);
       }
       return;
@@ -250,7 +262,7 @@
     const cssId = `rb-tabulator-css-${resolvedTheme}`;
     if (document.getElementById(cssId)) return;
 
-    const rawCSS = THEME_CSS_MAP[resolvedTheme] || lightCSS;
+    const rawCSS = stripSourceMapComment(THEME_CSS_MAP[resolvedTheme] || lightCSS);
     const style = document.createElement('style');
     style.id = cssId;
     style.textContent = scopeCSS(rawCSS, scopeClass);
@@ -285,16 +297,12 @@
       if (resolvedColumns && resolvedColumns.length) {
         table.setColumns(resolvedColumns);
       }
-      // Debug log on updates for easier diagnosis if table is empty
-      try {
-        console.debug('rb-tabulator: updateTable', { resolvedColumns, dataLength: data?.length });
-      } catch (e) {}
 
-      // replace entire dataset
-      if (Array.isArray(data)) {
+      // Skip replaceData when data is empty and Tabulator's AJAX module owns the data.
+      // In remote pagination mode, calling replaceData([]) would clear AJAX-loaded rows.
+      const remotePagination = options?.paginationMode === 'remote' && reportCode && apiBaseUrl;
+      if (Array.isArray(data) && (data.length > 0 || !remotePagination)) {
         table.replaceData(data);
-      } else {
-        try { console.warn('rb-tabulator: replaceData skipped because `data` is not an array', data); } catch (e) {}
       }
     } catch (err) {
       console.error('rb-tabulator update error', err);
@@ -348,7 +356,12 @@
         if (config.tabulatorDsl) configDsl = config.tabulatorDsl;
         dispatch('configLoaded', { configDsl, config });
 
-        if (!data || !data.length) {
+        // Skip self-fetch when remote pagination or progressive load is configured
+        // — Tabulator's AJAX module will fetch data page-by-page via ajaxURL.
+        // Downloading all rows here just to delete them later is wasteful.
+        const willUseRemotePagination = options?.paginationMode === 'remote';
+        const willUseProgressiveLoad = !!(options as any)?.progressiveLoad;
+        if (!willUseRemotePagination && !willUseProgressiveLoad && (!data || !data.length)) {
           const dataQueryParams = new URLSearchParams(reportParams as Record<string, string>);
           if (testMode) dataQueryParams.set('testMode', 'true');
           if (componentId) dataQueryParams.set('componentId', componentId);
@@ -359,7 +372,7 @@
           const dataRes = await fetch(dataUrl, { headers });
           if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
           const dataResult = await dataRes.json();
-          data = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
+          data = Array.isArray(dataResult) ? dataResult : (dataResult?.data || []);
           dispatch('dataFetched', {
             data,
             executionTimeMillis: dataResult?.executionTimeMillis || 0,
@@ -384,7 +397,7 @@
 
     // Auto-inject sensible defaults when no explicit configuration provided.
     // Prevents browser freezing on large datasets.
-    if (opts.pagination === undefined && !(opts as any).paginationMode) {
+    if (opts.pagination === undefined && !(opts as any).paginationMode && !(opts as any).progressiveLoad) {
       opts.pagination = true;
       (opts as any).paginationSize = 50;
       (opts as any).paginationCounter = 'rows';
@@ -431,37 +444,57 @@
 
     // Server-side mode detection
     const isRemotePagination = opts.paginationMode === 'remote' && reportCode && apiBaseUrl;
+    const isProgressiveLoad = !!(opts as any).progressiveLoad && reportCode && apiBaseUrl;
     const isRemoteFilter = opts.filterMode === 'remote' && reportCode && apiBaseUrl;
     const isRemoteSort = opts.sortMode === 'remote' && reportCode && apiBaseUrl;
 
-    if (isRemotePagination) {
+    // Graceful downgrade: when remote modes are requested but no server endpoint
+    // is available (Mode 1 / data-push), fall back to local equivalents so the
+    // table still works with the pre-fetched data.
+    if (opts.paginationMode === 'remote' && !isRemotePagination) {
+      opts.paginationMode = 'local';
+      opts.pagination = true;
+      if (!opts.paginationSize) opts.paginationSize = 25;
+    }
+    if ((opts as any).progressiveLoad && !isProgressiveLoad) {
+      delete (opts as any).progressiveLoad;
+      opts.pagination = true;
+      if (!opts.paginationSize) opts.paginationSize = 25;
+    }
+    if (opts.filterMode === 'remote' && !isRemoteFilter) {
+      opts.filterMode = 'local';
+    }
+    if (opts.sortMode === 'remote' && !isRemoteSort) {
+      opts.sortMode = 'local';
+    }
+
+    if (isRemotePagination || isProgressiveLoad) {
       delete opts.data;
     }
 
-    if (isRemotePagination || isRemoteFilter || isRemoteSort) {
-      const headers: Record<string, string> = {};
-      opts.ajaxURL = 'server-side';
-      opts.ajaxRequestFunc = (_url: string, _config: any, params: any) => {
-        const queryParams = new URLSearchParams();
-        if (params.page) queryParams.set('page', String(params.page));
-        if (params.size) queryParams.set('size', String(params.size));
-        if (params.sorters?.length) queryParams.set('sort', JSON.stringify(params.sorters));
-        if (params.filters?.length) queryParams.set('filter', JSON.stringify(params.filters));
-        Object.entries(reportParams).forEach(([k, v]) => queryParams.set(k, v));
-        if (testMode) queryParams.set('testMode', 'true');
-        if (componentId) queryParams.set('componentId', componentId);
+    if (isRemotePagination || isProgressiveLoad || isRemoteFilter || isRemoteSort) {
+      opts.ajaxURL = `${apiBaseUrl}/reports/${reportCode}/data`;
 
-        const url = `${apiBaseUrl}/reports/${reportCode}/data?${queryParams.toString()}`;
-        return fetch(url, { headers })
-          .then(res => {
-            if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
-            return res.json();
-          })
-          .then(result => ({
-            last_page: result.lastPage || 1,
-            data: result.reportData || [],
-          }));
-      };
+      // Static params Tabulator includes in every request
+      const extraParams: Record<string, string> = {};
+      if (reportParams) Object.entries(reportParams).forEach(([k, v]) => extraParams[k] = String(v));
+      if (testMode) extraParams.testMode = 'true';
+      if (componentId) extraParams.componentId = componentId;
+      if (Object.keys(extraParams).length > 0) {
+        opts.ajaxParams = extraParams;
+      }
+
+      // When paginationMode is "remote", Tabulator's Page module intercepts the
+      // AJAX response and extracts response.data natively — no help needed.
+      // But when ONLY filterMode/sortMode are "remote" (no remote pagination),
+      // Page module does NOT intercept, so RowManager receives the full response
+      // object and rejects it ("Expecting: array, Received: object").
+      // Fix: unwrap the response envelope ourselves via ajaxResponse callback.
+      if (!isRemotePagination && !isProgressiveLoad) {
+        opts.ajaxResponse = function(_url: string, _params: any, response: any) {
+          return Array.isArray(response) ? response : (response?.data || response);
+        };
+      }
     }
 
     // === THE ONLY THING THE WRAPPER DOES: create Tabulator on the div ===
@@ -476,6 +509,7 @@
       });
       table.on('rowClick', (e, row) => dispatch('rowClick', { event: e, row, rowData: row.getData() }));
       table.on('dataLoaded', (d) => dispatch('dataLoaded', { data: d }));
+      table.on('dataFiltered', (filters: any[], rows: any[]) => dispatch('dataFiltered', { filters, rowCount: rows.length }));
     } catch (err) {
       console.error('rb-tabulator init error', err);
       dispatch('initError', { message: String(err) });
@@ -549,7 +583,7 @@
       const res = await fetch(url, { headers });
       if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
       const dataResult = await res.json();
-      data = Array.isArray(dataResult) ? dataResult : (dataResult?.reportData || []);
+      data = Array.isArray(dataResult) ? dataResult : (dataResult?.data || []);
 
       if (isReady && table) {
         if (resolvedColumns && resolvedColumns.length) {
