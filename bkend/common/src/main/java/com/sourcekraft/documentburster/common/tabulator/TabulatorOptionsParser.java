@@ -1,5 +1,7 @@
 package com.sourcekraft.documentburster.common.tabulator;
 
+import java.util.Map;
+
 import org.codehaus.groovy.control.CompilerConfiguration;
 
 import groovy.lang.Binding;
@@ -67,7 +69,25 @@ public class TabulatorOptionsParser {
 		TabulatorOptions opts = new TabulatorOptions();
 		opts.setOptions(script.getOptions());
 		opts.setNamedOptions(script.getNamedOptions());
+
+		// If paginationMode is set, ensure pagination:true is present.
+		// Tabulator 6 requires both — paginationMode alone won't activate the Page module.
+		ensurePaginationConsistency(opts.getOptions());
+		for (Map.Entry<String, Map<String, Object>> entry : opts.getNamedOptions().entrySet()) {
+			ensurePaginationConsistency(entry.getValue());
+		}
+
 		return opts;
+	}
+
+	/**
+	 * If paginationMode is set, ensure pagination:true is present.
+	 * Tabulator 6 requires both — paginationMode alone won't activate the Page module.
+	 */
+	private static void ensurePaginationConsistency(Map<String, Object> options) {
+		if (options.containsKey("paginationMode") && !options.containsKey("pagination")) {
+			options.put("pagination", true);
+		}
 	}
 }
 

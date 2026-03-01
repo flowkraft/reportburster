@@ -16,6 +16,8 @@ All notable changes to this project will be documented in this file.
 
 - **View Data — Improved large dataset handling** — View Data in the Generate Reports screen now auto-injects client-side pagination (50 rows/page) and virtual DOM rendering, keeping the browser responsive even with large result sets. For truly massive datasets (millions of rows), configure `paginationMode: 'remote'` in the tabulator DSL to enable server-side pagination — the data grid then fetches pages on demand directly from the database.
 
+- **Test Script / View Data — Performance drastically improved** — Test Script and View Data operations now complete in seconds even for very large datasets (tested up to 1 million rows).
+
 - **Updated Documentation** — Documentation updated with examples and configurations for tabulator, charts, and pivot tables
 
 ## 13.3.0 - 2026-02-23

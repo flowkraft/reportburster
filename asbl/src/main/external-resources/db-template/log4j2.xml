@@ -99,9 +99,10 @@
 
 		</Logger>
 
-		<!-- Only log com.flowkraft.jobman to console at INFO and above -->
+		<!-- Log com.flowkraft to console + errors.log for DSL parse failures etc. -->
         <Logger name="com.flowkraft" level="info" additivity="false">
             <AppenderRef ref="Console"/>
+            <AppenderRef ref="error-out"/>
         </Logger>
 
 		<Root level="warn">

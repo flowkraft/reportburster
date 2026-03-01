@@ -220,10 +220,10 @@
       
       const result = await response.json();
       console.log('[RbReport] fetchData - result:', result);
-      console.log('[RbReport] fetchData - reportData length:', result.reportData?.length);
+      console.log('[RbReport] fetchData - data length:', result.data?.length);
       console.log('[RbReport] fetchData - renderedHtml length:', result.renderedHtml?.length);
-      
-      reportData = result.reportData || [];
+
+      reportData = result.data || [];
       renderedHtml = result.renderedHtml || '';
       dataLoaded = true;
       fetchCounter++; // Force re-render of named components on re-fetch

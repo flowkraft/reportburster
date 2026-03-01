@@ -35,8 +35,8 @@ export const tabReportingPivotTableTemplate = `<ng-template
 
                 <!-- Pivot Table Web Component -->
                 <rb-pivot-table #pivotTable
-                  *ngIf="activePivotTableConfigScriptGroovy?.trim() && reportDataResult && !reportDataResultIsError && reportDataResult?.reportData?.length > 0"
-                  [data]="reportDataResult?.reportData"
+                  *ngIf="activePivotTableConfigScriptGroovy?.trim() && reportDataResult && !reportDataResultIsError && reportDataResult?.data?.length > 0"
+                  [data]="reportDataResult?.data"
                   [rows]="activePivotTableConfigOptions?.rows || []"
                   [cols]="activePivotTableConfigOptions?.cols || []"
                   [vals]="activePivotTableConfigOptions?.vals || []"
@@ -48,7 +48,7 @@ export const tabReportingPivotTableTemplate = `<ng-template
                 ></rb-pivot-table>
 
                 <!-- Show 'No Data' when pivot table is configured but no data -->
-                <div id="noDataPivotTable" *ngIf="activePivotTableConfigScriptGroovy?.trim() && (!reportDataResult || (!reportDataResultIsError && (!reportDataResult?.reportData || reportDataResult?.reportData?.length === 0)))" class="text-center" style="padding: 20px;">
+                <div id="noDataPivotTable" *ngIf="activePivotTableConfigScriptGroovy?.trim() && (!reportDataResult || (!reportDataResultIsError && (!reportDataResult?.data || reportDataResult?.data?.length === 0)))" class="text-center" style="padding: 20px;">
                   <strong>No Data</strong>
                 </div>
 
@@ -57,7 +57,7 @@ export const tabReportingPivotTableTemplate = `<ng-template
                     <strong>Error:</strong> Query failed. Check Logs below.
                   </div>
                   <pre style="white-space:pre-wrap;max-height:300px;overflow:auto;">
-                    {{ reportDataResult.reportData?.[0]?.ERROR_MESSAGE }}
+                    {{ reportDataResult.data?.[0]?.ERROR_MESSAGE }}
                   </pre>
                   <div
                     id="errorsLogPivotTable"
@@ -78,7 +78,7 @@ export const tabReportingPivotTableTemplate = `<ng-template
                 <div *ngIf="reportDataResult">
                   <br/>
                   <p>Execution Time: {{ reportDataResult.executionTimeMillis }}ms</p>
-                  <p>Total Rows: {{ reportDataResult.reportData?.length || 0 }}</p>
+                  <p>Total Rows: {{ reportDataResult.data?.length || 0 }}</p>
                 </div>
               </div>
             </div>

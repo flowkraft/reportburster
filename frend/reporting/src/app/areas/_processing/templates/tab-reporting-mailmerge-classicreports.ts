@@ -230,6 +230,11 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
     >
        <div class="col-xs-12">
 
+            <!-- Clear All Filters link — only visible when filters are active -->
+            <div *ngIf="viewDataHasActiveFilters" style="text-align: right; margin-bottom: 6px;">
+              <a href="javascript:void(0)" (click)="clearAllViewDataFilters()" style="font-weight: bold; cursor: pointer;">Clear All Filters</a>
+            </div>
+
             <!-- MODE 2 — Tabulator self-fetches config + data via [reportCode] + [apiBaseUrl].
                  View Data uses Mode 2 (not Mode 1) because:
                  1. It needs server-side pagination support for large datasets (1M+ rows)
@@ -242,8 +247,10 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
               [apiBaseUrl]="reportingService.reportingApiBaseUrl"
               [reportParams]="viewDataParams || {}"
               (dataFetched)="onViewDataFetched($any($event))"
+              (dataLoaded)="onViewDataFetched($any($event))"
+              (dataFiltered)="onViewDataFiltered($any($event))"
               (fetchError)="onViewDataError($any($event))"
-              (ready)="onTabReady()"
+              (ready)="onTabReady($any($event))"
               (initError)="onTabError($any($event).detail.message)"
               (tableError)="onTabError($any($event).detail.message)"
             ></rb-tabulator>

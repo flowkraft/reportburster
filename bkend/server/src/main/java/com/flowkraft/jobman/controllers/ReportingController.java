@@ -1,8 +1,14 @@
 package com.flowkraft.jobman.controllers;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -190,37 +196,66 @@ public class ReportingController {
 			@PathVariable String reportCode,
 			@RequestParam(required = false) Integer page,
 			@RequestParam(required = false) Integer size,
-			@RequestParam(required = false) String sort,
-			@RequestParam(required = false) String filter,
 			@RequestParam(required = false, defaultValue = "false") Boolean testMode,
 			@RequestParam(required = false) String componentId,
 			@RequestParam Map<String, String> parameters) {
 		// Remove server-side operation params so they don't reach the Groovy script/SQL
 		parameters.remove("page");
 		parameters.remove("size");
-		parameters.remove("sort");
-		parameters.remove("filter");
 		parameters.remove("testMode");
+
+		// Extract Tabulator bracket-notation sort/filter params
+		// e.g. sort[0][field]=Name&sort[0][dir]=asc&filter[0][field]=Status&filter[0][type]=like&filter[0][value]=Active
+		String sort = extractBracketParams(parameters, "sort");
+		String filter = extractBracketParams(parameters, "filter");
+
 		// componentId stays in parameters — flows via reportParameters → ctx.variables
 		// so ctx.reportData('id', rows) can match the requested component
-		System.out.println("[DEBUG] GET /reports/" + reportCode + "/data - ENTERING, params=" + parameters
-				+ ", page=" + page + ", size=" + size + ", testMode=" + testMode
-				+ ", componentId=" + componentId);
+		log.info("GET /reports/{}/data - params={}, page={}, size={}, sort={}, filter={}, testMode={}, componentId={}",
+				reportCode, parameters, page, size, sort, filter, testMode, componentId);
 		return Mono.fromCallable(() -> {
-			System.out.println("[DEBUG] GET /reports/" + reportCode + "/data - calling reportingService.fetchReportData");
 			ReportDataResult result = reportingService.fetchReportData(reportCode, parameters, testMode);
-			System.out.println("[DEBUG] GET /reports/" + reportCode + "/data - SUCCESS, rows=" + (result.reportData != null ? result.reportData.size() : "null"));
+			log.info("GET /reports/{}/data - SUCCESS, rows={}", reportCode,
+					result.reportData != null ? result.reportData.size() : "null");
 
 			// Apply server-side filtering, sorting, and pagination
 			result = reportingService.applyServerSideOperations(result, page, size, sort, filter);
 
 			return result;
 		}).doOnError(e -> {
-			System.out.println("[DEBUG] GET /reports/" + reportCode + "/data - ERROR: " + e.getMessage());
-			e.printStackTrace();
 			log.error("Error fetching report data for: " + reportCode, e);
 		}).onErrorResume(e -> Mono.error(
 			new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to fetch report data", e)));
+	}
+
+	/**
+	 * Parse Tabulator bracket-notation query params into a JSON array string.
+	 * e.g. sort[0][field]=Name&sort[0][dir]=asc → [{"field":"Name","dir":"asc"}]
+	 * Removes matched keys from the params map so they don't leak downstream.
+	 */
+	private String extractBracketParams(Map<String, String> params, String prefix) {
+		TreeMap<Integer, Map<String, String>> indexed = new TreeMap<>();
+		String pat = prefix + "[";
+		Iterator<Map.Entry<String, String>> it = params.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry<String, String> e = it.next();
+			if (e.getKey().startsWith(pat)) {
+				// parse "sort[0][field]" → index=0, key="field"
+				String rest = e.getKey().substring(pat.length());
+				int cb = rest.indexOf(']');
+				int idx = Integer.parseInt(rest.substring(0, cb));
+				String key = rest.substring(cb + 2, rest.length() - 1);
+				indexed.computeIfAbsent(idx, k -> new LinkedHashMap<>()).put(key, e.getValue());
+				it.remove();
+			}
+		}
+		if (indexed.isEmpty()) return null;
+		try {
+			return new ObjectMapper().writeValueAsString(new ArrayList<>(indexed.values()));
+		} catch (Exception ex) {
+			log.error("Failed to serialize bracket params for prefix: " + prefix, ex);
+			return null;
+		}
 	}
 
 }

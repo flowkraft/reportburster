@@ -15,16 +15,14 @@
 package com.sourcekraft.documentburster.variables;
 
 import java.text.DateFormat;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.TreeMap; // Import TreeMap
-import java.util.stream.Collectors;
+import java.util.TreeMap;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -85,16 +83,19 @@ public class Variables {
 
 	private List<String> varAliases;
 
-	// Store variables as Objects to preserve types
-	private Map<String, Object> vars = Collections.synchronizedMap(new HashMap<String, Object>());
+	// Global variables (no token prefix): system vars, dates, reportData, etc.
+	private Map<String, Object> globalVars = new HashMap<>();
+
+	// Per-token variables: token -> {key -> value}
+	private Map<String, Map<String, Object>> tokenVars = new HashMap<>();
 
 	private int numberOfUserVariables;
 
 	public Variables(String documentName, String language, String country, int numberOfUserVariables) {
 
-		vars.put(INPUT_DOCUMENT_NAME, documentName);
-		vars.put(INPUT_DOCUMENT_EXTENSION, FilenameUtils.getExtension(documentName));
-		vars.put(OUTPUT_TYPE_EXTENSION, FilenameUtils.getExtension(documentName));
+		globalVars.put(INPUT_DOCUMENT_NAME, documentName);
+		globalVars.put(INPUT_DOCUMENT_EXTENSION, FilenameUtils.getExtension(documentName));
+		globalVars.put(OUTPUT_TYPE_EXTENSION, FilenameUtils.getExtension(documentName));
 
 		addDateSystemVariables(language, country);
 
@@ -110,41 +111,41 @@ public class Variables {
 
 		Date now = new Date();
 
-		vars.put(NOW, now);
+		globalVars.put(NOW, now);
 
 		if (StringUtils.isNotEmpty(language)) {
 
 			locale = new Locale(language, country);
 
-			vars.put(NOW_DEFAULT_DATE, DateFormat.getDateInstance(DateFormat.DEFAULT, locale).format(now));
-			vars.put(NOW_SHORT_DATE, DateFormat.getDateInstance(DateFormat.SHORT, locale).format(now));
-			vars.put(NOW_MEDIUM_DATE, DateFormat.getDateInstance(DateFormat.MEDIUM, locale).format(now));
-			vars.put(NOW_LONG_DATE, DateFormat.getDateInstance(DateFormat.LONG, locale).format(now));
-			vars.put(NOW_FULL_DATE, DateFormat.getDateInstance(DateFormat.FULL, locale).format(now));
+			globalVars.put(NOW_DEFAULT_DATE, DateFormat.getDateInstance(DateFormat.DEFAULT, locale).format(now));
+			globalVars.put(NOW_SHORT_DATE, DateFormat.getDateInstance(DateFormat.SHORT, locale).format(now));
+			globalVars.put(NOW_MEDIUM_DATE, DateFormat.getDateInstance(DateFormat.MEDIUM, locale).format(now));
+			globalVars.put(NOW_LONG_DATE, DateFormat.getDateInstance(DateFormat.LONG, locale).format(now));
+			globalVars.put(NOW_FULL_DATE, DateFormat.getDateInstance(DateFormat.FULL, locale).format(now));
 
-			vars.put(NOW_DEFAULT_TIME, DateFormat.getTimeInstance(DateFormat.DEFAULT, locale).format(now));
-			vars.put(NOW_SHORT_TIME, DateFormat.getTimeInstance(DateFormat.SHORT, locale).format(now));
-			vars.put(NOW_MEDIUM_TIME, DateFormat.getTimeInstance(DateFormat.MEDIUM, locale).format(now));
-			vars.put(NOW_LONG_TIME, DateFormat.getTimeInstance(DateFormat.LONG, locale).format(now));
-			vars.put(NOW_FULL_TIME, DateFormat.getTimeInstance(DateFormat.FULL, locale).format(now));
+			globalVars.put(NOW_DEFAULT_TIME, DateFormat.getTimeInstance(DateFormat.DEFAULT, locale).format(now));
+			globalVars.put(NOW_SHORT_TIME, DateFormat.getTimeInstance(DateFormat.SHORT, locale).format(now));
+			globalVars.put(NOW_MEDIUM_TIME, DateFormat.getTimeInstance(DateFormat.MEDIUM, locale).format(now));
+			globalVars.put(NOW_LONG_TIME, DateFormat.getTimeInstance(DateFormat.LONG, locale).format(now));
+			globalVars.put(NOW_FULL_TIME, DateFormat.getTimeInstance(DateFormat.FULL, locale).format(now));
 
 		} else {
 
-			vars.put(NOW_DEFAULT_DATE, DateFormat.getDateInstance(DateFormat.DEFAULT).format(now));
-			vars.put(NOW_SHORT_DATE, DateFormat.getDateInstance(DateFormat.SHORT).format(now));
-			vars.put(NOW_MEDIUM_DATE, DateFormat.getDateInstance(DateFormat.MEDIUM).format(now));
-			vars.put(NOW_LONG_DATE, DateFormat.getDateInstance(DateFormat.LONG).format(now));
-			vars.put(NOW_FULL_DATE, DateFormat.getDateInstance(DateFormat.FULL).format(now));
+			globalVars.put(NOW_DEFAULT_DATE, DateFormat.getDateInstance(DateFormat.DEFAULT).format(now));
+			globalVars.put(NOW_SHORT_DATE, DateFormat.getDateInstance(DateFormat.SHORT).format(now));
+			globalVars.put(NOW_MEDIUM_DATE, DateFormat.getDateInstance(DateFormat.MEDIUM).format(now));
+			globalVars.put(NOW_LONG_DATE, DateFormat.getDateInstance(DateFormat.LONG).format(now));
+			globalVars.put(NOW_FULL_DATE, DateFormat.getDateInstance(DateFormat.FULL).format(now));
 
-			vars.put(NOW_DEFAULT_TIME, DateFormat.getTimeInstance(DateFormat.DEFAULT).format(now));
-			vars.put(NOW_SHORT_TIME, DateFormat.getTimeInstance(DateFormat.SHORT).format(now));
-			vars.put(NOW_MEDIUM_TIME, DateFormat.getTimeInstance(DateFormat.MEDIUM).format(now));
-			vars.put(NOW_LONG_TIME, DateFormat.getTimeInstance(DateFormat.LONG).format(now));
-			vars.put(NOW_FULL_TIME, DateFormat.getTimeInstance(DateFormat.FULL).format(now));
+			globalVars.put(NOW_DEFAULT_TIME, DateFormat.getTimeInstance(DateFormat.DEFAULT).format(now));
+			globalVars.put(NOW_SHORT_TIME, DateFormat.getTimeInstance(DateFormat.SHORT).format(now));
+			globalVars.put(NOW_MEDIUM_TIME, DateFormat.getTimeInstance(DateFormat.MEDIUM).format(now));
+			globalVars.put(NOW_LONG_TIME, DateFormat.getTimeInstance(DateFormat.LONG).format(now));
+			globalVars.put(NOW_FULL_TIME, DateFormat.getTimeInstance(DateFormat.FULL).format(now));
 
 		}
 
-		vars.put(NOW_QUARTER, Integer.toString(Utils.getQuarter(now, locale)));
+		globalVars.put(NOW_QUARTER, Integer.toString(Utils.getQuarter(now, locale)));
 
 	}
 
@@ -165,8 +166,7 @@ public class Variables {
 			String value = StringUtils.substringBetween(text, start, end);
 
 			if (value != null) {
-				// Use setUserVariable to handle potential alias updates
-				setUserVariable(token, "var" + i, value); // Keep storing String for text parsing
+				setUserVariable(token, "var" + i, value);
 			}
 
 		}
@@ -179,7 +179,7 @@ public class Variables {
 	 * Parses user variables from a map where keys are column names and values are
 	 * cell values. Assumes the map iteration order corresponds to the desired
 	 * column index for varX/colX. Preserves the original Object type of values.
-	 * 
+	 *
 	 * @param token   The burst token.
 	 * @param dataRow A map (preferably ordered like LinkedHashMap) of column names
 	 *                to values.
@@ -187,28 +187,22 @@ public class Variables {
 	public void parseUserVariablesFromMap(String token, Map<String, Object> dataRow) {
 		int index = 0;
 		if (dataRow != null) {
+			Map<String, Object> tokenMap = tokenVars.computeIfAbsent(token, k -> new LinkedHashMap<>());
 			for (Map.Entry<String, Object> entry : dataRow.entrySet()) {
 				String columnName = entry.getKey();
-				Object value = entry.getValue(); // Keep the original Object value
+				Object value = entry.getValue();
 
 				// Set indexed variable (varX) and its aliases (colX, etc.)
-				// Pass the original Object value
 				setUserVariable(token, "var" + index, value);
 
 				// Set named variable (using column name)
-				// Store the original Object value
-				// Avoid overwriting if column name conflicts with 'varX' or alias format
 				if (!isIndexedVariableOrAlias(columnName, index)) {
-					vars.put(token + "." + columnName, value);
+					tokenMap.put(columnName, value);
 				}
 
 				index++;
 			}
-			// Update the effective number of user variables based on the map size
-			//this.numberOfUserVariables = index;
 		}
-		// Note: Skip variable is not handled here, assumes it's not present in the map
-		// source
 	}
 
 	/**
@@ -229,105 +223,44 @@ public class Variables {
 		return false;
 	}
 
-	/*
-	 * public void parseUserVariablesWithAliases(String token, String text,
-	 * List<String> varAliases) {
-	 * 
-	 * for (int i = 0; i < numberOfUserVariables; i++) {
-	 * 
-	 * String start = "<" + i + ">"; String end = "</" + i + ">"; String value =
-	 * StringUtils.substringBetween(text, start, end);
-	 * 
-	 * String key = token + ".var" + Integer.toString(i);
-	 * 
-	 * if (value != null) { vars.put(key, value);
-	 * 
-	 * for (String varAlias : varAliases) { String keyAlias = token + "." + varAlias
-	 * + Integer.toString(i); vars.put(keyAlias, value); } } }
-	 * 
-	 * parseSkipVariable(token, text);
-	 * 
-	 * }
-	 */
-
-	/*
-	 * public Map<String, Object> getUserVariablesWithAliases(String token,
-	 * List<String> varAliases) {
-	 * 
-	 * Map<String, Object> userVars = _getBuildInVariables();
-	 * 
-	 * for (int i = 0; i < numberOfUserVariables; i++) {
-	 * 
-	 * String key = token + ".var" + Integer.toString(i); String value = (String)
-	 * vars.get(key);
-	 * 
-	 * if (value == null) value = "";
-	 * 
-	 * userVars.put("var" + Integer.toString(i), value);
-	 * 
-	 * if (!Objects.isNull(varAliases)) for (String alias : varAliases)
-	 * userVars.put(alias + Integer.toString(i), value);
-	 * 
-	 * }
-	 * 
-	 * String key = token + "." + SKIP; String value = (String) vars.get(key);
-	 * 
-	 * if (value == null) value = "false";
-	 * 
-	 * userVars.put(SKIP, value);
-	 * 
-	 * return userVars;
-	 * 
-	 * }
-	 */
-
 	public Map<String, Object> getUserVariables(String token) {
 
 		// Use TreeMap with CASE_INSENSITIVE_ORDER for the map passed to Freemarker
 		Map<String, Object> userVars = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-		userVars.putAll(_getBuildInVariables()); // Add built-in variables first
+		userVars.putAll(_getBuildInVariables());
 
-		String prefix = token + ".";
-
-		// Collect all variables associated with this token
-		Set<String> tokenVarKeys = vars.keySet().stream().filter(k -> k.startsWith(prefix)).collect(Collectors.toSet());
-
-		// Add indexed, alias, skip, and named variables to the result map
-		for (String fullKey : tokenVarKeys) {
-			String key = fullKey.substring(prefix.length());
-			Object value = vars.get(fullKey); // Retrieve the Object value
-
-			userVars.put(key, value); // Put the Object value into the map for Freemarker
+		// O(1) lookup: get all variables for this token directly
+		Map<String, Object> tokenMap = tokenVars.get(token);
+		if (tokenMap != null) {
+			userVars.putAll(tokenMap);
 		}
 
 		// Ensure standard variables like 'skip' have default values if not present
 		if (!userVars.containsKey(SKIP)) {
-			userVars.put(SKIP, "false"); // Keep skip as String "false"
+			userVars.put(SKIP, "false");
 		}
 
 		// Ensure indexed variables (varX and aliases) exist up to
-		// numberOfUserVariables,
-		// even if they were null/not set, defaulting to empty string for backward
-		// compatibility.
+		// numberOfUserVariables, defaulting to empty string.
 		for (int i = 0; i < numberOfUserVariables; i++) {
 			String varKey = "var" + i;
 			if (!userVars.containsKey(varKey)) {
-				userVars.put(varKey, StringUtils.EMPTY); // Default to empty string
+				userVars.put(varKey, StringUtils.EMPTY);
 			}
 			if (varAliases != null) {
 				for (String alias : varAliases) {
 					String aliasKey = alias + i;
 					if (!userVars.containsKey(aliasKey)) {
-						userVars.put(aliasKey, StringUtils.EMPTY); // Default to empty string
+						userVars.put(aliasKey, StringUtils.EMPTY);
 					}
 				}
 			}
 		}
 
-		// Add global variables (no token prefix) to support crosstabData and similar
-		for (String fullKey : vars.keySet()) {
-			if (!fullKey.contains(".") && !userVars.containsKey(fullKey)) {
-				userVars.put(fullKey, vars.get(fullKey));
+		// Add global variables (reportData, crosstabData, etc.)
+		for (Map.Entry<String, Object> entry : globalVars.entrySet()) {
+			if (!userVars.containsKey(entry.getKey())) {
+				userVars.put(entry.getKey(), entry.getValue());
 			}
 		}
 
@@ -338,84 +271,79 @@ public class Variables {
 	}
 
 	private Map<String, Object> _getBuildInVariables() {
-		// This map can remain a standard HashMap as it's just for internal collection
 		Map<String, Object> builtInVars = new HashMap<String, Object>();
 
-		// Retrieve Objects from the main 'vars' map
-		builtInVars.put(INPUT_DOCUMENT_NAME, vars.get(INPUT_DOCUMENT_NAME));
-		builtInVars.put(INPUT_DOCUMENT_EXTENSION, vars.get(INPUT_DOCUMENT_EXTENSION));
-		builtInVars.put(OUTPUT_TYPE_EXTENSION, vars.get(OUTPUT_TYPE_EXTENSION));
+		builtInVars.put(INPUT_DOCUMENT_NAME, globalVars.get(INPUT_DOCUMENT_NAME));
+		builtInVars.put(INPUT_DOCUMENT_EXTENSION, globalVars.get(INPUT_DOCUMENT_EXTENSION));
+		builtInVars.put(OUTPUT_TYPE_EXTENSION, globalVars.get(OUTPUT_TYPE_EXTENSION));
 
-		builtInVars.put(BURST_TOKEN, vars.get(BURST_TOKEN));
-		builtInVars.put(BURST_INDEX, vars.get(BURST_INDEX));
+		builtInVars.put(BURST_TOKEN, globalVars.get(BURST_TOKEN));
+		builtInVars.put(BURST_INDEX, globalVars.get(BURST_INDEX));
 
-		builtInVars.put(OUTPUT_FOLDER, vars.get(OUTPUT_FOLDER));
-		builtInVars.put(EXTRACTED_FILE_PATH, vars.get(EXTRACTED_FILE_PATH));
+		builtInVars.put(OUTPUT_FOLDER, globalVars.get(OUTPUT_FOLDER));
+		builtInVars.put(EXTRACTED_FILE_PATH, globalVars.get(EXTRACTED_FILE_PATH));
 		builtInVars.put(EXTRACTED_FILE_PATHS_AFTER_SPLITTING_2ND_TIME,
-				vars.get(EXTRACTED_FILE_PATHS_AFTER_SPLITTING_2ND_TIME));
+				globalVars.get(EXTRACTED_FILE_PATHS_AFTER_SPLITTING_2ND_TIME));
 
-		builtInVars.put(QUARANTINE_FOLDER, vars.get(QUARANTINE_FOLDER));
+		builtInVars.put(QUARANTINE_FOLDER, globalVars.get(QUARANTINE_FOLDER));
 
 		// stats variables
-		builtInVars.put(STATS_INFO, vars.get(STATS_INFO));
-		builtInVars.put(NUM_PAGES, vars.get(NUM_PAGES));
-		builtInVars.put(NUM_TOKENS, vars.get(NUM_TOKENS));
-		builtInVars.put(NUM_FILES_EXTRACTED, vars.get(NUM_FILES_EXTRACTED));
-		builtInVars.put(NUM_MESSAGES_SENT, vars.get(NUM_MESSAGES_SENT));
-		builtInVars.put(NUM_FILES_DISTRIBUTED, vars.get(NUM_FILES_DISTRIBUTED));
-		builtInVars.put(NUM_FILES_SKIPPED_DISTRIBUTION, vars.get(NUM_FILES_SKIPPED_DISTRIBUTION));
-		builtInVars.put(NUM_FILES_QUARANTINED, vars.get(NUM_FILES_QUARANTINED));
+		builtInVars.put(STATS_INFO, globalVars.get(STATS_INFO));
+		builtInVars.put(NUM_PAGES, globalVars.get(NUM_PAGES));
+		builtInVars.put(NUM_TOKENS, globalVars.get(NUM_TOKENS));
+		builtInVars.put(NUM_FILES_EXTRACTED, globalVars.get(NUM_FILES_EXTRACTED));
+		builtInVars.put(NUM_MESSAGES_SENT, globalVars.get(NUM_MESSAGES_SENT));
+		builtInVars.put(NUM_FILES_DISTRIBUTED, globalVars.get(NUM_FILES_DISTRIBUTED));
+		builtInVars.put(NUM_FILES_SKIPPED_DISTRIBUTION, globalVars.get(NUM_FILES_SKIPPED_DISTRIBUTION));
+		builtInVars.put(NUM_FILES_QUARANTINED, globalVars.get(NUM_FILES_QUARANTINED));
 
-		// Date/Time variables - NOW is stored as Date, others as String
-		builtInVars.put(NOW, vars.get(NOW));
-		builtInVars.put(NOW_DEFAULT_DATE, vars.get(NOW_DEFAULT_DATE));
-		builtInVars.put(NOW_SHORT_DATE, vars.get(NOW_SHORT_DATE));
-		builtInVars.put(NOW_MEDIUM_DATE, vars.get(NOW_MEDIUM_DATE));
-		builtInVars.put(NOW_LONG_DATE, vars.get(NOW_LONG_DATE));
-		builtInVars.put(NOW_FULL_DATE, vars.get(NOW_FULL_DATE));
+		// Date/Time variables
+		builtInVars.put(NOW, globalVars.get(NOW));
+		builtInVars.put(NOW_DEFAULT_DATE, globalVars.get(NOW_DEFAULT_DATE));
+		builtInVars.put(NOW_SHORT_DATE, globalVars.get(NOW_SHORT_DATE));
+		builtInVars.put(NOW_MEDIUM_DATE, globalVars.get(NOW_MEDIUM_DATE));
+		builtInVars.put(NOW_LONG_DATE, globalVars.get(NOW_LONG_DATE));
+		builtInVars.put(NOW_FULL_DATE, globalVars.get(NOW_FULL_DATE));
 
-		builtInVars.put(NOW_DEFAULT_TIME, vars.get(NOW_DEFAULT_TIME));
-		builtInVars.put(NOW_SHORT_TIME, vars.get(NOW_SHORT_TIME));
-		builtInVars.put(NOW_MEDIUM_TIME, vars.get(NOW_MEDIUM_TIME));
-		builtInVars.put(NOW_LONG_TIME, vars.get(NOW_LONG_TIME));
-		builtInVars.put(NOW_FULL_TIME, vars.get(NOW_FULL_TIME));
+		builtInVars.put(NOW_DEFAULT_TIME, globalVars.get(NOW_DEFAULT_TIME));
+		builtInVars.put(NOW_SHORT_TIME, globalVars.get(NOW_SHORT_TIME));
+		builtInVars.put(NOW_MEDIUM_TIME, globalVars.get(NOW_MEDIUM_TIME));
+		builtInVars.put(NOW_LONG_TIME, globalVars.get(NOW_LONG_TIME));
+		builtInVars.put(NOW_FULL_TIME, globalVars.get(NOW_FULL_TIME));
 
-		builtInVars.put(NOW_QUARTER, vars.get(NOW_QUARTER));
-		return builtInVars; // Return the standard HashMap
+		builtInVars.put(NOW_QUARTER, globalVars.get(NOW_QUARTER));
+		return builtInVars;
 	}
 
 	public Object set(String key, Object value) {
-		return vars.put(key, value); // Accepts Object
+		return globalVars.put(key, value);
 	}
 
 	public Object get(String key) {
-		return vars.get(key); // Returns Object
+		return globalVars.get(key);
 	}
 
 	/**
 	 * Sets a user variable for a specific token, handling aliases. Accepts Object
 	 * values.
-	 * 
+	 *
 	 * @param token The burst token.
 	 * @param key   The base variable key (e.g., "var0", "col0").
 	 * @param value The variable value (as an Object).
 	 * @return The previous value associated with the key, or null.
 	 */
 	public Object setUserVariable(String token, String key, Object value) {
-		// Original put operation - always update the specified key with the Object
-		// value
-		Object previousValue = vars.put(token + "." + key, value);
+		Map<String, Object> tokenMap = tokenVars.computeIfAbsent(token, k -> new LinkedHashMap<>());
 
-		// Synchronization logic remains the same, but operates on the Object value
+		Object previousValue = tokenMap.put(key, value);
+
 		if (!Objects.isNull(varAliases)) {
 			// Handle setting varX -> update aliases
 			if (key.startsWith("var") && key.length() > 3) {
 				try {
 					int index = Integer.parseInt(key.substring(3));
-					// Update all aliases for this index with the Object value
 					for (String alias : varAliases) {
-						String aliasKey = alias + index;
-						vars.put(token + "." + aliasKey, value);
+						tokenMap.put(alias + index, value);
 					}
 				} catch (NumberFormatException e) {
 					// Not a numeric index, ignore synchronization
@@ -426,34 +354,19 @@ public class Variables {
 				for (String alias : varAliases) {
 					if (key.startsWith(alias) && key.length() > alias.length()) {
 						try {
-							// Extract the index from the alias
 							int index = Integer.parseInt(key.substring(alias.length()));
-							// Update the base variable with the Object value
-							String varKey = "var" + index;
-							vars.put(token + "." + varKey, value);
+							tokenMap.put("var" + index, value);
 
-							// Also update other aliases for the same index with the Object value
 							for (String otherAlias : varAliases) {
 								if (!otherAlias.equals(alias)) {
-									String otherAliasKey = otherAlias + index;
-									vars.put(token + "." + otherAliasKey, value);
+									tokenMap.put(otherAlias + index, value);
 								}
 							}
-							break; // Found the matching alias, no need to check others
+							break;
 						} catch (NumberFormatException e) {
 							// Not a numeric index, ignore synchronization
 						}
 					}
-				}
-			}
-		} else {
-			// Handle case where varAliases is null but key might be varX
-			if (key.startsWith("var") && key.length() > 3) {
-				// No aliases to update, just the base varX was updated above.
-				try {
-					Integer.parseInt(key.substring(3)); // Check if it's varX format
-				} catch (NumberFormatException e) {
-					// Not varX format
 				}
 			}
 		}
@@ -462,7 +375,7 @@ public class Variables {
 	}
 
 	public String toString() {
-		return vars.toString();
+		return "globalVars=" + globalVars.toString() + ", tokenVars.size=" + tokenVars.size();
 	}
 
 	private void parseSkipVariable(String token, String text) {
@@ -473,8 +386,7 @@ public class Variables {
 			skip = StringUtils.substringBetween(text, SKIP_START_LONG, SKIP_END_LONG);
 
 		if (StringUtils.isNotEmpty(skip)) {
-			String key = token + "." + SKIP;
-			vars.put(key, skip); // Store skip as String
+			tokenVars.computeIfAbsent(token, k -> new LinkedHashMap<>()).put(SKIP, skip);
 		}
 	}
 }
