@@ -300,8 +300,10 @@
 
       // Skip replaceData when data is empty and Tabulator's AJAX module owns the data.
       // In remote pagination mode, calling replaceData([]) would clear AJAX-loaded rows.
+      // In spreadsheet mode, data lives in spreadsheetData — replaceData would overwrite it.
       const remotePagination = options?.paginationMode === 'remote' && reportCode && apiBaseUrl;
-      if (Array.isArray(data) && (data.length > 0 || !remotePagination)) {
+      const isSpreadsheet = (options as any)?.spreadsheet;
+      if (Array.isArray(data) && (data.length > 0 || !remotePagination) && !isSpreadsheet) {
         table.replaceData(data);
       }
     } catch (err) {
@@ -361,7 +363,8 @@
         // Downloading all rows here just to delete them later is wasteful.
         const willUseRemotePagination = options?.paginationMode === 'remote';
         const willUseProgressiveLoad = !!(options as any)?.progressiveLoad;
-        if (!willUseRemotePagination && !willUseProgressiveLoad && (!data || !data.length)) {
+        const willUseSpreadsheet = !!(options as any)?.spreadsheet;
+        if (!willUseRemotePagination && !willUseProgressiveLoad && !willUseSpreadsheet && (!data || !data.length)) {
           const dataQueryParams = new URLSearchParams(reportParams as Record<string, string>);
           if (testMode) dataQueryParams.set('testMode', 'true');
           if (componentId) dataQueryParams.set('componentId', componentId);
