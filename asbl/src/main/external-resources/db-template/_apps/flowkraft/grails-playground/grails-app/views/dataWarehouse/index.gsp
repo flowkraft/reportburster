@@ -630,14 +630,13 @@
                 var loaded = false;
 
                 function fetchPage() {
-                    var offset = currentPage * pageSize;
                     document.getElementById('rawDataLoading').classList.remove('d-none');
                     document.getElementById('rawDataError').classList.add('d-none');
 
-                    fetch(apiBase + '/reports/' + reportCode + '/data?offset=' + offset + '&limit=' + pageSize)
+                    fetch(apiBase + '/reports/' + reportCode + '/data?page=' + (currentPage + 1) + '&size=' + pageSize)
                         .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                         .then(function(result) {
-                            var data = result.reportData || [];
+                            var data = result.data || [];
                             totalRows = result.totalRows || 0;
 
                             // Build header once
@@ -656,8 +655,8 @@
                             document.getElementById('rawDataBody').innerHTML = rows;
 
                             // Info text
-                            var from = offset + 1;
-                            var to = Math.min(offset + pageSize, totalRows);
+                            var from = currentPage * pageSize + 1;
+                            var to = Math.min((currentPage + 1) * pageSize, totalRows);
                             document.getElementById('rawDataInfo').textContent =
                                 'Showing ' + from + '-' + to + ' of ' + totalRows + ' rows';
 

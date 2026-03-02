@@ -27,6 +27,9 @@ export class SelfServicePortalsTestHelper {
   static readonly GRAILS_BASE_URL = 'http://localhost:8400'; // Points to grails-playground
   static readonly NEXT_BASE_URL = 'http://localhost:8420'; // Points to next-playground
 
+  // Tabulator load timeout — tabulators can take a while to render with server-side data
+  static readonly TABULATOR_LOAD_TIMEOUT = 15_000;
+
   // App IDs
   static readonly APP_ID_WORDPRESS = 'cms-webportal';
   static readonly APP_ID_GRAILS = 'flowkraft-grails'; // Grails unified app (portal + admin)
@@ -738,11 +741,11 @@ export class SelfServicePortalsTestHelper {
 
     // ---- Raw Data Tab (server-side pagination) ----
     await page.click('#rawdata-tab');
-    await page.waitForTimeout(2000);
-    await expect(page.locator('#rawDataTable')).toBeVisible({ timeout: 15000 });
+    await page.waitForTimeout(SelfServicePortalsTestHelper.TABULATOR_LOAD_TIMEOUT);
+    await expect(page.locator('#rawDataTable')).toBeVisible({ timeout: SelfServicePortalsTestHelper.TABULATOR_LOAD_TIMEOUT });
     const rawDataInfo = await page.locator('#rawDataInfo').textContent();
     expect(rawDataInfo).toContain('Showing');
-    await expect(page.locator('#rawDataPagination')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#rawDataPagination')).toBeVisible({ timeout: SelfServicePortalsTestHelper.TABULATOR_LOAD_TIMEOUT * 3 });
     // Change page size to 50 and verify reload
     await page.selectOption('#rawDataPageSize', '50');
     // Use auto-retrying assertion instead of fixed wait — the async fetch may take variable time
