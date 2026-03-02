@@ -397,7 +397,7 @@
 
     // Auto-inject sensible defaults when no explicit configuration provided.
     // Prevents browser freezing on large datasets.
-    if (opts.pagination === undefined && !(opts as any).paginationMode && !(opts as any).progressiveLoad) {
+    if (opts.pagination === undefined && !(opts as any).paginationMode && !(opts as any).progressiveLoad && !(opts as any).spreadsheet) {
       opts.pagination = true;
       (opts as any).paginationSize = 50;
       (opts as any).paginationCounter = 'rows';
