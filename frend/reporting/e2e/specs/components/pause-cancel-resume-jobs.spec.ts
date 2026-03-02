@@ -145,7 +145,7 @@ const _splitVerifyBigFile = (
     ft.waitOnElementToBecomeVisible('#qaReminderLink');
   }
 
-  ft.click('#btnBurst')
+  ft.sleep(Constants.DELAY_ONE_SECOND).click('#btnBurst')
     .clickYesDoThis()
     .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR);
 

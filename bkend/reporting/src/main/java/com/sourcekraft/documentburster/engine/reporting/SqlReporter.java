@@ -81,7 +81,11 @@ public class SqlReporter extends AbstractReporter {
 					sqlQuery = "SELECT * FROM (" + trimmed + ") WHERE ROWNUM <= 100";
 					break;
 				case "sqlserver":
-					sqlQuery = "SELECT TOP 100 * FROM (" + trimmed + ") AS _testmode_t";
+					if (trimmed.toUpperCase().contains("ORDER BY")) {
+						sqlQuery = trimmed + " OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY";
+					} else {
+						sqlQuery = trimmed + " ORDER BY (SELECT NULL) OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY";
+					}
 					break;
 				case "ibmdb2":
 				case "db2":

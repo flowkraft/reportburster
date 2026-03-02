@@ -331,8 +331,9 @@ const _splitSendVerifyEmails = async (
         );
     }
 
-    ft.elementShouldBeVisible('#qaReminderLink')
+    ft.waitOnElementToBecomeVisible('#qaReminderLink')
       .click('#qaReminderLink')
+      .waitOnElementToBecomeVisible('#qaReminder a')
       .elementShouldBeVisible('#qaReminder a')
       .elementShouldBeVisible('#goToQa');
 

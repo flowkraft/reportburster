@@ -314,7 +314,11 @@ public class AnalyticsController {
                     .body(createErrorResponse("Invalid request: " + e.getMessage()));
 
         } catch (Exception e) {
-            log.error("Error executing pivot query", e);
+            if (hasCause(e, "com.clickhouse.client.api.ConnectionInitiationException")) {
+                System.out.println("Error executing pivot query (ClickHouse): " + e.getMessage());
+            } else {
+                log.error("Error executing pivot query", e);
+            }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Query execution failed: " + e.getMessage()));
         }
@@ -662,6 +666,15 @@ public class AnalyticsController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Failed to get file sample: " + e.getMessage()));
         }
+    }
+
+    private boolean hasCause(Throwable e, String className) {
+        Throwable t = e;
+        while (t != null) {
+            if (t.getClass().getName().equals(className)) return true;
+            t = t.getCause();
+        }
+        return false;
     }
 
     private Map<String, Object> createErrorResponse(String message) {

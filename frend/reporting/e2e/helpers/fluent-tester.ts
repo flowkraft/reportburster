@@ -34,7 +34,7 @@ export class FluentTester implements PromiseLike<void> {
   /** Global default wait (ms) applied after every click when > 0. Can be set per-file/suite. */
   //public static globalClickWaitMs: number = 0;
 
-  public static globalClickWaitMs: number = 250;
+  public static globalClickWaitMs: number = 500;
 
   /** Optional per-instance override (if undefined, global is used). */
   private clickWaitMs?: number;
@@ -2961,6 +2961,7 @@ export class FluentTester implements PromiseLike<void> {
     await this.doClick('#topMenuBurst');
 
     await this.doClick('#topMenuConfiguration');
+    await this.doWaitOnElementToBecomeVisible('#topMenuConfigurationLoad_burst_' + PATHS.SETTINGS_CONFIG_FILE);
     await this.doClick(
       '#topMenuConfigurationLoad_burst_' + PATHS.SETTINGS_CONFIG_FILE,
     );
@@ -2972,6 +2973,7 @@ export class FluentTester implements PromiseLike<void> {
     await this.doClick('#topMenuBurst');
 
     await this.doClick('#topMenuConfiguration');
+    await this.doWaitOnElementToBecomeVisible('#topMenuConfigurationLoad_burst_' + PATHS.SETTINGS_CONFIG_FILE);
     await this.doClick(
       '#topMenuConfigurationLoad_burst_' + PATHS.SETTINGS_CONFIG_FILE,
     );
@@ -2984,6 +2986,7 @@ export class FluentTester implements PromiseLike<void> {
     await this.doClick('#topMenuBurst');
 
     await this.doClick('#topMenuConfiguration');
+    await this.doWaitOnElementToBecomeVisible('#topMenuConfigurationLoad_burst_' + PATHS.SETTINGS_CONFIG_FILE);
     await this.doClick(
       '#topMenuConfigurationLoad_burst_' + PATHS.SETTINGS_CONFIG_FILE,
     );

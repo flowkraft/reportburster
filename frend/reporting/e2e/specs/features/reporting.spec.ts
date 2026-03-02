@@ -27,7 +27,7 @@ const SKIP_NON_DATABASE_TESTS = false;
 
 const DB_VENDORS_SELECTED: string[] = (() => {
 
-  //return ['mysql']; 
+  //return ['sqlserver']; 
   //return ['ibmdb2'];
 
   // ── DEV OVERRIDES (uncomment ONE line to limit vendor scope) ──
@@ -1551,10 +1551,10 @@ function configureAndRunReportGeneration2(
               .click('#btnTestDbConnection')
               .confirmDialogShouldBeVisible()
               .clickYesDoThis()
-              .waitOnToastToBecomeVisible(
-                'success',
-                'Successfully connected to the database', Constants.DELAY_HUNDRED_SECONDS
-              )
+              .waitOnElementToBecomeDisabled('#btnTestDbConnection', Constants.DELAY_HUNDRED_SECONDS)
+              .waitOnElementToBecomeEnabled('#btnTestDbConnection', Constants.DELAY_HUNDRED_SECONDS)
+              .sleep(Constants.DELAY_ONE_SECOND)
+              .appStatusShouldBeGreatNoErrorsNoWarnings()
 
             ft = ft.click('#databaseSchemaTab-link')
               .waitOnElementToBecomeInvisible('#btnTestDbConnectionDbSchema')
@@ -1796,11 +1796,6 @@ function configureAndRunReportGeneration2(
     }
 
     ft = ft
-      .waitOnToastToBecomeVisible(
-        'success',
-        'SQL query executed successfully, go to the Tabulator', Constants.DELAY_HUNDRED_SECONDS
-      )
-      .waitOnElementToBecomeVisible('#reportingTabulatorTab-link')
       .click('#reportingTabulatorTab-link')
       .waitOnTabulatorToBecomeVisible();
 

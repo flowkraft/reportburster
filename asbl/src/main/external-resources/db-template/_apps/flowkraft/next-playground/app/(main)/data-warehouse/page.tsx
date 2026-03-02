@@ -112,11 +112,10 @@ export default function DataWarehousePage() {
     setRawLoading(true)
     setRawError("")
     try {
-      const offset = page * size
-      const res = await fetch(`${rbConfig.apiBaseUrl}/reports/piv-northwind-warehouse-browser/data?offset=${offset}&limit=${size}`)
+      const res = await fetch(`${rbConfig.apiBaseUrl}/reports/piv-northwind-warehouse-browser/data?page=${page + 1}&size=${size}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const result = await res.json()
-      const data: Record<string, unknown>[] = Array.isArray(result) ? result : (result?.reportData || [])
+      const data: Record<string, unknown>[] = Array.isArray(result) ? result : (result?.data || [])
       const total = result?.totalRows ?? data.length
 
       if (data.length > 0 && rawColumns.length === 0) {
