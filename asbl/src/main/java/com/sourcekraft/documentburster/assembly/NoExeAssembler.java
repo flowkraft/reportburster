@@ -1334,6 +1334,13 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// FREND SAMPLES END
 
+		// Copy AI prompt library to cookbook skill folder for Athena
+		String aiPromptsSource = Utils.getTopProjectFolderPath()
+				+ "/frend/reporting/src/app/components/ai-manager/ai-manager.service.ts";
+		String aiPromptsDest = packageDirPath + "/" + topFolderName
+				+ "/_apps/flowkraft/_ai-hub/.skills/reportburster-cookbook/ai-prompts-reference.ts";
+		FileUtils.copyFile(new File(aiPromptsSource), new File(aiPromptsDest));
+
 		// WebPortal samples - copy paystub templates to plugin views folder
 		String webportalSamplesPath = Utils.getTopProjectFolderPath()
 				+ "/bkend/reporting/src/main/external-resources/template/samples/webportal";

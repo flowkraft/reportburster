@@ -48,8 +48,14 @@ const EXAMPLES = [
 ];
 
 /**
- * Assert that an rb-chart web component rendered a Chart.js canvas.
- * Validates: component visible → canvas rendered → canvas has real dimensions.
+ * Assert that an rb-chart web component rendered a Chart.js canvas WITH data.
+ * Validates: component visible → canvas rendered → canvas has real dimensions
+ *            → chart datasets contain actual data points.
+ *
+ * Why step 4 matters: Chart.js renders axes, gridlines, and titles even with
+ * empty datasets, so canvas dimensions >50×50 alone does NOT prove data loaded.
+ * Checking the web component's `data` property (a Svelte export → custom element
+ * property) confirms the API returned rows and the chart transformed them.
  */
 async function assertChartRendered(page: Page, id: string): Promise<void> {
   const card = page.locator(`#example-${id}`);
@@ -69,6 +75,22 @@ async function assertChartRendered(page: Page, id: string): Promise<void> {
   expect(box!.width).toBeGreaterThan(50);
   expect(box!.height).toBeGreaterThan(50);
   console.log(`  #example-${id} canvas dimensions: ${box!.width}x${box!.height} PASSED`);
+
+  // 4. Chart has actual data — not just empty axes/gridlines.
+  //    rb-chart exposes `data` as a custom-element property (Svelte export).
+  //    After self-fetch, `data` is a Chart.js object: { labels: [...], datasets: [...] }.
+  const dataInfo = await page.locator(`#rb-${id}`).evaluate((el: any) => {
+    const d = el.data;
+    if (!d) return { hasData: false, labels: 0, datasets: 0, points: 0 };
+    const labels = d.labels?.length || 0;
+    const datasets = d.datasets?.length || 0;
+    const points = (d.datasets || []).reduce(
+      (sum: number, ds: any) => sum + (ds.data?.length || 0), 0,
+    );
+    return { hasData: labels > 0 && points > 0, labels, datasets, points };
+  });
+  expect(dataInfo.hasData).toBe(true);
+  console.log(`  #example-${id} chart data: ${dataInfo.datasets} dataset(s), ${dataInfo.labels} labels, ${dataInfo.points} data points PASSED`);
 }
 
 // ============================================================

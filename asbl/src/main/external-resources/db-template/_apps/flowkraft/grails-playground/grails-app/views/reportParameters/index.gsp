@@ -307,7 +307,7 @@
                     if (!response.ok) throw new Error('Data fetch failed: ' + response.status);
                     
                     const result = await response.json();
-                    const data = Array.isArray(result) ? result : (result.reportData || []);
+                    const data = Array.isArray(result) ? result : (result.data || []);
                     
                     console.log('[reportParameters GSP] Filtered data received:', data.length, 'records');
                     
