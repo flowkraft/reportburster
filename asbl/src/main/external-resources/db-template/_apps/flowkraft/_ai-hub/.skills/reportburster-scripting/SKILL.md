@@ -61,15 +61,26 @@ ReportBurster includes ready-to-use samples in `scripts/burst/samples/`:
 | `zip.groovy` | Zip all output files together |
 | `encrypt.groovy` | Password-protect PDFs |
 | `print.groovy` | Send to printer |
+| `batch_pdf_print.groovy` | Batch print multiple PDF files |
 | `copy_shared_folder.groovy` | Copy to network share |
 | `ant_ftp.groovy`, `ant_scp_sftp.groovy` | Upload via FTP/SFTP |
+| `ant_mail.groovy` | Send email using Apache Ant mail task |
+| `ant_vfs.groovy` | Virtual filesystem operations using Apache Ant VFS |
 | `curl_ftp.groovy`, `curl_sftp.groovy` | Upload via cURL |
+| `curl_invoice2portal.groovy` | Publish invoices to a web portal via REST API |
+| `curl_payslip2portal.groovy` | Publish payslips to a web portal via REST API |
+| `curl_paystub2portal.groovy` | Publish paystubs to a web portal via REST API |
 | `fetch_distribution_details_from_database.groovy` | Fetch recipient info from DB |
 | `fetch_distribution_details_from_csv_file.groovy` | Fetch recipient info from CSV |
 | `skip_current_file_distribution_if.groovy` | Conditional distribution |
 | `merge_with_external_files.groovy` | Merge PDFs |
+| `exec_pdftk_background.groovy` | Add PDF background/watermark using pdftk |
+| `overlay.groovy` | Overlay content on PDF pages |
 | `add_and_format_page_numbers.groovy` | Add page numbers |
+| `email_html_cid_embedded_images.groovy` | Send HTML emails with CID-embedded inline images |
 | `rclone_sync_cloud.groovy` | Sync to cloud storage |
+
+> **Note:** Each `.groovy` sample file contains detailed inline documentation — usage instructions, configuration options, and code comments explaining how to adapt the script. When a user needs help with a scripting scenario, **read the actual `.groovy` file** in `scripts/burst/samples/` to get the full context before advising.
 
 ---
 

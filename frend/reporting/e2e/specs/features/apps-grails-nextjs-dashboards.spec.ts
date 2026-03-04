@@ -155,6 +155,21 @@ test.describe('Dashboards Tests', () => {
             expect(box!.width).toBeGreaterThan(50);
             expect(box!.height).toBeGreaterThan(50);
             console.log(`  #${panel.panelId} canvas dimensions: ${Math.round(box!.width)}x${Math.round(box!.height)} PASSED`);
+
+            // Chart has actual data — not just empty axes/gridlines.
+            // rb-chart exposes `data` as a custom-element property (Svelte export).
+            const dataInfo = await chart.evaluate((el: any) => {
+              const d = el.data;
+              if (!d) return { hasData: false, labels: 0, datasets: 0, points: 0 };
+              const labels = d.labels?.length || 0;
+              const datasets = d.datasets?.length || 0;
+              const points = (d.datasets || []).reduce(
+                (sum: number, ds: any) => sum + (ds.data?.length || 0), 0,
+              );
+              return { hasData: labels > 0 && points > 0, labels, datasets, points };
+            });
+            expect(dataInfo.hasData).toBe(true);
+            console.log(`  #${panel.chartId} chart data: ${dataInfo.datasets} dataset(s), ${dataInfo.labels} labels, ${dataInfo.points} points PASSED`);
           }
 
           // ════════════════════════════════════════════════════════

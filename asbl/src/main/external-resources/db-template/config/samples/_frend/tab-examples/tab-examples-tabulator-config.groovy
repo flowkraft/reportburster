@@ -1,9 +1,13 @@
 /*
  * Tabulator Examples Showcase
  *
+ * This Groovy DSL is a thin pass-through wrapper over Tabulator (https://tabulator.info/).
+ * Any configuration that Tabulator supports works here in the most direct/intuitive way possible.
+ * Use these examples together with the Tabulator docs for the full picture.
+ *
  * ⚠️  IMPORTANT — These examples use named blocks as a SHOWCASE CONVENIENCE only
  *
- * ALL 45 examples use tabulator('name') { ... } because they are packed into a
+ * ALL examples use tabulator('name') { ... } because they are packed into a
  * SINGLE report file so they can all be previewed in one place. The names keep
  * each example's config and data separate within this one showcase report.
  *

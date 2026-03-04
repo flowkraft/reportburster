@@ -165,7 +165,7 @@ export default function ReportParametersPage() {
       if (!response.ok) throw new Error(`Data fetch failed: ${response.status}`)
 
       const result = await response.json()
-      const data = Array.isArray(result) ? result : result.reportData || []
+      const data = Array.isArray(result) ? result : result.data || []
 
       console.log("Filtered data received:", data.length, "records")
 
