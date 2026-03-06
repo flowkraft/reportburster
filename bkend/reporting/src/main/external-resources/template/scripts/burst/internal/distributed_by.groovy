@@ -4,82 +4,104 @@ import java.io.FileOutputStream;
 import java.awt.Color;
 
 import org.apache.commons.io.FilenameUtils;
-import com.lowagie.text.Element;
+import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.BaseFont;
+import com.lowagie.text.pdf.PdfAction;
+import com.lowagie.text.pdf.PdfAnnotation;
+import com.lowagie.text.pdf.PdfBorderArray;
 import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.PdfStamper;
 import com.lowagie.text.pdf.PdfGState;
 
-BaseFont bf = BaseFont.createFont(BaseFont.HELVETICA_OBLIQUE, 
-				BaseFont.WINANSI, BaseFont.EMBEDDED);
+// Determine URL suffix based on burst vs generated report
+def outputType = null
+try { outputType = ctx.settings.getReportTemplate()?.outputtype } catch (Exception e) {}
+def urlSuffix = (outputType != null && outputType != "output.none") ? "gr" : "br"
+def url = "https://reportburster.com/g/rb/" + urlSuffix
 
-def tempFilePath = "./temp/" + 
+BaseFont bfRegular = BaseFont.createFont(BaseFont.HELVETICA,
+				BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
+BaseFont bfBold = BaseFont.createFont(BaseFont.HELVETICA_BOLD,
+				BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
+
+def tempFilePath = "./temp/" +
                        FilenameUtils.getBaseName(ctx.extractedFilePath) +
                        "_tmp.pdf"
 
 PdfReader reader = new PdfReader(ctx.extractedFilePath);
 
-//get the number of pages
 int n = reader.getNumberOfPages();
 
-PdfStamper stamp = new PdfStamper(reader, 
+PdfStamper stamp = new PdfStamper(reader,
                        new FileOutputStream(tempFilePath));
 
-PdfContentByte over;
-
 PdfGState gs = new PdfGState();
-
-//100% opacity
 gs.setFillOpacity(1.0f);
-	    
-//current page index
+
+String labelPrefix = "Built by ";
+String labelBold = "ReportBurster";
+
+float fontSize = 7.5f;
+float prefixWidth = bfRegular.getWidthPoint(labelPrefix, fontSize);
+float boldWidth = bfBold.getWidthPoint(labelBold, fontSize);
+float textWidth = prefixWidth + boldWidth;
+
+float paddingH = 10f;
+float paddingV = 4f;
+float badgeWidth = textWidth + 2 * paddingH;
+float badgeHeight = fontSize + 2 * paddingV;
+float cornerRadius = badgeHeight / 2;
+
+float badgeX = 10f;
+float badgeY = 10f;
+
 int i = 0;
 
 while (i < n) {
 
     i++;
 
-    over = stamp.getOverContent(i);
-	
-    //draw an "opaque" and white rectangle
-    //which is used to hide the old/wrong page numbering
+    PdfContentByte over = stamp.getOverContent(i);
+
     over.setGState(gs);
-    over.setColorFill(Color.WHITE);
-    
-    //the default label location is at the bottom left-corner
-    //of the page
-    
-    //x, y, width, height 
-    over.rectangle(10, 10, 60, 20);
-    
+
+    // Draw navy pill-shaped badge (#000033)
+    over.setColorFill(new Color(0x00, 0x00, 0x33));
+    over.roundRectangle(badgeX, badgeY, badgeWidth, badgeHeight, cornerRadius);
     over.fill();
-    
+
+    // Draw white text
+    float textX = badgeX + paddingH;
+    float textY = badgeY + paddingV;
+
     over.beginText();
-	
-    //http://download.oracle.com/javase/1.4.2/docs/api/java/awt/Color.html
-    over.setColorFill(Color.GRAY);
-    
-    //the default size of the font is 12
-    over.setFontAndSize(bf, 6);
-    
-    //the default label location is at the bottom left-corner
-    //of the page
-    //x, y 
-    over.setTextMatrix(10, 10);
-    
-    //label text
-    over.showText("Sent by ReportBurster - https://reportburster.com/g/rb/br");
-    
+    over.setColorFill(Color.WHITE);
+
+    over.setFontAndSize(bfRegular, fontSize);
+    over.setTextMatrix(textX, textY);
+    over.showText(labelPrefix);
+
+    over.setFontAndSize(bfBold, fontSize);
+    over.setTextMatrix(textX + prefixWidth, textY);
+    over.showText(labelBold);
+
     over.endText();
-	
+
+    // Add clickable hyperlink annotation over the badge
+    PdfAnnotation link = PdfAnnotation.createLink(stamp.getWriter(),
+            new Rectangle(badgeX, badgeY, badgeX + badgeWidth, badgeY + badgeHeight),
+            PdfAnnotation.HIGHLIGHT_NONE,
+            new PdfAction(url));
+    link.setBorder(new PdfBorderArray(0, 0, 0));
+    stamp.addAnnotation(link, i);
+
 }
 
 stamp.close();
 
 def ant = new AntBuilder()
 
-//replace the original burst report
-//with the numbered one
+//replace the original file with the stamped one
 ant.delete(file:ctx.extractedFilePath)
 ant.move(file:"$tempFilePath", tofile:ctx.extractedFilePath)
