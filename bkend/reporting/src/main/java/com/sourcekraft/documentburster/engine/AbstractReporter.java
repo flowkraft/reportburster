@@ -350,11 +350,13 @@ public abstract class AbstractReporter extends AbstractBurster {
 		else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_PDF)) {
 			generatePDFFromHtmlTemplateUsingFlywingSaucer(ctx.extractedFilePath, templateFilePath,
 					ctx.variables.getUserVariables(ctx.token));
+			writeDistributedBy();
 		} else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_FOP2PDF)) {
 			String foContent = generateFileContentFromFreemarkerTemplate(templateFilePath,
 					ctx.variables.getUserVariables(ctx.token));
 
 			renderPdfFromFoContent(ctx.extractedFilePath, foContent);
+			writeDistributedBy();
 		} else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_EXCEL))
 			generateExcelFromHtmlTemplateUsingHtmlExporter(ctx.extractedFilePath, templateFilePath,
 					ctx.variables.getUserVariables(ctx.token));
@@ -577,12 +579,20 @@ public abstract class AbstractReporter extends AbstractBurster {
 		}
 	}
 
+	private void writeDistributedBy() {
+		try {
+			scripting.executeBurstingLifeCycleScript(ctx.scripts.distributedBy, ctx);
+		} catch (Exception e) {
+			// log.error("Error executing distributedBy script", e);
+		}
+	}
+
 	private void generatePDFFromHtmlTemplateUsingFlywingSaucer(String documentPath, String templatePath,
 			Map<String, Object> variablesData) throws Exception {
 
 		// First generate the HTML using the existing method
 		String tempHtmlPath = documentPath.replace(".pdf", ".html");
-		this.generateFileFromFreemarkerTemplate(tempHtmlPath, templatePath, variablesData, "Built by");
+		this.generateFileFromFreemarkerTemplate(tempHtmlPath, templatePath, variablesData, "none");
 
 		// Read the generated HTML
 		String html = Files.readString(Paths.get(tempHtmlPath));
