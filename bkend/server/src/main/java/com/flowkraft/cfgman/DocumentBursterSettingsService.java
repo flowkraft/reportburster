@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +27,7 @@ import com.flowkraft.jobman.dtos.FindCriteriaDto;
 import com.flowkraft.jobman.services.SystemService;
 import com.sourcekraft.documentburster.common.chart.ChartOptionsParser;
 import com.sourcekraft.documentburster.common.pivottable.PivotTableOptionsParser;
+
 import com.sourcekraft.documentburster.common.reportparameters.ReportParametersHelper;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ConfigurationFileInfo;
@@ -180,7 +184,139 @@ public class DocumentBursterSettingsService {
 			}
 		}
 
+		// Scan for JasperReports in config/reports-jasper/
+		scanJasperReports(configurationFiles);
+
 		return configurationFiles.stream();
+	}
+
+	// --- JasperReports scanning ---
+
+	private static final Pattern JRXML_NAME_PATTERN = Pattern
+			.compile("<jasperReport[^>]*\\sname=\"([^\"]+)\"", Pattern.DOTALL);
+
+	private void scanJasperReports(List<ConfigurationFileInfo> configurationFiles) {
+		try {
+			String jasperReportsDir = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/reports-jasper";
+			File jasperDir = new File(jasperReportsDir);
+			if (!jasperDir.exists() || !jasperDir.isDirectory()) {
+				return;
+			}
+
+			// Find the default DB connection code
+			String defaultDbConnectionCode = findDefaultDbConnectionCode();
+
+			// Check for global datasource.properties in config/reports-jasper/
+			String globalJasperConnectionCode = null;
+			File globalDsProps = new File(jasperDir, "datasource.properties");
+			if (globalDsProps.exists()) {
+				Properties props = new Properties();
+				try (FileInputStream fis = new FileInputStream(globalDsProps)) {
+					props.load(fis);
+				}
+				String code = props.getProperty("connectionCode");
+				if (code != null && !code.isBlank()) {
+					globalJasperConnectionCode = code.trim();
+				}
+			}
+
+			File[] reportFolders = jasperDir.listFiles(File::isDirectory);
+			if (reportFolders == null)
+				return;
+
+			for (File reportFolder : reportFolders) {
+				// Find .jrxml files in this folder
+				File[] jrxmlFiles = reportFolder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jrxml"));
+				if (jrxmlFiles == null || jrxmlFiles.length == 0)
+					continue;
+
+				// Use the first .jrxml as the main report
+				File mainJrxml = jrxmlFiles[0];
+				String jrxmlContent = Files.readString(mainJrxml.toPath());
+
+				// Extract report name
+				String reportName = extractJrxmlReportName(jrxmlContent, reportFolder.getName());
+
+				// Parameters are loaded on-demand via loadConfigDetails(), not at scan time
+
+				// DB connection resolution (highest priority wins):
+				// 1. Per-report datasource.properties (in report folder)
+				// 2. Global datasource.properties (in config/reports-jasper/)
+				// 3. ReportBurster's default DB connection
+				String connectionCode = defaultDbConnectionCode;
+				if (globalJasperConnectionCode != null) {
+					connectionCode = globalJasperConnectionCode;
+				}
+				File dsProps = new File(reportFolder, "datasource.properties");
+				if (dsProps.exists()) {
+					Properties props = new Properties();
+					try (FileInputStream fis = new FileInputStream(dsProps)) {
+						props.load(fis);
+					}
+					String code = props.getProperty("connectionCode");
+					if (code != null && !code.isBlank()) {
+						connectionCode = code.trim();
+					}
+				}
+
+				ConfigurationFileInfo configFile = new ConfigurationFileInfo();
+				configFile.fileName = mainJrxml.getName();
+				configFile.filePath = ("/config/reports-jasper/" + reportFolder.getName() + "/" + mainJrxml.getName())
+						.replace("\\", "/");
+				configFile.relativeFilePath = "./config/reports-jasper/" + reportFolder.getName() + "/"
+						+ mainJrxml.getName();
+				configFile.templateName = reportName;
+				configFile.isFallback = false;
+				configFile.capReportDistribution = false;
+				configFile.capReportGenerationMailMerge = true;
+				configFile.dsInputType = "ds.jasper";
+				configFile.visibility = "visible";
+				configFile.notes = StringUtils.EMPTY;
+				configFile.folderName = reportFolder.getName();
+				configFile.type = "config-jasper-reports";
+				configFile.activeClicked = false;
+				configFile.dbConnectionCode = connectionCode;
+
+				configurationFiles.add(configFile);
+			}
+		} catch (Exception e) {
+			log.error("Failed to scan JasperReports: {}", e.getMessage(), e);
+		}
+	}
+
+	private String extractJrxmlReportName(String jrxmlContent, String defaultName) {
+		Matcher m = JRXML_NAME_PATTERN.matcher(jrxmlContent);
+		return m.find() ? m.group(1) : defaultName;
+	}
+
+
+	private String findDefaultDbConnectionCode() {
+		try {
+			File connectionsDir = new File(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/connections");
+			if (!connectionsDir.exists())
+				return null;
+
+			File[] dbFolders = connectionsDir
+					.listFiles((dir, name) -> new File(dir, name).isDirectory() && name.startsWith("db-"));
+			if (dbFolders == null)
+				return null;
+
+			for (File dbFolder : dbFolders) {
+				File xmlFile = new File(dbFolder, dbFolder.getName() + ".xml");
+				if (xmlFile.exists()) {
+					String content = Files.readString(xmlFile.toPath());
+					if (content.contains("<default>true</default>")) {
+						// Extract connection code
+						String code = extractXmlTagValue(content, "code", null);
+						if (code != null)
+							return code;
+					}
+				}
+			}
+		} catch (Exception e) {
+			log.error("Failed to find default DB connection: {}", e.getMessage(), e);
+		}
+		return null;
 	}
 
 	/**
@@ -210,7 +346,13 @@ public class DocumentBursterSettingsService {
 		configDetails.filePath = settingsFilePath.replace("\\", "/");
 		
 		// Determine type based on path
-		if (settingsFilePath.contains("/config/reports/")) {
+		if (settingsFilePath.contains("/config/reports-jasper/")) {
+			configDetails.type = "config-jasper-reports";
+			// Parse .jrxml for parameters on-demand
+			String jrxmlContent = Files.readString(settingsPath);
+			configDetails.reportParameters = ReportParametersHelper.parseJrxmlParameters(jrxmlContent);
+			return configDetails;
+		} else if (settingsFilePath.contains("/config/reports/")) {
 			configDetails.type = "config-reports";
 		} else if (settingsFilePath.contains("/config/samples/")) {
 			configDetails.type = "config-samples";

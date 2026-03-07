@@ -327,6 +327,20 @@
 		</dependency>
 		<!--DATABASE END -->
 
+		<!-- JasperReports CE (LGPL) -->
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-pdf</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-excel-poi</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.dflib</groupId>
 			<artifactId>dflib</artifactId>

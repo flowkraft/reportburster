@@ -69,6 +69,9 @@ export class ConnectionListComponent implements OnInit {
 
     await this.settingsService.loadAllConnectionFilesAsync();
 
+    // Check which DB connection is set for JasperReports via datasource.properties
+    await this.loadJasperReportsConnectionFlag();
+
     if (!this.settingsService.defaultEmailConnectionFile) {
       if (
         this.settingsService.connectionFiles &&
@@ -442,5 +445,85 @@ export class ConnectionListComponent implements OnInit {
     navigator.clipboard.writeText(code).then(() => {
       this.messagesService.showInfo('Connection code copied to clipboard!', 'Copied');
     });
+  }
+
+  async loadJasperReportsConnectionFlag() {
+    try {
+      const dsPropsPath = 'config/reports-jasper/datasource.properties';
+      const exists = await this.fsService.existsAsync(dsPropsPath);
+      if (exists) {
+        const content = await this.fsService.readAsync(dsPropsPath);
+        const match = content?.match(/connectionCode\s*=\s*(.+)/);
+        if (match) {
+          const jasperConnCode = match[1].trim();
+          for (const conn of this.settingsService.connectionFiles) {
+            conn.useForJasperReports = conn.connectionCode === jasperConnCode;
+          }
+        }
+      }
+    } catch (e) {
+      // datasource.properties doesn't exist yet — that's fine
+    }
+  }
+
+  async toggleUseForJasperReports() {
+    const selectedConnection = this.getSelectedConnection();
+    if (!selectedConnection || selectedConnection.connectionType !== 'database-connection') {
+      return;
+    }
+
+    const dsPropsPath = 'config/reports-jasper/datasource.properties';
+    const isCurrentlySet = selectedConnection.useForJasperReports;
+
+    if (isCurrentlySet) {
+      this.confirmService.askConfirmation({
+        message: `Remove '${selectedConnection.connectionName}' as the JasperReports database connection?`,
+        confirmAction: async () => {
+          try {
+            await this.fsService.removeAsync(dsPropsPath);
+            for (const conn of this.settingsService.connectionFiles) {
+              conn.useForJasperReports = false;
+            }
+            this.messagesService.showInfo(
+              `Connection '${selectedConnection.connectionName}' is no longer used for JasperReports.`,
+            );
+          } catch (error) {
+            this.messagesService.showError(`Failed to remove JasperReports connection: ${error.message || 'Unknown error'}`);
+          }
+        },
+      });
+    } else {
+      const previousJasperConn = this.settingsService.connectionFiles.find(
+        (c) => c.useForJasperReports,
+      );
+      const replaceMsg = previousJasperConn
+        ? `Replace '${previousJasperConn.connectionName}' with '${selectedConnection.connectionName}' as the database connection for JasperReports?`
+        : `Use '${selectedConnection.connectionName}' as the database connection for JasperReports?`;
+
+      this.confirmService.askConfirmation({
+        message: replaceMsg,
+        confirmAction: async () => {
+          try {
+            // Always remove existing file first, then create new one
+            const exists = await this.fsService.existsAsync(dsPropsPath);
+            if (exists) {
+              await this.fsService.removeAsync(dsPropsPath);
+            }
+            await this.fsService.writeAsync(
+              dsPropsPath,
+              `connectionCode=${selectedConnection.connectionCode}\n`,
+            );
+            for (const conn of this.settingsService.connectionFiles) {
+              conn.useForJasperReports = conn.filePath === selectedConnection.filePath;
+            }
+            this.messagesService.showInfo(
+              `Connection '${selectedConnection.connectionName}' is now used for JasperReports.`,
+            );
+          } catch (error) {
+            this.messagesService.showError(`Failed to set JasperReports connection: ${error.message || 'Unknown error'}`);
+          }
+        },
+      });
+    }
   }
 }

@@ -44,6 +44,7 @@ public class CsvUtils {
 	public static final String OUTPUT_TYPE_ANY = "output.any";
 	
 	public static final String OUTPUT_TYPE_EXCEL = "output.xlsx";
+	public static final String OUTPUT_TYPE_JASPER = "output.jasper";
 
 	public static final String HEADER_NOHEADER = "noheader";
 	public static final String HEADER_FIRSTLINE = "firstline";

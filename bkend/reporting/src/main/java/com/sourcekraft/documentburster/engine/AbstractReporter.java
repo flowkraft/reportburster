@@ -46,6 +46,8 @@ import org.slf4j.LoggerFactory;
 //import com.haulmont.yarg.structure.impl.ReportTemplateImpl;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sourcekraft.documentburster.common.settings.model.ReportSettings;
+import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
+import com.sourcekraft.documentburster.engine.jasper.JasperReportRunner;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.utils.CsvUtils;
 import com.sourcekraft.documentburster.utils.DocumentBursterFreemarkerInitializer;
@@ -360,6 +362,9 @@ public abstract class AbstractReporter extends AbstractBurster {
 		} else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_EXCEL))
 			generateExcelFromHtmlTemplateUsingHtmlExporter(ctx.extractedFilePath, templateFilePath,
 					ctx.variables.getUserVariables(ctx.token));
+		else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_JASPER))
+			generateFromJasperReport(ctx.extractedFilePath, templateFilePath,
+					ctx.variables.getUserVariables(ctx.token));
 	}
 
 	// --- Template Generation Methods (Unchanged) ---
@@ -379,6 +384,50 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 		// Clean up temporary HTML file
 		Files.deleteIfExists(Paths.get(tempHtmlPath));
+	}
+
+	protected void generateFromJasperReport(String outputPath, String jrxmlRelPath,
+			Map<String, Object> userVariables) throws Exception {
+
+		File jrxmlFile = new File(jrxmlRelPath);
+		if (!jrxmlFile.isAbsolute()) {
+			jrxmlFile = new File(jrxmlRelPath.startsWith("/") ? jrxmlRelPath.substring(1) : jrxmlRelPath);
+		}
+
+		File reportDir = jrxmlFile.getParentFile();
+		String jrxmlFileName = jrxmlFile.getName();
+
+		// Convert user variables to String params for JasperReportRunner
+		Map<String, String> params = new java.util.HashMap<>();
+		for (Map.Entry<String, Object> entry : userVariables.entrySet()) {
+			if (entry.getValue() != null) {
+				params.put(entry.getKey(), String.valueOf(entry.getValue()));
+			}
+		}
+
+		// Resolve JDBC connection from the already-loaded connection settings
+		// (Settings.loadSettingsReporting() already parsed conncode from reporting.xml)
+		String jdbcUrl = null;
+		String jdbcUser = null;
+		String jdbcPass = null;
+
+		if (ctx.settings.connectionDatabaseSettings != null
+				&& ctx.settings.connectionDatabaseSettings.connection != null
+				&& ctx.settings.connectionDatabaseSettings.connection.databaseserver != null) {
+			ServerDatabaseSettings dbServer = ctx.settings.connectionDatabaseSettings.connection.databaseserver;
+			jdbcUrl = dbServer.url;
+			jdbcUser = dbServer.userid;
+			jdbcPass = dbServer.userpassword;
+		}
+
+		File outputFile = new File(outputPath);
+		String format = FilenameUtils.getExtension(outputPath);
+		if (format == null || format.isEmpty()) {
+			format = "pdf";
+		}
+
+		JasperReportRunner runner = new JasperReportRunner();
+		runner.generate(reportDir, jrxmlFileName, format, outputFile, jdbcUrl, jdbcUser, jdbcPass, params);
 	}
 
 	protected Object toObject(String value) {

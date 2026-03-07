@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+                                  http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="employee_detail"
+              pageWidth="595" pageHeight="842" columnWidth="515"
+              leftMargin="40" rightMargin="40" topMargin="50" bottomMargin="50">
+
+    <parameter name="EmployeeID" class="java.lang.Integer"/>
+    <parameter name="FirstName" class="java.lang.String"/>
+    <parameter name="LastName" class="java.lang.String"/>
+    <parameter name="Title" class="java.lang.String"/>
+    <parameter name="City" class="java.lang.String"/>
+    <parameter name="Country" class="java.lang.String"/>
+
+    <title>
+        <band height="260">
+            <staticText>
+                <reportElement x="0" y="0" width="515" height="40"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="18" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Employee Detail]]></text>
+            </staticText>
+
+            <line>
+                <reportElement x="0" y="45" width="515" height="1"/>
+            </line>
+
+            <staticText>
+                <reportElement x="0" y="60" width="150" height="25"/>
+                <textElement><font size="11" isBold="true"/></textElement>
+                <text><![CDATA[Employee ID:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="155" y="60" width="360" height="25"/>
+                <textElement><font size="11"/></textElement>
+                <textFieldExpression><![CDATA[$P{EmployeeID}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="90" width="150" height="25"/>
+                <textElement><font size="11" isBold="true"/></textElement>
+                <text><![CDATA[First Name:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="155" y="90" width="360" height="25"/>
+                <textElement><font size="11"/></textElement>
+                <textFieldExpression><![CDATA[$P{FirstName}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="120" width="150" height="25"/>
+                <textElement><font size="11" isBold="true"/></textElement>
+                <text><![CDATA[Last Name:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="155" y="120" width="360" height="25"/>
+                <textElement><font size="11"/></textElement>
+                <textFieldExpression><![CDATA[$P{LastName}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="150" width="150" height="25"/>
+                <textElement><font size="11" isBold="true"/></textElement>
+                <text><![CDATA[Title:]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="155" y="150" width="360" height="25"/>
+                <textElement><font size="11"/></textElement>
+                <textFieldExpression><![CDATA[$P{Title}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="180" width="150" height="25"/>
+                <textElement><font size="11" isBold="true"/></textElement>
+                <text><![CDATA[City:]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="155" y="180" width="360" height="25"/>
+                <textElement><font size="11"/></textElement>
+                <textFieldExpression><![CDATA[$P{City}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="210" width="150" height="25"/>
+                <textElement><font size="11" isBold="true"/></textElement>
+                <text><![CDATA[Country:]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="155" y="210" width="360" height="25"/>
+                <textElement><font size="11"/></textElement>
+                <textFieldExpression><![CDATA[$P{Country}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+</jasperReport>

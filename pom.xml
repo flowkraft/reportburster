@@ -107,7 +107,9 @@
 		<!-- end upgraded -->
 
 		<jsoup.version>1.19.1</jsoup.version>
-			
+
+		<jasperreports.version>7.0.4</jasperreports.version>
+
 	</properties>
 
 	<dependencyManagement>
@@ -740,7 +742,23 @@
 				<scope>provided</scope>
 			</dependency>
 
-			
+			<!-- JasperReports CE (LGPL) -->
+			<dependency>
+				<groupId>net.sf.jasperreports</groupId>
+				<artifactId>jasperreports</artifactId>
+				<version>${jasperreports.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>net.sf.jasperreports</groupId>
+				<artifactId>jasperreports-pdf</artifactId>
+				<version>${jasperreports.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>net.sf.jasperreports</groupId>
+				<artifactId>jasperreports-excel-poi</artifactId>
+				<version>${jasperreports.version}</version>
+			</dependency>
+
 			<!--TEST START-->
 			<dependency>
 				<groupId>com.h2database</groupId>
