@@ -41,7 +41,10 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
             >
             <span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.excelfile'"
               >(input Excel)</span
-            >  
+            >
+            <span id="{{report.folderName}}_{{report.dsInputType}}" *ngIf="report.dsInputType=='ds.jasper'"
+              ><i class="fa fa-diamond"></i> (JasperReport)</span
+            >
             </ng-option
           >
         </ng-select>

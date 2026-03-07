@@ -8,6 +8,11 @@ export const modalConfigurationTemplateTemplate = /*html*/ `<p-dialog
   class="modal-dialog-center"
 >
   <div style="margin: 35px;">
+    <div class="alert alert-info" *ngIf="modalConfigurationTemplateInfo.fileInfo.type == 'config-jasper-reports'" style="margin-bottom: 15px;">
+      <i class="fa fa-diamond"></i>&nbsp;
+      <strong>JasperReport</strong> — This report is defined by a <code>.jrxml</code> template. Configuration is read-only. To modify the report, edit the <code>.jrxml</code> file in Jaspersoft Studio.
+    </div>
+
     <div class="row">
       <div class="col-xs-2">
         {{ 'AREAS.CONFIGURATION-TEMPLATES.MODAL-CONF-TEMPLATE.NAME' | translate
@@ -24,6 +29,7 @@ export const modalConfigurationTemplateTemplate = /*html*/ `<p-dialog
           placeholder="e.g. Payslips, Invoices, Statements, etc."
           autofocus
           required
+          [readonly]="modalConfigurationTemplateInfo.fileInfo.type == 'config-jasper-reports'"
         />
       </div>
     </div>
@@ -41,6 +47,7 @@ export const modalConfigurationTemplateTemplate = /*html*/ `<p-dialog
           type="checkbox"
           id="btnCapReportDistribution"
           [(ngModel)]="modalConfigurationTemplateInfo.fileInfo.capReportDistribution"
+          [disabled]="modalConfigurationTemplateInfo.fileInfo.type == 'config-jasper-reports'"
         />
         <label
           for="btnCapReportDistribution" class="checkboxlabel">
@@ -51,10 +58,11 @@ export const modalConfigurationTemplateTemplate = /*html*/ `<p-dialog
         <input
           type="checkbox"
           id="btnCapReportGenerationMailMerge"
-          *ngIf ="modalConfigurationTemplateInfo.fileInfo.type == 'config-reports'"
+          *ngIf="modalConfigurationTemplateInfo.fileInfo.type == 'config-reports' || modalConfigurationTemplateInfo.fileInfo.type == 'config-jasper-reports'"
           [(ngModel)]="modalConfigurationTemplateInfo.fileInfo.capReportGenerationMailMerge"
+          [disabled]="modalConfigurationTemplateInfo.fileInfo.type == 'config-jasper-reports'"
         />
-        <label *ngIf ="modalConfigurationTemplateInfo.fileInfo.type == 'config-reports'" for="btnCapReportGenerationMailMerge" class="checkboxlabel">
+        <label *ngIf="modalConfigurationTemplateInfo.fileInfo.type == 'config-reports' || modalConfigurationTemplateInfo.fileInfo.type == 'config-jasper-reports'" for="btnCapReportGenerationMailMerge" class="checkboxlabel">
           &nbsp;{{'AREAS.CONFIGURATION-TEMPLATES.MODAL-CONF-TEMPLATE.CAP-REPORT-GENERATION'
           | translate}}
         </label>
@@ -74,6 +82,7 @@ export const modalConfigurationTemplateTemplate = /*html*/ `<p-dialog
           [style]="{'height':'200px', 'width':'500px'}"
           id="notes"
           [(ngModel)]="modalConfigurationTemplateInfo.fileInfo.notes"
+          [readonly]="modalConfigurationTemplateInfo.fileInfo.type == 'config-jasper-reports'"
         >
           <ng-template pTemplate="header">
             <span class="ql-formats">
@@ -118,6 +127,7 @@ export const modalConfigurationTemplateTemplate = /*html*/ `<p-dialog
         <select
           id="visibility"
           [(ngModel)]="modalConfigurationTemplateInfo.fileInfo.visibility"
+          [disabled]="modalConfigurationTemplateInfo.fileInfo.type == 'config-jasper-reports'"
         >
           <option value="hidden">
             {{
@@ -196,7 +206,8 @@ export const modalConfigurationTemplateTemplate = /*html*/ `<p-dialog
       [disabled]="
         !modalConfigurationTemplateInfo.fileInfo.templateName ||
         (modalConfigurationTemplateInfo.crudMode == 'create' &&
-        (modalConfigurationTemplateInfo.templateFilePathExists == 'file'))
+        (modalConfigurationTemplateInfo.templateFilePathExists == 'file')) ||
+        modalConfigurationTemplateInfo.fileInfo.type == 'config-jasper-reports'
       "
     >
       {{ 'BUTTONS.OK' | translate }}

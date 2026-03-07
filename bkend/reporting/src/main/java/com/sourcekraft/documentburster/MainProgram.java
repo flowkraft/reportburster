@@ -30,7 +30,8 @@ import picocli.CommandLine.Spec;
 
 @Command(name = "reportburster", mixinStandardHelpOptions = true, version = "ReportBurster 10.3.0", description = "Report bursting and report generation software", subcommands = {
 		MainProgram.BurstCommand.class, MainProgram.GenerateCommand.class, MainProgram.ResumeCommand.class,
-		MainProgram.DocumentCommand.class, MainProgram.SystemCommand.class, MainProgram.ServiceCommand.class })
+		MainProgram.DocumentCommand.class, MainProgram.SystemCommand.class, MainProgram.ServiceCommand.class,
+		MainProgram.JasperCommand.class })
 public class MainProgram implements Callable<Integer> {
 
 	private static Logger log = LoggerFactory.getLogger(MainProgram.class);
@@ -545,6 +546,48 @@ public class MainProgram implements Callable<Integer> {
 				job.doSendFeatureRequestEmail(featureRequestFile.getAbsolutePath());
 				return 0;
 			}
+		}
+	}
+
+	@Command(name = "jasper", description = "Compile, fill, and export JasperReports (.jrxml) reports")
+	public static class JasperCommand extends BaseCommand implements Callable<Integer> {
+		@ParentCommand
+		MainProgram parent;
+
+		@Option(names = { "--report-dir" }, required = true, description = "Folder containing the .jrxml and its resources")
+		private File reportDir;
+
+		@Option(names = { "--jrxml" }, required = true, description = "Main .jrxml template filename")
+		private String jrxml;
+
+		@Option(names = { "--jdbc-url" }, description = "JDBC connection URL")
+		private String jdbcUrl;
+
+		@Option(names = { "--jdbc-user" }, description = "JDBC username")
+		private String jdbcUser;
+
+		@Option(names = { "--jdbc-pass" }, description = "JDBC password", defaultValue = "")
+		private String jdbcPass;
+
+		@Option(names = { "-p", "--params" }, description = "Report parameter as key=value (repeatable)")
+		private Map<String, String> params;
+
+		@Option(names = { "--format" }, required = true, description = "Output format: pdf, xlsx, csv, html")
+		private String format;
+
+		@Option(names = { "--out" }, required = true, description = "Output file path")
+		private File out;
+
+		@Override
+		protected MainProgram getMainProgram() {
+			return parent;
+		}
+
+		@Override
+		public Integer call() throws Exception {
+			CliJob job = getJob(null);
+			job.doJasperReport(reportDir, jrxml, format, out, jdbcUrl, jdbcUser, jdbcPass, params);
+			return 0;
 		}
 	}
 

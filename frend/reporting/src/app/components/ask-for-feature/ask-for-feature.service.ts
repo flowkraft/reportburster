@@ -22,6 +22,7 @@ export class AskForFeatureService {
     'output.html',
     'output.fop2pdf',
     'output.any',
+    'output.jasper',
   ];
 
   messageTemplate = {

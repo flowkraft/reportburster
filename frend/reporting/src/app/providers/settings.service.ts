@@ -12,6 +12,7 @@ export interface ExtConnection {
   connectionType: 'email-connection' | 'database-connection';
   activeClicked: boolean;
   defaultConnection: boolean;
+  useForJasperReports: boolean;
   usedBy: string;
   emailserver?: {
     host: string;
@@ -105,6 +106,9 @@ export interface CfgTmplFileInfo {
   activeClicked?: boolean;
   useEmlConn?: boolean;
   emlConnCode?: string;
+
+  // For JasperReports: DB connection code (from datasource.properties or default)
+  dbConnectionCode?: string;
 
   reportParameters: ReportParameter[];
   
@@ -526,8 +530,8 @@ export class SettingsService {
    * @returns The updated configuration with DSL options populated
    */
   async loadConfigurationDetailsAsync(configFile: CfgTmplFileInfo): Promise<CfgTmplFileInfo> {
-    // Only reports and samples have DSL files to parse
-    if (configFile.type !== 'config-reports' && configFile.type !== 'config-samples') {
+    // Only reports, samples, and jasper reports have details to load
+    if (configFile.type !== 'config-reports' && configFile.type !== 'config-samples' && configFile.type !== 'config-jasper-reports') {
       return configFile;
     }
 
@@ -823,6 +827,15 @@ export class SettingsService {
         return filterCondition;
       });
     }
+  }
+
+  getJasperReportConfigurations() {
+    if (this.configurationFiles && this.configurationFiles.length > 0) {
+      return this.configurationFiles.filter(
+        (configuration) => configuration.type === 'config-jasper-reports' && configuration.visibility === 'visible',
+      );
+    }
+    return [];
   }
 
   getReportTemplates(outputType: string, options: any = {}) {

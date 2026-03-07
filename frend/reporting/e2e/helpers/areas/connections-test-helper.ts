@@ -884,6 +884,20 @@ export class ConnectionsTestHelper {
     return ft;
   }
 
+  static useForJasperReports(
+    ft: FluentTester,
+    connectionFileName: string,
+  ): FluentTester {
+    return ft
+      .gotoConnections()
+      .clickAndSelectTableRow(`#${connectionFileName}`)
+      .waitOnElementToBecomeVisible(`#btnActions_${connectionFileName}`)
+      .click(`#btnActions_${connectionFileName}`)
+      .waitOnElementToBecomeVisible(`#btnUseForJasper_${connectionFileName}`)
+      .click(`#btnUseForJasper_${connectionFileName}`)
+      .clickYesDoThis();
+  }
+
   static _waitForStarterPackToBeInState(
     ft: FluentTester,
     packId: string,

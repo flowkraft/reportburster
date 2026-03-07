@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.GlobalContext;
 import com.sourcekraft.documentburster.common.ServicesManager;
+import com.sourcekraft.documentburster.engine.jasper.JasperReportRunner;
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionTester;
 import com.sourcekraft.documentburster.common.db.DatabaseSchemaFetcher;
 import com.sourcekraft.documentburster.common.db.ReportDataResult;
@@ -667,6 +668,22 @@ public class CliJob {
 			_deleteJobFileWithRetry(jobFile);
 		}
 
+	}
+
+	public void doJasperReport(File reportDir, String jrxmlFileName, String format, File outputFile,
+			String jdbcUrl, String jdbcUser, String jdbcPass, Map<String, String> params) throws Exception {
+
+		File jobFile = null;
+
+		try {
+			jobFile = _createJobFile(jrxmlFileName, "jasper-report");
+
+			JasperReportRunner runner = new JasperReportRunner();
+			runner.generate(reportDir, jrxmlFileName, format, outputFile, jdbcUrl, jdbcUser, jdbcPass, params);
+
+		} finally {
+			_deleteJobFileWithRetry(jobFile);
+		}
 	}
 
 	public void doService(String serviceName, String commandLine) throws Exception {

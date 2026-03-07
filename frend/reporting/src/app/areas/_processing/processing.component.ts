@@ -698,6 +698,38 @@ export class ProcessingComponent implements OnInit {
             configFilePath = Utilities.slash(selectedReport.filePath);
           }
 
+          // JasperReports: spawn reportburster.bat jasper CLI command
+          if (selectedReport.type === 'config-jasper-reports') {
+            const commandArgs: string[] = [
+              'jasper',
+              '--report-dir', `PORTABLE_EXECUTABLE_DIR_PATH/config/reports-jasper/${selectedReport.folderName}`,
+              '--jrxml', selectedReport.fileName,
+              '--format', 'pdf',
+              '--out', `PORTABLE_EXECUTABLE_DIR_PATH/output/${selectedReport.folderName}-output.pdf`,
+            ];
+
+            if (selectedReport.dbConnectionCode) {
+              commandArgs.push('--db-connection-code', selectedReport.dbConnectionCode);
+            }
+
+            if (
+              doesSelectedReportRequiresParameters &&
+              this.reportParamsValues &&
+              Object.keys(this.reportParamsValues).length > 0
+            ) {
+              for (const [key, value] of Object.entries(this.reportParamsValues)) {
+                commandArgs.push('-p', `"${key}=${value}"`);
+              }
+            }
+
+            this.shellService.runBatFile(
+              commandArgs,
+              selectedReport.fileName,
+            );
+            this.resetProcInfo();
+            return;
+          }
+
           let inputFilePath = '';
 
           if (doesSelectedReportRequiresAnInputFile) {
@@ -1324,8 +1356,9 @@ export class ProcessingComponent implements OnInit {
   }
 
   groupByMailMergeHelper(report: any) {
-    if (report.type == 'config-reports') return 'Reports';
-    else return 'Samples';
+    if (report.type === 'config-jasper-reports') return 'JasperReports';
+    if (report.type === 'config-reports') return 'Reports';
+    return 'Samples';
   }
 
   viewDataTabulatorTable: any = null;
@@ -1595,10 +1628,11 @@ export class ProcessingComponent implements OnInit {
     this.showViewDataTabulator = false;
     this.viewDataResult = null;
 
-    // Lazy load DSL details for the selected report
+    // Lazy load DSL details for the selected report (including JasperReports .jrxml parameters)
     if ($event && (
       $event.type === 'config-reports' ||
-      $event.type === 'config-samples'
+      $event.type === 'config-samples' ||
+      $event.type === 'config-jasper-reports'
     )) {
       await this.settingsService.loadConfigurationDetailsAsync($event);
     }
@@ -1709,6 +1743,7 @@ export class ProcessingComponent implements OnInit {
 
     if (!selectedReport) return true;
 
+    if (selectedReport.dsInputType == 'ds.jasper') return false;
     if (selectedReport.dsInputType == 'ds.sqlquery') return false;
 
     if (selectedReport.dsInputType == 'ds.scriptfile') {

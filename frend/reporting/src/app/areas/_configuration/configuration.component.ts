@@ -535,6 +535,8 @@ export class ConfigurationComponent implements OnInit {
     relativeFilePath: '',
   };
 
+  selectedJasperReport: any = null;
+
   constructor(
     protected settingsService: SettingsService,
     protected fsService: FsService,
@@ -838,6 +840,18 @@ export class ConfigurationComponent implements OnInit {
     this.settingsChangedEventHandler(newValue);
   }
 
+  groupByJasperHelper() {
+    return 'Available JasperReports';
+  }
+
+  onJasperReportSelected(report: any) {
+    if (report) {
+      this.xmlReporting.documentburster.report.template.documentpath =
+        report.filePath;
+      this.settingsChangedEventHandler(report.filePath);
+    }
+  }
+
   async onReportOutputTypeChanged() {
 
     this.autosaveEnabled = false;
@@ -1069,6 +1083,21 @@ export class ConfigurationComponent implements OnInit {
             this.settingsService.currentConfigurationTemplatePath,
             this.xmlReporting,
           );
+        }
+      } else if (
+        this.xmlReporting.documentburster.report.template.outputtype ===
+        'output.jasper'
+      ) {
+        this.reportPreviewVisible = false;
+        // Restore selectedJasperReport from saved documentpath
+        const savedPath = this.xmlReporting.documentburster.report.template.documentpath;
+        if (savedPath && savedPath.includes('reports-jasper')) {
+          const jasperConfigs = this.settingsService.getJasperReportConfigurations();
+          this.selectedJasperReport = jasperConfigs.find(
+            (r: any) => r.filePath === savedPath,
+          ) || null;
+        } else {
+          this.selectedJasperReport = null;
         }
       }
 

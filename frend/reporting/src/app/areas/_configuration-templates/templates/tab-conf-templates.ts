@@ -40,6 +40,9 @@ export const tabConfigurationTemplatesTemplate = `<ng-template #tabConfTemplates
                 <span *ngIf="configurationFile.isFallback">
                   <strong> (fallback)</strong>
                 </span>
+                <span *ngIf="configurationFile.type=='config-jasper-reports'" class="label label-info" style="margin-left: 5px;">
+                  <i class="fa fa-diamond"></i> Jasper
+                </span>
               </td>
               <td>
                 <span class="label label-default" *ngIf="!configurationFile.capReportGenerationMailMerge">

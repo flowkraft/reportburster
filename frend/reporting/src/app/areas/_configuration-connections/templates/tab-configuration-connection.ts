@@ -74,6 +74,10 @@ export const tabExternalConnectionsTemplate = `<ng-template #tabExternalConnecti
                 | translate }}</li> 
                   <li id="btnSeparator_{{connectionFile.fileName}}" role="separator" class="divider" *ngIf="!connectionFile.defaultConnection"></li>
                   <li id="btnToggleDefault_{{connectionFile.fileName}}" *ngIf="!connectionFile.defaultConnection" (click)="toggleDefault()">Make <strong>Default</strong></li>
+                  <li *ngIf="connectionFile.connectionType === 'database-connection'" id="btnSeparator2_{{connectionFile.fileName}}" role="separator" class="divider"></li>
+                  <li *ngIf="connectionFile.connectionType === 'database-connection'" id="btnUseForJasper_{{connectionFile.fileName}}" (click)="toggleUseForJasperReports()">
+                    <span *ngIf="connectionFile.useForJasperReports"><i class="fa fa-check"></i>&nbsp;</span>Use For <strong>JasperReports</strong>
+                  </li>
             </ul>
                 
           </div>

@@ -36,14 +36,17 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
           <option value="output.any">
             {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TYPE-ANY' | translate }}
           </option>
+          <option value="output.jasper">
+            JasperReport (.jrxml)
+          </option>
         </select>
       </div>
       <div class="col-xs-5">
-        <button id="btnAskAiForHelpOutput" type="button" class="btn btn-default" (click)="askAiForHelp((xmlReporting?.documentburster.report.template.outputtype))" *ngIf="xmlReporting?.documentburster.report.template.outputtype !== 'output.none'">
+        <button id="btnAskAiForHelpOutput" type="button" class="btn btn-default" (click)="askAiForHelp((xmlReporting?.documentburster.report.template.outputtype))" *ngIf="xmlReporting?.documentburster.report.template.outputtype !== 'output.none' && xmlReporting?.documentburster.report.template.outputtype !== 'output.jasper'">
               <strong>{{ getAiHelpButtonLabel(xmlReporting?.documentburster.report.template.outputtype) }}</strong>
         </button>
       </div>
-     
+
     </div>
     <p></p>
     <!-- Add this help text when None is selected -->
@@ -52,6 +55,37 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
         <span id="noneOutputTypeHelp" class="help-block">
           <i class="fa fa-info-circle text-info"></i>&nbsp;
           {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.NONE-OUTPUT-HELP' | translate }}
+        </span>
+      </div>
+    </div>
+
+    <!-- JasperReport picker when output.jasper is selected -->
+    <div class="row" *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.jasper'">
+      <div class="col-xs-2">
+        JasperReport
+      </div>
+      <div class="col-xs-5">
+        <ng-select
+          id="selectJasperReport"
+          [(ngModel)]="selectedJasperReport"
+          [groupBy]="groupByJasperHelper"
+          (change)="onJasperReportSelected($event)"
+          appendTo="body"
+          placeholder="Select a JasperReport..."
+        >
+          <ng-option
+            *ngFor="let report of this.settingsService.getJasperReportConfigurations()"
+            [value]="report"
+          >
+            <i class="fa fa-diamond"></i>&nbsp;{{report.templateName}}
+            <span style="color: #999; font-size: 0.85em">({{report.fileName}})</span>
+          </ng-option>
+        </ng-select>
+      </div>
+      <div class="col-xs-5" *ngIf="selectedJasperReport">
+        <span class="help-block" style="margin-top: 6px;">
+          <i class="fa fa-info-circle text-info"></i>&nbsp;
+          Each row from the data source will be passed as parameters to this JasperReport, producing one output file per row.
         </span>
       </div>
     </div>
