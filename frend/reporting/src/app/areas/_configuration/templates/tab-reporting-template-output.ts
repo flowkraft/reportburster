@@ -37,12 +37,12 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
             {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TYPE-ANY' | translate }}
           </option>
           <option value="output.jasper">
-            JasperReport (.jrxml)
+            JasperReports (.jrxml)
           </option>
         </select>
       </div>
       <div class="col-xs-5">
-        <button id="btnAskAiForHelpOutput" type="button" class="btn btn-default" (click)="askAiForHelp((xmlReporting?.documentburster.report.template.outputtype))" *ngIf="xmlReporting?.documentburster.report.template.outputtype !== 'output.none' && xmlReporting?.documentburster.report.template.outputtype !== 'output.jasper'">
+        <button id="btnAskAiForHelpOutput" type="button" class="btn btn-default" (click)="askAiForHelp((xmlReporting?.documentburster.report.template.outputtype))" *ngIf="xmlReporting?.documentburster.report.template.outputtype !== 'output.none' && (xmlReporting?.documentburster.report.template.outputtype !== 'output.jasper' || selectedJasperReport?.filePath === '__inline__')">
               <strong>{{ getAiHelpButtonLabel(xmlReporting?.documentburster.report.template.outputtype) }}</strong>
         </button>
       </div>
@@ -59,10 +59,10 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
       </div>
     </div>
 
-    <!-- JasperReport picker when output.jasper is selected -->
+    <!-- JasperReport picker when output.jasper is selected (hidden for standalone jasper from config/reports-jasper/) -->
     <div class="row" *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.jasper'">
       <div class="col-xs-2">
-        JasperReport
+        JasperReports
       </div>
       <div class="col-xs-5">
         <ng-select
@@ -73,6 +73,9 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
           appendTo="body"
           placeholder="Select a JasperReport..."
         >
+          <ng-option [value]="inlineJrxmlOption">
+            <i class="fa fa-pencil"></i>&nbsp;Write .jrxml code inline
+          </ng-option>
           <ng-option
             *ngFor="let report of this.settingsService.getJasperReportConfigurations()"
             [value]="report"
@@ -82,11 +85,26 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
           </ng-option>
         </ng-select>
       </div>
-      <div class="col-xs-5" *ngIf="selectedJasperReport">
-        <span class="help-block" style="margin-top: 6px;">
-          <i class="fa fa-info-circle text-info"></i>&nbsp;
-          Each row from the data source will be passed as parameters to this JasperReport, producing one output file per row.
-        </span>
+    </div>
+
+    <!-- .jrxml code editor (editable for inline, read-only for reports-jasper/) -->
+    <p></p>
+    <div class="row" *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.jasper' && selectedJasperReport">
+      <div class="col-xs-2">
+        Template
+        <span *ngIf="selectedJasperReport.filePath !== '__inline__'" class="label label-default" style="font-size: 0.75em; margin-left: 4px;">read-only</span>
+      </div>
+      <div class="col-xs-10">
+        <ngx-codejar
+          id="codeJarJrxmlTemplateEditor"
+          [(code)]="activeReportTemplateContent"
+          (update)="onTemplateContentChanged($event)"
+          [highlightMethod]="highlightXmlCode"
+          [highlighter]="'prism'"
+          [showLineNumbers]="true"
+          [readonly]="selectedJasperReport.filePath !== '__inline__'"
+          style="height: 476px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto;">
+        </ngx-codejar>
       </div>
     </div>
     
@@ -96,7 +114,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
       <div
         class="row"
         id="reportTemplateContainer"
-        *ngIf="xmlReporting?.documentburster.report.template.outputtype != 'output.none'"
+        *ngIf="xmlReporting?.documentburster.report.template.outputtype != 'output.none' && xmlReporting?.documentburster.report.template.outputtype != 'output.jasper'"
       >
         <div class="col-xs-2">
           {{(

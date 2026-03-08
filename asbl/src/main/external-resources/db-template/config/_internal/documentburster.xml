@@ -20,12 +20,47 @@
     <echo>arg13 = ${arg13}</echo>
     <echo>arg14 = ${arg14}</echo>
     <echo>arg15 = ${arg15}</echo>
-    
+    <echo>arg16 = ${arg16}</echo>
+    <echo>arg17 = ${arg17}</echo>
+    <echo>arg18 = ${arg18}</echo>
+    <echo>arg19 = ${arg19}</echo>
+    <echo>arg20 = ${arg20}</echo>
+    <echo>arg21 = ${arg21}</echo>
+    <echo>arg22 = ${arg22}</echo>
+    <echo>arg23 = ${arg23}</echo>
+    <echo>arg24 = ${arg24}</echo>
+    <echo>arg25 = ${arg25}</echo>
+    <echo>arg26 = ${arg26}</echo>
+    <echo>arg27 = ${arg27}</echo>
+    <echo>arg28 = ${arg28}</echo>
+    <echo>arg29 = ${arg29}</echo>
+    <echo>arg30 = ${arg30}</echo>
+    <echo>arg31 = ${arg31}</echo>
+    <echo>arg32 = ${arg32}</echo>
+    <echo>arg33 = ${arg33}</echo>
+    <echo>arg34 = ${arg34}</echo>
+    <echo>arg35 = ${arg35}</echo>
+    <echo>arg36 = ${arg36}</echo>
+    <echo>arg37 = ${arg37}</echo>
+    <echo>arg38 = ${arg38}</echo>
+    <echo>arg39 = ${arg39}</echo>
+    <echo>arg40 = ${arg40}</echo>
+    <echo>arg41 = ${arg41}</echo>
+    <echo>arg42 = ${arg42}</echo>
+    <echo>arg43 = ${arg43}</echo>
+    <echo>arg44 = ${arg44}</echo>
+    <echo>arg45 = ${arg45}</echo>
+    <echo>arg46 = ${arg46}</echo>
+    <echo>arg47 = ${arg47}</echo>
+    <echo>arg48 = ${arg48}</echo>
+    <echo>arg49 = ${arg49}</echo>
+    <echo>arg50 = ${arg50}</echo>
+
     <path id="documentburster.class.path">
         <fileset dir="${DOCUMENTBURSTER_HOME}/lib/burst">
             <include name="**/*.jar" />
         </fileset>
-        
+
         <pathelement location="${DOCUMENTBURSTER_HOME}" />
     </path>
 
@@ -52,7 +87,42 @@
             <arg value="${arg13}" />
             <arg value="${arg14}" />
             <arg value="${arg15}" />
-                
+            <arg value="${arg16}" />
+            <arg value="${arg17}" />
+            <arg value="${arg18}" />
+            <arg value="${arg19}" />
+            <arg value="${arg20}" />
+            <arg value="${arg21}" />
+            <arg value="${arg22}" />
+            <arg value="${arg23}" />
+            <arg value="${arg24}" />
+            <arg value="${arg25}" />
+            <arg value="${arg26}" />
+            <arg value="${arg27}" />
+            <arg value="${arg28}" />
+            <arg value="${arg29}" />
+            <arg value="${arg30}" />
+            <arg value="${arg31}" />
+            <arg value="${arg32}" />
+            <arg value="${arg33}" />
+            <arg value="${arg34}" />
+            <arg value="${arg35}" />
+            <arg value="${arg36}" />
+            <arg value="${arg37}" />
+            <arg value="${arg38}" />
+            <arg value="${arg39}" />
+            <arg value="${arg40}" />
+            <arg value="${arg41}" />
+            <arg value="${arg42}" />
+            <arg value="${arg43}" />
+            <arg value="${arg44}" />
+            <arg value="${arg45}" />
+            <arg value="${arg46}" />
+            <arg value="${arg47}" />
+            <arg value="${arg48}" />
+            <arg value="${arg49}" />
+            <arg value="${arg50}" />
+
             <classpath refid="class.path" />
         </java>
     </target>
@@ -61,7 +131,7 @@
         <java classname="com.sourcekraft.documentburster.MainProgram" fork="true" dir="${DOCUMENTBURSTER_HOME}">
             <jvmarg line="${CLIENT_JVM_OPTS}" />
             <jvmarg value="-agentlib:hprof=cpu=samples,depth=64,interval=1" />
-            
+
             <arg value="${arg1}" />
             <arg value="${arg2}" />
             <arg value="${arg3}" />
@@ -77,7 +147,42 @@
             <arg value="${arg13}" />
             <arg value="${arg14}" />
             <arg value="${arg15}" />
-            
+            <arg value="${arg16}" />
+            <arg value="${arg17}" />
+            <arg value="${arg18}" />
+            <arg value="${arg19}" />
+            <arg value="${arg20}" />
+            <arg value="${arg21}" />
+            <arg value="${arg22}" />
+            <arg value="${arg23}" />
+            <arg value="${arg24}" />
+            <arg value="${arg25}" />
+            <arg value="${arg26}" />
+            <arg value="${arg27}" />
+            <arg value="${arg28}" />
+            <arg value="${arg29}" />
+            <arg value="${arg30}" />
+            <arg value="${arg31}" />
+            <arg value="${arg32}" />
+            <arg value="${arg33}" />
+            <arg value="${arg34}" />
+            <arg value="${arg35}" />
+            <arg value="${arg36}" />
+            <arg value="${arg37}" />
+            <arg value="${arg38}" />
+            <arg value="${arg39}" />
+            <arg value="${arg40}" />
+            <arg value="${arg41}" />
+            <arg value="${arg42}" />
+            <arg value="${arg43}" />
+            <arg value="${arg44}" />
+            <arg value="${arg45}" />
+            <arg value="${arg46}" />
+            <arg value="${arg47}" />
+            <arg value="${arg48}" />
+            <arg value="${arg49}" />
+            <arg value="${arg50}" />
+
             <classpath refid="class.path" />
         </java>
     </target>
@@ -87,7 +192,7 @@
             <jvmarg line="${CLIENT_JVM_OPTS}" />
             <jvmarg value="-javaagent:lib/perf/jip/profile/profile.jar" />
             <jvmarg value="-Dprofile.properties=lib/perf/jip/profile/profile.properties" />
-            
+
             <arg value="${arg1}" />
             <arg value="${arg2}" />
             <arg value="${arg3}" />
@@ -103,7 +208,42 @@
             <arg value="${arg13}" />
             <arg value="${arg14}" />
             <arg value="${arg15}" />
-            
+            <arg value="${arg16}" />
+            <arg value="${arg17}" />
+            <arg value="${arg18}" />
+            <arg value="${arg19}" />
+            <arg value="${arg20}" />
+            <arg value="${arg21}" />
+            <arg value="${arg22}" />
+            <arg value="${arg23}" />
+            <arg value="${arg24}" />
+            <arg value="${arg25}" />
+            <arg value="${arg26}" />
+            <arg value="${arg27}" />
+            <arg value="${arg28}" />
+            <arg value="${arg29}" />
+            <arg value="${arg30}" />
+            <arg value="${arg31}" />
+            <arg value="${arg32}" />
+            <arg value="${arg33}" />
+            <arg value="${arg34}" />
+            <arg value="${arg35}" />
+            <arg value="${arg36}" />
+            <arg value="${arg37}" />
+            <arg value="${arg38}" />
+            <arg value="${arg39}" />
+            <arg value="${arg40}" />
+            <arg value="${arg41}" />
+            <arg value="${arg42}" />
+            <arg value="${arg43}" />
+            <arg value="${arg44}" />
+            <arg value="${arg45}" />
+            <arg value="${arg46}" />
+            <arg value="${arg47}" />
+            <arg value="${arg48}" />
+            <arg value="${arg49}" />
+            <arg value="${arg50}" />
+
             <classpath refid="class.path" />
         </java>
     </target>
@@ -114,7 +254,7 @@
             <jvmarg value="-javaagent:lib/perf/perf4j/weaver/aspectjweaver.jar" />
             <jvmarg value="-Dorg.aspectj.weaver.loadtime.configuration=config/_internal/aop-perf4j.xml" />
             <jvmarg value="-Dlog4j.configuration=config/_internal/log4j-perf4j.xml" />
-            
+
             <arg value="${arg1}" />
             <arg value="${arg2}" />
             <arg value="${arg3}" />
@@ -130,7 +270,42 @@
             <arg value="${arg13}" />
             <arg value="${arg14}" />
             <arg value="${arg15}" />
-            
+            <arg value="${arg16}" />
+            <arg value="${arg17}" />
+            <arg value="${arg18}" />
+            <arg value="${arg19}" />
+            <arg value="${arg20}" />
+            <arg value="${arg21}" />
+            <arg value="${arg22}" />
+            <arg value="${arg23}" />
+            <arg value="${arg24}" />
+            <arg value="${arg25}" />
+            <arg value="${arg26}" />
+            <arg value="${arg27}" />
+            <arg value="${arg28}" />
+            <arg value="${arg29}" />
+            <arg value="${arg30}" />
+            <arg value="${arg31}" />
+            <arg value="${arg32}" />
+            <arg value="${arg33}" />
+            <arg value="${arg34}" />
+            <arg value="${arg35}" />
+            <arg value="${arg36}" />
+            <arg value="${arg37}" />
+            <arg value="${arg38}" />
+            <arg value="${arg39}" />
+            <arg value="${arg40}" />
+            <arg value="${arg41}" />
+            <arg value="${arg42}" />
+            <arg value="${arg43}" />
+            <arg value="${arg44}" />
+            <arg value="${arg45}" />
+            <arg value="${arg46}" />
+            <arg value="${arg47}" />
+            <arg value="${arg48}" />
+            <arg value="${arg49}" />
+            <arg value="${arg50}" />
+
             <classpath>
                 <path refid="class.path" />
                 <fileset dir="${DOCUMENTBURSTER_HOME}/lib/perf/perf4j/jars">

@@ -6,10 +6,11 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import * as PATHS from '../../utils/paths';
 import { ConfTemplatesTestHelper } from '../../helpers/areas/conf-templates-test-helper';
-import { ConnectionsTestHelper, DB_VENDORS_DEFAULT, DB_VENDORS_SUPPORTED, isOlapVendor, SCHEMA_TABLES_OLAP, SCHEMA_VIEWS_OLAP } from '../../helpers/areas/connections-test-helper';
+import { ConnectionsTestHelper, DB_VENDORS_DEFAULT, DB_VENDORS_SUPPORTED, hasSeedCapability, isOlapVendor, SCHEMA_TABLES_OLAP, SCHEMA_VIEWS_OLAP } from '../../helpers/areas/connections-test-helper';
 
 const DB_VENDORS_SELECTED: string[] = (() => {
   
+  return ['oracle', 'sqlserver', 'ibmdb2', 'postgres', 'mysql', 'mariadb', 'supabase']; // DEV FOCUS — comment out to restore full rotation
   //return ['supabase']; // DEV FOCUS — comment out to restore full rotation
   
   //return ['duckdb', 'clickhouse']; // DEV FOCUS — comment out to restore full rotation
@@ -930,6 +931,33 @@ test.describe('', async () => {
         }
 
         return ft;
+      },
+    );
+
+    electronBeforeAfterAllTest(
+      `(seed-wipe) [${dbVendor}] should seed and wipe invoice data`,
+      async function ({ beforeAfterEach: firstPage }) {
+        test.setTimeout(Constants.DELAY_FIVE_HUNDRED_SECONDS);
+        let ft = new FluentTester(firstPage);
+
+        if (isFileBasedVendor(dbVendor) || !hasSeedCapability(dbVendor)) {
+          ft = ft.consoleLog(`[SeedWipe] Skipping — ${dbVendor} does not support seed/wipe`);
+          return ft;
+        }
+
+        try {
+          // Start starter pack
+          ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'start');
+
+          // Seed 100 invoices, wipe, then stop (all without re-navigating)
+          ft = ConnectionsTestHelper.seedAndWipeInvoices(ft, dbVendor, 100);
+
+          return ft;
+        } finally {
+          if (!isFileBasedVendor(dbVendor)) {
+            ConnectionsTestHelper.dockerComposeDownInDbFolder();
+          }
+        }
       },
     );
 

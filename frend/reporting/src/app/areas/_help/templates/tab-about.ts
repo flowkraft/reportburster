@@ -23,7 +23,7 @@ export const tabAboutTemplate = `<ng-template #tabAboutTemplate>
         </a>
       </li>
       <li>
-        Server Side Public License (SSPL) v1.0 Open Source License  
+        Server Side Public License (SSPL) v1.0 Open Source License
       </li>
     </ol>
 
@@ -35,6 +35,16 @@ export const tabAboutTemplate = `<ng-template #tabAboutTemplate>
     <br>
     <a href="https://www.reportburster.com/contact.html" target="_blank">&#9400; {{
       'AREAS.HELP.TAB-ABOUT.COPYRIGHT-YEARS' | translate }}</a>
+
+    <hr>
+
+    <strong>Third-Party Libraries</strong>
+    <br><br>
+    <span>
+      This software uses <a href="https://github.com/Jaspersoft/jasperreports" target="_blank">JasperReports Library</a>,
+      &copy; Cloud Software Group, Inc., licensed under the
+      <a href="https://www.gnu.org/licenses/lgpl-3.0.html" target="_blank">GNU Lesser General Public License v3.0 (LGPLv3)</a>.
+    </span>
 
   </div>
 </ng-template>

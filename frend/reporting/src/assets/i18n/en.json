@@ -995,6 +995,11 @@
       "NOTES": {
         "INNER-HTML": "This sample demonstrates <strong>per-supplier</strong> HTML <strong>Scorecards</strong> built with a <strong>scripted datasource</strong> against the <em>Sample Northwind SQLite</em> database. The script computes <strong>KPIs</strong> (product counts, pricing, delivery metrics) and the engine generates one file per supplier using the burst token naming pattern (<code>supplier_${burst_token}_scorecard.html</code>). <br/><br/>Use this example to learn per-entity generation, and how to produce mail-merge style outputs suitable for supplier reporting or distribution."
       }
+    },
+    "GENERATE-ADHOC-EMPLOYEE-PROFILE-SCRIPT2PDF": {
+      "NOTES": {
+        "INNER-HTML": "This sample demonstrates <strong>ad-hoc report generation</strong> using <strong>report parameters</strong> — no database or file datasource needed. The user fills in parameter values (EmployeeID, FirstName, LastName) via the <strong>report parameters form</strong> in the UI, and the Groovy script reads them to build a single data row for the <strong>XSL-FO</strong> template to render as a <strong>PDF</strong>. <br/><br/>Use this example to learn how to define <strong>report parameters</strong> with default values and generate one-off documents (certificates, badges, invoices) from form values alone."
+      }
     }
   }
 }

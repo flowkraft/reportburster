@@ -896,4 +896,49 @@ electronBeforeAfterAllTest(
     },
   );
 
+  electronBeforeAfterAllTest(
+    'should work correctly (18_generate_adhoc_employee_profile_script2pdf)',
+    async ({ beforeAfterEach: firstPage }) => {
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      const expectedOutputFiles = ['E001-John-Doe.pdf'];
+
+      let ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded(
+          '#trGENERATE-ADHOC-EMPLOYEE-PROFILE-SCRIPT2PDF',
+        )
+        .waitOnElementToContainText(
+          '#tdGENERATE-ADHOC-EMPLOYEE-PROFILE-SCRIPT2PDF',
+          'Ad-hoc Employee Profile',
+        );
+
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'GENERATE-ADHOC-EMPLOYEE-PROFILE-SCRIPT2PDF',
+        'Adhoc (user provided data)',
+        'E001-John-Doe.pdf',
+        '',
+        'fo:layout-master-set',
+      );
+
+      await ft
+        .click('#trGENERATE-ADHOC-EMPLOYEE-PROFILE-SCRIPT2PDF')
+        .click('#btnSampleTryItGENERATE-ADHOC-EMPLOYEE-PROFILE-SCRIPT2PDF')
+        .clickNoDontDoThis()
+        .click('#btnSampleTryItGENERATE-ADHOC-EMPLOYEE-PROFILE-SCRIPT2PDF')
+        .clickYesDoThis()
+        .waitOnElementToBecomeEnabled('#btnGenerateReports')
+        .click('#btnGenerateReports')
+        .clickYesDoThis()
+        .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
+        .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+        .appStatusShouldBeGreatNoErrorsNoWarnings()
+        .processingShouldHaveGeneratedOutputFiles(expectedOutputFiles, 'pdf')
+        .appStatusShouldBeGreatNoErrorsNoWarnings();
+    },
+  );
+
 });

@@ -119,6 +119,7 @@ memory-bank
 
 **/test-results/**/*.*
 frend/reporting/temp
+bkend/reporting/temp/
 
 #batch-web-lightmin
 #next

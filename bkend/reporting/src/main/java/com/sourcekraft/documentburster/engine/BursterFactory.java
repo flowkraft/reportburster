@@ -9,6 +9,7 @@ import com.sourcekraft.documentburster.engine.pdf.PdfBurster;
 import com.sourcekraft.documentburster.engine.reporting.CsvReporter;
 import com.sourcekraft.documentburster.engine.reporting.ExcelReporter;
 import com.sourcekraft.documentburster.engine.reporting.FixedWidthReporter;
+import com.sourcekraft.documentburster.engine.reporting.JasperStandaloneReporter;
 import com.sourcekraft.documentburster.engine.reporting.ScriptedReporter;
 import com.sourcekraft.documentburster.engine.reporting.SqlReporter;
 import com.sourcekraft.documentburster.engine.reporting.XmlReporter;
@@ -63,6 +64,9 @@ public class BursterFactory {
 			case "ds.scriptfile":
 				// System.out.println("Processing database connection");
 				reporter = new ScriptedReporter(configurationFilePath);
+				break;
+			case "ds.jasper":
+				reporter = new JasperStandaloneReporter(configurationFilePath);
 				break;
 			case "ds.gsheet":
 				// System.out.println("Processing Google Sheet");

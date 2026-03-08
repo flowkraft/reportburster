@@ -3,13 +3,17 @@ package com.sourcekraft.documentburster.engine.jasper;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.sf.jasperreports.engine.JREmptyDataSource;
+import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
 import net.sf.jasperreports.engine.JRParameter;
 import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperFillManager;
@@ -82,6 +86,71 @@ public class JasperReportRunner {
 		}
 	}
 
+	/**
+	 * Overload that accepts in-memory report data (from ReportBurster's data pipeline)
+	 * plus an optional JDBC connection. Used when .jrxml is written inline as an output template.
+	 * The report data feeds the main dataset, while the connection is passed as REPORT_CONNECTION
+	 * so that internal queries (e.g., sub-reports) inside the .jrxml still work.
+	 */
+	public File generate(File reportDir, String jrxmlFileName, String format, File outputFile,
+			List<LinkedHashMap<String, Object>> reportData, Map<String, String> params,
+			String jdbcUrl, String jdbcUser, String jdbcPass) throws Exception {
+
+		File jrxmlFile = new File(reportDir, jrxmlFileName);
+		if (!jrxmlFile.exists()) {
+			throw new IllegalArgumentException("Template not found: " + jrxmlFile.getAbsolutePath());
+		}
+
+		log.info("Compiling {} ...", jrxmlFile.getName());
+		JasperReport report = JasperCompileManager.compileReport(jrxmlFile.getAbsolutePath());
+
+		Map<String, Object> jasperParams = new HashMap<>();
+		jasperParams.put("SUBREPORT_DIR", reportDir.getAbsolutePath() + File.separator);
+
+		if (params != null && !params.isEmpty()) {
+			coerceAndPutParams(report, jasperParams, params);
+		}
+
+		List<LinkedHashMap<String, Object>> flatData = flattenNestedData(reportData);
+
+		@SuppressWarnings("unchecked")
+		List<Map<String, ?>> castedData = (List<Map<String, ?>>) (List<?>) flatData;
+		JRMapCollectionDataSource dataSource = new JRMapCollectionDataSource(castedData);
+
+		Connection conn = null;
+		try {
+			if (jdbcUrl != null && !jdbcUrl.isEmpty()) {
+				conn = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPass != null ? jdbcPass : "");
+				jasperParams.put(JRParameter.REPORT_CONNECTION, conn);
+			}
+
+			// If the .jrxml has its own queryString AND a DB connection is available,
+			// use the connection so JR executes the query. Otherwise use the in-memory data.
+			JasperPrint print;
+			if (report.getQuery() != null && conn != null) {
+				log.info("Template has queryString — filling with DB connection");
+				print = JasperFillManager.fillReport(report, jasperParams, conn);
+			} else {
+				print = JasperFillManager.fillReport(report, jasperParams, dataSource);
+			}
+			log.info("Report filled: {} page(s)", print.getPages().size());
+
+			if (outputFile.getParentFile() != null) {
+				outputFile.getParentFile().mkdirs();
+			}
+
+			log.info("Exporting to {} ...", format.toUpperCase());
+			export(print, format, outputFile);
+
+			log.info("Output written to: {}", outputFile.getAbsolutePath());
+			return outputFile;
+		} finally {
+			if (conn != null) {
+				try { conn.close(); } catch (Exception ignored) {}
+			}
+		}
+	}
+
 	private void export(JasperPrint print, String format, File outFile) throws Exception {
 		switch (format.toLowerCase()) {
 			case "pdf": {
@@ -118,10 +187,63 @@ public class JasperReportRunner {
 		}
 	}
 
+	/**
+	 * Flattens nested master-detail data for JasperReports grouping.
+	 * If a row contains a List&lt;Map&gt; value (e.g. "details"), the master fields
+	 * are duplicated for each child row, producing flat denormalized output.
+	 * Rows without nested lists pass through unchanged.
+	 */
+	@SuppressWarnings("unchecked")
+	private List<LinkedHashMap<String, Object>> flattenNestedData(List<LinkedHashMap<String, Object>> reportData) {
+		List<LinkedHashMap<String, Object>> result = new ArrayList<>();
+
+		for (LinkedHashMap<String, Object> row : reportData) {
+			// Find the first List<Map> value in this row (the nested details)
+			String nestedKey = null;
+			List<Map<String, Object>> nestedList = null;
+
+			for (Map.Entry<String, Object> entry : row.entrySet()) {
+				if (entry.getValue() instanceof List) {
+					List<?> candidate = (List<?>) entry.getValue();
+					if (!candidate.isEmpty() && candidate.get(0) instanceof Map) {
+						nestedKey = entry.getKey();
+						nestedList = (List<Map<String, Object>>) entry.getValue();
+						break;
+					}
+				}
+			}
+
+			if (nestedList == null) {
+				// No nested data — pass through as-is
+				result.add(row);
+			} else {
+				// Flatten: for each child row, create a new row with master fields + child fields
+				for (Map<String, Object> childRow : nestedList) {
+					LinkedHashMap<String, Object> flatRow = new LinkedHashMap<>();
+					// Copy master fields (skip the nested list itself)
+					for (Map.Entry<String, Object> entry : row.entrySet()) {
+						if (!entry.getKey().equals(nestedKey)) {
+							flatRow.put(entry.getKey(), entry.getValue());
+						}
+					}
+					// Merge child fields
+					flatRow.putAll(childRow);
+					result.add(flatRow);
+				}
+			}
+		}
+
+		return result;
+	}
+
 	private void coerceAndPutParams(JasperReport report, Map<String, Object> target,
 			Map<String, String> source) {
 		Map<String, Class<?>> paramTypes = new HashMap<>();
 		for (JRParameter p : report.getParameters()) {
+			// Skip JasperReports system-defined parameters — we must not overwrite them
+			if (p.isSystemDefined()) {
+				continue;
+			}
 			paramTypes.put(p.getName(), p.getValueClass());
 		}
 
@@ -129,7 +251,19 @@ public class JasperReportRunner {
 			String name = entry.getKey();
 			String raw = entry.getValue();
 			Class<?> type = paramTypes.get(name);
-			target.put(name, type != null ? coerceValue(raw, type) : raw);
+			if (type != null) {
+				try {
+					target.put(name, coerceValue(raw, type));
+				} catch (Exception e) {
+					// Coercion failed (e.g., empty string to Integer) — pass raw value
+					// and let JasperReports handle it; better than a stacktrace
+					log.debug("Could not coerce param '{}' value '{}' to {}: {}",
+							name, raw, type.getSimpleName(), e.getMessage());
+					target.put(name, raw);
+				}
+			} else {
+				target.put(name, raw);
+			}
 		}
 	}
 

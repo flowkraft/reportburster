@@ -50,6 +50,12 @@ interface StarterPackUIData extends StarterPackDefinition {
 
   // UI State props (added by component for managing UI interactions)
   currentCommandValue: string; // The command currently displayed and editable in the input field
+
+  // Seed invoice data state
+  seedInvoiceCount: number; // N value for seed command (default 10000)
+  isInvoiceDataSeeded: boolean; // Whether seed_inv_* tables have data
+  isSeedingOrWiping: boolean; // Whether a seed/wipe operation is in progress
+  seedWipeOutput: string; // Last output from seed/wipe operation
 }
 
 // Define expected response types for clarity
@@ -188,7 +194,11 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
           ...definition,
           status: 'stopped',
           lastOutput: null,
-          currentCommandValue: definition.startCmd
+          currentCommandValue: definition.startCmd,
+          seedInvoiceCount: 10000,
+          isInvoiceDataSeeded: false,
+          isSeedingOrWiping: false,
+          seedWipeOutput: '',
         };
       });
 
@@ -204,8 +214,11 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
           status: currentStatus,
           lastOutput: existingPack?.lastOutput || (currentStatus === 'running' ? `Running ${definition.displayName}` : `Ready to start ${definition.displayName}`),
           // Show stopCmd when running OR starting (so user can stop a starting pack)
-          currentCommandValue: (currentStatus === 'running' || currentStatus === 'starting') ? definition.stopCmd : definition.startCmd
-
+          currentCommandValue: (currentStatus === 'running' || currentStatus === 'starting') ? definition.stopCmd : definition.startCmd,
+          seedInvoiceCount: existingPack?.seedInvoiceCount || 10000,
+          isInvoiceDataSeeded: existingPack?.isInvoiceDataSeeded || false,
+          isSeedingOrWiping: existingPack?.isSeedingOrWiping || false,
+          seedWipeOutput: existingPack?.seedWipeOutput || '',
         };
       });
 
@@ -281,7 +294,19 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
         // send a stop command to the backend.
         const isActive = (pack.status === 'running' || pack.status === 'starting');
         pack.currentCommandValue = isActive ? pack.stopCmd : pack.startCmd;
+
+        // 3. Check seed status for running packs with seed capability
+        if (pack.status === 'running' && pack.seedInvoicesCmd && pack.target && !pack.isSeedingOrWiping) {
+          try {
+            const seedResult: any = await this.apiService.get('/jobman/system/services/check-seed-status', { vendor: pack.target });
+            pack.isInvoiceDataSeeded = seedResult?.hasSeedData === true;
+            console.debug(`[StarterPacks] Seed check for ${pack.id}: hasSeedData=${pack.isInvoiceDataSeeded}`);
+          } catch (e) {
+            console.debug(`[StarterPacks] Seed check failed for ${pack.id}:`, e);
+          }
+        }
       }
+
     } catch (error) {
       console.error('[StarterPacks] Error refreshing statuses:', error);
     }
@@ -587,6 +612,86 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     } catch (err) {
       console.error('Failed polling pack statuses', err);
     }
+  }
+
+  // --- Seed / Wipe Invoice Data ---
+
+  /**
+   * Triggers seeding of N invoices into seed_inv_* tables.
+   * Shows confirmation dialog with warning about resource usage.
+   */
+  seedInvoiceData(pack: StarterPackUIData): void {
+    if (!pack.seedInvoicesCmd || pack.isSeedingOrWiping) return;
+
+    const n = pack.seedInvoiceCount || 10000;
+    this.confirmService.askConfirmation({
+      message: `Seed ${n.toLocaleString()} invoices into ${pack.displayName}? The larger the amount you seed, the more time and resources it will take.`,
+      confirmAction: () => {
+        this.executeSeedInvoices(pack, n);
+      },
+    });
+  }
+
+  /**
+   * Triggers wiping of all seed_inv_* table data.
+   * Shows confirmation dialog.
+   */
+  wipeInvoiceData(pack: StarterPackUIData): void {
+    if (!pack.wipeInvoicesCmd || pack.isSeedingOrWiping) return;
+
+    this.confirmService.askConfirmation({
+      message: `Wipe all seeded invoice data from ${pack.displayName}? This only removes data from seed_inv_* tables — your Northwind data will not be touched.`,
+      confirmAction: () => {
+        this.executeWipeInvoices(pack);
+      },
+    });
+  }
+
+  private executeSeedInvoices(pack: StarterPackUIData, invoiceCount: number): void {
+    pack.isSeedingOrWiping = true;
+    pack.seedWipeOutput = `Seeding ${invoiceCount.toLocaleString()} invoices...`;
+    this.cdRef.detectChanges();
+
+    const cmd = `${pack.seedInvoicesCmd} ${invoiceCount}`;
+    const args = cmd.split(/\s+/);
+
+    this.shellService.runBatFile(
+      args,
+      `Seeding invoices into ${pack.displayName}`,
+      (result: any) => {
+        pack.isSeedingOrWiping = false;
+        if (result.success) {
+          pack.isInvoiceDataSeeded = true;
+          pack.seedWipeOutput = result.output || `Successfully seeded ${invoiceCount.toLocaleString()} invoices`;
+        } else {
+          pack.seedWipeOutput = result.error || `Failed to seed invoices`;
+        }
+        this.cdRef.detectChanges();
+      }
+    );
+  }
+
+  private executeWipeInvoices(pack: StarterPackUIData): void {
+    pack.isSeedingOrWiping = true;
+    pack.seedWipeOutput = 'Wiping seeded invoice data...';
+    this.cdRef.detectChanges();
+
+    const args = pack.wipeInvoicesCmd!.split(/\s+/);
+
+    this.shellService.runBatFile(
+      args,
+      `Wiping invoices from ${pack.displayName}`,
+      (result: any) => {
+        pack.isSeedingOrWiping = false;
+        if (result.success) {
+          pack.isInvoiceDataSeeded = false;
+          pack.seedWipeOutput = result.output || 'Successfully wiped all seeded invoice data';
+        } else {
+          pack.seedWipeOutput = result.error || 'Failed to wipe invoice data';
+        }
+        this.cdRef.detectChanges();
+      }
+    );
   }
 
   toggleCommandFlag(pack: StarterPackUIData, flag: string, event: Event): void {

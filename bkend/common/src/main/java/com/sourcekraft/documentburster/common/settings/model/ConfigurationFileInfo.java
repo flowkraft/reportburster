@@ -44,6 +44,9 @@ public class ConfigurationFileInfo extends DumpToString {
 	// For JasperReports: the DB connection code to use (from datasource.properties or default)
 	public String dbConnectionCode;
 
+	// For JasperReports: path to the .jrxml file (separate from filePath which points to settings.xml)
+	public String jrxmlFilePath;
+
 	public List<ReportParameter> reportParameters = new ArrayList<>();
 	
 	// Parsed Tabulator DSL options — flat map matching tabulator.info constructor options

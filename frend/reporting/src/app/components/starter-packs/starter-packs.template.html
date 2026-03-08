@@ -223,8 +223,73 @@
             </button>
           </div>
 
+          <!-- Seed / Wipe Invoice Data Section -->
+          <div
+            *ngIf="pack.seedInvoicesCmd && pack.status === 'running'"
+            style="margin-top: 15px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px; background-color: #fafafa"
+          >
+            <div style="display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px">
+              <!-- Not seeded state: show seed controls -->
+              <div *ngIf="!pack.isInvoiceDataSeeded" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto">
+                <span style="font-size: 0.9em; color: #555; white-space: nowrap">
+                  <i class="fa fa-database"></i> Seed large amounts of data (for load testing)
+                </span>
+                <div class="input-group input-group-sm" style="width: 140px">
+                  <span class="input-group-addon">N</span>
+                  <input
+                    type="number"
+                    class="form-control"
+                    [id]="'seedInvoiceCount_' + pack.id"
+                    [(ngModel)]="pack.seedInvoiceCount"
+                    [disabled]="pack.isSeedingOrWiping"
+                    min="100"
+                    step="1000"
+                    title="Number of invoices to seed (e.g., 1000, 10000, 100000)"
+                    style="font-family: monospace"
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-success"
+                  [disabled]="pack.isSeedingOrWiping"
+                  (click)="seedInvoiceData(pack)"
+                  [id]="'btnSeedInvoices_' + pack.id"
+                  title="Seed N invoices into seed_inv_* tables"
+                >
+                  <i *ngIf="!pack.isSeedingOrWiping" class="fa fa-plus-circle"></i>
+                  <i *ngIf="pack.isSeedingOrWiping" class="fa fa-spinner fa-spin"></i>
+                  Seed {{ pack.seedInvoiceCount?.toLocaleString() }} Invoices
+                </button>
+              </div>
+
+              <!-- Seeded state: show wipe button -->
+              <div *ngIf="pack.isInvoiceDataSeeded" style="display: flex; align-items: center; gap: 8px; margin-left: auto">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-warning"
+                  [disabled]="pack.isSeedingOrWiping"
+                  (click)="wipeInvoiceData(pack)"
+                  [id]="'btnWipeInvoices_' + pack.id"
+                  title="Wipe all seeded invoice data from seed_inv_* tables (Northwind data is NOT affected)"
+                >
+                  <i *ngIf="!pack.isSeedingOrWiping" class="fa fa-trash"></i>
+                  <i *ngIf="pack.isSeedingOrWiping" class="fa fa-spinner fa-spin"></i>
+                  Wipe out the Seeded Invoice Data
+                </button>
+              </div>
+            </div>
+
+            <!-- Seed/Wipe output -->
+            <div
+              *ngIf="pack.seedWipeOutput"
+              style="margin-top: 8px"
+            >
+              <pre style="max-height: 60px; overflow-y: auto; font-size: 0.8em; background-color: #f0f0f0; border: 1px solid #ddd; padding: 4px 8px; margin-bottom: 0"><code style="white-space: pre-wrap">{{ pack.seedWipeOutput }}</code></pre>
+            </div>
+          </div>
+
           <br/>
-          
+
           <!-- Supabase website link + extended description (only for Supabase packs) -->
           <div *ngIf="pack.target === 'supabase'" style="margin-bottom: 8px">
             <a href="https://supabase.com/" target="_blank" rel="noopener noreferrer"

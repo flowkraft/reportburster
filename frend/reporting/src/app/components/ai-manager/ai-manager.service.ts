@@ -13,6 +13,7 @@ export interface PromptInfo {
   | 'Email Templates'
   | 'Email Templates (Responsive)'
   | 'Excel Report Generation'
+  | 'JasperReports (.jrxml) Generation'
   | 'PDF Generation (from HTML)'
   | 'PDF Generation (from XSL-FO)'
   | 'SQL Writing Assistance'
@@ -1223,6 +1224,27 @@ The following data attributes allow you to access Excel-specific functionality:
 - Certain Excel features might not be available through the HTML interface`,
       tags: ['excel', 'template', 'conversion'],
       category: 'Excel Report Generation',
+    },
+
+    // --- JasperReports (.jrxml) Template Generation ---
+    {
+      id: 'JASPER_JRXML_TEMPLATE_GENERATOR',
+      title: 'Generate JasperReports (.jrxml) Template',
+      description:
+        'Generates a complete .jrxml template for JasperReports, based on user requirements.',
+      promptText: `Write a JasperReports 7.0+ .jrxml (Jackson-based XML format) for JRMapCollectionDataSource (no JDBC, no subreports, single file, fields are java.lang.Object). Do NOT use the legacy JR 6.x XML format. Do NOT declare a REPORT_CONNECTION parameter. Return only the complete .jrxml code — no partial snippets or explanations.
+
+<BUSINESS_REQUIREMENT>
+[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE REPORT HERE]
+</BUSINESS_REQUIREMENT>
+
+Available data columns:
+[INSERT COLUMN NAMES HERE]
+
+Sample data (first rows):
+[INSERT SAMPLE DATA HERE]`,
+      tags: ['jasper', 'jrxml', 'template'],
+      category: 'JasperReports (.jrxml) Generation',
     },
 
     // --- SQL Writing Assistance ---

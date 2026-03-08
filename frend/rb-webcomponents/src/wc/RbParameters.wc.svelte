@@ -1,7 +1,7 @@
 <svelte:options customElement="rb-parameters" accessors={true} />
 
 <script lang="ts">
-  console.log('[rb-parameters] ====== COMPONENT SCRIPT LOADED ======');
+  //console.log('[rb-parameters] ====== COMPONENT SCRIPT LOADED ======');
   
   import { onMount, createEventDispatcher, tick } from 'svelte';
 
@@ -59,33 +59,33 @@
 
   // Get host element reference on mount
   onMount(async () => {
-    console.log('[rb-parameters] onMount START, reportCode:', reportCode, 'apiBaseUrl:', apiBaseUrl);
+    //console.log('[rb-parameters] onMount START, reportCode:', reportCode, 'apiBaseUrl:', apiBaseUrl);
     await tick();
     // Get the host element (the custom element itself)
     hostElement = container?.getRootNode() instanceof ShadowRoot 
       ? (container.getRootNode() as ShadowRoot).host as HTMLElement
       : container?.closest('rb-parameters');
     
-    console.log('[rb-parameters] onMount after tick, hostElement:', hostElement ? 'found' : 'null');
+    //console.log('[rb-parameters] onMount after tick, hostElement:', hostElement ? 'found' : 'null');
     
     // Read attributes directly from host element (Svelte props may not be populated yet for kebab-case attributes)
     if (hostElement) {
       if (!reportCode) reportCode = hostElement.getAttribute('report-code') || '';
       if (!apiBaseUrl) apiBaseUrl = hostElement.getAttribute('api-base-url') || '';
       if (!apiKey) apiKey = hostElement.getAttribute('api-key') || '';
-      console.log('[rb-parameters] After reading host attributes - reportCode:', reportCode, 'apiBaseUrl:', apiBaseUrl);
+      //console.log('[rb-parameters] After reading host attributes - reportCode:', reportCode, 'apiBaseUrl:', apiBaseUrl);
     }
     
     isMounted = true;
     
     // Emit any pending events that were queued before mount
     if (pendingValidEmit !== null) {
-      console.log('[rb-parameters] onMount: emitting PENDING validChange:', pendingValidEmit);
+      //console.log('[rb-parameters] onMount: emitting PENDING validChange:', pendingValidEmit);
       emitHostEvent('validChange', pendingValidEmit);
       pendingValidEmit = null;
     }
     if (pendingValuesEmit !== null) {
-      console.log('[rb-parameters] onMount: emitting PENDING valueChange');
+      //console.log('[rb-parameters] onMount: emitting PENDING valueChange');
       emitHostEvent('valueChange', pendingValuesEmit);
       pendingValuesEmit = null;
     }
@@ -94,7 +94,7 @@
     // Hybrid Mode: if reportCode provided, self-fetch config
     // ========================================================================
     if (reportCode && apiBaseUrl) {
-      console.log('[rb-parameters] Self-fetch mode: fetching config for', reportCode);
+      //console.log('[rb-parameters] Self-fetch mode: fetching config for', reportCode);
       loading = true;
       error = null;
       
@@ -103,64 +103,64 @@
       // if (apiKey) headers['X-API-Key'] = apiKey;
       
       const configUrl = `${apiBaseUrl}/reports/${reportCode}/config`;
-      console.log('[rb-parameters] Fetching config from:', configUrl);
+      //console.log('[rb-parameters] Fetching config from:', configUrl);
       
       try {
         // Fetch config
         const configRes = await fetch(configUrl, { headers });
-        console.log('[rb-parameters] Config response status:', configRes.status);
+        //console.log('[rb-parameters] Config response status:', configRes.status);
         if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
         const config = await configRes.json();
         
-        console.log('[rb-parameters] Config received:', {
-          hasParameters: config.hasParameters,
-          parametersCount: config.parameters?.length || 0,
-          parametersDsl: config.parametersDsl ? `${config.parametersDsl.length} chars` : 'MISSING',
-          parameters: config.parameters
-        });
+        //console.log('[rb-parameters] Config received:', {
+        //  hasParameters: config.hasParameters,
+        //  parametersCount: config.parameters?.length || 0,
+        //  parametersDsl: config.parametersDsl ? `${config.parametersDsl.length} chars` : 'MISSING',
+        //  parameters: config.parameters
+        //});
         
         // Apply parameters from config
         if (config.parameters && Array.isArray(config.parameters)) {
           parameters = config.parameters;
-          console.log('[rb-parameters] Parameters applied:', parameters.length, 'params');
+          //console.log('[rb-parameters] Parameters applied:', parameters.length, 'params');
         } else {
-          console.warn('[rb-parameters] No parameters array in config!');
+          //console.warn('[rb-parameters] No parameters array in config!');
         }
         
         // Store raw DSL for Configuration tab display
         if (config.parametersDsl) {
           configDsl = config.parametersDsl;
-          console.log('[rb-parameters] configDsl set, length:', configDsl.length);
+          //console.log('[rb-parameters] configDsl set, length:', configDsl.length);
         } else {
-          console.warn('[rb-parameters] No parametersDsl in config!');
+          //console.warn('[rb-parameters] No parametersDsl in config!');
         }
         
         // Dispatch events for config loaded (both names for compatibility)
-        console.log('[rb-parameters] Dispatching configLoaded and configFetched events');
+        //console.log('[rb-parameters] Dispatching configLoaded and configFetched events');
         dispatch('configLoaded', { configDsl, config });
         dispatch('configFetched', { parameters }); // Legacy event name
         
       } catch (err: any) {
         error = err.message || 'Failed to load parameters';
-        console.error('[rb-parameters] self-fetch error:', err);
+        //console.error('[rb-parameters] self-fetch error:', err);
         dispatch('fetchError', { message: error });
       }
       loading = false;
-      console.log('[rb-parameters] Self-fetch complete, loading:', loading, 'error:', error);
+      //console.log('[rb-parameters] Self-fetch complete, loading:', loading, 'error:', error);
     } else {
-      console.log('[rb-parameters] Props mode (no self-fetch), parameters:', parameters?.length || 0);
+      //console.log('[rb-parameters] Props mode (no self-fetch), parameters:', parameters?.length || 0);
     }
   });
 
   // Initialize form values from parameters
   $: if (parameters && parameters.length) {
-    console.log('[rb-parameters] reactive $: parameters changed, count:', parameters.length, 'isMounted:', isMounted);
-    console.log('[rb-parameters] parameters details:', JSON.stringify(parameters, null, 2));
+    //console.log('[rb-parameters] reactive $: parameters changed, count:', parameters.length, 'isMounted:', isMounted);
+    //console.log('[rb-parameters] parameters details:', JSON.stringify(parameters, null, 2));
     initForm();
   }
 
   function initForm() {
-    console.log('[rb-parameters] initForm START, params count:', parameters?.length);
+    //console.log('[rb-parameters] initForm START, params count:', parameters?.length);
     formValues = {};
     touched = {};
     errors = {};

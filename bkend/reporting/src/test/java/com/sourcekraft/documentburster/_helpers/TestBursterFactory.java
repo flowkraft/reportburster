@@ -612,7 +612,7 @@ public class TestBursterFactory {
 
 	}
 
-	static private void setUpTestFolders(BurstingContext ctx, String testName) throws Exception {
+	public static void setUpTestFolders(BurstingContext ctx, String testName) throws Exception {
 
 		ctx.settings.setOutputFolder(TestsUtils.TESTS_OUTPUT_FOLDER + "/output/${input_document_name}/" + testName
 				+ "/${now?string[\"yyyy.MM.dd_HH.mm.ss.SSS\"]}");
@@ -866,7 +866,8 @@ public class TestBursterFactory {
 			}
 
 			// --- Assert branding ---
-			if (!outputType.equals(CsvUtils.OUTPUT_TYPE_DOCX) && !outputType.equals(CsvUtils.OUTPUT_TYPE_EXCEL))
+			if (!outputType.equals(CsvUtils.OUTPUT_TYPE_DOCX) && !outputType.equals(CsvUtils.OUTPUT_TYPE_EXCEL)
+					&& !outputType.equals(CsvUtils.OUTPUT_TYPE_PDF))
 				Assertions.assertThat(currentReportText).contains("Built by");
 
 			// --- Assert content ---

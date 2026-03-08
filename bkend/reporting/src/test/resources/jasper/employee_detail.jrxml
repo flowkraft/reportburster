@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport name="employee_detail"
+    pageWidth="595" pageHeight="842" columnWidth="555"
+    leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+  <parameter name="EmployeeID" class="java.lang.String"/>
+  <parameter name="FirstName" class="java.lang.String"/>
+  <parameter name="LastName" class="java.lang.String"/>
+  <parameter name="Title" class="java.lang.String"/>
+  <parameter name="City" class="java.lang.String"/>
+  <parameter name="Country" class="java.lang.String"/>
+  <detail>
+    <band height="60">
+      <element kind="textField" x="0" y="0" width="555" height="20">
+        <expression>$P{FirstName} + " " + $P{LastName}</expression>
+      </element>
+      <element kind="textField" x="0" y="20" width="555" height="20">
+        <expression>$P{Title}</expression>
+      </element>
+      <element kind="textField" x="0" y="40" width="555" height="20">
+        <expression>$P{City} + ", " + $P{Country}</expression>
+      </element>
+    </band>
+  </detail>
+</jasperReport>

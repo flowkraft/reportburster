@@ -1,6 +1,7 @@
 package com.sourcekraft.documentburster.common.reportparameters;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +38,7 @@ public class ReportParametersHelper {
 			factory.setNamespaceAware(false);
 			factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
 			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document doc = builder.parse(new ByteArrayInputStream(jrxmlContent.getBytes("UTF-8")));
+			Document doc = builder.parse(new ByteArrayInputStream(jrxmlContent.getBytes(StandardCharsets.UTF_8)));
 
 			NodeList paramNodes = doc.getElementsByTagName("parameter");
 			for (int i = 0; i < paramNodes.getLength(); i++) {

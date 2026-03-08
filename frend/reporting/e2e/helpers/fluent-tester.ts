@@ -590,6 +590,13 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  public clearValue(selector: string): FluentTester {
+    const action = (): Promise<void> => this.doClearValue(selector);
+
+    this.actions.push(action);
+    return this;
+  }
+
   public setValue(selector: string, value: string): FluentTester {
     const action = (): Promise<void> => this.doSetValue(selector, value);
 
@@ -2544,6 +2551,10 @@ export class FluentTester implements PromiseLike<void> {
     if (isCurrentlyChecked !== checked) {
       await this.window.locator(selector).click();
     }
+  }
+
+  private async doClearValue(selector: string): Promise<void> {
+    await this.window.locator(selector).fill('');
   }
 
   private async doSetValue(selector: string, value: string): Promise<void> {

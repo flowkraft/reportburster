@@ -3,6 +3,11 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
   <li class="header">
     {{ 'AREAS.CONFIGURATION.LEFT-MENU.TOP-TITLE' | translate }}
     (<strong>{{ settingsService.currentConfigurationTemplateName }}</strong>)
+    <br *ngIf="settingsService.currentConfigurationTemplate?.type === 'config-jasper-reports'" />
+    <span *ngIf="settingsService.currentConfigurationTemplate?.type === 'config-jasper-reports'"
+          class="label label-default" style="font-size: 0.8em; opacity: 0.85;">
+      <i class="fa fa-diamond"></i> JasperReports
+    </span>
   </li>
 
   <li routerLinkActive="active">
@@ -17,7 +22,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
     </a>
   </li>
 
-  <li *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportgenerationmailmerge" routerLinkActive="active">
+  <li *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportgenerationmailmerge && settingsService.currentConfigurationTemplate?.type !== 'config-jasper-reports'" routerLinkActive="active">
     <a id="leftMenuReportingSettings" href="#" [routerLink]="[
         '/configuration',
         'reportingSettingsMenuSelected',

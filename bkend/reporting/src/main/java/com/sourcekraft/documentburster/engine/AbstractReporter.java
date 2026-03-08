@@ -156,7 +156,15 @@ public abstract class AbstractReporter extends AbstractBurster {
 		} catch (NoSuchFieldException | IllegalAccessException e) {
 			log.warn("Could not reflectively access Variables.OUTPUT_TYPE_EXTENSION, using default key name.", e);
 		}
-		ctx.variables.set(outputTypeExtVar, FilenameUtils.getExtension(ctx.settings.getReportTemplate().outputtype));
+		String outputExt = FilenameUtils.getExtension(ctx.settings.getReportTemplate().outputtype);
+		// output.jasper doesn't encode the export format — derive it from burstfilename
+		if ("jasper".equals(outputExt)) {
+			String burstFn = ctx.settings.getBurstFileName();
+			String fnExt = FilenameUtils.getExtension(burstFn);
+			// Use the literal extension if set (e.g. ".pdf", ".xlsx"), default to pdf
+			outputExt = (fnExt != null && !fnExt.isEmpty() && !fnExt.contains("$")) ? fnExt : "pdf";
+		}
+		ctx.variables.set(outputTypeExtVar, outputExt);
 
 		if (reportParameters != null) {
 			reportParameters.forEach((k, v) -> {
@@ -178,7 +186,6 @@ public abstract class AbstractReporter extends AbstractBurster {
 		// Unified bursting metadata parsing for all reporters
 		if (ctx.reportData == null || ctx.reportData.isEmpty()) {
 			ctx.burstTokens = new ArrayList<>();
-			// log.warn("Source data is null or empty. No burst tokens generated.");
 			return;
 		}
 
@@ -323,6 +330,9 @@ public abstract class AbstractReporter extends AbstractBurster {
 			return dataSource.exceloptions.idcolumn;
 		} else if (typeString.equalsIgnoreCase("ds.scriptfile")) {
 			return dataSource.scriptoptions.idcolumn;
+		} else if (typeString.equalsIgnoreCase("ds.jasper")) {
+			// Standalone JasperReports have no external data — single token, no idcolumn
+			return null;
 		} else if (typeString.equalsIgnoreCase("ds.gsheet") || typeString.equalsIgnoreCase("ds.o365sheet")) {
 			// Assuming cloud sheets might not have a specific idcolumn setting in the same
 			// way
@@ -362,9 +372,14 @@ public abstract class AbstractReporter extends AbstractBurster {
 		} else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_EXCEL))
 			generateExcelFromHtmlTemplateUsingHtmlExporter(ctx.extractedFilePath, templateFilePath,
 					ctx.variables.getUserVariables(ctx.token));
-		else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_JASPER))
+		else if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_JASPER)) {
 			generateFromJasperReport(ctx.extractedFilePath, templateFilePath,
 					ctx.variables.getUserVariables(ctx.token));
+			String ext = FilenameUtils.getExtension(ctx.extractedFilePath);
+			if ("pdf".equalsIgnoreCase(ext)) {
+				writeDistributedBy();
+			}
+		}
 	}
 
 	// --- Template Generation Methods (Unchanged) ---
@@ -397,16 +412,30 @@ public abstract class AbstractReporter extends AbstractBurster {
 		File reportDir = jrxmlFile.getParentFile();
 		String jrxmlFileName = jrxmlFile.getName();
 
-		// Convert user variables to String params for JasperReportRunner
+		// Convert user variables to String params for JasperReportRunner.
+		// Skip complex objects (Lists, Maps) — they are not meaningful as JR string params.
 		Map<String, String> params = new java.util.HashMap<>();
 		for (Map.Entry<String, Object> entry : userVariables.entrySet()) {
-			if (entry.getValue() != null) {
-				params.put(entry.getKey(), String.valueOf(entry.getValue()));
+			Object val = entry.getValue();
+			if (val != null && !(val instanceof java.util.List) && !(val instanceof java.util.Map)) {
+				params.put(entry.getKey(), String.valueOf(val));
 			}
 		}
 
-		// Resolve JDBC connection from the already-loaded connection settings
-		// (Settings.loadSettingsReporting() already parsed conncode from reporting.xml)
+		File outputFile = new File(outputPath);
+		String format = FilenameUtils.getExtension(outputPath);
+		if (format == null || format.isEmpty()) {
+			format = "pdf";
+		}
+
+		JasperReportRunner runner = new JasperReportRunner();
+
+		// Extract DB connection details (used in both modes).
+		// For standalone JasperReports (pure .jrxml in config/reports-jasper/),
+		// this was resolved dynamically by Settings.loadSettingsReporting() using
+		// the 3-tier datasource.properties priority.
+		// For inline/wrapper .jrxml templates, this comes from the parent report's
+		// own conncode in reporting.xml — NOT from datasource.properties.
 		String jdbcUrl = null;
 		String jdbcUser = null;
 		String jdbcPass = null;
@@ -420,14 +449,31 @@ public abstract class AbstractReporter extends AbstractBurster {
 			jdbcPass = dbServer.userpassword;
 		}
 
-		File outputFile = new File(outputPath);
-		String format = FilenameUtils.getExtension(outputPath);
-		if (format == null || format.isEmpty()) {
-			format = "pdf";
-		}
+		// ALWAYS pass reportData to JR — it was constructed for a reason.
+		// - Standalone JR (ds.jasper): reportData is a single row (empty or
+		//   populated from form params) — JR uses it or ignores it, harmless.
+		// - Wrapped JR (from reports-jasper/): reportData has real data from
+		//   the parent report's SQL/CSV/etc. JR can use $F{...} fields.
+		// - Inline JR (not from reports-jasper/): same as wrapped.
+		// If the row contains nested detail data (List<Map>), flattenNestedData
+		// inside JasperReportRunner expands it for JR grouping.
+		// The DB connection is also always passed — if the JR has its own SQL
+		// query, it uses the connection; otherwise JR ignores it.
+		if (ctx.reportData != null && !ctx.reportData.isEmpty()) {
+			// Find the current row by matching ctx.token position in ctx.burstTokens
+			int rowIndex = ctx.burstTokens.indexOf(ctx.token);
+			if (rowIndex < 0) rowIndex = 0;
 
-		JasperReportRunner runner = new JasperReportRunner();
-		runner.generate(reportDir, jrxmlFileName, format, outputFile, jdbcUrl, jdbcUser, jdbcPass, params);
+			java.util.List<java.util.LinkedHashMap<String, Object>> currentRow = new java.util.ArrayList<>();
+			if (rowIndex >= 0 && rowIndex < ctx.reportData.size()) {
+				currentRow.add(ctx.reportData.get(rowIndex));
+			}
+			runner.generate(reportDir, jrxmlFileName, format, outputFile, currentRow, params,
+					jdbcUrl, jdbcUser, jdbcPass);
+		} else {
+			// No reportData at all — fallback to JDBC-only path
+			runner.generate(reportDir, jrxmlFileName, format, outputFile, jdbcUrl, jdbcUser, jdbcPass, params);
+		}
 	}
 
 	protected Object toObject(String value) {

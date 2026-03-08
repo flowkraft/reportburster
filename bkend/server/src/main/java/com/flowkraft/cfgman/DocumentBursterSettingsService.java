@@ -225,6 +225,7 @@ public class DocumentBursterSettingsService {
 				return;
 
 			for (File reportFolder : reportFolders) {
+				try {
 				// Find .jrxml files in this folder
 				File[] jrxmlFiles = reportFolder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jrxml"));
 				if (jrxmlFiles == null || jrxmlFiles.length == 0)
@@ -239,10 +240,16 @@ public class DocumentBursterSettingsService {
 
 				// Parameters are loaded on-demand via loadConfigDetails(), not at scan time
 
-				// DB connection resolution (highest priority wins):
-				// 1. Per-report datasource.properties (in report folder)
-				// 2. Global datasource.properties (in config/reports-jasper/)
-				// 3. ReportBurster's default DB connection
+				// DB connection resolution for standalone JasperReports (pure .jrxml in
+				// config/reports-jasper/) — highest priority wins:
+				//   1. Per-report override — {report-folder}/datasource.properties
+				//   2. Global JasperReports override — config/reports-jasper/datasource.properties
+				//   3. ReportBurster's default DB connection (marked "default" in Connections)
+				// This is for UI display (ConfigurationFileInfo.dbConnectionCode).
+				// The same 3-tier logic runs again at generation time in
+				// Settings.loadSettingsReporting() to dynamically resolve the connection.
+				// Does NOT apply to inline/wrapper .jrxml templates (output type = jasper)
+				// which always use the parent report's DB connection.
 				String connectionCode = defaultDbConnectionCode;
 				if (globalJasperConnectionCode != null) {
 					connectionCode = globalJasperConnectionCode;
@@ -259,12 +266,14 @@ public class DocumentBursterSettingsService {
 					}
 				}
 
+				// Auto-generate settings.xml and reporting.xml from defaults if missing
+				ensureJasperConfigFiles(reportFolder, mainJrxml.getName(), reportName);
+
 				ConfigurationFileInfo configFile = new ConfigurationFileInfo();
-				configFile.fileName = mainJrxml.getName();
-				configFile.filePath = ("/config/reports-jasper/" + reportFolder.getName() + "/" + mainJrxml.getName())
+				configFile.fileName = "settings.xml";
+				configFile.filePath = ("/config/reports-jasper/" + reportFolder.getName() + "/settings.xml")
 						.replace("\\", "/");
-				configFile.relativeFilePath = "./config/reports-jasper/" + reportFolder.getName() + "/"
-						+ mainJrxml.getName();
+				configFile.relativeFilePath = "./config/reports-jasper/" + reportFolder.getName() + "/settings.xml";
 				configFile.templateName = reportName;
 				configFile.isFallback = false;
 				configFile.capReportDistribution = false;
@@ -276,8 +285,13 @@ public class DocumentBursterSettingsService {
 				configFile.type = "config-jasper-reports";
 				configFile.activeClicked = false;
 				configFile.dbConnectionCode = connectionCode;
+				configFile.jrxmlFilePath = ("/config/reports-jasper/" + reportFolder.getName() + "/" + mainJrxml.getName())
+						.replace("\\", "/");
 
 				configurationFiles.add(configFile);
+				} catch (Exception e) {
+					log.warn("Skipping JasperReport folder {}: {}", reportFolder.getName(), e.getMessage());
+				}
 			}
 		} catch (Exception e) {
 			log.error("Failed to scan JasperReports: {}", e.getMessage(), e);
@@ -287,6 +301,70 @@ public class DocumentBursterSettingsService {
 	private String extractJrxmlReportName(String jrxmlContent, String defaultName) {
 		Matcher m = JRXML_NAME_PATTERN.matcher(jrxmlContent);
 		return m.find() ? m.group(1) : defaultName;
+	}
+
+	/**
+	 * Auto-generates settings.xml and reporting.xml in a jasper report folder
+	 * from the defaults, with correct overrides for JasperReports output.
+	 * Only creates files that don't already exist (user customizations are preserved).
+	 */
+	private void ensureJasperConfigFiles(File reportFolder, String jrxmlFileName, String reportName) {
+		try {
+			String burstDir = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/burst";
+			String defaultsDir = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/_defaults";
+
+			// --- settings.xml (same pattern as NoExeAssembler) ---
+			File settingsFile = new File(reportFolder, "settings.xml");
+			if (!settingsFile.exists()) {
+				String content = Files.readString(Paths.get(burstDir, "settings.xml"));
+
+				// friendly template name
+				content = content.replaceAll(
+						"(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+						"<template>" + Matcher.quoteReplacement(reportName) + "</template>");
+
+				// enable mailmerge (report generation)
+				content = content.replaceAll(
+						"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+						"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+
+				// burstfilename: default to .pdf for JasperReports
+				// (user can change to .xlsx, .csv, .html in General Settings)
+				content = content.replaceAll(
+						"(?s)<burstfilename>.*?</burstfilename>",
+						"<burstfilename>\\$\\{burst_token}.pdf</burstfilename>");
+
+				Files.writeString(settingsFile.toPath(), content);
+				log.info("Auto-generated settings.xml for jasper report: {}", reportFolder.getName());
+			}
+
+			// --- reporting.xml (same pattern as NoExeAssembler) ---
+			File reportingFile = new File(reportFolder, "reporting.xml");
+			if (!reportingFile.exists()) {
+				String content = Files.readString(Paths.get(defaultsDir, "reporting.xml"));
+
+				// datasource type -> ds.jasper
+				content = content.replaceAll("(?si)<type\\s*>\\s*ds\\.csvfile\\s*</type>",
+						"<type>ds.jasper</type>");
+
+				// output type -> output.jasper
+				content = content.replaceAll("(?s)output\\.none", "output.jasper");
+
+				// document path -> full relative path from app root
+				// e.g. config/reports-jasper/employee-detail/employee_detail.jrxml
+				Path appRoot = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH);
+				String jrxmlRelPath = appRoot.relativize(reportFolder.toPath().resolve(jrxmlFileName))
+						.toString().replace('\\', '/');
+				content = content.replaceAll(
+						"(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
+						"<documentpath>" + Matcher.quoteReplacement(jrxmlRelPath) + "</documentpath>");
+
+					Files.writeString(reportingFile.toPath(), content);
+				log.info("Auto-generated reporting.xml for jasper report: {}", reportFolder.getName());
+			}
+		} catch (Exception e) {
+			log.warn("Failed to auto-generate config files for {}: {}", reportFolder.getName(), e.getMessage());
+		}
 	}
 
 
@@ -348,9 +426,13 @@ public class DocumentBursterSettingsService {
 		// Determine type based on path
 		if (settingsFilePath.contains("/config/reports-jasper/")) {
 			configDetails.type = "config-jasper-reports";
-			// Parse .jrxml for parameters on-demand
-			String jrxmlContent = Files.readString(settingsPath);
-			configDetails.reportParameters = ReportParametersHelper.parseJrxmlParameters(jrxmlContent);
+			// Find the .jrxml in the same folder and parse parameters from it
+			File[] jrxmlFiles = itemDir.toFile().listFiles(
+					(dir, name) -> name.toLowerCase().endsWith(".jrxml"));
+			if (jrxmlFiles != null && jrxmlFiles.length > 0) {
+				String jrxmlContent = Files.readString(jrxmlFiles[0].toPath());
+				configDetails.reportParameters = ReportParametersHelper.parseJrxmlParameters(jrxmlContent);
+			}
 			return configDetails;
 		} else if (settingsFilePath.contains("/config/reports/")) {
 			configDetails.type = "config-reports";
