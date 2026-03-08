@@ -713,6 +713,35 @@ export class SamplesService {
       capReportGenerationMailMerge: true,
       activeClicked: false,
     },
+    {
+      id: 'GENERATE-ADHOC-EMPLOYEE-PROFILE-SCRIPT2PDF',
+      name: '18. Ad-hoc Employee Profile (script2pdf - report parameters, no database)',
+      visibility: 'visible',
+      jobType: 'generate',
+      input: {
+        data: ['Adhoc (user provided data)'],
+        dataUrl: [],
+        numberOfPages: -1,
+        tokens: [],
+      },
+      step1: 'generate',
+      step2: '',
+      step3: '',
+      output: {
+        data: ['file:E001-John-Doe.pdf'],
+        folder: "output/AdhocEmployeeProfile/${timestamp?format['yyyy.MM.dd_HH.mm.ss.SSS']}",
+      },
+      outputHtmlHardcoded: '',
+      configurationFilePath: `config/samples/g-scr2pdf-adhoc/settings.xml`,
+      configurationFileName: 'g-scr2pdf-adhoc',
+      notes: ``,
+      recipientType: '',
+      documentType: 'report',
+      capReportSplitting: false,
+      capReportDistribution: false,
+      capReportGenerationMailMerge: true,
+      activeClicked: false,
+    },
   ];
 
   samplesNotYetImplemented: Array<SampleInfo> = [

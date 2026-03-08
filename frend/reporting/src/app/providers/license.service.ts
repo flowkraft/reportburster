@@ -104,9 +104,7 @@ export class LicenseService {
         });
         this.changeLogStr = changelog;
       } catch {
-        console.warn(
-          'Error while fetching the changelog for the demo installation',
-        );
+        // Silently ignore changelog fetch failures (expected for demo/offline installations)
       }
     }
 

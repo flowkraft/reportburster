@@ -536,6 +536,7 @@ export class ConfigurationComponent implements OnInit {
   };
 
   selectedJasperReport: any = null;
+  inlineJrxmlOption = { templateName: 'Write .jrxml code inline', filePath: '__inline__' };
 
   constructor(
     protected settingsService: SettingsService,
@@ -844,11 +845,69 @@ export class ConfigurationComponent implements OnInit {
     return 'Available JasperReports';
   }
 
-  onJasperReportSelected(report: any) {
-    if (report) {
-      this.xmlReporting.documentburster.report.template.documentpath =
-        report.filePath;
-      this.settingsChangedEventHandler(report.filePath);
+  async onJasperReportSelected(report: any) {
+    if (!report) return;
+
+    if (report.filePath === '__inline__') {
+      // Inline .jrxml mode: load or create the template file
+      const configName =
+        this.settingsService.currentConfigurationTemplate?.folderName ||
+        'template';
+      const newPath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-jasper.jrxml`;
+
+      try {
+        const fileExists = await this.fsService.existsAsync(newPath);
+        if (fileExists) {
+          const content =
+            await this.settingsService.loadTemplateFileAsync(newPath);
+          if (content) {
+            this.activeReportTemplateContent = content;
+          }
+        } else {
+          const defaultContent = `<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="inline-report" pageWidth="595" pageHeight="842">
+    <detail>
+        <band height="20">
+            <staticText>
+                <reportElement x="0" y="0" width="200" height="20"/>
+                <text><![CDATA[Hello from JasperReports]]></text>
+            </staticText>
+        </band>
+    </detail>
+</jasperReport>`;
+          await this.settingsService.saveTemplateFileAsync(
+            newPath,
+            defaultContent,
+          );
+          this.activeReportTemplateContent = defaultContent;
+        }
+        this.changeDetectorRef.detectChanges();
+      } catch (error) {
+        console.error('Error loading inline .jrxml template:', error);
+      }
+
+      this.xmlReporting.documentburster.report.template.documentpath = newPath;
+      await this.settingsService.saveReportingFileAsync(
+        this.settingsService.currentConfigurationTemplatePath,
+        this.xmlReporting,
+      );
+      this.autosaveEnabled = true;
+    } else {
+      // Existing report from reports-jasper/ — show read-only preview
+      const jrxmlPath = report.jrxmlFilePath || report.filePath;
+      this.xmlReporting.documentburster.report.template.documentpath = jrxmlPath;
+      try {
+        const content = await this.settingsService.loadTemplateFileAsync(jrxmlPath);
+        this.activeReportTemplateContent = content || '';
+        this.changeDetectorRef.detectChanges();
+      } catch (error) {
+        this.activeReportTemplateContent = '';
+      }
+      this.settingsChangedEventHandler(jrxmlPath);
     }
   }
 
@@ -1089,9 +1148,25 @@ export class ConfigurationComponent implements OnInit {
         'output.jasper'
       ) {
         this.reportPreviewVisible = false;
-        // Restore selectedJasperReport from saved documentpath
         const savedPath = this.xmlReporting.documentburster.report.template.documentpath;
-        if (savedPath && savedPath.includes('reports-jasper')) {
+
+        if (savedPath && savedPath.endsWith('.jrxml') && !savedPath.includes('reports-jasper')) {
+          // Inline .jrxml mode — restore editor content
+          this.selectedJasperReport = this.inlineJrxmlOption;
+          try {
+            const fileExists = await this.fsService.existsAsync(savedPath);
+            if (fileExists) {
+              const content =
+                await this.settingsService.loadTemplateFileAsync(savedPath);
+              if (content) {
+                this.activeReportTemplateContent = content;
+              }
+            }
+          } catch (error) {
+            console.error('Error loading inline .jrxml template:', error);
+          }
+          this.autosaveEnabled = true;
+        } else if (savedPath && savedPath.includes('reports-jasper')) {
           const jasperConfigs = this.settingsService.getJasperReportConfigurations();
           this.selectedJasperReport = jasperConfigs.find(
             (r: any) => r.filePath === savedPath,
@@ -1146,12 +1221,14 @@ export class ConfigurationComponent implements OnInit {
           ...this.xmlSettings.documentburster.settings,
         };
 
+        // Search all configs (configurationFiles includes both user configs and samples).
+        // Normalize leading slash: backend returns "/config/..." while frontend uses "config/..."
+        const stripLeadingSlash = (p: string) => p?.replace(/^\//, '') || '';
+        const targetPath = stripLeadingSlash(this.settingsService.currentConfigurationTemplatePath);
         this.settingsService.currentConfigurationTemplate = this.settingsService
-          .getConfigurations()
-          .find(
+          .configurationFiles?.find(
             (confTemplate) =>
-              confTemplate.filePath ==
-              this.settingsService.currentConfigurationTemplatePath,
+              stripLeadingSlash(confTemplate.filePath) === targetPath,
           );
 
         // Lazy load DSL details for this specific configuration
@@ -1159,8 +1236,8 @@ export class ConfigurationComponent implements OnInit {
           await this.settingsService.loadConfigurationDetailsAsync(
             this.settingsService.currentConfigurationTemplate
           );
-          console.log('[DEBUG] After loadConfigurationDetailsAsync - tabulatorOptions:',
-            this.settingsService.currentConfigurationTemplate.tabulatorOptions);
+          //console.log('[DEBUG] After loadConfigurationDetailsAsync - tabulatorOptions:',
+          //  this.settingsService.currentConfigurationTemplate.tabulatorOptions);
         }
       }
 
@@ -1218,10 +1295,10 @@ export class ConfigurationComponent implements OnInit {
           // Initialize parsed options from the pre-loaded configuration template
           // (backend already parsed DSLs via loadConfigurationDetailsAsync)
           const configTemplate = this.settingsService.currentConfigurationTemplate;
-          console.log('[DEBUG] Reporting init - configTemplate:', configTemplate?.folderName,
-            'tabulatorOptions:', configTemplate?.tabulatorOptions,
-            'chartOptions:', configTemplate?.chartOptions,
-            'pivotTableOptions:', configTemplate?.pivotTableOptions);
+          //console.log('[DEBUG] Reporting init - configTemplate:', configTemplate?.folderName,
+          //  'tabulatorOptions:', configTemplate?.tabulatorOptions,
+          //  'chartOptions:', configTemplate?.chartOptions,
+          //  'pivotTableOptions:', configTemplate?.pivotTableOptions);
           if (configTemplate?.tabulatorOptions) {
             this.activeTabulatorConfigOptions = configTemplate.tabulatorOptions;
           }
@@ -2308,6 +2385,12 @@ export class ConfigurationComponent implements OnInit {
     if (outputType === 'any')
       templatePath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-${outputType}.ftl`;
 
+    if (outputType === 'jasper') {
+      // Wrapped JR (from reports-jasper/) — editor is read-only, nothing to save
+      if (currentPath && currentPath.includes('reports-jasper')) return;
+      templatePath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-jasper.jrxml`;
+    }
+
     try {
       // Save to disk
       await this.settingsService.saveTemplateFileAsync(
@@ -2409,6 +2492,29 @@ export class ConfigurationComponent implements OnInit {
         initialSelectedCategory: 'Template Creation/Modification',
         initialExpandedPromptId: 'BUILD_TEMPLATE_FROM_SCRATCH',
       };
+
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      }
+    }
+
+    if (outputTypeCode === 'output.jasper') {
+      const launchConfig: AiManagerLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'JasperReports (.jrxml) Generation',
+        initialExpandedPromptId: 'JASPER_JRXML_TEMPLATE_GENERATOR',
+      };
+
+      if (this.reportDataResult?.reportColumnNames?.length) {
+        launchConfig.promptVariables = {
+          '[INSERT COLUMN NAMES HERE]': this.reportDataResult.reportColumnNames.join(', '),
+        };
+
+        if (this.reportDataResult.data?.length) {
+          const sampleRows = this.reportDataResult.data.slice(0, 3);
+          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
+        }
+      }
 
       if (this.aiManagerInstance) {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
@@ -2616,6 +2722,9 @@ export class ConfigurationComponent implements OnInit {
   //DBCONNECTIONS END
 
   getAiHelpButtonLabel(outputType: string): string {
+    if (outputType === 'output.jasper') {
+      return 'Hey AI, Help Me Build This Jasper Template!';
+    }
     return `Hey AI, Help Me Build This ${outputType.replace('output.', '').toUpperCase()} Template!`;
   }
 
@@ -3868,8 +3977,6 @@ pivotTable {
       {} as { [key: string]: any },
     );
     this.previewParams = paramsObject;
-    // console.log('[DEBUG] runQueryWithParams: paramsObject=', paramsObject);
-    // console.log('[DEBUG] runQueryWithParams: calling fetchData...');
     const result = await this.reportingService.fetchData(paramsObject, true);
     // console.log('[DEBUG] runQueryWithParams: fetchData returned:', result);
     return result;
@@ -4173,6 +4280,7 @@ pivotTable {
         activeClicked: false,
         defaultConnection: true,
         usedBy: '',
+        useForJasperReports: false,
       }];
 
     return this.settingsService.getDatabaseConnectionFiles();

@@ -109,6 +109,9 @@ export class SamplesTestHelper {
     if (sampleId.includes("SUPPLIER-SCORECARDS"))
       expectedBurstFileName = 'supplier_${burst_token}_scorecard.html';
 
+    if (sampleId.includes("ADHOC-EMPLOYEE-PROFILE"))
+      expectedBurstFileName = '${EmployeeID}-${FirstName}-${LastName}.pdf';
+
     ft = ft.waitOnInputToHaveValue(
       '#burstFileName',
       expectedBurstFileName,

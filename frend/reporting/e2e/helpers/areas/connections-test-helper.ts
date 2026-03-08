@@ -28,6 +28,12 @@ export const DB_VENDORS_DEFAULT = 'sqlite';
 export const DB_VENDORS_OLAP = ['duckdb', 'clickhouse'];
 
 // Helper to check if vendor is OLAP (has Star Schema)
+export const SEED_CAPABLE_VENDORS = ['oracle', 'sqlserver', 'ibmdb2', 'postgres', 'mysql', 'mariadb', 'supabase'];
+
+export function hasSeedCapability(vendor: string): boolean {
+  return SEED_CAPABLE_VENDORS.includes(vendor);
+}
+
 export function isOlapVendor(vendor: string): boolean {
   return DB_VENDORS_OLAP.includes(vendor.toLowerCase());
 }
@@ -888,13 +894,17 @@ export class ConnectionsTestHelper {
     ft: FluentTester,
     connectionFileName: string,
   ): FluentTester {
+    // The dropdown button is btnDefault_ (blue) for default connections
+    // or btnActions_ (grey) for non-default — click whichever is visible
+    const dropdownSelector = `#btnDefault_${connectionFileName}, #btnActions_${connectionFileName}`;
     return ft
       .gotoConnections()
       .clickAndSelectTableRow(`#${connectionFileName}`)
-      .waitOnElementToBecomeVisible(`#btnActions_${connectionFileName}`)
-      .click(`#btnActions_${connectionFileName}`)
+      .waitOnElementToBecomeVisible(dropdownSelector)
+      .click(dropdownSelector)
       .waitOnElementToBecomeVisible(`#btnUseForJasper_${connectionFileName}`)
       .click(`#btnUseForJasper_${connectionFileName}`)
+      .confirmDialogShouldBeVisible()
       .clickYesDoThis();
   }
 
@@ -1108,6 +1118,70 @@ export class ConnectionsTestHelper {
     }
 
     console.log('[ConnectionsTestHelper] docker compose down completed (blocking).');
+  }
+
+  /**
+   * Seeds N invoices into seed_inv_* tables, waits for completion,
+   * then wipes the data and waits for the seed button to reappear.
+   * Assumes the starter pack is already running and visible.
+   */
+  static seedAndWipeInvoices(
+    ft: FluentTester,
+    dbVendor: string,
+    invoiceCount: number = 100,
+    fullTimeout: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS,
+  ): FluentTester {
+    const packId = vendorToPackId(dbVendor);
+    const inputSel = `#seedInvoiceCount_${packId}`;
+    const seedBtnSel = `#btnSeedInvoices_${packId}`;
+    const wipeBtnSel = `#btnWipeInvoices_${packId}`;
+
+    // Already on starter packs page with vendor filtered (from setStarterPackStateForVendor)
+    // Wait for seed controls to be visible and enabled (pack running, not mid-operation)
+    ft = ft
+      .waitOnElementToBecomeVisible(inputSel)
+      .waitOnElementToBecomeEnabled(inputSel)
+      .setValue(inputSel, String(invoiceCount))
+      .consoleLog(`[SeedWipe] Set invoice count to ${invoiceCount} for ${packId}`)
+      .waitOnElementToBecomeVisible(seedBtnSel)
+      .waitOnElementToBecomeEnabled(seedBtnSel)
+      .click(seedBtnSel)
+      .confirmDialogShouldBeVisible()
+      .clickYesDoThis()
+      .consoleLog(`[SeedWipe] Clicked Seed for ${packId}`);
+
+    // Wait for Wipe button to appear (seed completed)
+    ft = ft
+      .waitOnElementToBecomeVisible(wipeBtnSel, fullTimeout)
+      .waitOnElementToBecomeEnabled(wipeBtnSel)
+      .consoleLog(`[SeedWipe] Seed complete — Wipe button visible for ${packId}`);
+
+    // Click Wipe
+    ft = ft
+      .click(wipeBtnSel)
+      .confirmDialogShouldBeVisible()
+      .clickYesDoThis()
+      .consoleLog(`[SeedWipe] Clicked Wipe for ${packId}`);
+
+    // Wait for Seed button to reappear (wipe completed)
+    ft = ft
+      .waitOnElementToBecomeVisible(seedBtnSel, fullTimeout)
+      .waitOnElementToBecomeEnabled(seedBtnSel)
+      .consoleLog(`[SeedWipe] Wipe complete — Seed button visible again for ${packId}`);
+
+    // Stop starter pack (already on the page, no navigation needed)
+    const stopBtnSel = `#btnStartStop_${packId}`;
+    ft = ft
+      .waitOnElementToBecomeEnabled(stopBtnSel)
+      .click(stopBtnSel)
+      .confirmDialogShouldBeVisible()
+      .clickYesDoThis()
+      .consoleLog(`[SeedWipe] Requested stop for ${packId}`);
+
+    ft = ConnectionsTestHelper._waitForStarterPackToBeInState(ft, packId, 'stopping', fullTimeout);
+    ft = ConnectionsTestHelper._waitForStarterPackToBeInState(ft, packId, 'stopped', fullTimeout);
+
+    return ft;
   }
 
 }

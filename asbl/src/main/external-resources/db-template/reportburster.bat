@@ -2,16 +2,18 @@
 cd /d "%~dp0"
 setlocal EnableDelayedExpansion
 
-:: Count arguments
+:: Count and save arguments using shift (preserves quoted values with spaces)
 set argCount=0
-for %%x in (%*) do set /A argCount+=1
-
-:: Save all arguments to variables
 set argIndex=0
-for %%x in (%*) do (
-    set /A argIndex+=1
-    set "ARG!argIndex!=%%~x"
-)
+
+:countArgs
+if "%~1"=="" goto doneCount
+set /A argIndex+=1
+set "ARG!argIndex!=%~1"
+shift
+goto countArgs
+:doneCount
+set argCount=%argIndex%
 
 :: Build logging string dynamically
 set "logLine=Arguments: "

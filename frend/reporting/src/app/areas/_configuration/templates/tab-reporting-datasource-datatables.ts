@@ -12,7 +12,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
       <div class="col-xs-2">
          {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE' | translate }}
       </div>
-        
+
       <div class="col-xs-5">
         <select
             id="dsTypes"

@@ -89,6 +89,8 @@
 
 		<lettuce.version>7.4.0.RELEASE</lettuce.version>
 
+		<datafaker.version>2.5.4</datafaker.version>
+
 		<!--DATABASE END -->
 
 		<dflib.version>2.0.0-M2</dflib.version>
@@ -101,7 +103,7 @@
 		wasted 
 			too much time. 3.2.1 is the last v3 released -->
 		<stringtemplate.version>3.2.1</stringtemplate.version>
-		<itext.version>2.1.7</itext.version>
+		<openpdf.version>1.3.43</openpdf.version>
 		<poi.version>5.2.3</poi.version>
 		<openxml4j.version>1.0-beta</openxml4j.version>
 		<!-- end upgraded -->
@@ -190,31 +192,9 @@
 			</dependency>
 
 			<dependency>
-				<groupId>com.lowagie</groupId>
-				<artifactId>itext</artifactId>
-				<version>${itext.version}</version>
-				<exclusions>
-					<exclusion>
-						<groupId>org.bouncycastle</groupId>
-						<artifactId>bcprov-jdk14</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>bouncycastle</groupId>
-						<artifactId>bcprov-jdk14</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>org.bouncycastle</groupId>
-						<artifactId>bcmail-jdk14</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>bouncycastle</groupId>
-						<artifactId>bcmail-jdk14</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>org.bouncycastle</groupId>
-						<artifactId>bctsp-jdk14</artifactId>
-					</exclusion>
-				</exclusions>
+				<groupId>com.github.librepdf</groupId>
+				<artifactId>openpdf</artifactId>
+				<version>${openpdf.version}</version>
 			</dependency>
 
 			<dependency>
@@ -458,6 +438,11 @@
 				<artifactId>lettuce-core</artifactId>
 				<version>${lettuce.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>net.datafaker</groupId>
+				<artifactId>datafaker</artifactId>
+				<version>${datafaker.version}</version>
+			</dependency>
 			<!--DATABASE END -->
 
 			<!-- Testcontainers Core 
@@ -640,6 +625,21 @@
 			<dependency>
 				<groupId>com.fasterxml.jackson.dataformat</groupId>
 				<artifactId>jackson-dataformat-xml</artifactId>
+				<version>${jackson.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-annotations</artifactId>
+				<version>${jackson.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.dataformat</groupId>
+				<artifactId>jackson-dataformat-yaml</artifactId>
+				<version>${jackson.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.module</groupId>
+				<artifactId>jackson-module-jaxb-annotations</artifactId>
 				<version>${jackson.version}</version>
 			</dependency>
 			<dependency>

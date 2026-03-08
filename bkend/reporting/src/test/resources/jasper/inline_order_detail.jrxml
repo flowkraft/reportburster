@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport name="inline_order_detail"
+    pageWidth="595" pageHeight="842" columnWidth="555"
+    leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+  <field name="OrderID" class="java.lang.String"/>
+  <field name="CustomerID" class="java.lang.String"/>
+  <field name="ProductName" class="java.lang.String"/>
+  <field name="Quantity" class="java.lang.Integer"/>
+  <detail>
+    <band height="20">
+      <element kind="textField" x="0" y="0" width="80" height="20">
+        <expression>$F{OrderID}</expression>
+      </element>
+      <element kind="textField" x="80" y="0" width="80" height="20">
+        <expression>$F{CustomerID}</expression>
+      </element>
+      <element kind="textField" x="160" y="0" width="250" height="20">
+        <expression>$F{ProductName}</expression>
+      </element>
+      <element kind="textField" x="410" y="0" width="145" height="20">
+        <expression>$F{Quantity}</expression>
+      </element>
+    </band>
+  </detail>
+</jasperReport>

@@ -698,36 +698,17 @@ export class ProcessingComponent implements OnInit {
             configFilePath = Utilities.slash(selectedReport.filePath);
           }
 
-          // JasperReports: spawn reportburster.bat jasper CLI command
+          // JasperReports from config/reports-jasper/ — route through the
+          // standard generate pipeline so output folders, variables, and
+          // lifecycle scripts are resolved by AbstractBurster.
           if (selectedReport.type === 'config-jasper-reports') {
-            const commandArgs: string[] = [
-              'jasper',
-              '--report-dir', `PORTABLE_EXECUTABLE_DIR_PATH/config/reports-jasper/${selectedReport.folderName}`,
-              '--jrxml', selectedReport.fileName,
-              '--format', 'pdf',
-              '--out', `PORTABLE_EXECUTABLE_DIR_PATH/output/${selectedReport.folderName}-output.pdf`,
-            ];
-
-            if (selectedReport.dbConnectionCode) {
-              commandArgs.push('--db-connection-code', selectedReport.dbConnectionCode);
+            configFilePath = Utilities.slash(selectedReport.filePath);
+            if (!configFilePath.includes('PORTABLE_EXECUTABLE_DIR_PATH')) {
+              configFilePath = Utilities.slash(configFilePath).replace(
+                '/config/',
+                'PORTABLE_EXECUTABLE_DIR_PATH/config/',
+              );
             }
-
-            if (
-              doesSelectedReportRequiresParameters &&
-              this.reportParamsValues &&
-              Object.keys(this.reportParamsValues).length > 0
-            ) {
-              for (const [key, value] of Object.entries(this.reportParamsValues)) {
-                commandArgs.push('-p', `"${key}=${value}"`);
-              }
-            }
-
-            this.shellService.runBatFile(
-              commandArgs,
-              selectedReport.fileName,
-            );
-            this.resetProcInfo();
-            return;
           }
 
           let inputFilePath = '';
@@ -777,8 +758,8 @@ export class ProcessingComponent implements OnInit {
             commandArgs.push(inputFilePath);
           }
           else {
-            if (selectedReport.dsInputType === 'ds.sqlquery' || selectedReport.dsInputType === 'ds.scriptfile') {
-              commandArgs.push(selectedReport.templateName);;
+            if (selectedReport.dsInputType === 'ds.sqlquery' || selectedReport.dsInputType === 'ds.scriptfile' || selectedReport.dsInputType === 'ds.jasper') {
+              commandArgs.push(selectedReport.templateName);
             }
           }
 

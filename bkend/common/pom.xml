@@ -144,6 +144,11 @@
 			<groupId>org.duckdb</groupId>
 			<artifactId>duckdb_jdbc</artifactId>
 		</dependency>
+		<!-- Datafaker: deterministic fake data generation for large-volume seed testing -->
+		<dependency>
+			<groupId>net.datafaker</groupId>
+			<artifactId>datafaker</artifactId>
+		</dependency>
 		<!--DATABASE END -->
 
 		<dependency>

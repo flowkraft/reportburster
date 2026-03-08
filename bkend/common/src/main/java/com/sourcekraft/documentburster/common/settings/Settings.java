@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.Unmarshaller;
@@ -255,6 +256,29 @@ public class Settings extends DumpToString {
 			reportingSettings = (ReportingSettings) ur.unmarshal(fis);
 		}
 
+		// For standalone JasperReports (pure .jrxml dropped into config/reports-jasper/):
+		// if conncode is empty, resolve the DB connection dynamically using the
+		// 3-tier datasource.properties priority:
+		//   1. Per-report override — config/reports-jasper/{report-folder}/datasource.properties
+		//   2. Global JasperReports override — config/reports-jasper/datasource.properties
+		//   3. ReportBurster's default DB connection (marked as "default" in Connections settings)
+		// This does NOT apply to inline/wrapper .jrxml templates (output type = jasper)
+		// which always use the parent report's DB connection from its own conncode.
+		if ("ds.jasper".equals(reportingSettings.report.datasource.type)
+				&& (Objects.isNull(reportingSettings.report.datasource.sqloptions)
+						|| Objects.isNull(reportingSettings.report.datasource.sqloptions.conncode)
+						|| StringUtils.isBlank(reportingSettings.report.datasource.sqloptions.conncode))) {
+
+			String resolvedConnCode = resolveJasperConnectionCode(configFolderPath);
+			if (resolvedConnCode != null) {
+				if (reportingSettings.report.datasource.sqloptions == null) {
+					reportingSettings.report.datasource.sqloptions = new ReportSettings.DataSource.SQLOptions();
+				}
+				reportingSettings.report.datasource.sqloptions.conncode = resolvedConnCode;
+				log.debug("Dynamically resolved DB connection for ds.jasper: {}", resolvedConnCode);
+			}
+		}
+
 		if (!Objects.isNull(reportingSettings.report.datasource.sqloptions)
 				&& !Objects.isNull(reportingSettings.report.datasource.sqloptions.conncode)) {
 
@@ -370,6 +394,73 @@ public class Settings extends DumpToString {
 			}
 
 		}
+	}
+
+	/**
+	 * Resolves DB connection code for standalone JasperReports (pure .jrxml in
+	 * config/reports-jasper/) using 3-tier priority:
+	 *   1. Per-report override — {report-folder}/datasource.properties
+	 *   2. Global JasperReports override — config/reports-jasper/datasource.properties
+	 *   3. ReportBurster's default DB connection (first db-* with default=true)
+	 * Does NOT apply to inline/wrapper .jrxml templates (output type = jasper)
+	 * which always use the parent report's DB connection.
+	 */
+	private String resolveJasperConnectionCode(String reportConfigFolderPath) {
+		try {
+			// 1. Per-report: datasource.properties in the report folder
+			File reportDsProps = new File(reportConfigFolderPath, "datasource.properties");
+			String code = readConnectionCodeFromProperties(reportDsProps);
+			if (code != null) return code;
+
+			// 2. Global: datasource.properties in config/reports-jasper/
+			Path parentDir = Paths.get(reportConfigFolderPath).getParent();
+			if (parentDir != null) {
+				File globalDsProps = new File(parentDir.toFile(), "datasource.properties");
+				code = readConnectionCodeFromProperties(globalDsProps);
+				if (code != null) return code;
+			}
+
+			// 3. Default: first db-* connection folder with <default>true</default>
+			String connectionsDir = PORTABLE_EXECUTABLE_DIR_PATH + "/config/connections";
+			File connDir = new File(connectionsDir);
+			if (connDir.exists() && connDir.isDirectory()) {
+				File[] dbFolders = connDir.listFiles(
+						(dir, name) -> new File(dir, name).isDirectory() && name.startsWith("db-"));
+				if (dbFolders != null) {
+					for (File dbFolder : dbFolders) {
+						File xmlFile = new File(dbFolder, dbFolder.getName() + ".xml");
+						if (xmlFile.exists()) {
+							String content = Files.readString(xmlFile.toPath());
+							if (content.contains("<default>true</default>")) {
+								// Extract the connection code from <code>...</code>
+								java.util.regex.Matcher m = java.util.regex.Pattern
+										.compile("<code>\\s*([^<]+?)\\s*</code>").matcher(content);
+								if (m.find()) return m.group(1);
+							}
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			log.warn("Failed to resolve jasper DB connection: {}", e.getMessage());
+		}
+		return null;
+	}
+
+	private String readConnectionCodeFromProperties(File propsFile) {
+		if (propsFile.exists()) {
+			try {
+				Properties props = new Properties();
+				try (FileInputStream fis = new FileInputStream(propsFile)) {
+					props.load(fis);
+				}
+				String code = props.getProperty("connectionCode");
+				if (code != null && !code.isBlank()) return code.trim();
+			} catch (Exception e) {
+				log.warn("Failed to read {}: {}", propsFile.getAbsolutePath(), e.getMessage());
+			}
+		}
+		return null;
 	}
 
 	public ReportingSettings loadSettingsReportingWithCode(String reportCode) throws Exception {

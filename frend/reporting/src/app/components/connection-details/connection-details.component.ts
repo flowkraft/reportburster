@@ -128,7 +128,6 @@ export class ConnectionDetailsComponent implements OnInit {
 
   isModalEmailConnectionVisible = false;
   isModalDbConnectionVisible = false;
-  useForJasperReports = false;
 
   showSchemaTreeSelect = false; // Flag to control visibility of the PickList section
 
@@ -351,8 +350,6 @@ export class ConnectionDetailsComponent implements OnInit {
         await this.saveConnectionDomainGroupedSchema();
         await this.saveConnectionErDiagram();
         await this.saveConnectionUbiquitousLanguage();
-        await this.saveJasperReportsDatasource();
-
         this.isModalDbConnectionVisible = false;
       } else {
         this.isModalEmailConnectionVisible = false;
@@ -362,28 +359,6 @@ export class ConnectionDetailsComponent implements OnInit {
     }
   }
 
-  private async saveJasperReportsDatasource(): Promise<void> {
-    const dsPropsPath = 'config/reports-jasper/datasource.properties';
-    const connectionCode = this.modalConnectionInfo.database.documentburster.connection.code;
-
-    if (this.useForJasperReports && connectionCode) {
-      await this.fsService.writeAsync(dsPropsPath, `connectionCode=${connectionCode}\n`);
-    } else {
-      // If unchecked, remove the file only if it currently points to this connection
-      try {
-        const exists = await this.fsService.existsAsync(dsPropsPath);
-        if (exists) {
-          const content = await this.fsService.readAsync(dsPropsPath);
-          const match = content?.match(/connectionCode\s*=\s*(.+)/);
-          if (match && match[1]?.trim() === connectionCode) {
-            await this.fsService.removeAsync(dsPropsPath);
-          }
-        }
-      } catch (e) {
-        // Ignore — file may not exist
-      }
-    }
-  }
 
   onModalClose() {
     this.isModalEmailConnectionVisible = false;
@@ -1058,6 +1033,7 @@ export class ConnectionDetailsComponent implements OnInit {
             : this.modalConnectionInfo.email.documentburster.connection
               .defaultConnection,
           usedBy: '--not used--',
+          useForJasperReports: false,
         };
 
         // Add connection-specific properties
@@ -1795,21 +1771,6 @@ export class ConnectionDetailsComponent implements OnInit {
           ...selectedConnection.dbserver, // use correct property
         };
 
-        // Check if this connection is used for JasperReports
-        this.useForJasperReports = false;
-        try {
-          const dsPropsPath = 'config/reports-jasper/datasource.properties';
-          const exists = await this.fsService.existsAsync(dsPropsPath);
-          if (exists) {
-            const content = await this.fsService.readAsync(dsPropsPath);
-            const match = content?.match(/connectionCode\s*=\s*(.+)/);
-            if (match && match[1]?.trim() === selectedConnection.connectionCode) {
-              this.useForJasperReports = true;
-            }
-          }
-        } catch (e) {
-          // Ignore — file may not exist
-        }
 
         // Trigger schema load for update
         if (crudMode == 'update') {
@@ -1838,7 +1799,6 @@ export class ConnectionDetailsComponent implements OnInit {
         }
       } else {
         // Create mode
-        this.useForJasperReports = false;
         this.modalConnectionInfo.database.documentburster.connection.defaultConnection =
           false;
         this.modalConnectionInfo.database.documentburster.connection.databaseserver =

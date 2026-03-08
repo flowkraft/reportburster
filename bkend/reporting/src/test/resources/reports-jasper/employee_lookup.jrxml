@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport name="employee_lookup"
+    pageWidth="595" pageHeight="842" columnWidth="555"
+    leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+  <parameter name="EmployeeID" class="java.lang.String"/>
+  <query language="SQL"><![CDATA[
+    SELECT "FirstName", "LastName", "Title"
+    FROM "Employees"
+    WHERE CAST("EmployeeID" AS VARCHAR) = $P{EmployeeID}
+  ]]></query>
+  <field name="FirstName" class="java.lang.String"/>
+  <field name="LastName" class="java.lang.String"/>
+  <field name="Title" class="java.lang.String"/>
+  <detail>
+    <band height="20">
+      <element kind="textField" x="0" y="0" width="200" height="20">
+        <expression>$F{FirstName} + " " + $F{LastName}</expression>
+      </element>
+      <element kind="textField" x="200" y="0" width="355" height="20">
+        <expression>$F{Title}</expression>
+      </element>
+    </band>
+  </detail>
+</jasperReport>

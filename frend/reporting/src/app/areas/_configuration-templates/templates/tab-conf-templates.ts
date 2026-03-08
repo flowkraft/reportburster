@@ -40,7 +40,7 @@ export const tabConfigurationTemplatesTemplate = `<ng-template #tabConfTemplates
                 <span *ngIf="configurationFile.isFallback">
                   <strong> (fallback)</strong>
                 </span>
-                <span *ngIf="configurationFile.type=='config-jasper-reports'" class="label label-info" style="margin-left: 5px;">
+                <span *ngIf="configurationFile.type=='config-jasper-reports'" class="label" style="margin-left: 5px; background-color: #8fbcd4; color: #fff;">
                   <i class="fa fa-diamond"></i> Jasper
                 </span>
               </td>

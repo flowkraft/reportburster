@@ -954,6 +954,70 @@ public class NoExeAssembler extends AbstractAssembler {
 		// write adapted script
 		FileUtils.writeStringToFile(destSupplierScript, content, "UTF-8");
 
+		// =========================
+		// 18. Ad-hoc Employee Profile - ScriptedReporter -> FOP2PDF (no database, user provided data)
+		// =========================
+		String adhocSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/g-scr2pdf-adhoc";
+		String adhocSettingsFilePath = adhocSampleDir + "/settings.xml";
+		String adhocReportingFilePath = adhocSampleDir + "/reporting.xml";
+
+		// copy base settings and tweak for this sample
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(adhocSettingsFilePath));
+		content = FileUtils.readFileToString(new File(adhocSettingsFilePath), "UTF-8");
+
+		// friendly template name
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+				"<template>AdhocEmployeeProfile</template>");
+
+		// burst filename uses parameter values
+		content = content.replaceAll(
+				"(?s)<burstfilename>\\s*\\$\\{burst_token\\}\\.\\$\\{output_type_extension\\}\\s*</burstfilename>",
+				Matcher.quoteReplacement(
+						"<burstfilename>${EmployeeID}-${FirstName}-${LastName}.pdf</burstfilename>"));
+
+		// no distribution, enable mailmerge
+		content = content.replaceAll(
+				"(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replaceAll(
+				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+
+		FileUtils.writeStringToFile(new File(adhocSettingsFilePath), content, "UTF-8");
+
+		// prepare reporting.xml (defaults -> override for script datasource + FOP output)
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(adhocReportingFilePath));
+
+		content = FileUtils.readFileToString(new File(adhocReportingFilePath), "UTF-8");
+
+		// datasource -> ds.scriptfile
+		content = content.replaceAll("(?si)<type\\s*>\\s*ds\\.csvfile\\s*</type>", "<type>ds.scriptfile</type>");
+
+		// NO conncode - ad-hoc sample has no database connection (leave empty)
+
+		// set script name
+		content = content.replaceAll("(?s)<scriptname\\s*/>|<scriptname>\\s*</scriptname>",
+				"<scriptname>g-scr2pdf-adhoc-script.groovy</scriptname>");
+
+		// set params spec script name
+		content = content.replaceAll("(?s)<scriptnameparamsspec\\s*/>|<scriptnameparamsspec>\\s*</scriptnameparamsspec>",
+				"<scriptnameparamsspec>g-scr2pdf-adhoc-report-parameters-spec.groovy</scriptnameparamsspec>");
+
+		// idcolumn not used (single ad-hoc row, no real burst token column)
+		content = content.replaceAll("(?s)<idcolumn\\s*/>|<idcolumn>\\s*[^<]*\\s*</idcolumn>",
+				"<idcolumn>notused</idcolumn>");
+
+		// output -> fop2pdf
+		content = content.replaceAll("(?s)output\\.none", "output.fop2pdf");
+
+		// document path -> XSL-FO template (full path from app root, config folder)
+		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
+				"<documentpath>config/samples/g-scr2pdf-adhoc/g-scr2pdf-adhoc-template.xsl</documentpath>");
+
+		FileUtils.writeStringToFile(new File(adhocReportingFilePath), content, "UTF-8");
+
 		// SAMPLES END
 
 		// FREND SAMPLES START

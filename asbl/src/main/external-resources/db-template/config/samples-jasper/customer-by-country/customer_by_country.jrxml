@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
-              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
-                                  http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
-              name="customer_by_country"
+<jasperReport name="customer_by_country"
               pageWidth="595" pageHeight="842" columnWidth="515"
               leftMargin="40" rightMargin="40" topMargin="50" bottomMargin="50">
 
@@ -11,14 +7,10 @@
         <defaultValueExpression><![CDATA["Germany"]]></defaultValueExpression>
     </parameter>
 
-    <parameter name="REPORT_CONNECTION" class="java.sql.Connection" isForPrompting="false"/>
-
-    <queryString>
-        <![CDATA[SELECT "CustomerID", "CompanyName", "ContactName", "City", "Country"
+    <query language="SQL"><![CDATA[SELECT "CustomerID", "CompanyName", "ContactName", "City", "Country"
 FROM "Customers"
 WHERE "Country" = $P{country}
-ORDER BY "CompanyName"]]>
-    </queryString>
+ORDER BY "CompanyName"]]></query>
 
     <field name="CustomerID" class="java.lang.String"/>
     <field name="CompanyName" class="java.lang.String"/>
@@ -26,109 +18,59 @@ ORDER BY "CompanyName"]]>
     <field name="City" class="java.lang.String"/>
     <field name="Country" class="java.lang.String"/>
 
-    <title>
-        <band height="55">
-            <staticText>
-                <reportElement x="0" y="0" width="515" height="30"/>
-                <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="16" isBold="true"/>
-                </textElement>
-                <text><![CDATA[Customers by Country]]></text>
-            </staticText>
-            <textField>
-                <reportElement x="0" y="32" width="515" height="20"/>
-                <textElement textAlignment="Center">
-                    <font size="11" isItalic="true"/>
-                </textElement>
-                <textFieldExpression><![CDATA["Country: " + $P{country}]]></textFieldExpression>
-            </textField>
-        </band>
+    <title height="55">
+        <element kind="staticText" x="0" y="0" width="515" height="30" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+            <text><![CDATA[Customers by Country]]></text>
+        </element>
+        <element kind="textField" x="0" y="32" width="515" height="20" fontSize="11.0" italic="true" hTextAlign="Center">
+            <expression><![CDATA["Country: " + $P{country}]]></expression>
+        </element>
     </title>
 
-    <columnHeader>
-        <band height="25">
-            <staticText>
-                <reportElement x="0" y="0" width="80" height="25" mode="Opaque" backcolor="#E0E0E0"/>
-                <box><pen lineWidth="0.5"/></box>
-                <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="9" isBold="true"/>
-                </textElement>
-                <text><![CDATA[Customer ID]]></text>
-            </staticText>
-            <staticText>
-                <reportElement x="80" y="0" width="170" height="25" mode="Opaque" backcolor="#E0E0E0"/>
-                <box><pen lineWidth="0.5"/></box>
-                <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="9" isBold="true"/>
-                </textElement>
-                <text><![CDATA[Company Name]]></text>
-            </staticText>
-            <staticText>
-                <reportElement x="250" y="0" width="140" height="25" mode="Opaque" backcolor="#E0E0E0"/>
-                <box><pen lineWidth="0.5"/></box>
-                <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="9" isBold="true"/>
-                </textElement>
-                <text><![CDATA[Contact Name]]></text>
-            </staticText>
-            <staticText>
-                <reportElement x="390" y="0" width="125" height="25" mode="Opaque" backcolor="#E0E0E0"/>
-                <box><pen lineWidth="0.5"/></box>
-                <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="9" isBold="true"/>
-                </textElement>
-                <text><![CDATA[City]]></text>
-            </staticText>
-        </band>
+    <columnHeader height="25">
+        <element kind="staticText" x="0" y="0" width="80" height="25" mode="Opaque" backcolor="#E0E0E0" fontSize="9.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+            <box><pen lineWidth="0.5"/></box>
+            <text><![CDATA[Customer ID]]></text>
+        </element>
+        <element kind="staticText" x="80" y="0" width="170" height="25" mode="Opaque" backcolor="#E0E0E0" fontSize="9.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+            <box><pen lineWidth="0.5"/></box>
+            <text><![CDATA[Company Name]]></text>
+        </element>
+        <element kind="staticText" x="250" y="0" width="140" height="25" mode="Opaque" backcolor="#E0E0E0" fontSize="9.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+            <box><pen lineWidth="0.5"/></box>
+            <text><![CDATA[Contact Name]]></text>
+        </element>
+        <element kind="staticText" x="390" y="0" width="125" height="25" mode="Opaque" backcolor="#E0E0E0" fontSize="9.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+            <box><pen lineWidth="0.5"/></box>
+            <text><![CDATA[City]]></text>
+        </element>
     </columnHeader>
 
     <detail>
         <band height="20">
-            <textField>
-                <reportElement x="0" y="0" width="80" height="20"/>
+            <element kind="textField" x="0" y="0" width="80" height="20" fontSize="8.0" hTextAlign="Center" vTextAlign="Middle">
                 <box><pen lineWidth="0.25"/></box>
-                <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="8"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$F{CustomerID}]]></textFieldExpression>
-            </textField>
-            <textField>
-                <reportElement x="80" y="0" width="170" height="20"/>
+                <expression><![CDATA[$F{CustomerID}]]></expression>
+            </element>
+            <element kind="textField" x="80" y="0" width="170" height="20" fontSize="8.0" vTextAlign="Middle">
                 <box leftPadding="4"><pen lineWidth="0.25"/></box>
-                <textElement verticalAlignment="Middle">
-                    <font size="8"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$F{CompanyName}]]></textFieldExpression>
-            </textField>
-            <textField>
-                <reportElement x="250" y="0" width="140" height="20"/>
+                <expression><![CDATA[$F{CompanyName}]]></expression>
+            </element>
+            <element kind="textField" x="250" y="0" width="140" height="20" fontSize="8.0" vTextAlign="Middle">
                 <box leftPadding="4"><pen lineWidth="0.25"/></box>
-                <textElement verticalAlignment="Middle">
-                    <font size="8"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$F{ContactName}]]></textFieldExpression>
-            </textField>
-            <textField>
-                <reportElement x="390" y="0" width="125" height="20"/>
+                <expression><![CDATA[$F{ContactName}]]></expression>
+            </element>
+            <element kind="textField" x="390" y="0" width="125" height="20" fontSize="8.0" vTextAlign="Middle">
                 <box leftPadding="4"><pen lineWidth="0.25"/></box>
-                <textElement verticalAlignment="Middle">
-                    <font size="8"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$F{City}]]></textFieldExpression>
-            </textField>
+                <expression><![CDATA[$F{City}]]></expression>
+            </element>
         </band>
     </detail>
 
-    <summary>
-        <band height="30">
-            <textField>
-                <reportElement x="0" y="10" width="515" height="20"/>
-                <textElement textAlignment="Right">
-                    <font size="9" isItalic="true"/>
-                </textElement>
-                <textFieldExpression><![CDATA["Total customers: " + $V{REPORT_COUNT}]]></textFieldExpression>
-            </textField>
-        </band>
+    <summary height="30">
+        <element kind="textField" x="0" y="10" width="515" height="20" fontSize="9.0" italic="true" hTextAlign="Right">
+            <expression><![CDATA["Total customers: " + $V{REPORT_COUNT}]]></expression>
+        </element>
     </summary>
 
 </jasperReport>

@@ -242,10 +242,10 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
     // If any app is already in a transitional state (starting/stopping), start polling
     // This handles the case where user navigates away and back while an app is still starting
     const hasTransitionalApps = PollingHelper.hasTransitionalItems(this.masterApps);
-    console.log('loadInitialApps complete. Apps states:', this.masterApps.map(a => ({ id: a.id, state: a.state })));
-    console.log('hasTransitionalApps:', hasTransitionalApps);
+    console.debug('loadInitialApps complete. Apps states:', this.masterApps.map(a => ({ id: a.id, state: a.state })));
+    console.debug('hasTransitionalApps:', hasTransitionalApps);
     if (hasTransitionalApps) {
-      console.log('Starting transition polling...');
+      console.debug('Starting transition polling...');
       this.startTransitionPolling();
     }
   }

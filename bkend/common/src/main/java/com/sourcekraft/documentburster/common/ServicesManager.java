@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.sourcekraft.documentburster.utils.Utils;
 
+import com.sourcekraft.documentburster.common.db.northwind.InvoiceSeedGenerator;
 import com.sourcekraft.documentburster.common.db.northwind.NorthwindManager;
 import com.sourcekraft.documentburster.common.db.northwind.NorthwindManager.DatabaseVendor;
 
@@ -60,6 +61,9 @@ public class ServicesManager {
 	private static final String CMD_LIST = "list";
 	private static final String CMD_INFO = "info";
 	private static final String CMD_QUERY = "query"; // Keep Northwind query capability
+	private static final String CMD_SEED_INVOICES = "seed-invoices";
+	private static final String CMD_WIPE_INVOICES = "wipe-invoices";
+	private static final String CMD_CHECK_SEED_INVOICES = "check-seed-invoices";
 
 	// Programmatic API: Result and execute() entrypoint
 	public static class Result {
@@ -115,6 +119,22 @@ public class ServicesManager {
 						String out = captureOutput(() -> handleNorthwindQuery(managerArgsString));
 						String status = out.toLowerCase().contains("error") ? "error" : "ok";
 						return new Result(status, out);
+					}
+					case CMD_SEED_INVOICES: {
+						String out = captureOutput(() -> handleNorthwindSeedInvoices(managerArgsString));
+						String status = out.toLowerCase().contains("completed") ? "ok"
+								: (out.toLowerCase().contains("error") ? "error" : "ok");
+						return new Result(status, out);
+					}
+					case CMD_WIPE_INVOICES: {
+						String out = captureOutput(() -> handleNorthwindWipeInvoices(managerArgsString));
+						String status = out.toLowerCase().contains("completed") ? "ok"
+								: (out.toLowerCase().contains("error") ? "error" : "ok");
+						return new Result(status, out);
+					}
+					case CMD_CHECK_SEED_INVOICES: {
+						String out = captureOutput(() -> handleNorthwindCheckSeedInvoices(managerArgsString));
+						return new Result("ok", out);
 					}
 					default:
 						return new Result("error", "Unknown database command: " + subCmd);
@@ -226,6 +246,48 @@ public class ServicesManager {
 		String vendorName = managerArgsString.split("\\s+")[0].toUpperCase();
 		DatabaseVendor vendor = DatabaseVendor.valueOf(vendorName);
 		dbManager.stopDatabase(vendor); // Call manager
+	}
+
+	/**
+	 * Handle 'database seed-invoices northwind <vendor> <N>'.
+	 * Seeds N invoices (master-detail) into seed_inv_* tables using Datafaker.
+	 */
+	private static void handleNorthwindSeedInvoices(String managerArgsString) throws Exception {
+		String[] parts = managerArgsString.split("\\s+");
+		String vendorName = parts[0].toUpperCase();
+		int invoiceCount = parts.length > 1 ? Integer.parseInt(parts[1]) : 10000;
+
+		DatabaseVendor vendor = DatabaseVendor.valueOf(vendorName);
+		try (java.sql.Connection conn = dbManager.getConnection(vendor)) {
+			InvoiceSeedGenerator.seedInvoices(conn, vendor, invoiceCount);
+		}
+	}
+
+	/**
+	 * Handle 'database wipe-invoices northwind <vendor>'.
+	 * Wipes all data from seed_inv_* tables (does NOT touch Northwind tables).
+	 */
+	private static void handleNorthwindWipeInvoices(String managerArgsString) throws Exception {
+		String vendorName = managerArgsString.split("\\s+")[0].toUpperCase();
+
+		DatabaseVendor vendor = DatabaseVendor.valueOf(vendorName);
+		try (java.sql.Connection conn = dbManager.getConnection(vendor)) {
+			InvoiceSeedGenerator.wipeInvoices(conn, vendor);
+		}
+	}
+
+	/**
+	 * Handle 'database check-seed-invoices northwind <vendor>'.
+	 * Fast check: returns "seeded" if seed_inv_invoice has data, "empty" otherwise.
+	 */
+	private static void handleNorthwindCheckSeedInvoices(String managerArgsString) throws Exception {
+		String vendorName = managerArgsString.split("\\s+")[0].toUpperCase();
+
+		DatabaseVendor vendor = DatabaseVendor.valueOf(vendorName);
+		try (java.sql.Connection conn = dbManager.getConnection(vendor)) {
+			boolean hasData = InvoiceSeedGenerator.checkSeedStatus(conn, vendor);
+			System.out.println(hasData ? "seeded" : "empty");
+		}
 	}
 
 	/**
