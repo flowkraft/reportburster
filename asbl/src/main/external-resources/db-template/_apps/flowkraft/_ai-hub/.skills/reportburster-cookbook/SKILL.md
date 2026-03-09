@@ -35,6 +35,12 @@ in your own response.
 
 These are the configuration files behind the same samples users can run interactively in the ReportBurster app via **Processing → Samples - Try All** (each sample has a "Try It" button). Samples covering report splitting and generation from various data sources. The `g-*` prefixed ones are report generation samples — the naming pattern encodes `g-{source}2{output}`, e.g. `g-csv2pdf` (CSV → PDF), `g-sql2htm-cst-stmt` (SQL → HTML customer statement), `g-scr2htm-cross` (Groovy script → HTML cross-tab). The remaining ones (`split-only`, `split-two-times`) demonstrate pure document splitting. Browse the folder and read the relevant sample when needed.
 
+### JasperReports Samples (config/samples-jasper/)
+
+Ready-to-run `.jrxml` report templates: `customer-by-country`, `employee-detail`, `employee-roster`. Each folder contains the `.jrxml` file (and any resources). These appear automatically in the UI with a Jasper badge. Browse the folder and read the `.jrxml` files when needed.
+
+Docs: [JasperReports](https://www.reportburster.com/docs/report-generation/jasperreports)
+
 ### BI & Analytics Samples (config/samples/_frend/)
 
 Groovy DSL configuration examples for the `rb-*` web components: dashboards, `rb-chart` (charts), `rb-tabulator` (data tables), `rb-pivot-table` (pivot tables), `rb-parameters` (report parameters), and `rb-report` (reports). Each sample folder's name describes what it configures — study the naming conventions to quickly find what you need. Browse the folder and read the relevant sample when needed.

@@ -66,8 +66,9 @@ public class SqlReporter extends AbstractReporter {
 			throw new IllegalArgumentException("SQL query (sqlquery) cannot be empty for SQL data source.");
 		}
 
-		// In test mode, wrap the SQL as a subquery with a DB-specific LIMIT to stop scanning early.
-		// Wrapping as a subquery avoids conflicts with existing LIMIT/FETCH/TOP/ROWNUM in the user's query.
+		// In test mode, append a DB-specific LIMIT clause to stop scanning early.
+		// Appended directly (not as subquery) to avoid breaking parameter markers in CAST/TO_DATE.
+		// If the user's query already has a LIMIT/FETCH/TOP/ROWNUM clause, trust it as-is.
 		if (this.testMode) {
 			ServerDatabaseSettings dbs = ctx.dbManager.getServerDatabaseSettings(connectionCode);
 			String dbType = (dbs != null && dbs.type != null) ? dbs.type.toLowerCase() : "";
@@ -76,26 +77,38 @@ public class SqlReporter extends AbstractReporter {
 			while (trimmed.endsWith(";")) {
 				trimmed = trimmed.substring(0, trimmed.length() - 1).trim();
 			}
-			switch (dbType) {
-				case "oracle":
-					sqlQuery = "SELECT * FROM (" + trimmed + ") WHERE ROWNUM <= 100";
-					break;
-				case "sqlserver":
-					if (trimmed.toUpperCase().contains("ORDER BY")) {
-						sqlQuery = trimmed + " OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY";
-					} else {
-						sqlQuery = trimmed + " ORDER BY (SELECT NULL) OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY";
-					}
-					break;
-				case "ibmdb2":
-				case "db2":
-					sqlQuery = "SELECT * FROM (" + trimmed + ") AS _testmode_t FETCH FIRST 100 ROWS ONLY";
-					break;
-				default: // postgres, mysql, mariadb, sqlite, duckdb, clickhouse, supabase
-					sqlQuery = "SELECT * FROM (" + trimmed + ") AS _testmode_t LIMIT 100";
-					break;
+			String upper = trimmed.toUpperCase();
+			boolean hasLimit = upper.contains("LIMIT ") || upper.contains("FETCH FIRST")
+					|| upper.contains("FETCH NEXT") || upper.contains("ROWNUM")
+					|| upper.matches("(?s).*\\bTOP\\s+\\d+\\b.*");
+
+			if (!hasLimit) {
+				boolean hasOrderBy = upper.contains("ORDER BY");
+				switch (dbType) {
+					case "oracle":
+						// Oracle 12c+ supports FETCH FIRST syntax.
+						sqlQuery = hasOrderBy ? trimmed + " FETCH FIRST 100 ROWS ONLY"
+								: trimmed + " ORDER BY 1 FETCH FIRST 100 ROWS ONLY";
+						break;
+					case "sqlserver":
+						sqlQuery = hasOrderBy
+								? trimmed + " OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY"
+								: trimmed + " ORDER BY (SELECT NULL) OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY";
+						break;
+					case "ibmdb2":
+					case "db2":
+						sqlQuery = hasOrderBy ? trimmed + " FETCH FIRST 100 ROWS ONLY"
+								: trimmed + " ORDER BY 1 FETCH FIRST 100 ROWS ONLY";
+						break;
+					default: // postgres, mysql, mariadb, sqlite, duckdb, clickhouse, supabase
+						sqlQuery = trimmed + " LIMIT 100";
+						break;
+				}
+				log.info("Test mode: added LIMIT for dbType={}: {}", dbType, sqlQuery);
+			} else {
+				sqlQuery = trimmed;
+				log.info("Test mode: user query already has a limit clause, trusting as-is for dbType={}", dbType);
 			}
-			log.info("Test mode: wrapped SQL for dbType={}: {}", dbType, sqlQuery);
 		}
 
 		// Get JDBI instance and execute query

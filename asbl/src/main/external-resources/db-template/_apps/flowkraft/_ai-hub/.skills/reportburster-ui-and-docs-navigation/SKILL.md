@@ -147,7 +147,7 @@ Header: "CONFIGURATION" + (currently loaded template name)
      ├── Reporting
      │   Configure report generation settings: data source (SQL query,
      │   script, CSV, Excel, XML), output template (HTML, FreeMarker,
-     │   FOP), and output format (PDF, Excel, etc.).
+     │   FOP, JasperReports), and output format (PDF, Excel, etc.).
      │   Configure Data Tables (rb-tabulator), Charts (rb-chart), and
      │   Pivot Tables (rb-pivot-table) — define their data sources,
      │   appearance, and behavior through DSL configurations.
@@ -155,6 +155,7 @@ Header: "CONFIGURATION" + (currently loaded template name)
      │   Docs: /docs/report-generation
      │         /docs/report-generation#supported-data-sources
      │         /docs/report-generation#output-formats
+     │         /docs/report-generation/jasperreports
      │         /docs/bi-analytics/web-components/datatables
      │         /docs/bi-analytics/web-components/charts
      │         /docs/bi-analytics/web-components/pivottables
@@ -320,8 +321,14 @@ For complete reference, the documentation is organized as follows:
     /docs/data-exploration/chat2db-ai . Chat2DB AI
 
   Report Generation
-    /docs/report-generation ........... Overview, Data Sources, Formats
-    /docs/report-generation/ai-powered-reporting .. AI-Powered
+    /docs/report-generation ........... Overview
+    /docs/report-generation#supported-data-sources .. Data Sources
+    /docs/report-generation#output-formats .. Output Formats
+    /docs/report-generation#report-parameters .. Report Parameters
+    /docs/report-generation#report-templates-examples-gallery .. Samples & Walkthroughs
+    /docs/report-generation/ai-powered-reporting .. AI-Powered Reporting
+    /docs/report-generation/jasperreports .. JasperReports
+    /docs/report-generation/large-scale .. Large-Scale Report Generation
 
   Document Portal
     /docs/document-portal ............. Overview

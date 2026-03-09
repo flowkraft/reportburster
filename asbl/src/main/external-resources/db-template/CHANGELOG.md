@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.2.0 - 2026-03-09
+
+### Added
+
+- **JasperReports Integration** — Full JasperReports (.jrxml) support as a built-in output type. Supports parameters, subreports, database connections, and all JasperReports export formats (PDF, Excel, CSV, HTML). Includes sample reports (Customer by Country, Employee Detail, Employee Roster).
+
+- **Migrate Existing JasperReports in Seconds** — Already have `.jrxml` templates from Jaspersoft Studio, JasperReports Server, or a legacy system? Drop them into `config/reports-jasper/` and they run immediately. No rewriting, no conversion, no migration project — your existing reports work as-is.
+
+- **Inline JasperReports** — Write .jrxml code directly in the configuration UI without creating external files. Select "JasperReports (.jrxml)" as the output type, choose "Write .jrxml code inline", and edit the report template in the built-in code editor.
+
+- **Ad-hoc Reports from Form Parameters** — Generate reports using only user-provided parameter values — no database or file datasource needed. New sample `g-scr2pdf-adhoc` demonstrates building a report (e.g., employee badge card) entirely from form input.
+
+- **Invoice Data Seeding for Load Testing** — Seed large amounts of invoice data (100 to 1,000,000+ rows) directly from the Starter Packs UI, generate reports against it, and measure actual throughput on your hardware. One-click "Wipe" to clean up without affecting sample data.
+
+- **ReportBurster Cookbook AI Skill** — New AI skill providing a catalog of working examples, sample configurations, Groovy scripts, and report templates as reference material.
+
+- **UI & Docs Navigation AI Skill** — New AI skill for navigating ReportBurster's UI screens and documentation.
+
+### Changed
+
+- **Guided Development Workflow — Phase 0 Project Setup** — The guided development AI skill now includes a Phase 0 that walks users through backing up the original playground, building on it, and cleaning up sample files only after custom features are working.
+
+- **Test SQL Query — Improved compatibility** — Test SQL Query no longer wraps queries as subqueries, fixing compatibility issues with DB2 `CAST()` parameters and Oracle derived tables. All database engines now use direct `LIMIT`/`FETCH FIRST`/`OFFSET-FETCH` append instead. Also added automatic detection of user-provided limits to avoid double-limiting.
+
+- **Updated AI Crew Knowledge** — Athena agent knowledge updated to cover JasperReports capabilities and new configuration options.
+
 ## 14.1.0 - 2026-03-02
 
 ### Added
