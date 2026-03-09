@@ -50,6 +50,7 @@ What the generated report looks like:
 |--------|---------------|----------|
 | **PDF** | HTML/CSS → PDF | Invoices, statements, professional documents |
 | **PDF (XSL-FO)** | FOP templates | High-quality paginated output |
+| **JasperReports (.jrxml)** | .jrxml templates | Pixel-perfect PDF, Excel, CSV, HTML — complex layouts, charts, subreports, barcodes |
 | **Excel (xlsx)** | HTML with tables | Financial reports, editable data |
 | **HTML** | HTML/CSS | Web dashboards, online reports |
 | **Word (docx)** | DOCX with merge fields | Contracts, letters, editable docs |
@@ -73,6 +74,12 @@ External inspiration: Microsoft Create Templates, Adobe Color Explore for color 
 ---
 
 ## Advanced Features
+
+### JasperReports
+First-class output type — select **JasperReport (.jrxml)** from the output dropdown. Two execution modes: **Direct** (one report, one output) and **Wrapper** (data source drives mass generation). Existing `.jrxml` files can be dropped into `config/reports-jasper/` for instant use. For details on templates, execution modes, and migration, fetch the JasperReports docs.
+
+### Large-Scale Report Generation
+Built-in data seeding tool in Starter Packs lets users seed 1,000 to 1,000,000+ records, generate reports, and measure actual throughput on their hardware. For the full workflow, fetch the Large-Scale docs.
 
 ### Report Parameters
 Runtime prompts for user input (date ranges, IDs, categories). Makes reports interactive and reusable.
@@ -151,15 +158,19 @@ To help users effectively, I read whatever I need:
 - Forgetting to set ID column for bursting after generation
 - Template HTML not following Excel-specific rules (for xlsx output)
 - Missing database connection setup before configuring data source
+- JasperReports: output file extension (`.pdf`, `.xlsx`) determines the export format
+- JasperReports Wrapper mode: data source column names must match `.jrxml` parameter names
 
 ---
 
-## Documentation Link
+## Documentation Links
 
 - **Report Generation**: https://www.reportburster.com/docs/report-generation
 - **AI-Powered Reporting**: https://www.reportburster.com/docs/report-generation/ai-powered-reporting
+- **JasperReports**: https://www.reportburster.com/docs/report-generation/jasperreports
+- **Large-Scale Report Generation**: https://www.reportburster.com/docs/report-generation/large-scale
 
-When I need specifics on template syntax, FOP configuration, or advanced Groovy patterns, I fetch this documentation.
+When I need specifics on template syntax, FOP configuration, JasperReports execution modes, or advanced Groovy patterns, I fetch this documentation.
 
 ---
 

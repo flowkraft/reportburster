@@ -7,25 +7,26 @@ import grails.gorm.transactions.Transactional
 class BootStrap {
 
     def init = { servletContext ->
-        // Check if data already exists
-        if (Invoice.count() > 0 || Payslip.count() > 0) {
-            log.info "Sample data already exists, skipping initialization"
-            return
-        }
+        log.info "Checking sample data..."
 
-        log.info "Initializing sample data..."
-
-        // Wrap in transaction for GORM operations
+        // Seed each entity type independently so orphan E2E records
+        // from previous test runs don't prevent re-seeding
         Setting.withTransaction {
-            createDefaultSettings()
+            if (Setting.count() == 0) {
+                createDefaultSettings()
+            }
         }
-        
+
         Invoice.withTransaction {
-            createSampleInvoices()
+            if (Invoice.count() < 10) {
+                createSampleInvoices()
+            }
         }
-        
+
         Payslip.withTransaction {
-            createSamplePayslips()
+            if (Payslip.count() < 10) {
+                createSamplePayslips()
+            }
         }
 
         log.info "Sample data initialization complete"
@@ -146,12 +147,8 @@ class BootStrap {
                 periodStart + 30.days
             }
 
-            def basicSalary = 4000.0 + random.nextInt(4000)
-            def allowances = basicSalary * 0.15
-            def grossAmount = basicSalary + allowances
-            
-            def taxAmount = grossAmount * 0.20
-            def deductions = taxAmount + (random.nextInt(100) + 50)
+            def grossAmount = 4000.0 + random.nextInt(4000)
+            def deductions = grossAmount * 0.20 + (random.nextInt(100) + 50)
             def netAmount = grossAmount - deductions
 
             def payslip = new Payslip(
@@ -162,15 +159,11 @@ class BootStrap {
                 department: employee.dept,
                 payPeriodStart: periodStart,
                 payPeriodEnd: periodEnd,
-                basicSalary: basicSalary,
-                allowances: allowances,
                 grossAmount: grossAmount,
-                taxAmount: taxAmount,
                 deductions: deductions,
                 netAmount: netAmount,
                 currency: "USD",
-                status: status,
-                notes: i % 2 == 0 ? "Regular monthly payslip" : null
+                status: status
             )
 
             payslip.save(flush: true, failOnError: true)

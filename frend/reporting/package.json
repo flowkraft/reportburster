@@ -3,7 +3,7 @@
   "productName": "ReportBurster",
   "license": "SSPL-1.0",
   "description": "Server Side Public License (SSPL) - Desktop and Server versions. SSPL terms apply upon distribution or service provision.",
-  "version": "14.1.0",
+  "version": "14.2.0",
   "copyright": "2026, FlowKraft Systems & Consulting Ltd.",
   "homepage": "https://www.reportburster.com",
   "author": {
@@ -37,7 +37,7 @@
     "custom:start-server-and-ui-web": "npx gulp utils:start-server-and-ui-web",
     "custom:start-server-and-ui-both": "npx gulp utils:start-server-and-ui-both",
     "custom:start-server-and-e2e-electron": "npm run custom:clean-testground && npx gulp utils:start-server-and-e2e-electron",
-    "custom:start-server-and-e2e-electron-grep": "npm run custom:clean-testground && cross-env \"E2E_GREP=should seed and wipe invoice data\" npx gulp utils:start-server-and-e2e-electron",
+    "custom:start-server-and-e2e-electron-grep": "npm run custom:clean-testground && cross-env \"E2E_GREP=should generate an ad-hoc employee badge card from form values alone\" npx gulp utils:start-server-and-e2e-electron",
     "custom:start-server-and-e2e-web": "npm run custom:clean-testground && npx gulp utils:start-server-and-e2e-web",
     "custom:e2e-rename-ts2ignore": "cd e2e && npx renamer --find .spec.ts --replace .spec.ignore **",
     "custom:e2e-rename-ignore2ts": "cd e2e && npx renamer --find .spec.ignore --replace .spec.ts **",

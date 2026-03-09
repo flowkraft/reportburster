@@ -10,7 +10,7 @@ import { ConnectionsTestHelper, DB_VENDORS_DEFAULT, DB_VENDORS_SUPPORTED, hasSee
 
 const DB_VENDORS_SELECTED: string[] = (() => {
   
-  return ['oracle', 'sqlserver', 'ibmdb2', 'postgres', 'mysql', 'mariadb', 'supabase']; // DEV FOCUS — comment out to restore full rotation
+  //return ['oracle', 'sqlserver', 'ibmdb2', 'postgres', 'mysql', 'mariadb', 'supabase']; // DEV FOCUS — comment out to restore full rotation
   //return ['supabase']; // DEV FOCUS — comment out to restore full rotation
   
   //return ['duckdb', 'clickhouse']; // DEV FOCUS — comment out to restore full rotation
