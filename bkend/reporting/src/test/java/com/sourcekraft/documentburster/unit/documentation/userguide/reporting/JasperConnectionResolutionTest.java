@@ -210,33 +210,21 @@ public class JasperConnectionResolutionTest {
 	}
 
 	private static void createSettingsXml() throws Exception {
-		// Create identical settings.xml for each test-report folder
+		// Copy canonical settings.xml and patch for this test
 		String[] folders = {"test-report", "test-report-with-conncode", "test-report-non-jasper"};
-		String content = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
-				+ "<documentburster>\n"
-				+ "  <settings>\n"
-				+ "    <version>14.1.0</version>\n"
-				+ "    <template>Test Report</template>\n"
-				+ "    <burstfilename>${burst_token}.pdf</burstfilename>\n"
-				+ "    <mergefilename>merged.pdf</mergefilename>\n"
-				+ "    <outputfolder>output</outputfolder>\n"
-				+ "    <backupfolder>backup</backupfolder>\n"
-				+ "    <quarantinefiles>true</quarantinefiles>\n"
-				+ "    <quarantinefolder>quarantine</quarantinefolder>\n"
-				+ "    <logsarchivesfolder>logs/archives</logsarchivesfolder>\n"
-				+ "    <statsfilename>_stats.log</statsfilename>\n"
-				+ "    <numberofuservariables>100</numberofuservariables>\n"
-				+ "    <locale><language>en</language><country>US</country></locale>\n"
-				+ "    <capabilities>\n"
-				+ "      <reportdistribution>false</reportdistribution>\n"
-				+ "      <reportgenerationmailmerge>true</reportgenerationmailmerge>\n"
-				+ "    </capabilities>\n"
-				+ "    <sendfiles><email>false</email></sendfiles>\n"
-				+ "    <emailsettings><to></to><from></from><subject></subject><text></text></emailsettings>\n"
-				+ "    <emailserver><useconn>false</useconn><conncode></conncode><host></host><port>25</port><userid></userid><userpassword></userpassword><usessl>false</usessl><usetls>false</usetls></emailserver>\n"
-				+ "    <attachments><items/></attachments>\n"
-				+ "  </settings>\n"
-				+ "</documentburster>";
+		String content = FileUtils.readFileToString(
+				new File("src/main/external-resources/template/config/burst/settings.xml"), "UTF-8");
+		content = content.replace("<template>My Reports</template>",
+				"<template>Test Report</template>");
+		content = content.replace(
+				"<burstfilename>${burst_token}.${output_type_extension}",
+				"<burstfilename>${burst_token}.pdf");
+		content = content.replace(
+				"<reportdistribution>true</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replace(
+				"<reportgenerationmailmerge>false</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
 
 		for (String folder : folders) {
 			File dir = new File(TEST_ROOT, "config/reports-jasper/" + folder);
@@ -248,33 +236,18 @@ public class JasperConnectionResolutionTest {
 	private static void createReportingXml(String reportFolder, String dsType, String conncode) throws Exception {
 		File dir = new File(TEST_ROOT, "config/reports-jasper/" + reportFolder);
 		dir.mkdirs();
-		String connElem = (conncode != null && !conncode.isEmpty())
-				? "<conncode>" + conncode + "</conncode>"
-				: "<conncode/>";
-		String content = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-				+ "<documentburster>\n"
-				+ "  <report>\n"
-				+ "    <datasource>\n"
-				+ "      <type>" + dsType + "</type>\n"
-				+ "      <sqloptions>\n"
-				+ "        " + connElem + "\n"
-				+ "        <query/>\n"
-				+ "        <scriptname/>\n"
-				+ "        <idcolumn>notused</idcolumn>\n"
-				+ "      </sqloptions>\n"
-				+ "      <scriptoptions>\n"
-				+ "        <conncode/>\n"
-				+ "        <scriptname/>\n"
-				+ "        <idcolumn>notused</idcolumn>\n"
-				+ "        <selectfileexplorer>notused</selectfileexplorer>\n"
-				+ "      </scriptoptions>\n"
-				+ "    </datasource>\n"
-				+ "    <template>\n"
-				+ "      <outputtype>output.jasper</outputtype>\n"
-				+ "      <documentpath>test.jrxml</documentpath>\n"
-				+ "    </template>\n"
-				+ "  </report>\n"
-				+ "</documentburster>";
+		// Copy canonical reporting.xml and patch for this test
+		String content = FileUtils.readFileToString(
+				new File("../../asbl/src/main/external-resources/db-template/config/_defaults/reporting.xml"), "UTF-8");
+		content = content.replace("ds.csvfile", dsType);
+		content = content.replace("output.none", "output.jasper");
+		content = content.replace("<documentpath/>",
+				"<documentpath>test.jrxml</documentpath>");
+		if (conncode != null && !conncode.isEmpty()) {
+			// Replace first <conncode/> (in sqloptions) with the specified conncode
+			content = content.replaceFirst("<conncode/>",
+					"<conncode>" + conncode + "</conncode>");
+		}
 		Files.writeString(new File(dir, "reporting.xml").toPath(), content);
 	}
 

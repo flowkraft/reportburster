@@ -392,64 +392,33 @@ public class JasperCliFlowTest {
 		jrxmlDest.getParentFile().mkdirs();
 		Files.writeString(jrxmlDest.toPath(), JRXML_WITH_SQL);
 
-		// settings.xml — enables reportgenerationmailmerge, sets burst filename
-		String settingsXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
-				+ "<documentburster>\n"
-				+ "  <settings>\n"
-				+ "    <version>14.1.0</version>\n"
-				+ "    <template>customer_by_country</template>\n"
-				+ "    <burstfilename>${burst_token}.xlsx</burstfilename>\n"
-				+ "    <mergefilename>merged.pdf</mergefilename>\n"
-				+ "    <outputfolder>output/${input_document_name}/${now?string[\"yyyy.MM.dd_HH.mm.ss.SSS\"]}</outputfolder>\n"
-				+ "    <backupfolder>backup</backupfolder>\n"
-				+ "    <quarantinefiles>true</quarantinefiles>\n"
-				+ "    <quarantinefolder>quarantine</quarantinefolder>\n"
-				+ "    <logsarchivesfolder>logs/archives</logsarchivesfolder>\n"
-				+ "    <statsfilename>_stats.log</statsfilename>\n"
-				+ "    <numberofuservariables>100</numberofuservariables>\n"
-				+ "    <locale><language>en</language><country>US</country></locale>\n"
-				+ "    <capabilities>\n"
-				+ "      <reportdistribution>false</reportdistribution>\n"
-				+ "      <reportgenerationmailmerge>true</reportgenerationmailmerge>\n"
-				+ "    </capabilities>\n"
-				+ "    <sendfiles><email>false</email></sendfiles>\n"
-				+ "    <emailsettings><to></to><from></from><subject></subject><text></text></emailsettings>\n"
-				+ "    <emailserver><useconn>false</useconn><conncode></conncode><host></host><port>25</port>"
-				+ "<userid></userid><userpassword></userpassword><usessl>false</usessl><usetls>false</usetls></emailserver>\n"
-				+ "    <attachments><items/></attachments>\n"
-				+ "  </settings>\n"
-				+ "</documentburster>";
+		// settings.xml — copy canonical and patch for this test
+		String settingsXml = FileUtils.readFileToString(
+				new File("src/main/external-resources/template/config/burst/settings.xml"), "UTF-8");
+		settingsXml = settingsXml.replace("<template>My Reports</template>",
+				"<template>customer_by_country</template>");
+		settingsXml = settingsXml.replace(
+				"<burstfilename>${burst_token}.${output_type_extension}",
+				"<burstfilename>${burst_token}.xlsx");
+		settingsXml = settingsXml.replace(
+				"<reportdistribution>true</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		settingsXml = settingsXml.replace(
+				"<reportgenerationmailmerge>false</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
 		Files.writeString(
 				new File(TEST_ROOT, "config/reports-jasper/customer-by-country/settings.xml").toPath(),
 				settingsXml);
 
-		// reporting.xml — ds.jasper, output.jasper, EMPTY conncode (dynamic resolution)
+		// reporting.xml — copy canonical and patch for Jasper datasource
 		// Use absolute path for documentpath so JasperReportRunner can find the .jrxml
 		String jrxmlRelPath = jrxmlDest.getAbsolutePath().replace('\\', '/');
-		String reportingXml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-				+ "<documentburster>\n"
-				+ "  <report>\n"
-				+ "    <datasource>\n"
-				+ "      <type>ds.jasper</type>\n"
-				+ "      <sqloptions>\n"
-				+ "        <conncode/>\n"
-				+ "        <query/>\n"
-				+ "        <scriptname/>\n"
-				+ "        <idcolumn>notused</idcolumn>\n"
-				+ "      </sqloptions>\n"
-				+ "      <scriptoptions>\n"
-				+ "        <conncode/>\n"
-				+ "        <scriptname/>\n"
-				+ "        <idcolumn>notused</idcolumn>\n"
-				+ "        <selectfileexplorer>notused</selectfileexplorer>\n"
-				+ "      </scriptoptions>\n"
-				+ "    </datasource>\n"
-				+ "    <template>\n"
-				+ "      <outputtype>output.jasper</outputtype>\n"
-				+ "      <documentpath>" + jrxmlRelPath + "</documentpath>\n"
-				+ "    </template>\n"
-				+ "  </report>\n"
-				+ "</documentburster>";
+		String reportingXml = FileUtils.readFileToString(
+				new File("../../asbl/src/main/external-resources/db-template/config/_defaults/reporting.xml"), "UTF-8");
+		reportingXml = reportingXml.replace("ds.csvfile", "ds.jasper");
+		reportingXml = reportingXml.replace("output.none", "output.jasper");
+		reportingXml = reportingXml.replace("<documentpath/>",
+				"<documentpath>" + jrxmlRelPath + "</documentpath>");
 		Files.writeString(
 				new File(TEST_ROOT, "config/reports-jasper/customer-by-country/reporting.xml").toPath(),
 				reportingXml);
