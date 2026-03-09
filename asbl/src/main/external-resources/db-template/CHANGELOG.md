@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- **JasperReports Integration** — Full JasperReports (.jrxml) support as a built-in output type. Supports parameters, subreports, database connections, and all JasperReports export formats (PDF, Excel, CSV, HTML). Includes sample reports (Customer by Country, Employee Detail, Employee Roster).
+- **JasperReports Support** — Full JasperReports (.jrxml) engine support as a built-in output type. Supports parameters, subreports, database connections, and all JasperReports export formats (PDF, Excel, CSV, HTML). Includes sample reports (Customer by Country, Employee Detail, Employee Roster).
 
 - **Migrate Existing JasperReports in Seconds** — Already have `.jrxml` templates from Jaspersoft Studio, JasperReports Server, or a legacy system? Drop them into `config/reports-jasper/` and they run immediately. No rewriting, no conversion, no migration project — your existing reports work as-is.
 
