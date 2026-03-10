@@ -498,190 +498,186 @@ Generate only the complete HTML code based on the above instructions.`,
     // --- PDF Report Generation ---
     {
       id: 'PDF_SAMPLE_A4_PAYSLIP_XSLFO',
-      title: 'Sample of an A4 `Payslip` PDF Report (generated from XSL-FO)',
+      title: 'Generate XSL-FO FreeMarker Template for PDF Report',
       description:
-        'Sample of an A4 `Payslip` PDF Report (generated from XSL-FO)',
-      promptText: `Create a clean, professional FreeMarker template in XSL-FO (XSL Formatting Objects) format for a payslip report. 
-The template should be designed for processing with Apache FOP and must generate a single-page PDF document.
+        'Generates a complete XSL-FO (.xsl) FreeMarker template for Apache FOP PDF rendering, based on user requirements.',
+      promptText: `Write a FreeMarker template in XSL-FO (XSL Formatting Objects) format for Apache FOP PDF rendering. Return only the complete template code — no partial snippets or explanations.
 
-The generated XSL-FO template must fulfill the following requirements:
+<BUSINESS_REQUIREMENT>
+[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE REPORT HERE]
+</BUSINESS_REQUIREMENT>
 
-1.  **Document Structure & Page Layout**:
-    *   The root element must be \`<fo:root xmlns:fo="http://www.w3.org/1999/XSL/Format">\`.
-    *   Define a single \`<fo:simple-page-master>\` for a standard A4 portrait page (\`page-height="29.7cm"\`, \`page-width="21cm"\`).
-    *   Set page margins to \`1.5cm\` on the left and right, and \`1cm\` on the top and bottom.
-    *   The entire content must be within a single \`<fo:page-sequence>\` and flow into the \`xsl-region-body\`.
+DATA MODEL:
+A companion Groovy script (or SQL query) prepares the data and passes it to this template as a FreeMarker model — one Map<String, Object> per document. The Map keys are the column/field names (case-insensitive). Variables are also available by index (\${var0}, \${col0}, etc.) but prefer named columns.
 
-2.  **Content Sections**:
-    The payslip must be clearly organized into the following sections using \`fo:block\` and \`fo:table\` elements:
-    *   **Company Information**: Centered block at the top for the company name (bold), address, and phone number.
-    *   **Report Header**: A clear, centered title, such as "STATEMENT OF MONTHLY INCOME," in a larger, bold font.
-    *   **Employee Details**: A two-column table with a fixed layout (\`table-layout="fixed"\`) to display:
-        *   Employee Name
-        *   Employee ID
-        *   Social Security #
-        *   Pay Period
-        *   Department
-        *   Position/Grade
-    *   **Earnings & Deductions**: A single, four-column table with a fixed layout to display earnings and deductions side-by-side.
-        *   **Header**: The table must have a header row with the titles: "EARNINGS", "AMOUNT", "TAXES/DEDUCTIONS", "AMOUNT".
-        *   **Body**: List individual items like "Basic Salary" and "Bonuses" under Earnings, and "Federal Tax," "Social Security Tax," etc., under Taxes/Deductions. Use empty cells on the left to align with the longer list of deductions on the right.
-        *   **Footer**: The table must have a footer row summarizing "Total Earnings" and "Total Deductions".
-    *   **Net Pay Summary**: A block or container showing the final "Net Pay". This should be right-aligned on the page.
-    *   **Signatures**: A two-column table at the bottom with top borders to create signature lines for the "Employee" and "Director".
+Because data comes from database queries through a script, field types vary at runtime:
+- Numeric columns (e.g., price, quantity) arrive as native Java numbers (not strings) — so \`?number\` will FAIL on them. Use them directly or check with \`?is_number\`.
+- Text columns arrive as strings.
+- Date columns arrive as Java date objects — check with \`?is_date\` before formatting.
+- Calculated totals may arrive as either numbers or pre-formatted strings, depending on the script — always be defensive.
+- Any field can be null — always use \`!\` defaults (\${amount!0}, \${name!""}).
 
-3.  **Styling and Formatting (XSL-FO Properties)**:
-    *   **Fonts**: Use standard fonts. Specify \`font-weight="bold"\` for headers and labels. Use \`font-size\` with absolute units (e.g., \`10pt\`, \`16pt\`).
-    *   **Spacing**: Use \`space-after\`, \`space-before\`, and \`padding\` properties with absolute units (e.g., \`10pt\`, \`5pt\`) to ensure consistent spacing. Do not rely on default spacing.
-    *   **Borders**: Use solid black 1pt borders for all table cells (\`border="1pt solid black"\`).
-    *   **Alignment**: Use \`text-align\` property for text alignment (\`center\`, \`end\`). Financial amounts should be right-aligned (\`text-align="end"\`).
-    *   **Colors**: Use high-contrast, print-friendly colors. The header and footer rows of the main table should have a light gray background (e.g., \`background-color="#f2f2f2"\`).
+SIMPLE REPORTS (one row = one document, e.g., payslip, certificate, letter):
+- All fields available directly as \${column_name}. Put the full layout in the flow body.
 
-4.  **FreeMarker Integration**:
-    *   Use FreeMarker placeholders \`\${colN}\` (e.g., \`\${col0}\`, \`\${col1}\`, etc.) for all dynamic data fields.
-    *   Include a conditional check for the "Pay Period" field to format it as a date if possible: \`<#if col3?is_date>\${col3?string("MM/dd/yy")}<#else>\${col3}</#if>\`.
+MASTER-DETAIL REPORTS (e.g., invoice with line items, order with products):
+- Master fields available directly as \${column_name}.
+- Detail rows in a nested list variable (e.g., \`details\`): iterate with \`<#list details as item>\` and access as \${item.field_name}.
+- Totals/summaries are pre-computed by the script and available as direct variables (e.g., \${Subtotal}, \${Tax}, \${GrandTotal}) — do NOT calculate in the template.
 
-5.  **XML Validity**:
-    *   Ensure the entire output is a well-formed XML document. All tags must be properly closed.
+XSL-FO DOCUMENT STRUCTURE:
+- Root element: \`<fo:root xmlns:fo="http://www.w3.org/1999/XSL/Format">\`
+- Define a single \`<fo:simple-page-master>\` for A4 portrait (\`page-height="29.7cm"\`, \`page-width="21cm"\`).
+- Page margins: \`1.5cm\` left/right, \`1cm\` top/bottom.
+- All content within a single \`<fo:page-sequence>\` flowing into \`xsl-region-body\`.
 
-**Return a single, complete, and self-contained XSL-FO FreeMarker template (\`.ftl\`) that strictly adheres to all the things mentioned above.`,
-      tags: ['payslip', 'sample-xslfo2pdf'],
+STYLING RULES:
+- **Fonts**: Standard fonts (Helvetica, Arial, sans-serif). Use \`font-weight="bold"\` for headers/labels. Font sizes in absolute units (e.g., \`10pt\`, \`16pt\`).
+- **Spacing**: Explicit \`space-after\`, \`space-before\`, and \`padding\` in absolute units. Never rely on default spacing.
+- **Tables**: Always use \`table-layout="fixed"\` with explicit \`fo:table-column\` widths.
+- **Borders**: Solid borders for table cells (e.g., \`border="1pt solid #dce0e6"\`).
+- **Alignment**: \`text-align="end"\` for financial amounts. \`text-align="center"\` for headers.
+- **Colors**: High-contrast, print-friendly. Use light backgrounds for header/footer rows (e.g., \`background-color="#f2f4f7"\`).
+
+FREEMARKER INTEGRATION:
+- Use \${column_name} placeholders matching the actual data columns listed below.
+- For dates: \`<#if myDate?is_date>\${myDate?string("MM/dd/yyyy")}<#else>\${myDate!""}</#if>\`
+- For numbers needing formatting: \`<#if amount?is_number>\${amount?string(",##0.00")}<#else>\${amount!""}</#if>\`
+- For nested lists: \`<#list details as item>...\${item.field_name}...</#list>\`
+- For null safety: always use \${value!""} or \${value!0}
+- For conditional blocks: \`<#if notes?has_content>...</#if>\`
+
+CRITICAL: FreeMarker + Apache FOP Rules:
+These rules prevent silent rendering failures. FreeMarker's default error handler dumps stack traces into the XSL-FO output without stopping, which corrupts the XML and causes FOP to silently drop content.
+
+- **\`?number\` is ONLY for strings.** If the value is already a number at runtime, \`?number\` throws a silent error and corrupts the output. Since you cannot know the runtime type, the safe pattern is: use values directly (\`\${amount}\`) or use the type-safe check \`<#if amount?is_number>\${amount?string(",##0.00")}<#else>\${amount}</#if>\`.
+- **Always use null-safe defaults.** Any value can be null at runtime. Use the \`!\` operator: \`\${amount!0}\` for numeric fields, \`\${notes!""}\` for text fields.
+- **Do NOT use \`fo:block-container\` for layout positioning.** It has known rendering issues in Apache FOP with percentage widths and margins. Instead, use a plain \`fo:table\` with an empty spacer column. For right-aligned totals, use a 3-column table: 60% empty + 20% label + 20% value.
+- **Do NOT do math in the template.** All calculations (totals, tax, subtotals) should be pre-computed and passed as ready-to-display values. The template should only display, never calculate.
+
+XML VALIDITY:
+- The entire output must be well-formed XML. All tags must be properly closed.
+
+Available data columns:
+[INSERT COLUMN NAMES HERE]
+
+Sample data (first rows):
+[INSERT SAMPLE DATA HERE]
+`,
+      tags: ['xslfo', 'fop', 'pdf', 'template', 'freemarker'],
       category: 'PDF Generation (from XSL-FO)',
     },
     {
-      id: 'PDF_COMBINED_PAYSLIP_EXAMPLE',
-      title: 'Combined Example: PDF Payslip',
+      id: 'PDF_HTML_COMPREHENSIVE_TEMPLATE',
+      title: 'Generate Comprehensive PDF Report Template (from HTML)',
       description:
-        'A comprehensive prompt combining multiple PDF requirements to generate a payslip template.',
-      promptText: `**Create a clean, professional template for a payslip report with the following sections,
-which are commonly included in such documents.
+        'Generates a comprehensive, single-page XHTML template optimized for PDF conversion with detailed styling and layout requirements.',
+      promptText: `Generate a complete, self-contained XHTML document for conversion to a professional PDF report.
+Return ONLY the HTML code in a single code block. The output must be ready to use without modifications.
+The entire report must fit on a single page.
 
-The generated HTML must fulfill the following requirements to ensure it is optimized for
-PDF conversion:**
+<BUSINESS_REQUIREMENT>
+[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE REPORT HERE]
+</BUSINESS_REQUIREMENT>
 
-1. **Layout and Dimensions**:
-   - Fixed-width layout: Use absolute pixel values (\`px\`) for all layout dimensions.
-   Relative units like \`%\`, \`em\`, or \`rem\` must not be used.
-   - Explicit dimensions: Specify fixed dimensions for all containers, elements,
-   and components—no relative or undefined measurements.
-   - Ensure the main areas of the report are well aligned, creating a visually
-   appealing and structured final design.
+## DATA MODEL
 
-2. **Sections**:
-   - **Header**:
-     - Company name, logo, address, and contact information.
-     - Payslip title (e.g., "Employee Payslip") and date of issuance.
-   - **Employee Details**:
-     - Employee's full name.
-     - Employee ID or payroll number.
-     - Department and job designation.
-   - **Earnings**:
-     - Basic salary.
-     - Allowances (e.g., housing, transport).
-     - Bonuses or incentives.
-     - Overtime pay (if applicable).
-   - **Deductions**:
-     - Tax deductions (e.g., income tax).
-     - Social security contributions.
-     - Insurance premiums.
-     - Other deductions (e.g., loan repayment).
-   - **Summary**:
-     - Gross pay (total earnings before deductions).
-     - Total deductions.
-     - Net pay (final amount paid to the employee after deductions).
-   - **Footer**:
-     - Bank details (e.g., account number for payment).
-     - Employer's contact details for payroll queries.
-     - Any disclaimers or notes (e.g., "This payslip is for reference only").
+- Data arrives as a FreeMarker model. Variable names match the data column names (case-insensitive).
+- Variables are also available by index: \${var0}, \${col0}, \${var1}, \${col1}, etc.
+- At runtime, values may be numbers, dates, strings, or lists — use type-safe FreeMarker patterns.
 
-3. **Spacing**:
-   - Apply explicit margin and padding values to every element for consistent spacing.
-   Default or unspecified spacing is not allowed.
+### SIMPLE REPORTS (one row = one document, e.g. payslip, certificate, statement)
+- All fields available directly: \${EmployeeName}, \${Salary}, etc.
 
-4. **Visual and Print-Optimized Design**:
-   - Print-optimized colors: Avoid subtle gradients and ensure all colors have high
-   contrast for clarity. Use solid colors wherever possible.
-   - Font consistency: Define consistent fonts with appropriate font-family fallbacks
-   throughout the document. Avoid unsupported font variations in PDF rendering.
+### MASTER-DETAIL REPORTS (e.g. invoice with line items, order with products)
+- Master fields available directly: \${OrderID}, \${CustomerName}, etc.
+- Detail rows in a nested list: iterate with <#list details as item> and access fields as \${item.field_name}.
+- Totals/summaries are pre-computed direct variables (e.g. \${Subtotal}, \${GrandTotal}) — do NOT calculate in the template.
 
-5. **HTML Standards**:
-   - Set \`box-sizing: border-box\` for all elements for predictable alignment and dimensions.
-   - Close all HTML tags properly, including self-closing tags like \`<br>\` and \`<img>\`.
-   - Replace the \`&\` character with \`&amp;\` to ensure valid HTML code.
-   - Avoid using \`&nbsp;\`; replace it with alternative spacing methods.
+## HTML→PDF TECHNICAL RULES
 
-6. **Measurements**:
-   - Use absolute units (e.g., \`px\`, \`pt\`) for all measurements such as width, height,
-   and font size.
+1. **Fixed-width layout:** Use absolute pixel values (\`px\`) for ALL layout dimensions. Relative units (\`%\`, \`em\`, \`rem\`) must not be used. Specify fixed dimensions for all containers, elements, and components.
+2. **Valid XHTML:** Close all tags properly, including self-closing tags (\`<br/>\`, \`<img/>\`). Use \`&amp;\` instead of raw \`&\`.
+3. **Internal CSS:** All CSS in \`<style type="text/css">\` in \`<head>\` — no external references.
+4. **Box model:** Set \`* { box-sizing: border-box; }\` for predictable alignment and dimensions.
+5. **Spacing:** Apply explicit margin and padding values to every element. No default or unspecified spacing. Do not use \`&nbsp;\`.
+6. **Print-optimized design:** High-contrast solid colors, no subtle gradients. Consistent fonts with appropriate \`font-family\` fallbacks. All font sizes in \`pt\`.
+7. **A4 portrait:** Format for A4 portrait with standard margins. Consolidate all content into a single page.
+8. **Absolute measurements:** Use \`px\` or \`pt\` for all measurements (width, height, font-size).
 
-7. **Page Format**:
-   - Format the document for A4 portrait orientation with standard margins.
-   - Ensure the output PDF consolidates all content into a single page, maintaining
-   the integrity and readability of the payslip.
+## FREEMARKER RULES
 
-**Return fully self-contained HTML code with inline CSS—no partial or snippet formats—and
-ensure the design aligns with both the requirements of the payslip template and
-PDF conversion rules.**`,
-      tags: ['payslip', 'comprehensive', 'sample-html2pdf'],
+- Use \${column_name} placeholders matching the actual data columns listed below
+- For null safety: \${value!""} for strings, \${value!0} for numbers
+- For dates: <#if myDate?is_date>\${myDate?string("MM/dd/yyyy")}<#else>\${myDate!""}</#if>
+- For numbers needing formatting: <#if amount?is_number>\${amount?string(",##0.00")}<#else>\${amount!""}</#if>
+- For nested lists: <#list details as item><tr>...</tr></#list>
+- For conditional content: <#if field?has_content>...</#if>
+- NEVER use \${value?number} — values are already their native types at runtime
+
+Available data columns:
+[INSERT COLUMN NAMES HERE]
+
+Sample data (first rows):
+[INSERT SAMPLE DATA HERE]`,
+      tags: ['pdf', 'html2pdf', 'template', 'comprehensive'],
       category: 'PDF Generation (from HTML)',
     },
     {
-      id: 'PDF_SAMPLE_A4_ORDER_SUMMARY',
-      title: 'Sample of an A4 `Order Summary` PDF Report (generated from HTML)',
+      id: 'PDF_HTML_TEMPLATE_GENERATOR',
+      title: 'Generate PDF Report Template (from HTML)',
       description:
-        'Sample of an A4 `Order Summary` PDF Report (generated from HTML)',
-      promptText: `**Role:** You are an expert web developer specializing in creating pixel-perfect HTML templates for generating professional PDF documents.
+        'Generates a complete XHTML template optimized for PDF conversion, based on user requirements and actual data columns.',
+      promptText: `Generate a complete, self-contained XHTML document for conversion to a PDF report.
+Return ONLY the HTML code in a single code block. The output must be ready to use without modifications.
 
-**Objective:** Generate a complete, self-contained HTML template with embedded CSS to render a professional A4-sized **Order Summary**. This template will be used by 
-a Java-based rendering engine to convert the XHTML into a PDF, so it must adhere to strict formatting rules for print output.
+<BUSINESS_REQUIREMENT>
+[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE REPORT HERE]
+</BUSINESS_REQUIREMENT>
 
-**Data Placeholders:**
-The template must use two types of placeholders:
+## DATA MODEL
 
-1.  **Dynamic Data Placeholders (for template engine):** These will be populated at runtime. Use the exact \`\${FieldName}\` syntax.
-    *   \`\${OrderID}\`
-    *   \`\${OrderDate}\`
-    *   \`\${RequiredDate}\`
-    *   \`\${ShippedDate}\`
-    *   \`\${CustomerName}\`
-    *   \`\${EmployeeName}\`
-    *   \`\${TotalAmount}\`
+- Data arrives as a FreeMarker model. Variable names match the data column names (case-insensitive).
+- Variables are also available by index: \${var0}, \${col0}, \${var1}, \${col1}, etc.
+- At runtime, values may be numbers, dates, strings, or lists — use type-safe FreeMarker patterns.
 
-2.  **Static Configuration Placeholders (for manual replacement):** These are meant to be replaced with hardcoded values directly in the template file. Use the exact \`[[...]]\` syntax.
-    *   \`[[PUT_YOUR_COMPANY_NAME_HERE]]\`
-    *   \`[[PUT_YOUR_COMPANY_ADDRESS_HERE]]\`
-    *   \`[[PUT_YOUR_COMPANY_CONTACT_INFO_HERE]]\`
+### SIMPLE REPORTS (one row = one document, e.g. payslip, certificate, statement)
+- All fields available directly: \${EmployeeName}, \${Salary}, etc.
 
-**Layout Requirements:**
-1.  **Header:**
-    *   Top-left: Your company details (\`[[PUT_YOUR_COMPANY_NAME_HERE]]\`, \`[[PUT_YOUR_COMPANY_ADDRESS_HERE]]\`, \`[[PUT_YOUR_COMPANY_CONTACT_INFO_HERE]]\`).
-    *   Top-right: A large "ORDER SUMMARY" title, followed by Order # (\`\${OrderID}\`), Order Date (\`\${OrderDate}\`), Required Date (\`\${RequiredDate}\`), and Shipped Date (\`\${ShippedDate}\`).
-2.  **Customer Information:**
-    *   A section below the header for "BILL TO" containing only the customer's name (\`\${CustomerName}\`).
-3.  **Total Amount Section:**
-    *   Create a clean and prominent section in the main body.
-    *   It should feature a single, clear line item: "Order Total".
-    *   Align the "Order Total" label to the left and the \`\${TotalAmount}\` value to the right. Make the total amount large and bold.
-4.  **Footer:**
-    *   A section at the bottom of the page for any notes, a "Thank you for your business!" message, and the sales representative's name (\`\${EmployeeName}\`).
+### MASTER-DETAIL REPORTS (e.g. invoice with line items, order with products)
+- Master fields available directly: \${OrderID}, \${CustomerName}, etc.
+- Detail rows in a nested list: iterate with <#list details as item> and access fields as \${item.field_name}.
+- Totals/summaries are pre-computed direct variables (e.g. \${Subtotal}, \${GrandTotal}) — do NOT calculate in the template.
 
-**CRITICAL Technical & Styling Constraints:**
-You must follow these rules precisely to ensure proper PDF rendering.
+## HTML→PDF TECHNICAL RULES
 
-1.  **Well-Formed XHTML:** The entire output must be valid XHTML. All tags must be properly nested and closed (e.g., \`<br/>\`, \`<hr/>\`).
-2.  **Character Encoding:** Use \`&amp;\` for all ampersand characters. Do not use the raw \`&\` character.
-3.  **Internal CSS:** All CSS must be placed within a \`<style type="text/css">\` tag in the \`<head>\` section.
-4.  **A4 Page Setup:** Use the \`@page\` CSS rule to define the document size as A4 portrait and set margins (e.g., \`size: A4 portrait; margin: 25mm;\`).
-5.  **Absolute Units ONLY:** All measurements for layout, fonts, margins, padding, and borders **must** be in absolute units (\`px\` or \`pt\`). **DO NOT USE** relative units like \`%\`, \`em\`, or \`rem\`.
-6.  **Box Model:** Apply \`* { box-sizing: border-box; }\` at the beginning of your CSS for predictable layout calculations.
-7.  **Fixed Layout:** Use \`div\` elements with fixed pixel widths for the main layout structure. Use \`display: table;\` and \`display: table-cell;\` for creating columns instead of floats to ensure robust alignment.
-8.  **Font Specification:** Use a common, print-safe font stack like \`font-family: Arial, Helvetica, sans-serif;\`. Define all font sizes in \`pt\`.
-9.  **Color:** Use high-contrast, solid colors (e.g., \`#000000\` for text).
-10. **Spacing:** Do not use \`&nbsp;\` for spacing. Define all spacing explicitly using \`margin\` and \`padding\` with absolute \`px\` or \`pt\` values.
-11. **Page Break Control:** Apply \`page-break-inside: avoid;\` to the main content containers.
+1. **Valid XHTML:** All tags properly nested and closed (e.g., \`<br/>\`, \`<hr/>\`). Use \`&amp;\` for all ampersand characters — never raw \`&\`.
+2. **Internal CSS:** All CSS in \`<style type="text/css">\` in \`<head>\` — no external references.
+3. **Absolute units ONLY:** All measurements (layout, fonts, margins, padding, borders) must use \`px\` or \`pt\`. **DO NOT USE** \`%\`, \`em\`, or \`rem\`.
+4. **Box model:** Apply \`* { box-sizing: border-box; }\` at the start of CSS.
+5. **Fixed layout:** Use \`div\` elements with fixed pixel widths. Use \`display: table\` / \`display: table-cell\` for column layouts (not floats).
+6. **A4 portrait:** Use \`@page { size: A4 portrait; margin: 25mm; }\`.
+7. **Print-safe fonts:** \`font-family: Arial, Helvetica, sans-serif;\` with all sizes in \`pt\`.
+8. **Colors:** High-contrast, solid colors only. No subtle gradients.
+9. **Spacing:** Do not use \`&nbsp;\`. Define all spacing with \`margin\` and \`padding\` in \`px\` or \`pt\`.
+10. **Page breaks:** Apply \`page-break-inside: avoid;\` on main content containers.
 
-Please provide the complete, single HTML file as the final output, ready for rendering.`,
-      tags: ['format-a4-portrait', 'order-summary', 'sample-html2pdf'],
+## FREEMARKER RULES
+
+- Use \${column_name} placeholders matching the actual data columns listed below
+- For null safety: \${value!""} for strings, \${value!0} for numbers
+- For dates: <#if myDate?is_date>\${myDate?string("MM/dd/yyyy")}<#else>\${myDate!""}</#if>
+- For numbers needing formatting: <#if amount?is_number>\${amount?string(",##0.00")}<#else>\${amount!""}</#if>
+- For nested lists: <#list details as item><tr>...</tr></#list>
+- For conditional content: <#if field?has_content>...</#if>
+- NEVER use \${value?number} — values are already their native types at runtime
+
+Available data columns:
+[INSERT COLUMN NAMES HERE]
+
+Sample data (first rows):
+[INSERT SAMPLE DATA HERE]`,
+      tags: ['pdf', 'html2pdf', 'template', 'a4-portrait'],
       category: 'PDF Generation (from HTML)',
     },
     {
@@ -1056,69 +1052,57 @@ Please provide the complete, single HTML file as the final output, ready for ren
       title: 'Generate Excel Report Template',
       description:
         'Generates an HTML template specifically designed for conversion to an Excel spreadsheet, based on user requirements and technical specifications.',
-      promptText: `# Excel "HTML-based" Report Template Generator
+      promptText: `Generate a complete, self-contained HTML document designed for conversion to an Excel spreadsheet.
+Return ONLY the HTML code in a single code block. The output must be ready to use without modifications.
 
-## Report Requirements
+<BUSINESS_REQUIREMENT>
+[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE REPORT HERE]
+</BUSINESS_REQUIREMENT>
 
-### Overview
+## DATA MODEL
 
-_Describe your report purpose, e.g., "Create a monthly employee payslip that clearly shows earnings and deductions"._
+- Data arrives as a FreeMarker model. Variable names match the data column names (case-insensitive).
+- Variables are also available by index: \${var0}, \${col0}, \${var1}, \${col1}, etc.
+- At runtime, values may be numbers, dates, strings, or lists — use type-safe FreeMarker patterns.
 
-### Structure and Layout
+### SIMPLE REPORTS (one row = one document, e.g. payslip, certificate, statement)
+- All fields available directly: \${EmployeeName}, \${Salary}, etc.
 
-List the main sections your report needs, e.g.:
+### MASTER-DETAIL REPORTS (e.g. invoice with line items, order with products)
+- Master fields available directly: \${OrderID}, \${CustomerName}, etc.
+- Detail rows in a nested list: iterate with <#list details as item> and access fields as \${item.field_name}.
+- Totals/summaries are pre-computed direct variables (e.g. \${Subtotal}, \${GrandTotal}) — do NOT calculate in the template.
 
-- Company header with name and address
-- Employee information section
-- Earnings and deductions table
-- Summary totals and net pay
-- Signature area
+## FORMAT RULES
 
-### Visual Design
+1. All CSS must be in a <style> block within <head> — no external CSS references
+2. Use Excel-compatible CSS only (see technical docs below)
+3. Colors: use long hex format (#ff0000 not #f00)
+4. Border widths: \`thin\`, \`medium\`, or \`thick\` only
+5. Use \`data-*\` attributes for Excel features (formulas, comments, freeze panes, etc.)
+6. The HTML must be fully self-contained with no external dependencies
 
-#### Color Scheme:
+## FREEMARKER RULES
 
-- **Main color**: [e.g., dark blue] for headers
-- **Accent color**: [e.g., light blue] for subtotals
+- Use \${column_name} placeholders matching the actual data columns listed below
+- For dates displayed in Excel: use data-date-cell-format attribute
+  <td data-date-cell-format="MM/dd/yyyy">\${myDate!""}</td>
+- For numbers with Excel formatting: use data-numeric-cell-format attribute
+  <td data-numeric-cell-format="##0.00">\${amount!0}</td>
+- For null safety: always use \${value!""} for strings or \${value!0} for numbers
+- For nested lists: <#list details as item><tr>...</tr></#list>
+- For conditional content: <#if field?has_content>...</#if>
+- NEVER use \${value?number} — values are already their native types at runtime
 
-#### Typography:
+Available data columns:
+[INSERT COLUMN NAMES HERE]
 
-- **Font family**: [e.g., Arial, sans-serif]
-- **Text size preferences**: [e.g., regular 11pt for data, bold 12pt for headings]
-
-### Content Requirements
-
-Specify the data fields needed, using ReportBurster variable format where applicable:
-
-#### Employee Information:
-
-- Employee Name: \${col0}
-- Employee ID: \${col1}
-- Social Security #: \${col2}
-- Department: \${col4}
-- Position/Grade: \${col5}
-
-#### Earnings and Deductions:
-
-- Basic Salary: \${col6}
-- Tax Deductions: \${col7}
-- Net Pay: \${col16}
-
-## Generate HTML that produces an Excel report based on the requirements above and the technical specifications below.
-
-Your response must include:
-
-1. Complete HTML code with all required elements - do not provide partial code snippets
-2. All CSS styles must be included inline within the document head - no external CSS file references
-3. The HTML code should be fully self-contained and ready to use without any additional dependencies
-4. Include all necessary data attributes for Excel export functionality as specified in the technical documentation
-5. Ensure the code follows best practices for Excel export compatibility
-
-Please provide the entire HTML document in a single code block.
+Sample data (first rows):
+[INSERT SAMPLE DATA HERE]
 
 ---
 
-**TECHNICAL DOCUMENTATION - DO NOT MODIFY BELOW THIS LINE**
+**TECHNICAL DOCUMENTATION — Excel-Specific Reference**
 
 # ReportBurster Excel Exporter
 
@@ -1222,7 +1206,7 @@ The following data attributes allow you to access Excel-specific functionality:
 
 - When using border widths with non-solid styles, the width property is ignored
 - Certain Excel features might not be available through the HTML interface`,
-      tags: ['excel', 'template', 'conversion'],
+      tags: ['excel', 'html', 'template', 'spreadsheet'],
       category: 'Excel Report Generation',
     },
 
@@ -1232,17 +1216,55 @@ The following data attributes allow you to access Excel-specific functionality:
       title: 'Generate JasperReports (.jrxml) Template',
       description:
         'Generates a complete .jrxml template for JasperReports, based on user requirements.',
-      promptText: `Write a JasperReports 7.0+ .jrxml (Jackson-based XML format) for JRMapCollectionDataSource (no JDBC, no subreports, single file, fields are java.lang.Object). Do NOT use the legacy JR 6.x XML format. Do NOT declare a REPORT_CONNECTION parameter. Return only the complete .jrxml code — no partial snippets or explanations.
+      promptText: `Write a JasperReports 7.0+ .jrxml (Jackson-based XML format). Return only the complete .jrxml code — no partial snippets or explanations.
 
 <BUSINESS_REQUIREMENT>
 [INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE REPORT HERE]
 </BUSINESS_REQUIREMENT>
 
+DATA MODEL:
+- Data source is JRMapCollectionDataSource — flat rows from a Map (no JDBC).
+- All fields must be declared as java.lang.Object.
+- SIMPLE REPORTS (one row = one document): all data is directly available on the single row. Use the title band for the full layout — it can access fields from the first (and only) row.
+- MULTI-ROW / MASTER-DETAIL REPORTS: data is pre-flattened (master fields duplicated on every child row). A companion Groovy script can add separate "virtual rows" for totals/footers with a row_type field. The .jrxml uses printWhenExpression on elements to show different layouts per row_type — all within a SINGLE detail band.
+
+FORMAT RULES (JR 7.0.x / Jackson XML):
+- Do NOT add xmlns or xsi:schemaLocation on <jasperReport> — JR7 does not use them.
+- Do NOT use expressionBackcolor (unsupported in 7.0.x). For alternating row colors use two overlapping rectangles with printWhenExpression.
+- Do NOT declare a REPORT_CONNECTION parameter.
+- No subreports — single file only.
+- Band heights must fit within pageHeight minus topMargin minus bottomMargin.
+- All elements that go beyond the declared band height cause a compile-time validation error — every element must fit within its band.
+
+CRITICAL JR 7 + JRMapCollectionDataSource RULES:
+- Fields are NULL outside the primary detail band. Do NOT use summary band, columnFooter, lastPageFooter, group footer, or second detail bands for displaying field values — they will always be empty.
+- Do NOT use <variable> elements (calculation="First", "Nothing", sticky patterns) to carry values into post-detail bands — they also fail with JRMapCollectionDataSource.
+- Do NOT wrap conditional elements in a <frame> with printWhenExpression — fields inside the frame will be null. Instead, put each element directly in the band with its own individual printWhenExpression.
+- java.lang.Object fields do NOT render as text. Always use string concatenation to force toString(): write \`"" + $F{myField}\` or \`"Label: " + $F{myField}\`, never bare \`$F{myField}\` in a textField expression.
+- Only the title band and the detail band can safely access field values. Everything else sees null.
+
+ARCHITECTURE PATTERNS:
+
+Pattern A — SIMPLE REPORT (one row = one document, e.g., a letter, certificate, single-record form):
+- Put the entire layout in the title band. All fields are available from the single data row.
+- Use the detail band only if you need repeating sections.
+
+Pattern B — MULTI-ROW REPORT with totals (e.g., invoice, order, statement):
+- Title band: report header, company logo, bill-to info (fields from first row).
+- Single detail band (fixed height, e.g., 24px) with row_type routing:
+  1. Normal data rows (row_type == null): line items with product, qty, price, etc.
+  2. Totals rows (row_type == "totals_line"): label + value right-aligned in table columns.
+  3. Grand total row (row_type == "total_due"): bold label + value with colored background.
+  4. Footer row (row_type == "footer"): notes, signatures, thank-you message.
+- All within ONE <detail><band> — no summary, no second band, no frames.
+- The Groovy script emits totals/footer as separate data rows after the line items.
+
 Available data columns:
 [INSERT COLUMN NAMES HERE]
 
 Sample data (first rows):
-[INSERT SAMPLE DATA HERE]`,
+[INSERT SAMPLE DATA HERE]
+`,
       tags: ['jasper', 'jrxml', 'template'],
       category: 'JasperReports (.jrxml) Generation',
     },
@@ -1705,6 +1727,35 @@ try {
     throw e
 }
 \`\`\`
+
+---
+
+**IMPORTANT: JASPERREPORTS (.jrxml) OUTPUT — ADDITIONAL RULES**
+
+**These rules ONLY apply when the user explicitly mentions JasperReports, .jrxml, or Jasper in their request.** If nobody mentioned JasperReports — do NOT assume it is JasperReports. By default, generate a standard Groovy script following Examples 1-4 above.
+
+When the output template is a JasperReports .jrxml (not HTML/Excel), the Groovy script MUST follow these additional rules because JasperReports \`JRMapCollectionDataSource\` cannot access fields outside the detail band (summary, footer, second bands all see NULL):
+
+1.  **Emit totals/footer as separate virtual rows at the END of the details list.**
+    After the real line-item rows, append rows with a \`row_type\` key so the .jrxml can render different layouts per row type within a single detail band:
+    \`\`\`groovy
+    // After all line-item rows have been added to detailsList:
+    detailsList.add([row_type: "totals_line", label: "Subtotal", value: subtotalStr])
+    detailsList.add([row_type: "totals_line", label: "Freight",  value: freightStr])
+    detailsList.add([row_type: "totals_line", label: "Tax (8%)", value: taxStr])
+    detailsList.add([row_type: "total_due",   label: "TOTAL DUE", value: "\\$\${grandTotalStr}"])
+    detailsList.add([row_type: "footer", notes: masterRow.notes?.toString() ?: "",
+                     contact_name: masterRow.contact_name?.toString() ?: "",
+                     due_date: masterRow.due_date?.toString() ?: ""])
+    \`\`\`
+
+2.  **Pre-calculate ALL values in the script.** The .jrxml cannot do math — it only renders. Compute line totals, subtotals, tax, grand totals in Groovy and pass them as plain strings.
+
+3.  **For line items, also pre-calculate \`line_total\`** as a string field on each detail row so the .jrxml just displays it.
+
+4.  **Normal line-item rows should NOT have a \`row_type\` key** (or set it to null). The .jrxml uses \`$F{row_type} == null\` to identify real data rows vs. virtual rows.
+
+These rules do NOT apply when the output is HTML, Excel, or any other non-JR template — only when the template is a .jrxml file.
 `,
       tags: ['groovy', 'input-source', 'master-details', 'cross-tab', 'kpi'],
       category: 'Script Writing Assistance',
