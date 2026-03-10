@@ -2466,9 +2466,19 @@ export class ConfigurationComponent implements OnInit {
       const launchConfig: AiManagerLaunchConfig = {
         initialActiveTabKey: 'PROMPTS',
         initialSelectedCategory: 'PDF Generation (from HTML)',
-        initialExpandedPromptId: 'PDF_SAMPLE_A4_ORDER_SUMMARY',
+        initialExpandedPromptId: 'PDF_HTML_TEMPLATE_GENERATOR',
       };
-
+      if (this.reportDataResult?.reportColumnNames?.length) {
+        launchConfig.promptVariables = {
+          '[INSERT COLUMN NAMES HERE]':
+            this.reportDataResult.reportColumnNames.join(', '),
+        };
+        if (this.reportDataResult.data?.length) {
+          const sampleRows = this.reportDataResult.data.slice(0, 5);
+          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] =
+            JSON.stringify(sampleRows, null, 2);
+        }
+      }
       if (this.aiManagerInstance) {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
       }
@@ -2480,7 +2490,17 @@ export class ConfigurationComponent implements OnInit {
         initialSelectedCategory: 'Excel Report Generation',
         initialExpandedPromptId: 'EXCEL_TEMPLATE_GENERATOR',
       };
-
+      if (this.reportDataResult?.reportColumnNames?.length) {
+        launchConfig.promptVariables = {
+          '[INSERT COLUMN NAMES HERE]':
+            this.reportDataResult.reportColumnNames.join(', '),
+        };
+        if (this.reportDataResult.data?.length) {
+          const sampleRows = this.reportDataResult.data.slice(0, 5);
+          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] =
+            JSON.stringify(sampleRows, null, 2);
+        }
+      }
       if (this.aiManagerInstance) {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
       }
@@ -2511,7 +2531,7 @@ export class ConfigurationComponent implements OnInit {
         };
 
         if (this.reportDataResult.data?.length) {
-          const sampleRows = this.reportDataResult.data.slice(0, 3);
+          const sampleRows = this.reportDataResult.data.slice(0, 5);
           launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
         }
       }
@@ -2527,6 +2547,17 @@ export class ConfigurationComponent implements OnInit {
         initialSelectedCategory: 'PDF Generation (from XSL-FO)',
         initialExpandedPromptId: 'PDF_SAMPLE_A4_PAYSLIP_XSLFO',
       };
+
+      if (this.reportDataResult?.reportColumnNames?.length) {
+        launchConfig.promptVariables = {
+          '[INSERT COLUMN NAMES HERE]': this.reportDataResult.reportColumnNames.join(', '),
+        };
+
+        if (this.reportDataResult.data?.length) {
+          const sampleRows = this.reportDataResult.data.slice(0, 5);
+          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
+        }
+      }
 
       if (this.aiManagerInstance) {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
