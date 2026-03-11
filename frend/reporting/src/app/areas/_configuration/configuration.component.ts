@@ -2479,6 +2479,7 @@ export class ConfigurationComponent implements OnInit {
             JSON.stringify(sampleRows, null, 2);
         }
       }
+      this._populateScriptVariable(launchConfig);
       if (this.aiManagerInstance) {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
       }
@@ -2501,6 +2502,7 @@ export class ConfigurationComponent implements OnInit {
             JSON.stringify(sampleRows, null, 2);
         }
       }
+      this._populateScriptVariable(launchConfig);
       if (this.aiManagerInstance) {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
       }
@@ -2535,6 +2537,7 @@ export class ConfigurationComponent implements OnInit {
           launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
         }
       }
+      this._populateScriptVariable(launchConfig);
 
       if (this.aiManagerInstance) {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
@@ -2558,6 +2561,7 @@ export class ConfigurationComponent implements OnInit {
           launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
         }
       }
+      this._populateScriptVariable(launchConfig);
 
       if (this.aiManagerInstance) {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
@@ -2621,6 +2625,27 @@ export class ConfigurationComponent implements OnInit {
       }
     }
 
+  }
+
+  private _populateScriptVariable(launchConfig: AiManagerLaunchConfig): void {
+    const dsType = this.xmlReporting?.documentburster?.report?.datasource?.type;
+    let scriptContent: string | undefined;
+
+    if (dsType === 'ds.scriptfile' && this.activeDatasourceScriptGroovy?.trim()) {
+      scriptContent = this.activeDatasourceScriptGroovy;
+    } else if (dsType === 'ds.sqlquery') {
+      const sqlQuery = this.xmlReporting?.documentburster?.report?.datasource?.sqloptions?.query;
+      if (sqlQuery?.trim()) {
+        scriptContent = sqlQuery;
+      }
+    }
+
+    if (scriptContent) {
+      if (!launchConfig.promptVariables) {
+        launchConfig.promptVariables = {};
+      }
+      launchConfig.promptVariables['[INSERT SCRIPT HERE]'] = scriptContent;
+    }
   }
 
   absoluteTemplateFolderPath: string = '';

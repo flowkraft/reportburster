@@ -508,22 +508,22 @@ Generate only the complete HTML code based on the above instructions.`,
 </BUSINESS_REQUIREMENT>
 
 DATA MODEL:
-A companion Groovy script (or SQL query) prepares the data and passes it to this template as a FreeMarker model — one Map<String, Object> per document. The Map keys are the column/field names (case-insensitive). Variables are also available by index (\${var0}, \${col0}, etc.) but prefer named columns.
+A companion script (Groovy or SQL) prepares the data and passes it to this template as a FreeMarker model — one Map<String, Object> per document. The Map keys are the column/field names (case-insensitive). Variables are also available by index (\${var0}, \${col0}, etc.) but prefer named columns.
 
-Because data comes from database queries through a script, field types vary at runtime:
-- Numeric columns (e.g., price, quantity) arrive as native Java numbers (not strings) — so \`?number\` will FAIL on them. Use them directly or check with \`?is_number\`.
+Because data comes from database queries, field types vary at runtime:
+- Numeric columns arrive as native Java numbers — \`?number\` will FAIL on them. Use directly or check with \`?is_number\`.
 - Text columns arrive as strings.
 - Date columns arrive as Java date objects — check with \`?is_date\` before formatting.
-- Calculated totals may arrive as either numbers or pre-formatted strings, depending on the script — always be defensive.
+- Calculated totals may arrive as either numbers or pre-formatted strings — always be defensive.
 - Any field can be null — always use \`!\` defaults (\${amount!0}, \${name!""}).
 
-SIMPLE REPORTS (one row = one document, e.g., payslip, certificate, letter):
-- All fields available directly as \${column_name}. Put the full layout in the flow body.
+SIMPLE REPORTS (one row = one document, e.g. payslip, certificate, statement):
+- All fields available directly: \${EmployeeName}, \${Salary}, etc.
 
-MASTER-DETAIL REPORTS (e.g., invoice with line items, order with products):
-- Master fields available directly as \${column_name}.
-- Detail rows in a nested list variable (e.g., \`details\`): iterate with \`<#list details as item>\` and access as \${item.field_name}.
-- Totals/summaries are pre-computed by the script and available as direct variables (e.g., \${Subtotal}, \${Tax}, \${GrandTotal}) — do NOT calculate in the template.
+MASTER-DETAIL REPORTS (e.g. invoice with line items, order with products):
+- Master fields available directly: \${OrderID}, \${CustomerName}, etc.
+- Detail rows in a nested list: iterate with <#list details as item> and access fields as \${item.field_name}.
+- Totals/summaries are pre-computed by the script and available as direct variables (e.g. \${Subtotal}, \${GrandTotal}) — do NOT calculate in the template.
 
 XSL-FO DOCUMENT STRUCTURE:
 - Root element: \`<fo:root xmlns:fo="http://www.w3.org/1999/XSL/Format">\`
@@ -563,6 +563,9 @@ Available data columns:
 
 Sample data (first rows):
 [INSERT SAMPLE DATA HERE]
+
+Script which generated the data:
+[INSERT SCRIPT HERE]
 `,
       tags: ['xslfo', 'fop', 'pdf', 'template', 'freemarker'],
       category: 'PDF Generation (from XSL-FO)',
@@ -572,7 +575,7 @@ Sample data (first rows):
       title: 'Generate Comprehensive PDF Report Template (from HTML)',
       description:
         'Generates a comprehensive, single-page XHTML template optimized for PDF conversion with detailed styling and layout requirements.',
-      promptText: `Generate a complete, self-contained XHTML document for conversion to a professional PDF report.
+      promptText: `Generate a complete, self-contained XHTML document for conversion to a professional PDF report using OpenHTMLToPDF — a CSS 2.1 renderer backed by Apache PDFBox.
 Return ONLY the HTML code in a single code block. The output must be ready to use without modifications.
 The entire report must fit on a single page.
 
@@ -582,9 +585,14 @@ The entire report must fit on a single page.
 
 ## DATA MODEL
 
-- Data arrives as a FreeMarker model. Variable names match the data column names (case-insensitive).
-- Variables are also available by index: \${var0}, \${col0}, \${var1}, \${col1}, etc.
-- At runtime, values may be numbers, dates, strings, or lists — use type-safe FreeMarker patterns.
+A companion script (Groovy or SQL) prepares the data and passes it to this template as a FreeMarker model — one Map<String, Object> per document. The Map keys are the column/field names (case-insensitive). Variables are also available by index (\${var0}, \${col0}, etc.) but prefer named columns.
+
+Because data comes from database queries, field types vary at runtime:
+- Numeric columns arrive as native Java numbers — \`?number\` will FAIL on them. Use directly or check with \`?is_number\`.
+- Text columns arrive as strings.
+- Date columns arrive as Java date objects — check with \`?is_date\` before formatting.
+- Calculated totals may arrive as either numbers or pre-formatted strings — always be defensive.
+- Any field can be null — always use \`!\` defaults (\${amount!0}, \${name!""}).
 
 ### SIMPLE REPORTS (one row = one document, e.g. payslip, certificate, statement)
 - All fields available directly: \${EmployeeName}, \${Salary}, etc.
@@ -592,9 +600,9 @@ The entire report must fit on a single page.
 ### MASTER-DETAIL REPORTS (e.g. invoice with line items, order with products)
 - Master fields available directly: \${OrderID}, \${CustomerName}, etc.
 - Detail rows in a nested list: iterate with <#list details as item> and access fields as \${item.field_name}.
-- Totals/summaries are pre-computed direct variables (e.g. \${Subtotal}, \${GrandTotal}) — do NOT calculate in the template.
+- Totals/summaries are pre-computed by the script and available as direct variables (e.g. \${Subtotal}, \${GrandTotal}) — do NOT calculate in the template.
 
-## HTML→PDF TECHNICAL RULES
+## HTML→PDF TECHNICAL RULES (OpenHTMLToPDF — CSS 2.1 only, no JS, XHTML required)
 
 1. **Fixed-width layout:** Use absolute pixel values (\`px\`) for ALL layout dimensions. Relative units (\`%\`, \`em\`, \`rem\`) must not be used. Specify fixed dimensions for all containers, elements, and components.
 2. **Valid XHTML:** Close all tags properly, including self-closing tags (\`<br/>\`, \`<img/>\`). Use \`&amp;\` instead of raw \`&\`.
@@ -604,6 +612,10 @@ The entire report must fit on a single page.
 6. **Print-optimized design:** High-contrast solid colors, no subtle gradients. Consistent fonts with appropriate \`font-family\` fallbacks. All font sizes in \`pt\`.
 7. **A4 portrait:** Format for A4 portrait with standard margins. Consolidate all content into a single page.
 8. **Absolute measurements:** Use \`px\` or \`pt\` for all measurements (width, height, font-size).
+9. **CSS 2.1 ONLY:** No flexbox, no grid, no CSS variables (\`var()\`), no transforms, no \`calc()\`.
+10. **No @font-face:** Use only system fonts (Arial, Helvetica, sans-serif).
+11. **No JavaScript** — the renderer does not execute scripts.
+12. **Images:** Use absolute file paths or base64 data URIs — no remote URLs.
 
 ## FREEMARKER RULES
 
@@ -619,7 +631,12 @@ Available data columns:
 [INSERT COLUMN NAMES HERE]
 
 Sample data (first rows):
-[INSERT SAMPLE DATA HERE]`,
+[INSERT SAMPLE DATA HERE]
+
+Script which generated the data:
+[INSERT SCRIPT HERE]
+
+If you need help with CSS properties supported by OpenHTMLToPDF, refer to: https://github.com/danfickle/openhtmltopdf/wiki/Big-CSS-reference`,
       tags: ['pdf', 'html2pdf', 'template', 'comprehensive'],
       category: 'PDF Generation (from HTML)',
     },
@@ -628,7 +645,7 @@ Sample data (first rows):
       title: 'Generate PDF Report Template (from HTML)',
       description:
         'Generates a complete XHTML template optimized for PDF conversion, based on user requirements and actual data columns.',
-      promptText: `Generate a complete, self-contained XHTML document for conversion to a PDF report.
+      promptText: `Generate a complete, self-contained XHTML document for conversion to a PDF report using OpenHTMLToPDF — a CSS 2.1 renderer backed by Apache PDFBox.
 Return ONLY the HTML code in a single code block. The output must be ready to use without modifications.
 
 <BUSINESS_REQUIREMENT>
@@ -637,9 +654,14 @@ Return ONLY the HTML code in a single code block. The output must be ready to us
 
 ## DATA MODEL
 
-- Data arrives as a FreeMarker model. Variable names match the data column names (case-insensitive).
-- Variables are also available by index: \${var0}, \${col0}, \${var1}, \${col1}, etc.
-- At runtime, values may be numbers, dates, strings, or lists — use type-safe FreeMarker patterns.
+A companion script (Groovy or SQL) prepares the data and passes it to this template as a FreeMarker model — one Map<String, Object> per document. The Map keys are the column/field names (case-insensitive). Variables are also available by index (\${var0}, \${col0}, etc.) but prefer named columns.
+
+Because data comes from database queries, field types vary at runtime:
+- Numeric columns arrive as native Java numbers — \`?number\` will FAIL on them. Use directly or check with \`?is_number\`.
+- Text columns arrive as strings.
+- Date columns arrive as Java date objects — check with \`?is_date\` before formatting.
+- Calculated totals may arrive as either numbers or pre-formatted strings — always be defensive.
+- Any field can be null — always use \`!\` defaults (\${amount!0}, \${name!""}).
 
 ### SIMPLE REPORTS (one row = one document, e.g. payslip, certificate, statement)
 - All fields available directly: \${EmployeeName}, \${Salary}, etc.
@@ -647,9 +669,9 @@ Return ONLY the HTML code in a single code block. The output must be ready to us
 ### MASTER-DETAIL REPORTS (e.g. invoice with line items, order with products)
 - Master fields available directly: \${OrderID}, \${CustomerName}, etc.
 - Detail rows in a nested list: iterate with <#list details as item> and access fields as \${item.field_name}.
-- Totals/summaries are pre-computed direct variables (e.g. \${Subtotal}, \${GrandTotal}) — do NOT calculate in the template.
+- Totals/summaries are pre-computed by the script and available as direct variables (e.g. \${Subtotal}, \${GrandTotal}) — do NOT calculate in the template.
 
-## HTML→PDF TECHNICAL RULES
+## HTML→PDF TECHNICAL RULES (OpenHTMLToPDF — CSS 2.1 only, no JS, XHTML required)
 
 1. **Valid XHTML:** All tags properly nested and closed (e.g., \`<br/>\`, \`<hr/>\`). Use \`&amp;\` for all ampersand characters — never raw \`&\`.
 2. **Internal CSS:** All CSS in \`<style type="text/css">\` in \`<head>\` — no external references.
@@ -661,6 +683,10 @@ Return ONLY the HTML code in a single code block. The output must be ready to us
 8. **Colors:** High-contrast, solid colors only. No subtle gradients.
 9. **Spacing:** Do not use \`&nbsp;\`. Define all spacing with \`margin\` and \`padding\` in \`px\` or \`pt\`.
 10. **Page breaks:** Apply \`page-break-inside: avoid;\` on main content containers.
+11. **CSS 2.1 ONLY:** No flexbox, no grid, no CSS variables (\`var()\`), no transforms, no \`calc()\`.
+12. **No @font-face:** Use only system fonts (Arial, Helvetica, sans-serif).
+13. **No JavaScript** — the renderer does not execute scripts.
+14. **Images:** Use absolute file paths or base64 data URIs — no remote URLs.
 
 ## FREEMARKER RULES
 
@@ -676,7 +702,12 @@ Available data columns:
 [INSERT COLUMN NAMES HERE]
 
 Sample data (first rows):
-[INSERT SAMPLE DATA HERE]`,
+[INSERT SAMPLE DATA HERE]
+
+Script which generated the data:
+[INSERT SCRIPT HERE]
+
+If you need help with CSS properties supported by OpenHTMLToPDF, refer to: https://github.com/danfickle/openhtmltopdf/wiki/Big-CSS-reference`,
       tags: ['pdf', 'html2pdf', 'template', 'a4-portrait'],
       category: 'PDF Generation (from HTML)',
     },
@@ -1052,7 +1083,7 @@ Sample data (first rows):
       title: 'Generate Excel Report Template',
       description:
         'Generates an HTML template specifically designed for conversion to an Excel spreadsheet, based on user requirements and technical specifications.',
-      promptText: `Generate a complete, self-contained HTML document designed for conversion to an Excel spreadsheet.
+      promptText: `Generate a complete, self-contained HTML document designed for conversion to an Excel spreadsheet using html-exporter — an HTML-to-Excel converter backed by Apache POI.
 Return ONLY the HTML code in a single code block. The output must be ready to use without modifications.
 
 <BUSINESS_REQUIREMENT>
@@ -1061,9 +1092,14 @@ Return ONLY the HTML code in a single code block. The output must be ready to us
 
 ## DATA MODEL
 
-- Data arrives as a FreeMarker model. Variable names match the data column names (case-insensitive).
-- Variables are also available by index: \${var0}, \${col0}, \${var1}, \${col1}, etc.
-- At runtime, values may be numbers, dates, strings, or lists — use type-safe FreeMarker patterns.
+A companion script (Groovy or SQL) prepares the data and passes it to this template as a FreeMarker model — one Map<String, Object> per document. The Map keys are the column/field names (case-insensitive). Variables are also available by index (\${var0}, \${col0}, etc.) but prefer named columns.
+
+Because data comes from database queries, field types vary at runtime:
+- Numeric columns arrive as native Java numbers — \`?number\` will FAIL on them. Use directly or check with \`?is_number\`.
+- Text columns arrive as strings.
+- Date columns arrive as Java date objects — check with \`?is_date\` before formatting.
+- Calculated totals may arrive as either numbers or pre-formatted strings — always be defensive.
+- Any field can be null — always use \`!\` defaults (\${amount!0}, \${name!""}).
 
 ### SIMPLE REPORTS (one row = one document, e.g. payslip, certificate, statement)
 - All fields available directly: \${EmployeeName}, \${Salary}, etc.
@@ -1071,9 +1107,9 @@ Return ONLY the HTML code in a single code block. The output must be ready to us
 ### MASTER-DETAIL REPORTS (e.g. invoice with line items, order with products)
 - Master fields available directly: \${OrderID}, \${CustomerName}, etc.
 - Detail rows in a nested list: iterate with <#list details as item> and access fields as \${item.field_name}.
-- Totals/summaries are pre-computed direct variables (e.g. \${Subtotal}, \${GrandTotal}) — do NOT calculate in the template.
+- Totals/summaries are pre-computed by the script and available as direct variables (e.g. \${Subtotal}, \${GrandTotal}) — do NOT calculate in the template.
 
-## FORMAT RULES
+## FORMAT RULES (html-exporter — HTML-to-Excel via Apache POI)
 
 1. All CSS must be in a <style> block within <head> — no external CSS references
 2. Use Excel-compatible CSS only (see technical docs below)
@@ -1100,18 +1136,12 @@ Available data columns:
 Sample data (first rows):
 [INSERT SAMPLE DATA HERE]
 
+Script which generated the data:
+[INSERT SCRIPT HERE]
+
 ---
 
-**TECHNICAL DOCUMENTATION — Excel-Specific Reference**
-
-# ReportBurster Excel Exporter
-
-ReportBurster transforms CSS styled HTML into Excel spreadsheets with robust formatting and features.
-
-## Overview
-
-ReportBurster allows you to generate professional Excel spreadsheets from HTML content, maintaining styling, formulas, and other Excel-specific features.
-The main advantage is the ability to use familiar HTML/CSS for report generation, combined with a good templating engine for producing high-quality Excel output.
+**TECHNICAL DOCUMENTATION — Excel-Specific Reference (html-exporter / Apache POI)**
 
 ## Features
 
@@ -1127,7 +1157,7 @@ The main advantage is the ability to use familiar HTML/CSS for report generation
 
 ## CSS Support
 
-ReportBurster maps CSS styles to corresponding Excel formatting. The following CSS properties are supported:
+html-exporter maps CSS styles to corresponding Excel formatting. The following CSS properties are supported:
 
 - **Font:** \`font-family\`, \`font-size\`, \`font-weight\`, \`font-style\`, \`text-decoration\`
 - **Alignment:** \`text-align\`, \`vertical-align\`
@@ -1139,6 +1169,9 @@ ReportBurster maps CSS styles to corresponding Excel formatting. The following C
 - Colors can be specified as literals (e.g., \`red\`, \`black\`) or hex values (must use long format: \`#ff0000\` not \`#f00\`)
 - Border widths must be specified as \`thin\`, \`medium\`, or \`thick\`
 - Supported border styles: \`solid\`, \`dotted\`, \`dashed\`, \`double\` (widths apply only to \`solid\` style)
+- Shorthand CSS is supported (e.g., \`border: thick solid red;\`)
+- Style inheritance: background colors and other properties cascade from parent elements (tables/rows) to children unless overridden
+- Style precedence: inline styles override class declarations, which override global declarations
 
 ## Excel-Specific Attributes
 
@@ -1205,7 +1238,9 @@ The following data attributes allow you to access Excel-specific functionality:
 ## Limitations
 
 - When using border widths with non-solid styles, the width property is ignored
-- Certain Excel features might not be available through the HTML interface`,
+- Certain Excel features might not be available through the HTML interface
+
+If you need help with HTML-to-Excel features supported by html-exporter, refer to: https://github.com/alanhay/html-exporter`,
       tags: ['excel', 'html', 'template', 'spreadsheet'],
       category: 'Excel Report Generation',
     },
@@ -1223,10 +1258,10 @@ The following data attributes allow you to access Excel-specific functionality:
 </BUSINESS_REQUIREMENT>
 
 DATA MODEL:
-- Data source is JRMapCollectionDataSource — flat rows from a Map (no JDBC).
+A companion script (Groovy or SQL) prepares the data. Data source is JRMapCollectionDataSource — flat rows from a Map (no JDBC).
 - All fields must be declared as java.lang.Object.
 - SIMPLE REPORTS (one row = one document): all data is directly available on the single row. Use the title band for the full layout — it can access fields from the first (and only) row.
-- MULTI-ROW / MASTER-DETAIL REPORTS: data is pre-flattened (master fields duplicated on every child row). A companion Groovy script can add separate "virtual rows" for totals/footers with a row_type field. The .jrxml uses printWhenExpression on elements to show different layouts per row_type — all within a SINGLE detail band.
+- MULTI-ROW / MASTER-DETAIL REPORTS: data is pre-flattened (master fields duplicated on every child row). A companion script can add separate "virtual rows" for totals/footers with a row_type field. The .jrxml uses printWhenExpression on elements to show different layouts per row_type — all within a SINGLE detail band.
 
 FORMAT RULES (JR 7.0.x / Jackson XML):
 - Do NOT add xmlns or xsi:schemaLocation on <jasperReport> — JR7 does not use them.
@@ -1257,13 +1292,16 @@ Pattern B — MULTI-ROW REPORT with totals (e.g., invoice, order, statement):
   3. Grand total row (row_type == "total_due"): bold label + value with colored background.
   4. Footer row (row_type == "footer"): notes, signatures, thank-you message.
 - All within ONE <detail><band> — no summary, no second band, no frames.
-- The Groovy script emits totals/footer as separate data rows after the line items.
+- The script emits totals/footer as separate data rows after the line items.
 
 Available data columns:
 [INSERT COLUMN NAMES HERE]
 
 Sample data (first rows):
 [INSERT SAMPLE DATA HERE]
+
+Script which generated the data:
+[INSERT SCRIPT HERE]
 `,
       tags: ['jasper', 'jrxml', 'template'],
       category: 'JasperReports (.jrxml) Generation',
