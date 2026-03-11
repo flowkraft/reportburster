@@ -199,7 +199,7 @@
     "code-tag": "1.1.0",
     "conventional-changelog-cli": "2.2.2",
     "cross-env": "7.0.3",
-    "del-cli": "7.0.0",
+    "del-cli": "5.1.0",
     "electron": "21.4.4",
     "electron-builder": "23.6.0",
     "electron-chromedriver": "21.0.0",

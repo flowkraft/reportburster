@@ -1885,7 +1885,7 @@ export class ConfigurationTestHelper {
         .waitOnElementToBecomeInvisible('.dburst-button-question-confirm');
 
       ft = ft.clipboardShouldContainText(
-        'to convert the XHTML into a PDF',
+        'conversion to a PDF report using OpenHTMLToPDF',
       );
     }
 
@@ -1899,7 +1899,7 @@ export class ConfigurationTestHelper {
         .waitOnElementToBecomeInvisible('.dburst-button-question-confirm');
 
       ft = ft.clipboardShouldContainText(
-        'Excel "HTML-based" Report Template Generator',
+        'conversion to an Excel spreadsheet using html-exporter',
       );
     }
 
