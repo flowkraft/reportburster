@@ -52,7 +52,7 @@ IF %ERRORLEVEL% NEQ 0 (
 
 REM STEP 2: Build asbl and all its dependencies using Maven reactor
 echo Building asbl and dependencies...
-call mvn clean install -pl asbl -am -DskipTests -U >> asbl\pack-reportburster.log 2>&1
+call mvn clean install -pl asbl -am -DskipTests -U -Djavac.compiler.path="%JAVA_HOME%/bin/javac.exe" >> asbl\pack-reportburster.log 2>&1
 IF %ERRORLEVEL% NEQ 0 (
     echo ERROR: Build failed. Check asbl\pack-reportburster.log for details.
     popd
@@ -61,7 +61,7 @@ IF %ERRORLEVEL% NEQ 0 (
 
 REM STEP 3: Now run the test
 echo Running AssemblerTest#assembleReportBursterAndReportBursterServer...
-call mvn test -pl asbl -Dtest=AssemblerTest#assembleReportBursterAndReportBursterServer -X >> asbl\pack-reportburster.log 2>&1
+call mvn test -pl asbl -Dtest=AssemblerTest#assembleReportBursterAndReportBursterServer -X -Djavac.compiler.path="%JAVA_HOME%/bin/javac.exe" >> asbl\pack-reportburster.log 2>&1
 IF %ERRORLEVEL% NEQ 0 (
     echo ERROR: Test failed. Check asbl\pack-reportburster.log for details.
     popd
