@@ -42,7 +42,7 @@ echo Current directory: %CD%
 
 REM Build both modules in a single Maven invocation
 REM The -am flag ensures it builds all required modules for the target
-call mvn clean install -pl bkend/common,asbl -am -DskipTests -Djavac.compiler.path="%JAVA_HOME%/bin/javac.exe" > asbl\pack-prepare-for-e2e.log 2>&1
+call mvn clean install -pl bkend/common,asbl -am -DskipTests > asbl\pack-prepare-for-e2e.log 2>&1
 IF %ERRORLEVEL% NEQ 0 (
     echo ERROR: Build failed. Check asbl\pack-prepare-for-e2e.log for details.
     popd
@@ -52,7 +52,7 @@ IF %ERRORLEVEL% NEQ 0 (
 echo.
 echo Running AssemblerTest#prepareForE2E...
 REM Now run just the specific test
-call mvn test -pl asbl -Dtest=AssemblerTest#prepareForE2E -Djavac.compiler.path="%JAVA_HOME%/bin/javac.exe" >> asbl\pack-prepare-for-e2e.log 2>&1
+call mvn test -pl asbl -Dtest=AssemblerTest#prepareForE2E >> asbl\pack-prepare-for-e2e.log 2>&1
 IF %ERRORLEVEL% NEQ 0 (
     echo ERROR: AssemblerTest#prepareForE2E failed. Check asbl\pack-prepare-for-e2e.log for details.
     popd
