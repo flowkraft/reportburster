@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.3.0 - 2026-03-16
+
+### Changed
+
+- **Improved AI Prompts for HTML-to-PDF Reports** — The "Generate PDF Report (from HTML)" prompts now explicitly specify the HTMLToPDF rendering engine and its CSS 2.1 constraints, so the AI produces templates that render correctly on the first try — no more flexbox, CSS grid, or `calc()` that silently breaks in the PDF output.
+
+- **Improved AI Prompts for XSL-FO Reports** — The "Generate PDF Report (from XSL-FO)" prompt now provides clearer data model guidance with concrete field name examples, helping the AI generate more accurate FreeMarker variable references.
+
+- **Improved AI Prompts for Excel Reports** — The "Generate Excel Report" prompt now names the html-exporter engine and documents additional CSS capabilities (shorthand properties, style inheritance, style precedence), resulting in better-styled spreadsheet output.
+
+- **Improved AI Prompts for JasperReports** — The "Generate JasperReports (.jrxml)" prompt now uses clearer, engine-agnostic language for describing the companion data script.
+
+- **AI Prompts Now Include the Data Script** — All report generation prompts now automatically include the Groovy script or SQL query that produces the data, giving the AI full context to generate templates that match your actual data pipeline.
+
 ## 14.2.0 - 2026-03-10
 
 ### Added
