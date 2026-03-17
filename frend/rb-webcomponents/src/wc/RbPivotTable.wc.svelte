@@ -588,6 +588,7 @@
     if (!chartCanvas) {
       outputContainer.innerHTML = '<canvas></canvas>';
       chartCanvas = outputContainer.querySelector('canvas')!;
+      if (!chartCanvas) return;
     }
 
     const config = getChartConfigForRenderer(rendererName, pivotData);
@@ -604,7 +605,9 @@
         chartInstance.update();
       } else {
         // Create new chart
-        chartInstance = new ChartCtor(chartCanvas.getContext('2d'), config);
+        const ctx2d = chartCanvas?.getContext('2d');
+        if (!ctx2d) return;
+        chartInstance = new ChartCtor(ctx2d, config);
       }
     } catch (err) {
       console.error('Chart.js error:', err);
