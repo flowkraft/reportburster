@@ -767,12 +767,15 @@ export class ConnectionDetailsComponent implements OnInit {
     const promptPlaceholder =
       '[INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]';
 
+    const dbVendor = this.modalConnectionInfo?.database?.documentburster?.connection?.databaseserver?.type || '';
+
     const launchConfig: AiManagerLaunchConfig = {
       initialActiveTabKey: 'PROMPTS',
       initialSelectedCategory: targetCategory,
       initialExpandedPromptId: targetPromptId,
       promptVariables: {
         [promptPlaceholder]: tablesJsonString, // Use the full JSON string here
+        '[DATABASE_VENDOR]': dbVendor,
       },
     };
 

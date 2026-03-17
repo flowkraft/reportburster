@@ -2603,10 +2603,16 @@ export class ConfigurationComponent implements OnInit {
     }
 
     if (outputTypeCode === 'script.ds') {
+      const selectedConn = this.getSelectedDbConnection();
+      const dbVendor = selectedConn?.dbserver?.type || '';
+
       const launchConfig: AiManagerLaunchConfig = {
         initialActiveTabKey: 'PROMPTS',
         initialSelectedCategory: 'Script Writing Assistance',
         initialExpandedPromptId: 'GROOVY_SCRIPT_INPUT_SOURCE',
+        promptVariables: {
+          '[DATABASE_VENDOR]': dbVendor,
+        },
       };
 
       if (this.aiManagerInstance) {
