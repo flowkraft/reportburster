@@ -1330,8 +1330,12 @@ Relevant Database Schema Subset:
 [INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]
 \`\`\`
 
-This JSON object contains an array of table definitions. Each table object details its name, columns (with data types), primary keys, and foreign keys. 
+This JSON object contains an array of table definitions. Each table object details its name, columns (with data types), primary keys, and foreign keys.
 You MUST use only the tables and columns present in this provided schema subset. Do not infer the existence of other tables or columns.
+
+Target Database Vendor: [DATABASE_VENDOR]
+
+Generate SQL optimized for the specified database vendor. Use vendor-idiomatic syntax, functions, and quoting conventions (e.g., backticks for MySQL, double quotes for PostgreSQL, square brackets for SQL Server). If no vendor is specified, use standard ANSI SQL.
 
 **YOUR TASK:**
 
@@ -1340,8 +1344,7 @@ You MUST use only the tables and columns present in this provided schema subset.
 * Prioritize Accuracy: Ensure the query correctly retrieves or manipulates the data as per the user's intent.
 * Consider Efficiency: Where possible, write an efficient query, but correctness is paramount.
 * Adhere to Schema: The query must strictly use table and column names as they appear in the provided schema subset. Do not invent or assume table/column names.
-* Standard SQL: Generate a query using standard SQL syntax that is generally compatible with common relational database systems (e.g., PostgreSQL, MySQL, SQL Server, Oracle). 
-If the request implies a specific SQL dialect feature not universally available, make a reasonable judgment or use a common alternative.
+* Vendor-Idiomatic SQL: Generate a query using syntax and functions native to the Target Database Vendor specified above. Use vendor-specific features (e.g., LIMIT vs TOP vs FETCH FIRST, date functions, string functions) as appropriate. If no vendor is specified, fall back to standard ANSI SQL.
 
 **OUTPUT REQUIREMENTS:**
 
@@ -1410,15 +1413,18 @@ WHERE T2.CategoryName = 'Electronics';
         'Reviews and optimizes a provided SQL query for better performance',
       promptText: `Analyze and optimize the following SQL query for improved performance:
 
+Target Database Vendor: [DATABASE_VENDOR]
+
 \`\`\`sql
 -- Paste your SQL query here
 \`\`\`
 
 Please provide:
-1. An optimized version of the query
+1. An optimized version of the query using vendor-idiomatic syntax for the Target Database Vendor specified above
 2. Explanation of performance issues in the original query
 3. The reasoning behind each optimization
-4. Suggestions for adding appropriate indexes`,
+4. Suggestions for adding appropriate indexes
+5. Any vendor-specific optimization features (e.g., execution plan hints, vendor-specific index types, or query rewrite capabilities) that could help. If no vendor is specified, provide general optimization advice.`,
       tags: ['optimization', 'performance', 'analysis'],
       category: 'SQL Writing Assistance',
     },
@@ -1441,7 +1447,11 @@ Provide **only** the final Groovy script in a single Markdown code block, with n
 [INSERT USER'S NATURAL LANGUAGE QUESTION OR INSTRUCTION FOR THE SQL QUERY HERE]
 </BUSINESS_REQUIREMENT>
 
-This script will be used as the "Input Source" for a report. It runs within a Java application and has access to a context object named \`ctx\`. 
+Target Database Vendor: [DATABASE_VENDOR]
+
+The SQL queries embedded in the Groovy script must use syntax and functions idiomatic to the specified database vendor (e.g., backticks for MySQL, double quotes for PostgreSQL, square brackets for SQL Server, vendor-specific date/string functions). If no vendor is specified, use standard ANSI SQL.
+
+This script will be used as the "Input Source" for a report. It runs within a Java application and has access to a context object named \`ctx\`.
 A pre-configured \`groovy.sql.Sql\` instance is available as \`ctx.dbSql\` for database queries.
 
 **CRITICAL INSTRUCTIONS: You must follow these "Golden Rules" precisely.**

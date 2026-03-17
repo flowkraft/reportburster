@@ -189,12 +189,12 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                   
                 <div class="row" style="margin-top: 10px;">
 
-                  <div class="col-xs-6" *ngIf="getDatabaseConnectionFilesForUI().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode">
+                  <div class="col-xs-6" *ngIf="getDatabaseConnectionFilesForUI().length === 0 || !selectedDbConnCode">
                     <button id="btnHelpWithScriptAI" type="button" class="btn btn-default btn-block" (click)="askAiForHelp('script.ds')" [disabled]="isSampleReport">
                       <strong>Hey AI, Help Me With This Groovy Script ...</strong>
                     </button>
                   </div>
-                  <div class="col-xs-6" style="display: flex; align-items: center;" *ngIf="getDatabaseConnectionFilesForUI().length > 0 && xmlReporting.documentburster.report.datasource.sqloptions.conncode">
+                  <div class="col-xs-6" style="display: flex; align-items: center;" *ngIf="getDatabaseConnectionFilesForUI().length > 0 && selectedDbConnCode">
                     <div class="btn-group" style="width: 100%; display: flex;">
                       <button id="btnHelpWithScriptAI" type="button" class="btn btn-default" style="flex: 1; text-align: left;" (click)="askAiForHelp('script.ds')" [disabled]="isSampleReport">
                         <strong>Hey AI, Help Me With This Groovy Script ...</strong>
