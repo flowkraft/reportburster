@@ -208,7 +208,9 @@
       if (!ChartCtor) throw new Error('Chart.js module not found');
 
       const config = buildConfig();
-      chart = new ChartCtor(canvas.getContext('2d'), config);
+      const ctx2d = canvas?.getContext('2d');
+      if (!ctx2d) return;
+      chart = new ChartCtor(ctx2d, config);
       lastChartType = config.type;
       dispatch('ready', { chart });
 

@@ -502,6 +502,10 @@
 
     // === THE ONLY THING THE WRAPPER DOES: create Tabulator on the div ===
     try {
+      if (!container) {
+        dispatch('initError', { message: 'Container element is null, skipping Tabulator initialization' });
+        return;
+      }
       table = new Tabulator(container, opts);
 
       table.on('tableBuilt', () => {
