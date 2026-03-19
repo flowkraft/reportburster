@@ -341,7 +341,7 @@ if (!filteredData.isEmpty()) {
 log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size())`,
             },
             exerciseAiButtons: {
-              sql: true,
+              datasource: true,
               transformation: true,
             },
           });
@@ -764,7 +764,7 @@ if (!filteredData.isEmpty()) {
 log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size())`,
             },
             exerciseAiButtons: {
-              sql: true,
+              datasource: true,
               transformation: true,
             },
           });
@@ -932,7 +932,7 @@ log.info("Finished scriptedReport_employeesByHireDate_noParams.groovy. Rows: {}"
           //transformationScript: ''
         },
         exerciseAiButtons: {
-          sql: false,
+          datasource: false,
           transformation: false
         },
       });
@@ -1092,7 +1092,7 @@ log.info("Finished scriptedReport_employeesByHireDate_noParams.groovy. Rows: {}"
           testViewData: true, // keep view-data checks
         },
         exerciseAiButtons: {
-          sql: false,
+          datasource: false,
           transformation: false,
         },
       });
@@ -1445,8 +1445,7 @@ function configureAndRunReportGeneration2(
       transformationScript?: string;
     };
     exerciseAiButtons?: {
-      sql?: boolean;
-      script?: boolean;
+      datasource?: boolean;
       transformation?: boolean;
     };
   },
@@ -1472,10 +1471,10 @@ function configureAndRunReportGeneration2(
       paramsTab: '#tabScriptReportParameters-link',
       codeTab: '#tabScriptCode-link',
       prompt1: 'You are an expert Groovy Developer',
-      prompt2TableNameProducts: 'write a complete Groovy script',
-      prompt3ColumnNameDiscontinued: 'This script will be used as the "Input Source" for a report',
-      prompt4TableNameOrders: 'CRITICAL INSTRUCTIONS',
-      prompt5TableNameOrderDetails: 'Golden Rules',
+      prompt2TableNameProducts: '"tableName": "Products"',
+      prompt3ColumnNameDiscontinued: '"columnName": "Discontinued"',
+      prompt4TableNameOrders: '"tableName": "Orders"',
+      prompt5TableNameOrderDetails: `"tableName": "${dbVendor === 'clickhouse' ? 'OrderDetails' : 'Order Details'}"`,
     }
 
   };
@@ -1520,7 +1519,7 @@ function configureAndRunReportGeneration2(
 
     ft = ft.waitOnElementToContainText('#databaseConnection', '(default)');
 
-    let shouldExerciseAiButtons = params.exerciseAiButtons?.sql || params.exerciseAiButtons?.script;
+    let shouldExerciseAiButtons = params.exerciseAiButtons?.datasource;
     if (shouldExerciseAiButtons) {
 
       for (const dbConnection of params.dbConnections || []) {
@@ -1530,47 +1529,45 @@ function configureAndRunReportGeneration2(
           ft = ft.waitOnElementToBecomeEnabled(ids.aiHelp);
           ft = ft.click(ids.aiHelp);
 
-          if (params.dataSourceType === 'ds.sqlquery') {
-            ft = ft.waitOnElementToBecomeVisible('#btnTestDbConnectionDbSchema');
-            ft = ft.waitOnElementToBecomeEnabled('#btnTestDbConnectionDbSchema');
+          ft = ft.waitOnElementToBecomeVisible('#btnTestDbConnectionDbSchema');
+          ft = ft.waitOnElementToBecomeEnabled('#btnTestDbConnectionDbSchema');
 
-            ft = ft.click('#btnTestDbConnectionDbSchema');
+          ft = ft.click('#btnTestDbConnectionDbSchema');
 
-            ft = ft.waitOnElementToBecomeVisible('#btnTestDbConnection');
-            ft = ft.waitOnElementToBecomeEnabled('#btnTestDbConnection');
+          ft = ft.waitOnElementToBecomeVisible('#btnTestDbConnection');
+          ft = ft.waitOnElementToBecomeEnabled('#btnTestDbConnection');
 
-            ft = ft.click('#btnTestDbConnection')
-              .infoDialogShouldBeVisible()
-              .clickYesDoThis()
-              .click('#btnClearLogsDbConnection')
-              .confirmDialogShouldBeVisible()
-              .clickYesDoThis()
-              .waitOnElementToBecomeDisabled('#btnClearLogsDbConnection')
-              .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
-              .appStatusShouldBeGreatNoErrorsNoWarnings()
-              .click('#btnTestDbConnection')
-              .confirmDialogShouldBeVisible()
-              .clickYesDoThis()
-              .waitOnElementToBecomeDisabled('#btnTestDbConnection', Constants.DELAY_HUNDRED_SECONDS)
-              .waitOnElementToBecomeEnabled('#btnTestDbConnection', Constants.DELAY_HUNDRED_SECONDS)
-              .sleep(Constants.DELAY_ONE_SECOND)
-              .appStatusShouldBeGreatNoErrorsNoWarnings()
+          ft = ft.click('#btnTestDbConnection')
+            .infoDialogShouldBeVisible()
+            .clickYesDoThis()
+            .click('#btnClearLogsDbConnection')
+            .confirmDialogShouldBeVisible()
+            .clickYesDoThis()
+            .waitOnElementToBecomeDisabled('#btnClearLogsDbConnection')
+            .waitOnElementToBecomeVisible('#btnGreatNoErrorsNoWarnings')
+            .appStatusShouldBeGreatNoErrorsNoWarnings()
+            .click('#btnTestDbConnection')
+            .confirmDialogShouldBeVisible()
+            .clickYesDoThis()
+            .waitOnElementToBecomeDisabled('#btnTestDbConnection', Constants.DELAY_HUNDRED_SECONDS)
+            .waitOnElementToBecomeEnabled('#btnTestDbConnection', Constants.DELAY_HUNDRED_SECONDS)
+            .sleep(Constants.DELAY_ONE_SECOND)
+            .appStatusShouldBeGreatNoErrorsNoWarnings()
 
-            ft = ft.click('#databaseSchemaTab-link')
-              .waitOnElementToBecomeInvisible('#btnTestDbConnectionDbSchema')
-              .waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
-              .waitOnElementToBecomeEnabled(
-                '#btnCloseDbConnectionModal',
-              )
-              .waitOnElementToBecomeVisible('#btnGenerateWithAIDbSchema')
-              .elementShouldBeDisabled('#btnGenerateWithAIDbSchema') //because no tables are selected yet 
-              .click('#treeNodeCategoriessourceTreedatabaseSchemaPicklist')
-              .click('#treeNodeProductssourceTreedatabaseSchemaPicklist')
-              .click('#btnMoveToTargetdatabaseSchemaPicklist')
-              .waitOnElementToBecomeInvisible('#chooseTableLabelDbSchema')
-              .waitOnElementToBecomeEnabled('#btnGenerateWithAIDbSchema')
-              .click('#btnGenerateWithAIDbSchema')
-          }
+          ft = ft.click('#databaseSchemaTab-link')
+            .waitOnElementToBecomeInvisible('#btnTestDbConnectionDbSchema')
+            .waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
+            .waitOnElementToBecomeEnabled(
+              '#btnCloseDbConnectionModal',
+            )
+            .waitOnElementToBecomeVisible('#btnGenerateWithAIDbSchema')
+            .elementShouldBeDisabled('#btnGenerateWithAIDbSchema') //because no tables are selected yet
+            .click('#treeNodeCategoriessourceTreedatabaseSchemaPicklist')
+            .click('#treeNodeProductssourceTreedatabaseSchemaPicklist')
+            .click('#btnMoveToTargetdatabaseSchemaPicklist')
+            .waitOnElementToBecomeInvisible('#chooseTableLabelDbSchema')
+            .waitOnElementToBecomeEnabled('#btnGenerateWithAIDbSchema')
+            .click('#btnGenerateWithAIDbSchema')
 
           ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText')
             .click('#btnCopyPromptText')
@@ -1583,7 +1580,7 @@ function configureAndRunReportGeneration2(
             .click('#btnCloseAiCopilotModal')
             .waitOnElementToBecomeInvisible('#btnCopyPromptText');
 
-          if (params.dataSourceType === 'ds.sqlquery') ft = ft.click('#btnCloseDbConnectionModal');
+          ft = ft.click('#btnCloseDbConnectionModal');
 
         } else {
 
@@ -1594,20 +1591,19 @@ function configureAndRunReportGeneration2(
 
           if (dbConnection.dbConnectionType === 'dbcon-plain-schema-only') {
 
-            if (params.dataSourceType === 'ds.sqlquery') {
-              ft = ft.waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
-                .waitOnElementToBecomeEnabled(
-                  '#btnCloseDbConnectionModal',
-                )
-                .waitOnElementToBecomeVisible('#btnGenerateWithAIDbSchema')
-                .elementShouldBeDisabled('#btnGenerateWithAIDbSchema') //because no tables are selected yet 
-                .click('#treeNodeCategoriessourceTreedatabaseSchemaPicklist')
-                .click('#treeNodeProductssourceTreedatabaseSchemaPicklist')
-                .click('#btnMoveToTargetdatabaseSchemaPicklist')
-                .waitOnElementToBecomeInvisible('#chooseTableLabelDbSchema')
-                .waitOnElementToBecomeEnabled('#btnGenerateWithAIDbSchema')
-                .click('#btnGenerateWithAIDbSchema');
-            }
+            ft = ft.waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
+              .waitOnElementToBecomeEnabled(
+                '#btnCloseDbConnectionModal',
+              )
+              .waitOnElementToBecomeVisible('#btnGenerateWithAIDbSchema')
+              .elementShouldBeDisabled('#btnGenerateWithAIDbSchema') //because no tables are selected yet
+              .click('#treeNodeCategoriessourceTreedatabaseSchemaPicklist')
+              .click('#treeNodeProductssourceTreedatabaseSchemaPicklist')
+              .click('#btnMoveToTargetdatabaseSchemaPicklist')
+              .waitOnElementToBecomeInvisible('#chooseTableLabelDbSchema')
+              .waitOnElementToBecomeEnabled('#btnGenerateWithAIDbSchema')
+              .click('#btnGenerateWithAIDbSchema');
+
             ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText')
               .click('#btnCopyPromptText')
               .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
@@ -1618,26 +1614,25 @@ function configureAndRunReportGeneration2(
               .clipboardShouldContainText(ids.prompt3ColumnNameDiscontinued)
               .click('#btnCloseAiCopilotModal')
               .waitOnElementToBecomeInvisible('#btnCopyPromptText');
-            if (params.dataSourceType === 'ds.sqlquery') ft.click('#btnCloseDbConnectionModal');
+            ft = ft.click('#btnCloseDbConnectionModal');
 
           }
           else if (dbConnection.dbConnectionType === 'dbcon-domaingrouped-schema') {
 
-            if (params.dataSourceType === 'ds.sqlquery') {
-              ft = ft.waitOnElementToBecomeVisible('#domainGroupedSchemaPicklist')
-                .waitOnElementToBecomeVisible('#chooseTableLabelDomainGroupedSchema')
-                .waitOnElementToBecomeEnabled(
-                  '#btnCloseDbConnectionModal',
-                )
-                .elementShouldNotBeVisible('#btnToggleDomainGroupedCodeView')
-                .elementShouldNotBeVisible('#btnGenerateWithAIDomainGroupedSchema')
-                .elementShouldBeDisabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-                .click('#treeNodedomain_SalessourceTreedomainGroupedSchemaPicklist') // select "Sales" group
-                .click('#btnMoveToTargetdomainGroupedSchemaPicklist')
-                .waitOnElementToBecomeInvisible('#chooseTableLabelDomainGroupedSchema')
-                .waitOnElementToBecomeEnabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-                .click('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-            }
+            ft = ft.waitOnElementToBecomeVisible('#domainGroupedSchemaPicklist')
+              .waitOnElementToBecomeVisible('#chooseTableLabelDomainGroupedSchema')
+              .waitOnElementToBecomeEnabled(
+                '#btnCloseDbConnectionModal',
+              )
+              .elementShouldNotBeVisible('#btnToggleDomainGroupedCodeView')
+              .elementShouldNotBeVisible('#btnGenerateWithAIDomainGroupedSchema')
+              .elementShouldBeDisabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
+              .click('#treeNodedomain_SalessourceTreedomainGroupedSchemaPicklist') // select "Sales" group
+              .click('#btnMoveToTargetdomainGroupedSchemaPicklist')
+              .waitOnElementToBecomeInvisible('#chooseTableLabelDomainGroupedSchema')
+              .waitOnElementToBecomeEnabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
+              .click('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
+
             ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText')
               .click('#btnCopyPromptText')
               .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
@@ -1649,29 +1644,25 @@ function configureAndRunReportGeneration2(
               .click('#btnCloseAiCopilotModal')
               .waitOnElementToBecomeInvisible('#btnCopyPromptText');
 
-            if (params.dataSourceType === 'ds.sqlquery') {
-              ft = ft.click('#databaseSchemaTab-link')
-                .waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
-                //.waitOnElementToBecomeVisible('#btnRefreshDatabaseSchema')
-                .click('#btnCloseDbConnectionModal');
-            }
+            ft = ft.click('#databaseSchemaTab-link')
+              .waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
+              //.waitOnElementToBecomeVisible('#btnRefreshDatabaseSchema')
+              .click('#btnCloseDbConnectionModal');
 
           } else if (dbConnection.dbConnectionType === 'dbcon-all-features') {
 
-            if (params.dataSourceType === 'ds.sqlquery') {
-              ft = ft.waitOnElementToBecomeVisible('#domainGroupedSchemaPicklist')
-                .waitOnElementToBecomeVisible('#chooseTableLabelDomainGroupedSchema')
-                .waitOnElementToBecomeEnabled(
-                  '#btnCloseDbConnectionModal',
-                )
-                .elementShouldNotBeVisible('#btnToggleDomainGroupedCodeView')
-                .elementShouldBeDisabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-                .click('#treeNodedomain_SalessourceTreedomainGroupedSchemaPicklist') // select "Sales" group
-                .click('#btnMoveToTargetdomainGroupedSchemaPicklist')
-                .waitOnElementToBecomeInvisible('#chooseTableLabelDomainGroupedSchema')
-                .waitOnElementToBecomeEnabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-                .click('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-            }
+            ft = ft.waitOnElementToBecomeVisible('#domainGroupedSchemaPicklist')
+              .waitOnElementToBecomeVisible('#chooseTableLabelDomainGroupedSchema')
+              .waitOnElementToBecomeEnabled(
+                '#btnCloseDbConnectionModal',
+              )
+              .elementShouldNotBeVisible('#btnToggleDomainGroupedCodeView')
+              .elementShouldBeDisabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
+              .click('#treeNodedomain_SalessourceTreedomainGroupedSchemaPicklist') // select "Sales" group
+              .click('#btnMoveToTargetdomainGroupedSchemaPicklist')
+              .waitOnElementToBecomeInvisible('#chooseTableLabelDomainGroupedSchema')
+              .waitOnElementToBecomeEnabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
+              .click('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
 
             ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText')
               .click('#btnCopyPromptText')
@@ -1684,32 +1675,29 @@ function configureAndRunReportGeneration2(
               .click('#btnCloseAiCopilotModal')
               .waitOnElementToBecomeInvisible('#btnCopyPromptText')
 
-
-            if (params.dataSourceType === 'ds.sqlquery') {
-              ft = ft.waitOnElementToBecomeEnabled('#databaseSchemaTab-link')
-                .click('#databaseSchemaTab-link')
-                .waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
-                //.waitOnElementToBecomeVisible('#btnRefreshDatabaseSchema')
-                .waitOnElementToBecomeEnabled('#connectionDetailsTab-link')
-                .waitOnElementToBecomeEnabled('#databaseDiagramTab-link')
-                .waitOnElementToBecomeEnabled('#databaseUbiquitousLanguageTab-link')
-                .waitOnElementToBecomeEnabled('#toolsTab-link')
-                .click('#connectionDetailsTab-link')
-                .waitOnElementToBecomeVisible('#btnTestDbConnection')
-                .click('#databaseDiagramTab-link')
-                .waitOnElementToBecomeVisible('#plantUmlDiagram')
-                .waitOnElementToBecomeEnabled('#btnDatabaseDiagramViewInBrowserLink')
-                .elementShouldNotBeVisible('#btnDatabaseDiagramShowCode')
-                .elementShouldNotBeVisible('#btnGenerateWithAIErDiagram')
-                .click('#databaseUbiquitousLanguageTab-link')
-                .waitOnElementToBecomeVisible('#ubiquitousLanguageViewer')
-                .elementShouldNotBeVisible('#noUbiquitousLanguageContentInfo')
-                .elementShouldNotBeVisible('#btnUbiquitousLanguageStartEditing')
-                .elementShouldNotBeVisible('#ubiquitousLanguageEditor')
-                // TODO: Write Chat2DB tab e2e tests for FlowKraft AI Hub app
-                .click('#toolsTab-link')
-                .click('#btnCloseDbConnectionModal');
-            }
+            ft = ft.waitOnElementToBecomeEnabled('#databaseSchemaTab-link')
+              .click('#databaseSchemaTab-link')
+              .waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
+              //.waitOnElementToBecomeVisible('#btnRefreshDatabaseSchema')
+              .waitOnElementToBecomeEnabled('#connectionDetailsTab-link')
+              .waitOnElementToBecomeEnabled('#databaseDiagramTab-link')
+              .waitOnElementToBecomeEnabled('#databaseUbiquitousLanguageTab-link')
+              .waitOnElementToBecomeEnabled('#toolsTab-link')
+              .click('#connectionDetailsTab-link')
+              .waitOnElementToBecomeVisible('#btnTestDbConnection')
+              .click('#databaseDiagramTab-link')
+              .waitOnElementToBecomeVisible('#plantUmlDiagram')
+              .waitOnElementToBecomeEnabled('#btnDatabaseDiagramViewInBrowserLink')
+              .elementShouldNotBeVisible('#btnDatabaseDiagramShowCode')
+              .elementShouldNotBeVisible('#btnGenerateWithAIErDiagram')
+              .click('#databaseUbiquitousLanguageTab-link')
+              .waitOnElementToBecomeVisible('#ubiquitousLanguageViewer')
+              .elementShouldNotBeVisible('#noUbiquitousLanguageContentInfo')
+              .elementShouldNotBeVisible('#btnUbiquitousLanguageStartEditing')
+              .elementShouldNotBeVisible('#ubiquitousLanguageEditor')
+              // TODO: Write Chat2DB tab e2e tests for FlowKraft AI Hub app
+              .click('#toolsTab-link')
+              .click('#btnCloseDbConnectionModal');
 
           }
 

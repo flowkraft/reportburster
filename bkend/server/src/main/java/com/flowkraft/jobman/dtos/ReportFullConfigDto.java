@@ -58,4 +58,10 @@ public class ReportFullConfigDto {
      * Only relevant when hasPivotTable=true.
      */
     public String pivotEngineMode = "browser";  // default
+
+    /** Output type from reporting.xml (e.g., "output.html", "output.dashboard") */
+    public String outputType;
+
+    /** Raw HTML template content for dashboard mode (only populated when outputType = "output.dashboard") */
+    public String dashboardTemplate;
 }

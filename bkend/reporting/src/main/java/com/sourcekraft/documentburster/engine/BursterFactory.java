@@ -62,6 +62,7 @@ public class BursterFactory {
 				reporter = new SqlReporter(configurationFilePath);
 				break;
 			case "ds.scriptfile":
+			case "ds.dashboard":
 				// System.out.println("Processing database connection");
 				reporter = new ScriptedReporter(configurationFilePath);
 				break;

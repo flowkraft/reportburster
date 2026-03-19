@@ -963,7 +963,7 @@ export class ConfigurationComponent implements OnInit {
         //this.activeReportTemplateContent = '';
         //this.sanitizedReportPreview = this.sanitizer.bypassSecurityTrustHtml('');
       } else if (
-        ['output.docx', 'output.pdf', 'output.xlsx', 'output.html'].includes(
+        ['output.docx', 'output.pdf', 'output.xlsx', 'output.html', 'output.dashboard'].includes(
           this.xmlReporting.documentburster.report.template.outputtype,
         )
       ) {
@@ -1275,11 +1275,11 @@ export class ConfigurationComponent implements OnInit {
         if (this.xmlReporting?.documentburster?.report?.datasource) {
           const dsType =
             this.xmlReporting.documentburster.report.datasource.type;
-          if (dsType === 'ds.scriptfile') {
+          if (dsType === 'ds.scriptfile' || dsType === 'ds.dashboard') {
             await this.loadExternalReportingScript('datasourceScript');
           }
           // Parameters spec is only relevant for SQL and Script (you need a query/script to apply parameters to)
-          if (dsType === 'ds.scriptfile' || dsType === 'ds.sqlquery') {
+          if (dsType === 'ds.scriptfile' || dsType === 'ds.dashboard' || dsType === 'ds.sqlquery') {
             // Load params spec script - do NOT auto-populate with example
             await this.loadExternalReportingScript('paramsSpecScript');
           }
@@ -2038,7 +2038,7 @@ export class ConfigurationComponent implements OnInit {
     // Save content of scripts related to the *previous* data source type
     // This ensures that any pending changes in the editors are saved to their respective files
     // before the UI potentially clears them or loads new content.
-    if (previousDsType === 'ds.scriptfile') {
+    if (previousDsType === 'ds.scriptfile' || previousDsType === 'ds.dashboard') {
       if (
         this.activeDatasourceScriptGroovy &&
         this.activeDatasourceScriptGroovy.trim() !== '' &&
@@ -2051,6 +2051,7 @@ export class ConfigurationComponent implements OnInit {
     // Parameters spec might have been used by SQL or Script
     if (
       previousDsType === 'ds.scriptfile' ||
+      previousDsType === 'ds.dashboard' ||
       previousDsType === 'ds.sqlquery'
     ) {
 
@@ -2095,8 +2096,16 @@ export class ConfigurationComponent implements OnInit {
     // Update the datasource type in the XML model
     this.xmlReporting.documentburster.report.datasource.type = newValue;
 
+    // When dashboard input type is selected, force output type to dashboard
+    // and set burstFileName without placeholders so single report mode is detected automatically
+    if (newValue === 'ds.dashboard') {
+      this.xmlReporting.documentburster.report.template.outputtype = 'output.dashboard';
+      this.xmlSettings.documentburster.settings.burstfilename = 'dashboard.html';
+      await this.onReportOutputTypeChanged();
+    }
+
     // Load content for the *new* data source type into the UI models
-    if (newValue === 'ds.scriptfile') {
+    if (newValue === 'ds.scriptfile' || newValue === 'ds.dashboard') {
       await this.loadExternalReportingScript('datasourceScript');
       // Parameters spec is also relevant for scriptfile
       await this.loadExternalReportingScript('paramsSpecScript');
@@ -2116,6 +2125,7 @@ export class ConfigurationComponent implements OnInit {
 
     if (
       newValue !== 'ds.scriptfile' &&
+      newValue !== 'ds.dashboard' &&
       this.xmlReporting.documentburster.report.datasource.scriptoptions
     ) {
       // If scriptoptions contains fields like 'scriptpath' or 'scriptcontent' from other non-conventional uses,
@@ -2227,7 +2237,7 @@ export class ConfigurationComponent implements OnInit {
     if (dsType === 'ds.sqlquery') {
       return this.xmlReporting.documentburster.report.datasource.sqloptions.conncode;
     }
-    if (dsType === 'ds.scriptfile') {
+    if (dsType === 'ds.scriptfile' || dsType === 'ds.dashboard') {
       return this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode;
     }
     return '';
@@ -2238,7 +2248,7 @@ export class ConfigurationComponent implements OnInit {
     if (dsType === 'ds.sqlquery') {
       this.xmlReporting.documentburster.report.datasource.sqloptions.conncode = value;
     }
-    if (dsType === 'ds.scriptfile') {
+    if (dsType === 'ds.scriptfile' || dsType === 'ds.dashboard') {
       this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode = value;
     }
   }
@@ -2316,7 +2326,7 @@ export class ConfigurationComponent implements OnInit {
     const outputType =
       this.xmlReporting?.documentburster?.report?.template?.outputtype;
 
-    if (['output.html', 'output.pdf', 'output.xlsx'].includes(outputType)) {
+    if (['output.html', 'output.dashboard', 'output.pdf', 'output.xlsx'].includes(outputType)) {
       this.reportPreviewVisible = !this.reportPreviewVisible;
       if (this.reportPreviewVisible) this.refreshHtmlPreview();
     }
@@ -2324,10 +2334,25 @@ export class ConfigurationComponent implements OnInit {
 
   refreshHtmlPreview() {
 
+    let htmlContent = this.activeReportTemplateContent;
+
+    // For dashboard templates, inject the web components bundle so
+    // <rb-tabulator>, <rb-chart>, <rb-pivot-table>, <rb-parameters> self-initialize
+    if (this.xmlReporting?.documentburster?.report?.template?.outputtype === 'output.dashboard'
+        && htmlContent
+        && (htmlContent.includes('<rb-tabulator') || htmlContent.includes('<rb-chart')
+            || htmlContent.includes('<rb-pivot-table') || htmlContent.includes('<rb-parameters'))) {
+      const scriptTag = '<script src="/rb-webcomponents/rb-webcomponents.umd.js"><\/script>';
+      if (htmlContent.includes('</body>')) {
+        htmlContent = htmlContent.replace('</body>', scriptTag + '</body>');
+      } else {
+        htmlContent = htmlContent + scriptTag;
+      }
+    }
+
     this.sanitizedReportPreview = this.sanitizer.bypassSecurityTrustHtml(
-      this.activeReportTemplateContent,
+      htmlContent,
     );
-    //console.log(`this.sanitizedReportPreview = ${this.sanitizedReportPreview}`);
 
   }
 
@@ -2349,7 +2374,7 @@ export class ConfigurationComponent implements OnInit {
     // Update preview if visible
     if (
       this.reportPreviewVisible &&
-      ['html', 'pdf', 'xlsx'].includes(outputType)
+      ['html', 'dashboard', 'pdf', 'xlsx'].includes(outputType)
     ) {
       this.refreshHtmlPreview();
       this.changeDetectorRef.detectChanges();
@@ -2508,6 +2533,26 @@ export class ConfigurationComponent implements OnInit {
       }
     }
 
+    if (outputTypeCode === 'output.dashboard') {
+      const launchConfig: AiManagerLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'Dashboard Creation',
+        initialExpandedPromptId: 'DASHBOARD_BUILD_LAYOUT',
+      };
+
+      // Build dynamic component reference from configured DSLs
+      const componentsInfo = this._buildDashboardComponentsReference();
+      if (componentsInfo) {
+        launchConfig.promptVariables = {
+          '[AVAILABLE_COMPONENTS]': componentsInfo,
+        };
+      }
+
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      }
+    }
+
     if (outputTypeCode === 'output.html') {
       const launchConfig: AiManagerLaunchConfig = {
         initialActiveTabKey: 'PROMPTS',
@@ -2612,6 +2657,26 @@ export class ConfigurationComponent implements OnInit {
         initialExpandedPromptId: 'GROOVY_SCRIPT_INPUT_SOURCE',
         promptVariables: {
           '[DATABASE_VENDOR]': dbVendor,
+          '[INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]': '',
+        },
+      };
+
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      }
+    }
+
+    if (outputTypeCode === 'script.ds.dashboard') {
+      const selectedConn = this.getSelectedDbConnection();
+      const dbVendor = selectedConn?.dbserver?.type || '';
+
+      const launchConfig: AiManagerLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'Dashboard Creation',
+        initialExpandedPromptId: 'DASHBOARD_BUILD_STEP_BY_STEP_INSTRUCTIONS',
+        promptVariables: {
+          '[DATABASE_VENDOR]': dbVendor,
+          '[INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]': '',
         },
       };
 
@@ -2631,13 +2696,105 @@ export class ConfigurationComponent implements OnInit {
       }
     }
 
+    if (outputTypeCode === 'dsl.reportparams') {
+      const launchConfig: AiManagerLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'DSL Configuration',
+        initialExpandedPromptId: 'REPORT_PARAMS_DSL_CONFIGURE',
+      };
+      if (this.xmlReporting?.documentburster?.report?.datasource?.type !== 'ds.dashboard'
+          && this.reportDataResult?.reportColumnNames?.length) {
+        launchConfig.promptVariables = {
+          '[INSERT COLUMN NAMES HERE]': this.reportDataResult.reportColumnNames.join(', '),
+        };
+        if (this.reportDataResult.data?.length) {
+          const sampleRows = this.reportDataResult.data.slice(0, 5);
+          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
+        }
+      }
+      this._populateScriptVariable(launchConfig);
+
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      }
+    }
+
+    if (outputTypeCode === 'dsl.tabulator') {
+      const launchConfig: AiManagerLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'DSL Configuration',
+        initialExpandedPromptId: 'TABULATOR_DSL_CONFIGURE',
+      };
+      if (this.xmlReporting?.documentburster?.report?.datasource?.type !== 'ds.dashboard'
+          && this.reportDataResult?.reportColumnNames?.length) {
+        launchConfig.promptVariables = {
+          '[INSERT COLUMN NAMES HERE]': this.reportDataResult.reportColumnNames.join(', '),
+        };
+        if (this.reportDataResult.data?.length) {
+          const sampleRows = this.reportDataResult.data.slice(0, 5);
+          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
+        }
+      }
+      this._populateScriptVariable(launchConfig);
+
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      }
+    }
+
+    if (outputTypeCode === 'dsl.chart') {
+      const launchConfig: AiManagerLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'DSL Configuration',
+        initialExpandedPromptId: 'CHART_DSL_CONFIGURE',
+      };
+      if (this.xmlReporting?.documentburster?.report?.datasource?.type !== 'ds.dashboard'
+          && this.reportDataResult?.reportColumnNames?.length) {
+        launchConfig.promptVariables = {
+          '[INSERT COLUMN NAMES HERE]': this.reportDataResult.reportColumnNames.join(', '),
+        };
+        if (this.reportDataResult.data?.length) {
+          const sampleRows = this.reportDataResult.data.slice(0, 5);
+          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
+        }
+      }
+      this._populateScriptVariable(launchConfig);
+
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      }
+    }
+
+    if (outputTypeCode === 'dsl.pivottable') {
+      const launchConfig: AiManagerLaunchConfig = {
+        initialActiveTabKey: 'PROMPTS',
+        initialSelectedCategory: 'DSL Configuration',
+        initialExpandedPromptId: 'PIVOT_TABLE_DSL_CONFIGURE',
+      };
+      if (this.xmlReporting?.documentburster?.report?.datasource?.type !== 'ds.dashboard'
+          && this.reportDataResult?.reportColumnNames?.length) {
+        launchConfig.promptVariables = {
+          '[INSERT COLUMN NAMES HERE]': this.reportDataResult.reportColumnNames.join(', '),
+        };
+        if (this.reportDataResult.data?.length) {
+          const sampleRows = this.reportDataResult.data.slice(0, 5);
+          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
+        }
+      }
+      this._populateScriptVariable(launchConfig);
+
+      if (this.aiManagerInstance) {
+        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      }
+    }
+
   }
 
   private _populateScriptVariable(launchConfig: AiManagerLaunchConfig): void {
     const dsType = this.xmlReporting?.documentburster?.report?.datasource?.type;
     let scriptContent: string | undefined;
 
-    if (dsType === 'ds.scriptfile' && this.activeDatasourceScriptGroovy?.trim()) {
+    if ((dsType === 'ds.scriptfile' || dsType === 'ds.dashboard') && this.activeDatasourceScriptGroovy?.trim()) {
       scriptContent = this.activeDatasourceScriptGroovy;
     } else if (dsType === 'ds.sqlquery') {
       const sqlQuery = this.xmlReporting?.documentburster?.report?.datasource?.sqloptions?.query;
@@ -2652,6 +2809,57 @@ export class ConfigurationComponent implements OnInit {
       }
       launchConfig.promptVariables['[INSERT SCRIPT HERE]'] = scriptContent;
     }
+  }
+
+  private _buildDashboardComponentsReference(): string {
+    const reportCode = this.getCurrentReportCode();
+    const apiBaseUrl = this.getApiBaseUrl();
+    const apiKey = this.getApiKeyForUsage();
+    const parts: string[] = [];
+
+    // Data Tables
+    const namedTabIds = this.getNamedTabulatorIds();
+    if (namedTabIds.length > 0) {
+      parts.push(`## Data Tables (${namedTabIds.length} named components)\n`);
+      for (const cid of namedTabIds) {
+        parts.push(`\`\`\`html\n<rb-tabulator\n  report-code="${reportCode}"\n  component-id="${cid}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-tabulator>\n\`\`\`\n`);
+      }
+    } else if (this.activeTabulatorConfigScriptGroovy?.trim()) {
+      parts.push(`## Data Table\n\n\`\`\`html\n<rb-tabulator\n  report-code="${reportCode}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-tabulator>\n\`\`\`\n`);
+    }
+
+    // Charts
+    const namedChartIds = this.getNamedChartIds();
+    if (namedChartIds.length > 0) {
+      parts.push(`## Charts (${namedChartIds.length} named components)\n`);
+      for (const cid of namedChartIds) {
+        parts.push(`\`\`\`html\n<rb-chart\n  report-code="${reportCode}"\n  component-id="${cid}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-chart>\n\`\`\`\n`);
+      }
+    } else if (this.activeChartConfigScriptGroovy?.trim()) {
+      parts.push(`## Chart\n\n\`\`\`html\n<rb-chart\n  report-code="${reportCode}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-chart>\n\`\`\`\n`);
+    }
+
+    // Pivot Tables
+    const namedPivotIds = this.getNamedPivotIds();
+    if (namedPivotIds.length > 0) {
+      parts.push(`## Pivot Tables (${namedPivotIds.length} named components)\n`);
+      for (const cid of namedPivotIds) {
+        parts.push(`\`\`\`html\n<rb-pivot-table\n  report-code="${reportCode}"\n  component-id="${cid}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-pivot-table>\n\`\`\`\n`);
+      }
+    } else if (this.activePivotTableConfigScriptGroovy?.trim()) {
+      parts.push(`## Pivot Table\n\n\`\`\`html\n<rb-pivot-table\n  report-code="${reportCode}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-pivot-table>\n\`\`\`\n`);
+    }
+
+    // Parameters
+    if (this.activeParamsSpecScriptGroovy?.trim()) {
+      parts.push(`## Parameters Form\n\nPlace this once in the dashboard. When the user submits, all visualization components automatically refresh with the new parameter values.\n\n\`\`\`html\n<rb-parameters\n  report-code="${reportCode}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-parameters>\n\`\`\`\n`);
+    }
+
+    if (parts.length === 0) {
+      return `No visualization components are configured yet. Configure at least one data table, chart, or pivot table in the DSL tabs first, then come back here.`;
+    }
+
+    return parts.join('\n');
   }
 
   absoluteTemplateFolderPath: string = '';
@@ -2772,8 +2980,9 @@ export class ConfigurationComponent implements OnInit {
     );
   }
 
-  async showDbConnectionModal() {
+  async showDbConnectionModal(context: 'sqlQuery' | 'scriptQuery' | 'dashboardScript' = 'sqlQuery') {
     //console.log('ConfigurationConnectionsComponet: showCrudModal()');
+    this.connectionDetailsModalInstance.context = context;
     this.connectionDetailsModalInstance.showCrudModal(
       'update',
       'database-connection',
@@ -2782,6 +2991,10 @@ export class ConfigurationComponent implements OnInit {
     );
   }
   //DBCONNECTIONS END
+
+  get isOutputTypeLocked(): boolean {
+    return this.xmlReporting?.documentburster?.report?.datasource?.type === 'ds.dashboard';
+  }
 
   getAiHelpButtonLabel(outputType: string): string {
     if (outputType === 'output.jasper') {
@@ -3251,6 +3464,10 @@ pivotTable {
 
   // ========== Usage Tab Helper Methods ==========
 
+  isDashboardOutputType(): boolean {
+    return this.xmlReporting?.documentburster?.report?.template?.outputtype === 'output.dashboard';
+  }
+
   getCurrentReportCode(): string {
     return this.settingsService.currentConfigurationTemplate?.folderName || 'unknown_config';
   }
@@ -3321,11 +3538,11 @@ pivotTable {
       return sqlQuery.includes('entityCode') || sqlQuery.includes(':entityCode');
     }
     
-    if (dsType === 'ds.scriptfile') {
+    if (dsType === 'ds.scriptfile' || dsType === 'ds.dashboard') {
       const scriptContent = this.activeDatasourceScriptGroovy || '';
       return scriptContent.includes('entityCode');
     }
-    
+
     return false;
   }
 
@@ -3346,6 +3563,30 @@ pivotTable {
     const apiKey = this.getApiKeyForUsage();
     const webComponentsBaseUrl = this.getWebComponentsBaseUrl();
     const entityCodeAttr = this.getEntityCodeAttribute();
+
+    // Dashboard mode: simplified example with rb-dashboard only
+    if (this.isDashboardOutputType()) {
+      return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard: ${reportCode}</title>
+  <script src="${webComponentsBaseUrl}/rb-webcomponents.umd.js"><\/script>
+</head>
+<body>
+  <h1>Dashboard: ${reportCode}</h1>
+
+  <!-- Dashboard -->
+  <rb-dashboard
+    report-code="${reportCode}"
+    api-base-url="${apiBaseUrl}"
+    api-key="${apiKey}">
+  </rb-dashboard>
+
+</body>
+</html>`;
+    }
 
     const namedTabIds = this.getNamedTabulatorIds();
     const namedChartIds = this.getNamedChartIds();
@@ -3482,6 +3723,37 @@ pivotTable {
     }).catch((err) => {
       console.error('Failed to copy rb-report snippet: ', err);
       this.messagesService.showInfo('Failed to copy rb-report snippet.', 'Error');
+    });
+  }
+
+  copyUsageRbDashboard() {
+    const html = `<rb-dashboard
+  report-code="${this.getCurrentReportCode()}"
+  api-base-url="${this.getApiBaseUrl()}"
+  api-key="${this.getApiKeyForUsage()}">
+</rb-dashboard>`;
+    navigator.clipboard.writeText(html).then(() => {
+      this.messagesService.showInfo('rb-dashboard snippet copied to clipboard!', 'Success');
+    }).catch((err) => {
+      console.error('Failed to copy rb-dashboard snippet: ', err);
+      this.messagesService.showInfo('Failed to copy rb-dashboard snippet.', 'Error');
+    });
+  }
+
+  getDashboardUrl(): string {
+    const baseUrl = this.getApiBaseUrl();
+    // Strip /api suffix to get server root, then append dashboard path
+    const serverRoot = baseUrl.endsWith('/api') ? baseUrl.slice(0, -4) :
+      baseUrl.includes('/api/') ? baseUrl.slice(0, baseUrl.indexOf('/api/')) : '';
+    return `${serverRoot}/dashboard/${this.getCurrentReportCode()}`;
+  }
+
+  copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      this.messagesService.showInfo('Copied to clipboard!', 'Success');
+    }).catch((err) => {
+      console.error('Failed to copy to clipboard: ', err);
+      this.messagesService.showInfo('Failed to copy to clipboard.', 'Error');
     });
   }
 
@@ -4254,6 +4526,7 @@ pivotTable {
         return ['excel'];
       case 'output.pdf':
       case 'output.html':
+      case 'output.dashboard':
       case 'output.docx':
         return null; // Show all except 'excel'
       case 'email.message':
@@ -4290,7 +4563,7 @@ pivotTable {
       outputType = 'email.message';
     }
 
-    if (outputType === 'output.xlsx' || outputType === 'output.pdf' || outputType === 'output.html') {
+    if (outputType === 'output.xlsx' || outputType === 'output.pdf' || outputType === 'output.html' || outputType === 'output.dashboard') {
       this.activeReportTemplateContent = template.htmlContent[template.currentVariantIndex || 0];
       this.settingsChangedEventHandler(this.activeReportTemplateContent);
     } else if (outputType === 'output.docx') {

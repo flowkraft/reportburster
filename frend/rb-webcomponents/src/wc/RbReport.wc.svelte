@@ -36,7 +36,12 @@
   let configLoaded = false;
   let dataLoaded = false;
   let error: string | null = null;
-  
+
+  // Dashboard mode state
+  let dashboardTemplate: string = '';
+  let dashboardContainer: HTMLDivElement;
+  let currentDashboardParams: Record<string, any> = {};
+
   // Track previous entityCode to detect changes
   let prevEntityCode: string = '';
   
@@ -152,7 +157,14 @@
       
       config = await response.json();
       configLoaded = true;
-      
+
+      // Dashboard mode: config includes raw HTML template with embedded web components
+      if (config.dashboardTemplate) {
+        dashboardTemplate = config.dashboardTemplate;
+        loading = false;
+        return; // Dashboard renders via innerHTML, no data fetch needed
+      }
+
       // Initialize parameter values with defaults
       if (config.parameters) {
         config.parameters.forEach((p: any) => {
@@ -344,6 +356,72 @@
     }
   }
   
+  // Dashboard mode: inject HTML into DOM when container is ready
+  let dashboardHasParameters = false;
+  let dashboardInitialParamsReceived = false;
+
+  function injectDashboard(fullInject: boolean = true) {
+    if (!dashboardContainer || !dashboardTemplate) return;
+
+    if (fullInject) {
+      let html = dashboardTemplate;
+
+      // Inject report-params attribute on all rb-* visualization components
+      if (Object.keys(currentDashboardParams).length > 0) {
+        const paramsJson = JSON.stringify(currentDashboardParams).replace(/"/g, '&quot;');
+        html = html.replace(
+          /(<rb-(?:tabulator|chart|pivot-table)\b)([^>]*>)/gi,
+          `$1 report-params="${paramsJson}"$2`
+        );
+      }
+
+      dashboardContainer.innerHTML = html;
+    }
+
+    // Listen for parameter events from rb-parameters inside the dashboard
+    dashboardContainer.addEventListener('valueChange', handleDashboardParamChange as EventListener);
+    dashboardContainer.addEventListener('submit', handleDashboardParamSubmit as EventListener);
+  }
+
+  function handleDashboardParamChange(e: CustomEvent) {
+    currentDashboardParams = e.detail || {};
+
+    // First valueChange = defaults loaded. If we haven't rendered visualizations yet, do it now.
+    if (dashboardHasParameters && !dashboardInitialParamsReceived) {
+      dashboardInitialParamsReceived = true;
+      injectDashboard(); // Re-inject full dashboard with default param values on all rb-* components
+    }
+  }
+
+  function handleDashboardParamSubmit(e: CustomEvent) {
+    currentDashboardParams = e.detail || {};
+    injectDashboard(); // Re-inject = force re-mount all components with new params
+  }
+
+  $: if (dashboardContainer && dashboardTemplate) {
+    // Check if dashboard HTML contains rb-parameters
+    dashboardHasParameters = /<rb-parameters\b/i.test(dashboardTemplate);
+
+    if (dashboardHasParameters) {
+      // Phase 1: Inject only rb-parameters, strip visualization components
+      // They'll be injected after we receive default param values
+      const paramsOnlyHtml = dashboardTemplate.replace(
+        /<rb-(?:tabulator|chart|pivot-table)\b[^>]*>[\s\S]*?<\/rb-(?:tabulator|chart|pivot-table)>/gi,
+        ''
+      ).replace(
+        /<rb-(?:tabulator|chart|pivot-table)\b[^>]*\/>/gi,
+        ''
+      );
+      dashboardContainer.innerHTML = paramsOnlyHtml;
+      // Attach listeners so we catch the first valueChange with defaults
+      dashboardContainer.addEventListener('valueChange', handleDashboardParamChange as EventListener);
+      dashboardContainer.addEventListener('submit', handleDashboardParamSubmit as EventListener);
+    } else {
+      // No parameters — inject everything immediately
+      injectDashboard();
+    }
+  }
+
   // Helpers for aggregator reports — extract named component IDs from config
   $: namedTabulatorIds = config?.namedTabulatorOptions ? Object.keys(config.namedTabulatorOptions) : [];
   $: namedChartIds = config?.namedChartOptions ? Object.keys(config.namedChartOptions) : [];
@@ -403,7 +481,12 @@
     </div>
   {/if}
   
-  {#if configLoaded && !error}
+  <!-- Dashboard Mode: Inject HTML with live web components into DOM -->
+  {#if configLoaded && dashboardTemplate && !error}
+    <div class="rb-report-dashboard" bind:this={dashboardContainer}></div>
+  {/if}
+
+  {#if configLoaded && !dashboardTemplate && !error}
     <!-- Parameters Section -->
     {#if config.hasParameters}
       <div class="rb-report-section rb-report-parameters">
@@ -591,6 +674,10 @@
     gap: 24px;
   }
   
+  .rb-report-dashboard {
+    width: 100%;
+  }
+
   .rb-report-entity-html {
     width: 100%;
     min-height: 400px;

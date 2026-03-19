@@ -176,6 +176,9 @@ export const tabReportingTabulatorTemplate = `<ng-template
             <button id="btnCopyToClipboardTabulatorConfigExample" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardTabulatorConfigExample()">
               Copy Example Tabulator Options To Clipboard
             </button>
+            <button id="btnAiHelpTabulatorConfig" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.tabulator')">
+              <strong>Hey AI, Help Me Configure This Tabulator Table ...</strong>
+            </button>
           </div>
         </div>
       </tab>

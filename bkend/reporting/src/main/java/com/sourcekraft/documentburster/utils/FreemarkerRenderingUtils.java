@@ -56,6 +56,7 @@ public class FreemarkerRenderingUtils {
      */
     public static boolean isHtmlBasedOutputType(String outputType) {
         return CsvUtils.OUTPUT_TYPE_HTML.equals(outputType)
+                || CsvUtils.OUTPUT_TYPE_DASHBOARD.equals(outputType)
                 || CsvUtils.OUTPUT_TYPE_PDF.equals(outputType)
                 || CsvUtils.OUTPUT_TYPE_EXCEL.equals(outputType)
                 || CsvUtils.OUTPUT_TYPE_ANY.equals(outputType);

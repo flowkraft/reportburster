@@ -845,6 +845,7 @@ export class SettingsService {
         return true;
       if (
         (outputType === 'output.html' ||
+          outputType === 'output.dashboard' ||
           outputType === 'output.pdf' ||
           outputType === 'output.xlsx') &&
         tplFile.fileName.endsWith('.html')

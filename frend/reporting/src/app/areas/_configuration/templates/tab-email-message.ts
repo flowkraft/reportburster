@@ -13,7 +13,7 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
       <div class="col-xs-3">
         <dburst-button-variables id="btnEmailToAddressVariables"
           (sendSelectedVariable)="updateFormControlWithSelectedVariable('emailToAddress',$event)">
-        </dburst-button-variables>
+</dburst-button-variables>
       </div>
 
     </div>
@@ -31,7 +31,7 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
         <div class="col-xs-3">
           <dburst-button-variables id="btnEmailCcAddressVariables"
             (sendSelectedVariable)="updateFormControlWithSelectedVariable('emailCcAddress',$event)">
-          </dburst-button-variables>
+</dburst-button-variables>
         </div>
 
       </div>
@@ -49,7 +49,7 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
           <div class="col-xs-3">
             <dburst-button-variables id="btnEmailBccAddressVariables"
               (sendSelectedVariable)="updateFormControlWithSelectedVariable('emailBccAddress',$event)">
-            </dburst-button-variables>
+</dburst-button-variables>
           </div>
 
         </div>
@@ -67,7 +67,7 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
             <div class="col-xs-3">
               <dburst-button-variables id="btnEmailSubjectVariables"
                 (sendSelectedVariable)="updateFormControlWithSelectedVariable('emailSubject',$event)">
-              </dburst-button-variables>
+</dburst-button-variables>
             </div>
 
           </div>
@@ -107,14 +107,14 @@ export const tabEmailMessageTemplate = `<ng-template #tabEmailMessageTemplate>
               </div>
             </div>
             <div class="col-xs-3">
-              <dburst-button-variables 
+              <dburst-button-variables
                 id="btnHtmlCodeEmailMessageVariables"
                 (sendSelectedVariable)="updateFormControlWithSelectedVariable('htmlCodeEmailMessage',$event)" *ngIf="xmlSettings?.documentburster.settings.htmlemail && xmlSettings?.documentburster.settings.htmlemaileditcode">
-              </dburst-button-variables>
+</dburst-button-variables>
               <dburst-button-variables id="btnWysiwygEmailMessageVariables"
                 (sendSelectedVariable)="updateQuillFormControlWithSelectedVariable($event)"
                 *ngIf="xmlSettings?.documentburster.settings.htmlemail && !xmlSettings?.documentburster.settings.htmlemaileditcode">
-              </dburst-button-variables>
+</dburst-button-variables>
             </div>
           </div>
           

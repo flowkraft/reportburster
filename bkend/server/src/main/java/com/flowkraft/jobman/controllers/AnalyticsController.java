@@ -120,7 +120,7 @@ public class AnalyticsController {
             // Extract connection code from the appropriate section
             if ("ds.sqlquery".equals(dsType) && ds.sqloptions != null) {
                 connectionCode = ds.sqloptions.conncode;
-            } else if ("ds.scriptfile".equals(dsType) && ds.scriptoptions != null) {
+            } else if (("ds.scriptfile".equals(dsType) || "ds.dashboard".equals(dsType)) && ds.scriptoptions != null) {
                 connectionCode = ds.scriptoptions.conncode;
             }
 

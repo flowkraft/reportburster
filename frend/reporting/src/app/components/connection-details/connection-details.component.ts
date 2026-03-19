@@ -54,7 +54,7 @@ const PACK_DEFAULTS: Record<string, { host: string; port: string; database: stri
 })
 export class ConnectionDetailsComponent implements OnInit {
   @Input() mode: 'crud' | 'viewMode' = 'crud';
-  @Input() context: 'crud' | 'sqlQuery' = 'crud';
+  @Input() context: 'crud' | 'sqlQuery' | 'scriptQuery' | 'dashboardScript' = 'crud';
 
 
   // Tab active states
@@ -703,7 +703,7 @@ export class ConnectionDetailsComponent implements OnInit {
 
     // The this.context check might still be relevant depending on your overall design
     // For example, this feature might only be available when context is 'sqlQuery'
-    if (this.context === 'sqlQuery' && selectedTableObjects.length === 0) {
+    if ((this.context === 'sqlQuery' || this.context === 'scriptQuery' || this.context === 'dashboardScript') && selectedTableObjects.length === 0) {
       this.messagesService.showInfo(
         `Please select at least one table from the ${sourceSchemaName}.`, // Dynamic message
       );
@@ -762,8 +762,10 @@ export class ConnectionDetailsComponent implements OnInit {
 
     const tablesJsonString = JSON.stringify(relevantTableData, null, 2); // Pretty print JSON
 
-    const targetPromptId = 'SQL_FROM_NATURAL_LANGUAGE';
-    const targetCategory = 'SQL Writing Assistance';
+    const isDashboard = this.context === 'dashboardScript';
+    const isScript = this.context === 'scriptQuery';
+    const targetPromptId = isDashboard ? 'DASHBOARD_BUILD_STEP_BY_STEP_INSTRUCTIONS' : (isScript ? 'GROOVY_SCRIPT_INPUT_SOURCE' : 'SQL_FROM_NATURAL_LANGUAGE');
+    const targetCategory = isDashboard ? 'Dashboard Creation' : (isScript ? 'Script Writing Assistance' : 'SQL Writing Assistance');
     const promptPlaceholder =
       '[INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]';
 
@@ -1760,6 +1762,9 @@ export class ConnectionDetailsComponent implements OnInit {
           if (this.context === 'sqlQuery')
             this.modalConnectionInfo.modalTitle =
               'Choose Table(s) & Generate SQL';
+          if (this.context === 'scriptQuery')
+            this.modalConnectionInfo.modalTitle =
+              'Choose Table(s) & Generate Script';
 
           this.modalConnectionInfo.database.documentburster.connection.code =
             selectedConnection.connectionCode;
@@ -1782,7 +1787,7 @@ export class ConnectionDetailsComponent implements OnInit {
           await this.loadErDiagram(selectedConnection.filePath);
           await this.loadUbiquitousLanguage(selectedConnection.filePath);
 
-          if (this.context === 'sqlQuery') {
+          if (this.context === 'sqlQuery' || this.context === 'scriptQuery') {
             //console.log(
             //  `this.domainGroupedSchemaExists = ${this.domainGroupedSchemaExists}`,
             //);

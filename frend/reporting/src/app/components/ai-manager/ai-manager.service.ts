@@ -18,6 +18,8 @@ export interface PromptInfo {
   | 'PDF Generation (from XSL-FO)'
   | 'SQL Writing Assistance'
   | 'Script Writing Assistance'
+  | 'Dashboard Creation'
+  | 'DSL Configuration'
   | 'Web Portal / CMS'
 ;
 }
@@ -27,6 +29,23 @@ export interface PromptInfo {
 })
 export class AiManagerService {
   constructor() { }
+
+  // Shared HTML layout rules for dashboard prompts — used by both
+  // DASHBOARD_BUILD_LAYOUT and DASHBOARD_BUILD_STEP_BY_STEP_INSTRUCTIONS
+  private static readonly DASHBOARD_HTML_RULES = `1. **Visually self-contained** — this HTML will be injected into an existing page's DOM, so it MUST NOT leak styles or be affected by parent styles. Follow these CSS isolation rules strictly:
+   - Wrap the entire dashboard in a single root \`<div class="rb-dashboard-root">\` container.
+   - Start the \`<style>\` block with \`.rb-dashboard-root { all: initial; display: block; font-family: system-ui, -apple-system, sans-serif; box-sizing: border-box; }\` to reset all inherited styles.
+   - Add \`.rb-dashboard-root *, .rb-dashboard-root *::before, .rb-dashboard-root *::after { box-sizing: inherit; }\` to reset box-sizing for all children.
+   - **Every CSS selector MUST be scoped** under \`.rb-dashboard-root\` (e.g., \`.rb-dashboard-root h1 {}\`, \`.rb-dashboard-root .kpi-card {}\`). Never use bare element selectors like \`h1 {}\`, \`p {}\`, \`div {}\`.
+   - Use a \`<style>\` block (not inline styles on each element) — but every rule must be scoped under \`.rb-dashboard-root\`.
+   - Do NOT use \`<link>\` tags, \`@import\`, or external stylesheets.
+2. **No JavaScript** — no \`<script>\` tags. The web components are self-initializing.
+3. **Layout with CSS Grid or Flexbox** — arrange components in a responsive dashboard layout. Use CSS Grid for the overall dashboard grid and Flexbox for smaller arrangements.
+4. **Add HTML context around components** — include headings, section titles, summary cards, KPI boxes, or any other HTML elements that make the dashboard informative and professional.
+5. **Responsive design** — the dashboard should look good on different screen sizes. Use relative units and media queries where appropriate.
+6. **Visual identity — cohesive color theme** — pick a color palette that fits the business domain, not random or generic blue-gray. Define colors as CSS variables in the style block for consistency. Use a dominant neutral for backgrounds, one or two accent colors for KPIs and highlights, and subtle borders or separators. Avoid the default Bootstrap look — make intentional color choices. Avoid cliché AI aesthetics (purple gradients, neon glows).
+7. **Typography — clear hierarchy** — use font weight and size to create a clear visual hierarchy: dashboard title > section headings > KPI values > KPI labels > body text. KPI numbers should be large and bold — they are the first thing the eye hits. System fonts are fine but use them with intention — vary weight, size, and letter-spacing to create contrast. Do not use more than 2–3 font sizes; hierarchy comes from weight and spacing, not endless size variations.
+8. **Spacing and polish** — use generous, consistent spacing between sections — white space is a design tool, not wasted space. Cards and sections should have consistent padding, border-radius, and subtle shadows or borders. Align elements to a visible grid — nothing should look randomly placed. Small details matter: consistent border-radius values, subtle hover states on interactive elements, smooth color transitions.`;
 
   // Repository of AI prompts
   prompts: Array<PromptInfo> = [
@@ -495,6 +514,666 @@ Generate only the complete HTML code based on the above instructions.`,
       category: 'Template Creation/Modification',
     },
 
+    // --- Dashboard Creation ---
+    {
+      id: 'DASHBOARD_BUILD_LAYOUT',
+      title: 'Build Dashboard Layout with Web Components',
+      description:
+        'Creates an HTML dashboard template that mixes layout HTML with self-initializing <rb-*> web components for data tables, charts, and pivot tables.',
+      promptText: `You are an expert at building data dashboards using HTML and ReportBurster web components. Your task is to create an HTML dashboard template that combines regular HTML layout with self-initializing web components.
+
+# Dashboard Requirements
+
+<REQUIREMENT>
+[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE DASHBOARD HERE]
+</REQUIREMENT>
+
+# Available Web Components
+
+The following web components are **self-initializing** — they automatically fetch their own data from the server. You only need to place them in the HTML with the correct attributes. **Do NOT add any <script> tags or JavaScript** — the components handle everything internally.
+
+[AVAILABLE_COMPONENTS]
+
+# Rules
+
+${AiManagerService.DASHBOARD_HTML_RULES}
+6. **Place components exactly as shown** — use the exact tag names and attributes from the "Available Web Components" section above. Do not modify attribute names or invent new ones.
+
+Generate only the complete HTML code for the dashboard template.`,
+      tags: ['dashboard', 'html', 'web-components', 'layout'],
+      category: 'Dashboard Creation',
+    },
+    {
+      id: 'DASHBOARD_BUILD_STEP_BY_STEP_INSTRUCTIONS',
+      title: 'Build a Dashboard (Step-by-Step Instructions)',
+      description:
+        'Returns numbered step-by-step instructions covering all pieces needed to build a complete dashboard: Groovy data source script, HTML template, Tabulator/Chart/Pivot Table configuration DSLs, and Report Parameters.',
+      promptText: `You are an expert at building data dashboards using ReportBurster. The user wants to create a complete, working dashboard from scratch. Your task is to provide a **numbered step-by-step guide** with all pieces needed — NOT just a single template.
+
+# Business-First Thinking
+
+**Before designing anything**, study the database schema carefully and reason about:
+
+1. **What business domain is this?** (e-commerce, HR, finance, logistics, healthcare, etc.) — the table and column names will tell you.
+2. **What decisions does a business person make with this data?** — a sales manager cares about revenue trends and top customers, an HR director cares about headcount and turnover, a warehouse manager cares about inventory levels and order fulfillment. Design for the specific person who would use THIS data.
+3. **What are the most important metrics THIS schema can actually produce?** — only propose KPIs, charts, and tables that the actual columns support. Do not assume columns exist that are not in the schema. Do not invent metrics the data cannot back. Be pragmatic.
+4. **What is the most common-sense, highest-value dashboard for this data?** — build what a business stakeholder would expect to see. No novelty for novelty's sake. The dashboard should feel obvious and inevitable given the data — "of course that's what you'd show."
+
+# Design Principles
+
+- **Less is more.** A clean, focused dashboard with 4–6 well-chosen components is always better than one stuffed with everything the schema could support. Only include what earns its place. If a visualization doesn't help a decision, leave it out.
+- **Top-to-bottom, left-to-right priority.** Place the most important, most frequently needed information at the top. As the user scrolls down, importance decreases. Within a row, the most critical item goes on the left. KPI cards first, then the primary trend chart, then breakdowns, then detail tables at the bottom.
+- **Naming matters.** Every chart title, table heading, KPI label, column header, section name, and component ID must use the most direct, expected business term for what it represents. Fewer, clearer words always beat more words. "Revenue" not "Total Revenue Amount". "Orders by Region" not "Regional Order Distribution Analysis". Choose the name a business person would already use when talking about this data.
+
+# Dashboard Requirements
+
+<REQUIREMENT>
+Analyze my database schema and build the most useful business dashboard.
+
+Use the schema to make domain-aware choices — not just mechanical column-type mapping:
+- Identify the **core business entities** (customers, orders, products, employees, transactions, etc.) and their relationships
+- Determine the **key business metrics** these entities produce (revenue, conversion rate, average order value, headcount, fulfillment rate, etc.)
+- Find the **natural time dimension** for trends (order date, hire date, transaction date) — not every date column is worth trending
+- Identify **meaningful categorical breakdowns** (by region, department, product category, status) — pick the ones that drive business decisions, not all of them
+
+Prioritize what a business stakeholder would check every morning:
+1. Key metrics at a glance (KPI cards with the numbers that matter most for THIS business)
+2. Trends over time (the metric that best shows how the business is performing)
+3. Top performers and breakdowns (the dimensions people actually slice by)
+4. Detailed drill-down data (filterable data table for investigation)
+
+Start with your best suggestion — I will refine (with your help also) from there.
+</REQUIREMENT>
+
+# Database Schema
+
+Database vendor: [DATABASE_VENDOR]
+
+The following JSON describes the relevant tables and columns available:
+
+\`\`\`json
+[INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]
+\`\`\`
+
+# Instructions
+
+Return the following numbered steps. Each step must include **complete, ready-to-use code** — no placeholders, no "add more here" comments. Every query, column reference, and table name must exist in the schema above — do not hallucinate columns or tables.
+
+**Visual coherence across all components:** The HTML template, Tabulator tables, Charts, and Pivot Tables will render together as one dashboard. Their colors must be visually coherent — pick a unified color palette and carry it through: the CSS variables in the HTML layout, the Chart dataset backgroundColor/borderColor values, any Tabulator formatter colors, and Pivot Table renderer colors should all feel like they belong to the same dashboard. Do not pick colors in isolation per component.
+
+---
+
+## Step 1: Groovy Data Source Script
+
+Write the complete Groovy script that fetches data for each dashboard component. **Use the componentId guard pattern** so each component only triggers its own query:
+
+\`\`\`groovy
+import groovy.sql.Sql
+
+def dbSql = ctx.dbSql
+
+def componentId = ctx.variables?.get('componentId')
+
+// Component: salesGrid (Tabulator)
+if (!componentId || componentId == 'salesGrid') {
+    def data = dbSql.rows("SELECT ... FROM ...")
+    ctx.reportData('salesGrid', data)
+}
+
+// Component: revenueChart (Chart)
+if (!componentId || componentId == 'revenueChart') {
+    def data = dbSql.rows("SELECT ... FROM ...")
+    ctx.reportData('revenueChart', data)
+}
+\`\`\`
+
+**Key rules:**
+- When \`componentId\` is null (full dashboard load), ALL blocks execute
+- When a specific \`componentId\` is passed (single component refresh), only that block runs
+- Use \`ctx.dbSql\` for database access (connection is pre-configured)
+- Use \`ctx.reportData('componentName', data)\` to route data to each component
+- Each component name must match the \`component-id\` attribute in the HTML template
+
+---
+
+## Step 2: Report Parameters Configuration
+
+**Think carefully about this step** — parameters are NOT optional plumbing, they are core to the dashboard's business value. They define how users interact with and explore the data. A dashboard without the right filters is just a static report.
+
+Consider the business context and the database schema to determine:
+- **Date ranges** — almost every business dashboard needs a time window (last 7 days, this month, custom range). Look for date/timestamp columns.
+- **Key dimensions** — which categorical fields (department, region, product category, customer segment, status) would a stakeholder want to slice by?
+- **Sensible defaults** — each parameter must have a default value that shows meaningful data on first load (e.g., last 30 days, "All" departments). The dashboard must be immediately useful without any user interaction.
+
+\`\`\`groovy
+import java.time.LocalDate
+
+reportParameters {
+    parameter(
+        id: 'startDate',
+        type: LocalDate,
+        label: 'Start Date',
+        defaultValue: LocalDate.now().minusDays(30)
+    ) {
+        constraints(required: true)
+        ui(control: 'date', format: 'yyyy-MM-dd')
+    }
+    parameter(
+        id: 'department',
+        type: String,
+        label: 'Department',
+        defaultValue: 'All'
+    ) {
+        constraints(required: false)
+        ui(control: 'select', options: ['All', 'Sales', 'Engineering', 'Marketing'])
+    }
+}
+\`\`\`
+
+The SQL queries in Step 1 must use these parameters via \`ctx.variables\` to filter the data accordingly.
+
+---
+
+## Step 3: HTML Dashboard Template
+
+Write the complete HTML template using \`<rb-tabulator>\`, \`<rb-chart>\`, \`<rb-pivot-table>\`, and \`<rb-parameters>\` web components.
+
+${AiManagerService.DASHBOARD_HTML_RULES}
+
+Each web component needs these attributes:
+- \`report-code="REPORT_CODE"\` — the report identifier (will be configured by the system)
+- \`api-base-url="API_BASE_URL"\` — the API endpoint (will be configured by the system)
+- \`component-id="uniqueName"\` — must match the name used in \`ctx.reportData()\` in Step 1
+
+Example: \`<rb-tabulator report-code="REPORT_CODE" api-base-url="API_BASE_URL" component-id="salesGrid"></rb-tabulator>\`
+
+---
+
+## Step 4: Tabulator Configuration DSL
+
+For each \`<rb-tabulator>\` component, provide the Groovy DSL configuration:
+
+\`\`\`groovy
+tabulator {
+    columns [
+        [field: 'columnName', title: 'Display Title', sorter: 'string', headerFilter: 'input'],
+        [field: 'amount', title: 'Amount', sorter: 'number', formatter: 'money', formatterParams: [precision: 2]],
+    ]
+    options {
+        pagination 'local'
+        paginationSize 10
+        layout 'fitColumns'
+        responsiveLayout 'collapse'
+    }
+}
+\`\`\`
+
+**Key options:** columns (field, title, sorter, formatter, headerFilter), pagination, paginationSize, layout (fitColumns/fitData/fitDataFill), height, theme (default/simple/midnight/modern), movableRows, selectableRows, groupBy, frozenRows, responsiveLayout.
+
+For full details: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
+
+---
+
+## Step 5: Chart Configuration DSL
+
+For each \`<rb-chart>\` component, provide the Groovy DSL configuration:
+
+\`\`\`groovy
+chart {
+    type 'bar'
+    labelField 'categoryColumn'
+    series {
+        dataset('Series Name') {
+            valueField 'amountColumn'
+            backgroundColor 'rgba(54, 162, 235, 0.5)'
+            borderColor 'rgba(54, 162, 235, 1)'
+        }
+    }
+    options {
+        responsive true
+        plugins {
+            title { display true; text 'Chart Title' }
+            legend { position 'top' }
+        }
+    }
+}
+\`\`\`
+
+**Supported chart types:** bar, line, pie, doughnut, radar, polarArea, horizontalBar, stackedBar, area, dualYAxis.
+
+For full details: https://www.reportburster.com/docs/bi-analytics/web-components/charts
+
+---
+
+## Step 6: Pivot Table Configuration DSL
+
+For each \`<rb-pivot-table>\` component, provide the Groovy DSL configuration:
+
+\`\`\`groovy
+pivotTable {
+    rows ['dimension1', 'dimension2']
+    cols ['dimension3']
+    vals ['measureField']
+    aggregatorName 'Sum'
+    rendererName 'Table'
+    rowOrder 'value_z_to_a'
+    colOrder 'key_a_to_z'
+}
+\`\`\`
+
+**Aggregators:** Sum, Count, Average, Minimum, Maximum, Count Unique Values, List Unique Values, Integer Sum, Sum over Sum.
+**Renderers:** Table, Table Barchart, Heatmap, Row Heatmap, Col Heatmap, Bar Chart, Line Chart, Area Chart, Scatter Chart.
+
+For full details: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
+
+---
+
+# Reference Documentation
+- Data Tables: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
+- Charts: https://www.reportburster.com/docs/bi-analytics/web-components/charts
+- Pivot Tables: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
+- Performance / Real-Time: https://www.reportburster.com/docs/bi-analytics/performance-real-time
+
+Provide all steps with complete, production-ready code based on the user's requirements and the database schema provided.`,
+      tags: ['dashboard', 'step-by-step', 'groovy', 'web-components', 'complete-guide'],
+      category: 'Dashboard Creation',
+    },
+    // --- DSL Configuration ---
+    {
+      id: 'REPORT_PARAMS_DSL_CONFIGURE',
+      title: 'Configure Report Parameters',
+      description:
+        'Generates a complete Report Parameters DSL configuration script based on user requirements.',
+      promptText: `You are an expert at configuring Report Parameters using the Groovy DSL for FlowKraft ReportBurster.
+
+<REQUIREMENT>
+[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE REPORT PARAMETERS HERE]
+</REQUIREMENT>
+
+<EXAMPLE_DSL>
+import java.time.LocalDate
+import java.time.LocalDateTime
+
+reportParameters {
+  // Core date range parameters with constraints
+  parameter(
+    id:           'startDate',
+    type:         LocalDate,
+    label:        'Start Date',
+    description:  'Report start date',
+    defaultValue: LocalDate.now().minusDays(30)
+  ) {
+    constraints(
+      required: true,
+      min:      LocalDate.now().minusDays(365),
+      max:      endDate
+    )
+    ui(
+      control: 'date',
+      format:  'yyyy-MM-dd'
+    )
+  }
+
+  parameter(
+    id:           'endDate',
+    type:         LocalDate,
+    label:        'End Date',
+    defaultValue: LocalDate.now()
+  ) {
+    constraints(
+      required: true,
+      min:      startDate,
+      max:      LocalDate.now()
+    )
+    ui(
+      control: 'date',
+      format:  'yyyy-MM-dd'
+    )
+  }
+
+  parameter(
+    id:    'customerId',
+    type:  String,
+    label: 'Customer ID'
+  ) {
+    constraints(
+      required:  true,
+      maxLength: 10,
+      pattern:   '[A-Z0-9]+'
+    )
+  }
+
+  parameter(
+    id:    'customer',
+    type:  String,
+    label: 'Customer'
+  ) {
+    constraints(required: true)
+    ui(
+      control: 'select',
+      options: "SELECT id, name FROM customers WHERE status = 'active'"
+    )
+  }
+
+  parameter(
+    id:           'maxRecords',
+    type:         Integer,
+    label:        'Max Records',
+    defaultValue: 100
+  ) {
+    constraints(min: 1, max: 1000)
+  }
+
+  parameter(
+    id:           'includeInactive',
+    type:         Boolean,
+    label:        'Include Inactive',
+    defaultValue: false
+  )
+
+  parameter(
+    id:           'processingTime',
+    type:         LocalDateTime,
+    label:        'Processing Time',
+    defaultValue: LocalDateTime.now()
+  ) {
+    ui(
+      control: 'datetime',
+      format:  "yyyy-MM-dd'T'HH:mm:ss"
+    )
+  }
+}
+
+if (reportParametersProvided) {
+  log.info("--- Report Parameter Values ---")
+  log.info("startDate          : \\\${startDate ?: 'NOT_SET'}")
+  log.info("endDate            : \\\${endDate   ?: 'NOT_SET'}")
+  log.info("customer           : \\\${customer ?: 'NOT_SET'}")
+  log.info("maxRecords         : \\\${maxRecords ?: 'NOT_SET'}")
+  log.info("includeInactive    : \\\${includeInactive ?: 'false'}")
+  log.info("processingTime     : \\\${processingTime ?: 'NOT_SET'}")
+}
+</EXAMPLE_DSL>
+
+Generate a Report Parameters DSL configuration script based on the requirement above. Use the example DSL as a reference for syntax and available options.
+
+IMPORTANT — be minimalistic:
+- Return ONLY the parameters the user explicitly asked for — no assumptions, no extras.
+- Use the simplest type and fewest constraints that satisfy the requirement.
+- Do not add parameters "just in case" or because they seem useful — if the user didn't ask for it, don't include it.
+
+Available data columns:
+[INSERT COLUMN NAMES HERE]
+
+Sample data (first rows):
+[INSERT SAMPLE DATA HERE]
+
+Script which generated the data:
+[INSERT SCRIPT HERE]
+
+Return only the DSL script — no explanations.`,
+      tags: ['dsl', 'report-parameters', 'configuration'],
+      category: 'DSL Configuration',
+    },
+    {
+      id: 'TABULATOR_DSL_CONFIGURE',
+      title: 'Configure Tabulator Table',
+      description:
+        'Generates a complete Tabulator DSL configuration script based on user requirements.',
+      promptText: `You are an expert at configuring Tabulator data tables using the Groovy DSL for FlowKraft ReportBurster. The DSL is a minimal wrapper over the tabulator.info API — all options map 1:1.
+
+<REQUIREMENT>
+[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE TABLE HERE]
+</REQUIREMENT>
+
+<EXAMPLE_DSL>
+/*
+ Tabulator Groovy DSL — minimal wrapper over tabulator.info API
+ All options map 1:1 to tabulator.info — no invented concepts.
+ Docs: https://tabulator.info/docs/6.3
+ Data comes from ctx.reportData by default — no need to specify it.
+*/
+
+tabulator {
+  layout "fitColumns"
+  height "400px"
+  width "100%"
+  autoColumns false
+  renderVertical "virtual"
+  renderHorizontal "basic"
+  layoutColumnsOnNewData true
+
+  columns {
+    column {
+      title "Name"
+      field "name"
+      hozAlign "left"
+      vertAlign "middle"
+      headerHozAlign "center"
+      width 200
+      minWidth 100
+      maxWidth 400
+      widthGrow 1
+      widthShrink 1
+      visible true
+      frozen false
+      responsive 0
+      resizable true
+      sorter "string"
+      sorterParams([])
+      headerSort true
+      headerFilter "input"
+      headerFilterParams([values: ["A", "B", "C"]])
+      headerFilterPlaceholder "Search..."
+      formatter "plaintext"
+      formatterParams([:])
+      cssClass "my-class"
+      tooltip true
+      editor "input"
+      editorParams([:])
+      editable true
+      validator "required"
+      headerTooltip "Column description"
+      headerVertical false
+    }
+
+    column { title "Age"; field "age"; hozAlign "right"; sorter "number"; formatter "number" }
+    column { title "Status"; field "status"; headerFilter "list"; headerFilterParams([values: ["Active", "Pending"]]) }
+    column { title "Amount"; field "amount"; formatter "money"; width 120 }
+  }
+}
+</EXAMPLE_DSL>
+
+Generate a Tabulator DSL configuration script based on the requirement above. Use the example DSL as a reference for syntax.
+
+IMPORTANT — be minimalistic:
+- Tabulator's default configuration is already good. Your job is to add ONLY the minimum extra configuration needed to match the user's specific requirement — nothing more.
+- Do not set options that repeat the default behavior (e.g. do not set layout, height, renderVertical, etc. unless the user specifically asked for non-default values).
+- Only define columns the user asked for. Only add formatters, filters, sorters, or editors that the user explicitly needs.
+- Do not add options "just in case" or for completeness.
+
+For more details: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
+
+Available data columns:
+[INSERT COLUMN NAMES HERE]
+
+Sample data (first rows):
+[INSERT SAMPLE DATA HERE]
+
+Script which generated the data:
+[INSERT SCRIPT HERE]
+
+Return only the DSL script — no explanations.`,
+      tags: ['dsl', 'tabulator', 'configuration', 'data-table'],
+      category: 'DSL Configuration',
+    },
+    {
+      id: 'CHART_DSL_CONFIGURE',
+      title: 'Configure Chart',
+      description:
+        'Generates a complete Chart DSL configuration script based on user requirements.',
+      promptText: `You are an expert at configuring Charts using the Groovy DSL for FlowKraft ReportBurster. The DSL is aligned with Chart.js — options pass through directly to the Chart.js configuration.
+
+<REQUIREMENT>
+[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE CHART HERE]
+</REQUIREMENT>
+
+<EXAMPLE_DSL>
+/*
+ Chart Groovy DSL - aligned with Chart.js
+ Docs: https://www.chartjs.org/docs/latest/configuration/
+ Data comes from ctx.reportData by default - no need to specify it
+*/
+
+chart {
+  type 'bar'
+  labelField 'region'
+
+  series {
+    series {
+      field 'revenue'
+      label 'Revenue'
+      backgroundColor 'rgba(78, 121, 167, 0.5)'
+      borderColor '#4e79a7'
+      type 'bar'
+      yAxisID 'y'
+      xAxisID 'x'
+      borderWidth 2
+      fill false
+      tension 0.4
+      pointRadius 4
+      pointStyle 'circle'
+      hidden false
+      order 0
+    }
+
+    series field: 'sales', label: 'Sales', backgroundColor: '#4e79a7', borderColor: '#4e79a7'
+    series field: 'profit', label: 'Profit', backgroundColor: '#e15759', borderColor: '#e15759', type: 'line'
+    series field: 'cost', label: 'Cost', backgroundColor: '#59a14f', borderColor: '#59a14f', fill: true, tension: 0.3
+  }
+
+  options {
+    responsive true
+    maintainAspectRatio true
+
+    plugins {
+      title { display true; text 'Sales by Region' }
+      legend { position 'bottom' }
+      tooltip { enabled true }
+      datalabels { display false }
+    }
+
+    scales {
+      y {
+        beginAtZero true
+        title { display true; text 'Value' }
+      }
+      x {
+        title { display true; text 'Region' }
+      }
+    }
+
+    animation { duration 1000 }
+  }
+}
+</EXAMPLE_DSL>
+
+Generate a Chart DSL configuration script based on the requirement above. Use the example DSL as a reference for syntax.
+
+IMPORTANT — be minimalistic:
+- Chart.js default configuration is already good. Your job is to add ONLY the minimum extra configuration needed to match the user's specific requirement — nothing more.
+- Do not set options that repeat the default behavior (e.g. do not set responsive, maintainAspectRatio, animation, etc. unless the user specifically asked for non-default values).
+- Only define series the user asked for. Only add scales, plugins, or styling that the user explicitly needs.
+- Do not add options "just in case" or for completeness.
+
+For more details: https://www.reportburster.com/docs/bi-analytics/web-components/charts
+
+Available data columns:
+[INSERT COLUMN NAMES HERE]
+
+Sample data (first rows):
+[INSERT SAMPLE DATA HERE]
+
+Script which generated the data:
+[INSERT SCRIPT HERE]
+
+Return only the DSL script — no explanations.`,
+      tags: ['dsl', 'chart', 'configuration', 'chartjs'],
+      category: 'DSL Configuration',
+    },
+    {
+      id: 'PIVOT_TABLE_DSL_CONFIGURE',
+      title: 'Configure Pivot Table',
+      description:
+        'Generates a complete Pivot Table DSL configuration script based on user requirements.',
+      promptText: `You are an expert at configuring Pivot Tables using the Groovy DSL for FlowKraft ReportBurster. The DSL is aligned with the react-pivottable API.
+
+<REQUIREMENT>
+[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE PIVOT TABLE HERE]
+</REQUIREMENT>
+
+<EXAMPLE_DSL>
+/*
+ Pivot Table Groovy DSL - aligned with react-pivottable API
+ Docs: https://github.com/plotly/react-pivottable
+ Data comes from ctx.reportData by default - no need to specify it
+*/
+
+pivotTable {
+  rows 'region', 'country'
+  cols 'year', 'quarter'
+  vals 'revenue'
+
+  // Available aggregators:
+  // Count, Count Unique Values, List Unique Values, Sum, Integer Sum, Average, Median,
+  // Sample Variance, Sample Standard Deviation, Minimum, Maximum, First, Last,
+  // Sum over Sum, Sum as Fraction of Total, Sum as Fraction of Rows, Sum as Fraction of Columns,
+  // Count as Fraction of Total, Count as Fraction of Rows, Count as Fraction of Columns
+  aggregatorName 'Sum'
+
+  // Available renderers:
+  // Table, Table Heatmap, Table Col Heatmap, Table Row Heatmap, Exportable TSV
+  // (Plotly renderers if available: Grouped Column Chart, Stacked Column Chart, etc.)
+  rendererName 'Table'
+
+  // Options: key_a_to_z (alphabetical), value_a_to_z (by value ascending), value_z_to_a (by value descending)
+  rowOrder 'key_a_to_z'
+  colOrder 'key_a_to_z'
+
+  valueFilter {
+    // filter 'status', exclude: ['Inactive', 'Pending']
+    // filter 'region', exclude: ['Unknown']
+  }
+
+  options {
+    menuLimit 500
+  }
+}
+</EXAMPLE_DSL>
+
+Generate a Pivot Table DSL configuration script based on the requirement above. Use the example DSL as a reference for syntax.
+
+IMPORTANT — be minimalistic:
+- The pivot table's default configuration is already good. Your job is to add ONLY the minimum extra configuration needed to match the user's specific requirement — nothing more.
+- Do not set options that repeat the default behavior (e.g. do not set rowOrder, colOrder, rendererName, etc. unless the user specifically asked for non-default values).
+- Only specify rows, cols, vals, and aggregator that the user explicitly needs.
+- Do not add options "just in case" or for completeness.
+
+For more details: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
+
+Available data columns:
+[INSERT COLUMN NAMES HERE]
+
+Sample data (first rows):
+[INSERT SAMPLE DATA HERE]
+
+Script which generated the data:
+[INSERT SCRIPT HERE]
+
+Return only the DSL script — no explanations.`,
+      tags: ['dsl', 'pivot-table', 'configuration'],
+      category: 'DSL Configuration',
+    },
     // --- PDF Report Generation ---
     {
       id: 'PDF_SAMPLE_A4_PAYSLIP_XSLFO',
@@ -503,9 +1182,9 @@ Generate only the complete HTML code based on the above instructions.`,
         'Generates a complete XSL-FO (.xsl) FreeMarker template for Apache FOP PDF rendering, based on user requirements.',
       promptText: `Write a FreeMarker template in XSL-FO (XSL Formatting Objects) format for Apache FOP PDF rendering. Return only the complete template code — no partial snippets or explanations.
 
-<BUSINESS_REQUIREMENT>
+<REQUIREMENT>
 [INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE REPORT HERE]
-</BUSINESS_REQUIREMENT>
+</REQUIREMENT>
 
 DATA MODEL:
 A companion script (Groovy or SQL) prepares the data and passes it to this template as a FreeMarker model — one Map<String, Object> per document. The Map keys are the column/field names (case-insensitive). Variables are also available by index (\${var0}, \${col0}, etc.) but prefer named columns.
@@ -571,86 +1250,16 @@ Script which generated the data:
       category: 'PDF Generation (from XSL-FO)',
     },
     {
-      id: 'PDF_HTML_COMPREHENSIVE_TEMPLATE',
-      title: 'Generate Comprehensive PDF Report Template (from HTML)',
-      description:
-        'Generates a comprehensive, single-page XHTML template optimized for PDF conversion with detailed styling and layout requirements.',
-      promptText: `Generate a complete, self-contained XHTML document for conversion to a professional PDF report using OpenHTMLToPDF — a CSS 2.1 renderer backed by Apache PDFBox.
-Return ONLY the HTML code in a single code block. The output must be ready to use without modifications.
-The entire report must fit on a single page.
-
-<BUSINESS_REQUIREMENT>
-[INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE REPORT HERE]
-</BUSINESS_REQUIREMENT>
-
-## DATA MODEL
-
-A companion script (Groovy or SQL) prepares the data and passes it to this template as a FreeMarker model — one Map<String, Object> per document. The Map keys are the column/field names (case-insensitive). Variables are also available by index (\${var0}, \${col0}, etc.) but prefer named columns.
-
-Because data comes from database queries, field types vary at runtime:
-- Numeric columns arrive as native Java numbers — \`?number\` will FAIL on them. Use directly or check with \`?is_number\`.
-- Text columns arrive as strings.
-- Date columns arrive as Java date objects — check with \`?is_date\` before formatting.
-- Calculated totals may arrive as either numbers or pre-formatted strings — always be defensive.
-- Any field can be null — always use \`!\` defaults (\${amount!0}, \${name!""}).
-
-### SIMPLE REPORTS (one row = one document, e.g. payslip, certificate, statement)
-- All fields available directly: \${EmployeeName}, \${Salary}, etc.
-
-### MASTER-DETAIL REPORTS (e.g. invoice with line items, order with products)
-- Master fields available directly: \${OrderID}, \${CustomerName}, etc.
-- Detail rows in a nested list: iterate with <#list details as item> and access fields as \${item.field_name}.
-- Totals/summaries are pre-computed by the script and available as direct variables (e.g. \${Subtotal}, \${GrandTotal}) — do NOT calculate in the template.
-
-## HTML→PDF TECHNICAL RULES (OpenHTMLToPDF — CSS 2.1 only, no JS, XHTML required)
-
-1. **Fixed-width layout:** Use absolute pixel values (\`px\`) for ALL layout dimensions. Relative units (\`%\`, \`em\`, \`rem\`) must not be used. Specify fixed dimensions for all containers, elements, and components.
-2. **Valid XHTML:** Close all tags properly, including self-closing tags (\`<br/>\`, \`<img/>\`). Use \`&amp;\` instead of raw \`&\`.
-3. **Internal CSS:** All CSS in \`<style type="text/css">\` in \`<head>\` — no external references.
-4. **Box model:** Set \`* { box-sizing: border-box; }\` for predictable alignment and dimensions.
-5. **Spacing:** Apply explicit margin and padding values to every element. No default or unspecified spacing. Do not use \`&nbsp;\`.
-6. **Print-optimized design:** High-contrast solid colors, no subtle gradients. Consistent fonts with appropriate \`font-family\` fallbacks. All font sizes in \`pt\`.
-7. **A4 portrait:** Format for A4 portrait with standard margins. Consolidate all content into a single page.
-8. **Absolute measurements:** Use \`px\` or \`pt\` for all measurements (width, height, font-size).
-9. **CSS 2.1 ONLY:** No flexbox, no grid, no CSS variables (\`var()\`), no transforms, no \`calc()\`.
-10. **No @font-face:** Use only system fonts (Arial, Helvetica, sans-serif).
-11. **No JavaScript** — the renderer does not execute scripts.
-12. **Images:** Use absolute file paths or base64 data URIs — no remote URLs.
-
-## FREEMARKER RULES
-
-- Use \${column_name} placeholders matching the actual data columns listed below
-- For null safety: \${value!""} for strings, \${value!0} for numbers
-- For dates: <#if myDate?is_date>\${myDate?string("MM/dd/yyyy")}<#else>\${myDate!""}</#if>
-- For numbers needing formatting: <#if amount?is_number>\${amount?string(",##0.00")}<#else>\${amount!""}</#if>
-- For nested lists: <#list details as item><tr>...</tr></#list>
-- For conditional content: <#if field?has_content>...</#if>
-- NEVER use \${value?number} — values are already their native types at runtime
-
-Available data columns:
-[INSERT COLUMN NAMES HERE]
-
-Sample data (first rows):
-[INSERT SAMPLE DATA HERE]
-
-Script which generated the data:
-[INSERT SCRIPT HERE]
-
-If you need help with CSS properties supported by OpenHTMLToPDF, refer to: https://github.com/danfickle/openhtmltopdf/wiki/Big-CSS-reference`,
-      tags: ['pdf', 'html2pdf', 'template', 'comprehensive'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
       id: 'PDF_HTML_TEMPLATE_GENERATOR',
       title: 'Generate PDF Report Template (from HTML)',
       description:
-        'Generates a complete XHTML template optimized for PDF conversion, based on user requirements and actual data columns.',
+        'Generates a complete XHTML template optimized for PDF conversion using OpenHTMLToPDF, based on user requirements and actual data columns.',
       promptText: `Generate a complete, self-contained XHTML document for conversion to a PDF report using OpenHTMLToPDF — a CSS 2.1 renderer backed by Apache PDFBox.
 Return ONLY the HTML code in a single code block. The output must be ready to use without modifications.
 
-<BUSINESS_REQUIREMENT>
+<REQUIREMENT>
 [INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE REPORT HERE]
-</BUSINESS_REQUIREMENT>
+</REQUIREMENT>
 
 ## DATA MODEL
 
@@ -673,20 +1282,17 @@ Because data comes from database queries, field types vary at runtime:
 
 ## HTML→PDF TECHNICAL RULES (OpenHTMLToPDF — CSS 2.1 only, no JS, XHTML required)
 
-1. **Valid XHTML:** All tags properly nested and closed (e.g., \`<br/>\`, \`<hr/>\`). Use \`&amp;\` for all ampersand characters — never raw \`&\`.
-2. **Internal CSS:** All CSS in \`<style type="text/css">\` in \`<head>\` — no external references.
+1. **Valid XHTML:** All tags properly nested and closed (e.g., \`<br/>\`, \`<hr/>\`). Use \`&amp;\` for all ampersand characters — never raw \`&\`. Do not use \`&nbsp;\`.
+2. **Internal CSS:** All CSS in \`<style type="text/css">\` in \`<head>\` — no external references, no \`@font-face\`.
 3. **Absolute units ONLY:** All measurements (layout, fonts, margins, padding, borders) must use \`px\` or \`pt\`. **DO NOT USE** \`%\`, \`em\`, or \`rem\`.
 4. **Box model:** Apply \`* { box-sizing: border-box; }\` at the start of CSS.
 5. **Fixed layout:** Use \`div\` elements with fixed pixel widths. Use \`display: table\` / \`display: table-cell\` for column layouts (not floats).
-6. **A4 portrait:** Use \`@page { size: A4 portrait; margin: 25mm; }\`.
-7. **Print-safe fonts:** \`font-family: Arial, Helvetica, sans-serif;\` with all sizes in \`pt\`.
-8. **Colors:** High-contrast, solid colors only. No subtle gradients.
-9. **Spacing:** Do not use \`&nbsp;\`. Define all spacing with \`margin\` and \`padding\` in \`px\` or \`pt\`.
-10. **Page breaks:** Apply \`page-break-inside: avoid;\` on main content containers.
-11. **CSS 2.1 ONLY:** No flexbox, no grid, no CSS variables (\`var()\`), no transforms, no \`calc()\`.
-12. **No @font-face:** Use only system fonts (Arial, Helvetica, sans-serif).
-13. **No JavaScript** — the renderer does not execute scripts.
-14. **Images:** Use absolute file paths or base64 data URIs — no remote URLs.
+6. **A4 portrait:** Use \`@page { size: A4 portrait; margin: 25mm; }\`. Adjust page size and margins as needed based on the business requirement.
+7. **Print-safe fonts:** \`font-family: Arial, Helvetica, sans-serif;\` with all sizes in \`pt\`. High-contrast, solid colors only.
+8. **Page breaks:** Apply \`page-break-inside: avoid;\` on main content containers. Use \`page-break-before\`/\`page-break-after\` for multi-page documents.
+9. **CSS 2.1 ONLY:** No flexbox, no grid, no CSS variables (\`var()\`), no transforms, no \`calc()\`.
+10. **No JavaScript** — the renderer does not execute scripts.
+11. **Images:** Use absolute file paths or base64 data URIs — no remote URLs.
 
 ## FREEMARKER RULES
 
@@ -708,373 +1314,7 @@ Script which generated the data:
 [INSERT SCRIPT HERE]
 
 If you need help with CSS properties supported by OpenHTMLToPDF, refer to: https://github.com/danfickle/openhtmltopdf/wiki/Big-CSS-reference`,
-      tags: ['pdf', 'html2pdf', 'template', 'a4-portrait'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_CORE_OPTIMIZATION',
-      title: 'Core PDF Optimization Instructions',
-      description:
-        'Base instructions to ensure HTML is optimized for PDF conversion (fixed layout, absolute units, etc.).',
-      promptText: `Generate HTML optimized for PDF conversion with the following requirements:
-
-- Fixed-Width Layout: All layout dimensions must be specified using absolute pixel values (\`px\`). Do not use percentages, responsive units (e.g., \`%\`, \`em\`, or \`rem\`), or any other relative measurement units.
-- Consistent Spacing: Apply explicit margin and padding values for every HTML element to ensure consistent spacing throughout the layout. Avoid using default or unspecified spacing.
-- Explicit Dimensions: Define fixed dimensions (in pixel values) for all containers, elements, and components. No container should have undefined or relative dimensions.
-- Strategic Page Breaks: Use CSS \`page-break-before\`, \`page-break-after\`, and \`page-break-inside\` properties strategically to control where page breaks occur in the PDF output.
-- Print-Optimized Colors: Avoid subtle gradients and ensure all colors have sufficient contrast for print clarity. Use solid colors whenever possible.
-- Font Consistency: Use consistent fonts throughout the document, and define appropriate font-family fallbacks. Avoid font variations that might not be supported in PDF rendering.
-- Proper Box-Sizing: Set \`box-sizing: border-box\` for all elements to ensure predictable element dimensions and alignment in the layout.
-- Close All HTML Tags: All HTML tags must be properly closed, including self-closing tags like \`<br>\` and \`<img>\`. Do not leave any tag unclosed or partially closed.
-- Use \`&amp;\` Instead of \`&\`: Replace every instance of the raw \`&\` character with the encoded entity \`&amp;\`. The raw \`&\` character must never appear in the HTML code.
-- Avoid Using \`&nbsp;\`: Do not use the non-breaking space entity \`&nbsp;\`. Replace it with alternative spacing methods if needed.
-- Absolute Measurements Only: All measurements (e.g., width, height, font-size) must use absolute units such as \`px\` or \`pt\`. Relative units like \`%\`, \`em\`, or \`rem\` are strictly prohibited.`,
-      tags: ['optimization', 'layout', 'core', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PAGE_SIZE_A4_PORTRAIT',
-      title: 'Set PDF Page Size: A4 Portrait',
-      description:
-        'Instructs the AI to format the document as A4 portrait with standard margins.',
-      promptText: `Format the document as A4 portrait with standard margins.`,
-      tags: ['format-a4-portrait', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PAGE_SIZE_US_LETTER',
-      title: 'Set PDF Page Size: US Letter',
-      description:
-        'Instructs the AI to format the document as US Letter size with standard margins.',
-      promptText: `Format the document as US Letter size with standard margins.`,
-      tags: ['format-letter-us-size', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_MARGINS_NARROW',
-      title: 'Set PDF Margins: Narrow',
-      description:
-        'Instructs the AI to apply narrow margins (1.5cm) to maximize content area.',
-      promptText: `Apply narrow margins (1.5cm) to maximize content area.`,
-      tags: ['margins', 'narrow', 'layout', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_MARGINS_WIDE',
-      title: 'Set PDF Margins: Wide',
-      description:
-        'Instructs the AI to apply wide margins (3cm) for a more formal appearance.',
-      promptText: `Apply wide margins (3cm) for a more formal document appearance.`,
-      tags: ['margins', 'wide', 'formal', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PAGE_NUMBERING_BOTTOM_CENTER_X_OF_Y',
-      title: 'Add Page Numbering: Bottom Center (X of Y)',
-      description:
-        'Adds page numbering at the bottom center showing "Page X of Y".',
-      promptText: `Add page numbering at the bottom center of each page showing "Page X of Y".`,
-      tags: ['numbering', 'pagination', 'footer', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PAGE_NUMBERING_BOTTOM_RIGHT_CURRENT',
-      title: 'Add Page Numbering: Bottom Right (Current Page)',
-      description:
-        'Adds page numbering at the bottom right showing only the current page number.',
-      promptText: `Add page numbering at the bottom right corner showing only the current page number.`,
-      tags: ['numbering', 'pagination', 'footer', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PAGE_NUMBERING_START_SECOND_PAGE',
-      title: 'Start Page Numbering from Second Page',
-      description:
-        'Starts page numbering from the second page, leaving the first page unnumbered.',
-      promptText: `Start page numbering from the second page, leaving the first page without a number.`,
-      tags: ['numbering', 'pagination', 'multi-page', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PAGE_NUMBERING_SECTION_PREFIX',
-      title: 'Add Page Numbering: With Section Prefix',
-      description:
-        'Adds page numbering with a section prefix (e.g., "Section 1, Page 2").',
-      promptText: `Add page numbering with section prefix, like "Section 1, Page 2".`,
-      tags: ['numbering', 'sections', 'organization', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_HEADER_CONSISTENT_LOGO_TITLE',
-      title: 'Add Header: Consistent Logo & Title',
-      description:
-        'Adds a consistent header on each page with company logo and document title.',
-      promptText: `Add a consistent header on each page containing the company logo and document title.`,
-      tags: ['header', 'branding', 'consistency', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_FOOTER_CONSISTENT_CONTACT_COPYRIGHT',
-      title: 'Add Footer: Consistent Contact & Copyright',
-      description:
-        'Includes a footer on each page with contact information and copyright notice.',
-      promptText: `Include a footer on each page with contact information and copyright notice.`,
-      tags: ['footer', 'legal', 'contact', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_HEADER_DIFFERENT_FIRST_PAGE',
-      title: 'Set Header: Different First Page',
-      description:
-        'Applies a different header on the first page compared to subsequent pages.',
-      promptText: `Apply a different header on the first page than on subsequent pages.`,
-      tags: ['header', 'first-page', 'styling', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_HEADER_TITLE_FOOTER_DATE',
-      title: 'Set Header/Footer: Title & Date',
-      description:
-        'Includes the document title in the header and the date in the footer.',
-      promptText: `Include the document title in the header and the date in the footer.`,
-      tags: ['header', 'footer', 'metadata', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_HEADER_TOC',
-      title: 'Add Header: Table of Contents',
-      description:
-        'Includes a table of contents in the header for navigation (requires specific implementation).',
-      promptText: `Include a table of contents in the header for easy navigation.`,
-      tags: ['toc', 'navigation', 'header', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_WATERMARK',
-      title: 'Add Watermark',
-      description: 'Includes a watermark in the background of each page.',
-      promptText: `Include a watermark in the background of each page.`,
-      tags: ['watermark', 'security', 'background', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_FOOTER_DISCLAIMER',
-      title: 'Add Footer: Disclaimer',
-      description: 'Includes a disclaimer in the footer of each page.',
-      promptText: `Include a disclaimer in the footer of each page.`,
-      tags: ['footer', 'legal', 'disclaimer', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_HEADER_DATE_FOOTER_PAGENUM',
-      title: 'Set Header/Footer: Date & Page Numbers',
-      description:
-        'Includes the document date in the header and page numbers in the footer.',
-      promptText: `Include the document date in the header and page numbers in the footer.`,
-      tags: ['header', 'footer', 'metadata', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_MULTIPAGE_BREAK_HANDLING',
-      title: 'Handle Multi-Page: Page Breaks',
-      description:
-        'Ensures proper page break handling, keeping related content together.',
-      promptText: `Ensure proper page break handling for a multi-page document, keeping related content together.`,
-      tags: ['page-breaks', 'multi-page', 'content', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_MULTIPAGE_TABLE_HEADERS',
-      title: 'Handle Multi-Page: Repeat Table Headers',
-      description:
-        'Repeats table headers on each new page for tables spanning multiple pages.',
-      promptText: `For tables that span multiple pages, repeat the table headers on each new page.`,
-      tags: ['tables', 'headers', 'multi-page', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_MULTIPAGE_WIDOWS_ORPHANS',
-      title: 'Handle Multi-Page: Prevent Widows/Orphans',
-      description:
-        'Prevents single lines of a paragraph at the start or end of pages.',
-      promptText: `Prevent widows and orphans (single lines at start/end of pages) throughout the document.`,
-      tags: ['typography', 'readability', 'formatting', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_MULTIPAGE_SECTIONS',
-      title: 'Handle Multi-Page: Sections',
-      description:
-        'Sets up sections with different formatting, each starting on a new page.',
-      promptText: `Set up sections with different formatting, each starting on a new page.`,
-      tags: ['sections', 'organization', 'formatting', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_TABLE_PAGINATION_HEADERS',
-      title: 'Handle Tables: Pagination & Headers',
-      description:
-        'Creates tables that paginate correctly across pages with repeating headers.',
-      promptText: `Create tables that properly paginate across multiple pages with repeating headers.`,
-      tags: ['tables', 'pagination', 'headers', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_TABLE_FINANCIAL_FORMATTING',
-      title: 'Handle Tables: Financial Formatting',
-      description:
-        'Formats financial tables with right-aligned currency values.',
-      promptText: `Format financial tables with right-aligned monetary values and proper currency symbols.`,
-      tags: ['financial', 'tables', 'currency', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_TABLE_ALTERNATING_ROWS',
-      title: 'Handle Tables: Alternating Row Colors',
-      description:
-        'Designs data tables with alternating row colors suitable for printing.',
-      promptText: `Design data tables with alternating row colors that print properly.`,
-      tags: ['tables', 'visual', 'readability', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_TABLE_FIXED_COLUMNS',
-      title: 'Handle Tables: Fixed-Width Columns',
-      description:
-        'Uses fixed-width columns for tables to maintain alignment across pages.',
-      promptText: `Use fixed-width columns for tables to maintain alignment across pages.`,
-      tags: ['tables', 'alignment', 'layout', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_TABLE_BORDERS_PADDING',
-      title: 'Handle Tables: Borders & Padding',
-      description:
-        'Ensures tables have proper borders and padding for readability.',
-      promptText: `Ensure tables have proper borders and padding for readability.`,
-      tags: ['tables', 'borders', 'spacing', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_TABLE_CSS_STYLING',
-      title: 'Handle Tables: Use CSS for Styling',
-      description: 'Uses CSS for table styling instead of HTML attributes.',
-      promptText: `Use CSS for table styling instead of relying on HTML attributes.`,
-      tags: ['tables', 'css', 'styling', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PRINT_HIDE_SCREEN_ELEMENTS',
-      title: 'Print Styling: Hide Screen Elements',
-      description:
-        'Hides elements meant only for screen display when printing to PDF.',
-      promptText: `Hide screen-only elements when printing to PDF.`,
-      tags: ['printing', 'visibility', 'optimization', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PRINT_ADJUST_LAYOUT',
-      title: 'Print Styling: Adjust Layout/Visibility',
-      description:
-        'Uses print-specific styles to adjust layout and visibility for PDF output.',
-      promptText: `Use print-specific styles to adjust layout and visibility of elements.`,
-      tags: ['printing', 'layout', 'visibility', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PRINT_EMBED_IMAGES',
-      title: 'Print Styling: Embed Images',
-      description:
-        'Ensures all images are embedded in the document for proper printing.',
-      promptText: `Ensure all images are embedded in the document for proper printing.`,
-      tags: ['images', 'embedding', 'printing', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PRINT_HIGH_RES_IMAGES',
-      title: 'Print Styling: High-Resolution Images',
-      description: 'Uses high-resolution images for better print quality.',
-      promptText: `Use high-resolution images for better print quality.`,
-      tags: ['images', 'resolution', 'quality', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PRINT_AVOID_BACKGROUNDS',
-      title: 'Print Styling: Avoid Backgrounds',
-      description:
-        'Avoids background images or colors that may not print well.',
-      promptText: `Avoid using background images or colors that may not print well.`,
-      tags: ['backgrounds', 'printing', 'optimization', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PRINT_STYLE_LINKS',
-      title: 'Print Styling: Style Hyperlinks',
-      description: 'Ensures hyperlinks are styled appropriately for print.',
-      promptText: `Ensure all hyperlinks are styled appropriately for print.`,
-      tags: ['hyperlinks', 'styling', 'printing', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PRINT_MEDIA_QUERIES',
-      title: 'Print Styling: Use Media Queries',
-      description:
-        'Uses CSS media queries (@media print) to apply print-specific styles.',
-      promptText: `Use CSS media queries to apply print-specific styles.`,
-      tags: ['media-queries', 'css', 'printing', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PRINT_LINK_LAYOUT',
-      title: 'Print Styling: Ensure Link Layout',
-      description:
-        'Ensures hyperlinks appear properly without disrupting the layout.',
-      promptText: `Ensure all hyperlinks appear properly in the PDF without disrupting the layout.`,
-      tags: ['hyperlinks', 'layout', 'printing', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_PRINT_BACKGROUNDS_CORRECTLY',
-      title: 'Print Styling: Print Backgrounds Correctly',
-      description: 'Makes sure background colors and images print correctly.',
-      promptText: `Make sure background colors and images print correctly in the PDF.`,
-      tags: ['backgrounds', 'colors', 'printing', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_FONT_WEBSAFE_EMBED',
-      title: 'Font Handling: Web-Safe or Embed',
-      description:
-        'Uses only web-safe fonts or embeds custom fonts for consistent rendering.',
-      promptText: `Use only web-safe fonts or embed custom fonts properly to ensure consistent rendering.`,
-      tags: ['fonts', 'embedding', 'consistency', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_FONT_OPTIMIZE_TEXT',
-      title: 'Font Handling: Optimize Text',
-      description:
-        'Optimizes text with proper line heights and character spacing for PDF.',
-      promptText: `Optimize text for PDF output with proper line heights and character spacing.`,
-      tags: ['typography', 'spacing', 'readability', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_FONT_SIZE_READABILITY',
-      title: 'Font Handling: Ensure Readability',
-      description:
-        'Ensures proper font sizing (min 10pt body text) for print readability.',
-      promptText: `Ensure proper font sizing for headability in print format (minimum 10pt for body text).`,
-      tags: ['fonts', 'size', 'readability', 'html2pdf'],
-      category: 'PDF Generation (from HTML)',
-    },
-    {
-      id: 'PDF_METADATA',
-      title: 'Include PDF Metadata',
-      description:
-        'Includes document metadata (title, author, subject) for PDF cataloging.',
-      promptText: `Include proper document metadata (title, author, subject) for PDF cataloging.`,
-      tags: ['metadata', 'seo', 'cataloging', 'html2pdf'],
+      tags: ['pdf', 'html2pdf', 'template'],
       category: 'PDF Generation (from HTML)',
     },
     // --- Excel Report Generation ---
@@ -1086,9 +1326,9 @@ If you need help with CSS properties supported by OpenHTMLToPDF, refer to: https
       promptText: `Generate a complete, self-contained HTML document designed for conversion to an Excel spreadsheet using html-exporter — an HTML-to-Excel converter backed by Apache POI.
 Return ONLY the HTML code in a single code block. The output must be ready to use without modifications.
 
-<BUSINESS_REQUIREMENT>
+<REQUIREMENT>
 [INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE REPORT HERE]
-</BUSINESS_REQUIREMENT>
+</REQUIREMENT>
 
 ## DATA MODEL
 
@@ -1253,9 +1493,9 @@ If you need help with HTML-to-Excel features supported by html-exporter, refer t
         'Generates a complete .jrxml template for JasperReports, based on user requirements.',
       promptText: `Write a JasperReports 7.0+ .jrxml (Jackson-based XML format). Return only the complete .jrxml code — no partial snippets or explanations.
 
-<BUSINESS_REQUIREMENT>
+<REQUIREMENT>
 [INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE REPORT HERE]
-</BUSINESS_REQUIREMENT>
+</REQUIREMENT>
 
 DATA MODEL:
 A companion script (Groovy or SQL) prepares the data. Data source is JRMapCollectionDataSource — flat rows from a Map (no JDBC).
@@ -1320,9 +1560,9 @@ using only the provided subset of the database schema.
 
 Natural Language Request:
 
-<BUSINESS_REQUIREMENT>
+<REQUIREMENT>
 [INSERT USER'S NATURAL LANGUAGE QUESTION OR INSTRUCTION FOR THE SQL QUERY HERE]
-</BUSINESS_REQUIREMENT>
+</REQUIREMENT>
 
 Relevant Database Schema Subset:
 
@@ -1443,11 +1683,20 @@ Your task is to write a complete Groovy script based on the user's business requ
 Based on all the rules and examples below, write a complete Groovy script for the following business requirement. 
 Provide **only** the final Groovy script in a single Markdown code block, with no other text or explanation.
 
-<BUSINESS_REQUIREMENT>
+<REQUIREMENT>
 [INSERT USER'S NATURAL LANGUAGE QUESTION OR INSTRUCTION FOR THE SQL QUERY HERE]
-</BUSINESS_REQUIREMENT>
+</REQUIREMENT>
 
 Target Database Vendor: [DATABASE_VENDOR]
+
+Relevant Database Schema Subset:
+
+\`\`\`json
+[INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]
+\`\`\`
+
+This JSON object contains an array of table definitions. Each table object details its name, columns (with data types), primary keys, and foreign keys.
+You MUST use only the tables and columns present in this provided schema subset. Do not infer the existence of other tables or columns.
 
 The SQL queries embedded in the Groovy script must use syntax and functions idiomatic to the specified database vendor (e.g., backticks for MySQL, double quotes for PostgreSQL, square brackets for SQL Server, vendor-specific date/string functions). If no vendor is specified, use standard ANSI SQL.
 
@@ -1820,9 +2069,9 @@ Your task is to write a complete Groovy script that performs **additional data t
 Based on all the rules and examples below, write a complete Groovy script for the following business requirement.  
 Provide **only** the final Groovy script in a single Markdown code block, with no other text or explanation.
 
-<BUSINESS_REQUIREMENT>
+<REQUIREMENT>
 [USER: PASTE YOUR PLAIN ENGLISH BUSINESS REQUIREMENT HERE]
-</BUSINESS_REQUIREMENT>
+</REQUIREMENT>
 
 This script will be used as the "Additional Data Transformation" step in ReportBurster.  
 It runs within a Java application and has access to a context object named \`ctx\`.  

@@ -79,6 +79,7 @@ public class Variables {
 	public static final String NOW_FULL_TIME = "now_full_time";
 
 	public static final String NOW_QUARTER = "now_quarter";
+	public static final String DASHBOARD_URL = "dashboard_url";
 	public static final String SKIP = "skip";
 
 	private List<String> varAliases;
@@ -312,6 +313,9 @@ public class Variables {
 		builtInVars.put(NOW_FULL_TIME, globalVars.get(NOW_FULL_TIME));
 
 		builtInVars.put(NOW_QUARTER, globalVars.get(NOW_QUARTER));
+
+		builtInVars.put(DASHBOARD_URL, globalVars.get(DASHBOARD_URL));
+
 		return builtInVars;
 	}
 

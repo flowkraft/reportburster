@@ -26,6 +26,9 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
             <option value="ds.scriptfile">
               {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-SCRIPT' | translate }}
             </option>
+            <option value="ds.dashboard">
+              Dashboard
+            </option>
             <option value="ds.xmlfile">
               {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-XML' | translate }}
             </option>
@@ -54,7 +57,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
       <div class="col-xs-5">
           <select
                 id="databaseConnection"
-                *ngIf="getDatabaseConnectionFilesForUI().length > 0 && (xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile')"
+                *ngIf="getDatabaseConnectionFilesForUI().length > 0 && (xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile' || xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard')"
                 class="form-control"
                 [(ngModel)]="selectedDbConnCode"
                 (ngModelChange)="onDatabaseConnectionChanged($event)"
@@ -65,13 +68,14 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 </option>
               </select>
           <!-- Help text below editor -->
-          <small class="text-muted" style="display: block; margin-top: 5px;" *ngIf="getDatabaseConnectionFilesForUI().length > 0 && (xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile')"
+          <small class="text-muted" style="display: block; margin-top: 5px;" *ngIf="getDatabaseConnectionFilesForUI().length > 0 && (xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile' || xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard')"
                 >
             Database Connection
           </small>
            <!-- Message when no database connections exist -->
-          <div id="noDbConnectionsMessageSql" *ngIf="(xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || 
-                xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile') && getDatabaseConnectionFilesForUI().length === 0" style="padding-top: 6px;">
+          <div id="noDbConnectionsMessageSql" *ngIf="(xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' ||
+                xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile' ||
+                xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard') && getDatabaseConnectionFilesForUI().length === 0" style="padding-top: 6px;">
             <i class="fa fa-info-circle"></i>&nbsp;No database connections defined&nbsp;
             <a id="createDbConnectionLinkSql" [routerLink]="['/configuration-connections']" skipLocationChange="true" class="btn btn-primary btn-sm">
               <i class="fa fa-database"></i>&nbsp;Create Database Connection
@@ -85,8 +89,9 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
     <p></p>
 
     <!-- START: New Report Parameters Section for SQL Query/Script -->
-    <div class="row" *ngIf="xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || 
-                xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile'">
+    <div class="row" *ngIf="xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' ||
+                xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile' ||
+                xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard'">
       <div class="col-xs-12" *ngIf="xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery'">
           <tabset id="tabsetSqlQuery">
             <tab id="tabSqlCode" heading="{{ 'AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.SQL-QUERY-PLACEHOLDER' | translate }}">
@@ -161,12 +166,15 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
               <button id="btnCopyToClipboardParametersSpecExampleSql" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardParametersSpecExample()">
                 Copy Example Params Script To Clipboard
               </button>
+              <button id="btnAiHelpParamsSpecSql" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.reportparams')">
+                <strong>Hey AI, Help Me Configure These Report Parameters ...</strong>
+              </button>
             </tab>
             </tabset>
           </div>
-          
-          <div class="col-xs-12" *ngIf="xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile'">
-          
+
+          <div class="col-xs-12" *ngIf="xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile' || xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard'">
+
             <tabset id="tabsetScriptFile">
             <tab id="tabScriptCode" heading="{{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.SCRIPT-CODE' | translate }}">
             
@@ -190,14 +198,14 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 <div class="row" style="margin-top: 10px;">
 
                   <div class="col-xs-6" *ngIf="getDatabaseConnectionFilesForUI().length === 0 || !selectedDbConnCode">
-                    <button id="btnHelpWithScriptAI" type="button" class="btn btn-default btn-block" (click)="askAiForHelp('script.ds')" [disabled]="isSampleReport">
-                      <strong>Hey AI, Help Me With This Groovy Script ...</strong>
+                    <button id="btnHelpWithScriptAI" type="button" class="btn btn-default btn-block" (click)="askAiForHelp(xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'script.ds.dashboard' : 'script.ds')" [disabled]="isSampleReport">
+                      <strong>{{ xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'Hey AI, Help Me Build This Dashboard (step-by-step) ...' : 'Hey AI, Help Me With This Groovy Script ...' }}</strong>
                     </button>
                   </div>
                   <div class="col-xs-6" style="display: flex; align-items: center;" *ngIf="getDatabaseConnectionFilesForUI().length > 0 && selectedDbConnCode">
                     <div class="btn-group" style="width: 100%; display: flex;">
-                      <button id="btnHelpWithScriptAI" type="button" class="btn btn-default" style="flex: 1; text-align: left;" (click)="askAiForHelp('script.ds')" [disabled]="isSampleReport">
-                        <strong>Hey AI, Help Me With This Groovy Script ...</strong>
+                      <button id="btnHelpWithScriptAI" type="button" class="btn btn-default" style="flex: 1; text-align: left;" (click)="showDbConnectionModal(xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'dashboardScript' : 'scriptQuery')" [disabled]="isSampleReport">
+                        <strong>{{ xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'Hey AI, Help Me Build This Dashboard (step-by-step) ...' : 'Hey AI, Help Me With This Groovy Script ...' }}</strong>
                       </button>
                       <button
                         id="btnHelpWithScriptAIDropdownToggle"
@@ -213,11 +221,11 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                       </button>
                       <ul class="dropdown-menu" style="min-width: 220px;" *ngIf="!isSampleReport">
                         <li>
-                          <a id="btnHelpWithScriptAIDropdownItem" href="#" (click)="askAiForHelp('script.ds'); $event.preventDefault();">
-                            Hey AI, Help Me With This Groovy Script ...
+                          <a id="btnHelpWithScriptAIDropdownItem" href="#" (click)="showDbConnectionModal(xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'dashboardScript' : 'scriptQuery'); $event.preventDefault();">
+                            {{ xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'Hey AI, Help Me Build This Dashboard (step-by-step) ...' : 'Hey AI, Help Me With This Groovy Script ...' }}
                           </a>
                         </li>
-                        <li>
+                        <li *ngIf="xmlReporting?.documentburster.report.datasource.type !== 'ds.dashboard'">
                           <a id="btnHelpWithSqlQueryAIDropdownItem" href="#" (click)="showDbConnectionModal(); $event.preventDefault();">
                             Hey AI, Help Me With This SQL Query ...
                           </a>
@@ -269,6 +277,9 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
               ></ngx-codejar>
               <button id="btnCopyToClipboardParametersSpecExampleScript" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardParametersSpecExample()">
                 Copy Example Params Script To Clipboard
+              </button>
+              <button id="btnAiHelpParamsSpecScript" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.reportparams')">
+                <strong>Hey AI, Help Me Configure These Report Parameters ...</strong>
               </button>
             </tab>
             </tabset>
@@ -1005,7 +1016,7 @@ Column 3, 15"
     <p></p>
       
     <!-- Add this after all datasource type sections but before the Request Feature section -->
-    <div *ngIf="xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' || 
+    <div *ngIf="xmlReporting?.documentburster.report.datasource.type === 'ds.sqlquery' ||
                 xmlReporting?.documentburster.report.datasource.type === 'ds.scriptfile' ||
                 xmlReporting?.documentburster.report.datasource.type === 'ds.xmlfile' ||
                 xmlReporting?.documentburster.report.datasource.type === 'ds.csvfile' ||

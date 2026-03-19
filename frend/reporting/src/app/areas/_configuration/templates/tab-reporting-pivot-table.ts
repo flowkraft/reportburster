@@ -121,6 +121,9 @@ export const tabReportingPivotTableTemplate = `<ng-template
             <button id="btnCopyToClipboardPivotTableConfigExample" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardPivotTableConfigExample()">
               Copy Example Pivot Table Options To Clipboard
             </button>
+            <button id="btnAiHelpPivotTableConfig" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.pivottable')">
+              <strong>Hey AI, Help Me Configure This Pivot Table ...</strong>
+            </button>
           </div>
         </div>
       </tab>
