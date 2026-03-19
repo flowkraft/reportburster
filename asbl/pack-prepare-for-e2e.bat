@@ -40,9 +40,12 @@ REM Go to parent directory
 pushd ..\
 echo Current directory: %CD%
 
+REM Install the grandparent POM so the second command can resolve the full parent chain
+call mvn install -N -f xtra-tools/bild/common-scripts/maven/pom.xml > asbl\pack-prepare-for-e2e.log 2>&1
+
 REM Build both modules in a single Maven invocation
 REM The -am flag ensures it builds all required modules for the target
-call mvn clean install -pl bkend/common,asbl -am -DskipTests > asbl\pack-prepare-for-e2e.log 2>&1
+call mvn clean install -pl bkend/common,asbl -am -DskipTests >> asbl\pack-prepare-for-e2e.log 2>&1
 IF %ERRORLEVEL% NEQ 0 (
     echo ERROR: Build failed. Check asbl\pack-prepare-for-e2e.log for details.
     popd
