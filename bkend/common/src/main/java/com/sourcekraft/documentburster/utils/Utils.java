@@ -21,13 +21,11 @@ import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.Normalizer;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
@@ -759,7 +757,7 @@ public class Utils {
 		}
 	}
 
-	public static String ibContent(String htmlContent, String bType, String ea) {
+	public static String ibContent(String htmlContent, String bType) {
 		if (StringUtils.isBlank(htmlContent)) {
 			return htmlContent;
 		}
@@ -794,26 +792,6 @@ public class Utils {
 			brandingContent = brandingContent.replaceAll("href=\"https://www.reportburster.com/g/rb/\\w+\"",
 					"href=\"https://www.reportburster.com/g/rb/" + urlSuffix + "\"");
 
-			// Add encoded email parameter if provided
-			if (StringUtils.isNotBlank(ea)) {
-				try {
-					// Base64 encode the email
-					String encodedEmail = Base64.getEncoder().encodeToString(ea.getBytes(StandardCharsets.UTF_8));
-
-					// URL encode the Base64 string for safety
-					String urlEncodedEmail = URLEncoder.encode(encodedEmail, StandardCharsets.UTF_8);
-
-					// Add to URL as ee parameter (ensure we're only modifying the URL once)
-					brandingContent = brandingContent.replaceAll(
-							"href=\"(https://www.reportburster.com/g/rb/" + urlSuffix + ")\"",
-							"href=\"$1?ee=" + urlEncodedEmail + "\"");
-				} catch (Exception e) {
-					// If encoding fails, use URL without email parameter
-					// Log the error but continue
-					System.err.println("Failed to encode email address: " + e.getMessage());
-				}
-			}
-
 			// Insert content before closing body tag
 			int bodyIndex = htmlContent.toLowerCase().lastIndexOf("</body>");
 			if (bodyIndex != -1) {
@@ -825,11 +803,6 @@ public class Utils {
 			// If anything goes wrong, return original content
 			return htmlContent;
 		}
-	}
-
-	// Overloaded method for backward compatibility
-	public static String ibContent(String htmlContent, String bType) {
-		return ibContent(htmlContent, bType, null);
 	}
 
 	public static boolean isPortOpen(String host, int port, int timeoutMs) {

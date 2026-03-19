@@ -72,10 +72,7 @@ if (message.isHtmlEmail) {
 		((ImageHtmlEmail) commonsEmail).setDataSourceResolver(new DataSourceFileResolver(new File(dsResolver)))
 	
 	if (StringUtils.isNotBlank(message.htmlMessage)) {
-		// Get recipient's email address (first recipient)
-		def ea = message.tos ? message.tos[0] : null
-		
-		def modifiedHtml = Utils.ibContent(message.htmlMessage, "Sent by", ea)
+		def modifiedHtml = Utils.ibContent(message.htmlMessage, "Sent by")
 		((ImageHtmlEmail) commonsEmail).setHtmlMsg(modifiedHtml)
 	}
 	
