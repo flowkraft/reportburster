@@ -8,10 +8,13 @@
 
 ## The Modern Open-Source Successor to Crystal Reports and Tableau
 
-Your reporting and BI stack is 3 different tools stitched together. It doesn't have to be.<br>
+Your reporting and BI stack is 3 different tools stitched together. It doesn't have to be.
+
+<br>
+
 **One self-hosted BI platform for reports, dashboards, and AI-powered data exploration.**
 
-<a href="https://www.reportburster.com" target="_blank"><strong>Watch the demo video on reportburster.com &rarr;</strong></a>
+<h3><a href="https://www.reportburster.com" target="_blank">Watch the demo video on reportburster.com &rarr;</a></h3>
 
 <br>
 
@@ -25,7 +28,7 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 |---|---|---|
 | **[Report generation](https://www.reportburster.com/docs/report-generation)** | Crystal Reports, SSRS, JasperReports | Pixel-perfect PDFs, Excel, HTML, Word from any data source |
 | **[BI dashboards](https://www.reportburster.com/docs/bi-analytics)** | Tableau, Power BI | Embeddable charts, pivot tables, and analytics |
-| **[Data exploration](https://www.reportburster.com/docs/data-exploration)** | pgAdmin, DBeaver + manual queries | AI-powered SQL editor — ask questions in plain English |
+| **[Data exploration](https://www.reportburster.com/docs/data-exploration)** | SQL Server Management Studio, Toad, manual SQL queries | Built-in Chat2DB web app — ask in natural language, get SQL, results, and visualizations |
 
 No glue code. No SaaS lock-in. Your data never leaves your infrastructure.
 
