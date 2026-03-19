@@ -10,6 +10,7 @@ export class AskForFeatureService {
   alreadyImplementedFeatures = [
     'ds.sqlquery',
     'ds.scriptfile',
+    'ds.dashboard',
     'ds.xmlfile',
     'ds.csvfile',
     'ds.tsvfile',
@@ -20,6 +21,7 @@ export class AskForFeatureService {
     'output.pdf',
     'output.xlsx',
     'output.html',
+    'output.dashboard',
     'output.fop2pdf',
     'output.any',
     'output.jasper',
@@ -107,6 +109,9 @@ Sincerely,
         case 'ds.sqlquery':
           requestedFeatureFriendly = 'SQL query (DataSource)';
           break;
+        case 'ds.dashboard':
+          requestedFeatureFriendly = 'Dashboard Scripts (DataSource)';
+          break;
         case 'output.pdf':
           requestedFeatureFriendly = 'PDF Files (Output Type)';
           break;
@@ -115,6 +120,9 @@ Sincerely,
           break;
         case 'output.html':
           requestedFeatureFriendly = 'HTML Files (Output Type)';
+          break;
+        case 'output.dashboard':
+          requestedFeatureFriendly = 'Dashboard (Output Type)';
           break;
         default:
           requestedFeatureFriendly = '';

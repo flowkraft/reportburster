@@ -13,6 +13,7 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
           [(ngModel)]="xmlReporting?.documentburster.report.template.outputtype"
           (ngModelChange)="settingsChangedEventHandler($event)"
           (change)="onReportOutputTypeChanged()"
+          [disabled]="isOutputTypeLocked"
         >
           <option value="output.none">
             {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TYPE-NONE' | translate }}
@@ -25,6 +26,9 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
           </option>
           <option value="output.html">
             {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TYPE-HTML' | translate }}
+          </option>
+          <option value="output.dashboard" *ngIf="isOutputTypeLocked">
+            Dashboard
           </option>
           <option value="output.docx">
             {{ 'AREAS.CONFIGURATION.TAB-REPORT-TEMPLATE-OUTPUT.TYPE-DOCX' | translate }}
@@ -40,6 +44,9 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
             JasperReports (.jrxml)
           </option>
         </select>
+        <small *ngIf="isOutputTypeLocked" class="text-muted" style="display: block; margin-top: 5px;">
+          <i class="fa fa-lock"></i> Output type locked to Dashboard (set by input type)
+        </small>
       </div>
       <div class="col-xs-5">
         <button id="btnAskAiForHelpOutput" type="button" class="btn btn-default" (click)="askAiForHelp((xmlReporting?.documentburster.report.template.outputtype))" *ngIf="xmlReporting?.documentburster.report.template.outputtype !== 'output.none' && (xmlReporting?.documentburster.report.template.outputtype !== 'output.jasper' || selectedJasperReport?.filePath === '__inline__')">
@@ -196,9 +203,10 @@ export const tabReportingTemplateOutputTemplate = `<ng-template
           </div>
 
 
-          <!-- HTML editor for HTML, PDF and XLSX -->
-          <div *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.html' || 
-                    xmlReporting?.documentburster.report.template.outputtype === 'output.pdf' || 
+          <!-- HTML editor for HTML, Dashboard, PDF and XLSX -->
+          <div *ngIf="xmlReporting?.documentburster.report.template.outputtype === 'output.html' ||
+                    xmlReporting?.documentburster.report.template.outputtype === 'output.dashboard' ||
+                    xmlReporting?.documentburster.report.template.outputtype === 'output.pdf' ||
                     xmlReporting?.documentburster.report.template.outputtype === 'output.xlsx'
                    ">
               

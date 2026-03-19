@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.4.0 - 2026-03-23
+
+### Added
+
+- **Dashboards** — Build interactive dashboards combining charts, tables, pivot tables, and parameters in a single view. Select "Dashboard" as the datasource type and let the AI help you design the layout.
+
+- **Share Dashboards** — Each dashboard gets a shareable URL. For example, use the `${dashboard_url}` variable in email templates to automatically send recipients a link to their live dashboard.
+
+- **Database Table Picker for Scripts and Dashboards** — The database connection modal with table selection and AI generation now works for Script and Dashboard datasource types too, not just SQL queries.
+
+- **AI-Assisted Dashboard Design** — Dedicated AI prompts guide you through creating polished, business-ready dashboards with coherent styling across all components.
+
 ## 14.3.0 - 2026-03-16
 
 ### Changed

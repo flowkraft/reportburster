@@ -122,6 +122,9 @@ export const tabReportingChartTemplate = `<ng-template
             <button id="btnCopyToClipboardChartConfigExample" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardChartConfigExample()">
               Copy Example Chart Options To Clipboard
             </button>
+            <button id="btnAiHelpChartConfig" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.chart')">
+              <strong>Hey AI, Help Me Configure This Chart ...</strong>
+            </button>
           </div>
         </div>
       </tab>

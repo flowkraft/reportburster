@@ -407,6 +407,14 @@ public class CfgManController {
 				el.attr("style", sb.toString());
 			}
 
+			// Inject web components bundle if dashboard components are present
+			String rawHtml = doc.outerHtml();
+			if (rawHtml.contains("<rb-tabulator") || rawHtml.contains("<rb-chart")
+					|| rawHtml.contains("<rb-pivot-table") || rawHtml.contains("<rb-parameters")) {
+				doc.body().appendElement("script")
+						.attr("src", "/rb-webcomponents/rb-webcomponents.umd.js");
+			}
+
 			// Convert back to HTML string
 			String processedHtml = doc.outerHtml();
 

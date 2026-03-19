@@ -95,6 +95,17 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
     
     </div>
 
+    <div class="row" style="margin-top: 10px;" *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport?.dsInputType === 'ds.dashboard'">
+      <div class="col-xs-1"></div>
+      <div class="col-xs-10">
+        <div class="alert alert-info" style="margin-bottom: 0;">
+          <i class="fa fa-info-circle"></i>
+          This dashboard report will send an email with the dashboard URL
+          (<code>{{ '$' }}{{ '{' }}dashboard_url{{ '}' }}</code>) — no file attachment is generated.
+        </div>
+      </div>
+    </div>
+
     <p></p>
     <div class="row">
       <div class="col-xs-1"></div>

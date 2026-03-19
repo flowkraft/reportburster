@@ -104,6 +104,11 @@ export class ButtonVariablesComponent {
       type: 'built-in',
       active: false,
     },
+    {
+      name: '${dashboard_url}',
+      type: 'built-in',
+      active: false,
+    },
   ];
 
   getShortListUserVariables() {

@@ -122,7 +122,8 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 		final String finalExtractedFilePathVar = extractedFilePathVar; // Final variable for lambda
 
-		if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_NONE))
+		if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_NONE)
+				|| ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_DASHBOARD))
 			ctx.settings.getAttachments().removeIf(attachment -> attachment.path.contains(finalExtractedFilePathVar));
 
 		super.processAttachments();
@@ -130,13 +131,17 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 	@Override
 	protected void quarantineDocument() throws Exception {
-		if (!ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_NONE))
+		String outputType = ctx.settings.getReportTemplate().outputtype;
+		if (!outputType.equals(CsvUtils.OUTPUT_TYPE_NONE)
+				&& !outputType.equals(CsvUtils.OUTPUT_TYPE_DASHBOARD))
 			super.quarantineDocument();
 	}
 
 	@Override
 	protected void extractDocument() throws Exception {
-		if (!ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_NONE))
+		String outputType = ctx.settings.getReportTemplate().outputtype;
+		if (!outputType.equals(CsvUtils.OUTPUT_TYPE_NONE)
+				&& !outputType.equals(CsvUtils.OUTPUT_TYPE_DASHBOARD))
 			super.extractDocument();
 		else
 			super.createOutputFoldersIfTheyDontExist();
@@ -176,6 +181,12 @@ public abstract class AbstractReporter extends AbstractBurster {
 		DocumentBursterFreemarkerInitializer.configureFreeMarker(ctx.settings.docSettings.settings.locale, // Existing <locale> section
 				ctx.settings.docSettings.settings.freemarker // Optional <freemarker> section (can be null)
 		);
+
+		// Set dashboard_url built-in variable for dashboard output type
+		if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_DASHBOARD)) {
+			String reportCode = getReportFolderName();
+			ctx.variables.set(Variables.DASHBOARD_URL, "/dashboard/" + reportCode);
+		}
 
 		if (this.isPreviewMode)
 			this._setPreviewMode();
@@ -328,7 +339,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 			return dataSource.xmloptions.idcolumn;
 		} else if (typeString.equalsIgnoreCase("ds.excelfile")) {
 			return dataSource.exceloptions.idcolumn;
-		} else if (typeString.equalsIgnoreCase("ds.scriptfile")) {
+		} else if (typeString.equalsIgnoreCase("ds.scriptfile") || typeString.equalsIgnoreCase("ds.dashboard")) {
 			return dataSource.scriptoptions.idcolumn;
 		} else if (typeString.equalsIgnoreCase("ds.jasper")) {
 			// Standalone JasperReports have no external data — single token, no idcolumn

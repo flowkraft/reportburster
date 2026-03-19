@@ -118,7 +118,29 @@ public class ReportingService {
 			config.reportName = extractXmlValue(content, "template");
 			config.dsInputType = extractReportingDsInputType(itemDir);
 		}
-		
+
+		// Read output type and dashboard template from reporting.xml
+		Path reportingPath = itemDir.resolve("reporting.xml");
+		if (Files.exists(reportingPath)) {
+			String reportingContent = Files.readString(reportingPath);
+			config.outputType = extractXmlValue(reportingContent, "outputtype");
+
+			// For dashboard output type, load the HTML template content
+			if ("output.dashboard".equals(config.outputType)) {
+				String documentPath = extractXmlValue(reportingContent, "documentpath");
+				if (documentPath != null && !documentPath.isEmpty()) {
+					Path templatePath = itemDir.resolve(documentPath);
+					// Also try relative to PORTABLE_EXECUTABLE_DIR_PATH
+					if (!Files.exists(templatePath)) {
+						templatePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, documentPath);
+					}
+					if (Files.exists(templatePath)) {
+						config.dashboardTemplate = Files.readString(templatePath);
+					}
+				}
+			}
+		}
+
 		// Load parameters DSL
 		Path paramsPath = itemDir.resolve(reportCode + "-report-parameters-spec.groovy");
 		System.out.println("[DEBUG] Parameters DSL path: " + paramsPath + " exists=" + Files.exists(paramsPath));
@@ -348,8 +370,8 @@ public class ReportingService {
 					System.out.println("[DEBUG] sqloptions.query value length: " + (ds.sqloptions.query != null ? ds.sqloptions.query.length() : "null"));
 					connectionCode = ds.sqloptions.conncode;
 				}
-			} else if ("ds.scriptfile".equals(dsType)) {
-				System.out.println("[DEBUG] ds.scriptfile path - scriptoptions is null? " + (ds.scriptoptions == null));
+			} else if ("ds.scriptfile".equals(dsType) || "ds.dashboard".equals(dsType)) {
+				System.out.println("[DEBUG] ds.scriptfile/ds.dashboard path - scriptoptions is null? " + (ds.scriptoptions == null));
 				if (ds.scriptoptions != null) {
 					System.out.println("[DEBUG] scriptoptions.conncode value: '" + ds.scriptoptions.conncode + "'");
 					connectionCode = ds.scriptoptions.conncode;

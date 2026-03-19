@@ -8,8 +8,49 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
       <div class="panel-body">
 
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- DATA TABLE COMPONENT(S)                                    -->
+        <!-- DASHBOARD MODE: Show only rb-dashboard snippet              -->
         <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <ng-container *ngIf="isDashboardOutputType()">
+          <h5><strong>1. Dashboard Component</strong></h5>
+          <p class="text-muted" style="font-size: 12px;">
+            <i class="fa fa-info-circle"></i>
+            Dashboards render the full HTML template with all embedded <code>&lt;rb-*&gt;</code> components.
+          </p>
+          <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
+&lt;rb-dashboard
+  report-code="{{ getCurrentReportCode() }}"
+  api-base-url="{{ getApiBaseUrl() }}"
+  api-key="{{ getApiKeyForUsage() }}"&gt;
+&lt;/rb-dashboard&gt;
+          </div>
+          <button type="button" class="btn btn-default btn-sm" style="margin-bottom: 15px;" (click)="copyUsageRbDashboard()">
+            <i class="fa fa-copy"></i> Copy rb-dashboard
+          </button>
+
+          <h5><strong>2. Shareable Dashboard URL</strong></h5>
+          <p class="text-muted" style="font-size: 12px;">
+            <i class="fa fa-info-circle"></i>
+            Open this URL in a browser to view the live dashboard. Share it with others or use it in emails.
+          </p>
+          <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">{{ getDashboardUrl() }}</div>
+          <button type="button" class="btn btn-default btn-sm" (click)="copyToClipboard(getDashboardUrl())">
+            <i class="fa fa-copy"></i> Copy URL
+          </button>
+          <p class="text-muted" style="font-size: 12px; margin-top: 8px;">
+            <i class="fa fa-envelope"></i>
+            Available in email templates as: <code>{{ '$' }}{{ '{' }}dashboard_url{{ '}' }}</code>
+          </p>
+          <hr/>
+        </ng-container>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- NON-DASHBOARD MODE: Individual component snippets           -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <ng-container *ngIf="!isDashboardOutputType()">
+
+        <!-- DATA TABLE COMPONENT(S) -->
 
         <!-- Named tabulators (multi-component / aggregator report) -->
         <ng-container *ngIf="getNamedTabulatorIds().length > 0">
@@ -46,9 +87,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
           <hr/>
         </ng-container>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- PARAMETERS COMPONENT                                       -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- PARAMETERS COMPONENT -->
 
         <!-- Parameters component - show only if parameters are configured -->
         <div *ngIf="activeParamsSpecScriptGroovy?.trim()">
@@ -66,9 +105,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
           <hr/>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- CHART COMPONENT(S)                                         -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- CHART COMPONENT(S) -->
 
         <!-- Named charts (multi-component / aggregator report) -->
         <ng-container *ngIf="getNamedChartIds().length > 0">
@@ -105,9 +142,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
           <hr/>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- PIVOT TABLE COMPONENT(S)                                   -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- PIVOT TABLE COMPONENT(S) -->
 
         <!-- Named pivot tables (multi-component / aggregator report) -->
         <ng-container *ngIf="getNamedPivotIds().length > 0">
@@ -144,9 +179,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
           <hr/>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- REPORT COMPONENT (always shown, no component-id needed)    -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- REPORT COMPONENT (always shown, no component-id needed) -->
 
         <h5><strong>{{ getUsageRbReportNumber() }}. Report Component</strong></h5>
         <div *ngIf="hasEntityCodeParameter()" class="alert alert-info" style="font-size: 12px; padding: 8px 12px; margin-bottom: 10px;">
@@ -165,6 +198,8 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
         </button>
 
         <hr/>
+
+        </ng-container>
 
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!-- SCRIPT TAG                                                 -->
