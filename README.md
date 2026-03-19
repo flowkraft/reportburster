@@ -12,7 +12,7 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 
 <br>
 
-**One self-hosted BI platform for reports, dashboards, and AI-powered data exploration.**
+**One self-hosted BI platform for reports, dashboards, and AI-powered data exploration.** No glue code. No SaaS lock-in. Your data never leaves your infrastructure.
 
 <h3><a href="https://www.reportburster.com" target="_blank">Watch the demo video on reportburster.com &rarr;</a></h3>
 
@@ -29,8 +29,6 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 | **[Report generation](https://www.reportburster.com/docs/report-generation)** | Crystal Reports, SSRS, JasperReports | Pixel-perfect PDFs, Excel, HTML, Word from any data source |
 | **[BI dashboards](https://www.reportburster.com/docs/bi-analytics)** | Tableau, Power BI | Embeddable charts, pivot tables, and analytics |
 | **[Data exploration](https://www.reportburster.com/docs/data-exploration)** | SQL Server Management Studio, Toad, manual SQL queries | Built-in Chat2DB web app — ask in natural language, get SQL, results, and visualizations |
-
-No glue code. No SaaS lock-in. Your data never leaves your infrastructure.
 
 Also includes: [automated report distribution](https://www.reportburster.com/docs/report-bursting) | [self-service document portals](https://www.reportburster.com/docs/document-portal) | [AI agents](https://www.reportburster.com/docs/ai-crew/the-team)
 
