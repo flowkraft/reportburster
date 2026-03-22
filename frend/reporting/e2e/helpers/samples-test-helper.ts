@@ -115,6 +115,9 @@ export class SamplesTestHelper {
     if (sampleId.includes("NORTHWIND-SALES-DASHBOARD"))
       expectedBurstFileName = 'dashboard.html';
 
+    if (sampleId.includes("NORTHWIND-SALES-PIVOTTABLE"))
+      expectedBurstFileName = 'dashboard.html';
+
     ft = ft.waitOnInputToHaveValue(
       '#burstFileName',
       expectedBurstFileName,

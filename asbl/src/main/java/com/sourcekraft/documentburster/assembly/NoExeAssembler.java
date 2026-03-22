@@ -1018,7 +1018,7 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		FileUtils.writeStringToFile(new File(adhocReportingFilePath), content, "UTF-8");
 
-		// 19. g-dashboard (Northwind Sales Dashboard - interactive)
+		// 18. g-dashboard (Sales Dashboard - interactive)
 
 		String dashNorthwindSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/g-dashboard";
 		String dashNorthwindSettingsFilePath = dashNorthwindSampleDir + "/settings.xml";
@@ -1073,9 +1073,62 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// document path -> HTML template (relative to config sample dir)
 		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
-				"<documentpath>g-dashboard-template.html</documentpath>");
+				"<documentpath>/samples/reports/northwind/g-dashboard-template.html</documentpath>");
 
 		FileUtils.writeStringToFile(new File(dashNorthwindReportingFilePath), content, "UTF-8");
+
+		// move dashboard HTML template from config/samples into samples/reports/northwind
+		FileUtils.moveFile(
+				new File(dashNorthwindSampleDir + "/g-dashboard-template.html"),
+				new File(packageDirPath + "/" + topFolderName
+						+ "/samples/reports/northwind/g-dashboard-template.html"));
+
+		// 19. g-pivottable (Sales PivotTable - data warehouse, DuckDB)
+
+		String pivottableSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/g-pivottable";
+		String pivottableSettingsFilePath = pivottableSampleDir + "/settings.xml";
+		String pivottableReportingFilePath = pivottableSampleDir + "/reporting.xml";
+
+		// copy base settings and tweak for this sample
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(pivottableSettingsFilePath));
+		content = FileUtils.readFileToString(new File(pivottableSettingsFilePath), "UTF-8");
+
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+				"<template>SalesPivotTable</template>");
+		content = content.replaceAll(
+				"(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replaceAll(
+				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+		content = content.replaceAll(
+				"(?s)<burstfilename>.*?</burstfilename>",
+				"<burstfilename>dashboard.html</burstfilename>");
+
+		FileUtils.writeStringToFile(new File(pivottableSettingsFilePath), content, "UTF-8");
+
+		// prepare reporting.xml
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(pivottableReportingFilePath));
+		content = FileUtils.readFileToString(new File(pivottableReportingFilePath), "UTF-8");
+
+		content = content.replaceAll("(?si)<type\\s*>\\s*ds\\.csvfile\\s*</type>", "<type>ds.dashboard</type>");
+		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
+				"<conncode>rbt-sample-northwind-duckdb-4f2</conncode>");
+		content = content.replaceAll("(?s)<scriptname\\s*/>|<scriptname>\\s*</scriptname>",
+				"<scriptname>g-pivottable-script.groovy</scriptname>");
+		content = content.replaceAll("(?s)output\\.none", "output.dashboard");
+		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
+				"<documentpath>/samples/reports/northwind/g-pivottable-template.html</documentpath>");
+
+		FileUtils.writeStringToFile(new File(pivottableReportingFilePath), content, "UTF-8");
+
+		// move pivot table HTML template from config/samples into samples/reports/northwind
+		FileUtils.moveFile(
+				new File(pivottableSampleDir + "/g-pivottable-template.html"),
+				new File(packageDirPath + "/" + topFolderName
+						+ "/samples/reports/northwind/g-pivottable-template.html"));
 
 		// SAMPLES END
 
