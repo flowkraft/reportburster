@@ -1,12 +1,12 @@
 <div align="center">
 
-# ReportBurster
+# ReportBurster - Business Intelligence For The New Era
 
 <a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
   <img src=".github/screenshots/041_00_ai-driven-hei-ai-help-me-with-buttons.png" alt="ReportBurster — AI-Powered Data Exploration">
 </a>
 
-## Business Intelligence For The New Era
+## One Modern BI Platform
 
 Your reporting and BI stack is 3 different tools stitched together. It doesn't have to be.
 
