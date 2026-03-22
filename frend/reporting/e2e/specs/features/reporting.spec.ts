@@ -27,7 +27,7 @@ const SKIP_NON_DATABASE_TESTS = false;
 
 const DB_VENDORS_SELECTED: string[] = (() => {
   
-  return ['mariadb'];
+  //return ['mariadb'];
 
   //return ['oracle', 'ibmdb2'];
   //return ['sqlserver']; 

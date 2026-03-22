@@ -762,8 +762,37 @@ export class SamplesService {
       activeClicked: false,
     },
     {
+      id: 'NORTHWIND-SALES-PIVOTTABLE',
+      name: '19. Sales PivotTable (data warehouse)',
+      visibility: 'visible',
+      jobType: 'dashboard',
+      input: {
+        data: ['file:db/sample-northwind-duckdb/northwind.duckdb'],
+        dataUrl: [],
+        numberOfPages: -1,
+        tokens: [],
+      },
+      step1: 'dashboard',
+      step2: '',
+      step3: '',
+      output: {
+        data: [],
+        folder: '',
+      },
+      outputHtmlHardcoded: '<i class="fa fa-dashboard"></i> Interactive pivot table (no output files)',
+      configurationFilePath: `config/samples/g-pivottable/settings.xml`,
+      configurationFileName: 'g-pivottable',
+      notes: ``,
+      recipientType: '',
+      documentType: 'dashboard',
+      capReportSplitting: false,
+      capReportDistribution: false,
+      capReportGenerationMailMerge: true,
+      activeClicked: false,
+    },
+    {
       id: 'GENERATE-ADHOC-EMPLOYEE-PROFILE-SCRIPT2PDF',
-      name: '19. Ad-hoc Employee Profile (script2pdf - report parameters, no database)',
+      name: '20. Ad-hoc Employee Profile (script2pdf - report parameters, no database)',
       visibility: 'visible',
       jobType: 'generate',
       input: {
@@ -889,7 +918,7 @@ export class SamplesService {
       inputFileIcon = 'fa-file-excel-o';
     } else if (inputLabel.endsWith('.csv')) {
       inputFileIcon = 'fa-file-text-o';
-    } else if (inputLabel.endsWith('.db')) {
+    } else if (inputLabel.endsWith('.db') || inputLabel.endsWith('.duckdb')) {
       inputFileIcon = 'fa-database';
     }
 

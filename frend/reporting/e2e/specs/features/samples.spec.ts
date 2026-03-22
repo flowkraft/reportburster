@@ -991,7 +991,71 @@ electronBeforeAfterAllTest(
   );
 
   electronBeforeAfterAllTest(
-    'should work correctly (19_generate_adhoc_employee_profile_script2pdf)',
+    'should work correctly (19_northwind_sales_pivottable)',
+    async ({ beforeAfterEach: firstPage }) => {
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      let ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trNORTHWIND-SALES-PIVOTTABLE')
+        .waitOnElementToContainText(
+          '#tdNORTHWIND-SALES-PIVOTTABLE',
+          'Sales PivotTable',
+        );
+
+      // Verify the Learn More modal
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'NORTHWIND-SALES-PIVOTTABLE',
+        'northwind.duckdb',
+      );
+
+      // Dashboard "Try It" opens directly in the browser
+      let externalBrowser = null;
+
+      await ft
+        .scrollIntoViewIfNeeded('#trNORTHWIND-SALES-PIVOTTABLE')
+        .click('#trNORTHWIND-SALES-PIVOTTABLE')
+        .click('#btnSampleTryItNORTHWIND-SALES-PIVOTTABLE');
+
+      try {
+        const { browser, page } = await SelfServicePortalsTestHelper.createExternalBrowser();
+        externalBrowser = browser;
+
+        const dashboardUrl = 'http://localhost:9090/dashboard/g-pivottable';
+
+        await SelfServicePortalsTestHelper.waitForServerReady(
+          page,
+          dashboardUrl,
+          30,
+          2000,
+        );
+
+        await page.goto(dashboardUrl, {
+          timeout: 30000,
+          waitUntil: 'networkidle',
+        });
+
+        const { expect } = await import('@playwright/test');
+
+        // Assert rb-dashboard web component is present
+        await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 10000 });
+
+        // Assert pivot table header and component are visible
+        await expect(page.locator('text=Northwind Sales PivotTable')).toBeVisible({ timeout: 30000 });
+        await expect(page.locator('rb-pivot-table')).toHaveCount(1, { timeout: 15000 });
+      } finally {
+        if (externalBrowser) {
+          await SelfServicePortalsTestHelper.closeExternalBrowser(externalBrowser);
+        }
+      }
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (20_generate_adhoc_employee_profile_script2pdf)',
     async ({ beforeAfterEach: firstPage }) => {
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 

@@ -4610,8 +4610,8 @@ pivotTable {
     const scriptConn = this.xmlReporting?.documentburster?.report?.datasource?.scriptoptions?.conncode || '';
     const codeLower = (sqlConn || scriptConn).toString().toLowerCase();
     return (
-      (dsType === 'ds.sqlquery' || dsType === 'ds.scriptfile') &&
-      (codeLower.includes('rbt-sample-northwind-sqlite-4f2'))
+      (dsType === 'ds.sqlquery' || dsType === 'ds.scriptfile' || dsType === 'ds.dashboard') &&
+      (codeLower.includes('rbt-sample-northwind-sqlite-4f2') || codeLower.includes('rbt-sample-northwind-duckdb-4f2'))
     );
   }
 
@@ -4626,18 +4626,20 @@ pivotTable {
 
     const isSample = this.isSampleReport
 
-    if (isSample)
+    if (isSample) {
+      const isDuckDb = connCode.toLowerCase().includes('duckdb');
       return [{
         connectionCode: connCode,
-        connectionName: 'Sample Northwind (SQLite)',
+        connectionName: isDuckDb ? 'Sample Northwind (DuckDB)' : 'Sample Northwind (SQLite)',
         connectionType: 'database-connection',
-        fileName: 'northwind.db',
-        filePath: 'db/sample-northwind-sqlite/northwind.db',
+        fileName: isDuckDb ? 'northwind.duckdb' : 'northwind.db',
+        filePath: isDuckDb ? 'db/sample-northwind-duckdb/northwind.duckdb' : 'db/sample-northwind-sqlite/northwind.db',
         activeClicked: false,
         defaultConnection: true,
         usedBy: '',
         useForJasperReports: false,
       }];
+    }
 
     return this.settingsService.getDatabaseConnectionFiles();
   }

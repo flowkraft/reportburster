@@ -1,0 +1,94 @@
+<meta charset="utf-8">
+<div class="rb-pivottable-root">
+  <style>
+    .rb-pivottable-root {
+      all: initial;
+      display: block;
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      box-sizing: border-box;
+      color: #1e293b;
+      background: #f8fafc;
+      padding: 24px;
+    }
+    .rb-pivottable-root *, .rb-pivottable-root *::before, .rb-pivottable-root *::after {
+      box-sizing: inherit;
+    }
+
+    .rb-pivottable-root {
+      --accent: #4e79a7;
+      --accent-dark: #2c5282;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --radius: 10px;
+    }
+
+    .rb-pivottable-root .dash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--accent);
+    }
+    .rb-pivottable-root .dash-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+      margin: 0;
+    }
+    .rb-pivottable-root .dash-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin: 4px 0 0 0;
+      font-weight: 400;
+    }
+
+    .rb-pivottable-root .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .rb-pivottable-root .info-bar {
+      background: #f0f4f8;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .rb-pivottable-root .info-bar strong {
+      color: var(--text-primary);
+    }
+    .rb-pivottable-root .info-bar a {
+      color: var(--accent-dark);
+      text-decoration: underline;
+    }
+  </style>
+
+  <!-- Header -->
+  <div class="dash-header">
+    <div>
+      <h1 class="dash-title">Northwind Sales PivotTable</h1>
+      <p class="dash-subtitle">Data warehouse analysis — revenue by country, category &amp; quarter</p>
+    </div>
+  </div>
+
+  <!-- Data Warehouse Info -->
+  <div class="info-bar">
+    <strong>Data Warehouse</strong> &mdash; powered by <strong>DuckDB</strong>, the &ldquo;SQLite for analytics&rdquo;. Server-side embedded OLAP database (single file, zero setup). Aggregation runs on the server, only results sent to the browser. Sweet spot: up to <strong>1&ndash;10 million rows</strong>. Handles <strong>10&ndash;100M rows</strong> with tuning. For even larger data warehouses, <strong>ClickHouse</strong> scales to billions of rows. <a href="https://www.reportburster.com/docs/bi-analytics/data-warehouse-olap" target="_blank">Read more &rarr;</a>
+  </div>
+
+  <!-- Pivot Table -->
+  <div class="card">
+    <rb-pivot-table report-code="g-pivottable" api-base-url="http://localhost:9090/api/jobman/reporting"></rb-pivot-table>
+  </div>
+</div>
