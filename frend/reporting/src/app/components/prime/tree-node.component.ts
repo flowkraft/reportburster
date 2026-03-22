@@ -17,7 +17,7 @@ import { TreeNode } from './tree.component';
   imports: [CommonModule], // Import itself for recursion if needed, but handled by parent loop here
   template: `
     <div
-      class="p-treenode-content"
+      class="p-treenode-content {{ node.styleClass || '' }}"
       [style.padding-left]="level * indentation + 'rem'"
       [ngClass]="{
         'p-treenode-selectable': selectable && node.selectable !== false,
@@ -60,12 +60,13 @@ import { TreeNode } from './tree.component';
           [ngClass]="{
             'p-highlight': isSelected,
             'p-indeterminate': node.partialSelected,
+            'p-weak-highlight': !isSelected && !node.partialSelected && node.styleClass?.includes('p-weak-selected'),
           }"
         >
           <span
             class="p-checkbox-icon pi"
             [ngClass]="{
-              'pi-check': isSelected,
+              'pi-check': isSelected || (!node.partialSelected && node.styleClass?.includes('p-weak-selected')),
               'pi-minus': node.partialSelected,
             }"
           >
@@ -115,7 +116,9 @@ import { TreeNode } from './tree.component';
             [selectable]="selectable"
             [checkboxMode]="checkboxMode"
             [isSelected]="isNodeSelected(childNode)"
+            [selection]="selection"
             [nodeTemplate]="nodeTemplate"
+            [treeId]="treeId"
             (nodeSelect)="onChildNodeSelect($event)"
             (nodeUnselect)="onChildNodeUnselect($event)"
             (nodeToggle)="onChildNodeToggle($event)"
@@ -254,6 +257,10 @@ import { TreeNode } from './tree.component';
         border-color: var(--primary-color, #10b981);
         background: var(--primary-color, #10b981);
       }
+      .p-checkbox-box.p-weak-highlight {
+        border-color: #93c5fd;
+        background: #bfdbfe;
+      }
       .p-checkbox-icon {
         font-size: 0.875rem; /* Icon size */
         color: #ffffff; /* Icon color when selected */
@@ -297,6 +304,7 @@ export class TreeNodeComponent {
   @Input() checkboxMode: boolean = false;
   @Input() isSelected: boolean = false;
   @Input() nodeTemplate: TemplateRef<any> | undefined;
+  @Input() treeId: string = '';
 
   @Output() nodeSelect = new EventEmitter<{
     originalEvent: Event;
@@ -311,6 +319,10 @@ export class TreeNodeComponent {
     node: TreeNode;
     expanded: boolean;
   }>();
+
+  @HostBinding('attr.id') get nodeId() {
+    return this.node?.key ? `treeNode${this.node.key.toLowerCase()}${this.treeId}` : null;
+  }
 
   // Bind leaf class to host for potential external styling
   @HostBinding('class.p-treenode-leaf') get isLeafClass() {
@@ -383,16 +395,11 @@ export class TreeNodeComponent {
     return 'p-treenode-icon ' + icon;
   }
 
-  // Check selection state for child nodes (passed down from parent)
+  @Input() selection: TreeNode[] = [];
+
   isNodeSelected(node: TreeNode): boolean {
-    // This needs to be determined by the parent component's selection state
-    // We pass the `isSelected` input for the current node,
-    // but for children, the parent needs to calculate it.
-    // Let's assume the parent component handles this logic correctly
-    // when iterating and passing inputs.
-    // For simplicity here, we re-emit events upwards.
-    // A more robust way involves passing the selection array down or using a service.
-    return false; // Placeholder - Parent component should manage this state
+    if (!this.selection || this.selection.length === 0) return false;
+    return this.selection.some((n) => n.key === node.key);
   }
 
   // --- Event Bubbling ---

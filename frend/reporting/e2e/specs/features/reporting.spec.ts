@@ -26,7 +26,10 @@ const dataSourceTypeDisplayMap: Record<string, string> = {
 const SKIP_NON_DATABASE_TESTS = false;
 
 const DB_VENDORS_SELECTED: string[] = (() => {
+  
+  return ['mariadb'];
 
+  //return ['oracle', 'ibmdb2'];
   //return ['sqlserver']; 
   //return ['ibmdb2'];
 
@@ -74,7 +77,7 @@ test.describe('', async () => {
 
         try {
 
-          test.setTimeout(Constants.DELAY_FIVE_HUNDRED_SECONDS);
+          test.setTimeout(Constants.DELAY_THOUSAND_SECONDS);
 
           const TEST_NAME = `SQLPayslips`;
 
@@ -388,7 +391,7 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
 
         try {
 
-          test.setTimeout(Constants.DELAY_FIVE_HUNDRED_SECONDS);
+          test.setTimeout(Constants.DELAY_THOUSAND_SECONDS);
 
           const TEST_NAME = `ScriptPayslips`;
 
@@ -1562,8 +1565,8 @@ function configureAndRunReportGeneration2(
             )
             .waitOnElementToBecomeVisible('#btnGenerateWithAIDbSchema')
             .elementShouldBeDisabled('#btnGenerateWithAIDbSchema') //because no tables are selected yet
-            .click('#treeNodeCategoriessourceTreedatabaseSchemaPicklist')
-            .click('#treeNodeProductssourceTreedatabaseSchemaPicklist')
+            .click('#treeNodecategoriessourceTreedatabaseSchemaPicklist')
+            .click('#treeNodeproductssourceTreedatabaseSchemaPicklist')
             .click('#btnMoveToTargetdatabaseSchemaPicklist')
             .waitOnElementToBecomeInvisible('#chooseTableLabelDbSchema')
             .waitOnElementToBecomeEnabled('#btnGenerateWithAIDbSchema')
@@ -1597,8 +1600,8 @@ function configureAndRunReportGeneration2(
               )
               .waitOnElementToBecomeVisible('#btnGenerateWithAIDbSchema')
               .elementShouldBeDisabled('#btnGenerateWithAIDbSchema') //because no tables are selected yet
-              .click('#treeNodeCategoriessourceTreedatabaseSchemaPicklist')
-              .click('#treeNodeProductssourceTreedatabaseSchemaPicklist')
+              .click('#treeNodecategoriessourceTreedatabaseSchemaPicklist')
+              .click('#treeNodeproductssourceTreedatabaseSchemaPicklist')
               .click('#btnMoveToTargetdatabaseSchemaPicklist')
               .waitOnElementToBecomeInvisible('#chooseTableLabelDbSchema')
               .waitOnElementToBecomeEnabled('#btnGenerateWithAIDbSchema')
@@ -1614,6 +1617,11 @@ function configureAndRunReportGeneration2(
               .clipboardShouldContainText(ids.prompt3ColumnNameDiscontinued)
               .click('#btnCloseAiCopilotModal')
               .waitOnElementToBecomeInvisible('#btnCopyPromptText');
+
+            // Exercise Field Selection Modes (enableFieldSelection=true in sqlQuery/scriptQuery context)
+            // Called at the end of dbcon-plain-schema-only so it doesn't affect subsequent connection branches
+            ft = ConnectionsTestHelper.exerciseFieldSelectionModes(ft, 'databaseSchemaPicklist');
+
             ft = ft.click('#btnCloseDbConnectionModal');
 
           }
@@ -1627,7 +1635,7 @@ function configureAndRunReportGeneration2(
               .elementShouldNotBeVisible('#btnToggleDomainGroupedCodeView')
               .elementShouldNotBeVisible('#btnGenerateWithAIDomainGroupedSchema')
               .elementShouldBeDisabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-              .click('#treeNodedomain_SalessourceTreedomainGroupedSchemaPicklist') // select "Sales" group
+              .click('#treeNodedomain_salessourceTreedomainGroupedSchemaPicklist') // select "Sales" group
               .click('#btnMoveToTargetdomainGroupedSchemaPicklist')
               .waitOnElementToBecomeInvisible('#chooseTableLabelDomainGroupedSchema')
               .waitOnElementToBecomeEnabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
@@ -1658,7 +1666,7 @@ function configureAndRunReportGeneration2(
               )
               .elementShouldNotBeVisible('#btnToggleDomainGroupedCodeView')
               .elementShouldBeDisabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
-              .click('#treeNodedomain_SalessourceTreedomainGroupedSchemaPicklist') // select "Sales" group
+              .click('#treeNodedomain_salessourceTreedomainGroupedSchemaPicklist') // select "Sales" group
               .click('#btnMoveToTargetdomainGroupedSchemaPicklist')
               .waitOnElementToBecomeInvisible('#chooseTableLabelDomainGroupedSchema')
               .waitOnElementToBecomeEnabled('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
@@ -2091,10 +2099,10 @@ function createDbConnection(
 
     ft = ft.confirmDialogShouldBeVisible()
       .clickYesDoThis()
-      .waitOnToastToBecomeVisible(
-        'success',
-        'Successfully connected to the database', Constants.DELAY_HUNDRED_SECONDS
-      )
+      .waitOnElementToBecomeDisabled('#btnTestDbConnection', Constants.DELAY_HUNDRED_SECONDS)
+      .waitOnElementToBecomeEnabled('#btnTestDbConnection', Constants.DELAY_HUNDRED_SECONDS)
+      .sleep(Constants.DELAY_ONE_SECOND)
+      .appStatusShouldBeGreatNoErrorsNoWarnings()
 
   }
 

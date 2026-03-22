@@ -148,6 +148,30 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  /**
+   * Ensures a tree node is expanded. If the node's toggle icon shows
+   * pi-chevron-right (collapsed), clicks the toggle button to expand it.
+   * If already expanded (pi-chevron-down), does nothing.
+   * @param nodeSelector CSS selector for the tree node container (e.g. '#treeNodecategoriestargetTreedatabaseSchemaPicklist')
+   */
+  public ensureTreeNodeExpanded(nodeSelector: string): FluentTester {
+    const action = async (): Promise<void> => {
+      const toggleBtn = this.window.locator(`${nodeSelector} .p-tree-node-toggle-button`);
+      const toggleIcon = this.window.locator(`${nodeSelector} .p-tree-node-toggle-icon`);
+      const isCollapsed = await toggleIcon.evaluate(
+        (el) => el.classList.contains('pi-chevron-right'),
+      );
+      console.log(`[ensureTreeNodeExpanded] ${nodeSelector} — collapsed=${isCollapsed}`);
+      if (isCollapsed) {
+        await toggleBtn.click();
+        console.log(`[ensureTreeNodeExpanded] Clicked toggle to expand`);
+      }
+    };
+
+    this.actions.push(action);
+    return this;
+  }
+
   public hover(selector: string): FluentTester {
     const action = (): Promise<void> => this.doHover(selector);
 
@@ -244,6 +268,29 @@ export class FluentTester implements PromiseLike<void> {
       );
       throw new Error(
         `Failed to read clipboard or assert text: ${error.message}`,
+      );
+    }
+  }
+
+  public clipboardShouldNotContainText(text: string): FluentTester {
+    const action = (): Promise<void> => this.doClipboardShouldNotContainText(text);
+    this.actions.push(action);
+    return this;
+  }
+
+  private async doClipboardShouldNotContainText(text: string): Promise<void> {
+    try {
+      const clipboardText = await this.window.evaluate(() =>
+        navigator.clipboard.readText(),
+      );
+      expect(clipboardText).not.toContain(text);
+    } catch (error) {
+      console.error(
+        'Failed to read clipboard text or assertion failed:',
+        error,
+      );
+      throw new Error(
+        `Failed to read clipboard or assert text not contained: ${error.message}`,
       );
     }
   }

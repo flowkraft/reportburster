@@ -1184,4 +1184,185 @@ export class ConnectionsTestHelper {
     return ft;
   }
 
+  /**
+   * Exercises the Field Selection toolbar (All Details / Names Only / Mixed)
+   * on the Database Schema picklist. Only works when enableFieldSelection=true
+   * (i.e. context is sqlQuery, scriptQuery, or dashboardScript).
+   *
+   * Assumes Products is already in the target picklist.
+   * Moves Categories + Employees to target, then tests all three modes.
+   */
+  static exerciseFieldSelectionModes(
+    ft: FluentTester,
+    picklistId: string,
+  ): FluentTester {
+    // Assumes Products + Categories already in target. Move Employees to target.
+    ft = ft.consoleLog('Field Selection Modes — testing All Details / Names Only / Mixed');
+
+    ft = ft
+      .click(`#treeNodeemployeessourceTree${picklistId}`)
+      .click(`#btnMoveToTarget${picklistId}`)
+      .waitOnElementToBecomeVisible(`#treeNodecategoriestargetTree${picklistId}`)
+      .waitOnElementToBecomeVisible(`#treeNodeemployeestargetTree${picklistId}`)
+      .waitOnElementToBecomeVisible(`#treeNodeproductstargetTree${picklistId}`);
+
+    // ── 4a: All three tables → Names Only ──
+    ft = ft.consoleLog('Field Selection 4a: All three tables → Names Only');
+    ft = ft
+      .click(`#btnNamesOnly${picklistId}`)
+      .sleep(Constants.DELAY_ONE_SECOND)
+      .click('#btnGenerateWithAIDbSchema')
+      .waitOnElementToBecomeVisible('#btnCopyPromptText')
+      .click('#btnCopyPromptText')
+      .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+      .click('.dburst-button-question-confirm')
+      .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+      .clipboardShouldContainText('Products')
+      .clipboardShouldContainText('Categories')
+      .clipboardShouldContainText('Employees')
+      .clipboardShouldContainText('Tables Included by Name Only')
+      .clipboardShouldNotContainText('"columnName"')
+      .click('#btnCloseAiCopilotModal')
+      .waitOnElementToBecomeInvisible('#btnCopyPromptText');
+
+    // ── 4b: Switch back to All Details for all three ──
+    ft = ft.consoleLog('Field Selection 4b: All three tables → All Details');
+    ft = ft
+      .click(`#btnAllDetails${picklistId}`)
+      .sleep(Constants.DELAY_ONE_SECOND)
+      .click('#btnGenerateWithAIDbSchema')
+      .waitOnElementToBecomeVisible('#btnCopyPromptText')
+      .click('#btnCopyPromptText')
+      .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+      .click('.dburst-button-question-confirm')
+      .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+      .clipboardShouldContainText('"tableName": "Products"')
+      .clipboardShouldContainText('"columnName": "Discontinued"')
+      .clipboardShouldContainText('"tableName": "Categories"')
+      .clipboardShouldContainText('"columnName": "CategoryName"')
+      .clipboardShouldContainText('"tableName": "Employees"')
+      .clipboardShouldContainText('"columnName": "LastName"')
+      .click('#btnCloseAiCopilotModal')
+      .waitOnElementToBecomeInvisible('#btnCopyPromptText');
+
+    // ── 4c: Mixed — Products full, Categories partial, Employees names-only ──
+    ft = ft.consoleLog('Field Selection 4c: Mixed — Products full, Categories partial, Employees names-only');
+
+    // Start from names-only baseline
+    ft = ft
+      .click(`#btnNamesOnly${picklistId}`)
+      .sleep(Constants.DELAY_ONE_SECOND);
+
+    // Re-include Products with all columns (click checkbox to select Products + all children)
+    ft = ft
+      .click(`#treeNodeproductstargetTree${picklistId} .p-checkbox`)
+      .sleep(Constants.DELAY_ONE_SECOND);
+
+    // Re-include Categories partially — expand node and check only CategoryName.
+    ft = ft.ensureTreeNodeExpanded(
+      `#treeNodecategoriestargetTree${picklistId}`,
+    ).sleep(Constants.DELAY_ONE_SECOND);
+
+    // Click only the CategoryName column checkbox (partial selection for Categories)
+    ft = ft
+      .click(`#treeNodecategories_categorynametargetTree${picklistId} .p-checkbox`)
+      .sleep(Constants.DELAY_ONE_SECOND);
+
+    // Employees stays unchecked = names only
+    ft = ft
+      .sleep(Constants.DELAY_ONE_SECOND)
+      .click('#btnGenerateWithAIDbSchema')
+      .waitOnElementToBecomeVisible('#btnCopyPromptText')
+      .click('#btnCopyPromptText')
+      .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+      .click('.dburst-button-question-confirm')
+      .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+      // Products = full details
+      .clipboardShouldContainText('"tableName": "Products"')
+      .clipboardShouldContainText('"columnName": "Discontinued"')
+      // Categories = partial (only CategoryName included; Description and Picture excluded)
+      .clipboardShouldContainText('"columnName": "CategoryName"')
+      .clipboardShouldNotContainText('"columnName": "Description"')
+      .clipboardShouldNotContainText('"columnName": "Picture"')
+      // Employees = names only (no column details)
+      .clipboardShouldContainText('Employees')
+      .clipboardShouldNotContainText('"columnName": "LastName"')
+      // Sectioned format markers
+      .clipboardShouldContainText('Tables with Full/Partial Schema')
+      .clipboardShouldContainText('Tables Included by Name Only')
+      .click('#btnCloseAiCopilotModal')
+      .waitOnElementToBecomeInvisible('#btnCopyPromptText');
+
+    // Cleanup: restore picklist and switch back to Connection Details tab
+    // so that isDatabaseSchemaTabActive=false when modal closes (prevents
+    // stale tab state from affecting the next connection's tab auto-selection)
+    ft = ft
+      .click(`#btnAllDetails${picklistId}`)
+      .sleep(Constants.DELAY_HALF_SECOND)
+      .click(`#btnMoveAllToSource${picklistId}`)
+      .sleep(Constants.DELAY_HALF_SECOND)
+      // Re-select Categories + Products — use > .p-treenode-content > .p-checkbox to avoid
+      // hitting nested child checkboxes when Categories is still expanded from step 4c
+      .click(`#treeNodecategoriessourceTree${picklistId} > .p-treenode-content > .p-checkbox`)
+      .click(`#treeNodeproductssourceTree${picklistId} > .p-treenode-content > .p-checkbox`)
+      .click(`#btnMoveToTarget${picklistId}`)
+      .waitOnElementToBecomeVisible(`#treeNodecategoriestargetTree${picklistId}`)
+      .waitOnElementToBecomeVisible(`#treeNodeproductstargetTree${picklistId}`)
+      // Switch to Connection Details tab to reset isDatabaseSchemaTabActive
+      .click('#connectionDetailsTab-link')
+      .waitOnElementToBecomeVisible('#btnTestDbConnection')
+      .sleep(Constants.DELAY_HALF_SECOND);
+
+    return ft;
+  }
+
+  /**
+   * Lightweight check: verifies the Field Selection toolbar buttons exist, respond,
+   * and produce the expected prompt content (Names Only vs All Details).
+   * Only works when enableFieldSelection=true.
+   *
+   * Assumes at least one table is already in the target picklist
+   * and the AI generate button is enabled.
+   */
+  static quickExerciseFieldSelectionButtons(
+    ft: FluentTester,
+    picklistId: string,
+  ): FluentTester {
+    ft = ft.consoleLog('Quick Field Selection — verifying buttons and prompt content');
+
+    // Names Only: prompt should mention "Tables Included by Name Only" and have no column details
+    ft = ft
+      .waitOnElementToBecomeVisible(`#btnAllDetails${picklistId}`)
+      .waitOnElementToBecomeVisible(`#btnNamesOnly${picklistId}`)
+      .click(`#btnNamesOnly${picklistId}`)
+      .sleep(Constants.DELAY_ONE_SECOND)
+      .click('#btnGenerateWithAIDbSchema')
+      .waitOnElementToBecomeVisible('#btnCopyPromptText')
+      .click('#btnCopyPromptText')
+      .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+      .click('.dburst-button-question-confirm')
+      .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+      .clipboardShouldContainText('Tables Included by Name Only')
+      .clipboardShouldNotContainText('"columnName"')
+      .click('#btnCloseAiCopilotModal')
+      .waitOnElementToBecomeInvisible('#btnCopyPromptText');
+
+    // All Details: prompt should contain column details
+    ft = ft
+      .click(`#btnAllDetails${picklistId}`)
+      .sleep(Constants.DELAY_ONE_SECOND)
+      .click('#btnGenerateWithAIDbSchema')
+      .waitOnElementToBecomeVisible('#btnCopyPromptText')
+      .click('#btnCopyPromptText')
+      .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+      .click('.dburst-button-question-confirm')
+      .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+      .clipboardShouldContainText('"columnName"')
+      .clipboardShouldNotContainText('Tables Included by Name Only')
+      .click('#btnCloseAiCopilotModal')
+      .waitOnElementToBecomeInvisible('#btnCopyPromptText');
+
+    return ft;
+  }
+
 }

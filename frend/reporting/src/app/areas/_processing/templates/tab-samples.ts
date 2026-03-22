@@ -74,6 +74,10 @@ export const tabSamplesTemplate = `<ng-template #tabSamplesTemplate>
                   <em>2. Split </em>                
                   <i class="fa fa-files-o">&nbsp;</i>               
                 </span>
+                <span class="label label-default" *ngIf="sample.step1 == 'dashboard'">
+                  <i class="fa fa-dashboard">&nbsp;</i>
+                  <em>Interactive Dashboard</em>
+                </span>
                 <span class="label label-default" *ngIf="sample.step1 == 'generate'">
                    <i class="fa fa-list-ol">&nbsp;</i> 
                    <em *ngIf="samplesService.getOutputType(sample.id) == 'docx'">1. Generate .docx&nbsp;</em>

@@ -72,13 +72,14 @@ export interface TreeNode {
         <ul class="p-tree-container p-tree-root-children" role="tree">
           <dburst-tree-node
             *ngFor="let node of visibleNodes; trackBy: trackBy"
-            id="treeNode{{ node.key }}{{ treeId }}"
             [node]="node"
             [level]="0"
             [indentation]="indentation"
             [selectable]="isSelectable()"
             [checkboxMode]="selectionMode === 'checkbox'"
             [isSelected]="isSelected(node)"
+            [selection]="selection"
+            [treeId]="treeId"
             [nodeTemplate]="
               nodeTemplate || _templateMap?.[node.type || 'default']
             "

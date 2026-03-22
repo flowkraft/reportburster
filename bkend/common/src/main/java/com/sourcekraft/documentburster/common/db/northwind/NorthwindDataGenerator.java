@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
 
 import com.sourcekraft.documentburster.common.db.northwind.entities.Category;
 import com.sourcekraft.documentburster.common.db.northwind.entities.Customer;
@@ -49,6 +50,7 @@ public class NorthwindDataGenerator {
 			createEmployees();
 			createShippers();
 			createOrdersAndDetails(); // Creates orders and links them
+			createBulkDashboardOrders(); // Adds ~72 orders spanning 18 months
 
 			tx.commit();
 		} catch (Exception e) {
@@ -130,23 +132,70 @@ public class NorthwindDataGenerator {
 		sup3.setRegion("MI");
 		sup3.setCountry("USA");
 		em.persist(sup3);
+
+		// --- New suppliers ---
+		Supplier sup4 = new Supplier();
+		sup4.setCompanyName("Tokyo Traders");
+		sup4.setContactName("Yoshi Nagase");
+		sup4.setContactTitle("Marketing Manager");
+		sup4.setAddress("9-8 Sekimai Musashino-shi");
+		sup4.setCity("Tokyo");
+		sup4.setPostalCode("100");
+		sup4.setCountry("Japan");
+		sup4.setPhone("(03) 3555-5011");
+		em.persist(sup4);
+
+		Supplier sup5 = new Supplier();
+		sup5.setCompanyName("Pavlova Ltd");
+		sup5.setContactName("Ian Devling");
+		sup5.setContactTitle("Marketing Manager");
+		sup5.setAddress("74 Rose St. Moonie Ponds");
+		sup5.setCity("Melbourne");
+		sup5.setRegion("Victoria");
+		sup5.setPostalCode("3058");
+		sup5.setCountry("Australia");
+		sup5.setPhone("(03) 444-2343");
+		em.persist(sup5);
+
+		Supplier sup6 = new Supplier();
+		sup6.setCompanyName("Pasta Buttini s.r.l.");
+		sup6.setContactName("Giovanni Giudici");
+		sup6.setContactTitle("Order Administrator");
+		sup6.setAddress("Via dei Gelsomini, 153");
+		sup6.setCity("Salerno");
+		sup6.setPostalCode("84100");
+		sup6.setCountry("Italy");
+		sup6.setPhone("(089) 6547665");
+		em.persist(sup6);
 	}
 
 	private void createProducts() {
-		// Find categories and suppliers created earlier
+		// Find categories created earlier
 		Category beverages = em
 				.createQuery("SELECT c FROM Category c WHERE c.categoryName = 'Beverages'", Category.class)
 				.getSingleResult();
 		Category condiments = em
 				.createQuery("SELECT c FROM Category c WHERE c.categoryName = 'Condiments'", Category.class)
 				.getSingleResult();
-		// Find additional categories needed
 		Category confections = em
 				.createQuery("SELECT c FROM Category c WHERE c.categoryName = 'Confections'", Category.class)
+				.getSingleResult();
+		Category dairy = em
+				.createQuery("SELECT c FROM Category c WHERE c.categoryName = 'Dairy Products'", Category.class)
+				.getSingleResult();
+		Category grains = em
+				.createQuery("SELECT c FROM Category c WHERE c.categoryName = 'Grains/Cereals'", Category.class)
+				.getSingleResult();
+		Category meat = em
+				.createQuery("SELECT c FROM Category c WHERE c.categoryName = 'Meat/Poultry'", Category.class)
+				.getSingleResult();
+		Category produce = em
+				.createQuery("SELECT c FROM Category c WHERE c.categoryName = 'Produce'", Category.class)
 				.getSingleResult();
 		Category seafood = em.createQuery("SELECT c FROM Category c WHERE c.categoryName = 'Seafood'", Category.class)
 				.getSingleResult();
 
+		// Find suppliers
 		Supplier exoticLiquids = em
 				.createQuery("SELECT s FROM Supplier s WHERE s.companyName = 'Exotic Liquids'", Supplier.class)
 				.getSingleResult();
@@ -154,11 +203,21 @@ public class NorthwindDataGenerator {
 				.createQuery("SELECT s FROM Supplier s WHERE s.companyName = 'New Orleans Cajun Delights'",
 						Supplier.class)
 				.getSingleResult();
-		// Find additional supplier needed
 		Supplier grandmaKelly = em
 				.createQuery("SELECT s FROM Supplier s WHERE s.companyName = 'Grandma Kellys Homestead'",
-						Supplier.class) // Escaped apostrophe
+						Supplier.class)
 				.getSingleResult();
+		Supplier tokyoTraders = em
+				.createQuery("SELECT s FROM Supplier s WHERE s.companyName = 'Tokyo Traders'", Supplier.class)
+				.getSingleResult();
+		Supplier pavlova = em
+				.createQuery("SELECT s FROM Supplier s WHERE s.companyName = 'Pavlova Ltd'", Supplier.class)
+				.getSingleResult();
+		Supplier pastaButtini = em
+				.createQuery("SELECT s FROM Supplier s WHERE s.companyName = 'Pasta Buttini s.r.l.'", Supplier.class)
+				.getSingleResult();
+
+		// --- Original 6 products (IDs 1-6) ---
 
 		Product prod1 = new Product();
 		prod1.setProductName("Chai");
@@ -208,11 +267,10 @@ public class NorthwindDataGenerator {
 		prod4.setDiscontinued(false);
 		em.persist(prod4);
 
-		// Add Product 5 (Confections)
 		Product prod5 = new Product();
 		prod5.setProductName("Scottish Longbreads");
-		prod5.setSupplier(grandmaKelly); // Use Grandma Kelly
-		prod5.setCategory(confections); // Confections category
+		prod5.setSupplier(grandmaKelly);
+		prod5.setCategory(confections);
 		prod5.setQuantityPerUnit("10 pkgs.");
 		prod5.setUnitPrice(new BigDecimal("12.50"));
 		prod5.setUnitsInStock((short) 6);
@@ -221,11 +279,10 @@ public class NorthwindDataGenerator {
 		prod5.setDiscontinued(false);
 		em.persist(prod5);
 
-		// Add Product 6 (Seafood)
 		Product prod6 = new Product();
 		prod6.setProductName("Boston Crab Meat");
-		prod6.setSupplier(grandmaKelly); // Use Grandma Kelly
-		prod6.setCategory(seafood); // Seafood category
+		prod6.setSupplier(grandmaKelly);
+		prod6.setCategory(seafood);
 		prod6.setQuantityPerUnit("24 - 4 oz tins");
 		prod6.setUnitPrice(new BigDecimal("18.40"));
 		prod6.setUnitsInStock((short) 123);
@@ -233,6 +290,186 @@ public class NorthwindDataGenerator {
 		prod6.setReorderLevel((short) 30);
 		prod6.setDiscontinued(false);
 		em.persist(prod6);
+
+		// --- New products (IDs 7-20) covering all 8 categories ---
+
+		// Dairy Products (category was empty)
+		Product prod7 = new Product();
+		prod7.setProductName("Camembert Pierrot");
+		prod7.setSupplier(pastaButtini);
+		prod7.setCategory(dairy);
+		prod7.setQuantityPerUnit("15 - 300 g rounds");
+		prod7.setUnitPrice(new BigDecimal("34.00"));
+		prod7.setUnitsInStock((short) 19);
+		prod7.setUnitsOnOrder((short) 0);
+		prod7.setReorderLevel((short) 0);
+		prod7.setDiscontinued(false);
+		em.persist(prod7);
+
+		Product prod8 = new Product();
+		prod8.setProductName("Gorgonzola Telino");
+		prod8.setSupplier(pastaButtini);
+		prod8.setCategory(dairy);
+		prod8.setQuantityPerUnit("12 - 100 g pkgs");
+		prod8.setUnitPrice(new BigDecimal("12.50"));
+		prod8.setUnitsInStock((short) 0);
+		prod8.setUnitsOnOrder((short) 70);
+		prod8.setReorderLevel((short) 20);
+		prod8.setDiscontinued(false);
+		em.persist(prod8);
+
+		// Grains/Cereals (category was empty)
+		Product prod9 = new Product();
+		prod9.setProductName("Gnocchi di nonna Alice");
+		prod9.setSupplier(pastaButtini);
+		prod9.setCategory(grains);
+		prod9.setQuantityPerUnit("24 - 250 g pkgs.");
+		prod9.setUnitPrice(new BigDecimal("38.00"));
+		prod9.setUnitsInStock((short) 21);
+		prod9.setUnitsOnOrder((short) 10);
+		prod9.setReorderLevel((short) 30);
+		prod9.setDiscontinued(false);
+		em.persist(prod9);
+
+		Product prod10 = new Product();
+		prod10.setProductName("Filo Mix");
+		prod10.setSupplier(tokyoTraders);
+		prod10.setCategory(grains);
+		prod10.setQuantityPerUnit("16 - 2 kg boxes");
+		prod10.setUnitPrice(new BigDecimal("7.00"));
+		prod10.setUnitsInStock((short) 38);
+		prod10.setUnitsOnOrder((short) 0);
+		prod10.setReorderLevel((short) 25);
+		prod10.setDiscontinued(false);
+		em.persist(prod10);
+
+		// Meat/Poultry (category was empty)
+		Product prod11 = new Product();
+		prod11.setProductName("Mishi Kobe Niku");
+		prod11.setSupplier(tokyoTraders);
+		prod11.setCategory(meat);
+		prod11.setQuantityPerUnit("18 - 500 g pkgs.");
+		prod11.setUnitPrice(new BigDecimal("97.00"));
+		prod11.setUnitsInStock((short) 29);
+		prod11.setUnitsOnOrder((short) 0);
+		prod11.setReorderLevel((short) 0);
+		prod11.setDiscontinued(true);
+		em.persist(prod11);
+
+		Product prod12 = new Product();
+		prod12.setProductName("Thuringer Rostbratwurst");
+		prod12.setSupplier(pavlova);
+		prod12.setCategory(meat);
+		prod12.setQuantityPerUnit("50 bags x 30 sausgs.");
+		prod12.setUnitPrice(new BigDecimal("123.79"));
+		prod12.setUnitsInStock((short) 0);
+		prod12.setUnitsOnOrder((short) 0);
+		prod12.setReorderLevel((short) 0);
+		prod12.setDiscontinued(true);
+		em.persist(prod12);
+
+		// Produce (category was empty)
+		Product prod13 = new Product();
+		prod13.setProductName("Uncle Bobs Organic Dried Pears");
+		prod13.setSupplier(grandmaKelly);
+		prod13.setCategory(produce);
+		prod13.setQuantityPerUnit("12 - 1 lb pkgs.");
+		prod13.setUnitPrice(new BigDecimal("30.00"));
+		prod13.setUnitsInStock((short) 15);
+		prod13.setUnitsOnOrder((short) 0);
+		prod13.setReorderLevel((short) 10);
+		prod13.setDiscontinued(false);
+		em.persist(prod13);
+
+		Product prod14 = new Product();
+		prod14.setProductName("Tofu");
+		prod14.setSupplier(tokyoTraders);
+		prod14.setCategory(produce);
+		prod14.setQuantityPerUnit("40 - 100 g pkgs.");
+		prod14.setUnitPrice(new BigDecimal("23.25"));
+		prod14.setUnitsInStock((short) 35);
+		prod14.setUnitsOnOrder((short) 0);
+		prod14.setReorderLevel((short) 0);
+		prod14.setDiscontinued(false);
+		em.persist(prod14);
+
+		// More Beverages
+		Product prod15 = new Product();
+		prod15.setProductName("Guarana Fantastica");
+		prod15.setSupplier(cajunDelights);
+		prod15.setCategory(beverages);
+		prod15.setQuantityPerUnit("12 - 355 ml cans");
+		prod15.setUnitPrice(new BigDecimal("4.50"));
+		prod15.setUnitsInStock((short) 20);
+		prod15.setUnitsOnOrder((short) 0);
+		prod15.setReorderLevel((short) 0);
+		prod15.setDiscontinued(false);
+		em.persist(prod15);
+
+		// More Condiments
+		Product prod16 = new Product();
+		prod16.setProductName("Genen Shouyu");
+		prod16.setSupplier(tokyoTraders);
+		prod16.setCategory(condiments);
+		prod16.setQuantityPerUnit("24 - 250 ml bottles");
+		prod16.setUnitPrice(new BigDecimal("15.50"));
+		prod16.setUnitsInStock((short) 39);
+		prod16.setUnitsOnOrder((short) 0);
+		prod16.setReorderLevel((short) 5);
+		prod16.setDiscontinued(false);
+		em.persist(prod16);
+
+		// More Confections
+		Product prod17 = new Product();
+		prod17.setProductName("Pavlova");
+		prod17.setSupplier(pavlova);
+		prod17.setCategory(confections);
+		prod17.setQuantityPerUnit("32 - 500 g boxes");
+		prod17.setUnitPrice(new BigDecimal("17.45"));
+		prod17.setUnitsInStock((short) 29);
+		prod17.setUnitsOnOrder((short) 0);
+		prod17.setReorderLevel((short) 10);
+		prod17.setDiscontinued(false);
+		em.persist(prod17);
+
+		// More Seafood
+		Product prod18 = new Product();
+		prod18.setProductName("Ikura");
+		prod18.setSupplier(tokyoTraders);
+		prod18.setCategory(seafood);
+		prod18.setQuantityPerUnit("12 - 200 ml jars");
+		prod18.setUnitPrice(new BigDecimal("31.00"));
+		prod18.setUnitsInStock((short) 31);
+		prod18.setUnitsOnOrder((short) 0);
+		prod18.setReorderLevel((short) 0);
+		prod18.setDiscontinued(false);
+		em.persist(prod18);
+
+		// More Dairy
+		Product prod19 = new Product();
+		prod19.setProductName("Queso Cabrales");
+		prod19.setSupplier(pavlova);
+		prod19.setCategory(dairy);
+		prod19.setQuantityPerUnit("1 kg pkg.");
+		prod19.setUnitPrice(new BigDecimal("21.00"));
+		prod19.setUnitsInStock((short) 22);
+		prod19.setUnitsOnOrder((short) 30);
+		prod19.setReorderLevel((short) 30);
+		prod19.setDiscontinued(false);
+		em.persist(prod19);
+
+		// More Grains
+		Product prod20 = new Product();
+		prod20.setProductName("Ravioli Angelo");
+		prod20.setSupplier(pastaButtini);
+		prod20.setCategory(grains);
+		prod20.setQuantityPerUnit("24 - 250 g pkgs.");
+		prod20.setUnitPrice(new BigDecimal("19.50"));
+		prod20.setUnitsInStock((short) 36);
+		prod20.setUnitsOnOrder((short) 0);
+		prod20.setReorderLevel((short) 20);
+		prod20.setDiscontinued(false);
+		em.persist(prod20);
 	}
 
 	private void createCustomers() {
@@ -260,7 +497,7 @@ public class NorthwindDataGenerator {
 		createCustomer("WANDK", "Die Wandernde Kuh", "Rita Müller", "Sales Representative", "Adenauerallee 900",
 				"Stuttgart", null, "70563", "Germany", "0711-020361", "0711-035428");
 
-		// Other Customers
+		// Other Customers (original 4)
 		createCustomer("ANATR", "Ana Trujillo Emparedados y helados", "Ana Trujillo", "Owner",
 				"Avda. de la Constitución 2222", "México D.F.", null, "05021", "Mexico", "(5) 555-4729",
 				"(5) 555-3745");
@@ -270,6 +507,28 @@ public class NorthwindDataGenerator {
 				null, "WA1 1DP", "UK", "(171) 555-7788", "(171) 555-6750");
 		createCustomer("BERGS", "Berglunds snabbköp", "Christina Berglund", "Order Administrator", "Berguvsvägen 8",
 				"Luleå", null, "S-958 22", "Sweden", "0921-12 34 65", "0921-12 34 67");
+
+		// --- New customers in diverse countries ---
+		createCustomer("BONAP", "Bon app'", "Laurence Lebihan", "Owner", "12, rue des Bouchers",
+				"Marseille", null, "13008", "France", "91.24.45.40", "91.24.45.41");
+		createCustomer("CACTU", "Cactus Comidas para llevar", "Patricio Simpson", "Sales Agent", "Cerrito 333",
+				"Buenos Aires", null, "1010", "Argentina", "(1) 135-5555", "(1) 135-4892");
+		createCustomer("DUMON", "Du monde entier", "Janine Labrune", "Owner", "67, rue des Cinquante Otages",
+				"Nantes", null, "44000", "France", "40.67.88.88", "40.67.89.89");
+		createCustomer("ERNSH", "Ernst Handel", "Roland Mendel", "Sales Manager", "Kirchgasse 6",
+				"Graz", null, "8010", "Austria", "7675-3425", "7675-3426");
+		createCustomer("FOLKO", "Folk och fä HB", "Maria Larsson", "Owner", "Åkergatan 24",
+				"Bräcke", null, "S-844 67", "Sweden", "0695-34 67 21", null);
+		createCustomer("GREAL", "Great Lakes Food Market", "Howard Snyder", "Marketing Manager", "2732 Baker Blvd.",
+				"Eugene", "OR", "97403", "USA", "(503) 555-7555", null);
+		createCustomer("HILAA", "HILARION-Abastos", "Carlos Hernandez", "Sales Representative", "Carrera 22 con Ave.",
+				"San Cristóbal", "Táchira", "5022", "Venezuela", "(5) 555-1340", "(5) 555-1948");
+		createCustomer("ISLAT", "Island Trading", "Helen Bennett", "Marketing Manager", "Garden House Crowther Way",
+				"Cowes", "Isle of Wight", "PO31 7PJ", "UK", "(198) 555-8888", null);
+		createCustomer("LILAS", "LILA-Supermercado", "Carlos Gonzalez", "Accounting Manager", "Carrera 52 con Ave.",
+				"Barquisimeto", "Lara", "3508", "Venezuela", "(9) 331-6954", "(9) 331-7256");
+		createCustomer("MAGAA", "Magazzini Alimentari Riuniti", "Giovanni Rovelli", "Marketing Manager", "Via Ludovico il Moro 22",
+				"Bergamo", null, "24100", "Italy", "035-640230", "035-640231");
 	}
 
 	private void createCustomer(String id, String company, String contact, String title, String address, String city,
@@ -367,8 +626,7 @@ public class NorthwindDataGenerator {
 		Shipper united = em.createQuery("SELECT s FROM Shipper s WHERE s.companyName = 'United Package'", Shipper.class)
 				.getSingleResult();
 		Shipper federal = em
-				.createQuery("SELECT s FROM Shipper s WHERE s.companyName = 'Federal Shipping'", Shipper.class) // Find
-																												// Federal
+				.createQuery("SELECT s FROM Shipper s WHERE s.companyName = 'Federal Shipping'", Shipper.class)
 				.getSingleResult();
 
 		Product chai = em.createQuery("SELECT p FROM Product p WHERE p.productName = 'Chai'", Product.class)
@@ -379,16 +637,13 @@ public class NorthwindDataGenerator {
 				.getSingleResult();
 		Product cajunSeasoning = em
 				.createQuery("SELECT p FROM Product p WHERE p.productName = 'Chef Antons Cajun Seasoning'",
-						Product.class) // Find Cajun Seasoning
+						Product.class)
 				.getSingleResult();
 		Product longbreads = em
-				.createQuery("SELECT p FROM Product p WHERE p.productName = 'Scottish Longbreads'", Product.class) // Find
-																													// Longbreads
+				.createQuery("SELECT p FROM Product p WHERE p.productName = 'Scottish Longbreads'", Product.class)
 				.getSingleResult();
 		Product crabMeat = em
-				.createQuery("SELECT p FROM Product p WHERE p.productName = 'Boston Crab Meat'", Product.class) // Find
-																												// Crab
-																												// Meat
+				.createQuery("SELECT p FROM Product p WHERE p.productName = 'Boston Crab Meat'", Product.class)
 				.getSingleResult();
 
 		// --- Add orders spanning multiple months ---
@@ -565,14 +820,8 @@ public class NorthwindDataGenerator {
 		order3.setEmployee(nancy); // Use Nancy
 		// Make RequiredDate slightly earlier to potentially make it late
 		order3.setOrderDate(REFERENCE_INSTANT.minusSeconds(86400 * 8).atZone(DEFAULT_ZONE_ID).toLocalDateTime());
-		order3.setRequiredDate(REFERENCE_INSTANT.minusSeconds(86400 * 3).atZone(DEFAULT_ZONE_ID).toLocalDateTime()); // Required
-																														// 3
-																														// days
-																														// ago
-		order3.setShippedDate(REFERENCE_INSTANT.minusSeconds(86400 * 2).atZone(DEFAULT_ZONE_ID).toLocalDateTime()); // Shipped
-																													// 2
-																													// days
-																													// ago
+		order3.setRequiredDate(REFERENCE_INSTANT.minusSeconds(86400 * 3).atZone(DEFAULT_ZONE_ID).toLocalDateTime());
+		order3.setShippedDate(REFERENCE_INSTANT.minusSeconds(86400 * 2).atZone(DEFAULT_ZONE_ID).toLocalDateTime());
 		order3.setShipper(federal); // Use Federal Shipping
 		order3.setFreight(new BigDecimal("45.50"));
 		order3.setShipName("Around the Horn");
@@ -624,5 +873,74 @@ public class NorthwindDataGenerator {
 		detail4_1.setQuantity((short) 8);
 		detail4_1.setDiscount(BigDecimal.ZERO);
 		em.persist(detail4_1);
+	}
+
+	/**
+	 * Creates ~72 bulk orders spanning 18 months across all customers,
+	 * covering all product categories for meaningful dashboard visualizations.
+	 */
+	private void createBulkDashboardOrders() {
+		// Load all entities for rotation
+		List<Customer> customers = em
+				.createQuery("SELECT c FROM Customer c ORDER BY c.customerId", Customer.class)
+				.getResultList();
+		List<Employee> employees = em
+				.createQuery("SELECT e FROM Employee e", Employee.class)
+				.getResultList();
+		List<Shipper> shippers = em
+				.createQuery("SELECT s FROM Shipper s", Shipper.class)
+				.getResultList();
+		List<Product> products = em
+				.createQuery("SELECT p FROM Product p", Product.class)
+				.getResultList();
+
+		int orderCount = 72; // 4 orders per month for 18 months
+		LocalDate startDate = REFERENCE_DATE.minusMonths(18);
+
+		for (int i = 0; i < orderCount; i++) {
+			Customer customer = customers.get(i % customers.size());
+			Employee employee = employees.get(i % employees.size());
+			Shipper shipper = shippers.get(i % shippers.size());
+
+			// Distribute orders: 4 per month across 18 months
+			int monthOffset = i / 4;
+			int dayOfMonth = 5 + (i % 4) * 7; // days 5, 12, 19, 26
+			LocalDate orderDate = startDate.plusMonths(monthOffset)
+					.withDayOfMonth(Math.min(dayOfMonth, 28));
+
+			// ~2/3 of orders are shipped
+			boolean shipped = (i % 3 != 0);
+
+			Order order = new Order();
+			order.setCustomer(customer);
+			order.setEmployee(employee);
+			order.setOrderDate(orderDate.atStartOfDay(DEFAULT_ZONE_ID).toLocalDateTime());
+			order.setRequiredDate(orderDate.plusDays(14).atStartOfDay(DEFAULT_ZONE_ID).toLocalDateTime());
+			if (shipped) {
+				order.setShippedDate(
+						orderDate.plusDays(3 + (i % 7)).atStartOfDay(DEFAULT_ZONE_ID).toLocalDateTime());
+			}
+			order.setShipper(shipper);
+			order.setFreight(new BigDecimal(10 + (i * 7 % 90) + "." + String.format("%02d", i * 3 % 100)));
+			order.setShipName(customer.getCompanyName());
+			order.setShipAddress(customer.getAddress());
+			order.setShipCity(customer.getCity());
+			order.setShipPostalCode(customer.getPostalCode());
+			order.setShipCountry(customer.getCountry());
+			em.persist(order);
+
+			// Each order has 2 or 3 details
+			int detailCount = 2 + (i % 2);
+			for (int j = 0; j < detailCount; j++) {
+				Product product = products.get((i * 3 + j) % products.size());
+				OrderDetail detail = new OrderDetail();
+				detail.setOrder(order);
+				detail.setProduct(product);
+				detail.setUnitPrice(product.getUnitPrice());
+				detail.setQuantity((short) (2 + (i + j) % 20));
+				detail.setDiscount(j == 0 ? BigDecimal.ZERO : new BigDecimal("0.05"));
+				em.persist(detail);
+			}
+		}
 	}
 }

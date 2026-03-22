@@ -1,0 +1,209 @@
+<meta charset="utf-8">
+<div class="rb-dashboard-root">
+  <style>
+    .rb-dashboard-root {
+      all: initial;
+      display: block;
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      box-sizing: border-box;
+      color: #1e293b;
+      background: #f8fafc;
+      padding: 24px;
+    }
+    .rb-dashboard-root *, .rb-dashboard-root *::before, .rb-dashboard-root *::after {
+      box-sizing: inherit;
+    }
+
+    /* Color palette — warm teal for a wholesale/trade feel */
+    .rb-dashboard-root {
+      --accent: #0f766e;
+      --accent-light: #ccfbf1;
+      --accent-dark: #064e3b;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --radius: 10px;
+    }
+
+    /* Header */
+    .rb-dashboard-root .dash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--accent);
+    }
+    .rb-dashboard-root .dash-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+      margin: 0;
+    }
+    .rb-dashboard-root .dash-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin: 4px 0 0 0;
+      font-weight: 400;
+    }
+
+    /* Parameters */
+    .rb-dashboard-root .params-bar {
+      margin-bottom: 24px;
+    }
+
+    /* KPI row */
+    .rb-dashboard-root .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .rb-dashboard-root .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .rb-dashboard-root .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent);
+    }
+    .rb-dashboard-root .kpi-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin: 0 0 6px 0;
+    }
+    .rb-dashboard-root .kpi-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent-dark);
+      margin: 0;
+      line-height: 1.1;
+    }
+
+    /* Charts row */
+    .rb-dashboard-root .charts-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    .rb-dashboard-root .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .rb-dashboard-root .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 16px 0;
+      letter-spacing: -0.2px;
+    }
+
+    /* Table section */
+    .rb-dashboard-root .table-section {
+      margin-bottom: 28px;
+    }
+
+    /* Pivot section */
+    .rb-dashboard-root .pivot-section {
+      margin-bottom: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .rb-dashboard-root .kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .rb-dashboard-root .charts-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 500px) {
+      .rb-dashboard-root .kpi-row { grid-template-columns: 1fr; }
+      .rb-dashboard-root { padding: 12px; }
+    }
+  </style>
+
+  <!-- Header -->
+  <div class="dash-header">
+    <div>
+      <h1 class="dash-title">Northwind Sales Dashboard</h1>
+      <p class="dash-subtitle">Wholesale distribution - revenue, customers &amp; product performance</p>
+    </div>
+  </div>
+
+  <!-- Parameters -->
+  <div class="params-bar">
+    <rb-parameters report-code="g-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" show-reload="true"></rb-parameters>
+  </div>
+
+  <!-- KPI Cards — all 4 share component-id="atomicValues" (1 fetch, cached), each picks a different field -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <p class="kpi-label">Revenue</p>
+      <p class="kpi-value">
+        <rb-value report-code="g-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="atomicValues" field="revenue" format="currency"></rb-value>
+      </p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Orders</p>
+      <p class="kpi-value">
+        <rb-value report-code="g-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="atomicValues" field="orders" format="number"></rb-value>
+      </p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Avg Order Value</p>
+      <p class="kpi-value">
+        <rb-value report-code="g-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="atomicValues" field="avgOrderValue" format="currency"></rb-value>
+      </p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Customers</p>
+      <p class="kpi-value">
+        <rb-value report-code="g-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="atomicValues" field="customers" format="number"></rb-value>
+      </p>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-row">
+    <div class="card">
+      <h2 class="card-title">Revenue Trend</h2>
+      <rb-chart report-code="g-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="revenueTrend"></rb-chart>
+    </div>
+    <div class="card">
+      <h2 class="card-title">Revenue by Category</h2>
+      <rb-chart report-code="g-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="revenueByCategory"></rb-chart>
+    </div>
+  </div>
+
+  <!-- Top Customers Table -->
+  <div class="table-section">
+    <div class="card">
+      <h2 class="card-title">Top 10 Customers</h2>
+      <rb-tabulator report-code="g-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="topCustomers"></rb-tabulator>
+    </div>
+  </div>
+
+  <!-- Order Explorer Pivot -->
+  <div class="pivot-section">
+    <div class="card">
+      <h2 class="card-title">Order Explorer</h2>
+      <rb-pivot-table report-code="g-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="orderExplorer"></rb-pivot-table>
+    </div>
+  </div>
+</div>

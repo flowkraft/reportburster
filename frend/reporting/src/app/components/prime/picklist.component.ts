@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common'; // Import CommonModule
 import { FormsModule } from '@angular/forms'; // Import FormsModule if needed for inputs/buttons potentially
 import { TreeNode, TreeComponent } from './tree.component'; // Import TreeComponent
@@ -97,10 +97,41 @@ import { TreeNode, TreeComponent } from './tree.component'; // Import TreeCompon
       .p-button .pi {
         font-size: 1.25rem; /* Adjust icon size */
       }
+
+      .p-picklist-field-toolbar {
+        display: flex;
+        gap: 0.25rem;
+        padding: 0.35rem 0.5rem;
+        background: #f0f9ff;
+        border: 1px solid #e5e7eb;
+        border-top: 0;
+        border-bottom: 0;
+      }
+      .p-button-toolbar {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.8rem;
+        border-radius: 4px;
+      }
+      .p-button-toolbar .pi {
+        font-size: 0.8rem;
+      }
+      .p-button-toolbar-active {
+        background: #dbeafe;
+        border-color: #3b82f6;
+        color: #1d4ed8;
+        font-weight: 600;
+      }
+      .p-button-toolbar-active:enabled:hover {
+        background: #bfdbfe;
+        border-color: #3b82f6;
+        color: #1d4ed8;
+      }
     `,
   ],
 })
 export class PicklistComponent {
+  constructor(private cdRef: ChangeDetectorRef) {}
+
   @Input() picklistId: string | undefined;
 
   @Input() sourceItems: TreeNode[] = [];
@@ -114,8 +145,26 @@ export class PicklistComponent {
   @Input() sourceFilterPlaceholder: string = 'Filter...';
   @Input() targetFilterPlaceholder: string = 'Filter...';
 
+  @Input() enableFieldSelection: boolean = false;
+
   selectedSourceNodes: TreeNode[] = [];
   selectedTargetNodes: TreeNode[] = [];
+  fieldIncludedNodes: TreeNode[] = [];
+  fieldSelectionMode: 'allDetails' | 'namesOnly' | 'custom' = 'allDetails';
+
+  get activeTargetSelection(): TreeNode[] {
+    return this.enableFieldSelection ? this.fieldIncludedNodes : this.selectedTargetNodes;
+  }
+
+  set activeTargetSelection(value: TreeNode[]) {
+    if (this.enableFieldSelection) {
+      this.fieldIncludedNodes = value;
+      this.fieldSelectionMode = 'custom';
+      this.updateTableNodeStyles();
+    } else {
+      this.selectedTargetNodes = value;
+    }
+  }
 
   moveToTarget() {
     const selectedKeys = new Set(
@@ -131,14 +180,23 @@ export class PicklistComponent {
     );
     this.sourceItems = nodesToKeep;
     this.targetItems = [...this.targetItems, ...nodesToMove];
+    if (this.enableFieldSelection) {
+      this.autoIncludeNodes(nodesToMove);
+      this.updateTableNodeStyles();
+    }
     this.clearSelection();
     this.updateEmitters();
   }
 
   moveAllToTarget() {
     if (!this.sourceItems || this.sourceItems.length === 0) return;
-    this.targetItems = [...this.targetItems, ...this.sourceItems];
+    const movedItems = [...this.sourceItems];
+    this.targetItems = [...this.targetItems, ...movedItems];
     this.sourceItems = [];
+    if (this.enableFieldSelection) {
+      this.autoIncludeNodes(movedItems);
+      this.updateTableNodeStyles();
+    }
     this.clearSelection();
     this.updateEmitters();
   }
@@ -157,6 +215,9 @@ export class PicklistComponent {
     );
     this.targetItems = nodesToKeep;
     this.sourceItems = [...this.sourceItems, ...nodesToMove];
+    if (this.enableFieldSelection) {
+      this.removeFromFieldSelection(nodesToMove);
+    }
     this.clearSelection();
     this.updateEmitters();
   }
@@ -165,8 +226,143 @@ export class PicklistComponent {
     if (!this.targetItems || this.targetItems.length === 0) return;
     this.sourceItems = [...this.sourceItems, ...this.targetItems];
     this.targetItems = [];
+    if (this.enableFieldSelection) {
+      this.fieldIncludedNodes = [];
+    }
     this.clearSelection();
     this.updateEmitters();
+  }
+
+  // --- Field Selection Toolbar Actions ---
+
+  selectAllFields(): void {
+    this.fieldIncludedNodes = [];
+    this.collectAllNodes(this.targetItems, this.fieldIncludedNodes);
+    this.fieldIncludedNodes = [...this.fieldIncludedNodes];
+    this.clearPartialSelected(this.targetItems);
+    this.fieldSelectionMode = 'allDetails';
+    this.updateTableNodeStyles();
+    this.cdRef.detectChanges();
+  }
+
+  selectNamesOnly(): void {
+    this.fieldIncludedNodes = [];
+    this.clearPartialSelected(this.targetItems);
+    this.fieldSelectionMode = 'namesOnly';
+    this.updateTableNodeStyles();
+    this.cdRef.detectChanges();
+  }
+
+  // --- Field Selection State for Prompt Building ---
+
+  getFieldSelectionState(): {
+    fullDetailTables: TreeNode[];
+    partialDetailTables: { node: TreeNode; selectedChildren: TreeNode[] }[];
+    nameOnlyTables: TreeNode[];
+  } {
+    const full: TreeNode[] = [];
+    const partial: { node: TreeNode; selectedChildren: TreeNode[] }[] = [];
+    const nameOnly: TreeNode[] = [];
+
+    const includedKeys = new Set(
+      (this.fieldIncludedNodes || []).map((n) => n.key),
+    );
+
+    for (const tableNode of this.targetItems) {
+      if (!tableNode.children?.length) {
+        if (includedKeys.has(tableNode.key)) {
+          full.push(tableNode);
+        } else {
+          nameOnly.push(tableNode);
+        }
+        continue;
+      }
+
+      const selectedChildren = tableNode.children.filter((child) =>
+        includedKeys.has(child.key),
+      );
+
+      if (selectedChildren.length === tableNode.children.length) {
+        full.push(tableNode);
+      } else if (selectedChildren.length > 0) {
+        partial.push({ node: tableNode, selectedChildren });
+      } else {
+        nameOnly.push(tableNode);
+      }
+    }
+
+    return { fullDetailTables: full, partialDetailTables: partial, nameOnlyTables: nameOnly };
+  }
+
+  // --- Private Helpers ---
+
+  private updateTableNodeStyles(): void {
+    if (!this.enableFieldSelection) return;
+    const includedKeys = new Set(
+      (this.fieldIncludedNodes || []).map((n) => n.key),
+    );
+    for (const tableNode of this.targetItems) {
+      if (!tableNode.children?.length) {
+        tableNode.styleClass = includedKeys.has(tableNode.key) ? '' : 'p-weak-selected';
+        continue;
+      }
+      const selectedChildren = tableNode.children.filter((child) =>
+        includedKeys.has(child.key),
+      );
+      if (selectedChildren.length === 0) {
+        tableNode.styleClass = 'p-weak-selected';
+      } else {
+        tableNode.styleClass = '';
+      }
+    }
+  }
+
+  private autoIncludeNodes(nodes: TreeNode[]): void {
+    for (const node of nodes) {
+      this.fieldIncludedNodes.push(node);
+      if (node.children?.length) {
+        this.autoIncludeNodes(node.children);
+      }
+    }
+    this.fieldIncludedNodes = [...this.fieldIncludedNodes];
+  }
+
+  private removeFromFieldSelection(nodes: TreeNode[]): void {
+    const keysToRemove = new Set<string | undefined>();
+    this.collectAllKeys(nodes, keysToRemove);
+    this.fieldIncludedNodes = this.fieldIncludedNodes.filter(
+      (n) => !keysToRemove.has(n.key),
+    );
+  }
+
+  private collectAllKeys(
+    nodes: TreeNode[],
+    keys: Set<string | undefined>,
+  ): void {
+    for (const node of nodes) {
+      keys.add(node.key);
+      if (node.children?.length) {
+        this.collectAllKeys(node.children, keys);
+      }
+    }
+  }
+
+  private collectAllNodes(nodes: TreeNode[], collected: TreeNode[]): void {
+    for (const node of nodes) {
+      collected.push(node);
+      if (node.children?.length) {
+        this.collectAllNodes(node.children, collected);
+      }
+    }
+  }
+
+  private clearPartialSelected(nodes: TreeNode[]): void {
+    for (const node of nodes) {
+      node.partialSelected = false;
+      if (node.children?.length) {
+        this.clearPartialSelected(node.children);
+      }
+    }
   }
 
   private partitionNodes(

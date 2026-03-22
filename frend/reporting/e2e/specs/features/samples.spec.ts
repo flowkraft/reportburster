@@ -6,6 +6,8 @@ import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
 import { SamplesTestHelper } from '../../helpers/samples-test-helper';
+import { assertDashboardRendersCorrectly } from '../../helpers/dashboard-test-helper';
+import { SelfServicePortalsTestHelper } from '../../helpers/areas/self-service-portals-test-helper';
 
 //DONE2
 test.describe('', async () => {
@@ -613,10 +615,20 @@ test.describe('', async () => {
         'AROUT.html',
         'BERGS.html',
         'BLAUS.html',
+        'BONAP.html',
+        'CACTU.html',
         'DRACD.html',
+        'DUMON.html',
+        'ERNSH.html',
+        'FOLKO.html',
         'FRANK.html',
+        'GREAL.html',
+        'HILAA.html',
+        'ISLAT.html',
         'KOENE.html',
         'LEHMS.html',
+        'LILAS.html',
+        'MAGAA.html',
         'MORGK.html',
         'OTTIK.html',
         'QUICK.html',
@@ -720,6 +732,12 @@ test.describe('', async () => {
         'invoice_2.html',
         'invoice_4.html',
         'invoice_5.html',
+        'invoice_8.html',
+        'invoice_9.html',
+        'invoice_33.html',
+        'invoice_34.html',
+        'invoice_58.html',
+        'invoice_59.html',
       ];
 
       let ft = new FluentTester(firstPage);
@@ -857,6 +875,9 @@ electronBeforeAfterAllTest(
         'supplier_1_scorecard.html',
         'supplier_2_scorecard.html',
         'supplier_3_scorecard.html',
+        'supplier_4_scorecard.html',
+        'supplier_5_scorecard.html',
+        'supplier_6_scorecard.html',
       ];
 
       let ft = new FluentTester(firstPage);
@@ -897,7 +918,80 @@ electronBeforeAfterAllTest(
   );
 
   electronBeforeAfterAllTest(
-    'should work correctly (18_generate_adhoc_employee_profile_script2pdf)',
+    'should work correctly (18_northwind_sales_dashboard)',
+    async ({ beforeAfterEach: firstPage }) => {
+      test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
+
+      let ft = new FluentTester(firstPage);
+
+      await ft
+        .click('#leftMenuSamples')
+        .scrollIntoViewIfNeeded('#trNORTHWIND-SALES-DASHBOARD')
+        .waitOnElementToContainText(
+          '#tdNORTHWIND-SALES-DASHBOARD',
+          'Sales Dashboard',
+        );
+
+      // Verify the Learn More modal
+      ft = SamplesTestHelper.verifyLearnMoreModal(
+        ft,
+        'NORTHWIND-SALES-DASHBOARD',
+        'northwind.db',
+      );
+
+      // Dashboard "Try It" opens directly in the browser (no burst/generate flow).
+      // Open external browser and assert dashboard renders correctly.
+      let externalBrowser = null;
+
+      await ft
+        .scrollIntoViewIfNeeded('#trNORTHWIND-SALES-DASHBOARD')
+        .click('#trNORTHWIND-SALES-DASHBOARD')
+        .click('#btnSampleTryItNORTHWIND-SALES-DASHBOARD');
+
+      try {
+        const { browser, page } = await SelfServicePortalsTestHelper.createExternalBrowser();
+        externalBrowser = browser;
+
+        const dashboardUrl = 'http://localhost:9090/dashboard/g-dashboard';
+
+        await SelfServicePortalsTestHelper.waitForServerReady(
+          page,
+          dashboardUrl,
+          30,
+          2000,
+        );
+
+        await page.goto(dashboardUrl, {
+          timeout: 30000,
+          waitUntil: 'networkidle',
+        });
+
+        // Assert rb-dashboard web component is present
+        const { expect } = await import('@playwright/test');
+        await expect(page.locator('rb-dashboard')).toBeVisible({ timeout: 10000 });
+
+        // Run shared dashboard assertions — default "-- All --" (unfiltered)
+        await assertDashboardRendersCorrectly(page, 'g-dashboard');
+
+        // Exercise the country parameter filter — select "Germany"
+        await page.selectOption('#country', 'Germany');
+        await page.click('#btnReloadDashboard');
+        await expect(page.locator('#btnConfirmReload')).toBeVisible({ timeout: 5000 });
+        await page.click('#btnConfirmReload');
+        await page.waitForTimeout(5000);
+
+        // Assert Germany-filtered data across all components
+        await assertDashboardRendersCorrectly(page, 'g-dashboard', 'Germany');
+      } finally {
+        if (externalBrowser) {
+          await SelfServicePortalsTestHelper.closeExternalBrowser(externalBrowser);
+        }
+      }
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    'should work correctly (19_generate_adhoc_employee_profile_script2pdf)',
     async ({ beforeAfterEach: firstPage }) => {
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 

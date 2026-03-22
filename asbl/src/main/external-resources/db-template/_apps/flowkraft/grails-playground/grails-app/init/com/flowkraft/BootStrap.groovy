@@ -7,27 +7,15 @@ import grails.gorm.transactions.Transactional
 class BootStrap {
 
     def init = { servletContext ->
-        log.info "Checking sample data..."
+        log.info "Resetting sample data..."
 
-        // Seed each entity type independently so orphan E2E records
-        // from previous test runs don't prevent re-seeding
-        Setting.withTransaction {
-            if (Setting.count() == 0) {
-                createDefaultSettings()
-            }
-        }
+        Setting.withTransaction { Setting.executeUpdate("delete from Setting") }
+        Invoice.withTransaction { Invoice.executeUpdate("delete from Invoice") }
+        Payslip.withTransaction { Payslip.executeUpdate("delete from Payslip") }
 
-        Invoice.withTransaction {
-            if (Invoice.count() < 10) {
-                createSampleInvoices()
-            }
-        }
-
-        Payslip.withTransaction {
-            if (Payslip.count() < 10) {
-                createSamplePayslips()
-            }
-        }
+        Setting.withTransaction { createDefaultSettings() }
+        Invoice.withTransaction { createSampleInvoices() }
+        Payslip.withTransaction { createSamplePayslips() }
 
         log.info "Sample data initialization complete"
     }

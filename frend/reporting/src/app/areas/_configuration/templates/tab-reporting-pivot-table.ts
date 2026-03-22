@@ -86,7 +86,7 @@ export const tabReportingPivotTableTemplate = `<ng-template
         </div>
       </tab>
 
-      <tab heading="Pivot Table Options">
+      <tab heading="Pivot Table Options" id="pivotTableOptionsTab">
         <div class="row" style="margin-top: 10px;">
           <div class="col-xs-12">
             <ngx-codejar
@@ -99,6 +99,9 @@ export const tabReportingPivotTableTemplate = `<ng-template
               [showLineNumbers]="true"
               style="height: 350px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; margin-top: 10px;"
             ></ngx-codejar>
+            <button id="btnAiHelpPivotTableConfig" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.pivottable')">
+              <strong>Hey AI, Help Me Configure This Pivot Table ...</strong>
+            </button>
           </div>
         </div>
       </tab>
@@ -120,9 +123,6 @@ export const tabReportingPivotTableTemplate = `<ng-template
             ></ngx-codejar>
             <button id="btnCopyToClipboardPivotTableConfigExample" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardPivotTableConfigExample()">
               Copy Example Pivot Table Options To Clipboard
-            </button>
-            <button id="btnAiHelpPivotTableConfig" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.pivottable')">
-              <strong>Hey AI, Help Me Configure This Pivot Table ...</strong>
             </button>
           </div>
         </div>

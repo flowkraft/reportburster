@@ -13,6 +13,21 @@ import com.sourcekraft.documentburster.common.chart.ChartOptionsParser;
 /**
  * Business use-case tests for the Chart.js Groovy DSL.
  *
+ * The DSL mirrors Chart.js configuration structure 1:1:
+ *   chart {
+ *     type '...'
+ *     data {
+ *       labelField '...'        ← DSL-only: which reportData column → labels
+ *       datasets {
+ *         dataset {
+ *           field '...'          ← DSL-only: which reportData column → data
+ *           label '...'          ← everything else is native Chart.js
+ *         }
+ *       }
+ *     }
+ *     options { ... }            ← native Chart.js options
+ *   }
+ *
  * Tests are ordered top-to-bottom by real-world frequency: the charts that
  * appear most often in CRM, ERP, and financial dashboards come first, with
  * progressively more specialized use cases further down.
@@ -37,24 +52,23 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// #1  Monthly Sales Trend — Line Chart
-	//     THE universal chart. If a dashboard has one chart, it's a line showing
-	//     a metric over time — revenue, pipeline, MRR, stock price, traffic.
-	//     Used by: CRM, ERP, Finance, SaaS, Operations — every app type
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testMonthlySalesTrendLineChart() throws Exception {
 		String dsl = "chart {\n" +
 			"  type 'line'\n" +
-			"  labelField 'Month'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'Revenue'\n" +
-			"      label 'Monthly Revenue ($)'\n" +
-			"      borderColor '#4e79a7'\n" +
-			"      backgroundColor 'rgba(78, 121, 167, 0.1)'\n" +
-			"      tension 0.3\n" +
-			"      borderWidth 2\n" +
-			"      pointRadius 4\n" +
+			"  data {\n" +
+			"    labelField 'Month'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'Revenue'\n" +
+			"        label 'Monthly Revenue ($)'\n" +
+			"        borderColor '#4e79a7'\n" +
+			"        backgroundColor 'rgba(78, 121, 167, 0.1)'\n" +
+			"        tension 0.3\n" +
+			"        borderWidth 2\n" +
+			"        pointRadius 4\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"  options {\n" +
@@ -104,22 +118,21 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// #2  Sales by Region — Bar Chart
-	//     A single metric compared across categories — the simplest bar chart
-	//     users reach for. "Sales by region", "output by plant", "income by source".
-	//     Used by: CRM, ERP, Finance, SaaS — every app type
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testSalesByRegionBarChart() throws Exception {
 		String dsl = "chart {\n" +
 			"  type 'bar'\n" +
-			"  labelField 'Region'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'Sales'\n" +
-			"      label 'Total Sales ($)'\n" +
-			"      backgroundColor 'rgba(78, 121, 167, 0.7)'\n" +
-			"      borderColor '#4e79a7'\n" +
-			"      borderWidth 1\n" +
+			"  data {\n" +
+			"    labelField 'Region'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'Sales'\n" +
+			"        label 'Total Sales ($)'\n" +
+			"        backgroundColor 'rgba(78, 121, 167, 0.7)'\n" +
+			"        borderColor '#4e79a7'\n" +
+			"        borderWidth 1\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"  options {\n" +
@@ -152,30 +165,28 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// #3  Revenue vs Expenses — Grouped Bar Chart
-	//     P&L side-by-side in every ERP and finance dashboard. "Revenue vs Cost",
-	//     "This Year vs Last Year", "Budget vs Actual" — always two bars per
-	//     category so managers can compare at a glance.
-	//     Used by: ERP, Finance, SaaS — any app comparing two metrics side-by-side
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testRevenueVsExpensesGroupedBarChart() throws Exception {
 		String dsl = "chart {\n" +
 			"  type 'bar'\n" +
-			"  labelField 'Quarter'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'Revenue'\n" +
-			"      label 'Revenue'\n" +
-			"      backgroundColor 'rgba(78, 121, 167, 0.7)'\n" +
-			"      borderColor '#4e79a7'\n" +
-			"      borderWidth 1\n" +
-			"    }\n" +
-			"    series {\n" +
-			"      field 'Expenses'\n" +
-			"      label 'Expenses'\n" +
-			"      backgroundColor 'rgba(225, 87, 89, 0.7)'\n" +
-			"      borderColor '#e15759'\n" +
-			"      borderWidth 1\n" +
+			"  data {\n" +
+			"    labelField 'Quarter'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'Revenue'\n" +
+			"        label 'Revenue'\n" +
+			"        backgroundColor 'rgba(78, 121, 167, 0.7)'\n" +
+			"        borderColor '#4e79a7'\n" +
+			"        borderWidth 1\n" +
+			"      }\n" +
+			"      dataset {\n" +
+			"        field 'Expenses'\n" +
+			"        label 'Expenses'\n" +
+			"        backgroundColor 'rgba(225, 87, 89, 0.7)'\n" +
+			"        borderColor '#e15759'\n" +
+			"        borderWidth 1\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"  options {\n" +
@@ -217,21 +228,19 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// #4  Expense Breakdown — Pie Chart
-	//     "Where does the money go?" Every finance team, every budget review,
-	//     every department head meeting. Pie is the go-to for showing proportions
-	//     of a whole — expense categories, revenue sources, cost centers.
-	//     Used by: Finance, ERP, CRM, SaaS — any app showing proportions of a whole
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testExpenseBreakdownPieChart() throws Exception {
 		String dsl = "chart {\n" +
 			"  type 'pie'\n" +
-			"  labelField 'Category'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'Amount'\n" +
-			"      label 'Expenses'\n" +
-			"      backgroundColor(['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'])\n" +
+			"  data {\n" +
+			"    labelField 'Category'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'Amount'\n" +
+			"        label 'Expenses'\n" +
+			"        backgroundColor(['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'])\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"  options {\n" +
@@ -264,39 +273,37 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// #5  Revenue and Profit Margin — Dual Y-Axis Mixed Chart
-	//     Executive KPI dashboard: Revenue ($, bars, left axis) + Profit Margin
-	//     (%, line, right axis). CFOs and VPs of Sales always want to see the
-	//     dollar amount alongside the percentage in one view.
-	//     Used by: ERP, Finance, SaaS — executive dashboards correlating $ with %
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testRevenueAndProfitMarginDualAxisChart() throws Exception {
 		String dsl = "chart {\n" +
 			"  type 'bar'\n" +
-			"  labelField 'Quarter'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'Revenue'\n" +
-			"      label 'Revenue ($)'\n" +
-			"      backgroundColor 'rgba(78, 121, 167, 0.7)'\n" +
-			"      borderColor '#4e79a7'\n" +
-			"      borderWidth 1\n" +
-			"      yAxisID 'y'\n" +
-			"      order 1\n" +
-			"    }\n" +
-			"    series {\n" +
-			"      field 'ProfitMargin'\n" +
-			"      label 'Profit Margin (%)'\n" +
-			"      type 'line'\n" +
-			"      borderColor '#e15759'\n" +
-			"      backgroundColor 'rgba(225, 87, 89, 0.1)'\n" +
-			"      borderWidth 3\n" +
-			"      pointRadius 5\n" +
-			"      pointStyle 'circle'\n" +
-			"      tension 0.3\n" +
-			"      fill false\n" +
-			"      yAxisID 'y1'\n" +
-			"      order 0\n" +
+			"  data {\n" +
+			"    labelField 'Quarter'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'Revenue'\n" +
+			"        label 'Revenue ($)'\n" +
+			"        backgroundColor 'rgba(78, 121, 167, 0.7)'\n" +
+			"        borderColor '#4e79a7'\n" +
+			"        borderWidth 1\n" +
+			"        yAxisID 'y'\n" +
+			"        order 1\n" +
+			"      }\n" +
+			"      dataset {\n" +
+			"        field 'ProfitMargin'\n" +
+			"        label 'Profit Margin (%)'\n" +
+			"        type 'line'\n" +
+			"        borderColor '#e15759'\n" +
+			"        backgroundColor 'rgba(225, 87, 89, 0.1)'\n" +
+			"        borderWidth 3\n" +
+			"        pointRadius 5\n" +
+			"        pointStyle 'circle'\n" +
+			"        tension 0.3\n" +
+			"        fill false\n" +
+			"        yAxisID 'y1'\n" +
+			"        order 0\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"  options {\n" +
@@ -331,13 +338,11 @@ public class ChartOptionsParserTest {
 		List<Map<String, Object>> datasets = result.getDatasets();
 		assertEquals(2, datasets.size());
 
-		// Revenue series: bars on left axis
 		Map<String, Object> revenueDs = datasets.get(0);
 		assertEquals("Revenue", revenueDs.get("field"));
 		assertEquals("y", revenueDs.get("yAxisID"));
 		assertEquals(1, revenueDs.get("order"));
 
-		// Profit Margin series: line on right axis (mixed chart)
 		Map<String, Object> marginDs = datasets.get(1);
 		assertEquals("ProfitMargin", marginDs.get("field"));
 		assertEquals("line", marginDs.get("type"));
@@ -347,7 +352,6 @@ public class ChartOptionsParserTest {
 		assertEquals(false, marginDs.get("fill"));
 		assertEquals(0, marginDs.get("order"));
 
-		// Dual Y-axis scales
 		@SuppressWarnings("unchecked")
 		Map<String, Object> scales = (Map<String, Object>) result.getOptions().get("scales");
 		@SuppressWarnings("unchecked")
@@ -367,31 +371,29 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// #6  Quarterly Revenue by Product Line — Stacked Bar Chart
-	//     "How much of Q3 revenue came from each product line?" Stacked bars show
-	//     composition over time — extremely common in ERP product analytics,
-	//     SaaS plan-level MRR breakdowns, and regional contribution reports.
-	//     Used by: ERP, SaaS, Finance — composition analysis over time periods
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testQuarterlyRevenueByProductStackedBarChart() throws Exception {
 		String dsl = "chart {\n" +
 			"  type 'bar'\n" +
-			"  labelField 'Quarter'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'Software'\n" +
-			"      label 'Software'\n" +
-			"      backgroundColor 'rgba(78, 121, 167, 0.8)'\n" +
-			"    }\n" +
-			"    series {\n" +
-			"      field 'Services'\n" +
-			"      label 'Professional Services'\n" +
-			"      backgroundColor 'rgba(242, 142, 43, 0.8)'\n" +
-			"    }\n" +
-			"    series {\n" +
-			"      field 'Support'\n" +
-			"      label 'Support & Maintenance'\n" +
-			"      backgroundColor 'rgba(89, 161, 79, 0.8)'\n" +
+			"  data {\n" +
+			"    labelField 'Quarter'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'Software'\n" +
+			"        label 'Software'\n" +
+			"        backgroundColor 'rgba(78, 121, 167, 0.8)'\n" +
+			"      }\n" +
+			"      dataset {\n" +
+			"        field 'Services'\n" +
+			"        label 'Professional Services'\n" +
+			"        backgroundColor 'rgba(242, 142, 43, 0.8)'\n" +
+			"      }\n" +
+			"      dataset {\n" +
+			"        field 'Support'\n" +
+			"        label 'Support & Maintenance'\n" +
+			"        backgroundColor 'rgba(89, 161, 79, 0.8)'\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"  options {\n" +
@@ -413,7 +415,6 @@ public class ChartOptionsParserTest {
 		assertEquals("bar", result.getType());
 		assertEquals("Quarter", result.getLabelField());
 
-		// Three product line series
 		List<Map<String, Object>> datasets = result.getDatasets();
 		assertEquals(3, datasets.size());
 		assertEquals("Software", datasets.get(0).get("field"));
@@ -423,7 +424,6 @@ public class ChartOptionsParserTest {
 		assertEquals("Support", datasets.get(2).get("field"));
 		assertEquals("Support & Maintenance", datasets.get(2).get("label"));
 
-		// Stacked scales (Chart.js native)
 		@SuppressWarnings("unchecked")
 		Map<String, Object> scales = (Map<String, Object>) result.getOptions().get("scales");
 		@SuppressWarnings("unchecked")
@@ -434,7 +434,6 @@ public class ChartOptionsParserTest {
 		assertEquals(true, yAxis.get("stacked"));
 		assertEquals(true, yAxis.get("beginAtZero"));
 
-		// Tooltip mode for stacked charts
 		@SuppressWarnings("unchecked")
 		Map<String, Object> tooltip = (Map<String, Object>) ((Map<String, Object>) result.getOptions().get("plugins")).get("tooltip");
 		assertEquals("index", tooltip.get("mode"));
@@ -447,23 +446,20 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// #7  Portfolio Allocation — Doughnut Chart
-	//     Financial apps: investment portfolio split, fund allocation, asset class
-	//     weights. Also used for market share, product revenue mix. Doughnut with
-	//     cutout is the modern alternative to pie when you want to show a KPI or
-	//     total in the center hole.
-	//     Used by: Finance, SaaS, CRM — portfolio views, market share, plan mix
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testPortfolioAllocationDoughnutChart() throws Exception {
 		String dsl = "chart {\n" +
 			"  type 'doughnut'\n" +
-			"  labelField 'AssetClass'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'Allocation'\n" +
-			"      label 'Portfolio Weight (%)'\n" +
-			"      backgroundColor(['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'])\n" +
-			"      borderWidth 2\n" +
+			"  data {\n" +
+			"    labelField 'AssetClass'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'Allocation'\n" +
+			"        label 'Portfolio Weight (%)'\n" +
+			"        backgroundColor(['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'])\n" +
+			"        borderWidth 2\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"  options {\n" +
@@ -500,35 +496,33 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// #8  Budget vs Actual Spending — Area Chart (Line with Fill)
-	//     Financial planning: budget as a filled area, actual spend as a line
-	//     overlay. Also used for sales target tracking ("target zone" vs actual),
-	//     project spend monitoring, and forecast vs reality comparisons.
-	//     Used by: Finance, ERP, Operations — budget tracking, forecast vs actual
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testBudgetVsActualSpendingAreaChart() throws Exception {
 		String dsl = "chart {\n" +
 			"  type 'line'\n" +
-			"  labelField 'Month'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'Budget'\n" +
-			"      label 'Budget'\n" +
-			"      borderColor '#4e79a7'\n" +
-			"      backgroundColor 'rgba(78, 121, 167, 0.3)'\n" +
-			"      fill 'origin'\n" +
-			"      tension 0.4\n" +
-			"      pointRadius 3\n" +
-			"    }\n" +
-			"    series {\n" +
-			"      field 'Actual'\n" +
-			"      label 'Actual Spending'\n" +
-			"      borderColor '#e15759'\n" +
-			"      borderDash([5, 5])\n" +
-			"      borderWidth 2\n" +
-			"      fill false\n" +
-			"      pointRadius 4\n" +
-			"      pointStyle 'circle'\n" +
+			"  data {\n" +
+			"    labelField 'Month'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'Budget'\n" +
+			"        label 'Budget'\n" +
+			"        borderColor '#4e79a7'\n" +
+			"        backgroundColor 'rgba(78, 121, 167, 0.3)'\n" +
+			"        fill 'origin'\n" +
+			"        tension 0.4\n" +
+			"        pointRadius 3\n" +
+			"      }\n" +
+			"      dataset {\n" +
+			"        field 'Actual'\n" +
+			"        label 'Actual Spending'\n" +
+			"        borderColor '#e15759'\n" +
+			"        borderDash([5, 5])\n" +
+			"        borderWidth 2\n" +
+			"        fill false\n" +
+			"        pointRadius 4\n" +
+			"        pointStyle 'circle'\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"  options {\n" +
@@ -551,19 +545,16 @@ public class ChartOptionsParserTest {
 		List<Map<String, Object>> datasets = result.getDatasets();
 		assertEquals(2, datasets.size());
 
-		// Budget series — filled area
 		Map<String, Object> budgetDs = datasets.get(0);
 		assertEquals("Budget", budgetDs.get("field"));
 		assertEquals("origin", budgetDs.get("fill"));
 		assertEquals(new java.math.BigDecimal("0.4"), budgetDs.get("tension"));
 
-		// Actual series — dashed line overlay
 		Map<String, Object> actualDs = datasets.get(1);
 		assertEquals("Actual", actualDs.get("field"));
 		assertEquals(false, actualDs.get("fill"));
 		assertEquals("circle", actualDs.get("pointStyle"));
 
-		// borderDash passes through as a list (Chart.js native)
 		@SuppressWarnings("unchecked")
 		List<Integer> borderDash = (List<Integer>) actualDs.get("borderDash");
 		assertEquals(2, borderDash.size());
@@ -572,23 +563,21 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// #9  Top 10 Customers by Revenue — Horizontal Bar Chart
-	//     CRM ranking reports: "Top 10 Customers", "Top Products by Units Sold",
-	//     "Sales Leaderboard by Rep". Horizontal bars are the natural choice for
-	//     ranked lists where category labels (company names) are long.
-	//     Used by: CRM, ERP, SaaS — ranked lists, leaderboards, Pareto analysis
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testTopCustomersByRevenueHorizontalBarChart() throws Exception {
 		String dsl = "chart {\n" +
 			"  type 'bar'\n" +
-			"  labelField 'Customer'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'Revenue'\n" +
-			"      label 'Revenue ($)'\n" +
-			"      backgroundColor 'rgba(89, 161, 79, 0.7)'\n" +
-			"      borderColor '#59a14f'\n" +
-			"      borderWidth 1\n" +
+			"  data {\n" +
+			"    labelField 'Customer'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'Revenue'\n" +
+			"        label 'Revenue ($)'\n" +
+			"        backgroundColor 'rgba(89, 161, 79, 0.7)'\n" +
+			"        borderColor '#59a14f'\n" +
+			"        borderWidth 1\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"  options {\n" +
@@ -612,7 +601,6 @@ public class ChartOptionsParserTest {
 		Map<String, Object> ds = result.getDatasets().get(0);
 		assertEquals("Revenue", ds.get("field"));
 
-		// Horizontal bar: indexAxis = 'y' (Chart.js native)
 		Map<String, Object> opts = result.getOptions();
 		assertEquals("y", opts.get("indexAxis"));
 
@@ -627,32 +615,30 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// #10 Employee Performance Review — Radar Chart
-	//     HR: comparing an employee's scores across 6-8 skill dimensions against
-	//     the team average. Also used for supplier evaluation scorecards and
-	//     product feature comparison matrices.
-	//     Used by: HR, Operations, ERP — performance reviews, supplier scorecards
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testEmployeePerformanceRadarChart() throws Exception {
 		String dsl = "chart {\n" +
 			"  type 'radar'\n" +
-			"  labelField 'Skill'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'EmployeeScore'\n" +
-			"      label 'Employee'\n" +
-			"      borderColor '#4e79a7'\n" +
-			"      backgroundColor 'rgba(78, 121, 167, 0.2)'\n" +
-			"      pointRadius 4\n" +
-			"      pointStyle 'rectRot'\n" +
-			"    }\n" +
-			"    series {\n" +
-			"      field 'TeamAverage'\n" +
-			"      label 'Team Average'\n" +
-			"      borderColor '#e15759'\n" +
-			"      backgroundColor 'rgba(225, 87, 89, 0.2)'\n" +
-			"      pointRadius 4\n" +
-			"      pointStyle 'circle'\n" +
+			"  data {\n" +
+			"    labelField 'Skill'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'EmployeeScore'\n" +
+			"        label 'Employee'\n" +
+			"        borderColor '#4e79a7'\n" +
+			"        backgroundColor 'rgba(78, 121, 167, 0.2)'\n" +
+			"        pointRadius 4\n" +
+			"        pointStyle 'rectRot'\n" +
+			"      }\n" +
+			"      dataset {\n" +
+			"        field 'TeamAverage'\n" +
+			"        label 'Team Average'\n" +
+			"        borderColor '#e15759'\n" +
+			"        backgroundColor 'rgba(225, 87, 89, 0.2)'\n" +
+			"        pointRadius 4\n" +
+			"        pointStyle 'circle'\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"  options {\n" +
@@ -698,22 +684,19 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// #11 Customer Satisfaction by Channel — Polar Area Chart
-	//     Customer success / quality teams: NPS or CSAT scores broken down by
-	//     support channel (phone, email, chat, in-person). Each wedge's radius
-	//     shows the score magnitude — useful when categories aren't parts of a
-	//     whole but each has an independent score.
-	//     Used by: CRM, SaaS — customer success teams, NPS/CSAT analysis
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testCustomerSatisfactionPolarAreaChart() throws Exception {
 		String dsl = "chart {\n" +
 			"  type 'polarArea'\n" +
-			"  labelField 'Channel'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'SatisfactionScore'\n" +
-			"      label 'CSAT Score'\n" +
-			"      backgroundColor(['rgba(78,121,167,0.6)', 'rgba(242,142,43,0.6)', 'rgba(225,87,89,0.6)', 'rgba(118,183,178,0.6)', 'rgba(89,161,79,0.6)'])\n" +
+			"  data {\n" +
+			"    labelField 'Channel'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'SatisfactionScore'\n" +
+			"        label 'CSAT Score'\n" +
+			"        backgroundColor(['rgba(78,121,167,0.6)', 'rgba(242,142,43,0.6)', 'rgba(225,87,89,0.6)', 'rgba(118,183,178,0.6)', 'rgba(89,161,79,0.6)'])\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"  options {\n" +
@@ -751,20 +734,18 @@ public class ChartOptionsParserTest {
 	// ═════════════════════════════════════════════════════════════════════════════
 
 	// ─────────────────────────────────────────────────────────────────────────────
-	// #12 Quick Ad-Hoc Report — Compact Map-Style Series Shorthand
-	//     When a user just wants a quick chart and doesn't need to configure every
-	//     property — uses the compact series field: 'x', label: 'Y' notation
-	//     instead of closure blocks.
-	//     Used by: Any app type — quick ad-hoc reports, prototyping, one-off charts
+	// #12 Quick Ad-Hoc Report — Compact Map-Style Dataset Shorthand
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
-	public void testCompactMapStyleSeriesShorthand() throws Exception {
+	public void testCompactMapStyleDatasetShorthand() throws Exception {
 		String dsl = "chart {\n" +
 			"  type 'bar'\n" +
-			"  labelField 'Product'\n" +
-			"  series {\n" +
-			"    series field: 'UnitsSold', label: 'Units Sold', backgroundColor: '#4e79a7'\n" +
-			"    series field: 'Revenue', label: 'Revenue ($)', backgroundColor: '#e15759', type: 'line'\n" +
+			"  data {\n" +
+			"    labelField 'Product'\n" +
+			"    datasets {\n" +
+			"      dataset field: 'UnitsSold', label: 'Units Sold', backgroundColor: '#4e79a7'\n" +
+			"      dataset field: 'Revenue', label: 'Revenue ($)', backgroundColor: '#e15759', type: 'line'\n" +
+			"    }\n" +
 			"  }\n" +
 			"}";
 
@@ -787,7 +768,6 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// #13 Edge Case — Empty/Null DSL Returns Empty Options
-	//     Used by: Internal — guards against misconfigured or missing .groovy files
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testEmptyDslReturnsEmptyOptions() throws Exception {
@@ -804,23 +784,21 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// #14 Future-Proofing — Unknown Chart.js Properties Pass Through
-	//     If Chart.js releases a new dataset property or plugin option tomorrow,
-	//     our DSL handles it today via methodMissing catch-alls — no code changes
-	//     needed in ChartOptionsScript.
-	//     Used by: Any app type — ensures zero-maintenance compatibility with Chart.js upgrades
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testFutureChartJsPropertiesPassThrough() throws Exception {
 		String dsl = "chart {\n" +
 			"  type 'bar'\n" +
-			"  labelField 'X'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'Y'\n" +
-			"      label 'Data'\n" +
-			"      someNewDatasetProp 'value1'\n" +
-			"      anotherFutureProp 42\n" +
-			"      yetAnotherProp true\n" +
+			"  data {\n" +
+			"    labelField 'X'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'Y'\n" +
+			"        label 'Data'\n" +
+			"        someNewDatasetProp 'value1'\n" +
+			"        anotherFutureProp 42\n" +
+			"        yetAnotherProp true\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"  options {\n" +
@@ -833,17 +811,14 @@ public class ChartOptionsParserTest {
 
 		ChartOptions result = ChartOptionsParser.parseGroovyChartDslCode(dsl);
 
-		// Series-level methodMissing: unknown properties pass through
 		Map<String, Object> ds = result.getDatasets().get(0);
 		assertEquals("value1", ds.get("someNewDatasetProp"));
 		assertEquals(42, ds.get("anotherFutureProp"));
 		assertEquals(true, ds.get("yetAnotherProp"));
 
-		// Chart-level options: unknown properties pass through
 		Map<String, Object> opts = result.getOptions();
 		assertEquals("enabled", opts.get("futureTopLevelOption"));
 
-		// Nested unknown plugin: pass through as map
 		@SuppressWarnings("unchecked")
 		Map<String, Object> futurePlugin = (Map<String, Object>) ((Map<String, Object>) opts.get("plugins")).get("futurePlugin");
 		assertEquals(true, futurePlugin.get("activated"));
@@ -856,24 +831,20 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// Named Chart Blocks — Multi-Component Dashboard Pattern
-	//     When a single report needs multiple charts side-by-side (e.g., a
-	//     dashboard with a revenue bar chart AND a monthly trend line chart),
-	//     each chart block gets a unique string ID. The parser stores each named
-	//     block independently in namedOptions, leaving the unnamed defaults empty.
-	//     Used by: Multi-component reports, aggregator dashboards — see
-	//     /docs/bi-analytics/dashboards#multi-component-reports
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testNamedChartBlocks() throws Exception {
 		String dsl =
 			"chart('revenueChart') {\n" +
 			"  type 'bar'\n" +
-			"  labelField 'Region'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'Revenue'\n" +
-			"      label 'Revenue ($)'\n" +
-			"      backgroundColor '#4e79a7'\n" +
+			"  data {\n" +
+			"    labelField 'Region'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'Revenue'\n" +
+			"        label 'Revenue ($)'\n" +
+			"        backgroundColor '#4e79a7'\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"  options {\n" +
@@ -886,27 +857,26 @@ public class ChartOptionsParserTest {
 			"\n" +
 			"chart('trendChart') {\n" +
 			"  type 'line'\n" +
-			"  labelField 'Month'\n" +
-			"  series {\n" +
-			"    series {\n" +
-			"      field 'Sales'\n" +
-			"      label 'Monthly Sales'\n" +
-			"      borderColor '#e15759'\n" +
-			"      tension 0.3\n" +
+			"  data {\n" +
+			"    labelField 'Month'\n" +
+			"    datasets {\n" +
+			"      dataset {\n" +
+			"        field 'Sales'\n" +
+			"        label 'Monthly Sales'\n" +
+			"        borderColor '#e15759'\n" +
+			"        tension 0.3\n" +
+			"      }\n" +
 			"    }\n" +
 			"  }\n" +
 			"}\n";
 
 		ChartOptions result = ChartOptionsParser.parseGroovyChartDslCode(dsl);
 
-		// Unnamed options should be empty (no unnamed chart block)
 		assertNull(result.getType());
 
-		// Named options should have 2 entries
 		Map<String, ChartOptions> named = result.getNamedOptions();
 		assertEquals(2, named.size());
 
-		// Verify revenueChart
 		ChartOptions revenue = named.get("revenueChart");
 		assertNotNull(revenue);
 		assertEquals("bar", revenue.getType());
@@ -916,7 +886,6 @@ public class ChartOptionsParserTest {
 		Map<String, Object> revOpts = revenue.getOptions();
 		assertEquals(true, revOpts.get("responsive"));
 
-		// Verify trendChart
 		ChartOptions trend = named.get("trendChart");
 		assertNotNull(trend);
 		assertEquals("line", trend.getType());
@@ -927,36 +896,32 @@ public class ChartOptionsParserTest {
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// Mixed Unnamed + Named Blocks — Coexistence Pattern
-	//     A report can have ONE unnamed chart block (the default/primary
-	//     visualization) alongside one or more named blocks. The unnamed block
-	//     populates the root-level DTO fields (type, labelField, etc.); named
-	//     blocks populate namedOptions. This pattern is used when a report has a
-	//     main chart plus supplementary detail charts embedded alongside it.
-	//     Used by: Reports that need a primary view plus secondary detail views
 	// ─────────────────────────────────────────────────────────────────────────────
 	@Test
 	public void testMixedUnnamedAndNamedChartBlocks() throws Exception {
 		String dsl =
 			"chart {\n" +
 			"  type 'pie'\n" +
-			"  labelField 'Category'\n" +
+			"  data {\n" +
+			"    labelField 'Category'\n" +
+			"  }\n" +
 			"}\n" +
 			"\n" +
 			"chart('detailChart') {\n" +
 			"  type 'bar'\n" +
-			"  labelField 'Product'\n" +
-			"  series {\n" +
-			"    series { field 'Quantity'; label 'Qty' }\n" +
+			"  data {\n" +
+			"    labelField 'Product'\n" +
+			"    datasets {\n" +
+			"      dataset { field 'Quantity'; label 'Qty' }\n" +
+			"    }\n" +
 			"  }\n" +
 			"}\n";
 
 		ChartOptions result = ChartOptionsParser.parseGroovyChartDslCode(dsl);
 
-		// Unnamed block should be populated
 		assertEquals("pie", result.getType());
 		assertEquals("Category", result.getLabelField());
 
-		// Named block should also be populated
 		assertEquals(1, result.getNamedOptions().size());
 		ChartOptions detail = result.getNamedOptions().get("detailChart");
 		assertNotNull(detail);

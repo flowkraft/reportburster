@@ -112,6 +112,9 @@ export class SamplesTestHelper {
     if (sampleId.includes("ADHOC-EMPLOYEE-PROFILE"))
       expectedBurstFileName = '${EmployeeID}-${FirstName}-${LastName}.pdf';
 
+    if (sampleId.includes("NORTHWIND-SALES-DASHBOARD"))
+      expectedBurstFileName = 'dashboard.html';
+
     ft = ft.waitOnInputToHaveValue(
       '#burstFileName',
       expectedBurstFileName,

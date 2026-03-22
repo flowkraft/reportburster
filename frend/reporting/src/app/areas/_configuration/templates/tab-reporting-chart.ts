@@ -87,7 +87,7 @@ export const tabReportingChartTemplate = `<ng-template
         </div>
       </tab>
 
-      <tab heading="Chart Options">
+      <tab heading="Chart Options" id="chartOptionsTab">
         <div class="row" style="margin-top: 10px;">
           <div class="col-xs-12">
             <ngx-codejar
@@ -100,6 +100,9 @@ export const tabReportingChartTemplate = `<ng-template
               [showLineNumbers]="true"
               style="height: 350px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; margin-top: 10px;"
             ></ngx-codejar>
+            <button id="btnAiHelpChartConfig" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.chart')">
+              <strong>Hey AI, Help Me Configure This Chart ...</strong>
+            </button>
           </div>
         </div>
       </tab>
@@ -121,9 +124,6 @@ export const tabReportingChartTemplate = `<ng-template
             ></ngx-codejar>
             <button id="btnCopyToClipboardChartConfigExample" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardChartConfigExample()">
               Copy Example Chart Options To Clipboard
-            </button>
-            <button id="btnAiHelpChartConfig" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.chart')">
-              <strong>Hey AI, Help Me Configure This Chart ...</strong>
             </button>
           </div>
         </div>

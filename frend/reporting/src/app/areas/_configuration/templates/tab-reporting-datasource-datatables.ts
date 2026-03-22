@@ -27,7 +27,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
               {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-SCRIPT' | translate }}
             </option>
             <option value="ds.dashboard">
-              Dashboard
+              Script (for fetching dashboard data)
             </option>
             <option value="ds.xmlfile">
               {{ 'AREAS.CONFIGURATION.TAB-REPORT-DATASOURCE-DATATABLES.TYPE-XML' | translate }}
@@ -152,6 +152,9 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 [showLineNumbers]="true"
                 style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; margin-top: 10px;"
               ></ngx-codejar>
+              <button id="btnAiHelpParamsSpecSqlInTab" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.reportparams')">
+                <strong>Hey AI, Help Me Configure These Report Parameters ...</strong>
+              </button>
             </tab>
             <tab id="tabSqlExampleReportParameters" heading="Example (Report Parameters)">
               <ngx-codejar
@@ -225,7 +228,7 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                             {{ xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'Hey AI, Help Me Build This Dashboard (step-by-step) ...' : 'Hey AI, Help Me With This Groovy Script ...' }}
                           </a>
                         </li>
-                        <li *ngIf="xmlReporting?.documentburster.report.datasource.type !== 'ds.dashboard'">
+                        <li>
                           <a id="btnHelpWithSqlQueryAIDropdownItem" href="#" (click)="showDbConnectionModal(); $event.preventDefault();">
                             Hey AI, Help Me With This SQL Query ...
                           </a>
@@ -264,6 +267,9 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 [showLineNumbers]="true"
                 style="height: 250px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; margin-top: 10px;"
               ></ngx-codejar>
+              <button id="btnAiHelpParamsSpecScriptInTab" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.reportparams')">
+                <strong>Hey AI, Help Me Configure These Report Parameters ...</strong>
+              </button>
             </tab>
             <tab id="tabScriptExampleReportParameters" heading="Example (Report Parameters)">
               <ngx-codejar

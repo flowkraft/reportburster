@@ -1,4 +1,4 @@
-<svelte:options customElement="rb-report" accessors={true} />
+<svelte:options customElement={{ tag: "rb-report", shadow: "none" }} accessors={true} />
 
 <script lang="ts">
   import { onMount, tick } from 'svelte';
@@ -66,32 +66,20 @@
   onMount(async () => {
     console.log('[RbReport] onMount - reportCode:', reportCode, 'apiBaseUrl:', apiBaseUrl, 'entityCode:', entityCode);
     
-    // Read attributes from host element if props are empty (same pattern as other components)
+    // Read attributes from host custom element (light DOM — walk up, same as RbTabulator)
     await tick();
-    const hostElement = document.querySelector('rb-report');
+    const hostElement = container?.closest('rb-report') || container?.closest('rb-dashboard');
     console.log('[RbReport] onMount - hostElement:', hostElement);
-    
-    if (!reportCode && hostElement) {
-      reportCode = hostElement.getAttribute('report-code') || '';
-      console.log('[RbReport] onMount - read report-code from attribute:', reportCode);
-    }
-    if (!apiBaseUrl && hostElement) {
-      apiBaseUrl = hostElement.getAttribute('api-base-url') || '';
-      console.log('[RbReport] onMount - read api-base-url from attribute:', apiBaseUrl);
-    }
-    if (!apiKey && hostElement) {
-      apiKey = hostElement.getAttribute('api-key') || '';
-      console.log('[RbReport] onMount - read api-key from attribute:', apiKey);
-    }
-    if (!entityCode && hostElement) {
-      entityCode = hostElement.getAttribute('entity-code') || '';
-      console.log('[RbReport] onMount - read entity-code from attribute:', entityCode);
-    }
-    // Read show-print-button attribute
-    if (hostElement && hostElement.hasAttribute('show-print-button')) {
-      const printAttr = hostElement.getAttribute('show-print-button');
-      showPrintButton = printAttr === '' || printAttr === 'true';
-      console.log('[RbReport] onMount - read show-print-button from attribute:', showPrintButton);
+
+    if (hostElement) {
+      if (!reportCode) reportCode = hostElement.getAttribute('report-code') || '';
+      if (!apiBaseUrl) apiBaseUrl = hostElement.getAttribute('api-base-url') || '';
+      if (!apiKey) apiKey = hostElement.getAttribute('api-key') || '';
+      if (!entityCode) entityCode = hostElement.getAttribute('entity-code') || '';
+      if (hostElement.hasAttribute('show-print-button')) {
+        const printAttr = hostElement.getAttribute('show-print-button');
+        showPrintButton = printAttr === '' || printAttr === 'true';
+      }
     }
     // Read print-button-label attribute
     if (hostElement && hostElement.hasAttribute('print-button-label')) {
@@ -370,7 +358,7 @@
       if (Object.keys(currentDashboardParams).length > 0) {
         const paramsJson = JSON.stringify(currentDashboardParams).replace(/"/g, '&quot;');
         html = html.replace(
-          /(<rb-(?:tabulator|chart|pivot-table)\b)([^>]*>)/gi,
+          /(<rb-(?:tabulator|chart|pivot-table|value)\b)([^>]*>)/gi,
           `$1 report-params="${paramsJson}"$2`
         );
       }
@@ -394,32 +382,20 @@
   }
 
   function handleDashboardParamSubmit(e: CustomEvent) {
+    console.log('[RbReport] handleDashboardParamSubmit - received submit event, detail:', e.detail);
     currentDashboardParams = e.detail || {};
-    injectDashboard(); // Re-inject = force re-mount all components with new params
+    // Do NOT call injectDashboard() here — that would destroy and re-create ALL elements
+    // (including rb-parameters itself, resetting the user's selections).
+    // rb-parameters.confirmReload() already handles replacing sibling rb-* components
+    // with fresh elements that carry the updated report-params attribute.
   }
 
   $: if (dashboardContainer && dashboardTemplate) {
-    // Check if dashboard HTML contains rb-parameters
-    dashboardHasParameters = /<rb-parameters\b/i.test(dashboardTemplate);
-
-    if (dashboardHasParameters) {
-      // Phase 1: Inject only rb-parameters, strip visualization components
-      // They'll be injected after we receive default param values
-      const paramsOnlyHtml = dashboardTemplate.replace(
-        /<rb-(?:tabulator|chart|pivot-table)\b[^>]*>[\s\S]*?<\/rb-(?:tabulator|chart|pivot-table)>/gi,
-        ''
-      ).replace(
-        /<rb-(?:tabulator|chart|pivot-table)\b[^>]*\/>/gi,
-        ''
-      );
-      dashboardContainer.innerHTML = paramsOnlyHtml;
-      // Attach listeners so we catch the first valueChange with defaults
-      dashboardContainer.addEventListener('valueChange', handleDashboardParamChange as EventListener);
-      dashboardContainer.addEventListener('submit', handleDashboardParamSubmit as EventListener);
-    } else {
-      // No parameters — inject everything immediately
-      injectDashboard();
-    }
+    // Single code flow: inject the full dashboard HTML as-is.
+    // All web components (rb-parameters, rb-tabulator, rb-chart, rb-pivot-table)
+    // are self-contained and fetch their own data on mount.
+    injectDashboard();
+    dashboardContainer.addEventListener('submit', handleDashboardParamSubmit as EventListener);
   }
 
   // Helpers for aggregator reports — extract named component IDs from config
