@@ -652,7 +652,9 @@
                   (targetItemsChange)="targetSchemaObjects = $event" sourceHeader="All Database Tables & Objects"
                   targetHeader="Selected Tables & Objects" optionLabel="label" itemKey="key"
                   sourceFilterPlaceholder="Search available..."
-                  targetFilterPlaceholder="Search selected..."></dburst-picklist>
+                  targetFilterPlaceholder="Search selected..."
+                  [enableFieldSelection]="context === 'sqlQuery' || context === 'scriptQuery' || context === 'dashboardScript'"
+                  #databaseSchemaPicklistRef></dburst-picklist>
               </div>
               <button id="btnRefreshDatabaseSchema" class="btn btn-default btn-xm" (click)="refreshDatabaseSchema()"
                 title="Refresh Database Schema" [disabled]="isSchemaLoading" *ngIf="mode !== 'viewMode'">
@@ -690,7 +692,7 @@
           isUbiquitousLanguageTabActive = false;
           isToolsTabActive = false;
         " (deselectTab)="isDomainGroupedSchemaTabActive = false"
-        *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' || domainGroupedSchemaExists">
+        *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' || domainGroupedSchemaExists">
         <ng-template tabHeading>
           <i class="fa fa-object-group"></i> &nbsp;Domain-Grouped Schema
         </ng-template>
@@ -719,7 +721,9 @@
                     (targetItemsChange)="domainTargetSchemaObjects = $event"
                     sourceHeader="All Database Tables & Objects" targetHeader="Selected Tables & Objects"
                     optionLabel="label" itemKey="key" sourceFilterPlaceholder="Search available..."
-                    targetFilterPlaceholder="Search selected...">
+                    targetFilterPlaceholder="Search selected..."
+                    [enableFieldSelection]="context === 'sqlQuery' || context === 'scriptQuery' || context === 'dashboardScript'"
+                    #domainGroupedSchemaPicklistRef>
                   </dburst-picklist>
                 </div>
                 <div class="row text-center" id="chooseTableLabelDomainGroupedSchema" *ngIf="
@@ -737,7 +741,7 @@
                 <!-- Replace the existing buttons layout in Domain-Grouped Schema tab with this code -->
                 <div class="row" style="margin-top: 10px">
                   <!-- Original layout when domainGroupedSchemaExists is false -->
-                  <ng-container *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && !domainGroupedSchemaExists">
+                  <ng-container *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && !domainGroupedSchemaExists">
                     <div class="col-xs-6">
                       <button id="btnToggleDomainGroupedCodeView" type="button" class="btn btn-default btn-block"
                         (click)="toggleDomainGroupedCodeView()">
@@ -841,7 +845,7 @@
           isDomainGroupedSchemaTabActive = false;
           isUbiquitousLanguageTabActive = false;
           isToolsTabActive = false;
-        " (deselectTab)="isErDiagramTabActive = false" *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' || erDiagramExists">
+        " (deselectTab)="isErDiagramTabActive = false" *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' || erDiagramExists">
         <ng-template tabHeading>
           <i class="fa fa-sitemap"></i> &nbsp;ER Diagram
         </ng-template>
@@ -942,7 +946,7 @@
                 </p>
               </div>
               <!-- Three buttons 1/3 width each -->
-              <div class="row" style="margin-top: 10px" *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery'">
+              <div class="row" style="margin-top: 10px" *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript'">
                 <div class="col-xs-4">
                   <button id="btnDatabaseDiagramShowCode" type="button" class="btn btn-default btn-block" [disabled]="
                       !modalConnectionInfo.database.documentburster.connection
@@ -969,7 +973,7 @@
                   </button>
                 </div>
               </div>
-              <div class="row" style="margin-top: 10px" *ngIf="context === 'sqlQuery' || context === 'scriptQuery'">
+              <div class="row" style="margin-top: 10px" *ngIf="context === 'sqlQuery' || context === 'scriptQuery' || context === 'dashboardScript'">
                 <div class="col-xs-12">
                   <a id="btnDatabaseDiagramViewInBrowserLink" *ngIf="encodedPlantUmlDiagram" [href]="
                       'https://kroki.io/plantuml/svg/' + encodedPlantUmlDiagram
@@ -1049,7 +1053,7 @@
           isErDiagramTabActive = false;
           isToolsTabActive = false;
         " (deselectTab)="isUbiquitousLanguageTabActive = false"
-        *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' || isStringAndNotEmpty(ubiquitousLanguageMarkdown)">
+        *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' || isStringAndNotEmpty(ubiquitousLanguageMarkdown)">
         <ng-template tabHeading>
           <i class="fa fa-language"></i> &nbsp;Ubiquitous Language
         </ng-template>
@@ -1075,7 +1079,7 @@
                 style="margin-top: 10px" [disabled]="
                   !modalConnectionInfo.database.documentburster.connection.name
                 " (click)="toggleUbiquitousLanguageEditMode()" *ngIf="
-                  context !== 'sqlQuery' && context !== 'scriptQuery'">
+                  context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript'">
                 <i class="fa fa-edit"></i> Edit 'Ubiquitous Language'
                 Documentation
               </button>
@@ -1205,7 +1209,7 @@
         isDomainGroupedSchemaTabActive = false;
         isErDiagramTabActive = false;
         isUbiquitousLanguageTabActive = false
-      " (deselectTab)="isToolsTabActive = false" *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' || (showSchemaTreeSelect && domainGroupedSchemaExists && erDiagramExists && isStringAndNotEmpty(ubiquitousLanguageMarkdown))">
+      " (deselectTab)="isToolsTabActive = false" *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' || (showSchemaTreeSelect && domainGroupedSchemaExists && erDiagramExists && isStringAndNotEmpty(ubiquitousLanguageMarkdown))">
         <ng-template tabHeading>
           <i class="fa fa-robot"></i> &nbsp;Chat2DB
         </ng-template>

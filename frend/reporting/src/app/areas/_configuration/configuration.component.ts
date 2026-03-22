@@ -95,6 +95,7 @@ import {
   AiManagerComponent,
   AiManagerLaunchConfig,
 } from '../../components/ai-manager/ai-manager.component';
+import { AiManagerService } from '../../components/ai-manager/ai-manager.service';
 import {
   ReportingService,
   ReportDataResult,
@@ -1798,6 +1799,7 @@ export class ConfigurationComponent implements OnInit {
           parameters =
             await this.reportingService.processGroovyParametersDsl(
               this.activeParamsSpecScriptGroovy,
+              this.selectedDbConnCode,
             );
           // console.log('[DEBUG] doRunTestScript: parsed parameters:', parameters);
 
@@ -2545,8 +2547,12 @@ export class ConfigurationComponent implements OnInit {
       if (componentsInfo) {
         launchConfig.promptVariables = {
           '[AVAILABLE_COMPONENTS]': componentsInfo,
+          '[REPORT_CODE]': this.getCurrentReportCode(),
+          '[API_BASE_URL]': this.getApiBaseUrl() + '/jobman/reporting',
         };
       }
+
+      this._populateScriptVariable(launchConfig);
 
       if (this.aiManagerInstance) {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
@@ -2657,7 +2663,7 @@ export class ConfigurationComponent implements OnInit {
         initialExpandedPromptId: 'GROOVY_SCRIPT_INPUT_SOURCE',
         promptVariables: {
           '[DATABASE_VENDOR]': dbVendor,
-          '[INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]': '',
+          '[INSERT THE RELEVANT DATABASE SCHEMA HERE]': '',
         },
       };
 
@@ -2676,7 +2682,9 @@ export class ConfigurationComponent implements OnInit {
         initialExpandedPromptId: 'DASHBOARD_BUILD_STEP_BY_STEP_INSTRUCTIONS',
         promptVariables: {
           '[DATABASE_VENDOR]': dbVendor,
-          '[INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]': '',
+          '[INSERT THE RELEVANT DATABASE SCHEMA HERE]': '',
+          '[REPORT_CODE]': this.getCurrentReportCode(),
+          '[API_BASE_URL]': this.getApiBaseUrl() + '/jobman/reporting',
         },
       };
 
@@ -2725,17 +2733,7 @@ export class ConfigurationComponent implements OnInit {
         initialSelectedCategory: 'DSL Configuration',
         initialExpandedPromptId: 'TABULATOR_DSL_CONFIGURE',
       };
-      if (this.xmlReporting?.documentburster?.report?.datasource?.type !== 'ds.dashboard'
-          && this.reportDataResult?.reportColumnNames?.length) {
-        launchConfig.promptVariables = {
-          '[INSERT COLUMN NAMES HERE]': this.reportDataResult.reportColumnNames.join(', '),
-        };
-        if (this.reportDataResult.data?.length) {
-          const sampleRows = this.reportDataResult.data.slice(0, 5);
-          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
-        }
-      }
-      this._populateScriptVariable(launchConfig);
+      this._populateDslPromptVariables(launchConfig);
 
       if (this.aiManagerInstance) {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
@@ -2748,17 +2746,7 @@ export class ConfigurationComponent implements OnInit {
         initialSelectedCategory: 'DSL Configuration',
         initialExpandedPromptId: 'CHART_DSL_CONFIGURE',
       };
-      if (this.xmlReporting?.documentburster?.report?.datasource?.type !== 'ds.dashboard'
-          && this.reportDataResult?.reportColumnNames?.length) {
-        launchConfig.promptVariables = {
-          '[INSERT COLUMN NAMES HERE]': this.reportDataResult.reportColumnNames.join(', '),
-        };
-        if (this.reportDataResult.data?.length) {
-          const sampleRows = this.reportDataResult.data.slice(0, 5);
-          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
-        }
-      }
-      this._populateScriptVariable(launchConfig);
+      this._populateDslPromptVariables(launchConfig);
 
       if (this.aiManagerInstance) {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
@@ -2771,17 +2759,7 @@ export class ConfigurationComponent implements OnInit {
         initialSelectedCategory: 'DSL Configuration',
         initialExpandedPromptId: 'PIVOT_TABLE_DSL_CONFIGURE',
       };
-      if (this.xmlReporting?.documentburster?.report?.datasource?.type !== 'ds.dashboard'
-          && this.reportDataResult?.reportColumnNames?.length) {
-        launchConfig.promptVariables = {
-          '[INSERT COLUMN NAMES HERE]': this.reportDataResult.reportColumnNames.join(', '),
-        };
-        if (this.reportDataResult.data?.length) {
-          const sampleRows = this.reportDataResult.data.slice(0, 5);
-          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
-        }
-      }
-      this._populateScriptVariable(launchConfig);
+      this._populateDslPromptVariables(launchConfig);
 
       if (this.aiManagerInstance) {
         this.aiManagerInstance.launchWithConfiguration(launchConfig);
@@ -2809,6 +2787,26 @@ export class ConfigurationComponent implements OnInit {
       }
       launchConfig.promptVariables['[INSERT SCRIPT HERE]'] = scriptContent;
     }
+  }
+
+  private _populateDslPromptVariables(launchConfig: AiManagerLaunchConfig): void {
+    const isDashboard = this.xmlReporting?.documentburster?.report?.datasource?.type === 'ds.dashboard';
+
+    launchConfig.promptVariables = {
+      '[MULTI_COMPONENT_NOTE]': isDashboard ? AiManagerService.MULTI_COMPONENT_NOTE : '',
+      '[INSERT COLUMN NAMES HERE]': 'INFORMATION_NOT_AVAILABLE',
+      '[INSERT SAMPLE DATA HERE]': 'INFORMATION_NOT_AVAILABLE',
+    };
+
+    if (!isDashboard && this.reportDataResult?.reportColumnNames?.length) {
+      launchConfig.promptVariables['[INSERT COLUMN NAMES HERE]'] = this.reportDataResult.reportColumnNames.join(', ');
+      if (this.reportDataResult.data?.length) {
+        const sampleRows = this.reportDataResult.data.slice(0, 5);
+        launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
+      }
+    }
+
+    this._populateScriptVariable(launchConfig);
   }
 
   private _buildDashboardComponentsReference(): string {
@@ -2854,6 +2852,9 @@ export class ConfigurationComponent implements OnInit {
     if (this.activeParamsSpecScriptGroovy?.trim()) {
       parts.push(`## Parameters Form\n\nPlace this once in the dashboard. When the user submits, all visualization components automatically refresh with the new parameter values.\n\n\`\`\`html\n<rb-parameters\n  report-code="${reportCode}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-parameters>\n\`\`\`\n`);
     }
+
+    // Atomic Values (always available for dashboards)
+    parts.push(`## Atomic Values\n\nFor single values (totals, counts, averages), use \`<rb-value>\` instead of a full data table. Multiple elements with the same \`component-id\` share one cached HTTP request — each picks its column via \`field\`.\n\n\`\`\`html\n<rb-value\n  report-code="${reportCode}"\n  component-id="atomicValues"\n  field="revenue"\n  format="currency"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-value>\n\`\`\`\n\nSupported \`format\` values: \`currency\`, \`number\`, \`percent\`, \`date\`, or omit for raw value.\n`);
 
     if (parts.length === 0) {
       return `No visualization components are configured yet. Configure at least one data table, chart, or pivot table in the DSL tabs first, then come back here.`;
@@ -2965,9 +2966,7 @@ export class ConfigurationComponent implements OnInit {
   connectionDetailsModalInstance!: ConnectionDetailsComponent;
 
   getSelectedDbConnection(): ExtConnection | undefined {
-    const selectedDbConnectionCode =
-      this.xmlReporting?.documentburster?.report?.datasource?.sqloptions
-        ?.conncode;
+    const selectedDbConnectionCode = this.selectedDbConnCode;
     if (!selectedDbConnectionCode) {
       // No connection code is selected in the model
       return undefined;
@@ -2983,6 +2982,10 @@ export class ConfigurationComponent implements OnInit {
   async showDbConnectionModal(context: 'sqlQuery' | 'scriptQuery' | 'dashboardScript' = 'sqlQuery') {
     //console.log('ConfigurationConnectionsComponet: showCrudModal()');
     this.connectionDetailsModalInstance.context = context;
+    if (context === 'dashboardScript') {
+      this.connectionDetailsModalInstance.reportCode = this.getCurrentReportCode();
+      this.connectionDetailsModalInstance.apiBaseUrl = this.getApiBaseUrl() + '/jobman/reporting';
+    }
     this.connectionDetailsModalInstance.showCrudModal(
       'update',
       'database-connection',
@@ -3211,9 +3214,12 @@ tabulator {
 `;
   // Example Chart configuration Groovy DSL
   exampleChartConfigScript = `/*
- Chart Groovy DSL - aligned with Chart.js
+ Chart Groovy DSL - aligned 1:1 with Chart.js
  Docs: https://www.chartjs.org/docs/latest/configuration/
  Data comes from ctx.reportData by default - no need to specify it
+
+ Only TWO properties are DSL-specific: labelField and field.
+ Everything else is verbatim Chart.js vocabulary.
 */
 
 chart {
@@ -3222,94 +3228,83 @@ chart {
   // ─────────────────────────────────────────────────────────────────────────────
   // Types: line, bar, pie, doughnut, radar, polarArea, scatter, bubble
   type 'bar'
-  
-  // ─────────────────────────────────────────────────────────────────────────────
-  // LABEL FIELD - Which column to use for X-axis labels
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Optional - auto-detected from first column if not specified
-  labelField 'region'
-  
-  // ─────────────────────────────────────────────────────────────────────────────
-  // SERIES CONFIGURATION - which data columns to chart
-  // ─────────────────────────────────────────────────────────────────────────────
-  series {
-    // Full-featured series example
-    series {
-      // Core DSL property
-      field 'revenue'                 // data column name (required - maps reportData column to dataset values)
 
-      // All other properties are native Chart.js dataset properties (passthrough via catch-all)
-      label 'Revenue'                 // legend label
-      backgroundColor 'rgba(78, 121, 167, 0.5)'  // fill color (can use rgba)
-      borderColor '#4e79a7'           // line/border color
-      type 'bar'                      // override chart type for this series (mixed charts)
+  // ─────────────────────────────────────────────────────────────────────────────
+  // DATA - mirrors Chart.js data { labels, datasets } structure
+  // ─────────────────────────────────────────────────────────────────────────────
+  data {
+    labelField 'region'               // DSL-only: which reportData column → X-axis labels
 
-      // Axis assignment (for multiple axes)
-      yAxisID 'y'                     // which Y axis to use
-      xAxisID 'x'                     // which X axis to use
+    datasets {
+      // Full-featured dataset example
+      dataset {
+        // Core DSL property
+        field 'revenue'               // DSL-only: which reportData column → dataset values
 
-      // Line/Area chart options
-      borderWidth 2                   // line thickness
-      fill false                      // fill area under line (true|false|'origin'|'start'|'end')
-      tension 0.4                     // line curve tension (0 = straight, 1 = very curved)
-      pointRadius 4                   // data point size
-      pointStyle 'circle'             // circle|cross|crossRot|dash|line|rect|rectRounded|rectRot|star|triangle
+        // All other properties are native Chart.js dataset properties (passthrough via catch-all)
+        label 'Revenue'               // legend label
+        backgroundColor 'rgba(78, 121, 167, 0.5)'  // fill color (can use rgba)
+        borderColor '#4e79a7'         // line/border color
+        type 'bar'                    // override chart type for this dataset (mixed charts)
 
-      // Display options
-      hidden false                    // hide series initially
-      order 0                         // drawing order (lower = drawn first)
+        // Axis assignment (for multiple axes)
+        yAxisID 'y'                   // which Y axis to use
+        xAxisID 'x'                   // which X axis to use
+
+        // Line/Area chart options
+        borderWidth 2                 // line thickness
+        fill false                    // fill area under line (true|false|'origin'|'start'|'end')
+        tension 0.4                   // line curve tension (0 = straight, 1 = very curved)
+        pointRadius 4                 // data point size
+        pointStyle 'circle'           // circle|cross|crossRot|dash|line|rect|rectRounded|rectRot|star|triangle
+
+        // Display options
+        hidden false                  // hide dataset initially
+        order 0                       // drawing order (lower = drawn first)
+      }
+
+      // Compact shorthand examples (all properties are native Chart.js)
+      dataset field: 'sales', label: 'Sales', backgroundColor: '#4e79a7', borderColor: '#4e79a7'
+      dataset field: 'profit', label: 'Profit', backgroundColor: '#e15759', borderColor: '#e15759', type: 'line'
+      dataset field: 'cost', label: 'Cost', backgroundColor: '#59a14f', borderColor: '#59a14f', fill: true, tension: 0.3
     }
-
-    // Compact shorthand examples (all properties are native Chart.js)
-    series field: 'sales', label: 'Sales', backgroundColor: '#4e79a7', borderColor: '#4e79a7'
-    series field: 'profit', label: 'Profit', backgroundColor: '#e15759', borderColor: '#e15759', type: 'line'
-    series field: 'cost', label: 'Cost', backgroundColor: '#59a14f', borderColor: '#59a14f', fill: true, tension: 0.3
   }
-  
+
   // ─────────────────────────────────────────────────────────────────────────────
   // CHART.JS OPTIONS - full passthrough to Chart.js configuration
   // ─────────────────────────────────────────────────────────────────────────────
   options {
     responsive true
     maintainAspectRatio true
-    
+
     plugins {
       title { display true; text 'Sales by Region' }
       legend { position 'bottom' }    // top|bottom|left|right
       tooltip { enabled true }
       datalabels { display false }    // requires chartjs-plugin-datalabels
     }
-    
+
     scales {
-      y { 
+      y {
         beginAtZero true
         title { display true; text 'Value' }
         // For secondary axis: y2 { position 'right'; beginAtZero true }
       }
-      x { 
+      x {
         title { display true; text 'Region' }
       }
     }
-    
+
     // Animation
     animation { duration 1000 }
   }
-  
-  // ─────────────────────────────────────────────────────────────────────────────
-  // OPTIONAL: Data override (90% of the time you don't need this)
-  // By default, data comes from ctx.reportData. Uncomment to use custom data:
-  // ─────────────────────────────────────────────────────────────────────────────
-  // data ctx.reportData                                    // explicit default
-  // data ctx.reportData.findAll { it.status == 'Active' }  // filtered
-  // data ctx.reportData.take(10)                           // top 10 only
-  // data ctx.reportData.groupBy { it.category }.collect { k, v -> [category: k, total: v.sum { it.amount }] }
 }
 `;
 
   // Example Pivot Table configuration Groovy DSL
   examplePivotTableConfigScript = `/*
- Pivot Table Groovy DSL - aligned with react-pivottable API
- Docs: https://github.com/plotly/react-pivottable
+ Pivot Table Groovy DSL
+ Docs: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
  Data comes from ctx.reportData by default - no need to specify it
 */
 
@@ -3364,12 +3359,37 @@ pivotTable {
   }
   
   // ─────────────────────────────────────────────────────────────────────────────
+  // DERIVED ATTRIBUTES - compute new fields from existing data
+  // ─────────────────────────────────────────────────────────────────────────────
+  // derivedAttributes {
+  //   'Fiscal Quarter' 'dateFormat(orderDate, "%Y-Q%q")'   // 2024-Q3
+  //   'Year'           'dateFormat(orderDate, "%Y")'        // 2024
+  //   'Month'          'dateFormat(orderDate, "%Y-%m")'     // 2024-07
+  // }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CUSTOM SORTERS - control the display order of dimension values
+  // ─────────────────────────────────────────────────────────────────────────────
+  // sorters {
+  //   sorter 'priority', order: ['Critical', 'High', 'Medium', 'Low']
+  //   sorter 'region',   order: ['West', 'Central', 'East']
+  // }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // FIELD VISIBILITY - control which fields appear in the UI
+  // ─────────────────────────────────────────────────────────────────────────────
+  // hiddenAttributes 'id', 'internal_code'          // hide from everywhere
+  // hiddenFromAggregators 'name', 'description'     // hide from value dropdown
+  // hiddenFromDragDrop 'total'                      // hide from drag areas
+
+  // ─────────────────────────────────────────────────────────────────────────────
   // OPTIONS - additional pivot table options
   // ─────────────────────────────────────────────────────────────────────────────
   options {
-    menuLimit 500  // max values to show in filter dropdowns
+    menuLimit 500                // max values to show in filter dropdowns
+    // unusedOrientationCutoff 85  // layout threshold: horizontal if fewer chars
   }
-  
+
   // ─────────────────────────────────────────────────────────────────────────────
   // OPTIONAL: Data override (90% of the time you don't need this)
   // By default, data comes from ctx.reportData. Uncomment to use custom data:
@@ -4402,6 +4422,7 @@ pivotTable {
           parameters =
             await this.reportingService.processGroovyParametersDsl(
               this.activeParamsSpecScriptGroovy,
+              this.selectedDbConnCode,
             );
 
           // Access user-provided values

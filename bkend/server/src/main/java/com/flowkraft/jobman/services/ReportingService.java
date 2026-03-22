@@ -25,8 +25,11 @@ import com.flowkraft.cfgman.DocumentBursterSettingsService;
 import com.flowkraft.common.AppPaths;
 import com.flowkraft.jobman.dtos.ReportFullConfigDto;
 import com.sourcekraft.documentburster.common.chart.ChartOptionsParser;
+import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
 import com.sourcekraft.documentburster.common.db.ReportDataResult;
+import com.sourcekraft.documentburster.common.db.SqlExecutor;
 import com.sourcekraft.documentburster.common.pivottable.PivotTableOptionsParser;
+import com.sourcekraft.documentburster.common.reportparameters.ReportParameter;
 import com.sourcekraft.documentburster.common.reportparameters.ReportParametersHelper;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ConfigurationFileInfo;
@@ -121,9 +124,11 @@ public class ReportingService {
 
 		// Read output type and dashboard template from reporting.xml
 		Path reportingPath = itemDir.resolve("reporting.xml");
+		String reportingConnCode = null;
 		if (Files.exists(reportingPath)) {
 			String reportingContent = Files.readString(reportingPath);
 			config.outputType = extractXmlValue(reportingContent, "outputtype");
+			reportingConnCode = extractXmlValue(reportingContent, "conncode");
 
 			// For dashboard output type, load the HTML template content
 			if ("output.dashboard".equals(config.outputType)) {
@@ -151,6 +156,11 @@ public class ReportingService {
 			config.parameters = ReportParametersHelper.parseGroovyParametersDslCode(dslContent);
 			config.hasParameters = config.parameters != null && !config.parameters.isEmpty();
 			System.out.println("[DEBUG] Parameters DSL parsed, hasParameters=" + config.hasParameters);
+
+			// Resolve SQL-based parameter options (e.g., options: "SELECT DISTINCT ...")
+			if (config.hasParameters && reportingConnCode != null && !reportingConnCode.isEmpty()) {
+				resolveParameterSqlOptions(config.parameters, reportingConnCode);
+			}
 		}
 		
 		// Load Tabulator DSL
@@ -635,6 +645,36 @@ public class ReportingService {
 			return Double.compare(da, db);
 		} catch (NumberFormatException e) {
 			return String.valueOf(a).compareToIgnoreCase(String.valueOf(b));
+		}
+	}
+
+	public void resolveParameterSqlOptions(List<ReportParameter> parameters, String connectionCode) {
+		for (ReportParameter param : parameters) {
+			Object options = param.uiHints.get("options");
+			if (options instanceof String) {
+				String sql = ((String) options).trim();
+				if (sql.toUpperCase().startsWith("SELECT")) {
+					try {
+						String settingsPath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH,
+								"config", "burst", "settings.xml").toString();
+						Settings settings = new Settings(settingsPath);
+						DatabaseConnectionManager dbManager = new DatabaseConnectionManager(settings);
+						SqlExecutor sqlExec = new SqlExecutor(dbManager);
+						List<Map<String, Object>> rows = sqlExec.queryOn(connectionCode, sql);
+						dbManager.close();
+
+						List<String> optionValues = new ArrayList<>();
+						for (Map<String, Object> row : rows) {
+							Object val = row.values().iterator().next();
+							if (val != null) optionValues.add(String.valueOf(val));
+						}
+						param.uiHints.put("options", optionValues);
+						System.out.println("[DEBUG] Resolved SQL options for param '" + param.id + "': " + optionValues.size() + " values");
+					} catch (Exception e) {
+						log.warn("Failed to resolve SQL options for param '{}': {}", param.id, e.getMessage());
+					}
+				}
+			}
 		}
 	}
 

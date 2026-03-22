@@ -141,7 +141,7 @@ export const tabReportingTabulatorTemplate = `<ng-template
         </div>
       </tab>
 
-      <tab heading="Tabulator Options">
+      <tab heading="Tabulator Options" id="tabulatorOptionsTab">
         <div class="row" style="margin-top: 10px;">
           <div class="col-xs-12">
             <ngx-codejar
@@ -154,6 +154,9 @@ export const tabReportingTabulatorTemplate = `<ng-template
               [showLineNumbers]="true"
               style="height: 350px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; margin-top: 10px;"
             ></ngx-codejar>
+            <button id="btnAiHelpTabulatorConfig" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.tabulator')">
+              <strong>Hey AI, Help Me Configure This Tabulator Table ...</strong>
+            </button>
           </div>
         </div>
       </tab>
@@ -175,9 +178,6 @@ export const tabReportingTabulatorTemplate = `<ng-template
             ></ngx-codejar>
             <button id="btnCopyToClipboardTabulatorConfigExample" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardTabulatorConfigExample()">
               Copy Example Tabulator Options To Clipboard
-            </button>
-            <button id="btnAiHelpTabulatorConfig" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.tabulator')">
-              <strong>Hey AI, Help Me Configure This Tabulator Table ...</strong>
             </button>
           </div>
         </div>

@@ -91,7 +91,7 @@
   export let testMode: boolean = false;
 
   // ============================================================================
-  // Props - matching react-pivottable API
+  // Pivot Table Configuration Props
   // ============================================================================
   
   export let data: Record<string, any>[] = [];

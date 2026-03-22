@@ -64,15 +64,29 @@
     <div class="p-picklist-header">
       {{ targetHeader }} ({{ targetItems?.length }})
     </div>
+    <!-- Field Selection Toolbar -->
+    <div *ngIf="enableFieldSelection && targetItems?.length > 0"
+         class="p-picklist-field-toolbar">
+      <button id="btnAllDetails{{ picklistId }}" type="button" class="p-button p-button-toolbar"
+              [ngClass]="{ 'p-button-toolbar-active': fieldSelectionMode === 'allDetails' }"
+              (click)="selectAllFields()" title="Include All Table Details Schema for AI (larger prompt)">
+        <span class="pi pi-check-square"></span>&nbsp;All Details
+      </button>
+      <button id="btnNamesOnly{{ picklistId }}" type="button" class="p-button p-button-toolbar"
+              [ngClass]="{ 'p-button-toolbar-active': fieldSelectionMode === 'namesOnly' }"
+              (click)="selectNamesOnly()" title="Send only table names to AI (shorter prompt)">
+        <span class="pi pi-stop"></span>&nbsp;Table Names Only
+      </button>
+    </div>
     <dburst-tree
       [treeId]="'targetTree' + picklistId"
       [value]="targetItems"
       selectionMode="checkbox"
-      [(selection)]="selectedTargetNodes"
+      [(selection)]="activeTargetSelection"
       [filter]="true"
       [filterPlaceholder]="targetFilterPlaceholder"
-      [propagateSelectionUp]="false"
-      [propagateSelectionDown]="false"
+      [propagateSelectionUp]="enableFieldSelection"
+      [propagateSelectionDown]="enableFieldSelection"
       style="height: 304px; display: block"
     ></dburst-tree>
   </div>

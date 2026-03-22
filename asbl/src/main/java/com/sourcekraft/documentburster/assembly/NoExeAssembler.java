@@ -1018,6 +1018,65 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		FileUtils.writeStringToFile(new File(adhocReportingFilePath), content, "UTF-8");
 
+		// 19. g-dashboard (Northwind Sales Dashboard - interactive)
+
+		String dashNorthwindSampleDir = packageDirPath + "/" + topFolderName + "/config/samples/g-dashboard";
+		String dashNorthwindSettingsFilePath = dashNorthwindSampleDir + "/settings.xml";
+		String dashNorthwindReportingFilePath = dashNorthwindSampleDir + "/reporting.xml";
+
+		// copy base settings and tweak for this sample
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/burst/settings.xml"),
+				new File(dashNorthwindSettingsFilePath));
+		content = FileUtils.readFileToString(new File(dashNorthwindSettingsFilePath), "UTF-8");
+
+		// friendly template name
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+				"<template>SalesDashboard</template>");
+
+		// no distribution, enable mailmerge (required for script datasource execution)
+		content = content.replaceAll(
+				"(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
+				"<reportdistribution>false</reportdistribution>");
+		content = content.replaceAll(
+				"(?s)<reportgenerationmailmerge\\s*/>|<reportgenerationmailmerge>\\s*false\\s*</reportgenerationmailmerge>",
+				"<reportgenerationmailmerge>true</reportgenerationmailmerge>");
+
+		// Dashboard — output is dashboard.html (same as ds.dashboard UI default)
+		content = content.replaceAll(
+				"(?s)<burstfilename>.*?</burstfilename>",
+				"<burstfilename>dashboard.html</burstfilename>");
+
+		FileUtils.writeStringToFile(new File(dashNorthwindSettingsFilePath), content, "UTF-8");
+
+		// prepare reporting.xml
+		FileUtils.copyFile(new File(packageDirPath + "/" + topFolderName + "/config/_defaults/reporting.xml"),
+				new File(dashNorthwindReportingFilePath));
+		content = FileUtils.readFileToString(new File(dashNorthwindReportingFilePath), "UTF-8");
+
+		// datasource -> ds.dashboard
+		content = content.replaceAll("(?si)<type\\s*>\\s*ds\\.csvfile\\s*</type>", "<type>ds.dashboard</type>");
+
+		// connection to sample northwind sqlite DB
+		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
+				"<conncode>rbt-sample-northwind-sqlite-4f2</conncode>");
+
+		// script name
+		content = content.replaceAll("(?s)<scriptname\\s*/>|<scriptname>\\s*</scriptname>",
+				"<scriptname>g-dashboard-script.groovy</scriptname>");
+
+		// params spec script name
+		content = content.replaceAll("(?s)<scriptnameparamsspec\\s*/>|<scriptnameparamsspec>\\s*</scriptnameparamsspec>",
+				"<scriptnameparamsspec>g-dashboard-report-parameters-spec.groovy</scriptnameparamsspec>");
+
+		// output type -> dashboard
+		content = content.replaceAll("(?s)output\\.none", "output.dashboard");
+
+		// document path -> HTML template (relative to config sample dir)
+		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
+				"<documentpath>g-dashboard-template.html</documentpath>");
+
+		FileUtils.writeStringToFile(new File(dashNorthwindReportingFilePath), content, "UTF-8");
+
 		// SAMPLES END
 
 		// FREND SAMPLES START

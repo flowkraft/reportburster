@@ -43,7 +43,10 @@
   
   // Raw DSL source code (exposed for Configuration tab)
   export let configDsl: string = '';
-  
+
+  // Show/hide the Reload button (hidden by default, shown via attribute show-reload="true")
+  export let showReload: boolean = false;
+
   // Internal state
   let formValues: { [id: string]: any } = {};
   let touched: { [id: string]: boolean } = {};
@@ -73,6 +76,10 @@
       if (!reportCode) reportCode = hostElement.getAttribute('report-code') || '';
       if (!apiBaseUrl) apiBaseUrl = hostElement.getAttribute('api-base-url') || '';
       if (!apiKey) apiKey = hostElement.getAttribute('api-key') || '';
+      if (hostElement.hasAttribute('show-reload')) {
+        const reloadAttr = hostElement.getAttribute('show-reload');
+        showReload = reloadAttr === '' || reloadAttr === 'true';
+      }
       //console.log('[rb-parameters] After reading host attributes - reportCode:', reportCode, 'apiBaseUrl:', apiBaseUrl);
     }
     
@@ -164,13 +171,13 @@
     formValues = {};
     touched = {};
     errors = {};
-    
+
     parameters.forEach(p => {
       formValues[p.id] = p.defaultValue ?? getDefaultForType(p.type);
       touched[p.id] = false;
       errors[p.id] = [];
     });
-    
+
     validateAll(true); // Force emit on init
     emitValues();
   }
@@ -342,6 +349,39 @@
     dispatch('valueChange', values);
     // Emit as CustomEvent for Angular/vanilla JS consumers
     emitHostEvent('valueChange', values);
+  }
+
+  // Submit: user explicitly requests data refresh with current param values
+  let showConfirm = false;
+  function handleReloadClick() {
+    showConfirm = true;
+  }
+  function confirmReload() {
+    showConfirm = false;
+    const values = { ...formValues };
+    console.log('[RbParameters] confirmReload - dispatching submit event with values:', values);
+    emitHostEvent('submit', values);
+
+    // Replace sibling rb-* components with fresh elements to force full re-mount
+    const root = hostElement?.closest('.rb-dashboard-root') || hostElement?.getRootNode() || document;
+    const paramsJson = JSON.stringify(values);
+    const components = root.querySelectorAll('rb-tabulator, rb-chart, rb-pivot-table, rb-value');
+    components.forEach((el: Element) => {
+      // Create a brand new element (not a clone) to avoid inheriting stale DOM/state
+      const fresh = document.createElement(el.tagName.toLowerCase());
+      // Copy all attributes from the original
+      for (const attr of Array.from(el.attributes)) {
+        fresh.setAttribute(attr.name, attr.value);
+      }
+      // Set the new params
+      fresh.setAttribute('report-params', paramsJson);
+      // Replace old with fresh
+      el.parentNode?.replaceChild(fresh, el);
+    });
+    console.log('[RbParameters] confirmReload - replaced', components.length, 'sibling components');
+  }
+  function cancelReload() {
+    showConfirm = false;
   }
 
   // Dispatch custom event on the host element (for Angular, vanilla JS, etc.)
@@ -541,6 +581,19 @@
         </div>
       {/each}
     </form>
+    {#if showReload}
+      {#if !showConfirm}
+        <button id="btnReloadDashboard" type="button" style="display:block;width:100%;margin-top:12px;padding:10px 20px;background:#0f766e;color:white;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;" on:click={handleReloadClick}>
+          Reload
+        </button>
+      {:else}
+        <div style="display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px 16px;background:#f0fdf4;border:1px solid #0f766e;border-radius:6px;">
+          <span style="flex:1;font-size:13px;color:#0f172a;">Reload dashboard with current parameters?</span>
+          <button id="btnConfirmReload" type="button" style="padding:6px 16px;background:#0f766e;color:white;border:none;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;" on:click={confirmReload}>Yes</button>
+          <button id="btnCancelReload" type="button" style="padding:6px 16px;background:#e2e8f0;color:#334155;border:none;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;" on:click={cancelReload}>No</button>
+        </div>
+      {/if}
+    {/if}
   {:else}
     <div class="rb-no-params" style="padding: 1rem; color: #666; text-align: center;">
       No parameters defined. Check console for debug info.
@@ -601,5 +654,22 @@
   input[type="checkbox"] {
     width: 1.25rem;
     height: 1.25rem;
+  }
+
+  .rb-submit-btn {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px 20px;
+    background: var(--accent, #0f766e);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .rb-submit-btn:hover {
+    opacity: 0.9;
   }
 </style>

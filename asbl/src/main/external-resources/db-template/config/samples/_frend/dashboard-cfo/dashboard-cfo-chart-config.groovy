@@ -6,27 +6,29 @@
 // Revenue Trend — line chart with actual revenue vs target, 6 months
 chart('revenueTrend') {
   type 'line'
-  labelField 'Month'
-  series {
-    series {
-      field 'Revenue'
-      label 'Revenue'
-      borderColor '#3b82f6'
-      backgroundColor 'rgba(59, 130, 246, 0.1)'
-      fill true
-      tension 0.4
-      borderWidth 2
-      pointRadius 4
-    }
-    series {
-      field 'Target'
-      label 'Target'
-      borderColor '#ef4444'
-      borderDash([5, 5])
-      borderWidth 2
-      fill false
-      tension 0.4
-      pointRadius 3
+  data {
+    labelField 'Month'
+    datasets {
+      dataset {
+        field 'Revenue'
+        label 'Revenue'
+        borderColor '#3b82f6'
+        backgroundColor 'rgba(59, 130, 246, 0.1)'
+        fill true
+        tension 0.4
+        borderWidth 2
+        pointRadius 4
+      }
+      dataset {
+        field 'Target'
+        label 'Target'
+        borderColor '#ef4444'
+        borderDash([5, 5])
+        borderWidth 2
+        fill false
+        tension 0.4
+        pointRadius 3
+      }
     }
   }
   options {
@@ -44,13 +46,15 @@ chart('revenueTrend') {
 // Revenue by Category — doughnut chart showing revenue distribution
 chart('revenueByCategory') {
   type 'doughnut'
-  labelField 'Category'
-  series {
-    series {
-      field 'Revenue'
-      label 'Revenue ($)'
-      backgroundColor(['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'])
-      borderWidth 2
+  data {
+    labelField 'Category'
+    datasets {
+      dataset {
+        field 'Revenue'
+        label 'Revenue ($)'
+        backgroundColor(['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'])
+        borderWidth 2
+      }
     }
   }
   options {
@@ -66,13 +70,15 @@ chart('revenueByCategory') {
 // Accounts Receivable Aging — vertical bar chart with color-coded aging buckets
 chart('arAging') {
   type 'bar'
-  labelField 'Bucket'
-  series {
-    series {
-      field 'Amount'
-      label 'Outstanding ($)'
-      backgroundColor(['#22c55e', '#eab308', '#f97316', '#ef4444'])
-      borderWidth 1
+  data {
+    labelField 'Bucket'
+    datasets {
+      dataset {
+        field 'Amount'
+        label 'Outstanding ($)'
+        backgroundColor(['#22c55e', '#eab308', '#f97316', '#ef4444'])
+        borderWidth 1
+      }
     }
   }
   options {
@@ -90,13 +96,15 @@ chart('arAging') {
 // Revenue by Country — horizontal bar chart showing top 5 countries
 chart('revenueByCountry') {
   type 'bar'
-  labelField 'Country'
-  series {
-    series {
-      field 'Revenue'
-      label 'Revenue ($)'
-      backgroundColor(['#ec4899', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'])
-      borderWidth 1
+  data {
+    labelField 'Country'
+    datasets {
+      dataset {
+        field 'Revenue'
+        label 'Revenue ($)'
+        backgroundColor(['#ec4899', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'])
+        borderWidth 1
+      }
     }
   }
   options {

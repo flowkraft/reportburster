@@ -5,4 +5,10 @@ module.exports = {
     changeOrigin: true,
     logLevel: "debug",
   },
+  "/rb-webcomponents": {
+    target: "http://localhost:9090",
+    secure: false,
+    changeOrigin: true,
+    logLevel: "debug",
+  },
 };

@@ -54,18 +54,20 @@ public class ReportingController {
 	}
 
 	@PostMapping("/parse-parameters")
-	public Mono<List<ReportParameter>> processGroovyParameters(@RequestBody String groovyParametersDslCode) {
+	public Mono<List<ReportParameter>> processGroovyParameters(@RequestBody String groovyParametersDslCode,
+			@RequestParam(required = false) String connectionCode) {
 
 		String cleanedCode = groovyParametersDslCode.replaceAll("^\"|\"$", "") // Remove surrounding quotes
 				.replace("\\n", "\n") // Unescape newlines
 				.replace("\\t", "\t") // Unescape tabs
 				.replace("\\\"", "\""); // Unescape double quotes
 
-		//System.out.println("/parse-parameters groovyParametersDslCode: " + groovyParametersDslCode.substring(0, 200));
-		//System.out.println("/parse-parameters cleanedCode: " + cleanedCode.substring(0, 200));
-
 		return Mono.fromCallable(() -> {
 			List<ReportParameter> reportParameters = ReportParametersHelper.parseGroovyParametersDslCode(cleanedCode);
+
+			if (connectionCode != null && !connectionCode.isEmpty()) {
+				reportingService.resolveParameterSqlOptions(reportParameters, connectionCode);
+			}
 
 			return reportParameters;
 		}).doOnError(e -> log.error("Error parsing report parameters", e)).onErrorResume(e -> Mono.error(

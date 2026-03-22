@@ -1503,6 +1503,11 @@ export class ProcessingComponent implements OnInit {
   doSampleTryIt(clickedSample: SampleInfo) {
     //console.log(`clickedSample = ${JSON.stringify(clickedSample)}`);
 
+    if (clickedSample.jobType === 'dashboard') {
+      window.open(`http://localhost:9090/dashboard/${clickedSample.configurationFileName}`, '_blank');
+      return;
+    }
+
     const dialogQuestion = clickedSample.notes;
     this.confirmService.askConfirmation({
       message: dialogQuestion,

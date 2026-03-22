@@ -10,6 +10,7 @@ import { ConnectionsTestHelper, DB_VENDORS_DEFAULT, DB_VENDORS_SUPPORTED, hasSee
 
 const DB_VENDORS_SELECTED: string[] = (() => {
   
+  //return ['oracle'];
   //return ['oracle', 'sqlserver', 'ibmdb2', 'postgres', 'mysql', 'mariadb', 'supabase']; // DEV FOCUS — comment out to restore full rotation
   //return ['supabase']; // DEV FOCUS — comment out to restore full rotation
   
@@ -1234,10 +1235,10 @@ test.describe('', async () => {
 
         //left is populated with schema objects
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeCategoriessourceTreedatabaseSchemaPicklist',
+          '#treeNodecategoriessourceTreedatabaseSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeProductssourceTreedatabaseSchemaPicklist',
+          '#treeNodeproductssourceTreedatabaseSchemaPicklist',
         );
 
         // For OLAP vendors (DuckDB, ClickHouse), also assert Star Schema tables and views
@@ -1274,19 +1275,19 @@ test.describe('', async () => {
         ft = ft.setValue('#filterInputsourceTreedatabaseSchemaPicklist', 'Test');
 
         ft = ft.waitOnElementToBecomeInvisible(
-          '#treeNodeCategoriessourceTreedatabaseSchemaPicklist',
+          '#treeNodecategoriessourceTreedatabaseSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeInvisible(
-          '#treeNodeProductssourceTreedatabaseSchemaPicklist',
+          '#treeNodeproductssourceTreedatabaseSchemaPicklist',
         );
 
         ft = ft.setValue('#filterInputsourceTreedatabaseSchemaPicklist', '');
 
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeCategoriessourceTreedatabaseSchemaPicklist',
+          '#treeNodecategoriessourceTreedatabaseSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeProductssourceTreedatabaseSchemaPicklist',
+          '#treeNodeproductssourceTreedatabaseSchemaPicklist',
         );
 
         ft = ft.setValue(
@@ -1295,58 +1296,58 @@ test.describe('', async () => {
         );
 
         ft = ft.waitOnElementToBecomeInvisible(
-          '#treeNodeCategoriessourceTreedatabaseSchemaPicklist',
+          '#treeNodecategoriessourceTreedatabaseSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeProductssourceTreedatabaseSchemaPicklist',
+          '#treeNodeproductssourceTreedatabaseSchemaPicklist',
         );
 
         ft = ft.setValue('#filterInputsourceTreedatabaseSchemaPicklist', '');
 
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeCategoriessourceTreedatabaseSchemaPicklist',
+          '#treeNodecategoriessourceTreedatabaseSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeProductssourceTreedatabaseSchemaPicklist',
+          '#treeNodeproductssourceTreedatabaseSchemaPicklist',
         );
 
         // Test all 4x picklist buttons
-        ft = ft.click('#treeNodeCategoriessourceTreedatabaseSchemaPicklist');
-        ft = ft.click('#treeNodeProductssourceTreedatabaseSchemaPicklist');
+        ft = ft.click('#treeNodecategoriessourceTreedatabaseSchemaPicklist');
+        ft = ft.click('#treeNodeproductssourceTreedatabaseSchemaPicklist');
 
         ft = ft.click('#btnMoveToTargetdatabaseSchemaPicklist');
 
         ft = ft.waitOnElementToBecomeInvisible(
-          '#treeNodeCategoriessourceTreedatabaseSchemaPicklist',
+          '#treeNodecategoriessourceTreedatabaseSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeInvisible(
-          '#treeNodeProductssourceTreedatabaseSchemaPicklist',
+          '#treeNodeproductssourceTreedatabaseSchemaPicklist',
         );
 
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeCategoriestargetTreedatabaseSchemaPicklist',
+          '#treeNodecategoriestargetTreedatabaseSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeProductstargetTreedatabaseSchemaPicklist',
+          '#treeNodeproductstargetTreedatabaseSchemaPicklist',
         );
 
-        ft = ft.click('#treeNodeCategoriestargetTreedatabaseSchemaPicklist');
-        ft = ft.click('#treeNodeProductstargetTreedatabaseSchemaPicklist');
+        ft = ft.click('#treeNodecategoriestargetTreedatabaseSchemaPicklist');
+        ft = ft.click('#treeNodeproductstargetTreedatabaseSchemaPicklist');
 
         ft = ft.click('#btnMoveToSourcedatabaseSchemaPicklist');
 
         ft = ft.waitOnElementToBecomeInvisible(
-          '#treeNodeCategoriestargetTreedatabaseSchemaPicklist',
+          '#treeNodecategoriestargetTreedatabaseSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeInvisible(
-          '#treeNodeProductstargetTreedatabaseSchemaPicklist',
+          '#treeNodeproductstargetTreedatabaseSchemaPicklist',
         );
 
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeCategoriessourceTreedatabaseSchemaPicklist',
+          '#treeNodecategoriessourceTreedatabaseSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeProductssourceTreedatabaseSchemaPicklist',
+          '#treeNodeproductssourceTreedatabaseSchemaPicklist',
         );
 
         ft = ft.click('#btnMoveAllToTargetdatabaseSchemaPicklist');
@@ -1355,7 +1356,7 @@ test.describe('', async () => {
         ft = ft.waitOnElementToBecomeEnabled('#btnGenerateWithAIDbSchema');
 
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeCategoriestargetTreedatabaseSchemaPicklist',
+          '#treeNodecategoriestargetTreedatabaseSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeVisible(
           '#sourceTreedatabaseSchemaPicklist .p-tree-empty-message',
@@ -1370,7 +1371,7 @@ test.describe('', async () => {
           '#sourceTreedatabaseSchemaPicklist .p-tree-empty-message',
         );
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeCategoriessourceTreedatabaseSchemaPicklist',
+          '#treeNodecategoriessourceTreedatabaseSchemaPicklist',
         );
 
         ft = ft.waitOnElementToBecomeVisible(
@@ -1379,15 +1380,15 @@ test.describe('', async () => {
 
         ft = ft.consoleLog('STEP 3: Testing AI Copilot integration');
 
-        ft = ft.click('#treeNodeProductssourceTreedatabaseSchemaPicklist');
+        ft = ft.click('#treeNodeproductssourceTreedatabaseSchemaPicklist');
         ft = ft.click('#btnMoveToTargetdatabaseSchemaPicklist');
 
         ft = ft.waitOnElementToBecomeInvisible(
-          '#treeNodeProductssourceTreedatabaseSchemaPicklist',
+          '#treeNodeproductssourceTreedatabaseSchemaPicklist',
         );
 
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodeProductstargetTreedatabaseSchemaPicklist',
+          '#treeNodeproductstargetTreedatabaseSchemaPicklist',
         );
 
         ft = ft.waitOnElementToBecomeInvisible('#chooseTableLabelDbSchema');
@@ -1409,8 +1410,9 @@ test.describe('', async () => {
 
         ft = ft
           .click('#btnCloseAiCopilotModal')
-          .waitOnElementToBecomeInvisible('#btnCopyPromptText')
-          .click('#btnCloseDbConnectionModal');
+          .waitOnElementToBecomeInvisible('#btnCopyPromptText');
+
+        ft = ft.click('#btnCloseDbConnectionModal');
 
         ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
           ft,
@@ -1694,11 +1696,11 @@ test.describe('', async () => {
             '#btnGenerateSqlQueryWithAIDomainGroupedSchema',
           )
           .waitOnElementToBecomeVisible(
-            '#treeNodeCustomerDemographicssourceTreedatabaseSchemaPicklist',
+            '#treeNodecustomerdemographicssourceTreedatabaseSchemaPicklist',
           )
           .click('#domainGroupedDatabaseSchemaTab-link')
           .waitOnElementToBecomeVisible(
-            '#treeNodedomain_Sales_\\&_OrderssourceTreedomainGroupedSchemaPicklist',
+            '#treeNodedomain_sales_\\&_orderssourceTreedomainGroupedSchemaPicklist',
           );
 
         // Test all 4x picklist buttons and AI SQL Gen for Domain-Grouped Schema
@@ -1710,9 +1712,9 @@ test.describe('', async () => {
         // The domainGroupedSchemaExists should be true at this point.
         ft = ft.waitOnElementToBecomeVisible('#domainGroupedSchemaPicklist');
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodedomain_Customer_ManagementsourceTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_customer_managementsourceTreedomainGroupedSchemaPicklist',
         ).click(
-          '#treeNodedomain_Customer_ManagementsourceTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_customer_managementsourceTreedomainGroupedSchemaPicklist',
         ).consoleLog(
           'STEP X.1: Moving "Customer Management" domain to Target',
         );
@@ -1722,13 +1724,13 @@ test.describe('', async () => {
 
         // Verify "Customer Management" domain (and its children like "Customers" table) is no longer in source
         ft = ft.waitOnElementToBecomeInvisible(
-          '#treeNodedomain_Customer_ManagementsourceTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_customer_managementsourceTreedomainGroupedSchemaPicklist',
         );
 
         // Verify "Customer Management" domain and its child "Customers" table are in target, preserving hierarchy
         ft = ft
           .waitOnElementToBecomeVisible(
-            '#treeNodedomain_Customer_ManagementtargetTreedomainGroupedSchemaPicklist',
+            '#treeNodedomain_customer_managementtargetTreedomainGroupedSchemaPicklist',
           )
           .waitOnElementToBecomeInvisible('#chooseTableLabelDomainGroupedSchema')
           .waitOnElementToBecomeEnabled(
@@ -1742,7 +1744,7 @@ test.describe('', async () => {
 
         // Select "Customer Management" domain in the target list
         ft = ft.click(
-          '#treeNodedomain_Customer_ManagementtargetTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_customer_managementtargetTreedomainGroupedSchemaPicklist',
         );
 
         // Click "Move to Source" button
@@ -1750,13 +1752,13 @@ test.describe('', async () => {
 
         // Verify "Customer Management" domain (and its children) is no longer in target
         ft = ft.waitOnElementToBecomeInvisible(
-          '#treeNodedomain_Customer_ManagementtargetTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_customer_managementtargetTreedomainGroupedSchemaPicklist',
         );
 
         // Verify "Customer Management" domain and its child "Customers" table are back in source
         ft = ft
           .waitOnElementToBecomeVisible(
-            '#treeNodedomain_Customer_ManagementsourceTreedomainGroupedSchemaPicklist',
+            '#treeNodedomain_customer_managementsourceTreedomainGroupedSchemaPicklist',
           )
           .waitOnElementToBecomeVisible('#chooseTableLabelDomainGroupedSchema')
           .waitOnElementToBecomeDisabled(
@@ -1774,15 +1776,15 @@ test.describe('', async () => {
 
         // Verify all domain groups and their children are in target
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodedomain_Customer_ManagementtargetTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_customer_managementtargetTreedomainGroupedSchemaPicklist',
         );
 
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodedomain_Sales_\\&_OrderstargetTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_sales_\\&_orderstargetTreedomainGroupedSchemaPicklist',
         ); // Escaped '&'
 
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodedomain_Product_CatalogtargetTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_product_catalogtargetTreedomainGroupedSchemaPicklist',
         );
 
         ft = ft
@@ -1806,13 +1808,13 @@ test.describe('', async () => {
         );
 
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodedomain_Customer_ManagementsourceTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_customer_managementsourceTreedomainGroupedSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodedomain_Sales_\\&_OrderssourceTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_sales_\\&_orderssourceTreedomainGroupedSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodedomain_Product_CatalogsourceTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_product_catalogsourceTreedomainGroupedSchemaPicklist',
         );
 
         ft = ft
@@ -1828,14 +1830,14 @@ test.describe('', async () => {
 
         // Move "Sales & Orders" domain to the target list
         ft = ft.click(
-          '#treeNodedomain_Sales_\\&_OrderssourceTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_sales_\\&_orderssourceTreedomainGroupedSchemaPicklist',
         );
         ft = ft.click('#btnMoveToTargetdomainGroupedSchemaPicklist');
         ft = ft.waitOnElementToBecomeInvisible(
-          '#treeNodedomain_Sales_\\&_OrderssourceTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_sales_\\&_orderssourceTreedomainGroupedSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodedomain_Sales_\\&_OrderstargetTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_sales_\\&_orderstargetTreedomainGroupedSchemaPicklist',
         );
 
         ft = ft
@@ -1873,14 +1875,14 @@ test.describe('', async () => {
         // Clean up: move "Sales & Orders" back to source for subsequent tests if any
         // Ensure it's selected in target to be moved
         ft = ft.click(
-          '#treeNodedomain_Sales_\\&_OrderstargetTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_sales_\\&_orderstargetTreedomainGroupedSchemaPicklist',
         );
         ft = ft.click('#btnMoveToSourcedomainGroupedSchemaPicklist');
         ft = ft.waitOnElementToBecomeInvisible(
-          '#treeNodedomain_Sales_\\&_OrderstargetTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_sales_\\&_orderstargetTreedomainGroupedSchemaPicklist',
         );
         ft = ft.waitOnElementToBecomeVisible(
-          '#treeNodedomain_Sales_\\&_OrderssourceTreedomainGroupedSchemaPicklist',
+          '#treeNodedomain_sales_\\&_orderssourceTreedomainGroupedSchemaPicklist',
         );
 
         // AI button should be disabled again, and label visible

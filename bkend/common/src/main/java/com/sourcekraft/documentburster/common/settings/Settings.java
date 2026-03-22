@@ -568,6 +568,43 @@ public class Settings extends DumpToString {
 				connDatabaseSettings.connection.databaseserver.ensureDriverAndUrl();
 
 			return connDatabaseSettings;
+		} else if (codeLower.contains("rbt-sample-northwind-sqlite-4f2")) {
+			String dbFilePath = null;
+			String portable = System.getenv("PORTABLE_EXECUTABLE_DIR");
+			if (portable != null && !portable.trim().isEmpty()) {
+				dbFilePath = portable + java.io.File.separator + "db" + java.io.File.separator
+						+ "sample-northwind-sqlite" + java.io.File.separator + "northwind.db";
+			} else {
+				try {
+					dbFilePath = com.sourcekraft.documentburster.utils.Utils.getDbFolderPath()
+							+ java.io.File.separator + "sample-northwind-sqlite" + java.io.File.separator
+							+ "northwind.db";
+				} catch (Throwable t) {
+					dbFilePath = "db" + java.io.File.separator + "sample-northwind-sqlite"
+							+ java.io.File.separator + "northwind.db";
+				}
+			}
+
+			java.io.File dbFile = new java.io.File(dbFilePath);
+			String resolvedPath = dbFile.getAbsolutePath();
+			String jdbcUrl = "jdbc:sqlite:" + resolvedPath;
+
+			DocumentBursterConnectionDatabaseSettings connDatabaseSettings = new DocumentBursterConnectionDatabaseSettings();
+			ConnectionDatabaseSettings conn = new ConnectionDatabaseSettings();
+			ServerDatabaseSettings server = new ServerDatabaseSettings();
+			server.type = "sqlite";
+			server.driver = "org.sqlite.JDBC";
+			server.url = jdbcUrl;
+			server.database = resolvedPath;
+			server.userid = "";
+			server.userpassword = "";
+			conn.databaseserver = server;
+			connDatabaseSettings.connection = conn;
+
+			if (connDatabaseSettings.connection != null && connDatabaseSettings.connection.databaseserver != null)
+				connDatabaseSettings.connection.databaseserver.ensureDriverAndUrl();
+
+			return connDatabaseSettings;
 		}
 
 		String connectionConfigFilePath = Paths

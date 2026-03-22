@@ -33,6 +33,7 @@ import {
   AiManagerLaunchConfig,
 } from '../ai-manager/ai-manager.component';
 import { AppsManagerService, ManagedApp } from '../apps-manager/apps-manager.service';
+import { PicklistComponent } from '../prime/picklist.component';
 
 const PACK_DEFAULTS: Record<string, { host: string; port: string; database: string; userid: string; userpassword: string; usessl?: boolean }> = {
   postgresql: { host: 'localhost', port: '5432', database: 'Northwind', userid: 'postgres', userpassword: 'postgres', usessl: false },
@@ -55,6 +56,8 @@ const PACK_DEFAULTS: Record<string, { host: string; port: string; database: stri
 export class ConnectionDetailsComponent implements OnInit {
   @Input() mode: 'crud' | 'viewMode' = 'crud';
   @Input() context: 'crud' | 'sqlQuery' | 'scriptQuery' | 'dashboardScript' = 'crud';
+  @Input() reportCode: string = '';
+  @Input() apiBaseUrl: string = '';
 
 
   // Tab active states
@@ -88,6 +91,8 @@ export class ConnectionDetailsComponent implements OnInit {
   }
 
   @ViewChild(AiManagerComponent) private aiManagerInstance!: AiManagerComponent;
+  @ViewChild('databaseSchemaPicklistRef') databaseSchemaPicklistRef: PicklistComponent;
+  @ViewChild('domainGroupedSchemaPicklistRef') domainGroupedSchemaPicklistRef: PicklistComponent;
 
   modalConnectionInfo = {
     connectionType: 'email-connection',
@@ -760,25 +765,131 @@ export class ConnectionDetailsComponent implements OnInit {
       return;
     }
 
-    const tablesJsonString = JSON.stringify(relevantTableData, null, 2); // Pretty print JSON
+    // Determine which picklist is active and whether field selection is enabled
+    const activePicklist = this.isDatabaseSchemaTabActive
+      ? this.databaseSchemaPicklistRef
+      : this.domainGroupedSchemaPicklistRef;
+
+    let schemaString: string;
+
+    if (activePicklist?.enableFieldSelection) {
+      const fieldState = activePicklist.getFieldSelectionState();
+
+      // Helper: check if a node (or any of its children) matches a table name.
+      // Handles both database schema (node IS the table) and domain-grouped (node is a domain group, children are tables).
+      const nodeMatchesTable = (node: any, tableName: string): boolean =>
+        node.key === tableName || node.label === tableName ||
+        (node.children || []).some((c: any) => c.key === tableName || c.label === tableName);
+
+      // Helper: collect table names from a node (direct or via children for domain-grouped)
+      const getTableNames = (node: any): string[] => {
+        if (!node.children?.length || node.children[0]?.children !== undefined) {
+          // Domain-grouped: children are table nodes
+          return (node.children || []).map((c: any) => c.label || c.key);
+        }
+        // Database schema: node IS the table
+        return [node.label || node.key];
+      };
+
+      // Build full-detail tables (all columns included)
+      const fullDetailData = relevantTableData.filter(
+        (table: any) => fieldState.fullDetailTables.some((n) => nodeMatchesTable(n, table.tableName)),
+      );
+
+      // Build partial-detail tables (only checked columns/tables)
+      const partialDetailData: any[] = [];
+      for (const entry of fieldState.partialDetailTables) {
+        const selectedChildNames = entry.selectedChildren.map((c: any) => c.label || c.key);
+
+        // Check if children are tables (domain-grouped) or columns (database schema)
+        const firstChild = entry.selectedChildren[0];
+        const childrenAreTables = firstChild && (firstChild.children !== undefined);
+
+        if (childrenAreTables) {
+          // Domain-grouped: selected children are table nodes — include them with full details
+          const matchedTables = relevantTableData.filter(
+            (t: any) => selectedChildNames.includes(t.tableName),
+          );
+          partialDetailData.push(...matchedTables);
+        } else {
+          // Database schema: selected children are column nodes — filter columns
+          const rawTable = relevantTableData.find(
+            (t: any) => t.tableName === entry.node.key || t.tableName === entry.node.label,
+          );
+          if (!rawTable) continue;
+
+          const selectedColumnNames = entry.selectedChildren.map(
+            (child: any) => child.data?.columnName || child.label,
+          );
+
+          partialDetailData.push({
+            ...rawTable,
+            columns: (rawTable.columns || []).filter(
+              (col: any) => selectedColumnNames.includes(col.columnName),
+            ),
+            primaryKeyColumns: (rawTable.primaryKeyColumns || []).filter(
+              (pk: string) => selectedColumnNames.includes(pk),
+            ),
+            foreignKeys: (rawTable.foreignKeys || []).filter(
+              (fk: any) => selectedColumnNames.includes(fk.fkColumnName),
+            ),
+          });
+        }
+      }
+
+      const tablesWithSchema = [...fullDetailData, ...partialDetailData];
+
+      // Name-only: collect table names (flatten domain groups if needed)
+      const nameOnlyTableNames: string[] = [];
+      for (const n of fieldState.nameOnlyTables) {
+        nameOnlyTableNames.push(...getTableNames(n));
+      }
+
+      // Build sectioned string
+      let sections = '';
+
+      if (tablesWithSchema.length > 0) {
+        sections += 'Tables with Full/Partial Schema:\n\n```json\n';
+        sections += JSON.stringify(tablesWithSchema, null, 2);
+        sections += '\n```\n\n';
+      }
+
+      if (nameOnlyTableNames.length > 0) {
+        sections += 'Tables Included by Name Only (no column details provided):\n';
+        sections += nameOnlyTableNames.map((n) => `- ${n}`).join('\n');
+        sections += '\n';
+      }
+
+      schemaString = sections;
+    } else {
+      // Original behavior — all table details as JSON
+      schemaString = '```json\n' + JSON.stringify(relevantTableData, null, 2) + '\n```';
+    }
 
     const isDashboard = this.context === 'dashboardScript';
     const isScript = this.context === 'scriptQuery';
     const targetPromptId = isDashboard ? 'DASHBOARD_BUILD_STEP_BY_STEP_INSTRUCTIONS' : (isScript ? 'GROOVY_SCRIPT_INPUT_SOURCE' : 'SQL_FROM_NATURAL_LANGUAGE');
     const targetCategory = isDashboard ? 'Dashboard Creation' : (isScript ? 'Script Writing Assistance' : 'SQL Writing Assistance');
     const promptPlaceholder =
-      '[INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]';
+      '[INSERT THE RELEVANT DATABASE SCHEMA HERE]';
 
     const dbVendor = this.modalConnectionInfo?.database?.documentburster?.connection?.databaseserver?.type || '';
+
+    const promptVars: Record<string, string> = {
+      [promptPlaceholder]: schemaString,
+      '[DATABASE_VENDOR]': dbVendor,
+    };
+
+    if (isDashboard && this.reportCode) {
+      promptVars['[REPORT_CODE]'] = this.reportCode;
+      promptVars['[API_BASE_URL]'] = this.apiBaseUrl;
+    }
 
     const launchConfig: AiManagerLaunchConfig = {
       initialActiveTabKey: 'PROMPTS',
       initialSelectedCategory: targetCategory,
       initialExpandedPromptId: targetPromptId,
-      promptVariables: {
-        [promptPlaceholder]: tablesJsonString, // Use the full JSON string here
-        '[DATABASE_VENDOR]': dbVendor,
-      },
+      promptVariables: promptVars,
     };
 
     if (this.aiManagerInstance) {
@@ -1402,7 +1513,7 @@ export class ConnectionDetailsComponent implements OnInit {
             title: 'Type: ' + (tbl.tableType || 'TABLE'),
             data: tbl, // Store original table data in the UI node if needed by PickList or other UI features
             children: (tbl.columns || []).map((col: any) => ({
-              key: tbl.tableName + '.' + col.columnName,
+              key: tbl.tableName + '_' + col.columnName,
               label: col.columnName,
               icon:
                 tbl.primaryKeyColumns &&
@@ -1641,7 +1752,7 @@ export class ConnectionDetailsComponent implements OnInit {
               const columns = table.columns || table.children || [];
               if (Array.isArray(columns)) {
                 tableNode.children = columns.map((column) => ({
-                  key: `${tableNode.label}.${column.name || column.columnName}`,
+                  key: `${tableNode.label}_${column.name || column.columnName}`,
                   label: column.name || column.columnName,
                   icon: column.isPrimaryKey
                     ? 'fa fa-key'
@@ -1765,6 +1876,9 @@ export class ConnectionDetailsComponent implements OnInit {
           if (this.context === 'scriptQuery')
             this.modalConnectionInfo.modalTitle =
               'Choose Table(s) & Generate Script';
+          if (this.context === 'dashboardScript')
+            this.modalConnectionInfo.modalTitle =
+              'Choose Table(s) & Build Dashboard';
 
           this.modalConnectionInfo.database.documentburster.connection.code =
             selectedConnection.connectionCode;
@@ -1787,7 +1901,7 @@ export class ConnectionDetailsComponent implements OnInit {
           await this.loadErDiagram(selectedConnection.filePath);
           await this.loadUbiquitousLanguage(selectedConnection.filePath);
 
-          if (this.context === 'sqlQuery' || this.context === 'scriptQuery') {
+          if (this.context === 'sqlQuery' || this.context === 'scriptQuery' || this.context === 'dashboardScript') {
             //console.log(
             //  `this.domainGroupedSchemaExists = ${this.domainGroupedSchemaExists}`,
             //);

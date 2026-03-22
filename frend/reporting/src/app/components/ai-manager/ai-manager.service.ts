@@ -30,6 +30,18 @@ export interface PromptInfo {
 export class AiManagerService {
   constructor() { }
 
+  // Shared web component attribute instructions — used by both
+  // DASHBOARD_BUILD_LAYOUT and DASHBOARD_BUILD_STEP_BY_STEP_INSTRUCTIONS
+  // Uses [REPORT_CODE] and [API_BASE_URL] bracket placeholders that get replaced
+  // with real values at runtime via expandPromptWithVariables()
+  private static readonly DASHBOARD_WEB_COMPONENT_ATTRS = `Each web component needs these attributes:
+- \`report-code="[REPORT_CODE]"\` — the report identifier
+- \`api-base-url="[API_BASE_URL]"\` — the API endpoint
+- \`component-id="uniqueName"\` — must match the name used in \`ctx.reportData()\`
+
+Example: \`<rb-tabulator report-code="[REPORT_CODE]" api-base-url="[API_BASE_URL]" component-id="salesGrid"></rb-tabulator>\`
+Example: \`<rb-value report-code="[REPORT_CODE]" api-base-url="[API_BASE_URL]" component-id="atomicValues" field="revenue" format="currency"></rb-value>\``;
+
   // Shared HTML layout rules for dashboard prompts — used by both
   // DASHBOARD_BUILD_LAYOUT and DASHBOARD_BUILD_STEP_BY_STEP_INSTRUCTIONS
   private static readonly DASHBOARD_HTML_RULES = `1. **Visually self-contained** — this HTML will be injected into an existing page's DOM, so it MUST NOT leak styles or be affected by parent styles. Follow these CSS isolation rules strictly:
@@ -41,11 +53,299 @@ export class AiManagerService {
    - Do NOT use \`<link>\` tags, \`@import\`, or external stylesheets.
 2. **No JavaScript** — no \`<script>\` tags. The web components are self-initializing.
 3. **Layout with CSS Grid or Flexbox** — arrange components in a responsive dashboard layout. Use CSS Grid for the overall dashboard grid and Flexbox for smaller arrangements.
-4. **Add HTML context around components** — include headings, section titles, summary cards, KPI boxes, or any other HTML elements that make the dashboard informative and professional.
+4. **Add HTML context around components** — include headings, section titles, summary cards, KPI boxes, or any other HTML elements that make the dashboard informative and professional. **For single values (totals, counts, averages), use \`<rb-value>\` with \`component-id="atomicValues"\`** — do not use \`<rb-tabulator>\` just to display a single number.
 5. **Responsive design** — the dashboard should look good on different screen sizes. Use relative units and media queries where appropriate.
 6. **Visual identity — cohesive color theme** — pick a color palette that fits the business domain, not random or generic blue-gray. Define colors as CSS variables in the style block for consistency. Use a dominant neutral for backgrounds, one or two accent colors for KPIs and highlights, and subtle borders or separators. Avoid the default Bootstrap look — make intentional color choices. Avoid cliché AI aesthetics (purple gradients, neon glows).
 7. **Typography — clear hierarchy** — use font weight and size to create a clear visual hierarchy: dashboard title > section headings > KPI values > KPI labels > body text. KPI numbers should be large and bold — they are the first thing the eye hits. System fonts are fine but use them with intention — vary weight, size, and letter-spacing to create contrast. Do not use more than 2–3 font sizes; hierarchy comes from weight and spacing, not endless size variations.
 8. **Spacing and polish** — use generous, consistent spacing between sections — white space is a design tool, not wasted space. Cards and sections should have consistent padding, border-radius, and subtle shadows or borders. Align elements to a visible grid — nothing should look randomly placed. Small details matter: consistent border-radius values, subtle hover states on interactive elements, smooth color transitions.`;
+
+  // Shared DSL example — same content used in TABULATOR_DSL_CONFIGURE prompt and configuration.component.ts exampleTabulatorConfigScript
+  private static readonly TABULATOR_DSL_EXAMPLE = `/*
+ Tabulator Groovy DSL — minimal wrapper over tabulator.info API
+ All options map 1:1 to tabulator.info — no invented concepts.
+ Docs: https://tabulator.info/docs/6.3
+ Data comes from ctx.reportData by default — no need to specify it.
+*/
+
+tabulator {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // TABLE-LEVEL OPTIONS — flat, exactly as in tabulator.info
+  // Any tabulator.info option works here: layout, height, pagination, etc.
+  // ─────────────────────────────────────────────────────────────────────────────
+  layout "fitColumns"       // fitData|fitDataFill|fitDataStretch|fitDataTable|fitColumns
+  height "400px"            // table height (px, %, or number)
+  width "100%"              // table width
+  autoColumns false         // true = auto-generate columns from data
+  renderVertical "virtual"  // virtual|basic - virtual DOM rendering
+  renderHorizontal "basic"  // virtual|basic - horizontal rendering
+  layoutColumnsOnNewData true  // recalc column widths on new data
+
+  // Pagination (all tabulator.info pagination options supported)
+  // pagination true
+  // paginationSize 20
+  // paginationMode "local"  // "local" (default) or "remote" for server-side
+
+  // Server-side options (when working with large datasets)
+  // filterMode "local"      // "local" (default) or "remote" for server-side filtering
+  // sortMode "local"        // "local" (default) or "remote" for server-side sorting
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // COLUMN DEFINITIONS — mirrors tabulator.info column definition API
+  // Any tabulator.info column property works here.
+  // ─────────────────────────────────────────────────────────────────────────────
+  columns {
+    // Full-featured column example
+    column {
+      // Required
+      title "Name"
+      field "name"
+
+      // Alignment: hozAlign (left|center|right), vertAlign (top|middle|bottom)
+      hozAlign "left"
+      vertAlign "middle"
+      headerHozAlign "center"  // header text alignment
+
+      // Width: width, minWidth, maxWidth (px or number)
+      width 200
+      minWidth 100
+      maxWidth 400
+      widthGrow 1              // flex grow factor
+      widthShrink 1            // flex shrink factor
+
+      // Visibility & Layout
+      visible true             // false to hide column
+      frozen false             // true to freeze column (left/right)
+      responsive 0             // responsive priority (lower = hidden first)
+      resizable true           // user can resize column
+
+      // Sorting: sorter (string|number|alphanum|boolean|exists|date|time|datetime|array)
+      sorter "string"
+      sorterParams([])         // sorter-specific params
+      headerSort true          // enable header click sorting
+
+      // Filtering
+      headerFilter "input"     // input|number|list|textarea|tick|star|select|autocomplete
+      headerFilterParams([values: ["A", "B", "C"]])  // filter-specific params
+      headerFilterPlaceholder "Search..."
+
+      // Formatting: formatter (plaintext|textarea|html|money|image|link|datetime|tickCross|star|progress|etc)
+      formatter "plaintext"
+      formatterParams([:])     // formatter-specific params
+      cssClass "my-class"      // custom CSS class
+      tooltip true             // show cell tooltip
+
+      // Editing: editor (input|textarea|number|range|tick|star|select|autocomplete|date|time|datetime)
+      editor "input"
+      editorParams([:])        // editor-specific params
+      editable true            // cell is editable
+      validator "required"     // required|unique|integer|float|numeric|string|min|max|etc
+
+      // Header customization
+      headerTooltip "Column description"
+      headerVertical false     // rotate header text
+    }
+
+    // Compact shorthand examples
+    column { title "Age"; field "age"; hozAlign "right"; sorter "number"; formatter "number" }
+    column { title "Status"; field "status"; headerFilter "list"; headerFilterParams([values: ["Active", "Pending"]]) }
+    column { title "Amount"; field "amount"; formatter "money"; width 120 }
+  }
+}`;
+
+  // Shared DSL example — same content used in CHART_DSL_CONFIGURE prompt and configuration.component.ts exampleChartConfigScript
+  private static readonly CHART_DSL_EXAMPLE = `/*
+ Chart Groovy DSL - aligned 1:1 with Chart.js
+ Docs: https://www.chartjs.org/docs/latest/configuration/
+ Data comes from ctx.reportData by default - no need to specify it
+
+ Only TWO properties are DSL-specific: labelField and field.
+ Everything else is verbatim Chart.js vocabulary.
+*/
+
+chart {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CHART TYPE
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Types: line, bar, pie, doughnut, radar, polarArea, scatter, bubble
+  type 'bar'
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // DATA - mirrors Chart.js data { labels, datasets } structure
+  // ─────────────────────────────────────────────────────────────────────────────
+  data {
+    labelField 'region'               // DSL-only: which reportData column → X-axis labels
+
+    datasets {
+      // Full-featured dataset example
+      dataset {
+        // Core DSL property
+        field 'revenue'               // DSL-only: which reportData column → dataset values
+
+        // All other properties are native Chart.js dataset properties (passthrough via catch-all)
+        label 'Revenue'               // legend label
+        backgroundColor 'rgba(78, 121, 167, 0.5)'  // fill color (can use rgba)
+        borderColor '#4e79a7'         // line/border color
+        type 'bar'                    // override chart type for this dataset (mixed charts)
+
+        // Axis assignment (for multiple axes)
+        yAxisID 'y'                   // which Y axis to use
+        xAxisID 'x'                   // which X axis to use
+
+        // Line/Area chart options
+        borderWidth 2                 // line thickness
+        fill false                    // fill area under line (true|false|'origin'|'start'|'end')
+        tension 0.4                   // line curve tension (0 = straight, 1 = very curved)
+        pointRadius 4                 // data point size
+        pointStyle 'circle'           // circle|cross|crossRot|dash|line|rect|rectRounded|rectRot|star|triangle
+
+        // Display options
+        hidden false                  // hide dataset initially
+        order 0                       // drawing order (lower = drawn first)
+      }
+
+      // Compact shorthand examples (all properties are native Chart.js)
+      dataset field: 'sales', label: 'Sales', backgroundColor: '#4e79a7', borderColor: '#4e79a7'
+      dataset field: 'profit', label: 'Profit', backgroundColor: '#e15759', borderColor: '#e15759', type: 'line'
+      dataset field: 'cost', label: 'Cost', backgroundColor: '#59a14f', borderColor: '#59a14f', fill: true, tension: 0.3
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CHART.JS OPTIONS - full passthrough to Chart.js configuration
+  // ─────────────────────────────────────────────────────────────────────────────
+  options {
+    responsive true
+    maintainAspectRatio true
+
+    plugins {
+      title { display true; text 'Sales by Region' }
+      legend { position 'bottom' }    // top|bottom|left|right
+      tooltip { enabled true }
+      datalabels { display false }    // requires chartjs-plugin-datalabels
+    }
+
+    scales {
+      y {
+        beginAtZero true
+        title { display true; text 'Value' }
+        // For secondary axis: y2 { position 'right'; beginAtZero true }
+      }
+      x {
+        title { display true; text 'Region' }
+      }
+    }
+
+    // Animation
+    animation { duration 1000 }
+  }
+}`;
+
+  // Shared DSL example — same content used in PIVOT_TABLE_DSL_CONFIGURE prompt and configuration.component.ts examplePivotTableConfigScript
+  private static readonly PIVOT_TABLE_DSL_EXAMPLE = `/*
+ Pivot Table Groovy DSL
+ Docs: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
+ Data comes from ctx.reportData by default - no need to specify it
+*/
+
+pivotTable {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // ROW FIELDS - which columns to use as row headers (group by)
+  // ─────────────────────────────────────────────────────────────────────────────
+  rows 'region', 'country'
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // COLUMN FIELDS - which columns to pivot across horizontally
+  // ─────────────────────────────────────────────────────────────────────────────
+  cols 'year', 'quarter'
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // VALUE FIELDS - which columns to aggregate
+  // ─────────────────────────────────────────────────────────────────────────────
+  vals 'revenue'
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // AGGREGATOR - how to combine values
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Available aggregators:
+  // Count, Count Unique Values, List Unique Values, Sum, Integer Sum, Average, Median,
+  // Sample Variance, Sample Standard Deviation, Minimum, Maximum, First, Last,
+  // Sum over Sum, Sum as Fraction of Total, Sum as Fraction of Rows, Sum as Fraction of Columns,
+  // Count as Fraction of Total, Count as Fraction of Rows, Count as Fraction of Columns
+  aggregatorName 'Sum'
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDERER - how to display the pivot table
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Available renderers:
+  // Table, Table Heatmap, Table Col Heatmap, Table Row Heatmap, Exportable TSV
+  // (Plotly renderers if available: Grouped Column Chart, Stacked Column Chart, etc.)
+  rendererName 'Table'
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SORTING - row and column sort order
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Options: key_a_to_z (alphabetical), value_a_to_z (by value ascending), value_z_to_a (by value descending)
+  rowOrder 'key_a_to_z'
+  colOrder 'key_a_to_z'
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // VALUE FILTER - exclude specific values from the pivot
+  // ─────────────────────────────────────────────────────────────────────────────
+  valueFilter {
+    // Exclude specific values from a column
+    // filter 'status', exclude: ['Inactive', 'Pending']
+    // filter 'region', exclude: ['Unknown']
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // DERIVED ATTRIBUTES - compute new fields from existing data
+  // ─────────────────────────────────────────────────────────────────────────────
+  // derivedAttributes {
+  //   'Fiscal Quarter' 'dateFormat(orderDate, "%Y-Q%q")'   // 2024-Q3
+  //   'Year'           'dateFormat(orderDate, "%Y")'        // 2024
+  //   'Month'          'dateFormat(orderDate, "%Y-%m")'     // 2024-07
+  // }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CUSTOM SORTERS - control the display order of dimension values
+  // ─────────────────────────────────────────────────────────────────────────────
+  // sorters {
+  //   sorter 'priority', order: ['Critical', 'High', 'Medium', 'Low']
+  //   sorter 'region',   order: ['West', 'Central', 'East']
+  // }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // FIELD VISIBILITY - control which fields appear in the UI
+  // ─────────────────────────────────────────────────────────────────────────────
+  // hiddenAttributes 'id', 'internal_code'          // hide from everywhere
+  // hiddenFromAggregators 'name', 'description'     // hide from value dropdown
+  // hiddenFromDragDrop 'total'                      // hide from drag areas
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // OPTIONS - additional pivot table options
+  // ─────────────────────────────────────────────────────────────────────────────
+  options {
+    menuLimit 500                // max values to show in filter dropdowns
+    // unusedOrientationCutoff 85  // layout threshold: horizontal if fewer chars
+  }
+}`;
+
+  // Multi-component note — appended to DSL examples when used inside dashboard prompts
+  static readonly MULTI_COMPONENT_NOTE = `
+IMPORTANT — This is a Multi-Component Dashboard:
+A dashboard may contain tabulators, charts, and pivot tables in the same report.
+You MUST use the named (multi-component) form for ALL configurations:
+  tabulator('componentId') { ... }   NOT   tabulator { ... }
+  chart('componentId') { ... }       NOT   chart { ... }
+  pivotTable('componentId') { ... }  NOT   pivotTable { ... }
+The componentId must match across three places:
+  1. ctx.reportData('componentId', data) in the Groovy data script
+  2. component-id="componentId" attribute on the HTML web component
+  3. The named DSL block: tabulator('componentId') { ... }
+
+The Groovy data script below also reflects this multi-component pattern — each componentId has its own guarded data block.
+
+For more details and examples read: https://www.reportburster.com/docs/bi-analytics/performance-real-time#multi-component-reports`;
 
   // Repository of AI prompts
   prompts: Array<PromptInfo> = [
@@ -528,16 +828,57 @@ Generate only the complete HTML code based on the above instructions.`,
 [INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE DASHBOARD HERE]
 </REQUIREMENT>
 
+# Rules
+
+${AiManagerService.DASHBOARD_HTML_RULES}
+
+# Data Fetching Script
+
+The following Groovy script fetches data for the dashboard components. Use it to understand the available data, column names, and component IDs:
+
+[INSERT SCRIPT HERE]
+
 # Available Web Components
 
 The following web components are **self-initializing** — they automatically fetch their own data from the server. You only need to place them in the HTML with the correct attributes. **Do NOT add any <script> tags or JavaScript** — the components handle everything internally.
 
 [AVAILABLE_COMPONENTS]
 
-# Rules
+**Place components exactly as shown** — use the exact tag names and attributes from the "Available Web Components" section above. Do not modify attribute names or invent new ones.
 
-${AiManagerService.DASHBOARD_HTML_RULES}
-6. **Place components exactly as shown** — use the exact tag names and attributes from the "Available Web Components" section above. Do not modify attribute names or invent new ones.
+**Atomic Values:** If the data fetching script contains \`if (!componentId || componentId == 'atomicValues')\`, use \`<rb-value>\` elements with \`component-id="atomicValues"\` to display those values. Each \`<rb-value>\` picks one column via \`field\`. Multiple elements with the same componentId share one cached fetch. Supported \`format\`: \`currency\`, \`number\`, \`percent\`, \`date\`.
+
+Example — 4 KPI cards, 1 shared fetch:
+\`\`\`html
+<!-- All 4 share component-id="atomicValues" (1 fetch, cached), each picks a different field -->
+<div class="kpi-row">
+  <div class="kpi-card">
+    <p class="kpi-label">Revenue</p>
+    <p class="kpi-value">
+      <rb-value report-code="[REPORT_CODE]" api-base-url="[API_BASE_URL]" component-id="atomicValues" field="revenue" format="currency"></rb-value>
+    </p>
+  </div>
+  <div class="kpi-card">
+    <p class="kpi-label">Orders</p>
+    <p class="kpi-value">
+      <rb-value report-code="[REPORT_CODE]" api-base-url="[API_BASE_URL]" component-id="atomicValues" field="orders" format="number"></rb-value>
+    </p>
+  </div>
+  <div class="kpi-card">
+    <p class="kpi-label">Avg Order Value</p>
+    <p class="kpi-value">
+      <rb-value report-code="[REPORT_CODE]" api-base-url="[API_BASE_URL]" component-id="atomicValues" field="avgOrderValue" format="currency"></rb-value>
+    </p>
+  </div>
+  <div class="kpi-card">
+    <p class="kpi-label">Customers</p>
+    <p class="kpi-value">
+      <rb-value report-code="[REPORT_CODE]" api-base-url="[API_BASE_URL]" component-id="atomicValues" field="customers" format="number"></rb-value>
+    </p>
+  </div>
+</div>
+
+\`\`\`
 
 Generate only the complete HTML code for the dashboard template.`,
       tags: ['dashboard', 'html', 'web-components', 'layout'],
@@ -589,15 +930,19 @@ Start with your best suggestion — I will refine (with your help also) from the
 
 Database vendor: [DATABASE_VENDOR]
 
-The following JSON describes the relevant tables and columns available:
+The following describes the relevant tables and columns available:
 
-\`\`\`json
-[INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]
-\`\`\`
+[INSERT THE RELEVANT DATABASE SCHEMA HERE]
+
+For tables with full schema, the JSON contains table definitions with columns (data types), primary keys, and foreign keys.
+For tables listed by name only, you know these tables exist but do not have column details — if you need column details for specific tables, ask the user.
+You MUST use only the tables and columns present in the provided schema. Do not infer the existence of other tables or columns not listed.
 
 # Instructions
 
 Return the following numbered steps. Each step must include **complete, ready-to-use code** — no placeholders, no "add more here" comments. Every query, column reference, and table name must exist in the schema above — do not hallucinate columns or tables.
+
+**Multi-Component Reports:** A dashboard may contain multiple tabulators, charts, and/or pivot tables in the same report — use only the component types that serve the business need. You MUST use the **named (multi-component) DSL syntax** for all component configurations — \`tabulator('componentId') { ... }\`, \`chart('componentId') { ... }\`, \`pivotTable('componentId') { ... }\`. The componentId must match across three places: (1) \`ctx.reportData('componentId', data)\` in the data script, (2) the \`component-id\` attribute on the HTML web component, and (3) the named DSL block. Do NOT use the unnamed \`tabulator { ... }\` form — that is only for standalone single-component reports. For details see: https://www.reportburster.com/docs/bi-analytics/performance-real-time#multi-component-reports
 
 **Visual coherence across all components:** The HTML template, Tabulator tables, Charts, and Pivot Tables will render together as one dashboard. Their colors must be visually coherent — pick a unified color palette and carry it through: the CSS variables in the HTML layout, the Chart dataset backgroundColor/borderColor values, any Tabulator formatter colors, and Pivot Table renderer colors should all feel like they belong to the same dashboard. Do not pick colors in isolation per component.
 
@@ -614,6 +959,12 @@ def dbSql = ctx.dbSql
 
 def componentId = ctx.variables?.get('componentId')
 
+// Component: atomicValues — single query returning all KPI values as columns
+if (!componentId || componentId == 'atomicValues') {
+    def data = dbSql.rows("SELECT COUNT(*) AS totalOrders, SUM(amount) AS revenue, ... FROM ...")
+    ctx.reportData('atomicValues', data)
+}
+
 // Component: salesGrid (Tabulator)
 if (!componentId || componentId == 'salesGrid') {
     def data = dbSql.rows("SELECT ... FROM ...")
@@ -625,6 +976,12 @@ if (!componentId || componentId == 'revenueChart') {
     def data = dbSql.rows("SELECT ... FROM ...")
     ctx.reportData('revenueChart', data)
 }
+
+// Component: orderExplorer (Pivot Table)
+if (!componentId || componentId == 'orderExplorer') {
+    def data = dbSql.rows("SELECT ... FROM ...")
+    ctx.reportData('orderExplorer', data)
+}
 \`\`\`
 
 **Key rules:**
@@ -633,6 +990,7 @@ if (!componentId || componentId == 'revenueChart') {
 - Use \`ctx.dbSql\` for database access (connection is pre-configured)
 - Use \`ctx.reportData('componentName', data)\` to route data to each component
 - Each component name must match the \`component-id\` attribute in the HTML template
+- **Atomic values:** Use a single \`atomicValues\` component that returns all KPI metrics as columns in one row. Do NOT create separate components per KPI — one query, one \`ctx.reportData('atomicValues', data)\` call. In the HTML template (Step 3), use \`<rb-value>\` elements with \`component-id="atomicValues"\` and different \`field\` attributes to display each value.
 
 ---
 
@@ -676,39 +1034,27 @@ The SQL queries in Step 1 must use these parameters via \`ctx.variables\` to fil
 
 ## Step 3: HTML Dashboard Template
 
-Write the complete HTML template using \`<rb-tabulator>\`, \`<rb-chart>\`, \`<rb-pivot-table>\`, and \`<rb-parameters>\` web components.
+Write the complete HTML template using the web components your design requires — choose from \`<rb-value>\`, \`<rb-tabulator>\`, \`<rb-chart>\`, \`<rb-pivot-table>\`, and \`<rb-parameters>\`. Only include component types that earn their place in the dashboard.
 
 ${AiManagerService.DASHBOARD_HTML_RULES}
 
-Each web component needs these attributes:
-- \`report-code="REPORT_CODE"\` — the report identifier (will be configured by the system)
-- \`api-base-url="API_BASE_URL"\` — the API endpoint (will be configured by the system)
-- \`component-id="uniqueName"\` — must match the name used in \`ctx.reportData()\` in Step 1
+${AiManagerService.DASHBOARD_WEB_COMPONENT_ATTRS}
 
-Example: \`<rb-tabulator report-code="REPORT_CODE" api-base-url="API_BASE_URL" component-id="salesGrid"></rb-tabulator>\`
+**Atomic Values with \`<rb-value>\`:** For single-value displays (revenue totals, order counts, averages), use \`<rb-value>\` instead of \`<rb-tabulator>\`. The data script (Step 1) should have a \`ctx.reportData('atomicValues', data)\` block returning all values as columns in one row. Multiple \`<rb-value>\` elements sharing \`component-id="atomicValues"\` make only one HTTP request — each picks its column via \`field\`. Supported \`format\`: \`currency\` ($58,153), \`number\` (1,234), \`percent\` (73%), \`date\` (Mar 15, 2024), or omit for raw value.
 
 ---
 
 ## Step 4: Tabulator Configuration DSL
 
-For each \`<rb-tabulator>\` component, provide the Groovy DSL configuration:
+If your dashboard includes \`<rb-tabulator>\` components, provide the Groovy DSL configuration for each. Since a dashboard has multiple components, **always use the named form** \`tabulator('componentId') { ... }\` where the componentId matches the \`component-id\` attribute in the HTML template and the name used in \`ctx.reportData('componentId', data)\`.
 
 \`\`\`groovy
-tabulator {
-    columns [
-        [field: 'columnName', title: 'Display Title', sorter: 'string', headerFilter: 'input'],
-        [field: 'amount', title: 'Amount', sorter: 'number', formatter: 'money', formatterParams: [precision: 2]],
-    ]
-    options {
-        pagination 'local'
-        paginationSize 10
-        layout 'fitColumns'
-        responsiveLayout 'collapse'
-    }
-}
+${AiManagerService.TABULATOR_DSL_EXAMPLE}
 \`\`\`
 
-**Key options:** columns (field, title, sorter, formatter, headerFilter), pagination, paginationSize, layout (fitColumns/fitData/fitDataFill), height, theme (default/simple/midnight/modern), movableRows, selectableRows, groupBy, frozenRows, responsiveLayout.
+${AiManagerService.MULTI_COMPONENT_NOTE}
+
+**Key options:** All options are flat at the top level of \`tabulator('componentId') { }\` (no nested \`options {}\` block). columns (field, title, sorter, formatter, headerFilter), pagination, paginationSize, layout (fitColumns/fitData/fitDataFill), height, movableRows, selectableRows, groupBy, frozenRows, responsiveLayout.
 
 For full details: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
 
@@ -716,28 +1062,13 @@ For full details: https://www.reportburster.com/docs/bi-analytics/web-components
 
 ## Step 5: Chart Configuration DSL
 
-For each \`<rb-chart>\` component, provide the Groovy DSL configuration:
+If your dashboard includes \`<rb-chart>\` components, provide the Groovy DSL configuration for each. Since a dashboard has multiple components, **always use the named form** \`chart('componentId') { ... }\`.
 
 \`\`\`groovy
-chart {
-    type 'bar'
-    labelField 'categoryColumn'
-    series {
-        dataset('Series Name') {
-            valueField 'amountColumn'
-            backgroundColor 'rgba(54, 162, 235, 0.5)'
-            borderColor 'rgba(54, 162, 235, 1)'
-        }
-    }
-    options {
-        responsive true
-        plugins {
-            title { display true; text 'Chart Title' }
-            legend { position 'top' }
-        }
-    }
-}
+${AiManagerService.CHART_DSL_EXAMPLE}
 \`\`\`
+
+${AiManagerService.MULTI_COMPONENT_NOTE}
 
 **Supported chart types:** bar, line, pie, doughnut, radar, polarArea, horizontalBar, stackedBar, area, dualYAxis.
 
@@ -747,22 +1078,16 @@ For full details: https://www.reportburster.com/docs/bi-analytics/web-components
 
 ## Step 6: Pivot Table Configuration DSL
 
-For each \`<rb-pivot-table>\` component, provide the Groovy DSL configuration:
+If your dashboard includes \`<rb-pivot-table>\` components, provide the Groovy DSL configuration for each. Since a dashboard has multiple components, **always use the named form** \`pivotTable('componentId') { ... }\`.
 
 \`\`\`groovy
-pivotTable {
-    rows ['dimension1', 'dimension2']
-    cols ['dimension3']
-    vals ['measureField']
-    aggregatorName 'Sum'
-    rendererName 'Table'
-    rowOrder 'value_z_to_a'
-    colOrder 'key_a_to_z'
-}
+${AiManagerService.PIVOT_TABLE_DSL_EXAMPLE}
 \`\`\`
 
+${AiManagerService.MULTI_COMPONENT_NOTE}
+
 **Aggregators:** Sum, Count, Average, Minimum, Maximum, Count Unique Values, List Unique Values, Integer Sum, Sum over Sum.
-**Renderers:** Table, Table Barchart, Heatmap, Row Heatmap, Col Heatmap, Bar Chart, Line Chart, Area Chart, Scatter Chart.
+**Renderers:** Table, Table Heatmap, Table Col Heatmap, Table Row Heatmap, Exportable TSV.
 
 For full details: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
 
@@ -772,7 +1097,7 @@ For full details: https://www.reportburster.com/docs/bi-analytics/web-components
 - Data Tables: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
 - Charts: https://www.reportburster.com/docs/bi-analytics/web-components/charts
 - Pivot Tables: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
-- Performance / Real-Time: https://www.reportburster.com/docs/bi-analytics/performance-real-time
+- Multi-Component Dashboards / Performance / Real-Time: https://www.reportburster.com/docs/bi-analytics/performance-real-time
 
 Provide all steps with complete, production-ready code based on the user's requirements and the database schema provided.`,
       tags: ['dashboard', 'step-by-step', 'groovy', 'web-components', 'complete-guide'],
@@ -784,7 +1109,7 @@ Provide all steps with complete, production-ready code based on the user's requi
       title: 'Configure Report Parameters',
       description:
         'Generates a complete Report Parameters DSL configuration script based on user requirements.',
-      promptText: `You are an expert at configuring Report Parameters using the Groovy DSL for FlowKraft ReportBurster.
+      promptText: `You are an expert at configuring Report Parameters using the Groovy DSL for ReportBurster.
 
 <REQUIREMENT>
 [INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE REPORT PARAMETERS HERE]
@@ -920,68 +1245,14 @@ Return only the DSL script — no explanations.`,
       title: 'Configure Tabulator Table',
       description:
         'Generates a complete Tabulator DSL configuration script based on user requirements.',
-      promptText: `You are an expert at configuring Tabulator data tables using the Groovy DSL for FlowKraft ReportBurster. The DSL is a minimal wrapper over the tabulator.info API — all options map 1:1.
+      promptText: `You are an expert at configuring Tabulator data tables using the Groovy DSL for ReportBurster. The DSL is a minimal wrapper over the tabulator.info API — all options map 1:1.
 
 <REQUIREMENT>
 [INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE TABLE HERE]
 </REQUIREMENT>
 
 <EXAMPLE_DSL>
-/*
- Tabulator Groovy DSL — minimal wrapper over tabulator.info API
- All options map 1:1 to tabulator.info — no invented concepts.
- Docs: https://tabulator.info/docs/6.3
- Data comes from ctx.reportData by default — no need to specify it.
-*/
-
-tabulator {
-  layout "fitColumns"
-  height "400px"
-  width "100%"
-  autoColumns false
-  renderVertical "virtual"
-  renderHorizontal "basic"
-  layoutColumnsOnNewData true
-
-  columns {
-    column {
-      title "Name"
-      field "name"
-      hozAlign "left"
-      vertAlign "middle"
-      headerHozAlign "center"
-      width 200
-      minWidth 100
-      maxWidth 400
-      widthGrow 1
-      widthShrink 1
-      visible true
-      frozen false
-      responsive 0
-      resizable true
-      sorter "string"
-      sorterParams([])
-      headerSort true
-      headerFilter "input"
-      headerFilterParams([values: ["A", "B", "C"]])
-      headerFilterPlaceholder "Search..."
-      formatter "plaintext"
-      formatterParams([:])
-      cssClass "my-class"
-      tooltip true
-      editor "input"
-      editorParams([:])
-      editable true
-      validator "required"
-      headerTooltip "Column description"
-      headerVertical false
-    }
-
-    column { title "Age"; field "age"; hozAlign "right"; sorter "number"; formatter "number" }
-    column { title "Status"; field "status"; headerFilter "list"; headerFilterParams([values: ["Active", "Pending"]]) }
-    column { title "Amount"; field "amount"; formatter "money"; width 120 }
-  }
-}
+${AiManagerService.TABULATOR_DSL_EXAMPLE}
 </EXAMPLE_DSL>
 
 Generate a Tabulator DSL configuration script based on the requirement above. Use the example DSL as a reference for syntax.
@@ -992,7 +1263,9 @@ IMPORTANT — be minimalistic:
 - Only define columns the user asked for. Only add formatters, filters, sorters, or editors that the user explicitly needs.
 - Do not add options "just in case" or for completeness.
 
-For more details: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
+For more details and examples read: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
+
+[MULTI_COMPONENT_NOTE]
 
 Available data columns:
 [INSERT COLUMN NAMES HERE]
@@ -1012,70 +1285,14 @@ Return only the DSL script — no explanations.`,
       title: 'Configure Chart',
       description:
         'Generates a complete Chart DSL configuration script based on user requirements.',
-      promptText: `You are an expert at configuring Charts using the Groovy DSL for FlowKraft ReportBurster. The DSL is aligned with Chart.js — options pass through directly to the Chart.js configuration.
+      promptText: `You are an expert at configuring Charts using the Groovy DSL for ReportBurster. The DSL is aligned with Chart.js — options pass through directly to the Chart.js configuration.
 
 <REQUIREMENT>
 [INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE CHART HERE]
 </REQUIREMENT>
 
 <EXAMPLE_DSL>
-/*
- Chart Groovy DSL - aligned with Chart.js
- Docs: https://www.chartjs.org/docs/latest/configuration/
- Data comes from ctx.reportData by default - no need to specify it
-*/
-
-chart {
-  type 'bar'
-  labelField 'region'
-
-  series {
-    series {
-      field 'revenue'
-      label 'Revenue'
-      backgroundColor 'rgba(78, 121, 167, 0.5)'
-      borderColor '#4e79a7'
-      type 'bar'
-      yAxisID 'y'
-      xAxisID 'x'
-      borderWidth 2
-      fill false
-      tension 0.4
-      pointRadius 4
-      pointStyle 'circle'
-      hidden false
-      order 0
-    }
-
-    series field: 'sales', label: 'Sales', backgroundColor: '#4e79a7', borderColor: '#4e79a7'
-    series field: 'profit', label: 'Profit', backgroundColor: '#e15759', borderColor: '#e15759', type: 'line'
-    series field: 'cost', label: 'Cost', backgroundColor: '#59a14f', borderColor: '#59a14f', fill: true, tension: 0.3
-  }
-
-  options {
-    responsive true
-    maintainAspectRatio true
-
-    plugins {
-      title { display true; text 'Sales by Region' }
-      legend { position 'bottom' }
-      tooltip { enabled true }
-      datalabels { display false }
-    }
-
-    scales {
-      y {
-        beginAtZero true
-        title { display true; text 'Value' }
-      }
-      x {
-        title { display true; text 'Region' }
-      }
-    }
-
-    animation { duration 1000 }
-  }
-}
+${AiManagerService.CHART_DSL_EXAMPLE}
 </EXAMPLE_DSL>
 
 Generate a Chart DSL configuration script based on the requirement above. Use the example DSL as a reference for syntax.
@@ -1083,10 +1300,12 @@ Generate a Chart DSL configuration script based on the requirement above. Use th
 IMPORTANT — be minimalistic:
 - Chart.js default configuration is already good. Your job is to add ONLY the minimum extra configuration needed to match the user's specific requirement — nothing more.
 - Do not set options that repeat the default behavior (e.g. do not set responsive, maintainAspectRatio, animation, etc. unless the user specifically asked for non-default values).
-- Only define series the user asked for. Only add scales, plugins, or styling that the user explicitly needs.
+- Only define datasets the user asked for. Only add scales, plugins, or styling that the user explicitly needs.
 - Do not add options "just in case" or for completeness.
 
-For more details: https://www.reportburster.com/docs/bi-analytics/web-components/charts
+For more details and examples read: https://www.reportburster.com/docs/bi-analytics/web-components/charts
+
+[MULTI_COMPONENT_NOTE]
 
 Available data columns:
 [INSERT COLUMN NAMES HERE]
@@ -1106,49 +1325,14 @@ Return only the DSL script — no explanations.`,
       title: 'Configure Pivot Table',
       description:
         'Generates a complete Pivot Table DSL configuration script based on user requirements.',
-      promptText: `You are an expert at configuring Pivot Tables using the Groovy DSL for FlowKraft ReportBurster. The DSL is aligned with the react-pivottable API.
+      promptText: `You are an expert at configuring Pivot Tables using the Groovy DSL for ReportBurster.
 
 <REQUIREMENT>
 [INSERT USER'S NATURAL LANGUAGE DESCRIPTION OF THE PIVOT TABLE HERE]
 </REQUIREMENT>
 
 <EXAMPLE_DSL>
-/*
- Pivot Table Groovy DSL - aligned with react-pivottable API
- Docs: https://github.com/plotly/react-pivottable
- Data comes from ctx.reportData by default - no need to specify it
-*/
-
-pivotTable {
-  rows 'region', 'country'
-  cols 'year', 'quarter'
-  vals 'revenue'
-
-  // Available aggregators:
-  // Count, Count Unique Values, List Unique Values, Sum, Integer Sum, Average, Median,
-  // Sample Variance, Sample Standard Deviation, Minimum, Maximum, First, Last,
-  // Sum over Sum, Sum as Fraction of Total, Sum as Fraction of Rows, Sum as Fraction of Columns,
-  // Count as Fraction of Total, Count as Fraction of Rows, Count as Fraction of Columns
-  aggregatorName 'Sum'
-
-  // Available renderers:
-  // Table, Table Heatmap, Table Col Heatmap, Table Row Heatmap, Exportable TSV
-  // (Plotly renderers if available: Grouped Column Chart, Stacked Column Chart, etc.)
-  rendererName 'Table'
-
-  // Options: key_a_to_z (alphabetical), value_a_to_z (by value ascending), value_z_to_a (by value descending)
-  rowOrder 'key_a_to_z'
-  colOrder 'key_a_to_z'
-
-  valueFilter {
-    // filter 'status', exclude: ['Inactive', 'Pending']
-    // filter 'region', exclude: ['Unknown']
-  }
-
-  options {
-    menuLimit 500
-  }
-}
+${AiManagerService.PIVOT_TABLE_DSL_EXAMPLE}
 </EXAMPLE_DSL>
 
 Generate a Pivot Table DSL configuration script based on the requirement above. Use the example DSL as a reference for syntax.
@@ -1159,7 +1343,9 @@ IMPORTANT — be minimalistic:
 - Only specify rows, cols, vals, and aggregator that the user explicitly needs.
 - Do not add options "just in case" or for completeness.
 
-For more details: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
+For more details and examples read: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
+
+[MULTI_COMPONENT_NOTE]
 
 Available data columns:
 [INSERT COLUMN NAMES HERE]
@@ -1564,16 +1750,17 @@ Natural Language Request:
 [INSERT USER'S NATURAL LANGUAGE QUESTION OR INSTRUCTION FOR THE SQL QUERY HERE]
 </REQUIREMENT>
 
-Relevant Database Schema Subset:
+# Database Schema
 
-\`\`\`json
-[INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]
-\`\`\`
+Database vendor: [DATABASE_VENDOR]
 
-This JSON object contains an array of table definitions. Each table object details its name, columns (with data types), primary keys, and foreign keys.
-You MUST use only the tables and columns present in this provided schema subset. Do not infer the existence of other tables or columns.
+The following describes the relevant tables and columns available:
 
-Target Database Vendor: [DATABASE_VENDOR]
+[INSERT THE RELEVANT DATABASE SCHEMA HERE]
+
+For tables with full schema, the JSON contains table definitions with columns (data types), primary keys, and foreign keys.
+For tables listed by name only, you know these tables exist but do not have column details — if you need column details for specific tables, ask the user.
+You MUST use only the tables and columns present in the provided schema. Do not infer the existence of other tables or columns not listed.
 
 Generate SQL optimized for the specified database vendor. Use vendor-idiomatic syntax, functions, and quoting conventions (e.g., backticks for MySQL, double quotes for PostgreSQL, square brackets for SQL Server). If no vendor is specified, use standard ANSI SQL.
 
@@ -1687,16 +1874,17 @@ Provide **only** the final Groovy script in a single Markdown code block, with n
 [INSERT USER'S NATURAL LANGUAGE QUESTION OR INSTRUCTION FOR THE SQL QUERY HERE]
 </REQUIREMENT>
 
-Target Database Vendor: [DATABASE_VENDOR]
+# Database Schema
 
-Relevant Database Schema Subset:
+Database vendor: [DATABASE_VENDOR]
 
-\`\`\`json
-[INSERT THE JSON REPRESENTATION OF THE RELEVANT TABLE SUBSET HERE]
-\`\`\`
+The following describes the relevant tables and columns available:
 
-This JSON object contains an array of table definitions. Each table object details its name, columns (with data types), primary keys, and foreign keys.
-You MUST use only the tables and columns present in this provided schema subset. Do not infer the existence of other tables or columns.
+[INSERT THE RELEVANT DATABASE SCHEMA HERE]
+
+For tables with full schema, the JSON contains table definitions with columns (data types), primary keys, and foreign keys.
+For tables listed by name only, you know these tables exist but do not have column details — if you need column details for specific tables, ask the user.
+You MUST use only the tables and columns present in the provided schema. Do not infer the existence of other tables or columns not listed.
 
 The SQL queries embedded in the Groovy script must use syntax and functions idiomatic to the specified database vendor (e.g., backticks for MySQL, double quotes for PostgreSQL, square brackets for SQL Server, vendor-specific date/string functions). If no vendor is specified, use standard ANSI SQL.
 

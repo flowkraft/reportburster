@@ -1000,6 +1000,11 @@
       "NOTES": {
         "INNER-HTML": "This sample demonstrates <strong>ad-hoc report generation</strong> using <strong>report parameters</strong> — no database or file datasource needed. The user fills in parameter values (EmployeeID, FirstName, LastName) via the <strong>report parameters form</strong> in the UI, and the Groovy script reads them to build a single data row for the <strong>XSL-FO</strong> template to render as a <strong>PDF</strong>. <br/><br/>Use this example to learn how to define <strong>report parameters</strong> with default values and generate one-off documents (certificates, badges, invoices) from form values alone."
       }
+    },
+    "NORTHWIND-SALES-DASHBOARD": {
+      "NOTES": {
+        "INNER-HTML": "This is a ready-to-use <strong>Northwind Sales Dashboard</strong> — the same dashboard from the <a href='https://www.reportburster.com/docs/bi-analytics/dashboards' target='_blank'>Dashboards tutorial</a>. It combines <strong>KPI cards</strong>, <strong>charts</strong>, a <strong>data table</strong>, and a <strong>pivot table</strong> into a single interactive view powered by the <em>Sample Northwind SQLite</em> database. A <strong>Country</strong> filter lets you drill down by region. <br/><br/>Click <strong>Try It</strong> to open the live dashboard in your browser. To build your own, follow the step-by-step <a href='https://www.reportburster.com/docs/bi-analytics/dashboards' target='_blank'>tutorial</a>."
+      }
     }
   }
 }

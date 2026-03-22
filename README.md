@@ -6,13 +6,13 @@
   <img src=".github/screenshots/041_00_ai-driven-hei-ai-help-me-with-buttons.png" alt="ReportBurster — AI-Powered Data Exploration">
 </a>
 
-## The Modern Open-Source Successor to Crystal Reports and Tableau
+## Business Intelligence Done Right
 
 Your reporting and BI stack is 3 different tools stitched together. It doesn't have to be.
 
 <br>
 
-**One self-hosted BI platform for reports, dashboards, and AI-powered data exploration.** No glue code. No SaaS lock-in. Your data never leaves your infrastructure.
+**One self-hosted BI platform for reports, dashboards, and AI-powered data exploration.** No glue code. No SaaS lock-in. Your data stays on your own servers.
 
 <h3><a href="https://www.reportburster.com" target="_blank">Watch the demo video on reportburster.com &rarr;</a></h3>
 
@@ -22,12 +22,12 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 
 </div>
 
-## One Platform, Not Three
+## One Modern BI Platform, Not Three Legacy Ones
 
 | What you need | What you're using today | ReportBurster |
 |---|---|---|
 | **[Report generation](https://www.reportburster.com/docs/report-generation)** | Crystal Reports, SSRS, JasperReports | Pixel-perfect PDFs, Excel, HTML, Word from any data source |
-| **[BI dashboards](https://www.reportburster.com/docs/bi-analytics)** | Tableau, Power BI | Embeddable charts, pivot tables, and analytics |
+| **[BI dashboards](https://www.reportburster.com/docs/bi-analytics/dashboards)** | Tableau, Power BI | Embeddable charts, pivot tables, and analytics |
 | **[Data exploration](https://www.reportburster.com/docs/data-exploration)** | SQL Server Management Studio, Toad, manual SQL queries | Built-in Chat2DB web app — ask in natural language, get SQL, results, and visualizations |
 
 Also includes: [report bursting](https://www.reportburster.com/docs/report-bursting) | [self-service document portals](https://www.reportburster.com/docs/document-portal) | [AI agents](https://www.reportburster.com/docs/ai-crew/the-team)
@@ -50,19 +50,19 @@ Also includes: [report bursting](https://www.reportburster.com/docs/report-burst
 
 **BI Dashboards** — embeddable charts, pivot tables, and analytics
 
-<a href="https://www.reportburster.com/docs/bi-analytics/web-components/charts" target="_blank">
-  <img src=".github/screenshots/030-rb-chart.png" alt="BI Dashboards — Monthly Sales Trend Chart">
+<a href="https://www.reportburster.com/docs/bi-analytics/dashboards" target="_blank">
+  <img src=".github/screenshots/095-rb-dash-northwind-final-browser.png" alt="BI Dashboards — Monthly Sales Trend Chart">
 </a>
 
-**Data Exploration** — ask a question in plain English, get SQL and results
+**Data Exploration** — ask a question in plain English, get SQL, results and charts
 
 <a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
-  <img src=".github/screenshots/000_74_chat2db-athena-top-3-customers-3.png" alt="Data Exploration — AI-Powered SQL Query and Results">
+  <img src=".github/screenshots/000_78_chat2db-athena-top-3-pie-chart-5.png" alt="Data Exploration — AI-Powered SQL Query and Results">
 </a>
 
 ## Works With All Major Databases
 
-<a href="https://www.reportburster.com/docs/data-exploration" target="_blank">
+<a href="https://www.reportburster.com/docs/data-exploration/database-connections" target="_blank">
   <img src=".github/screenshots/042_00_ai-driven-db-conn-new.png" alt="Database Connections — Oracle, SQL Server, PostgreSQL, MySQL, MariaDB, IBM Db2, SQLite, DuckDB, ClickHouse, Supabase">
 </a>
 
@@ -72,9 +72,7 @@ We welcome contributions! Whether it's bug reports, feature requests, documentat
 
 - **Bug reports & feature requests:** [Open an issue](https://github.com/flowkraft/reportburster/issues)
 
-## License
-
-ReportBurster is licensed under the **[Server Side Public License (SSPL)](LICENSE.md)**.
+## All Features Are Included
 
 **Start using it today with no artificial restrictions — all features are included. No community vs. enterprise editions.**
 
@@ -82,7 +80,6 @@ ReportBurster is licensed under the **[Server Side Public License (SSPL)](LICENS
 
 <div align="center">
 
-[![License: SSPL](https://img.shields.io/badge/License-SSPL-blue.svg)](LICENSE.md)
 [![GitHub Stars](https://img.shields.io/github/stars/flowkraft/reportburster?style=social)](https://github.com/flowkraft/reportburster/stargazers)
 
 <sub>If ReportBurster helps you, consider giving it a star — it helps others discover the project.</sub>

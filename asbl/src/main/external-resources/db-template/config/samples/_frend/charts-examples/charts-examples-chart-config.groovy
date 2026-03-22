@@ -5,6 +5,25 @@
  * Any configuration that Chart.js supports works here in the most direct/intuitive way possible.
  * Use these examples together with the Chart.js docs for the full picture.
  *
+ * The DSL mirrors Chart.js structure 1:1:
+ *   chart {
+ *     type '...'
+ *     data {
+ *       labelField '...'        ← DSL-only: which reportData column → labels
+ *       datasets {
+ *         dataset {
+ *           field '...'          ← DSL-only: which reportData column → data
+ *           label '...'          ← everything else is native Chart.js
+ *           backgroundColor '...'
+ *         }
+ *       }
+ *     }
+ *     options { ... }            ← native Chart.js options
+ *   }
+ *
+ * Only TWO properties are DSL-specific: labelField and field.
+ * Everything else is verbatim Chart.js vocabulary.
+ *
  * ⚠️  IMPORTANT — These examples use named blocks as a SHOWCASE CONVENIENCE only
  *
  * ALL examples use chart('name') { ... } because they are packed into a
@@ -16,9 +35,11 @@
  *
  *   chart {               ← no name, no quotes, no parentheses
  *     type 'bar'
- *     labelField 'Month'
- *     series {
- *       series { field 'Revenue'; label 'Revenue ($)'; backgroundColor '#4e79a7' }
+ *     data {
+ *       labelField 'Month'
+ *       datasets {
+ *         dataset { field 'Revenue'; label 'Revenue ($)'; backgroundColor '#4e79a7' }
+ *       }
  *     }
  *   }
  *
@@ -42,16 +63,18 @@
 // ─────────────────────────────────────────────────────────────────────────────
 chart('monthlySalesTrend') {
   type 'line'
-  labelField 'Month'
-  series {
-    series {
-      field 'Revenue'
-      label 'Monthly Revenue ($)'
-      borderColor '#4e79a7'
-      backgroundColor 'rgba(78, 121, 167, 0.1)'
-      tension 0.3
-      borderWidth 2
-      pointRadius 4
+  data {
+    labelField 'Month'
+    datasets {
+      dataset {
+        field 'Revenue'
+        label 'Monthly Revenue ($)'
+        borderColor '#4e79a7'
+        backgroundColor 'rgba(78, 121, 167, 0.1)'
+        tension 0.3
+        borderWidth 2
+        pointRadius 4
+      }
     }
   }
   options {
@@ -75,14 +98,16 @@ chart('monthlySalesTrend') {
 // ─────────────────────────────────────────────────────────────────────────────
 chart('salesByRegion') {
   type 'bar'
-  labelField 'Region'
-  series {
-    series {
-      field 'Sales'
-      label 'Total Sales ($)'
-      backgroundColor 'rgba(78, 121, 167, 0.7)'
-      borderColor '#4e79a7'
-      borderWidth 1
+  data {
+    labelField 'Region'
+    datasets {
+      dataset {
+        field 'Sales'
+        label 'Total Sales ($)'
+        backgroundColor 'rgba(78, 121, 167, 0.7)'
+        borderColor '#4e79a7'
+        borderWidth 1
+      }
     }
   }
   options {
@@ -106,21 +131,23 @@ chart('salesByRegion') {
 // ─────────────────────────────────────────────────────────────────────────────
 chart('revenueVsExpenses') {
   type 'bar'
-  labelField 'Quarter'
-  series {
-    series {
-      field 'Revenue'
-      label 'Revenue'
-      backgroundColor 'rgba(78, 121, 167, 0.7)'
-      borderColor '#4e79a7'
-      borderWidth 1
-    }
-    series {
-      field 'Expenses'
-      label 'Expenses'
-      backgroundColor 'rgba(225, 87, 89, 0.7)'
-      borderColor '#e15759'
-      borderWidth 1
+  data {
+    labelField 'Quarter'
+    datasets {
+      dataset {
+        field 'Revenue'
+        label 'Revenue'
+        backgroundColor 'rgba(78, 121, 167, 0.7)'
+        borderColor '#4e79a7'
+        borderWidth 1
+      }
+      dataset {
+        field 'Expenses'
+        label 'Expenses'
+        backgroundColor 'rgba(225, 87, 89, 0.7)'
+        borderColor '#e15759'
+        borderWidth 1
+      }
     }
   }
   options {
@@ -148,12 +175,14 @@ chart('revenueVsExpenses') {
 // ─────────────────────────────────────────────────────────────────────────────
 chart('expenseBreakdown') {
   type 'pie'
-  labelField 'Category'
-  series {
-    series {
-      field 'Amount'
-      label 'Expenses'
-      backgroundColor(['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'])
+  data {
+    labelField 'Category'
+    datasets {
+      dataset {
+        field 'Amount'
+        label 'Expenses'
+        backgroundColor(['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'])
+      }
     }
   }
   options {
@@ -174,30 +203,32 @@ chart('expenseBreakdown') {
 // ─────────────────────────────────────────────────────────────────────────────
 chart('revenueAndProfitMargin') {
   type 'bar'
-  labelField 'Quarter'
-  series {
-    series {
-      field 'Revenue'
-      label 'Revenue ($)'
-      backgroundColor 'rgba(78, 121, 167, 0.7)'
-      borderColor '#4e79a7'
-      borderWidth 1
-      yAxisID 'y'
-      order 1
-    }
-    series {
-      field 'ProfitMargin'
-      label 'Profit Margin (%)'
-      type 'line'
-      borderColor '#e15759'
-      backgroundColor 'rgba(225, 87, 89, 0.1)'
-      borderWidth 3
-      pointRadius 5
-      pointStyle 'circle'
-      tension 0.3
-      fill false
-      yAxisID 'y1'
-      order 0
+  data {
+    labelField 'Quarter'
+    datasets {
+      dataset {
+        field 'Revenue'
+        label 'Revenue ($)'
+        backgroundColor 'rgba(78, 121, 167, 0.7)'
+        borderColor '#4e79a7'
+        borderWidth 1
+        yAxisID 'y'
+        order 1
+      }
+      dataset {
+        field 'ProfitMargin'
+        label 'Profit Margin (%)'
+        type 'line'
+        borderColor '#e15759'
+        backgroundColor 'rgba(225, 87, 89, 0.1)'
+        borderWidth 3
+        pointRadius 5
+        pointStyle 'circle'
+        tension 0.3
+        fill false
+        yAxisID 'y1'
+        order 0
+      }
     }
   }
   options {
@@ -233,22 +264,24 @@ chart('revenueAndProfitMargin') {
 // ─────────────────────────────────────────────────────────────────────────────
 chart('quarterlyRevenueByProduct') {
   type 'bar'
-  labelField 'Quarter'
-  series {
-    series {
-      field 'Software'
-      label 'Software'
-      backgroundColor 'rgba(78, 121, 167, 0.8)'
-    }
-    series {
-      field 'Services'
-      label 'Professional Services'
-      backgroundColor 'rgba(242, 142, 43, 0.8)'
-    }
-    series {
-      field 'Support'
-      label 'Support & Maintenance'
-      backgroundColor 'rgba(89, 161, 79, 0.8)'
+  data {
+    labelField 'Quarter'
+    datasets {
+      dataset {
+        field 'Software'
+        label 'Software'
+        backgroundColor 'rgba(78, 121, 167, 0.8)'
+      }
+      dataset {
+        field 'Services'
+        label 'Professional Services'
+        backgroundColor 'rgba(242, 142, 43, 0.8)'
+      }
+      dataset {
+        field 'Support'
+        label 'Support & Maintenance'
+        backgroundColor 'rgba(89, 161, 79, 0.8)'
+      }
     }
   }
   options {
@@ -279,13 +312,15 @@ chart('quarterlyRevenueByProduct') {
 // ─────────────────────────────────────────────────────────────────────────────
 chart('portfolioAllocation') {
   type 'doughnut'
-  labelField 'AssetClass'
-  series {
-    series {
-      field 'Allocation'
-      label 'Portfolio Weight (%)'
-      backgroundColor(['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'])
-      borderWidth 2
+  data {
+    labelField 'AssetClass'
+    datasets {
+      dataset {
+        field 'Allocation'
+        label 'Portfolio Weight (%)'
+        backgroundColor(['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'])
+        borderWidth 2
+      }
     }
   }
   options {
@@ -308,26 +343,28 @@ chart('portfolioAllocation') {
 // ─────────────────────────────────────────────────────────────────────────────
 chart('budgetVsActual') {
   type 'line'
-  labelField 'Month'
-  series {
-    series {
-      field 'Budget'
-      label 'Budget'
-      borderColor '#4e79a7'
-      backgroundColor 'rgba(78, 121, 167, 0.3)'
-      fill 'origin'
-      tension 0.4
-      pointRadius 3
-    }
-    series {
-      field 'Actual'
-      label 'Actual Spending'
-      borderColor '#e15759'
-      borderDash([5, 5])
-      borderWidth 2
-      fill false
-      pointRadius 4
-      pointStyle 'circle'
+  data {
+    labelField 'Month'
+    datasets {
+      dataset {
+        field 'Budget'
+        label 'Budget'
+        borderColor '#4e79a7'
+        backgroundColor 'rgba(78, 121, 167, 0.3)'
+        fill 'origin'
+        tension 0.4
+        pointRadius 3
+      }
+      dataset {
+        field 'Actual'
+        label 'Actual Spending'
+        borderColor '#e15759'
+        borderDash([5, 5])
+        borderWidth 2
+        fill false
+        pointRadius 4
+        pointStyle 'circle'
+      }
     }
   }
   options {
@@ -352,14 +389,16 @@ chart('budgetVsActual') {
 // ─────────────────────────────────────────────────────────────────────────────
 chart('topCustomersByRevenue') {
   type 'bar'
-  labelField 'Customer'
-  series {
-    series {
-      field 'Revenue'
-      label 'Revenue ($)'
-      backgroundColor 'rgba(89, 161, 79, 0.7)'
-      borderColor '#59a14f'
-      borderWidth 1
+  data {
+    labelField 'Customer'
+    datasets {
+      dataset {
+        field 'Revenue'
+        label 'Revenue ($)'
+        backgroundColor 'rgba(89, 161, 79, 0.7)'
+        borderColor '#59a14f'
+        borderWidth 1
+      }
     }
   }
   options {
@@ -388,23 +427,25 @@ chart('topCustomersByRevenue') {
 // ─────────────────────────────────────────────────────────────────────────────
 chart('employeePerformance') {
   type 'radar'
-  labelField 'Skill'
-  series {
-    series {
-      field 'EmployeeScore'
-      label 'Employee'
-      borderColor '#4e79a7'
-      backgroundColor 'rgba(78, 121, 167, 0.2)'
-      pointRadius 4
-      pointStyle 'rectRot'
-    }
-    series {
-      field 'TeamAverage'
-      label 'Team Average'
-      borderColor '#e15759'
-      backgroundColor 'rgba(225, 87, 89, 0.2)'
-      pointRadius 4
-      pointStyle 'circle'
+  data {
+    labelField 'Skill'
+    datasets {
+      dataset {
+        field 'EmployeeScore'
+        label 'Employee'
+        borderColor '#4e79a7'
+        backgroundColor 'rgba(78, 121, 167, 0.2)'
+        pointRadius 4
+        pointStyle 'rectRot'
+      }
+      dataset {
+        field 'TeamAverage'
+        label 'Team Average'
+        borderColor '#e15759'
+        backgroundColor 'rgba(225, 87, 89, 0.2)'
+        pointRadius 4
+        pointStyle 'circle'
+      }
     }
   }
   options {
@@ -432,12 +473,14 @@ chart('employeePerformance') {
 // ─────────────────────────────────────────────────────────────────────────────
 chart('customerSatisfaction') {
   type 'polarArea'
-  labelField 'Channel'
-  series {
-    series {
-      field 'SatisfactionScore'
-      label 'CSAT Score'
-      backgroundColor(['rgba(78,121,167,0.6)', 'rgba(242,142,43,0.6)', 'rgba(225,87,89,0.6)', 'rgba(118,183,178,0.6)', 'rgba(89,161,79,0.6)'])
+  data {
+    labelField 'Channel'
+    datasets {
+      dataset {
+        field 'SatisfactionScore'
+        label 'CSAT Score'
+        backgroundColor(['rgba(78,121,167,0.6)', 'rgba(242,142,43,0.6)', 'rgba(225,87,89,0.6)', 'rgba(118,183,178,0.6)', 'rgba(89,161,79,0.6)'])
+      }
     }
   }
   options {

@@ -95,22 +95,16 @@ export class ReportingService {
 
   async processGroovyParametersDsl(
     groovyDslCode: string,
+    connectionCode?: string,
   ): Promise<ReportParameter[]> {
-    //console.log('Processing Groovy DSL parameters:', {
-    //  code: groovyDslCode,
-    //  configPath: this.settingsService.currentConfigurationTemplatePath,
-    //});
-
     try {
-      const result = await this.apiService.post(
-        '/jobman/reporting/parse-parameters',
-        groovyDslCode,
-      );
-
-      //console.log('Received parameters from backend:', result);
+      let url = '/jobman/reporting/parse-parameters';
+      if (connectionCode) {
+        url += `?connectionCode=${encodeURIComponent(connectionCode)}`;
+      }
+      const result = await this.apiService.post(url, groovyDslCode);
       return result;
     } catch (error) {
-      //console.error('Error processing Groovy DSL:', error);
       throw error;
     }
   }
