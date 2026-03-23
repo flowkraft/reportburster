@@ -46,19 +46,19 @@ ReportBurster ships with many ready-to-run samples — report bursting, report g
 
 ## Screenshots
 
-**Report Generation** — generate and distribute pixel-perfect output files
+### **Report Generation** — generate and distribute pixel-perfect output files
 
 <a href="https://www.reportburster.com/docs/report-generation" target="_blank">
   <img src=".github/screenshots/044_10_ai-driven-report-execution.png" alt="Report Generation — AI-Driven Report Execution">
 </a>
 
-**BI Dashboards** — embeddable charts, pivot tables, and analytics
+### **BI Dashboards** — embeddable charts, pivot tables, and analytics
 
 <a href="https://www.reportburster.com/docs/bi-analytics/dashboards" target="_blank">
   <img src=".github/screenshots/100_10_web-components-dashboard-example.png" alt="ReportBurster BI Dashboards">
 </a>
 
-**Data Exploration** — ask a question in plain English, get SQL, results and charts
+### **Data Exploration** — ask a question in plain English, get SQL, results and charts
 
 <a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
   <img src=".github/screenshots/000_78_chat2db-athena-top-3-pie-chart-5.png" alt="Data Exploration — AI-Powered SQL Query and Results">
