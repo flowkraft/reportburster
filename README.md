@@ -55,7 +55,7 @@ ReportBurster ships with many ready-to-run samples — report bursting, report g
 **BI Dashboards** — embeddable charts, pivot tables, and analytics
 
 <a href="https://www.reportburster.com/docs/bi-analytics/dashboards" target="_blank">
-  <img src=".github/screenshots/095-rb-dash-northwind-final-browser.png" alt="BI Dashboards — Monthly Sales Trend Chart">
+  <img src=".github/screenshots/100_10_web-components-dashboard-example.png" alt="ReportBurster BI Dashboards">
 </a>
 
 **Data Exploration** — ask a question in plain English, get SQL, results and charts
