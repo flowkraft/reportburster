@@ -32,6 +32,10 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 
 Also includes: [report bursting](https://www.reportburster.com/docs/report-bursting) | [self-service document portals](https://www.reportburster.com/docs/document-portal) | [AI agents](https://www.reportburster.com/docs/ai-crew/the-team)
 
+## See Samples
+
+ReportBurster ships with many ready-to-run samples — report bursting, report generation, interactive dashboards, pivot tables, and more. **[See all samples](https://www.reportburster.com/docs/samples)**
+
 ## Quick Start
 
 **Get up and running in 5 minutes:**

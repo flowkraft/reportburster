@@ -61,7 +61,7 @@ export class AppsManagerService {
         icon: 'fa fa-cube',
         category: 'Full-Stack Apps',
         type: 'docker',
-        description: 'Build admin panels and self-service portals using Grails — our <em>recommended stack</em> for consistency with ReportBurster\'s scripting and backend. Create custom apps with real-time analytics dashboards (DuckDB/ClickHouse OLAP), secure document distribution (payslips, invoices with payments, student portals), and interactive data visualization.',
+        description: 'Build admin panels and self-service portals using Grails — our <em>default stack</em> for consistency with ReportBurster\'s scripting and backend. Create custom apps with real-time analytics dashboards (DuckDB/ClickHouse OLAP), secure document distribution (payslips, invoices with payments, student portals), and interactive data visualization.',
         url: 'http://localhost:8400',
         launchLinks: [
           { label: 'Front-Facing Area /', url: 'http://localhost:8400', icon: 'fa fa-globe' },

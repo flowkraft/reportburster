@@ -37,6 +37,7 @@ class AdminController {
     /**
      * Settings page - loads current settings from DB
      */
+    @Transactional
     def settings() {
         // Get all settings grouped by category
         def companySettings = Setting.getByCategory('company')

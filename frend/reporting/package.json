@@ -37,7 +37,7 @@
     "custom:start-server-and-ui-web": "npx gulp utils:start-server-and-ui-web",
     "custom:start-server-and-ui-both": "npx gulp utils:start-server-and-ui-both",
     "custom:start-server-and-e2e-electron": "npm run custom:clean-testground && npx gulp utils:start-server-and-e2e-electron",
-    "custom:start-server-and-e2e-electron-grep": "npm run custom:clean-testground && cross-env \"E2E_GREP=should work correctly .19_northwind_sales_pivottable.\" npx gulp utils:start-server-and-e2e-electron",
+    "custom:start-server-and-e2e-electron-grep": "npm run custom:clean-testground && cross-env \"E2E_GREP=.supabase. should generate FOP2PDF report from SQL datasource and transformation .WITH parameters.|.supabase. should generate XLSX report from Groovy script datasource .WITH parameters.\" npx gulp utils:start-server-and-e2e-electron",
     "custom:start-server-and-e2e-web": "npm run custom:clean-testground && npx gulp utils:start-server-and-e2e-web",
     "custom:e2e-rename-ts2ignore": "cd e2e && npx renamer --find .spec.ts --replace .spec.ignore **",
     "custom:e2e-rename-ignore2ts": "cd e2e && npx renamer --find .spec.ignore --replace .spec.ts **",
