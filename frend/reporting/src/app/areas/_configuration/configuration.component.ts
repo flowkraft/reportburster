@@ -2344,7 +2344,8 @@ export class ConfigurationComponent implements OnInit {
         && htmlContent
         && (htmlContent.includes('<rb-tabulator') || htmlContent.includes('<rb-chart')
             || htmlContent.includes('<rb-pivot-table') || htmlContent.includes('<rb-parameters'))) {
-      const scriptTag = '<script src="/rb-webcomponents/rb-webcomponents.umd.js"><\/script>';
+      const wcBaseUrl = this.getWebComponentsBaseUrl();
+      const scriptTag = `<script src="${wcBaseUrl}/rb-webcomponents.umd.js"><\/script>`;
       if (htmlContent.includes('</body>')) {
         htmlContent = htmlContent.replace('</body>', scriptTag + '</body>');
       } else {
@@ -2458,7 +2459,7 @@ export class ConfigurationComponent implements OnInit {
 
     // Case 1: Direct path provided (from editor "View in Browser" button)
     if (templatePath) {
-      const url = `/api/cfgman/rb/view-template?path=${encodeURIComponent(templatePath)}`;
+      const url = `${this.apiService.BACKEND_URL}/cfgman/rb/view-template?path=${encodeURIComponent(templatePath)}`;
       window.open(url, '_blank');
       return;
     }
@@ -2479,7 +2480,7 @@ export class ConfigurationComponent implements OnInit {
     }
 
     // Use the new view-template endpoint specifically designed for browser viewing
-    const url = `/api/cfgman/rb/view-template?path=${encodeURIComponent(templateObjectPath)}`;
+    const url = `${this.apiService.BACKEND_URL}/cfgman/rb/view-template?path=${encodeURIComponent(templateObjectPath)}`;
     window.open(url, '_blank');
   }
 
