@@ -212,7 +212,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		content = content.replace("output.none", "output.docx");
 
 		content = content.replace("<documentpath/>",
-				"<documentpath>/samples/reports/payslips/payslips-template.docx</documentpath>");
+				"<documentpath>samples/reports/payslips/payslips-template.docx</documentpath>");
 
 		newFile = new File(payslipsGenerateOnlyDocxReportingXmlConfigFilePath);
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
@@ -248,7 +248,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		content = content.replace("output.none", "output.html");
 
 		content = content.replace("<documentpath/>",
-				"<documentpath>/samples/reports/payslips/payslips-template.html</documentpath>");
+				"<documentpath>samples/reports/payslips/payslips-template.html</documentpath>");
 
 		newFile = new File(payslipsGenerateOnlyHtmlReportingXmlConfigFilePath);
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
@@ -285,7 +285,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		content = content.replace("output.none", "output.pdf");
 
 		content = content.replace("<documentpath/>",
-				"<documentpath>/samples/reports/payslips/payslips-template.html</documentpath>");
+				"<documentpath>samples/reports/payslips/payslips-template.html</documentpath>");
 
 		newFile = new File(payslipsGenerateOnlyPdfReportingXmlConfigFilePath);
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
@@ -324,7 +324,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		content = content.replace("output.none", "output.xlsx");
 
 		content = content.replace("<documentpath/>",
-				"<documentpath>/samples/reports/payslips/payslips-template-excel.html</documentpath>");
+				"<documentpath>samples/reports/payslips/payslips-template-excel.html</documentpath>");
 
 		newFile = new File(payslipsGenerateOnlyExcelReportingXmlConfigFilePath);
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
@@ -362,7 +362,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		content = content.replace("output.none", "output.xlsx");
 
 		content = content.replace("<documentpath/>",
-				"<documentpath>/samples/reports/payslips/payslips-template-excel.html</documentpath>");
+				"<documentpath>samples/reports/payslips/payslips-template-excel.html</documentpath>");
 
 		newFile = new File(payslipsGenerateOnlyExcelReportingXlsxDatasourceXmlConfigFilePath);
 		FileUtils.writeStringToFile(newFile, content, "UTF-8");
@@ -411,7 +411,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		content = content.replaceAll("(?s)output\\.none", "output.fop2pdf");
 		// document path -> FO template we will copy below
 		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
-				"<documentpath>/samples/reports/northwind/student-profiles-template.xsl</documentpath>");
+				"<documentpath>samples/reports/northwind/student-profiles-template.xsl</documentpath>");
 		// connection to sample northwind sqlite DB
 		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
 				"<conncode>rbt-sample-northwind-sqlite-4f2</conncode>");
@@ -528,7 +528,7 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// handle both self-closing and empty/whitespace variants for <documentpath>
 		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
-				"<documentpath>/samples/reports/northwind/customer-statement-template.html</documentpath>");
+				"<documentpath>samples/reports/northwind/customer-statement-template.html</documentpath>");
 
 		// set connection to sample northwind sqlite DB (matches other samples)
 		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
@@ -602,7 +602,7 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// handle both self-closing and empty/whitespace variants for <documentpath>
 		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
-				"<documentpath>/samples/reports/northwind/customer-sales-template-excel.html</documentpath>");
+				"<documentpath>samples/reports/northwind/customer-sales-template-excel.html</documentpath>");
 
 		content = content.replaceAll("(?s)<conncode\\s*/>|<conncode>\\s*</conncode>",
 				"<conncode>rbt-sample-northwind-sqlite-4f2</conncode>");
@@ -679,7 +679,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		content = content.replaceAll("(?s)output\\.none", "output.html");
 		// set document path to packaged template
 		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
-				"<documentpath>/samples/reports/northwind/scriptedReport-invoice-template.html</documentpath>");
+				"<documentpath>samples/reports/northwind/scriptedReport-invoice-template.html</documentpath>");
 
 		FileUtils.writeStringToFile(new File(scriptedInvoiceReportingFilePath), content, "UTF-8");
 
@@ -747,7 +747,7 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// set document path to packaged template (we will copy it below)
 		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
-				"<documentpath>/samples/reports/northwind/scriptedReport-crosstab-template.html</documentpath>");
+				"<documentpath>samples/reports/northwind/scriptedReport-crosstab-template.html</documentpath>");
 
 		FileUtils.writeStringToFile(new File(crosstabReportingFilePath), content, "UTF-8");
 
@@ -814,7 +814,7 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// set document path to packaged template (we will copy it below)
 		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
-				"<documentpath>/samples/reports/northwind/scriptedReport-trend-template.html</documentpath>");
+				"<documentpath>samples/reports/northwind/scriptedReport-trend-template.html</documentpath>");
 
 		FileUtils.writeStringToFile(new File(trendReportingFilePath), content, "UTF-8");
 
@@ -904,7 +904,7 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// set document path to packaged template
 		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
-				"<documentpath>/samples/reports/northwind/scriptedReport-scorecard-template.html</documentpath>");
+				"<documentpath>samples/reports/northwind/scriptedReport-scorecard-template.html</documentpath>");
 
 		FileUtils.writeStringToFile(new File(scorecardReportingFilePath), content, "UTF-8");
 
@@ -1073,7 +1073,7 @@ public class NoExeAssembler extends AbstractAssembler {
 
 		// document path -> HTML template (relative to config sample dir)
 		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
-				"<documentpath>/samples/reports/northwind/g-dashboard-template.html</documentpath>");
+				"<documentpath>samples/reports/northwind/g-dashboard-template.html</documentpath>");
 
 		FileUtils.writeStringToFile(new File(dashNorthwindReportingFilePath), content, "UTF-8");
 
@@ -1120,7 +1120,7 @@ public class NoExeAssembler extends AbstractAssembler {
 				"<scriptname>g-pivottable-script.groovy</scriptname>");
 		content = content.replaceAll("(?s)output\\.none", "output.dashboard");
 		content = content.replaceAll("(?s)<documentpath\\s*/>|<documentpath>\\s*</documentpath>",
-				"<documentpath>/samples/reports/northwind/g-pivottable-template.html</documentpath>");
+				"<documentpath>samples/reports/northwind/g-pivottable-template.html</documentpath>");
 
 		FileUtils.writeStringToFile(new File(pivottableReportingFilePath), content, "UTF-8");
 
