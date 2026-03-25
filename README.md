@@ -36,6 +36,14 @@ Also includes: [report bursting](https://www.reportburster.com/docs/report-burst
 
 ReportBurster ships with many ready-to-run samples — report bursting, report generation, interactive dashboards, pivot tables, and more. **[See all samples](https://www.reportburster.com/docs/samples)**
 
+## Stay Up-to-Date
+
+Watch this repository to be notified of future updates:
+
+<a href="https://github.com/flowkraft/reportburster/stargazers">
+  <img src=".github/screenshots/github-star-animation.svg" alt="Star ReportBurster on GitHub" width="490">
+</a>
+
 ## Quick Start
 
 **Get up and running in 5 minutes:**
