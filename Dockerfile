@@ -95,7 +95,7 @@ FROM eclipse-temurin:17-jre
 
 # Metadata
 LABEL maintainer="FlowKraft" \
-      version="14.5.0" \
+      version="0.0.0" \
       description="ReportBurster Server - Business Intelligence, Reporting, and Document Distribution in the Age of AI"
 
 # Install runtime dependencies + Docker CE CLI with compose v2 plugin
