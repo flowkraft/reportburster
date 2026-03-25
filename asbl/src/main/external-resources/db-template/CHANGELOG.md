@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.5.0 - 2026-03-30
+
+### Fixed
+
+- **Docker — Pivot tables and DuckDB now work correctly** — Resolved a missing system library that prevented DuckDB-based features (like the Sales PivotTable sample) from running in Docker.
+
+- **Docker — HTML templates now display in configuration** — Fixed an issue where the Output/Template editor appeared empty for report templates when running in Docker.
+
 ## 14.4.0 - 2026-03-23
 
 ### Added
