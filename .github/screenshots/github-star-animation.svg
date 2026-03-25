@@ -2,11 +2,11 @@
   <defs>
     <style>
       @keyframes moveCursor {
-        0%   { transform: translate(400px, 88px); }
-        20%  { transform: translate(255px, 48px); }
-        85%  { transform: translate(255px, 48px); }
-        95%  { transform: translate(400px, 88px); }
-        100% { transform: translate(400px, 88px); }
+        0%   { transform: translate(400px, 95px); }
+        20%  { transform: translate(255px, 66px); }
+        85%  { transform: translate(255px, 66px); }
+        95%  { transform: translate(400px, 95px); }
+        100% { transform: translate(400px, 95px); }
       }
       @keyframes showArrow {
         0%   { opacity: 1; }
