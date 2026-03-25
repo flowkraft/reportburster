@@ -91,16 +91,15 @@ RUN npm run custom:release-web && npm prune --production --force
 # -----------------------------------------------------------------------------
 # STAGE 4: Runtime Image
 # -----------------------------------------------------------------------------
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 
 # Metadata
 LABEL maintainer="FlowKraft" \
-      version="13.3.0" \
+      version="14.5.0" \
       description="ReportBurster Server - Business Intelligence, Reporting, and Document Distribution in the Age of AI"
 
 # Install runtime dependencies
-RUN apk --no-cache add \
-    libstdc++ \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     \
     # --- Networking & Transfer Tools ---
     curl \
@@ -109,8 +108,8 @@ RUN apk --no-cache add \
     rsync \
     \
     # --- Container / DevOps Tools ---
-    docker-cli \
-    docker-cli-compose \
+    docker.io \
+    docker-compose \
     \
     # --- Shell & Scripting Utilities ---
     bash \
@@ -118,7 +117,8 @@ RUN apk --no-cache add \
     gawk \
     sed \
     jq \
-    xmlstarlet
+    xmlstarlet \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
