@@ -134,10 +134,12 @@ public class ReportingService {
 			if ("output.dashboard".equals(config.outputType)) {
 				String documentPath = extractXmlValue(reportingContent, "documentpath");
 				if (documentPath != null && !documentPath.isEmpty()) {
-					Path templatePath = itemDir.resolve(documentPath);
+					// Strip leading slash so path resolves relative on all platforms
+					String relDocPath = documentPath.startsWith("/") ? documentPath.substring(1) : documentPath;
+					Path templatePath = itemDir.resolve(relDocPath);
 					// Also try relative to PORTABLE_EXECUTABLE_DIR_PATH
 					if (!Files.exists(templatePath)) {
-						templatePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, documentPath);
+						templatePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, relDocPath);
 					}
 					if (Files.exists(templatePath)) {
 						config.dashboardTemplate = Files.readString(templatePath);
