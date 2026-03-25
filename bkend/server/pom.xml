@@ -15,7 +15,7 @@
 
 	<properties>
         <!-- Define revision here since this module doesn't inherit from your parent -->
-        <revision>14.4.0</revision>
+        <revision>14.5.0</revision>
     </properties>
 
 	<groupId>com.flowkraft</groupId>
