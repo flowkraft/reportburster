@@ -1,0 +1,41 @@
+name: Update star count in SVG
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # once daily at midnight UTC
+  watch:
+    types: [started] # also triggers when someone stars
+  workflow_dispatch: # manual trigger
+
+jobs:
+  update-stars:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch star count and update SVG
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          STARS=$(gh api repos/flowkraft/reportburster --jq '.stargazers_count')
+          NEXT=$((STARS + 1))
+          echo "Current stars: $STARS, showing $STARS -> $NEXT"
+
+          SVG=".github/screenshots/github-star-animation.svg"
+
+          # Replace the before-click count (line with before-click class and text-anchor="middle")
+          sed -i "s|<text class=\"before-click\" x=\"78\"[^>]*text-anchor=\"middle\">[0-9]*</text>|<text class=\"before-click\" x=\"78\" y=\"18\" font-family=\"-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif\" font-size=\"12\" fill=\"#c9d1d9\" font-weight=\"600\" text-anchor=\"middle\">${STARS}</text>|" "$SVG"
+
+          # Replace the after-click count
+          sed -i "s|<text class=\"after-click\" x=\"78\"[^>]*text-anchor=\"middle\">[0-9]*</text>|<text class=\"after-click\" x=\"78\" y=\"18\" font-family=\"-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif\" font-size=\"12\" fill=\"#c9d1d9\" font-weight=\"600\" text-anchor=\"middle\">${NEXT}</text>|" "$SVG"
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet && exit 0
+          git add .github/screenshots/github-star-animation.svg
+          git commit -m "chore: update star count in SVG animation"
+          git push
