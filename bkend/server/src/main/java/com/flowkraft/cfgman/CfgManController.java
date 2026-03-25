@@ -248,16 +248,10 @@ public class CfgManController {
 	@GetMapping(value = "/rb/load-template", produces = MediaType.TEXT_PLAIN_VALUE)
 	Mono<String> readFileToString(@RequestParam String path) throws Exception {
 		String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
-		Path requestedPath = Paths.get(decodedPath);
-		String fullPath;
-
-		// Check if the decoded path from the request is already absolute
-		if (requestedPath.isAbsolute()) {
-			fullPath = decodedPath; // Use the absolute path directly
-		} else {
-			// If the path is relative, prepend the base directory
-			fullPath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, decodedPath).toString();
-		}
+		// Strip leading slash so path is always treated as relative (on Linux,
+		// "/samples/..." is absolute and would bypass the base directory prepend)
+		String relPath = decodedPath.startsWith("/") ? decodedPath.substring(1) : decodedPath;
+		String fullPath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, relPath).toString();
 
 		
 		//System.out.println("/rb/load-template Full path: " + fullPath);

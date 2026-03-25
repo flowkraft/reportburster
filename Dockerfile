@@ -100,6 +100,7 @@ LABEL maintainer="FlowKraft" \
 
 # Install runtime dependencies
 RUN apk --no-cache add \
+    libstdc++ \
     \
     # --- Networking & Transfer Tools ---
     curl \
