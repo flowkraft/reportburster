@@ -218,7 +218,7 @@ export class Helpers {
     //  snapshots: true,
     //});
     this.firstPage = await this.currentBrowserContext.newPage(); // Create a new page in the context
-    await this.firstPage.goto('http://localhost:4201'); // Navigate to the URL
+    await this.firstPage.goto(process.env.E2E_BASE_URL || 'http://localhost:4201'); // Navigate to the URL
     await this.firstPage.waitForLoadState('domcontentloaded'); // Wait for the 'domcontentloaded' event
 
     const browser = this.currentBrowser;
