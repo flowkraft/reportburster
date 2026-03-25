@@ -76,3 +76,7 @@ echo ========================================
 
 REM Upload dist artifacts to Backblaze B2 (reportburster/newest/)
 REM rclone --config rclone.conf copy C:/Projects/reportburster/asbl/dist/ backblaze:reportburster/newest/ --include "reportburster.zip" --include "reportburster-server.zip" --include "reportburster-server-docker.zip" --include "reportburster-src.zip" --progress
+
+REM Push Docker image to Docker Hub (flowkraft/reportburster-server)
+REM CMD:        docker login -u flowkraft && docker push flowkraft/reportburster-server:latest && for /f "tokens=*" %v in ('docker inspect --format "{{ index .Config.Labels \"version\" }}" flowkraft/reportburster-server:latest') do docker push flowkraft/reportburster-server:%v
+REM PowerShell: docker login -u flowkraft; docker push flowkraft/reportburster-server:latest; $v = docker inspect --format '{{ index .Config.Labels \"version\" }}' flowkraft/reportburster-server:latest; docker push flowkraft/reportburster-server:$v

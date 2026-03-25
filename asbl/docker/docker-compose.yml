@@ -20,7 +20,7 @@
 
 services:
   reportburster-server:
-    image: flowkraft/reportburster-server:14.4.0
+    image: flowkraft/reportburster-server:0.0.0
     container_name: reportburster-server
     ports:
       - "${SERVER_PORT:-9090}:9090"
