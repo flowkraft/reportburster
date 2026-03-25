@@ -980,7 +980,7 @@ export class ConfigurationComponent implements OnInit {
         // For non-sample paths, calculate a conventional path
         else if (newOutputType === 'docx') {
           if (!currentPath || !currentPath.toLowerCase().endsWith('.docx')) {
-            newPath = `/${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-template.docx`;
+            newPath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-template.docx`;
           } else {
             newPath = currentPath;
           }
