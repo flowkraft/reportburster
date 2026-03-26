@@ -26,9 +26,9 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 
 | What you need | What you're using today | ReportBurster |
 |---|---|---|
-| **[Report generation](https://www.reportburster.com/docs/report-generation)** | ~~Crystal Reports~~, ~~SSRS~~, ~~JasperReports~~ | Pixel-perfect PDFs, Excel, HTML, Word from any data source |
-| **[BI dashboards](https://www.reportburster.com/docs/bi-analytics/dashboards)** | ~~Tableau~~, ~~Power BI~~ | Embeddable data-tables, charts, pivot tables, and analytics |
-| **[Data exploration](https://www.reportburster.com/docs/data-exploration)** | ~~SQL Server Management Studio~~, ~~Toad~~, ~~manual SQL queries~~ | Built-in Chat2DB/AI web app — ask in natural language, get SQL, results, and visualizations |
+| **[1. Report generation](https://www.reportburster.com/docs/report-generation)** | ~~Crystal Reports~~, ~~SSRS~~, ~~JasperReports~~ | Pixel-perfect PDFs, Excel, HTML, Word from any data source |
+| **[2. BI dashboards](https://www.reportburster.com/docs/bi-analytics/dashboards)** | ~~Tableau~~, ~~Power BI~~ | Embeddable data-tables, charts, pivot tables, and analytics |
+| **[3. Data exploration](https://www.reportburster.com/docs/data-exploration)** | ~~SQL Server Management Studio~~, ~~Toad~~, ~~manual SQL queries~~ | Built-in Chat2DB/AI web app — ask in natural language, get SQL, results, and visualizations |
 
 Also includes: [report bursting](https://www.reportburster.com/docs/report-bursting) | [self-service document portals](https://www.reportburster.com/docs/document-portal) | [AI agents](https://www.reportburster.com/docs/ai-crew/the-team)
 
@@ -57,7 +57,7 @@ Full documentation is available at **[reportburster.com/docs](https://www.report
 
 ## Screenshots
 
-### **Report Generation** — generate and distribute pixel-perfect output files
+### **1. Report Generation** — generate and distribute pixel-perfect output files
 
 <br/>
 
@@ -65,7 +65,7 @@ Full documentation is available at **[reportburster.com/docs](https://www.report
   <img src=".github/screenshots/044_10_ai-driven-report-execution.png" alt="Report Generation — AI-Driven Report Execution">
 </a>
 
-### **BI Dashboards** — embeddable data-tables, charts, pivot tables, and analytics
+### **2. BI Dashboards** — embeddable data-tables, charts, pivot tables, and analytics
 
 <br/>
 
@@ -73,7 +73,7 @@ Full documentation is available at **[reportburster.com/docs](https://www.report
   <img src=".github/screenshots/100_10_web-components-dashboard-example.png" alt="ReportBurster BI Dashboards">
 </a>
 
-### **Data Exploration** — ask a question in plain English, get SQL, results and charts
+### **3. Data Exploration** — ask a question in plain English, get SQL, results and charts
 
 <br/>
 
