@@ -44,13 +44,12 @@ Watch this repository to be notified of future updates:
   <img src=".github/screenshots/github-star-animation.svg" alt="Star ReportBurster on GitHub" width="490">
 </a>
 
-## Quick Start
+## Self-Host with Docker (Windows, Linux, macOS)
 
-**Get up and running in 5 minutes:**
-
-1. **[Download ReportBurster](https://downloads.reportburster.com/file/reportburster/newest/reportburster.zip)** (Windows / Linux / macOS)
-2. Extract the zip and launch `ReportBurster.exe`
-3. Follow the **[QuickStart Guide](https://www.reportburster.com/docs/quickstart)**
+1. **[Download reportburster-server-docker.zip](https://downloads.reportburster.com/file/reportburster/newest/reportburster-server-docker.zip)**
+2. Extract the zip and navigate to the `ReportBurster` directory
+3. Run `docker compose up -d`
+4. Open `http://localhost:9090`
 
 ## Screenshots
 
