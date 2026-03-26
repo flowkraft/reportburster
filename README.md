@@ -28,7 +28,7 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 |---|---|---|
 | **[Report generation](https://www.reportburster.com/docs/report-generation)** | Crystal Reports, SSRS, JasperReports | Pixel-perfect PDFs, Excel, HTML, Word from any data source |
 | **[BI dashboards](https://www.reportburster.com/docs/bi-analytics/dashboards)** | Tableau, Power BI | Embeddable charts, pivot tables, and analytics |
-| **[Data exploration](https://www.reportburster.com/docs/data-exploration)** | SQL Server Management Studio, Toad, manual SQL queries | Built-in Chat2DB web app — ask in natural language, get SQL, results, and visualizations |
+| **[Data exploration](https://www.reportburster.com/docs/data-exploration)** | SQL Server Management Studio, Toad, manual SQL queries | Built-in Chat2DB/AI web app — ask in natural language, get SQL, results, and visualizations |
 
 Also includes: [report bursting](https://www.reportburster.com/docs/report-bursting) | [self-service document portals](https://www.reportburster.com/docs/document-portal) | [AI agents](https://www.reportburster.com/docs/ai-crew/the-team)
 
@@ -62,7 +62,7 @@ Watch this repository to be notified of future updates:
   <img src=".github/screenshots/044_10_ai-driven-report-execution.png" alt="Report Generation — AI-Driven Report Execution">
 </a>
 
-### **BI Dashboards** — embeddable charts, pivot tables, and analytics
+### **BI Dashboards** — embeddable data-tables, charts, pivot tables, and analytics
 
 <br/>
 
