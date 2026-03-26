@@ -46,10 +46,14 @@ Watch this repository to be notified of future updates:
 
 ## Self-Host with Docker (Windows, Linux, macOS)
 
-1. **[Download reportburster-server-docker.zip](https://downloads.reportburster.com/file/reportburster/newest/reportburster-server-docker.zip)**
+1. Download **[reportburster-server-docker.zip](https://downloads.reportburster.com/file/reportburster/newest/reportburster-server-docker.zip)**
 2. Extract the zip and navigate to the `ReportBurster` directory
 3. Run `docker compose up -d`
 4. Open `http://localhost:9090`
+
+## Documentation
+
+Full documentation is available at **[reportburster.com/docs](https://www.reportburster.com/docs)**.
 
 ## Screenshots
 
