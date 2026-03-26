@@ -30,7 +30,7 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 | **[2.&nbsp;BI&nbsp;dashboards](https://www.reportburster.com/docs/bi-analytics/dashboards)** | ~~Tableau~~, ~~Power BI~~ | Embeddable data-tables, charts, pivot tables, and analytics |
 | **[3.&nbsp;Data&nbsp;exploration](https://www.reportburster.com/docs/data-exploration)** | ~~SQL Server Management Studio~~, ~~Toad~~, ~~manual SQL queries~~ | Built-in Chat2DB/AI web app — ask in natural language, get SQL, results, and visualizations |
 
-Also includes: [report bursting](https://www.reportburster.com/docs/report-bursting) | [self-service document portals](https://www.reportburster.com/docs/document-portal) | [AI agents](https://www.reportburster.com/docs/ai-crew/the-team)
+Also includes: [4. report bursting](https://www.reportburster.com/docs/report-bursting) | [5. self-service document portals](https://www.reportburster.com/docs/document-portal) | [6. AI agents](https://www.reportburster.com/docs/ai-crew/the-team)
 
 ## See Samples
 
