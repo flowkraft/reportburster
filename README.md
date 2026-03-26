@@ -12,13 +12,13 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 
 <br>
 
-**One self-hosted BI platform for reports, dashboards, and AI-powered data exploration.** No glue code. No SaaS lock-in. Your data stays on your own servers.
+**One self-hosted BI platform for pixel-perfect reports, BI dashboards, and AI-powered data exploration.** No glue code. No SaaS lock-in. Your data stays on your own servers.
 
 <h3><a href="https://www.reportburster.com" target="_blank">Watch the demo video on reportburster.com &rarr;</a></h3>
 
 <br>
 
-[![Watch the demo](.github/screenshots/0000-reportburster-introduction-thumbnail.png)](https://www.reportburster.com)
+[![Watch the demo](.github/screenshots/25-large-scale-invoices-generate.png)](https://www.reportburster.com)
 
 </div>
 
