@@ -26,9 +26,9 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 
 | What you need | What you're using today | ReportBurster |
 |---|---|---|
-| **[1.&nbsp;Report&nbsp;generation](https://www.reportburster.com/docs/report-generation)** | ~~Crystal Reports~~, ~~SSRS~~, ~~JasperReports~~ | Pixel-perfect PDFs, Excel, HTML, Word from any data source |
-| **[2.&nbsp;BI&nbsp;dashboards](https://www.reportburster.com/docs/bi-analytics/dashboards)** | ~~Tableau~~, ~~Power BI~~ | Embeddable data-tables, charts, pivot tables, and analytics |
-| **[3.&nbsp;Data&nbsp;exploration](https://www.reportburster.com/docs/data-exploration)** | ~~SQL Server Management Studio~~, ~~Toad~~, ~~manual SQL queries~~ | Built-in Chat2DB/AI web app — ask in natural language, get SQL, results, and visualizations |
+| **[1.&nbsp;Report&nbsp;Generation](https://www.reportburster.com/docs/report-generation)** | ~~Crystal Reports~~, ~~SSRS~~, ~~JasperReports~~ | Pixel-perfect PDFs, Excel, HTML, Word from any data source |
+| **[2.&nbsp;Dashboards & Analytics&nbsp;](https://www.reportburster.com/docs/bi-analytics/dashboards)** | ~~Tableau~~, ~~Power BI~~ | Embeddable data-tables, charts, pivot tables, and analytics |
+| **[3.&nbsp;Data&nbsp;Exploration](https://www.reportburster.com/docs/data-exploration)** | ~~SQL Server Management Studio~~, ~~Toad~~, ~~manual SQL queries~~ | Built-in Chat2DB/AI web app — ask in natural language, get SQL, results, and visualizations |
 
 Also includes: [4. report bursting](https://www.reportburster.com/docs/report-bursting) | [5. self-service document portals](https://www.reportburster.com/docs/document-portal) | [6. AI agents](https://www.reportburster.com/docs/ai-crew/the-team)
 
@@ -65,7 +65,7 @@ Full documentation is available at **[reportburster.com/docs](https://www.report
   <img src=".github/screenshots/044_10_ai-driven-report-execution.png" alt="Report Generation — AI-Driven Report Execution">
 </a>
 
-### **2. BI Dashboards** — embeddable data-tables, charts, pivot tables, and analytics
+### **2. Dashboards & Analytics** — embeddable data-tables, charts, pivot tables, and analytics
 
 <br/>
 
