@@ -65,6 +65,8 @@ Full documentation is available at **[reportburster.com/docs](https://www.report
   <img src=".github/screenshots/044_10_ai-driven-report-execution.png" alt="Report Generation — AI-Driven Report Execution">
 </a>
 
+<br/>
+
 ### **[2.&nbsp;Dashboards&nbsp;&amp;&nbsp;Analytics](https://www.reportburster.com/docs/bi-analytics/dashboards)** — embeddable data-tables, charts, pivot tables, and analytics
 
 <br/>
@@ -73,6 +75,8 @@ Full documentation is available at **[reportburster.com/docs](https://www.report
   <img src=".github/screenshots/100_10_web-components-dashboard-example.png" alt="ReportBurster BI Dashboards">
 </a>
 
+<br/>
+
 ### **[3.&nbsp;Data Exploration](https://www.reportburster.com/docs/data-exploration)** — ask a question in plain English, get SQL, results and charts
 
 <br/>
@@ -80,6 +84,8 @@ Full documentation is available at **[reportburster.com/docs](https://www.report
 <a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
   <img src=".github/screenshots/000_78_chat2db-athena-top-3-pie-chart-5.png" alt="Data Exploration — AI-Powered SQL Query and Results">
 </a>
+
+<br/>
 
 ## Works With All Major Databases
 
