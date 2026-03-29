@@ -32,7 +32,7 @@ const DB_VENDORS_SELECTED: string[] = (() => {
   //return ['mariadb'];
 
   //return ['oracle', 'ibmdb2'];
-  //return ['sqlserver']; 
+  //return ['sqlserver', 'ibmdb2'];
   //return ['ibmdb2'];
 
   // ── DEV OVERRIDES (uncomment ONE line to limit vendor scope) ──

@@ -1039,9 +1039,10 @@ export class ConfigurationComponent implements OnInit {
         }
 
         if (newOutputType === 'docx') {
+          const stripLeadSlash = (p: string) => p?.replace(/^\//, '') || '';
           this.selectedReportTemplateFile =
             this.settingsService.templateFiles.find(
-              (tplFile) => tplFile.filePath === newPath,
+              (tplFile) => stripLeadSlash(tplFile.filePath) === stripLeadSlash(newPath),
             );
         }
       } else if (
