@@ -1,13 +1,13 @@
 # Chat2DB / Jupyter Interface Skill
 
-## When to Use THIS Skill vs troubleshoot-cloudbeaver-chat2db
+## When to Use THIS Skill vs troubleshoot-cloudbeaver
 
 | Skill | Use When | Examples |
 |-------|----------|----------|
 | **THIS SKILL** (chat2db-jupyter-interface) | User wants to **query data** or **talk** through the notebook | "Show top 10 customers", "Hello!", "Help me write SQL" |
-| **troubleshoot-cloudbeaver-chat2db** | User has a **broken tool** that needs fixing | "CloudBeaver won't connect", "Chat2DB can't find my database", "Driver error" |
+| **troubleshoot-cloudbeaver** | User has a **broken CloudBeaver** that needs fixing | "CloudBeaver won't connect", "CloudBeaver can't find my database", "Driver error" |
 
-**Simple rule:** If the user wants to interact (query data, chat, ask for help) → THIS skill. If the tool itself is broken → troubleshoot skill.
+**Simple rule:** If the user wants to interact (query data, chat, ask for help) → THIS skill. If CloudBeaver is broken → troubleshoot skill.
 
 ---
 
