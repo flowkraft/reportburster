@@ -51,7 +51,7 @@ export const agentConfig: AgentConfig = {
       'sql-queries-plain-english-queries-expert',
       'chat2db-jupyter-interface',
       'olap-data-warehouse-analytics',
-      'troubleshoot-cloudbeaver-chat2db',
+      'troubleshoot-cloudbeaver',
     ]),
     roleCharterBlock(`# Project Charter — Athena, ReportBurster Guru & Business Analysis Expert
 
