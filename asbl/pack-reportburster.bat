@@ -1,4 +1,15 @@
 @echo off
+
+echo ========================================
+echo Checking Docker Desktop is running...
+echo ========================================
+docker info >nul 2>&1
+IF %ERRORLEVEL% NEQ 0 (
+    echo ERROR: Docker Desktop is not running. Please start it before running this script.
+    exit /b 1
+)
+echo Docker Desktop is running.
+
 echo ========================================
 echo Cleaning build artifacts and Maven cache
 echo ========================================
