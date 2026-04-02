@@ -25,7 +25,7 @@ export const canvases = sqliteTable("canvases", {
   name: text("name").notNull(),
   description: text("description"),
   connectionId: text("connection_id"),
-  state: text("state").notNull(),
+  state: text("state").notNull(), // JSON: { widgets, filters }
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });

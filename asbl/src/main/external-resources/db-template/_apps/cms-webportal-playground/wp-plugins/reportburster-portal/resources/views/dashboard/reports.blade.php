@@ -8,7 +8,7 @@
 
 <?php 
 // Get configuration from WordPress options or environment
-$api_base_url = get_option('reportburster_api_url', 'http://localhost:9090/api/jobman/reporting');
+$api_base_url = get_option('reportburster_api_url', 'http://localhost:9090/api/reporting');
 $api_key = get_option('reportburster_api_key', '');
 ?>
 

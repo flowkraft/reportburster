@@ -37,7 +37,7 @@
     "custom:start-server-and-ui-web": "npx gulp utils:start-server-and-ui-web",
     "custom:start-server-and-ui-both": "npx gulp utils:start-server-and-ui-both",
     "custom:start-server-and-e2e-electron": "npm run custom:clean-testground && npx gulp utils:start-server-and-e2e-electron",
-    "custom:start-server-and-e2e-electron-grep": "npm run custom:clean-testground && cross-env \"E2E_GREP=\\(sqlserver\\)|\\(ibmdb2\\)\" npx gulp utils:start-server-and-e2e-electron",
+    "custom:start-server-and-e2e-electron-grep": "npm run custom:clean-testground && cross-env \"E2E_GREP=should correctly create two distinct configuration\" npx gulp utils:start-server-and-e2e-electron",
     "custom:start-server-and-e2e-web": "npm run custom:clean-testground && npx gulp utils:start-server-and-e2e-web",
     "custom:e2e-docker": "npm run custom:clean-testground && npx gulp e2e-package-javastuff-if-needed && cross-env TEST_ENV=web E2E_BASE_URL=http://localhost:9090 TEST_LICENSE_KEY=51b0aa18f2bbc066efdca8b53c2dacc8 RUNNING_IN_E2E=true PORTABLE_EXECUTABLE_DIR=testground/e2e playwright test -c e2e/playwright.config.ts e2e/",
     "custom:e2e-rename-ts2ignore": "cd e2e && npx renamer --find .spec.ts --replace .spec.ignore **",

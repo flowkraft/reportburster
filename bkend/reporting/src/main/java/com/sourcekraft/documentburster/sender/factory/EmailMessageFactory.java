@@ -4,14 +4,20 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.sender.model.EmailMessage;
+import com.sourcekraft.documentburster.common.security.SecretsCipher;
 import com.sourcekraft.documentburster.common.settings.EmailConnection;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.EmailSettings;
 import com.sourcekraft.documentburster.utils.Utils;
 
 public class EmailMessageFactory {
+
+	private static final Logger log = LoggerFactory.getLogger(EmailMessageFactory.class);
 
 	public EmailMessage createEmailMessage(BurstingContext ctx, boolean useTestServer) throws Exception {
 
@@ -44,6 +50,13 @@ public class EmailMessageFactory {
 
 		msg.sjm = ctx.settings.getSimpleJavaMail();
 
+		// Decrypt proxy password at the exact moment of use — never store plaintext.
+		// Since msg.sjm is a reference to the settings object, we decrypt on a
+		// temporary and only set the decrypted value on the message's proxy field.
+		if (msg.sjm != null && msg.sjm.proxy != null && StringUtils.isNotEmpty(msg.sjm.proxy.password)) {
+			msg.sjm.proxy.password = decryptPassword(msg.sjm.proxy.password);
+		}
+
 	}
 
 	private void setEmailServerSettings(EmailMessage msg, BurstingContext ctx, boolean useTestServer) throws Exception {
@@ -61,11 +74,9 @@ public class EmailMessageFactory {
 			String authpwd = StringUtils.EMPTY;
 
 			if (StringUtils.isNotEmpty(ctx.settings.getTestEmailServerUserPassword())) {
-				// if (ctx.settings.getTestEmailServerUserPassword().indexOf("$") == -1)
-				authpwd = Utils.getStringFromTemplate(ctx.settings.getTestEmailServerUserPassword(), ctx.variables,
-						ctx.token);
-				// else
-				// authpwd = ctx.settings.getTestEmailServerUserPassword();
+				// Decrypt password at the exact moment of use — never store plaintext
+				String decryptedPwd = decryptPassword(ctx.settings.getTestEmailServerUserPassword());
+				authpwd = Utils.getStringFromTemplate(decryptedPwd, ctx.variables, ctx.token);
 			}
 
 			if (StringUtils.isNotEmpty(authpwd))
@@ -103,11 +114,9 @@ public class EmailMessageFactory {
 				String authpwd = StringUtils.EMPTY;
 
 				if (StringUtils.isNotEmpty(ctx.settings.getEmailServerUserPassword())) {
-					// if (ctx.settings.getEmailServerUserPassword().indexOf("$") == -1)
-					authpwd = Utils.getStringFromTemplate(ctx.settings.getEmailServerUserPassword(), ctx.variables,
-							ctx.token);
-					// else
-					// authpwd = ctx.settings.getEmailServerUserPassword();
+					// Decrypt password at the exact moment of use — never store plaintext
+					String decryptedPwd = decryptPassword(ctx.settings.getEmailServerUserPassword());
+					authpwd = Utils.getStringFromTemplate(decryptedPwd, ctx.variables, ctx.token);
 				}
 
 				if (StringUtils.isNotEmpty(authpwd))
@@ -151,14 +160,10 @@ public class EmailMessageFactory {
 				String authpwd = StringUtils.EMPTY;
 
 				if (StringUtils.isNotEmpty(ctx.emailConnection.getDetails().connection.emailserver.userpassword)) {
-					// if
-					// (emailConnection.getDetails().connection.emailserver.userpassword.indexOf("$")
-					// == -1)
-					authpwd = Utils.getStringFromTemplate(
-							ctx.emailConnection.getDetails().connection.emailserver.userpassword, ctx.variables,
-							ctx.token);
-					// else
-					// authpwd = emailConnection.getDetails().connection.emailserver.userpassword;
+					// Decrypt password at the exact moment of use — never store plaintext
+					String decryptedPwd = decryptPassword(
+							ctx.emailConnection.getDetails().connection.emailserver.userpassword);
+					authpwd = Utils.getStringFromTemplate(decryptedPwd, ctx.variables, ctx.token);
 				}
 
 				if (StringUtils.isNotEmpty(authpwd))
@@ -259,7 +264,8 @@ public class EmailMessageFactory {
 			if (StringUtils.isNotEmpty(authuser))
 				authentication = true;
 
-			String authpwd = settings.getEmailServerUserPassword();
+			// Decrypt password at the exact moment of use — never store plaintext
+			String authpwd = decryptPassword(settings.getEmailServerUserPassword());
 			if (StringUtils.isNotEmpty(authpwd))
 				authentication = true;
 
@@ -296,6 +302,11 @@ public class EmailMessageFactory {
 
 		msg.sjm = settings.getSimpleJavaMail();
 
+		// Decrypt proxy password at the exact moment of use
+		if (msg.sjm != null && msg.sjm.proxy != null && StringUtils.isNotEmpty(msg.sjm.proxy.password)) {
+			msg.sjm.proxy.password = decryptPassword(msg.sjm.proxy.password);
+		}
+
 		return msg;
 
 	}
@@ -310,7 +321,8 @@ public class EmailMessageFactory {
 		if (StringUtils.isNotEmpty(authuser))
 			authentication = true;
 
-		String authpwd = emailConnection.getDetails().connection.emailserver.userpassword;
+		// Decrypt password at the exact moment of use — never store plaintext
+		String authpwd = decryptPassword(emailConnection.getDetails().connection.emailserver.userpassword);
 		if (StringUtils.isNotEmpty(authpwd))
 			authentication = true;
 
@@ -339,6 +351,22 @@ public class EmailMessageFactory {
 
 		return msg;
 
+	}
+
+	/**
+	 * Decrypt a password at the exact moment of use. Returns the original value
+	 * if decryption fails (e.g., the value is already plaintext).
+	 */
+	private static String decryptPassword(String encryptedPassword) {
+		if (StringUtils.isEmpty(encryptedPassword))
+			return encryptedPassword;
+		try {
+			return SecretsCipher.getInstance(Settings.PORTABLE_EXECUTABLE_DIR_PATH)
+					.decrypt(encryptedPassword);
+		} catch (Exception e) {
+			log.warn("Failed to decrypt email password: {}", e.getMessage());
+			return encryptedPassword;
+		}
 	}
 
 }

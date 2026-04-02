@@ -202,7 +202,7 @@ test.describe('', async () => {
       //Update #btnCapReportGenerationMailMerge to be "on" again
       
       //ft = ft
-      //  .gotoConfigurationTemplates()
+      //  .gotoConfigurationReports()
       //  .clickAndSelectTableRow(`#payslips_${PATHS.SETTINGS_CONFIG_FILE}`)
       //  .waitOnElementToBecomeEnabled('#btnEdit')
       //  .click('#btnEdit')

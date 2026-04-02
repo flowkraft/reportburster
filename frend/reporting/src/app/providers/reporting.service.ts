@@ -61,7 +61,7 @@ export class ReportingService {
   ) {}
 
   get reportingApiBaseUrl(): string {
-    return this.apiService.BACKEND_URL + '/jobman/reporting';
+    return this.apiService.BACKEND_URL + '/reporting';
   }
 
   async fetchData(
@@ -87,7 +87,7 @@ export class ReportingService {
     });
 
     const result = await this.apiService.get(
-      `/jobman/reporting/reports/${reportCode}/data`,
+      `/reporting/reports/${reportCode}/data`,
       paramsObj,
     );
     return result;
@@ -98,7 +98,7 @@ export class ReportingService {
     connectionCode?: string,
   ): Promise<ReportParameter[]> {
     try {
-      let url = '/jobman/reporting/parse-parameters';
+      let url = '/reporting/parse-parameters';
       if (connectionCode) {
         url += `?connectionCode=${encodeURIComponent(connectionCode)}`;
       }
@@ -114,7 +114,7 @@ export class ReportingService {
   ): Promise<TabulatorOptionsDto> {
     try {
       const result = await this.apiService.post(
-        '/jobman/reporting/parse-tabulator',
+        '/reporting/parse-tabulator',
         groovyDslCode,
       );
       return result;
@@ -128,7 +128,7 @@ export class ReportingService {
   ): Promise<ChartOptionsDto> {
     try {
       const result = await this.apiService.post(
-        '/jobman/reporting/parse-chart',
+        '/reporting/parse-chart',
         groovyDslCode,
       );
       return result;
@@ -142,7 +142,7 @@ export class ReportingService {
   ): Promise<PivotTableOptionsDto> {
     try {
       const result = await this.apiService.post(
-        '/jobman/reporting/parse-pivot',
+        '/reporting/parse-pivot',
         groovyDslCode,
       );
       return result;

@@ -12,7 +12,7 @@ export class ConfTemplatesTestHelper {
     const folderName = _.kebabCase(templateName);
 
     ft = ft
-      .gotoConfigurationTemplates()
+      .gotoConfigurationReports()
       .click('#btnNew')
       .waitOnElementToBecomeVisible('#templateHowTo')
       .waitOnInputValueToContainText('#templateHowTo', 'folder-name');
@@ -79,7 +79,7 @@ export class ConfTemplatesTestHelper {
       .elementShouldNotBeVisible(`#topMenuConfigurationLoad_${selector}`);
 
     return ft
-      .gotoConfigurationTemplates()
+      .gotoConfigurationReports()
       .elementShouldContainText(`#btnActions_${selector} button`, 'Hidden')
       .click(`#btnActions_${selector}`)
       .click(`#btnActionHideShow_${selector}`)
@@ -201,7 +201,7 @@ export class ConfTemplatesTestHelper {
   ): FluentTester => {
     const newFolderName = _.kebabCase(newTemplateName);
     ft = ft
-      .gotoConfigurationTemplates()
+      .gotoConfigurationReports()
       .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .waitOnElementToBecomeEnabled('#btnDuplicate')
       .click('#btnDuplicate')
@@ -235,7 +235,7 @@ export class ConfTemplatesTestHelper {
   ): FluentTester => {
     return ft
       .gotoStartScreen()
-      .gotoConfigurationTemplates()
+      .gotoConfigurationReports()
       .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .click(`#btnActions_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .click(`#btnActionRestore_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
@@ -277,7 +277,7 @@ export class ConfTemplatesTestHelper {
     }
 
     ft = ft
-      .gotoConfigurationTemplates()
+      .gotoConfigurationReports()
       .waitOnElementToHaveText(
         `#${folderName}_${PATHS.SETTINGS_CONFIG_FILE} td:first-child`,
         templateName,
@@ -347,7 +347,7 @@ export class ConfTemplatesTestHelper {
   ): FluentTester => {
     return ft
       .gotoStartScreen()
-      .gotoConfigurationTemplates()
+      .gotoConfigurationReports()
       .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .waitOnElementToBecomeEnabled('#btnDelete')
       .click('#btnDelete')
@@ -374,7 +374,7 @@ export class ConfTemplatesTestHelper {
   ): FluentTester => {
     return ft
       .gotoStartScreen()
-      .gotoConfigurationTemplates()
+      .gotoConfigurationReports()
       .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .waitOnElementToBecomeEnabled('#btnEdit')
       .click('#btnEdit')
@@ -392,7 +392,7 @@ export class ConfTemplatesTestHelper {
     templateName: string,
   ): FluentTester => {
     return ft
-      .gotoConfigurationTemplates()
+      .gotoConfigurationReports()
       .waitOnElementToBecomeEnabled('#btnEdit')
       .click('#btnEdit')
       .waitOnElementToBecomeVisible('#templateName')

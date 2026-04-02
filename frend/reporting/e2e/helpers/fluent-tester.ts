@@ -211,6 +211,38 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  // ── File Content Assertions ──
+
+  public fileShouldExist(filePath: string): FluentTester {
+    const action = (): Promise<void> => this.doFileShouldExist(filePath);
+    this.actions.push(action);
+    return this;
+  }
+
+  public fileShouldNotExist(filePath: string): FluentTester {
+    const action = (): Promise<void> => this.doFileShouldNotExist(filePath);
+    this.actions.push(action);
+    return this;
+  }
+
+  public fileContentShouldContain(filePath: string, text: string): FluentTester {
+    const action = (): Promise<void> => this.doFileContentShouldContain(filePath, text);
+    this.actions.push(action);
+    return this;
+  }
+
+  public fileContentShouldNotContain(filePath: string, text: string): FluentTester {
+    const action = (): Promise<void> => this.doFileContentShouldNotContain(filePath, text);
+    this.actions.push(action);
+    return this;
+  }
+
+  public fileContentShouldMatch(filePath: string, regex: RegExp): FluentTester {
+    const action = (): Promise<void> => this.doFileContentShouldMatch(filePath, regex);
+    this.actions.push(action);
+    return this;
+  }
+
   public dblClick(selector: string): FluentTester {
     const action = (): Promise<void> => this.doDblClick(selector);
 
@@ -1513,14 +1545,14 @@ export class FluentTester implements PromiseLike<void> {
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
   }
 
-  gotoConfigurationTemplates = (): FluentTester => {
-    const action = (): Promise<void> => this.doGotoConfigurationTemplates();
+  gotoConfigurationReports = (): FluentTester => {
+    const action = (): Promise<void> => this.doGotoConfigurationReports();
 
     this.actions.push(action);
     return this;
   };
 
-  private async doGotoConfigurationTemplates(): Promise<void> {
+  private async doGotoConfigurationReports(): Promise<void> {
     //await this.doHover('#supportEmail');
     //await this.doClick('#supportEmail');
 
@@ -1557,15 +1589,15 @@ export class FluentTester implements PromiseLike<void> {
     /*
    
     await this.doWaitOnElementToBecomeVisible(
-      '#topMenuConfigurationTemplates',
+      '#topMenuConfigurationReports',
       Constants.DELAY_HUNDRED_SECONDS
     );
       */
-    //await this.doWaitOnElementToBecomeVisible('#topMenuConfigurationTemplates');
-    await this.doHover('#topMenuConfigurationTemplates');
+    //await this.doWaitOnElementToBecomeVisible('#topMenuConfigurationReports');
+    await this.doHover('#topMenuConfigurationReports');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
-    await this.doClick('#topMenuConfigurationTemplates');
+    await this.doClick('#topMenuConfigurationReports');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
     /*
@@ -1916,6 +1948,43 @@ export class FluentTester implements PromiseLike<void> {
 
   private async doDeleteFolder(path: string): Promise<void> {
     await jetpack.removeAsync(path);
+  }
+
+  // ── File Content Assertion Implementations ──
+
+  private async doFileShouldExist(filePath: string): Promise<void> {
+    const exists = await jetpack.existsAsync(filePath);
+    if (!exists) {
+      throw new Error(`File should exist: ${filePath}`);
+    }
+  }
+
+  private async doFileShouldNotExist(filePath: string): Promise<void> {
+    const exists = await jetpack.existsAsync(filePath);
+    if (exists) {
+      throw new Error(`File should NOT exist: ${filePath}`);
+    }
+  }
+
+  private async doFileContentShouldContain(filePath: string, text: string): Promise<void> {
+    const content = await jetpack.readAsync(filePath);
+    if (!content || !content.includes(text)) {
+      throw new Error(`File ${filePath} should contain "${text}" but ${content ? 'does not' : 'file is empty/missing'}`);
+    }
+  }
+
+  private async doFileContentShouldNotContain(filePath: string, text: string): Promise<void> {
+    const content = await jetpack.readAsync(filePath);
+    if (content && content.includes(text)) {
+      throw new Error(`File ${filePath} should NOT contain "${text}" but it does`);
+    }
+  }
+
+  private async doFileContentShouldMatch(filePath: string, regex: RegExp): Promise<void> {
+    const content = await jetpack.readAsync(filePath);
+    if (!content || !regex.test(content)) {
+      throw new Error(`File ${filePath} should match ${regex} but ${content ? 'does not' : 'file is empty/missing'}`);
+    }
   }
 
   protected async doHover(selector: string): Promise<void> {
@@ -2961,14 +3030,14 @@ export class FluentTester implements PromiseLike<void> {
     /*
    
     await this.doWaitOnElementToBecomeVisible(
-      '#topMenuConfigurationTemplates',
+      '#topMenuConfigurationReports',
       Constants.DELAY_HUNDRED_SECONDS
     );
       */
     await this.doHover('#topMenuConfigurationExternalConnections');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
-    //await this.doFocus('#topMenuConfigurationTemplates');
+    //await this.doFocus('#topMenuConfigurationReports');
     await this.doClick('#topMenuConfigurationExternalConnections');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 

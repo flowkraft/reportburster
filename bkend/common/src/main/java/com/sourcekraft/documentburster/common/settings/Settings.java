@@ -178,6 +178,9 @@ public class Settings extends DumpToString {
 
 	}
 
+	// Passwords are kept encrypted in memory (ENC(base64...)) — decryption
+	// happens only at the exact runtime moment of use (SMTP/JDBC/Twilio/proxy).
+
 	public String getReportingPrimaryDatabaseConnectionCode() {
 
 		if (Objects.isNull(this.reportingSettings))
@@ -388,8 +391,9 @@ public class Settings extends DumpToString {
 				}
 
 				if (connectionDatabaseSettings.connection != null
-						&& connectionDatabaseSettings.connection.databaseserver != null)
+						&& connectionDatabaseSettings.connection.databaseserver != null) {
 					connectionDatabaseSettings.connection.databaseserver.ensureDriverAndUrl();
+				}
 
 			}
 

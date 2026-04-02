@@ -188,14 +188,19 @@ export const tabEmailConnectionSettingsTemplate = `<ng-template
         translate }}
       </div>
       <div class="col-xs-7">
-        <input
-          id="smtpPassword"
-          [(ngModel)]="xmlSettings?.documentburster.settings.emailserver.userpassword"
-          (ngModelChange)="settingsChangedEventHandler($event)"
-          type="password"
-          class="form-control"
-          [disabled]="xmlSettings?.documentburster.settings.emailserver.useconn"
-        />
+        <div class="input-group">
+          <input
+            id="smtpPassword"
+            [(ngModel)]="xmlSettings?.documentburster.settings.emailserver.userpassword"
+            (ngModelChange)="settingsChangedEventHandler($event)"
+            [type]="showSmtpPassword ? 'text' : 'password'"
+            class="form-control"
+            [disabled]="xmlSettings?.documentburster.settings.emailserver.useconn"
+          />
+          <span id="btnToggleSmtpPassword" class="input-group-addon" style="cursor:pointer" (click)="toggleRevealSmtpPassword()">
+            <i [class]="showSmtpPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+          </span>
+        </div>
       </div>
 
       <div class="col-xs-3">

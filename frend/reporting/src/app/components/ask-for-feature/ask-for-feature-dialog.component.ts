@@ -7,7 +7,7 @@ import { ConfirmService } from '../dialog-confirm/confirm.service';
 import Utilities from '../../helpers/utilities';
 import { ShellService } from '../../providers/shell.service';
 import { SettingsService } from '../../providers/settings.service';
-import { FsService } from '../../providers/fs.service';
+import { ReportsService } from '../../providers/reports.service';
 
 @Component({
   selector: 'dburst-ask-for-feature-dialog',
@@ -26,8 +26,8 @@ export class AskForFeatureDialogComponent implements OnInit {
   constructor(
     protected bsModalRef: BsModalRef,
     protected settingsService: SettingsService,
+    protected reportsService: ReportsService,
     protected confirmService: ConfirmService,
-    protected fsService: FsService,
     protected shellService: ShellService,
     private router: Router,
   ) {}
@@ -44,8 +44,8 @@ export class AskForFeatureDialogComponent implements OnInit {
 
       xmlAskForFeatureFilePath = Utilities.slash(xmlAskForFeatureFilePath);
 
-      await this.settingsService.saveSettingsFileAsync(
-        xmlAskForFeatureFilePath,
+      await this.reportsService.saveReportSettings(
+        Utilities.basename(Utilities.dirname(xmlAskForFeatureFilePath)),
         {
           documentburster: {
             featurerequest: {

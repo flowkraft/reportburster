@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import * as semver from 'semver';
 import { ApiService } from './api.service';
 import { APP_CONFIG } from '../../environments/environment';
-import Utilities from '../helpers/utilities';
 
 export interface ExtConnection {
   fileName: string;
@@ -296,209 +295,12 @@ export class SettingsService {
     return `${this.CONFIGURATION_BURST_FOLDER_PATH}/settings.xml`;
   }
 
-  async loadImageAsDataUrl(imagePath: string): Promise<string> {
-    // Important: Explicitly set Accept header to image/*
-    const response = await fetch(
-      `/api/cfgman/rb/serve-asset?path=${encodeURIComponent(imagePath)}`,
-      {
-        headers: {
-          Accept: 'image/*', // This is critical
-        },
-      },
-    );
-
-    if (!response.ok) {
-      console.error(
-        `Failed to load image: ${imagePath}, status: ${response.status}`,
-      );
-      return null;
-    }
-
-    const blob = await response.blob();
-
-    // Convert blob to data URL
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(blob);
-    });
-  }
-
-  async loadDefaultSettingsFileAsync(): Promise<any> {
-    const systemInfo = await this.apiService.get('/jobman/system/info');
-
-    if (!systemInfo) {
-      return;
-    }
-
-    this.isWindows = systemInfo.osName.startsWith('Windows');
-
-    this.product = systemInfo.product;
-
-    if (this.product.toLowerCase().includes('server')) {
-      this.isServerVersion = true;
-    }
-
-    let xmlSettings = {
-      documentburster: {
-        settings: null,
-      },
-    };
-
-    xmlSettings.documentburster = await this.apiService.get('/cfgman/rb/load', {
-      path: this.getDefaultsConfigurationValuesFilePath(),
-    });
-
-    this.version = xmlSettings.documentburster.settings.version;
-
-    return xmlSettings;
-  }
-
-  async resolveAbsolutePath(relativePath: string): Promise<string> {
-    // Normalize relativePath by removing leading slash if present
-    if (relativePath.startsWith('/')) {
-      relativePath = relativePath.substring(1);
-    }
-
-    // Call the backend API to resolve the path
-    const response = await this.apiService.get(
-      '/jobman/system/fs/resolve-absolute-path',
-      {
-        path: relativePath,
-      },
-    );
-
-    return response.absolutePath;
-  }
-
-  async saveSettingsFileAsync(
-    filePath: string,
-    xmlSettings: {
-      documentburster: any;
-    },
-  ) {
-    const path = encodeURIComponent(filePath);
-
-    //console.log(
-    //  `saveSettingsFileAsync filePath = ${path}, xmlSettings.documentburster = ${JSON.stringify(xmlSettings.documentburster)}`,
-    //);
-
-    xmlSettings.documentburster.settings.attachments.items.attachmentItems.forEach(
-      (item: { selected: boolean }) => {
-        delete item.selected;
-      },
-    );
-
-    return this.apiService.post(
-      `/cfgman/rb/save?path=${path}`,
-      xmlSettings.documentburster,
-    );
-  }
-
-  async loadSettingsFileAsync(filePath: string): Promise<{
-    documentburster: {
-      settings: any;
-    };
-  }> {
-    let xmlSettings = {
-      documentburster: { settings: {} },
-    };
-
-    //console.log(`loadSettingsFileAsync filePath = ${filePath}`);
-
-    xmlSettings.documentburster = await this.apiService.get('/cfgman/rb/load', {
-      path: filePath,
-    });
-
-    //console.log(
-    //  `loadSettingsFileAsync filePath = ${filePath}, settings = ${JSON.stringify(
-    //    xmlSettings,
-    //  )}`,
-    //);
-
-    return xmlSettings;
-  }
-
-  async saveConnectionFileAsync(
-    filePath: string,
-    xmlConnectionSettings: {
-      documentburster: {};
-    },
-  ) {
-    const path = encodeURIComponent(filePath);
-
-    // Determine if this is a database connection based on the file path
-    const isDbConnection =
-      filePath.includes('/db-') || filePath.includes('\\db-');
-
-    // Use the appropriate endpoint based on connection type
-    const endpoint = isDbConnection
-      ? `/cfgman/rb/save-connection-database?path=${path}`
-      : `/cfgman/rb/save-connection-email?path=${path}`;
-
-    return this.apiService.post(
-      endpoint,
-      xmlConnectionSettings.documentburster,
-    );
-  }
-
-  async loadConnectionFileAsync(filePath: string): Promise<{
-    documentburster: {
-      connection: any;
-    };
-  }> {
-    let xmlConnectionSettings = {
-      documentburster: { connection: {} },
-    };
-
-    xmlConnectionSettings.documentburster = await this.apiService.get(
-      '/cfgman/rb/load-connection',
-      {
-        path: filePath,
-      },
-    );
-
-    //console.log(
-    //  `loadSettingsFileAsync filePath = ${filePath}, settings = ${JSON.stringify(
-    //    xmlConnectionSettings,
-    //  )}`,
-    //);
-    return xmlConnectionSettings;
-  }
-
-  async loadPreferencesFileAsync(filePath: string): Promise<any> {
-    return this.apiService.get('/cfgman/rb/load-internal', {
-      path: filePath,
-    });
-  }
-  async savePreferencesFileAsync(
-    filePath: string,
-    xmlSettings: {
-      documentburster: {};
-    },
-  ): Promise<any> {
-    const path = encodeURIComponent(filePath);
-
-    return this.apiService.post(
-      `/cfgman/rb/save-internal?path=${path}`,
-      xmlSettings.documentburster,
-    );
-  }
-
-  // Cache for loaded DSL details to avoid re-parsing
-  private configDetailsCache: Map<string, {
-    reportParameters?: ReportParameter[];
-    tabulatorOptions?: any;
-    chartOptions?: any;
-    pivotTableOptions?: any;
-  }> = new Map();
-
   /**
    * MINIMAL LOADING - Fast startup.
    * Returns only basic metadata needed for UI menus (no DSL parsing).
-   * DSL options are loaded on-demand via loadConfigurationDetailsAsync().
+   * DSL options are loaded on-demand via loadReportDetails().
    */
-  async loadAllSettingsFilesAsync({
+  async loadAllReports({
     forceReload = false,
     fullLoad = false,  // Set to true for backward-compat scenarios needing all details upfront
   }: { forceReload?: boolean; fullLoad?: boolean } = {}): Promise<Array<CfgTmplFileInfo>> {
@@ -515,7 +317,7 @@ export class SettingsService {
     }
 
     // Use minimal endpoint for fast startup, full endpoint only when explicitly needed
-    const endpoint = fullLoad ? '/cfgman/rb/load-all' : '/cfgman/rb/load-all-minimal';
+    const endpoint = fullLoad ? '/reports/load-all' : '/reports/load-all-minimal';
     this.configurationFiles = await this.apiService.get(endpoint);
 
     return this.configurationFiles;
@@ -525,11 +327,11 @@ export class SettingsService {
    * FULL DETAILS LOADING - On-demand for a specific configuration.
    * Loads and caches DSL options (reportParameters, tabulatorOptions, etc.)
    * Merges the loaded details into the existing configurationFiles entry.
-   * 
+   *
    * @param configFile The configuration to load details for
    * @returns The updated configuration with DSL options populated
    */
-  async loadConfigurationDetailsAsync(configFile: CfgTmplFileInfo): Promise<CfgTmplFileInfo> {
+  async loadReportDetails(configFile: CfgTmplFileInfo): Promise<CfgTmplFileInfo> {
     // Only reports, samples, and jasper reports have details to load
     if (configFile.type !== 'config-reports' && configFile.type !== 'config-samples' && configFile.type !== 'config-jasper-reports') {
       return configFile;
@@ -548,7 +350,7 @@ export class SettingsService {
     }
 
     try {
-      const details = await this.apiService.get('/cfgman/rb/load-config-details', {
+      const details = await this.apiService.get('/reports/load-config-details', {
         path: configFile.filePath,
       });
 
@@ -586,6 +388,56 @@ export class SettingsService {
       this.configDetailsCache.clear();
     }
   }
+
+  async resolveAbsolutePath(relativePath: string): Promise<string> {
+    // Normalize relativePath by removing leading slash if present
+    if (relativePath.startsWith('/')) {
+      relativePath = relativePath.substring(1);
+    }
+
+    // Call the backend API to resolve the path
+    const response = await this.apiService.get(
+      '/system/fs/resolve-absolute-path',
+      {
+        path: relativePath,
+      },
+    );
+
+    return response.absolutePath;
+  }
+
+  async loadPreferences(): Promise<any> {
+    return this.apiService.get('/reports/load-internal', {
+      path: this.INTERNAL_SETTINGS_FILE_PATH,
+    });
+  }
+
+  async savePreferences(
+    xmlSettings: {
+      documentburster: {};
+    },
+  ): Promise<any> {
+    const path = encodeURIComponent(this.INTERNAL_SETTINGS_FILE_PATH);
+
+    return this.apiService.post(
+      `/reports/save-internal?path=${path}`,
+      xmlSettings.documentburster,
+    );
+  }
+
+  // ===== Backward-compatible deprecated wrappers =====
+
+  /**
+   * Extract reportId (folder name) from a file path.
+   * e.g. "config/reports/my-report/settings.xml" -> "my-report"
+   */
+  // Cache for loaded DSL details to avoid re-parsing
+  private configDetailsCache: Map<string, {
+    reportParameters?: ReportParameter[];
+    tabulatorOptions?: any;
+    chartOptions?: any;
+    pivotTableOptions?: any;
+  }> = new Map();
 
   refreshConnectionsUsedByInformation(
     filePath: string,
@@ -651,19 +503,19 @@ export class SettingsService {
   }
 
   async loadSqlOptionsAsync(sql: string) {
-    return this.apiService.get('/cfgman/rb/load-sql-options', { sql });
+    return this.apiService.get('/reports/load-sql-options', { sql });
   }
 
-  async loadAllConnectionFilesAsync() {
+  async loadAllConnections() {
     if (this.connectionsLoading == 1) return;
 
     this.connectionsLoading = 1;
 
     const emailConnFiles = await this.apiService.get(
-      '/cfgman/rb/load-connection-email-all',
+      '/reports/load-connection-email-all',
     );
     const dbConnFiles = await this.apiService.get(
-      '/cfgman/rb/load-connection-database-all',
+      '/reports/load-connection-database-all',
     );
 
     // Combine all connection files
@@ -739,59 +591,12 @@ export class SettingsService {
     );
   }
 
-  async loadAllReportTemplatesFilesAsync() {
+  async loadAllReportTemplates() {
     this.templateFiles = await this.apiService.get(
-      '/cfgman/rb/load-templates-all',
+      '/reports/load-templates-all',
     );
-
-    //console.log('Loaded templates:', this.templateFiles);
 
     return this.templateFiles;
-  }
-
-  async saveReportingFileAsync(
-    filePath: string,
-    xmlReporting: { documentburster: {} },
-  ) {
-    //console.log(
-    //  `saveReportingFileAsynce xmlReporting = ${JSON.stringify(xmlReporting)}`,
-    //);
-    return this.apiService.post(
-      `/cfgman/rb/save-reporting?path=${filePath}`,
-      xmlReporting.documentburster,
-    );
-  }
-
-  async loadReportingFileAsync(filePath: string): Promise<any> {
-    return this.apiService.get('/cfgman/rb/load-reporting', {
-      path: filePath,
-    });
-  }
-
-  async saveTemplateFileAsync(filePath: string, content: string) {
-    //console.log(
-    //  `saveTemplateFileAsync filePath = ${filePath}, content length = ${content.length}`,
-    //);
-    const encodedPath = encodeURIComponent(Utilities.slash(filePath));
-    return this.apiService.post(
-      `/cfgman/rb/save-template?path=${encodedPath}`,
-      content,
-      new Headers({
-        'Content-Type': 'text/plain',
-      }),
-    );
-  }
-
-  async loadTemplateFileAsync(filePath: string): Promise<string> {
-    return this.apiService.get(
-      '/cfgman/rb/load-template',
-      { path: encodeURIComponent(filePath) },
-      new Headers({
-        Accept: 'text/plain',
-        'Content-Type': 'application/json',
-      }),
-      'text',
-    );
   }
 
   getConfigurations(visibility?: string) {

@@ -5,6 +5,8 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SettingsService } from '../../providers/settings.service';
+import { ReportsService } from '../../providers/reports.service';
+import Utilities from '../../helpers/utilities';
 
 @Component({
   selector: 'dburst-templates-gallery-modal',
@@ -17,6 +19,7 @@ export class TemplatesGalleryModalComponent {
 
   constructor(
     protected settingsService: SettingsService,
+    protected reportsService: ReportsService,
     protected messagesService: ToastrMessagesService,
     protected translateService: TranslateService,
     protected sanitizer: DomSanitizer,
@@ -220,7 +223,7 @@ export class TemplatesGalleryModalComponent {
     }
 
     // Use the new view-template endpoint specifically designed for browser viewing
-    const url = `/api/cfgman/rb/view-template?path=${encodeURIComponent(templateObjectPath)}`;
+    const url = `/api/reports/view-template?path=${encodeURIComponent(templateObjectPath)}`;
     window.open(url, '_blank');
   }
 
@@ -370,7 +373,7 @@ export class TemplatesGalleryModalComponent {
         const assetPath = `${baseDirUrl}${src}`;
         img.setAttribute(
           'src',
-          `/api/cfgman/rb/serve-asset?path=${encodeURIComponent(assetPath)}`,
+          `/api/reports/serve-asset?path=${encodeURIComponent(assetPath)}`,
         );
       }
     });
@@ -394,7 +397,7 @@ export class TemplatesGalleryModalComponent {
           const assetPath = `${baseDirUrl}${bgMatch[1]}`;
           const newStyle = style.replace(
             bgMatch[0],
-            `background-image: url('/api/cfgman/rb/serve-asset?path=${encodeURIComponent(assetPath)}')`,
+            `background-image: url('/api/reports/serve-asset?path=${encodeURIComponent(assetPath)}')`,
           );
           el.setAttribute('style', newStyle);
         }
@@ -503,7 +506,8 @@ export class TemplatesGalleryModalComponent {
       // Load each HTML file of the template and pre-cache it
       for (let i = 0; i < template.templateFilePaths.length; i++) {
         const path = template.templateFilePaths[i];
-        const content = await this.settingsService.loadTemplateFileAsync(path);
+        const reportId = Utilities.basename(Utilities.dirname(path));
+        const content = await this.reportsService.loadReportTemplate(reportId);
         if (content) {
           template.htmlContent.push(content);
           if (!this.templateSanitizedHtmlCache.has(path)) {
@@ -525,8 +529,9 @@ export class TemplatesGalleryModalComponent {
           // Load README
           try {
             const readmePath = `${dirPath}/${templateName}-readme.md`;
+            const readmeReportId = Utilities.basename(Utilities.dirname(readmePath));
             const readmeContent =
-              await this.settingsService.loadTemplateFileAsync(readmePath);
+              await this.reportsService.loadReportTemplate(readmeReportId);
             template.readmeContent =
               readmeContent && readmeContent.length > 0 ? readmeContent : '';
           } catch (error) {
@@ -536,9 +541,10 @@ export class TemplatesGalleryModalComponent {
           // Load AI prompt for “modify”
           try {
             const promptModifyPath = `${dirPath}/${templateName}-ai_prompt_modify.md`;
+            const promptModifyReportId = Utilities.basename(Utilities.dirname(promptModifyPath));
             const promptModifyContent =
-              await this.settingsService.loadTemplateFileAsync(
-                promptModifyPath,
+              await this.reportsService.loadReportTemplate(
+                promptModifyReportId,
               );
             template.selectedTemplateModifyPrompt =
               promptModifyContent && promptModifyContent.length > 0
@@ -551,9 +557,10 @@ export class TemplatesGalleryModalComponent {
           // Load AI prompt for “scratch”
           try {
             const promptScratchPath = `${dirPath}/${templateName}-ai_prompt_scratch.md`;
+            const promptScratchReportId = Utilities.basename(Utilities.dirname(promptScratchPath));
             const promptScratchContent =
-              await this.settingsService.loadTemplateFileAsync(
-                promptScratchPath,
+              await this.reportsService.loadReportTemplate(
+                promptScratchReportId,
               );
             template.selectedTemplateScratchPrompt =
               promptScratchContent && promptScratchContent.length > 0

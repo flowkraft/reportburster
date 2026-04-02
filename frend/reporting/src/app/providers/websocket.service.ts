@@ -4,7 +4,6 @@ import { SettingsService } from './settings.service';
 import { Constants } from '../helpers/constants';
 import { ApiService } from './api.service';
 import { Injectable } from '@angular/core';
-import { FsService } from './fs.service';
 import { ExecutionStatsService } from './execution-stats.service';
 import Utilities from '../helpers/utilities';
 import { ToastrMessagesService } from './toastr-messages.service';
@@ -17,7 +16,6 @@ export class WebSocketService extends WebSocketEndpoint {
   constructor(
     protected apiService: ApiService,
     protected settingsService: SettingsService,
-    protected fsService: FsService,
     protected executionStatsService: ExecutionStatsService,
     protected toastMessagesService: ToastrMessagesService,
     protected stateStore: StateStoreService,
@@ -166,7 +164,7 @@ export class WebSocketService extends WebSocketEndpoint {
       logFileName,
       subscriptionLogFileContent,
     );
-    await this.apiService.put('/jobman/logs/tailer', {
+    await this.apiService.put('/jobs/logs/tailer', {
       fileName: logFileName,
       command: 'start',
     });
@@ -211,7 +209,7 @@ export class WebSocketService extends WebSocketEndpoint {
       this.logsSubjects.get(logFileName).complete();
       this.subscriptionsLogFileContent.get(logFileName).unsubscribe();
       this.logsSubjects.delete(logFileName);
-      await this.apiService.put('/jobman/logs/tailer', {
+      await this.apiService.put('/jobs/logs/tailer', {
         fileName: logFileName,
         command: 'stop',
       });
@@ -229,21 +227,24 @@ export class WebSocketService extends WebSocketEndpoint {
 
   async clearLogs(logFileName?: string) {
     if (logFileName) {
-      await this.fsService.writeAsync(
-        `${this.settingsService.LOGS_FOLDER_PATH}/${logFileName}`,
-        '',
-      );
+      await this.apiService.delete(`/jobs/logs/${logFileName}`);
     } else {
       const logsFiles = ['errors.log', 'warnings.log', 'info.log'];
 
-      for (const logFileName of logsFiles) {
-        await this.fsService.writeAsync(
-          `${this.settingsService.LOGS_FOLDER_PATH}/${logFileName}`,
-          '',
-        );
+      for (const logFile of logsFiles) {
+        await this.apiService.delete(`/jobs/logs/${logFile}`);
       }
       await this.checkLogsFolder();
     }
+
+    // Clear frontend log buffers so stale content doesn't remain on screen
+    const stats = this.executionStatsService.logStats;
+    stats.infoLogLines = [];
+    stats.infoLogContent = '';
+    stats.errorsLogLines = [];
+    stats.errorsLogContent = '';
+    stats.warningsLogLines = [];
+    stats.warningsLogContent = '';
   }
 
   async checkIfFileWasCreatedIsEmptyOrRemoved(logFileName: string) {

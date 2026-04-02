@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { SettingsService } from './settings.service';
 import { ApiService } from './api.service';
+import { ReportsService } from './reports.service';
 import Utilities from '../helpers/utilities';
 
 export interface SampleInfo {
@@ -70,6 +71,7 @@ export class SamplesService {
   constructor(
     protected translateService: TranslateService,
     protected settingsService: SettingsService,
+    protected reportsService: ReportsService,
     protected apiService: ApiService,
   ) { }
 
@@ -1068,16 +1070,15 @@ export class SamplesService {
   }
 
   async toggleSampleVisibility(sample: SampleInfo, visibility: string) {
+    const reportId = Utilities.basename(Utilities.dirname(sample.configurationFilePath));
     const settingsXmlConfigurationValues =
-      await this.settingsService.loadSettingsFileAsync(
-        sample.configurationFilePath,
-      );
+      await this.reportsService.loadReportSettings(reportId);
 
     settingsXmlConfigurationValues.documentburster.settings.visibility =
       visibility;
 
-    await this.settingsService.saveSettingsFileAsync(
-      sample.configurationFilePath,
+    await this.reportsService.saveReportSettings(
+      reportId,
       settingsXmlConfigurationValues,
     );
 

@@ -19,8 +19,8 @@ import {
   newEmailServer,
   SettingsService,
 } from '../../providers/settings.service';
-import { ShellService } from '../../providers/shell.service';
 import { FsService } from '../../providers/fs.service';
+import { ConnectionsService } from '../../providers/connections.service';
 import { ConnectionDetailsComponent } from '../../components/connection-details/connection-details.component';
 
 @Component({
@@ -52,9 +52,9 @@ export class ConnectionListComponent implements OnInit {
     protected messagesService: ToastrMessagesService,
     protected fsService: FsService,
     protected settingsService: SettingsService,
+    protected connectionsService: ConnectionsService,
     protected infoService: InfoService,
     protected executionStatsService: ExecutionStatsService,
-    protected shellService: ShellService,
     protected route: ActivatedRoute,
     protected router: Router,
   ) { }
@@ -65,9 +65,9 @@ export class ConnectionListComponent implements OnInit {
     this.settingsService.currentConfigurationTemplatePath = '';
 
     this.settingsService.configurationFiles =
-      await this.settingsService.loadAllSettingsFilesAsync();
+      await this.settingsService.loadAllReports();
 
-    await this.settingsService.loadAllConnectionFilesAsync();
+    await this.settingsService.loadAllConnections();
 
     // Check which DB connection is set for JasperReports via datasource.properties
     await this.loadJasperReportsConnectionFlag();
@@ -135,34 +135,10 @@ export class ConnectionListComponent implements OnInit {
       message: dialogQuestion,
       confirmAction: async () => {
         const originalFilePath = selectedConnection.filePath; // Path to the .xml file, used for removing from list
-        let pathToRemoveOnBackend = originalFilePath; // Path for the fsService.removeAsync call
-
-        if (selectedConnection.connectionType === 'database-connection') {
-          // For database connections, target the parent directory for deletion.
-          // Example: originalFilePath = "config/connections/db-my-connection/db-my-connection.xml"
-          // We want to remove "config/connections/db-my-connection"
-          const pathParts = originalFilePath.split('/');
-          if (pathParts.length > 1) {
-            // Ensure there's a parent directory
-            pathParts.pop(); // Remove the file name (e.g., "db-my-connection.xml")
-            pathToRemoveOnBackend = pathParts.join('/');
-          } else {
-            // Should not happen for DB connections if path structure is consistent
-            console.error(
-              'Could not determine parent directory for database connection:',
-              originalFilePath,
-            );
-            this.messagesService.showError(
-              'Error determining path for database connection deletion.',
-            );
-            return;
-          }
-        }
 
         try {
-          // The fsService.removeAsync should be capable of removing a directory recursively
-          //console.log(`Removing path: ${pathToRemoveOnBackend}`);
-          await this.fsService.removeAsync(pathToRemoveOnBackend);
+          // Use the connections API — backend handles both directory (db) and file (email) deletion
+          await this.connectionsService.deleteConnection(selectedConnection.connectionCode);
 
           // Remove the connection from the frontend list using its original unique filePath
           _.remove(
@@ -356,8 +332,8 @@ export class ConnectionListComponent implements OnInit {
           }
 
           try {
-            await this.settingsService.saveConnectionFileAsync(
-              previousDefaultConnection.filePath,
+            await this.connectionsService.saveConnection(
+              previousDefaultConnection.connectionCode,
               payloadForPreviousToSave,
             );
           } catch (error) {
@@ -410,8 +386,8 @@ export class ConnectionListComponent implements OnInit {
         }
 
         try {
-          await this.settingsService.saveConnectionFileAsync(
-            selectedConnection.filePath,
+          await this.connectionsService.saveConnection(
+            selectedConnection.connectionCode,
             payloadForSelectedToSave,
           );
           this.messagesService.showInfo(

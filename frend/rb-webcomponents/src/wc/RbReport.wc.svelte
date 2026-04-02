@@ -10,7 +10,7 @@
   /** Report folder name (e.g., "sales-summary") */
   export let reportCode: string = '';
   
-  /** Base URL for API calls (e.g., "http://localhost:9090/api/jobman/reporting") */
+  /** Base URL for API calls (e.g., "http://localhost:9090/api/reporting") */
   export let apiBaseUrl: string = '';
   
   /** API key for authentication (passed from host app) */

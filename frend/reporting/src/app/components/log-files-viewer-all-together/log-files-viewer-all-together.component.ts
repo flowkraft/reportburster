@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
 import { ConfirmService } from '../dialog-confirm/confirm.service';
 import { WebSocketService } from '../../providers/websocket.service';
-import { FsService } from '../../providers/fs.service';
+import { JobsService } from '../../providers/jobs.service';
 import { SettingsService } from '../../providers/settings.service';
 
 @Component({
@@ -13,7 +13,7 @@ export class LogFilesViewerAllTogetherComponent {
   constructor(
     protected confirmService: ConfirmService,
     protected executionStatsService: ExecutionStatsService,
-    protected fsService: FsService,
+    protected jobsService: JobsService,
     protected logsService: WebSocketService,
     protected settingsService: SettingsService,
   ) {}
@@ -27,10 +27,7 @@ export class LogFilesViewerAllTogetherComponent {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: async () => {
-        await this.fsService.dirAsync(
-          this.settingsService.QUARANTINE_FOLDER_PATH,
-          { empty: true },
-        );
+        await this.jobsService.clearQuarantine();
         if (shouldClearLogFiles) {
           await this.logsService.clearLogs();
         }

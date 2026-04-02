@@ -295,7 +295,7 @@ EXPOSE 9090
 
 # Health check
 # HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-#     CMD curl -f http://localhost:9090/api/jobman/system/version || exit 1
+#     CMD curl -f http://localhost:9090/api/system/version || exit 1
 
 # Set entrypoint
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

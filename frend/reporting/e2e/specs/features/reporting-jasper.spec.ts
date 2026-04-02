@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import { electronBeforeAfterAllTest } from '../../utils/common-setup';
 import { Constants } from '../../utils/constants';
 import { FluentTester } from '../../helpers/fluent-tester';
@@ -50,7 +50,7 @@ test.describe('ReportBurster - JasperReports Integration', async () => {
       // Navigate away from Processing so that returning triggers a fresh config reload
       ft = ft
         .click('#topMenuConfiguration')
-        .click('#topMenuConfigurationTemplates')
+        .click('#topMenuConfigurationReports')
         .sleep(Constants.DELAY_ONE_SECOND)
         .gotoReportGenerationScreen()
         .click('#selectMailMergeClassicReport')
@@ -103,7 +103,7 @@ test.describe('ReportBurster - JasperReports Integration', async () => {
       // Then select the config from the dropdown to change burstfilename to .xlsx
       ft = ft
         .click('#topMenuConfiguration')
-        .click('#topMenuConfigurationTemplates')
+        .click('#topMenuConfigurationReports')
         .sleep(Constants.DELAY_ONE_SECOND)
         .gotoReportGenerationScreen()
         .click('#topMenuConfiguration')
@@ -177,17 +177,9 @@ test.describe('ReportBurster - JasperReports Integration', async () => {
       const portableDir = process.env.PORTABLE_EXECUTABLE_DIR;
       const dsPropsPath = path.resolve(portableDir, 'config', 'reports-jasper', 'datasource.properties');
       const expectedConnCode = `db-${_.kebabCase(dbConn.connectionName)}-${dbVendor}`;
-      ft.actions.push(async () => {
-        // Poll for up to 5 seconds — the backend API write is async
-        let found = false;
-        for (let i = 0; i < 10; i++) {
-          if (fs.existsSync(dsPropsPath)) { found = true; break; }
-          await new Promise(r => setTimeout(r, 500));
-        }
-        expect(found, `datasource.properties should exist at ${dsPropsPath}`).toBeTruthy();
-        const dsPropsContent = fs.readFileSync(dsPropsPath, 'utf-8');
-        expect(dsPropsContent).toContain(`connectionCode=${expectedConnCode}`);
-      });
+      ft = ft
+        .fileShouldExist(dsPropsPath)
+        .fileContentShouldContain(dsPropsPath, `connectionCode=${expectedConnCode}`);
 
       // Pick the "customers by country" report
       ft = ft

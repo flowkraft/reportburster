@@ -264,7 +264,7 @@
         colOrder,
       }, engineToUse);
 
-      // Derive analytics API URL from apiBaseUrl (e.g. http://host:port/api/jobman/reporting -> http://host:port/api/analytics)
+      // Derive analytics API URL from apiBaseUrl (e.g. http://host:port/api/reporting -> http://host:port/api/analytics)
       if (apiBaseUrl) {
         const baseOrigin = apiBaseUrl.replace(/\/api\/jobman\/reporting\/?$/, '');
         pivotApi.baseUrl = `${baseOrigin}/api/analytics`;

@@ -35,13 +35,13 @@ export class ShellService {
     upgDbTempFolderPath: string,
   ) {
     const jblFilePath = Utilities.slash(
-      await this.apiService.get('/jobman/system/fs/resolve', {
+      await this.apiService.get('/system/fs/resolve', {
         paths: jobFilePath,
       }),
     );
 
     const script = await this.apiService.post(
-      '/jobman/system/child-process/spawn',
+      '/system/child-process/spawn',
       {
         command: 'rb_rust_updater',
         args: ['--job_file_path', jblFilePath, '2>&1'],
@@ -72,7 +72,7 @@ export class ShellService {
 
     const commands = ['reportburster.bat'].concat(arrguments);
     const batScript = await this.apiService.post(
-      '/jobman/system/child-process/spawn',
+      '/system/child-process/spawn',
       commands,
     );
 
@@ -108,7 +108,7 @@ export class ShellService {
     const batFile = command + 'TestEmailServer.bat';
 
     const batScript = await this.apiService.post(
-      `/jobman/system/child-process/spawn?cwdPath=${encodeURIComponent(
+      `/system/child-process/spawn?cwdPath=${encodeURIComponent(
         Utilities.slash(currentWorkingDirPath),
       )}`,
       [batFile],

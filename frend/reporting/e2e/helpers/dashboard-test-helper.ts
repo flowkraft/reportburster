@@ -24,7 +24,7 @@ export async function assertDashboardRendersCorrectly(
 
   // ── 2. rb-value (KPI cards) ──
   const atomicData = await page.evaluate(async ({ rc, cp }) => {
-    const resp = await fetch(`/api/jobman/reporting/reports/${rc}/data?componentId=atomicValues${cp}`);
+    const resp = await fetch(`/api/reporting/reports/${rc}/data?componentId=atomicValues${cp}`);
     return resp.json();
   }, { rc: reportCode, cp: countryParam });
   expect(atomicData.data).toBeDefined();
@@ -50,7 +50,7 @@ export async function assertDashboardRendersCorrectly(
 
   // ── 3. rb-chart (revenueTrend) — monthly revenue ──
   const revenueTrendData = await page.evaluate(async ({ rc, cp }) => {
-    const resp = await fetch(`/api/jobman/reporting/reports/${rc}/data?componentId=revenueTrend${cp}`);
+    const resp = await fetch(`/api/reporting/reports/${rc}/data?componentId=revenueTrend${cp}`);
     return resp.json();
   }, { rc: reportCode, cp: countryParam });
   expect(revenueTrendData.data).toBeDefined();
@@ -65,7 +65,7 @@ export async function assertDashboardRendersCorrectly(
 
   // ── 4. rb-chart (revenueByCategory) — category breakdown ──
   const categoryData = await page.evaluate(async ({ rc, cp }) => {
-    const resp = await fetch(`/api/jobman/reporting/reports/${rc}/data?componentId=revenueByCategory${cp}`);
+    const resp = await fetch(`/api/reporting/reports/${rc}/data?componentId=revenueByCategory${cp}`);
     return resp.json();
   }, { rc: reportCode, cp: countryParam });
   expect(categoryData.data).toBeDefined();
@@ -81,7 +81,7 @@ export async function assertDashboardRendersCorrectly(
 
   // ── 5. rb-tabulator (topCustomers) ──
   const topCustomersData = await page.evaluate(async ({ rc, cp }) => {
-    const resp = await fetch(`/api/jobman/reporting/reports/${rc}/data?componentId=topCustomers${cp}`);
+    const resp = await fetch(`/api/reporting/reports/${rc}/data?componentId=topCustomers${cp}`);
     return resp.json();
   }, { rc: reportCode, cp: countryParam });
   expect(topCustomersData.data).toBeDefined();
@@ -119,7 +119,7 @@ export async function assertDashboardRendersCorrectly(
 
   // ── 6. rb-pivot-table (orderExplorer) — pivot source data ──
   const pivotData = await page.evaluate(async ({ rc, cp }) => {
-    const resp = await fetch(`/api/jobman/reporting/reports/${rc}/data?componentId=orderExplorer${cp}`);
+    const resp = await fetch(`/api/reporting/reports/${rc}/data?componentId=orderExplorer${cp}`);
     return resp.json();
   }, { rc: reportCode, cp: countryParam });
   expect(pivotData.data).toBeDefined();

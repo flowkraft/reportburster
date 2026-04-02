@@ -42,9 +42,11 @@ import {
 } from '../../providers/settings.service';
 import { ShellService } from '../../providers/shell.service';
 import { ApiService } from '../../providers/api.service';
-import { FsService } from '../../providers/fs.service';
+import { JobsService } from '../../providers/jobs.service';
+import { SystemService } from '../../providers/system.service';
 import { ProcessingService } from '../../providers/processing.service';
 import { StateStoreService } from '../../providers/state-store.service';
+import { ReportsService } from '../../providers/reports.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   ReportingService,
@@ -218,6 +220,8 @@ export class ProcessingComponent implements OnInit {
   constructor(
     protected processingService: ProcessingService,
     protected apiService: ApiService,
+    protected jobsService: JobsService,
+    protected systemService: SystemService,
     protected settingsService: SettingsService,
     protected appsManagerService: AppsManagerService,
     protected confirmService: ConfirmService,
@@ -230,9 +234,9 @@ export class ProcessingComponent implements OnInit {
     protected shellService: ShellService,
     protected reportingService: ReportingService,
     protected executionStatsService: ExecutionStatsService,
-    protected fsService: FsService,
     protected samplesService: SamplesService,
     protected sanitizer: DomSanitizer,
+    protected reportsService: ReportsService,
   ) { }
 
   ngOnDestroy() {
@@ -258,10 +262,10 @@ export class ProcessingComponent implements OnInit {
     delete this.processingService.procReportingMailMergeInfo
       .selectedMailMergeClassicReport;
 
-    await this.settingsService.loadAllConnectionFilesAsync();
+    await this.settingsService.loadAllConnections();
 
     this.settingsService.configurationFiles =
-      await this.settingsService.loadAllSettingsFilesAsync({
+      await this.settingsService.loadAllReports({
         forceReload: true,
       });
 
@@ -296,7 +300,7 @@ export class ProcessingComponent implements OnInit {
         
         // Lazy load DSL details for the pre-filled sample report
         if (this.processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport) {
-          await this.settingsService.loadConfigurationDetailsAsync(
+          await this.settingsService.loadReportDetails(
             this.processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport
           );
         }
@@ -395,9 +399,7 @@ export class ProcessingComponent implements OnInit {
       this.changeDetectorRef.detectChanges();
     });
 
-    this.xmlSettings = await this.settingsService.loadSettingsFileAsync(
-      this.settingsService.getMyReportsConfigurationValuesFilePath(),
-    );
+    this.xmlSettings = await this.reportsService.loadReportSettings('burst');
 
     //console.log(
     //  `processing.component.xmlSettings: ${JSON.stringify(this.xmlSettings)}`
@@ -617,14 +619,7 @@ export class ProcessingComponent implements OnInit {
               this.processingService.procBurstInfo.inputFile,
               this.processingService.procBurstInfo.inputFileName,
             );
-            const customHeaders = new Headers({
-              Accept: 'application/json',
-            });
-            const uploadedFilesInfo = await this.apiService.post(
-              '/jobman/upload/process-single',
-              formData,
-              customHeaders,
-            );
+            const uploadedFilesInfo = await this.jobsService.uploadSingle(formData);
 
             if (!uploadedFilesInfo || !uploadedFilesInfo.length) {
               return;
@@ -724,14 +719,7 @@ export class ProcessingComponent implements OnInit {
                 this.processingService.procReportingMailMergeInfo.inputFile,
                 this.processingService.procReportingMailMergeInfo.inputFileName,
               );
-              const customHeaders = new Headers({
-                Accept: 'application/json',
-              });
-              const uploadedFilesInfo = await this.apiService.post(
-                '/jobman/upload/process-single',
-                formData,
-                customHeaders,
-              );
+              const uploadedFilesInfo = await this.jobsService.uploadSingle(formData);
 
               if (!uploadedFilesInfo || !uploadedFilesInfo.length) {
                 return;
@@ -814,15 +802,7 @@ export class ProcessingComponent implements OnInit {
               },
             );
 
-            const customHeaders = new Headers({
-              Accept: 'application/json',
-            });
-
-            const uploadedFilesInfo = await this.apiService.post(
-              '/jobman/upload/process-multiple',
-              formData,
-              customHeaders,
-            );
+            const uploadedFilesInfo = await this.jobsService.uploadMultiple(formData);
             if (!uploadedFilesInfo || !uploadedFilesInfo.length) {
               return;
             }
@@ -1003,17 +983,12 @@ export class ProcessingComponent implements OnInit {
   }
 
   async saveMergedFileSetting() {
-    const xmlSettings = await this.settingsService.loadSettingsFileAsync(
-      this.settingsService.getMyReportsConfigurationValuesFilePath(),
-    );
+    const xmlSettings = await this.reportsService.loadReportSettings('burst');
 
     xmlSettings.documentburster.settings.mergefilename =
       this.processingService.procMergeBurstInfo.mergedFileName;
 
-    this.settingsService.saveSettingsFileAsync(
-      this.settingsService.getMyReportsConfigurationValuesFilePath(),
-      xmlSettings,
-    );
+    this.reportsService.saveReportSettings('burst', xmlSettings);
   }
 
   moveItemInArray<T>(array: T[], from: number, to: number): void {
@@ -1123,15 +1098,7 @@ export class ProcessingComponent implements OnInit {
               this.processingService.procQualityAssuranceInfo.inputFileName,
             );
 
-            const customHeaders = new Headers({
-              Accept: 'application/json',
-            });
-
-            const uploadedFilesInfo = await this.apiService.post(
-              '/jobman/upload/process-qa',
-              formData,
-              customHeaders,
-            );
+            const uploadedFilesInfo = await this.jobsService.uploadQa(formData);
             inputFilePath = uploadedFilesInfo[0].filePath;
 
             // Update the input file path in the command arguments
@@ -1215,14 +1182,11 @@ export class ProcessingComponent implements OnInit {
     //);
 
     let testEmailServerStatus = 'stopped';
-    const qaEmailServerStarted = await this.apiService.get(
-      '/jobman/system/check-url',
-      {
-        url: encodeURIComponent(
-          this.xmlSettings.documentburster.settings.qualityassurance.emailserver
-            .weburl,
-        ),
-      },
+    const qaEmailServerStarted = await this.systemService.checkUrl(
+      encodeURIComponent(
+        this.xmlSettings.documentburster.settings.qualityassurance.emailserver
+          .weburl,
+      ),
     );
 
     //console.log(`qaEmailServerStarted = ${qaEmailServerStarted}`);
@@ -1620,7 +1584,7 @@ export class ProcessingComponent implements OnInit {
       $event.type === 'config-samples' ||
       $event.type === 'config-jasper-reports'
     )) {
-      await this.settingsService.loadConfigurationDetailsAsync($event);
+      await this.settingsService.loadReportDetails($event);
     }
   }
 

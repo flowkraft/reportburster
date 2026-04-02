@@ -10,6 +10,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sourcekraft.documentburster.common.security.SecretsCipher;
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ReportSettings.DataSource.ScriptOptions; // Adjust import if needed
 import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 import com.sourcekraft.documentburster.engine.AbstractReporter;
@@ -76,9 +78,17 @@ public class ScriptedReporter extends AbstractReporter {
 				// Retrieve existing ServerDatabaseSettings and create a groovy Sql instance
 				ServerDatabaseSettings dbs = this.getServerDatabaseSettings(connectionCode);
 				dbs.ensureDriverAndUrl();
-				//System.out.println("ServerDatabaseSettings dbs = " + dbs.toString());
 
-				dbSql = Sql.newInstance(dbs.url, dbs.userid, dbs.userpassword, dbs.driver);
+				// Decrypt password at the exact moment of use — never store plaintext
+				String decryptedPassword = dbs.userpassword;
+				try {
+					decryptedPassword = SecretsCipher.getInstance(Settings.PORTABLE_EXECUTABLE_DIR_PATH)
+							.decrypt(dbs.userpassword);
+				} catch (Exception ex) {
+					log.warn("Failed to decrypt database password for scripted reporter: {}", ex.getMessage());
+				}
+
+				dbSql = Sql.newInstance(dbs.url, dbs.userid, decryptedPassword, dbs.driver);
 				ctx.dbSql = dbSql;
 				log.debug("Created and provided dbSql for connection code: {}", connectionCode);
 			}

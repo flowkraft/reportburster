@@ -29,9 +29,9 @@ export class TopMenuHeaderComponent implements OnInit {
 
     //console.log('TopMenuHeaderComponent');
     this.settingsService.configurationFiles =
-      await this.settingsService.loadAllSettingsFilesAsync();
+      await this.settingsService.loadAllReports();
 
-    await this.settingsService.loadAllConnectionFilesAsync();
+    await this.settingsService.loadAllConnections();
 
     await this.samplesService.fillSamplesNotes();
   }

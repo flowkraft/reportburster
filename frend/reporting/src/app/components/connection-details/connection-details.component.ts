@@ -18,12 +18,11 @@ import {
   newEmailServer,
   SettingsService,
 } from '../../providers/settings.service';
+import { ConnectionsService } from '../../providers/connections.service';
 import { ConfirmService } from '../dialog-confirm/confirm.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
-import { FsService } from '../../providers/fs.service';
 import { InfoService } from '../dialog-info/info.service';
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
-import { ShellService } from '../../providers/shell.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import _ from 'lodash';
 import Utilities from '../../helpers/utilities';
@@ -60,6 +59,50 @@ export class ConnectionDetailsComponent implements OnInit {
   @Input() apiBaseUrl: string = '';
 
 
+  // Password visibility toggles
+  showEmailPassword = false;
+  showDbPassword = false;
+  private emailPasswordRevealTimer: any;
+  private dbPasswordRevealTimer: any;
+
+  async toggleRevealEmailPassword() {
+    if (this.showEmailPassword) {
+      this.showEmailPassword = false;
+      this.modalConnectionInfo.email.documentburster.connection.emailserver.userpassword = '******';
+      clearTimeout(this.emailPasswordRevealTimer);
+    } else {
+      try {
+        const connectionCode = this.getConnectionCode();
+        const realPassword = await this.connectionsService.revealPassword(connectionCode, 'userpassword');
+        this.modalConnectionInfo.email.documentburster.connection.emailserver.userpassword = realPassword;
+        this.showEmailPassword = true;
+        this.emailPasswordRevealTimer = setTimeout(() => {
+          this.showEmailPassword = false;
+          this.modalConnectionInfo.email.documentburster.connection.emailserver.userpassword = '******';
+        }, 10000);
+      } catch (e) { console.error('Failed to reveal email password', e); }
+    }
+  }
+
+  async toggleRevealDbPassword() {
+    if (this.showDbPassword) {
+      this.showDbPassword = false;
+      this.modalConnectionInfo.database.documentburster.connection.databaseserver.userpassword = '******';
+      clearTimeout(this.dbPasswordRevealTimer);
+    } else {
+      try {
+        const connectionCode = this.getConnectionCode();
+        const realPassword = await this.connectionsService.revealPassword(connectionCode, 'userpassword');
+        this.modalConnectionInfo.database.documentburster.connection.databaseserver.userpassword = realPassword;
+        this.showDbPassword = true;
+        this.dbPasswordRevealTimer = setTimeout(() => {
+          this.showDbPassword = false;
+          this.modalConnectionInfo.database.documentburster.connection.databaseserver.userpassword = '******';
+        }, 10000);
+      } catch (e) { console.error('Failed to reveal db password', e); }
+    }
+  }
+
   // Tab active states
   isConnectionDetailsTabActive = true;
   isDatabaseSchemaTabActive = false;
@@ -71,16 +114,26 @@ export class ConnectionDetailsComponent implements OnInit {
   constructor(
     protected confirmService: ConfirmService,
     protected messagesService: ToastrMessagesService,
-    protected fsService: FsService,
+    protected connectionsService: ConnectionsService,
     protected settingsService: SettingsService,
     protected infoService: InfoService,
     protected executionStatsService: ExecutionStatsService,
-    protected shellService: ShellService,
     protected appsManagerService: AppsManagerService,
     protected route: ActivatedRoute,
     protected router: Router,
     private cdRef: ChangeDetectorRef,
   ) { }
+
+  /**
+   * Extract connectionCode from a file path like "config/connections/db-test-7/db-test-7.xml" -> "db-test-7"
+   */
+  private getConnectionCode(filePath?: string): string {
+    const fp = filePath || this.modalConnectionInfo.filePath;
+    if (!fp) return '';
+    const pathParts = fp.split('/');
+    const connectionFileName = pathParts[pathParts.length - 1];
+    return connectionFileName.replace(/\.xml$/i, '');
+  }
 
   ngOnInit(): void {
     //console.log(
@@ -210,23 +263,21 @@ export class ConnectionDetailsComponent implements OnInit {
         const folderPath = `${this.settingsService.CONFIGURATION_CONNECTIONS_FOLDER_PATH}/${connectionCode}`;
         this.modalConnectionInfo.filePath = `${folderPath}/${connectionFileName}`;
 
-        // First check if the folder exists, if not the file can't exist
-        const folderExists = await this.fsService.existsAsync(folderPath);
-        if (!folderExists) {
-          this.modalConnectionInfo.connectionSameFilePathAlreadyExists = false;
-        } else {
-          // If folder exists, check if the file exists inside
-          this.modalConnectionInfo.connectionSameFilePathAlreadyExists =
-            await this.fsService.existsAsync(this.modalConnectionInfo.filePath);
-        }
+        // Check if a connection with this code already exists in the loaded list
+        const existingConnection = this.settingsService.connectionFiles.find(
+          (conn) => conn.connectionCode === connectionCode,
+        );
+        this.modalConnectionInfo.connectionSameFilePathAlreadyExists = !!existingConnection;
       } else {
         // For email connections: maintain current approach with a single file
         // Path format: /config/connections/eml-my-connection.xml
         this.modalConnectionInfo.filePath = `${this.settingsService.CONFIGURATION_CONNECTIONS_FOLDER_PATH}/${connectionFileName}`;
 
-        // Check if the file exists
-        this.modalConnectionInfo.connectionSameFilePathAlreadyExists =
-          await this.fsService.existsAsync(this.modalConnectionInfo.filePath);
+        // Check if a connection with this code already exists in the loaded list
+        const existingConnection = this.settingsService.connectionFiles.find(
+          (conn) => conn.connectionCode === connectionCode,
+        );
+        this.modalConnectionInfo.connectionSameFilePathAlreadyExists = !!existingConnection;
       }
     }
   }
@@ -257,34 +308,31 @@ export class ConnectionDetailsComponent implements OnInit {
       }
       this.confirmService.askConfirmation({
         message: 'Send test email?',
-        confirmAction: () => {
+        confirmAction: async () => {
           this.isTestingConnection = true;
 
-          const execPath = `"${Utilities.slash(this.modalConnectionInfo.filePath).replace('config/', 'PORTABLE_EXECUTABLE_DIR_PATH/config/')}"`;
-          this.shellService.runBatFile(
-            ['system', 'test-email', '--email-connection-file', execPath],
-            `testing SMTP connection for '${this.modalConnectionInfo.email.documentburster.connection.name}'`,
-            result => {
-              this.isTestingConnection = false;
-
-              if (result.success) this.messagesService.showSuccess('Test email sent successfully');
-              else {
-                this.messagesService.showError('Test email failed');
-                console.error(result.error);
-              }
-            }
-          );
+          try {
+            const connectionCode = this.getConnectionCode();
+            await this.connectionsService.testConnection(connectionCode, 'email');
+            this.messagesService.showSuccess('Test email sent successfully');
+          } catch (err) {
+            this.messagesService.showError('Test email failed');
+            console.error(err);
+          } finally {
+            this.isTestingConnection = false;
+            this.cdRef.detectChanges();
+          }
         },
       });
     };
 
     if (this.modalConnectionInfo.crudMode === 'create') {
-      // first‐save prompt for brand‐new connections
+      // first-save prompt for brand-new connections
       this.confirmService.askConfirmation({
         message: 'The connection must be saved before being able to test it. Save now?',
         confirmAction: async () => {
           await this.saveCurrentConnection(this.isModalDbConnectionVisible);
-          // flip to update mode so future tests don’t re-prompt “Save now?”
+          // flip to update mode so future tests don't re-prompt “Save now?”
           this.modalConnectionInfo.crudMode = 'update';
           // now run the usual test flow
           await runTest();
@@ -419,47 +467,32 @@ export class ConnectionDetailsComponent implements OnInit {
       return;
     }
 
-    const performTestLogic = (filePathToTest: string) => {
-      this.isTestingConnection = true; // <<<< SET LOADING STATE TO TRUE
-      this.isSchemaLoading = true; // Keep this as testing also loads schema
+    const performTestLogic = async (filePathToTest: string) => {
+      this.isTestingConnection = true;
+      this.isSchemaLoading = true;
       this.showSchemaTreeSelect = false;
       this.sourceSchemaObjects = [];
       this.targetSchemaObjects = [];
       this.cdRef.detectChanges();
 
-      const execPath = `"${Utilities.slash(filePathToTest)}"`;
-      this.shellService.runBatFile(
-        [
-          'system',
-          'test-and-fetch-database-schema',
-          '--database-connection-file',
-          execPath,
-        ],
-        `testing connection and fetching schema for '${this.modalConnectionInfo.database.documentburster.connection.name}'`,
-        // null, // onDoneCmdStdOut - REMOVED
-        // null, // onDoneCmdError - REMOVED
-        // The third argument is the onDoneCmdClose callback
-        (result: { success: boolean; error?: any }) => {
-          // onDoneCmdClose
-          this.isTestingConnection = false; // <<<< RESET LOADING STATE
-          // isSchemaLoading will be handled by loadSchemaFromBackend or set here on error
-
-          if (result.success) {
-            this.messagesService.showSuccess(
-              'Successfully connected to the database and fetched schema.',
-            );
-            this.loadSchemaFromBackend(filePathToTest); // This will set isSchemaLoading = false in its finally block
-          } else {
-            this.messagesService.showError(
-              result.error?.message ||
-              'Failed to connect to the database or fetch schema. Please check logs.',
-            );
-            this.isSchemaLoading = false; // Explicitly reset on error if loadSchemaFromBackend isn't called
-            this.showSchemaTreeSelect = false;
-          }
-          this.cdRef.detectChanges();
-        },
-      );
+      try {
+        const connectionCode = this.getConnectionCode(filePathToTest);
+        await this.connectionsService.testConnection(connectionCode, 'database');
+        this.isTestingConnection = false;
+        this.messagesService.showSuccess(
+          'Successfully connected to the database and fetched schema.',
+        );
+        this.loadSchemaFromBackend(filePathToTest);
+      } catch (err) {
+        this.isTestingConnection = false;
+        this.messagesService.showError(
+          err?.message ||
+          'Failed to connect to the database or fetch schema. Please check logs.',
+        );
+        this.isSchemaLoading = false;
+        this.showSchemaTreeSelect = false;
+      }
+      this.cdRef.detectChanges();
     };
 
     const proceedWithTest = async () => {
@@ -472,7 +505,7 @@ export class ConnectionDetailsComponent implements OnInit {
       }
       this.confirmService.askConfirmation({
         message: 'Test database connection?',
-        confirmAction: () => {
+        confirmAction: async () => {
           const rawFilePath = this.modalConnectionInfo.filePath;
           if (!rawFilePath) {
             this.messagesService.showError(
@@ -480,7 +513,7 @@ export class ConnectionDetailsComponent implements OnInit {
             );
             return;
           }
-          performTestLogic(rawFilePath);
+          await performTestLogic(rawFilePath);
         },
         cancelAction: () => {
           // User cancelled testing
@@ -497,17 +530,16 @@ export class ConnectionDetailsComponent implements OnInit {
           if (saved) {
             const savedFilePath = this.modalConnectionInfo.filePath;
             if (savedFilePath) {
-              performTestLogic(savedFilePath);
+              await performTestLogic(savedFilePath);
             } else {
               this.messagesService.showError(
                 'Failed to get file path after saving. Cannot test connection.',
               );
-              this.isTestingConnection = false; // Ensure state is reset if save fails to provide path
+              this.isTestingConnection = false;
               this.isSchemaLoading = false;
               this.cdRef.detectChanges();
             }
           }
-          // If not saved, button remains as is, isTestingConnection is false.
         },
         cancelAction: () => {
           // User clicked No to saving
@@ -577,7 +609,7 @@ export class ConnectionDetailsComponent implements OnInit {
     // Show confirmation dialog
     this.confirmService.askConfirmation({
       message: 'This will refresh the Database Schema. Continue?',
-      confirmAction: () => {
+      confirmAction: async () => {
         const filePath = this.modalConnectionInfo.filePath;
         if (!filePath) {
           this.messagesService.showError(
@@ -590,31 +622,18 @@ export class ConnectionDetailsComponent implements OnInit {
         this.isSchemaLoading = true;
         this.cdRef.detectChanges();
 
-        const execPath = `"${Utilities.slash(filePath)}"`;
-
-        // Call the same method used for testing database connections
-        // as it already fetches the schema
-        this.shellService.runBatFile(
-          [
-            'system',
-            'test-and-fetch-database-schema',
-            '--database-connection-file',
-            execPath,
-          ],
-          `refreshing schema for '${this.modalConnectionInfo.database.documentburster.connection.name}'`,
-          (result: { success: boolean }) => {
-            if (result.success) {
-              // Reload the schema data
-              this.loadSchemaFromBackend(filePath);
-            } else {
-              this.isSchemaLoading = false;
-              this.messagesService.showError(
-                'Failed to refresh database schema.',
-              );
-              this.cdRef.detectChanges();
-            }
-          },
-        );
+        try {
+          const connectionCode = this.getConnectionCode(filePath);
+          await this.connectionsService.testConnection(connectionCode, 'database');
+          // Reload the schema data
+          this.loadSchemaFromBackend(filePath);
+        } catch (err) {
+          this.isSchemaLoading = false;
+          this.messagesService.showError(
+            'Failed to refresh database schema.',
+          );
+          this.cdRef.detectChanges();
+        }
       },
     });
   }
@@ -1112,8 +1131,8 @@ export class ConnectionDetailsComponent implements OnInit {
           };
       }
 
-      await this.settingsService.saveConnectionFileAsync(
-        savePath,
+      await this.connectionsService.saveConnection(
+        this.getConnectionCode(savePath),
         connectionData,
       );
 
@@ -1212,9 +1231,7 @@ export class ConnectionDetailsComponent implements OnInit {
       return false;
     }
 
-    const pathParts = this.modalConnectionInfo.filePath.split('/');
-    const connectionFileName = pathParts[pathParts.length - 1];
-    const connectionCode = connectionFileName.replace(/\.xml$/i, '');
+    const connectionCode = this.getConnectionCode();
     const targetPath = `config/connections/${connectionCode}/${connectionCode}-domain-grouped-schema.json`;
     // Update this.domainGroupedSchemaPath if it's meant to always reflect the target path for the current connection
     this.domainGroupedSchemaPath = targetPath;
@@ -1248,25 +1265,15 @@ export class ConnectionDetailsComponent implements OnInit {
     try {
       if (hasMeaningfulContent) {
         // Save the exact text content from domainGroupedSchemaJsonTextContent
-        await this.fsService.writeAsync(targetPath, textToSave);
+        await this.connectionsService.saveMetadata(connectionCode, 'domain-grouped-schema', textToSave);
         this.messagesService.showInfo(
           'Domain-grouped schema saved successfully.',
         );
         this.domainGroupedSchemaExists = true;
       } else {
-        // If content is empty, invalid, or parses to an empty schema, remove the file if it exists.
-        if (await this.fsService.existsAsync(targetPath)) {
-          await this.fsService.removeAsync(targetPath);
-          this.messagesService.showInfo(
-            'Empty or invalid domain-grouped schema - existing file removed or not saved.',
-          );
-        } else {
-          // If file doesn't exist and content is not meaningful, no action needed, but can log.
-          //console.log(
-          //  'Domain-grouped schema is empty or invalid; no file to save or remove.',
-          //);
-        }
-        this.domainGroupedSchemaExists = false; // Reflect that no meaningful schema is persisted
+        // Send empty content to backend - it will handle removal if file exists
+        await this.connectionsService.saveMetadata(connectionCode, 'domain-grouped-schema', '');
+        this.domainGroupedSchemaExists = false;
       }
       this.cdRef.detectChanges();
       return true;
@@ -1290,23 +1297,15 @@ export class ConnectionDetailsComponent implements OnInit {
       return false;
     }
 
-    const pathParts = this.modalConnectionInfo.filePath.split('/');
-    const connectionFileName = pathParts[pathParts.length - 1];
-    const connectionCode = connectionFileName.replace(/\.xml$/i, '');
+    const connectionCode = this.getConnectionCode();
     this.erDiagramFilePath = `config/connections/${connectionCode}/${connectionCode}-er-diagram.puml`;
 
     try {
       const content = this.plantUmlCode?.trim() ?? '';
+      await this.connectionsService.saveMetadata(connectionCode, 'er-diagram', content);
       if (content !== '') {
-        await this.fsService.writeAsync(this.erDiagramFilePath, content);
         this.messagesService.showInfo('ER Diagram saved successfully.');
-        this.domainGroupedSchemaExists = true;
       } else {
-        // Remove existing diagram file if no content
-        if (await this.fsService.existsAsync(this.erDiagramFilePath)) {
-          await this.fsService.removeAsync(this.erDiagramFilePath);
-          this.messagesService.showInfo('Empty ER Diagram removed.');
-        }
         this.erDiagramFilePath = '';
       }
       this.cdRef.detectChanges();
@@ -1328,27 +1327,17 @@ export class ConnectionDetailsComponent implements OnInit {
       return false;
     }
 
-    const pathParts = this.modalConnectionInfo.filePath.split('/');
-    const connectionFileName = pathParts[pathParts.length - 1];
-    const connectionCode = connectionFileName.replace(/\.xml$/i, '');
+    const connectionCode = this.getConnectionCode();
     this.ubiquitousLanguageFilePath = `config/connections/${connectionCode}/${connectionCode}-ubiquitous-language.md`;
 
     try {
       const content = this.ubiquitousLanguageMarkdown?.trim() ?? '';
+      await this.connectionsService.saveMetadata(connectionCode, 'ubiquitous-language', content);
       if (content !== '') {
-        await this.fsService.writeAsync(
-          this.ubiquitousLanguageFilePath,
-          content,
-        );
         this.messagesService.showInfo(
           'Ubiquitous Language saved successfully.',
         );
       } else {
-        // Remove existing file if no content
-        if (await this.fsService.existsAsync(this.ubiquitousLanguageFilePath)) {
-          await this.fsService.removeAsync(this.ubiquitousLanguageFilePath);
-          this.messagesService.showInfo('Empty Ubiquitous Language removed.');
-        }
         this.ubiquitousLanguageFilePath = '';
       }
       this.cdRef.detectChanges();
@@ -1374,9 +1363,10 @@ export class ConnectionDetailsComponent implements OnInit {
     this.rawDomainGroupedSchema = { domainGroups: [] };
     this.domainGroupedSchemaExists = false;
 
-    if (!this.domainGroupedSchemaPath) {
+    const connectionCode = this.getConnectionCode();
+    if (!connectionCode) {
       console.warn(
-        'Domain-grouped schema path is not set. Using empty schema.',
+        'Connection code could not be determined. Using empty schema.',
       );
       // Process with empty schema to clear UI
       this.processDomainGroupedSchema(this.rawDomainGroupedSchema);
@@ -1385,22 +1375,10 @@ export class ConnectionDetailsComponent implements OnInit {
     }
 
     try {
-      const exists = await this.fsService.existsAsync(
-        this.domainGroupedSchemaPath,
-      );
+      const result = await this.connectionsService.getMetadata(connectionCode, 'domain-grouped-schema');
 
-      //console.log(
-      //  `Checking for domain-grouped schema file: ${this.domainGroupedSchemaPath}, exists: ${exists}`,
-      //);
-
-      if (exists) {
-        const fileContent = await this.fsService.readAsync(
-          this.domainGroupedSchemaPath,
-        );
-
-        //console.log(
-        //  `Attempting to load domain-grouped schema from: ${this.domainGroupedSchemaPath}, fileContent: ${fileContent}`,
-        //);
+      if (result.exists === 'true') {
+        const fileContent = result.content;
 
         if (typeof fileContent === 'string' && fileContent.trim() !== '') {
           this.domainGroupedSchemaJsonTextContent = fileContent; // Store raw text
@@ -1420,24 +1398,18 @@ export class ConnectionDetailsComponent implements OnInit {
               'Domain-grouped schema file contains invalid JSON. Displaying empty schema.',
             );
             // Fallback to empty state for rawDomainGroupedSchema and text content
-            this.domainGroupedSchemaJsonTextContent = ''; // Or '{}' if preferred for editor
+            this.domainGroupedSchemaJsonTextContent = '';
             this.rawDomainGroupedSchema = { domainGroups: [] };
             this.domainGroupedSchemaExists = false;
           }
         } else {
           // File exists but is empty or not a string
-          //console.log(
-          //  `Domain-grouped schema file ${this.domainGroupedSchemaPath} is empty or content is not a string.`,
-          //);
-          this.domainGroupedSchemaJsonTextContent = ''; // Ensure text content is also reset
+          this.domainGroupedSchemaJsonTextContent = '';
           this.rawDomainGroupedSchema = { domainGroups: [] };
           this.domainGroupedSchemaExists = false;
         }
       } else {
-        //console.log(
-        //  `Domain-grouped schema file does not exist: ${this.domainGroupedSchemaPath}.`,
-        //);
-        // Ensure text content is reset if file doesn't exist
+        // File does not exist
         this.domainGroupedSchemaJsonTextContent = '';
         this.rawDomainGroupedSchema = { domainGroups: [] };
         this.domainGroupedSchemaExists = false;
@@ -1447,7 +1419,7 @@ export class ConnectionDetailsComponent implements OnInit {
       this.messagesService.showError(
         `Failed to load domain-grouped schema: ${err.message || err}`,
       );
-      this.domainGroupedSchemaJsonTextContent = ''; // Fallback on any other error
+      this.domainGroupedSchemaJsonTextContent = '';
       this.rawDomainGroupedSchema = { domainGroups: [] };
       this.domainGroupedSchemaExists = false;
     }
@@ -1470,72 +1442,49 @@ export class ConnectionDetailsComponent implements OnInit {
       return;
     }
 
-    // Extract the connection code to construct relative paths correctly
-    const pathParts = rawFilePath.split('/');
-    const connectionFileName = pathParts[pathParts.length - 1]; // e.g., "db-test-7.xml"
-    const connectionCode = connectionFileName.replace(/\.xml$/i, ''); // e.g., "db-test-7"
-
-    // Construct relative path that backend expects: config/connections/{code}/{code}-information-schema.json
-    const relativeSchemaPath = `config/connections/${connectionCode}/${connectionCode}-information-schema.json`;
-
-    // Declare content variable at this scope so it's available in the catch block
-    let content: string = '';
+    const connectionCode = this.getConnectionCode(rawFilePath);
 
     try {
-      const fileExists = await this.fsService.existsAsync(relativeSchemaPath);
-      //console.log('fileExists:', fileExists, typeof fileExists);
+      const result = await this.connectionsService.getMetadata(connectionCode, 'information-schema');
 
-      if (!fileExists) {
-        //console.log(
-        //  `Database schema file not found: ${relativeSchemaPath}. Please test the connection or refresh the schema to generate it.`,
-        //);
+      if (result.exists !== 'true' || !result.content || result.content.trim() === '') {
         this.rawSchemaData = null;
         this.sourceSchemaObjects = [];
         this.showSchemaTreeSelect = false;
       } else {
-        content = await this.fsService.readAsync(relativeSchemaPath);
-        if (!content || content.trim() === '') {
-          //console.log(
-          //  `Schema file ${relativeSchemaPath} is empty. No schema loaded.`,
-          //);
-          this.rawSchemaData = null;
-          this.sourceSchemaObjects = [];
-          this.showSchemaTreeSelect = false;
-        } else {
-          const parsed: any = JSON.parse(content);
-          this.rawSchemaData = parsed; // Cache the raw parsed data
+        const parsed: any = JSON.parse(result.content);
+        this.rawSchemaData = parsed; // Cache the raw parsed data
 
-          // build hierarchical nodes for UI (PickList)
-          const nodes = (parsed.tables || []).map((tbl: any) => ({
-            key: tbl.tableName,
-            label: tbl.tableName,
-            icon: 'fa fa-table',
-            title: 'Type: ' + (tbl.tableType || 'TABLE'),
-            data: tbl, // Store original table data in the UI node if needed by PickList or other UI features
-            children: (tbl.columns || []).map((col: any) => ({
-              key: tbl.tableName + '_' + col.columnName,
-              label: col.columnName,
-              icon:
-                tbl.primaryKeyColumns &&
-                  tbl.primaryKeyColumns.includes(col.columnName)
-                  ? 'fa fa-key'
-                  : (tbl.foreignKeys || []).some(
-                    (fk: any) => fk.fkColumnName === col.columnName,
-                  )
-                    ? 'fa fa-link'
-                    : 'fa fa-columns',
-              title: `${col.typeName || ''}${col.columnSize ? '[' + col.columnSize + ']' : ''} ${col.isNullable === false ? 'NOT NULL' : 'NULL'}`,
-              data: col, // Store original column data
-            })),
-          }));
+        // build hierarchical nodes for UI (PickList)
+        const nodes = (parsed.tables || []).map((tbl: any) => ({
+          key: tbl.tableName,
+          label: tbl.tableName,
+          icon: 'fa fa-table',
+          title: 'Type: ' + (tbl.tableType || 'TABLE'),
+          data: tbl, // Store original table data in the UI node if needed by PickList or other UI features
+          children: (tbl.columns || []).map((col: any) => ({
+            key: tbl.tableName + '_' + col.columnName,
+            label: col.columnName,
+            icon:
+              tbl.primaryKeyColumns &&
+                tbl.primaryKeyColumns.includes(col.columnName)
+                ? 'fa fa-key'
+                : (tbl.foreignKeys || []).some(
+                  (fk: any) => fk.fkColumnName === col.columnName,
+                )
+                  ? 'fa fa-link'
+                  : 'fa fa-columns',
+            title: `${col.typeName || ''}${col.columnSize ? '[' + col.columnSize + ']' : ''} ${col.isNullable === false ? 'NOT NULL' : 'NULL'}`,
+            data: col, // Store original column data
+          })),
+        }));
 
-          // assign hierarchical table nodes for picklist
-          this.sourceSchemaObjects = nodes; // top-level tables with children columns
-          this.targetSchemaObjects = [];
-          this.showSchemaTreeSelect = true;
+        // assign hierarchical table nodes for picklist
+        this.sourceSchemaObjects = nodes; // top-level tables with children columns
+        this.targetSchemaObjects = [];
+        this.showSchemaTreeSelect = true;
 
-          this.messagesService.showInfo('Database schema loaded.');
-        }
+        this.messagesService.showInfo('Database schema loaded.');
       }
     } catch (err) {
       console.error('Error loading schema JSON:', err);
@@ -1673,40 +1622,32 @@ export class ConnectionDetailsComponent implements OnInit {
   async checkDomainGroupedSchemaExists(): Promise<void> {
     if (!this.modalConnectionInfo.filePath) {
       this.domainGroupedSchemaExists = false;
-      this.domainGroupedSchemaJsonTextContent = ''; // Default to empty object string
-      this.rawDomainGroupedSchema = { domainGroups: [] }; // Set empty raw data
-      this.processDomainGroupedSchema({ domainGroups: [] }); // Process empty schema for UI consistency
-      this.showDomainSchemaTreeSelect = false; // Ensure picklist is hidden
+      this.domainGroupedSchemaJsonTextContent = '';
+      this.rawDomainGroupedSchema = { domainGroups: [] };
+      this.processDomainGroupedSchema({ domainGroups: [] });
+      this.showDomainSchemaTreeSelect = false;
       return;
     }
 
     try {
-      // Extract the connection code to construct relative paths correctly
-      const pathParts = this.modalConnectionInfo.filePath.split('/');
-      const connectionFileName = pathParts[pathParts.length - 1]; // e.g., "db-test-7.xml"
-      const connectionCode = connectionFileName.replace(/\.xml$/i, ''); // e.g., "db-test-7"
-
-      // Construct relative path that backend expects: config/connections/{code}/{code}-domain-grouped-schema.json
+      const connectionCode = this.getConnectionCode();
       const domainGroupedSchemaPath = `config/connections/${connectionCode}/${connectionCode}-domain-grouped-schema.json`;
 
       // Store the path but don't assume the file exists yet
       this.domainGroupedSchemaPath = domainGroupedSchemaPath;
 
-      // Check if the file exists
-      const exists = await this.fsService.existsAsync(domainGroupedSchemaPath);
-      this.domainGroupedSchemaExists = !!exists;
+      // Check if the file exists via the metadata API
+      const result = await this.connectionsService.getMetadata(connectionCode, 'domain-grouped-schema');
+      this.domainGroupedSchemaExists = result.exists === 'true';
 
-      if (exists) {
+      if (this.domainGroupedSchemaExists) {
         // File exists, attempt to load it
         await this.loadDomainGroupedSchema();
       } else {
-        //console.log(
-        //  `Domain-grouped schema file does not exist yet: ${domainGroupedSchemaPath}`,
-        //);
         // Set default empty schema since the file doesn't exist
-        this.domainGroupedSchemaJsonTextContent = ''; // Default to empty object for the editor
-        this.rawDomainGroupedSchema = { domainGroups: [] }; // Set empty raw data
-        this.processDomainGroupedSchema({ domainGroups: [] }); // Initialize the UI with empty state
+        this.domainGroupedSchemaJsonTextContent = '';
+        this.rawDomainGroupedSchema = { domainGroups: [] };
+        this.processDomainGroupedSchema({ domainGroups: [] });
       }
 
       this.cdRef.detectChanges();
@@ -1716,7 +1657,7 @@ export class ConnectionDetailsComponent implements OnInit {
       this.domainGroupedSchemaJsonTextContent = '';
       this.rawDomainGroupedSchema = { domainGroups: [] };
       this.processDomainGroupedSchema({ domainGroups: [] });
-      this.showDomainSchemaTreeSelect = false; // Ensure picklist is hidden on error
+      this.showDomainSchemaTreeSelect = false;
       this.cdRef.detectChanges();
     }
   }
@@ -1956,16 +1897,13 @@ export class ConnectionDetailsComponent implements OnInit {
       return;
     }
     try {
-      const pathParts = connectionFilePath.split('/');
-      const connectionFileName = pathParts[pathParts.length - 1];
-      const connectionCode = connectionFileName.replace(/\.xml$/i, '');
+      const connectionCode = this.getConnectionCode(connectionFilePath);
       const erDiagramPath = `config/connections/${connectionCode}/${connectionCode}-er-diagram.puml`;
       this.erDiagramFilePath = erDiagramPath;
 
-      const exists = await this.fsService.existsAsync(erDiagramPath);
-      if (exists) {
-        const content = await this.fsService.readAsync(erDiagramPath);
-        this.plantUmlCode = content || '';
+      const result = await this.connectionsService.getMetadata(connectionCode, 'er-diagram');
+      if (result.exists === 'true') {
+        this.plantUmlCode = result.content || '';
       } else {
         this.plantUmlCode = '';
       }
@@ -1988,24 +1926,19 @@ export class ConnectionDetailsComponent implements OnInit {
       return;
     }
     try {
-      const pathParts = connectionFilePath.split('/');
-      const connectionFileName = pathParts[pathParts.length - 1];
-      const connectionCode = connectionFileName.replace(/\.xml$/i, '');
+      const connectionCode = this.getConnectionCode(connectionFilePath);
       const ulPath = `config/connections/${connectionCode}/${connectionCode}-ubiquitous-language.md`;
       this.ubiquitousLanguageFilePath = ulPath;
 
-      const exists = await this.fsService.existsAsync(ulPath);
-      //console.log(`Ubiquitous Language file exists: ${exists}`);
-
-      if (exists) {
-        const content = await this.fsService.readAsync(ulPath);
-        this.ubiquitousLanguageMarkdown = content || '';
+      const result = await this.connectionsService.getMetadata(connectionCode, 'ubiquitous-language');
+      if (result.exists === 'true') {
+        this.ubiquitousLanguageMarkdown = result.content || '';
       } else {
         this.ubiquitousLanguageMarkdown = '';
       }
     } catch (err) {
       console.error('Error loading Ubiquitous Language:', err);
-      this.ubiquitousLanguageMarkdown = ''; // Reset on error
+      this.ubiquitousLanguageMarkdown = '';
     } finally {
       this.cdRef.detectChanges();
     }

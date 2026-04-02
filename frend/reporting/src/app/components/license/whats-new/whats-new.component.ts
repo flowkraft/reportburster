@@ -55,7 +55,7 @@ export class WhatsNewComponent {
   async ngOnInit() {
     if (!this.stateStore.configSys.sysInfo.setup.java.isJavaOk) return;
 
-    await this.licenseService.loadLicenseFileAsync();
+    await this.licenseService.loadLicense();
     if (this.licenseService.changeLog) {
       this.changeLog = this.licenseService.changeLog;
       this.changeLogMarkdown =
@@ -89,7 +89,7 @@ export class WhatsNewComponent {
   }
 
   async getBlogPosts(): Promise<BlogPost[]> {
-    const data = await this.apiService.get('/jobman/system/get-blog-posts');
+    const data = await this.apiService.get('/system/blog-posts');
     //console.log(`data = ${JSON.stringify(data)}`);
     //const result = await Utilities.parseStringPromise(data);
     return data.channel.item;

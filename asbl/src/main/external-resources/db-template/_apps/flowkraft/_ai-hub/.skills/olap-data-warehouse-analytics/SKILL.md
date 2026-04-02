@@ -18,7 +18,7 @@ I help users with two related domains: **Embeddable Analytics Components** and *
 
 All components share the same attributes:
 - `report-code` — Report folder name (e.g., "sales-summary")
-- `api-base-url` — ReportBurster API URL (e.g., "http://localhost:9090/api/jobman/reporting")
+- `api-base-url` — ReportBurster API URL (e.g., "http://localhost:9090/api/reporting")
 
 ### How Embedding Works
 
