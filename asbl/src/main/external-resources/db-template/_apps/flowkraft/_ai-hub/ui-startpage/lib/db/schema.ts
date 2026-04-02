@@ -17,6 +17,23 @@ export type Config = typeof config.$inferSelect;
 export type NewConfig = typeof config.$inferInsert;
 
 /**
+ * Canvases table - stores data-canvas work-in-progress dashboards
+ * Each canvas holds its full state (widgets, layout, data sources, configs) as JSON
+ */
+export const canvases = sqliteTable("canvases", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  connectionId: text("connection_id"),
+  state: text("state").notNull(),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export type Canvas = typeof canvases.$inferSelect;
+export type NewCanvas = typeof canvases.$inferInsert;
+
+/**
  * Default configuration values
  * These are seeded on first run if not present
  */

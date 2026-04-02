@@ -1,0 +1,747 @@
+package com.flowkraft.reporting.services;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.flowkraft.samples.SamplesFrendOnlyService;
+
+import com.flowkraft.reports.ReportsService;
+import com.flowkraft.common.AppPaths;
+import com.flowkraft.reporting.dtos.ReportFullConfigDto;
+import com.flowkraft.reporting.dsl.chart.ChartOptionsParser;
+import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
+import com.sourcekraft.documentburster.common.db.ReportDataResult;
+import com.sourcekraft.documentburster.common.db.SqlExecutor;
+import com.flowkraft.reporting.dsl.pivottable.PivotTableOptionsParser;
+import com.flowkraft.reporting.dsl.filterpane.FilterPaneOptionsParser;
+import com.sourcekraft.documentburster.common.reportparameters.ReportParameter;
+import com.sourcekraft.documentburster.common.reportparameters.ReportParametersHelper;
+import com.sourcekraft.documentburster.common.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.model.ConfigurationFileInfo;
+import com.flowkraft.reporting.dsl.tabulator.TabulatorOptionsParser;
+import com.sourcekraft.documentburster.job.CliJob;
+import com.sourcekraft.documentburster.utils.CsvUtils;
+import com.sourcekraft.documentburster.utils.FreemarkerRenderingUtils;
+
+@Service
+public class ReportingService {
+
+	private static final Logger log = LoggerFactory.getLogger(ReportingService.class);
+
+	@Autowired
+	ReportsService settingsService;
+
+	@Autowired
+	SamplesFrendOnlyService samplesFrendOnlyService;
+
+	public ReportDataResult fetchData(String configurationFilePath, Map<String, String> parameters, boolean testMode)
+			throws Exception {
+		CliJob cliJob = new CliJob(configurationFilePath);
+
+		return cliJob.doFetchData(parameters, testMode);
+	}
+
+	/**
+	 * Load full report configuration by report code.
+	 * Looks in both config/reports/{code} and config/samples/{code}.
+	 */
+	public ReportFullConfigDto loadReportConfig(String reportCode) throws Exception {
+		log.debug("ReportingService.loadReportConfig(" + reportCode + ") - START");
+		log.debug("PORTABLE_EXECUTABLE_DIR_PATH = " + AppPaths.PORTABLE_EXECUTABLE_DIR_PATH);
+		
+		ReportFullConfigDto config = new ReportFullConfigDto();
+		config.reportCode = reportCode;
+		
+		// Try config/reports first, then config/samples
+		Path reportsDir = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "reports", reportCode);
+		Path samplesDir = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples", reportCode);
+		
+		log.debug("Checking reportsDir: " + reportsDir + " exists=" + Files.exists(reportsDir));
+		log.debug("Checking samplesDir: " + samplesDir + " exists=" + Files.exists(samplesDir));
+		
+		Path itemDir;
+		String configType;
+		if (Files.exists(reportsDir)) {
+			itemDir = reportsDir;
+			configType = "config-reports";
+		} else if (Files.exists(samplesDir)) {
+			itemDir = samplesDir;
+			configType = "config-samples";
+		} else {
+			// Try frend-only samples under config/samples/_frend/{reportCode}
+			Path frendSamplesDir = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples", SamplesFrendOnlyService.FREND_SAMPLES_SUBFOLDER, reportCode);
+			log.debug("Checking frendSamplesDir: " + frendSamplesDir + " exists=" + Files.exists(frendSamplesDir));
+			if (Files.exists(frendSamplesDir)) {
+				try {
+					log.debug("Found _frend sample folder: " + reportCode + " - ensuring settings.xml/reporting.xml exist...");
+					samplesFrendOnlyService.getOrProvisionFrendSample(reportCode);
+					itemDir = frendSamplesDir;
+					configType = "config-samples-frend"; // use distinct type for _frend path resolution
+					log.debug("Using _frend sample directory: " + itemDir);
+				} catch (Exception e) {
+					log.debug("Failed loading frend sample: " + e.getMessage());
+					throw new RuntimeException("Report not found: " + reportCode, e);
+				}
+			} else {
+				log.debug("Report not found: " + reportCode);
+				throw new RuntimeException("Report not found: " + reportCode);
+			}
+		}
+		
+		log.debug("Using itemDir: " + itemDir);
+		
+		// Set configuration file path
+		if ("config-reports".equals(configType)) {
+			config.configurationFilePath = "./config/reports/" + reportCode + "/settings.xml";
+		} else if ("config-samples-frend".equals(configType)) {
+			config.configurationFilePath = "./config/samples/_frend/" + reportCode + "/settings.xml";
+		} else {
+			config.configurationFilePath = "./config/samples/" + reportCode + "/settings.xml";
+		}
+		
+		// Load settings.xml for report name and dsInputType
+		Path settingsPath = itemDir.resolve("settings.xml");
+		if (Files.exists(settingsPath)) {
+			String content = Files.readString(settingsPath);
+			config.reportName = extractXmlValue(content, "template");
+			config.dsInputType = extractReportingDsInputType(itemDir);
+		}
+
+		// Read output type and dashboard template from reporting.xml
+		Path reportingPath = itemDir.resolve("reporting.xml");
+		String reportingConnCode = null;
+		if (Files.exists(reportingPath)) {
+			String reportingContent = Files.readString(reportingPath);
+			config.outputType = extractXmlValue(reportingContent, "outputtype");
+			reportingConnCode = extractXmlValue(reportingContent, "conncode");
+
+			// For dashboard output type, load the HTML template content
+			if ("output.dashboard".equals(config.outputType)) {
+				String documentPath = extractXmlValue(reportingContent, "documentpath");
+				if (documentPath != null && !documentPath.isEmpty()) {
+					// Strip leading slash so path resolves relative on all platforms
+					String relDocPath = documentPath.startsWith("/") ? documentPath.substring(1) : documentPath;
+					Path templatePath = itemDir.resolve(relDocPath);
+					// Also try relative to PORTABLE_EXECUTABLE_DIR_PATH
+					if (!Files.exists(templatePath)) {
+						templatePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, relDocPath);
+					}
+					if (Files.exists(templatePath)) {
+						config.dashboardTemplate = Files.readString(templatePath);
+					}
+				}
+			}
+		}
+
+		// Load parameters DSL
+		Path paramsPath = itemDir.resolve(reportCode + "-report-parameters-spec.groovy");
+		log.debug("Parameters DSL path: " + paramsPath + " exists=" + Files.exists(paramsPath));
+		if (Files.exists(paramsPath)) {
+			String dslContent = Files.readString(paramsPath);
+			config.parametersDsl = dslContent;
+			log.debug("Parameters DSL content (first 200 chars): " + dslContent.substring(0, Math.min(200, dslContent.length())));
+			config.parameters = ReportParametersHelper.parseGroovyParametersDslCode(dslContent);
+			config.hasParameters = config.parameters != null && !config.parameters.isEmpty();
+			log.debug("Parameters DSL parsed, hasParameters=" + config.hasParameters);
+
+			// Resolve SQL-based parameter options (e.g., options: "SELECT DISTINCT ...")
+			if (config.hasParameters && reportingConnCode != null && !reportingConnCode.isEmpty()) {
+				resolveParameterSqlOptions(config.parameters, reportingConnCode);
+			}
+		}
+		
+		// Load Tabulator DSL
+		Path tabulatorPath = itemDir.resolve(reportCode + "-tabulator-config.groovy");
+		log.debug("Tabulator DSL path: " + tabulatorPath + " exists=" + Files.exists(tabulatorPath));
+		if (Files.exists(tabulatorPath)) {
+			try {
+				String dslContent = Files.readString(tabulatorPath);
+				config.tabulatorDsl = dslContent;
+				log.debug("Tabulator DSL content (first 200 chars): " + dslContent.substring(0, Math.min(200, dslContent.length())));
+				var opts = TabulatorOptionsParser.parseGroovyTabulatorDslCode(dslContent);
+				log.debug("Tabulator DSL parsed successfully, opts=" + (opts != null ? "not null" : "null"));
+				if (opts != null) {
+					config.tabulatorOptions = new HashMap<>(opts.getOptions());
+					// Extract named blocks for aggregator reports
+					if (opts.getNamedOptions() != null && !opts.getNamedOptions().isEmpty()) {
+						config.namedTabulatorOptions = opts.getNamedOptions();
+					}
+					// hasTabulator is true when unnamed options or named blocks exist
+					config.hasTabulator = !opts.getOptions().isEmpty()
+							|| (config.namedTabulatorOptions != null);
+			}
+			} catch (Exception e) {
+				log.debug("ERROR parsing Tabulator DSL: " + e.getMessage());
+				e.printStackTrace();
+				throw e;
+			}
+		}
+		
+		// Load Chart DSL
+		Path chartPath = itemDir.resolve(reportCode + "-chart-config.groovy");
+		log.debug("Chart DSL path: " + chartPath + " exists=" + Files.exists(chartPath));
+		if (Files.exists(chartPath)) {
+			String dslContent = Files.readString(chartPath);
+			config.chartDsl = dslContent;
+			log.debug("Chart DSL content (first 200 chars): " + dslContent.substring(0, Math.min(200, dslContent.length())));
+			var opts = ChartOptionsParser.parseGroovyChartDslCode(dslContent);
+			log.debug("Chart DSL parsed successfully, opts=" + (opts != null ? "not null" : "null"));
+			if (opts != null) {
+				config.chartOptions = new HashMap<>();
+				if (opts.getType() != null) {
+					config.chartOptions.put("type", opts.getType());
+				}
+				if (opts.getLabelField() != null) {
+					config.chartOptions.put("labelField", opts.getLabelField());
+				}
+				if (opts.getOptions() != null && !opts.getOptions().isEmpty()) {
+					config.chartOptions.put("options", opts.getOptions());
+				}
+				if (opts.getLabels() != null && !opts.getLabels().isEmpty()) {
+					config.chartOptions.put("labels", opts.getLabels());
+				}
+				if (opts.getDatasets() != null && !opts.getDatasets().isEmpty()) {
+					config.chartOptions.put("datasets", opts.getDatasets());
+				}
+				if (opts.getData() != null && !opts.getData().isEmpty()) {
+					config.chartOptions.put("data", opts.getData());
+				}
+				// Extract named blocks for aggregator reports
+				if (opts.getNamedOptions() != null && !opts.getNamedOptions().isEmpty()) {
+					config.namedChartOptions = new HashMap<>();
+					for (Map.Entry<String, com.flowkraft.reporting.dsl.chart.ChartOptions> entry : opts.getNamedOptions().entrySet()) {
+						Map<String, Object> m = new HashMap<>();
+						com.flowkraft.reporting.dsl.chart.ChartOptions co = entry.getValue();
+						if (co.getType() != null) m.put("type", co.getType());
+						if (co.getLabelField() != null) m.put("labelField", co.getLabelField());
+						if (co.getOptions() != null && !co.getOptions().isEmpty()) m.put("options", co.getOptions());
+						if (co.getLabels() != null && !co.getLabels().isEmpty()) m.put("labels", co.getLabels());
+						if (co.getDatasets() != null && !co.getDatasets().isEmpty()) m.put("datasets", co.getDatasets());
+						if (co.getData() != null && !co.getData().isEmpty()) m.put("data", co.getData());
+						config.namedChartOptions.put(entry.getKey(), m);
+					}
+				}
+				// hasChart is true when unnamed options or named blocks exist
+				config.hasChart = !config.chartOptions.isEmpty()
+						|| (config.namedChartOptions != null);
+			}
+		}
+
+		// Load Pivot DSL
+		Path pivotPath = itemDir.resolve(reportCode + "-pivot-config.groovy");
+		log.debug("Pivot DSL path: " + pivotPath + " exists=" + Files.exists(pivotPath));
+		if (Files.exists(pivotPath)) {
+			String dslContent = Files.readString(pivotPath);
+			config.pivotTableDsl = dslContent;
+			log.debug("Pivot DSL loaded, content length=" + dslContent.length() + ", first 200 chars: " + dslContent.substring(0, Math.min(200, dslContent.length())));
+			var opts = PivotTableOptionsParser.parseGroovyPivotTableDslCode(dslContent);
+			log.debug("Pivot DSL parsed successfully, opts=" + (opts != null ? "not null" : "null"));
+			if (opts != null) {
+				config.pivotTableOptions = new HashMap<>();
+				if (opts.getRows() != null && !opts.getRows().isEmpty()) {
+					config.pivotTableOptions.put("rows", opts.getRows());
+				}
+				if (opts.getCols() != null && !opts.getCols().isEmpty()) {
+					config.pivotTableOptions.put("cols", opts.getCols());
+				}
+				if (opts.getVals() != null && !opts.getVals().isEmpty()) {
+					config.pivotTableOptions.put("vals", opts.getVals());
+				}
+				if (opts.getAggregatorName() != null) {
+					config.pivotTableOptions.put("aggregatorName", opts.getAggregatorName());
+				}
+				if (opts.getRendererName() != null) {
+					config.pivotTableOptions.put("rendererName", opts.getRendererName());
+				}
+				if (opts.getRowOrder() != null) {
+					config.pivotTableOptions.put("rowOrder", opts.getRowOrder());
+				}
+				if (opts.getColOrder() != null) {
+					config.pivotTableOptions.put("colOrder", opts.getColOrder());
+				}
+				if (opts.getValueFilter() != null && !opts.getValueFilter().isEmpty()) {
+					config.pivotTableOptions.put("valueFilter", opts.getValueFilter());
+				}
+				if (opts.getOptions() != null && !opts.getOptions().isEmpty()) {
+					config.pivotTableOptions.put("options", opts.getOptions());
+				}
+				if (opts.getHiddenAttributes() != null && !opts.getHiddenAttributes().isEmpty()) {
+					config.pivotTableOptions.put("hiddenAttributes", opts.getHiddenAttributes());
+				}
+				if (opts.getHiddenFromAggregators() != null && !opts.getHiddenFromAggregators().isEmpty()) {
+					config.pivotTableOptions.put("hiddenFromAggregators", opts.getHiddenFromAggregators());
+				}
+				if (opts.getHiddenFromDragDrop() != null && !opts.getHiddenFromDragDrop().isEmpty()) {
+					config.pivotTableOptions.put("hiddenFromDragDrop", opts.getHiddenFromDragDrop());
+				}
+				if (opts.getUnusedOrientationCutoff() != null) {
+					config.pivotTableOptions.put("unusedOrientationCutoff", opts.getUnusedOrientationCutoff());
+				}
+				if (opts.getMenuLimit() != null) {
+					config.pivotTableOptions.put("menuLimit", opts.getMenuLimit());
+				}
+				if (opts.getTableName() != null) {
+					config.pivotTableOptions.put("tableName", opts.getTableName());
+				}
+				// Extract named blocks for aggregator reports
+				if (opts.getNamedOptions() != null && !opts.getNamedOptions().isEmpty()) {
+					config.namedPivotTableOptions = new HashMap<>();
+					for (Map.Entry<String, com.flowkraft.reporting.dsl.pivottable.PivotTableOptions> entry : opts.getNamedOptions().entrySet()) {
+						Map<String, Object> m = new HashMap<>();
+						com.flowkraft.reporting.dsl.pivottable.PivotTableOptions po = entry.getValue();
+						if (po.getRows() != null && !po.getRows().isEmpty()) m.put("rows", po.getRows());
+						if (po.getCols() != null && !po.getCols().isEmpty()) m.put("cols", po.getCols());
+						if (po.getVals() != null && !po.getVals().isEmpty()) m.put("vals", po.getVals());
+						if (po.getAggregatorName() != null) m.put("aggregatorName", po.getAggregatorName());
+						if (po.getRendererName() != null) m.put("rendererName", po.getRendererName());
+						if (po.getRowOrder() != null) m.put("rowOrder", po.getRowOrder());
+						if (po.getColOrder() != null) m.put("colOrder", po.getColOrder());
+						if (po.getValueFilter() != null && !po.getValueFilter().isEmpty()) m.put("valueFilter", po.getValueFilter());
+						if (po.getOptions() != null && !po.getOptions().isEmpty()) m.put("options", po.getOptions());
+						if (po.getHiddenAttributes() != null && !po.getHiddenAttributes().isEmpty()) m.put("hiddenAttributes", po.getHiddenAttributes());
+						if (po.getHiddenFromAggregators() != null && !po.getHiddenFromAggregators().isEmpty()) m.put("hiddenFromAggregators", po.getHiddenFromAggregators());
+						if (po.getHiddenFromDragDrop() != null && !po.getHiddenFromDragDrop().isEmpty()) m.put("hiddenFromDragDrop", po.getHiddenFromDragDrop());
+						if (po.getUnusedOrientationCutoff() != null) m.put("unusedOrientationCutoff", po.getUnusedOrientationCutoff());
+						if (po.getMenuLimit() != null) m.put("menuLimit", po.getMenuLimit());
+						if (po.getTableName() != null) m.put("tableName", po.getTableName());
+						config.namedPivotTableOptions.put(entry.getKey(), m);
+					}
+				}
+				// hasPivotTable is true when unnamed options or named blocks exist
+				config.hasPivotTable = !config.pivotTableOptions.isEmpty()
+						|| (config.namedPivotTableOptions != null);
+				log.debug("Pivot config set: hasPivotTable=" + config.hasPivotTable + ", pivotTableDsl length=" + config.pivotTableDsl.length());
+			}
+
+			// Detect pivot engine mode from datasource type
+			if (config.hasPivotTable) {
+				String engineMode = detectPivotEngineMode(itemDir);
+				config.pivotEngineMode = engineMode;
+				log.debug("Detected pivotEngineMode=" + engineMode + " for report " + reportCode);
+			}
+		} else {
+			log.debug("No pivot DSL file found at: " + pivotPath);
+		}
+
+		// Load Filter Pane DSL
+		Path filterPanePath = itemDir.resolve(reportCode + "-filterpane-config.groovy");
+		if (Files.exists(filterPanePath)) {
+			String dslContent = Files.readString(filterPanePath);
+			config.filterPaneDsl = dslContent;
+			var opts = FilterPaneOptionsParser.parseGroovyFilterPaneDslCode(dslContent);
+			if (opts != null) {
+				config.filterPaneOptions = new HashMap<>();
+				if (opts.getField() != null) config.filterPaneOptions.put("field", opts.getField());
+				if (opts.getLabel() != null) config.filterPaneOptions.put("label", opts.getLabel());
+				config.filterPaneOptions.put("sort", opts.getSort());
+				config.filterPaneOptions.put("maxValues", opts.getMaxValues());
+				if (opts.getShowSearch() != null) config.filterPaneOptions.put("showSearch", opts.getShowSearch());
+				config.filterPaneOptions.put("showCount", opts.isShowCount());
+				if (opts.getDefaultSelected() != null && !opts.getDefaultSelected().isEmpty()) {
+					config.filterPaneOptions.put("defaultSelected", opts.getDefaultSelected());
+				}
+				config.filterPaneOptions.put("multiSelect", opts.isMultiSelect());
+				config.filterPaneOptions.put("height", opts.getHeight());
+
+				// Named blocks
+				if (opts.getNamedOptions() != null && !opts.getNamedOptions().isEmpty()) {
+					config.namedFilterPaneOptions = new HashMap<>();
+					for (Map.Entry<String, com.flowkraft.reporting.dsl.filterpane.FilterPaneOptions> entry : opts.getNamedOptions().entrySet()) {
+						Map<String, Object> m = new HashMap<>();
+						var fo = entry.getValue();
+						if (fo.getField() != null) m.put("field", fo.getField());
+						if (fo.getLabel() != null) m.put("label", fo.getLabel());
+						m.put("sort", fo.getSort());
+						m.put("maxValues", fo.getMaxValues());
+						if (fo.getShowSearch() != null) m.put("showSearch", fo.getShowSearch());
+						m.put("showCount", fo.isShowCount());
+						if (fo.getDefaultSelected() != null && !fo.getDefaultSelected().isEmpty()) m.put("defaultSelected", fo.getDefaultSelected());
+						m.put("multiSelect", fo.isMultiSelect());
+						m.put("height", fo.getHeight());
+						config.namedFilterPaneOptions.put(entry.getKey(), m);
+					}
+				}
+				config.hasFilterPane = (opts.getField() != null) || (config.namedFilterPaneOptions != null);
+			}
+		}
+
+		return config;
+	}
+
+	/**
+	 * Detect whether this report should use browser-side or server-side pivot aggregation
+	 * by examining the datasource connection file.
+	 * Uses JAXB unmarshalling for proper XML parsing.
+	 */
+	private String detectPivotEngineMode(Path reportDir) {
+		try {
+			Path reportingXml = reportDir.resolve("reporting.xml");
+			if (!Files.exists(reportingXml)) {
+				return "browser";  // no reporting.xml = fallback to browser mode
+			}
+
+			// Use JAXB to properly parse the XML
+			jakarta.xml.bind.JAXBContext jaxbContext = jakarta.xml.bind.JAXBContext.newInstance(
+				com.sourcekraft.documentburster.common.settings.model.ReportingSettings.class
+			);
+			jakarta.xml.bind.Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+
+			com.sourcekraft.documentburster.common.settings.model.ReportingSettings reportingSettings;
+			try (java.io.FileInputStream fis = new java.io.FileInputStream(reportingXml.toFile())) {
+				reportingSettings = (com.sourcekraft.documentburster.common.settings.model.ReportingSettings) unmarshaller.unmarshal(fis);
+			}
+
+			if (reportingSettings == null || reportingSettings.report == null || reportingSettings.report.datasource == null) {
+				return "browser";
+			}
+
+			com.sourcekraft.documentburster.common.settings.model.ReportSettings.DataSource ds = reportingSettings.report.datasource;
+			String dsType = ds.type;
+			log.debug("detectPivotEngineMode - datasource type: " + dsType);
+
+			String connectionCode = null;
+
+			// Extract connection code from the appropriate section
+			if ("ds.sqlquery".equals(dsType)) {
+				log.debug("ds.sqlquery path - sqloptions is null? " + (ds.sqloptions == null));
+				if (ds.sqloptions != null) {
+					log.debug("sqloptions.conncode value: '" + ds.sqloptions.conncode + "'");
+					log.debug("sqloptions.query value length: " + (ds.sqloptions.query != null ? ds.sqloptions.query.length() : "null"));
+					connectionCode = ds.sqloptions.conncode;
+				}
+			} else if ("ds.scriptfile".equals(dsType) || "ds.dashboard".equals(dsType)) {
+				log.debug("ds.scriptfile/ds.dashboard path - scriptoptions is null? " + (ds.scriptoptions == null));
+				if (ds.scriptoptions != null) {
+					log.debug("scriptoptions.conncode value: '" + ds.scriptoptions.conncode + "'");
+					connectionCode = ds.scriptoptions.conncode;
+				}
+			}
+
+			log.debug("detectPivotEngineMode - extracted connectionCode: " + connectionCode);
+
+			if (connectionCode == null || connectionCode.isEmpty()) {
+				return "browser";  // no connection = browser mode
+			}
+
+			// Simple detection: check if connection code contains engine name
+			String codeLower = connectionCode.toLowerCase();
+			if (codeLower.contains("duckdb")) {
+				log.debug("DuckDB detected in connectionCode: " + connectionCode);
+				return "duckdb";
+			}
+			if (codeLower.contains("clickhouse")) {
+				log.debug("ClickHouse detected in connectionCode: " + connectionCode);
+				return "clickhouse";
+			}
+
+			// Default to browser if no OLAP database detected
+			log.debug("No OLAP engine detected, defaulting to browser mode");
+			return "browser";
+
+		} catch (Exception e) {
+			log.debug("Error detecting engine mode: " + e.getMessage());
+			e.printStackTrace();
+			return "browser";  // fallback to browser on any error
+		}
+	}
+	
+	/**
+	 * Fetch report data using report code and parameters.
+	 * If entityCode parameter is provided, also renders the HTML template for that entity.
+	 * 
+	 * When entityCode is present, it's expected that the SQL query or Groovy script
+	 * uses :entityCode as a parameter binding, guaranteeing a single row result.
+	 */
+	public ReportDataResult fetchReportData(String reportCode, Map<String, String> parameters, boolean testMode) throws Exception {
+		log.debug("fetchReportData - START, reportCode=" + reportCode + ", parameters=" + parameters);
+		
+		// Build config file path
+		Path reportsDir = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "reports", reportCode);
+		Path samplesDir = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples", reportCode);
+		
+		log.debug("fetchReportData - reportsDir=" + reportsDir + ", exists=" + Files.exists(reportsDir));
+		log.debug("fetchReportData - samplesDir=" + samplesDir + ", exists=" + Files.exists(samplesDir));
+		
+		String cfgFilePath;
+		Path itemDir;
+		if (Files.exists(reportsDir)) {
+			cfgFilePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "reports", reportCode, "settings.xml").toString();
+			itemDir = reportsDir;
+			log.debug("fetchReportData - using reportsDir, cfgFilePath=" + cfgFilePath);
+		} else if (Files.exists(samplesDir)) {
+			cfgFilePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples", reportCode, "settings.xml").toString();
+			itemDir = samplesDir;
+			log.debug("fetchReportData - using samplesDir, cfgFilePath=" + cfgFilePath);
+		} else {
+			// Try frend-only samples under config/samples/_frend/{reportCode}
+			Path frendSamplesDir = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples", SamplesFrendOnlyService.FREND_SAMPLES_SUBFOLDER, reportCode);
+			log.debug("Checking frendSamplesDir (data fetch): " + frendSamplesDir + " exists=" + Files.exists(frendSamplesDir));
+			if (Files.exists(frendSamplesDir)) {
+				try {
+					samplesFrendOnlyService.getOrProvisionFrendSample(reportCode);
+					cfgFilePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples", SamplesFrendOnlyService.FREND_SAMPLES_SUBFOLDER, reportCode, "settings.xml").toString();
+					itemDir = frendSamplesDir;
+				} catch (Exception e) {
+					throw new RuntimeException("Report not found: " + reportCode, e);
+				}
+			} else {
+				throw new RuntimeException("Report not found: " + reportCode);
+			}
+		}
+		
+		// Fetch the report data (entityCode flows through as a parameter to SQL/Script)
+		log.debug("fetchReportData - about to call fetchData with cfgFilePath=" + cfgFilePath);
+		ReportDataResult result = fetchData(cfgFilePath, parameters, testMode);
+		log.debug("fetchReportData - fetchData returned, reportData size=" + (result.reportData != null ? result.reportData.size() : "null"));
+		
+		// Check if entityCode was provided for single-entity HTML rendering
+		String entityCode = parameters != null ? parameters.get("entityCode") : null;
+		log.debug("fetchReportData - entityCode=" + entityCode);
+		if (entityCode != null && !entityCode.isEmpty()) {
+			result.entityCode = entityCode;
+			
+			try {
+				// Load settings to get template configuration
+				Settings settings = new Settings(cfgFilePath);
+				settings.loadSettings();
+				
+				String outputType = settings.getReportTemplate().outputtype;
+				log.debug("fetchReportData - outputType=" + outputType);
+				
+				// Only render if output type is HTML-based
+				if (FreemarkerRenderingUtils.isHtmlBasedOutputType(outputType)) {
+					String templatePath = settings.getReportTemplate().retrieveTemplateFilePath();
+					log.debug("fetchReportData - templatePath=" + templatePath);
+					
+					// Make template path absolute if relative
+					Path absoluteTemplatePath = itemDir.resolve(templatePath);
+					log.debug("fetchReportData - absoluteTemplatePath=" + absoluteTemplatePath + ", exists=" + Files.exists(absoluteTemplatePath));
+					if (!Files.exists(absoluteTemplatePath)) {
+						// Try from PORTABLE_EXECUTABLE_DIR_PATH
+						absoluteTemplatePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, templatePath);
+						log.debug("fetchReportData - trying PORTABLE path: " + absoluteTemplatePath + ", exists=" + Files.exists(absoluteTemplatePath));
+					}
+					
+					if (Files.exists(absoluteTemplatePath)) {
+						// When entityCode is used, the SQL/Script is expected to return exactly one row
+						// via :entityCode parameter binding (e.g., WHERE customer_id = :entityCode)
+						if (result.reportData != null && !result.reportData.isEmpty()) {
+							LinkedHashMap<String, Object> entityRow = result.reportData.get(0);
+							log.debug("fetchReportData - entityRow keys=" + entityRow.keySet());
+							
+							// Build user variables from the entity row
+							Map<String, Object> userVariables = new HashMap<>(entityRow);
+							
+							// Render the template
+							result.renderedHtml = FreemarkerRenderingUtils.renderTemplate(
+									absoluteTemplatePath.toString(), userVariables);
+							log.debug("fetchReportData - renderedHtml length=" + (result.renderedHtml != null ? result.renderedHtml.length() : "null"));
+							
+							log.info("Rendered HTML for entity '{}' from template '{}'", 
+									entityCode, absoluteTemplatePath);
+						} else {
+							log.debug("fetchReportData - No data returned for entityCode: " + entityCode);
+							log.warn("No data returned for entityCode: {}", entityCode);
+						}
+					} else {
+						log.debug("fetchReportData - Template file not found: " + absoluteTemplatePath);
+						log.warn("Template file not found: {}", absoluteTemplatePath);
+					}
+				} else {
+					log.debug("fetchReportData - Output type is not HTML-based: " + outputType);
+					log.debug("Output type '{}' is not HTML-based, skipping template rendering", outputType);
+				}
+			} catch (Exception e) {
+				log.debug("fetchReportData - EXCEPTION: " + e.getMessage());
+				e.printStackTrace();
+				log.error("Failed to render HTML for entity '{}': {}", entityCode, e.getMessage(), e);
+				// Don't fail the entire request, just log the error
+			}
+		}
+		
+		log.debug("fetchReportData - END, returning result with renderedHtml=" + (result.renderedHtml != null ? result.renderedHtml.length() + " chars" : "null"));
+		return result;
+	}
+	
+	/**
+	 * Apply server-side filtering, sorting, and pagination to report data in-memory.
+	 * Order: filter → sort → count → paginate.
+	 *
+	 * @param result    The full report data result from fetchData()
+	 * @param page      1-based page number (Tabulator convention)
+	 * @param size      Page size (rows per page)
+	 * @param sortJson  JSON array: [{"field":"name","dir":"asc"}]
+	 * @param filterJson JSON array: [{"field":"age","type":">","value":"30"}]
+	 * @return Modified result with sliced data, totalRows, and lastPage set
+	 */
+	public ReportDataResult applyServerSideOperations(ReportDataResult result,
+			Integer page, Integer size, String sortJson, String filterJson) {
+		if (result.reportData == null) return result;
+
+		List<LinkedHashMap<String, Object>> rows = result.reportData;
+		ObjectMapper mapper = new ObjectMapper();
+
+		// 1. Apply filters
+		if (filterJson != null && !filterJson.isBlank()) {
+			try {
+				List<Map<String, String>> filters = mapper.readValue(filterJson,
+						new TypeReference<List<Map<String, String>>>() {});
+				for (Map<String, String> f : filters) {
+					String field = f.get("field");
+					String type = f.get("type");
+					String value = f.get("value");
+					if (field == null || type == null) continue;
+					rows = new ArrayList<>(rows.stream().filter(row -> {
+						Object cellVal = row.get(field);
+						if (cellVal == null) return "!=".equals(type);
+						String cellStr = String.valueOf(cellVal);
+						switch (type) {
+							case "=": return cellStr.equals(value);
+							case "!=": return !cellStr.equals(value);
+							case "like": return cellStr.toLowerCase().contains(
+									value != null ? value.toLowerCase() : "");
+							case "starts": return cellStr.toLowerCase().startsWith(
+									value != null ? value.toLowerCase() : "");
+							case "ends": return cellStr.toLowerCase().endsWith(
+									value != null ? value.toLowerCase() : "");
+							case "<": return compareValues(cellVal, value) < 0;
+							case ">": return compareValues(cellVal, value) > 0;
+							case "<=": return compareValues(cellVal, value) <= 0;
+							case ">=": return compareValues(cellVal, value) >= 0;
+							default: return true;
+						}
+					}).toList());
+				}
+			} catch (Exception e) {
+				log.warn("Failed to parse filter JSON: {}", e.getMessage());
+			}
+		}
+
+		// 2. Apply sorting
+		if (sortJson != null && !sortJson.isBlank()) {
+			try {
+				List<Map<String, String>> sorters = mapper.readValue(sortJson,
+						new TypeReference<List<Map<String, String>>>() {});
+				if (!sorters.isEmpty()) {
+					Comparator<LinkedHashMap<String, Object>> comparator = null;
+					for (Map<String, String> s : sorters) {
+						String field = s.get("field");
+						String dir = s.getOrDefault("dir", "asc");
+						if (field == null) continue;
+						Comparator<LinkedHashMap<String, Object>> c = (a, b) -> {
+							Object va = a.get(field);
+							Object vb = b.get(field);
+							return compareValues(va, vb);
+						};
+						if ("desc".equalsIgnoreCase(dir)) c = c.reversed();
+						comparator = (comparator == null) ? c : comparator.thenComparing(c);
+					}
+					if (comparator != null) {
+						rows = new ArrayList<>(rows);
+						Collections.sort(rows, comparator);
+					}
+				}
+			} catch (Exception e) {
+				log.warn("Failed to parse sort JSON: {}", e.getMessage());
+			}
+		}
+
+		// 3. Set totalRows AFTER filtering but BEFORE pagination
+		result.totalRows = rows.size();
+
+		// 4. Apply pagination
+		if (page != null && size != null && size > 0) {
+			result.lastPage = Math.max(1, (int) Math.ceil((double) rows.size() / size));
+			int from = Math.min((page - 1) * size, rows.size());
+			int to = Math.min(from + size, rows.size());
+			rows = new ArrayList<>(rows.subList(from, to));
+		} else {
+			result.lastPage = 1;
+		}
+
+		result.reportData = new ArrayList<>(rows);
+		return result;
+	}
+
+	/** Compare two values — tries numeric first, falls back to string */
+	private static int compareValues(Object a, Object b) {
+		if (a == null && b == null) return 0;
+		if (a == null) return -1;
+		if (b == null) return 1;
+		try {
+			double da = (a instanceof Number) ? ((Number) a).doubleValue() : Double.parseDouble(String.valueOf(a));
+			double db = (b instanceof Number) ? ((Number) b).doubleValue() : Double.parseDouble(String.valueOf(b));
+			return Double.compare(da, db);
+		} catch (NumberFormatException e) {
+			return String.valueOf(a).compareToIgnoreCase(String.valueOf(b));
+		}
+	}
+
+	public void resolveParameterSqlOptions(List<ReportParameter> parameters, String connectionCode) {
+		for (ReportParameter param : parameters) {
+			Object options = param.uiHints.get("options");
+			if (options instanceof String) {
+				String sql = ((String) options).trim();
+				if (sql.toUpperCase().startsWith("SELECT")) {
+					try {
+						String settingsPath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH,
+								"config", "burst", "settings.xml").toString();
+						Settings settings = new Settings(settingsPath);
+						DatabaseConnectionManager dbManager = new DatabaseConnectionManager(settings);
+						SqlExecutor sqlExec = new SqlExecutor(dbManager);
+						List<Map<String, Object>> rows = sqlExec.queryOn(connectionCode, sql);
+						dbManager.close();
+
+						List<String> optionValues = new ArrayList<>();
+						for (Map<String, Object> row : rows) {
+							Object val = row.values().iterator().next();
+							if (val != null) optionValues.add(String.valueOf(val));
+						}
+						param.uiHints.put("options", optionValues);
+						log.debug("Resolved SQL options for param '" + param.id + "': " + optionValues.size() + " values");
+					} catch (Exception e) {
+						log.warn("Failed to resolve SQL options for param '{}': {}", param.id, e.getMessage());
+					}
+				}
+			}
+		}
+	}
+
+	private String extractXmlValue(String content, String tag) {
+		int startPos = content.indexOf("<" + tag + ">") + tag.length() + 2;
+		int endPos = content.indexOf("</" + tag + ">");
+		if (startPos > tag.length() + 1 && endPos > startPos) {
+			return content.substring(startPos, endPos).trim();
+		}
+		return "";
+	}
+	
+	private String extractReportingDsInputType(Path itemDir) {
+		try {
+			Path reportingPath = itemDir.resolve("reporting.xml");
+			if (Files.exists(reportingPath)) {
+				String content = Files.readString(reportingPath);
+				return extractXmlValue(content, "type");
+			}
+		} catch (Exception e) {
+			// Ignore
+		}
+		return "";
+	}
+}
