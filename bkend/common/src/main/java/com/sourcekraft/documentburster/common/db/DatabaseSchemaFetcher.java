@@ -21,6 +21,7 @@ import com.sourcekraft.documentburster.common.db.schema.ForeignKeySchema;
 import com.sourcekraft.documentburster.common.db.schema.IndexSchema;
 import com.sourcekraft.documentburster.common.db.schema.SchemaInfo;
 import com.sourcekraft.documentburster.common.db.schema.TableSchema;
+import com.sourcekraft.documentburster.common.security.SecretsCipher;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
 import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
@@ -246,9 +247,18 @@ public class DatabaseSchemaFetcher {
             throw new RuntimeException("JDBC Driver not found: " + settings.driver, e);
         }
 
+        // Decrypt password at the exact moment of use — never store plaintext
+        String decryptedPassword = settings.userpassword;
+        try {
+            decryptedPassword = SecretsCipher.getInstance(Settings.PORTABLE_EXECUTABLE_DIR_PATH)
+                    .decrypt(settings.userpassword);
+        } catch (Exception ex) {
+            log.warn("Failed to decrypt database password for schema fetcher: {}", ex.getMessage());
+        }
+
         try {
             log.debug("Attempting to connect using JDBC URL: {}", settings.url);
-            return DriverManager.getConnection(settings.url, settings.userid, settings.userpassword);
+            return DriverManager.getConnection(settings.url, settings.userid, decryptedPassword);
         } catch (SQLException e) {
             log.error("SQL error during connection attempt: {} (SQLState: {}, ErrorCode: {})", e.getMessage(),
                     e.getSQLState(), e.getErrorCode());

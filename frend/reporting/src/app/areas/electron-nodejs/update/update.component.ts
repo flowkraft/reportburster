@@ -22,8 +22,9 @@ import { ToastrMessagesService } from '../../../providers/toastr-messages.servic
 import { UsageDetailsInfo } from '../../../models/usage-details-info.model';
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
 import { SettingsService } from '../../../providers/settings.service';
+import { ReportsService } from '../../../providers/reports.service';
 import { ShellService } from '../../../providers/shell.service';
-import { BashService } from '../bash.service';
+import { DesktopAdminService } from '../desktop-admin.service';
 import { RbElectronService } from '../electron.service';
 import { FsService } from '../../../providers/fs.service';
 import UtilitiesNodeJs from '../utilities-nodejs';
@@ -47,12 +48,13 @@ export class UpdateComponent implements OnInit {
 
   constructor(
     protected settingsService: SettingsService,
+    protected reportsService: ReportsService,
     protected licenseService: LicenseService,
     protected executionStatsService: ExecutionStatsService,
     protected confirmService: ConfirmService,
     protected messagesService: ToastrMessagesService,
     protected shellService: ShellService,
-    protected bashService: BashService,
+    protected desktopAdminService: DesktopAdminService,
     protected electronService: RbElectronService,
     protected fsService: FsService,
     protected storeService: StateStoreService,
@@ -69,16 +71,16 @@ export class UpdateComponent implements OnInit {
     this.updateInfo.updateSourceDirectoryPath =
       this.electronService.PORTABLE_EXECUTABLE_DIR;
 
-    await this.settingsService.loadDefaultSettingsFileAsync();
+    await this.reportsService.loadDefaults();
 
-    this.updateInfo.productInfo.product = this.settingsService.product;
+    this.updateInfo.productInfo.product = this.reportsService.product;
 
-    this.updateInfo.productInfo.version = this.settingsService.version;
+    this.updateInfo.productInfo.version = this.reportsService.version;
     this.updateInfo.productInfo.isServerVersion =
-      this.settingsService.isServerVersion;
-    this.updateInfo.productInfo.isWindows = this.settingsService.isWindows;
+      this.reportsService.isServerVersion;
+    this.updateInfo.productInfo.isWindows = this.reportsService.isWindows;
 
-    await this.licenseService.loadLicenseFileAsync();
+    await this.licenseService.loadLicense();
 
     this.updateInfo.licenseInfo.latestVersion =
       this.licenseService.licenseDetails?.license.latestversion;
@@ -140,17 +142,17 @@ export class UpdateComponent implements OnInit {
         this.updateInfo.mode = 'migrate-copy';
         await this.doUpdate();
 
-        await this.licenseService.loadLicenseFileAsync();
+        await this.licenseService.loadLicense();
 
         if (this.licenseService.licenseDetails.license.key)
           await this.licenseService.verifyLicense('check');
 
         this.settingsService.configurationFiles =
-          await this.settingsService.loadAllSettingsFilesAsync({
+          await this.settingsService.loadAllReports({
             forceReload: true,
           });
 
-        await this.licenseService.loadLicenseFileAsync();
+        await this.licenseService.loadLicense();
 
         this.letMeUpdateManually = false;
         this.letMeUpdateSourceDirectoryPath = '';
@@ -196,7 +198,7 @@ export class UpdateComponent implements OnInit {
     const nowFormatted = dayjs().utc().format('YYYY-MM-DD HH-mm-ss');
 
     // Creates directory if doesn't exist
-    const backupFolderPath = `${this.electronService.PORTABLE_EXECUTABLE_DIR}/backup/config-files-before-updating/${this.settingsService.version}/${nowFormatted}`;
+    const backupFolderPath = `${this.electronService.PORTABLE_EXECUTABLE_DIR}/backup/config-files-before-updating/${this.reportsService.version}/${nowFormatted}`;
 
     //console.log(`dirAsync.backupFolderPath: ${backupFolderPath}`);
     await UtilitiesNodeJs.dirAsync(backupFolderPath);
@@ -224,7 +226,7 @@ export class UpdateComponent implements OnInit {
     let updateError: Error = null;
 
     this.updateInfo.jobFilePath =
-      await this.bashService.createJobFile('update');
+      await this.desktopAdminService.createJobFile('update');
 
     try {
       this.executionStatsService.jobStats.numberOfActiveUpdateJobs = 1;
@@ -254,7 +256,7 @@ export class UpdateComponent implements OnInit {
         }
         //END - REMOVE THIS AFTER FEW RELEASES (when the jar will be there)
 
-        await this.licenseService.loadLicenseFileAsync();
+        await this.licenseService.loadLicense();
 
         if (this.licenseService.licenseDetails.license.key)
           await this.licenseService.verifyLicense('check');
@@ -331,12 +333,12 @@ export class UpdateComponent implements OnInit {
     if (updateInfo.mode == 'update-now') eventDetails += '-now';
     else eventDetails += '-letme';
 
-    if (this.settingsService.isServerVersion) eventDetails += '-dbs';
+    if (this.reportsService.isServerVersion) eventDetails += '-dbs';
     else eventDetails += '-db';
 
-    eventDetails = `${eventDetails}-${updateInfo.updateSourceVersion}-to-${this.settingsService.version}`;
+    eventDetails = `${eventDetails}-${updateInfo.updateSourceVersion}-to-${this.reportsService.version}`;
 
-    if (this.settingsService.isWindows) eventDetails += '-win';
+    if (this.reportsService.isWindows) eventDetails += '-win';
     else eventDetails += '-linux';
 
     eventDetails = `${eventDetails}-${Math.round(executionTime / 1000)}sec`;

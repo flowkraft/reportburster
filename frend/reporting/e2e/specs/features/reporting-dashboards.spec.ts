@@ -390,7 +390,7 @@ const DASHBOARD_HTML = `<meta charset="utf-8">
 
   <!-- Parameters -->
   <div class="params-bar">
-    <rb-parameters report-code="my-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" show-reload="true"></rb-parameters>
+    <rb-parameters report-code="my-dashboard" api-base-url="http://localhost:9090/api/reporting" show-reload="true"></rb-parameters>
   </div>
 
   <!-- KPI Cards — all 4 share component-id="atomicValues" (1 fetch, cached), each picks a different field -->
@@ -398,25 +398,25 @@ const DASHBOARD_HTML = `<meta charset="utf-8">
     <div class="kpi-card">
       <p class="kpi-label">Revenue</p>
       <p class="kpi-value">
-        <rb-value report-code="my-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="atomicValues" field="revenue" format="currency"></rb-value>
+        <rb-value report-code="my-dashboard" api-base-url="http://localhost:9090/api/reporting" component-id="atomicValues" field="revenue" format="currency"></rb-value>
       </p>
     </div>
     <div class="kpi-card">
       <p class="kpi-label">Orders</p>
       <p class="kpi-value">
-        <rb-value report-code="my-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="atomicValues" field="orders" format="number"></rb-value>
+        <rb-value report-code="my-dashboard" api-base-url="http://localhost:9090/api/reporting" component-id="atomicValues" field="orders" format="number"></rb-value>
       </p>
     </div>
     <div class="kpi-card">
       <p class="kpi-label">Avg Order Value</p>
       <p class="kpi-value">
-        <rb-value report-code="my-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="atomicValues" field="avgOrderValue" format="currency"></rb-value>
+        <rb-value report-code="my-dashboard" api-base-url="http://localhost:9090/api/reporting" component-id="atomicValues" field="avgOrderValue" format="currency"></rb-value>
       </p>
     </div>
     <div class="kpi-card">
       <p class="kpi-label">Customers</p>
       <p class="kpi-value">
-        <rb-value report-code="my-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="atomicValues" field="customers" format="number"></rb-value>
+        <rb-value report-code="my-dashboard" api-base-url="http://localhost:9090/api/reporting" component-id="atomicValues" field="customers" format="number"></rb-value>
       </p>
     </div>
   </div>
@@ -425,11 +425,11 @@ const DASHBOARD_HTML = `<meta charset="utf-8">
   <div class="charts-row">
     <div class="card">
       <h2 class="card-title">Revenue Trend</h2>
-      <rb-chart report-code="my-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="revenueTrend"></rb-chart>
+      <rb-chart report-code="my-dashboard" api-base-url="http://localhost:9090/api/reporting" component-id="revenueTrend"></rb-chart>
     </div>
     <div class="card">
       <h2 class="card-title">Revenue by Category</h2>
-      <rb-chart report-code="my-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="revenueByCategory"></rb-chart>
+      <rb-chart report-code="my-dashboard" api-base-url="http://localhost:9090/api/reporting" component-id="revenueByCategory"></rb-chart>
     </div>
   </div>
 
@@ -437,7 +437,7 @@ const DASHBOARD_HTML = `<meta charset="utf-8">
   <div class="table-section">
     <div class="card">
       <h2 class="card-title">Top 10 Customers</h2>
-      <rb-tabulator report-code="my-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="topCustomers"></rb-tabulator>
+      <rb-tabulator report-code="my-dashboard" api-base-url="http://localhost:9090/api/reporting" component-id="topCustomers"></rb-tabulator>
     </div>
   </div>
 
@@ -445,7 +445,7 @@ const DASHBOARD_HTML = `<meta charset="utf-8">
   <div class="pivot-section">
     <div class="card">
       <h2 class="card-title">Order Explorer</h2>
-      <rb-pivot-table report-code="my-dashboard" api-base-url="http://localhost:9090/api/jobman/reporting" component-id="orderExplorer"></rb-pivot-table>
+      <rb-pivot-table report-code="my-dashboard" api-base-url="http://localhost:9090/api/reporting" component-id="orderExplorer"></rb-pivot-table>
     </div>
   </div>
 </div>`;
@@ -655,7 +655,7 @@ test.describe('ReportBurster - Dashboard Report E2E', async () => {
         const { browser, page } = await SelfServicePortalsTestHelper.createExternalBrowser();
 
         try {
-          const viewUrl = `${DASHBOARD_BASE_URL}/api/cfgman/rb/view-template?path=templates/reports/my-dashboard/my-dashboard-dashboard.html`;
+          const viewUrl = `${DASHBOARD_BASE_URL}/api/reports/view-template?path=templates/reports/my-dashboard/my-dashboard-dashboard.html`;
 
           await SelfServicePortalsTestHelper.waitForServerReady(
             page,

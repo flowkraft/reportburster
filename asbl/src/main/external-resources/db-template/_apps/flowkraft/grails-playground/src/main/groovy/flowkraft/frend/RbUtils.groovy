@@ -25,7 +25,7 @@ class RbUtils {
     static String getApiBaseUrl() {
         def config = Holders.grailsApplication?.config
         String baseUrl = config?.getProperty('reportburster.backend.baseUrl', String, 'http://localhost:9090')
-        return "${baseUrl}/api/jobman/reporting"
+        return "${baseUrl}/api/reporting"
     }
 
     /**
@@ -51,7 +51,7 @@ class RbUtils {
     }
 
     /**
-     * Returns the backend base URL without the /api/jobman/reporting suffix.
+     * Returns the backend base URL without the /api/reporting suffix.
      */
     static String getBackendBaseUrl() {
         def config = Holders.grailsApplication?.config

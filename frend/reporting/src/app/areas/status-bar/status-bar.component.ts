@@ -8,7 +8,7 @@ import { ExecutionStatsService } from '../../providers/execution-stats.service';
 //import * as path from 'path';
 import Utilities from '../../helpers/utilities';
 import { ConfirmService } from '../../components/dialog-confirm/confirm.service';
-import { FsService } from '../../providers/fs.service';
+import { JobsService } from '../../providers/jobs.service';
 import { StateStoreService } from '../../providers/state-store.service';
 import { WebSocketService } from '../../providers/websocket.service';
 import { SettingsService } from '../../providers/settings.service';
@@ -22,7 +22,7 @@ export class StatusBarComponent implements OnInit, OnDestroy {
 
   constructor(
     protected confirmService: ConfirmService,
-    protected fsService: FsService,
+    protected jobsService: JobsService,
     protected executionStatsService: ExecutionStatsService,
     protected webSocketService: WebSocketService,
     protected storeService: StateStoreService,
@@ -90,19 +90,8 @@ export class StatusBarComponent implements OnInit, OnDestroy {
           this.executionStatsService.jobStats.cancelJobFileExists = 1;
         }
 
-        const dirPath = Utilities.dirname(jobFilePath);
-        const baseName = Utilities.basename(jobFilePath, '.job');
-
-        const pauseCancelFileName = baseName + '.' + command;
-
-        const pauseCancelFilePath = Utilities.slash(
-          dirPath + '/' + pauseCancelFileName,
-        );
-
-        //console.log(
-        //  `this.executionStatsService. = ${JSON.stringify(this.executionStatsService)}`,
-        //);
-        this.fsService.fileAsync(pauseCancelFilePath);
+        // Backend creates the pause/cancel marker file
+        this.jobsService.pauseOrCancel(command, jobFilePath);
       },
     });
   }

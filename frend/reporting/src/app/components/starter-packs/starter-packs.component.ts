@@ -19,13 +19,13 @@ import {
 } from 'simple-icons';
 
 import { ApiService } from '../../providers/api.service';
+import { SystemService } from '../../providers/system.service';
 // Import the new service and definition interface
 // Ensure this path is correct relative to the current file
 import {
   StarterPacksService,
   StarterPackDefinition,
 } from './starter-packs.service';
-import { ShellService } from '../../providers/shell.service';
 import { ConfirmService } from '../dialog-confirm/confirm.service';
 import { StateStoreService } from '../../providers/state-store.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
@@ -116,8 +116,8 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
 
   // Inject DomSanitizer along with other services
   constructor(
-    protected shellService: ShellService,
     protected apiService: ApiService,
+    protected systemService: SystemService,
     protected starterPacksService: StarterPacksService,
     protected confirmService: ConfirmService,
     protected stateStore: StateStoreService,
@@ -255,7 +255,7 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
       await this.refreshSystemInfo();
 
       // 2. Fetch container statuses
-      const statuses = await this.apiService.get('/jobman/system/services/status', { skipProbe });
+      const statuses = await this.systemService.getServicesStatus(skipProbe);
 
       console.debug('[StarterPacks] API response statuses:', statuses);
 
@@ -298,7 +298,7 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
         // 3. Check seed status for running packs with seed capability
         if (pack.status === 'running' && pack.seedInvoicesCmd && pack.target && !pack.isSeedingOrWiping) {
           try {
-            const seedResult: any = await this.apiService.get('/jobman/system/services/check-seed-status', { vendor: pack.target });
+            const seedResult: any = await this.systemService.checkSeedStatus(pack.target);
             pack.isInvoiceDataSeeded = seedResult?.hasSeedData === true;
             console.debug(`[StarterPacks] Seed check for ${pack.id}: hasSeedData=${pack.isInvoiceDataSeeded}`);
           } catch (e) {
@@ -315,7 +315,7 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
   // Fetch authoritative system info (Docker status) from backend
   private async refreshSystemInfo(): Promise<void> {
     try {
-      const backendSystemInfo = await this.apiService.get('/jobman/system/info');
+      const backendSystemInfo = await this.systemService.getSystemInfo();
       if (backendSystemInfo) {
         const dockerSetup = this.stateStore.configSys.sysInfo.setup.docker;
         
@@ -392,35 +392,36 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     });
   }
 
-  private executePackAction(pack: StarterPackUIData, action: 'start' | 'stop'): void {
+  private async executePackAction(pack: StarterPackUIData, action: 'start' | 'stop'): Promise<void> {
     // pending state
     pack.status = action === 'start' ? 'starting' : 'stopping';
     pack.lastOutput = `Executing ${action}...`;
-    // Force Angular to detect the status change (callback may run outside NgZone)
+    // Force Angular to detect the status change
     this.cdRef.detectChanges();
 
-    const args = pack.currentCommandValue.split(/\s+/);
+    const command = pack.currentCommandValue;
 
-    this.shellService.runBatFile(
-      args,
-      `${action}ing ${pack.displayName}`,
-      async (result: any) => {
-        if (result.success) {
-          // Don't immediately set to final state - keep as transitional until healthcheck passes
-          // The polling will set the correct state based on Docker's health status
-          pack.status = action === 'start' ? 'starting' : 'stopping';
-          // Command will be updated by refreshAllStatuses based on actual status
-          pack.lastOutput = result.output || `${pack.displayName} container ${action}ed, waiting for health check...`;
-        } else {
-          pack.status = 'error';
-          pack.currentCommandValue = pack.startCmd;
-          pack.lastOutput = result.error || `Failed to ${action} ${pack.displayName}`;
-        }
-        await this.refreshAllStatuses();
-        // Start polling after action to track healthcheck status
-        this.startTransitionPolling();
+    try {
+      const response = await this.apiService.post('/starter-packs/execute', { command });
+      if (response && response.status && response.status !== 'error') {
+        // Don't immediately set to final state - keep as transitional until healthcheck passes
+        // The polling will set the correct state based on Docker's health status
+        pack.status = action === 'start' ? 'starting' : 'stopping';
+        // Command will be updated by refreshAllStatuses based on actual status
+        pack.lastOutput = response.output || `${pack.displayName} container ${action}ed, waiting for health check...`;
+      } else {
+        pack.status = 'error';
+        pack.currentCommandValue = pack.startCmd;
+        pack.lastOutput = response?.output || `Failed to ${action} ${pack.displayName}`;
       }
-    );
+    } catch (e: any) {
+      pack.status = 'error';
+      pack.currentCommandValue = pack.startCmd;
+      pack.lastOutput = e?.message || `Failed to ${action} ${pack.displayName}`;
+    }
+    await this.refreshAllStatuses();
+    // Start polling after action to track healthcheck status
+    this.startTransitionPolling();
   }
 
   // --- UI Interaction Methods ---
@@ -647,51 +648,50 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     });
   }
 
-  private executeSeedInvoices(pack: StarterPackUIData, invoiceCount: number): void {
+  private async executeSeedInvoices(pack: StarterPackUIData, invoiceCount: number): Promise<void> {
     pack.isSeedingOrWiping = true;
     pack.seedWipeOutput = `Seeding ${invoiceCount.toLocaleString()} invoices...`;
     this.cdRef.detectChanges();
 
-    const cmd = `${pack.seedInvoicesCmd} ${invoiceCount}`;
-    const args = cmd.split(/\s+/);
+    const command = `${pack.seedInvoicesCmd} ${invoiceCount}`;
 
-    this.shellService.runBatFile(
-      args,
-      `Seeding invoices into ${pack.displayName}`,
-      (result: any) => {
-        pack.isSeedingOrWiping = false;
-        if (result.success) {
-          pack.isInvoiceDataSeeded = true;
-          pack.seedWipeOutput = result.output || `Successfully seeded ${invoiceCount.toLocaleString()} invoices`;
-        } else {
-          pack.seedWipeOutput = result.error || `Failed to seed invoices`;
-        }
-        this.cdRef.detectChanges();
+    try {
+      const response = await this.apiService.post('/starter-packs/execute', { command });
+      pack.isSeedingOrWiping = false;
+      if (response && response.status && response.status !== 'error') {
+        pack.isInvoiceDataSeeded = true;
+        pack.seedWipeOutput = response.output || `Successfully seeded ${invoiceCount.toLocaleString()} invoices`;
+      } else {
+        pack.seedWipeOutput = response?.output || `Failed to seed invoices`;
       }
-    );
+    } catch (e: any) {
+      pack.isSeedingOrWiping = false;
+      pack.seedWipeOutput = e?.message || `Failed to seed invoices`;
+    }
+    this.cdRef.detectChanges();
   }
 
-  private executeWipeInvoices(pack: StarterPackUIData): void {
+  private async executeWipeInvoices(pack: StarterPackUIData): Promise<void> {
     pack.isSeedingOrWiping = true;
     pack.seedWipeOutput = 'Wiping seeded invoice data...';
     this.cdRef.detectChanges();
 
-    const args = pack.wipeInvoicesCmd!.split(/\s+/);
+    const command = pack.wipeInvoicesCmd!;
 
-    this.shellService.runBatFile(
-      args,
-      `Wiping invoices from ${pack.displayName}`,
-      (result: any) => {
-        pack.isSeedingOrWiping = false;
-        if (result.success) {
-          pack.isInvoiceDataSeeded = false;
-          pack.seedWipeOutput = result.output || 'Successfully wiped all seeded invoice data';
-        } else {
-          pack.seedWipeOutput = result.error || 'Failed to wipe invoice data';
-        }
-        this.cdRef.detectChanges();
+    try {
+      const response = await this.apiService.post('/starter-packs/execute', { command });
+      pack.isSeedingOrWiping = false;
+      if (response && response.status && response.status !== 'error') {
+        pack.isInvoiceDataSeeded = false;
+        pack.seedWipeOutput = response.output || 'Successfully wiped all seeded invoice data';
+      } else {
+        pack.seedWipeOutput = response?.output || 'Failed to wipe invoice data';
       }
-    );
+    } catch (e: any) {
+      pack.isSeedingOrWiping = false;
+      pack.seedWipeOutput = e?.message || 'Failed to wipe invoice data';
+    }
+    this.cdRef.detectChanges();
   }
 
   toggleCommandFlag(pack: StarterPackUIData, flag: string, event: Event): void {

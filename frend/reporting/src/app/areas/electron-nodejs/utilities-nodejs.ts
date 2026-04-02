@@ -207,24 +207,8 @@ export default class UtilitiesNodeJs {
     }
   }
 
-  static async loadFileContentAsync(filePath: string): Promise<string> {
-    return UtilitiesNodeJs.readAsync(filePath);
-  }
-
-  static async loadReportingFileAsync(filePath: string): Promise<any> {
-    const configFolderPath = Utilities.dirname(filePath);
-
-    const configReportingFilePath = `${configFolderPath}/reporting.xml`;
-
-    const content = await UtilitiesNodeJs.readAsync(configReportingFilePath);
-
-    return Utilities.parseStringPromise(content, {
-      trim: true,
-      explicitArray: false,
-      valueProcessors: [xml2js.processors.parseBooleans],
-    });
-  }
-
+  // loadSettingsFileAsync — used by updater.ts during auto-update
+  // (server may not be running during update, so local file access is needed)
   static async loadSettingsFileAsync(filePath: string): Promise<any> {
     //console.trace();
 
@@ -262,17 +246,5 @@ export default class UtilitiesNodeJs {
     return parsedString;
   }
 
-  static async loadPreferencesFileAsync(filePath: string): Promise<any> {
-    const content = await UtilitiesNodeJs.readAsync(filePath);
-
-    const parsedString = await Utilities.parseStringPromise(content, {
-      trim: true,
-      explicitArray: false,
-      valueProcessors: [xml2js.processors.parseBooleans],
-    });
-
-    return parsedString;
-  }
-
-  //end settings stuff
+  //end settings stuff (loadReportingFileAsync, loadPreferencesFileAsync, loadFileContentAsync removed — now handled by server API)
 }

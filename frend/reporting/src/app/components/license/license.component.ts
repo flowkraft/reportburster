@@ -34,7 +34,7 @@ export class LicenseComponent {
       confirmAction: async () => {
         await this.licenseService.verifyLicense(action);
         //console.log(`verifyLicense done`);
-        await this.licenseService.loadLicenseFileAsync();
+        await this.licenseService.loadLicense();
 
         //this.router.navigate(['/help', 'licenseMenuSelected']);
       },
@@ -46,7 +46,7 @@ export class LicenseComponent {
       message: 'Are you sure you want to de-activate the license?',
       confirmAction: async () => {
         this.licenseService.deActivateLicense(async () => {
-          await this.licenseService.loadLicenseFileAsync();
+          await this.licenseService.loadLicense();
 
           //this.router.navigate(['/help', 'licenseMenuSelected']);
         });
@@ -55,6 +55,6 @@ export class LicenseComponent {
   }
 
   async saveLicenseKey() {
-    return this.licenseService.saveLicenseFileAsync();
+    return this.licenseService.saveLicense();
   }
 }

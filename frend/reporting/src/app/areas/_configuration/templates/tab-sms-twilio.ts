@@ -72,8 +72,13 @@ export const tabSMSTwilioTemplate = `<ng-template #tabSMSTwilioTemplate>
       <div class="col-xs-2">{{
         'AREAS.CONFIGURATION.TAB-SMS-TWILIO.ACCOUNT-SID' | translate }}</div>
       <div class="col-xs-7">
-        <input id="accountSid" [(ngModel)]="xmlSettings?.documentburster.settings.smssettings.twilio.accountsid"
-          (ngModelChange)='settingsChangedEventHandler($event)' class="form-control" />
+        <div class="input-group">
+          <input id="accountSid" [(ngModel)]="xmlSettings?.documentburster.settings.smssettings.twilio.accountsid"
+            (ngModelChange)='settingsChangedEventHandler($event)' [type]="showTwilioAccountSid ? 'text' : 'password'" class="form-control" />
+          <span id="btnToggleTwilioAccountSid" class="input-group-addon" style="cursor:pointer" (click)="toggleRevealTwilioSid()">
+            <i [class]="showTwilioAccountSid ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+          </span>
+        </div>
       </div>
 
       <div class="col-xs-3">
@@ -91,8 +96,13 @@ export const tabSMSTwilioTemplate = `<ng-template #tabSMSTwilioTemplate>
       <div class="col-xs-2">{{
         'AREAS.CONFIGURATION.TAB-SMS-TWILIO.AUTH-TOKEN' | translate }}</div>
       <div class="col-xs-7">
-        <input id="authToken" [(ngModel)]="xmlSettings?.documentburster.settings.smssettings.twilio.authtoken"
-          (ngModelChange)='settingsChangedEventHandler($event)' class="form-control" />
+        <div class="input-group">
+          <input id="authToken" [(ngModel)]="xmlSettings?.documentburster.settings.smssettings.twilio.authtoken"
+            (ngModelChange)='settingsChangedEventHandler($event)' [type]="showTwilioAuthToken ? 'text' : 'password'" class="form-control" />
+          <span id="btnToggleTwilioAuthToken" class="input-group-addon" style="cursor:pointer" (click)="toggleRevealTwilioToken()">
+            <i [class]="showTwilioAuthToken ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+          </span>
+        </div>
       </div>
 
       <div class="col-xs-3">

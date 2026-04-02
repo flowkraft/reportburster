@@ -22,12 +22,16 @@ import java.util.Map;
 
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
 import com.sourcekraft.documentburster.common.db.SqlExecutor;
+import com.sourcekraft.documentburster.common.security.SecretsCipher;
 import com.sourcekraft.documentburster.common.settings.EmailConnection;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 import com.sourcekraft.documentburster.utils.DumpToString;
 import com.sourcekraft.documentburster.utils.Scripts;
 import com.sourcekraft.documentburster.variables.Variables;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import groovy.sql.Sql;
 
@@ -42,6 +46,8 @@ import groovy.sql.Sql;
  */
 
 public class BurstingContext extends DumpToString {
+
+	private static final Logger log = LoggerFactory.getLogger(BurstingContext.class);
 
 	/**
 	 * 
@@ -296,7 +302,16 @@ public class BurstingContext extends DumpToString {
 
 		ServerDatabaseSettings dbs = dbManager.getServerDatabaseSettings(connectionCode);
 		dbs.ensureDriverAndUrl();
-		Sql sql = Sql.newInstance(dbs.url, dbs.userid, dbs.userpassword, dbs.driver);
+
+		// Decrypt password at the exact moment of use — never store plaintext
+		String decryptedPassword = dbs.userpassword;
+		try {
+			decryptedPassword = SecretsCipher.getInstance(Settings.PORTABLE_EXECUTABLE_DIR_PATH)
+					.decrypt(dbs.userpassword);
+		} catch (Exception e) {
+			log.warn("Failed to decrypt database password for connection '{}': {}", connectionCode, e.getMessage());
+		}
+		Sql sql = Sql.newInstance(dbs.url, dbs.userid, decryptedPassword, dbs.driver);
 		namedDbSql.put(connectionCode, sql);
 		return sql;
 	}

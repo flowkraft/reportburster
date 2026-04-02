@@ -13,6 +13,7 @@ import org.jdbi.v3.core.statement.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sourcekraft.documentburster.common.security.SecretsCipher;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ConnectionDatabaseSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings; // Import needed
@@ -91,8 +92,17 @@ public class DatabaseConnectionManager implements AutoCloseable {
 
 		String driverClass = getDriverClass(settings.databaseserver.type);
 		Class.forName(driverClass);
+
+		// Decrypt password at the exact moment of use — never store plaintext
+		String decryptedPassword = settings.databaseserver.userpassword;
+		try {
+			decryptedPassword = SecretsCipher.getInstance(Settings.PORTABLE_EXECUTABLE_DIR_PATH)
+					.decrypt(settings.databaseserver.userpassword);
+		} catch (Exception e) {
+			log.warn("Failed to decrypt database password for JDBC connection: {}", e.getMessage());
+		}
 		return DriverManager.getConnection(settings.databaseserver.url, settings.databaseserver.userid,
-				settings.databaseserver.userpassword);
+				decryptedPassword);
 	}
 
 	/**
@@ -178,8 +188,16 @@ public class DatabaseConnectionManager implements AutoCloseable {
 		config.setDriverClassName(connSettings.databaseserver.driver);
 		config.setJdbcUrl(connSettings.databaseserver.url);
 		config.setUsername(connSettings.databaseserver.userid);
-		// Log password presence/absence, not the value itself
-		config.setPassword(connSettings.databaseserver.userpassword);
+
+		// Decrypt password at the exact moment of use — never store plaintext
+		String decryptedPoolPassword = connSettings.databaseserver.userpassword;
+		try {
+			decryptedPoolPassword = SecretsCipher.getInstance(Settings.PORTABLE_EXECUTABLE_DIR_PATH)
+					.decrypt(connSettings.databaseserver.userpassword);
+		} catch (Exception e) {
+			log.warn("Failed to decrypt database password for connection pool: {}", e.getMessage());
+		}
+		config.setPassword(decryptedPoolPassword);
 		log.trace("HikariConfig: Driver={}, URL={}, User={}, Password provided={}", connSettings.databaseserver.driver,
 				connSettings.databaseserver.url, connSettings.databaseserver.userid,
 				StringUtils.isNotEmpty(connSettings.databaseserver.userpassword));

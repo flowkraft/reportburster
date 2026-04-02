@@ -17,9 +17,12 @@ package com.sourcekraft.documentburster.sender;
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.sender.model.SmsMessage;
+import com.sourcekraft.documentburster.common.security.SecretsCipher;
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.SmsSettings;
 import com.sourcekraft.documentburster.utils.Scripts;
 import com.sourcekraft.documentburster.utils.Utils;
@@ -59,10 +62,20 @@ public class SmsSender extends AbstractSender {
         switch (type) {
         case TWILIO:
 
+            // Decrypt Twilio credentials at the exact moment of use — never store plaintext
+            String decryptedSid = smsSettings.twilio.accountsid;
+            String decryptedToken = smsSettings.twilio.authtoken;
+            try {
+                SecretsCipher cipher = SecretsCipher.getInstance(Settings.PORTABLE_EXECUTABLE_DIR_PATH);
+                decryptedSid = cipher.decrypt(smsSettings.twilio.accountsid);
+                decryptedToken = cipher.decrypt(smsSettings.twilio.authtoken);
+            } catch (Exception e) {
+                log.warn("Failed to decrypt Twilio credentials: {}", e.getMessage());
+            }
             message.twilio.accountsid =
-                    Utils.getStringFromTemplate(smsSettings.twilio.accountsid, ctx.variables, ctx.token);
+                    Utils.getStringFromTemplate(decryptedSid, ctx.variables, ctx.token);
             message.twilio.authtoken =
-                    Utils.getStringFromTemplate(smsSettings.twilio.authtoken, ctx.variables, ctx.token);
+                    Utils.getStringFromTemplate(decryptedToken, ctx.variables, ctx.token);
             ctx.scripts.sms = Scripts.TWILIO;
             typeStr = "twilio";
             break;

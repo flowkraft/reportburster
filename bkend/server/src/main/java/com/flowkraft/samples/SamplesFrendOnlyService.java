@@ -22,8 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.flowkraft.common.AppPaths;
-import com.flowkraft.jobman.dtos.FindCriteriaDto;
-import com.flowkraft.jobman.services.SystemService;
+import com.flowkraft.system.dtos.FindCriteriaDto;
+import com.flowkraft.system.services.FileSystemService;
 import com.sourcekraft.documentburster.common.settings.model.ConfigurationFileInfo;
 import com.sourcekraft.documentburster.common.settings.model.ReportingSettings;
 
@@ -49,7 +49,7 @@ public class SamplesFrendOnlyService {
     public static final String FREND_SAMPLES_SUBFOLDER = "_frend";
 
     @Autowired
-    SystemService systemService;
+    FileSystemService fileSystemService;
 
     // Lazy-loaded cache of frend sample reports
     private List<ConfigurationFileInfo> cachedFrendSamples = null;
@@ -170,7 +170,7 @@ public class SamplesFrendOnlyService {
                 true    // ignoreCase
         );
 
-        List<String> sampleFilePaths = systemService.unixCliFind(frendSamplesDir, criteriaDto);
+        List<String> sampleFilePaths = fileSystemService.unixCliFind(frendSamplesDir, criteriaDto);
 
         for (String filePath : sampleFilePaths) {
             try {

@@ -20,7 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.apache.tools.ant.types.FileSet;
 
-import com.flowkraft.jobman.models.FileInfo;
+import com.flowkraft.jobs.models.FileInfo;
 
 public class Utils {
 

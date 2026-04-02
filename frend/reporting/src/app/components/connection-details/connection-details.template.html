@@ -111,10 +111,15 @@
         }}
       </div>
       <div class="col-xs-7">
-        <input id="smtpPassword" [(ngModel)]="
-            modalConnectionInfo.email.documentburster.connection.emailserver
-              .userpassword
-          " type="password" class="form-control" />
+        <div class="input-group">
+          <input id="smtpPassword" [(ngModel)]="
+              modalConnectionInfo.email.documentburster.connection.emailserver
+                .userpassword
+            " [type]="showEmailPassword ? 'text' : 'password'" class="form-control" />
+          <span id="btnToggleEmailPassword" class="input-group-addon" style="cursor:pointer" (click)="toggleRevealEmailPassword()">
+            <i [class]="showEmailPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+          </span>
+        </div>
       </div>
 
       <div class="col-xs-3">
@@ -487,10 +492,15 @@
             }}
           </div>
           <div class="col-xs-7">
-            <input id="dbPassword" [(ngModel)]="
-                modalConnectionInfo.database.documentburster.connection
-                  .databaseserver.userpassword
-              " type="password" class="form-control" [readonly]="mode === 'viewMode'" />
+            <div class="input-group">
+              <input id="dbPassword" [(ngModel)]="
+                  modalConnectionInfo.database.documentburster.connection
+                    .databaseserver.userpassword
+                " [type]="showDbPassword ? 'text' : 'password'" class="form-control" [readonly]="mode === 'viewMode'" />
+              <span id="btnToggleDbPassword" class="input-group-addon" style="cursor:pointer" (click)="toggleRevealDbPassword()">
+                <i [class]="showDbPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+              </span>
+            </div>
           </div>
           <div class="col-xs-3">
             <dburst-button-variables id="btnDbPasswordVariables" *ngIf="mode !== 'viewMode'" (sendSelectedVariable)="

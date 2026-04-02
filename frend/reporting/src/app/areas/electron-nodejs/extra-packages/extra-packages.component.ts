@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { extraPackagesTemplate } from './extra-packages.template';
 
-import { BashService } from '../bash.service';
+import { DesktopAdminService } from '../desktop-admin.service';
 import { ConfirmService } from '../../../components/dialog-confirm/confirm.service';
 import { ExecutionStatsService } from '../../../providers/execution-stats.service';
 import Utilities from '../../../helpers/utilities';
@@ -88,7 +88,7 @@ export class ExtraPackagesComponent implements OnInit {
 
   constructor(
     protected translateService: TranslateService,
-    protected bashService: BashService,
+    protected desktopAdminService: DesktopAdminService,
     //protected electronService: ElectronService,
     protected stateStore: StateStoreService,
     protected executionStatsService: ExecutionStatsService,
@@ -149,7 +149,7 @@ export class ExtraPackagesComponent implements OnInit {
     this.confirmService.askConfirmation({
       message: dialogQuestion,
       confirmAction: () => {
-        this.bashService.typeCommandOnTerminalAndThenPressEnter(
+        this.desktopAdminService.typeCommandOnTerminalAndThenPressEnter(
           `choco ${action} ${pckage.id} --yes`,
         );
       },

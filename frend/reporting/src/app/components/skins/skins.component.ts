@@ -41,15 +41,12 @@ export class SkinsComponent implements OnInit {
 
   async ngOnInit() {
     this.settingsService.xmlInternalSettings.documentburster =
-      await this.settingsService.loadPreferencesFileAsync(
-        this.settingsService.INTERNAL_SETTINGS_FILE_PATH,
-      );
+      await this.settingsService.loadPreferences();
 
    // Debounced save for Copilot URL
     this.internalSettingsChangedSub = this.onInternalSettingsChanged.pipe(debounceTime(400)).subscribe(async (newUrl) => {
       this.settingsService.xmlInternalSettings.documentburster.settings.copiloturl = newUrl;
-      await this.settingsService.savePreferencesFileAsync(
-        this.settingsService.INTERNAL_SETTINGS_FILE_PATH,
+      await this.settingsService.savePreferences(
         this.settingsService.xmlInternalSettings,
       );
       this.messagesService.showInfo('Copilot/LLM URL saved');
@@ -103,15 +100,12 @@ export class SkinsComponent implements OnInit {
     }
 
     this.settingsService.xmlInternalSettings.documentburster =
-      await this.settingsService.loadPreferencesFileAsync(
-        this.settingsService.INTERNAL_SETTINGS_FILE_PATH,
-      );
+      await this.settingsService.loadPreferences();
 
     this.settingsService.xmlInternalSettings.documentburster.settings.skin =
       newSkin;
 
-    await this.settingsService.savePreferencesFileAsync(
-      this.settingsService.INTERNAL_SETTINGS_FILE_PATH,
+    await this.settingsService.savePreferences(
       this.settingsService.xmlInternalSettings,
     );
   }

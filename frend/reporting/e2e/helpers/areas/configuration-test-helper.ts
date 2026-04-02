@@ -13,7 +13,7 @@ export class ConfigurationTestHelper {
     //const escapedWhich = PATHS.SETTINGS_CONFIG_FILE; //.replace('.', '\\.');
 
     return ft
-      .gotoConfigurationTemplates()
+      .gotoConfigurationReports()
       .click(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .waitOnElementToHaveClass(
         `#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,

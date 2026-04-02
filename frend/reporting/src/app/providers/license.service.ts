@@ -13,6 +13,7 @@ import { SettingsService } from './settings.service';
 import { ShellService } from './shell.service';
 import { FsService } from './fs.service';
 import { ApiService } from './api.service';
+import { ReportsService } from './reports.service';
 
 @Injectable({
   providedIn: 'root',
@@ -30,6 +31,7 @@ export class LicenseService {
 
   constructor(
     protected settingsService: SettingsService,
+    protected reportsService: ReportsService,
     protected shellService: ShellService,
     protected fsService: FsService,
     protected apiService: ApiService,
@@ -39,7 +41,7 @@ export class LicenseService {
     );
   }
 
-  async saveLicenseFileAsync() {
+  async saveLicense() {
     //console.log(
     //  `saveLicenseFileAsync - this.licenseDetails = ${JSON.stringify(
     //    this.licenseDetails,
@@ -60,7 +62,7 @@ export class LicenseService {
     );
   }
 
-  async loadLicenseFileAsync() {
+  async loadLicense() {
     //if (this.latestVersion) return;
 
     //console.log(`this.latestVersion = ${this.latestVersion}`);
@@ -110,20 +112,20 @@ export class LicenseService {
 
     this.isNewerVersionAvailable = false;
 
-    if (!this.settingsService.version)
-      await this.settingsService.loadDefaultSettingsFileAsync();
+    if (!this.reportsService.version)
+      await this.reportsService.loadDefaults();
 
-    if (this.latestVersion && this.settingsService.version) {
+    if (this.latestVersion && this.reportsService.version) {
       this.latestVersion = semver.coerce(this.latestVersion);
-      this.settingsService.version = semver.coerce(
-        this.settingsService.version,
+      this.reportsService.version = semver.coerce(
+        this.reportsService.version,
       );
 
       //console.log(
       //  `this.latestVersion = ${this.latestVersion}, this.settingsService.version = ${this.settingsService.version}`
       //);
 
-      if (semver.gt(this.latestVersion, this.settingsService.version)) {
+      if (semver.gt(this.latestVersion, this.reportsService.version)) {
         this.isNewerVersionAvailable = true;
       }
     }
@@ -136,7 +138,7 @@ export class LicenseService {
 
   getChangeLogForTheDemoInstallationToo(): Promise<any> {
     return this.apiService.get(
-      `/jobman/system/get-changelog?itemName=${encodeURIComponent(this.settingsService.product)}`,
+      `/system/changelog?itemName=${encodeURIComponent(this.settingsService.product)}`,
     );
   }
 

@@ -71,6 +71,7 @@ import { EmailProviderSettings } from '../../components/button-well-known/button
 import { Quill, RangeStatic } from 'quill';
 import { InfoService } from '../../components/dialog-info/info.service';
 import { AskForFeatureService } from '../../components/ask-for-feature/ask-for-feature.service';
+import { ConnectionsService } from '../../providers/connections.service';
 import { SettingsService } from '../../providers/settings.service';
 import { ShellService } from '../../providers/shell.service';
 import { StateStoreService } from '../../providers/state-store.service';
@@ -89,7 +90,6 @@ import {
   HtmlDocTemplateDisplay,
 } from '../../providers/samples.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FsService } from '../../providers/fs.service';
 import { ConnectionDetailsComponent } from '../../components/connection-details/connection-details.component';
 import {
   AiManagerComponent,
@@ -101,6 +101,7 @@ import {
   ReportDataResult,
 } from '../../providers/reporting.service';
 import { ApiService } from '../../providers/api.service';
+import { ReportsService } from '../../providers/reports.service';
 import { modalTemplatesGalleryTemplate } from './templates/modal-gallery';
 
 @Component({
@@ -541,12 +542,13 @@ export class ConfigurationComponent implements OnInit {
 
   constructor(
     protected settingsService: SettingsService,
-    protected fsService: FsService,
+    protected connectionsService: ConnectionsService,
     protected executionStatsService: ExecutionStatsService,
     protected shellService: ShellService,
     protected reportingService: ReportingService,
     protected stateStore: StateStoreService,
     protected apiService: ApiService,
+    protected reportsService: ReportsService,
     protected confirmService: ConfirmService,
     protected infoService: InfoService,
     protected messagesService: ToastrMessagesService,
@@ -556,6 +558,10 @@ export class ConfigurationComponent implements OnInit {
     protected changeDetectorRef: ChangeDetectorRef,
     protected sanitizer: DomSanitizer,
   ) { }
+
+  private get currentReportId(): string {
+    return this.settingsService.currentConfigurationTemplate?.folderName || 'burst';
+  }
 
   currentLeftMenu: string;
 
@@ -857,13 +863,10 @@ export class ConfigurationComponent implements OnInit {
       const newPath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-jasper.jrxml`;
 
       try {
-        const fileExists = await this.fsService.existsAsync(newPath);
-        if (fileExists) {
-          const content =
-            await this.settingsService.loadTemplateFileAsync(newPath);
-          if (content) {
-            this.activeReportTemplateContent = content;
-          }
+        const content =
+            await this.reportsService.loadReportTemplate(this.currentReportId);
+        if (content) {
+          this.activeReportTemplateContent = content;
         } else {
           const defaultContent = `<?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
@@ -880,8 +883,8 @@ export class ConfigurationComponent implements OnInit {
         </band>
     </detail>
 </jasperReport>`;
-          await this.settingsService.saveTemplateFileAsync(
-            newPath,
+          await this.reportsService.saveReportTemplate(
+            this.currentReportId,
             defaultContent,
           );
           this.activeReportTemplateContent = defaultContent;
@@ -892,8 +895,8 @@ export class ConfigurationComponent implements OnInit {
       }
 
       this.xmlReporting.documentburster.report.template.documentpath = newPath;
-      await this.settingsService.saveReportingFileAsync(
-        this.settingsService.currentConfigurationTemplatePath,
+      await this.reportsService.saveReportDataSource(
+        this.currentReportId,
         this.xmlReporting,
       );
       this.autosaveEnabled = true;
@@ -902,7 +905,7 @@ export class ConfigurationComponent implements OnInit {
       const jrxmlPath = report.jrxmlFilePath || report.filePath;
       this.xmlReporting.documentburster.report.template.documentpath = jrxmlPath;
       try {
-        const content = await this.settingsService.loadTemplateFileAsync(jrxmlPath);
+        const content = await this.reportsService.loadReportTemplate(this.currentReportId);
         this.activeReportTemplateContent = content || '';
         this.changeDetectorRef.detectChanges();
       } catch (error) {
@@ -1000,21 +1003,15 @@ export class ConfigurationComponent implements OnInit {
 
         // Always load from disk (no cache)
         try {
-          const fileExists = await this.fsService.existsAsync(newPath);
-          //console.log(`Checking file: ${newPath}, exists: ${fileExists}`);
-          if (fileExists) {
-            const content =
-              await this.settingsService.loadTemplateFileAsync(newPath);
-            //console.log(`Loaded content for ${newPath}:`, content);
-            if (content) {
-              this.activeReportTemplateContent = content;
-
-            }
+          const content =
+              await this.reportsService.loadReportTemplate(this.currentReportId);
+          if (content) {
+            this.activeReportTemplateContent = content;
           } else {
             // Create with default content for NEW output type
             const defaultContent = `<html>\n<head>\n<title>${configName} ${newOutputType} Template</title>\n</head>\n<body>\n<h1>${configName} ${newOutputType} Report</h1>\n</body>\n</html>`;
-            await this.settingsService.saveTemplateFileAsync(
-              newPath,
+            await this.reportsService.saveReportTemplate(
+              this.currentReportId,
               defaultContent,
             );
             this.activeReportTemplateContent = defaultContent;
@@ -1032,8 +1029,8 @@ export class ConfigurationComponent implements OnInit {
         ) {
           this.xmlReporting.documentburster.report.template.documentpath =
             newPath;
-          await this.settingsService.saveReportingFileAsync(
-            this.settingsService.currentConfigurationTemplatePath,
+          await this.reportsService.saveReportDataSource(
+            this.currentReportId,
             this.xmlReporting,
           );
         }
@@ -1061,18 +1058,15 @@ export class ConfigurationComponent implements OnInit {
         }
         // Always load from disk (no cache)
         try {
-          const fileExists = await this.fsService.existsAsync(newPath);
-          if (fileExists) {
-            const content =
-              await this.settingsService.loadTemplateFileAsync(newPath);
-            if (content) {
-              this.activeReportTemplateContent = content;
-            }
+          const content =
+              await this.reportsService.loadReportTemplate(this.currentReportId);
+          if (content) {
+            this.activeReportTemplateContent = content;
           } else {
             // Default XSL-FO template
             const defaultContent = `<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">\n<!-- XSL-FO template for FOP2PDF -->\n</xsl:stylesheet>`;
-            await this.settingsService.saveTemplateFileAsync(
-              newPath,
+            await this.reportsService.saveReportTemplate(
+              this.currentReportId,
               defaultContent,
             );
             this.activeReportTemplateContent = defaultContent;
@@ -1090,8 +1084,8 @@ export class ConfigurationComponent implements OnInit {
         ) {
           this.xmlReporting.documentburster.report.template.documentpath =
             newPath;
-          await this.settingsService.saveReportingFileAsync(
-            this.settingsService.currentConfigurationTemplatePath,
+          await this.reportsService.saveReportDataSource(
+            this.currentReportId,
             this.xmlReporting,
           );
         }
@@ -1111,18 +1105,15 @@ export class ConfigurationComponent implements OnInit {
         }
         // Always load from disk (no cache)
         try {
-          const fileExists = await this.fsService.existsAsync(newPath);
-          if (fileExists) {
-            const content =
-              await this.settingsService.loadTemplateFileAsync(newPath);
-            if (content) {
-              this.activeReportTemplateContent = content;
-            }
+          const content =
+              await this.reportsService.loadReportTemplate(this.currentReportId);
+          if (content) {
+            this.activeReportTemplateContent = content;
           } else {
             // Default FreeMarker template
             const defaultContent = `<#-- FreeMarker template for arbitrary text output -->\n<#-- Use FreeMarker syntax to generate your output -->`;
-            await this.settingsService.saveTemplateFileAsync(
-              newPath,
+            await this.reportsService.saveReportTemplate(
+              this.currentReportId,
               defaultContent,
             );
             this.activeReportTemplateContent = defaultContent;
@@ -1140,8 +1131,8 @@ export class ConfigurationComponent implements OnInit {
         ) {
           this.xmlReporting.documentburster.report.template.documentpath =
             newPath;
-          await this.settingsService.saveReportingFileAsync(
-            this.settingsService.currentConfigurationTemplatePath,
+          await this.reportsService.saveReportDataSource(
+            this.currentReportId,
             this.xmlReporting,
           );
         }
@@ -1156,13 +1147,10 @@ export class ConfigurationComponent implements OnInit {
           // Inline .jrxml mode — restore editor content
           this.selectedJasperReport = this.inlineJrxmlOption;
           try {
-            const fileExists = await this.fsService.existsAsync(savedPath);
-            if (fileExists) {
-              const content =
-                await this.settingsService.loadTemplateFileAsync(savedPath);
-              if (content) {
-                this.activeReportTemplateContent = content;
-              }
+            const content =
+                await this.reportsService.loadReportTemplate(this.currentReportId);
+            if (content) {
+              this.activeReportTemplateContent = content;
             }
           } catch (error) {
             console.error('Error loading inline .jrxml template:', error);
@@ -1215,8 +1203,15 @@ export class ConfigurationComponent implements OnInit {
         this.settingsService.currentConfigurationTemplateName =
           params.configurationFileName;
 
-        this.xmlSettings = await this.settingsService.loadSettingsFileAsync(
-          this.settingsService.currentConfigurationTemplatePath,
+        // Extract reportId from the route path — must be done before loading,
+        // because this.currentReportId depends on currentConfigurationTemplate
+        // which hasn't been updated yet for this navigation.
+        const reportId = Utilities.basename(
+          Utilities.dirname(params.configurationFilePath),
+        );
+
+        this.xmlSettings = await this.reportsService.loadReportSettings(
+          reportId,
         );
 
         this.stateStore.configSys.currentConfigFile.configuration.settings = {
@@ -1235,16 +1230,16 @@ export class ConfigurationComponent implements OnInit {
 
         // Lazy load DSL details for this specific configuration
         if (this.settingsService.currentConfigurationTemplate) {
-          await this.settingsService.loadConfigurationDetailsAsync(
+          await this.settingsService.loadReportDetails(
             this.settingsService.currentConfigurationTemplate
           );
-          //console.log('[DEBUG] After loadConfigurationDetailsAsync - tabulatorOptions:',
+          //console.log('[DEBUG] After loadReportDetails - tabulatorOptions:',
           //  this.settingsService.currentConfigurationTemplate.tabulatorOptions);
         }
       }
 
       if (this.currentLeftMenu === 'emailSettingsMenuSelected') {
-        await this.settingsService.loadAllConnectionFilesAsync();
+        await this.settingsService.loadAllConnections();
 
         if (!this.xmlSettings.documentburster.settings.emailserver.conncode)
           this.xmlSettings.documentburster.settings.emailserver.conncode =
@@ -1267,11 +1262,11 @@ export class ConfigurationComponent implements OnInit {
         }
       } else if (this.currentLeftMenu === 'reportingSettingsMenuSelected') {
         // Load all template files and reporting configuration
-        await this.settingsService.loadAllReportTemplatesFilesAsync();
+        await this.settingsService.loadAllReportTemplates();
 
         this.xmlReporting.documentburster =
-          await this.settingsService.loadReportingFileAsync(
-            this.settingsService.currentConfigurationTemplatePath,
+          await this.reportsService.loadReportDataSource(
+            this.currentReportId,
           );
 
         if (this.xmlReporting?.documentburster?.report?.datasource) {
@@ -1295,7 +1290,7 @@ export class ConfigurationComponent implements OnInit {
           await this.loadExternalReportingScript('transformScript');
           
           // Initialize parsed options from the pre-loaded configuration template
-          // (backend already parsed DSLs via loadConfigurationDetailsAsync)
+          // (backend already parsed DSLs via loadReportDetails)
           const configTemplate = this.settingsService.currentConfigurationTemplate;
           //console.log('[DEBUG] Reporting init - configTemplate:', configTemplate?.folderName,
           //  'tabulatorOptions:', configTemplate?.tabulatorOptions,
@@ -1343,8 +1338,8 @@ export class ConfigurationComponent implements OnInit {
       this.settingsChanged
         .pipe(debounceTime(30))
         .subscribe(async (newValue) => {
-          await this.settingsService.saveSettingsFileAsync(
-            this.settingsService.currentConfigurationTemplatePath,
+          await this.reportsService.saveReportSettings(
+            this.currentReportId,
             this.xmlSettings,
           );
 
@@ -1353,8 +1348,8 @@ export class ConfigurationComponent implements OnInit {
               .reportgenerationmailmerge &&
             this.xmlReporting.documentburster
           )
-            await this.settingsService.saveReportingFileAsync(
-              this.settingsService.currentConfigurationTemplatePath,
+            await this.reportsService.saveReportDataSource(
+              this.currentReportId,
               this.xmlReporting,
             );
 
@@ -1391,8 +1386,8 @@ export class ConfigurationComponent implements OnInit {
   async onSelectOutputFolderPath(filePath: string) {
     this.xmlSettings.documentburster.settings.outputfolder =
       Utilities.slash(filePath);
-    await this.settingsService.saveSettingsFileAsync(
-      this.settingsService.currentConfigurationTemplatePath,
+    await this.reportsService.saveReportSettings(
+      this.currentReportId,
       this.xmlSettings,
     );
     this.messagesService.showInfo('Saved');
@@ -1400,8 +1395,8 @@ export class ConfigurationComponent implements OnInit {
 
   async onSelectQuarantineFolderPath(filePath: string) {
     this.xmlSettings.documentburster.settings.quarantinefolder = filePath;
-    await this.settingsService.saveSettingsFileAsync(
-      this.settingsService.currentConfigurationTemplatePath,
+    await this.reportsService.saveReportSettings(
+      this.currentReportId,
       this.xmlSettings,
     );
     this.messagesService.showInfo('Saved');
@@ -1432,8 +1427,8 @@ export class ConfigurationComponent implements OnInit {
       confirmAction: async () => {
         this.fillExistingEmailConnectionDetails(code);
 
-        await this.settingsService.saveSettingsFileAsync(
-          this.settingsService.currentConfigurationTemplatePath,
+        await this.reportsService.saveReportSettings(
+          this.currentReportId,
           this.xmlSettings,
         );
 
@@ -1515,15 +1510,15 @@ export class ConfigurationComponent implements OnInit {
   }
 
   async onSaveHTMLTemplateClick(filePath: string) {
-    await this.settingsService.saveTemplateFileAsync(
-      filePath + '.html',
+    await this.reportsService.saveReportTemplate(
+      this.currentReportId,
       this.xmlSettings.documentburster.settings.emailsettings.html,
     );
     this.messagesService.showInfo('HTML template was saved.');
   }
 
   async onLoadHTMLTemplateClick(filePath: string) {
-    const data = await this.settingsService.loadTemplateFileAsync(filePath);
+    const data = await this.reportsService.loadReportTemplate(this.currentReportId);
 
     (
       document.getElementById('htmlCodeEmailMessage') as HTMLInputElement
@@ -1575,8 +1570,8 @@ export class ConfigurationComponent implements OnInit {
         );
 
         delete this.selectedAttachment;
-        await this.settingsService.saveSettingsFileAsync(
-          this.settingsService.currentConfigurationTemplatePath,
+        await this.reportsService.saveReportSettings(
+          this.currentReportId,
           this.xmlSettings,
         );
         this.messagesService.showInfo('Saved');
@@ -1595,8 +1590,8 @@ export class ConfigurationComponent implements OnInit {
         this.xmlSettings.documentburster.settings.attachments.items.attachmentItems =
           [];
 
-        await this.settingsService.saveSettingsFileAsync(
-          this.settingsService.currentConfigurationTemplatePath,
+        await this.reportsService.saveReportSettings(
+          this.currentReportId,
           this.xmlSettings,
         );
         this.messagesService.showInfo('Saved');
@@ -1619,8 +1614,8 @@ export class ConfigurationComponent implements OnInit {
         .attachmentItems[index - 1].order++;
 
       this.onAttachmentSelected(this.selectedAttachment);
-      await this.settingsService.saveSettingsFileAsync(
-        this.settingsService.currentConfigurationTemplatePath,
+      await this.reportsService.saveReportSettings(
+        this.currentReportId,
         this.xmlSettings,
       );
       this.messagesService.showInfo('Saved');
@@ -1647,8 +1642,8 @@ export class ConfigurationComponent implements OnInit {
         .attachmentItems[index + 1].order--;
 
       this.onAttachmentSelected(this.selectedAttachment);
-      await this.settingsService.saveSettingsFileAsync(
-        this.settingsService.currentConfigurationTemplatePath,
+      await this.reportsService.saveReportSettings(
+        this.currentReportId,
         this.xmlSettings,
       );
       this.messagesService.showInfo('Saved');
@@ -1710,8 +1705,8 @@ export class ConfigurationComponent implements OnInit {
     //);
     //console.log(`this.xmlSettings = ${JSON.stringify(this.xmlSettings)}`);
 
-    await this.settingsService.saveSettingsFileAsync(
-      this.settingsService.currentConfigurationTemplatePath,
+    await this.reportsService.saveReportSettings(
+      this.currentReportId,
       this.xmlSettings,
     );
     this.isModalAttachmentVisible = false;
@@ -1770,8 +1765,8 @@ export class ConfigurationComponent implements OnInit {
       this.xmlSettings.documentburster.settings.emailserver.usetls = true;
     }
 
-    await this.settingsService.saveSettingsFileAsync(
-      this.settingsService.currentConfigurationTemplatePath,
+    await this.reportsService.saveReportSettings(
+      this.currentReportId,
       this.xmlSettings,
     );
     this.messagesService.showInfo('Saved');
@@ -1862,25 +1857,18 @@ export class ConfigurationComponent implements OnInit {
           fileToTest = this.settingsService.currentConfigurationTemplatePath;
         }
 
-        // 2) Build the CLI argument and run
-        const execPath = `"${Utilities.slash(fileToTest)
-          .replace('/config/', 'PORTABLE_EXECUTABLE_DIR_PATH/config/')}"`;
+        // Determine connection code from file path
+        const connectionCode = Utilities.basename(Utilities.dirname(fileToTest));
 
-        this.shellService.runBatFile(
-          ['system', 'test-email', '--email-connection-file', execPath],
-          'testing SMTP connection',
-          (result) => {
-            // Reset flag when done - this will enable the button
-            this.isTestingEmailConnection = false;
-
-            if (result.success) {
-              this.messagesService.showSuccess('Test email sent successfully');
-            } else {
-              this.messagesService.showError('Test email failed');
-              console.error(result.error);
-            }
-          }
-        );
+        try {
+          await this.connectionsService.testConnection(connectionCode, 'email');
+          this.messagesService.showSuccess('Test email sent successfully');
+        } catch (e) {
+          this.messagesService.showError('Test email failed');
+          console.error(e);
+        } finally {
+          this.isTestingEmailConnection = false;
+        }
       },
     });
   }
@@ -1903,21 +1891,18 @@ export class ConfigurationComponent implements OnInit {
     this.isModalSMSVisible = false;
   }
 
-  onSendTestSMS() {
-    this.shellService.runBatFile([
-      'system',
-      'test-sms',
-      '--from',
-      this.modalSMSInfo.fromNumber,
-      '--to',
-      this.modalSMSInfo.toNumber,
-      '-c',
-      '"' +
-      Utilities.slash(
-        this.settingsService.currentConfigurationTemplatePath,
-      ).replace('/config/', 'PORTABLE_EXECUTABLE_DIR_PATH/config/') +
-      '"',
-    ]);
+  async onSendTestSMS() {
+    try {
+      await this.apiService.post('/connections/test-sms', {
+        fromNumber: this.modalSMSInfo.fromNumber,
+        toNumber: this.modalSMSInfo.toNumber,
+        configPath: this.settingsService.currentConfigurationTemplatePath,
+      });
+      this.messagesService.showSuccess('Test SMS sent successfully');
+    } catch (e) {
+      this.messagesService.showError('Test SMS failed');
+      console.error(e);
+    }
   }
 
   //reporting
@@ -2422,8 +2407,8 @@ export class ConfigurationComponent implements OnInit {
 
     try {
       // Save to disk
-      await this.settingsService.saveTemplateFileAsync(
-        templatePath,
+      await this.reportsService.saveReportTemplate(
+        this.currentReportId,
         this.activeReportTemplateContent,
       );
 
@@ -2434,8 +2419,8 @@ export class ConfigurationComponent implements OnInit {
       ) {
         this.xmlReporting.documentburster.report.template.documentpath =
           templatePath;
-        await this.settingsService.saveReportingFileAsync(
-          this.settingsService.currentConfigurationTemplatePath,
+        await this.reportsService.saveReportDataSource(
+          this.currentReportId,
           this.xmlReporting,
         );
       }
@@ -2460,7 +2445,7 @@ export class ConfigurationComponent implements OnInit {
 
     // Case 1: Direct path provided (from editor "View in Browser" button)
     if (templatePath) {
-      const url = `${this.apiService.BACKEND_URL}/cfgman/rb/view-template?path=${encodeURIComponent(templatePath)}`;
+      const url = `${this.apiService.BACKEND_URL}/reports/view-template?path=${encodeURIComponent(templatePath)}`;
       window.open(url, '_blank');
       return;
     }
@@ -2481,7 +2466,7 @@ export class ConfigurationComponent implements OnInit {
     }
 
     // Use the new view-template endpoint specifically designed for browser viewing
-    const url = `${this.apiService.BACKEND_URL}/cfgman/rb/view-template?path=${encodeURIComponent(templateObjectPath)}`;
+    const url = `${this.apiService.BACKEND_URL}/reports/view-template?path=${encodeURIComponent(templateObjectPath)}`;
     window.open(url, '_blank');
   }
 
@@ -2550,7 +2535,7 @@ export class ConfigurationComponent implements OnInit {
         launchConfig.promptVariables = {
           '[AVAILABLE_COMPONENTS]': componentsInfo,
           '[REPORT_CODE]': this.getCurrentReportCode(),
-          '[API_BASE_URL]': this.getApiBaseUrl() + '/jobman/reporting',
+          '[API_BASE_URL]': this.getApiBaseUrl() + '/reporting',
         };
       }
 
@@ -2686,7 +2671,7 @@ export class ConfigurationComponent implements OnInit {
           '[DATABASE_VENDOR]': dbVendor,
           '[INSERT THE RELEVANT DATABASE SCHEMA HERE]': '',
           '[REPORT_CODE]': this.getCurrentReportCode(),
-          '[API_BASE_URL]': this.getApiBaseUrl() + '/jobman/reporting',
+          '[API_BASE_URL]': this.getApiBaseUrl() + '/reporting',
         },
       };
 
@@ -2986,7 +2971,7 @@ export class ConfigurationComponent implements OnInit {
     this.connectionDetailsModalInstance.context = context;
     if (context === 'dashboardScript') {
       this.connectionDetailsModalInstance.reportCode = this.getCurrentReportCode();
-      this.connectionDetailsModalInstance.apiBaseUrl = this.getApiBaseUrl() + '/jobman/reporting';
+      this.connectionDetailsModalInstance.apiBaseUrl = this.getApiBaseUrl() + '/reporting';
     }
     this.connectionDetailsModalInstance.showCrudModal(
       'update',
@@ -4178,7 +4163,7 @@ pivotTable {
         return;
     }
 
-    let content = await this.settingsService.loadTemplateFileAsync(path);
+    let content = await this.reportsService.loadReportTemplate(this.currentReportId);
     // If there is no content on disk, prefer the default example provided
     if (!content || content.trim().length === 0) {
       content = defaultFileContent || '';
@@ -4254,7 +4239,7 @@ pivotTable {
     //     console.log(`Skipping save for empty or default placeholder ${scriptType} to ${path}.`);
     //     return;
     // }
-    await this.settingsService.saveTemplateFileAsync(path, contentToSave);
+    await this.reportsService.saveReportTemplate(this.currentReportId, contentToSave);
 
     // Invalidate DSL cache for this config when DSL scripts are modified
     // This ensures fresh parsing when the config is loaded again (e.g., in processing)
@@ -4274,6 +4259,92 @@ pivotTable {
   reportDataResult: ReportDataResult | null = null;
   isReportDataLoading = false;
   reportDataResultIsError = false;
+
+  // Password visibility toggles
+  showSmtpPassword = false;
+  showQaPassword = false;
+  showTwilioAccountSid = false;
+  showTwilioAuthToken = false;
+  private smtpPasswordRevealTimer: any;
+  private qaPasswordRevealTimer: any;
+  private twilioSidRevealTimer: any;
+  private twilioTokenRevealTimer: any;
+
+  async toggleRevealSmtpPassword() {
+    if (this.showSmtpPassword) {
+      this.showSmtpPassword = false;
+      this.xmlSettings.documentburster.settings.emailserver.userpassword = '******';
+      clearTimeout(this.smtpPasswordRevealTimer);
+    } else {
+      try {
+        const reportId = this.settingsService.currentConfigurationTemplate?.folderName || 'burst';
+        const realPassword = await this.connectionsService.revealPassword('settings', 'userpassword', reportId);
+        this.xmlSettings.documentburster.settings.emailserver.userpassword = realPassword;
+        this.showSmtpPassword = true;
+        this.smtpPasswordRevealTimer = setTimeout(() => {
+          this.showSmtpPassword = false;
+          this.xmlSettings.documentburster.settings.emailserver.userpassword = '******';
+        }, 10000);
+      } catch (e) { console.error('Failed to reveal SMTP password', e); }
+    }
+  }
+
+  async toggleRevealQaPassword() {
+    if (this.showQaPassword) {
+      this.showQaPassword = false;
+      this.xmlSettings.documentburster.settings.qualityassurance.emailserver.userpassword = '******';
+      clearTimeout(this.qaPasswordRevealTimer);
+    } else {
+      try {
+        const reportId = this.settingsService.currentConfigurationTemplate?.folderName || 'burst';
+        const realPassword = await this.connectionsService.revealPassword('settings', 'userpassword', reportId);
+        this.xmlSettings.documentburster.settings.qualityassurance.emailserver.userpassword = realPassword;
+        this.showQaPassword = true;
+        this.qaPasswordRevealTimer = setTimeout(() => {
+          this.showQaPassword = false;
+          this.xmlSettings.documentburster.settings.qualityassurance.emailserver.userpassword = '******';
+        }, 10000);
+      } catch (e) { console.error('Failed to reveal QA password', e); }
+    }
+  }
+
+  async toggleRevealTwilioSid() {
+    if (this.showTwilioAccountSid) {
+      this.showTwilioAccountSid = false;
+      this.xmlSettings.documentburster.settings.smssettings.twilio.accountsid = '******';
+      clearTimeout(this.twilioSidRevealTimer);
+    } else {
+      try {
+        const reportId = this.settingsService.currentConfigurationTemplate?.folderName || 'burst';
+        const realValue = await this.connectionsService.revealPassword('settings', 'accountsid', reportId);
+        this.xmlSettings.documentburster.settings.smssettings.twilio.accountsid = realValue;
+        this.showTwilioAccountSid = true;
+        this.twilioSidRevealTimer = setTimeout(() => {
+          this.showTwilioAccountSid = false;
+          this.xmlSettings.documentburster.settings.smssettings.twilio.accountsid = '******';
+        }, 10000);
+      } catch (e) { console.error('Failed to reveal Twilio SID', e); }
+    }
+  }
+
+  async toggleRevealTwilioToken() {
+    if (this.showTwilioAuthToken) {
+      this.showTwilioAuthToken = false;
+      this.xmlSettings.documentburster.settings.smssettings.twilio.authtoken = '******';
+      clearTimeout(this.twilioTokenRevealTimer);
+    } else {
+      try {
+        const reportId = this.settingsService.currentConfigurationTemplate?.folderName || 'burst';
+        const realValue = await this.connectionsService.revealPassword('settings', 'authtoken', reportId);
+        this.xmlSettings.documentburster.settings.smssettings.twilio.authtoken = realValue;
+        this.showTwilioAuthToken = true;
+        this.twilioTokenRevealTimer = setTimeout(() => {
+          this.showTwilioAuthToken = false;
+          this.xmlSettings.documentburster.settings.smssettings.twilio.authtoken = '******';
+        }, 10000);
+      } catch (e) { console.error('Failed to reveal Twilio auth token', e); }
+    }
+  }
 
   // Toggle flags for self-contained component preview
   showTabulatorPreview = false;

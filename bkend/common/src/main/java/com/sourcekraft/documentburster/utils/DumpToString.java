@@ -15,19 +15,38 @@
 package com.sourcekraft.documentburster.utils;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 public class DumpToString implements Serializable {
 
-    /**
-	 * 
-	 */
 	private static final long serialVersionUID = -7339133617732968922L;
 
+	/** Fields containing these substrings will be masked in toString() output. */
+	private static final String[] SENSITIVE_FIELD_NAMES = {
+			"password", "passwd", "secret", "token", "authtoken", "accountsid", "apikey"
+	};
+
 	@Override
-    public String toString() {
-        return ReflectionToStringBuilder.toString(this, ToStringStyle.MULTI_LINE_STYLE);
-    }
+	public String toString() {
+		return new ReflectionToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE) {
+			@Override
+			protected boolean accept(Field field) {
+				return super.accept(field);
+			}
+
+			@Override
+			protected Object getValue(Field field) throws IllegalAccessException {
+				String fieldName = field.getName().toLowerCase();
+				for (String sensitive : SENSITIVE_FIELD_NAMES) {
+					if (fieldName.contains(sensitive)) {
+						return "******";
+					}
+				}
+				return super.getValue(field);
+			}
+		}.toString();
+	}
 }

@@ -9,7 +9,7 @@ Use any component with just 3 attributes:
 ```html
 <rb-report 
     report-code="sales-summary"
-    api-base-url="http://localhost:9090/api/jobman/reporting"
+    api-base-url="http://localhost:9090/api/reporting"
     api-key="your-api-key">
 </rb-report>
 ```
@@ -39,7 +39,7 @@ All components use the same 3 attributes:
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | `report-code` | `string` | Yes | Report folder name (e.g., `"sales-summary"`) |
-| `api-base-url` | `string` | Yes | Base URL for API (e.g., `"http://localhost:9090/api/jobman/reporting"`) |
+| `api-base-url` | `string` | Yes | Base URL for API (e.g., `"http://localhost:9090/api/reporting"`) |
 | `api-key` | `string` | Yes | API key for authentication |
 
 ---
@@ -75,7 +75,7 @@ Shows parameters form + all visualizations (table, chart, pivot) in one componen
 ```html
 <rb-report 
     report-code="sales-summary"
-    api-base-url="http://localhost:9090/api/jobman/reporting"
+    api-base-url="http://localhost:9090/api/reporting"
     api-key="your-api-key">
 </rb-report>
 ```
@@ -87,7 +87,7 @@ Just the table visualization:
 ```html
 <rb-tabulator 
     report-code="sales-summary"
-    api-base-url="http://localhost:9090/api/jobman/reporting"
+    api-base-url="http://localhost:9090/api/reporting"
     api-key="your-api-key">
 </rb-tabulator>
 ```
@@ -99,7 +99,7 @@ Just the chart visualization:
 ```html
 <rb-chart 
     report-code="sales-summary"
-    api-base-url="http://localhost:9090/api/jobman/reporting"
+    api-base-url="http://localhost:9090/api/reporting"
     api-key="your-api-key"
     style="height: 300px;">
 </rb-chart>
@@ -112,7 +112,7 @@ Just the pivot table:
 ```html
 <rb-pivot-table 
     report-code="sales-summary"
-    api-base-url="http://localhost:9090/api/jobman/reporting"
+    api-base-url="http://localhost:9090/api/reporting"
     api-key="your-api-key">
 </rb-pivot-table>
 ```
@@ -124,7 +124,7 @@ Just the parameters form:
 ```html
 <rb-parameters 
     report-code="sales-summary"
-    api-base-url="http://localhost:9090/api/jobman/reporting"
+    api-base-url="http://localhost:9090/api/reporting"
     api-key="your-api-key">
 </rb-parameters>
 ```
@@ -161,7 +161,7 @@ table.fetchData({ startDate: '2025-01-01', endDate: '2025-12-31' });
 })
 export class ReportViewComponent {
   reportCode = 'sales-summary';
-  apiBaseUrl = 'http://localhost:9090/api/jobman/reporting';
+  apiBaseUrl = 'http://localhost:9090/api/reporting';
   apiKey = 'your-api-key';
 }
 ```
@@ -221,7 +221,7 @@ add_action('wp_enqueue_scripts', 'enqueue_rb_components');
 <body>
     <rb-tabulator 
         report-code="sales-summary"
-        api-base-url="http://localhost:9090/api/jobman/reporting"
+        api-base-url="http://localhost:9090/api/reporting"
         api-key="abc123">
     </rb-tabulator>
     
@@ -239,7 +239,7 @@ add_action('wp_enqueue_scripts', 'enqueue_rb_components');
 
 Components communicate with the ReportBurster Spring Boot server:
 
-### GET `/api/jobman/reporting/reports/{reportCode}/config`
+### GET `/api/reporting/reports/{reportCode}/config`
 
 Returns full configuration (parsed from Groovy DSL):
 
@@ -258,7 +258,7 @@ Returns full configuration (parsed from Groovy DSL):
 }
 ```
 
-### POST `/api/jobman/reporting/reports/{reportCode}/data`
+### POST `/api/reporting/reports/{reportCode}/data`
 
 Request body: `{ "startDate": "2025-01-01", ... }`
 

@@ -2010,10 +2010,4 @@ export class SelfServicePortalsTestHelper {
     console.log(`${appName} Playground: All assertions PASSED ✓`);
   }
 
-  /**
-   * Backward-compatible wrapper: assert all Grails playground pages.
-   */
-  static async assertAllGrailsPages(page: Page): Promise<void> {
-    await SelfServicePortalsTestHelper.assertAllFrontFacingPages(page, 'grails');
-  }
 }

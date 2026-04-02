@@ -76,9 +76,14 @@ export const tabQATemplate = `<ng-template #tabQATemplate>
       <div class="col-xs-2">{{
         'AREAS.CONFIGURATION.TAB-QA.PASSWORD' | translate }}</div>
       <div class="col-xs-7">
-        <input id="qaPassword"
-          [(ngModel)]="xmlSettings?.documentburster.settings.qualityassurance.emailserver.userpassword"
-          (ngModelChange)='settingsChangedEventHandler($event)' type="password" class="form-control" />
+        <div class="input-group">
+          <input id="qaPassword"
+            [(ngModel)]="xmlSettings?.documentburster.settings.qualityassurance.emailserver.userpassword"
+            (ngModelChange)='settingsChangedEventHandler($event)' [type]="showQaPassword ? 'text' : 'password'" class="form-control" />
+          <span id="btnToggleQaPassword" class="input-group-addon" style="cursor:pointer" (click)="toggleRevealQaPassword()">
+            <i [class]="showQaPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+          </span>
+        </div>
       </div>
 
     </div>

@@ -4,7 +4,10 @@ import java.sql.Connection;
 import java.sql.Statement;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.sourcekraft.documentburster.common.security.SecretsCipher;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
 
@@ -13,6 +16,8 @@ import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConn
  * Designed to be used by CliJob and potentially other services.
  */
 public class DatabaseConnectionTester {
+
+	private static final Logger log = LoggerFactory.getLogger(DatabaseConnectionTester.class);
 
 	/**
 	 * Tests the database connection based on the provided settings. Logs detailed
@@ -34,10 +39,19 @@ public class DatabaseConnectionTester {
 		dbSettings.connection.databaseserver.ensureDriverAndUrl();
 		Class.forName(dbSettings.connection.databaseserver.driver);
 
+		// Decrypt password at the exact moment of use — never store plaintext
+		String decryptedPassword = dbSettings.connection.databaseserver.userpassword;
+		try {
+			decryptedPassword = SecretsCipher.getInstance(Settings.PORTABLE_EXECUTABLE_DIR_PATH)
+					.decrypt(dbSettings.connection.databaseserver.userpassword);
+		} catch (Exception e) {
+			log.warn("Failed to decrypt database password for connection test: {}", e.getMessage());
+		}
+
 		try (Connection connection = java.sql.DriverManager.getConnection(
 				dbSettings.connection.databaseserver.url,
 				dbSettings.connection.databaseserver.userid,
-				dbSettings.connection.databaseserver.userpassword)) {
+				decryptedPassword)) {
 			try (Statement stmt = connection.createStatement()) {
 				String testSql = getTestQueryForDatabase(dbSettings.connection.databaseserver.type);
 				stmt.executeQuery(testSql);

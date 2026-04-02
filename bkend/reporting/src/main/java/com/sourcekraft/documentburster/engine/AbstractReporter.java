@@ -45,6 +45,8 @@ import org.slf4j.LoggerFactory;
 //import com.haulmont.yarg.structure.ReportOutputType;
 //import com.haulmont.yarg.structure.impl.ReportTemplateImpl;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sourcekraft.documentburster.common.security.SecretsCipher;
+import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ReportSettings;
 import com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings;
 import com.sourcekraft.documentburster.engine.jasper.JasperReportRunner;
@@ -457,7 +459,15 @@ public abstract class AbstractReporter extends AbstractBurster {
 			ServerDatabaseSettings dbServer = ctx.settings.connectionDatabaseSettings.connection.databaseserver;
 			jdbcUrl = dbServer.url;
 			jdbcUser = dbServer.userid;
+
+			// Decrypt password at the exact moment of use — never store plaintext
 			jdbcPass = dbServer.userpassword;
+			try {
+				jdbcPass = SecretsCipher.getInstance(Settings.PORTABLE_EXECUTABLE_DIR_PATH)
+						.decrypt(dbServer.userpassword);
+			} catch (Exception ex) {
+				log.warn("Failed to decrypt database password for JasperReports: {}", ex.getMessage());
+			}
 		}
 
 		// ALWAYS pass reportData to JR — it was constructed for a reason.

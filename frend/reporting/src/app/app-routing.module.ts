@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { ConfigurationTemplatesComponent } from './areas/_configuration-templates/configuration-templates.component';
+import { ConfigurationReportsComponent } from './areas/_configuration-reports/configuration-reports.component';
 import { ConfigurationComponent } from './areas/_configuration/configuration.component';
 import { ConnectionListComponent } from './areas/_configuration-connections/configuration-connections.component';
 import { HelpComponent } from './areas/_help/help.component';
@@ -9,7 +9,7 @@ import { ProcessingComponent } from './areas/_processing/processing.component';
 import { NoJavaGuard } from './app-nojava-route-guard';
 /*
 import { ConfigurationComponent } from './areas/_configuration/configuration.component';
-import { ConfigurationTemplatesComponent } from './areas/_configuration-templates/configuration-templates.component';
+import { ConfigurationReportsComponent } from './areas/_configuration-reports/configuration-reports.component';
 import { HelpComponent } from './areas/_help/help.component';
 */
 const routes: Routes = [
@@ -63,9 +63,9 @@ const routes: Routes = [
     component: ConfigurationComponent,
   },
   {
-    path: 'configuration-templates',
+    path: 'configuration-reports',
     canActivate: [NoJavaGuard],
-    component: ConfigurationTemplatesComponent,
+    component: ConfigurationReportsComponent,
   },
   {
     path: 'configuration-connections/:goBackLocation/:configurationFilePath/:configurationFileName',

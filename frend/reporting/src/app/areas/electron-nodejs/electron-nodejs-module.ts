@@ -16,7 +16,7 @@ import { TerminalComponent } from './terminal/terminal.component';
 
 import { ChocolateyComponent } from './chocolatey/chocolatey.component';
 
-import { BashService } from './bash.service';
+import { DesktopAdminService } from './desktop-admin.service';
 import { RbElectronService } from './electron.service';
 import { ButtonNativeSystemDialogComponent } from './button-native-system-dialog/button-native-system-dialog.component';
 import { UpdateComponent } from './update/update.component';
@@ -48,6 +48,6 @@ import { WhenUpdatingComponent } from './update/when-updating';
     TerminalComponent,
     SystemDiagnosticsComponent,
   ],
-  providers: [BashService, TerminalService, RbElectronService],
+  providers: [DesktopAdminService, TerminalService, RbElectronService],
 })
 export class ElectronNodeJsModule {}

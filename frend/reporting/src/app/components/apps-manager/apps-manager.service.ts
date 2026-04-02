@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { ShellService } from '../../providers/shell.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 import { ApiService } from '../../providers/api.service';
+import { SystemService } from '../../providers/system.service';
 import { StateStoreService } from '../../providers/state-store.service';
 import { PollingHelper } from '../../providers/polling.helper';
 
@@ -313,9 +313,9 @@ export class AppsManagerService {
   private static readonly TRANSITIONAL_STATES_KEY = 'rb-apps-transitional-states';
 
   constructor(
-    private shellService: ShellService,
     private messagesService: ToastrMessagesService,
     private apiService: ApiService,
+    private systemService: SystemService,
     private stateStore: StateStoreService,
   ) { }
 
@@ -333,7 +333,7 @@ export class AppsManagerService {
       // Refresh system info (docker status) along with service statuses
       await this.refreshSystemInfo();
 
-      const response = await this.apiService.get('/jobman/system/services/status', { skipProbe });
+      const response = await this.systemService.getServicesStatus(skipProbe);
       const statuses: any[] = response;  // Array of {name, status, ports, health}
 
       // Use debug-level logging to avoid noisy console output in normal operation
@@ -411,7 +411,7 @@ export class AppsManagerService {
   // Fetch authoritative system info (Docker status) from backend
   private async refreshSystemInfo(): Promise<void> {
     try {
-      const backendSystemInfo = await this.apiService.get('/jobman/system/info');
+      const backendSystemInfo = await this.systemService.getSystemInfo();
       if (backendSystemInfo) {
         const dockerSetup = this.stateStore.configSys.sysInfo.setup.docker;
         
@@ -484,19 +484,19 @@ export class AppsManagerService {
 
   // Start an app
   private async startApp(app: ManagedApp): Promise<void> {
-    let command: string[] = [];
+    let commandStr: string;
     let successMessage = `App '${app.name}' started successfully.`;
 
     if (app.type === 'docker') {
       if (app.currentCommandValue) {
-        command = app.currentCommandValue.split(' ');
+        commandStr = app.currentCommandValue;
       } else {
         this.messagesService.showError(`No command defined for '${app.name}'.`);
         return;
       }
     } else if (app.type === 'local' || app.type === 'desktop') {
       if (app.command) {
-        command = app.command.split(' ');
+        commandStr = app.command;
       } else {
         this.messagesService.showError(`No command defined for '${app.name}'.`);
         return;
@@ -519,36 +519,36 @@ export class AppsManagerService {
     this.commandsInFlight.add(app.id);
     this.appLastOutputs[app.id] = 'Executing start...';
 
-    return new Promise<void>((resolve, reject) => {
-      this.shellService.runBatFile(command, `Starting ${app.name}`, async (result) => {
-        this.commandsInFlight.delete(app.id);
-        //console.log('Callback fired for', app.name, 'result:', JSON.stringify(result));
-        if (result && result.success) {
-          // Don't immediately set to 'running' - keep as 'starting' until healthcheck passes
-          // The refreshAllStatuses() will set the correct state based on Docker's health status
-          // NOTE: Do NOT call markProcessCompleted() here - the shell script exits after launching
-          // docker compose in detached mode, but the container is still building. Only mark completed on error.
-          this.appStates[app.id] = 'starting';
-          this.appLastOutputs[app.id] = result.output || `✓ ${app.name} container started, waiting for health check...`;
-          app.state = 'starting';
-          app.lastOutput = this.appLastOutputs[app.id];
-        } else {
-          this.appStates[app.id] = 'error';
-          this.clearTransitionalState(app.id);
-          this.appLastOutputs[app.id] = (result && result.output) || `✗ Failed to start ${app.name}.`;
-          app.state = 'error';
-          app.lastOutput = this.appLastOutputs[app.id];
-          app.currentCommandValue = app.startCmd;
-        }
-        await this.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.allAppsData.apps));
-        const apiState = this.appStates[app.id] ?? app.state;
-        app.state = apiState;
-        // Always sync currentCommandValue with actual state after refresh
-        app.currentCommandValue = (apiState === 'running' || apiState === 'starting') ? app.stopCmd : app.startCmd;
-        //console.log('After refresh, appStates:', JSON.stringify(this.appStates[app.id]));
-        resolve();
-      });
-    });
+    try {
+      const response = await this.apiService.post('/starter-packs/execute', { command: commandStr });
+      this.commandsInFlight.delete(app.id);
+      if (response && response.status && response.status !== 'error') {
+        this.appStates[app.id] = 'starting';
+        this.appLastOutputs[app.id] = response.output || `✓ ${app.name} container started, waiting for health check...`;
+        app.state = 'starting';
+        app.lastOutput = this.appLastOutputs[app.id];
+      } else {
+        this.appStates[app.id] = 'error';
+        this.clearTransitionalState(app.id);
+        this.appLastOutputs[app.id] = response?.output || `✗ Failed to start ${app.name}.`;
+        app.state = 'error';
+        app.lastOutput = this.appLastOutputs[app.id];
+        app.currentCommandValue = app.startCmd;
+      }
+    } catch (e: any) {
+      this.commandsInFlight.delete(app.id);
+      this.appStates[app.id] = 'error';
+      this.clearTransitionalState(app.id);
+      this.appLastOutputs[app.id] = e?.message || `✗ Failed to start ${app.name}.`;
+      app.state = 'error';
+      app.lastOutput = this.appLastOutputs[app.id];
+      app.currentCommandValue = app.startCmd;
+    }
+    await this.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.allAppsData.apps));
+    const apiState = this.appStates[app.id] ?? app.state;
+    app.state = apiState;
+    // Always sync currentCommandValue with actual state after refresh
+    app.currentCommandValue = (apiState === 'running' || apiState === 'starting') ? app.stopCmd : app.startCmd;
   }
 
   // Reprovision action for WordPress CMS. Executes startCmd with --reprovision (alias to rebuild-theme)
@@ -562,52 +562,59 @@ export class AppsManagerService {
       return;
     }
 
-    const cmdParts = app.startCmd.split(' ');
-    if (!cmdParts.includes('--reprovision')) cmdParts.push('--reprovision');
+    let commandStr = app.startCmd;
+    if (!commandStr.includes('--reprovision')) {
+      commandStr = commandStr.trim() + ' --reprovision';
+    }
 
     this.appStates[app.id] = 'starting';
     this.commandsInFlight.add(app.id);
     this.appLastOutputs[app.id] = 'Starting theme rebuild...';
 
-    return new Promise<void>((resolve) => {
-      this.shellService.runBatFile(cmdParts, `Rebuilding theme for ${app.name}`, async (result) => {
-        this.commandsInFlight.delete(app.id);
-        if (result && result.success) {
-          this.appStates[app.id] = 'starting';
-          this.appLastOutputs[app.id] = result.output || `✓ Reprovision started for ${app.name}`;
-          app.state = 'starting';
-          app.lastOutput = this.appLastOutputs[app.id];
-        } else {
-          this.appStates[app.id] = 'error';
-          this.clearTransitionalState(app.id);
-          this.appLastOutputs[app.id] = (result && result.output) || `✗ Failed to reprovision ${app.name}.`;
-          app.state = 'error';
-          app.lastOutput = this.appLastOutputs[app.id];
-        }
-        await this.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.allAppsData.apps));
-        const apiState = this.appStates[app.id] ?? app.state;
-        app.state = apiState;
-        app.currentCommandValue = (apiState === 'running' || apiState === 'starting') ? app.stopCmd : app.startCmd;
-        resolve();
-      });
-    });
+    try {
+      const response = await this.apiService.post('/starter-packs/execute', { command: commandStr });
+      this.commandsInFlight.delete(app.id);
+      if (response && response.status && response.status !== 'error') {
+        this.appStates[app.id] = 'starting';
+        this.appLastOutputs[app.id] = response.output || `✓ Reprovision started for ${app.name}`;
+        app.state = 'starting';
+        app.lastOutput = this.appLastOutputs[app.id];
+      } else {
+        this.appStates[app.id] = 'error';
+        this.clearTransitionalState(app.id);
+        this.appLastOutputs[app.id] = response?.output || `✗ Failed to reprovision ${app.name}.`;
+        app.state = 'error';
+        app.lastOutput = this.appLastOutputs[app.id];
+      }
+    } catch (e: any) {
+      this.commandsInFlight.delete(app.id);
+      this.appStates[app.id] = 'error';
+      this.clearTransitionalState(app.id);
+      this.appLastOutputs[app.id] = e?.message || `✗ Failed to reprovision ${app.name}.`;
+      app.state = 'error';
+      app.lastOutput = this.appLastOutputs[app.id];
+    }
+    await this.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.allAppsData.apps));
+    const apiState = this.appStates[app.id] ?? app.state;
+    app.state = apiState;
+    app.currentCommandValue = (apiState === 'running' || apiState === 'starting') ? app.stopCmd : app.startCmd;
   }
 
   // Stop an app
   private async stopApp(app: ManagedApp): Promise<void> {
-    let command: string[] = [];
+    let commandStr: string;
     let successMessage = `App '${app.name}' stopped successfully.`;
 
     if (app.type === 'docker') {
       if (app.currentCommandValue) {
-        command = app.currentCommandValue.split(' ');
+        commandStr = app.currentCommandValue;
       } else {
         this.messagesService.showError(`No command defined for '${app.name}'.`);
         return;
       }
     } else if (app.type === 'local' || app.type === 'desktop') {
       if (app.command) {
-        command = app.command.split(' ');
+        commandStr = app.command;
       } else {
         this.messagesService.showInfo(
           `Stopping local/desktop app '${app.name}' is not automatically supported. Please close it manually.`
@@ -629,35 +636,40 @@ export class AppsManagerService {
     this.commandsInFlight.add(app.id);
     this.appLastOutputs[app.id] = 'Executing stop...';
 
-    return new Promise<void>((resolve, reject) => {
-      this.shellService.runBatFile(command, `Stopping ${app.name}`, async (result) => {
-        this.commandsInFlight.delete(app.id);
-        if (result && result.success) {
-          this.appStates[app.id] = 'stopped';
-          this.clearTransitionalState(app.id);
-          this.appLastOutputs[app.id] = result.output || `✓ ${app.name} stopped successfully.`;
-          try { app.state = 'stopped'; } catch (e) { }
-          try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e) { }
-          try { app.currentCommandValue = app.startCmd; } catch (e) { }
-        } else {
-          this.appStates[app.id] = 'error';
-          this.clearTransitionalState(app.id);
-          this.appLastOutputs[app.id] = (result && result.output) || `✗ Failed to stop ${app.name}.`;
-          try { app.state = 'error'; } catch (e) { }
-          try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e) { }
-        }
-        // Automatic refresh after action to get authoritative state from API
-        try {
-          await this.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.allAppsData.apps));
-          const apiState = this.appStates[app.id] ?? app.state;
-          try { app.state = apiState; } catch (e) { }
-          // Always sync currentCommandValue with actual state after refresh
-          try { app.currentCommandValue = apiState === 'running' ? app.stopCmd : app.startCmd; } catch (e) { }
-        } catch (e) {
-          console.error('refreshAllStatuses failed after stop:', e);
-        }
-        resolve();
-      });
-    });
+    try {
+      const response = await this.apiService.post('/starter-packs/execute', { command: commandStr });
+      this.commandsInFlight.delete(app.id);
+      if (response && response.status && response.status !== 'error') {
+        this.appStates[app.id] = 'stopped';
+        this.clearTransitionalState(app.id);
+        this.appLastOutputs[app.id] = response.output || `✓ ${app.name} stopped successfully.`;
+        try { app.state = 'stopped'; } catch (e) { }
+        try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e) { }
+        try { app.currentCommandValue = app.startCmd; } catch (e) { }
+      } else {
+        this.appStates[app.id] = 'error';
+        this.clearTransitionalState(app.id);
+        this.appLastOutputs[app.id] = response?.output || `✗ Failed to stop ${app.name}.`;
+        try { app.state = 'error'; } catch (e) { }
+        try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e) { }
+      }
+    } catch (e: any) {
+      this.commandsInFlight.delete(app.id);
+      this.appStates[app.id] = 'error';
+      this.clearTransitionalState(app.id);
+      this.appLastOutputs[app.id] = e?.message || `✗ Failed to stop ${app.name}.`;
+      try { app.state = 'error'; } catch (e2) { }
+      try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e2) { }
+    }
+    // Automatic refresh after action to get authoritative state from API
+    try {
+      await this.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.allAppsData.apps));
+      const apiState = this.appStates[app.id] ?? app.state;
+      try { app.state = apiState; } catch (e) { }
+      // Always sync currentCommandValue with actual state after refresh
+      try { app.currentCommandValue = apiState === 'running' ? app.stopCmd : app.startCmd; } catch (e) { }
+    } catch (e) {
+      console.error('refreshAllStatuses failed after stop:', e);
+    }
   }
 }
