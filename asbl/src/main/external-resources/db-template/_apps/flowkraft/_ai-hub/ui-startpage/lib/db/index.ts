@@ -32,12 +32,24 @@ function ensureDb() {
   _sqlite.pragma("journal_mode = WAL");
   _db = drizzle(_sqlite, { schema });
 
-  // Create table (idempotent)
+  // Create tables (idempotent)
   _sqlite.exec(`
     CREATE TABLE IF NOT EXISTS config (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL,
       description TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `);
+
+  _sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS canvases (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT,
+      connection_id TEXT,
+      state TEXT NOT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )
@@ -112,6 +124,39 @@ export function getAllConfig(): schema.Config[] {
   }
 
   return rows;
+}
+
+// --- Canvas CRUD ---
+
+export function getAllCanvases(): schema.Canvas[] {
+  const { db } = ensureDb();
+  return db.select().from(schema.canvases).all();
+}
+
+export function getCanvas(id: string): schema.Canvas | undefined {
+  const { db } = ensureDb();
+  return db.select().from(schema.canvases).where(eq(schema.canvases.id, id)).get();
+}
+
+export function createCanvas(canvas: schema.NewCanvas): schema.Canvas {
+  const { db } = ensureDb();
+  db.insert(schema.canvases).values(canvas).run();
+  return db.select().from(schema.canvases).where(eq(schema.canvases.id, canvas.id)).get()!;
+}
+
+export function updateCanvas(id: string, data: Partial<Pick<schema.Canvas, 'name' | 'description' | 'connectionId' | 'state'>>): schema.Canvas | undefined {
+  const { db } = ensureDb();
+  const now = new Date().toISOString();
+  db.update(schema.canvases)
+    .set({ ...data, updatedAt: now })
+    .where(eq(schema.canvases.id, id))
+    .run();
+  return db.select().from(schema.canvases).where(eq(schema.canvases.id, id)).get();
+}
+
+export function deleteCanvas(id: string): void {
+  const { db } = ensureDb();
+  db.delete(schema.canvases).where(eq(schema.canvases.id, id)).run();
 }
 
 // Export db path for debugging
