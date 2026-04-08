@@ -440,7 +440,7 @@ try {
   });
 
   app.on('before-quit', async () => {
-    log.info(`before-quit: serverProcess exists? ${!!serverProcess}`);
+    // log.info(`before-quit: serverProcess exists? ${!!serverProcess}`);
 
     //stop the java server
     if (app.isPackaged) {
@@ -454,7 +454,7 @@ try {
   });
 
   app.on('will-quit', async () => {
-    log.info(`will-quit: serverProcess exists? ${!!serverProcess}`);
+    // log.info(`will-quit: serverProcess exists? ${!!serverProcess}`);
 
     if (app.isPackaged) {
       if (serverProcess) {

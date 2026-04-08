@@ -28,7 +28,7 @@ import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Spec;
 
-@Command(name = "reportburster", mixinStandardHelpOptions = true, version = "ReportBurster 10.3.0", description = "Report bursting and report generation software", subcommands = {
+@Command(name = "reportburster", mixinStandardHelpOptions = true, versionProvider = MainProgram.VersionFromSettings.class, description = "Report bursting and report generation software", subcommands = {
 		MainProgram.BurstCommand.class, MainProgram.GenerateCommand.class, MainProgram.ResumeCommand.class,
 		MainProgram.DocumentCommand.class, MainProgram.SystemCommand.class, MainProgram.ServiceCommand.class,
 		MainProgram.JasperCommand.class })
@@ -65,6 +65,26 @@ public class MainProgram implements Callable<Integer> {
 		int exitCode = new CommandLine(this).execute(args);
 		if (exitCode != 0) {
 			throw new RuntimeException("Command execution failed with exit code: " + exitCode);
+		}
+	}
+
+	static class VersionFromSettings implements CommandLine.IVersionProvider {
+		@Override
+		public String[] getVersion() {
+			try {
+				String settingsPath = System.getProperty("DOCUMENTBURSTER_HOME", ".");
+				java.io.File settingsFile = new java.io.File(settingsPath, "config/burst/settings.xml");
+				if (settingsFile.exists()) {
+					String content = new String(java.nio.file.Files.readAllBytes(settingsFile.toPath()));
+					java.util.regex.Matcher m = java.util.regex.Pattern.compile("<version>([^<]+)</version>").matcher(content);
+					if (m.find()) {
+						return new String[] { "ReportBurster " + m.group(1) };
+					}
+				}
+			} catch (Exception e) {
+				// fall through
+			}
+			return new String[] { "ReportBurster (version unknown)" };
 		}
 	}
 

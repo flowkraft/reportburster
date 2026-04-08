@@ -45,6 +45,8 @@ import org.slf4j.LoggerFactory;
 //import com.haulmont.yarg.structure.ReportOutputType;
 //import com.haulmont.yarg.structure.impl.ReportTemplateImpl;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
+import com.sourcekraft.documentburster.common.db.SqlExecutor;
 import com.sourcekraft.documentburster.common.security.SecretsCipher;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.ReportSettings;
@@ -53,6 +55,7 @@ import com.sourcekraft.documentburster.engine.jasper.JasperReportRunner;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.utils.CsvUtils;
 import com.sourcekraft.documentburster.utils.DocumentBursterFreemarkerInitializer;
+import com.sourcekraft.documentburster.utils.Utils;
 import com.sourcekraft.documentburster.utils.Scripts;
 import com.sourcekraft.documentburster.variables.Variables; // Assuming Variables class exists
 
@@ -151,6 +154,9 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 	@Override
 	protected void initializeResources() throws Exception {
+		ctx.dbManager = new DatabaseConnectionManager(ctx.settings);
+		ctx.sql = new SqlExecutor(ctx.dbManager);
+
 		ctx.burstTokens = new ArrayList<>();
 		ctx.variables.setVarAliases(Arrays.asList("col"));
 		// Assuming Variables.OUTPUT_TYPE_EXTENSION exists as a constant string
@@ -360,7 +366,8 @@ public abstract class AbstractReporter extends AbstractBurster {
 	@Override
 	protected void extractOutputBurstDocument() throws Exception {
 
-		String templateFilePath = ctx.settings.getReportTemplate().retrieveTemplateFilePath();
+		String templateFilePath = Utils.resolvePathAgainstPortableDir(
+				ctx.settings.getReportTemplate().retrieveTemplateFilePath());
 
 		// Existing template generation logic
 		if (ctx.settings.getReportTemplate().outputtype.equals(CsvUtils.OUTPUT_TYPE_DOCX))
@@ -548,7 +555,7 @@ public abstract class AbstractReporter extends AbstractBurster {
 		if (!bType.equals("none")) {
 			// Assuming com.sourcekraft.documentburster.common.utils.Utils.ibContent exists
 			try {
-				htmlContent = com.sourcekraft.documentburster.utils.Utils.ibContent(htmlContent, bType);
+				htmlContent = Utils.ibContent(htmlContent, bType);
 			} catch (Exception e) {
 				log.error("Error calling common.utils.Utils.ibContent", e);
 			}
@@ -788,15 +795,24 @@ public abstract class AbstractReporter extends AbstractBurster {
 
 	}
 
+	@Override
+	protected void closeResources() throws Exception {
+		if (ctx != null && ctx.dbManager != null) {
+			ctx.dbManager.close();
+		}
+	}
+
 	protected void setUpScriptingRoots() {
-		// Default roots
-		String[] defaultRoots = new String[] { "scripts/burst", "scripts/burst/internal" };
+		// Resolve default script roots against PORTABLE_EXECUTABLE_DIR so they work
+		// both from CLI (CWD = installation dir) and in-process REST (CWD = bkend/server).
+		String defaultRoot0 = Utils.resolvePathAgainstPortableDir("scripts/burst");
+		String defaultRoot1 = Utils.resolvePathAgainstPortableDir("scripts/burst/internal");
 
 		File configFile = new File(configurationFilePath);
 		File configFolder = configFile.getParentFile();
 		String configFolderPath = configFolder.getAbsolutePath();
 
-		String[] roots = new String[] { configFolderPath, defaultRoots[0], defaultRoots[1] };
+		String[] roots = new String[] { configFolderPath, defaultRoot0, defaultRoot1 };
 		scripting.setRoots(roots);
 		// log.info("Added config folder to scripting roots: {}", configFolderPath);
 

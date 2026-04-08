@@ -128,7 +128,10 @@ public class ReportParametersHelper {
 		config.setScriptBaseClass(ReportParametersScript.class.getName());
 
 		// 4) parse + run
-		GroovyShell shell = new GroovyShell(binding, config);
+		// Pass the script base class's classloader as parent. Without this, under Spring Boot
+		// DevTools the compiled Script1 extends a ReportParametersScript loaded by GroovyShell's
+		// classloader while the cast target is loaded by RestartClassLoader → ClassCastException.
+		GroovyShell shell = new GroovyShell(ReportParametersScript.class.getClassLoader(), binding, config);
 		ReportParametersScript script = (ReportParametersScript) shell.parse(groovyParametersDslCode);
 		script.setBinding(binding);
 		script.run();

@@ -132,7 +132,8 @@ import { modalTemplatesGalleryTemplate } from './templates/modal-gallery';
   `,
 })
 export class ConfigurationComponent implements OnInit {
-  //editor: Squire;
+
+  // ========== VIEW CHILDREN & TAB CONFIGURATION ==========
 
   @ViewChild('tabGeneralSettingsTemplate', { static: true })
   tabGeneralSettingsTemplate: TemplateRef<any>;
@@ -497,7 +498,8 @@ export class ConfigurationComponent implements OnInit {
     },
   ];
 
-  // Add these properties to your component class
+  // ========== COMPONENT STATE ==========
+
   emailPreviewVisible = false;
   sanitizedEmailPreview: SafeHtml;
 
@@ -539,6 +541,8 @@ export class ConfigurationComponent implements OnInit {
 
   selectedJasperReport: any = null;
   inlineJrxmlOption = { templateName: 'Write .jrxml code inline', filePath: '__inline__' };
+
+  // ========== CONSTRUCTOR & INITIALIZATION ==========
 
   constructor(
     protected settingsService: SettingsService,
@@ -591,262 +595,117 @@ export class ConfigurationComponent implements OnInit {
     if (qlEvent.range) this.editorCaretPosition = qlEvent.range.index;
   }
 
-  // ID column selection variables for each data source type
+  // ========== ID COLUMN SELECTION ==========
+
   xmlIdColumnSelection: string = 'notused';
   csvIdColumnSelection: string = 'notused';
   excelIdColumnSelection: string = 'notused';
   fixedWidthIdColumnSelection: string = 'notused';
-
   sqlIdColumnSelection: string = 'notused';
-
   scriptIdColumnSelection: string = 'notused';
   scriptFileExplorerSelection: string = 'notused';
 
-  // Add to ngOnInit or where appropriate
   initIdColumnSelections() {
-    // XML selection
-    const xmlValue =
-      this.xmlReporting?.documentburster.report.datasource.xmloptions?.idcolumn;
-    if (xmlValue === 'notused' || !xmlValue) {
-      this.xmlIdColumnSelection = 'notused';
-    } else {
-      this.xmlIdColumnSelection = 'custom';
-    }
+    const ds = this.xmlReporting?.documentburster.report.datasource;
+    this.xmlIdColumnSelection = this.classifyIdColumn(ds.xmloptions?.idcolumn, false);
+    this.csvIdColumnSelection = this.classifyIdColumn(ds.csvoptions?.idcolumn);
+    this.excelIdColumnSelection = this.classifyIdColumn(ds.exceloptions?.idcolumn);
+    this.fixedWidthIdColumnSelection = this.classifyIdColumn(ds.fixedwidthoptions?.idcolumn);
+    this.sqlIdColumnSelection = this.classifyIdColumn(ds.sqloptions?.idcolumn);
+    this.scriptIdColumnSelection = this.classifyIdColumn(ds.scriptoptions?.idcolumn);
 
-    // CSV/TSV selection
-    const csvValue =
-      this.xmlReporting?.documentburster.report.datasource.csvoptions?.idcolumn;
-    if (csvValue === 'notused' || !csvValue) {
-      this.csvIdColumnSelection = 'notused';
-    } else if (csvValue === 'firstcolumn') {
-      // Corrected from 'first' to 'firstcolumn' if your XML/Java uses 'firstcolumn'
-      this.csvIdColumnSelection = 'firstcolumn';
-    } else if (csvValue === 'lastcolumn') {
-      // Corrected from 'last' to 'lastcolumn' if your XML/Java uses 'lastcolumn'
-      this.csvIdColumnSelection = 'lastcolumn';
-    } else {
-      this.csvIdColumnSelection = 'custom';
-    }
-
-    // Excel selection
-    const excelValue =
-      this.xmlReporting?.documentburster.report.datasource.exceloptions
-        ?.idcolumn;
-    if (excelValue === 'notused' || !excelValue) {
-      this.excelIdColumnSelection = 'notused';
-    } else if (excelValue === 'firstcolumn') {
-      // Corrected
-      this.excelIdColumnSelection = 'firstcolumn';
-    } else if (excelValue === 'lastcolumn') {
-      // Corrected
-      this.excelIdColumnSelection = 'lastcolumn';
-    } else {
-      this.excelIdColumnSelection = 'custom';
-    }
-
-    // Fixed Width selection
-    const fixedWidthValue =
-      this.xmlReporting?.documentburster.report.datasource.fixedwidthoptions
-        ?.idcolumn;
-    if (fixedWidthValue === 'notused' || !fixedWidthValue) {
-      this.fixedWidthIdColumnSelection = 'notused';
-    } else if (fixedWidthValue === 'firstcolumn') {
-      // Corrected
-      this.fixedWidthIdColumnSelection = 'firstcolumn';
-    } else if (fixedWidthValue === 'lastcolumn') {
-      // Corrected
-      this.fixedWidthIdColumnSelection = 'lastcolumn';
-    } else {
-      this.fixedWidthIdColumnSelection = 'custom';
-    }
-
-    // Corrected SQL idcolumn initialization
-    const sqlIdColumnValue =
-      this.xmlReporting?.documentburster.report.datasource.sqloptions.idcolumn;
-    if (sqlIdColumnValue === 'notused' || !sqlIdColumnValue) {
-      this.sqlIdColumnSelection = 'notused';
-    } else if (sqlIdColumnValue === 'firstcolumn') {
-      this.sqlIdColumnSelection = 'firstcolumn';
-    } else if (sqlIdColumnValue === 'lastcolumn') {
-      this.sqlIdColumnSelection = 'lastcolumn';
-    } else {
-      // If it's none of the above, it's a numeric string representing a custom index
-      this.sqlIdColumnSelection = 'custom';
-    }
-
-    // Corrected Script idcolumn initialization
-    const scriptIdColumnValue =
-      this.xmlReporting?.documentburster.report.datasource.scriptoptions
-        .idcolumn;
-    if (scriptIdColumnValue === 'notused' || !scriptIdColumnValue) {
-      this.scriptIdColumnSelection = 'notused';
-    } else if (scriptIdColumnValue === 'firstcolumn') {
-      this.scriptIdColumnSelection = 'firstcolumn';
-    } else if (scriptIdColumnValue === 'lastcolumn') {
-      this.scriptIdColumnSelection = 'lastcolumn';
-    } else {
-      // If it's none of the above, it's a numeric string representing a custom index
-      this.scriptIdColumnSelection = 'custom';
-    }
-
-    // Corrected Script fileexplorer initialization
-    const scriptFileExplorerValue =
-      this.xmlReporting?.documentburster.report.datasource.scriptoptions
-        .selectfileexplorer;
-    if (scriptFileExplorerValue === 'notused' || !scriptFileExplorerValue) {
-      this.scriptFileExplorerSelection = 'notused';
-    } else if (
-      scriptFileExplorerValue &&
-      scriptFileExplorerValue != 'notused'
-    ) {
-      // If it contains wildcard pattern
-      this.scriptFileExplorerSelection = 'globpattern';
-    } else {
-      // If it's a specific file or other pattern
-      this.scriptFileExplorerSelection = scriptFileExplorerValue;
-    }
+    const feVal = ds.scriptoptions?.selectfileexplorer;
+    this.scriptFileExplorerSelection = (!feVal || feVal === 'notused') ? 'notused' : 'globpattern';
   }
 
+  /**
+   * Classify an idcolumn value: 'notused' | 'firstcolumn' | 'lastcolumn' | 'custom'.
+   * XML datasource only supports 'notused' or 'custom' (no first/last).
+   */
+  private classifyIdColumn(value: string, supportsFirstLast: boolean = true): string {
+    if (!value || value === 'notused') return 'notused';
+    if (supportsFirstLast && value === 'firstcolumn') return 'firstcolumn';
+    if (supportsFirstLast && value === 'lastcolumn') return 'lastcolumn';
+    return 'custom';
+  }
+
+  /**
+   * Generic ID column change handler. Updates the UI selection and the XML model.
+   * For 'custom', sets the model to '0' if it wasn't already a numeric string.
+   */
+  private handleIdColumnChange(
+    newValue: string,
+    optionsObj: any,
+    fieldName: string = 'idcolumn',
+    supportsCustomNumeric: boolean = true,
+  ) {
+    if (newValue !== 'custom') {
+      optionsObj[fieldName] = newValue;
+    } else if (supportsCustomNumeric) {
+      const current = optionsObj[fieldName];
+      if (!current || !/^\d+$/.test(current) || ['notused', 'firstcolumn', 'lastcolumn'].includes(current)) {
+        optionsObj[fieldName] = '0';
+      }
+    } else {
+      optionsObj[fieldName] = '';
+    }
+    this.settingsChangedEventHandler(newValue);
+  }
+
+  // Template-bound handlers — thin wrappers around the generic handler
   onXmlIdColumnSelectionChange(newValue: any) {
     this.xmlIdColumnSelection = newValue;
-    if (newValue !== 'custom') {
-      this.xmlReporting.documentburster.report.datasource.xmloptions.idcolumn =
-        newValue;
-    } else {
-      // When "custom" is selected, clear the value for user input
-      this.xmlReporting.documentburster.report.datasource.xmloptions.idcolumn =
-        '';
-    }
-    this.settingsChangedEventHandler(newValue);
+    this.handleIdColumnChange(newValue,
+      this.xmlReporting.documentburster.report.datasource.xmloptions,
+      'idcolumn', false);
   }
 
-  // Handler for CSV/TSV dropdown
   onCsvIdColumnSelectionChange(newValue: any) {
     this.csvIdColumnSelection = newValue;
-    if (newValue !== 'custom') {
-      this.xmlReporting.documentburster.report.datasource.csvoptions.idcolumn =
-        newValue;
-    } else {
-      // When "custom" is selected, ensure the underlying model value is a number string (e.g., "0")
-      // if it was previously "notused", "firstcolumn", or "lastcolumn".
-      // The actual number input is bound via [(ngModel)] to csvCustomIdColumnIndex.
-      const currentCustomValue =
-        this.xmlReporting.documentburster.report.datasource.csvoptions.idcolumn;
-      if (!/^\d+$/.test(currentCustomValue)) {
-        // Check if it's not already a number string
-        this.xmlReporting.documentburster.report.datasource.csvoptions.idcolumn =
-          '0';
-      }
-    }
-    this.settingsChangedEventHandler(newValue);
+    this.handleIdColumnChange(newValue,
+      this.xmlReporting.documentburster.report.datasource.csvoptions);
   }
 
-  // Handler for Excel dropdown
   onExcelIdColumnSelectionChange(newValue: any) {
     this.excelIdColumnSelection = newValue;
-    if (newValue !== 'custom') {
-      this.xmlReporting.documentburster.report.datasource.exceloptions.idcolumn =
-        newValue;
-    } else {
-      const currentCustomValue =
-        this.xmlReporting.documentburster.report.datasource.exceloptions
-          .idcolumn;
-      if (!/^\d+$/.test(currentCustomValue)) {
-        this.xmlReporting.documentburster.report.datasource.exceloptions.idcolumn =
-          '0';
-      }
-    }
-    this.settingsChangedEventHandler(newValue);
+    this.handleIdColumnChange(newValue,
+      this.xmlReporting.documentburster.report.datasource.exceloptions);
   }
 
-  // Handler for Fixed Width dropdown
   onFixedWidthIdColumnSelectionChange(newValue: any) {
     this.fixedWidthIdColumnSelection = newValue;
-    if (newValue !== 'custom') {
-      this.xmlReporting.documentburster.report.datasource.fixedwidthoptions.idcolumn =
-        newValue;
-    } else {
-      const currentCustomValue =
-        this.xmlReporting.documentburster.report.datasource.fixedwidthoptions
-          .idcolumn;
-      if (!/^\d+$/.test(currentCustomValue)) {
-        this.xmlReporting.documentburster.report.datasource.fixedwidthoptions.idcolumn =
-          '0';
-      }
-    }
-    this.settingsChangedEventHandler(newValue);
+    this.handleIdColumnChange(newValue,
+      this.xmlReporting.documentburster.report.datasource.fixedwidthoptions);
   }
 
-  // Methods to handle selection changes
   public onSqlIdColumnSelectionChange(newValue: any) {
-    this.sqlIdColumnSelection = newValue; // Update the UI-bound model for the dropdown
-
-    if (newValue !== 'custom') {
-      // If "notused", "firstcolumn", or "lastcolumn" is selected, update the model directly
-      this.xmlReporting.documentburster.report.datasource.sqloptions.idcolumn =
-        newValue;
-    } else {
-      // If "custom" is selected, the input field for the index is bound to
-      // xmlReporting.documentburster.report.datasource.sqloptions.idcolumn.
-      // We need to ensure that if the previous value was "notused", "firstcolumn", or "lastcolumn",
-      // we set a default numeric string like "0" to `xmlReporting.documentburster.report.datasource.sqloptions.idcolumn`.
-      const currentCustomValue =
-        this.xmlReporting.documentburster.report.datasource.sqloptions.idcolumn;
-      if (
-        ['notused', 'firstcolumn', 'lastcolumn'].includes(currentCustomValue) ||
-        !/^\d+$/.test(currentCustomValue)
-      ) {
-        this.xmlReporting.documentburster.report.datasource.sqloptions.idcolumn =
-          '0';
-      }
-      // If it was already a valid number string, the [(ngModel)] on the input field will handle it.
-    }
-    this.settingsChangedEventHandler(newValue);
+    this.sqlIdColumnSelection = newValue;
+    this.handleIdColumnChange(newValue,
+      this.xmlReporting.documentburster.report.datasource.sqloptions);
   }
 
   public onScriptIdColumnSelectionChange(newValue: any) {
-    this.scriptIdColumnSelection = newValue; // Update the UI-bound model for the dropdown
-
-    if (newValue !== 'custom') {
-      this.xmlReporting.documentburster.report.datasource.scriptoptions.idcolumn =
-        newValue;
-    } else {
-      const currentCustomValue =
-        this.xmlReporting.documentburster.report.datasource.scriptoptions
-          .idcolumn;
-      if (
-        ['notused', 'firstcolumn', 'lastcolumn'].includes(currentCustomValue) ||
-        !/^\d+$/.test(currentCustomValue)
-      ) {
-        this.xmlReporting.documentburster.report.datasource.scriptoptions.idcolumn =
-          '0';
-      }
-    }
-    this.settingsChangedEventHandler(newValue);
+    this.scriptIdColumnSelection = newValue;
+    this.handleIdColumnChange(newValue,
+      this.xmlReporting.documentburster.report.datasource.scriptoptions);
   }
 
   public onScriptFileExplorerSelectionChange(newValue: any) {
-    this.scriptFileExplorerSelection = newValue; // Update the UI-bound model for the dropdown
-
-    // Set the XML configuration with appropriate value
+    this.scriptFileExplorerSelection = newValue;
+    const opts = this.xmlReporting.documentburster.report.datasource.scriptoptions;
     if (newValue === 'notused') {
-      this.xmlReporting.documentburster.report.datasource.scriptoptions.selectfileexplorer =
-        'notused';
+      opts.selectfileexplorer = 'notused';
     } else if (newValue === 'globpattern') {
-      // If it's currently 'notused', set to default value
-      const currentValue =
-        this.xmlReporting.documentburster.report.datasource.scriptoptions
-          .selectfileexplorer;
-      if (currentValue === 'notused' || !currentValue) {
-        this.xmlReporting.documentburster.report.datasource.scriptoptions.selectfileexplorer =
-          '*.xml';
+      if (opts.selectfileexplorer === 'notused' || !opts.selectfileexplorer) {
+        opts.selectfileexplorer = '*.xml';
       }
-      // Otherwise keep existing value (don't overwrite user's pattern)
     }
-
-    // Notify that settings have changed
     this.settingsChangedEventHandler(newValue);
   }
+
+  // ========== END ID COLUMN SELECTION ==========
+
+  // ========== TEMPLATE & OUTPUT TYPE MANAGEMENT ==========
 
   groupByJasperHelper() {
     return 'Available JasperReports';
@@ -864,7 +723,7 @@ export class ConfigurationComponent implements OnInit {
 
       try {
         const content =
-            await this.reportsService.loadReportTemplate(this.currentReportId);
+            await this.reportsService.loadReportTemplateByType(this.currentReportId, 'jasper');
         if (content) {
           this.activeReportTemplateContent = content;
         } else {
@@ -916,254 +775,32 @@ export class ConfigurationComponent implements OnInit {
   }
 
   async onReportOutputTypeChanged() {
-
     this.autosaveEnabled = false;
     try {
-      // Check if the current path is a sample path that should be preserved
-      const currentPath =
-        this.xmlReporting.documentburster.report.template.documentpath;
-      const isSamplePath =
-        currentPath &&
-        (currentPath.includes('/samples/') ||
-          currentPath.startsWith('samples/') ||
-          currentPath.includes('\\samples\\') ||
-          currentPath.startsWith('samples\\'));
+      const currentPath = this.xmlReporting.documentburster.report.template.documentpath;
+      const outputType = this.xmlReporting.documentburster.report.template.outputtype;
+      const newOutputType = outputType.replace('output.', '');
 
-      // Get the PREVIOUS output type (before the change)
-      let previousOutputType = '';
-      let previousExtension = '';
-      if (currentPath) {
-        const match = currentPath.match(/-(\w+)\.(html|xsl)$/);
-        if (match) {
-          previousOutputType = match[1];
-          previousExtension = match[2];
-        }
-      }
+      // Adjust burst filename extension for special output types
+      this.adjustBurstFilenameExtension(newOutputType);
 
-      // Get the NEW output type and config name
-      const newOutputType =
-        this.xmlReporting.documentburster.report.template.outputtype.replace(
-          'output.',
-          '',
-        );
-
-      if (newOutputType === 'fop2pdf' || newOutputType === 'any') {
-        const prevValue = this.xmlSettings?.documentburster?.settings?.burstfilename || '';
-        const baseName = prevValue.replace(/\.[^\.]+$/, ''); // removes last extension (e.g. .pdf, .xlsx, .docx, etc.)
-        if (newOutputType === 'fop2pdf') this.xmlSettings.documentburster.settings.burstfilename = baseName + '.pdf';
-        if (newOutputType === 'any') this.xmlSettings.documentburster.settings.burstfilename = baseName + '.xml';
-      }
-
-      const configName =
-        this.settingsService.currentConfigurationTemplate?.folderName ||
-        'template';
-
-      // Now handle the new output type
-      if (
-        this.xmlReporting.documentburster.report.template.outputtype ==
-        'output.none'
-      ) {
+      if (outputType === 'output.none') {
         this.xmlReporting.documentburster.report.template.documentpath = '';
-        //this.activeReportTemplateContent = '';
-        //this.sanitizedReportPreview = this.sanitizer.bypassSecurityTrustHtml('');
-      } else if (
-        ['output.docx', 'output.pdf', 'output.xlsx', 'output.html', 'output.dashboard'].includes(
-          this.xmlReporting.documentburster.report.template.outputtype,
-        )
-      ) {
+      } else if (outputType === 'output.jasper') {
+        await this.handleJasperOutputType(currentPath);
+      } else if (outputType === 'output.docx') {
+        await this.handleDocxOutputType(currentPath);
+      } else if (['output.pdf', 'output.xlsx', 'output.html', 'output.dashboard'].includes(outputType)) {
         this.reportPreviewVisible = true;
-
-        // Generate appropriate path for this output type
-        let newPath = '';
-
-        // For sample paths, preserve the original path
-        if (isSamplePath) {
-          newPath = currentPath;
-        }
-        // For non-sample paths, calculate a conventional path
-        else if (newOutputType === 'docx') {
-          if (!currentPath || !currentPath.toLowerCase().endsWith('.docx')) {
-            newPath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-template.docx`;
-          } else {
-            newPath = currentPath;
-          }
-          //this.activeReportTemplateContent = '';
-          //this.sanitizedReportPreview =
-          //  this.sanitizer.bypassSecurityTrustHtml('');
-        } else {
-          newPath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-${newOutputType}.html`;
-
-          // Reset and force change detection to ensure CodeJar updates correctly
-          // this.activeReportTemplateContent = '';
-          // this.changeDetectorRef.detectChanges();
-          // await Utilities.sleep(10);
-
-
-        }
-
-        // Always load from disk (no cache)
-        try {
-          const content =
-              await this.reportsService.loadReportTemplate(this.currentReportId);
-          if (content) {
-            this.activeReportTemplateContent = content;
-          } else {
-            // Create with default content for NEW output type
-            const defaultContent = `<html>\n<head>\n<title>${configName} ${newOutputType} Template</title>\n</head>\n<body>\n<h1>${configName} ${newOutputType} Report</h1>\n</body>\n</html>`;
-            await this.reportsService.saveReportTemplate(
-              this.currentReportId,
-              defaultContent,
-            );
-            this.activeReportTemplateContent = defaultContent;
-          }
-          this.changeDetectorRef.detectChanges();
-        } catch (error) {
-          console.error(`Error loading template for ${newOutputType}:`, error);
-        }
-
-        // Update path if needed - but never update for sample paths
-        if (
-          !isSamplePath &&
-          this.xmlReporting.documentburster.report.template.documentpath !==
-          newPath
-        ) {
-          this.xmlReporting.documentburster.report.template.documentpath =
-            newPath;
-          await this.reportsService.saveReportDataSource(
-            this.currentReportId,
-            this.xmlReporting,
-          );
-        }
-
-        if (newOutputType === 'docx') {
-          const stripLeadSlash = (p: string) => p?.replace(/^\//, '') || '';
-          this.selectedReportTemplateFile =
-            this.settingsService.templateFiles.find(
-              (tplFile) => stripLeadSlash(tplFile.filePath) === stripLeadSlash(newPath),
-            );
-        }
-      } else if (
-        this.xmlReporting.documentburster.report.template.outputtype ===
-        'output.fop2pdf'
-      ) {
-        this.reportPreviewVisible = false; // No preview for XSL-FO
-        let newPath = '';
-        if (isSamplePath) {
-          newPath = currentPath;
-        } else {
-          newPath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-fop2pdf.xsl`;
-          //this.activeReportTemplateContent = '';
-          //this.changeDetectorRef.detectChanges();
-          //await Utilities.sleep(10);
-        }
-        // Always load from disk (no cache)
-        try {
-          const content =
-              await this.reportsService.loadReportTemplate(this.currentReportId);
-          if (content) {
-            this.activeReportTemplateContent = content;
-          } else {
-            // Default XSL-FO template
-            const defaultContent = `<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">\n<!-- XSL-FO template for FOP2PDF -->\n</xsl:stylesheet>`;
-            await this.reportsService.saveReportTemplate(
-              this.currentReportId,
-              defaultContent,
-            );
-            this.activeReportTemplateContent = defaultContent;
-          }
-          this.changeDetectorRef.detectChanges();
-        } catch (error) {
-          console.error(`Error loading template for fop2pdf:`, error);
-        }
-
-        // Update path if needed
-        if (
-          !isSamplePath &&
-          this.xmlReporting.documentburster.report.template.documentpath !==
-          newPath
-        ) {
-          this.xmlReporting.documentburster.report.template.documentpath =
-            newPath;
-          await this.reportsService.saveReportDataSource(
-            this.currentReportId,
-            this.xmlReporting,
-          );
-        }
-      } else if (
-        this.xmlReporting.documentburster.report.template.outputtype ===
-        'output.any'
-      ) {
-        this.reportPreviewVisible = false; // No preview for FreeMarker
-        let newPath = '';
-        if (isSamplePath) {
-          newPath = currentPath;
-        } else {
-          newPath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-any.ftl`;
-          // this.activeReportTemplateContent = '';
-          //this.changeDetectorRef.detectChanges();
-          // await Utilities.sleep(10);
-        }
-        // Always load from disk (no cache)
-        try {
-          const content =
-              await this.reportsService.loadReportTemplate(this.currentReportId);
-          if (content) {
-            this.activeReportTemplateContent = content;
-          } else {
-            // Default FreeMarker template
-            const defaultContent = `<#-- FreeMarker template for arbitrary text output -->\n<#-- Use FreeMarker syntax to generate your output -->`;
-            await this.reportsService.saveReportTemplate(
-              this.currentReportId,
-              defaultContent,
-            );
-            this.activeReportTemplateContent = defaultContent;
-          }
-          this.changeDetectorRef.detectChanges();
-        } catch (error) {
-          console.error(`Error loading template for freemarker:`, error);
-        }
-
-        // Update path if needed
-        if (
-          !isSamplePath &&
-          this.xmlReporting.documentburster.report.template.documentpath !==
-          newPath
-        ) {
-          this.xmlReporting.documentburster.report.template.documentpath =
-            newPath;
-          await this.reportsService.saveReportDataSource(
-            this.currentReportId,
-            this.xmlReporting,
-          );
-        }
-      } else if (
-        this.xmlReporting.documentburster.report.template.outputtype ===
-        'output.jasper'
-      ) {
+        await this.loadOrCreateTemplate(newOutputType);
+      } else if (outputType === 'output.fop2pdf') {
         this.reportPreviewVisible = false;
-        const savedPath = this.xmlReporting.documentburster.report.template.documentpath;
-
-        if (savedPath && savedPath.endsWith('.jrxml') && !savedPath.includes('reports-jasper')) {
-          // Inline .jrxml mode — restore editor content
-          this.selectedJasperReport = this.inlineJrxmlOption;
-          try {
-            const content =
-                await this.reportsService.loadReportTemplate(this.currentReportId);
-            if (content) {
-              this.activeReportTemplateContent = content;
-            }
-          } catch (error) {
-            console.error('Error loading inline .jrxml template:', error);
-          }
-          this.autosaveEnabled = true;
-        } else if (savedPath && savedPath.includes('reports-jasper')) {
-          const jasperConfigs = this.settingsService.getJasperReportConfigurations();
-          this.selectedJasperReport = jasperConfigs.find(
-            (r: any) => r.filePath === savedPath,
-          ) || null;
-        } else {
-          this.selectedJasperReport = null;
-        }
+        await this.loadOrCreateTemplate('fop2pdf',
+          `<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">\n<!-- XSL-FO template for FOP2PDF -->\n</xsl:stylesheet>`);
+      } else if (outputType === 'output.any') {
+        this.reportPreviewVisible = false;
+        await this.loadOrCreateTemplate('any',
+          `<#-- FreeMarker template for arbitrary text output -->\n<#-- Use FreeMarker syntax to generate your output -->`);
       }
 
       await this.loadAbsoluteTemplatePath();
@@ -1171,17 +808,121 @@ export class ConfigurationComponent implements OnInit {
         this.refreshHtmlPreview();
       }
       this.changeDetectorRef.detectChanges();
-
-      this.onAskForFeatureModalShow(
-        this.xmlReporting.documentburster.report.template.outputtype,
-      );
+      this.onAskForFeatureModalShow(outputType);
     } finally {
-      //console.log(`Autosave enabled after output type change: ${this.autosaveEnabled}`);
-      // Re-enable
       this.autosaveEnabled = true;
     }
-
   }
+
+  /**
+   * Load template for an output type via the backend. If no template exists,
+   * create one with default content. Backend handles path resolution and
+   * updates reporting.xml's documentpath as a side effect.
+   */
+  private async loadOrCreateTemplate(outputType: string, defaultContent?: string) {
+    const configName = this.settingsService.currentConfigurationTemplate?.folderName || 'template';
+    try {
+      // Try auto endpoint first — reads documentpath from reporting.xml.
+      // This handles samples with custom template names/locations
+      // (e.g., samples/reports/northwind/customer-statement-template.html).
+      let content = await this.reportsService.loadReportTemplate(this.currentReportId);
+
+      // Fall back to per-type endpoint (convention: templates/reports/{id}/{id}-{type}.{ext})
+      if (!content) {
+        content = await this.reportsService.loadReportTemplateByType(
+          this.currentReportId, outputType,
+        );
+      }
+
+      if (content) {
+        this.activeReportTemplateContent = content;
+      } else {
+        const skeleton = defaultContent ||
+          `<html>\n<head>\n<title>${configName} ${outputType} Template</title>\n</head>\n<body>\n<h1>${configName} ${outputType} Report</h1>\n</body>\n</html>`;
+        await this.reportsService.saveReportTemplateByType(
+          this.currentReportId, outputType, skeleton,
+        );
+        this.activeReportTemplateContent = skeleton;
+      }
+      this.changeDetectorRef.detectChanges();
+    } catch (error) {
+      console.error(`Error loading template for ${outputType}:`, error);
+    }
+  }
+
+  private adjustBurstFilenameExtension(outputType: string) {
+    if (outputType === 'fop2pdf' || outputType === 'any') {
+      const prevValue = this.xmlSettings?.documentburster?.settings?.burstfilename || '';
+      const baseName = prevValue.replace(/\.[^\.]+$/, '');
+      if (outputType === 'fop2pdf') this.xmlSettings.documentburster.settings.burstfilename = baseName + '.pdf';
+      if (outputType === 'any') this.xmlSettings.documentburster.settings.burstfilename = baseName + '.xml';
+    }
+  }
+
+  private async handleJasperOutputType(currentPath: string) {
+    this.reportPreviewVisible = false;
+    const savedPath = currentPath;
+
+    if (savedPath && savedPath.endsWith('.jrxml') && !savedPath.includes('reports-jasper')) {
+      // Inline .jrxml mode — restore editor content
+      this.selectedJasperReport = this.inlineJrxmlOption;
+      try {
+        const content = await this.reportsService.loadReportTemplateByType(this.currentReportId, 'jasper');
+        if (content) {
+          this.activeReportTemplateContent = content;
+        }
+      } catch (error) {
+        console.error('Error loading inline .jrxml template:', error);
+      }
+      this.autosaveEnabled = true;
+    } else if (savedPath && savedPath.includes('reports-jasper')) {
+      const jasperConfigs = this.settingsService.getJasperReportConfigurations();
+      this.selectedJasperReport = jasperConfigs.find(
+        (r: any) => r.filePath === savedPath,
+      ) || null;
+    } else {
+      this.selectedJasperReport = null;
+    }
+  }
+
+  /**
+   * Handle docx output type — binary format, uses dropdown selection instead of code editor.
+   * Docx uses a different naming convention: {configName}-template.docx
+   */
+  private async handleDocxOutputType(currentPath: string) {
+    this.reportPreviewVisible = true;
+    const configName = this.settingsService.currentConfigurationTemplate?.folderName || 'template';
+    const isSamplePath = currentPath && (currentPath.includes('/samples/') || currentPath.startsWith('samples/'));
+
+    let newPath = '';
+    if (isSamplePath) {
+      newPath = currentPath;
+    } else if (!currentPath || !currentPath.toLowerCase().endsWith('.docx')) {
+      newPath = `templates/reports/${configName}/${configName}-template.docx`;
+    } else {
+      newPath = currentPath;
+    }
+
+    // Update documentpath if changed
+    if (!isSamplePath && this.xmlReporting.documentburster.report.template.documentpath !== newPath) {
+      this.xmlReporting.documentburster.report.template.documentpath = newPath;
+      await this.reportsService.saveReportDataSource(this.currentReportId, this.xmlReporting);
+    }
+
+    this.syncSelectedDocxTemplate();
+  }
+
+  private syncSelectedDocxTemplate() {
+    const docxPath = this.xmlReporting.documentburster.report.template.documentpath;
+    const stripLeadSlash = (p: string) => p?.replace(/^\//, '') || '';
+    this.selectedReportTemplateFile = this.settingsService.templateFiles?.find(
+      (tplFile) => stripLeadSlash(tplFile.filePath) === stripLeadSlash(docxPath),
+    );
+  }
+
+  // ========== END TEMPLATE & OUTPUT TYPE MANAGEMENT ==========
+
+  // ========== INITIALIZATION (ngOnInit) ==========
 
   async ngOnInit() {
     this.route.params.subscribe(async (params) => {
@@ -1203,15 +944,8 @@ export class ConfigurationComponent implements OnInit {
         this.settingsService.currentConfigurationTemplateName =
           params.configurationFileName;
 
-        // Extract reportId from the route path — must be done before loading,
-        // because this.currentReportId depends on currentConfigurationTemplate
-        // which hasn't been updated yet for this navigation.
-        const reportId = Utilities.basename(
-          Utilities.dirname(params.configurationFilePath),
-        );
-
-        this.xmlSettings = await this.reportsService.loadReportSettings(
-          reportId,
+        this.xmlSettings = await this.reportsService.loadSettingsByPath(
+          params.configurationFilePath,
         );
 
         this.stateStore.configSys.currentConfigFile.configuration.settings = {
@@ -1239,89 +973,9 @@ export class ConfigurationComponent implements OnInit {
       }
 
       if (this.currentLeftMenu === 'emailSettingsMenuSelected') {
-        await this.settingsService.loadAllConnections();
-
-        if (!this.xmlSettings.documentburster.settings.emailserver.conncode)
-          this.xmlSettings.documentburster.settings.emailserver.conncode =
-            this.settingsService.defaultEmailConnectionFile.connectionCode;
-
-        if (this.xmlSettings.documentburster.settings.emailserver.conncode) {
-          this.selectedEmailConnectionFile =
-            this.settingsService.connectionFiles.find(
-              (connection) =>
-                connection.connectionType == 'email-connection' &&
-                connection.connectionCode ==
-                this.xmlSettings.documentburster.settings.emailserver
-                  .conncode,
-            );
-
-          if (this.xmlSettings.documentburster.settings.emailserver.useconn)
-            this.fillExistingEmailConnectionDetails(
-              this.selectedEmailConnectionFile.connectionCode,
-            );
-        }
+        await this.initEmailSettings();
       } else if (this.currentLeftMenu === 'reportingSettingsMenuSelected') {
-        // Load all template files and reporting configuration
-        await this.settingsService.loadAllReportTemplates();
-
-        this.xmlReporting.documentburster =
-          await this.reportsService.loadReportDataSource(
-            this.currentReportId,
-          );
-
-        if (this.xmlReporting?.documentburster?.report?.datasource) {
-          const dsType =
-            this.xmlReporting.documentburster.report.datasource.type;
-          if (dsType === 'ds.scriptfile' || dsType === 'ds.dashboard') {
-            await this.loadExternalReportingScript('datasourceScript');
-          }
-          // Parameters spec is only relevant for SQL and Script (you need a query/script to apply parameters to)
-          if (dsType === 'ds.scriptfile' || dsType === 'ds.dashboard' || dsType === 'ds.sqlquery') {
-            // Load params spec script - do NOT auto-populate with example
-            await this.loadExternalReportingScript('paramsSpecScript');
-          }
-          // Tabulator and Chart config are relevant for ALL data sources
-          // since they all produce reportData (List<LinkedHashMap<String, Object>>)
-          // that can be displayed in a table or chart - CSV, XML, SQL, Script, Excel, etc.
-          await this.loadExternalReportingScript('tabulatorConfigScript');
-          await this.loadExternalReportingScript('chartConfigScript');
-          await this.loadExternalReportingScript('pivotTableConfigScript');
-          // Transformation script is always potentially relevant
-          await this.loadExternalReportingScript('transformScript');
-          
-          // Initialize parsed options from the pre-loaded configuration template
-          // (backend already parsed DSLs via loadReportDetails)
-          const configTemplate = this.settingsService.currentConfigurationTemplate;
-          //console.log('[DEBUG] Reporting init - configTemplate:', configTemplate?.folderName,
-          //  'tabulatorOptions:', configTemplate?.tabulatorOptions,
-          //  'chartOptions:', configTemplate?.chartOptions,
-          //  'pivotTableOptions:', configTemplate?.pivotTableOptions);
-          if (configTemplate?.tabulatorOptions) {
-            this.activeTabulatorConfigOptions = configTemplate.tabulatorOptions;
-          }
-          if (configTemplate?.chartOptions) {
-            this.activeChartConfigOptions = configTemplate.chartOptions;
-          }
-          if (configTemplate?.pivotTableOptions) {
-            this.activePivotTableConfigOptions = configTemplate.pivotTableOptions;
-          }
-        }
-
-        this.initIdColumnSelections();
-
-        // Initialize the reporting tab with appropriate content for the current output type
-        if (this.xmlReporting?.documentburster?.report?.template?.outputtype) {
-          const outputType =
-            this.xmlReporting.documentburster.report.template.outputtype;
-          const configName =
-            this.settingsService.currentConfigurationTemplate?.folderName ||
-            'template';
-
-          //console.log(`ngOnInit before this.onReportOutputTypeChanged() - reporting output type: ${outputType}`);
-
-          // Check if the template path is properly set for the current output type
-          await this.onReportOutputTypeChanged();
-        }
+        await this.initReportingSettings();
       }
 
       this.settingsService.numberOfUserVariables =
@@ -1356,6 +1010,76 @@ export class ConfigurationComponent implements OnInit {
           this.messagesService.showInfo('Saved');
         });
     });
+  }
+
+  private async initEmailSettings() {
+    await this.settingsService.loadAllConnections();
+
+    if (!this.xmlSettings.documentburster.settings.emailserver.conncode)
+      this.xmlSettings.documentburster.settings.emailserver.conncode =
+        this.settingsService.defaultEmailConnectionFile.connectionCode;
+
+    if (this.xmlSettings.documentburster.settings.emailserver.conncode) {
+      this.selectedEmailConnectionFile =
+        this.settingsService.connectionFiles.find(
+          (connection) =>
+            connection.connectionType == 'email-connection' &&
+            connection.connectionCode ==
+              this.xmlSettings.documentburster.settings.emailserver.conncode,
+        );
+
+      if (this.xmlSettings.documentburster.settings.emailserver.useconn)
+        this.fillExistingEmailConnectionDetails(
+          this.selectedEmailConnectionFile.connectionCode,
+        );
+    }
+  }
+
+  private async initReportingSettings() {
+    await this.settingsService.loadAllReportTemplates();
+
+    this.xmlReporting.documentburster =
+      await this.reportsService.loadReportDataSource(this.currentReportId);
+
+    if (this.xmlReporting?.documentburster?.report?.datasource) {
+      await this.loadDslScriptsForDatasource();
+      this.applyPreloadedDslOptions();
+    }
+
+    this.initIdColumnSelections();
+
+    if (this.xmlReporting?.documentburster?.report?.template?.outputtype) {
+      await this.onReportOutputTypeChanged();
+    }
+  }
+
+  private async loadDslScriptsForDatasource() {
+    const dsType = this.xmlReporting.documentburster.report.datasource.type;
+
+    if (dsType === 'ds.scriptfile' || dsType === 'ds.dashboard') {
+      await this.loadExternalReportingScript('datasourceScript');
+    }
+    if (dsType === 'ds.scriptfile' || dsType === 'ds.dashboard' || dsType === 'ds.sqlquery') {
+      await this.loadExternalReportingScript('paramsSpecScript');
+    }
+    // Tabulator, chart, pivot, and transform are relevant for ALL datasource types
+    await this.loadExternalReportingScript('tabulatorConfigScript');
+    await this.loadExternalReportingScript('chartConfigScript');
+    await this.loadExternalReportingScript('pivotTableConfigScript');
+    await this.loadExternalReportingScript('transformScript');
+  }
+
+  private applyPreloadedDslOptions() {
+    const configTemplate = this.settingsService.currentConfigurationTemplate;
+    if (configTemplate?.tabulatorOptions) {
+      this.activeTabulatorConfigOptions = configTemplate.tabulatorOptions;
+    }
+    if (configTemplate?.chartOptions) {
+      this.activeChartConfigOptions = configTemplate.chartOptions;
+    }
+    if (configTemplate?.pivotTableOptions) {
+      this.activePivotTableConfigOptions = configTemplate.pivotTableOptions;
+    }
   }
 
   refreshTabs() {
@@ -1405,6 +1129,8 @@ export class ConfigurationComponent implements OnInit {
   async onSelectAttachmentFilePath(filePath: string) {
     this.modalAttachmentInfo.attachmentFilePath = Utilities.slash(filePath);
   }
+
+  // ========== EMAIL SETTINGS ==========
 
   onUseExistingEmailConnectionClick(event: Event) {
     if (event instanceof Event) {
@@ -1528,7 +1254,7 @@ export class ConfigurationComponent implements OnInit {
       .getElementById('htmlCodeEmailMessage')
       .dispatchEvent(new Event('input', { bubbles: true }));
   }
-  // attachments
+  // ========== ATTACHMENTS ==========
 
   onAttachmentSelected(attachment: { selected: boolean }) {
     //console.log('=== DEBUG attachment selection ===');
@@ -1772,6 +1498,8 @@ export class ConfigurationComponent implements OnInit {
     this.messagesService.showInfo('Saved');
   }
 
+  // ========== TEST ACTIONS (Script, SMTP, SMS) ==========
+
   async doRunTestScript() {
     if (this.executionStatsService.logStats.foundDirtyLogFiles) {
       const dialogMessage =
@@ -1857,11 +1585,15 @@ export class ConfigurationComponent implements OnInit {
           fileToTest = this.settingsService.currentConfigurationTemplatePath;
         }
 
-        // Determine connection code from file path
-        const connectionCode = Utilities.basename(Utilities.dirname(fileToTest));
-
         try {
-          await this.connectionsService.testConnection(connectionCode, 'email');
+          if (this.xmlSettings.documentburster.settings.emailserver.useconn) {
+            // Test using the linked email connection
+            const connectionCode = this.selectedEmailConnectionFile.connectionCode;
+            await this.connectionsService.testConnection(connectionCode, 'email');
+          } else {
+            // Test using inline SMTP settings from the report config
+            await this.connectionsService.testConnection(this.currentReportId, 'email-inline');
+          }
           this.messagesService.showSuccess('Test email sent successfully');
         } catch (e) {
           this.messagesService.showError('Test email failed');
@@ -2005,129 +1737,91 @@ export class ConfigurationComponent implements OnInit {
     }
   }
 
+  // ========== DATASOURCE CONFIGURATION ==========
+
   async onDataSourceTypeChange(newValue: any) {
+    this.applySeparatorForDsType(newValue);
+    this.xmlReporting.documentburster.report.datasource.showmoreoptions = false;
 
+    const previousDsType = this.xmlReporting.documentburster.report.datasource.type;
 
-    if (newValue === 'ds.tsvfile') {
-      this.xmlReporting.documentburster.report.datasource.csvoptions.separatorchar =
-        '→ [tab character]';
-    }
+    // Save pending scripts from the PREVIOUS datasource before switching
+    await this.savePendingScriptsForDsType(previousDsType);
+    this.ensureDefaultDbConnections();
 
-    if (newValue === 'ds.csvfile') {
-      this.xmlReporting.documentburster.report.datasource.csvoptions.separatorchar =
-        ',';
-    }
-
-    this.xmlReporting.documentburster.report.datasource.showmoreoptions = false; // Reset UI state
-
-    const previousDsType =
-      this.xmlReporting.documentburster.report.datasource.type;
-
-    // Save content of scripts related to the *previous* data source type
-    // This ensures that any pending changes in the editors are saved to their respective files
-    // before the UI potentially clears them or loads new content.
-    if (previousDsType === 'ds.scriptfile' || previousDsType === 'ds.dashboard') {
-      if (
-        this.activeDatasourceScriptGroovy &&
-        this.activeDatasourceScriptGroovy.trim() !== '' &&
-        this.activeDatasourceScriptGroovy.trim() !==
-        '// Groovy Datasource Script\n'.trim()
-      ) {
-        await this.saveExternalReportingScript('datasourceScript');
-      }
-    }
-    // Parameters spec might have been used by SQL or Script
-    if (
-      previousDsType === 'ds.scriptfile' ||
-      previousDsType === 'ds.dashboard' ||
-      previousDsType === 'ds.sqlquery'
-    ) {
-
-
-      if (!this.xmlReporting.documentburster.report.datasource.sqloptions.conncode) {
-        const defaultDbConn = this.settingsService.defaultDatabaseConnectionFile;
-        if (defaultDbConn && defaultDbConn.connectionCode) {
-          this.xmlReporting.documentburster.report.datasource.sqloptions.conncode = defaultDbConn.connectionCode;
-        }
-
-        //console.log(`Default DB connection code set: ${this.xmlReporting.documentburster.report.datasource.sqloptions.conncode}`);
-      }
-
-      if (!this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode) {
-        const defaultDbConn = this.settingsService.defaultDatabaseConnectionFile;
-        if (defaultDbConn && defaultDbConn.connectionCode) {
-          this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode = defaultDbConn.connectionCode;
-        }
-
-        //console.log(`Default DB connection code set: ${this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode}`);
-      }
-
-      if (
-        this.activeParamsSpecScriptGroovy &&
-        this.activeParamsSpecScriptGroovy.trim() !== '' &&
-        this.activeParamsSpecScriptGroovy.trim() !==
-        this.exampleParamsSpecScript.trim()
-      ) {
-        await this.saveExternalReportingScript('paramsSpecScript');
-      }
-    }
-    // Transformation script is always potentially relevant, save it if it has non-default content
-    if (
-      this.activeTransformScriptGroovy &&
-      this.activeTransformScriptGroovy.trim() !== '' &&
-      this.activeTransformScriptGroovy.trim() !==
-      '// Groovy Additional Transformation Script\n// Ensure this file is saved in the report configuration folder.'.trim()
-    ) {
-      await this.saveExternalReportingScript('transformScript');
-    }
-
-    // Update the datasource type in the XML model
+    // Update the datasource type
     this.xmlReporting.documentburster.report.datasource.type = newValue;
 
-    // When dashboard input type is selected, force output type to dashboard
-    // and set burstFileName without placeholders so single report mode is detected automatically
+    // Dashboard forces output type + burst filename
     if (newValue === 'ds.dashboard') {
       this.xmlReporting.documentburster.report.template.outputtype = 'output.dashboard';
       this.xmlSettings.documentburster.settings.burstfilename = 'dashboard.html';
       await this.onReportOutputTypeChanged();
     }
 
-    // Load content for the *new* data source type into the UI models
-    if (newValue === 'ds.scriptfile' || newValue === 'ds.dashboard') {
+    // Load scripts for the NEW datasource type
+    await this.loadScriptsForDsType(newValue);
+
+    this.settingsChangedEventHandler(this.xmlReporting.documentburster.report);
+    this.onAskForFeatureModalShow(newValue);
+    this.changeDetectorRef.detectChanges();
+  }
+
+  private applySeparatorForDsType(dsType: string) {
+    if (dsType === 'ds.tsvfile') {
+      this.xmlReporting.documentburster.report.datasource.csvoptions.separatorchar = '→ [tab character]';
+    } else if (dsType === 'ds.csvfile') {
+      this.xmlReporting.documentburster.report.datasource.csvoptions.separatorchar = ',';
+    }
+  }
+
+  private async savePendingScriptsForDsType(dsType: string) {
+    // Save datasource script if it has non-default content
+    if ((dsType === 'ds.scriptfile' || dsType === 'ds.dashboard') &&
+        this.hasNonDefaultContent(this.activeDatasourceScriptGroovy, '// Groovy Datasource Script')) {
+      await this.saveExternalReportingScript('datasourceScript');
+    }
+    // Save params spec if relevant
+    if (['ds.scriptfile', 'ds.dashboard', 'ds.sqlquery'].includes(dsType) &&
+        this.hasNonDefaultContent(this.activeParamsSpecScriptGroovy, this.exampleParamsSpecScript)) {
+      await this.saveExternalReportingScript('paramsSpecScript');
+    }
+    // Transformation script is always potentially relevant
+    if (this.hasNonDefaultContent(this.activeTransformScriptGroovy,
+        '// Groovy Additional Transformation Script\n// Ensure this file is saved in the report configuration folder.')) {
+      await this.saveExternalReportingScript('transformScript');
+    }
+  }
+
+  private hasNonDefaultContent(content: string, defaultContent: string): boolean {
+    return !!content && content.trim() !== '' && content.trim() !== defaultContent.trim();
+  }
+
+  private ensureDefaultDbConnections() {
+    const ds = this.xmlReporting.documentburster.report.datasource;
+    const defaultDbConn = this.settingsService.defaultDatabaseConnectionFile;
+    if (defaultDbConn?.connectionCode) {
+      if (!ds.sqloptions.conncode) {
+        ds.sqloptions.conncode = defaultDbConn.connectionCode;
+      }
+      if (!ds.scriptoptions.conncode) {
+        ds.scriptoptions.conncode = defaultDbConn.connectionCode;
+      }
+    }
+  }
+
+  private async loadScriptsForDsType(dsType: string) {
+    if (dsType === 'ds.scriptfile' || dsType === 'ds.dashboard') {
       await this.loadExternalReportingScript('datasourceScript');
-      // Parameters spec is also relevant for scriptfile
       await this.loadExternalReportingScript('paramsSpecScript');
-    } else if (newValue === 'ds.sqlquery') {
-      // SQL Query type does not use the main datasource script editor
-      this.activeDatasourceScriptGroovy = ''; // Clear the UI model
-      // Parameters spec is relevant for sqlquery
+    } else if (dsType === 'ds.sqlquery') {
+      this.activeDatasourceScriptGroovy = '';
       await this.loadExternalReportingScript('paramsSpecScript');
     } else {
-      // For other types (CSV, Excel, etc.), clear both script UI models
       this.activeDatasourceScriptGroovy = '';
       this.activeParamsSpecScriptGroovy = '';
     }
-
-    // Transformation script is always potentially relevant, load its content for the new type
     await this.loadExternalReportingScript('transformScript');
-
-    if (
-      newValue !== 'ds.scriptfile' &&
-      newValue !== 'ds.dashboard' &&
-      this.xmlReporting.documentburster.report.datasource.scriptoptions
-    ) {
-      // If scriptoptions contains fields like 'scriptpath' or 'scriptcontent' from other non-conventional uses,
-      // you might clear them here if they are truly not applicable.
-      // However, the primary goal is to *not set them* for ds.scriptfile.
-      // e.g., this.xmlReporting.documentburster.report.datasource.scriptoptions.scriptname = '';
-      // e.g., this.xmlReporting.documentburster.report.datasource.scriptoptions.scriptcontent = '';
-      // Only do this if these fields actually exist in your XML structure for non-scriptfile types
-      // and need explicit clearing.
-    }
-
-    this.settingsChangedEventHandler(this.xmlReporting.documentburster.report); // Triggers saving of reporting.xml
-    this.onAskForFeatureModalShow(newValue); // Handle UI for feature requests
-    this.changeDetectorRef.detectChanges();
   }
 
   onSqlQueryChanged(event: string) {
@@ -2346,9 +2040,14 @@ export class ConfigurationComponent implements OnInit {
   }
 
 
+  // ========== TEMPLATE CONTENT AUTOSAVE ==========
+
   async onTemplateContentChanged(event: any) {
 
     if (!this.autosaveEnabled) return;
+
+    // Skip if no meaningful content — editor fires (update) on initialization during navigation
+    if (!event || (typeof event === 'string' && event.trim().length === 0)) return;
 
     // Get content from event or active property, ensuring we have something to work with
     this.activeReportTemplateContent = typeof event === 'string' ? event : this.activeReportTemplateContent;
@@ -2380,51 +2079,24 @@ export class ConfigurationComponent implements OnInit {
 
     if (isSamplePath) return;
 
-    const configName =
-      this.settingsService.currentConfigurationTemplate?.folderName ||
-      'template';
-
-    //console.log(
-    //  `Saving ${outputType} template content (${htmlContent.length} bytes)`,
-    //);
-
-
-
-    // Template path using structure: reports/{configName}/{configName}-{outputType}.html
-    let templatePath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-${outputType}.html`;
-
-    if (outputType === 'fop2pdf')
-      templatePath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-${outputType}.xsl`;
-
-    if (outputType === 'any')
-      templatePath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-${outputType}.ftl`;
-
-    if (outputType === 'jasper') {
-      // Wrapped JR (from reports-jasper/) — editor is read-only, nothing to save
-      if (currentPath && currentPath.includes('reports-jasper')) return;
-      templatePath = `${this.settingsService.CONFIGURATION_TEMPLATES_FOLDER_PATH}/reports/${configName}/${configName}-jasper.jrxml`;
-    }
+    // Wrapped JasperReports (from reports-jasper/) — editor is read-only, nothing to save
+    if (outputType === 'jasper' && currentPath && currentPath.includes('reports-jasper')) return;
 
     try {
-      // Save to disk
-      await this.reportsService.saveReportTemplate(
+      // Save template content — backend resolves the per-output-type path
+      // and updates reporting.xml's documentpath as a side effect.
+      // Backend returns the new documentpath so we can sync our in-memory copy.
+      const result = await this.reportsService.saveReportTemplateByType(
         this.currentReportId,
+        outputType,
         this.activeReportTemplateContent,
       );
 
-      // Ensure the path is updated in the configuration
-      if (
-        this.xmlReporting.documentburster.report.template.documentpath !==
-        templatePath
-      ) {
-        this.xmlReporting.documentburster.report.template.documentpath =
-          templatePath;
-        await this.reportsService.saveReportDataSource(
-          this.currentReportId,
-          this.xmlReporting,
-        );
+      // Sync in-memory documentpath so the debounced settingsChanged autosave
+      // (which writes reporting.xml) doesn't overwrite the backend's update with stale data.
+      if (result?.documentpath) {
+        this.xmlReporting.documentburster.report.template.documentpath = result.documentpath;
       }
-
 
       // Update absolute path for display
       await this.loadAbsoluteTemplatePath();
@@ -2434,7 +2106,6 @@ export class ConfigurationComponent implements OnInit {
         this.messagesService.showInfo('Template saved successfully');
       }
     } catch (error) {
-      //console.error('Error saving template:', error);
       this.messagesService.showError('Error saving template');
     }
   }
@@ -2470,289 +2141,123 @@ export class ConfigurationComponent implements OnInit {
     window.open(url, '_blank');
   }
 
+  // ========== AI INTEGRATION ==========
+
   @ViewChild(AiManagerComponent) private aiManagerInstance!: AiManagerComponent;
 
   async askAiForHelp(outputTypeCode: string) {
-
-    //console.log(`Asking AI for help with output type: ${outputTypeCode}`);
-
-    if (outputTypeCode === 'output.pdf') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'PDF Generation (from HTML)',
-        initialExpandedPromptId: 'PDF_HTML_TEMPLATE_GENERATOR',
-      };
-      if (this.reportDataResult?.reportColumnNames?.length) {
-        launchConfig.promptVariables = {
-          '[INSERT COLUMN NAMES HERE]':
-            this.reportDataResult.reportColumnNames.join(', '),
-        };
-        if (this.reportDataResult.data?.length) {
-          const sampleRows = this.reportDataResult.data.slice(0, 5);
-          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] =
-            JSON.stringify(sampleRows, null, 2);
-        }
-      }
-      this._populateScriptVariable(launchConfig);
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
+    const launchConfig = this.buildAiLaunchConfig(outputTypeCode);
+    if (launchConfig && this.aiManagerInstance) {
+      this.aiManagerInstance.launchWithConfiguration(launchConfig);
     }
+  }
 
-    if (outputTypeCode === 'output.xlsx') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'Excel Report Generation',
-        initialExpandedPromptId: 'EXCEL_TEMPLATE_GENERATOR',
-      };
-      if (this.reportDataResult?.reportColumnNames?.length) {
-        launchConfig.promptVariables = {
-          '[INSERT COLUMN NAMES HERE]':
-            this.reportDataResult.reportColumnNames.join(', '),
-        };
-        if (this.reportDataResult.data?.length) {
-          const sampleRows = this.reportDataResult.data.slice(0, 5);
-          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] =
-            JSON.stringify(sampleRows, null, 2);
-        }
-      }
-      this._populateScriptVariable(launchConfig);
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
-    }
+  /**
+   * Build AI launch configuration for a given output type code.
+   * Maps each code to its category, prompt ID, and data enrichment strategy.
+   */
+  private buildAiLaunchConfig(code: string): AiManagerLaunchConfig | null {
+    // Catalog: outputTypeCode → { category, promptId, enrichment }
+    const AI_PROMPT_CATALOG: Record<string, {
+      category: string;
+      promptId?: string;
+      enrich?: 'columnData' | 'dsl' | 'dashboard' | 'script' | 'scriptDashboard' | 'reportParams' | 'none';
+    }> = {
+      'output.pdf':       { category: 'PDF Generation (from HTML)',     promptId: 'PDF_HTML_TEMPLATE_GENERATOR',               enrich: 'columnData' },
+      'output.xlsx':      { category: 'Excel Report Generation',       promptId: 'EXCEL_TEMPLATE_GENERATOR',                  enrich: 'columnData' },
+      'output.jasper':    { category: 'JasperReports (.jrxml) Generation', promptId: 'JASPER_JRXML_TEMPLATE_GENERATOR',        enrich: 'columnData' },
+      'output.fop2pdf':   { category: 'PDF Generation (from XSL-FO)',  promptId: 'PDF_SAMPLE_A4_PAYSLIP_XSLFO',              enrich: 'columnData' },
+      'output.html':      { category: 'Template Creation/Modification', promptId: 'BUILD_TEMPLATE_FROM_SCRATCH',              enrich: 'none' },
+      'output.dashboard': { category: 'Dashboard Creation',            promptId: 'DASHBOARD_BUILD_LAYOUT',                    enrich: 'dashboard' },
+      'output.any':       { category: 'Template Creation/Modification',                                                       enrich: 'none' },
+      'output.docx':      { category: 'Template Creation/Modification',                                                       enrich: 'none' },
+      'email.message':    { category: 'Email Templates (Responsive)',                                                         enrich: 'none' },
+      'script.additionaltransformation': { category: 'Script Writing Assistance', promptId: 'GROOVY_SCRIPT_ADDITIONAL_TRANSFORMATION', enrich: 'none' },
+      'script.ds':        { category: 'Script Writing Assistance',     promptId: 'GROOVY_SCRIPT_INPUT_SOURCE',                enrich: 'script' },
+      'script.ds.dashboard': { category: 'Dashboard Creation',        promptId: 'DASHBOARD_BUILD_STEP_BY_STEP_INSTRUCTIONS', enrich: 'scriptDashboard' },
+      'cms.webportal':    { category: 'Web Portal / CMS',                                                                    enrich: 'none' },
+      'dsl.reportparams': { category: 'DSL Configuration',            promptId: 'REPORT_PARAMS_DSL_CONFIGURE',               enrich: 'reportParams' },
+      'dsl.tabulator':    { category: 'DSL Configuration',            promptId: 'TABULATOR_DSL_CONFIGURE',                   enrich: 'dsl' },
+      'dsl.chart':        { category: 'DSL Configuration',            promptId: 'CHART_DSL_CONFIGURE',                       enrich: 'dsl' },
+      'dsl.pivottable':   { category: 'DSL Configuration',            promptId: 'PIVOT_TABLE_DSL_CONFIGURE',                 enrich: 'dsl' },
+    };
 
-    if (outputTypeCode === 'output.dashboard') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'Dashboard Creation',
-        initialExpandedPromptId: 'DASHBOARD_BUILD_LAYOUT',
-      };
+    const entry = AI_PROMPT_CATALOG[code];
+    if (!entry) return null;
 
-      // Build dynamic component reference from configured DSLs
-      const componentsInfo = this._buildDashboardComponentsReference();
-      if (componentsInfo) {
-        launchConfig.promptVariables = {
-          '[AVAILABLE_COMPONENTS]': componentsInfo,
+    const config: AiManagerLaunchConfig = {
+      initialActiveTabKey: 'PROMPTS',
+      initialSelectedCategory: entry.category,
+      initialExpandedPromptId: entry.promptId,
+    };
+
+    // Enrich with context data based on the enrichment strategy
+    switch (entry.enrich) {
+      case 'columnData':
+        this.enrichWithColumnData(config);
+        this._populateScriptVariable(config);
+        break;
+      case 'dashboard':
+        this.enrichWithDashboardContext(config);
+        this._populateScriptVariable(config);
+        break;
+      case 'script':
+        this.enrichWithDbVendor(config);
+        break;
+      case 'scriptDashboard':
+        this.enrichWithDbVendor(config);
+        config.promptVariables = {
+          ...config.promptVariables,
           '[REPORT_CODE]': this.getCurrentReportCode(),
           '[API_BASE_URL]': this.getApiBaseUrl() + '/reporting',
         };
-      }
-
-      this._populateScriptVariable(launchConfig);
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
-    }
-
-    if (outputTypeCode === 'output.html') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'Template Creation/Modification',
-        initialExpandedPromptId: 'BUILD_TEMPLATE_FROM_SCRATCH',
-      };
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
-    }
-
-    if (outputTypeCode === 'output.jasper') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'JasperReports (.jrxml) Generation',
-        initialExpandedPromptId: 'JASPER_JRXML_TEMPLATE_GENERATOR',
-      };
-
-      if (this.reportDataResult?.reportColumnNames?.length) {
-        launchConfig.promptVariables = {
-          '[INSERT COLUMN NAMES HERE]': this.reportDataResult.reportColumnNames.join(', '),
-        };
-
-        if (this.reportDataResult.data?.length) {
-          const sampleRows = this.reportDataResult.data.slice(0, 5);
-          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
+        break;
+      case 'reportParams':
+        if (this.xmlReporting?.documentburster?.report?.datasource?.type !== 'ds.dashboard') {
+          this.enrichWithColumnData(config);
         }
-      }
-      this._populateScriptVariable(launchConfig);
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
+        this._populateScriptVariable(config);
+        break;
+      case 'dsl':
+        this._populateDslPromptVariables(config);
+        break;
     }
 
-    if (outputTypeCode === 'output.fop2pdf') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'PDF Generation (from XSL-FO)',
-        initialExpandedPromptId: 'PDF_SAMPLE_A4_PAYSLIP_XSLFO',
+    return config;
+  }
+
+  private enrichWithColumnData(config: AiManagerLaunchConfig) {
+    if (this.reportDataResult?.reportColumnNames?.length) {
+      config.promptVariables = {
+        ...config.promptVariables,
+        '[INSERT COLUMN NAMES HERE]': this.reportDataResult.reportColumnNames.join(', '),
       };
-
-      if (this.reportDataResult?.reportColumnNames?.length) {
-        launchConfig.promptVariables = {
-          '[INSERT COLUMN NAMES HERE]': this.reportDataResult.reportColumnNames.join(', '),
-        };
-
-        if (this.reportDataResult.data?.length) {
-          const sampleRows = this.reportDataResult.data.slice(0, 5);
-          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
-        }
-      }
-      this._populateScriptVariable(launchConfig);
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
+      if (this.reportDataResult.data?.length) {
+        config.promptVariables['[INSERT SAMPLE DATA HERE]'] =
+          JSON.stringify(this.reportDataResult.data.slice(0, 5), null, 2);
       }
     }
+  }
 
-    if (outputTypeCode === 'output.any' || outputTypeCode === 'output.docx') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'Template Creation/Modification',
+  private enrichWithDashboardContext(config: AiManagerLaunchConfig) {
+    const componentsInfo = this._buildDashboardComponentsReference();
+    if (componentsInfo) {
+      config.promptVariables = {
+        '[AVAILABLE_COMPONENTS]': componentsInfo,
+        '[REPORT_CODE]': this.getCurrentReportCode(),
+        '[API_BASE_URL]': this.getApiBaseUrl() + '/reporting',
       };
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
     }
+  }
 
-    if (outputTypeCode === 'email.message') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'Email Templates (Responsive)',
-      };
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
-    }
-
-    if (outputTypeCode === 'script.additionaltransformation') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'Script Writing Assistance',
-        initialExpandedPromptId: 'GROOVY_SCRIPT_ADDITIONAL_TRANSFORMATION',
-      };
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
-    }
-
-    if (outputTypeCode === 'script.ds') {
-      const selectedConn = this.getSelectedDbConnection();
-      const dbVendor = selectedConn?.dbserver?.type || '';
-
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'Script Writing Assistance',
-        initialExpandedPromptId: 'GROOVY_SCRIPT_INPUT_SOURCE',
-        promptVariables: {
-          '[DATABASE_VENDOR]': dbVendor,
-          '[INSERT THE RELEVANT DATABASE SCHEMA HERE]': '',
-        },
-      };
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
-    }
-
-    if (outputTypeCode === 'script.ds.dashboard') {
-      const selectedConn = this.getSelectedDbConnection();
-      const dbVendor = selectedConn?.dbserver?.type || '';
-
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'Dashboard Creation',
-        initialExpandedPromptId: 'DASHBOARD_BUILD_STEP_BY_STEP_INSTRUCTIONS',
-        promptVariables: {
-          '[DATABASE_VENDOR]': dbVendor,
-          '[INSERT THE RELEVANT DATABASE SCHEMA HERE]': '',
-          '[REPORT_CODE]': this.getCurrentReportCode(),
-          '[API_BASE_URL]': this.getApiBaseUrl() + '/reporting',
-        },
-      };
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
-    }
-
-    if (outputTypeCode === 'cms.webportal') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'Web Portal / CMS',
-      };
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
-    }
-
-    if (outputTypeCode === 'dsl.reportparams') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'DSL Configuration',
-        initialExpandedPromptId: 'REPORT_PARAMS_DSL_CONFIGURE',
-      };
-      if (this.xmlReporting?.documentburster?.report?.datasource?.type !== 'ds.dashboard'
-          && this.reportDataResult?.reportColumnNames?.length) {
-        launchConfig.promptVariables = {
-          '[INSERT COLUMN NAMES HERE]': this.reportDataResult.reportColumnNames.join(', '),
-        };
-        if (this.reportDataResult.data?.length) {
-          const sampleRows = this.reportDataResult.data.slice(0, 5);
-          launchConfig.promptVariables['[INSERT SAMPLE DATA HERE]'] = JSON.stringify(sampleRows, null, 2);
-        }
-      }
-      this._populateScriptVariable(launchConfig);
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
-    }
-
-    if (outputTypeCode === 'dsl.tabulator') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'DSL Configuration',
-        initialExpandedPromptId: 'TABULATOR_DSL_CONFIGURE',
-      };
-      this._populateDslPromptVariables(launchConfig);
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
-    }
-
-    if (outputTypeCode === 'dsl.chart') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'DSL Configuration',
-        initialExpandedPromptId: 'CHART_DSL_CONFIGURE',
-      };
-      this._populateDslPromptVariables(launchConfig);
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
-    }
-
-    if (outputTypeCode === 'dsl.pivottable') {
-      const launchConfig: AiManagerLaunchConfig = {
-        initialActiveTabKey: 'PROMPTS',
-        initialSelectedCategory: 'DSL Configuration',
-        initialExpandedPromptId: 'PIVOT_TABLE_DSL_CONFIGURE',
-      };
-      this._populateDslPromptVariables(launchConfig);
-
-      if (this.aiManagerInstance) {
-        this.aiManagerInstance.launchWithConfiguration(launchConfig);
-      }
-    }
-
+  private enrichWithDbVendor(config: AiManagerLaunchConfig) {
+    const selectedConn = this.getSelectedDbConnection();
+    const dbVendor = selectedConn?.dbserver?.type || '';
+    config.promptVariables = {
+      ...config.promptVariables,
+      '[DATABASE_VENDOR]': dbVendor,
+      '[INSERT THE RELEVANT DATABASE SCHEMA HERE]': '',
+    };
   }
 
   private _populateScriptVariable(launchConfig: AiManagerLaunchConfig): void {
@@ -3876,6 +3381,8 @@ pivotTable {
 
   // ========== End Usage Tab Helper Methods ==========
 
+  // ========== DSL SCRIPT HANDLERS (Parameters, Tabulator, Chart, Pivot) ==========
+
   async onParametersSpecChanged(event: string) {
     this.activeParamsSpecScriptGroovy = event;
     await this.saveExternalReportingScript('paramsSpecScript');
@@ -3897,10 +3404,7 @@ pivotTable {
       // ignore and fallback to provided event string
     }
     this.activeTabulatorConfigScriptGroovy = content;
-    // Debug info (keeps logs concise)
-    try {
-      console.debug('Tabulator content saved length:', content.length, 'lines:', (content || '').split(/\r?\n/).length);
-    } catch (e) {}
+    // console.debug('Tabulator content saved length:', content.length, 'lines:', (content || '').split(/\r?\n/).length);
     await this.saveExternalReportingScript('tabulatorConfigScript');
     this.settingsChangedEventHandler(event);
     // Only parse if content is non-empty (skip parsing empty/whitespace-only scripts)
@@ -3940,9 +3444,7 @@ pivotTable {
       // ignore and fallback to provided event string
     }
     this.activeChartConfigScriptGroovy = content;
-    try {
-      console.debug('Chart content saved length:', content.length, 'lines:', (content || '').split(/\r?\n/).length);
-    } catch (e) {}
+    // console.debug('Chart content saved length:', content.length, 'lines:', (content || '').split(/\r?\n/).length);
     await this.saveExternalReportingScript('chartConfigScript');
     this.settingsChangedEventHandler(event);
     // Only parse if content is non-empty (skip parsing empty/whitespace-only scripts)
@@ -3989,9 +3491,7 @@ pivotTable {
       // ignore and fallback to provided event string
     }
     this.activePivotTableConfigScriptGroovy = content;
-    try {
-      console.debug('Pivot Table content saved length:', content.length, 'lines:', (content || '').split(/\r?\n/).length);
-    } catch (e) {}
+    // console.debug('Pivot Table content saved length:', content.length, 'lines:', (content || '').split(/\r?\n/).length);
     await this.saveExternalReportingScript('pivotTableConfigScript');
     this.settingsChangedEventHandler(event);
     // Only parse if content is non-empty (skip parsing empty/whitespace-only scripts)
@@ -4163,14 +3663,14 @@ pivotTable {
         return;
     }
 
-    let content = await this.reportsService.loadReportTemplate(this.currentReportId);
+    let content = await this.reportsService.loadReportScript(this.currentReportId, scriptType);
     // If there is no content on disk, prefer the default example provided
     if (!content || content.trim().length === 0) {
       content = defaultFileContent || '';
     }
     (this as any)[targetProperty] = content;
     try {
-      console.debug(`Loaded ${scriptType} from ${path}, length:`, content.length, 'lines:', (content || '').split(/\r?\n/).length);
+      // console.debug(`Loaded ${scriptType} from ${path}, length:`, content.length, 'lines:', (content || '').split(/\r?\n/).length);
     } catch (e) {}
 
     this.changeDetectorRef.detectChanges();
@@ -4239,7 +3739,7 @@ pivotTable {
     //     console.log(`Skipping save for empty or default placeholder ${scriptType} to ${path}.`);
     //     return;
     // }
-    await this.reportsService.saveReportTemplate(this.currentReportId, contentToSave);
+    await this.reportsService.saveReportScript(this.currentReportId, scriptType, contentToSave);
 
     // Invalidate DSL cache for this config when DSL scripts are modified
     // This ensures fresh parsing when the config is loaded again (e.g., in processing)
@@ -4260,14 +3760,13 @@ pivotTable {
   isReportDataLoading = false;
   reportDataResultIsError = false;
 
-  // Password visibility toggles
+  // ========== PASSWORD SECURITY & REVEAL TOGGLES ==========
+
   showSmtpPassword = false;
   showQaPassword = false;
-  showTwilioAccountSid = false;
   showTwilioAuthToken = false;
   private smtpPasswordRevealTimer: any;
   private qaPasswordRevealTimer: any;
-  private twilioSidRevealTimer: any;
   private twilioTokenRevealTimer: any;
 
   async toggleRevealSmtpPassword() {
@@ -4308,24 +3807,7 @@ pivotTable {
     }
   }
 
-  async toggleRevealTwilioSid() {
-    if (this.showTwilioAccountSid) {
-      this.showTwilioAccountSid = false;
-      this.xmlSettings.documentburster.settings.smssettings.twilio.accountsid = '******';
-      clearTimeout(this.twilioSidRevealTimer);
-    } else {
-      try {
-        const reportId = this.settingsService.currentConfigurationTemplate?.folderName || 'burst';
-        const realValue = await this.connectionsService.revealPassword('settings', 'accountsid', reportId);
-        this.xmlSettings.documentburster.settings.smssettings.twilio.accountsid = realValue;
-        this.showTwilioAccountSid = true;
-        this.twilioSidRevealTimer = setTimeout(() => {
-          this.showTwilioAccountSid = false;
-          this.xmlSettings.documentburster.settings.smssettings.twilio.accountsid = '******';
-        }, 10000);
-      } catch (e) { console.error('Failed to reveal Twilio SID', e); }
-    }
-  }
+  // accountSid is not a secret — no toggle needed
 
   async toggleRevealTwilioToken() {
     if (this.showTwilioAuthToken) {
@@ -4346,7 +3828,8 @@ pivotTable {
     }
   }
 
-  // Toggle flags for self-contained component preview
+  // ========== QUERY EXECUTION & DATA PREVIEW ==========
+
   showTabulatorPreview = false;
   showChartPreview = false;
   showPivotPreview = false;
@@ -4611,6 +4094,8 @@ pivotTable {
 
   @ViewChild('templatesGalleryModal') templatesGalleryModal: any;
 
+  // ========== GALLERY INTEGRATION ==========
+
   templatesGalleryTags: string[] | null = null;
   istemplatesGalleryModalVisible = false;
 
@@ -4660,6 +4145,13 @@ pivotTable {
     if (outputType === 'output.xlsx' || outputType === 'output.pdf' || outputType === 'output.html' || outputType === 'output.dashboard') {
       this.activeReportTemplateContent = template.htmlContent[template.currentVariantIndex || 0];
       this.settingsChangedEventHandler(this.activeReportTemplateContent);
+      // Explicitly save the gallery template to disk using per-output-type path
+      const galleryOutputType = outputType.replace('output.', '');
+      this.reportsService.saveReportTemplateByType(
+        this.currentReportId,
+        galleryOutputType,
+        this.activeReportTemplateContent,
+      ).catch((err) => console.error('Failed to save gallery template:', err));
     } else if (outputType === 'output.docx') {
       // Show warning toast for DOCX mode
       this.messagesService.showWarning(

@@ -97,9 +97,9 @@ const _splitVerifyBigFile = (
       .typeText(Constants.TEST_LICENSE_KEY)
       .click('#btnActivateLicenseKey')
       .clickYesDoThis()
-      .waitOnProcessingToStart(Constants.CHECK_PROCESSING_LOGS)
+      .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR)
       .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
-      .waitOnElementToBecomeVisible('#btnCheckLicenseKey')
+      .waitOnElementToBecomeVisible('#btnCheckLicenseKey', Constants.DELAY_FIVE_THOUSANDS_SECONDS)
       .click('#burstTab-link')
       .waitOnElementToBecomeVisible('#logsViewerBurstReportsTab')
       .click('#btnClearLogsBurstReportsTab')
@@ -108,8 +108,7 @@ const _splitVerifyBigFile = (
       .click('#licenseTab-link')
       .click('#btnCheckLicenseKey')
       .clickYesDoThis()
-      .waitOnProcessingToStart(Constants.CHECK_PROCESSING_LOGS)
-      .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+      .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR)
       .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
       .waitOnElementToBecomeVisible(
         '#statusActiveLicenseKey',
@@ -123,7 +122,6 @@ const _splitVerifyBigFile = (
         '#version',
         Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       )
-      .sleep(Constants.DELAY_ONE_SECOND)
       .appShouldBeReadyToRunNewJobs()
       .click('#burstTab-link')
       .waitOnElementToBecomeVisible('#logsViewerBurstReportsTab')
@@ -200,8 +198,7 @@ const _splitVerifyBigFile = (
       // de-activating the test license key
       .click('#deactivateLicenseKey')
       .clickYesDoThis()
-      .waitOnProcessingToStart(Constants.CHECK_PROCESSING_JAVA)
-      .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_LOGS)
+      .waitOnProcessingToStart(Constants.CHECK_PROCESSING_STATUS_BAR)
       .waitOnProcessingToFinish(Constants.CHECK_PROCESSING_STATUS_BAR)
       .waitOnElementToBecomeVisible(
         '#statusDemoLicense',

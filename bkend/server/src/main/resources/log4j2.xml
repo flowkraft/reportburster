@@ -8,7 +8,7 @@
 	</Properties>
 
 	<Appenders>
-		
+
 		<Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="${LOG_PATTERN}"/>
         </Console>
@@ -99,7 +99,7 @@
 
 		</Logger>
 
-		<!-- Log com.flowkraft to console + errors.log for DSL parse failures etc. -->
+		<!-- Log com.flowkraft to console + errors only (not info.log to avoid polluting dirty-logs checks) -->
         <Logger name="com.flowkraft" level="info" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="error-out"/>
@@ -109,7 +109,7 @@
 
 			<!-- <AppenderRef ref="documentburster" /> -->
 
-			<!-- Un-comment the following line for sending DocumentBurster problems 
+			<!-- Un-comment the following line for sending DocumentBurster problems
 				by email -->
 			<!-- <AppenderRef ref="mailAppender" /> -->
 

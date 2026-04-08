@@ -25,7 +25,8 @@ public class PivotTableOptionsParser {
 		CompilerConfiguration config = new CompilerConfiguration();
 		config.setScriptBaseClass(PivotTableOptionsScript.class.getName());
 
-		GroovyShell shell = new GroovyShell(binding, config);
+		// Pass the script base class's classloader as parent — see TabulatorOptionsParser comment.
+		GroovyShell shell = new GroovyShell(PivotTableOptionsScript.class.getClassLoader(), binding, config);
 		PivotTableOptionsScript script = (PivotTableOptionsScript) shell.parse(groovyDslCode);
 		script.setBinding(binding);
 		script.run();

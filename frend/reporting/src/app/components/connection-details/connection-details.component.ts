@@ -59,6 +59,10 @@ export class ConnectionDetailsComponent implements OnInit {
   @Input() apiBaseUrl: string = '';
 
 
+  // Test connection result state
+  testConnectionSuccess = false;
+  testConnectionError = false;
+
   // Password visibility toggles
   showEmailPassword = false;
   showDbPassword = false;
@@ -267,7 +271,7 @@ export class ConnectionDetailsComponent implements OnInit {
         const existingConnection = this.settingsService.connectionFiles.find(
           (conn) => conn.connectionCode === connectionCode,
         );
-        this.modalConnectionInfo.connectionSameFilePathAlreadyExists = !!existingConnection;
+        this.modalConnectionInfo.connectionSameFilePathAlreadyExists = existingConnection ? 'file' : false;
       } else {
         // For email connections: maintain current approach with a single file
         // Path format: /config/connections/eml-my-connection.xml
@@ -277,7 +281,7 @@ export class ConnectionDetailsComponent implements OnInit {
         const existingConnection = this.settingsService.connectionFiles.find(
           (conn) => conn.connectionCode === connectionCode,
         );
-        this.modalConnectionInfo.connectionSameFilePathAlreadyExists = !!existingConnection;
+        this.modalConnectionInfo.connectionSameFilePathAlreadyExists = existingConnection ? 'file' : false;
       }
     }
   }
@@ -298,7 +302,9 @@ export class ConnectionDetailsComponent implements OnInit {
   }
 
   async doTestSMTPConnection() {
-    // the actual “Send test email?” flow
+    // the actual “Send test email?” flow — matches old shellService.runBatFile pattern:
+    // confirmAction is synchronous, sets isTestingConnection=true immediately,
+    // then fires the API call in the background (fire-and-forget, like runBatFile did)
     const runTest = async () => {
       if (this.executionStatsService.logStats.foundDirtyLogFiles) {
         this.infoService.showInformation({
@@ -308,20 +314,25 @@ export class ConnectionDetailsComponent implements OnInit {
       }
       this.confirmService.askConfirmation({
         message: 'Send test email?',
-        confirmAction: async () => {
+        confirmAction: () => {
+          // Synchronous: disable button immediately (same as old shellService.runBatFile)
           this.isTestingConnection = true;
+          this.cdRef.detectChanges();
 
-          try {
-            const connectionCode = this.getConnectionCode();
-            await this.connectionsService.testConnection(connectionCode, 'email');
-            this.messagesService.showSuccess('Test email sent successfully');
-          } catch (err) {
-            this.messagesService.showError('Test email failed');
-            console.error(err);
-          } finally {
-            this.isTestingConnection = false;
-            this.cdRef.detectChanges();
-          }
+          // Fire-and-forget: API call runs in background (same as old runBatFile callback)
+          const connectionCode = this.getConnectionCode();
+          this.connectionsService.testConnection(connectionCode, 'email')
+            .then(() => {
+              this.isTestingConnection = false;
+              this.messagesService.showSuccess('Test email sent successfully');
+              this.cdRef.detectChanges();
+            })
+            .catch((err) => {
+              this.isTestingConnection = false;
+              this.messagesService.showError('Test email failed');
+              console.error(err);
+              this.cdRef.detectChanges();
+            });
         },
       });
     };
@@ -332,9 +343,7 @@ export class ConnectionDetailsComponent implements OnInit {
         message: 'The connection must be saved before being able to test it. Save now?',
         confirmAction: async () => {
           await this.saveCurrentConnection(this.isModalDbConnectionVisible);
-          // flip to update mode so future tests don't re-prompt “Save now?”
           this.modalConnectionInfo.crudMode = 'update';
-          // now run the usual test flow
           await runTest();
         },
         cancelAction: () => { },
@@ -469,6 +478,8 @@ export class ConnectionDetailsComponent implements OnInit {
 
     const performTestLogic = async (filePathToTest: string) => {
       this.isTestingConnection = true;
+      this.testConnectionSuccess = false;
+      this.testConnectionError = false;
       this.isSchemaLoading = true;
       this.showSchemaTreeSelect = false;
       this.sourceSchemaObjects = [];
@@ -479,12 +490,16 @@ export class ConnectionDetailsComponent implements OnInit {
         const connectionCode = this.getConnectionCode(filePathToTest);
         await this.connectionsService.testConnection(connectionCode, 'database');
         this.isTestingConnection = false;
+        this.testConnectionSuccess = true;
+        this.testConnectionError = false;
         this.messagesService.showSuccess(
           'Successfully connected to the database and fetched schema.',
         );
         this.loadSchemaFromBackend(filePathToTest);
       } catch (err) {
         this.isTestingConnection = false;
+        this.testConnectionSuccess = false;
+        this.testConnectionError = true;
         this.messagesService.showError(
           err?.message ||
           'Failed to connect to the database or fetch schema. Please check logs.',
@@ -1770,6 +1785,10 @@ export class ConnectionDetailsComponent implements OnInit {
         {
           ...selectedConnection.emailserver,
         };
+        // Clear password for duplicates — force user to enter a new one
+        if (duplicate) {
+          this.modalConnectionInfo.email.documentburster.connection.emailserver.userpassword = '';
+        }
       } else {
         this.modalConnectionInfo.email.documentburster.connection.defaultConnection =
           false;
@@ -1833,7 +1852,10 @@ export class ConnectionDetailsComponent implements OnInit {
         {
           ...selectedConnection.dbserver, // use correct property
         };
-
+        // Clear password for duplicates — force user to enter a new one
+        if (duplicate) {
+          this.modalConnectionInfo.database.documentburster.connection.databaseserver.userpassword = '';
+        }
 
         // Trigger schema load for update
         if (crudMode == 'update') {

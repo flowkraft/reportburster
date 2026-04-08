@@ -30,7 +30,7 @@ public class JobsService implements JobsApi {
 	public State state = new State();
 
 	@Autowired
-	private ShellService shellService;
+	private JobExecutionService jobExecutionService;
 
 	@Override
 	public Stream<FileInfo> fetchStats() throws Exception {
@@ -69,13 +69,15 @@ public class JobsService implements JobsApi {
 
 		this.state.numberOfActiveJobs = 1;
 
-		// Updated to use the new CLI interface
-		// Instead of passing "-rf filepath", we now use the new command structure
-		// "resume filepath"
-		this.shellService.runDocumentBursterBatScriptFile("resume \"" + jobFilePath + "\"", file -> {
-			FileUtils.forceDelete(file);
+		// In-process execution via JobExecutionService (replaces ShellService.runDocumentBursterBatScriptFile)
+		jobExecutionService.executeAsync(new String[] { "resume", jobFilePath }, () -> {
+			try {
+				FileUtils.forceDelete(new File(serverTransactionInfo.info));
+			} catch (Exception e) {
+				// ignore cleanup failure
+			}
 			this.state.numberOfActiveJobs = 0;
-		}, new File(serverTransactionInfo.info));
+		});
 
 	}
 

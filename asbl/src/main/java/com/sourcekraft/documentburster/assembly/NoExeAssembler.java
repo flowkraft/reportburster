@@ -69,6 +69,11 @@ public class NoExeAssembler extends AbstractAssembler {
 		FileUtils.copyDirectory(new File("src/main/external-resources/db-template"),
 				new File(packageDirPath + "/" + topFolderName), createDotAppslSelectiveFilter());
 
+		// copy log4j2.xml from server resources (single source of truth)
+		FileUtils.copyFile(
+				new File(Utils.getTopProjectFolderPath() + "/bkend/server/src/main/resources/log4j2.xml"),
+				new File(packageDirPath + "/" + topFolderName + "/log4j2.xml"));
+
 		System.out.println(
 				"------------------------------------- DONE_03:NoExeAssembler copy db template files and folders ... -------------------------------------");
 

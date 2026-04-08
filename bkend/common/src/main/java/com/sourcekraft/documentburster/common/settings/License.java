@@ -21,6 +21,7 @@ import jakarta.xml.bind.Marshaller;
 import jakarta.xml.bind.Unmarshaller;
 
 import org.apache.commons.lang3.StringUtils;
+import com.sourcekraft.documentburster.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +54,8 @@ public class License {
 
 		Unmarshaller u = jc.createUnmarshaller();
 
-		licenseDetails = (LicenseDetails) u.unmarshal(new File(this.licenseFilePath));
+		String resolvedPath = Utils.resolvePathAgainstPortableDir(this.licenseFilePath);
+		licenseDetails = (LicenseDetails) u.unmarshal(new File(resolvedPath));
 
 		log.debug("loadLicense - license = [" + licenseDetails + "]");
 
@@ -66,7 +68,7 @@ public class License {
 		JAXBContext jc = JAXBContext.newInstance(LicenseDetails.class);
 		Marshaller m = jc.createMarshaller();
 		m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-		m.marshal(licenseDetails, new File(licenseFilePath));
+		m.marshal(licenseDetails, new File(Utils.resolvePathAgainstPortableDir(licenseFilePath)));
 
 	}
 

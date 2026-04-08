@@ -28,7 +28,8 @@ public class FilterPaneOptionsParser {
         CompilerConfiguration config = new CompilerConfiguration();
         config.setScriptBaseClass(FilterPaneOptionsScript.class.getName());
 
-        GroovyShell shell = new GroovyShell(binding, config);
+        // Pass the script base class's classloader as parent — see TabulatorOptionsParser comment.
+        GroovyShell shell = new GroovyShell(FilterPaneOptionsScript.class.getClassLoader(), binding, config);
         FilterPaneOptionsScript script = (FilterPaneOptionsScript) shell.parse(groovyDslCode);
         script.setBinding(binding);
         script.run();

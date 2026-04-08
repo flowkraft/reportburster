@@ -51,9 +51,11 @@ public class Merger {
 		if (StringUtils.isEmpty(outputFileName))
 			outputFileName = "merged.pdf";
 
-		outputFolder = Utils.getStringFromTemplate(settings.getOutputFolder(), variables, "");
+		outputFolder = Utils.resolvePathAgainstPortableDir(
+				Utils.getStringFromTemplate(settings.getOutputFolder(), variables, ""));
 
-		backupFolder = Utils.getStringFromTemplate(settings.getBackupFolder(), variables, "") + "/merge/files";
+		backupFolder = Utils.resolvePathAgainstPortableDir(
+				Utils.getStringFromTemplate(settings.getBackupFolder(), variables, "") + "/merge/files");
 
 		File outputDir = new File(outputFolder);
 		if (!outputDir.exists())

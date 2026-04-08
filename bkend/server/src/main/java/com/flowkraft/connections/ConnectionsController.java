@@ -20,12 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.flowkraft.common.AppPaths;
 import com.flowkraft.reports.ReportsService;
-import com.sourcekraft.documentburster.common.db.schema.SchemaInfo;
 import com.sourcekraft.documentburster.common.security.SecretsCipher;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionEmailSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSettings;
 
+import com.sourcekraft.documentburster.common.settings.model.ConnectionFileInfo;
+
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -46,6 +48,48 @@ public class ConnectionsController {
 		this.reportsService = reportsService;
 	}
 
+	private static final String PASSWORD_MASK = "******";
+
+	// ========== LIST ALL CONNECTIONS ==========
+
+	@GetMapping(value = "/email", consumes = MediaType.ALL_VALUE)
+	public Flux<ConnectionFileInfo> listEmailConnections() throws Exception {
+		return Flux.fromStream(reportsService.loadSettingsConnectionEmailAll()
+				.peek(this::maskConnectionFileInfoPasswords));
+	}
+
+	@GetMapping(value = "/database", consumes = MediaType.ALL_VALUE)
+	public Flux<ConnectionFileInfo> listDatabaseConnections() throws Exception {
+		return Flux.fromStream(reportsService.loadSettingsConnectionDatabaseAll()
+				.peek(this::maskConnectionFileInfoPasswords));
+	}
+
+	// ========== LOAD SINGLE CONNECTION ==========
+
+	@GetMapping(value = "/{connectionId}/email/settings", consumes = MediaType.ALL_VALUE)
+	public Mono<DocumentBursterConnectionEmailSettings> loadEmailConnection(
+			@PathVariable String connectionId) throws Exception {
+		String fullPath = connectionsService.resolveEmailConnectionPath(connectionId);
+		DocumentBursterConnectionEmailSettings result = reportsService.loadSettingsConnectionEmail(fullPath);
+		if (result != null && result.connection != null && result.connection.emailserver != null) {
+			result.connection.emailserver.userpassword = maskIfSecret(result.connection.emailserver.userpassword);
+		}
+		return Mono.just(result);
+	}
+
+	@GetMapping(value = "/{connectionId}/database/settings", consumes = MediaType.ALL_VALUE)
+	public Mono<DocumentBursterConnectionDatabaseSettings> loadDatabaseConnection(
+			@PathVariable String connectionId) throws Exception {
+		String fullPath = connectionsService.resolveDbConnectionPath(connectionId);
+		DocumentBursterConnectionDatabaseSettings result = reportsService.loadSettingsConnectionDatabase(fullPath);
+		if (result != null && result.connection != null && result.connection.databaseserver != null) {
+			result.connection.databaseserver.userpassword = maskIfSecret(result.connection.databaseserver.userpassword);
+		}
+		return Mono.just(result);
+	}
+
+	// ========== SAVE CONNECTION ==========
+
 	/**
 	 * Test a connection (email or database).
 	 * For database connections, also fetches and saves the schema.
@@ -59,22 +103,86 @@ public class ConnectionsController {
 		log.info("Testing {} connection: {}", connectionType, connectionId);
 
 		return Mono.fromCallable(() -> {
-			if ("email".equals(connectionType)) {
-				connectionsService.testEmailConnection(connectionId);
-				return ResponseEntity.ok(Map.<String, Object>of(
-						"status", "success",
-						"message", "Email connection test passed"));
-			} else {
-				SchemaInfo schema = connectionsService.testDatabaseConnection(connectionId);
-				return ResponseEntity.ok(Map.<String, Object>of(
-						"status", "success",
-						"message", "Database connection test passed",
-						"tablesCount", schema.tables.size()));
+			try {
+				if ("email".equals(connectionType)) {
+					connectionsService.testEmailConnection(connectionId);
+					return ResponseEntity.ok(Map.<String, Object>of(
+							"status", "success",
+							"message", "Email connection test passed"));
+				} else if ("email-inline".equals(connectionType)) {
+					connectionsService.testInlineEmailConnection(connectionId);
+					return ResponseEntity.ok(Map.<String, Object>of(
+							"status", "success",
+							"message", "Inline email connection test passed"));
+				} else {
+					connectionsService.testDatabaseConnection(connectionId);
+					return ResponseEntity.ok(Map.<String, Object>of(
+							"status", "success",
+							"message", "Database connection test passed"));
+				}
+			} catch (Throwable t) {
+				throw (t instanceof Exception) ? (Exception) t : new Exception(t);
 			}
 		}).onErrorResume(e -> {
 			log.error("Connection test failed for {}: {}", connectionId, e.getMessage());
 			return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
 					.body(Map.of("status", "error", "message", e.getMessage())));
+		});
+	}
+
+	/**
+	 * Save (create or update) a database connection.
+	 * Backend resolves the file path from connectionId.
+	 */
+	@PutMapping(value = "/{connectionId}/database", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public Mono<ResponseEntity<Void>> saveDatabaseConnection(
+			@PathVariable String connectionId,
+			@RequestBody DocumentBursterConnectionDatabaseSettings settings) {
+		log.info("Saving database connection: {}", connectionId);
+		return Mono.fromCallable(() -> {
+			String fullPath = connectionsService.resolveDbConnectionPath(connectionId);
+			// If password is masked, preserve the existing encrypted value from disk
+			if (settings.connection != null && settings.connection.databaseserver != null
+					&& PASSWORD_MASK.equals(settings.connection.databaseserver.userpassword)
+					&& new File(fullPath).exists()) {
+				DocumentBursterConnectionDatabaseSettings existing = reportsService.loadSettingsConnectionDatabase(fullPath);
+				if (existing != null && existing.connection != null && existing.connection.databaseserver != null) {
+					settings.connection.databaseserver.userpassword = existing.connection.databaseserver.userpassword;
+				}
+			}
+			reportsService.saveSettingsConnectionDatabase(settings, fullPath);
+			return ResponseEntity.ok().<Void>build();
+		}).onErrorResume(e -> {
+			log.error("Failed to save database connection {}: {}", connectionId, e.getMessage());
+			return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
+		});
+	}
+
+	/**
+	 * Save (create or update) an email connection.
+	 * Backend resolves the file path from connectionId.
+	 */
+	@PutMapping(value = "/{connectionId}/email", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public Mono<ResponseEntity<Void>> saveEmailConnection(
+			@PathVariable String connectionId,
+			@RequestBody DocumentBursterConnectionEmailSettings settings) {
+		log.info("Saving email connection: {}", connectionId);
+		return Mono.fromCallable(() -> {
+			String filePath = connectionsService.resolveEmailConnectionPath(connectionId);
+			// If password is masked, preserve the existing encrypted value from disk
+			if (settings.connection != null && settings.connection.emailserver != null
+					&& PASSWORD_MASK.equals(settings.connection.emailserver.userpassword)
+					&& new File(filePath).exists()) {
+				DocumentBursterConnectionEmailSettings existing = reportsService.loadSettingsConnectionEmail(filePath);
+				if (existing != null && existing.connection != null && existing.connection.emailserver != null) {
+					settings.connection.emailserver.userpassword = existing.connection.emailserver.userpassword;
+				}
+			}
+			reportsService.saveSettingsConnectionEmail(settings, filePath);
+			return ResponseEntity.ok().<Void>build();
+		}).onErrorResume(e -> {
+			log.error("Failed to save email connection {}: {}", connectionId, e.getMessage());
+			return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
 		});
 	}
 
@@ -254,5 +362,25 @@ public class ConnectionsController {
 			return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body(Map.of("error", e.getMessage())));
 		});
+	}
+
+	// ========== PRIVATE HELPERS ==========
+
+	private String maskIfSecret(String value) {
+		if (value == null || value.isEmpty()) return value;
+		if (value.startsWith("ENC(")) return PASSWORD_MASK;
+		if (value.contains("${")) return value; // Variable references
+		if (value.contains(" ") && value.length() > 10) return value; // Placeholder text
+		return PASSWORD_MASK;
+	}
+
+	private void maskConnectionFileInfoPasswords(ConnectionFileInfo connFileInfo) {
+		if (connFileInfo == null) return;
+		if (connFileInfo.emailserver != null) {
+			connFileInfo.emailserver.userpassword = maskIfSecret(connFileInfo.emailserver.userpassword);
+		}
+		if (connFileInfo.dbserver != null) {
+			connFileInfo.dbserver.userpassword = maskIfSecret(connFileInfo.dbserver.userpassword);
+		}
 	}
 }

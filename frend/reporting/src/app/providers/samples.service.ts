@@ -62,6 +62,7 @@ export interface HtmlDocTemplateDisplay extends HtmlDocTemplateInfo {
   collectionIndex?: number;
   collectionTotal?: number;
   currentVariantIndex?: number;
+  assetBaseDir?: string;
 }
 
 @Injectable({

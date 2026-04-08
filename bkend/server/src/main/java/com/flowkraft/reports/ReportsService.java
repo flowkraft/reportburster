@@ -860,24 +860,25 @@ public class ReportsService {
 		return settings.loadSettings();
 	}
 
-	public void saveSettings(DocumentBursterSettings settings, String configFilePath) throws Exception {
+	public synchronized void saveSettings(DocumentBursterSettings settings, String configFilePath) throws Exception {
 
-		// Encrypt password fields before saving
+		// Encrypt password fields before saving — only encrypt real secrets,
+		// not empty strings, placeholder text, or already-encrypted values
 		try {
 			SecretsCipher cipher = SecretsCipher.getInstance(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH);
 
 			if (settings.settings.emailserver != null) {
-				settings.settings.emailserver.userpassword = cipher.encrypt(settings.settings.emailserver.userpassword);
+				settings.settings.emailserver.userpassword = encryptIfSecret(cipher, settings.settings.emailserver.userpassword);
 			}
 			if (settings.settings.smssettings != null && settings.settings.smssettings.twilio != null) {
-				settings.settings.smssettings.twilio.accountsid = cipher
-						.encrypt(settings.settings.smssettings.twilio.accountsid);
-				settings.settings.smssettings.twilio.authtoken = cipher
-						.encrypt(settings.settings.smssettings.twilio.authtoken);
+				// accountsid is NOT a secret — not encrypted
+				settings.settings.smssettings.twilio.authtoken = encryptIfSecret(cipher, settings.settings.smssettings.twilio.authtoken);
 			}
 			if (settings.settings.simplejavamail != null && settings.settings.simplejavamail.proxy != null) {
-				settings.settings.simplejavamail.proxy.password = cipher
-						.encrypt(settings.settings.simplejavamail.proxy.password);
+				settings.settings.simplejavamail.proxy.password = encryptIfSecret(cipher, settings.settings.simplejavamail.proxy.password);
+			}
+			if (settings.settings.qualityassurance != null && settings.settings.qualityassurance.emailserver != null) {
+				settings.settings.qualityassurance.emailserver.userpassword = encryptIfSecret(cipher, settings.settings.qualityassurance.emailserver.userpassword);
 			}
 		} catch (Exception e) {
 			log.warn("Failed to encrypt settings passwords before save: {}", e.getMessage());
@@ -893,6 +894,31 @@ public class ReportsService {
 
 	}
 
+	/**
+	 * Only encrypt values that are real secrets — skip empty, placeholder text,
+	 * already-encrypted values, and the API mask.
+	 */
+	private String encryptIfSecret(SecretsCipher cipher, String value) throws Exception {
+		if (value == null || value.isEmpty()) {
+			return value;
+		}
+		if (value.startsWith("ENC(")) {
+			return value; // Already encrypted
+		}
+		if ("******".equals(value)) {
+			return value; // API mask — should have been preserved by preserveExistingPasswords
+		}
+		// Variable references like ${var3} are template placeholders, not secrets
+		if (value.contains("${")) {
+			return value;
+		}
+		// Placeholder text (contains spaces and is descriptive) — don't encrypt
+		if (value.contains(" ") && value.length() > 10) {
+			return value;
+		}
+		return cipher.encrypt(value);
+	}
+
 	public ReportingSettings loadSettingsReporting(String configFilePath) throws Exception {
 
 		Settings settings = new Settings(configFilePath);
@@ -901,7 +927,7 @@ public class ReportsService {
 
 	}
 
-	public void saveSettingsReporting(ReportingSettings settings, String configFilePath) throws Exception {
+	public synchronized void saveSettingsReporting(ReportingSettings settings, String configFilePath) throws Exception {
 
 		String configFolderPath = Paths.get(configFilePath).getParent().toString();
 		String reportingConfigFilePath = configFolderPath + "/reporting.xml";
@@ -974,28 +1000,37 @@ public class ReportsService {
 
 	}
 
-	public DocumentBursterConnectionEmailSettings loadSettingsConnectionEmail(String connectionCode) throws Exception {
+	public DocumentBursterConnectionEmailSettings loadSettingsConnectionEmail(String filePath) throws Exception {
+		File connectionFile = new File(filePath);
 
-		Settings settings = new Settings(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/burst/settings.xml");
+		// If the path is relative, resolve it against PORTABLE_EXECUTABLE_DIR
+		if (!connectionFile.isAbsolute()) {
+			connectionFile = new File(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, filePath);
+		}
 
-		settings.loadSettingsConnectionEmail(connectionCode);
+		if (!connectionFile.exists()) {
+			throw new Exception("Email connection file not found: " + connectionFile.getAbsolutePath());
+		}
 
-		// System.out.println(
-		// "DocumentBursterConnectionEmailSettings settings.connectionEmailSettings = "
-		// + settings.connectionEmailSettings.toString());
+		DocumentBursterConnectionEmailSettings connEmailSettings;
+		try (FileInputStream inputStream = new FileInputStream(connectionFile)) {
+			JAXBContext jaxbContext = JAXBContext.newInstance(DocumentBursterConnectionEmailSettings.class);
+			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+			connEmailSettings = (DocumentBursterConnectionEmailSettings) unmarshaller.unmarshal(inputStream);
+		}
 
-		return settings.connectionEmailSettings;
+		return connEmailSettings;
 	}
 
-	public void saveSettingsConnectionEmail(DocumentBursterConnectionEmailSettings settings, String connectionFilePath)
+	public synchronized void saveSettingsConnectionEmail(DocumentBursterConnectionEmailSettings settings, String connectionFilePath)
 			throws Exception {
 
-		// Encrypt email connection password before saving
+		// Encrypt email connection password before saving — skip variable references and placeholders
 		if (settings.connection != null && settings.connection.emailserver != null) {
 			try {
 				SecretsCipher cipher = SecretsCipher.getInstance(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH);
-				settings.connection.emailserver.userpassword = cipher
-						.encrypt(settings.connection.emailserver.userpassword);
+				settings.connection.emailserver.userpassword = encryptIfSecret(cipher,
+						settings.connection.emailserver.userpassword);
 			} catch (Exception e) {
 				log.warn("Failed to encrypt email connection password before save: {}", e.getMessage());
 			}
@@ -1092,7 +1127,7 @@ public class ReportsService {
 		return connDbSettings;
 	}
 
-	public void saveSettingsConnectionDatabase(DocumentBursterConnectionDatabaseSettings dbSettings, String filePath)
+	public synchronized void saveSettingsConnectionDatabase(DocumentBursterConnectionDatabaseSettings dbSettings, String filePath)
 			throws Exception {
 		// Extract folder path from the file path
 		File file = new File(filePath);
@@ -1103,12 +1138,12 @@ public class ReportsService {
 			folderPath.mkdirs();
 		}
 
-		// Encrypt database connection password before saving
+		// Encrypt database connection password before saving — skip variable references and placeholders
 		if (dbSettings.connection != null && dbSettings.connection.databaseserver != null) {
 			try {
 				SecretsCipher cipher = SecretsCipher.getInstance(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH);
-				dbSettings.connection.databaseserver.userpassword = cipher
-						.encrypt(dbSettings.connection.databaseserver.userpassword);
+				dbSettings.connection.databaseserver.userpassword = encryptIfSecret(cipher,
+						dbSettings.connection.databaseserver.userpassword);
 			} catch (Exception e) {
 				log.warn("Failed to encrypt database connection password before save: {}", e.getMessage());
 			}
@@ -1131,7 +1166,7 @@ public class ReportsService {
 		return settings.loadSettingsInternal();
 	}
 
-	public void saveSettingsInternal(DocumentBursterSettingsInternal dbSettingsInternal, String internalConfigFilePath)
+	public synchronized void saveSettingsInternal(DocumentBursterSettingsInternal dbSettingsInternal, String internalConfigFilePath)
 			throws Exception {
 
 		JAXBContext jc = JAXBContext.newInstance(DocumentBursterSettingsInternal.class);
@@ -1239,6 +1274,16 @@ public class ReportsService {
 		settings.settings.capabilities.reportgenerationmailmerge = capReportGenerationMailMerge;
 		settings.settings.visibility = "visible";
 
+		// When creating (not duplicating) with distribution enabled,
+		// link the current default email connection
+		if (capReportDistribution && (copyFromReportId == null || copyFromReportId.isEmpty())) {
+			String defaultConnCode = findDefaultEmailConnectionCode();
+			if (defaultConnCode != null) {
+				settings.settings.emailserver.useconn = true;
+				settings.settings.emailserver.conncode = defaultConnCode;
+			}
+		}
+
 		String targetSettingsPath = targetDir + "/settings.xml";
 		saveSettings(settings, targetSettingsPath);
 
@@ -1290,10 +1335,19 @@ public class ReportsService {
 	 */
 	public void restoreDefaults(String reportId) throws Exception {
 
-		String reportsDir = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/reports";
 		String defaultsDir = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/_defaults";
-		String targetDir = reportsDir + "/" + reportId;
-		String targetSettingsPath = targetDir + "/settings.xml";
+
+		// Resolve the actual settings path — "burst" lives at config/burst/, others at config/reports/{id}/
+		String targetSettingsPath;
+		String targetDir;
+		if ("burst".equals(reportId)) {
+			targetDir = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/burst";
+			targetSettingsPath = targetDir + "/settings.xml";
+		} else {
+			String reportsDir = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/reports";
+			targetDir = reportsDir + "/" + reportId;
+			targetSettingsPath = targetDir + "/settings.xml";
+		}
 
 		// 1. Read current template name before overwriting
 		DocumentBursterSettings currentSettings = loadSettings(targetSettingsPath);
@@ -1318,6 +1372,23 @@ public class ReportsService {
 	/**
 	 * Delete a report configuration (entire folder).
 	 */
+	/**
+	 * Find the connection code of the current default email connection.
+	 * Scans config/connections/ for eml-*.xml files and returns the one marked as default.
+	 */
+	private String findDefaultEmailConnectionCode() {
+		try {
+			return loadSettingsConnectionEmailAll()
+					.filter(conn -> conn.defaultConnection)
+					.map(conn -> conn.connectionCode)
+					.findFirst()
+					.orElse(null);
+		} catch (Exception e) {
+			log.debug("Could not find default email connection: {}", e.getMessage());
+			return null;
+		}
+	}
+
 	public void deleteConfiguration(String reportId) throws Exception {
 		String reportsDir = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/reports";
 		File targetDir = new File(reportsDir + "/" + reportId);

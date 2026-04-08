@@ -75,15 +75,42 @@ public class ReportsController {
 			return;
 
 		if (dbSettings.settings.emailserver != null) {
-			dbSettings.settings.emailserver.userpassword = PASSWORD_MASK;
+			dbSettings.settings.emailserver.userpassword = maskIfSecret(dbSettings.settings.emailserver.userpassword);
 		}
 		if (dbSettings.settings.smssettings != null && dbSettings.settings.smssettings.twilio != null) {
-			dbSettings.settings.smssettings.twilio.authtoken = PASSWORD_MASK;
-			dbSettings.settings.smssettings.twilio.accountsid = PASSWORD_MASK;
+			dbSettings.settings.smssettings.twilio.authtoken = maskIfSecret(dbSettings.settings.smssettings.twilio.authtoken);
+			// accountsid is NOT a secret — displayed as normal text
 		}
 		if (dbSettings.settings.simplejavamail != null && dbSettings.settings.simplejavamail.proxy != null) {
-			dbSettings.settings.simplejavamail.proxy.password = PASSWORD_MASK;
+			dbSettings.settings.simplejavamail.proxy.password = maskIfSecret(dbSettings.settings.simplejavamail.proxy.password);
 		}
+		if (dbSettings.settings.qualityassurance != null && dbSettings.settings.qualityassurance.emailserver != null) {
+			dbSettings.settings.qualityassurance.emailserver.userpassword = maskIfSecret(dbSettings.settings.qualityassurance.emailserver.userpassword);
+		}
+	}
+
+	/**
+	 * Only mask values that look like actual secrets — not empty strings,
+	 * not placeholder/help text (e.g., "From Email Password").
+	 * Encrypted values (ENC(...)) and short non-placeholder values are masked.
+	 */
+	private String maskIfSecret(String value) {
+		if (value == null || value.isEmpty()) {
+			return value; // Empty = no secret, don't mask
+		}
+		if (value.startsWith("ENC(")) {
+			return PASSWORD_MASK; // Encrypted = real secret, always mask
+		}
+		// Variable references like ${var3} are template placeholders, not secrets
+		if (value.contains("${")) {
+			return value;
+		}
+		// Placeholder text contains spaces or is long descriptive text — don't mask
+		if (value.contains(" ") && value.length() > 10) {
+			return value;
+		}
+		// Short values without spaces are likely real passwords — mask them
+		return PASSWORD_MASK;
 	}
 
 	/**
@@ -92,8 +119,37 @@ public class ReportsController {
 	 * mask string.
 	 */
 	private void preserveExistingPasswords(DocumentBursterSettings incoming, String fullPath) {
+		// Only load existing settings if the incoming data actually contains masked passwords
+		boolean hasMaskedPasswords = false;
+
+		if (incoming.settings != null) {
+			if (incoming.settings.emailserver != null
+					&& PASSWORD_MASK.equals(incoming.settings.emailserver.userpassword)) {
+				hasMaskedPasswords = true;
+			}
+			if (incoming.settings.smssettings != null && incoming.settings.smssettings.twilio != null
+					&& PASSWORD_MASK.equals(incoming.settings.smssettings.twilio.authtoken)) {
+				hasMaskedPasswords = true;
+			}
+			if (incoming.settings.simplejavamail != null && incoming.settings.simplejavamail.proxy != null
+					&& PASSWORD_MASK.equals(incoming.settings.simplejavamail.proxy.password)) {
+				hasMaskedPasswords = true;
+			}
+			if (incoming.settings.qualityassurance != null && incoming.settings.qualityassurance.emailserver != null
+					&& PASSWORD_MASK.equals(incoming.settings.qualityassurance.emailserver.userpassword)) {
+				hasMaskedPasswords = true;
+			}
+		}
+
+		if (!hasMaskedPasswords) {
+			return;
+		}
+
 		try {
 			DocumentBursterSettings existing = rbSettingsService.loadSettings(fullPath);
+			if (existing == null || existing.settings == null) {
+				return;
+			}
 
 			if (incoming.settings.emailserver != null
 					&& PASSWORD_MASK.equals(incoming.settings.emailserver.userpassword)
@@ -107,11 +163,7 @@ public class ReportsController {
 						&& existing.settings.smssettings.twilio != null) {
 					incoming.settings.smssettings.twilio.authtoken = existing.settings.smssettings.twilio.authtoken;
 				}
-				if (PASSWORD_MASK.equals(incoming.settings.smssettings.twilio.accountsid)
-						&& existing.settings.smssettings != null
-						&& existing.settings.smssettings.twilio != null) {
-					incoming.settings.smssettings.twilio.accountsid = existing.settings.smssettings.twilio.accountsid;
-				}
+				// accountsid is NOT a secret — no preservation needed
 			}
 
 			if (incoming.settings.simplejavamail != null && incoming.settings.simplejavamail.proxy != null
@@ -120,33 +172,19 @@ public class ReportsController {
 					&& existing.settings.simplejavamail.proxy != null) {
 				incoming.settings.simplejavamail.proxy.password = existing.settings.simplejavamail.proxy.password;
 			}
+
+			if (incoming.settings.qualityassurance != null && incoming.settings.qualityassurance.emailserver != null
+					&& PASSWORD_MASK.equals(incoming.settings.qualityassurance.emailserver.userpassword)
+					&& existing.settings.qualityassurance != null
+					&& existing.settings.qualityassurance.emailserver != null) {
+				incoming.settings.qualityassurance.emailserver.userpassword = existing.settings.qualityassurance.emailserver.userpassword;
+			}
 		} catch (Exception e) {
-			log.warn("Failed to load existing settings for password preservation: {}", e.getMessage());
+			log.debug("Could not load existing settings for password preservation: {}", e.getMessage());
 		}
 	}
 
-	private void maskConnectionEmailPassword(DocumentBursterConnectionEmailSettings settings) {
-		if (settings != null && settings.connection != null && settings.connection.emailserver != null) {
-			settings.connection.emailserver.userpassword = PASSWORD_MASK;
-		}
-	}
-
-	private void maskConnectionDatabasePassword(DocumentBursterConnectionDatabaseSettings settings) {
-		if (settings != null && settings.connection != null && settings.connection.databaseserver != null) {
-			settings.connection.databaseserver.userpassword = PASSWORD_MASK;
-		}
-	}
-
-	private void maskConnectionFileInfoPasswords(ConnectionFileInfo connFileInfo) {
-		if (connFileInfo == null)
-			return;
-		if (connFileInfo.emailserver != null) {
-			connFileInfo.emailserver.userpassword = PASSWORD_MASK;
-		}
-		if (connFileInfo.dbserver != null) {
-			connFileInfo.dbserver.userpassword = PASSWORD_MASK;
-		}
-	}
+	// Connection password masking moved to ConnectionsController
 
 	@GetMapping(value = "/load-all")
 	public Flux<ConfigurationFileInfo> loadRbSettingsAll() throws Exception {
@@ -223,107 +261,6 @@ public class ReportsController {
 
 		rbSettingsService.saveSettingsReporting(dbSettings, fullPath);
 
-	}
-
-	@GetMapping(value = "/load-connection-email-all")
-	public Flux<ConnectionFileInfo> loadRbSettingsConnectionEmailAll() throws Exception {
-		return Flux.fromStream(rbSettingsService.loadSettingsConnectionEmailAll()
-				.peek(this::maskConnectionFileInfoPasswords));
-	}
-
-	@GetMapping(value = "/load-connection-email")
-	public Mono<DocumentBursterConnectionEmailSettings> loadRbSettingsConnectionEmail(@RequestParam String path)
-			throws Exception {
-
-		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
-				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
-
-		DocumentBursterConnectionEmailSettings result = rbSettingsService.loadSettingsConnectionEmail(fullPath);
-		maskConnectionEmailPassword(result);
-
-		return Mono.just(result);
-
-	}
-
-	@PostMapping(value = "/save-connection-email")
-	public void saveRbReportSettingsConnection(@RequestParam String path,
-			@RequestBody DocumentBursterConnectionEmailSettings dbSettings) throws Exception {
-
-		String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
-		Path requestedPath = Paths.get(decodedPath);
-		String fullPath;
-
-		// Check if the decoded path from the request is already absolute
-		if (requestedPath.isAbsolute()) {
-			fullPath = decodedPath; // Use the absolute path directly
-		} else {
-			// If the path is relative, prepend the base directory
-			fullPath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, decodedPath).toString();
-		}
-
-		// Preserve existing encrypted password if frontend sent the mask
-		if (dbSettings.connection != null && dbSettings.connection.emailserver != null
-				&& PASSWORD_MASK.equals(dbSettings.connection.emailserver.userpassword)) {
-			try {
-				DocumentBursterConnectionEmailSettings existing = rbSettingsService
-						.loadSettingsConnectionEmail(fullPath);
-				dbSettings.connection.emailserver.userpassword = existing.connection.emailserver.userpassword;
-			} catch (Exception e) {
-				log.warn("Failed to load existing email connection for password preservation: {}", e.getMessage());
-			}
-		}
-
-		rbSettingsService.saveSettingsConnectionEmail(dbSettings, fullPath);
-
-	}
-
-	@GetMapping(value = "/load-connection-database-all")
-	public Flux<ConnectionFileInfo> loadRbSettingsConnectionDatabaseAll() throws Exception {
-		return Flux.fromStream(rbSettingsService.loadSettingsConnectionDatabaseAll()
-				.peek(this::maskConnectionFileInfoPasswords));
-	}
-
-	@GetMapping(value = "/load-connection-database")
-	public Mono<DocumentBursterConnectionDatabaseSettings> loadRbSettingsConnectionDatabase(@RequestParam String path)
-			throws Exception {
-		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
-				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
-
-		DocumentBursterConnectionDatabaseSettings result = rbSettingsService.loadSettingsConnectionDatabase(fullPath);
-		maskConnectionDatabasePassword(result);
-
-		return Mono.just(result);
-	}
-
-	@PostMapping(value = "/save-connection-database")
-	public void saveRbSettingsConnectionDatabase(@RequestParam String path,
-			@RequestBody DocumentBursterConnectionDatabaseSettings dbSettings) throws Exception {
-
-		String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
-		Path requestedPath = Paths.get(decodedPath);
-		String fullPath;
-
-		// Check if the decoded path from the request is already absolute
-		if (requestedPath.isAbsolute()) {
-			fullPath = decodedPath; // Use the absolute path directly
-		} else {
-			// If the path is relative, prepend the base directory
-			fullPath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, decodedPath).toString();
-		}
-
-		// Preserve existing encrypted password if frontend sent the mask
-		if (dbSettings.connection != null && dbSettings.connection.databaseserver != null
-				&& PASSWORD_MASK.equals(dbSettings.connection.databaseserver.userpassword)) {
-			try {
-				DocumentBursterConnectionDatabaseSettings existing = rbSettingsService
-						.loadSettingsConnectionDatabase(fullPath);
-				dbSettings.connection.databaseserver.userpassword = existing.connection.databaseserver.userpassword;
-			} catch (Exception e) {
-				log.warn("Failed to load existing database connection for password preservation: {}", e.getMessage());
-			}
-		}
-
-		rbSettingsService.saveSettingsConnectionDatabase(dbSettings, fullPath);
 	}
 
 	@GetMapping(value = "/load-internal")
@@ -573,7 +510,7 @@ public class ReportsController {
 		return Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(result));
 	}
 
-	@PostMapping(value = "/configurations/{reportId}/restore-defaults")
+	@PostMapping(value = "/configurations/{reportId}/restore-defaults", consumes = MediaType.ALL_VALUE)
 	public Mono<ResponseEntity<Void>> restoreDefaults(@PathVariable String reportId) throws Exception {
 		rbSettingsService.restoreDefaults(reportId);
 		return Mono.just(ResponseEntity.ok().build());
@@ -632,13 +569,20 @@ public class ReportsController {
 		return Mono.just(content != null ? content : "");
 	}
 
-	@PutMapping(value = "/{reportId}/template/{type}", consumes = "text/plain")
-	public Mono<Void> saveReportTemplate(@PathVariable String reportId, @PathVariable String type,
-			@RequestBody Optional<String> content) throws Exception {
+	@PutMapping(value = "/{reportId}/template/{type}", consumes = "text/plain",
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public Mono<ResponseEntity<java.util.Map<String, String>>> saveReportTemplate(@PathVariable String reportId,
+			@PathVariable String type, @RequestBody Optional<String> content) throws Exception {
 		String templatePath = resolveTemplatePath(reportId, type);
+		String relativeTemplatePath = resolveRelativeTemplatePath(reportId, type);
 		return Mono.fromCallable(() -> {
+			// Save template content
 			fileSystemService.fsWriteStringToFile(templatePath, content);
-			return null;
+			// Update ONLY documentpath in reporting.xml — do NOT overwrite other fields
+			// (outputtype, conncode, etc.) which the frontend may have changed in memory.
+			updateDocumentPathOnly(reportId, relativeTemplatePath);
+			// Return the new documentpath so the frontend can sync its in-memory copy
+			return ResponseEntity.ok(java.util.Map.of("documentpath", relativeTemplatePath));
 		});
 	}
 
@@ -650,23 +594,81 @@ public class ReportsController {
 		if (templatePath == null || templatePath.isEmpty()) {
 			return Mono.just("");
 		}
+		// Skip binary template formats — they can't be displayed in a text editor
+		if (templatePath.endsWith(".docx") || templatePath.endsWith(".xlsx")
+				|| templatePath.endsWith(".pptx") || templatePath.endsWith(".odt")) {
+			return Mono.just("");
+		}
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/" + templatePath;
 		String content = fileSystemService.unixCliCat(fullPath);
 		return Mono.just(content != null ? content : "");
 	}
 
 	@PutMapping(value = "/{reportId}/template", consumes = "text/plain")
-	public Mono<Void> saveReportTemplateAuto(@PathVariable String reportId,
+	public Mono<ResponseEntity<Void>> saveReportTemplateAuto(@PathVariable String reportId,
 			@RequestBody Optional<String> content) throws Exception {
 		String templatePath = resolveTemplatePathFromConfig(reportId);
 		if (templatePath == null || templatePath.isEmpty()) {
-			return Mono.empty();
+			return Mono.just(new ResponseEntity<>(HttpStatus.NO_CONTENT));
 		}
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/" + templatePath;
 		return Mono.fromCallable(() -> {
 			fileSystemService.fsWriteStringToFile(fullPath, content);
-			return null;
+			return new ResponseEntity<Void>(HttpStatus.OK);
 		});
+	}
+
+	/**
+	 * Load a Groovy DSL script for a report by type.
+	 * Scripts live in the report's config folder: config/reports/{reportId}/{reportId}-{suffix}.groovy
+	 */
+	@GetMapping(value = "/{reportId}/script/{scriptType}", produces = MediaType.TEXT_PLAIN_VALUE, consumes = MediaType.ALL_VALUE)
+	public Mono<String> loadReportScript(@PathVariable String reportId, @PathVariable String scriptType)
+			throws Exception {
+		String suffix = resolveScriptSuffix(scriptType);
+		if (suffix == null) {
+			return Mono.just("");
+		}
+		String settingsPath = resolveSettingsPath(reportId);
+		String configDir = new File(settingsPath).getParent();
+		String scriptPath = configDir + "/" + reportId + "-" + suffix + ".groovy";
+		File scriptFile = new File(scriptPath);
+		if (!scriptFile.exists()) {
+			return Mono.just("");
+		}
+		String content = fileSystemService.unixCliCat(scriptPath);
+		return Mono.just(content != null ? content : "");
+	}
+
+	/**
+	 * Save a Groovy DSL script for a report by type.
+	 */
+	@PutMapping(value = "/{reportId}/script/{scriptType}", consumes = "text/plain")
+	public Mono<ResponseEntity<Void>> saveReportScript(@PathVariable String reportId,
+			@PathVariable String scriptType, @RequestBody Optional<String> content) throws Exception {
+		String suffix = resolveScriptSuffix(scriptType);
+		if (suffix == null) {
+			return Mono.just(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+		}
+		String settingsPath = resolveSettingsPath(reportId);
+		String configDir = new File(settingsPath).getParent();
+		String scriptPath = configDir + "/" + reportId + "-" + suffix + ".groovy";
+		return Mono.fromCallable(() -> {
+			fileSystemService.fsWriteStringToFile(scriptPath, content);
+			return new ResponseEntity<Void>(HttpStatus.OK);
+		});
+	}
+
+	private String resolveScriptSuffix(String scriptType) {
+		switch (scriptType) {
+			case "datasourceScript": return "script";
+			case "paramsSpecScript": return "report-parameters-spec";
+			case "transformScript": return "additional-transformation";
+			case "tabulatorConfigScript": return "tabulator-config";
+			case "chartConfigScript": return "chart-config";
+			case "pivotTableConfigScript": return "pivot-config";
+			default: return null;
+		}
 	}
 
 	/**
@@ -696,7 +698,7 @@ public class ReportsController {
 	// ── Private helpers for ID-based path resolution ──
 
 	private String resolveSettingsPath(String reportId) {
-		// Check reports first, then samples, then burst (legacy)
+		// Check all config locations: reports, samples, _frend samples, reports-jasper, burst (legacy)
 		String reportsPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/reports/" + reportId + "/settings.xml";
 		if (new File(reportsPath).exists())
 			return reportsPath;
@@ -704,6 +706,14 @@ public class ReportsController {
 		String samplesPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/samples/" + reportId + "/settings.xml";
 		if (new File(samplesPath).exists())
 			return samplesPath;
+
+		String frendSamplesPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/samples/_frend/" + reportId + "/settings.xml";
+		if (new File(frendSamplesPath).exists())
+			return frendSamplesPath;
+
+		String jasperPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/reports-jasper/" + reportId + "/settings.xml";
+		if (new File(jasperPath).exists())
+			return jasperPath;
 
 		String burstPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/burst/settings.xml";
 		if ("burst".equals(reportId) && new File(burstPath).exists())
@@ -714,14 +724,51 @@ public class ReportsController {
 	}
 
 	private String resolveTemplatePath(String reportId, String type) {
-		// Template types: html, docx, xsl, fo, jrxml
+		return AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/" + resolveRelativeTemplatePath(reportId, type);
+	}
+
+	private String resolveRelativeTemplatePath(String reportId, String type) {
+		// Docx uses a different naming convention: {reportId}-template.docx
+		if ("docx".equals(type)) {
+			return "templates/reports/" + reportId + "/" + reportId + "-template.docx";
+		}
+
 		String extension = type;
 		if ("fop2pdf".equals(type))
 			extension = "xsl";
 		if ("jasper".equals(type))
 			extension = "jrxml";
+		if ("dashboard".equals(type))
+			extension = "html";
 
-		return AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/templates/reports/" + reportId + "/" + reportId + "-" + type
-				+ "." + extension;
+		return "templates/reports/" + reportId + "/" + reportId + "-" + type + "." + extension;
+	}
+
+	/**
+	 * Targeted update of ONLY the documentpath tag in reporting.xml.
+	 * Uses string replacement instead of full JAXB unmarshal/marshal to avoid
+	 * overwriting other fields (outputtype, conncode, etc.) that the frontend
+	 * may have changed in memory but not yet saved.
+	 */
+	private void updateDocumentPathOnly(String reportId, String newDocumentPath) {
+		try {
+			String settingsPath = resolveSettingsPath(reportId);
+			String configDir = new java.io.File(settingsPath).getParent();
+			String reportingPath = configDir + "/reporting.xml";
+			java.io.File reportingFile = new java.io.File(reportingPath);
+			if (!reportingFile.exists()) return;
+
+			String xml = java.nio.file.Files.readString(reportingFile.toPath());
+			// Replace <documentpath>...</documentpath> with the new value
+			String updated = xml.replaceFirst(
+				"<documentpath>[^<]*</documentpath>",
+				"<documentpath>" + newDocumentPath + "</documentpath>"
+			);
+			if (!xml.equals(updated)) {
+				java.nio.file.Files.writeString(reportingFile.toPath(), updated);
+			}
+		} catch (Exception e) {
+			log.debug("Could not update reporting.xml documentpath for {}: {}", reportId, e.getMessage());
+		}
 	}
 }

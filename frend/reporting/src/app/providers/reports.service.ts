@@ -223,6 +223,23 @@ export class ReportsService {
     return xmlSettings;
   }
 
+  async loadSettingsByPath(configFilePath: string): Promise<{
+    documentburster: {
+      settings: any;
+    };
+  }> {
+    let xmlSettings = {
+      documentburster: { settings: {} },
+    };
+
+    xmlSettings.documentburster = await this.apiService.get(
+      '/reports/load',
+      { path: configFilePath },
+    );
+
+    return xmlSettings;
+  }
+
   async saveReportSettings(
     reportId: string,
     xmlSettings: {
@@ -258,6 +275,60 @@ export class ReportsService {
   }
 
   /**
+   * Load a template file by its path. Used when the path is known
+   * (e.g., per-output-type templates: payslips-html.html, payslips-pdf.html).
+   */
+  async loadTemplateByPath(templatePath: string): Promise<string> {
+    const textHeaders = new Headers({ Accept: 'text/plain' });
+    return this.apiService.get(
+      `/reports/load-template`,
+      { path: templatePath },
+      textHeaders,
+      'text',
+    );
+  }
+
+  /**
+   * Save a template file by its path. Used when the path is known
+   * (e.g., per-output-type templates).
+   */
+  async saveTemplateByPath(templatePath: string, content: string): Promise<void> {
+    const textHeaders = new Headers({ 'Content-Type': 'text/plain' });
+    return this.apiService.post(
+      `/reports/save-template?path=${encodeURIComponent(templatePath)}`,
+      content,
+      textHeaders,
+    );
+  }
+
+  /**
+   * Load template content for a specific output type.
+   * Backend computes the path: templates/reports/{reportId}/{reportId}-{type}.{ext}
+   * Each output type has its own template file.
+   */
+  async loadReportTemplateByType(reportId: string, outputType: string): Promise<string> {
+    const textHeaders = new Headers({ Accept: 'text/plain' });
+    return this.apiService.get(
+      `/reports/${encodeURIComponent(reportId)}/template/${encodeURIComponent(outputType)}`,
+      undefined,
+      textHeaders,
+      'text',
+    );
+  }
+
+  /**
+   * Save template content for a specific output type.
+   */
+  async saveReportTemplateByType(reportId: string, outputType: string, content: string): Promise<{ documentpath?: string }> {
+    const textHeaders = new Headers({ 'Content-Type': 'text/plain' });
+    return this.apiService.put(
+      `/reports/${encodeURIComponent(reportId)}/template/${encodeURIComponent(outputType)}`,
+      content,
+      textHeaders,
+    );
+  }
+
+  /**
    * Load template content for a report.
    * Backend resolves the template path from the report's config — no type needed.
    */
@@ -279,10 +350,37 @@ export class ReportsService {
    * Save template content for a report.
    * Backend resolves the template path from the report's config.
    */
+  /**
+   * Load a Groovy DSL script (tabulator, chart, pivot, datasource, etc.) by reportId and type.
+   */
+  async loadReportScript(reportId: string, scriptType: string): Promise<string> {
+    const textHeaders = new Headers({ Accept: 'text/plain' });
+    return this.apiService.get(
+      `/reports/${encodeURIComponent(reportId)}/script/${encodeURIComponent(scriptType)}`,
+      undefined,
+      textHeaders,
+      'text',
+    );
+  }
+
+  /**
+   * Save a Groovy DSL script by reportId and type.
+   */
+  async saveReportScript(reportId: string, scriptType: string, content: string) {
+    const textHeaders = new Headers({ 'Content-Type': 'text/plain' });
+    return this.apiService.put(
+      `/reports/${encodeURIComponent(reportId)}/script/${encodeURIComponent(scriptType)}`,
+      content,
+      textHeaders,
+    );
+  }
+
   async saveReportTemplate(reportId: string, content: string) {
+    const textHeaders = new Headers({ 'Content-Type': 'text/plain' });
     return this.apiService.put(
       `/reports/${encodeURIComponent(reportId)}/template`,
       content,
+      textHeaders,
     );
   }
 
@@ -378,6 +476,55 @@ export class ReportsService {
       // Clear entire cache
       this.configDetailsCache.clear();
     }
+  }
+
+  // ===== Gallery template methods (ID-based, no paths) =====
+
+  /**
+   * Load gallery template HTML content + asset base directory.
+   */
+  async loadGalleryTemplateContent(
+    templateId: string,
+    variant: number = 0,
+  ): Promise<{ content: string; assetBaseDir: string }> {
+    return this.apiService.get(`/gallery/templates/${encodeURIComponent(templateId)}/content`, { variant });
+  }
+
+  /**
+   * Load gallery template README.
+   */
+  async loadGalleryTemplateReadme(templateId: string, variant: number = 0): Promise<string> {
+    const textHeaders = new Headers({ Accept: 'text/plain' });
+    return this.apiService.get(
+      `/gallery/templates/${encodeURIComponent(templateId)}/readme`,
+      { variant },
+      textHeaders,
+      'text',
+    );
+  }
+
+  /**
+   * Load gallery template AI prompt (type: 'modify' or 'scratch').
+   */
+  async loadGalleryTemplateAiPrompt(
+    templateId: string,
+    type: 'modify' | 'scratch',
+    variant: number = 0,
+  ): Promise<string> {
+    const textHeaders = new Headers({ Accept: 'text/plain' });
+    return this.apiService.get(
+      `/gallery/templates/${encodeURIComponent(templateId)}/ai-prompt`,
+      { type, variant },
+      textHeaders,
+      'text',
+    );
+  }
+
+  /**
+   * Get the URL to view a gallery template in the browser.
+   */
+  getGalleryTemplateViewUrl(templateId: string, variant: number = 0): string {
+    return `/api/gallery/templates/${encodeURIComponent(templateId)}/view?variant=${variant}`;
   }
 
   async loadAllReportTemplates() {

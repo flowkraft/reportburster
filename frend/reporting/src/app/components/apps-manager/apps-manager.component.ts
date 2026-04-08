@@ -442,10 +442,8 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
 
         await this.appsManagerService.toggleApp(app);
 
-        // Immediately refresh UI with final state from service (don't wait for polling interval)
-        await this.refreshDataSilent();
-
-        // After toggleApp completes, start polling if any app is still in transitional state
+        // Don't refreshDataSilent() here — it overwrites the optimistic state.
+        // Polling every 3s will confirm the real state from Docker.
         this.startTransitionPolling();
       }
     });

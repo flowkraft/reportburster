@@ -512,10 +512,10 @@ export class SettingsService {
     this.connectionsLoading = 1;
 
     const emailConnFiles = await this.apiService.get(
-      '/reports/load-connection-email-all',
+      '/connections/email',
     );
     const dbConnFiles = await this.apiService.get(
-      '/reports/load-connection-database-all',
+      '/connections/database',
     );
 
     // Combine all connection files

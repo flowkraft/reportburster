@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.common.settings.model.Attachment;
 import com.sourcekraft.documentburster.common.settings.model.BursterSettings;
+import com.sourcekraft.documentburster.utils.Utils;
 import com.sourcekraft.documentburster.common.settings.model.Capabilities;
 import com.sourcekraft.documentburster.common.settings.model.ConnectionDatabaseSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
@@ -309,7 +310,7 @@ public class Settings extends DumpToString {
 								+ "sample-northwind-sqlite" + java.io.File.separator + "northwind.db";
 					} else {
 						try {
-							dbFilePath = com.sourcekraft.documentburster.utils.Utils.getDbFolderPath()
+							dbFilePath = Utils.getDbFolderPath()
 									+ java.io.File.separator + "sample-northwind-sqlite" + java.io.File.separator
 									+ "northwind.db";
 						} catch (Throwable t) {
@@ -342,7 +343,7 @@ public class Settings extends DumpToString {
 								+ "sample-northwind-duckdb" + java.io.File.separator + "northwind.duckdb";
 					} else {
 						try {
-							dbFilePath = com.sourcekraft.documentburster.utils.Utils.getDbFolderPath()
+							dbFilePath = Utils.getDbFolderPath()
 									+ java.io.File.separator + "sample-northwind-duckdb" + java.io.File.separator
 									+ "northwind.duckdb";
 						} catch (Throwable t) {
@@ -523,7 +524,7 @@ public class Settings extends DumpToString {
 						+ "sample-northwind-duckdb" + java.io.File.separator + "northwind.duckdb";
 			} else {
 				try {
-					dbFilePath = com.sourcekraft.documentburster.utils.Utils.getDbFolderPath()
+					dbFilePath = Utils.getDbFolderPath()
 							+ java.io.File.separator + "sample-northwind-duckdb" + java.io.File.separator
 							+ "northwind.duckdb";
 				} catch (Throwable t) {
@@ -580,7 +581,7 @@ public class Settings extends DumpToString {
 						+ "sample-northwind-sqlite" + java.io.File.separator + "northwind.db";
 			} else {
 				try {
-					dbFilePath = com.sourcekraft.documentburster.utils.Utils.getDbFolderPath()
+					dbFilePath = Utils.getDbFolderPath()
 							+ java.io.File.separator + "sample-northwind-sqlite" + java.io.File.separator
 							+ "northwind.db";
 				} catch (Throwable t) {
@@ -640,7 +641,7 @@ public class Settings extends DumpToString {
 						+ "sample-northwind-sqlite" + java.io.File.separator + "northwind.db";
 			} else {
 				try {
-					dbFilePath = com.sourcekraft.documentburster.utils.Utils.getDbFolderPath()
+					dbFilePath = Utils.getDbFolderPath()
 							+ java.io.File.separator + "sample-northwind-sqlite" + java.io.File.separator
 							+ "northwind.db";
 				} catch (Throwable t) {
@@ -779,6 +780,10 @@ public class Settings extends DumpToString {
 
 	public SendFiles getSendFiles() {
 		return docSettings.settings.sendfiles;
+	}
+
+	public boolean isSettingsLoaded() {
+		return docSettings != null && docSettings.settings != null;
 	}
 
 	public boolean isDeleteFiles() {

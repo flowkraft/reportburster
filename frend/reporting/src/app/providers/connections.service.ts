@@ -88,20 +88,12 @@ export class ConnectionsService {
       documentburster: { connection: {} },
     };
 
-    // Resolve file path from connectionId using connectionFiles array
-    const connFile = this.connectionFiles.find(
-      (c) => c.connectionCode === connectionId || c.fileName === connectionId,
-    );
-    const filePath = connFile
-      ? connFile.filePath
-      : `${this.CONFIGURATION_CONNECTIONS_FOLDER_PATH}/${connectionId}`;
+    const isDbConnection = connectionId.startsWith('db-');
+    const settingsEndpoint = isDbConnection
+      ? `/connections/${encodeURIComponent(connectionId)}/database/settings`
+      : `/connections/${encodeURIComponent(connectionId)}/email/settings`;
 
-    xmlConnectionSettings.documentburster = await this.apiService.get(
-      '/reports/load-connection',
-      {
-        path: filePath,
-      },
-    );
+    xmlConnectionSettings.documentburster = await this.apiService.get(settingsEndpoint);
 
     return xmlConnectionSettings;
   }
@@ -112,26 +104,15 @@ export class ConnectionsService {
       documentburster: {};
     },
   ) {
-    // Resolve file path from connectionId using connectionFiles array
-    const connFile = this.connectionFiles.find(
-      (c) => c.connectionCode === connectionId || c.fileName === connectionId,
-    );
-    const filePath = connFile
-      ? connFile.filePath
-      : `${this.CONFIGURATION_CONNECTIONS_FOLDER_PATH}/${connectionId}`;
+    // Determine connection type from ID convention
+    const isDbConnection = connectionId.startsWith('db-');
 
-    const path = encodeURIComponent(filePath);
-
-    // Determine if this is a database connection based on the file path
-    const isDbConnection =
-      filePath.includes('/db-') || filePath.includes('\\db-');
-
-    // Use the appropriate endpoint based on connection type
+    // Use ID-based endpoints — backend resolves the file path
     const endpoint = isDbConnection
-      ? `/reports/save-connection-database?path=${path}`
-      : `/reports/save-connection-email?path=${path}`;
+      ? `/connections/${encodeURIComponent(connectionId)}/database`
+      : `/connections/${encodeURIComponent(connectionId)}/email`;
 
-    return this.apiService.post(
+    return this.apiService.put(
       endpoint,
       xmlConnectionSettings.documentburster,
     );
@@ -152,10 +133,10 @@ export class ConnectionsService {
     this.connectionsLoading = 1;
 
     const emailConnFiles = await this.apiService.get(
-      '/reports/load-connection-email-all',
+      '/connections/email',
     );
     const dbConnFiles = await this.apiService.get(
-      '/reports/load-connection-database-all',
+      '/connections/database',
     );
 
     // Combine all connection files
@@ -256,7 +237,7 @@ export class ConnectionsService {
     return undefined;
   }
 
-  async testConnection(connectionId: string, type: 'email' | 'database'): Promise<any> {
+  async testConnection(connectionId: string, type: 'email' | 'email-inline' | 'database'): Promise<any> {
     return this.apiService.post(`/connections/${connectionId}/test`, { type });
   }
 

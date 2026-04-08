@@ -20,7 +20,7 @@ import com.flowkraft.reports.ReportsService;
 import com.flowkraft.common.Constants;
 import com.flowkraft.common.Utils;
 import com.flowkraft.common.AppPaths;
-import com.flowkraft.jobs.services.ShellService;
+import com.flowkraft.jobs.services.JobExecutionService;
 import com.flowkraft.license.model.LicenseDetails;
 import de.ailis.pherialize.Pherialize;
 import jakarta.ws.rs.client.Client;
@@ -35,26 +35,20 @@ public class LicenseService {
 	ReportsService settingsService;
 
 	@Autowired
-	private ShellService shellService;
+	private JobExecutionService jobExecutionService;
 
 	private String licenseFilePath = AppPaths.WORKSPACE_DIR_PATH + "config/burst/internal/license.xml";
 
-	public void activateLicense() throws Exception {
-
-		shellService.runDocumentBursterBatScriptFile("system license activate");
-
+	public void activateLicense() throws Throwable {
+		jobExecutionService.executeSync(new String[] { "system", "license", "activate" });
 	}
 
-	public void deActivateLicense() throws Exception {
-
-		shellService.runDocumentBursterBatScriptFile("system license deactivate");
-
+	public void deActivateLicense() throws Throwable {
+		jobExecutionService.executeSync(new String[] { "system", "license", "deactivate" });
 	}
 
-	public void checkLicense() throws Exception {
-
-		shellService.runDocumentBursterBatScriptFile("system license check");
-
+	public void checkLicense() throws Throwable {
+		jobExecutionService.executeSync(new String[] { "system", "license", "check" });
 	}
 
 	public LicenseDetails loadLicenseFile() throws Exception {

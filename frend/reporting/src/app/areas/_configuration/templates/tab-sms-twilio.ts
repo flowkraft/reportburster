@@ -72,13 +72,8 @@ export const tabSMSTwilioTemplate = `<ng-template #tabSMSTwilioTemplate>
       <div class="col-xs-2">{{
         'AREAS.CONFIGURATION.TAB-SMS-TWILIO.ACCOUNT-SID' | translate }}</div>
       <div class="col-xs-7">
-        <div class="input-group">
-          <input id="accountSid" [(ngModel)]="xmlSettings?.documentburster.settings.smssettings.twilio.accountsid"
-            (ngModelChange)='settingsChangedEventHandler($event)' [type]="showTwilioAccountSid ? 'text' : 'password'" class="form-control" />
-          <span id="btnToggleTwilioAccountSid" class="input-group-addon" style="cursor:pointer" (click)="toggleRevealTwilioSid()">
-            <i [class]="showTwilioAccountSid ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
-          </span>
-        </div>
+        <input id="accountSid" [(ngModel)]="xmlSettings?.documentburster.settings.smssettings.twilio.accountsid"
+            (ngModelChange)='settingsChangedEventHandler($event)' type="text" class="form-control" />
       </div>
 
       <div class="col-xs-3">

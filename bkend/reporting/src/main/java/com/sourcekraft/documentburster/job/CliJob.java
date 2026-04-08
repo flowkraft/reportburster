@@ -96,7 +96,7 @@ public class CliJob {
 		if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(Paths.get(configFilePath)))))
 			this.configurationFilePath = configFilePath;
 		else
-			this.configurationFilePath = "./config/burst/settings.xml";
+			this.configurationFilePath = Utils.resolvePathAgainstPortableDir("config/burst/settings.xml");
 
 		settings = new Settings(configurationFilePath);
 
@@ -120,7 +120,7 @@ public class CliJob {
 
 	public void doCheckEmail() throws Exception {
 
-		log.debug("doCheckEmail()");
+		log.info("Sending test email...");
 
 		EmailMessage message;
 
@@ -142,6 +142,7 @@ public class CliJob {
 		try {
 			jobFile = _createJobFile(Scripts.EMAIL, "check-email");
 			(new Scripting()).executeSenderScript(Scripts.EMAIL, message);
+			log.info("Test email sent successfully.");
 
 		} finally {
 			_deleteJobFileWithRetry(jobFile);
@@ -542,11 +543,8 @@ public class CliJob {
 			return result;
 
         } finally {
-			// Release database connection pools to prevent file lock leaks (DuckDB)
-			// and connection leaks (all database vendors)
-			if (burster != null && burster.getCtx() != null && burster.getCtx().dbManager != null) {
-				burster.getCtx().dbManager.close();
-			}
+			// dbManager.close() is handled by AbstractBurster.closeResources()
+			// which is called in burst()/fetchDataOnly() finally blocks.
 		}
 	}
 

@@ -10,7 +10,6 @@ import * as semver from 'semver';
 
 import Utilities from '../helpers/utilities';
 import { SettingsService } from './settings.service';
-import { ShellService } from './shell.service';
 import { FsService } from './fs.service';
 import { ApiService } from './api.service';
 import { ReportsService } from './reports.service';
@@ -32,7 +31,6 @@ export class LicenseService {
   constructor(
     protected settingsService: SettingsService,
     protected reportsService: ReportsService,
-    protected shellService: ShellService,
     protected fsService: FsService,
     protected apiService: ApiService,
   ) {
@@ -143,18 +141,14 @@ export class LicenseService {
   }
 
   verifyLicense(action, exitCallback?): Promise<void> {
-    return this.shellService.runBatFile(
-      ['system', 'license', action],
-      'license',
-      exitCallback,
-    );
+    return this.apiService.put(`/license/${action}`, {}).then(() => {
+      if (exitCallback) exitCallback();
+    });
   }
 
   deActivateLicense(exitCallback?) {
-    return this.shellService.runBatFile(
-      ['system', 'license', 'deactivate'],
-      'license',
-      exitCallback,
-    );
+    return this.apiService.put('/license/deactivate', {}).then(() => {
+      if (exitCallback) exitCallback();
+    });
   }
 }

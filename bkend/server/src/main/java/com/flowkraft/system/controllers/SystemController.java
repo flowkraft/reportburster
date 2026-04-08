@@ -342,6 +342,24 @@ public class SystemController {
 
 	}
 
+	/**
+	 * Start or stop the test email server (MailHog or similar).
+	 * Replaces the old shellService.startStopTestEmailServer() which spawned a bat file.
+	 */
+	@PostMapping("/test-email-server")
+	public Mono<ProcessOutputResultDto> startStopTestEmailServer(@RequestBody Map<String, String> request)
+			throws Exception {
+		String action = request.get("action"); // "start" or "stop"
+		if (action == null || action.isBlank()) {
+			throw new IllegalArgumentException("action is required (start or stop)");
+		}
+
+		String cwdPath = "tools/test-email-server";
+		String batFile = action + "TestEmailServer.bat";
+
+		return processService.spawn(java.util.Arrays.asList(batFile), Optional.of(cwdPath));
+	}
+
 	@PostMapping("/install/chocolatey")
 	public Mono<ProcessOutputResultDto> installChocolatey() throws Exception {
 		// System.out.println("/install/chocolatey");

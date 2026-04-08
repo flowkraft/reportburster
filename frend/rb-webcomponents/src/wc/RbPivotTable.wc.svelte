@@ -264,10 +264,15 @@
         colOrder,
       }, engineToUse);
 
-      // Derive analytics API URL from apiBaseUrl (e.g. http://host:port/api/reporting -> http://host:port/api/analytics)
+      // Derive analytics API URL from apiBaseUrl (e.g. http://host:port/api/reporting -> http://host:port/api/analytics).
+      // Use URL.origin so we don't depend on the exact /api/... path structure of apiBaseUrl.
       if (apiBaseUrl) {
-        const baseOrigin = apiBaseUrl.replace(/\/api\/jobman\/reporting\/?$/, '');
-        pivotApi.baseUrl = `${baseOrigin}/api/analytics`;
+        try {
+          const origin = new URL(apiBaseUrl, window.location.href).origin;
+          pivotApi.baseUrl = `${origin}/api/analytics`;
+        } catch (e) {
+          console.warn('[rb-pivot-table] Could not derive analytics URL from apiBaseUrl:', apiBaseUrl, e);
+        }
       }
 
       console.log('[rb-pivot-table] Executing server-side pivot:', request);

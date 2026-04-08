@@ -67,7 +67,7 @@ export const modalGalleryTemplate = `<p-dialog
               style="width: 100%; height: calc(89vh - 200px); display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px;">
               <iframe #templateIframe
                 [id]="'template-iframe-' + (example?.id || selectedGalleryTemplateIndex)"
-                [srcdoc]="sanitizeHtmlForIframe(example?.htmlContent?.[example?.currentVariantIndex || 0], example?.templateFilePaths?.[example?.currentVariantIndex || 0])"
+                [srcdoc]="sanitizeHtmlForIframe(example?.htmlContent?.[example?.currentVariantIndex || 0], example?.assetBaseDir)"
                 [ngClass]="{'fade-transition': true, 'fade-hidden': templatePreviewFadeState === 'hidden'}"
                 scaleIframe
                 scrolling="no"

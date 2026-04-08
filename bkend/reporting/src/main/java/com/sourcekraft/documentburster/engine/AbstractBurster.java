@@ -24,8 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sourcekraft.documentburster.GlobalContext;
-import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
-import com.sourcekraft.documentburster.common.db.SqlExecutor;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.common.settings.model.Attachment;
 import com.sourcekraft.documentburster.context.BurstingContext;
@@ -75,7 +73,7 @@ public abstract class AbstractBurster {
 				&& ((configFilePath.contains(Utils.SPLIT_2ND_TIME) || Files.exists(Paths.get(configFilePath))))))
 			this.configurationFilePath = configFilePath;
 		else
-			this.configurationFilePath = "./config/burst/settings.xml";
+			this.configurationFilePath = Utils.resolvePathAgainstPortableDir("config/burst/settings.xml");
 	}
 
 	public int getLicenseLimit() {
@@ -489,9 +487,6 @@ public abstract class AbstractBurster {
 
 		ctx.settings = new Settings(configurationFilePath);
 
-		ctx.dbManager = new DatabaseConnectionManager(ctx.settings);
-		ctx.sql = new SqlExecutor(ctx.dbManager);
-
 		ctx.scripts = new Scripts();
 
 		scripting = new Scripting();
@@ -857,6 +852,11 @@ public abstract class AbstractBurster {
 
 	protected void backupFile() throws Exception {
 
+		// Guard: if settings were never loaded (e.g., burst failed before
+		// controller.groovy ran), skip backup to avoid masking the real error.
+		if (!ctx.settings.isSettingsLoaded())
+			return;
+
 		// don't waste time doing a backup if files are to be deleted anyway
 		// (and if you do the unit tests will fail)
 		if (ctx.settings.isDeleteFiles())
@@ -877,11 +877,12 @@ public abstract class AbstractBurster {
 
 	protected void createOutputFoldersIfTheyDontExist() throws Exception {
 
-		ctx.quarantineFolder = Utils.getStringFromTemplate(ctx.settings.getQuarantineFolder(), ctx.variables,
-				ctx.token);
+		ctx.quarantineFolder = Utils.resolvePathAgainstPortableDir(
+				Utils.getStringFromTemplate(ctx.settings.getQuarantineFolder(), ctx.variables, ctx.token));
 		ctx.variables.set(Variables.QUARANTINE_FOLDER, ctx.quarantineFolder);
 
-		ctx.outputFolder = Utils.getStringFromTemplate(ctx.settings.getOutputFolder(), ctx.variables, ctx.token);
+		ctx.outputFolder = Utils.resolvePathAgainstPortableDir(
+				Utils.getStringFromTemplate(ctx.settings.getOutputFolder(), ctx.variables, ctx.token));
 		ctx.variables.set(Variables.OUTPUT_FOLDER, ctx.outputFolder);
 
 		File outputDir = new File(ctx.outputFolder);
