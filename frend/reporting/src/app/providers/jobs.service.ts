@@ -50,4 +50,31 @@ export class JobsService {
   async clearQuarantine(): Promise<any> {
     return this.apiService.delete('/jobs/files/quarantine');
   }
+
+  // ========== IN-PROCESS JOB EXECUTION (replaces shellService.runBatFile) ==========
+
+  async burst(params: { inputFile: string; reportId?: string }): Promise<any> {
+    return this.apiService.post('/jobs/burst', params);
+  }
+
+  async generate(params: {
+    reportId: string;
+    input?: string;
+    params?: Record<string, string>;
+  }): Promise<any> {
+    return this.apiService.post('/jobs/generate', params);
+  }
+
+  async merge(params: {
+    listFile: string;
+    outputName: string;
+    burst?: boolean;
+    reportId?: string;
+  }): Promise<any> {
+    return this.apiService.post('/jobs/merge', params);
+  }
+
+  async prepareMergeList(filePaths: string[]): Promise<{ listFile: string }> {
+    return this.apiService.post('/jobs/merge/prepare-list', { filePaths });
+  }
 }

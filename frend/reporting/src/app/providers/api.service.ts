@@ -239,8 +239,8 @@ export class ApiService {
     return this.request(path, RequestMethod.post, body, customHeaders);
   }
 
-  public put(path: string, body: any): Promise<any> {
-    return this.request(path, RequestMethod.put, body);
+  public put(path: string, body: any, customHeaders?: Headers): Promise<any> {
+    return this.request(path, RequestMethod.put, body, customHeaders);
   }
 
   public delete(path: string, body?: any): Promise<any> {

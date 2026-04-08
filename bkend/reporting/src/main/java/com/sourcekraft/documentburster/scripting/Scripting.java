@@ -18,7 +18,18 @@ public class Scripting {
 
 	private static Logger log = LoggerFactory.getLogger(Scripting.class);
 
-	private String[] engineRoots = new String[] { "scripts/burst", "scripts/burst/internal" };
+	private String[] engineRoots = resolveDefaultRoots();
+
+	private static String[] resolveDefaultRoots() {
+		String baseDir = System.getProperty("PORTABLE_EXECUTABLE_DIR", "");
+		if (baseDir.isEmpty()) {
+			baseDir = System.getProperty("DOCUMENTBURSTER_HOME", "");
+		}
+		if (!baseDir.isEmpty() && !baseDir.endsWith("/") && !baseDir.endsWith("\\")) {
+			baseDir = baseDir + "/";
+		}
+		return new String[] { baseDir + "scripts/burst", baseDir + "scripts/burst/internal" };
+	}
 
 	// @Profiled(tag = "executeBurstingLifeCycleScript_{$0}")
 	public void executeBurstingLifeCycleScript(String scriptFileName, BurstingContext context) throws Exception {

@@ -64,6 +64,7 @@ public class ServicesManager {
 	private static final String CMD_SEED_INVOICES = "seed-invoices";
 	private static final String CMD_WIPE_INVOICES = "wipe-invoices";
 	private static final String CMD_CHECK_SEED_INVOICES = "check-seed-invoices";
+	private static final String CMD_RUN_CUSTOM_SEED = "run-custom-seed";
 
 	// Programmatic API: Result and execute() entrypoint
 	public static class Result {
@@ -135,6 +136,11 @@ public class ServicesManager {
 					case CMD_CHECK_SEED_INVOICES: {
 						String out = captureOutput(() -> handleNorthwindCheckSeedInvoices(managerArgsString));
 						return new Result("ok", out);
+					}
+					case CMD_RUN_CUSTOM_SEED: {
+						String out = captureOutput(() -> handleNorthwindRunCustomSeed(managerArgsString));
+						String status = out.toLowerCase().contains("error") ? "error" : "ok";
+						return new Result(status, out);
 					}
 					default:
 						return new Result("error", "Unknown database command: " + subCmd);
@@ -287,6 +293,61 @@ public class ServicesManager {
 		try (java.sql.Connection conn = dbManager.getConnection(vendor)) {
 			boolean hasData = InvoiceSeedGenerator.checkSeedStatus(conn, vendor);
 			System.out.println(hasData ? "seeded" : "empty");
+		}
+	}
+
+	/**
+	 * Handle 'database run-custom-seed northwind <vendor>'.
+	 * Runs user-provided Groovy script against the running database.
+	 * Script path: db/sample-northwind-{vendor}/custom-seed.groovy
+	 */
+	private static void handleNorthwindRunCustomSeed(String managerArgsString) throws Exception {
+		String vendorName = managerArgsString.split("\\s+")[0].toUpperCase();
+		DatabaseVendor vendor = DatabaseVendor.valueOf(vendorName);
+
+		String dbFolder = Utils.getDbFolderPath();
+		Path scriptPath = Paths.get(dbFolder, "sample-northwind-" + vendor.name().toLowerCase(), "custom-seed.groovy");
+
+		if (!Files.exists(scriptPath)) {
+			System.out.println("Error: No custom seed script found at " + scriptPath);
+			return;
+		}
+
+		System.out.println("Running custom seed script: " + scriptPath);
+		java.sql.Connection conn = null;
+		groovy.sql.Sql dbSql = null;
+		try {
+			conn = dbManager.getConnection(vendor);
+			conn.setAutoCommit(false); // Force transaction — no half-inserts even without withTransaction
+
+			dbSql = new groovy.sql.Sql(conn);
+
+			groovy.lang.Binding binding = new groovy.lang.Binding();
+			binding.setVariable("dbSql", dbSql);
+			binding.setVariable("vendor", vendor.name());
+			binding.setVariable("log", log);
+
+			groovy.util.GroovyScriptEngine gse = new groovy.util.GroovyScriptEngine(
+					new String[] { scriptPath.getParent().toString() });
+			gse.run("custom-seed.groovy", binding);
+
+			conn.commit();
+			System.out.println("Custom seed script completed successfully for " + vendor.name());
+		} catch (Exception e) {
+			// Rollback on ANY error — no half-inserted data
+			if (conn != null) {
+				try { conn.rollback(); } catch (Exception ignored) {}
+			}
+			System.out.println("Error running custom seed script: " + e.getMessage());
+			throw e;
+		} finally {
+			// Close dbSql + connection — no leaks even if script is badly coded
+			if (dbSql != null) {
+				try { dbSql.close(); } catch (Exception ignored) {}
+			}
+			if (conn != null) {
+				try { conn.close(); } catch (Exception ignored) {}
+			}
 		}
 	}
 
@@ -776,7 +837,7 @@ public class ServicesManager {
 	 * create the .pedp-apps marker file.
 	 */
 	private static void ensurePortableAppsConfig() throws Exception {
-		String portableDir = com.sourcekraft.documentburster.utils.Utils.getPortableExecutableDir();
+		String portableDir = Utils.getPortableExecutableDir();
 		if (StringUtils.isBlank(portableDir)) return;
 
 		Path pedpPath = Paths.get(portableDir).resolve("config").resolve("_internal").resolve(".pedp-apps");

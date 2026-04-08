@@ -103,6 +103,26 @@ public class Utils {
 		}
 	}
 
+	/**
+	 * Resolve a relative path against PORTABLE_EXECUTABLE_DIR or DOCUMENTBURSTER_HOME.
+	 * Same lookup order as getTempFolder/getDbFolderPath/getAppsFolderPath.
+	 * Absolute paths are returned as-is.
+	 */
+	public static String resolvePathAgainstPortableDir(String relativePath) {
+		if (relativePath == null || relativePath.isEmpty()) return relativePath;
+		File f = new File(relativePath);
+		if (f.isAbsolute()) return relativePath;
+		String portableDir = System.getProperty("PORTABLE_EXECUTABLE_DIR");
+		if (StringUtils.isNotBlank(portableDir)) {
+			return new File(portableDir, relativePath).toPath().normalize().toString();
+		}
+		String homeDir = System.getProperty("DOCUMENTBURSTER_HOME");
+		if (StringUtils.isNotBlank(homeDir)) {
+			return new File(homeDir, relativePath).toPath().normalize().toString();
+		}
+		return relativePath;
+	}
+
 	public static String getTempFolder() {
 		String portableDir = System.getProperty("PORTABLE_EXECUTABLE_DIR");
 		if (StringUtils.isNotBlank(portableDir)) {
@@ -763,7 +783,7 @@ public class Utils {
 		}
 
 		try {
-			Path brandingPath = Paths.get("./scripts/burst/internal/bb.html");
+			Path brandingPath = Paths.get(resolvePathAgainstPortableDir("scripts/burst/internal/bb.html"));
 			if (!Files.exists(brandingPath)) {
 
 				brandingPath = Paths.get("src/main/external-resources/template/scripts/burst/internal/bb.html");

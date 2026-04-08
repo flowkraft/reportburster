@@ -65,21 +65,21 @@ public final class LicenseController {
 	}
 
 	@PutMapping("/activate")
-	public void activateLicense() throws Exception {
+	public void activateLicense() throws Throwable {
 
 		licenseService.activateLicense();
 
 	}
 
 	@PutMapping("/check")
-	public void checkLicense() throws Exception {
+	public void checkLicense() throws Throwable {
 
 		licenseService.checkLicense();
 
 	}
 
 	@PutMapping("/deactivate")
-	public void deActivateLicense() throws Exception {
+	public void deActivateLicense() throws Throwable {
 
 		licenseService.deActivateLicense();
 

@@ -58,7 +58,10 @@ public class TabulatorOptionsParser {
 		config.setScriptBaseClass(TabulatorOptionsScript.class.getName());
 
 		// System.out.println("[DEBUG] TabulatorOptionsParser: creating GroovyShell...");
-		GroovyShell shell = new GroovyShell(binding, config);
+		// Pass the script base class's classloader as parent. Without this, under Spring Boot
+		// DevTools the compiled Script1 extends a TabulatorOptionsScript loaded by GroovyShell's
+		// classloader while the cast target is loaded by RestartClassLoader → ClassCastException.
+		GroovyShell shell = new GroovyShell(TabulatorOptionsScript.class.getClassLoader(), binding, config);
 		// System.out.println("[DEBUG] TabulatorOptionsParser: parsing script...");
 		TabulatorOptionsScript script = (TabulatorOptionsScript) shell.parse(groovyDslCode);
 		script.setBinding(binding);

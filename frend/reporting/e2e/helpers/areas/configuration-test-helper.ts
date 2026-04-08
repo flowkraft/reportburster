@@ -447,7 +447,7 @@ export class ConfigurationTestHelper {
         .inputShouldHaveValue('#fromEmailAddress', '01')
         .inputShouldHaveValue('#emailServerHost', '02')
         .inputShouldHaveValue('#userName', '03')
-        .inputShouldHaveValue('#smtpPassword', '04')
+        .inputShouldHaveValue('#smtpPassword', '******')
         .inputShouldHaveValue('#smtpPort', '05')
         .elementCheckBoxShouldBeSelected('#btnSSL')
         .elementCheckBoxShouldBeSelected('#btnTLS')
@@ -518,11 +518,11 @@ export class ConfigurationTestHelper {
         // SMS settings
         .click('#leftMenuSMSSettings')
         .inputShouldHaveValue('#accountSid', '00')
-        .inputShouldHaveValue('#authToken', '01')
+        .inputShouldHaveValue('#authToken', '******')
         // Twilio settings
         .click('#leftMenuTwilioSettings')
         .inputShouldHaveValue('#accountSid', '00')
-        .inputShouldHaveValue('#authToken', '01')
+        .inputShouldHaveValue('#authToken', '******')
         // SMS Message settings
         .click('#smsMessageTab-link')
         .inputShouldHaveValue('#fromTelephoneNumber', '00')
@@ -534,7 +534,7 @@ export class ConfigurationTestHelper {
         .inputShouldHaveValue('#qaFromEmailAddress', '01')
         .inputShouldHaveValue('#qaEmailServerHost', '02')
         .inputShouldHaveValue('#qaUserName', '03')
-        .inputShouldHaveValue('#qaPassword', '04')
+        .inputShouldHaveValue('#qaPassword', '******')
         .inputShouldHaveValue('#qaPort', '05')
         .elementCheckBoxShouldBeSelected('#btnQASSL')
         .elementCheckBoxShouldBeSelected('#btnQATLS')
@@ -543,7 +543,7 @@ export class ConfigurationTestHelper {
         .inputShouldHaveValue('#qaFromEmailAddress', '01')
         .inputShouldHaveValue('#qaEmailServerHost', '02')
         .inputShouldHaveValue('#qaUserName', '03')
-        .inputShouldHaveValue('#qaPassword', '04')
+        .inputShouldHaveValue('#qaPassword', '******')
         .inputShouldHaveValue('#qaPort', '05')
         .elementCheckBoxShouldBeSelected('#btnQASSL')
         .elementCheckBoxShouldBeSelected('#btnQATLS')
@@ -591,7 +591,7 @@ export class ConfigurationTestHelper {
         .inputShouldHaveValue('#proxyHost', '10')
         .inputShouldHaveValue('#proxyUserName', '11')
         .inputShouldHaveValue('#proxyPort', '12')
-        .inputShouldHaveValue('#proxyPassword', '13')
+        .inputShouldHaveValue('#proxyPassword', '******')
         .inputShouldHaveValue('#proxySocks5BridgePort', '14')
     );
   }
@@ -1113,14 +1113,14 @@ export class ConfigurationTestHelper {
       .waitOnElementToBecomeVisible('#noDocxTemplatesFoundCode')
       .elementShouldContainText(
         '#noDocxTemplatesFoundCode',
-        '/templates/reports/payslips',
+        'templates/reports/payslips',
       )
       .pressKey('Escape') // Close the dropdown
       .waitOnElementToBecomeVisible('#divTruncatedAbsoluteTemplateFolderPath')
       .elementShouldBeVisible('#divTruncatedAbsoluteTemplateFolderPath')
       .elementShouldContainText(
         '#divTruncatedAbsoluteTemplateFolderPath',
-        `/templates/reports/${folderName}`,
+        `templates/reports/${folderName}`,
       )
       .elementShouldBeVisible('#btnCopyTemplatePathToClipboard')
       .click('#btnCopyTemplatePathToClipboard')
@@ -1806,10 +1806,14 @@ export class ConfigurationTestHelper {
       .codeJarShouldContainText('#codeJarHtmlTemplateEditor', '<html')
       // Verify it contains other HTML structural elements (more robust than just checking for <html)
       .codeJarShouldContainText('#codeJarHtmlTemplateEditor', '<body')
-      .codeJarShouldContainText('#codeJarHtmlTemplateEditor', '<head')
-      // Check for common template elements that indicate complexity
-      // .codeJarShouldContainText('#codeJarHtmlTemplateEditor', '<div')
-      .codeJarShouldContainText('#codeJarHtmlTemplateEditor', '<style')
+      .codeJarShouldContainText('#codeJarHtmlTemplateEditor', '<head');
+
+    // <style> check only for output types that use rich HTML templates (not xlsx which uses a skeleton)
+    if (reportOutputType !== 'output.xlsx') {
+      ft = ft.codeJarShouldContainText('#codeJarHtmlTemplateEditor', '<style');
+    }
+
+    ft = ft
       // Make sure the preview is visible, confirming template renders correctly
       .elementShouldBeVisible('#reportPreviewPane')
       .sleep(Constants.DELAY_ONE_SECOND); // Wait for the value to be set

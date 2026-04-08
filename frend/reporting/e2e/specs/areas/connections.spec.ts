@@ -182,7 +182,8 @@ test.describe('', async () => {
         .click('#topMenuConfiguration')
         .click('#topMenuConfigurationLoad_burst_' + escapedWhich) // STEP0 - CHANGE VALUES general settings
         .click('#leftMenuEmailSettings') // email SMTP settings
-        .click('#btnUseExistingEmailConnection');
+        .click('#btnUseExistingEmailConnection')
+        .sleep(Constants.DELAY_ONE_SECOND); // Wait for debounced save to complete
 
       //assert basic "default" connection things
       ft = ConnectionsTestHelper.assertConfigurationUsesEmailConnection(
@@ -1529,6 +1530,7 @@ test.describe('', async () => {
           .click('#btnCloseAiCopilotModal')
           .waitOnElementToBecomeInvisible('#btnCopyPromptText');
 
+        const orderDetailsTableName = dbVendor === 'clickhouse' ? 'OrderDetails' : 'Order Details';
         const northwindDomainGroupedSchemaExample = `{
   "originalSchema": [
     {
@@ -1550,7 +1552,7 @@ test.describe('', async () => {
       ]
     },
     {
-      "tableName": "Order Details",
+      "tableName": "${orderDetailsTableName}",
       "columns": [
         { "name": "OrderID", "dataType": "INT", "isPrimaryKey": true, "isForeignKey": true, "references": "Orders" },
         { "name": "ProductID", "dataType": "INT", "isPrimaryKey": true, "isForeignKey": true, "references": "Products" },
@@ -1605,7 +1607,7 @@ test.describe('', async () => {
           ]
         },
         {
-          "tableName": "Order Details",
+          "tableName": "${orderDetailsTableName}",
           "columns": [
             { "name": "OrderID", "dataType": "INT", "isPrimaryKey": true, "isForeignKey": true, "references": "Orders" },
             { "name": "ProductID", "dataType": "INT", "isPrimaryKey": true, "isForeignKey": true, "references": "Products" },

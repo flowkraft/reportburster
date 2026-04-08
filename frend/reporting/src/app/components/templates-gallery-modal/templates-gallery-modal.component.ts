@@ -6,7 +6,7 @@ import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SettingsService } from '../../providers/settings.service';
 import { ReportsService } from '../../providers/reports.service';
-import Utilities from '../../helpers/utilities';
+
 
 @Component({
   selector: 'dburst-templates-gallery-modal',
@@ -131,18 +131,20 @@ export class TemplatesGalleryModalComponent {
   }
 
   async onGalleryTemplateSelected(event: any): Promise<void> {
-    // Update the index and template data
-    this.selectedGalleryTemplateIndex = event.page;
+    const page = Number.isFinite(event?.page) ? event.page : 0;
+
+    // Skip if page hasn't changed (avoid redundant processing)
+    if (this.selectedGalleryTemplateIndex === page) {
+      return;
+    }
+
+    this.selectedGalleryTemplateIndex = page;
     const currentTemplate = this.getSelectedGalleryTemplate();
 
     if (!currentTemplate) return;
 
     // Update dialog header
     this.galleryDialogTitle = `Examples (Gallery) - ${currentTemplate.name || currentTemplate.displayName}`;
-
-    if (this.selectedGalleryTemplateIndex === event.page) {
-      return;
-    }
 
     // First hide the current content
     this.templatePreviewFadeState = 'hidden';
@@ -210,20 +212,8 @@ export class TemplatesGalleryModalComponent {
     const currentTemplate = this.getSelectedGalleryTemplate();
     if (!currentTemplate) return;
 
-    // Get the template path from the template object
-    const currentVariantIndex = currentTemplate.currentVariantIndex || 0;
-    const templateObjectPath =
-      currentTemplate.templateFilePaths?.[currentVariantIndex];
-
-    if (!templateObjectPath) {
-      this.messagesService.showError(
-        'Cannot view template: Missing template path',
-      );
-      return;
-    }
-
-    // Use the new view-template endpoint specifically designed for browser viewing
-    const url = `/api/reports/view-template?path=${encodeURIComponent(templateObjectPath)}`;
+    const variantOffset = currentTemplate.collectionIndex ? currentTemplate.collectionIndex - 1 : 0;
+    const url = this.reportsService.getGalleryTemplateViewUrl(currentTemplate.id, variantOffset);
     window.open(url, '_blank');
   }
 
@@ -350,17 +340,17 @@ export class TemplatesGalleryModalComponent {
     window.open(url, '_blank');
   }
 
-  sanitizeHtmlForIframe(html: string, templatePath?: string): SafeHtml {
+  sanitizeHtmlForIframe(html: string, assetBaseDir?: string): SafeHtml {
     if (!html) {
       return this.sanitizer.bypassSecurityTrustHtml('');
     }
-    const cacheKey = templatePath || '';
-    if (this.templateSanitizedHtmlCache.has(cacheKey)) {
-      return this.templateSanitizedHtmlCache.get(cacheKey);
+    // Cache by content hash to avoid re-processing on every change detection cycle
+    const cacheKey = assetBaseDir ? `${assetBaseDir}:${html.length}` : `${html.length}`;
+    const cached = this.templateSanitizedHtmlCache.get(cacheKey);
+    if (cached) {
+      return cached;
     }
-    const baseDirUrl = templatePath
-      ? templatePath.substring(0, templatePath.lastIndexOf('/') + 1)
-      : '';
+    const baseDirUrl = assetBaseDir || '';
     const tempDoc = document.implementation.createHTMLDocument('');
     const tempDiv = tempDoc.createElement('div');
     tempDiv.innerHTML = html;
@@ -404,7 +394,15 @@ export class TemplatesGalleryModalComponent {
       }
     });
 
-    const processedHtml = tempDiv.innerHTML;
+    // Rewrite @font-face and other url() references in <style> blocks
+    let processedHtml = tempDiv.innerHTML;
+    if (baseDirUrl) {
+      processedHtml = processedHtml.replace(
+        /url\(['"]?(?!http|data:|\/api)([^'")]+)['"]?\)/gi,
+        (_match, relPath) => `url('/api/reports/serve-asset?path=${encodeURIComponent(baseDirUrl + relPath)}')`
+      );
+    }
+
     const safeHtml = this.sanitizer.bypassSecurityTrustHtml(processedHtml);
     this.templateSanitizedHtmlCache.set(cacheKey, safeHtml);
     return safeHtml;
@@ -473,7 +471,6 @@ export class TemplatesGalleryModalComponent {
       }
     });
 
-    // Rest of the method remains the same
     if (this.galleryTemplates.length > 0) {
       this.selectedGalleryTemplateIndex = 0;
       await Promise.all(
@@ -503,77 +500,49 @@ export class TemplatesGalleryModalComponent {
     template.currentVariantIndex = 0;
 
     try {
-      // Load each HTML file of the template and pre-cache it
+      const templateId = template.id;
+      const variantOffset = template.collectionIndex ? template.collectionIndex - 1 : 0;
+
+      // Load each HTML variant of the template via ID-based endpoint
       for (let i = 0; i < template.templateFilePaths.length; i++) {
-        const path = template.templateFilePaths[i];
-        const reportId = Utilities.basename(Utilities.dirname(path));
-        const content = await this.reportsService.loadReportTemplate(reportId);
-        if (content) {
-          template.htmlContent.push(content);
-          if (!this.templateSanitizedHtmlCache.has(path)) {
-            const safeHtml = this.sanitizeHtmlForIframe(content, path);
-            this.templateSanitizedHtmlCache.set(path, safeHtml);
+        const variant = variantOffset + i;
+        const cacheKey = `${templateId}:${variant}`;
+        const result = await this.reportsService.loadGalleryTemplateContent(templateId, variant);
+        if (result?.content) {
+          template.htmlContent.push(result.content);
+          template.assetBaseDir = result.assetBaseDir;
+          if (!this.templateSanitizedHtmlCache.has(cacheKey)) {
+            const safeHtml = this.sanitizeHtmlForIframe(result.content, result.assetBaseDir);
+            this.templateSanitizedHtmlCache.set(cacheKey, safeHtml);
           }
         }
       }
 
-      // With the first (main) template file, load associated README and AI prompts
-      if (template.templateFilePaths.length > 0) {
-        const path = template.templateFilePaths[0];
-        const lastSlashIndex = path.lastIndexOf('/');
-        const lastDotIndex = path.lastIndexOf('.');
-        if (lastSlashIndex !== -1 && lastDotIndex !== -1) {
-          const templateName = path.substring(lastSlashIndex + 1, lastDotIndex);
-          const dirPath = path.substring(0, lastSlashIndex);
+      // Load README
+      try {
+        const readmeContent = await this.reportsService.loadGalleryTemplateReadme(templateId, variantOffset);
+        template.readmeContent = readmeContent?.length > 0 ? readmeContent : '';
+      } catch (error) {
+        template.readmeContent = '';
+      }
 
-          // Load README
-          try {
-            const readmePath = `${dirPath}/${templateName}-readme.md`;
-            const readmeReportId = Utilities.basename(Utilities.dirname(readmePath));
-            const readmeContent =
-              await this.reportsService.loadReportTemplate(readmeReportId);
-            template.readmeContent =
-              readmeContent && readmeContent.length > 0 ? readmeContent : '';
-          } catch (error) {
-            template.readmeContent = '';
-          }
+      // Load AI prompt for “modify”
+      try {
+        const modifyContent = await this.reportsService.loadGalleryTemplateAiPrompt(templateId, 'modify', variantOffset);
+        template.selectedTemplateModifyPrompt = modifyContent?.length > 0 ? modifyContent : '';
+      } catch (error) {
+        template.selectedTemplateModifyPrompt = '';
+      }
 
-          // Load AI prompt for “modify”
-          try {
-            const promptModifyPath = `${dirPath}/${templateName}-ai_prompt_modify.md`;
-            const promptModifyReportId = Utilities.basename(Utilities.dirname(promptModifyPath));
-            const promptModifyContent =
-              await this.reportsService.loadReportTemplate(
-                promptModifyReportId,
-              );
-            template.selectedTemplateModifyPrompt =
-              promptModifyContent && promptModifyContent.length > 0
-                ? promptModifyContent
-                : '';
-          } catch (error) {
-            template.selectedTemplateModifyPrompt = '';
-          }
-
-          // Load AI prompt for “scratch”
-          try {
-            const promptScratchPath = `${dirPath}/${templateName}-ai_prompt_scratch.md`;
-            const promptScratchReportId = Utilities.basename(Utilities.dirname(promptScratchPath));
-            const promptScratchContent =
-              await this.reportsService.loadReportTemplate(
-                promptScratchReportId,
-              );
-            template.selectedTemplateScratchPrompt =
-              promptScratchContent && promptScratchContent.length > 0
-                ? promptScratchContent
-                : '';
-          } catch (error) {
-            template.selectedTemplateScratchPrompt = '';
-          }
-        }
+      // Load AI prompt for “scratch”
+      try {
+        const scratchContent = await this.reportsService.loadGalleryTemplateAiPrompt(templateId, 'scratch', variantOffset);
+        template.selectedTemplateScratchPrompt = scratchContent?.length > 0 ? scratchContent : '';
+      } catch (error) {
+        template.selectedTemplateScratchPrompt = '';
       }
 
       template.isLoaded = true;
-      //this.changeDetectorRef.detectChanges();
     } catch (error) {
       console.error('Error loading template content:', error);
       template.isLoaded = false;

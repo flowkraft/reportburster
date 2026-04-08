@@ -14,51 +14,56 @@ public class DocumentBurster {
 
 	private static Logger log = LoggerFactory.getLogger(DocumentBurster.class);
 
+	/**
+	 * CLI entry point — called by reportburster.bat via Ant.
+	 * Calls execute() then System.exit().
+	 */
 	public static void main(String[] args) throws Throwable {
+		int exitCode = execute(args);
+		System.exit(exitCode);
+	}
+
+	/**
+	 * Execute a command with full lifecycle: log start, run, log end, archive logs.
+	 * Called by both CLI (main → execute → System.exit) and REST (JobExecutionService → execute).
+	 * Same code path, same logging, same behavior — only difference is CLI exits the JVM after.
+	 */
+	public static int execute(String[] args) throws Throwable {
 		int exitCode = 0;
 
-		// Filter out empty arguments
+		// Filter out empty arguments and Ant's unresolved ${argN} placeholders
 		args = Arrays.stream(args).filter(arg -> arg != null && !arg.trim().isEmpty() && !arg.startsWith("${arg"))
 				.toArray(String[]::new);
 
 		log.info("***********************Program Started with Arguments : " + Arrays.toString(args)
 				+ "***********************");
 
-		// Enable Picocli debug tracing
-		// System.setProperty("picocli.trace", "DEBUG");
-
 		GlobalContext global = new GlobalContext();
 
 		try {
-			// Create a MainProgram instance
 			MainProgram program = new MainProgram();
 			program.setGlobal(global);
 
-			// Use picocli to execute the command directly with custom exception handlers
 			CommandLine commandLine = new CommandLine(program);
 
-			// Set parameter exception handler to capture validation errors
 			commandLine.setParameterExceptionHandler((ex, args1) -> {
 				String errorMsg = "Command parameter validation error: " + ex.getMessage();
 				log.error(errorMsg, ex);
 				ex.getCommandLine().usage(System.err);
-				return 2; // Standard exit code for user errors
+				return 2;
 			});
 
-			// Set execution exception handler to capture runtime errors
 			commandLine.setExecutionExceptionHandler((ex, cmd, parseResult) -> {
 				String errorMsg = ex.getMessage();
 				log.error(errorMsg, ex);
-				return 1; // Standard exit code for runtime errors
+				return 1;
 			});
 
 			exitCode = commandLine.execute(args);
 
-			// Check if execution failed
 			if (exitCode != 0) {
 				String errorMsg = "Command execution failed with exit code: " + exitCode;
 				log.error(errorMsg);
-				// Not throwing exception here to avoid hiding the real error
 			}
 
 		} catch (Throwable e) {
@@ -70,8 +75,8 @@ public class DocumentBurster {
 
 			if (StringUtils.isNotEmpty(global.logsArchivesFolder))
 				Utils.archiveLogFiles(global.logsArchivesFolder);
-
-			System.exit(exitCode);
 		}
+
+		return exitCode;
 	}
 }

@@ -28,7 +28,7 @@ const SKIP_NON_DATABASE_TESTS = false;
 const DB_VENDORS_SELECTED: string[] = (() => {
   
   //return ['supabase'];
-  
+  //return ['mysql'];
   //return ['mariadb'];
 
   //return ['oracle', 'ibmdb2'];
@@ -43,6 +43,7 @@ const DB_VENDORS_SELECTED: string[] = (() => {
   //return ['clickhouse'];
   //return ['duckdb', 'clickhouse'];
   // return ['sqlite', 'duckdb', 'clickhouse'];
+  // return ['ibmdb2', 'clickhouse'];
   const alwaysIncluded = ['sqlite', 'duckdb'];
   const pool = DB_VENDORS_SUPPORTED.filter(v => !alwaysIncluded.includes(v));
 

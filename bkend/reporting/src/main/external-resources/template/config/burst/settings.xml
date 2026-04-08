@@ -2,7 +2,7 @@
 <documentburster>
 	<settings>
 		<!-- DocumentBurster version -->
-		<version>14.5.0</version>
+		<version>14.6.0</version>
 		<!-- template name -->
 		<template>My Reports</template>
 		<!-- file name for the burst files -->
@@ -49,7 +49,7 @@
 		<deletefiles>false</deletefiles>
 		<!-- email server settings -->
 		<emailserver>
-			<useconn>false</useconn>
+			<useconn>true</useconn>
       		<conncode>eml-contact</conncode>
       		<host>Email Server Host</host>
 			<!-- email server port. 25 is the default SMTP port -->

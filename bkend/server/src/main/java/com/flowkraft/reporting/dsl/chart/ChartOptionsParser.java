@@ -30,7 +30,8 @@ public class ChartOptionsParser {
 		config.setScriptBaseClass(ChartOptionsScript.class.getName());
 
 		// System.out.println("[DEBUG] ChartOptionsParser: creating GroovyShell...");
-		GroovyShell shell = new GroovyShell(binding, config);
+		// Pass the script base class's classloader as parent — see TabulatorOptionsParser comment.
+		GroovyShell shell = new GroovyShell(ChartOptionsScript.class.getClassLoader(), binding, config);
 		// System.out.println("[DEBUG] ChartOptionsParser: parsing script...");
 		ChartOptionsScript script = (ChartOptionsScript) shell.parse(groovyDslCode);
 		script.setBinding(binding);

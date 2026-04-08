@@ -17,7 +17,9 @@ package com.sourcekraft.documentburster.sender;
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
+import com.sourcekraft.documentburster.common.security.SecretsCipher;
 import com.sourcekraft.documentburster.context.BurstingContext;
 import com.sourcekraft.documentburster.sender.factory.EmailMessageFactory;
 import com.sourcekraft.documentburster.sender.model.EmailMessage;
@@ -39,8 +41,26 @@ public class EmailSender extends AbstractSender {
 			FileUtils.writeStringToFile(new File(ctx.outputFolder + "/quality-assurance/" + ctx.token + "_email.txt"),
 					message.toString(), "UTF-8");
 
-		if (execute)
-			scripting.executeSenderScript(ctx.scripts.email, message);
+		if (execute) {
+			try {
+				// Decrypt credentials right before SMTP use — minimum plaintext lifetime
+				if (message.isAuthentication && StringUtils.isNotEmpty(message.authpwd)) {
+					message.authpwd = SecretsCipher.decryptGraceful(message.authpwd);
+				}
+				if (message.sjm != null && message.sjm.proxy != null
+						&& StringUtils.isNotEmpty(message.sjm.proxy.password)) {
+					message.sjm.proxy.password = SecretsCipher.decryptGraceful(message.sjm.proxy.password);
+				}
+
+				scripting.executeSenderScript(ctx.scripts.email, message);
+			} finally {
+				// Clear plaintext immediately after SMTP send
+				message.authpwd = null;
+				if (message.sjm != null && message.sjm.proxy != null) {
+					message.sjm.proxy.password = null;
+				}
+			}
+		}
 
 		if (ctx.isQARunningMode)
 			log.info("(Running in QA Mode) Email with attachments " + ctx.attachments + " was sent successfully TO : "

@@ -26,7 +26,7 @@ public class DumpToString implements Serializable {
 
 	/** Fields containing these substrings will be masked in toString() output. */
 	private static final String[] SENSITIVE_FIELD_NAMES = {
-			"password", "passwd", "secret", "token", "authtoken", "accountsid", "apikey"
+			"password", "passwd", "secret", "token", "authtoken", "apikey"
 	};
 
 	@Override

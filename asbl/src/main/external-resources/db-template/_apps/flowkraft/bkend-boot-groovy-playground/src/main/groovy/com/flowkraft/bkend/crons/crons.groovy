@@ -29,6 +29,17 @@ class Crons {
     //
     // Requires: Windows + Microsoft Excel installed
     //
+    // IMPORTANT: This feature uses COM automation (JACOB) which only
+    // works on Windows. If this app is running in Docker (Linux),
+    // the Excel refresh will fail. You must run the Groovy playground
+    // natively on Windows for this feature:
+    //
+    //   cd _apps/flowkraft/bkend-boot-groovy-playground
+    //   mvnw.cmd spring-boot:run ^
+    //     -Dspring-boot.run.jvmArguments="-Djava.library.path=lib"
+    //
+    // See ExcelHelper.groovy and the blog post for full setup details.
+    //
     // Common use case: refresh 50-100 Excel dashboards with live
     // database connections every morning before the team arrives.
     //

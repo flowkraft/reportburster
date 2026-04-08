@@ -352,17 +352,17 @@ public class DockerService {
 				ServicesManager.Result r = ServicesManager.execute("app stop " + serviceName);
 				String status = (r != null ? r.status : "null");
 				String outputStr = (r != null && r.output != null ? r.output.replaceAll("\r?\n", " ") : "");
-				System.out.println("pause/cancel: executed 'app stop " + serviceName + "' -> status=" + status
-						+ " output=" + outputStr);
+				// System.out.println("pause/cancel: executed 'app stop " + serviceName + "' -> status=" + status
+				// 		+ " output=" + outputStr);
 
 				if ("stopped".equalsIgnoreCase(status) || "ok".equalsIgnoreCase(status)) {
 					FileUtils.deleteQuietly(jobPath.toFile());
 					FileUtils.deleteQuietly(p.toFile());
 					FileUtils.deleteQuietly(jobsDir.resolve(baseName + ".progress").toFile());
-					System.out.println("pause/cancel: cleaned up job files for " + baseName);
+					// System.out.println("pause/cancel: cleaned up job files for " + baseName);
 				} else {
-					System.err.println("pause/cancel: stop command did not indicate success for " + serviceName
-							+ " (status=" + status + "). Leaving signal file for retry.");
+					// System.err.println("pause/cancel: stop command did not indicate success for " + serviceName
+					// 		+ " (status=" + status + "). Leaving signal file for retry.");
 				}
 			} catch (Exception ex) {
 				System.err.println(

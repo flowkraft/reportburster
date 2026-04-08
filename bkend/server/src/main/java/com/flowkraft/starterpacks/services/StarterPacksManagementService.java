@@ -64,17 +64,49 @@ public class StarterPacksManagementService {
         final String[] args = cleanCommand.split("\\s+");
         final String cmd = command;
 
-        // Block until command completes — same timing as old ProcessService.spawn().
-        // Runs on dedicated thread pool to avoid reactor InterruptedException.
-        return Mono.fromCallable(() -> {
+        // Commands that complete quickly (custom seed scripts) run synchronously —
+        // the HTTP response blocks until the script finishes, giving the frontend
+        // a clean completion signal.
+        // Long-running commands (docker compose start/stop) run async and return
+        // "pending" immediately — the frontend polls Docker status for actual state.
+        if (cleanCommand.contains("run-custom-seed")) {
+            return Mono.fromCallable(() -> {
+                // Capture stdout + stderr so Groovy errors reach the frontend
+                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                java.io.PrintStream capture = new java.io.PrintStream(baos);
+                java.io.PrintStream origOut = System.out;
+                java.io.PrintStream origErr = System.err;
+                try {
+                    System.setOut(capture);
+                    System.setErr(capture);
+                    new MainProgram().execute(args);
+                    String output = baos.toString().trim();
+                    log.info("Command completed: {}", cmd);
+                    return new ExecuteCommandResponseDto(
+                            output.isEmpty() ? "Custom seed script completed" : output, "ok");
+                } catch (Throwable e) {
+                    String output = baos.toString().trim();
+                    log.error("Command failed: {}", e.getMessage(), e);
+                    String msg = output.isEmpty() ? e.getMessage() : output;
+                    return new ExecuteCommandResponseDto("Error: " + msg, "error");
+                } finally {
+                    System.setOut(origOut);
+                    System.setErr(origErr);
+                }
+            }).subscribeOn(Schedulers.boundedElastic());
+        }
+
+        // Async: returns immediately with "pending" for long-running commands (docker compose).
+        // The frontend polls /system/services/status for actual state.
+        executor.submit(() -> {
             try {
                 new MainProgram().execute(args);
                 log.info("Command completed: {}", cmd);
-                return new ExecuteCommandResponseDto("Done: " + cmd, "ok");
             } catch (Throwable e) {
                 log.error("Command failed: {}", e.getMessage(), e);
-                return new ExecuteCommandResponseDto("Error: " + e.getMessage(), "error");
             }
-        }).subscribeOn(Schedulers.fromExecutor(executor));
+        });
+
+        return Mono.just(new ExecuteCommandResponseDto("Executing: " + cmd, "pending"));
     }
 }

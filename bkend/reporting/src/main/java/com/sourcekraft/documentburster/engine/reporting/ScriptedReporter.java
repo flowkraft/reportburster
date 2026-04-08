@@ -241,12 +241,6 @@ public class ScriptedReporter extends AbstractReporter {
 	}
 
 	@Override
-	protected void closeResources() throws Exception {
-		// Database handle is closed in fetchData's finally block.
-		log.trace("closeResources - db handle cleanup handled in fetchData.");
-	}
-
-	@Override
 	protected void backupFile() throws Exception {
 		// ScriptedReporter typically doesn't have a single input file like PdfBurster.
 		log.debug("Skipping backupFile for ScriptedReporter as there is no single input file.");

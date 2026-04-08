@@ -358,11 +358,23 @@ export class AppsManagerService {
 
         if (service) {
           // Use shared helper to map backend status to UI state (handles healthcheck states)
-          this.appStates[app.id] = PollingHelper.mapBackendStatusToUiState(service.status);
+          const mapped = PollingHelper.mapBackendStatusToUiState(service.status);
+          const current = this.appStates[app.id];
 
-          // Clear persisted transitional state once we reach a stable state
+          // Preserve transitional 'stopping' state while the stop command is in-flight
+          // (docker compose down still running → container still reported as 'running').
+          // Without this guard, polling would flip 'stopping' back to 'running' for the
+          // ~5 seconds it takes compose-down to finish, re-enabling the Start/Stop button.
+          if (this.commandsInFlight.has(app.id) && current === 'stopping' && mapped === 'running') {
+            console.debug(`[AppsManager] Preserving 'stopping' for ${app.id} (stop command in-flight)`);
+          } else {
+            this.appStates[app.id] = mapped;
+          }
+
+          // Clear persisted transitional state and in-flight flag once we reach a stable state
           if (PollingHelper.isStableState(this.appStates[app.id])) {
             this.clearTransitionalState(app.id);
+            this.commandsInFlight.delete(app.id);
           }
 
           // If app has no `url`, derive one from the container's exposed ports (use first host-mapped port)
@@ -372,7 +384,7 @@ export class AppsManagerService {
               const portMatch = (service.ports || '').match(/:(\d+)->/);
               if (portMatch && portMatch[1]) {
                 app.url = `http://localhost:${portMatch[1]}`;
-                console.log(`[AppsManager] Derived URL for app ${app.id}: ${app.url}`);
+                // console.log(`[AppsManager] Derived URL for app ${app.id}: ${app.url}`);
               }
             }
           } catch (e) {
@@ -389,8 +401,17 @@ export class AppsManagerService {
           // is actively running (spawn process hasn't returned yet, e.g. image still downloading).
           // Once the command completes or on page reload, no container = stopped.
           if (this.commandsInFlight.has(app.id)) {
-            // Command still executing (image downloading, build in progress) — keep transitional state
-            console.debug(`[AppsManager] No container for ${app.id}, but command still in-flight — preserving transitional state`);
+            const currentState = this.appStates[app.id];
+            if (currentState === 'stopping') {
+              // Container gone mid-stop → stop command has completed successfully.
+              // Finalize to 'stopped' and clear in-flight so polling can terminate.
+              this.appStates[app.id] = 'stopped';
+              this.clearTransitionalState(app.id);
+              this.commandsInFlight.delete(app.id);
+            } else {
+              // Start command still executing (image downloading, build in progress) — keep transitional state
+              console.debug(`[AppsManager] No container for ${app.id}, but command still in-flight — preserving transitional state`);
+            }
           } else {
             // Command completed or page was reloaded — docker ps is truth, no container = stopped
             const currentState = this.appStates[app.id];
@@ -521,13 +542,16 @@ export class AppsManagerService {
 
     try {
       const response = await this.apiService.post('/starter-packs/execute', { command: commandStr });
-      this.commandsInFlight.delete(app.id);
       if (response && response.status && response.status !== 'error') {
+        // Keep commandsInFlight — backend runs async (fire-and-forget),
+        // Docker may not have started yet. refreshAllStatuses() preserves
+        // transitional state while in-flight.
         this.appStates[app.id] = 'starting';
         this.appLastOutputs[app.id] = response.output || `✓ ${app.name} container started, waiting for health check...`;
         app.state = 'starting';
         app.lastOutput = this.appLastOutputs[app.id];
       } else {
+        this.commandsInFlight.delete(app.id);
         this.appStates[app.id] = 'error';
         this.clearTransitionalState(app.id);
         this.appLastOutputs[app.id] = response?.output || `✗ Failed to start ${app.name}.`;
@@ -544,11 +568,8 @@ export class AppsManagerService {
       app.lastOutput = this.appLastOutputs[app.id];
       app.currentCommandValue = app.startCmd;
     }
-    await this.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.allAppsData.apps));
-    const apiState = this.appStates[app.id] ?? app.state;
-    app.state = apiState;
-    // Always sync currentCommandValue with actual state after refresh
-    app.currentCommandValue = (apiState === 'running' || apiState === 'starting') ? app.stopCmd : app.startCmd;
+    // Don't refreshAllStatuses() here — it overwrites the optimistic state.
+    // Polling will confirm the real state from Docker.
   }
 
   // Reprovision action for WordPress CMS. Executes startCmd with --reprovision (alias to rebuild-theme)
@@ -594,10 +615,8 @@ export class AppsManagerService {
       app.state = 'error';
       app.lastOutput = this.appLastOutputs[app.id];
     }
-    await this.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.allAppsData.apps));
-    const apiState = this.appStates[app.id] ?? app.state;
-    app.state = apiState;
-    app.currentCommandValue = (apiState === 'running' || apiState === 'starting') ? app.stopCmd : app.startCmd;
+    // Don't refreshAllStatuses() here — it overwrites the optimistic state.
+    // Polling will confirm the real state from Docker.
   }
 
   // Stop an app
@@ -638,15 +657,17 @@ export class AppsManagerService {
 
     try {
       const response = await this.apiService.post('/starter-packs/execute', { command: commandStr });
-      this.commandsInFlight.delete(app.id);
       if (response && response.status && response.status !== 'error') {
-        this.appStates[app.id] = 'stopped';
-        this.clearTransitionalState(app.id);
-        this.appLastOutputs[app.id] = response.output || `✓ ${app.name} stopped successfully.`;
-        try { app.state = 'stopped'; } catch (e) { }
+        // Keep commandsInFlight — backend runs async (fire-and-forget),
+        // docker compose down may not have finished yet. refreshAllStatuses()
+        // preserves transitional 'stopping' state while in-flight.
+        this.appStates[app.id] = 'stopping';
+        this.appLastOutputs[app.id] = response.output || `Stopping ${app.name}...`;
+        try { app.state = 'stopping'; } catch (e) { }
         try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e) { }
-        try { app.currentCommandValue = app.startCmd; } catch (e) { }
+        // currentCommandValue stays at app.stopCmd — we are still mid-stop
       } else {
+        this.commandsInFlight.delete(app.id);
         this.appStates[app.id] = 'error';
         this.clearTransitionalState(app.id);
         this.appLastOutputs[app.id] = response?.output || `✗ Failed to stop ${app.name}.`;
@@ -661,15 +682,7 @@ export class AppsManagerService {
       try { app.state = 'error'; } catch (e2) { }
       try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e2) { }
     }
-    // Automatic refresh after action to get authoritative state from API
-    try {
-      await this.refreshAllStatuses(PollingHelper.hasTransitionalItems(this.allAppsData.apps));
-      const apiState = this.appStates[app.id] ?? app.state;
-      try { app.state = apiState; } catch (e) { }
-      // Always sync currentCommandValue with actual state after refresh
-      try { app.currentCommandValue = apiState === 'running' ? app.stopCmd : app.startCmd; } catch (e) { }
-    } catch (e) {
-      console.error('refreshAllStatuses failed after stop:', e);
-    }
+    // Don't refreshAllStatuses() here — it overwrites the optimistic state.
+    // Polling will confirm the real state from Docker.
   }
 }

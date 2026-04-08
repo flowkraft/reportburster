@@ -15,8 +15,11 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.sourcekraft.documentburster.common.settings.Settings;
 
 /**
  * AES-256-GCM encryption for passwords and secrets at rest.
@@ -150,6 +153,21 @@ public class SecretsCipher {
 
 		byte[] plaintext = cipher.doFinal(ciphertext);
 		return new String(plaintext, StandardCharsets.UTF_8);
+	}
+
+	/**
+	 * Decrypt with graceful fallback — returns the original value if decryption
+	 * fails or the value is not encrypted. Used by senders at the point of use.
+	 */
+	public static String decryptGraceful(String value) {
+		if (StringUtils.isEmpty(value) || !isEncrypted(value))
+			return value;
+		try {
+			return getInstance(Settings.PORTABLE_EXECUTABLE_DIR_PATH).decrypt(value);
+		} catch (Exception e) {
+			log.warn("Failed to decrypt: {}", e.getMessage());
+			return value;
+		}
 	}
 
 	/**

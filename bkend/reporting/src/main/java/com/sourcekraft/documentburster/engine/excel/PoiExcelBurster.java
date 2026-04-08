@@ -12,6 +12,8 @@ import java.util.Random;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+
+import com.sourcekraft.documentburster.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.poi.ss.usermodel.Cell;
@@ -333,7 +335,7 @@ public class PoiExcelBurster extends AbstractBurster {
 
 		Random generator = new Random(Long.MAX_VALUE);
 
-		return "./temp/" + baseName + "_" + generator.nextInt() + "." + extension;
+		return Utils.getTempFolder() + baseName + "_" + generator.nextInt() + "." + extension;
 
 	}
 

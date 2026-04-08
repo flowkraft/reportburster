@@ -466,7 +466,7 @@ Started ServerApplication with PID 13404`,
 
         fileContent = fileContent.replace(
           /\<documentpath\/\>/g,
-          `<documentpath>/templates/reports/payslips/payslips-template.docx</documentpath>`,
+          `<documentpath>templates/reports/payslips/payslips-template.docx</documentpath>`,
         );
 
         // Write the new content back to the file

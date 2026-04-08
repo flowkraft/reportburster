@@ -62,20 +62,11 @@ public class SmsSender extends AbstractSender {
         switch (type) {
         case TWILIO:
 
-            // Decrypt Twilio credentials at the exact moment of use — never store plaintext
-            String decryptedSid = smsSettings.twilio.accountsid;
-            String decryptedToken = smsSettings.twilio.authtoken;
-            try {
-                SecretsCipher cipher = SecretsCipher.getInstance(Settings.PORTABLE_EXECUTABLE_DIR_PATH);
-                decryptedSid = cipher.decrypt(smsSettings.twilio.accountsid);
-                decryptedToken = cipher.decrypt(smsSettings.twilio.authtoken);
-            } catch (Exception e) {
-                log.warn("Failed to decrypt Twilio credentials: {}", e.getMessage());
-            }
-            message.twilio.accountsid =
-                    Utils.getStringFromTemplate(decryptedSid, ctx.variables, ctx.token);
-            message.twilio.authtoken =
-                    Utils.getStringFromTemplate(decryptedToken, ctx.variables, ctx.token);
+            // Decrypt Twilio credentials right before use — minimum plaintext lifetime
+            message.twilio.accountsid = Utils.getStringFromTemplate(
+                    SecretsCipher.decryptGraceful(smsSettings.twilio.accountsid), ctx.variables, ctx.token);
+            message.twilio.authtoken = Utils.getStringFromTemplate(
+                    SecretsCipher.decryptGraceful(smsSettings.twilio.authtoken), ctx.variables, ctx.token);
             ctx.scripts.sms = Scripts.TWILIO;
             typeStr = "twilio";
             break;
@@ -90,8 +81,15 @@ public class SmsSender extends AbstractSender {
             FileUtils.writeStringToFile(new File(ctx.outputFolder + "/quality-assurance/" + ctx.token + "_sms_"
                     + typeStr + ".txt"), message.toString(), "UTF-8");
 
-        if (execute)
-            scripting.executeSenderScript(ctx.scripts.sms, message);
+        if (execute) {
+            try {
+                scripting.executeSenderScript(ctx.scripts.sms, message);
+            } finally {
+                // Clear plaintext credentials immediately after send
+                message.twilio.accountsid = null;
+                message.twilio.authtoken = null;
+            }
+        }
 
         log.info("SMS message '" + message + "' sent successfully.");
 

@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## 14.6.0 - 2026-04-13
+
+### Added
+
+- **REST API for integration and automation** — All core operations (burst, generate, merge, license, connections) are now available as REST endpoints. Integrate ReportBurster into your workflows, CI/CD pipelines, or custom applications using simple HTTP calls. Interactive documentation available at `/swagger-ui.html` when the server is running.
+
+- **CLI and REST API documentation** — New documentation pages with ready-to-run examples for both the command line interface and REST API.
+
+- **Data Canvas and Cube semantic layer (foundations)** — Added the foundational code for an improved Data Exploration experience: a visual drag-and-drop canvas for building interactive views with charts, tables, pivot tables, and filters, backed by a cube-based semantic layer that defines dimensions, measures, and joins over your database tables.
+
+### Changed
+
+- **In-process job execution** — Burst, generate, and merge operations now run inside the server process instead of spawning a separate JVM via `reportburster.bat`. This eliminates the 2-3 second JVM startup overhead per job and provides more reliable status bar feedback.
+
+- **Passwords encrypted at rest** — Database, email, and SMS passwords are now encrypted on disk (AES-256-GCM) and decrypted only at the exact moment they are needed (SMTP connect, JDBC connect, Twilio call), then cleared from memory immediately after.
+
 ## 14.5.0 - 2026-03-30
 
 ### Fixed

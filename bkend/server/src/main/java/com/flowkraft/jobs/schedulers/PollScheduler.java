@@ -21,8 +21,9 @@ import org.springframework.stereotype.Component;
 import com.flowkraft.common.Constants;
 import com.flowkraft.common.Utils;
 import com.flowkraft.jobs.models.FileInfo;
+import com.flowkraft.jobs.services.JobExecutionService;
 import com.flowkraft.jobs.services.JobsService;
-import com.flowkraft.jobs.services.ShellService;
+import com.flowkraft.common.AppPaths;
 
 @Component
 public class PollScheduler {
@@ -34,7 +35,7 @@ public class PollScheduler {
 	JobsService jobsService;
 
 	@Autowired
-	private ShellService shellService;
+	JobExecutionService jobExecutionService;
 
 	// put the new files in a waitQueue just to be sure we don't try to process
 	// incomplete files which are not yet fully copied to the "poll" folder
@@ -116,28 +117,26 @@ public class PollScheduler {
 
 					FileUtils.moveFile(polledFile, fileToProcess);
 
-					// Updated to use the new CLI interface
-					// Instead of passing "-f filepath", we now use the new command structure "burst
-					// filepath"
-					shellService.runDocumentBursterBatScriptFile("burst \"" + filePathToProcess + "\"", file -> {
+					// In-process execution via JobExecutionService (replaces ShellService)
+					jobExecutionService.executeAsync(new String[] { "burst", filePathToProcess }, () -> {
+						try {
+							List<FileInfo> progressFile = this.jobsService.fetchStats()
+									.filter(f -> f.fileName.endsWith(Constants.EXTENTION_PROGRESS_FILE)
+											&& f.fileContent.contains(filePathToProcess))
+									.collect(Collectors.toList());
 
-						List<FileInfo> progressFile = this.jobsService.fetchStats()
-								.filter(f -> f.fileName.endsWith(Constants.EXTENTION_PROGRESS_FILE)
-										&& f.fileContent.contains(filePathToProcess))
-								.collect(Collectors.toList());
+							// if there is a corresponding .progress file do not remove the file since it
+							// might be "Resumed" later
+							if (Objects.isNull(progressFile) || progressFile.size() == 0) {
+								FileUtils.forceDelete(fileToProcess);
+							}
 
-						// if there is a corresponding .progress file do not remove the file since it
-						// might be "Resumed" later
-						if (Objects.isNull(progressFile) || progressFile.size() == 0) {
-							// System.out.println("Deleting file: " + file.getAbsolutePath());
-							FileUtils.forceDelete(file);
+							waitQueue.remove(polledFilePath);
+							jobsService.state.numberOfActiveJobs = 0;
+						} catch (Exception e) {
+							// ignore cleanup errors
 						}
-
-						// System.out.println("Removing file from wait queue: " + polledFilePath);
-						waitQueue.remove(polledFilePath);
-						jobsService.state.numberOfActiveJobs = 0;
-
-					}, fileToProcess);
+					});
 				}
 			}
 		// System.out.println("Polling ended...");

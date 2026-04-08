@@ -25,7 +25,7 @@ const SECURITY_EMAIL_CONNECTION_FILENAME = `eml-${_.kebabCase(SECURITY_EMAIL_CON
 const SECURITY_EMAIL_CONNECTION_FILENAME_RAW = `eml-${_.kebabCase(SECURITY_EMAIL_CONNECTION_NAME)}.xml`;
 
 const SECURITY_DB_CONNECTION_NAME = 'Security Test Db';
-const SECURITY_DB_VENDOR = 'sqlite';
+const SECURITY_DB_VENDOR = 'postgres';
 const SECURITY_DB_CONNECTION_CODE = `db-${_.kebabCase(SECURITY_DB_CONNECTION_NAME)}-${SECURITY_DB_VENDOR}`;
 const SECURITY_DB_CONNECTION_FILENAME = `${SECURITY_DB_CONNECTION_CODE}\\.xml`;
 const SECURITY_DB_CONNECTION_FILENAME_RAW = `${SECURITY_DB_CONNECTION_CODE}.xml`;
@@ -49,7 +49,7 @@ test.describe('Security Tests', async () => {
 
       // Create a new email connection with a KNOWN literal password
       await ft
-        .gotoConnections()
+        .navigateToConnectionsPage()
         .waitOnElementToBecomeEnabled('#btnNewDropdown')
         .click('#btnNewDropdown')
         .waitOnElementToBecomeVisible('#btnNewEmail')
@@ -80,11 +80,16 @@ test.describe('Security Tests', async () => {
         .fileContentShouldContain(xmlPath, 'ENC(')
         .fileContentShouldNotContain(xmlPath, KNOWN_EMAIL_PASSWORD);
 
-      // Cleanup: delete the connection
-      await ConnectionsTestHelper.deleteAndAssertEmailConnection(
-        ft.gotoConnections(),
-        SECURITY_EMAIL_CONNECTION_FILENAME,
-      );
+      // Cleanup: delete the email connection (inline to avoid gotoConnections() precondition)
+      await ft
+        .navigateToConnectionsPage()
+        .waitOnElementToBecomeVisible(`#${SECURITY_EMAIL_CONNECTION_FILENAME}`)
+        .clickAndSelectTableRow(`#${SECURITY_EMAIL_CONNECTION_FILENAME}`)
+        .waitOnElementToBecomeEnabled('#btnDelete')
+        .click('#btnDelete')
+        .waitOnElementToBecomeVisible('#confirmDialog')
+        .clickYesDoThis()
+        .waitOnElementToBecomeInvisible(`#${SECURITY_EMAIL_CONNECTION_FILENAME}`);
     },
   );
 
@@ -103,7 +108,7 @@ test.describe('Security Tests', async () => {
 
       // Create a new SQLite database connection with a KNOWN literal password
       await ft
-        .gotoConnections()
+        .navigateToConnectionsPage()
         .waitOnElementToBecomeEnabled('#btnNewDropdown')
         .click('#btnNewDropdown')
         .waitOnElementToBecomeVisible('#btnNewDatabase')
@@ -113,20 +118,13 @@ test.describe('Security Tests', async () => {
         .click('#dbConnectionName')
         .typeText(SECURITY_DB_CONNECTION_NAME)
         .dropDownSelectOptionHavingValue('#dbType', SECURITY_DB_VENDOR)
-        .waitOnElementToBecomeEnabled('#btnBrowseSqliteFile')
-        .click('#btnBrowseSqliteFile')
-        .waitOnElementToBecomeEnabled('#childDirLinksample-northwind-sqlite')
-        .click('#childDirLinksample-northwind-sqlite')
-        .waitOnElementToBecomeVisible('#tdFileNamenorthwind\\.db')
-        .elementShouldBeDisabled('#btnSelectFileExplorer')
-        .click('#tdFileNamenorthwind\\.db')
-        .waitOnElementToBecomeEnabled('#btnSelectFileExplorer')
-        .click('#btnSelectFileExplorer')
-        .waitOnElementToBecomeInvisible('#btnSelectFileExplorer')
-        .waitOnInputValueToContainText(
-          '#dbName',
-          '/db/sample-northwind-sqlite/northwind.db',
-        )
+        .waitOnElementToBecomeEnabled('#dbPassword')
+        .click('#dbHost')
+        .typeText('localhost')
+        .click('#dbPort')
+        .typeText('5432')
+        .click('#dbName')
+        .typeText('security_test_db')
         .click('#dbPassword')
         .typeText(KNOWN_DB_PASSWORD)
         .waitOnElementToBecomeEnabled('#btnOKConfirmationDbConnectionModal')
@@ -140,7 +138,99 @@ test.describe('Security Tests', async () => {
 
       // Cleanup: delete the connection
       await ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
-        ft.gotoConnections(),
+        ft.navigateToConnectionsPage(),
+        SECURITY_DB_CONNECTION_FILENAME,
+        SECURITY_DB_VENDOR,
+      );
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    '(password-encryption) email password should decrypt back to the original value via reveal-password API',
+    async ({ beforeAfterEach: firstPage }) => {
+      test.setTimeout(Constants.DELAY_FIVE_HUNDRED_SECONDS);
+      const ft = new FluentTester(firstPage);
+
+      const emailConnectionId = SECURITY_EMAIL_CONNECTION_FILENAME_RAW.replace('.xml', '');
+
+      // Create a new email connection with a KNOWN password, then verify
+      // the reveal-password API decrypts it back to the original value
+      await ft
+        .navigateToConnectionsPage()
+        .waitOnElementToBecomeEnabled('#btnNewDropdown')
+        .click('#btnNewDropdown')
+        .waitOnElementToBecomeVisible('#btnNewEmail')
+        .click('#btnNewEmail')
+        .waitOnElementToBecomeVisible('#connectionName')
+        .click('#connectionName')
+        .typeText(SECURITY_EMAIL_CONNECTION_NAME)
+        .waitOnElementToBecomeEnabled('#btnOKConfirmationConnectionModal')
+        .click('#emailServerHost')
+        .typeText('smtp.decrypt-test.example.com')
+        .click('#smtpPassword')
+        .typeText(KNOWN_EMAIL_PASSWORD)
+        .click('#btnOKConfirmationConnectionModal')
+        .waitOnElementToHaveText(
+          `#${SECURITY_EMAIL_CONNECTION_FILENAME} td:first-child`,
+          SECURITY_EMAIL_CONNECTION_NAME,
+        )
+        // Assert: reveal-password API decrypts back to the original value
+        .apiGetJsonValueShouldEqual(
+          `http://localhost:9090/api/connections/${emailConnectionId}/reveal-password?field=userpassword`,
+          'password',
+          KNOWN_EMAIL_PASSWORD,
+        );
+
+      // Cleanup: delete the connection
+      await ConnectionsTestHelper.deleteAndAssertEmailConnection(
+        ft.navigateToConnectionsPage(),
+        SECURITY_EMAIL_CONNECTION_FILENAME,
+      );
+    },
+  );
+
+  electronBeforeAfterAllTest(
+    '(password-encryption) database password should decrypt back to the original value via reveal-password API',
+    async ({ beforeAfterEach: firstPage }) => {
+      test.setTimeout(Constants.DELAY_FIVE_HUNDRED_SECONDS);
+      const ft = new FluentTester(firstPage);
+
+      // Create a new database connection with a KNOWN password, then verify
+      // the reveal-password API decrypts it back to the original value
+      await ft
+        .navigateToConnectionsPage()
+        .waitOnElementToBecomeEnabled('#btnNewDropdown')
+        .click('#btnNewDropdown')
+        .waitOnElementToBecomeVisible('#btnNewDatabase')
+        .click('#btnNewDatabase')
+        .waitOnElementToBecomeVisible('#modalDbConnection')
+        .waitOnElementToBecomeEnabled('#dbConnectionName')
+        .click('#dbConnectionName')
+        .typeText(SECURITY_DB_CONNECTION_NAME)
+        .dropDownSelectOptionHavingValue('#dbType', SECURITY_DB_VENDOR)
+        .waitOnElementToBecomeEnabled('#dbPassword')
+        .click('#dbHost')
+        .typeText('localhost')
+        .click('#dbPort')
+        .typeText('5432')
+        .click('#dbName')
+        .typeText('security_test_db')
+        .click('#dbPassword')
+        .typeText(KNOWN_DB_PASSWORD)
+        .waitOnElementToBecomeEnabled('#btnOKConfirmationDbConnectionModal')
+        .click('#btnOKConfirmationDbConnectionModal')
+        .waitOnElementToBecomeInvisible('#btnOKConfirmationDbConnectionModal')
+        .waitOnElementToBecomeVisible(`#${SECURITY_DB_CONNECTION_FILENAME}`)
+        // Assert: reveal-password API decrypts back to the original value
+        .apiGetJsonValueShouldEqual(
+          `http://localhost:9090/api/connections/${SECURITY_DB_CONNECTION_CODE}/reveal-password?field=userpassword`,
+          'password',
+          KNOWN_DB_PASSWORD,
+        );
+
+      // Cleanup: delete the connection
+      await ConnectionsTestHelper.deleteAndAssertDatabaseConnection(
+        ft.navigateToConnectionsPage(),
         SECURITY_DB_CONNECTION_FILENAME,
         SECURITY_DB_VENDOR,
       );
@@ -159,7 +249,7 @@ test.describe('Security Tests', async () => {
 
       // Open a new email connection modal to inspect the password field
       await ft
-        .gotoConnections()
+        .navigateToConnectionsPage()
         .waitOnElementToBecomeEnabled('#btnNewDropdown')
         .click('#btnNewDropdown')
         .waitOnElementToBecomeVisible('#btnNewEmail')
@@ -193,7 +283,7 @@ test.describe('Security Tests', async () => {
 
       // Open a new database connection modal to inspect the password field
       await ft
-        .gotoConnections()
+        .navigateToConnectionsPage()
         .waitOnElementToBecomeEnabled('#btnNewDropdown')
         .click('#btnNewDropdown')
         .waitOnElementToBecomeVisible('#btnNewDatabase')
@@ -241,7 +331,7 @@ test.describe('Security Tests', async () => {
 
       // Create an email connection with a KNOWN password
       await ft
-        .gotoConnections()
+        .navigateToConnectionsPage()
         .waitOnElementToBecomeEnabled('#btnNewDropdown')
         .click('#btnNewDropdown')
         .waitOnElementToBecomeVisible('#btnNewEmail')
@@ -266,7 +356,7 @@ test.describe('Security Tests', async () => {
 
       // Cleanup: delete the connection
       await ConnectionsTestHelper.deleteAndAssertEmailConnection(
-        ft.gotoConnections(),
+        ft.navigateToConnectionsPage(),
         SECURITY_EMAIL_CONNECTION_FILENAME,
       );
     },

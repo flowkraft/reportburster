@@ -12,13 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.flowkraft.common.AppPaths;
-import com.sourcekraft.documentburster.common.db.DatabaseConnectionTester;
-import com.sourcekraft.documentburster.common.db.DatabaseSchemaFetcher;
-import com.sourcekraft.documentburster.common.db.schema.SchemaInfo;
+import com.flowkraft.jobs.services.JobExecutionService;
 import com.sourcekraft.documentburster.common.settings.Settings;
+import com.sourcekraft.documentburster.job.CliJob;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionEmailSettings;
-import com.sourcekraft.documentburster.job.CliJob;
 
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.Marshaller;
@@ -34,6 +32,9 @@ public class ConnectionsService {
 
 	private static final Logger log = LoggerFactory.getLogger(ConnectionsService.class);
 
+	@org.springframework.beans.factory.annotation.Autowired
+	private JobExecutionService jobExecutionService;
+
 	private String getConnectionsDir() {
 		return AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/connections";
 	}
@@ -42,55 +43,64 @@ public class ConnectionsService {
 		return getConnectionsDir() + "/" + connectionId + "/" + connectionId + ".xml";
 	}
 
+	/** Resolve file path for a database connection: config/connections/{id}/{id}.xml */
+	public String resolveDbConnectionPath(String connectionId) {
+		return getConnectionFilePath(connectionId);
+	}
+
+	/** Resolve file path for an email connection: config/connections/{id}.xml */
+	public String resolveEmailConnectionPath(String connectionId) {
+		return getConnectionsDir() + "/" + connectionId + ".xml";
+	}
+
 	/**
 	 * Test an email connection by sending a test message.
+	 * Goes through DocumentBurster.execute() → CliJob.doCheckEmail() for proper
+	 * .job file lifecycle (status bar "Working on...").
 	 */
-	public void testEmailConnection(String connectionId) throws Exception {
-		String connectionFilePath = getConnectionFilePath(connectionId);
+	public void testEmailConnection(String connectionId) throws Throwable {
+		String connectionFilePath = resolveEmailConnectionPath(connectionId);
 		log.info("Testing email connection: {}", connectionId);
-
-		CliJob job = new CliJob(connectionFilePath);
-		job.doCheckEmail();
-
+		jobExecutionService.executeSync(new String[] {
+				"system", "test-email",
+				"--email-connection-file", connectionFilePath
+		});
 		log.info("Email connection test completed for: {}", connectionId);
 	}
 
 	/**
-	 * Test a database connection and fetch its schema.
+	 * Test inline SMTP email settings from a report config (settings.xml).
+	 * Used when useconn=false — the SMTP settings are in the report's own config,
+	 * not in a separate connection file.
 	 */
-	public SchemaInfo testDatabaseConnection(String connectionId) throws Exception {
+	public void testInlineEmailConnection(String reportId) throws Throwable {
+		String settingsPath;
+		if ("burst".equals(reportId)) {
+			settingsPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/burst/settings.xml";
+		} else {
+			settingsPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/reports/" + reportId + "/settings.xml";
+		}
+		log.info("Testing inline email connection from report config: {}", settingsPath);
+		jobExecutionService.executeSync(new String[] {
+				"system", "test-email",
+				"--email-connection-file", settingsPath
+		});
+		log.info("Inline email connection test completed for report: {}", reportId);
+	}
+
+	/**
+	 * Test a database connection and fetch its schema.
+	 * Goes through DocumentBurster.execute() → CliJob.doTestAndFetchDatabaseSchema()
+	 * which handles testing, schema fetch, and saving information-schema.json + table-names.txt.
+	 */
+	public void testDatabaseConnection(String connectionId) throws Throwable {
 		String connectionFilePath = getConnectionFilePath(connectionId);
 		log.info("Testing database connection: {}", connectionId);
-
-		// Test connection
-		DatabaseConnectionTester tester = new DatabaseConnectionTester();
-		tester.testConnection(connectionFilePath);
-		log.info("Database connection test successful for: {}", connectionId);
-
-		// Fetch and save schema
-		DatabaseSchemaFetcher fetcher = new DatabaseSchemaFetcher();
-		SchemaInfo schemaInfo = fetcher.fetchSchema(connectionFilePath);
-
-		// Save information-schema.json
-		String schemaOutputPath = getConnectionsDir() + "/" + connectionId + "/" + connectionId
-				+ "-information-schema.json";
-		fetcher.saveSchemaToJson(schemaInfo, schemaOutputPath);
-
-		// Save table-names.txt
-		String tableNamesPath = getConnectionsDir() + "/" + connectionId + "/" + connectionId + "-table-names.txt";
-		StringBuilder sb = new StringBuilder();
-		for (var table : schemaInfo.tables) {
-			String type = (table.tableType != null) ? table.tableType.toUpperCase() : "TABLE";
-			if ("VIEW".equals(type)) {
-				sb.append(table.tableName).append(" (VIEW)").append("\n");
-			} else {
-				sb.append(table.tableName).append("\n");
-			}
-		}
-		Files.writeString(Path.of(tableNamesPath), sb.toString().trim());
-
-		log.info("Database schema saved for: {}", connectionId);
-		return schemaInfo;
+		jobExecutionService.executeSync(new String[] {
+				"system", "test-and-fetch-database-schema",
+				"--database-connection-file", connectionFilePath
+		});
+		log.info("Database connection test and schema fetch completed for: {}", connectionId);
 	}
 
 	/**

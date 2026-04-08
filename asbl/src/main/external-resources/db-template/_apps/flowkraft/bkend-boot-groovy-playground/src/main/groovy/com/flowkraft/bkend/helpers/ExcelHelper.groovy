@@ -16,13 +16,26 @@ import groovy.util.logging.Slf4j
  * Refreshes all embedded queries (Power Query, Power Pivot, ODBC, OLE DB, etc.)
  * in an Excel workbook using COM automation via JACOB.
  *
+ * IMPORTANT - WINDOWS-NATIVE ONLY:
+ *   This helper uses COM (Component Object Model) which is a Windows-only technology.
+ *   It CANNOT run inside a Linux Docker container. If bkend-boot-groovy-playground
+ *   is running in Docker (the default), you must run it natively on Windows instead:
+ *
+ *     cd _apps/flowkraft/bkend-boot-groovy-playground
+ *     mvnw.cmd spring-boot:run ^
+ *       -Dspring-boot.run.jvmArguments="-Djava.library.path=lib"
+ *
+ *   Place jacob-1.18-x64.dll in the lib/ folder (or any folder on your PATH).
+ *   Download from: https://github.com/freemansoft/jacob-project/releases
+ *
  * Requirements:
- *   - Windows OS
+ *   - Windows OS (NOT Docker / NOT Linux)
  *   - Microsoft Excel installed (desktop, not online)
- *   - JACOB native DLLs on the PATH or java.library.path
+ *   - JACOB native DLL (jacob-1.18-x64.dll) on the PATH or java.library.path
+ *   - bkend-boot-groovy-playground running natively on Windows (not in Docker)
  *
  * This is the ReportBurster equivalent of what PowerUpdate did:
- * open workbook → refresh all connections → wait → save → close.
+ * open workbook -> refresh all connections -> wait -> save -> close.
  *
  * Usage:
  *   ExcelHelper.refreshAndSave('C:/reports/sales-dashboard.xlsx')

@@ -237,6 +237,17 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  public apiGetJsonValueShouldEqual(
+    url: string,
+    jsonPath: string,
+    expectedValue: string,
+  ): FluentTester {
+    const action = (): Promise<void> =>
+      this.doApiGetJsonValueShouldEqual(url, jsonPath, expectedValue);
+    this.actions.push(action);
+    return this;
+  }
+
   public fileContentShouldMatch(filePath: string, regex: RegExp): FluentTester {
     const action = (): Promise<void> => this.doFileContentShouldMatch(filePath, regex);
     this.actions.push(action);
@@ -1647,6 +1658,12 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  public navigateToConnectionsPage(): FluentTester {
+    const action = (): Promise<void> => this.doNavigateToConnectionsPage();
+    this.actions.push(action);
+    return this;
+  }
+
   public gotoConfiguration(): FluentTester {
     const action = (): Promise<void> => this.doGotoConfiguration();
 
@@ -1984,6 +2001,32 @@ export class FluentTester implements PromiseLike<void> {
     const content = await jetpack.readAsync(filePath);
     if (!content || !regex.test(content)) {
       throw new Error(`File ${filePath} should match ${regex} but ${content ? 'does not' : 'file is empty/missing'}`);
+    }
+  }
+
+  private async doApiGetJsonValueShouldEqual(
+    url: string,
+    jsonPath: string,
+    expectedValue: string,
+  ): Promise<void> {
+    // Use page.evaluate + fetch() instead of page.request.get() because
+    // Playwright's APIRequestContext is not supported in Electron context.
+    const body = await this.window.evaluate(async (fetchUrl: string) => {
+      const res = await fetch(fetchUrl);
+      if (!res.ok) throw new Error(`API GET ${fetchUrl} failed: ${res.status}`);
+      return res.json();
+    }, url);
+    // Navigate the JSON path (e.g., "password" or "data.value")
+    const keys = jsonPath.split('.');
+    let actual: any = body;
+    for (const key of keys) {
+      if (actual == null) break;
+      actual = actual[key];
+    }
+    if (actual !== expectedValue) {
+      throw new Error(
+        `API GET ${url} → ${jsonPath}: expected "${expectedValue}" but got "${actual}"`,
+      );
     }
   }
 
@@ -2827,7 +2870,11 @@ export class FluentTester implements PromiseLike<void> {
   }
 
   private async doAppShouldBeReadyToRunNewJobs(): Promise<void> {
-    await this.doCheckElementExists('#noJobsRunning', true);
+    await this.doWaitOnElementToContainText(
+      '#noJobsRunning',
+      'No jobs are currently',
+      Constants.DELAY_FIVE_THOUSANDS_SECONDS,
+    );
   }
 
   private async doWaitOnSkinToBeCorrectlySaved(skin: string): Promise<void> {
@@ -2870,12 +2917,6 @@ export class FluentTester implements PromiseLike<void> {
         Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       );
     } else {
-      //await this.doWaitOnElementToContainText(
-      //  '#infoLogViewer',
-      //  'Program Started',
-      //  Constants.DELAY_FIVE_THOUSANDS_SECONDS
-      //);
-
       await this.doWaitOnFileToContainText(
         path.resolve(
           slash(
@@ -2894,28 +2935,12 @@ export class FluentTester implements PromiseLike<void> {
         Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       );
     } else if (howToCheck === Constants.CHECK_PROCESSING_STATUS_BAR) {
-      /*
-     
-      await this.doWaitOnElementToBecomeVisible(
-        '#noJobsRunning',
-        Constants.DELAY_FIVE_THOUSANDS_SECONDS
-      );
-      */
-
       await this.doWaitOnElementToContainText(
         '#noJobsRunning',
         'No jobs are currently',
         Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       );
     } else {
-      /*
-      await this.doWaitOnElementToContainText(
-        '#infoLogViewer',
-        'Execution Ended',
-        Constants.DELAY_FIVE_THOUSANDS_SECONDS
-      );
-      */
-
       await this.doWaitOnFileToContainText(
         path.resolve(
           slash(
@@ -2925,20 +2950,6 @@ export class FluentTester implements PromiseLike<void> {
         'Execution Ended',
       );
     }
-    /*
-   
-    await this.doWaitOnElementToContainText(
-      '#infoLogViewer',
-      'Execution Ended',
-      //Configuration.DELAY_FIVE_THOUSANDS_SECONDS
-      25000
-    );
-
-    await this.waitOnElementToBeVisible(
-      '.java-exited',
-      Configuration.DELAY_FIVE_THOUSANDS_SECONDS
-    );
-    */
   }
 
   private async doGotoProcessingMergeBurstScreen(): Promise<void> {
@@ -3070,6 +3081,18 @@ export class FluentTester implements PromiseLike<void> {
     );
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
+  }
+
+  private async doNavigateToConnectionsPage(): Promise<void> {
+    await this.doHover('#topMenuBurst');
+    await this.doClick('#topMenuBurst');
+    await this.doHover('#topMenuConfiguration');
+    await this.doClick('#topMenuConfiguration');
+    await this.doHover('#topMenuConfigurationExternalConnections');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doClick('#topMenuConfigurationExternalConnections');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doWaitOnElementToBecomeEnabledDisabled('#btnNewDropdown', true, Constants.DELAY_TEN_SECONDS);
   }
 
   private async doGotoConfiguration(): Promise<void> {
