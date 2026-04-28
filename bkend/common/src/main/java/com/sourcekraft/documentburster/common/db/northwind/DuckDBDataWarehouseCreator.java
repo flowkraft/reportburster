@@ -1,6 +1,7 @@
 package com.sourcekraft.documentburster.common.db.northwind;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -79,10 +80,20 @@ public class DuckDBDataWarehouseCreator {
             dbFile.getParentFile().mkdirs();
         }
 
-        // Delete existing DuckDB file
+        // Delete existing DuckDB file. On Windows, File.delete() can return
+        // false silently if a prior DuckDB handle is still holding the file.
+        // If that happens, the tables remain in the old file and the INSERT
+        // statements below would duplicate rows on top of existing data, so
+        // the Orders table (and every other OLTP table) would grow by a
+        // factor of N on the Nth run. Fail loud instead.
         if (dbFile.exists()) {
             log.info("Deleting existing DuckDB file...");
-            dbFile.delete();
+            if (!dbFile.delete()) {
+                throw new IOException("Could not delete existing DuckDB file at "
+                    + dbFile.getAbsolutePath()
+                    + " — another process is holding the handle. "
+                    + "Close connections before re-initializing.");
+            }
         }
 
         // Load JDBC drivers
@@ -118,13 +129,13 @@ public class DuckDBDataWarehouseCreator {
 
     private static void createOLTPTables(Statement stmt) throws Exception {
         // Categories Table
-        stmt.execute("CREATE TABLE Categories (" +
+        stmt.execute("CREATE OR REPLACE TABLE Categories (" +
             "CategoryID INTEGER, " +
             "CategoryName VARCHAR, " +
             "Description VARCHAR)");
 
         // Suppliers Table
-        stmt.execute("CREATE TABLE Suppliers (" +
+        stmt.execute("CREATE OR REPLACE TABLE Suppliers (" +
             "SupplierID INTEGER, " +
             "CompanyName VARCHAR, " +
             "ContactName VARCHAR, " +
@@ -139,7 +150,7 @@ public class DuckDBDataWarehouseCreator {
             "HomePage VARCHAR)");
 
         // Products Table
-        stmt.execute("CREATE TABLE Products (" +
+        stmt.execute("CREATE OR REPLACE TABLE Products (" +
             "ProductID INTEGER, " +
             "ProductName VARCHAR, " +
             "SupplierID INTEGER, " +
@@ -152,7 +163,7 @@ public class DuckDBDataWarehouseCreator {
             "Discontinued SMALLINT DEFAULT 0)");
 
         // Customers Table
-        stmt.execute("CREATE TABLE Customers (" +
+        stmt.execute("CREATE OR REPLACE TABLE Customers (" +
             "CustomerID VARCHAR, " +
             "CompanyName VARCHAR, " +
             "ContactName VARCHAR, " +
@@ -166,7 +177,7 @@ public class DuckDBDataWarehouseCreator {
             "Fax VARCHAR)");
 
         // Employees Table
-        stmt.execute("CREATE TABLE Employees (" +
+        stmt.execute("CREATE OR REPLACE TABLE Employees (" +
             "EmployeeID INTEGER, " +
             "LastName VARCHAR, " +
             "FirstName VARCHAR, " +
@@ -187,13 +198,13 @@ public class DuckDBDataWarehouseCreator {
             "PhotoPath VARCHAR)");
 
         // Shippers Table
-        stmt.execute("CREATE TABLE Shippers (" +
+        stmt.execute("CREATE OR REPLACE TABLE Shippers (" +
             "ShipperID INTEGER, " +
             "CompanyName VARCHAR, " +
             "Phone VARCHAR)");
 
         // Orders Table
-        stmt.execute("CREATE TABLE Orders (" +
+        stmt.execute("CREATE OR REPLACE TABLE Orders (" +
             "OrderID INTEGER, " +
             "CustomerID VARCHAR, " +
             "EmployeeID INTEGER, " +
@@ -210,7 +221,7 @@ public class DuckDBDataWarehouseCreator {
             "ShipCountry VARCHAR)");
 
         // Order Details Table (DuckDB keeps the space in the name, quoted)
-        stmt.execute("CREATE TABLE \"Order Details\" (" +
+        stmt.execute("CREATE OR REPLACE TABLE \"Order Details\" (" +
             "OrderID INTEGER, " +
             "ProductID INTEGER, " +
             "UnitPrice DECIMAL(10,4), " +
@@ -218,28 +229,28 @@ public class DuckDBDataWarehouseCreator {
             "Discount FLOAT DEFAULT 0)");
 
         // Region Table
-        stmt.execute("CREATE TABLE Region (" +
+        stmt.execute("CREATE OR REPLACE TABLE Region (" +
             "RegionID INTEGER, " +
             "RegionDescription VARCHAR)");
 
         // Territories Table
-        stmt.execute("CREATE TABLE Territories (" +
+        stmt.execute("CREATE OR REPLACE TABLE Territories (" +
             "TerritoryID VARCHAR, " +
             "TerritoryDescription VARCHAR, " +
             "RegionID INTEGER)");
 
         // EmployeeTerritories Table
-        stmt.execute("CREATE TABLE EmployeeTerritories (" +
+        stmt.execute("CREATE OR REPLACE TABLE EmployeeTerritories (" +
             "EmployeeID INTEGER, " +
             "TerritoryID VARCHAR)");
 
         // CustomerDemographics Table
-        stmt.execute("CREATE TABLE CustomerDemographics (" +
+        stmt.execute("CREATE OR REPLACE TABLE CustomerDemographics (" +
             "CustomerTypeID VARCHAR, " +
             "CustomerDesc VARCHAR)");
 
         // CustomerCustomerDemo Table
-        stmt.execute("CREATE TABLE CustomerCustomerDemo (" +
+        stmt.execute("CREATE OR REPLACE TABLE CustomerCustomerDemo (" +
             "CustomerID VARCHAR, " +
             "CustomerTypeID VARCHAR)");
 
@@ -389,7 +400,7 @@ public class DuckDBDataWarehouseCreator {
 
         // ── dim_customer ──
         log.info("  Creating dim_customer...");
-        stmt.execute("CREATE TABLE dim_customer (" +
+        stmt.execute("CREATE OR REPLACE TABLE dim_customer (" +
             "customer_key INTEGER, " +
             "company_name VARCHAR, " +
             "country VARCHAR, " +
@@ -409,7 +420,7 @@ public class DuckDBDataWarehouseCreator {
 
         // ── dim_product ──
         log.info("  Creating dim_product...");
-        stmt.execute("CREATE TABLE dim_product (" +
+        stmt.execute("CREATE OR REPLACE TABLE dim_product (" +
             "product_key INTEGER, " +
             "product_name VARCHAR, " +
             "category_name VARCHAR, " +
@@ -429,7 +440,7 @@ public class DuckDBDataWarehouseCreator {
 
         // ── dim_employee ──
         log.info("  Creating dim_employee...");
-        stmt.execute("CREATE TABLE dim_employee (" +
+        stmt.execute("CREATE OR REPLACE TABLE dim_employee (" +
             "employee_key INTEGER, " +
             "full_name VARCHAR, " +
             "title VARCHAR)");
@@ -447,7 +458,7 @@ public class DuckDBDataWarehouseCreator {
 
         // ── dim_time ──
         log.info("  Creating dim_time...");
-        stmt.execute("CREATE TABLE dim_time (" +
+        stmt.execute("CREATE OR REPLACE TABLE dim_time (" +
             "date_key DATE, " +
             "year SMALLINT, " +
             "quarter SMALLINT, " +
@@ -477,7 +488,7 @@ public class DuckDBDataWarehouseCreator {
 
         // ── fact_sales ──
         log.info("  Creating fact_sales...");
-        stmt.execute("CREATE TABLE fact_sales (" +
+        stmt.execute("CREATE OR REPLACE TABLE fact_sales (" +
             "sales_key INTEGER, " +
             "date_key DATE, " +
             "customer_key INTEGER, " +

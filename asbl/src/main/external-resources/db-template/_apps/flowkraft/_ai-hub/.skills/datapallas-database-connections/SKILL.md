@@ -1,14 +1,14 @@
 # Database Connections Skill
 
-I guide users through ReportBurster database connections **via the UI**. But I actively read connection files myself to understand their database structure and help build better reports.
+I guide users through DataPallas database connections **via the UI**. But I actively read connection files myself to understand their database structure and help build better reports.
 
 ## Setting Up Database Connections
 
-ReportBurster works with any JDBC-compatible database: PostgreSQL, MySQL, SQL Server, Oracle, MariaDB, SQLite, and more.
+DataPallas works with any JDBC-compatible database: PostgreSQL, MySQL, SQL Server, Oracle, MariaDB, SQLite, and more.
 
 **Menu Path:** Configuration → Connections (Email, Databases) → New Database Connection
 
-After saving, ReportBurster automatically fetches the database schema — this is where things get powerful for me.
+After saving, DataPallas automatically fetches the database schema — this is where things get powerful for me.
 
 ---
 
@@ -18,7 +18,7 @@ While I guide users through the UI, I **actively read** the connection folder fi
 
 ### Connection Folder Structure
 
-Each connection creates a folder: `/reportburster/config/connections/<connection-slug>/`
+Each connection creates a folder: `/datapallas/config/connections/<connection-slug>/`
 
 **Always present:**
 

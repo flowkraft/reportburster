@@ -118,7 +118,7 @@ public class ReportsController {
 	 * existing encrypted value from disk so we never overwrite with the literal
 	 * mask string.
 	 */
-	private void preserveExistingPasswords(DocumentBursterSettings incoming, String fullPath) {
+	private void preserveExistingPasswords(DocumentBursterSettings incoming, String fullPath) throws Exception {
 		// Only load existing settings if the incoming data actually contains masked passwords
 		boolean hasMaskedPasswords = false;
 
@@ -145,42 +145,38 @@ public class ReportsController {
 			return;
 		}
 
-		try {
-			DocumentBursterSettings existing = rbSettingsService.loadSettings(fullPath);
-			if (existing == null || existing.settings == null) {
-				return;
-			}
+		DocumentBursterSettings existing = rbSettingsService.loadSettings(fullPath);
+		if (existing == null || existing.settings == null) {
+			return;
+		}
 
-			if (incoming.settings.emailserver != null
-					&& PASSWORD_MASK.equals(incoming.settings.emailserver.userpassword)
-					&& existing.settings.emailserver != null) {
-				incoming.settings.emailserver.userpassword = existing.settings.emailserver.userpassword;
-			}
+		if (incoming.settings.emailserver != null
+				&& PASSWORD_MASK.equals(incoming.settings.emailserver.userpassword)
+				&& existing.settings.emailserver != null) {
+			incoming.settings.emailserver.userpassword = existing.settings.emailserver.userpassword;
+		}
 
-			if (incoming.settings.smssettings != null && incoming.settings.smssettings.twilio != null) {
-				if (PASSWORD_MASK.equals(incoming.settings.smssettings.twilio.authtoken)
-						&& existing.settings.smssettings != null
-						&& existing.settings.smssettings.twilio != null) {
-					incoming.settings.smssettings.twilio.authtoken = existing.settings.smssettings.twilio.authtoken;
-				}
-				// accountsid is NOT a secret — no preservation needed
+		if (incoming.settings.smssettings != null && incoming.settings.smssettings.twilio != null) {
+			if (PASSWORD_MASK.equals(incoming.settings.smssettings.twilio.authtoken)
+					&& existing.settings.smssettings != null
+					&& existing.settings.smssettings.twilio != null) {
+				incoming.settings.smssettings.twilio.authtoken = existing.settings.smssettings.twilio.authtoken;
 			}
+			// accountsid is NOT a secret — no preservation needed
+		}
 
-			if (incoming.settings.simplejavamail != null && incoming.settings.simplejavamail.proxy != null
-					&& PASSWORD_MASK.equals(incoming.settings.simplejavamail.proxy.password)
-					&& existing.settings.simplejavamail != null
-					&& existing.settings.simplejavamail.proxy != null) {
-				incoming.settings.simplejavamail.proxy.password = existing.settings.simplejavamail.proxy.password;
-			}
+		if (incoming.settings.simplejavamail != null && incoming.settings.simplejavamail.proxy != null
+				&& PASSWORD_MASK.equals(incoming.settings.simplejavamail.proxy.password)
+				&& existing.settings.simplejavamail != null
+				&& existing.settings.simplejavamail.proxy != null) {
+			incoming.settings.simplejavamail.proxy.password = existing.settings.simplejavamail.proxy.password;
+		}
 
-			if (incoming.settings.qualityassurance != null && incoming.settings.qualityassurance.emailserver != null
-					&& PASSWORD_MASK.equals(incoming.settings.qualityassurance.emailserver.userpassword)
-					&& existing.settings.qualityassurance != null
-					&& existing.settings.qualityassurance.emailserver != null) {
-				incoming.settings.qualityassurance.emailserver.userpassword = existing.settings.qualityassurance.emailserver.userpassword;
-			}
-		} catch (Exception e) {
-			log.debug("Could not load existing settings for password preservation: {}", e.getMessage());
+		if (incoming.settings.qualityassurance != null && incoming.settings.qualityassurance.emailserver != null
+				&& PASSWORD_MASK.equals(incoming.settings.qualityassurance.emailserver.userpassword)
+				&& existing.settings.qualityassurance != null
+				&& existing.settings.qualityassurance.emailserver != null) {
+			incoming.settings.qualityassurance.emailserver.userpassword = existing.settings.qualityassurance.emailserver.userpassword;
 		}
 	}
 
@@ -263,27 +259,6 @@ public class ReportsController {
 
 	}
 
-	@GetMapping(value = "/load-internal")
-	public Mono<DocumentBursterSettingsInternal> loadRbSettingsInternal(@RequestParam String path) throws Exception {
-
-		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
-				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
-
-		return Mono.just(rbSettingsService.loadSettingsInternal(fullPath));
-
-	}
-
-	@PostMapping(value = "/save-internal")
-	public void saveRbSettingsInternal(@RequestParam String path,
-			@RequestBody DocumentBursterSettingsInternal dbSettingsInternal) throws Exception {
-
-		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
-				+ URLDecoder.decode(path, StandardCharsets.UTF_8.toString());
-
-		rbSettingsService.saveSettingsInternal(dbSettingsInternal, fullPath);
-
-	}
-
 	@GetMapping(value = "/load-templates-all")
 	public Flux<ConfigurationFileInfo> loadRbTemplatesAll() throws Exception {
 		return Flux.fromStream(rbSettingsService.loadRbTemplatesAll());
@@ -336,7 +311,13 @@ public class ReportsController {
 
 		// Determine content type based on file extension
 		String contentType = MimeTypeUtils.determineContentType(fullPath);
-		// System.out.println("Content type: " + contentType);
+
+		// Return 404 gracefully for missing assets — avoids a 500 stack trace in
+		// errors.log when a report template references fonts/images that haven't been
+		// copied yet (e.g. gallery assets used in a report template directory).
+		if (!new File(fullPath).exists()) {
+			return Mono.just(ResponseEntity.notFound().<Object>build());
+		}
 
 		// For images and binary files
 		if (!contentType.startsWith("text/")) {
@@ -522,15 +503,6 @@ public class ReportsController {
 		return Mono.just(ResponseEntity.ok().build());
 	}
 
-	@PutMapping(value = "/configurations/{reportId}/visibility", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-	public Mono<ResponseEntity<Map<String, String>>> toggleVisibility(@PathVariable String reportId,
-			@RequestBody Map<String, String> request) throws Exception {
-
-		String newVisibility = request.get("visibility");
-		String result = rbSettingsService.toggleVisibility(reportId, newVisibility);
-		return Mono.just(ResponseEntity.ok(Map.of("visibility", result)));
-	}
-
 	// ── Phase 3: ID-based REST endpoints ──
 
 	@GetMapping(value = "/{reportId}/settings", consumes = MediaType.ALL_VALUE)
@@ -572,7 +544,8 @@ public class ReportsController {
 	@PutMapping(value = "/{reportId}/template/{type}", consumes = "text/plain",
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ResponseEntity<java.util.Map<String, String>>> saveReportTemplate(@PathVariable String reportId,
-			@PathVariable String type, @RequestBody Optional<String> content) throws Exception {
+			@PathVariable String type, @RequestBody Optional<String> content,
+			@RequestParam(required = false) String assetSourceDir) throws Exception {
 		String templatePath = resolveTemplatePath(reportId, type);
 		String relativeTemplatePath = resolveRelativeTemplatePath(reportId, type);
 		return Mono.fromCallable(() -> {
@@ -581,6 +554,24 @@ public class ReportsController {
 			// Update ONLY documentpath in reporting.xml — do NOT overwrite other fields
 			// (outputtype, conncode, etc.) which the frontend may have changed in memory.
 			updateDocumentPathOnly(reportId, relativeTemplatePath);
+			// Copy companion assets (fonts, images) from the gallery source directory into
+			// the report template directory so that serve-asset can find them.
+			// Uses StandardCopyOption.REPLACE_EXISTING — safe to call repeatedly (1st use
+			// or 20th use); idempotent, never fails if files are already present.
+			if (assetSourceDir != null && !assetSourceDir.isBlank()) {
+				File srcDir = new File(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/" + assetSourceDir);
+				File dstDir = new File(templatePath).getParentFile();
+				if (srcDir.isDirectory()) {
+					for (File asset : srcDir.listFiles()) {
+						String name = asset.getName().toLowerCase();
+						if (asset.isFile() && !name.endsWith(".html") && !name.endsWith(".md")) {
+							java.nio.file.Files.copy(asset.toPath(),
+									new File(dstDir, asset.getName()).toPath(),
+									java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+						}
+					}
+				}
+			}
 			// Return the new documentpath so the frontend can sync its in-memory copy
 			return ResponseEntity.ok(java.util.Map.of("documentpath", relativeTemplatePath));
 		});
@@ -675,22 +666,18 @@ public class ReportsController {
 	 * Resolve template file path by reading the report's reporting.xml config.
 	 * The template path is stored in reporting.xml → report.template.documentpath
 	 */
-	private String resolveTemplatePathFromConfig(String reportId) {
-		try {
-			String settingsPath = resolveSettingsPath(reportId);
-			String configDir = new File(settingsPath).getParent();
-			String reportingPath = configDir + "/reporting.xml";
+	private String resolveTemplatePathFromConfig(String reportId) throws Exception {
+		String settingsPath = resolveSettingsPath(reportId);
+		String configDir = new File(settingsPath).getParent();
+		String reportingPath = configDir + "/reporting.xml";
 
-			if (!new File(reportingPath).exists()) {
-				return null;
-			}
+		if (!new File(reportingPath).exists()) {
+			return null;
+		}
 
-			ReportingSettings reporting = rbSettingsService.loadSettingsReporting(settingsPath);
-			if (reporting != null && reporting.report != null && reporting.report.template != null) {
-				return reporting.report.template.retrieveTemplateFilePath();
-			}
-		} catch (Exception e) {
-			// Config not found or parsing error — return null
+		ReportingSettings reporting = rbSettingsService.loadSettingsReporting(settingsPath);
+		if (reporting != null && reporting.report != null && reporting.report.template != null) {
+			return reporting.report.template.retrieveTemplateFilePath();
 		}
 		return null;
 	}
@@ -750,25 +737,20 @@ public class ReportsController {
 	 * overwriting other fields (outputtype, conncode, etc.) that the frontend
 	 * may have changed in memory but not yet saved.
 	 */
-	private void updateDocumentPathOnly(String reportId, String newDocumentPath) {
-		try {
-			String settingsPath = resolveSettingsPath(reportId);
-			String configDir = new java.io.File(settingsPath).getParent();
-			String reportingPath = configDir + "/reporting.xml";
-			java.io.File reportingFile = new java.io.File(reportingPath);
-			if (!reportingFile.exists()) return;
+	private void updateDocumentPathOnly(String reportId, String newDocumentPath) throws Exception {
+		String settingsPath = resolveSettingsPath(reportId);
+		String configDir = new java.io.File(settingsPath).getParent();
+		String reportingPath = configDir + "/reporting.xml";
+		java.io.File reportingFile = new java.io.File(reportingPath);
+		if (!reportingFile.exists()) return;
 
-			String xml = java.nio.file.Files.readString(reportingFile.toPath());
-			// Replace <documentpath>...</documentpath> with the new value
-			String updated = xml.replaceFirst(
-				"<documentpath>[^<]*</documentpath>",
-				"<documentpath>" + newDocumentPath + "</documentpath>"
-			);
-			if (!xml.equals(updated)) {
-				java.nio.file.Files.writeString(reportingFile.toPath(), updated);
-			}
-		} catch (Exception e) {
-			log.debug("Could not update reporting.xml documentpath for {}: {}", reportId, e.getMessage());
+		String xml = java.nio.file.Files.readString(reportingFile.toPath());
+		String updated = xml.replaceFirst(
+			"<documentpath>[^<]*</documentpath>",
+			"<documentpath>" + newDocumentPath + "</documentpath>"
+		);
+		if (!xml.equals(updated)) {
+			java.nio.file.Files.writeString(reportingFile.toPath(), updated);
 		}
 	}
 }

@@ -1,6 +1,6 @@
-# ReportBurster Server Skill
+# DataPallas Server Skill
 
-I help users deploy and manage ReportBurster Server — the enterprise edition for centralized, unattended report processing. Same UI and configuration as desktop, but designed for 24/7 automated operation.
+I help users deploy and manage DataPallas Server — the enterprise edition for centralized, unattended report processing. Same UI and configuration as desktop, but designed for 24/7 automated operation.
 
 ---
 
@@ -8,7 +8,7 @@ I help users deploy and manage ReportBurster Server — the enterprise edition f
 
 | Scenario | Use |
 |----------|-----|
-| Interactive testing, ad-hoc bursting | Desktop (ReportBurster.exe) |
+| Interactive testing, ad-hoc bursting | Desktop (DataPallas.exe) |
 | Scheduled nightly/weekly jobs | **Server** |
 | Multiple users, centralized processing | **Server** |
 | Unattended 24/7 operation | **Server** |
@@ -25,7 +25,7 @@ I help users deploy and manage ReportBurster Server — the enterprise edition f
 - Supports multiple concurrent users across the organization
 
 ### 2. Automatic Polling
-Drop reports into the `poll/` folder → ReportBurster automatically processes them. No manual intervention needed.
+Drop reports into the `poll/` folder → DataPallas automatically processes them. No manual intervention needed.
 
 ### 3. Scheduling Integration
 - **Windows Task Scheduler** — create scheduled tasks that copy reports to `poll/` folder
@@ -44,8 +44,8 @@ Drop reports into the `poll/` folder → ReportBurster automatically processes t
 
 ## Setup Flow
 
-1. **Download**: [reportburster-server.zip](https://s3.amazonaws.com/documentburster/newest/reportburster-server.zip)
-2. **Extract**: To simple path like `C:/ReportBurster` (avoid `Program Files`)
+1. **Download**: [datapallas-server.zip](https://s3.amazonaws.com/documentburster/newest/datapallas-server.zip)
+2. **Extract**: To simple path like `C:/DataPallas` (avoid `Program Files`)
 3. **Java**: Ensure Java 17+ is installed (same as desktop)
 4. **Start**: Run `startServer.bat`
 5. **Access**: Open `http://localhost:9090` in browser
@@ -61,7 +61,7 @@ Drop reports into the `poll/` folder → ReportBurster automatically processes t
        ↓
 [Scheduler] → copies report to poll/ folder
        ↓
-[ReportBurster Server] → detects new file
+[DataPallas Server] → detects new file
        ↓
 [Auto-burst & distribute] → emails, uploads, archives
 ```
@@ -74,7 +74,7 @@ I guide users through creating scheduled tasks:
 1. Open Task Scheduler → Create Basic Task
 2. Set trigger (daily, weekly, etc.)
 3. Action: Start a program → batch script that copies report to `poll/` folder
-4. ReportBurster Server picks it up automatically
+4. DataPallas Server picks it up automatically
 
 ---
 

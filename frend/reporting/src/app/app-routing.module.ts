@@ -1,17 +1,12 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { ConfigurationReportsComponent } from './areas/_configuration-reports/configuration-reports.component';
 import { ConfigurationComponent } from './areas/_configuration/configuration.component';
-import { ConnectionListComponent } from './areas/_configuration-connections/configuration-connections.component';
+import { ConfigurationCrudComponent } from './areas/_configuration-crud/configuration-crud.component';
 import { HelpComponent } from './areas/_help/help.component';
 
 import { ProcessingComponent } from './areas/_processing/processing.component';
 import { NoJavaGuard } from './app-nojava-route-guard';
-/*
-import { ConfigurationComponent } from './areas/_configuration/configuration.component';
-import { ConfigurationReportsComponent } from './areas/_configuration-reports/configuration-reports.component';
-import { HelpComponent } from './areas/_help/help.component';
-*/
+
 const routes: Routes = [
   {
     path: '',
@@ -63,19 +58,34 @@ const routes: Routes = [
     component: ConfigurationComponent,
   },
   {
-    path: 'configuration-reports',
-    canActivate: [NoJavaGuard],
-    component: ConfigurationReportsComponent,
+    path: 'configuration-crud',
+    redirectTo: 'configuration-crud/reports',
+    pathMatch: 'full',
   },
   {
-    path: 'configuration-connections/:goBackLocation/:configurationFilePath/:configurationFileName',
+    path: 'configuration-crud/:section',
     canActivate: [NoJavaGuard],
-    component: ConnectionListComponent,
+    component: ConfigurationCrudComponent,
+  },
+  {
+    path: 'configuration-explorer',
+    redirectTo: 'configuration-crud/reports',
+  },
+  {
+    path: 'configuration-explorer/:section',
+    redirectTo: 'configuration-crud/:section',
+  },
+  {
+    path: 'configuration-reports',
+    redirectTo: 'configuration-crud/reports',
   },
   {
     path: 'configuration-connections',
-    canActivate: [NoJavaGuard],
-    component: ConnectionListComponent,
+    redirectTo: 'configuration-crud/connections',
+  },
+  {
+    path: 'configuration-cubes',
+    redirectTo: 'configuration-crud/cubes',
   },
   {
     path: 'help/:leftMenu',

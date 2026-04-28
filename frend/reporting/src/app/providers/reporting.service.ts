@@ -67,7 +67,7 @@ export class ReportingService {
   async fetchData(
     parameters: { [key: string]: any },
     testMode: boolean = false,
-    reportCode: string = this.settingsService.currentConfigurationTemplate
+    reportId: string = this.settingsService.currentConfigurationTemplate
       ?.folderName,
   ) {
     const params = new URLSearchParams();
@@ -87,7 +87,7 @@ export class ReportingService {
     });
 
     const result = await this.apiService.get(
-      `/reporting/reports/${reportCode}/data`,
+      `/reporting/reports/${reportId}/data`,
       paramsObj,
     );
     return result;

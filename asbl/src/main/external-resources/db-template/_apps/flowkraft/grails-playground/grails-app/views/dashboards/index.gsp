@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>Dashboards - ReportBurster</title>
+    <title>Dashboards - DataPallas</title>
     <style>
         rb-chart { display: block; width: 100%; height: 100%; }
         rb-tabulator { display: block; width: 100%; }
@@ -169,7 +169,7 @@
                             <div class="chart-container">
                                 <rb-chart
                                     id="rb-revenueTrend"
-                                    report-code="dashboard-cfo"
+                                    report-id="dashboard-cfo"
                                     component-id="revenueTrend"
                                     api-base-url="${RbUtils.apiBaseUrl}"
                                     api-key="${RbUtils.apiKey}"
@@ -183,7 +183,7 @@
                             <div class="chart-container">
                                 <rb-chart
                                     id="rb-revenueByCategory"
-                                    report-code="dashboard-cfo"
+                                    report-id="dashboard-cfo"
                                     component-id="revenueByCategory"
                                     api-base-url="${RbUtils.apiBaseUrl}"
                                     api-key="${RbUtils.apiKey}"
@@ -200,7 +200,7 @@
                             <h6><i class="bi bi-people me-2" style="color: #06b6d4;"></i>Top 5 Customers</h6>
                             <rb-tabulator
                                 id="rb-topCustomers"
-                                report-code="dashboard-cfo"
+                                report-id="dashboard-cfo"
                                 component-id="topCustomers"
                                 api-base-url="${RbUtils.apiBaseUrl}"
                                 api-key="${RbUtils.apiKey}"
@@ -213,7 +213,7 @@
                             <div class="chart-container">
                                 <rb-chart
                                     id="rb-arAging"
-                                    report-code="dashboard-cfo"
+                                    report-id="dashboard-cfo"
                                     component-id="arAging"
                                     api-base-url="${RbUtils.apiBaseUrl}"
                                     api-key="${RbUtils.apiKey}"
@@ -227,7 +227,7 @@
                             <div class="chart-container">
                                 <rb-chart
                                     id="rb-revenueByCountry"
-                                    report-code="dashboard-cfo"
+                                    report-id="dashboard-cfo"
                                     component-id="revenueByCountry"
                                     api-base-url="${RbUtils.apiBaseUrl}"
                                     api-key="${RbUtils.apiKey}"

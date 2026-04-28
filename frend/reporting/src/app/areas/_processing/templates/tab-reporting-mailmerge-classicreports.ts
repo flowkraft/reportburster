@@ -17,7 +17,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
           appendTo="body"
         >
           <ng-option
-            *ngFor="let report of this.settingsService.getMailMergeConfigurations({visibility: 'visible', samples: this.processingService.procReportingMailMergeInfo.isSample})"
+            *ngFor="let report of this.settingsService.getMailMergeConfigurations({samples: this.processingService.procReportingMailMergeInfo.isSample})"
             [value]="report"
             >{{report.templateName}}
             <span *ngIf="report.type=='config-samples'">(sample)</span
@@ -93,17 +93,6 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
         </div>
       </ng-container>
     
-    </div>
-
-    <div class="row" style="margin-top: 10px;" *ngIf="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport?.dsInputType === 'ds.dashboard'">
-      <div class="col-xs-1"></div>
-      <div class="col-xs-10">
-        <div class="alert alert-info" style="margin-bottom: 0;">
-          <i class="fa fa-info-circle"></i>
-          This dashboard report will send an email with the dashboard URL
-          (<code>{{ '$' }}{{ '{' }}dashboard_url{{ '}' }}</code>) — no file attachment is generated.
-        </div>
-      </div>
     </div>
 
     <p></p>
@@ -249,7 +238,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
               <a href="javascript:void(0)" (click)="clearAllViewDataFilters()" style="font-weight: bold; cursor: pointer;">Clear All Filters</a>
             </div>
 
-            <!-- MODE 2 — Tabulator self-fetches config + data via [reportCode] + [apiBaseUrl].
+            <!-- MODE 2 — Tabulator self-fetches config + data via [reportId] + [apiBaseUrl].
                  View Data uses Mode 2 (not Mode 1) because:
                  1. It needs server-side pagination support for large datasets (1M+ rows)
                  2. The component manages its own pagination state (page/size/sort/filter via ajaxRequestFunc)
@@ -257,7 +246,7 @@ export const tabReportGenerationMailMergeTemplate = `<ng-template
                  Unlike Config > Test button (Mode 1) where one fetch feeds Tabulator + Chart + Pivot,
                  here the component fetches its own data independently. -->
             <rb-tabulator
-              [reportCode]="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport?.folderName"
+              [reportId]="processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport?.folderName"
               [apiBaseUrl]="reportingService.reportingApiBaseUrl"
               [reportParams]="viewDataParams || {}"
               (dataFetched)="onViewDataFetched($any($event))"

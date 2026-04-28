@@ -67,6 +67,17 @@ public abstract class ChartOptionsScript extends Script {
 	// Chart type: line, bar, pie, doughnut, radar, polarArea, scatter, bubble
 	public void type(String t) { this.type = t; }
 
+	// labelField and datasets at the top level (emitted by GroovyDslEmitter)
+	public void labelField(String f) { this.labelField = f; }
+
+	@SuppressWarnings("unchecked")
+	public void datasets(List<?> list) {
+		if (list == null) return;
+		for (Object item : list) {
+			if (item instanceof Map) this.datasets.add(new LinkedHashMap<>((Map<String, Object>) item));
+		}
+	}
+
 	// Chart.js options - map form
 	public void options(Map<String, Object> args) {
 		if (args != null) options.putAll(args);
@@ -263,6 +274,16 @@ public abstract class ChartOptionsScript extends Script {
 		private final List<Map<String, Object>> dataRows = new ArrayList<>();
 
 		public void type(String t) { this.type = t; }
+
+		public void labelField(String f) { this.labelField = f; }
+
+		@SuppressWarnings("unchecked")
+		public void datasets(List<?> list) {
+			if (list == null) return;
+			for (Object item : list) {
+				if (item instanceof Map) this.datasets.add(new LinkedHashMap<>((Map<String, Object>) item));
+			}
+		}
 
 		public void options(Map<String, Object> args) {
 			if (args != null) options.putAll(args);

@@ -19,7 +19,7 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
 	@Autowired
 	private ApiKeyManager apiKeyManager;
 
-	@Value("${reportburster.security.enabled:true}")
+	@Value("${DataPallas.security.enabled:true}")
 	private boolean securityEnabled;
 
 	@Override

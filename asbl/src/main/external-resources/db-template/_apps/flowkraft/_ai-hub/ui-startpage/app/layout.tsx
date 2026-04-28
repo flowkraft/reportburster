@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AINavbar } from "@/components/layout/AINavbar";
+import { RbWebComponentsLoader } from "@/components/layout/RbWebComponentsLoader";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "sonner";
 
@@ -19,8 +20,8 @@ const fontHeading = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "FlowKraft's AI Crew",
-  description: "FlowKraft's AI Crew Dashboard",
+  title: "DataPallas",
+  description: "DataPallas — Explore Data & Build Dashboards",
 };
 
 export default function RootLayout({
@@ -32,6 +33,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${fontHeading.variable}`}>
       <body className="font-sans antialiased min-h-screen flex flex-col bg-background text-foreground">
         <ThemeProvider>
+          <RbWebComponentsLoader />
           <AINavbar />
           <main className="flex-1 pt-16 w-full">
             <div className="w-full">

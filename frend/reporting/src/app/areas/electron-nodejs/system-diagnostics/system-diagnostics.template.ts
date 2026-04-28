@@ -20,7 +20,7 @@ export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTem
     <button type="button" class="btn btn-primary" (click)="restartApp()">
       <i class="fa fa-play"></i
       >&nbsp;{{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.RESTART' | translate
-      }} <em>ReportBurster</em>
+      }} <em>DataPallas</em>
     </button>
   </div>
   -->
@@ -32,7 +32,7 @@ export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTem
     <em>Java</em>
     {{this.stateStore.configSys.sysInfo.setup.java.version}}
     {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.FOUND' | translate }}
-    <em>ReportBurster</em></strong
+    <em>DataPallas</em></strong
   ></span
 >
 
@@ -137,7 +137,7 @@ export const systemDiagnosticsTemplate = `<!--<ng-template #systemDiagnosticsTem
       *ngIf="!this.stateStore.configSys.sysInfo.setup.javaDiagnostics.jreHomeFolderExists"
       >&nbsp;<em>%JRE_HOME%</em>
       ({{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.DIAGNOSTICS.REQUIRED-BY' |
-      translate }}&nbsp;<em>ReportBurster</em> Web Console)
+      translate }}&nbsp;<em>DataPallas</em> Web Console)
       {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.DIAGNOSTICS.FOLDER-NOT-FOUND' |
       translate }}</span
     >

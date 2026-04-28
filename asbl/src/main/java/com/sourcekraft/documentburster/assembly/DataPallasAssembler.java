@@ -9,13 +9,13 @@ import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.stream.LogOutputStream;
 import org.zeroturnaround.zip.ZipUtil;
 
-public class ReportBursterAssembler extends AbstractAssembler {
+public class DataPallasAssembler extends AbstractAssembler {
 
 	private String e2eVerifyDirPath;
 
-	public ReportBursterAssembler() {
+	public DataPallasAssembler() {
 
-		super("target/package/db", "target/package/verified-db", "target/reportburster.zip");
+		super("target/package/db", "target/package/verified-db", "target/datapallas.zip");
 
 	}
 
@@ -34,26 +34,26 @@ public class ReportBursterAssembler extends AbstractAssembler {
 				}).execute();
 
 		System.out.println(
-				"------------------------------------- DONE_01:ReportBurster _generate ReportBurster.exe ... -------------------------------------");
+				"------------------------------------- DONE_01:DataPallas _generate DataPallas.exe ... -------------------------------------");
 
 	}
 
 	protected void preparePackage() throws Exception {
 
-		// copy all the already "verified" ReportBurster files
+		// copy all the already "verified" DataPallas files
 		FileUtils.copyDirectory(new File(e2eVerifyDirPath),
 				new File(packageDirPath));
 
 		System.out.println(
-				"------------------------------------- DONE_02:ReportBursterServer copy all the already 'verified' ReportBurster files ... -------------------------------------");
+				"------------------------------------- DONE_02:DataPallasServer copy all the already 'verified' DataPallas files ... -------------------------------------");
 
 		
 		FileUtils.copyFile(
-				new File(Utils.getTopProjectFolderPath() + "/frend/reporting/release/ReportBurster.exe"),
-				new File(packageDirPath + "/" + topFolderName + "/ReportBurster.exe"));
+				new File(Utils.getTopProjectFolderPath() + "/frend/reporting/release/DataPallas.exe"),
+				new File(packageDirPath + "/" + topFolderName + "/DataPallas.exe"));
 
 		System.out.println(
-				"------------------------------------- DONE_03:ReportBurster _copy ReportBursterExe... -------------------------------------");
+				"------------------------------------- DONE_03:DataPallas _copy DataPallasExe... -------------------------------------");
 
 		
 	}
@@ -63,14 +63,14 @@ public class ReportBursterAssembler extends AbstractAssembler {
 
 		ZipUtil.unpack(new File(targetPathZipFile), new File(verifyDirPath));
 
-		// verify ReportBurster.exe;
-		assertThat(new File(verifyDirPath + "/" + topFolderName + "/ReportBurster.exe").exists()).isTrue();
+		// verify DataPallas.exe;
+		assertThat(new File(verifyDirPath + "/" + topFolderName + "/DataPallas.exe").exists()).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_01:ReportBurster ReportBurster.exe... -------------------------------------");
+				"------------------------------------- VERIFIED_01:DataPallas DataPallas.exe... -------------------------------------");
 
 		System.out.println(
-				"------------------------------------- VERIFIED_DONE:ReportBurster ... -------------------------------------");
+				"------------------------------------- VERIFIED_DONE:DataPallas ... -------------------------------------");
 
 	}
 	

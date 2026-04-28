@@ -261,10 +261,13 @@
       &nbsp;
     </span>
 
+    <span *ngIf="isEditingSample" class="text-muted" style="margin-right: 12px; font-size: 12px;">
+      <i class="fa fa-info-circle"></i> Sample connections are read-only. Use Duplicate to create an editable copy.
+    </span>
     <button id="btnOKConfirmationConnectionModal" class="btn btn-primary" type="button" (click)="onModalOK()"
       [disabled]="
         !modalConnectionInfo.email.documentburster.connection.name ||
-        modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file' || isTestingConnection">
+        modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file' || isTestingConnection || isEditingSample">
       {{ "BUTTONS.SAVE" | translate }}
     </button>
 
@@ -275,7 +278,7 @@
   </p-footer>
 </p-dialog>
 <p-dialog id="modalDbConnection" [header]="modalConnectionInfo.modalTitle" [(visible)]="isModalDbConnectionVisible"
-  [modal]="true" width="800" [style]="{ top: '3vw', left: '4vw' }" [autoZIndex]="false">
+  [modal]="true" width="800" [style]="{ top: context === 'cubeDsl' ? '0.5vw' : '3vw', left: '4vw' }" [autoZIndex]="false" [styleClass]="context === 'cubeDsl' ? 'cube-dsl-stacked-dialog' : ''" [maskStyleClass]="context === 'cubeDsl' ? 'cube-dsl-stacked-mask' : ''">
   <div style="margin: 5px">
     <!-- Tabs Container -->
     <tabset>
@@ -620,7 +623,6 @@
           isUbiquitousLanguageTabActive = false;
           isToolsTabActive = false;
         " (deselectTab)="isDatabaseSchemaTabActive = false">
-        >
         <ng-template tabHeading>
           <i class="fa fa-table"></i> &nbsp;Database Schema
         </ng-template>
@@ -654,29 +656,69 @@
         </div></div>
         <div class="row" style="padding: 15px" *ngIf="showSchemaTreeSelect" >
           <div class="col-xs-12">
+            <!-- Cube-vs-tables toggle. Auto-hidden when the connection has
+                 zero cubes. ONLY visible when the modal is acting as an AI
+                 helper for generating SQL or Groovy scripts (sqlQuery /
+                 scriptQuery contexts) — never in CRUD mode, never in
+                 cubeDsl mode (which would be circular). -->
+            <div class="row" style="padding: 0 5px 8px 5px"
+                 *ngIf="(context === 'sqlQuery' || context === 'scriptQuery' || context === 'dashboardScript') && cubesForCurrentConnection.length !== 0">
+              <div class="col-xs-12">
+                <label style="font-size: 12px; font-weight: normal; cursor: pointer; user-select: none">
+                  <input type="checkbox" id="chkUseCubesInsteadOfTables"
+                         [(ngModel)]="useCubesInsteadOfTables"
+                         (ngModelChange)="onUseCubesInsteadOfTablesChanged($event)"
+                         style="margin-right: 6px; vertical-align: middle">
+                  Show cubes instead of tables
+                </label>
+              </div>
+            </div>
             <!-- PickList and refresh when loaded -->
               <div id="databaseSchemaPicklistContainer" class="schema-picklist-container"
-                style="min-height: 350px; max-height: 350px; padding: 0 5px">
+                [class.crud-picklist]="context === 'crud'"
+                style="min-height: 350px; max-height: 350px; padding: 0 5px"
+                *ngIf="!useCubesInsteadOfTables">
                 <dburst-picklist picklistId="databaseSchemaPicklist" [sourceItems]="sourceSchemaObjects"
                   [targetItems]="targetSchemaObjects" (sourceItemsChange)="sourceSchemaObjects = $event"
                   (targetItemsChange)="targetSchemaObjects = $event" sourceHeader="All Database Tables & Objects"
                   targetHeader="Selected Tables & Objects" optionLabel="label" itemKey="key"
                   sourceFilterPlaceholder="Search available..."
                   targetFilterPlaceholder="Search selected..."
-                  [enableFieldSelection]="context === 'sqlQuery' || context === 'scriptQuery' || context === 'dashboardScript'"
+                  [enableFieldSelection]="context === 'sqlQuery' || context === 'scriptQuery' || context === 'dashboardScript' || context === 'cubeDsl'"
                   #databaseSchemaPicklistRef></dburst-picklist>
+              </div>
+              <!-- Cube picklist — flat list of available cubes for the
+                   current connection. Only shown when the toggle is ON. -->
+              <div id="cubesPicklistContainer" class="schema-picklist-container"
+                style="min-height: 350px; max-height: 350px; padding: 0 5px"
+                *ngIf="useCubesInsteadOfTables">
+                <dburst-picklist picklistId="cubesPicklist"
+                  [sourceItems]="cubeSourceItems"
+                  [targetItems]="cubeTargetItems"
+                  (sourceItemsChange)="cubeSourceItems = $event"
+                  (targetItemsChange)="cubeTargetItems = $event"
+                  sourceHeader="Available Cubes"
+                  targetHeader="Selected Cubes"
+                  optionLabel="label"
+                  itemKey="key"
+                  sourceFilterPlaceholder="Search cubes..."
+                  targetFilterPlaceholder="Search selected..."
+                  [enableFieldSelection]="false"
+                  #cubesPicklistRef></dburst-picklist>
               </div>
               <button id="btnRefreshDatabaseSchema" class="btn btn-default btn-xm" (click)="refreshDatabaseSchema()"
                 title="Refresh Database Schema" [disabled]="isSchemaLoading" *ngIf="mode !== 'viewMode'">
                 <i class="fa fa-refresh" [ngClass]="{ 'fa-spin': isSchemaLoading }"></i>
               </button>
             </div></div>
-              <div class="row" style="margin-top: 10px">
+              <div class="row" style="margin-top: 10px" *ngIf="context !== 'crud'">
                 <div class="col-xs-12">
                   <div class="text-center">
-                    <span id="chooseTableLabelDbSchema" *ngIf="targetSchemaObjects.length === 0" style="font-size: 11px"
-                      class="label label-default">
-                      <strong>Choose Table(s) from the list above</strong>
+                    <span id="chooseTableLabelDbSchema"
+                      *ngIf="(!useCubesInsteadOfTables && targetSchemaObjects.length === 0) ||
+                             (useCubesInsteadOfTables && cubeTargetItems.length === 0)"
+                      style="font-size: 11px" class="label label-default">
+                      <strong>{{ useCubesInsteadOfTables ? 'Choose Cube(s) from the list above' : 'Choose Table(s) from the list above' }}</strong>
                     </span>
                     <button id="btnGenerateWithAIDbSchema" style="margin-top: 8px" [ngClass]="
                         domainGroupedSchemaExists
@@ -684,9 +726,10 @@
                           : 'btn-primary'
                       " class="btn btn-block" (click)="launchAiCopilotForSchemaQuery()" [disabled]="
                         !showSchemaTreeSelect ||
-                        targetSchemaObjects.length === 0
+                        (!useCubesInsteadOfTables && targetSchemaObjects.length === 0) ||
+                        (useCubesInsteadOfTables && cubeTargetItems.length === 0)
                       ">
-                      <i class="fa fa-magic"></i>&nbsp; {{ context === 'dashboardScript' ? 'Build Dashboard with Help From AI' : (context === 'scriptQuery' ? 'Generate Script with Help From AI' : 'Generate SQL Query with Help From AI') }}
+                      <i class="fa fa-magic"></i>&nbsp; {{ useCubesInsteadOfTables ? (context === 'dashboardScript' ? 'Build Dashboard from Cubes with Help From AI' : context === 'scriptQuery' ? 'Generate Script from Cubes with Help From AI' : 'Generate SQL Query from Cubes with Help From AI') : (context === 'dashboardScript' ? 'Build Dashboard with Help From AI' : (context === 'scriptQuery' ? 'Generate Script with Help From AI' : (context === 'cubeDsl' ? 'Generate Cube DSL with Help From AI' : 'Generate SQL Query with Help From AI'))) }}
                     </button>
                   </div>
                 </div>
@@ -702,7 +745,7 @@
           isUbiquitousLanguageTabActive = false;
           isToolsTabActive = false;
         " (deselectTab)="isDomainGroupedSchemaTabActive = false"
-        *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' || domainGroupedSchemaExists">
+        *ngIf="(context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && context !== 'cubeDsl') || domainGroupedSchemaExists">
         <ng-template tabHeading>
           <i class="fa fa-object-group"></i> &nbsp;Domain-Grouped Schema
         </ng-template>
@@ -724,7 +767,55 @@
             <ng-container *ngIf="showSchemaTreeSelect">
               <!-- Picklist View -->
               <div *ngIf="!isDomainGroupedCodeViewActive">
-                <div id="domainGroupedSchemaPicklistContainer" class="schema-picklist-container"
+                <!-- Friendly empty state when DGS doesn't exist yet. Mirrors
+                     the "No ER Diagram Available" pattern from the diagram tab. -->
+                <div *ngIf="!domainGroupedSchemaExists" id="noDomainGroupedSchemaAvailable" class="text-center" style="
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    padding: 20px;
+                    min-height: 375px;
+                    max-height: 375px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                  ">
+                  <h4>No Domain-Grouped Schema Available</h4>
+                  <p style="margin-top: 15px; max-width: 80%; font-size: 0.95em">
+                    Groups database tables into <a href="https://en.wikipedia.org/wiki/Domain-driven_design#Strategic_design" target="_blank" rel="noopener noreferrer">business domains</a> (e.g. "Sales & Orders", "Customer Management") so the picklist and the AI helpers can work on a focused subset instead of the full schema.
+                  </p>
+                  <div style="
+                      margin-top: 20px;
+                      text-align: left;
+                      border: 1px solid #e0e0e0;
+                      padding: 15px;
+                      border-radius: 5px;
+                      background-color: #f9f9f9;
+                      max-width: 85%;
+                      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                    ">
+                    <p style="margin-bottom: 10px; font-weight: bold; font-size: 1em;">
+                      How to get started:
+                    </p>
+                    <ul style="
+                        list-style-type: disc;
+                        margin-left: 20px;
+                        padding-left: 0;
+                        font-size: 0.9em;
+                        line-height: 1.6;
+                      ">
+                      <li style="margin-bottom: 8px;">
+                        Use the "<strong>Generate Domain Schema with AI Help</strong>" button (located below) to create an initial grouping from your database schema.
+                      </li>
+                      <li>
+                        After AI generation, or to write your own, click "<strong>Show Domain-Grouped Schema Code</strong>" to view, manually customize, or fine-tune the JSON.
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <!-- Picklist itself, only when DGS exists. -->
+                <div *ngIf="domainGroupedSchemaExists" id="domainGroupedSchemaPicklistContainer" class="schema-picklist-container"
+                  [class.crud-picklist]="context === 'crud'"
                   style="min-height: 375px; max-height: 375px; padding: 0 5px">
                   <dburst-picklist picklistId="domainGroupedSchemaPicklist" [sourceItems]="domainSourceSchemaObjects"
                     [targetItems]="domainTargetSchemaObjects" (sourceItemsChange)="domainSourceSchemaObjects = $event"
@@ -732,7 +823,8 @@
                     sourceHeader="All Database Tables & Objects" targetHeader="Selected Tables & Objects"
                     optionLabel="label" itemKey="key" sourceFilterPlaceholder="Search available..."
                     targetFilterPlaceholder="Search selected..."
-                    [enableFieldSelection]="context === 'sqlQuery' || context === 'scriptQuery' || context === 'dashboardScript'"
+                    [enableFieldSelection]="context === 'sqlQuery' || context === 'scriptQuery' || context === 'dashboardScript' || context === 'cubeDsl'"
+                    [flattenGroupNodes]="true"
                     #domainGroupedSchemaPicklistRef>
                   </dburst-picklist>
                 </div>
@@ -751,7 +843,7 @@
                 <!-- Replace the existing buttons layout in Domain-Grouped Schema tab with this code -->
                 <div class="row" style="margin-top: 10px">
                   <!-- Original layout when domainGroupedSchemaExists is false -->
-                  <ng-container *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && !domainGroupedSchemaExists">
+                  <ng-container *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && context !== 'cubeDsl' && !domainGroupedSchemaExists">
                     <div class="col-xs-6">
                       <button id="btnToggleDomainGroupedCodeView" type="button" class="btn btn-default btn-block"
                         (click)="toggleDomainGroupedCodeView()">
@@ -770,7 +862,7 @@
 
                   <!-- New split button layout when domainGroupedSchemaExists is true -->
                   <div class="col-xs-12" *ngIf="domainGroupedSchemaExists">
-                    <div class="btn-group btn-block" style="margin-bottom: 20px" *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript'">
+                    <div class="btn-group btn-block" style="margin-bottom: 20px" *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && context !== 'cubeDsl'">
                       <button id="btnGenerateSqlQueryWithAIDomainGroupedSchema" type="button" class="btn btn-primary"
                         style="width: calc(100% - 34px); text-align: left" (click)="launchAiCopilotForSchemaQuery()"
                         [disabled]="
@@ -803,9 +895,9 @@
                         [disabled]="
                           !showSchemaTreeSelect ||
                           domainTargetSchemaObjects.length === 0
-                        " *ngIf="context === 'sqlQuery' || context === 'scriptQuery' || context === 'dashboardScript'">
+                        " *ngIf="context === 'sqlQuery' || context === 'scriptQuery' || context === 'dashboardScript' || context === 'cubeDsl'">
                         <div class="text-center">
-                          <i class="fa fa-magic"></i>&nbsp; {{ context === 'dashboardScript' ? 'Build Dashboard with Help From AI' : (context === 'scriptQuery' ? 'Generate Script with Help From AI' : 'Generate SQL Query with Help From AI') }}
+                          <i class="fa fa-magic"></i>&nbsp; {{ context === 'dashboardScript' ? 'Build Dashboard with Help From AI' : (context === 'scriptQuery' ? 'Generate Script with Help From AI' : (context === 'cubeDsl' ? 'Generate Cube DSL with Help From AI' : 'Generate SQL Query with Help From AI')) }}
                         </div>
                       </button>
                   </div>
@@ -855,7 +947,7 @@
           isDomainGroupedSchemaTabActive = false;
           isUbiquitousLanguageTabActive = false;
           isToolsTabActive = false;
-        " (deselectTab)="isErDiagramTabActive = false" *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' || erDiagramExists">
+        " (deselectTab)="isErDiagramTabActive = false" *ngIf="(context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && context !== 'cubeDsl') || erDiagramExists">
         <ng-template tabHeading>
           <i class="fa fa-sitemap"></i> &nbsp;ER Diagram
         </ng-template>
@@ -875,6 +967,28 @@
           <div class="col-xs-12">
             <!-- View mode (default) -->
             <div *ngIf="!isDiagramEditMode">
+              <!-- Business domain filter — only shows when DGS exists AND has
+                   at least one top-level domain present in the current PUML.
+                   Filter is purely client-side; the .puml file on disk is
+                   never modified. -->
+              <div *ngIf="domainGroupedSchemaExists && availableBusinessDomains.length > 0"
+                style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 8px 10px; background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 4px;">
+                <label for="erDiagramDomainFilter" style="margin: 0; font-weight: 600; white-space: nowrap;">
+                  <i class="fa fa-filter"></i>&nbsp;Business Domain:
+                </label>
+                <select id="erDiagramDomainFilter" class="form-control"
+                  [ngModel]="selectedBusinessDomain"
+                  (ngModelChange)="onBusinessDomainFilterChanged($event)"
+                  style="flex: 1; max-width: 360px; height: 30px; padding: 2px 8px;">
+                  <option value="All">All ({{ totalEntitiesInPuml }} tables)</option>
+                  <option *ngFor="let d of availableBusinessDomains; trackBy: trackBusinessDomainByLabel" [value]="d.label">
+                    {{ d.label }} ({{ d.tableNames.length }} tables)
+                  </option>
+                </select>
+                <span style="margin-left: auto; font-size: 0.85em; color: #555; white-space: nowrap;">
+                  Showing <strong>{{ filteredEntitiesInPuml }}</strong> of <strong>{{ totalEntitiesInPuml }}</strong> tables
+                </span>
+              </div>
               <iframe id="plantUmlDiagram" *ngIf="
                   encodedPlantUmlDiagram && encodedPlantUmlDiagram.length > 0
                 " [src]="
@@ -956,7 +1070,7 @@
                 </p>
               </div>
               <!-- Three buttons 1/3 width each -->
-              <div class="row" style="margin-top: 10px" *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript'">
+              <div class="row" style="margin-top: 10px" *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && context !== 'cubeDsl'">
                 <div class="col-xs-4">
                   <button id="btnDatabaseDiagramShowCode" type="button" class="btn btn-default btn-block" [disabled]="
                       !modalConnectionInfo.database.documentburster.connection
@@ -983,7 +1097,7 @@
                   </button>
                 </div>
               </div>
-              <div class="row" style="margin-top: 10px" *ngIf="context === 'sqlQuery' || context === 'scriptQuery' || context === 'dashboardScript'">
+              <div class="row" style="margin-top: 10px" *ngIf="context === 'sqlQuery' || context === 'scriptQuery' || context === 'dashboardScript' || context === 'cubeDsl'">
                 <div class="col-xs-12">
                   <a id="btnDatabaseDiagramViewInBrowserLink" *ngIf="encodedPlantUmlDiagram" [href]="
                       'https://kroki.io/plantuml/svg/' + encodedPlantUmlDiagram
@@ -1063,7 +1177,7 @@
           isErDiagramTabActive = false;
           isToolsTabActive = false;
         " (deselectTab)="isUbiquitousLanguageTabActive = false"
-        *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' || isStringAndNotEmpty(ubiquitousLanguageMarkdown)">
+        *ngIf="(context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && context !== 'cubeDsl') || isStringAndNotEmpty(ubiquitousLanguageMarkdown)">
         <ng-template tabHeading>
           <i class="fa fa-language"></i> &nbsp;Ubiquitous Language
         </ng-template>
@@ -1089,7 +1203,7 @@
                 style="margin-top: 10px" [disabled]="
                   !modalConnectionInfo.database.documentburster.connection.name
                 " (click)="toggleUbiquitousLanguageEditMode()" *ngIf="
-                  context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript'">
+                  context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && context !== 'cubeDsl'">
                 <i class="fa fa-edit"></i> Edit 'Ubiquitous Language'
                 Documentation
               </button>
@@ -1219,16 +1333,16 @@
         isDomainGroupedSchemaTabActive = false;
         isErDiagramTabActive = false;
         isUbiquitousLanguageTabActive = false
-      " (deselectTab)="isToolsTabActive = false" *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' || (showSchemaTreeSelect && domainGroupedSchemaExists && erDiagramExists && isStringAndNotEmpty(ubiquitousLanguageMarkdown))">
+      " (deselectTab)="isToolsTabActive = false" *ngIf="(context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && context !== 'cubeDsl') || (showSchemaTreeSelect && domainGroupedSchemaExists && erDiagramExists && isStringAndNotEmpty(ubiquitousLanguageMarkdown))">
         <ng-template tabHeading>
-          <i class="fa fa-robot"></i> &nbsp;Chat2DB
+          <i class="fa fa-robot"></i> &nbsp;Explore Data
         </ng-template>
 
         <div style="padding: 15px; min-height: 420px; overflow: visible;">
           <div style="max-width: 700px; overflow: visible;">
             <dburst-apps-manager
               [dropdownDirection]="'expandedList'"
-              [inputAppsToShow]="['flowkraft-ai-hub']"
+              [inputAppsToShow]="['flowkraft-data-canvas']"
               [showDevButtons]="false"
             >
             </dburst-apps-manager>
@@ -1270,11 +1384,14 @@
 
     <!-- Right Aligned Group -->
     <div>
+      <span *ngIf="isEditingSample" class="text-muted" style="margin-right: 12px; font-size: 12px;">
+        <i class="fa fa-info-circle"></i> Sample connections are read-only. Use Duplicate to create an editable copy.
+      </span>
       <button id="btnOKConfirmationDbConnectionModal" *ngIf="mode !== 'viewMode'" class="btn btn-primary" type="button"
         (click)="onModalOK()" [disabled]="
           (!modalConnectionInfo.database.documentburster.connection.name ||
           modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file' ||
-          (isTestingConnection == true || isSchemaLoading == true))
+          (isTestingConnection == true || isSchemaLoading == true) || isEditingSample)
         ">
         {{ "BUTTONS.SAVE" | translate }}
       </button>

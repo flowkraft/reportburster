@@ -2,7 +2,7 @@
 
 <script context="module" lang="ts">
   // Module-level: shared across all <rb-tabulator> instances on the page.
-  // Deduplicates config requests when N components share the same report-code.
+  // Deduplicates config requests when N components share the same report-id.
   const _cfgCache = new Map<string, Promise<any>>();
 
   function fetchConfigCached(url: string, headers: Record<string, string>): Promise<any> {
@@ -67,7 +67,7 @@
   //   This avoids 3 separate API calls for the same data.
   //
   // MODE 2 — "Self-Fetch" (component fetches its own config + data)
-  //   Props: [reportCode], [apiBaseUrl], [reportParams], [testMode], [componentId]
+  //   Props: [reportId], [apiBaseUrl], [reportParams], [testMode], [componentId]
   //   Component calls GET /reports/{code}/config then GET /reports/{code}/data
   //   Used in:
   //     - Configuration > Tabulator/Chart/Pivot Preview for named components
@@ -84,9 +84,9 @@
   // ============================================================================
 
   // ============================================================================
-  // Mode 2 Props — when reportCode is provided, component self-fetches
+  // Mode 2 Props — when reportId is provided, component self-fetches
   // ============================================================================
-  export let reportCode: string = '';
+  export let reportId: string = '';
   export let apiBaseUrl: string = '';
   export let apiKey: string = '';
   export let componentId: string = '';
@@ -234,8 +234,9 @@
   const dispatch = createEventDispatcher();
 
   // Inject Tabulator CSS into document <head>.
-  // - No theme / 'light' / 'default' → global injection (backward compatible)
-  // - Named theme → scoped injection with .rb-theme-{name} prefix
+  // - No theme / 'light' / 'default' → global injection (default styling)
+  // - Named theme → scoped injection with .rb-theme-{name} prefix so the
+  //   theme only affects descendants of an opted-in element
   function injectCSS(resolvedTheme: string) {
     // Always inject contrast fix CSS (once) — ensures readable text on any host page
     const contrastId = 'rb-tabulator-contrast-fix';
@@ -301,7 +302,7 @@
       // Skip replaceData when data is empty and Tabulator's AJAX module owns the data.
       // In remote pagination mode, calling replaceData([]) would clear AJAX-loaded rows.
       // In spreadsheet mode, data lives in spreadsheetData — replaceData would overwrite it.
-      const remotePagination = options?.paginationMode === 'remote' && reportCode && apiBaseUrl;
+      const remotePagination = options?.paginationMode === 'remote' && reportId && apiBaseUrl;
       const isSpreadsheet = (options as any)?.spreadsheet;
       if (Array.isArray(data) && (data.length > 0 || !remotePagination) && !isSpreadsheet) {
         table.replaceData(data);
@@ -318,7 +319,7 @@
     // Read attributes from host custom element (light DOM — just walk up)
     const hostEl = container?.closest('rb-tabulator');
     if (hostEl) {
-      if (!reportCode) reportCode = hostEl.getAttribute('report-code') || '';
+      if (!reportId) reportId = hostEl.getAttribute('report-id') || '';
       if (!apiBaseUrl) apiBaseUrl = hostEl.getAttribute('api-base-url') || '';
       if (!apiKey) apiKey = hostEl.getAttribute('api-key') || '';
       if (!componentId) componentId = hostEl.getAttribute('component-id') || '';
@@ -339,16 +340,16 @@
     }
 
     // ========================================================================
-    // Smart Mode: if reportCode provided, fetch config + data from server
+    // Smart Mode: if reportId provided, fetch config + data from server
     // ========================================================================
-    if (reportCode && apiBaseUrl) {
+    if (reportId && apiBaseUrl) {
       loading = true;
       error = null;
 
       const headers: Record<string, string> = {};
 
       try {
-        const configUrl = `${apiBaseUrl}/reports/${reportCode}/config`;
+        const configUrl = `${apiBaseUrl}/reports/${reportId}/config`;
         const config = await fetchConfigCached(configUrl, headers);
         if (componentId && config.namedTabulatorOptions?.[componentId]) {
           options = config.namedTabulatorOptions[componentId];
@@ -370,8 +371,8 @@
           if (componentId) dataQueryParams.set('componentId', componentId);
           const dataQs = dataQueryParams.toString();
           const dataUrl = dataQs
-              ? `${apiBaseUrl}/reports/${reportCode}/data?${dataQs}`
-              : `${apiBaseUrl}/reports/${reportCode}/data`;
+              ? `${apiBaseUrl}/reports/${reportId}/data?${dataQs}`
+              : `${apiBaseUrl}/reports/${reportId}/data`;
           const dataRes = await fetch(dataUrl, { headers });
           if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
           const dataResult = await dataRes.json();
@@ -446,10 +447,10 @@
     }
 
     // Server-side mode detection
-    const isRemotePagination = opts.paginationMode === 'remote' && reportCode && apiBaseUrl;
-    const isProgressiveLoad = !!(opts as any).progressiveLoad && reportCode && apiBaseUrl;
-    const isRemoteFilter = opts.filterMode === 'remote' && reportCode && apiBaseUrl;
-    const isRemoteSort = opts.sortMode === 'remote' && reportCode && apiBaseUrl;
+    const isRemotePagination = opts.paginationMode === 'remote' && reportId && apiBaseUrl;
+    const isProgressiveLoad = !!(opts as any).progressiveLoad && reportId && apiBaseUrl;
+    const isRemoteFilter = opts.filterMode === 'remote' && reportId && apiBaseUrl;
+    const isRemoteSort = opts.sortMode === 'remote' && reportId && apiBaseUrl;
 
     // Graceful downgrade: when remote modes are requested but no server endpoint
     // is available (Mode 1 / data-push), fall back to local equivalents so the
@@ -476,7 +477,7 @@
     }
 
     if (isRemotePagination || isProgressiveLoad || isRemoteFilter || isRemoteSort) {
-      opts.ajaxURL = `${apiBaseUrl}/reports/${reportCode}/data`;
+      opts.ajaxURL = `${apiBaseUrl}/reports/${reportId}/data`;
 
       // Static params Tabulator includes in every request
       const extraParams: Record<string, string> = {};
@@ -556,8 +557,8 @@
   }
 
   export async function fetchData(params: Record<string, any> = {}) {
-    if (!reportCode || !apiBaseUrl) {
-      console.warn('rb-tabulator: fetchData requires reportCode and apiBaseUrl');
+    if (!reportId || !apiBaseUrl) {
+      console.warn('rb-tabulator: fetchData requires reportId and apiBaseUrl');
       return;
     }
 
@@ -565,7 +566,7 @@
     const headers: Record<string, string> = {};
 
     try {
-      const configUrl = `${apiBaseUrl}/reports/${reportCode}/config`;
+      const configUrl = `${apiBaseUrl}/reports/${reportId}/config`;
       const config = await fetchConfigCached(configUrl, headers);
 
       if (componentId && config.namedTabulatorOptions?.[componentId]) {
@@ -584,8 +585,8 @@
       if (componentId) dataParams.set('componentId', componentId);
       const queryString = dataParams.toString();
       const url = queryString
-        ? `${apiBaseUrl}/reports/${reportCode}/data?${queryString}`
-        : `${apiBaseUrl}/reports/${reportCode}/data`;
+        ? `${apiBaseUrl}/reports/${reportId}/data?${queryString}`
+        : `${apiBaseUrl}/reports/${reportId}/data`;
 
       const res = await fetch(url, { headers });
       if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
@@ -616,12 +617,12 @@
 
 <div class={themeWrapperClass} data-rb-theme-mode={themeMode} style:color={themeTextColor}>
   {#if loading}
-    <div class="rb-loading">Loading...</div>
+    <div class="rb-loading" id={componentId ? `widgetLoading-${componentId}` : undefined}>Loading...</div>
   {/if}
   {#if error}
-    <div class="rb-error">{error}</div>
+    <div class="rb-error" id={componentId ? `widgetError-${componentId}` : undefined}>{error}</div>
   {/if}
-  <div bind:this={container} style:display={loading || error ? 'none' : 'block'}></div>
+  <div bind:this={container} id={componentId ? `widgetTabulator-${componentId}` : undefined} style:display={loading || error ? 'none' : 'block'}></div>
 </div>
 
 <style>

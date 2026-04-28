@@ -34,6 +34,13 @@ export interface TreeNode {
   leaf?: boolean;
   style?: string;
   visible?: boolean; // Added for filtering
+  // Used by the picklist's `flattenGroupNodes` mode. When set, the node is
+  // treated as a "leaf" that, when moved back from target to source, is
+  // re-grouped under a parent node identified by `originalParentKey`. The
+  // picklist creates the parent group on demand if it no longer exists in
+  // the source.
+  originalParentKey?: string;
+  originalParentLabel?: string;
 }
 
 @Component({
@@ -80,12 +87,14 @@ export interface TreeNode {
             [isSelected]="isSelected(node)"
             [selection]="selection"
             [treeId]="treeId"
+            [showTooltips]="showTooltips"
             [nodeTemplate]="
               nodeTemplate || _templateMap?.[node.type || 'default']
             "
             (nodeSelect)="handleNodeSelect($event)"
             (nodeUnselect)="handleNodeUnselect($event)"
             (nodeToggle)="handleNodeToggle($event)"
+            (nodeWeakClick)="nodeWeakClick.emit($event)"
           >
           </dburst-tree-node>
         </ul>
@@ -203,6 +212,8 @@ export class TreeComponent implements OnInit, OnChanges {
   @Input() indentation: number = 1.5; // Default indentation in rem
   @Input() propagateSelectionUp: boolean = true;
   @Input() propagateSelectionDown: boolean = true;
+  // When false, suppresses ALL checkbox tooltips on this tree.
+  @Input() showTooltips: boolean = true;
   @Input() metaKeySelection: boolean = false; // For multiple selection
   @Input() nodeTemplate: TemplateRef<any> | undefined; // Specific template for all nodes
   @Input() _templateMap: { [key: string]: TemplateRef<any> } | undefined; // For typed nodes
@@ -221,6 +232,13 @@ export class TreeComponent implements OnInit, OnChanges {
     node: TreeNode;
   }>();
   @Output() nodeCollapse = new EventEmitter<{
+    originalEvent: Event;
+    node: TreeNode;
+  }>();
+  // Emitted when the user clicks the checkbox of a "weak-highlight"
+  // (light blue) node. Forwarded verbatim from the tree-node component;
+  // the picklist handles it by removing the table from target.
+  @Output() nodeWeakClick = new EventEmitter<{
     originalEvent: Event;
     node: TreeNode;
   }>();

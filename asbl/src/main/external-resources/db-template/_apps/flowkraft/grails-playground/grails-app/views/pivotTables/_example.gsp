@@ -4,7 +4,7 @@
     <p class="example-desc">${desc}</p>
     <rb-pivot-table
         id="rb-${id}"
-        report-code="piv-examples"
+        report-id="piv-examples"
         component-id="${id}"
         api-base-url="${RbUtils.apiBaseUrl}"
         api-key="${RbUtils.apiKey}"

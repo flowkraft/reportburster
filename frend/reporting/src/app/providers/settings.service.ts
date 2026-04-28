@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 import * as semver from 'semver';
 import { ApiService } from './api.service';
 import { APP_CONFIG } from '../../environments/environment';
@@ -13,6 +14,8 @@ export interface ExtConnection {
   defaultConnection: boolean;
   useForJasperReports: boolean;
   usedBy: string;
+  // True for synthesized sample DB connections (Northwind SQLite/DuckDB/ClickHouse)
+  isSample?: boolean;
   emailserver?: {
     host: string;
     port: string;
@@ -96,7 +99,6 @@ export interface CfgTmplFileInfo {
   capReportDistribution: boolean;
   dsInputType: string;
   notes: string;
-  visibility: string;
   type: string;
   folderName: string;
   relativeFilePath: string;
@@ -161,9 +163,20 @@ export class SettingsService {
         skin: 'skin-black',
         backendurl: 'http://localhost:9090',
         copiloturl: 'https://chatgpt.com/',
+        showsamples: false,
       },
     },
   };
+
+  // Emits whenever the showsamples preference changes.
+  // CRUD list views (Connections, Reports, Cube Definitions) subscribe and reload.
+  showSamples$ = new BehaviorSubject<boolean>(false);
+
+  get showSamples(): boolean {
+    const v: any = this.xmlInternalSettings?.documentburster?.settings?.showsamples;
+    // Robust to both boolean and string XML representations
+    return v === true || v === 'true';
+  }
 
   //PORTABLE_EXECUTABLE_DIR: string;
   RUNNING_IN_E2E: boolean;
@@ -407,9 +420,15 @@ export class SettingsService {
   }
 
   async loadPreferences(): Promise<any> {
-    return this.apiService.get('/reports/load-internal', {
-      path: this.INTERNAL_SETTINGS_FILE_PATH,
-    });
+    const loaded = await this.apiService.get('/system/preferences');
+    // Defensive default: if the loaded XML doesn't have the new field, it's false
+    if (loaded?.settings && loaded.settings.showsamples === undefined) {
+      loaded.settings.showsamples = false;
+    }
+    // Sync the BehaviorSubject with the loaded value (robust to bool/string)
+    const v = loaded?.settings?.showsamples;
+    this.showSamples$.next(v === true || v === 'true');
+    return loaded;
   }
 
   async savePreferences(
@@ -417,12 +436,15 @@ export class SettingsService {
       documentburster: {};
     },
   ): Promise<any> {
-    const path = encodeURIComponent(this.INTERNAL_SETTINGS_FILE_PATH);
-
-    return this.apiService.post(
-      `/reports/save-internal?path=${path}`,
+    const result = await this.apiService.post(
+      '/system/preferences',
       xmlSettings.documentburster,
     );
+
+    // Notify subscribers (CRUD list views) that the preference may have changed
+    this.showSamples$.next(this.showSamples);
+
+    return result;
   }
 
   // ===== Backward-compatible deprecated wrappers =====
@@ -599,31 +621,23 @@ export class SettingsService {
     return this.templateFiles;
   }
 
-  getConfigurations(visibility?: string) {
+  getConfigurations() {
     if (this.configurationFiles && this.configurationFiles.length > 0) {
-      return this.configurationFiles.filter((configuration) => {
-        let filterCondition = configuration.type != 'config-samples';
-
-        if (visibility)
-          filterCondition =
-            filterCondition && configuration.visibility === visibility;
-
-        return filterCondition;
-      });
+      return this.configurationFiles.filter(
+        (configuration) => configuration.type != 'config-samples',
+      );
     }
   }
 
-  getMailMergeConfigurations(filter?: {
-    visibility?: string;
-    samples?: boolean;
-  }) {
+
+  getMailMergeConfigurations(filter?: { samples?: boolean }) {
     if (this.configurationFiles && this.configurationFiles.length > 0) {
       return this.configurationFiles.filter((configuration) => {
         let filterCondition = configuration.capReportGenerationMailMerge;
 
-        if (filter && filter.visibility)
+        if (filterCondition)
           filterCondition =
-            filterCondition && configuration.visibility === filter.visibility;
+            filterCondition && configuration.dsInputType !== 'ds.dashboard';
 
         if (filter && !filter.samples)
           filterCondition =
@@ -637,7 +651,7 @@ export class SettingsService {
   getJasperReportConfigurations() {
     if (this.configurationFiles && this.configurationFiles.length > 0) {
       return this.configurationFiles.filter(
-        (configuration) => configuration.type === 'config-jasper-reports' && configuration.visibility === 'visible',
+        (configuration) => configuration.type === 'config-jasper-reports',
       );
     }
     return [];
@@ -690,17 +704,11 @@ export class SettingsService {
     return filteredTemplates;
   }
 
-  getSampleConfigurations(visibility?: string) {
+  getSampleConfigurations() {
     if (this.configurationFiles && this.configurationFiles.length > 0) {
-      return this.configurationFiles.filter((configuration) => {
-        let filterCondition = configuration.type == 'config-samples';
-
-        if (visibility)
-          filterCondition =
-            filterCondition && configuration.visibility === visibility;
-
-        return filterCondition;
-      });
+      return this.configurationFiles.filter(
+        (configuration) => configuration.type == 'config-samples',
+      );
     }
   }
 

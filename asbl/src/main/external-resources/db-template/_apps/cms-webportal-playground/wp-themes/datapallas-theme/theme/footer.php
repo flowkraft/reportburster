@@ -6,7 +6,7 @@
  *
  * @link https://developer.wordpress.org/themes/basics/template-files/#template-partials
  *
- * @package ReportBurster_Theme
+ * @package DataPallas_Theme
  */
 
 ?>

@@ -5,7 +5,7 @@ Library     Process
 Library     resources/utilities.py
 Variables   resources/vars.py
 Test Setup       Clean Output Folders and Log Files
-Test Teardown    Kill Reportburster Exe Process
+Test Teardown    Kill DataPallas Exe Process
 
 *** Test Cases ***
 Let me manualy Update Should Work Fine
@@ -50,14 +50,14 @@ Let me manualy Update Should Work Fine
     
     Click Button    id=btnSelectExistingInstallation
     Sleep  1s
-    Open Folder   Select the installation/location path from where you want to migrate your existing configuration values and data. The selected folder should contain the DocumentBurster.exe/ReportBurster.exe file   ${PROJECT_PATH}/frend/reporting/testground
+    Open Folder   Select the installation/location path from where you want to migrate your existing configuration values and data. The selected folder should contain the DataPallas.exe file   ${PROJECT_PATH}/frend/reporting/testground
     Sleep  1s
     Wait Until Page Contains Element    id=errorMsg
     Sleep  2s
 
     Click Button    id=btnSelectExistingInstallation
     Sleep  2s
-    Open Folder   Select the installation/location path from where you want to migrate your existing configuration values and data. The selected folder should contain the DocumentBurster.exe/ReportBurster.exe file   ${PROJECT_PATH}/frend/reporting/testground/upgrade/baseline/DocumentBurster
+    Open Folder   Select the installation/location path from where you want to migrate your existing configuration values and data. The selected folder should contain the DataPallas.exe file   ${PROJECT_PATH}/frend/reporting/testground/upgrade/baseline/DocumentBurster
     Sleep  1s
     Wait Until Page Contains Element    id=btnMigrate
     Wait Until Page Contains Element   xpath=//ol/li[contains(.//text(), 'baseline')]
@@ -113,7 +113,7 @@ Open Electron Application
   ...  ${signal_electron_let_me_update.binary_location} and chromedriver binary via ${chromedriver_path}
   ...  see vars.py for more details.
   # Kill any existing processes to prevent conflicts
-  Run Keyword And Ignore Error    Kill Reportburster Exe Process
+  Run Keyword And Ignore Error    Kill DataPallas Exe Process
   Sleep    2s
      
   # Start with explicit debugging port
@@ -146,4 +146,4 @@ Verify Chrome Debugger Connection
 
 Close Electron Application
   [Documentation]  Kills the Electron application process
-  Kill Reportburster Exe Process  ${True} 
+  Kill DataPallas Exe Process  ${True} 

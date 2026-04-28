@@ -4,7 +4,7 @@
 
   <!-- Intro paragraph -->
   <p class="text-muted" style="margin-bottom: 15px; font-size: 0.95em;">
-    Each starter pack below launches a <strong>Northwind</strong> sample database — a realistic dataset with customers, orders, products, and employees — preloaded into a different database engine. Use them to quickly learn how ReportBurster connects to, queries, and generates reports from each supported database vendor.
+    Each starter pack below launches a <strong>Northwind</strong> sample database — a realistic dataset with customers, orders, products, and employees — preloaded into a different database engine. Use them to quickly learn how DataPallas connects to, queries, and generates reports from each supported database vendor.
   </p>
 
   <!-- Header Row: Title, Search, Tags, Refresh -->
@@ -158,7 +158,12 @@
         <div class="panel-heading">
           <h3 class="panel-title">
             <span [innerHTML]="getIconSvg(pack.icon)"></span>
-            {{ pack.displayName }}
+            <span [style.color]="pack.status === 'starting' || pack.status === 'stopping' ? 'white' : '#333'">{{ pack.displayName }}</span>
+            <strong style="margin-left: 6px;"
+              [style.color]="pack.status === 'running' ? '#31708f' : (pack.status === 'starting' || pack.status === 'stopping') ? 'white' : '#888'">
+              <i *ngIf="pack.status === 'starting' || pack.status === 'stopping'" class="fa fa-spinner fa-spin" style="margin-right: 5px;"></i>
+              {{ pack.status === 'running' ? 'running' : pack.status === 'starting' ? 'starting' : pack.status === 'stopping' ? 'stopping' : 'stopped' }}
+            </strong>
           </h3>
         </div>
         <div class="panel-body">
@@ -198,7 +203,7 @@
               [disabled]="pack.status === 'starting' || pack.status === 'stopping' || pack.isCustomSeedRunning"
               [ngClass]="{
                       'btn-default': pack.status === 'stopped' || pack.status === 'unknown' || pack.status === 'error',
-                      'btn-primary': pack.status === 'running'
+                      'btn-primary': pack.status === 'running' || pack.status === 'starting' || pack.status === 'stopping'
                     }"
               [id]="'btnStartStop_' + pack.id"
               (click)="togglePackState(pack)"
@@ -458,5 +463,5 @@
     </div>
   </ng-template>
 
-  <dburst-ai-manager></dburst-ai-manager>
+  <dburst-ai-manager #aiManagerInstance hidden></dburst-ai-manager>
 </div>

@@ -1,16 +1,16 @@
-# ReportBurster Report Bursting
+# DataPallas Report Bursting
 
 I help users split PDF and Excel documents into multiple output files based on burst tokens.
 
 ## Core Concept
 
-**Burst tokens** are unique identifiers (invoice numbers, customer IDs, email addresses, etc.) that tell ReportBurster where to split a document. Each distinct token value creates a separate output file.
+**Burst tokens** are unique identifiers (invoice numbers, customer IDs, email addresses, etc.) that tell DataPallas where to split a document. Each distinct token value creates a separate output file.
 
 ## PDF Bursting
 
 ### How It Works
 - Tokens are text wrapped in **curly brackets**: `{clyde.grew@northridgehealth.org}`
-- When ReportBurster encounters a new token, it breaks the document at that point
+- When DataPallas encounters a new token, it breaks the document at that point
 - Default output filename: `${burst_token}.pdf` (e.g., `clyde.grew@northridgehealth.org.pdf`)
 
 ### Configuration Steps I Guide
@@ -61,10 +61,10 @@ Users can merge multiple PDFs first, then burst the merged result:
 
 ## Works With Any Source
 
-ReportBurster processes PDF/Excel from any reporting system:
+DataPallas processes PDF/Excel from any reporting system:
 - Crystal Reports, SAP, Oracle, Microsoft Dynamics
 - Any ERP/CRM that exports PDF or Excel
-- As long as burst tokens are embedded, ReportBurster can split it
+- As long as burst tokens are embedded, DataPallas can split it
 
 ## When I Need More Details
 

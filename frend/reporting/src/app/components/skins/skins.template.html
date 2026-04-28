@@ -452,6 +452,16 @@
   </div>
 </div>
 
+<div *ngIf="settingsService.xmlInternalSettings?.documentburster?.settings"
+  style="margin: 18px 0 8px 0; padding-left: 8px;">
+  <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;">
+    <input id="chkShowSamples" type="checkbox"
+      [checked]="settingsService.showSamples"
+      (change)="onShowSamplesChanged($any($event.target).checked)" />
+    Show sample connections &amp; cubes
+  </label>
+</div>
+
 </aside>
 <!-- /.control-sidebar -->
 <!-- Add the sidebar's background. This div must be placed

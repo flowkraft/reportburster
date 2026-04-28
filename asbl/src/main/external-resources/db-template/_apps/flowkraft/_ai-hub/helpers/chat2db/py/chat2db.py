@@ -18,7 +18,7 @@ from datetime import datetime
 import pandas as pd
 import sqlparse
 
-from rb_connections import ReportBursterConnections, DatabaseConnection
+from rb_connections import DataPallasConnections, DatabaseConnection
 from letta_chat2db import LettaChat2DB, LettaResponse
 
 
@@ -80,7 +80,7 @@ class Chat2DB:
         Initialize Chat2DB.
 
         Args:
-            connection_code: ReportBurster connection code (e.g., 'db-northwind-postgres').
+            connection_code: DataPallas connection code (e.g., 'db-northwind-postgres').
             connection_config: Or provide a DatabaseConnection directly.
             block_dangerous: Block DELETE, DROP, UPDATE, etc. queries.
             max_rows: Maximum rows to return from queries.
@@ -90,7 +90,7 @@ class Chat2DB:
         self.max_rows = max_rows if max_rows != 1000 else int(os.environ.get('MAX_RESULT_ROWS', '1000'))
         
         # Initialize connection manager
-        self._conn_manager = ReportBursterConnections()
+        self._conn_manager = DataPallasConnections()
         self._connection: Optional[Any] = None
         self._connection_config: Optional[DatabaseConnection] = None
         
@@ -114,7 +114,7 @@ class Chat2DB:
     # -------------------------------------------------------------------------
     
     def list_connections(self) -> List[DatabaseConnection]:
-        """List all available ReportBurster database connections."""
+        """List all available DataPallas database connections."""
         connections = self._conn_manager.list_connections()
         
         print("\n📁 Available Database Connections:\n")
@@ -127,7 +127,7 @@ class Chat2DB:
     
     def connect(self, connection_code: str) -> 'Chat2DB':
         """
-        Connect to a database using a ReportBurster connection code.
+        Connect to a database using a DataPallas connection code.
         
         Args:
             connection_code: The connection code (e.g., 'db-northwind-postgres')
@@ -395,7 +395,7 @@ class Chat2DB:
 
         # No SQL extracted - this could be:
         # 1. Conversational response ("Hello!", "How are you?")
-        # 2. ReportBurster guidance ("How do I burst a PDF?")
+        # 2. DataPallas guidance ("How do I burst a PDF?")
         # 3. Clarification question from Athena
         # All are valid responses - not errors!
         if not sql:

@@ -434,7 +434,7 @@
                       >
                     </div>
 
-                    {{ prompt.promptText | slice:0:100 }}...
+                    {{ prompt.description }}
 
                     <!-- IMPROVED: Better display with flexbox to ensure same line alignment -->
                     <div
@@ -454,7 +454,7 @@
                       >
                         <button
                           class="btn btn-xm btn-outline-secondary"
-                          (click)="copyToClipboard(prompt.promptText)"
+                          (click)="copyPromptText(prompt)"
                           title="Copy prompt text to clipboard"
                         >
                           <i class="fa fa-clipboard"></i>

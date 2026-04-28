@@ -4,7 +4,7 @@
     <p class="example-desc">${desc}</p>
     <rb-tabulator
         id="rb-${id}"
-        report-code="tab-examples"
+        report-id="tab-examples"
         component-id="${id}"
         api-base-url="${RbUtils.apiBaseUrl}"
         api-key="${RbUtils.apiKey}"

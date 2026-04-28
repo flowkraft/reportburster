@@ -179,14 +179,22 @@ public class SqlExecutor {
 	 * propagate.
 	 */
 	private List<Map<String, Object>> executeQuery(Handle handle, String sql, Map<String, Object> params) {
-		// Change ResultBearing to Query
 		org.jdbi.v3.core.statement.Query query = handle.createQuery(sql);
 		if (params != null && !params.isEmpty()) {
-			// Now bindMap can be called on the Query object
 			query.bindMap(params);
 		}
-		// mapToMap().list() is available on Query
-		return query.mapToMap().list();
+		// Use getColumnLabel() directly so aliases like AS "Revenue" are preserved
+		// as-is, matching the case the published Groovy script returns via JDBC.
+		// JDBI's default mapToMap() lowercases all keys, which breaks rb-value/rb-chart
+		// field lookups in published dashboards.
+		return query.map((rs, ctx) -> {
+			java.sql.ResultSetMetaData meta = rs.getMetaData();
+			Map<String, Object> row = new java.util.LinkedHashMap<>();
+			for (int i = 1; i <= meta.getColumnCount(); i++) {
+				row.put(meta.getColumnLabel(i), rs.getObject(i));
+			}
+			return row;
+		}).list();
 	}
 
 	/**

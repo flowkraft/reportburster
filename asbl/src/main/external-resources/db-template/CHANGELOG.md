@@ -1,18 +1,22 @@
-# ReportBurster
+# DataPallas
 
 All notable changes to this project will be documented in this file.
 
-## 14.6.0 - 2026-04-13
+## 15.1.0 - 2026-04-27
 
 ### Added
 
-- **REST API for integration and automation** — All core operations (burst, generate, merge, license, connections) are now available as REST endpoints. Integrate ReportBurster into your workflows, CI/CD pipelines, or custom applications using simple HTTP calls. Interactive documentation available at `/swagger-ui.html` when the server is running.
+- **REST API for integration and automation** — All core operations (burst, generate, merge, license, connections) are now available as REST endpoints. Integrate DataPallas into your workflows, CI/CD pipelines, or custom applications using simple HTTP calls. Interactive documentation available at `/swagger-ui.html` when the server is running.
 
 - **CLI and REST API documentation** — New documentation pages with ready-to-run examples for both the command line interface and REST API.
 
-- **Data Canvas and Cube semantic layer (foundations)** — Added the foundational code for an improved Data Exploration experience: a visual drag-and-drop canvas for building interactive views with charts, tables, pivot tables, and filters, backed by a cube-based semantic layer that defines dimensions, measures, and joins over your database tables.
+- **Explore Data Canvas** — Introduces a visual drag-and-drop canvas for building interactive data views and dashboards with charts, tables, pivot tables, and filters — all in one unified workspace.
+
+- **Cube semantic layer** — Define dimensions, measures, and joins over your database tables in a reusable semantic layer. Cubes power queries across Data Canvas, dashboards, and reports, giving you a single source of truth for your business metrics.
 
 ### Changed
+
+- **Product rebranded to DataPallas** — The product is now named DataPallas. All user-facing names, labels, splash screens, and the desktop executable (`DataPallas.exe`) reflect the new identity.
 
 - **In-process job execution** — Burst, generate, and merge operations now run inside the server process instead of spawning a separate JVM via `reportburster.bat`. This eliminates the 2-3 second JVM startup overhead per job and provides more reliable status bar feedback.
 
@@ -66,9 +70,9 @@ All notable changes to this project will be documented in this file.
 
 - **Invoice Data Seeding for Load Testing** — Seed large amounts of invoice data (100 to 1,000,000+ rows) directly from the Starter Packs UI, generate reports against it, and measure actual throughput on your hardware. One-click "Wipe" to clean up without affecting sample data.
 
-- **ReportBurster Cookbook AI Skill** — New AI skill providing a catalog of working examples, sample configurations, Groovy scripts, and report templates as reference material.
+- **DataPallas Cookbook AI Skill** — New AI skill providing a catalog of working examples, sample configurations, Groovy scripts, and report templates as reference material.
 
-- **UI & Docs Navigation AI Skill** — New AI skill for navigating ReportBurster's UI screens and documentation.
+- **UI & Docs Navigation AI Skill** — New AI skill for navigating DataPallas's UI screens and documentation.
 
 ### Changed
 
@@ -101,7 +105,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Updated documentation to reflect the latest developments
-- Updated AI Crew agents knowledge to reflect the new ReportBurster capabilities
+- Updated AI Crew agents knowledge to reflect the new DataPallas capabilities
 
 ## 13.2.0 - 2026-02-17
 
@@ -126,7 +130,7 @@ All notable changes to this project will be documented in this file.
   to ClickHouse (OLAP)
   
 - **AI Assistants** — A powerful crew of AI agents to accelerate your work
-  - **Athena** — ReportBurster Guru & Data Modeling advisor; expert on all ReportBurster features, report configuration, and schema design
+  - **Athena** — DataPallas Guru & Data Modeling advisor; expert on all DataPallas features, report configuration, and schema design
   - **Hephaestus** — Automation & ETL specialist for building data pipelines and job workflows
   - **Hermes** — Grails Guru & Self-Service Portal advisor for GSP views, Groovy scripting, and portal best practices
   - **Apollo** — Next.js/React specialist for modern TypeScript/Tailwind dashboards and admin panels
@@ -158,13 +162,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- New 'embeddable analytics' web components rb-report, rb-tabulator, rb-chart, rb-pivottable, rb-parameters; embed ReportBurster reports directly into your existing web applications and portals 
+- New 'embeddable analytics' web components rb-report, rb-tabulator, rb-chart, rb-pivottable, rb-parameters; embed DataPallas reports directly into your existing web applications and portals 
 - Improved **Apps**
-  - 'ReportBurster Self Service Portal' is a fast way to build an Employee Portal / Customer Portal  / Partner Portal / Student Portal
+  - 'DataPallas Self Service Portal' is a fast way to build an Employee Portal / Customer Portal  / Partner Portal / Student Portal
   -  Use 'Flowkraft Frontend App' for creating custom dashboards & portals
   - 'Flowkraft Admin Panel App' can be used to easily build admin user interfaces on top of your business data
   - 'Flowkraft Backend App' can be used to quickly deploy / run automation flows across your business systems
-- ReportBurster can now create pivot tables
+- DataPallas can now create pivot tables
 
 ### Fixed
 
@@ -174,8 +178,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- New **Apps** Tab accessible via *Help* → **Apps / Starter Packs / Extra Utils** → *Apps* — 10 applications that complement ReportBurster. **Docker must be installed & running for starting, stopping, or using these apps.**
-  - ReportBurster Portal
+- New **Apps** Tab accessible via *Help* → **Apps / Starter Packs / Extra Utils** → *Apps* — 10 applications that complement DataPallas. **Docker must be installed & running for starting, stopping, or using these apps.**
+  - DataPallas Portal
   - 3x FlowKraft apps (backend automation, admin-panel and frontend dashboards)
   - Rundeck - Runbook automation and job scheduling
   - CloudBeaver - Database management tool
@@ -184,7 +188,7 @@ All notable changes to this project will be documented in this file.
   - Metabase - BI and visualization tool
   - Clickhouse - High-performance OLAP database
 - Tabulator is now configurable via a simple and effective **Tabulator Options DSL**  
-- ReportBurster can now create charts (powered by **Chart.js**)
+- DataPallas can now create charts (powered by **Chart.js**)
 - User experience improvements
   - Added option to toggle (show/hide) the left navigation menu to increase usable screen space.
   - Main application window can now be maximized to use the full display area.
@@ -198,7 +202,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Improved splash screen feedback when launching ReportBurster.exe — clearer progress and better status messages during startup.
+- Improved splash screen feedback when launching DataPallas.exe — clearer progress and better status messages during startup.
 - Improved Test SQL Query / Test Script / View Data preview feedback:
   - The UI now detects preview error payloads (ERROR_MESSAGE) and shows an error toast rather than a success message.
   - When errors occur, the Tabulator preview displays an inline ERROR_MESSAGE and the Errors Log Viewer is shown to make debugging easier.
@@ -229,7 +233,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - MariaDB starter pack Start/Stop
-- ReportBurster Portal
+- DataPallas Portal
 
 ### Fixed
 
@@ -242,14 +246,14 @@ All notable changes to this project will be documented in this file.
 - New "AI powered" report generation flows
 - SQL Queries and Scrips can now be used as input data source for report generation
 - XML documents can now be used as input data source for report generation
-- ReportBurster can now generate XML, JSON and “pixel perfect” PDF documents (using XSL-FO)
+- DataPallas can now generate XML, JSON and “pixel perfect” PDF documents (using XSL-FO)
 
 ## 10.3.0 - 2025-04-14
 
 ### Added
 
 - Artificial Intelligence and LLM features assist in designing HTML report layouts
-- ReportBurster now generates reports (DOCX, PDF, XLSX, HTML) using (also) Excel files as the input data source
+- DataPallas now generates reports (DOCX, PDF, XLSX, HTML) using (also) Excel files as the input data source
 - The HTML editor and previewer have been enhanced to improve the report layout design process
 - A new sample named "10. Generate Reports From Excel Data Source" is included
 
@@ -257,7 +261,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- ReportBurster now generates (also) Excel (.XLSX) reports
+- DataPallas now generates (also) Excel (.XLSX) reports
 - A sample titled "9. Generate (Excel) Monthly Payslips" is available for users to quickly try it out
 
 ### Fixed
@@ -313,15 +317,15 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- 'Report Generation' which got broken since the new ReportBurster Server release
-- 'Let Me Update' which got broken since the new ReportBurster Server release
-- 'Chocolatey' and 'Java' (auto) installations, which got broken since the new ReportBurster Server release
+- 'Report Generation' which got broken since the new DataPallas Server release
+- 'Let Me Update' which got broken since the new DataPallas Server release
+- 'Chocolatey' and 'Java' (auto) installations, which got broken since the new DataPallas Server release
 
 ## 10.2.0 - 2024-05-21
 
 ### Added
 
-- Install/run ReportBurster under Linux (using Docker)
+- Install/run DataPallas under Linux (using Docker)
 
 ### Fixed
 
@@ -334,7 +338,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - New java server which replaces the old NodeJS API calls/functionality
-- New ReportBurster Server webapp UI having the same capabilities as ReportBurster.exe
+- New DataPallas Server webapp UI having the same capabilities as DataPallas.exe
 
 ## 9.1.7 - 2024-02-19
 
@@ -364,14 +368,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- An easy way for users to onboard/tour/learn about ReportBurster capabilities
+- An easy way for users to onboard/tour/learn about DataPallas capabilities
 - "Samples/1. Monthly Payslips (split only)" is the first of the "Samples" which users can quickly "Try It"
 
 ## 9.1.2 - 2023-12-22
 
 ### Changed
 
-- DocumentBurster -> ReportBurster product rename
+- DocumentBurster -> DataPallas product rename
 
 ## 9.1.1 - 2023-05-25
 

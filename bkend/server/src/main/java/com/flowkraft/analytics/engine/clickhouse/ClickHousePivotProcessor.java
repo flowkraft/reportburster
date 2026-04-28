@@ -372,13 +372,7 @@ public class ClickHousePivotProcessor implements PivotSQLGenerator {
 
     @Override
     public boolean supportsAggregator(String aggregatorName) {
-        try {
-            AggregatorType.fromString(aggregatorName);
-            // ClickHouse supports all aggregators (with fallback to default SQL if needed)
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        return Arrays.stream(AggregatorType.values()).anyMatch(a -> a.name().equalsIgnoreCase(aggregatorName));
     }
 
     @Override

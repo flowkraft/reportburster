@@ -109,16 +109,7 @@ public class JobsController {
 		// System.out.println("Controller clearQuarantinedFiles");
 
 		File quarantineDirectory = new File(AppPaths.QUARANTINE_DIR_PATH);
-
-		boolean isEmpty = false;
-		while (!isEmpty) {
-			try {
-				FileUtils.cleanDirectory(quarantineDirectory);
-				isEmpty = FileUtils.isEmptyDirectory(quarantineDirectory);
-			} catch (Exception e) {
-				isEmpty = false;
-			}
-		}
+		FileUtils.cleanDirectory(quarantineDirectory);
 		return Mono.just(new ResponseEntity<Void>(HttpStatus.OK));
 
 	}
@@ -136,7 +127,7 @@ public class JobsController {
 		return Mono.just(new ResponseEntity<Void>(HttpStatus.OK));
 	}
 
-	// ========== IN-PROCESS JOB EXECUTION (replaces reportburster.bat spawning) ==========
+	// ========== IN-PROCESS JOB EXECUTION (replaces DataPallas.bat spawning) ==========
 
 	/**
 	 * Burst a document into individual files based on burst tokens.
@@ -217,7 +208,7 @@ public class JobsController {
 			}
 		} else {
 			// For SQL/Script data sources, the reportId doubles as the input name.
-			// The CLI equivalent: reportburster generate -c config/.../settings.xml g-sql2fop-stud
+			// The CLI equivalent: DataPallas generate -c config/.../settings.xml g-sql2fop-stud
 			args.add(reportId);
 		}
 
@@ -256,7 +247,7 @@ public class JobsController {
 	 */
 	@SuppressWarnings("unchecked")
 	@PostMapping(value = "/merge/prepare-list", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public Mono<ResponseEntity<Map<String, String>>> prepareMergeList(@RequestBody Map<String, Object> request) {
+	public Mono<ResponseEntity<Map<String, String>>> prepareMergeList(@RequestBody Map<String, Object> request) throws Exception {
 		List<String> filePaths = (List<String>) request.get("filePaths");
 		if (filePaths == null || filePaths.isEmpty()) {
 			return Mono.just(ResponseEntity.badRequest().body(Map.of("error", "filePaths is required")));
@@ -267,18 +258,13 @@ public class JobsController {
 		String listFilePath = "temp/merge-files-" + uniqueId;
 		String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/" + listFilePath;
 
-		try {
-			// Resolve each path against PORTABLE_EXECUTABLE_DIR so both absolute
-			// paths (from REST tests) and relative paths (from UI samples) work.
-			List<String> resolvedPaths = filePaths.stream()
-					.map(this::resolveFilePath)
-					.collect(Collectors.toList());
-			Files.createDirectories(Path.of(fullPath).getParent());
-			Files.writeString(Path.of(fullPath), String.join("\n", resolvedPaths));
-		} catch (Exception e) {
-			return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(Map.of("error", "Failed to create merge list: " + e.getMessage())));
-		}
+		// Resolve each path against PORTABLE_EXECUTABLE_DIR so both absolute
+		// paths (from REST tests) and relative paths (from UI samples) work.
+		List<String> resolvedPaths = filePaths.stream()
+				.map(this::resolveFilePath)
+				.collect(Collectors.toList());
+		Files.createDirectories(Path.of(fullPath).getParent());
+		Files.writeString(Path.of(fullPath), String.join("\n", resolvedPaths));
 
 		return Mono.just(ResponseEntity.ok(Map.of("listFile", listFilePath)));
 	}
@@ -345,7 +331,7 @@ public class JobsController {
 	/**
 	 * Resolve a file path against PORTABLE_EXECUTABLE_DIR if relative.
 	 * Absolute paths are returned as-is.
-	 * The CLI's reportburster.bat cd's into the installation dir, so relative paths
+	 * The CLI's DataPallas.bat cd's into the installation dir, so relative paths
 	 * work there. For in-process execution, the JVM CWD is bkend/server/ — relative
 	 * paths must be resolved against PORTABLE_EXECUTABLE_DIR.
 	 */

@@ -24,8 +24,8 @@ Format: `INV-YYYY-NNN`. Generated in the bulk generator and import pipeline by
 querying max existing number for the current year. Simple and readable. If we needed
 guaranteed uniqueness under concurrency, we'd use a database sequence.
 
-### ReportBurster Integration
-The export pipeline generates per-customer invoice bundles that ReportBurster can pick
+### DataPallas Integration
+The export pipeline generates per-customer invoice bundles that DataPallas can pick
 up for document bursting and distribution. Output directory is configurable via the
 Settings domain.
 

@@ -1533,26 +1533,23 @@ export class FluentTester implements PromiseLike<void> {
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
   }
 
-  public gotoCmsWebPortal(): FluentTester {
-    const action = (): Promise<void> => this.doGotoCmsWebPortal();
+  public gotoDataCanvas(): FluentTester {
+    const action = (): Promise<void> => this.doGotoDataCanvas();
     this.actions.push(action);
     return this;
   }
 
-  private async doGotoCmsWebPortal(): Promise<void> {
-    // Navigate to Burst screen which contains the CMS Web Portal tab
+  private async doGotoDataCanvas(): Promise<void> {
     await this.doHover('#topMenuBurst');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
     await this.doClick('#topMenuBurst');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
-    // Click on the CMS Web Portal tab
     await this.doWaitOnElementToBecomeVisible('#cmsWebPortalTab-link');
     await this.doClick('#cmsWebPortalTab-link');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
-    // Wait for the apps-manager component to load
-    await this.doWaitOnElementToBecomeVisible('#appPanel_cms-webportal');
+    await this.doWaitOnElementToBecomeVisible('#appPanel_flowkraft-data-canvas');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
   }
 
@@ -1564,60 +1561,21 @@ export class FluentTester implements PromiseLike<void> {
   };
 
   private async doGotoConfigurationReports(): Promise<void> {
-    //await this.doHover('#supportEmail');
-    //await this.doClick('#supportEmail');
-
     await this.doHover('#topMenuBurst');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
     await this.doClick('#topMenuBurst');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
-    //await this.doHover('#supportEmail');
-    //await this.doClick('#supportEmail');
-
-    //await this.doClick('#topMenuBurst');
-
     await this.doHover('#topMenuConfiguration');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
-    //await this.doFocus('#topMenuConfiguration');
-
     await this.doClick('#topMenuConfiguration');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
-    /*
-    await this.doWaitOnElementToBecomeVisible(
-      '#topMenuConfigurationManage',
-      Constants.DELAY_HUNDRED_SECONDS
-    );
-      */
-
-    //await this.doFocus('#topMenuConfigurationManage');
-    //await this.doHover('#topMenuConfigurationManage');
-
-    //await this.doFocus('#topMenuConfigurationManage');
-    //await this.doClick('#topMenuConfigurationManage');
-
-    /*
-   
-    await this.doWaitOnElementToBecomeVisible(
-      '#topMenuConfigurationReports',
-      Constants.DELAY_HUNDRED_SECONDS
-    );
-      */
-    //await this.doWaitOnElementToBecomeVisible('#topMenuConfigurationReports');
-    await this.doHover('#topMenuConfigurationReports');
+    await this.doHover('#topConfigurationCrud');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doClick('#topConfigurationCrud');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
-    await this.doClick('#topMenuConfigurationReports');
-    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
-
-    /*
-   
-    await this.doWaitOnElementToBecomeVisible(
-      `#burst_${PATHS.SETTINGS_CONFIG_FILE}`,
-      Constants.DELAY_HUNDRED_SECONDS
-    );
-  */
     await this.doClickAndSelectTableRow(
       `#confTemplatesTable tbody tr:first-child`,
     );
@@ -1640,7 +1598,6 @@ export class FluentTester implements PromiseLike<void> {
       Constants.DELAY_TEN_SECONDS,
     );
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
-
   }
 
   public gotoConfigurationGeneralSettings(): FluentTester {
@@ -1653,6 +1610,13 @@ export class FluentTester implements PromiseLike<void> {
 
   public gotoConnections(): FluentTester {
     const action = (): Promise<void> => this.doGotoConnections();
+
+    this.actions.push(action);
+    return this;
+  }
+
+  public gotoCubeDefinitions(): FluentTester {
+    const action = (): Promise<void> => this.doGotoCubeDefinitions();
 
     this.actions.push(action);
     return this;
@@ -2897,11 +2861,19 @@ export class FluentTester implements PromiseLike<void> {
   }
 
   private async doCheckAppStatus(status: string): Promise<void> {
-    if (status === Constants.STATUS_GREAT_NO_ERRORS_NO_WARNINGS)
-      return this.doCheckElementExists('#btnGreatNoErrorsNoWarnings', true);
-    else if (status === Constants.STATUS_WARNINGS)
-      return this.doCheckElementExists('#btnWarnings', true);
-    else return this.doCheckElementExists('#btnErrors', true);
+    const selector =
+      status === Constants.STATUS_GREAT_NO_ERRORS_NO_WARNINGS
+        ? '#btnGreatNoErrorsNoWarnings'
+        : status === Constants.STATUS_WARNINGS
+          ? '#btnWarnings'
+          : '#btnErrors';
+    // The status bar is driven by JobManScheduler's 250ms poll of errors.log / warnings.log
+    // sizes, broadcast over WebSocket. Right after a failed command, the HTTP response comes
+    // back before the next poll tick, so a one-shot count() check races the WebSocket update.
+    // Use toHaveCount, which auto-retries until the condition holds (or timeout fires).
+    await expect(this.window.locator(selector)).toHaveCount(1, {
+      timeout: Constants.DELAY_TEN_SECONDS,
+    });
   }
 
   private async doWaitOnProcessingToStart(howToCheck: string): Promise<void> {
@@ -3002,63 +2974,23 @@ export class FluentTester implements PromiseLike<void> {
   }
 
   private async doGotoConnections(): Promise<void> {
-    //await this.doHover('#supportEmail');
-    //await this.doClick('#supportEmail');
-
     await this.doHover('#topMenuBurst');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
-
-
     await this.doClick('#topMenuBurst');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
-    //await this.doHover('#supportEmail');
-    //await this.doClick('#supportEmail');
-
-    //await this.doClick('#topMenuBurst');
-
     await this.doHover('#topMenuConfiguration');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
-
-    //await this.doFocus('#topMenuConfiguration');
-
     await this.doClick('#topMenuConfiguration');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
-    /*
-    await this.doWaitOnElementToBecomeVisible(
-      '#topMenuConfigurationManage',
-      Constants.DELAY_HUNDRED_SECONDS
-    );
-      */
-
-    //await this.doFocus('#topMenuConfigurationManage');
-    //await this.doHover('#topMenuConfigurationManage');
-
-    //await this.doFocus('#topMenuConfigurationManage');
-    //await this.doClick('#topMenuConfigurationManage');
-
-    /*
-   
-    await this.doWaitOnElementToBecomeVisible(
-      '#topMenuConfigurationReports',
-      Constants.DELAY_HUNDRED_SECONDS
-    );
-      */
-    await this.doHover('#topMenuConfigurationExternalConnections');
+    await this.doHover('#topConfigurationCrud');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doClick('#topConfigurationCrud');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
 
-    //await this.doFocus('#topMenuConfigurationReports');
-    await this.doClick('#topMenuConfigurationExternalConnections');
+    await this.doClick('#btnNavSectionConnections');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
-
-    /*
-   
-    await this.doWaitOnElementToBecomeVisible(
-      `#burst_${PATHS.SETTINGS_CONFIG_FILE}`,
-      Constants.DELAY_HUNDRED_SECONDS
-    );
-*/
 
     await this.doWaitOnElementToBecomeVisible(`#${PATHS.EML_CONTACT_FILE}`);
 
@@ -3080,17 +3012,39 @@ export class FluentTester implements PromiseLike<void> {
       Constants.DELAY_TEN_SECONDS,
     );
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+  }
 
+  private async doGotoCubeDefinitions(): Promise<void> {
+    await this.doHover('#topMenuBurst');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doClick('#topMenuBurst');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
+    await this.doHover('#topMenuConfiguration');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doClick('#topMenuConfiguration');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
+    await this.doHover('#topConfigurationCrud');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doClick('#topConfigurationCrud');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+
+    await this.doClick('#btnNavSectionCubes');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
   }
 
   private async doNavigateToConnectionsPage(): Promise<void> {
     await this.doHover('#topMenuBurst');
     await this.doClick('#topMenuBurst');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
     await this.doHover('#topMenuConfiguration');
     await this.doClick('#topMenuConfiguration');
-    await this.doHover('#topMenuConfigurationExternalConnections');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
-    await this.doClick('#topMenuConfigurationExternalConnections');
+    await this.doHover('#topConfigurationCrud');
+    await this.doClick('#topConfigurationCrud');
+    await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
+    await this.doClick('#btnNavSectionConnections');
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
     await this.doWaitOnElementToBecomeEnabledDisabled('#btnNewDropdown', true, Constants.DELAY_TEN_SECONDS);
   }

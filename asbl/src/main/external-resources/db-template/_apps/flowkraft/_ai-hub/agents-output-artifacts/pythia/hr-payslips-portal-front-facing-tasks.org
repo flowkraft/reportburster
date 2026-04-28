@@ -3,7 +3,7 @@
 #+DATE: 2026-01-22
 
 * TODO Task1: Create single-paystub.php (Individual Payslip View)
-File location: ~wp-themes/reportburster-theme/single-paystub.php~
+File location: ~wp-themes/DataPallas-theme/single-paystub.php~
 
 ** 1.1 Access Control Logic (top of file)
 #+begin_src php
@@ -48,11 +48,11 @@ $net_pay        = number_format((float)$pod->field('net_pay'), 2);
   - Right column: Federal Tax, SS Tax, Medicare, State Tax, Medical, Dental, Total Deductions
 - Net Pay highlighted at bottom
 - Print button: ~onclick="window.print()"~
-- "Back to My Documents" link: ~get_permalink(get_option('reportburster_account_page_id'))~
+- "Back to My Documents" link: ~get_permalink(get_option('DataPallas_account_page_id'))~
 - Call ~get_footer()~
 
 * TODO Task2: Create page-my-documents.php (Payslip List View)
-File location: ~wp-themes/reportburster-theme/page-my-documents.php~
+File location: ~wp-themes/DataPallas-theme/page-my-documents.php~
 
 ** 2.1 Authentication
 #+begin_src php
@@ -107,8 +107,8 @@ $total_found = (int)$pod->total();
 - "No payslips found" message when empty
 - Logout link in header
 
-* TODO Task3: Create endExtractDocument.groovy (ReportBurster Publishing Script)
-File location: ~/reportburster/scripts/burst/endExtractDocument.groovy~
+* TODO Task3: Create endExtractDocument.groovy (DataPallas Publishing Script)
+File location: ~/datapallas/scripts/burst/endExtractDocument.groovy~
 
 ** 3.1 Guard Pattern
 Only execute for payslip template:
@@ -166,4 +166,4 @@ def payload = [
 4. Click to view — verify single-paystub.php renders correctly
 5. Test print button
 6. Log in as admin — verify admin sees all payslips
-7. Test ReportBurster publishing by running a burst with payslips2portal template
+7. Test DataPallas publishing by running a burst with payslips2portal template

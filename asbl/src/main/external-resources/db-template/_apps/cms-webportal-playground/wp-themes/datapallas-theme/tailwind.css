@@ -11,18 +11,18 @@
  */
 
 /**
- * IMPORTANT: Scan the reportburster-portal plugin for Tailwind classes.
+ * IMPORTANT: Scan the datapallas-portal plugin for Tailwind classes.
  * This ensures classes used in single-paystub.php, page-my-documents.php, etc.
  * are detected and included in the compiled CSS.
  * 
  * Path context (Docker container):
  *   tailwind.css: /theme-src/tailwind.css (working directory)
- *   plugin:       /var/www/html/wp-content/plugins/reportburster-portal/
+ *   plugin:       /var/www/html/wp-content/plugins/datapallas-portal/
  *   
  * Using absolute path because theme-builder's working_dir is /theme-src,
- * not /var/www/html/wp-content/themes/reportburster-theme/
+ * not /var/www/html/wp-content/themes/datapallas-theme/
  */
-@source "/var/www/html/wp-content/plugins/reportburster-portal/**/*.php";
+@source "/var/www/html/wp-content/plugins/datapallas-portal/**/*.php";
 
 /**
  * Add the WordPress file header.

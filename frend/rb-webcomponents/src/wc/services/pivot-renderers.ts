@@ -61,6 +61,10 @@ export interface TableRenderOptions {
   colorScaleGenerator?: (values: number[]) => (x: number) => { backgroundColor: string };
   /** If true, adds data attributes to cells for click handling */
   clickable?: boolean;
+  /** If false, suppresses the rightmost "Totals" column. Default: true (back-compat). */
+  showRowTotals?: boolean;
+  /** If false, suppresses the bottom grand-totals row. Default: true (back-compat). */
+  showColTotals?: boolean;
 }
 
 /**
@@ -70,12 +74,23 @@ export function renderPivotTableHTML(
   pivotData: PivotData,
   options: TableRenderOptions = {}
 ): string {
-  const { heatmapMode, colorScaleGenerator = redColorScaleGenerator } = options;
-  
+  const {
+    heatmapMode,
+    colorScaleGenerator = redColorScaleGenerator,
+    showRowTotals = true,
+    showColTotals = true,
+  } = options;
+
   const colAttrs = pivotData.props.cols || [];
   const rowAttrs = pivotData.props.rows || [];
   const rowKeys = pivotData.getRowKeys();
   const colKeys = pivotData.getColKeys();
+
+  // When cols=[] (no column dimension), colKeys is empty and the row-total cell
+  // is the ONLY data column. Force it on so the table isn't empty.
+  const effectiveShowRowTotals = showRowTotals || colKeys.length === 0;
+  // Symmetrically: when rows=[] the col-total row is the only data row.
+  const effectiveShowColTotals = showColTotals || rowKeys.length === 0;
   const grandTotalAggregator = pivotData.getAggregator([], []);
 
   // Prepare heatmap color functions
@@ -151,20 +166,22 @@ export function renderPivotTableHTML(
       }
     });
     
-    if (j === 0) {
+    if (j === 0 && showRowTotals) {
       const rowspan = colAttrs.length + (rowAttrs.length === 0 ? 0 : 1);
       html += `<th class="pvtTotalLabel" rowspan="${rowspan}">Totals</th>`;
     }
     html += '</tr>';
   });
-  
+
   // Row attribute labels header
   if (rowAttrs.length !== 0) {
     html += '<tr>';
     rowAttrs.forEach((r) => {
       html += `<th class="pvtAxisLabel">${escapeHtml(r)}</th>`;
     });
-    html += `<th class="pvtTotalLabel">${colAttrs.length === 0 ? 'Totals' : ''}</th>`;
+    if (effectiveShowRowTotals) {
+      html += `<th class="pvtTotalLabel">${colAttrs.length === 0 ? 'Totals' : ''}</th>`;
+    }
     html += '</tr>';
   }
   
@@ -201,31 +218,39 @@ export function renderPivotTableHTML(
       html += `<td class="pvtVal${clickClass}"${styleAttr}${dataAttrs}>${aggregator.format(val)}</td>`;
     });
     
-    // Row total
-    const totalVal = totalAggregator.value();
-    const totalNumVal = typeof totalVal === 'number' ? totalVal : 0;
-    const totalStyle = colTotalColors(totalNumVal);
-    const totalStyleAttr = totalStyle.backgroundColor ? ` style="background-color:${totalStyle.backgroundColor}"` : '';
-    html += `<td class="pvtTotal"${totalStyleAttr}>${totalAggregator.format(totalVal)}</td>`;
-    
+    // Row total (rightmost column) — suppress when showRowTotals === false.
+    if (effectiveShowRowTotals) {
+      const totalVal = totalAggregator.value();
+      const totalNumVal = typeof totalVal === 'number' ? totalVal : 0;
+      const totalStyle = colTotalColors(totalNumVal);
+      const totalStyleAttr = totalStyle.backgroundColor ? ` style="background-color:${totalStyle.backgroundColor}"` : '';
+      html += `<td class="pvtTotal"${totalStyleAttr}>${totalAggregator.format(totalVal)}</td>`;
+    }
+
     html += '</tr>';
   });
-  
-  // Grand totals row
-  html += '<tr>';
-  html += `<th class="pvtTotalLabel" colspan="${rowAttrs.length + (colAttrs.length === 0 ? 0 : 1)}">Totals</th>`;
-  
-  colKeys.forEach((colKey) => {
-    const totalAggregator = pivotData.getAggregator([], colKey);
-    const val = totalAggregator.value();
-    const numVal = typeof val === 'number' ? val : 0;
-    const style = rowTotalColors(numVal);
-    const styleAttr = style.backgroundColor ? ` style="background-color:${style.backgroundColor}"` : '';
-    html += `<td class="pvtTotal"${styleAttr}>${totalAggregator.format(val)}</td>`;
-  });
-  
-  html += `<td class="pvtGrandTotal">${grandTotalAggregator.format(grandTotalAggregator.value())}</td>`;
-  html += '</tr>';
+
+  // Grand totals row — suppress entirely when showColTotals === false.
+  if (effectiveShowColTotals) {
+    html += '<tr>';
+    html += `<th class="pvtTotalLabel" colspan="${rowAttrs.length + (colAttrs.length === 0 ? 0 : 1)}">Totals</th>`;
+
+    colKeys.forEach((colKey) => {
+      const totalAggregator = pivotData.getAggregator([], colKey);
+      const val = totalAggregator.value();
+      const numVal = typeof val === 'number' ? val : 0;
+      const style = rowTotalColors(numVal);
+      const styleAttr = style.backgroundColor ? ` style="background-color:${style.backgroundColor}"` : '';
+      html += `<td class="pvtTotal"${styleAttr}>${totalAggregator.format(val)}</td>`;
+    });
+
+    // The grand-total cell only makes sense alongside row totals; if the user
+    // suppressed row totals, don't emit the grand cell either.
+    if (effectiveShowRowTotals) {
+      html += `<td class="pvtGrandTotal">${grandTotalAggregator.format(grandTotalAggregator.value())}</td>`;
+    }
+    html += '</tr>';
+  }
   
   html += '</tbody>';
   html += '</table>';

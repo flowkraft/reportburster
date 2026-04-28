@@ -34,7 +34,7 @@ startServer.bat and shutServer.bat Scripts Should Work Fine
     
 
 service.bat Should Work Fine
-    [Documentation]  service.bat install should check that the ReportBurster Server Windows Service was installed and service.bat uninstall should check that the Windows Service was removed
+    [Documentation]  service.bat install should check that the DataPallas Server Windows Service was installed and service.bat uninstall should check that the Windows Service was removed
 
     Ensure Chocolatey Is Installed
     Sleep  1s

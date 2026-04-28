@@ -8,9 +8,9 @@ Real-time CDC replication from your OLTP databases to ClickHouse using the [Alti
 
 ## Step 1: Prepare Your ClickHouse Target
 
-**Option A: Use ReportBurster's bundled ClickHouse** (for prototyping)
+**Option A: Use DataPallas's bundled ClickHouse** (for prototyping)
 
-Start from ReportBurster Starter Packs UI, or:
+Start from DataPallas Starter Packs UI, or:
 ```bash
 cd db
 docker-compose up -d clickhouse
@@ -153,13 +153,13 @@ SELECT * FROM orders WHERE id = 1;
 
 ---
 
-## Step 6: Use in ReportBurster
+## Step 6: Use in DataPallas
 
 1. **Configure a ClickHouse database connection** — [see how](https://www.reportburster.com/docs/data-exploration/database-connections)
 
 2. **Create a Pivot Table** using your ClickHouse connection — [see how](https://www.reportburster.com/docs/bi-analytics/web-components/pivottables)
 
-3. **Use or embed** in ReportBurster's Analytics Portal or your own web apps — [see how](https://www.reportburster.com/docs/bi-analytics/web-components)
+3. **Use or embed** in DataPallas's Analytics Portal or your own web apps — [see how](https://www.reportburster.com/docs/bi-analytics/web-components)
 
 ---
 

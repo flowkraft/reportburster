@@ -1,8 +1,8 @@
 <?php
 
-namespace ReportBurster_Portal\Http\Controllers\Dashboard;
+namespace DataPallas_Portal\Http\Controllers\Dashboard;
 
-use ReportBurster_Portal\Http\Controllers\Controller;
+use DataPallas_Portal\Http\Controllers\Controller;
 
 if (!defined('ABSPATH')) {
   exit();
@@ -41,10 +41,10 @@ class DashboardController extends Controller
       ],
     ];
 
-    return ReportBurster_Portal()
+    return DataPallas_Portal()
       ->view('dashboard.index', ['books' => $books])
       ->withAdminStyle('prism')
       ->withAdminScript('prism')
-      ->withAdminStyle('reportburster-portal-common');
+      ->withAdminStyle('datapallas-portal-common');
   }
 }

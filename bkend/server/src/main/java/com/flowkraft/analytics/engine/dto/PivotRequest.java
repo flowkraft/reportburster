@@ -16,16 +16,16 @@ public class PivotRequest {
      * When provided, the backend resolves connectionCode + tableName from reporting.xml.
      * This is the ONLY field clients should send.
      */
-    private String reportCode;
+    private String reportId;
 
     /**
-     * INTERNAL: Connection code - resolved from reportCode by the backend.
+     * INTERNAL: Connection code - resolved from reportId by the backend.
      * Do NOT send this from the client.
      */
     private String connectionCode;
 
     /**
-     * INTERNAL: Table name - resolved from reportCode by the backend.
+     * INTERNAL: Table name - resolved from reportId by the backend.
      * Do NOT send this from the client.
      */
     private String tableName;
@@ -63,12 +63,12 @@ public class PivotRequest {
     }
 
     // Getters and Setters
-    public String getReportCode() {
-        return reportCode;
+    public String getReportId() {
+        return reportId;
     }
 
-    public void setReportCode(String reportCode) {
-        this.reportCode = reportCode;
+    public void setReportId(String reportId) {
+        this.reportId = reportId;
     }
 
     public String getConnectionCode() {

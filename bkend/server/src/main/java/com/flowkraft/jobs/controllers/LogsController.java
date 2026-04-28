@@ -1,5 +1,7 @@
 package com.flowkraft.jobs.controllers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,6 +26,8 @@ import reactor.core.publisher.Mono;
 @RequestMapping(value = "/api/jobs", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
 public class LogsController {
 
+	private static final Logger log = LoggerFactory.getLogger(LogsController.class);
+
 	@Autowired
 	LogsService logsService;
 
@@ -38,18 +42,13 @@ public class LogsController {
 	}
 
 	@PutMapping("/logs/tailer")
-	public Mono<ResponseEntity<Void>> tail(@RequestBody TailCommandInfo tailCommandInfo) throws Exception {
+	public Mono<ResponseEntity<Void>> tail(@RequestBody TailCommandInfo tailCommandInfo) {
 
 		//System.out.println("tailCommandInfo.fileName = " + tailCommandInfo.fileName);
 		//System.out.println("tailCommandInfo.command = " + tailCommandInfo.command);
 
 		if (tailCommandInfo.command.equals("start"))
-			try {
-				logTailingService.startTailer(tailCommandInfo.fileName);
-			} catch (Exception e) {
-				logTailingService.stopTailer(tailCommandInfo.fileName);
-				logTailingService.startTailer(tailCommandInfo.fileName);
-			}
+			logTailingService.startTailer(tailCommandInfo.fileName);
 		else
 			// if (info.equals("stop"))
 			logTailingService.stopTailer(tailCommandInfo.fileName);

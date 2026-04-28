@@ -1,6 +1,6 @@
 # Variables & Templating Skill
 
-I guide users through ReportBurster's variable system — dynamic values extracted from reports at runtime that personalize every aspect of document delivery.
+I guide users through DataPallas's variable system — dynamic values extracted from reports at runtime that personalize every aspect of document delivery.
 
 ## Core Concept
 
@@ -14,7 +14,7 @@ Variables are placeholders that get replaced with actual values from each report
 
 ### 1. Built-In Variables
 
-Available automatically in all ReportBurster configurations:
+Available automatically in all DataPallas configurations:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -136,7 +136,7 @@ Michelle
 
 **Solution**: Set the tag text to white (or background color) in your report designer:
 - Tags are invisible to recipients
-- ReportBurster still extracts the values
+- DataPallas still extracts the values
 - Professional-looking output
 
 **Alternative**: Place tags in hidden areas (headers, footers, off-page margins).

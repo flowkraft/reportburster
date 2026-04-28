@@ -6,15 +6,15 @@ import subprocess, glob, re, os, importlib, shutil, zipfile, time, errno, pyauto
 import shutil
 from pywinauto.application import Application
 
-from vars import reportburster_exe_path, reportburster_exe_path_let_me_update, PORTABLE_EXECUTABLE_DIR, PORTABLE_EXECUTABLE_DIR_SERVER, PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE
+from vars import DataPallas_exe_path, DataPallas_exe_path_let_me_update, PORTABLE_EXECUTABLE_DIR, PORTABLE_EXECUTABLE_DIR_SERVER, PORTABLE_EXECUTABLE_DIR_LET_ME_UPDATE
 
-def click_x_close_reportburster():
+def click_x_close_DataPallas():
     # Get the directory that this script is in
     script_dir = os.path.dirname(os.path.realpath(__file__))
     print(f"DEBUG: Looking for images in directory: {os.path.abspath(script_dir)}")
 
     # Construct the path to the image file
-    image_path = os.path.join(script_dir, 'images', 'x_button_close_reportburster.png')
+    image_path = os.path.join(script_dir, 'images', 'x_button_close_DataPallas.png')
     print(f"DEBUG: Full image path: {os.path.abspath(image_path)}")
 
     # Check if image file exists
@@ -53,8 +53,8 @@ def click_x_close_reportburster():
         
         # Fallback to using PyWinAuto to try to close the window
         try:
-            print("DEBUG: Attempting to close window using PyWinAuto with title regex '.*ReportBurster.*'")
-            app = Application().connect(title_re=".*ReportBurster.*")
+            print("DEBUG: Attempting to close window using PyWinAuto with title regex '.*DataPallas.*'")
+            app = Application().connect(title_re=".*DataPallas.*")
             main_window = app.top_window()
             print(f"DEBUG: Window found: {main_window.window_text()}")
             main_window.close()
@@ -127,12 +127,12 @@ def wait_for_powershell_and_accept_completion():
             print(f"DEBUG: PyWinAuto fallback failed: {e}")
             return False
 
-def kill_reportburster_exe_process(let_me_update=False):
+def kill_DataPallas_exe_process(let_me_update=False):
     
-    log_file_path = os.path.join(os.path.dirname(reportburster_exe_path), 'logs', 'electron.log')
+    log_file_path = os.path.join(os.path.dirname(DataPallas_exe_path), 'logs', 'electron.log')
     
     if let_me_update:
-        log_file_path = os.path.join(os.path.dirname(reportburster_exe_path_let_me_update), 'logs', 'electron.log')
+        log_file_path = os.path.join(os.path.dirname(DataPallas_exe_path_let_me_update), 'logs', 'electron.log')
     
     print(f'Log file path: {log_file_path}')
     
@@ -333,15 +333,15 @@ def ensure_folder_location_not_in_path(folder_location_path):
 
 def clean_and_extract_zip_files():
     """
-    Cleans destination folders and extracts ReportBurster zip files to target directories
+    Cleans destination folders and extracts DataPallas zip files to target directories
     """
     paths = [
         "../../target/uat/rb",
         "../../target/uat/rbs"
     ]
     zips = [
-        "../../dist/reportburster.zip",
-        "../../dist/reportburster-server.zip"
+        "../../dist/DataPallas.zip",
+        "../../dist/DataPallas-server.zip"
     ]
 
     for path, zip_file in zip(paths, zips):

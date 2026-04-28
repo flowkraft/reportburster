@@ -13,6 +13,7 @@
       [filterPlaceholder]="sourceFilterPlaceholder"
       [propagateSelectionUp]="false"
       [propagateSelectionDown]="false"
+      [showTooltips]="false"
       style="height: 200px; display: block"
     ></dburst-tree>
   </div>
@@ -54,7 +55,7 @@
       class="p-button p-button-icon-only"
       aria-label="Move to Source"
       (click)="moveToSource()"
-      [disabled]="!selectedTargetNodes?.length"
+      [disabled]="!activeTargetSelection?.length"
     >
       <span class="pi pi-angle-left"></span>
     </button>
@@ -69,12 +70,14 @@
          class="p-picklist-field-toolbar">
       <button id="btnAllDetails{{ picklistId }}" type="button" class="p-button p-button-toolbar"
               [ngClass]="{ 'p-button-toolbar-active': fieldSelectionMode === 'allDetails' }"
-              (click)="selectAllFields()" title="Include All Table Details Schema for AI (larger prompt)">
+              (click)="selectAllFields()"
+              title="Send full table details (every column) to AI for all selected tables. Larger prompt, more accurate results.">
         <span class="pi pi-check-square"></span>&nbsp;All Details
       </button>
       <button id="btnNamesOnly{{ picklistId }}" type="button" class="p-button p-button-toolbar"
               [ngClass]="{ 'p-button-toolbar-active': fieldSelectionMode === 'namesOnly' }"
-              (click)="selectNamesOnly()" title="Send only table names to AI (shorter prompt)">
+              (click)="selectNamesOnly()"
+              title="Send only table names to AI (no columns) for all selected tables. Much smaller prompt, useful when the AI just needs to know which tables exist.">
         <span class="pi pi-stop"></span>&nbsp;Table Names Only
       </button>
     </div>
@@ -87,6 +90,7 @@
       [filterPlaceholder]="targetFilterPlaceholder"
       [propagateSelectionUp]="enableFieldSelection"
       [propagateSelectionDown]="enableFieldSelection"
+      (nodeWeakClick)="onTargetWeakClick($event)"
       style="height: 304px; display: block"
     ></dburst-tree>
   </div>

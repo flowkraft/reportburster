@@ -7,7 +7,6 @@ import com.flowkraft.starterpacks.services.StarterPacksManagementService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,10 +50,6 @@ public class StarterPacksController {
 		return starterPacksManagementService.executeCommand(request.getCommand()).map(response -> {
 			log.info("Command result: status={}, output='{}'", response.getStatus(), response.getOutput());
 			return ResponseEntity.ok(response);
-		}).onErrorResume(e -> {
-			log.error("Error executing command: [{}]", request.getCommand(), e);
-			return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(new ExecuteCommandResponseDto("Error: " + e.getMessage(), "error")));
 		});
 	}
 }

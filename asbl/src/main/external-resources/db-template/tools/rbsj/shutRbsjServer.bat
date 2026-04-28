@@ -6,7 +6,7 @@ set "SCRIPT_DIR=%~dp0"
 :: Remove trailing backslash
 set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 
-:: Navigate to the ReportBurster directory
+:: Navigate to the DataPallas directory
 cd /d "%SCRIPT_DIR%\..\.."
 set "PORTABLE_EXECUTABLE_DIR_PATH=%cd%"
 
@@ -37,6 +37,6 @@ echo RB_SERVER_MODE  (shutRbsjServer.bat) is set to %RB_SERVER_MODE%
 if "%RB_SERVER_MODE%"=="true" (
     powershell -File "%~dp0killOlderExesAndSpringBoots.ps1"
 ) else (
-    :: Call killOlderExes.ps1 to kill older instances of ReportBurster.exe
+    :: Call killOlderExes.ps1 to kill older instances of DataPallas.exe
     powershell -File "%~dp0killOlderExesAndSpringBoots.ps1" -scriptDir "%PORTABLE_EXECUTABLE_DIR_PATH%"
 )

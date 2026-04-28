@@ -8,6 +8,7 @@ import {
   ViewChild,
   OnDestroy,
 } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { AiManagerService, PromptInfo } from './ai-manager.service';
 import { InfoService } from '../../components/dialog-info/info.service';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal'; // Add ngx-bootstrap modal service
@@ -67,6 +68,8 @@ export class AiManagerComponent implements OnInit, AfterViewChecked, OnDestroy {
   // --- AI Prompts Tab State ---
   allPrompts: PromptInfo[] = [];
   filteredPrompts: PromptInfo[] = [];
+  promptsLoading = false;
+  private promptsSubscription: Subscription | null = null;
   uniqueTags: string[] = [];
   categoriesWithCounts: CategoryWithCount[] = [];
   searchTerm: string = '';
@@ -104,7 +107,7 @@ export class AiManagerComponent implements OnInit, AfterViewChecked, OnDestroy {
   async ngOnInit(): Promise<void> {
     try {
       this.loadPrompts();
-      this.chat2dbApp = await this.appsManagerService.getAppById('flowkraft-ai-hub');
+      this.chat2dbApp = await this.appsManagerService.getAppById('flowkraft-data-canvas');
 
       // Periodically refresh chat2dbApp state to stay in sync with other components
       // (e.g., when the app is started from Apps/Starter Packs page or Chat2DB tab)
@@ -116,7 +119,7 @@ export class AiManagerComponent implements OnInit, AfterViewChecked, OnDestroy {
             if (this.chat2dbApp?.state === 'starting' || this.chat2dbApp?.state === 'stopping') {
               await this.appsManagerService.refreshAllStatuses(true);
             }
-            const freshApp = await this.appsManagerService.getAppById('flowkraft-ai-hub');
+            const freshApp = await this.appsManagerService.getAppById('flowkraft-data-canvas');
             if (freshApp && this.chat2dbApp && freshApp.state !== this.chat2dbApp.state) {
               this.chat2dbApp.state = freshApp.state;
               this.chat2dbApp.lastOutput = freshApp.lastOutput;
@@ -143,6 +146,7 @@ export class AiManagerComponent implements OnInit, AfterViewChecked, OnDestroy {
     if (this.chat2dbRefreshInterval) {
       clearInterval(this.chat2dbRefreshInterval);
     }
+    this.promptsSubscription?.unsubscribe();
   }
 
   /**
@@ -165,7 +169,7 @@ export class AiManagerComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.cdRef.detectChanges();
         await this.appsManagerService.toggleApp(this.chat2dbApp);
         // Re-fetch actual state from service after toggle completes
-        const freshApp = await this.appsManagerService.getAppById('flowkraft-ai-hub');
+        const freshApp = await this.appsManagerService.getAppById('flowkraft-data-canvas');
         if (freshApp) {
           this.chat2dbApp.state = freshApp.state;
           this.chat2dbApp.lastOutput = freshApp.lastOutput;
@@ -243,7 +247,25 @@ export class AiManagerComponent implements OnInit, AfterViewChecked, OnDestroy {
   }
 
   private expandPromptWithVariables(promptDef: PromptInfo): void {
-    let text = promptDef.promptText;
+    if (!promptDef.promptText) {
+      // Fetch full prompt first, then apply variables
+      this.aiManagerService.getPromptById(promptDef.id).subscribe({
+        next: (full) => {
+          this._applyVariablesAndExpand(full);
+          this.cdRef.detectChanges();
+        },
+        error: () => {
+          this.expandedPrompt = { ...promptDef, promptText: '' };
+          this.cdRef.detectChanges();
+        },
+      });
+      return;
+    }
+    this._applyVariablesAndExpand(promptDef);
+  }
+
+  private _applyVariablesAndExpand(promptDef: PromptInfo): void {
+    let text = promptDef.promptText || '';
 
     if (this.promptVariables) {
       Object.entries(this.promptVariables).forEach(([key, val]) => {
@@ -260,10 +282,22 @@ export class AiManagerComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   // --- Prompt Loading and Filtering ---
   loadPrompts(): void {
-    this.allPrompts = this.aiManagerService.getAllPrompts();
-    this.calculateUniqueTags();
-    this.calculateCategoriesWithCounts();
-    this.applyFilters(); // Apply initial filters (show all)
+    this.promptsLoading = true;
+    this.promptsSubscription?.unsubscribe();
+    this.promptsSubscription = this.aiManagerService.getAllPrompts().subscribe({
+      next: (prompts) => {
+        this.allPrompts = prompts;
+        this.calculateUniqueTags();
+        this.calculateCategoriesWithCounts();
+        this.applyFilters();
+        this.promptsLoading = false;
+        this.cdRef.detectChanges();
+      },
+      error: () => {
+        this.promptsLoading = false;
+        this.cdRef.detectChanges();
+      },
+    });
   }
 
   calculateUniqueTags(): void {
@@ -313,7 +347,7 @@ export class AiManagerComponent implements OnInit, AfterViewChecked, OnDestroy {
         (p) =>
           p.title.toLowerCase().includes(term) ||
           p.description.toLowerCase().includes(term) ||
-          p.promptText.toLowerCase().includes(term) ||
+          (p.promptText?.toLowerCase().includes(term) ?? false) ||
           p.tags.some((tag) => tag.toLowerCase().includes(term)),
       );
     }
@@ -341,7 +375,21 @@ export class AiManagerComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   // --- Prompt Display ---
   expandPrompt(prompt: PromptInfo): void {
-    this.expandedPrompt = prompt;
+    if (prompt.promptText) {
+      this.expandedPrompt = prompt;
+    } else {
+      // promptText is absent from list-endpoint results — fetch the full prompt on demand
+      this.aiManagerService.getPromptById(prompt.id).subscribe({
+        next: (full) => {
+          this.expandedPrompt = full;
+          this.cdRef.detectChanges();
+        },
+        error: () => {
+          this.expandedPrompt = { ...prompt, promptText: '' };
+          this.cdRef.detectChanges();
+        },
+      });
+    }
   }
 
   collapsePrompt(): void {
@@ -354,7 +402,6 @@ export class AiManagerComponent implements OnInit, AfterViewChecked, OnDestroy {
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        // Replace toast with InfoService
         this.infoService.showInformation({
           message: 'Prompt copied to clipboard!',
         });
@@ -365,6 +412,18 @@ export class AiManagerComponent implements OnInit, AfterViewChecked, OnDestroy {
           message: 'Failed to copy prompt.',
         });
       });
+  }
+
+  /** Copy from the list view — fetches full promptText on demand if not yet loaded. */
+  copyPromptText(prompt: PromptInfo): void {
+    if (prompt.promptText) {
+      this.copyToClipboard(prompt.promptText);
+    } else {
+      this.aiManagerService.getPromptById(prompt.id).subscribe({
+        next: (full) => this.copyToClipboard(full.promptText || ''),
+        error: () => {},
+      });
+    }
   }
   // --- End Copy to Clipboard ---
 

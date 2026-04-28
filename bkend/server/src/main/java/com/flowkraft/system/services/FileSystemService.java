@@ -139,16 +139,11 @@ public class FileSystemService {
 			matchers = new PathMatcher[0];
 		}
 
-		Files.walk(sourcePath).filter(
+		List<Path> sources = Files.walk(sourcePath).filter(
 				source -> matchers.length == 0 || Stream.of(matchers).anyMatch(matcher -> matcher.matches(source)))
-				.forEach(source -> fsCopy(source, destinationPath.resolve(sourcePath.relativize(source)), options));
-	}
-
-	private void fsCopy(Path source, Path dest, CopyOption[] options) {
-		try {
-			Files.copy(source, dest, options);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+				.collect(java.util.stream.Collectors.toList());
+		for (Path source : sources) {
+			Files.copy(source, destinationPath.resolve(sourcePath.relativize(source)), options);
 		}
 	}
 

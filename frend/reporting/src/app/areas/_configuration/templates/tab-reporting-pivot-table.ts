@@ -13,7 +13,7 @@ export const tabReportingPivotTableTemplate = `<ng-template
                 <div class="panel-body">
                   <rb-pivot-table
                     *ngIf="showPivotPreview"
-                    [reportCode]="getCurrentReportCode()"
+                    [reportId]="getCurrentReportCode()"
                     [componentId]="cid"
                     [apiBaseUrl]="reportingService.reportingApiBaseUrl"
                     [reportParams]="previewParams || {}"

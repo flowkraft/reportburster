@@ -144,7 +144,7 @@ async function seed() {
 
   // Seed default settings (like Grails BootStrap.groovy)
   const defaultSettings = [
-    { key: "theme.color", value: "reportburster", category: "theme", description: "Color theme name" },
+    { key: "theme.color", value: "datapallas", category: "theme", description: "Color theme name" },
     { key: "theme.mode", value: "light", category: "theme", description: "Theme mode (light/dark)" },
     { key: "company.name", value: "FlowKraft Inc.", category: "company", description: "Company name" },
     { key: "company.email", value: "contact@flowkraft.com", category: "company", description: "Company email" },

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Add Tailwind Typography.
  *
  * https://github.com/tailwindlabs/tailwindcss-typography
@@ -29,9 +29,9 @@
  * By default, _tw uses Tailwind Typography's Neutral gray scale. If you are
  * adapting an existing design and you need to set specific colors throughout,
  * you can do so here. In your `./theme/functions.php file, you will need to
- * replace `-neutral` with `-reportburster-theme`.
+ * replace `-neutral` with `-datapallas-theme`.
  */
-@utility prose-reportburster-theme {
+@utility prose-datapallas-theme {
 	--tw-prose-body: --theme(--color-foreground, initial);
 	--tw-prose-headings: --theme(--color-foreground, initial);
 	--tw-prose-lead: --theme(--color-foreground, initial);

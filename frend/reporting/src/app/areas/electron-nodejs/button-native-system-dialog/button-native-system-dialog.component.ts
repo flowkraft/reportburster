@@ -32,7 +32,7 @@ export class ButtonNativeSystemDialogComponent {
         title:
           this.dialogTitle ||
           'Select ' + (this.dialogType === 'folder' ? 'Folder' : 'File'),
-        defaultPath: this.defaultPath || 'C:/ReportBurster',
+        defaultPath: this.defaultPath || 'C:/DataPallas',
         buttonLabel: this.value,
         properties: [
           this.dialogType === 'folder' ? 'openDirectory' : 'openFile',
@@ -80,7 +80,7 @@ export class ButtonNativeSystemDialogComponent {
             await UtilitiesNodeJs.existsAsync(defaultFolderPath);
 
           if ((defaultFolderPathExists = !'dir')) {
-            defaultFolderPath = 'C:/ReportBurster';
+            defaultFolderPath = 'C:/DataPallas';
 
             defaultFolderPathExists =
               await UtilitiesNodeJs.existsAsync(defaultFolderPath);
@@ -91,7 +91,7 @@ export class ButtonNativeSystemDialogComponent {
 
           options.defaultPath = defaultFolderPath;
           options.title =
-            'Select the installation/location path from where you want to migrate your existing configuration values and data. The selected folder should contain the DocumentBurster.exe/ReportBurster.exe file';
+            'Select the installation/location path from where you want to migrate your existing configuration values and data. The selected folder should contain the DocumentBurster.exe/DataPallas.exe file';
         }
 
         //console.log(`options = ${JSON.stringify(options)}`);

@@ -483,7 +483,7 @@ Write-Host "Script execution completed successfully"
 Remove-Item $PSCommandPath;
 
 Add-Type -AssemblyName System.Windows.Forms
-[System.Windows.Forms.MessageBox]::Show('Command execution completed, you may want to close and start again ReportBurster.', 'Info', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+[System.Windows.Forms.MessageBox]::Show('Command execution completed, you may want to close and start again DataPallas.', 'Info', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
 `;
 
     await UtilitiesNodeJs.writeAsync(elevatedScriptFilePath, scriptContent);
@@ -569,7 +569,7 @@ Add-Type -AssemblyName System.Windows.Forms
      
      echo Script execution completed successfully
      ::show message box
-     powershell -ExecutionPolicy Bypass -NoProfile -Command "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; [System.Windows.Forms.MessageBox]::Show('Command execution completed, you may want to close and start again ReportBurster.', 'Info', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)"
+     powershell -ExecutionPolicy Bypass -NoProfile -Command "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; [System.Windows.Forms.MessageBox]::Show('Command execution completed, you may want to close and start again DataPallas.', 'Info', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)"
      del /f /s *.cmd 2>&1 >> ${this.logFilePath}
      
      ::cmd /k

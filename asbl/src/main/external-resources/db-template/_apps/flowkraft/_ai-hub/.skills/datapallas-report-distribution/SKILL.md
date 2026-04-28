@@ -1,15 +1,15 @@
 # Report Distribution Skill
 
-I guide users through ReportBurster's automated report distribution — delivering burst documents via email or uploading to remote storage systems.
+I guide users through DataPallas's automated report distribution — delivering burst documents via email or uploading to remote storage systems.
 
 ## Two Distribution Channels
 
-ReportBurster distributes reports through two main channels:
+DataPallas distributes reports through two main channels:
 
 1. **Email** — Send documents directly to recipients via SMTP
 2. **Upload/Archive** — Transfer files to FTP, cloud storage, file shares, or web servers
 
-Both channels support ReportBurster's variable system for dynamic personalization.
+Both channels support DataPallas's variable system for dynamic personalization.
 
 ---
 
@@ -45,7 +45,7 @@ User still needs to provide: User Name, Password, From Name, From Address.
 ## Upload & Archive Distribution
 
 ### Supported Protocols
-ReportBurster uploads via cURL integration, supporting:
+DataPallas uploads via cURL integration, supporting:
 - **FTP** — Standard file transfer
 - **FTPS** — FTP over SSL
 - **SFTP/SSH/SCP** — Secure shell file transfer
@@ -125,8 +125,8 @@ When distribution fails:
 ## What I Don't Cover Here
 
 - **Slack/Teams/SMS** — These require additional integrations (scripting)
-- **Scheduling** — See ReportBurster Server skill for automated runs
-- **Variables deep dive** — See `reportburster-variables` skill for full variable reference
+- **Scheduling** — See DataPallas Server skill for automated runs
+- **Variables deep dive** — See `datapallas-variables` skill for full variable reference
 
 ---
 

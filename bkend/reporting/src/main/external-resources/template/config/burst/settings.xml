@@ -2,9 +2,9 @@
 <documentburster>
 	<settings>
 		<!-- DocumentBurster version -->
-		<version>14.6.0</version>
+		<version>15.1.0</version>
 		<!-- template name -->
-		<template>My Reports</template>
+		<template>Bursting</template>
 		<!-- file name for the burst files -->
 		<burstfilename>${burst_token}.${output_type_extension}
 		</burstfilename>
@@ -324,9 +324,6 @@
 
 		<!-- Notes -->
 		<notes></notes>
-  
-		<!-- Visible in the menu -->
-		<visibility>visible</visibility>
   
 	</settings>
 

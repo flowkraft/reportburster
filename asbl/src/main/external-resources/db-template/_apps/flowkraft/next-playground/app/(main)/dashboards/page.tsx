@@ -124,7 +124,7 @@ export default function DashboardsPage() {
                   {/* @ts-expect-error - Web component custom element */}
                   <rb-chart
                     id="rb-revenueTrend"
-                    report-code="dashboard-cfo"
+                    report-id="dashboard-cfo"
                     component-id="revenueTrend"
                     api-base-url={rbConfig.apiBaseUrl}
                     api-key={rbConfig.apiKey}
@@ -137,7 +137,7 @@ export default function DashboardsPage() {
                   {/* @ts-expect-error - Web component custom element */}
                   <rb-chart
                     id="rb-revenueByCategory"
-                    report-code="dashboard-cfo"
+                    report-id="dashboard-cfo"
                     component-id="revenueByCategory"
                     api-base-url={rbConfig.apiBaseUrl}
                     api-key={rbConfig.apiKey}
@@ -153,7 +153,7 @@ export default function DashboardsPage() {
                 {/* @ts-expect-error - Web component custom element */}
                 <rb-tabulator
                   id="rb-topCustomers"
-                  report-code="dashboard-cfo"
+                  report-id="dashboard-cfo"
                   component-id="topCustomers"
                   api-base-url={rbConfig.apiBaseUrl}
                   api-key={rbConfig.apiKey}
@@ -165,7 +165,7 @@ export default function DashboardsPage() {
                   {/* @ts-expect-error - Web component custom element */}
                   <rb-chart
                     id="rb-arAging"
-                    report-code="dashboard-cfo"
+                    report-id="dashboard-cfo"
                     component-id="arAging"
                     api-base-url={rbConfig.apiBaseUrl}
                     api-key={rbConfig.apiKey}
@@ -178,7 +178,7 @@ export default function DashboardsPage() {
                   {/* @ts-expect-error - Web component custom element */}
                   <rb-chart
                     id="rb-revenueByCountry"
-                    report-code="dashboard-cfo"
+                    report-id="dashboard-cfo"
                     component-id="revenueByCountry"
                     api-base-url={rbConfig.apiBaseUrl}
                     api-key={rbConfig.apiKey}

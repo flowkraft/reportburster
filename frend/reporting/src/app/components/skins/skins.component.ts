@@ -94,7 +94,7 @@ export class SkinsComponent implements OnInit {
   async saveSkin(newSkin: string) {
     if (!this.storeService.configSys.sysInfo.setup.java.isJavaOk) {
       alert(
-        'To use ReportBurster, Java 17 (or newer) must be installed on your computer.',
+        'To use DataPallas, Java 17 (or newer) must be installed on your computer.',
       );
       return;
     }
@@ -107,6 +107,31 @@ export class SkinsComponent implements OnInit {
 
     await this.settingsService.savePreferences(
       this.settingsService.xmlInternalSettings,
+    );
+  }
+
+  async onShowSamplesChanged(checked: boolean) {
+    if (!this.storeService.configSys.sysInfo.setup.java.isJavaOk) {
+      alert(
+        'To use DataPallas, Java 17 (or newer) must be installed on your computer.',
+      );
+      return;
+    }
+
+    // Reload then mutate then save (same pattern as saveSkin) to avoid clobbering
+    // any other in-flight preference changes.
+    this.settingsService.xmlInternalSettings.documentburster =
+      await this.settingsService.loadPreferences();
+
+    this.settingsService.xmlInternalSettings.documentburster.settings.showsamples =
+      checked;
+
+    await this.settingsService.savePreferences(
+      this.settingsService.xmlInternalSettings,
+    );
+
+    this.messagesService.showInfo(
+      checked ? 'Sample connections, reports & cubes are now visible' : 'Samples are now hidden',
     );
   }
 

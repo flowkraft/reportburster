@@ -4,7 +4,7 @@
  *
  * @link https://developer.wordpress.org/themes/basics/template-hierarchy/
  *
- * @package ReportBurster_Theme
+ * @package DataPallas_Theme
  */
 
 ?>
@@ -21,15 +21,15 @@
 		?>
 	</header><!-- .entry-header -->
 
-	<?php reportburster_theme_post_thumbnail(); ?>
+	<?php DATAPALLAS_THEME_post_thumbnail(); ?>
 
-	<div <?php reportburster_theme_content_class( 'entry-content' ); ?>>
+	<div <?php DATAPALLAS_THEME_content_class( 'entry-content' ); ?>>
 		<?php
 		the_content();
 
 		wp_link_pages(
 			array(
-				'before' => '<div>' . __( 'Pages:', 'reportburster-theme' ),
+				'before' => '<div>' . __( 'Pages:', 'datapallas-theme' ),
 				'after'  => '</div>',
 			)
 		);
@@ -43,7 +43,7 @@
 				sprintf(
 					wp_kses(
 						/* translators: %s: Name of current post. Only visible to screen readers. */
-						__( 'Edit <span class="sr-only">%s</span>', 'reportburster-theme' ),
+						__( 'Edit <span class="sr-only">%s</span>', 'datapallas-theme' ),
 						array(
 							'span' => array(
 								'class' => array(),

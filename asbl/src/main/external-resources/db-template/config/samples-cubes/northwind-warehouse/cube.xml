@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cube>
+    <name>Northwind Sales Warehouse</name>
+    <description>OLAP star schema sales analysis on the bundled DuckDB data warehouse. Pre-computed measures (gross/net revenue), denormalized dimensions, and a rich time hierarchy. Demonstrates the dimensional modeling pattern and matches the existing Sales PivotTable sample.</description>
+    <connectionId>rbt-sample-northwind-duckdb-4f2</connectionId>
+</cube>

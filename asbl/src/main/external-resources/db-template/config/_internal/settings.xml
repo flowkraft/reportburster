@@ -8,6 +8,8 @@
 		<copiloturl>https://chatgpt.com/</copiloturl>
 
 		<runtime>windows</runtime>
+
+		<showsamples>true</showsamples>
 		
 	</settings>
 

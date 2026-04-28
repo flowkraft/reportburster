@@ -1,6 +1,6 @@
-# JasperReports in ReportBurster
+# JasperReports in DataPallas
 
-Run JasperReports (.jrxml) reports inside ReportBurster.
+Run JasperReports (.jrxml) reports inside DataPallas.
 
 ## Jaspersoft Studio (Report Designer)
 
@@ -9,7 +9,7 @@ To create and edit `.jrxml` report templates you need **Jaspersoft Studio Commun
 1. Download it from [https://community.jaspersoft.com/download-jaspersoft/community-edition/](https://community.jaspersoft.com/download-jaspersoft/community-edition/).
 2. Install and launch the application.
 3. Use the visual designer to create your report, add parameters, connect to databases, and preview output.
-4. Save the report as a `.jrxml` file, then deploy it into ReportBurster (see below).
+4. Save the report as a `.jrxml` file, then deploy it into DataPallas (see below).
 
 ## Adding a JasperReport
 
@@ -28,11 +28,11 @@ To create and edit `.jrxml` report templates you need **Jaspersoft Studio Commun
        company_logo.png
    ```
 
-4. The report will appear automatically in ReportBurster's UI under the **JasperReports** group.
+4. The report will appear automatically in DataPallas's UI under the **JasperReports** group.
 
 ## Migrating Existing JasperReports
 
-If you already have JasperReports running in another environment (JasperReports Server, standalone app, or embedded in your own code), migrating to ReportBurster is straightforward.
+If you already have JasperReports running in another environment (JasperReports Server, standalone app, or embedded in your own code), migrating to DataPallas is straightforward.
 
 ### What you need
 
@@ -42,7 +42,7 @@ If you already have JasperReports running in another environment (JasperReports 
 
 ### Step-by-step migration
 
-1. **Locate your `.jrxml` files.** If you only have compiled `.jasper` files, open them in Jaspersoft Studio and re-export as `.jrxml`. ReportBurster compiles templates at runtime, so `.jrxml` source files are required.
+1. **Locate your `.jrxml` files.** If you only have compiled `.jasper` files, open them in Jaspersoft Studio and re-export as `.jrxml`. DataPallas compiles templates at runtime, so `.jrxml` source files are required.
 
 2. **Create a report folder** under `config/reports-jasper/` with a descriptive name:
    ```
@@ -58,31 +58,31 @@ If you already have JasperReports running in another environment (JasperReports 
    ```
 
 4. **Set up the database connection.** If your report uses a database:
-   - If ReportBurster already has a default database connection and your report uses the same database, no action is needed — it is used automatically.
-   - To use a different connection, configure it in ReportBurster (under *Connections* in the UI), then create a `datasource.properties` file in the report folder:
+   - If DataPallas already has a default database connection and your report uses the same database, no action is needed — it is used automatically.
+   - To use a different connection, configure it in DataPallas (under *Connections* in the UI), then create a `datasource.properties` file in the report folder:
      ```properties
      connectionCode=my-database
      ```
 
-5. **Verify parameters.** ReportBurster automatically detects parameters declared in your `.jrxml`. Open the report in ReportBurster's UI and confirm that the expected parameters appear. No changes to your `.jrxml` are needed — the existing `<parameter>` declarations work as-is.
+5. **Verify parameters.** DataPallas automatically detects parameters declared in your `.jrxml`. Open the report in DataPallas's UI and confirm that the expected parameters appear. No changes to your `.jrxml` are needed — the existing `<parameter>` declarations work as-is.
 
 6. **Run the report.** Select it from the **JasperReports** group in the Processing tab, fill in any parameters, and click execute.
 
 ### Notes on compatibility
 
-- **Subreports:** Subreport paths are resolved relative to the report folder. Place all subreport `.jrxml` files alongside the main template. ReportBurster automatically sets the `SUBREPORT_DIR` parameter to the report folder path.
-- **JDBC drivers:** ReportBurster ships with drivers for PostgreSQL, MySQL, MariaDB, Oracle, SQL Server, DB2, SQLite, DuckDB, and ClickHouse. If your report uses a different database, place the JDBC driver jar in ReportBurster's `lib/` folder.
-- **Fonts:** If your report uses custom fonts, place the font jar or `.ttf` files in ReportBurster's `lib/` folder.
+- **Subreports:** Subreport paths are resolved relative to the report folder. Place all subreport `.jrxml` files alongside the main template. DataPallas automatically sets the `SUBREPORT_DIR` parameter to the report folder path.
+- **JDBC drivers:** DataPallas ships with drivers for PostgreSQL, MySQL, MariaDB, Oracle, SQL Server, DB2, SQLite, DuckDB, and ClickHouse. If your report uses a different database, place the JDBC driver jar in DataPallas's `lib/` folder.
+- **Fonts:** If your report uses custom fonts, place the font jar or `.ttf` files in DataPallas's `lib/` folder.
 - **JasperReports version:** This version uses JasperReports 7.0.4. Reports designed with older versions generally work without changes. If you encounter compilation errors, open the `.jrxml` in the latest Jaspersoft Studio and re-save it.
-- **Compiled `.jasper` files are not used.** ReportBurster always compiles from `.jrxml` source to ensure compatibility.
+- **Compiled `.jasper` files are not used.** DataPallas always compiles from `.jrxml` source to ensure compatibility.
 
 ## Database Connection
 
-ReportBurster resolves the database connection for each JasperReport using this priority order:
+DataPallas resolves the database connection for each JasperReport using this priority order:
 
 1. **Per-report override** — if `config/reports-jasper/{report-folder}/datasource.properties` exists, it is used.
 2. **Global JasperReports override** — if `config/reports-jasper/datasource.properties` exists, it applies to all jasper reports that don't have their own.
-3. **ReportBurster's default DB connection** — the connection marked as "default" in ReportBurster's *Connections* settings.
+3. **DataPallas's default DB connection** — the connection marked as "default" in DataPallas's *Connections* settings.
 
 If none of the above is configured, the report runs without a database (suitable for static reports or reports with embedded data).
 
@@ -94,7 +94,7 @@ Create a `datasource.properties` file with a single line:
 connectionCode=my-postgres-db
 ```
 
-The `connectionCode` must match an existing ReportBurster database connection
+The `connectionCode` must match an existing DataPallas database connection
 in `config/connections/db-{connectionCode}/`.
 
 Place this file in:
@@ -118,7 +118,7 @@ Supported parameter types: String, Integer, Long, Double, Float, BigDecimal, Boo
 ## Folder Structure
 
 ```
-ReportBurster/
+DataPallas/
     config/
         reports-jasper/              <-- your JasperReports go here
             monthly-sales/

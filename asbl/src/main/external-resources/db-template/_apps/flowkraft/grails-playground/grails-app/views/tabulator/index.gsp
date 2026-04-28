@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>Data Tables - ReportBurster</title>
+    <title>Data Tables - DataPallas</title>
     <style>
         rb-tabulator { display: block; width: 100%; }
         .example-card {
@@ -135,7 +135,7 @@
                             </button>
                         </div>
                         <pre id="usageCode" class="code-block"><code class="language-markup">&lt;rb-tabulator
-    report-code="your-report-code"
+    report-id="your-report-id"
     component-id="yourComponentId"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
     api-key="&#36;{RbUtils.apiKey}"
@@ -179,7 +179,7 @@
             }
 
             // Listen to first rb-tabulator for shared configDsl
-            var firstComponent = document.querySelector('rb-tabulator[report-code="tab-examples"]');
+            var firstComponent = document.querySelector('rb-tabulator[report-id="tab-examples"]');
             function updateConfigDisplay() {
                 if (firstComponent && firstComponent.configDsl) {
                     var escaped = firstComponent.configDsl

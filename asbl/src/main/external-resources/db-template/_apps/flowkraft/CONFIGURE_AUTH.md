@@ -295,7 +295,7 @@ DOC_ALWAYS_PUBLIC=marketing,brochures
 
 ### Invoice Email Workflow
 
-**Email sent by ReportBurster:**
+**Email sent by DataPallas:**
 ```
 http://localhost:8420/invoice/ABC-2025-001?token=secret123
 ```
@@ -708,7 +708,7 @@ DOC_ALWAYS_PUBLIC=marketing,brochures
 
 ### Invoice Email Workflow
 
-**Email sent by ReportBurster:**
+**Email sent by DataPallas:**
 ```
 http://localhost:8420/invoice/ABC-2025-001?token=secret123
 ```

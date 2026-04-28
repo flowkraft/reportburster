@@ -41,7 +41,6 @@ export interface CfgTmplFileInfo {
   capReportDistribution: boolean;
   dsInputType: string;
   notes: string;
-  visibility: string;
   type: string;
   folderName: string;
   relativeFilePath: string;
@@ -319,10 +318,11 @@ export class ReportsService {
   /**
    * Save template content for a specific output type.
    */
-  async saveReportTemplateByType(reportId: string, outputType: string, content: string): Promise<{ documentpath?: string }> {
+  async saveReportTemplateByType(reportId: string, outputType: string, content: string, assetSourceDir?: string): Promise<{ documentpath?: string }> {
     const textHeaders = new Headers({ 'Content-Type': 'text/plain' });
+    const assetParam = assetSourceDir ? `?assetSourceDir=${encodeURIComponent(assetSourceDir)}` : '';
     return this.apiService.put(
-      `/reports/${encodeURIComponent(reportId)}/template/${encodeURIComponent(outputType)}`,
+      `/reports/${encodeURIComponent(reportId)}/template/${encodeURIComponent(outputType)}${assetParam}`,
       content,
       textHeaders,
     );
@@ -539,31 +539,22 @@ export class ReportsService {
     return this.apiService.get('/reports/load-sql-options', { sql });
   }
 
-  getConfigurations(visibility?: string) {
+  getConfigurations() {
     if (this.configurationFiles && this.configurationFiles.length > 0) {
-      return this.configurationFiles.filter((configuration) => {
-        let filterCondition = configuration.type != 'config-samples';
-
-        if (visibility)
-          filterCondition =
-            filterCondition && configuration.visibility === visibility;
-
-        return filterCondition;
-      });
+      return this.configurationFiles.filter(
+        (configuration) => configuration.type != 'config-samples',
+      );
     }
   }
 
-  getMailMergeConfigurations(filter?: {
-    visibility?: string;
-    samples?: boolean;
-  }) {
+  getMailMergeConfigurations(filter?: { samples?: boolean }) {
     if (this.configurationFiles && this.configurationFiles.length > 0) {
       return this.configurationFiles.filter((configuration) => {
         let filterCondition = configuration.capReportGenerationMailMerge;
 
-        if (filter && filter.visibility)
+        if (filterCondition)
           filterCondition =
-            filterCondition && configuration.visibility === filter.visibility;
+            filterCondition && configuration.dsInputType !== 'ds.dashboard';
 
         if (filter && !filter.samples)
           filterCondition =
@@ -574,24 +565,18 @@ export class ReportsService {
     }
   }
 
-  getSampleConfigurations(visibility?: string) {
+  getSampleConfigurations() {
     if (this.configurationFiles && this.configurationFiles.length > 0) {
-      return this.configurationFiles.filter((configuration) => {
-        let filterCondition = configuration.type == 'config-samples';
-
-        if (visibility)
-          filterCondition =
-            filterCondition && configuration.visibility === visibility;
-
-        return filterCondition;
-      });
+      return this.configurationFiles.filter(
+        (configuration) => configuration.type == 'config-samples',
+      );
     }
   }
 
   getJasperReportConfigurations() {
     if (this.configurationFiles && this.configurationFiles.length > 0) {
       return this.configurationFiles.filter(
-        (configuration) => configuration.type === 'config-jasper-reports' && configuration.visibility === 'visible',
+        (configuration) => configuration.type === 'config-jasper-reports',
       );
     }
     return [];
@@ -690,10 +675,4 @@ export class ReportsService {
     );
   }
 
-  async toggleVisibility(reportId: string, visibility: string): Promise<any> {
-    return this.apiService.put(
-      `/reports/configurations/${reportId}/visibility`,
-      { visibility },
-    );
-  }
 }

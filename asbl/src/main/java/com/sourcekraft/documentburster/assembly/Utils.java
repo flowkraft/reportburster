@@ -27,7 +27,7 @@ import org.zeroturnaround.exec.stream.LogOutputStream;
 
 public class Utils {
 
-	private static String PRODUCT_NAME = "ReportBurster";
+	private static String PRODUCT_NAME = "DataPallas";
 
 	public static boolean dir1ContainsAllDir2Files(File dir1, File dir2) throws Exception {
 		return dir1ContainsAllDir2Files(dir1, dir2, null);

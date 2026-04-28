@@ -18,7 +18,7 @@ import { DEFAULT_LLM_FULL_CONFIG, type LLMFullConfig } from '@/lib/llm-providers
 
 // Short descriptions for display (avoids importing heavy agent configs into client bundle)
 const AGENT_DESCRIPTIONS: Record<string, string> = {
-  'Athena': 'ReportBurster Guru & Data Modeling/Business Analysis Expert',
+  'Athena': 'DataPallas Guru & Data Modeling/Business Analysis Expert',
   'Hephaestus': 'Backend Jobs/ETL/Automation Expert',
   'Hermes': 'Grails Guru & Web Portal Expert',
   'Pythia': 'WordPress CMS Web Portal Expert',
@@ -159,8 +159,8 @@ export default function AgentsPage() {
 
         // Sort: Athena first, then non-alternatives alphabetically, alternatives last
         mappedAgents.sort((a: Agent, b: Agent) => {
-          const aIsAthena = a.name === 'Athena' || a.tags.includes('reportburster');
-          const bIsAthena = b.name === 'Athena' || b.tags.includes('reportburster');
+          const aIsAthena = a.name === 'Athena' || a.tags.includes('datapallas');
+          const bIsAthena = b.name === 'Athena' || b.tags.includes('datapallas');
           if (aIsAthena && !bIsAthena) return -1;
           if (!aIsAthena && bIsAthena) return 1;
 
@@ -261,7 +261,7 @@ export default function AgentsPage() {
             if (event.type === 'done') {
               setLogStatus(event.message === 'success' ? 'success' : 'error');
               if (event.message === 'success') {
-                toast.success('FlowKraft AI Crew agents provisioned successfully!');
+                toast.success('DataPallas AI Crew agents provisioned successfully!');
                 await fetchAgents();
               } else {
                 toast.error('Provisioning completed with errors');
@@ -299,7 +299,7 @@ export default function AgentsPage() {
 
   // Check if an agent is Athena
   const isAthena = (agent: Agent): boolean => {
-    return agent.name === 'Athena' || agent.tags.includes('reportburster');
+    return agent.name === 'Athena' || agent.tags.includes('datapallas');
   };
 
   // Get display description for an agent
@@ -439,7 +439,7 @@ export default function AgentsPage() {
           <div id="agents-empty-state" className="text-center mb-12">
             <h1 id="agents-page-heading" className="text-4xl font-bold text-foreground mb-4">Welcome to AI Crew</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              No agents found. Provision the FlowKraft AI Crew to get started.
+              No agents found. Provision the DataPallas AI Crew to get started.
             </p>
           </div>
 
@@ -460,7 +460,7 @@ export default function AgentsPage() {
               ) : (
                 <>
                   <Rocket className="w-6 h-6 mr-3" />
-                  Provision FlowKraft's AI Crew Agents
+                  Provision DataPallas's AI Crew Agents
                 </>
               )}
             </Button>
@@ -470,8 +470,8 @@ export default function AgentsPage() {
           <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-card border border-border rounded-lg p-6 text-center">
               <h3 className="font-semibold text-foreground mb-2">Athena</h3>
-              <p className="text-sm text-muted-foreground font-medium">ReportBurster Guru & Data Architect/Expert</p>
-              <p className="text-xs text-muted-foreground mt-2">Get help mastering ReportBurster, designing data models, writing SQL, architecting business intelligence and reporting solutions</p>
+              <p className="text-sm text-muted-foreground font-medium">DataPallas Guru & Data Architect/Expert</p>
+              <p className="text-xs text-muted-foreground mt-2">Get help mastering DataPallas, designing data models, writing SQL, architecting business intelligence and reporting solutions</p>
             </div>
             <div className="bg-card border border-border rounded-lg p-6 text-center">
               <h3 className="font-semibold text-foreground mb-2">Hephaestus</h3>
@@ -502,7 +502,7 @@ export default function AgentsPage() {
             <DialogHeader>
               <DialogTitle>Provision AI Crew?</DialogTitle>
               <DialogDescription>
-                This will provision Athena, Hephaestus, Hermes, Apollo, and Pythia as your FlowKraft AI Crew agents. This may take 60-120 seconds. Are you sure?
+                This will provision Athena, Hephaestus, Hermes, Apollo, and Pythia as your DataPallas AI Crew agents. This may take 60-120 seconds. Are you sure?
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-3 mt-4">
@@ -686,13 +686,13 @@ export default function AgentsPage() {
                 <div className="py-1">
                   <button
                     onClick={() => {
-                      window.open('http://localhost:8442/?workspace=/workspaces/reportburster.code-workspace', '_blank', 'noopener,noreferrer');
+                      window.open('http://localhost:8442/?workspace=/workspaces/datapallas.code-workspace', '_blank', 'noopener,noreferrer');
                       setProjectDropdownOpen(false);
                     }}
                     className="w-full px-4 py-2.5 text-sm text-left hover:bg-muted transition-colors flex items-center gap-3"
                   >
                     <Code className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-card-foreground">ReportBurster</span>
+                    <span className="text-card-foreground">DataPallas</span>
                   </button>
                   <button
                     onClick={() => {
@@ -825,7 +825,7 @@ export default function AgentsPage() {
                   <span className="text-sm font-medium text-foreground">Give db_query tool to Athena</span>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     When checked, Athena gets READ-ONLY access to query your
-                    ReportBurster database connections.{' '}
+                    DataPallas database connections.{' '}
                     <strong className="text-foreground">When unchecked, no AI agent
                     has any database access whatsoever.</strong>
                   </p>

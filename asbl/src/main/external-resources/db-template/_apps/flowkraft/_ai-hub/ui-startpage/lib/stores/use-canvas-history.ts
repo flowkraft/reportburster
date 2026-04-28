@@ -3,15 +3,15 @@ import { useCanvasStore, type CanvasState } from "./canvas-store";
 
 const MAX_HISTORY = 50;
 
-type Snapshot = Pick<CanvasState, "widgets" | "filters" | "connectionId">;
+type Snapshot = Pick<CanvasState, "widgets" | "filterDsl" | "connectionId">;
 
 function takeSnapshot(): Snapshot {
-  const { widgets, filters, connectionId } = useCanvasStore.getState();
-  return JSON.parse(JSON.stringify({ widgets, filters, connectionId }));
+  const { widgets, filterDsl, connectionId } = useCanvasStore.getState();
+  return JSON.parse(JSON.stringify({ widgets, filterDsl, connectionId }));
 }
 
 function applySnapshot(snap: Snapshot) {
-  useCanvasStore.setState({ widgets: snap.widgets, filters: snap.filters, connectionId: snap.connectionId });
+  useCanvasStore.setState({ widgets: snap.widgets, filterDsl: snap.filterDsl, connectionId: snap.connectionId });
 }
 
 export function useCanvasHistory() {
@@ -20,19 +20,19 @@ export function useCanvasHistory() {
   const skipRef = useRef(false); // skip recording when applying undo/redo
   const lastSnapshotRef = useRef<string>("");
 
-  // Auto-record: subscribe to Zustand and push snapshot when widgets/filters change
+  // Auto-record: subscribe to Zustand and push snapshot when widgets/filterDsl change
   useEffect(() => {
     const unsub = useCanvasStore.subscribe((state) => {
       if (skipRef.current) return;
 
-      // Only snapshot when widgets or filters change (not on every state update)
-      const key = JSON.stringify({ w: state.widgets, f: state.filters, c: state.connectionId });
+      // Only snapshot when widgets, filterDsl, or connectionId change
+      const key = JSON.stringify({ w: state.widgets, f: state.filterDsl, c: state.connectionId });
       if (key === lastSnapshotRef.current) return;
 
       // Push previous state to history before it changes
       if (lastSnapshotRef.current) {
         const prev = JSON.parse(lastSnapshotRef.current);
-        pastRef.current.push({ widgets: prev.w, filters: prev.f, connectionId: prev.c });
+        pastRef.current.push({ widgets: prev.w, filterDsl: prev.f, connectionId: prev.c });
         if (pastRef.current.length > MAX_HISTORY) pastRef.current.shift();
         futureRef.current = []; // clear redo on new change
       }
@@ -41,8 +41,8 @@ export function useCanvasHistory() {
     });
 
     // Initialize with current state
-    const { widgets, filters, connectionId } = useCanvasStore.getState();
-    lastSnapshotRef.current = JSON.stringify({ w: widgets, f: filters, c: connectionId });
+    const { widgets, filterDsl, connectionId } = useCanvasStore.getState();
+    lastSnapshotRef.current = JSON.stringify({ w: widgets, f: filterDsl, c: connectionId });
 
     return unsub;
   }, []);
@@ -53,7 +53,7 @@ export function useCanvasHistory() {
     futureRef.current.push(takeSnapshot());
     const prev = pastRef.current.pop()!;
     applySnapshot(prev);
-    lastSnapshotRef.current = JSON.stringify({ w: prev.widgets, f: prev.filters, c: prev.connectionId });
+    lastSnapshotRef.current = JSON.stringify({ w: prev.widgets, f: prev.filterDsl, c: prev.connectionId });
     skipRef.current = false;
   }, []);
 
@@ -63,7 +63,7 @@ export function useCanvasHistory() {
     pastRef.current.push(takeSnapshot());
     const next = futureRef.current.pop()!;
     applySnapshot(next);
-    lastSnapshotRef.current = JSON.stringify({ w: next.widgets, f: next.filters, c: next.connectionId });
+    lastSnapshotRef.current = JSON.stringify({ w: next.widgets, f: next.filterDsl, c: next.connectionId });
     skipRef.current = false;
   }, []);
 

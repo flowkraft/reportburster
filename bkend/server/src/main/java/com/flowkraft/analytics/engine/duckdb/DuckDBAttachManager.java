@@ -258,9 +258,6 @@ public class DuckDBAttachManager {
             // Track attached source
             AttachedSource source = new AttachedSource(alias, type, path, tables);
             attachedSources.put(alias, source);
-
-        } catch (SQLException e) {
-            throw new SQLException("Failed to attach '" + alias + "' from '" + path + "': " + e.getMessage(), e);
         }
     }
 
@@ -384,9 +381,6 @@ public class DuckDBAttachManager {
 
             // Remove from tracking
             attachedSources.remove(alias);
-
-        } catch (SQLException e) {
-            throw new SQLException("Failed to detach '" + alias + "': " + e.getMessage(), e);
         }
     }
 
@@ -452,7 +446,6 @@ public class DuckDBAttachManager {
             try {
                 detach(connection, alias);
             } catch (SQLException e) {
-                // Log error but continue detaching others
                 System.err.println("Failed to detach '" + alias + "': " + e.getMessage());
             }
         }

@@ -5,7 +5,7 @@ import { ButtonHtmlPreviewComponent } from '../app/components/button-html-previe
 type Story = StoryObj<ButtonHtmlPreviewComponent>;
 const defaultMeta: Meta<ButtonHtmlPreviewComponent> = {
   ...baseMeta,
-  title: 'ReportBurster/Buttons/ButtonHTMLPreview',
+  title: 'DataPallas/Buttons/ButtonHTMLPreview',
   component: ButtonHtmlPreviewComponent,
 };
 

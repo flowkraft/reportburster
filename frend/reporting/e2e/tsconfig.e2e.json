@@ -3,7 +3,13 @@
   "compilerOptions": {
     "outDir": "../out-tsc/e2e",
     "module": "node16",
-    "types": ["jasmine", "node"]
+    "types": ["jasmine", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "../../../asbl/src/main/external-resources/db-template/_apps/flowkraft/_ai-hub/ui-startpage/*"
+      ]
+    }
   },
   "include": ["**.spec.ts", "**.tests.ts"]
 }

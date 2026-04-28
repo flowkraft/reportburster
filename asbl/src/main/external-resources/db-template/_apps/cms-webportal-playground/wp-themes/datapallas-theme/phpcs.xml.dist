@@ -1,5 +1,5 @@
-<?xml version="1.0"?>
-<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="ReportBurster Theme" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd">
+﻿<?xml version="1.0"?>
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="DataPallas Theme" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd">
 
 	<description>A set of rules to check for a custom WordPress theme</description>
 	<!-- Based on the `phpcs.xml.dist.sample` file from the WordPress Coding Standards. -->
@@ -67,7 +67,7 @@
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array">
-				<element value="reportburster-theme"/>
+				<element value="datapallas-theme"/>
 			</property>
 		</properties>
 	</rule>

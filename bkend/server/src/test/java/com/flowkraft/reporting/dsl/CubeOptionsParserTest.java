@@ -13,7 +13,7 @@ import com.flowkraft.reporting.dsl.cube.CubeOptionsParser;
 /**
  * Business use-case tests for the Cube Groovy DSL.
  *
- * Each test is a real-world scenario that a ReportBurster user would configure
+ * Each test is a real-world scenario that a DataPallas user would configure
  * in their {reportCode}-cube-config.groovy file:
  *
  *   GETTING STARTED — first cubes a new user creates
@@ -746,7 +746,7 @@ public class CubeOptionsParserTest {
 		assertEquals(1, result.getMeta().get("priority"));
 
 		// ── Dimensions ──
-		assertEquals(9, result.getDimensions().size());
+		assertEquals(8, result.getDimensions().size());
 
 		// Primary key
 		assertEquals(true, result.getDimensions().get(0).get("primary_key"));

@@ -1,6 +1,6 @@
 <?php
 
-namespace ReportBurster_Portal;
+namespace DataPallas_Portal;
 
 // ------------------------------
 // IMPORT WORDPRESS CORE FUNCTIONS
@@ -38,10 +38,10 @@ use function pods_api;
  */
 class Provisioner
 {
-    public static string $LOG_PREFIX = '[ReportBurster Provisioner]';
-    public static string $PROVISIONED_OPTION = 'reportburster_demo_data_provisioned';
-    public static string $CHANGES_OPTION = 'reportburster_provision_changes';
-    public static string $PREV_HOME_OPTION = 'reportburster_prev_homepage_content';
+    public static string $LOG_PREFIX = '[DataPallas Provisioner]';
+    public static string $PROVISIONED_OPTION = 'datapallas_demo_data_provisioned';
+    public static string $CHANGES_OPTION = 'datapallas_provision_changes';
+    public static string $PREV_HOME_OPTION = 'datapallas_prev_homepage_content';
 
     private static array $created_paystubs = [];
 
@@ -488,8 +488,8 @@ class Provisioner
 
     private static function updateHomepageContent(): void
     {
-        // Attempt to get existing page titled "Welcome to ReportBurster Portal"
-        $home_page = get_page_by_title('Welcome to ReportBurster Portal', OBJECT, 'page');
+        // Attempt to get existing page titled "Welcome to DataPallas Portal"
+        $home_page = get_page_by_title('Welcome to DataPallas Portal', OBJECT, 'page');
 
         // Update existing page content if needed
         $documents_url = site_url('/my-documents');
@@ -497,7 +497,7 @@ class Provisioner
         // If page does not exist, create it
         if (!$home_page) {
             $home_page_id = wp_insert_post([
-                'post_title'    => 'Welcome to ReportBurster Portal',
+                'post_title'    => 'Welcome to DataPallas Portal',
                 'post_content' => '<p>The fastest way to build your <em>You Name It</em> <strong>Web Portal</strong> - could be Employee Portal, Customer Portal, Partner Portal, Student Portal or any other Self-Service Portal.</p><br/><br/><br/><a href="' . esc_url($documents_url) . '" class="inline-block px-6 py-2 mt-6 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-offset-2" style="--color-cyan-600: oklch(60.9% 0.126 221.723); background-color: var(--color-cyan-600); color: #ffffff; text-decoration: none;">My Documents</a>',
                 'post_status'   => 'publish',
                 'post_type'     => 'page',

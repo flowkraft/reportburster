@@ -9,7 +9,7 @@
  *
  * @link https://developer.wordpress.org/themes/basics/template-hierarchy/
  *
- * @package ReportBurster_Theme
+ * @package DataPallas_Theme
  */
 
 get_header();
@@ -37,7 +37,7 @@ get_header();
 			}
 
 			// Previous/next page navigation.
-			reportburster_theme_the_posts_navigation();
+			DATAPALLAS_THEME_the_posts_navigation();
 
 		} else {
 

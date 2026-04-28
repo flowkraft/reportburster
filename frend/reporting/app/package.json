@@ -1,9 +1,9 @@
 {
-  "name": "reportburster",
-  "productName": "ReportBurster",
+  "name": "datapallas",
+  "productName": "DataPallas",
   "license": "SSPL-1.0",
   "description": "Server Side Public License (SSPL) - Desktop and Server versions. SSPL terms apply upon distribution or service provision.",
-  "version": "14.6.0",
+  "version": "15.1.0",
   "copyright": "2026, FlowKraft Systems & Consulting Ltd.",
   "homepage": "https://www.reportburster.com",
   "author": {

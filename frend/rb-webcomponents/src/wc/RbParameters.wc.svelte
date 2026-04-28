@@ -24,9 +24,9 @@
   }
 
   // ============================================================================
-  // Hybrid Mode Props - when reportCode is provided, component self-fetches
+  // Hybrid Mode Props - when reportId is provided, component self-fetches
   // ============================================================================
-  export let reportCode: string = '';
+  export let reportId: string = '';
   export let apiBaseUrl: string = '';
   export let apiKey: string = '';
 
@@ -62,7 +62,7 @@
 
   // Get host element reference on mount
   onMount(async () => {
-    //console.log('[rb-parameters] onMount START, reportCode:', reportCode, 'apiBaseUrl:', apiBaseUrl);
+    //console.log('[rb-parameters] onMount START, reportId:', reportId, 'apiBaseUrl:', apiBaseUrl);
     await tick();
     // Get the host element (the custom element itself)
     hostElement = container?.getRootNode() instanceof ShadowRoot 
@@ -73,14 +73,14 @@
     
     // Read attributes directly from host element (Svelte props may not be populated yet for kebab-case attributes)
     if (hostElement) {
-      if (!reportCode) reportCode = hostElement.getAttribute('report-code') || '';
+      if (!reportId) reportId = hostElement.getAttribute('report-id') || '';
       if (!apiBaseUrl) apiBaseUrl = hostElement.getAttribute('api-base-url') || '';
       if (!apiKey) apiKey = hostElement.getAttribute('api-key') || '';
       if (hostElement.hasAttribute('show-reload')) {
         const reloadAttr = hostElement.getAttribute('show-reload');
         showReload = reloadAttr === '' || reloadAttr === 'true';
       }
-      //console.log('[rb-parameters] After reading host attributes - reportCode:', reportCode, 'apiBaseUrl:', apiBaseUrl);
+      //console.log('[rb-parameters] After reading host attributes - reportId:', reportId, 'apiBaseUrl:', apiBaseUrl);
     }
     
     isMounted = true;
@@ -98,10 +98,10 @@
     }
     
     // ========================================================================
-    // Hybrid Mode: if reportCode provided, self-fetch config
+    // Hybrid Mode: if reportId provided, self-fetch config
     // ========================================================================
-    if (reportCode && apiBaseUrl) {
-      //console.log('[rb-parameters] Self-fetch mode: fetching config for', reportCode);
+    if (reportId && apiBaseUrl) {
+      //console.log('[rb-parameters] Self-fetch mode: fetching config for', reportId);
       loading = true;
       error = null;
       
@@ -109,7 +109,7 @@
       // TEMP: API key disabled for rollback
       // if (apiKey) headers['X-API-Key'] = apiKey;
       
-      const configUrl = `${apiBaseUrl}/reports/${reportCode}/config`;
+      const configUrl = `${apiBaseUrl}/reports/${reportId}/config`;
       //console.log('[rb-parameters] Fetching config from:', configUrl);
       
       try {
@@ -142,10 +142,7 @@
           //console.warn('[rb-parameters] No parametersDsl in config!');
         }
         
-        // Dispatch events for config loaded (both names for compatibility)
-        //console.log('[rb-parameters] Dispatching configLoaded and configFetched events');
         dispatch('configLoaded', { configDsl, config });
-        dispatch('configFetched', { parameters }); // Legacy event name
         
       } catch (err: any) {
         error = err.message || 'Failed to load parameters';
@@ -180,6 +177,11 @@
 
     validateAll(true); // Force emit on init
     emitValues();
+    // In standalone published dashboard mode, auto-apply defaults to sibling widgets
+    // so the initial load reflects the default filter value without requiring a Reload click
+    if (showReload && hostElement) {
+      applyParamsToSiblings({ ...formValues });
+    }
   }
 
   function getDefaultForType(type: string): any {
@@ -351,6 +353,22 @@
     emitHostEvent('valueChange', values);
   }
 
+  // Replace all sibling rb-* components with fresh elements carrying the given params
+  function applyParamsToSiblings(values: { [id: string]: any }) {
+    if (!hostElement) return;
+    const root = hostElement.closest('.rb-dashboard-root') || (hostElement.getRootNode() as Element | Document) || document;
+    const paramsJson = JSON.stringify(values);
+    const components = (root as Element | Document).querySelectorAll('rb-tabulator, rb-chart, rb-pivot-table, rb-value, rb-trend, rb-map, rb-sankey, rb-gauge, rb-progress, rb-detail');
+    components.forEach((el: Element) => {
+      const fresh = document.createElement(el.tagName.toLowerCase());
+      for (const attr of Array.from(el.attributes)) {
+        fresh.setAttribute(attr.name, attr.value);
+      }
+      fresh.setAttribute('report-params', paramsJson);
+      el.parentNode?.replaceChild(fresh, el);
+    });
+  }
+
   // Submit: user explicitly requests data refresh with current param values
   let showConfirm = false;
   function handleReloadClick() {
@@ -359,26 +377,8 @@
   function confirmReload() {
     showConfirm = false;
     const values = { ...formValues };
-    console.log('[RbParameters] confirmReload - dispatching submit event with values:', values);
     emitHostEvent('submit', values);
-
-    // Replace sibling rb-* components with fresh elements to force full re-mount
-    const root = hostElement?.closest('.rb-dashboard-root') || hostElement?.getRootNode() || document;
-    const paramsJson = JSON.stringify(values);
-    const components = root.querySelectorAll('rb-tabulator, rb-chart, rb-pivot-table, rb-value');
-    components.forEach((el: Element) => {
-      // Create a brand new element (not a clone) to avoid inheriting stale DOM/state
-      const fresh = document.createElement(el.tagName.toLowerCase());
-      // Copy all attributes from the original
-      for (const attr of Array.from(el.attributes)) {
-        fresh.setAttribute(attr.name, attr.value);
-      }
-      // Set the new params
-      fresh.setAttribute('report-params', paramsJson);
-      // Replace old with fresh
-      el.parentNode?.replaceChild(fresh, el);
-    });
-    console.log('[RbParameters] confirmReload - replaced', components.length, 'sibling components');
+    applyParamsToSiblings(values);
   }
   function cancelReload() {
     showConfirm = false;
@@ -437,8 +437,8 @@
 
   // Public method to re-fetch config (for Refresh button)
   export async function fetchConfig() {
-    if (!reportCode || !apiBaseUrl) {
-      console.warn('rb-parameters: fetchConfig requires reportCode and apiBaseUrl');
+    if (!reportId || !apiBaseUrl) {
+      console.warn('rb-parameters: fetchConfig requires reportId and apiBaseUrl');
       return;
     }
     
@@ -451,7 +451,7 @@
     
     try {
       // Fetch config
-      const configRes = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
+      const configRes = await fetch(`${apiBaseUrl}/reports/${reportId}/config`, { headers });
       if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
       const config = await configRes.json();
       
@@ -464,8 +464,8 @@
       if (config.parametersDsl) {
         configDsl = config.parametersDsl;
       }
-      
-      dispatch('configFetched', { parameters });
+
+      dispatch('configLoaded', { configDsl, config });
     } catch (err: any) {
       error = err.message || 'Failed to load parameters';
       console.error('rb-parameters fetchConfig error:', err);
@@ -476,9 +476,9 @@
 </script>
 
 {#if loading}
-  <div class="rb-loading">Loading parameters...</div>
+  <div class="rb-loading" id="widgetLoading">Loading parameters...</div>
 {:else if error}
-  <div class="rb-error">{error}</div>
+  <div class="rb-error" id="widgetError">{error}</div>
 {:else}
   <div bind:this={container} id="formReportParameters" class="rb-parameters-form">
     {#if parameters && parameters.length}

@@ -130,6 +130,51 @@ export class PollingHelper {
   }
   
   /**
+   * High-level polling loop for Docker container lifecycles. Wraps
+   * `createPollingSubscription` with the standard "poll until no transitional
+   * items remain" pattern used by AppsManagerComponent and StarterPacksComponent.
+   *
+   * The caller owns the returned Subscription so it can unsubscribe on destroy.
+   *
+   * @param config.refresh          Called every tick; should refresh status (silently)
+   * @param config.getItems         Returns the list to check for transitional items
+   * @param config.onMaxIterations  Called when the max timeout is reached
+   * @param config.label            Prefix for log messages (e.g. 'AppsManager')
+   */
+  public static startLifecyclePolling(config: {
+    refresh: () => Promise<void>;
+    getItems: () => Array<{ state?: string; status?: string }>;
+    onMaxIterations: () => void;
+    label: string;
+  }): Subscription {
+    console.log(`[${config.label}] Starting polling subscription (max timeout: ${this.getMaxTimeoutDescription()})...`);
+
+    let subscription: Subscription;
+    subscription = this.createPollingSubscription(
+      async () => {
+        await config.refresh();
+        const hasTransitional = this.hasTransitionalItems(config.getItems());
+        if (!hasTransitional) {
+          // Actually unsubscribe — createPollingSubscription can't do it from within onPoll
+          if (subscription) subscription.unsubscribe();
+          return true;
+        }
+        return false;
+      },
+      (reason) => {
+        if (reason === 'maxIterations') {
+          console.warn(`[${config.label}] Polling stopped: max iterations reached.`);
+          config.onMaxIterations();
+        }
+      },
+      (err) => {
+        console.error(`[${config.label}] Polling error:`, err);
+      },
+    );
+    return subscription;
+  }
+
+  /**
    * Calculate the max timeout in human-readable format.
    */
   public static getMaxTimeoutDescription(): string {

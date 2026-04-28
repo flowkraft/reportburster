@@ -18,7 +18,7 @@ Transforms raw OLTP tables in ClickHouse into a proper OLAP star schema using [d
 The dbt models read from raw OLTP tables (`Orders`, `OrderDetails`, `Customers`, `Products`, `Categories`, `Employees`).
 
 These can be loaded via:
-- **ReportBurster's Java initializer** (happens automatically on first start)
+- **DataPallas's Java initializer** (happens automatically on first start)
 - **CDC sink connector** (see [CONFIGURE_OLTP_2_OLAP_DATA_WAREHOUSE_SYNC.md](./CONFIGURE_OLTP_2_OLAP_DATA_WAREHOUSE_SYNC.md))
 
 Verify tables exist:
@@ -107,13 +107,13 @@ Tests validate not-null constraints, unique keys, accepted values, and referenti
 
 ---
 
-## Step 6: Use in ReportBurster
+## Step 6: Use in DataPallas
 
 1. **Configure a ClickHouse database connection** — [see how](https://www.reportburster.com/docs/data-exploration/database-connections)
 
 2. **Create a Pivot Table** using your ClickHouse connection — [see how](https://www.reportburster.com/docs/bi-analytics/web-components/pivottables)
 
-3. **Use or embed** in ReportBurster's Analytics Portal or your own web apps — [see how](https://www.reportburster.com/docs/bi-analytics/web-components)
+3. **Use or embed** in DataPallas's Analytics Portal or your own web apps — [see how](https://www.reportburster.com/docs/bi-analytics/web-components)
 
 ---
 

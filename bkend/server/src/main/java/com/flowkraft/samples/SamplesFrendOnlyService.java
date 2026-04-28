@@ -37,7 +37,7 @@ import jakarta.xml.bind.Unmarshaller;
  * 
  * Key features:
  * - Auto-generates missing settings.xml and reporting.xml from defaults
- * - Samples are NOT shown in main ReportBurster UI
+ * - Samples are NOT shown in main DataPallas UI
  * - Uses lazy initialization for fast startup
  */
 @Service
@@ -76,7 +76,7 @@ public class SamplesFrendOnlyService {
     }
 
     /**
-     * Get or provision a frend sample by its report-code (folder name).
+     * Get or provision a frend sample by its report-id (folder name).
      * If the sample exists but is missing settings.xml/reporting.xml, they will be auto-created.
      * 
      * @param reportCode The folder name (e.g., "report1", "chart-demo")
@@ -173,13 +173,9 @@ public class SamplesFrendOnlyService {
         List<String> sampleFilePaths = fileSystemService.unixCliFind(frendSamplesDir, criteriaDto);
 
         for (String filePath : sampleFilePaths) {
-            try {
-                ConfigurationFileInfo info = loadFrendSampleConfig(filePath);
-                if (info != null) {
-                    samples.add(info);
-                }
-            } catch (Exception e) {
-                log.error("Failed to load frend sample config: {} - {}", filePath, e.getMessage());
+            ConfigurationFileInfo info = loadFrendSampleConfig(filePath);
+            if (info != null) {
+                samples.add(info);
             }
         }
 
@@ -199,7 +195,7 @@ public class SamplesFrendOnlyService {
         info.filePath = filePath;
         info.fileName = file.getName();
 
-        // Extract sample name from parent directory (the report-code)
+        // Extract sample name from parent directory (the report-id)
         Path path = Paths.get(filePath);
         if (path.getParent() != null) {
             info.folderName = path.getParent().getFileName().toString();

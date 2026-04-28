@@ -63,7 +63,7 @@ export default function Home() {
         <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
           Bring your reports to the <strong className="text-foreground">frontend</strong>: dashboards, portals, anywhere your users need them.
           Use our 'quick to get things done' (highly capable and fully customizable) portal, or{" "}
-          <strong className="text-foreground">embed ReportBurster reports</strong> directly into your existing web applications and portals —
+          <strong className="text-foreground">embed DataPallas reports</strong> directly into your existing web applications and portals —
           responsive, secure, and themeable to match your look and feel.
         </p>
       </div>

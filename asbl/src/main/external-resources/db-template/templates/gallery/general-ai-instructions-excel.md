@@ -1,10 +1,10 @@
-# ReportBurster Excel Exporter
+# DataPallas Excel Exporter
 
-ReportBurster transforms CSS styled HTML into Excel spreadsheets with robust formatting and features.
+DataPallas transforms CSS styled HTML into Excel spreadsheets with robust formatting and features.
 
 ## Overview
 
-ReportBurster allows you to generate professional Excel spreadsheets from HTML content, maintaining styling, formulas, and other Excel-specific features. 
+DataPallas allows you to generate professional Excel spreadsheets from HTML content, maintaining styling, formulas, and other Excel-specific features. 
 The main advantage is the ability to use familiar HTML/CSS for report generation, combined with a good templating engine for producing high-quality Excel output.
 
 ## Features
@@ -21,7 +21,7 @@ The main advantage is the ability to use familiar HTML/CSS for report generation
 
 ## CSS Support
 
-ReportBurster maps CSS styles to corresponding Excel formatting. The following CSS properties are supported:
+DataPallas maps CSS styles to corresponding Excel formatting. The following CSS properties are supported:
 
 - **Font:** `font-family`, `font-size`, `font-weight`, `font-style`, `text-decoration`
 - **Alignment:** `text-align`, `vertical-align`

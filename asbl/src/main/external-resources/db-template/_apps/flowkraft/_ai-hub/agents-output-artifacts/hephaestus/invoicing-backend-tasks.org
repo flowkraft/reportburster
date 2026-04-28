@@ -37,7 +37,7 @@ Create ~grails-app/services/com/flowkraft/InvoiceExportService.groovy~
 
 - Export invoices to CSV, JSON, and XML formats
 - Filter by date range, status, and customer
-- ReportBurster integration: generate per-customer invoice bundles
+- DataPallas integration: generate per-customer invoice bundles
 - Output to configurable export directory
 - Include summary statistics in export metadata
 

@@ -4,7 +4,7 @@
  *
  * @link https://developer.wordpress.org/themes/basics/template-hierarchy/
  *
- * @package ReportBurster_Theme
+ * @package DataPallas_Theme
  */
 
 ?>
@@ -15,7 +15,7 @@
 		<header class="entry-header mb-4">
 			<?php
 			if ( is_sticky() && is_home() && ! is_paged() ) {
-				printf( '<span class="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded mb-3">%s</span>', esc_html_x( 'Featured', 'post', 'reportburster-theme' ) );
+				printf( '<span class="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded mb-3">%s</span>', esc_html_x( 'Featured', 'post', 'datapallas-theme' ) );
 			}
 			if ( is_singular() ) :
 				the_title( '<h1 class="text-2xl sm:text-3xl font-bold text-gray-900">', '</h1>' );
@@ -25,15 +25,15 @@
 			?>
 		</header><!-- .entry-header -->
 
-		<?php reportburster_theme_post_thumbnail(); ?>
+		<?php DATAPALLAS_THEME_post_thumbnail(); ?>
 
-		<div <?php reportburster_theme_content_class( 'entry-content prose prose-gray max-w-none' ); ?>>
+		<div <?php DATAPALLAS_THEME_content_class( 'entry-content prose prose-gray max-w-none' ); ?>>
 			<?php
 			the_content();
 
 			wp_link_pages(
 				array(
-					'before' => '<div class="mt-4 flex gap-2">' . __( 'Pages:', 'reportburster-theme' ),
+					'before' => '<div class="mt-4 flex gap-2">' . __( 'Pages:', 'datapallas-theme' ),
 					'after'  => '</div>',
 				)
 			);
@@ -43,7 +43,7 @@
 		<?php if ( ! is_front_page() && ! is_home() ) : ?>
 		<footer class="entry-footer mt-6 pt-4 border-t border-gray-100">
 			<div class="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500">
-				<?php reportburster_theme_entry_footer(); ?>
+				<?php DATAPALLAS_THEME_entry_footer(); ?>
 			</div>
 		</footer><!-- .entry-footer -->
 		<?php endif; ?>

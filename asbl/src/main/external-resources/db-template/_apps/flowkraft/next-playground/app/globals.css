@@ -2,7 +2,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 
-/* ReportBurster Brand Colors - Cyan #22a7c8 */
+/* DataPallas Brand Colors - Cyan #22a7c8 */
 :root {
   --rb-cyan: #22a7c8;
   --rb-cyan-light: #3ab8d6;
@@ -95,7 +95,7 @@ body {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-/* ReportBurster brand utilities */
+/* DataPallas brand utilities */
 .text-rb-cyan {
   color: var(--rb-cyan);
 }

@@ -277,7 +277,7 @@ public class DuckDBAnalyticsService {
     private PivotResponse executePivotWithScriptData(PivotRequest request) throws Exception {
         long startTime = System.currentTimeMillis();
 
-        String reportCode = request.getReportCode();
+        String reportCode = request.getReportId();
         if (reportCode == null || reportCode.isEmpty()) {
             throw new IllegalArgumentException("reportCode is required for script-based reports");
         }

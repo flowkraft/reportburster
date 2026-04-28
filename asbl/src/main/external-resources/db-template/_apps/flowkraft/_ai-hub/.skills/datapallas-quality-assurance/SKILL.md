@@ -1,6 +1,6 @@
 # Quality Assurance Skill
 
-I guide users through ReportBurster's QA and testing features — validating configurations and ensuring accurate delivery before going live with production distribution.
+I guide users through DataPallas's QA and testing features — validating configurations and ensuring accurate delivery before going live with production distribution.
 
 ## Why QA Matters
 
@@ -10,7 +10,7 @@ Before distributing 1,000 payslips or invoices, you need confidence that:
 - Email templates look right
 - Variables expand correctly
 
-ReportBurster provides built-in tools to validate everything before actual delivery.
+DataPallas provides built-in tools to validate everything before actual delivery.
 
 ---
 
@@ -30,7 +30,7 @@ The safest way to test: a local email server that captures emails without sendin
 
 ### Testing Workflow
 1. Start Test Email Server
-2. Configure ReportBurster to use localhost SMTP
+2. Configure DataPallas to use localhost SMTP
 3. Run a burst with test distribution
 4. Review captured emails at localhost:8025
 5. Verify: recipients, subject, body, attachments
@@ -116,7 +116,7 @@ Failed reports are automatically quarantined for review.
 
 ### Log Location
 - `logs/errors.log` — Error details
-- `logs/reportburster.bat.log` — Execution log (Windows)
+- `logs/datapallas.bat.log` — Execution log (Windows)
 
 ### Job Monitoring
 - View currently running jobs

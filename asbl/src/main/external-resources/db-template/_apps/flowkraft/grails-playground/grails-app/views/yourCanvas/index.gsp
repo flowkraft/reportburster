@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>Your Canvas - ReportBurster</title>
+    <title>Your Canvas - DataPallas</title>
     <style>
         .canvas-hero {
             text-align: center;
@@ -240,7 +240,7 @@
             <div class="row">
                 <div class="col-lg-6">
                     <ol class="step-list">
-                        <li><strong>Define your reports in ReportBurster</strong> — Connect to any datasource that returns rows</li>
+                        <li><strong>Define your reports in DataPallas</strong> — Connect to any datasource that returns rows</li>
                         <li><strong>Add the component to your dashboard</strong> — One HTML tag per visualization</li>
                         <li><strong>Deploy</strong> — Users access it through any web page</li>
                     </ol>
@@ -249,7 +249,7 @@
                     <p><strong>Example: Add a chart to any page</strong></p>
                     <div class="code-snippet">
 <span class="tag">&lt;rb-chart</span>
-    <span class="attr">report-code</span>=<span class="value">"sales-by-region"</span>
+    <span class="attr">report-id</span>=<span class="value">"sales-by-region"</span>
     <span class="attr">api-base-url</span>=<span class="value">"${RbUtils.apiBaseUrl}"</span>
     <span class="attr">api-key</span>=<span class="value">"${RbUtils.apiKey}"</span>
 <span class="tag">&gt;&lt;/rb-chart&gt;</span>

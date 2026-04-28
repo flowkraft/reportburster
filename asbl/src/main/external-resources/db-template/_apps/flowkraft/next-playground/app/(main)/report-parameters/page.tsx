@@ -209,7 +209,7 @@ export default function ReportParametersPage() {
   }
 
   const usageCode = `<rb-parameters
-  report-code="par-employee-hire-dates"
+  report-id="par-employee-hire-dates"
   api-base-url="${rbConfig.apiBaseUrl}"
   api-key="${rbConfig.apiKey}"
 ></rb-parameters>`
@@ -293,7 +293,7 @@ export default function ReportParametersPage() {
                     <rb-parameters
                       ref={paramsRef}
                       id="demoParams"
-                      report-code="par-employee-hire-dates"
+                      report-id="par-employee-hire-dates"
                       api-base-url={rbConfig.apiBaseUrl}
                       api-key={rbConfig.apiKey}
                     />
@@ -354,7 +354,7 @@ export default function ReportParametersPage() {
                   <rb-tabulator
                     ref={dataTableRef}
                     id="dataTable"
-                    report-code="par-employee-hire-dates"
+                    report-id="par-employee-hire-dates"
                     api-base-url={rbConfig.apiBaseUrl}
                     api-key={rbConfig.apiKey}
                     style={{ display: "block", width: "100%" }}

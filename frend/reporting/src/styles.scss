@@ -31,6 +31,35 @@
   z-index: 10000002 !important; /* Higher than backdrop */
 }
 
+/* When the connection-details modal is opened from inside the cube definition
+   modal (Bootstrap, z-index 10000002), it must stack ABOVE the cube modal.
+   These classes are toggled by [styleClass]/[maskStyleClass] bindings on
+   <p-dialog id="modalDbConnection"> when context === 'cubeDsl'. */
+.p-dialog-mask.cube-dsl-stacked-mask {
+  z-index: 10000010 !important;
+}
+.p-dialog.cube-dsl-stacked-dialog {
+  z-index: 10000011 !important;
+}
+
+/* CRUD-mode picklist (Connections admin area only) — hide the right "target"
+   list and the transfer arrow buttons, let the left "source" list grow to
+   full width. The .crud-picklist class is toggled in the connection-details
+   template via [class.crud-picklist]="context === 'crud'". */
+.crud-picklist .p-picklist-controls,
+.crud-picklist .p-picklist-target-list-container {
+  display: none !important;
+}
+.crud-picklist .p-picklist-source-list-container {
+  flex: 1 1 100% !important;
+  width: 100% !important;
+}
+/* Keep the source tree short enough that the Refresh button below the
+   picklist wrapper is not covered. */
+.crud-picklist dburst-tree {
+  height: 250px !important;
+}
+
 /* target the internal .codejar <pre> */
 ngx-codejar .codejar pre {
   white-space: pre !important; /* no wrap */

@@ -1,11 +1,9 @@
 package com.flowkraft.fs.models;
 
-import org.apache.commons.lang3.JavaVersion;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.Validate;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -56,16 +54,7 @@ public class FileVO implements Comparable<FileVO> {
 	}
 
 	private boolean localCanExecute(File file) {
-		if (SystemUtils.isJavaVersionAtLeast(JavaVersion.JAVA_1_6)) {
-			try {
-				Method canExecuteMethod = File.class.getMethod("canExecute", (Class[]) null);
-				return (Boolean) canExecuteMethod.invoke(file, (Object[]) null);
-			} catch (Exception e) {
-				throw new RuntimeException("Can't execute File.canExecute()", e);
-			}
-		}
-
-		return false;
+		return file.canExecute();
 	}
 
 	public String getAccessAttributes() {

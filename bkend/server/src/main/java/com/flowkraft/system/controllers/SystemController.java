@@ -24,6 +24,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSettingsInternal;
 import com.flowkraft.common.AppPaths;
 import com.flowkraft.system.dtos.DirCriteriaDto;
 import com.flowkraft.system.dtos.FileCriteriaDto;
@@ -41,7 +42,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping(value = "/api/system", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/system", produces = MediaType.APPLICATION_JSON_VALUE)
 public class SystemController {
 
 	@Autowired
@@ -118,6 +119,31 @@ public class SystemController {
 		SystemInfo info = systemService.getSystemInfo();
 		return Mono.just(info);
 
+	}
+
+	@GetMapping(value = "/preferences")
+	public Mono<DocumentBursterSettingsInternal> getPreferences() {
+		return Mono.fromCallable(() -> systemService.loadInternalSettings());
+	}
+
+	@PostMapping(value = "/preferences")
+	public Mono<Void> savePreferences(@RequestBody DocumentBursterSettingsInternal settings) {
+		return Mono.fromCallable(() -> {
+			systemService.saveInternalSettings(settings);
+			return null;
+		}).then();
+	}
+
+	@GetMapping(value = "/copilot-url", produces = MediaType.TEXT_PLAIN_VALUE)
+	public Mono<String> getCopilotUrl() {
+		return Mono.fromCallable(() -> {
+			DocumentBursterSettingsInternal internal = systemService.loadInternalSettings();
+			if (internal != null && internal.settings != null
+					&& !StringUtils.isBlank(internal.settings.copiloturl)) {
+				return internal.settings.copiloturl;
+			}
+			return "https://chatgpt.com/";
+		});
 	}
 
 	@GetMapping("/unix-cli/find")

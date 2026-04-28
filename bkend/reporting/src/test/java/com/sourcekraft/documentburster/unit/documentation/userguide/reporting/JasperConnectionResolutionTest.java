@@ -21,10 +21,10 @@ import com.sourcekraft.documentburster.common.settings.Settings;
  * Tests the 3-tier DB connection resolution for standalone JasperReports
  * (pure .jrxml dropped into config/reports-jasper/).
  *
- * ReportBurster resolves the database connection using this priority:
+ * DataPallas resolves the database connection using this priority:
  *   1. Per-report override — config/reports-jasper/{report-folder}/datasource.properties
  *   2. Global JasperReports override — config/reports-jasper/datasource.properties
- *   3. ReportBurster's default DB connection (marked "default" in Connections settings)
+ *   3. DataPallas's default DB connection (marked "default" in Connections settings)
  *
  * This does NOT apply to inline/wrapper .jrxml templates (output type = jasper)
  * which always use the parent report's DB connection from its own conncode.

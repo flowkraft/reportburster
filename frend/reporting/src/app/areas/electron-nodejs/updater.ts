@@ -115,7 +115,7 @@ export class Updater {
 
       if (validDbExeFilePath !== 'file') {
         validDbExeFilePath = await UtilitiesNodeJs.existsAsync(
-          `${updateInfo.updateSourceDirectoryPath}/ReportBurster.exe`,
+          `${updateInfo.updateSourceDirectoryPath}/DataPallas.exe`,
         );
       }
 
@@ -124,7 +124,7 @@ export class Updater {
       //);
 
       if (validDbExeFilePath !== 'file') {
-        updateInfo.errorMsg = `Neither DocumentBurster.exe or ReportBurster.exe was not found in the ${updateInfo.updateSourceDirectoryPath} selected location. Please select an existing DocumentBurster/ReportBurster installation folder!`;
+        updateInfo.errorMsg = `Neither DocumentBurster.exe or DataPallas.exe was not found in the ${updateInfo.updateSourceDirectoryPath} selected location. Please select an existing DocumentBurster/DataPallas installation folder!`;
       } else {
         let xmlSourceSettings = {
           documentburster: {
@@ -312,7 +312,7 @@ export class Updater {
       //if (updateInfo.productInfo.isServerVersion)
       //  this.updateDestinationDirectoryPath = `${this.upgdDbTempDirectoryPath}/to/${topFolderName}/server`;
       //else
-      topFolderName = 'ReportBurster';
+      topFolderName = 'DataPallas';
       this.updateDestinationDirectoryPath = `${this.upgdDbTempDirectoryPath}/to/${topFolderName}`;
     }
 
@@ -325,7 +325,7 @@ export class Updater {
     //console.log(`homeDirectoryPath = ${homeDirectoryPath}`);
 
     if (updateInfo.mode == 'update-now') {
-      const upgdDbFromFolderPath = `${this.upgdDbTempDirectoryPath}/from/ReportBurster`;
+      const upgdDbFromFolderPath = `${this.upgdDbTempDirectoryPath}/from/DataPallas`;
 
       //console.log(`Log 4 this.UPG_DB_FOLDER_PATH = ${this.UPG_DB_FOLDER_PATH}`);
 
@@ -368,7 +368,7 @@ export class Updater {
       topFolderNamePath = await UtilitiesNodeJs.findAsync(
         `${this.upgdDbTempDirectoryPath}/to`,
         {
-          matching: ['ReportBurster*'],
+          matching: ['DataPallas*'],
           files: false,
           directories: true,
           recursive: false,
@@ -376,7 +376,7 @@ export class Updater {
       )[0];
 
       if (!topFolderNamePath)
-        topFolderNamePath = `${this.upgdDbTempDirectoryPath}/to/ReportBurster`;
+        topFolderNamePath = `${this.upgdDbTempDirectoryPath}/to/DataPallas`;
 
       //console.log(`Log 61 - topFolderNamePath = ${topFolderNamePath}`);
 
@@ -609,9 +609,9 @@ export class Updater {
       );
 
       if (updateInfo.productInfo.isServerVersion)
-        this.backupZipFileName = `reportburster-server-${updateInfo.productInfo.version}-${this.nowFormatted}.zip`;
+        this.backupZipFileName = `datapallas-server-${updateInfo.productInfo.version}-${this.nowFormatted}.zip`;
       else
-        this.backupZipFileName = `reportburster-${updateInfo.productInfo.version}-${this.nowFormatted}.zip`;
+        this.backupZipFileName = `datapallas-${updateInfo.productInfo.version}-${this.nowFormatted}.zip`;
 
       UtilitiesNodeJs.writeZip(
         `${this.upgdDbTempDirectoryPath}/${this.backupZipFileName}`,
@@ -813,6 +813,10 @@ export class Updater {
             migratedValue = String(value);
           } else {
             migratedValue = prevRaw;
+            // 'My Reports' was the old default — upgrade to new default
+            if (key === 'template' && migratedValue === 'My Reports') {
+              migratedValue = String(value);
+            }
             if (migratedValue) {
               if (!['text', 'html', 'subject'].includes(key)) {
                 // remove the line breaks

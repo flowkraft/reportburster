@@ -83,7 +83,7 @@ Open Electron Application
   ...  ${signal_electron.binary_location} and chromedriver binary via ${chromedriver_path}
   ...  see vars.py for more details.
   # Kill any existing processes to prevent conflicts
-  Run Keyword And Ignore Error    Kill Reportburster Exe Process
+  Run Keyword And Ignore Error    Kill DataPallas Exe Process
   Sleep    2s
      
   # Start with explicit debugging port
@@ -116,7 +116,7 @@ Verify Chrome Debugger Connection
   
 Close Electron Application
   [Documentation]  Kills the Electron application process
-  Kill Reportburster Exe Process
+  Kill DataPallas Exe Process
 
 
 startServer.bat and shutServer.bat Should Work Fine

@@ -27,24 +27,24 @@ require_once __DIR__ . '/../vendor/autoload.php';
 |
 */
 
-final class ReportBurster_Portal
+final class DataPallas_Portal
 {
-    public const TEXTDOMAIN = 'reportburster-portal';
+    public const TEXTDOMAIN = 'datapallas-portal';
     public static $plugin;
     public static $start;
 }
 
-ReportBurster_Portal::$plugin = require_once __DIR__ . '/plugin.php';
-ReportBurster_Portal::$start = microtime(true);
+DataPallas_Portal::$plugin = require_once __DIR__ . '/plugin.php';
+DataPallas_Portal::$start = microtime(true);
 
 // Commodity function to get the plugin instance
-if (!function_exists('ReportBurster_Portal')) {
+if (!function_exists('DataPallas_Portal')) {
     /**
      * Return the instance of plugin.
      *
      */
-    function ReportBurster_Portal()
+    function DataPallas_Portal()
     {
-        return ReportBurster_Portal::$plugin;
+        return DataPallas_Portal::$plugin;
     }
 }

@@ -5,7 +5,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 /**
- * Simple helper class with static utility methods for ReportBurster.
+ * Simple helper class with static utility methods for DataPallas.
  *
  * Usage in GSP:
  *   <%@ page import="flowkraft.frend.RbUtils" %>
@@ -20,11 +20,11 @@ class RbUtils {
     private static String cachedApiKey = null
 
     /**
-     * Returns the backend API base URL for ReportBurster.
+     * Returns the backend API base URL for DataPallas.
      */
     static String getApiBaseUrl() {
         def config = Holders.grailsApplication?.config
-        String baseUrl = config?.getProperty('reportburster.backend.baseUrl', String, 'http://localhost:9090')
+        String baseUrl = config?.getProperty('datapallas.backend.baseUrl', String, 'http://localhost:9090')
         return "${baseUrl}/api/reporting"
     }
 
@@ -55,7 +55,7 @@ class RbUtils {
      */
     static String getBackendBaseUrl() {
         def config = Holders.grailsApplication?.config
-        return config?.getProperty('reportburster.backend.baseUrl', String, 'http://localhost:9090')
+        return config?.getProperty('datapallas.backend.baseUrl', String, 'http://localhost:9090')
     }
 
     /**

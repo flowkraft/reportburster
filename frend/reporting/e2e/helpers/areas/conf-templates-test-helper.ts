@@ -52,46 +52,7 @@ export class ConfTemplatesTestHelper {
     }
     return ft
       .clickYesDoThis()
-      .waitOnElementToHaveText(
-        `#${folderName}_${PATHS.SETTINGS_CONFIG_FILE} td:first-child`,
-        templateName,
-      );
-  };
-
-  static assertShowHideWorksFine = (
-    ft: FluentTester,
-    folderName: string,
-  ): FluentTester => {
-    const selector = `${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`;
-
-    ft = ft
-      .clickAndSelectTableRow(`#${selector}`)
-      .click(`#btnActions_${selector}`)
-      .click(`#btnActionHideShow_${selector}`)
-      .clickNoDontDoThis()
-      .elementShouldContainText(`#btnActions_${selector} button`, 'Visible')
-      .click(`#btnActions_${selector}`)
-      .click(`#btnActionHideShow_${selector}`)
-      .clickYesDoThis()
-      .waitOnElementToContainText(`#btnActions_${selector} button`, 'Hidden')
-      .click('#topMenuBurst')
-      .click('#topMenuConfiguration')
-      .elementShouldNotBeVisible(`#topMenuConfigurationLoad_${selector}`);
-
-    return ft
-      .gotoConfigurationReports()
-      .elementShouldContainText(`#btnActions_${selector} button`, 'Hidden')
-      .click(`#btnActions_${selector}`)
-      .click(`#btnActionHideShow_${selector}`)
-      .clickNoDontDoThis()
-      .elementShouldContainText(`#btnActions_${selector} button`, 'Hidden')
-      .click(`#btnActions_${selector}`)
-      .click(`#btnActionHideShow_${selector}`)
-      .clickYesDoThis()
-      .waitOnElementToContainText(`#btnActions_${selector} button`, 'Visible')
-      .click('#topMenuBurst')
-      .click('#topMenuConfiguration')
-      .elementShouldBeVisible(`#topMenuConfigurationLoad_${selector}`);
+      .waitOnElementToBecomeVisible('#burstFileName');
   };
 
   static assertBCCSubjectValues = (
@@ -108,10 +69,12 @@ export class ConfTemplatesTestHelper {
     }
 
     return ft
-      .gotoConfiguration()
-      .click(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-      )
+      .gotoConfigurationReports()
+      .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .waitOnElementToBecomeVisible(`#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .click(`#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .waitOnElementToBecomeVisible(`#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .click(`#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .click('#leftMenuEmailSettings') // email SMTP settings
       .click('#emailMessageTab-link') // email message settings
       .inputShouldHaveValue('#emailBccAddress', bccValue)
@@ -124,11 +87,13 @@ export class ConfTemplatesTestHelper {
     templateName: string,
   ): FluentTester => {
     ft = ft
-      .gotoConfiguration()
+      .gotoConfigurationReports()
       // STEP0 - CHANGE VALUES
-      .click(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-      )
+      .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .waitOnElementToBecomeVisible(`#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .click(`#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .waitOnElementToBecomeVisible(`#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .click(`#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .click('#leftMenuEmailSettings') // email SMTP settings
       .click('#emailMessageTab-link') // email message settings
       .click('#emailBccAddress')
@@ -153,13 +118,13 @@ export class ConfTemplatesTestHelper {
   ): FluentTester => {
     return (
       ft
-        .gotoStartScreen()
-        .click('#topMenuConfiguration')
-        // STEP0 - CHANGE VALUES
-        // general settings
-        .click(
-          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-        )
+        .gotoConfigurationReports()
+        // STEP0 - CHANGE VALUES via reports list Load flow
+        .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+        .waitOnElementToBecomeVisible(`#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+        .click(`#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+        .waitOnElementToBecomeVisible(`#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+        .click(`#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
         .click('#burstFileName')
         .typeText('00')
         .click('#outputFolder')
@@ -168,21 +133,16 @@ export class ConfTemplatesTestHelper {
         .typeText('02')
         .click('#leftMenuEnableDisableDistribution')
         .click('#btnSendDocumentsEmail')
-        //.waitOnElementWithTextToBecomeVisible('Saved')
-        //.waitOnElementWithTextToBecomeInvisible('Saved')
         .click('#btnDeleteDocuments')
-        //.waitOnElementWithTextToBecomeVisible('Saved')
-        //.waitOnElementWithTextToBecomeInvisible('Saved')
         .click('#btnQuarantineDocuments')
-        //.waitOnElementWithTextToBecomeVisible('Saved')
-        // values are supposed to be saved at this moment ==> go away and click burst top menu
-        .gotoStartScreen()
+        // values are supposed to be saved at this moment ==> go away and reload
+        .gotoConfigurationReports()
         // STEP1 - load and assert the saved values
-        .click('#topMenuConfiguration')
-        // general settings
-        .click(
-          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-        )
+        .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+        .waitOnElementToBecomeVisible(`#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+        .click(`#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+        .waitOnElementToBecomeVisible(`#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+        .click(`#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
         .inputShouldHaveValue('#burstFileName', '00')
         .inputShouldHaveValue('#outputFolder', '01')
         .inputShouldHaveValue('#quarantineFolder', '02')
@@ -223,10 +183,7 @@ export class ConfTemplatesTestHelper {
     }
     return ft
       .clickYesDoThis()
-      .waitOnElementToHaveText(
-        `#${newFolderName}_${PATHS.SETTINGS_CONFIG_FILE} td:first-child`,
-        newTemplateName,
-      );
+      .waitOnElementToBecomeVisible('#burstFileName');
   };
 
   static rollbackChangesToDefaultDocumentBursterConfiguration = (
@@ -237,11 +194,9 @@ export class ConfTemplatesTestHelper {
       .gotoStartScreen()
       .gotoConfigurationReports()
       .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
-      .click(`#btnActions_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
-      .click(`#btnActionRestore_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .click(`#btnRestore_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .clickNoDontDoThis()
-      .click(`#btnActions_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
-      .click(`#btnActionRestore_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .click(`#btnRestore_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .clickYesDoThis();
   };
 
@@ -251,20 +206,24 @@ export class ConfTemplatesTestHelper {
     templateName: string,
     mailMergeCapability?: string,
   ): FluentTester => {
+    // Top menu only shows the default fallback config (Bursting); user-created
+    // configs are accessible via Configuration → Reports list only.
     ft = ft
       .gotoStartScreen()
       .gotoConfiguration()
       .elementShouldContainText(
         `#topMenuConfigurationLoad_burst_${PATHS.SETTINGS_CONFIG_FILE}`,
-        'My Report',
+        'Bursting',
       )
-      .elementShouldContainText(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-        templateName,
-      )
-      .click(
+      .elementShouldNotBeVisible(
         `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
       )
+      .gotoConfigurationReports()
+      .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .waitOnElementToBecomeVisible(`#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .click(`#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .waitOnElementToBecomeVisible(`#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .click(`#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .waitOnElementToHaveText(
         '.sidebar-menu .header',
         `CONFIGURATION (${templateName})`,
@@ -313,13 +272,13 @@ export class ConfTemplatesTestHelper {
   ): FluentTester => {
     return (
       ft
-        .gotoStartScreen()
-        // STEP1 - load and assert the saved values
-        .click('#topMenuConfiguration')
-        // general settings
-        .click(
-          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-        )
+        .gotoConfigurationReports()
+        // STEP1 - load and assert the saved values via reports list Load flow
+        .clickAndSelectTableRow(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+        .waitOnElementToBecomeVisible(`#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+        .click(`#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+        .waitOnElementToBecomeVisible(`#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+        .click(`#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
         .click('#leftMenuGeneralSettings')
         .inputShouldHaveValue(
           '#burstFileName',
@@ -359,11 +318,6 @@ export class ConfTemplatesTestHelper {
       .clickYesDoThis()
       .waitOnElementToBecomeInvisible(
         `#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-      )
-      .click('#topMenuBurst')
-      .click('#topMenuConfiguration')
-      .elementShouldNotBeVisible(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
       );
   };
 
@@ -381,10 +335,7 @@ export class ConfTemplatesTestHelper {
       .click('#templateName')
       .typeText(newTemplateName)
       .clickYesDoThis()
-      .waitOnElementToContainText(
-        `#${folderName}_${PATHS.SETTINGS_CONFIG_FILE} td:first-child`,
-        newTemplateName,
-      );
+      .waitOnElementToBecomeVisible('#burstFileName');
   };
 
   static assertFallbackTemplate = (
@@ -405,11 +356,17 @@ export class ConfTemplatesTestHelper {
       .click('#btnClose')
       .elementShouldContainText(
         `#burst_${PATHS.SETTINGS_CONFIG_FILE} td:first-child`,
-        templateName + ' (fallback)',
+        templateName,
       )
       .elementShouldContainText(
         `#burst_${PATHS.SETTINGS_CONFIG_FILE} td:nth-child(3)`,
         'used automatically when no other (more specific) configuration is defined',
-      );
+      )
+      .click('#topMenuConfiguration')
+      .elementShouldContainText(
+        `#topMenuConfigurationLoad_burst_${PATHS.SETTINGS_CONFIG_FILE}`,
+        templateName,
+      )
+      .click('#topMenuConfiguration');
   };
 }

@@ -221,19 +221,19 @@ export default function DataWarehousePage() {
 
   // Usage code snippets
   const usageBrowser = `<rb-pivot-table
-  report-code="piv-northwind-warehouse-browser"
+  report-id="piv-northwind-warehouse-browser"
   api-base-url="\${RbUtils.apiBaseUrl}"
   api-key="\${RbUtils.apiKey}"
 ></rb-pivot-table>`
 
   const usageDuckdb = `<rb-pivot-table
-  report-code="piv-northwind-warehouse-duckdb"
+  report-id="piv-northwind-warehouse-duckdb"
   api-base-url="\${RbUtils.apiBaseUrl}"
   api-key="\${RbUtils.apiKey}"
 ></rb-pivot-table>`
 
   const usageClickhouse = `<rb-pivot-table
-  report-code="piv-northwind-warehouse-clickhouse"
+  report-id="piv-northwind-warehouse-clickhouse"
   api-base-url="\${RbUtils.apiBaseUrl}"
   api-key="\${RbUtils.apiKey}"
 ></rb-pivot-table>`
@@ -269,7 +269,7 @@ export default function DataWarehousePage() {
             Processing these volumes requires specialized techniques &mdash; but more tools mean more infrastructure, more complexity, and higher costs.
           </p>
           <p className="mb-4 text-sm">
-            <strong>ReportBurster&apos;s approach:</strong> start with the simplest option. Only move to the next tier when your data volume actually demands it.
+            <strong>DataPallas&apos;s approach:</strong> start with the simplest option. Only move to the next tier when your data volume actually demands it.
           </p>
 
           {/* Tier Cards */}
@@ -375,7 +375,7 @@ export default function DataWarehousePage() {
               <rb-pivot-table
                 ref={warehouseBrowserRef}
                 id="warehousePivotBrowser"
-                report-code="piv-northwind-warehouse-browser"
+                report-id="piv-northwind-warehouse-browser"
                 api-base-url={rbConfig.apiBaseUrl}
                 api-key={rbConfig.apiKey}
               />
@@ -395,7 +395,7 @@ export default function DataWarehousePage() {
               <rb-pivot-table
                 ref={warehouseDuckdbRef}
                 id="warehousePivotDuckdb"
-                report-code="piv-northwind-warehouse-duckdb"
+                report-id="piv-northwind-warehouse-duckdb"
                 api-base-url={rbConfig.apiBaseUrl}
                 api-key={rbConfig.apiKey}
               />
@@ -423,7 +423,7 @@ export default function DataWarehousePage() {
               <rb-pivot-table
                 ref={warehouseClickhouseRef}
                 id="warehousePivotClickhouse"
-                report-code="piv-northwind-warehouse-clickhouse"
+                report-id="piv-northwind-warehouse-clickhouse"
                 api-base-url={rbConfig.apiBaseUrl}
                 api-key={rbConfig.apiKey}
               />

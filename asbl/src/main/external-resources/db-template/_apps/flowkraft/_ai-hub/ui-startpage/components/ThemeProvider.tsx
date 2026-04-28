@@ -6,7 +6,7 @@ import { applyTheme } from "@/lib/themes"
 // Settings keys for theme (must match useThemeSettings.ts)
 const THEME_COLOR_KEY = "theme.color"
 const THEME_MODE_KEY = "theme.mode"
-const DEFAULT_THEME = "reportburster"
+const DEFAULT_THEME = "datapallas"
 const DEFAULT_MODE = "dark"
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {

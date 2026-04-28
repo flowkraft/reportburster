@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>Parameters - ReportBurster</title>
+    <title>Parameters - DataPallas</title>
     <style>
         .code-block {
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -82,7 +82,7 @@
                                 <div class="card-body">
                                     <rb-parameters 
                                         id="demoParams"
-                                        report-code="par-employee-hire-dates"
+                                        report-id="par-employee-hire-dates"
                                         api-base-url="${RbUtils.apiBaseUrl}"
                                         api-key="${RbUtils.apiKey}"
                                     ></rb-parameters>
@@ -123,7 +123,7 @@
                                 <div class="card-body" style="max-height: 450px; overflow: auto;">
                                     <rb-tabulator 
                                         id="dataTable"
-                                        report-code="par-employee-hire-dates"
+                                        report-id="par-employee-hire-dates"
                                         api-base-url="${RbUtils.apiBaseUrl}"
                                         api-key="${RbUtils.apiKey}"
                                     ></rb-tabulator>
@@ -155,7 +155,7 @@
                         </button>
                     </div>
                     <pre id="usageCode" class="code-block"><code class="language-markup">&lt;rb-parameters 
-    report-code="par-employee-hire-dates"
+    report-id="par-employee-hire-dates"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
     api-key="&#36;{RbUtils.apiKey}"
 &gt;&lt;/rb-parameters&gt;</code></pre>
@@ -294,13 +294,13 @@
                     // Fetch filtered data from backend
                     const apiBaseUrl = '${RbUtils.apiBaseUrl}';
                     const apiKey = '${RbUtils.apiKey}';
-                    const reportCode = 'par-employee-hire-dates';
+                    const reportId = 'par-employee-hire-dates';
                     
                     const headers = { 'Content-Type': 'application/json' };
                     // TEMP: API key disabled for rollback
                     // if (apiKey) headers['X-API-Key'] = apiKey;
                     
-                    const dataUrl = apiBaseUrl + '/reports/' + reportCode + '/data?' + queryParams.toString();
+                    const dataUrl = apiBaseUrl + '/reports/' + reportId + '/data?' + queryParams.toString();
                     console.log('[reportParameters GSP] Fetching filtered data from:', dataUrl);
                     
                     const response = await fetch(dataUrl, { headers });

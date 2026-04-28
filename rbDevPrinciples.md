@@ -1,4 +1,4 @@
-## **ReportBurster Development Principles**
+## **DataPallas Development Principles**
 
 1. **Solve the real request — prioritize delivering the intended outcome.**  
     * Ensure the offered solution (often code) truly solves the user's original need, not just the surface symptom.  

@@ -115,7 +115,7 @@ export const updateTemplate = `<div *ngIf="succint">
             required
           /><em
             >(*) {{ "AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.UPDATE-NOW.SELECT" |
-            translate }} DocumentBurster.exe/ReportBurster.exe</em
+            translate }} DocumentBurster.exe/DataPallas.exe</em
           >
         </div>
 

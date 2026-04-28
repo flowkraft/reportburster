@@ -2,7 +2,7 @@
 Resource    resources/utilities.robot
 
 Test Setup       Clean Output Folders and Log Files
-Test Teardown    Kill Reportburster Exe Process
+Test Teardown    Kill DataPallas Exe Process
 
 *** Test Cases ***
 Quickstart Payslips.pdf Should Work Fine

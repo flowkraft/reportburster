@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>ReportBurster - Dashboards & Self Service Portals</title>
+    <title>DataPallas - Dashboards & Self Service Portals</title>
     <style>
         /* Hero section - matches Next.js */
         .hero-section {
@@ -119,7 +119,7 @@
         <p class="hero-description">
             Bring your reports to the <strong>frontend</strong>: dashboards, portals, anywhere your users need them.
             Use our 'quick to get things done' (highly capable and fully customizable) portal, or
-            <strong>embed ReportBurster reports</strong> directly into your existing web applications and portals —
+            <strong>embed DataPallas reports</strong> directly into your existing web applications and portals —
             responsive, secure, and themeable to match your look and feel.
         </p>
     </section>

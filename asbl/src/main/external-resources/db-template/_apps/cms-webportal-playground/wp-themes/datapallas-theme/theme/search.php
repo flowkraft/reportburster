@@ -4,7 +4,7 @@
  *
  * @link https://developer.wordpress.org/themes/basics/template-hierarchy/#search-result
  *
- * @package ReportBurster_Theme
+ * @package DataPallas_Theme
  */
 
 get_header();
@@ -20,7 +20,7 @@ get_header();
 				printf(
 					/* translators: 1: search result title. 2: search term. */
 					'<h1 class="page-title">%1$s <span>%2$s</span></h1>',
-					esc_html__( 'Search results for:', 'reportburster-theme' ),
+					esc_html__( 'Search results for:', 'datapallas-theme' ),
 					get_search_query()
 				);
 				?>
@@ -36,7 +36,7 @@ get_header();
 			endwhile;
 
 			// Previous/next page navigation.
-			reportburster_theme_the_posts_navigation();
+			DATAPALLAS_THEME_the_posts_navigation();
 
 		else :
 

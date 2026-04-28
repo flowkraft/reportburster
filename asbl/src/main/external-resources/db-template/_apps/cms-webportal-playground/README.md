@@ -1,9 +1,9 @@
 # CMS Web Portal Playground
 
-A WordPress-based document portal for ReportBurster, featuring:
+A WordPress-based document portal for DataPallas, featuring:
 - **Sage Theme** (Roots) with Tailwind CSS v4
 - **Pods Framework** for custom post types
-- **WPBones Plugin** (reportburster-integration) for template routing
+- **WPBones Plugin** (DataPallas-integration) for template routing
 
 ## Quick Start
 
@@ -71,7 +71,7 @@ docker compose logs -f sage-theme-builder
 
 Add a new file in the plugin's views directory:
 ```
-wp-plugins/reportburster-integration/resources/views/
+wp-plugins/DataPallas-integration/resources/views/
 ├── page-my-documents.php      # /my-documents/
 ├── page-invoices.php          # /invoices/ (new)
 ├── single-paystub.php         # /paystub/{id}/
@@ -100,13 +100,13 @@ FORCE_BUILD=true docker compose up -d sage-theme-builder
 
 **Option 3 - Delete manifest to trigger rebuild:**
 ```powershell
-Remove-Item ".\wp-themes\reportburster-sage\public\build\manifest.json" -Force
+Remove-Item ".\wp-themes\DataPallas-sage\public\build\manifest.json" -Force
 docker compose up -d sage-theme-builder
 ```
 
 **Option 4 - Run npm directly (if node_modules exists):**
 ```powershell
-cd wp-themes\reportburster-sage
+cd wp-themes\DataPallas-sage
 npm run build
 ```
 
@@ -129,14 +129,14 @@ cms-webportal-playground/
 │       └── resources/css/
 │           └── app.css         # Tailwind with plugin @source
 ├── wp-plugins/
-│   └── reportburster-integration/
+│   └── DataPallas-integration/
 │       ├── plugin/
 │       │   ├── Providers/AppServiceProvider.php
 │       │   └── Http/Controllers/TemplateController.php
 │       ├── bootstrap/render-view.php
 │       └── resources/views/    # PHP templates here
 └── wp-themes/
-    └── reportburster-sage/     # Created by Composer at runtime
+    └── DataPallas-sage/     # Created by Composer at runtime
 ```
 
 ---
@@ -162,7 +162,7 @@ Sage v11 is a modern WordPress theme that uses:
 - **Vite** for asset bundling with hashed filenames (`app-WlKM2Wai.css`)
 - **Tailwind CSS v4** with JIT (Just-In-Time) compilation
 
-Our `reportburster-integration` plugin uses:
+Our `DataPallas-integration` plugin uses:
 - **Classic PHP templates** (`page-my-documents.php`) that call `get_header()` / `get_footer()`
 - **Tailwind classes** in PHP files outside the theme directory
 
@@ -190,7 +190,7 @@ Closes the HTML structure opened by `header.php` and calls `wp_footer()`.
 @import "tailwindcss" theme(static);
 @source "../views/";
 @source "../../app/";
-@source "../../../../plugins/reportburster-integration/**/*.php";
+@source "../../../../plugins/DataPallas-integration/**/*.php";
 ```
 The last `@source` line tells Tailwind v4 to scan the plugin directory for CSS classes.
 **Note:** The path uses `plugins/` (not `wp-plugins/`) because this is the path **inside the container** where `/var/www/html/wp-content/plugins/` is mounted.
@@ -204,7 +204,7 @@ The last `@source` line tells Tailwind v4 to scan the plugin directory for CSS c
 │                                                                             │
 │  1. cms-webportal-playground-cli:                                           │
 │     └── composer create-project roots/sage → Fresh Sage theme              │
-│     └── wp plugin activate reportburster-integration                        │
+│     └── wp plugin activate DataPallas-integration                        │
 │                                                                             │
 │  2. sage-theme-builder:                                                     │
 │     └── cp /patches/header.php .                    ← Apply patches         │
@@ -245,7 +245,7 @@ The last `@source` line tells Tailwind v4 to scan the plugin directory for CSS c
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Key Files in reportburster-integration Plugin
+### Key Files in DataPallas-integration Plugin
 
 | File | Role |
 |------|------|
@@ -260,7 +260,7 @@ The last `@source` line tells Tailwind v4 to scan the plugin directory for CSS c
 ## Troubleshooting
 
 ### CSS not loading / Tailwind classes not working
-1. Check if manifest exists: `wp-themes/reportburster-sage/public/build/manifest.json`
+1. Check if manifest exists: `wp-themes/DataPallas-sage/public/build/manifest.json`
 2. Force rebuild: `$env:FORCE_BUILD="true"; docker compose up -d sage-theme-builder`
 3. Check build logs: `docker compose logs sage-theme-builder`
 

@@ -744,9 +744,9 @@ async function isUserInRoom(username: string, roomId: string): Promise<boolean> 
 export const ORACLE_ROOMS = [
   {
     agentKey: 'athena',
-    name: 'Athena (ReportBurster Guru & Data Modeling/Business Analysis Expert)',
+    name: 'Athena (DataPallas Guru & Data Modeling/Business Analysis Expert)',
     alias: 'athena',
-    topic: 'Chat with Athena - ReportBurster Guru & Data Modeling/Business Analysis Expert',
+    topic: 'Chat with Athena - DataPallas Guru & Data Modeling/Business Analysis Expert',
     staticHandler: 'static/athena',
   },
   {

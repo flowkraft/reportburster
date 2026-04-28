@@ -37,6 +37,8 @@ services:
       - config_file=/etc/postgresql/postgresql.conf
       - -c
       - log_min_messages=fatal
+      - -c
+      - max_connections=500
     depends_on:
       vector:
         condition: service_healthy

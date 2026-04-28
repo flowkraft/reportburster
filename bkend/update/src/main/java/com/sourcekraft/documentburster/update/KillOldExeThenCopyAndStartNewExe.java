@@ -53,11 +53,11 @@ public class KillOldExeThenCopyAndStartNewExe {
 		// System.out.println(APP_ID + " - _KILL_COMMAND: " + _KILL_COMMAND);
 
 		// System.out.println(APP_ID + " - STEP 1 - \"Kill -9\" the running
-		// ReportBurster.exe process ... ");
+		// DataPallas.exe process ... ");
 
 		_killProcess();
 
-		File oldExe = new File(_getWorkingDirectoryPath() + "/ReportBurster.exe");
+		File oldExe = new File(_getWorkingDirectoryPath() + "/DataPallas.exe");
 
 		String message;
 
@@ -112,13 +112,13 @@ public class KillOldExeThenCopyAndStartNewExe {
 		}
 
 		if (!oldExe.exists()) {
-			message = APP_ID + " - STEP 6 - Could not start the new / updated ReportBurster.exe... '"
+			message = APP_ID + " - STEP 6 - Could not start the new / updated DataPallas.exe... '"
 					+ oldExe.getAbsolutePath() + "' file WAS NOT FOUND !";
 			// System.out.println(message);
 			throw new Exception(message);
 		} else {
 			// System.out.println(APP_ID + " - STEP 6 - Starting the new / updated
-			// ReportBurster.exe ... ");
+			// DataPallas.exe ... ");
 			Runtime.getRuntime().exec(oldExe.getAbsolutePath());
 		}
 	}

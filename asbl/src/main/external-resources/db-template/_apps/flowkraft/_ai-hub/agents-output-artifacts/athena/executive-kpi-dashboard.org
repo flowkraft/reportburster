@@ -1,5 +1,5 @@
 #+TITLE: Executive KPI Dashboard — Product Requirements Document
-#+AUTHOR: Athena (ReportBurster Guru & Business Analysis Expert)
+#+AUTHOR: Athena (DataPallas Guru & Business Analysis Expert)
 #+DATE: 2026-01-20
 
 * 1. Overview

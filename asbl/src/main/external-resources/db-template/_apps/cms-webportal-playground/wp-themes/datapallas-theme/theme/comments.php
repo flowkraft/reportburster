@@ -7,7 +7,7 @@
  *
  * @link https://developer.wordpress.org/themes/basics/template-hierarchy/
  *
- * @package ReportBurster_Theme
+ * @package DataPallas_Theme
  */
 
 /*
@@ -26,12 +26,12 @@ if ( post_password_required() ) {
 		?>
 		<h2>
 			<?php
-			$reportburster_theme_comment_count = get_comments_number();
-			if ( '1' === $reportburster_theme_comment_count ) {
+			$DATAPALLAS_THEME_comment_count = get_comments_number();
+			if ( '1' === $DATAPALLAS_THEME_comment_count ) {
 				// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 				printf(
 					/* translators: 1: title. */
-					esc_html__( 'One comment on &ldquo;%1$s&rdquo;', 'reportburster-theme' ),
+					esc_html__( 'One comment on &ldquo;%1$s&rdquo;', 'datapallas-theme' ),
 					get_the_title()
 				);
 				// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -39,8 +39,8 @@ if ( post_password_required() ) {
 				// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 				printf(
 					/* translators: 1: comment count number, 2: title. */
-					esc_html( _nx( '%1$s comment on &ldquo;%2$s&rdquo;', '%1$s comments on &ldquo;%2$s&rdquo;', $reportburster_theme_comment_count, 'comments title', 'reportburster-theme' ) ),
-					number_format_i18n( $reportburster_theme_comment_count ),
+					esc_html( _nx( '%1$s comment on &ldquo;%2$s&rdquo;', '%1$s comments on &ldquo;%2$s&rdquo;', $DATAPALLAS_THEME_comment_count, 'comments title', 'datapallas-theme' ) ),
+					number_format_i18n( $DATAPALLAS_THEME_comment_count ),
 					get_the_title()
 				);
 				// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -55,7 +55,7 @@ if ( post_password_required() ) {
 			wp_list_comments(
 				array(
 					'style'      => 'ol',
-					'callback'   => 'reportburster_theme_html5_comment',
+					'callback'   => 'DATAPALLAS_THEME_html5_comment',
 					'short_ping' => true,
 				)
 			);
@@ -69,7 +69,7 @@ if ( post_password_required() ) {
 		// message.
 		if ( ! comments_open() ) :
 			?>
-			<p><?php esc_html_e( 'Comments are closed.', 'reportburster-theme' ); ?></p>
+			<p><?php esc_html_e( 'Comments are closed.', 'datapallas-theme' ); ?></p>
 			<?php
 		endif;
 

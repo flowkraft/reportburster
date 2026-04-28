@@ -23,6 +23,7 @@ import com.flowkraft.samples.SamplesFrendOnlyService;
 
 import com.flowkraft.reports.ReportsService;
 import com.flowkraft.common.AppPaths;
+import com.flowkraft.queries.ConnectionFactory;
 import com.flowkraft.reporting.dtos.ReportFullConfigDto;
 import com.flowkraft.reporting.dsl.chart.ChartOptionsParser;
 import com.sourcekraft.documentburster.common.db.DatabaseConnectionManager;
@@ -88,16 +89,11 @@ public class ReportingService {
 			Path frendSamplesDir = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples", SamplesFrendOnlyService.FREND_SAMPLES_SUBFOLDER, reportCode);
 			log.debug("Checking frendSamplesDir: " + frendSamplesDir + " exists=" + Files.exists(frendSamplesDir));
 			if (Files.exists(frendSamplesDir)) {
-				try {
-					log.debug("Found _frend sample folder: " + reportCode + " - ensuring settings.xml/reporting.xml exist...");
-					samplesFrendOnlyService.getOrProvisionFrendSample(reportCode);
-					itemDir = frendSamplesDir;
-					configType = "config-samples-frend"; // use distinct type for _frend path resolution
-					log.debug("Using _frend sample directory: " + itemDir);
-				} catch (Exception e) {
-					log.debug("Failed loading frend sample: " + e.getMessage());
-					throw new RuntimeException("Report not found: " + reportCode, e);
-				}
+				log.debug("Found _frend sample folder: " + reportCode + " - ensuring settings.xml/reporting.xml exist...");
+				samplesFrendOnlyService.getOrProvisionFrendSample(reportCode);
+				itemDir = frendSamplesDir;
+				configType = "config-samples-frend"; // use distinct type for _frend path resolution
+				log.debug("Using _frend sample directory: " + itemDir);
 			} else {
 				log.debug("Report not found: " + reportCode);
 				throw new RuntimeException("Report not found: " + reportCode);
@@ -170,26 +166,18 @@ public class ReportingService {
 		Path tabulatorPath = itemDir.resolve(reportCode + "-tabulator-config.groovy");
 		log.debug("Tabulator DSL path: " + tabulatorPath + " exists=" + Files.exists(tabulatorPath));
 		if (Files.exists(tabulatorPath)) {
-			try {
-				String dslContent = Files.readString(tabulatorPath);
-				config.tabulatorDsl = dslContent;
-				log.debug("Tabulator DSL content (first 200 chars): " + dslContent.substring(0, Math.min(200, dslContent.length())));
-				var opts = TabulatorOptionsParser.parseGroovyTabulatorDslCode(dslContent);
-				log.debug("Tabulator DSL parsed successfully, opts=" + (opts != null ? "not null" : "null"));
-				if (opts != null) {
-					config.tabulatorOptions = new HashMap<>(opts.getOptions());
-					// Extract named blocks for aggregator reports
-					if (opts.getNamedOptions() != null && !opts.getNamedOptions().isEmpty()) {
-						config.namedTabulatorOptions = opts.getNamedOptions();
-					}
-					// hasTabulator is true when unnamed options or named blocks exist
-					config.hasTabulator = !opts.getOptions().isEmpty()
-							|| (config.namedTabulatorOptions != null);
-			}
-			} catch (Exception e) {
-				log.debug("ERROR parsing Tabulator DSL: " + e.getMessage());
-				e.printStackTrace();
-				throw e;
+			String dslContent = Files.readString(tabulatorPath);
+			config.tabulatorDsl = dslContent;
+			log.debug("Tabulator DSL content (first 200 chars): " + dslContent.substring(0, Math.min(200, dslContent.length())));
+			var opts = TabulatorOptionsParser.parseGroovyTabulatorDslCode(dslContent);
+			log.debug("Tabulator DSL parsed successfully, opts=" + (opts != null ? "not null" : "null"));
+			if (opts != null) {
+				config.tabulatorOptions = new HashMap<>(opts.getOptions());
+				if (opts.getNamedOptions() != null && !opts.getNamedOptions().isEmpty()) {
+					config.namedTabulatorOptions = opts.getNamedOptions();
+				}
+				config.hasTabulator = !opts.getOptions().isEmpty()
+						|| (config.namedTabulatorOptions != null);
 			}
 		}
 		
@@ -381,7 +369,81 @@ public class ReportingService {
 			}
 		}
 
+		// Load Map config (plain JSON sidecar — no DSL).
+		//
+		// Two shapes supported in {reportCode}-map-config.json:
+		//   a) single-map report:  { "mapType": "...", "dimension": "...", ... }
+		//   b) multi-map report:   { "<componentId>": { ... }, "<componentId2>": { ... } }
+		//
+		// We detect (b) by testing whether every top-level value is itself an
+		// object — if so, treat each entry as a named block (mirrors
+		// namedChartOptions). Otherwise the whole document is the unnamed map.
+		Path mapPath = itemDir.resolve(reportCode + "-map-config.json");
+		if (Files.exists(mapPath)) {
+			String json = Files.readString(mapPath);
+			config.mapConfigJson = json;
+			ObjectMapper mapMapper = new ObjectMapper();
+			Map<String, Object> parsed = mapMapper.readValue(json,
+				new TypeReference<Map<String, Object>>() {});
+			boolean allValuesAreMaps = !parsed.isEmpty()
+				&& parsed.values().stream().allMatch(v -> v instanceof Map);
+			if (allValuesAreMaps) {
+				Map<String, Map<String, Object>> named = new HashMap<>();
+				for (Map.Entry<String, Object> e : parsed.entrySet()) {
+					@SuppressWarnings("unchecked")
+					Map<String, Object> inner = (Map<String, Object>) e.getValue();
+					named.put(e.getKey(), inner);
+				}
+				config.namedMapOptions = named;
+				config.hasMap = !named.isEmpty();
+			} else {
+				config.mapOptions = parsed;
+				config.hasMap = !parsed.isEmpty();
+			}
+		}
+
+		// Same JSON-sidecar pattern for the new viz types added in the data-canvas:
+		// sankey, gauge, trend, progress, detail. Each uses {reportCode}-{viz}-config.json
+		// and supports both single-block and named-blocks shapes (see map block above).
+		loadJsonSidecar(itemDir, reportCode, "sankey",   "sankeyOptions",   "namedSankeyOptions",   "sankeyConfigJson",   "hasSankey",   config);
+		loadJsonSidecar(itemDir, reportCode, "gauge",    "gaugeOptions",    "namedGaugeOptions",    "gaugeConfigJson",    "hasGauge",    config);
+		loadJsonSidecar(itemDir, reportCode, "trend",    "trendOptions",    "namedTrendOptions",    "trendConfigJson",    "hasTrend",    config);
+		loadJsonSidecar(itemDir, reportCode, "progress", "progressOptions", "namedProgressOptions", "progressConfigJson", "hasProgress", config);
+		loadJsonSidecar(itemDir, reportCode, "detail",   "detailOptions",   "namedDetailOptions",   "detailConfigJson",   "hasDetail",   config);
+		loadJsonSidecar(itemDir, reportCode, "value",   "valueOptions",    "namedValueOptions",    "valueConfigJson",    "hasValue",    config);
+
 		return config;
+	}
+
+	/**
+	 * Generic loader for the JSON-sidecar widget configs (sankey / gauge / trend /
+	 * progress / detail). Auto-detects single-block vs named-blocks shape and writes
+	 * to the right DTO fields via reflection. Mirrors the inlined map block above.
+	 */
+	@SuppressWarnings("unchecked")
+	private void loadJsonSidecar(Path itemDir, String reportCode, String vizName,
+			String optionsFieldName, String namedFieldName,
+			String rawJsonFieldName, String hasFieldName,
+			ReportFullConfigDto config) throws Exception {
+		Path p = itemDir.resolve(reportCode + "-" + vizName + "-config.json");
+		if (!Files.exists(p)) return;
+		String json = Files.readString(p);
+		ReportFullConfigDto.class.getField(rawJsonFieldName).set(config, json);
+		ObjectMapper m = new ObjectMapper();
+		Map<String, Object> parsed = m.readValue(json, new TypeReference<Map<String, Object>>() {});
+		boolean allValuesAreMaps = !parsed.isEmpty()
+			&& parsed.values().stream().allMatch(v -> v instanceof Map);
+		if (allValuesAreMaps) {
+			Map<String, Map<String, Object>> named = new HashMap<>();
+			for (Map.Entry<String, Object> e : parsed.entrySet()) {
+				named.put(e.getKey(), (Map<String, Object>) e.getValue());
+			}
+			ReportFullConfigDto.class.getField(namedFieldName).set(config, named);
+			ReportFullConfigDto.class.getField(hasFieldName).setBoolean(config, !named.isEmpty());
+		} else {
+			ReportFullConfigDto.class.getField(optionsFieldName).set(config, parsed);
+			ReportFullConfigDto.class.getField(hasFieldName).setBoolean(config, !parsed.isEmpty());
+		}
 	}
 
 	/**
@@ -389,76 +451,48 @@ public class ReportingService {
 	 * by examining the datasource connection file.
 	 * Uses JAXB unmarshalling for proper XML parsing.
 	 */
-	private String detectPivotEngineMode(Path reportDir) {
-		try {
-			Path reportingXml = reportDir.resolve("reporting.xml");
-			if (!Files.exists(reportingXml)) {
-				return "browser";  // no reporting.xml = fallback to browser mode
-			}
-
-			// Use JAXB to properly parse the XML
-			jakarta.xml.bind.JAXBContext jaxbContext = jakarta.xml.bind.JAXBContext.newInstance(
-				com.sourcekraft.documentburster.common.settings.model.ReportingSettings.class
-			);
-			jakarta.xml.bind.Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-
-			com.sourcekraft.documentburster.common.settings.model.ReportingSettings reportingSettings;
-			try (java.io.FileInputStream fis = new java.io.FileInputStream(reportingXml.toFile())) {
-				reportingSettings = (com.sourcekraft.documentburster.common.settings.model.ReportingSettings) unmarshaller.unmarshal(fis);
-			}
-
-			if (reportingSettings == null || reportingSettings.report == null || reportingSettings.report.datasource == null) {
-				return "browser";
-			}
-
-			com.sourcekraft.documentburster.common.settings.model.ReportSettings.DataSource ds = reportingSettings.report.datasource;
-			String dsType = ds.type;
-			log.debug("detectPivotEngineMode - datasource type: " + dsType);
-
-			String connectionCode = null;
-
-			// Extract connection code from the appropriate section
-			if ("ds.sqlquery".equals(dsType)) {
-				log.debug("ds.sqlquery path - sqloptions is null? " + (ds.sqloptions == null));
-				if (ds.sqloptions != null) {
-					log.debug("sqloptions.conncode value: '" + ds.sqloptions.conncode + "'");
-					log.debug("sqloptions.query value length: " + (ds.sqloptions.query != null ? ds.sqloptions.query.length() : "null"));
-					connectionCode = ds.sqloptions.conncode;
-				}
-			} else if ("ds.scriptfile".equals(dsType) || "ds.dashboard".equals(dsType)) {
-				log.debug("ds.scriptfile/ds.dashboard path - scriptoptions is null? " + (ds.scriptoptions == null));
-				if (ds.scriptoptions != null) {
-					log.debug("scriptoptions.conncode value: '" + ds.scriptoptions.conncode + "'");
-					connectionCode = ds.scriptoptions.conncode;
-				}
-			}
-
-			log.debug("detectPivotEngineMode - extracted connectionCode: " + connectionCode);
-
-			if (connectionCode == null || connectionCode.isEmpty()) {
-				return "browser";  // no connection = browser mode
-			}
-
-			// Simple detection: check if connection code contains engine name
-			String codeLower = connectionCode.toLowerCase();
-			if (codeLower.contains("duckdb")) {
-				log.debug("DuckDB detected in connectionCode: " + connectionCode);
-				return "duckdb";
-			}
-			if (codeLower.contains("clickhouse")) {
-				log.debug("ClickHouse detected in connectionCode: " + connectionCode);
-				return "clickhouse";
-			}
-
-			// Default to browser if no OLAP database detected
-			log.debug("No OLAP engine detected, defaulting to browser mode");
-			return "browser";
-
-		} catch (Exception e) {
-			log.debug("Error detecting engine mode: " + e.getMessage());
-			e.printStackTrace();
-			return "browser";  // fallback to browser on any error
+	private String detectPivotEngineMode(Path reportDir) throws Exception {
+		Path reportingXml = reportDir.resolve("reporting.xml");
+		if (!Files.exists(reportingXml)) {
+			return "browser";  // no reporting.xml = fallback to browser mode
 		}
+
+		jakarta.xml.bind.JAXBContext jaxbContext = jakarta.xml.bind.JAXBContext.newInstance(
+			com.sourcekraft.documentburster.common.settings.model.ReportingSettings.class
+		);
+		jakarta.xml.bind.Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+
+		com.sourcekraft.documentburster.common.settings.model.ReportingSettings reportingSettings;
+		try (java.io.FileInputStream fis = new java.io.FileInputStream(reportingXml.toFile())) {
+			reportingSettings = (com.sourcekraft.documentburster.common.settings.model.ReportingSettings) unmarshaller.unmarshal(fis);
+		}
+
+		if (reportingSettings == null || reportingSettings.report == null || reportingSettings.report.datasource == null) {
+			return "browser";
+		}
+
+		com.sourcekraft.documentburster.common.settings.model.ReportSettings.DataSource ds = reportingSettings.report.datasource;
+		String dsType = ds.type;
+		log.debug("detectPivotEngineMode - datasource type: " + dsType);
+
+		String connectionCode = null;
+
+		if ("ds.sqlquery".equals(dsType)) {
+			if (ds.sqloptions != null) connectionCode = ds.sqloptions.conncode;
+		} else if ("ds.scriptfile".equals(dsType) || "ds.dashboard".equals(dsType)) {
+			if (ds.scriptoptions != null) connectionCode = ds.scriptoptions.conncode;
+		}
+
+		log.debug("detectPivotEngineMode - extracted connectionCode: " + connectionCode);
+
+		if (connectionCode == null || connectionCode.isEmpty()) {
+			return "browser";  // no connection = browser mode
+		}
+
+		String codeLower = connectionCode.toLowerCase();
+		if (codeLower.contains("duckdb")) return "duckdb";
+		if (codeLower.contains("clickhouse")) return "clickhouse";
+		return "browser";
 	}
 	
 	/**
@@ -493,13 +527,9 @@ public class ReportingService {
 			Path frendSamplesDir = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples", SamplesFrendOnlyService.FREND_SAMPLES_SUBFOLDER, reportCode);
 			log.debug("Checking frendSamplesDir (data fetch): " + frendSamplesDir + " exists=" + Files.exists(frendSamplesDir));
 			if (Files.exists(frendSamplesDir)) {
-				try {
-					samplesFrendOnlyService.getOrProvisionFrendSample(reportCode);
-					cfgFilePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples", SamplesFrendOnlyService.FREND_SAMPLES_SUBFOLDER, reportCode, "settings.xml").toString();
-					itemDir = frendSamplesDir;
-				} catch (Exception e) {
-					throw new RuntimeException("Report not found: " + reportCode, e);
-				}
+				samplesFrendOnlyService.getOrProvisionFrendSample(reportCode);
+				cfgFilePath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, "config", "samples", SamplesFrendOnlyService.FREND_SAMPLES_SUBFOLDER, reportCode, "settings.xml").toString();
+				itemDir = frendSamplesDir;
 			} else {
 				throw new RuntimeException("Report not found: " + reportCode);
 			}
@@ -568,10 +598,8 @@ public class ReportingService {
 					log.debug("Output type '{}' is not HTML-based, skipping template rendering", outputType);
 				}
 			} catch (Exception e) {
-				log.debug("fetchReportData - EXCEPTION: " + e.getMessage());
-				e.printStackTrace();
-				log.error("Failed to render HTML for entity '{}': {}", entityCode, e.getMessage(), e);
-				// Don't fail the entire request, just log the error
+				log.error("Failed to render HTML for entity '{}' — data is returned without HTML", entityCode, e);
+				// Don't fail the entire request — data is still returned, HTML rendering is optional
 			}
 		}
 		
@@ -591,7 +619,7 @@ public class ReportingService {
 	 * @return Modified result with sliced data, totalRows, and lastPage set
 	 */
 	public ReportDataResult applyServerSideOperations(ReportDataResult result,
-			Integer page, Integer size, String sortJson, String filterJson) {
+			Integer page, Integer size, String sortJson, String filterJson) throws Exception {
 		if (result.reportData == null) return result;
 
 		List<LinkedHashMap<String, Object>> rows = result.reportData;
@@ -599,66 +627,58 @@ public class ReportingService {
 
 		// 1. Apply filters
 		if (filterJson != null && !filterJson.isBlank()) {
-			try {
-				List<Map<String, String>> filters = mapper.readValue(filterJson,
-						new TypeReference<List<Map<String, String>>>() {});
-				for (Map<String, String> f : filters) {
-					String field = f.get("field");
-					String type = f.get("type");
-					String value = f.get("value");
-					if (field == null || type == null) continue;
-					rows = new ArrayList<>(rows.stream().filter(row -> {
-						Object cellVal = row.get(field);
-						if (cellVal == null) return "!=".equals(type);
-						String cellStr = String.valueOf(cellVal);
-						switch (type) {
-							case "=": return cellStr.equals(value);
-							case "!=": return !cellStr.equals(value);
-							case "like": return cellStr.toLowerCase().contains(
-									value != null ? value.toLowerCase() : "");
-							case "starts": return cellStr.toLowerCase().startsWith(
-									value != null ? value.toLowerCase() : "");
-							case "ends": return cellStr.toLowerCase().endsWith(
-									value != null ? value.toLowerCase() : "");
-							case "<": return compareValues(cellVal, value) < 0;
-							case ">": return compareValues(cellVal, value) > 0;
-							case "<=": return compareValues(cellVal, value) <= 0;
-							case ">=": return compareValues(cellVal, value) >= 0;
-							default: return true;
-						}
-					}).toList());
-				}
-			} catch (Exception e) {
-				log.warn("Failed to parse filter JSON: {}", e.getMessage());
+			List<Map<String, String>> filters = mapper.readValue(filterJson,
+					new TypeReference<List<Map<String, String>>>() {});
+			for (Map<String, String> f : filters) {
+				String field = f.get("field");
+				String type = f.get("type");
+				String value = f.get("value");
+				if (field == null || type == null) continue;
+				rows = new ArrayList<>(rows.stream().filter(row -> {
+					Object cellVal = row.get(field);
+					if (cellVal == null) return "!=".equals(type);
+					String cellStr = String.valueOf(cellVal);
+					switch (type) {
+						case "=": return cellStr.equals(value);
+						case "!=": return !cellStr.equals(value);
+						case "like": return cellStr.toLowerCase().contains(
+								value != null ? value.toLowerCase() : "");
+						case "starts": return cellStr.toLowerCase().startsWith(
+								value != null ? value.toLowerCase() : "");
+						case "ends": return cellStr.toLowerCase().endsWith(
+								value != null ? value.toLowerCase() : "");
+						case "<": return compareValues(cellVal, value) < 0;
+						case ">": return compareValues(cellVal, value) > 0;
+						case "<=": return compareValues(cellVal, value) <= 0;
+						case ">=": return compareValues(cellVal, value) >= 0;
+						default: return true;
+					}
+				}).toList());
 			}
 		}
 
 		// 2. Apply sorting
 		if (sortJson != null && !sortJson.isBlank()) {
-			try {
-				List<Map<String, String>> sorters = mapper.readValue(sortJson,
-						new TypeReference<List<Map<String, String>>>() {});
-				if (!sorters.isEmpty()) {
-					Comparator<LinkedHashMap<String, Object>> comparator = null;
-					for (Map<String, String> s : sorters) {
-						String field = s.get("field");
-						String dir = s.getOrDefault("dir", "asc");
-						if (field == null) continue;
-						Comparator<LinkedHashMap<String, Object>> c = (a, b) -> {
-							Object va = a.get(field);
-							Object vb = b.get(field);
-							return compareValues(va, vb);
-						};
-						if ("desc".equalsIgnoreCase(dir)) c = c.reversed();
-						comparator = (comparator == null) ? c : comparator.thenComparing(c);
-					}
-					if (comparator != null) {
-						rows = new ArrayList<>(rows);
-						Collections.sort(rows, comparator);
-					}
+			List<Map<String, String>> sorters = mapper.readValue(sortJson,
+					new TypeReference<List<Map<String, String>>>() {});
+			if (!sorters.isEmpty()) {
+				Comparator<LinkedHashMap<String, Object>> comparator = null;
+				for (Map<String, String> s : sorters) {
+					String field = s.get("field");
+					String dir = s.getOrDefault("dir", "asc");
+					if (field == null) continue;
+					Comparator<LinkedHashMap<String, Object>> c = (a, b) -> {
+						Object va = a.get(field);
+						Object vb = b.get(field);
+						return compareValues(va, vb);
+					};
+					if ("desc".equalsIgnoreCase(dir)) c = c.reversed();
+					comparator = (comparator == null) ? c : comparator.thenComparing(c);
 				}
-			} catch (Exception e) {
-				log.warn("Failed to parse sort JSON: {}", e.getMessage());
+				if (comparator != null) {
+					rows = new ArrayList<>(rows);
+					Collections.sort(rows, comparator);
+				}
 			}
 		}
 
@@ -693,31 +713,24 @@ public class ReportingService {
 		}
 	}
 
-	public void resolveParameterSqlOptions(List<ReportParameter> parameters, String connectionCode) {
+	public void resolveParameterSqlOptions(List<ReportParameter> parameters, String connectionCode) throws Exception {
 		for (ReportParameter param : parameters) {
 			Object options = param.uiHints.get("options");
 			if (options instanceof String) {
 				String sql = ((String) options).trim();
 				if (sql.toUpperCase().startsWith("SELECT")) {
-					try {
-						String settingsPath = Paths.get(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH,
-								"config", "burst", "settings.xml").toString();
-						Settings settings = new Settings(settingsPath);
-						DatabaseConnectionManager dbManager = new DatabaseConnectionManager(settings);
-						SqlExecutor sqlExec = new SqlExecutor(dbManager);
-						List<Map<String, Object>> rows = sqlExec.queryOn(connectionCode, sql);
-						dbManager.close();
+					DatabaseConnectionManager dbManager = ConnectionFactory.newConnectionManager();
+					SqlExecutor sqlExec = new SqlExecutor(dbManager);
+					List<Map<String, Object>> rows = sqlExec.queryOn(connectionCode, sql);
+					dbManager.close();
 
-						List<String> optionValues = new ArrayList<>();
-						for (Map<String, Object> row : rows) {
-							Object val = row.values().iterator().next();
-							if (val != null) optionValues.add(String.valueOf(val));
-						}
-						param.uiHints.put("options", optionValues);
-						log.debug("Resolved SQL options for param '" + param.id + "': " + optionValues.size() + " values");
-					} catch (Exception e) {
-						log.warn("Failed to resolve SQL options for param '{}': {}", param.id, e.getMessage());
+					List<String> optionValues = new ArrayList<>();
+					for (Map<String, Object> row : rows) {
+						Object val = row.values().iterator().next();
+						if (val != null) optionValues.add(String.valueOf(val));
 					}
+					param.uiHints.put("options", optionValues);
+					log.debug("Resolved SQL options for param '" + param.id + "': " + optionValues.size() + " values");
 				}
 			}
 		}
@@ -732,15 +745,11 @@ public class ReportingService {
 		return "";
 	}
 	
-	private String extractReportingDsInputType(Path itemDir) {
-		try {
-			Path reportingPath = itemDir.resolve("reporting.xml");
-			if (Files.exists(reportingPath)) {
-				String content = Files.readString(reportingPath);
-				return extractXmlValue(content, "type");
-			}
-		} catch (Exception e) {
-			// Ignore
+	private String extractReportingDsInputType(Path itemDir) throws Exception {
+		Path reportingPath = itemDir.resolve("reporting.xml");
+		if (Files.exists(reportingPath)) {
+			String content = Files.readString(reportingPath);
+			return extractXmlValue(content, "type");
 		}
 		return "";
 	}

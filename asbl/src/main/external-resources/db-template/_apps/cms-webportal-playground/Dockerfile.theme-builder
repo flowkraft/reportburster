@@ -3,4 +3,4 @@ FROM node:20-alpine
 WORKDIR /theme-src
 
 # Copy theme source into /theme-src
-COPY ./wp-themes/reportburster-theme /theme-src
+COPY ./wp-themes/datapallas-theme /theme-src

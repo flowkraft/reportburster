@@ -21,7 +21,7 @@ Test Setup       Clean Output Folders and Log Files
 # openjdk8
 
 *** Test Cases ***
-ReportBurster.exe Latest Java
+DataPallas.exe Latest Java
     [Documentation]  Quickstart Payslips.pdf Should Work Fine (Latest Java)
   
     Ensure Chocolatey Is Installed

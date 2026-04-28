@@ -38,7 +38,7 @@ const categories: Category[] = [
 ]
 
 const usageCode = `<rb-chart
-  report-code="your-report-code"
+  report-id="your-report-id"
   component-id="yourComponentId"
   api-base-url="\${apiBaseUrl}"
   api-key="\${apiKey}"
@@ -63,7 +63,7 @@ export default function ChartsPage() {
   // Listen to first rb-chart for shared configDsl
   useEffect(() => {
     if (!isReady) return
-    const el = document.querySelector('rb-chart[report-code="charts-examples"]') as any
+    const el = document.querySelector('rb-chart[report-id="charts-examples"]') as any
     if (!el) return
     const handler = () => { if (el.configDsl) setConfigDsl(el.configDsl) }
     el.addEventListener("configLoaded", handler)
@@ -124,7 +124,7 @@ export default function ChartsPage() {
                         {/* @ts-expect-error - Web component custom element */}
                         <rb-chart
                           id={`rb-${example.id}`}
-                          report-code="charts-examples"
+                          report-id="charts-examples"
                           component-id={example.id}
                           api-base-url={rbConfig.apiBaseUrl}
                           api-key={rbConfig.apiKey}

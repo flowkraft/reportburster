@@ -2,7 +2,7 @@
 
 <script context="module" lang="ts">
   // Module-level: shared across ALL <rb-value> instances on the page.
-  // Deduplicates data requests when N components share the same reportCode + componentId + params.
+  // Deduplicates data requests when N components share the same reportId + componentId + params.
   const _dataCache = new Map<string, Promise<any>>();
 
   function fetchDataCached(url: string, headers: Record<string, string>): Promise<any> {
@@ -22,16 +22,42 @@
 </script>
 
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
 
-  // Props — same pattern as all other rb-* components
-  export let reportCode: string = '';
+  // ============================================================================
+  // Two usage modes:
+  //
+  // MODE 1 — "Data Push" (parent fetches data, passes via props)
+  //   Props: [data], [field], [format]
+  //   Parent (e.g. AI Hub Data Canvas) calls the API, gets reportData, then renders:
+  //     <rb-value [data]="result.reportData" field="total" format="currency">
+  //   Used when the parent already has the data (live ad-hoc queries, dashboard
+  //   value cards backed by a Data Canvas widget) and there is no reportId yet.
+  //
+  // MODE 2 — "Self-Fetch" (component fetches its own data)
+  //   Props: [reportId], [apiBaseUrl], [apiKey], [componentId], [field], [format], [reportParams]
+  //   Component calls GET /reports/{code}/data and reads rows[0][field].
+  //   Used in: dashboards / saved report viewers where the value is bound to a
+  //   stored report id.
+  //
+  // Both modes converge at displayValue = formatValue(rawValue, format).
+  // ============================================================================
+
+  // ============================================================================
+  // Mode 2 Props — when reportId is provided, component self-fetches
+  // ============================================================================
+  export let reportId: string = '';
   export let apiBaseUrl: string = '';
   export let apiKey: string = '';
   export let componentId: string = '';
   export let field: string = '';
   export let format: string = '';         // 'currency', 'number', 'percent', 'date', or ''
   export let reportParams: Record<string, string> = {};
+
+  // ============================================================================
+  // Mode 1 Prop — data push from parent (e.g., AI Hub Data Canvas)
+  // ============================================================================
+  export let data: Record<string, any>[] = [];
 
   // Internal state
   let container: HTMLSpanElement;
@@ -70,7 +96,7 @@
   }
 
   async function fetchAndDisplay() {
-    if (!reportCode || !apiBaseUrl || !field) return;
+    if (!reportId || !apiBaseUrl) return;
 
     loading = true;
     error = null;
@@ -82,14 +108,15 @@
       if (componentId) dataQueryParams.set('componentId', componentId);
       const qs = dataQueryParams.toString();
       const dataUrl = qs
-        ? `${apiBaseUrl}/reports/${reportCode}/data?${qs}`
-        : `${apiBaseUrl}/reports/${reportCode}/data`;
+        ? `${apiBaseUrl}/reports/${reportId}/data?${qs}`
+        : `${apiBaseUrl}/reports/${reportId}/data`;
 
       const dataResult = await fetchDataCached(dataUrl, headers);
       const rows = Array.isArray(dataResult) ? dataResult : (dataResult?.data || []);
 
-      if (rows.length > 0 && field in rows[0]) {
-        displayValue = formatValue(rows[0][field], format);
+      const resolvedField = field || (rows.length > 0 ? Object.keys(rows[0])[0] : '');
+      if (resolvedField && rows.length > 0 && resolvedField in rows[0]) {
+        displayValue = formatValue(rows[0][resolvedField], format);
       } else {
         displayValue = '';
       }
@@ -101,13 +128,24 @@
     }
   }
 
+  /** Extract the value from a data array (Mode 1 — Data Push) */
+  function extractValueFromData(rows: Record<string, any>[]) {
+    const resolvedField = field || (rows.length > 0 ? Object.keys(rows[0])[0] : '');
+    if (!resolvedField) { displayValue = ''; return; }
+    if (rows.length > 0 && resolvedField in rows[0]) {
+      displayValue = formatValue(rows[0][resolvedField], format);
+    } else {
+      displayValue = '';
+    }
+  }
+
   onMount(async () => {
     await tick();
 
     // Read attributes from host element (light DOM)
     const hostEl = container?.closest('rb-value');
     if (hostEl) {
-      if (!reportCode) reportCode = hostEl.getAttribute('report-code') || '';
+      if (!reportId) reportId = hostEl.getAttribute('report-id') || '';
       if (!apiBaseUrl) apiBaseUrl = hostEl.getAttribute('api-base-url') || '';
       if (!apiKey) apiKey = hostEl.getAttribute('api-key') || '';
       if (!componentId) componentId = hostEl.getAttribute('component-id') || '';
@@ -119,40 +157,62 @@
       }
     }
 
-    await fetchAndDisplay();
-
-    // Listen for parameter submit events (from rb-parameters via rb-report)
-    // Walk up to find the dashboard/report root and listen for submit
-    const reportRoot = container?.closest('rb-report') || container?.closest('rb-dashboard');
-    if (reportRoot) {
-      reportRoot.addEventListener('submit', ((e: CustomEvent) => {
-        // Update reportParams from the submit event and re-fetch
-        if (e.detail) {
-          reportParams = { ...reportParams, ...e.detail };
-        }
-        invalidateDataCache();
-        fetchAndDisplay();
-      }) as EventListener);
+    // ====================================================================
+    // MODE 1: Data Push — if data prop is provided, skip all fetching
+    // ====================================================================
+    if (data && data.length > 0) {
+      extractValueFromData(data);
+      loading = false;
+      return;
     }
 
-    // Also listen for rb-value-reload custom event (for standalone usage)
-    document.addEventListener('rb-value-reload', ((e: CustomEvent) => {
-      if (!e.detail?.reportCode || e.detail.reportCode === reportCode) {
-        if (e.detail?.params) {
-          reportParams = { ...reportParams, ...e.detail.params };
-        }
-        invalidateDataCache();
-        fetchAndDisplay();
-      }
-    }) as EventListener);
+    // ====================================================================
+    // MODE 2: Self-Fetch — if reportId + apiBaseUrl + field provided
+    // ====================================================================
+    await fetchAndDisplay();
+
+    // Listen for parameter submit events (from rb-parameters via rb-report).
+    // Walk up to find the dashboard/report root and listen for submit.
+    _reportRoot = container?.closest('rb-report') || container?.closest('rb-dashboard') || null;
+    if (_reportRoot) {
+      _reportRoot.addEventListener('submit', _onReportSubmit as EventListener);
+    }
+
+    // Also listen for rb-value-reload custom event (for standalone usage).
+    document.addEventListener('rb-value-reload', _onValueReload as EventListener);
   });
+
+  let _reportRoot: Element | null = null;
+  const _onReportSubmit = (e: CustomEvent) => {
+    if (e.detail) reportParams = { ...reportParams, ...e.detail };
+    invalidateDataCache();
+    fetchAndDisplay();
+  };
+  const _onValueReload = (e: CustomEvent) => {
+    if (!e.detail?.reportId || e.detail.reportId === reportId) {
+      if (e.detail?.params) reportParams = { ...reportParams, ...e.detail.params };
+      invalidateDataCache();
+      fetchAndDisplay();
+    }
+  };
+
+  onDestroy(() => {
+    if (_reportRoot) _reportRoot.removeEventListener('submit', _onReportSubmit as EventListener);
+    document.removeEventListener('rb-value-reload', _onValueReload as EventListener);
+  });
+
+  // Reactive: if data prop changes after mount (Mode 1), re-extract the value
+  $: if (data && data.length > 0 && field) {
+    extractValueFromData(data);
+    loading = false;
+  }
 </script>
 
-<span bind:this={container} class="rb-value-root">
+<span bind:this={container} class="rb-value-root" id={componentId ? `widgetValue-${componentId}` : undefined}>
   {#if loading}
-    <span class="rb-value-loading">...</span>
+    <span class="rb-value-loading" id={componentId ? `widgetLoading-${componentId}` : undefined}>...</span>
   {:else if error}
-    <span class="rb-value-error" title={error}>--</span>
+    <span class="rb-value-error" id={componentId ? `widgetError-${componentId}` : undefined} title={error}>--</span>
   {:else}
     {displayValue}
   {/if}

@@ -35,7 +35,7 @@ export function Navbar() {
 
   const toggleMode = async () => {
     const newMode = mode === "light" ? "dark" : "light"
-    const currentTheme = localStorage.getItem("rb-color-theme") || "reportburster"
+    const currentTheme = localStorage.getItem("rb-color-theme") || "datapallas"
 
     setMode(newMode)
     document.documentElement.setAttribute("data-theme", newMode)
@@ -82,7 +82,7 @@ export function Navbar() {
                 <path d="m22 2-7 20-4-9-9-4Z"/>
                 <path d="M22 2 11 13"/>
               </svg>
-              ReportBurster
+              DataPallas
             </Link>
           </div>
 

@@ -17,7 +17,7 @@ export type Config = typeof config.$inferSelect;
 export type NewConfig = typeof config.$inferInsert;
 
 /**
- * Canvases table - stores data-canvas work-in-progress dashboards
+ * Canvases table - stores explore-data work-in-progress dashboards
  * Each canvas holds its full state (widgets, layout, data sources, configs) as JSON
  */
 export const canvases = sqliteTable("canvases", {
@@ -45,8 +45,8 @@ export const DEFAULT_CONFIG = {
   },
   // Theme settings - persisted in SQLite instead of localStorage
   'theme.color': {
-    value: 'reportburster',
-    description: 'Color theme name (reportburster, ocean, forest, sunset, etc.)',
+    value: 'datapallas',
+    description: 'Color theme name (datapallas, ocean, forest, sunset, etc.)',
   },
   'theme.mode': {
     value: 'light',

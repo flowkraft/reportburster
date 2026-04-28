@@ -8,7 +8,7 @@
  *
  * @link https://developer.wordpress.org/themes/basics/template-hierarchy/
  *
- * @package ReportBurster_Theme
+ * @package DataPallas_Theme
  */
 
 get_header();

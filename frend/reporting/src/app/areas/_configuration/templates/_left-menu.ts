@@ -164,7 +164,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
         settingsService.currentConfigurationTemplatePath,
         settingsService.currentConfigurationTemplateName
       ]" skipLocationChange="true">
-      <i class="fa fa-list-ul"></i>
+      <i class="fa fa-sliders"></i>
       <span>{{ 'AREAS.CONFIGURATION.LEFT-MENU.ADVANCED' | translate }}</span>
       <span class="pull-right-container" *ngIf="xmlSettings?.documentburster?.settings?.capabilities?.reportdistribution">
         <i class="fa fa-angle-left pull-right "></i>
@@ -184,6 +184,25 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
         </a>
       </li>
     </ul>
+  </li>
+
+  <li style="padding: 0; margin: 0; list-style: none;">
+    <hr style="border-color: #4b545c; margin: 8px 10px;" />
+  </li>
+  <li style="color: #8aa4af; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; padding: 10px 25px 5px 25px; font-weight: normal;">
+    {{ 'AREAS.CONFIGURATION.LEFT-MENU.ALL-REPORTS' | translate }}
+  </li>
+
+  <li routerLinkActive="active">
+    <a id="leftMenuReports" href="#" [routerLink]="[
+        '/configuration',
+        'reportsListMenuSelected',
+        settingsService.currentConfigurationTemplatePath,
+        settingsService.currentConfigurationTemplateName
+      ]" skipLocationChange="true" style="font-weight: 600;">
+      <i class="fa fa-list-ul" style="color: #00c0ef;"></i>
+      <span style="color: #dce6ec;">{{ 'AREAS.CONFIGURATION.LEFT-MENU.REPORTS' | translate }}</span>
+    </a>
   </li>
 </ul>
 `;

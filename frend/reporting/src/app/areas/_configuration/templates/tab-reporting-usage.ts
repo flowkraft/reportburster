@@ -19,7 +19,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
           </p>
           <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;rb-dashboard
-  report-code="{{ getCurrentReportCode() }}"
+  report-id="{{ getCurrentReportCode() }}"
   api-base-url="{{ getApiBaseUrl() }}"
   api-key="{{ getApiKeyForUsage() }}"&gt;
 &lt;/rb-dashboard&gt;
@@ -58,7 +58,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
             <h5><strong>1{{ getLetterSuffix(idx) }}. Data Table — {{ cid }}</strong></h5>
             <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;rb-tabulator
-  report-code="{{ getCurrentReportCode() }}"
+  report-id="{{ getCurrentReportCode() }}"
   component-id="{{ cid }}"
   api-base-url="{{ getApiBaseUrl() }}"
   api-key="{{ getApiKeyForUsage() }}"&gt;
@@ -76,7 +76,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
           <h5><strong>1. Data Table Component</strong></h5>
           <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;rb-tabulator
-  report-code="{{ getCurrentReportCode() }}"
+  report-id="{{ getCurrentReportCode() }}"
   api-base-url="{{ getApiBaseUrl() }}"
   api-key="{{ getApiKeyForUsage() }}"&gt;
 &lt;/rb-tabulator&gt;
@@ -94,7 +94,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
           <h5><strong>{{ getUsageParamsNumber() }}. Parameters Component</strong></h5>
           <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;rb-parameters
-  report-code="{{ getCurrentReportCode() }}"
+  report-id="{{ getCurrentReportCode() }}"
   api-base-url="{{ getApiBaseUrl() }}"
   api-key="{{ getApiKeyForUsage() }}"&gt;
 &lt;/rb-parameters&gt;
@@ -113,7 +113,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
             <h5><strong>{{ getUsageChartNumber() }}{{ getLetterSuffix(idx) }}. Chart — {{ cid }}</strong></h5>
             <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;rb-chart
-  report-code="{{ getCurrentReportCode() }}"
+  report-id="{{ getCurrentReportCode() }}"
   component-id="{{ cid }}"
   api-base-url="{{ getApiBaseUrl() }}"
   api-key="{{ getApiKeyForUsage() }}"&gt;
@@ -131,7 +131,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
           <h5><strong>{{ getUsageChartNumber() }}. Chart Component (optional - for data visualization)</strong></h5>
           <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;rb-chart
-  report-code="{{ getCurrentReportCode() }}"
+  report-id="{{ getCurrentReportCode() }}"
   api-base-url="{{ getApiBaseUrl() }}"
   api-key="{{ getApiKeyForUsage() }}"&gt;
 &lt;/rb-chart&gt;
@@ -150,7 +150,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
             <h5><strong>{{ getUsagePivotTableNumber() }}{{ getLetterSuffix(idx) }}. Pivot Table — {{ cid }}</strong></h5>
             <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;rb-pivottable
-  report-code="{{ getCurrentReportCode() }}"
+  report-id="{{ getCurrentReportCode() }}"
   component-id="{{ cid }}"
   api-base-url="{{ getApiBaseUrl() }}"
   api-key="{{ getApiKeyForUsage() }}"&gt;
@@ -168,7 +168,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
           <h5><strong>{{ getUsagePivotTableNumber() }}. Pivot Table Component (for data analysis)</strong></h5>
           <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;rb-pivottable
-  report-code="{{ getCurrentReportCode() }}"
+  report-id="{{ getCurrentReportCode() }}"
   api-base-url="{{ getApiBaseUrl() }}"
   api-key="{{ getApiKeyForUsage() }}"&gt;
 &lt;/rb-pivottable&gt;
@@ -188,7 +188,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
         </div>
         <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;rb-report
-  report-code="{{ getCurrentReportCode() }}"{{ getEntityCodeAttribute() }}
+  report-id="{{ getCurrentReportCode() }}"{{ getEntityCodeAttribute() }}
   api-base-url="{{ getApiBaseUrl() }}"
   api-key="{{ getApiKeyForUsage() }}"&gt;
 &lt;/rb-report&gt;
@@ -209,7 +209,7 @@ export const tabReportingUsageTemplate = `<ng-template #tabReportingUsageTemplat
         <p class="text-muted" style="font-size: 12px;">
           <i class="fa fa-info-circle"></i>
           All FlowKraft apps (<code>_apps/flowkraft/*</code>) and <code>_apps/cms-webportal-playground</code> have this pre-configured.
-          Only add this script tag for fully custom applications not pre-configured by ReportBurster.
+          Only add this script tag for fully custom applications not pre-configured by DataPallas.
         </p>
         <div class="well well-sm" style="background-color: #f5f5f5; font-family: monospace; white-space: pre-wrap; word-break: break-all;">
 &lt;script src="{{ getWebComponentsBaseUrl() }}/rb-webcomponents.umd.js"&gt;&lt;/script&gt;

@@ -35,6 +35,7 @@ import { StateStoreService } from '../../providers/state-store.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 import { Router } from '@angular/router';
 import { PollingHelper } from '../../providers/polling.helper';
+import { DockerLifecycleService } from '../../providers/docker-lifecycle.service';
 
 // Interface for dynamic status data from API
 interface StarterPackStatusData {
@@ -148,6 +149,7 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     protected sanitizer: DomSanitizer,
     protected cdRef: ChangeDetectorRef,
     protected modalService: BsModalService,
+    protected dockerLifecycle: DockerLifecycleService,
   ) { }
 
   /**
@@ -286,7 +288,7 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
 
     try {
       // 1. Refresh System Info (Docker status)
-      await this.refreshSystemInfo();
+      await this.dockerLifecycle.refreshSystemInfo();
 
       // 2. Fetch container statuses
       const statuses = await this.systemService.getServicesStatus(skipProbe);
@@ -314,11 +316,17 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
           return false;
         });
 
-        if (service) {
-          // Map backend status to UI state
-          pack.status = PollingHelper.mapBackendStatusToUiState(service.status);
-        } else {
-          pack.status = 'unknown';
+        const dockerStatus = service
+          ? PollingHelper.mapBackendStatusToUiState(service.status)
+          : null;
+        const resolved = this.dockerLifecycle.resolveNextStatus(
+          pack.id,
+          pack.status,
+          dockerStatus,
+        );
+        pack.status = resolved.status as StarterPackUIData['status'];
+        if (resolved.clearInFlight) {
+          this.dockerLifecycle.markCommandEnd(pack.id);
         }
 
         // Keep displayed command in sync with status so the correct
@@ -346,41 +354,6 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Fetch authoritative system info (Docker status) from backend
-  private async refreshSystemInfo(): Promise<void> {
-    try {
-      const backendSystemInfo = await this.systemService.getSystemInfo();
-      if (backendSystemInfo) {
-        const dockerSetup = this.stateStore.configSys.sysInfo.setup.docker;
-        
-        // Only update if we got valid boolean values from the backend
-        // This prevents clearing good status with undefined/null values
-        if (typeof backendSystemInfo.isDockerInstalled === 'boolean') {
-          dockerSetup.isDockerInstalled = backendSystemInfo.isDockerInstalled;
-        }
-        if (typeof backendSystemInfo.isDockerDaemonRunning === 'boolean') {
-          dockerSetup.isDockerDaemonRunning = backendSystemInfo.isDockerDaemonRunning;
-        }
-
-        // Calculate isDockerOk based on current values (using potentially updated values)
-        dockerSetup.isDockerOk = dockerSetup.isDockerInstalled && dockerSetup.isDockerDaemonRunning;
-
-        if (backendSystemInfo.dockerVersion && backendSystemInfo.dockerVersion !== 'DOCKER_NOT_INSTALLED') {
-          dockerSetup.version = backendSystemInfo.dockerVersion;
-        }
-        
-        console.debug('[StarterPacks] Docker status after refresh:', {
-          isDockerInstalled: dockerSetup.isDockerInstalled,
-          isDockerDaemonRunning: dockerSetup.isDockerDaemonRunning,
-          isDockerOk: dockerSetup.isDockerOk,
-          version: dockerSetup.version
-        });
-      }
-    } catch (e) {
-      // On API failure, keep existing Docker status (don't set isDockerOk = false)
-      console.warn('[StarterPacks] Failed to fetch backend system info, keeping existing Docker status', e);
-    }
-  }
   // --- Action Trigger ---
 
   // In starter-packs.component.ts
@@ -400,7 +373,7 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
       confirmAction: async () => {
         // Refresh Docker status BEFORE checking it (to get the latest status, not stale cached value)
         if (action === 'start') {
-          await this.refreshSystemInfo();
+          await this.dockerLifecycle.refreshSystemInfo();
         }
 
         // Check Docker AFTER user confirms they want to start
@@ -409,7 +382,7 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
 
           if (dockerInfo && dockerInfo.isDockerInstalled && !dockerInfo.isDockerDaemonRunning) {
             this.messagesService.showWarning(
-              `Docker is installed but cannot be reached. Please ensure Docker Desktop is running and that ReportBurster was started with "Run as Administrator".`,
+              `Docker is installed but cannot be reached. Please ensure Docker Desktop is running and that DataPallas was started with "Run as Administrator".`,
               'Docker Not Running'
             );
           } else {
@@ -427,35 +400,29 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
   }
 
   private async executePackAction(pack: StarterPackUIData, action: 'start' | 'stop'): Promise<void> {
-    // pending state
     pack.status = action === 'start' ? 'starting' : 'stopping';
     pack.lastOutput = `Executing ${action}...`;
-    // Force Angular to detect the status change
+    this.dockerLifecycle.markCommandStart(pack.id);
     this.cdRef.detectChanges();
 
-    const command = pack.currentCommandValue;
-
     try {
-      const response = await this.apiService.post('/starter-packs/execute', { command });
+      const response = await this.dockerLifecycle.executeCommand(pack.currentCommandValue);
       if (response && response.status && response.status !== 'error') {
-        // Don't immediately set to final state - keep as transitional until healthcheck passes
-        // The polling will set the correct state based on Docker's health status
+        // Keep transitional state until polling picks up the real Docker status.
         pack.status = action === 'start' ? 'starting' : 'stopping';
-        // Command will be updated by refreshAllStatuses based on actual status
         pack.lastOutput = response.output || `${pack.displayName} container ${action}ed, waiting for health check...`;
       } else {
         pack.status = 'error';
         pack.currentCommandValue = pack.startCmd;
         pack.lastOutput = response?.output || `Failed to ${action} ${pack.displayName}`;
+        this.dockerLifecycle.markCommandEnd(pack.id);
       }
     } catch (e: any) {
       pack.status = 'error';
       pack.currentCommandValue = pack.startCmd;
       pack.lastOutput = e?.message || `Failed to ${action} ${pack.displayName}`;
+      this.dockerLifecycle.markCommandEnd(pack.id);
     }
-    // Don't refreshAllStatuses() here — it overwrites the optimistic
-    // 'starting'/'stopping' state with 'stopped' (container not yet created).
-    // Polling every 3s will confirm the real state from Docker.
     this.startTransitionPolling();
   }
 
@@ -576,49 +543,27 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
   // --- Polling Methods (shared logic with apps-manager via PollingHelper) ---
 
   /**
-   * Start polling for status updates while any pack is in a transitional state (starting/stopping).
-   * Polls every 3 seconds until all packs reach a stable state (running/stopped/error/unknown).
-   * Uses shared PollingHelper for consistent behavior with apps-manager.
+   * Start polling for status updates while any pack is in a transitional state.
+   * Delegates to shared PollingHelper.startLifecyclePolling for consistency with apps-manager.
    */
   private startTransitionPolling(): void {
-    // Don't start multiple polling loops - if one is active, it will pick up the new transitional pack
-    if (this.pollingSubscription && !this.pollingSubscription.closed) {
-      console.log('Polling already active, skipping...');
-      return;
-    }
+    if (this.pollingSubscription && !this.pollingSubscription.closed) return;
 
-    console.log('Starting polling subscription (max timeout: ' + PollingHelper.getMaxTimeoutDescription() + ')...');
-
-    this.pollingSubscription = PollingHelper.createPollingSubscription(
-      // onPoll callback - returns true to stop polling
-      async () => {
-        // First refresh to get latest state
-        await this.refreshDataSilent();
-
-        console.log('After refresh, pack states:', this.starterPacks.map(p => ({ id: p.id, status: p.status })));
-
-        // Check if we should stop polling
-        const hasTransitionalPacks = PollingHelper.hasTransitionalItems(this.starterPacks);
-
-        if (!hasTransitionalPacks) {
-          this.stopTransitionPolling();
-          return true; // Signal to stop
-        }
-        return false; // Continue polling
+    this.pollingSubscription = PollingHelper.startLifecyclePolling({
+      refresh: () => this.refreshDataSilent(),
+      getItems: () => this.starterPacks,
+      onMaxIterations: () => {
+        this.dockerLifecycle.clearAllInFlight();
+        this.starterPacks.forEach(pack => {
+          if (pack.status === 'starting' || pack.status === 'stopping') {
+            pack.status = 'stopped';
+            pack.currentCommandValue = pack.startCmd;
+          }
+        });
+        this.cdRef.detectChanges();
       },
-      // onComplete callback
-      (reason) => {
-        this.pollingSubscription = null;
-        if (reason === 'maxIterations') {
-          console.warn('Polling stopped: max iterations reached. Some packs may still be starting.');
-        }
-      },
-      // onError callback
-      (err) => {
-        console.error('Polling error:', err);
-        this.pollingSubscription = null;
-      }
-    );
+      label: 'StarterPacks',
+    });
   }
 
   /**

@@ -1,3 +1,5 @@
-// Home page shows the agents list
-// Both / and /agents point to the same content
-export { default } from './agents/page';
+// Root → Data Canvas (primary experience)
+import { redirect } from "next/navigation";
+export default function Home() {
+  redirect("/explore-data");
+}

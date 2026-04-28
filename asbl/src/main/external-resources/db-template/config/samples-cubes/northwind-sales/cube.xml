@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cube>
+    <name>Northwind Sales Analysis</name>
+    <description>Order, line-item, customer, employee and product analysis. Answers most business questions about the Northwind sales operation: who bought what, when, where shipped, by which sales rep, on time or late, with or without discount.</description>
+    <connectionId>rbt-sample-northwind-sqlite-4f2</connectionId>
+</cube>

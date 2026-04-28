@@ -11,7 +11,7 @@ public class AssemblerTest {
 	public void doAdHoc() throws Exception {
 
 		new ProcessExecutor().command("cmd", "/c",
-				"java -cp target/package/db/ReportBurster/lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile bild-groovy.xml")
+				"java -cp target/package/db/DataPallas/lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile bild-groovy.xml")
 				.redirectOutput(new LogOutputStream() {
 					@Override
 					protected void processLine(String line) {
@@ -22,7 +22,7 @@ public class AssemblerTest {
 	}
 
 	@Test
-	public void assembleReportBursterAndReportBursterServer() throws Exception {
+	public void assembleDataPallasAndDataPallasServer() throws Exception {
 
 		AbstractAssembler e2eAssembler = new NoExeAssembler();
 
@@ -32,27 +32,27 @@ public class AssemblerTest {
 		System.out.println(
 				"------------------------------------- FINISHED Assembler:NoExeAssembler ... -------------------------------------");
 
-		AbstractAssembler rbAssembler = new ReportBursterAssembler();
-		((ReportBursterAssembler) rbAssembler).setE2EVerifyDirPath(e2eAssembler.getVerifyDirPath());
+		AbstractAssembler rbAssembler = new DataPallasAssembler();
+		((DataPallasAssembler) rbAssembler).setE2EVerifyDirPath(e2eAssembler.getVerifyDirPath());
 
 		rbAssembler.assemble();
 		rbAssembler.verify();
 		rbAssembler.install();
 
 		System.out.println(
-				"------------------------------------- FINISHED Assembler:ReportBursterAssembler ... -------------------------------------");
+				"------------------------------------- FINISHED Assembler:DataPallasAssembler ... -------------------------------------");
 
-		AbstractAssembler rbServerAssembler = new ReportBursterServerSpringBootAssembler();
+		AbstractAssembler rbServerAssembler = new DataPallasServerSpringBootAssembler();
 
-		((ReportBursterServerSpringBootAssembler) rbServerAssembler)
-				.setReportBursterVerifyDirPath(rbAssembler.getVerifyDirPath());
+		((DataPallasServerSpringBootAssembler) rbServerAssembler)
+				.setdataPallasVerifyDirPath(rbAssembler.getVerifyDirPath());
 
 		rbServerAssembler.assemble();
 		rbServerAssembler.verify();
 		rbServerAssembler.install();
 
 		System.out.println(
-				"------------------------------------- FINISHED Assembler:ReportBursterServerSpringBootAssembler ... -------------------------------------");
+				"------------------------------------- FINISHED Assembler:DataPallasServerSpringBootAssembler ... -------------------------------------");
 
 		// Build a Docker image from the project root (requires docker daemon available)
 		AbstractAssembler dockerAssembler = new DockerAssembler();
@@ -63,14 +63,14 @@ public class AssemblerTest {
 		System.out.println(
 				"------------------------------------- FINISHED Assembler:DockerAssembler ... -------------------------------------");
 		
-		AbstractAssembler rbSourceAssembler = new ReportBursterSourceAssembler();
+		AbstractAssembler rbSourceAssembler = new DataPallasSourceAssembler();
 		
 		rbSourceAssembler.assemble();
 		rbSourceAssembler.verify();
 		rbSourceAssembler.install();
 
 		System.out.println(
-				"------------------------------------- FINISHED Assembler:ReportBursterSourceAssembler ... -------------------------------------");
+				"------------------------------------- FINISHED Assembler:DataPallasSourceAssembler ... -------------------------------------");
 
 	}
 

@@ -18,7 +18,7 @@ export function AdminHeader() {
 
   const toggleMode = async () => {
     const newMode = mode === "light" ? "dark" : "light"
-    const currentTheme = localStorage.getItem("rb-color-theme") || "reportburster"
+    const currentTheme = localStorage.getItem("rb-color-theme") || "datapallas"
 
     setMode(newMode)
     document.documentElement.setAttribute("data-theme", newMode)

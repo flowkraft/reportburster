@@ -22,9 +22,9 @@ public class DockerAssembler extends AbstractAssembler {
 
     public DockerAssembler() {
         // Package the docker bundle into a zip so it can be distributed and verified
-        super("target/package/docker", "target/package/verified-docker", "target/reportburster-server-docker.zip");
+        super("target/package/docker", "target/package/verified-docker", "target/datapallas-server-docker.zip");
         // default imageTag uses latest until we read version from settings.xml
-        this.imageTag = "flowkraft/reportburster-server:latest";
+        this.imageTag = "flowkraft/datapallas-server:latest";
     }
 
     @Override
@@ -34,7 +34,7 @@ public class DockerAssembler extends AbstractAssembler {
         if (this.version == null || this.version.trim().isEmpty()) {
             this.version = "latest";
         }
-        this.imageTag = "flowkraft/reportburster-server:" + this.version;
+        this.imageTag = "flowkraft/datapallas-server:" + this.version;
 
         System.out.println("------------------------------------- START: DockerAssembler.compile() building Docker image '" + imageTag + "' ... -------------------------------------");
 
@@ -60,7 +60,7 @@ public class DockerAssembler extends AbstractAssembler {
 
         // Build the Docker image without cache using the preprocessed Dockerfile
         new ProcessExecutor().directory(top)
-                .command("docker", "build", "--no-cache", "-t", imageTag, "-t", "flowkraft/reportburster-server:latest", "-f", dockerfileBuild.getName(), ".")
+                .command("docker", "build", "--no-cache", "-t", imageTag, "-t", "flowkraft/datapallas-server:latest", "-f", dockerfileBuild.getName(), ".")
                 .redirectOutput(new LogOutputStream() {
                     @Override
                     protected void processLine(String line) {
@@ -88,17 +88,17 @@ public class DockerAssembler extends AbstractAssembler {
 
         // Replace image line with two lines: pinned version active and commented unpinned 'latest'
         // Preserve indentation by capturing leading whitespace and reusing it in the replacement
-        composeContent = composeContent.replaceAll("(?m)^(\\s*)image:\\s*flowkraft/reportburster-server:\\S+",
-                "$1image: flowkraft/reportburster-server:" + this.version + "\n$1# unpinned: image: flowkraft/reportburster-server:latest");
+        composeContent = composeContent.replaceAll("(?m)^(\\s*)image:\\s*flowkraft/datapallas-server:\\S+",
+                "$1image: flowkraft/datapallas-server:" + this.version + "\n$1# unpinned: image: flowkraft/datapallas-server:latest");
 
-        // Write the compose file at the root of the assembled ReportBurster bundle
+        // Write the compose file at the root of the assembled DataPallas bundle
         File outCompose = new File(packageDirPath + "/" + this.topFolderName, "docker-compose.yml");
         FileUtils.writeStringToFile(outCompose, composeContent, "UTF-8");
 
         // Copy initial directories from the verified NoExe package into the assembled package directory
         // DIRECTORIES = ("_apps", "backup", "config", "db", "input-files", "logs", "output", "poll", "quarantine", "samples", "scripts", "temp", "templates")
         String[] directories = new String[] {"_apps", "backup", "config", "db", "input-files", "logs", "output", "poll", "quarantine", "samples", "scripts", "temp", "templates"};
-        File verifiedRoot = new File(Utils.getTopProjectFolderPath() + "/asbl/target/package/verified-db-noexe/ReportBurster");
+        File verifiedRoot = new File(Utils.getTopProjectFolderPath() + "/asbl/target/package/verified-db-noexe/DataPallas");
 
         for (String dir : directories) {
             File src = new File(verifiedRoot, dir);
@@ -263,7 +263,7 @@ public class DockerAssembler extends AbstractAssembler {
         try {
             // Prefer the assembled settings.xml produced by NoExeAssembler
             File settingsPath = new File(Utils.getTopProjectFolderPath()
-                    + "/asbl/target/package/verified-db-noexe/ReportBurster/config/burst/settings.xml");
+                    + "/asbl/target/package/verified-db-noexe/DataPallas/config/burst/settings.xml");
             if (!settingsPath.exists()) {
                 // fallback to template settings.xml in backend resources
                 settingsPath = new File(Utils.getTopProjectFolderPath()

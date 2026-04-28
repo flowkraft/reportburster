@@ -1,16 +1,16 @@
 # =============================================================================
-# ReportBurster Server Dockerfile
+# DataPallas Server Dockerfile
 # Multi-stage build optimized for caching and clean builds
 # =============================================================================
 # 
 # BUILD MODES:
 # 
 # 1. DEVELOPMENT BUILD (uses cache, fast rebuilds):
-#    docker build -t flowkraft/reportburster-server:dev .
+#    docker build -t flowkraft/datapallas-server:dev .
 #
 # 2. RELEASE BUILD (100% clean, no cache):
 #    docker build --no-cache --build-arg BUILD_DATE=$(date -u +%Y%m%d%H%M%S) \
-#                 -t flowkraft/reportburster-server:X.Y.Z .
+#                 -t flowkraft/datapallas-server:X.Y.Z .
 #
 # =============================================================================
 
@@ -96,7 +96,7 @@ FROM eclipse-temurin:17-jre
 # Metadata
 LABEL maintainer="FlowKraft" \
       version="0.0.0" \
-      description="ReportBurster Server - Business Intelligence, Reporting, and Document Distribution in the Age of AI"
+      description="DataPallas Server - Business Intelligence, Reporting, and Document Distribution in the Age of AI"
 
 # Install runtime dependencies + Docker CE CLI with compose v2 plugin
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -130,12 +130,12 @@ COPY ./asbl/src/main/external-resources/db-server-template .
 COPY ./bkend/reporting/src/main/external-resources/template .
 
 # NoExeAssembler generated files (config, db)
-COPY ./asbl/target/package/verified-db-noexe/ReportBurster/_apps ./_apps
-COPY ./asbl/target/package/verified-db-noexe/ReportBurster/config ./config
-COPY ./asbl/target/package/verified-db-noexe/ReportBurster/db ./db
+COPY ./asbl/target/package/verified-db-noexe/DataPallas/_apps ./_apps
+COPY ./asbl/target/package/verified-db-noexe/DataPallas/config ./config
+COPY ./asbl/target/package/verified-db-noexe/DataPallas/db ./db
 
 # Preserve a copy of defaults in a safe location so runtime can extract them
-RUN mkdir -p /opt/reportburster/defaults && cp -a ./config /opt/reportburster/defaults/ || true
+RUN mkdir -p /opt/datapallas/defaults && cp -a ./config /opt/datapallas/defaults/ || true
 
 # Configure default settings for Docker environment (robust, portable replacements)
 RUN perl -0777 -pi -e 's#<host\b[^>]*>\s*localhost\s*</host>#<host>mailhog</host>#ig' /app/config/burst/settings.xml && \
@@ -150,10 +150,10 @@ COPY --from=backend-build /app/bkend/reporting/target/dependencies /app/lib/burs
 COPY --from=backend-build /app/bkend/reporting/target/rb-reporting.jar /app/lib/burst/rb-reporting.jar
 COPY --from=backend-build /app/bkend/server/target/rb-server.jar /app/lib/server/rb-server.jar
 
-# Generate reportburster.sh script (matches .bat functionality with dynamic args)
-RUN cat > ./reportburster.sh << 'EOF'
+# Generate datapallas.sh script (matches .bat functionality with dynamic args)
+RUN cat > ./datapallas.sh << 'EOF'
 #!/bin/sh
-# ReportBurster CLI - matches Windows .bat behavior
+# DataPallas CLI - matches Windows .bat behavior
 # Passes all arguments dynamically to the Java process
 
 # Build argument string for Ant
@@ -170,9 +170,9 @@ eval java -DDOCUMENTBURSTER_HOME="$(pwd)" \
     org.apache.tools.ant.launch.Launcher \
     -buildfile config/_internal/documentburster.xml \
     $ARGS \
-    -emacs >> logs/reportburster.sh.log 2>&1
+    -emacs >> logs/datapallas.sh.log 2>&1
 EOF
-RUN sed -i 's/\r$//' ./reportburster.sh && chmod +x ./reportburster.sh
+RUN sed -i 's/\r$//' ./datapallas.sh && chmod +x ./datapallas.sh
 
 # Generate test email server scripts
 RUN echo '#!/bin/sh' > ./tools/test-email-server/startTestEmailServer.sh && \
@@ -191,7 +191,7 @@ RUN cat > /usr/local/bin/docker-entrypoint.sh << 'ENTRYPOINT_EOF'
 set -e
 
 # =============================================================================
-# ReportBurster Docker Entrypoint
+# DataPallas Docker Entrypoint
 # Handles first-run extraction, API key generation and server startup
 # =============================================================================
 
@@ -241,13 +241,13 @@ EOF
 # -----------------------------------------------------------------------------
 # Main: Route based on first argument
 # -----------------------------------------------------------------------------
-if [ "$1" = "reportburster.sh" ]; then
-    # CLI mode: run reportburster.sh with remaining arguments
+if [ "$1" = "datapallas.sh" ]; then
+    # CLI mode: run datapallas.sh with remaining arguments
     shift
-    exec ./reportburster.sh "$@"
+    exec ./datapallas.sh "$@"
 else
     # Server mode: start the Spring Boot server
-    echo "Starting ReportBurster Server..."
+    echo "Starting DataPallas Server..."
 
     # No automatic initial-folder extraction is performed here; ensure host mounts
     # are populated externally when needed

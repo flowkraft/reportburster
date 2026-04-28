@@ -32,6 +32,9 @@ export class ButtonClearLogsComponent {
       confirmAction: async () => {
         await this.logsService.clearLogs();
         this.executionStatsService.logStats.foundDirtyLogFiles = false;
+        this.executionStatsService.logStats.errorsLogFileSize = -1;
+        this.executionStatsService.logStats.warningsLogFileSize = -1;
+        this.executionStatsService.logStats.infoLogFileSize = -1;
         this.messagesService.showInfo('Logs cleared.');
       },
     });

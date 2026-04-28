@@ -105,18 +105,18 @@ services:
       - POSTGRES_DB=letta
     volumes:
       - letta-data:/var/lib/postgresql/data
-      # ReportBurster installation root - all agent resources accessed from here
-      # Set REPORTBURSTER_INSTALLATION_FOLDER to your ReportBurster installation path
-      # Example: REPORTBURSTER_INSTALLATION_FOLDER=C:\reportburster or /opt/reportburster
-      # 
-      # Agents access everything via /reportburster:
-      # - Skills: /reportburster/_apps/flowkraft/_ai-hub/.skills
-      # - Agent output artifacts: /reportburster/_apps/flowkraft/_ai-hub/agents-output-artifacts
-      # - WordPress portal: /reportburster/_apps/cms-webportal-playground
-      # - Grails playground: /reportburster/_apps/flowkraft/grails-playground
-      # - Next.js playground: /reportburster/_apps/flowkraft/next-playground
-      # - Backend playground: /reportburster/_apps/flowkraft/bkend-boot-groovy-playground
-      - ${REPORTBURSTER_INSTALLATION_FOLDER:-../../..}:/reportburster
+      # DataPallas installation root - all agent resources accessed from here
+      # Set DATAPALLAS_INSTALLATION_FOLDER to your DataPallas installation path
+      # Example: DATAPALLAS_INSTALLATION_FOLDER=C:\datapallas or /opt/datapallas
+      #
+      # Agents access everything via /datapallas:
+      # - Skills: /datapallas/_apps/flowkraft/_ai-hub/.skills
+      # - Agent output artifacts: /datapallas/_apps/flowkraft/_ai-hub/agents-output-artifacts
+      # - WordPress portal: /datapallas/_apps/cms-webportal-playground
+      # - Grails playground: /datapallas/_apps/flowkraft/grails-playground
+      # - Next.js playground: /datapallas/_apps/flowkraft/next-playground
+      # - Backend playground: /datapallas/_apps/flowkraft/bkend-boot-groovy-playground
+      - ${DATAPALLAS_INSTALLATION_FOLDER:-../../..}:/datapallas
     # Ports commented - internal services accessed via ai-hub-network
     # Uncomment only if you need direct external access for debugging
     # ports:
@@ -285,8 +285,8 @@ services:
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
     volumes:
-      # ReportBurster project (full repo)
-      - ${REPORTBURSTER_INSTALLATION_FOLDER:-../../..}:/reportburster
+      # DataPallas project (full repo)
+      - ${DATAPALLAS_INSTALLATION_FOLDER:-../../..}:/datapallas
 
       # Workspace files with color configurations
       - ../__devcontainer/workspaces:/workspaces
@@ -315,9 +315,9 @@ services:
       - OPENAI_API_BASE=http://flowkraft-ai-hub-frend:3000/api/openai/athena/v1
       - OPENAI_MODEL=letta:athena
     volumes:
-      # ReportBurster root — Python code derives all paths from /reportburster
+      # DataPallas root — Python code derives all paths from /datapallas
       # (config/connections, lib, db) via hardcoded defaults in rb_connections.py
-      - ${REPORTBURSTER_INSTALLATION_FOLDER:-../../..}:/reportburster:ro
+      - ${DATAPALLAS_INSTALLATION_FOLDER:-../../..}:/datapallas:ro
     # No port exposed — accessed only by ai-hub-frend via Docker network
     restart: unless-stopped
     networks:

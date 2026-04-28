@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ReportBurster - Dashboards & Self Service Portals",
+  title: "DataPallas - Dashboards & Self Service Portals",
   description: "Bring your reports to the frontend: dashboards, portals, anywhere your users need them",
 };
 

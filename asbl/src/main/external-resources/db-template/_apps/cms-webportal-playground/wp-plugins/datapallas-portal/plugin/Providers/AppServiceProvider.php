@@ -1,10 +1,10 @@
 <?php
 
-namespace ReportBurster_Portal\Providers;
+namespace DataPallas_Portal\Providers;
 
-use ReportBurster_Portal\Http\Controllers\TemplateController;
-use ReportBurster_Portal\Provisioner;
-use ReportBurster_Portal\WPBones\Support\ServiceProvider; 
+use DataPallas_Portal\Http\Controllers\TemplateController;
+use DataPallas_Portal\Provisioner;
+use DataPallas_Portal\WPBones\Support\ServiceProvider; 
 
 // Log that this file was loaded
 error_log('AppServiceProvider.php was loaded at: ' . date('Y-m-d H:i:s'));
@@ -82,7 +82,7 @@ class AppServiceProvider extends ServiceProvider
         add_action('init', function () {
             $slug       = 'my-documents';
             $title      = 'My Documents';
-            $option_key = 'reportburster_account_page_id';
+            $option_key = 'datapallas_account_page_id';
 
             $page = get_page_by_path($slug);
 
@@ -148,7 +148,7 @@ class AppServiceProvider extends ServiceProvider
         add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
 
         // --- Pods Admin Columns & Search Integration (Commented Out) ---
-        // error_log('[ReportBurster] Registering Pods integration hooks');
+        // error_log('[DataPallas] Registering Pods integration hooks');
         // add_action('init', [$this, 'integrate_with_pods'], 20);
     }
 
@@ -159,32 +159,32 @@ class AppServiceProvider extends ServiceProvider
         
         // Prevent double integration
         if ($already_integrated) {
-            error_log('[ReportBurster] Pods integration already run, skipping duplicate execution');
+            error_log('[DataPallas] Pods integration already run, skipping duplicate execution');
             return;
         }
         
-        error_log('[ReportBurster] Running integrate_with_pods() method');
+        error_log('[DataPallas] Running integrate_with_pods() method');
         
         // Double-check that Pods is active before adding hooks.
         if (!function_exists('pods')) {
-            error_log('[ReportBurster] Pods function not found, aborting integration');
+            error_log('[DataPallas] Pods function not found, aborting integration');
             return;
         }
         
-        error_log('[ReportBurster] Pods function exists, proceeding with integration');
+        error_log('[DataPallas] Pods function exists, proceeding with integration');
         
         // Add the "Show as column" option to the Pods field editor UI
         add_filter('pods_admin_setup_edit_field_options', [$this, 'add_pods_column_option'], 10, 2);
         
         // Register hooks for ALL post types, not just 'posts'
         $post_types = get_post_types(['public' => true]);
-        error_log('[ReportBurster] Found post types: ' . implode(', ', $post_types));
+        error_log('[DataPallas] Found post types: ' . implode(', ', $post_types));
         
         foreach ($post_types as $post_type) {
             // These hooks target the specific post type's admin columns
             add_filter("manage_{$post_type}_posts_columns", [$this, 'add_admin_columns']);
             add_action("manage_{$post_type}_posts_custom_column", [$this, 'populate_admin_columns'], 10, 2);
-            error_log("[ReportBurster] Added column support for post type: {$post_type}");
+            error_log("[DataPallas] Added column support for post type: {$post_type}");
         }
         
         // Add search functionality for the custom columns if we're on an admin page
@@ -192,11 +192,11 @@ class AppServiceProvider extends ServiceProvider
             add_filter('posts_join', [$this, 'search_join'], 10, 2);
             add_filter('posts_where', [$this, 'search_where'], 10, 2);
             add_filter('posts_distinct', [$this, 'search_distinct']);
-            error_log("[ReportBurster] Added search filters for admin");
+            error_log("[DataPallas] Added search filters for admin");
         }
         
         $already_integrated = true;
-        error_log('[ReportBurster] Pods integration complete');
+        error_log('[DataPallas] Pods integration complete');
     }
     */
 
@@ -208,10 +208,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $options['advanced']['show_admin_column'] = [
             'name' => 'show_admin_column',
-            'label' => __('Show as column in dashboard', 'reportburster-integration'),
+            'label' => __('Show as column in dashboard', 'datapallas-portal'),
             'type' => 'boolean',
             'default' => 0,
-            'help' => __('If checked, this field will be displayed as a column in the admin list view for this post type.', 'reportburster-integration')
+            'help' => __('If checked, this field will be displayed as a column in the admin list view for this post type.', 'datapallas-portal')
         ];
         return $options;
     }
@@ -223,24 +223,24 @@ class AppServiceProvider extends ServiceProvider
     /*
     public function add_admin_columns($columns)
     {
-        error_log("[ReportBurster] add_admin_columns: Fired.");
+        error_log("[DataPallas] add_admin_columns: Fired.");
 
         // Determine the post type from the filter hook itself for reliability.
         $post_type = substr(current_filter(), 7, -15); // Extracts 'payslip' from 'manage_payslip_posts_columns'
 
         if (empty($post_type)) {
-            error_log("[ReportBurster] add_admin_columns: Could not determine post type from filter.");
+            error_log("[DataPallas] add_admin_columns: Could not determine post type from filter.");
             return $columns;
         }
 
-        error_log("[ReportBurster] add_admin_columns: Checking for post type '{$post_type}'");
+        error_log("[DataPallas] add_admin_columns: Checking for post type '{$post_type}'");
 
         // Get the Pod for the current post type
         $pod = pods($post_type);
 
         // Check if it's a valid Pod
         if (!$pod || !$pod->id()) {
-            error_log("[ReportBurster] add_admin_columns: No valid pod found for '{$post_type}'");
+            error_log("[DataPallas] add_admin_columns: No valid pod found for '{$post_type}'");
             return $columns;
         }
 
@@ -249,7 +249,7 @@ class AppServiceProvider extends ServiceProvider
             // Check if our custom option is set to true (1)
             if (!empty($field_data['options']['show_admin_column'])) {
                 $columns[$field_name] = $field_data['label'];
-                error_log("[ReportBurster] add_admin_columns: Adding column '{$field_name}' for post type '{$post_type}'");
+                error_log("[DataPallas] add_admin_columns: Adding column '{$field_name}' for post type '{$post_type}'");
             }
         }
 
@@ -274,7 +274,7 @@ class AppServiceProvider extends ServiceProvider
             // Use the Pods API to get the display value for the field
             $value = $pod->field($column_name, $post_id);
             echo esc_html($value);
-            error_log("[ReportBurster] populate_admin_columns: Populating '{$column_name}' for post #{$post_id}");
+            error_log("[DataPallas] populate_admin_columns: Populating '{$column_name}' for post #{$post_id}");
         }
     }
     */
@@ -340,7 +340,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function enqueueAssets()
     {
-        // Enqueue ReportBurster web components from server (Svelte-based custom elements)
+        // Enqueue DataPallas web components from server (Svelte-based custom elements)
         wp_enqueue_script(
             'rb-webcomponents',
             'http://localhost:9090/rb-webcomponents/rb-webcomponents.umd.js',

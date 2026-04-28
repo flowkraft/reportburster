@@ -1,4 +1,4 @@
-{
+﻿{
 	"$schema": "https://json.schemastore.org/package.json",
 	"private": true,
 	"type": "module",
@@ -25,7 +25,7 @@
 		"production:esbuild": "npm run development:esbuild -- --minify",
 		"production": "run-p \"production:**\"",
 		"prod": "npm run production",
-		"zip": "node node_scripts/zip.js reportburster-theme",
+		"zip": "node node_scripts/zip.js datapallas-theme",
 		"bundle": "run-s production zip"
 	},
 	"devDependencies": {

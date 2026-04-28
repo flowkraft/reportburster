@@ -76,7 +76,7 @@ process.env.PORTABLE_EXECUTABLE_DIR = path
 
 const electronLogFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/logs/electron.log`;
 const rbsjExeLogFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/logs/rbsj-exe.log`;
-const portalSageComposerLockFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/_apps/cms-webportal-playground/wp-themes/reportburster-sage/composer.lock`;
+const portalSageComposerLockFilePath = `${process.env.PORTABLE_EXECUTABLE_DIR}/_apps/cms-webportal-playground/wp-themes/datapallas-sage/composer.lock`;
 
 log.transports.file.resolvePath = () => {
   return electronLogFilePath;
@@ -96,8 +96,8 @@ let focusRequestedBySecondInstance = false; // flag set when second-instance occ
 
 // choose theme centrally (packaged: prefer OS choice or fallback to dark; dev: random)
 function chooseTheme(): 'light' | 'dark' {
-  if (process.env.REPORTBURSTER_FORCE_THEME === 'light') return 'light';
-  if (process.env.REPORTBURSTER_FORCE_THEME === 'dark') return 'dark';
+  if (process.env.DATAPALLAS_FORCE_THEME === 'light') return 'light';
+  if (process.env.DATAPALLAS_FORCE_THEME === 'dark') return 'dark';
   // if (app.isPackaged) {
   // deterministic default for packaged builds to match BMP & avoid mismatch
   // return 'dark';
@@ -139,7 +139,7 @@ function createSplashWindow(theme: 'light' | 'dark'): BrowserWindow {
     splashUrl.searchParams.set('theme', theme);
     splash.loadURL(splashUrl.href).catch(() => { });
   } else {
-    splash.loadURL(`data:text/html,<body><h3>ReportBurster</h3><p>Starting...</p></body>`);
+    splash.loadURL(`data:text/html,<body><h3>DataPallas</h3><p>Starting...</p></body>`);
   }
 
   return splash;

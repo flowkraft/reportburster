@@ -118,10 +118,6 @@ public enum WindowFunction {
         if (name == null) {
             throw new IllegalArgumentException("Window function name cannot be null");
         }
-        try {
-            return WindowFunction.valueOf(name.toUpperCase().replace(" ", "_"));
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Unknown window function: " + name);
-        }
+        return WindowFunction.valueOf(name.toUpperCase().replace(" ", "_"));
     }
 }

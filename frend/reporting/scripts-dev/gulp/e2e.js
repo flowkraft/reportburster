@@ -1,4 +1,4 @@
-const jetpack = require("fs-jetpack");
+﻿const jetpack = require("fs-jetpack");
 const fse = require("fs-extra");
 
 const slash = require("slash");
@@ -29,7 +29,7 @@ const semver = require("semver");
 gulp.task("e2e-package-javastuff-if-needed", async () => {
   // Finds existing javaStuffFiles files inside 'e2eRuntimeDir' directory WITHOUT subdirectories
   let javaStuffFilesInE2eDirExists = fse.pathExistsSync(
-    e2eRuntimeDir.path() + "/reportburster.bat",
+    e2eRuntimeDir.path() + "/datapallas.bat",
   );
 
   //if-needed
@@ -67,7 +67,7 @@ gulp.task("e2e-package-javastuff-if-needed", async () => {
     let verifiedDbFolder = await jetpack.findAsync(
       VERIFIED_DB_NOEXE_ASSEMBLY_PATH,
       {
-        matching: "ReportBurster*",
+        matching: "DataPallas*",
         files: false,
         directories: true,
         recursive: false,
@@ -144,7 +144,7 @@ gulp.task("e2e-copy-dbexe-to-e2e", async () => {
 
 gulp.task("e2e-copy-updatejar-to-e2e", async () => {
   let ujf = await jetpack.findAsync(VERIFIED_DB_ASSEMBLY_PATH, {
-    matching: "ReportBurster/lib/burst/update-*.jar",
+    matching: "DataPallas/lib/burst/update-*.jar",
   });
 
   let ujfp = ujf[0];
@@ -373,7 +373,7 @@ gulp.task("e2e-generate-keepachangelog-com", async () => {
     const line = allLines[i];
 
     const isStartReleaseLine =
-      line.startsWith("ReportBurster ") && line.endsWith(")");
+      line.startsWith("DataPallas ") && line.endsWith(")");
 
     if (isStartReleaseLine) {
       let releaseInfo = line.split(" ");
@@ -407,7 +407,7 @@ gulp.task("e2e-generate-keepachangelog-com", async () => {
     i++;
   }
 
-  const changelog = new Changelog("ReportBurster");
+  const changelog = new Changelog("DataPallas");
   allReleases.forEach((release) => changelog.addRelease(release));
 
   console.log(changelog.toString());
@@ -430,13 +430,13 @@ async function _copyDbExe2FolderPath(where) {
 
   //find the DocumentBurster-8.6 folder location
   let verifiedDbFolder = await jetpack.findAsync(VERIFIED_DB_ASSEMBLY_PATH, {
-    matching: "ReportBurster*",
+    matching: "DataPallas*",
     files: false,
     directories: true,
     recursive: false,
   });
 
-  console.log(`${verifiedDbFolder[0]}/ReportBurster.exe`);
+  console.log(`${verifiedDbFolder[0]}/DataPallas.exe`);
 
   let isServerVersion = await jetpack.existsAsync(
     `${FRONTEND_PLAYGROUND_FOLDER_PATH}/upgrade/baseline/DocumentBurster/server`,
@@ -445,18 +445,18 @@ async function _copyDbExe2FolderPath(where) {
   let destinationExePath;
 
   if (where != "e2e") {
-    destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/upgrade/baseline/DocumentBurster/ReportBurster.exe`;
+    destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/upgrade/baseline/DocumentBurster/DataPallas.exe`;
     if (isServerVersion == "dir")
-      destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/upgrade/baseline/DocumentBurster/server/ReportBurster.exe`;
+      destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/upgrade/baseline/DocumentBurster/server/DataPallas.exe`;
   } else {
-    destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/e2e/ReportBurster.exe`;
+    destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/e2e/DataPallas.exe`;
     if (isServerVersion == "dir")
-      destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/e2e/server/ReportBurster.exe`;
+      destinationExePath = `${FRONTEND_PLAYGROUND_FOLDER_PATH}/e2e/server/DataPallas.exe`;
   }
 
   console.log(destinationExePath);
 
-  jetpack.copy(`${verifiedDbFolder[0]}/ReportBurster.exe`, destinationExePath, {
+  jetpack.copy(`${verifiedDbFolder[0]}/DataPallas.exe`, destinationExePath, {
     overwrite: true,
   });
 }
@@ -481,7 +481,7 @@ async function _generateAutoupdateNewerVersion(zipFilePath, newVersion) {
 
   let verifiedDbFolder = path.resolve(
     jetpack.find(tmpFolderPath, {
-      matching: "ReportBurster*",
+      matching: "DataPallas*",
       files: false,
       directories: true,
       recursive: false,
@@ -489,7 +489,7 @@ async function _generateAutoupdateNewerVersion(zipFilePath, newVersion) {
   );
 
   let allDocumentBursterFolders = await jetpack.findAsync(tmpFolderPath, {
-    matching: "!*ReportBurster*",
+    matching: "!*DataPallas*",
     files: false,
     directories: true,
   });
@@ -520,11 +520,11 @@ async function _generateAutoupdateNewerVersion(zipFilePath, newVersion) {
 
   if (!isServer)
     allDocumentBursterFolders = allDocumentBursterFolders.filter(
-      (e) => !e.includes("ReportBurster\\tools"),
+      (e) => !e.includes("DataPallas\\tools"),
     );
   else
     allDocumentBursterFolders = allDocumentBursterFolders.filter(
-      (e) => !e.includes("ReportBurster\\server\\tools"),
+      (e) => !e.includes("DataPallas\\server\\tools"),
     );
 
   for (let folderEntry of allDocumentBursterFolders) {
@@ -589,7 +589,7 @@ async function _generateAutoupdateBaseline(verifiedFolderPath) {
 
   let verifiedDbFolder = path.resolve(
     jetpack.find(VERIFIED_DB872_NOEXE_ASSEMBLY_PATH, {
-      matching: "ReportBurster*",
+      matching: "DataPallas*",
       files: false,
       directories: true,
       recursive: false,
@@ -600,7 +600,7 @@ async function _generateAutoupdateBaseline(verifiedFolderPath) {
 
   const allDocumentBursterFolders = await jetpack.findAsync(
     VERIFIED_DB872_NOEXE_ASSEMBLY_PATH,
-    { matching: "!*ReportBurster*", files: false, directories: true },
+    { matching: "!*DataPallas*", files: false, directories: true },
   );
 
   const MAX_NUMBER_OF_FILES_IN_EACH_FOLDER = 5;
@@ -668,3 +668,4 @@ async function _generateLetmeUpdateBaseline() {
   );
 }
 */
+

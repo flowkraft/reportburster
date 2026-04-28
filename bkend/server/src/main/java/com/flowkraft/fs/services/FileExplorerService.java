@@ -101,17 +101,11 @@ public class FileExplorerService {
 		this.explorerConfiguration = explorerConfiguration;
 	}
 
-	public FileContentVO readFile(String filePath) {
-		try {
-			File file = new File(filePath);
-
-			FileContentVO fileContentVO = new FileContentVO();
-			fileContentVO.setFileName(file.getName());
-			fileContentVO.setContent(FileUtils.readFileToByteArray(file));
-
-			return fileContentVO;
-		} catch (IOException exp) {
-			return null;
-		}
+	public FileContentVO readFile(String filePath) throws Exception {
+		File file = new File(filePath);
+		FileContentVO fileContentVO = new FileContentVO();
+		fileContentVO.setFileName(file.getName());
+		fileContentVO.setContent(FileUtils.readFileToByteArray(file));
+		return fileContentVO;
 	}
 }

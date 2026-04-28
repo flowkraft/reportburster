@@ -1,8 +1,8 @@
 {
   "folders": [
     {
-      "name": "ReportBurster",
-      "path": "/reportburster"
+      "name": "DataPallas",
+      "path": "/datapallas"
     }
   ],
   "settings": {
@@ -13,7 +13,7 @@
       "activityBar.inactiveForeground": "#000000",
       "sideBar.border": "#B22222"
     },
-    "window.title": "${dirty} ReportBurster > ${activeEditorShort}",
+    "window.title": "${dirty} DataPallas > ${activeEditorShort}",
     "files.watcherExclude": {
       "**/node_modules/*/**": true,
       "**/.venv/*/**": true

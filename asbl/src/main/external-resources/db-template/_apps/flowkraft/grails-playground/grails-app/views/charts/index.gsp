@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>Charts - ReportBurster</title>
+    <title>Charts - DataPallas</title>
     <style>
         rb-chart { display: block; width: 100%; height: 400px; }
         .example-card {
@@ -105,7 +105,7 @@
                             </button>
                         </div>
                         <pre id="usageCode" class="code-block"><code class="language-markup">&lt;rb-chart
-    report-code="your-report-code"
+    report-id="your-report-id"
     component-id="yourComponentId"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
     api-key="&#36;{RbUtils.apiKey}"
@@ -149,7 +149,7 @@
             }
 
             // Listen to first rb-chart for shared configDsl
-            var firstComponent = document.querySelector('rb-chart[report-code="charts-examples"]');
+            var firstComponent = document.querySelector('rb-chart[report-id="charts-examples"]');
             function updateConfigDisplay() {
                 if (firstComponent && firstComponent.configDsl) {
                     var escaped = firstComponent.configDsl

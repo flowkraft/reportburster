@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cube>
+    <name>Northwind Human Resources</name>
+    <description>Workforce composition, tenure, age and territory coverage. This cube is appropriately focused on what an HR person can actually answer with this data.</description>
+    <connectionId>rbt-sample-northwind-sqlite-4f2</connectionId>
+</cube>

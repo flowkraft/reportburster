@@ -12,7 +12,7 @@
 - Go to Pods Admin > Add New > Custom Post Type
 - Pod Name: ~paystub~
 - Label: "Payslip" (singular), "Payslips" (plural)
-- Enable REST API: Yes (needed for ReportBurster publishing)
+- Enable REST API: Yes (needed for DataPallas publishing)
 
 * TODO Task3: Define Paystub Fields in PODS Admin
 Add these custom fields to the paystub Pod:
@@ -63,7 +63,7 @@ Add these custom fields to the paystub Pod:
 - Title: "My Documents"
 - Slug: ~my-documents~
 - Template: leave as default (WordPress will auto-load ~page-my-documents.php~ from theme)
-- Store the page ID in WordPress option: ~reportburster_account_page_id~
+- Store the page ID in WordPress option: ~DataPallas_account_page_id~
 
 * TODO Task6: Create Test Payslip Entry
 - Go to WP Admin > Payslips > Add New
@@ -75,4 +75,4 @@ Add these custom fields to the paystub Pod:
 - Test: GET ~http://localhost:8080/wp-json/wp/v2/paystub~
 - Should return the test payslip as JSON
 - Verify all custom fields appear in the response
-- This endpoint is used by the ReportBurster Groovy script to publish payslips
+- This endpoint is used by the DataPallas Groovy script to publish payslips

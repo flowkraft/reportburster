@@ -3,7 +3,7 @@
 #+DATE: 2026-01-26
 
 * TODO Task1: Create single-invoice.php (Individual Invoice View)
-File location: ~wp-themes/reportburster-theme/single-invoice.php~
+File location: ~wp-themes/DataPallas-theme/single-invoice.php~
 
 ** 1.1 Access Control
 #+begin_src php
@@ -91,7 +91,7 @@ $pod = pods($post_type, [
 - Admin: Show "View" + "Viewed" indicator (no pay button)
 
 * TODO Task3: Create endExtractDocument.groovy for Invoices
-File: ~/reportburster/scripts/burst/endExtractDocument.groovy~
+File: ~/datapallas/scripts/burst/endExtractDocument.groovy~
 
 ** 3.1 Guard
 #+begin_src groovy
@@ -146,7 +146,7 @@ Two approaches — choose based on complexity needs:
 - Zero custom payment code needed
 
 ** Option B: Custom Payment Code
-- Write custom Stripe/PayPal integration in the reportburster-portal plugin
+- Write custom Stripe/PayPal integration in the DataPallas-portal plugin
 - More control but significantly more code
 - Only if Forminator doesn't meet specific requirements
 
@@ -158,4 +158,4 @@ Two approaches — choose based on complexity needs:
 5. Click "Pay Invoice" > verify payment flow
 6. After payment > verify status changes to "PA" (Paid)
 7. Log in as admin > verify "Viewed" indicator shows
-8. Test ReportBurster publishing with invoices2portal template
+8. Test DataPallas publishing with invoices2portal template

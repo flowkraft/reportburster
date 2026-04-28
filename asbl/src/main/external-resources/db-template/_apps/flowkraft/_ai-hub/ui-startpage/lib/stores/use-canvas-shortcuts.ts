@@ -11,9 +11,14 @@ export function useCanvasShortcuts({ onUndo, onRedo }: ShortcutHandlers) {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Don't intercept when typing in inputs
-      const tag = (e.target as HTMLElement)?.tagName;
+      // Don't intercept when typing in inputs or rich-text editors (CodeMirror, etc.)
+      const el = e.target as HTMLElement;
+      const tag = el?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      // CodeMirror renders as <div> elements — detect via .cm-editor wrapper
+      // or contenteditable on the inner content area.
+      if (el?.closest?.(".cm-editor")) return;
+      if (el?.isContentEditable) return;
 
       // Delete — remove selected widget
       if ((e.key === "Delete" || e.key === "Backspace") && editMode && selectedWidgetId) {

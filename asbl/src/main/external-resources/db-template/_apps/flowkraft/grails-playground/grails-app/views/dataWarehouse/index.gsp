@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>Data Warehouse - ReportBurster</title>
+    <title>Data Warehouse - DataPallas</title>
     <style>
         rb-pivot-table { display: block; width: 100%; margin-bottom: 2rem; }
         rb-tabulator { display: block; width: 100%; min-height: 300px; }
@@ -136,7 +136,7 @@
                     Processing these volumes requires specialized techniques &mdash; but more tools mean more infrastructure, more complexity, and higher costs.
                 </p>
                 <p class="mb-3">
-                    <strong>ReportBurster's approach:</strong> start with the simplest option. Only move to the next tier when your data volume actually demands it.
+                    <strong>DataPallas's approach:</strong> start with the simplest option. Only move to the next tier when your data volume actually demands it.
                 </p>
 
                 <div class="row g-3 mb-3">
@@ -226,7 +226,7 @@
                         </p>
                         <rb-pivot-table
                             id="warehousePivotBrowser"
-                            report-code="piv-northwind-warehouse-browser"
+                            report-id="piv-northwind-warehouse-browser"
                             api-base-url="${RbUtils.apiBaseUrl}"
                             api-key="${RbUtils.apiKey}"
                         ></rb-pivot-table>
@@ -243,7 +243,7 @@
                         </p>
                         <rb-pivot-table
                             id="warehousePivotDuckdb"
-                            report-code="piv-northwind-warehouse-duckdb"
+                            report-id="piv-northwind-warehouse-duckdb"
                             api-base-url="${RbUtils.apiBaseUrl}"
                             api-key="${RbUtils.apiKey}"
                         ></rb-pivot-table>
@@ -263,7 +263,7 @@
                         </div>
                         <rb-pivot-table
                             id="warehousePivotClickhouse"
-                            report-code="piv-northwind-warehouse-clickhouse"
+                            report-id="piv-northwind-warehouse-clickhouse"
                             api-base-url="${RbUtils.apiBaseUrl}"
                             api-key="${RbUtils.apiKey}"
                         ></rb-pivot-table>
@@ -480,7 +480,7 @@
                             </button>
                         </div>
                         <pre id="usageCodeBrowser" class="code-block mt-2"><code class="language-markup">&lt;rb-pivot-table
-    report-code="piv-northwind-warehouse-browser"
+    report-id="piv-northwind-warehouse-browser"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
     api-key="&#36;{RbUtils.apiKey}"
 &gt;&lt;/rb-pivot-table&gt;</code></pre>
@@ -493,7 +493,7 @@
                             </button>
                         </div>
                         <pre id="usageCodeDuckdb" class="code-block mt-2"><code class="language-markup">&lt;rb-pivot-table
-    report-code="piv-northwind-warehouse-duckdb"
+    report-id="piv-northwind-warehouse-duckdb"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
     api-key="&#36;{RbUtils.apiKey}"
 &gt;&lt;/rb-pivot-table&gt;</code></pre>
@@ -506,7 +506,7 @@
                             </button>
                         </div>
                         <pre id="usageCodeClickhouse" class="code-block mt-2"><code class="language-markup">&lt;rb-pivot-table
-    report-code="piv-northwind-warehouse-clickhouse"
+    report-id="piv-northwind-warehouse-clickhouse"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
     api-key="&#36;{RbUtils.apiKey}"
 &gt;&lt;/rb-pivot-table&gt;</code></pre>
@@ -622,7 +622,7 @@
             // ================================================================
             (function() {
                 var apiBase = '${RbUtils.apiBaseUrl}';
-                var reportCode = 'piv-northwind-warehouse-browser';
+                var reportId = 'piv-northwind-warehouse-browser';
                 var currentPage = 0;
                 var pageSize = 10;
                 var totalRows = 0;
@@ -633,7 +633,7 @@
                     document.getElementById('rawDataLoading').classList.remove('d-none');
                     document.getElementById('rawDataError').classList.add('d-none');
 
-                    fetch(apiBase + '/reports/' + reportCode + '/data?page=' + (currentPage + 1) + '&size=' + pageSize)
+                    fetch(apiBase + '/reports/' + reportId + '/data?page=' + (currentPage + 1) + '&size=' + pageSize)
                         .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                         .then(function(result) {
                             var data = result.data || [];

@@ -106,6 +106,5 @@ public class BursterSettings extends DumpToString {
 	public Boolean enableincubatingfeatures;
 
 	public String notes;
-	public String visibility;
 
 }

@@ -1,4 +1,4 @@
-// ReportBurster API Configuration
+// DataPallas API Configuration
 // Auto-discovers API key from api-key.txt or uses '123' fallback for development
 
 export const rbConfig = {
@@ -21,7 +21,7 @@ export async function rbFetch(endpoint: string, options?: RequestInit) {
   })
 
   if (!response.ok) {
-    throw new Error(`ReportBurster API error: ${response.statusText}`)
+    throw new Error(`DataPallas API error: ${response.statusText}`)
   }
 
   return response.json()

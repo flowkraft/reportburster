@@ -62,7 +62,9 @@ public class ReportsService {
 		int startPos = xmlContent.indexOf(openTag);
 		int endPos = xmlContent.indexOf(closeTag);
 		if (startPos >= 0 && endPos > startPos) {
-			return xmlContent.substring(startPos + openTag.length(), endPos).trim();
+			String raw = xmlContent.substring(startPos + openTag.length(), endPos).trim();
+			return raw.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+					.replace("&quot;", "\"").replace("&apos;", "'");
 		}
 		return defaultValue;
 	}
@@ -130,7 +132,6 @@ public class ReportsService {
 						extractXmlTagValue(settingsFileContent, "reportdistribution", "false"));
 				boolean boolReportGenerationMailMerge = Boolean.parseBoolean(
 						extractXmlTagValue(settingsFileContent, "reportgenerationmailmerge", "false"));
-				String strVisibility = extractXmlTagValue(settingsFileContent, "visibility", "visible");
 				boolean boolUseEmailConnection = Boolean.parseBoolean(
 						extractXmlTagValue(settingsFileContent, "useconn", "false"));
 				String strEmailConnectionCode = extractXmlTagValue(settingsFileContent, "conncode", StringUtils.EMPTY);
@@ -170,7 +171,6 @@ public class ReportsService {
 				configFile.capReportGenerationMailMerge = boolReportGenerationMailMerge;
 				configFile.dsInputType = dsInputType;
 				configFile.scriptOptionsSelectFileExplorer = scriptOptionsSelectFileExplorer;
-				configFile.visibility = strVisibility;
 				configFile.notes = StringUtils.EMPTY;
 				configFile.folderName = folderName;
 				configFile.type = typeOfConfiguration;
@@ -196,9 +196,8 @@ public class ReportsService {
 	private static final Pattern JRXML_NAME_PATTERN = Pattern
 			.compile("<jasperReport[^>]*\\sname=\"([^\"]+)\"", Pattern.DOTALL);
 
-	private void scanJasperReports(List<ConfigurationFileInfo> configurationFiles) {
-		try {
-			String jasperReportsDir = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/reports-jasper";
+	private void scanJasperReports(List<ConfigurationFileInfo> configurationFiles) throws Exception {
+		String jasperReportsDir = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/reports-jasper";
 			File jasperDir = new File(jasperReportsDir);
 			if (!jasperDir.exists() || !jasperDir.isDirectory()) {
 				return;
@@ -226,7 +225,6 @@ public class ReportsService {
 				return;
 
 			for (File reportFolder : reportFolders) {
-				try {
 				// Find .jrxml files in this folder
 				File[] jrxmlFiles = reportFolder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jrxml"));
 				if (jrxmlFiles == null || jrxmlFiles.length == 0)
@@ -245,7 +243,7 @@ public class ReportsService {
 				// config/reports-jasper/) — highest priority wins:
 				//   1. Per-report override — {report-folder}/datasource.properties
 				//   2. Global JasperReports override — config/reports-jasper/datasource.properties
-				//   3. ReportBurster's default DB connection (marked "default" in Connections)
+				//   3. DataPallas's default DB connection (marked "default" in Connections)
 				// This is for UI display (ConfigurationFileInfo.dbConnectionCode).
 				// The same 3-tier logic runs again at generation time in
 				// Settings.loadSettingsReporting() to dynamically resolve the connection.
@@ -280,7 +278,6 @@ public class ReportsService {
 				configFile.capReportDistribution = false;
 				configFile.capReportGenerationMailMerge = true;
 				configFile.dsInputType = "ds.jasper";
-				configFile.visibility = "visible";
 				configFile.notes = StringUtils.EMPTY;
 				configFile.folderName = reportFolder.getName();
 				configFile.type = "config-jasper-reports";
@@ -290,13 +287,7 @@ public class ReportsService {
 						.replace("\\", "/");
 
 				configurationFiles.add(configFile);
-				} catch (Exception e) {
-					log.warn("Skipping JasperReport folder {}: {}", reportFolder.getName(), e.getMessage());
-				}
 			}
-		} catch (Exception e) {
-			log.error("Failed to scan JasperReports: {}", e.getMessage(), e);
-		}
 	}
 
 	private String extractJrxmlReportName(String jrxmlContent, String defaultName) {
@@ -659,10 +650,6 @@ public class ReportsService {
 				boolean boolReportGenerationMailMerge = Boolean
 						.parseBoolean(settingsFileContent.substring(startPos, endPos).trim());
 
-				startPos = settingsFileContent.indexOf("<visibility>") + "<visibility>".length();
-				endPos = settingsFileContent.indexOf("</visibility>");
-				String strVisibility = settingsFileContent.substring(startPos, endPos).trim();
-
 				startPos = settingsFileContent.indexOf("<useconn>") + "<useconn>".length();
 				endPos = settingsFileContent.indexOf("</useconn>");
 				boolean boolUseEmailConnection = Boolean
@@ -721,7 +708,6 @@ public class ReportsService {
 				configFile.capReportGenerationMailMerge = boolReportGenerationMailMerge;
 				configFile.dsInputType = dsInputType;
 				configFile.scriptOptionsSelectFileExplorer = scriptOptionsSelectFileExplorer;
-				configFile.visibility = strVisibility;
 				configFile.notes = StringUtils.EMPTY;
 				configFile.folderName = folderName;
 				configFile.type = typeOfConfiguration;
@@ -1057,13 +1043,9 @@ public class ReportsService {
 		File[] connectionFolders = connectionsFolder
 				.listFiles((dir, name) -> new File(dir, name).isDirectory() && name.toLowerCase().startsWith("db-"));
 
-		if (connectionFolders == null || connectionFolders.length == 0) {
-			return Stream.empty();
-		}
-
 		List<ConnectionFileInfo> connectionInfoFiles = new ArrayList<>();
 
-		for (File connectionFolder : connectionFolders) {
+		if (connectionFolders != null) for (File connectionFolder : connectionFolders) {
 			// Look for the main XML file inside the folder
 			File mainXmlFile = new File(connectionFolder, connectionFolder.getName() + ".xml");
 
@@ -1103,6 +1085,24 @@ public class ReportsService {
 				}
 			}
 
+		}
+
+		if (Settings.isShowSamplesEnabled()) {
+			for (String sampleId : new String[]{"rbt-sample-northwind-sqlite-4f2", "rbt-sample-northwind-duckdb-4f2"}) {
+				DocumentBursterConnectionDatabaseSettings s = getSampleConnectionAsDbSettings(sampleId);
+				if (s != null && s.connection != null) {
+					ConnectionFileInfo info = new ConnectionFileInfo();
+					info.connectionCode = s.connection.code;
+					info.connectionName = s.connection.name;
+					info.connectionType = "database-connection";
+					info.isSample = true;
+					info.dbserver.type = s.connection.databaseserver.type;
+					info.dbserver.database = s.connection.databaseserver.database;
+					info.dbserver.driver = s.connection.databaseserver.driver;
+					info.dbserver.url = s.connection.databaseserver.url;
+					connectionInfoFiles.add(info);
+				}
+			}
 		}
 
 		return connectionInfoFiles.stream();
@@ -1158,6 +1158,38 @@ public class ReportsService {
 		}
 
 	}
+
+	/**
+	 * Synthesize in-memory DocumentBursterConnectionDatabaseSettings for the two
+	 * built-in sample connections (Northwind SQLite and DuckDB).
+	 * Returns null for unknown IDs.
+	 */
+	public DocumentBursterConnectionDatabaseSettings getSampleConnectionAsDbSettings(String connectionId) {
+		if (connectionId == null) return null;
+		String id = connectionId.trim().toLowerCase();
+
+		DocumentBursterConnectionDatabaseSettings dto = new DocumentBursterConnectionDatabaseSettings();
+		dto.connection = new com.sourcekraft.documentburster.common.settings.model.ConnectionDatabaseSettings();
+		dto.connection.code = connectionId;
+		dto.connection.databaseserver = new com.sourcekraft.documentburster.common.settings.model.ServerDatabaseSettings();
+
+		if (id.contains("rbt-sample-northwind-sqlite-4f2")) {
+			dto.connection.name = "Northwind Sample (SQLite)";
+			dto.connection.databaseserver.type = "sqlite";
+			dto.connection.databaseserver.database =
+				AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/db/sample-northwind-sqlite/northwind.db";
+		} else if (id.contains("rbt-sample-northwind-duckdb-4f2")) {
+			dto.connection.name = "Northwind Sample (DuckDB)";
+			dto.connection.databaseserver.type = "duckdb";
+			dto.connection.databaseserver.database =
+				AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/db/sample-northwind-duckdb/northwind.duckdb";
+		} else {
+			return null;
+		}
+		dto.connection.databaseserver.ensureDriverAndUrl();
+		return dto;
+	}
+
 	// DATABASE END
 
 	public DocumentBursterSettingsInternal loadSettingsInternal(String internalConfigFilePath) throws Exception {
@@ -1272,7 +1304,6 @@ public class ReportsService {
 		settings.settings.template = templateName;
 		settings.settings.capabilities.reportdistribution = capReportDistribution;
 		settings.settings.capabilities.reportgenerationmailmerge = capReportGenerationMailMerge;
-		settings.settings.visibility = "visible";
 
 		// When creating (not duplicating) with distribution enabled,
 		// link the current default email connection
@@ -1313,7 +1344,6 @@ public class ReportsService {
 		configFile.scriptOptionsSelectFileExplorer = "notused";
 		configFile.folderName = reportId;
 		configFile.type = "config-reports";
-		configFile.visibility = "visible";
 		configFile.notes = "";
 
 		return configFile;
@@ -1331,7 +1361,7 @@ public class ReportsService {
 
 	/**
 	 * Restore default configuration values for a report atomically.
-	 * Preserves the template name and sets visibility to visible.
+	 * Preserves the template name.
 	 */
 	public void restoreDefaults(String reportId) throws Exception {
 
@@ -1356,7 +1386,6 @@ public class ReportsService {
 		// 2. Load default settings
 		DocumentBursterSettings defaultSettings = loadSettings(defaultsDir + "/settings.xml");
 		defaultSettings.settings.template = currentTemplateName;
-		defaultSettings.settings.visibility = "visible";
 
 		// 3. Save defaults as the new settings
 		saveSettings(defaultSettings, targetSettingsPath);
@@ -1397,18 +1426,5 @@ public class ReportsService {
 		}
 	}
 
-	/**
-	 * Toggle visibility for a report configuration.
-	 */
-	public String toggleVisibility(String reportId, String newVisibility) throws Exception {
-		String reportsDir = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/reports";
-		String settingsPath = reportsDir + "/" + reportId + "/settings.xml";
-
-		DocumentBursterSettings settings = loadSettings(settingsPath);
-		settings.settings.visibility = newVisibility;
-		saveSettings(settings, settingsPath);
-
-		return newVisibility;
-	}
 
 }

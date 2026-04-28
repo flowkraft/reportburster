@@ -1,7 +1,7 @@
 {
-  "name": "flowkraft/reportburster-portal",
+  "name": "flowkraft/datapallas-portal",
   "type": "wordpress-plugin",
-  "description": "ReportBurster Portal WordPress plugin",
+  "description": "DataPallas Portal WordPress plugin",
   "version": "1.0.0",
   "keywords": [
     "wordpress"
@@ -26,7 +26,7 @@
   },
   "autoload": {
     "psr-4": {
-      "ReportBurster_Portal\\": "plugin/"
+      "DataPallas_Portal\\": "plugin/"
     },
     "files": [
       "functions.php"

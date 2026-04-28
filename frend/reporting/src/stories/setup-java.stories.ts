@@ -10,7 +10,7 @@ type Story = StoryObj<JavaComponent>;
 
 const defaultMeta: Meta<JavaComponent> = {
   ...baseMeta,
-  title: 'ReportBurster/Setup/Java',
+  title: 'DataPallas/Setup/Java',
   component: JavaComponent,
   decorators: [
     ...baseMeta.decorators,

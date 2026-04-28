@@ -8,7 +8,7 @@
 	<parent>
 
 		<groupId>com.sourcekraft.documentburster</groupId>
-		<artifactId>rb-product-reportburster</artifactId>
+		<artifactId>rb-product-DataPallas</artifactId>
 		<version>${revision}</version>
 		<relativePath>../../pom.xml</relativePath>
 

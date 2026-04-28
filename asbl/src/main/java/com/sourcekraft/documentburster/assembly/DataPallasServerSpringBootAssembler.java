@@ -13,15 +13,15 @@ import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.stream.LogOutputStream;
 import org.zeroturnaround.zip.ZipUtil;
 
-public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
+public class DataPallasServerSpringBootAssembler extends AbstractAssembler {
 
 	private String groovyCompilationLogs = StringUtils.EMPTY;
 
-	private String reportBursterVerifyDirPath;
+	private String dataPallasVerifyDirPath;
 
-	public ReportBursterServerSpringBootAssembler() {
+	public DataPallasServerSpringBootAssembler() {
 
-		super("target/package/db-server", "target/package/verified-db-server", "target/reportburster-server.zip");
+		super("target/package/db-server", "target/package/verified-db-server", "target/datapallas-server.zip");
 
 	}
 
@@ -38,25 +38,25 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 				}).execute();
 
 		System.out.println(
-				"------------------------------------- DONE_01:ReportBursterServer npm run custom:release-web --force) ... -------------------------------------");
+				"------------------------------------- DONE_01:DataPallasServer npm run custom:release-web --force) ... -------------------------------------");
 
 	}
 
 	protected void preparePackage() throws Exception {
 
-		// copy all the already "verified" ReportBurster files
-		FileUtils.copyDirectory(new File(reportBursterVerifyDirPath + "/" + this.topFolderName),
+		// copy all the already "verified" DataPallas files
+		FileUtils.copyDirectory(new File(dataPallasVerifyDirPath + "/" + this.topFolderName),
 				new File(packageDirPath + "/" + this.topFolderName));
 
 		System.out.println(
-				"------------------------------------- DONE_02:ReportBursterServer copy all the already 'verified' ReportBurster files ... -------------------------------------");
+				"------------------------------------- DONE_02:DataPallasServer copy all the already 'verified' DataPallas files ... -------------------------------------");
 
 		// copy db-server template files and folders
 		FileUtils.copyDirectory(new File("src/main/external-resources/db-server-template"),
 				new File(packageDirPath + "/" + this.topFolderName));
 
 		System.out.println(
-				"------------------------------------- DONE_03:ReportBursterServer copy db-server template files and folders ... -------------------------------------");
+				"------------------------------------- DONE_03:DataPallasServer copy db-server template files and folders ... -------------------------------------");
 
 		// copy "frontent" web app (compiled)
 		String frontEndFolderPath = packageDirPath + "/" + this.topFolderName + "/lib/frend";
@@ -67,7 +67,7 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 				new File(frontEndFolderPath));
 
 		System.out.println(
-				"------------------------------------- DONE_04:ReportBursterServer copy 'frontent' web app (compiled) ... -------------------------------------");
+				"------------------------------------- DONE_04:DataPallasServer copy 'frontent' web app (compiled) ... -------------------------------------");
 
 		// COMPILE / CHECK the groovy scripts don't give errors
 
@@ -85,7 +85,7 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 			throw new Exception("Groovy Scripts COMPILATION FAILED");
 
 		System.out.println(
-				"------------------------------------- DONE_05:ReportBursterServer COMPILE / CHECK the groovy scripts don't give errors ... -------------------------------------");
+				"------------------------------------- DONE_05:DataPallasServer COMPILE / CHECK the groovy scripts don't give errors ... -------------------------------------");
 
 		FileUtils.moveFile(
 				FileUtils.getFile(packageDirPath + "/" + this.topFolderName + "/scripts/batch/schedules.groovy"),
@@ -101,19 +101,19 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 
 		ZipUtil.unpack(new File(targetPathZipFile), new File(verifyDirPath));
 
-		// copy all the already "verified" ReportBurster files
+		// copy all the already "verified" DataPallas files
 		assertThat(Utils.dir1ContainsAllDir2Files(new File(verifyDirPath + "/" + this.topFolderName),
-				new File(reportBursterVerifyDirPath + "/" + this.topFolderName))).isTrue();
+				new File(dataPallasVerifyDirPath + "/" + this.topFolderName))).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_02:ReportBursterServer copy all the already 'verified' ReportBurster files ... -------------------------------------");
+				"------------------------------------- VERIFIED_02:DataPallasServer copy all the already 'verified' DataPallas files ... -------------------------------------");
 
 		// copy db-server template files and folders
 		assertThat(Utils.dir1ContainsAllDir2Files(new File(verifyDirPath + "/" + this.topFolderName),
 				new File("src/main/external-resources/db-server-template"))).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_03:ReportBursterServer db-server template files and folders ... -------------------------------------");
+				"------------------------------------- VERIFIED_03:DataPallasServer db-server template files and folders ... -------------------------------------");
 
 		// copy "frontent" web app (compiled)
 		String content = FileUtils.readFileToString(
@@ -122,7 +122,7 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 		assertThat(content.contains("skin-black")).isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_04:ReportBursterServer copy 'frontent' web app (compiled) ... -------------------------------------");
+				"------------------------------------- VERIFIED_04:DataPallasServer copy 'frontent' web app (compiled) ... -------------------------------------");
 
 		// COMPILE / CHECK the groovy scripts don't give errors
 
@@ -141,7 +141,7 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 				.isTrue();
 
 		System.out.println(
-				"------------------------------------- VERIFIED_07:ReportBursterServer CHECK the groovy scripts ... -------------------------------------");
+				"------------------------------------- VERIFIED_07:DataPallasServer CHECK the groovy scripts ... -------------------------------------");
 
 		// END COMPILE groovy scripts
 
@@ -155,8 +155,8 @@ public class ReportBursterServerSpringBootAssembler extends AbstractAssembler {
 
 	}
 
-	public void setReportBursterVerifyDirPath(String reportBursterVerifyDirPath) {
-		this.reportBursterVerifyDirPath = reportBursterVerifyDirPath;
+	public void setdataPallasVerifyDirPath(String dataPallasVerifyDirPath) {
+		this.dataPallasVerifyDirPath = dataPallasVerifyDirPath;
 	}
 
 }

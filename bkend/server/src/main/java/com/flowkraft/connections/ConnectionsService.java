@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.flowkraft.common.AppPaths;
 import com.flowkraft.jobs.services.JobExecutionService;
+import com.flowkraft.reports.ReportsService;
 import com.sourcekraft.documentburster.common.settings.Settings;
 import com.sourcekraft.documentburster.job.CliJob;
 import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings;
@@ -35,8 +36,76 @@ public class ConnectionsService {
 	@org.springframework.beans.factory.annotation.Autowired
 	private JobExecutionService jobExecutionService;
 
+	@org.springframework.beans.factory.annotation.Autowired
+	private ReportsService reportsService;
+
 	private String getConnectionsDir() {
 		return AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/config/connections";
+	}
+
+	/**
+	 * Returns true if the given connectionId is one of the synthesized
+	 * in-memory sample connections (Northwind on SQLite/DuckDB/ClickHouse).
+	 * Mirrors the same check in {@code ConnectionsController.isSampleConnectionCode}.
+	 */
+	private static boolean isSampleConnectionCode(String connectionId) {
+		if (connectionId == null) return false;
+		String lower = connectionId.trim().toLowerCase();
+		return lower.contains("rbt-sample-northwind-sqlite-4f2")
+				|| lower.contains("rbt-sample-northwind-duckdb-4f2")
+				|| lower.contains("rbt-sample-northwind-clickhouse-4f2");
+	}
+
+	/**
+	 * Lazily writes a sample connection's XML to its standard on-disk location
+	 * if the file does not yet exist. Sample connections are synthesized
+	 * in-memory by {@link ReportsService#synthesizeSampleConnections()} and
+	 * have no XML on disk by default — but downstream backend operations
+	 * (test connection, fetch schema, ER diagram, DGS, cubes) all expect
+	 * a real file at {@code config/connections/{id}/{id}.xml}. This helper
+	 * bridges the gap by materializing the file once on demand.
+	 *
+	 * <p>Behavior:
+	 * <ul>
+	 *   <li>No-op for non-sample connection IDs.</li>
+	 *   <li>Throws {@link IllegalStateException} if the user has disabled the
+	 *       "Show sample connections & cubes" preference — in that case the UI
+	 *       should not be exposing samples in the first place, but we guard
+	 *       against stale state and direct API calls. The error message is
+	 *       explicit so the user knows why.</li>
+	 *   <li>Idempotent: if the XML already exists, returns immediately
+	 *       without overwriting (samples are read-only).</li>
+	 *   <li>Side effect: creates the parent directory and writes the XML
+	 *       via the standard {@link ReportsService#saveSettingsConnectionDatabase}
+	 *       path. The materialized folder name starts with {@code rbt-sample-}
+	 *       so it is invisible to {@link ReportsService#loadSettingsConnectionDatabaseAll()},
+	 *       which only enumerates folders prefixed with {@code db-}. The
+	 *       canonical entry in the connections list remains the synthesized
+	 *       one (with {@code isSample=true}); the materialized file is
+	 *       purely backend plumbing.</li>
+	 * </ul>
+	 */
+	private void materializeSampleIfNeeded(String connectionId) throws Exception {
+		if (!isSampleConnectionCode(connectionId)) {
+			return;
+		}
+		if (!Settings.isShowSamplesEnabled()) {
+			throw new IllegalStateException(
+					"Sample connections are disabled. Enable them in Skin Options → "
+							+ "'Show sample connections & cubes' to use this connection.");
+		}
+		String xmlPath = getConnectionFilePath(connectionId);
+		if (new File(xmlPath).exists()) {
+			return; // already materialized — idempotent
+		}
+		DocumentBursterConnectionDatabaseSettings dto = reportsService
+				.getSampleConnectionAsDbSettings(connectionId);
+		if (dto == null) {
+			throw new IllegalStateException(
+					"Unknown sample connection: " + connectionId);
+		}
+		reportsService.saveSettingsConnectionDatabase(dto, xmlPath);
+		log.info("Materialized sample connection {} → {}", connectionId, xmlPath);
 	}
 
 	private String getConnectionFilePath(String connectionId) {
@@ -45,6 +114,16 @@ public class ConnectionsService {
 
 	/** Resolve file path for a database connection: config/connections/{id}/{id}.xml */
 	public String resolveDbConnectionPath(String connectionId) {
+		return getConnectionFilePath(connectionId);
+	}
+
+	/**
+	 * Ensures the connection is available on disk (materializes sample connections
+	 * if needed) and returns its XML file path. Safe to call for any connection type.
+	 * Used by both testDatabaseConnection() and QueriesService.getSchema().
+	 */
+	public String prepareConnectionFilePath(String connectionId) throws Exception {
+		materializeSampleIfNeeded(connectionId);
 		return getConnectionFilePath(connectionId);
 	}
 
@@ -94,7 +173,7 @@ public class ConnectionsService {
 	 * which handles testing, schema fetch, and saving information-schema.json + table-names.txt.
 	 */
 	public void testDatabaseConnection(String connectionId) throws Throwable {
-		String connectionFilePath = getConnectionFilePath(connectionId);
+		String connectionFilePath = prepareConnectionFilePath(connectionId);
 		log.info("Testing database connection: {}", connectionId);
 		jobExecutionService.executeSync(new String[] {
 				"system", "test-and-fetch-database-schema",

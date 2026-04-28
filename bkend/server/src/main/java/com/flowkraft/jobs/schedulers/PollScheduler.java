@@ -13,6 +13,8 @@ import jakarta.annotation.PostConstruct;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,6 +29,8 @@ import com.flowkraft.common.AppPaths;
 
 @Component
 public class PollScheduler {
+
+	private static final Logger log = LoggerFactory.getLogger(PollScheduler.class);
 
 	@Value("${POLLING_PATH:}")
 	private String pollingPath;
@@ -124,17 +128,16 @@ public class PollScheduler {
 									.filter(f -> f.fileName.endsWith(Constants.EXTENTION_PROGRESS_FILE)
 											&& f.fileContent.contains(filePathToProcess))
 									.collect(Collectors.toList());
-
 							// if there is a corresponding .progress file do not remove the file since it
 							// might be "Resumed" later
 							if (Objects.isNull(progressFile) || progressFile.size() == 0) {
 								FileUtils.forceDelete(fileToProcess);
 							}
-
 							waitQueue.remove(polledFilePath);
-							jobsService.state.numberOfActiveJobs = 0;
 						} catch (Exception e) {
-							// ignore cleanup errors
+							log.warn("Post-burst cleanup failed for {}: {}", filePathToProcess, e.getMessage());
+						} finally {
+							jobsService.state.numberOfActiveJobs = 0;
 						}
 					});
 				}

@@ -25,7 +25,7 @@ class BootStrap {
 
     private void createDefaultSettings() {
         // Theme settings - persisted in SQLite instead of localStorage
-        Setting.setValue('theme.color', 'reportburster', 'theme', 'Color theme name')
+        Setting.setValue('theme.color', 'datapallas', 'theme', 'Color theme name')
         Setting.setValue('theme.mode', 'light', 'theme', 'Theme mode (light/dark)')
         
         // Company settings

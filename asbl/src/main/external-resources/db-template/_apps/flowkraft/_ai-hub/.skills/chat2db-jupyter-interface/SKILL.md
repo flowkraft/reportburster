@@ -13,9 +13,9 @@
 
 ## When This Skill Applies
 
-I'm receiving a message through the **Chat2DB / Jupyter interface** — the interactive notebook environment where users interact with me for data queries, general conversation, or ReportBurster guidance.
+I'm receiving a message through the **Chat2DB / Jupyter interface** — the interactive notebook environment where users interact with me for data queries, general conversation, or DataPallas guidance.
 
-This skill is about **classifying intent** and responding appropriately — SQL when they want data, conversation when they're chatting, guidance when they need help with ReportBurster.
+This skill is about **classifying intent** and responding appropriately — SQL when they want data, conversation when they're chatting, guidance when they need help with DataPallas.
 
 ---
 
@@ -27,7 +27,7 @@ When a message comes from Chat2DB, I first classify what the user wants:
 |--------|---------|-------------|
 | **DATA QUERY** | "Show top 10 customers", "Revenue by month", "Which products sold most?" | Generate SQL, investigate schema |
 | **CHIT-CHAT** | "Hello!", "How are you?", "What can you do?" | Respond naturally and friendly |
-| **REPORTBURSTER CONFIG** | "How do I set up email distribution?", "Where are the templates?" | Use my ReportBurster expertise |
+| **DATAPALLAS CONFIG** | "How do I set up email distribution?", "Where are the templates?" | Use my DataPallas expertise |
 | **RESULTS EXPLANATION** | "What does this data mean?", "Explain these numbers" | Analyze provided results, highlight insights |
 | **SCHEMA QUESTION** | "What tables do we have?", "What columns are in Orders?" | Investigate disk resources |
 
@@ -42,9 +42,9 @@ Even when the Chat2DB interface sends me a schema:
 1. **Use it as a starting point** — the provided schema is useful for quick answers
 2. **BUT it may be a SUBSET** — the full schema on disk is more complete
 3. **Investigate disk for:**
-   - Existing reports with working SQLs: `/reportburster/config/reports/`
-   - Sample configurations: `/reportburster/config/samples/`
-   - Complete schema files: `/reportburster/config/connections/`
+   - Existing reports with working SQLs: `/datapallas/config/reports/`
+   - Sample configurations: `/datapallas/config/samples/`
+   - Complete schema files: `/datapallas/config/connections/`
    - ER diagrams (*.puml files) for relationships
 
 **Don't be lazy!** The user might be missing context that I can provide by investigating.
@@ -55,15 +55,15 @@ I MUST investigate on-disk resources before generating SQL:
 
 ```bash
 # Step 1: List available connections
-ls /reportburster/config/connections/
+ls /datapallas/config/connections/
 
 # Step 2: Read the schema for a specific connection
 # Look for *-information-schema.json or *-domain-grouped-schema.json
-ls /reportburster/config/connections/db-<name>/
+ls /datapallas/config/connections/db-<name>/
 
 # Step 3: Check for existing working SQLs in reports
-find /reportburster/config/reports -name "*.xml" | head -20
-grep -r "SELECT" /reportburster/config/samples/ --include="*.xml"
+find /datapallas/config/reports -name "*.xml" | head -20
+grep -r "SELECT" /datapallas/config/samples/ --include="*.xml"
 ```
 
 ---
@@ -72,9 +72,9 @@ grep -r "SELECT" /reportburster/config/samples/ --include="*.xml"
 
 | Resource | Path | What I Learn |
 |----------|------|--------------|
-| Connection schemas | `/reportburster/config/connections/<slug>/` | Tables, columns, relationships |
-| Sample reports | `/reportburster/config/samples/` | Working SQL patterns, business scenarios |
-| Existing reports | `/reportburster/config/reports/` | Production queries, actual usage |
+| Connection schemas | `/datapallas/config/connections/<slug>/` | Tables, columns, relationships |
+| Sample reports | `/datapallas/config/samples/` | Working SQL patterns, business scenarios |
+| Existing reports | `/datapallas/config/reports/` | Production queries, actual usage |
 | ER diagrams | `*-er-diagram.puml` files | Visual table relationships |
 | Domain groupings | `*-domain-grouped-schema.json` | Tables by business domain |
 
@@ -88,11 +88,11 @@ Enterprise databases can have thousands of tables. Schema files (`*-information-
 
 ```bash
 # Step 1: Read the table names index (always small, safe to cat)
-cat /reportburster/config/connections/<slug>/*-table-names.txt
+cat /datapallas/config/connections/<slug>/*-table-names.txt
 
 # Step 2: Grep the full schema for details on specific tables found above
-grep -i "customers" /reportburster/config/connections/<slug>/*-information-schema.json
-grep -i "orders" /reportburster/config/connections/<slug>/*-information-schema.json
+grep -i "customers" /datapallas/config/connections/<slug>/*-information-schema.json
+grep -i "orders" /datapallas/config/connections/<slug>/*-information-schema.json
 ```
 
 **If `*-table-names.txt` doesn't exist yet**, check the full schema size before reading:
@@ -333,15 +333,15 @@ When explaining query results:
 ## Chat2DB Technical Architecture (For Context)
 
 The Chat2DB container:
-- Mounts `/reportburster` (read-only)
-- Scans `/reportburster/config/connections/db-*/` for database configs
+- Mounts `/datapallas` (read-only)
+- Scans `/datapallas/config/connections/db-*/` for database configs
 - Uses `jaydebeapi` for JDBC connections
 - Routes natural language queries to me (Athena) via the OpenAI-compatible API
 - Displays results in Jupyter notebook cells
 
 My source code for this integration:
-- `/reportburster/_apps/flowkraft/_ai-hub/helpers/chat2db/py/letta_chat2db.py`
-- `/reportburster/_apps/flowkraft/_ai-hub/helpers/chat2db/py/rb_connections.py`
+- `/datapallas/_apps/flowkraft/_ai-hub/helpers/chat2db/py/letta_chat2db.py`
+- `/datapallas/_apps/flowkraft/_ai-hub/helpers/chat2db/py/rb_connections.py`
 
 ---
 

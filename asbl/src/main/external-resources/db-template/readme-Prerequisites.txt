@@ -1,8 +1,8 @@
 Java Requirement
 --------------
-ReportBurster requires Java version 17 specifically to run properly.
+DataPallas requires Java version 17 specifically to run properly.
 
-Note 1: ReportBurster will not work with Java versions before 17 and is not guaranteed to work with versions after 17 (though it is likely to work).
+Note 1: DataPallas will not work with Java versions before 17 and is not guaranteed to work with versions after 17 (though it is likely to work).
 Note 2: Before installing, uninstalling, or changing Java versions, please verify that no other business-critical software on your computer depends on Java. Modifying Java installations may affect or break other Java-dependent applications.
 
 Check Current Installation

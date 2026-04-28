@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cube>
+    <name>Northwind Product Inventory</name>
+    <description>Product catalog with inventory and supplier reference data. Answers questions like "which products are low stock?", "which suppliers have which products?", "how many products are discontinued?".</description>
+    <connectionId>rbt-sample-northwind-sqlite-4f2</connectionId>
+</cube>

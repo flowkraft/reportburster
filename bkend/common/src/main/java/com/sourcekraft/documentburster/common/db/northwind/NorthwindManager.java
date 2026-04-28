@@ -162,6 +162,20 @@ public class NorthwindManager implements AutoCloseable {
 		} else {
 			Path markerFile = hostDataPath.resolve(MARKER_FILENAME);
 			needsInitialization = !Files.exists(markerFile);
+			// Marker absent but DB may already have data (persistent container, deleted marker, CI wipe).
+			if (needsInitialization) {
+				try {
+					if (northwindExistsInDatabase(vendor)) {
+						log.info("[{}] Northwind tables already in DB; recreating marker, skipping init", vendor);
+						Files.createDirectories(hostDataPath);
+						if (!Files.exists(markerFile)) Files.createFile(markerFile);
+						needsInitialization = false;
+					}
+				} catch (Exception e) {
+					log.warn("[{}] Could not check DB for existing Northwind data: {}", vendor, e.getMessage());
+					// fall through — attempt init as normal
+				}
+			}
 		}
 
 		activeDataPaths.put(vendor, hostDataPath);
@@ -495,7 +509,7 @@ public class NorthwindManager implements AutoCloseable {
             // SQLite path - SQLite and DuckDB are sibling folders under the same parent (db/)
             // Use hostDataPath.getParent() to get the common db/ folder, then resolve SQLite sibling
             // This works for both:
-            //   - Build time: target/package/db-noexe/ReportBurster/db/ (no PORTABLE_EXECUTABLE_DIR)
+            //   - Build time: target/package/db-noexe/DataPallas/db/ (no PORTABLE_EXECUTABLE_DIR)
             //   - Runtime: {PORTABLE_EXECUTABLE_DIR}/db/ (when running as packaged app)
             Path sqliteDbPath = hostDataPath.getParent().resolve("sample-northwind-sqlite").resolve("northwind.db");
             String sqlitePath = sqliteDbPath.toAbsolutePath().toString();
@@ -621,6 +635,19 @@ public class NorthwindManager implements AutoCloseable {
         }
     }
 	
+	private boolean northwindExistsInDatabase(DatabaseVendor vendor) {
+		try (Connection conn = DriverManager.getConnection(
+				getJdbcUrl(vendor), getUsername(vendor), getPassword(vendor))) {
+			try (ResultSet rs = conn.getMetaData().getTables(
+					null, null, "Customers", new String[]{"TABLE"})) {
+				return rs.next();
+			}
+		} catch (Exception e) {
+			log.debug("[{}] northwindExistsInDatabase check failed: {}", vendor, e.getMessage());
+			return false;
+		}
+	}
+
 	public Map<String, String> getJpaProperties(DatabaseVendor vendor, boolean forDdl) {
 		Map<String, String> properties = new HashMap<>();
 		properties.put("jakarta.persistence.jdbc.url", getJdbcUrl(vendor));
@@ -628,14 +655,15 @@ public class NorthwindManager implements AutoCloseable {
 		properties.put("jakarta.persistence.jdbc.password", getPassword(vendor));
 
 		if (forDdl) {
-			// Supabase's superuser sees internal schemas (auth, storage, vault).
-			// "drop-and-create" fails because the drop phase encounters those objects.
-			// Use "create" only for Supabase — first-run only, nothing to drop anyway.
-			if (vendor == DatabaseVendor.SUPABASE) {
-				properties.put("jakarta.persistence.schema-generation.database.action", "create");
-			} else {
-				properties.put("jakarta.persistence.schema-generation.database.action", "drop-and-create");
-			}
+			// All server vendors use drop-and-create for idempotent re-seeding:
+			// Hibernate drops and recreates only the tables mapped to @Entity
+			// classes, scoped via hibernate.default_schema (see setupDatabase
+			// where Supabase gets default_schema=public). Auth/storage/vault
+			// schemas on Supabase are outside that scope and never touched.
+			// Without drop-and-create the Docker volume holds whatever was
+			// first seeded, forever — so a generator code change never reaches
+			// the test database.
+			properties.put("jakarta.persistence.schema-generation.database.action", "drop-and-create");
 			properties.put("hibernate.hbm2ddl.auto", "create");
 		}
 

@@ -13,6 +13,9 @@ import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.flowkraft.common.Constants;
 import com.flowkraft.common.Utils;
 import com.flowkraft.common.AppPaths;
@@ -22,6 +25,8 @@ import com.flowkraft.jobs.models.ClientServerCommunicationInfo;
 
 @Service
 public class JobsService implements JobsApi {
+
+	private static final Logger log = LoggerFactory.getLogger(JobsService.class);
 
 	public class State {
 		public int numberOfActiveJobs = 0;
@@ -54,7 +59,8 @@ public class JobsService implements JobsApi {
 					jobFileInfo.filePath = entry.toString();
 					allJobDetails.add(jobFileInfo);
 				} catch (Exception e) {
-					// File may have been deleted between listing and reading — ignore
+					// File deleted between directory listing and read — normal race condition
+					log.debug("Skipped job file deleted between list and read: {}", entry, e);
 				}
 			}
 		}
@@ -73,10 +79,11 @@ public class JobsService implements JobsApi {
 		jobExecutionService.executeAsync(new String[] { "resume", jobFilePath }, () -> {
 			try {
 				FileUtils.forceDelete(new File(serverTransactionInfo.info));
-			} catch (Exception e) {
-				// ignore cleanup failure
+			} catch (java.io.IOException e) {
+				log.warn("Could not delete job file {}: {}", serverTransactionInfo.info, e.getMessage());
+			} finally {
+				this.state.numberOfActiveJobs = 0;
 			}
-			this.state.numberOfActiveJobs = 0;
 		});
 
 	}
@@ -103,12 +110,8 @@ public class JobsService implements JobsApi {
 				String filePath = fileToProcess.filePath;
 				String fileName = FilenameUtils.getName(filePath);
 
-				try {
-					FileUtils.moveFile(new File(filePath), new File(AppPaths.DEFAULT_POLL_DIR_PATH + "/" + fileName));
-					FileUtils.deleteDirectory(new File(AppPaths.UPLOADS_DIR_PATH + "/" + serverTransactionInfo.id));
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
+				FileUtils.moveFile(new File(filePath), new File(AppPaths.DEFAULT_POLL_DIR_PATH + "/" + fileName));
+				FileUtils.deleteDirectory(new File(AppPaths.UPLOADS_DIR_PATH + "/" + serverTransactionInfo.id));
 
 			}
 

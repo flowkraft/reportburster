@@ -6,7 +6,7 @@ Library     resources/utilities.py
 Resource    resources/utilities.robot
 Variables   resources/vars.py
 Test Setup    Clean State
-Test Teardown    Kill Reportburster Exe Process
+Test Teardown    Kill DataPallas Exe Process
 
 *** Test Cases ***
 # Prerequisites Java 8 Installed Should Let The User Know That At Least Java 11 Is Required
@@ -22,7 +22,7 @@ Test Teardown    Kill Reportburster Exe Process
 #     Wait Until Page Contains Element    id=javaInstallationOld    timeout=300
 #     Sleep  1s
 #     Ensure Java Is Not Installed
-#     Close ReportBurster Application
+#     Close DataPallas Application
     
 Prerequisites Chocolatey Is Installed and Java Not Installed Should Allow User To Install Java
     [Documentation]  Prerequisites Chocolatey Is Installed and Java Not Installed Should Allow User To Install Java
@@ -53,7 +53,7 @@ Prerequisites Chocolatey Is Installed and Java Not Installed Should Allow User T
     Wait Until Element Is Not Visible    css=.dburst-button-question-confirm    timeout=300
     Sleep  1s
     Wait For Powershell And Accept Completion
-    Close ReportBurster Application
+    Close DataPallas Application
     Sleep  1s
     Refresh Env Variables
     Sleep  1s
@@ -63,7 +63,7 @@ Prerequisites Chocolatey Is Installed and Java Not Installed Should Allow User T
     Page Should Not Contain Element    id=btnInstallJavaTabBurst
     Sleep  1s
     Ensure Java Is Not Installed
-    Close ReportBurster Application
+    Close DataPallas Application
 
 Prerequisites Chocolatey Not Installed and Java Not Installed Should Allow User to Install Chocolatey and Then Java
    [Documentation]  Chocolatey Not Installed and Java Not Installed Should Allow User to Install Chocolatey and Then Java
@@ -93,7 +93,7 @@ Prerequisites Chocolatey Not Installed and Java Not Installed Should Allow User 
    Wait Until Element Is Not Visible    css=.dburst-button-question-confirm    timeout=300
    Wait For Powershell And Accept Completion
    Sleep  1s
-   Close ReportBurster Application
+   Close DataPallas Application
    Sleep  1s
    Refresh Env Variables
    Sleep  1s
@@ -118,7 +118,7 @@ Prerequisites Chocolatey Not Installed and Java Not Installed Should Allow User 
    Sleep  1s
    Wait For Powershell And Accept Completion
    Sleep  1s
-   Close ReportBurster Application
+   Close DataPallas Application
    Sleep  1s
    Refresh Env Variables
    Sleep  1s
@@ -128,7 +128,7 @@ Prerequisites Chocolatey Not Installed and Java Not Installed Should Allow User 
    Page Should Not Contain Element    id=btnInstallJavaTabBurst
    Sleep  1s
    Ensure Java Is Not Installed
-   Close ReportBurster Application
+   Close DataPallas Application
 
 # Prerequisites Chocolatey Installed But Choco Minus Version Not Working Should Work Fine
 #   [Documentation] Chocolatey Installed But Choco Minus Version Not Working Should Work Fine
@@ -145,7 +145,7 @@ Open Electron Application
   ...  ${signal_electron.binary_location} and chromedriver binary via ${chromedriver_path}
   ...  see vars.py for more details.
   # Kill any existing processes to prevent conflicts
-  Run Keyword And Ignore Error    Kill Reportburster Exe Process
+  Run Keyword And Ignore Error    Kill DataPallas Exe Process
   Sleep    2s
      
   # Start with explicit debugging port
@@ -180,16 +180,16 @@ Close Electron Application
   [Documentation]  Kills the Electron application process
   Close All Browsers
   Terminate All Processes    kill=True
-  Kill Reportburster Exe Process
+  Kill DataPallas Exe Process
 
-Close ReportBurster Application
-  [Documentation]  Close ReportBurster Application
-#  Click X Close Reportburster
-  Kill Reportburster Exe Process
+Close DataPallas Application
+  [Documentation]  Close DataPallas Application
+#  Click X Close DataPallas
+  Kill DataPallas Exe Process
 
 Close And Open Electron Application
     [Arguments]    ${condition_keyword}    ${condition_arg}    ${timeout}
-    Close ReportBurster Application
+    Close DataPallas Application
     Sleep  1s
     Refresh Env Variables
     Sleep  1s
@@ -201,7 +201,7 @@ Close And Open Electron Application
 Clean State
   [Documentation]  Clean Output Folders and Log Files
   Clean Output Folders and Log Files
-  Close ReportBurster Application
+  Close DataPallas Application
 
 #Capture Failed Test Screenshot
 #  [Documentation]  Captures a screenshot with a name based on the test case name

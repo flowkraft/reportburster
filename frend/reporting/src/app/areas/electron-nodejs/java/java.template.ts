@@ -22,7 +22,7 @@ export const javaTemplate = `<!-- <ng-template #javaTemplate> -->
           <em>Java</em>
           {{this.stateStore.configSys.sysInfo.setup.java.version}}
           {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.FOUND' | translate }}
-          <em>ReportBurster</em></strong
+          <em>DataPallas</em></strong
         ></span
       >
     </div>
@@ -112,7 +112,7 @@ export const javaTemplate = `<!-- <ng-template #javaTemplate> -->
         <u
           >{{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.RESTARTING' |
           translate }}
-          <em>ReportBurster</em>
+          <em>DataPallas</em>
           {{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.RESTARTING-REQUIRED' |
           translate }}
         </u>
@@ -128,7 +128,7 @@ export const javaTemplate = `<!-- <ng-template #javaTemplate> -->
       >
         <i class="fa fa-play"></i
         >&nbsp;{{'AREAS.INSTALL-SETUP-UPGRADE.COMPONENTS.JAVA.RESTART' |
-        translate }}Restart <em>ReportBurster</em>
+        translate }}Restart <em>DataPallas</em>
       </button>
     </p-panel>
   </div>

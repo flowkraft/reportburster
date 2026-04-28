@@ -6,7 +6,7 @@ import { baseMeta } from './_utils/setup';
 type Story = StoryObj<ButtonClearLogsComponent>;
 const defaultMeta: Meta<ButtonClearLogsComponent> = {
   ...baseMeta,
-  title: 'ReportBurster/Buttons/ButtonClearLogs',
+  title: 'DataPallas/Buttons/ButtonClearLogs',
   component: ButtonClearLogsComponent,
 };
 

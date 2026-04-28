@@ -14,8 +14,8 @@ Users choose **one** of these stacks:
 
 | Stack | When to Use | Boilerplate Location |
 |-------|-------------|---------------------|
-| **Grails** (recommended) | Consistency with ReportBurster's Groovy scripting and backend. Best for admin panels + front-facing portals. | `_apps/flowkraft/grails-playground/` |
-| **WordPress + PODS** | Vast plugin ecosystem (payments, themes), quick setup. Bundled with ReportBurster. | `_apps/cms-webportal-playground/` |
+| **Grails** (recommended) | Consistency with DataPallas's Groovy scripting and backend. Best for admin panels + front-facing portals. | `_apps/flowkraft/grails-playground/` |
+| **WordPress + PODS** | Vast plugin ecosystem (payments, themes), quick setup. Bundled with DataPallas. | `_apps/cms-webportal-playground/` |
 | **NextJS/React** | Modern React/Tailwind/Shadcn stack for developers who prefer that ecosystem. | `_apps/flowkraft/next-playground/` |
 
 **Important:** I read the `README.md` in each boilerplate folder to understand the setup.
@@ -27,7 +27,7 @@ Users choose **one** of these stacks:
 Every self-service portal needs an **Admin Panel** (`/admin`) where administrators manage documents, users, data, and configuration. This is separate from the front-facing portal that end-users see.
 
 All three stacks provide admin interfaces:
-- **Grails** — Built-in scaffolding for CRUD admin panels. Our recommended stack for consistency with ReportBurster's Groovy scripting and backend.
+- **Grails** — Built-in scaffolding for CRUD admin panels. Our recommended stack for consistency with DataPallas's Groovy scripting and backend.
 - **WordPress + PODS** — Admin dashboard comes out of the box (`/wp-admin`). PODS Framework adds custom content type management.
 - **NextJS** — Build custom admin routes using shadcn components and server actions.
 
@@ -43,7 +43,7 @@ Each boilerplate includes both `/admin` (back-office) and `/` (front-facing port
 
 ## Publishing Documents to the Portal
 
-Documents are published via the `reportburster-scripting` skill:
+Documents are published via the `datapallas-scripting` skill:
 
 1. **Hook**: Use `endExtractDocument.groovy` to publish each extracted report
 2. **API**: Call the portal's REST API via cURL
@@ -51,7 +51,7 @@ Documents are published via the `reportburster-scripting` skill:
    - Grails/NextJS: Custom API endpoints you define
 
 **Workflow:**
-1. ReportBurster generates/extracts report → `endExtractDocument` fires
+1. DataPallas generates/extracts report → `endExtractDocument` fires
 2. Script checks/creates user via REST API
 3. Script publishes document with metadata (employee, period, amounts, etc.)
 4. User sees document in their portal dashboard
@@ -104,7 +104,7 @@ I encourage reading the full docs — I can generate most of the PHP code from p
 
 1. I identify which portal stack the user wants (Grails, WordPress, NextJS)
 2. I point them to the correct boilerplate: `_apps/cms-webportal-playground/README.md`, `_apps/flowkraft/grails-playground/README.md`, or `_apps/flowkraft/next-playground/README.md`
-3. For document publishing, I use the `reportburster-scripting` skill to write Groovy + cURL scripts
+3. For document publishing, I use the `datapallas-scripting` skill to write Groovy + cURL scripts
 4. For WordPress customization, I fetch the AI-driven setup docs and help generate PHP templates
 
 ---

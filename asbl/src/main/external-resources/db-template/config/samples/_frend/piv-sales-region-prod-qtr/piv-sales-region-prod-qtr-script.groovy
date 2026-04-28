@@ -44,7 +44,7 @@ regions.each { region ->
     }
 }
 
-// Set the context variables as expected by ReportBurster
+// Set the context variables as expected by DataPallas
 ctx.reportData = salesData
 ctx.reportColumnNames = ['Region', 'Product', 'Quarter', 'SalesRep', 'Quantity', 'Revenue', 'Cost', 'Profit']
 

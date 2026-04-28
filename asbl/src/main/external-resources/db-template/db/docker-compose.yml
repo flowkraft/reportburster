@@ -10,6 +10,10 @@ services:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    command:
+      - postgres
+      - -c
+      - max_connections=500
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
@@ -28,7 +32,7 @@ services:
       - "${MYSQL_PORT}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-    command: --general-log=1 --general-log-file=/var/log/mysql/mysql-general.log
+    command: --general-log=1 --general-log-file=/var/log/mysql/mysql-general.log --max_connections=500
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MYSQL_PASSWORD"]
@@ -47,7 +51,7 @@ services:
       - "${MARIADB_PORT}:3306"  # set MARIADB_PORT (e.g. 3307) if you need to avoid conflicts
     volumes:
       - mariadb_data:/var/lib/mysql
-    command: --general-log=1 --general-log-file=/var/log/mysql/mariadb-general.log
+    command: --general-log=1 --general-log-file=/var/log/mysql/mariadb-general.log --max_connections=500
     restart: unless-stopped
     #healthcheck:
     #  test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MARIADB_PASSWORD"]

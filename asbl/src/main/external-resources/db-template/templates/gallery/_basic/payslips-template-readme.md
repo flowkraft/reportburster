@@ -16,7 +16,7 @@ The template consists of:
 
 ## Variable Placeholders
 
-The template uses `${colX}` variables that ReportBurster replaces with your data:
+The template uses `${colX}` variables that DataPallas replaces with your data:
 
 * `${col0}` through `${col5}` - Employee information (name, ID, SSN, period, etc.)
 * `${col6}` through `${col13}` - Earnings and deductions amounts
@@ -54,7 +54,7 @@ Adjust colors and styles to match your organization's branding.
 
 1. Ensure your data source has all required fields in the correct order.
 2. For testing, create a sample CSV with appropriate placeholder data.
-3. Map your data columns to the template variables in ReportBurster.
+3. Map your data columns to the template variables in DataPallas.
 4. Preview with sample data before generating payslips for distribution.
 
 This template provides a solid foundation that can be extended with additional information, 

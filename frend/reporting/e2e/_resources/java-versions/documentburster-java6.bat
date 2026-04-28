@@ -27,4 +27,4 @@ for /L %%i in (1,1,!argCount!) do (
 )
 
 :: Launch with dynamically built arguments
-"C:/Program Files/Java/jre6/bin/java.exe" -DDOCUMENTBURSTER_HOME="%CD%" -cp lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml !javaArgs! -emacs > logs/reportburster.bat.log
+"C:/Program Files/Java/jre6/bin/java.exe" -DDOCUMENTBURSTER_HOME="%CD%" -cp lib/burst/ant-launcher.jar org.apache.tools.ant.launch.Launcher -buildfile config/_internal/documentburster.xml !javaArgs! -emacs > logs/datapallas.bat.log

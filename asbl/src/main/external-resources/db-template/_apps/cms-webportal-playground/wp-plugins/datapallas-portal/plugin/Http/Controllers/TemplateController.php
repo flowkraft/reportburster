@@ -1,6 +1,6 @@
 <?php
 
-namespace ReportBurster_Portal\Http\Controllers;
+namespace DataPallas_Portal\Http\Controllers;
 
 class TemplateController extends Controller
 {

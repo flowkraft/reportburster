@@ -4,8 +4,8 @@
 	xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
-	<name>rb-product-reportburster</name>
-	<description>rb-product-reportburster</description>
+	<name>rb-product-DataPallas</name>
+	<description>rb-product-DataPallas</description>
 	<url>http://www.reportburster.com/</url>
 	<parent>
 		<groupId>com.sourcekraft.documentburster</groupId>
@@ -13,14 +13,14 @@
 		<version>1</version>
 		<relativePath>./xtra-tools/bild/common-scripts/maven/pom.xml</relativePath>
 	</parent>
-	<artifactId>rb-product-reportburster</artifactId>
+	<artifactId>rb-product-DataPallas</artifactId>
 	<version>${revision}</version>
 
 	<packaging>pom</packaging>
 
 	<properties>
 
-		<revision>14.6.0</revision>
+		<revision>15.1.0</revision>
 
 		<!-- upgraded -->
 		<commons.beanutils.version>1.9.4</commons.beanutils.version>

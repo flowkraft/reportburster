@@ -4,7 +4,7 @@
     "activityBar.foreground": "#ffffff",
     "activityBar.inactiveForeground": "#000000"
   },
-  "window.title": "${dirty} ReportBurster (Kate) > ${activeEditorShort}",
+  "window.title": "${dirty} DataPallas (Kate) > ${activeEditorShort}",
   "files.watcherExclude": {
     "**/node_modules/*/**": true,
     "**/.venv/*/**": true

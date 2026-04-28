@@ -13,7 +13,7 @@ export const tabReportingChartTemplate = `<ng-template
                 <div class="panel-body">
                   <rb-chart
                     *ngIf="showChartPreview"
-                    [reportCode]="getCurrentReportCode()"
+                    [reportId]="getCurrentReportCode()"
                     [componentId]="cid"
                     [apiBaseUrl]="reportingService.reportingApiBaseUrl"
                     [reportParams]="previewParams || {}"

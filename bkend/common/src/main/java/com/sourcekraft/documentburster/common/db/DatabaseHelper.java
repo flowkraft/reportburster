@@ -97,7 +97,7 @@ public class DatabaseHelper {
 		return params.stream().distinct().collect(Collectors.toList());
 	}
 
-	public String convertToJdbiParameters(String sql) {
+	public static String convertToJdbiParameters(String sql) {
 		Pattern pattern = Pattern.compile("[\\$#]\\{([^}]+)\\}|@(\\w+)@");
 		Matcher matcher = pattern.matcher(sql);
 		StringBuilder sb = new StringBuilder();

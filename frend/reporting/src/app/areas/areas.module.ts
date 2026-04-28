@@ -4,15 +4,13 @@ import { ProgressbarModule } from 'ngx-bootstrap/progressbar';
 
 import { AreasComponent } from './areas.component';
 
-//import { SharedModule } from '../shared.module';
 import { SharedModule } from '../shared/shared.module';
 
 import { ProcessingModule } from './_processing/processing.module';
 import { AppRoutingModule } from '../app-routing.module';
-import { ConfigurationReportsModule } from './_configuration-reports/configuration-reports.module';
+import { ConfigurationCrudModule } from './_configuration-crud/configuration-crud.module';
 import { HelpModule } from './_help/help.module';
 import { ConfigurationModule } from './_configuration/configuration.module';
-import { ConfigurationConnectionsModule } from './_configuration-connections/configuration-connections.module';
 import { StatusBarModule } from './status-bar/status-bar.module';
 import { TopMenuHeaderModule } from './top-menu-header/top-menu-header.module';
 
@@ -25,8 +23,7 @@ import { TopMenuHeaderModule } from './top-menu-header/top-menu-header.module';
     StatusBarModule,
     ProcessingModule,
     ConfigurationModule,
-    ConfigurationReportsModule,
-    ConfigurationConnectionsModule,
+    ConfigurationCrudModule,
     HelpModule,
   ],
 })

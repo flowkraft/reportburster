@@ -2,7 +2,7 @@
 
 <script context="module" lang="ts">
   // Module-level: shared across all <rb-filter-pane> instances on the page.
-  // Deduplicates config requests when N components share the same report-code.
+  // Deduplicates config requests when N components share the same report-id.
   const _cfgCache = new Map<string, Promise<any>>();
 
   function fetchConfigCached(url: string, headers: Record<string, string>): Promise<any> {
@@ -31,7 +31,7 @@
   //   This avoids N separate API calls for the same data.
   //
   // MODE 2 — "Self-Fetch" (component fetches its own config + data)
-  //   Props: [reportCode], [apiBaseUrl], [reportParams], [testMode], [componentId]
+  //   Props: [reportId], [apiBaseUrl], [reportParams], [testMode], [componentId]
   //   Component calls GET /reports/{code}/config then GET /reports/{code}/data
   //   Used in: Processing > View Data, dashboards with named components.
   //
@@ -42,11 +42,11 @@
   // ============================================================================
   // Core Props (HTML attributes on the web component)
   // ============================================================================
-  export let reportCode: string = '';
+  export let reportId: string = '';
   export let apiBaseUrl: string = '';
   export let apiKey: string = '';
   export let componentId: string = '';
-  export let connectionCode: string = '';
+  export let connectionId: string = '';
   export let tableName: string = '';
   export let reportParams: Record<string, string> = {};
   export let testMode: boolean = false;
@@ -126,10 +126,10 @@
     if (hostEl) {
       if (!field) field = hostEl.getAttribute('field') || '';
       if (!label) label = hostEl.getAttribute('label') || '';
-      if (!reportCode) reportCode = hostEl.getAttribute('report-code') || '';
+      if (!reportId) reportId = hostEl.getAttribute('report-id') || '';
       if (!apiBaseUrl) apiBaseUrl = hostEl.getAttribute('api-base-url') || '';
       if (!componentId) componentId = hostEl.getAttribute('component-id') || '';
-      if (!connectionCode) connectionCode = hostEl.getAttribute('connection-code') || '';
+      if (!connectionId) connectionId = hostEl.getAttribute('connection-id') || '';
       if (!tableName) tableName = hostEl.getAttribute('table-name') || '';
 
       // DSL config attributes
@@ -166,12 +166,12 @@
     }
 
     // ====================================================================
-    // MODE 2: Self-Fetch — if reportCode + apiBaseUrl provided, fetch config
+    // MODE 2: Self-Fetch — if reportId + apiBaseUrl provided, fetch config
     // from Java backend (same pattern as RbTabulator, RbChart, RbPivotTable)
     // ====================================================================
-    if (reportCode && apiBaseUrl) {
+    if (reportId && apiBaseUrl) {
       try {
-        const configUrl = `${apiBaseUrl}/api/reports/${reportCode}/config`;
+        const configUrl = `${apiBaseUrl}/api/reports/${reportId}/config`;
         const headers = buildHeaders();
         const config = await fetchConfigCached(configUrl, headers);
 
@@ -253,7 +253,7 @@
     try {
       const headers = buildHeaders();
 
-      if (connectionCode && tableName) {
+      if (connectionId && tableName) {
         // Direct mode: query distinct values via connection
         const orderClause = sort === 'none' ? '' : ` ORDER BY "${field}" ${sort === 'desc' ? 'DESC' : 'ASC'}`;
         const sql = `SELECT DISTINCT "${field}" FROM "${tableName}" WHERE "${field}" IS NOT NULL${orderClause} LIMIT ${maxValues}`;
@@ -261,16 +261,16 @@
         const res = await fetch(`${apiBaseUrl}/api/queries/execute`, {
           method: 'POST',
           headers,
-          body: JSON.stringify({ connectionId: connectionCode, sql }),
+          body: JSON.stringify({ connectionId: connectionId, sql }),
         });
         if (!res.ok) throw new Error(`Failed to load values: ${res.status}`);
         const result = await res.json();
         allValues = (result.data || []).map((row: any) => ({ value: String(row[field] ?? '') }));
         applySortAndLimit();
 
-      } else if (reportCode && apiBaseUrl) {
+      } else if (reportId && apiBaseUrl) {
         // Report mode: fetch data and extract distinct values
-        let dataUrl = `${apiBaseUrl}/api/reports/${reportCode}/data?componentId=${componentId}`;
+        let dataUrl = `${apiBaseUrl}/api/reports/${reportId}/data?componentId=${componentId}`;
         if (testMode) dataUrl += '&testMode=true';
 
         // Append report params

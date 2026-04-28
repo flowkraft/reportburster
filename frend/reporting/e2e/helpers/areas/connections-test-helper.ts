@@ -3,6 +3,7 @@ import _ from 'lodash';
 import { FluentTester } from '../fluent-tester';
 import * as PATHS from '../../utils/paths';
 import { Constants } from '../../utils/constants';
+import { ConfigurationTestHelper } from './configuration-test-helper';
 
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
@@ -387,11 +388,9 @@ export class ConnectionsTestHelper {
     emailConnectionName: string,
     shouldBeTheDefaultEmailConnection: string,
   ): FluentTester {
+    ft = ConfigurationTestHelper.loadConfiguration(ft, folderName)
+
     ft = ft
-      .gotoConfiguration()
-      .click(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-      )
       .click('#leftMenuEmailSettings') // email SMTP settings
       .elementCheckBoxShouldBeSelected('#btnUseExistingEmailConnection')
       .elementShouldBeEnabled('#btnSelectedEmailConnection')
@@ -1121,7 +1120,85 @@ export class ConnectionsTestHelper {
   }
 
   /**
+   * Vendor-aware docker compose down. Supabase uses its own subdirectory
+   * (`db/supabase/`) rather than the root `db/` compose file. All other
+   * server-based vendors live in the root `db/` compose.
+   *
+   * Safe to call from a `finally` block — swallows non-fatal errors from
+   * already-stopped containers.
+   */
+  static dockerComposeDownForVendor(
+    vendor: string,
+    timeoutMs: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS,
+    removeVolumes: boolean = true,
+  ): void {
+    const baseDir = String(process.env.PORTABLE_EXECUTABLE_DIR || '.');
+    const v = (vendor || '').toLowerCase().trim();
+    // Supabase has its own docker-compose in db/supabase/
+    const composeDir = v === 'supabase'
+      ? path.resolve(baseDir, 'db', 'supabase')
+      : path.resolve(baseDir, 'db');
+
+    const downCmd = removeVolumes ? 'docker compose down -v' : 'docker compose down';
+    const isWin = process.platform === 'win32';
+    let cmd: string;
+    let args: string[];
+
+    if (isWin) {
+      cmd = 'powershell.exe';
+      args = ['-NoProfile', '-NonInteractive', '-Command', downCmd];
+    } else {
+      cmd = 'docker';
+      args = removeVolumes ? ['compose', 'down', '-v'] : ['compose', 'down'];
+    }
+
+    console.log(`[ConnectionsTestHelper] stopping ${vendor} docker compose (cwd=${composeDir})`);
+
+    const res = spawnSync(cmd, args, {
+      cwd: composeDir,
+      encoding: 'utf8',
+      timeout: timeoutMs,
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    if (res.error) {
+      console.error(`[ConnectionsTestHelper] docker compose down error (${vendor}):`, res.error);
+      return; // non-fatal in finally cleanup
+    }
+    if (res.status !== 0) {
+      const out = (res.stdout || '').toString();
+      const err = (res.stderr || '').toString();
+      console.error(`[ConnectionsTestHelper] docker compose down failed (${vendor}, status=${res.status})\n${err || out}`);
+      return; // non-fatal in finally cleanup
+    }
+
+    if (res.stdout) console.log(res.stdout.toString());
+
+    // Remove .northwind_initialized markers so next start re-provisions
+    if (removeVolumes) {
+      const markerDir = v === 'supabase' ? composeDir : path.resolve(baseDir, 'db');
+      try {
+        const entries = fs.readdirSync(markerDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory() && entry.name.startsWith('sample-northwind-')) {
+            const markerPath = path.join(markerDir, entry.name, '.northwind_initialized');
+            if (fs.existsSync(markerPath)) {
+              fs.unlinkSync(markerPath);
+              console.log(`[ConnectionsTestHelper] Removed marker: ${markerPath}`);
+            }
+          }
+        }
+      } catch (e) { /* ignore marker cleanup errors */ }
+    }
+
+    console.log(`[ConnectionsTestHelper] docker compose down completed for ${vendor}.`);
+  }
+
+  /**
    * Seeds N invoices into seed_inv_* tables, waits for completion,
+   * then wipes the data and waits for the seed button to reappear.
+   * Assumes the starter pack is already running and visible.
    * then wipes the data and waits for the seed button to reappear.
    * Assumes the starter pack is already running and visible.
    */
@@ -1248,27 +1325,34 @@ export class ConnectionsTestHelper {
     // ── 4c: Mixed — Products full, Categories partial, Employees names-only ──
     ft = ft.consoleLog('Field Selection 4c: Mixed — Products full, Categories partial, Employees names-only');
 
-    // Start from names-only baseline
+    // Start from all-details baseline (all three tables → full).
+    // The target-side checkbox cycle is tri-state: full → names-only → fully-deselected,
+    // so we build the mixed scenario by descending from "all full" rather than ascending
+    // from "all names-only" (which would put the second click into the wrong bucket).
     ft = ft
-      .click(`#btnNamesOnly${picklistId}`)
+      .click(`#btnAllDetails${picklistId}`)
       .sleep(Constants.DELAY_ONE_SECOND);
 
-    // Re-include Products with all columns (click checkbox to select Products + all children)
-    ft = ft
-      .click(`#treeNodeproductstargetTree${picklistId} .p-checkbox`)
-      .sleep(Constants.DELAY_ONE_SECOND);
+    // Products — leave as-is → stays full. No click needed.
 
-    // Re-include Categories partially — expand node and check only CategoryName.
+    // Categories → partial: expand, then uncheck Description column,
+    // leaving CategoryName (and any other vendor-specific columns) partially selected.
+    // Picture is not unchecked here because DuckDB's Northwind omits that column entirely.
     ft = ft.ensureTreeNodeExpanded(
       `#treeNodecategoriestargetTree${picklistId}`,
     ).sleep(Constants.DELAY_ONE_SECOND);
 
-    // Click only the CategoryName column checkbox (partial selection for Categories)
     ft = ft
-      .click(`#treeNodecategories_categorynametargetTree${picklistId} .p-checkbox`)
+      .click(`#treeNodecategories_descriptiontargetTree${picklistId} .p-checkbox`)
       .sleep(Constants.DELAY_ONE_SECOND);
 
-    // Employees stays unchecked = names only
+    // Employees → names-only: single click on the table's own checkbox cycles
+    // full → names-only. Use the direct-child combinator to hit the row's own
+    // checkbox (not a nested column's) even if the node is expanded.
+    ft = ft
+      .click(`#treeNodeemployeestargetTree${picklistId} > .p-treenode-content > .p-checkbox`)
+      .sleep(Constants.DELAY_ONE_SECOND);
+
     ft = ft
       .sleep(Constants.DELAY_ONE_SECOND)
       .click('#btnGenerateWithAIDbSchema')
@@ -1280,10 +1364,9 @@ export class ConnectionsTestHelper {
       // Products = full details
       .clipboardShouldContainText('"tableName": "Products"')
       .clipboardShouldContainText('"columnName": "Discontinued"')
-      // Categories = partial (only CategoryName included; Description and Picture excluded)
+      // Categories = partial (CategoryName included; Description excluded)
       .clipboardShouldContainText('"columnName": "CategoryName"')
       .clipboardShouldNotContainText('"columnName": "Description"')
-      .clipboardShouldNotContainText('"columnName": "Picture"')
       // Employees = names only (no column details)
       .clipboardShouldContainText('Employees')
       .clipboardShouldNotContainText('"columnName": "LastName"')

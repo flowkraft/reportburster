@@ -1,10 +1,10 @@
-<?php
+﻿<?php
 /**
  * Template part for displaying the header content
  *
  * @link https://developer.wordpress.org/themes/basics/template-hierarchy/
  *
- * @package ReportBurster_Theme
+ * @package DataPallas_Theme
  */
 
 ?>
@@ -19,7 +19,7 @@
 							<path d="m22 2-7 20-4-9-9-4Z"/>
 							<path d="M22 2 11 13"/>
 						</svg>
-						<span><strong>Report</strong><em class="font-normal">Burster</em></span>
+						<span><strong>Data</strong><em class="font-normal">Pallas</em></span>
 					</h1>
 				<?php else : ?>
 					<a href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home" class="text-xl font-bold text-gray-900 hover:text-cyan-600 transition-colors flex items-center gap-2">
@@ -27,13 +27,13 @@
 							<path d="m22 2-7 20-4-9-9-4Z"/>
 							<path d="M22 2 11 13"/>
 						</svg>
-						<span><strong>Report</strong><em class="font-normal">Burster</em></span>
+						<span><strong>Data</strong><em class="font-normal">Pallas</em></span>
 					</a>
 				<?php endif; ?>
 			</div>
 
 			<div class="flex items-center space-x-6">
-				<nav id="site-navigation" aria-label="<?php esc_attr_e( 'Main Navigation', 'reportburster-theme' ); ?>">
+				<nav id="site-navigation" aria-label="<?php esc_attr_e( 'Main Navigation', 'datapallas-theme' ); ?>">
 					<?php
 					wp_nav_menu(
 						array(

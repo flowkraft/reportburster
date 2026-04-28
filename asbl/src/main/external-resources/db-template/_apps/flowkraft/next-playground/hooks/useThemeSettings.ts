@@ -8,7 +8,7 @@ const THEME_COLOR_KEY = "theme.color"
 const THEME_MODE_KEY = "theme.mode"
 
 // Default values
-const DEFAULT_THEME = "reportburster"
+const DEFAULT_THEME = "datapallas"
 const DEFAULT_MODE = "light" as const
 
 type ThemeMode = "light" | "dark"

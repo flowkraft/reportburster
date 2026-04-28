@@ -14,7 +14,7 @@ export function ThemeSelector() {
     setIsOpen(false)
   }
 
-  const currentThemeLabel = themes.find((t) => t.name === colorTheme)?.label || "ReportBurster"
+  const currentThemeLabel = themes.find((t) => t.name === colorTheme)?.label || "DataPallas"
 
   if (isLoading) {
     return (

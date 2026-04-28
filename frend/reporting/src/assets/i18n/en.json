@@ -11,6 +11,8 @@
         "GENERAL": "General",
         "REPORTING": "Reporting",
         "QUALITY-ASSURANCE": "Quality Assurance",
+        "ALL-REPORTS": "Switch Configuration",
+        "REPORTS": "All Reports",
         "SMS": "SMS",
         "TEST-EMAIL-SERVER": "Test Email Server",
         "TOP-TITLE": "CONFIGURATION",
@@ -101,7 +103,7 @@
           "SAMPLE-LABEL": "(sample)",
           "PROMPT-MODIFY": "prompt 1: modify this HTML template with some changes, as needed",
           "PROMPT-REBUILD": "prompt 2: build your HTML template from scratch, using this template's (full) prompt as a guide",
-          "GALLERY-CONFIRM": "Got it! I'll check out the ReportBurster templates gallery now",
+          "GALLERY-CONFIRM": "Got it! I'll check out the DataPallas templates gallery now",
           "AI-HELP-CONFIRM": "Ask Artificial Intelligence to help you, find out how!"
         },
         "AI-INSTRUCTIONS": {
@@ -109,7 +111,7 @@
           "STEP2-GENERAL": "2. Carefully read (yes, do read it) and <strong>tailor the prompt</strong> to meet your specific requirements",
           "STEP2-CUSTOM": "2. Tailor <strong>Customization Instructions</strong> to meet your specific requirements",
           "STEP3": "3. Paste the entire (modified) prompt into your preferred artificial intelligence chat (<a href=\"https://copilot.microsoft.com\" target=\"_blank\">Microsoft Copilot</a> is a good free one!) or any similar AI assistant.",
-          "STEP4": "4. Copy the complete HTML code the AI generates and paste it into the ReportBurster editor",
+          "STEP4": "4. Copy the complete HTML code the AI generates and paste it into the DataPallas editor",
           "COLOR-TIP": "Go to <a href=\"https://color.adobe.com/explore\" target=\"_blank\">Adobe Color Explore</a> for choosing a beautiful color theme (based on color theory)"
         }
       },
@@ -144,7 +146,7 @@
         "ENABLE-RETRY-POLICY": "Enable Retry Policy",
         "IF-ANY-RECIPIENT-FAILS": "If Any Recipient Delivery Fails",
         "INNER-HTML": {
-          "RETRY-POLICY": "By default report delivery jobs only have one attempt, that is when they fail, they are marked as a failure, and remain that way until you intervene. However, <em>ReportBurster</em> allows to specify a retry policy, which is important for report delivery jobs such as transferring an email, which upon failure, may usually retry without issue.",
+          "RETRY-POLICY": "By default report delivery jobs only have one attempt, that is when they fail, they are marked as a failure, and remain that way until you intervene. However, <em>DataPallas</em> allows to specify a retry policy, which is important for report delivery jobs such as transferring an email, which upon failure, may usually retry without issue.",
           "SETS-DELAY": "Sets the <strong>Delay</strong> between retries, exponentially backing off to the <strong>Max Delay</strong> and multiplying successive delays by a factor of 2"
         },
         "MAX-DELAY": "Max Delay",
@@ -213,8 +215,8 @@
         "DATABASE-FILE": "Database File",
         "HOST": "Host",
         "INNER-HTML": {
-          "DB-ALL-CLOUD-PROVIDERS": "<em>ReportBurster</em> works with any SMTP email server including\n<a href=\"https://products.office.com/en-us/exchange \" target=\"_blank \">Microsoft Exchange Server</a> and the below cloud email service providers.",
-          "DB-ALL-DATABASE-SYSTEMS": "<em>ReportBurster</em> works with all major database systems including\n<a href=\"https://www.oracle.com/database/\" target=\"_blank\">Oracle</a>, <a href=\"https://www.microsoft.com/sql-server/\" target=\"_blank\">Microsoft SQL Server</a>, <a href=\"https://www.postgresql.org/\" target=\"_blank\">PostgreSQL</a>, and <a href=\"https://www.mysql.com/\" target=\"_blank\">MySQL</a>."
+          "DB-ALL-CLOUD-PROVIDERS": "<em>DataPallas</em> works with any SMTP email server including\n<a href=\"https://products.office.com/en-us/exchange \" target=\"_blank \">Microsoft Exchange Server</a> and the below cloud email service providers.",
+          "DB-ALL-DATABASE-SYSTEMS": "<em>DataPallas</em> works with all major database systems including\n<a href=\"https://www.oracle.com/database/\" target=\"_blank\">Oracle</a>, <a href=\"https://www.microsoft.com/sql-server/\" target=\"_blank\">Microsoft SQL Server</a>, <a href=\"https://www.postgresql.org/\" target=\"_blank\">PostgreSQL</a>, and <a href=\"https://www.mysql.com/\" target=\"_blank\">MySQL</a>."
         },
         "PASSWORD": "Password",
         "PORT": "Port",
@@ -251,7 +253,7 @@
         "QUARANTINE-DOCUMENTS-WHICH-FAIL": "Quarantine documents which fail to be delivered",
         "SEND-BY-EMAIL": "Send documents by Email",
         "SEND-SMS-MESSAGES": "Send SMS messages",
-        "SEND-TO-WEB": "Send documents to a Website (i.e. <em>ReportBurster Web</em>, SharePoint, WordPress)",
+        "SEND-TO-WEB": "Send documents to a Website (i.e. <em>DataPallas Web</em>, SharePoint, WordPress)",
         "SMS-CONFIGURATION": "SMS Configuration",
         "UPLOAD-CONFIGURATION": "Upload Configuration",
         "UPLOAD-DOCUMENTS": "Upload documents (i.e. FTP, SFTP, File Share, FTPs or HTTP/WebDAV)",
@@ -311,7 +313,7 @@
         "FULL-CURL-POWER": "Full cURL power is available here",
         "HINT": "Hint",
         "INNER-HTML": {
-          "CURL-INTEGRATION": "<p></p>\n<p></p>\n<em>ReportBurster</em> closely integrates with cURL in order to upload business reports through FTP, FTPS, SCP, SFTP, TFTP, HTTP, HTTPS, etc.\n<p></p>\n<p></p>For more details about cURL usage please read:\n<p></p>\n<p></p>1. cURL Man Page -\n<a href=\"http://curl.haxx.se/docs/manpage.html\" target=\"_blank\">http://curl.haxx.se/docs/manpage.html\n</a>\n<br>2. cURL Manual -\n<a href=\"http://curl.haxx.se/docs/manual.html\" target=\"_blank\">http://curl.haxx.se/docs/manual.html\n </a>"
+          "CURL-INTEGRATION": "<p></p>\n<p></p>\n<em>DataPallas</em> closely integrates with cURL in order to upload business reports through FTP, FTPS, SCP, SFTP, TFTP, HTTP, HTTPS, etc.\n<p></p>\n<p></p>For more details about cURL usage please read:\n<p></p>\n<p></p>1. cURL Man Page -\n<a href=\"http://curl.haxx.se/docs/manpage.html\" target=\"_blank\">http://curl.haxx.se/docs/manpage.html\n</a>\n<br>2. cURL Manual -\n<a href=\"http://curl.haxx.se/docs/manual.html\" target=\"_blank\">http://curl.haxx.se/docs/manual.html\n </a>"
         },
         "OPTIONS": "options",
         "SYNOPSIS": "Synopsis"
@@ -360,7 +362,7 @@
         "EXAMPLE": "Example",
         "EXAMPLES": "Examples",
         "INNER-HTML": {
-          "USE-DOCUMENTBURSTER-DRUPAL": "   Use\n          <em>ReportBurster</em> to securely send documents to your company\n          <a href=\"https://www.drupal.org\" target=\"_blank\">Drupal</a> website."
+          "USE-DOCUMENTBURSTER-DRUPAL": "   Use\n          <em>DataPallas</em> to securely send documents to your company\n          <a href=\"https://www.drupal.org\" target=\"_blank\">Drupal</a> website."
         }
       },
       "TAB-WEB-UPLOAD-JOOMLA": {
@@ -368,7 +370,7 @@
         "EXAMPLE": "Example",
         "EXAMPLES": "Examples",
         "INNER-HTML": {
-          "USE-DOCUMENTBURSTER-JOOMLA": "  Use\n          <em>ReportBurster</em> to securely send documents to your company\n          <a href=\"https://www.joomla.org\" target=\"_blank\">Joomla</a> website."
+          "USE-DOCUMENTBURSTER-JOOMLA": "  Use\n          <em>DataPallas</em> to securely send documents to your company\n          <a href=\"https://www.joomla.org\" target=\"_blank\">Joomla</a> website."
         }
       },
       "TAB-WEB-UPLOAD-OTHER": {
@@ -376,7 +378,7 @@
         "EXAMPLE": "Example",
         "EXAMPLES": "Examples",
         "INNER-HTML": {
-          "USE-DOCUMENTBURSTER-OTHER": "  Use\n          <em>ReportBurster</em> to securely send documents to all the major\n          <a href=\"https://en.wikipedia.org/wiki/Content_management_system\" target=\"_blank\">content management system</a>\n          vendors."
+          "USE-DOCUMENTBURSTER-OTHER": "  Use\n          <em>DataPallas</em> to securely send documents to all the major\n          <a href=\"https://en.wikipedia.org/wiki/Content_management_system\" target=\"_blank\">content management system</a>\n          vendors."
         }
       },
       "TAB-WEB-UPLOAD-SHAREPOINT": {
@@ -384,7 +386,7 @@
         "EXAMPLE": "SharePoint Example",
         "EXAMPLES": "Examples",
         "INNER-HTML": {
-          "USE-DOCUMENTBURSTER-SHAREPOINT": "  Use\n          <em>ReportBurster</em> to securely send documents to your company\n          <a href=\"http://www.sharepoint.com\" target=\"_blank\">Microsoft SharePoint</a> website."
+          "USE-DOCUMENTBURSTER-SHAREPOINT": "  Use\n          <em>DataPallas</em> to securely send documents to your company\n          <a href=\"http://www.sharepoint.com\" target=\"_blank\">Microsoft SharePoint</a> website."
         }
       },
       "TAB-WEB-UPLOAD-WORDPRESS": {
@@ -392,7 +394,7 @@
         "EXAMPLE": "Example",
         "EXAMPLES": "Examples",
         "INNER-HTML": {
-          "USE-DOCUMENTBURSTER-WORDPRESS": "Use\n          <em>ReportBurster</em> to securely send documents to your company\n          <a href=\"https://wordpress.com/\" target=\"_blank\">WordPress</a> website."
+          "USE-DOCUMENTBURSTER-WORDPRESS": "Use\n          <em>DataPallas</em> to securely send documents to your company\n          <a href=\"https://wordpress.com/\" target=\"_blank\">WordPress</a> website."
         }
       },
       "TABS": {
@@ -430,7 +432,7 @@
           "SFTP": "SFTP/SCP"
         },
         "WEB-UPLOAD": {
-          "DOCUMENTBURSTER-WEB": "ReportBurster Web",
+          "DOCUMENTBURSTER-WEB": "DataPallas Web",
           "DRUPAL": "Drupal",
           "JOOMLA": "Joomla",
           "OTHER-WEB-PLATFORMS": "Other Web Platforms...",
@@ -467,7 +469,7 @@
         "CAPABILITIES": "Capabilities",
         "CAP-REPORT-SPLITTING": "Report Splitting",
         "CAP-REPORT-DISTRIBUTION": "Report Distribution",
-        "CAP-REPORT-GENERATION": "Report Generation",
+        "CAP-REPORT-GENERATION": "Report Generation & Dashboards",
         "NOTES": "Notes",
         "VISIBILITY": "Visibility",
         "VISIBILITY-HIDDEN": "Hidden",
@@ -492,14 +494,14 @@
     "HELP": {
       "LEFT-MENU": {
         "ABOUT": "About",
-        "BLOG": "ReportBurster Blog",
+        "BLOG": "DataPallas Blog",
         "INSTALL-SETUP": "System Diagnostics / Update",
         "DOCUMENTATION": "Documentation",
         "EXAMPLES": "Examples",
         "FREE": "Free For Schools",
         "LICENSE": "License",
         "REVIEWS": "Customer Reviews",
-        "SERVICES": "ReportBurster Services",
+        "SERVICES": "DataPallas Services",
         "SUPPORT": "Get Software Support",
         "TOP-TITLE": "HELP"
       },
@@ -508,7 +510,7 @@
         "COPYRIGHT": "Copyright",
         "COPYRIGHT-YEARS": "2008 - 2025 SourceKraft Systems &\n      Consulting Ltd",
         "INNER-HTML": {
-          "GET-FREE-SCHOOLS": "Get\n            <em>ReportBurster</em> Free For Schools",
+          "GET-FREE-SCHOOLS": "Get\n            <em>DataPallas</em> Free For Schools",
           "LICENSE-2-OPTIONS": "<strong>License</strong> - two licensing options are available"
         },
         "PURCHASE-COMMERCIAL-LICENSE": "Enterprise License (Professional Support)",
@@ -518,8 +520,8 @@
         "FEATURES": "Features",
         "INNER-HTML": {
           "DB-FEATURES": "<li>Send PDF and Excel documents by email and/or FTP, FTPs, SFTP, TFTP, shared drives, samba servers, WebDAV\n        servers\n      </li>\n      <li>Upload (publish) reports to Microsoft SharePoint or to WordPress, Drupal and Joomla web-portals and web-sites\n      </li>\n      <li>Easy to integrate with existing software solutions\n      </li>",
-          "DB-SERVER-FEATURES1": " <em>ReportBurster Server</em> has all the capabilities of\n    <em>ReportBurster</em> and some additional advanced features like scheduling, capability to run as windows\n    services and a\n    browser based web interface which can be accessed simultaneously by multiple people.\n",
-          "DB-SERVER-FEATURES2": "<li>\n        <em>ReportBurster Server</em> runs as central report distribution server which can be used simultaneously by\n        multiple\n        people and/or apps from withing your organization\n      </li>\n      <li>Can be started and automated as Windows Services\n      </li>\n      <li>Can schedule reports distribution to be daily, weekly, every other day, third Monday of the month, etc.\n      </li>"
+          "DB-SERVER-FEATURES1": " <em>DataPallas Server</em> has all the capabilities of\n    <em>DataPallas</em> and some additional advanced features like scheduling, capability to run as windows\n    services and a\n    browser based web interface which can be accessed simultaneously by multiple people.\n",
+          "DB-SERVER-FEATURES2": "<li>\n        <em>DataPallas Server</em> runs as central report distribution server which can be used simultaneously by\n        multiple\n        people and/or apps from withing your organization\n      </li>\n      <li>Can be started and automated as Windows Services\n      </li>\n      <li>Can schedule reports distribution to be daily, weekly, every other day, third Monday of the month, etc.\n      </li>"
         },
         "VIEW-ALL-FEATURES": "View All Features"
       },
@@ -528,7 +530,7 @@
         "SEND-LOG-FILES-SHORT": "Send the log files",
         "HOW-IT-WORKS": "How our support works",
         "INNER-HTML": {
-          "SEND-LOG-FILES-LONG": "In the <em>ReportBurster</em> installation folder you will find a <strong><em>logs</em></strong> folder. Zip the <em>logs</em> folder (all the log files) and email to <a href='mailto:support@reportburster.com' target='_blank'>support@reportburster.com</a>.<br><br>By checking the log files we will better understand the difficulty you face."
+          "SEND-LOG-FILES-LONG": "In the <em>DataPallas</em> installation folder you will find a <strong><em>logs</em></strong> folder. Zip the <em>logs</em> folder (all the log files) and email to <a href='mailto:support@reportburster.com' target='_blank'>support@reportburster.com</a>.<br><br>By checking the log files we will better understand the difficulty you face."
         }
       },
       "TAB-SERVICES": {
@@ -537,15 +539,15 @@
         "SKRF-MANAGED-SERVICE2": "We handle initial configuration and ongoing maintenance of the cloud based email infrastructure required by companies when sending a huge number of business documents to customers, partners or employees",
         "REQUEST-QUOTE": "Request a quote",
         "INNER-HTML": {
-          "SKRF-SERVICES": "<em>SourceKraft Ltd.</em> offers the following <em>ReportBurster</em> extended services",
-          "SKRF-SERVICE1": "We build custom <em>ReportBurster</em> scripts to implement very specific document distribution requirements",
-          "SKRF-SERVICE2": "We build branded <em>ReportBurster</em> HTML email templates for your company",
+          "SKRF-SERVICES": "<em>SourceKraft Ltd.</em> offers the following <em>DataPallas</em> extended services",
+          "SKRF-SERVICE1": "We build custom <em>DataPallas</em> scripts to implement very specific document distribution requirements",
+          "SKRF-SERVICE2": "We build branded <em>DataPallas</em> HTML email templates for your company",
           "SKRF-MANAGED-SERVICE3": "We handle end-to-end managed services for document development, generation and distribution - <em>SourceKraft Ltd.</em> can design, develop, test, run and maintain a complete digital web solution (cloud based) required by companies for accepting faster and safer online payments. Let your customers, partners or employees receive, view and pay your company invoices, statements and payslips online"
         }
       },
       "TABS": {
         "ABOUT": "About",
-        "BLOG": "ReportBurster Blog",
+        "BLOG": "DataPallas Blog",
         "JAVA": "Java",
         "TERMINAL": "Terminal",
         "APPS": "Apps",
@@ -553,7 +555,7 @@
         "EXTRA-PACKAGES": "Docker / Extra Utilities",
         "SYSTEM-DIAGNOSTICS": "System Diagnostics",
         "UPDATE": "Update",
-        "COMPARISON": "ReportBurster vs. ReportBurster Server",
+        "COMPARISON": "DataPallas vs. DataPallas Server",
         "DOCUMENTATION": "Documentation",
         "EXAMPLES": "Examples",
         "FREE": "Free For Schools",
@@ -628,7 +630,7 @@
       "TABS": {
         "BURST": "Burst Reports",
         "MAILMERGE-CLASSICREPORTS": "Generate Reports",
-        "CMS-WEBPORTAL": "Dashboards / Customer Portal",
+        "CMS-WEBPORTAL": "Explore Data & Build Dashboards",
         "LOGGING-TRACING": "Logging and Tracing",
         "MERGE-BURST": "Merge -> Burst",
         "QUALITY-ASSURANCE": "Quality Assurance",
@@ -655,9 +657,9 @@
       "CONFIGURATION": "Configuration",
       "CUSTOMER-REVIEWS": "Customer Reviews",
       "DOCUMENTATION": "Documentation",
-      "DOCUMENTBURSTER-BLOG": "ReportBurster Blog",
+      "DOCUMENTBURSTER-BLOG": "DataPallas Blog",
       "INSTALL-SETUP": "System Diagnostics / Update",
-      "DOCUMENTBURSTER-SERVICES": "ReportBurster Services",
+      "DOCUMENTBURSTER-SERVICES": "DataPallas Services",
       "EXAMPLES": "Examples",
       "FREE-FOR-SCHOOLS": "Free For Schools",
       "GET-SOFTWARE-SUPPORT": "Get Software Support",
@@ -690,10 +692,10 @@
           "RESTARTING": "Restarting",
           "RESTARTING-REQUIRED": "is required to complete the installation",
           "INNER-HTML": {
-            "TOO-OLD": "Your computer is currently running a version of <em>Java</em> that is older than <em>Java 17</em>.<br><br>To upgrade, you will first need to uninstall this older <em>Java</em> version. Please be aware that if you have any software that relies on your current <em>Java</em> installation, removing it could cause those programs to malfunction.<br><br><strong>Once the older version of <em>Java</em> has been successfully uninstalled, you can utilize <em>ReportBurster</em> to facilitate the installation of <em>Java 17</em></strong>.",
-            "REQUIRED-SHORT": "<em>ReportBurster</em> requires <em>Java 17</em> (or newer) as a prerequisite.",
+            "TOO-OLD": "Your computer is currently running a version of <em>Java</em> that is older than <em>Java 17</em>.<br><br>To upgrade, you will first need to uninstall this older <em>Java</em> version. Please be aware that if you have any software that relies on your current <em>Java</em> installation, removing it could cause those programs to malfunction.<br><br><strong>Once the older version of <em>Java</em> has been successfully uninstalled, you can utilize <em>DataPallas</em> to facilitate the installation of <em>Java 17</em></strong>.",
+            "REQUIRED-SHORT": "<em>DataPallas</em> requires <em>Java 17</em> (or newer) as a prerequisite.",
             "REQUIRED-LONG": "In order to use the software <em>Java 17</em> (or newer) runtime must be installed on your computer.",
-            "EXTRA": "Follow the guided installation steps provided. <strong>As the system processes each step, please wait patiently for its completion. After each step is finished, make sure to restart <em>ReportBurster</em></strong>."
+            "EXTRA": "Follow the guided installation steps provided. <strong>As the system processes each step, please wait patiently for its completion. After each step is finished, make sure to restart <em>DataPallas</em></strong>."
           }
         },
         "DOCKER": {
@@ -792,11 +794,11 @@
         },
         "EXTRA-PACKAGES": {
           "INNER-HTML": {
-            "ABOUT": "<h5><strong>A list of external tools which bring additional value when used together with <em>ReportBurster</em></strong></h5><p><br/>A good chunk of the below tools can be easily installed and/or uninstalled using <strong>Chocolatey</strong>, a very good <strong>package manager</strong> for <strong>Windows</strong>. All the below commands should be executed by first starting a <strong>DOS/Powershell command prompt</strong> and then by typing the respective commands inside the DOS/Windows Powershell command prompt.<br/></p><p>It is recommended to start the <strong>DOS/Powershell command prompt</strong> using Windows Start button -> Search for DOS/Powershell -> <strong>Right mouse click</strong> and then select &quot;<strong>Run as administrator</strong>&quot;<br /><br /></p>",
-            "NOTEPADPLUSPLUS": " is a free (as in “free speech” and also as in “free beer”) source code editor and Notepad replacement. Notepad++ is useful when editing ReportBurster configuration files and scripts.",
+            "ABOUT": "<h5><strong>A list of external tools which bring additional value when used together with <em>DataPallas</em></strong></h5><p><br/>A good chunk of the below tools can be easily installed and/or uninstalled using <strong>Chocolatey</strong>, a very good <strong>package manager</strong> for <strong>Windows</strong>. All the below commands should be executed by first starting a <strong>DOS/Powershell command prompt</strong> and then by typing the respective commands inside the DOS/Windows Powershell command prompt.<br/></p><p>It is recommended to start the <strong>DOS/Powershell command prompt</strong> using Windows Start button -> Search for DOS/Powershell -> <strong>Right mouse click</strong> and then select &quot;<strong>Run as administrator</strong>&quot;<br /><br /></p>",
+            "NOTEPADPLUSPLUS": " is a free (as in “free speech” and also as in “free beer”) source code editor and Notepad replacement. Notepad++ is useful when editing DataPallas configuration files and scripts.",
             "VSCODE": "  is a code editor redefined and optimized for building and debugging modern applications.",
-            "WINMERGE": " is an Open Source differencing and merging tool for Windows. WinMerge can compare both folders and files, presenting differences in a visual text format that is easy to understand and handle. WinMerge can be used for comparing ReportBurster configuration files and scripts.",
-            "DOCKER-DESKTOP": " a very good containerization software. Docker is required for running (some) ReportBurster extra packages."
+            "WINMERGE": " is an Open Source differencing and merging tool for Windows. WinMerge can compare both folders and files, presenting differences in a visual text format that is easy to understand and handle. WinMerge can be used for comparing DataPallas configuration files and scripts.",
+            "DOCKER-DESKTOP": " a very good containerization software. Docker is required for running (some) DataPallas extra packages."
           },
           "INSTALLED": {
             "ALREADY": "already installed",

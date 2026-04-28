@@ -50,6 +50,19 @@ public class ConnectionsController {
 
 	private static final String PASSWORD_MASK = "******";
 
+	/**
+	 * Returns true if the given connectionId is one of the synthesized in-memory
+	 * sample connections (Northwind SQLite/DuckDB/ClickHouse). Sample connections
+	 * have no on-disk XML and are read-only.
+	 */
+	private static boolean isSampleConnectionCode(String connectionId) {
+		if (connectionId == null) return false;
+		String lower = connectionId.trim().toLowerCase();
+		return lower.contains("rbt-sample-northwind-sqlite-4f2")
+				|| lower.contains("rbt-sample-northwind-duckdb-4f2")
+				|| lower.contains("rbt-sample-northwind-clickhouse-4f2");
+	}
+
 	// ========== LIST ALL CONNECTIONS ==========
 
 	@GetMapping(value = "/email", consumes = MediaType.ALL_VALUE)
@@ -97,37 +110,27 @@ public class ConnectionsController {
 	@PostMapping(value = "/{connectionId}/test", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ResponseEntity<Map<String, Object>>> testConnection(
 			@PathVariable String connectionId,
-			@RequestBody Map<String, String> request) {
+			@RequestBody Map<String, String> request) throws Throwable {
 
 		String connectionType = request.getOrDefault("type", "database");
 		log.info("Testing {} connection: {}", connectionType, connectionId);
 
-		return Mono.fromCallable(() -> {
-			try {
-				if ("email".equals(connectionType)) {
-					connectionsService.testEmailConnection(connectionId);
-					return ResponseEntity.ok(Map.<String, Object>of(
-							"status", "success",
-							"message", "Email connection test passed"));
-				} else if ("email-inline".equals(connectionType)) {
-					connectionsService.testInlineEmailConnection(connectionId);
-					return ResponseEntity.ok(Map.<String, Object>of(
-							"status", "success",
-							"message", "Inline email connection test passed"));
-				} else {
-					connectionsService.testDatabaseConnection(connectionId);
-					return ResponseEntity.ok(Map.<String, Object>of(
-							"status", "success",
-							"message", "Database connection test passed"));
-				}
-			} catch (Throwable t) {
-				throw (t instanceof Exception) ? (Exception) t : new Exception(t);
-			}
-		}).onErrorResume(e -> {
-			log.error("Connection test failed for {}: {}", connectionId, e.getMessage());
-			return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body(Map.of("status", "error", "message", e.getMessage())));
-		});
+		if ("email".equals(connectionType)) {
+			connectionsService.testEmailConnection(connectionId);
+			return Mono.just(ResponseEntity.ok(Map.<String, Object>of(
+					"status", "success",
+					"message", "Email connection test passed")));
+		} else if ("email-inline".equals(connectionType)) {
+			connectionsService.testInlineEmailConnection(connectionId);
+			return Mono.just(ResponseEntity.ok(Map.<String, Object>of(
+					"status", "success",
+					"message", "Inline email connection test passed")));
+		} else {
+			connectionsService.testDatabaseConnection(connectionId);
+			return Mono.just(ResponseEntity.ok(Map.<String, Object>of(
+					"status", "success",
+					"message", "Database connection test passed")));
+		}
 	}
 
 	/**
@@ -137,25 +140,24 @@ public class ConnectionsController {
 	@PutMapping(value = "/{connectionId}/database", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ResponseEntity<Void>> saveDatabaseConnection(
 			@PathVariable String connectionId,
-			@RequestBody DocumentBursterConnectionDatabaseSettings settings) {
+			@RequestBody DocumentBursterConnectionDatabaseSettings settings) throws Exception {
 		log.info("Saving database connection: {}", connectionId);
-		return Mono.fromCallable(() -> {
-			String fullPath = connectionsService.resolveDbConnectionPath(connectionId);
-			// If password is masked, preserve the existing encrypted value from disk
-			if (settings.connection != null && settings.connection.databaseserver != null
-					&& PASSWORD_MASK.equals(settings.connection.databaseserver.userpassword)
-					&& new File(fullPath).exists()) {
-				DocumentBursterConnectionDatabaseSettings existing = reportsService.loadSettingsConnectionDatabase(fullPath);
-				if (existing != null && existing.connection != null && existing.connection.databaseserver != null) {
-					settings.connection.databaseserver.userpassword = existing.connection.databaseserver.userpassword;
-				}
+		if (isSampleConnectionCode(connectionId)) {
+			log.warn("Refused to save sample connection (read-only): {}", connectionId);
+			return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).<Void>build());
+		}
+		String fullPath = connectionsService.resolveDbConnectionPath(connectionId);
+		// If password is masked, preserve the existing encrypted value from disk
+		if (settings.connection != null && settings.connection.databaseserver != null
+				&& PASSWORD_MASK.equals(settings.connection.databaseserver.userpassword)
+				&& new File(fullPath).exists()) {
+			DocumentBursterConnectionDatabaseSettings existing = reportsService.loadSettingsConnectionDatabase(fullPath);
+			if (existing != null && existing.connection != null && existing.connection.databaseserver != null) {
+				settings.connection.databaseserver.userpassword = existing.connection.databaseserver.userpassword;
 			}
-			reportsService.saveSettingsConnectionDatabase(settings, fullPath);
-			return ResponseEntity.ok().<Void>build();
-		}).onErrorResume(e -> {
-			log.error("Failed to save database connection {}: {}", connectionId, e.getMessage());
-			return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
-		});
+		}
+		reportsService.saveSettingsConnectionDatabase(settings, fullPath);
+		return Mono.just(ResponseEntity.ok().<Void>build());
 	}
 
 	/**
@@ -165,37 +167,34 @@ public class ConnectionsController {
 	@PutMapping(value = "/{connectionId}/email", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ResponseEntity<Void>> saveEmailConnection(
 			@PathVariable String connectionId,
-			@RequestBody DocumentBursterConnectionEmailSettings settings) {
+			@RequestBody DocumentBursterConnectionEmailSettings settings) throws Exception {
 		log.info("Saving email connection: {}", connectionId);
-		return Mono.fromCallable(() -> {
-			String filePath = connectionsService.resolveEmailConnectionPath(connectionId);
-			// If password is masked, preserve the existing encrypted value from disk
-			if (settings.connection != null && settings.connection.emailserver != null
-					&& PASSWORD_MASK.equals(settings.connection.emailserver.userpassword)
-					&& new File(filePath).exists()) {
-				DocumentBursterConnectionEmailSettings existing = reportsService.loadSettingsConnectionEmail(filePath);
-				if (existing != null && existing.connection != null && existing.connection.emailserver != null) {
-					settings.connection.emailserver.userpassword = existing.connection.emailserver.userpassword;
-				}
+		String filePath = connectionsService.resolveEmailConnectionPath(connectionId);
+		// If password is masked, preserve the existing encrypted value from disk
+		if (settings.connection != null && settings.connection.emailserver != null
+				&& PASSWORD_MASK.equals(settings.connection.emailserver.userpassword)
+				&& new File(filePath).exists()) {
+			DocumentBursterConnectionEmailSettings existing = reportsService.loadSettingsConnectionEmail(filePath);
+			if (existing != null && existing.connection != null && existing.connection.emailserver != null) {
+				settings.connection.emailserver.userpassword = existing.connection.emailserver.userpassword;
 			}
-			reportsService.saveSettingsConnectionEmail(settings, filePath);
-			return ResponseEntity.ok().<Void>build();
-		}).onErrorResume(e -> {
-			log.error("Failed to save email connection {}: {}", connectionId, e.getMessage());
-			return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
-		});
+		}
+		reportsService.saveSettingsConnectionEmail(settings, filePath);
+		return Mono.just(ResponseEntity.ok().<Void>build());
 	}
 
 	/**
 	 * Delete a connection.
 	 */
 	@DeleteMapping("/{connectionId}")
-	public Mono<ResponseEntity<Void>> deleteConnection(@PathVariable String connectionId) {
+	public Mono<ResponseEntity<Void>> deleteConnection(@PathVariable String connectionId) throws Exception {
 		log.info("Deleting connection: {}", connectionId);
-		return Mono.fromCallable(() -> {
-			connectionsService.deleteConnection(connectionId);
-			return ResponseEntity.ok().<Void>build();
-		});
+		if (isSampleConnectionCode(connectionId)) {
+			log.warn("Refused to delete sample connection (read-only): {}", connectionId);
+			return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).<Void>build());
+		}
+		connectionsService.deleteConnection(connectionId);
+		return Mono.just(ResponseEntity.ok().<Void>build());
 	}
 
 	/**
@@ -204,15 +203,13 @@ public class ConnectionsController {
 	@GetMapping(value = "/{connectionId}/metadata/{type}", consumes = MediaType.ALL_VALUE)
 	public Mono<ResponseEntity<Map<String, String>>> getMetadata(
 			@PathVariable String connectionId,
-			@PathVariable String type) {
+			@PathVariable String type) throws Exception {
 
-		return Mono.fromCallable(() -> {
-			String content = connectionsService.getMetadata(connectionId, type);
-			if (content == null) {
-				return ResponseEntity.ok(Map.of("exists", "false", "content", ""));
-			}
-			return ResponseEntity.ok(Map.of("exists", "true", "content", content));
-		});
+		String content = connectionsService.getMetadata(connectionId, type);
+		if (content == null) {
+			return Mono.just(ResponseEntity.ok(Map.of("exists", "false", "content", "")));
+		}
+		return Mono.just(ResponseEntity.ok(Map.of("exists", "true", "content", content)));
 	}
 
 	/**
@@ -222,36 +219,28 @@ public class ConnectionsController {
 	public Mono<ResponseEntity<Void>> saveMetadata(
 			@PathVariable String connectionId,
 			@PathVariable String type,
-			@RequestBody Map<String, String> request) {
+			@RequestBody Map<String, String> request) throws Exception {
 
 		String content = request.get("content");
-		return Mono.fromCallable(() -> {
-			connectionsService.saveMetadata(connectionId, type, content);
-			return ResponseEntity.ok().<Void>build();
-		});
+		connectionsService.saveMetadata(connectionId, type, content);
+		return Mono.just(ResponseEntity.ok().<Void>build());
 	}
 
 	/**
 	 * Test SMS connection via Twilio.
 	 */
 	@PostMapping(value = "/test-sms", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public Mono<ResponseEntity<Map<String, Object>>> testSms(@RequestBody Map<String, String> request) {
+	public Mono<ResponseEntity<Map<String, Object>>> testSms(@RequestBody Map<String, String> request) throws Exception {
 		String fromNumber = request.get("fromNumber");
 		String toNumber = request.get("toNumber");
 		String configPath = request.get("configPath");
 
 		log.info("Testing SMS: from={}, to={}", fromNumber, toNumber);
 
-		return Mono.fromCallable(() -> {
-			connectionsService.testSms(fromNumber, toNumber, configPath);
-			return ResponseEntity.ok(Map.<String, Object>of(
-					"status", "success",
-					"message", "SMS test sent successfully"));
-		}).onErrorResume(e -> {
-			log.error("SMS test failed: {}", e.getMessage());
-			return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body(Map.of("status", "error", "message", e.getMessage())));
-		});
+		connectionsService.testSms(fromNumber, toNumber, configPath);
+		return Mono.just(ResponseEntity.ok(Map.<String, Object>of(
+				"status", "success",
+				"message", "SMS test sent successfully")));
 	}
 
 	/**
@@ -268,9 +257,8 @@ public class ConnectionsController {
 	public Mono<ResponseEntity<Map<String, String>>> revealPassword(
 			@PathVariable String connectionId,
 			@RequestParam String field,
-			@RequestParam(required = false) String reportId) {
+			@RequestParam(required = false) String reportId) throws Exception {
 
-		final String fieldName = field;
 		// Resolve reportId to configPath
 		final String configPath;
 		if (reportId != null && !reportId.isEmpty()) {
@@ -291,77 +279,70 @@ public class ConnectionsController {
 			configPath = null;
 		}
 
-		return Mono.fromCallable(() -> {
-			SecretsCipher cipher = SecretsCipher.getInstance(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH);
-			String encryptedValue = null;
+		SecretsCipher cipher = SecretsCipher.getInstance(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH);
+		String encryptedValue = null;
 
-			// Determine where to load the encrypted value from
-			if ("authtoken".equals(fieldName) || "accountsid".equals(fieldName) || "proxypassword".equals(fieldName)) {
-				// These live in main settings.xml, not in a connection file
-				if (configPath == null || configPath.isEmpty()) {
-					return ResponseEntity.badRequest()
-							.body(Map.of("error", "configPath is required for field: " + fieldName));
-				}
-				String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
-						+ configPath.replaceFirst("^/", "");
-				DocumentBursterSettings dbSettings = reportsService.loadSettings(fullPath);
+		// Determine where to load the encrypted value from
+		if ("authtoken".equals(field) || "accountsid".equals(field) || "proxypassword".equals(field)) {
+			// These live in main settings.xml, not in a connection file
+			if (configPath == null || configPath.isEmpty()) {
+				return Mono.just(ResponseEntity.badRequest()
+						.body(Map.of("error", "configPath is required for field: " + field)));
+			}
+			String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+					+ configPath.replaceFirst("^/", "");
+			DocumentBursterSettings dbSettings = reportsService.loadSettings(fullPath);
 
-				if ("authtoken".equals(fieldName)
-						&& dbSettings.settings.smssettings != null
-						&& dbSettings.settings.smssettings.twilio != null) {
-					encryptedValue = dbSettings.settings.smssettings.twilio.authtoken;
-				} else if ("accountsid".equals(fieldName)
-						&& dbSettings.settings.smssettings != null
-						&& dbSettings.settings.smssettings.twilio != null) {
-					encryptedValue = dbSettings.settings.smssettings.twilio.accountsid;
-				} else if ("proxypassword".equals(fieldName)
-						&& dbSettings.settings.simplejavamail != null
-						&& dbSettings.settings.simplejavamail.proxy != null) {
-					encryptedValue = dbSettings.settings.simplejavamail.proxy.password;
-				}
+			if ("authtoken".equals(field)
+					&& dbSettings.settings.smssettings != null
+					&& dbSettings.settings.smssettings.twilio != null) {
+				encryptedValue = dbSettings.settings.smssettings.twilio.authtoken;
+			} else if ("accountsid".equals(field)
+					&& dbSettings.settings.smssettings != null
+					&& dbSettings.settings.smssettings.twilio != null) {
+				encryptedValue = dbSettings.settings.smssettings.twilio.accountsid;
+			} else if ("proxypassword".equals(field)
+					&& dbSettings.settings.simplejavamail != null
+					&& dbSettings.settings.simplejavamail.proxy != null) {
+				encryptedValue = dbSettings.settings.simplejavamail.proxy.password;
+			}
+		} else {
+			// "userpassword" — try database connection first, then email connection
+			String dbConnPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH
+					+ "/config/connections/" + connectionId + "/" + connectionId + ".xml";
+
+			if (new File(dbConnPath).exists()) {
+				DocumentBursterConnectionDatabaseSettings dbConn = reportsService
+						.loadSettingsConnectionDatabase(dbConnPath);
+				encryptedValue = dbConn.connection.databaseserver.userpassword;
 			} else {
-				// "userpassword" — try database connection first, then email connection
-				String dbConnPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH
-						+ "/config/connections/" + connectionId + "/" + connectionId + ".xml";
-
-				if (new File(dbConnPath).exists()) {
-					DocumentBursterConnectionDatabaseSettings dbConn = reportsService
-							.loadSettingsConnectionDatabase(dbConnPath);
-					encryptedValue = dbConn.connection.databaseserver.userpassword;
+				// Try as email connection file
+				String emlConnPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH
+						+ "/config/connections/" + connectionId + ".xml";
+				if (new File(emlConnPath).exists()) {
+					DocumentBursterConnectionEmailSettings emlConn = reportsService
+							.loadSettingsConnectionEmail(emlConnPath);
+					encryptedValue = emlConn.connection.emailserver.userpassword;
 				} else {
-					// Try as email connection file
-					String emlConnPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH
-							+ "/config/connections/" + connectionId + ".xml";
-					if (new File(emlConnPath).exists()) {
-						DocumentBursterConnectionEmailSettings emlConn = reportsService
-								.loadSettingsConnectionEmail(emlConnPath);
-						encryptedValue = emlConn.connection.emailserver.userpassword;
-					} else {
-						// Try configPath for main settings email password
-						if (configPath != null && !configPath.isEmpty()) {
-							String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
-									+ configPath.replaceFirst("^/", "");
-							DocumentBursterSettings dbSettings = reportsService.loadSettings(fullPath);
-							if (dbSettings.settings.emailserver != null) {
-								encryptedValue = dbSettings.settings.emailserver.userpassword;
-							}
+					// Try configPath for main settings email password
+					if (configPath != null && !configPath.isEmpty()) {
+						String fullPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/"
+								+ configPath.replaceFirst("^/", "");
+						DocumentBursterSettings dbSettings = reportsService.loadSettings(fullPath);
+						if (dbSettings.settings.emailserver != null) {
+							encryptedValue = dbSettings.settings.emailserver.userpassword;
 						}
 					}
 				}
 			}
+		}
 
-			if (encryptedValue == null || encryptedValue.isEmpty()) {
-				return ResponseEntity.ok(Map.of("password", ""));
-			}
+		if (encryptedValue == null || encryptedValue.isEmpty()) {
+			return Mono.just(ResponseEntity.ok(Map.of("password", "")));
+		}
 
-			String decrypted = cipher.decrypt(encryptedValue);
-			return ResponseEntity.ok(Map.of("password", decrypted));
-
-		}).onErrorResume(e -> {
-			log.error("Failed to reveal password for {}/{}: {}", connectionId, fieldName, e.getMessage());
-			return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(Map.of("error", e.getMessage())));
-		});
+		String decrypted = cipher.decrypt(encryptedValue);
+		return Mono.just(ResponseEntity.ok(Map.of("password", decrypted)));
 	}
 
 	// ========== PRIVATE HELPERS ==========

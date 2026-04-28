@@ -7,7 +7,7 @@ import { RbElectronService } from '../app/areas/electron-nodejs/electron.service
 type Story = StoryObj<ChocolateyComponent>;
 const defaultMeta: Meta<ChocolateyComponent> = {
   ...baseMeta,
-  title: 'ReportBurster/Setup/Chocolatey',
+  title: 'DataPallas/Setup/Chocolatey',
   component: ChocolateyComponent,
 };
 

@@ -11,6 +11,7 @@ import { ConfigurationComponent } from './configuration.component';
 import { AngularSplitModule } from 'angular-split';
 import { ConnectionDetailsModule } from '../../components/connection-details/connection-details.module';
 import { TemplatesGalleryModalModule } from '../../components/templates-gallery-modal/templates-gallery-modal.module';
+import { ReportsListModule } from '../../components/reports-list/reports-list.module';
 
 @NgModule({
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -25,6 +26,7 @@ import { TemplatesGalleryModalModule } from '../../components/templates-gallery-
     LicenseModule,
     ConnectionDetailsModule,
     AngularSplitModule,
+    ReportsListModule,
   ],
 })
 export class ConfigurationModule {}

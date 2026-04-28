@@ -1,5 +1,5 @@
 /*
- * Groovy Script for ReportBurster: Publish Invoice to WordPress Portal
+ * Groovy Script for DataPallas: Publish Invoice to WordPress Portal
  *
  * This script creates a new 'invoice' post in WordPress via REST API,
  * checking or creating the associated user as needed.

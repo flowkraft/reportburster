@@ -1,4 +1,4 @@
-﻿services:
+services:
   # ============================================================================
   # READY SERVICE - Have everything READY
   # ============================================================================
@@ -41,11 +41,11 @@
       - wp_html:/var/www/html
 
       # Plugin source code (use Docker-managed volume populated from image)
-      - reportburster_plugin_build:/var/www/html/wp-content/plugins/reportburster-portal:ro
+      - datapallas_plugin_build:/var/www/html/wp-content/plugins/datapallas-portal:ro
 
       # Theme source code (host) — commented out to prefer the builder volume
       # Use the builder-produced theme build so the web container sees the compiled assets
-      - reportburster_theme_build:/var/www/html/wp-content/themes/reportburster-theme:ro
+      - datapallas_theme_build:/var/www/html/wp-content/themes/datapallas-theme:ro
 
       # Writable dirs for WordPress
       - wp_uploads:/var/www/html/wp-content/uploads
@@ -97,10 +97,10 @@
       - wp_html:/var/www/html
 
       # Plugin source code (use Docker-managed volume populated from image)
-      - reportburster_plugin_build:/var/www/html/wp-content/plugins/reportburster-portal
+      - datapallas_plugin_build:/var/www/html/wp-content/plugins/datapallas-portal
 
       # Use the builder-produced theme build so the CLI and web see the same compiled assets
-      - reportburster_theme_build:/var/www/html/wp-content/themes/reportburster-theme
+      - datapallas_theme_build:/var/www/html/wp-content/themes/datapallas-theme
 
     restart: "no"
     command: >
@@ -145,9 +145,9 @@
           wp plugin is-installed hello   && wp plugin delete hello   || true
 
           # ================================================================
-          # PODS FRAMEWORK - Install FIRST (dependency for reportburster-portal)
+          # PODS FRAMEWORK - Install FIRST (dependency for datapallas-portal)
           # ================================================================
-          echo "📦 Installing Pods framework (required by reportburster-portal)…";
+          echo "📦 Installing Pods framework (required by datapallas-portal)…";
           if ! wp plugin is-installed pods; then
             wp plugin install pods --version=3.3.3 --activate
           else
@@ -166,20 +166,20 @@
         
           sleep 2
 
-          echo "🎨 Activating reportburster-theme…";
+          echo "🎨 Activating datapallas-theme…";
           # Check if theme exists before trying to activate
-          if wp theme is-installed reportburster-theme; then
-            wp theme activate reportburster-theme
+          if wp theme is-installed datapallas-theme; then
+            wp theme activate datapallas-theme
           else
             echo "Theme not found yet, will be activated after build."
           fi
         
           sleep 2
 
-          echo "🎨 Activating reportburster-portal…";
-          
-          if wp plugin is-installed reportburster-portal; then
-            wp plugin activate reportburster-portal
+          echo "🎨 Activating datapallas-portal…";
+
+          if wp plugin is-installed datapallas-portal; then
+            wp plugin activate datapallas-portal
           else
             echo "Plugin not found yet, will be activated later."
           fi
@@ -252,7 +252,7 @@
         fi
 
         # Demo users, Pods CPT, and sample data are now provisioned automatically
-        # by the ReportBurster Portal plugin when WordPress loads (via Provisioner class).
+        # by the DataPallas Portal plugin when WordPress loads (via Provisioner class).
         # This eliminates dependency on fragile shell script execution.
 
         echo "✅ CLI provisioning complete.";
@@ -273,7 +273,7 @@
     working_dir: /theme-src
     volumes:
       - wp_html:/var/www/html
-      - reportburster_theme_build:/theme-dist
+      - datapallas_theme_build:/theme-dist
     env_file:
       - .env
     environment:
@@ -340,8 +340,8 @@
 
 volumes:
   wp_html:
-  reportburster_theme_build:
-  reportburster_plugin_build:
+  datapallas_theme_build:
+  datapallas_plugin_build:
   wp_uploads:
   wp_upgrade:
   wp_db_data:

@@ -5,31 +5,31 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.StringUtils
 
-def archiveFileList  
+def archiveFileList
 
-def outputFolder = ctx.outputFolder+"/"
+def outputFolderCanonical = new File(ctx.outputFolder).getCanonicalPath() + File.separator
 
 for (path in ctx.attachments)
 {
-	
+
 	def attachmentFile = new File (path)
 	if (!attachmentFile.exists())
 		throw new FileNotFoundException (path)
-	
+
 	def fileName = FilenameUtils.getName(path)
-	def fileFolder = FilenameUtils.getFullPath(path)
+	def fileFolderCanonical = attachmentFile.getCanonicalFile().getParent() + File.separator
 
 	def fileNameInList
-	
-	if (!FilenameUtils.equalsNormalizedOnSystem(outputFolder, fileFolder))
+
+	if (!FilenameUtils.equalsNormalizedOnSystem(outputFolderCanonical, fileFolderCanonical))
 	{
-		
+
 		def base = FilenameUtils.getBaseName(fileName)
 		def ext = FilenameUtils.getExtension(fileName)
-		
+
 		fileNameInList = base + "_"+RandomStringUtils.randomNumeric(9)+"."+ext
-		
-		FileUtils.copyFile(new File(path), new File(outputFolder + fileNameInList))
+
+		FileUtils.copyFile(new File(path), new File(ctx.outputFolder, fileNameInList))
 	}
 	else
 		fileNameInList = fileName

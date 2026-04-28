@@ -99,7 +99,7 @@ export default function YourCanvasPage() {
                   <span className="absolute left-0 top-0 w-8 h-8 bg-rb-cyan text-white rounded-full flex items-center justify-center font-semibold text-sm">
                     1
                   </span>
-                  <strong className="block text-foreground">Define your reports in ReportBurster</strong>
+                  <strong className="block text-foreground">Define your reports in DataPallas</strong>
                   <span className="text-muted-foreground"> — Connect to any datasource that returns rows</span>
                 </li>
                 <li className="relative pl-12">
@@ -123,7 +123,7 @@ export default function YourCanvasPage() {
               <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-gray-300 rounded-lg p-4 font-mono text-sm overflow-x-auto leading-relaxed border border-gray-700">
                 <span className="text-blue-400">&lt;rb-chart</span>
                 {"\n    "}
-                <span className="text-cyan-300">report-code</span>=<span className="text-orange-300">&quot;sales-by-region&quot;</span>
+                <span className="text-cyan-300">report-id</span>=<span className="text-orange-300">&quot;sales-by-region&quot;</span>
                 {"\n    "}
                 <span className="text-cyan-300">api-base-url</span>=<span className="text-orange-300">&quot;{rbConfig.apiBaseUrl}&quot;</span>
                 {"\n    "}

@@ -153,7 +153,7 @@ RUN cp /app/init.sql /docker-entrypoint-initdb.d/
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/
 
 # Install native Python database drivers for the db_query custom tool.
-# These allow Athena to query any ReportBurster-configured database directly.
+# These allow Athena to query any DataPallas-configured database directly.
 RUN uv pip install --python /app/.venv/bin/python --no-cache-dir \
     duckdb \
     psycopg2-binary \

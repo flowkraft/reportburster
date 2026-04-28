@@ -6,6 +6,39 @@ import { Constants } from '../../utils/constants';
 import { sep } from 'path';
 
 export class ConfigurationTestHelper {
+  static loadConfiguration(
+    ft: FluentTester,
+    folderName: string,
+    searchHint?: string,
+  ): FluentTester {
+    if (folderName === 'burst') {
+      return ft
+        .gotoBurstScreen()
+        .click('#topMenuConfiguration')
+        .click(
+          `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
+        );
+    }
+    // Non-fallback configs: accessible only via Configuration → Reports list.
+    // Use searchHint to narrow the paginated list before clicking the row.
+    ft = ft.gotoConfigurationReports();
+    if (searchHint) {
+      ft = ft
+        .setValue('#reportsListSearch', searchHint)
+        .sleep(400); // debounce is 300ms
+    }
+    return ft
+      .click(`#${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .waitOnElementToBecomeVisible(
+        `#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
+      )
+      .click(`#btnLoadInvite_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .waitOnElementToBecomeVisible(
+        `#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
+      )
+      .click(`#btnLoadConfirmYes_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`);
+  }
+
   static rollbackChangesToDefaultDocumentBursterConfiguration(
     ft: FluentTester,
     folderName: string,
@@ -20,11 +53,9 @@ export class ConfigurationTestHelper {
         'info',
         Constants.DELAY_FIVE_THOUSANDS_SECONDS,
       )
-      .click(`#btnActions_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
-      .click(`#btnActionRestore_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .click(`#btnRestore_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .clickNoDontDoThis()
-      .click(`#btnActions_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
-      .click(`#btnActionRestore_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
+      .click(`#btnRestore_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`)
       .clickYesDoThis();
   }
 
@@ -32,28 +63,17 @@ export class ConfigurationTestHelper {
     ft: FluentTester,
     folderName: string,
   ): FluentTester {
-    ft = ft.gotoBurstScreen().click('#topMenuConfiguration');
+    ft = ConfigurationTestHelper.loadConfiguration(ft, folderName);
 
-    if (folderName == 'burst') {
-      ft = ft.waitOnElementToHaveText(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-        'My Reports',
-      );
-    }
-
-    ft = ft.click(
-      `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-    ); // general settings
-
-    if (folderName == 'burst') {
+    if (folderName === 'burst') {
       ft = ft
         .waitOnElementToHaveText(
           '#topMenuConfiguration',
-          'Configuration (My Reports) ',
+          'Configuration (Bursting) ',
         )
         .waitOnElementToHaveText(
           '.sidebar-menu .header',
-          'CONFIGURATION (My Reports)',
+          'CONFIGURATION (Bursting)',
         );
     }
 
@@ -78,6 +98,9 @@ export class ConfigurationTestHelper {
       .elementCheckBoxShouldNotBeSelected('#btnDeleteDocuments')
       .elementCheckBoxShouldBeSelected('#btnQuarantineDocuments')
       .click('#leftMenuEmailSettings') // email SMTP settings
+      // default ships with useconn=true: "Use Existing Email Connection" is checked,
+      // SMTP fields are disabled but still carry their default values
+      .elementCheckBoxShouldBeSelected('#btnUseExistingEmailConnection')
       .inputShouldHaveValue('#fromName', 'From Name')
       .inputShouldHaveValue('#fromEmailAddress', 'from@emailaddress.com')
       .inputShouldHaveValue('#emailServerHost', 'Email Server Host')
@@ -240,7 +263,9 @@ export class ConfigurationTestHelper {
         .click('#btnDeleteDocuments')
         .click('#btnQuarantineDocuments')
         .click('#leftMenuEmailSettings') // email SMTP settings
-        //.click('#btnUseExistingEmailConnection')
+        // pre-condition: default ships with useconn=true (connection mode, SMTP fields disabled)
+        .elementCheckBoxShouldBeSelected('#btnUseExistingEmailConnection')
+        .click('#btnUseExistingEmailConnection') // user unchecks → switch to manual SMTP mode
         .setValue('#fromName', '00')
         .setValue('#fromEmailAddress', '01')
         .setValue('#emailServerHost', '02')
@@ -415,17 +440,17 @@ export class ConfigurationTestHelper {
         .click('#topMenuConfiguration')
         .elementShouldHaveText(
           '#topMenuConfigurationLoad_burst_' + escapedWhich,
-          'My Reports',
+          'Bursting',
         )
         // general settings
         .click('#topMenuConfigurationLoad_burst_' + escapedWhich)
         .elementShouldHaveText(
           '#topMenuConfiguration',
-          'Configuration (My Reports) ',
+          'Configuration (Bursting) ',
         )
         .elementShouldHaveText(
           '.sidebar-menu .header',
-          'CONFIGURATION (My Reports)',
+          'CONFIGURATION (Bursting)',
         )
         .inputShouldHaveValue('#burstFileName', '00')
         .inputShouldHaveValue('#outputFolder', '01')
@@ -443,6 +468,8 @@ export class ConfigurationTestHelper {
         .elementCheckBoxShouldNotBeSelected('#btnQuarantineDocuments')
         // email SMTP settings
         .click('#leftMenuEmailSettings')
+        // user's uncheck persisted across save+reload → still in manual SMTP mode
+        .elementCheckBoxShouldNotBeSelected('#btnUseExistingEmailConnection')
         .inputShouldHaveValue('#fromName', '00')
         .inputShouldHaveValue('#fromEmailAddress', '01')
         .inputShouldHaveValue('#emailServerHost', '02')
@@ -600,11 +627,7 @@ export class ConfigurationTestHelper {
     ft: FluentTester,
     folderName: string,
   ): FluentTester {
-    ft = ft
-      .gotoConfiguration()
-      .click(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-      )
+    ft = ConfigurationTestHelper.loadConfiguration(ft, folderName)
       .waitOnElementToBecomeVisible('#leftMenuGeneralSettings')
       .waitOnElementToBecomeEnabled('#leftMenuGeneralSettings')
       .sleep(3 * Constants.DELAY_ONE_SECOND)
@@ -863,14 +886,12 @@ export class ConfigurationTestHelper {
       .click('#btnCloseAskForFeatureModal')
       .waitOnElementToBecomeInvisible('#btnCloseAskForFeatureModal')
 
-      // Test Database feature request modal
+      // Test SQL Query datasource
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.sqlquery')
-      // If settingsService.getDatabaseConnectionFiles().length === 0 initially:
-      .waitOnElementToBecomeVisible('#noDbConnectionsMessageSql') // Using new ID
-      .waitOnElementToBecomeVisible('#createDbConnectionLinkSql') // Using new ID
-      // Assuming no connections by default for a clean test, or check for default selection if connections exist
-      // If connections can exist, you might need conditional logic or ensure a specific state
-      // .selectedOptionShouldContainText('#databaseConnection', 'EXPECTED_DEFAULT_CONNECTION_NAME_OR_NONE') // Or check if it's empty/first option
+      // 3 sample DB connections (SQLite/DuckDB/ClickHouse) are always present in memory (virtual,
+      // materialized to disk only on first save/test), so getDatabaseConnectionFilesForUI().length
+      // is never 0 — the #databaseConnection dropdown always shows instead of the "no connections" message.
+      .waitOnElementToBecomeVisible('#databaseConnection')
       .waitOnElementToBecomeVisible('#sqlQueryEditor')
       .codeJarShouldContainText('#sqlQueryEditor', '') // Assumes codejar content is checkable this way or use codeJarShouldContainText(selector, '')
       .waitOnElementToBecomeVisible('#btnHelpWithSqlQueryAI') // Assumed ID
@@ -931,8 +952,8 @@ export class ConfigurationTestHelper {
 
       // Test Script Default Settings
       .dropDownSelectOptionHavingValue('#dsTypes', 'ds.scriptfile')
-      .waitOnElementToBecomeVisible('#noDbConnectionsMessageSql') // Using new ID
-      .waitOnElementToBecomeVisible('#createDbConnectionLinkSql') // Using new ID
+      // 3 sample DB connections always present in memory — dropdown shows, not "no connections" message.
+      .waitOnElementToBecomeVisible('#databaseConnection')
       .waitOnElementToBecomeVisible('#groovyScriptEditor') // Wait for the section to be visible
       .waitOnElementToBecomeVisible('#btnHelpWithScriptAI') // Assumed ID
 
@@ -1164,12 +1185,7 @@ export class ConfigurationTestHelper {
     const scriptIdColumnCustomIndex = `${(uniqueTimestamp % 3) + 2}`; // e.g., 2, 3, or 4 to be different
 
     // First, handle the datasource tab
-    ft = ft
-      .gotoBurstScreen()
-      .click('#topMenuConfiguration')
-      .click(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-      )
+    ft = ConfigurationTestHelper.loadConfiguration(ft, folderName)
       .waitOnElementToBecomeVisible('#leftMenuReportingSettings')
       .waitOnElementToBecomeEnabled('#leftMenuReportingSettings')
       .click('#leftMenuReportingSettings')
@@ -1550,12 +1566,7 @@ export class ConfigurationTestHelper {
       // .click('#btnCloseTemplateGalleryX')
       .sleep(Constants.DELAY_TEN_SECONDS); // Wait for the value to be set
 
-    ft = ft
-      .gotoBurstScreen()
-      .click('#topMenuConfiguration')
-      .click(
-        `#topMenuConfigurationLoad_${folderName}_${PATHS.SETTINGS_CONFIG_FILE}`,
-      )
+    ft = ConfigurationTestHelper.loadConfiguration(ft, folderName)
       .waitOnElementToBecomeVisible('#leftMenuReportingSettings')
       .waitOnElementToBecomeEnabled('#leftMenuReportingSettings')
       .click('#leftMenuReportingSettings')

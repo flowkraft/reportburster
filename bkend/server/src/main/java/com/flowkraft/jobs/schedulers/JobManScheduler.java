@@ -44,7 +44,7 @@ public class JobManScheduler {
 	@Scheduled(fixedRate = 250)
 	public void publishExecutionStatsDetailsToWebSocket() throws Exception {
 
-		// stop the server if the user closed the "parent" ReportBurster.exe (Electron)
+		// stop the server if the user closed the "parent" DataPallas.exe (Electron)
 		// which initiated the
 		// server
 		if (StringUtils.isNotBlank(parentElectronPid)) {
@@ -61,7 +61,7 @@ public class JobManScheduler {
 			}
 			if (!isRunning) {
 				// Electron process is not running, stop the Spring Boot application
-				//System.out.println("rbsj.JobManScheduler - ReportBurster.exe (Electron) process having PID " + pid
+				//System.out.println("rbsj.JobManScheduler - DataPallas.exe (Electron) process having PID " + pid
 				//		+ " was closed => stop its corresponding SpringBoot server application");
 
 				int exitCode = SpringApplication.exit(this.context, (ExitCodeGenerator) () -> 0);
@@ -82,7 +82,7 @@ public class JobManScheduler {
 	@PostConstruct
 	public void killAnyHangedElectronProcesses() throws Exception {
 		// this code makes sense only if the SpringBoot server was initiated from
-		// ReportBurster.exe
+		// DataPallas.exe
 
 		/*
 		 * if (StringUtils.isNotBlank(parentElectronPid)) {
@@ -91,16 +91,16 @@ public class JobManScheduler {
 		 * Utils.getProcessCreationDate(Long.parseLong(parentElectronPid));
 		 * 
 		 * List<Long> pIDs =
-		 * Utils.getPidsOfProcessesOfExecutableRunning("ReportBurster.exe"); if
+		 * Utils.getPidsOfProcessesOfExecutableRunning("DataPallas.exe"); if
 		 * (pIDs.size() > 0) { for (Long pid : pIDs) {
 		 * 
 		 * String processCreationDate = Utils.getProcessCreationDate(pid);
 		 * 
-		 * // kill all "hanged" ReportBurster.exe but make sure the current "parent" //
-		 * ReportBurster.exe which // triggered the server is not killed also if
+		 * // kill all "hanged" DataPallas.exe but make sure the current "parent" //
+		 * DataPallas.exe which // triggered the server is not killed also if
 		 * (!processCreationDate.equals(parentElectronCreationDate)) { boolean
 		 * isRunning; do { System.out.println(
-		 * "rbsj.JobManScheduler.killAnyHangedElectronProcesses() - Attempting to kill 'hanged' ReportBurster.exe process having PID "
+		 * "rbsj.JobManScheduler.killAnyHangedElectronProcesses() - Attempting to kill 'hanged' DataPallas.exe process having PID "
 		 * + pid);
 		 * 
 		 * Process killProcess = Runtime.getRuntime().exec("taskkill /F /PID " + pid);

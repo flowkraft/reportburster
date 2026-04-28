@@ -25,7 +25,7 @@ public class LogTailingService {
 
 	private Map<String, Tailer> existingTailers = new HashMap<>();
 
-	public void startTailer(String fileName) throws Exception {
+	public void startTailer(String fileName) {
 		if (Objects.isNull(existingTailers.get(fileName))) {
 
 			Tailer tailer = new Tailer(new File(AppPaths.LOGS_DIR_PATH + "/" + fileName), new TailerListenerAdapter() {
@@ -44,8 +44,8 @@ public class LogTailingService {
 			});
 			existingTailers.put(fileName, tailer);
 			new Thread(tailer, "log-tailer-" + fileName).start();
-		} else
-			throw new Exception("A tailer is already started for " + fileName);
+		}
+		// If already running, desired state is already achieved — idempotent no-op.
 	}
 
 	public void stopTailer(String fileName) {

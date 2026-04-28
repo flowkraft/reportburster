@@ -12,8 +12,8 @@ export type Theme = {
 
 export const themes: Theme[] = [
   {
-    name: "reportburster",
-    label: "ReportBurster",
+    name: "datapallas",
+    label: "DataPallas",
     cssVars: {
       light: {
         background: "#fafafa",

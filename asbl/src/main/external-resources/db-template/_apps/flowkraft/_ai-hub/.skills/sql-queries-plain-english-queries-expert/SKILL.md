@@ -37,10 +37,10 @@ When the user doesn't specify the vendor, I MUST read the XML connection file:
 
 ```bash
 # Step 1: List available connections
-ls /reportburster/config/connections/
+ls /datapallas/config/connections/
 
 # Step 2: Read the XML file (folder name + .xml extension)
-cat /reportburster/config/connections/db-test/db-test.xml
+cat /datapallas/config/connections/db-test/db-test.xml
 ```
 
 The XML contains a `<type>` element that tells you the database vendor:
@@ -55,7 +55,7 @@ The XML contains a `<type>` element that tells you the database vendor:
 
 ## Where I Learn About the User's Database
 
-### Gold Mine #1: `/reportburster/config/connections/`
+### Gold Mine #1: `/datapallas/config/connections/`
 
 Connection folders contain:
 - **XML connection file** (always present) — JDBC URL, host, port, vendor, credentials
@@ -73,7 +73,7 @@ Connection folders contain:
 
 **Don't know the table names yet?** Read `*-table-names.txt` first. If that file doesn't exist, use `db_query(connection_code="db-xxx", sql="SHOW TABLES")` to discover them, then grep schema files for details on specific tables.
 
-### Gold Mine #2: `/reportburster/config/reports/`
+### Gold Mine #2: `/datapallas/config/reports/`
 
 Existing reports show:
 - Working SQL queries in the data source configuration
@@ -82,10 +82,10 @@ Existing reports show:
 
 I learn patterns from what already works.
 
-### Gold Mine #3: `/reportburster/config/samples/`
+### Gold Mine #3: `/datapallas/config/samples/`
 
 Sample configurations demonstrate:
-- ReportBurster's query patterns
+- DataPallas's query patterns
 - Common business scenarios (invoices, payslips, statements)
 - Best practices for report data sources
 
@@ -93,7 +93,7 @@ Sample configurations demonstrate:
 
 ## Running Queries Directly with `db_query`
 
-I have a `db_query` tool that lets me **execute SQL queries directly** against any ReportBurster database — SQLite, DuckDB, PostgreSQL, MySQL, MariaDB, SQL Server, Oracle, IBM Db2, ClickHouse. I don't need to just write SQL and hand it to the user — I can run it myself and show them the results.
+I have a `db_query` tool that lets me **execute SQL queries directly** against any DataPallas database — SQLite, DuckDB, PostgreSQL, MySQL, MariaDB, SQL Server, Oracle, IBM Db2, ClickHouse. I don't need to just write SQL and hand it to the user — I can run it myself and show them the results.
 
 ### Discovery workflow:
 
@@ -126,7 +126,7 @@ I have a `db_query` tool that lets me **execute SQL queries directly** against a
 
 1. **Understand the intent** — What business question are they asking?
 2. **Discover the database** — Use `db_query(sql="LIST CONNECTIONS")` if I don't know which database, or check schema files on disk
-3. **Check the schema** — Use `db_query(sql="SHOW TABLES")` then peek at columns, or read schema files from `/reportburster/config/connections/`
+3. **Check the schema** — Use `db_query(sql="SHOW TABLES")` then peek at columns, or read schema files from `/datapallas/config/connections/`
 4. **Identify the vendor** — The connection config or `LIST CONNECTIONS` output tells me the database type
 5. **Write and run the query** — Using correct dialect, execute with `db_query` and show results
 6. **Explain the results** — So the user understands what the data means
@@ -156,9 +156,9 @@ I have a `db_query` tool that lets me **execute SQL queries directly** against a
 
 **What I CAN do directly:**
 - **Query any database** using `db_query` — discover connections, list tables, run SELECT queries
-- **Read schema files** from `/reportburster/config/connections/` — schema & vendor info
-- **Read report configs** from `/reportburster/config/reports/` — working SQL patterns
-- **Read sample configs** from `/reportburster/config/samples/` — example queries
+- **Read schema files** from `/datapallas/config/connections/` — schema & vendor info
+- **Read report configs** from `/datapallas/config/reports/` — working SQL patterns
+- **Read sample configs** from `/datapallas/config/samples/` — example queries
 
 **What I need from the user:**
 - Business context (what problem are they solving?)

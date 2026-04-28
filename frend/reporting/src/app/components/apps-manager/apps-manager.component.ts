@@ -80,14 +80,35 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
     return app.state === 'running';
   }
 
+  private static readonly FLOWKRAFT_IDS = [
+    'flowkraft-data-canvas',
+    'flowkraft-grails',
+    'flowkraft-next',
+    'flowkraft-bkend-boot-groovy',
+    'flowkraft-chat2db',
+  ];
+
+  private static readonly CMS_WEBPORTAL_IDS = [
+    'cms-webportal',
+    'cms-webportal-playground',
+  ];
+
   isCmsWebPortal(app: ManagedApp | undefined): boolean {
-    if (!app) return false;
-    return ['cms-webportal', 'cms-webportal-playground'].includes(app.id);
+    return this.matchesByIdOrSiblingService(app, AppsManagerComponent.CMS_WEBPORTAL_IDS);
   }
 
   isFlowkraftApp(app: ManagedApp | undefined): boolean {
+    return this.matchesByIdOrSiblingService(app, AppsManagerComponent.FLOWKRAFT_IDS);
+  }
+
+  // Match an app by direct id OR by shared `service_name` with any app in the id list.
+  // Lets sibling cards that alias the same Docker service (e.g. data-canvas ↔ flowkraft-ai-hub
+  // both on `ai-hub-frend`) share flag visibility without a maintenance burden on the allowlist.
+  private matchesByIdOrSiblingService(app: ManagedApp | undefined, idList: string[]): boolean {
     if (!app) return false;
-    return ['flowkraft-grails', 'flowkraft-next', 'flowkraft-bkend-boot-groovy', 'flowkraft-ai-hub', 'flowkraft-chat2db'].includes(app.id);
+    if (idList.includes(app.id)) return true;
+    if (!app.service_name) return false;
+    return this.masterApps.some(a => idList.includes(a.id) && a.service_name === app.service_name);
   }
 
   isStartingOrStopping(app: ManagedApp | undefined): boolean {
@@ -425,7 +446,7 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
 
           if (dockerInfo && dockerInfo.isDockerInstalled && !dockerInfo.isDockerDaemonRunning) {
             this.messagesService.showWarning(
-              `Docker is installed but cannot be reached. Please ensure Docker Desktop is running and that ReportBurster was started with "Run as Administrator".`,
+              `Docker is installed but cannot be reached. Please ensure Docker Desktop is running and that DataPallas was started with "Run as Administrator".`,
               'Docker Not Running'
             );
           } else {
@@ -455,44 +476,24 @@ export class AppsManagerComponent implements OnInit, OnChanges, OnDestroy {
    * Uses shared PollingHelper for consistent behavior with starter-packs.
    */
   private startTransitionPolling(): void {
-    // Don't start multiple polling loops - if one is active, it will pick up the new transitional app
-    if (this.pollingSubscription && !this.pollingSubscription.closed) {
-      console.log('Polling already active, skipping...');
-      return;
-    }
+    if (this.pollingSubscription && !this.pollingSubscription.closed) return;
 
-    console.log('Starting polling subscription (max timeout: ' + PollingHelper.getMaxTimeoutDescription() + ')...');
-
-    this.pollingSubscription = PollingHelper.createPollingSubscription(
-      // onPoll callback - returns true to stop polling
-      async () => {
-        // First refresh to get latest state
-        await this.refreshDataSilent();
-
-        console.log('After refresh, app states:', this.masterApps.map(a => ({ id: a.id, state: a.state })));
-
-        // Check if we should stop polling
-        const hasTransitionalApps = PollingHelper.hasTransitionalItems(this.masterApps);
-
-        if (!hasTransitionalApps) {
-          this.stopTransitionPolling();
-          return true; // Signal to stop
-        }
-        return false; // Continue polling
+    this.pollingSubscription = PollingHelper.startLifecyclePolling({
+      refresh: () => this.refreshDataSilent(),
+      getItems: () => this.masterApps,
+      onMaxIterations: () => {
+        this.appsManagerService.clearAllInFlight();
+        this.masterApps.forEach(app => {
+          if (app.state === 'starting' || app.state === 'stopping') {
+            app.state = 'stopped';
+            app.currentCommandValue = app.startCmd;
+          }
+        });
+        this.visibleApps = [...this.masterApps];
+        this.cdRef.detectChanges();
       },
-      // onComplete callback
-      (reason) => {
-        this.pollingSubscription = null;
-        if (reason === 'maxIterations') {
-          console.warn('Polling stopped: max iterations reached. Some apps may still be starting.');
-        }
-      },
-      // onError callback
-      (err) => {
-        console.error('Polling error:', err);
-        this.pollingSubscription = null;
-      }
-    );
+      label: 'AppsManager',
+    });
   }
 
   /**

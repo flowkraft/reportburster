@@ -25,4 +25,10 @@ public class InternalSettings extends DumpToString {
     // runtime: windows | linux | docker
     public String runtime;
 
+    // When true, CRUD list views (Connections, Reports, Cube Definitions)
+    // also display bundled sample entries (Northwind DB connections,
+    // sample reports under config/samples*, sample cubes under config/samples-cubes).
+    // Default false. Sample entries are read-only.
+    public Boolean showsamples;
+
 }

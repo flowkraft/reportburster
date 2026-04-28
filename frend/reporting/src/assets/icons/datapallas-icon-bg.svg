@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!--
+    DataPallas application icon — 3-column temple, no background rectangle.
+    Matches the app nav bar inline logo style.
+    Drop-shadow filter makes the building legible on both dark and light Explorer backgrounds.
+  -->
+  <defs>
+    <filter id="s" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#s)">
+    <!-- Cornice — warm stone -->
+    <rect x="32" y="56" width="192" height="14" fill="#f0e2c0"/>
+    <!-- Frieze — vivid terracotta -->
+    <rect x="32" y="70" width="192" height="22" fill="#c9603a"/>
+    <!-- Architrave -->
+    <rect x="32" y="92" width="192" height="8" fill="#e8d4a8"/>
+    <!-- Capital line — gold -->
+    <rect x="32" y="100" width="192" height="6" fill="#d4a843"/>
+    <!-- 3 columns — bright warm white -->
+    <rect x="44"  y="106" width="36" height="98" fill="#f8f2e8"/>
+    <rect x="110" y="106" width="36" height="98" fill="#f8f2e8"/>
+    <rect x="176" y="106" width="36" height="98" fill="#f8f2e8"/>
+    <!-- column right-edge shadow -->
+    <rect x="77"  y="106" width="5" height="98" fill="#b89858"/>
+    <rect x="143" y="106" width="5" height="98" fill="#b89858"/>
+    <rect x="209" y="106" width="3" height="98" fill="#b89858"/>
+    <!-- base moulding — gold -->
+    <rect x="32" y="204" width="192" height="6" fill="#d4a843"/>
+    <!-- stylobate steps -->
+    <rect x="20"  y="210" width="216" height="10" fill="#e8d4a8"/>
+    <rect x="0"   y="220" width="256" height="14" fill="#c8a860"/>
+  </g>
+</svg>

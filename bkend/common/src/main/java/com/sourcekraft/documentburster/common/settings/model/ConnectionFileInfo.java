@@ -29,4 +29,7 @@ public class ConnectionFileInfo extends DumpToString {
 	public ServerEmailSettings emailserver = new ServerEmailSettings();
 	public ServerDatabaseSettings dbserver = new ServerDatabaseSettings();
 
+	// True for synthesized sample (read-only) entries (Northwind SQLite/DuckDB/ClickHouse)
+	public boolean isSample = false;
+
 }

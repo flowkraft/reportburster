@@ -159,8 +159,6 @@ public class DuckDBFileHandler {
                 }
                 results.add(row);
             }
-        } catch (SQLException e) {
-            throw new SQLException("Failed to query file '" + config.getFilePath() + "': " + e.getMessage(), e);
         }
 
         return results;
@@ -193,8 +191,6 @@ public class DuckDBFileHandler {
                 column.put("class", metaData.getColumnClassName(i));
                 schema.add(column);
             }
-        } catch (SQLException e) {
-            throw new SQLException("Failed to get schema for file '" + config.getFilePath() + "': " + e.getMessage(), e);
         }
 
         return schema;
@@ -219,9 +215,6 @@ public class DuckDBFileHandler {
                 return rs.getLong("row_count");
             }
             return 0;
-
-        } catch (SQLException e) {
-            throw new SQLException("Failed to count rows in file '" + config.getFilePath() + "': " + e.getMessage(), e);
         }
     }
 
@@ -255,8 +248,6 @@ public class DuckDBFileHandler {
                 }
                 results.add(row);
             }
-        } catch (SQLException e) {
-            throw new SQLException("Failed to get sample from file '" + config.getFilePath() + "': " + e.getMessage(), e);
         }
 
         return results;

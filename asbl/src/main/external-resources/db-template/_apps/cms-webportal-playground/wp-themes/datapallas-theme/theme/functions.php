@@ -1,13 +1,13 @@
 <?php
 /**
- * ReportBurster Theme functions and definitions
+ * DataPallas Theme functions and definitions
  *
  * @link https://developer.wordpress.org/themes/basics/theme-functions/
  *
- * @package ReportBurster_Theme
+ * @package DataPallas_Theme
  */
 
-if ( ! defined( 'REPORTBURSTER_THEME_VERSION' ) ) {
+if ( ! defined( 'DATAPALLAS_THEME_VERSION' ) ) {
 	/*
 	 * Set the theme’s version number.
 	 *
@@ -15,15 +15,15 @@ if ( ! defined( 'REPORTBURSTER_THEME_VERSION' ) ) {
 	 * to create your production build, the value below will be replaced in the
 	 * generated zip file with a timestamp, converted to base 36.
 	 */
-	define( 'REPORTBURSTER_THEME_VERSION', '0.1.0' );
+	define( 'DATAPALLAS_THEME_VERSION', '0.1.0' );
 }
 
-if ( ! defined( 'REPORTBURSTER_THEME_TYPOGRAPHY_CLASSES' ) ) {
+if ( ! defined( 'DATAPALLAS_THEME_TYPOGRAPHY_CLASSES' ) ) {
 	/*
 	 * Set Tailwind Typography classes for the front end, block editor and
 	 * classic editor using the constant below.
 	 *
-	 * For the front end, these classes are added by the `reportburster_theme_content_class`
+	 * For the front end, these classes are added by the `DATAPALLAS_THEME_content_class`
 	 * function. You will see that function used everywhere an `entry-content`
 	 * or `page-content` class has been added to a wrapper element.
 	 *
@@ -37,12 +37,12 @@ if ( ! defined( 'REPORTBURSTER_THEME_TYPOGRAPHY_CLASSES' ) ) {
 	 * initializes.
 	 */
 	define(
-		'REPORTBURSTER_THEME_TYPOGRAPHY_CLASSES',
+		'DATAPALLAS_THEME_TYPOGRAPHY_CLASSES',
 		'prose prose-neutral max-w-none prose-a:text-primary'
 	);
 }
 
-if ( ! function_exists( 'reportburster_theme_setup' ) ) :
+if ( ! function_exists( 'DATAPALLAS_THEME_setup' ) ) :
 	/**
 	 * Sets up theme defaults and registers support for various WordPress features.
 	 *
@@ -50,14 +50,14 @@ if ( ! function_exists( 'reportburster_theme_setup' ) ) :
 	 * runs before the init hook. The init hook is too late for some features, such
 	 * as indicating support for post thumbnails.
 	 */
-	function reportburster_theme_setup() {
+	function DATAPALLAS_THEME_setup() {
 		/*
 		 * Make theme available for translation.
 		 * Translations can be filed in the /languages/ directory.
-		 * If you're building a theme based on ReportBurster Theme, use a find and replace
-		 * to change 'reportburster-theme' to the name of your theme in all the template files.
+		 * If you're building a theme based on DataPallas Theme, use a find and replace
+		 * to change 'datapallas-theme' to the name of your theme in all the template files.
 		 */
-		load_theme_textdomain( 'reportburster-theme', get_template_directory() . '/languages' );
+		load_theme_textdomain( 'datapallas-theme', get_template_directory() . '/languages' );
 
 		// Add default posts and comments RSS feed links to head.
 		add_theme_support( 'automatic-feed-links' );
@@ -80,8 +80,8 @@ if ( ! function_exists( 'reportburster_theme_setup' ) ) :
 		// This theme uses wp_nav_menu() in two locations.
 		register_nav_menus(
 			array(
-				'menu-1' => __( 'Primary', 'reportburster-theme' ),
-				'menu-2' => __( 'Footer Menu', 'reportburster-theme' ),
+				'menu-1' => __( 'Primary', 'datapallas-theme' ),
+				'menu-2' => __( 'Footer Menu', 'datapallas-theme' ),
 			)
 		);
 
@@ -118,19 +118,19 @@ if ( ! function_exists( 'reportburster_theme_setup' ) ) :
 		remove_theme_support( 'block-templates' );
 	}
 endif;
-add_action( 'after_setup_theme', 'reportburster_theme_setup' );
+add_action( 'after_setup_theme', 'DATAPALLAS_THEME_setup' );
 
 /**
  * Register widget area.
  *
  * @link https://developer.wordpress.org/themes/functionality/sidebars/#registering-a-sidebar
  */
-function reportburster_theme_widgets_init() {
+function DATAPALLAS_THEME_widgets_init() {
 	register_sidebar(
 		array(
-			'name'          => __( 'Footer', 'reportburster-theme' ),
+			'name'          => __( 'Footer', 'datapallas-theme' ),
 			'id'            => 'sidebar-1',
-			'description'   => __( 'Add widgets here to appear in your footer.', 'reportburster-theme' ),
+			'description'   => __( 'Add widgets here to appear in your footer.', 'datapallas-theme' ),
 			'before_widget' => '<section id="%1$s" class="widget %2$s">',
 			'after_widget'  => '</section>',
 			'before_title'  => '<h2 class="widget-title">',
@@ -138,25 +138,25 @@ function reportburster_theme_widgets_init() {
 		)
 	);
 }
-add_action( 'widgets_init', 'reportburster_theme_widgets_init' );
+add_action( 'widgets_init', 'DATAPALLAS_THEME_widgets_init' );
 
 /**
  * Enqueue scripts and styles.
  */
-function reportburster_theme_scripts() {
-	wp_enqueue_style( 'reportburster-theme-style', get_stylesheet_uri(), array(), REPORTBURSTER_THEME_VERSION );
-	wp_enqueue_script( 'reportburster-theme-script', get_template_directory_uri() . '/js/script.min.js', array(), REPORTBURSTER_THEME_VERSION, true );
+function DATAPALLAS_THEME_scripts() {
+	wp_enqueue_style( 'datapallas-theme-style', get_stylesheet_uri(), array(), DATAPALLAS_THEME_VERSION );
+	wp_enqueue_script( 'datapallas-theme-script', get_template_directory_uri() . '/js/script.min.js', array(), DATAPALLAS_THEME_VERSION, true );
 
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 		wp_enqueue_script( 'comment-reply' );
 	}
 }
-add_action( 'wp_enqueue_scripts', 'reportburster_theme_scripts' );
+add_action( 'wp_enqueue_scripts', 'DATAPALLAS_THEME_scripts' );
 
 /**
  * Enqueue the block editor script.
  */
-function reportburster_theme_enqueue_block_editor_script() {
+function DATAPALLAS_THEME_enqueue_block_editor_script() {
 	$current_screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
 	if (
@@ -165,19 +165,19 @@ function reportburster_theme_enqueue_block_editor_script() {
 		'widgets' !== $current_screen->id
 	) {
 		wp_enqueue_script(
-			'reportburster-theme-editor',
+			'datapallas-theme-editor',
 			get_template_directory_uri() . '/js/block-editor.min.js',
 			array(
 				'wp-blocks',
 				'wp-edit-post',
 			),
-			REPORTBURSTER_THEME_VERSION,
+			DATAPALLAS_THEME_VERSION,
 			true
 		);
-		wp_add_inline_script( 'reportburster-theme-editor', "tailwindTypographyClasses = '" . esc_attr( REPORTBURSTER_THEME_TYPOGRAPHY_CLASSES ) . "'.split(' ');", 'before' );
+		wp_add_inline_script( 'datapallas-theme-editor', "tailwindTypographyClasses = '" . esc_attr( DATAPALLAS_THEME_TYPOGRAPHY_CLASSES ) . "'.split(' ');", 'before' );
 	}
 }
-add_action( 'enqueue_block_assets', 'reportburster_theme_enqueue_block_editor_script' );
+add_action( 'enqueue_block_assets', 'DATAPALLAS_THEME_enqueue_block_editor_script' );
 
 /**
  * Add the Tailwind Typography classes to TinyMCE.
@@ -185,11 +185,11 @@ add_action( 'enqueue_block_assets', 'reportburster_theme_enqueue_block_editor_sc
  * @param array $settings TinyMCE settings.
  * @return array
  */
-function reportburster_theme_tinymce_add_class( $settings ) {
-	$settings['body_class'] = REPORTBURSTER_THEME_TYPOGRAPHY_CLASSES;
+function DATAPALLAS_THEME_tinymce_add_class( $settings ) {
+	$settings['body_class'] = DATAPALLAS_THEME_TYPOGRAPHY_CLASSES;
 	return $settings;
 }
-add_filter( 'tiny_mce_before_init', 'reportburster_theme_tinymce_add_class' );
+add_filter( 'tiny_mce_before_init', 'DATAPALLAS_THEME_tinymce_add_class' );
 
 /**
  * Limit the block editor to heading levels supported by Tailwind Typography.
@@ -198,7 +198,7 @@ add_filter( 'tiny_mce_before_init', 'reportburster_theme_tinymce_add_class' );
  * @param string $block_type Block type name including namespace.
  * @return array
  */
-function reportburster_theme_modify_heading_levels( $args, $block_type ) {
+function DATAPALLAS_THEME_modify_heading_levels( $args, $block_type ) {
 	if ( 'core/heading' !== $block_type ) {
 		return $args;
 	}
@@ -208,7 +208,7 @@ function reportburster_theme_modify_heading_levels( $args, $block_type ) {
 
 	return $args;
 }
-add_filter( 'register_block_type_args', 'reportburster_theme_modify_heading_levels', 10, 2 );
+add_filter( 'register_block_type_args', 'DATAPALLAS_THEME_modify_heading_levels', 10, 2 );
 
 /**
  * Hide WordPress admin bar for non-administrator users.

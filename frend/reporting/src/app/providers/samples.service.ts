@@ -1054,7 +1054,6 @@ export class SamplesService {
               sampleConfigurationValues.capReportDistribution;
             sample.capReportGenerationMailMerge =
               sampleConfigurationValues.capReportGenerationMailMerge;
-            sample.visibility = sampleConfigurationValues.visibility;
           }
 
           const notes = await this.translateService.instant(
@@ -1090,7 +1089,6 @@ export class SamplesService {
       .find((configuration) =>
         sample.configurationFilePath.endsWith(configuration.filePath),
       );
-    sampleConfiguration.visibility = visibility;
     this.countVisibleSamples = this.samples.filter(
       (sample) => sample.visibility == 'visible',
     ).length;

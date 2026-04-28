@@ -46,11 +46,7 @@ public class TimeSeries {
             if (name == null) {
                 throw new IllegalArgumentException("Date bin name cannot be null");
             }
-            try {
-                return DateBin.valueOf(name.toUpperCase().replace(" ", "_"));
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Unknown date bin: " + name);
-            }
+            return DateBin.valueOf(name.toUpperCase().replace(" ", "_"));
         }
     }
 
@@ -95,11 +91,7 @@ public class TimeSeries {
             if (name == null) {
                 throw new IllegalArgumentException("Period comparison name cannot be null");
             }
-            try {
-                return PeriodComparison.valueOf(name.toUpperCase().replace(" ", "_"));
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Unknown period comparison: " + name);
-            }
+            return PeriodComparison.valueOf(name.toUpperCase().replace(" ", "_"));
         }
     }
 
@@ -139,11 +131,7 @@ public class TimeSeries {
             if (name == null) {
                 throw new IllegalArgumentException("Time aggregation name cannot be null");
             }
-            try {
-                return TimeAggregation.valueOf(name.toUpperCase().replace(" ", "_"));
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Unknown time aggregation: " + name);
-            }
+            return TimeAggregation.valueOf(name.toUpperCase().replace(" ", "_"));
         }
     }
 }

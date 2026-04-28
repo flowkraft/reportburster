@@ -90,10 +90,14 @@ public class Settings extends DumpToString {
 		if ((StringUtils.isNoneEmpty(configFilePath) && (Files.exists(initialPath))))
 			this.configurationFilePath = initialPath.toString();
 		else
-			this.configurationFilePath = Paths.get("./config/burst/settings.xml").toAbsolutePath().normalize()
-					.toString();
+			// Anchor fallback to PORTABLE_EXECUTABLE_DIR, not CWD. CWD-anchored fallback
+			// caused cross-thread corruption of the static PORTABLE_EXECUTABLE_DIR_PATH
+			// (constructor below writes it) when parallel /data-canvas requests hit the
+			// fallback branch — half of the widgets then read bkend/server as the base
+			// and failed with FileNotFoundException on config/connections/*.
+			this.configurationFilePath = Utils.resolvePathAgainstPortableDir("config/burst/settings.xml");
 
-		Path path = Paths.get(this.configurationFilePath);
+		Path path = Paths.get(this.configurationFilePath).toAbsolutePath().normalize();
 		Path parentPath = path.getParent();
 		Path grandParentPath = parentPath.getParent().getParent();
 
@@ -244,6 +248,64 @@ public class Settings extends DumpToString {
 		}
 
 		return docSettingsInternal;
+	}
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// showsamples preference
+	// ─────────────────────────────────────────────────────────────────────────
+	//
+	// CRUD list views (Connections, Reports, Cube Definitions) check this flag
+	// when loading. The flag is persisted in config/_internal/settings.xml via
+	// the existing loadPreferences/savePreferences flow. To avoid threading a
+	// "showSamples" parameter through every list endpoint, the backend reads
+	// the preference directly from disk on each list call (cached briefly).
+	//
+	// Fail-closed: any error → returns false (samples stay hidden).
+	// ─────────────────────────────────────────────────────────────────────────
+
+	private static volatile boolean showSamplesCachedValue = false;
+	private static volatile long showSamplesCachedAt = 0L;
+	private static final long SHOW_SAMPLES_CACHE_TTL_MS = 2000L;
+
+	/**
+	 * Reads showsamples preference from the internal settings XML.
+	 * Returns false if the file is missing, the field is missing, or any I/O / parsing
+	 * error occurs (fail-closed). Cached for 2 seconds to avoid hammering disk on
+	 * rapid list calls.
+	 */
+	public static boolean isShowSamplesEnabled() {
+		long now = System.currentTimeMillis();
+		if (now - showSamplesCachedAt < SHOW_SAMPLES_CACHE_TTL_MS) {
+			return showSamplesCachedValue;
+		}
+
+		boolean value = false;
+		try {
+			String internalConfigFilePath = Utils.resolvePathAgainstPortableDir("config/_internal/settings.xml");
+			File f = new File(internalConfigFilePath);
+			if (f.exists() && f.isFile()) {
+				JAXBContext jcr = JAXBContext.newInstance(DocumentBursterSettingsInternal.class);
+				Unmarshaller ur = jcr.createUnmarshaller();
+				try (FileInputStream fis = new FileInputStream(f)) {
+					DocumentBursterSettingsInternal s = (DocumentBursterSettingsInternal) ur.unmarshal(fis);
+					if (s != null && s.settings != null && s.settings.showsamples != null) {
+						value = s.settings.showsamples.booleanValue();
+					}
+				}
+			}
+		} catch (Exception e) {
+			// Fail-closed: never accidentally show samples
+			value = false;
+		}
+
+		showSamplesCachedValue = value;
+		showSamplesCachedAt = now;
+		return value;
+	}
+
+	/** Invalidate the cache (called when preferences are saved). */
+	public static void invalidateShowSamplesCache() {
+		showSamplesCachedAt = 0L;
 	}
 
 	public void loadSettingsReporting() throws Exception {

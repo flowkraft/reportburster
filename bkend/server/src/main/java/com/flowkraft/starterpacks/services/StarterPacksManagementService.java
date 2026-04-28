@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 
 /**
  * Executes starter pack commands by calling MainProgram.execute() —
- * the exact same code path as running reportburster.bat from the CLI.
+ * the exact same code path as running DataPallas.bat from the CLI.
  *
  * MainProgram (picocli) → ServiceCommand.call() → CliJob.doService()
  *   → _createJobFile() (drives WebSocket progress tracking)
@@ -60,7 +60,7 @@ public class StarterPacksManagementService {
             cleanCommand = "service " + cleanCommand;
         }
 
-        // Split into args array for MainProgram.execute() — same as reportburster.bat
+        // Split into args array for MainProgram.execute() — same as DataPallas.bat
         final String[] args = cleanCommand.split("\\s+");
         final String cmd = command;
 

@@ -1,14 +1,14 @@
 <svelte:options customElement={{ tag: "rb-report", shadow: "none" }} accessors={true} />
 
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
 
   // ============================================================================
   // Minimal Interface - Only 3 required props!
   // ============================================================================
   
   /** Report folder name (e.g., "sales-summary") */
-  export let reportCode: string = '';
+  export let reportId: string = '';
   
   /** Base URL for API calls (e.g., "http://localhost:9090/api/reporting") */
   export let apiBaseUrl: string = '';
@@ -64,7 +64,7 @@
   // ============================================================================
   
   onMount(async () => {
-    console.log('[RbReport] onMount - reportCode:', reportCode, 'apiBaseUrl:', apiBaseUrl, 'entityCode:', entityCode);
+    console.log('[RbReport] onMount - reportId:', reportId, 'apiBaseUrl:', apiBaseUrl, 'entityCode:', entityCode);
     
     // Read attributes from host custom element (light DOM — walk up, same as RbTabulator)
     await tick();
@@ -72,7 +72,7 @@
     console.log('[RbReport] onMount - hostElement:', hostElement);
 
     if (hostElement) {
-      if (!reportCode) reportCode = hostElement.getAttribute('report-code') || '';
+      if (!reportId) reportId = hostElement.getAttribute('report-id') || '';
       if (!apiBaseUrl) apiBaseUrl = hostElement.getAttribute('api-base-url') || '';
       if (!apiKey) apiKey = hostElement.getAttribute('api-key') || '';
       if (!entityCode) entityCode = hostElement.getAttribute('entity-code') || '';
@@ -87,9 +87,9 @@
       console.log('[RbReport] onMount - read print-button-label from attribute:', printButtonLabel);
     }
     
-    console.log('[RbReport] onMount - after attribute read: reportCode:', reportCode, 'apiBaseUrl:', apiBaseUrl, 'entityCode:', entityCode);
+    console.log('[RbReport] onMount - after attribute read: reportId:', reportId, 'apiBaseUrl:', apiBaseUrl, 'entityCode:', entityCode);
     
-    if (reportCode && apiBaseUrl) {
+    if (reportId && apiBaseUrl) {
       // In entity mode, skip config loading and directly fetch data with entityCode
       if (entityCode) {
         console.log('[RbReport] onMount - entity mode, calling fetchData()');
@@ -99,19 +99,19 @@
         await loadConfig();
       }
     } else {
-      console.warn('[RbReport] onMount - missing reportCode or apiBaseUrl, not fetching');
+      console.warn('[RbReport] onMount - missing reportId or apiBaseUrl, not fetching');
     }
   });
   
   // Watch for prop changes
-  $: if (reportCode && apiBaseUrl && !configLoaded && !entityCode) {
+  $: if (reportId && apiBaseUrl && !configLoaded && !entityCode) {
     console.log('[RbReport] prop watcher triggered - loadConfig()');
     loadConfig();
   }
   
   // Watch for entityCode changes - fetch data directly in entity mode
   // Use prevEntityCode to detect actual changes and re-fetch
-  $: if (reportCode && apiBaseUrl && entityCode && entityCode !== prevEntityCode) {
+  $: if (reportId && apiBaseUrl && entityCode && entityCode !== prevEntityCode) {
     console.log('[RbReport] entityCode watcher triggered - entityCode:', entityCode, 'prevEntityCode:', prevEntityCode);
     prevEntityCode = entityCode;
     dataLoaded = false; // Reset to allow fresh fetch
@@ -123,7 +123,7 @@
   // ============================================================================
   
   async function loadConfig() {
-    if (!reportCode || !apiBaseUrl) return;
+    if (!reportId || !apiBaseUrl) return;
     
     loading = true;
     error = null;
@@ -137,7 +137,7 @@
       //   headers['X-API-Key'] = apiKey;
       // }
       
-      const response = await fetch(`${apiBaseUrl}/reports/${reportCode}/config`, { headers });
+      const response = await fetch(`${apiBaseUrl}/reports/${reportId}/config`, { headers });
       
       if (!response.ok) {
         throw new Error(`Failed to load config: ${response.status}`);
@@ -174,10 +174,10 @@
   }
   
   async function fetchData() {
-    console.log('[RbReport] fetchData called - reportCode:', reportCode, 'apiBaseUrl:', apiBaseUrl, 'entityCode:', entityCode);
+    console.log('[RbReport] fetchData called - reportId:', reportId, 'apiBaseUrl:', apiBaseUrl, 'entityCode:', entityCode);
     
-    if (!reportCode || !apiBaseUrl) {
-      console.warn('[RbReport] fetchData - missing reportCode or apiBaseUrl, returning');
+    if (!reportId || !apiBaseUrl) {
+      console.warn('[RbReport] fetchData - missing reportId or apiBaseUrl, returning');
       return;
     }
     
@@ -208,7 +208,7 @@
         }
       });
       
-      const url = `${apiBaseUrl}/reports/${reportCode}/data?${params.toString()}`;
+      const url = `${apiBaseUrl}/reports/${reportId}/data?${params.toString()}`;
       console.log('[RbReport] fetchData - fetching from URL:', url);
       
       const response = await fetch(url, { headers });
@@ -366,7 +366,11 @@
       dashboardContainer.innerHTML = html;
     }
 
-    // Listen for parameter events from rb-parameters inside the dashboard
+    // Listen for parameter events from rb-parameters inside the dashboard.
+    // Guard against stacking listeners if injectDashboard runs repeatedly:
+    // remove first, add once. onDestroy does a final remove.
+    dashboardContainer.removeEventListener('valueChange', handleDashboardParamChange as EventListener);
+    dashboardContainer.removeEventListener('submit', handleDashboardParamSubmit as EventListener);
     dashboardContainer.addEventListener('valueChange', handleDashboardParamChange as EventListener);
     dashboardContainer.addEventListener('submit', handleDashboardParamSubmit as EventListener);
   }
@@ -394,9 +398,17 @@
     // Single code flow: inject the full dashboard HTML as-is.
     // All web components (rb-parameters, rb-tabulator, rb-chart, rb-pivot-table)
     // are self-contained and fetch their own data on mount.
+    // Listener attachment happens inside injectDashboard() with a
+    // remove-before-add guard; no need to add again here.
     injectDashboard();
-    dashboardContainer.addEventListener('submit', handleDashboardParamSubmit as EventListener);
   }
+
+  onDestroy(() => {
+    if (dashboardContainer) {
+      dashboardContainer.removeEventListener('valueChange', handleDashboardParamChange as EventListener);
+      dashboardContainer.removeEventListener('submit', handleDashboardParamSubmit as EventListener);
+    }
+  });
 
   // Helpers for aggregator reports — extract named component IDs from config
   $: namedTabulatorIds = config?.namedTabulatorOptions ? Object.keys(config.namedTabulatorOptions) : [];
@@ -445,21 +457,21 @@
 
 <div bind:this={container} class="rb-report">
   {#if loading}
-    <div class="rb-report-loading">
+    <div class="rb-report-loading" id="widgetLoading">
       <div class="rb-report-spinner"></div>
       <span>Loading...</span>
     </div>
   {/if}
   
   {#if error}
-    <div class="rb-report-error">
+    <div class="rb-report-error" id="widgetError">
       <strong>Error:</strong> {error}
     </div>
   {/if}
   
   <!-- Dashboard Mode: Inject HTML with live web components into DOM -->
   {#if configLoaded && dashboardTemplate && !error}
-    <div class="rb-report-dashboard" bind:this={dashboardContainer}></div>
+    <div class="rb-report-dashboard" id="widgetReport" bind:this={dashboardContainer}></div>
   {/if}
 
   {#if configLoaded && !dashboardTemplate && !error}
@@ -505,7 +517,7 @@
           {#each namedTabulatorIds as cid}
             <div class="rb-report-section rb-report-table">
               <rb-tabulator
-                report-code={reportCode}
+                report-id={reportId}
                 component-id={cid}
                 api-base-url={apiBaseUrl}
                 api-key={apiKey}
@@ -518,7 +530,7 @@
           {#each namedChartIds as cid}
             <div class="rb-report-section rb-report-chart">
               <rb-chart
-                report-code={reportCode}
+                report-id={reportId}
                 component-id={cid}
                 api-base-url={apiBaseUrl}
                 api-key={apiKey}
@@ -531,7 +543,7 @@
           {#each namedPivotIds as cid}
             <div class="rb-report-section rb-report-pivot">
               <rb-pivot-table
-                report-code={reportCode}
+                report-id={reportId}
                 component-id={cid}
                 api-base-url={apiBaseUrl}
                 api-key={apiKey}

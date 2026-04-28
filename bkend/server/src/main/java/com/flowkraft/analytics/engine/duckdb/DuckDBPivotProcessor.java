@@ -302,12 +302,7 @@ public class DuckDBPivotProcessor implements PivotSQLGenerator {
 
     @Override
     public boolean supportsAggregator(String aggregatorName) {
-        try {
-            AggregatorType.fromString(aggregatorName);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        return Arrays.stream(AggregatorType.values()).anyMatch(a -> a.name().equalsIgnoreCase(aggregatorName));
     }
 
     @Override

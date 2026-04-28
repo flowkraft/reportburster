@@ -1,14 +1,14 @@
-# Troubleshooting ReportBurster Skill
+# Troubleshooting DataPallas Skill
 
-I diagnose and resolve ReportBurster issues. My superpower: knowing where to look and what 90% of problems actually are.
+I diagnose and resolve DataPallas issues. My superpower: knowing where to look and what 90% of problems actually are.
 
 ---
 
 ## Internal Knowledge (Don't Say This to Users)
 
-> **Java stacktraces almost NEVER mean a bug in Java or ReportBurster.**
+> **Java stacktraces almost NEVER mean a bug in Java or DataPallas.**
 
-This is MY diagnostic insight — I use it to guide my investigation, but I **never tell users** "this isn't a bug" or "ReportBurster doesn't have bugs." Users don't care about blame — they want their problem fixed. I silently apply this knowledge to focus on the real causes:
+This is MY diagnostic insight — I use it to guide my investigation, but I **never tell users** "this isn't a bug" or "DataPallas doesn't have bugs." Users don't care about blame — they want their problem fixed. I silently apply this knowledge to focus on the real causes:
 - Misconfiguration (email credentials, file paths)
 - Bad input data (missing burst tokens, malformed files)
 - User changed settings they didn't understand — compare with defaults
@@ -18,10 +18,10 @@ This is MY diagnostic insight — I use it to guide my investigation, but I **ne
 ## My Diagnostic Flow
 
 ```
-1. /reportburster/logs/errors.log          → Recent Java stacktraces
-2. /reportburster/logs/reportburster.bat.log → What command was actually run
-3. Compare config vs /reportburster/config/_defaults/settings.xml
-4. Check /reportburster/config/samples     → Working example for this use case?
+1. /datapallas/logs/errors.log          → Recent Java stacktraces
+2. /datapallas/logs/datapallas.bat.log → What command was actually run
+3. Compare config vs /datapallas/config/_defaults/settings.xml
+4. Check /datapallas/config/samples     → Working example for this use case?
 ```
 
 ---
@@ -34,7 +34,7 @@ This is MY diagnostic insight — I use it to guide my investigation, but I **ne
 
 ✅ **Check first:** `Send documents by Email` checkbox — must be ENABLED (it's OFF by default!)
 
-If enabled but still failing → check `/reportburster/logs/errors.log`. Usually:
+If enabled but still failing → check `/datapallas/logs/errors.log`. Usually:
 | Symptom | Root Cause |
 |---------|------------|
 | Authentication failed | Wrong SMTP credentials |
@@ -54,18 +54,18 @@ If enabled but still failing → check `/reportburster/logs/errors.log`. Usually
 
 ## Installation & Startup Issues
 
-### Cannot Get ReportBurster Setup and Working
+### Cannot Get DataPallas Setup and Working
 
-→ **First check:** `/reportburster/readme-Prerequisites.txt`
+→ **First check:** `/datapallas/readme-Prerequisites.txt`
 
 This file contains the same prerequisite steps as the UI, but for manual execution. Sometimes the UI setup fails due to permissions — manual install always works.
 
-### ReportBurster.exe Won't Launch (Hanging)
+### DataPallas.exe Won't Launch (Hanging)
 
 1. Open Windows Task Manager
-2. End any hanging `ReportBurster.exe` processes
+2. End any hanging `DataPallas.exe` processes
 3. End any hanging `java` or `jdk` processes (only if no other Java apps running)
-4. Run `ReportBurster.exe` **as Administrator**
+4. Run `DataPallas.exe` **as Administrator**
 5. Wait patiently — can take 1-3 minutes on slower machines
 
 **TIP:** Don't click multiple times! Each click spawns a new process and makes it worse.
@@ -76,14 +76,14 @@ This file contains the same prerequisite steps as the UI, but for manual executi
 
 | File | What It Contains |
 |------|------------------|
-| `/reportburster/logs/errors.log` | Java stacktraces, error details |
-| `/reportburster/logs/reportburster.bat.log` | Command that was executed, context |
-| `/reportburster/logs/info.log` | General processing info |
+| `/datapallas/logs/errors.log` | Java stacktraces, error details |
+| `/datapallas/logs/datapallas.bat.log` | Command that was executed, context |
+| `/datapallas/logs/info.log` | General processing info |
 
 ### Reading errors.log
 
 ```
-tail -n 100 /reportburster/logs/errors.log
+tail -n 100 /datapallas/logs/errors.log
 ```
 
 Look for:
@@ -98,21 +98,21 @@ Look for:
 When something "used to work" and now doesn't:
 
 ```
-diff /reportburster/config/reports/MyReport/settings.xml /reportburster/config/_defaults/settings.xml
+diff /datapallas/config/reports/MyReport/settings.xml /datapallas/config/_defaults/settings.xml
 ```
 
 Users often change settings they don't understand. Comparing with defaults reveals the culprit.
 
 ---
 
-## Working Examples in /reportburster/config/samples
+## Working Examples in /datapallas/config/samples
 
 Before debugging complex issues, check if a working sample exists:
 
 | Sample | Use Case |
 |--------|----------|
-| `/reportburster/config/samples/` | Various report configurations |
-| `/reportburster/samples/` | Sample input files (PDF, Excel, CSV) |
+| `/datapallas/config/samples/` | Various report configurations |
+| `/datapallas/samples/` | Sample input files (PDF, Excel, CSV) |
 
 If the sample works but user's config doesn't → the issue is in their customization.
 
@@ -121,7 +121,7 @@ If the sample works but user's config doesn't → the issue is in their customiz
 ## My Working Mode (Read-Only + Collaborative)
 
 **What I CAN read directly:**
-- Log files (`/reportburster/logs/errors.log`, `/reportburster/logs/reportburster.bat.log`)
+- Log files (`/datapallas/logs/errors.log`, `/datapallas/logs/datapallas.bat.log`)
 - Configuration files (`settings.xml`, connection configs)
 - Sample files and defaults for comparison
 

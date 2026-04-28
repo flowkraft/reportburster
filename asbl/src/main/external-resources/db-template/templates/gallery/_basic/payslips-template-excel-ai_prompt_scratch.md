@@ -2,7 +2,7 @@
 
 ## Overview
 
-Create a professional payslip template that can be exported to Excel using ReportBurster technology. This template should combine clean HTML/CSS design with Excel-specific functionality through specialized data attributes. The result should be a visually organized monthly income statement that maintains its formatting when converted to Excel and includes automatic calculations.
+Create a professional payslip template that can be exported to Excel using DataPallas technology. This template should combine clean HTML/CSS design with Excel-specific functionality through specialized data attributes. The result should be a visually organized monthly income statement that maintains its formatting when converted to Excel and includes automatic calculations.
 
 ## Design Requirements
 
@@ -45,7 +45,7 @@ Create a single-page payslip with the following sections:
 
 ## Excel Export Functionality
 
-The template must include specialized data attributes for ReportBurster Excel export. Include the following Excel-specific features:
+The template must include specialized data attributes for DataPallas Excel export. Include the following Excel-specific features:
 
 ### Worksheet Configuration
 

@@ -62,7 +62,7 @@ const pivotCategories: PivotCategory[] = [
 ]
 
 const usageCode = `<rb-pivot-table
-  report-code="your-report-code"
+  report-id="your-report-id"
   component-id="yourComponentId"
   api-base-url="\${apiBaseUrl}"
   api-key="\${apiKey}"
@@ -71,7 +71,7 @@ const usageCode = `<rb-pivot-table
 type SoTab = "pivot" | "rawdata" | "config" | "usage"
 
 const soUsageCode = `<rb-pivot-table
-  report-code="piv-examples"
+  report-id="piv-examples"
   component-id="salesOverview"
   api-base-url="\${apiBaseUrl}"
   api-key="\${apiKey}"
@@ -132,7 +132,7 @@ function SalesOverviewSection({ copyFn, copiedKey }: { copyFn: (text: string, ke
             {/* @ts-expect-error - Web component custom element */}
             <rb-pivot-table
               id="demoPivot"
-              report-code="piv-examples"
+              report-id="piv-examples"
               component-id="salesOverview"
               api-base-url={rbConfig.apiBaseUrl}
               api-key={rbConfig.apiKey}
@@ -242,7 +242,7 @@ FROM sales GROUP BY Product;
             {/* @ts-expect-error - Web component custom element */}
             <rb-tabulator
               id="rawDataTable"
-              report-code="piv-examples"
+              report-id="piv-examples"
               component-id="salesOverview"
               api-base-url={rbConfig.apiBaseUrl}
               api-key={rbConfig.apiKey}
@@ -304,7 +304,7 @@ export default function PivotTablesPage() {
   // Listen to first rb-pivot-table for shared configDsl
   useEffect(() => {
     if (!isReady) return
-    const el = document.querySelector('rb-pivot-table[report-code="piv-examples"]') as any
+    const el = document.querySelector('rb-pivot-table[report-id="piv-examples"]') as any
     if (!el) return
     const handler = () => { if (el.configDsl) setConfigDsl(el.configDsl) }
     el.addEventListener("configLoaded", handler)
@@ -365,7 +365,7 @@ export default function PivotTablesPage() {
                       {/* @ts-expect-error - Web component custom element */}
                       <rb-pivot-table
                         id={`rb-${example.id}`}
-                        report-code="piv-examples"
+                        report-id="piv-examples"
                         component-id={example.id}
                         api-base-url={rbConfig.apiBaseUrl}
                         api-key={rbConfig.apiKey}

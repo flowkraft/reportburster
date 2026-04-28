@@ -7,12 +7,10 @@ import type { PivotEngine } from './pivot-types';
 
 // Server-side request/response types matching Java DTOs
 export interface ServerPivotRequest {
-  // Option 1 (recommended): server resolves connectionCode + tableName internally
-  reportCode?: string;
-  // Option 2 (legacy): client provides connectionCode + tableName directly
-  connectionCode?: string;
-  tableName?: string;
-  engine?: 'duckdb' | 'clickhouse';  // Backend engine (if omitted, backend auto-detects from connection type)
+  /** Server resolves connectionCode + tableName from the reportId. */
+  reportId: string;
+  /** Backend engine (if omitted, backend auto-detects from connection type). */
+  engine?: 'duckdb' | 'clickhouse';
   rows?: string[];
   cols?: string[];
   vals?: string[];
@@ -223,10 +221,10 @@ export function convertValueFilterToServerFilters(
 
 /**
  * Helper to build ServerPivotRequest from PivotTable state.
- * Uses reportCode so the server resolves connectionCode + tableName internally.
+ * Uses reportId so the server resolves connectionCode + tableName internally.
  */
 export function buildServerPivotRequest(
-  reportCode: string,
+  reportId: string,
   state: {
     rows?: string[];
     cols?: string[];
@@ -239,7 +237,7 @@ export function buildServerPivotRequest(
   engine?: 'duckdb' | 'clickhouse'
 ): ServerPivotRequest {
   return {
-    reportCode,
+    reportId,
     engine,
     rows: state.rows || [],
     cols: state.cols || [],

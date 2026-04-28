@@ -105,14 +105,13 @@
             <AppenderRef ref="error-out"/>
         </Logger>
 
+		<!-- Root catches Spring-internal loggers (org.springframework.*, reactor.*,
+		     io.netty.*, java.*). Without appenders here, exceptions thrown inside
+		     Spring's dispatch pipeline (WebFlux error handlers, filter chains) are
+		     silently dropped — never reaching errors.log or stdout. -->
 		<Root level="warn">
-
-			<!-- <AppenderRef ref="documentburster" /> -->
-
-			<!-- Un-comment the following line for sending DocumentBurster problems
-				by email -->
-			<!-- <AppenderRef ref="mailAppender" /> -->
-
+			<AppenderRef ref="Console"/>
+			<AppenderRef ref="error-out"/>
 		</Root>
 	</Loggers>
 

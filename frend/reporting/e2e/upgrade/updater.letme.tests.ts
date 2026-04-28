@@ -10,7 +10,7 @@ describe('updater: letme-db tests', function () {
   });
 
   beforeEach(async () => {
-    helpers.updateDestinationDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/ReportBurster`;
+    helpers.updateDestinationDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DataPallas`;
 
     await jetpack.dirAsync(PATHS.EXECUTABLE_DIR_PATH, { empty: true });
   });

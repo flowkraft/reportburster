@@ -1,5 +1,5 @@
 <!--
- | ReportBurster Integration - Report View
+ | DataPallas Integration - Report View
  |
  | This template demonstrates the new <rb-report> component
  | that simplifies integration to just 3 attributes.
@@ -8,19 +8,19 @@
 
 <?php 
 // Get configuration from WordPress options or environment
-$api_base_url = get_option('reportburster_api_url', 'http://localhost:9090/api/reporting');
-$api_key = get_option('reportburster_api_key', '');
+$api_base_url = get_option('datapallas_api_url', 'http://localhost:9090/api/reporting');
+$api_key = get_option('datapallas_api_key', '');
 ?>
 
-<div class="reportburster-integration wrap">
-    <h1><?php _e('Reports', 'reportburster-integration'); ?></h1>
-    <p class="description"><?php _e('Select a report to view. The rb-report component handles everything automatically.', 'reportburster-integration'); ?></p>
+<div class="datapallas-portal wrap">
+    <h1><?php _e('Reports', 'datapallas-portal'); ?></h1>
+    <p class="description"><?php _e('Select a report to view. The rb-report component handles everything automatically.', 'datapallas-portal'); ?></p>
 
     <!-- Report Selection -->
     <div class="card" style="margin: 20px 0; padding: 15px;">
-        <label for="report-select" style="font-weight: bold;"><?php _e('Select Report:', 'reportburster-integration'); ?></label>
+        <label for="report-select" style="font-weight: bold;"><?php _e('Select Report:', 'datapallas-portal'); ?></label>
         <select id="report-select" class="regular-text" style="margin-left: 10px;">
-            <option value=""><?php _e('-- Select a report --', 'reportburster-integration'); ?></option>
+            <option value=""><?php _e('-- Select a report --', 'datapallas-portal'); ?></option>
             <option value="sales-summary">Sales Summary</option>
             <option value="customer-orders">Customer Orders</option>
             <option value="inventory-report">Inventory Report</option>
@@ -40,22 +40,22 @@ $api_key = get_option('reportburster_api_key', '');
 
     <!-- Integration Example -->
     <div class="card" style="margin-top: 30px; padding: 15px;">
-        <h2><?php _e('Integration Code', 'reportburster-integration'); ?></h2>
+        <h2><?php _e('Integration Code', 'datapallas-portal'); ?></h2>
         <pre style="background: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;"><code>&lt;rb-report 
     report-code="sales-summary"
     api-base-url="<?php echo esc_attr($api_base_url); ?>"
     api-key="YOUR_API_KEY"&gt;
 &lt;/rb-report&gt;</code></pre>
         <p class="description">
-            <?php _e('That\'s it! The component automatically:', 'reportburster-integration'); ?>
+            <?php _e('That\'s it! The component automatically:', 'datapallas-portal'); ?>
         </p>
         <ol>
-            <li><?php _e('Fetches configuration from the server', 'reportburster-integration'); ?></li>
-            <li><?php _e('Renders a parameter form (if configured)', 'reportburster-integration'); ?></li>
-            <li><?php _e('Fetches data when user submits', 'reportburster-integration'); ?></li>
-            <li><?php _e('Displays tables, charts, and pivots based on server config', 'reportburster-integration'); ?></li>
+            <li><?php _e('Fetches configuration from the server', 'datapallas-portal'); ?></li>
+            <li><?php _e('Renders a parameter form (if configured)', 'datapallas-portal'); ?></li>
+            <li><?php _e('Fetches data when user submits', 'datapallas-portal'); ?></li>
+            <li><?php _e('Displays tables, charts, and pivots based on server config', 'datapallas-portal'); ?></li>
         </ol>
-        <p><strong><?php _e('Server is the single source of truth.', 'reportburster-integration'); ?></strong></p>
+        <p><strong><?php _e('Server is the single source of truth.', 'datapallas-portal'); ?></strong></p>
     </div>
 </div>
 

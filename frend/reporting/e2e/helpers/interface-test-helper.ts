@@ -160,7 +160,7 @@ export class InterfaceTestHelper {
     const isWindows = os.platform() === 'win32';
 
     const absoluteDir = path.resolve(this.PORTABLE_DIR);
-    const cmd = isWindows ? 'reportburster.bat' : './reportburster.sh';
+    const cmd = isWindows ? 'datapallas.bat' : './datapallas.sh';
     const fullCommand = `cd "${absoluteDir}" && set "PORTABLE_EXECUTABLE_DIR=" && ${cmd} ${args.join(' ')}`;
 
     try {

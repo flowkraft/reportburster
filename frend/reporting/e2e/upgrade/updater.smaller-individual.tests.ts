@@ -15,7 +15,7 @@ describe('updater: smaler individual tests', function () {
   beforeEach(async () => {
     await jetpack.dirAsync(PATHS.EXECUTABLE_DIR_PATH, { empty: true });
 
-    helpers.updateDestinationDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/ReportBurster`;
+    helpers.updateDestinationDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DataPallas`;
 
     const files = await jetpack.listAsync(PATHS.EXECUTABLE_DIR_PATH);
 

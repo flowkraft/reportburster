@@ -1,7 +1,7 @@
 <service>
   <id>rbsj</id>
-  <name>ReportBurster Server</name>
-  <description>ReportBurster Server (Reporting) Service</description>
+  <name>DataPallas Server</name>
+  <description>DataPallas Server (Reporting) Service</description>
   <executable>cmd.exe</executable>
   <arguments>/c "../../startServer.bat"</arguments>
   <log mode="roll"></log>

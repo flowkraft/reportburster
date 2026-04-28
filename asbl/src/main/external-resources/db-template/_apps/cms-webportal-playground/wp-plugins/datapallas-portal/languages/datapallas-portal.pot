@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WP Kirk Blade Boilerplate 1.8.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/reportburster-integration\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/datapallas-portal\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -12,30 +12,30 @@ msgstr ""
 "POT-Creation-Date: 2025-01-08T10:13:49+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
-"X-Domain: reportburster-integration\n"
+"X-Domain: datapallas-portal\n"
 
 #. Plugin Name of the plugin
-#: reportburster-integration.php
+#: datapallas-portal.php
 msgid "WP Kirk Blade Boilerplate"
 msgstr ""
 
 #. Plugin URI of the plugin
-#: reportburster-integration.php
-msgid "https://github.com/wpbones/ReportBurster_Integration-Boilerplate"
+#: datapallas-portal.php
+msgid "https://github.com/wpbones/DataPallas_Integration-Boilerplate"
 msgstr ""
 
 #. Description of the plugin
-#: reportburster-integration.php
+#: datapallas-portal.php
 msgid "WP Bones Blade Boilerplate WordPress plugin"
 msgstr ""
 
 #. Author of the plugin
-#: reportburster-integration.php
+#: datapallas-portal.php
 msgid "Giovambattista Fazioli"
 msgstr ""
 
 #. Author URI of the plugin
-#: reportburster-integration.php
+#: datapallas-portal.php
 msgid "https://wpbones.com/"
 msgstr ""
 

@@ -1,18 +1,18 @@
-=== ReportBurster Portal ===
+=== DataPallas Portal ===
 Contributors: flowkraft
 Donate link: https://reportburster.com/
-Tags: documents, portal, reportburster
+Tags: documents, portal, datapallas
 Requires at least: 6.2
 Tested up to: 6.7
 Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-ReportBurster Portal WordPress plugin for document distribution.
+DataPallas Portal WordPress plugin for document distribution.
 
 == Description ==
 
-ReportBurster Portal plugin for creating document portals with WordPress.
+DataPallas Portal plugin for creating document portals with WordPress.
 
 == Installation ==
 

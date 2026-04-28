@@ -18,24 +18,24 @@ I help users with two related domains: **Embeddable Analytics Components** and *
 
 All components share the same attributes:
 - `report-code` — Report folder name (e.g., "sales-summary")
-- `api-base-url` — ReportBurster API URL (e.g., "http://localhost:9090/api/reporting")
+- `api-base-url` — DataPallas API URL (e.g., "http://localhost:9090/api/reporting")
 
 ### How Embedding Works
 
 **For FlowKraft Apps (Recommended):**
-1. Configure your report in ReportBurster
+1. Configure your report in DataPallas
 2. Go to Usage tab → copy embed code
 3. Paste into your FlowKraft app view
 
 **For Other Web Apps (WordPress, Angular, Vue, React, plain HTML):**
-1. Configure report in ReportBurster (data source, visualization options)
+1. Configure report in DataPallas (data source, visualization options)
 2. Copy embed code from Usage tab
 3. Include script: `<script src="http://localhost:9090/rb-webcomponents.umd.js"></script>`
 4. Paste component: `<rb-tabulator report-code="sales" api-base-url="..."></rb-tabulator>`
 
 ### Configuration via Groovy DSL
 
-Components are configured in ReportBurster using Groovy DSL — not in the embed code.
+Components are configured in DataPallas using Groovy DSL — not in the embed code.
 
 **Chart example:**
 ```groovy

@@ -8,7 +8,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { interval, Subscription } from 'rxjs';
+import { interval, Subscription, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import * as _ from 'lodash';
 
@@ -88,6 +89,7 @@ export class ProcessingComponent implements OnInit {
   };
 
   subscriptionCheckIfTestEmailServerIsStarted: Subscription;
+  private showSamplesSub?: Subscription;
 
   @ViewChild('tabBurstTemplate', { static: true })
   tabBurstTemplate: TemplateRef<any>;
@@ -215,6 +217,78 @@ export class ProcessingComponent implements OnInit {
   ];
 
   cmsPortalApp: ManagedApp[] = [];
+  dashboardReports: CfgTmplFileInfo[] = [];
+  dashboardFilteredReports: CfgTmplFileInfo[] = [];
+  dashboardPage = 0;
+  readonly dashboardPageSize = 3;
+  dashboardSearchTerm = '';
+  isDashboardRefreshing = false;
+  private dashboardSearchSubject = new Subject<string>();
+
+  get dashboardTotalPages(): number {
+    return Math.max(1, Math.ceil(this.dashboardFilteredReports.length / this.dashboardPageSize));
+  }
+  get dashboardPageStart(): number {
+    return this.dashboardPage * this.dashboardPageSize;
+  }
+  get dashboardPageEnd(): number {
+    return Math.min(this.dashboardFilteredReports.length, this.dashboardPageStart + this.dashboardPageSize);
+  }
+  get dashboardPageNumbers(): number[] {
+    return Array.from({ length: this.dashboardTotalPages }, (_, i) => i);
+  }
+  get dashboardPagedReports(): CfgTmplFileInfo[] {
+    return this.dashboardFilteredReports.slice(this.dashboardPageStart, this.dashboardPageEnd);
+  }
+
+  onDashboardSearchChange(term: string) {
+    this.dashboardSearchSubject.next(term ?? '');
+  }
+
+  dashboardGoToPage(i: number) {
+    this.dashboardPage = i;
+  }
+  dashboardPrevPage() {
+    if (this.dashboardPage > 0) this.dashboardPage--;
+  }
+  dashboardNextPage() {
+    if (this.dashboardPage < this.dashboardTotalPages - 1) this.dashboardPage++;
+  }
+
+  async refreshDashboards(): Promise<void> {
+    if (this.isDashboardRefreshing) return;
+    this.isDashboardRefreshing = true;
+    try {
+      this.settingsService.configurationFiles =
+        await this.settingsService.loadAllReports({ forceReload: true });
+      this.applyDashboardFilter();
+    } finally {
+      this.isDashboardRefreshing = false;
+    }
+  }
+
+  /** Rebuild dashboardReports respecting the "Show sample connections & cubes" toggle and search. */
+  applyDashboardFilter(): void {
+    const all = this.settingsService.configurationFiles.filter(
+      (r) => r.dsInputType === 'ds.dashboard'
+    );
+    this.dashboardReports = this.settingsService.showSamples
+      ? all
+      : all.filter((r) => r.type !== 'config-samples');
+
+    // Apply search filter
+    const term = (this.dashboardSearchTerm || '').trim().toLowerCase();
+    this.dashboardFilteredReports = term
+      ? this.dashboardReports.filter((r) =>
+          (r.templateName || r.folderName || '').toLowerCase().includes(term)
+        )
+      : [...this.dashboardReports];
+
+    // Reset to first page if current page is now out of range
+    if (this.dashboardPage >= this.dashboardTotalPages) {
+      this.dashboardPage = 0;
+    }
+  }
 
   constructor(
     protected processingService: ProcessingService,
@@ -244,6 +318,7 @@ export class ProcessingComponent implements OnInit {
     if (this.subscriptionCheckIfTestEmailServerIsStarted) {
       this.subscriptionCheckIfTestEmailServerIsStarted.unsubscribe();
     }
+    this.showSamplesSub?.unsubscribe();
   }
 
   // ========== SHARED HELPERS ==========
@@ -293,7 +368,30 @@ export class ProcessingComponent implements OnInit {
     await this.settingsService.loadAllConnections();
     this.settingsService.configurationFiles =
       await this.settingsService.loadAllReports({ forceReload: true });
+    // Dashboard search debounce
+    this.dashboardSearchSubject
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe((term) => {
+        this.dashboardSearchTerm = term;
+        this.dashboardPage = 0;
+        this.applyDashboardFilter();
+      });
+
+    this.applyDashboardFilter();
     await this.samplesService.fillSamplesNotes();
+
+    // Reload dashboard list when the user toggles "Show sample connections & cubes".
+    // BehaviorSubject fires the current value synchronously on subscribe — skip
+    // that first emission since we already loaded above.
+    let firstEmission = true;
+    this.showSamplesSub = this.settingsService.showSamples$.subscribe(() => {
+      if (firstEmission) {
+        firstEmission = false;
+        return;
+      }
+      this.applyDashboardFilter();
+      this.changeDetectorRef.detectChanges();
+    });
 
     this.route.params.subscribe(async (params) => {
       await this.handleRouteParams(params);
@@ -329,7 +427,7 @@ export class ProcessingComponent implements OnInit {
       this.processingService.procReportingMailMergeInfo.isSample = true;
       this.processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport =
         this.settingsService
-          .getMailMergeConfigurations({ visibility: 'visible', samples: true })
+          .getMailMergeConfigurations({ samples: true })
           .find((c: CfgTmplFileInfo) =>
             c.filePath.includes(params.prefilledSelectedMailMergeClassicReport),
           );
@@ -420,7 +518,6 @@ export class ProcessingComponent implements OnInit {
     //if (this.currentLeftMenu == 'burstMenuSelected') {
     const mailMergeConfigurations =
       this.settingsService.getMailMergeConfigurations({
-        visibility: 'visible',
         samples: this.processingService.procReportingMailMergeInfo.isSample,
       });
 
@@ -509,7 +606,7 @@ export class ProcessingComponent implements OnInit {
     this.processingService.procReportingMailMergeInfo.selectedMailMergeClassicReport =
       null;
 
-    // Reset View Data state so rb-tabulator isn't rendered with null reportCode
+    // Reset View Data state so rb-tabulator isn't rendered with null reportId
     this.showViewDataTabulator = false;
     this.isViewDataLoading = false;
     this.viewDataResult = null;
@@ -1573,7 +1670,7 @@ export class ProcessingComponent implements OnInit {
     if (this.storeService.configSys.sysInfo.setup.portal.isProvisioned) {
       // Portal is running, so stop it
       this.confirmService.askConfirmation({
-        message: 'Are you sure you want to stop the ReportBurster Portal?',
+        message: 'Are you sure you want to stop the DataPallas Portal?',
         confirmAction: () => {
           //this.stopPortal(event);
         },
@@ -1581,7 +1678,7 @@ export class ProcessingComponent implements OnInit {
     } else {
       // Portal is not running, so start it
       this.confirmService.askConfirmation({
-        message: 'Are you sure you want to start the ReportBurster Portal?',
+        message: 'Are you sure you want to start the DataPallas Portal?',
         confirmAction: () => {
           //this.startPortal(event);
         },

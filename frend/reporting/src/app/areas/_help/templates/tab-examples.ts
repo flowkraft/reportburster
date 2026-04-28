@@ -1,13 +1,13 @@
 export const tabExamplesTemplate = `<ng-template #tabExamplesTemplate>
   <div class="well">
-    <h3 id="checkPointHelpExamples"><em>ReportBurster</em> Examples</h3>
+    <h3 id="checkPointHelpExamples"><em>DataPallas</em> Examples</h3>
 
-    <br />People are using <em>ReportBurster</em> for the following situations
+    <br />People are using <em>DataPallas</em> for the following situations
 
     <br />
     <br />1.
 
-    <em>ReportBurster</em> as a general
+    <em>DataPallas</em> as a general
     <a
       title="Examples of how people are using DocumentBurster report distribution software"
       href="https://www.pdfburst.com/blog/report-distribution-software/"
@@ -31,7 +31,7 @@ export const tabExamplesTemplate = `<ng-template #tabExamplesTemplate>
       href="https://www.pdfburst.com/blog/crystal-reports-distribution/"
       target="_blank">Burst and Distribute Crystal Reports Documents</a
     >
-    using <em>ReportBurster</em>&nbsp;&nbsp;
+    using <em>DataPallas</em>&nbsp;&nbsp;
     <a
       href="https://www.pdfburst.com/blog/crystal-reports-distribution/"
       target="_blank"
@@ -49,7 +49,7 @@ export const tabExamplesTemplate = `<ng-template #tabExamplesTemplate>
       href="https://www.pdfburst.com/blog/email-payslips/"
       target="_blank">Email Payslips to Employees</a
     >
-    using <em>ReportBurster</em>&nbsp;&nbsp;
+    using <em>DataPallas</em>&nbsp;&nbsp;
     <a href="https://www.pdfburst.com/blog/email-payslips/" target="_blank">
       <button class="btn btn-primary btn-xs" type="button">
         View Examples

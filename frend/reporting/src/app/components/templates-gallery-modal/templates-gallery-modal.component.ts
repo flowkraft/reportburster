@@ -6,6 +6,7 @@ import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SettingsService } from '../../providers/settings.service';
 import { ReportsService } from '../../providers/reports.service';
+import { ApiService } from '../../providers/api.service';
 
 
 @Component({
@@ -25,6 +26,7 @@ export class TemplatesGalleryModalComponent {
     protected sanitizer: DomSanitizer,
     protected confirmService: ConfirmService,
     protected samplesService: SamplesService,
+    protected apiService: ApiService,
   ) { }
 
   templateSanitizedHtmlCache = new Map<string, SafeHtml>();
@@ -363,7 +365,7 @@ export class TemplatesGalleryModalComponent {
         const assetPath = `${baseDirUrl}${src}`;
         img.setAttribute(
           'src',
-          `/api/reports/serve-asset?path=${encodeURIComponent(assetPath)}`,
+          `${this.apiService.BACKEND_URL}/reports/serve-asset?path=${encodeURIComponent(assetPath)}`,
         );
       }
     });
@@ -387,7 +389,7 @@ export class TemplatesGalleryModalComponent {
           const assetPath = `${baseDirUrl}${bgMatch[1]}`;
           const newStyle = style.replace(
             bgMatch[0],
-            `background-image: url('/api/reports/serve-asset?path=${encodeURIComponent(assetPath)}')`,
+            `background-image: url('${this.apiService.BACKEND_URL}/reports/serve-asset?path=${encodeURIComponent(assetPath)}')`,
           );
           el.setAttribute('style', newStyle);
         }
@@ -399,7 +401,7 @@ export class TemplatesGalleryModalComponent {
     if (baseDirUrl) {
       processedHtml = processedHtml.replace(
         /url\(['"]?(?!http|data:|\/api)([^'")]+)['"]?\)/gi,
-        (_match, relPath) => `url('/api/reports/serve-asset?path=${encodeURIComponent(baseDirUrl + relPath)}')`
+        (_match, relPath) => `url('${this.apiService.BACKEND_URL}/reports/serve-asset?path=${encodeURIComponent(baseDirUrl + relPath)}')`
       );
     }
 

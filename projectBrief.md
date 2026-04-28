@@ -1,7 +1,7 @@
-# ReportBurster — Project Brief
+# DataPallas — Project Brief
 
 Functional Overview
-- ReportBurster: AI-assisted, automated report generation, bursting, and distribution for business documents.
+- DataPallas: AI-assisted, automated report generation, bursting, and distribution for business documents.
 - Capabilities:
   - AI-driven report definition: describe what you need and AI generates the report definition — no coding, no SQL, no template design required.
   - Flexible inputs/outputs: connect to databases, Excel/CSV/XML and export to PDF, Excel, Word, HTML, JSON, etc.
@@ -14,9 +14,9 @@ Components
 
 1. asbl
 
-- Assembling layer: contains the assembling code that puts the parts together, creates package artifacts and ZIP distributions (e.g. reportburster.zip, reportburster-server.zip); main classes include AbstractAssembler, NoExeAssembler, ReportBursterAssembler, ReportBursterServerSpringBootAssembler. Packaging/test scripts include pack-reportburster.bat and pack-prepare-for-e2e.bat. 
+- Assembling layer: contains the assembling code that puts the parts together, creates package artifacts and ZIP distributions (e.g. datapallas.zip, datapallas-server.zip); main classes include AbstractAssembler, NoExeAssembler, DataPallasAssembler, DataPallasServerSpringBootAssembler, DataPallasSourceAssembler. Packaging/test scripts include pack-datapallas.bat and pack-prepare-for-e2e.bat. 
 
-- UAT scripts: inside asbl/src/uat there are Robot Framework (Python) scripts that run User Acceptance Tests against the final packages (reportburster.zip, reportburster-server.zip) to prove the packages work.
+- UAT scripts: inside asbl/src/uat there are Robot Framework (Python) scripts that run User Acceptance Tests against the final packages (datapallas.zip, datapallas-server.zip) to prove the packages work.
 
 - Inside asbl/docker are scripts to build and deploy the app using Docker.
 
@@ -30,7 +30,7 @@ Components
 
 3. frend
 - frend/reporting: main Angular UI webapp (also compiled as an Electron desktop app).
-- frend/rb-tabulator: Svelte project that wraps/deploys the Tabulator JS library (https://tabulator.info) as a web component used by ReportBurster.
+- frend/rb-tabulator: Svelte project that wraps/deploys the Tabulator JS library (https://tabulator.info) as a web component used by DataPallas.
 - UI communication: Angular app talks to bkend/server over REST and WebSocket.
 - Dual deployment: almost the same source is built and deployed both as an Electron desktop app and as a normal Web App.
 - E2E tests: frend/reporting/e2e contains an exhaustive set of 100+ Playwright end-to-end tests that validate main use cases; the same tests run against both the Electron app and the Web App.
@@ -55,7 +55,7 @@ Release verification flow (minimal)
 - Run build:prod and compile-and-stage scripts to produce fresh frontend and backend artifacts.
 - Run the subset of E2E tests you need during development (using the rename helpers to limit the test set).
 - For release: run the full 100+ Playwright E2E suite (Electron or Web) and the Robot Framework UATs.
-- After all tests pass, run asbl/pack-reportburster.bat to create reportburster.zip and reportburster-server.zip.
+- After all tests pass, run asbl/pack-datapallas.bat to create datapallas.zip and datapallas-server.zip.
 - Execute asbl/src/uat/run-tests.bat against the generated ZIPs to validate final packages before uploading/releasing.
 
 - IMPORTANT: Above all, simplicity and pragmatism trump everything: whether proposing design options or writing code, aim for the most straightforward, to‑the‑point solution that gets the job done. Change only what is strictly required for the task, avoid touching unrelated lines or files, and always ask one more time "could this be done even simpler?"

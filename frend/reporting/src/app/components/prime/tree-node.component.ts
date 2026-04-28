@@ -57,6 +57,7 @@ import { TreeNode } from './tree.component';
         <!-- Stop propagation on checkbox click -->
         <div
           class="p-checkbox-box"
+          [title]="getCheckboxTooltip()"
           [ngClass]="{
             'p-highlight': isSelected,
             'p-indeterminate': node.partialSelected,
@@ -119,9 +120,11 @@ import { TreeNode } from './tree.component';
             [selection]="selection"
             [nodeTemplate]="nodeTemplate"
             [treeId]="treeId"
+            [showTooltips]="showTooltips"
             (nodeSelect)="onChildNodeSelect($event)"
             (nodeUnselect)="onChildNodeUnselect($event)"
             (nodeToggle)="onChildNodeToggle($event)"
+            (nodeWeakClick)="onChildNodeWeakClick($event)"
           >
           </dburst-tree-node>
         </li>
@@ -305,6 +308,10 @@ export class TreeNodeComponent {
   @Input() isSelected: boolean = false;
   @Input() nodeTemplate: TemplateRef<any> | undefined;
   @Input() treeId: string = '';
+  // When false, suppresses ALL checkbox tooltips. Used by the picklist to
+  // disable tooltips on the source tree (only the target tree shows the
+  // name-only hint).
+  @Input() showTooltips: boolean = true;
 
   @Output() nodeSelect = new EventEmitter<{
     originalEvent: Event;
@@ -318,6 +325,17 @@ export class TreeNodeComponent {
     originalEvent: Event;
     node: TreeNode;
     expanded: boolean;
+  }>();
+  // Emitted when the user clicks the checkbox of a node currently in the
+  // "weak-highlight" (light blue) state — meaning the picklist had marked it
+  // as name-only-selected via the `p-weak-selected` style class. The picklist
+  // listens for this and fully removes the table from target. We do NOT also
+  // emit nodeSelect for this click, so the regular toggle path (which would
+  // flip the table back to green) is bypassed entirely. The result is a clean
+  // 3-state cycle: green → light blue → empty → green.
+  @Output() nodeWeakClick = new EventEmitter<{
+    originalEvent: Event;
+    node: TreeNode;
   }>();
 
   @HostBinding('attr.id') get nodeId() {
@@ -351,10 +369,24 @@ export class TreeNodeComponent {
 
   onCheckboxClick(event: MouseEvent) {
     event.stopPropagation(); // Prevent node click when clicking checkbox
-    // Emit select/unselect event to the parent tree component
-    if (this.selectable && this.node.selectable !== false) {
-      this.nodeSelect.emit({ originalEvent: event, node: this.node });
+    if (!(this.selectable && this.node.selectable !== false)) return;
+
+    // Special case: clicking a checkbox that is currently in the
+    // "weak-highlight" (name-only) state. Bypass the regular nodeSelect
+    // path so we don't flip the table back to green; instead emit a
+    // dedicated nodeWeakClick event which the picklist handles by fully
+    // removing the table from target (= empty).
+    const isCurrentlyWeak =
+      !this.isSelected &&
+      !this.node.partialSelected &&
+      !!this.node.styleClass?.includes('p-weak-selected');
+    if (isCurrentlyWeak) {
+      this.nodeWeakClick.emit({ originalEvent: event, node: this.node });
+      return;
     }
+
+    // Default path — emit the regular nodeSelect event.
+    this.nodeSelect.emit({ originalEvent: event, node: this.node });
   }
 
   toggle(event: Event) {
@@ -365,6 +397,21 @@ export class TreeNodeComponent {
       node: this.node,
       expanded: this.node.expanded,
     });
+  }
+
+  // Returns the tooltip text for the checkbox box. Tooltips are only shown
+  // when the parent tree opted in (`showTooltips=true`). Currently the
+  // picklist only enables tooltips on the target tree, and only for the
+  // "weak-highlight" (light blue / name-only) state — to surface the
+  // existence of the name-only feature without cluttering every checkbox
+  // with explanatory text.
+  getCheckboxTooltip(): string {
+    if (!this.showTooltips) return '';
+    const isWeak =
+      !this.isSelected &&
+      !this.node?.partialSelected &&
+      !!this.node?.styleClass?.includes('p-weak-selected');
+    return isWeak ? 'Send to AI only the table name' : '';
   }
 
   isNodeLeaf(): boolean {
@@ -419,5 +466,9 @@ export class TreeNodeComponent {
     expanded: boolean;
   }) {
     this.nodeToggle.emit(event);
+  }
+
+  onChildNodeWeakClick(event: { originalEvent: Event; node: TreeNode }) {
+    this.nodeWeakClick.emit(event);
   }
 }

@@ -30,11 +30,14 @@ export function AINavbar() {
     loadTheme()
   }, [])
 
-  const isActive = (path: string) => pathname === path
+  // Active when the current pathname matches exactly OR is a child route
+  // (e.g. /explore-data/canvas-XXX highlights the "Explore Data" item).
+  const isActive = (path: string) =>
+    pathname === path || pathname?.startsWith(path + "/")
 
   const toggleMode = async () => {
     const newMode = mode === "light" ? "dark" : "light"
-    const currentTheme = localStorage.getItem("rb-color-theme") || "reportburster"
+    const currentTheme = localStorage.getItem("rb-color-theme") || "datapallas"
 
     setMode(newMode)
     document.documentElement.setAttribute("data-theme", newMode)
@@ -61,10 +64,13 @@ export function AINavbar() {
   }
 
   const navLinks = [
-    { href: "/", label: "Agents" },
+    { href: "/explore-data", label: "Explore Data" },
     { href: "/chat2db", label: "Chat2DB" },
-    { href: "/data-canvas", label: "Data Canvas" },
+    { href: "/agents", label: "Data Geeks (AI Crew)" },
   ]
+
+  const isDataCanvas = pathname?.startsWith("/explore-data")
+  const brandLabel = isDataCanvas ? "DataPallas" : "Data Geeks"
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-foreground/[0.06]">
@@ -78,7 +84,7 @@ export function AINavbar() {
                 <path d="M12 1v6m0 6v6"/>
                 <path d="m23 12-6-6m-6 6-6-6"/>
               </svg>
-              FlowKraft&apos;s AI Crew
+              {brandLabel}
             </Link>
           </div>
 

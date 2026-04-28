@@ -4,7 +4,6 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
   <dburst-connection-details
       #connectionDetailsModal
       [mode]="'viewMode'"
-      [context]="'sqlQuery'"
   ></dburst-connection-details>
 
   <div class="well">
@@ -116,10 +115,24 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
   
               <div class="row" style="margin-top: 10px;">
                 <div class="col-xs-6">
-                  <button id="btnHelpWithSqlQueryAI" type="button" title="Write SQL code to fetch report data from the database" class="btn btn-default btn-block" (click)="showDbConnectionModal()" 
-                  [disabled]="getDatabaseConnectionFilesForUI().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode || isSampleReport">
-                    <strong>Hey AI, Help Me With This SQL Query ...</strong>
-                  </button>
+                  <div style="display: flex; gap: 6px;">
+                    <button id="btnReuseCubeSqlQuery" type="button"
+                      *ngIf="hasCubesForCurrentConnection"
+                      title="Reuse a cube to generate SQL for this report"
+                      class="btn btn-default"
+                      style="flex: 0 0 25%;"
+                      (click)="showCubesReuseModal()">
+                      <i class="fa fa-cube"></i>&nbsp;<strong>Cubes</strong>
+                    </button>
+                    <button id="btnHelpWithSqlQueryAI" type="button"
+                      title="Write SQL code to fetch report data from the database"
+                      class="btn btn-default"
+                      [ngStyle]="{ flex: hasCubesForCurrentConnection ? '0 0 calc(75% - 6px)' : '1 1 100%' }"
+                      (click)="showDbConnectionModal()"
+                      [disabled]="getDatabaseConnectionFilesForUI().length === 0 || !xmlReporting.documentburster.report.datasource.sqloptions.conncode">
+                      <strong>Hey AI, Help Me With This SQL Query ...</strong>
+                    </button>
+                  </div>
                 </div>
                 <!-- MODE 1 — Angular fetches data via doTestSqlQuery(), stores in reportDataResult,
                      then pushes the SAME data to Tabulator, Chart, and Pivot preview tabs via [data] prop.
@@ -201,39 +214,49 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
                 <div class="row" style="margin-top: 10px;">
 
                   <div class="col-xs-6" *ngIf="getDatabaseConnectionFilesForUI().length === 0 || !selectedDbConnCode">
-                    <button id="btnHelpWithScriptAI" type="button" class="btn btn-default btn-block" (click)="askAiForHelp(xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'script.ds.dashboard' : 'script.ds')" [disabled]="isSampleReport">
-                      <strong>{{ xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'Hey AI, Help Me Build This Dashboard (step-by-step) ...' : 'Hey AI, Help Me With This Groovy Script ...' }}</strong>
+                    <button id="btnHelpWithScriptAI" type="button" class="btn btn-default btn-block" (click)="askAiForHelp(xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'script.ds.dashboard' : 'script.ds')">
+                      <strong>{{ xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'Hey AI, Help Me Build This Dashboard ...' : 'Hey AI, Help Me With This Groovy Script ...' }}</strong>
                     </button>
                   </div>
                   <div class="col-xs-6" style="display: flex; align-items: center;" *ngIf="getDatabaseConnectionFilesForUI().length > 0 && selectedDbConnCode">
-                    <div class="btn-group" style="width: 100%; display: flex;">
-                      <button id="btnHelpWithScriptAI" type="button" class="btn btn-default" style="flex: 1; text-align: left;" (click)="showDbConnectionModal(xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'dashboardScript' : 'scriptQuery')" [disabled]="isSampleReport">
-                        <strong>{{ xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'Hey AI, Help Me Build This Dashboard (step-by-step) ...' : 'Hey AI, Help Me With This Groovy Script ...' }}</strong>
+                    <div style="display: flex; width: 100%; gap: 6px;">
+                      <button id="btnReuseCubeScript" type="button"
+                        *ngIf="hasCubesForCurrentConnection"
+                        title="Reuse a cube to generate SQL for this script"
+                        class="btn btn-default"
+                        style="flex: 0 0 25%;"
+                        (click)="showCubesReuseModal()">
+                        <i class="fa fa-cube"></i>&nbsp;<strong>Cubes</strong>
                       </button>
-                      <button
-                        id="btnHelpWithScriptAIDropdownToggle"
-                        type="button"
-                        [disabled]="isSampleReport"
-                        class="btn btn-default dropdown-toggle"
-                        data-toggle="dropdown"
-                        aria-haspopup="true"
-                        aria-expanded="false"
-                        style="flex: 0; margin-left: 6px; display: flex; align-items: center; justify-content: center; padding: 6px 10px;"
-                      >
-                        <span class="caret"></span>
-                      </button>
-                      <ul class="dropdown-menu" style="min-width: 220px;" *ngIf="!isSampleReport">
-                        <li>
-                          <a id="btnHelpWithScriptAIDropdownItem" href="#" (click)="showDbConnectionModal(xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'dashboardScript' : 'scriptQuery'); $event.preventDefault();">
-                            {{ xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'Hey AI, Help Me Build This Dashboard (step-by-step) ...' : 'Hey AI, Help Me With This Groovy Script ...' }}
-                          </a>
-                        </li>
-                        <li>
-                          <a id="btnHelpWithSqlQueryAIDropdownItem" href="#" (click)="showDbConnectionModal(); $event.preventDefault();">
-                            Hey AI, Help Me With This SQL Query ...
-                          </a>
-                        </li>
-                      </ul>
+                      <div class="btn-group"
+                        [ngStyle]="{ flex: hasCubesForCurrentConnection ? '0 0 calc(75% - 6px)' : '1 1 100%', display: 'flex' }">
+                        <button id="btnHelpWithScriptAI" type="button" class="btn btn-default" style="flex: 1; text-align: left;" (click)="showDbConnectionModal(xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'dashboardScript' : 'scriptQuery')">
+                          <strong>{{ xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'Hey AI, Help Me Build This Dashboard ...' : 'Hey AI, Help Me With This Groovy Script ...' }}</strong>
+                        </button>
+                        <button
+                          id="btnHelpWithScriptAIDropdownToggle"
+                          type="button"
+                          class="btn btn-default dropdown-toggle"
+                          data-toggle="dropdown"
+                          aria-haspopup="true"
+                          aria-expanded="false"
+                          style="flex: 0; margin-left: 6px; display: flex; align-items: center; justify-content: center; padding: 6px 10px;"
+                        >
+                          <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" style="min-width: 220px;">
+                          <li>
+                            <a id="btnHelpWithScriptAIDropdownItem" href="#" (click)="showDbConnectionModal(xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'dashboardScript' : 'scriptQuery'); $event.preventDefault();">
+                              {{ xmlReporting?.documentburster.report.datasource.type === 'ds.dashboard' ? 'Hey AI, Help Me Build This Dashboard ...' : 'Hey AI, Help Me With This Groovy Script ...' }}
+                            </a>
+                          </li>
+                          <li>
+                            <a id="btnHelpWithSqlQueryAIDropdownItem" href="#" (click)="showDbConnectionModal(); $event.preventDefault();">
+                              Hey AI, Help Me With This SQL Query ...
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                   <!-- MODE 1 — Angular fetches data via doRunTestScript(), stores in reportDataResult,
@@ -1060,7 +1083,7 @@ Column 3, 15"
             </label>
           </div>
           <div class="col-xs-6">
-            <button id="btnHelpWithTransformationAI" type="button" class="btn btn-default" (click)="askAiForHelp('script.additionaltransformation')" [disabled]="isSampleReport">
+            <button id="btnHelpWithTransformationAI" type="button" class="btn btn-default" (click)="askAiForHelp('script.additionaltransformation')">
              <strong>Hey AI, Help Me With This Groovy Script ...</strong>
             </button>
           </div>
@@ -1112,18 +1135,95 @@ Column 3, 15"
         (valueChange)="onReportParamsValuesChange($event)">
     </rb-parameters>
     <p-footer>
-        <button pButton 
-            type="button" 
-            label="Cancel" 
+        <button pButton
+            type="button"
+            label="Cancel"
             id="btnTestQueryCancel"
             (click)="isModalParametersVisible = false"
             class="p-button-secondary"></button>
-        <button pButton 
-            type="button" 
-            label="Test Query" 
+        <button pButton
+            type="button"
+            label="Test Query"
             id="btnTestQueryRun"
             (click)="onRunQueryWithParams()"
             [disabled]="!reportParamsValid"></button>
     </p-footer>
 </p-dialog>
+
+<!-- ===================================================================== -->
+<!-- Cubes Reuse Modal — pick fields, generate SQL, copy to clipboard      -->
+<!-- ===================================================================== -->
+<div *ngIf="isCubesReuseModalVisible" class="modal fade in" style="display: block;" tabindex="-1">
+  <div class="modal-dialog" style="max-width: 640px;">
+    <div class="modal-content">
+      <div class="modal-header" style="padding: 6px 15px;">
+        <span style="font-size: 13px; font-weight: 600;">Cubes</span>
+      </div>
+      <div class="modal-body" style="max-height: calc(100vh - 240px); overflow-y: auto; padding-top: 12px;">
+        <!-- Cube selector — only when more than one cube exists for this connection -->
+        <div *ngIf="cubesForCurrentConnection.length > 1" style="margin-bottom: 10px;">
+          <select id="cubeReuseSelect" class="form-control"
+            [ngModel]="selectedCubeForReuse?.id"
+            (ngModelChange)="onCubeForReuseChanged($event)">
+            <option *ngFor="let c of cubesForCurrentConnection" [value]="c.id">
+              {{ c.name }}
+            </option>
+          </select>
+        </div>
+        <!-- Cube renderer — same web component the cube admin uses -->
+        <div style="border: 1px solid #ccc; border-radius: 4px; padding: 10px; background: #fafafa;">
+          <rb-cube-renderer
+            *ngIf="parsedCubeForReuse && selectedCubeForReuse"
+            [cubeConfig]="parsedCubeForReuse"
+            [connectionId]="selectedCubeForReuse.connectionId"
+            [apiBaseUrl]="cubesReuseApiBaseUrl"
+            (selectionChanged)="onCubeForReuseSelectionChanged($any($event))">
+          </rb-cube-renderer>
+          <div *ngIf="parseCubeForReuseError" class="text-danger" style="margin-top: 10px;">
+            <i class="fa fa-exclamation-triangle"></i> {{ parseCubeForReuseError }}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCubeReuseShowSql" type="button" class="btn btn-primary"
+          [disabled]="!hasCubesReuseFieldSelections"
+          (click)="showCubesReuseSql()">
+          <i class="fa fa-eye"></i>&nbsp;Get SQL
+        </button>
+        <button id="btnCubeReuseClose" type="button" class="btn btn-default" (click)="closeCubesReuseModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div *ngIf="isCubesReuseModalVisible" class="modal-backdrop fade in"></div>
+
+<!-- ===================================================================== -->
+<!-- Cubes Reuse — generated SQL preview + Copy to Clipboard               -->
+<!-- ===================================================================== -->
+<div *ngIf="isCubesReuseSqlModalVisible" class="modal fade in" style="display: block; z-index: 1060;" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" (click)="closeCubesReuseSqlModal()">&times;</button>
+        <h4 class="modal-title">Generated SQL</h4>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="cubesReuseSqlLoading" style="text-align: center; padding: 30px;">
+          <i class="fa fa-spinner fa-spin fa-2x"></i>
+          <p style="margin-top: 10px;">Generating SQL...</p>
+        </div>
+        <pre *ngIf="!cubesReuseSqlLoading"
+          style="background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; white-space: pre-wrap; max-height: 400px; overflow-y: auto;">{{ cubesReuseGeneratedSql }}</pre>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCubeReuseCopySql" type="button" class="btn btn-primary"
+          (click)="copyCubesReuseSqlToClipboard()" [disabled]="cubesReuseSqlLoading">
+          <i class="fa fa-clipboard"></i>&nbsp;Copy SQL to Clipboard
+        </button>
+        <button id="btnCubeReuseSqlClose" type="button" class="btn btn-default" (click)="closeCubesReuseSqlModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div *ngIf="isCubesReuseSqlModalVisible" class="modal-backdrop fade in" style="z-index: 1055;"></div>
 `;

@@ -120,6 +120,23 @@
 			<artifactId>spring-security-messaging</artifactId>
 		</dependency>
 
+		<!-- Apache Beam — data processing pipelines (batch + streaming) -->
+		<dependency>
+			<groupId>org.apache.beam</groupId>
+			<artifactId>beam-sdks-java-core</artifactId>
+			<version>2.72.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.beam</groupId>
+			<artifactId>beam-runners-direct-java</artifactId>
+			<version>2.72.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.beam</groupId>
+			<artifactId>beam-sdks-java-io-jdbc</artifactId>
+			<version>2.72.0</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>

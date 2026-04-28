@@ -1,6 +1,7 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   ViewChild,
   ChangeDetectorRef,
   TemplateRef,
@@ -11,8 +12,8 @@ import {
 
 import { ActivatedRoute } from '@angular/router';
 
-import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { Subject, from, firstValueFrom } from 'rxjs';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 
 import * as _ from 'lodash';
 
@@ -61,6 +62,7 @@ import { tabEmailTuningTemplate } from './templates/tab-email-tuning';
 import { tabLogsTemplate } from './templates/tab-logs';
 
 import { tabLicenseTemplate } from './templates/tab-license';
+import { tabReportsListTemplate } from './templates/tab-reports-list';
 
 import { modalAttachmentTemplate } from './templates/modal-attachment';
 
@@ -95,13 +97,13 @@ import {
   AiManagerComponent,
   AiManagerLaunchConfig,
 } from '../../components/ai-manager/ai-manager.component';
-import { AiManagerService } from '../../components/ai-manager/ai-manager.service';
 import {
   ReportingService,
   ReportDataResult,
 } from '../../providers/reporting.service';
 import { ApiService } from '../../providers/api.service';
 import { ReportsService } from '../../providers/reports.service';
+import { CubesService, CubeDefinition } from '../../providers/cubes.service';
 import { modalTemplatesGalleryTemplate } from './templates/modal-gallery';
 
 @Component({
@@ -128,10 +130,10 @@ import { modalTemplatesGalleryTemplate } from './templates/modal-gallery';
     ${tabSMSTwilioTemplate} ${tabSMSMessageTemplate} ${tabQATemplate}
     ${tabAdvancedTemplate} ${tabAdvancedErrorHandlingTemplate}
     ${tabEmailAddressValidationTemplate} ${tabEmailTuningTemplate}
-    ${tabLogsTemplate} ${tabLicenseTemplate} ${modalAttachmentTemplate} ${modalTemplatesGalleryTemplate}
+    ${tabLogsTemplate} ${tabLicenseTemplate} ${tabReportsListTemplate} ${modalAttachmentTemplate} ${modalTemplatesGalleryTemplate}
   `,
 })
-export class ConfigurationComponent implements OnInit {
+export class ConfigurationComponent implements OnInit, OnDestroy {
 
   // ========== VIEW CHILDREN & TAB CONFIGURATION ==========
 
@@ -219,6 +221,9 @@ export class ConfigurationComponent implements OnInit {
 
   @ViewChild('tabLicenseTemplate', { static: true })
   tabLicenseTemplate: TemplateRef<any>;
+
+  @ViewChild('tabReportsListTemplate', { static: true })
+  tabReportsListTemplate!: TemplateRef<any>;
 
   @ViewChildren('templateIframe') templateIframes: QueryList<ElementRef>;
 
@@ -409,6 +414,11 @@ export class ConfigurationComponent implements OnInit {
       ngTemplateOutlet: 'tabReportingUsageTemplate',
     },
     {
+      id: 'reportsListTab',
+      heading: 'AREAS.CONFIGURATION.LEFT-MENU.REPORTS',
+      ngTemplateOutlet: 'tabReportsListTemplate',
+    },
+    {
       id: 'licenseTab',
       heading: 'SHARED-TABS.LICENSE',
       ngTemplateOutlet: 'tabLicenseTemplate',
@@ -496,6 +506,10 @@ export class ConfigurationComponent implements OnInit {
       selectedMenu: 'errorHandlingSettingsMenuSelected',
       visibleTabs: ['errorHandlingTab', 'licenseTab'],
     },
+    {
+      selectedMenu: 'reportsListMenuSelected',
+      visibleTabs: ['reportsListTab', 'licenseTab'],
+    },
   ];
 
   // ========== COMPONENT STATE ==========
@@ -530,6 +544,13 @@ export class ConfigurationComponent implements OnInit {
   autosaveEnabled = false;
 
   settingsChanged: Subject<any> = new Subject<any>();
+  private destroy$ = new Subject<void>();
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   selectedEmailConnectionFile: ExtConnection;
   selectedReportTemplateFile = {
     fileName: '',
@@ -541,6 +562,30 @@ export class ConfigurationComponent implements OnInit {
 
   selectedJasperReport: any = null;
   inlineJrxmlOption = { templateName: 'Write .jrxml code inline', filePath: '__inline__' };
+
+  // ========== CUBES REUSE MODAL ==========
+  // Lets the user pick a cube already configured for the current DB connection,
+  // click dimensions/measures/segments and copy the generated SQL into their
+  // SQL Query / Script body. Reuses CubesService + the <rb-cube-renderer> web
+  // component (same primitives the cube admin area uses).
+  allCubes: CubeDefinition[] = [];
+  cubesForCurrentConnection: CubeDefinition[] = [];
+  hasCubesForCurrentConnection = false;
+  isCubesReuseModalVisible = false;
+  selectedCubeForReuse: CubeDefinition | null = null;
+  parsedCubeForReuse: any = null;
+  parseCubeForReuseError = '';
+  cubesReuseSelectedDimensions: string[] = [];
+  cubesReuseSelectedMeasures: string[] = [];
+  cubesReuseSelectedSegments: string[] = [];
+  hasCubesReuseFieldSelections = false;
+  isCubesReuseSqlModalVisible = false;
+  cubesReuseGeneratedSql = '';
+  cubesReuseSqlLoading = false;
+
+  get cubesReuseApiBaseUrl(): string {
+    return this.apiService.BACKEND_URL || '/api';
+  }
 
   // ========== CONSTRUCTOR & INITIALIZATION ==========
 
@@ -561,6 +606,7 @@ export class ConfigurationComponent implements OnInit {
     protected route: ActivatedRoute,
     protected changeDetectorRef: ChangeDetectorRef,
     protected sanitizer: DomSanitizer,
+    public cubesService: CubesService,
   ) { }
 
   private get currentReportId(): string {
@@ -1042,9 +1088,13 @@ export class ConfigurationComponent implements OnInit {
       await this.reportsService.loadReportDataSource(this.currentReportId);
 
     if (this.xmlReporting?.documentburster?.report?.datasource) {
+      this.ensureDefaultDbConnections();
       await this.loadDslScriptsForDatasource();
       this.applyPreloadedDslOptions();
     }
+
+    // Populate the Cubes-reuse button visibility for the loaded report.
+    await this.refreshCubesForCurrentConnection();
 
     this.initIdColumnSelections();
 
@@ -1912,27 +1962,142 @@ export class ConfigurationComponent implements OnInit {
   onDatabaseConnectionChanged(connectionCode: string) {
     // Logic when SQL database connection changes
     this.settingsChangedEventHandler(connectionCode);
+    // Refresh cubes available for the newly selected connection so the
+    // "Cubes" reuse button shows/hides correctly.
+    this.refreshCubesForCurrentConnection();
   }
 
   get selectedDbConnCode(): string {
-    const dsType = this.xmlReporting?.documentburster.report.datasource.type;
-    if (dsType === 'ds.sqlquery') {
-      return this.xmlReporting.documentburster.report.datasource.sqloptions.conncode;
-    }
-    if (dsType === 'ds.scriptfile' || dsType === 'ds.dashboard') {
-      return this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode;
-    }
-    return '';
+    // Both sqloptions.conncode and scriptoptions.conncode are always kept
+    // in sync by the setter, so reading from either one is sufficient.
+    return this.xmlReporting?.documentburster?.report?.datasource?.sqloptions?.conncode || '';
   }
 
   set selectedDbConnCode(value: string) {
-    const dsType = this.xmlReporting?.documentburster.report.datasource.type;
-    if (dsType === 'ds.sqlquery') {
-      this.xmlReporting.documentburster.report.datasource.sqloptions.conncode = value;
+    // Always mirror the connection code to both options so that switching
+    // between SQL and Script input types does not silently change the
+    // active database connection.
+    const ds = this.xmlReporting?.documentburster?.report?.datasource;
+    if (ds) {
+      ds.sqloptions.conncode = value;
+      ds.scriptoptions.conncode = value;
     }
-    if (dsType === 'ds.scriptfile' || dsType === 'ds.dashboard') {
-      this.xmlReporting.documentburster.report.datasource.scriptoptions.conncode = value;
+  }
+
+  // ---- Cubes Reuse modal helpers ----
+
+  async refreshCubesForCurrentConnection() {
+    const dsType = this.xmlReporting?.documentburster?.report?.datasource?.type;
+    // Only the three input types that get the Cubes button.
+    const eligible =
+      dsType === 'ds.sqlquery' ||
+      dsType === 'ds.scriptfile' ||
+      dsType === 'ds.dashboard';
+    if (!eligible || !this.selectedDbConnCode) {
+      this.cubesForCurrentConnection = [];
+      this.hasCubesForCurrentConnection = false;
+      return;
     }
+    try {
+      // loadAll() is cheap (a single GET /cubes); always re-fetch so the user
+      // sees newly created cubes without restarting the configuration screen.
+      // takeUntil(destroy$) ensures the await resolves early (EmptyError) if the
+      // component is destroyed before the HTTP response arrives, preventing NG0901.
+      this.allCubes = await firstValueFrom(
+        from(this.cubesService.loadAll()).pipe(takeUntil(this.destroy$))
+      );
+    } catch {
+      this.allCubes = [];
+      return;
+    }
+    this.cubesForCurrentConnection = this.allCubes.filter(
+      (c) => c.connectionId === this.selectedDbConnCode,
+    );
+    this.hasCubesForCurrentConnection = this.cubesForCurrentConnection.length > 0;
+  }
+
+  async showCubesReuseModal() {
+    if (!this.hasCubesForCurrentConnection) return;
+    // Always preselect the first cube — also covers the single-cube case
+    // where the dropdown is hidden.
+    await this.selectCubeForReuse(this.cubesForCurrentConnection[0]);
+    this.isCubesReuseModalVisible = true;
+  }
+
+  async onCubeForReuseChanged(cubeId: string) {
+    const next = this.cubesForCurrentConnection.find((c) => c.id === cubeId);
+    if (next) {
+      await this.selectCubeForReuse(next);
+    }
+  }
+
+  private async selectCubeForReuse(cube: CubeDefinition) {
+    this.selectedCubeForReuse = cube;
+    this.parsedCubeForReuse = null;
+    this.parseCubeForReuseError = '';
+    this.cubesReuseSelectedDimensions = [];
+    this.cubesReuseSelectedMeasures = [];
+    this.cubesReuseSelectedSegments = [];
+    this.hasCubesReuseFieldSelections = false;
+    // Cube list returns the lightweight metadata only — fetch the full record
+    // (which contains dslCode) before parsing.
+    try {
+      const full = await this.cubesService.load(cube.id);
+      if (full) {
+        this.selectedCubeForReuse = full;
+        const parsed = await this.cubesService.parseDsl(full.dslCode);
+        this.parsedCubeForReuse = parsed;
+      }
+    } catch (e: any) {
+      this.parseCubeForReuseError = e?.message || 'Failed to parse cube DSL';
+    }
+  }
+
+  onCubeForReuseSelectionChanged(event: any) {
+    const detail = event?.detail || event;
+    this.cubesReuseSelectedDimensions = detail?.selectedDimensions || [];
+    this.cubesReuseSelectedMeasures = detail?.selectedMeasures || [];
+    this.cubesReuseSelectedSegments = detail?.selectedSegments || [];
+    this.hasCubesReuseFieldSelections =
+      this.cubesReuseSelectedDimensions.length > 0 ||
+      this.cubesReuseSelectedMeasures.length > 0;
+  }
+
+  async showCubesReuseSql() {
+    if (!this.hasCubesReuseFieldSelections || !this.selectedCubeForReuse) return;
+    this.cubesReuseSqlLoading = true;
+    this.cubesReuseGeneratedSql = '';
+    this.isCubesReuseSqlModalVisible = true;
+    try {
+      const result = await this.cubesService.generateSqlFromDsl(
+        this.selectedCubeForReuse.dslCode,
+        this.selectedCubeForReuse.connectionId,
+        this.cubesReuseSelectedDimensions,
+        this.cubesReuseSelectedMeasures,
+        this.cubesReuseSelectedSegments,
+      );
+      this.cubesReuseGeneratedSql = result?.sql || '-- No SQL generated';
+    } catch (e: any) {
+      this.cubesReuseGeneratedSql = '-- Error: ' + (e?.message || 'Failed to generate SQL');
+    } finally {
+      this.cubesReuseSqlLoading = false;
+    }
+  }
+
+  copyCubesReuseSqlToClipboard() {
+    navigator.clipboard.writeText(this.cubesReuseGeneratedSql).then(
+      () => this.messagesService.showSuccess('SQL copied to clipboard'),
+      () => this.messagesService.showError('Failed to copy to clipboard'),
+    );
+  }
+
+  closeCubesReuseSqlModal() {
+    this.isCubesReuseSqlModalVisible = false;
+  }
+
+  closeCubesReuseModal() {
+    this.isCubesReuseSqlModalVisible = false;
+    this.isCubesReuseModalVisible = false;
   }
 
   onSelectCsvHeader() {
@@ -2285,7 +2450,6 @@ export class ConfigurationComponent implements OnInit {
     const isDashboard = this.xmlReporting?.documentburster?.report?.datasource?.type === 'ds.dashboard';
 
     launchConfig.promptVariables = {
-      '[MULTI_COMPONENT_NOTE]': isDashboard ? AiManagerService.MULTI_COMPONENT_NOTE : '',
       '[INSERT COLUMN NAMES HERE]': 'INFORMATION_NOT_AVAILABLE',
       '[INSERT SAMPLE DATA HERE]': 'INFORMATION_NOT_AVAILABLE',
     };
@@ -2302,7 +2466,7 @@ export class ConfigurationComponent implements OnInit {
   }
 
   private _buildDashboardComponentsReference(): string {
-    const reportCode = this.getCurrentReportCode();
+    const reportId = this.getCurrentReportCode();
     const apiBaseUrl = this.getApiBaseUrl();
     const apiKey = this.getApiKeyForUsage();
     const parts: string[] = [];
@@ -2312,10 +2476,10 @@ export class ConfigurationComponent implements OnInit {
     if (namedTabIds.length > 0) {
       parts.push(`## Data Tables (${namedTabIds.length} named components)\n`);
       for (const cid of namedTabIds) {
-        parts.push(`\`\`\`html\n<rb-tabulator\n  report-code="${reportCode}"\n  component-id="${cid}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-tabulator>\n\`\`\`\n`);
+        parts.push(`\`\`\`html\n<rb-tabulator\n  report-id="${reportId}"\n  component-id="${cid}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-tabulator>\n\`\`\`\n`);
       }
     } else if (this.activeTabulatorConfigScriptGroovy?.trim()) {
-      parts.push(`## Data Table\n\n\`\`\`html\n<rb-tabulator\n  report-code="${reportCode}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-tabulator>\n\`\`\`\n`);
+      parts.push(`## Data Table\n\n\`\`\`html\n<rb-tabulator\n  report-id="${reportId}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-tabulator>\n\`\`\`\n`);
     }
 
     // Charts
@@ -2323,10 +2487,10 @@ export class ConfigurationComponent implements OnInit {
     if (namedChartIds.length > 0) {
       parts.push(`## Charts (${namedChartIds.length} named components)\n`);
       for (const cid of namedChartIds) {
-        parts.push(`\`\`\`html\n<rb-chart\n  report-code="${reportCode}"\n  component-id="${cid}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-chart>\n\`\`\`\n`);
+        parts.push(`\`\`\`html\n<rb-chart\n  report-id="${reportId}"\n  component-id="${cid}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-chart>\n\`\`\`\n`);
       }
     } else if (this.activeChartConfigScriptGroovy?.trim()) {
-      parts.push(`## Chart\n\n\`\`\`html\n<rb-chart\n  report-code="${reportCode}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-chart>\n\`\`\`\n`);
+      parts.push(`## Chart\n\n\`\`\`html\n<rb-chart\n  report-id="${reportId}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-chart>\n\`\`\`\n`);
     }
 
     // Pivot Tables
@@ -2334,19 +2498,19 @@ export class ConfigurationComponent implements OnInit {
     if (namedPivotIds.length > 0) {
       parts.push(`## Pivot Tables (${namedPivotIds.length} named components)\n`);
       for (const cid of namedPivotIds) {
-        parts.push(`\`\`\`html\n<rb-pivot-table\n  report-code="${reportCode}"\n  component-id="${cid}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-pivot-table>\n\`\`\`\n`);
+        parts.push(`\`\`\`html\n<rb-pivot-table\n  report-id="${reportId}"\n  component-id="${cid}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-pivot-table>\n\`\`\`\n`);
       }
     } else if (this.activePivotTableConfigScriptGroovy?.trim()) {
-      parts.push(`## Pivot Table\n\n\`\`\`html\n<rb-pivot-table\n  report-code="${reportCode}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-pivot-table>\n\`\`\`\n`);
+      parts.push(`## Pivot Table\n\n\`\`\`html\n<rb-pivot-table\n  report-id="${reportId}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-pivot-table>\n\`\`\`\n`);
     }
 
     // Parameters
     if (this.activeParamsSpecScriptGroovy?.trim()) {
-      parts.push(`## Parameters Form\n\nPlace this once in the dashboard. When the user submits, all visualization components automatically refresh with the new parameter values.\n\n\`\`\`html\n<rb-parameters\n  report-code="${reportCode}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-parameters>\n\`\`\`\n`);
+      parts.push(`## Parameters Form\n\nPlace this once in the dashboard. When the user submits, all visualization components automatically refresh with the new parameter values.\n\n\`\`\`html\n<rb-parameters\n  report-id="${reportId}"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-parameters>\n\`\`\`\n`);
     }
 
     // Atomic Values (always available for dashboards)
-    parts.push(`## Atomic Values\n\nFor single values (totals, counts, averages), use \`<rb-value>\` instead of a full data table. Multiple elements with the same \`component-id\` share one cached HTTP request — each picks its column via \`field\`.\n\n\`\`\`html\n<rb-value\n  report-code="${reportCode}"\n  component-id="atomicValues"\n  field="revenue"\n  format="currency"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-value>\n\`\`\`\n\nSupported \`format\` values: \`currency\`, \`number\`, \`percent\`, \`date\`, or omit for raw value.\n`);
+    parts.push(`## Atomic Values\n\nFor single values (totals, counts, averages), use \`<rb-value>\` instead of a full data table. Multiple elements with the same \`component-id\` share one cached HTTP request — each picks its column via \`field\`.\n\n\`\`\`html\n<rb-value\n  report-id="${reportId}"\n  component-id="atomicValues"\n  field="revenue"\n  format="currency"\n  api-base-url="${apiBaseUrl}"\n  api-key="${apiKey}">\n</rb-value>\n\`\`\`\n\nSupported \`format\` values: \`currency\`, \`number\`, \`percent\`, \`date\`, or omit for raw value.\n`);
 
     if (parts.length === 0) {
       return `No visualization components are configured yet. Configure at least one data table, chart, or pivot table in the DSL tabs first, then come back here.`;
@@ -2475,7 +2639,7 @@ export class ConfigurationComponent implements OnInit {
     //console.log('ConfigurationConnectionsComponet: showCrudModal()');
     this.connectionDetailsModalInstance.context = context;
     if (context === 'dashboardScript') {
-      this.connectionDetailsModalInstance.reportCode = this.getCurrentReportCode();
+      this.connectionDetailsModalInstance.reportId = this.getCurrentReportCode();
       this.connectionDetailsModalInstance.apiBaseUrl = this.getApiBaseUrl() + '/reporting';
     }
     this.connectionDetailsModalInstance.showCrudModal(
@@ -3070,7 +3234,7 @@ pivotTable {
   }
 
   getCompleteUsageExample(): string {
-    const reportCode = this.getCurrentReportCode();
+    const reportId = this.getCurrentReportCode();
     const apiBaseUrl = this.getApiBaseUrl();
     const apiKey = this.getApiKeyForUsage();
     const webComponentsBaseUrl = this.getWebComponentsBaseUrl();
@@ -3083,15 +3247,15 @@ pivotTable {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard: ${reportCode}</title>
+  <title>Dashboard: ${reportId}</title>
   <script src="${webComponentsBaseUrl}/rb-webcomponents.umd.js"><\/script>
 </head>
 <body>
-  <h1>Dashboard: ${reportCode}</h1>
+  <h1>Dashboard: ${reportId}</h1>
 
   <!-- Dashboard -->
   <rb-dashboard
-    report-code="${reportCode}"
+    report-id="${reportId}"
     api-base-url="${apiBaseUrl}"
     api-key="${apiKey}">
   </rb-dashboard>
@@ -3109,15 +3273,15 @@ pivotTable {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Report: ${reportCode}</title>
+  <title>Report: ${reportId}</title>
   <script src="${webComponentsBaseUrl}/rb-webcomponents.umd.js"><\/script>
 </head>
 <body>
-  <h1>Report: ${reportCode}</h1>
+  <h1>Report: ${reportId}</h1>
 
   <!-- Full Report -->
   <rb-report
-    report-code="${reportCode}"${entityCodeAttr}
+    report-id="${reportId}"${entityCodeAttr}
     api-base-url="${apiBaseUrl}"
     api-key="${apiKey}">
   </rb-report>`;
@@ -3129,7 +3293,7 @@ pivotTable {
 
   <!-- Data Table: ${cid} -->
   <rb-tabulator
-    report-code="${reportCode}"
+    report-id="${reportId}"
     component-id="${cid}"
     api-base-url="${apiBaseUrl}"
     api-key="${apiKey}">
@@ -3140,7 +3304,7 @@ pivotTable {
 
   <!-- Data Table -->
   <rb-tabulator
-    report-code="${reportCode}"
+    report-id="${reportId}"
     api-base-url="${apiBaseUrl}"
     api-key="${apiKey}">
   </rb-tabulator>`;
@@ -3151,7 +3315,7 @@ pivotTable {
 
   <!-- Report Parameters -->
   <rb-parameters
-    report-code="${reportCode}"
+    report-id="${reportId}"
     api-base-url="${apiBaseUrl}"
     api-key="${apiKey}">
   </rb-parameters>`;
@@ -3164,7 +3328,7 @@ pivotTable {
 
   <!-- Chart: ${cid} -->
   <rb-chart
-    report-code="${reportCode}"
+    report-id="${reportId}"
     component-id="${cid}"
     api-base-url="${apiBaseUrl}"
     api-key="${apiKey}">
@@ -3175,7 +3339,7 @@ pivotTable {
 
   <!-- Chart -->
   <rb-chart
-    report-code="${reportCode}"
+    report-id="${reportId}"
     api-base-url="${apiBaseUrl}"
     api-key="${apiKey}">
   </rb-chart>`;
@@ -3188,7 +3352,7 @@ pivotTable {
 
   <!-- Pivot Table: ${cid} -->
   <rb-pivottable
-    report-code="${reportCode}"
+    report-id="${reportId}"
     component-id="${cid}"
     api-base-url="${apiBaseUrl}"
     api-key="${apiKey}">
@@ -3199,7 +3363,7 @@ pivotTable {
 
   <!-- Pivot Table -->
   <rb-pivottable
-    report-code="${reportCode}"
+    report-id="${reportId}"
     api-base-url="${apiBaseUrl}"
     api-key="${apiKey}">
   </rb-pivottable>`;
@@ -3226,7 +3390,7 @@ pivotTable {
   copyUsageRbReport() {
     const entityCodeAttr = this.getEntityCodeAttribute();
     const html = `<rb-report
-  report-code="${this.getCurrentReportCode()}"${entityCodeAttr}
+  report-id="${this.getCurrentReportCode()}"${entityCodeAttr}
   api-base-url="${this.getApiBaseUrl()}"
   api-key="${this.getApiKeyForUsage()}">
 </rb-report>`;
@@ -3240,7 +3404,7 @@ pivotTable {
 
   copyUsageRbDashboard() {
     const html = `<rb-dashboard
-  report-code="${this.getCurrentReportCode()}"
+  report-id="${this.getCurrentReportCode()}"
   api-base-url="${this.getApiBaseUrl()}"
   api-key="${this.getApiKeyForUsage()}">
 </rb-dashboard>`;
@@ -3271,7 +3435,7 @@ pivotTable {
 
   copyUsageRbTabulator() {
     const html = `<rb-tabulator
-  report-code="${this.getCurrentReportCode()}"
+  report-id="${this.getCurrentReportCode()}"
   api-base-url="${this.getApiBaseUrl()}"
   api-key="${this.getApiKeyForUsage()}">
 </rb-tabulator>`;
@@ -3285,7 +3449,7 @@ pivotTable {
 
   copyUsageRbParameters() {
     const html = `<rb-parameters
-  report-code="${this.getCurrentReportCode()}"
+  report-id="${this.getCurrentReportCode()}"
   api-base-url="${this.getApiBaseUrl()}"
   api-key="${this.getApiKeyForUsage()}">
 </rb-parameters>`;
@@ -3299,7 +3463,7 @@ pivotTable {
 
   copyUsageRbChart() {
     const html = `<rb-chart
-  report-code="${this.getCurrentReportCode()}"
+  report-id="${this.getCurrentReportCode()}"
   api-base-url="${this.getApiBaseUrl()}"
   api-key="${this.getApiKeyForUsage()}">
 </rb-chart>`;
@@ -3313,7 +3477,7 @@ pivotTable {
 
   copyUsageRbPivotTable() {
     const html = `<rb-pivottable
-  report-code="${this.getCurrentReportCode()}"
+  report-id="${this.getCurrentReportCode()}"
   api-base-url="${this.getApiBaseUrl()}"
   api-key="${this.getApiKeyForUsage()}">
 </rb-pivottable>`;
@@ -3327,7 +3491,7 @@ pivotTable {
 
   copyUsageRbTabulatorNamed(componentId: string) {
     const html = `<rb-tabulator
-  report-code="${this.getCurrentReportCode()}"
+  report-id="${this.getCurrentReportCode()}"
   component-id="${componentId}"
   api-base-url="${this.getApiBaseUrl()}"
   api-key="${this.getApiKeyForUsage()}">
@@ -3342,7 +3506,7 @@ pivotTable {
 
   copyUsageRbChartNamed(componentId: string) {
     const html = `<rb-chart
-  report-code="${this.getCurrentReportCode()}"
+  report-id="${this.getCurrentReportCode()}"
   component-id="${componentId}"
   api-base-url="${this.getApiBaseUrl()}"
   api-key="${this.getApiKeyForUsage()}">
@@ -3357,7 +3521,7 @@ pivotTable {
 
   copyUsageRbPivotTableNamed(componentId: string) {
     const html = `<rb-pivottable
-  report-code="${this.getCurrentReportCode()}"
+  report-id="${this.getCurrentReportCode()}"
   component-id="${componentId}"
   api-base-url="${this.getApiBaseUrl()}"
   api-key="${this.getApiKeyForUsage()}">
@@ -4151,6 +4315,7 @@ pivotTable {
         this.currentReportId,
         galleryOutputType,
         this.activeReportTemplateContent,
+        template.assetBaseDir,
       ).catch((err) => console.error('Failed to save gallery template:', err));
     } else if (outputType === 'output.docx') {
       // Show warning toast for DOCX mode
@@ -4176,7 +4341,7 @@ pivotTable {
     const codeLower = (sqlConn || scriptConn).toString().toLowerCase();
     return (
       (dsType === 'ds.sqlquery' || dsType === 'ds.scriptfile' || dsType === 'ds.dashboard') &&
-      (codeLower.includes('rbt-sample-northwind-sqlite-4f2') || codeLower.includes('rbt-sample-northwind-duckdb-4f2'))
+      (codeLower.includes('rbt-sample-northwind-sqlite-4f2') || codeLower.includes('rbt-sample-northwind-duckdb-4f2') || codeLower.includes('rbt-sample-northwind-clickhouse-4f2'))
     );
   }
 
@@ -4192,15 +4357,42 @@ pivotTable {
     const isSample = this.isSampleReport
 
     if (isSample) {
-      const isDuckDb = connCode.toLowerCase().includes('duckdb');
+      const codeLower = connCode.toLowerCase();
+      const isDuckDb = codeLower.includes('duckdb');
+      const isClickHouse = codeLower.includes('clickhouse');
+
+      // Look up the actual defaultConnection status from persisted connection files.
+      // Sample connections are synthetic (in-memory only) until the user tests/fetches schema,
+      // at which point they get persisted to disk with their own default flag.
+      const actualConn = this.settingsService.getDatabaseConnectionFiles()
+        .find(c => c.connectionCode === connCode);
+
+      let connectionName: string;
+      let fileName: string;
+      let filePath: string;
+
+      if (isClickHouse) {
+        connectionName = 'Sample Northwind (ClickHouse)';
+        fileName = 'northwind';
+        filePath = 'clickhouse://localhost:8123/northwind';
+      } else if (isDuckDb) {
+        connectionName = 'Sample Northwind (DuckDB)';
+        fileName = 'northwind.duckdb';
+        filePath = 'db/sample-northwind-duckdb/northwind.duckdb';
+      } else {
+        connectionName = 'Sample Northwind (SQLite)';
+        fileName = 'northwind.db';
+        filePath = 'db/sample-northwind-sqlite/northwind.db';
+      }
+
       return [{
         connectionCode: connCode,
-        connectionName: isDuckDb ? 'Sample Northwind (DuckDB)' : 'Sample Northwind (SQLite)',
+        connectionName: connectionName,
         connectionType: 'database-connection',
-        fileName: isDuckDb ? 'northwind.duckdb' : 'northwind.db',
-        filePath: isDuckDb ? 'db/sample-northwind-duckdb/northwind.duckdb' : 'db/sample-northwind-sqlite/northwind.db',
+        fileName: fileName,
+        filePath: filePath,
         activeClicked: false,
-        defaultConnection: true,
+        defaultConnection: actualConn?.defaultConnection ?? false,
         usedBy: '',
         useForJasperReports: false,
       }];

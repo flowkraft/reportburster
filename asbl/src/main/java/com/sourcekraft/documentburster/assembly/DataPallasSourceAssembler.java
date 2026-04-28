@@ -6,10 +6,10 @@ import java.io.File;
 import org.apache.commons.io.FileUtils;
 import org.zeroturnaround.zip.ZipUtil;
 
-public class ReportBursterSourceAssembler extends AbstractAssembler {
+public class DataPallasSourceAssembler extends AbstractAssembler {
 
-	public ReportBursterSourceAssembler() {
-		super("target/package/db-src", "target/package/verified-db-src", "target/reportburster-src.zip");
+	public DataPallasSourceAssembler() {
+		super("target/package/db-src", "target/package/verified-db-src", "target/datapallas-src.zip");
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public class ReportBursterSourceAssembler extends AbstractAssembler {
 		});
 
 		System.out.println(
-				"------------------------------------- DONE:ReportBursterSourceAssembler copied source files ... -------------------------------------");
+				"------------------------------------- DONE:DataPallasSourceAssembler copied source files ... -------------------------------------");
 	}
 
 	@Override
@@ -75,6 +75,6 @@ public class ReportBursterSourceAssembler extends AbstractAssembler {
 		}
 
 		System.out.println(
-				"------------------------------------- VERIFIED:ReportBursterSourceAssembler source package ... -------------------------------------");
+				"------------------------------------- VERIFIED:DataPallasSourceAssembler source package ... -------------------------------------");
 	}
 }

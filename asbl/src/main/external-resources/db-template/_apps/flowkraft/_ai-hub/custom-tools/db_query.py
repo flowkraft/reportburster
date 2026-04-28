@@ -9,9 +9,9 @@ import xml.etree.ElementTree as ET
 
 def db_query(connection_code: str, sql: str, format: str = "table", max_rows: int = 50) -> str:
     """
-    Execute a READ-ONLY SQL query on any ReportBurster database connection.
+    Execute a READ-ONLY SQL query on any DataPallas database connection.
 
-    This tool connects to any database configured in ReportBurster using the
+    This tool connects to any database configured in DataPallas using the
     connection code (e.g., 'db-northwind-sqlite', 'db-sales-postgres').
     It supports SQLite, DuckDB, PostgreSQL, MySQL, MariaDB, SQL Server,
     Oracle, IBM Db2, and ClickHouse.
@@ -26,7 +26,7 @@ def db_query(connection_code: str, sql: str, format: str = "table", max_rows: in
         db_query(connection_code="db-northwind-sqlite", sql="SELECT * FROM Customers LIMIT 10")
 
     Args:
-        connection_code (str): ReportBurster connection code (e.g., 'db-northwind-sqlite').
+        connection_code (str): DataPallas connection code (e.g., 'db-northwind-sqlite').
                               Use empty string with sql="LIST CONNECTIONS" to see available connections.
         sql (str): SQL query to execute. Use "SHOW TABLES" or "LIST TABLES" to list tables.
                    Use "LIST CONNECTIONS" to list available database connections.
@@ -45,8 +45,8 @@ def db_query(connection_code: str, sql: str, format: str = "table", max_rows: in
     print(f"db_query called: connection={connection_code}, sql={sql[:100]}...")
 
     connections_path = os.environ.get(
-        'REPORTBURSTER_CONNECTIONS_PATH',
-        '/reportburster/config/connections'
+        'DATAPALLAS_CONNECTIONS_PATH',
+        '/datapallas/config/connections'
     )
 
     dangerous_patterns = [
@@ -93,8 +93,8 @@ def db_query(connection_code: str, sql: str, format: str = "table", max_rows: in
                     connections.append(f"  {folder_name} (error: {e})")
 
         if not connections:
-            return "No database connections found. Check REPORTBURSTER_CONNECTIONS_PATH."
-        return "Available ReportBurster Database Connections:\n" + '\n'.join(connections)
+            return "No database connections found. Check DATAPALLAS_CONNECTIONS_PATH."
+        return "Available DataPallas Database Connections:\n" + '\n'.join(connections)
 
     if not connection_code:
         raise Exception("connection_code is required. Use sql='LIST CONNECTIONS' to see available connections.")
@@ -141,11 +141,11 @@ def db_query(connection_code: str, sql: str, format: str = "table", max_rows: in
     cfg['usessl'] = cfg['usessl'].lower() == 'true'
 
     # For file-based DBs (SQLite, DuckDB), the XML has the Windows host path.
-    # Inside Docker the same file lives under /reportburster/db/,
+    # Inside Docker the same file lives under /datapallas/db/,
     # so remap the host path to the container mount path.
     if cfg['db_type'] in ('sqlite', 'duckdb') and cfg['database']:
         if not os.path.exists(cfg['database']):
-            db_mount = os.environ.get('REPORTBURSTER_DB_PATH', '/reportburster/db')
+            db_mount = os.environ.get('DATAPALLAS_DB_PATH', '/datapallas/db')
             normalized = cfg['database'].replace('\\', '/')
             idx = normalized.rfind('/db/')
             if idx >= 0:

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cube>
+    <name>Northwind Customer Management</name>
+    <description>Customer base composition and order activity. Different grain than the Sales cube — one row per customer — so it answers CRM/sales-ops questions like "how many customers per country?", "who are our decision-makers?", "when did each customer first/last order?".</description>
+    <connectionId>rbt-sample-northwind-sqlite-4f2</connectionId>
+</cube>

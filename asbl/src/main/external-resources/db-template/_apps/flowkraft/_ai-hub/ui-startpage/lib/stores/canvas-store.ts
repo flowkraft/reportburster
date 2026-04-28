@@ -1,16 +1,67 @@
 import { create } from "zustand";
+import type { ColumnSchema, QueryResult, TableSchema } from "@/lib/explore-data/types";
+import type { PickShape } from "@/lib/explore-data/smart-defaults/widget-picker";
+import type { CardinalityMap } from "@/lib/explore-data/smart-defaults/classification";
+import {
+  computeWidgetShape,
+  seedDisplayConfigForType,
+  resolveAutoWidget,
+} from "@/lib/explore-data/widget-defaults";
+import { shapeFromColumns } from "@/lib/explore-data/smart-defaults/widget-picker";
 
 // --- Types ---
 
-export type WidgetType = "chart" | "tabulator" | "pivot" | "kpi" | "text" | "divider" | "filter-pane";
+export type WidgetType =
+  | "chart" | "tabulator" | "pivot" | "number" | "map"
+  | "sankey" | "gauge" | "trend" | "progress" | "detail"
+  | "text" | "divider" | "iframe" | "filter-pane";
 
 export type DataSourceMode = "visual" | "ai-sql" | "sql" | "script";
 
+/** Temporal group-by bucket.
+ *
+ *  Truncation family (keeps temporal ordering — timeline):
+ *    day | week | month | quarter | year
+ *
+ *  Extraction family (produces discrete categories — e.g. 0-6 for day-of-week):
+ *    day-of-week | hour-of-day | month-of-year | quarter-of-year
+ *
+ *  The two families render differently — extraction dims are categorical
+ *  (bar), truncation dims are a timeline (line). The `isTemporalExtraction()`
+ *  helper in smart-defaults tells them apart. */
+export type TimeBucket =
+  | "day" | "week" | "month" | "quarter" | "year"
+  | "day-of-week" | "hour-of-day" | "month-of-year" | "quarter-of-year";
+
+/** Numeric group-by bucket — binning width in column units.
+ *  `numBins` captures the user's intent (Auto / 10 / 25 / 100); `width` is
+ *  the pre-computed width at pick time (from `nicerBinWidth()` over the
+ *  column's probed range). The SQL builder re-derives a tighter width from
+ *  active filter bounds when `numBins` is set and a matching filter exists
+ *  — bin boundaries follow the visible range, not the full column span. */
+export interface NumericBucket {
+  width: number;
+  numBins?: number;
+}
+
 export interface VisualQuery {
+  // Discriminator: "table" (default, backward-compatible) drives the existing
+  // SQL builder. "cube" routes the widget to <rb-cube-renderer> instead.
+  kind?: "table" | "cube";
+  // For kind === "cube" — the cube id from /api/cubes
+  cubeId?: string;
   table: string;
   filters: { column: string; operator: string; value: string; valueTo?: string }[];
   summarize: { aggregation: string; field: string }[];
   groupBy: string[];
+  // Optional per-column time bucket. When set and the column is in `groupBy`,
+  // the SQL builder replaces the raw column with a date-truncated/extracted
+  // expression in both SELECT and GROUP BY. Columns without an entry group by
+  // raw value.
+  groupByBuckets?: Record<string, TimeBucket>;
+  // Optional per-column numeric bin width. Same wiring as groupByBuckets but
+  // for numeric columns — the SQL builder emits FLOOR(col/width)*width.
+  groupByNumericBuckets?: Record<string, NumericBucket>;
   sort: { column: string; direction: "ASC" | "DESC" }[];
   limit: number;
 }
@@ -21,6 +72,8 @@ export interface DataSource {
   sql?: string;
   script?: string;
   generatedSql?: string;
+  executeVersion?: number;
+  scriptExecuteVersion?: number;
 }
 
 export interface WidgetDisplayConfig {
@@ -33,15 +86,29 @@ export interface Widget {
   gridPosition: { x: number; y: number; w: number; h: number };
   dataSource: DataSource | null;
   displayConfig: WidgetDisplayConfig;
+  /** Raw column metadata — populated atomically with `shape` by
+   *  `setWidgetQueryResult` (post-query) or `setWidgetColumnsFromSchema`
+   *  (visual-mode pre-query schema fetch).  Every consumer reads from here
+   *  rather than re-computing its own ColumnSchema[] array.  null during
+   *  loading or when nothing has populated it yet. */
+  columns: ColumnSchema[] | null;
+  /** Classified dims+measures shape for widget-picker / sensibility / chart-
+   *  ranking consumers.  Computed once in the store alongside `columns`, so
+   *  classification (isCountry/isTemporalLike/etc.) runs once per query land
+   *  rather than once per consumer render.  null when columns is null. */
+  shape: PickShape | null;
 }
 
-export interface DashboardFilter {
-  id: string;
-  paramName: string;
-  type: "dropdown" | "date" | "daterange" | "text" | "number";
-  label: string;
-  defaultValue: string;
-  linkedWidgetIds: string[];
+/** Runtime cache of the latest QueryResult for each widget. Populated by
+ *  useWidgetData after it executes the widget's query; read by ConfigPanel
+ *  (column inference, palette/widget-type ranking) and by QueryBuilder
+ *  (row-count status). Keeps the backend hit to one call per Run instead
+ *  of every consumer fetching independently. Not serialized — transient
+ *  per-session state, cleared on canvas load/reset. */
+export interface WidgetQueryResult {
+  result: QueryResult | null;
+  error: string | null;
+  loading: boolean;
 }
 
 export interface CanvasState {
@@ -50,11 +117,24 @@ export interface CanvasState {
   description: string;
   connectionId: string | null;
   widgets: Widget[];
-  filters: DashboardFilter[];
+  /** Per-widget query-result cache. See WidgetQueryResult. */
+  queryResults: Record<string, WidgetQueryResult | undefined>;
+  /** Report-parameters DSL text (the same grammar RB uses in
+   *  `{reportCode}-report-parameters-spec.groovy`). Edited via the FilterBar
+   *  UI panel + its bidirectional DSL editor. Parsed on-demand by
+   *  `<rb-parameters>` (via `/api/dsl/reportparameters/parse`) to produce
+   *  the ParamMeta[] that drives the canvas filter bar. At Phase 6 export
+   *  time this string is written verbatim to disk — canvas state IS the
+   *  exported file. Empty string = no filters declared. */
+  filterDsl: string;
   filterValues: Record<string, string>;
   filterVersion: number;
   selectedWidgetId: string | null;
   editMode: boolean;
+  /** The reportId of the last successful "Save to DataPallas" export.
+   *  null = never exported. Lives in its own DB column (not serialized into
+   *  the state JSON). Updated by the ExportDialog after a successful export. */
+  exportedReportCode: string | null;
   // Associative exploration (activates when ≥1 filter-pane widget exists)
   exploreSelections: ExploreSelection[];
   exploreFieldStates: FieldStates;
@@ -69,11 +149,13 @@ const DEFAULT_STATE: CanvasState = {
   description: "",
   connectionId: null,
   widgets: [],
-  filters: [],
+  queryResults: {},
+  filterDsl: "",
   filterValues: {},
   filterVersion: 0,
   selectedWidgetId: null,
   editMode: true,
+  exportedReportCode: null,
   exploreSelections: [],
   exploreFieldStates: {},
   exploreVersion: 0,
@@ -85,9 +167,16 @@ const WIDGET_DEFAULTS: Record<WidgetType, { w: number; h: number }> = {
   chart: { w: 6, h: 4 },
   tabulator: { w: 12, h: 4 },
   pivot: { w: 12, h: 5 },
-  kpi: { w: 3, h: 2 },
+  number: { w: 3, h: 2 },
+  map: { w: 6, h: 5 },
+  sankey: { w: 8, h: 5 },
+  gauge: { w: 3, h: 3 },
+  trend: { w: 3, h: 2 },
+  progress: { w: 4, h: 2 },
+  detail: { w: 4, h: 4 },
   text: { w: 6, h: 2 },
   divider: { w: 12, h: 1 },
+  iframe: { w: 6, h: 4 },
   "filter-pane": { w: 3, h: 4 },
 };
 
@@ -105,35 +194,69 @@ export interface FieldStates {
 // --- Store ---
 
 interface CanvasActions {
-  loadCanvas: (canvas: CanvasState) => void;
+  // Accepts a persisted canvas shape (without the runtime queryResults cache).
+  // loadCanvas always resets queryResults to {} — the cache is per-session.
+  loadCanvas: (canvas: Omit<CanvasState, "queryResults">) => void;
   resetCanvas: () => void;
   setName: (name: string) => void;
   setDescription: (description: string) => void;
   setConnectionId: (connectionId: string | null) => void;
   addWidget: (type: WidgetType) => string;
+  addWidgetFromTable: (tableName: string) => string;
+  addWidgetFromCube: (cubeId: string) => string;
+  changeWidgetRenderMode: (id: string, newType: WidgetType) => void;
   removeWidget: (id: string) => void;
   updateWidgetPosition: (id: string, position: { x: number; y: number; w: number; h: number }) => void;
   updateWidgetDataSource: (id: string, dataSource: DataSource) => void;
   updateWidgetDisplayConfig: (id: string, config: WidgetDisplayConfig) => void;
+  /** Mark a widget's query as in-flight. Called by useWidgetData right
+   *  before it executes the query/script. Keeps any previously cached
+   *  `result` visible so consumers don't flicker to empty during refetch. */
+  setWidgetQueryLoading: (widgetId: string) => void;
+  /** Store a successful QueryResult. Overwrites previous result/error and
+   *  clears loading. Called by useWidgetData (the single fetcher).  Also
+   *  writes `widget.columns` + `widget.shape` — the classified view every
+   *  downstream consumer reads from. */
+  setWidgetQueryResult: (widgetId: string, result: QueryResult) => void;
+  /** Store a fetch error. Clears previous result + loading. */
+  setWidgetQueryError: (widgetId: string, error: string) => void;
+  /** Flip loading → false without touching result/error. Called from
+   *  useWidgetData's early-return paths (e.g. mode switched but the new
+   *  mode has no SQL yet) so a stale `loading=true` from a previously
+   *  in-flight query can't leave the Run button stuck in "Running…". */
+  clearWidgetQueryLoading: (widgetId: string) => void;
+  /** Pre-query path for visual mode: write classified columns + shape from
+   *  a fetched table schema.  Called by ConfigPanel's schema-fetch effect
+   *  when a widget is in visual mode with a picked table but before any
+   *  query result has landed (so the palette / config panels have
+   *  `widget.columns` and `widget.shape` to read from immediately).  The
+   *  post-query path (`setWidgetQueryResult`) overwrites these later with
+   *  the actual result's columns. */
+  setWidgetColumnsFromSchema: (
+    widgetId: string,
+    columns: ColumnSchema[],
+    tableSchema?: TableSchema | null,
+    cardinality?: CardinalityMap,
+  ) => void;
   selectWidget: (id: string | null) => void;
   setEditMode: (editMode: boolean) => void;
   updateLayout: (layouts: { i: string; x: number; y: number; w: number; h: number }[]) => void;
-  addFilter: (filter: DashboardFilter) => void;
-  removeFilter: (id: string) => void;
-  updateFilter: (id: string, patch: Partial<DashboardFilter>) => void;
+  setFilterDsl: (dsl: string) => void;
   setFilterValue: (paramName: string, value: string) => void;
+  /** Update the exportedReportCode after a successful "Save to DataPallas". */
+  setExportedReportCode: (code: string | null) => void;
   // Associative exploration
   toggleExploreSelection: (field: string, value: string) => void;
   clearExploreSelections: () => void;
   setExploreFieldStates: (states: FieldStates) => void;
   isExploreActive: () => boolean; // true when ≥1 filter-pane widget exists
-  getSerializableState: () => Omit<CanvasState, "selectedWidgetId" | "editMode" | "filterValues" | "filterVersion" | "exploreSelections" | "exploreFieldStates" | "exploreVersion">;
+  getSerializableState: () => Omit<CanvasState, "selectedWidgetId" | "editMode" | "filterValues" | "filterVersion" | "exploreSelections" | "exploreFieldStates" | "exploreVersion" | "exportedReportCode" | "queryResults">;
 }
 
 export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => ({
   ...DEFAULT_STATE,
 
-  loadCanvas: (canvas) => set({ ...canvas, selectedWidgetId: null, editMode: true }),
+  loadCanvas: (canvas) => set({ ...canvas, queryResults: {}, selectedWidgetId: null, editMode: true }),
 
   resetCanvas: () => set({ ...DEFAULT_STATE }),
 
@@ -161,16 +284,121 @@ export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => 
       gridPosition: { x: 0, y: maxY, ...defaults },
       dataSource: null,
       displayConfig: {},
+      columns: null,
+      shape: null,
     };
 
     set({ widgets: [...widgets, widget], selectedWidgetId: id });
     return id;
   },
 
+  // Data-first: create a widget pre-wired to a table. Default render mode is
+  // Data Table — start with raw rows; the user switches via "Visualize as".
+  addWidgetFromTable: (tableName) => {
+    const id = `w-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const defaults = WIDGET_DEFAULTS.tabulator;
+    const widgets = get().widgets;
+    let maxY = 0;
+    for (const w of widgets) {
+      const bottom = w.gridPosition.y + w.gridPosition.h;
+      if (bottom > maxY) maxY = bottom;
+    }
+    const widget: Widget = {
+      id,
+      type: "tabulator",
+      gridPosition: { x: 0, y: maxY, ...defaults },
+      dataSource: {
+        mode: "visual",
+        visualQuery: {
+          kind: "table",
+          table: tableName,
+          filters: [],
+          summarize: [],
+          groupBy: [],
+          sort: [],
+          limit: 500,
+        },
+      },
+      // Drop-default type (tabulator for tables).  The widget auto-migrates
+      // to the best-fit type (number / chart / map / ...) on the FIRST
+      // successful query result — handled imperatively in
+      // setWidgetQueryResult below, not via any reactive effect.  Any
+      // explicit palette click sets `userPicked: true` which pins the type
+      // forever.  Matches the "display-auto on first question run"
+      // behaviour without any loop potential.
+      displayConfig: {},
+      columns: null,
+      shape: null,
+    };
+    set({ widgets: [...widgets, widget], selectedWidgetId: id });
+    return id;
+  },
+
+  // Data-first: create a widget pre-wired to a cube. Default render mode is Pivot
+  // (cubes are usually crosstab-shaped); user can change via "Visualize as".
+  addWidgetFromCube: (cubeId) => {
+    const id = `w-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const defaults = WIDGET_DEFAULTS.pivot;
+    const widgets = get().widgets;
+    let maxY = 0;
+    for (const w of widgets) {
+      const bottom = w.gridPosition.y + w.gridPosition.h;
+      if (bottom > maxY) maxY = bottom;
+    }
+    const widget: Widget = {
+      id,
+      type: "pivot",
+      gridPosition: { x: 0, y: maxY, ...defaults },
+      dataSource: {
+        mode: "visual",
+        visualQuery: {
+          kind: "cube",
+          cubeId,
+          table: "",
+          filters: [],
+          summarize: [],
+          groupBy: [],
+          sort: [],
+          limit: 500,
+        },
+      },
+      // See addWidgetFromTable — cube drops default to "pivot" and auto-
+      // migrate on first successful query result via setWidgetQueryResult.
+      displayConfig: {},
+      columns: null,
+      shape: null,
+    };
+    set({ widgets: [...widgets, widget], selectedWidgetId: id });
+    return id;
+  },
+
+  // Switch a widget's render mode while preserving its dataSource + displayConfig.
+  // Used by the "Visualize as" dropdown. Grid size adjusts to the new type's defaults
+  // only when the current size matches the old type's defaults (so user-resized widgets
+  // keep their size).
+  changeWidgetRenderMode: (id, newType) => {
+    const widgets = get().widgets;
+    const widget = widgets.find((w) => w.id === id);
+    console.log('[changeRenderMode] id=' + id + ' newType=' + newType + ' prevType=' + (widget?.type ?? 'none'));
+    if (!widget || widget.type === newType) return;
+    const oldDefaults = WIDGET_DEFAULTS[widget.type];
+    const newDefaults = WIDGET_DEFAULTS[newType];
+    const isDefaultSize = widget.gridPosition.w === oldDefaults.w && widget.gridPosition.h === oldDefaults.h;
+    const gridPosition = isDefaultSize
+      ? { ...widget.gridPosition, w: newDefaults.w, h: newDefaults.h }
+      : widget.gridPosition;
+    set({
+      widgets: widgets.map((w) => (w.id === id ? { ...w, type: newType, gridPosition } : w)),
+    });
+  },
+
   removeWidget: (id) => {
     const state = get();
+    const nextQueryResults = { ...state.queryResults };
+    delete nextQueryResults[id];
     set({
       widgets: state.widgets.filter((w) => w.id !== id),
+      queryResults: nextQueryResults,
       selectedWidgetId: state.selectedWidgetId === id ? null : state.selectedWidgetId,
     });
   },
@@ -193,6 +421,145 @@ export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => 
     });
   },
 
+  setWidgetQueryLoading: (widgetId) => {
+    const state = get();
+    const prev = state.queryResults[widgetId];
+    // Preserve any existing result so consumers don't blank out mid-refetch.
+    set({
+      queryResults: {
+        ...state.queryResults,
+        [widgetId]: { result: prev?.result ?? null, error: null, loading: true },
+      },
+    });
+  },
+
+  setWidgetQueryResult: (widgetId, result) => {
+    const state = get();
+    const widget = state.widgets.find((w) => w.id === widgetId);
+    if (!widget) {
+      // Widget was removed between query launch and result land — still cache
+      // the result so any stragglers can read it.
+      set({
+        queryResults: { ...state.queryResults, [widgetId]: { result, error: null, loading: false } },
+      });
+      return;
+    }
+
+    // STEP 1 — classify ONCE.  `computeWidgetShape` runs the full
+    // inferColumnsFromRow + shapeFromResult pipeline.  The resulting
+    // `columns` + `shape` are written onto the widget record below and
+    // become the single source of truth for every downstream consumer
+    // (ConfigPanel palette, MapConfig, TrendConfig, widget-sensibility,
+    // ChartWidget's shape-aware rendering).  Before this refactor each
+    // consumer rebuilt its own ColumnSchema[] from its own source — races
+    // and drift followed.  After this: one computation, one cache.
+    const computed = computeWidgetShape(result, widget.dataSource);
+    if (computed) {
+      const colTypes = computed.columns.map(c => c.columnName + ':' + c.typeName).join(',');
+      const dimKinds = computed.shape.dims.map(d => d.name + ':' + d.kind).join(',');
+      console.log('[setQR] widgetId=' + widgetId + ' cols=[' + colTypes + '] dims=[' + dimKinds + ']');
+    }
+
+    // STEP 2 — auto-switch.  Mirrors the standard model: every query result
+    // gets `defaultDisplay()` applied as long as the user hasn't pinned a
+    // choice AND the pick is either a migration away from the drop-default
+    // (tabulator/pivot) OR a genuine change of best-fit type.  Loop-safe:
+    //  - `userPicked: true` permanently disables this path.
+    //  - once widget.type === pick.best and !isAtDropDefault, no re-write.
+    //  - atomic set() below publishes widget + queryResult together.
+    const userHasPicked = !!widget.displayConfig.userPicked;
+    const isAtDropDefault = widget.type === "tabulator" || widget.type === "pivot";
+
+    let nextType = widget.type;
+    let nextDisplayConfig = widget.displayConfig;
+
+    if (computed && !userHasPicked) {
+      const vq = widget.dataSource?.mode === "visual" ? widget.dataSource.visualQuery : undefined;
+      const isAggregated = vq
+        ? (vq.kind === "cube" || (vq.summarize?.length ?? 0) > 0 || (vq.groupBy?.length ?? 0) > 0)
+        : undefined;
+      const auto = resolveAutoWidget(computed.shape, result.rowCount, isAggregated);
+      if (isAtDropDefault || auto.type !== widget.type) {
+        // Layer the two seeds: the type-specific helper (pickMapDefaults,
+        // pickTrendFields, etc.) first, then pickWidget's per-rule
+        // displayConfig (authoritative — Rule 4 already knows which region).
+        const basePatch = seedDisplayConfigForType(
+          auto.type,
+          widget.displayConfig,
+          computed.columns,
+          { cardinality: {}, extractions: new Set() },
+          computed.shape,
+        );
+        nextType = auto.type;
+        nextDisplayConfig = {
+          ...widget.displayConfig,
+          ...(basePatch ?? {}),
+          ...(auto.displayConfig ?? {}),
+        };
+      }
+    }
+
+    console.log('[setQR-final] widgetId=' + widgetId + ' type=' + nextType +
+      ' prevType=' + widget.type + ' userPicked=' + userHasPicked +
+      ' autoSwitched=' + (nextType !== widget.type) +
+      ' dc.dateField=' + (nextDisplayConfig.dateField ?? 'none') +
+      ' dc.keys=' + Object.keys(nextDisplayConfig).join(','));
+
+    // STEP 3 — atomic write.  One set() publishes type, displayConfig,
+    // columns, shape, and the queryResult cache together.  No half-state
+    // visible to reactive observers.
+    set({
+      widgets: state.widgets.map((w) =>
+        w.id === widgetId
+          ? {
+              ...w,
+              type: nextType,
+              displayConfig: nextDisplayConfig,
+              columns: computed?.columns ?? w.columns,
+              shape: computed?.shape ?? w.shape,
+            }
+          : w
+      ),
+      queryResults: {
+        ...state.queryResults,
+        [widgetId]: { result, error: null, loading: false },
+      },
+    });
+  },
+
+  setWidgetColumnsFromSchema: (widgetId, columns, tableSchema, cardinality) => {
+    // Pre-query classification for visual mode.  Runs shapeFromColumns once;
+    // every consumer reads widget.columns + widget.shape from here onwards.
+    // Overwritten later by setWidgetQueryResult when the query actually runs.
+    const shape = shapeFromColumns(columns, tableSchema ?? undefined, cardinality);
+    set({
+      widgets: get().widgets.map((w) =>
+        w.id === widgetId ? { ...w, columns, shape } : w
+      ),
+    });
+  },
+
+  setWidgetQueryError: (widgetId, error) => {
+    set({
+      queryResults: {
+        ...get().queryResults,
+        [widgetId]: { result: null, error, loading: false },
+      },
+    });
+  },
+
+  clearWidgetQueryLoading: (widgetId) => {
+    const state = get();
+    const prev = state.queryResults[widgetId];
+    if (!prev || prev.loading === false) return;
+    set({
+      queryResults: {
+        ...state.queryResults,
+        [widgetId]: { ...prev, loading: false },
+      },
+    });
+  },
+
   selectWidget: (id) => set({ selectedWidgetId: id }),
 
   setEditMode: (editMode) => set({ editMode }),
@@ -209,21 +576,11 @@ export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => 
     });
   },
 
-  addFilter: (filter) => {
-    set({ filters: [...get().filters, filter] });
+  setFilterDsl: (dsl) => {
+    set({ filterDsl: dsl });
   },
 
-  removeFilter: (id) => {
-    const state = get();
-    const removed = state.filters.find((f) => f.id === id);
-    const newFilterValues = { ...state.filterValues };
-    if (removed) delete newFilterValues[removed.paramName];
-    set({ filters: state.filters.filter((f) => f.id !== id), filterValues: newFilterValues, filterVersion: state.filterVersion + 1 });
-  },
-
-  updateFilter: (id, patch) => {
-    set({ filters: get().filters.map((f) => (f.id === id ? { ...f, ...patch } : f)) });
-  },
+  setExportedReportCode: (code) => set({ exportedReportCode: code }),
 
   setFilterValue: (paramName, value) => {
     const state = get();
@@ -255,9 +612,11 @@ export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => 
   },
 
   getSerializableState: () => {
-    const { selectedWidgetId, editMode, filterValues, filterVersion, exploreSelections, exploreFieldStates, exploreVersion, ...rest } = get();
+    // queryResults is transient per-session cache — strip it along with the
+    // other non-serializable runtime fields.
+    const { selectedWidgetId, editMode, filterValues, filterVersion, exploreSelections, exploreFieldStates, exploreVersion, exportedReportCode, queryResults, ...rest } = get();
     // Strip store actions — only keep data properties
-    const { loadCanvas, resetCanvas, setName, setDescription, setConnectionId, addWidget, removeWidget, updateWidgetPosition, updateWidgetDataSource, updateWidgetDisplayConfig, selectWidget, setEditMode, updateLayout, addFilter, removeFilter, updateFilter, setFilterValue, toggleExploreSelection, clearExploreSelections, setExploreFieldStates, isExploreActive, getSerializableState, ...state } = rest as CanvasState & CanvasActions;
+    const { loadCanvas, resetCanvas, setName, setDescription, setConnectionId, addWidget, addWidgetFromTable, addWidgetFromCube, changeWidgetRenderMode, removeWidget, updateWidgetPosition, updateWidgetDataSource, updateWidgetDisplayConfig, setWidgetQueryLoading, setWidgetQueryResult, setWidgetQueryError, selectWidget, setEditMode, updateLayout, setFilterDsl, setFilterValue, setExportedReportCode, toggleExploreSelection, clearExploreSelections, setExploreFieldStates, isExploreActive, getSerializableState, ...state } = rest as CanvasState & CanvasActions;
     return state;
   },
 }));

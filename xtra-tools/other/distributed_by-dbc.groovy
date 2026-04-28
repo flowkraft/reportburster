@@ -41,7 +41,7 @@ try {
     gs.setFillOpacity(1.0f);
 
     String labelPrefix = "Built by ";
-    String labelBold = "ReportBurster";
+    String labelBold = "DataPallas";
 
     float fontSize = 7.5f;
     float prefixWidth = bfRegular.getWidthPoint(labelPrefix, fontSize);

@@ -51,8 +51,8 @@ if ($pidLine) {
 
 Remove-Item -Path $logFilePath -ErrorAction Ignore
 
-# Existing functionality to manage ReportBurster.exe processes
-$processes = Get-Process -Name ReportBurster -ErrorAction SilentlyContinue
+# Existing functionality to manage DataPallas.exe processes
+$processes = Get-Process -Name DataPallas -ErrorAction SilentlyContinue
 if ($scriptDir) {
     $processes = $processes | Where-Object {$_.Path -like "$scriptDir\*"}
 }
@@ -78,7 +78,7 @@ $sortedProcesses = $processes | Sort-Object StartTime -Descending
 # If there are more than one process, kill all but the newest one
 if ($sortedProcesses.Count -gt 1) {
     $sortedProcesses | Select-Object -Skip 1 | ForEach-Object {
-        Write-Host "Stopping older ReportBurster process with ID: $($_.Id)"
+        Write-Host "Stopping older DataPallas process with ID: $($_.Id)"
         Stop-Process -Id $_.Id -Force
     }
 }

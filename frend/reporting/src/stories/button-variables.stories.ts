@@ -7,7 +7,7 @@ import { StateStoreService } from '../app/providers/state-store.service';
 type Story = StoryObj<ButtonClearLogsComponent>;
 const defaultMeta: Meta<ButtonClearLogsComponent> = {
   ...baseMeta,
-  title: 'ReportBurster/Buttons/ButtonVariables',
+  title: 'DataPallas/Buttons/ButtonVariables',
   component: ButtonVariablesComponent,
 };
 

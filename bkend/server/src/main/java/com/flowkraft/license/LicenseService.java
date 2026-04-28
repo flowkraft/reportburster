@@ -11,6 +11,8 @@ import jakarta.xml.bind.Marshaller;
 import jakarta.xml.bind.Unmarshaller;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,8 @@ import jakarta.ws.rs.core.Response;
 
 @Service
 public class LicenseService {
+
+	private static final Logger log = LoggerFactory.getLogger(LicenseService.class);
 
 	@Autowired
 	ReportsService settingsService;
@@ -94,7 +98,7 @@ public class LicenseService {
 			productInfo.changelog = Pherialize.unserialize(jsonNodeResult.get("sections").asText()).toArray()
 					.getString("changelog");
 		} catch (Exception e) {
-
+			log.warn("Failed to fetch latest version/changelog from licensing server", e);
 			productInfo.changelog = StringUtils.EMPTY;
 			productInfo.latestversion = StringUtils.EMPTY;
 

@@ -1,6 +1,6 @@
-# ReportBurster UI & Documentation Navigation
+# DataPallas UI & Documentation Navigation
 
-= REPORTBURSTER APPLICATION MENU STRUCTURE
+= DATAPALLAS APPLICATION MENU STRUCTURE
   A complete guide to every screen, what the user can do there,
   and where to read more.
   Base URL: https://www.reportburster.com
@@ -47,13 +47,13 @@ TOP NAVIGATION BAR
      │   on which log files to attach for faster troubleshooting.
      │   Docs: /docs/troubleshooting
      │
-     ├── ReportBurster Services
+     ├── DataPallas Services
      │   Learn about professional services: custom scripting,
      │   branded email templates, and managed document solutions.
      │
      ├── Apps / Starter Packs / Extra Utils
      │   Browse and install additional apps, starter packs, and
-     │   Docker/extra utility packages to extend ReportBurster.
+     │   Docker/extra utility packages to extend DataPallas.
      │   Docs: /docs/advanced/work-well-apps
      │
      ├── Documentation
@@ -70,16 +70,16 @@ TOP NAVIGATION BAR
      │
      ├── Customer Reviews
      │   Testimonials from organizations showing how they use
-     │   ReportBurster.
+     │   DataPallas.
      │
-     ├── ReportBurster Blog
+     ├── DataPallas Blog
      │   Live feed of the latest blog posts about report distribution
      │   tips, new features, and best practices.
      │   URL: /blog
      │
      ├── System Diagnostics / Update
      │   [Desktop app only] Check Java installation, verify system
-     │   requirements, and update ReportBurster to the latest version.
+     │   requirements, and update DataPallas to the latest version.
      │   Docs: /docs/server/installation
      │
      ├── License
@@ -251,13 +251,13 @@ Header: "HELP"
      │   on which log files to attach for faster troubleshooting.
      │   Docs: /docs/troubleshooting
      │
-     ├── ReportBurster Services
+     ├── DataPallas Services
      │   Learn about professional services: custom scripting,
      │   branded email templates, and managed document solutions.
      │
      ├── Apps / Starter Packs
      │   Browse and install additional apps, starter packs, and
-     │   Docker/extra utility packages to extend ReportBurster.
+     │   Docker/extra utility packages to extend DataPallas.
      │   Docs: /docs/advanced/work-well-apps
      │
      ├── Documentation
@@ -272,9 +272,9 @@ Header: "HELP"
      │         /testimonials/email-payslips
      │
      ├── Customer Reviews
-     │   Testimonials from organizations using ReportBurster.
+     │   Testimonials from organizations using DataPallas.
      │
-     ├── ReportBurster Blog
+     ├── DataPallas Blog
      │   Latest blog posts about features and best practices.
      │   URL: /blog
      │
@@ -301,7 +301,7 @@ For complete reference, the documentation is organized as follows:
   Getting Started
     /docs/quickstart .................. QuickStart in 5 Minutes
 
-  ReportBurster Server
+  DataPallas Server
     /docs/server ...................... Overview
     /docs/server/installation ......... Installation & Setup
     /docs/server/scheduling ........... Scheduling & Automation

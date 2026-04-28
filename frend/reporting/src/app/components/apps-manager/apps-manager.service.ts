@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
-import { ApiService } from '../../providers/api.service';
 import { SystemService } from '../../providers/system.service';
 import { StateStoreService } from '../../providers/state-store.service';
 import { PollingHelper } from '../../providers/polling.helper';
+import { DockerLifecycleService } from '../../providers/docker-lifecycle.service';
 
 export interface ManagedApp {
   id: string;
@@ -47,21 +47,36 @@ export class AppsManagerService {
   // Simulated last output for each app
   private appLastOutputs: { [id: string]: string } = {};
 
-  // Track apps with in-flight commands (spawn process still running, callback not yet fired).
-  // Only while a command is actively running do we preserve 'starting'/'stopping' when docker ps finds no container.
-  // Once the command completes (callback fires), docker ps is the ground truth.
-  private commandsInFlight = new Set<string>();
-
   // Simulated "backend" data (replace with REST call in future)
   private allAppsData: { apps: ManagedApp[] } = {
     apps: [
       {
+        id: 'flowkraft-data-canvas',
+        name: 'Explore Data & Build Dashboards',
+        icon: 'fa fa-bar-chart',
+        category: 'Data & Analytics',
+        type: 'docker',
+        description: 'Explore your databases visually, create stunning charts and build interactive dashboards. Connect to Oracle, SQL Server, PostgreSQL, MySQL, ClickHouse and more. Use <strong>data tables</strong>, <strong>KPI cards</strong>, <strong>charts</strong>, <strong>pivot tables</strong>, and <strong>filter panes</strong> to create BI dashboards powered by your own data. AI assistance is available (when needed).',
+        url: 'http://localhost:8440/explore-data',
+        launchLinks: [
+          { label: 'Explore Data', url: 'http://localhost:8440/explore-data', icon: 'fa fa-th-large' },
+          { label: 'Chat2DB', url: 'http://localhost:8440/chat2db', icon: 'fa fa-flask' },
+        ],
+        entrypoint: 'flowkraft/_ai-hub/docker-compose.yml',
+        service_name: 'ai-hub-frend',
+        startCmd: 'service app start ai-hub-frend 8440',
+        stopCmd: 'service app stop ai-hub-frend',
+        tags: ['bi', 'charts', 'analytics', 'olap', 'visualization', 'data-warehouse', 'dashboards', 'flowkraft-data-canvas', 'explore-data', 'DataPallas\'s App'],
+        visible: true,
+        tutorialLink: { label: 'Learn how to build dashboards →', url: 'https://www.reportburster.com/docs/bi-analytics/dashboards' },
+      },
+      {
         id: 'flowkraft-grails',
-        name: 'Flowkraft\'s Grails App',
+        name: 'DataPallas Grails App',
         icon: 'fa fa-cube',
         category: 'Full-Stack Apps',
         type: 'docker',
-        description: 'Build admin panels and self-service portals using Grails — our <em>default stack</em> for consistency with ReportBurster\'s scripting and backend. Create custom apps with real-time analytics dashboards (DuckDB/ClickHouse OLAP), secure document distribution (payslips, invoices with payments, student portals), and interactive data visualization.',
+        description: 'Build admin panels and self-service portals using Grails — our <em>default stack</em> for consistency with DataPallas\'s scripting and backend. Create custom apps with real-time analytics dashboards (DuckDB/ClickHouse OLAP), secure document distribution (payslips, invoices with payments, student portals), and interactive data visualization.',
         url: 'http://localhost:8400',
         launchLinks: [
           { label: 'Front-Facing Area /', url: 'http://localhost:8400', icon: 'fa fa-globe' },
@@ -71,13 +86,13 @@ export class AppsManagerService {
         service_name: 'grails-playground',
         startCmd: 'service app start grails-playground 8400',
         stopCmd: 'service app stop grails-playground',
-        tags: ['flowkraft', 'admin-panel', 'grails', 'front-facing' , 'customer-portal', 'payments', 'bi', 'charts', 'analytics', 'olap', 'visualization', 'data-warehouse', 'ReportBurster\'s App'],
+        tags: ['flowkraft', 'admin-panel', 'grails', 'front-facing' , 'customer-portal', 'payments', 'bi', 'charts', 'analytics', 'olap', 'visualization', 'data-warehouse', 'DataPallas\'s App'],
         visible: true,
         tutorialLink: { label: 'Want to build your own? See a real walkthrough →', url: 'https://www.reportburster.com/docs/ai-crew/athena#athena---new-billing-portal' },
       },
       {
         id: 'flowkraft-bkend-boot-groovy',
-        name: 'Flowkraft\'s Backend App (Automation & Job Scheduling)',
+        name: 'DataPallas Backend App (Automation & Job Scheduling)',
         icon: 'fa fa-cogs',
         category: 'Backend Services',
         type: 'docker',
@@ -87,14 +102,14 @@ export class AppsManagerService {
         service_name: 'bkend-boot-groovy-playground',
         startCmd: 'service app start bkend-boot-groovy-playground 8410',
         stopCmd: 'service app stop bkend-boot-groovy-playground',
-        tags: ['flowkraft', 'backend', 'etl', 'automation', 'crons-job-scheduling', 'ReportBurster\'s App'],
+        tags: ['flowkraft', 'backend', 'etl', 'automation', 'crons-job-scheduling', 'DataPallas\'s App'],
         visible: true,
         launch: false, // No UI - API/automation only
         tutorialLink: { label: 'Want to build your own? See a real walkthrough →', url: 'https://www.reportburster.com/docs/ai-crew/hephaestus#billing-portal--payment-reminders-for-overdue-bills' },
       },
       {
         id: 'flowkraft-next',
-        name: 'Flowkraft\'s Next.js App (Alternative Stack)',
+        name: 'DataPallas Next.js App (Alternative Stack)',
         icon: 'fa fa-cube',
         category: 'Full-Stack Apps',
         type: 'docker',
@@ -108,7 +123,7 @@ export class AppsManagerService {
         service_name: 'next-playground',
         startCmd: 'service app start next-playground 8420',
         stopCmd: 'service app stop next-playground',
-        tags: ['flowkraft', 'admin-panel', 'front-facing', 'dashboards', 'customer-portal', 'payments', 'next.js', 'react', 'bi', 'charts', 'analytics', 'olap', 'visualization', 'data-warehouse', 'ReportBurster\'s App'],
+        tags: ['flowkraft', 'admin-panel', 'front-facing', 'dashboards', 'customer-portal', 'payments', 'next.js', 'react', 'bi', 'charts', 'analytics', 'olap', 'visualization', 'data-warehouse', 'DataPallas\'s App'],
         visible: true,
         tutorialLink: { label: 'Want to build your own? See a real walkthrough →', url: 'https://www.reportburster.com/docs/ai-crew/athena#athena---new-billing-portal' },
       },
@@ -154,30 +169,9 @@ export class AppsManagerService {
         service_name: 'cms-webportal-playground',
         startCmd: 'service app start cms-webportal-playground 8080',
         stopCmd: 'service app stop cms-webportal-playground',
-        tags: ['flowkraft', 'cms', 'admin-panel', 'front-facing', 'customer-portal', 'cms', 'wordpress', 'ReportBurster\'s App'],
+        tags: ['flowkraft', 'cms', 'admin-panel', 'front-facing', 'customer-portal', 'cms', 'wordpress', 'DataPallas\'s App'],
         visible: true,
         tutorialLink: { label: 'Want to build your own? See a real walkthrough →', url: 'https://www.reportburster.com/docs/ai-crew/athena#athena---new-billing-portal' },
-      },
-      {
-        id: 'flowkraft-ai-hub',
-        name: 'FlowKraft\'s AI Hub',
-        icon: 'fa fa-robot',
-        category: 'AI & Agents',
-        type: 'docker',
-        description: 'Meet your AI experts! <strong>Athena</strong>, Hephaestus, Hermes, and Apollo are here to help with ReportBurster tasks, data exploration & visualization, ETL/cron automations, and building admin panels, BI dashboards, or customer-facing web apps.<br><br><b>Visit Chat2DB to chat with your databases and create stunning charts!</b>',
-        url: 'http://localhost:8440',
-        launchLinks: [
-          { label: 'Meet the FlowKraft AI Crew', url: 'http://localhost:8440', icon: 'fa fa-free-code-camp' },
-          { label: 'Chat2DB', url: 'http://localhost:8440/chat2db', icon: 'fa fa-flask' },
-          { label: 'Chat with the Ancient Greeks ... Oracles@Your Service', url: 'http://localhost:8441', icon: 'fa fa-commenting-o' },
-        ],
-        entrypoint: 'flowkraft/_ai-hub/docker-compose.yml',
-        service_name: 'ai-hub-frend',
-        startCmd: 'service app start ai-hub-frend 8440',
-        stopCmd: 'service app stop ai-hub-frend',
-        tags: ['flowkraft', 'ai-agents', 'ReportBurster\'s App', 'visualization', 'analytics', 'chat2db', 'charts'],
-        visible: true,
-        launch: true,
       },
       {
         id: 'cloudbeaver',
@@ -314,9 +308,9 @@ export class AppsManagerService {
 
   constructor(
     private messagesService: ToastrMessagesService,
-    private apiService: ApiService,
     private systemService: SystemService,
     private stateStore: StateStoreService,
+    private dockerLifecycle: DockerLifecycleService,
   ) { }
 
   private clearTransitionalState(appId: string): void {
@@ -327,11 +321,23 @@ export class AppsManagerService {
     } catch (e) { /* ignore localStorage errors */ }
   }
 
+  /** Clear all in-flight commands — called when polling reaches max iterations */
+  public clearAllInFlight(): void {
+    this.dockerLifecycle.clearAllInFlight();
+    // Reset all transitional appStates to stopped
+    for (const [id, state] of Object.entries(this.appStates)) {
+      if (state === 'starting' || state === 'stopping') {
+        this.appStates[id] = 'stopped';
+        this.clearTransitionalState(id);
+      }
+    }
+  }
+
   // Add method to fetch statuses from API
   public async refreshAllStatuses(skipProbe: boolean = false): Promise<void> {
     try {
       // Refresh system info (docker status) along with service statuses
-      await this.refreshSystemInfo();
+      await this.dockerLifecycle.refreshSystemInfo();
 
       const response = await this.systemService.getServicesStatus(skipProbe);
       const statuses: any[] = response;  // Array of {name, status, ports, health}
@@ -356,27 +362,21 @@ export class AppsManagerService {
         // Debug-level output so it only appears when debug logging is enabled
         console.debug(`[AppsManager] App ${app.id}: service_name=${app.service_name}, matched service=`, service);
 
+        const dockerStatus = service
+          ? PollingHelper.mapBackendStatusToUiState(service.status)
+          : null;
+        const resolved = this.dockerLifecycle.resolveNextStatus(
+          app.id,
+          this.appStates[app.id],
+          dockerStatus,
+        );
+        this.appStates[app.id] = resolved.status as NonNullable<ManagedApp['state']>;
+        if (resolved.clearInFlight) {
+          this.clearTransitionalState(app.id);
+          this.dockerLifecycle.markCommandEnd(app.id);
+        }
+
         if (service) {
-          // Use shared helper to map backend status to UI state (handles healthcheck states)
-          const mapped = PollingHelper.mapBackendStatusToUiState(service.status);
-          const current = this.appStates[app.id];
-
-          // Preserve transitional 'stopping' state while the stop command is in-flight
-          // (docker compose down still running → container still reported as 'running').
-          // Without this guard, polling would flip 'stopping' back to 'running' for the
-          // ~5 seconds it takes compose-down to finish, re-enabling the Start/Stop button.
-          if (this.commandsInFlight.has(app.id) && current === 'stopping' && mapped === 'running') {
-            console.debug(`[AppsManager] Preserving 'stopping' for ${app.id} (stop command in-flight)`);
-          } else {
-            this.appStates[app.id] = mapped;
-          }
-
-          // Clear persisted transitional state and in-flight flag once we reach a stable state
-          if (PollingHelper.isStableState(this.appStates[app.id])) {
-            this.clearTransitionalState(app.id);
-            this.commandsInFlight.delete(app.id);
-          }
-
           // If app has no `url`, derive one from the container's exposed ports (use first host-mapped port)
           try {
             if (!app.url && service.ports) {
@@ -384,7 +384,6 @@ export class AppsManagerService {
               const portMatch = (service.ports || '').match(/:(\d+)->/);
               if (portMatch && portMatch[1]) {
                 app.url = `http://localhost:${portMatch[1]}`;
-                // console.log(`[AppsManager] Derived URL for app ${app.id}: ${app.url}`);
               }
             }
           } catch (e) {
@@ -395,73 +394,36 @@ export class AppsManagerService {
           if (app.id === 'cms-webportal' && this.appStates[app.id] === 'running') {
             this.stateStore.configSys.sysInfo.setup.portal.isProvisioned = true;
           }
-        } else {
-          // No matching container found in docker ps.
-          // Docker ps is the ground truth. Only preserve transitional state while a command
-          // is actively running (spawn process hasn't returned yet, e.g. image still downloading).
-          // Once the command completes or on page reload, no container = stopped.
-          if (this.commandsInFlight.has(app.id)) {
-            const currentState = this.appStates[app.id];
-            if (currentState === 'stopping') {
-              // Container gone mid-stop → stop command has completed successfully.
-              // Finalize to 'stopped' and clear in-flight so polling can terminate.
-              this.appStates[app.id] = 'stopped';
-              this.clearTransitionalState(app.id);
-              this.commandsInFlight.delete(app.id);
-            } else {
-              // Start command still executing (image downloading, build in progress) — keep transitional state
-              console.debug(`[AppsManager] No container for ${app.id}, but command still in-flight — preserving transitional state`);
-            }
-          } else {
-            // Command completed or page was reloaded — docker ps is truth, no container = stopped
-            const currentState = this.appStates[app.id];
-            if (currentState === 'starting' || currentState === 'stopping') {
-              console.warn(`[AppsManager] No container found for ${app.id} and no command in-flight, resetting to stopped`);
-            }
-            this.appStates[app.id] = 'stopped';
-            this.clearTransitionalState(app.id);
+        }
+      }
+
+      // Sync state across apps that share the same service_name (e.g. data-canvas and
+      // flowkraft-ai-hub both run as 'ai-hub-frend'). The per-app loop above only preserves
+      // transitional state for the in-flight app; sibling apps sharing the same service_name
+      // would otherwise be wrongly reset to 'stopped'.
+      // Priority: running > starting > stopping > error > unknown > stopped
+      type AppState = 'running' | 'stopped' | 'unknown' | 'starting' | 'stopping' | 'error';
+      const statePriority: AppState[] = ['running', 'starting', 'stopping', 'error', 'unknown', 'stopped'];
+      const byServiceName: { [svc: string]: string[] } = {};
+      for (const app of this.allAppsData.apps) {
+        if (app.service_name) {
+          if (!byServiceName[app.service_name]) byServiceName[app.service_name] = [];
+          byServiceName[app.service_name].push(app.id);
+        }
+      }
+      for (const ids of Object.values(byServiceName)) {
+        if (ids.length < 2) continue;
+        const states: AppState[] = ids.map(id => this.appStates[id] ?? 'stopped');
+        const best: AppState = statePriority.find(s => states.includes(s)) ?? 'stopped';
+        for (const id of ids) {
+          if ((this.appStates[id] ?? 'stopped') !== best) {
+            this.appStates[id] = best;
           }
         }
       }
     } catch (error) {
       console.error('Error refreshing statuses:', error);
       // Set to 'error' or leave as-is
-    }
-  }
-
-  // Fetch authoritative system info (Docker status) from backend
-  private async refreshSystemInfo(): Promise<void> {
-    try {
-      const backendSystemInfo = await this.systemService.getSystemInfo();
-      if (backendSystemInfo) {
-        const dockerSetup = this.stateStore.configSys.sysInfo.setup.docker;
-        
-        // Only update if we got valid boolean values from the backend
-        // This prevents clearing good status with undefined/null values
-        if (typeof backendSystemInfo.isDockerInstalled === 'boolean') {
-          dockerSetup.isDockerInstalled = backendSystemInfo.isDockerInstalled;
-        }
-        if (typeof backendSystemInfo.isDockerDaemonRunning === 'boolean') {
-          dockerSetup.isDockerDaemonRunning = backendSystemInfo.isDockerDaemonRunning;
-        }
-
-        // Calculate isDockerOk based on current values (using potentially updated values)
-        dockerSetup.isDockerOk = dockerSetup.isDockerInstalled && dockerSetup.isDockerDaemonRunning;
-
-        if (backendSystemInfo.dockerVersion && backendSystemInfo.dockerVersion !== 'DOCKER_NOT_INSTALLED') {
-          dockerSetup.version = backendSystemInfo.dockerVersion;
-        }
-        
-        console.debug('[AppsManager] Docker status after refresh:', {
-          isDockerInstalled: dockerSetup.isDockerInstalled,
-          isDockerDaemonRunning: dockerSetup.isDockerDaemonRunning,
-          isDockerOk: dockerSetup.isDockerOk,
-          version: dockerSetup.version
-        });
-      }
-    } catch (e) {
-      // On API failure, keep existing Docker status (don't set isDockerOk = false)
-      console.warn('[AppsManager] Failed to fetch backend system info, keeping existing Docker status', e);
     }
   }
 
@@ -537,21 +499,20 @@ export class AppsManagerService {
 
     // Set instant feedback
     this.appStates[app.id] = 'starting';
-    this.commandsInFlight.add(app.id);
+    this.dockerLifecycle.markCommandStart(app.id);
     this.appLastOutputs[app.id] = 'Executing start...';
 
     try {
-      const response = await this.apiService.post('/starter-packs/execute', { command: commandStr });
+      const response = await this.dockerLifecycle.executeCommand(commandStr);
       if (response && response.status && response.status !== 'error') {
-        // Keep commandsInFlight — backend runs async (fire-and-forget),
-        // Docker may not have started yet. refreshAllStatuses() preserves
-        // transitional state while in-flight.
+        // Keep in-flight — backend runs async (fire-and-forget), Docker may not have
+        // started yet. refreshAllStatuses() preserves transitional state while in-flight.
         this.appStates[app.id] = 'starting';
         this.appLastOutputs[app.id] = response.output || `✓ ${app.name} container started, waiting for health check...`;
         app.state = 'starting';
         app.lastOutput = this.appLastOutputs[app.id];
       } else {
-        this.commandsInFlight.delete(app.id);
+        this.dockerLifecycle.markCommandEnd(app.id);
         this.appStates[app.id] = 'error';
         this.clearTransitionalState(app.id);
         this.appLastOutputs[app.id] = response?.output || `✗ Failed to start ${app.name}.`;
@@ -560,7 +521,7 @@ export class AppsManagerService {
         app.currentCommandValue = app.startCmd;
       }
     } catch (e: any) {
-      this.commandsInFlight.delete(app.id);
+      this.dockerLifecycle.markCommandEnd(app.id);
       this.appStates[app.id] = 'error';
       this.clearTransitionalState(app.id);
       this.appLastOutputs[app.id] = e?.message || `✗ Failed to start ${app.name}.`;
@@ -568,8 +529,6 @@ export class AppsManagerService {
       app.lastOutput = this.appLastOutputs[app.id];
       app.currentCommandValue = app.startCmd;
     }
-    // Don't refreshAllStatuses() here — it overwrites the optimistic state.
-    // Polling will confirm the real state from Docker.
   }
 
   // Reprovision action for WordPress CMS. Executes startCmd with --reprovision (alias to rebuild-theme)
@@ -589,12 +548,12 @@ export class AppsManagerService {
     }
 
     this.appStates[app.id] = 'starting';
-    this.commandsInFlight.add(app.id);
+    this.dockerLifecycle.markCommandStart(app.id);
     this.appLastOutputs[app.id] = 'Starting theme rebuild...';
 
     try {
-      const response = await this.apiService.post('/starter-packs/execute', { command: commandStr });
-      this.commandsInFlight.delete(app.id);
+      const response = await this.dockerLifecycle.executeCommand(commandStr);
+      this.dockerLifecycle.markCommandEnd(app.id);
       if (response && response.status && response.status !== 'error') {
         this.appStates[app.id] = 'starting';
         this.appLastOutputs[app.id] = response.output || `✓ Reprovision started for ${app.name}`;
@@ -608,15 +567,13 @@ export class AppsManagerService {
         app.lastOutput = this.appLastOutputs[app.id];
       }
     } catch (e: any) {
-      this.commandsInFlight.delete(app.id);
+      this.dockerLifecycle.markCommandEnd(app.id);
       this.appStates[app.id] = 'error';
       this.clearTransitionalState(app.id);
       this.appLastOutputs[app.id] = e?.message || `✗ Failed to reprovision ${app.name}.`;
       app.state = 'error';
       app.lastOutput = this.appLastOutputs[app.id];
     }
-    // Don't refreshAllStatuses() here — it overwrites the optimistic state.
-    // Polling will confirm the real state from Docker.
   }
 
   // Stop an app
@@ -652,22 +609,21 @@ export class AppsManagerService {
 
     // Set instant feedback
     this.appStates[app.id] = 'stopping';
-    this.commandsInFlight.add(app.id);
+    this.dockerLifecycle.markCommandStart(app.id);
     this.appLastOutputs[app.id] = 'Executing stop...';
 
     try {
-      const response = await this.apiService.post('/starter-packs/execute', { command: commandStr });
+      const response = await this.dockerLifecycle.executeCommand(commandStr);
       if (response && response.status && response.status !== 'error') {
-        // Keep commandsInFlight — backend runs async (fire-and-forget),
-        // docker compose down may not have finished yet. refreshAllStatuses()
-        // preserves transitional 'stopping' state while in-flight.
+        // Keep in-flight — backend runs async (fire-and-forget), docker compose down
+        // may not have finished yet. refreshAllStatuses() preserves transitional
+        // 'stopping' state while in-flight.
         this.appStates[app.id] = 'stopping';
         this.appLastOutputs[app.id] = response.output || `Stopping ${app.name}...`;
         try { app.state = 'stopping'; } catch (e) { }
         try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e) { }
-        // currentCommandValue stays at app.stopCmd — we are still mid-stop
       } else {
-        this.commandsInFlight.delete(app.id);
+        this.dockerLifecycle.markCommandEnd(app.id);
         this.appStates[app.id] = 'error';
         this.clearTransitionalState(app.id);
         this.appLastOutputs[app.id] = response?.output || `✗ Failed to stop ${app.name}.`;
@@ -675,14 +631,12 @@ export class AppsManagerService {
         try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e) { }
       }
     } catch (e: any) {
-      this.commandsInFlight.delete(app.id);
+      this.dockerLifecycle.markCommandEnd(app.id);
       this.appStates[app.id] = 'error';
       this.clearTransitionalState(app.id);
       this.appLastOutputs[app.id] = e?.message || `✗ Failed to stop ${app.name}.`;
       try { app.state = 'error'; } catch (e2) { }
       try { app.lastOutput = this.appLastOutputs[app.id]; } catch (e2) { }
     }
-    // Don't refreshAllStatuses() here — it overwrites the optimistic state.
-    // Polling will confirm the real state from Docker.
   }
 }

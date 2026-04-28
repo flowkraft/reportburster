@@ -5,7 +5,7 @@ import { ButtonWellKnownEmailProvidersComponent } from '../app/components/button
 type Story = StoryObj<ButtonWellKnownEmailProvidersComponent>;
 const defaultMeta: Meta<ButtonWellKnownEmailProvidersComponent> = {
   ...baseMeta,
-  title: 'ReportBurster/Buttons/ButtonWellKnownEmailProviders',
+  title: 'DataPallas/Buttons/ButtonWellKnownEmailProviders',
   component: ButtonWellKnownEmailProvidersComponent,
 };
 

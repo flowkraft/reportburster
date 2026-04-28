@@ -5,11 +5,11 @@ import { Constants } from '../utils/constants';
 // Apps with launch: false have no Launch button (headless/API-only apps)
 // 'name' is a minimal unique substring for resilience to minor UI text changes
 export const VISIBLE_APPS = [
+  { id: 'flowkraft-data-canvas', name: 'Explore Data' },
   { id: 'flowkraft-grails', name: 'Grails App' },
   { id: 'flowkraft-bkend-boot-groovy', name: 'Backend App', launch: false },
   { id: 'flowkraft-next', name: 'Next.js App' },
   { id: 'cms-webportal', name: 'WebPortal' },
-  { id: 'flowkraft-ai-hub', name: 'FlowKraft' },
   { id: 'cloudbeaver', name: 'CloudBeaver' },
   { id: 'rundeck', name: 'Rundeck' },
   { id: 'matomo', name: 'Matomo' },

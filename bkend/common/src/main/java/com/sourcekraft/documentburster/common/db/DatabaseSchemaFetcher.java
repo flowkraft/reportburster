@@ -99,10 +99,37 @@ public class DatabaseSchemaFetcher {
         DocumentBursterConnectionDatabaseSettings dbSettings = settings
                 .loadSettingsConnectionDatabaseByPath(connectionFilePath);
 
+        return fetchSchema(dbSettings);
+    }
+
+    /**
+     * Fetches the database schema using a connection code (e.g. "db-northwind-sqlite"
+     * or "rbt-sample-northwind-sqlite-4f2"). This variant goes through the code-based
+     * settings loader, which knows how to synthesize virtual settings for packaged
+     * sample databases (Northwind SQLite/DuckDB/ClickHouse) that don't have config XML
+     * on disk.
+     *
+     * @param connectionCode The connection code as stored in config/connections/&lt;code&gt;/&lt;code&gt;.xml
+     *                       or a recognized sample connection code.
+     * @return A {@link SchemaInfo} object populated with the fetched schema details.
+     * @throws Exception If any error occurs during the process.
+     */
+    public SchemaInfo fetchSchemaByCode(String connectionCode) throws Exception {
+        Settings settings = new Settings(StringUtils.EMPTY);
+        DocumentBursterConnectionDatabaseSettings dbSettings = settings
+                .loadSettingsConnectionDatabase(connectionCode);
+        return fetchSchema(dbSettings);
+    }
+
+    /**
+     * Core schema-fetch logic that works from a pre-loaded settings object.
+     * Shared by the path-based and code-based entry points.
+     */
+    public SchemaInfo fetchSchema(DocumentBursterConnectionDatabaseSettings dbSettings) throws Exception {
         ServerDatabaseSettings serverSettings = dbSettings.connection.databaseserver;
 
         // ... (validation remains the same) ...
-        if (settings == null || StringUtils.isBlank(serverSettings.type)) {
+        if (StringUtils.isBlank(serverSettings.type)) {
             throw new IllegalArgumentException("Database settings or type cannot be null or blank.");
         }
 

@@ -4,7 +4,7 @@
     <p class="example-desc">${desc}</p>
     <rb-chart
         id="rb-${id}"
-        report-code="charts-examples"
+        report-id="charts-examples"
         component-id="${id}"
         api-base-url="${RbUtils.apiBaseUrl}"
         api-key="${RbUtils.apiKey}"

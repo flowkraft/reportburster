@@ -28,7 +28,7 @@ import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Spec;
 
-@Command(name = "reportburster", mixinStandardHelpOptions = true, versionProvider = MainProgram.VersionFromSettings.class, description = "Report bursting and report generation software", subcommands = {
+@Command(name = "DataPallas", mixinStandardHelpOptions = true, versionProvider = MainProgram.VersionFromSettings.class, description = "Report bursting and report generation software", subcommands = {
 		MainProgram.BurstCommand.class, MainProgram.GenerateCommand.class, MainProgram.ResumeCommand.class,
 		MainProgram.DocumentCommand.class, MainProgram.SystemCommand.class, MainProgram.ServiceCommand.class,
 		MainProgram.JasperCommand.class })
@@ -78,13 +78,13 @@ public class MainProgram implements Callable<Integer> {
 					String content = new String(java.nio.file.Files.readAllBytes(settingsFile.toPath()));
 					java.util.regex.Matcher m = java.util.regex.Pattern.compile("<version>([^<]+)</version>").matcher(content);
 					if (m.find()) {
-						return new String[] { "ReportBurster " + m.group(1) };
+						return new String[] { "DataPallas " + m.group(1) };
 					}
 				}
 			} catch (Exception e) {
 				// fall through
 			}
-			return new String[] { "ReportBurster (version unknown)" };
+			return new String[] { "DataPallas (version unknown)" };
 		}
 	}
 
@@ -656,5 +656,6 @@ public class MainProgram implements Callable<Integer> {
 			return 0;
 		}
 	}
+
 
 }

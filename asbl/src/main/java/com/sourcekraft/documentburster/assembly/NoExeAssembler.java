@@ -1035,7 +1035,7 @@ public class NoExeAssembler extends AbstractAssembler {
 		content = FileUtils.readFileToString(new File(dashNorthwindSettingsFilePath), "UTF-8");
 
 		// friendly template name
-		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*(?:My Reports|Bursting)\\s*</template>",
 				"<template>SalesDashboard</template>");
 
 		// no distribution, enable mailmerge (required for script datasource execution)
@@ -1099,7 +1099,7 @@ public class NoExeAssembler extends AbstractAssembler {
 				new File(pivottableSettingsFilePath));
 		content = FileUtils.readFileToString(new File(pivottableSettingsFilePath), "UTF-8");
 
-		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*My Reports\\s*</template>",
+		content = content.replaceAll("(?s)<template\\s*/>|<template>\\s*(?:My Reports|Bursting)\\s*</template>",
 				"<template>SalesPivotTable</template>");
 		content = content.replaceAll(
 				"(?s)<reportdistribution\\s*/>|<reportdistribution>\\s*true\\s*</reportdistribution>",
@@ -1519,14 +1519,14 @@ public class NoExeAssembler extends AbstractAssembler {
 		String aiPromptsSource = Utils.getTopProjectFolderPath()
 				+ "/frend/reporting/src/app/components/ai-manager/ai-manager.service.ts";
 		String aiPromptsDest = packageDirPath + "/" + topFolderName
-				+ "/_apps/flowkraft/_ai-hub/.skills/reportburster-cookbook/ai-prompts-reference.ts";
+				+ "/_apps/flowkraft/_ai-hub/.skills/datapallas-cookbook/ai-prompts-reference.ts";
 		FileUtils.copyFile(new File(aiPromptsSource), new File(aiPromptsDest));
 
 		// WebPortal samples - copy paystub templates to plugin views folder
 		String webportalSamplesPath = Utils.getTopProjectFolderPath()
 				+ "/bkend/reporting/src/main/external-resources/template/samples/webportal";
 		String pluginViewsPath = packageDirPath + "/" + topFolderName
-				+ "/_apps/cms-webportal-playground/wp-plugins/reportburster-portal/resources/views";
+				+ "/_apps/cms-webportal-playground/wp-plugins/datapallas-portal/resources/views";
 
 		// Copy and rename page template (page-my-documents-paystubs.php -> page-my-documents.php)
 		FileUtils.copyFile(new File(webportalSamplesPath + "/page-my-documents-paystubs.php"),

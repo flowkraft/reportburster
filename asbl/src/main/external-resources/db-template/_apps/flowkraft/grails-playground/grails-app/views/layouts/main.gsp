@@ -4,9 +4,9 @@
     <meta charset="UTF-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title><g:layoutTitle default="ReportBurster - Dashboards & Self Service Portals"/></title>
+    <title><g:layoutTitle default="DataPallas - Dashboards & Self Service Portals"/></title>
     
-    <!-- Favicon - ReportBurster paper plane icon -->
+    <!-- Favicon - DataPallas paper plane icon -->
     <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='m22 2-7 20-4-9-9-4Z' fill='%2322a7c8'/></svg>" type="image/svg+xml"/>
     
     <!-- Apply theme immediately to prevent flash - Load from SQLite -->
@@ -37,7 +37,7 @@
         })();
     </script>
     
-    <!-- ReportBurster configuration -->
+    <!-- DataPallas configuration -->
     <%@ page import="flowkraft.frend.RbUtils" %>
     <script>
         window.rbConfig = {
@@ -59,7 +59,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css"/>
     
     <style>
-        /* ReportBurster brand - matches Next.js theme */
+        /* DataPallas brand - matches Next.js theme */
         :root {
             --rb-cyan: #22a7c8;
             --rb-dark: #1a2332;
@@ -254,7 +254,7 @@
                         <path d="m22 2-7 20-4-9-9-4Z"/>
                         <path d="M22 2 11 13"/>
                     </svg>
-                    ReportBurster
+                    DataPallas
                 </a>
                 
                 <!-- Navbar toggler for mobile -->
@@ -407,7 +407,7 @@
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-groovy.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
 
-    <!-- ReportBurster Web Components -->
+    <!-- DataPallas Web Components -->
     <script src="http://localhost:9090/rb-webcomponents/rb-webcomponents.umd.js"></script>
     
     <g:pageProperty name="page.scripts"/>

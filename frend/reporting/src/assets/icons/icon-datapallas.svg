@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!--
+    Schematic ancient palace. 6 columns. No triangle roof.
+    Re-coloured to match the Aegean Stone palette used across the website
+    (terracotta, sage olive, gold leaf, limestone ivory, soft slate sea).
+  -->
+
+  <!-- Background: soft slate-sea (warm Aegean horizon, not Santorini-tourist blue) -->
+  <rect width="256" height="256" rx="20" fill="#5e7c8a"/>
+
+  <!-- Outer border: gold leaf accent -->
+  <rect x="5" y="5" width="246" height="246" rx="16"
+        fill="none" stroke="#c9a663" stroke-width="3"/>
+
+  <!-- Soft ivory clouds (above the temple) -->
+  <g fill="#f0e5cf" opacity="0.85">
+    <!-- Cloud 1: upper left -->
+    <ellipse cx="42" cy="30" rx="18" ry="7"/>
+    <ellipse cx="30" cy="32" rx="11" ry="6"/>
+    <ellipse cx="55" cy="28" rx="12" ry="6"/>
+    <ellipse cx="48" cy="24" rx="10" ry="5"/>
+    <!-- Cloud 2: upper right, smaller -->
+    <ellipse cx="208" cy="34" rx="16" ry="6"/>
+    <ellipse cx="222" cy="36" rx="10" ry="5"/>
+    <ellipse cx="214" cy="29" rx="9" ry="4"/>
+  </g>
+
+  <!--
+    TOP: classical cornice — three horizontal bands + a
+    triglyph-and-metope frieze strip (distinctly Greek, no pediment).
+  -->
+
+  <!-- Cornice — top horizontal slab (limestone ivory) -->
+  <rect x="18" y="54" width="220" height="10" fill="#f0e5cf"/>
+
+  <!-- Frieze band: alternating triglyphs (terracotta) and metopes (sage olive) -->
+  <!-- 11 triglyphs (w=11) + 10 metopes (w=9) = 211px, centered in 220px strip with 4px L / 5px R padding -->
+  <rect x="18"  y="64" width="220" height="18" fill="#8aa385"/>
+  <!-- triglyphs (terracotta blocks, evenly spaced, all w=11) -->
+  <rect x="22"  y="64" width="11" height="18" fill="#b66a4a"/>
+  <rect x="42"  y="64" width="11" height="18" fill="#b66a4a"/>
+  <rect x="62"  y="64" width="11" height="18" fill="#b66a4a"/>
+  <rect x="82"  y="64" width="11" height="18" fill="#b66a4a"/>
+  <rect x="102" y="64" width="11" height="18" fill="#b66a4a"/>
+  <rect x="122" y="64" width="11" height="18" fill="#b66a4a"/>
+  <rect x="142" y="64" width="11" height="18" fill="#b66a4a"/>
+  <rect x="162" y="64" width="11" height="18" fill="#b66a4a"/>
+  <rect x="182" y="64" width="11" height="18" fill="#b66a4a"/>
+  <rect x="202" y="64" width="11" height="18" fill="#b66a4a"/>
+  <rect x="222" y="64" width="11" height="18" fill="#b66a4a"/>
+  <!-- thin vertical grooves on triglyphs (+4 and +7 from each triglyph start) -->
+  <rect x="26"  y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="29"  y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="46"  y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="49"  y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="66"  y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="69"  y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="86"  y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="89"  y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="106" y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="109" y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="126" y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="129" y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="146" y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="149" y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="166" y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="169" y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="186" y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="189" y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="206" y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="209" y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="226" y="64" width="2" height="18" fill="#8a4d35"/>
+  <rect x="229" y="64" width="2" height="18" fill="#8a4d35"/>
+
+  <!-- Architrave — band below frieze (warmer ivory) -->
+  <rect x="18" y="82" width="220" height="10" fill="#e0cfb0"/>
+
+  <!-- Capital line (top of columns) — gold leaf -->
+  <rect x="18" y="92" width="220" height="6" fill="#c9a663"/>
+
+  <!--
+    6 columns — limestone ivory shaft, warmer ivory shadow side.
+  -->
+  <rect x="21"  y="98" width="24" height="100" fill="#f0e5cf"/>
+  <rect x="59"  y="98" width="24" height="100" fill="#f0e5cf"/>
+  <rect x="97"  y="98" width="24" height="100" fill="#f0e5cf"/>
+  <rect x="135" y="98" width="24" height="100" fill="#f0e5cf"/>
+  <rect x="173" y="98" width="24" height="100" fill="#f0e5cf"/>
+  <rect x="211" y="98" width="24" height="100" fill="#f0e5cf"/>
+
+  <!-- Column right-edge shadow (cylindrical depth illusion) -->
+  <rect x="42"  y="98" width="4" height="100" fill="#d6c292"/>
+  <rect x="80"  y="98" width="4" height="100" fill="#d6c292"/>
+  <rect x="118" y="98" width="4" height="100" fill="#d6c292"/>
+  <rect x="156" y="98" width="4" height="100" fill="#d6c292"/>
+  <rect x="194" y="98" width="4" height="100" fill="#d6c292"/>
+  <rect x="232" y="98" width="3" height="100" fill="#d6c292"/>
+
+  <!-- Inter-column gaps (open — background shows through) -->
+  <rect x="45"  y="98" width="14" height="100" fill="#5e7c8a"/>
+  <rect x="83"  y="98" width="14" height="100" fill="#5e7c8a"/>
+  <rect x="121" y="98" width="14" height="100" fill="#5e7c8a"/>
+  <rect x="159" y="98" width="14" height="100" fill="#5e7c8a"/>
+  <rect x="197" y="98" width="14" height="100" fill="#5e7c8a"/>
+
+  <!-- Column base moulding — gold leaf accent -->
+  <rect x="18" y="198" width="220" height="6" fill="#c9a663"/>
+
+  <!-- Stylobate — 3 stepped base, warm stone gradient -->
+  <rect x="14"  y="204" width="228" height="9"  fill="#e0cfb0"/>
+  <rect x="8"   y="213" width="240" height="8"  fill="#c9a663"/>
+  <rect x="0"   y="221" width="256" height="8"  fill="#b59a64"/>
+
+  <!-- Ground shadow — Aegean deep -->
+  <rect x="0" y="229" width="256" height="27" rx="0" fill="#243d48"/>
+  <ellipse cx="128" cy="229" rx="130" ry="10" fill="#243d48"/>
+</svg>

@@ -1,6 +1,6 @@
 # Scripting Skill
 
-I help users extend ReportBurster with custom Groovy scripts for advanced report distribution scenarios — things the standard UI doesn't cover out of the box.
+I help users extend DataPallas with custom Groovy scripts for advanced report distribution scenarios — things the standard UI doesn't cover out of the box.
 
 ## When Scripting Is Needed
 
@@ -54,7 +54,7 @@ Scripts access the `ctx` object with runtime information:
 
 ## Sample Scripts
 
-ReportBurster includes ready-to-use samples in `scripts/burst/samples/`:
+DataPallas includes ready-to-use samples in `scripts/burst/samples/`:
 
 | Script | Purpose |
 |--------|---------|
@@ -86,7 +86,7 @@ ReportBurster includes ready-to-use samples in `scripts/burst/samples/`:
 
 ## cURL Integration
 
-cURL handles uploads for FTP, FTPS, SFTP, HTTP, HTTPS, and more. ReportBurster bundles cURL on Windows.
+cURL handles uploads for FTP, FTPS, SFTP, HTTP, HTTPS, and more. DataPallas bundles cURL on Windows.
 
 Sample scripts: `curl_ftp.groovy`, `curl_sftp.groovy`
 

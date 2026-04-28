@@ -1,4 +1,4 @@
-# ReportBurster Web Components
+# DataPallas Web Components
 
 Reusable web components for data visualization. Works in **any framework**: Angular, React, Vue, Grails, WordPress, plain HTML.
 
@@ -177,7 +177,7 @@ export class ReportViewComponent {
 <body>
     <rb-report 
         report-code="sales-summary"
-        api-base-url="${grailsApplication.config.reportburster.apiUrl}"
+        api-base-url="${grailsApplication.config.DataPallas.apiUrl}"
         api-key="${session.apiKey}">
     </rb-report>
 </body>
@@ -237,7 +237,7 @@ add_action('wp_enqueue_scripts', 'enqueue_rb_components');
 
 ## API Endpoints
 
-Components communicate with the ReportBurster Spring Boot server:
+Components communicate with the DataPallas Spring Boot server:
 
 ### GET `/api/reporting/reports/{reportCode}/config`
 
@@ -341,7 +341,7 @@ chart {
           │ HTTP
           ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  ReportBurster Spring Boot Server                             │
+│  DataPallas Spring Boot Server                             │
 │  ┌─────────────────────────────────────────────────────────┐ │
 │  │  Groovy DSL Files (Single Source of Truth)               │ │
 │  │  - parameters-spec.groovy                                │ │
@@ -372,7 +372,100 @@ npm run check   # TypeScript validation
 
 ---
 
+## Contributor Rule — Svelte reactive-write discipline
+
+**Do not write to a template-bound top-level `let` from inside `render()`,
+`renderX()`, or an `afterUpdate` callback.** Doing so triggers an infinite
+render loop that freezes the browser.
+
+### Why
+
+Every assignment to a top-level `let` that is read from the template (or from
+a `$:` block, or from another reactive expression) calls Svelte's
+`$invalidate` — which marks the component dirty → scheduled `afterUpdate` →
+fires the same callback again → re-writes the variable → loops forever. The
+`_dirty` counter trick we tried earlier makes it worse, because the counter
+variable is itself a top-level `let` that the callback mutates.
+
+### Example — WRONG (CPU will peg)
+
+```svelte
+<script>
+  let container;
+  let error = null;  // ← read from template below
+
+  function render() {
+    error = null;   // ← triggers $invalidate → next afterUpdate → render() → loop
+    // ... build DOM ...
+    if (somethingBad) error = "bad";  // ← same story
+  }
+
+  afterUpdate(() => { render(); });
+</script>
+
+{#if error}<div class="err">{error}</div>{/if}
+<div bind:this={container}></div>
+```
+
+### Example — RIGHT
+
+```svelte
+<script>
+  let container;
+  let error = null;  // only written from onMount's async fetch path
+
+  function render() {
+    if (!container) return;
+    container.innerHTML = "";             // direct DOM — not reactive
+    if (somethingBad) {
+      container.innerHTML = '<div class="err">bad</div>';  // direct DOM
+      return;
+    }
+    // ... build SVG / HTML into container.innerHTML or via appendChild ...
+  }
+
+  afterUpdate(() => { render(); });
+</script>
+
+{#if error}<div class="err">{error}</div>{/if}
+<div bind:this={container}></div>
+```
+
+### The allowed exceptions
+
+A top-level `let` that is **never read from the template, from a `$:`
+block, or from another reactive expression** is NOT reactive — Svelte's
+compiler does not generate `$invalidate` calls for it. You can safely write
+to it from `afterUpdate`. Example: `_afterUpdateCount` and
+`_lastAfterUpdateLogTime` in `RbChart` / `RbTabulator` are used only for
+internal logging and are safe.
+
+### The quick audit
+
+For every `.wc.svelte` file:
+1. List top-level `let` declarations.
+2. For each, ask: is this variable read from the template, a `{#if}`,
+   `class:`, `style:`, `$:` block, or another reactive expression?
+3. If YES, grep for assignments to it inside any function called from
+   `render()`/`renderX()`/`afterUpdate`. If found, that's a loop risk.
+4. Either (a) hoist the write outside the render cycle, (b) use
+   `container.innerHTML = ...` / imperative DOM instead, or (c) verify the
+   write is idempotent AND guarded (e.g. only fires once, like `isReady = true`
+   inside a single-fire callback).
+
+### Current status
+
+As of the reliability audit, none of the `.wc.svelte` components have a
+template-bound reactive write inside their `render()`/`afterUpdate` path.
+Row-2 components (`RbSankey`, `RbGauge`, `RbTrend`, `RbProgress`, `RbDetail`)
+were refactored to use `container.innerHTML` for error states. `RbMap` uses
+an async `renderMap` which yields the event loop and allows the `_dirty`
+counter debounce to work. `RbChart` / `RbTabulator`'s `_afterUpdateCount`
+writes are to non-template lets (safe).
+
+---
+
 ## License
 
-MIT © ReportBurster
+MIT © DataPallas
 

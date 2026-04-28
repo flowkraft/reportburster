@@ -81,9 +81,9 @@
   }
 
   // ============================================================================
-  // Hybrid Mode Props - when reportCode is provided, component self-fetches
+  // Hybrid Mode Props - when reportId is provided, component self-fetches
   // ============================================================================
-  export let reportCode: string = '';
+  export let reportId: string = '';
   export let apiBaseUrl: string = '';
   export let apiKey: string = '';
   export let componentId: string = '';
@@ -100,6 +100,10 @@
   export let vals: string[] = [];
   export let aggregatorName: string = 'Count';
   export let rendererName: string = 'Table';
+  /** Show the rightmost per-row "Totals" column (default on). */
+  export let rowTotals: boolean = true;
+  /** Show the grand-totals row at the bottom (default on). */
+  export let colTotals: boolean = true;
   export let valueFilter: ValueFilter = {};
   export let sorters: any = {};
   export let derivedAttributes: Record<string, (record: Record<string, any>) => any> = {};
@@ -119,11 +123,6 @@
   // "duckdb" or "clickhouse" = aggregate server-side, only send results
   export let engine: PivotEngine = 'browser';
 
-  // DEPRECATED: connectionCode and tableName are no longer needed.
-  // The backend already knows which connection/table to use from reporting.xml.
-  // These props remain for backwards compatibility but are ignored.
-  export let connectionCode: string = '';
-  export let tableName: string = '';
 
   // ============================================================================
   // Internal state for self-fetch mode
@@ -225,9 +224,9 @@
   // ============================================================================
 
   // Helper to determine if server-side processing should be used
-  // Server-side is used when reportCode is available AND engine is duckdb/clickhouse
+  // Server-side is used when reportId is available AND engine is duckdb/clickhouse
   function shouldUseServerProcessing(): boolean {
-    return engine !== 'browser' && !!reportCode;
+    return engine !== 'browser' && !!reportId;
   }
 
   // Reactive statement to trigger server-side pivot when conditions are met.
@@ -235,14 +234,14 @@
   // Re-fires on any pivot parameter change so server re-aggregates.
   // Debounced to avoid rapid cancellations during config loading.
   let _serverPivotTimer: any = null;
-  $: if (engine !== 'browser' && reportCode && rows && cols && vals && aggregatorName && rowOrder && colOrder) {
+  $: if (engine !== 'browser' && reportId && rows && cols && vals && aggregatorName && rowOrder && colOrder) {
     clearTimeout(_serverPivotTimer);
     _serverPivotTimer = setTimeout(() => executePivotOnServer(), 150);
   }
 
   async function executePivotOnServer() {
-    if (!reportCode) {
-      error = 'reportCode is required for server-side processing';
+    if (!reportId) {
+      error = 'reportId is required for server-side processing';
       return;
     }
 
@@ -251,10 +250,10 @@
     serverMetadata = null;
 
     try {
-      // Server resolves connectionCode + tableName from reportCode internally
+      // Server resolves connectionCode + tableName from reportId internally
       const engineToUse = engine as 'duckdb' | 'clickhouse' | undefined;
 
-      const request = buildServerPivotRequest(reportCode, {
+      const request = buildServerPivotRequest(reportId, {
         rows,
         cols,
         vals,
@@ -276,7 +275,7 @@
       }
 
       console.log('[rb-pivot-table] Executing server-side pivot:', request);
-      const response = await pivotApi.executePivot(request, `pivot-${reportCode}`);
+      const response = await pivotApi.executePivot(request, `pivot-${reportId}`);
 
       // Check if backend returned 'browser' engine (non-OLAP connection)
       if ((response as any).engine === 'browser') {
@@ -364,7 +363,7 @@
     const shadowRoot = container?.getRootNode();
     const hostEl = (shadowRoot as ShadowRoot)?.host;
     if (hostEl) {
-      if (!reportCode) reportCode = hostEl.getAttribute('report-code') || '';
+      if (!reportId) reportId = hostEl.getAttribute('report-id') || '';
       if (!apiBaseUrl) apiBaseUrl = hostEl.getAttribute('api-base-url') || '';
       if (!apiKey) apiKey = hostEl.getAttribute('api-key') || '';
       if (!Object.keys(reportParams).length) {
@@ -379,9 +378,9 @@
     }
     
     // ========================================================================
-    // Hybrid Mode: if reportCode provided, self-fetch config + optionally data
+    // Hybrid Mode: if reportId provided, self-fetch config + optionally data
     // ========================================================================
-    if (reportCode && apiBaseUrl) {
+    if (reportId && apiBaseUrl) {
       loading = true;
       error = null;
 
@@ -390,9 +389,9 @@
       // if (apiKey) headers['X-API-Key'] = apiKey;
 
       try {
-        // Fetch config (deduplicated across all rb-pivot-table instances with same report-code)
-        console.log('[rb-pivot-table] Fetching config from:', `${apiBaseUrl}/reports/${reportCode}/config`);
-        const config = await fetchConfigCached(`${apiBaseUrl}/reports/${reportCode}/config`, headers);
+        // Fetch config (deduplicated across all rb-pivot-table instances with same report-id)
+        console.log('[rb-pivot-table] Fetching config from:', `${apiBaseUrl}/reports/${reportId}/config`);
+        const config = await fetchConfigCached(`${apiBaseUrl}/reports/${reportId}/config`, headers);
         console.log('[rb-pivot-table] Config received:', {
           hasPivotTable: config.hasPivotTable,
           pivotTableDsl: config.pivotTableDsl ? `${config.pivotTableDsl.length} chars` : 'MISSING',
@@ -448,8 +447,8 @@
           if (componentId) dataQueryParams.set('componentId', componentId);
           const dataQs = dataQueryParams.toString();
           const dataFetchUrl = dataQs
-              ? `${apiBaseUrl}/reports/${reportCode}/data?${dataQs}`
-              : `${apiBaseUrl}/reports/${reportCode}/data`;
+              ? `${apiBaseUrl}/reports/${reportId}/data?${dataQs}`
+              : `${apiBaseUrl}/reports/${reportId}/data`;
           // Longer timeout (60s) because backend may process multiple requests sequentially
           const dataRes = await fetchWithTimeout(dataFetchUrl, { headers }, 60000);
           if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
@@ -555,6 +554,8 @@
         const html = renderPivotTableHTML(pivotData, {
           heatmapMode: rendererInfo.heatmapMode,
           clickable: !!tableClickCallback,
+          showRowTotals: rowTotals,
+          showColTotals: colTotals,
         });
         outputContainer.innerHTML = html;
         
@@ -940,8 +941,8 @@
 
   // Public method to fetch data with parameters (for use after initial load)
   export async function fetchData(params: Record<string, any> = {}) {
-    if (!reportCode || !apiBaseUrl) {
-      console.warn('rb-pivot-table: fetchData requires reportCode and apiBaseUrl');
+    if (!reportId || !apiBaseUrl) {
+      console.warn('rb-pivot-table: fetchData requires reportId and apiBaseUrl');
       return;
     }
     
@@ -952,7 +953,7 @@
     
     try {
       // Re-fetch config (uses module-level dedup cache)
-      const configUrl = `${apiBaseUrl}/reports/${reportCode}/config`;
+      const configUrl = `${apiBaseUrl}/reports/${reportId}/config`;
       const config = await fetchConfigCached(configUrl, headers);
 
       // Update pivot table options from fresh config (named or default)
@@ -989,8 +990,8 @@
       if (componentId) mergedParams.set('componentId', componentId);
       const queryString = mergedParams.toString();
       const url = queryString
-        ? `${apiBaseUrl}/reports/${reportCode}/data?${queryString}`
-        : `${apiBaseUrl}/reports/${reportCode}/data`;
+        ? `${apiBaseUrl}/reports/${reportId}/data?${queryString}`
+        : `${apiBaseUrl}/reports/${reportId}/data`;
 
       // Longer timeout (60s) because backend may process multiple requests sequentially
       const res = await fetchWithTimeout(url, { headers }, 60000);
@@ -1027,7 +1028,7 @@
 <!-- Template -->
 <!-- ============================================================================ -->
 {#if loading}
-  <div class="rb-loading">
+  <div class="rb-loading" id={componentId ? `widgetLoading-${componentId}` : undefined}>
     {#if engine === 'duckdb' || engine === 'clickhouse'}
       Loading pivot data from server ({engine})...
     {:else}
@@ -1036,7 +1037,7 @@
   </div>
 {/if}
 {#if error}
-  <div class="rb-error">{error}</div>
+  <div class="rb-error" id={componentId ? `widgetError-${componentId}` : undefined}>{error}</div>
 {/if}
 {#if serverMetadata && (engine === 'duckdb' || engine === 'clickhouse')}
   <div class="rb-server-info">
@@ -1044,10 +1045,11 @@
   </div>
 {/if}
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<div 
-  bind:this={container} 
-  class="pvtUi-container" 
-  style:display={loading || error ? 'none' : 'block'} 
+<div
+  bind:this={container}
+  class="pvtUi-container"
+  id={componentId ? `widgetPivot-${componentId}` : undefined}
+  style:display={loading || error ? 'none' : 'block'}
   on:click={() => openDropdown = false}
   on:keydown={(e) => { if (e.key === 'Escape') openDropdown = false; }}
   role="application"
@@ -1480,7 +1482,7 @@
 
 <script context="module" lang="ts">
   // Module-level: shared across all <rb-pivot-table> instances on the page.
-  // Deduplicates config requests when N components share the same report-code.
+  // Deduplicates config requests when N components share the same report-id.
   const _cfgCache = new Map<string, Promise<any>>();
 
   function fetchConfigCached(url: string, headers: Record<string, string>): Promise<any> {

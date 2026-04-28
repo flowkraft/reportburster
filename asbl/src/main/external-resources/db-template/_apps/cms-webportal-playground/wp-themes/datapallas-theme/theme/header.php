@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * The header for our theme
  *
@@ -7,7 +7,7 @@
  *
  * @link https://developer.wordpress.org/themes/basics/template-files/#template-partials
  *
- * @package ReportBurster_Theme
+ * @package DataPallas_Theme
  */
 
 ?><!doctype html>
@@ -24,7 +24,7 @@
 <?php wp_body_open(); ?>
 
 <div id="page">
-	<a href="#content" class="sr-only"><?php esc_html_e( 'Skip to content', 'reportburster-theme' ); ?></a>
+	<a href="#content" class="sr-only"><?php esc_html_e( 'Skip to content', 'datapallas-theme' ); ?></a>
 
 	<?php get_template_part( 'template-parts/layout/header', 'content' ); ?>
 

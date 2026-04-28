@@ -63,7 +63,7 @@ export const tabReportingTabulatorTemplate = `<ng-template
                 <div class="panel-body">
                   <rb-tabulator
                     *ngIf="showTabulatorPreview"
-                    [reportCode]="getCurrentReportCode()"
+                    [reportId]="getCurrentReportCode()"
                     [componentId]="cid"
                     [apiBaseUrl]="reportingService.reportingApiBaseUrl"
                     [reportParams]="previewParams || {}"

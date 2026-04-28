@@ -1,5 +1,5 @@
 /*
- * Groovy Script for ReportBurster: Publish Payslip to WordPress Portal
+ * Groovy Script for DataPallas: Publish Payslip to WordPress Portal
  *
  * This script creates a new 'payslip' post in WordPress via REST API,
  * checking or creating the associated user as needed.

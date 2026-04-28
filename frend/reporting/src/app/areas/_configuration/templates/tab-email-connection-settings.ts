@@ -65,12 +65,13 @@ export const tabEmailConnectionSettingsTemplate = `<ng-template
               <a
                 id="manageEmailConnections"
                 href="#"
-                [routerLink]="[
-    '/configuration-connections',
-    'emailSettingsMenuSelected',
-    settingsService.currentConfigurationTemplatePath,
-    settingsService.currentConfigurationTemplateName
-  ]" skipLocationChange="true"
+                [routerLink]="['/configuration-crud/connections']"
+                [queryParams]="{
+                  goBackLocation: 'emailSettingsMenuSelected',
+                  configurationFilePath: settingsService.currentConfigurationTemplatePath,
+                  configurationFileName: settingsService.currentConfigurationTemplateName
+                }"
+                skipLocationChange="true"
                 >{{
                 'AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.MANAGE-EMAIL-CONNECTIONS'
                 | translate }}</a

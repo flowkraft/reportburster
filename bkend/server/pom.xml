@@ -15,7 +15,7 @@
 
 	<properties>
         <!-- Define revision here since this module doesn't inherit from your parent -->
-        <revision>14.6.0</revision>
+        <revision>15.1.0</revision>
     </properties>
 
 	<groupId>com.flowkraft</groupId>
@@ -355,7 +355,7 @@
 		<dependency>
 			<groupId>org.jooq</groupId>
 			<artifactId>jooq</artifactId>
-			<version>3.21.1</version>
+			<version>3.19.22</version>
 		</dependency>
 
 		<dependency>
@@ -381,6 +381,17 @@
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.commonmark</groupId>
+			<artifactId>commonmark</artifactId>
+			<version>0.22.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.commonmark</groupId>
+			<artifactId>commonmark-ext-gfm-tables</artifactId>
+			<version>0.22.0</version>
 		</dependency>
 	</dependencies>
 

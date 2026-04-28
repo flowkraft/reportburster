@@ -32,9 +32,9 @@ import picocli.CommandLine;
 
 /**
  * Tests the full CLI flow for standalone JasperReports — the EXACT same code
- * path that Electron spawns via reportburster.bat:
+ * path that Electron spawns via DataPallas.bat:
  *
- *   reportburster.bat generate -c {configPath} {reportName} -p "key=value"
+ *   DataPallas.bat generate -c {configPath} {reportName} -p "key=value"
  *
  * This translates to Picocli → GenerateCommand.call() → CliJob.doBurst() →
  * BursterFactory → JasperStandaloneReporter → Settings.loadSettings() →
@@ -57,7 +57,7 @@ import picocli.CommandLine;
  * config/reports-jasper/) uses 3-tier priority:
  *   1. Per-report override — config/reports-jasper/{report-folder}/datasource.properties
  *   2. Global JasperReports override — config/reports-jasper/datasource.properties
- *   3. ReportBurster's default DB connection (marked "default" in Connections)
+ *   3. DataPallas's default DB connection (marked "default" in Connections)
  * This does NOT apply to inline/wrapper .jrxml templates which always use
  * the parent report's DB connection.
  */
@@ -140,7 +140,7 @@ public class JasperCliFlowTest {
 
 		String configPath = absPath("config/reports-jasper/customer-by-country/settings.xml");
 
-		// Execute through the EXACT same Picocli CLI pipeline as reportburster.bat
+		// Execute through the EXACT same Picocli CLI pipeline as DataPallas.bat
 		executeCliGenerate(configPath, "customer_by_country", TEST_NAME,
 				"-p", "country=Germany");
 
@@ -382,7 +382,7 @@ public class JasperCliFlowTest {
 	}
 
 	/**
-	 * Creates the full app directory structure simulating a deployed ReportBurster,
+	 * Creates the full app directory structure simulating a deployed DataPallas,
 	 * using the SAME .jrxml from the e2e tests.
 	 */
 	private static void createAppStructure() throws Exception {

@@ -1,4 +1,4 @@
-const gulp = require("gulp");
+﻿const gulp = require("gulp");
 
 class TemplateNamespace {
   constructor(templates) {
@@ -23,31 +23,31 @@ const generateSimilarFeatureTemplate = (
 
         Backend requirements:
         1. Modify existing files:
-           - src/main/java/com/reportburster/service/${existingPath}Service.java
+           - src/main/java/com/datapallas/service/${existingPath}Service.java
              * Add new service methods
              * Integrate with existing validation
-           - src/main/java/com/reportburster/config/SecurityConfig.java
+           - src/main/java/com/datapallas/config/SecurityConfig.java
              * Configure new endpoints security
            - src/main/resources/application.properties
              * Add new configuration settings
 
         2. Create new files (using existing as examples):
-           - src/main/java/com/reportburster/controller/${newPath}Controller.java
-             (similar to src/main/java/com/reportburster/controller/${existingPath}Controller.java)
-           - src/main/java/com/reportburster/service/${newPath}Service.java
-             (similar to src/main/java/com/reportburster/service/${existingPath}Service.java)
-           - src/main/java/com/reportburster/dto/${newPath}Request.java
-             (similar to src/main/java/com/reportburster/dto/${existingPath}Request.java)
+           - src/main/java/com/datapallas/controller/${newPath}Controller.java
+             (similar to src/main/java/com/datapallas/controller/${existingPath}Controller.java)
+           - src/main/java/com/datapallas/service/${newPath}Service.java
+             (similar to src/main/java/com/datapallas/service/${existingPath}Service.java)
+           - src/main/java/com/datapallas/dto/${newPath}Request.java
+             (similar to src/main/java/com/datapallas/dto/${existingPath}Request.java)
 
         Testing requirements:
         1. Modify existing tests:
-           - src/test/java/com/reportburster/service/${existingPath}ServiceTest.java
+           - src/test/java/com/datapallas/service/${existingPath}ServiceTest.java
 
         2. Create new tests (using existing as examples):
-           - src/test/java/com/reportburster/controller/${newPath}ControllerTest.java
-             (similar to src/test/java/com/reportburster/controller/${existingPath}ControllerTest.java)
-           - src/test/java/com/reportburster/service/${newPath}ServiceTest.java
-             (similar to src/test/java/com/reportburster/service/${existingPath}ServiceTest.java)
+           - src/test/java/com/datapallas/controller/${newPath}ControllerTest.java
+             (similar to src/test/java/com/datapallas/controller/${existingPath}ControllerTest.java)
+           - src/test/java/com/datapallas/service/${newPath}ServiceTest.java
+             (similar to src/test/java/com/datapallas/service/${existingPath}ServiceTest.java)
 
         Consider:
         - API versioning
@@ -102,21 +102,21 @@ const generateSimilarFeatureTemplate = (
 
         Backend requirements:
         1. Modify existing files:
-           - src/main/java/com/reportburster/service/AuthService.java
+           - src/main/java/com/datapallas/service/AuthService.java
              * Add ${newPath} functionality
              * Integrate with existing validation
-           - src/main/java/com/reportburster/config/SecurityConfig.java
+           - src/main/java/com/datapallas/config/SecurityConfig.java
              * Configure new endpoints security
            - src/main/resources/application.properties
              * Add new settings
 
         2. Create new files (using existing as examples):
-           - src/main/java/com/reportburster/controller/${newPath}Controller.java
-             (similar to src/main/java/com/reportburster/controller/${existingPath}Controller.java)
-           - src/main/java/com/reportburster/service/${newPath}Service.java
-             (similar to src/main/java/com/reportburster/service/${existingPath}Service.java)
-           - src/main/java/com/reportburster/dto/${newPath}Request.java
-             (similar to src/main/java/com/reportburster/dto/${existingPath}Request.java)
+           - src/main/java/com/datapallas/controller/${newPath}Controller.java
+             (similar to src/main/java/com/datapallas/controller/${existingPath}Controller.java)
+           - src/main/java/com/datapallas/service/${newPath}Service.java
+             (similar to src/main/java/com/datapallas/service/${existingPath}Service.java)
+           - src/main/java/com/datapallas/dto/${newPath}Request.java
+             (similar to src/main/java/com/datapallas/dto/${existingPath}Request.java)
 
         Frontend requirements:
         1. Modify existing files:
@@ -135,8 +135,8 @@ const generateSimilarFeatureTemplate = (
 
         Testing requirements:
         1. Backend tests:
-           - src/test/java/com/reportburster/controller/${newPath}ControllerTest.java
-           - src/test/java/com/reportburster/service/${newPath}ServiceTest.java
+           - src/test/java/com/datapallas/controller/${newPath}ControllerTest.java
+           - src/test/java/com/datapallas/service/${newPath}ServiceTest.java
         
         2. Frontend tests:
            - src/app/${newPath}/${newPath}.component.spec.ts
@@ -432,3 +432,4 @@ module.exports = {
   promptTemplates,
   getPromptTemplate,
 };
+

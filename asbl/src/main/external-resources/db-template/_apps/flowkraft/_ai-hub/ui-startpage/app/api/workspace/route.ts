@@ -41,7 +41,7 @@ const MAX_FILE_SIZE = 256 * 1024; // 256KB
 const AGENT_ORDER = ['athena', 'hephaestus', 'hermes', 'apollo', 'pythia'];
 
 const AGENT_DISPLAY_NAMES: Record<string, string> = {
-  'athena': 'Athena (ReportBurster Guru & Data Modeling & Business Analysis Expert)',
+  'athena': 'Athena (DataPallas Guru & Data Modeling & Business Analysis Expert)',
   'hephaestus': 'Hephaestus (Backend Jobs & ETL & Automation Advisor)',
   'hermes': 'Hermes (Grails Guru & Self-Service Portal Advisor)',
   'apollo': 'Apollo (Next.js Guru & Modern Web Advisor)',

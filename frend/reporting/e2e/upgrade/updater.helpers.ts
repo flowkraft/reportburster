@@ -22,7 +22,7 @@ export default {
 
   filesToMigrateDirectoryPath: `${PATHS.E2E_RESOURCES_PATH}/upgrade/files-to-migrate`,
 
-  updateDestinationDirectoryPath: `${PATHS.EXECUTABLE_DIR_PATH}/ReportBurster`,
+  updateDestinationDirectoryPath: `${PATHS.EXECUTABLE_DIR_PATH}/DataPallas`,
 
   _getInitialUpdateInfo(folderPath: string, isServer: boolean): UpdateInfo {
     let updateInfo = new UpdateInfo();
@@ -83,7 +83,7 @@ export default {
 
     //START SIMULATE AN OLDER INSTALLATION
     const txtFiles = await jetpack.findAsync(PATHS.EXECUTABLE_DIR_PATH, {
-      matching: 'ReportBurster/**/*.txt',
+      matching: 'DataPallas/**/*.txt',
     });
 
     // Loop through each txt file
@@ -224,7 +224,7 @@ export default {
         `${updater.upgdDbTempDirectoryPath}/to`
       );
       */
-      let updateTempDestinationDirectoryPath = `${updater.upgdDbTempDirectoryPath}/to/ReportBurster`;
+      let updateTempDestinationDirectoryPath = `${updater.upgdDbTempDirectoryPath}/to/DataPallas`;
       //if (isServer)
       //updateTempDestinationDirectoryPath = `${updater.upgdDbTempDirectoryPath}/to/DocumentBurster/server`;
 
@@ -522,7 +522,7 @@ export default {
     updater: Updater,
     isServer: boolean,
   ) {
-    let dbDesktopServerDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/ReportBurster`;
+    let dbDesktopServerDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DataPallas`;
     //let dbWebConsoleDirectoryPath = `${PATHS.EXECUTABLE_DIR_PATH}/DocumentBurster/web-console`;
 
     //if (isServer)
@@ -533,7 +533,7 @@ export default {
     //assert all the *.txt file in the "upgraded" folder contain
     // file-999 and do not contain file-872
     let allTxtFilePaths = await jetpack.findAsync(PATHS.EXECUTABLE_DIR_PATH, {
-      matching: 'ReportBurster/**/*.txt',
+      matching: 'DataPallas/**/*.txt',
     });
 
     if (updateInfo.updateOptions.copybackupfiles)
@@ -617,7 +617,7 @@ export default {
     await this._assertXmlConfigV51ExpectedNN(
       `${dbDesktopServerDirectoryPath}/config/burst/settings.xml`,
       updater.defaultSettings,
-      'My Report',
+      'Bursting',
     );
 
     //console.log(`STEP19`);
@@ -1224,7 +1224,7 @@ export default {
         if (value !== expectedValue) {
           //only for this case
           if (joinedKeys && joinedKeys.endsWith('.template')) {
-            if (['My Report', 'custom'].includes(expectedValue)) {
+            if (['My Report', 'Bursting', 'custom'].includes(expectedValue)) {
               if (value && value.startsWith(expectedValue))
                 expectedValue = value;
             }

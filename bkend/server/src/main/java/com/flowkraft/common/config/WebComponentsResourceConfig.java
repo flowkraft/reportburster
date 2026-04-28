@@ -10,9 +10,9 @@ import com.flowkraft.common.AppPaths;
  * Static resource configuration for serving web components.
  * 
  * This allows external applications (Grails, WordPress, custom HTML pages, etc.)
- * to include the web components directly from the ReportBurster server:
+ * to include the web components directly from the DataPallas server:
  * 
- * <script src="http://reportburster-server:9090/rb-webcomponents/rb-webcomponents.umd.js"></script>
+ * <script src="http://DataPallas-server:9090/rb-webcomponents/rb-webcomponents.umd.js"></script>
  * 
  * The files are served from {PORTABLE_EXECUTABLE_DIR}/tools/rb-webcomponents/
  * 
@@ -30,9 +30,20 @@ public class WebComponentsResourceConfig implements WebMvcConfigurer {
         // Serve web components from tools/rb-webcomponents folder
         // URL: /rb-webcomponents/** -> file:{PORTABLE_EXECUTABLE_DIR}/tools/rb-webcomponents/
         String webComponentsPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH + "/tools/rb-webcomponents/";
-        
+
         registry.addResourceHandler("/rb-webcomponents/**")
                 .addResourceLocations("file:" + webComponentsPath)
                 .setCachePeriod(3600); // Cache for 1 hour
+
+        // Serve geojson assets (countries.geojson etc.) consumed by rb-map.
+        // The files live in the AI Hub Next.js app's public folder so they can
+        // be served identically on port 8440 (canvas editor) and port 9090
+        // (published /dashboard/{reportId} pages).
+        String geojsonPath = AppPaths.PORTABLE_EXECUTABLE_DIR_PATH
+                + "/_apps/flowkraft/_ai-hub/ui-startpage/public/geojson/";
+
+        registry.addResourceHandler("/geojson/**")
+                .addResourceLocations("file:" + geojsonPath)
+                .setCachePeriod(3600);
     }
 }

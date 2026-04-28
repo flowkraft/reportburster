@@ -151,7 +151,7 @@ return [
   */
 
   'providers' => [
-      "ReportBurster_Portal\Providers\AppServiceProvider",
+      "DataPallas_Portal\Providers\AppServiceProvider",
   ]
 
 ];

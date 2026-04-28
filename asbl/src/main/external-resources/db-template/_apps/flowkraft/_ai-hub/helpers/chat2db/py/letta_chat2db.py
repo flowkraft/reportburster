@@ -142,7 +142,7 @@ class LettaChat2DB:
         Athena decides what to do based on the question:
         - Data query → generate SQL + optional visualization
         - Chit-chat → respond conversationally
-        - ReportBurster config → guide through UI
+        - DataPallas config → guide through UI
         - Unclear → ask for clarification
         """
         parts = []
@@ -193,7 +193,7 @@ class LettaChat2DB:
         Athena decides the appropriate response based on intent:
         - Data query → generates SQL
         - Chit-chat → responds conversationally
-        - ReportBurster config → guides through UI
+        - DataPallas config → guides through UI
         - Unclear → asks for clarification
 
         Args:

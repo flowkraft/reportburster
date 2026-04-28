@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 */
 
 return [
-  'reportburster_integration_slug_menu' => [
+  'datapallas_integration_slug_menu' => [
     "page_title" => "WP Kirk Page",
     "menu_title" => "WP Kirk Menu",
     'capability' => 'read',

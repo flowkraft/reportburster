@@ -126,13 +126,13 @@
             </strong>
           </h4>
           <!-- App Source Badge -->
-          <span *ngIf="app.tags?.includes('ReportBurster\'s App')" 
+          <span *ngIf="app.tags?.includes('DataPallas\'s App')" 
                 class="label" 
                 style="position: absolute; top: 8px; right: 10px; background-color: #5a9bb8; color: white; font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 3px;"
-                title="Built and maintained by ReportBurster">
+                title="Built and maintained by DataPallas">
             <i class="fa fa-check-circle" style="margin-right: 4px;"></i>Our App
           </span>
-          <span *ngIf="!app.tags?.includes('ReportBurster\'s App')" 
+          <span *ngIf="!app.tags?.includes('DataPallas\'s App')" 
                 class="label" 
                 style="position: absolute; top: 8px; right: 10px; background-color: #777; color: white; font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 3px;"
                 title="Third-party application">
@@ -147,7 +147,7 @@
           </span>
         </div>
         <div class="panel-body">
-          <div *ngIf="!app.tags?.includes('ReportBurster\'s App') && app.website" style="margin-bottom: 8px;">
+          <div *ngIf="!app.tags?.includes('DataPallas\'s App') && app.website" style="margin-bottom: 8px;">
             <a [href]="app.website" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: #31708f; font-weight: 500;">
               <i class="fa fa-external-link" style="margin-right: 6px;"></i>{{ app.website }}
             </a>
@@ -178,7 +178,7 @@
           </div>
 
           <!-- Build Options: show for Docker apps when stopped (Start is enabled) -->
-          <div *ngIf="showDevButtons && app.type === 'docker' && !isAppRunning(app)" 
+          <div *ngIf="showDevButtons && app.type === 'docker' && isAppStopped(app)"
                style="margin-top: 5px; margin-bottom: 10px;">
             <label *ngIf="isFlowkraftApp(app)" class="checkbox-inline" style="font-size: 0.85em; cursor: pointer;"
                    title="Rebuild image using cache. Use when source code changed (*.groovy, *.java, *.gsp, views, assets)">
@@ -218,7 +218,7 @@
               <i class="fa fa-info-circle text-muted" style="margin-left: 3px;"></i>
             </label>
 
-            <label *ngIf="app.tags?.includes('ReportBurster\'s App')" class="checkbox-inline" style="font-size: 0.85em; margin-left: 15px; cursor: pointer;"
+            <label *ngIf="app.tags?.includes('DataPallas\'s App')" class="checkbox-inline" style="font-size: 0.85em; margin-left: 15px; cursor: pointer;"
                    title="Full rebuild without cache and remove local images first. Heaviest operation — slower.">
               <input type="checkbox"
                      [checked]="app.currentCommandValue?.includes('--full')"
@@ -234,7 +234,7 @@
           <div *ngIf="showDevButtons && app.type === 'docker' && isAppRunning(app)" 
                style="margin-top: 5px; margin-bottom: 10px;">
 
-            <label *ngIf="app.tags?.includes('ReportBurster\'s App')" class="checkbox-inline" style="font-size: 0.85em; margin-left: 15px; cursor: pointer;" title="Remove persistent volumes (permanently deletes data stored in volumes)">
+            <label *ngIf="app.tags?.includes('DataPallas\'s App')" class="checkbox-inline" style="font-size: 0.85em; margin-left: 15px; cursor: pointer;" title="Remove persistent volumes (permanently deletes data stored in volumes)">
               <input type="checkbox"
                      [checked]="app.stopCmd?.includes('--volumes')"
                      (change)="toggleVolumesFlag(app, $event)"

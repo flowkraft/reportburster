@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>Pivot Tables - ReportBurster</title>
+    <title>Pivot Tables - DataPallas</title>
     <style>
         rb-pivot-table { display: block; width: 100%; }
         rb-tabulator { display: block; width: 100%; min-height: 300px; }
@@ -199,7 +199,7 @@
                                 <div class="tab-pane fade show active" id="so-pivot-pane" role="tabpanel" aria-labelledby="so-pivot-tab">
                                     <rb-pivot-table
                                         id="demoPivot"
-                                        report-code="piv-examples"
+                                        report-id="piv-examples"
                                         component-id="salesOverview"
                                         api-base-url="${RbUtils.apiBaseUrl}"
                                         api-key="${RbUtils.apiKey}"
@@ -301,7 +301,7 @@ FROM sales GROUP BY Product;
                                     </p>
                                     <rb-tabulator
                                         id="rawDataTable"
-                                        report-code="piv-examples"
+                                        report-id="piv-examples"
                                         component-id="salesOverview"
                                         api-base-url="${RbUtils.apiBaseUrl}"
                                         api-key="${RbUtils.apiKey}"
@@ -328,7 +328,7 @@ FROM sales GROUP BY Product;
                                         </button>
                                     </div>
                                     <pre id="soUsageCode" class="code-block"><code class="language-markup">&lt;rb-pivot-table
-    report-code="piv-examples"
+    report-id="piv-examples"
     component-id="salesOverview"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
     api-key="&#36;{RbUtils.apiKey}"
@@ -359,7 +359,7 @@ FROM sales GROUP BY Product;
                             </button>
                         </div>
                         <pre id="usageCode" class="code-block"><code class="language-markup">&lt;rb-pivot-table
-    report-code="your-report-code"
+    report-id="your-report-id"
     component-id="yourComponentId"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
     api-key="&#36;{RbUtils.apiKey}"
@@ -403,7 +403,7 @@ FROM sales GROUP BY Product;
             }
 
             // Listen to first rb-pivot-table for shared configDsl
-            var firstComponent = document.querySelector('rb-pivot-table[report-code="piv-examples"]');
+            var firstComponent = document.querySelector('rb-pivot-table[report-id="piv-examples"]');
             function updateConfigDisplay() {
                 if (firstComponent && firstComponent.configDsl) {
                     var escaped = firstComponent.configDsl

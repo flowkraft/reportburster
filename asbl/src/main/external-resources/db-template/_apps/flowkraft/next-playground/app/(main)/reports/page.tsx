@@ -118,7 +118,7 @@ export default function ReportsPage() {
   }
 
   const usageCode = `<rb-report
-  report-code="rep-employee-payslip"
+  report-id="rep-employee-payslip"
   entity-code="EMP001"
   api-base-url="${rbConfig.apiBaseUrl}"
   api-key="${rbConfig.apiKey}"
@@ -229,7 +229,7 @@ export default function ReportsPage() {
                   <rb-report
                     ref={reportRef}
                     id="demoReport"
-                    report-code="rep-employee-payslip"
+                    report-id="rep-employee-payslip"
                     api-base-url={rbConfig.apiBaseUrl}
                     api-key={rbConfig.apiKey}
                     show-print-button

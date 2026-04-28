@@ -16,7 +16,7 @@ The template includes:
 
 ## Variable Placeholders
 
-The template uses `${colX}` variables that ReportBurster replaces with your data:
+The template uses `${colX}` variables that DataPallas replaces with your data:
 
 - `${col0}` through `${col5}` - Employee information fields
 - `${col6}` through `${col13}` - Earnings and deductions amounts
@@ -77,7 +77,7 @@ To create automatic calculations in Excel:
 ## Implementation Tips
 
 1. Maintain all data-\* attributes when customizing the template
-2. Test your template with ReportBurster's preview feature
+2. Test your template with DataPallas's preview feature
 3. For complex formulas, consider using multiple data-group attributes
 4. Excel formatting takes precedence over HTML/CSS styling
 

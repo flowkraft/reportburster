@@ -63,7 +63,7 @@ Line items JSON format:
 - Verify all fields save and display correctly
 
 * TODO Task5: Configure Plugin Permissions
-- Ensure the ~reportburster-portal~ plugin is activated
+- Ensure the ~DataPallas-portal~ plugin is activated
 - The plugin's Provisioner class handles:
   - Creating demo users on activation
   - Setting up sample data

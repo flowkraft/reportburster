@@ -19,7 +19,7 @@ title Invoicing Backend — Hephaestus Task Breakdown
 *** 2.2 Invoice Data Export
 **** Generate reports in CSV, JSON, XML formats
 **** Scheduled nightly export to accounting systems
-**** ReportBurster integration for document bursting
+**** DataPallas integration for document bursting
 ** 3. Scheduled Jobs & Cron Tasks
 *** 3.1 OverdueDetectionJob (Quartz)
 **** Daily scan: invoices where status=sent AND dueDate < today

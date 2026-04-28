@@ -1,5 +1,5 @@
 /*
- * Groovy Script for ReportBurster: Publish Paystub to WordPress Portal
+ * Groovy Script for DataPallas: Publish Paystub to WordPress Portal
  *
  * This script creates a new 'paystub' post in WordPress via REST API,
  * checking or creating the associated user as needed.

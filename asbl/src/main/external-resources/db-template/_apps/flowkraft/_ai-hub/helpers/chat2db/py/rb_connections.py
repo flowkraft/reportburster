@@ -1,10 +1,10 @@
 """
-ReportBurster Database Connection Parser
+DataPallas Database Connection Parser
 
-Parses ReportBurster's XML database connection files and provides 
+Parses DataPallas's XML database connection files and provides 
 JDBC connectivity using JayDeBeApi.
 
-Supports all databases that ReportBurster supports:
+Supports all databases that DataPallas supports:
 - PostgreSQL, MySQL, MariaDB, SQL Server, Oracle, IBM DB2
 - SQLite, DuckDB, ClickHouse
 """
@@ -21,7 +21,7 @@ from defusedxml import ElementTree as ET
 
 @dataclass
 class DatabaseConnection:
-    """Represents a ReportBurster database connection configuration."""
+    """Represents a DataPallas database connection configuration."""
     code: str
     name: str
     db_type: str
@@ -43,7 +43,7 @@ class DatabaseConnection:
 
     def _ensure_driver_and_url(self):
         """
-        Mirrors ReportBurster's ServerDatabaseSettings.ensureDriverAndUrl() logic.
+        Mirrors DataPallas's ServerDatabaseSettings.ensureDriverAndUrl() logic.
         Auto-generates JDBC driver class and URL based on database type.
         """
         if not self.db_type:
@@ -103,11 +103,11 @@ _JDBC_JAR_PREFIXES = (
 )
 
 
-class ReportBursterConnections:
+class DataPallasConnections:
     """
-    Manages ReportBurster database connections.
+    Manages DataPallas database connections.
 
-    Reads connection configurations from ReportBurster's config/connections folder
+    Reads connection configurations from DataPallas's config/connections folder
     and provides JDBC connectivity.
     """
 
@@ -118,16 +118,16 @@ class ReportBursterConnections:
         Initialize the connection manager.
 
         Args:
-            connections_path: Path to ReportBurster's config/connections folder.
-                            Defaults to REPORTBURSTER_CONNECTIONS_PATH env var.
+            connections_path: Path to DataPallas's config/connections folder.
+                            Defaults to DATAPALLAS_CONNECTIONS_PATH env var.
             jdbc_drivers_path: Path to JDBC driver JARs.
                              Defaults to JDBC_DRIVERS_PATH env var.
         """
         self.connections_path = connections_path or os.environ.get(
-            'REPORTBURSTER_CONNECTIONS_PATH', '/reportburster/config/connections'
+            'DATAPALLAS_CONNECTIONS_PATH', '/datapallas/config/connections'
         )
         self.jdbc_drivers_path = jdbc_drivers_path or os.environ.get(
-            'JDBC_DRIVERS_PATH', '/reportburster/lib'
+            'JDBC_DRIVERS_PATH', '/datapallas/lib'
         )
         self._connections: Dict[str, DatabaseConnection] = {}
         self._active_connection: Optional[jaydebeapi.Connection] = None
@@ -135,7 +135,7 @@ class ReportBursterConnections:
         
     def list_connections(self) -> List[DatabaseConnection]:
         """
-        List all available database connections from ReportBurster config.
+        List all available database connections from DataPallas config.
         
         Returns:
             List of DatabaseConnection objects.
@@ -143,7 +143,7 @@ class ReportBursterConnections:
         self._connections.clear()
         connections = []
         
-        # ReportBurster stores database connections in folders like db-*/
+        # DataPallas stores database connections in folders like db-*/
         if not os.path.exists(self.connections_path):
             print(f"⚠️ Connections path not found: {self.connections_path}")
             return connections
@@ -174,7 +174,7 @@ class ReportBursterConnections:
     
     def _parse_connection_xml(self, xml_path: str) -> Optional[DatabaseConnection]:
         """
-        Parse a ReportBurster database connection XML file.
+        Parse a DataPallas database connection XML file.
         
         XML Structure:
         <documentburster>
@@ -222,11 +222,11 @@ class ReportBursterConnections:
 
             # For file-based DBs (SQLite, DuckDB), the XML has the Windows host path
             # (e.g. "C:/Projects/.../db/sample-northwind-sqlite/northwind.db").
-            # Inside Docker the same file lives under /reportburster/db/...,
+            # Inside Docker the same file lives under /datapallas/db/...,
             # so remap the host path to the container mount path.
             if db_value and db_type_value and db_type_value.lower() in ('sqlite', 'duckdb'):
                 if not os.path.exists(db_value):
-                    db_mount = os.environ.get('REPORTBURSTER_DB_PATH', '/reportburster/db')
+                    db_mount = os.environ.get('DATAPALLAS_DB_PATH', '/datapallas/db')
                     normalized = db_value.replace('\\', '/')
                     idx = normalized.rfind('/db/')
                     if idx >= 0:
@@ -284,7 +284,7 @@ class ReportBursterConnections:
         Create a JDBC connection to the specified database.
         
         Args:
-            connection_code: The ReportBurster connection code (e.g., 'db-northwind-postgres')
+            connection_code: The DataPallas connection code (e.g., 'db-northwind-postgres')
         
         Returns:
             A JayDeBeApi Connection object.
@@ -400,7 +400,7 @@ class ReportBursterConnections:
 
 def print_connections():
     """Utility function to print all available connections."""
-    manager = ReportBursterConnections()
+    manager = DataPallasConnections()
     connections = manager.list_connections()
     
     if not connections:
@@ -408,7 +408,7 @@ def print_connections():
         print(f"Looking in: {manager.connections_path}")
         return
     
-    print("\n📁 Available ReportBurster Database Connections:\n")
+    print("\n📁 Available DataPallas Database Connections:\n")
     print("-" * 70)
     
     for conn in connections:

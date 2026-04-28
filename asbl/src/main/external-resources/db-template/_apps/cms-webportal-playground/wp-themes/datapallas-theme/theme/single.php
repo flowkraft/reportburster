@@ -1,10 +1,10 @@
-<?php
+﻿<?php
 /**
  * The template for displaying all single posts
  *
  * @link https://developer.wordpress.org/themes/basics/template-hierarchy/#single-post
  *
- * @package ReportBurster_Theme
+ * @package DataPallas_Theme
  */
 
 get_header();
@@ -23,11 +23,11 @@ get_header();
 					// Previous/next post navigation.
 					the_post_navigation(
 						array(
-							'next_text' => '<span aria-hidden="true">' . __( 'Next Post', 'reportburster-theme' ) . '</span> ' .
-								'<span class="sr-only">' . __( 'Next post:', 'reportburster-theme' ) . '</span> <br/>' .
+							'next_text' => '<span aria-hidden="true">' . __( 'Next Post', 'datapallas-theme' ) . '</span> ' .
+								'<span class="sr-only">' . __( 'Next post:', 'datapallas-theme' ) . '</span> <br/>' .
 								'<span>%title</span>',
-							'prev_text' => '<span aria-hidden="true">' . __( 'Previous Post', 'reportburster-theme' ) . '</span> ' .
-								'<span class="sr-only">' . __( 'Previous post:', 'reportburster-theme' ) . '</span> <br/>' .
+							'prev_text' => '<span aria-hidden="true">' . __( 'Previous Post', 'datapallas-theme' ) . '</span> ' .
+								'<span class="sr-only">' . __( 'Previous post:', 'datapallas-theme' ) . '</span> <br/>' .
 								'<span>%title</span>',
 						)
 					);

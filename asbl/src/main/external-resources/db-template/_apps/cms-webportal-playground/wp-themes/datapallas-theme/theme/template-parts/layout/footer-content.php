@@ -1,10 +1,10 @@
-<?php
+﻿<?php
 /**
  * Template part for displaying the footer content
  *
  * @link https://developer.wordpress.org/themes/basics/template-hierarchy/
  *
- * @package ReportBurster_Theme
+ * @package DataPallas_Theme
  */
 
 ?>
@@ -14,14 +14,14 @@
 
 		<?php /* Widget sidebar commented out
 		if ( is_active_sidebar( 'sidebar-1' ) ) : ?>
-			<aside role="complementary" aria-label="<?php esc_attr_e( 'Footer', 'reportburster-theme' ); ?>" class="mb-8">
+			<aside role="complementary" aria-label="<?php esc_attr_e( 'Footer', 'datapallas-theme' ); ?>" class="mb-8">
 				<?php dynamic_sidebar( 'sidebar-1' ); ?>
 			</aside>
 		<?php endif;
 		*/ ?>
 
 		<?php if ( has_nav_menu( 'menu-2' ) ) : ?>
-			<nav aria-label="<?php esc_attr_e( 'Footer Menu', 'reportburster-theme' ); ?>" class="mb-8">
+			<nav aria-label="<?php esc_attr_e( 'Footer Menu', 'datapallas-theme' ); ?>" class="mb-8">
 				<?php
 				wp_nav_menu(
 					array(
@@ -38,7 +38,7 @@
 			<span class="text-gray-600">&copy; <?php echo date('Y'); ?></span>
 			<span class="mx-2">&bull;</span>
 			<a href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home" class="text-gray-700 hover:text-blue-600">
-				<strong>Report</strong>Burster Portal
+				<strong>Data</strong>Pallas Portal
 			</a>
 		</div>
 

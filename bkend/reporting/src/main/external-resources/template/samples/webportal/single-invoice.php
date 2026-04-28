@@ -282,7 +282,7 @@ get_header();
   <!-- Actions -->
   <div class="mt-10 flex justify-center gap-4 print:hidden">
     <?php
-      $account_page_id = (int) get_option('reportburster_account_page_id');
+      $account_page_id = (int) get_option('DataPallas_account_page_id');
       $back_url = $account_page_id
         ? get_permalink($account_page_id)
         : ( get_permalink( get_page_by_path('my-documents') ) ?: home_url() );

@@ -1,4 +1,4 @@
-ReportBurster Theme
+DataPallas Theme
 ===================
 
 A custom theme based on \_tw

@@ -6,9 +6,16 @@ import RbParameters from "./RbParameters.wc.svelte";
 import RbReport from "./RbReport.wc.svelte";
 import RbValue from "./RbValue.wc.svelte";
 import RbFilterPane from "./RbFilterPane.wc.svelte";
+import RbCubeRenderer from "./RbCubeRenderer.wc.svelte";
+import RbMap from "./RbMap.wc.svelte";
+import RbSankey from "./RbSankey.wc.svelte";
+import RbGauge from "./RbGauge.wc.svelte";
+import RbTrend from "./RbTrend.wc.svelte";
+import RbProgress from "./RbProgress.wc.svelte";
+import RbDetail from "./RbDetail.wc.svelte";
 
 // Export them so they can be imported elsewhere if desired
-export { RbTabulator, RbChart, RbPivotTable, RbParameters, RbReport, RbValue, RbFilterPane };
+export { RbTabulator, RbChart, RbPivotTable, RbParameters, RbReport, RbValue, RbFilterPane, RbCubeRenderer, RbMap, RbSankey, RbGauge, RbTrend, RbProgress, RbDetail };
 
 // rb-dashboard is a semantic alias for rb-report
 const RbReportClass = customElements.get('rb-report');

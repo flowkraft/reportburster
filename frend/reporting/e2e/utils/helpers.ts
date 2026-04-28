@@ -97,7 +97,7 @@ export class Helpers {
     //console.log(`Copying license file from ${src} to ${dest}`);
     await jetpack.copyAsync(src, dest, { overwrite: true });
 
-    spawnSync('reportburster.bat', ['system', 'license', 'deactivate'], {
+    spawnSync('datapallas.bat', ['system', 'license', 'deactivate'], {
       cwd: path.join(process.env.PORTABLE_EXECUTABLE_DIR),
       shell: true,
     });
@@ -253,11 +253,11 @@ export class Helpers {
     );
     */
 
-    //copy back the default reportburster.bat file
+    //copy back the default datapallas.bat file
     await jetpack.copyAsync(
       PATHS.E2E_RESOURCES_PATH +
       '/java-versions/documentburster-java-default.bat',
-      process.env.PORTABLE_EXECUTABLE_DIR + '/reportburster.bat',
+      process.env.PORTABLE_EXECUTABLE_DIR + '/datapallas.bat',
       { overwrite: true },
     );
 
@@ -290,7 +290,7 @@ export class Helpers {
     const verifiedDbFolder = await jetpack.findAsync(
       path.resolve(PATHS.E2E_ASSEMBLY_FOLDER_PATH),
       {
-        matching: 'ReportBurster*',
+        matching: 'DataPallas*',
         files: false,
         directories: true,
         recursive: false,
@@ -423,12 +423,12 @@ Started ServerApplication with PID 13404`,
       );
 
       await jetpack.copyAsync(
-        `${PATHS.E2E_ASSEMBLY_FOLDER_PATH}/ReportBurster/config/_defaults/settings.xml`,
+        `${PATHS.E2E_ASSEMBLY_FOLDER_PATH}/DataPallas/config/_defaults/settings.xml`,
         `${process.env.PORTABLE_EXECUTABLE_DIR}/config/reports/${templateName.toLowerCase()}/settings.xml`,
       );
 
       await jetpack.copyAsync(
-        `${PATHS.E2E_ASSEMBLY_FOLDER_PATH}/ReportBurster/config/_defaults/reporting.xml`,
+        `${PATHS.E2E_ASSEMBLY_FOLDER_PATH}/DataPallas/config/_defaults/reporting.xml`,
         `${process.env.PORTABLE_EXECUTABLE_DIR}/config/reports/${templateName.toLowerCase()}/reporting.xml`,
       );
 
@@ -438,7 +438,7 @@ Started ServerApplication with PID 13404`,
 
       if (fileContent) {
         fileContent = fileContent.replace(
-          /\<template\>My Reports\<\/template\>/g,
+          /<template>[^<]*<\/template>/g,
           `<template>${templateName}</template>`,
         );
 

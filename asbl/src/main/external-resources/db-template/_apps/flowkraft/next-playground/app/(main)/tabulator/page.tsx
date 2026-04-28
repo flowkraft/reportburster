@@ -74,7 +74,7 @@ const categories: Category[] = [
 ]
 
 const usageCode = `<rb-tabulator
-  report-code="your-report-code"
+  report-id="your-report-id"
   component-id="yourComponentId"
   api-base-url="\${apiBaseUrl}"
   api-key="\${apiKey}"
@@ -99,7 +99,7 @@ export default function TabulatorPage() {
   // Listen to first rb-tabulator for shared configDsl
   useEffect(() => {
     if (!isReady) return
-    const el = document.querySelector('rb-tabulator[report-code="tab-examples"]') as any
+    const el = document.querySelector('rb-tabulator[report-id="tab-examples"]') as any
     if (!el) return
     const handler = () => { if (el.configDsl) setConfigDsl(el.configDsl) }
     el.addEventListener("configLoaded", handler)
@@ -162,7 +162,7 @@ export default function TabulatorPage() {
                       {/* @ts-expect-error - Web component custom element */}
                       <rb-tabulator
                         id={`rb-${example.id}`}
-                        report-code="tab-examples"
+                        report-id="tab-examples"
                         component-id={example.id}
                         api-base-url={rbConfig.apiBaseUrl}
                         api-key={rbConfig.apiKey}

@@ -1,8 +1,8 @@
 @echo off
-REM ReportBurster Server
+REM DataPallas Server
 REM
 REM -------------------------------------------------------------------------
-REM ReportBurster Server 'Windows Service' Script
+REM DataPallas Server 'Windows Service' Script
 REM -------------------------------------------------------------------------
 
 @if not "%ECHO%" == "" echo %ECHO%
@@ -10,11 +10,11 @@ REM -------------------------------------------------------------------------
 set DIRNAME=%CD%
 
 if "x%SVCNAME%" == "x" (
-    set SVCNAME="ReportBursterSrv"
+    set SVCNAME="DataPallasSrv"
 )
 
-set SVCDISP=ReportBurster Server
-set SVCDESC=ReportBurster Server/Platform: Windows %PROCESSOR_ARCHITECTURE%
+set SVCDISP=DataPallas Server
+set SVCDESC=DataPallas Server/Platform: Windows %PROCESSOR_ARCHITECTURE%
 set NOPAUSE=Y
 
 REM Update the rbsj.xml file with the correct path to the startServer.bat file

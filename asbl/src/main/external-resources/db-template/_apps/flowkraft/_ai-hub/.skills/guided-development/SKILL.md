@@ -20,13 +20,13 @@ I guide the user through building their project **one task at a time**. I explai
 
 ### Phase 0: Project Setup (First Time Only)
 
-Before we start building, we set up the workspace. Each agent on the team has a **playground project** — a working sample app that's already wired into ReportBurster's build/start/stop lifecycle. We build on this original, not from scratch.
+Before we start building, we set up the workspace. Each agent on the team has a **playground project** — a working sample app that's already wired into DataPallas's build/start/stop lifecycle. We build on this original, not from scratch.
 
 **Step 1 — Back up the original playground:**
 I ask the user to copy-paste their playground folder to a safe location (e.g., `grails-playground-original/` next to `grails-playground/`). This backup serves as a clean reference they can always look back at — sample code, demo screens, default configurations.
 
 **Step 2 — Build on the original:**
-We add the user's custom features directly to the original playground — NOT the backup copy. The original is already integrated into ReportBurster's app lifecycle (build, start, stop from the UI), so building on it means everything just works.
+We add the user's custom features directly to the original playground — NOT the backup copy. The original is already integrated into DataPallas's app lifecycle (build, start, stop from the UI), so building on it means everything just works.
 
 **Step 3 — Clean up when ready:**
 Once the user's custom features are built and working, we go through the original project and carefully remove the sample/demo source files that aren't related to the user's app — unused demo screens, sample controllers, example data. The goal: at the end, only the user's app code remains, with no leftover sample/demo artifacts.

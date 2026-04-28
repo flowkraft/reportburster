@@ -1,17 +1,3 @@
-/*
-    DocumentBurster is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
-
-    DocumentBurster is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with DocumentBurster.  If not, see <http://www.gnu.org/licenses/>
- */
 package com.sourcekraft.documentburster.utils;
 
 import java.io.File;
@@ -114,11 +100,11 @@ public class Utils {
 		if (f.isAbsolute()) return relativePath;
 		String portableDir = System.getProperty("PORTABLE_EXECUTABLE_DIR");
 		if (StringUtils.isNotBlank(portableDir)) {
-			return new File(portableDir, relativePath).toPath().normalize().toString();
+			return new File(portableDir, relativePath).toPath().normalize().toAbsolutePath().toString();
 		}
 		String homeDir = System.getProperty("DOCUMENTBURSTER_HOME");
 		if (StringUtils.isNotBlank(homeDir)) {
-			return new File(homeDir, relativePath).toPath().normalize().toString();
+			return new File(homeDir, relativePath).toPath().normalize().toAbsolutePath().toString();
 		}
 		return relativePath;
 	}
@@ -144,7 +130,7 @@ public class Utils {
 		if (StringUtils.isNotBlank(homeDir)) {
 			return new File(homeDir, "db").getAbsolutePath() + "/";
 		}
-		return "./db/";
+		return resolvePathAgainstPortableDir("db") + "/";
 	}
 
 	public static String getAppsFolderPath() {
@@ -156,7 +142,7 @@ public class Utils {
 		if (StringUtils.isNotBlank(homeDir)) {
 			return new File(homeDir, "_apps").getAbsolutePath() + "/";
 		}
-		return "./_apps/";
+		return resolvePathAgainstPortableDir("_apps") + "/";
 	}
 
 	public static String getConfigurationFolderPath(String configurationFilePath) {

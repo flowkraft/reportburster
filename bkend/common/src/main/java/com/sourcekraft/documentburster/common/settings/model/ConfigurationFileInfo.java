@@ -31,7 +31,6 @@ public class ConfigurationFileInfo extends DumpToString {
 	public boolean capReportDistribution;
 	public boolean capReportGenerationMailMerge;
 	public String dsInputType;
-	public String visibility;
 	public String notes;
 	public String folderName;
 	public String type;

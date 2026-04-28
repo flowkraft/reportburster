@@ -2,7 +2,7 @@
 
 <script context="module" lang="ts">
   // Module-level: shared across all <rb-chart> instances on the page.
-  // Deduplicates config requests when N components share the same report-code.
+  // Deduplicates config requests when N components share the same report-id.
   const _cfgCache = new Map<string, Promise<any>>();
 
   function fetchConfigCached(url: string, headers: Record<string, string>): Promise<any> {
@@ -24,9 +24,9 @@
   let _lastAfterUpdateLogTime = 0;
 
   // ============================================================================
-  // Hybrid Mode Props - when reportCode is provided, component self-fetches
+  // Hybrid Mode Props - when reportId is provided, component self-fetches
   // ============================================================================
-  export let reportCode: string = '';
+  export let reportId: string = '';
   export let apiBaseUrl: string = '';
   export let apiKey: string = '';
   export let componentId: string = '';
@@ -68,10 +68,10 @@
     if (!reportData || reportData.length === 0) return { labels: [], datasets: [] };
     
     const labelField = chartConfig.labelField || Object.keys(reportData[0]).find((k: string) => typeof reportData[0][k] === 'string') || Object.keys(reportData[0])[0];
-    
+
     // Extract labels
     const labels = reportData.map((row: any) => row[labelField] != null ? String(row[labelField]) : '');
-    
+
     // Transform datasets - extract field values into data arrays
     const datasets = (chartConfig.datasets || []).map((ds: any) => {
       const field = ds.field;
@@ -149,7 +149,7 @@
     // Extract Chart.js options from chartConfig.options (DSL mode) or use props
     // chartConfig has structure: { type, labelField, datasets, options (Chart.js options) }
     let mergedOptions: any = { responsive };
-    
+
     // First apply Chart.js options from chartConfig (DSL mode)
     if (chartConfig?.options) {
       mergedOptions = Object.assign({}, chartConfig.options, mergedOptions);
@@ -158,11 +158,251 @@
     if (options && !chartConfig) {
       mergedOptions = Object.assign({}, options, mergedOptions);
     }
-    
+
+    const resolvedType = type || chartConfig?.type || (normalizedData?.datasets?.[0]?.type || 'line');
+
+    // Special chart types — Chart.js doesn't render these natively from a plain
+    // type string, so we transform the data/options here and dispatch the result.
+    if (resolvedType === 'funnel')    return buildFunnelConfig(normalizedData, mergedOptions);
+    if (resolvedType === 'row')       return buildRowConfig(normalizedData, mergedOptions);
+    if (resolvedType === 'area')      return buildAreaConfig(normalizedData, mergedOptions);
+    if (resolvedType === 'combo')     return buildComboConfig(normalizedData, mergedOptions);
+    if (resolvedType === 'bubble')    return buildBubbleConfig(normalizedData, mergedOptions, data);
+    if (resolvedType === 'boxplot')   return buildBoxPlotConfig(mergedOptions, data);
+    if (resolvedType === 'waterfall') return buildWaterfallConfig(normalizedData, mergedOptions);
+
     return {
-      type: type || chartConfig?.type || (normalizedData?.datasets?.[0]?.type || 'line'),
+      type: resolvedType,
       data: normalizedData || { labels: [], datasets: [] },
       options: mergedOptions,
+      plugins: plugins || [],
+    } as any;
+  }
+
+  // Row — horizontal bar (axis flip).
+  function buildRowConfig(normalizedData: any, mergedOptions: any) {
+    return {
+      type: 'bar',
+      data: normalizedData || { labels: [], datasets: [] },
+      options: Object.assign({}, mergedOptions, { indexAxis: 'y' }),
+      plugins: plugins || [],
+    } as any;
+  }
+
+  // Area — line with each dataset filled + Y-axis stacked.
+  function buildAreaConfig(normalizedData: any, mergedOptions: any) {
+    const datasets = (normalizedData?.datasets ?? []).map((ds: any) => Object.assign({}, ds, { fill: true }));
+    const opts = Object.assign({}, mergedOptions, {
+      scales: Object.assign({}, mergedOptions?.scales, {
+        y: Object.assign({}, mergedOptions?.scales?.y, { stacked: true }),
+      }),
+    });
+    return {
+      type: 'line',
+      data: { labels: normalizedData?.labels ?? [], datasets },
+      options: opts,
+      plugins: plugins || [],
+    } as any;
+  }
+
+  // Combo — first dataset = bar, rest = line. Chart.js handles mixed natively.
+  // `order` makes bars render under lines (lower order = drawn later = on top).
+  function buildComboConfig(normalizedData: any, mergedOptions: any) {
+    const datasets = (normalizedData?.datasets ?? []).map((ds: any, i: number) => Object.assign({}, ds, {
+      type: i === 0 ? 'bar' : 'line',
+      order: i === 0 ? 2 : 1,
+      fill: false,
+    }));
+    return {
+      type: 'bar',
+      data: { labels: normalizedData?.labels ?? [], datasets },
+      options: mergedOptions,
+      plugins: plugins || [],
+    } as any;
+  }
+
+  // Bubble — re-shape datasets into [{x, y, r}]. The radius comes from
+  // `bubbleSizeField` if present in the chart config; otherwise constant.
+  function buildBubbleConfig(normalizedData: any, mergedOptions: any, rawData: any) {
+    const sizeField: string | undefined = chartConfig?.bubbleSizeField || mergedOptions?.bubbleSizeField;
+    const constR: number = Number(mergedOptions?.bubbleSizeMin) || 6;
+
+    // If we have raw rows, rebuild datasets so each point gets {x, y, r}.
+    const reportRows: any[] = rawData?.reportData ?? (Array.isArray(rawData) ? rawData : []);
+    const labels: any[] = normalizedData?.labels ?? [];
+
+    const datasets = (normalizedData?.datasets ?? []).map((ds: any) => {
+      const dataPoints = (ds.data ?? []).map((v: any, i: number) => {
+        const xVal = labels[i] != null ? labels[i] : i;
+        const yVal = typeof v === 'number' ? v : (v?.y != null ? Number(v.y) : Number(v));
+        let rVal: number;
+        if (typeof v === 'object' && v?.r != null) {
+          rVal = Number(v.r);
+        } else if (sizeField && reportRows[i] && reportRows[i][sizeField] != null) {
+          rVal = Number(reportRows[i][sizeField]);
+          if (!Number.isFinite(rVal)) rVal = constR;
+        } else {
+          rVal = constR;
+        }
+        return { x: xVal, y: yVal, r: Math.max(2, rVal) };
+      });
+      return Object.assign({}, ds, { data: dataPoints });
+    });
+
+    return {
+      type: 'bubble',
+      data: { datasets },
+      options: mergedOptions,
+      plugins: plugins || [],
+    } as any;
+  }
+
+  // BoxPlot — needs raw rows grouped by xField. Each category becomes
+  // `[v1, v2, v3, ...]`; the plugin computes quartiles/whiskers.
+  function buildBoxPlotConfig(mergedOptions: any, rawData: any) {
+    // Array-shaped options: xFields[0] is the X column, yFields[0] the metric.
+    // Falls back to chartConfig.labelField / dataset field for DSL-driven renders.
+    const xField: string = chartConfig?.labelField
+      || (mergedOptions?.xFields && mergedOptions.xFields[0])
+      || '';
+    const yField: string = chartConfig?.datasets?.[0]?.field
+      || (mergedOptions?.yFields && mergedOptions.yFields[0])
+      || '';
+    const reportRows: any[] = rawData?.reportData ?? (Array.isArray(rawData) ? rawData : []);
+
+    if (!reportRows.length || !xField || !yField) {
+      return { type: 'bar', data: { labels: [], datasets: [] }, options: mergedOptions, plugins: plugins || [] } as any;
+    }
+
+    const groups = new Map<string, number[]>();
+    for (const r of reportRows) {
+      const k = String(r[xField] ?? '');
+      const v = Number(r[yField]);
+      if (!Number.isFinite(v)) continue;
+      let arr = groups.get(k);
+      if (!arr) { arr = []; groups.set(k, arr); }
+      arr.push(v);
+    }
+    const labels = [...groups.keys()];
+    const data = labels.map((k) => groups.get(k) ?? []);
+
+    return {
+      type: 'boxplot',
+      data: {
+        labels,
+        datasets: [{
+          label: yField,
+          data,
+          backgroundColor: 'rgba(80,158,227,0.4)',
+          borderColor: '#2171b5',
+          borderWidth: 1,
+        }],
+      },
+      options: mergedOptions,
+      plugins: plugins || [],
+    } as any;
+  }
+
+  // Waterfall — single-series cumulative deltas as stacked bar:
+  //   floor (invisible) + delta (visible). Same approach Metabase uses.
+  function buildWaterfallConfig(normalizedData: any, mergedOptions: any) {
+    const labels: any[] = normalizedData?.labels ?? [];
+    const ds0 = normalizedData?.datasets?.[0] ?? { data: [] };
+    const values: number[] = (ds0.data ?? []).map((v: unknown) => Number(v));
+
+    const floors: number[] = [];
+    const deltas: number[] = [];
+    const colors: string[] = [];
+    let running = 0;
+    for (const v of values) {
+      if (!Number.isFinite(v)) { floors.push(0); deltas.push(0); colors.push('#cccccc'); continue; }
+      if (v >= 0) {
+        floors.push(running);
+        deltas.push(v);
+        colors.push('#88bf4d');
+      } else {
+        floors.push(running + v);
+        deltas.push(-v);
+        colors.push('#ef8c8c');
+      }
+      running += v;
+    }
+
+    const opts = Object.assign({}, mergedOptions, {
+      plugins: Object.assign({}, mergedOptions?.plugins, { legend: { display: false } }),
+      scales: Object.assign({}, mergedOptions?.scales, {
+        x: Object.assign({}, mergedOptions?.scales?.x, { stacked: true }),
+        y: Object.assign({}, mergedOptions?.scales?.y, { stacked: true, beginAtZero: true }),
+      }),
+    });
+
+    return {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'floor', data: floors, backgroundColor: 'rgba(0,0,0,0)', borderColor: 'rgba(0,0,0,0)', stack: 'wf' },
+          { label: ds0.label || 'value', data: deltas, backgroundColor: colors, borderColor: colors, stack: 'wf' },
+        ],
+      },
+      options: opts,
+      plugins: plugins || [],
+    } as any;
+  }
+
+  // Map a single-series dataset onto a horizontal bar with descending sort
+  // and a uniform-tone fade. First step = 100%; subsequent rows show their %
+  // of the first step in the tooltip.
+  function buildFunnelConfig(normalizedData: any, mergedOptions: any) {
+    const labels: string[] = (normalizedData?.labels ?? []).map((v: unknown) => String(v ?? ''));
+    const ds = normalizedData?.datasets?.[0] ?? { data: [], label: '' };
+    const values: (number | null)[] = (ds.data ?? []).map((v: unknown) => v == null ? null : Number(v));
+    // Sort indices descending by numeric value (nulls last).
+    const idx = values.map((_, i) => i).sort((a, b) => {
+      const va = values[a] ?? -Infinity;
+      const vb = values[b] ?? -Infinity;
+      return vb - va;
+    });
+    const sortedLabels = idx.map((i) => labels[i] ?? '');
+    const sortedValues = idx.map((i) => values[i]);
+    const top = (sortedValues.find((v) => v != null && Number.isFinite(v)) as number | undefined) ?? 0;
+    // Funnel palette — fades from saturated to muted as we descend.
+    const palette = ['#509ee3', '#5fa9e6', '#74b6ec', '#8cc4f1', '#a3d2f7', '#bcdffc'];
+    const bgColors = sortedValues.map((_, i) => palette[Math.min(i, palette.length - 1)]);
+
+    const funnelOptions = Object.assign({}, mergedOptions, {
+      indexAxis: 'y',
+      plugins: Object.assign({}, mergedOptions?.plugins, {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (item: any) => {
+              const v = item.parsed?.x ?? item.raw;
+              if (v == null || !Number.isFinite(v)) return String(v ?? '');
+              const pct = top > 0 ? (v / top) * 100 : 0;
+              return `${v.toLocaleString()} (${pct.toFixed(1)}% of top)`;
+            },
+          },
+        },
+      }),
+      scales: Object.assign({}, mergedOptions?.scales, {
+        x: { beginAtZero: true },
+      }),
+    });
+
+    return {
+      type: 'bar',
+      data: {
+        labels: sortedLabels,
+        datasets: [{
+          label: ds.label || 'value',
+          data: sortedValues,
+          backgroundColor: bgColors,
+          borderColor: bgColors,
+          borderWidth: 0,
+        }],
+      },
+      options: funnelOptions,
       plugins: plugins || [],
     } as any;
   }
@@ -199,6 +439,17 @@
     return { labels: [], datasets: [] };
   }
 
+  // Tracks whether the BoxPlot controllers have been registered with Chart.js.
+  // Done lazily on first boxplot render so we don't pay the import cost
+  // for charts that never use it.
+  let _boxplotRegistered = false;
+  async function ensureBoxPlotRegistered(ChartCtor: any) {
+    if (_boxplotRegistered) return;
+    const bpMod: any = await import('@sgratzl/chartjs-chart-boxplot');
+    ChartCtor.register(bpMod.BoxPlotController, bpMod.BoxAndWiskers);
+    _boxplotRegistered = true;
+  }
+
   async function createChart() {
     if (!canvas) return;
 
@@ -206,6 +457,9 @@
       const mod = await import('chart.js/auto');
       const ChartCtor = (mod as any).Chart || (mod as any).default || (mod as any);
       if (!ChartCtor) throw new Error('Chart.js module not found');
+
+      const wantsBoxplot = (type || chartConfig?.type) === 'boxplot';
+      if (wantsBoxplot) await ensureBoxPlotRegistered(ChartCtor);
 
       const config = buildConfig();
       const ctx2d = canvas?.getContext('2d');
@@ -280,7 +534,7 @@
     const shadowRoot = container?.getRootNode();
     const hostEl = (shadowRoot as ShadowRoot)?.host;
     if (hostEl) {
-      if (!reportCode) reportCode = hostEl.getAttribute('report-code') || '';
+      if (!reportId) reportId = hostEl.getAttribute('report-id') || '';
       if (!apiBaseUrl) apiBaseUrl = hostEl.getAttribute('api-base-url') || '';
       if (!apiKey) apiKey = hostEl.getAttribute('api-key') || '';
       if (!componentId) componentId = hostEl.getAttribute('component-id') || '';
@@ -300,9 +554,9 @@
     }
 
     // ========================================================================
-    // Hybrid Mode: if reportCode provided, self-fetch config + data
+    // Hybrid Mode: if reportId provided, self-fetch config + data
     // ========================================================================
-    if (reportCode && apiBaseUrl) {
+    if (reportId && apiBaseUrl) {
       selfFetchLoading = true;
       error = null;
       
@@ -311,8 +565,8 @@
       // if (apiKey) headers['X-API-Key'] = apiKey;
       
       try {
-        // Fetch config (deduplicated across all rb-chart instances with same report-code)
-        const config = await fetchConfigCached(`${apiBaseUrl}/reports/${reportCode}/config`, headers);
+        // Fetch config (deduplicated across all rb-chart instances with same report-id)
+        const config = await fetchConfigCached(`${apiBaseUrl}/reports/${reportId}/config`, headers);
         
         // Store full chart configuration from DSL (named or default)
         if (componentId && config.namedChartOptions?.[componentId]) {
@@ -333,8 +587,8 @@
         if (componentId) dataQueryParams.set('componentId', componentId);
         const dataQs = dataQueryParams.toString();
         const dataUrl = dataQs
-            ? `${apiBaseUrl}/reports/${reportCode}/data?${dataQs}`
-            : `${apiBaseUrl}/reports/${reportCode}/data`;
+            ? `${apiBaseUrl}/reports/${reportId}/data?${dataQs}`
+            : `${apiBaseUrl}/reports/${reportId}/data`;
         const dataRes = await fetch(dataUrl, { headers });
         if (!dataRes.ok) throw new Error(`Data fetch failed: ${dataRes.status}`);
         const dataResult = await dataRes.json();
@@ -407,8 +661,8 @@
           // DSL mode: use chartConfig.options
           mergedOptions = Object.assign({}, chartConfig.options, mergedOptions);
         } else if (options) {
-          // Angular mode: use options prop
-          mergedOptions = Object.assign({}, options, mergedOptions);
+          // Canvas/Angular mode: incoming options win over stale chart state
+          mergedOptions = Object.assign({}, mergedOptions, options);
         }
         chart.config.options = mergedOptions;
         
@@ -426,8 +680,8 @@
 
   // Public method to fetch data with parameters (for use after initial load)
   export async function fetchData(params: Record<string, any> = {}) {
-    if (!reportCode || !apiBaseUrl) {
-      console.warn('rb-chart: fetchData requires reportCode and apiBaseUrl');
+    if (!reportId || !apiBaseUrl) {
+      console.warn('rb-chart: fetchData requires reportId and apiBaseUrl');
       return;
     }
     
@@ -438,7 +692,7 @@
     
     try {
       // Re-fetch config (uses module-level dedup cache)
-      const configUrl = `${apiBaseUrl}/reports/${reportCode}/config`;
+      const configUrl = `${apiBaseUrl}/reports/${reportId}/config`;
       const config = await fetchConfigCached(configUrl, headers);
       
       // Update chartConfig from fresh config (named or default)
@@ -460,8 +714,8 @@
       if (componentId) mergedParams.set('componentId', componentId);
       const queryString = mergedParams.toString();
       const url = queryString
-        ? `${apiBaseUrl}/reports/${reportCode}/data?${queryString}`
-        : `${apiBaseUrl}/reports/${reportCode}/data`;
+        ? `${apiBaseUrl}/reports/${reportId}/data?${queryString}`
+        : `${apiBaseUrl}/reports/${reportId}/data`;
       
       const res = await fetch(url, { headers });
       if (!res.ok) throw new Error(`Data fetch failed: ${res.status}`);
@@ -530,12 +784,12 @@
 </style>
 
 {#if selfFetchLoading}
-  <div class="rb-loading">Loading...</div>
+  <div class="rb-loading" id={componentId ? `widgetLoading-${componentId}` : undefined}>Loading...</div>
 {/if}
 {#if error}
-  <div class="rb-error">{error}</div>
+  <div class="rb-error" id={componentId ? `widgetError-${componentId}` : undefined}>{error}</div>
 {/if}
-<div class="rb-chart-root" bind:this={container} style:display={selfFetchLoading || error ? 'none' : 'block'}>
+<div class="rb-chart-root" bind:this={container} id={componentId ? `widgetChart-${componentId}` : undefined} style:display={selfFetchLoading || error ? 'none' : 'block'}>
   {#if loading}
     <div class="rb-chart-overlay"><div class="rb-chart-spinner"></div></div>
   {/if}

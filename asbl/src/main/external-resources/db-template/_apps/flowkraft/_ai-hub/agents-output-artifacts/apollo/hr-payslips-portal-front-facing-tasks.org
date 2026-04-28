@@ -46,7 +46,7 @@ the UI pattern. For production portal:
 * TODO Task 5: Component Demo Pages
 Files: ~app/(main)/tabulator/page.tsx~, ~charts/page.tsx~, etc.
 
-These pages showcase ReportBurster web components embedded in the Next.js app.
+These pages showcase DataPallas web components embedded in the Next.js app.
 Each page:
 - Loads RbWebComponentsLoader for custom elements
 - Renders the web component with sample configuration

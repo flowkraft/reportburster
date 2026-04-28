@@ -36,50 +36,32 @@
             <span class="caret"></span>
           </a>
           <ul id="topMenuConfigurationList" class="dropdown-menu" role="menu">
-            <li
-              *ngFor="let configurationFile of this.settingsService.getConfigurations('visible')"
+            <ng-container
+              *ngFor="let configurationFile of this.settingsService.getConfigurations()"
             >
-              <a
-                id="topMenuConfigurationLoad_{{ configurationFile.folderName }}_{{ configurationFile.fileName }}"
-                href="#"
-                [routerLink]="[
-                  '/configuration',
-                  'generalSettingsMenuSelected',
-                  configurationFile.filePath,
-                  configurationFile.templateName
-                ]"
-                skipLocationChange="true"
-                ><i *ngIf="configurationFile.type === 'config-jasper-reports'" class="fa fa-diamond" style="color: #999; font-size: 0.85em;"></i> {{ configurationFile.templateName }}
-              </a>
-            </li>
+              <li *ngIf="configurationFile.isFallback">
+                <a
+                  id="topMenuConfigurationLoad_{{ configurationFile.folderName }}_{{ configurationFile.fileName }}"
+                  href="#"
+                  [routerLink]="[
+                    '/configuration',
+                    'generalSettingsMenuSelected',
+                    configurationFile.filePath,
+                    configurationFile.templateName
+                  ]"
+                  skipLocationChange="true"
+                  >{{ configurationFile.templateName }}
+                </a>
+              </li>
+            </ng-container>
             <li class="divider"></li>
             <li>
               <a
-                id="topMenuConfigurationReports"
+                id="topConfigurationCrud"
                 href="#"
-                routerLink="/configuration-reports"
+                [routerLink]="['/configuration-crud', 'reports']"
                 skipLocationChange="true"
-                >Reports</a
-              >
-            </li>
-            <!--
-            <li>
-              <a
-                id="topMenuConfigurationWebPortalContentManagement"
-                href="#"
-                routerLink="/configuration-connections"
-                skipLocationChange="true"
-                >Web Portal / Content Management</a
-              >
-            </li>-->
-            <li class="divider"></li>
-            <li>
-              <a
-                id="topMenuConfigurationExternalConnections"
-                href="#"
-                routerLink="/configuration-connections"
-                skipLocationChange="true"
-                >Connections (Email, Databases)</a
+                >Reports, Connections & Cubes</a
               >
             </li>
             <li *ngIf="false" class="divider"></li>
@@ -93,12 +75,12 @@
               >
               <ul class="dropdown-menu">
                 <li
-                  *ngIf="this.settingsService.getSampleConfigurations('visible').length == 0"
+                  *ngIf="this.settingsService.getSampleConfigurations().length == 0"
                 >
                   No Samples
                 </li>
                 <li
-                  *ngFor="let configurationFile of this.settingsService.getSampleConfigurations('visible')"
+                  *ngFor="let configurationFile of this.settingsService.getSampleConfigurations()"
                 >
                   <a
                     id="topMenuConfigurationLoad_{{ configurationFile.folderName }}_{{ configurationFile.fileName }}"

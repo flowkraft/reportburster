@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>Reports - ReportBurster</title>
+    <title>Reports - DataPallas</title>
     <style>
         .employee-cards { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
         .employee-card {
@@ -95,7 +95,7 @@
                             </div>
                             <rb-report 
                                 id="demoReport"
-                                report-code="rep-employee-payslip"
+                                report-id="rep-employee-payslip"
                                 api-base-url="${RbUtils.apiBaseUrl}"
                                 api-key="${RbUtils.apiKey}"
                                 style="display: none;"
@@ -115,7 +115,7 @@
                         </button>
                     </div>
                     <pre id="usageCode" class="code-block"><code class="language-markup">&lt;rb-report 
-    report-code="rep-employee-payslip"
+    report-id="rep-employee-payslip"
     entity-code="EMP001"
     api-base-url="&#36;{RbUtils.apiBaseUrl}"
     api-key="&#36;{RbUtils.apiKey}"
@@ -170,7 +170,7 @@
                 // Log current component state
                 console.log('[reports GSP] report element:', report);
                 console.log('[reports GSP] report.entityCode (before toggle):', report.entityCode);
-                console.log('[reports GSP] report.reportCode:', report.reportCode);
+                console.log('[reports GSP] report.reportId:', report.reportId);
                 console.log('[reports GSP] report.apiBaseUrl:', report.apiBaseUrl);
                 
                 // Force re-fetch by toggling entityCode

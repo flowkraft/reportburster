@@ -1,5 +1,9 @@
 package com.flowkraft.system.services;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -11,6 +15,13 @@ import org.springframework.stereotype.Service;
 import com.flowkraft.common.AppPaths;
 import com.flowkraft.system.dtos.FindCriteriaDto;
 import com.flowkraft.system.models.SystemInfo;
+import com.sourcekraft.documentburster.common.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.model.DocumentBursterSettingsInternal;
+import com.sourcekraft.documentburster.utils.Utils;
+
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
 
 @Service
 public class SystemService {
@@ -30,7 +41,7 @@ public class SystemService {
 		info.osVersion = System.getProperty("os.version");
 		info.userName = System.getProperty("user.name");
 		info.osArch = System.getProperty("os.arch");
-		info.product = "ReportBurster";
+		info.product = "DataPallas";
 
 		List<String> matching = new ArrayList<String>();
 
@@ -47,7 +58,7 @@ public class SystemService {
 
 		List<String> startServerScripts = fileSystemService.unixCliFind(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH, criteria);
 		if (!Objects.isNull(startServerScripts) && startServerScripts.size() > 0)
-			info.product = "ReportBurster Server";
+			info.product = "DataPallas Server";
 
 		// Use cached Docker probe results
 		info.isDockerDaemonRunning = dockerService.isCachedDockerDaemonRunning();
@@ -59,6 +70,28 @@ public class SystemService {
 
 		return info;
 
+	}
+
+	public DocumentBursterSettingsInternal loadInternalSettings() throws Exception {
+		String path = Utils.resolvePathAgainstPortableDir("config/_internal/settings.xml");
+		JAXBContext jc = JAXBContext.newInstance(DocumentBursterSettingsInternal.class);
+		Unmarshaller u = jc.createUnmarshaller();
+		try (FileInputStream fis = new FileInputStream(path)) {
+			return (DocumentBursterSettingsInternal) u.unmarshal(fis);
+		}
+	}
+
+	public void saveInternalSettings(DocumentBursterSettingsInternal settings) throws Exception {
+		String path = Utils.resolvePathAgainstPortableDir("config/_internal/settings.xml");
+		File f = new File(path);
+		f.getParentFile().mkdirs();
+		JAXBContext jc = JAXBContext.newInstance(DocumentBursterSettingsInternal.class);
+		Marshaller m = jc.createMarshaller();
+		m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+		try (OutputStream os = new FileOutputStream(f)) {
+			m.marshal(settings, os);
+		}
+		Settings.invalidateShowSamplesCache();
 	}
 
 }

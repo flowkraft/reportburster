@@ -2,7 +2,7 @@ declare namespace JSX {
   interface IntrinsicElements {
     "rb-tabulator": React.DetailedHTMLProps<
       React.HTMLAttributes<HTMLElement> & {
-        "report-code"?: string
+        "report-id"?: string
         "api-base-url"?: string
         "api-key"?: string
       },
@@ -10,7 +10,7 @@ declare namespace JSX {
     >
     "rb-chart": React.DetailedHTMLProps<
       React.HTMLAttributes<HTMLElement> & {
-        "report-code"?: string
+        "report-id"?: string
         "api-base-url"?: string
         "api-key"?: string
       },
@@ -18,7 +18,7 @@ declare namespace JSX {
     >
     "rb-pivot-table": React.DetailedHTMLProps<
       React.HTMLAttributes<HTMLElement> & {
-        "report-code"?: string
+        "report-id"?: string
         "api-base-url"?: string
         "api-key"?: string
       },
@@ -26,7 +26,7 @@ declare namespace JSX {
     >
     "rb-parameters": React.DetailedHTMLProps<
       React.HTMLAttributes<HTMLElement> & {
-        "report-code"?: string
+        "report-id"?: string
         "api-base-url"?: string
         "api-key"?: string
       },
@@ -34,7 +34,7 @@ declare namespace JSX {
     >
     "rb-report": React.DetailedHTMLProps<
       React.HTMLAttributes<HTMLElement> & {
-        "report-code"?: string
+        "report-id"?: string
         "api-base-url"?: string
         "api-key"?: string
       },
