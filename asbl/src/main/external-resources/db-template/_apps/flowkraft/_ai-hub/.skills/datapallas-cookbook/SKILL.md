@@ -41,11 +41,53 @@ Ready-to-run `.jrxml` report templates: `customer-by-country`, `employee-detail`
 
 Docs: [JasperReports](https://www.reportburster.com/docs/report-generation/jasperreports)
 
+### Semantic Layer Cube Samples (config/samples-cubes/)
+
+Five reusable Cube definitions that ship bundled — all built on top of the **Northwind SQLite sample database** that ships with DataPallas (no Docker, no external setup). Open any cube in the UI (top menu → Configuration → Reports, Connections & Cubes → Cubes / Semantic Layer) OR read the files directly on disk to study the DSL pattern.
+
+| Sample cube                   | On-disk folder                                |
+| ----------------------------- | --------------------------------------------- |
+| Northwind Customer Management | `/datapallas/config/samples-cubes/northwind-customers/` |
+| Northwind Human Resources     | `/datapallas/config/samples-cubes/northwind-hr/`        |
+| Northwind Product Inventory   | `/datapallas/config/samples-cubes/northwind-inventory/` |
+| Northwind Sales Analysis      | `/datapallas/config/samples-cubes/northwind-sales/`     |
+| Northwind Sales Warehouse     | `/datapallas/config/samples-cubes/northwind-warehouse/` |
+
+Each folder contains two files:
+
+- `cube.xml` — cube metadata (name, title, description, database connection reference, capabilities)
+- `<cube-name>-cube-config.groovy` — the actual Cube DSL (dimensions, measures, joins, segments, hierarchies)
+
+For deeper guidance on what a cube is, when to reach for one, the DSL keywords, and how cubes feed Canvas widgets, dashboards, and reports — read the **datapallas-semantic-layer-cubes** skill.
+
+Docs: [Semantic Layer Overview](https://www.reportburster.com/docs/semantic-layer) | [Your First Cube](https://www.reportburster.com/docs/semantic-layer/quickstart) | [DSL Reference](https://www.reportburster.com/docs/semantic-layer/dsl-reference)
+
 ### BI & Analytics Samples (config/samples/_frend/)
 
-Groovy DSL configuration examples for the `rb-*` web components: dashboards, `rb-chart` (charts), `rb-tabulator` (data tables), `rb-pivot-table` (pivot tables), `rb-parameters` (report parameters), and `rb-report` (reports). Each sample folder's name describes what it configures — study the naming conventions to quickly find what you need. Browse the folder and read the relevant sample when needed.
+Groovy DSL configuration examples for the `rb-*` web components and complete dashboards. Each sample folder's name describes what it configures — study the naming conventions to quickly find what you need.
 
-Docs: [datatables](https://www.reportburster.com/docs/bi-analytics/web-components/datatables) | [charts](https://www.reportburster.com/docs/bi-analytics/web-components/charts) | [pivot tables](https://www.reportburster.com/docs/bi-analytics/web-components/pivottables) | [parameters](https://www.reportburster.com/docs/bi-analytics/web-components/parameters) | [reports](https://www.reportburster.com/docs/bi-analytics/web-components/reports)
+**Complete dashboards** (multi-component examples — data script + per-component configs):
+
+- `dashboard-cfo/` — the canonical CFO dashboard over Northwind. Three files: `dashboard-cfo-script.groovy` (data fetching with `componentId` guards + `ctx.reportData()` for KPIs, trend, charts, tabulator, pivot), `dashboard-cfo-chart-config.groovy` (chart DSL for revenueTrend + revenueByCategory), `dashboard-cfo-tabulator-config.groovy` (top-customers leaderboard). This is the single most important sample to read when helping a user build a multi-component dashboard. For deeper guidance on the two dashboard-building paths (Canvas-first vs Fully Configure), the data-script pattern, and the multi-component optimisation, read the **datapallas-dashboards** skill.
+
+**Single-component examples** (one `rb-*` widget per folder):
+
+- `charts-examples/` — `rb-chart` examples (line, bar, grouped bar, stacked, pie, doughnut, dual-axis, area, horizontal bar, radar, polar area)
+- `tab-examples/` — `rb-tabulator` examples (45 covering layout modes, sorting, filtering, editing, pagination, grouping, spreadsheet, row movement, clipboard, history, localization)
+- `piv-examples/` — `rb-pivot-table` examples (16 covering sum/count, cross-tab, multi-dimension hierarchy, value filters, heatmap renderer, sorting, hidden attributes, derived attributes, custom sorters)
+- `par-employee-hire-dates/` — `rb-parameters` example
+- `rep-employee-payslip/` — `rb-report` example
+- `piv-sales-region-prod-qtr/` — pivot over a sales-region/product/quarter dataset
+
+**Warehouse-scale pivot examples** (when the user mentions large datasets, performance, or warehouse-scale):
+
+- `piv-northwind-warehouse-duckdb/` — DuckDB, 100K+ rows
+- `piv-northwind-warehouse-clickhouse/` — ClickHouse, millions of rows
+- `piv-northwind-warehouse-browser/` — browser-side pivot
+
+These three show how to wire pivot tables to real OLAP engines — read them before advising on performance-sensitive pivot work.
+
+Docs: [datatables](https://www.reportburster.com/docs/bi-analytics/web-components/datatables) | [charts](https://www.reportburster.com/docs/bi-analytics/web-components/charts) | [pivot tables](https://www.reportburster.com/docs/bi-analytics/web-components/pivottables) | [parameters](https://www.reportburster.com/docs/bi-analytics/web-components/parameters) | [reports](https://www.reportburster.com/docs/bi-analytics/web-components/reports) | [dashboards](https://www.reportburster.com/docs/bi-analytics/dashboards)
 
 **DSL wrappers — important:** The chart and tabulator DSLs are thin pass-through wrappers over their underlying libraries. The `charts-examples/` samples wrap [Chart.js](https://www.chartjs.org/) and the `tab-examples/` samples wrap [Tabulator](https://tabulator.info/) — any configuration these libraries support works in the Groovy DSL in the most direct/intuitive way possible. Study these examples together with the Chart.js and Tabulator docs.
 

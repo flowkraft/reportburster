@@ -1,6 +1,12 @@
-# Scripting Skill
+# Scripting & Integration Skill
 
-I help users extend DataPallas with custom Groovy scripts for advanced report distribution scenarios — things the standard UI doesn't cover out of the box.
+I help users extend DataPallas and integrate it with other systems. **Three forms** of scripting/integration exist — pick the one that fits the task:
+
+1. **Groovy lifecycle hooks** — for in-process customisation of the burst pipeline (zip, encrypt, conditional distribution, etc.). Live inside the burst job.
+2. **CLI** — for shell scripts, cron jobs, Windows Task Scheduler, batch automation. Same engine as the UI, driven from the command line.
+3. **REST API** — for programmatic integration from external applications, CI/CD pipelines, custom portals. Same engine again, exposed over HTTP/JSON.
+
+The CLI and REST API are two interfaces to the same engine — both produce identical results to the UI. Choose by ergonomics, not by capability.
 
 ## When Scripting Is Needed
 
@@ -98,14 +104,77 @@ Common options:
 
 ---
 
+## CLI Interface
+
+DataPallas exposes every core operation as a `DataPallas <command> [options] [args]` invocation, perfect for shell scripts, cron jobs, and Windows Task Scheduler.
+
+**Main commands:**
+
+| Command    | Purpose                                                                                  |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| `burst`    | Split documents into individual files based on burst tokens                              |
+| `generate` | Create reports from data sources (CSV, Excel, SQL, Groovy, dashboards)                   |
+| `resume`   | Continue a previously paused job from its saved progress file                            |
+| `document` | Document operations such as `document merge` (combine multiple PDFs)                     |
+| `jasper`   | Compile/fill/export standalone JasperReports `.jrxml` files                              |
+| `service`  | Start/stop database starter packs and Docker apps (`service database start`, etc.)       |
+| `system`   | System-level operations (`test-email`, `test-sql-query`, `license activate`, diagnostics)|
+
+**Common options:** `-c, --config <file>` · `-p, --params <key=value>` (repeatable) · `--testall` · `--testlist <list>` · `--testrandom <count>`.
+
+**Quick example:**
+```bash
+DataPallas burst samples/burst/Payslips.pdf -c config/samples/split-only/settings.xml --testrandom 2
+```
+
+**Full reference (commands, every option, Windows/Linux integration patterns, best practices):** I fetch https://www.reportburster.com/docs/advanced/cli when I need exact syntax, exit codes, or specific examples.
+
+---
+
+## REST API
+
+The same operations are exposed as REST endpoints — use this for programmatic integration from external applications, custom portals, and CI/CD pipelines.
+
+**API domains:**
+
+| Domain            | Base path             | Purpose                                                              |
+| ----------------- | --------------------- | -------------------------------------------------------------------- |
+| **Jobs**          | `/api/jobs`           | Burst, generate, merge documents. Monitor and control running jobs.  |
+| **Reports**       | `/api/reports`        | Manage report configurations — CRUD, duplicate.                      |
+| **Connections**   | `/api/connections`    | Database/email connections — CRUD, test, schema exploration.         |
+| **Analytics**     | `/api/analytics`      | Server-side OLAP pivot queries (DuckDB, ClickHouse).                 |
+| **Queries**       | `/api/queries`        | Ad-hoc SQL execution and schema exploration.                         |
+| **Starter Packs** | `/api/starter-packs`  | Start/stop database instances and Docker apps.                       |
+| **System**        | `/api/system`         | System info, service status, diagnostics.                            |
+| **License**       | `/api/license`        | License activation and management.                                   |
+
+**Key concepts:**
+- **`reportId`** — most endpoints take the report's folder name (e.g., `monthly-invoices`), not file paths. The server resolves it internally.
+- **Asynchronous execution** — `/api/jobs/*` endpoints return `{"status": "submitted"}` immediately and run in the background. Subscribe to WebSocket `/api/ws` (topic `/topic/execution-stats`) for real-time status, or watch `temp/*.job` files.
+- **Input files** — `inputFile` accepts both relative (resolved against the install dir) and absolute paths.
+
+**Quick example:**
+```bash
+curl -X POST http://localhost:9090/api/jobs/burst \
+  -H "Content-Type: application/json" \
+  -d '{"inputFile": "samples/burst/Payslips.pdf", "reportId": "split-only"}'
+```
+
+**Live, machine-generated reference:**
+- **Swagger UI**: http://localhost:9090/swagger-ui.html — interactive "Try it out" buttons
+- **OpenAPI spec**: http://localhost:9090/v3/api-docs — JSON for code generation, Postman/Insomnia import, contract validation
+
+**Full written reference (every endpoint, payload examples, async patterns):** I fetch https://www.reportburster.com/docs/advanced/api when I need exact request shapes or detailed examples.
+
+---
+
 ## How I Use This Knowledge
 
-When users need custom distribution logic:
+When users need custom distribution logic or system integration:
 
-1. I identify which lifecycle event fits their requirement
-2. I read the relevant sample script in `scripts/burst/samples/`
-3. I understand the pattern, then give them a customized script
-4. I tell them which file to paste it into (e.g., `scripts/burst/endExtractDocument.groovy`)
+1. I pick the right form: **Groovy hook** (in-pipeline customisation), **CLI** (shell/cron), or **REST API** (external app integration).
+2. For Groovy: I read the relevant sample script in `scripts/burst/samples/`, understand the pattern, then give a customised script and tell the user which file to paste it into (e.g., `scripts/burst/endExtractDocument.groovy`).
+3. For CLI/REST: I fetch the docs (`/docs/advanced/cli`, `/docs/advanced/api`) for exact syntax, then provide a working command or HTTP request the user can run as-is.
 
 ---
 
@@ -122,10 +191,13 @@ When I provide Groovy scripts, I:
 
 ## Documentation Links
 
-- **Scripting**: https://www.reportburster.com/docs/advanced/scripting
+- **Scripting (Groovy hooks)**: https://www.reportburster.com/docs/advanced/scripting
 - **cURL Integration**: https://www.reportburster.com/docs/advanced/curl
+- **CLI Reference**: https://www.reportburster.com/docs/advanced/cli
+- **REST API Reference**: https://www.reportburster.com/docs/advanced/api
+- **Live Swagger UI** (when server is running): http://localhost:9090/swagger-ui.html
 
-When I need specifics on lifecycle events, ctx variables, or cURL options, I fetch these docs.
+When I need specifics on lifecycle events, ctx variables, cURL options, exact CLI syntax, or REST endpoint payloads, I fetch the relevant doc above.
 
 ---
 

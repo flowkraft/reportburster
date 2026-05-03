@@ -1,6 +1,16 @@
 <p-dialog id="modalExtConnection" [header]="modalConnectionInfo.modalTitle" [(visible)]="isModalEmailConnectionVisible"
-  [modal]="true" width="700" [style]="{ top: '3vw', left: '4vw' }" [autoZIndex]="false">
+  [modal]="true" [style]="{ top: '3vw', left: '4vw', width: '700px' }" [autoZIndex]="false">
   <div style="margin: 5px">
+    <tabset>
+
+      <!-- Tab 1: SMTP — all existing connection fields, untouched -->
+      <tab id="smtpTab" [tabOrder]="1" [active]="isSMTPTabActive"
+        (selectTab)="isSMTPTabActive = true; isOAuth2TabActive = false"
+        (deselectTab)="isSMTPTabActive = false">
+        <ng-template tabHeading>
+          <i class="fa fa-envelope"></i>&nbsp;SMTP
+        </ng-template>
+
     <div class="row">
       <div class="col-xs-2">
         {{
@@ -248,6 +258,208 @@
         </dburst-button-well-known-email-providers>
       </div>
     </div>
+
+      </tab>
+      <!-- end Tab 1: SMTP -->
+
+      <!-- Tab 2: OAuth2 — provider-specific sign-in for Office 365 / Google / Generic -->
+      <tab id="oauth2Tab" [tabOrder]="2" [active]="isOAuth2TabActive"
+        (selectTab)="isOAuth2TabActive = true; isSMTPTabActive = false"
+        (deselectTab)="isOAuth2TabActive = false">
+        <ng-template tabHeading>
+          <i class="fa fa-cog"></i>&nbsp;{{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.TAB-HEADING" | translate }}
+        </ng-template>
+
+        <br />
+
+        <!-- Provider row -->
+        <div class="row">
+          <div class="col-xs-3">
+            {{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.PROVIDER" | translate }}
+          </div>
+          <div class="col-xs-9">
+            <select id="oauth2Provider" class="form-control"
+              [(ngModel)]="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2provider"
+              (ngModelChange)="onOAuth2ProviderChange($event)">
+              <option value="NONE">{{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.PROVIDER-NONE" | translate }}</option>
+              <option value="MICROSOFT">{{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.PROVIDER-MICROSOFT" | translate }}</option>
+              <option value="GOOGLE">{{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.PROVIDER-GOOGLE" | translate }}</option>
+              <option value="GENERIC">{{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.PROVIDER-GENERIC" | translate }}</option>
+            </select>
+          </div>
+        </div>
+        <br />
+
+        <!-- Everything below is shown only when an OAuth2 provider is selected -->
+        <ng-container *ngIf="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2provider !== 'NONE'">
+
+          <!-- ═══════════════════════════════════════════════════════════════
+               STEP 1 — On the provider's side (one-time, outside DataPallas)
+               ═══════════════════════════════════════════════════════════════ -->
+          <div style="margin-top: 10px; margin-bottom: 6px;">
+            <span style="display: inline-block; min-width: 22px; height: 22px; border-radius: 50%; background: #337ab7; color: white; text-align: center; line-height: 22px; font-weight: bold; font-size: 12px; padding: 0 6px;">1</span>
+            &nbsp;<strong style="font-size: 13px;">
+              {{ modalConnectionInfo.email.documentburster.connection.emailserver.oauth2provider === 'MICROSOFT' ? "On Microsoft's side" :
+                 modalConnectionInfo.email.documentburster.connection.emailserver.oauth2provider === 'GOOGLE' ? "On Google's side" :
+                 "On your identity provider's side" }}
+            </strong>
+            <span style="font-size: 12px; color: #888;">— one-time setup, outside DataPallas</span>
+          </div>
+
+          <!-- Step 1 body: Microsoft -->
+          <div *ngIf="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2provider === 'MICROSOFT'"
+               id="oauth2NoteMicrosoft"
+               style="padding: 10px 12px; margin-bottom: 18px; background: #f5f5f5; border-left: 3px solid #999; border-radius: 3px; font-size: 12px; color: #555; word-wrap: break-word;">
+            Your Microsoft 365 admin must register an app in Microsoft Entra ID (Azure AD), grant it
+            the <code>SMTP.Send</code> delegated permission, and enable "Allow public client flows".
+            The <strong>Tenant ID</strong> and <strong>Client ID</strong> for Step 2 come from that app registration.
+            <br />
+            <a href="https://learn.microsoft.com/en-us/exchange/client-developer/legacy-protocols/how-to-authenticate-an-imap-pop-smtp-application-by-using-oauth"
+               target="_blank" rel="noopener">Open Microsoft's official OAuth2 SMTP setup guide
+               <i class="fa fa-external-link"></i></a>
+          </div>
+
+          <!-- Step 1 body: Google -->
+          <div *ngIf="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2provider === 'GOOGLE'"
+               id="oauth2NoteGoogle"
+               style="padding: 10px 12px; margin-bottom: 18px; background: #f5f5f5; border-left: 3px solid #999; border-radius: 3px; font-size: 12px; color: #555; word-wrap: break-word;">
+            Create an OAuth 2.0 Client ID in Google Cloud Console (Application type: Desktop app),
+            then enable the Gmail API for that project. The <strong>Client ID</strong> for Step 2 is the
+            one Google issues for that credential.
+            <br />
+            <a href="https://developers.google.com/gmail/imap/xoauth2-protocol"
+               target="_blank" rel="noopener">Open Google's official OAuth2 SMTP/IMAP guide
+               <i class="fa fa-external-link"></i></a>
+          </div>
+
+          <!-- Step 1 body: Generic -->
+          <div *ngIf="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2provider === 'GENERIC'"
+               id="oauth2NoteGeneric"
+               style="padding: 10px 12px; margin-bottom: 18px; background: #f5f5f5; border-left: 3px solid #999; border-radius: 3px; font-size: 12px; color: #555; word-wrap: break-word;">
+            Register an OAuth 2.0 client (with PKCE) with your identity provider and grant it permission
+            to send mail via SMTP. Use a loopback redirect URI like <code>http://localhost</code>
+            (DataPallas picks a random port). Copy the Client ID, Authorize URL, Token URL, and Scope
+            from your provider's documentation into Step 2.
+          </div>
+
+          <!-- ═══════════════════════════════════════════════════════════════
+               STEP 2 — In DataPallas (paste the values from Step 1)
+               ═══════════════════════════════════════════════════════════════ -->
+          <div style="margin-top: 10px; margin-bottom: 8px;">
+            <span style="display: inline-block; min-width: 22px; height: 22px; border-radius: 50%; background: #337ab7; color: white; text-align: center; line-height: 22px; font-weight: bold; font-size: 12px; padding: 0 6px;">2</span>
+            &nbsp;<strong style="font-size: 13px;">In DataPallas</strong>
+            <span style="font-size: 12px; color: #888;">— paste the values from Step 1</span>
+          </div>
+
+          <!-- Microsoft only: Tenant ID -->
+          <div class="row" *ngIf="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2provider === 'MICROSOFT'">
+            <div class="col-xs-3">
+              {{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.TENANT-ID" | translate }}
+            </div>
+            <div class="col-xs-9">
+              <input id="oauth2TenantId" class="form-control"
+                [(ngModel)]="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2tenantid"
+                placeholder="common" />
+            </div>
+          </div>
+          <br *ngIf="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2provider === 'MICROSOFT'" />
+
+          <!-- All providers: Client ID -->
+          <div class="row">
+            <div class="col-xs-3">
+              {{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.CLIENT-ID" | translate }}
+            </div>
+            <div class="col-xs-9">
+              <input id="oauth2ClientId" class="form-control"
+                [(ngModel)]="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2clientid" />
+            </div>
+          </div>
+          <br />
+
+          <!-- Generic only: Authorize URL, Token URL, Scope -->
+          <ng-container *ngIf="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2provider === 'GENERIC'">
+            <div class="row">
+              <div class="col-xs-3">
+                {{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.AUTHORIZE-URL" | translate }}
+              </div>
+              <div class="col-xs-9">
+                <input id="oauth2AuthorizeUrl" class="form-control"
+                  [(ngModel)]="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2authorizeurl" />
+              </div>
+            </div>
+            <br />
+            <div class="row">
+              <div class="col-xs-3">
+                {{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.TOKEN-URL" | translate }}
+              </div>
+              <div class="col-xs-9">
+                <input id="oauth2TokenUrl" class="form-control"
+                  [(ngModel)]="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2tokenurl" />
+              </div>
+            </div>
+            <br />
+            <div class="row">
+              <div class="col-xs-3">
+                {{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.SCOPE" | translate }}
+              </div>
+              <div class="col-xs-9">
+                <input id="oauth2Scope" class="form-control"
+                  [(ngModel)]="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2scope" />
+              </div>
+            </div>
+            <br />
+          </ng-container>
+
+          <!-- ═══════════════════════════════════════════════════════════════
+               STEP 3 — Sign in (mailbox owner authorizes DataPallas)
+               ═══════════════════════════════════════════════════════════════ -->
+          <div style="margin-top: 10px; margin-bottom: 8px;">
+            <span style="display: inline-block; min-width: 22px; height: 22px; border-radius: 50%; background: #337ab7; color: white; text-align: center; line-height: 22px; font-weight: bold; font-size: 12px; padding: 0 6px;">3</span>
+            &nbsp;<strong style="font-size: 13px;">Sign in</strong>
+            <span style="font-size: 12px; color: #888;">— the mailbox owner authorizes DataPallas (re-do every ~90 days)</span>
+          </div>
+
+          <!-- Sign-in button (not yet connected) -->
+          <div class="row" *ngIf="!modalConnectionInfo.email.documentburster.connection.emailserver.oauth2useremail">
+            <div class="col-xs-3"></div>
+            <div class="col-xs-9">
+              <button id="btnSignInOAuth" type="button" class="btn btn-primary btn-block"
+                (click)="onSignInOAuth()"
+                [disabled]="isSigningInOAuth
+                            || !modalConnectionInfo.email.documentburster.connection.emailserver.oauth2clientid
+                            || !modalConnectionInfo.email.documentburster.connection.name">
+                <i class="fa" [ngClass]="{ 'fa-refresh fa-spin': isSigningInOAuth, 'fa-sign-in': !isSigningInOAuth }"></i>
+                &nbsp;&nbsp;{{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.SIGN-IN" | translate }}
+                {{ modalConnectionInfo.email.documentburster.connection.emailserver.oauth2provider === 'MICROSOFT' ? 'with Microsoft' :
+                   modalConnectionInfo.email.documentburster.connection.emailserver.oauth2provider === 'GOOGLE' ? 'with Google' : '' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Connected status (after successful sign-in) -->
+          <div class="row" *ngIf="modalConnectionInfo.email.documentburster.connection.emailserver.oauth2useremail">
+            <div class="col-xs-3"></div>
+            <div class="col-xs-9">
+              <span id="oauth2ConnectedStatus" class="label label-success" style="font-size: 13px; padding: 6px 10px">
+                <i class="fa fa-check-circle"></i>
+                &nbsp;{{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.CONNECTED-AS" | translate }}
+                {{ modalConnectionInfo.email.documentburster.connection.emailserver.oauth2useremail }}
+              </span>
+              &nbsp;
+              <button id="btnDisconnectOAuth" type="button" class="btn btn-default btn-sm"
+                (click)="onDisconnectOAuth()">
+                <i class="fa fa-times"></i>&nbsp;{{ "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.OAUTH2.DISCONNECT" | translate }}
+              </button>
+            </div>
+          </div>
+
+        </ng-container>
+        <!-- end OAuth2 Step 1 / Step 2 / Step 3 wrapper -->
+
+      </tab>
+      <!-- end Tab 2: OAuth2 -->
+
+    </tabset>
   </div>
 
   <p-footer>

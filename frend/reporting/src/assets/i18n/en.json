@@ -230,7 +230,23 @@
         "USERNAME": "Username",
         "USE-SSL": "Use SSL",
         "SQL-QUERY-PLACEHOLDER": "SQL Query",
-        "TEST-DB-CONNECTION": "Test Connection & Fetch Database Schema"
+        "TEST-DB-CONNECTION": "Test Connection & Fetch Database Schema",
+        "OAUTH2": {
+          "TAB-HEADING": "Advanced",
+          "PROVIDER": "OAuth2 Provider",
+          "PROVIDER-NONE": "None (Basic Auth / App Password)",
+          "PROVIDER-MICROSOFT": "Microsoft Office 365",
+          "PROVIDER-GOOGLE": "Google Gmail / Workspace",
+          "PROVIDER-GENERIC": "Generic OAuth2",
+          "TENANT-ID": "Tenant ID",
+          "CLIENT-ID": "Client ID",
+          "AUTHORIZE-URL": "Authorize URL",
+          "TOKEN-URL": "Token URL",
+          "SCOPE": "Scope",
+          "SIGN-IN": "Sign in",
+          "CONNECTED-AS": "Connected as",
+          "DISCONNECT": "Disconnect"
+        }
       },
       "TAB-EMAIL-MESSAGE": {
         "BCC": "BCC",

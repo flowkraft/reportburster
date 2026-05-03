@@ -10,13 +10,11 @@ import { Constants } from '../../utils/constants';
  *
  * Test Structure: 5 tests × 2 apps = 10 tests total (when RUN_ALL_TESTS=true)
  *
- * ERROR-SAFE CLEANUP + BROWSER RECOVERY:
- *   - TEST 1 initializes app/browser ONCE, stores electronPage in shared state
- *   - TEST 2-5 check if browser still exists, recreate if needed (recovery from previous test failure)
- *   - ALL tests (1-5) have try/catch → emergencyCleanup() → ensures app stops even on failure
- *   - emergencyCleanup() closes browser + stops app + resets state (uses stored electronPage)
- *   - TEST 5 runs final cleanup in finally block (guaranteed, even if test fails)
- *   - Browser null check prevents "Cannot read properties of null (reading 'goto')" errors
+ * INDEPENDENT TESTS — each test is fully self-contained:
+ *   - Starts the app itself (docker compose up via startApp)
+ *   - Creates its own external browser
+ *   - Stops the app + closes the browser in its own finally block
+ *   - No shared state between tests — any test can run in isolation via grep
  *
  * RUN_ALL_TESTS=false (default): Daily rotation
  *   - Even days: Demo tests→Grails, Warehouse tests→Next.js
@@ -67,8 +65,7 @@ import { Constants } from '../../utils/constants';
  */
 
 // ============================================================
-// DUAL-APP PIVOT TABLE TESTS
-// One test per app: start once, run all 5 sub-tests, stop once.
+// DUAL-APP PIVOT TABLE TESTS — each test fully independent
 // ============================================================
 
 // Set to true to run ALL tests (5 tests × 2 apps = 10 tests).
@@ -102,92 +99,16 @@ const PIVOT_APPS = [
   },
 ];
 
-// Module-level shared state per app (survives across test blocks)
-const sharedAppState = new Map<string, {
-  externalBrowser: any;
-  page: any;
-  electronPage: any; // Store electronPage for emergency cleanup
-  clickhouseStarted: boolean;
-  initialized: boolean;
-}>();
-
-/**
- * EMERGENCY CLEANUP - Called if any test 1-4 fails (before TEST 5 cleanup runs)
- * This ensures the app is stopped even when tests fail unexpectedly.
- */
-async function emergencyCleanup(
-  appKey: string,
-  app: typeof PIVOT_APPS[0],
-): Promise<void> {
-  const state = sharedAppState.get(appKey);
-  if (!state || !state.initialized || !state.electronPage) {
-    return; // Nothing to clean up
-  }
-
-  console.log(`\n========== [EMERGENCY CLEANUP] ${app.name} ==========\n`);
-
-  // Each cleanup step has its own try/catch - if one fails, others still execute
-
-  // Step 1: Stop ClickHouse via dockerComposeDownInDbFolder (synchronous spawnSync, works even if app crashed)
-  if (state.clickhouseStarted) {
-    try {
-      ConnectionsTestHelper.dockerComposeDownInDbFolder();
-      state.clickhouseStarted = false;
-    } catch (error) {
-      console.warn(`Failed to stop ClickHouse (non-critical): ${error.message}`);
-    }
-  }
-
-  // Step 2: Close browser (best effort)
-  try {
-    if (state.page) {
-      await state.page.close();
-      console.log('Browser page closed');
-    }
-    if (state.externalBrowser) {
-      await state.externalBrowser.close();
-      console.log('External browser closed');
-    }
-  } catch (error) {
-    console.warn(`Failed to close browser (non-critical): ${error.message}`);
-  }
-
-  // Step 3: Stop app via docker compose (simple and reliable)
-  try {
-    const composeService = app.appName === 'grails' ? 'grails-playground' : 'next-playground';
-    const composeDir = `_apps/flowkraft/${composeService}`;
-    console.log(`Stopping ${composeService} via docker compose...`);
-    await new FluentTester(state.electronPage)
-      .executeCommand(`docker compose stop ${composeService}`, composeDir);
-    console.log('App stopped successfully');
-  } catch (error) {
-    console.warn(`Failed to stop app (non-critical): ${error.message}`);
-  }
-
-  // Reset state (always happens)
-  state.initialized = false;
-  state.clickhouseStarted = false;
-  state.externalBrowser = null;
-  state.page = null;
-  state.electronPage = null;
-
-  console.log(`${app.name} emergency cleanup complete\n`);
+/** Stop the playground app via docker compose. */
+async function stopApp(electronPage: any, appName: 'grails' | 'nextjs'): Promise<void> {
+  const composeService = appName === 'grails' ? 'grails-playground' : 'next-playground';
+  const composeDir = `_apps/flowkraft/${composeService}`;
+  await new FluentTester(electronPage)
+    .executeCommand(`docker compose stop ${composeService}`, composeDir);
 }
 
 for (const app of PIVOT_APPS) {
-  const appKey = app.appName;
   const baseUrl = app.baseUrl;
-
-  // Initialize shared state for this app
-  if (!sharedAppState.has(appKey)) {
-    sharedAppState.set(appKey, {
-      externalBrowser: null,
-      page: null,
-      electronPage: null,
-      clickhouseStarted: false,
-      initialized: false,
-    });
-  }
 
   // ============================================================
   // TEST 1: Demo Pivot [BROWSER]
@@ -195,8 +116,6 @@ for (const app of PIVOT_APPS) {
   electronBeforeAfterAllTest(
     `${app.name} - TEST 1: Demo Pivot [BROWSER]`,
     async ({ beforeAfterEach: electronPage }) => {
-      
-      //return; // TEMPORARY EARLY RETURN TO SKIP ALL TESTS WHILE WORKING ON TEST 1
 
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
@@ -205,38 +124,30 @@ for (const app of PIVOT_APPS) {
         return;
       }
 
-      const state = sharedAppState.get(appKey)!;
+      let externalBrowser: any = null;
+      let page: any = null;
 
       try {
-        // Initialize app ONCE (only in first test)
-        if (!state.initialized) {
-          console.log(`\n========== Starting ${app.name} for all tests ==========\n`);
+        console.log(`\n========== [TEST 1] Starting ${app.name} ==========\n`);
+        await SelfServicePortalsTestHelper.startApp(
+          new FluentTester(electronPage).gotoApps(),
+          app.appId,
+        );
+        const result = await SelfServicePortalsTestHelper.createExternalBrowser();
+        externalBrowser = result.browser;
+        page = result.page;
 
-          // Store electronPage for emergency cleanup in all tests
-          state.electronPage = electronPage;
-
-          await SelfServicePortalsTestHelper.startApp(
-            new FluentTester(electronPage).gotoApps(),
-            app.appId,
-          );
-
-          // Create browser ONCE
-          const result = await SelfServicePortalsTestHelper.createExternalBrowser();
-          state.externalBrowser = result.browser;
-          state.page = result.page;
-          state.initialized = true;
-          console.log(`${app.name} is ready - will run all 5 tests\n`);
-        }
-
-        // TEST 1: Demo Pivot [BROWSER]
         console.log(`\n=== [${app.name}] TEST 1: Demo Pivot [BROWSER] ===\n`);
-        await SelfServicePortalsTestHelper.waitForServerReady(state.page, `${baseUrl}/pivot-tables`);
-        await state.page.goto(`${baseUrl}/pivot-tables`);
-        await performComprehensiveDemoPivotActions(state.page, baseUrl);
+        await SelfServicePortalsTestHelper.waitForServerReady(page, `${baseUrl}/pivot-tables`);
+        await page.goto(`${baseUrl}/pivot-tables`);
+        await performComprehensiveDemoPivotActions(page, baseUrl);
         console.log(`[${app.name}] TEST 1 [BROWSER]: ✓ passed`);
-      } catch (error) {
-        await emergencyCleanup(appKey, app);
-        throw error; // Re-throw to fail the test
+      } finally {
+        if (page) await page.close().catch(() => {});
+        if (externalBrowser) await externalBrowser.close().catch(() => {});
+        await stopApp(electronPage, app.appName).catch((e) =>
+          console.warn(`Failed to stop app (non-critical): ${e.message}`));
+        console.log(`[TEST 1] ${app.name} cleanup complete\n`);
       }
     },
   );
@@ -246,10 +157,8 @@ for (const app of PIVOT_APPS) {
   // ============================================================
   electronBeforeAfterAllTest(
     `${app.name} - TEST 2: Demo Pivot [DuckDB]`,
-    async () => {
-      
-      //return; // TEMPORARY EARLY RETURN TO SKIP ALL TESTS WHILE WORKING ON TEST 1
-      
+    async ({ beforeAfterEach: electronPage }) => {
+
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
       if (!(RUN_ALL_TESTS || demoApp === app.appName)) {
@@ -257,57 +166,56 @@ for (const app of PIVOT_APPS) {
         return;
       }
 
-      const state = sharedAppState.get(appKey)!;
+      let externalBrowser: any = null;
+      let page: any = null;
 
       try {
-        // Check if browser still exists (might be null if previous test failed and triggered cleanup)
-        if (!state.page || !state.externalBrowser) {
-          console.log(`Browser was cleaned up by previous test failure - recreating...`);
-          const result = await SelfServicePortalsTestHelper.createExternalBrowser();
-          state.externalBrowser = result.browser;
-          state.page = result.page;
-        }
+        console.log(`\n========== [TEST 2] Starting ${app.name} ==========\n`);
+        await SelfServicePortalsTestHelper.startApp(
+          new FluentTester(electronPage).gotoApps(),
+          app.appId,
+        );
+        const result = await SelfServicePortalsTestHelper.createExternalBrowser();
+        externalBrowser = result.browser;
+        page = result.page;
 
-        // TEST 2: Demo Pivot [DuckDB Auto-Plumbing] ⭐ CRITICAL TEST
         console.log(`\n=== [${app.name}] TEST 2: Demo Pivot [DuckDB Auto-Plumbing] ===\n`);
         console.log(`Demo pivot uses script-based data generation (no SQL table)`);
         console.log(`DuckDB auto-plumbs: script → CREATE TABLE → pivot`);
         console.log(`Tests that client can request engine='duckdb' without config changes`);
 
-        await SelfServicePortalsTestHelper.waitForServerReady(state.page, `${baseUrl}/pivot-tables`);
-        await state.page.goto(`${baseUrl}/pivot-tables`);
+        await SelfServicePortalsTestHelper.waitForServerReady(page, `${baseUrl}/pivot-tables`);
+        await page.goto(`${baseUrl}/pivot-tables`);
 
-        // Set engine to DuckDB - should auto-plumb without any config changes!
-        await SelfServicePortalsTestHelper.setPivotEngine(state.page, 'demoPivot', 'duckdb');
-        await SelfServicePortalsTestHelper.waitForPivotTableRender(state.page, 'demoPivot');
+        await SelfServicePortalsTestHelper.setPivotEngine(page, 'demoPivot', 'duckdb');
+        await SelfServicePortalsTestHelper.waitForPivotTableRender(page, 'demoPivot');
 
-        // Verify same results as browser mode
-        const grandTotal = await SelfServicePortalsTestHelper.getPivotGrandTotal(state.page, 'demoPivot');
+        const grandTotal = await SelfServicePortalsTestHelper.getPivotGrandTotal(page, 'demoPivot');
         expect(grandTotal).toBeGreaterThan(600000);
         expect(grandTotal).toBeLessThan(700000);
         console.log(`[${app.name}] TEST 2 [DuckDB]: ✓ Grand total matches: $${grandTotal.toLocaleString()}`);
 
-        // Reset to browser engine
-        await SelfServicePortalsTestHelper.setPivotEngine(state.page, 'demoPivot', 'browser');
-        await SelfServicePortalsTestHelper.waitForPivotTableRender(state.page, 'demoPivot');
+        await SelfServicePortalsTestHelper.setPivotEngine(page, 'demoPivot', 'browser');
+        await SelfServicePortalsTestHelper.waitForPivotTableRender(page, 'demoPivot');
 
         console.log(`[${app.name}] TEST 2 [DuckDB]: ✓ passed`);
-      } catch (error) {
-        await emergencyCleanup(appKey, app);
-        throw error;
+      } finally {
+        if (page) await page.close().catch(() => {});
+        if (externalBrowser) await externalBrowser.close().catch(() => {});
+        await stopApp(electronPage, app.appName).catch((e) =>
+          console.warn(`Failed to stop app (non-critical): ${e.message}`));
+        console.log(`[TEST 2] ${app.name} cleanup complete\n`);
       }
     },
   );
-  
+
   // ============================================================
   // TEST 3: Warehouse Pivot [BROWSER]
   // ============================================================
   electronBeforeAfterAllTest(
     `${app.name} - TEST 3: Warehouse Pivot [BROWSER]`,
-    async () => {
-      
-      // return; // TEMPORARY EARLY RETURN TO SKIP ALL TESTS WHILE WORKING ON TEST 1
-      
+    async ({ beforeAfterEach: electronPage }) => {
+
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
       if (!(RUN_ALL_TESTS || warehouseApp === app.appName)) {
@@ -315,26 +223,30 @@ for (const app of PIVOT_APPS) {
         return;
       }
 
-      const state = sharedAppState.get(appKey)!;
+      let externalBrowser: any = null;
+      let page: any = null;
 
       try {
-        // Check if browser still exists (might be null if previous test failed and triggered cleanup)
-        if (!state.page || !state.externalBrowser) {
-          console.log(`Browser was cleaned up by previous test failure - recreating...`);
-          const result = await SelfServicePortalsTestHelper.createExternalBrowser();
-          state.externalBrowser = result.browser;
-          state.page = result.page;
-        }
+        console.log(`\n========== [TEST 3] Starting ${app.name} ==========\n`);
+        await SelfServicePortalsTestHelper.startApp(
+          new FluentTester(electronPage).gotoApps(),
+          app.appId,
+        );
+        const result = await SelfServicePortalsTestHelper.createExternalBrowser();
+        externalBrowser = result.browser;
+        page = result.page;
 
-        // TEST 3: Warehouse Pivot [BROWSER]
         console.log(`\n=== [${app.name}] TEST 3: Warehouse Pivot [BROWSER] ===\n`);
-        await SelfServicePortalsTestHelper.waitForServerReady(state.page, `${baseUrl}/data-warehouse`);
-        await state.page.goto(`${baseUrl}/data-warehouse`);
-        await performWarehousePivotActions(state.page, baseUrl);
+        await SelfServicePortalsTestHelper.waitForServerReady(page, `${baseUrl}/data-warehouse`);
+        await page.goto(`${baseUrl}/data-warehouse`);
+        await performWarehousePivotActions(page, baseUrl);
         console.log(`[${app.name}] TEST 3 [BROWSER]: ✓ passed`);
-      } catch (error) {
-        await emergencyCleanup(appKey, app);
-        throw error;
+      } finally {
+        if (page) await page.close().catch(() => {});
+        if (externalBrowser) await externalBrowser.close().catch(() => {});
+        await stopApp(electronPage, app.appName).catch((e) =>
+          console.warn(`Failed to stop app (non-critical): ${e.message}`));
+        console.log(`[TEST 3] ${app.name} cleanup complete\n`);
       }
     },
   );
@@ -344,8 +256,7 @@ for (const app of PIVOT_APPS) {
   // ============================================================
   electronBeforeAfterAllTest(
     `${app.name} - TEST 4: Warehouse OLAP [BROWSER]`,
-    async () => {
-      // return; // TEMPORARY EARLY RETURN TO SKIP ALL TESTS WHILE WORKING ON TEST 1
+    async ({ beforeAfterEach: electronPage }) => {
 
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
@@ -354,25 +265,29 @@ for (const app of PIVOT_APPS) {
         return;
       }
 
-      const state = sharedAppState.get(appKey)!;
+      let externalBrowser: any = null;
+      let page: any = null;
 
       try {
-        // Check if browser still exists (might be null if previous test failed and triggered cleanup)
-        if (!state.page || !state.externalBrowser) {
-          console.log(`Browser was cleaned up by previous test failure - recreating...`);
-          const result = await SelfServicePortalsTestHelper.createExternalBrowser();
-          state.externalBrowser = result.browser;
-          state.page = result.page;
-        }
+        console.log(`\n========== [TEST 4] Starting ${app.name} ==========\n`);
+        await SelfServicePortalsTestHelper.startApp(
+          new FluentTester(electronPage).gotoApps(),
+          app.appId,
+        );
+        const result = await SelfServicePortalsTestHelper.createExternalBrowser();
+        externalBrowser = result.browser;
+        page = result.page;
 
-        // TEST 4: Warehouse OLAP [BROWSER]
         console.log(`\n=== [${app.name}] TEST 4: Warehouse OLAP [BROWSER] ===\n`);
-        await SelfServicePortalsTestHelper.waitForServerReady(state.page, `${baseUrl}/data-warehouse`);
-        await runWarehouseOlap(state.page, 'browser', baseUrl);
+        await SelfServicePortalsTestHelper.waitForServerReady(page, `${baseUrl}/data-warehouse`);
+        await runWarehouseOlap(page, 'browser', baseUrl);
         console.log(`[${app.name}] TEST 4 [BROWSER]: ✓ passed`);
-      } catch (error) {
-        await emergencyCleanup(appKey, app);
-        throw error;
+      } finally {
+        if (page) await page.close().catch(() => {});
+        if (externalBrowser) await externalBrowser.close().catch(() => {});
+        await stopApp(electronPage, app.appName).catch((e) =>
+          console.warn(`Failed to stop app (non-critical): ${e.message}`));
+        console.log(`[TEST 4] ${app.name} cleanup complete\n`);
       }
     },
   );
@@ -383,7 +298,6 @@ for (const app of PIVOT_APPS) {
   electronBeforeAfterAllTest(
     `${app.name} - TEST 5: Warehouse OLAP [DuckDB + ClickHouse]`,
     async ({ beforeAfterEach: electronPage }) => {
-      //return; // TEMPORARY EARLY RETURN TO SKIP ALL TESTS WHILE WORKING ON TEST 1
 
       test.setTimeout(Constants.DELAY_FIVE_THOUSANDS_SECONDS);
 
@@ -392,24 +306,17 @@ for (const app of PIVOT_APPS) {
         return;
       }
 
-      const state = sharedAppState.get(appKey)!;
+      let externalBrowser: any = null;
+      let page: any = null;
+      let clickhouseStarted = false;
 
       try {
-        // Check if app was stopped by previous test failure - restart if needed
-        if (!state.initialized) {
-          console.log(`App was stopped by previous test failure - restarting...`);
-          state.electronPage = electronPage;
+        console.log(`\n========== [TEST 5] Starting ${app.name} ==========\n`);
+        await SelfServicePortalsTestHelper.startApp(
+          new FluentTester(electronPage).gotoApps(),
+          app.appId,
+        );
 
-          await SelfServicePortalsTestHelper.startApp(
-            new FluentTester(electronPage).gotoApps(),
-            app.appId,
-          );
-
-          state.initialized = true;
-          console.log(`${app.name} restarted successfully`);
-        }
-
-        // Always start ClickHouse before TEST 5 via starter pack (not raw Docker)
         // Starter pack triggers NorthwindManager.startDatabase(CLICKHOUSE) which:
         // 1. Starts Docker container  2. Waits for health check  3. Initializes data warehouse
         // Raw "docker compose up -d" only starts the container — no tables/views are created.
@@ -417,59 +324,28 @@ for (const app of PIVOT_APPS) {
         await ConnectionsTestHelper.setStarterPackStateForVendor(
           new FluentTester(electronPage), 'clickhouse', 'start'
         );
-        state.clickhouseStarted = true;
+        clickhouseStarted = true;
 
-        // Check if browser still exists (might be null if previous test failed and triggered cleanup)
-        if (!state.page || !state.externalBrowser) {
-          console.log(`Browser was cleaned up by previous test failure - recreating...`);
-          const result = await SelfServicePortalsTestHelper.createExternalBrowser();
-          state.externalBrowser = result.browser;
-          state.page = result.page;
-        }
+        const result = await SelfServicePortalsTestHelper.createExternalBrowser();
+        externalBrowser = result.browser;
+        page = result.page;
 
-        // TEST 5: Warehouse OLAP [DuckDB + ClickHouse]
         console.log(`\n=== [${app.name}] TEST 5: Warehouse OLAP [DuckDB + ClickHouse] ===\n`);
-        await SelfServicePortalsTestHelper.waitForServerReady(state.page, `${baseUrl}/data-warehouse`);
+        await SelfServicePortalsTestHelper.waitForServerReady(page, `${baseUrl}/data-warehouse`);
 
-        // DuckDB — same DRY code, different engine argument
-        await runWarehouseOlap(state.page, 'duckdb', baseUrl);
-
-        // ClickHouse — same DRY code, different engine argument
-        await runWarehouseOlap(state.page, 'clickhouse', baseUrl);
+        await runWarehouseOlap(page, 'duckdb', baseUrl);
+        await runWarehouseOlap(page, 'clickhouse', baseUrl);
 
         console.log(`[${app.name}] TEST 5 [OLAP]: ✓ passed`);
       } finally {
-        // GUARANTEED CLEANUP - Runs even if TEST 5 (or any previous test) fails
-        console.log(`\n========== Cleanup: ${app.name} ==========\n`);
-
-        try {
-          if (state.page) {
-            await state.page.close();
-          }
-          if (state.externalBrowser) {
-            await state.externalBrowser.close();
-          }
-
-          const composeService = app.appName === 'grails' ? 'grails-playground' : 'next-playground';
-          const composeDir = `_apps/flowkraft/${composeService}`;
-          console.log(`Stopping ${composeService} via docker compose...`);
-          await new FluentTester(electronPage)
-            .executeCommand(`docker compose stop ${composeService}`, composeDir);
-
-          console.log(`${app.name} cleanup complete\n`);
-        } catch (cleanupError) {
-          console.error(`ERROR during cleanup for ${app.name}:`, cleanupError);
-        } finally {
-          // Guaranteed ClickHouse cleanup — synchronous spawnSync, works even if app crashed
-          if (state.clickhouseStarted) {
-            ConnectionsTestHelper.dockerComposeDownInDbFolder();
-            state.clickhouseStarted = false;
-          }
-          // Reset state for next run
-          state.initialized = false;
-          state.externalBrowser = null;
-          state.page = null;
+        if (page) await page.close().catch(() => {});
+        if (externalBrowser) await externalBrowser.close().catch(() => {});
+        await stopApp(electronPage, app.appName).catch((e) =>
+          console.error(`ERROR stopping app: ${e.message}`));
+        if (clickhouseStarted) {
+          ConnectionsTestHelper.dockerComposeDownInDbFolder();
         }
+        console.log(`[TEST 5] ${app.name} cleanup complete\n`);
       }
     },
   );

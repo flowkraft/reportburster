@@ -360,33 +360,43 @@ try {
       // (like the old behavior) — gulp already waited for server, no coordination needed.
       if (!app.isPackaged) {
         log.info('main: Development mode — creating window immediately');
+        sendSplashProgress({ text: 'Development mode — initializing UI', progress: 20 });
         setTimeout(() => {
           if (!win) {
             win = createWindow();
             win.show(); // Show immediately in dev mode (matches old behavior)
+            // Defer BMP regen until after the main window has finished loading and
+            // the app is fully running. The hidden capture window contended with the
+            // main window during startup, so we run it in the background only after
+            // everything else is up. The BMP is only consumed at electron-builder
+            // package time, not at dev runtime, so timing is flexible.
+            win.webContents.once('did-finish-load', () => {
+              setTimeout(() => {
+                log.info('main: starting deferred splash BMP regeneration');
+                generateSplashIfMissing().catch((err) =>
+                  log.warn('generateSplashIfMissing failed', err),
+                );
+              }, 10000); // 10 s after the Angular app finishes loading
+            });
           }
         }, 400);
         return; // Skip the rest of the ready handler - no server monitoring or probes needed
       }
 
-      // Start/monitor server as before, but forward log lines to splash with sendSplashProgress()
-      if (app.isPackaged) {
-        serverProcess = _spawnSync('startRbsjServer.bat', [], {
-          cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
-          env: { ...process.env, ELECTRON_PID: process.pid.toString() },
-        });
-        serverProcess.stdout.on('data', (data) => {
-          sendSplashProgress({ text: String(data).trim(), progress: 20 });
-          handleServerOutput(data, false);
-        });
-        serverProcess.stderr.on('data', (data) => {
-          sendSplashProgress({ text: String(data).trim(), progress: 15 });
-          handleServerOutput(data, true);
-        });
-      } else {
-        sendSplashProgress({ text: 'Development mode — initializing UI', progress: 20 });
-        await generateSplashIfMissing();
-      }
+      // Packaged mode only — dev mode already returned above.
+      // Start/monitor server, forwarding log lines to splash with sendSplashProgress().
+      serverProcess = _spawnSync('startRbsjServer.bat', [], {
+        cwd: `${process.env.PORTABLE_EXECUTABLE_DIR}/tools/rbsj`,
+        env: { ...process.env, ELECTRON_PID: process.pid.toString() },
+      });
+      serverProcess.stdout.on('data', (data) => {
+        sendSplashProgress({ text: String(data).trim(), progress: 20 });
+        handleServerOutput(data, false);
+      });
+      serverProcess.stderr.on('data', (data) => {
+        sendSplashProgress({ text: String(data).trim(), progress: 15 });
+        handleServerOutput(data, true);
+      });
 
       // Rely primarily on the server's stdout to decide when to create the main window.
       // The handleServerOutput() callback will call createWindow() when it detects
@@ -1063,25 +1073,23 @@ function writeBmpFromNativeImage(img: Electron.NativeImage, outPath: string): vo
 async function generateSplashIfMissing(): Promise<void> {
   try {
     const outDir = path.resolve(__dirname, '../src/assets/images');
-    const light = path.join(outDir, 'splash-light.bmp');
     const dark = path.join(outDir, 'splash-dark.bmp');
 
-    // If you only want one neutral BMP (no light/dark), change these filenames
-    if (fs.existsSync(light) && fs.existsSync(dark)) return;
+    if (fs.existsSync(dark)) return;
 
-    sendSplashProgress({ text: 'Generating splash images (light/dark)…', progress: 16 });
+    sendSplashProgress({ text: 'Generating splash image (dark)…', progress: 16 });
     fs.mkdirSync(outDir, { recursive: true });
 
     // Capture scale: choose 2 or 3 depending how large/high-DPI you want the embedded BMP.
     const EMBED_SCALE = Number(process.env.SPLASH_EMBED_SCALE || 2);
 
-    async function captureTheme(theme: 'light' | 'dark', outFileFull: string, outFileSmall?: string, embedScale = 2) {
+    async function captureSplash(outFileFull: string, outFileSmall?: string, embedScale = 2) {
       const logicalW = 180;
       const logicalH = 150;
       const splashHtml = path.join(__dirname, 'splash-bmp.html'); // static small-mark page
       const pxW = Math.round(logicalW * embedScale);
       const pxH = Math.round(logicalH * embedScale);
-      const bg = theme === 'light' ? '#ffffff' : '#1f1f1f';
+      const bg = '#1f1f1f';
 
       const w = new BrowserWindow({
         width: logicalW,
@@ -1096,7 +1104,7 @@ async function generateSplashIfMissing(): Promise<void> {
 
       try {
         if (!fs.existsSync(splashHtml)) throw new Error('splash-bmp.html not found');
-        const url = `file://${splashHtml.replace(/\\/g, '/')}?theme=${encodeURIComponent(theme)}`;
+        const url = `file://${splashHtml.replace(/\\/g, '/')}`;
         await w.loadURL(url);
 
         // Force rasterization scale we want (embedded scale)
@@ -1127,13 +1135,13 @@ async function generateSplashIfMissing(): Promise<void> {
           log.warn('Full splash capture failed', e);
         }
 
-        // 2) Small crop around the "mark" (svg.rb or .mini), converted to device pixels
+        // 2) Small crop around the "mark" (svg.dp or .mini), converted to device pixels
         if (outFileSmall) {
           try {
             // Get boundingClientRect and devicePixelRatio from the page
             const rect = await w.webContents.executeJavaScript(
               `(() => {
-             const el = document.querySelector('svg.rb') || document.querySelector('.mini');
+             const el = document.querySelector('svg.dp') || document.querySelector('.mini');
              if (!el) return null;
              const r = el.getBoundingClientRect();
              const dpr = window.devicePixelRatio || 1;
@@ -1169,7 +1177,7 @@ async function generateSplashIfMissing(): Promise<void> {
 
               const resized = cropped.resize({ width: Math.max(1, targetW), height: Math.max(1, targetH) });
               writeBmpFromNativeImage(resized, outFileSmall);
-              sendSplashProgress({ text: `Saved small splash ${theme}`, progress: undefined });
+              sendSplashProgress({ text: 'Saved small splash', progress: undefined });
             } else {
               sendSplashProgress({ text: 'No small element found; skipped small BMP', progress: undefined });
             }
@@ -1178,17 +1186,14 @@ async function generateSplashIfMissing(): Promise<void> {
           }
         }
 
-        sendSplashProgress({ text: `Saved splash ${theme}`, progress: undefined });
+        sendSplashProgress({ text: 'Saved splash', progress: undefined });
       } finally {
         try { w.destroy(); } catch { }
       }
     }
-    // If splash-bmp.html has no theme, call with 'neutral' once; else generate both
-    // Use whichever you prefer; below I keep both to preserve your previous behavior:
-    // await captureTheme('light', light);
-    await captureTheme('dark', dark);
+    await captureSplash(dark);
 
-    sendSplashProgress({ text: 'Splash images generated.', progress: 20 });
+    sendSplashProgress({ text: 'Splash image generated.', progress: 20 });
   } catch (err) {
     log.warn('generateSplashIfMissing failed', err);
     sendSplashProgress({ text: 'Failed to generate splash images', progress: undefined });

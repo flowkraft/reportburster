@@ -5,94 +5,83 @@
   and where to read more.
   Base URL: https://www.reportburster.com
 
+> **Stay current.** This file is a snapshot of the current UI. If the user describes a screen, button, or path you don't recognise — or if it's been a while since you last verified — fetch https://www.reportburster.com/docs to confirm you're still aligned with the latest UI. Reality on screen is the source of truth; this file is the cheat sheet.
+
 ================================================================================
 TOP NAVIGATION BAR
 ================================================================================
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ [Logo]  Processing   Configuration (template) ▾   Help & Support ▾  (...) │
+│ [Logo]  Processing   Configuration ▾   Help & Support ▾    (...)            │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ─── 1. PROCESSING ─────────────────────────────────────────────────────────────
-     Click to go directly to the Processing area (no dropdown).
-     This is where you run burst & report generation jobs, merge files, and test your setup.
+     Direct link (no dropdown). Opens the Processing area, where the
+     user runs burst & report generation jobs, explores data, builds
+     dashboards, merges files, runs QA, and inspects logs.
      Docs: /docs/report-bursting
            /docs/report-generation
+           /docs/data-exploration
+           /docs/bi-analytics/dashboards
 
 ─── 2. CONFIGURATION ▾ ────────────────────────────────────────────────────────
-     Dropdown shows the currently loaded configuration template name.
-     Docs: /docs/configuration
+     Lean dropdown — only two entries by default:
 
-     ├── [List of your configuration templates]
-     │   Click any template to open its settings for editing.
+     ├── Bursting
+     │   The fallback configuration template (loaded automatically when
+     │   no more specific template applies). Click to open its settings
+     │   in the per-template Configuration area.
      │   Docs: /docs/configuration
      │
-     ├── Reports
-     │   Browse, create, duplicate, or delete configuration templates.
-     │   Each template defines how a specific report type is split,
-     │   generated, and distributed. Toggle visibility, restore defaults.
-     │   Docs: /docs/configuration
-     │
-     └── Connections (Email, Databases)
-         Manage reusable email server and database connection profiles.
-         Create, edit, test, duplicate, or delete connections. Set one
-         as default so new templates inherit it automatically.
-         Docs: /docs/data-exploration/database-connections
-               /docs/report-distribution-email
+     └── Reports, Connections & Cubes
+         Single link that opens the management area with three sub-pages
+         (Reports, Connections, Cubes / Semantic Layer) — see below.
+         Reports are NOT enumerated in this dropdown anymore — they live
+         in a paginated table inside the Reports page.
+         Docs: /docs/configuration
 
 ─── 3. HELP & SUPPORT ▾ ──────────────────────────────────────────────────────
 
      ├── Get Software Support
-     │   Contact support@reportburster.com — includes instructions
-     │   on which log files to attach for faster troubleshooting.
+     │   Contact support@reportburster.com with log files attached.
      │   Docs: /docs/troubleshooting
      │
      ├── DataPallas Services
-     │   Learn about professional services: custom scripting,
-     │   branded email templates, and managed document solutions.
+     │   Professional services: custom scripting, branded email templates,
+     │   managed solutions.
      │
      ├── Apps / Starter Packs / Extra Utils
-     │   Browse and install additional apps, starter packs, and
-     │   Docker/extra utility packages to extend DataPallas.
+     │   Browse and install bundled apps (Matomo, Docuseal, etc.) and
+     │   starter packs.
      │   Docs: /docs/advanced/work-well-apps
      │
      ├── Documentation
-     │   Quick links to the QuickStart guide (5-minute setup),
-     │   the full User Guide, and Advanced Scenarios (scripting).
+     │   Quick links to QuickStart, User Guide, Advanced Scenarios.
      │   Docs: /docs  /docs/quickstart  /docs/advanced
      │
      ├── Examples
-     │   Real-world use cases: report distribution, Crystal Reports
-     │   bursting, payslip emailing — with "Try It" demonstrations.
-     │   Docs: /testimonials/report-distribution-software
-     │         /testimonials/crystal-reports-distribution
-     │         /testimonials/email-payslips
+     │   Real-world use cases with "Try It" demos.
      │
      ├── Customer Reviews
-     │   Testimonials from organizations showing how they use
-     │   DataPallas.
+     │   Testimonials from organizations using DataPallas.
      │
      ├── DataPallas Blog
-     │   Live feed of the latest blog posts about report distribution
-     │   tips, new features, and best practices.
-     │   URL: /blog
+     │   Latest blog posts, features, best practices.
      │
-     ├── System Diagnostics / Update
-     │   [Desktop app only] Check Java installation, verify system
-     │   requirements, and update DataPallas to the latest version.
+     ├── Install/Setup        [Electron desktop app only]
+     │   Java/system check and update flow.
      │   Docs: /docs/server/installation
      │
      ├── License
-     │   View and manage your license key, see edition details.
+     │   View and manage license key.
      │
      └── About
-         Version information, licensing options (commercial or SSPL
-         open-source), and copyright details.
+         Version & copyright info.
 
 ─── RIGHT SIDE OF NAVBAR ──────────────────────────────────────────────────────
-     ├── Request New Feature — Opens a form to suggest a new feature.
-     ├── support@reportburster.com — Quick link to support.
-     └── Theme/Skin selector — Change the application's visual theme.
+     ├── Request New Feature — opens a feature-request form
+     ├── support@reportburster.com — quick link to support
+     └── Theme/Skin selector — change the app's visual theme
 
 
 ================================================================================
@@ -101,202 +90,217 @@ LEFT SIDEBAR MENUS (one per area)
 When you enter an area, the left sidebar shows its dedicated menu.
 
 
-━━━ PROCESSING ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━ PROCESSING (left menu) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Header: "ACTIONS"
 
-     ├── Processing
-     │   Select a PDF or Excel file and click "Burst" to split it into
-     │   individual documents based on burst tokens. Monitor progress
-     │   and view job results in real time.
+     ├── Processing                       [route: /processing/burstMenuSelected]
+     │   The default landing item. Selecting it shows a TAB STRIP in the
+     │   main pane (see Processing Tabs below).
      │   Docs: /docs/report-bursting
      │
      ├── Merge -> Burst
-     │   Combine multiple PDF files into one merged document, then
-     │   optionally burst the result. Drag to reorder before merging.
+     │   Combine multiple PDFs into one merged document, then optionally
+     │   burst the result. Drag to reorder before merging.
      │   Docs: /docs/report-bursting
      │
-     ├── Quality Assurance
-     │   Test your configuration before going live. Choose test modes:
-     │   test all tokens, random tokens, or specific values. Start a
-     │   built-in test email server to catch and inspect outgoing
-     │   emails safely — nothing gets delivered for real.
+     ├── Quality Assurance                [route: /processingQa/qualityMenuSelected]
+     │   Test the configuration before going live: test all tokens,
+     │   random tokens, or specific values. Built-in test email server
+     │   captures outgoing email safely.
      │   Docs: /docs/report-distribution-qa
      │
      ├── Logging, Tracing
-     │   View detailed logs from all completed jobs (burst, merge,
-     │   QA). Search and filter to diagnose issues.
+     │   Detailed logs from completed jobs (burst, merge, QA). Search,
+     │   filter, diagnose.
      │   Docs: /docs/troubleshooting
      │
      └── Samples - Try All
-         Browse built-in sample configurations that demonstrate
-         different capabilities (splitting, emailing, report
-         generation). Each sample has a "Try It" button so you
-         can run it immediately and see how it works.
+         Built-in sample configurations covering different capabilities.
+         Each sample has a "Try It" button to run it instantly. The two
+         sample dashboards live here too.
          Docs: /docs/quickstart
 
 
-━━━ CONFIGURATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Header: "CONFIGURATION" + (currently loaded template name)
+━━━ PROCESSING TABS (main pane, when "Processing" left menu is selected) ━━━━━
 
-     ├── General
-     │   Set the burst token pattern (how documents are split), the
-     │   output folder where burst files are saved, and the quarantine
-     │   folder for documents that fail during processing.
+When Processing (Burst) is selected in the left menu, the main pane shows
+a tab strip. The visible tabs are:
+
+     ┌────────────┬─────────────────┬──────────────────────────────┬──────────────────┬─────────┐
+     │ Burst      │ Generate        │ Explore Data &               │ Logging and      │ License │
+     │ Reports    │ Reports         │ Build Dashboards             │ Tracing          │         │
+     └────────────┴─────────────────┴──────────────────────────────┴──────────────────┴─────────┘
+
+     ├── Burst Reports
+     │   Pick a PDF/Excel input file and click Burst — splits the input
+     │   into individual files based on burst tokens. Real-time progress.
+     │   Docs: /docs/report-bursting
+     │
+     ├── Generate Reports
+     │   Run report generation jobs from configured data sources (CSV,
+     │   Excel, SQL, Groovy scripts, JasperReports).
+     │   Docs: /docs/report-generation
+     │
+     ├── Explore Data & Build Dashboards    ★ NEW IN 15.1.0
+     │   Apps Manager for the Explore Data Canvas — a Docker-based
+     │   visual workspace. Click Start (waits for the container), then
+     │   Launch (opens the canvas in a browser at localhost:8440/explore-data).
+     │   This is where the user explores data visually and prototypes
+     │   dashboards by dropping cubes or tables onto the canvas.
+     │   Docs: /docs/data-exploration
+     │         /docs/data-exploration/canvas
+     │         /docs/bi-analytics/dashboards
+     │
+     ├── Logging and Tracing
+     │   View logs from running and completed jobs.
+     │   Docs: /docs/troubleshooting
+     │
+     └── License
+         Standard License tab (mirror of Help → License).
+
+When other left-menu items are selected (Merge -> Burst, Quality Assurance,
+Logging Tracing, Samples), only the relevant tab plus Logging and License
+are shown.
+
+
+━━━ REPORTS, CONNECTIONS & CUBES (left menu) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Header: "Reports, Connections & Cubes"
+Reached via: Top menu → Configuration → Reports, Connections & Cubes
+
+     ├── Reports                          [route: /configuration-crud/reports]
+     │   Paginated table of every configured report. Browse, create,
+     │   duplicate, edit name/capabilities, toggle visibility, restore
+     │   defaults, delete. The default fallback template (Bursting) is
+     │   always present.
      │   Docs: /docs/configuration
      │
-     ├── Reporting
-     │   Configure report generation settings: data source (SQL query,
-     │   script, CSV, Excel, XML), output template (HTML, FreeMarker,
-     │   FOP, JasperReports), and output format (PDF, Excel, etc.).
-     │   Configure Data Tables (rb-tabulator), Charts (rb-chart), and
-     │   Pivot Tables (rb-pivot-table) — define their data sources,
-     │   appearance, and behavior through DSL configurations.
-     │   [Only visible if the template has report generation enabled]
+     ├── Connections                      [route: /configuration-crud/connections]
+     │   Manage reusable email-server and database connection profiles.
+     │   Create, edit, test, set default, duplicate, delete. Templates
+     │   reference connections by name so credentials are configured
+     │   once and reused everywhere.
+     │   Docs: /docs/data-exploration/database-connections
+     │         /docs/report-distribution-email
+     │
+     └── Cubes / Semantic Layer           [route: /configuration-crud/cubes]
+         ★ NEW IN 15.1.0
+         Define reusable Cube definitions over your database tables —
+         dimensions, measures, joins, segments, hierarchies — in business
+         language. Cubes power the Explore Data Canvas, dashboards,
+         reports, and AI questions, all reading from the same source of
+         truth. Five Northwind sample cubes ship bundled (Customer
+         Management, Human Resources, Product Inventory, Sales Analysis,
+         Sales Warehouse).
+         Docs: /docs/semantic-layer
+               /docs/semantic-layer/quickstart
+               /docs/semantic-layer/dsl-reference
+
+
+━━━ PER-TEMPLATE CONFIGURATION (left menu) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Header: "CONFIGURATION" + (currently loaded template name in parentheses)
+Reached via: Top menu → Configuration → <template name>
+
+     ├── General
+     │   Burst token pattern, output folder, quarantine folder.
+     │   Docs: /docs/configuration
+     │
+     ├── Reporting                        [only if Report Generation enabled]
+     │   Configure data source (SQL, script, CSV, Excel, XML), output
+     │   template (HTML, FreeMarker, FOP, JasperReports), output format
+     │   (PDF, Excel, etc.). Configure data tables (rb-tabulator), charts
+     │   (rb-chart), pivot tables (rb-pivot-table) via Groovy DSL.
      │   Docs: /docs/report-generation
-     │         /docs/report-generation#supported-data-sources
-     │         /docs/report-generation#output-formats
-     │         /docs/report-generation/jasperreports
-     │         /docs/bi-analytics/web-components/datatables
-     │         /docs/bi-analytics/web-components/charts
-     │         /docs/bi-analytics/web-components/pivottables
+     │         /docs/bi-analytics/web-components
      │
      ├── Enable / Disable Delivery
-     │   Master toggle switches for each delivery method: Email,
-     │   Upload (FTP/cloud), Web Portal, SMS. Turn them on or off
-     │   independently. Each toggle links to its detailed settings.
+     │   Master toggles for Email, Upload, Web Portal, SMS. Each links
+     │   to its own settings.
      │   Docs: /docs/report-distribution-email
      │         /docs/report-distribution-upload
      │
      ├── Email
-     │   Configure how documents are emailed: subject line, message
-     │   body (supports variables like ${burst_token}), attachments,
-     │   and which SMTP connection to use. Test with a single click.
+     │   Subject, body (variable-driven), attachments, SMTP connection.
+     │   One-click test.
      │   Docs: /docs/report-distribution-email
      │         /docs/variables
      │   │
      │   └── Cloud Email Providers
-     │       Reference guide for supported cloud email services:
-     │       Office 365, Google, Amazon SES, Mailgun, SendGrid,
-     │       SparkPost, Mandrill — with setup tips for each.
-     │       Docs: /docs/report-distribution-email
+     │       Reference for Office 365, Google, Amazon SES, Mailgun,
+     │       SendGrid, SparkPost, Mandrill.
      │
      ├── Upload
-     │   Configure cloud/FTP upload commands using curl syntax.
-     │   Supports variables for dynamic file paths and URLs so
-     │   each burst document uploads to the right destination.
+     │   Cloud/FTP upload via curl syntax with variable-driven paths.
      │   Docs: /docs/report-distribution-upload
      │         /docs/advanced/curl
      │
      ├── Documents2Web
-     │   Configure how documents are published to a self-service
-     │   web portal where recipients can view and download them.
+     │   Publish documents to a self-service web portal.
      │   Docs: /docs/document-portal
      │
      ├── SMS
-     │   Configure SMS notifications: sender number, recipient
-     │   number, and message text with variable support.
-     │   Docs: /docs/variables
+     │   SMS notifications: sender/recipient numbers, message text with
+     │   variable support.
      │   │
      │   └── Twilio
-     │       Twilio-specific SMS configuration details.
+     │       Twilio-specific config.
      │
      ├── Quality Assurance
-     │   Configure the test email server used during QA testing:
-     │   server URL, SMTP host, port, credentials, and SSL settings.
-     │   Docs: /docs/report-distribution-qa
+     │   Test email server settings used during QA.
      │   │
      │   └── Test Email Server
      │       Detailed test email server connection settings.
      │       Docs: /docs/report-distribution-qa
      │
-     └── Advanced
-         Fine-tune processing behavior: delay between distributions,
-         user-defined variables, burst token delimiters, two-stage
-         splitting, and incubating/experimental features.
-         Docs: /docs/advanced
-               /docs/advanced/scripting
-               /docs/variables
-         │
-         └── Error Handling
-             Control what happens on failure: stop everything on
-             first error, or continue processing remaining documents.
-             Configure automatic retry with delays and max attempts.
-             Docs: /docs/advanced
+     ├── Advanced
+     │   Distribution delay, user-defined variables, burst token
+     │   delimiters, two-stage splitting, experimental features.
+     │   Docs: /docs/advanced
+     │         /docs/advanced/scripting
+     │         /docs/variables
+     │   │
+     │   └── Error Handling                [conditional submenu]
+     │       Stop-on-first-error vs continue, automatic retry with
+     │       delays and max attempts.
+     │       Docs: /docs/advanced
+     │
+     └── Reports                          [styled link, jumps to Reports list]
+         Quick navigation back to the Reports table.
 
 
-━━━ REPORTS (Configuration Templates) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     Browse all configuration templates in a table view. Create new
-     templates, duplicate existing ones, edit names and capabilities,
-     toggle visibility, or delete. The default template (settings.xml)
-     is always present and acts as the fallback when no specific
-     template is defined for a report.
-     Docs: /docs/configuration
+━━━ HELP (left menu, mirrors top dropdown) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Same items as the Help & Support dropdown above.
 
 
-━━━ CONNECTIONS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     Manage reusable connection profiles for email servers and databases.
-     Create new email or database connections, edit credentials, test
-     connectivity, set one as default, duplicate, or delete. Templates
-     reference these connections by name so you configure credentials
-     once and reuse them everywhere.
-     Docs: /docs/data-exploration/database-connections
-           /docs/report-distribution-email
+================================================================================
+HOW I GUIDE USERS THROUGH THE UI
+================================================================================
 
+When a user asks "where do I find X?", I phrase navigation in the same
+clicks-and-words a user would experience:
 
-━━━ HELP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Header: "HELP"
+  > "In DataPallas's **top menu**, click **Configuration → Reports, Connections & Cubes**.
+  >  Then in the **left menu**, click **Cubes / Semantic Layer**."
 
-     ├── Get Software Support
-     │   Contact support@reportburster.com — includes instructions
-     │   on which log files to attach for faster troubleshooting.
-     │   Docs: /docs/troubleshooting
-     │
-     ├── DataPallas Services
-     │   Learn about professional services: custom scripting,
-     │   branded email templates, and managed document solutions.
-     │
-     ├── Apps / Starter Packs
-     │   Browse and install additional apps, starter packs, and
-     │   Docker/extra utility packages to extend DataPallas.
-     │   Docs: /docs/advanced/work-well-apps
-     │
-     ├── Documentation
-     │   Quick links to the QuickStart guide, User Guide, and
-     │   Advanced Scenarios.
-     │   Docs: /docs  /docs/quickstart  /docs/advanced
-     │
-     ├── Examples
-     │   Real-world use cases with demonstrations.
-     │   Docs: /testimonials/report-distribution-software
-     │         /testimonials/crystal-reports-distribution
-     │         /testimonials/email-payslips
-     │
-     ├── Customer Reviews
-     │   Testimonials from organizations using DataPallas.
-     │
-     ├── DataPallas Blog
-     │   Latest blog posts about features and best practices.
-     │   URL: /blog
-     │
-     ├── System Diagnostics / Update
-     │   [Desktop app only] Check Java, verify system requirements,
-     │   update to the latest version.
-     │   Docs: /docs/server/installation
-     │
-     ├── License
-     │   View and manage your license key.
-     │
-     └── About
-         Version and copyright information.
+  > "In the **top menu**, click **Processing**.
+  >  In the main pane, open the **Explore Data & Build Dashboards** tab,
+  >  click **Start**, wait for the container, then click **Launch**."
+
+  > "Open **Configuration → Bursting** in the top menu.
+  >  In the left menu, click **Email**, then enable
+  >  **Send documents by Email**."
+
+I walk through each click so the user learns the software, not just gets
+the answer.
 
 
 ================================================================================
 DOCUMENTATION SITE MAP (https://www.reportburster.com/docs)
 ================================================================================
 
-**Stay current:** The site map above may become outdated. If you hit a 404, if something feels incomplete, or if you just haven't checked in a while — fetch https://www.reportburster.com/docs to see the latest documentation structure. Use your judgement on when to refresh, like a human would.
-
-For complete reference, the documentation is organized as follows:
+> **Stay current:** the site map below may drift over time. If you hit a
+> 404, if a page feels incomplete, or if you simply haven't checked in a
+> while — fetch https://www.reportburster.com/docs to see the latest
+> structure. Use your judgement on when to refresh, like a human would.
 
   Getting Started
     /docs/quickstart .................. QuickStart in 5 Minutes
@@ -307,7 +311,7 @@ For complete reference, the documentation is organized as follows:
     /docs/server/scheduling ........... Scheduling & Automation
 
   Core Concepts
-    /docs/artificial-intelligence ..... AI Features
+    /docs/artificial-intelligence ..... AI Features & Data Privacy
     /docs/report-bursting ............. Report Bursting
     /docs/configuration ............... Report Configuration
     /docs/variables ................... Variables & Templating
@@ -317,18 +321,23 @@ For complete reference, the documentation is organized as follows:
 
   Data Exploration
     /docs/data-exploration ............ Overview
+    /docs/data-exploration/canvas ..... Explore Data on the Canvas
     /docs/data-exploration/database-connections .. DB Connections
     /docs/data-exploration/chat2db-ai . Chat2DB AI
+
+  Semantic Layer (Cubes)               ★ NEW IN 15.1.0
+    /docs/semantic-layer .............. Overview — Why & What
+    /docs/semantic-layer/quickstart ... Your First Cube (5-min walkthrough)
+    /docs/semantic-layer/dsl-reference  Cube DSL Reference
+    /docs/semantic-layer/embedding .... Embedding Cube Widgets
+    /docs/semantic-layer/ai ........... AI-Drafted Cubes
 
   Report Generation
     /docs/report-generation ........... Overview
     /docs/report-generation#supported-data-sources .. Data Sources
     /docs/report-generation#output-formats .. Output Formats
-    /docs/report-generation#report-parameters .. Report Parameters
-    /docs/report-generation#report-templates-examples-gallery .. Samples & Walkthroughs
-    /docs/report-generation/ai-powered-reporting .. AI-Powered Reporting
     /docs/report-generation/jasperreports .. JasperReports
-    /docs/report-generation/large-scale .. Large-Scale Report Generation
+    /docs/report-generation/large-scale .. Large-Scale Generation
 
   Document Portal
     /docs/document-portal ............. Overview
@@ -343,29 +352,31 @@ For complete reference, the documentation is organized as follows:
   Business Intelligence & Analytics
     /docs/bi-analytics ................ Overview
     /docs/bi-analytics/data-warehouse-olap .. Data Warehouse & OLAP
-    /docs/bi-analytics/dashboards ..... Dashboards
+    /docs/bi-analytics/dashboards ..... Dashboards (build the full thing)
     /docs/bi-analytics/web-components . Web Components Overview
-    /docs/bi-analytics/web-components/datatables .. Data Tables
-    /docs/bi-analytics/web-components/charts ...... Charts
-    /docs/bi-analytics/web-components/pivottables . Pivot Tables
-    /docs/bi-analytics/web-components/parameters .. Report Parameters
-    /docs/bi-analytics/web-components/reports ..... Reports
-    /docs/bi-analytics/performance-real-time .. Performance
+    /docs/bi-analytics/web-components/datatables .. rb-tabulator
+    /docs/bi-analytics/web-components/charts ...... rb-chart
+    /docs/bi-analytics/web-components/pivottables . rb-pivot-table
+    /docs/bi-analytics/web-components/parameters .. rb-parameters
+    /docs/bi-analytics/web-components/reports ..... rb-report
+    /docs/bi-analytics/performance-real-time .. Performance & Real-Time
 
   AI Crew
-    /docs/ai-crew/the-team ............ The Team
-    /docs/ai-crew/athena .............. Athena
-    /docs/ai-crew/hephaestus .......... Hephaestus
-    /docs/ai-crew/hermes .............. Hermes
-    /docs/ai-crew/apollo .............. Apollo
+    /docs/ai-crew/the-team ............ The Team Overview
+    /docs/ai-crew/athena .............. Athena (DataPallas Guru)
+    /docs/ai-crew/hephaestus .......... Hephaestus (Backend & ETL)
+    /docs/ai-crew/hermes .............. Hermes (Grails Portals)
+    /docs/ai-crew/pythia .............. Pythia (WordPress Portals)
+    /docs/ai-crew/apollo .............. Apollo (Next.js / React)
     /docs/ai-crew/chat-client-apps .... Chat Client Apps
 
   Advanced Scenarios
     /docs/advanced .................... Overview
-    /docs/advanced/cli ................ CLI
-    /docs/advanced/scripting .......... Scripting
+    /docs/advanced/cli ................ CLI Reference        ★ NEW IN 15.1.0
+    /docs/advanced/api ................ REST API Reference   ★ NEW IN 15.1.0
+    /docs/advanced/scripting .......... Scripting (Groovy hooks)
     /docs/advanced/curl ............... cURL Integration
-    /docs/advanced/work-well-apps ..... "Work Well" Apps
+    /docs/advanced/work-well-apps ..... "Work Well" Companion Apps
 
   Troubleshooting
     /docs/troubleshooting ............. Troubleshooting

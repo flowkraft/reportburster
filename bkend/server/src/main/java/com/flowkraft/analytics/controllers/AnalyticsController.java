@@ -40,22 +40,6 @@ public class AnalyticsController {
 
     private static final Logger log = LoggerFactory.getLogger(AnalyticsController.class);
 
-    private DuckDBAnalyticsService duckDBService;
-    private ClickHouseAnalyticsService clickHouseService;
-    private DatabaseConnectionManager connectionManager;
-
-    /**
-     * Lazy initialization of the DatabaseConnectionManager and analytics services.
-     * Creates the services on first use with Settings loaded from config.
-     */
-    private void ensureServicesInitialized() throws Exception {
-        if (connectionManager == null) {
-            connectionManager = ConnectionFactory.newConnectionManager();
-            duckDBService = new DuckDBAnalyticsService(connectionManager);
-            clickHouseService = new ClickHouseAnalyticsService(connectionManager);
-            log.info("Analytics services initialized successfully");
-        }
-    }
 
     /**
      * Resolve connectionCode and tableName from a reportCode by reading reporting.xml.
@@ -64,7 +48,7 @@ public class AnalyticsController {
      * @param request The pivot request with reportCode set
      * @throws RuntimeException if reporting.xml not found or invalid
      */
-    private void resolveConnectionFromReportCode(PivotRequest request) throws Exception {
+    private void resolveConnectionFromReportCode(PivotRequest request, DatabaseConnectionManager cm) throws Exception {
         String reportCode = request.getReportId();
 
         // Find the report directory (same logic as ReportingService)
@@ -150,7 +134,7 @@ public class AnalyticsController {
         // auto-configure virtual DuckDB connection (only if not already DuckDB)
         String clientEngine = request.getEngine();
         if ("duckdb".equalsIgnoreCase(clientEngine)) {
-            String detectedEngine = detectEngineFromConnection(connectionCode);
+            String detectedEngine = detectEngineFromConnection(connectionCode, cm);
             if (!"duckdb".equalsIgnoreCase(detectedEngine)) {
                 log.info("Client requested DuckDB engine but report uses '{}' connection - auto-configuring virtual DuckDB",
                         connectionCode);
@@ -168,9 +152,8 @@ public class AnalyticsController {
      * @param connectionCode The connection code to look up
      * @return The detected engine: "duckdb", "clickhouse", or "browser"
      */
-    private String detectEngineFromConnection(String connectionCode) throws Exception {
-        ensureServicesInitialized();
-        ServerDatabaseSettings dbSettings = connectionManager.getServerDatabaseSettings(connectionCode);
+    private String detectEngineFromConnection(String connectionCode, DatabaseConnectionManager cm) throws Exception {
+        ServerDatabaseSettings dbSettings = cm.getServerDatabaseSettings(connectionCode);
         String dbType = dbSettings.type != null ? dbSettings.type.toLowerCase() : "";
 
         switch (dbType) {
@@ -219,69 +202,66 @@ public class AnalyticsController {
      */
     @PostMapping("/pivot")
     public ResponseEntity<?> executePivot(@RequestBody PivotRequest request) throws Exception {
-        ensureServicesInitialized();
+        try (DatabaseConnectionManager cm = ConnectionFactory.newConnectionManager()) {
+            DuckDBAnalyticsService duckDBService = new DuckDBAnalyticsService(cm);
+            ClickHouseAnalyticsService clickHouseService = new ClickHouseAnalyticsService(cm);
 
-        // If reportCode is provided, resolve connectionCode + tableName from reporting.xml
-        if (request.getReportId() != null && !request.getReportId().isEmpty()) {
-            log.info("Received pivot request for reportCode: {}", request.getReportId());
-            resolveConnectionFromReportCode(request);
-        } else {
-            log.info("Received pivot request for table: {}, engine: {}",
-                    request.getTableName(), request.getEngine());
-        }
+            if (request.getReportId() != null && !request.getReportId().isEmpty()) {
+                log.info("Received pivot request for reportCode: {}", request.getReportId());
+                resolveConnectionFromReportCode(request, cm);
+            } else {
+                log.info("Received pivot request for table: {}, engine: {}",
+                        request.getTableName(), request.getEngine());
+            }
 
-        // Validate request (after resolution)
-        if (request.getConnectionCode() == null || request.getConnectionCode().isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(createErrorResponse("connectionCode is required (or provide reportCode)"));
-        }
-        if (request.getTableName() == null || request.getTableName().isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(createErrorResponse("tableName is required (or provide reportCode)"));
-        }
+            if (request.getConnectionCode() == null || request.getConnectionCode().isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(createErrorResponse("connectionCode is required (or provide reportCode)"));
+            }
+            if (request.getTableName() == null || request.getTableName().isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(createErrorResponse("tableName is required (or provide reportCode)"));
+            }
 
-        // Determine engine: use provided value or auto-detect from connection
-        String engine;
-        if (request.getEngine() != null && !request.getEngine().isEmpty()) {
-            engine = request.getEngine().toLowerCase();
-            log.debug("Using explicitly provided engine: {}", engine);
-        } else {
-            engine = detectEngineFromConnection(request.getConnectionCode());
-            log.info("Auto-detected engine '{}' from connection '{}'", engine, request.getConnectionCode());
-        }
+            String engine;
+            if (request.getEngine() != null && !request.getEngine().isEmpty()) {
+                engine = request.getEngine().toLowerCase();
+                log.debug("Using explicitly provided engine: {}", engine);
+            } else {
+                engine = detectEngineFromConnection(request.getConnectionCode(), cm);
+                log.info("Auto-detected engine '{}' from connection '{}'", engine, request.getConnectionCode());
+            }
 
-        // Browser engine means client-side processing - return empty response
-        if ("browser".equals(engine)) {
-            log.debug("Engine is 'browser', returning indication for client-side processing");
-            Map<String, Object> browserResponse = new HashMap<>();
-            browserResponse.put("engine", "browser");
-            browserResponse.put("message", "Connection type requires client-side (browser) pivot processing");
-            return ResponseEntity.ok(browserResponse);
-        }
+            if ("browser".equals(engine)) {
+                log.debug("Engine is 'browser', returning indication for client-side processing");
+                Map<String, Object> browserResponse = new HashMap<>();
+                browserResponse.put("engine", "browser");
+                browserResponse.put("message", "Connection type requires client-side (browser) pivot processing");
+                return ResponseEntity.ok(browserResponse);
+            }
 
-        // Route to appropriate OLAP service based on engine
-        PivotResponse response;
-        java.util.List<String> availableColumns = null;
-        switch (engine) {
-            case "clickhouse":
-                log.debug("Routing to ClickHouse analytics service");
-                response = clickHouseService.executePivot(request);
-                availableColumns = clickHouseService.getTableColumns(request.getConnectionCode(), request.getTableName());
-                break;
-            case "duckdb":
-            default:
-                log.debug("Routing to DuckDB analytics service");
-                response = duckDBService.executePivot(request);
-                availableColumns = duckDBService.getTableColumns(request.getConnectionCode(), request.getTableName());
-                break;
-        }
+            PivotResponse response;
+            java.util.List<String> availableColumns = null;
+            switch (engine) {
+                case "clickhouse":
+                    log.debug("Routing to ClickHouse analytics service");
+                    response = clickHouseService.executePivot(request);
+                    availableColumns = clickHouseService.getTableColumns(request.getConnectionCode(), request.getTableName());
+                    break;
+                case "duckdb":
+                default:
+                    log.debug("Routing to DuckDB analytics service");
+                    response = duckDBService.executePivot(request);
+                    availableColumns = duckDBService.getTableColumns(request.getConnectionCode(), request.getTableName());
+                    break;
+            }
 
-        // Include all table columns so frontend can show draggable fields
-        if (availableColumns != null) {
-            response.getMetadata().setAvailableColumns(availableColumns);
-        }
+            if (availableColumns != null) {
+                response.getMetadata().setAvailableColumns(availableColumns);
+            }
 
-        return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response);
+        }
     }
 
     /**
@@ -314,53 +294,47 @@ public class AnalyticsController {
      */
     @PostMapping("/explore")
     public ResponseEntity<?> explore(@RequestBody ExploreRequest request) throws Exception {
-        ensureServicesInitialized();
-
-        // Validate request
         if (request.getConnectionCode() == null || request.getConnectionCode().isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(createErrorResponse("connectionCode is required"));
+            return ResponseEntity.badRequest().body(createErrorResponse("connectionCode is required"));
         }
         if (request.getTableName() == null || request.getTableName().isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(createErrorResponse("tableName is required"));
+            return ResponseEntity.badRequest().body(createErrorResponse("tableName is required"));
         }
         if (request.getFields() == null || request.getFields().isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(createErrorResponse("fields is required (list of fields to explore)"));
+            return ResponseEntity.badRequest().body(createErrorResponse("fields is required (list of fields to explore)"));
         }
 
         log.info("Received explore request for table: {}, selections: {}, fields: {}",
                 request.getTableName(), request.getSelections().size(), request.getFields().size());
 
-        // Detect engine from connection type
-        String engine = detectEngineFromConnection(request.getConnectionCode());
+        try (DatabaseConnectionManager cm = ConnectionFactory.newConnectionManager()) {
+            DuckDBAnalyticsService duckDBService = new DuckDBAnalyticsService(cm);
+            ClickHouseAnalyticsService clickHouseService = new ClickHouseAnalyticsService(cm);
 
-        // Route to appropriate service — all engines supported, no "browser" fallback
-        ExploreResponse response;
-        switch (engine) {
-            case "clickhouse":
-                log.debug("Routing explore to ClickHouse service");
-                response = clickHouseService.executeExplore(request);
-                break;
-            case "duckdb":
-                log.debug("Routing explore to DuckDB service");
-                response = duckDBService.executeExplore(request);
-                break;
-            default:
-                // Regular SQL databases (MySQL, Postgres, Oracle, SQL Server, etc.)
-                // Use DuckDB service — it uses standard ANSI double-quote identifiers
-                // and the same JDBC path via connectionManager.getJdbcConnection()
-                log.debug("Routing explore to DuckDB service for regular SQL database (engine: {})", engine);
-                response = duckDBService.executeExplore(request);
-                response.getMetadata().setEngine(engine);
-                response.getMetadata().setHint(
-                        "Associative exploration works on all databases. " +
-                        "For best performance on large datasets, use a DuckDB or ClickHouse connection.");
-                break;
+            String engine = detectEngineFromConnection(request.getConnectionCode(), cm);
+
+            ExploreResponse response;
+            switch (engine) {
+                case "clickhouse":
+                    log.debug("Routing explore to ClickHouse service");
+                    response = clickHouseService.executeExplore(request);
+                    break;
+                case "duckdb":
+                    log.debug("Routing explore to DuckDB service");
+                    response = duckDBService.executeExplore(request);
+                    break;
+                default:
+                    log.debug("Routing explore to DuckDB service for regular SQL database (engine: {})", engine);
+                    response = duckDBService.executeExplore(request);
+                    response.getMetadata().setEngine(engine);
+                    response.getMetadata().setHint(
+                            "Associative exploration works on all databases. " +
+                            "For best performance on large datasets, use a DuckDB or ClickHouse connection.");
+                    break;
+            }
+
+            return ResponseEntity.ok(response);
         }
-
-        return ResponseEntity.ok(response);
     }
 
     /**
@@ -374,41 +348,25 @@ public class AnalyticsController {
      */
     @GetMapping("/aggregators")
     public ResponseEntity<List<String>> getSupportedAggregators(
-            @RequestParam(defaultValue = "duckdb") String engine) throws Exception {
-        ensureServicesInitialized();
+            @RequestParam(defaultValue = "duckdb") String engine) {
         List<String> aggregators;
         if ("clickhouse".equalsIgnoreCase(engine)) {
-            aggregators = clickHouseService.getSupportedAggregators();
+            aggregators = new ClickHouseAnalyticsService(null).getSupportedAggregators();
         } else {
-            aggregators = duckDBService.getSupportedAggregators();
+            aggregators = new DuckDBAnalyticsService(null).getSupportedAggregators();
         }
         return ResponseEntity.ok(aggregators);
     }
 
-    /**
-     * Get aggregator display names for UI.
-     *
-     * GET /api/analytics/aggregators/display-names
-     *
-     * @return Map of aggregator names to display names
-     */
     @GetMapping("/aggregators/display-names")
-    public ResponseEntity<Map<String, String>> getAggregatorDisplayNames() throws Exception {
-        ensureServicesInitialized();
-        Map<String, String> displayNames = duckDBService.getAggregatorDisplayNames();
-        return ResponseEntity.ok(displayNames);
+    public ResponseEntity<Map<String, String>> getAggregatorDisplayNames() {
+        return ResponseEntity.ok(new DuckDBAnalyticsService(null).getAggregatorDisplayNames());
     }
 
-    /**
-     * Health check endpoint.
-     *
-     * GET /api/analytics/health
-     *
-     * @return Health status
-     */
     @GetMapping("/health")
-    public ResponseEntity<Map<String, Object>> health() throws Exception {
-        ensureServicesInitialized();
+    public ResponseEntity<Map<String, Object>> health() {
+        DuckDBAnalyticsService duckDBService = new DuckDBAnalyticsService(null);
+        ClickHouseAnalyticsService clickHouseService = new ClickHouseAnalyticsService(null);
         Map<String, Object> health = new HashMap<>();
         health.put("status", "UP");
         health.put("service", "Analytics (DuckDB + ClickHouse)");
@@ -425,58 +383,36 @@ public class AnalyticsController {
         return ResponseEntity.ok(health);
     }
 
-    /**
-     * Get cache statistics.
-     *
-     * GET /api/analytics/cache/stats
-     * GET /api/analytics/cache/stats?engine=clickhouse
-     *
-     * @param engine Optional engine parameter (duckdb or clickhouse)
-     * @return Cache statistics
-     */
     @GetMapping("/cache/stats")
     public ResponseEntity<Map<String, Object>> getCacheStats(
-            @RequestParam(defaultValue = "duckdb") String engine) throws Exception {
-        ensureServicesInitialized();
+            @RequestParam(defaultValue = "duckdb") String engine) {
         Map<String, Object> stats;
         if ("clickhouse".equalsIgnoreCase(engine)) {
-            stats = clickHouseService.getCacheStats();
+            stats = new ClickHouseAnalyticsService(null).getCacheStats();
         } else {
-            stats = duckDBService.getCacheStats();
+            stats = new DuckDBAnalyticsService(null).getCacheStats();
         }
         return ResponseEntity.ok(stats);
     }
 
-    /**
-     * Clear query cache.
-     *
-     * POST /api/analytics/cache/clear
-     * POST /api/analytics/cache/clear?engine=clickhouse
-     * POST /api/analytics/cache/clear?engine=all
-     *
-     * @param engine Optional engine parameter (duckdb, clickhouse, or all)
-     * @return Success message
-     */
     @PostMapping("/cache/clear")
     public ResponseEntity<Map<String, Object>> clearCache(
             @RequestParam(defaultValue = "duckdb") String engine) {
         Map<String, Object> response = new HashMap<>();
-        
         if ("all".equalsIgnoreCase(engine)) {
-            duckDBService.clearCache();
-            clickHouseService.clearCache();
+            new DuckDBAnalyticsService(null).clearCache();
+            new ClickHouseAnalyticsService(null).clearCache();
             response.put("message", "All caches cleared successfully");
             response.put("engines", List.of("duckdb", "clickhouse"));
         } else if ("clickhouse".equalsIgnoreCase(engine)) {
-            clickHouseService.clearCache();
+            new ClickHouseAnalyticsService(null).clearCache();
             response.put("message", "ClickHouse cache cleared successfully");
             response.put("engine", "clickhouse");
         } else {
-            duckDBService.clearCache();
+            new DuckDBAnalyticsService(null).clearCache();
             response.put("message", "DuckDB cache cleared successfully");
             response.put("engine", "duckdb");
         }
-        
         response.put("timestamp", System.currentTimeMillis());
         return ResponseEntity.ok(response);
     }
@@ -540,15 +476,15 @@ public class AnalyticsController {
         Map<String, String> options = (Map<String, String>) request.getOrDefault("options", new HashMap<>());
 
         DuckDBFileHandler.FileQueryConfig config = new DuckDBFileHandler.FileQueryConfig(filePath, fileFormat, options);
-        List<Map<String, Object>> results = duckDBService.queryFile(connectionCode, config, query);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("data", results);
-        response.put("rowCount", results.size());
-        response.put("filePath", filePath);
-        response.put("format", fileFormat.name());
-
-        return ResponseEntity.ok(response);
+        try (DatabaseConnectionManager cm = ConnectionFactory.newConnectionManager()) {
+            List<Map<String, Object>> results = new DuckDBAnalyticsService(cm).queryFile(connectionCode, config, query);
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", results);
+            response.put("rowCount", results.size());
+            response.put("filePath", filePath);
+            response.put("format", fileFormat.name());
+            return ResponseEntity.ok(response);
+        }
     }
 
     /**
@@ -596,14 +532,14 @@ public class AnalyticsController {
         }
 
         DuckDBFileHandler.FileQueryConfig config = new DuckDBFileHandler.FileQueryConfig(filePath, fileFormat);
-        List<Map<String, String>> schema = duckDBService.getFileSchema(connectionCode, config);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("schema", schema);
-        response.put("filePath", filePath);
-        response.put("format", fileFormat.name());
-
-        return ResponseEntity.ok(response);
+        try (DatabaseConnectionManager cm = ConnectionFactory.newConnectionManager()) {
+            List<Map<String, String>> schema = new DuckDBAnalyticsService(cm).getFileSchema(connectionCode, config);
+            Map<String, Object> response = new HashMap<>();
+            response.put("schema", schema);
+            response.put("filePath", filePath);
+            response.put("format", fileFormat.name());
+            return ResponseEntity.ok(response);
+        }
     }
 
     /**
@@ -653,15 +589,15 @@ public class AnalyticsController {
         }
 
         DuckDBFileHandler.FileQueryConfig config = new DuckDBFileHandler.FileQueryConfig(filePath, fileFormat);
-        List<Map<String, Object>> sample = duckDBService.getFileSample(connectionCode, config, limit);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("data", sample);
-        response.put("rowCount", sample.size());
-        response.put("filePath", filePath);
-        response.put("format", fileFormat.name());
-
-        return ResponseEntity.ok(response);
+        try (DatabaseConnectionManager cm = ConnectionFactory.newConnectionManager()) {
+            List<Map<String, Object>> sample = new DuckDBAnalyticsService(cm).getFileSample(connectionCode, config, limit);
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", sample);
+            response.put("rowCount", sample.size());
+            response.put("filePath", filePath);
+            response.put("format", fileFormat.name());
+            return ResponseEntity.ok(response);
+        }
     }
 
     private boolean hasCause(Throwable e, String className) {

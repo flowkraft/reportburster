@@ -25,6 +25,14 @@ export interface ExtConnection {
     usetls: boolean;
     fromaddress: string;
     name: string;
+    oauth2provider?: string;
+    oauth2clientid?: string;
+    oauth2tenantid?: string;
+    oauth2authorizeurl?: string;
+    oauth2tokenurl?: string;
+    oauth2scope?: string;
+    oauth2refreshtoken?: string;
+    oauth2useremail?: string;
   };
   dbserver?: {
     type: string; // mysql, postgresql, sqlserver, oracle
@@ -38,7 +46,24 @@ export interface ExtConnection {
   };
 }
 
-export const newEmailServer = {
+export const newEmailServer: {
+  host: string;
+  port: string;
+  userid: string;
+  userpassword: string;
+  usessl: boolean;
+  usetls: boolean;
+  fromaddress: string;
+  name: string;
+  oauth2provider?: string;
+  oauth2clientid?: string;
+  oauth2tenantid?: string;
+  oauth2authorizeurl?: string;
+  oauth2tokenurl?: string;
+  oauth2scope?: string;
+  oauth2refreshtoken?: string;
+  oauth2useremail?: string;
+} = {
   host: 'Email Server Host',
   port: '25',
   userid: 'From Email User ID',
@@ -47,6 +72,14 @@ export const newEmailServer = {
   usetls: false,
   fromaddress: 'from@emailaddress.com',
   name: 'From Name',
+  oauth2provider: 'NONE',
+  oauth2clientid: '',
+  oauth2tenantid: '',
+  oauth2authorizeurl: '',
+  oauth2tokenurl: '',
+  oauth2scope: '',
+  oauth2refreshtoken: '',
+  oauth2useremail: '',
 };
 
 export const newDatabaseServer = {

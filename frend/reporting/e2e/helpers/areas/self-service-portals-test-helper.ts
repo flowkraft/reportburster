@@ -52,6 +52,14 @@ export class SelfServicePortalsTestHelper {
 
   /**
    * Start an app and wait for it to be running (returns FluentTester for chaining).
+   *
+   * Idempotent against leftover state: if a prior test run was interrupted and
+   * left the app `running` / `starting`, the start-stop button reads "Stop"
+   * — blindly clicking it would STOP the app and the test would then hang
+   * waiting for state to become `starting` (state goes running → stopping →
+   * stopped, never starting). We do a one-shot pre-flight: read the state
+   * element, and ONLY if it indicates the app is already up, stop it first;
+   * otherwise the chain proceeds straight to the normal start sequence.
    */
   static startApp(
     ft: FluentTester,
@@ -61,6 +69,27 @@ export class SelfServicePortalsTestHelper {
     const btnSel = `#btnStartStop_${appId}`;
     const stateSel = `#appState_${appId}`;
     const spinnerSel = `#appSpinner_${appId}`;
+
+    ft.actions.push(async (): Promise<void> => {
+      const stateEl = ft.window.locator(stateSel);
+      await stateEl.waitFor({ state: 'visible', timeout });
+      const text = ((await stateEl.textContent()) || '').toLowerCase();
+      if (!text.includes('running') && !text.includes('starting')) return;
+
+      console.log(`[startApp] app '${appId}' is already '${text.trim()}' — stopping first for a clean start`);
+      await ft.window.locator(btnSel).click();
+      await ft.window.locator(Constants.BTN_CONFIRM_SELECTOR).click();
+      await ft.window.waitForFunction(
+        (sel: string) => {
+          const el = document.querySelector(sel);
+          return !!el && (el.textContent || '').toLowerCase().includes('stopped');
+        },
+        stateSel,
+        { timeout },
+      );
+      await ft.window.waitForTimeout(2_000);
+      console.log(`[startApp] app '${appId}' stopped — proceeding to start`);
+    });
 
     return ft
       .consoleLog(`Starting app '${appId}'...`)

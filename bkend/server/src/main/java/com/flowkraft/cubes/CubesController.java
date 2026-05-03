@@ -119,52 +119,45 @@ public class CubesController {
 	@PostMapping(value = "/get-sql", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<Map<String, Object>> getSql(@RequestBody Map<String, Object> request) throws Exception {
 		String dslCode = (String) request.get("dslCode");
-		String connectionId = (String) request.get("connectionId");
-		List<String> selectedDimensions = (List<String>) request.getOrDefault("selectedDimensions", List.of());
-		List<String> selectedMeasures = (List<String>) request.getOrDefault("selectedMeasures", List.of());
-		List<String> selectedSegments = (List<String>) request.getOrDefault("selectedSegments", List.of());
-
 		CubeOptions cube = cubesService.parseDsl(dslCode);
-
-		String dbVendor = "default";
-		if (connectionId != null && !connectionId.isBlank()) {
-			DatabaseConnectionManager dbManager = ConnectionFactory.newConnectionManager();
-			ServerDatabaseSettings dbs = dbManager.getServerDatabaseSettings(connectionId);
-			if (dbs != null && dbs.type != null) {
-				dbVendor = dbs.type;
-			}
-			dbManager.close();
-		}
-
-		String sql = CubeSqlGenerator.generateSql(cube, selectedDimensions, selectedMeasures, selectedSegments, dbVendor);
-		return Mono.just(Map.<String, Object>of("sql", sql, "dialect", dbVendor));
+		return generateSqlInternal(cube, request);
 	}
 
 	/** Generate vendor-specific SQL from cube metadata + user field selections */
-	@SuppressWarnings("unchecked")
 	@PostMapping(value = "/{cubeId}/generate-sql", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<Map<String, Object>> generateSql(
 			@PathVariable String cubeId,
 			@RequestBody Map<String, Object> request) throws Exception {
+		Map<String, Object> cubeData = cubesService.load(cubeId);
+		String dslCode = (String) cubeData.get("dslCode");
+		CubeOptions cube = cubesService.parseDsl(dslCode);
+		return generateSqlInternal(cube, request);
+	}
+
+	/**
+	 * Shared core for both SQL-generation endpoints. Resolves the DB vendor from the
+	 * connection (so dialect-specific SQL can be emitted) and runs the generator.
+	 * The DSL parsing is the only step that differs between the two endpoints —
+	 * see {@link #getSql} (inline DSL) and {@link #generateSql} (saved cube).
+	 */
+	@SuppressWarnings("unchecked")
+	private Mono<Map<String, Object>> generateSqlInternal(CubeOptions cube, Map<String, Object> request) throws Exception {
 		String connectionId = (String) request.get("connectionId");
 		List<String> selectedDimensions = (List<String>) request.getOrDefault("selectedDimensions", List.of());
 		List<String> selectedMeasures = (List<String>) request.getOrDefault("selectedMeasures", List.of());
 		List<String> selectedSegments = (List<String>) request.getOrDefault("selectedSegments", List.of());
 
-		// Load and parse the cube DSL
-		Map<String, Object> cubeData = cubesService.load(cubeId);
-		String dslCode = (String) cubeData.get("dslCode");
-		CubeOptions cube = cubesService.parseDsl(dslCode);
-
-		// Resolve DB vendor from connection
 		String dbVendor = "default";
 		if (connectionId != null && !connectionId.isBlank()) {
 			DatabaseConnectionManager dbManager = ConnectionFactory.newConnectionManager();
-			ServerDatabaseSettings dbs = dbManager.getServerDatabaseSettings(connectionId);
-			if (dbs != null && dbs.type != null) {
-				dbVendor = dbs.type;
+			try {
+				ServerDatabaseSettings dbs = dbManager.getServerDatabaseSettings(connectionId);
+				if (dbs != null && dbs.type != null) {
+					dbVendor = dbs.type;
+				}
+			} finally {
+				dbManager.close();
 			}
-			dbManager.close();
 		}
 
 		String sql = CubeSqlGenerator.generateSql(cube, selectedDimensions, selectedMeasures, selectedSegments, dbVendor);

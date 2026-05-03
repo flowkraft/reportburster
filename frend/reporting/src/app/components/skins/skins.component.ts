@@ -40,8 +40,11 @@ export class SkinsComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    this.settingsService.xmlInternalSettings.documentburster =
-      await this.settingsService.loadPreferences();
+    // Internal preferences are loaded at app bootstrap by InitService so that
+    // settingsService.showSamples is correct everywhere, including when this
+    // skins component is hidden (RUNNING_IN_E2E=true). The post-save reload
+    // calls in saveTheme() / onShowSamplesChanged() below stay as they are —
+    // they re-sync the local model after writing.
 
    // Debounced save for Copilot URL
     this.internalSettingsChangedSub = this.onInternalSettingsChanged.pipe(debounceTime(400)).subscribe(async (newUrl) => {

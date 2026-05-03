@@ -74,6 +74,7 @@ export function TabulatorConfig({ config, columns, onChange, rowCount }: Tabulat
             {[true, false].map((v) => (
               <button
                 key={String(v)}
+                id={`btnTabulatorPagination-${v ? "on" : "off"}`}
                 onClick={() => onChange({ ...config, tabulatorPagination: v })}
                 className={`flex-1 py-1.5 transition-colors ${
                   pagination === v

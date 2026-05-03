@@ -47,6 +47,9 @@ public class EmailSender extends AbstractSender {
 				if (message.isAuthentication && StringUtils.isNotEmpty(message.authpwd)) {
 					message.authpwd = SecretsCipher.decryptGraceful(message.authpwd);
 				}
+				if (StringUtils.isNotEmpty(message.oauth2refreshtoken)) {
+					message.oauth2refreshtoken = SecretsCipher.decryptGraceful(message.oauth2refreshtoken);
+				}
 				if (message.sjm != null && message.sjm.proxy != null
 						&& StringUtils.isNotEmpty(message.sjm.proxy.password)) {
 					message.sjm.proxy.password = SecretsCipher.decryptGraceful(message.sjm.proxy.password);
@@ -56,6 +59,7 @@ public class EmailSender extends AbstractSender {
 			} finally {
 				// Clear plaintext immediately after SMTP send
 				message.authpwd = null;
+				message.oauth2refreshtoken = null;
 				if (message.sjm != null && message.sjm.proxy != null) {
 					message.sjm.proxy.password = null;
 				}

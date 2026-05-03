@@ -240,8 +240,8 @@ test.describe('', async () => {
       // When no user-created DB connection exists yet, the first one is
       // automatically made the default — skip makeConnectionAsDefault in that case.
       const dbConnsResp = await fetch('http://localhost:9090/api/connections/database');
-      const dbConns: Array<{ fileName: string }> = await dbConnsResp.json();
-      const hasUserDbConn = dbConns.some(c => !c.fileName.includes('rbt-sample-'));
+      const dbConns: Array<{ fileName: string; isSample?: boolean }> = await dbConnsResp.json();
+      const hasUserDbConn = dbConns.some(c => !c.isSample);
 
       let ft = new FluentTester(firstPage);
 

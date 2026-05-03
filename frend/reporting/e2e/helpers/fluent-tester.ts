@@ -1533,6 +1533,10 @@ export class FluentTester implements PromiseLike<void> {
     await Helpers.delay(Constants.DELAY_HUNDRED_MILISECONDS);
   }
 
+  public gotoCmsWebPortal(): FluentTester {
+    return this.gotoApps();
+  }
+
   public gotoDataCanvas(): FluentTester {
     const action = (): Promise<void> => this.doGotoDataCanvas();
     this.actions.push(action);

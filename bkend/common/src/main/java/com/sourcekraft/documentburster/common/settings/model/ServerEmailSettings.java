@@ -44,4 +44,15 @@ public class ServerEmailSettings extends DumpToString {
 
 	public String weburl;
 
+	// OAuth2 fields — only used when the connection file specifies oauth2provider != NONE.
+	// The inline <emailserver> branch in EmailMessageFactory ignores these intentionally.
+	public String oauth2provider = "NONE";  // NONE | MICROSOFT | GOOGLE | GENERIC
+	public String oauth2clientid;
+	public String oauth2tenantid;           // MICROSOFT only
+	public String oauth2authorizeurl;       // GENERIC only
+	public String oauth2tokenurl;           // GENERIC only
+	public String oauth2scope;              // GENERIC only
+	public String oauth2refreshtoken;       // ENC(...) — encrypted at rest via SecretsCipher
+	public String oauth2useremail;          // display only — mailbox confirmed after sign-in
+
 }

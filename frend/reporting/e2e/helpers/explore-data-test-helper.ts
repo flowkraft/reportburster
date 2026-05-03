@@ -208,6 +208,14 @@ export async function runSqlQuery(
   await editor.click();
   await page.keyboard.press('Control+a');
   await enterTextIntoEditor(page, sql, inputMode);
+  // Dismiss any CodeMirror autocomplete popup left visible after typing
+  // (e.g. the keyword popover that fires on "DESC", "ORDER", "SELECT").
+  // If the popup is still on screen when we click Run, the click is
+  // intercepted by the popup overlay and the test hangs at this point —
+  // exactly the behavior the user observed (manually clicking the editor
+  // unblocked it because that click dismissed the popover).
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(150);
   await page.locator('#btnRunSqlQuery').click();
   await page.waitForTimeout(2_000);
 }
@@ -230,6 +238,10 @@ export async function runGroovyScript(
   await editor.click();
   await page.keyboard.press('Control+a');
   await enterTextIntoEditor(page, script, inputMode);
+  // Same autocomplete-dismiss as runSqlQuery — the Groovy mode editor
+  // also pops keyword/identifier completions while typing.
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(150);
   await page.locator('#btnRunScript').click();
   await page.waitForTimeout(2_000);
 }

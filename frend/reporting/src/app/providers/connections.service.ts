@@ -21,6 +21,14 @@ export interface ExtConnection {
     usetls: boolean;
     fromaddress: string;
     name: string;
+    oauth2provider?: string;
+    oauth2clientid?: string;
+    oauth2tenantid?: string;
+    oauth2authorizeurl?: string;
+    oauth2tokenurl?: string;
+    oauth2scope?: string;
+    oauth2refreshtoken?: string;
+    oauth2useremail?: string;
   };
   dbserver?: {
     type: string; // mysql, postgresql, sqlserver, oracle
@@ -264,6 +272,21 @@ export class ConnectionsService {
     if (reportId) params.reportId = reportId;
     const result = await this.apiService.get(`/connections/${connectionId}/reveal-password`, params);
     return result.password || '';
+  }
+
+  async startEmailOAuth(payload: {
+    provider: string;
+    tenantId?: string;
+    clientId: string;
+    authorizeUrl?: string;
+    tokenUrl?: string;
+    scope?: string;
+  }): Promise<{ flowId: string }> {
+    return this.apiService.post('/oauth/email/start', payload);
+  }
+
+  async cancelEmailOAuth(flowId: string): Promise<void> {
+    return this.apiService.post(`/oauth/email/${flowId}/cancel`, {});
   }
 
   refreshConnectionsUsedByInformation(

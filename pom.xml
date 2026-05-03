@@ -47,7 +47,7 @@
 		<hikaricp.version>6.3.0</hikaricp.version>
 		<commons.net.version>3.7</commons.net.version>
 		<perf4j.version>0.9.16</perf4j.version>
-		<mail.version>1.6.5</mail.version>
+		<mail.version>1.6.7</mail.version>
 		<twilio.version>6.3.0</twilio.version>
 		<failsafe.version>2.4.0</failsafe.version>
 		<ant.version>1.10.15</ant.version>

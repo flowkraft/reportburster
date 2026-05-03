@@ -57,4 +57,14 @@ public class EmailMessage extends AbstractMessage {
 
 	public SimpleJavaMail sjm;
 
+	// OAuth2 fields — populated from connection file; empty/NONE means Basic Auth path
+	public String oauth2provider = "NONE";  // NONE | MICROSOFT | GOOGLE | GENERIC
+	public String oauth2clientid;
+	public String oauth2tenantid;
+	public String oauth2authorizeurl;
+	public String oauth2tokenurl;
+	public String oauth2scope;
+	public String oauth2refreshtoken;       // decrypted by EmailSender immediately before use
+	public String oauth2useremail;
+
 }

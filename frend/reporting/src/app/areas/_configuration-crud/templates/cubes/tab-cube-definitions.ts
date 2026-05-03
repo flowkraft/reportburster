@@ -157,7 +157,7 @@ export const tabCubeDefinitionsTemplate = `
                   style="height: 350px; border: 1px solid #ccc; border-radius: 4px 4px 0 0; overflow-y: auto; display: block; font-family: 'Courier New', monospace;">
                 </ngx-codejar>
                 <div style="display: flex;">
-                  <button id="btnAiHelpCubeDsl" type="button" class="btn btn-default" style="flex: 1; border-radius: 0 0 0 4px;" (click)="showDbConnectionModalForCubeDsl()">
+                  <button id="btnAiHelpCubeDslFullEditor" type="button" class="btn btn-default" style="flex: 1; border-radius: 0 0 0 4px;" (click)="showDbConnectionModalForCubeDsl()">
                     <strong>Hey AI, Help Me ...</strong>
                   </button>
                   <button id="btnToggleCubePreviewShow" type="button" class="btn btn-default" style="flex: 1; border-radius: 0 0 4px 0;" (click)="toggleCubePreview()">

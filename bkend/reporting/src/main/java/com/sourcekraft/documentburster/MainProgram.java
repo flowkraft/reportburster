@@ -2,6 +2,8 @@ package com.sourcekraft.documentburster;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -15,8 +17,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sourcekraft.documentburster.common.oauth.OAuthFlowHelper;
+import com.sourcekraft.documentburster.common.oauth.OAuthFlowHelper.TokenResult;
+import com.sourcekraft.documentburster.common.security.SecretsCipher;
 import com.sourcekraft.documentburster.common.settings.Settings;
+import com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionEmailSettings;
 import com.sourcekraft.documentburster.job.CliJob;
+
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Marshaller;
 
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
@@ -332,7 +341,8 @@ public class MainProgram implements Callable<Integer> {
 	@Command(name = "system", description = "System operations", subcommands = {
 			MainProgram.SystemCommand.TestEmailCommand.class, MainProgram.SystemCommand.TestSmsCommand.class,
 			MainProgram.SystemCommand.LicenseCommand.class, MainProgram.SystemCommand.FeatureRequestCommand.class,
-			MainProgram.SystemCommand.TestAndFetchDatabaseSchemaCommand.class })
+			MainProgram.SystemCommand.TestAndFetchDatabaseSchemaCommand.class,
+			MainProgram.SystemCommand.OAuth2Command.class })
 	public static class SystemCommand implements Callable<Integer> {
 		@ParentCommand
 		MainProgram parent;
@@ -565,6 +575,133 @@ public class MainProgram implements Callable<Integer> {
 				CliJob job = getJob(null);
 				job.doSendFeatureRequestEmail(featureRequestFile.getAbsolutePath());
 				return 0;
+			}
+		}
+
+		@Command(name = "oauth2", description = "OAuth2 sign-in for email connections", subcommands = {
+				SystemCommand.OAuth2Command.SignInCommand.class })
+		public static class OAuth2Command implements Callable<Integer> {
+			@ParentCommand
+			SystemCommand systemCommand;
+
+			@Spec
+			CommandSpec spec;
+
+			@Override
+			public Integer call() {
+				spec.commandLine().usage(System.out);
+				return 0;
+			}
+
+			@Command(name = "sign-in",
+					description = "Run the interactive OAuth2 PKCE flow against a provider (Microsoft / Google / Generic) "
+							+ "and either persist the resulting refresh token onto a defined email connection file "
+							+ "(--email-connection-file) or print it to stdout for manual paste.")
+			public static class SignInCommand extends BaseCommand implements Callable<Integer> {
+				@ParentCommand
+				OAuth2Command oauth2Command;
+
+				@Option(names = "--provider", required = true,
+						description = "Provider: MICROSOFT | GOOGLE | GENERIC")
+				private String provider;
+
+				@Option(names = "--client-id", required = true,
+						description = "OAuth2 client ID (Application (client) ID for Microsoft)")
+				private String clientId;
+
+				@Option(names = "--tenant-id",
+						description = "Azure AD tenant ID (MICROSOFT only; defaults to 'common')")
+				private String tenantId;
+
+				@Option(names = "--authorize-url",
+						description = "Authorization endpoint (GENERIC only)")
+				private String authorizeUrl;
+
+				@Option(names = "--token-url",
+						description = "Token endpoint (GENERIC only)")
+				private String tokenUrl;
+
+				@Option(names = "--scope",
+						description = "OAuth2 scope (GENERIC only; e.g. 'https://outlook.office.com/SMTP.Send offline_access openid email')")
+				private String scope;
+
+				@Option(names = "--email-connection-file",
+						description = "Optional: path to an email connection XML file (e.g. config/connections/eml-office365.xml). "
+								+ "When provided, the refresh token + signed-in mailbox are persisted into that file (refresh token encrypted). "
+								+ "When omitted, both values are printed to stdout for manual paste.")
+				private File emailConnectionFile;
+
+				@Override
+				protected MainProgram getMainProgram() {
+					return oauth2Command.systemCommand.parent;
+				}
+
+				@Override
+				public Integer call() throws Exception {
+					System.out.println("Starting OAuth2 sign-in flow for provider: " + provider);
+					System.out.println("Your default browser will open in a moment to complete sign-in.");
+
+					TokenResult result = OAuthFlowHelper.runAuthCodeFlow(
+							provider, tenantId, clientId, authorizeUrl, tokenUrl, scope);
+
+					if (emailConnectionFile == null) {
+						System.out.println();
+						System.out.println("=== OAuth2 sign-in successful ===");
+						System.out.println("userEmail:    " + result.userEmail);
+						System.out.println("refreshToken: " + result.refreshToken);
+						System.out.println();
+						System.out.println("Paste these into the <oauth2useremail> and <oauth2refreshtoken> elements "
+								+ "of your email connection XML. The refresh token will be encrypted on first save "
+								+ "by the running DataPallas instance.");
+						return 0;
+					}
+
+					if (!emailConnectionFile.exists()) {
+						throw new FileNotFoundException(
+								"Email connection file does not exist: " + emailConnectionFile.getAbsolutePath());
+					}
+
+					Settings settings = new Settings(null);
+					DocumentBursterConnectionEmailSettings connSettings = settings
+							.loadSettingsConnectionEmail(emailConnectionFile.getAbsolutePath());
+					if (connSettings == null || connSettings.connection == null
+							|| connSettings.connection.emailserver == null) {
+						throw new IllegalStateException(
+								"Email connection file is malformed (missing <connection><emailserver>): "
+										+ emailConnectionFile.getAbsolutePath());
+					}
+
+					connSettings.connection.emailserver.oauth2provider = provider.toUpperCase();
+					connSettings.connection.emailserver.oauth2clientid = clientId;
+					if (StringUtils.isNotBlank(tenantId))
+						connSettings.connection.emailserver.oauth2tenantid = tenantId;
+					if (StringUtils.isNotBlank(authorizeUrl))
+						connSettings.connection.emailserver.oauth2authorizeurl = authorizeUrl;
+					if (StringUtils.isNotBlank(tokenUrl))
+						connSettings.connection.emailserver.oauth2tokenurl = tokenUrl;
+					if (StringUtils.isNotBlank(scope))
+						connSettings.connection.emailserver.oauth2scope = scope;
+					connSettings.connection.emailserver.oauth2useremail = result.userEmail;
+
+					// Encrypt the refresh token at rest using the same SecretsCipher path the server uses.
+					// SecretsCipher.encrypt() already returns the full "ENC(...)" wrapper.
+					SecretsCipher cipher = SecretsCipher.getInstance(Settings.PORTABLE_EXECUTABLE_DIR_PATH);
+					connSettings.connection.emailserver.oauth2refreshtoken = cipher.encrypt(result.refreshToken);
+
+					JAXBContext jc = JAXBContext.newInstance(DocumentBursterConnectionEmailSettings.class);
+					Marshaller marshaller = jc.createMarshaller();
+					marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+					try (OutputStream os = new FileOutputStream(emailConnectionFile)) {
+						marshaller.marshal(connSettings, os);
+					}
+
+					System.out.println();
+					System.out.println("=== OAuth2 sign-in successful ===");
+					System.out.println("Signed in as : " + result.userEmail);
+					System.out.println("Saved to     : " + emailConnectionFile.getAbsolutePath());
+					System.out.println("Refresh token has been written encrypted (ENC(...)).");
+					return 0;
+				}
 			}
 		}
 	}

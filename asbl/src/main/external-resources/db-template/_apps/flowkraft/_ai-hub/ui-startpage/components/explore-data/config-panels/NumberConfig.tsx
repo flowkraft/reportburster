@@ -86,6 +86,7 @@ export function NumberConfig({ config, columns, onChange }: NumberConfigProps) {
           {!config.numberFormat && <AutoBadge reason="Inferred from column name: currency for price/revenue/freight/etc., else plain number." />}
         </span>
         <select
+          id="selectNumberFormat"
           value={format}
           onChange={(e) => onChange(clearAutoFlag({ ...config, numberFormat: e.target.value }, "numberFormat"))}
           className="w-full mt-1 text-sm bg-background border border-border rounded-md px-2 py-1.5 text-foreground"

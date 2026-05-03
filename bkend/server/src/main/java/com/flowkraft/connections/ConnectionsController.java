@@ -86,6 +86,11 @@ public class ConnectionsController {
 		DocumentBursterConnectionEmailSettings result = reportsService.loadSettingsConnectionEmail(fullPath);
 		if (result != null && result.connection != null && result.connection.emailserver != null) {
 			result.connection.emailserver.userpassword = maskIfSecret(result.connection.emailserver.userpassword);
+			// Same defensive masking for the OAuth2 refresh token — never leak the encrypted
+			// ENC(...) wrapper to the browser. The on-disk value stays encrypted; the browser
+			// only sees PASSWORD_MASK and the save path preserves the existing ENC(...) when
+			// the form posts the mask back unchanged.
+			result.connection.emailserver.oauth2refreshtoken = maskIfSecret(result.connection.emailserver.oauth2refreshtoken);
 		}
 		return Mono.just(result);
 	}
@@ -170,13 +175,26 @@ public class ConnectionsController {
 			@RequestBody DocumentBursterConnectionEmailSettings settings) throws Exception {
 		log.info("Saving email connection: {}", connectionId);
 		String filePath = connectionsService.resolveEmailConnectionPath(connectionId);
-		// If password is masked, preserve the existing encrypted value from disk
+		// If userpassword or oauth2refreshtoken come back masked, preserve the existing
+		// encrypted ENC(...) value from disk. This makes the save idempotent: any sequence
+		// of save→reload→save→… leaves the on-disk secret untouched until the user explicitly
+		// changes it. Auto-save (right after OAuth sign-in) sends the freshly-issued token in
+		// plaintext on the *first* save, after which the form is reloaded with PASSWORD_MASK,
+		// and any subsequent user-triggered Save preserves what's already on disk.
 		if (settings.connection != null && settings.connection.emailserver != null
-				&& PASSWORD_MASK.equals(settings.connection.emailserver.userpassword)
 				&& new File(filePath).exists()) {
-			DocumentBursterConnectionEmailSettings existing = reportsService.loadSettingsConnectionEmail(filePath);
-			if (existing != null && existing.connection != null && existing.connection.emailserver != null) {
-				settings.connection.emailserver.userpassword = existing.connection.emailserver.userpassword;
+			boolean userPwdMasked = PASSWORD_MASK.equals(settings.connection.emailserver.userpassword);
+			boolean refreshTokenMasked = PASSWORD_MASK.equals(settings.connection.emailserver.oauth2refreshtoken);
+			if (userPwdMasked || refreshTokenMasked) {
+				DocumentBursterConnectionEmailSettings existing = reportsService.loadSettingsConnectionEmail(filePath);
+				if (existing != null && existing.connection != null && existing.connection.emailserver != null) {
+					if (userPwdMasked) {
+						settings.connection.emailserver.userpassword = existing.connection.emailserver.userpassword;
+					}
+					if (refreshTokenMasked) {
+						settings.connection.emailserver.oauth2refreshtoken = existing.connection.emailserver.oauth2refreshtoken;
+					}
+				}
 			}
 		}
 		reportsService.saveSettingsConnectionEmail(settings, filePath);

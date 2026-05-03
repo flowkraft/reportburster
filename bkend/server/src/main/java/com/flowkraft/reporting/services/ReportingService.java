@@ -719,18 +719,18 @@ public class ReportingService {
 			if (options instanceof String) {
 				String sql = ((String) options).trim();
 				if (sql.toUpperCase().startsWith("SELECT")) {
-					DatabaseConnectionManager dbManager = ConnectionFactory.newConnectionManager();
-					SqlExecutor sqlExec = new SqlExecutor(dbManager);
-					List<Map<String, Object>> rows = sqlExec.queryOn(connectionCode, sql);
-					dbManager.close();
+					try (DatabaseConnectionManager dbManager = ConnectionFactory.newConnectionManager()) {
+						SqlExecutor sqlExec = new SqlExecutor(dbManager);
+						List<Map<String, Object>> rows = sqlExec.queryOn(connectionCode, sql);
 
-					List<String> optionValues = new ArrayList<>();
-					for (Map<String, Object> row : rows) {
-						Object val = row.values().iterator().next();
-						if (val != null) optionValues.add(String.valueOf(val));
+						List<String> optionValues = new ArrayList<>();
+						for (Map<String, Object> row : rows) {
+							Object val = row.values().iterator().next();
+							if (val != null) optionValues.add(String.valueOf(val));
+						}
+						param.uiHints.put("options", optionValues);
+						log.debug("Resolved SQL options for param '" + param.id + "': " + optionValues.size() + " values");
 					}
-					param.uiHints.put("options", optionValues);
-					log.debug("Resolved SQL options for param '" + param.id + "': " + optionValues.size() + " values");
 				}
 			}
 		}

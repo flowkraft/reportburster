@@ -13,7 +13,7 @@ export const leftMenuTemplate = `<!-- Sidebar Menu -->
   </li>
   <li [class.active]="activeSection === 'cubes'">
     <a id="btnNavSectionCubes" href="#" [routerLink]="['/configuration-crud', 'cubes']" skipLocationChange="true">
-      <i class="fa fa-cube"></i> <span>Cubes</span>
+      <i class="fa fa-cube"></i> <span>Cubes / Semantic Layer</span>
     </a>
   </li>
 </ul>`;

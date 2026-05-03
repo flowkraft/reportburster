@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { StateStoreService } from './state-store.service';
 import { RbElectronService } from '../areas/electron-nodejs/electron.service';
 import { ApiService } from './api.service';
+import { SettingsService } from './settings.service';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable({
@@ -13,6 +14,7 @@ export class InitService {
     private stateStore: StateStoreService,
     private electronService: RbElectronService,
     private apiService: ApiService,
+    private settingsService: SettingsService,
     private http: HttpClient,
   ) { }
 
@@ -36,6 +38,19 @@ export class InitService {
       };
       this.stateStore.configSys.sysInfo.setup.java = { ...systemInfo.java };
       this.stateStore.configSys.sysInfo.setup.env = { ...systemInfo.env };
+
+      // Load internal preferences (skin, copilotUrl, showsamples) once at
+      // bootstrap so any feature that reads settingsService.showSamples works
+      // regardless of whether the SkinsComponent (which is hidden in
+      // RUNNING_IN_E2E mode) ever renders. Without this, the Processing tab's
+      // dashboardReports filter sees showSamples=false and hides sample
+      // dashboards even though config/_internal/settings.xml says true.
+      try {
+        const prefs = await this.settingsService.loadPreferences();
+        this.settingsService.xmlInternalSettings.documentburster = prefs;
+      } catch (e) {
+        console.warn('[InitService] Failed to load preferences at bootstrap:', e);
+      }
     } else {
       // TEMP (2025-12-19): API key handling is present below but intentionally skipped in web mode during rollback.
       // We return early to avoid accidentally setting an API key in normal web usage until a proper reimplementation is scheduled.

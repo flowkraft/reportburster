@@ -180,6 +180,16 @@ public class EmailMessageFactory {
 				msg.isTls = ctx.emailConnection.getDetails().connection.emailserver.usetls;
 				msg.isSsl = ctx.emailConnection.getDetails().connection.emailserver.usessl;
 
+				// OAuth2 fields — only present when connection file specifies a provider
+				msg.oauth2provider   = ctx.emailConnection.getDetails().connection.emailserver.oauth2provider;
+				msg.oauth2clientid   = ctx.emailConnection.getDetails().connection.emailserver.oauth2clientid;
+				msg.oauth2tenantid   = ctx.emailConnection.getDetails().connection.emailserver.oauth2tenantid;
+				msg.oauth2authorizeurl = ctx.emailConnection.getDetails().connection.emailserver.oauth2authorizeurl;
+				msg.oauth2tokenurl   = ctx.emailConnection.getDetails().connection.emailserver.oauth2tokenurl;
+				msg.oauth2scope      = ctx.emailConnection.getDetails().connection.emailserver.oauth2scope;
+				msg.oauth2refreshtoken = ctx.emailConnection.getDetails().connection.emailserver.oauth2refreshtoken;
+				msg.oauth2useremail  = ctx.emailConnection.getDetails().connection.emailserver.oauth2useremail;
+
 			}
 		}
 
@@ -326,6 +336,16 @@ public class EmailMessageFactory {
 		// Very Important, Don't use email.setAuthentication()
 		msg.isTls = emailConnection.getDetails().connection.emailserver.usetls;
 		msg.isSsl = emailConnection.getDetails().connection.emailserver.usessl;
+
+		// OAuth2 fields — only present when connection file specifies a provider
+		msg.oauth2provider   = emailConnection.getDetails().connection.emailserver.oauth2provider;
+		msg.oauth2clientid   = emailConnection.getDetails().connection.emailserver.oauth2clientid;
+		msg.oauth2tenantid   = emailConnection.getDetails().connection.emailserver.oauth2tenantid;
+		msg.oauth2authorizeurl = emailConnection.getDetails().connection.emailserver.oauth2authorizeurl;
+		msg.oauth2tokenurl   = emailConnection.getDetails().connection.emailserver.oauth2tokenurl;
+		msg.oauth2scope      = emailConnection.getDetails().connection.emailserver.oauth2scope;
+		msg.oauth2refreshtoken = emailConnection.getDetails().connection.emailserver.oauth2refreshtoken;
+		msg.oauth2useremail  = emailConnection.getDetails().connection.emailserver.oauth2useremail;
 
 		msg.subject = "Great. You Got It!";
 

@@ -119,6 +119,13 @@ export class ConnectionDetailsComponent implements OnInit {
   isUbiquitousLanguageTabActive = false;
   isToolsTabActive = false;
 
+  // Email connection tab states
+  isSMTPTabActive = true;
+  isOAuth2TabActive = false;
+  isSigningInOAuth = false;
+  private activeOAuthFlowId: string | null = null;
+  private activeOAuthEventSource: EventSource | null = null;
+
   constructor(
     protected confirmService: ConfirmService,
     protected messagesService: ToastrMessagesService,
@@ -494,6 +501,104 @@ export class ConnectionDetailsComponent implements OnInit {
 
     // Rebuild folder path with correct vendor suffix (async - will complete in background)
     await this.updateModelAndForm();
+  }
+
+  onOAuth2ProviderChange(_provider: string): void {
+    // ngModel already writes to the model — nothing extra needed
+  }
+
+  async onSignInOAuth(): Promise<void> {
+    const emailserver = this.modalConnectionInfo.email.documentburster.connection.emailserver as any;
+    const payload = {
+      provider: emailserver.oauth2provider,
+      tenantId: emailserver.oauth2tenantid || '',
+      clientId: emailserver.oauth2clientid,
+      authorizeUrl: emailserver.oauth2authorizeurl || '',
+      tokenUrl: emailserver.oauth2tokenurl || '',
+      scope: emailserver.oauth2scope || '',
+    };
+
+    this.isSigningInOAuth = true;
+    this.cdRef.detectChanges();
+
+    try {
+      const { flowId } = await this.connectionsService.startEmailOAuth(payload);
+      this.activeOAuthFlowId = flowId;
+
+      const sseUrl = `${this.connectionsService.apiService.BACKEND_URL}/oauth/email/${flowId}/events`;
+      this.activeOAuthEventSource = new EventSource(sseUrl);
+
+      this.activeOAuthEventSource.addEventListener('success', async (event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        emailserver.oauth2useremail = data.userEmail || '';
+        emailserver.oauth2refreshtoken = data.refreshToken || '';
+        this.isSigningInOAuth = false;
+        this.activeOAuthEventSource?.close();
+        this.activeOAuthEventSource = null;
+        this.activeOAuthFlowId = null;
+        this.cdRef.detectChanges();
+
+        // Auto-save right away so the freshly-issued refresh token can never be lost
+        // by the user closing the modal without clicking Save. The save path encrypts
+        // the token at rest and is idempotent — the user's later explicit Save click
+        // will re-post the same plaintext form value, which the backend either re-encrypts
+        // (overwriting with a new ENC(...) ciphertext of the same plaintext, AES-GCM
+        // randomized nonce makes the bytes differ but the secret is identical) or
+        // preserves untouched if the form is reloaded with PASSWORD_MASK before the
+        // second save. Either way the on-disk file always holds a valid encrypted token.
+        const autoSaved = await this.saveCurrentConnection(false);
+        if (autoSaved) {
+          // Tell the user we did the heavy lifting AND ask them to confirm with Save.
+          // Putting them in the loop makes the responsibility explicit and avoids the
+          // "wait, did it actually persist?" feeling that silent auto-saves create.
+          this.infoService.showInformation({
+            message:
+              `<strong>Sign-in successful</strong> — connected as <code>${data.userEmail}</code>.<br /><br />` +
+              `The OAuth2 credentials have been auto-saved so they cannot be lost. ` +
+              `Please click <strong>Save</strong> to confirm and finalize the email connection.`,
+          });
+        }
+      });
+
+      this.activeOAuthEventSource.addEventListener('error', (event: MessageEvent) => {
+        const data = (event as any).data ? JSON.parse((event as any).data) : {};
+        this.messagesService.showError(data.error || 'OAuth2 sign-in failed');
+        this.isSigningInOAuth = false;
+        this.activeOAuthEventSource?.close();
+        this.activeOAuthEventSource = null;
+        this.activeOAuthFlowId = null;
+        this.cdRef.detectChanges();
+      });
+
+      this.activeOAuthEventSource.onerror = () => {
+        if (this.isSigningInOAuth) {
+          this.messagesService.showError('OAuth2 sign-in connection lost');
+          this.isSigningInOAuth = false;
+          this.activeOAuthEventSource?.close();
+          this.activeOAuthEventSource = null;
+          this.activeOAuthFlowId = null;
+          this.cdRef.detectChanges();
+        }
+      };
+    } catch (err) {
+      this.messagesService.showError('Failed to start OAuth2 sign-in');
+      this.isSigningInOAuth = false;
+      this.cdRef.detectChanges();
+    }
+  }
+
+  onDisconnectOAuth(): void {
+    const emailserver = this.modalConnectionInfo.email.documentburster.connection.emailserver as any;
+    emailserver.oauth2useremail = '';
+    emailserver.oauth2refreshtoken = '';
+    if (this.activeOAuthFlowId) {
+      this.connectionsService.cancelEmailOAuth(this.activeOAuthFlowId).catch(() => {});
+      this.activeOAuthFlowId = null;
+    }
+    this.activeOAuthEventSource?.close();
+    this.activeOAuthEventSource = null;
+    this.isSigningInOAuth = false;
+    this.cdRef.detectChanges();
   }
 
   openSqliteFileBrowser() {
@@ -2562,6 +2667,19 @@ export class ConnectionDetailsComponent implements OnInit {
 
     if (connectionType === 'email-connection') {
       this.modalConnectionInfo.modalTitle = 'Create Email Connection';
+
+      // Reset email tab state and any in-flight OAuth flow
+      this.isSMTPTabActive = true;
+      this.isOAuth2TabActive = false;
+      this.isSigningInOAuth = false;
+      if (this.activeOAuthEventSource) {
+        this.activeOAuthEventSource.close();
+        this.activeOAuthEventSource = null;
+      }
+      if (this.activeOAuthFlowId) {
+        this.connectionsService.cancelEmailOAuth(this.activeOAuthFlowId).catch(() => {});
+        this.activeOAuthFlowId = null;
+      }
 
       this.modalConnectionInfo.connectionSameFilePathAlreadyExists = false;
       this.modalConnectionInfo.email.documentburster.connection.code = '';

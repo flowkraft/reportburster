@@ -1011,14 +1011,19 @@ public class ReportsService {
 	public synchronized void saveSettingsConnectionEmail(DocumentBursterConnectionEmailSettings settings, String connectionFilePath)
 			throws Exception {
 
-		// Encrypt email connection password before saving — skip variable references and placeholders
+		// Encrypt email connection password and OAuth2 refresh token before saving — skip
+		// variable references, placeholders, the API mask, and already-ENC(...)-wrapped values.
+		// encryptIfSecret is idempotent: ENC(...) → ENC(...) (no double-wrap), "******" → "******"
+		// (preserved by ConnectionsController), empty → empty, plaintext → ENC(...).
 		if (settings.connection != null && settings.connection.emailserver != null) {
 			try {
 				SecretsCipher cipher = SecretsCipher.getInstance(AppPaths.PORTABLE_EXECUTABLE_DIR_PATH);
 				settings.connection.emailserver.userpassword = encryptIfSecret(cipher,
 						settings.connection.emailserver.userpassword);
+				settings.connection.emailserver.oauth2refreshtoken = encryptIfSecret(cipher,
+						settings.connection.emailserver.oauth2refreshtoken);
 			} catch (Exception e) {
-				log.warn("Failed to encrypt email connection password before save: {}", e.getMessage());
+				log.warn("Failed to encrypt email connection secrets before save: {}", e.getMessage());
 			}
 		}
 
@@ -1092,6 +1097,7 @@ public class ReportsService {
 				DocumentBursterConnectionDatabaseSettings s = getSampleConnectionAsDbSettings(sampleId);
 				if (s != null && s.connection != null) {
 					ConnectionFileInfo info = new ConnectionFileInfo();
+					info.fileName = sampleId + ".xml";
 					info.connectionCode = s.connection.code;
 					info.connectionName = s.connection.name;
 					info.connectionType = "database-connection";

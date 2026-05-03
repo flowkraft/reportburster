@@ -232,9 +232,13 @@ export function SchemaBrowser({
               onChange={(e) => setConnectionId(e.target.value || null)}
               className="w-full text-xs bg-background border border-border rounded-md px-2 py-1.5 text-foreground"
             >
-              <option value="">Select connection…</option>
+              <option id="option-conn-none" value="">Select connection…</option>
               {connections.map((c) => (
-                <option key={c.connectionCode} value={c.connectionCode}>
+                <option
+                  id={`option-conn-${c.connectionCode}`}
+                  key={c.connectionCode}
+                  value={c.connectionCode}
+                >
                   {c.connectionCode} ({c.dbserver?.type})
                 </option>
               ))}

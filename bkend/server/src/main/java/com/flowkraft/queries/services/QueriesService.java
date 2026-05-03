@@ -51,9 +51,10 @@ public class QueriesService {
 				}
 			}
 		}
-		DatabaseConnectionManager dbManager = createConnectionManager(connectionId);
-		SqlExecutor executor = new SqlExecutor(dbManager);
-		return executor.queryOn(connectionId, sql, boundParams);
+		try (DatabaseConnectionManager dbManager = createConnectionManager(connectionId)) {
+			SqlExecutor executor = new SqlExecutor(dbManager);
+			return executor.queryOn(connectionId, sql, boundParams);
+		}
 	}
 
 	/**

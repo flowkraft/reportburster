@@ -203,8 +203,8 @@ public class DatabaseConnectionManager implements AutoCloseable {
 				StringUtils.isNotEmpty(connSettings.databaseserver.userpassword));
 
 		// Add common pool properties (can be customized further)
-		config.setMaximumPoolSize(10); // Example size
-		config.setMinimumIdle(2); // Example idle
+		config.setMaximumPoolSize(10);
+		config.setMinimumIdle(0); // connections opened on demand, not at pool creation
 		config.setPoolName("HikariPool-" + connectionCode);
 
 		// Prepared statement cache — MySQL/MariaDB only; other drivers reject these properties
