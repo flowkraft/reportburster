@@ -1,9 +1,9 @@
 ﻿<div align="center">
 
-# DataPallas - Business Intelligence For The New Era
+# ReportBurster - Business Intelligence For The New Era
 
 <a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
-  <img src=".github/screenshots/041_00_ai-driven-hei-ai-help-me-with-buttons.png" alt="DataPallas — AI-Powered Data Exploration">
+  <img src=".github/screenshots/041_00_ai-driven-hei-ai-help-me-with-buttons.png" alt="ReportBurster — AI-Powered Data Exploration">
 </a>
 
 ## One Modern BI Platform
@@ -18,13 +18,13 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 
 <br>
 
-[![Watch the demo](.github/0020-datapallas-learn-gif-600x380-3fps.gif)](https://www.reportburster.com)
+[![Watch the demo](.github/screenshots/25-large-scale-invoices-generate.png)](https://www.reportburster.com)
 
 </div>
 
 ## One Modern BI Platform, Not Three Legacy Ones
 
-| What you need | What you're using today | DataPallas |
+| What you need | What you're using today | ReportBurster |
 |---|---|---|
 | **[1.&nbsp;Report Generation](https://www.reportburster.com/docs/report-generation)** | ~~Crystal Reports~~, ~~SSRS~~, ~~JasperReports~~ | Pixel-perfect PDFs, Excel, HTML, Word from any data source |
 | **[2.&nbsp;Dashboards&nbsp;&amp;&nbsp;Analytics](https://www.reportburster.com/docs/bi-analytics/dashboards)** | ~~Tableau~~, ~~Power BI~~, ~~Metabase~~, ~~Superset~~ | Embeddable data-tables, charts, pivot tables, and analytics |
@@ -41,13 +41,13 @@ ReportBurster ships with many ready-to-run samples — report bursting, report g
 Watch this repository to be notified of future updates:
 
 <a href="https://github.com/flowkraft/reportburster/stargazers">
-  <img src=".github/screenshots/github-star-animation.svg" alt="Star DataPallas on GitHub" width="490">
+  <img src=".github/screenshots/github-star-animation.svg" alt="Star ReportBurster on GitHub" width="490">
 </a>
 
 ## Self-Host with Docker (Windows, Linux, macOS)
 
 1. Download **[reportburster-server-docker.zip](https://downloads.reportburster.com/file/reportburster/newest/reportburster-server-docker.zip)**
-2. Extract the zip and navigate to the `DataPallas` directory
+2. Extract the zip and navigate to the `ReportBurster` directory
 3. Run `docker compose up -d`
 4. Open `http://localhost:9090`
 
@@ -72,7 +72,7 @@ Full documentation is available at **[reportburster.com/docs](https://www.report
 <br/>
 
 <a href="https://www.reportburster.com/docs/bi-analytics/dashboards" target="_blank">
-  <img src=".github/screenshots/100_10_web-components-dashboard-example.png" alt="DataPallas BI Dashboards">
+  <img src=".github/screenshots/100_10_web-components-dashboard-example.png" alt="ReportBurster BI Dashboards">
 </a>
 
 <br/>
@@ -109,7 +109,7 @@ We welcome contributions! Whether it's bug reports, feature requests, documentat
 
 [![GitHub Stars](https://img.shields.io/github/stars/flowkraft/reportburster?style=social)](https://github.com/flowkraft/reportburster/stargazers)
 
-<sub>If DataPallas helps you, consider giving it a star — it helps others discover the project.</sub>
+<sub>If ReportBurster helps you, consider giving it a star — it helps others discover the project.</sub>
 
 </div>
 
