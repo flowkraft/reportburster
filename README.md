@@ -18,7 +18,7 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 
 <br>
 
-[![Watch the demo](.github/screenshots/25-large-scale-invoices-generate.png)](https://www.reportburster.com)
+[![Watch the demo](.github/0020-datapallas-learn-gif-600x380-3fps.gif)](https://www.reportburster.com)
 
 </div>
 
