@@ -67,7 +67,7 @@ IMPORTANT — be minimalistic:
 - Do not set options that repeat default behavior (e.g. do not set showSearch unless needed).
 - Only include the field and the options that change behaviour the user actually asked for.
 
-For more details and examples read: https://www.reportburster.com/docs/bi-analytics/web-components/filter-pane
+For more details and examples read: https://datapallas.com/docs/bi-analytics/web-components/filter-pane
 
 """
             + AiPromptConstants.MULTI_COMPONENT_NOTE

@@ -155,11 +155,11 @@ SELECT * FROM orders WHERE id = 1;
 
 ## Step 6: Use in DataPallas
 
-1. **Configure a ClickHouse database connection** — [see how](https://www.reportburster.com/docs/data-exploration/database-connections)
+1. **Configure a ClickHouse database connection** — [see how](https://datapallas.com/docs/data-exploration/database-connections)
 
-2. **Create a Pivot Table** using your ClickHouse connection — [see how](https://www.reportburster.com/docs/bi-analytics/web-components/pivottables)
+2. **Create a Pivot Table** using your ClickHouse connection — [see how](https://datapallas.com/docs/bi-analytics/web-components/pivottables)
 
-3. **Use or embed** in DataPallas's Analytics Portal or your own web apps — [see how](https://www.reportburster.com/docs/bi-analytics/web-components)
+3. **Use or embed** in DataPallas's Analytics Portal or your own web apps — [see how](https://datapallas.com/docs/bi-analytics/web-components)
 
 ---
 

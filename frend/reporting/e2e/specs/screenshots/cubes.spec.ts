@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SCREENSHOTS — Cubes / Semantic Layer (for reportburster.com docs)
+// SCREENSHOTS — Cubes / Semantic Layer (for datapallas.com docs)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Captures the 4 PNGs referenced from the docs MDX:
@@ -13,7 +13,7 @@
 // (`firstPage`) — no external browser, no AI Hub.
 //
 // Output: writes directly into the docs repo at
-//   c:\Projects\kraft-src-company-biz\flowkraft\www\reportburster.com\public\images\docs\
+//   c:\Projects\kraft-src-company-biz\flowkraft\www\datapallas.com\public\images\docs\
 //
 // HOW TO RUN
 //     cd frend/reporting

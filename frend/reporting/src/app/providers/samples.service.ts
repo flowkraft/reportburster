@@ -86,7 +86,7 @@ export class SamplesService {
       jobType: 'burst',
       input: {
         data: ['file:samples/burst/Payslips.pdf'],
-        dataUrl: ['file:https://www.reportburster.com/docs/Payslips.pdf'],
+        dataUrl: ['file:https://datapallas.com/docs/Payslips.pdf'],
         numberOfPages: 3,
         tokens: [
           'clyde.grew@northridgehealth.org',
@@ -131,7 +131,7 @@ export class SamplesService {
       input: {
         data: ['file:samples/burst/Payslips-Distinct-Sheets.xls'],
         dataUrl: [
-          'file:https://www.reportburster.com/docs/Payslips-Distinct-Sheets.xls',
+          'file:https://datapallas.com/docs/Payslips-Distinct-Sheets.xls',
         ],
         numberOfPages: -1,
         tokens: [
@@ -175,7 +175,7 @@ export class SamplesService {
       input: {
         data: ['file:samples/burst/Customers-Distinct-Column-Values.xls'],
         dataUrl: [
-          'file:https://www.reportburster.com/docs/Customers-Distinct-Column-Values.xls',
+          'file:https://datapallas.com/docs/Customers-Distinct-Column-Values.xls',
         ],
         numberOfPages: -1,
         tokens: [],
@@ -210,7 +210,7 @@ export class SamplesService {
       step3: '',
       input: {
         data: ['file:samples/burst/Split2Times.pdf'],
-        dataUrl: ['file:https://www.reportburster.com/docs/Split2Times.pdf'],
+        dataUrl: ['file:https://datapallas.com/docs/Split2Times.pdf'],
         numberOfPages: -1,
         tokens: [],
       },
@@ -255,9 +255,9 @@ export class SamplesService {
           'file:samples/burst/Invoices-Dec.pdf',
         ],
         dataUrl: [
-          'file:https://www.reportburster.com/docs/Invoices-Oct.pdf',
-          'file:https://www.reportburster.com/docs/Invoices-Nov.pdf',
-          'file:https://www.reportburster.com/docs/Invoices-Dec.pdf',
+          'file:https://datapallas.com/docs/Invoices-Oct.pdf',
+          'file:https://datapallas.com/docs/Invoices-Nov.pdf',
+          'file:https://datapallas.com/docs/Invoices-Dec.pdf',
         ],
         numberOfPages: -1,
         tokens: [],
@@ -299,7 +299,7 @@ export class SamplesService {
       jobType: 'generate',
       input: {
         data: ['file:samples/reports/payslips/Payslips.csv'],
-        dataUrl: ['file:https://www.reportburster.com/docs/Payslips.csv'],
+        dataUrl: ['file:https://datapallas.com/docs/Payslips.csv'],
         numberOfPages: -1,
         tokens: [
           'clyde.grew@northridgehealth.org',
@@ -337,7 +337,7 @@ export class SamplesService {
       jobType: 'generate',
       input: {
         data: ['file:samples/reports/payslips/Payslips.csv'],
-        dataUrl: ['file:https://www.reportburster.com/docs/Payslips.csv'],
+        dataUrl: ['file:https://datapallas.com/docs/Payslips.csv'],
         numberOfPages: -1,
         tokens: [
           'clyde.grew@northridgehealth.org',
@@ -375,7 +375,7 @@ export class SamplesService {
       jobType: 'generate',
       input: {
         data: ['file:samples/reports/payslips/Payslips.csv'],
-        dataUrl: ['file:https://www.reportburster.com/docs/Payslips.csv'],
+        dataUrl: ['file:https://datapallas.com/docs/Payslips.csv'],
         numberOfPages: -1,
         tokens: [
           'clyde.grew@northridgehealth.org',
@@ -413,7 +413,7 @@ export class SamplesService {
       jobType: 'generate',
       input: {
         data: ['file:samples/reports/payslips/Payslips.csv'],
-        dataUrl: ['file:https://www.reportburster.com/docs/Payslips.csv'],
+        dataUrl: ['file:https://datapallas.com/docs/Payslips.csv'],
         numberOfPages: -1,
         tokens: [
           'clyde.grew@northridgehealth.org',
@@ -451,7 +451,7 @@ export class SamplesService {
       jobType: 'generate',
       input: {
         data: ['file:samples/reports/payslips/Payslips.xlsx'],
-        dataUrl: ['file:https://www.reportburster.com/docs/Payslips.xlsx'],
+        dataUrl: ['file:https://datapallas.com/docs/Payslips.xlsx'],
         numberOfPages: -1,
         tokens: [
           'clyde.grew@northridgehealth.org',

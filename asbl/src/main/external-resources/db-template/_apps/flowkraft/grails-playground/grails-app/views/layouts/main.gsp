@@ -342,8 +342,8 @@
         <footer class="app-footer">
             <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
                 <span>&copy; 2025 FlowKraft Systems</span>
-                <a href="https://www.reportburster.com" target="_blank" class="text-decoration-none text-muted">
-                    reportburster.com
+                <a href="https://datapallas.com" target="_blank" class="text-decoration-none text-muted">
+                    datapallas.com
                 </a>
             </div>
         </footer>

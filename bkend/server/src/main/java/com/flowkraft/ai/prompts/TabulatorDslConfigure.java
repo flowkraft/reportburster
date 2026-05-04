@@ -122,7 +122,7 @@ IMPORTANT — be minimalistic:
 - Only define columns the user asked for. Only add formatters, filters, sorters, or editors that the user explicitly needs.
 - Do not add options "just in case" or for completeness.
 
-For more details and examples read: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
+For more details and examples read: https://datapallas.com/docs/bi-analytics/web-components/datatables
 
 """
             + AiPromptConstants.MULTI_COMPONENT_NOTE

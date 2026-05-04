@@ -18,9 +18,9 @@ export class LiveChatComponent implements OnInit {
         const j = d.createElement(s) as HTMLScriptElement;
         j.async = true;
         j.src =
-          'https://chat.reportburster.com/livechat/rocketchat-livechat.min.js?_=201903270000';
+          'https://chat.datapallas.com/livechat/rocketchat-livechat.min.js?_=201903270000';
         h.parentNode?.insertBefore(j, h);
-      })(window, document, 'script', 'https://chat.reportburster.com/livechat');
+      })(window, document, 'script', 'https://chat.datapallas.com/livechat');
     } catch (error) {
       console.error('RocketChat widget error:', error);
     }

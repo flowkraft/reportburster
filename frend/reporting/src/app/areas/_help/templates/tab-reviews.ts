@@ -16,7 +16,7 @@ export const tabReviewsTemplate = `<ng-template #tabReviewsTemplate>
     <a href="http://www.english-heritage.org.uk" target="_blank">English Heritage, United Kingdom</a>
     <br>
     <br>
-    <a href="https://www.reportburster.com/uses" target="_blank">
+    <a href="https://datapallas.com/uses" target="_blank">
       <button class="btn btn-primary" type="button">View More Customer Reviews</button>
     </a>
     <br>

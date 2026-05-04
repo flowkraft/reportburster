@@ -68,7 +68,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop ai-hub-frend',
         tags: ['bi', 'charts', 'analytics', 'olap', 'visualization', 'data-warehouse', 'dashboards', 'flowkraft-data-canvas', 'explore-data', 'DataPallas\'s App'],
         visible: true,
-        tutorialLink: { label: 'Learn how to build dashboards →', url: 'https://www.reportburster.com/docs/bi-analytics/dashboards' },
+        tutorialLink: { label: 'Learn how to build dashboards →', url: 'https://datapallas.com/docs/bi-analytics/dashboards' },
       },
       {
         id: 'flowkraft-grails',
@@ -88,7 +88,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop grails-playground',
         tags: ['flowkraft', 'admin-panel', 'grails', 'front-facing' , 'customer-portal', 'payments', 'bi', 'charts', 'analytics', 'olap', 'visualization', 'data-warehouse', 'DataPallas\'s App'],
         visible: true,
-        tutorialLink: { label: 'Want to get your own self-service document web portal? See a real walkthrough →', url: 'https://www.reportburster.com/docs/ai-crew/athena#athena---new-billing-portal' },
+        tutorialLink: { label: 'Want to get your own self-service document web portal? See a real walkthrough →', url: 'https://datapallas.com/docs/ai-crew/athena#athena---new-billing-portal' },
       },
       {
         id: 'flowkraft-bkend-boot-groovy',
@@ -105,7 +105,7 @@ export class AppsManagerService {
         tags: ['flowkraft', 'backend', 'etl', 'automation', 'crons-job-scheduling', 'DataPallas\'s App'],
         visible: true,
         launch: false, // No UI - API/automation only
-        tutorialLink: { label: 'Want to get your own automation & job scheduling backend application? See a real walkthrough →', url: 'https://www.reportburster.com/docs/ai-crew/hephaestus#billing-portal--payment-reminders-for-overdue-bills' },
+        tutorialLink: { label: 'Want to get your own automation & job scheduling backend application? See a real walkthrough →', url: 'https://datapallas.com/docs/ai-crew/hephaestus#billing-portal--payment-reminders-for-overdue-bills' },
       },
       {
         id: 'flowkraft-next',
@@ -125,7 +125,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop next-playground',
         tags: ['flowkraft', 'admin-panel', 'front-facing', 'dashboards', 'customer-portal', 'payments', 'next.js', 'react', 'bi', 'charts', 'analytics', 'olap', 'visualization', 'data-warehouse', 'DataPallas\'s App'],
         visible: true,
-        tutorialLink: { label: 'Want to get your own self-service document web portal? See a real walkthrough →', url: 'https://www.reportburster.com/docs/ai-crew/athena#athena---new-billing-portal' },
+        tutorialLink: { label: 'Want to get your own self-service document web portal? See a real walkthrough →', url: 'https://datapallas.com/docs/ai-crew/athena#athena---new-billing-portal' },
       },
       {
         id: 'cms-webportal',
@@ -133,7 +133,7 @@ export class AppsManagerService {
         icon: 'fa fa-users',
         category: 'Web Portal',
         type: 'docker',
-        description: 'The fastest way to build your <em>You Name It</em> <strong>Web Portal</strong> - could be Employee Portal, Customer Portal, Partner Portal, Student Portal or any other Self-Service Portal <a href="https://www.reportburster.com/docs/document-portal" target="_blank"><i class="fa fa-book"></i>&nbsp;see how</a>',
+        description: 'The fastest way to build your <em>You Name It</em> <strong>Web Portal</strong> - could be Employee Portal, Customer Portal, Partner Portal, Student Portal or any other Self-Service Portal <a href="https://datapallas.com/docs/document-portal" target="_blank"><i class="fa fa-book"></i>&nbsp;see how</a>',
         url: 'http://localhost:8080/wp-admin',
         demoInfo: `
           <div style="margin-top: 18px; padding: 14px 16px; background: #f0f7fa; border: 1px solid #d0e4ed; border-radius: 6px; font-size: 0.88em; color: #333;">
@@ -171,7 +171,7 @@ export class AppsManagerService {
         stopCmd: 'service app stop cms-webportal-playground',
         tags: ['flowkraft', 'cms', 'admin-panel', 'front-facing', 'customer-portal', 'cms', 'wordpress', 'DataPallas\'s App'],
         visible: true,
-        tutorialLink: { label: 'Want to get your own CMS document web portal? See a real walkthrough →', url: 'https://www.reportburster.com/docs/ai-crew/athena#athena---new-billing-portal' },
+        tutorialLink: { label: 'Want to get your own CMS document web portal? See a real walkthrough →', url: 'https://datapallas.com/docs/ai-crew/athena#athena---new-billing-portal' },
       },
       {
         id: 'cloudbeaver',

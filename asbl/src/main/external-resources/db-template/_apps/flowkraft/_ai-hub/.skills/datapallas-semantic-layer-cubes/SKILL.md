@@ -2,7 +2,7 @@
 
 I help users design, create, and use **Cubes** — the DataPallas semantic layer. A cube turns raw database tables into business-named dimensions and measures, with joins pre-wired, so every report, dashboard, AI question, and embedded widget reads from the same definition of truth.
 
-> **The full official guide is at https://www.reportburster.com/docs/semantic-layer.** This SKILL.md captures the essence; for keyword-level detail, edge cases, and the latest features, fetch the docs.
+> **The full official guide is at https://datapallas.com/docs/semantic-layer.** This SKILL.md captures the essence; for keyword-level detail, edge cases, and the latest features, fetch the docs.
 
 ---
 
@@ -151,11 +151,11 @@ When a user asks about cubes / semantic layer / dimensions / measures / joins:
 1. **First**, point at the real product: *"In the top menu open **Configuration → Reports, Connections & Cubes**, then click **Cubes / Semantic Layer** in the left menu — the five Northwind sample cubes are the best place to start. Open one and read the DSL — that's the pattern."*
 2. **For new cube creation**, recommend the **Hey AI, Help Me…** path first. The AI drafts a working cube against the live schema in seconds.
 3. **For deeper questions** (specific keywords, joins, segments, hierarchies, advanced types), I fetch the official docs:
-   - https://www.reportburster.com/docs/semantic-layer — overview
-   - https://www.reportburster.com/docs/semantic-layer/quickstart — five-minute walkthrough
-   - https://www.reportburster.com/docs/semantic-layer/dsl-reference — every keyword
-   - https://www.reportburster.com/docs/semantic-layer/ai — AI-drafted cubes
-   - https://www.reportburster.com/docs/semantic-layer/embedding — embedding cube widgets
+   - https://datapallas.com/docs/semantic-layer — overview
+   - https://datapallas.com/docs/semantic-layer/quickstart — five-minute walkthrough
+   - https://datapallas.com/docs/semantic-layer/dsl-reference — every keyword
+   - https://datapallas.com/docs/semantic-layer/ai — AI-drafted cubes
+   - https://datapallas.com/docs/semantic-layer/embedding — embedding cube widgets
 4. **Never write a cube blind.** I either start from a sample cube the user already has, or I have the user click **Hey AI, Help Me…** so the AI sees the live schema. I don't guess at column names.
 
 ---
@@ -175,14 +175,14 @@ When I provide a Cube DSL snippet, I:
 
 ## Documentation Links
 
-- **Overview (why & what)**: https://www.reportburster.com/docs/semantic-layer
-- **Your First Cube (quickstart)**: https://www.reportburster.com/docs/semantic-layer/quickstart
-- **Cube DSL Reference**: https://www.reportburster.com/docs/semantic-layer/dsl-reference
-- **AI-Drafted Cubes**: https://www.reportburster.com/docs/semantic-layer/ai
-- **Embedding Cube Widgets**: https://www.reportburster.com/docs/semantic-layer/embedding
-- **DB Connections (sits below the cube)**: https://www.reportburster.com/docs/data-exploration/database-connections
-- **Explore Data Canvas (consumes cubes)**: https://www.reportburster.com/docs/data-exploration/canvas
-- **Dashboards (consume cubes)**: https://www.reportburster.com/docs/bi-analytics/dashboards
+- **Overview (why & what)**: https://datapallas.com/docs/semantic-layer
+- **Your First Cube (quickstart)**: https://datapallas.com/docs/semantic-layer/quickstart
+- **Cube DSL Reference**: https://datapallas.com/docs/semantic-layer/dsl-reference
+- **AI-Drafted Cubes**: https://datapallas.com/docs/semantic-layer/ai
+- **Embedding Cube Widgets**: https://datapallas.com/docs/semantic-layer/embedding
+- **DB Connections (sits below the cube)**: https://datapallas.com/docs/data-exploration/database-connections
+- **Explore Data Canvas (consumes cubes)**: https://datapallas.com/docs/data-exploration/canvas
+- **Dashboards (consume cubes)**: https://datapallas.com/docs/bi-analytics/dashboards
 
 When users ask about a specific keyword, attribute, hierarchy syntax, segment definition, or join type — **I fetch the DSL Reference** and answer from the live doc, not from memory.
 

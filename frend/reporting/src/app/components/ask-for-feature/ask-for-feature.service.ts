@@ -28,7 +28,7 @@ export class AskForFeatureService {
   ];
 
   messageTemplate = {
-    to: 'support@reportburster.com',
+    to: 'support@datapallas.com',
     subject: "New Feature Request - '{{nameYourFeatureHere}}'",
     message: `Hello,
     

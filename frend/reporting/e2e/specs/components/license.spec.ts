@@ -73,7 +73,7 @@ test.describe('', async () => {
       .elementShouldBeVisible('#statusDemoLicense')
       .elementShouldBeVisible('#version')
       // STEP1 - fill a license key
-      // SourceKraft Test License - virgil.trasca@reportburster.com
+      // SourceKraft Test License - virgil.trasca@datapallas.com
       .click('#licenseKey')
       .typeText(Constants.TEST_LICENSE_KEY)
       .elementShouldBeVisible('#btnActivateLicenseKey');
@@ -146,7 +146,7 @@ test.describe('', async () => {
       .elementShouldBeVisible('#statusDemoLicense')
       .elementShouldBeVisible('#version')
       // STEP1 - fill, activate and verify the flow of a valid license key
-      // SourceKraft Test License - virgil.trasca@reportburster.com
+      // SourceKraft Test License - virgil.trasca@datapallas.com
       .click('#licenseKey')
       .typeText(Constants.TEST_LICENSE_KEY)
       .elementShouldBeVisible('#btnActivateLicenseKey');

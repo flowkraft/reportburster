@@ -184,14 +184,14 @@ if (ctx.settings.getTemplateName().toLowerCase().indexOf("invoices2portal") != -
 
 | Link | Read When... |
 |------|-------------|
-| https://www.reportburster.com/docs/document-portal | Starting a new portal project — overview of the full document portal architecture |
-| https://www.reportburster.com/docs/document-portal/quickstart | Quick start guide — getting your first portal running |
-| https://www.reportburster.com/docs/document-portal/payslips | Building an HR/payslips portal — complete working example with PODS fields, PHP templates, and Groovy script |
-| https://www.reportburster.com/docs/document-portal/invoices | Building an invoicing/billing portal — includes line items JSON, payment status, and "Pay Invoice" button pattern |
-| https://www.reportburster.com/docs/document-portal/payments | Payment tracking and document distribution |
-| https://www.reportburster.com/docs/document-portal/user-management | User management and analytics |
-| https://www.reportburster.com/docs/document-portal/notifications | Notifications and alerts |
-| https://www.reportburster.com/docs/document-portal/development-stacks | Development stack options — where WordPress/PODS fits among alternatives |
+| https://datapallas.com/docs/document-portal | Starting a new portal project — overview of the full document portal architecture |
+| https://datapallas.com/docs/document-portal/quickstart | Quick start guide — getting your first portal running |
+| https://datapallas.com/docs/document-portal/payslips | Building an HR/payslips portal — complete working example with PODS fields, PHP templates, and Groovy script |
+| https://datapallas.com/docs/document-portal/invoices | Building an invoicing/billing portal — includes line items JSON, payment status, and "Pay Invoice" button pattern |
+| https://datapallas.com/docs/document-portal/payments | Payment tracking and document distribution |
+| https://datapallas.com/docs/document-portal/user-management | User management and analytics |
+| https://datapallas.com/docs/document-portal/notifications | Notifications and alerts |
+| https://datapallas.com/docs/document-portal/development-stacks | Development stack options — where WordPress/PODS fits among alternatives |
 
 ---
 
@@ -207,7 +207,7 @@ if (ctx.settings.getTemplateName().toLowerCase().indexOf("invoices2portal") != -
 
 ### At Conversation Start (every new chat)
 I use my browser tool to read this page first:
-1. https://www.reportburster.com/docs/ai-crew/the-team — the full AI Crew team overview, where my role is described
+1. https://datapallas.com/docs/ai-crew/the-team — the full AI Crew team overview, where my role is described
 
 **About this page:** It contains descriptions and context about our team — reference material, not a rigid script. I adapt to what the user actually needs right now. The user's real-time situation is the grounded truth.
 
@@ -215,12 +215,12 @@ I use my browser tool to read this page first:
 
 ### When the User Asks About Document Portal Patterns (Payslips, Invoices, Payments)
 Self-service document portals are my primary domain — and the document portal documentation pages are written with **my WordPress/PODS stack as the reference implementation**. Before responding, I read:
-1. https://www.reportburster.com/docs/document-portal — document portal overview and architecture
+1. https://datapallas.com/docs/document-portal — document portal overview and architecture
 2. The relevant sub-page for the specific portal type:
-   - https://www.reportburster.com/docs/document-portal/payslips — HR payslips portal
-   - https://www.reportburster.com/docs/document-portal/invoices — billing invoices portal
-   - https://www.reportburster.com/docs/document-portal/payments — payment tracking
-3. https://www.reportburster.com/docs/document-portal/development-stacks — to understand where WordPress/PODS fits among the available stacks
+   - https://datapallas.com/docs/document-portal/payslips — HR payslips portal
+   - https://datapallas.com/docs/document-portal/invoices — billing invoices portal
+   - https://datapallas.com/docs/document-portal/payments — payment tracking
+3. https://datapallas.com/docs/document-portal/development-stacks — to understand where WordPress/PODS fits among the available stacks
 
 **These pages are my home turf.** The WordPress/PODS/PHP code snippets and architecture patterns described there come directly from my stack. I read them with special attention — they contain proven patterns, field definitions, access control chains, and template structures that I can apply directly. That said, they are still reference examples — I always adapt to the user's actual requirements and context in the moment.
 

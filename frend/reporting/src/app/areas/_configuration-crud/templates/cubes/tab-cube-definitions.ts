@@ -169,7 +169,7 @@ export const tabCubeDefinitionsTemplate = `
 
             <tab heading="Example (Cube Options)">
               <div style="margin-top: 10px;">
-                <a id="btnSeeMoreCubeExamples" href="https://www.reportburster.com/docs/data-exploration" target="_blank" class="btn btn-default btn-block" style="color: #337ab7; text-decoration: underline; margin-bottom: 10px;">
+                <a id="btnSeeMoreCubeExamples" href="https://datapallas.com/docs/data-exploration" target="_blank" class="btn btn-default btn-block" style="color: #337ab7; text-decoration: underline; margin-bottom: 10px;">
                   See More Cube Options Examples
                 </a>
                 <ngx-codejar
@@ -222,7 +222,7 @@ export const tabCubeDefinitionsTemplate = `
 
                 <tab heading="Example (Cube Options)">
                   <div style="margin-top: 10px;">
-                    <a id="btnSeeMoreCubeExamples" href="https://www.reportburster.com/docs/data-exploration" target="_blank" class="btn btn-default btn-block" style="color: #337ab7; text-decoration: underline; margin-bottom: 10px;">
+                    <a id="btnSeeMoreCubeExamples" href="https://datapallas.com/docs/data-exploration" target="_blank" class="btn btn-default btn-block" style="color: #337ab7; text-decoration: underline; margin-bottom: 10px;">
                       See More Cube Options Examples
                     </a>
                     <ngx-codejar

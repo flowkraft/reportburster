@@ -32,7 +32,7 @@ export default {
     updateInfo.licenseInfo.latestVersion = '9.9.9';
 
     updateInfo.licenseInfo.key = '51b0aa18f2bbc066efdca8b53c2dacc8';
-    updateInfo.licenseInfo.customeremail = 'virgil.trasca@reportburster.com';
+    updateInfo.licenseInfo.customeremail = 'virgil.trasca@datapallas.com';
     updateInfo.licenseInfo.status = 'valid';
 
     updateInfo.productInfo.product = 'DocumentBurster';

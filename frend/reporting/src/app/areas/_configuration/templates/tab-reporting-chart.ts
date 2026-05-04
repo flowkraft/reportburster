@@ -110,7 +110,7 @@ export const tabReportingChartTemplate = `<ng-template
       <tab heading="Example (Chart Options)">
         <div class="row" style="margin-top: 10px;">
           <div class="col-xs-12">
-            <a id="btnSeeMoreChartExamples" href="https://www.reportburster.com/docs/bi-analytics/web-components/charts" target="_blank" class="btn btn-default btn-block" style="color: #337ab7; text-decoration: underline; margin-bottom: 10px;">
+            <a id="btnSeeMoreChartExamples" href="https://datapallas.com/docs/bi-analytics/web-components/charts" target="_blank" class="btn btn-default btn-block" style="color: #337ab7; text-decoration: underline; margin-bottom: 10px;">
               See More Chart Examples
             </a>
             <ngx-codejar

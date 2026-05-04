@@ -6,13 +6,13 @@
   "keywords": [
     "wordpress"
   ],
-  "homepage": "https://reportburster.com/",
+  "homepage": "https://datapallas.com/",
   "license": "GPL-3.0",
   "authors": [
     {
       "name": "FlowKraft",
-      "email": "support@reportburster.com",
-      "homepage": "https://reportburster.com/"
+      "email": "support@datapallas.com",
+      "homepage": "https://datapallas.com/"
     }
   ],
   "support": {

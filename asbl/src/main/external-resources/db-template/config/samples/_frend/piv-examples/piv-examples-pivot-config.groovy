@@ -17,7 +17,7 @@
  * And in the data script: ctx.reportData(rows)  <- no name argument
  *
  * Use named blocks ONLY when a single report needs multiple components together.
- * See: https://www.reportburster.com/docs/bi-analytics/dashboards#multi-component-reports
+ * See: https://datapallas.com/docs/bi-analytics/dashboards#multi-component-reports
  */
 
 // ═══════════════════════════════════════════════════════════════════════════════

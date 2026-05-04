@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SCREENSHOTS — Canvas Dashboard build walkthrough (for reportburster.com docs)
+// SCREENSHOTS — Canvas Dashboard build walkthrough (for datapallas.com docs)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Builds a 6-widget "Northwind Sales Overview" dashboard on the Data Canvas
@@ -17,7 +17,7 @@
 // is reserved for genuinely non-visual logic (Pareto distribution math,
 // month-bucketed time grouping which the cube tree can't express today).
 //
-// Output PNGs (under c:\Projects\kraft-src-company-biz\flowkraft\www\reportburster.com\public\images\docs\):
+// Output PNGs (under c:\Projects\kraft-src-company-biz\flowkraft\www\datapallas.com\public\images\docs\):
 //   - 300_20_dashboard-build-0-title.png          (Text block — UI Element, dashboard title)
 //   - 300_30_dashboard-build-1-kpi-revenue.png    (Number — Total Revenue, Visual)
 //   - 300_40_dashboard-build-2-kpi-orders.png     (Number — Total Orders, Visual)

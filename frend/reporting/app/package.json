@@ -5,10 +5,10 @@
   "description": "Server Side Public License (SSPL) - Desktop and Server versions. SSPL terms apply upon distribution or service provision.",
   "version": "15.1.0",
   "copyright": "2026, FlowKraft Systems & Consulting Ltd.",
-  "homepage": "https://www.reportburster.com",
+  "homepage": "https://datapallas.com",
   "author": {
     "name": "FlowKraft Systems & Consulting Ltd",
-    "email": "support@reportburster.com"
+    "email": "support@datapallas.com"
   },
   "main": "main.js",
   "private": true,

@@ -27,7 +27,7 @@
  * Use named blocks (tabulator('myId') { ... }) ONLY when a single report
  * needs multiple tabulators, charts, or pivot tables together — the
  * "Multi-Component Reports" aggregator pattern described at:
- * https://www.reportburster.com/docs/bi-analytics/dashboards#multi-component-reports
+ * https://datapallas.com/docs/bi-analytics/dashboards#multi-component-reports
  */
 
 // ═══════════════════════════════════════════════════════════════════════════════

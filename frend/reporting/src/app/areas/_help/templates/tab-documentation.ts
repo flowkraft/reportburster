@@ -4,17 +4,17 @@ export const tabDocumentationTemplate = `<ng-template #tabDocumentationTemplate>
 
     <ol>
       <li>
-        <a href="https://www.reportburster.com/docs/quickstart" target="_blank">QuickStart -
+        <a href="https://datapallas.com/docs/quickstart" target="_blank">QuickStart -
           <em>DataPallas</em> in 5 Minutes</a> will help you to quickly get started with report bursting
       </li>
       <br>
       <li>
-        <a href="https://www.reportburster.com/docs" target="_blank">
+        <a href="https://datapallas.com/docs" target="_blank">
           <em>DataPallas</em> User Guide</a> explains with more details what &amp; how can be achieved with
         <em>DataPallas</em></li>
       <br>
       <li>
-        <a id='checkPointHelpDocumentation' href="https://www.reportburster.com/docs/advanced" target="_blank">
+        <a id='checkPointHelpDocumentation' href="https://datapallas.com/docs/advanced" target="_blank">
           <em>DataPallas</em> - Advanced Report Delivery Scenarios</a> explains how
         <em>DataPallas</em> scripting can be used to achieve more complex report delivery scenarios</li>
     </ol>
@@ -29,7 +29,7 @@ export const tabDocumentationTemplate = `<ng-template #tabDocumentationTemplate>
       </li>
       <br>
       <li>
-        <a href="https://www.reportburster.com/docs/advanced/api" target="_blank">REST API Documentation</a> — examples, API domains, and key concepts
+        <a href="https://datapallas.com/docs/advanced/api" target="_blank">REST API Documentation</a> — examples, API domains, and key concepts
       </li>
     </ol>
   </div>

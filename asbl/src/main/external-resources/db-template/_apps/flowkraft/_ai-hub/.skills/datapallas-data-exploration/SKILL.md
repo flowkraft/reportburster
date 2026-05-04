@@ -2,7 +2,7 @@
 
 I help users go beyond pre-configured reports and **explore data ad-hoc** — the questions nobody anticipated, the angles you didn't think to chart in advance. The main tool for this in DataPallas is the **Explore Data Canvas**, supported by Cubes, database connections, and Chat2DB AI.
 
-> **The full official guide is at https://www.reportburster.com/docs/data-exploration.** This SKILL.md captures the essence; for the visual walkthrough with screenshots, fetch the docs.
+> **The full official guide is at https://datapallas.com/docs/data-exploration.** This SKILL.md captures the essence; for the visual walkthrough with screenshots, fetch the docs.
 
 ---
 
@@ -178,10 +178,10 @@ For the full explanation, point users to `/docs/artificial-intelligence#few-note
 3. **For visual mode questions**, I describe the four buckets (Filter / Summarize / Group By / Sort) — usually that's all the user needs.
 4. **For Finetune SQL/Script**, I either provide a snippet directly or — better — point at the **Hey AI, Help Me…** button so the AI drafts against the live schema.
 5. **For deeper questions** (specific widget config, embedding, advanced filters, performance), I fetch the docs:
-   - https://www.reportburster.com/docs/data-exploration — overview & landing
-   - https://www.reportburster.com/docs/data-exploration/canvas — five-step walkthrough
-   - https://www.reportburster.com/docs/data-exploration/database-connections — schema, ER diagram, ubiquitous language
-   - https://www.reportburster.com/docs/data-exploration/chat2db-ai — natural-language questions
+   - https://datapallas.com/docs/data-exploration — overview & landing
+   - https://datapallas.com/docs/data-exploration/canvas — five-step walkthrough
+   - https://datapallas.com/docs/data-exploration/database-connections — schema, ER diagram, ubiquitous language
+   - https://datapallas.com/docs/data-exploration/chat2db-ai — natural-language questions
 6. **When the user wants to publish**, I hand off to the `datapallas-dashboards` skill.
 7. **When the user wants to build a cube to power further exploration**, I hand off to the `datapallas-semantic-layer-cubes` skill.
 
@@ -202,13 +202,13 @@ When I provide Finetune SQL or Script snippets, I:
 
 ## Documentation Links
 
-- **Overview**: https://www.reportburster.com/docs/data-exploration
-- **Canvas walkthrough**: https://www.reportburster.com/docs/data-exploration/canvas
-- **Database Connections**: https://www.reportburster.com/docs/data-exploration/database-connections
-- **Chat2DB AI**: https://www.reportburster.com/docs/data-exploration/chat2db-ai
-- **Cubes (the canvas's preferred input)**: https://www.reportburster.com/docs/semantic-layer
-- **Publishing to a dashboard**: https://www.reportburster.com/docs/bi-analytics/dashboards
-- **Data privacy in AI features**: https://www.reportburster.com/docs/artificial-intelligence
+- **Overview**: https://datapallas.com/docs/data-exploration
+- **Canvas walkthrough**: https://datapallas.com/docs/data-exploration/canvas
+- **Database Connections**: https://datapallas.com/docs/data-exploration/database-connections
+- **Chat2DB AI**: https://datapallas.com/docs/data-exploration/chat2db-ai
+- **Cubes (the canvas's preferred input)**: https://datapallas.com/docs/semantic-layer
+- **Publishing to a dashboard**: https://datapallas.com/docs/bi-analytics/dashboards
+- **Data privacy in AI features**: https://datapallas.com/docs/artificial-intelligence
 
 When the user asks about a specific feature, widget option, or quirk I'm not 100% sure about — **I fetch the relevant doc above** and answer from the live source.
 

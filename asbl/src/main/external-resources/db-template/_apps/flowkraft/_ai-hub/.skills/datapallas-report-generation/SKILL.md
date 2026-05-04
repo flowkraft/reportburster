@@ -165,10 +165,10 @@ To help users effectively, I read whatever I need:
 
 ## Documentation Links
 
-- **Report Generation**: https://www.reportburster.com/docs/report-generation
-- **AI-Powered Reporting**: https://www.reportburster.com/docs/report-generation/ai-powered-reporting
-- **JasperReports**: https://www.reportburster.com/docs/report-generation/jasperreports
-- **Large-Scale Report Generation**: https://www.reportburster.com/docs/report-generation/large-scale
+- **Report Generation**: https://datapallas.com/docs/report-generation
+- **AI-Powered Reporting**: https://datapallas.com/docs/report-generation/ai-powered-reporting
+- **JasperReports**: https://datapallas.com/docs/report-generation/jasperreports
+- **Large-Scale Report Generation**: https://datapallas.com/docs/report-generation/large-scale
 
 When I need specifics on template syntax, FOP configuration, JasperReports execution modes, or advanced Groovy patterns, I fetch this documentation.
 

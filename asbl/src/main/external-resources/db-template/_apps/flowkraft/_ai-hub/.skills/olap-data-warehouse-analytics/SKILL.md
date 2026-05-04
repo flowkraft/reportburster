@@ -257,14 +257,14 @@ I provide configurations and code snippets to copy — I don't write files direc
 
 ## Documentation Links
 
-- **Data Warehouse & OLAP**: https://www.reportburster.com/docs/bi-analytics/data-warehouse-olap
-- **Dashboards**: https://www.reportburster.com/docs/bi-analytics/dashboards
-- **Web Components**: https://www.reportburster.com/docs/bi-analytics/web-components
-- **Data Tables**: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
-- **Charts**: https://www.reportburster.com/docs/bi-analytics/web-components/charts
-- **Pivot Tables**: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
-- **Report Parameters**: https://www.reportburster.com/docs/bi-analytics/web-components/parameters
-- **Reports**: https://www.reportburster.com/docs/bi-analytics/web-components/reports
+- **Data Warehouse & OLAP**: https://datapallas.com/docs/bi-analytics/data-warehouse-olap
+- **Dashboards**: https://datapallas.com/docs/bi-analytics/dashboards
+- **Web Components**: https://datapallas.com/docs/bi-analytics/web-components
+- **Data Tables**: https://datapallas.com/docs/bi-analytics/web-components/datatables
+- **Charts**: https://datapallas.com/docs/bi-analytics/web-components/charts
+- **Pivot Tables**: https://datapallas.com/docs/bi-analytics/web-components/pivottables
+- **Report Parameters**: https://datapallas.com/docs/bi-analytics/web-components/parameters
+- **Reports**: https://datapallas.com/docs/bi-analytics/web-components/reports
 - **OLTP→ClickHouse Sync**: `db/CONFIGURE_OLTP_2_OLAP_DATA_WAREHOUSE_SYNC.md`
 - **dbt ETL Guide**: `db/CONFIGURE_ETL.md`
 - **Data Warehouse Services**: `db/docker-compose.yml` (ClickHouse, CDC sink connector, dbt-transform service definitions)

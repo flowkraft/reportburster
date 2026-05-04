@@ -2,7 +2,7 @@
 
 I help users build **interactive BI dashboards** in DataPallas — combinations of KPI cards, charts, pivot tables, data tables, and filters that give stakeholders a real-time, always-up-to-date view of the business.
 
-> **The full official guide is at https://www.reportburster.com/docs/bi-analytics/dashboards.** This SKILL.md captures the essence — the two paths, the building blocks, the data-script pattern. For the complete walkthrough with screenshots, copy-paste-ready code, and the working Northwind sample, fetch the docs.
+> **The full official guide is at https://datapallas.com/docs/bi-analytics/dashboards.** This SKILL.md captures the essence — the two paths, the building blocks, the data-script pattern. For the complete walkthrough with screenshots, copy-paste-ready code, and the working Northwind sample, fetch the docs.
 
 ---
 
@@ -257,13 +257,13 @@ When the user wants to build a dashboard:
 3. **For Fully Configure work**, I walk through the seven-step recipe (DataSource → Parameters → Template → Tabulator → Chart → Pivot → View) using the bundled Northwind dashboard as the reference.
 4. **For data-script questions** (componentId guards, parameter access, multi-component optimization), I use the patterns from this SKILL.md and the bundled `dashboard-cfo` sample.
 5. **For component-level config** (Tabulator columns, Chart options, Pivot setup), I fetch the relevant web-component doc:
-   - https://www.reportburster.com/docs/bi-analytics/web-components/datatables
-   - https://www.reportburster.com/docs/bi-analytics/web-components/charts
-   - https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
-   - https://www.reportburster.com/docs/bi-analytics/web-components/parameters
+   - https://datapallas.com/docs/bi-analytics/web-components/datatables
+   - https://datapallas.com/docs/bi-analytics/web-components/charts
+   - https://datapallas.com/docs/bi-analytics/web-components/pivottables
+   - https://datapallas.com/docs/bi-analytics/web-components/parameters
 6. **For performance** (caching, real-time, large datasets), I fetch:
-   - https://www.reportburster.com/docs/bi-analytics/performance-real-time
-   - https://www.reportburster.com/docs/bi-analytics/data-warehouse-olap
+   - https://datapallas.com/docs/bi-analytics/performance-real-time
+   - https://datapallas.com/docs/bi-analytics/data-warehouse-olap
 
 ---
 
@@ -290,18 +290,18 @@ When I provide a snippet, I:
 
 ## Documentation Links
 
-- **Dashboards (full walkthrough)**: https://www.reportburster.com/docs/bi-analytics/dashboards
-- **Data Warehouse & OLAP** (DuckDB / ClickHouse for scale): https://www.reportburster.com/docs/bi-analytics/data-warehouse-olap
-- **Web Components Overview**: https://www.reportburster.com/docs/bi-analytics/web-components
-  - rb-tabulator: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
-  - rb-chart: https://www.reportburster.com/docs/bi-analytics/web-components/charts
-  - rb-pivot-table: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
-  - rb-parameters: https://www.reportburster.com/docs/bi-analytics/web-components/parameters
-  - rb-report: https://www.reportburster.com/docs/bi-analytics/web-components/reports
-- **Performance & Real-Time**: https://www.reportburster.com/docs/bi-analytics/performance-real-time
-- **Canvas (Approach 1's home)**: https://www.reportburster.com/docs/data-exploration/canvas
-- **Cubes (data source for canvas-built dashboards)**: https://www.reportburster.com/docs/semantic-layer
-- **Variables (e.g. `${dashboard_url}`)**: https://www.reportburster.com/docs/variables
+- **Dashboards (full walkthrough)**: https://datapallas.com/docs/bi-analytics/dashboards
+- **Data Warehouse & OLAP** (DuckDB / ClickHouse for scale): https://datapallas.com/docs/bi-analytics/data-warehouse-olap
+- **Web Components Overview**: https://datapallas.com/docs/bi-analytics/web-components
+  - rb-tabulator: https://datapallas.com/docs/bi-analytics/web-components/datatables
+  - rb-chart: https://datapallas.com/docs/bi-analytics/web-components/charts
+  - rb-pivot-table: https://datapallas.com/docs/bi-analytics/web-components/pivottables
+  - rb-parameters: https://datapallas.com/docs/bi-analytics/web-components/parameters
+  - rb-report: https://datapallas.com/docs/bi-analytics/web-components/reports
+- **Performance & Real-Time**: https://datapallas.com/docs/bi-analytics/performance-real-time
+- **Canvas (Approach 1's home)**: https://datapallas.com/docs/data-exploration/canvas
+- **Cubes (data source for canvas-built dashboards)**: https://datapallas.com/docs/semantic-layer
+- **Variables (e.g. `${dashboard_url}`)**: https://datapallas.com/docs/variables
 
 When the user asks about a specific component option, performance technique, or feature I'm not certain about — **I fetch the relevant doc above** and answer from the live source.
 

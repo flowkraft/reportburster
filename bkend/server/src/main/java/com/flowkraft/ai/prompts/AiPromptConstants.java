@@ -26,7 +26,7 @@ The componentId must match across three places:
 
 The Groovy data script below also reflects this multi-component pattern — each componentId has its own guarded data block.
 
-For more details and examples read: https://www.reportburster.com/docs/bi-analytics/performance-real-time#multi-component-reports""";
+For more details and examples read: https://datapallas.com/docs/bi-analytics/performance-real-time#multi-component-reports""";
 
     // ── Dashboard HTML layout rules ───────────────────────────────────────────
     // Eight CSS/layout rules for HTML dashboard templates.

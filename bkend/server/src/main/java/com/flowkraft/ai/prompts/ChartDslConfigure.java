@@ -117,7 +117,7 @@ IMPORTANT — be minimalistic:
 - Only define datasets the user asked for. Only add scales, plugins, or styling that the user explicitly needs.
 - Do not add options "just in case" or for completeness.
 
-For more details and examples read: https://www.reportburster.com/docs/bi-analytics/web-components/charts
+For more details and examples read: https://datapallas.com/docs/bi-analytics/web-components/charts
 
 """
             + AiPromptConstants.MULTI_COMPONENT_NOTE

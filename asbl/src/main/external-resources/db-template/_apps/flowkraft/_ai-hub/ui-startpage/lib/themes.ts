@@ -1,6 +1,6 @@
 // Theme configuration for shadcn/ui based color schemes
 // Each theme includes light and dark mode with excellent text contrast
-// Palette: blue-tinted zinc neutrals, blue primary — matching reportburster.com
+// Palette: blue-tinted zinc neutrals, blue primary — matching datapallas.com
 
 export type Theme = {
   name: string;

@@ -72,12 +72,12 @@ When users have startup or setup problems, I know these key points:
 - This file contains the same steps but formatted for direct execution in Windows PowerShell/DOS
 - Permission issues or specific Windows configurations can cause UI installation to fail — manual install via `readme-Prerequisites.txt` is the fallback
 
-When I need more troubleshooting details, I fetch: https://www.reportburster.com/docs/troubleshooting
-For installation specifics, I fetch: https://www.reportburster.com/docs/server/installation
+When I need more troubleshooting details, I fetch: https://datapallas.com/docs/troubleshooting
+For installation specifics, I fetch: https://datapallas.com/docs/server/installation
 
 ## When I Need More Details
 
-I fetch: https://www.reportburster.com/docs/quickstart
+I fetch: https://datapallas.com/docs/quickstart
 
 The documentation includes:
 - Step-by-step screenshots for every installation phase

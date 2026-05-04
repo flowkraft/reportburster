@@ -68,7 +68,7 @@ DataPallas processes PDF/Excel from any reporting system:
 
 ## When I Need More Details
 
-I fetch: https://www.reportburster.com/docs/report-bursting
+I fetch: https://datapallas.com/docs/report-bursting
 
 The documentation includes:
 - Screenshots of burst token placement in PDFs

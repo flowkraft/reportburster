@@ -2,13 +2,13 @@
 
 /**
  * Plugin Name: DataPallas Portal
- * Plugin URI: https://reportburster.com/
+ * Plugin URI: https://datapallas.com/
  * Description: DataPallas Portal for WordPress, a plugin to create document portals with DataPallas and WordPress.
  * Version: 1.0.0
  * Requires at least: 6.2
  * Requires PHP: 7.4
  * Author: FlowKraft
- * Author URI: https://reportburster.com/
+ * Author URI: https://datapallas.com/
  * License: GPLv2 or later
  * License URI: http://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: datapallas-portal

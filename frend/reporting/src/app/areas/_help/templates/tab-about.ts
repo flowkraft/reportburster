@@ -33,7 +33,7 @@ export const tabAboutTemplate = `<ng-template #tabAboutTemplate>
       'AREAS.HELP.TAB-ABOUT.COPYRIGHT' | translate }}</strong>
     <br>
     <br>
-    <a href="https://www.reportburster.com/contact.html" target="_blank">&#9400; {{
+    <a href="https://datapallas.com/contact.html" target="_blank">&#9400; {{
       'AREAS.HELP.TAB-ABOUT.COPYRIGHT-YEARS' | translate }}</a>
 
     <hr>

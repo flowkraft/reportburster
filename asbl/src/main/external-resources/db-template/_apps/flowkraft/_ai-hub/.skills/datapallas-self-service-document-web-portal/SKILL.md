@@ -122,14 +122,14 @@ When I provide scripts or PHP templates, I:
 
 ## Documentation Links
 
-- **Overview**: https://www.reportburster.com/docs/document-portal
-- **Quick Start**: https://www.reportburster.com/docs/document-portal/quickstart
-- **Payslips Portal (HR)**: https://www.reportburster.com/docs/document-portal/payslips
-- **Invoices Portal (Billing)**: https://www.reportburster.com/docs/document-portal/invoices
-- **Document Distribution & Payments**: https://www.reportburster.com/docs/document-portal/payments
-- **User Management & Analytics**: https://www.reportburster.com/docs/document-portal/user-management
-- **Notifications**: https://www.reportburster.com/docs/document-portal/notifications
-- **Development Stacks**: https://www.reportburster.com/docs/document-portal/development-stacks
+- **Overview**: https://datapallas.com/docs/document-portal
+- **Quick Start**: https://datapallas.com/docs/document-portal/quickstart
+- **Payslips Portal (HR)**: https://datapallas.com/docs/document-portal/payslips
+- **Invoices Portal (Billing)**: https://datapallas.com/docs/document-portal/invoices
+- **Document Distribution & Payments**: https://datapallas.com/docs/document-portal/payments
+- **User Management & Analytics**: https://datapallas.com/docs/document-portal/user-management
+- **Notifications**: https://datapallas.com/docs/document-portal/notifications
+- **Development Stacks**: https://datapallas.com/docs/document-portal/development-stacks
 
 When users ask about portal setup or customization, I fetch these docs for specifics.
 

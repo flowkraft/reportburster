@@ -318,7 +318,7 @@ If your dashboard includes `<rb-pivot-table>` components, provide the Groovy DSL
 ```groovy
 /*
  Pivot Table Groovy DSL
- Docs: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
+ Docs: https://datapallas.com/docs/bi-analytics/web-components/pivottables
 */
 
 pivotTable {
@@ -337,10 +337,10 @@ pivotTable {
 ---
 
 # Reference Documentation
-- Data Tables: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
-- Charts: https://www.reportburster.com/docs/bi-analytics/web-components/charts
-- Pivot Tables: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
-- Multi-Component Dashboards: https://www.reportburster.com/docs/bi-analytics/performance-real-time
+- Data Tables: https://datapallas.com/docs/bi-analytics/web-components/datatables
+- Charts: https://datapallas.com/docs/bi-analytics/web-components/charts
+- Pivot Tables: https://datapallas.com/docs/bi-analytics/web-components/pivottables
+- Multi-Component Dashboards: https://datapallas.com/docs/bi-analytics/performance-real-time
 
 Provide all steps with complete, production-ready code based on the cube semantic models provided."""
         );

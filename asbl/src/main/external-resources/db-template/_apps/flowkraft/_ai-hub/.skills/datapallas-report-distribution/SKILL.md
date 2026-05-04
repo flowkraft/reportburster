@@ -132,9 +132,9 @@ When distribution fails:
 
 ## Documentation Links
 
-- **Email Distribution**: https://www.reportburster.com/docs/report-distribution-email
-- **Archive & Upload**: https://www.reportburster.com/docs/report-distribution-upload
-- **Variables Reference**: https://www.reportburster.com/docs/variables
+- **Email Distribution**: https://datapallas.com/docs/report-distribution-email
+- **Archive & Upload**: https://datapallas.com/docs/report-distribution-upload
+- **Variables Reference**: https://datapallas.com/docs/variables
 
 When I need specifics on a protocol or provider configuration, I fetch these docs for the latest details.
 

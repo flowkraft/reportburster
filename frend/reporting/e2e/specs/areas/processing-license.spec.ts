@@ -22,7 +22,7 @@ test.describe('', async () => {
           .appShouldBeReadyToRunNewJobs()
           .appStatusShouldBeGreatNoErrorsNoWarnings()
           // STEP1 - fill, activate and verify the flow of a valid license key
-          // SourceKraft Test License - virgil.trasca@reportburster.com
+          // SourceKraft Test License - virgil.trasca@datapallas.com
           .setValue('#licenseKey', Constants.TEST_LICENSE_KEY)
           .click('#btnActivateLicenseKey')
           .clickYesDoThis()

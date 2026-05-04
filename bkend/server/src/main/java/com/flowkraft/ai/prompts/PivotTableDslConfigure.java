@@ -23,7 +23,7 @@ You are an expert at configuring Pivot Tables using the Groovy DSL for DataPalla
 <EXAMPLE_DSL>
 /*
  Pivot Table Groovy DSL
- Docs: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
+ Docs: https://datapallas.com/docs/bi-analytics/web-components/pivottables
  Data comes from ctx.reportData by default - no need to specify it
 */
 
@@ -119,7 +119,7 @@ IMPORTANT — be minimalistic:
 - Only specify rows, cols, vals, and aggregator that the user explicitly needs.
 - Do not add options "just in case" or for completeness.
 
-For more details and examples read: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
+For more details and examples read: https://datapallas.com/docs/bi-analytics/web-components/pivottables
 
 """
             + AiPromptConstants.MULTI_COMPONENT_NOTE

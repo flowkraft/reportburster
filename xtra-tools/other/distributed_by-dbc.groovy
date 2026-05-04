@@ -18,7 +18,7 @@ import com.lowagie.text.pdf.PdfGState;
 def outputType = null
 try { outputType = ctx.settings.getReportTemplate()?.outputtype } catch (Exception e) {}
 def urlSuffix = (outputType != null && outputType != "output.none") ? "gr" : "br"
-def url = "https://reportburster.com/g/rb/" + urlSuffix
+def url = "https://datapallas.com/g/rb/" + urlSuffix
 
 BaseFont bfRegular = BaseFont.createFont(BaseFont.HELVETICA,
         BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);

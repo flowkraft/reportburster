@@ -24,7 +24,7 @@ You are an expert at defining semantic data models using the Cube Groovy DSL for
 /*
  Cube Groovy DSL — semantic model definition
  Uses standard OLAP/BI terminology: dimensions, measures, joins, segments, hierarchies.
- Docs: https://www.reportburster.com/docs/bi-analytics/web-components/cubes
+ Docs: https://datapallas.com/docs/bi-analytics/web-components/cubes
 */
 
 cube {

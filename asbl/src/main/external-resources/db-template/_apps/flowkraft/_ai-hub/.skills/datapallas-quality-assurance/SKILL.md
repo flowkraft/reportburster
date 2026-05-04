@@ -157,7 +157,7 @@ Failed reports are automatically quarantined for review.
 
 ## Documentation Link
 
-- **Quality Assurance**: https://www.reportburster.com/docs/report-distribution-qa
+- **Quality Assurance**: https://datapallas.com/docs/report-distribution-qa
 
 When I need specifics on error handling options or retry configuration, I fetch this documentation.
 

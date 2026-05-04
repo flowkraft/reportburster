@@ -109,7 +109,7 @@ export const tabReportingPivotTableTemplate = `<ng-template
       <tab heading="Example (Pivot Table Options)">
         <div class="row" style="margin-top: 10px;">
           <div class="col-xs-12">
-            <a id="btnSeeMorePivotTableExamples" href="https://www.reportburster.com/docs/bi-analytics/web-components/pivottables" target="_blank" class="btn btn-default btn-block" style="color: #337ab7; text-decoration: underline; margin-bottom: 10px;">
+            <a id="btnSeeMorePivotTableExamples" href="https://datapallas.com/docs/bi-analytics/web-components/pivottables" target="_blank" class="btn btn-default btn-block" style="color: #337ab7; text-decoration: underline; margin-bottom: 10px;">
               See More Pivot Tables Examples
             </a>
             <ngx-codejar

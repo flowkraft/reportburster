@@ -1,6 +1,6 @@
 === DataPallas Portal ===
 Contributors: flowkraft
-Donate link: https://reportburster.com/
+Donate link: https://datapallas.com/
 Tags: documents, portal, datapallas
 Requires at least: 6.2
 Tested up to: 6.7

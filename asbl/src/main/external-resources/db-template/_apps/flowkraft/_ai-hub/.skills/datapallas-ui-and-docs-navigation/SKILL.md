@@ -3,9 +3,9 @@
 = DATAPALLAS APPLICATION MENU STRUCTURE
   A complete guide to every screen, what the user can do there,
   and where to read more.
-  Base URL: https://www.reportburster.com
+  Base URL: https://datapallas.com
 
-> **Stay current.** This file is a snapshot of the current UI. If the user describes a screen, button, or path you don't recognise — or if it's been a while since you last verified — fetch https://www.reportburster.com/docs to confirm you're still aligned with the latest UI. Reality on screen is the source of truth; this file is the cheat sheet.
+> **Stay current.** This file is a snapshot of the current UI. If the user describes a screen, button, or path you don't recognise — or if it's been a while since you last verified — fetch https://datapallas.com/docs to confirm you're still aligned with the latest UI. Reality on screen is the source of truth; this file is the cheat sheet.
 
 ================================================================================
 TOP NAVIGATION BAR
@@ -43,7 +43,7 @@ TOP NAVIGATION BAR
 ─── 3. HELP & SUPPORT ▾ ──────────────────────────────────────────────────────
 
      ├── Get Software Support
-     │   Contact support@reportburster.com with log files attached.
+     │   Contact support@datapallas.com with log files attached.
      │   Docs: /docs/troubleshooting
      │
      ├── DataPallas Services
@@ -80,7 +80,7 @@ TOP NAVIGATION BAR
 
 ─── RIGHT SIDE OF NAVBAR ──────────────────────────────────────────────────────
      ├── Request New Feature — opens a feature-request form
-     ├── support@reportburster.com — quick link to support
+     ├── support@datapallas.com — quick link to support
      └── Theme/Skin selector — change the app's visual theme
 
 
@@ -294,12 +294,12 @@ the answer.
 
 
 ================================================================================
-DOCUMENTATION SITE MAP (https://www.reportburster.com/docs)
+DOCUMENTATION SITE MAP (https://datapallas.com/docs)
 ================================================================================
 
 > **Stay current:** the site map below may drift over time. If you hit a
 > 404, if a page feels incomplete, or if you simply haven't checked in a
-> while — fetch https://www.reportburster.com/docs to see the latest
+> while — fetch https://datapallas.com/docs to see the latest
 > structure. Use your judgement on when to refresh, like a human would.
 
   Getting Started

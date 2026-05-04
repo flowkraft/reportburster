@@ -24,7 +24,7 @@ electronBeforeAfterAllTest(
       .click('#leftMenuHelpServices')
       .elementShouldHaveText(
         '#checkPointHelpServices',
-        'sales@reportburster.com',
+        'sales@datapallas.com',
       )
       .click('#licenseTab-link')
       .elementShouldHaveText(
@@ -123,7 +123,7 @@ electronBeforeAfterAllTest(
       .click('#topMenuHelpServices')
       .elementShouldHaveText(
         '#checkPointHelpServices',
-        'sales@reportburster.com',
+        'sales@datapallas.com',
       )
       .gotoBurstScreen()
       .click('#topMenuHelp')

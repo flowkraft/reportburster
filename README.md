@@ -2,7 +2,7 @@
 
 # ReportBurster - Business Intelligence For The New Era
 
-<a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
+<a href="https://datapallas.com/docs/data-exploration/chat2db-ai" target="_blank">
   <img src=".github/screenshots/041_00_ai-driven-hei-ai-help-me-with-buttons.png" alt="ReportBurster — AI-Powered Data Exploration">
 </a>
 
@@ -14,11 +14,11 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 
 **One self-hosted BI platform for building reports, creating dashboards, and exploring data.** No glue code. No SaaS lock-in. Your data stays on your own servers.
 
-<h3><a href="https://www.reportburster.com" target="_blank">Watch the demo video on reportburster.com &rarr;</a></h3>
+<h3><a href="https://datapallas.com" target="_blank">Watch the demo video on datapallas.com &rarr;</a></h3>
 
 <br>
 
-[![Watch the demo](.github/screenshots/25-large-scale-invoices-generate.png)](https://www.reportburster.com)
+[![Watch the demo](.github/screenshots/25-large-scale-invoices-generate.png)](https://datapallas.com)
 
 </div>
 
@@ -26,15 +26,15 @@ Your reporting and BI stack is 3 different tools stitched together. It doesn't h
 
 | What you need | What you're using today | ReportBurster |
 |---|---|---|
-| **[1.&nbsp;Report Generation](https://www.reportburster.com/docs/report-generation)** | ~~Crystal Reports~~, ~~SSRS~~, ~~JasperReports~~ | Pixel-perfect PDFs, Excel, HTML, Word from any data source |
-| **[2.&nbsp;Dashboards&nbsp;&amp;&nbsp;Analytics](https://www.reportburster.com/docs/bi-analytics/dashboards)** | ~~Tableau~~, ~~Power BI~~, ~~Metabase~~, ~~Superset~~ | Embeddable data-tables, charts, pivot tables, and analytics |
-| **[3.&nbsp;Data Exploration](https://www.reportburster.com/docs/data-exploration)** | ~~SQL Server Management Studio~~, ~~Toad~~, ~~manual SQL queries~~ | Built-in Chat2DB/AI web app — ask in natural language, get SQL, results, and visualizations |
+| **[1.&nbsp;Report Generation](https://datapallas.com/docs/report-generation)** | ~~Crystal Reports~~, ~~SSRS~~, ~~JasperReports~~ | Pixel-perfect PDFs, Excel, HTML, Word from any data source |
+| **[2.&nbsp;Dashboards&nbsp;&amp;&nbsp;Analytics](https://datapallas.com/docs/bi-analytics/dashboards)** | ~~Tableau~~, ~~Power BI~~, ~~Metabase~~, ~~Superset~~ | Embeddable data-tables, charts, pivot tables, and analytics |
+| **[3.&nbsp;Data Exploration](https://datapallas.com/docs/data-exploration)** | ~~SQL Server Management Studio~~, ~~Toad~~, ~~manual SQL queries~~ | Built-in Chat2DB/AI web app — ask in natural language, get SQL, results, and visualizations |
 
-Also includes: [4. report bursting](https://www.reportburster.com/docs/report-bursting) | [5. self-service document portals](https://www.reportburster.com/docs/document-portal) | [6. AI agents](https://www.reportburster.com/docs/ai-crew/the-team)
+Also includes: [4. report bursting](https://datapallas.com/docs/report-bursting) | [5. self-service document portals](https://datapallas.com/docs/document-portal) | [6. AI agents](https://datapallas.com/docs/ai-crew/the-team)
 
 ## See Samples
 
-ReportBurster ships with many ready-to-run samples — report bursting, report generation, interactive dashboards, pivot tables, and more. **[See all samples](https://www.reportburster.com/docs/samples)**
+ReportBurster ships with many ready-to-run samples — report bursting, report generation, interactive dashboards, pivot tables, and more. **[See all samples](https://datapallas.com/docs/samples)**
 
 ## Stay Up-to-Date
 
@@ -46,42 +46,42 @@ Watch this repository to be notified of future updates:
 
 ## Self-Host with Docker (Windows, Linux, macOS)
 
-1. Download **[reportburster-server-docker.zip](https://downloads.reportburster.com/file/reportburster/newest/reportburster-server-docker.zip)**
+1. Download **[reportburster-server-docker.zip](https://downloads.datapallas.com/file/reportburster/newest/reportburster-server-docker.zip)**
 2. Extract the zip and navigate to the `ReportBurster` directory
 3. Run `docker compose up -d`
 4. Open `http://localhost:9090`
 
 ## Documentation
 
-Full documentation is available at **[reportburster.com/docs](https://www.reportburster.com/docs)**.
+Full documentation is available at **[datapallas.com/docs](https://datapallas.com/docs)**.
 
 ## Screenshots
 
-### **[1.&nbsp;Report Generation](https://www.reportburster.com/docs/report-generation)** — generate and distribute pixel-perfect output files
+### **[1.&nbsp;Report Generation](https://datapallas.com/docs/report-generation)** — generate and distribute pixel-perfect output files
 
 <br/>
 
-<a href="https://www.reportburster.com/docs/report-generation" target="_blank">
+<a href="https://datapallas.com/docs/report-generation" target="_blank">
   <img src=".github/screenshots/044_10_ai-driven-report-execution.png" alt="Report Generation — AI-Driven Report Execution">
 </a>
 
 <br/>
 
-### **[2.&nbsp;Dashboards&nbsp;&amp;&nbsp;Analytics](https://www.reportburster.com/docs/bi-analytics/dashboards)** — embeddable data-tables, charts, pivot tables, and analytics
+### **[2.&nbsp;Dashboards&nbsp;&amp;&nbsp;Analytics](https://datapallas.com/docs/bi-analytics/dashboards)** — embeddable data-tables, charts, pivot tables, and analytics
 
 <br/>
 
-<a href="https://www.reportburster.com/docs/bi-analytics/dashboards" target="_blank">
+<a href="https://datapallas.com/docs/bi-analytics/dashboards" target="_blank">
   <img src=".github/screenshots/100_10_web-components-dashboard-example.png" alt="ReportBurster BI Dashboards">
 </a>
 
 <br/>
 
-### **[3.&nbsp;Data Exploration](https://www.reportburster.com/docs/data-exploration)** — ask a question in plain English, get SQL, results and charts
+### **[3.&nbsp;Data Exploration](https://datapallas.com/docs/data-exploration)** — ask a question in plain English, get SQL, results and charts
 
 <br/>
 
-<a href="https://www.reportburster.com/docs/data-exploration/chat2db-ai" target="_blank">
+<a href="https://datapallas.com/docs/data-exploration/chat2db-ai" target="_blank">
   <img src=".github/screenshots/000_78_chat2db-athena-top-3-pie-chart-5.png" alt="Data Exploration — AI-Powered SQL Query and Results">
 </a>
 
@@ -89,7 +89,7 @@ Full documentation is available at **[reportburster.com/docs](https://www.report
 
 ## Works With All Major Databases
 
-<a href="https://www.reportburster.com/docs/data-exploration/database-connections" target="_blank">
+<a href="https://datapallas.com/docs/data-exploration/database-connections" target="_blank">
   <img src=".github/screenshots/042_00_ai-driven-db-conn-new.png" alt="Database Connections — Oracle, SQL Server, PostgreSQL, MySQL, MariaDB, IBM Db2, SQLite, DuckDB, ClickHouse, Supabase">
 </a>
 

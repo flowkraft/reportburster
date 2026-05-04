@@ -795,8 +795,8 @@ public class Utils {
 			}
 
 			// Replace the URL base pattern
-			brandingContent = brandingContent.replaceAll("href=\"https://www.reportburster.com/g/rb/\\w+\"",
-					"href=\"https://www.reportburster.com/g/rb/" + urlSuffix + "\"");
+			brandingContent = brandingContent.replaceAll("href=\"https://datapallas.com/g/rb/\\w+\"",
+					"href=\"https://datapallas.com/g/rb/" + urlSuffix + "\"");
 
 			// Insert content before closing body tag
 			int bodyIndex = htmlContent.toLowerCase().lastIndexOf("</body>");

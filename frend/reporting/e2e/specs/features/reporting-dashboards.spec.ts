@@ -10,7 +10,7 @@ import { assertDashboardRendersCorrectly } from '../../helpers/dashboard-test-he
 
 // ─────────────────────────────────────────────────────────────────────────────
 // This test follows and asserts the step-by-step tutorial described at:
-//   https://www.DataPallas.com/docs/bi-analytics/dashboards
+//   https://datapallas.com/docs/bi-analytics/dashboards
 //
 // The tutorial source lives at:
 //   C:\Projects\kraft-src-company-biz\flowkraft\www\DataPallas.com\content\docs\bi-analytics\dashboards.mdx

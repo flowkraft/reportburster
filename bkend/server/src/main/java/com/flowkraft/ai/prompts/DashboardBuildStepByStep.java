@@ -67,7 +67,7 @@ You MUST use only the tables and columns present in the provided schema. Do not 
 
 Return the following numbered steps. Each step must include **complete, ready-to-use code** — no placeholders, no "add more here" comments. Every query, column reference, and table name must exist in the schema above — do not hallucinate columns or tables.
 
-**Multi-Component Reports:** A dashboard may contain multiple tabulators, charts, and/or pivot tables in the same report — use only the component types that serve the business need. You MUST use the **named (multi-component) DSL syntax** for all component configurations — `tabulator('componentId') { ... }`, `chart('componentId') { ... }`, `pivotTable('componentId') { ... }`. The componentId must match across three places: (1) `ctx.reportData('componentId', data)` in the data script, (2) the `component-id` attribute on the HTML web component, and (3) the named DSL block. Do NOT use the unnamed `tabulator { ... }` form — that is only for standalone single-component reports. For details see: https://www.reportburster.com/docs/bi-analytics/performance-real-time#multi-component-reports
+**Multi-Component Reports:** A dashboard may contain multiple tabulators, charts, and/or pivot tables in the same report — use only the component types that serve the business need. You MUST use the **named (multi-component) DSL syntax** for all component configurations — `tabulator('componentId') { ... }`, `chart('componentId') { ... }`, `pivotTable('componentId') { ... }`. The componentId must match across three places: (1) `ctx.reportData('componentId', data)` in the data script, (2) the `component-id` attribute on the HTML web component, and (3) the named DSL block. Do NOT use the unnamed `tabulator { ... }` form — that is only for standalone single-component reports. For details see: https://datapallas.com/docs/bi-analytics/performance-real-time#multi-component-reports
 
 **Visual coherence across all components:** The HTML template, Tabulator tables, Charts, and Pivot Tables will render together as one dashboard. Their colors must be visually coherent — pick a unified color palette and carry it through: the CSS variables in the HTML layout, the Chart dataset backgroundColor/borderColor values, any Tabulator formatter colors, and Pivot Table renderer colors should all feel like they belong to the same dashboard. Do not pick colors in isolation per component.
 
@@ -213,7 +213,7 @@ tabulator {
 
 **Key options:** All options are flat at the top level of `tabulator('componentId') { }` (no nested `options {}` block). columns (field, title, sorter, formatter, headerFilter), pagination, paginationSize, layout (fitColumns/fitData/fitDataFill), height, movableRows, selectableRows, groupBy, frozenRows, responsiveLayout.
 
-For full details: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
+For full details: https://datapallas.com/docs/bi-analytics/web-components/datatables
 
 ---
 
@@ -259,7 +259,7 @@ chart {
 
 **Supported chart types:** bar, line, pie, doughnut, radar, polarArea, horizontalBar, stackedBar, area, dualYAxis.
 
-For full details: https://www.reportburster.com/docs/bi-analytics/web-components/charts
+For full details: https://datapallas.com/docs/bi-analytics/web-components/charts
 
 ---
 
@@ -270,7 +270,7 @@ If your dashboard includes `<rb-pivot-table>` components, provide the Groovy DSL
 ```groovy
 /*
  Pivot Table Groovy DSL
- Docs: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
+ Docs: https://datapallas.com/docs/bi-analytics/web-components/pivottables
  Data comes from ctx.reportData by default - no need to specify it
 */
 
@@ -296,15 +296,15 @@ pivotTable {
 **Aggregators:** Sum, Count, Average, Minimum, Maximum, Count Unique Values, List Unique Values, Integer Sum, Sum over Sum.
 **Renderers:** Table, Table Heatmap, Table Col Heatmap, Table Row Heatmap, Exportable TSV.
 
-For full details: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
+For full details: https://datapallas.com/docs/bi-analytics/web-components/pivottables
 
 ---
 
 # Reference Documentation
-- Data Tables: https://www.reportburster.com/docs/bi-analytics/web-components/datatables
-- Charts: https://www.reportburster.com/docs/bi-analytics/web-components/charts
-- Pivot Tables: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
-- Multi-Component Dashboards / Performance / Real-Time: https://www.reportburster.com/docs/bi-analytics/performance-real-time
+- Data Tables: https://datapallas.com/docs/bi-analytics/web-components/datatables
+- Charts: https://datapallas.com/docs/bi-analytics/web-components/charts
+- Pivot Tables: https://datapallas.com/docs/bi-analytics/web-components/pivottables
+- Multi-Component Dashboards / Performance / Real-Time: https://datapallas.com/docs/bi-analytics/performance-real-time
 
 Provide all steps with complete, production-ready code based on the user's requirements and the database schema provided."""
         );

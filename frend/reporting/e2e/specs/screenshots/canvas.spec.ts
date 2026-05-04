@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// SCREENSHOTS — Explore Data Canvas (for reportburster.com docs)
+// SCREENSHOTS — Explore Data Canvas (for datapallas.com docs)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Captures the 4 PNGs referenced from the docs MDX:
@@ -9,7 +9,7 @@
 //   - 300_00_explore-data-canvas-overview.png  (quickstart Step 5 — Table + Chart hero)
 //
 // Output: writes directly into the docs repo at
-//   c:\Projects\kraft-src-company-biz\flowkraft\www\reportburster.com\public\images\docs\
+//   c:\Projects\kraft-src-company-biz\flowkraft\www\datapallas.com\public\images\docs\
 //
 // HOW TO RUN
 //     cd frend/reporting

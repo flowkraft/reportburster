@@ -148,9 +148,9 @@ When troubleshooting:
 
 ## Documentation Links
 
-- **Main Troubleshooting:** https://www.reportburster.com/docs/troubleshooting
-- **Quality Assurance:** https://www.reportburster.com/docs/report-distribution-qa
-- **Configuration:** https://www.reportburster.com/docs/configuration
+- **Main Troubleshooting:** https://datapallas.com/docs/troubleshooting
+- **Quality Assurance:** https://datapallas.com/docs/report-distribution-qa
+- **Configuration:** https://datapallas.com/docs/configuration
 
 I fetch these docs for specific error messages and edge cases.
 

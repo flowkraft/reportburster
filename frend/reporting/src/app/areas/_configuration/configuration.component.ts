@@ -2960,7 +2960,7 @@ chart {
   // Example Pivot Table configuration Groovy DSL
   examplePivotTableConfigScript = `/*
  Pivot Table Groovy DSL
- Docs: https://www.reportburster.com/docs/bi-analytics/web-components/pivottables
+ Docs: https://datapallas.com/docs/bi-analytics/web-components/pivottables
  Data comes from ctx.reportData by default - no need to specify it
 */
 

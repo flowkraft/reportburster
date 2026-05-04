@@ -80,9 +80,9 @@ Once connected, users can pull data via:
 
 ## Documentation Link
 
-- **Data Exploration**: https://www.reportburster.com/docs/data-exploration
-- **Database Connections**: https://www.reportburster.com/docs/data-exploration/database-connections
-- **Chat2DB AI**: https://www.reportburster.com/docs/data-exploration/chat2db-ai
+- **Data Exploration**: https://datapallas.com/docs/data-exploration
+- **Database Connections**: https://datapallas.com/docs/data-exploration/database-connections
+- **Chat2DB AI**: https://datapallas.com/docs/data-exploration/chat2db-ai
 
 When I need specifics on output formats, templates, or data transformations, I fetch this documentation.
 

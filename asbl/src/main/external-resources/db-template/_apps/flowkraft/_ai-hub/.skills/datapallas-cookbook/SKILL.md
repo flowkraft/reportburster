@@ -13,7 +13,7 @@ dashboard, chart, or Groovy script:
 2. **Read the relevant sample files** on disk to understand the pattern
 3. **Adapt the pattern** to the user's specific needs
 
-**Keep it simple:** One of the most common use cases for DataPallas is [report bursting](https://www.reportburster.com/docs/report-bursting) (the name says it all) — and most report bursting tasks can be achieved without any scripting. If it is a report bursting task, it is safe to assume scripting is not needed unless the user's requirements clearly call for it (conditional distribution, custom uploads, etc.) — but stay open that in some advanced cases it might actually help. Just don't push users toward scripting directly.
+**Keep it simple:** One of the most common use cases for DataPallas is [report bursting](https://datapallas.com/docs/report-bursting) (the name says it all) — and most report bursting tasks can be achieved without any scripting. If it is a report bursting task, it is safe to assume scripting is not needed unless the user's requirements clearly call for it (conditional distribution, custom uploads, etc.) — but stay open that in some advanced cases it might actually help. Just don't push users toward scripting directly.
 
 Other use cases — such as report generation, self-service document portals & BI dashboards, or embeddable analytics / web components — will typically require some form of scripting: SQL or Groovy for data sourcing / fetching / web components DSL configuration, or for templating. For all of these, the configs and samples below (the "cookbook") are your go-to reference. Even so, **keep it simple:** always aim to assist the user with the simplest, most effective script that gets the job done. For instance, when configuring a Tabulator via its Groovy DSL, assume the default Tabulator configuration works just fine — only provide the minimum extra configuration necessary to achieve what the user specifically needs (e.g. server-side pagination, grouping by a column, etc.). Do not add configuration values "just for the sake of it" that are not strictly related to what the user needs to achieve. Apply the same principle when configuring charts and pivot tables, when writing Groovy scripts to fetch data (data sourcing), or when writing templates for reports.
 
@@ -39,7 +39,7 @@ These are the configuration files behind the same samples users can run interact
 
 Ready-to-run `.jrxml` report templates: `customer-by-country`, `employee-detail`, `employee-roster`. Each folder contains the `.jrxml` file (and any resources). These appear automatically in the UI with a Jasper badge. Browse the folder and read the `.jrxml` files when needed.
 
-Docs: [JasperReports](https://www.reportburster.com/docs/report-generation/jasperreports)
+Docs: [JasperReports](https://datapallas.com/docs/report-generation/jasperreports)
 
 ### Semantic Layer Cube Samples (config/samples-cubes/)
 
@@ -60,7 +60,7 @@ Each folder contains two files:
 
 For deeper guidance on what a cube is, when to reach for one, the DSL keywords, and how cubes feed Canvas widgets, dashboards, and reports — read the **datapallas-semantic-layer-cubes** skill.
 
-Docs: [Semantic Layer Overview](https://www.reportburster.com/docs/semantic-layer) | [Your First Cube](https://www.reportburster.com/docs/semantic-layer/quickstart) | [DSL Reference](https://www.reportburster.com/docs/semantic-layer/dsl-reference)
+Docs: [Semantic Layer Overview](https://datapallas.com/docs/semantic-layer) | [Your First Cube](https://datapallas.com/docs/semantic-layer/quickstart) | [DSL Reference](https://datapallas.com/docs/semantic-layer/dsl-reference)
 
 ### BI & Analytics Samples (config/samples/_frend/)
 
@@ -87,7 +87,7 @@ Groovy DSL configuration examples for the `rb-*` web components and complete das
 
 These three show how to wire pivot tables to real OLAP engines — read them before advising on performance-sensitive pivot work.
 
-Docs: [datatables](https://www.reportburster.com/docs/bi-analytics/web-components/datatables) | [charts](https://www.reportburster.com/docs/bi-analytics/web-components/charts) | [pivot tables](https://www.reportburster.com/docs/bi-analytics/web-components/pivottables) | [parameters](https://www.reportburster.com/docs/bi-analytics/web-components/parameters) | [reports](https://www.reportburster.com/docs/bi-analytics/web-components/reports) | [dashboards](https://www.reportburster.com/docs/bi-analytics/dashboards)
+Docs: [datatables](https://datapallas.com/docs/bi-analytics/web-components/datatables) | [charts](https://datapallas.com/docs/bi-analytics/web-components/charts) | [pivot tables](https://datapallas.com/docs/bi-analytics/web-components/pivottables) | [parameters](https://datapallas.com/docs/bi-analytics/web-components/parameters) | [reports](https://datapallas.com/docs/bi-analytics/web-components/reports) | [dashboards](https://datapallas.com/docs/bi-analytics/dashboards)
 
 **DSL wrappers — important:** The chart and tabulator DSLs are thin pass-through wrappers over their underlying libraries. The `charts-examples/` samples wrap [Chart.js](https://www.chartjs.org/) and the `tab-examples/` samples wrap [Tabulator](https://tabulator.info/) — any configuration these libraries support works in the Groovy DSL in the most direct/intuitive way possible. Study these examples together with the Chart.js and Tabulator docs.
 

@@ -45,7 +45,7 @@ export const tabWebUploadWordPressTemplate = `<ng-template #tabWebUploadWordPres
         <em>--user "documentburster:password" -X POST --data "code=1234 &customer=Northridge Pharmaceuticals
           &product=Nebulizer
           Machine&amount=200.00 &date=December 28th, 2015&status=Unpaid"
-          https://www.reportburster.com/wp-json/pods/invoices
+          https://datapallas.com/wp-json/pods/invoices
         </em>
       </div>
 
@@ -57,36 +57,36 @@ export const tabWebUploadWordPressTemplate = `<ng-template #tabWebUploadWordPres
 
       <div class="col-xs-2">{{'AREAS.CONFIGURATION.TAB-WEB-UPLOAD-WORDPRESS.EXAMPLES' | translate }}</div>
       <div class="col-xs-7">
-        <a href="https://www.reportburster.com/docs/document-portal/payments" target="_blank">https://www.reportburster.com/docs/document-portal/payments
+        <a href="https://datapallas.com/docs/document-portal/payments" target="_blank">https://datapallas.com/docs/document-portal/payments
         </a>
         <p></p>
         <p></p>
         &nbsp;&nbsp;
-        <a href="https://www.reportburster.com/docs/document-portal/payments" target="_blank">1. Web + DocumentBurster = Customer
+        <a href="https://datapallas.com/docs/document-portal/payments" target="_blank">1. Web + DocumentBurster = Customer
           Payment Portal</a>
         <br> &nbsp;&nbsp;
-        <a href="https://www.reportburster.com/docs/document-portal/payments" target="_blank">2. Web + DocumentBurster =
+        <a href="https://datapallas.com/docs/document-portal/payments" target="_blank">2. Web + DocumentBurster =
           Invoices2People</a>
         <br> &nbsp;&nbsp;
-        <a href="https://www.reportburster.com/docs/document-portal/payments" target="_blank">3. Web + DocumentBurster =
+        <a href="https://datapallas.com/docs/document-portal/payments" target="_blank">3. Web + DocumentBurster =
           Bills2People</a>
         <br> &nbsp;&nbsp;
-        <a href="https://www.reportburster.com/docs/document-portal/payments" target="_blank">4. Web + DocumentBurster =
+        <a href="https://datapallas.com/docs/document-portal/payments" target="_blank">4. Web + DocumentBurster =
           PurchaseOrders2People</a>
         <br> &nbsp;&nbsp;
-        <a href="https://www.reportburster.com/docs/document-portal/payments" target="_blank">5. Web + DocumentBurster =
+        <a href="https://datapallas.com/docs/document-portal/payments" target="_blank">5. Web + DocumentBurster =
           Statements2People</a>
         <br> &nbsp;&nbsp;
-        <a href="https://www.reportburster.com/docs/document-portal/payments" target="_blank">6. Web + DocumentBurster =
+        <a href="https://datapallas.com/docs/document-portal/payments" target="_blank">6. Web + DocumentBurster =
           Payslips2People</a>
         <br> &nbsp;&nbsp;
-        <a href="https://www.reportburster.com/docs/document-portal/payments" target="_blank">7. Web + DocumentBurster =
+        <a href="https://datapallas.com/docs/document-portal/payments" target="_blank">7. Web + DocumentBurster =
           SchoolReports2People</a>
         <br> &nbsp;&nbsp;
-        <a href="https://www.reportburster.com/docs/document-portal/payments" target="_blank">8. Web + DocumentBurster =
+        <a href="https://datapallas.com/docs/document-portal/payments" target="_blank">8. Web + DocumentBurster =
           Contracts2People</a>
         <br> &nbsp;&nbsp;
-        <a href="https://www.reportburster.com/docs/document-portal/payments" target="_blank">9. Web + DocumentBurster =
+        <a href="https://datapallas.com/docs/document-portal/payments" target="_blank">9. Web + DocumentBurster =
           AnyDocument2People </a>
 
       </div>

@@ -127,7 +127,7 @@ DataPallas exposes every core operation as a `DataPallas <command> [options] [ar
 DataPallas burst samples/burst/Payslips.pdf -c config/samples/split-only/settings.xml --testrandom 2
 ```
 
-**Full reference (commands, every option, Windows/Linux integration patterns, best practices):** I fetch https://www.reportburster.com/docs/advanced/cli when I need exact syntax, exit codes, or specific examples.
+**Full reference (commands, every option, Windows/Linux integration patterns, best practices):** I fetch https://datapallas.com/docs/advanced/cli when I need exact syntax, exit codes, or specific examples.
 
 ---
 
@@ -164,7 +164,7 @@ curl -X POST http://localhost:9090/api/jobs/burst \
 - **Swagger UI**: http://localhost:9090/swagger-ui.html — interactive "Try it out" buttons
 - **OpenAPI spec**: http://localhost:9090/v3/api-docs — JSON for code generation, Postman/Insomnia import, contract validation
 
-**Full written reference (every endpoint, payload examples, async patterns):** I fetch https://www.reportburster.com/docs/advanced/api when I need exact request shapes or detailed examples.
+**Full written reference (every endpoint, payload examples, async patterns):** I fetch https://datapallas.com/docs/advanced/api when I need exact request shapes or detailed examples.
 
 ---
 
@@ -191,10 +191,10 @@ When I provide Groovy scripts, I:
 
 ## Documentation Links
 
-- **Scripting (Groovy hooks)**: https://www.reportburster.com/docs/advanced/scripting
-- **cURL Integration**: https://www.reportburster.com/docs/advanced/curl
-- **CLI Reference**: https://www.reportburster.com/docs/advanced/cli
-- **REST API Reference**: https://www.reportburster.com/docs/advanced/api
+- **Scripting (Groovy hooks)**: https://datapallas.com/docs/advanced/scripting
+- **cURL Integration**: https://datapallas.com/docs/advanced/curl
+- **CLI Reference**: https://datapallas.com/docs/advanced/cli
+- **REST API Reference**: https://datapallas.com/docs/advanced/api
 - **Live Swagger UI** (when server is running): http://localhost:9090/swagger-ui.html
 
 When I need specifics on lifecycle events, ctx variables, cURL options, exact CLI syntax, or REST endpoint payloads, I fetch the relevant doc above.
