@@ -4,7 +4,9 @@
 
 *Helps you reach **"I get it"** and then **"it's live and beautiful"** for any data requirement — faster than any other platform.*
 
-<img src=".github/0020-datapallas-learn-gif-600x380-3fps.gif" alt="DataPallas" width="600">
+<a href="https://datapallas.com" target="_blank">
+  <img src=".github/0020-datapallas-learn-gif-600x380-3fps.gif" alt="DataPallas">
+</a>
 
 ### [Watch the video on datapallas.com &rarr;](https://datapallas.com)
 
@@ -33,7 +35,7 @@ Also includes: [4. report bursting](https://datapallas.com/docs/report-bursting)
 ## Self-Host with Docker (Windows, Linux, macOS)
 
 1. Download **[datapallas-server-docker.zip](https://downloads.datapallas.com/file/datapallas/newest/datapallas-server-docker.zip)**
-2. Extract the zip and navigate to the `ReportBurster` directory
+2. Extract the zip and navigate to the `DataPallas` directory
 3. Run `docker compose up -d`
 4. Open `http://localhost:9090`
 
