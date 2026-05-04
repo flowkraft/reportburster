@@ -10,6 +10,8 @@
 
 </div>
 
+<br>
+
 ## One Modern BI Platform, Not Three Legacy Ones
 
 | What you need | What you're using today | DataPallas |
@@ -20,9 +22,13 @@
 
 Also includes: [4. report bursting](https://datapallas.com/docs/report-bursting) | [5. self-service document portals](https://datapallas.com/docs/document-portal) | [6. AI crew](https://datapallas.com/docs/ai-crew/the-team)
 
+<br>
+
 <a href="https://datapallas.com" target="_blank">
   <img src=".github/screenshots/0010-dashboard.png" alt="DataPallas — BI Dashboards & Analytics">
 </a>
+
+<br>
 
 ## Self-Host with Docker (Windows, Linux, macOS)
 
@@ -31,9 +37,13 @@ Also includes: [4. report bursting](https://datapallas.com/docs/report-bursting)
 3. Run `docker compose up -d`
 4. Open `http://localhost:9090`
 
+<br>
+
 <a href="https://datapallas.com" target="_blank">
   <img src=".github/screenshots/0015-burst-deliver-generate-deliver.png" alt="DataPallas — Burst, Deliver, Generate">
 </a>
+
+<br>
 
 ## Features
 
