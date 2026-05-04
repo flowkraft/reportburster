@@ -2,7 +2,7 @@
 
 # DataPallas
 
-*From **"I get it"** to **"it's live and beautiful"** — for any data requirement, faster than any other platform.*
+*Helps you reach **"I get it"** and then **"it's live and beautiful"** for any data requirement — faster than any other platform.*
 
 <img src=".github/0020-datapallas-learn-gif-600x380-3fps.gif" alt="DataPallas" width="600">
 
