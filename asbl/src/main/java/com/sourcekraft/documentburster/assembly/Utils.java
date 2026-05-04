@@ -121,13 +121,17 @@ public class Utils {
 			}
 		}
 
-		new ProcessExecutor().directory(new File(pomXmlFolderPath)).command("cmd", "/c", mavenCommand)
+		int exitCode = new ProcessExecutor().directory(new File(pomXmlFolderPath)).command("cmd", "/c", mavenCommand)
 				.redirectOutput(new LogOutputStream() {
 					@Override
 					protected void processLine(String line) {
 						System.out.println(line);
 					}
-				}).execute();
+				}).execute().getExitValue();
+
+		if (exitCode != 0) {
+			throw new RuntimeException("Maven command failed (exit " + exitCode + "): " + mavenCommand);
+		}
 
 	}
 
