@@ -6,13 +6,7 @@
 
 ### [Watch the demo video on datapallas.com &rarr;](https://datapallas.com)
 
-## Stay Up-to-Date
-
-Watch this repository to be notified of future updates:
-
-<a href="https://github.com/flowkraft/reportburster/stargazers">
-  <img src=".github/screenshots/github-star-animation.svg" alt="Star DataPallas on GitHub" width="490">
-</a>
+</div>
 
 ## Self-Host with Docker (Windows, Linux, macOS)
 
@@ -20,8 +14,6 @@ Watch this repository to be notified of future updates:
 2. Extract the zip and navigate to the `ReportBurster` directory
 3. Run `docker compose up -d`
 4. Open `http://localhost:9090`
-
-</div>
 
 ## One Modern BI Platform, Not Three Legacy Ones
 
@@ -98,6 +90,14 @@ We welcome contributions! Bug reports, feature requests, documentation, or code 
 **Start using it today with no artificial restrictions — all features included. No community vs. enterprise editions.**
 
 ---
+
+## Stay Up-to-Date
+
+Watch this repository to be notified of future updates:
+
+<a href="https://github.com/flowkraft/reportburster/stargazers">
+  <img src=".github/screenshots/github-star-animation.svg" alt="Star DataPallas on GitHub" width="490">
+</a>
 
 <div align="center">
 
