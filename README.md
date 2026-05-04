@@ -1,19 +1,14 @@
 <div align="center">
 
-# DataPallas — Business Intelligence For The New Era
+# DataPallas
+
+*From **"I get it"** to **"it's live and beautiful"** — for any data requirement, faster than any other platform.*
 
 <img src=".github/0020-datapallas-learn-gif-600x380-3fps.gif" alt="DataPallas" width="600">
 
-### [Watch the demo video on datapallas.com &rarr;](https://datapallas.com)
+### [Watch the video on datapallas.com &rarr;](https://datapallas.com)
 
 </div>
-
-## Self-Host with Docker (Windows, Linux, macOS)
-
-1. Download **[reportburster-server-docker.zip](https://downloads.datapallas.com/file/reportburster/newest/reportburster-server-docker.zip)**
-2. Extract the zip and navigate to the `ReportBurster` directory
-3. Run `docker compose up -d`
-4. Open `http://localhost:9090`
 
 ## One Modern BI Platform, Not Three Legacy Ones
 
@@ -25,11 +20,18 @@
 
 Also includes: [4. report bursting](https://datapallas.com/docs/report-bursting) | [5. self-service document portals](https://datapallas.com/docs/document-portal) | [6. AI crew](https://datapallas.com/docs/ai-crew/the-team)
 
-<a href="https://datapallas.com/docs/bi-analytics/dashboards" target="_blank">
+<a href="https://datapallas.com" target="_blank">
   <img src=".github/screenshots/0010-dashboard.png" alt="DataPallas — BI Dashboards & Analytics">
 </a>
 
-<a href="https://datapallas.com/docs/report-bursting" target="_blank">
+## Self-Host with Docker (Windows, Linux, macOS)
+
+1. Download **[reportburster-server-docker.zip](https://downloads.datapallas.com/file/reportburster/newest/reportburster-server-docker.zip)**
+2. Extract the zip and navigate to the `ReportBurster` directory
+3. Run `docker compose up -d`
+4. Open `http://localhost:9090`
+
+<a href="https://datapallas.com" target="_blank">
   <img src=".github/screenshots/0015-burst-deliver-generate-deliver.png" alt="DataPallas — Burst, Deliver, Generate">
 </a>
 
@@ -83,7 +85,7 @@ Full documentation is available at **[datapallas.com/docs](https://datapallas.co
 
 We welcome contributions! Bug reports, feature requests, documentation, or code — every bit helps.
 
-- **Bug reports & feature requests:** [Open an issue](https://github.com/flowkraft/reportburster/issues)
+- **Bug reports & feature requests:** [Open an issue](https://github.com/flowkraft/datapallas/issues)
 
 ## All Features Are Included
 
@@ -95,14 +97,6 @@ We welcome contributions! Bug reports, feature requests, documentation, or code 
 
 Watch this repository to be notified of future updates:
 
-<a href="https://github.com/flowkraft/reportburster/stargazers">
+<a href="https://github.com/flowkraft/datapallas/stargazers">
   <img src=".github/screenshots/github-star-animation.svg" alt="Star DataPallas on GitHub" width="490">
 </a>
-
-<div align="center">
-
-[![GitHub Stars](https://img.shields.io/github/stars/flowkraft/reportburster?style=social)](https://github.com/flowkraft/reportburster/stargazers)
-
-<sub>If DataPallas helps you, consider giving it a star — it helps others discover the project.</sub>
-
-</div>

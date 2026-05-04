@@ -16,8 +16,8 @@
     }
   ],
   "support": {
-    "issues": "https://github.com/flowkraft/reportburster/issues",
-    "source": "https://github.com/flowkraft/reportburster"
+    "issues": "https://github.com/flowkraft/datapallas/issues",
+    "source": "https://github.com/flowkraft/datapallas"
   },
   "require": {
     "php": ">=7.4",
