@@ -436,7 +436,7 @@ class CubeSqlGeneratorTest {
 	// the actual Northwind schema before they ship.
 
 	private static String SAMPLES_CUBES_DIR =
-			"../../frend/reporting/testground/e2e/config/samples-cubes";
+			"../../asbl/src/main/external-resources/db-template/config/samples-cubes";
 
 	private static String readCubeDsl(String folderName) throws Exception {
 		File f = new File(SAMPLES_CUBES_DIR + "/" + folderName + "/" + folderName + "-cube-config.groovy");
