@@ -1710,6 +1710,10 @@ public class NoExeAssembler extends AbstractAssembler {
 				if (file.getName().equals(".next") || path.contains("/.next/")) {
 					return false;
 				}
+				// Exclude tsconfig.tsbuildinfo (TypeScript incremental build cache)
+				if (fileName.equals("tsconfig.tsbuildinfo")) {
+					return false;
+				}
 				// Exclude .git (version control)
 				if (file.getName().equals(".git") || path.contains("/.git/")) {
 					return false;

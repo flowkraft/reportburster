@@ -23,8 +23,9 @@ public class DataPallasSourceAssembler extends AbstractAssembler {
 		File targetDir = new File(packageDirPath + "/" + topFolderName);
 
 		String[] excludePatterns = new String[] { "node_modules", ".venv", "__pycache__", "dependencies", "target",
-				"results", "test-results", "dist", "release", ".git", ".angular", ".settings", "build", ".aider", 
-				".roo", ".rooignore", ".roomodes", ".docs", ".workspace", ".log", "_ai_crew", ".flattened-pom" };
+				"results", "test-results", "dist", "release", ".git", ".angular", ".settings", "build", ".aider",
+				".roo", ".rooignore", ".roomodes", ".docs", ".workspace", ".log", "_ai_crew", ".flattened-pom",
+				"testground", ".next", "tsconfig.tsbuildinfo" };
 
 		FileUtils.copyDirectory(sourceDir, targetDir, file -> {
 			String relativePath = sourceDir.toURI().relativize(file.toURI()).getPath();
@@ -54,6 +55,14 @@ public class DataPallasSourceAssembler extends AbstractAssembler {
 					}
 				}
 			}
+
+			// backup/output/logs belong only in db-template — exclude them everywhere else
+			if (fileName.equals("backup") || fileName.equals("output") || fileName.equals("logs")) {
+				if (!relativePath.startsWith("asbl/src/main/external-resources/db-template/")) {
+					return false;
+				}
+			}
+
 			return true;
 		});
 
