@@ -32,7 +32,7 @@ Also includes: [4. report bursting](https://datapallas.com/docs/report-bursting)
 
 ## Self-Host with Docker (Windows, Linux, macOS)
 
-1. Download **[reportburster-server-docker.zip](https://downloads.datapallas.com/file/reportburster/newest/reportburster-server-docker.zip)**
+1. Download **[datapallas-server-docker.zip](https://downloads.datapallas.com/file/datapallas/newest/datapallas-server-docker.zip)**
 2. Extract the zip and navigate to the `ReportBurster` directory
 3. Run `docker compose up -d`
 4. Open `http://localhost:9090`
