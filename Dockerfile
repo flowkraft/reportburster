@@ -98,6 +98,19 @@ LABEL maintainer="FlowKraft" \
       version="0.0.0" \
       description="DataPallas Server - Business Intelligence, Reporting, and Document Distribution in the Age of AI"
 
+# Make apt resilient against archive.ubuntu.com flakiness:
+#   - 80-retries: retry transient download failures up to 5 times instead of failing on first connection error
+#   - mirror swap: replace archive.ubuntu.com (round-robin pool with frequently-failing IPs) with
+#     azure.archive.ubuntu.com (Canonical's anycast Azure-fronted mirror, single healthy logical endpoint)
+# Handles both deb822 (noble: /etc/apt/sources.list.d/ubuntu.sources) and legacy (/etc/apt/sources.list) layouts
+RUN echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/80-retries && \
+    if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then \
+        sed -i 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources; \
+    fi && \
+    if [ -f /etc/apt/sources.list ]; then \
+        sed -i 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g' /etc/apt/sources.list; \
+    fi
+
 # Install runtime dependencies + Docker CE CLI with compose v2 plugin
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \

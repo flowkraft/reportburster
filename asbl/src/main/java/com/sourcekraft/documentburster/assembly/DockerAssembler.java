@@ -59,14 +59,18 @@ public class DockerAssembler extends AbstractAssembler {
         }
 
         // Build the Docker image without cache using the preprocessed Dockerfile
-        new ProcessExecutor().directory(top)
+        int buildExitCode = new ProcessExecutor().directory(top)
                 .command("docker", "build", "--no-cache", "-t", imageTag, "-t", "flowkraft/datapallas-server:latest", "-f", dockerfileBuild.getName(), ".")
                 .redirectOutput(new LogOutputStream() {
                     @Override
                     protected void processLine(String line) {
                         System.out.println(line);
                     }
-                }).execute();
+                }).execute().getExitValue();
+
+        if (buildExitCode != 0) {
+            throw new RuntimeException("docker build failed (exit " + buildExitCode + ") for image " + imageTag);
+        }
 
         // cleanup generated Dockerfile (best-effort)
         try {
