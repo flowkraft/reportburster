@@ -1098,6 +1098,7 @@ public class ReportsService {
 				if (s != null && s.connection != null) {
 					ConnectionFileInfo info = new ConnectionFileInfo();
 					info.fileName = sampleId + ".xml";
+					info.filePath = sampleId + ".xml";
 					info.connectionCode = s.connection.code;
 					info.connectionName = s.connection.name;
 					info.connectionType = "database-connection";

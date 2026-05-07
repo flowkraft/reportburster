@@ -7,7 +7,7 @@ import type { ColumnSchema } from "@/lib/explore-data/types";
 import { fetchSchema, executeQuery, getConnectionType } from "@/lib/explore-data/rb-api";
 import { sqlForDataSource } from "@/lib/explore-data/sql-builder";
 import { isTemporalExtraction, probeCardinality, probeSemanticType, pickDefaultAxes, canReuseAxisPicks, splitDimsAndMeasures, groupWidgetsByShape, groupWidgetsBySensibility, rankChartSubtypes, type CardinalityMap } from "@/lib/explore-data/smart-defaults";
-import { seedDisplayConfigForType, synthesizePostAggColumns } from "@/lib/explore-data/widget-defaults";
+import { seedDisplayConfigForType, synthesizePostAggColumns, temporalColumnNamesOf } from "@/lib/explore-data/widget-defaults";
 import type { TableSchema } from "@/lib/explore-data/types";
 import { Settings2, Database, Palette, Wand2, Loader2, Table, BarChart3, PieChart, Hash, Map as MapIcon, Workflow, Gauge as GaugeIcon, TrendingUp, BarChartHorizontal, FileText, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
 import type { WidgetType } from "@/lib/stores/canvas-store";
@@ -179,7 +179,11 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
       || (ds.visualQuery?.groupBy?.length ?? 0) > 0;
     if (!isAgg) return; // raw table drop: schema columns from the effect above are correct
 
-    const sql = sqlForDataSource(ds, getConnectionType(connectionId));
+    const sql = sqlForDataSource(
+      ds,
+      getConnectionType(connectionId),
+      temporalColumnNamesOf(selectedWidget?.shape),
+    );
     if (!sql) return;
 
     let cancelled = false;
@@ -188,6 +192,13 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
         if (cancelled || !res.data || res.data.length === 0) return;
         // Only update rowCount — column types come from widget.columns
         // (written by setWidgetColumnsFromSchema; type-preserving).
+        // [SQL-TRACE] diagnostic — leave commented; uncomment to debug what
+        // value flows into the engine's `hints.rowCount` palette gate.
+        // console.log(
+        //   '[SQL-TRACE ConfigPanel setLastRowCount] widgetId=' + selectedWidget?.id +
+        //   ' lastRowCount=' + res.rowCount +
+        //   ' dataLen=' + res.data.length,
+        // );
         setLastRowCount(res.rowCount);
       })
       .catch(() => { /* ignore — schema columns from main effect remain as fallback */ });
@@ -306,7 +317,11 @@ export function ConfigPanel({ onCollapse }: { onCollapse?: () => void }) {
         scriptExecuteVersion: (ds.scriptExecuteVersion ?? 0) + 1,
       });
     } else {
-      const sql = sqlForDataSource(ds, getConnectionType(connectionId));
+      const sql = sqlForDataSource(
+        ds,
+        getConnectionType(connectionId),
+        temporalColumnNamesOf(selectedWidget?.shape),
+      );
       if (!sql) { setDetectError("Write or generate a query first"); return; }
       const nextVersion = (ds.executeVersion ?? 0) + 1;
       // Persist sql/generatedSql for visual→SQL consistency, same as handleRun.

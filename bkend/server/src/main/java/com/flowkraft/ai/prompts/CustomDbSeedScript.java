@@ -14,64 +14,96 @@ public final class CustomDbSeedScript {
             List.of("database", "groovy", "seed", "custom-schema"),
             "Database Schema",
             """
-Write a Groovy database seed script for [VENDOR] that creates custom tables and populates them with realistic sample data.
+Write a Groovy database seed script for **[VENDOR]** that creates custom tables and populates them with realistic sample data.
 
 **YOUR SCHEMA & DATA REQUIREMENTS:**
 
 <REQUIREMENT>
 - Table: my_departments (dept_id PK, dept_name, location) — 6 rows with fixed names: Engineering, Marketing, Sales, HR, Finance, Operations
-
 - Table: my_employees (emp_id PK, first_name, last_name, email, salary, dept_id FK→my_departments) — 20 rows
-
-- Use DataFaker for realistic first/last names, email addresses, salaries between 45000-150000
+- Use DataFaker for realistic first/last names, email addresses, salaries between 45000–150000
 - Each employee assigned to a random department
 </REQUIREMENT>
 
-The script receives these pre-configured variables (do NOT create them yourself):
-- `dbSql` — a groovy.sql.Sql instance already connected to the [VENDOR] database
+**Pre-configured variables (DO NOT create them yourself):**
+- `dbSql` — a `groovy.sql.Sql` instance already connected to the [VENDOR] database
 - `vendor` — String with the database vendor name
-- `log` — SLF4J Logger for logging
+- `log` — SLF4J Logger
 
-The DataFaker library (net.datafaker.Faker) is available on the classpath.
-Documentation: https://www.datafaker.net/documentation/getting-started/#usage
-GitHub: https://github.com/datafaker-net/datafaker/
-Usage:
+**DataFaker library** (`net.datafaker.Faker`) is on the classpath.
+Docs: https://www.datafaker.net/documentation/getting-started/#usage
 ```groovy
 import net.datafaker.Faker
-def faker = new Faker(new Random(42)) // fixed seed for deterministic data
+def faker = new Faker(new Random(42)) // fixed seed → deterministic data
 faker.name().fullName()
 faker.company().name()
 faker.address().city()
 faker.internet().emailAddress()
-faker.commerce().productName()
-faker.number().numberBetween(1, 100)
+faker.number().numberBetween(45000, 150000)
 ```
 
-Key groovy.sql.Sql methods:
-- `dbSql.execute("CREATE TABLE IF NOT EXISTS ...")` — DDL
-- `dbSql.execute("INSERT INTO ... VALUES (?, ?)", [val1, val2])` — parameterized DML (SQL injection safe)
-- `dbSql.rows("SELECT * FROM my_table")` — query returning list of maps
-- `dbSql.withTransaction { ... }` — automatic rollback on error
+**`groovy.sql.Sql` methods you'll use:**
+- `dbSql.execute("CREATE TABLE ...")` — DDL
+- `dbSql.execute("INSERT INTO ... VALUES (?, ?)", [v1, v2])` — parameterized DML (SQL-injection safe)
+- `dbSql.withTransaction { ... }` — wraps DML; rolls back on any exception
 
-Requirements:
-1. Use CREATE TABLE IF NOT EXISTS for all tables
-2. Use CREATE INDEX IF NOT EXISTS for indexes
-3. TRUNCATE only YOUR custom tables — NEVER touch any Northwind tables!
-4. Re-insert sample data after truncating (idempotent — safe to run multiple times)
-5. Use [VENDOR]-native DDL syntax, data types, and conventions throughout the script
-6. Wrap all DML in `dbSql.withTransaction { ... }` for automatic rollback on error (skip this for ClickHouse which does not support transactions)
-7. Use DataFaker with a fixed seed (e.g. 42) for deterministic, repeatable data
-8. DDL (CREATE TABLE) should be OUTSIDE the transaction (some vendors auto-commit DDL)
+**HARD RULES — these are required for the script to work on every supported vendor:**
 
-Here is a working [VENDOR] example for reference (adapt the table structure and data to your needs):
+1. **Idempotency via DROP + CREATE, NOT `CREATE TABLE IF NOT EXISTS`.**
+   `CREATE TABLE IF NOT EXISTS` is rejected by SQL Server, Oracle, and DB2. Use this universal pattern instead — define a `safeDrop` helper that swallows "table doesn't exist" on the first run, then plain `CREATE TABLE`:
+   ```groovy
+   def safeDrop = { String t ->
+       try { dbSql.execute("DROP TABLE " + t) }
+       catch (Exception ignored) { /* didn't exist — fine */ }
+   }
+   safeDrop("my_employees")     // children first (FK order)
+   safeDrop("my_departments")
+   dbSql.execute(\"\"\"CREATE TABLE my_departments (...)\"\"\")
+   dbSql.execute(\"\"\"CREATE TABLE my_employees  (...)\"\"\")
+   ```
+   For ClickHouse you may use `DROP TABLE IF EXISTS` natively (it supports the syntax cleanly).
+
+2. **Explicit IDs in INSERTs — do NOT rely on auto-increment.**
+   Auto-increment syntax differs across every vendor (SERIAL / IDENTITY / AUTO_INCREMENT / sequences) and DuckDB needs an explicit sequence. Define columns as plain `INT NOT NULL PRIMARY KEY` (or `NUMBER` for Oracle, `UInt32` for ClickHouse) and supply the ID in every INSERT. Example:
+   ```groovy
+   deptNames.eachWithIndex { name, i ->
+       dbSql.execute("INSERT INTO my_departments (dept_id, dept_name, location) VALUES (?, ?, ?)",
+                     [i + 1, name, faker.address().city()])
+   }
+   ```
+
+3. **DO NOT use `TRUNCATE`.** TRUNCATE is DDL that auto-commits on Oracle, MySQL, and MariaDB — it breaks `withTransaction` rollback semantics. The DROP+CREATE pattern in rule #1 makes TRUNCATE unnecessary anyway (the table is empty after CREATE).
+
+4. **DDL outside the transaction; DML inside.**
+   - `safeDrop(...)` and `CREATE TABLE` calls go BEFORE `dbSql.withTransaction { ... }`.
+   - All `INSERT` statements go INSIDE `dbSql.withTransaction { ... }` so a mid-insert failure rolls everything back.
+   - For **ClickHouse**, omit `withTransaction` entirely — ClickHouse has no multi-statement transactions.
+
+5. **Use [VENDOR]-native data types in CREATE TABLE:**
+   - Integer PK: `INT` (use `NUMBER` for Oracle, `UInt32` for ClickHouse)
+   - String:    `VARCHAR(n)` (use `VARCHAR2(n)` for Oracle, `String` for ClickHouse)
+   - Decimal:   `DECIMAL(10,2)` (use `Decimal64(2)` for ClickHouse)
+   - Date:      `DATE`
+   - ClickHouse tables additionally need `ENGINE = MergeTree() ORDER BY <pk>`.
+
+6. **Touch ONLY tables prefixed `my_*`. NEVER read, write, or drop any Northwind tables (customer, product, employee, orders, etc.).**
+
+7. **Use DataFaker with a fixed seed (e.g. `new Random(42)`)** so re-runs produce identical data.
+
+8. **Wrap inserts in `dbSql.withTransaction`** (except for ClickHouse). Do NOT call any FK-disabling commands (e.g. `SET session_replication_role`, `ALTER TABLE NOCHECK CONSTRAINT`) — they either need elevated privileges (Postgres/Supabase) or auto-commit (Oracle/DB2). Inserts in parents-first order satisfy FKs without disabling them.
+
+**Working reference for [VENDOR]** — your generated script should follow this exact structure (DROP+CREATE outside, INSERTs inside `withTransaction`, explicit IDs, fixed-seed DataFaker, only `my_*` tables):
 
 ```groovy
 [VENDOR_EXAMPLE_SCRIPT]
 ```
 
-The script must be completely idempotent — running it multiple times must produce the exact same result with no errors or duplicate data.
+**Final acceptance criteria for your generated script:**
+- Re-running it 5× in a row on a [VENDOR] database produces the exact same final state with zero errors and zero warnings.
+- It compiles as valid Groovy and runs end-to-end with only `dbSql`, `vendor`, and `log` as inputs.
+- Every CREATE TABLE / INSERT statement uses [VENDOR]-correct syntax and types.
 
-Please generate a complete, working Groovy script for [VENDOR] with realistic business-domain tables and sample data using DataFaker and groovy.sql.Sql (dbSql)."""
+Now generate a complete, working Groovy script for **[VENDOR]** that satisfies the schema requirements above and follows all 8 hard rules."""
         );
     }
 }

@@ -6,6 +6,7 @@ import { X, Check, ExternalLink, Loader2 } from "lucide-react";
 import { useCanvasStore } from "@/lib/stores/canvas-store";
 import { usePublishStatusStore } from "@/lib/stores/publish-status-store";
 import { sqlForDataSource } from "@/lib/explore-data/sql-builder";
+import { temporalColumnNamesOf } from "@/lib/explore-data/widget-defaults";
 import { getConnectionType, updateCanvas } from "@/lib/explore-data/rb-api";
 import { saveDashboardToDataPallas } from "./rbApiClient";
 
@@ -51,7 +52,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
       const hasExplicitSql = (ds.mode === "sql" || ds.mode === "ai-sql") && !!ds.sql?.trim();
       const alreadyPersisted = !!ds.generatedSql?.trim();
       if (hasExplicitSql || alreadyPersisted) return w;
-      const built = sqlForDataSource(ds, connectionType);
+      const built = sqlForDataSource(ds, connectionType, temporalColumnNamesOf(w.shape));
       return built ? { ...w, dataSource: { ...ds, generatedSql: built } } : w;
     });
     try {

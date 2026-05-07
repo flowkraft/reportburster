@@ -29,7 +29,7 @@ export const DB_VENDORS_DEFAULT = 'sqlite';
 export const DB_VENDORS_OLAP = ['duckdb', 'clickhouse'];
 
 // Helper to check if vendor is OLAP (has Star Schema)
-export const SEED_CAPABLE_VENDORS = ['oracle', 'sqlserver', 'ibmdb2', 'postgres', 'mysql', 'mariadb', 'supabase'];
+export const SEED_CAPABLE_VENDORS = ['oracle', 'sqlserver', 'ibmdb2', 'postgres', 'mysql', 'mariadb', 'supabase', 'clickhouse', 'duckdb'];
 
 export function hasSeedCapability(vendor: string): boolean {
   return SEED_CAPABLE_VENDORS.includes(vendor);
@@ -67,6 +67,38 @@ export const SCHEMA_VIEWS_OLAP = [
 ];
 
 type StarterPackState = 'running' | 'stopped' | 'starting' | 'stopping' | 'error' | 'unknown';
+
+// Tables created by the Example (default) seed script (see component.getExampleCustomSeedScript).
+// Used by the Database Schema verification step to confirm the seed actually landed in the DB
+// and that the wipe actually removed them. Lowercase form matches the tree-node id convention
+// (#treeNode{name}sourceTreedatabaseSchemaPicklist).
+const EXAMPLE_DEFAULT_TABLES = ['my_employees', 'my_departments'];
+
+// Tables created by the bundled `invoice-seeder.groovy` template and dropped by
+// `wipe-invoices.groovy`. Authoritative source: GenericSeedExecutor.java:38 and the
+// two .groovy templates under asbl/.../db-template/db/scripts/.
+const INVOICE_SEEDER_TABLES = [
+  'seed_inv_customer',
+  'seed_inv_product',
+  'seed_inv_invoice',
+  'seed_inv_invoice_line',
+];
+
+// Hardcoded wipe paired with the Example (default) seed script.
+// `safeDrop` swallows "table doesn't exist" errors so the wipe is idempotent on every
+// vendor — sqlite, duckdb, and any future addition. Mirrors the component's own pattern.
+const EXAMPLE_DEFAULT_WIPE_SCRIPT = `import groovy.sql.Sql
+
+def safeDrop = { String table ->
+    try { dbSql.execute("DROP TABLE " + table) }
+    catch (Exception e) { /* table didn't exist — fine */ }
+}
+
+log.info("Wiping example default seed for " + vendor + "...")
+safeDrop("my_employees")
+safeDrop("my_departments")
+log.info("Example default wipe complete for " + vendor)
+`;
 
 function vendorToPackId(vendor: string): string {
   const v = (vendor || '').toLowerCase().trim();
@@ -686,7 +718,7 @@ export class ConnectionsTestHelper {
       .clickAndSelectTableRow(`#${connectionFileName}`)
       .waitOnElementToBecomeEnabled('#btnDelete')
       .click('#btnDelete')
-      .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+      .waitOnConfirmDialogToBecomeVisible()
       .clickYesDoThis()
       .waitOnElementToBecomeInvisible(`#${connectionFileName}`)
       .gotoConnections()
@@ -1196,69 +1228,342 @@ export class ConnectionsTestHelper {
   }
 
   /**
-   * Seeds N invoices into seed_inv_* tables, waits for completion,
-   * then wipes the data and waits for the seed button to reappear.
-   * Assumes the starter pack is already running and visible.
-   * then wipes the data and waits for the seed button to reappear.
-   * Assumes the starter pack is already running and visible.
+   * Seeds invoice data then wipes it via the Seed Data tab in the Connection Details modal.
+   *
+   * Flow (twice — once with each bundled template): pick template from `<select>` on
+   * Example sub-tab → confirm → Example codejar populates → Copy to clipboard →
+   * switch to My Script → paste → Run Script → wait until done.
+   *
+   * The bundled `invoice-seeder.groovy` template hard-codes `int N = 10000` internally;
+   * the `invoiceCount` parameter is currently retained for back-compat but unused.
+   * Honoring it requires plumbing `params: { N }` through `runCustomSeed` (separate change).
    */
-  static seedAndWipeInvoices(
+  static seedAndWipeInvoicesViaConnectionDetails(
     ft: FluentTester,
-    dbVendor: string,
+    connectionCode: string,
     invoiceCount: number = 100,
     fullTimeout: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS,
   ): FluentTester {
-    const packId = vendorToPackId(dbVendor);
-    const inputSel = `#seedInvoiceCount_${packId}`;
-    const seedBtnSel = `#btnSeedInvoices_${packId}`;
-    const wipeBtnSel = `#btnWipeInvoices_${packId}`;
+    ft = ConnectionsTestHelper.openSeedDataTabAndTestConnection(ft, connectionCode, fullTimeout);
 
-    // Already on starter packs page with vendor filtered (from setStarterPackStateForVendor)
-    // Wait for seed controls to be visible and enabled (pack running, not mid-operation)
+    // SEED via Invoice Seeder template (creates seed_inv_* tables)
+    ft = ConnectionsTestHelper.loadExampleAndPasteIntoMyScript(ft, 'invoice-seeder', 'seed_inv_');
+    ft = ConnectionsTestHelper.runMyScriptAndWait(ft, 'invoice-seeder', fullTimeout);
+
+    // VERIFY: Database Schema tab → Refresh → assert the seed_inv_* tables now exist in the tree.
+    ft = ConnectionsTestHelper.verifySchemaTablesPresent(ft, INVOICE_SEEDER_TABLES, fullTimeout);
+    ft = ConnectionsTestHelper.returnToSeedDataTab(ft);
+
+    // WIPE via Wipe Invoices template (drops every seed_inv_* table)
+    ft = ConnectionsTestHelper.loadExampleAndPasteIntoMyScript(ft, 'wipe-invoices', 'seed_inv_');
+    ft = ConnectionsTestHelper.runMyScriptAndWait(ft, 'wipe-invoices', fullTimeout);
+
+    // VERIFY: Database Schema tab → Refresh → assert the seed_inv_* tables are gone from the tree.
+    ft = ConnectionsTestHelper.verifySchemaTablesAbsent(ft, INVOICE_SEEDER_TABLES, fullTimeout);
+
+    return ConnectionsTestHelper.closeConnectionDetailsModal(ft);
+  }
+
+  /**
+   * Runs the Example (default) script against an existing sample connection and then
+   * runs a hardcoded wipe that drops the tables it created. Does **not** create or
+   * delete the connection — assumes a pre-existing read-friendly sample connection
+   * (e.g. `rbt-sample-northwind-sqlite-4f2`, `rbt-sample-northwind-duckdb-4f2`).
+   *
+   * The Example default creates `my_departments` and `my_employees`. The wipe script
+   * embedded here is vendor-agnostic (uses `safeDrop`) so it works on every vendor;
+   * sample connections currently exist only for sqlite and duckdb, but the helper
+   * itself does not assume either.
+   */
+  static seedAndWipeUsingExampleDefaultViaConnectionDetails(
+    ft: FluentTester,
+    connectionCode: string,
+    fullTimeout: number = Constants.DELAY_FIVE_THOUSANDS_SECONDS,
+  ): FluentTester {
+    ft = ConnectionsTestHelper.openSeedDataTabAndTestConnection(ft, connectionCode, fullTimeout);
+
+    // SEED via Example (default) — `__EXAMPLE_DEFAULT__` is already loaded on first open;
+    // pass null for templateId so the helper skips the dropdown pick + confirm.
+    ft = ConnectionsTestHelper.loadExampleAndPasteIntoMyScript(ft, null, 'my_employees');
+    ft = ConnectionsTestHelper.runMyScriptAndWait(ft, 'example-default', fullTimeout);
+
+    // VERIFY: Database Schema tab → Refresh → assert the seed tables now exist in the tree.
+    ft = ConnectionsTestHelper.verifySchemaTablesPresent(ft, EXAMPLE_DEFAULT_TABLES, fullTimeout);
+    ft = ConnectionsTestHelper.returnToSeedDataTab(ft);
+
+    // WIPE via hardcoded inline script (no UI affordance for this — supplied by the helper)
+    ft = ConnectionsTestHelper.loadInlineIntoMyScript(
+      ft,
+      EXAMPLE_DEFAULT_WIPE_SCRIPT,
+      'safeDrop',
+    );
+    ft = ConnectionsTestHelper.runMyScriptAndWait(ft, 'example-default-wipe', fullTimeout);
+
+    // VERIFY: Database Schema tab → Refresh → assert the seed tables are gone from the tree.
+    ft = ConnectionsTestHelper.verifySchemaTablesAbsent(ft, EXAMPLE_DEFAULT_TABLES, fullTimeout);
+
+    return ConnectionsTestHelper.closeConnectionDetailsModal(ft);
+  }
+
+  // ============================================================================
+  // Shared Seed Data sub-flows (used by both seed-wipe public helpers above)
+  // ============================================================================
+
+  /**
+   * Opens the Connection Details modal for `connectionCode`, navigates to the
+   * Seed Data tab, uses the placeholder button to route to Connection Details,
+   * tests the connection (confirming the "Save first?" dialog), then returns to
+   * Seed Data — at which point `showSchemaTreeSelect` is true and the panel
+   * (My Script / Example / Templates dropdown / Run / Copy buttons) is rendered.
+   */
+  private static openSeedDataTabAndTestConnection(
+    ft: FluentTester,
+    connectionCode: string,
+    fullTimeout: number,
+  ): FluentTester {
+    const connFileSel = `#${connectionCode}\\.xml`;
+
     ft = ft
-      .waitOnElementToBecomeVisible(inputSel)
-      .waitOnElementToBecomeEnabled(inputSel)
-      .setValue(inputSel, String(invoiceCount))
-      .consoleLog(`[SeedWipe] Set invoice count to ${invoiceCount} for ${packId}`)
-      .waitOnElementToBecomeVisible(seedBtnSel)
-      .waitOnElementToBecomeEnabled(seedBtnSel)
-      .click(seedBtnSel)
+      .gotoConnections()
+      .waitOnElementToBecomeVisible(connFileSel)
+      .clickAndSelectTableRow(connFileSel)
+      .waitOnElementToBecomeEnabled('#btnEdit')
+      .click('#btnEdit')
+      .waitOnElementToBecomeVisible('#modalDbConnection')
+      .consoleLog(`[SeedWipe] Opened modal for ${connectionCode}`);
+
+    ft = ft
+      .waitOnElementToBecomeVisible('#seedDataTab-link')
+      .click('#seedDataTab-link');
+
+    ft = ft
+      .waitOnElementToBecomeVisible('#btnTestDbConnectionSeedData')
+      .click('#btnTestDbConnectionSeedData')
+      .waitOnElementToBecomeVisible('#btnTestDbConnection')
+      .waitOnElementToBecomeEnabled('#btnTestDbConnection')
+      .click('#btnTestDbConnection')
       .confirmDialogShouldBeVisible()
       .clickYesDoThis()
-      .consoleLog(`[SeedWipe] Clicked Seed for ${packId}`);
+      .waitOnElementToBecomeEnabled('#btnTestDbConnection', fullTimeout)
+      .consoleLog('[SeedWipe] Connection tested');
 
-    // Wait for Wipe button to appear (seed completed)
-    ft = ft
-      .waitOnElementToBecomeVisible(wipeBtnSel, fullTimeout)
-      .waitOnElementToBecomeEnabled(wipeBtnSel)
-      .consoleLog(`[SeedWipe] Seed complete — Wipe button visible for ${packId}`);
+    return ft
+      .click('#seedDataTab-link')
+      .waitOnElementToBecomeVisible('#seedTemplateSelect');
+  }
 
-    // Click Wipe
+  /**
+   * Closes the Connection Details modal via the Close button.
+   *
+   * The DB-connection modal's close button is `#btnCloseDbConnectionModal`
+   * (note "Db" in the middle); `#btnCloseConnectionModal` belongs to the
+   * email-connection modal and does not exist in this context.
+   */
+  private static closeConnectionDetailsModal(ft: FluentTester): FluentTester {
+    return ft
+      .click('#btnCloseDbConnectionModal')
+      .waitOnElementToBecomeInvisible('#btnCloseDbConnectionModal')
+      .consoleLog('[SeedWipe] Modal closed');
+  }
+
+  /**
+   * Switches to the Example sub-tab, optionally picks a template from
+   * `#seedTemplateSelect` (when `templateId` is non-null) and confirms the dialog,
+   * then clicks Copy and pastes the clipboard into the My Script editor via
+   * Ctrl+A / Delete / Ctrl+V.
+   *
+   * `templateId === null` is used for the Example (default) flow — the dropdown
+   * stays on `__EXAMPLE_DEFAULT__` and the in-component generated script is used.
+   *
+   * `exampleMarker` is asserted in both the Example codejar (after load) and the
+   * My Script codejar (after paste), and on the OS clipboard (after Copy).
+   */
+  private static loadExampleAndPasteIntoMyScript(
+    ft: FluentTester,
+    templateId: string | null,
+    exampleMarker: string,
+  ): FluentTester {
     ft = ft
-      .click(wipeBtnSel)
+      .waitOnElementToBecomeVisible('#seedTabExample-link')
+      .click('#seedTabExample-link')
+      .waitOnElementToBecomeEnabled('#seedTemplateSelect');
+
+    if (templateId !== null) {
+      // Two timing concerns:
+      // 1. The component lazy-loads `seedTemplates` from the backend on first
+      //    Seed Data tab activation. Wait for the specific <option> to appear
+      //    so we don't try to select before the dropdown is populated.
+      // 2. After `selectOption`, the change event flows through Zone.js into
+      //    `(ngModelChange)` → async `onSeedTemplateSelected` → `await
+      //    confirmService.askConfirmation(...)` before the confirm dialog
+      //    renders. `confirmDialogShouldBeVisible()` is a synchronous count
+      //    check and loses that race; `waitOnConfirmDialogToBecomeVisible`
+      //    polls with a timeout.
+      ft = ft
+        .waitOnElementToBecomeVisible(
+          `#seedTemplateSelect option[value="${templateId}"]`,
+        )
+        .dropDownSelectOptionHavingValue('#seedTemplateSelect', templateId)
+        .waitOnConfirmDialogToBecomeVisible()
+        .clickYesDoThis()
+        .consoleLog(`[SeedWipe] Selected template '${templateId}'`);
+    } else {
+      ft = ft.consoleLog('[SeedWipe] Using Example (default) script — no template pick');
+    }
+
+    ft = ft
+      .waitOnElementToBecomeVisible('#seedExampleEditor')
+      .codeJarShouldContainText('#seedExampleEditor', exampleMarker);
+
+    // Copy to OS clipboard (uses navigator.clipboard.writeText in the page)
+    ft = ft
+      .waitOnElementToBecomeEnabled('#btnCopyExampleSeedScript')
+      .click('#btnCopyExampleSeedScript')
+      .clipboardShouldContainText(exampleMarker);
+
+    // Switch to My Script and paste the OS clipboard contents into the codejar.
+    // Note: Electron-Playwright's synthesized Ctrl+V does not couple the OS
+    // clipboard to the contenteditable's paste event in a way CodeJar's
+    // (update) model picks up — the editor stays empty. pasteClipboardIntoCodeJar
+    // reads the clipboard inside the page and dispatches a real `input` event,
+    // so Copy is still tested end-to-end via `clipboardShouldContainText` above.
+    return ft
+      .waitOnElementToBecomeVisible('#seedTabMyScript-link')
+      .click('#seedTabMyScript-link')
+      .waitOnElementToBecomeVisible('#seedCustomScriptEditor')
+      .pasteClipboardIntoCodeJar('#seedCustomScriptEditor')
+      .consoleLog('[SeedWipe] Pasted clipboard into My Script')
+      .codeJarShouldContainText('#seedCustomScriptEditor', exampleMarker);
+  }
+
+  /**
+   * Switches to the My Script sub-tab and injects a hardcoded Groovy `source`
+   * directly into `#seedCustomScriptEditor` via `setCodeJarContentSingleShot`.
+   *
+   * Used when there is no UI affordance to load the script (e.g. the wipe step
+   * of the Example-default flow). `marker` is asserted to appear in the editor
+   * after injection.
+   */
+  private static loadInlineIntoMyScript(
+    ft: FluentTester,
+    source: string,
+    marker: string,
+  ): FluentTester {
+    return ft
+      .waitOnElementToBecomeVisible('#seedTabMyScript-link')
+      .click('#seedTabMyScript-link')
+      .waitOnElementToBecomeVisible('#seedCustomScriptEditor')
+      .setCodeJarContentSingleShot('#seedCustomScriptEditor', source)
+      .consoleLog('[SeedWipe] Injected inline script into My Script')
+      .codeJarShouldContainText('#seedCustomScriptEditor', marker);
+  }
+
+  /**
+   * Clicks `#btnRunCustomSeed`, confirms the dialog, and waits for the run to
+   * finish via the button's disabled → enabled transition (driven by
+   * `isCustomSeedRunning` and `executionStatsService.jobStats.numberOfActiveJobs`).
+   *
+   * `label` is purely for log output to disambiguate seed/wipe phases.
+   */
+  private static runMyScriptAndWait(
+    ft: FluentTester,
+    label: string,
+    fullTimeout: number,
+  ): FluentTester {
+    return ft
+      .waitOnElementToBecomeEnabled('#btnRunCustomSeed')
+      .click('#btnRunCustomSeed')
       .confirmDialogShouldBeVisible()
       .clickYesDoThis()
-      .consoleLog(`[SeedWipe] Clicked Wipe for ${packId}`);
+      .consoleLog(`[SeedWipe] Running '${label}'...`)
+      .waitOnElementToBecomeEnabled('#btnRunCustomSeed', fullTimeout)
+      .consoleLog(`[SeedWipe] '${label}' completed`);
+  }
 
-    // Wait for Seed button to reappear (wipe completed)
-    ft = ft
-      .waitOnElementToBecomeVisible(seedBtnSel, fullTimeout)
-      .waitOnElementToBecomeEnabled(seedBtnSel)
-      .consoleLog(`[SeedWipe] Wipe complete — Seed button visible again for ${packId}`);
-
-    // Stop starter pack (already on the page, no navigation needed)
-    const stopBtnSel = `#btnStartStop_${packId}`;
-    ft = ft
-      .waitOnElementToBecomeEnabled(stopBtnSel)
-      .click(stopBtnSel)
-      .confirmDialogShouldBeVisible()
+  /**
+   * Switches to the Database Schema tab and clicks Refresh. Confirms the
+   * "This will refresh the Database Schema. Continue?" dialog and waits for
+   * the spinner on `#btnRefreshDatabaseSchema .fa-refresh` to start and stop —
+   * the same pattern other tests use (e.g. connections.spec.ts:992-1015).
+   *
+   * The refresh delegates to `connectionsService.testConnection` + a fresh
+   * `loadSchemaFromBackend` call, so any tables created since the last fetch
+   * (e.g. by a seed script) appear in the picklist tree afterwards.
+   */
+  private static refreshDatabaseSchemaTab(
+    ft: FluentTester,
+    fullTimeout: number,
+  ): FluentTester {
+    return ft
+      .waitOnElementToBecomeVisible('#databaseSchemaTab-link')
+      .click('#databaseSchemaTab-link')
+      .waitOnElementToBecomeVisible('#databaseSchemaPicklistContainer')
+      .waitOnElementToBecomeVisible('#btnRefreshDatabaseSchema')
+      .click('#btnRefreshDatabaseSchema')
+      .waitOnElementToContainText(
+        '#confirmDialog .modal-body',
+        'This will refresh the Database Schema. Continue?',
+      )
       .clickYesDoThis()
-      .consoleLog(`[SeedWipe] Requested stop for ${packId}`);
+      .waitOnElementToHaveClass('#btnRefreshDatabaseSchema .fa-refresh', 'fa-spin')
+      .waitOnElementNotToHaveClass(
+        '#btnRefreshDatabaseSchema .fa-refresh',
+        'fa-spin',
+        fullTimeout,
+      )
+      .consoleLog('[SeedWipe] Database Schema refreshed');
+  }
 
-    ft = ConnectionsTestHelper._waitForStarterPackToBeInState(ft, packId, 'stopping', fullTimeout);
-    ft = ConnectionsTestHelper._waitForStarterPackToBeInState(ft, packId, 'stopped', fullTimeout);
-
+  /**
+   * Refreshes the Database Schema tab and asserts each lowercase table name
+   * is present as a tree node in the source picklist
+   * (`#treeNode{name}sourceTreedatabaseSchemaPicklist`).
+   */
+  private static verifySchemaTablesPresent(
+    ft: FluentTester,
+    tableNamesLowercase: string[],
+    fullTimeout: number,
+  ): FluentTester {
+    ft = ConnectionsTestHelper.refreshDatabaseSchemaTab(ft, fullTimeout);
+    for (const t of tableNamesLowercase) {
+      ft = ft
+        .waitOnElementToBecomeVisible(
+          `#treeNode${t}sourceTreedatabaseSchemaPicklist`,
+        )
+        .consoleLog(`[SeedWipe] Schema contains table '${t}'`);
+    }
     return ft;
+  }
+
+  /**
+   * Refreshes the Database Schema tab and asserts each lowercase table name
+   * is **not** present as a tree node in the source picklist.
+   */
+  private static verifySchemaTablesAbsent(
+    ft: FluentTester,
+    tableNamesLowercase: string[],
+    fullTimeout: number,
+  ): FluentTester {
+    ft = ConnectionsTestHelper.refreshDatabaseSchemaTab(ft, fullTimeout);
+    for (const t of tableNamesLowercase) {
+      ft = ft
+        .elementShouldNotBeVisible(
+          `#treeNode${t}sourceTreedatabaseSchemaPicklist`,
+        )
+        .consoleLog(`[SeedWipe] Schema no longer contains table '${t}'`);
+    }
+    return ft;
+  }
+
+  /**
+   * Returns to the Seed Data tab and waits for the seed panel to be ready
+   * (Templates dropdown visible). Used between schema-verification steps and
+   * the next seed/wipe cycle.
+   */
+  private static returnToSeedDataTab(ft: FluentTester): FluentTester {
+    return ft
+      .click('#seedDataTab-link')
+      .waitOnElementToBecomeVisible('#seedTemplateSelect');
   }
 
   /**
@@ -1291,9 +1596,9 @@ export class ConnectionsTestHelper {
       .click('#btnGenerateWithAIDbSchema')
       .waitOnElementToBecomeVisible('#btnCopyPromptText')
       .click('#btnCopyPromptText')
-      .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+      .waitOnConfirmDialogToBecomeVisible()
       .click('.dburst-button-question-confirm')
-      .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+      .waitOnConfirmDialogToBecomeInvisible()
       .clipboardShouldContainText('Products')
       .clipboardShouldContainText('Categories')
       .clipboardShouldContainText('Employees')
@@ -1310,9 +1615,9 @@ export class ConnectionsTestHelper {
       .click('#btnGenerateWithAIDbSchema')
       .waitOnElementToBecomeVisible('#btnCopyPromptText')
       .click('#btnCopyPromptText')
-      .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+      .waitOnConfirmDialogToBecomeVisible()
       .click('.dburst-button-question-confirm')
-      .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+      .waitOnConfirmDialogToBecomeInvisible()
       .clipboardShouldContainText('"tableName": "Products"')
       .clipboardShouldContainText('"columnName": "Discontinued"')
       .clipboardShouldContainText('"tableName": "Categories"')
@@ -1358,9 +1663,9 @@ export class ConnectionsTestHelper {
       .click('#btnGenerateWithAIDbSchema')
       .waitOnElementToBecomeVisible('#btnCopyPromptText')
       .click('#btnCopyPromptText')
-      .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+      .waitOnConfirmDialogToBecomeVisible()
       .click('.dburst-button-question-confirm')
-      .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+      .waitOnConfirmDialogToBecomeInvisible()
       // Products = full details
       .clipboardShouldContainText('"tableName": "Products"')
       .clipboardShouldContainText('"columnName": "Discontinued"')
@@ -1422,9 +1727,9 @@ export class ConnectionsTestHelper {
       .click('#btnGenerateWithAIDbSchema')
       .waitOnElementToBecomeVisible('#btnCopyPromptText')
       .click('#btnCopyPromptText')
-      .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+      .waitOnConfirmDialogToBecomeVisible()
       .click('.dburst-button-question-confirm')
-      .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+      .waitOnConfirmDialogToBecomeInvisible()
       .clipboardShouldContainText('Tables Included by Name Only')
       .clipboardShouldNotContainText('"columnName"')
       .click('#btnCloseAiCopilotModal')
@@ -1437,9 +1742,9 @@ export class ConnectionsTestHelper {
       .click('#btnGenerateWithAIDbSchema')
       .waitOnElementToBecomeVisible('#btnCopyPromptText')
       .click('#btnCopyPromptText')
-      .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+      .waitOnConfirmDialogToBecomeVisible()
       .click('.dburst-button-question-confirm')
-      .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+      .waitOnConfirmDialogToBecomeInvisible()
       .clipboardShouldContainText('"columnName"')
       .clipboardShouldNotContainText('Tables Included by Name Only')
       .click('#btnCloseAiCopilotModal')

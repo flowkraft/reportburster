@@ -195,12 +195,12 @@
             />
           </div>
 
-          <!-- Action Buttons Row: Start/Stop + Custom Seed -->
+          <!-- Action Buttons Row: Start/Stop -->
           <div style="display: flex; align-items: center; gap: 8px">
             <button
               type="button"
               class="btn btn-sm"
-              [disabled]="pack.status === 'starting' || pack.status === 'stopping' || pack.isCustomSeedRunning"
+              [disabled]="pack.status === 'starting' || pack.status === 'stopping'"
               [ngClass]="{
                       'btn-default': pack.status === 'stopped' || pack.status === 'unknown' || pack.status === 'error',
                       'btn-primary': pack.status === 'running' || pack.status === 'starting' || pack.status === 'stopping'
@@ -210,7 +210,7 @@
               [title]="pack.status === 'running' ? 'Stop using the command above' : 'Start using the command above'"
             >
               <i
-                *ngIf="pack.status !== 'starting' && pack.status !== 'stopping' && !pack.isCustomSeedRunning"
+                *ngIf="pack.status !== 'starting' && pack.status !== 'stopping'"
                 class="fa"
                 [id]="'starterPackIcon_' + pack.id"
                 [ngClass]="{
@@ -219,102 +219,12 @@
                 }"
               ></i>
               <i
-                *ngIf="pack.status === 'starting' || pack.status === 'stopping' || pack.isCustomSeedRunning"
+                *ngIf="pack.status === 'starting' || pack.status === 'stopping'"
                 [id]="'starterPackSpinner_' + pack.id"
                 class="fa fa-spinner fa-spin"
               ></i>
-              {{ pack.isCustomSeedRunning ? 'Custom Seeding' : (pack.status === 'running' ? 'Stop' : pack.status === 'starting' ? 'Starting' : pack.status === 'stopping' ? 'Stopping' : 'Start') }}
+              {{ pack.status === 'running' ? 'Stop' : pack.status === 'starting' ? 'Starting' : pack.status === 'stopping' ? 'Stopping' : 'Start' }}
             </button>
-            <!-- Custom Seed Button (right of Start/Stop) -->
-            <button
-              *ngIf="pack.runCustomSeedCmd && pack.status === 'running'"
-              type="button"
-              class="btn btn-sm btn-default"
-              [disabled]="pack.isCustomSeedRunning"
-              (click)="onCustomSeedButtonClicked(pack)"
-              [id]="'btnCustomSeed_' + pack.id"
-            >
-              <i class="fa fa-code"></i> Seed My Own Custom Schema &amp; Data
-            </button>
-          </div>
-
-          <!-- Custom seed output (visible on card even when modal is closed) -->
-          <div *ngIf="pack.customSeedOutput" style="margin-top: 6px">
-            <pre style="max-height: 60px; overflow-y: auto; font-size: 0.8em; background-color: #f0f0f0; border: 1px solid #ddd; padding: 4px 8px; margin-bottom: 0"><code style="white-space: pre-wrap">{{ pack.customSeedOutput }}</code></pre>
-          </div>
-
-          <!-- Seed / Wipe Invoice Data Section -->
-          <div
-            *ngIf="pack.seedInvoicesCmd && pack.status === 'running'"
-            style="margin-top: 25px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px; background-color: #fafafa"
-          >
-            <div style="display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px">
-              <!-- Not seeded state: show seed controls -->
-              <div *ngIf="!pack.isInvoiceDataSeeded" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto">
-                <span style="font-size: 0.9em; color: #555; white-space: nowrap">
-                  <i class="fa fa-database"></i> Seed large amounts of data (for load testing)
-                </span>
-                <div class="input-group input-group-sm" style="width: 140px">
-                  <span class="input-group-addon">N</span>
-                  <input
-                    type="number"
-                    class="form-control"
-                    [id]="'seedInvoiceCount_' + pack.id"
-                    [(ngModel)]="pack.seedInvoiceCount"
-                    [disabled]="pack.isSeedingOrWiping || pack.isCustomSeedRunning"
-                    min="100"
-                    step="1000"
-                    title="Number of invoices to seed (e.g., 1000, 10000, 100000)"
-                    style="font-family: monospace"
-                  />
-                </div>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-default"
-                  [disabled]="pack.isSeedingOrWiping || pack.isCustomSeedRunning"
-                  (click)="seedInvoiceData(pack)"
-                  [id]="'btnSeedInvoices_' + pack.id"
-                  title="Seed N invoices into seed_inv_* tables"
-                >
-                  <i *ngIf="!pack.isSeedingOrWiping" class="fa fa-plus-circle"></i>
-                  <i *ngIf="pack.isSeedingOrWiping" class="fa fa-spinner fa-spin"></i>
-                  Seed {{ pack.seedInvoiceCount?.toLocaleString() }} Invoices
-                </button>
-              </div>
-
-              <!-- Link: why seed large data -->
-              <div *ngIf="!pack.isInvoiceDataSeeded" style="width: 100%; text-align: left; margin-top: 4px">
-                <a href="https://datapallas.com/docs/report-generation/large-scale"
-                   target="_blank" rel="noopener noreferrer"
-                   style="font-size: 0.85em; text-decoration: underline; color: #31708f">
-                  Why Would I Want To Do That? (read here)
-                </a>
-              </div>
-
-              <!-- Seeded state: show wipe button -->
-              <div *ngIf="pack.isInvoiceDataSeeded" style="display: flex; align-items: center; gap: 8px; margin-left: auto">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-warning"
-                  [disabled]="pack.isSeedingOrWiping || pack.isCustomSeedRunning"
-                  (click)="wipeInvoiceData(pack)"
-                  [id]="'btnWipeInvoices_' + pack.id"
-                  title="Wipe all seeded invoice data from seed_inv_* tables (Northwind data is NOT affected)"
-                >
-                  <i *ngIf="!pack.isSeedingOrWiping" class="fa fa-trash"></i>
-                  <i *ngIf="pack.isSeedingOrWiping" class="fa fa-spinner fa-spin"></i>
-                  Wipe out the Seeded Invoice Data
-                </button>
-              </div>
-            </div>
-
-            <!-- Seed/Wipe output -->
-            <div
-              *ngIf="pack.seedWipeOutput"
-              style="margin-top: 8px"
-            >
-              <pre style="max-height: 60px; overflow-y: auto; font-size: 0.8em; background-color: #f0f0f0; border: 1px solid #ddd; padding: 4px 8px; margin-bottom: 0"><code style="white-space: pre-wrap">{{ pack.seedWipeOutput }}</code></pre>
-            </div>
           </div>
 
           <br/>
@@ -335,6 +245,17 @@
             <a href="https://redis.io/" target="_blank" rel="noopener noreferrer"
                style="text-decoration: none; color: #31708f; font-weight: 500;">
               <i class="fa fa-external-link" style="margin-right: 6px;"></i>https://redis.io/
+            </a>
+            <small class="text-muted" style="display: block; margin-top: 6px;">
+              {{ pack.description }}
+            </small>
+          </div>
+
+          <!-- TimescaleDB website link + extended description (only for TimescaleDB packs) -->
+          <div *ngIf="pack.target === 'timescaledb'" style="margin-bottom: 8px">
+            <a href="https://www.timescale.com/" target="_blank" rel="noopener noreferrer"
+               style="text-decoration: none; color: #31708f; font-weight: 500;">
+              <i class="fa fa-external-link" style="margin-right: 6px;"></i>https://www.timescale.com/
             </a>
             <small class="text-muted" style="display: block; margin-top: 6px;">
               {{ pack.description }}
@@ -372,96 +293,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Custom Seed Script Modal -->
-  <ng-template #customSeedModal>
-    <div class="modal-header">
-      <button type="button" class="close" (click)="closeCustomSeedModal()" [disabled]="activeCustomSeedPack?.isCustomSeedRunning">&times;</button>
-      <h4 class="modal-title">
-        <i class="fa fa-code"></i> Custom Seed Script &mdash; {{ activeCustomSeedPack?.displayName }}
-      </h4>
-    </div>
-    <div class="modal-body" *ngIf="activeCustomSeedPack">
-      <tabset>
-        <tab heading="My Script" [id]="'tabMyScript'" (selectTab)="isExampleTabActive = false">
-          <ngx-codejar
-            [id]="'customSeedEditor'"
-            [(code)]="activeCustomSeedPack.customSeedScript"
-            (update)="onCustomSeedScriptChanged(activeCustomSeedPack, $event)"
-            [highlightMethod]="highlightGroovyCode"
-            [highlighter]="'prism'"
-            [showLineNumbers]="true"
-            style="height: 400px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; margin-top: 10px;"
-          ></ngx-codejar>
-        </tab>
-        <tab heading="Example" [id]="'tabExampleScript'" (selectTab)="isExampleTabActive = true">
-          <ngx-codejar
-            [id]="'customSeedExampleEditor'"
-            [code]="exampleCustomSeedScript"
-            [highlightMethod]="highlightGroovyCode"
-            [highlighter]="'prism'"
-            [showLineNumbers]="true"
-            [readonly]="true"
-            style="height: 400px; border: 1px solid #ccc; border-radius: 4px; overflow-y: auto; display: block; font-family: 'Courier New', monospace; background-color: #f8f8f8; margin-top: 10px;"
-          ></ngx-codejar>
-        </tab>
-      </tabset>
-
-      <!-- My Script tab: action buttons -->
-      <div *ngIf="!isExampleTabActive" style="margin-top: 15px; display: flex; gap: 10px; align-items: center">
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="activeCustomSeedPack.isCustomSeedRunning || activeCustomSeedPack.status !== 'running' || !activeCustomSeedPack.customSeedScript?.trim()"
-          (click)="runCustomSeedScript(activeCustomSeedPack)"
-          [id]="'btnRunCustomSeed_' + activeCustomSeedPack.id"
-        >
-          <i
-            [id]="'btnRunCustomSeedIcon_' + activeCustomSeedPack.id"
-            class="fa"
-            [ngClass]="{
-              'fa-refresh fa-spin': activeCustomSeedPack.isCustomSeedRunning,
-              'fa-play': !activeCustomSeedPack.isCustomSeedRunning
-            }"
-          ></i>&nbsp;&nbsp;{{ activeCustomSeedPack.isCustomSeedRunning ? 'Custom Seeding ...' : 'Run Script' }}
-        </button>
-        <button
-          type="button"
-          class="btn btn-default"
-          [disabled]="activeCustomSeedPack.isCustomSeedRunning"
-          (click)="askAiForCustomSeedHelp(activeCustomSeedPack)"
-          [id]="'btnAiCustomSeed_' + activeCustomSeedPack.id"
-        >
-          <i class="fa fa-magic"></i> Hey AI, Help Me With This Custom Database Seeding Script
-        </button>
-      </div>
-
-      <!-- Example tab: copy button -->
-      <button
-        *ngIf="isExampleTabActive"
-        id="btnCopyExampleSeedScript"
-        type="button"
-        class="btn btn-default btn-block"
-        style="margin-top: 10px;"
-        (click)="copyExampleSeedScriptToClipboard()"
-      >
-        <i class="fa fa-copy"></i> Copy Example Seed Script To Clipboard
-      </button>
-
-      <!-- Output -->
-      <div *ngIf="activeCustomSeedPack.customSeedOutput" style="margin-top: 10px">
-        <pre style="max-height: 120px; overflow-y: auto; font-size: 0.85em; background-color: #f0f0f0; border: 1px solid #ddd; padding: 5px 8px; margin-bottom: 0"><code style="white-space: pre-wrap">{{ activeCustomSeedPack.customSeedOutput }}</code></pre>
-      </div>
-    </div>
-    <div class="modal-footer" style="text-align: right">
-      <a href="https://www.datafaker.net/documentation/getting-started/#usage"
-         target="_blank" rel="noopener noreferrer"
-         style="text-decoration: underline; color: #31708f; font-size: 0.9em; float: left; margin-top: 7px">
-        <i class="fa fa-external-link"></i> DataFaker Documentation
-      </a>
-      <button type="button" class="btn btn-default pull-right" (click)="closeCustomSeedModal()" [disabled]="activeCustomSeedPack?.isCustomSeedRunning">Close</button>
-    </div>
-  </ng-template>
 
   <dburst-ai-manager #aiManagerInstance hidden></dburst-ai-manager>
 </div>

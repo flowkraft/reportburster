@@ -694,4 +694,83 @@ public class CliJob {
 		}
 	}
 
+	/**
+	 * Execute a Groovy seed script against the database connection at connectionFilePath.
+	 * Called by MainProgram.SystemCommand.RunSeedScriptCommand — same job-file lifecycle
+	 * as every other CliJob operation.
+	 *
+	 * @param connectionFilePath absolute path to the connection XML file
+	 * @param scriptFilePath     absolute path to the .groovy script file
+	 * @param params             key=value parameters passed as Groovy binding "params"
+	 */
+	public void doRunSeedScript(String connectionFilePath, String scriptFilePath,
+			Map<String, String> params) throws Exception {
+
+		File jobFile = null;
+		try {
+			jobFile = _createJobFile(connectionFilePath, "run-seed-script");
+
+			// Load settings from the connection file — same pattern as DatabaseConnectionTester
+			com.sourcekraft.documentburster.common.settings.Settings connSettings =
+					new com.sourcekraft.documentburster.common.settings.Settings(StringUtils.EMPTY);
+			com.sourcekraft.documentburster.common.settings.model.DocumentBursterConnectionDatabaseSettings dbSettings =
+					connSettings.loadSettingsConnectionDatabaseByPath(connectionFilePath);
+			dbSettings.connection.databaseserver.ensureDriverAndUrl();
+			Class.forName(dbSettings.connection.databaseserver.driver);
+
+			String decryptedPassword = dbSettings.connection.databaseserver.userpassword;
+			try {
+				decryptedPassword = com.sourcekraft.documentburster.common.security.SecretsCipher
+						.getInstance(com.sourcekraft.documentburster.common.settings.Settings.PORTABLE_EXECUTABLE_DIR_PATH)
+						.decrypt(dbSettings.connection.databaseserver.userpassword);
+			} catch (Exception e) {
+				log.warn("Failed to decrypt database password: {}", e.getMessage());
+			}
+
+			String vendor = normalizeDbVendorType(dbSettings.connection.databaseserver.type);
+			String script  = Files.readString(Path.of(scriptFilePath));
+
+			try (java.sql.Connection conn = java.sql.DriverManager.getConnection(
+					dbSettings.connection.databaseserver.url,
+					dbSettings.connection.databaseserver.userid,
+					decryptedPassword)) {
+
+				groovy.sql.Sql dbSql = new groovy.sql.Sql(conn);
+				groovy.lang.Binding binding = new groovy.lang.Binding();
+				binding.setVariable("dbSql",   dbSql);
+				binding.setVariable("vendor",  vendor);
+				binding.setVariable("log",     log);
+				binding.setVariable("params",  params != null ? params : new LinkedHashMap<>());
+
+				new groovy.lang.GroovyShell(
+						Thread.currentThread().getContextClassLoader(),
+						binding,
+						new org.codehaus.groovy.control.CompilerConfiguration())
+						.evaluate(script);
+			}
+
+			log.info("Seed script completed for: {}", connectionFilePath);
+		} finally {
+			_deleteJobFileWithRetry(jobFile);
+		}
+	}
+
+	private String normalizeDbVendorType(String type) {
+		if (type == null) return "UNKNOWN";
+		switch (type.toLowerCase()) {
+			case "postgres": case "postgresql": return "POSTGRES";
+			case "mysql":                        return "MYSQL";
+			case "mariadb":                      return "MARIADB";
+			case "sqlserver":                    return "SQLSERVER";
+			case "oracle":                       return "ORACLE";
+			case "ibmdb2": case "db2":           return "DB2";
+			case "clickhouse":                   return "CLICKHOUSE";
+			case "sqlite":                       return "SQLITE";
+			case "duckdb":                       return "DUCKDB";
+			case "supabase":                     return "SUPABASE";
+			case "timescaledb":                  return "TIMESCALEDB";
+			default: return type.toUpperCase();
+		}
+	}
+
 }

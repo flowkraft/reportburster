@@ -490,8 +490,8 @@
   </p-footer>
 </p-dialog>
 <p-dialog id="modalDbConnection" [header]="modalConnectionInfo.modalTitle" [(visible)]="isModalDbConnectionVisible"
-  [modal]="true" width="800" [style]="{ top: context === 'cubeDsl' ? '0.5vw' : '3vw', left: '4vw' }" [autoZIndex]="false" [styleClass]="context === 'cubeDsl' ? 'cube-dsl-stacked-dialog' : ''" [maskStyleClass]="context === 'cubeDsl' ? 'cube-dsl-stacked-mask' : ''">
-  <div style="margin: 5px">
+  [modal]="true" width="800" [style]="{ top: context === 'cubeDsl' ? '0.5vw' : '3vw', left: '4vw', 'max-width': '92vw' }" [autoZIndex]="false" [styleClass]="context === 'cubeDsl' ? 'cube-dsl-stacked-dialog' : ''" [maskStyleClass]="context === 'cubeDsl' ? 'cube-dsl-stacked-mask' : ''">
+  <div style="margin: 5px; overflow-x: hidden;">
     <!-- Tabs Container -->
     <tabset>
       <!-- Tab 1: Connection Details -->
@@ -502,6 +502,7 @@
           isErDiagramTabActive = false;
           isUbiquitousLanguageTabActive = false;
           isToolsTabActive = false;
+          isSeedDataTabActive = false;
         " (deselectTab)="isConnectionDetailsTabActive = false">
         <ng-template tabHeading>
           <i class="fa fa-plug"></i> &nbsp;Connection Details
@@ -546,6 +547,7 @@
               <option value="duckdb">DuckDB (Analytics/OLAP)</option>
               <option value="clickhouse">ClickHouse (Analytics/OLAP)</option>
               <option value="supabase">Supabase (PostgreSQL BaaS)</option>
+              <option value="timescaledb">TimescaleDB</option>
             </select>
           </div>
           <div class="col-xs-3"></div>
@@ -568,7 +570,7 @@
             <input id="dbHost" [(ngModel)]="
                 modalConnectionInfo.database.documentburster.connection
                   .databaseserver.host
-              " class="form-control" [readonly]="mode === 'viewMode'" />
+              " (ngModelChange)="resetSchemaStateOnConnectionChange()" class="form-control" [readonly]="mode === 'viewMode'" />
           </div>
           <div class="col-xs-3">
             <dburst-button-variables id="btnDbHostVariables" *ngIf="mode !== 'viewMode'" (sendSelectedVariable)="
@@ -595,7 +597,7 @@
             <input id="dbPort" [(ngModel)]="
                 modalConnectionInfo.database.documentburster.connection
                   .databaseserver.port
-              " class="form-control" [readonly]="mode === 'viewMode'" />
+              " (ngModelChange)="resetSchemaStateOnConnectionChange()" class="form-control" [readonly]="mode === 'viewMode'" />
           </div>
           <div class="col-xs-3">
             <dburst-button-variables id="btnDbPortVariables" (sendSelectedVariable)="
@@ -655,7 +657,7 @@
             <input id="dbName" [(ngModel)]="
                 modalConnectionInfo.database.documentburster.connection
                   .databaseserver.database
-              " class="form-control" [readonly]="mode === 'viewMode'" />
+              " (ngModelChange)="resetSchemaStateOnConnectionChange()" class="form-control" [readonly]="mode === 'viewMode'" />
           </div>
           <div class="col-xs-3">
             <dburst-button-variables id="btnDbNameVariables" *ngIf="mode !== 'viewMode'" (sendSelectedVariable)="
@@ -683,7 +685,7 @@
             <input id="dbUsername" [(ngModel)]="
                 modalConnectionInfo.database.documentburster.connection
                   .databaseserver.userid
-              " class="form-control" [readonly]="mode === 'viewMode'" />
+              " (ngModelChange)="resetSchemaStateOnConnectionChange()" class="form-control" [readonly]="mode === 'viewMode'" />
           </div>
           <div class="col-xs-3">
             <dburst-button-variables id="btnDbUsernameVariables" *ngIf="mode !== 'viewMode'" (sendSelectedVariable)="
@@ -711,7 +713,7 @@
               <input id="dbPassword" [(ngModel)]="
                   modalConnectionInfo.database.documentburster.connection
                     .databaseserver.userpassword
-                " [type]="showDbPassword ? 'text' : 'password'" class="form-control" [readonly]="mode === 'viewMode'" />
+                " (ngModelChange)="resetSchemaStateOnConnectionChange()" [type]="showDbPassword ? 'text' : 'password'" class="form-control" [readonly]="mode === 'viewMode'" />
               <span id="btnToggleDbPassword" class="input-group-addon" style="cursor:pointer" (click)="toggleRevealDbPassword()">
                 <i [class]="showDbPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
               </span>
@@ -834,6 +836,7 @@
           isErDiagramTabActive = false;
           isUbiquitousLanguageTabActive = false;
           isToolsTabActive = false;
+          isSeedDataTabActive = false;
         " (deselectTab)="isDatabaseSchemaTabActive = false">
         <ng-template tabHeading>
           <i class="fa fa-table"></i> &nbsp;Database Schema
@@ -956,6 +959,7 @@
           isErDiagramTabActive = false;
           isUbiquitousLanguageTabActive = false;
           isToolsTabActive = false;
+          isSeedDataTabActive = false;
         " (deselectTab)="isDomainGroupedSchemaTabActive = false"
         *ngIf="(context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && context !== 'cubeDsl') || domainGroupedSchemaExists">
         <ng-template tabHeading>
@@ -1159,6 +1163,7 @@
           isDomainGroupedSchemaTabActive = false;
           isUbiquitousLanguageTabActive = false;
           isToolsTabActive = false;
+          isSeedDataTabActive = false;
         " (deselectTab)="isErDiagramTabActive = false" *ngIf="(context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && context !== 'cubeDsl') || erDiagramExists">
         <ng-template tabHeading>
           <i class="fa fa-sitemap"></i> &nbsp;ER Diagram
@@ -1388,6 +1393,7 @@
           isDomainGroupedSchemaTabActive = false;
           isErDiagramTabActive = false;
           isToolsTabActive = false;
+          isSeedDataTabActive = false;
         " (deselectTab)="isUbiquitousLanguageTabActive = false"
         *ngIf="(context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && context !== 'cubeDsl') || isStringAndNotEmpty(ubiquitousLanguageMarkdown)">
         <ng-template tabHeading>
@@ -1544,10 +1550,11 @@
         isDatabaseSchemaTabActive = false;
         isDomainGroupedSchemaTabActive = false;
         isErDiagramTabActive = false;
-        isUbiquitousLanguageTabActive = false
+        isUbiquitousLanguageTabActive = false;
+        isSeedDataTabActive = false
       " (deselectTab)="isToolsTabActive = false" *ngIf="(context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && context !== 'cubeDsl') || (showSchemaTreeSelect && domainGroupedSchemaExists && erDiagramExists && isStringAndNotEmpty(ubiquitousLanguageMarkdown))">
         <ng-template tabHeading>
-          <i class="fa fa-robot"></i> &nbsp;Explore Data
+          <i class="fa fa-compass"></i> &nbsp;Explore Data
         </ng-template>
 
         <div style="padding: 15px; min-height: 420px; overflow: visible;">
@@ -1566,52 +1573,181 @@
         </div>
       </tab>
 
+      <!-- Tab 7: Seed Data -->
+      <tab id="seedDataTab" [tabOrder]="7" [active]="isSeedDataTabActive" (selectTab)="
+        isSeedDataTabActive = true;
+        isConnectionDetailsTabActive = false;
+        isDatabaseSchemaTabActive = false;
+        isDomainGroupedSchemaTabActive = false;
+        isErDiagramTabActive = false;
+        isUbiquitousLanguageTabActive = false;
+        isToolsTabActive = false;
+        onSeedDataTabSelected()
+      " (deselectTab)="isSeedDataTabActive = false"
+      *ngIf="context !== 'sqlQuery' && context !== 'scriptQuery' && context !== 'dashboardScript' && context !== 'cubeDsl'">
+        <ng-template tabHeading>
+          <i class="fa fa-database"></i> &nbsp;Seed Data
+        </ng-template>
+
+        <!-- Not yet tested placeholder -->
+        <div class="row" style="padding: 15px" *ngIf="!showSchemaTreeSelect">
+          <div class="col-xs-12">
+            <div class="text-center" style="
+                min-height: 420px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+              ">
+              <p>
+                <span id="schemaNotLoadedSeedData"><strong>To seed data, please ensure your connection details
+                  are configured and then test the connection.</strong></span>
+              </p>
+              <button id="btnTestDbConnectionSeedData" type="button" class="btn btn-primary btn-block"
+                (click)="isConnectionDetailsTabActive = true; isSeedDataTabActive = false;">
+                <i id="btnTestDbConnectionSeedDataIcon" class="fa" [ngClass]="{
+                    'fa-refresh fa-spin': isTestingConnection,
+                    'fa-database': !isTestingConnection,
+                  }"></i>&nbsp;&nbsp;{{
+                "AREAS.CONFIGURATION.TAB-EMAIL-CONNECTION-SETTINGS.TEST-DB-CONNECTION"
+                | translate
+                }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seed Data content (connection tested) -->
+        <div class="row" style="padding: 15px" *ngIf="showSchemaTreeSelect">
+          <div class="col-xs-12">
+
+            <!-- Custom Seed Script panel -->
+            <div style="overflow: hidden; min-width: 0;">
+              <tabset style="margin-bottom: 8px; min-width: 0;">
+                <tab heading="My Script" [id]="'seedTabMyScript'" (selectTab)="isSeedDataExampleActive = false">
+                  <ngx-codejar
+                    [id]="'seedCustomScriptEditor'"
+                    [(code)]="customSeedScript"
+                    (update)="customSeedScript = $event"
+                    [highlightMethod]="highlightGroovyCode"
+                    [highlighter]="'prism'"
+                    [showLineNumbers]="true"
+                    [readonly]="mode === 'viewMode'"
+                    style="height: 360px; width: 100%; max-width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; overflow: auto; display: block; font-family: 'Courier New', monospace; margin-top: 10px;"
+                  ></ngx-codejar>
+                  <div class="row" style="margin-top: 10px;">
+                    <div class="col-xs-4">
+                      <button id="btnAskAiSeed" type="button" class="btn btn-default btn-block"
+                        (click)="askAiForSeedHelp()">
+                        <i class="fa fa-magic"></i>&nbsp;Hey AI, Help Me...
+                      </button>
+                    </div>
+                    <div class="col-xs-8">
+                      <button id="btnRunCustomSeed" type="button" class="btn btn-primary btn-block"
+                        (click)="doRunCustomSeed()"
+                        [disabled]="!customSeedScript?.trim() || mode === 'viewMode' || isCustomSeedRunning || executionStatsService.jobStats.numberOfActiveJobs > 0">
+                        <i class="fa" [ngClass]="{'fa-spinner fa-spin': isCustomSeedRunning || executionStatsService.jobStats.numberOfActiveJobs > 0, 'fa-play': !isCustomSeedRunning && executionStatsService.jobStats.numberOfActiveJobs === 0}"></i>
+                        &nbsp;Run Script
+                      </button>
+                    </div>
+                  </div>
+                </tab>
+                <tab heading="Example" [id]="'seedTabExample'" (selectTab)="isSeedDataExampleActive = true">
+                  <ngx-codejar
+                    [id]="'seedExampleEditor'"
+                    [code]="exampleEditorScript"
+                    [highlightMethod]="highlightGroovyCode"
+                    [highlighter]="'prism'"
+                    [showLineNumbers]="true"
+                    [readonly]="true"
+                    style="height: 360px; width: 100%; max-width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; overflow: auto; display: block; font-family: 'Courier New', monospace; background-color: #f8f8f8; margin-top: 10px;"
+                  ></ngx-codejar>
+                  <div class="row" style="margin-top: 10px;">
+                    <div class="col-xs-4">
+                      <button id="btnCopyExampleSeedScript" type="button" class="btn btn-default btn-block"
+                        (click)="copyExampleSeedScriptToClipboard()">
+                        <i class="fa fa-clipboard"></i>&nbsp;Copy Example Script To Clipboard
+                      </button>
+                    </div>
+                    <div class="col-xs-4" style="text-align: right;">
+                      <h5 style="margin: 0; font-size: 14px; font-weight: 600; line-height: 30px;">
+                        <i class="fa fa-code"></i>&nbsp; Custom Seed Script
+                      </h5>
+                    </div>
+                    <div class="col-xs-4">
+                      <select id="seedTemplateSelect" class="form-control input-sm" style="font-size: 12px;"
+                        [(ngModel)]="selectedSeedTemplateId"
+                        (ngModelChange)="onSeedTemplateSelected($event)"
+                        name="seedTemplateSelect"
+                        [disabled]="mode === 'viewMode'">
+                        <option value="__EXAMPLE_DEFAULT__">Example (default)</option>
+                        <option *ngFor="let t of seedTemplates" [value]="t.id">
+                          {{t.displayName}}{{t.description ? ' — ' + t.description : ''}}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style="margin-top: 12px; text-align: left;">
+                    <a href="https://www.datafaker.net/documentation/getting-started/#usage"
+                       target="_blank" rel="noopener noreferrer"
+                       style="text-decoration: underline; color: #31708f; font-size: 14px; font-weight: 500;">
+                      <i class="fa fa-external-link"></i>&nbsp;DataFaker Documentation
+                    </a>
+                  </div>
+                </tab>
+              </tabset>
+            </div>
+
+          </div>
+        </div>
+
+      </tab>
+
     </tabset>
   </div>
 
-  <p-footer style="
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-    ">
-    <div style="display: flex; align-items: center; gap: 10px">
-      <dburst-ai-manager #aiManagerInstance dropdownDirection="up" [showChat2db]="true" [initialActiveTabKey]="'PROMPTS'"
-        [initialSelectedCategory]="'Database Schema'">
-      </dburst-ai-manager>
-
-      <dburst-apps-manager [dropdownDirection]="'up'" [inputAppsToShow]="['cloudbeaver', 'vscode']">
-      </dburst-apps-manager>
-
-      <span>
-        <!-- Warning Span -->
-        <span id="dbAlreadyExistsWarning" style="font-size: 9px" class="label label-warning" *ngIf="
-            modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file'
-          ">{{
-          "AREAS.CONFIGURATION-TEMPLATES.MODAL-CONF-TEMPLATE.FILE-ALREADY-EXISTS"
-          | translate
-          }}</span>
-      </span>
+  <p-footer style="display: flex; flex-direction: column; width: 100%; gap: 6px;">
+    <!-- Sample read-only notice on its own row, left-aligned -->
+    <div *ngIf="isEditingSample" class="text-muted" style="font-size: 12px; text-align: left; width: 100%;">
+      <i class="fa fa-info-circle"></i> Sample connections are read-only. Use Duplicate to create an editable copy.
     </div>
 
-    <!-- Right Aligned Group -->
-    <div>
-      <span *ngIf="isEditingSample" class="text-muted" style="margin-right: 12px; font-size: 12px;">
-        <i class="fa fa-info-circle"></i> Sample connections are read-only. Use Duplicate to create an editable copy.
-      </span>
-      <button id="btnOKConfirmationDbConnectionModal" *ngIf="mode !== 'viewMode'" class="btn btn-primary" type="button"
-        (click)="onModalOK()" [disabled]="
-          (!modalConnectionInfo.database.documentburster.connection.name ||
-          modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file' ||
-          (isTestingConnection == true || isSchemaLoading == true) || isEditingSample)
-        ">
-        {{ "BUTTONS.SAVE" | translate }}
-      </button>
+    <!-- Button row -->
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <dburst-ai-manager #aiManagerInstance dropdownDirection="up" [showChat2db]="true" [initialActiveTabKey]="'PROMPTS'"
+          [initialSelectedCategory]="'Database Schema'">
+        </dburst-ai-manager>
 
-      <button id="btnCloseDbConnectionModal" class="btn btn-flat btn-default" type="button" (click)="onModalClose()"
-        style="margin-left: 5px">
-        {{ "BUTTONS.CLOSE" | translate }}
-      </button>
+        <dburst-apps-manager [dropdownDirection]="'up'" [inputAppsToShow]="['cloudbeaver', 'vscode']">
+        </dburst-apps-manager>
+
+        <span>
+          <!-- Warning Span -->
+          <span id="dbAlreadyExistsWarning" style="font-size: 9px" class="label label-warning" *ngIf="
+              modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file'
+            ">{{
+            "AREAS.CONFIGURATION-TEMPLATES.MODAL-CONF-TEMPLATE.FILE-ALREADY-EXISTS"
+            | translate
+            }}</span>
+        </span>
+      </div>
+
+      <div>
+        <button id="btnOKConfirmationDbConnectionModal" *ngIf="mode !== 'viewMode'" class="btn btn-primary" type="button"
+          (click)="onModalOK()" [disabled]="
+            (!modalConnectionInfo.database.documentburster.connection.name ||
+            modalConnectionInfo.connectionSameFilePathAlreadyExists == 'file' ||
+            (isTestingConnection == true || isSchemaLoading == true) || isEditingSample)
+          ">
+          {{ "BUTTONS.SAVE" | translate }}
+        </button>
+
+        <button id="btnCloseDbConnectionModal" class="btn btn-flat btn-default" type="button" (click)="onModalClose()"
+          style="margin-left: 5px">
+          {{ "BUTTONS.CLOSE" | translate }}
+        </button>
+      </div>
     </div>
   </p-footer>
   <!-- SQLite / DuckDB File Browser Dialog -->

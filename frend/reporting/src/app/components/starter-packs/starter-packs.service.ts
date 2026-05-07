@@ -15,10 +15,6 @@ export interface StarterPackDefinition {
   icon?: string; // Optional icon key (e.g., 'postgresql', 'mysql') matching iconMap in component
   startCmd: string; // The command string expected by StarterPackCLI.java (including port if applicable)
   stopCmd: string; // The command string expected by StarterPackCLI.java
-  seedInvoicesCmd?: string; // Optional: seed large volume invoice test data
-  wipeInvoicesCmd?: string; // Optional: wipe seeded invoice test data
-  checkSeedInvoicesCmd?: string; // Optional: fast check if seed data exists
-  runCustomSeedCmd?: string; // Optional: run user's custom seed script
   tags?: string[]; // Keywords for filtering/categorization
 }
 
@@ -43,10 +39,6 @@ export class StarterPacksService {
       icon: 'oracle', // Use simple key matching iconMap
       startCmd: 'service database start northwind oracle 1521', // Start command with port
       stopCmd: 'service database stop northwind oracle', // Stop command
-      seedInvoicesCmd: 'service database seed-invoices northwind oracle',
-      wipeInvoicesCmd: 'service database wipe-invoices northwind oracle',
-      checkSeedInvoicesCmd: 'service database check-seed-invoices northwind oracle',
-      runCustomSeedCmd: 'service database run-custom-seed northwind oracle',
       tags: ['database', 'northwind', 'oracle'],
     },
     {
@@ -59,10 +51,6 @@ export class StarterPacksService {
       icon: 'sqlserver', // Use simple key matching iconMap
       startCmd: 'service database start northwind sqlserver 1433', // Start command with port
       stopCmd: 'service database stop northwind sqlserver', // Stop command
-      seedInvoicesCmd: 'service database seed-invoices northwind sqlserver',
-      wipeInvoicesCmd: 'service database wipe-invoices northwind sqlserver',
-      checkSeedInvoicesCmd: 'service database check-seed-invoices northwind sqlserver',
-      runCustomSeedCmd: 'service database run-custom-seed northwind sqlserver',
       tags: ['database', 'northwind', 'sqlserver'],
     },
     {
@@ -75,10 +63,6 @@ export class StarterPacksService {
       icon: 'db2', // Use simple key matching iconMap
       startCmd: 'service database start northwind db2 50000', // Start command with port
       stopCmd: 'service database stop northwind db2', // Stop command
-      seedInvoicesCmd: 'service database seed-invoices northwind db2',
-      wipeInvoicesCmd: 'service database wipe-invoices northwind db2',
-      checkSeedInvoicesCmd: 'service database check-seed-invoices northwind db2',
-      runCustomSeedCmd: 'service database run-custom-seed northwind db2',
       tags: ['database', 'northwind', 'ibmdb2'],
     },
     {
@@ -91,10 +75,6 @@ export class StarterPacksService {
       icon: 'postgresql', // Use simple key matching iconMap
       startCmd: 'service database start northwind postgres 5432', // Start command with port
       stopCmd: 'service database stop northwind postgres', // Stop command
-      seedInvoicesCmd: 'service database seed-invoices northwind postgres',
-      wipeInvoicesCmd: 'service database wipe-invoices northwind postgres',
-      checkSeedInvoicesCmd: 'service database check-seed-invoices northwind postgres',
-      runCustomSeedCmd: 'service database run-custom-seed northwind postgres',
       tags: ['database', 'northwind', 'postgres'],
     },
     {
@@ -107,10 +87,6 @@ export class StarterPacksService {
       icon: 'mysql', // Use simple key matching iconMap
       startCmd: 'service database start northwind mysql 3306', // Start command with port
       stopCmd: 'service database stop northwind mysql', // Stop command
-      seedInvoicesCmd: 'service database seed-invoices northwind mysql',
-      wipeInvoicesCmd: 'service database wipe-invoices northwind mysql',
-      checkSeedInvoicesCmd: 'service database check-seed-invoices northwind mysql',
-      runCustomSeedCmd: 'service database run-custom-seed northwind mysql',
       tags: ['database', 'northwind', 'mysql'],
     },
     {
@@ -123,10 +99,6 @@ export class StarterPacksService {
       icon: 'mariadb', // Use simple key matching iconMap
       startCmd: 'service database start northwind mariadb 3307', // Start command with port
       stopCmd: 'service database stop northwind mariadb', // Stop command
-      seedInvoicesCmd: 'service database seed-invoices northwind mariadb',
-      wipeInvoicesCmd: 'service database wipe-invoices northwind mariadb',
-      checkSeedInvoicesCmd: 'service database check-seed-invoices northwind mariadb',
-      runCustomSeedCmd: 'service database run-custom-seed northwind mariadb',
       tags: ['database', 'northwind', 'mariadb'],
     },
     {
@@ -139,7 +111,6 @@ export class StarterPacksService {
       icon: 'clickhouse', // Use simple key matching iconMap
       startCmd: 'service database start northwind clickhouse 8123', // Start command with port
       stopCmd: 'service database stop northwind clickhouse', // Stop command
-      runCustomSeedCmd: 'service database run-custom-seed northwind clickhouse',
       tags: ['database', 'northwind', 'clickhouse', 'olap', 'analytics'],
     },
     {
@@ -152,10 +123,6 @@ export class StarterPacksService {
       icon: 'supabase',
       startCmd: 'service database start northwind supabase 5435',
       stopCmd: 'service database stop northwind supabase',
-      seedInvoicesCmd: 'service database seed-invoices northwind supabase',
-      wipeInvoicesCmd: 'service database wipe-invoices northwind supabase',
-      checkSeedInvoicesCmd: 'service database check-seed-invoices northwind supabase',
-      runCustomSeedCmd: 'service database run-custom-seed northwind supabase',
       tags: ['database', 'northwind', 'supabase', 'postgres', 'baas', ' backend-as-a-service', 'auth', 'real-time', 'storage', 'vector-embeddings'],
     },
     {
@@ -169,6 +136,18 @@ export class StarterPacksService {
       startCmd: 'service database start cache redis 6379',
       stopCmd: 'service database stop cache redis',
       tags: ['database', 'redis', 'cache', 'in-memory', 'key-value', 'real-time', 'performance'],
+    },
+    {
+      id: 'db-timeseries-timescaledb',
+      family: 'database',
+      packName: 'timeseries',
+      target: 'timescaledb',
+      displayName: 'TimescaleDB',
+      description: 'PostgreSQL extended for time-series workloads. Hypertables, continuous aggregates, time-bucketed queries.',
+      icon: 'timescaledb',
+      startCmd: 'service database start timeseries timescaledb 5433',
+      stopCmd: 'service database stop timeseries timescaledb',
+      tags: ['database', 'timescaledb', 'postgres', 'time-series', 'hypertable', 'analytics'],
     },
     // --- Add other families/packs here as needed ---
     // Example for a hypothetical 'messaging' family:

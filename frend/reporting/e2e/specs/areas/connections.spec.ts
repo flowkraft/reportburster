@@ -1044,26 +1044,37 @@ test.describe('', async () => {
     );
 
     electronBeforeAfterAllTest(
-      `(seed-wipe) [${dbVendor}] should seed and wipe invoice data`,
+      `(seed-wipe) [${dbVendor}] should seed and wipe invoice data via Connection Details Seed Data tab`,
       async function ({ beforeAfterEach: firstPage }) {
         test.setTimeout(Constants.DELAY_FIVE_HUNDRED_SECONDS);
         let ft = new FluentTester(firstPage);
 
-        if (isFileBasedVendor(dbVendor) || !hasSeedCapability(dbVendor)) {
-          ft = ft.consoleLog(`[SeedWipe] Skipping — ${dbVendor} does not support seed/wipe`);
+        if (!hasSeedCapability(dbVendor)) {
+          ft = ft.consoleLog(`[SeedWipe] Skipping — ${dbVendor} not seed-capable`);
           return ft;
         }
 
+        const tempConnName = 'Seed Test';
+        const tempConnCode = `db-${_.kebabCase(tempConnName)}-${dbVendor}`;
+        const isContainer = !isFileBasedVendor(dbVendor);
+
         try {
-          // Start starter pack
-          ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'start');
+          // All vendors follow the same flow: bring DB up (containers only) →
+          // create a fresh editable connection → run seed + wipe → delete the
+          // connection. File-based vendors (sqlite, duckdb) point at the bundled
+          // sample DB file; the seed + wipe pair leaves it back at baseline.
+          if (isContainer) {
+            ft = ConnectionsTestHelper.setStarterPackStateForVendor(ft, dbVendor, 'start');
+          }
+          ft = ConnectionsTestHelper.createAndAssertNewDatabaseConnection(ft, tempConnName, dbVendor);
 
-          // Seed 100 invoices, wipe, then stop (all without re-navigating)
-          ft = ConnectionsTestHelper.seedAndWipeInvoices(ft, dbVendor, 100);
+          ft = ConnectionsTestHelper.seedAndWipeInvoicesViaConnectionDetails(ft, tempConnCode, 100);
 
+          // Escape the dot for CSS — `#id.xml` (raw) parses as id+class, not a literal `.xml` suffix.
+          ft = ConnectionsTestHelper.deleteAndAssertDatabaseConnection(ft, `${tempConnCode}\\.xml`, dbVendor);
           return ft;
         } finally {
-          if (!isFileBasedVendor(dbVendor)) {
+          if (isContainer) {
             ConnectionsTestHelper.dockerComposeDownInDbFolder();
           }
         }
@@ -1531,9 +1542,9 @@ test.describe('', async () => {
           .click('#btnGenerateWithAIDomainGroupedSchema')
           .waitOnElementToBecomeVisible('#btnCopyPromptText')
           .click('#btnCopyPromptText')
-          .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+          .waitOnConfirmDialogToBecomeVisible()
           .click('.dburst-button-question-confirm')
-          .waitOnElementToBecomeInvisible('.dburst-button-question-confirm');
+          .waitOnConfirmDialogToBecomeInvisible();
 
         ft = ft.clipboardShouldContainText(
           'You are an expert Database Modeler and Data Architect.',
@@ -1745,9 +1756,9 @@ test.describe('', async () => {
         // Verify clipboard content for SQL Generation prompt
         ft = ft
           .click('#btnCopyPromptText')
-          .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+          .waitOnConfirmDialogToBecomeVisible()
           .click('.dburst-button-question-confirm')
-          .waitOnElementToBecomeInvisible('.dburst-button-question-confirm');
+          .waitOnConfirmDialogToBecomeInvisible();
 
         ft = ft.clipboardShouldContainText(
           'You are an expert Database Modeler and Visual Designer specializing in Entity-Relationship (ER) diagrams using PlantUML.',
@@ -1982,6 +1993,34 @@ CustomerCustomerDemo }|--|| CustomerDemographics : "CustomerTypeID"
       },
     );
 
+  }
+
+  // ============================================================
+  // Seed Data — Example (default) script against bundled sample connections.
+  // Outside the DB_VENDORS_SELECTED loop because these tests deliberately reuse
+  // the pre-existing `rbt-sample-northwind-{sqlite,duckdb}-4f2` sample
+  // connections (no create/delete) and exercise the in-component Example
+  // default script rather than a bundled `seed-templates/*.groovy` template.
+  // The wipe is supplied by the helper as a hardcoded inline script (no UI
+  // affordance for a default-cleanup), keeping the sample DB state unchanged.
+  // ============================================================
+  for (const sampleVendor of ['sqlite', 'duckdb'] as const) {
+    electronBeforeAfterAllTest(
+      `(seed-wipe-example-default) [${sampleVendor}] should run the Example (default) script against the bundled sample connection and clean up`,
+      async function ({ beforeAfterEach: firstPage }) {
+        test.setTimeout(Constants.DELAY_FIVE_HUNDRED_SECONDS);
+        let ft = new FluentTester(firstPage);
+
+        const sampleConnectionCode = `rbt-sample-northwind-${sampleVendor}-4f2`;
+
+        ft = ConnectionsTestHelper.seedAndWipeUsingExampleDefaultViaConnectionDetails(
+          ft,
+          sampleConnectionCode,
+        );
+
+        return ft;
+      },
+    );
   }
 
   // ============================================================

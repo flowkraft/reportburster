@@ -65,6 +65,20 @@ export function temporalDimensionsOf(
   return cols.filter((c) => names.has(c.columnName));
 }
 
+/** Names of columns classified as temporal — the form `buildSql` consumes
+ *  via `BuildSqlOptions.temporalColumns` to wrap LHS of SQLite filter
+ *  comparisons with `date(sqliteDateNormalize(c))`. Returns an empty set
+ *  when no shape exists yet (pre-query): the resulting no-op preserves
+ *  pre-fix filter behavior on the cold path. */
+export function temporalColumnNamesOf(
+  shape: PickShape | null | undefined,
+): ReadonlySet<string> {
+  if (!shape) return new Set<string>();
+  return new Set(
+    shape.dims.filter((d) => d.kind === "temporal").map((d) => d.name),
+  );
+}
+
 /** Synthesize the post-aggregation column list from a raw table schema +
  *  a visual query's summarize/groupBy.  For raw-table drops (no summarize,
  *  no groupBy) returns `baseCols` unchanged — the table's schema IS the

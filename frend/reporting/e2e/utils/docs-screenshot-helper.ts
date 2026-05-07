@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // docs-screenshot-helper — shared utilities for the screenshot specs that
-// produce PNGs consumed by the datapallas.com docs site.
+// produce PNGs consumed by the reportburster.com docs site.
 //
 // Provides two capture flavors:
 //
@@ -32,7 +32,7 @@ import * as jetpack from 'fs-jetpack';
 export const DOCS_IMAGES_DIR = path.resolve(
   __dirname,
   '..', '..', '..', '..', '..',
-  'kraft-src-company-biz', 'flowkraft', 'www', 'datapallas.com',
+  'kraft-src-company-biz', 'flowkraft', 'www', 'reportburster.com',
   'public', 'images', 'docs',
 );
 

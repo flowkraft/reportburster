@@ -5,6 +5,7 @@ import { useCanvasStore } from "@/lib/stores/canvas-store";
 import type { SchemaInfo, TableSchema } from "@/lib/explore-data/types";
 import { executeQuery, executeScript, fetchSchema, getConnectionType } from "@/lib/explore-data/rb-api";
 import { sqlForDataSource } from "@/lib/explore-data/sql-builder";
+import { temporalColumnNamesOf } from "@/lib/explore-data/widget-defaults";
 
 // Module-level per-widget "we've already executed this version" tracker.
 // Survives component remounts — critical because the auto-switch
@@ -167,7 +168,11 @@ export function useWidgetData(widgetId: string) {
     // Build raw SQL. Filter values are sent to the backend separately as named
     // params — the backend converts ${param} → :param and uses JDBI bindMap for
     // injection-safe binding.  No client-side string substitution.
-    const raw = sqlForDataSource(dataSource, getConnectionType(connectionId));
+    const raw = sqlForDataSource(
+      dataSource,
+      getConnectionType(connectionId),
+      temporalColumnNamesOf(widget?.shape),
+    );
     if (!raw) { clearWidgetQueryLoading(widgetId); return; }
 
     if (mode === "visual") {
@@ -180,14 +185,27 @@ export function useWidgetData(widgetId: string) {
     }
 
     let cancelled = false;
-    console.log('[useWidgetData] FIRE widgetId=' + widgetId + ' mode=' + mode + ' sql=' + raw.slice(0, 60));
+    // [SQL-TRACE] diagnostic — leave commented; uncomment to debug query
+    // execution per widget (FIRE / DISCARDED / RESULT with rows + first row).
+    // console.log(
+    //   '[SQL-TRACE useWidgetData FIRE] widgetId=' + widgetId +
+    //   ' mode=' + mode +
+    //   ' SQL=<<<' + raw.replace(/\n/g, ' ') + '>>>',
+    // );
     setWidgetQueryLoading(widgetId);
     executeQuery(connectionId, raw, filterValues ?? {})
       .then((res) => {
         if (cancelled) {
-          console.log('[useWidgetData] DISCARDED widgetId=' + widgetId);
+          // console.log('[SQL-TRACE useWidgetData DISCARDED] widgetId=' + widgetId);
         } else {
-          console.log('[useWidgetData] RESULT widgetId=' + widgetId + ' rows=' + res.data?.length);
+          // const firstRow = res.data?.[0];
+          // console.log(
+          //   '[SQL-TRACE useWidgetData RESULT] widgetId=' + widgetId +
+          //   ' rows=' + (res.data?.length ?? 0) +
+          //   ' rowCountField=' + res.rowCount +
+          //   ' colNames=' + JSON.stringify(firstRow ? Object.keys(firstRow) : []) +
+          //   ' firstRow=' + JSON.stringify(firstRow ?? null),
+          // );
           setWidgetQueryResult(widgetId, res);
         }
       })

@@ -140,6 +140,28 @@ services:
       retries: 10
       start_period: 10s
 
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: rb-timeseries-timescaledb
+    environment:
+      POSTGRES_USER: ${TIMESCALE_USER}
+      POSTGRES_PASSWORD: ${TIMESCALE_PASSWORD}
+      POSTGRES_DB: ${TIMESCALE_DB}
+    ports:
+      - "${TIMESCALE_PORT}:5432"
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+    command:
+      - postgres
+      - -c
+      - max_connections=500
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $TIMESCALE_USER -d $TIMESCALE_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis:7-alpine
     container_name: rb-cache-redis
@@ -256,3 +278,4 @@ volumes:
   clickhouse_data:
   clickhouse_logs:
   redis_data:
+  timescaledb_data:

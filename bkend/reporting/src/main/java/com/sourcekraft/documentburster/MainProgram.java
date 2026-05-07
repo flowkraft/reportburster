@@ -342,6 +342,7 @@ public class MainProgram implements Callable<Integer> {
 			MainProgram.SystemCommand.TestEmailCommand.class, MainProgram.SystemCommand.TestSmsCommand.class,
 			MainProgram.SystemCommand.LicenseCommand.class, MainProgram.SystemCommand.FeatureRequestCommand.class,
 			MainProgram.SystemCommand.TestAndFetchDatabaseSchemaCommand.class,
+			MainProgram.SystemCommand.RunSeedScriptCommand.class,
 			MainProgram.SystemCommand.OAuth2Command.class })
 	public static class SystemCommand implements Callable<Integer> {
 		@ParentCommand
@@ -462,6 +463,40 @@ public class MainProgram implements Callable<Integer> {
 				job.doTestAndFetchDatabaseSchema(databaseConnectionFile.getAbsolutePath());
 
 				log.info("CliJob execution for test-and-fetch-database-schema requested.");
+				return 0;
+			}
+		}
+
+		@Command(name = "run-seed-script", description = "Execute a Groovy seed script against a database connection")
+		static class RunSeedScriptCommand extends BaseCommand implements Callable<Integer> {
+			@ParentCommand
+			SystemCommand systemCommand;
+
+			@Option(names = { "--database-connection-file" }, required = true,
+					description = "Path to the database connection XML file")
+			private File databaseConnectionFile;
+
+			@Option(names = { "--script-file" }, required = true,
+					description = "Path to the Groovy script file to execute")
+			private File scriptFile;
+
+			@Option(names = { "-p", "--param" }, description = "Script parameters as key=value (can be repeated)", paramLabel = "KEY=VALUE")
+			private Map<String, String> params = new HashMap<>();
+
+			@Override
+			protected MainProgram getMainProgram() {
+				return systemCommand.parent;
+			}
+
+			@Override
+			public Integer call() throws Exception {
+				if (!databaseConnectionFile.exists())
+					throw new FileNotFoundException("Database connection file not found: " + databaseConnectionFile.getAbsolutePath());
+				if (!scriptFile.exists())
+					throw new FileNotFoundException("Script file not found: " + scriptFile.getAbsolutePath());
+
+				CliJob job = getJob(databaseConnectionFile.getAbsolutePath());
+				job.doRunSeedScript(databaseConnectionFile.getAbsolutePath(), scriptFile.getAbsolutePath(), params);
 				return 0;
 			}
 		}

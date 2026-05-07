@@ -64,6 +64,7 @@ public class DatabaseConnectionManager implements AutoCloseable {
 				return "com.microsoft.sqlserver.jdbc.SQLServerDriver";
 			case "postgres":
 			case "postgresql":
+			case "timescaledb":
 				return "org.postgresql.Driver";
 			case "mysql":
 				return "com.mysql.cj.jdbc.Driver";

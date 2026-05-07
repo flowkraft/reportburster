@@ -410,20 +410,4 @@ public class SystemController {
 		return Mono.just(statuses);
 	}
 
-	@GetMapping("/services/check-seed-status")
-	public Mono<Map<String, Object>> checkSeedStatus(@RequestParam String vendor) {
-		return Mono.fromCallable(() -> {
-			com.sourcekraft.documentburster.common.db.northwind.NorthwindManager.DatabaseVendor dbVendor =
-				com.sourcekraft.documentburster.common.db.northwind.NorthwindManager.DatabaseVendor.valueOf(vendor.toUpperCase());
-			com.sourcekraft.documentburster.common.db.northwind.NorthwindManager manager =
-				new com.sourcekraft.documentburster.common.db.northwind.NorthwindManager();
-			try (java.sql.Connection conn = manager.getConnection(dbVendor)) {
-				boolean hasSeedData = com.sourcekraft.documentburster.common.db.northwind.InvoiceSeedGenerator.checkSeedStatus(conn, dbVendor);
-				Map<String, Object> result = new HashMap<>();
-				result.put("vendor", vendor);
-				result.put("hasSeedData", hasSeedData);
-				return result;
-			}
-		});
-	}
 }

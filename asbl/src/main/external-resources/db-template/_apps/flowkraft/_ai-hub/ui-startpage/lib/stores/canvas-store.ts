@@ -455,9 +455,20 @@ export const useCanvasStore = create<CanvasState & CanvasActions>((set, get) => 
     // and drift followed.  After this: one computation, one cache.
     const computed = computeWidgetShape(result, widget.dataSource);
     if (computed) {
-      const colTypes = computed.columns.map(c => c.columnName + ':' + c.typeName).join(',');
-      const dimKinds = computed.shape.dims.map(d => d.name + ':' + d.kind).join(',');
-      console.log('[setQR] widgetId=' + widgetId + ' cols=[' + colTypes + '] dims=[' + dimKinds + ']');
+      // [SQL-TRACE] diagnostic — leave commented; uncomment to debug the
+      // engine's input: dim kinds, measure names, rowCount as observed by
+      // pickWidget. Useful when palette/auto-pick output looks wrong.
+      // const colTypes = computed.columns.map(c => c.columnName + ':' + c.typeName).join(',');
+      // const dimKinds = computed.shape.dims.map(d => d.name + ':' + d.kind).join(',');
+      // const measureNames = computed.shape.measures.map(m => m.name).join(',');
+      // console.log(
+      //   '[SQL-TRACE setWidgetQueryResult] widgetId=' + widgetId +
+      //   ' resultRows=' + (result.data?.length ?? 0) +
+      //   ' resultRowCount=' + result.rowCount +
+      //   ' cols=[' + colTypes + ']' +
+      //   ' dims=[' + dimKinds + ']' +
+      //   ' measures=[' + measureNames + ']',
+      // );
     }
 
     // STEP 2 — auto-switch.  Mirrors the standard model: every query result

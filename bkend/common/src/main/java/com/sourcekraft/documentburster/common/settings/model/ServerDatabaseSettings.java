@@ -79,6 +79,11 @@ public class ServerDatabaseSettings extends DumpToString {
 				if (isBlank(this.driver)) this.driver = "org.postgresql.Driver";
 				if (isBlank(this.url))    this.url    = "jdbc:postgresql://" + host + ":" + port + "/" + database + "?currentSchema=public";
 				break;
+
+			case "timescaledb":
+				if (isBlank(this.driver)) this.driver = "org.postgresql.Driver";
+				if (isBlank(this.url))    this.url    = "jdbc:postgresql://" + host + ":" + port + "/" + database;
+				break;
 		}
 	}
 

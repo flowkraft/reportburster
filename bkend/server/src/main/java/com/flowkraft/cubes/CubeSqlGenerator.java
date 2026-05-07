@@ -308,6 +308,7 @@ public class CubeSqlGenerator {
 			case "postgres":
 			case "postgresql":
 			case "supabase":
+			case "timescaledb":
 				return SQLDialect.POSTGRES;
 			case "mysql":
 			case "mariadb":

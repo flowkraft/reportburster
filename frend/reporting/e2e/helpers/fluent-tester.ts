@@ -1336,6 +1336,49 @@ export class FluentTester implements PromiseLike<void> {
     return this;
   }
 
+  /**
+   * Polling wait for the confirm dialog to render — use this instead of the
+   * synchronous `confirmDialogShouldBeVisible()` when the action that triggers
+   * the dialog is not synchronous to the same microtask. Common offenders:
+   * `<select>` changes routed through Angular `(ngModelChange)` and any handler
+   * that `await`s before opening the dialog. Same selector, but with a timeout.
+   */
+  public waitOnConfirmDialogToBecomeVisible(waitTime?: number): FluentTester {
+    return this.waitOnElementToBecomeVisible(
+      '.dburst-button-question-confirm',
+      waitTime,
+    );
+  }
+
+  /**
+   * Polling wait for the confirm dialog to disappear — use after `clickYesDoThis()`
+   * or `clickNoDontDoThis()` when the next step needs the dialog to be gone
+   * (e.g. clicking an underlying button covered by the dialog backdrop).
+   * Replaces the copy-pasted `waitOnElementToBecomeInvisible('.dburst-button-question-confirm')`.
+   */
+  public waitOnConfirmDialogToBecomeInvisible(waitTime?: number): FluentTester {
+    return this.waitOnElementToBecomeInvisible(
+      '.dburst-button-question-confirm',
+      waitTime,
+    );
+  }
+
+  /**
+   * Polling wait for the info dialog to render. Same rationale as
+   * `waitOnConfirmDialogToBecomeVisible` — use when the trigger isn't
+   * synchronous to the same microtask as the assertion.
+   */
+  public waitOnInfoDialogToBecomeVisible(waitTime?: number): FluentTester {
+    return this.waitOnElementToBecomeVisible('dburst-info-dialog', waitTime);
+  }
+
+  /**
+   * Polling wait for the info dialog to disappear after dismissing it.
+   */
+  public waitOnInfoDialogToBecomeInvisible(waitTime?: number): FluentTester {
+    return this.waitOnElementToBecomeInvisible('dburst-info-dialog', waitTime);
+  }
+
   public appShouldBeReadyToRunNewJobs(): FluentTester {
     const action = (): Promise<void> => this.doAppShouldBeReadyToRunNewJobs();
 
@@ -2425,6 +2468,57 @@ export class FluentTester implements PromiseLike<void> {
     await this.window.keyboard.press('End');
     await this.sleep(Constants.DELAY_HALF_SECOND);
     await this.window.keyboard.press('Control+s');
+    await this.sleep(Constants.DELAY_HALF_SECOND);
+  }
+
+  /**
+   * Pastes the current OS-clipboard text into a CodeJar contenteditable.
+   *
+   * Electron-Playwright's synthesised `Control+V` does not couple the OS
+   * clipboard to the contenteditable's paste event in a way CodeJar's
+   * `(update)` model picks up — the editor stays empty even though the
+   * clipboard holds the right content. This helper bridges that gap by
+   * reading `navigator.clipboard.readText()` inside the page and dispatching
+   * a real `input` event after assigning `textContent`, which is what CodeJar
+   * actually listens to. The OS clipboard is still the source — Copy buttons
+   * remain end-to-end tested through `clipboardShouldContainText` upstream.
+   */
+  public pasteClipboardIntoCodeJar(selector: string): FluentTester {
+    const action = (): Promise<void> =>
+      this.doPasteClipboardIntoCodeJar(selector);
+    this.actions.push(action);
+    return this;
+  }
+
+  private async doPasteClipboardIntoCodeJar(selector: string): Promise<void> {
+    // 1. Read clipboard, write into the contenteditable, dispatch synthetic events.
+    await this.window.evaluate(async (sel) => {
+      const editor = document.querySelector(
+        `${sel} [contenteditable]`,
+      ) as HTMLElement | null;
+      if (!editor) {
+        throw new Error(`CodeJar editor element not found: ${sel}`);
+      }
+
+      const content = await navigator.clipboard.readText();
+
+      editor.textContent = content;
+      const rawContent = editor.innerHTML;
+      editor.innerHTML = rawContent;
+
+      editor.dispatchEvent(new Event('input', { bubbles: true }));
+      editor.dispatchEvent(new Event('change', { bubbles: true }));
+    }, selector);
+
+    // 2. CodeJar's onUpdate callback (the one that propagates to Angular's
+    //    `[(code)]` two-way binding and `(update)` output) fires reliably on
+    //    real keyup events but not always on synthetic dispatch from
+    //    page.evaluate. Focus + a real End keypress nudge it to sync — same
+    //    trick `doSetCodeJarContentSingleShot` uses. Without this, the DOM
+    //    has the script but the Angular model stays empty, leaving Run
+    //    disabled (`!customSeedScript?.trim()` is true).
+    await this.window.locator(`${selector} [contenteditable]`).focus();
+    await this.window.keyboard.press('End');
     await this.sleep(Constants.DELAY_HALF_SECOND);
   }
 

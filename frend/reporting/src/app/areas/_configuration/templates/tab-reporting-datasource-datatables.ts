@@ -182,9 +182,6 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
               <button id="btnCopyToClipboardParametersSpecExampleSql" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardParametersSpecExample()">
                 Copy Example Params Script To Clipboard
               </button>
-              <button id="btnAiHelpParamsSpecSql" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.reportparams')">
-                <strong>Hey AI, Help Me Configure These Report Parameters ...</strong>
-              </button>
             </tab>
             </tabset>
           </div>
@@ -306,9 +303,6 @@ export const tabReportingDataSourceDataTablesTemplate = `<ng-template
               ></ngx-codejar>
               <button id="btnCopyToClipboardParametersSpecExampleScript" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="copyToClipboardParametersSpecExample()">
                 Copy Example Params Script To Clipboard
-              </button>
-              <button id="btnAiHelpParamsSpecScript" type="button" class="btn btn-default btn-block" style="margin-top: 10px;" (click)="askAiForHelp('dsl.reportparams')">
-                <strong>Hey AI, Help Me Configure These Report Parameters ...</strong>
               </button>
             </tab>
             </tabset>

@@ -3,7 +3,7 @@
 // during a canvas edit session don't re-run `COUNT(DISTINCT)` or `MIN/MAX`.
 
 import { executeQuery, getConnectionType } from "../rb-api";
-import { quoteIdent, dialectFor } from "../sql-dialects";
+import { quoteIdent, dialectFor, sqliteDateNormalize } from "../sql-dialects";
 import type { CardinalityMap } from "./classification";
 import type { ColumnSchema, SemanticHint } from "../types";
 import { normalizeType, NUMERIC_TYPES } from "./classification";
@@ -91,7 +91,16 @@ export async function probeDateRange(
 ): Promise<{ min: string; max: string } | null> {
   try {
     const dialect = dialectFor(getConnectionType(connectionId));
-    const sql = `SELECT MIN(${quoteIdent(column, dialect)}) AS minv, MAX(${quoteIdent(column, dialect)}) AS maxv FROM ${quoteIdent(tableName, dialect)} WHERE ${quoteIdent(column, dialect)} IS NOT NULL`;
+    const colId = quoteIdent(column, dialect);
+    // SQLite has no native DATETIME — JDBC drivers commonly write LocalDateTime
+    // as BIGINT epoch ms. Raw MIN/MAX on such a column returns integer epoch,
+    // which downstream `guessTimeBucket(string)` mis-parses via `new Date(...)`.
+    // Wrapping with sqliteDateNormalize coerces to ISO so callers receive a
+    // consistent ISO datetime string regardless of how SQLite stored the value.
+    // Other dialects use their native datetime types — MIN/MAX returns ISO via
+    // JDBC's standard mapping — so we leave them untouched.
+    const minMaxArg = dialect === "sqlite" ? sqliteDateNormalize(colId) : colId;
+    const sql = `SELECT MIN(${minMaxArg}) AS minv, MAX(${minMaxArg}) AS maxv FROM ${quoteIdent(tableName, dialect)} WHERE ${colId} IS NOT NULL`;
     const res = await executeQuery(connectionId, sql);
     const row = res.data[0];
     if (!row || row.minv == null || row.maxv == null) return null;

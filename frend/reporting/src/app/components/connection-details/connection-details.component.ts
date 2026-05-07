@@ -9,6 +9,7 @@ import {
 import Prism from 'prismjs';
 import 'prismjs/components/prism-json'; // Import JSON language support
 import 'prismjs/components/prism-markdown';
+import 'prismjs/components/prism-groovy';
 
 import * as pako from 'pako';
 
@@ -23,6 +24,7 @@ import { ConfirmService } from '../dialog-confirm/confirm.service';
 import { ToastrMessagesService } from '../../providers/toastr-messages.service';
 import { InfoService } from '../dialog-info/info.service';
 import { ExecutionStatsService } from '../../providers/execution-stats.service';
+import { WebSocketService } from '../../providers/websocket.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import _ from 'lodash';
 import Utilities from '../../helpers/utilities';
@@ -47,6 +49,7 @@ const PACK_DEFAULTS: Record<string, { host: string; port: string; database: stri
   oracle: { host: 'localhost', port: '1521', database: 'XEPDB1', userid: 'oracle', userpassword: 'oracle', usessl: false },
   ibmdb2: { host: 'localhost', port: '50000', database: 'NORTHWND', userid: 'db2inst1', userpassword: 'password', usessl: false },
   supabase: { host: 'localhost', port: '5435', database: 'Northwind', userid: 'supabase_admin', userpassword: 'postgres', usessl: false },
+  timescaledb: { host: 'localhost', port: '5433', database: 'timeseries', userid: 'timescale', userpassword: 'timescale', usessl: false },
 };
 
 @Component({
@@ -99,7 +102,7 @@ export class ConnectionDetailsComponent implements OnInit {
       clearTimeout(this.dbPasswordRevealTimer);
     } else {
       try {
-        const connectionCode = this.getConnectionCode();
+        const connectionCode = this.resolveConnectionCode();
         const realPassword = await this.connectionsService.revealPassword(connectionCode, 'userpassword');
         this.modalConnectionInfo.database.documentburster.connection.databaseserver.userpassword = realPassword;
         this.showDbPassword = true;
@@ -118,6 +121,31 @@ export class ConnectionDetailsComponent implements OnInit {
   isErDiagramTabActive = false;
   isUbiquitousLanguageTabActive = false;
   isToolsTabActive = false;
+  isSeedDataTabActive = false;
+
+  // Seed Data tab state
+  customSeedScript = '';
+  // Override for the Example tab editor — null means "use vendor-specific default from getExampleCustomSeedScript()"
+  exampleEditorOverride: string | null = null;
+  // ID of the template currently shown in the Example tab — also serves as initial dropdown value
+  loadedSeedTemplateId = '__EXAMPLE_DEFAULT__';
+  // Two-way bound to the dropdown; may diverge from loadedSeedTemplateId while confirmation is pending
+  selectedSeedTemplateId = '__EXAMPLE_DEFAULT__';
+  seedTemplates: Array<{ id: string; displayName: string; description: string; source: string }> = [];
+
+  /**
+   * Content shown in the Example tab editor: the loaded template's source,
+   * or the vendor-specific default when no override is set.
+   */
+  get exampleEditorScript(): string {
+    return this.exampleEditorOverride !== null
+      ? this.exampleEditorOverride
+      : this.getExampleCustomSeedScript();
+  }
+  isSeedDataExampleActive = false;
+  // True between Run Script click and the on.process.complete WebSocket event.
+  // Covers the gap when scripts complete faster than the 250ms .job-file poll cycle.
+  isCustomSeedRunning = false;
 
   // Email connection tab states
   isSMTPTabActive = true;
@@ -138,7 +166,22 @@ export class ConnectionDetailsComponent implements OnInit {
     protected router: Router,
     private cdRef: ChangeDetectorRef,
     private cubesService: CubesService,
+    private webSocketService: WebSocketService,
   ) { }
+
+  /**
+   * Returns the active connection code regardless of whether the connection
+   * has an on-disk XML (normal connections) or is a virtual sample (no filePath).
+   * Use this instead of getConnectionCode() when no explicit path is available.
+   */
+  private resolveConnectionCode(): string {
+    const fromPath = this.getConnectionCode();
+    if (fromPath) return fromPath;
+    if (this.isEditingSample) {
+      return this.modalConnectionInfo?.database?.documentburster?.connection?.code || '';
+    }
+    return '';
+  }
 
   /**
    * Extract connectionCode from a file path like "config/connections/db-test-7/db-test-7.xml" -> "db-test-7"
@@ -662,6 +705,16 @@ export class ConnectionDetailsComponent implements OnInit {
         confirmAction: async () => {
           const rawFilePath = this.modalConnectionInfo.filePath;
           if (!rawFilePath) {
+            if (this.isEditingSample) {
+              // Sample connections have no on-disk XML until the first test.
+              // The backend's materializeSampleIfNeeded() creates it automatically.
+              // Pass the connection code directly — getConnectionCode() returns it unchanged.
+              const sampleCode = this.modalConnectionInfo.database?.documentburster?.connection?.code;
+              if (sampleCode) {
+                await performTestLogic(sampleCode);
+                return;
+              }
+            }
             this.messagesService.showError(
               'Connection file path is not defined.',
             );
@@ -765,7 +818,10 @@ export class ConnectionDetailsComponent implements OnInit {
       message: 'This will refresh the Database Schema. Continue?',
       confirmAction: async () => {
         const filePath = this.modalConnectionInfo.filePath;
-        if (!filePath) {
+        const connectionCode = filePath
+          ? this.getConnectionCode(filePath)
+          : this.resolveConnectionCode();
+        if (!connectionCode) {
           this.messagesService.showError(
             'Connection file path is missing. Cannot refresh schema.',
           );
@@ -777,10 +833,9 @@ export class ConnectionDetailsComponent implements OnInit {
         this.cdRef.detectChanges();
 
         try {
-          const connectionCode = this.getConnectionCode(filePath);
           await this.connectionsService.testConnection(connectionCode, 'database');
           // Reload the schema data
-          this.loadSchemaFromBackend(filePath);
+          this.loadSchemaFromBackend(filePath || connectionCode);
         } catch (err) {
           this.isSchemaLoading = false;
           this.messagesService.showError(
@@ -1732,7 +1787,7 @@ export class ConnectionDetailsComponent implements OnInit {
     this.rawDomainGroupedSchema = { domainGroups: [] };
     this.domainGroupedSchemaExists = false;
 
-    const connectionCode = this.getConnectionCode();
+    const connectionCode = this.resolveConnectionCode();
     if (!connectionCode) {
       console.warn(
         'Connection code could not be determined. Using empty schema.',
@@ -1908,7 +1963,7 @@ export class ConnectionDetailsComponent implements OnInit {
     }
     try {
       const all = await this.cubesService.loadAll();
-      const connectionCode = this.getConnectionCode();
+      const connectionCode = this.resolveConnectionCode();
       this.cubesForCurrentConnection = (all || []).filter(
         (c) => c.connectionId === connectionCode,
       );
@@ -2813,12 +2868,16 @@ export class ConnectionDetailsComponent implements OnInit {
           this.modalConnectionInfo.database.documentburster.connection.databaseserver.userpassword = '';
         }
 
-        // Trigger schema load for update
+        // Trigger schema load for update.
+        // Sample connections have no on-disk XML so filePath is null;
+        // pass the connection code directly — getConnectionCode() returns it unchanged.
         if (crudMode == 'update') {
-          await this.loadSchemaFromBackend(selectedConnection.filePath);
+          const effectivePath = selectedConnection?.filePath ||
+            (this.isEditingSample ? (selectedConnection?.connectionCode || '') : '');
+          await this.loadSchemaFromBackend(effectivePath);
           // Load ER Diagram and Ubiquitous Language
-          await this.loadErDiagram(selectedConnection.filePath);
-          await this.loadUbiquitousLanguage(selectedConnection.filePath);
+          await this.loadErDiagram(effectivePath);
+          await this.loadUbiquitousLanguage(effectivePath);
 
           if (this.context === 'sqlQuery' || this.context === 'scriptQuery' || this.context === 'dashboardScript' || this.context === 'cubeDsl') {
             if (this.domainGroupedSchemaExists) {
@@ -2980,6 +3039,301 @@ export class ConnectionDetailsComponent implements OnInit {
     example +=
       '*   **SLA (Service Level Agreement)**: A commitment between a service provider and a client detailing aspects like quality, availability, responsibilities.\n';
     return example;
+  }
+
+  // ── Seed Data tab ─────────────────────────────────────────────────────────
+
+  resetSchemaStateOnConnectionChange(): void {
+    this.showSchemaTreeSelect = false;
+    this.testConnectionSuccess = false;
+    this.testConnectionError = false;
+    this.sourceSchemaObjects = [];
+    this.targetSchemaObjects = [];
+    this.rawSchemaData = null;
+  }
+
+  onSeedDataTabSelected(): void {
+    if (this.seedTemplates.length === 0) {
+      this.loadSeedTemplates();
+    }
+  }
+
+  async loadSeedTemplates(): Promise<void> {
+    try {
+      this.seedTemplates = await this.connectionsService.getSeedTemplates();
+      this.cdRef.detectChanges();
+    } catch (err) {
+      console.error('Failed to load seed templates', err);
+    }
+  }
+
+  async onSeedTemplateSelected(newId: string): Promise<void> {
+    if (!newId || newId === this.loadedSeedTemplateId) return;
+
+    const isExampleDefault = newId === '__EXAMPLE_DEFAULT__';
+    const template = isExampleDefault
+      ? { id: '__EXAMPLE_DEFAULT__', displayName: 'Example (default)' }
+      : this.seedTemplates.find(t => t.id === newId);
+
+    if (!template) {
+      this.selectedSeedTemplateId = this.loadedSeedTemplateId;
+      this.cdRef.detectChanges();
+      return;
+    }
+
+    const confirmed = await this.confirmService.askConfirmation({
+      message: `Load '${template.displayName}' into the Example tab? You can review it there and copy it into your script.`,
+      confirmAction: () => {},
+    });
+
+    if (confirmed) {
+      this.exampleEditorOverride = isExampleDefault ? null : (template as any).source;
+      this.loadedSeedTemplateId = newId;
+      this.isSeedDataExampleActive = true;
+    } else {
+      this.selectedSeedTemplateId = this.loadedSeedTemplateId;
+    }
+    this.cdRef.detectChanges();
+  }
+
+  async doRunCustomSeed(): Promise<void> {
+    const connectionCode = this.resolveConnectionCode();
+    if (!connectionCode || !this.customSeedScript?.trim()) return;
+    const confirmed = await this.confirmService.askConfirmation({
+      message: 'Run the custom seed script on this database. Proceed?',
+      confirmAction: () => {},
+    });
+    if (!confirmed) return;
+
+    this.messagesService.showInfo('Running seed script. Please wait.', '', { messageClass: 'java-started' });
+    this.isCustomSeedRunning = true;
+    this.cdRef.detectChanges();
+
+    this.webSocketService.callBacksProcessing.onProcessingComplete = () => {
+      this.isCustomSeedRunning = false;
+      this.cdRef.detectChanges();
+    };
+
+    this.connectionsService.runCustomSeed(connectionCode, this.customSeedScript, {})
+      .catch(err => {
+        this.isCustomSeedRunning = false;
+        this.cdRef.detectChanges();
+        this.messagesService.showError(`Failed to submit script: ${err?.message || err}`);
+      });
+  }
+
+  copyExampleSeedScriptToClipboard(): void {
+    navigator.clipboard
+      .writeText(this.exampleEditorScript)
+      .then(() => {
+        this.messagesService.showInfo('Example script copied to clipboard!', 'Success');
+      })
+      .catch((err) => {
+        console.error('Failed to copy example seed script: ', err);
+        this.messagesService.showError('Failed to copy to clipboard');
+      });
+  }
+
+  askAiForSeedHelp(): void {
+    if (!this.aiManagerInstance) return;
+    const vendor = (this.modalConnectionInfo?.database?.documentburster?.connection?.databaseserver?.type || 'postgres').toUpperCase();
+    const launchConfig: AiManagerLaunchConfig = {
+      initialActiveTabKey: 'PROMPTS',
+      initialSelectedCategory: 'Database Schema',
+      initialExpandedPromptId: 'CUSTOM_DB_SEED_SCRIPT',
+      promptVariables: {
+        '[VENDOR]': vendor,
+        '[VENDOR_EXAMPLE_SCRIPT]': this.getExampleCustomSeedScript(),
+      },
+    };
+    this.aiManagerInstance.launchWithConfiguration(launchConfig);
+  }
+
+  highlightGroovyCode = (editor: any) => {
+    if (!editor) return;
+    const code = this.getSeedRawCode(editor);
+    if (!code) return;
+    try {
+      if (Prism && Prism.languages['groovy']) {
+        const html = Prism.highlight(code, Prism.languages['groovy'], 'groovy');
+        editor.style.whiteSpace = 'pre-wrap';
+        editor.innerHTML = html;
+      } else {
+        editor.style.whiteSpace = 'pre-wrap';
+        editor.innerHTML = code;
+      }
+    } catch (error) {
+      console.error('Error during Groovy script highlighting:', error);
+      editor.style.whiteSpace = 'pre-wrap';
+      editor.innerHTML = code;
+    }
+  };
+
+  private getSeedRawCode(editor: any): string {
+    try {
+      if (editor.textContent !== undefined && editor.textContent !== null) {
+        return editor.textContent as string;
+      }
+    } catch (err) {
+      // ignore
+    }
+    return editor.innerText || '';
+  }
+
+  getExampleCustomSeedScript(): string {
+    const vendor = (this.modalConnectionInfo?.database?.documentburster?.connection?.databaseserver?.type || 'postgres').toUpperCase();
+
+    const intType = vendor === 'ORACLE' ? 'NUMBER' : (vendor === 'CLICKHOUSE' ? 'UInt32' : 'INT');
+    const varcharType = vendor === 'ORACLE' ? 'VARCHAR2' : (vendor === 'CLICKHOUSE' ? 'String' : 'VARCHAR');
+    const isClickHouse = vendor === 'CLICKHOUSE';
+
+    const header = `// ============================================================
+// Example: Custom seed script for ${vendor}
+// ============================================================
+// Available variables (pre-configured — do NOT create them):
+//   dbSql  - groovy.sql.Sql (already connected to the database)
+//   vendor - String ("${vendor}")
+//   log    - Logger (SLF4J)
+//
+// Available libraries on classpath:
+//   net.datafaker.Faker — realistic fake data with fixed seed
+//   groovy.sql.Sql — Groovy database access (dbSql)
+//
+// RULES:
+//   1. DROP THEN CREATE — every run starts on a clean slate (truly idempotent on every vendor)
+//   2. Supply explicit IDs in INSERT — no auto-increment vendor differences
+//   3. NEVER touch Northwind tables — only YOUR my_* tables!${isClickHouse ? '' : '\n//   4. Wrap inserts in dbSql.withTransaction { ... } for rollback on error'}
+//   ${isClickHouse ? '4' : '5'}. Use DataFaker with fixed seed for deterministic, repeatable data
+// ============================================================
+
+import groovy.sql.Sql
+import net.datafaker.Faker
+
+// Fixed seed = deterministic data (identical every run)
+def faker = new Faker(new Random(42))
+
+// safeDrop: ignore "table doesn't exist" on first run — every vendor throws a different SQLSTATE
+def safeDrop = { String table ->
+    try { dbSql.execute("DROP TABLE " + table) }
+    catch (Exception e) { /* table didn't exist — fine */ }
+}
+
+log.info("Starting custom seed for " + vendor + "...")
+`;
+
+    if (isClickHouse) {
+      return header + `
+// --- 1. Drop existing tables (children first), then create fresh ---
+dbSql.execute("DROP TABLE IF EXISTS my_employees")
+dbSql.execute("DROP TABLE IF EXISTS my_departments")
+
+dbSql.execute("""
+  CREATE TABLE my_departments (
+    dept_id UInt32,
+    dept_name String,
+    location String
+  ) ENGINE = MergeTree()
+  ORDER BY dept_id
+""")
+
+dbSql.execute("""
+  CREATE TABLE my_employees (
+    emp_id UInt32,
+    first_name String,
+    last_name String,
+    email String,
+    salary Decimal64(2),
+    dept_id UInt32
+  ) ENGINE = MergeTree()
+  ORDER BY emp_id
+""")
+
+// --- 2. Insert departments (explicit IDs — works on every vendor) ---
+def deptNames = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations']
+deptNames.eachWithIndex { name, i ->
+  def location = faker.address().city()
+  dbSql.execute(
+    "INSERT INTO my_departments (dept_id, dept_name, location) VALUES (?, ?, ?)",
+    [i + 1, name, location]
+  )
+}
+
+// --- 3. Insert employees using DataFaker ---
+(1..20).each { i ->
+  dbSql.execute(
+    "INSERT INTO my_employees (emp_id, first_name, last_name, email, salary, dept_id) VALUES (?, ?, ?, ?, ?, ?)",
+    [
+      i,
+      faker.name().firstName(),
+      faker.name().lastName(),
+      faker.internet().emailAddress(),
+      faker.number().numberBetween(45000, 150000) as BigDecimal,
+      faker.number().numberBetween(1, deptNames.size() + 1)
+    ]
+  )
+}
+
+log.info("Custom seed completed for " + vendor + ": 6 departments, 20 employees")
+`;
+    }
+
+    return header + `
+// --- 1. Drop existing tables (children first), then create fresh ---
+//     safeDrop swallows "table doesn't exist" on first run so the script
+//     is truly idempotent on every vendor — no IF NOT EXISTS quirks needed.
+safeDrop("my_employees")
+safeDrop("my_departments")
+
+dbSql.execute("""
+  CREATE TABLE my_departments (
+    dept_id ${intType} NOT NULL PRIMARY KEY,
+    dept_name ${varcharType}(100) NOT NULL,
+    location ${varcharType}(200)
+  )
+""")
+
+dbSql.execute("""
+  CREATE TABLE my_employees (
+    emp_id ${intType} NOT NULL PRIMARY KEY,
+    first_name ${varcharType}(50) NOT NULL,
+    last_name ${varcharType}(50) NOT NULL,
+    email ${varcharType}(100),
+    salary DECIMAL(10,2),
+    dept_id ${intType}
+  )
+""")
+
+// --- 2. Insert data in a transaction (rolls back on any error) ---
+dbSql.withTransaction {
+
+  // Insert departments (explicit IDs — no auto-increment vendor differences)
+  def deptNames = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations']
+  deptNames.eachWithIndex { name, i ->
+    def location = faker.address().city()
+    dbSql.execute(
+      "INSERT INTO my_departments (dept_id, dept_name, location) VALUES (?, ?, ?)",
+      [i + 1, name, location]
+    )
+  }
+
+  // Insert employees using DataFaker
+  (1..20).each { i ->
+    dbSql.execute(
+      "INSERT INTO my_employees (emp_id, first_name, last_name, email, salary, dept_id) VALUES (?, ?, ?, ?, ?, ?)",
+      [
+        i,
+        faker.name().firstName(),
+        faker.name().lastName(),
+        faker.internet().emailAddress(),
+        faker.number().numberBetween(45000, 150000) as BigDecimal,
+        faker.number().numberBetween(1, deptNames.size() + 1)
+      ]
+    )
+  }
+}
+
+log.info("Custom seed completed for " + vendor + ": 6 departments, 20 employees")
+`;
   }
 
 }

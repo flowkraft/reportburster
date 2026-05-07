@@ -1895,9 +1895,9 @@ export class ConfigurationTestHelper {
 
       ft = ft
         .click('#btnCopyPromptText')
-        .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+        .waitOnConfirmDialogToBecomeVisible()
         .click('.dburst-button-question-confirm')
-        .waitOnElementToBecomeInvisible('.dburst-button-question-confirm');
+        .waitOnConfirmDialogToBecomeInvisible();
 
       ft = ft.clipboardShouldContainText(
         'conversion to a PDF report using OpenHTMLToPDF',
@@ -1909,9 +1909,9 @@ export class ConfigurationTestHelper {
 
       ft = ft
         .click('#btnCopyPromptText')
-        .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+        .waitOnConfirmDialogToBecomeVisible()
         .click('.dburst-button-question-confirm')
-        .waitOnElementToBecomeInvisible('.dburst-button-question-confirm');
+        .waitOnConfirmDialogToBecomeInvisible();
 
       ft = ft.clipboardShouldContainText(
         'conversion to an Excel spreadsheet using html-exporter',
@@ -1923,9 +1923,9 @@ export class ConfigurationTestHelper {
 
       ft = ft
         .click('#btnCopyPromptText')
-        .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+        .waitOnConfirmDialogToBecomeVisible()
         .click('.dburst-button-question-confirm')
-        .waitOnElementToBecomeInvisible('.dburst-button-question-confirm');
+        .waitOnConfirmDialogToBecomeInvisible();
 
       ft = ft.clipboardShouldContainText(
         'You are tasked with creating a professional HTML template',

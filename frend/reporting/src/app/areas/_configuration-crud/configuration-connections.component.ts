@@ -108,12 +108,10 @@ export class ConnectionListComponent implements OnInit, OnDestroy {
 
   //generate inline a function at this location
 
-  onItemClick(item: { filePath: string }) {
-    //console.log(item.filePath);
-
+  onItemClick(item: { connectionCode: string }) {
     for (const connectionFile of this.settingsService.connectionFiles) {
       connectionFile.activeClicked =
-        connectionFile.filePath === item.filePath ? true : false;
+        connectionFile.connectionCode === item.connectionCode;
     }
   }
 

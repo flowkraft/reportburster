@@ -274,6 +274,18 @@ export class ConnectionsService {
     return result.password || '';
   }
 
+  async runCustomSeed(connectionCode: string, script: string, params?: Record<string, any>): Promise<any> {
+    return this.apiService.post(`/connections/${encodeURIComponent(connectionCode)}/run-custom-seed`, { script, params });
+  }
+
+  async getSeedStatus(connectionCode: string): Promise<{ hasSeedData: boolean; tables: Array<{ name: string; count: number }> }> {
+    return this.apiService.get(`/connections/${encodeURIComponent(connectionCode)}/seed-status`);
+  }
+
+  async getSeedTemplates(): Promise<Array<{ id: string; displayName: string; description: string; source: string }>> {
+    return this.apiService.get('/seed-templates');
+  }
+
   async startEmailOAuth(payload: {
     provider: string;
     tenantId?: string;

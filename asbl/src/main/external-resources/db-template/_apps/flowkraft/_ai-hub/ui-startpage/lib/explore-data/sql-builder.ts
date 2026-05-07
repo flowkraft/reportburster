@@ -13,7 +13,7 @@
 // the original column name so downstream code sees the same identifier.
 
 import type { DataSource, VisualQuery } from "@/lib/stores/canvas-store";
-import { bucketExpr, numericBucketExpr, quoteIdent, dialectFor, type SqlDialect } from "./sql-dialects";
+import { bucketExpr, numericBucketExpr, quoteIdent, dialectFor, sqliteDateNormalize, type SqlDialect } from "./sql-dialects";
 import { nicerBinWidth } from "./smart-defaults";
 
 /** Returns true if the value is a canvas parameter reference: `${paramName}`. */
@@ -70,6 +70,15 @@ export interface BuildSqlOptions {
   /** Optional connection type (from `dbserver.type`) to drive dialect choice.
    *  If omitted, defaults to SQLite — matches the bundled Northwind sample. */
   connectionType?: string | null;
+  /** Names of columns whose values represent dates / timestamps.
+   *  Used by SQLite filter emission to wrap the LHS with date(normalize(c))
+   *  so comparisons against ISO date literals work even when the column is
+   *  stored as BIGINT epoch ms (sqlite-jdbc's default for LocalDateTime).
+   *  Other dialects ignore this hint — their native types compare correctly
+   *  against ISO date literals. Omit to disable per-column wrapping (safe
+   *  no-op default that preserves pre-fix behavior for callers not yet
+   *  passing this option). */
+  temporalColumns?: ReadonlySet<string>;
 }
 
 export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): string {
@@ -82,9 +91,24 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
   const hasAgg = query.summarize.length > 0;
   const timeBuckets = query.groupByBuckets ?? {};
   const numericBuckets = query.groupByNumericBuckets ?? {};
+  const temporalColumns = options.temporalColumns;
   const selectParts: string[] = [];
 
   const quote = (name: string) => quoteIdent(name, dialect);
+
+  // Filter LHS for SQLite + temporal columns: wrap with date(normalize(c)) so
+  // comparisons against ISO date literals (e.g. user-picked '2024-01-01') are
+  // correct even when the column is stored as BIGINT epoch ms — the typical
+  // SQLite-JDBC mapping for java.time.LocalDateTime. Other vendors use the
+  // raw quoted column ref because their native datetime types compare against
+  // ISO literals natively. Non-temporal columns are never wrapped — applying
+  // sqliteDateNormalize blindly would mis-interpret integer IDs as epochs.
+  const filterLhs = (column: string): string => {
+    const raw = quote(column);
+    if (dialect !== "sqlite") return raw;
+    if (!temporalColumns || !temporalColumns.has(column)) return raw;
+    return `date(${sqliteDateNormalize(raw)})`;
+  };
 
   const bucketedSelectExpr = (col: string): string | null => {
     const t = timeBuckets[col];
@@ -138,22 +162,26 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
   // WHERE
   if (query.filters.length > 0) {
     const conditions = query.filters.map((f) => {
-      const col = quote(f.column);
+      // Comparison operators use the type-aware LHS (date-normalized for
+      // SQLite temporal columns); IS NULL / IS NOT NULL use the raw column
+      // ref because NULL semantics are independent of value encoding.
+      const cmp = filterLhs(f.column);
+      const raw = quote(f.column);
       const param = isParamRef(f.value);
       switch (f.operator) {
-        case "equals":          return param ? `${col} = ${f.value}`   : `${col} = '${esc(f.value)}'`;
-        case "not_equals":      return param ? `${col} != ${f.value}`  : `${col} != '${esc(f.value)}'`;
-        case "greater_than":    return param ? `${col} > ${f.value}`   : `${col} > '${esc(f.value)}'`;
-        case "greater_or_equal":return param ? `${col} >= ${f.value}`  : `${col} >= '${esc(f.value)}'`;
-        case "less_than":       return param ? `${col} < ${f.value}`   : `${col} < '${esc(f.value)}'`;
-        case "less_or_equal":   return param ? `${col} <= ${f.value}`  : `${col} <= '${esc(f.value)}'`;
-        case "contains":        return `${col} LIKE '%${esc(f.value)}%'`;
-        case "starts_with":     return `${col} LIKE '${esc(f.value)}%'`;
-        case "ends_with":       return `${col} LIKE '%${esc(f.value)}'`;
-        case "between":         return `${col} BETWEEN '${esc(f.value)}' AND '${esc(f.valueTo || '')}'`;
-        case "is_null":         return `${col} IS NULL`;
-        case "is_not_null":     return `${col} IS NOT NULL`;
-        default:                return param ? `${col} = ${f.value}`   : `${col} = '${esc(f.value)}'`;
+        case "equals":          return param ? `${cmp} = ${f.value}`   : `${cmp} = '${esc(f.value)}'`;
+        case "not_equals":      return param ? `${cmp} != ${f.value}`  : `${cmp} != '${esc(f.value)}'`;
+        case "greater_than":    return param ? `${cmp} > ${f.value}`   : `${cmp} > '${esc(f.value)}'`;
+        case "greater_or_equal":return param ? `${cmp} >= ${f.value}`  : `${cmp} >= '${esc(f.value)}'`;
+        case "less_than":       return param ? `${cmp} < ${f.value}`   : `${cmp} < '${esc(f.value)}'`;
+        case "less_or_equal":   return param ? `${cmp} <= ${f.value}`  : `${cmp} <= '${esc(f.value)}'`;
+        case "contains":        return `${cmp} LIKE '%${esc(f.value)}%'`;
+        case "starts_with":     return `${cmp} LIKE '${esc(f.value)}%'`;
+        case "ends_with":       return `${cmp} LIKE '%${esc(f.value)}'`;
+        case "between":         return `${cmp} BETWEEN '${esc(f.value)}' AND '${esc(f.valueTo || '')}'`;
+        case "is_null":         return `${raw} IS NULL`;
+        case "is_not_null":     return `${raw} IS NOT NULL`;
+        default:                return param ? `${cmp} = ${f.value}`   : `${cmp} = '${esc(f.value)}'`;
       }
     });
     sql += `\nWHERE ${conditions.join("\n  AND ")}`;
@@ -175,6 +203,16 @@ export function buildSql(query: VisualQuery, options: BuildSqlOptions = {}): str
     sql += `\nLIMIT ${query.limit}`;
   }
 
+  // [SQL-TRACE] diagnostic — leave commented; uncomment to debug what
+  // SQL the visual-query builder emits (table / groupBy / summarize / hasAgg).
+  // console.log(
+  //   '[SQL-TRACE buildSql] table=' + (query.table ?? '?') +
+  //   ' groupBy=' + JSON.stringify(query.groupBy ?? []) +
+  //   ' summarize=' + JSON.stringify((query.summarize ?? []).map(a => a.aggregation + '(' + a.field + ')')) +
+  //   ' kind=' + (query.kind ?? '?') +
+  //   ' hasAgg=' + hasAgg +
+  //   ' SQL=<<<' + sql.replace(/\n/g, ' ') + '>>>',
+  // );
   return sql;
 }
 
@@ -194,9 +232,10 @@ function esc(value: string): string {
 export function sqlForDataSource(
   ds: DataSource,
   connectionType: string | null,
+  temporalColumns?: ReadonlySet<string>,
 ): string | null {
   if (ds.mode === "visual" && ds.visualQuery) {
-    const built = buildSql(ds.visualQuery, { connectionType });
+    const built = buildSql(ds.visualQuery, { connectionType, temporalColumns });
     if (built) return built;
     // buildSql returns "" for cube queries — fall through.
   }

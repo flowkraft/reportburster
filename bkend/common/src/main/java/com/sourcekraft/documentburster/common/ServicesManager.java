@@ -27,7 +27,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.sourcekraft.documentburster.utils.Utils;
 
-import com.sourcekraft.documentburster.common.db.northwind.InvoiceSeedGenerator;
 import com.sourcekraft.documentburster.common.db.northwind.NorthwindManager;
 import com.sourcekraft.documentburster.common.db.northwind.NorthwindManager.DatabaseVendor;
 
@@ -54,6 +53,7 @@ public class ServicesManager {
 	private static final String APP_FAMILY = "app";
 	private static final String NORTHWIND_PACK = "northwind"; // Specific pack name within the database family
 	private static final String CACHE_PACK = "cache"; // Cache services (Redis) — no Northwind provisioning
+	private static final String TIMESERIES_PACK = "timeseries"; // Time-series DBs (TimescaleDB) — no Northwind provisioning
 
 	// Command constants
 	private static final String CMD_START = "start";
@@ -61,10 +61,6 @@ public class ServicesManager {
 	private static final String CMD_LIST = "list";
 	private static final String CMD_INFO = "info";
 	private static final String CMD_QUERY = "query"; // Keep Northwind query capability
-	private static final String CMD_SEED_INVOICES = "seed-invoices";
-	private static final String CMD_WIPE_INVOICES = "wipe-invoices";
-	private static final String CMD_CHECK_SEED_INVOICES = "check-seed-invoices";
-	private static final String CMD_RUN_CUSTOM_SEED = "run-custom-seed";
 
 	// Programmatic API: Result and execute() entrypoint
 	public static class Result {
@@ -121,27 +117,6 @@ public class ServicesManager {
 						String status = out.toLowerCase().contains("error") ? "error" : "ok";
 						return new Result(status, out);
 					}
-					case CMD_SEED_INVOICES: {
-						String out = captureOutput(() -> handleNorthwindSeedInvoices(managerArgsString));
-						String status = out.toLowerCase().contains("completed") ? "ok"
-								: (out.toLowerCase().contains("error") ? "error" : "ok");
-						return new Result(status, out);
-					}
-					case CMD_WIPE_INVOICES: {
-						String out = captureOutput(() -> handleNorthwindWipeInvoices(managerArgsString));
-						String status = out.toLowerCase().contains("completed") ? "ok"
-								: (out.toLowerCase().contains("error") ? "error" : "ok");
-						return new Result(status, out);
-					}
-					case CMD_CHECK_SEED_INVOICES: {
-						String out = captureOutput(() -> handleNorthwindCheckSeedInvoices(managerArgsString));
-						return new Result("ok", out);
-					}
-					case CMD_RUN_CUSTOM_SEED: {
-						String out = captureOutput(() -> handleNorthwindRunCustomSeed(managerArgsString));
-						String status = out.toLowerCase().contains("error") ? "error" : "ok";
-						return new Result(status, out);
-					}
 					default:
 						return new Result("error", "Unknown database command: " + subCmd);
 				}
@@ -159,6 +134,21 @@ public class ServicesManager {
 					}
 					default:
 						return new Result("error", "Unknown cache command: " + subCmd);
+				}
+			} else if (packName.equals(TIMESERIES_PACK)) {
+				// Time-series DBs (e.g. TimescaleDB): just docker compose, skip Northwind provisioning
+				switch (subCmd) {
+					case CMD_START: {
+						String out = captureOutput(() -> handleTimeseriesStart(managerArgsString));
+						String status = out.contains("✓") ? "running" : (out.contains("✗") ? "error" : "running");
+						return new Result(status, out);
+					}
+					case CMD_STOP: {
+						String out = captureOutput(() -> handleTimeseriesStop(managerArgsString));
+						return new Result("stopped", out);
+					}
+					default:
+						return new Result("error", "Unknown timeseries command: " + subCmd);
 				}
 			} else {
 				return new Result("error", "Unknown pack name '" + packName + "' in family '" + DB_FAMILY + "'.");
@@ -255,103 +245,6 @@ public class ServicesManager {
 	}
 
 	/**
-	 * Handle 'database seed-invoices northwind <vendor> <N>'.
-	 * Seeds N invoices (master-detail) into seed_inv_* tables using Datafaker.
-	 */
-	private static void handleNorthwindSeedInvoices(String managerArgsString) throws Exception {
-		String[] parts = managerArgsString.split("\\s+");
-		String vendorName = parts[0].toUpperCase();
-		int invoiceCount = parts.length > 1 ? Integer.parseInt(parts[1]) : 10000;
-
-		DatabaseVendor vendor = DatabaseVendor.valueOf(vendorName);
-		try (java.sql.Connection conn = dbManager.getConnection(vendor)) {
-			InvoiceSeedGenerator.seedInvoices(conn, vendor, invoiceCount);
-		}
-	}
-
-	/**
-	 * Handle 'database wipe-invoices northwind <vendor>'.
-	 * Wipes all data from seed_inv_* tables (does NOT touch Northwind tables).
-	 */
-	private static void handleNorthwindWipeInvoices(String managerArgsString) throws Exception {
-		String vendorName = managerArgsString.split("\\s+")[0].toUpperCase();
-
-		DatabaseVendor vendor = DatabaseVendor.valueOf(vendorName);
-		try (java.sql.Connection conn = dbManager.getConnection(vendor)) {
-			InvoiceSeedGenerator.wipeInvoices(conn, vendor);
-		}
-	}
-
-	/**
-	 * Handle 'database check-seed-invoices northwind <vendor>'.
-	 * Fast check: returns "seeded" if seed_inv_invoice has data, "empty" otherwise.
-	 */
-	private static void handleNorthwindCheckSeedInvoices(String managerArgsString) throws Exception {
-		String vendorName = managerArgsString.split("\\s+")[0].toUpperCase();
-
-		DatabaseVendor vendor = DatabaseVendor.valueOf(vendorName);
-		try (java.sql.Connection conn = dbManager.getConnection(vendor)) {
-			boolean hasData = InvoiceSeedGenerator.checkSeedStatus(conn, vendor);
-			System.out.println(hasData ? "seeded" : "empty");
-		}
-	}
-
-	/**
-	 * Handle 'database run-custom-seed northwind <vendor>'.
-	 * Runs user-provided Groovy script against the running database.
-	 * Script path: db/sample-northwind-{vendor}/custom-seed.groovy
-	 */
-	private static void handleNorthwindRunCustomSeed(String managerArgsString) throws Exception {
-		String vendorName = managerArgsString.split("\\s+")[0].toUpperCase();
-		DatabaseVendor vendor = DatabaseVendor.valueOf(vendorName);
-
-		String dbFolder = Utils.getDbFolderPath();
-		Path scriptPath = Paths.get(dbFolder, "sample-northwind-" + vendor.name().toLowerCase(), "custom-seed.groovy");
-
-		if (!Files.exists(scriptPath)) {
-			System.out.println("Error: No custom seed script found at " + scriptPath);
-			return;
-		}
-
-		System.out.println("Running custom seed script: " + scriptPath);
-		java.sql.Connection conn = null;
-		groovy.sql.Sql dbSql = null;
-		try {
-			conn = dbManager.getConnection(vendor);
-			conn.setAutoCommit(false); // Force transaction — no half-inserts even without withTransaction
-
-			dbSql = new groovy.sql.Sql(conn);
-
-			groovy.lang.Binding binding = new groovy.lang.Binding();
-			binding.setVariable("dbSql", dbSql);
-			binding.setVariable("vendor", vendor.name());
-			binding.setVariable("log", log);
-
-			groovy.util.GroovyScriptEngine gse = new groovy.util.GroovyScriptEngine(
-					new String[] { scriptPath.getParent().toString() });
-			gse.run("custom-seed.groovy", binding);
-
-			conn.commit();
-			System.out.println("Custom seed script completed successfully for " + vendor.name());
-		} catch (Exception e) {
-			// Rollback on ANY error — no half-inserted data
-			if (conn != null) {
-				try { conn.rollback(); } catch (Exception ignored) {}
-			}
-			System.out.println("Error running custom seed script: " + e.getMessage());
-			throw e;
-		} finally {
-			// Close dbSql + connection — no leaks even if script is badly coded
-			if (dbSql != null) {
-				try { dbSql.close(); } catch (Exception ignored) {}
-			}
-			if (conn != null) {
-				try { conn.close(); } catch (Exception ignored) {}
-			}
-		}
-	}
-
-	/**
 	 * Handle 'database start cache <service> [port]'.
 	 * Runs docker compose in the db/ folder — no data provisioning needed.
 	 */
@@ -420,6 +313,77 @@ public class ServicesManager {
 				.execute();
 
 		System.out.println("✓ Cache service '" + serviceName + "' stopped.");
+	}
+
+	/**
+	 * Handle 'database start timeseries <service> [port]'.
+	 * Runs docker compose in the db/ folder — no data provisioning needed.
+	 */
+	private static void handleTimeseriesStart(String managerArgsString) throws Exception {
+		String[] parts = managerArgsString.split("\\s+");
+		String serviceName = parts[0].toLowerCase();
+		Integer customPort = parts.length > 1 ? Integer.parseInt(parts[1]) : null;
+
+		String dbFolderPath = Utils.getDbFolderPath();
+		Path workingDir = Paths.get(dbFolderPath);
+
+		List<String> command = new ArrayList<>();
+		command.add("docker");
+		command.add("compose");
+		command.add("-f");
+		command.add("docker-compose.yml");
+		command.add("up");
+		command.add("-d");
+		command.add("--remove-orphans");
+		command.add(serviceName);
+
+		ProcessExecutor executor = new ProcessExecutor()
+				.command(command)
+				.directory(workingDir.toFile())
+				.readOutput(true)
+				.timeout(300, TimeUnit.SECONDS);
+
+		if (customPort != null) {
+			Map<String, String> env = new HashMap<>(System.getenv());
+			env.put("TIMESCALE_PORT", customPort.toString());
+			executor.environment(env);
+		}
+
+		log.info("[TIMESERIES] Executing: {} in {}", String.join(" ", command), workingDir);
+		ProcessResult result = executor.execute();
+
+		if (result.getExitValue() == 0) {
+			System.out.println("✓ Time-series DB '" + serviceName + "' started successfully.");
+		} else {
+			System.out.println("✗ Failed to start time-series DB '" + serviceName + "'. Exit code: " + result.getExitValue());
+		}
+	}
+
+	/**
+	 * Handle 'database stop timeseries <service>'.
+	 */
+	private static void handleTimeseriesStop(String managerArgsString) throws Exception {
+		String serviceName = managerArgsString.split("\\s+")[0].toLowerCase();
+
+		String dbFolderPath = Utils.getDbFolderPath();
+		Path workingDir = Paths.get(dbFolderPath);
+
+		List<String> command = new ArrayList<>();
+		command.add("docker");
+		command.add("compose");
+		command.add("-f");
+		command.add("docker-compose.yml");
+		command.add("stop");
+		command.add(serviceName);
+
+		log.info("[TIMESERIES] Executing: {} in {}", String.join(" ", command), workingDir);
+		new ProcessExecutor()
+				.command(command)
+				.directory(workingDir.toFile())
+				.timeout(120, TimeUnit.SECONDS)
+				.execute();
+
+		System.out.println("✓ Time-series DB '" + serviceName + "' stopped.");
 	}
 
 	/**

@@ -48,8 +48,8 @@ export function isTemporalExtraction(bucket?: TimeBucket | null): boolean {
  * timeline continuity — so this picker doesn't auto-return them.
  */
 export function guessTimeBucket(minDate: string, maxDate: string): TimeBucket {
-  const min = new Date(minDate).getTime();
-  const max = new Date(maxDate).getTime();
+  const min = parseDateBoundary(minDate);
+  const max = parseDateBoundary(maxDate);
   if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) return "month";
   const days = (max - min) / (1000 * 60 * 60 * 24);
   if (days < 60)        return "day";
@@ -57,6 +57,27 @@ export function guessTimeBucket(minDate: string, maxDate: string): TimeBucket {
   if (days < 365 * 2)   return "month";
   if (days < 365 * 10)  return "quarter";
   return "year";
+}
+
+/**
+ * Parse a min/max boundary into a millisecond timestamp.
+ *
+ * Vendor-agnostic by design — accepts ISO strings, pure-digit epoch strings
+ * (ms or seconds), or already-numeric input wrapped to string. The probe
+ * layer (probeDateRange) normalizes SQLite epoch columns to ISO via
+ * sqliteDateNormalize, so this defensive parser is belt-and-suspenders for
+ * the rare path where a probe somehow returns numeric strings (e.g. a third-
+ * party tool, a future driver change, or a custom SQL probe).
+ *
+ * Threshold 1e12 (~2001-09-09 in epoch ms) cleanly separates ms from seconds
+ * without false matches on small numeric IDs that happened to slip through.
+ */
+function parseDateBoundary(s: string): number {
+  if (typeof s === "string" && /^\d+$/.test(s)) {
+    const n = Number(s);
+    return n > 1e12 ? n : n * 1000;
+  }
+  return new Date(s).getTime();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

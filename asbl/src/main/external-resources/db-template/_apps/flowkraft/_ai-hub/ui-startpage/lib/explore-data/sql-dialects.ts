@@ -75,17 +75,51 @@ export function bucketExpr(column: string, bucket: TimeBucket, dialect: SqlDiale
   }
 }
 
+/**
+ * SQLite has no native DATETIME type. JDBC drivers (xerial sqlite-jdbc and
+ * the Hibernate sqlite community dialect) write java.time.LocalDateTime as
+ * BIGINT epoch milliseconds — so a column may legitimately hold either:
+ *   - integer epoch-ms (e.g. 1710457200000)
+ *   - integer epoch-seconds (rare in JDBC writes, common in Unix exports)
+ *   - ISO 8601 TEXT ('2024-03-15' or '2024-03-15 00:00:00')
+ *   - REAL Julian day numbers
+ *
+ * strftime() returns NULL for integer inputs without the 'unixepoch' modifier.
+ * If the bucket SQL emits raw strftime over an epoch-ms column, every row
+ * buckets to NULL, GROUP BY collapses to a single group, and downstream
+ * smart-defaults thinks the result is scalar.
+ *
+ * This normalizer routes per-row by typeof() + magnitude so the bucket SQL
+ * works regardless of how the source app stored the date. The typeof()
+ * comparison uses lowercase literals which only match SQLite (DuckDB returns
+ * uppercase like 'INTEGER'), so the duckdb path falls through to ELSE and
+ * keeps its current pass-through behavior.
+ *
+ * Magnitude threshold 1e12 (~2001-09-09 in epoch ms) cleanly separates ms
+ * from seconds without false matches on small integer columns.
+ */
+export function sqliteDateNormalize(c: string): string {
+  return `(CASE
+    WHEN typeof(${c}) IN ('integer','real') AND ${c} > 1000000000000
+      THEN datetime(${c}/1000, 'unixepoch')
+    WHEN typeof(${c}) IN ('integer','real')
+      THEN datetime(${c}, 'unixepoch')
+    ELSE ${c}
+  END)`;
+}
+
 function sqliteBucket(c: string, b: TimeBucket): string {
+  const n = sqliteDateNormalize(c);
   switch (b) {
-    case "day":     return `strftime('%Y-%m-%d', ${c})`;
-    case "week":    return `strftime('%Y-W%W', ${c})`;
-    case "month":   return `strftime('%Y-%m', ${c})`;
-    case "quarter": return `strftime('%Y', ${c}) || '-Q' || ((CAST(strftime('%m', ${c}) AS INTEGER) - 1) / 3 + 1)`;
-    case "year":    return `strftime('%Y', ${c})`;
-    case "day-of-week":     return `CAST(strftime('%w', ${c}) AS INTEGER)`;
-    case "hour-of-day":     return `CAST(strftime('%H', ${c}) AS INTEGER)`;
-    case "month-of-year":   return `CAST(strftime('%m', ${c}) AS INTEGER)`;
-    case "quarter-of-year": return `((CAST(strftime('%m', ${c}) AS INTEGER) - 1) / 3 + 1)`;
+    case "day":     return `strftime('%Y-%m-%d', ${n})`;
+    case "week":    return `strftime('%Y-W%W', ${n})`;
+    case "month":   return `strftime('%Y-%m', ${n})`;
+    case "quarter": return `strftime('%Y', ${n}) || '-Q' || ((CAST(strftime('%m', ${n}) AS INTEGER) - 1) / 3 + 1)`;
+    case "year":    return `strftime('%Y', ${n})`;
+    case "day-of-week":     return `CAST(strftime('%w', ${n}) AS INTEGER)`;
+    case "hour-of-day":     return `CAST(strftime('%H', ${n}) AS INTEGER)`;
+    case "month-of-year":   return `CAST(strftime('%m', ${n}) AS INTEGER)`;
+    case "quarter-of-year": return `((CAST(strftime('%m', ${n}) AS INTEGER) - 1) / 3 + 1)`;
   }
 }
 

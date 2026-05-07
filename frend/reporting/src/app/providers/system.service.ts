@@ -20,12 +20,6 @@ export class SystemService {
     return this.apiService.get('/system/info');
   }
 
-  async checkSeedStatus(vendor: string): Promise<any> {
-    return this.apiService.get('/system/services/check-seed-status', {
-      vendor,
-    });
-  }
-
   async checkUrl(url: string): Promise<any> {
     return this.apiService.get('/system/check-url', { url });
   }

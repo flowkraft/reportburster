@@ -27,7 +27,7 @@ const SKIP_NON_DATABASE_TESTS = false;
 
 const DB_VENDORS_SELECTED: string[] = (() => {
   
-  //return ['supabase'];
+  //return ['mariadb'];
   //return ['mysql'];
   //return ['mariadb'];
 
@@ -897,9 +897,9 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           .click('#btnGenerateWithAIDbSchema')
           .waitOnElementToBecomeVisible('#btnCopyPromptText')
           .click('#btnCopyPromptText')
-          .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+          .waitOnConfirmDialogToBecomeVisible()
           .click('.dburst-button-question-confirm')
-          .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+          .waitOnConfirmDialogToBecomeInvisible()
           .clipboardShouldContainText('You are an expert SQL Developer')
           .clipboardShouldContainText('"tableName": "Products"')
           .clipboardShouldContainText('"columnName": "Discontinued"')
@@ -959,9 +959,9 @@ log.info("Transformation complete. Rows after filter: {}", ctx.reportData.size()
           .click('#btnGenerateSqlQueryWithAIDomainGroupedSchema')
           .waitOnElementToBecomeVisible('#btnCopyPromptText')
           .click('#btnCopyPromptText')
-          .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+          .waitOnConfirmDialogToBecomeVisible()
           .click('.dburst-button-question-confirm')
-          .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+          .waitOnConfirmDialogToBecomeInvisible()
           .clipboardShouldContainText('You are an expert SQL Developer')
           .clipboardShouldContainText('"tableName": "Orders"')
           .clipboardShouldContainText(`"tableName": "${orderDetailsName}"`)
@@ -1766,9 +1766,9 @@ function configureAndRunReportGeneration2(
 
           ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText')
             .click('#btnCopyPromptText')
-            .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+            .waitOnConfirmDialogToBecomeVisible()
             .click('.dburst-button-question-confirm')
-            .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+            .waitOnConfirmDialogToBecomeInvisible()
             .clipboardShouldContainText(ids.prompt1)
             .clipboardShouldContainText(ids.prompt2TableNameProducts)
             .clipboardShouldContainText(ids.prompt3ColumnNameDiscontinued)
@@ -1801,9 +1801,9 @@ function configureAndRunReportGeneration2(
 
             ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText')
               .click('#btnCopyPromptText')
-              .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+              .waitOnConfirmDialogToBecomeVisible()
               .click('.dburst-button-question-confirm')
-              .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+              .waitOnConfirmDialogToBecomeInvisible()
               .clipboardShouldContainText(ids.prompt1)
               .clipboardShouldContainText(ids.prompt2TableNameProducts)
               .clipboardShouldContainText(ids.prompt3ColumnNameDiscontinued)
@@ -1835,9 +1835,9 @@ function configureAndRunReportGeneration2(
 
             ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText')
               .click('#btnCopyPromptText')
-              .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+              .waitOnConfirmDialogToBecomeVisible()
               .click('.dburst-button-question-confirm')
-              .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+              .waitOnConfirmDialogToBecomeInvisible()
               .clipboardShouldContainText(ids.prompt1)
               .clipboardShouldContainText(ids.prompt4TableNameOrders)
               .clipboardShouldContainText(ids.prompt5TableNameOrderDetails)
@@ -1866,9 +1866,9 @@ function configureAndRunReportGeneration2(
 
             ft = ft.waitOnElementToBecomeVisible('#btnCopyPromptText')
               .click('#btnCopyPromptText')
-              .waitOnElementToBecomeVisible('.dburst-button-question-confirm')
+              .waitOnConfirmDialogToBecomeVisible()
               .click('.dburst-button-question-confirm')
-              .waitOnElementToBecomeInvisible('.dburst-button-question-confirm')
+              .waitOnConfirmDialogToBecomeInvisible()
               .clipboardShouldContainText(ids.prompt1)
               .clipboardShouldContainText(ids.prompt4TableNameOrders)
               .clipboardShouldContainText(ids.prompt5TableNameOrderDetails)

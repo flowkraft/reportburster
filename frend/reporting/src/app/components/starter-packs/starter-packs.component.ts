@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, SecurityContext, ChangeDetectorRef, ViewChild, TemplateRef } from '@angular/core'; // Import SecurityContext
+import { Component, OnInit, OnDestroy, SecurityContext, ChangeDetectorRef, ViewChild } from '@angular/core'; // Import SecurityContext
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser'; // Import DomSanitizer
 import { Subscription, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -16,13 +16,11 @@ import {
   siApachecassandra, // Placeholder 4 - for ClickHouse (columnar DB)
   siSupabase,
   siRedis,
+  siInfluxdb,
 } from 'simple-icons';
 
-import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
-
-import { AiManagerComponent, AiManagerLaunchConfig } from '../ai-manager/ai-manager.component';
+import { AiManagerComponent } from '../ai-manager/ai-manager.component';
 import { ApiService } from '../../providers/api.service';
-import { FsService } from '../../providers/fs.service';
 import { SystemService } from '../../providers/system.service';
 // Import the new service and definition interface
 // Ensure this path is correct relative to the current file
@@ -55,18 +53,6 @@ interface StarterPackUIData extends StarterPackDefinition {
 
   // UI State props (added by component for managing UI interactions)
   currentCommandValue: string; // The command currently displayed and editable in the input field
-
-  // Seed invoice data state
-  seedInvoiceCount: number; // N value for seed command (default 10000)
-  isInvoiceDataSeeded: boolean; // Whether seed_inv_* tables have data
-  isSeedingOrWiping: boolean; // Whether a seed/wipe operation is in progress
-  seedWipeOutput: string; // Last output from seed/wipe operation
-
-  // Custom seed state
-  isCustomSeedChecked: boolean; // checkbox state
-  customSeedScript: string; // editor content
-  isCustomSeedRunning: boolean; // execution in progress
-  customSeedOutput: string; // last run output
 }
 
 // Define expected response types for clarity
@@ -90,6 +76,7 @@ const iconMap = {
   sqlite: siSqlite,
   supabase: siSupabase,
   redis: siRedis,
+  timescaledb: siInfluxdb, // simple-icons has no TimescaleDB brand; InfluxDB is the closest time-series icon
 };
 
 // Helper function to construct default commands based on definition
@@ -128,18 +115,9 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
   // AI Manager
   @ViewChild(AiManagerComponent) private aiManagerInstance!: AiManagerComponent;
 
-  // Custom seed modal
-  @ViewChild('customSeedModal') customSeedModalTemplate!: TemplateRef<any>;
-  activeCustomSeedPack: StarterPackUIData | null = null;
-  isExampleTabActive: boolean = false;
-  customSeedModalRef: BsModalRef | null = null;
-  exampleCustomSeedScript: string = '';
-  private customSeedSaveSubjects = new Map<string, Subject<string>>();
-
   // Inject DomSanitizer along with other services
   constructor(
     protected apiService: ApiService,
-    protected fsService: FsService,
     protected systemService: SystemService,
     protected starterPacksService: StarterPacksService,
     protected confirmService: ConfirmService,
@@ -148,7 +126,6 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     protected router: Router,
     protected sanitizer: DomSanitizer,
     protected cdRef: ChangeDetectorRef,
-    protected modalService: BsModalService,
     protected dockerLifecycle: DockerLifecycleService,
   ) { }
 
@@ -176,9 +153,6 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     this.searchSubscription?.unsubscribe();
     this.searchSubject.complete(); // Complete subject to prevent memory leaks
     this.stopTransitionPolling();
-    // Clean up custom seed auto-save subjects
-    this.customSeedSaveSubjects.forEach(s => s.complete());
-    this.customSeedSaveSubjects.clear();
   }
 
   // --- Data Fetching & Processing ---
@@ -223,14 +197,6 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
           status: 'stopped',
           lastOutput: undefined,
           currentCommandValue: definition.startCmd,
-          seedInvoiceCount: 10000,
-          isInvoiceDataSeeded: false,
-          isSeedingOrWiping: false,
-          seedWipeOutput: '',
-          isCustomSeedChecked: false,
-          customSeedScript: '',
-          isCustomSeedRunning: false,
-          customSeedOutput: '',
         };
       });
 
@@ -247,14 +213,6 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
           lastOutput: existingPack?.lastOutput || (currentStatus === 'running' ? `Running ${definition.displayName}` : `Ready to start ${definition.displayName}`),
           // Show stopCmd when running OR starting (so user can stop a starting pack)
           currentCommandValue: (currentStatus === 'running' || currentStatus === 'starting') ? definition.stopCmd : definition.startCmd,
-          seedInvoiceCount: existingPack?.seedInvoiceCount || 10000,
-          isInvoiceDataSeeded: existingPack?.isInvoiceDataSeeded || false,
-          isSeedingOrWiping: existingPack?.isSeedingOrWiping || false,
-          seedWipeOutput: existingPack?.seedWipeOutput || '',
-          isCustomSeedChecked: existingPack?.isCustomSeedChecked || false,
-          customSeedScript: existingPack?.customSeedScript || '',
-          isCustomSeedRunning: existingPack?.isCustomSeedRunning || false,
-          customSeedOutput: existingPack?.customSeedOutput || '',
         };
       });
 
@@ -336,17 +294,6 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
         // send a stop command to the backend.
         const isActive = (pack.status === 'running' || pack.status === 'starting');
         pack.currentCommandValue = isActive ? pack.stopCmd : pack.startCmd;
-
-        // 3. Check seed status for running packs with seed capability
-        if (pack.status === 'running' && pack.seedInvoicesCmd && pack.target && !pack.isSeedingOrWiping) {
-          try {
-            const seedResult: any = await this.systemService.checkSeedStatus(pack.target);
-            pack.isInvoiceDataSeeded = seedResult?.hasSeedData === true;
-            console.debug(`[StarterPacks] Seed check for ${pack.id}: hasSeedData=${pack.isInvoiceDataSeeded}`);
-          } catch (e) {
-            console.debug(`[StarterPacks] Seed check failed for ${pack.id}:`, e);
-          }
-        }
       }
 
     } catch (error) {
@@ -595,85 +542,6 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     }
   }
 
-  // --- Seed / Wipe Invoice Data ---
-
-  /**
-   * Triggers seeding of N invoices into seed_inv_* tables.
-   * Shows confirmation dialog with warning about resource usage.
-   */
-  seedInvoiceData(pack: StarterPackUIData): void {
-    if (!pack.seedInvoicesCmd || pack.isSeedingOrWiping) return;
-
-    const n = pack.seedInvoiceCount || 10000;
-    this.confirmService.askConfirmation({
-      message: `Seed ${n.toLocaleString()} invoices into ${pack.displayName}? The larger the amount you seed, the more time and resources it will take.`,
-      confirmAction: () => {
-        this.executeSeedInvoices(pack, n);
-      },
-    });
-  }
-
-  /**
-   * Triggers wiping of all seed_inv_* table data.
-   * Shows confirmation dialog.
-   */
-  wipeInvoiceData(pack: StarterPackUIData): void {
-    if (!pack.wipeInvoicesCmd || pack.isSeedingOrWiping) return;
-
-    this.confirmService.askConfirmation({
-      message: `Wipe all seeded invoice data from ${pack.displayName}? This only removes data from seed_inv_* tables — your Northwind data will not be touched.`,
-      confirmAction: () => {
-        this.executeWipeInvoices(pack);
-      },
-    });
-  }
-
-  private async executeSeedInvoices(pack: StarterPackUIData, invoiceCount: number): Promise<void> {
-    pack.isSeedingOrWiping = true;
-    pack.seedWipeOutput = `Seeding ${invoiceCount.toLocaleString()} invoices...`;
-    this.cdRef.detectChanges();
-
-    const command = `${pack.seedInvoicesCmd} ${invoiceCount}`;
-
-    try {
-      const response = await this.apiService.post('/starter-packs/execute', { command });
-      pack.isSeedingOrWiping = false;
-      if (response && response.status && response.status !== 'error') {
-        pack.isInvoiceDataSeeded = true;
-        pack.seedWipeOutput = response.output || `Successfully seeded ${invoiceCount.toLocaleString()} invoices`;
-      } else {
-        pack.seedWipeOutput = response?.output || `Failed to seed invoices`;
-      }
-    } catch (e: any) {
-      pack.isSeedingOrWiping = false;
-      pack.seedWipeOutput = e?.message || `Failed to seed invoices`;
-    }
-    this.cdRef.detectChanges();
-  }
-
-  private async executeWipeInvoices(pack: StarterPackUIData): Promise<void> {
-    pack.isSeedingOrWiping = true;
-    pack.seedWipeOutput = 'Wiping seeded invoice data...';
-    this.cdRef.detectChanges();
-
-    const command = pack.wipeInvoicesCmd!;
-
-    try {
-      const response = await this.apiService.post('/starter-packs/execute', { command });
-      pack.isSeedingOrWiping = false;
-      if (response && response.status && response.status !== 'error') {
-        pack.isInvoiceDataSeeded = false;
-        pack.seedWipeOutput = response.output || 'Successfully wiped all seeded invoice data';
-      } else {
-        pack.seedWipeOutput = response?.output || 'Failed to wipe invoice data';
-      }
-    } catch (e: any) {
-      pack.isSeedingOrWiping = false;
-      pack.seedWipeOutput = e?.message || 'Failed to wipe invoice data';
-    }
-    this.cdRef.detectChanges();
-  }
-
   toggleCommandFlag(pack: StarterPackUIData, flag: string, event: Event): void {
     const checkbox = event.target as HTMLInputElement;
     const isChecked = checkbox.checked;
@@ -691,318 +559,4 @@ export class StarterPacksComponent implements OnInit, OnDestroy {
     }
   }
 
-  // --- Custom Seed Script ---
-
-  private getCustomSeedScriptPath(pack: StarterPackUIData): string {
-    return `db/sample-northwind-${pack.target}/custom-seed.groovy`;
-  }
-
-  private async loadCustomSeedScript(pack: StarterPackUIData): Promise<void> {
-    try {
-      const content = await this.fsService.readAsync(this.getCustomSeedScriptPath(pack));
-      // readAsync may return a non-string (e.g. error object) when file doesn't exist
-      if (content && typeof content === 'string' && content.trim().length > 0) {
-        pack.customSeedScript = content;
-      } else {
-        pack.customSeedScript = '';
-      }
-    } catch (e) {
-      // File doesn't exist yet — start with empty editor
-      pack.customSeedScript = '';
-    }
-  }
-
-  private setupAutoSave(pack: StarterPackUIData): void {
-    if (!this.customSeedSaveSubjects.has(pack.id)) {
-      const subject = new Subject<string>();
-      subject.pipe(debounceTime(1000)).subscribe(async (content) => {
-        try {
-          await this.fsService.writeAsync(this.getCustomSeedScriptPath(pack), content);
-          this.messagesService.showInfo('Saved');
-        } catch (e) {
-          console.error(`[StarterPacks] Failed to auto-save custom seed script for ${pack.id}:`, e);
-        }
-      });
-      this.customSeedSaveSubjects.set(pack.id, subject);
-    }
-  }
-
-  onCustomSeedScriptChanged(pack: StarterPackUIData, content: string): void {
-    pack.customSeedScript = content;
-    const subject = this.customSeedSaveSubjects.get(pack.id);
-    if (subject) {
-      subject.next(content);
-    }
-  }
-
-  async onCustomSeedButtonClicked(pack: StarterPackUIData): Promise<void> {
-    await this.loadCustomSeedScript(pack);
-    this.setupAutoSave(pack);
-    this.activeCustomSeedPack = pack;
-    this.exampleCustomSeedScript = this.getExampleCustomSeedScript(pack);
-    this.isExampleTabActive = false;
-    // Open modal
-    this.customSeedModalRef = this.modalService.show(this.customSeedModalTemplate, {
-      class: 'modal-lg',
-      backdrop: 'static',
-      keyboard: false,
-    });
-  }
-
-  closeCustomSeedModal(): void {
-    if (this.customSeedModalRef) {
-      this.customSeedModalRef.hide();
-      this.customSeedModalRef = null;
-    }
-    this.activeCustomSeedPack = null;
-  }
-
-  runCustomSeedScript(pack: StarterPackUIData): void {
-    if (!pack || pack.isCustomSeedRunning || pack.status !== 'running') return;
-
-    // Use window.confirm instead of confirmService to avoid BsModalService.hide()
-    // closing the parent custom seed modal (confirmService calls modalService.hide()
-    // on both Yes and No, which closes the topmost modal — our modal).
-    if (window.confirm(`Run custom seed script on ${pack.displayName}?\n\nThis will create/update your custom tables alongside the existing Northwind data.`)) {
-      this.executeCustomSeed(pack);
-    }
-  }
-
-  private async executeCustomSeed(pack: StarterPackUIData): Promise<void> {
-    // Force-save before running
-    await this.fsService.writeAsync(this.getCustomSeedScriptPath(pack), pack.customSeedScript);
-
-    // Transitional state — mirrors 'starting' behavior
-    pack.isCustomSeedRunning = true;
-    pack.customSeedOutput = 'Running custom seed script...';
-    this.cdRef.detectChanges();
-
-    const command = pack.runCustomSeedCmd;
-
-    try {
-      // Backend blocks until script completes (synchronous for run-custom-seed)
-      const response = await this.apiService.post('/starter-packs/execute', { command });
-      if (response && response.status !== 'error') {
-        pack.customSeedOutput = response.output || 'Custom seed script completed successfully';
-      } else {
-        pack.customSeedOutput = response?.output || 'Custom seed script failed';
-      }
-    } catch (e: any) {
-      pack.customSeedOutput = e?.message || 'Failed to run custom seed script';
-    } finally {
-      pack.isCustomSeedRunning = false;
-      this.cdRef.detectChanges();
-    }
-  }
-
-  async copyExampleSeedScriptToClipboard(): Promise<void> {
-    await this.copyToClipboard(this.exampleCustomSeedScript);
-    this.messagesService.showInfo('Copied to clipboard!');
-  }
-
-  askAiForCustomSeedHelp(pack: StarterPackUIData): void {
-    if (!pack || !this.aiManagerInstance) return;
-
-    const launchConfig: AiManagerLaunchConfig = {
-      initialActiveTabKey: 'PROMPTS',
-      initialSelectedCategory: 'Database Schema',
-      initialExpandedPromptId: 'CUSTOM_DB_SEED_SCRIPT',
-      promptVariables: {
-        '[VENDOR]': pack.target?.toUpperCase() || 'POSTGRES',
-        '[VENDOR_EXAMPLE_SCRIPT]': this.exampleCustomSeedScript || this.getExampleCustomSeedScript(pack),
-      },
-    };
-    this.aiManagerInstance.launchWithConfiguration(launchConfig);
-  }
-
-  // Prism.js Groovy highlighting for ngx-codejar
-  highlightGroovyCode = (editor: any) => {
-    if (!editor) return;
-    const code = this.getRawCode(editor);
-    if (!code) return;
-
-    try {
-      const Prism = (window as any).Prism;
-      if (Prism && Prism.languages.groovy) {
-        const html = Prism.highlight(code, Prism.languages.groovy, 'groovy');
-        editor.style.whiteSpace = 'pre-wrap';
-        editor.innerHTML = html;
-      } else {
-        editor.style.whiteSpace = 'pre-wrap';
-        editor.innerHTML = code;
-      }
-    } catch (error) {
-      console.error('Error during Groovy script highlighting:', error);
-      editor.style.whiteSpace = 'pre-wrap';
-      editor.innerHTML = code;
-    }
-  };
-
-  private getRawCode(editor: any): string {
-    try {
-      if (editor.textContent !== undefined && editor.textContent !== null) {
-        return editor.textContent as string;
-      }
-    } catch (err) {
-      // ignore and use innerText
-    }
-    return editor.innerText || '';
-  }
-
-  private getExampleCustomSeedScript(pack: StarterPackUIData): string {
-    const vendor = (pack.target || 'postgres').toUpperCase();
-
-    const autoIncrementMap: Record<string, string> = {
-      POSTGRES: 'SERIAL', MYSQL: 'INT AUTO_INCREMENT', MARIADB: 'INT AUTO_INCREMENT',
-      SQLSERVER: 'INT IDENTITY(1,1)', ORACLE: 'NUMBER GENERATED ALWAYS AS IDENTITY',
-      DB2: 'INT GENERATED ALWAYS AS IDENTITY', SUPABASE: 'SERIAL',
-      CLICKHOUSE: 'UInt32',
-    };
-    const varcharType = vendor === 'ORACLE' ? 'VARCHAR2' : (vendor === 'CLICKHOUSE' ? 'String' : 'VARCHAR');
-    const autoInc = autoIncrementMap[vendor] || 'SERIAL';
-    const isClickHouse = vendor === 'CLICKHOUSE';
-
-    const header = `// ============================================================
-// Example: Custom seed script for ${pack.displayName}
-// ============================================================
-// Available variables (pre-configured — do NOT create them):
-//   dbSql  - groovy.sql.Sql (already connected to the database)
-//   vendor - String ("${vendor}")
-//   log    - Logger (SLF4J)
-//
-// Available libraries on classpath:
-//   net.datafaker.Faker — realistic fake data with fixed seed
-//     Docs: https://www.datafaker.net/documentation/getting-started/#usage
-//     GitHub: https://github.com/datafaker-net/datafaker/
-//   groovy.sql.Sql — Groovy database access (dbSql)
-//
-// RULES:
-//   1. Use CREATE TABLE IF NOT EXISTS (safe for repeated runs)
-//   2. TRUNCATE only YOUR tables — NEVER touch Northwind tables!${isClickHouse ? '' : '\n//   3. Wrap everything in dbSql.withTransaction { ... } for rollback on error'}
-//   ${isClickHouse ? '3' : '4'}. Use DataFaker with fixed seed for deterministic, repeatable data
-// ============================================================
-
-import groovy.sql.Sql
-import net.datafaker.Faker
-
-// Fixed seed = deterministic data (identical every run)
-def faker = new Faker(new Random(42))
-
-log.info("Starting custom seed for " + vendor + "...")
-`;
-
-    if (isClickHouse) {
-      return header + `
-// --- 1. Create tables (ClickHouse uses MergeTree engine) ---
-dbSql.execute("""
-  CREATE TABLE IF NOT EXISTS my_departments (
-    dept_id UInt32,
-    dept_name String,
-    location String
-  ) ENGINE = MergeTree()
-  ORDER BY dept_id
-""")
-
-dbSql.execute("""
-  CREATE TABLE IF NOT EXISTS my_employees (
-    emp_id UInt32,
-    first_name String,
-    last_name String,
-    email String,
-    salary Decimal64(2),
-    dept_id UInt32
-  ) ENGINE = MergeTree()
-  ORDER BY emp_id
-""")
-
-// --- 2. Truncate YOUR tables (never Northwind!) ---
-// ClickHouse does not support transactions — truncate + re-insert is still idempotent
-dbSql.execute("TRUNCATE TABLE IF EXISTS my_employees")
-dbSql.execute("TRUNCATE TABLE IF EXISTS my_departments")
-
-// --- 3. Insert departments ---
-def deptNames = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations']
-deptNames.eachWithIndex { name, i ->
-  def location = faker.address().city()
-  dbSql.execute(
-    "INSERT INTO my_departments (dept_id, dept_name, location) VALUES (?, ?, ?)",
-    [i + 1, name, location]
-  )
-}
-
-// --- 4. Insert employees using DataFaker ---
-(1..20).each { i ->
-  dbSql.execute(
-    "INSERT INTO my_employees (emp_id, first_name, last_name, email, salary, dept_id) VALUES (?, ?, ?, ?, ?, ?)",
-    [
-      i,
-      faker.name().firstName(),
-      faker.name().lastName(),
-      faker.internet().emailAddress(),
-      faker.number().numberBetween(45000, 150000) as BigDecimal,
-      faker.number().numberBetween(1, deptNames.size() + 1)
-    ]
-  )
-}
-
-log.info("Custom seed completed for " + vendor + ": 6 departments, 20 employees")
-`;
-    }
-
-    return header + `
-// --- 1. Create tables (outside transaction — DDL may auto-commit) ---
-dbSql.execute("""
-  CREATE TABLE IF NOT EXISTS my_departments (
-    dept_id ${autoInc} PRIMARY KEY,
-    dept_name ${varcharType}(100) NOT NULL,
-    location ${varcharType}(200)
-  )
-""")
-
-dbSql.execute("""
-  CREATE TABLE IF NOT EXISTS my_employees (
-    emp_id ${autoInc} PRIMARY KEY,
-    first_name ${varcharType}(50) NOT NULL,
-    last_name ${varcharType}(50) NOT NULL,
-    email ${varcharType}(100),
-    salary DECIMAL(10,2),
-    dept_id INT
-  )
-""")
-
-// --- 2. Seed data in a transaction (rolls back on any error) ---
-dbSql.withTransaction {
-
-  // Truncate YOUR tables (never Northwind!)
-  dbSql.execute("TRUNCATE TABLE my_employees")
-  dbSql.execute("TRUNCATE TABLE my_departments")
-
-  // Insert departments
-  def deptNames = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations']
-  deptNames.each { name ->
-    def location = faker.address().city()
-    dbSql.execute(
-      "INSERT INTO my_departments (dept_name, location) VALUES (?, ?)",
-      [name, location]
-    )
-  }
-
-  // Insert employees using DataFaker
-  (1..20).each { i ->
-    dbSql.execute(
-      "INSERT INTO my_employees (first_name, last_name, email, salary, dept_id) VALUES (?, ?, ?, ?, ?)",
-      [
-        faker.name().firstName(),
-        faker.name().lastName(),
-        faker.internet().emailAddress(),
-        faker.number().numberBetween(45000, 150000) as BigDecimal,
-        faker.number().numberBetween(1, deptNames.size() + 1)
-      ]
-    )
-  }
-}
-
-log.info("Custom seed completed for " + vendor + ": 6 departments, 20 employees")
-`;
-  }
 }
